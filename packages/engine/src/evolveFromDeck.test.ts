@@ -173,7 +173,11 @@ function exeggcute(id: string): Card {
 }
 
 function stage1From(id: string, from: string, hp: number): Card {
-  return { ...battler(id, { hp, retreat: 1, types: ["Colorless"] }), stage: "Stage1", evolveFrom: from };
+  return {
+    ...battler(id, { hp, retreat: 1, types: ["Colorless"] }),
+    stage: "Stage1",
+    evolveFrom: from,
+  };
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -210,7 +214,11 @@ const ASCENSION_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: ASCENSION_DECK, p2: ASCENSION_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: ASCENSION_DECK, p2: ASCENSION_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -435,7 +443,12 @@ describe("D307 §2 — the printed attack on a real board", () => {
     // the attacker's turn (§5.3), so the board has already moved on by the time
     // this is read. The stamp is what stops the new body evolving again.
     expect(active?.turnPlayed).toBe(placedOn);
-    expect(active?.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
+    expect(active?.conditions).toEqual({
+      rotation: "none",
+      poisonDamage: 0,
+      burned: false,
+      confusionDamage: 30,
+    });
   });
 
   it("a POKEMON_EVOLVED event is filed, and no DECK_SEARCHED is", () => {

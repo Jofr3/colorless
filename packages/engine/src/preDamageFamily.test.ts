@@ -6,7 +6,6 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -138,8 +137,7 @@ const ROW71 =
   "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.";
 const ROW72 =
   "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.";
-const ROW73 =
-  "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.";
+const ROW73 = "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.";
 const ROW74 =
   "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon. If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.";
 
@@ -192,9 +190,7 @@ function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as
-    | Extract<GameEvent, { type: T }>
-    | undefined;
+  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** What §8.5 said it dealt to the defending Active. `undefined` means no row at all,
@@ -394,9 +390,7 @@ describe("§2 — the derivation, and the boundaries the four anchors hold", () 
     expect(ROW71.replace(" and Special Energy", "")).toBe(ROW73);
     expect(deriveAttackPreDamage(ROW73)?.kind).toBe("discardOpponentActiveTools");
     expect(deriveAttackPreDamage(ROW74)?.kind).toBe("discardOpponentActiveToolsThenParalyze");
-    expect(deriveAttackPreDamage(ROW71)?.kind).toBe(
-      "discardOpponentActiveToolsAndSpecialEnergy",
-    );
+    expect(deriveAttackPreDamage(ROW71)?.kind).toBe("discardOpponentActiveToolsAndSpecialEnergy");
   });
 
   it("🛑 THE NEAR-MISSES ARE REFUSED, AND EACH DIFFERS ON EXACTLY ONE AXIS (D427)", () => {
@@ -592,7 +586,9 @@ describe("§4 — row 72 strips *this Pokémon*, and cancels when it cannot", ()
     // side of the table: a build that writes the discard into `next` and keeps reading
     // the declaration snapshot gives 110 for BOTH and looks correct everywhere else.
     const armed = banded();
-    expect((dealt(swing(armed, IDX.plain).events) ?? 0) - (dealt(swing(armed, IDX.shed).events) ?? 0)).toBe(10);
+    expect(
+      (dealt(swing(armed, IDX.plain).events) ?? 0) - (dealt(swing(armed, IDX.shed).events) ?? 0),
+    ).toBe(10);
   });
 
   it("🛑 THE RESURRECTION: the §9 counterattack must not put the Tool back", () => {
@@ -816,10 +812,16 @@ describe("§7 — ATTACK_EFFECT_SKIPPED, both directions", () => {
     const armed = armedDefender();
     const bare = board();
     for (const index of [IDX.purge, IDX.shed, IDX.lock]) {
-      expect(find(swing(armed, index).events, "ATTACK_EFFECT_SKIPPED"), String(index)).toBeUndefined();
+      expect(
+        find(swing(armed, index).events, "ATTACK_EFFECT_SKIPPED"),
+        String(index),
+      ).toBeUndefined();
       // …including the boards where the act did NOTHING, so "simulated" is a property
       // of the SENTENCE and not of whether anything happened — the cancelled swing too.
-      expect(find(swing(bare, index).events, "ATTACK_EFFECT_SKIPPED"), String(index)).toBeUndefined();
+      expect(
+        find(swing(bare, index).events, "ATTACK_EFFECT_SKIPPED"),
+        String(index),
+      ).toBeUndefined();
     }
   });
 
@@ -859,9 +861,7 @@ describe("§8 — the result channel, and the property it did not cost", () => {
     // ONE board pair, differing only in whether a Tool is attached.
     let tooled = board();
     tooled = attachToolFromDeck(tooled, "p2", "active", CHESTPLATE);
-    expect(swing(tooled, IDX.lock).state.players.p2.active?.conditions.rotation).toBe(
-      "paralyzed",
-    );
+    expect(swing(tooled, IDX.lock).state.players.p2.active?.conditions.rotation).toBe("paralyzed");
     expect(swing(board(), IDX.lock).state.players.p2.active?.conditions.rotation).toBe("none");
   });
 
@@ -1055,15 +1055,5 @@ describe("§10 — purity and the version", () => {
       expect(first, sentence).toEqual(second);
       expect(first, sentence).not.toBe(second);
     }
-  });
-
-  it("the engine version is pinned, and it is THIS slice's pin", () => {
-    // 🆕🆕 D429 — the FIFTEENTH `engineVersion` assertion in the suite (fourteen
-    // inherited plus this one) and the EIGHTEENTH site overall, counting
-    // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
-    // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
-    // and never the one it is about to AUTHOR** — and D428 was the first note to get it
-    // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

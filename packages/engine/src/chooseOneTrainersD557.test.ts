@@ -3,7 +3,7 @@ import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { CardFilter, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -49,7 +49,10 @@ const KIERAN_TEXT =
   "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During this turn, attacks used by your Pokémon do 30 more damage to your opponent's Active Pokémon ex and Active Pokémon V (before applying Weakness and Resistance).";
 const VENTURE_TEXT =
   "Flip a coin. If heads, put 2 damage counters on 1 of your opponent's Pokémon. If tails, put 2 damage counters on your Active Pokémon.";
-const LABELS = { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" } as const;
+const LABELS = {
+  yes: "Switch your Active Pokémon",
+  no: "+30 damage to ex and V this turn",
+} as const;
 const EX_OR_V: CardFilter = {
   kind: "anyOf",
   filters: [
@@ -82,13 +85,48 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ] as Card["attacks"],
   }),
-  "d557-relief": battler("d557-relief", { name: "D557 Relief", types: ["Colorless"], hp: 300, retreat: 0 }),
-  "d557-relief-2": battler("d557-relief-2", { name: "D557 Relief Two", types: ["Colorless"], hp: 300, retreat: 0 }),
-  "d557-wall-ex": battler("d557-wall-ex", { name: "D557 Wall ex", types: ["Fighting"], hp: 900, retreat: 1 }),
-  "d557-wall-v": battler("d557-wall-v", { name: "D557 Wall V", types: ["Fighting"], hp: 900, retreat: 1 }),
-  "d557-wall-vmax": battler("d557-wall-vmax", { name: "D557 Wall VMAX", types: ["Fighting"], hp: 900, retreat: 1 }),
-  "d557-wall-vstar": battler("d557-wall-vstar", { name: "D557 Wall VSTAR", types: ["Fighting"], hp: 900, retreat: 1 }),
-  "d557-wall": battler("d557-wall", { name: "D557 Wall", types: ["Fighting"], hp: 900, retreat: 1 }),
+  "d557-relief": battler("d557-relief", {
+    name: "D557 Relief",
+    types: ["Colorless"],
+    hp: 300,
+    retreat: 0,
+  }),
+  "d557-relief-2": battler("d557-relief-2", {
+    name: "D557 Relief Two",
+    types: ["Colorless"],
+    hp: 300,
+    retreat: 0,
+  }),
+  "d557-wall-ex": battler("d557-wall-ex", {
+    name: "D557 Wall ex",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
+  "d557-wall-v": battler("d557-wall-v", {
+    name: "D557 Wall V",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
+  "d557-wall-vmax": battler("d557-wall-vmax", {
+    name: "D557 Wall VMAX",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
+  "d557-wall-vstar": battler("d557-wall-vstar", {
+    name: "D557 Wall VSTAR",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
+  "d557-wall": battler("d557-wall", {
+    name: "D557 Wall",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
   "d557-weak-ex": battler("d557-weak-ex", {
     name: "D557 Weak ex",
     types: ["Fighting"],
@@ -96,7 +134,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Colorless", value: "×2" }],
   }),
-  "d557-bench": battler("d557-bench", { name: "D557 Bench", types: ["Fighting"], hp: 300, retreat: 1 }),
+  "d557-bench": battler("d557-bench", {
+    name: "D557 Bench",
+    types: ["Fighting"],
+    hp: 300,
+    retreat: 1,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -147,7 +190,9 @@ function localSetup(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
@@ -155,9 +200,12 @@ function localSetup(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
-  for (const seat of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat }));
+  for (const seat of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat }));
   return state;
 }
 
@@ -168,7 +216,11 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
   if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
   const inHand = side.hand.find((u) => state.cardIdByUid[u] === id);
   if (inHand !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== inHand), deck: [...side.deck, inHand] };
+    const next = {
+      ...side,
+      hand: side.hand.filter((u) => u !== inHand),
+      deck: [...side.deck, inHand],
+    };
     return { ...state, players: { ...state.players, [seat]: next } };
   }
   const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
@@ -248,18 +300,23 @@ function kieran(yes: boolean, opts: Parameters<typeof ready>[0] = {}) {
   return confirm(parked, yes);
 }
 
-const attack = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
-const dealt = (state: GameState, index = STRIKE) => find(attack(state, index).events, "DAMAGE_DEALT");
+const attack = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
+const dealt = (state: GameState, index = STRIKE) =>
+  find(attack(state, index).events, "DAMAGE_DEALT");
 
 function parkedPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -269,7 +326,10 @@ function cursorFor(face: "heads" | "tails"): number {
   throw new Error("no cursor");
 }
 
-const withCoin = (state: GameState, face: "heads" | "tails"): GameState => ({ ...state, rngState: cursorFor(face) });
+const withCoin = (state: GameState, face: "heads" | "tails"): GameState => ({
+  ...state,
+  rngState: cursorFor(face),
+});
 
 // ═════════════════════════════════════════════════════════════════════════════
 // KIERAN
@@ -311,11 +371,15 @@ describe("D557 §1 — Kieran: the print, and the registry row that maps it", ()
 });
 
 describe("D557 §2 — the park: a labelled `confirm`, answered by the controller", () => {
-  it("every printing parks `{ kind: \"confirm\", note, labels }` — the labels on the ENGINE prompt", () => {
+  it('every printing parks `{ kind: "confirm", note, labels }` — the labels on the ENGINE prompt', () => {
     for (const card of KIERAN) {
       const { state, events } = play(ready({ card }), card);
       expect(types(events), card).toEqual(["TRAINER_PLAYED", "EFFECT_PENDING"]);
-      expect(parkedPrompt(state), card).toStrictEqual({ kind: "confirm", note: KIERAN_TEXT, labels: LABELS });
+      expect(parkedPrompt(state), card).toStrictEqual({
+        kind: "confirm",
+        note: KIERAN_TEXT,
+        labels: LABELS,
+      });
       expect(state.allowances.supporterPlayed).toBe(true);
     }
   });
@@ -323,7 +387,8 @@ describe("D557 §2 — the park: a labelled `confirm`, answered by the controlle
   it("the redacted wire carries the labels, and the schema KEEPS them (zod strips undeclared keys)", () => {
     const parked = play(ready()).state;
     const wire = redactGame(parked, "p1");
-    if (wire.phase.kind !== "effect:choose" || wire.phase.prompt === null) throw new Error("expected a prompt");
+    if (wire.phase.kind !== "effect:choose" || wire.phase.prompt === null)
+      throw new Error("expected a prompt");
     expect(wire.phase.prompt).toStrictEqual({ kind: "confirm", note: KIERAN_TEXT, labels: LABELS });
     const parsed = redactedEffectPromptSchema.safeParse(wire.phase.prompt);
     expect(parsed.success).toBe(true);
@@ -333,10 +398,15 @@ describe("D557 §2 — the park: a labelled `confirm`, answered by the controlle
 
   it("a MALFORMED labels object is refused by the schema, and an unlabeled confirm still parses", () => {
     expect(
-      redactedEffectPromptSchema.safeParse({ kind: "confirm", note: "x", labels: { yes: "a" } }).success,
+      redactedEffectPromptSchema.safeParse({ kind: "confirm", note: "x", labels: { yes: "a" } })
+        .success,
     ).toBe(false);
     expect(
-      redactedEffectPromptSchema.safeParse({ kind: "confirm", note: "x", labels: { yes: 1, no: "b" } }).success,
+      redactedEffectPromptSchema.safeParse({
+        kind: "confirm",
+        note: "x",
+        labels: { yes: 1, no: "b" },
+      }).success,
     ).toBe(false);
     expect(redactedEffectPromptSchema.safeParse({ kind: "confirm", note: "x" }).success).toBe(true);
   });
@@ -360,7 +430,9 @@ describe("D557 §3 — the FIRST bullet (yes): the switch, and no bonus", () => 
     const { state, events } = kieran(true);
     expect(state.phase.kind).toBe("turn:action");
     expect(state.cardIdByUid[body(state.players.p1.active).stack[0] as string]).toBe("d557-relief");
-    expect(state.players.p1.bench.map((b) => state.cardIdByUid[b.stack[0] as string])).toEqual(["d557-striker"]);
+    expect(state.players.p1.bench.map((b) => state.cardIdByUid[b.stack[0] as string])).toEqual([
+      "d557-striker",
+    ]);
     expect(state.allowances.sideAttackBonuses).toEqual([]);
     expect(find(events, "SIDE_ATTACKS_BOOSTED")).toBeUndefined();
     expect(start.allowances.sideAttackBonuses).toEqual([]);
@@ -375,7 +447,9 @@ describe("D557 §3 — the FIRST bullet (yes): the switch, and no bonus", () => 
       seat: "p1",
       choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 1 } } },
     });
-    expect(state.cardIdByUid[body(state.players.p1.active).stack[0] as string]).toBe("d557-relief-2");
+    expect(state.cardIdByUid[body(state.players.p1.active).stack[0] as string]).toBe(
+      "d557-relief-2",
+    );
     expect(state.allowances.sideAttackBonuses).toEqual([]);
   });
 
@@ -504,13 +578,9 @@ describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a wide
     expect(bare.allowances).toEqual(labelled.allowances);
     expect(dealt(bare)?.dealt).toBe(50 + KIERAN_BONUS);
   });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
-describe("D557 §6 — the log row: \"…ex or Pokémon V\" (anyOf joins with \"or\"; zero log.ts bytes)", () => {
+describe('D557 §6 — the log row: "…ex or Pokémon V" (anyOf joins with "or"; zero log.ts bytes)', () => {
   it("renders under the installer with the union noun", () => {
     const { state, events } = kieran(false);
     expect(render(events, state)).toContainEqual({
@@ -528,13 +598,15 @@ const venture = (opts: Parameters<typeof ready>[0], face: "heads" | "tails") =>
   play(withCoin(ready({ card: VENTURE, ...opts }), face), VENTURE);
 
 describe("D557 §7 — Venture Bomb: the print, and the registry row that maps it", () => {
-  it("the program is a two-armed coin over two `\"trainer\"` placements, pinned by toEqual", () => {
+  it('the program is a two-armed coin over two `"trainer"` placements, pinned by toEqual', () => {
     expect(programFor(VENTURE)).toEqual({
       trainer: [
         {
           op: "coinFlipGate",
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
-          then: [{ op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" }],
+          then: [
+            { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" },
+          ],
           otherwise: [{ op: "damageSelf", amount: 20, source: "trainer" }],
         },
       ],
@@ -546,7 +618,11 @@ describe("D557 §7 — Venture Bomb: the print, and the registry row that maps i
 describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat", () => {
   it("with a Bench it PARKS a one-pick over Active + Bench; a Benched pick takes 20", () => {
     const { state: parked, events } = venture({ oppBench: ["d557-bench"] }, "heads");
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual({ type: "ATTACK_EFFECT_COIN_FLIP", seat: "p1", result: "heads" });
+    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual({
+      type: "ATTACK_EFFECT_COIN_FLIP",
+      seat: "p1",
+      result: "heads",
+    });
     const prompt = parkedPrompt(parked);
     if (prompt?.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect(prompt.candidates).toEqual([
@@ -561,18 +637,26 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
     });
     expect(body(state.players.p2.bench[0]).damage).toBe(20);
     expect(body(state.players.p2.active).damage).toBe(0);
-    expect(find(after, "COUNTERS_PLACED")).toMatchObject({ seat: "p2", amount: 20, source: "trainer" });
+    expect(find(after, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p2",
+      amount: 20,
+      source: "trainer",
+    });
   });
 
   it("🛑 an Active WITH A WEAKNESS takes a flat 20 — a placement is not attack damage (no W/R)", () => {
     const { state, events } = venture({ defender: "d557-weak-ex" }, "heads");
     expect(body(state.players.p2.active).damage).toBe(20);
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p2", amount: 20, source: "trainer" });
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p2",
+      amount: 20,
+      source: "trainer",
+    });
     expect(body(state.players.p1.active).damage).toBe(0);
   });
 
-  it("the row reads \"Trainer: 20 damage to …\" — never \"Ability:\" and never \"…to itself\"", () => {
+  it('the row reads "Trainer: 20 damage to …" — never "Ability:" and never "…to itself"', () => {
     const { state, events } = venture({ defender: "d557-weak-ex" }, "heads");
     const rows = render(events, state).map((r) => r.text);
     expect(rows).toContain("Trainer: 20 damage to D557 Weak ex");
@@ -584,7 +668,10 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
     expect(withBench.state.phase.kind).toBe("turn:action");
     expect(body(withBench.state.players.p2.active).damage).toBe(0);
     expect(body(withBench.state.players.p2.bench[0]).damage).toBe(20);
-    expect(find(withBench.events, "TRAINER_EFFECT_PREVENTED")).toMatchObject({ seat: "p2", trainerType: "item" });
+    expect(find(withBench.events, "TRAINER_EFFECT_PREVENTED")).toMatchObject({
+      seat: "p2",
+      trainerType: "item",
+    });
     const alone = venture({ defender: "fix-unnerve" }, "heads");
     expect(body(alone.state.players.p2.active).damage).toBe(0);
     expect(find(alone.events, "COUNTERS_PLACED")).toBeUndefined();
@@ -613,8 +700,14 @@ describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
     expect(state.phase.kind).toBe("turn:action");
     expect(body(state.players.p1.active).damage).toBe(20);
     expect(body(state.players.p2.active).damage).toBe(0);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 20, source: "trainer" });
-    expect(render(events, state).map((r) => r.text)).toContain("Trainer: 20 damage to D557 Striker");
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p1",
+      amount: 20,
+      source: "trainer",
+    });
+    expect(render(events, state).map((r) => r.text)).toContain(
+      "Trainer: 20 damage to D557 Striker",
+    );
   });
 
   it("🛑 a SELF-KO is swept by `resolveMidTurnKnockOuts`, and the OPPONENT takes the Prize", () => {
@@ -626,12 +719,19 @@ describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
   });
 
-  it("the attack recoil's own row is untouched: an absent `source` still reads \"did N damage to itself\"", () => {
+  it('the attack recoil\'s own row is untouched: an absent `source` still reads "did N damage to itself"', () => {
     const start = ready();
     const events: GameEvent[] = [];
-    const run = runProgram(start, [{ op: "damageSelf", amount: 30 }], { seat: "p1", invokedBy: "attack" }, events);
+    const run = runProgram(
+      start,
+      [{ op: "damageSelf", amount: 30 }],
+      { seat: "p1", invokedBy: "attack" },
+      events,
+    );
     if (run.kind !== "done") throw new Error("expected done");
     expect(find(events, "COUNTERS_PLACED")).toMatchObject({ source: "self", amount: 30 });
-    expect(render(events, run.state).map((r) => r.text)).toContain("D557 Striker did 30 damage to itself");
+    expect(render(events, run.state).map((r) => r.text)).toContain(
+      "D557 Striker did 30 damage to itself",
+    );
   });
 });

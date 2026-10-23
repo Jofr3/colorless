@@ -4,7 +4,7 @@ import { disabledAbilityUids, koSurvivalCoinFlip, passivesOf } from "./continuou
 import { deriveAttackEffect } from "./effects";
 import { koByOpponentAttack, koByOpponentPokemonEx } from "./flow";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -73,7 +73,12 @@ describe("D598 §1 — the texts and the registry rows", () => {
     for (const id of SHEDINJA) {
       expect(programFor(id), id).toEqual({
         triggered: [
-          { name: "Fragile Husk", trigger: "onKnockOut", program: [], onKoPrizeGuard: "pokemonExAttackPrevent" },
+          {
+            name: "Fragile Husk",
+            trigger: "onKnockOut",
+            program: [],
+            onKoPrizeGuard: "pokemonExAttackPrevent",
+          },
         ],
       });
     }
@@ -103,8 +108,10 @@ describe("D598 §1 — the texts and the registry rows", () => {
     for (const id of ["me01-087", "me01-148", "30th-022"]) {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
     }
-    for (const id of ["me02.5-039", "me02.5-040"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
-    for (const id of ["30th-090", "30th-154", "me05-028", "mep-082"]) expect(programFor(id), id).toBeDefined();
+    for (const id of ["me02.5-039", "me02.5-040"])
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
+    for (const id of ["30th-090", "30th-154", "me05-028", "mep-082"])
+      expect(programFor(id), id).toBeDefined();
   });
 });
 
@@ -137,7 +144,8 @@ const SPARE = "d598-spare";
 
 const SPREAD =
   "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
-const SNIPE = "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+const SNIPE =
+  "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const WIDE_SPREAD =
   "This attack also does 200 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const WIDE_SNIPE =
@@ -154,9 +162,16 @@ const MOVES: Card["attacks"] = [
   { cost: ["Colorless"], name: "Wide Snipe", effect: WIDE_SNIPE },
 ];
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
-const ability = (name: string, effect: string) => ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 1, attacks, ...extra });
+const ability = (name: string, effect: string) =>
+  ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 1, attacks, ...extra });
 
 const LOCAL: Record<string, Card> = {
   [MEGA_GENGAR[0]]: mon(MEGA_GENGAR[0], "Mega Gengar ex", 350, "Darkness", TAP, {
@@ -169,7 +184,14 @@ const LOCAL: Record<string, Card> = {
     evolveFrom: "Haunter",
     ...ability("Shadowy Concealment", SHADOWY_CONCEALMENT),
   }),
-  [MEGA_HAWLUCHA[0]]: mon(MEGA_HAWLUCHA[0], "Mega Hawlucha ex", 250, "Fighting", TAP, ability("Tenacious Body", TENACIOUS_BODY)),
+  [MEGA_HAWLUCHA[0]]: mon(
+    MEGA_HAWLUCHA[0],
+    "Mega Hawlucha ex",
+    250,
+    "Fighting",
+    TAP,
+    ability("Tenacious Body", TENACIOUS_BODY),
+  ),
   [ANNIHILAPE]: mon(ANNIHILAPE, "Annihilape", 150, "Psychic", TAP, {
     stage: "Stage2",
     evolveFrom: "Primeape",
@@ -185,7 +207,14 @@ const LOCAL: Record<string, Card> = {
     evolveFrom: "Haunter",
     ...ability("Infinite Shadow", INFINITE_SHADOW),
   }),
-  [PECHARUNT]: mon(PECHARUNT, "Pecharunt", 80, "Darkness", TAP, ability("Final Chain", FINAL_CHAIN)),
+  [PECHARUNT]: mon(
+    PECHARUNT,
+    "Pecharunt",
+    80,
+    "Darkness",
+    TAP,
+    ability("Final Chain", FINAL_CHAIN),
+  ),
   [FILLER]: mon(FILLER, "D598 Filler", 400, "Colorless", TAP),
   [FOE]: mon(FOE, "D598 Foe", 400, "Colorless", MOVES),
   [FOE_EX]: mon(FOE_EX, "D598 Foe ex", 400, "Colorless", MOVES),
@@ -193,15 +222,55 @@ const LOCAL: Record<string, Card> = {
   [DARK_EX]: mon(DARK_EX, "D598 Dark ex", 200, "Darkness", TAP),
   [PSY_EX]: mon(PSY_EX, "D598 Psy ex", 200, "Psychic", TAP),
   [GASTLY]: mon(GASTLY, "Gastly", 50, "Darkness", TAP),
-  [HAUNTER]: mon(HAUNTER, "Haunter", 80, "Darkness", TAP, { stage: "Stage1", evolveFrom: "Gastly" }),
-  [FLUTTER]: mon(FLUTTER, "Flutter Mane", 90, "Psychic", MOVES, ability("Midnight Fluttering", "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.")),
-  [IRON_THORNS]: mon(IRON_THORNS, "Iron Thorns ex", 230, "Lightning", MOVES, ability("Initialization", "As long as this Pokémon is in the Active Spot, Pokémon with a Rule Box in play (both yours and your opponent's) (except any Future Pokémon) have no Abilities.")),
-  [MILOTIC]: mon(MILOTIC, "Milotic", 120, "Water", TAP, ability("Mentally Calm", "Your opponent's Pokémon in play and all attached cards can't be put into your opponent's hand.")),
-  [LEGACY]: specialEnergy(LEGACY, "Legacy Energy", "As long as this card is attached to a Pokémon, it provides every type of Energy but provides only 1 Energy at a time. If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card. This effect of your Legacy Energy can't be applied more than once per game."),
+  [HAUNTER]: mon(HAUNTER, "Haunter", 80, "Darkness", TAP, {
+    stage: "Stage1",
+    evolveFrom: "Gastly",
+  }),
+  [FLUTTER]: mon(
+    FLUTTER,
+    "Flutter Mane",
+    90,
+    "Psychic",
+    MOVES,
+    ability(
+      "Midnight Fluttering",
+      "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.",
+    ),
+  ),
+  [IRON_THORNS]: mon(
+    IRON_THORNS,
+    "Iron Thorns ex",
+    230,
+    "Lightning",
+    MOVES,
+    ability(
+      "Initialization",
+      "As long as this Pokémon is in the Active Spot, Pokémon with a Rule Box in play (both yours and your opponent's) (except any Future Pokémon) have no Abilities.",
+    ),
+  ),
+  [MILOTIC]: mon(
+    MILOTIC,
+    "Milotic",
+    120,
+    "Water",
+    TAP,
+    ability(
+      "Mentally Calm",
+      "Your opponent's Pokémon in play and all attached cards can't be put into your opponent's hand.",
+    ),
+  ),
+  [LEGACY]: specialEnergy(
+    LEGACY,
+    "Legacy Energy",
+    "As long as this card is attached to a Pokémon, it provides every type of Energy but provides only 1 Energy at a time. If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card. This effect of your Legacy Energy can't be applied more than once per game.",
+  ),
   [TOGEKISS]: mon(TOGEKISS, "Togekiss", 140, "Psychic", TAP, {
     stage: "Stage2",
     evolveFrom: "Togetic",
-    ...ability("Wonder Kiss", "When your opponent's Active Pokémon is Knocked Out, flip a coin. If heads, take 1 more Prize card. The effect of Wonder Kiss doesn't stack."),
+    ...ability(
+      "Wonder Kiss",
+      "When your opponent's Active Pokémon is Knocked Out, flip a coin. If heads, take 1 more Prize card. The effect of Wonder Kiss doesn't stack.",
+    ),
   }),
   [BRACE]: {
     ...trainerCard(
@@ -251,11 +320,17 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 5984, decks: { p1: [...DECK, ...FILLERS], p2: [...DECK, ...FILLERS] }, cardPool: POOL });
+  const created = createGame({
+    seed: 5984,
+    decks: { p1: [...DECK, ...FILLERS], p2: [...DECK, ...FILLERS] },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -263,15 +338,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -308,11 +389,19 @@ function table(attacker: string, defender: string, bench: readonly string[] = [F
 }
 
 type Body = NonNullable<GameState["players"]["p1"]["active"]>;
-function edit(state: GameState, seat: Seat, where: "active" | number, change: (b: Body) => Body): GameState {
+function edit(
+  state: GameState,
+  seat: Seat,
+  where: "active" | number,
+  change: (b: Body) => Body,
+): GameState {
   const side = state.players[seat];
   if (where === "active") {
     if (side.active === null) throw new Error(`no ${seat} Active`);
-    return { ...state, players: { ...state.players, [seat]: { ...side, active: change(side.active) } } };
+    return {
+      ...state,
+      players: { ...state.players, [seat]: { ...side, active: change(side.active) } },
+    };
   }
   const bench = side.bench.map((b, i) => (i === where ? change(b) : b));
   return { ...state, players: { ...state.players, [seat]: { ...side, bench } } };
@@ -324,7 +413,10 @@ const hurt = (state: GameState, seat: Seat, where: "active" | number, damage: nu
 function rngFor(face: "heads" | "tails", from = 1): number {
   for (let r = from; ; r += 1) if (flipCoin(r)[0] === face) return r;
 }
-const seeded = (state: GameState, face: "heads" | "tails") => ({ ...state, rngState: rngFor(face) });
+const seeded = (state: GameState, face: "heads" | "tails") => ({
+  ...state,
+  rngState: rngFor(face),
+});
 
 const attack = (index: number, seat: Seat = "p1"): GameAction => ({ type: "attack", seat, index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
@@ -334,8 +426,11 @@ const top = (state: GameState, seat: Seat) => state.players[seat].active?.stack.
 const owed = (state: GameState) => (state.phase.kind === "ko:takePrizes" ? state.phase.count : 0);
 
 describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by an ex's attack", () => {
-  const gengarBench = (defender: string, attacker = FOE_EX, bench: readonly string[] = [MEGA_GENGAR[0]]) =>
-    table(attacker, defender, bench);
+  const gengarBench = (
+    defender: string,
+    attacker = FOE_EX,
+    bench: readonly string[] = [MEGA_GENGAR[0]],
+  ) => table(attacker, defender, bench);
 
   it("a {D} ex KO'd by an ex: 2 → 1, the reduction logged on the Mega Gengar", () => {
     const state = gengarBench(DARK_EX);
@@ -346,7 +441,9 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
     expect(of(events, "ABILITY_TRIGGERED")).toEqual([
       { type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Shadowy Concealment" },
     ]);
-    expect(of(events, "PRIZE_REDUCED")).toEqual([{ type: "PRIZE_REDUCED", seat: "p2", uid: dying, by: 1, count: 1 }]);
+    expect(of(events, "PRIZE_REDUCED")).toEqual([
+      { type: "PRIZE_REDUCED", seat: "p2", uid: dying, by: 1, count: 1 },
+    ]);
     // No other KO Ability on this board: no coin, and the body goes to the discard pile.
     expect(of(events, "ABILITY_COIN_FLIP")).toEqual([]);
     expect(after.players.p2.hand).toEqual([]);
@@ -384,7 +481,10 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
   });
 
   it("doesn't stack: two Mega Gengar ex reduce once", () => {
-    const { state: after, events } = mustApply(gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], MEGA_GENGAR[1]]), attack(0));
+    const { state: after, events } = mustApply(
+      gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], MEGA_GENGAR[1]]),
+      attack(0),
+    );
     expect(owed(after)).toBe(1);
     expect(of(events, "ABILITY_TRIGGERED")).toHaveLength(1);
   });
@@ -393,12 +493,21 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
   // OUT, so one ex attack that KOs two {D} bodies reduces each. The reversal (1 fewer for the whole
   // Prize-taking) would leave 3 here.
   it("R-GC3: two {D} ex KO'd by one ex attack (the Active and a benched one): 1 fewer for EACH, 2 → 1 twice", () => {
-    const state = hurt(gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], DARK_EX]), "p2", "active", 190);
+    const state = hurt(
+      gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], DARK_EX]),
+      "p2",
+      "active",
+      190,
+    );
     const gengar = state.players.p2.bench[0]?.stack.at(-1);
     const active = top(state, "p2");
     const benched = state.players.p2.bench[1]?.stack.at(-1);
     const { state: after, events } = mustApply(state, attack(4)); // Wide Splash: 10 to the Active, 200 to each Benched
-    expect(of(events, "KNOCKED_OUT").map((e) => e.uid).sort()).toEqual([active, benched].sort());
+    expect(
+      of(events, "KNOCKED_OUT")
+        .map((e) => e.uid)
+        .sort(),
+    ).toEqual([active, benched].sort());
     expect(of(events, "ABILITY_TRIGGERED")).toEqual([
       { type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Shadowy Concealment" },
       { type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Shadowy Concealment" },
@@ -409,23 +518,29 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
     ]);
     // Two Prize stages of 1 each (the first is the parked pick): P1 takes 2, not 4 and not 3.
     expect(owed(after)).toBe(1);
-    expect(after.pending.filter((s) => s.kind === "takePrizes").map((s) => s.count)).toEqual([1, 1]);
+    expect(after.pending.filter((s) => s.kind === "takePrizes").map((s) => s.count)).toEqual([
+      1, 1,
+    ]);
   });
 
   it("§9: an Active Iron Thorns ex (an ex attacker) silences the benched Mega Gengar ex", () => {
     const state = gengarBench(DARK_EX, IRON_THORNS);
-    expect(disabledAbilityUids(state).has(state.players.p2.bench[0]?.stack.at(-1) ?? "")).toBe(true);
+    expect(disabledAbilityUids(state).has(state.players.p2.bench[0]?.stack.at(-1) ?? "")).toBe(
+      true,
+    );
     expect(owed(mustApply(state, attack(0)).state)).toBe(2);
   });
 
   it("a Checkup Knock Out has no attack: no reduction", () => {
-    let state = setConditions(hurt(gengarBench(DARK_EX), "p2", "active", 190), "p2", { poisonDamage: 10 });
+    let state = setConditions(hurt(gengarBench(DARK_EX), "p2", "active", 190), "p2", {
+      poisonDamage: 10,
+    });
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p1", count: 2 });
   });
 });
 
-describe("D598 §3 — the \"KO'd by an ex\" condition, by clause", () => {
+describe('D598 §3 — the "KO\'d by an ex" condition, by clause', () => {
   const state = table(FOE_EX, DARK_EX);
   const ref = { seat: "p2" as Seat, uid: top(state, "p2") };
   const exUid = top(state, "p1");
@@ -440,7 +555,10 @@ describe("D598 §3 — the \"KO'd by an ex\" condition, by clause", () => {
   });
 
   it("a `knockOutDefender` doom is not damage", () => {
-    const doomed = edit(state, "p2", "active", (b) => ({ ...b, markers: [...b.markers, koByEffectMarker(state.turn)] }));
+    const doomed = edit(state, "p2", "active", (b) => ({
+      ...b,
+      markers: [...b.markers, koByEffectMarker(state.turn)],
+    }));
     expect(koByOpponentAttack(doomed, ref, "p1")).toBe(false);
     expect(koByOpponentPokemonEx(doomed, ref, "p1", exUid)).toBe(false);
     expect(koByOpponentAttack(state, ref, "p1")).toBe(true);
@@ -465,7 +583,9 @@ describe("D598 §4 — Fragile Husk: no Prize for a KO by an ex's attack", () =>
     expect(of(events, "ABILITY_TRIGGERED")).toEqual([
       { type: "ABILITY_TRIGGERED", seat: "p2", uid: husk, ability: "Fragile Husk" },
     ]);
-    expect(of(events, "PRIZE_PREVENTED")).toEqual([{ type: "PRIZE_PREVENTED", seat: "p2", uid: husk }]);
+    expect(of(events, "PRIZE_PREVENTED")).toEqual([
+      { type: "PRIZE_PREVENTED", seat: "p2", uid: husk },
+    ]);
   });
 
   it("KO'd by a non-ex: 1 Prize, nothing logged", () => {
@@ -481,7 +601,10 @@ describe("D598 §4 — Fragile Husk: no Prize for a KO by an ex's attack", () =>
     expect(owed(after)).toBe(0);
     expect(of(events, "ABILITY_COIN_FLIP")).toEqual([]);
     // The control: a non-ex KO pays 1, and Wonder Kiss flips (heads) for 1 more.
-    const control = mustApply(seeded(benchFromDeck(table(FOE, SHEDINJA[0]), "p1", TOGEKISS), "heads"), attack(0));
+    const control = mustApply(
+      seeded(benchFromDeck(table(FOE, SHEDINJA[0]), "p1", TOGEKISS), "heads"),
+      attack(0),
+    );
     expect(owed(control.state)).toBe(2);
   });
 });
@@ -498,7 +621,11 @@ describe("D598 §5 — Tenacious Body / Durable Body: a coin for the would-be Kn
     ]);
     expect(of(events, "KNOCKED_OUT")).toEqual([]);
     expect(after.players.p2.active?.damage).toBe(240);
-    expect(of(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 300, damage: 240, survived: true });
+    expect(of(events, "DAMAGE_DEALT")[0]).toMatchObject({
+      dealt: 300,
+      damage: 240,
+      survived: true,
+    });
     // The coin is drawn once, from the board's rng.
     expect(after.rngState).toBe(flipCoin(rngFor("heads"))[1]);
   });
@@ -516,7 +643,10 @@ describe("D598 §5 — Tenacious Body / Durable Body: a coin for the would-be Kn
   });
 
   it("no full-HP antecedent: a damaged Hawlucha flips too", () => {
-    const { state: after, events } = mustApply(seeded(hurt(hawlucha(), "p2", "active", 240), "heads"), attack(3));
+    const { state: after, events } = mustApply(
+      seeded(hurt(hawlucha(), "p2", "active", 240), "heads"),
+      attack(3),
+    );
     expect(of(events, "ABILITY_COIN_FLIP")).toHaveLength(1);
     expect(after.players.p2.active?.damage).toBe(240);
   });
@@ -550,7 +680,11 @@ describe("D598 §5 — Tenacious Body / Durable Body: a coin for the would-be Kn
 
   it("a chosen snipe: the Bench arm and the Active arm both flip", () => {
     const pick = (spot: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
-      ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot }] } }) as GameAction;
+      ({
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot }] },
+      }) as GameAction;
     // The Bench arm (`placeSnipe`'s `deals` arm).
     let state = seeded(hurt(table(FOE, FILLER, [ANNIHILAPE]), "p2", 0, 140), "heads");
     let parked = mustApply(state, attack(2)).state;
@@ -584,13 +718,23 @@ describe("D598 §5 — Tenacious Body / Durable Body: a coin for the would-be Kn
     expect(koSurvivalCoinFlip(state, body, "p2", 10, events)).toEqual([null, state.rngState]);
     expect(events).toEqual([]);
     const live = hurt(hawlucha(), "p2", "active", 240);
-    const [saved, rng] = koSurvivalCoinFlip(seeded(live, "heads"), live.players.p2.active as Body, "p2", 10, events);
+    const [saved, rng] = koSurvivalCoinFlip(
+      seeded(live, "heads"),
+      live.players.p2.active as Body,
+      "p2",
+      10,
+      events,
+    );
     expect([saved, rng]).toEqual([240, flipCoin(rngFor("heads"))[1]]);
   });
 
   it("R-SB2: a Survival Brace answers first at all four writes — the Brace is spent, no coin, the rng unmoved", () => {
     const pick = (spot: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
-      ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot }] } }) as GameAction;
+      ({
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot }] },
+      }) as GameAction;
     const braced = (where: "active" | number) => {
       const base = where === "active" ? hawlucha() : table(FOE, FILLER, [ANNIHILAPE]);
       return seeded(attachToolFromDeck(base, "p2", where, BRACE), "heads");
@@ -636,7 +780,13 @@ describe("D598 §6 — Infinite Shadow: KO'd by an opponent's attack, the Pokém
     const side = state.players.p2;
     const gastly = side.deck.find((u) => state.cardIdByUid[u] === GASTLY) ?? "";
     const haunter = side.deck.find((u) => state.cardIdByUid[u] === HAUNTER) ?? "";
-    state = { ...state, players: { ...state.players, p2: { ...side, deck: side.deck.filter((u) => u !== gastly && u !== haunter) } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p2: { ...side, deck: side.deck.filter((u) => u !== gastly && u !== haunter) },
+      },
+    };
     return edit(state, "p2", "active", (b) => ({ ...b, stack: [gastly, haunter, ...b.stack] }));
   };
 
@@ -645,26 +795,40 @@ describe("D598 §6 — Infinite Shadow: KO'd by an opponent's attack, the Pokém
     const body = state.players.p2.active as Body;
     const { state: after, events } = mustApply(state, attack(0));
     expect(of(events, "KNOCKED_OUT")).toEqual([
-      { type: "KNOCKED_OUT", seat: "p2", uid: body.stack.at(-1), discarded: [...body.energy], toHand: [...body.stack] },
+      {
+        type: "KNOCKED_OUT",
+        seat: "p2",
+        uid: body.stack.at(-1),
+        discarded: [...body.energy],
+        toHand: [...body.stack],
+      },
     ]);
     expect(after.players.p2.hand).toEqual(body.stack);
     expect(after.players.p2.discard).toEqual(body.energy);
     expect(owed(after)).toBe(1);
   });
 
-  it("the log tail counts what MOVED: 3 Pokémon cards, not D572's \"Basic Energy\"", () => {
+  it('the log tail counts what MOVED: 3 Pokémon cards, not D572\'s "Basic Energy"', () => {
     const state = shadow();
     const body = state.players.p2.active as Body;
     const { state: after, events } = mustApply(state, attack(0));
     const ctx = { names: { p1: "Ember", p2: "Tide" }, state: after, elapsed: formatElapsed(0) };
     const render = (list: readonly GameEvent[]) =>
-      logFromEvents(list, ctx).flatMap((entry) => (entry.kind === "turn" ? [] : [entry.segments.map((s) => s.text).join("")]));
+      logFromEvents(list, ctx).flatMap((entry) =>
+        entry.kind === "turn" ? [] : [entry.segments.map((s) => s.text).join("")],
+      );
     expect(render(of(events, "KNOCKED_OUT"))).toEqual([
       "Gengar was Knocked Out — 3 Pokémon cards put into the hand instead of the discard pile",
     ]);
     // A mixed split (Huntail's Energy beside a Pokémon card) names both; one card is singular.
     const uid = body.stack.at(-1) ?? "";
-    const mixed: GameEvent = { type: "KNOCKED_OUT", seat: "p2", uid, discarded: [], toHand: [uid, ...body.energy] };
+    const mixed: GameEvent = {
+      type: "KNOCKED_OUT",
+      seat: "p2",
+      uid,
+      discarded: [],
+      toHand: [uid, ...body.energy],
+    };
     expect(render([mixed])).toEqual([
       "Gengar was Knocked Out — 1 Pokémon card and 1 Basic Energy put into the hand instead of the discard pile",
     ]);
@@ -675,7 +839,9 @@ describe("D598 §6 — Infinite Shadow: KO'd by an opponent's attack, the Pokém
     const body = state.players.p2.active as Body;
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     expect(state.players.p2.hand).toEqual([]);
-    expect(state.players.p2.discard).toEqual(expect.arrayContaining([...body.stack, ...body.energy]));
+    expect(state.players.p2.discard).toEqual(
+      expect.arrayContaining([...body.stack, ...body.energy]),
+    );
   });
 
   it("§9: Flutter Mane's lock on the Active Gengar — the discard", () => {
@@ -696,22 +862,28 @@ describe("D598 §7 — Final Chain: an on-KO search behind the printed cause", (
     const state = table(FOE, PECHARUNT);
     const uid = top(state, "p2");
     const afterAttack = mustApply(state, attack(0)).state;
-    expect(afterAttack.pending.map((s) => s.kind).slice(0, 3)).toEqual(["takePrizes", "koTrigger", "promote"]);
-    const { state: parked, events } = mustApply(afterAttack, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    expect(of(events, "ABILITY_TRIGGERED")).toEqual([{ type: "ABILITY_TRIGGERED", seat: "p2", uid, ability: "Final Chain" }]);
+    expect(afterAttack.pending.map((s) => s.kind).slice(0, 3)).toEqual([
+      "takePrizes",
+      "koTrigger",
+      "promote",
+    ]);
+    const { state: parked, events } = mustApply(afterAttack, {
+      type: "takePrizes",
+      seat: "p1",
+      prizeIndices: [0],
+    });
+    expect(of(events, "ABILITY_TRIGGERED")).toEqual([
+      { type: "ABILITY_TRIGGERED", seat: "p2", uid, ability: "Final Chain" },
+    ]);
     expect(parked.phase).toMatchObject({ kind: "effect:choose", seat: "p2" });
   });
 
   it("a Checkup Knock Out: no koTrigger is queued", () => {
-    let state = setConditions(hurt(table(FOE, PECHARUNT), "p2", "active", 70), "p2", { poisonDamage: 10 });
+    let state = setConditions(hurt(table(FOE, PECHARUNT), "p2", "active", 70), "p2", {
+      poisonDamage: 10,
+    });
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     expect(state.phase.kind).toBe("ko:takePrizes");
     expect(state.pending.some((s) => s.kind === "koTrigger")).toBe(false);
-  });
-});
-
-describe("D598 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

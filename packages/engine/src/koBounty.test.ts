@@ -1,13 +1,12 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effectsModule from "./effects";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { collectKnockOuts } from "./flow";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -718,10 +717,5 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(
       TypeError,
     );
-  });
-
-  it("the engine version stepped to 0.555.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

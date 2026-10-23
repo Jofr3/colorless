@@ -360,9 +360,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   const profileResponse = await fetch(config.userinfoUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  const profile = profileResponse.ok
-    ? parseOAuthProfile(await profileResponse.json())
-    : null;
+  const profile = profileResponse.ok ? parseOAuthProfile(await profileResponse.json()) : null;
   if (profile === null) {
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "profile"), 302);
   }

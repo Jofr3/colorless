@@ -105,7 +105,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -116,7 +117,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -124,11 +127,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);
@@ -140,7 +146,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -156,7 +168,12 @@ function at(state: GameState, seat: Seat, spot: Spot = "active"): InPlayPokemon 
   return found;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -170,7 +187,10 @@ function attachEnergy(state: GameState, seat: Seat, spot: Spot, id: string): Gam
   const side = state.players[seat];
   const uid = side.deck.find((u) => state.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id} in ${seat}'s deck`);
-  const moved = { ...state, players: { ...state.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+  const moved = {
+    ...state,
+    players: { ...state.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+  };
   return withBody(moved, seat, spot, (p) => ({ ...p, energy: [...p.energy, uid] }));
 }
 
@@ -191,7 +211,10 @@ const totalDamage = (state: GameState): number =>
   (["p1", "p2"] as const).reduce(
     (sum, seat) =>
       sum +
-      [state.players[seat].active, ...state.players[seat].bench].reduce((s, p) => s + (p?.damage ?? 0), 0),
+      [state.players[seat].active, ...state.players[seat].bench].reduce(
+        (s, p) => s + (p?.damage ?? 0),
+        0,
+      ),
     0,
   );
 
@@ -206,7 +229,10 @@ const pick = (ref: Ref, take?: number): GameAction =>
     choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
   }) as GameAction;
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
@@ -224,7 +250,8 @@ describe("B10 §1 — Adrena-Brain MOVES the counters off a Life-Locked Active (
       expect(healLocked(start, at(start, "p1"))).toBe(true);
       const before = totalDamage(start);
       const parked = run(start, use("Adrena-Brain")).state;
-      if (parked.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
+      if (parked.phase.kind !== "effect:choose")
+        throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
       const { state, events } = run(parked, pick({ seat: "p2", spot: { spot: "active" } }, 3));
       expect(state.phase.kind).toBe("turn:action");
       expect(at(state, "p1").damage).toBe(20);

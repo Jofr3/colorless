@@ -43,7 +43,10 @@ import {
 /** tcgdex's two markup artefacts on these rows: a run of whitespace (Ultra Ball's "\n" against
     `sv01-196`'s "\n\n") and an energy symbol spelled as its type word ("ColorlessColorless"). */
 function normalise(text: string): string {
-  return text.replace(/ColorlessColorless/g, "{C}{C}").replace(/\s+/g, " ").trim();
+  return text
+    .replace(/ColorlessColorless/g, "{C}{C}")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 type Kind = "alias" | "renamed" | "param" | "attack";
@@ -178,8 +181,11 @@ describe("D584 §1 — the faces: 18 `me` printings and Heatran, each pinned to 
     expect(FACES).toHaveLength(11);
     expect(ME_IDS).toHaveLength(18);
     expect(new Set(ME_IDS).size).toBe(18);
-    const kinds = (k: Kind) => FACES.filter(([, , kind]) => kind === k).flatMap(([ids]) => ids).length;
-    expect([kinds("alias"), kinds("renamed"), kinds("param"), kinds("attack")]).toEqual([4, 11, 2, 2]);
+    const kinds = (k: Kind) =>
+      FACES.filter(([, , kind]) => kind === k).flatMap(([ids]) => ids).length;
+    expect([kinds("alias"), kinds("renamed"), kinds("param"), kinds("attack")]).toEqual([
+      4, 11, 2, 2,
+    ]);
   });
 
   it("every `me` text IS its twin's — normalised, and through the one stated delta", () => {
@@ -194,7 +200,9 @@ describe("D584 §1 — the faces: 18 `me` printings and Heatran, each pinned to 
     const [ultra, zoroark] = FACES;
     expect(ultra?.[4]).not.toBe(ultra?.[5]); // one newline apart
     expect(zoroark?.[4]).toContain("ColorlessColorless");
-    expect(normalise("Retreat Cost is ColorlessColorless less.")).toBe("Retreat Cost is {C}{C} less.");
+    expect(normalise("Retreat Cost is ColorlessColorless less.")).toBe(
+      "Retreat Cost is {C}{C} less.",
+    );
     // A lone type word is text, not markup, and survives.
     expect(normalise("a Colorless Pokémon")).toBe("a Colorless Pokémon");
   });
@@ -230,7 +238,9 @@ describe("D584 §2 — the registry relation, per kind", () => {
       expect(program).not.toBe(programFor(twin));
       const [twinName] = programAbilityNames(programFor(twin));
       expect(twinName, twin).toBeDefined();
-      expect(JSON.stringify(program).replaceAll(name, twinName as string)).toBe(JSON.stringify(programFor(twin)));
+      expect(JSON.stringify(program).replaceAll(name, twinName as string)).toBe(
+        JSON.stringify(programFor(twin)),
+      );
     }
   });
 
@@ -266,7 +276,14 @@ const PSYCHIC = "d584-psychic";
 const FILLER = "d584-filler";
 const ATTACKER = "d584-attacker";
 
-function body(id: string, name: string, hp: number, stage: string, type: string, extra: Partial<Card>): Card {
+function body(
+  id: string,
+  name: string,
+  hp: number,
+  stage: string,
+  type: string,
+  extra: Partial<Card>,
+): Card {
   return battler(id, { name, hp, stage, types: [type], retreat: 2, ...extra });
 }
 
@@ -279,18 +296,79 @@ const text = (id: string) => FACES.find(([ids]) => ids.includes(id))?.[4] ?? "";
 /** The LOCAL pool (D275's idiom): the real ids, printed names, texts and HP. No Weakness is
     carried (nothing below reads it). */
 const LOCAL: Record<string, Card> = {
-  "me04-073": body("me04-073", "Cinccino ex", 240, "Stage1", "Colorless", ability("Smooth Coat", text("me04-073"))),
-  "me03-017": body("me03-017", "Turtonator", 120, "Basic", "Fire", ability("Shell Spikes", text("me03-017"))),
-  "me02.5-027": body("me02.5-027", "Numel", 80, "Basic", "Fire", ability("Incandescent Body", text("me02.5-027"))),
-  "sv06-123": body("sv06-123", "Heatran", 140, "Basic", "Metal", ability("Incandescent Body", text("sv06-123"))),
-  "me05-068": body("me05-068", "Toucannon", 150, "Stage2", "Colorless", ability("Aerial Draw", text("me05-068"))),
-  "mep-101": body("mep-101", "Nidorina", 90, "Stage1", "Darkness", ability("Share Happiness", text("mep-101"))),
-  "me01-024": body("me01-024", "Pyroar", 130, "Stage1", "Fire", ability("Intimidating Fang", text("me01-024"))),
-  "mep-086": body("mep-086", "Slowpoke", 80, "Basic", "Psychic", ability("Dopey Face", text("mep-086"))),
+  "me04-073": body(
+    "me04-073",
+    "Cinccino ex",
+    240,
+    "Stage1",
+    "Colorless",
+    ability("Smooth Coat", text("me04-073")),
+  ),
+  "me03-017": body(
+    "me03-017",
+    "Turtonator",
+    120,
+    "Basic",
+    "Fire",
+    ability("Shell Spikes", text("me03-017")),
+  ),
+  "me02.5-027": body(
+    "me02.5-027",
+    "Numel",
+    80,
+    "Basic",
+    "Fire",
+    ability("Incandescent Body", text("me02.5-027")),
+  ),
+  "sv06-123": body(
+    "sv06-123",
+    "Heatran",
+    140,
+    "Basic",
+    "Metal",
+    ability("Incandescent Body", text("sv06-123")),
+  ),
+  "me05-068": body(
+    "me05-068",
+    "Toucannon",
+    150,
+    "Stage2",
+    "Colorless",
+    ability("Aerial Draw", text("me05-068")),
+  ),
+  "mep-101": body(
+    "mep-101",
+    "Nidorina",
+    90,
+    "Stage1",
+    "Darkness",
+    ability("Share Happiness", text("mep-101")),
+  ),
+  "me01-024": body(
+    "me01-024",
+    "Pyroar",
+    130,
+    "Stage1",
+    "Fire",
+    ability("Intimidating Fang", text("me01-024")),
+  ),
+  "mep-086": body(
+    "mep-086",
+    "Slowpoke",
+    80,
+    "Basic",
+    "Psychic",
+    ability("Dopey Face", text("mep-086")),
+  ),
   "30th-073": body("30th-073", "Drifloon", 70, "Basic", "Psychic", {
     attacks: [{ cost: ["Psychic"], name: "Float Up", damage: 20, effect: text("30th-073") }],
   }),
-  [FILLER]: battler(FILLER, { name: "D584 Filler", hp: 300, types: ["Colorless"], attacks: [{ cost: ["Colorless"], name: "Tap", damage: 10 }] }),
+  [FILLER]: battler(FILLER, {
+    name: "D584 Filler",
+    hp: 300,
+    types: ["Colorless"],
+    attacks: [{ cost: ["Colorless"], name: "Tap", damage: 10 }],
+  }),
   [PSYCHIC]: typedEnergy(PSYCHIC, "Psychic"),
   [ATTACKER]: battler(ATTACKER, {
     name: "D584 Attacker",
@@ -298,12 +376,18 @@ const LOCAL: Record<string, Card> = {
     types: ["Colorless"],
     attacks: [
       { cost: ["Colorless"], name: "Bite", damage: 30 },
-      { cost: ["Colorless"], name: "Confuse Ray", effect: "Your opponent's Active Pokémon is now Confused." },
+      {
+        cost: ["Colorless"],
+        name: "Confuse Ray",
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
     ],
   }),
 };
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL };
-const BODIES = Object.keys(LOCAL).filter((id) => id !== FILLER && id !== PSYCHIC && id !== ATTACKER);
+const BODIES = Object.keys(LOCAL).filter(
+  (id) => id !== FILLER && id !== PSYCHIC && id !== ATTACKER,
+);
 const DECK = deckOf({
   ...Object.fromEntries(BODIES.map((id) => [id, 3])),
   [ATTACKER]: 3,
@@ -325,7 +409,9 @@ function turnOf(seat: Seat): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -333,11 +419,14 @@ function turnOf(seat: Seat): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: first }));
 }
 
@@ -350,7 +439,10 @@ function fight(defender: string): GameState {
 
 const BITE = { type: "attack", seat: "p1", index: 0 } as const;
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
@@ -359,7 +451,7 @@ function use(abilityName: string): GameAction {
 }
 
 describe("D584 §3 — the renamed copies log the PRINTED name", () => {
-  it("Cinccino ex: the coin is flipped under \"Smooth Coat\"", () => {
+  it('Cinccino ex: the coin is flipped under "Smooth Coat"', () => {
     const state = fight("me04-073");
     const cinccino = state.players.p2.active;
     if (cinccino === null) throw new Error("no Active");
@@ -371,20 +463,28 @@ describe("D584 §3 — the renamed copies log the PRINTED name", () => {
     expect(all(hit, "ABILITY_COIN_FLIP").map((e) => e.ability)).toEqual(["Smooth Coat"]);
   });
 
-  it("Turtonator: the reaction triggers as \"Shell Spikes\"", () => {
+  it('Turtonator: the reaction triggers as "Shell Spikes"', () => {
     const { events } = mustApply(fight("me03-017"), BITE);
-    expect(all(events, "ABILITY_TRIGGERED").map((e) => [e.seat, e.ability])).toEqual([["p2", "Shell Spikes"]]);
+    expect(all(events, "ABILITY_TRIGGERED").map((e) => [e.seat, e.ability])).toEqual([
+      ["p2", "Shell Spikes"],
+    ]);
   });
 
-  it("Numel and Heatran: the attacker is Burned under \"Incandescent Body\" — never \"Scorching Armor\"", () => {
+  it('Numel and Heatran: the attacker is Burned under "Incandescent Body" — never "Scorching Armor"', () => {
     for (const id of ["me02.5-027", "sv06-123"]) {
       const { events } = mustApply(fight(id), BITE);
-      expect(all(events, "ABILITY_TRIGGERED").map((e) => [e.seat, e.ability]), id).toEqual([["p2", "Incandescent Body"]]);
-      expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status]), id).toEqual([["p1", "burned"]]);
+      expect(
+        all(events, "ABILITY_TRIGGERED").map((e) => [e.seat, e.ability]),
+        id,
+      ).toEqual([["p2", "Incandescent Body"]]);
+      expect(
+        all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status]),
+        id,
+      ).toEqual([["p1", "burned"]]);
     }
   });
 
-  it("Toucannon: \"Aerial Draw\" draws a card from the Bench; the twin's \"Hurried Gait\" is no such Ability", () => {
+  it('Toucannon: "Aerial Draw" draws a card from the Bench; the twin\'s "Hurried Gait" is no such Ability', () => {
     let state = setActiveFromDeck(turnOf("p1"), "p1", FILLER);
     state = clearBench(state, "p1");
     state = benchFromDeck(state, "p1", "me05-068");
@@ -396,12 +496,17 @@ describe("D584 §3 — the renamed copies log the PRINTED name", () => {
     expectErr(after, use("Aerial Draw"), "ABILITY_ALREADY_USED");
   });
 
-  it("Nidorina: \"Share Happiness\" heals 30 from 1 of your Pokémon; \"Confectionary Gift\" is no such Ability", () => {
+  it('Nidorina: "Share Happiness" heals 30 from 1 of your Pokémon; "Confectionary Gift" is no such Ability', () => {
     // Nidorina alone in play, so the one-target `healChosen` resolves with no pick.
     let state = setActiveFromDeck(turnOf("p1"), "p1", "mep-101");
     state = clearBench(state, "p1");
     state = setDamage(state, "p1", 50);
-    const active = { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Share Happiness" } as const;
+    const active = {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Share Happiness",
+    } as const;
     expectErr(state, { ...active, abilityName: "Confectionary Gift" }, "NO_SUCH_ABILITY");
     const { state: next, events } = mustApply(state, active);
     expect(all(events, "ABILITY_USED").map((e) => e.ability)).toEqual(["Share Happiness"]);
@@ -421,25 +526,32 @@ describe("D584 §4 — the parameter copies carry the PRINTED number and status"
   it("Slowpoke: Confuse Ray is prevented (the control Filler is Confused)", () => {
     const action = { type: "attack", seat: "p1", index: 1 } as const; // Confuse Ray
     const slowpoke = mustApply(fight("mep-086"), action).events;
-    expect(all(slowpoke, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([["p2", "confused"]]);
+    expect(all(slowpoke, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([
+      ["p2", "confused"],
+    ]);
     expect(all(slowpoke, "STATUS_APPLIED")).toEqual([]);
     const control = mustApply(fight(FILLER), action).events;
-    expect(all(control, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([["p2", "confused"]]);
+    expect(all(control, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([
+      ["p2", "confused"],
+    ]);
   });
 });
 
-describe("D584 §5 — Drifloon's \"Float Up\" (attack index 0)", () => {
+describe('D584 §5 — Drifloon\'s "Float Up" (attack index 0)', () => {
   function drifloon(): GameState {
     let state = setActiveFromDeck(turnOf("p1"), "p1", "30th-073");
     state = attachFromDeck(state, "p1", PSYCHIC, 1);
     return setActiveFromDeck(state, "p2", FILLER);
   }
   const FLOAT_UP = { type: "attack", seat: "p1", index: 0 } as const;
-  const confirm = (yes: boolean) => ({ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } }) as const;
+  const confirm = (yes: boolean) =>
+    ({ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } }) as const;
 
-  it("is declared under its printed name, deals 20, and asks the printed \"You may\"", () => {
+  it('is declared under its printed name, deals 20, and asks the printed "You may"', () => {
     const { state, events } = mustApply(drifloon(), FLOAT_UP);
-    expect(all(events, "ATTACK_DECLARED").map((e) => [e.attack, e.index])).toEqual([["Float Up", 0]]);
+    expect(all(events, "ATTACK_DECLARED").map((e) => [e.attack, e.index])).toEqual([
+      ["Float Up", 0],
+    ]);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ seat: "p2", dealt: 20 });
     expect(JSON.stringify(state.phase)).toContain(text("30th-073"));
   });

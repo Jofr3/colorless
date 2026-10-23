@@ -331,7 +331,12 @@ const DECK = deckOf({
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const;
 const yawn = { type: "attack", seat: "p1", index: 2 } as const;
-const useTrade = { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Trade" } as const;
+const useTrade = {
+  type: "useAbility",
+  seat: "p1",
+  target: { spot: "active" },
+  abilityName: "Trade",
+} as const;
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -389,7 +394,9 @@ function activeCost(state: GameState): number {
 describe("D190 — the registry-only programs that LANDED", () => {
   it("registers all 11 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
-      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
+      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
+        legal,
+      );
       const first = programFor(ids[0] as string);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
@@ -646,7 +653,9 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
     // suite, and the `needed` string above stops being history and becomes a work
     // order again.
     for (const { program, ids, legal, bought } of PAID) {
-      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
+      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
+        legal,
+      );
       const first = programFor(ids[0]);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
@@ -666,10 +675,9 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
           );
           break;
         case "trainerOp":
-          expect(
-            first?.trainer?.[0],
-            `${program}: the op its row predicted is gone`,
-          ).toMatchObject(bought.op);
+          expect(first?.trainer?.[0], `${program}: the op its row predicted is gone`).toMatchObject(
+            bought.op,
+          );
           break;
       }
     }
@@ -690,7 +698,9 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
     // the CLAIM, not a side effect of the data. Turn this red by adding any row.
     expect(DROPPED).toHaveLength(0);
     for (const { program, ids, legal } of DROPPED) {
-      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
+      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
+        legal,
+      );
       for (const id of ids) {
         expect(
           programFor(id),

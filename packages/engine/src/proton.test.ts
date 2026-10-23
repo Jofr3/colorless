@@ -169,7 +169,9 @@ function localSetup(
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
@@ -177,7 +179,9 @@ function localSetup(
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     state = must(applyAction(state, { type: "setupReady", seat }));
@@ -188,7 +192,12 @@ function localSetup(
 /** Turn 1, p1 going first and holding one Proton — the board nearly every case
     below runs on. */
 function armed(seed: number, deck: string[] = PROTON_DECK): GameState {
-  return handFromDeck(localSetup(seed, "p1", { p1: deck, p2: OPPONENT_DECK }), "p1", "fix-proton", 1);
+  return handFromDeck(
+    localSetup(seed, "p1", { p1: deck, p2: OPPONENT_DECK }),
+    "p1",
+    "fix-proton",
+    1,
+  );
 }
 
 function playProton(state: GameState, seat: Seat = "p1") {
@@ -196,7 +205,8 @@ function playProton(state: GameState, seat: Seat = "p1") {
 }
 
 function cardsPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   if (state.phase.prompt.kind !== "chooseCards") {
     throw new Error(`expected chooseCards, got ${state.phase.prompt.kind}`);
   }
@@ -361,7 +371,9 @@ describe("the search — D200's filter at its stage narrowing", () => {
     // The printed noun phrase, whole — `retrieveNoun`'s ownerPokemon arm with the
     // stage word INSIDE it. Without `stage` this reads "up to 3 Team Rocket's
     // Pokémon", which is a different card.
-    expect(prompt.note).toBe("Search your deck for up to 3 Basic Team Rocket's Pokémon into your hand.");
+    expect(prompt.note).toBe(
+      "Search your deck for up to 3 Basic Team Rocket's Pokémon into your hand.",
+    );
     expect(prompt.max).toBe(3);
     expect(prompt.min).toBe(0); // ⚠️ the printed "up to" — declining is legal
     expect(prompt.dest).toBe("hand");
@@ -394,8 +406,10 @@ describe("the search — D200's filter at its stage narrowing", () => {
     }).state;
     const negatives = ["fix-tr-arbok", "fix-tr-energy", "fix-cynthia-basic", "fix-proton"];
     for (const id of negatives) {
-      expect(inDeck(parked, "p1", [id]).length, `${id} is not in the deck to be refused`)
-        .toBeGreaterThan(0);
+      expect(
+        inDeck(parked, "p1", [id]).length,
+        `${id} is not in the deck to be refused`,
+      ).toBeGreaterThan(0);
       expect(offeredIds(parked), `${id} was offered`).not.toContain(id);
     }
     // The prefixed TRAINER negative is the card itself: three spare copies of
@@ -410,7 +424,9 @@ describe("the search — D200's filter at its stage narrowing", () => {
     const { state: done, events } = playAndTake(state, (parked) =>
       cardsPrompt(parked).candidates.slice(0, 3),
     );
-    const searched = events.find((e): e is Extract<GameEvent, { type: "DECK_SEARCHED" }> => e.type === "DECK_SEARCHED");
+    const searched = events.find(
+      (e): e is Extract<GameEvent, { type: "DECK_SEARCHED" }> => e.type === "DECK_SEARCHED",
+    );
     expect(searched?.uids).toHaveLength(3);
     expect(searched?.dest).toBe("hand");
     for (const uid of searched?.uids ?? []) {
@@ -441,7 +457,9 @@ describe("the search — D200's filter at its stage narrowing", () => {
     const { state: done, events } = playAndTake(state, (parked) =>
       cardsPrompt(parked).candidates.slice(0, 2),
     );
-    const searched = events.find((e): e is Extract<GameEvent, { type: "DECK_SEARCHED" }> => e.type === "DECK_SEARCHED");
+    const searched = events.find(
+      (e): e is Extract<GameEvent, { type: "DECK_SEARCHED" }> => e.type === "DECK_SEARCHED",
+    );
     expect(searched?.uids).toHaveLength(2);
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -557,9 +575,11 @@ describe("✅ the printed 'reveal them' — the clause D224 pinned as a gap, PAI
       uid: handUid(state, "p1", "fix-proton"),
     }).state;
     const phase = redactGame(parked, "p1").phase;
-    if (phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${phase.kind}`);
+    if (phase.kind !== "effect:choose")
+      throw new Error(`expected effect:choose, got ${phase.kind}`);
     const prompt = phase.prompt;
-    if (prompt === null || prompt.kind !== "chooseCards") throw new Error("expected a chooseCards prompt");
+    if (prompt === null || prompt.kind !== "chooseCards")
+      throw new Error("expected a chooseCards prompt");
     for (const candidate of prompt.candidates) {
       expect(candidate.name.startsWith("Team Rocket's ")).toBe(true);
     }

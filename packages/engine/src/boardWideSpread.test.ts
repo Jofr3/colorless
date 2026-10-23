@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   OWN_BENCH_SNIPE_DECK,
@@ -468,9 +468,11 @@ describe("D482 §3 — the refusals, and the sharpest one is a `not.toEqual`", (
     for (const read of READERS) expect(read(ALSO_FORM), read.name).toBeNull();
     // …while the sibling's own "also" wording still builds, which is what makes the line
     // above a claim about THIS anchor and not about the word.
-    expect(deriveAttackEffect(`This attack also does 30 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`)).toEqual(
-      [{ op: "spreadDamage", target: "opponentBench", amount: 30 }],
-    );
+    expect(
+      deriveAttackEffect(
+        `This attack also does 30 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`,
+      ),
+    ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 30 }]);
   });
 
   it("🛑 the POSSESSIVE is spelled, not captured — the own-side wording is refused", () => {
@@ -765,16 +767,6 @@ describe("D482 §9 — the surface, the version and what does NOT move", () => {
     // it indefinitely, and every "unread by the whole engine" claim above rests on it.
     expect(READERS.map((r) => r.name).sort()).toEqual([...attackReaderSurface()].sort());
     expect(READERS).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
-  });
-
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // A sentence that derived to `null` derives to a program: `packages/engine`
-    // behaviour moved, so the version steps. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS
-    // HEAD RATHER THAN INHERITED — 57 assertions / 73 sites across 57 files, against the
-    // "37 assertions / 41 sites" index.ts still forecast from D459. See the 0.378.0
-    // block, which records the class the old count did not have at all: 13 `it(…)`
-    // TITLES that spell the version.
-    expect(engineVersion).toBe("0.555.0");
   });
 
   it("🛑 `MATCH_RECORD_VERSION` does NOT move, and the argument is BOTH of D463's tests", () => {

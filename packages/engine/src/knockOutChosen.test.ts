@@ -1078,7 +1078,9 @@ describe("🛑 §6 the BENCHED non-damage Knock Out — `flow.ts` needed nothing
     // Without this the case above is satisfied by a reader that answers false
     // always. Same deck, same seats, same attacker card — index 1 instead of 0.
     const before = armed(3, "fix-koc-flip", "fix-koc-basic", ["fix-koc-basic2"]);
-    const after = settle(mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE }).state);
+    const after = settle(
+      mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE }).state,
+    );
     expect(conditionHolds(after, "p2", BY_ATTACK)).toBe(true);
   });
 

@@ -10,7 +10,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -133,7 +133,10 @@ describe("D608 §1 — the texts", () => {
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, ids] of SENTENCES) {
       // 🆕🆕🆕 D612 — Stealthy Slash's row is 3: the two `30th` faces normalise into it (WP06).
-      expect([text, me.get(text)]).toEqual([text, text === STEALTHY_SLASH ? ids.length + 2 : ids.length]);
+      expect([text, me.get(text)]).toEqual([
+        text,
+        text === STEALTHY_SLASH ? ids.length + 2 : ids.length,
+      ]);
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
@@ -147,7 +150,10 @@ describe("D608 §1 — the texts", () => {
       // 🆕🆕🆕 D612 — the raw text is gone from the corpus; its normalised form is the row.
       expect(me.has(text), text).toBe(false);
       const clean = normalizeCardText(text);
-      expect([clean, me.get(clean)]).toEqual([clean, text === PHOTON_BULLETS ? ids.length : ids.length + 1]);
+      expect([clean, me.get(clean)]).toEqual([
+        clean,
+        text === PHOTON_BULLETS ? ids.length : ids.length + 1,
+      ]);
       expect(resolvedByAnyReader(text), text).toBe(false);
       if (text === PHOTON_BULLETS) {
         expect(resolvedByAnyReader(clean), clean).toBe(false);
@@ -160,21 +166,31 @@ describe("D608 §1 — the texts", () => {
     }
   });
 
-  it("WP30's rest ~~stays unbuilt~~: 8 texts / 8 printings, named (🆕🆕🆕 D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` \"Psyspear\"; `snipeSpreadRestMeD629.test.ts`) (🆕🆕🆕 D645 (D539): and Psyspear is built at D645)", () => {
+  it('WP30\'s rest ~~stays unbuilt~~: 8 texts / 8 printings, named (🆕🆕🆕 D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` "Psyspear"; `snipeSpreadRestMeD629.test.ts`) (🆕🆕🆕 D645 (D539): and Psyspear is built at D645)', () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, id] of WP30_REST) {
       expect([id, me.get(text)]).toEqual([id, 1]);
       // 🆕🆕🆕 D629 — seven are built (two by composition); ~~Psyspear alone stays unread~~ [🆕🆕🆕 D645 (D539):
       // WITHDRAWN — Psyspear is reader-built at D645; all eight are built].
-      expect([id, resolvedByAnyReader(text) || splitAttackTrailingClause(text) !== null]).toEqual([id, true]);
+      expect([id, resolvedByAnyReader(text) || splitAttackTrailingClause(text) !== null]).toEqual([
+        id,
+        true,
+      ]);
       expect(programFor(id), id).toBeUndefined();
     }
   });
 });
 
 describe("D608 §2 — the readings", () => {
-  it("\"each of 2\" is the shipped arity: the same op as \"2 of\"", () => {
-    const two = { op: "damageChosen", target: "opponentAny", amount: 60, count: 2, source: "attack", deals: true };
+  it('"each of 2" is the shipped arity: the same op as "2 of"', () => {
+    const two = {
+      op: "damageChosen",
+      target: "opponentAny",
+      amount: 60,
+      count: 2,
+      source: "attack",
+      deals: true,
+    };
     expect(deriveAttackEffect(SPLIT_BOMB)).toEqual([two]);
     expect(deriveAttackEffect(SPLIT_BOMB.replace("each of 2", "2"))).toEqual([two]);
     expect(deriveAttackEffect(DUAL_TAIL)).toEqual([
@@ -190,7 +206,14 @@ describe("D608 §2 — the readings", () => {
     const reading = deriveAttackOptionalCostBoost(DISASTER_SHOCK);
     expect(reading).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 2, energy: "Lightning" },
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Lightning" }, count: 2 }],
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: "Lightning" },
+          count: 2,
+        },
+      ],
       payoff: { kind: "defenderStatus", status: "paralyzed" },
     });
     expect(deriveAttackEffect(DISASTER_SHOCK)).toBeNull();
@@ -220,9 +243,22 @@ describe("D608 §2 — the readings", () => {
 
   it("the three literal compounds", () => {
     expect(deriveAttackEffect(SONIC_RIPPER)).toEqual([
-      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "deck" },
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "anyEnergy" },
+        count: "all",
+        to: "deck",
+      },
       { op: "shuffleDeck" },
-      { op: "damageChosen", target: "opponentAny", amount: 220, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 220,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(deriveAttackEffect(BONE_SNIPER)).toEqual([
       {
@@ -258,7 +294,11 @@ describe("D608 §2 — the readings", () => {
         perDamageCounterOnTarget: true,
       },
     ]);
-    expect(deriveAttackEffect(STEALTHY_SLASH.replace("opponent's Pokémon for", "opponent's Benched Pokémon for"))).toEqual([
+    expect(
+      deriveAttackEffect(
+        STEALTHY_SLASH.replace("opponent's Pokémon for", "opponent's Benched Pokémon for"),
+      ),
+    ).toEqual([
       {
         op: "damageChosen",
         target: "opponentBench",
@@ -279,7 +319,11 @@ describe("D608 §2 — the readings", () => {
       "This attack does 50 damage to each of your opponent's Pokémon ex. This attack's damage isn't affected by Weakness or Resistance.",
     );
     // 🆕🆕🆕 D622 — the bare tail's `wrOnly` goes with `ignoreWR`: Photon Bullets prints no W/R tail.
-    const { ignoreWR: _dropped, wrOnly: _bare, ...withoutIgnore } = (shipped?.[0] ?? {}) as Record<string, unknown>;
+    const {
+      ignoreWR: _dropped,
+      wrOnly: _bare,
+      ...withoutIgnore
+    } = (shipped?.[0] ?? {}) as Record<string, unknown>;
     for (const id of ["30th-064", "30th-151", "30th-157"]) {
       expect(programFor(id)?.attack?.[0], id).toEqual([withoutIgnore]);
     }
@@ -298,8 +342,14 @@ const P = "d608-psychic";
 const W = "d608-water";
 const D = "d608-darkness";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -310,7 +360,12 @@ const LOCAL: Record<string, Card> = {
     "Lightning",
     [
       { cost: ["Lightning", "Lightning"], name: "Split Bomb", effect: SPLIT_BOMB },
-      { cost: ["Lightning", "Lightning", "Lightning"], name: "Disaster Shock", damage: 190, effect: DISASTER_SHOCK },
+      {
+        cost: ["Lightning", "Lightning", "Lightning"],
+        name: "Disaster Shock",
+        damage: 190,
+        effect: DISASTER_SHOCK,
+      },
     ],
     { stage: "Stage2", evolveFrom: "Eelektrik" },
   ),
@@ -365,12 +420,22 @@ const LOCAL: Record<string, Card> = {
   ]),
   "me02.5-098": mon("me02.5-098", "Spectrier", 120, "Psychic", [
     { cost: ["Psychic"], name: "Spooky Shot", damage: 30 },
-    { cost: ["Psychic", "Psychic", "Colorless"], name: "Phantasmal Barrage", effect: PHANTASMAL_BARRAGE },
+    {
+      cost: ["Psychic", "Psychic", "Colorless"],
+      name: "Phantasmal Barrage",
+      effect: PHANTASMAL_BARRAGE,
+    },
   ]),
   [FILLER]: mon(FILLER, "D608 Filler", 400, "Colorless", TAP),
-  [TARGET_L]: mon(TARGET_L, "D608 Volt Target", 400, "Water", TAP, { weaknesses: [{ type: "Lightning", value: "×2" }] }),
-  [TARGET_W]: mon(TARGET_W, "D608 Tide Target", 400, "Fire", TAP, { weaknesses: [{ type: "Water", value: "×2" }] }),
-  [TARGET_EX]: mon(TARGET_EX, "D608 Target ex", 400, "Fighting", TAP, { weaknesses: [{ type: "Psychic", value: "×2" }] }),
+  [TARGET_L]: mon(TARGET_L, "D608 Volt Target", 400, "Water", TAP, {
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+  }),
+  [TARGET_W]: mon(TARGET_W, "D608 Tide Target", 400, "Fire", TAP, {
+    weaknesses: [{ type: "Water", value: "×2" }],
+  }),
+  [TARGET_EX]: mon(TARGET_EX, "D608 Target ex", 400, "Fighting", TAP, {
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+  }),
   [L]: typedEnergy(L, "Lightning"),
   [M]: typedEnergy(M, "Metal"),
   [P]: typedEnergy(P, "Psychic"),
@@ -412,7 +477,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -420,15 +487,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -455,7 +528,8 @@ function table(
   bench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   state = clearBench(setActiveFromDeck(state, "p2", defender), "p2");
@@ -469,7 +543,11 @@ const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) 
 const ACTIVE: PokemonRef = { seat: "p2", spot: { spot: "active" } };
 const bench = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "bench", index } });
 const pick = (state: GameState, refs: readonly PokemonRef[]) =>
-  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [...refs] } } as GameAction);
+  mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemonMulti", refs: [...refs] },
+  } as GameAction);
 const say = (state: GameState, yes: boolean) =>
   mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
 const damageOf = (state: GameState) => [
@@ -485,9 +563,12 @@ function parkedMulti(state: GameState) {
   return state.phase.prompt;
 }
 
-describe("D608 §3 — \"each of 2\" on a board", () => {
+describe('D608 §3 — "each of 2" on a board', () => {
   it("Split Bomb: pick EXACTLY two; the Active takes Weakness (120), a Benched body 60, the third nothing", () => {
-    const parked = mustApply(table("me02.5-061", [[L, 2]], TARGET_L, [FILLER, FILLER]), attack(0)).state;
+    const parked = mustApply(
+      table("me02.5-061", [[L, 2]], TARGET_L, [FILLER, FILLER]),
+      attack(0),
+    ).state;
     const prompt = parkedMulti(parked);
     expect([prompt.min, prompt.max, prompt.candidates.length]).toEqual([2, 2, 3]);
     expect(prompt.note).toBe("Choose 2 of your opponent's Pokémon (60 damage each).");
@@ -502,12 +583,18 @@ describe("D608 §3 — \"each of 2\" on a board", () => {
   });
 
   it("Dual Tail: two Energy discarded first, then 60 to each of two Benched bodies", () => {
-    const parked = mustApply(table("me02-079", [["fix-energy", 3]], FILLER, [FILLER, FILLER]), attack(1)).state;
+    const parked = mustApply(
+      table("me02-079", [["fix-energy", 3]], FILLER, [FILLER, FILLER]),
+      attack(1),
+    ).state;
     expect(parkedMulti(parked).max).toBe(2);
     expect(parked.players.p1.active?.energy).toHaveLength(1);
     const result = pick(parked, [bench(0), bench(1)]);
     expect(damageOf(result.state)).toEqual([0, 60, 60]);
-    expect(ids(result.state, result.state.players.p1.discard)).toEqual(["fix-energy", "fix-energy"]);
+    expect(ids(result.state, result.state.players.p1.discard)).toEqual([
+      "fix-energy",
+      "fix-energy",
+    ]);
   });
 });
 
@@ -515,7 +602,10 @@ describe("D608 §4 — Disaster Shock: the optional discard and the Paralysis", 
   const swing = (yes: boolean) => {
     const parked = mustApply(table("me02.5-061", [[L, 3]], FILLER), attack(1));
     expect(of(parked.events, "DAMAGE_DEALT")[0]?.dealt).toBe(190); // the printed base lands first
-    if (parked.state.phase.kind !== "effect:choose" || parked.state.phase.prompt.kind !== "confirm") {
+    if (
+      parked.state.phase.kind !== "effect:choose" ||
+      parked.state.phase.prompt.kind !== "confirm"
+    ) {
       throw new Error(`expected a confirm, got ${parked.state.phase.kind}`);
     }
     return say(parked.state, yes);
@@ -539,7 +629,15 @@ describe("D608 §4 — Disaster Shock: the optional discard and the Paralysis", 
 
 describe("D608 §5 — the literal compounds on a board", () => {
   it("Sonic Ripper: every Energy shuffled into the deck, then 220 to the chosen body", () => {
-    const before = table("me03-055", [[M, 2], ["fix-energy", 1]], FILLER, [FILLER]);
+    const before = table(
+      "me03-055",
+      [
+        [M, 2],
+        ["fix-energy", 1],
+      ],
+      FILLER,
+      [FILLER],
+    );
     const parked = mustApply(before, attack(0));
     expect(parked.state.players.p1.active?.energy).toEqual([]);
     expect(parked.state.players.p1.deck.length).toBe(before.players.p1.deck.length + 3);
@@ -606,7 +704,10 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
   }
 
   it("30th-064: 50 to each ex — the ex Active with Weakness, a Benched ex flat, a non-ex untouched; no park", () => {
-    const result = mustApply(table("30th-064", [[P, 2]], TARGET_EX, [TARGET_EX, FILLER]), attack(0));
+    const result = mustApply(
+      table("30th-064", [[P, 2]], TARGET_EX, [TARGET_EX, FILLER]),
+      attack(0),
+    );
     expect(result.state.phase.kind).not.toBe("effect:choose");
     expect(damageOf(result.state)).toEqual([100, 50, 0]);
   });
@@ -614,11 +715,5 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
   it("30th-064: a non-ex Active is not hit", () => {
     const result = mustApply(table("30th-064", [[P, 2]], TARGET_W, [TARGET_EX]), attack(0));
     expect(damageOf(result.state)).toEqual([0, 50]);
-  });
-});
-
-describe("D608 §8 — the version", () => {
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

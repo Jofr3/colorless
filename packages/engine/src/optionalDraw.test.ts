@@ -349,7 +349,9 @@ describe("the two anchors — 12 legal printings, and the four words in front of
       expect(deriveAttackEffect(`You may draw ${n} cards.`)).toEqual(
         wrapped(`You may draw ${n} cards.`, { op: "drawCards", count: n }),
       );
-      expect(deriveAttackEffect(`You may draw cards until you have ${n} cards in your hand.`)).toEqual(
+      expect(
+        deriveAttackEffect(`You may draw cards until you have ${n} cards in your hand.`),
+      ).toEqual(
         wrapped(`You may draw cards until you have ${n} cards in your hand.`, {
           op: "drawUntilHandSize",
           size: n,
@@ -365,7 +367,9 @@ describe("the two anchors — 12 legal printings, and the four words in front of
     // the prompt the M1 no-choice rule exists to refuse. `drawUntilHandSize 0` is
     // worse still (the op NEVER TRIMS, so it is a no-op by construction).
     expect(deriveAttackEffect("You may draw 0 cards.")).toBeNull();
-    expect(deriveAttackEffect("You may draw cards until you have 0 cards in your hand.")).toBeNull();
+    expect(
+      deriveAttackEffect("You may draw cards until you have 0 cards in your hand."),
+    ).toBeNull();
     // …and the bare forms agree, which is the point: the wrapper inherits the
     // guard rather than re-deciding it.
     expect(deriveAttackEffect("Draw 0 cards.")).toBeNull();
@@ -495,7 +499,9 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
       expect(hasOptional(built), text).toBe(false);
       // …and the WRAPPED spelling is nobody's sentence, so the anchors here must
       // still refuse it — the original entry's claim, kept.
-      expect(deriveAttackEffect(`You may ${text.charAt(0).toLowerCase()}${text.slice(1)}`)).toBeNull();
+      expect(
+        deriveAttackEffect(`You may ${text.charAt(0).toLowerCase()}${text.slice(1)}`),
+      ).toBeNull();
     }
   });
 
@@ -511,7 +517,8 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     // same string minus "You may " and a capital, and it derives to the inner op
     // ALONE. A shared anchor with an optional `(?:You may )?` group would pass the
     // line above and fail this one — the same pair the two draw families carry.
-    const bare = "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
+    const bare =
+      "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
     expect(WRAPPED_ELSEWHERE).toBe(`You may s${bare.slice(1)}`);
     expect(deriveAttackEffect(bare)).toEqual([{ op: "opponentSwitchOut" }]);
   });
@@ -589,11 +596,7 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
       expect(
         deriveAttackEffect(`Your opponent's Active Pokémon is now Confused. ${text}`),
       ).toBeNull();
-      expect(
-        deriveAttackEffect(
-          `Discard your hand. ${text} Then, shuffle your deck.`,
-        ),
-      ).toBeNull();
+      expect(deriveAttackEffect(`Discard your hand. ${text} Then, shuffle your deck.`)).toBeNull();
       // Case is load-bearing too: the readers commit to it (no `/i` anywhere in
       // this reader), so the lowercase spelling of a sentence is not the
       // sentence.

@@ -83,7 +83,13 @@ const ALIASES = [
   { id: "sv05-010", twin: "sv01-121", card: "Turtwig — Solid Shell", legal: 2, catalog: 2 },
   { id: "sv08.5-088", twin: "sv01-121", card: "Furfrou — Fur Coat", legal: 2, catalog: 2 },
   // "…put 3 damage counters on the Attacking Pokémon." — 3 legal of 4.
-  { id: "sv05-139", twin: "sv01-005", card: "Iron Jugulis — Automated Combat", legal: 3, catalog: 4 },
+  {
+    id: "sv05-139",
+    twin: "sv01-005",
+    card: "Iron Jugulis — Automated Combat",
+    legal: 3,
+    catalog: 4,
+  },
   { id: "sv08-049", twin: "sv01-005", card: "Bruxish — Counterattack", legal: 3, catalog: 4 },
   { id: "sv08-200", twin: "sv01-005", card: "Bruxish — Counterattack", legal: 3, catalog: 4 },
   // "…the Attacking Pokémon is now Burned." — 1 legal of 1.
@@ -118,8 +124,17 @@ const SKIPPED_ZERO_LEGAL = [
     // REPRINTS sitting in sv08.5 / sv09 / sv10.5b carry regulation mark **G**,
     // so the biggest alias group in the catalog buys nothing in Standard.
     ids: [
-      "sv04.5-087", "sv04.5-088", "sv08.5-122", "sv08.5-123", "sv08.5-124",
-      "sv08.5-125", "sv09-155", "sv10.5b-085", "svp-221", "svp-222", "svp-223",
+      "sv04.5-087",
+      "sv04.5-088",
+      "sv08.5-122",
+      "sv08.5-123",
+      "sv08.5-124",
+      "sv08.5-125",
+      "sv09-155",
+      "sv10.5b-085",
+      "svp-221",
+      "svp-222",
+      "svp-223",
     ],
   },
   {
@@ -310,7 +325,10 @@ describe("the SKIPPED candidates — correct aliases with ZERO Standard-legal pa
     // is where the decision gets revisited rather than rediscovered.
     for (const { ids, sentence } of SKIPPED_ZERO_LEGAL) {
       for (const id of ids) {
-        expect(programFor(id), `${id} (${sentence}) was landed with 0 legal printings`).toBeUndefined();
+        expect(
+          programFor(id),
+          `${id} (${sentence}) was landed with 0 legal printings`,
+        ).toBeUndefined();
       }
     }
   });
@@ -388,14 +406,22 @@ const PRINTING_ALIAS_CENSUS = [
   { card: "Beach Court", authored: "sv01-167", unauthored: ["sv04-263"] },
   { card: "Brassius", authored: "sv03-187", unauthored: ["sv08.5-135"] },
   { card: "Bravery Charm", authored: "sv02-173", unauthored: ["sv07-175"] },
-  { card: "Charizard ex", authored: "sv03-125", unauthored: ["svp-056", "svp-074", "svp-196", "sv04.5-054", "sv04.5-234"] },
+  {
+    card: "Charizard ex",
+    authored: "sv03-125",
+    unauthored: ["svp-056", "svp-074", "svp-196", "sv04.5-054", "sv04.5-234"],
+  },
   { card: "Chien-Pao ex", authored: "sv02-061", unauthored: ["svp-030", "sv04.5-242"] },
   { card: "Dachsbun", authored: "sv01-099", unauthored: ["sv04.5-039", "sv04.5-161"] },
   { card: "Earthen Vessel", authored: "sv06.5-096", unauthored: ["sv04-163", "sv08.5-106"] },
   { card: "Electric Generator", authored: "sv01-170", unauthored: ["sv04.5-079"] },
   { card: "Entei", authored: "sv03-030", unauthored: ["sv04.5-112"] },
   { card: "Flamigo", authored: "sv02-170", unauthored: ["sv04.5-211"] },
-  { card: "Gardevoir ex", authored: "sv01-086", unauthored: ["sv04.5-029", "sv04.5-217", "sv04.5-233"] },
+  {
+    card: "Gardevoir ex",
+    authored: "sv01-086",
+    unauthored: ["sv04.5-029", "sv04.5-217", "sv04.5-233"],
+  },
   { card: "Garganacl", authored: "sv02-123", unauthored: ["sv04.5-178"] },
   { card: "Giacomo", authored: "sv02-182", unauthored: ["sv08.5-138"] },
   { card: "Hawlucha", authored: "sv01-118", unauthored: ["svp-007", "sv04.5-175"] },
@@ -415,7 +441,23 @@ const PRINTING_ALIAS_CENSUS = [
   { card: "Pachirisu", authored: "sv01-068", unauthored: ["sv04.5-138"] },
   { card: "Pawmot", authored: "sv01-076", unauthored: ["svp-006", "sv04.5-144"] },
   // Potion (sv01-188; mfb-33) LEFT THIS TABLE at card revision B05.
-  { card: "Professor's Research", authored: "sv01-189", unauthored: ["svp-221", "svp-222", "svp-223", "sv04.5-087", "sv04.5-088", "sv08.5-122", "sv08.5-123", "sv08.5-124", "sv08.5-125", "sv09-155", "sv10.5b-085"] },
+  {
+    card: "Professor's Research",
+    authored: "sv01-189",
+    unauthored: [
+      "svp-221",
+      "svp-222",
+      "svp-223",
+      "sv04.5-087",
+      "sv04.5-088",
+      "sv08.5-122",
+      "sv08.5-123",
+      "sv08.5-124",
+      "sv08.5-125",
+      "sv09-155",
+      "sv10.5b-085",
+    ],
+  },
   { card: "Quaquaval", authored: "sv01-054", unauthored: ["svp-005"] },
   // 🛑 THE ROW THE SLICE WAS SENT TO FOLD IN. The four printings' `effect` bytes
   // were RE-READ against remote D1 on 2026-08-08 rather than inherited: all four
@@ -462,8 +504,15 @@ const LANDED_SINCE_EFFECTIVE_LEGALITY = [
     named here so the two scopes stay distinguishable instead of merging into one
     number that is wrong for both. */
 const SENTENCE_ONLY_SKIPS = [
-  "sv04-134", "sv04-210", "svp-060",
-  "sv03.5-009", "sv03.5-184", "sv03.5-200", "sv04-128", "sv04-209", "sv07-030",
+  "sv04-134",
+  "sv04-210",
+  "svp-060",
+  "sv03.5-009",
+  "sv03.5-184",
+  "sv03.5-200",
+  "sv04-128",
+  "sv04-209",
+  "sv07-030",
 ] as const;
 
 describe("D290 — the COMPLETE per-printing reprint census", () => {
@@ -516,7 +565,10 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     // here rather than assumed — a key other than `attack`.
     for (const { card, authored } of PRINTING_ALIAS_CENSUS) {
       const program = programFor(authored);
-      expect(program, `${authored} (${card}) anchors a census row and has no program`).toBeDefined();
+      expect(
+        program,
+        `${authored} (${card}) anchors a census row and has no program`,
+      ).toBeDefined();
       expect(
         Object.keys(program ?? {}).some((key) => key !== "attack"),
         `${authored} (${card}) is attack-only and cannot anchor a NON-ATTACK census row`,

@@ -39,7 +39,8 @@ const VITAL_TEXT =
   "Heal 150 damage from 1 of your Pokémon.\n\nThis card can't be put into your hand or deck from the discard pile.";
 const IRIS_TEXT =
   "You can use this card only if you discard another card from your hand.\n\nDraw cards until you have 6 cards in your hand.";
-const ERI_TEXT = "Your opponent reveals their hand, and you discard up to 2 Item cards you find there.";
+const ERI_TEXT =
+  "Your opponent reveals their hand, and you discard up to 2 Item cards you find there.";
 const MEMO_TEXT =
   "Your opponent counts the cards in their hand, shuffles those cards, and puts them on the bottom of their deck. If they do, they draw that many cards.";
 
@@ -109,7 +110,9 @@ function board(seed = 5550): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -121,7 +124,8 @@ function board(seed = 5550): GameState {
     if (uid === undefined) throw new Error(`no filler Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     state = setActiveFromDeck(state, s, FILLER);
@@ -230,7 +234,9 @@ describe("D555 A §1 — the print, and the registry rows that map it", () => {
       text: ERI_TEXT,
       trainerType: "Supporter",
       program: {
-        trainer: [{ op: "bottomFromOpponentHand", filter: { kind: "item" }, dest: "discard", upTo: 2 }],
+        trainer: [
+          { op: "bottomFromOpponentHand", filter: { kind: "item" }, dest: "discard", upTo: 2 },
+        ],
       },
     },
     {
@@ -239,7 +245,14 @@ describe("D555 A §1 — the print, and the registry rows that map it", () => {
       text: MEMO_TEXT,
       trainerType: "Item",
       program: {
-        trainer: [{ op: "handRefresh", who: "opponent", toBottom: true, draw: { kind: "handPlus", delta: 0 } }],
+        trainer: [
+          {
+            op: "handRefresh",
+            who: "opponent",
+            toBottom: true,
+            draw: { kind: "handPlus", delta: 0 },
+          },
+        ],
       },
     },
   ];
@@ -261,7 +274,9 @@ describe("D555 A §1 — the print, and the registry rows that map it", () => {
   }
 
   it("five texts, five DISTINCT objects (D199)", () => {
-    const objects = new Set([COOK[0], VITAL[0], IRIS[0], ERI[0], MEMO[0]].map((id) => programFor(id)));
+    const objects = new Set(
+      [COOK[0], VITAL[0], IRIS[0], ERI[0], MEMO[0]].map((id) => programFor(id)),
+    );
     expect(objects.size).toBe(5);
   });
 });
@@ -319,7 +334,8 @@ describe("D555 A §3 — Poké Vital A: heal 150 from 1 of your Pokémon", () =>
     );
     expect(types(events)).toEqual(["TRAINER_PLAYED", "EFFECT_PENDING"]);
     const prompt = parkOf(parked);
-    if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemon")
+      throw new Error(`expected choosePokemon, got ${prompt.kind}`);
     expect(prompt.candidates).toHaveLength(2);
     const { state: done, events: healedEvents } = mustApply(parked, {
       type: "resolveEffect",
@@ -353,9 +369,13 @@ describe("D555 A §3 — Poké Vital A: heal 150 from 1 of your Pokémon", () =>
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D555 A §4 — Iris's Fighting Spirit: discard another card, then draw to 6", () => {
-  it("is REFUSED with no OTHER card in hand, and the message reads the printed \"another card\"", () => {
+  it('is REFUSED with no OTHER card in hand, and the message reads the printed "another card"', () => {
     const state = setHand(board(), "p1", [IRIS[0]]);
-    const result = applyAction(state, { type: "playTrainer", seat: "p1", uid: state.players.p1.hand[0] as string });
+    const result = applyAction(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: state.players.p1.hand[0] as string,
+    });
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable");
     expect(result.error.code).toBe("PLAY_CONDITION_NOT_MET");
@@ -369,10 +389,14 @@ describe("D555 A §4 — Iris's Fighting Spirit: discard another card, then draw
     // Four interchangeable fillers collapse to one candidate: the cost asks nothing.
     expect(state.phase.kind).toBe("turn:action");
     expect(state.players.p1.hand).toHaveLength(6);
-    const paid = before.players.p1.hand.filter((u) => u !== uid && !state.players.p1.hand.includes(u));
+    const paid = before.players.p1.hand.filter(
+      (u) => u !== uid && !state.players.p1.hand.includes(u),
+    );
     expect(paid).toHaveLength(1);
     expect(state.players.p1.discard).toEqual([...before.players.p1.discard, uid, ...paid]);
-    expect(all(events, "CARDS_DRAWN").flatMap((e) => e.uids)).toEqual(before.players.p1.deck.slice(0, 3));
+    expect(all(events, "CARDS_DRAWN").flatMap((e) => e.uids)).toEqual(
+      before.players.p1.deck.slice(0, 3),
+    );
   });
 
   it("a mixed hand PARKS the payment, and the answer is the card that goes", () => {
@@ -435,7 +459,12 @@ describe("D555 A §5 — Eri: reveal the opponent's hand, discard up to 2 Item c
     expect(done.players.p2.discard).toEqual([...before.players.p2.discard, ...prompt.candidates]);
     // CARD_DISCARDED_FROM_HAND carries the ACTOR: p2's cards, p1's choice.
     expect(all(events, "CARD_DISCARDED_FROM_HAND")).toEqual(
-      prompt.candidates.map((uid) => ({ type: "CARD_DISCARDED_FROM_HAND", seat: "p2", uid, actor: "p1" })),
+      prompt.candidates.map((uid) => ({
+        type: "CARD_DISCARDED_FROM_HAND",
+        seat: "p2",
+        uid,
+        actor: "p1",
+      })),
     );
   });
 
@@ -466,7 +495,11 @@ describe("D555 A §5 — Eri: reveal the opponent's hand, discard up to 2 Item c
 
   it("an EMPTY opponent hand is REFUSED — the count is public", () => {
     const state = setHand(setHand(board(), "p1", [ERI[0]]), "p2", []);
-    expectErr(state, { type: "playTrainer", seat: "p1", uid: state.players.p1.hand[0] as string }, "NO_LEGAL_TARGET");
+    expectErr(
+      state,
+      { type: "playTrainer", seat: "p1", uid: state.players.p1.hand[0] as string },
+      "NO_LEGAL_TARGET",
+    );
   });
 
   it("every printing is the same object and plays the same way", () => {
@@ -491,11 +524,13 @@ describe("D555 A §6 — Meddling Memo: the opponent's hand under their deck, th
     // …and the deck is the old deck minus those 5, with the old hand (shuffled) under it.
     expect(state.players.p2.deck.slice(0, oldDeck.length - 5)).toEqual(oldDeck.slice(5));
     expect(sorted(state.players.p2.deck.slice(oldDeck.length - 5))).toEqual(sorted(oldHand));
-    expect(all(events, "HAND_TO_BOTTOM_OF_DECK")).toEqual([{ type: "HAND_TO_BOTTOM_OF_DECK", seat: "p2", count: 5 }]);
+    expect(all(events, "HAND_TO_BOTTOM_OF_DECK")).toEqual([
+      { type: "HAND_TO_BOTTOM_OF_DECK", seat: "p2", count: 5 },
+    ]);
     expect(all(events, "CARDS_DRAWN").map((e) => [e.seat, e.uids.length])).toEqual([["p2", 5]]);
   });
 
-  it("\"shuffles those cards\" — the bottom slice is the hand SHUFFLED off the live rng, not its old order", () => {
+  it('"shuffles those cards" — the bottom slice is the hand SHUFFLED off the live rng, not its old order', () => {
     // The rung above compares the bottom slice SORTED, so it cannot see the shuffle.
     // This one can: the slice is exactly `shuffle(oldHand, rngState)` (Iono's shared
     // `handRefresh toBottom` path, interpreter.ts), and on this seed that order is NOT
@@ -511,12 +546,14 @@ describe("D555 A §6 — Meddling Memo: the opponent's hand under their deck, th
   });
 
   it("the CONTROLLER's hand is untouched (the card aside)", () => {
-    const { before, uid, state } = play(MEMO[0], [FILLER, ITEM], (s) => setHand(s, "p2", [ITEM, ITEM]));
+    const { before, uid, state } = play(MEMO[0], [FILLER, ITEM], (s) =>
+      setHand(s, "p2", [ITEM, ITEM]),
+    );
     expect(state.players.p1.hand).toEqual(before.players.p1.hand.filter((u) => u !== uid));
     expect(state.players.p1.deck).toEqual(before.players.p1.deck);
   });
 
-  it("an EMPTY opponent hand plays, moves nothing and draws 0 (\"If they do\" is handPlus 0)", () => {
+  it('an EMPTY opponent hand plays, moves nothing and draws 0 ("If they do" is handPlus 0)', () => {
     const { before, state, events } = play(MEMO[0], [FILLER], (s) => setHand(s, "p2", []));
     expect(state.players.p2.hand).toEqual([]);
     expect(state.players.p2.deck).toEqual(before.players.p2.deck);

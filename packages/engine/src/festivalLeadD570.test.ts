@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { passivesOf } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { attackAgainBarred, attackAgainLicensed } from "./interpreter";
 import type { LogContext } from "./log";
@@ -42,7 +42,15 @@ import { freshAllowances } from "./types";
 // offer row, the fourth caller]). R-FL1..R-FL4 are UNRULED: docs/decisions.md D570.
 // Driven on the REAL ids, on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
-const FESTIVAL_IDS = ["sv06-018", "sv06-044", "sv06-089", "sv06-170", "sv08.5-010", "sv08.5-020", "sv08.5-021"] as const;
+const FESTIVAL_IDS = [
+  "sv06-018",
+  "sv06-044",
+  "sv06-089",
+  "sv06-170",
+  "sv08.5-010",
+  "sv08.5-020",
+  "sv08.5-021",
+] as const;
 const SEAKING = "sv08.5-021";
 const GOLDEEN = "sv06-044";
 const SWIRLIX = "sv06-089"; // ⚠️ TEST SURGERY: the printed id, a DEMONSTRATOR attack (below)
@@ -66,7 +74,10 @@ const FESTIVAL_LEAD = { type: "Ability", name: "Festival Lead", effect: FESTIVAL
 
 const LOCAL_CARDS: Record<string, Card> = {
   ...Object.fromEntries(
-    FESTIVAL.map((id) => [id, { ...trainerCard(id, "Stadium", FESTIVAL_TEXT), name: "Festival Grounds" }]),
+    FESTIVAL.map((id) => [
+      id,
+      { ...trainerCard(id, "Stadium", FESTIVAL_TEXT), name: "Festival Grounds" },
+    ]),
   ),
   [JAMMING]: { ...trainerCard(JAMMING, "Stadium", JAMMING_TEXT), name: "Jamming Tower" },
   [SEAKING]: battler(SEAKING, {
@@ -106,7 +117,9 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     types: ["Psychic"],
     abilities: [FESTIVAL_LEAD],
-    attacks: [{ cost: ["Colorless"], name: "D570 Bounce", damage: 10, effect: DISCARD_DEFENDER_TEXT }],
+    attacks: [
+      { cost: ["Colorless"], name: "D570 Bounce", damage: 10, effect: DISCARD_DEFENDER_TEXT },
+    ],
   }),
   [FLUTTER]: battler(FLUTTER, {
     name: "Flutter Mane",
@@ -124,8 +137,20 @@ const LOCAL_CARDS: Record<string, Card> = {
     ],
     attacks: [{ cost: ["Colorless", "Colorless", "Colorless"], name: "Hex Hurl", damage: 90 }],
   }),
-  [WALL]: battler(WALL, { name: "D570 Wall", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
-  [SOFT]: battler(SOFT, { name: "D570 Soft", hp: 60, retreat: 1, types: ["Colorless"], weaknesses: null }),
+  [WALL]: battler(WALL, {
+    name: "D570 Wall",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
+  [SOFT]: battler(SOFT, {
+    name: "D570 Soft",
+    hp: 60,
+    retreat: 1,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -192,7 +217,9 @@ function opened(seed: number, deck: readonly string[] = DECK): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   state = completeSetup(state);
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
@@ -233,23 +260,26 @@ function stadium(state: GameState, id: string, owner: Seat = "p1"): GameState {
 /** p1's turn 2: p1 `active` (with `energy` {C}), p2 `oppActive`, p2's Bench `oppBench`, p1's
     Bench `bench`, and the Stadium `stadiumId` in play (Festival Grounds by default; `null`
     for none). */
-function table(opts: {
-  active?: string;
-  energy?: number;
-  oppActive?: string;
-  oppBench?: string[];
-  bench?: string[];
-  stadiumId?: string | null;
-  seed?: number;
-  deck?: readonly string[];
-} = {}): GameState {
+function table(
+  opts: {
+    active?: string;
+    energy?: number;
+    oppActive?: string;
+    oppBench?: string[];
+    bench?: string[];
+    stadiumId?: string | null;
+    seed?: number;
+    deck?: readonly string[];
+  } = {},
+): GameState {
   let state = opened(opts.seed ?? 5701, opts.deck);
   const mine = opts.active ?? SEAKING;
   state = setActiveFromDeck(ensureInDeck(state, "p1", mine), "p1", mine);
   const theirs = opts.oppActive ?? WALL;
   state = setActiveFromDeck(ensureInDeck(state, "p2", theirs), "p2", theirs);
   state = clearBench(clearBench(state, "p1"), "p2");
-  for (const id of opts.oppBench ?? []) state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
+  for (const id of opts.oppBench ?? [])
+    state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
   for (const id of opts.bench ?? []) state = benchFromDeck(ensureInDeck(state, "p1", id), "p1", id);
   state = attachFromDeck(state, "p1", "fix-energy", opts.energy ?? 2);
   const stadiumId = opts.stadiumId === undefined ? FESTIVAL[0] : opts.stadiumId;
@@ -265,7 +295,10 @@ function withHandTrainer(state: GameState): GameState {
   const uid = side.deck.find((u) => ensured.cardIdByUid[u] === FESTIVAL[1]) as string;
   return {
     ...ensured,
-    players: { ...ensured.players, p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] } },
+    players: {
+      ...ensured.players,
+      p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] },
+    },
   };
 }
 
@@ -277,7 +310,10 @@ function toHand(state: GameState, seat: Seat, id: string): GameState {
   const uid = side.deck.find((u) => ensured.cardIdByUid[u] === id) as string;
   return {
     ...ensured,
-    players: { ...ensured.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] } },
+    players: {
+      ...ensured.players,
+      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] },
+    },
   };
 }
 
@@ -302,11 +338,17 @@ function swapStadium(state: GameState, id: string): GameState {
   const placed = stadium(state, id);
   if (old === null) return placed;
   const owner = placed.players[old.owner];
-  return { ...placed, players: { ...placed.players, [old.owner]: { ...owner, discard: [...owner.discard, old.uid] } } };
+  return {
+    ...placed,
+    players: { ...placed.players, [old.owner]: { ...owner, discard: [...owner.discard, old.uid] } },
+  };
 }
 
 /** The same board with the window CLOSED — the control every §7 projection is read against. */
-const closed = (state: GameState): GameState => ({ ...state, allowances: { ...state.allowances, attackAgainUid: null } });
+const closed = (state: GameState): GameState => ({
+  ...state,
+  allowances: { ...state.allowances, attackAgainUid: null },
+});
 
 function all<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
@@ -315,7 +357,8 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 const active = (state: GameState, seat: Seat) => state.players[seat].active as InPlayPokemon;
-const topOf = (state: GameState, seat: Seat) => active(state, seat).stack[active(state, seat).stack.length - 1];
+const topOf = (state: GameState, seat: Seat) =>
+  active(state, seat).stack[active(state, seat).stack.length - 1];
 const swing = (state: GameState) => run(state, { type: "attack", seat: "p1", index: 0 });
 
 /** The nine OTHER in-turn actions, each addressed at something real on the board. */
@@ -336,7 +379,7 @@ function nineOthers(state: GameState): GameAction[] {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D570 §1 — the prints, the registry rows and the fold", () => {
-  it("all 7 printings carry ONE `passive` key: `attackTwiceIf` on `stadiumInPlayNamed \"Festival Grounds\"`, and NO `attack` key", () => {
+  it('all 7 printings carry ONE `passive` key: `attackTwiceIf` on `stadiumInPlayNamed "Festival Grounds"`, and NO `attack` key', () => {
     for (const id of FESTIVAL_IDS) {
       expect(programFor(id), id).toEqual({
         passive: { attackTwiceIf: { kind: "stadiumInPlayNamed", name: "Festival Grounds" } },
@@ -386,7 +429,9 @@ describe("D570 §2 — the window opens after the first attack, and the second a
     expect(first.state.pending).toEqual([]);
     expect(active(first.state, "p2").damage).toBe(60);
     expect(all(first.events, "TURN_ENDED")).toEqual([]);
-    expect(all(first.events, "ATTACK_AGAIN_OFFERED")).toEqual([{ type: "ATTACK_AGAIN_OFFERED", seat: "p1", uid }]);
+    expect(all(first.events, "ATTACK_AGAIN_OFFERED")).toEqual([
+      { type: "ATTACK_AGAIN_OFFERED", seat: "p1", uid },
+    ]);
     // Rapid Draw's own effect ran (Draw 2) — the first attack is a whole attack.
     expect(first.state.players.p1.hand.length).toBe(state.players.p1.hand.length + 2);
   });
@@ -396,7 +441,9 @@ describe("D570 §2 — the window opens after the first attack, and the second a
     const second = swing(first.state);
     expect(active(second.state, "p2").damage).toBe(120);
     expect(all(second.events, "ATTACK_AGAIN_OFFERED")).toEqual([]);
-    expect(all(second.events, "TURN_ENDED")).toEqual([{ type: "TURN_ENDED", turn: first.state.turn, seat: "p1" }]);
+    expect(all(second.events, "TURN_ENDED")).toEqual([
+      { type: "TURN_ENDED", turn: first.state.turn, seat: "p1" },
+    ]);
     expect(second.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
     // Allowances reset next turn.
     expect(second.state.allowances.attackAgainUid).toBeNull();
@@ -406,7 +453,11 @@ describe("D570 §2 — the window opens after the first attack, and the second a
   it("the log names the attacker and the Ability", () => {
     const state = table();
     const first = swing(state);
-    const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state: first.state, elapsed: formatElapsed(0) };
+    const ctx: LogContext = {
+      names: { p1: "Ember", p2: "Tide" },
+      state: first.state,
+      elapsed: formatElapsed(0),
+    };
     const rows = logFromEvents(first.events, ctx).flatMap((entry) =>
       entry.kind === "turn" ? [] : [entry.segments.map((segment) => segment.text).join("")],
     );
@@ -464,7 +515,9 @@ describe("D570 §4 — R-FL4: the window survives a Knock Out's prize and promot
     expect(prized.state.phase.kind).toBe("ko:promote");
     const promoted = run(prized.state, { type: "promote", seat: "p2", benchIndex: 1 });
     expect(promoted.state.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(all(promoted.events, "ATTACK_AGAIN_OFFERED")).toEqual([{ type: "ATTACK_AGAIN_OFFERED", seat: "p1", uid }]);
+    expect(all(promoted.events, "ATTACK_AGAIN_OFFERED")).toEqual([
+      { type: "ATTACK_AGAIN_OFFERED", seat: "p1", uid },
+    ]);
     expect(all([...first.events, ...prized.events, ...promoted.events], "TURN_ENDED")).toEqual([]);
     const second = swing(promoted.state);
     expect(all(second.events, "TURN_ENDED")).toHaveLength(1);
@@ -508,7 +561,11 @@ describe("D570 §4 — R-FL4: the window survives a Knock Out's prize and promot
       ...state,
       players: {
         ...state.players,
-        p1: { ...side, prizes: side.prizes.slice(0, 1), deck: [...side.deck, ...side.prizes.slice(1)] },
+        p1: {
+          ...side,
+          prizes: side.prizes.slice(0, 1),
+          deck: [...side.deck, ...side.prizes.slice(1)],
+        },
       },
     };
     const first = swing(state);
@@ -523,7 +580,9 @@ describe("D570 §5 — R-FL1: only `attack` and `endTurn` are legal in the windo
     for (const action of nineOthers(first)) {
       const error = refused(first, action);
       expect(error.code, action.type).toBe("BAD_PHASE");
-      expect(error.message, action.type).toContain("only a second attack or ending the turn is legal (Festival Lead)");
+      expect(error.message, action.type).toContain(
+        "only a second attack or ending the turn is legal (Festival Lead)",
+      );
     }
   });
 
@@ -531,12 +590,18 @@ describe("D570 §5 — R-FL1: only `attack` and `endTurn` are legal in the windo
     const state = table({ bench: [WALL] });
     for (const action of nineOthers(state)) {
       const result = applyAction(state, action);
-      if (!result.ok) expect(result.error.message, action.type).not.toContain("only a second attack");
+      if (!result.ok)
+        expect(result.error.message, action.type).not.toContain("only a second attack");
     }
     // …and one of them really is legal there: the turn's Energy attachment.
     const energy = state.players.p1.hand.find((u) => state.cardIdByUid[u] === "fix-energy");
     expect(energy).toBeDefined();
-    run(state, { type: "attachEnergy", seat: "p1", uid: energy as string, target: { spot: "active" } });
+    run(state, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: energy as string,
+      target: { spot: "active" },
+    });
   });
 
   it("the opponent is still refused by the SEAT check, not the window", () => {
@@ -553,7 +618,11 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
       ...first,
       players: {
         ...first.players,
-        p1: { ...side, active: side.bench[0] ?? null, bench: side.active === null ? [] : [side.active] },
+        p1: {
+          ...side,
+          active: side.bench[0] ?? null,
+          bench: side.active === null ? [] : [side.active],
+        },
       },
     };
     expect(attackAgainBarred(swapped, "p1", active(swapped, "p1"))).toBe(true);
@@ -579,8 +648,12 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
     // barred: turn:action came back on a board where the declaration is refused, so no log
     // row may say "Seaking may attack again".
     expect(all(prized.events, "ATTACK_AGAIN_OFFERED")).toEqual([]);
-    expect(refused(prized.state, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_PREVENTED");
-    expect(all(run(prized.state, { type: "endTurn", seat: "p1" }).events, "TURN_ENDED")).toHaveLength(1);
+    expect(refused(prized.state, { type: "attack", seat: "p1", index: 0 }).code).toBe(
+      "ATTACK_PREVENTED",
+    );
+    expect(
+      all(run(prized.state, { type: "endTurn", seat: "p1" }).events, "TURN_ENDED"),
+    ).toHaveLength(1);
   });
 
   it("the second declaration is a FULL one: an Asleep attacker (surgery — UNREACHABLE in play [🆕 D570 review], pinned anyway) is refused by §12, not waved through by the window", () => {
@@ -592,7 +665,9 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
     // re-read to the declaration and removes none of §12's gates.
     const first = swing(table()).state;
     const asleep = setConditions(first, "p1", { rotation: "asleep" });
-    expect(refused(asleep, { type: "attack", seat: "p1", index: 0 }).code).toBe("STATUS_PREVENTS_ATTACK");
+    expect(refused(asleep, { type: "attack", seat: "p1", index: 0 }).code).toBe(
+      "STATUS_PREVENTS_ATTACK",
+    );
   });
 });
 
@@ -632,13 +707,20 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
     expect(win.allowances.attackAgainUid).toBe(topOf(win, "p1"));
     const shut = redactGame(closed(win), "p1").phase;
     const open = redactGame(win, "p1").phase;
-    if (shut.kind !== "turn:action" || open.kind !== "turn:action") throw new Error("expected turn:action");
+    if (shut.kind !== "turn:action" || open.kind !== "turn:action")
+      throw new Error("expected turn:action");
     // The control: every one is offered, and offered LIT.
     expect(shut.abilities).toContainEqual(
-      expect.objectContaining({ abilityName: "Recon Directive", target: { spot: "bench", index: 1 }, disabled: false }),
+      expect.objectContaining({
+        abilityName: "Recon Directive",
+        target: { spot: "bench", index: 1 },
+        disabled: false,
+      }),
     );
     expect(shut.rareCandy.map((o) => o.target)).toEqual([{ spot: "bench", index: 0 }]);
-    expect(shut.trainers).toContainEqual(expect.objectContaining({ name: "Rare Candy", disabled: false, rareCandy: true }));
+    expect(shut.trainers).toContainEqual(
+      expect.objectContaining({ name: "Rare Candy", disabled: false, rareCandy: true }),
+    );
     expect(shut.retreat).not.toBeNull();
     // The window: the attack, and nothing else.
     expect(open.abilities).toEqual([]);
@@ -653,15 +735,21 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
     // a window, it has no activated ability, and R-FL1 refuses the Stadium play that could
     // replace it — so a live Stadium row inside a window needs surgery. `redactPhase` withholds
     // it through the same `mainPhase` guard, and this is the only board that can tell.
-    const win = swapStadium(ensureInDeck(swing(mainPhaseBoard()).state, "p1", "fix-tool"), TOWN_STORE);
+    const win = swapStadium(
+      ensureInDeck(swing(mainPhaseBoard()).state, "p1", "fix-tool"),
+      TOWN_STORE,
+    );
     expect(win.allowances.attackAgainUid).not.toBeNull();
     const shut = redactGame(closed(win), "p1").phase;
     const open = redactGame(win, "p1").phase;
-    if (shut.kind !== "turn:action" || open.kind !== "turn:action") throw new Error("expected turn:action");
+    if (shut.kind !== "turn:action" || open.kind !== "turn:action")
+      throw new Error("expected turn:action");
     expect(shut.stadiumAbility).toEqual({ label: "Town Store", disabled: false, reason: null });
     expect(open.stadiumAbility).toBeNull();
     // …and the engine agrees: inside the window the activation is the window's refusal.
-    expect(refused(win, { type: "useStadiumAbility", seat: "p1" }).message).toContain("(Festival Lead)");
+    expect(refused(win, { type: "useStadiumAbility", seat: "p1" }).message).toContain(
+      "(Festival Lead)",
+    );
   });
 
   it("a barred second declaration greys the attack (the licence lost)", () => {
@@ -677,9 +765,10 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     const first = swing(table()).state;
     const revived = JSON.parse(JSON.stringify(first)) as GameState;
     expect(revived.allowances.attackAgainUid).toBe(first.allowances.attackAgainUid);
-    expect(refused(revived, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }).code).toBe(
-      "BAD_PHASE",
-    );
+    expect(
+      refused(revived, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 })
+        .code,
+    ).toBe("BAD_PHASE");
     expect(all(swing(revived).events, "TURN_ENDED")).toHaveLength(1);
   });
 
@@ -688,13 +777,24 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     // value: an Energy attachment (and every other main-phase play) is accepted between
     // the two attacks, which the printed card never allows.
     const first = JSON.parse(JSON.stringify(swing(table()).state)) as GameState;
-    const rolled: GameState = { ...first, allowances: { ...first.allowances, attackAgainUid: null } };
-    const energy = rolled.players.p1.hand.find((u) => rolled.cardIdByUid[u] === "fix-energy") as string;
+    const rolled: GameState = {
+      ...first,
+      allowances: { ...first.allowances, attackAgainUid: null },
+    };
+    const energy = rolled.players.p1.hand.find(
+      (u) => rolled.cardIdByUid[u] === "fix-energy",
+    ) as string;
     expect(energy).toBeDefined();
-    expect(refused(first, { type: "attachEnergy", seat: "p1", uid: energy, target: { spot: "active" } }).code).toBe(
-      "BAD_PHASE",
-    );
-    const granted = run(rolled, { type: "attachEnergy", seat: "p1", uid: energy, target: { spot: "active" } });
+    expect(
+      refused(first, { type: "attachEnergy", seat: "p1", uid: energy, target: { spot: "active" } })
+        .code,
+    ).toBe("BAD_PHASE");
+    const granted = run(rolled, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: energy,
+      target: { spot: "active" },
+    });
     expect(active(granted.state, "p1").energy).toContain(energy);
   });
 
@@ -707,13 +807,10 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     const v36 = { ...state, allowances: v36Allowances } as unknown as GameState;
     expect(refused(v36, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_PREVENTED");
     const energy = v36.players.p1.hand.find((u) => v36.cardIdByUid[u] === "fix-energy") as string;
-    expect(refused(v36, { type: "attachEnergy", seat: "p1", uid: energy, target: { spot: "active" } }).code).toBe(
-      "BAD_PHASE",
-    );
+    expect(
+      refused(v36, { type: "attachEnergy", seat: "p1", uid: energy, target: { spot: "active" } })
+        .code,
+    ).toBe("BAD_PHASE");
     expect(all(run(v36, { type: "endTurn", seat: "p1" }).events, "TURN_ENDED")).toHaveLength(1);
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

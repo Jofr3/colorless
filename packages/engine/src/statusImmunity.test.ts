@@ -257,7 +257,9 @@ describe("THE CENSUS — re-derived against 978 rows / 6 sets, not inherited", (
       [...(card.abilities ?? []), ...(card.attacks ?? [])]
         .map((entry) => entry.effect ?? "")
         .concat(card.effect ?? "")
-        .some((text) => /can't be (Burned|Paralyzed)|affected by those Special Conditions/.test(text)),
+        .some((text) =>
+          /can't be (Burned|Paralyzed)|affected by those Special Conditions/.test(text),
+        ),
     );
     expect(withImmunityText.map(([id]) => id).sort()).toEqual([
       "sv01-068",
@@ -505,7 +507,10 @@ describe("⚠️ §9 — the Ability lock, and an immunity that survived it woul
     const side = state.players.p2;
     const active = side.active;
     if (active === null) throw new Error("no Active");
-    state = { ...state, players: { ...state.players, p2: { ...side, active: { ...active, damage: 10 } } } };
+    state = {
+      ...state,
+      players: { ...state.players, p2: { ...side, active: { ...active, damage: 10 } } },
+    };
     const damaged = state.players.p2.active;
     if (damaged === null) throw new Error("no Active");
     expect(disabledAbilityUids(state).has(activeUid(state, "p2"))).toBe(true);
@@ -653,7 +658,11 @@ describe("BURN — Dachsbun refuses it, and the control on the same swing does n
 });
 
 describe("⚠️ NOT IMMUNE TO EVERYTHING — the per-condition claim, on one card", () => {
-  const landing: { key: AttackKey; status: StatusName; check: (c: ReturnType<typeof conditionsOf>) => unknown }[] = [
+  const landing: {
+    key: AttackKey;
+    status: StatusName;
+    check: (c: ReturnType<typeof conditionsOf>) => unknown;
+  }[] = [
     { key: "hypnosis", status: "asleep", check: (c) => c?.rotation },
     { key: "confuseRay", status: "confused", check: (c) => c?.rotation },
     { key: "toxic", status: "poisoned", check: (c) => (c?.poisonDamage ?? 0) > 0 },
@@ -807,9 +816,9 @@ describe("⚠️ THE CHECKUP — NOT gated, and that is DERIVED rather than skip
     let state = board("hotBite", "sv01-099");
     state = setConditions(state, "p2", { burned: true });
     const done = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(
-      findAll(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn"),
-    ).toHaveLength(1);
+    expect(findAll(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(
+      1,
+    );
     // The discriminator, stated where the claim is: Dachsbun refuses a Burn and
     // recovers from nothing, so the two clauses really are two fields.
     const dachsbun = done.state.players.p2.active;
@@ -888,7 +897,12 @@ describe("the structural questions", () => {
     if (active === null) throw new Error("no Active");
     expect(Object.keys(active)).not.toContain("statusImmunity");
     expect(Object.keys(active)).not.toContain("statusImmunities");
-    expect(active.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
+    expect(active.conditions).toEqual({
+      rotation: "none",
+      poisonDamage: 0,
+      burned: false,
+      confusionDamage: 30,
+    });
   });
 
   it("GATES NO ACTION — a Pokémon that refuses a condition is not harder to attack with", () => {

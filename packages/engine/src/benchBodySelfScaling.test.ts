@@ -1,10 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -233,9 +229,7 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 80,
     retreat: 2,
     types: ["Grass"],
-    attacks: [
-      { cost: ["Colorless"], name: "Do the Wave", damage: "20×", effect: DIPPLIN_TEXT },
-    ],
+    attacks: [{ cost: ["Colorless"], name: "Do the Wave", damage: "20×", effect: DIPPLIN_TEXT }],
   }),
   "sv09-051": battler("sv09-051", {
     name: "Tapu Koko ex",
@@ -419,17 +413,15 @@ describe("D282 §1 — the gate-clause census (LEADING, and since D541 TRAILING)
     // predicted a fourth spelling would test: the sentence neither starts with
     // `If ` nor contains a `. `, so it is in NEITHER of that filter's two halves.
     // 🆕🆕🆕 **D541 6/14 → 7/17** — the TRAILING gate clause (`censusAttackCorpus.ts` file line 82, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, **1 sentence / 3 legal printings**). ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — THEY DISAGREE** (D451), so this site was MEASURED and not copied from its neighbour.
-    expect(gated.length).toBe(9);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate sentences, 7 → 9 — both new rows are clause-only (like Miltank's, D395), so like it they move THIS number and NOT the `leadingIf` one below.)
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate printings, 17 → 19.)
+    expect(gated.length).toBe(9); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate sentences, 7 → 9 — both new rows are clause-only (like Miltank's, D395), so like it they move THIS number and NOT the `leadingIf` one below.)
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate printings, 17 → 19.)
 
     // ⚠️ THE NEGATIVE HALF, AND IT IS THE ONE THAT DECIDED THE DESIGN. Every OTHER
     // multi-sentence corpus row that opens with "If " is a sentence whose `If`
     // clause is the SUBSTANCE — no split may touch them. Six of them, and the
     // count is asserted so that a later slice adding a fourth gate spelling to
     // `ATTACK_GATE_CLAUSES` moves the first number and not this one.
-    const leadingIf = corpus.filter(
-      ([, text]) => text.startsWith("If ") && text.includes(". "),
-    );
+    const leadingIf = corpus.filter(([, text]) => text.startsWith("If ") && text.includes(". "));
     // 8 DISTINCT sentences / 16 printings. Three of the eight are gate spellings
     // (Terapagos ex, Volbeat, Exeggcute) carrying 10 of the 16 printings; the
     // other five are the substantive ones, 6 printings between them.
@@ -476,7 +468,9 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
     // One word separates these three sentences and they must produce three
     // different members. A reader that dropped the possessive would collapse them.
     expect(
-      deriveAttackDamageBonus("This attack does 20 more damage for each of your opponent's Benched Pokémon."),
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each of your opponent's Benched Pokémon.",
+      ),
     ).toEqual({ per: 20, count: { kind: "opponentBenchCount" } });
     expect(
       deriveAttackDamageBonus(

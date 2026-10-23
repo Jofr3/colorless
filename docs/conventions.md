@@ -38,8 +38,13 @@ only the conclusion.
 ## Code & quality
 - TypeScript strict; match the surrounding code's style and comment density.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`**
-  (tsc + **lint coverage** + biome lint + vitest) before calling work done.
-  ⚠️ `check` **lints but never checks FORMATTING** — see "The format gap" below.
+  (tsc + lint coverage + biome lint + **biome format** + the headless Lua tests +
+  the mutant `precheck` + vitest) before calling work done. Run `bun run format`
+  before committing.
+- After any refactor that moves, reformats or un-comments mutated code, run
+  `bun scripts/mutation/reanchor.ts --write`: it re-points rows whose `find` moved
+  (whitespace, comments and file splits are ignored when matching) and lists the
+  rest for manual re-anchoring or retirement (`--retire <file of ids>`).
 - Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
   opt into jsdom per-file (`// @vitest-environment jsdom`).
 - **Never inherit a suite figure from prose — six were stale in one session**
@@ -472,16 +477,6 @@ uncovered set. It names the files. **Delete a directory from `files.include` and
   — pulling drizzle's generated snapshots into the lint set is its own decision),
   and it says nothing about whether the rules are good, only whether the linter
   can see the file.
-
-### The format gap (still open — D197, re-measured at D212)
-**`bun run check` lints; it never checks formatting.** With `--max-diagnostics`
-raised past Biome's default cap of 20, **122 committed files are format-dirty**
-(79 `packages/engine`, 15 `packages/schema`, 15 `src/features`, 13 `apps/api`) —
-D197's "10 files" was the capped view of `apps/api` alone. So `bun run format
---write` produces a 122-file diff that has nothing to do with your slice.
-**Do not sweep it inside another change.** Closing it properly means one
-formatting-only commit plus a `biome format --check` step in `check`; until then,
-never run `bun run format` on a shared tree.
 
 ## Handing work to another agent (D421)
 

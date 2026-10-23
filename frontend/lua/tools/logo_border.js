@@ -1,7 +1,7 @@
 // Authoring only: retain the approved angular faces and replace their noisy
 // generated sidewalls with the original Balatro sprite's measured border.
-import { refineReflections } from './logo_reflections.js';
-import { insertEnergy, paintEnergy } from './logo_energy.js';
+import { refineReflections } from "./logo_reflections.js";
+import { insertEnergy, paintEnergy } from "./logo_energy.js";
 export function rebuildBorder(ctx, { onLayers } = {}) {
   const { width: w, height: h } = ctx.canvas;
   const source = ctx.getImageData(0, 0, w, h);
@@ -10,7 +10,7 @@ export function rebuildBorder(ctx, { onLayers } = {}) {
   for (let p = 0; p < count; p++) {
     const [r, g, b, a] = source.data.subarray(p * 4, p * 4 + 4);
     const ivory = Math.min(r, g, b) > 202;
-    const blue = b > 170 && g > 145 && b > r * .98 && b > g * 1.04;
+    const blue = b > 170 && g > 145 && b > r * 0.98 && b > g * 1.04;
     const coral = r > 200 && g > 90 && r > g * 1.15 && r > b * 1.15;
     mask[p] = a > 192 && (ivory || blue || coral) ? 1 : 0;
   }
@@ -22,24 +22,29 @@ export function rebuildBorder(ctx, { onLayers } = {}) {
       seen[start] = 1;
       let boundary = false;
       for (let head = 0; head < queue.length; head++) {
-        const p = queue[head], x = p % w, y = Math.floor(p / w);
+        const p = queue[head],
+          x = p % w,
+          y = Math.floor(p / w);
         if (!x || !y || x === w - 1 || y === h - 1) boundary = true;
         for (const n of [x ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w]) {
           if (n < 0 || n >= count || seen[n] || mask[n] !== value) continue;
-          seen[n] = 1; queue.push(n);
+          seen[n] = 1;
+          queue.push(n);
         }
       }
       visit(queue, boundary);
     }
   }
-  let letters = 0, counters = 0, repairedPixels = 0;
+  let letters = 0,
+    counters = 0,
+    repairedPixels = 0;
   const bounds = [];
   components(1, (pixels) => {
     if (pixels.length < 32) for (const p of pixels) mask[p] = 0;
     else {
       letters++;
       bounds.push({
-        left: Math.min(...pixels.map(p => p % w)),
+        left: Math.min(...pixels.map((p) => p % w)),
         height: Math.floor(Math.max(...pixels) / w) - Math.floor(Math.min(...pixels) / w) + 1,
         pixels,
       });
@@ -49,7 +54,10 @@ export function rebuildBorder(ctx, { onLayers } = {}) {
   components(0, (pixels, boundary) => {
     if (boundary) return;
     if (pixels.length <= 24) {
-      for (const p of pixels) { mask[p] = 1; repairedPixels++; }
+      for (const p of pixels) {
+        mask[p] = 1;
+        repairedPixels++;
+      }
     } else counters++;
   });
   if (letters !== 9 || counters !== 3)
@@ -61,20 +69,35 @@ export function rebuildBorder(ctx, { onLayers } = {}) {
   const scale = (bounds[1].height + bounds[3].height) / (2 * 166);
   // A small inward offset slims the strokes without squeezing the word or
   // moving its reflections. Keep the existing bevel dimensions and palette.
-  const inward = squaredDistances(mask.map(value => 1 - value), w, h);
+  const inward = squaredDistances(
+    mask.map((value) => 1 - value),
+    w,
+    h,
+  );
   let thinnedPixels = 0;
   for (let p = 0; p < count; p++) {
-    if (mask[p] && inward[p] <= 3 ** 2) { mask[p] = 0; thinnedPixels++; }
+    if (mask[p] && inward[p] <= 3 ** 2) {
+      mask[p] = 0;
+      thinnedPixels++;
+    }
   }
-  let slimLetters = 0, slimCounters = 0;
-  components(1, pixels => {
+  let slimLetters = 0,
+    slimCounters = 0;
+  components(1, (pixels) => {
     if (pixels.length < 8) {
-      for (const p of pixels) { mask[p] = 0; thinnedPixels++; }
+      for (const p of pixels) {
+        mask[p] = 0;
+        thinnedPixels++;
+      }
     } else slimLetters++;
   });
-  components(0, (_, boundary) => { if (!boundary) slimCounters++; });
+  components(0, (_, boundary) => {
+    if (!boundary) slimCounters++;
+  });
   if (slimLetters !== 9 || slimCounters !== 3)
-    throw new Error(`Thinning changed face topology: ${slimLetters} letters, ${slimCounters} counters`);
+    throw new Error(
+      `Thinning changed face topology: ${slimLetters} letters, ${slimCounters} counters`,
+    );
   // Balatro's 2x sprite repeats every logical pixel as an exact 2x2 block.
   // Match its base grid using the measured O height, then draw all surfaces on
   // that grid. Rebuilding the ledges here preserves their one-pixel highlights;
@@ -82,29 +105,45 @@ export function rebuildBorder(ctx, { onLayers } = {}) {
   const logicalWidth = Math.round(w / (2 * scale));
   const logicalHeight = Math.round(h / (2 * scale));
   const pixelMask = new Uint8Array(logicalWidth * logicalHeight);
-  for (let y = 0; y < logicalHeight; y++) for (let x = 0; x < logicalWidth; x++) {
-    const sx = Math.floor((x + .5) * w / logicalWidth);
-    const sy = Math.floor((y + .5) * h / logicalHeight);
-    pixelMask[y * logicalWidth + x] = mask[sy * w + sx];
-  }
-  const pixelGlyphs = [], seen = new Uint8Array(pixelMask.length);
+  for (let y = 0; y < logicalHeight; y++)
+    for (let x = 0; x < logicalWidth; x++) {
+      const sx = Math.floor(((x + 0.5) * w) / logicalWidth);
+      const sy = Math.floor(((y + 0.5) * h) / logicalHeight);
+      pixelMask[y * logicalWidth + x] = mask[sy * w + sx];
+    }
+  const pixelGlyphs = [],
+    seen = new Uint8Array(pixelMask.length);
   let pixelCounters = 0;
   for (let start = 0; start < pixelMask.length; start++) {
     if (seen[start]) continue;
-    const value = pixelMask[start], pixels = [start]; seen[start] = 1;
+    const value = pixelMask[start],
+      pixels = [start];
+    seen[start] = 1;
     let boundary = false;
     for (let head = 0; head < pixels.length; head++) {
-      const p = pixels[head], x = p % logicalWidth, y = Math.floor(p / logicalWidth);
+      const p = pixels[head],
+        x = p % logicalWidth,
+        y = Math.floor(p / logicalWidth);
       if (!x || !y || x === logicalWidth - 1 || y === logicalHeight - 1) boundary = true;
-      const neighbors = [x ? p - 1 : -1, x < logicalWidth - 1 ? p + 1 : -1, p - logicalWidth, p + logicalWidth];
+      const neighbors = [
+        x ? p - 1 : -1,
+        x < logicalWidth - 1 ? p + 1 : -1,
+        p - logicalWidth,
+        p + logicalWidth,
+      ];
       // Logical pixel art can join at a diagonal. Use eight-connected faces
       // and four-connected empty space so angled tips survive intact.
-      if (value) neighbors.push(
-        x ? p - logicalWidth - 1 : -1, x < logicalWidth - 1 ? p - logicalWidth + 1 : -1,
-        x ? p + logicalWidth - 1 : -1, x < logicalWidth - 1 ? p + logicalWidth + 1 : -1);
+      if (value)
+        neighbors.push(
+          x ? p - logicalWidth - 1 : -1,
+          x < logicalWidth - 1 ? p - logicalWidth + 1 : -1,
+          x ? p + logicalWidth - 1 : -1,
+          x < logicalWidth - 1 ? p + logicalWidth + 1 : -1,
+        );
       for (const n of neighbors) {
         if (n < 0 || n >= pixelMask.length || seen[n] || pixelMask[n] !== value) continue;
-        seen[n] = 1; pixels.push(n);
+        seen[n] = 1;
+        pixels.push(n);
       }
     }
     // Sampling a pointed tip can leave a detached single-pixel fleck. Drop
@@ -114,49 +153,84 @@ export function rebuildBorder(ctx, { onLayers } = {}) {
     else if (!boundary) pixelCounters++;
   }
   if (pixelGlyphs.length !== 9 || pixelCounters !== 3)
-    throw new Error(`Pixel grid changed face topology: ${pixelGlyphs.length} letters, ${pixelCounters} counters`);
+    throw new Error(
+      `Pixel grid changed face topology: ${pixelGlyphs.length} letters, ${pixelCounters} counters`,
+    );
   const energy = insertEnergy(pixelGlyphs, logicalWidth, logicalHeight);
   const outputWidth = energy.width;
   const logical = ctx.createImageData(outputWidth, logicalHeight);
   const letterMask = new Uint8Array(energy.mask.length);
-  for (const [i, glyph] of energy.glyphs.entries()) if (i !== 3) for (const p of glyph) letterMask[p] = 1;
-  logical.data.set(renderBorder(letterMask, outputWidth, logicalHeight, .5, energy));
+  for (const [i, glyph] of energy.glyphs.entries())
+    if (i !== 3) for (const p of glyph) letterMask[p] = 1;
+  logical.data.set(renderBorder(letterMask, outputWidth, logicalHeight, 0.5, energy));
   for (let p = 0; p < energy.mask.length; p++) if (energy.mask[p]) logical.data[p * 4 + 3] = 255;
-  const reflections = refineReflections(logical, energy.mask, energy.glyphs, outputWidth, logicalHeight,
-    { pixelGrid: true, authoringWidth: logicalWidth, glyphOffsets: energy.offsets, skipGlyphs: [3] });
-  const layers = onLayers ? {
-    background: ctx.createImageData(outputWidth, logicalHeight),
-    star: ctx.createImageData(energy.diameter, energy.diameter),
-  } : null;
+  const reflections = refineReflections(
+    logical,
+    energy.mask,
+    energy.glyphs,
+    outputWidth,
+    logicalHeight,
+    {
+      pixelGrid: true,
+      authoringWidth: logicalWidth,
+      glyphOffsets: energy.offsets,
+      skipGlyphs: [3],
+    },
+  );
+  const layers = onLayers
+    ? {
+        background: ctx.createImageData(outputWidth, logicalHeight),
+        star: ctx.createImageData(energy.diameter, energy.diameter),
+      }
+    : null;
   if (layers) layers.background.data.set(logical.data);
   const energyStats = paintEnergy(logical, energy, layers);
   const result = doublePixels(ctx, logical);
-  if (layers) onLayers({
-    background: doublePixels(ctx, layers.background), star: doublePixels(ctx, layers.star),
-    centerX: (energy.left + energy.diameter / 2) * 2,
-    centerY: (energy.top + energy.diameter / 2) * 2,
-  });
-  ctx.canvas.width = result.width; ctx.canvas.height = result.height;
+  if (layers)
+    onLayers({
+      background: doublePixels(ctx, layers.background),
+      star: doublePixels(ctx, layers.star),
+      centerX: (energy.left + energy.diameter / 2) * 2,
+      centerY: (energy.top + energy.diameter / 2) * 2,
+    });
+  ctx.canvas.width = result.width;
+  ctx.canvas.height = result.height;
   ctx.putImageData(result, 0, 0);
-  return { letters: slimLetters, counters: slimCounters, repairedPixels, thinnedPixels, sourceScale: scale,
-    pixelGrid: { width: outputWidth, height: logicalHeight, exportScale: 2, letters: pixelGlyphs.length, counters: pixelCounters - 1 }, reflections, energy: energyStats };
+  return {
+    letters: slimLetters,
+    counters: slimCounters,
+    repairedPixels,
+    thinnedPixels,
+    sourceScale: scale,
+    pixelGrid: {
+      width: outputWidth,
+      height: logicalHeight,
+      exportScale: 2,
+      letters: pixelGlyphs.length,
+      counters: pixelCounters - 1,
+    },
+    reflections,
+    energy: energyStats,
+  };
 }
 
 function doublePixels(ctx, source) {
   const result = ctx.createImageData(source.width * 2, source.height * 2);
-  for (let y = 0; y < result.height; y++) for (let x = 0; x < result.width; x++) {
-    const p = (Math.floor(y / 2) * source.width + Math.floor(x / 2)) * 4;
-    result.data.set(source.data.subarray(p, p + 4), (y * result.width + x) * 4);
-  }
+  for (let y = 0; y < result.height; y++)
+    for (let x = 0; x < result.width; x++) {
+      const p = (Math.floor(y / 2) * source.width + Math.floor(x / 2)) * 4;
+      result.data.set(source.data.subarray(p, p + 4), (y * result.width + x) * 4);
+    }
   return result;
 }
 
 function reshapeE(mask, originalFace, source, glyph, w, h) {
-  if (w !== 1024 || h !== 380) throw new Error('E contour uses the 1024 × 380 authoring grid');
+  if (w !== 1024 || h !== 380) throw new Error("E contour uses the 1024 × 380 authoring grid");
   // Replace the lower stem and foot as one contour. The stem gently flares
   // into a swept left serif; a shallow arch carries the foot to a tapered
   // right terminal instead of the previous squared, drooping block.
-  const canvas = new OffscreenCanvas(w, h), ctx = canvas.getContext('2d');
+  const canvas = new OffscreenCanvas(w, h),
+    ctx = canvas.getContext("2d");
   ctx.beginPath();
   ctx.moveTo(702, 225);
   ctx.lineTo(725, 225);
@@ -176,22 +250,28 @@ function reshapeE(mask, originalFace, source, glyph, w, h) {
   const outline = ctx.getImageData(0, 0, w, h).data;
   // Only remove this connected glyph's lower face, never adjacent L pixels.
   for (const p of glyph) if (Math.floor(p / w) >= 225) mask[p] = 0;
-  for (let y = 225; y < 304; y++) for (let x = 684; x < 790; x++) {
-    const p = y * w + x;
-    if (outline[p * 4 + 3] < 128) continue;
-    if (!originalFace[p]) {
-      let paint = -1, nearest = Infinity;
-      for (const candidate of glyph) {
-        const dx = candidate % w - x, dy = Math.floor(candidate / w) - y;
-        const distance = dx * dx + dy * dy;
-        if (distance < nearest) { nearest = distance; paint = candidate; }
+  for (let y = 225; y < 304; y++)
+    for (let x = 684; x < 790; x++) {
+      const p = y * w + x;
+      if (outline[p * 4 + 3] < 128) continue;
+      if (!originalFace[p]) {
+        let paint = -1,
+          nearest = Infinity;
+        for (const candidate of glyph) {
+          const dx = (candidate % w) - x,
+            dy = Math.floor(candidate / w) - y;
+          const distance = dx * dx + dy * dy;
+          if (distance < nearest) {
+            nearest = distance;
+            paint = candidate;
+          }
+        }
+        source.data.set(source.data.slice(paint * 4, paint * 4 + 3), p * 4);
+        source.data[p * 4 + 3] = 255;
       }
-      source.data.set(source.data.slice(paint * 4, paint * 4 + 3), p * 4);
-      source.data[p * 4 + 3] = 255;
+      mask[p] = 1;
+      originalFace[p] = 1;
     }
-    mask[p] = 1;
-    originalFace[p] = 1;
-  }
 }
 
 // Exact squared Euclidean distance, via separable lower envelopes of parabolas.
@@ -199,20 +279,28 @@ function reshapeE(mask, originalFace, source, glyph, w, h) {
 function squaredDistances(mask, w, h) {
   const field = new Float64Array(w * h);
   for (let p = 0; p < field.length; p++) field[p] = mask[p] ? 0 : 1e9;
-  const n = Math.max(w, h), f = new Float64Array(n), out = new Float64Array(n);
-  const vertices = new Int32Array(n), breaks = new Float64Array(n + 1);
+  const n = Math.max(w, h),
+    f = new Float64Array(n),
+    out = new Float64Array(n);
+  const vertices = new Int32Array(n),
+    breaks = new Float64Array(n + 1);
   function transform(length) {
     let k = 0;
-    vertices[0] = 0; breaks[0] = -Infinity; breaks[1] = Infinity;
+    vertices[0] = 0;
+    breaks[0] = -Infinity;
+    breaks[1] = Infinity;
     for (let q = 1; q < length; q++) {
       let crossing;
       do {
         const v = vertices[k];
-        crossing = ((f[q] + q * q) - (f[v] + v * v)) / (2 * (q - v));
+        crossing = (f[q] + q * q - (f[v] + v * v)) / (2 * (q - v));
         if (crossing > breaks[k]) break;
         k--;
       } while (k >= 0);
-      k++; vertices[k] = q; breaks[k] = crossing; breaks[k + 1] = Infinity;
+      k++;
+      vertices[k] = q;
+      breaks[k] = crossing;
+      breaks[k + 1] = Infinity;
     }
     k = 0;
     for (let q = 0; q < length; q++) {
@@ -243,10 +331,21 @@ export function renderBorder(mask, w, h, scale = 1, energy = null) {
   // Soften only the two lightest bands per the user's marked lower bevel:
   // warm ivory replaces pure white, and the lip sits closer to the taupe.
   const bands = [
-    ...[[18, 3], [16, 11], [14, 29], [12, 59], [10, 100]]
+    ...[
+      [18, 3],
+      [16, 11],
+      [14, 29],
+      [12, 59],
+      [10, 100],
+    ]
       // Continue the same five-step halo outside the disc's 3px dark rim.
-      .map(([radius, alpha]) => ({ radius, depth: 14, color: [255, 255, 255, alpha],
-        energyRim: 3 + (radius - 8) / 2, energyDepth: 3 })),
+      .map(([radius, alpha]) => ({
+        radius,
+        depth: 14,
+        color: [255, 255, 255, alpha],
+        energyRim: 3 + (radius - 8) / 2,
+        energyDepth: 3,
+      })),
     { radius: 8, depth: 14, color: [49, 58, 60, 255], energyRim: 3, energyDepth: 3 },
     { radius: 8, depth: 10, color: [67, 81, 83, 255], energyRim: 3, energyDepth: 2 },
     { radius: 8, depth: 8, color: [91, 117, 123, 255], energyRim: 3, energyDepth: 1 },
@@ -269,8 +368,8 @@ export function renderBorder(mask, w, h, scale = 1, energy = null) {
         let energyHit = false;
         if (energy && band.energyRim !== undefined) {
           const radius = energy.diameter / 2;
-          const dx = x + .5 - energy.left - radius;
-          const dy = y + .5 - energy.top - radius;
+          const dx = x + 0.5 - energy.left - radius;
+          const dy = y + 0.5 - energy.top - radius;
           const vertical = dy - Math.max(0, Math.min(band.energyDepth, dy));
           energyHit = dx * dx + vertical * vertical <= (radius + band.energyRim) ** 2;
         }

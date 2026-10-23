@@ -1,7 +1,15 @@
 import type { Card } from "@colorless/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
-import { activeTop, cardOfUid, matchesFilter, pokemonSuffixOf, prizeValueOf, topCardOf, topUid } from "./cards";
+import {
+  activeTop,
+  cardOfUid,
+  matchesFilter,
+  pokemonSuffixOf,
+  prizeValueOf,
+  topCardOf,
+  topUid,
+} from "./cards";
 import {
   // 🆕🆕🆕 D577 — the Area Zero Underdepths state check, queued at the three sweeps.
   benchTrimStages,
@@ -221,7 +229,9 @@ export function knockOut(
     events.push(knockedOutEvent(koedSeat, koedUid, cleanup));
     return {
       state: withSide(stamped, koedSeat, { ...cleanup.side, bench }),
-      stages: [{ kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) }],
+      stages: [
+        { kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) },
+      ],
     };
   }
   // Not in play — unreachable (every caller just scanned it lethal). No-op.
@@ -242,7 +252,11 @@ function koCleanup(
   if (rescued.length === 0) return { side: cleanup.side, discarded: cleanup.discarded, toHand: [] };
   const discarded = cleanup.discarded.filter((uid) => !toHand.includes(uid));
   return {
-    side: { ...cleanup.side, discard: [...side.discard, ...discarded], hand: [...side.hand, ...rescued] },
+    side: {
+      ...cleanup.side,
+      discard: [...side.discard, ...discarded],
+      hand: [...side.hand, ...rescued],
+    },
     discarded,
     toHand: rescued,
   };
@@ -374,7 +388,8 @@ function koRecoilOf(
     if (uid !== undefined && doomed.has(uid) && !lethalByEffect(body, state.turn)) {
       const passives = passivesOf(state, body);
       total +=
-        passives.damageAttackerOnKo - (abilityShareRefused ? passives.damageAttackerOnKoFromAbility : 0);
+        passives.damageAttackerOnKo -
+        (abilityShareRefused ? passives.damageAttackerOnKoFromAbility : 0);
     }
   }
   return total;
@@ -393,7 +408,12 @@ function koRecoilOf(
     twice; the second can find the attacker already doomed); an attacker no longer in play is still flipped
     for and nothing happens; the attacker's Knock Out is in the SAME batch as the Gengar ex's, so both Prizes
     are taken before either promotion. */
-function faintingSpells(state: GameState, attackerSeat: Seat, attackerUid: string, events: GameEvent[]): GameState {
+function faintingSpells(
+  state: GameState,
+  attackerSeat: Seat,
+  attackerUid: string,
+  events: GameEvent[],
+): GameState {
   const seat = otherSeat(attackerSeat);
   const doomed = new Set(lethalRefs(state, [seat]).map((ref) => ref.uid));
   if (doomed.size === 0) return state;
@@ -417,10 +437,24 @@ function faintingSpells(state: GameState, attackerSeat: Seat, attackerUid: strin
         : index === -1
           ? undefined
           : { seat: attackerSeat, spot: { spot: "bench", index } };
-    const attacker = ref === undefined ? undefined : ref.spot.spot === "active" ? own.active : own.bench[index];
+    const attacker =
+      ref === undefined ? undefined : ref.spot.spot === "active" ? own.active : own.bench[index];
     if (ref === undefined || attacker === null || attacker === undefined) continue;
-    if (effectRefused(next, attackerSeat, { seat, sourceUid: uid, invokedBy: "ability" }, events, attacker)) continue;
-    next = doomBodyAt(next, ref, isLethallyDamaged(next, attacker) ? undefined : koByEffectMarker(next.turn));
+    if (
+      effectRefused(
+        next,
+        attackerSeat,
+        { seat, sourceUid: uid, invokedBy: "ability" },
+        events,
+        attacker,
+      )
+    )
+      continue;
+    next = doomBodyAt(
+      next,
+      ref,
+      isLethallyDamaged(next, attacker) ? undefined : koByEffectMarker(next.turn),
+    );
   }
   return next;
 }
@@ -468,12 +502,7 @@ function addDamageByUid(
     (Gholdengo's "Surf Back" shuffles its own actor away, D312) has nowhere to
     carry the stamp and the record dies with the body, which is the right answer
     and not an error. */
-function stampAttackUse(
-  state: GameState,
-  seat: Seat,
-  uid: string,
-  attack: string,
-): GameState {
+function stampAttackUse(state: GameState, seat: Seat, uid: string, attack: string): GameState {
   const side = state.players[seat];
   const used: UsedAttack = { name: attack, turn: state.turn };
   if (side.active !== null && topUid(side.active) === uid) {
@@ -639,7 +668,11 @@ function seatPrizeReduction(
   const { state, count } = reduced;
   if (count === 0 || !koByOpponentPokemonEx(state, ref, attackerSeat, attackerUid)) return reduced;
   const body = preBatchBody(state, ref);
-  const holder = seatKoPrizeReductionOf(state, ref.seat, body === undefined ? undefined : inPlayCardOf(state, body));
+  const holder = seatKoPrizeReductionOf(
+    state,
+    ref.seat,
+    body === undefined ? undefined : inPlayCardOf(state, body),
+  );
   if (holder === null) return reduced;
   const next = Math.max(0, count - holder.rule.by);
   return {
@@ -1012,7 +1045,9 @@ function collectKnockOutPass(
     // Milotic lock — is `koEnergyRescueUids`, asked of the PRE-batch `state` (R-DC2). Auto-fires
     // (D27). Decided BEFORE `knockOut`, because the split happens inside its teardown.
     const rescuable =
-      entry.ref.seat !== attackerSeat && byAttackFor(entry.ref) ? preBatchBody(state, entry.ref) : undefined;
+      entry.ref.seat !== attackerSeat && byAttackFor(entry.ref)
+        ? preBatchBody(state, entry.ref)
+        : undefined;
     const ko = knockOut(
       next,
       entry.ref.seat,
@@ -1023,7 +1058,10 @@ function collectKnockOutPass(
       rescuable === undefined
         ? []
         : // 🆕🆕🆕 D598 — Infinite Shadow's own stack rides the same `toHand` (R-IS1).
-          [...koEnergyRescueUids(state, entry.ref.seat, rescuable), ...koSelfToHandUids(state, entry.ref.seat, rescuable)],
+          [
+            ...koEnergyRescueUids(state, entry.ref.seat, rescuable),
+            ...koSelfToHandUids(state, entry.ref.seat, rescuable),
+          ],
     );
     next = ko.state;
     for (const guardEvent of entry.guardEvents) events.push(guardEvent);
@@ -1050,7 +1088,12 @@ function collectKnockOutPass(
     if (attackerSeat !== entry.ref.seat && byAttackFor(entry.ref)) {
       const holder = preBatchBody(state, entry.ref);
       for (const toolUid of holder === undefined ? [] : koHolderToolTriggersOf(state, holder)) {
-        koTriggerStages.push({ kind: "koTrigger", seat: entry.ref.seat, uid: entry.ref.uid, toolUid });
+        koTriggerStages.push({
+          kind: "koTrigger",
+          seat: entry.ref.seat,
+          uid: entry.ref.uid,
+          toolUid,
+        });
       }
     }
   }
@@ -1063,7 +1106,10 @@ function collectKnockOutPass(
 
 /** 🆕🆕🆕 D566 — the in-play body on `ref.seat` whose top uid is `ref.uid`, on `state` (the
     PRE-batch board `collectKnockOutPass` is handed), or undefined. */
-function preBatchBody(state: GameState, ref: { seat: Seat; uid: string }): InPlayPokemon | undefined {
+function preBatchBody(
+  state: GameState,
+  ref: { seat: Seat; uid: string },
+): InPlayPokemon | undefined {
   const side = state.players[ref.seat];
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
   return bodies.find((body) => topUid(body) === ref.uid);
@@ -1359,7 +1405,6 @@ function planPrizes(
     if (face === "heads") {
       guardEvents.push({ type: "PRIZE_PREVENTED", seat: ref.seat, uid: ref.uid });
       push(0, guardEvents, true); // D323 — a PROHIBITION; no bonus, and no flip
-
     } else {
       push(baseCount, guardEvents);
     }
@@ -1451,13 +1496,23 @@ export function resolveMidTurnKnockOuts(
   const trims = [...queued, ...benchTrimStages(batch.state, trimFirst ?? actorSeat, queued)];
   // Nothing KO'd, no spot left empty and no Bench over its limit — the fast path asks the
   // trim too (D576 (e)'s measurement: it used to return without draining anything).
-  if (batch.stages.length === 0 && orphaned.length === 0 && trims.length === 0 && tail === undefined) {
+  if (
+    batch.stages.length === 0 &&
+    orphaned.length === 0 &&
+    trims.length === 0 &&
+    tail === undefined
+  ) {
     return ok(batch.state, events);
   }
   return advance(
     {
       ...batch.state,
-      pending: [...batch.stages, ...orphaned, ...trims, ...(tail ?? [{ kind: "resumeTurn", seat: actorSeat }])],
+      pending: [
+        ...batch.stages,
+        ...orphaned,
+        ...trims,
+        ...(tail ?? [{ kind: "resumeTurn", seat: actorSeat }]),
+      ],
     },
     events,
   );
@@ -1642,9 +1697,10 @@ export function finishAttack(
   next = stampSeatAttacker(next, attackerSeat, attackerUid);
   // 🆕🆕🆕 D614 — Luminous Wing on the Attacking Pokémon, read by uid in either zone (it may have
   // self-switched): the KO recoil's Ability share is refused, and the refusal is announced.
-  const attackerBody = [next.players[attackerSeat].active, ...next.players[attackerSeat].bench].find(
-    (body) => body !== null && body !== undefined && topUid(body) === attackerUid,
-  );
+  const attackerBody = [
+    next.players[attackerSeat].active,
+    ...next.players[attackerSeat].bench,
+  ].find((body) => body !== null && body !== undefined && topUid(body) === attackerUid);
   const shielded = attackerBody != null && passivesOf(next, attackerBody).preventAbilityEffects;
   // 🆕🆕🆕 D618 — Battle Cage: an attacker that self-switched onto its own Bench (D189) takes no
   // counters from the opponent's ABILITY share (Maractus "Exploding Needles"); a Tool's share (Vengeful
@@ -1853,7 +1909,11 @@ export function settleProgram(
     // EFFECT_PENDING's seat is the seat that MUST RESOLVE the decision (its own
     // doc) — the park's decider when one is named (opponentMayDraw: Ortega's
     // "your opponent may"), else the controller, which is who it always was.
-    events.push({ type: "EFFECT_PENDING", seat: result.decider ?? controller, note: result.prompt.note });
+    events.push({
+      type: "EFFECT_PENDING",
+      seat: result.decider ?? controller,
+      note: result.prompt.note,
+    });
     return ok(
       {
         ...settled,
@@ -1907,7 +1967,10 @@ export function settleProgram(
   if (prizes.length > 0) {
     const tie = tiedOverTheBatch(resumed, prizes);
     if (tie !== null) return finishGame(resumed, tie, events);
-    return advance({ ...resumed, pending: [...resumed.pending, { kind: "resumeTurn", seat: controller }] }, events);
+    return advance(
+      { ...resumed, pending: [...resumed.pending, { kind: "resumeTurn", seat: controller }] },
+      events,
+    );
   }
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
 }
@@ -1920,7 +1983,9 @@ function handAttachTripped(state: GameState, seat: Seat): boolean {
   // ⚠️ `?.` and not `!== null`: this runs over EVERY body at EVERY program completion, and
   // hand-built test bodies that predate the field (cardplay.test.ts `benchN`) omit it. A real
   // v38 body always carries it; a v37 record is retired by the version gate, not read here.
-  return bodies.some((body) => body.handAttachMark?.turn === state.turn && body.handAttachMark.tripped);
+  return bodies.some(
+    (body) => body.handAttachMark?.turn === state.turn && body.handAttachMark.tripped,
+  );
 }
 
 /** Run the on-KO triggered Ability of the just-Knocked-Out `uid` (owned by
@@ -1961,7 +2026,12 @@ function runKoTrigger(
   // card's own printed sentence), and a source-reading op then finds no board
   // top for it and whiffs, which is what "this Pokémon" means after a KO.
   return settleProgram(
-    runProgram(state, ability.program, { seat: koedSeat, sourceUid: uid, invokedBy: "ability" }, events),
+    runProgram(
+      state,
+      ability.program,
+      { seat: koedSeat, sourceUid: uid, invokedBy: "ability" },
+      events,
+    ),
     koedSeat,
     events,
     { resumeTail: true },
@@ -2024,7 +2094,12 @@ function runDamagedTrigger(
       : damagedToolTriggersOf(state, damagedSeat, holderUid).find((entry) => entry.toolUid === uid);
   if (tool !== undefined) {
     return settleProgram(
-      runProgram(state, tool.ability.program, { seat: damagedSeat, sourceUid: uid, ...attackerCtx }, events),
+      runProgram(
+        state,
+        tool.ability.program,
+        { seat: damagedSeat, sourceUid: uid, ...attackerCtx },
+        events,
+      ),
       damagedSeat,
       events,
       { resumeTail: true },
@@ -2132,7 +2207,12 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
   if (entry.fromAbility === true) {
     events.push({ type: "ABILITY_TRIGGERED", seat: koedSeat, uid, ability: entry.ability.name });
     return settleProgram(
-      runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: uid, invokedBy: "ability" }, events),
+      runProgram(
+        state,
+        entry.ability.program,
+        { seat: koedSeat, sourceUid: uid, invokedBy: "ability" },
+        events,
+      ),
       koedSeat,
       events,
       { resumeTail: true },
@@ -2650,7 +2730,9 @@ function runToolTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyRe
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
   const over = bodies.filter((body) => owesToolTrim(state, seat, body)).length;
   const program = Array.from({ length: over }, (): EffectOp => ({ op: "trimTools" }));
-  return settleProgram(runProgram(state, program, { seat }, events), seat, events, { resumeTail: true });
+  return settleProgram(runProgram(state, program, { seat }, events), seat, events, {
+    resumeTail: true,
+  });
 }
 
 /** 🆕🆕🆕 §6.1 (D577) — Boomerang Energy `sv06-166`: re-attach every uid the attack's own
@@ -2676,7 +2758,9 @@ function returnBoomerangs(
     return id !== undefined && programFor(id)?.energy?.returnAfterAttackDiscard === "hand";
   };
   const before = start.players[stage.seat];
-  const handed = recorded.filter((uid, i) => toHand(uid) && before.discard.includes(uid) && recorded.indexOf(uid) === i);
+  const handed = recorded.filter(
+    (uid, i) => toHand(uid) && before.discard.includes(uid) && recorded.indexOf(uid) === i,
+  );
   if (handed.length > 0)
     events.push({ type: "DISCARD_RETRIEVED", seat: stage.seat, dest: "hand", uids: [...handed] });
   const state =
@@ -2695,11 +2779,16 @@ function returnBoomerangs(
   if (!onActive && onBench === -1) return state;
   const back = uids.filter((uid, i) => side.discard.includes(uid) && uids.indexOf(uid) === i);
   if (back.length === 0) return state;
-  const host = (body: InPlayPokemon): InPlayPokemon => ({ ...body, energy: [...body.energy, ...back] });
+  const host = (body: InPlayPokemon): InPlayPokemon => ({
+    ...body,
+    energy: [...body.energy, ...back],
+  });
   const next = withSide(state, stage.seat, {
     ...side,
     active: onActive && side.active !== null ? host(side.active) : side.active,
-    bench: onActive ? side.bench : side.bench.map((body, index) => (index === onBench ? host(body) : body)),
+    bench: onActive
+      ? side.bench
+      : side.bench.map((body, index) => (index === onBench ? host(body) : body)),
     discard: side.discard.filter((uid) => !back.includes(uid)),
   });
   for (const uid of back) {
@@ -2855,9 +2944,18 @@ function resolveTakePrizes(
       ? recorded
       : {
           turn: state.turn,
-          count: recorded !== null && recorded.turn === state.turn ? recorded.count + uids.length : uids.length,
+          count:
+            recorded !== null && recorded.turn === state.turn
+              ? recorded.count + uids.length
+              : uids.length,
         };
-  return withSide(state, seat, { ...side, prizes, faceUpPrizes, prizesTakenOnTurn, hand: [...side.hand, ...uids] });
+  return withSide(state, seat, {
+    ...side,
+    prizes,
+    faceUpPrizes,
+    prizesTakenOnTurn,
+    hand: [...side.hand, ...uids],
+  });
 }
 
 /** Promote bench[index] into the empty Active spot (§8.1). The bench stays
@@ -2937,13 +3035,25 @@ function discardEndOfTurnEnergy(state: GameState, seat: Seat, events: GameEvent[
     );
     if (taken.length === 0) return pokemon;
     discarded.push(...taken);
-    events.push({ type: "ENERGY_DISCARDED", seat, actor: seat, uids: taken, from, host: topUid(pokemon) ?? "" });
+    events.push({
+      type: "ENERGY_DISCARDED",
+      seat,
+      actor: seat,
+      uids: taken,
+      from,
+      host: topUid(pokemon) ?? "",
+    });
     return { ...pokemon, energy: pokemon.energy.filter((uid) => !taken.includes(uid)) };
   };
   const active = side.active === null ? null : strip(side.active, { spot: "active" });
   const bench = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
   if (discarded.length === 0) return state;
-  return withSide(state, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+  return withSide(state, seat, {
+    ...side,
+    active,
+    bench,
+    discard: [...side.discard, ...discarded],
+  });
 }
 
 /** 🆕🆕🆕 §6.1 (D578) — Team Rocket's Energy's *"If this card is attached to anything other than
@@ -2972,16 +3082,30 @@ export function discardMisplacedEnergy(state: GameState, events: GameEvent[]): G
     const side = next.players[seat];
     const discarded: string[] = [];
     const strip = (pokemon: InPlayPokemon, from: PokemonTarget): InPlayPokemon => {
-      const taken = pokemon.energy.filter((uid) => !energyMayBeAttachedTo(state, cardOfUid(state, uid), pokemon));
+      const taken = pokemon.energy.filter(
+        (uid) => !energyMayBeAttachedTo(state, cardOfUid(state, uid), pokemon),
+      );
       if (taken.length === 0) return pokemon;
       discarded.push(...taken);
-      events.push({ type: "ENERGY_DISCARDED", seat, actor: seat, uids: taken, from, host: topUid(pokemon) ?? "" });
+      events.push({
+        type: "ENERGY_DISCARDED",
+        seat,
+        actor: seat,
+        uids: taken,
+        from,
+        host: topUid(pokemon) ?? "",
+      });
       return { ...pokemon, energy: pokemon.energy.filter((uid) => !taken.includes(uid)) };
     };
     const active = side.active === null ? null : strip(side.active, { spot: "active" });
     const bench = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
     if (discarded.length === 0) continue;
-    next = withSide(next, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+    next = withSide(next, seat, {
+      ...side,
+      active,
+      bench,
+      discard: [...side.discard, ...discarded],
+    });
   }
   return next;
 }
@@ -3025,13 +3149,25 @@ function discardEndOfTurnTools(state: GameState, seat: Seat, events: GameEvent[]
     );
     if (taken.length === 0) return pokemon;
     discarded.push(...taken);
-    events.push({ type: "TOOLS_DISCARDED", seat, actor: seat, uids: taken, host: topUid(pokemon) ?? "", when: "consumed" });
+    events.push({
+      type: "TOOLS_DISCARDED",
+      seat,
+      actor: seat,
+      uids: taken,
+      host: topUid(pokemon) ?? "",
+      when: "consumed",
+    });
     return { ...pokemon, tools: pokemon.tools.filter((uid) => !taken.includes(uid)) };
   };
   const active = side.active === null ? null : strip(side.active);
   const bench = side.bench.map(strip);
   if (discarded.length === 0) return state;
-  return withSide(state, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+  return withSide(state, seat, {
+    ...side,
+    active,
+    bench,
+    discard: [...side.discard, ...discarded],
+  });
 }
 
 /** Drain GameState.pending stage by stage. Automatic stages (TURN_ENDED,
@@ -3052,7 +3188,8 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
   // skips the seats it queued, so it runs once.
   const head = state.pending[0];
   const toolTrims = head === undefined ? [] : toolTrimStages(state, head.seat, state.pending);
-  if (toolTrims.length > 0) return advance({ ...state, pending: [...toolTrims, ...state.pending] }, events);
+  if (toolTrims.length > 0)
+    return advance({ ...state, pending: [...toolTrims, ...state.pending] }, events);
   const stage = state.pending[0];
   if (stage === undefined) return ok(state, events);
   switch (stage.kind) {
@@ -3086,7 +3223,10 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
       const side = state.players[stage.seat];
       const [deck, rngState] = shuffle([...side.deck, ...side.hand], state.rngState);
       events.push({ type: "HAND_SHUFFLED_INTO_DECK", seat: stage.seat, count: side.hand.length });
-      return advance(popStage({ ...withSide(state, stage.seat, { ...side, hand: [], deck }), rngState }), events);
+      return advance(
+        popStage({ ...withSide(state, stage.seat, { ...side, hand: [], deck }), rngState }),
+        events,
+      );
     }
     case "promote": {
       const side = state.players[stage.seat];
@@ -3122,7 +3262,11 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
               ...state,
               pending: [
                 ...powerglass.map(
-                  ({ toolUid }): PendingStage => ({ kind: "endTurnToolTrigger", seat: stage.seat, toolUid }),
+                  ({ toolUid }): PendingStage => ({
+                    kind: "endTurnToolTrigger",
+                    seat: stage.seat,
+                    toolUid,
+                  }),
                 ),
                 { ...stage, toolsDone: true },
                 ...state.pending.slice(1),
@@ -3188,10 +3332,7 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
           uid: state.allowances.attackAgainUid,
         });
       }
-      return ok(
-        { ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } },
-        events,
-      );
+      return ok({ ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } }, events);
     }
     case "koTrigger":
       // §9 (M4) — the just-Knocked-Out Pokémon's on-KO Ability. Pop the stage

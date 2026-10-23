@@ -503,7 +503,7 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
     for (const [text, why] of DEFERRED) expect(deriveAttackEffect(text), why).toBeNull();
   });
 
-  it("🆕🆕🆕 D527 — the retired deferral: \"a DYNAMIC max (svp-188) — `max` is a number, not an expression\" was TRUE at D231 and FALSE since D514, and the row now derives on its OWN anchor to the exact two-op program with `max: \"yourBenchCount\"`", () => {
+  it('🆕🆕🆕 D527 — the retired deferral: "a DYNAMIC max (svp-188) — `max` is a number, not an expression" was TRUE at D231 and FALSE since D514, and the row now derives on its OWN anchor to the exact two-op program with `max: "yourBenchCount"`', () => {
     // D178/D418's second half: the refusal is INVERTED in place, its reason quoted as prose
     // rather than deleted. `max` became `number | "any"` at D514 and `number | "any" |
     // "yourBenchCount"` at D527; the row goes through NO noun table (the noun is fixed in the
@@ -523,7 +523,7 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
     expect(DEFERRED).toHaveLength(3);
   });
 
-  it("🆕🆕🆕 D531 — the retired deferral: \"a BOARD-DEPENDENT noun (sv07-065) — the filter would read the attacker\" was TRUE about the FILTER and named the wrong LAYER; the row now derives on its OWN anchor to the flat sibling's program plus the park-time rider `typedAsAttachedBasicEnergy`", () => {
+  it('🆕🆕🆕 D531 — the retired deferral: "a BOARD-DEPENDENT noun (sv07-065) — the filter would read the attacker" was TRUE about the FILTER and named the wrong LAYER; the row now derives on its OWN anchor to the flat sibling\'s program plus the park-time rider `typedAsAttachedBasicEnergy`', () => {
     // D178/D418's second half: the refusal is INVERTED in place, its reason quoted as prose rather
     // than deleted. The premise STILL HOLDS — `matchesFilter` is a pure predicate and no
     // `CardFilter` reads the board — which is exactly why the board is read at the PARK (the
@@ -548,7 +548,9 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
     // …and the flat twin still derives WITHOUT the rider on the sibling anchor — the rider is the
     // one key between the two programs, not a change to this table's reading.
     expect(
-      deriveAttackEffect("Search your deck for up to 5 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."),
+      deriveAttackEffect(
+        "Search your deck for up to 5 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+      ),
     ).toEqual([
       { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 5, reveal: true },
       { op: "shuffleDeck" },

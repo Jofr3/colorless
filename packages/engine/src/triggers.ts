@@ -139,7 +139,10 @@ export function runBoardTrigger(
     if (state.allowances.abilitiesUsed.includes(usedKey)) return ok(state, events);
     armed = {
       ...state,
-      allowances: { ...state.allowances, abilitiesUsed: [...state.allowances.abilitiesUsed, usedKey] },
+      allowances: {
+        ...state.allowances,
+        abilitiesUsed: [...state.allowances.abilitiesUsed, usedKey],
+      },
     };
   }
   // Optional triggers auto-fire (see TriggeredAbility.optional) — the "up to"
@@ -346,8 +349,12 @@ function sweepTriggers(
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
       next = recoverStatuses(
         // 🆕🆕🆕 D614 — `invokedBy: "ability"` on all three sweeps here (the §11 ability channel).
-        runProgram(next, ability.program, { seat: watcher, sourceUid: uid, subjectUid, invokedBy: "ability" }, events)
-          .state,
+        runProgram(
+          next,
+          ability.program,
+          { seat: watcher, sourceUid: uid, subjectUid, invokedBy: "ability" },
+          events,
+        ).state,
         events,
       );
     }
@@ -456,7 +463,13 @@ export function runCheckupTriggers(
       if (pokemon === undefined) continue;
       const uid = topUid(pokemon);
       if (uid === undefined) continue;
-      for (const ability of triggersOf(next, pokemon, "betweenTurns", target.spot === "active", "self")) {
+      for (const ability of triggersOf(
+        next,
+        pokemon,
+        "betweenTurns",
+        target.spot === "active",
+        "self",
+      )) {
         events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
         // Non-parking by construction — a betweenTurns program returns done, so
         // taking .state loses nothing (parking mid-Checkup is deferred).
@@ -479,7 +492,8 @@ export function runCheckupTriggers(
         // heals, Trevenant places a counter), so this is latent — but `program` is
         // a plain EffectOp[] and nothing stops the next one from doing so.
         next = recoverStatuses(
-          runProgram(next, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events).state,
+          runProgram(next, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events)
+            .state,
           events,
         );
       }
@@ -582,7 +596,12 @@ export function koToolTriggersOf(
   koedUid: string,
 ): { toolUid: string; holderUid: string; ability: TriggeredAbility; fromAbility?: true }[] {
   const side = state.players[seat];
-  const out: { toolUid: string; holderUid: string; ability: TriggeredAbility; fromAbility?: true }[] = [];
+  const out: {
+    toolUid: string;
+    holderUid: string;
+    ability: TriggeredAbility;
+    fromAbility?: true;
+  }[] = [];
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
   for (const body of bodies) {
     const holderUid = topUid(body);
@@ -593,7 +612,8 @@ export function koToolTriggersOf(
     if (holderUid === koedUid && !disabledAbilityUids(state).has(holderUid)) {
       const top = topCardOf(state, body);
       for (const ability of (top === undefined ? undefined : programFor(top.id)?.triggered) ?? []) {
-        if (ability.trigger === "onSelfActiveKnockedOut") out.push({ toolUid: holderUid, holderUid, ability, fromAbility: true });
+        if (ability.trigger === "onSelfActiveKnockedOut")
+          out.push({ toolUid: holderUid, holderUid, ability, fromAbility: true });
       }
     }
     // 🆕🆕🆕 D566 — THE KO'D BODY IS SKIPPED for the ally timing and READ for the self one:

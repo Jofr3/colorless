@@ -142,7 +142,9 @@ function localSetup(seed: number, first: Seat): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);

@@ -436,10 +436,7 @@ describe("the census — discovered from the population, not enumerated", () => 
     // driver of the unfiltered path and the FILTERED arm is the only live one. The
     // anchor and the fixture are both KEPT, on D364's rule: they are keyed on
     // printed text, the reading is still correct, and a reprint restores it free.
-    expect(found).toEqual([
-      "swsh10.5-043[0] Raging Crash",
-      "fix-benchnoun[0] Static Tally",
-    ]);
+    expect(found).toEqual(["swsh10.5-043[0] Raging Crash", "fix-benchnoun[0] Static Tally"]);
     expect(
       legalAttackCorpus().filter(
         ([, text]) =>

@@ -73,9 +73,18 @@ function printed(id: string, name: string, trainerType: string, effect: string):
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
-  ...Object.fromEntries(JAMMING.map((id) => [id, printed(id, "Jamming Tower", "Stadium", JAMMING_TEXT)])),
-  ...Object.fromEntries(FESTIVAL.map((id) => [id, printed(id, "Festival Grounds", "Stadium", FESTIVAL_TEXT)])),
-  [HEROS_CAPE]: printed(HEROS_CAPE, "Hero's Cape", "Tool", "The Pokémon this card is attached to gets +100 HP."),
+  ...Object.fromEntries(
+    JAMMING.map((id) => [id, printed(id, "Jamming Tower", "Stadium", JAMMING_TEXT)]),
+  ),
+  ...Object.fromEntries(
+    FESTIVAL.map((id) => [id, printed(id, "Festival Grounds", "Stadium", FESTIVAL_TEXT)]),
+  ),
+  [HEROS_CAPE]: printed(
+    HEROS_CAPE,
+    "Hero's Cape",
+    "Tool",
+    "The Pokémon this card is attached to gets +100 HP.",
+  ),
   [AIR_BALLOON]: printed(
     AIR_BALLOON,
     "Air Balloon",
@@ -107,9 +116,23 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 200,
     retreat: 1,
     attacks: [
-      { cost: ["Colorless"], name: "Confuse Ray", damage: 10, effect: "Your opponent's Active Pokémon is now Confused." },
-      { cost: ["Colorless"], name: "Rest", effect: "This Pokémon is now Asleep. Heal 30 damage from it." },
-      { cost: ["Colorless"], name: "Toxic", damage: 10, effect: "Your opponent's Active Pokémon is now Poisoned." },
+      {
+        cost: ["Colorless"],
+        name: "Confuse Ray",
+        damage: 10,
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Rest",
+        effect: "This Pokémon is now Asleep. Heal 30 damage from it.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Toxic",
+        damage: 10,
+        effect: "Your opponent's Active Pokémon is now Poisoned.",
+      },
     ],
   }),
 };
@@ -145,7 +168,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -153,11 +178,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -184,25 +212,42 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 
 /** p1's turn 2: p1 `active` (with `energy` {C}), p2 `oppActive` (with `oppEnergy`), a Tool
     on each Active if named, and each Bench EMPTY. */
-function table(opts: {
-  active?: string;
-  oppActive?: string;
-  energy?: number;
-  oppEnergy?: number;
-  tool?: string;
-  oppTool?: string;
-  seed?: number;
-} = {}): GameState {
+function table(
+  opts: {
+    active?: string;
+    oppActive?: string;
+    energy?: number;
+    oppEnergy?: number;
+    tool?: string;
+    oppTool?: string;
+    seed?: number;
+  } = {},
+): GameState {
   let state = opened(opts.seed ?? 5622);
-  state = setActiveFromDeck(ensureInDeck(state, "p1", opts.active ?? HEXER), "p1", opts.active ?? HEXER);
-  state = setActiveFromDeck(ensureInDeck(state, "p2", opts.oppActive ?? WALL), "p2", opts.oppActive ?? WALL);
+  state = setActiveFromDeck(
+    ensureInDeck(state, "p1", opts.active ?? HEXER),
+    "p1",
+    opts.active ?? HEXER,
+  );
+  state = setActiveFromDeck(
+    ensureInDeck(state, "p2", opts.oppActive ?? WALL),
+    "p2",
+    opts.oppActive ?? WALL,
+  );
   state = clearBench(clearBench(state, "p1"), "p2");
-  if (opts.tool !== undefined) state = attachToolFromDeck(ensureInDeck(state, "p1", opts.tool), "p1", "active", opts.tool);
+  if (opts.tool !== undefined)
+    state = attachToolFromDeck(ensureInDeck(state, "p1", opts.tool), "p1", "active", opts.tool);
   if (opts.oppTool !== undefined) {
-    state = attachToolFromDeck(ensureInDeck(state, "p2", opts.oppTool), "p2", "active", opts.oppTool);
+    state = attachToolFromDeck(
+      ensureInDeck(state, "p2", opts.oppTool),
+      "p2",
+      "active",
+      opts.oppTool,
+    );
   }
   if ((opts.energy ?? 1) > 0) state = attachFromDeck(state, "p1", "fix-energy", opts.energy ?? 1);
-  if ((opts.oppEnergy ?? 0) > 0) state = attachFromDeck(state, "p2", "fix-energy", opts.oppEnergy ?? 0);
+  if ((opts.oppEnergy ?? 0) > 0)
+    state = attachFromDeck(state, "p2", "fix-energy", opts.oppEnergy ?? 0);
   return state;
 }
 
@@ -247,7 +292,8 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 const active = (state: GameState, seat: Seat) => state.players[seat].active as InPlayPokemon;
-const swing = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 stadiums §1 — the prints, and the registry rows that map them", () => {
@@ -327,7 +373,11 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     expect(conditionHolds(board, "p1", { kind: "yourActiveHasToolAttached" })).toBe(true);
     expect(conditionHolds(board, "p1", { kind: "opponentActiveHasToolAttached" })).toBe(true);
     const held = inHand(board, "p1", RESCUE_BOARD);
-    expectErr(held.state, { type: "attachTool", seat: "p1", uid: held.uid, target: { spot: "active" } }, "TOOL_ALREADY_ATTACHED");
+    expectErr(
+      held.state,
+      { type: "attachTool", seat: "p1", uid: held.uid, target: { spot: "active" } },
+      "TOOL_ALREADY_ATTACHED",
+    );
   });
 
   it("🛑 replaced by another Stadium, the Tools work again (a live read, nothing stamped)", () => {
@@ -340,25 +390,31 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, both boards (R-FG)", () => {
-  it("🛑 \"can't be affected\": an opposing Active WITH Energy refuses the condition (one STATUS_PREVENTED)", () => {
+  it('🛑 "can\'t be affected": an opposing Active WITH Energy refuses the condition (one STATUS_PREVENTED)', () => {
     const board = stadium(table({ oppEnergy: 1 }), FESTIVAL[0]);
     const { state, events } = swing(board, CONFUSE);
-    expect(all(events, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([["p2", "confused"]]);
+    expect(all(events, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([
+      ["p2", "confused"],
+    ]);
     expect(all(events, "STATUS_APPLIED")).toEqual([]);
     expect(active(state, "p2").conditions.rotation).toBe("none");
   });
 
-  it("🛑 WITHOUT Energy the condition lands — \"that has any Energy attached\"", () => {
+  it('🛑 WITHOUT Energy the condition lands — "that has any Energy attached"', () => {
     const { events } = swing(stadium(table(), FESTIVAL[0]), TOXIC);
-    expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([["p2", "poisoned"]]);
+    expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([
+      ["p2", "poisoned"],
+    ]);
   });
 
   it("🛑 \"both yours and your opponent's\" — the attacker's OWN self-inflicted Sleep is refused too", () => {
     const { events } = swing(stadium(table(), FESTIVAL[0], "p2"), REST);
-    expect(all(events, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([["p1", "asleep"]]);
+    expect(all(events, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([
+      ["p1", "asleep"],
+    ]);
   });
 
-  it("🛑 \"recovers from ALL\" — PLAYING it clears every condition on each Energy-carrying Active, both boards", () => {
+  it('🛑 "recovers from ALL" — PLAYING it clears every condition on each Energy-carrying Active, both boards', () => {
     let board = table({ oppEnergy: 1 });
     board = setConditions(board, "p2", { poisonDamage: 10, burned: true, rotation: "asleep" });
     board = setConditions(board, "p1", { rotation: "confused" });
@@ -368,7 +424,11 @@ describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, 
       ["p1", ["confused"], "recovered"],
       ["p2", ["asleep", "burned", "poisoned"], "recovered"],
     ]);
-    expect(active(state, "p2").conditions).toMatchObject({ poisonDamage: 0, burned: false, rotation: "none" });
+    expect(active(state, "p2").conditions).toMatchObject({
+      poisonDamage: 0,
+      burned: false,
+      rotation: "none",
+    });
   });
 
   it("🛑 a body WITHOUT Energy keeps its conditions when it is played", () => {
@@ -379,7 +439,10 @@ describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, 
   });
 
   it("🛑 an Energy ATTACHED while it is in play cures the body at once (the §6.2 moment)", () => {
-    let board = stadium(setConditions(table({ energy: 0 }), "p1", { poisonDamage: 10 }), FESTIVAL[0]);
+    let board = stadium(
+      setConditions(table({ energy: 0 }), "p1", { poisonDamage: 10 }),
+      FESTIVAL[0],
+    );
     const held = inHand(board, "p1", "fix-energy");
     board = held.state;
     const { state, events } = mustApply(board, {
@@ -405,7 +468,7 @@ describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, 
     expect(stadiumShieldsStatus(jammed, active(jammed, "p2"))).toBe(false);
   });
 
-  it("\"recovers\" is one-way: replaced by Jamming Tower, the cured body stays cured and can be affected again", () => {
+  it('"recovers" is one-way: replaced by Jamming Tower, the cured body stays cured and can be affected again', () => {
     let board = setConditions(table({ oppEnergy: 1 }), "p2", { rotation: "asleep" });
     board = play(board, FESTIVAL[0]).state;
     expect(active(board, "p2").conditions.rotation).toBe("none");

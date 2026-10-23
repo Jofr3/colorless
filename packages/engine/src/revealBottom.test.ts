@@ -76,7 +76,11 @@ function census(state: GameState, seat: Seat): string[] {
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, the shape every Trainer suite here uses. */
 function board(seed: number): GameState {
-  const state = driveSetup(seed, { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK }, { first: "p2" });
+  const state = driveSetup(
+    seed,
+    { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
+    { first: "p2" },
+  );
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
@@ -231,7 +235,12 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       choice: { kind: "cards", uids: [picked] },
     });
     const bottomed = find(events, "CARD_TO_BOTTOM_OF_DECK");
-    expect(bottomed).toEqual({ type: "CARD_TO_BOTTOM_OF_DECK", seat: "p2", uid: picked, actor: "p1" });
+    expect(bottomed).toEqual({
+      type: "CARD_TO_BOTTOM_OF_DECK",
+      seat: "p2",
+      uid: picked,
+      actor: "p1",
+    });
     // The card sits on the BOTTOM — the deck's last element, its order above
     // untouched — and left the hand; nothing was created or destroyed.
     expect(asked.players.p2.deck.at(-1)).toBe(picked);
@@ -531,12 +540,20 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     // the controller "no Supporter in there" before they played the card.
     const state = ortegaBoard(["fix-item", "fix-grass-energy"]);
     expect(
-      programPlayable(state, [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }], "p1"),
+      programPlayable(
+        state,
+        [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }],
+        "p1",
+      ),
     ).toBe(true);
     // …and still refuses the empty hand, which IS public.
     const empty = ortegaBoard([]);
     expect(
-      programPlayable(empty, [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }], "p1"),
+      programPlayable(
+        empty,
+        [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }],
+        "p1",
+      ),
     ).toBe(false);
   });
 

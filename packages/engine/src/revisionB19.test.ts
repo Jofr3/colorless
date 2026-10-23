@@ -99,7 +99,12 @@ const LOCAL: Record<string, Card> = {
     abilities: ability("Lethargic Charge", LETHARGIC_CHARGE),
     attacks: TAP,
   }),
-  [LARRY]: battler(LARRY, { name: "Larry's B19 Body", types: ["Colorless"], hp: 300, attacks: TAP }),
+  [LARRY]: battler(LARRY, {
+    name: "Larry's B19 Body",
+    types: ["Colorless"],
+    hp: 300,
+    attacks: TAP,
+  }),
   [WOOLOO]: battler(WOOLOO, { name: "Hop's Wooloo", types: ["Colorless"], hp: 70, attacks: TAP }),
   [DUBWOOL]: battler(DUBWOOL, {
     name: "Hop's Dubwool",
@@ -226,7 +231,8 @@ function table(p1: SideSpec, p2: SideSpec): GameState {
 
 function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -245,7 +251,8 @@ const activeOf = (state: GameState, seat: Seat): InPlayPokemon => {
   if (body === null) throw new Error(`no ${seat} Active`);
   return body;
 };
-const idOf = (state: GameState, body: InPlayPokemon): string | undefined => state.cardIdByUid[body.stack.at(-1) ?? ""];
+const idOf = (state: GameState, body: InPlayPokemon): string | undefined =>
+  state.cardIdByUid[body.stack.at(-1) ?? ""];
 
 const tealDance: GameAction = {
   type: "useAbility",
@@ -259,41 +266,65 @@ const tealDance: GameAction = {
 describe("B19 §1 — an EFFECT's attach from the hand is an attach from the hand (Auto Heal, Gnawing Curse)", () => {
   it("the programs: both rows watch `onEnergyAttach`, and nothing else in the registry does", () => {
     expect(programFor(MAGEARNA)?.triggered).toEqual([
-      { name: "Auto Heal", trigger: "onEnergyAttach", activeOnly: true, program: [{ op: "healSubject", amount: 90 }] },
+      {
+        name: "Auto Heal",
+        trigger: "onEnergyAttach",
+        activeOnly: true,
+        program: [{ op: "healSubject", amount: 90 }],
+      },
     ]);
     for (const id of GENGARS) {
       expect(programFor(id)?.triggered, id).toEqual([
-        { name: "Gnawing Curse", trigger: "onEnergyAttach", opponentAction: true, program: [{ op: "damageSubject", amount: 20 }] },
+        {
+          name: "Gnawing Curse",
+          trigger: "onEnergyAttach",
+          opponentAction: true,
+          program: [{ op: "damageSubject", amount: 20 }],
+        },
       ]);
     }
     const watchers = registryCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.trigger === "onEnergyAttach"),
     );
-    expect(watchers.filter((id) => !id.startsWith("fix-")).sort()).toEqual([...GENGARS, MAGEARNA].sort());
+    expect(watchers.filter((id) => !id.startsWith("fix-")).sort()).toEqual(
+      [...GENGARS, MAGEARNA].sort(),
+    );
   });
 
   it("Teal Dance onto a benched Ogerpon at 100 damage, Magearna Active: healed 90, ends at 10", () => {
-    const state = table({ active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 100 }], hand: [G] }, { active: { id: FILLER } });
+    const state = table(
+      { active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 100 }], hand: [G] },
+      { active: { id: FILLER } },
+    );
     const { state: after, events } = must(state, tealDance);
     const ogerpon = benchAt(after, "p1", 0);
     expect(ogerpon.energy).toHaveLength(1);
     expect(ogerpon.damage).toBe(10);
-    expect(events.filter((e) => e.type === "ABILITY_TRIGGERED").map((e) => e.type === "ABILITY_TRIGGERED" && e.ability)).toEqual([
-      "Auto Heal",
-    ]);
+    expect(
+      events
+        .filter((e) => e.type === "ABILITY_TRIGGERED")
+        .map((e) => e.type === "ABILITY_TRIGGERED" && e.ability),
+    ).toEqual(["Auto Heal"]);
     expect(events.filter((e) => e.type === "HEALED")).toHaveLength(1);
     // The Ability's own rider still resolves: one card drawn.
     expect(after.players.p1.hand).toHaveLength(1);
   });
 
   it("the heal is clamped to the damage present (Ogerpon at 40 ends at 0)", () => {
-    const state = table({ active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 40 }], hand: [G] }, { active: { id: FILLER } });
+    const state = table(
+      { active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 40 }], hand: [G] },
+      { active: { id: FILLER } },
+    );
     expect(benchAt(must(state, tealDance).state, "p1", 0).damage).toBe(0);
   });
 
-  it("control: Magearna on the BENCH heals nothing (\"As long as this Pokémon is in the Active Spot\")", () => {
+  it('control: Magearna on the BENCH heals nothing ("As long as this Pokémon is in the Active Spot")', () => {
     const state = table(
-      { active: { id: FILLER }, bench: [{ id: OGERPON, damage: 100 }, { id: MAGEARNA }], hand: [G] },
+      {
+        active: { id: FILLER },
+        bench: [{ id: OGERPON, damage: 100 }, { id: MAGEARNA }],
+        hand: [G],
+      },
       { active: { id: FILLER } },
     );
     const { state: after, events } = must(state, tealDance);
@@ -303,10 +334,16 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
 
   for (const id of GENGARS) {
     it(`${id}: Teal Dance under the opponent's Gengar ex puts 2 damage counters on that Ogerpon`, () => {
-      const state = table({ active: { id: FILLER }, bench: [{ id: OGERPON, damage: 0 }], hand: [G] }, { active: { id } });
+      const state = table(
+        { active: { id: FILLER }, bench: [{ id: OGERPON, damage: 0 }], hand: [G] },
+        { active: { id } },
+      );
       const { state: after, events } = must(state, tealDance);
       expect(benchAt(after, "p1", 0).damage).toBe(20);
-      expect(events.find((e) => e.type === "ABILITY_TRIGGERED")).toMatchObject({ seat: "p2", ability: "Gnawing Curse" });
+      expect(events.find((e) => e.type === "ABILITY_TRIGGERED")).toMatchObject({
+        seat: "p2",
+        ability: "Gnawing Curse",
+      });
     });
   }
 
@@ -317,10 +354,11 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
     );
     const { state: after, events } = must(state, tealDance);
     expect(benchAt(after, "p1", 0).damage).toBe(30);
-    expect(events.filter((e) => e.type === "ABILITY_TRIGGERED").map((e) => e.type === "ABILITY_TRIGGERED" && e.ability)).toEqual([
-      "Auto Heal",
-      "Gnawing Curse",
-    ]);
+    expect(
+      events
+        .filter((e) => e.type === "ABILITY_TRIGGERED")
+        .map((e) => e.type === "ABILITY_TRIGGERED" && e.ability),
+    ).toEqual(["Auto Heal", "Gnawing Curse"]);
   });
 
   it("the attachFromHand path too: Lethargic Charge onto the Active Larry's Pokémon heals it and Gengar ex curses it", () => {
@@ -339,7 +377,10 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
       after = must(after, {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "attachCards", assignments: [{ uid, to: { seat: "p1", spot: { spot: "active" } } }] },
+        choice: {
+          kind: "attachCards",
+          assignments: [{ uid, to: { seat: "p1", spot: { spot: "active" } } }],
+        },
       }).state;
     }
     const larry = activeOf(after, "p1");
@@ -353,11 +394,20 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
     // `me01-051` installs it. R-EIC1 (UNRULED, kept): the counters land after the attach riders AND the
     // watched triggers. turn.ts's action path already did; the effect path placed them inside the
     // attach, before any trigger, so Auto Heal then healed the 80 away.
-    const marked = table({ active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 0 }], hand: [G] }, { active: { id: FILLER } });
+    const marked = table(
+      { active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 0 }], hand: [G] },
+      { active: { id: FILLER } },
+    );
     const bench0 = benchAt(marked, "p1", 0);
     marked.players.p1.bench[0] = {
       ...bench0,
-      handAttachMark: { turn: marked.turn, barred: false, endsTurn: false, tripped: false, counters: 8 },
+      handAttachMark: {
+        turn: marked.turn,
+        barred: false,
+        endsTurn: false,
+        tripped: false,
+        counters: 8,
+      },
     };
     const viaEffect = must(marked, tealDance).state;
     const viaAction = must(marked, {
@@ -371,7 +421,10 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
   });
 
   it("control: the §6.2 attach action still heals exactly once", () => {
-    const state = table({ active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 100 }], hand: [G] }, { active: { id: FILLER } });
+    const state = table(
+      { active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 100 }], hand: [G] },
+      { active: { id: FILLER } },
+    );
     const { state: after, events } = must(state, {
       type: "attachEnergy",
       seat: "p1",
@@ -405,7 +458,7 @@ const evolve = (state: GameState): GameAction => ({
   target: { spot: "bench", index: 0 },
 });
 
-describe("B19 §2 — \"you may switch in 1 of your opponent's Benched Pokémon\" can be declined", () => {
+describe('B19 §2 — "you may switch in 1 of your opponent\'s Benched Pokémon" can be declined', () => {
   for (const evolver of EVOLVERS) {
     it(`${evolver.id} "${evolver.name}": one opposing Benched Pokémon is ASKED, and the decline keeps the Active`, () => {
       const state = evolveBoard(evolver, 1);
@@ -413,7 +466,11 @@ describe("B19 §2 — \"you may switch in 1 of your opponent's Benched Pokémon\
       expect(parked.phase.kind).toBe("effect:choose");
       if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
       expect(parked.phase.prompt).toMatchObject({ kind: "choosePokemon", upTo: 1 });
-      const declined = must(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } }).state;
+      const declined = must(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon" },
+      }).state;
       expect(declined.phase.kind).toBe("turn:action");
       expect(idOf(declined, activeOf(declined, "p2"))).toBe(FILLER);
       expect(declined.players.p2.bench).toHaveLength(1);
@@ -422,7 +479,9 @@ describe("B19 §2 — \"you may switch in 1 of your opponent's Benched Pokémon\
     it(`${evolver.id}: two opposing Benched Pokémon — the decline is accepted, and taking one still gusts it`, () => {
       const state = evolveBoard(evolver, 2);
       const { state: parked } = must(state, evolve(state));
-      expect(rejection(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } })).toBeUndefined();
+      expect(
+        rejection(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } }),
+      ).toBeUndefined();
       const taken = must(parked, {
         type: "resolveEffect",
         seat: "p1",
@@ -443,11 +502,23 @@ describe("B19 §2 — \"you may switch in 1 of your opponent's Benched Pokémon\
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("B19 §3 — Tundra Wall shields only from the OPPONENT's attacks", () => {
-  const SEAT_AURA_IDS = ["sv02-113", "sv10-086", "sv07-119", "svp-136", "sv10.5b-063", "sv10.5b-141", "me05-072", "me03-024", "me03-092", "sv08.5-067"];
+  const SEAT_AURA_IDS = [
+    "sv02-113",
+    "sv10-086",
+    "sv07-119",
+    "svp-136",
+    "sv10.5b-063",
+    "sv10.5b-141",
+    "me05-072",
+    "me03-024",
+    "me03-092",
+    "sv08.5-067",
+  ];
 
-  it("every `seatDamageReductionAfterWR` row is one of the ids whose print says \"from attacks from your opponent's Pokémon\"", () => {
+  it('every `seatDamageReductionAfterWR` row is one of the ids whose print says "from attacks from your opponent\'s Pokémon"', () => {
     const rows = registryCardIds().filter(
-      (id) => !id.startsWith("fix-") && programFor(id)?.passive?.seatDamageReductionAfterWR !== undefined,
+      (id) =>
+        !id.startsWith("fix-") && programFor(id)?.passive?.seatDamageReductionAfterWR !== undefined,
     );
     expect(rows.sort()).toEqual([...SEAT_AURA_IDS].sort());
   });

@@ -221,15 +221,21 @@ function openTable(first: Seat): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let table = created.state;
   if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }));
+  table = must(
+    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  );
   while (table.phase.kind === "setup:drawExtra") {
     const drawing = table.phase;
     const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
     if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }));
+    table = must(
+      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }));
+    table = must(
+      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     table = must(applyAction(table, { type: "setupReady", seat }));
@@ -692,12 +698,7 @@ describe("D490 §4 — the readings table: how many does each board separate?", 
   it("🛑 board A ALONE separates 5 of 7, and A+B separate all 7 — MEASURED", () => {
     const on = (board: number): number[] =>
       READINGS.map(([, read]) =>
-        read(
-          BOARD_MILLS[board]?.[1] ?? [],
-          BOARD_MILLS[board]?.[2] ?? [],
-          SELF_PILE,
-          FOE_PILE,
-        ),
+        read(BOARD_MILLS[board]?.[1] ?? [], BOARD_MILLS[board]?.[2] ?? [], SELF_PILE, FOE_PILE),
       );
     // Board A: the attacker's top is an Energy, the opponent's is a Pokémon.
     expect(on(0)).toEqual([190, 190, 50, 330, 140, 470, 610]);
@@ -709,7 +710,15 @@ describe("D490 §4 — the readings table: how many does each board separate?", 
     // …and the PAIR separates every one of the seven, which no single board does.
     const pairs = READINGS.map((_, i) => `${on(0)[i]}/${on(1)[i]}`);
     expect(new Set(pairs).size).toBe(READINGS.length);
-    expect(pairs).toEqual(["190/190", "190/50", "50/190", "330/330", "140/140", "470/330", "610/610"]);
+    expect(pairs).toEqual([
+      "190/190",
+      "190/50",
+      "50/190",
+      "330/330",
+      "140/140",
+      "470/330",
+      "610/610",
+    ]);
   });
 
   it("🛑 board C is the only one where the BUILD reaches N = 2, and it is 330", () => {
@@ -751,7 +760,12 @@ describe("D490 §5 — the three boards, driven end to end", () => {
     // `base` on the row is the OP's own amount (the whole `base + per × N` sum dealt as
     // ONE §8.5 pass), not the attack's printed 50 — which is the point of re-homing the
     // addend: Resistance and the §8.1 survival clamp are subtractions paid once PER HIT.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", by: "p1", base: 190, dealt: 190 });
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      by: "p1",
+      base: 190,
+      dealt: 190,
+    });
     expect(done.players.p2.active?.damage).toBe(190);
     // ⚠️ **CONTENTS, NOT ONLY THE NUMBER.** One card off EACH deck, each into ITS OWN
     // owner's pile — which is what separates the build from a mill-side filter (the
@@ -1070,10 +1084,11 @@ describe("D490 §8 — the LOG: two rows, two voices, and no wording moved", () 
     // case for rows whose voice was already decided.
     const state = table(A_SELF_DECK, A_FOE_DECK);
     const { state: done, events } = swing(state, TWIN_MILL);
-    const rows = logFromEvents(
-      all(events, "DECK_TOP_DISCARDED"),
-      { names: { p1: "Ash", p2: "Misty" }, state: done, elapsed: "+00:07" },
-    );
+    const rows = logFromEvents(all(events, "DECK_TOP_DISCARDED"), {
+      names: { p1: "Ash", p2: "Misty" },
+      state: done,
+      elapsed: "+00:07",
+    });
     expect(rows).toHaveLength(2);
     const text = (entry: (typeof rows)[number]): string =>
       entry.kind === "turn" ? `— turn ${entry.turn} —` : entry.segments.map((s) => s.text).join("");
@@ -1136,7 +1151,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     }
   });
 
-  it("🛑 `\"eachPlayer\"` has exactly ONE producer in the whole engine, at index 0", () => {
+  it('🛑 `"eachPlayer"` has exactly ONE producer in the whole engine, at index 0', () => {
     // The reachability claim is about the PRODUCERS, not about the op (D450), so it is
     // measured over every program the engine can build for the whole legal column: the new
     // value appears once, at the FRONT of a two-op program, and nowhere behind a park.
@@ -1222,19 +1237,6 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
   });
 
   it("engineVersion is 0.555.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
-    // 🆕🆕🆕 D490 — 0.384.0 → **0.385.0**. A card can reach it: one printed sentence that
-    // derived to `null` on all thirteen readers and fell to the loud
-    // `ATTACK_EFFECT_SKIPPED` path now mills BOTH decks and deals a number proportional to
-    // the Energy among what it milled. ⚠️ **THIS SUITE AUTHORS THE PIN, WHICH IS THE HALF
-    // EVERY VERSION-TAX COUNT MISSES** (D427: every note counts the pins it INHERITED and
-    // never the one it is about to AUTHOR). Re-measured at this head AFTER the edit rather
-    // than forecast (D489): **85 occurrences / 63 files / 18 `it(…)` titles**, with SEVEN
-    // history occurrences of `0.384.0` left alone. ⚠️ **D489's own exception list said FOUR
-    // and there were FIVE** — it named "this heading" for the paragraph INSIDE its
-    // changelog entry and missed the entry's actual `0.383.0 → 0.384.0` heading, which is
-    // D488's rule fired a second time: *a prose census of exceptions is self-referential
-    // the moment it is written down, and the count is taken before the sentence exists.*
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
     expect(deriveAttackDiscardScaledBoost(MILL_BOTH)).not.toBeNull();
   });

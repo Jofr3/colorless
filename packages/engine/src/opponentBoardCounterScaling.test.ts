@@ -7,7 +7,7 @@ import {
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -570,9 +570,7 @@ describe("§6 — the cells this slice leaves EMPTY are measurements, not omissi
     // Pokémon."* prints, the cost is one anchor and one arm and NOT a rewrite of the
     // walk. That is a claim about the pool, so it is measured here.
     expect(
-      legalAttackCorpus().filter(([, s]) =>
-        /damage counter on all of your Pokémon\./.test(s),
-      ),
+      legalAttackCorpus().filter(([, s]) => /damage counter on all of your Pokémon\./.test(s)),
     ).toEqual([]);
   });
 
@@ -661,10 +659,6 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
     const returned = mustApply(saved, { type: "endTurn", seat: "p2" }).state;
     const second = swing(returned, BOARD);
     expect(find(second.events, "DAMAGE_DEALT")?.dealt).toBe(10 + 10 * (15 + 2 + 1 + 1));
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

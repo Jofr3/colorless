@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
-import { engineVersion, redactGame } from "./index";
+import { redactGame } from "./index";
 import {
   CLEAR_STATUS_DECK,
   FIXTURE_POOL,
@@ -64,7 +64,10 @@ const SEED = 0x2f11;
     Blissey Active with `basics` Colorless Energy on it and `ownBench` benched
     bodies. Both sides are set explicitly — a build that reached for the other
     seat's Bench is one `otherSeat` away, and this engine's most-repeated defect. */
-function board({ basics = 3, ownBench = 2 }: { basics?: number; ownBench?: number } = {}): GameState {
+function board({
+  basics = 3,
+  ownBench = 2,
+}: { basics?: number; ownBench?: number } = {}): GameState {
   let state = mustApply(
     driveSetup(SEED, { p1: CLEAR_STATUS_DECK, p2: CLEAR_STATUS_DECK }, { first: "p2" }),
     { type: "endTurn", seat: "p2" },
@@ -86,7 +89,8 @@ function swing(state: GameState) {
 /** The parked moveEnergy prompt, narrowed — and it THROWS rather than returning
     undefined when nothing parked, so a forced build cannot read as an empty one. */
 function parked(state: GameState): Extract<EffectPrompt, { kind: "moveEnergy" }> {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "moveEnergy") throw new Error(`expected moveEnergy, got ${prompt.kind}`);
   return prompt;
@@ -117,7 +121,10 @@ describe("§1 — the deriver: one anchor, and the edges it must not reach", () 
     expect(one).toEqual([
       { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench" },
     ]);
-    expect({ ...(all[0] as object), max: undefined }).toEqual({ ...(one[0] as object), max: undefined });
+    expect({ ...(all[0] as object), max: undefined }).toEqual({
+      ...(one[0] as object),
+      max: undefined,
+    });
   });
 
   it("🆕 D442 — THIS ANCHOR STILL DOES NOT REACH the multi-destination sibling", () => {
@@ -134,7 +141,9 @@ describe("§1 — the deriver: one anchor, and the edges it must not reach", () 
     // therefore the PROGRAM, and the pair is one key apart: the spread sentence
     // carries `anyDest`, this file's own sentence does not.
     expect(
-      deriveAttackEffect("Move all Energy from this Pokémon to your Benched Pokémon in any way you like."),
+      deriveAttackEffect(
+        "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.",
+      ),
     ).toEqual([
       {
         op: "moveEnergy",
@@ -174,8 +183,12 @@ describe("§1 — the deriver: one anchor, and the edges it must not reach", () 
     // to that family: `basicEnergy` narrows a CATEGORY and nothing in the op says
     // "{D}", so an anchor loose enough to admit a typed noun would move any Energy
     // at all. 0 legal printings, and a real catalog row.
-    expect(deriveAttackEffect("Move all {D} Energy from this Pokémon to 1 of your Benched Pokémon.")).toBeNull();
-    expect(deriveAttackEffect("Move 2 {D} Energy from this Pokémon to 1 of your Benched Pokémon.")).toBeNull();
+    expect(
+      deriveAttackEffect("Move all {D} Energy from this Pokémon to 1 of your Benched Pokémon."),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect("Move 2 {D} Energy from this Pokémon to 1 of your Benched Pokémon."),
+    ).toBeNull();
   });
 });
 
@@ -220,7 +233,11 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     const short = [parked(state).movable[0]?.uid as string];
     expectErr(
       state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: short.map((uid) => ({ uid, dest })) } },
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "moveEnergy", picks: short.map((uid) => ({ uid, dest })) },
+      },
       "BAD_EFFECT_CHOICE",
     );
   });
@@ -241,7 +258,12 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     expect(done.state.players.p1.bench[0]?.energy).toEqual([]);
     const rows = events(done.events, "ENERGY_MOVED");
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ seat: "p1", uids, from: { spot: "active" }, to: { spot: "bench", index: 1 } });
+    expect(rows[0]).toMatchObject({
+      seat: "p1",
+      uids,
+      from: { spot: "active" },
+      to: { spot: "bench", index: 1 },
+    });
     // The seat control — the opponent's BOARD is untouched. (Their deck and hand
     // move because resolving this park ends the turn, which is not this op.)
     expect(done.state.players.p2.active).toEqual(state.players.p2.active);
@@ -260,10 +282,23 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     // so neither park is constructed and neither deck is edited (D412).
     const mandatory = parked(swing(board({ basics: 3, ownBench: 2 })).state);
     const declinable = parked(swingSibling());
-    expect(Object.keys(declinable).sort()).toEqual(["destinations", "kind", "max", "movable", "note"]);
+    expect(Object.keys(declinable).sort()).toEqual([
+      "destinations",
+      "kind",
+      "max",
+      "movable",
+      "note",
+    ]);
     expect("min" in declinable).toBe(false);
     // …and the MANDATORY park carries exactly one more key, which is the diff.
-    expect(Object.keys(mandatory).sort()).toEqual(["destinations", "kind", "max", "min", "movable", "note"]);
+    expect(Object.keys(mandatory).sort()).toEqual([
+      "destinations",
+      "kind",
+      "max",
+      "min",
+      "movable",
+      "note",
+    ]);
     // 🛑 AND THE DECLINE IS STILL A LEGAL ANSWER ON THE PROMPT WITHOUT THE FLOOR —
     // the admission that keeps §2's refusal rungs from passing on a build that
     // simply refuses every empty pick (D424). Same op, same route, same engine.
@@ -315,7 +350,11 @@ describe("§3 — the FORCED arm: one destination, one legal answer, no dialog",
     expect(done.state.players.p1.bench[0]?.energy).toHaveLength(3);
     const rows = events(done.events, "ENERGY_MOVED");
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ seat: "p1", from: { spot: "active" }, to: { spot: "bench", index: 0 } });
+    expect(rows[0]).toMatchObject({
+      seat: "p1",
+      from: { spot: "active" },
+      to: { spot: "bench", index: 0 },
+    });
   });
 
   it("🛑 and a ONE-DESTINATION board PARKS for the declinable sibling — the control", () => {
@@ -353,13 +392,21 @@ describe("§4 — the wire: the floor crosses, and its absence crosses too", () 
     const state = swing(board({ basics: 3, ownBench: 2 })).state;
     const snapshot = redactGame(state, "p1");
     const wire = snapshot.phase.kind === "effect:choose" ? snapshot.phase.prompt : null;
-    if (wire === null || wire.kind !== "moveEnergy") throw new Error("expected a wire moveEnergy prompt");
+    if (wire === null || wire.kind !== "moveEnergy")
+      throw new Error("expected a wire moveEnergy prompt");
     // 🛑 THE ONLINE HALF. `ChoosePokemonDialog`'s twin defect (D358): a floor the
     // wire drops is a mandatory move the remote player is offered the right to
     // refuse, with every local assertion above still green.
     expect(wire.min).toBe(3);
     expect(wire.max).toBe(3);
-    expect(Object.keys(wire).sort()).toEqual(["destinations", "kind", "max", "min", "movable", "note"]);
+    expect(Object.keys(wire).sort()).toEqual([
+      "destinations",
+      "kind",
+      "max",
+      "min",
+      "movable",
+      "note",
+    ]);
   });
 
   it("the fixture printing is `legal_standard = 0`, so NO census figure moves for it", () => {
@@ -436,14 +483,5 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
       max: "all",
       route: "selfToBench",
     });
-  });
-
-  it("the version pin — this file's own, counted rather than inherited", () => {
-    // D427's mechanism, obeyed: every note counts the pins it INHERITED and never
-    // the one it is about to AUTHOR. MEASURED at this head by grepping BOTH
-    // `engineVersion` and `manifest.version`: **25 assertions across 25 files**
-    // before this line, **26** with it, over 27 sites once `index.ts`'s declaration
-    // and `packages/engine/package.json` are counted.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

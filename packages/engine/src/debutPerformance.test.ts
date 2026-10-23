@@ -216,9 +216,7 @@ function meloetta(id: string): Card {
     retreat: 1,
     types: ["Psychic"],
     abilities: [{ type: "Ability", name: "Debut Performance", effect: DEBUT_PERFORMANCE_TEXT }],
-    attacks: [
-      { cost: ["Psychic"], name: "Echoed Voice", damage: 30, effect: ECHOED_VOICE_TEXT },
-    ],
+    attacks: [{ cost: ["Psychic"], name: "Echoed Voice", damage: 30, effect: ECHOED_VOICE_TEXT }],
   });
 }
 
@@ -455,10 +453,9 @@ describe("D277 — `firstTurnAttackBanned`, the extracted §4 read", () => {
         state = passTurns(state, 1);
         expect(state.turn, `${activeId}@${turn}`).toBe(turn);
         const seat = state.phase.kind === "turn:action" ? state.phase.seat : "p1";
-        expect(
-          firstTurnAttackBanned(state, activeOf(state, seat), 0),
-          `${activeId}@${turn}`,
-        ).toBe(false);
+        expect(firstTurnAttackBanned(state, activeOf(state, seat), 0), `${activeId}@${turn}`).toBe(
+          false,
+        );
       }
     }
   });
@@ -559,9 +556,13 @@ describe("D277 — the three payability projections of ONE rule", () => {
     for (const first of ["p1", "p2"] as const) {
       const plain = redactGame(board(SEEDS[2], first, first, UNLICENSED), first);
       const plainPhase = plain.phase;
-      if (plainPhase.kind !== "turn:action") throw new Error(`expected turn:action, got ${plainPhase.kind}`);
+      if (plainPhase.kind !== "turn:action")
+        throw new Error(`expected turn:action, got ${plainPhase.kind}`);
       expect(plainPhase.attacks.length, `${first}`).toBe(1);
-      expect(plainPhase.attacks.every((a) => !a.playable), `${first}`).toBe(true);
+      expect(
+        plainPhase.attacks.every((a) => !a.playable),
+        `${first}`,
+      ).toBe(true);
       // The NON-VACUOUS control: the {P} was attached all along, so the only
       // reason the row was dead is the §4 ban — and the licence revives it.
       const licensed = redactGame(board(SEEDS[2], first, first, "sv10.5b-044"), first);

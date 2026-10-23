@@ -151,7 +151,12 @@ const POOL: Record<string, Card> = {
     weaknesses: [{ type: "Water", value: "×2" }],
     attacks: [
       { cost: ["Fire"], name: "Energy Assist", effect: ENERGY_ASSIST },
-      { cost: ["Fire"], name: "Fireworks", effect: "Discard an Energy from this Pokémon.", damage: 30 },
+      {
+        cost: ["Fire"],
+        name: "Fireworks",
+        effect: "Discard an Energy from this Pokémon.",
+        damage: 30,
+      },
     ],
   }),
   [BENCH_BODY]: battler(BENCH_BODY, {
@@ -210,7 +215,11 @@ function localSetup(seed: number): GameState {
   }
   for (const seat of ["p1", "p2"] as const) {
     state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstInHand(state, seat, BENCH_BODY) }),
+      applyAction(state, {
+        type: "setupPlaceActive",
+        seat,
+        uid: firstInHand(state, seat, BENCH_BODY),
+      }),
     );
   }
   for (const seat of ["p1", "p2"] as const) {
@@ -256,9 +265,11 @@ function attackWith(state: GameState) {
 }
 
 function parkOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
-  if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+  if (prompt.kind !== "choosePokemon")
+    throw new Error(`expected choosePokemon, got ${prompt.kind}`);
   return prompt;
 }
 
@@ -368,7 +379,13 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
         slot: "moved",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [
-          { op: "attachEnergyFrom", source: "hand", energyType: "Lightning", toSelf: true, count: 2 },
+          {
+            op: "attachEnergyFrom",
+            source: "hand",
+            energyType: "Lightning",
+            toSelf: true,
+            count: 2,
+          },
         ],
       },
     ]);
@@ -382,12 +399,16 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
     // 8 registry + 5 deriver, and the split is by PRODUCER rather than by column:
     // three of the six are Abilities and three are attacks, and every attack one
     // is invisible to `programFor`.
-    expect(
-      [...QUANTITY_IDS.goldenFlame, ...QUANTITY_IDS.battleHardened, ...QUANTITY_IDS.spikeClad],
-    ).toHaveLength(8);
-    expect(
-      [...QUANTITY_IDS.energyAssist, ...QUANTITY_IDS.regiCharge, ...QUANTITY_IDS.returnCharge],
-    ).toHaveLength(5);
+    expect([
+      ...QUANTITY_IDS.goldenFlame,
+      ...QUANTITY_IDS.battleHardened,
+      ...QUANTITY_IDS.spikeClad,
+    ]).toHaveLength(8);
+    expect([
+      ...QUANTITY_IDS.energyAssist,
+      ...QUANTITY_IDS.regiCharge,
+      ...QUANTITY_IDS.returnCharge,
+    ]).toHaveLength(5);
   });
 });
 
@@ -414,7 +435,9 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
     expect(energyOn(done.state, benchRef(0))).toEqual([WATER, WATER]);
     expect(energyOn(done.state, benchRef(1))).toEqual([]);
     expect(all(done.events, "ENERGY_ATTACHED")).toHaveLength(2);
-    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === WATER)).toHaveLength(0);
+    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === WATER)).toHaveLength(
+      0,
+    );
   });
 
   it("🛑 ONE — the printed MIDDLE answer, UNREACHABLE before this slice", () => {
@@ -429,7 +452,9 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
     // …and the second Energy is still in the pile. A build that read `op.count`
     // and ignored the answer passes every "something was attached" assertion and
     // fails exactly here.
-    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === WATER)).toHaveLength(1);
+    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === WATER)).toHaveLength(
+      1,
+    );
   });
 
   it("🛑🛑 ZERO — and on an ATTACK this answer had NO other route to it", () => {
@@ -447,7 +472,9 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
     expect(energyOn(done.state, benchRef(0))).toEqual([]);
     expect(energyOn(done.state, benchRef(1))).toEqual([]);
     expect(all(done.events, "ENERGY_ATTACHED")).toHaveLength(0);
-    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === WATER)).toHaveLength(2);
+    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === WATER)).toHaveLength(
+      2,
+    );
     expect(done.state.phase.kind).not.toBe("effect:choose");
   });
 
@@ -480,7 +507,10 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
 // ── 3. THE VALIDATOR — every way a quantity can be wrong ─────────────────────
 
 describe("D359 §3 — the validator is the only place the printed ceiling is enforced", () => {
-  const reject = (state: GameState, choice: { kind: "pokemon"; ref?: PokemonRef; take?: number }) => {
+  const reject = (
+    state: GameState,
+    choice: { kind: "pokemon"; ref?: PokemonRef; take?: number },
+  ) => {
     const result = applyAction(state, { type: "resolveEffect", seat: "p1", choice });
     if (result.ok) throw new Error("expected the frame to be rejected");
     return result.error;
@@ -649,7 +679,9 @@ describe("D359 §5 — what this slice refused, driven rather than asserted", ()
     // which is what makes `count` unambiguously a ceiling and `upTo` beside it a
     // second key on one axis.
     expect(
-      deriveAttackEffect("Attach 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon."),
+      deriveAttackEffect(
+        "Attach 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon.",
+      ),
     ).toBeNull();
     expect(
       deriveAttackEffect("Attach 2 Basic {F} Energy cards from your discard pile to this Pokémon."),
@@ -727,8 +759,14 @@ describe("D359 §5 — what this slice refused, driven rather than asserted", ()
     // precisely §9.1's *"one, two, or none, all legal"* and not a byte more.
     const landed = [0, 1, 2].map((k) => {
       const parked = attackWith(ready(11)).state;
-      const choice = k === 0 ? { kind: "pokemon" as const } : { kind: "pokemon" as const, ref: benchRef(0), take: k };
-      return energyOn(step(parked, { type: "resolveEffect", seat: "p1", choice }).state, benchRef(0)).length;
+      const choice =
+        k === 0
+          ? { kind: "pokemon" as const }
+          : { kind: "pokemon" as const, ref: benchRef(0), take: k };
+      return energyOn(
+        step(parked, { type: "resolveEffect", seat: "p1", choice }).state,
+        benchRef(0),
+      ).length;
     });
     expect(landed).toEqual([0, 1, 2]);
     for (const bad of [-1, 0, 3, 99]) {
@@ -903,9 +941,11 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight
       // registry printings, unchanged byte for byte.
-      expect(
-        [...QUANTITY_IDS.goldenFlame, ...QUANTITY_IDS.battleHardened, ...QUANTITY_IDS.spikeClad],
-      ).toContain(id);
+      expect([
+        ...QUANTITY_IDS.goldenFlame,
+        ...QUANTITY_IDS.battleHardened,
+        ...QUANTITY_IDS.spikeClad,
+      ]).toContain(id);
     }
   });
 });

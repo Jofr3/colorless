@@ -3,13 +3,22 @@ import { describe, expect, it } from "vitest";
 import { abilityUsedKey } from "./cardplay";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type EffectContext, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  trainerCard,
+  typedEnergy,
+} from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
 // ── 🆕🆕🆕 D565 — FOUR ABILITIES (and Ruffian, in `ruffianD565.test.ts`) ──
@@ -54,8 +63,10 @@ const IMPROMPTU_CARRIER =
   "When you play this Pokémon from your hand onto your Bench during your turn, you may search your deck for a Pokémon Tool card and attach it to this Pokémon. Then, shuffle your deck.";
 const ZERO_TO_HERO =
   "Once during your turn, when this Pokémon moves from the Active Spot to the Bench, you may search your deck for a Palafin ex and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.";
-const HEROS_SPIRIT = "Put this Pokémon into play only with the effect of Palafin's Zero to Hero Ability.";
-const PSYCHIC_TEXT = "This attack does 40 more damage for each Energy attached to your opponent's Active Pokémon.";
+const HEROS_SPIRIT =
+  "Put this Pokémon into play only with the effect of Palafin's Zero to Hero Ability.";
+const PSYCHIC_TEXT =
+  "This attack does 40 more damage for each Energy attached to your opponent's Active Pokémon.";
 const MACH_CUT_TEXT = "Discard a Special Energy from your opponent's Active Pokémon.";
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -86,7 +97,14 @@ const LOCAL_CARDS: Record<string, Card> = {
         weaknesses: [{ type: "Darkness", value: "×2" }],
         resistances: [{ type: "Fighting", value: "-30" }],
         abilities: [{ type: "Ability", name: "Rocket Brain", effect: ROCKET_BRAIN }],
-        attacks: [{ cost: ["Psychic", "Colorless", "Colorless"], name: "Psychic", damage: "40+", effect: PSYCHIC_TEXT }],
+        attacks: [
+          {
+            cost: ["Psychic", "Colorless", "Colorless"],
+            name: "Psychic",
+            damage: "40+",
+            effect: PSYCHIC_TEXT,
+          },
+        ],
       }),
     ]),
   ),
@@ -124,13 +142,23 @@ const LOCAL_CARDS: Record<string, Card> = {
         weaknesses: [{ type: "Lightning", value: "×2" }],
         abilities: [{ type: "Ability", name: "Hero's Spirit", effect: HEROS_SPIRIT }],
         attacks: [
-          { cost: ["Water"], name: "Giga Impact", damage: 250, effect: "During your next turn, this Pokémon can't attack." },
+          {
+            cost: ["Water"],
+            name: "Giga Impact",
+            damage: 250,
+            effect: "During your next turn, this Pokémon can't attack.",
+          },
         ],
       }),
     ]),
   ),
   [FINIZEN]: battler(FINIZEN, { name: "Finizen", types: ["Water"], hp: 60, retreat: 1 }),
-  [TR_MON]: battler(TR_MON, { name: "Team Rocket's Fixmon", hp: 100, retreat: 1, types: ["Colorless"] }),
+  [TR_MON]: battler(TR_MON, {
+    name: "Team Rocket's Fixmon",
+    hp: 100,
+    retreat: 1,
+    types: ["Colorless"],
+  }),
   [FILLER]: battler(FILLER, {
     name: "D565 Filler",
     hp: 900,
@@ -147,9 +175,16 @@ const LOCAL_CARDS: Record<string, Card> = {
     ),
     name: "Scramble Switch",
   },
-  [SWITCH]: { ...trainerCard(SWITCH, "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."), name: "Switch" },
+  [SWITCH]: {
+    ...trainerCard(SWITCH, "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."),
+    name: "Switch",
+  },
   [BOSS]: {
-    ...trainerCard(BOSS, "Supporter", "Switch in 1 of your opponent's Benched Pokémon to the Active Spot."),
+    ...trainerCard(
+      BOSS,
+      "Supporter",
+      "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+    ),
     name: "Boss's Orders",
   },
   [JELLICENT_EX]: battler(JELLICENT_EX, {
@@ -207,7 +242,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -223,7 +259,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -231,11 +269,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -285,7 +326,12 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 }
 
 /** p1's turn 2: p1 `active` + `bench`, p2 `oppActive`. Hands emptied into the decks. */
-function table(active: string, bench: readonly string[] = [], oppActive: string = FILLER, seed = 5651): GameState {
+function table(
+  active: string,
+  bench: readonly string[] = [],
+  oppActive: string = FILLER,
+  seed = 5651,
+): GameState {
   let state = setHand(setHand(opened(seed), "p1", []), "p2", []);
   state = setActiveFromDeck(ensureInDeck(state, "p1", active), "p1", active);
   state = setActiveFromDeck(ensureInDeck(state, "p2", oppActive), "p2", oppActive);
@@ -303,7 +349,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -316,14 +367,24 @@ const damaged = (state: GameState, seat: Seat, spot: Spot, damage: number) =>
   withBody(state, seat, spot, (p) => ({ ...p, damage }));
 
 /** TEST SURGERY — attach `n` copies of deck card `id` to the body (Energy or Tool by kind). */
-function attach(state: GameState, seat: Seat, spot: Spot, id: string, n = 1, as: "energy" | "tools" = "energy"): GameState {
+function attach(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  id: string,
+  n = 1,
+  as: "energy" | "tools" = "energy",
+): GameState {
   let next = ensureInDeck(state, seat, id);
   for (let i = 0; i < n; i++) {
     next = ensureInDeck(next, seat, id);
     const side = next.players[seat];
     const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
     if (uid === undefined) throw new Error(`no ${id} in the deck`);
-    next = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+    next = {
+      ...next,
+      players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+    };
     next = withBody(next, seat, spot, (p) => ({ ...p, [as]: [...p[as], uid] }));
   }
   return next;
@@ -335,7 +396,10 @@ function underneath(state: GameState, seat: Seat, spot: Spot, id: string): GameS
   const side = next.players[seat];
   const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id}`);
-  const moved = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+  const moved = {
+    ...next,
+    players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+  };
   return withBody(moved, seat, spot, (p) => ({ ...p, stack: [uid, ...p.stack] }));
 }
 
@@ -347,7 +411,10 @@ function toBottom(state: GameState, seat: Seat, id: string): GameState {
   if (uid === undefined) throw new Error(`no ${id}`);
   return {
     ...next,
-    players: { ...next.players, [seat]: { ...side, deck: [...side.deck.filter((u) => u !== uid), uid] } },
+    players: {
+      ...next.players,
+      [seat]: { ...side, deck: [...side.deck.filter((u) => u !== uid), uid] },
+    },
   };
 }
 
@@ -359,12 +426,19 @@ function purge(state: GameState, seat: Seat, id: string): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => !gone.includes(u)), discard: [...side.discard, ...gone] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => !gone.includes(u)),
+        discard: [...side.discard, ...gone],
+      },
     },
   };
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
@@ -377,17 +451,23 @@ function render(events: GameEvent[], state: GameState): string[] {
   );
 }
 
-const use = (name: string, target: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
-  ({ type: "useAbility", seat: "p1", target, abilityName: name }) as GameAction;
+const use = (
+  name: string,
+  target: { spot: "active" } | { spot: "bench"; index: number },
+): GameAction => ({ type: "useAbility", seat: "p1", target, abilityName: name }) as GameAction;
 const bench = (index: number) => ({ spot: "bench" as const, index });
 const ACTIVE = { spot: "active" as const };
-const pick = (ref: { seat: Seat; spot: { spot: "active" } | { spot: "bench"; index: number } }): GameAction =>
+const pick = (ref: {
+  seat: Seat;
+  spot: { spot: "active" } | { spot: "bench"; index: number };
+}): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } }) as GameAction;
 const cards = (uids: string[], seat: Seat = "p1"): GameAction =>
   ({ type: "resolveEffect", seat, choice: { kind: "cards", uids } }) as GameAction;
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -475,7 +555,7 @@ describe("§1 — the prints and the registry rows", () => {
     }
   });
 
-  it("🛑 `benchOnly` is carried by exactly Flustered Leap's two ids, and NO row pairs it with `activeOnly` (🆕🆕🆕 D602 (D539): \"exactly Flustered Leap's two ids\" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` \"Sunrise\"; 🆕🆕🆕 D603: plus Linoone `me02-082` \"Excited Dash\")", () => {
+  it('🛑 `benchOnly` is carried by exactly Flustered Leap\'s two ids, and NO row pairs it with `activeOnly` (🆕🆕🆕 D602 (D539): "exactly Flustered Leap\'s two ids" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` "Sunrise"; 🆕🆕🆕 D603: plus Linoone `me02-082` "Excited Dash")', () => {
     const benchOnly: string[] = [];
     for (const id of registryCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
@@ -488,11 +568,15 @@ describe("§1 — the prints and the registry rows", () => {
     // 🆕🆕🆕 D603 — Linoone `me02-082` "Excited Dash" prints it too (`EXCITED_DASH`).
     // 🆕🆕🆕 D628 — Larry's Komala `me02.5-175` "Lethargic Charge" prints it too (`LETHARGIC_CHARGE`).
     // 🆕🆕🆕 D636 — Clawitzer `me01-038` / `-141` "Fall Back to Reload" too (`FALL_BACK_TO_RELOAD`).
-    expect(benchOnly.sort()).toEqual([...PSYDUCK, "30th-105", "me02-082", "me02.5-175", "me01-038", "me01-141"].sort());
+    expect(benchOnly.sort()).toEqual(
+      [...PSYDUCK, "30th-105", "me02-082", "me02.5-175", "me01-038", "me01-141"].sort(),
+    );
   });
 
-  it("the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone (🆕🆕🆕 D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 \"Last-Ditch Catch\" carries the widened `\"sharedByName\"`)", () => {
-    const locked = registryCardIds().filter((id) => (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === true));
+  it('the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone (🆕🆕🆕 D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 "Last-Ditch Catch" carries the widened `"sharedByName"`)', () => {
+    const locked = registryCardIds().filter((id) =>
+      (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === true),
+    );
     expect(locked).toEqual([PALAFIN]);
     // 🆕🆕🆕 D628 — the name-scoped lock, read by `runBoardTrigger` (onBenchMoveMeD628.test.ts §2).
     const shared = registryCardIds().filter((id) =>
@@ -506,14 +590,10 @@ describe("§1 — the prints and the registry rows", () => {
     if (zero === undefined) throw new Error("no trigger");
     expect(abilityUsedKey("p1#7", zero)).toBe("p1#7:Zero to Hero");
   });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, deck TOP)", () => {
+describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, deck TOP)', () => {
   function leapBoard(): GameState {
     let state = table(FILLER, [PSYDUCK[0]]);
     state = attach(state, "p1", 0, WATER, 1);
@@ -532,7 +612,9 @@ describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, de
     expect(state.players.p1.deck).not.toContain(bottom);
     expect(state.players.p1.deck).toHaveLength(before.players.p1.deck.length); // −1 bottom, +1 Psyduck
     expect(state.players.p1.discard).toEqual([...before.players.p1.discard, bottom, ...attached]);
-    expect(all(events, "DECK_BOTTOM_DISCARDED")).toEqual([{ type: "DECK_BOTTOM_DISCARDED", seat: "p1", uids: [bottom] }]);
+    expect(all(events, "DECK_BOTTOM_DISCARDED")).toEqual([
+      { type: "DECK_BOTTOM_DISCARDED", seat: "p1", uids: [bottom] },
+    ]);
     expect(all(events, "POKEMON_RETURNED")).toEqual([
       {
         type: "POKEMON_RETURNED",
@@ -546,7 +628,7 @@ describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, de
     ]);
   });
 
-  it("🛑 \"on top of\" is a POSITION: no SHUFFLE row and the RNG does not move", () => {
+  it('🛑 "on top of" is a POSITION: no SHUFFLE row and the RNG does not move', () => {
     const before = leapBoard();
     const { state, events } = run(before, use("Flustered Leap", bench(0)));
     expect(all(events, "SHUFFLE")).toHaveLength(0);
@@ -560,7 +642,9 @@ describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, de
     const { state, events } = run(before, use("Flustered Leap", bench(0)));
     const rows = render(events, state);
     expect(rows).toContain("p1: discarded 1 card from the bottom of their deck");
-    expect(rows).toContain("p1: put Misty's Psyduck on top of Ember's deck and discarded 2 attached cards");
+    expect(rows).toContain(
+      "p1: put Misty's Psyduck on top of Ember's deck and discarded 2 attached cards",
+    );
   });
 
   it("🛑 from the Active Spot it is REFUSED `ABILITY_BENCH_ONLY` — the mirror of `activeOnly`", () => {
@@ -584,7 +668,17 @@ describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, de
 
   it("R-FL: an EMPTY deck mills nothing — the gate closes and nothing else happens, the use is spent", () => {
     let state = leapBoard();
-    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, deck: [], discard: [...state.players.p1.discard, ...state.players.p1.deck] } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          deck: [],
+          discard: [...state.players.p1.discard, ...state.players.p1.deck],
+        },
+      },
+    };
     const psyduck = top(bodyAt(state, "p1", 0));
     const { state: after, events } = run(state, use("Flustered Leap", bench(0)));
     expect(top(bodyAt(after, "p1", 0))).toBe(psyduck);
@@ -606,7 +700,10 @@ describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, de
     // Draw it (surgery: the top card into the hand) and play it back onto the Bench.
     const drawn = {
       ...leapt,
-      players: { ...leapt.players, p1: { ...leapt.players.p1, deck: leapt.players.p1.deck.slice(1), hand: [psyduck] } },
+      players: {
+        ...leapt.players,
+        p1: { ...leapt.players.p1, deck: leapt.players.p1.deck.slice(1), hand: [psyduck] },
+      },
     };
     const { state: replayed } = run(drawn, { type: "playBasicToBench", seat: "p1", uid: psyduck });
     expect(top(bodyAt(replayed, "p1", 0))).toBe(psyduck);
@@ -629,7 +726,7 @@ describe("§2 — Misty's Psyduck \"Flustered Leap\" (benchOnly, bottom mill, de
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§3 — Team Rocket's Orbeetle \"Rocket Brain\" (one counter, own → own)", () => {
+describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → own)', () => {
   it("🛑 both questions forced: the damaged Orbeetle gives ONE counter to the one other body", () => {
     const state = damaged(table(ORBEETLE[0], [FILLER]), "p1", "active", 30);
     const orbeetle = top(bodyAt(state, "p1", "active"));
@@ -638,7 +735,9 @@ describe("§3 — Team Rocket's Orbeetle \"Rocket Brain\" (one counter, own → 
     expect(after.phase.kind).toBe("turn:action");
     expect(bodyAt(after, "p1", "active").damage).toBe(20);
     expect(bodyAt(after, "p1", 0).damage).toBe(10);
-    expect(all(events, "HEALED")).toEqual([{ type: "HEALED", seat: "p1", uid: orbeetle, amount: 10 }]);
+    expect(all(events, "HEALED")).toEqual([
+      { type: "HEALED", seat: "p1", uid: orbeetle, amount: 10 },
+    ]);
     expect(all(events, "COUNTERS_PLACED")).toEqual([
       { type: "COUNTERS_PLACED", seat: "p1", uid: filler, amount: 10, source: "moved" },
     ]);
@@ -678,7 +777,12 @@ describe("§3 — Team Rocket's Orbeetle \"Rocket Brain\" (one counter, own → 
   });
 
   it("🛑 TWO damaged sources: question 1 parks, its answer buys question 2, the second answer moves", () => {
-    const state = damaged(damaged(table(ORBEETLE[0], [TR_MON, FILLER]), "p1", "active", 30), "p1", 0, 20);
+    const state = damaged(
+      damaged(table(ORBEETLE[0], [TR_MON, FILLER]), "p1", "active", 30),
+      "p1",
+      0,
+      20,
+    );
     const first = run(state, use("Rocket Brain", ACTIVE)).state;
     const p1 = prompt(first);
     if (p1.kind !== "choosePokemon") throw new Error("expected choosePokemon");
@@ -722,7 +826,8 @@ describe("§3 — Team Rocket's Orbeetle \"Rocket Brain\" (one counter, own → 
     expect(state.players.p1.bench).toHaveLength(0);
     expect(state.players.p1.prizes.length).toBe(p1Prizes);
     const p2Took =
-      state.players.p2.prizes.length < p2Prizes || (state.phase.kind === "ko:takePrizes" && state.phase.seat === "p2");
+      state.players.p2.prizes.length < p2Prizes ||
+      (state.phase.kind === "ko:takePrizes" && state.phase.seat === "p2");
     expect(p2Took).toBe(true);
   });
 
@@ -735,7 +840,9 @@ describe("§3 — Team Rocket's Orbeetle \"Rocket Brain\" (one counter, own → 
     ] as const) {
       const phase = redactGame(state, "p1").phase;
       if (phase.kind !== "turn:action") throw new Error("expected turn:action");
-      expect(phase.abilities.find((a) => a.abilityName === "Rocket Brain")?.disabled).toBe(disabled);
+      expect(phase.abilities.find((a) => a.abilityName === "Rocket Brain")?.disabled).toBe(
+        disabled,
+      );
     }
   });
 
@@ -750,7 +857,7 @@ describe("§3 — Team Rocket's Orbeetle \"Rocket Brain\" (one counter, own → 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§4 — Farfetch'd \"Impromptu Carrier\" (a searched Tool attached to itself)", () => {
+describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to itself)', () => {
   function played(state: GameState): { state: GameState; events: GameEvent[]; uid: string } {
     const before = setHand(state, "p1", [FARFETCHD]);
     const uid = before.players.p1.hand[0] as string;
@@ -758,7 +865,11 @@ describe("§4 — Farfetch'd \"Impromptu Carrier\" (a searched Tool attached to 
   }
 
   it("🛑 playing it to the Bench parks the search: dest `attach`, the printed note, SIMULATED Tools only (R-IC1)", () => {
-    const board = ensureInDeck(ensureInDeck(table(FILLER), "p1", VITALITY_BAND), "p1", UNSIMULATED_TOOL);
+    const board = ensureInDeck(
+      ensureInDeck(table(FILLER), "p1", VITALITY_BAND),
+      "p1",
+      UNSIMULATED_TOOL,
+    );
     const { state } = played(board);
     const p = prompt(state);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -786,10 +897,12 @@ describe("§4 — Farfetch'd \"Impromptu Carrier\" (a searched Tool attached to 
       { type: "TOOL_ATTACHED", seat: "p1", uid: band, target: { spot: "bench", index: 0 } },
     ]);
     expect(all(events, "SHUFFLE")).toEqual([{ type: "SHUFFLE", seat: "p1" }]);
-    expect(events.findIndex((e) => e.type === "TOOL_ATTACHED")).toBeLessThan(events.findIndex((e) => e.type === "SHUFFLE"));
+    expect(events.findIndex((e) => e.type === "TOOL_ATTACHED")).toBeLessThan(
+      events.findIndex((e) => e.type === "SHUFFLE"),
+    );
   });
 
-  it("the decline attaches nothing and still shuffles (\"you may\" is the search's own min 0)", () => {
+  it('the decline attaches nothing and still shuffles ("you may" is the search\'s own min 0)', () => {
     const { state } = played(ensureInDeck(table(FILLER), "p1", VITALITY_BAND));
     const { state: after, events } = run(state, cards([]));
     expect(bodyAt(after, "p1", 0).tools).toEqual([]);
@@ -799,15 +912,21 @@ describe("§4 — Farfetch'd \"Impromptu Carrier\" (a searched Tool attached to 
   it("🛑 R-IC1's ONE predicate: the same unsimulated Tool is refused from the HAND (TRAINER_NOT_SIMULATED)", () => {
     const board = setHand(table(FILLER), "p1", [UNSIMULATED_TOOL]);
     const uid = board.players.p1.hand[0] as string;
-    expect(refused(board, { type: "attachTool", seat: "p1", uid, target: { spot: "active" } }).code).toBe(
-      "TRAINER_NOT_SIMULATED",
-    );
+    expect(
+      refused(board, { type: "attachTool", seat: "p1", uid, target: { spot: "active" } }).code,
+    ).toBe("TRAINER_NOT_SIMULATED");
   });
 
   it("🛑 an UNSIMULATED Tool answered over the wire is refused (not among the candidates)", () => {
-    const board = ensureInDeck(ensureInDeck(table(FILLER), "p1", VITALITY_BAND), "p1", UNSIMULATED_TOOL);
+    const board = ensureInDeck(
+      ensureInDeck(table(FILLER), "p1", VITALITY_BAND),
+      "p1",
+      UNSIMULATED_TOOL,
+    );
     const { state } = played(board);
-    const fake = state.players.p1.deck.find((u) => state.cardIdByUid[u] === UNSIMULATED_TOOL) as string;
+    const fake = state.players.p1.deck.find(
+      (u) => state.cardIdByUid[u] === UNSIMULATED_TOOL,
+    ) as string;
     expect(applyAction(state, cards([fake])).ok).toBe(false);
   });
 
@@ -823,7 +942,12 @@ describe("§4 — Farfetch'd \"Impromptu Carrier\" (a searched Tool attached to 
     const handBand = setHand(board, "p1", [VITALITY_BAND]);
     const bandUid = handBand.players.p1.hand[0] as string;
     expect(
-      refused(handBand, { type: "attachTool", seat: "p1", uid: bandUid, target: { spot: "active" } }).code,
+      refused(handBand, {
+        type: "attachTool",
+        seat: "p1",
+        uid: bandUid,
+        target: { spot: "active" },
+      }).code,
     ).toBe("HAND_PLAY_BLOCKED");
     const { state } = played(board);
     const p = prompt(state);
@@ -856,7 +980,7 @@ describe("§4 — Farfetch'd \"Impromptu Carrier\" (a searched Tool attached to 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one route in)", () => {
+describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one route in)', () => {
   /** p1: an evolved Palafin (Finizen underneath) Active with one Water, 30 damage and a Tool,
       a benched pivot; one Palafin ex in the deck. */
   function heroBoard(withEx = true): GameState {
@@ -864,7 +988,12 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     state = underneath(state, "p1", "active", FINIZEN);
     state = attach(state, "p1", "active", WATER, 1);
     state = attach(state, "p1", "active", VITALITY_BAND, 1, "tools");
-    state = withBody(state, "p1", "active", (p) => ({ ...p, damage: 30, turnPlayed: 1, evolvedTurn: 1 }));
+    state = withBody(state, "p1", "active", (p) => ({
+      ...p,
+      damage: 30,
+      turnPlayed: 1,
+      evolvedTurn: 1,
+    }));
     // Exactly ONE Palafin ex in the deck (or none): the other copy out, this one in.
     state = purge(state, "p1", PALAFIN_EX[0]);
     return withEx ? ensureInDeck(state, "p1", PALAFIN_EX[1]) : purge(state, "p1", PALAFIN_EX[1]);
@@ -881,7 +1010,9 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     const before = heroBoard();
     const was = bodyAt(before, "p1", "active");
     const palafin = top(was);
-    const ex = before.players.p1.deck.find((u) => before.cardIdByUid[u] === PALAFIN_EX[1]) as string;
+    const ex = before.players.p1.deck.find(
+      (u) => before.cardIdByUid[u] === PALAFIN_EX[1],
+    ) as string;
     const { state, events } = run(before, retreat(before));
     expect(state.phase.kind).toBe("turn:action"); // R-ZH1: no park — the "you may" resolves YES
     const now = bodyAt(state, "p1", 0);
@@ -892,7 +1023,9 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     expect(now.evolvedTurn).toBe(1);
     expect(state.players.p1.deck).toContain(palafin);
     expect(state.players.p1.deck).not.toContain(ex);
-    expect(all(events, "ABILITY_TRIGGERED")).toEqual([{ type: "ABILITY_TRIGGERED", seat: "p1", uid: palafin, ability: "Zero to Hero" }]);
+    expect(all(events, "ABILITY_TRIGGERED")).toEqual([
+      { type: "ABILITY_TRIGGERED", seat: "p1", uid: palafin, ability: "Zero to Hero" },
+    ]);
     expect(all(events, "POKEMON_SWAPPED_FROM_DECK")).toEqual([
       { type: "POKEMON_SWAPPED_FROM_DECK", seat: "p1", fromUid: palafin, toUid: ex },
     ]);
@@ -902,7 +1035,7 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     expect(state.allowances.abilitiesUsed).toContain(`${palafin}:Zero to Hero`);
   });
 
-  it("🛑 \"THIS Pokémon\": only the body that MOVED fires — a second Palafin already on the Bench does not", () => {
+  it('🛑 "THIS Pokémon": only the body that MOVED fires — a second Palafin already on the Bench does not', () => {
     // Two Palafin: the Active retreats (and swaps), the benched one stays a Palafin.
     let state = heroBoard();
     state = benchFromDeck(ensureInDeck(state, "p1", PALAFIN), "p1", PALAFIN);
@@ -922,7 +1055,10 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
   it("🛑 a SWITCH (an Item, `switchInto`) fires it too", () => {
     const before = heroBoard();
     const { state, events } = playFromHand(before, SWITCH);
-    const after = state.phase.kind === "effect:choose" ? run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state : state;
+    const after =
+      state.phase.kind === "effect:choose"
+        ? run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state
+        : state;
     const moved = bodyAt(after, "p1", 0);
     expect(after.cardIdByUid[top(moved)]).toBe(PALAFIN_EX[1]);
     expect(events.length).toBeGreaterThan(0);
@@ -945,17 +1081,26 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     const palafin = top(bodyAt(state, "p1", 0));
     // A Palafin ex back in the deck, so a second firing WOULD swap — and must not.
     const side = state.players.p1;
-    const ex = side.discard.find((u) => state.cardIdByUid[u] === PALAFIN_EX[1] || state.cardIdByUid[u] === PALAFIN_EX[0]);
+    const ex = side.discard.find(
+      (u) => state.cardIdByUid[u] === PALAFIN_EX[1] || state.cardIdByUid[u] === PALAFIN_EX[0],
+    );
     if (ex === undefined) throw new Error("no Palafin ex in the discard");
     const deckEx: GameState = {
       ...state,
-      players: { ...state.players, p1: { ...side, discard: side.discard.filter((u) => u !== ex), deck: [...side.deck, ex] } },
+      players: {
+        ...state.players,
+        p1: { ...side, discard: side.discard.filter((u) => u !== ex), deck: [...side.deck, ex] },
+      },
     };
     state = playFromHand(deckEx, SWITCH).state;
-    if (state.phase.kind === "effect:choose") state = run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
+    if (state.phase.kind === "effect:choose")
+      state = run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
     expect(top(bodyAt(state, "p1", "active"))).toBe(palafin);
     const { state: out, events } = playFromHand(state, SWITCH);
-    const final = out.phase.kind === "effect:choose" ? run(out, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })) : { state: out, events };
+    const final =
+      out.phase.kind === "effect:choose"
+        ? run(out, pick({ seat: "p1", spot: { spot: "bench", index: 0 } }))
+        : { state: out, events };
     expect(all([...events, ...final.events], "ABILITY_TRIGGERED")).toHaveLength(0);
     expect(final.state.players.p1.bench.some((p) => top(p) === palafin)).toBe(true);
     expect(final.state.players.p1.deck).toContain(ex);
@@ -969,14 +1114,18 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     const played = run(state, { type: "playTrainer", seat: "p2", uid: boss });
     const after =
       played.state.phase.kind === "effect:choose"
-        ? run(played.state, { type: "resolveEffect", seat: "p2", choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } } })
+        ? run(played.state, {
+            type: "resolveEffect",
+            seat: "p2",
+            choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } },
+          })
         : played;
     const moved = after.state.players.p1.bench.map((p) => after.state.cardIdByUid[top(p)]);
     expect(moved).toContain(PALAFIN);
     expect(all([...played.events, ...after.events], "POKEMON_SWAPPED_FROM_DECK")).toHaveLength(0);
   });
 
-  it("🛑 THE CENSUS HOLDER: Scramble Switch's \"the Pokémon you moved to your Bench\" is re-keyed to the swapped body", () => {
+  it('🛑 THE CENSUS HOLDER: Scramble Switch\'s "the Pokémon you moved to your Bench" is re-keyed to the swapped body', () => {
     const before = heroBoard();
     const { state } = playFromHand(before, SCRAMBLE);
     // The switch pick is forced (one benched body); the Energy move parks (up to "any").
@@ -999,9 +1148,9 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
     let state = table(FINIZEN);
     state = setHand(state, "p1", [PALAFIN_EX[0]]);
     const uid = state.players.p1.hand[0] as string;
-    expect(refused(state, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }).code).toBe(
-      "EVOLVE_ONLY_VIA_ABILITY",
-    );
+    expect(
+      refused(state, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }).code,
+    ).toBe("EVOLVE_ONLY_VIA_ABILITY");
   });
 
   it("Wave Splash still derives: 30 to the opponent's Active", () => {
@@ -1015,12 +1164,20 @@ describe("§5 — Palafin \"Zero to Hero\" (the in-place swap, Palafin ex's one 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings, driven)", () => {
   it("🛑 a PARKED Rocket Brain (question 1) round-trips through JSON and resumes to both questions", () => {
-    const state = damaged(damaged(table(ORBEETLE[0], [TR_MON, FILLER]), "p1", "active", 30), "p1", 0, 20);
+    const state = damaged(
+      damaged(table(ORBEETLE[0], [TR_MON, FILLER]), "p1", "active", 30),
+      "p1",
+      0,
+      20,
+    );
     const parked = run(state, use("Rocket Brain", ACTIVE)).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(revived).toEqual(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(revived.phase.cont.pendingOp).toEqual({ op: "moveCounterOwnChosen", ownerPokemon: "Team Rocket" });
+    expect(revived.phase.cont.pendingOp).toEqual({
+      op: "moveCounterOwnChosen",
+      ownerPokemon: "Team Rocket",
+    });
     const second = run(revived, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
     if (second.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     // The engine-written first answer rides the continuation, a D125 optional key.
@@ -1034,10 +1191,14 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
     expect(bodyAt(done, "p1", "active").damage).toBe(40);
   });
 
-  it("🛑 a PARKED Impromptu Carrier search (`dest: \"attachToSelf\"`, prompt `\"attach\"`) round-trips and resumes", () => {
+  it('🛑 a PARKED Impromptu Carrier search (`dest: "attachToSelf"`, prompt `"attach"`) round-trips and resumes', () => {
     const board = ensureInDeck(table(FILLER), "p1", VITALITY_BAND);
     const before = setHand(board, "p1", [FARFETCHD]);
-    const parked = run(before, { type: "playBasicToBench", seat: "p1", uid: before.players.p1.hand[0] as string }).state;
+    const parked = run(before, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: before.players.p1.hand[0] as string,
+    }).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(revived).toEqual(parked);
     const p = prompt(revived);

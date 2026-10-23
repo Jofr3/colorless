@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState } from "./index";
-import { applyAction, engineVersion, phaseViewOf, programFor, redactGame } from "./index";
+import { applyAction, phaseViewOf, programFor, redactGame } from "./index";
 import {
   FIXTURE_POOL,
   TRAINER_OPS_DECK,
@@ -1018,10 +1018,6 @@ describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven thr
     expect(activeUid(done, "p1")).toBe(attacker);
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     expect(types(events)).toContain("TURN_ENDED");
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

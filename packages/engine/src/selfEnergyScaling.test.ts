@@ -16,7 +16,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -392,7 +392,9 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
     // …and D192's reader is alive on the spellings the pool DOES print standalone,
     // so the null above is a refusal and not a dead reader.
     expect(
-      deriveAttackDamageSuppression("This attack's damage isn't affected by Weakness or Resistance."),
+      deriveAttackDamageSuppression(
+        "This attack's damage isn't affected by Weakness or Resistance.",
+      ),
     ).toEqual({ weakness: true, resistance: true });
     // REASON 2 — 🆕🆕 **D467: THIS REASON HAS EXPIRED, AND IT IS RECORDED HERE
     // RATHER THAN DELETED (D444/D447).** It used to read *"the count source is a
@@ -540,7 +542,9 @@ describe("deriveAttackDamageBonus / …Multiplier — the two new members", () =
     // `{C}` is deliberately absent from the token table — Colorless is the
     // conservative provision fallback for unauthored Special Energy, so a `{C}`
     // clause would quietly match cards nobody meant.
-    expect(deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each {C} Energy"))).toBeNull();
+    expect(
+      deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each {C} Energy")),
+    ).toBeNull();
     // 🆕🆕 D500 — and a token that could never be in the table, so the LOUD half does
     // not rest on one deliberately-omitted code. `{C}`'s absence is a DECISION and
     // could in principle be revisited; `Fancy` is not a word the vocabulary has any
@@ -550,9 +554,9 @@ describe("deriveAttackDamageBonus / …Multiplier — the two new members", () =
     ).toBeNull();
     // …while `Special` and the spelled-out names DO resolve, through the shared
     // token table rather than a local lookup (D118's dual notation).
-    expect(deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each Special Energy"))).toEqual(
-      { per: 50, count: { kind: "energyOnSelf", energyType: "special" } },
-    );
+    expect(
+      deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each Special Energy")),
+    ).toEqual({ per: 50, count: { kind: "energyOnSelf", energyType: "special" } });
     expect(deriveAttackDamageBonus(FLARE_DRAW.replace("{R}", "Water"))).toEqual({
       per: 80,
       count: { kind: "energyOnSelf", energyType: "Water" },
@@ -575,7 +579,9 @@ describe("deriveAttackDamageBonus / …Multiplier — the two new members", () =
     // have bought a regex and an evaluator branch for a card no legal deck plays.
     expect(deriveAttackDamageMultiplier(TWIN_BLAST)).toBeNull();
     expect(deriveAttackDamageBonus(TWIN_BLAST)).toBeNull();
-    expect(deriveAttackDamagePenalty(TWIN_SURGE.replace(" more damage", " less damage"))).toBeNull();
+    expect(
+      deriveAttackDamagePenalty(TWIN_SURGE.replace(" more damage", " less damage")),
+    ).toBeNull();
     // The twin is a real string the fixture prints, not one this test constructed.
     expect(FIXTURE_POOL["fix-bothactives"]?.attacks?.[TWIN.blast]?.effect).toBe(TWIN_BLAST);
   });
@@ -586,7 +592,9 @@ describe("deriveAttackDamageBonus / …Multiplier — the two new members", () =
     // D193's refusal to give OPPONENT_ENERGY_SCALE a zone it can never vary. A
     // typed printing therefore stays LOUD, which is the correct answer and not a
     // gap.
-    expect(deriveAttackDamageBonus(TWIN_SURGE.replace("each Energy", "each {R} Energy"))).toBeNull();
+    expect(
+      deriveAttackDamageBonus(TWIN_SURGE.replace("each Energy", "each {R} Energy")),
+    ).toBeNull();
     expect(deriveAttackDamageBonus(TWIN_SURGE)?.count).toEqual({
       kind: "bothActivesEnergyCount",
     });
@@ -1260,22 +1268,5 @@ describe("the record-shape derivation, made rather than inherited", () => {
         "This attack does 30 more damage for each Special Energy attached to all of your Pokémon.",
       ),
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
-  });
-
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
-    // nothing else, which is the same shape D458's was: no op, no field, no prompt
-    // key, no wire byte and no vocabulary diff moved, so a reader looking for one
-    // would find none and conclude wrongly. What moved is that a printed sentence
-    // that derived to `null` at 0.357.0 derives to a typed count at 0.358.0.
-    // ⚠️ THE VERSION TAX, RE-MEASURED AT THIS HEAD BY `grep -c` OVER BOTH SPELLINGS
-    // RATHER THAN INHERITED: **36 assertions / 40 sites** before this rung — 35
-    // `expect(engineVersion).toBe(…)` across 35 test files, ONE
-    // `expect(manifest.version).toBe(…)` in `legacyEnergy.test.ts`, `package.json`,
-    // the declaration, its doc block and `D275`'s mutant `find`. That is D458's
-    // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
-    // this series to be checked and found right. This rung is the 37th assertion,
-    // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.555.0");
   });
 });

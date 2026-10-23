@@ -88,7 +88,8 @@ import {
     drops the card onto the loud ATTACK_EFFECT_SKIPPED path and mills nothing at
     all — a silent no-op, which for a card with no printed damage is the whole
     attack going missing. */
-const UNDERSEA_TUNNEL = "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.";
+const UNDERSEA_TUNNEL =
+  "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.";
 
 /** Gyarados swsh10.5-022 "Wreak Havoc", verbatim. It was untilTailsFlip.test.ts's
     end-to-end UNMAPPED witness until this slice; that suite's case was re-pointed at
@@ -196,7 +197,9 @@ const BUILT_AT_D528 = [
     corpus file line 217 verbatim. A NAMED SET of one rather than a deletion, for the reason
     `BUILT_AT_D463` is one: every rung below that used to say "this stays loud" now says the
     opposite about it, and a deleted array says nothing at all (D418). */
-const BUILT_AT_D476 = ["Flip 3 coins. For each tails, discard an Energy from this Pokémon."] as const;
+const BUILT_AT_D476 = [
+  "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",
+] as const;
 
 /** 🆕🆕 **D463 — THE TWO ROWS THIS FILE REFUSED AND NOW DERIVES**, verbatim off
     `censusAttackCorpus.ts` file lines 200 and 234, in that order. Kept as a NAMED SET rather
@@ -528,7 +531,12 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     // for 322 decisions. A byte pin on an invented string is green by construction;
     // membership in the measured corpus is not.
     const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
-    for (const sentence of [...BUILT_AT_D528, ...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463]) {
+    for (const sentence of [
+      ...BUILT_AT_D528,
+      ...BUILT_AT_D525,
+      ...BUILT_AT_D476,
+      ...BUILT_AT_D463,
+    ]) {
       expect(sentence).toBe(sentence.trim());
       expect(sentence).not.toContain(RSQUO);
       expect(corpus.has(sentence), `not a corpus sentence: ${sentence}`).toBe(true);
@@ -821,10 +829,14 @@ describe("constructed near-misses stay NULL", () => {
     // "Flip a coin." opening, and it is still null: D126 owns that opening, and both
     // printed arms of this member require the plural "coins".
     expect(
-      deriveAttackCoinFlip("Flip a coin. For each heads, discard the top card of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip a coin. For each heads, discard the top card of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip a coin. For each heads, discard the top 1 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip a coin. For each heads, discard the top 1 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     // COUNT 2 — THE GATE CONSEQUENT. Give it the plural flip count and leave "If
     // heads,", and it is still null on BOTH mill spellings.
@@ -832,12 +844,16 @@ describe("constructed near-misses stay NULL", () => {
       deriveAttackCoinFlip("Flip 2 coins. If heads, discard the top card of your opponent's deck."),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. If heads, discard the top 1 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. If heads, discard the top 1 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     // 🆕 BOTH REMAINING COUNTS MOVED — and the SINGULAR spelling is now a
     // sentence this deriver reads, at a literal count of 1. This is corpus line 201.
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top card of your opponent's deck.",
+      ),
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
@@ -849,9 +865,13 @@ describe("constructed near-misses stay NULL", () => {
     // catalog prints both readings of "one card" and they refuse the crossings the
     // catalog prints neither of (see the four rungs in the D452 block below).
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top 1 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top 1 cards of your opponent's deck.",
+      ),
     ).toEqual(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top card of your opponent's deck.",
+      ),
     );
   });
 
@@ -861,17 +881,23 @@ describe("constructed near-misses stay NULL", () => {
     // pool. Refusing it — rather than quietly treating it as one flip — keeps the
     // grammar of the sentence and the shape of the value in agreement.
     expect(
-      deriveAttackCoinFlip("Flip 1 coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 1 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 0 coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 0 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     // `flips <= MAX_PRINTED_FLIPS` (10) is the ingested-text ceiling, and it bites
     // HARDER here than on any sibling: the digits come from third-party text, and an
     // unbounded `\d+` would spin the flip loop AND grow the expanded program one copy
     // per heads. 10 is admitted, 11 is not — the boundary stated from both sides.
     expect(
-      deriveAttackCoinFlip("Flip 10 coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 10 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 10 },
@@ -879,10 +905,14 @@ describe("constructed near-misses stay NULL", () => {
       face: "heads",
     });
     expect(
-      deriveAttackCoinFlip("Flip 11 coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 11 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 9999 coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 9999 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     // THE CEILING IS OWED TO THE PRINTED COUNT ALONE, D128/D129's provenance rule:
     // the untilTails arm has no ceiling and must not grow one, because its bound
@@ -897,7 +927,9 @@ describe("constructed near-misses stay NULL", () => {
     // Refused on BOTH arms, because the deriver has two returns and only one of them
     // is on the printed path.
     expect(
-      deriveAttackCoinFlip("Flip 3 coins. For each heads, discard the top 0 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 3 coins. For each heads, discard the top 0 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
       deriveAttackCoinFlip(
@@ -906,7 +938,9 @@ describe("constructed near-misses stay NULL", () => {
     ).toBeNull();
     // …while the smallest REAL value one digit away is read fine on both.
     expect(
-      deriveAttackCoinFlip("Flip 3 coins. For each heads, discard the top 1 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 3 coins. For each heads, discard the top 1 cards of your opponent's deck.",
+      ),
     ).toHaveProperty("ops", [{ op: "discardDeckTop", whose: "opponent", count: 1 }]);
     expect(
       deriveAttackCoinFlip(
@@ -921,19 +955,29 @@ describe("constructed near-misses stay NULL", () => {
     // one letter down at the front and one up in the middle, neither of which any
     // printing carries.
     expect(
-      deriveAttackCoinFlip("flip 3 Coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "flip 3 Coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 3 Coins. For each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 3 Coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 3 coins. for each heads, discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 3 coins. for each heads, discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 3 coins. For each heads, Discard the top 3 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 3 coins. For each heads, Discard the top 3 cards of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
       deriveAttackCoinFlip(
@@ -1019,7 +1063,7 @@ describe("constructed near-misses stay NULL", () => {
     });
   });
 
-  it("\U0001f6d1 the `^` REALLY pins the front — a CAPITALISED leading clause, on both arms", () => {
+  it("U0001f6d1 the `^` REALLY pins the front — a CAPITALISED leading clause, on both arms", () => {
     // \U0001f6d1 **THE GAP D452's MUTANT FOUND.** Every "leading text" rung in this file used
     // a LOWERCASE "flip", so all of them were refused by case rather than by the
     // anchor and a build with no `^` passed the file. These four keep the printed
@@ -1028,9 +1072,15 @@ describe("constructed near-misses stay NULL", () => {
     // The prefixes are real printed openings (a self-discard cost, a pre-damage
     // clause), so each string is a plausible COMPOUND rather than a constructed
     // oddity — and claiming one whole would silently drop its head.
-    for (const prefix of ["Discard an Energy from this Pokémon. ", "Before doing damage, ", "Then, "]) {
+    for (const prefix of [
+      "Discard an Energy from this Pokémon. ",
+      "Before doing damage, ",
+      "Then, ",
+    ]) {
       expect(
-        deriveAttackCoinFlip(`${prefix}Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.`),
+        deriveAttackCoinFlip(
+          `${prefix}Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.`,
+        ),
         prefix,
       ).toBeNull();
       expect(
@@ -1148,7 +1198,9 @@ describe("constructed near-misses stay NULL", () => {
     for (const refused of [BUILT_AT_D463[0], BUILT_AT_D463[1]]) {
       const head = refused.slice(0, refused.indexOf("For each heads"));
       expect(
-        deriveAttackCoinFlip(`${head}For each heads, discard the top 2 cards of your opponent's deck.`),
+        deriveAttackCoinFlip(
+          `${head}For each heads, discard the top 2 cards of your opponent's deck.`,
+        ),
       ).not.toBeNull();
     }
     // The PRINTED-count opening reaches both D452 arms; the UNTIL-TAILS opening
@@ -1156,10 +1208,14 @@ describe("constructed near-misses stay NULL", () => {
     // anchor for one would author a card. (🆕🆕🆕 D595 (D539): WITHDRAWN for the mill — `me`
     // prints it ×3 and `ATTACK_COIN_MILL_ONE_UNTIL_TAILS` builds it; the random DISCARD stays null.)
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top card of your opponent's deck.",
+      ),
     ).not.toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard a random card from your opponent's hand."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard a random card from your opponent's hand.",
+      ),
     ).not.toBeNull();
     expect(
       deriveAttackCoinFlip(
@@ -1405,7 +1461,10 @@ describe("the ZERO-HEADS outcome — nothing runs, and nothing is skipped either
       // sequence, which is what separates it from an attack that never flipped.
       expect(facesIn(events), label).toHaveLength(flips);
       expect(headsIn(events), label).toBe(0);
-      expect(facesIn(events).every((f) => f === "tails"), label).toBe(true);
+      expect(
+        facesIn(events).every((f) => f === "tails"),
+        label,
+      ).toBe(true);
       // ZERO ROWS — not one carrying an empty uid list.
       expect(all(events, "DECK_TOP_DISCARDED"), label).toHaveLength(0);
       // The deck and the discard are untouched by the ATTACK; the single missing deck

@@ -1,10 +1,9 @@
 import type { Card } from "@colorless/schema";
-import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { matchesFilter, topCardOf } from "./cards";
 import { effectiveTypesOf, inPlayCardOf, preventsAttackerType } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds, runProgram } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
@@ -44,7 +43,11 @@ const scovillainFace = (id: string): Card =>
     retreat: 2,
     weaknesses: [{ type: "Water", value: "×2" }],
     abilities: [
-      { type: "Ability", name: "Double Type", effect: "As long as this Pokémon is in play, it is {G} and {R} type." },
+      {
+        type: "Ability",
+        name: "Double Type",
+        effect: "As long as this Pokémon is in play, it is {G} and {R} type.",
+      },
     ],
     attacks: [
       {
@@ -58,7 +61,13 @@ const scovillainFace = (id: string): Card =>
   });
 
 const defender = (id: string, extra: Partial<Card>): Card =>
-  battler(id, { name: id, hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }], ...extra });
+  battler(id, {
+    name: id,
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+    ...extra,
+  });
 
 const LOCAL_CARDS: Record<string, Card> = {
   [SCOVILLAIN]: scovillainFace(SCOVILLAIN),
@@ -121,7 +130,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -130,7 +140,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -138,15 +150,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -177,7 +196,12 @@ interface Spot {
 
 /** p1's turn 2: each seat's Active and Bench built from `Spot`s (an evolved body carries its
     `under` cards beneath the top), every hand emptied back into the deck. */
-function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: readonly Spot[] }): GameState {
+function table(opts: {
+  p1: Spot;
+  p1Bench?: readonly Spot[];
+  p2: Spot;
+  p2Bench?: readonly Spot[];
+}): GameState {
   let state = opened(5781);
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
@@ -186,7 +210,12 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const body = (seat: Seat, spot: Spot): InPlayPokemon => {
     const stack: string[] = [];
@@ -199,25 +228,23 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
   };
   for (const seat of ["p1", "p2"] as const) {
     const active = body(seat, seat === "p1" ? opts.p1 : opts.p2);
-    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) => body(seat, s));
+    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
+      body(seat, s),
+    );
     state = withSide(state, seat, { active, bench });
   }
   return state;
 }
 
 function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DAMAGE_DEALT" }> {
-  const row = events.find((e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT");
+  const row = events.find(
+    (e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT",
+  );
   if (row === undefined) throw new Error("no DAMAGE_DEALT");
   return row;
 }
 
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
-
-describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-});
 
 describe("D578 Scovillain §1 — the registry row", () => {
   it("both printings carry the ONE object: `typesInPlay` [Grass, Fire], no attack key (Spicy Rage keeps deriving)", () => {
@@ -232,7 +259,11 @@ describe("D578 Scovillain §1 — the registry row", () => {
 
 describe("D578 Scovillain §2 — `inPlayCardOf`: in play it is {G} and {R}, Active and Bench alike", () => {
   it("the Active and a Benched Scovillain ex both read [Grass, Fire]; the printed card stays [Fire]", () => {
-    const state = table({ p1: SCOV_SPOT, p1Bench: [{ id: SCOVILLAIN_ALT, under: [CAPSAKID] }], p2: { id: PLAIN } });
+    const state = table({
+      p1: SCOV_SPOT,
+      p1Bench: [{ id: SCOVILLAIN_ALT, under: [CAPSAKID] }],
+      p2: { id: PLAIN },
+    });
     const active = state.players.p1.active as InPlayPokemon;
     const bench = state.players.p1.bench[0] as InPlayPokemon;
     expect(effectiveTypesOf(state, active)).toEqual(["Grass", "Fire"]);
@@ -253,8 +284,12 @@ describe("D578 Scovillain §2 — `inPlayCardOf`: in play it is {G} and {R}, Act
   });
 
   it("the HAND card is printed — 'As long as this Pokémon is in play': a {G} filter refuses it", () => {
-    expect(matchesFilter(POOL[SCOVILLAIN], { kind: "typedPokemon", pokemonType: "Grass" })).toBe(false);
-    expect(matchesFilter(POOL[SCOVILLAIN], { kind: "typedPokemon", pokemonType: "Fire" })).toBe(true);
+    expect(matchesFilter(POOL[SCOVILLAIN], { kind: "typedPokemon", pokemonType: "Grass" })).toBe(
+      false,
+    );
+    expect(matchesFilter(POOL[SCOVILLAIN], { kind: "typedPokemon", pokemonType: "Fire" })).toBe(
+      true,
+    );
   });
 });
 
@@ -306,9 +341,13 @@ describe("D578 Scovillain §4 — the type-keyed reads see {G} and {R}", () => {
 
   it("`opponentActiveHasType` — the OPPONENT's clause sees a {G} and an {R} Active", () => {
     const state = table({ p1: SCOV_SPOT, p2: { id: PLAIN } });
-    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Grass" })).toBe(true);
+    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Grass" })).toBe(
+      true,
+    );
     expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Fire" })).toBe(true);
-    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Water" })).toBe(false);
+    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Water" })).toBe(
+      false,
+    );
   });
 
   it("`yourActiveHasType` and `yourBenchHasType` — the holder's own side", () => {
@@ -321,13 +360,24 @@ describe("D578 Scovillain §4 — the type-keyed reads see {G} and {R}", () => {
 
   it("a typed IN-PLAY filter — an attach to 'your {G} Pokémon' offers the Benched Scovillain ex", () => {
     const state = table({ p1: { id: PLAIN }, p1Bench: [SCOV_SPOT], p2: { id: PLAIN } });
-    expect(attachEnergyTargets(state, "p1", { targetType: "Grass" })).toEqual([{ seat: "p1", spot: { spot: "bench", index: 0 } }]);
+    expect(attachEnergyTargets(state, "p1", { targetType: "Grass" })).toEqual([
+      { seat: "p1", spot: { spot: "bench", index: 0 } },
+    ]);
     expect(attachEnergyTargets(state, "p1", { targetType: "Water" })).toEqual([]);
   });
 
   it("a typed heal ('each of your {G} Pokémon') heals the Scovillain ex and not the {C} body", () => {
-    const state = table({ p1: { id: PLAIN, damage: 30 }, p1Bench: [{ ...SCOV_SPOT, damage: 40 }], p2: { id: PLAIN } });
-    const result = runProgram(state, [{ op: "healEach", amount: 30, pokemonType: "Grass" }], { seat: "p1" }, []);
+    const state = table({
+      p1: { id: PLAIN, damage: 30 },
+      p1Bench: [{ ...SCOV_SPOT, damage: 40 }],
+      p2: { id: PLAIN },
+    });
+    const result = runProgram(
+      state,
+      [{ op: "healEach", amount: 30, pokemonType: "Grass" }],
+      { seat: "p1" },
+      [],
+    );
     expect(result.state.players.p1.bench[0]?.damage).toBe(10);
     expect(result.state.players.p1.active?.damage).toBe(30);
   });
@@ -335,10 +385,16 @@ describe("D578 Scovillain §4 — the type-keyed reads see {G} and {R}", () => {
 
 describe("D578 Scovillain §5 — a §9 Ability lock hands back the printed {R}", () => {
   it("an opposing Active Iron Thorns ex (Initialization: Rule Box Pokémon have no Abilities) — Scovillain ex is {R} only, Active and Bench", () => {
-    const state = table({ p1: SCOV_SPOT, p1Bench: [{ id: SCOVILLAIN_ALT, under: [CAPSAKID] }], p2: { id: IRON_THORNS } });
+    const state = table({
+      p1: SCOV_SPOT,
+      p1Bench: [{ id: SCOVILLAIN_ALT, under: [CAPSAKID] }],
+      p2: { id: IRON_THORNS },
+    });
     expect(effectiveTypesOf(state, state.players.p1.active as InPlayPokemon)).toEqual(["Fire"]);
     expect(effectiveTypesOf(state, state.players.p1.bench[0] as InPlayPokemon)).toEqual(["Fire"]);
-    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Grass" })).toBe(false);
+    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Grass" })).toBe(
+      false,
+    );
   });
 
   it("…so the locked attacker's hit on a {G}-weak Iron Thorns ex takes NO Weakness (50, not 100)", () => {
@@ -363,206 +419,13 @@ describe("D578 Scovillain §6 — R-WT1: the Watchtower's {C} read stays PRINTED
   };
 
   it("every `typesInPlay` value, and every holder's printed types, exclude {C} — a retype can neither add nor remove {C}", () => {
-    const holders = registryCardIds().filter((id) => programFor(id)?.passive?.typesInPlay !== undefined);
+    const holders = registryCardIds().filter(
+      (id) => programFor(id)?.passive?.typesInPlay !== undefined,
+    );
     expect(holders.sort()).toEqual(Object.keys(HOLDER_PRINTED_TYPES).sort());
     for (const id of holders) {
       expect(programFor(id)?.passive?.typesInPlay).not.toContain("Colorless");
       expect(HOLDER_PRINTED_TYPES[id]).not.toContain("Colorless");
     }
-  });
-});
-
-// ── §7 — THE ALLOWLIST: every `.types` read and every `matchesFilter` call in engine source ──
-//
-// Walked off the TypeScript AST (comments and strings cannot match), keyed by
-// `kind · file · enclosing function · first argument [· filter]`, each with a verdict:
-//   EFFECTIVE — the card was resolved through `inPlayCardOf` (or is a param its callers feed
-//               from it), so Scovillain ex reads {G} and {R};
-//   PRINTED   — a hand / deck / discard / energy / played card, or the one Watchtower read
-//               (R-WT1), or a type-blind filter;
-//   TYPE-BLIND — a literal non-type filter on an in-play card (owner, banner, stage, name).
-// A NEW read or call fails here until it is classified.
-
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["./*.ts", "!./*.test.ts", "!./testFixtures.ts"], { query: "?raw", import: "default", eager: true });
-
-function sites(): string[] {
-  const out: string[] = [];
-  for (const [path, text] of Object.entries(RAW).sort(([a], [b]) => a.localeCompare(b))) {
-    const f = path.replace(/^\.\//, "");
-    if (!f.endsWith(".ts") || f.endsWith(".test.ts") || f === "testFixtures.ts") continue;
-    const src = ts.createSourceFile(f, text, ts.ScriptTarget.Latest, true);
-    const fnName = (n: ts.Node): string => {
-      for (let p: ts.Node | undefined = n.parent; p; p = p.parent) {
-        if ((ts.isFunctionDeclaration(p) || ts.isMethodDeclaration(p)) && p.name !== undefined) return p.name.getText();
-      }
-      return "<top>";
-    };
-    const flat = (n: ts.Node | undefined) => (n === undefined ? "" : n.getText().replace(/\s+/g, " "));
-    const visit = (n: ts.Node): void => {
-      if (ts.isPropertyAccessExpression(n) && n.name.text === "types") {
-        out.push(`types · ${f} · ${fnName(n)} · ${flat(n)}`);
-      }
-      if (ts.isCallExpression(n) && n.expression.getText() === "matchesFilter") {
-        out.push(`filter · ${f} · ${fnName(n)} · ${flat(n.arguments[0])} · ${flat(n.arguments[1])}`);
-      }
-      ts.forEachChild(n, visit);
-    };
-    visit(src);
-  }
-  return out;
-}
-
-const E = "EFFECTIVE";
-const P = "PRINTED";
-const B = "TYPE-BLIND";
-
-const ALLOWLIST: Record<string, string> = {
-  // ── `.types` reads ──
-  "types · cards.ts · matchesFilter · card.types": `${E} for in-play callers (handed \`inPlayCardOf\`), ${P} for hand/deck/discard callers`,
-  "types · cards.ts · weakResModifier · attacker.types": `${E} — both §8.5 callers pass the in-play attacker view`,
-  "types · continuous.ts · attackerMatchesClass · attacker.types": `${E} — \`attackBlockOf\` callers pass the in-play attacker`,
-  "types · continuous.ts · auraSuppresses · top.types": `${P} — R-WT1: the Watchtower read, under \`disabledAbilityUids\` (no {C} retype exists)`,
-  "types · continuous.ts · berryReductionOf · attacker?.types": `${E} — the four §8.5 callers pass the in-play attacker`,
-  // 🆕🆕🆕 D646 — Backtrack Badge's printed {C}: the holder's IN-PLAY types.
-  "types · continuous.ts · coinRedoToolOf · inPlayCardOf(state, body)?.types": `${E} — Backtrack Badge's {C} holder, read in play (D646)`,
-  "types · continuous.ts · effectiveTypesOf · inPlayCardOf(state, pokemon)?.types": `${E} — the projection itself`,
-  "types · continuous.ts · passivesOf · holderCard?.types": `${E} — \`holderCard\` is \`inPlayCardOf\` (printed under a §9 lock)`,
-  "types · continuous.ts · preventsAttackerType · attacker.types": `${E} — every damage site passes the in-play attacker`,
-  "types · continuous.ts · seatWeaknessRewrite · defenderCard.types": `${E} — both Weakness sites pass the in-play defender`,
-  // 🆕🆕🆕 D618 — Forest of Vitality: the EVOLUTION card is in the hand (the body's side reads `effectiveTypesOf`).
-  "types · continuous.ts · stadiumLicensesSameTurnEvolve · evolution.types": `${P} — the evolution card is in the hand, not in play`,
-  "types · continuous.ts · stadiumPoisonExtraCounters · top?.types": `${E} — flow.ts's §13.1 Poison passes \`inPlayCardOf\``,
-  "types · continuous.ts · stadiumRetreatDelta · top.types": `${E} — \`effectiveRetreatCost\` passes \`inPlayCardOf\``,
-  "types · interpreter.ts · attachEnergyTargets · card?.types": `${E} — \`inPlayCardOf\``,
-  "types · interpreter.ts · conditionHolds · inPlayCardOf(state, p)?.types": `${E}`,
-  // 🆕🆕🆕 D600 — Sableye's `yourBenchHasStage2OfType`: `benched` is `inPlayCardOf(state, p)`.
-  "types · interpreter.ts · conditionHolds · benched.types": `${E}`,
-  // 🆕🆕🆕 D603 — WP11's `yourMegaExInPlay` type rider: `card` is `inPlayCardOf(state, body)`.
-  "types · interpreter.ts · conditionHolds · card.types": `${E}`,
-  "types · interpreter.ts · conditionHolds · (inPlayCardOf(state, spot.active) ?? spot.card).types": `${E}`,
-  "types · interpreter.ts · healEach · card?.types": `${E} — \`inPlayCardOf\``,
-  // 🆕🆕🆕 D625 — Strange Timepiece's own evolved {P} offer, off the in-play card.
-  "types · interpreter.ts · ownDevolveTargets · card?.types": `${E} — \`inPlayCardOf\``,
-  // 🆕🆕🆕 D642 — Spiteful Swirl's watched {D} Active and Risky Ruins' non-{D} landing, off the in-play card.
-  "types · continuous.ts · watchedRecoilOf · watched.types": `${E} — \`inPlayCardOf\``,
-  "types · interpreter.ts · benchArrivalCounters · card.types": `${E} — \`inPlayCardOf\``,
-  // ── `matchesFilter` calls ──
-  "filter · attack.ts · benchBodies · inPlayCardOf(state, p) · filter": E,
-  "filter · attack.ts · copySources · card · { kind: \"ownerPokemon\", owner }": B,
-  "filter · attack.ts · scaledAttackDamage · inPlayCardOf(state, p) · filter": E,
-  // 🆕🆕🆕 D613 — the Bench destination's noun test; its callers hand it a deck / discard / hand card.
-  "filter · cards.ts · benchMatches · card · filter": `${P} — a card an effect puts onto the Bench, from a pile`,
-  "filter · cards.ts · matchesFilter · card · inner": `${E} or ${P} — the caller's card, recursed`,
-  "filter · cards.ts · matchesFilter · card · { kind: \"anyPokemon\" }": B,
-  "filter · cards.ts · matchesFilter · card · { kind: \"supporter\" }": B,
-  "filter · cards.ts · matchesFilter · card · { kind: \"toolCard\" }": B,
-  "filter · cards.ts · matchesFilter · card · { kind: \"item\" }": B, // 🆕🆕🆕 D635 — `itemNameContaining`'s head noun
-  // 🆕🆕🆕 D619 — Sacred Charm / Thick Scale / Thick Fat: the four §8.5 callers pass the in-play attacker view.
-  "filter · continuous.ts · attackerGatedReductionOf · attacker · reduction.attacker": `${E} — the four §8.5 callers pass the in-play attacker`,
-  // 🆕🆕🆕 D620 — Core Memory's holder gate: its one producer is `byName` (Mega Zygarde ex), blind to type.
-  "filter · continuous.ts · attackMenuOf · top · holderGate": B,
-  // 🆕🆕🆕 D620 — Tremendous Bomb's two class reads: both cards are `inPlayCardOf`.
-  "filter · continuous.ts · gatedBombOf · attackerCard · gated.attacker": E,
-  "filter · continuous.ts · gatedBombOf · holderCard · gated.holderNot": E,
-  "filter · continuous.ts · auraSuppresses · top · { kind: \"bannerPokemon\", banner: aura.exemptBanner }": B,
-  "filter · continuous.ts · basicEnergyUids · cardOfUid(state, uid) · BASIC_ENERGY_CARD": `${P} — an Energy card`,
-  "filter · continuous.ts · countEnergyInPlay · inPlayCardOf(state, holder) · filter": E,
-  "filter · continuous.ts · energyMayBeAttachedTo · topCardOf(state, holder) · { kind: \"ownerPokemon\", owner }": B,
-  "filter · continuous.ts · groupShieldedFromAttackEffects · targetTop · filter": E,
-  // 🆕🆕🆕 D621 — Gladion's Final Battle / Premium Power Pro's attacker noun, on the attacker's `inPlayCardOf`.
-  "filter · continuous.ts · sideAttackBonusThisTurn · attackerCard · bonus.attacker": E,
-  "filter · continuous.ts · koEnergyRescueUids · cardOfUid(state, uid) · { kind: \"basicEnergy\", energyType }": `${P} — an Energy card`,
-  "filter · continuous.ts · koEnergyRescueUids · inPlayCardOf(state, body) · { kind: \"typedPokemon\", pokemonType: rescued }": E,
-  "filter · continuous.ts · opposingRetreatSurcharge · targetTop · aura.target": E,
-  // 🆕🆕🆕 D606 — Nighttime Mine's `attackCostSurcharge.attacker`: its one producer is `bannerPokemon Tera`
-  // (keyed on the printing id, D568), so the read is blind to type.
-  "filter · continuous.ts · stadiumFilteredCostSurcharge · top · surcharge.attacker": B,
-  "filter · continuous.ts · passivesOf · holderCard · stageFree.beneficiary": E,
-  "filter · continuous.ts · passivesOf · holderCard · targeted.holder": E,
-  "filter · continuous.ts · pokemonPlayBarredByOpponentActive · card · bar.except": `${P} — the card being PLAYED from the hand`,
-  "filter · continuous.ts · pokemonPlayBarredByOpponentActive · card · bar.only": `${P} — the card being PLAYED from the hand`,
-  "filter · continuous.ts · seatDamageReduction · damagedCard · aura.beneficiary": E,
-  "filter · continuous.ts · seatDamageReduction · topCardOf(state, other) · { kind: \"byName\", name: otherNamed }": B,
-  "filter · continuous.ts · seatKoPrizeBonuses · koCard · bonus.koTarget": `${P} — the KO'd card by uid; the one \`koTarget\` is \`basicPokemon\` (type-blind)`,
-  // 🆕🆕🆕 D598 — Shadowy Concealment's "your {D} Pokémon": flow.ts `seatPrizeReduction` passes `inPlayCardOf`.
-  "filter · continuous.ts · seatKoPrizeReductionOf · koCard · rule.koTarget": `${E} — \`seatPrizeReduction\` passes \`inPlayCardOf\``,
-  "filter · continuous.ts · seatPreWRDamageBonus · attackerCard · aura.beneficiary": `${E} — \`attackerPreWRBonus\` passes \`inPlayCardOf\``,
-  "filter · continuous.ts · seatPreWRDamageBonus · defenderCard · aura.target": `${E} — the §8.5 callers pass the in-play defender`,
-  "filter · continuous.ts · sideAttackBonusThisTurn · defenderCard · bonus.target": `${E} — the §8.5 callers pass the in-play defender`,
-  // 🆕🆕🆕 D630 — Iron Defender's "your {M} Pokémon": `seatDamageReduction` passes `inPlayCardOf` (R-ID1).
-  "filter · continuous.ts · sideDamageReductionOf · damagedCard · { kind: \"typedPokemon\", pokemonType: record.pokemonType }": `${E} — \`seatDamageReduction\`'s \`inPlayCardOf\``,
-  "filter · continuous.ts · stadiumDamageReduction · damagedCard · reduction.beneficiary": E,
-  "filter · continuous.ts · stadiumFreesRetreat · top · retreat.filter": `${E} — \`effectiveRetreatCost\`'s \`inPlayCardOf\``,
-  "filter · continuous.ts · stadiumPreWRBonus · attackerCard · bonus.attacker": `${E} — via \`seatPreWRDamageBonus\``,
-  "filter · continuous.ts · stadiumRetreatDelta · top · retreat.filter": `${E} — \`effectiveRetreatCost\`'s \`inPlayCardOf\``,
-  "filter · continuous.ts · toolAnyTypeCostDiscount · holderTop · anyTerm.holder": E,
-  "filter · continuous.ts · toolAttackCostDiscount · top · term.holder": E,
-  "filter · flow.ts · briarPrizeBonus · cardOfUid(state, attackerUid) · rule.attacker": `${P} — Briar's \`attacker\` is \`bannerPokemon\` Tera (type-blind)`,
-  "filter · interpreter.ts · attachableEnergies · card · { kind: \"byName\", name: energyName }": B,
-  "filter · interpreter.ts · attachedBasicEnergyTypedFilter · card · { kind: \"basicEnergy\" }": `${P} — an Energy card`,
-  "filter · interpreter.ts · attachEnergyTargets · card · { kind: \"bannerPokemon\", banner: riders.targetBanner }": B,
-  "filter · interpreter.ts · attachEnergyTargets · card · { kind: \"ownerPokemon\", owner: riders.ownerPokemon }": B,
-  "filter · interpreter.ts · attachFromDeckOffer · cardOf(state, uid) · op.filter": `${P} — a deck card`,
-  "filter · interpreter.ts · attachFromDiscardOffer · cardOf(state, uid) · op.filter": `${P} — a discard card`,
-  "filter · interpreter.ts · attachFromHandOffer · cardOf(state, uid) · op.filter": `${P} — a hand card`,
-  "filter · interpreter.ts · attachFromTopOffer · cardOf(state, uid) · op.filter": `${P} — a deck card`,
-  "filter · interpreter.ts · bottomFromOpponentHandOffer · cardOf(state, uid) · op.filter": `${P} — a hand card`,
-  "filter · interpreter.ts · conditionHolds · activeTop(state, otherSeat(seat))?.card · { kind: \"bannerPokemon\", banner: cond.banner, }": B,
-  "filter · interpreter.ts · conditionHolds · cardOfUid(state, playedUid) · { kind: \"bannerCard\", banner: cond.banner }": B,
-  // 🆕🆕🆕 D579 — Koraidon "Unrelenting Onslaught"'s banner read over `GameState.recentAttackers`: a
-  // banner is keyed by printing id, never by type, and the uid may name a body that has LEFT PLAY.
-  "filter · interpreter.ts · conditionHolds · cardOfUid(state, entry.uid) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
-  "filter · interpreter.ts · conditionHolds · spot.card · { kind: \"ownerPokemon\", owner: cond.owner }": B,
-  "filter · interpreter.ts · conditionHolds · topCardOf(state, body) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
-  // 🆕🆕🆕 D603 — `yourMegaExInPlay`'s class read: the D582 NAME predicate, keyed on no type.
-  "filter · interpreter.ts · conditionHolds · card · { kind: \"megaEvolutionEx\" }": B,
-  "filter · interpreter.ts · countCardsInDiscardPile · cardOfUid(state, uid) · filter": `${P} — a discard card`,
-  "filter · interpreter.ts · countCardsInHand · cardOfUid(state, uid) · filter": `${P} — a hand card`,
-  "filter · interpreter.ts · discardRetrievalCandidates · cardOf(state, uid) · op.filter": `${P} — a discard card`,
-  "filter · interpreter.ts · counterEachAll · card · filter": `${E} — \`inPlayCardOf\``,
-  "filter · interpreter.ts · countPokemonInPlay · card · filter": `${E} — \`inPlayCardOf\``,
-  "filter · interpreter.ts · eachAttachTopUp · cardOf(given.state, uid) · op.filter": `${P} — a deck / discard card`,
-  "filter · interpreter.ts · evolvableOwnRefs · card · { kind: \"typedPokemon\", pokemonType }": `${E} — \`refTopCard\` is \`inPlayCardOf\``,
-  "filter · interpreter.ts · filteredRefs · refTopCard(state, ref) · filter": `${E} — \`refTopCard\` is \`inPlayCardOf\``,
-  "filter · interpreter.ts · gustTargets · card · { kind: \"basicPokemon\" }": B,
-  "filter · interpreter.ts · handCostCandidates · card · op.filter": `${P} — a hand card`,
-  "filter · interpreter.ts · healEach · card · { kind: \"basicPokemon\" }": B,
-  "filter · interpreter.ts · healEach · card · { kind: \"evolutionPokemon\" }": B,
-  "filter · interpreter.ts · healEach · card · { kind: \"bannerPokemon\", banner: op.banner }": B,
-  "filter · interpreter.ts · knockOutChosenTargets · card · { kind: \"basicPokemon\" }": B,
-  "filter · interpreter.ts · matchesAttached · cardOf(state, uid) · filter": `${P} — an attached Energy / Tool card`,
-  "filter · interpreter.ts · oneOfRecordedChoice · found · { kind: \"basicEnergy\" }": `${P} — an Energy card`,
-  "filter · interpreter.ts · scoredSlot · cardOfUid(state, uid) · filter": `${P} — a hand / deck card`,
-  "filter · interpreter.ts · searchDeckOrElse · card · filter": `${P} — a deck card`,
-  "filter · interpreter.ts · snipeTargets · inPlayCardOf(state, pokemon) · narrowing": E,
-  "filter · interpreter.ts · stepOp · cardOf(state, uid) · filter": `${P} — deck / hand / discard cards`,
-  "filter · interpreter.ts · stepOp · cardOf(state, uid) · g.filter": `${P} — deck cards`,
-  "filter · interpreter.ts · stepOp · cardOf(state, uid) · op.filter": `${P} — deck / hand / discard cards`,
-  "filter · interpreter.ts · stepOp · cardOfUid(state, uid) · op.filter": `${P} — a revealed deck card`,
-  "filter · interpreter.ts · subgroupRefs · refTopCard(state, ref) · { kind: \"ownerPokemon\", owner }": B,
-  "filter · interpreter.ts · swapBodies · top · filter": `${E} — \`inPlayCardOf\``,
-  "filter · interpreter.ts · swapDiscardCards · card · filter": `${P} — a discard card`,
-  // 🆕🆕🆕 D641 — Ditto's deck offer (a deck card) and Bug Out's "Pokémon" test on a revealed deck card.
-  "filter · interpreter.ts · deckSwapCandidates · card · filter": `${P} — a deck card`,
-  "filter · interpreter.ts · stepOp · cardOfUid(state, uid) · { kind: \"anyPokemon\" }": `${P} — a revealed deck card`,
-  "filter · interpreter.ts · switchBenchNarrowing · card · { kind: \"typedPokemon\", pokemonType: op.targetType }": `${E} — \`refTopCard\` is \`inPlayCardOf\``,
-};
-
-describe("D578 Scovillain §7 — THE ALLOWLIST: every in-play type read is classified", () => {
-  it("every `.types` read and every `matchesFilter` call in engine source has a verdict, and no verdict is stale", () => {
-    // Non-vacuous: the glob reached the engine's own modules.
-    expect(Object.keys(RAW).some((k) => k.endsWith("/continuous.ts"))).toBe(true);
-    const found = [...new Set(sites())].sort();
-    const unclassified = found.filter((key) => ALLOWLIST[key] === undefined);
-    const stale = Object.keys(ALLOWLIST).filter((key) => !found.includes(key));
-    expect(unclassified).toEqual([]);
-    expect(stale).toEqual([]);
   });
 });

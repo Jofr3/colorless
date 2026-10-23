@@ -714,7 +714,12 @@ describe("D283 §6 — the bump, driven", () => {
         // Bronzong's act became stampable. This anchor is the guard that went RED
         // on its own the moment the key landed, which is what it is for.
         expect(Object.keys(state.handPlayLockedTurn[seat]).sort()).toEqual(
-          ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+          [
+            "Item",
+            "Supporter",
+            "Stadium",
+            "evolve",
+          ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
         );
       }
     }

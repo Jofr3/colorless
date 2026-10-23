@@ -228,7 +228,8 @@ export function selfCheck(): void {
       `two rows identical in every runner-visible field were not grouped (got ${String(found.length)} group(s)).`,
     );
   }
-  if (isPartitioned(twins)) bad("a corpus containing D483's exact defect was reported PARTITIONED.");
+  if (isPartitioned(twins))
+    bad("a corpus containing D483's exact defect was reported PARTITIONED.");
 
   // 2. The negative cases: one field apart is two experiments, not one. Each of
   //    these is a rung that goes red if that field leaves `experimentKey`.
@@ -288,7 +289,9 @@ export function selfCheck(): void {
       `the shared-patch population did not see two rows applying one patch (got ${String(near.length)} group(s)).`,
     );
   }
-  if (sharedPatchGroups([row({ id: "one" }), row({ id: "two", find: "const y = 1;" })]).length > 0) {
+  if (
+    sharedPatchGroups([row({ id: "one" }), row({ id: "two", find: "const y = 1;" })]).length > 0
+  ) {
     bad("the shared-patch population counted two rows that patch different text.");
   }
 }
@@ -345,7 +348,9 @@ export function partitionReport(): PartitionReport {
     for (const m of group) named.push(`       - ${m.id}  (${m.decision})`);
   }
   const more =
-    groups.length > MAX_NAMED ? [`   … and ${String(groups.length - MAX_NAMED)} more group(s).`] : [];
+    groups.length > MAX_NAMED
+      ? [`   … and ${String(groups.length - MAX_NAMED)} more group(s).`]
+      : [];
 
   return {
     ok: false,

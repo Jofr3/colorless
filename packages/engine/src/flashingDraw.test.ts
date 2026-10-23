@@ -165,7 +165,11 @@ function handSize(state: GameState, size: number): GameState {
     ...state,
     players: {
       ...state.players,
-      p1: { ...side, hand: side.hand.slice(0, size), deck: [...side.deck, ...side.hand.slice(size)] },
+      p1: {
+        ...side,
+        hand: side.hand.slice(0, size),
+        deck: [...side.deck, ...side.hand.slice(size)],
+      },
     },
   };
 }

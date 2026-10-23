@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { PokemonType } from "./effects";
 import {
   POKEMON_TYPES,
@@ -244,7 +240,7 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
     // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
     // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
@@ -355,7 +351,7 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -410,13 +406,11 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     const state = benched(ready(6300), "p1", "fix-metalbody");
     expect(conditionHolds(state, "p1", METAL)).toBe(true);
     // Same FIELD, wrong body: the opponent's Active is `fix-bigbody`, Colorless.
-    expect(
-      conditionHolds(state, "p1", { kind: "opponentActiveHasType", type: "Metal" }),
-    ).toBe(false);
+    expect(conditionHolds(state, "p1", { kind: "opponentActiveHasType", type: "Metal" })).toBe(
+      false,
+    );
     // Same ZONE, wrong field: the benched body's NAME is not a type and never was.
-    expect(
-      conditionHolds(state, "p1", { kind: "yourBenchHasNamed", name: "Metal" }),
-    ).toBe(false);
+    expect(conditionHolds(state, "p1", { kind: "yourBenchHasNamed", name: "Metal" })).toBe(false);
     // Same ZONE, no field at all — and a COUNT cannot stand in, which the next two
     // lines prove rather than assert: swap the benched body for a Fairy one and the
     // count is unchanged while this member flips.
@@ -446,7 +440,9 @@ describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neig
     expect(units(corpus().filter(([, s]) => s === TRAP))).toBe(1);
     // And they are the WHOLE population of this clause shape: the template's
     // vocabulary is the only thing standing between them.
-    const shaped = corpus().filter(([, s]) => /^If you have any .+ Pokémon on your Bench, /.test(s));
+    const shaped = corpus().filter(([, s]) =>
+      /^If you have any .+ Pokémon on your Bench, /.test(s),
+    );
     expect(shaped.map(([, s]) => s).sort()).toEqual([TRAP, TAKEN].sort());
   });
 
@@ -473,15 +469,25 @@ describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neig
     // notations, off the same pattern that just refused `Tera`.
     for (const type of POKEMON_TYPES) {
       expect(
-        deriveAttackDamageBonus(`If you have any ${type} Pokémon on your Bench, this attack does 80 more damage.`),
+        deriveAttackDamageBonus(
+          `If you have any ${type} Pokémon on your Bench, this attack does 80 more damage.`,
+        ),
         type,
-      ).toEqual({ per: 80, count: { kind: "boardCondition", cond: { kind: "yourBenchHasType", type } } });
+      ).toEqual({
+        per: 80,
+        count: { kind: "boardCondition", cond: { kind: "yourBenchHasType", type } },
+      });
     }
     for (const [code, type] of Object.entries(POKEMON_TYPE_BY_CODE)) {
       expect(
-        deriveAttackDamageBonus(`If you have any {${code}} Pokémon on your Bench, this attack does 80 more damage.`),
+        deriveAttackDamageBonus(
+          `If you have any {${code}} Pokémon on your Bench, this attack does 80 more damage.`,
+        ),
         code,
-      ).toEqual({ per: 80, count: { kind: "boardCondition", cond: { kind: "yourBenchHasType", type } } });
+      ).toEqual({
+        per: 80,
+        count: { kind: "boardCondition", cond: { kind: "yourBenchHasType", type } },
+      });
     }
   });
 });
@@ -518,14 +524,16 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
     // `CLAUSE_POKEMON_TYPES` the brace notation: before it, the note's re-derivation
     // would have missed and the sentence gone LOUD.
     expect(
-      deriveAttackDamageBonus(`If ${conditionNote(METAL)}, this attack does 80 more damage.`)?.count,
+      deriveAttackDamageBonus(`If ${conditionNote(METAL)}, this attack does 80 more damage.`)
+        ?.count,
     ).toEqual({ kind: "boardCondition", cond: METAL });
     // And it holds for every type, both directions, which is what makes it a
     // property of the TEMPLATE rather than a fact about Metal.
     for (const type of POKEMON_TYPES) {
       const cond: BoardCondition = { kind: "yourBenchHasType", type };
       expect(
-        deriveAttackDamageBonus(`If ${conditionNote(cond)}, this attack does 40 more damage.`)?.count,
+        deriveAttackDamageBonus(`If ${conditionNote(cond)}, this attack does 40 more damage.`)
+          ?.count,
         type,
       ).toEqual({ kind: "boardCondition", cond });
     }
@@ -548,9 +556,11 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
     const braceBonus = bracePrinted.filter(([, s]) => BONUS.test(s.trim()));
     expect(units(braceBonus)).toBe(3);
     const cond: BoardCondition = { kind: "opponentActiveHasType", type: "Psychic" };
-    expect(deriveAttackDamageBonus(
-      "If your opponent's Active Pokémon is a {P} Pokémon, this attack does 30 more damage.",
-    )).toEqual({ per: 30, count: { kind: "boardCondition", cond } });
+    expect(
+      deriveAttackDamageBonus(
+        "If your opponent's Active Pokémon is a {P} Pokémon, this attack does 30 more damage.",
+      ),
+    ).toEqual({ per: 30, count: { kind: "boardCondition", cond } });
     // The note answers the NAME, not the printed glyph — right answer, stale claim.
     expect(conditionNote(cond)).toBe("your opponent's Active Pokémon is a Psychic Pokémon");
     expect(conditionNote(cond)).not.toContain("{P}");
@@ -634,18 +644,22 @@ describe("§4 — the near-misses stay LOUD, and the siblings are untouched", ()
     // The clause pattern was appended LAST, and the three patterns are mutually
     // exclusive at their anchors. Both siblings are driven here so "appended last"
     // is a measured fact rather than a claim about ordering.
-    expect(deriveAttackDamageBonus(
-      "If this Pokémon has any {R} Energy attached, this attack does 90 more damage.",
-    )).toEqual({
+    expect(
+      deriveAttackDamageBonus(
+        "If this Pokémon has any {R} Energy attached, this attack does 90 more damage.",
+      ),
+    ).toEqual({
       per: 90,
       count: {
         kind: "boardCondition",
         cond: { kind: "yourActiveHasEnergyAttached", energy: "Fire" },
       },
     });
-    expect(deriveAttackDamageBonus(
-      "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.",
-    )).toEqual({
+    expect(
+      deriveAttackDamageBonus(
+        "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.",
+      ),
+    ).toEqual({
       per: 90,
       count: {
         kind: "boardCondition",
@@ -654,9 +668,9 @@ describe("§4 — the near-misses stay LOUD, and the siblings are untouched", ()
     });
     // …and the LITERAL table still wins first: the Bench clause keyed by NAME is a
     // row, and this template's anchor cannot reach it.
-    expect(deriveAttackDamageBonus(
-      "If Durant is on your Bench, this attack does 20 more damage.",
-    )).toEqual({
+    expect(
+      deriveAttackDamageBonus("If Durant is on your Bench, this attack does 20 more damage."),
+    ).toEqual({
       per: 20,
       count: { kind: "boardCondition", cond: { kind: "yourBenchHasNamed", name: "Durant" } },
     });

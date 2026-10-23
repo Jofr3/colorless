@@ -4,7 +4,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -164,7 +164,10 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
 
   it('Flygon ×3 "Sandy Flapping" is ~~not keyed (its KO half)~~ keyed since D626 with both halves (🆕🆕🆕 D626 (D539)), and no printed attack is registry-keyed', () => {
     for (const id of ["me02-053", "me02-101", "mep-016"])
-      expect(programFor(id)?.triggered?.map((t) => t.trigger), id).toEqual(["onEvolve", "onKnockOut"]);
+      expect(
+        programFor(id)?.triggered?.map((t) => t.trigger),
+        id,
+      ).toEqual(["onEvolve", "onKnockOut"]);
     for (const [, , ids] of ABILITIES)
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     expect(programFor(LOKIX)).toBeUndefined();
@@ -808,11 +811,5 @@ describe("D590 §10b — Aqua Return over an evolution stack", () => {
     expect(after.players.p1.deck).toHaveLength(deck + 4);
     expect(after.players.p1.discard).toEqual([]);
     expect(top(after, after.players.p1.active)).toBe(FILLER);
-  });
-});
-
-describe("D590 §11 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

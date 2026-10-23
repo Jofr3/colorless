@@ -233,7 +233,11 @@ function deckOfSize(state: GameState, n: number): GameState {
     ...state,
     players: {
       ...state.players,
-      p1: { ...side, deck: side.deck.slice(0, n), discard: [...side.discard, ...side.deck.slice(n)] },
+      p1: {
+        ...side,
+        deck: side.deck.slice(0, n),
+        discard: [...side.discard, ...side.deck.slice(n)],
+      },
     },
   };
 }
@@ -543,7 +547,11 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     ["sv08.5-080", "Dudunsparce — Run Away Draw (Ability, reprint)", null],
     ["sv06-080", "Abra — Teleporter (Ability, activeOnly)", null], // 🆕 BUILT at D312
     ["sv08-131", "Gholdengo — Surf Back (attack idx 1)", null], // 🆕 BUILT at D312
-    ["sv06-043", "Poliwrath — Jumping Uppercut (attack)", "a conditional damage BOOST behind the decision"],
+    [
+      "sv06-043",
+      "Poliwrath — Jumping Uppercut (attack)",
+      "a conditional damage BOOST behind the decision",
+    ],
     // 🆕 D314 — BUILT, and the `owes` string it carried for three sessions was
     // WRONG about the field. There is no `recordAs`: the printed *"If you do"*
     // has no separating board on this card (see `breezyGift.test.ts` §2), so the
@@ -580,10 +588,18 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     // already refuses the identical shape one family over (Copperajah
     // `sv06.5-042`). **So the family cannot be closed by another registry row.**
     expect(built).toEqual([
-      DUDUNSPARCE, REPRINT, "sv06-080", "sv08-131",
+      DUDUNSPARCE,
+      REPRINT,
+      "sv06-080",
+      "sv08-131",
       "sv07-011",
-      "sv09-068", "sv06.5-015", "sv06.5-081",
-      "sv10-122", "sv10-217", "sv10-234", "sv10-242",
+      "sv09-068",
+      "sv06.5-015",
+      "sv06.5-081",
+      "sv10-122",
+      "sv10-217",
+      "sv10-234",
+      "sv10-242",
     ]);
     const owed = FAMILY.filter(([, , owes]) => owes !== null).map(([id]) => id);
     expect(owed).toEqual(["sv06-043"]);

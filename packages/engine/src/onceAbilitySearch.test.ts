@@ -60,7 +60,14 @@ const STADIUM = "d553-stadium";
 const ITEM = "d553-item";
 const SUPPORTER = "d553-supporter";
 
-function body(id: string, name: string, stage: string, evolveFrom: string, ability: string, effect: string): Card {
+function body(
+  id: string,
+  name: string,
+  stage: string,
+  evolveFrom: string,
+  ability: string,
+  effect: string,
+): Card {
   return battler(id, {
     name,
     hp: 130,
@@ -74,13 +81,45 @@ function body(id: string, name: string, stage: string, evolveFrom: string, abili
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
-  [MAMOSWINE]: body(MAMOSWINE, "Mamoswine ex", "Stage2", "Piloswine", "Mammoth Hauler", MAMMOTH_TEXT),
-  [MAMOSWINE_2]: body(MAMOSWINE_2, "Mamoswine ex", "Stage2", "Piloswine", "Mammoth Hauler", MAMMOTH_TEXT),
+  [MAMOSWINE]: body(
+    MAMOSWINE,
+    "Mamoswine ex",
+    "Stage2",
+    "Piloswine",
+    "Mammoth Hauler",
+    MAMMOTH_TEXT,
+  ),
+  [MAMOSWINE_2]: body(
+    MAMOSWINE_2,
+    "Mamoswine ex",
+    "Stage2",
+    "Piloswine",
+    "Mammoth Hauler",
+    MAMMOTH_TEXT,
+  ),
   [SAWSBUCK]: body(SAWSBUCK, "Sawsbuck", "Stage1", "Deerling", "Changing Seasons", SEASONS_TEXT),
-  [SAWSBUCK_2]: body(SAWSBUCK_2, "Sawsbuck", "Stage1", "Deerling", "Changing Seasons", SEASONS_TEXT),
-  [QUILAVA]: body(QUILAVA, "Ethan's Quilava", "Stage1", "Ethan's Cyndaquil", "Bonded by the Journey", BONDED_TEXT),
+  [SAWSBUCK_2]: body(
+    SAWSBUCK_2,
+    "Sawsbuck",
+    "Stage1",
+    "Deerling",
+    "Changing Seasons",
+    SEASONS_TEXT,
+  ),
+  [QUILAVA]: body(
+    QUILAVA,
+    "Ethan's Quilava",
+    "Stage1",
+    "Ethan's Cyndaquil",
+    "Bonded by the Journey",
+    BONDED_TEXT,
+  ),
   [ETHANS_ADVENTURE]: {
-    ...trainerCard(ETHANS_ADVENTURE, "Supporter", "Search your deck for up to 3 in any combination of Ethan's Pokémon and Basic Fire Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."),
+    ...trainerCard(
+      ETHANS_ADVENTURE,
+      "Supporter",
+      "Search your deck for up to 3 in any combination of Ethan's Pokémon and Basic Fire Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+    ),
     name: "Ethan's Adventure",
   },
   [FILLER]: battler(FILLER, {
@@ -93,7 +132,10 @@ const LOCAL_CARDS: Record<string, Card> = {
   [ENERGY]: typedEnergy(ENERGY, "Fire"),
   [STADIUM]: { ...trainerCard(STADIUM, "Stadium", "A D553 Stadium."), name: "D553 Stadium" },
   [ITEM]: { ...trainerCard(ITEM, "Item", "A D553 Item."), name: "D553 Item" },
-  [SUPPORTER]: { ...trainerCard(SUPPORTER, "Supporter", "A D553 Supporter."), name: "D553 Supporter" },
+  [SUPPORTER]: {
+    ...trainerCard(SUPPORTER, "Supporter", "A D553 Supporter."),
+    name: "D553 Supporter",
+  },
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -123,7 +165,9 @@ function p1Turn(seed = 5530): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -135,7 +179,8 @@ function p1Turn(seed = 5530): GameState {
     if (uid === undefined) throw new Error(`no filler Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -157,7 +202,11 @@ function stripDeck(state: GameState, drop: (id: string) => boolean): GameState {
     ...state,
     players: {
       ...state.players,
-      p1: { ...side, deck: side.deck.filter((u) => !goneSet.has(u)), discard: [...side.discard, ...gone] },
+      p1: {
+        ...side,
+        deck: side.deck.filter((u) => !goneSet.has(u)),
+        discard: [...side.discard, ...gone],
+      },
     },
   };
 }
@@ -172,14 +221,19 @@ function use(abilityName: string, target: "active" | number = 0): GameAction {
 }
 
 function parkOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
   return prompt;
 }
 
 function answer(state: GameState, uids: readonly string[]) {
-  return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [...uids] } });
+  return mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "cards", uids: [...uids] },
+  });
 }
 
 function find<T extends GameEvent["type"]>(
@@ -323,7 +377,9 @@ for (const t of TEXTS) {
         uids: [pick],
         reveal: true,
       });
-      expect(searchRow(after, events)).toBe(`searched their deck — revealed ${t.hitName} and put it in hand`);
+      expect(searchRow(after, events)).toBe(
+        `searched their deck — revealed ${t.hitName} and put it in hand`,
+      );
       const order = types(events);
       expect(order.indexOf("SHUFFLE")).toBeGreaterThan(order.indexOf("DECK_SEARCHED"));
       expect(after.phase).toEqual({ kind: "turn:action", seat: "p1" });
@@ -349,7 +405,9 @@ for (const t of TEXTS) {
     it(`the NEAR MISS is refused — ${t.nearMissWhy}: never offered, and naming it is BAD_EFFECT_CHOICE`, () => {
       const before = benched(t.ids[0] as string);
       const parked = mustApply(before, use(t.name)).state;
-      const near = parked.players.p1.deck.find((u) => parked.cardIdByUid[u] === t.nearMiss) as string;
+      const near = parked.players.p1.deck.find(
+        (u) => parked.cardIdByUid[u] === t.nearMiss,
+      ) as string;
       expect(near).toBeDefined();
       expect(parkOf(parked).candidates).not.toContain(near);
       expectErr(
@@ -383,11 +441,13 @@ for (const t of TEXTS) {
 describe("D553 B §5 — the caption, and the article D553 had to compute", () => {
   for (const t of TEXTS) {
     it(`${t.name} captions "${t.caption}"`, () => {
-      expect(parkOf(mustApply(benched(t.ids[0] as string), use(t.name)).state).note).toBe(t.caption);
+      expect(parkOf(mustApply(benched(t.ids[0] as string), use(t.name)).state).note).toBe(
+        t.caption,
+      );
     });
   }
 
-  it("🛑 the article is COMPUTED off the name (D553 withdrew the consonant-only claim): the live singular reads \"an\"", () => {
+  it('🛑 the article is COMPUTED off the name (D553 withdrew the consonant-only claim): the live singular reads "an"', () => {
     // The caption above is the only singular this seam reaches today. Arven's
     // Greedent's "Arven's Sandwich" — the seam's first producer, and ALSO
     // vowel-initial — prints "up to 2 … cards" and reaches the PLURAL only, which is

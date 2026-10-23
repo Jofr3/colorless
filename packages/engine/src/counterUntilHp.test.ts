@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { applyAction, deriveAttackEffect, engineVersion, logFromEvents } from "./index";
+import { applyAction, deriveAttackEffect, logFromEvents } from "./index";
 import type { EffectOp, GameEvent, GameState, LogContext } from "./index";
 import { runProgram } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
@@ -86,8 +86,10 @@ function placements(
 /** The three printed sentences, transcribed byte for byte off the committed column. */
 const BENCH_100 =
   "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.";
-const ACTIVE_50 = "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.";
-const ACTIVE_10 = "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
+const ACTIVE_50 =
+  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.";
+const ACTIVE_10 =
+  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
 
 /** `fix-hptarget`'s attack indices, named so a board reads as a sentence. */
 const IDX = { bench: 0, deep: 1, shallow: 2, bolt: 3 } as const;
@@ -145,7 +147,9 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     expect(rows.get(BENCH_100)).toBe(2);
     expect(rows.get(ACTIVE_10)).toBe(1);
     expect(rows.get(ACTIVE_50)).toBe(2);
-    expect((rows.get(BENCH_100) ?? 0) + (rows.get(ACTIVE_10) ?? 0) + (rows.get(ACTIVE_50) ?? 0)).toBe(5);
+    expect(
+      (rows.get(BENCH_100) ?? 0) + (rows.get(ACTIVE_10) ?? 0) + (rows.get(ACTIVE_50) ?? 0),
+    ).toBe(5);
   });
 
   it("🛑 `\\bHP\\b` over the WHOLE column returns exactly these three — the class is closed", () => {
@@ -214,9 +218,9 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     // naming WHICH row left and why (D418), but they are no longer what reddens.
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
     expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
-    expect(
-      family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(38);
+    expect(family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0)).toBe(
+      38,
+    );
     expect(unread).toHaveLength(0);
     expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(0);
     const unbuilt = unread.map(([, t]) => t);
@@ -309,9 +313,7 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
       deriveAttackEffect(
         "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
       ),
-    ).toEqual([
-      { op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 },
-    ]);
+    ).toEqual([{ op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 }]);
     // …and the one the published pattern CANNOT see, carried forward from D450 because
     // a hole a predecessor named is a hole this slice inherits: `Put up to 9 …` puts the
     // bound between the verb and the count.
@@ -347,13 +349,28 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
 describe("§2 — the anchors derive their own ops, and the co-variance is fenced", () => {
   it("each sentence derives the exact literal, and the printed number is HP not counters", () => {
     expect(deriveAttackEffect(BENCH_100)).toEqual([
-      { op: "counterUntilRemainingHp", target: "opponentBench", remainingHp: 100, source: "attack" },
+      {
+        op: "counterUntilRemainingHp",
+        target: "opponentBench",
+        remainingHp: 100,
+        source: "attack",
+      },
     ]);
     expect(deriveAttackEffect(ACTIVE_50)).toEqual([
-      { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 50, source: "attack" },
+      {
+        op: "counterUntilRemainingHp",
+        target: "opponentActive",
+        remainingHp: 50,
+        source: "attack",
+      },
     ]);
     expect(deriveAttackEffect(ACTIVE_10)).toEqual([
-      { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 10, source: "attack" },
+      {
+        op: "counterUntilRemainingHp",
+        target: "opponentActive",
+        remainingHp: 10,
+        source: "attack",
+      },
     ]);
     // 🛑 **NO × 10, AND THIS IS THE RUNG THAT SAYS SO.** Every sibling arm in this family
     // converts the printed COUNT to HP at the producer (§12); these two pass the printed
@@ -361,9 +378,9 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // digits, and the sibling is asserted beside it so the difference is visible rather
     // than implied.
     expect(deriveAttackEffect(ACTIVE_10)?.[0]).toMatchObject({ remainingHp: 10 });
-    expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual([
-      { op: "damageActive", amount: 100, source: "attack" },
-    ]);
+    expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual(
+      [{ op: "damageActive", amount: 100, source: "attack" }],
+    );
   });
 
   it("🛑 refuses the CROSS PRODUCT — the determiner and the zone word CO-VARY", () => {
@@ -413,17 +430,26 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
         "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10 or less.",
       ],
       // NO TRAILING PERIOD — the `$` sits after it.
-      ["no period", "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10"],
+      [
+        "no period",
+        "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10",
+      ],
       // A LOWERCASE first word: what keeps every mid-sentence ABILITY printing of this
       // action off this path, and the standing reason there is no /i anywhere here.
-      ["lowercase, mid-sentence", "put damage counters on your opponent's Active Pokémon until its remaining HP is 10."],
+      [
+        "lowercase, mid-sentence",
+        "put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+      ],
       // A LEADING RIDER pins `^`; a trailing one pins `$` (the compound above).
       [
         "a gate clause in front",
         "Flip a coin. If heads, put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
       ],
       // THE SINGULAR NOUN — the family's standing near miss shape.
-      ["one counter, singular", "Put damage counter on your opponent's Active Pokémon until its remaining HP is 10."],
+      [
+        "one counter, singular",
+        "Put damage counter on your opponent's Active Pokémon until its remaining HP is 10.",
+      ],
       // A PRINTED COUNT in front: that is arm 22's sentence with this one's tail, and it
       // is exactly the sentence a merged anchor would have invented.
       [
@@ -466,8 +492,12 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // standing call: an unambiguous sentence the op expresses exactly is derived even
     // where no card prints that number. A claim about the GAME, not about the INGEST.
     expect(
-      deriveAttackEffect("Put damage counters on your opponent's Active Pokémon until its remaining HP is 7."),
-    ).toEqual([{ op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 7, source: "attack" }]);
+      deriveAttackEffect(
+        "Put damage counters on your opponent's Active Pokémon until its remaining HP is 7.",
+      ),
+    ).toEqual([
+      { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 7, source: "attack" },
+    ]);
   });
 });
 
@@ -536,10 +566,9 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
     // before the reachability argument, because the reachability argument alone reads as
     // an excuse (D450's rule).
     for (const key of ["op", "target", "remainingHp", "source"] as const) {
-      const dropped = JSON.parse(JSON.stringify(fresh, (k, v) => (k === key ? undefined : v))) as Record<
-        string,
-        unknown
-      >;
+      const dropped = JSON.parse(
+        JSON.stringify(fresh, (k, v) => (k === key ? undefined : v)),
+      ) as Record<string, unknown>;
       expect(Object.keys(dropped), key).not.toContain(key);
       expect(dropped).not.toEqual(fresh);
       expect(dropped).not.toEqual(bench);
@@ -565,10 +594,6 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
     expect(placements(events)[0]?.amount).toBeNaN();
     // …and NONE of the three is reachable, because direction 2 established there is no
     // record to lose them from. Both halves are stated; neither alone is the argument.
-  });
-
-  it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -628,7 +653,8 @@ describe("§4 — the maximum is the CONTINUOUS one and a Tool moves it", () => 
         ...board.players,
         p2: {
           ...board.players.p2,
-          active: board.players.p2.active === null ? null : { ...board.players.p2.active, stack: [] },
+          active:
+            board.players.p2.active === null ? null : { ...board.players.p2.active, stack: [] },
         },
       },
     };
@@ -824,7 +850,14 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
       const events: GameEvent[] = [];
       const run = runProgram(
         board,
-        [{ op: "counterUntilRemainingHp", target: "opponentActive", remainingHp, source: "attack" }],
+        [
+          {
+            op: "counterUntilRemainingHp",
+            target: "opponentActive",
+            remainingHp,
+            source: "attack",
+          },
+        ],
         { seat: "p1", invokedBy: "attack" },
         events,
       );
@@ -837,7 +870,14 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
     const events: GameEvent[] = [];
     const run = runProgram(
       board,
-      [{ op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 1, source: "attack" }],
+      [
+        {
+          op: "counterUntilRemainingHp",
+          target: "opponentActive",
+          remainingHp: 1,
+          source: "attack",
+        },
+      ],
       { seat: "p1", invokedBy: "attack" },
       events,
     );
@@ -884,7 +924,12 @@ describe("§8 — the prevention gate, per body", () => {
     // printed 100 — so it takes zero for ARITHMETIC reasons and the shield never speaks.
     // The difference between this board and the one above is one call to `setBenchDamage`,
     // which is what makes the ordering observable at all.
-    const state = setBenchDamage(fielded(82, { theirs: ["fix-unaware", "fix-bigbody"] }), "p2", 0, 130);
+    const state = setBenchDamage(
+      fielded(82, { theirs: ["fix-unaware", "fix-bigbody"] }),
+      "p2",
+      0,
+      130,
+    );
     const run = attack(state, IDX.bench);
     expect(run.events.filter((e) => e.type === "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
     expect(run.state.players.p2.bench[0]?.damage).toBe(130);

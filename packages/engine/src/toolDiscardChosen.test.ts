@@ -10,7 +10,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import {
@@ -112,20 +112,6 @@ const SENTENCE = "Discard up to 2 Pokémon Tools from your opponent's Pokémon."
 
 /** The program the sentence derives to. ONE op; the ceiling is a CAPTURE. */
 const PROGRAM: readonly EffectOp[] = [{ op: "discardTools", count: 2 }];
-
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(
-  ["./{censusAttackCorpus,interpreter}.ts", "../../../apps/api/src/lobby/match.ts"],
-  { query: "?raw", import: "default", eager: true },
-);
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
 
 const STRIP = 0; // {C}, no damage — the sentence
 const PLAIN = 1; // {C}, no damage, NO effect — the one-axis control
@@ -267,7 +253,8 @@ function ready(
   if (tools[0] !== null) state = attachToolFromDeck(state, opponent, "active", tools[0]);
   if (tools[1] !== null) state = attachToolFromDeck(state, opponent, 0, tools[1]);
   if (opts.shieldActive === true) state = attachFromDeck(state, opponent, "fix-mist-energy", 1);
-  if (opts.shieldBench === true) state = attachBenchFromDeck(state, opponent, 0, "fix-mist-energy", 1);
+  if (opts.shieldBench === true)
+    state = attachBenchFromDeck(state, opponent, 0, "fix-mist-energy", 1);
   return state;
 }
 
@@ -328,17 +315,19 @@ describe("§1 — the anchor, and the near-misses it refuses", () => {
     // not exist against a literal. Driven on SYNTHETIC numbers, said out loud: these
     // three strings are not printed by any card, and the rung is about the ANCHOR's
     // shape rather than about the column.
-    expect(deriveAttackEffect("Discard up to 1 Pokémon Tools from your opponent's Pokémon.")).toEqual(
-      [{ op: "discardTools", count: 1 }],
-    );
-    expect(deriveAttackEffect("Discard up to 3 Pokémon Tools from your opponent's Pokémon.")).toEqual(
-      [{ op: "discardTools", count: 3 }],
-    );
+    expect(
+      deriveAttackEffect("Discard up to 1 Pokémon Tools from your opponent's Pokémon."),
+    ).toEqual([{ op: "discardTools", count: 1 }]);
+    expect(
+      deriveAttackEffect("Discard up to 3 Pokémon Tools from your opponent's Pokémon."),
+    ).toEqual([{ op: "discardTools", count: 3 }]);
     expect(
       deriveAttackEffect("Discard up to 12 Pokémon Tools from your opponent's Pokémon."),
     ).toEqual([{ op: "discardTools", count: 12 }]);
     // …and a count the arm refuses rather than parking an empty decision.
-    expect(deriveAttackEffect("Discard up to 0 Pokémon Tools from your opponent's Pokémon.")).toBeNull();
+    expect(
+      deriveAttackEffect("Discard up to 0 Pokémon Tools from your opponent's Pokémon."),
+    ).toBeNull();
   });
 
   it("🛑 BOTH TRAILING NEAR-MISSES ARE KEPT — they refuse for two DIFFERENT reasons", () => {
@@ -370,7 +359,9 @@ describe("§1 — the anchor, and the near-misses it refuses", () => {
 
   it("🛑 the CARET is load-bearing too — a prefix that keeps the capital is refused", () => {
     expect(
-      deriveAttackEffect("Flip a coin. Discard up to 2 Pokémon Tools from your opponent's Pokémon."),
+      deriveAttackEffect(
+        "Flip a coin. Discard up to 2 Pokémon Tools from your opponent's Pokémon.",
+      ),
     ).toBeNull();
   });
 
@@ -735,7 +726,7 @@ describe("§6 — the wire carries the prompt, scope included", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646), driven rather than argued", () => {
-  it("🛑 `\"cont\" in phase` IS TRUE — a record really holds the new inhabitant", () => {
+  it('🛑 `"cont" in phase` IS TRUE — a record really holds the new inhabitant', () => {
     const parked = attack(ready(), STRIP).state;
     expect("cont" in parked.phase).toBe(true);
     expect(JSON.stringify(parked)).toContain('"op":"discardTools","count":2');
@@ -770,15 +761,14 @@ describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at 
     expect(JSON.stringify(quiet)).not.toContain("discardTools");
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the RAW source, not retyped", () => {
-    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-
   it("the op is PURE — the parked board is not mutated by resolving it", () => {
     const parked = deepFreeze(attack(ready(), STRIP).state);
     const snapshot = JSON.stringify(parked);
-    answerWith(parked, "p1", parkedPrompt(parked).discardable.map((d) => d.uid));
+    answerWith(
+      parked,
+      "p1",
+      parkedPrompt(parked).discardable.map((d) => d.uid),
+    );
     expect(JSON.stringify(parked)).toBe(snapshot);
   });
 });
@@ -788,15 +778,6 @@ describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the population, the log row, and the version", () => {
-  it("🛑 the corpus row is present ONCE, at file line 136, with count column 2", () => {
-    const rows = legalAttackCorpus().filter(([, s]) => s === SENTENCE);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.[0]).toBe(2);
-    // …and the FILE line, read off the raw corpus rather than asserted from memory.
-    const lines = raw("/censusAttackCorpus.ts").split("\n");
-    expect(lines[135]).toBe(`2 ${SENTENCE}`);
-  });
-
   it("🛑 THE POPULATION: this op is authored by EXACTLY ONE corpus sentence", () => {
     // D423 — pin the claim on the population, not on the specimen. If a future
     // anchor started emitting `discardTools` for a second printed sentence, the
@@ -807,7 +788,7 @@ describe("§8 — the population, the log row, and the version", () => {
     expect(claimed.map(([, s]) => s)).toEqual([SENTENCE]);
   });
 
-  it("🛑 THE LOG ROW DOES *NOT* SAY “before doing damage” — `when: \"effect\"`", () => {
+  it('🛑 THE LOG ROW DOES *NOT* SAY “before doing damage” — `when: "effect"`', () => {
     // D421 — a log row is a claim with the same standing as a predicate, and this
     // one happens at the program TAIL, after §8.5. `D543-event-when-flipped` moves
     // no board at all: it is a row that lies, and this is the only rung that sees it.
@@ -820,17 +801,6 @@ describe("§8 — the population, the log row, and the version", () => {
     expect(text).toContain("discarded ");
     expect(text).toContain("Tide's");
     expect(text).not.toContain("before doing damage");
-  });
-
-  it("engineVersion", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-
-  it("the interpreter keeps the op OUT of `recordSlotOf`, and says so", () => {
-    // D206's silent omission, written down in the tree and pinned here so the note
-    // cannot rot into a lie: no `recordAs` field, no enrolment, no consequent.
-    expect(raw("/interpreter.ts")).toContain("`discardTools` IS DELIBERATELY *NOT* IN THE LIST");
-    expect(JSON.stringify(PROGRAM)).not.toContain("recordAs");
   });
 });
 

@@ -122,7 +122,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-
 // ── The printed sentences, as bytes ──────────────────────────────────────────
 
 /** Team Rocket's Giovanni `sv10-174/-225/-238`, verbatim off `effect`. */
@@ -191,7 +190,12 @@ const TAIL_SWAP =
 /** The two rows this slice LANDS, with the legal id sets re-derived by NAME from
     the live catalog rather than inherited from D204's or D205's tables. */
 const LANDED = [
-  { card: "Team Rocket's Giovanni", sentence: GIOVANNI, ids: ["sv10-174", "sv10-225", "sv10-238"], legal: 3 },
+  {
+    card: "Team Rocket's Giovanni",
+    sentence: GIOVANNI,
+    ids: ["sv10-174", "sv10-225", "sv10-238"],
+    legal: 3,
+  },
   { card: "Surfer", sentence: SURFER, ids: ["sv08-187", "sv08-235"], legal: 2 },
   { card: "Prime Catcher", sentence: PRIME_CATCHER, ids: ["sv05-157", "sv08.5-119"], legal: 2 },
 ] as const;
@@ -241,10 +245,20 @@ const LOCAL_CARDS: Record<string, Card> = {
   "fix-iono-body": subgroupBasic("fix-iono-body", "Iono's Bellibolt"),
   /** ⚠️ A {L}-typed body, for Vikavolt's refused axis: `ownerPokemon` must not be
       able to express "your Benched {L} Pokémon" even by accident. */
-  "fix-lightning-body": battler("fix-lightning-body", { name: "Wattrel", hp: 70, types: ["Lightning"] }),
+  "fix-lightning-body": battler("fix-lightning-body", {
+    name: "Wattrel",
+    hp: 70,
+    types: ["Lightning"],
+  }),
   /** An EVOLUTION body for the opponent's Bench — Lisia's Appeal's refused
       "Benched **Basic** Pokémon" filter needs a non-Basic to be about anything. */
-  "fix-stage1": battler("fix-stage1", { name: "Beartic", hp: 130, stage: "Stage1", evolveFrom: "Cubchoo", types: ["Water"] }),
+  "fix-stage1": battler("fix-stage1", {
+    name: "Beartic",
+    hp: 130,
+    stage: "Stage1",
+    evolveFrom: "Cubchoo",
+    types: ["Water"],
+  }),
   /** A 340 HP neutral body for the opponent's side. */
   "fix-bigtitan": battler("fix-bigtitan", { name: "Titan", hp: 340, types: ["Colorless"] }),
   /** D138's own counter-move sentence on a local body — the op the destination
@@ -285,7 +299,9 @@ function localSetup(seed: number, first: Seat): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
@@ -293,9 +309,12 @@ function localSetup(seed: number, first: Seat): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
-  for (const seat of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat }));
+  for (const seat of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat }));
   return state;
 }
 
@@ -342,7 +361,8 @@ function play(state: GameState, uid: string) {
 
 /** The parked `choosePokemon` prompt, narrowed. */
 function choosePrompt(state: GameState): { candidates: PokemonRef[]; note: string } {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   if (state.phase.prompt.kind !== "choosePokemon") {
     throw new Error(`expected choosePokemon, got ${state.phase.prompt.kind}`);
   }
@@ -351,7 +371,8 @@ function choosePrompt(state: GameState): { candidates: PokemonRef[]; note: strin
 
 /** The §9.2 record a parked continuation is carrying — the slot `recordAs` fills. */
 function parkedRecord(state: GameState): Record<string, string[]> {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return (state.phase.cont.record ?? {}) as Record<string, string[]>;
 }
 
@@ -391,10 +412,17 @@ describe("Surfer sv08-187/-235 — `switchActive.recordAs` + §9.2, and nothing 
     // Hand is emptied to exactly the Supporter, so "drew to 5" is a measurement
     // and not an accident of the opening seven.
     let state = stage(11, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"]);
-    const staged = inHand({ ...state, players: { ...state.players, p1: { ...state.players.p1, hand: [] } } }, "sv08-187");
+    const staged = inHand(
+      { ...state, players: { ...state.players, p1: { ...state.players.p1, hand: [] } } },
+      "sv08-187",
+    );
     state = staged.state;
     expect(state.players.p1.hand).toHaveLength(1);
-    const { state: parked } = mustApply(state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     const { state: done, events } = mustApply(parked, pick("p1", P1_BENCH(0)));
     const switched = find(events, "POKEMON_SWITCHED");
     expect(switched?.seat).toBe("p1");
@@ -410,7 +438,11 @@ describe("Surfer sv08-187/-235 — `switchActive.recordAs` + §9.2, and nothing 
     // the §9.2 record, and this is what `recordGateHolds` will ask about.
     const state = stage(12, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"]);
     const staged = inHand(state, "sv08-187");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     // Nothing is filed BEFORE the answer — the op has not run yet.
     expect(parkedRecord(parked).moved).toBeUndefined();
     const incoming = parked.players.p1.bench[0]?.stack[0];
@@ -421,7 +453,11 @@ describe("Surfer sv08-187/-235 — `switchActive.recordAs` + §9.2, and nothing 
   it("⚠️ the PROMPT says what the answer buys — §9.2's `withConsequence`, at a sixth op", () => {
     const state = stage(13, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"]);
     const staged = inHand(state, "sv08-187");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     // The unmarked heading, plus the printed condition and the printed
     // consequent. A `recordSlotOf` that had not learned `switchActive` would
     // silently drop the second half and describe HALF the card — which is the
@@ -480,7 +516,11 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
   it("⚠️ offers ONLY the Team Rocket's bodies — `Team Rocketeer` and the lowercase are DROPPED", () => {
     const state = stage(21, "fix-tr-mewtwo", MIXED, ["fix-plain"]);
     const staged = inHand(state, "sv10-174");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     // ⚠️ The possessive is the load-bearing character: `startsWith("Team Rocket")`
     // takes `Team Rocketeer`, and a case-folded read takes `team rocket's Meowth`.
     // Both are on this Bench and both must be absent.
@@ -496,7 +536,11 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
   it("switches own, THEN gusts the opponent — two boards moved by one card", () => {
     const state = stage(22, "fix-tr-mewtwo", MIXED, ["fix-plain", "fix-iono-body"]);
     const staged = inHand(state, "sv10-174");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     const { state: gustParked, events: first } = mustApply(parked, pick("p1", P1_BENCH(0)));
     expect(find(first, "POKEMON_SWITCHED")?.seat).toBe("p1");
     expect(activeName(gustParked, "p1")).toBe("Team Rocket's Nidorino");
@@ -530,10 +574,19 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     // a longer wrong list is still non-empty. It takes a card that PARKS AGAIN
     // (Giovanni's gust) so the slot's exact CONTENTS are readable off the live
     // continuation.
-    let state = stage(28, "fix-tr-mewtwo", ["fix-tr-nidorino", "fix-tr-meowth"], ["fix-plain", "fix-iono-body"]);
+    let state = stage(
+      28,
+      "fix-tr-mewtwo",
+      ["fix-tr-nidorino", "fix-tr-meowth"],
+      ["fix-plain", "fix-iono-body"],
+    );
     state = setConditions(state, "p1", { poisonDamage: 10, burned: true });
     const staged = inHand(state, "sv10-174");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     const { state: gustParked, events } = mustApply(parked, pick("p1", P1_BENCH(0)));
     // BOTH rows really are emitted — otherwise this asserts nothing.
     expect(find(events, "POKEMON_SWITCHED")).toBeDefined();
@@ -576,7 +629,12 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
   });
 
   it("a Bench with no Team Rocket's body refuses the play — the SECOND printed noun", () => {
-    const state = stage(25, "fix-tr-mewtwo", ["fix-plain", "fix-rocketeer", "fix-iono-body"], ["fix-plain"]);
+    const state = stage(
+      25,
+      "fix-tr-mewtwo",
+      ["fix-plain", "fix-rocketeer", "fix-iono-body"],
+      ["fix-plain"],
+    );
     const staged = inHand(state, "sv10-174");
     const result = play(staged.state, staged.uid);
     expect(result.ok).toBe(false);
@@ -589,7 +647,11 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     // resolves here, so the card works and the gust does as much as it can.
     const state = stage(26, "fix-tr-mewtwo", MIXED, []);
     const staged = inHand(state, "sv10-174");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     const { state: done } = mustApply(parked, pick("p1", P1_BENCH(0)));
     expect(activeName(done, "p1")).toBe("Team Rocket's Nidorino");
     expect(activeName(done, "p2")).toBe("Titan");
@@ -597,10 +659,12 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
   });
 
   it("ONE Team Rocket's benched body is FORCED, not asked — `parkOrForce`, unchanged", () => {
-    const state = stage(27, "fix-tr-mewtwo", ["fix-tr-nidorino", "fix-plain", "fix-rocketeer"], [
-      "fix-plain",
-      "fix-iono-body",
-    ]);
+    const state = stage(
+      27,
+      "fix-tr-mewtwo",
+      ["fix-tr-nidorino", "fix-plain", "fix-rocketeer"],
+      ["fix-plain", "fix-iono-body"],
+    );
     const staged = inHand(state, "sv10-174");
     const { state: gustParked, events } = mustApply(staged.state, {
       type: "playTrainer",
@@ -629,7 +693,9 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     // The consequent IS Boss's Orders' whole program, byte for byte — one printed
     // action read off two different cards, which is this family's checkable claim.
     const gate = programFor("sv10-174")?.trainer?.[1];
-    expect(gate?.op === "recordGate" ? gate.then : undefined).toEqual(programFor("sv02-172")?.trainer);
+    expect(gate?.op === "recordGate" ? gate.then : undefined).toEqual(
+      programFor("sv02-172")?.trainer,
+    );
     expect(GIOVANNI).toContain(BOSSS_ORDERS.charAt(0).toLowerCase() + BOSSS_ORDERS.slice(1));
   });
 });
@@ -638,9 +704,18 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
 
 describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror field", () => {
   it("gusts, and THEN switches own — Giovanni's two ops in the opposite order", () => {
-    const state = stage(81, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"], ["fix-plain", "fix-iono-body"]);
+    const state = stage(
+      81,
+      "fix-plain",
+      ["fix-tr-nidorino", "fix-tr-meowth"],
+      ["fix-plain", "fix-iono-body"],
+    );
     const staged = inHand(state, "sv05-157");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     // The FIRST park is the OPPONENT's Bench — the antecedent, not the consequent.
     expect(refNames(parked, choosePrompt(parked).candidates).sort()).toEqual([
       "Iono's Bellibolt",
@@ -676,7 +751,11 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
     if (!refused.ok) expect(refused.error.code).toBe("NO_LEGAL_TARGET");
 
     const noOwn = inHand(stage(83, "fix-plain", [], ["fix-plain", "fix-iono-body"]), "sv05-157");
-    const { state: parked } = mustApply(noOwn.state, { type: "playTrainer", seat: "p1", uid: noOwn.uid });
+    const { state: parked } = mustApply(noOwn.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: noOwn.uid,
+    });
     const { state: done } = mustApply(parked, pick("p1", P2_BENCH(0)));
     expect(activeName(done, "p2")).toBe("Pikachu");
     expect(activeName(done, "p1")).toBe("Pikachu");
@@ -708,9 +787,18 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
   });
 
   it("⚠️ the PROMPT says what the answer buys, and Boss's Orders' does NOT", () => {
-    const state = stage(84, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"], ["fix-plain", "fix-iono-body"]);
+    const state = stage(
+      84,
+      "fix-plain",
+      ["fix-tr-nidorino", "fix-tr-meowth"],
+      ["fix-plain", "fix-iono-body"],
+    );
     const staged = inHand(state, "sv05-157");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     expect(choosePrompt(parked).note).toBe(
       "Gust up which of the opponent's Benched Pokémon? If you do, switch your Active Pokémon with 1 of your Benched Pokémon.",
     );
@@ -727,7 +815,9 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
       ]);
     }
     const gate = programFor("sv05-157")?.trainer?.[1];
-    expect(gate?.op === "recordGate" ? gate.then : undefined).toEqual(programFor("sv01-194")?.trainer);
+    expect(gate?.op === "recordGate" ? gate.then : undefined).toEqual(
+      programFor("sv01-194")?.trainer,
+    );
   });
 });
 
@@ -747,7 +837,11 @@ describe("the unmarked `switchActive` did not move", () => {
   it("offers EVERY benched body and keeps the unmarked heading, with no §9.2 clause", () => {
     const state = stage(31, "fix-plain", ["fix-tr-nidorino", "fix-plain", "fix-rocketeer"]);
     const staged = inHand(state, "sv01-194");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     expect(refNames(parked, choosePrompt(parked).candidates).sort()).toEqual([
       "Pikachu",
       "Team Rocket's Nidorino",
@@ -824,12 +918,18 @@ describe("the landed census, re-derived", () => {
   it("lands SEVEN Standard-legal printings on TWO mirror ops and ZERO new vocabulary", () => {
     expect(LANDED.reduce((n, row) => n + row.legal, 0)).toBe(7);
     for (const row of LANDED) {
-      expect(row.ids, `${row.card}: id list disagrees with its measured legal count`).toHaveLength(row.legal);
+      expect(row.ids, `${row.card}: id list disagrees with its measured legal count`).toHaveLength(
+        row.legal,
+      );
       // The TRAINER surface has exactly one route — there is no Trainer deriver
       // in this engine — so unlike D205's attack arm this cannot be vacuous for
       // the reason D204's was. Asserted rather than assumed, one line down.
-      for (const id of row.ids) expect(programFor(id)?.trainer, `${id} (${row.card})`).toBeDefined();
-      expect(deriveAttackEffect(row.sentence), `${row.card} is a TRAINER, not an attack`).toBeNull();
+      for (const id of row.ids)
+        expect(programFor(id)?.trainer, `${id} (${row.card})`).toBeDefined();
+      expect(
+        deriveAttackEffect(row.sentence),
+        `${row.card} is a TRAINER, not an attack`,
+      ).toBeNull();
     }
   });
 
@@ -929,7 +1029,9 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
     // 🆕🆕🆕 D572 — and the witness that moved: Munkidori is built, on its OWN op (the source any
     // own body, the destination parked with the printed ceiling).
     for (const id of ["sv06-095", "sv06.5-072", "sv08.5-044"]) {
-      expect(programFor(id)?.abilities?.[0]?.program, id).toEqual([{ op: "moveCountersToOpponentChosen", upTo: 3 }]);
+      expect(programFor(id)?.abilities?.[0]?.program, id).toEqual([
+        { op: "moveCountersToOpponentChosen", upTo: 3 },
+      ]);
       expect(programFor(id)?.triggered, `${id} was half-built as a trigger`).toBeUndefined();
     }
     // 🆕🆕🆕 D565 — and the witness that moved: Orbeetle is built, on its OWN op.
@@ -965,7 +1067,11 @@ describe("✅ D561 BUILT — Scramble Switch sv08-186 (1 legal), the seam's thir
     // could fire but the consequent has no way to name its source.
     const state = stage(51, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"]);
     const staged = inHand(state, "sv08-187");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     const wasActive = parked.players.p1.active?.stack[0];
     const incoming = parked.players.p1.bench[0]?.stack[0];
     // Two bodies, so "the record holds one of them" is a real distinction.
@@ -973,7 +1079,12 @@ describe("✅ D561 BUILT — Scramble Switch sv08-186 (1 legal), the seam's thir
     const { state: gustLess } = mustApply(parked, pick("p1", P1_BENCH(0)));
     // The program finished, so read the filing off a board where it is still
     // parked: Giovanni's gust park carries the same record one op later.
-    const trState = stage(52, "fix-tr-mewtwo", ["fix-tr-nidorino", "fix-tr-meowth"], ["fix-plain", "fix-iono-body"]);
+    const trState = stage(
+      52,
+      "fix-tr-mewtwo",
+      ["fix-tr-nidorino", "fix-tr-meowth"],
+      ["fix-plain", "fix-iono-body"],
+    );
     const trStaged = inHand(trState, "sv10-174");
     const { state: trParked } = mustApply(trState === trStaged.state ? trState : trStaged.state, {
       type: "playTrainer",
@@ -1005,7 +1116,12 @@ describe("✅ D561 BUILT — Scramble Switch sv08-186 (1 legal), the seam's thir
     const events: GameEvent[] = [];
     const first = runProgram(scramble, program ?? [], { seat: "p1" }, events);
     if (first.kind !== "parked") throw new Error("expected the switch to park");
-    const second = resumeProgram(first.state, first.cont, { kind: "pokemon", ref: P1_BENCH(0) }, events);
+    const second = resumeProgram(
+      first.state,
+      first.cont,
+      { kind: "pokemon", ref: P1_BENCH(0) },
+      events,
+    );
     if (second.kind !== "parked" || second.prompt.kind !== "moveEnergy") {
       throw new Error("expected the Energy move to park");
     }
@@ -1048,8 +1164,15 @@ describe("✅ BUILT AT D331 — Lisia's Appeal sv08-179/-234/-246 (3 legal)", ()
     // filtering unconditionally would redden right here.
     const state = stage(91, "fix-plain", ["fix-tr-nidorino"], ["fix-plain", "fix-stage1"]);
     const staged = inHand(state, "sv05-157");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
-    expect(refNames(parked, choosePrompt(parked).candidates).sort()).toEqual(["Beartic", "Pikachu"]);
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
+    expect(refNames(parked, choosePrompt(parked).candidates).sort()).toEqual([
+      "Beartic",
+      "Pikachu",
+    ]);
     const gustOp = programFor("sv05-157")?.trainer?.[0];
     expect(gustOp).toEqual({ op: "gust", recordAs: "moved" });
     expect(gustOp).not.toHaveProperty("filter");
@@ -1147,7 +1270,9 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // ⚠️ …and Yanmega `svp-187` is the card this slice first mis-attributed
     // "Interjet" to. It prints the BARE self-switch, so it IS built — pinned here
     // so the correction cannot rot back into the wrong id.
-    expect(deriveAttackEffect("Switch this Pokémon with 1 of your Benched Pokémon.")).not.toBeNull();
+    expect(
+      deriveAttackEffect("Switch this Pokémon with 1 of your Benched Pokémon."),
+    ).not.toBeNull();
   });
 
   it("⚠️ names each missing piece, and neither is the seam this slice built", () => {
@@ -1236,13 +1361,17 @@ describe("⏹️ FLAGGED — N's Zoroark ex sv09-098/-175/-185/-189 (4 legal)", 
     // touch — and it is STILL unreadable. So the 4 printings are not a price
     // signal for `ownerPokemon`; they are one for an attack-COPY op, and a slice
     // that builds the predicate cannot come back and claim this row.
-    expect(deriveAttackEffect("Choose 1 of your Benched Pokémon's attacks and use it as this attack.")).toBeNull();
+    expect(
+      deriveAttackEffect("Choose 1 of your Benched Pokémon's attacks and use it as this attack."),
+    ).toBeNull();
     expect(NIGHT_JOKER).toContain("use it as this attack");
     // 🆕🆕🆕 D573 — the prediction held: what built it was an attack-COPY (a declaration-time
     // re-entry of `attack()`), not the predicate; the copy reader claims the printed sentence and
     // refuses the subgroup-stripped one (no printing prints it).
     expect(deriveAttackCopy(NIGHT_JOKER)).toEqual({ from: "benchOwner", owner: "N" });
-    expect(deriveAttackCopy("Choose 1 of your Benched Pokémon's attacks and use it as this attack.")).toBeNull();
+    expect(
+      deriveAttackCopy("Choose 1 of your Benched Pokémon's attacks and use it as this attack."),
+    ).toBeNull();
   });
 });
 
@@ -1402,7 +1531,11 @@ describe("FIXTURE_POOL, swept as its own population", () => {
     // three near-misses, where a rider that leaked a default would refuse the play.
     const state = stage(61, "fix-plain", ["fix-rocketeer", "fix-lowercase", "fix-iono-body"]);
     const staged = inHand(state, "sv01-194");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     expect(choosePrompt(parked).candidates).toHaveLength(3);
   });
 });
@@ -1425,7 +1558,11 @@ describe("MATCH_RECORD_VERSION — the derivation, not the habit", () => {
     expect(deriveAttackEffect(SELF_SWITCH)).toEqual([{ op: "switchActive" }]);
     const state = stage(71, "fix-plain", ["fix-tr-nidorino", "fix-plain"]);
     const staged = inHand(state, "sv01-194");
-    const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
+    const { state: parked } = mustApply(staged.state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.uid,
+    });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(parked.phase.cont.record).toBeUndefined();
     expect(parked.phase.cont.pendingOp).toEqual({ op: "switchActive" });

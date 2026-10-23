@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,

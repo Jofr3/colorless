@@ -193,43 +193,43 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
     markRows,
     suffixRows,
   ] = await db.batch([
-      db
-        .selectDistinct({ value: cards.rarity })
-        .from(cards)
-        .where(isNotNull(cards.rarity))
-        .orderBy(asc(cards.rarity)),
-      db.selectDistinct({ value: cards.typesJson }).from(cards).where(isNotNull(cards.typesJson)),
-      db
-        .selectDistinct({ value: cards.stage })
-        .from(cards)
-        .where(isNotNull(cards.stage))
-        .orderBy(asc(cards.stage)),
-      db
-        .selectDistinct({ value: cards.trainerType })
-        .from(cards)
-        .where(isNotNull(cards.trainerType))
-        .orderBy(asc(cards.trainerType)),
-      db
-        .selectDistinct({ value: cards.energyType })
-        .from(cards)
-        .where(isNotNull(cards.energyType))
-        .orderBy(asc(cards.energyType)),
-      db
-        .selectDistinct({ value: cards.illustrator })
-        .from(cards)
-        .where(isNotNull(cards.illustrator))
-        .orderBy(asc(cards.illustrator)),
-      db
-        .selectDistinct({ value: cards.regulationMark })
-        .from(cards)
-        .where(isNotNull(cards.regulationMark))
-        .orderBy(asc(cards.regulationMark)),
-      db
-        .selectDistinct({ value: cards.suffix })
-        .from(cards)
-        .where(isNotNull(cards.suffix))
-        .orderBy(asc(cards.suffix)),
-    ]);
+    db
+      .selectDistinct({ value: cards.rarity })
+      .from(cards)
+      .where(isNotNull(cards.rarity))
+      .orderBy(asc(cards.rarity)),
+    db.selectDistinct({ value: cards.typesJson }).from(cards).where(isNotNull(cards.typesJson)),
+    db
+      .selectDistinct({ value: cards.stage })
+      .from(cards)
+      .where(isNotNull(cards.stage))
+      .orderBy(asc(cards.stage)),
+    db
+      .selectDistinct({ value: cards.trainerType })
+      .from(cards)
+      .where(isNotNull(cards.trainerType))
+      .orderBy(asc(cards.trainerType)),
+    db
+      .selectDistinct({ value: cards.energyType })
+      .from(cards)
+      .where(isNotNull(cards.energyType))
+      .orderBy(asc(cards.energyType)),
+    db
+      .selectDistinct({ value: cards.illustrator })
+      .from(cards)
+      .where(isNotNull(cards.illustrator))
+      .orderBy(asc(cards.illustrator)),
+    db
+      .selectDistinct({ value: cards.regulationMark })
+      .from(cards)
+      .where(isNotNull(cards.regulationMark))
+      .orderBy(asc(cards.regulationMark)),
+    db
+      .selectDistinct({ value: cards.suffix })
+      .from(cards)
+      .where(isNotNull(cards.suffix))
+      .orderBy(asc(cards.suffix)),
+  ]);
   const payload: CatalogFacets = {
     rarities: facetValues(rarityRows),
     // `types` is the one ARRAY-valued facet, so it flattens before it can go

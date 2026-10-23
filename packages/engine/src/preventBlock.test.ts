@@ -893,7 +893,8 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       for (const attack of card.attacks ?? []) {
         const reading =
           attack.effect === undefined ? null : deriveAttackOptionalCostBoost(attack.effect);
-        if (reading !== null) walkKinds(optionalCostBoostProgram(reading, 0, attack.effect ?? ""), kinds);
+        if (reading !== null)
+          walkKinds(optionalCostBoostProgram(reading, 0, attack.effect ?? ""), kinds);
       }
     }
     return kinds;
@@ -1849,7 +1850,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       // a printed destination and it is far below this Active's remaining HP, so the
       // UNBLOCKED run places a large positive amount — the probe must not be one where
       // "nothing happened" and "already at the destination" look the same.
-      op: { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 10, source: "attack" },
+      op: {
+        op: "counterUntilRemainingHp",
+        target: "opponentActive",
+        remainingHp: 10,
+        source: "attack",
+      },
       landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
     },
     damageChosen: {

@@ -530,7 +530,11 @@ describe("the rest of the coin family stays LOUD", () => {
     // closest live near-miss this slice has: STILL null on this reader (the control).
     // 🆕🆕🆕 D634 (D539): WITHDRAWN — the all-heads gate is BUILT (Bewear `me01-112` "Hyper Lariat",
     // `bonusOnAllHeads`), so Magikarp reads as that member, never as a one-flip `bonusOnHeads`.
-    expect(deriveAttackCoinFlip(magikarp)).toEqual({ kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: 20 });
+    expect(deriveAttackCoinFlip(magikarp)).toEqual({
+      kind: "bonusOnAllHeads",
+      flips: { kind: "printed", count: 2 },
+      bonus: 20,
+    });
     // Bisharp: the POSITIVE reading — pinned by value, not by a null (a null goes green the day the
     // whole family stops resolving; `ladder: [20, 60, 120]` does not).
     expect(deriveAttackCoinFlip(bisharp)).toEqual({
@@ -629,7 +633,9 @@ describe("constructed near-misses stay LOUD", () => {
     // Nothing in the pool prints it, and the guard is what keeps that a FACT about
     // the pool rather than an assumption: a 0 bonus would spend a flip (and an
     // rngState step, and an event) to add nothing at all.
-    expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 0 more damage.")).toBeNull();
+    expect(
+      deriveAttackCoinFlip("Flip a coin. If heads, this attack does 0 more damage."),
+    ).toBeNull();
     // …while the smallest REAL value one digit away is read fine.
     expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 1 more damage.")).toEqual({
       kind: "bonusOnHeads",

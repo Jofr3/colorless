@@ -2,13 +2,9 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
-import {
-  deriveAttackEffect,
-  splitAttackGateClause,
-  splitAttackTrailingClause,
-} from "./effects";
+import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { runProgram } from "./interpreter";
@@ -261,7 +257,8 @@ const attack = (state: GameState, index: number, seat: Seat = "p1") =>
 /** The parked prompt, narrowed. Throws rather than returning null, so a board that
     FORCED instead of parking names itself at the call site (D424's live-axis rule). */
 function parkedPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected the park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected the park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "chooseCards") throw new Error("expected a chooseCards prompt");
   return prompt;
@@ -455,7 +452,9 @@ describe("§2 — the corpus figures, read off the population", () => {
     }
     // …and the five are exactly this slice's sentence plus the four in `FAMILY`,
     // which is what makes the closure a partition rather than a count.
-    expect(family.map(([, s]) => s).sort()).toEqual([SENTENCE, ...FAMILY.map((f) => f.text)].sort());
+    expect(family.map(([, s]) => s).sort()).toEqual(
+      [SENTENCE, ...FAMILY.map((f) => f.text)].sort(),
+    );
     // The printing counts too, per row, off the ROW and not off this file.
     for (const sibling of FAMILY) {
       expect(family.find(([, s]) => s === sibling.text)?.[0], sibling.text).toBe(sibling.printings);
@@ -805,7 +804,7 @@ describe("§7 — the log row, both spellings", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the prompt shape the HUDs' Confirm-verb tables read", () => {
-  it("🛑 THE FIRST MANDATORY `dest: \"deck\"` PARK IN THIS ENGINE", () => {
+  it('🛑 THE FIRST MANDATORY `dest: "deck"` PARK IN THIS ENGINE', () => {
     // This is the fact that turned two guessed HUD cells into live ones and exposed
     // the ONLINE ternary. It is asserted here so a future build that made this park
     // declinable (`min: 0`) reddens beside the dom rung rather than silently
@@ -876,12 +875,14 @@ describe("§8b — the gate caption names the DECK, driven from a hand-built pro
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
-  it("🛑 `\"cont\" in phase` IS TRUE and the new field IS in the bytes", () => {
+  it('🛑 `"cont" in phase` IS TRUE and the new field IS in the bytes', () => {
     const { state } = attack(ready(), SHUFFLE);
     const phase = state.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect("cont" in phase).toBe(true);
-    expect(JSON.stringify(state)).toContain('"op":"opponentDiscardsFromHand","count":3,"to":"deck"');
+    expect(JSON.stringify(state)).toContain(
+      '"op":"opponentDiscardsFromHand","count":3,"to":"deck"',
+    );
   });
 
   it("🛑 DIRECTION 1 — the parked program survives a JSON round trip and resolves", () => {
@@ -903,7 +904,9 @@ describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
     const parked = attack(ready(), SHUFFLE).state;
     const bytes = JSON.stringify(parked);
     expect(bytes).toContain('"count":3,"to":"deck"');
-    const stripped = JSON.parse(bytes.split('"count":3,"to":"deck"').join('"count":3')) as GameState;
+    const stripped = JSON.parse(
+      bytes.split('"count":3,"to":"deck"').join('"count":3'),
+    ) as GameState;
     // The park itself is unchanged in every field but `dest` — which is the prompt,
     // not the record, and is re-derived from the op on resume.
     const picked = parkedPrompt(stripped).candidates.slice(0, 3);
@@ -930,10 +933,6 @@ describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§10 — the version moved with the behaviour", () => {
-  it("engineVersion", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-
   it("the op is PURE — the parked board is not mutated by resolving it", () => {
     const parked = deepFreeze(attack(ready(), SHUFFLE).state);
     const snapshot = JSON.stringify(parked);

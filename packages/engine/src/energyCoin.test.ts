@@ -209,7 +209,13 @@ function board(seed: number, deck: readonly string[]): GameState {
     ...state,
     players: {
       ...state.players,
-      p1: { ...side, hand: [coin], deck: deckUids, active: body(activeUid), bench: [body(benchUid)] },
+      p1: {
+        ...side,
+        hand: [coin],
+        deck: deckUids,
+        active: body(activeUid),
+        bench: [body(benchUid)],
+      },
     },
   };
 }
@@ -227,8 +233,9 @@ function play(state: GameState): { state: GameState; events: GameEvent[] } {
     off the SAME log, never off a chosen seed). */
 function facesOf(events: readonly GameEvent[]): string[] {
   return events
-    .filter((e): e is Extract<GameEvent, { type: "ATTACK_EFFECT_COIN_FLIP" }> =>
-      e.type === "ATTACK_EFFECT_COIN_FLIP",
+    .filter(
+      (e): e is Extract<GameEvent, { type: "ATTACK_EFFECT_COIN_FLIP" }> =>
+        e.type === "ATTACK_EFFECT_COIN_FLIP",
     )
     .map((e) => e.result);
 }
@@ -284,7 +291,9 @@ describe("D355 §1 — `coins` is how many coins the sentence prints", () => {
       const faces = facesOf(events);
       widths.add(faces.length);
       for (const face of faces) expect(["heads", "tails"]).toContain(face);
-      expect(events.filter((e) => e.type === "ATTACK_EFFECT_COIN_FLIP").every((e) => e.seat === "p1")).toBe(true);
+      expect(
+        events.filter((e) => e.type === "ATTACK_EFFECT_COIN_FLIP").every((e) => e.seat === "p1"),
+      ).toBe(true);
     }
     expect([...widths]).toEqual([2]);
   });
@@ -313,9 +322,7 @@ describe("D355 §2 — the branch runs IFF the coins are unanimous on heads", ()
       // …and the shuffle rides the same arm (§5 states this as its own claim).
       expect(typesOf(events).includes("SHUFFLE")).toBe(false);
     }
-    expect(seen).toEqual(
-      new Set(["heads-heads", "heads-tails", "tails-heads", "tails-tails"]),
-    );
+    expect(seen).toEqual(new Set(["heads-heads", "heads-tails", "tails-heads", "tails-tails"]));
   });
 
   it("🛑 HEADS-then-TAILS whiffs — the witness against reading only the FIRST coin", () => {

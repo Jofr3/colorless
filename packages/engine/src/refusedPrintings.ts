@@ -225,8 +225,7 @@ export const RESOLVED_REFUSALS: readonly ResolvedRefusal[] = [
     refusedBy: "D270 (registry.ts `HARLEQUIN`, effects.ts `handRefresh`), re-asserted by D479",
     cite: {
       file: "packages/engine/src/registry.ts",
-      excerpt:
-        "    🛑🛑 **D480 — THE PARAGRAPH ABOVE IS FALSE AT HEAD, AND ITS REFUTATION IS IN",
+      excerpt: "    🛑🛑 **D480 — THE PARAGRAPH ABOVE IS FALSE AT HEAD, AND ITS REFUTATION IS IN",
     },
   },
   {
@@ -236,8 +235,7 @@ export const RESOLVED_REFUSALS: readonly ResolvedRefusal[] = [
     refusedBy: "D270 (registry.ts `HARLEQUIN`, effects.ts `handRefresh`), re-asserted by D479",
     cite: {
       file: "packages/engine/src/effects.ts",
-      excerpt:
-        "      🛑🛑 **D480 — THE PARAGRAPH DIRECTLY ABOVE IS D479'S OWN CORRECTION, AND ITS",
+      excerpt: "      🛑🛑 **D480 — THE PARAGRAPH DIRECTLY ABOVE IS D479'S OWN CORRECTION, AND ITS",
     },
   },
   {
@@ -247,8 +245,7 @@ export const RESOLVED_REFUSALS: readonly ResolvedRefusal[] = [
     refusedBy: "D270 (registry.ts `HARLEQUIN`, effects.ts `handRefresh`), re-asserted by D479",
     cite: {
       file: "packages/engine/src/effects.ts",
-      excerpt:
-        "    🛑 **D480 — THE WORD `unbuilt-but-same-shape` FOUR LINES UP IS FALSE, AND HAS",
+      excerpt: "    🛑 **D480 — THE WORD `unbuilt-but-same-shape` FOUR LINES UP IS FALSE, AND HAS",
     },
   },
 ];

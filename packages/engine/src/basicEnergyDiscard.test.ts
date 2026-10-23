@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cardOfUid, matchesFilter } from "./cards";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -258,7 +254,7 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // re-derived live rather than edited down. That slice's THIRD printing moved a
     // DIFFERENT residue: its cancel-consequent sibling lives behind the "does nothing"
     // skeleton, not this one.
-        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
     // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
     // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
@@ -345,7 +341,7 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -479,7 +475,9 @@ describe("§2 — the clause row, the printed BYTES, and a note that round-trips
     // answers with the new member, the two adjacent rows have been conflated — which
     // is the exact accident their adjacency invites.
     expect(
-      deriveAttackDamageBonus("If you have at least 3 {D} Energy in play, this attack does 50 more damage."),
+      deriveAttackDamageBonus(
+        "If you have at least 3 {D} Energy in play, this attack does 50 more damage.",
+      ),
     ).toEqual({
       per: 50,
       count: {
@@ -501,9 +499,9 @@ describe("§2 — the clause row, the printed BYTES, and a note that round-trips
       "you have at least 10 Basic Fire Energy cards in your discard pile",
     );
     expect(conditionNote(DISCARD)).not.toBe(TAKEN_CLAUSE);
-    expect(resolvedByAnyReader(`If ${conditionNote(DISCARD)}, this attack does 100 more damage.`)).toBe(
-      false,
-    );
+    expect(
+      resolvedByAnyReader(`If ${conditionNote(DISCARD)}, this attack does 100 more damage.`),
+    ).toBe(false);
     // …and BOTH parameters are really read, so a second threshold or a second type
     // costs no note arm.
     expect(
@@ -522,9 +520,9 @@ describe("§2 — the clause row, the printed BYTES, and a note that round-trips
     }
     // …and the sibling one zone over does not round-trip either, for the same D118
     // reason, which is what makes this note's shape a family habit rather than a lapse.
-    expect(resolvedByAnyReader(`If ${conditionNote(IN_PLAY)}, this attack does 50 more damage.`)).toBe(
-      false,
-    );
+    expect(
+      resolvedByAnyReader(`If ${conditionNote(IN_PLAY)}, this attack does 50 more damage.`),
+    ).toBe(false);
   });
 });
 
@@ -640,12 +638,7 @@ describe("§3 — THE PROVISION AXIS: a card CLASS and a printed TYPE, never a p
     // print and three of another make ten — the real catalog carries Basic Fire Energy
     // under three ids (`sve-002`/`-010`/`-018`), all identical in play, so a member
     // keyed on an id rather than on the printed noun would answer six here.
-    const mixed = pile(
-      ready(8107),
-      "p1",
-      ["fix-fire-energy", 7],
-      ["fix-fire-energy-alt", 3],
-    );
+    const mixed = pile(ready(8107), "p1", ["fix-fire-energy", 7], ["fix-fire-energy-alt", 3]);
     expect(conditionHolds(mixed, "p1", DISCARD)).toBe(true);
     expect(damageDealt(mixed)).toBe(110);
 
@@ -770,15 +763,27 @@ describe("§5 — the THRESHOLD: `>=`, driven at exactly 9 and exactly 10", () =
     const nine = pile(ready(8320), "p1", ["fix-fire-energy", 9]);
     expect(conditionHolds(nine, "p1", DISCARD)).toBe(false);
     expect(
-      conditionHolds(nine, "p1", { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Fire", count: 9 }),
+      conditionHolds(nine, "p1", {
+        kind: "yourBasicEnergyInDiscardAtLeast",
+        energy: "Fire",
+        count: 9,
+      }),
     ).toBe(true);
     // …and the `energy` parameter is real too, on the same board.
     expect(
-      conditionHolds(nine, "p1", { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Water", count: 1 }),
+      conditionHolds(nine, "p1", {
+        kind: "yourBasicEnergyInDiscardAtLeast",
+        energy: "Water",
+        count: 1,
+      }),
     ).toBe(false);
     const water = pile(nine, "p1", ["fix-water-energy", 1]);
     expect(
-      conditionHolds(water, "p1", { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Water", count: 1 }),
+      conditionHolds(water, "p1", {
+        kind: "yourBasicEnergyInDiscardAtLeast",
+        energy: "Water",
+        count: 1,
+      }),
     ).toBe(true);
   });
 });
@@ -840,12 +845,18 @@ describe("§6 — the boundaries the arm has to survive", () => {
     const bare = ready(8404);
     expect(bare.players.p1.discard).toEqual([]);
     expect(
-      conditionHolds(bare, "p1", { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Fire", count: 0 }),
+      conditionHolds(bare, "p1", {
+        kind: "yourBasicEnergyInDiscardAtLeast",
+        energy: "Fire",
+        count: 0,
+      }),
     ).toBe(true);
     // …and no clause in the table produces one, which is what makes the line above a
     // statement about the arm and not a live path.
     expect(
-      resolvedByAnyReader("If you have 0 or more Basic {R} Energy cards in your discard pile, this attack does 100 more damage."),
+      resolvedByAnyReader(
+        "If you have 0 or more Basic {R} Energy cards in your discard pile, this attack does 100 more damage.",
+      ),
     ).toBe(false);
   });
 });

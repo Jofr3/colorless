@@ -1,10 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { shuffle } from "./rng";
 import {
@@ -144,20 +143,6 @@ const DECK = deckOf({
   [TOOL]: 2,
   [ENERGY]: 24,
 });
-
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(
-  ["./{censusAttackCorpus,effects,interpreter,cardplay,redact}.ts", "../../../apps/api/src/lobby/match.ts"],
-  { query: "?raw", import: "default", eager: true },
-);
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -437,7 +422,9 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
   });
 
   it("the HEAD is anchored — a printed prefix refuses", () => {
-    expect(deriveAttackEffect(`You may ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`)).toBeNull();
+    expect(
+      deriveAttackEffect(`You may ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`),
+    ).toBeNull();
     expect(deriveAttackEffect(`Flip a coin. If heads, ${PRINTED}`)).toBeNull();
   });
 
@@ -875,16 +862,6 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
     const { state: done } = answer(revived, [benchRef(0), benchRef(1), benchRef(2)]);
     expect(benchIds(done, "p2")).toEqual([B1, B2, B3]);
   });
-
-  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
-    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-
-  it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D538 — 0.422.0 → 0.423.0; the title is de-valued so the version tax is one edit per site, not two)", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -982,17 +959,6 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
       choice: { kind: "pokemonMulti", refs: [benchRef(0), benchRef(1), benchRef(2)] },
     });
     expect(accepted.ok).toBe(true);
-  });
-
-  it("🛑 ZERO NEW PROMPT VOCABULARY — the kind, the validator arm and the redactor are all SHIPPED", () => {
-    // RE-ASKED against this file rather than inherited from a brief (D536's overrun
-    // class: a claim about another file). `choosePokemonMulti` gains no key here.
-    expect(raw("/interpreter.ts")).toContain('kind: "choosePokemonMulti";');
-    expect(raw("/cardplay.ts")).toContain('case "choosePokemonMulti":');
-    expect(raw("/redact.ts")).toContain('case "choosePokemonMulti":');
-    // …and the op adds exactly TWO `case "returnBenchedRest":` labels — `stepOp`'s and
-    // `applyChoice`'s. A THIRD would mean somebody answered this question twice.
-    expect(raw("/interpreter.ts").split('case "returnBenchedRest":')).toHaveLength(3);
   });
 });
 

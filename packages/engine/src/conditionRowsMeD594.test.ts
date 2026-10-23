@@ -10,7 +10,7 @@ import {
   splitAttackRequirementClause,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote, evolveEarlyLicensed } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -41,7 +41,8 @@ const WHIRLING_ENVY =
   "If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness.";
 const COSMIC_BEAM =
   "If you don't have Lunatone on your Bench, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.";
-const WELCOMING_TAIL = "If you have exactly 6 Prize cards remaining, this attack does 200 more damage.";
+const WELCOMING_TAIL =
+  "If you have exactly 6 Prize cards remaining, this attack does 200 more damage.";
 const ALL_OUT = "If you have no cards in your hand, this attack does 160 more damage.";
 const FIGHTING_ROAR =
   "If your opponent's Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it.";
@@ -96,24 +97,36 @@ describe("D594 §2 — the readings: shipped members at the printed parameters",
   };
 
   it("the three bonus rows", () => {
-    expect(bonus(WHIRLING_ENVY)).toEqual([90, { kind: "yourActiveDamageCountersAtLeast", count: 2 }]);
+    expect(bonus(WHIRLING_ENVY)).toEqual([
+      90,
+      { kind: "yourActiveDamageCountersAtLeast", count: 2 },
+    ]);
     expect(bonus(WELCOMING_TAIL)).toEqual([200, { kind: "yourPrizesRemaining", counts: [6] }]);
     expect(bonus(ALL_OUT)).toEqual([160, { kind: "yourHandExactly", count: 0 }]);
   });
 
   it("Whirling Envy's rider is Weakness ONLY; Cosmic Beam's companion is Weakness AND Resistance", () => {
     expect(deriveAttackDamageSuppression(WHIRLING_ENVY)).toEqual({ weakness: true });
-    expect(deriveAttackRequirement(COSMIC_BEAM)).toEqual({ kind: "yourBenchHasNamed", name: "Lunatone" });
+    expect(deriveAttackRequirement(COSMIC_BEAM)).toEqual({
+      kind: "yourBenchHasNamed",
+      name: "Lunatone",
+    });
     expect(splitAttackRequirementClause(COSMIC_BEAM)).toEqual({
       clause: "If you don't have Lunatone on your Bench, this attack does nothing.",
       body: "This attack's damage isn't affected by Weakness or Resistance.",
     });
   });
 
-  it("`yourHandExactly` 0 reads as the printed \"no cards\"; 1 and 7 are unchanged", () => {
-    expect(conditionNote({ kind: "yourHandExactly", count: 0 })).toBe("you have no cards in your hand");
-    expect(conditionNote({ kind: "yourHandExactly", count: 1 })).toBe("you have exactly 1 card in your hand");
-    expect(conditionNote({ kind: "yourHandExactly", count: 7 })).toBe("you have exactly 7 cards in your hand");
+  it('`yourHandExactly` 0 reads as the printed "no cards"; 1 and 7 are unchanged', () => {
+    expect(conditionNote({ kind: "yourHandExactly", count: 0 })).toBe(
+      "you have no cards in your hand",
+    );
+    expect(conditionNote({ kind: "yourHandExactly", count: 1 })).toBe(
+      "you have exactly 1 card in your hand",
+    );
+    expect(conditionNote({ kind: "yourHandExactly", count: 7 })).toBe(
+      "you have exactly 7 cards in your hand",
+    );
   });
 
   it("the two Ability keys: shipped fields at the printed parameters", () => {
@@ -155,8 +168,14 @@ const LT = "d594-lightning";
 /** Never on a board: the Prize swap's stock. */
 const SPARE = "d594-spare";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -172,7 +191,12 @@ const LOCAL: Record<string, Card> = {
     200,
     "Metal",
     [
-      { cost: ["Colorless", "Colorless"], name: "Welcoming Tail", damage: "40+", effect: WELCOMING_TAIL },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Welcoming Tail",
+        damage: "40+",
+        effect: WELCOMING_TAIL,
+      },
       { cost: ["Metal", "Metal", "Colorless", "Colorless"], name: "Skull Bash", damage: 140 },
     ],
     { stage: "Stage1", evolveFrom: "Onix" },
@@ -221,10 +245,18 @@ const LOCAL: Record<string, Card> = {
   ),
   [FILLER]: mon(FILLER, "D594 Filler", 400, "Colorless", TAP),
   [FOE_EX]: mon(FOE_EX, "D594 Foe ex", 400, "Colorless", TAP),
-  [WEAK_D]: mon(WEAK_D, "D594 Weak D", 400, "Colorless", TAP, { weaknesses: [{ type: "Darkness", value: "×2" }] }),
-  [RESIST_D]: mon(RESIST_D, "D594 Resist D", 400, "Colorless", TAP, { resistances: [{ type: "Darkness", value: "-30" }] }),
-  [WEAK_F]: mon(WEAK_F, "D594 Weak F", 400, "Colorless", TAP, { weaknesses: [{ type: "Fighting", value: "×2" }] }),
-  [RESIST_F]: mon(RESIST_F, "D594 Resist F", 400, "Colorless", TAP, { resistances: [{ type: "Fighting", value: "-30" }] }),
+  [WEAK_D]: mon(WEAK_D, "D594 Weak D", 400, "Colorless", TAP, {
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+  }),
+  [RESIST_D]: mon(RESIST_D, "D594 Resist D", 400, "Colorless", TAP, {
+    resistances: [{ type: "Darkness", value: "-30" }],
+  }),
+  [WEAK_F]: mon(WEAK_F, "D594 Weak F", 400, "Colorless", TAP, {
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+  }),
+  [RESIST_F]: mon(RESIST_F, "D594 Resist F", 400, "Colorless", TAP, {
+    resistances: [{ type: "Fighting", value: "-30" }],
+  }),
   [LUNATONE]: mon(LUNATONE, "Lunatone", 110, "Fighting", TAP),
   [LUXRAY]: mon(LUXRAY, "Luxray", 160, "Lightning", TAP, { stage: "Stage2", evolveFrom: "Luxio" }),
   [SHINX]: mon(SHINX, "Shinx", 60, "Lightning", TAP),
@@ -233,7 +265,14 @@ const LOCAL: Record<string, Card> = {
   ]),
   // The lock is keyed by id; the attack is a stand-in (Hex Hurl's counters are not under test here).
   [FLUTTER]: mon(FLUTTER, "Flutter Mane", 90, "Psychic", TAP, {
-    abilities: [{ type: "Ability", name: "Midnight Fluttering", effect: "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering." }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Midnight Fluttering",
+        effect:
+          "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.",
+      },
+    ],
   } as Partial<Card>),
   [D]: typedEnergy(D, "Darkness"),
   [F]: typedEnergy(F, "Fighting"),
@@ -303,7 +342,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -311,15 +352,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -341,7 +388,11 @@ function unprize(state: GameState, seat: Seat, ids: readonly string[]): GameStat
 
 /** P1's Active is `attacker` with `energy` attached and one Filler benched; P2's Active is `defender`
     with one Filler benched. Every board id is taken out of the Prizes first (6 Prizes each remain). */
-function table(attacker: string, energy: readonly (readonly [string, number])[], defender = FILLER): GameState {
+function table(
+  attacker: string,
+  energy: readonly (readonly [string, number])[],
+  defender = FILLER,
+): GameState {
   let state = p1Turn();
   for (const s of ["p1", "p2"] as const) {
     state = clearBench(setActiveFromDeck(state, s, FILLER), s);
@@ -358,14 +409,19 @@ type Active = NonNullable<GameState["players"]["p1"]["active"]>;
 function withActive(state: GameState, seat: Seat, edit: (a: Active) => Active): GameState {
   const active = state.players[seat].active;
   if (active === null) throw new Error(`no ${seat} Active`);
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], active: edit(active) } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...state.players[seat], active: edit(active) } },
+  };
 }
 
 const attack = (index: number, seat: Seat = "p1"): GameAction => ({ type: "attack", seat, index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const dealt = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT")[0]?.dealt;
-const nothing = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
+const dealt = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT")[0]?.dealt;
+const nothing = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
 
 describe("D594 §3 — Whirling Envy: +90 at 2 or more damage counters; Weakness ignored, Resistance applied", () => {
   const envy = (damage: number, defender = FILLER) =>
@@ -413,14 +469,26 @@ describe("D594 §5 — Welcoming Tail: +200 at exactly 6 Prize cards remaining",
     expect(six.players.p1.prizes).toHaveLength(6);
     expect(dealt(six, 0)).toBe(240);
     const p1 = six.players.p1;
-    const five = { ...six, players: { ...six.players, p1: { ...p1, prizes: p1.prizes.slice(1), deck: [...p1.deck, ...p1.prizes.slice(0, 1)] } } };
+    const five = {
+      ...six,
+      players: {
+        ...six.players,
+        p1: { ...p1, prizes: p1.prizes.slice(1), deck: [...p1.deck, ...p1.prizes.slice(0, 1)] },
+      },
+    };
     expect(dealt(five, 0)).toBe(40);
   });
 
   it("reads the attacker's own Prizes: the opponent at 5 changes nothing", () => {
     const six = table("me01-093", [["fix-energy", 2]]);
     const p2 = six.players.p2;
-    const theirs = { ...six, players: { ...six.players, p2: { ...p2, prizes: p2.prizes.slice(1), deck: [...p2.deck, ...p2.prizes.slice(0, 1)] } } };
+    const theirs = {
+      ...six,
+      players: {
+        ...six.players,
+        p2: { ...p2, prizes: p2.prizes.slice(1), deck: [...p2.deck, ...p2.prizes.slice(0, 1)] },
+      },
+    };
     expect(dealt(theirs, 0)).toBe(240);
   });
 });
@@ -450,7 +518,9 @@ describe("D594 §7 — Fighting Roar: Luxio evolves early while the opponent's A
     const uid = state.players.p1.hand.find((h) => state.cardIdByUid[h] === LUXRAY);
     if (uid === undefined) throw new Error("no Luxray in hand");
     const target =
-      zone === "active" ? ({ spot: "active" } as const) : ({ spot: "bench", index: state.players.p1.bench.length - 1 } as const);
+      zone === "active"
+        ? ({ spot: "active" } as const)
+        : ({ spot: "bench", index: state.players.p1.bench.length - 1 } as const);
     return applyAction(state, { type: "evolve", seat: "p1", uid, target });
   };
 
@@ -458,7 +528,9 @@ describe("D594 §7 — Fighting Roar: Luxio evolves early while the opponent's A
     const result = evolve(roar(FOE_EX, "active"), "active");
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.error.code);
-    expect(result.state.cardIdByUid[result.state.players.p1.active?.stack.at(-1) ?? ""]).toBe(LUXRAY);
+    expect(result.state.cardIdByUid[result.state.players.p1.active?.stack.at(-1) ?? ""]).toBe(
+      LUXRAY,
+    );
   });
 
   it("the same turn, a non-ex opponent's Active: refused (FIRST_TURN_EVOLVE)", () => {
@@ -479,8 +551,14 @@ describe("D594 §7 — Fighting Roar: Luxio evolves early while the opponent's A
     const later = (defender: string): GameState => {
       const state = roar(defender, "bench");
       const last = state.players.p1.bench.length - 1;
-      const bench = state.players.p1.bench.map((b, i) => (i === last ? { ...b, turnPlayed: 4 } : b));
-      return { ...state, turn: 4, players: { ...state.players, p1: { ...state.players.p1, bench } } };
+      const bench = state.players.p1.bench.map((b, i) =>
+        i === last ? { ...b, turnPlayed: 4 } : b,
+      );
+      return {
+        ...state,
+        turn: 4,
+        players: { ...state.players, p1: { ...state.players.p1, bench } },
+      };
     };
     expect(evolve(later(FOE_EX), "bench").ok).toBe(true);
     const refused = evolve(later(FILLER), "bench");
@@ -511,7 +589,8 @@ describe("D594 §7 — Fighting Roar: Luxio evolves early while the opponent's A
       if (uid === undefined) throw new Error(`no ${id} in hand`);
       return applyAction(state, { type: "evolve", seat: "p1", uid, target: { spot: "active" } });
     };
-    const top = (state: GameState) => state.cardIdByUid[state.players.p1.active?.stack.at(-1) ?? ""];
+    const top = (state: GameState) =>
+      state.cardIdByUid[state.players.p1.active?.stack.at(-1) ?? ""];
     for (const defender of [FOE_EX, FILLER]) {
       const luxio = must(evolveActiveTo(chain(defender), "me03-027"));
       expect(top(luxio)).toBe("me03-027");
@@ -562,7 +641,7 @@ describe("D594 §8 — Needly Armor: 3 damage counters on the Attacking Pokémon
     expect(armor(1, [[D, 2]])).toBe(30);
   });
 
-  it("\"even if this Pokémon is Knocked Out\": a lethal hit still pays 60 for two {G}", () => {
+  it('"even if this Pokémon is Knocked Out": a lethal hit still pays 60 for two {G}', () => {
     let state = table(FILLER, [["fix-energy", 1]], "me04-007");
     state = withActive(attachFromDeck(state, "p2", G, 2), "p2", (a) => ({ ...a, damage: 170 }));
     const chesnaught = state.players.p2.active?.stack.at(-1);
@@ -588,11 +667,5 @@ describe("D594 §8 — Needly Armor: 3 damage counters on the Attacking Pokémon
     const state = attachFromDeck(table(FLUTTER, [["fix-energy", 1]], "me04-007"), "p2", G, 2);
     expect(disabledAbilityUids(state).has(state.players.p2.active?.stack.at(-1) ?? "")).toBe(true);
     expect(mustApply(state, attack(0)).state.players.p1.active?.damage).toBe(0);
-  });
-});
-
-describe("D594 §9 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -1,13 +1,16 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { BANNER_BY_ID, bannerOf } from "./banners";
 import { LEGAL_EX_POOL } from "./bannerPool";
 import { isTeraPokemon, matchesFilter } from "./cards";
 import { benchShieldedFromDamage, disabledAbilityUids, seatPreWRDamageBonus } from "./continuous";
-import { deriveAttackDamageBonus, deriveAttackDamageMultiplier, deriveAttackEffect } from "./effects";
+import {
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackEffect,
+} from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds, conditionNote, retrieveNoun } from "./interpreter";
 import { PARADOX_POOL } from "./paradoxPool";
@@ -75,21 +78,256 @@ const BENCH_SPREAD =
   "This attack also does 20 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
 const LOCAL_CARDS: Record<string, Card> = {
-  [KORAIDON]: battler(KORAIDON, {"name":"Koraidon","hp":140,"types":["Dragon"],"retreat":2,"attacks":[{"cost":["Fighting","Colorless"],"name":"Primordial Beatdown","damage":"30×","effect":"This attack does 30 damage for each of your Ancient Pokémon in play."},{"cost":["Fire","Fighting","Colorless"],"name":"Shred","damage":130,"effect":"This attack's damage isn't affected by any effects on your opponent's Active Pokémon."}]}),
-  [ROARING_MOON]: battler(ROARING_MOON, {"name":"Roaring Moon","hp":140,"types":["Darkness"],"retreat":2,"weaknesses":[{"type":"Grass","value":"×2"}],"attacks":[{"cost":["Darkness","Darkness"],"name":"Vengeance Fletching","damage":"70+","effect":"This attack does 10 more damage for each Ancient card in your discard pile."},{"cost":["Darkness","Colorless","Colorless","Colorless"],"name":"Speed Wing","damage":120}]}),
-  [IRON_VALIANT]: battler(IRON_VALIANT, {"name":"Iron Valiant","hp":130,"types":["Psychic"],"retreat":2,"weaknesses":[{"type":"Metal","value":"×2"}],"attacks":[{"cost":["Psychic"],"name":"Calculation","effect":"Look at the top 4 cards of your deck and put them back in any order."},{"cost":["Psychic","Psychic","Colorless"],"name":"Majestic Sword","damage":"100+","effect":"If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage."}]}),
-  [SLITHER_WING]: battler(SLITHER_WING, {"name":"Slither Wing","hp":140,"types":["Fighting"],"retreat":3,"weaknesses":[{"type":"Psychic","value":"×2"}],"attacks":[{"cost":["Fighting","Colorless"],"name":"Iron Smasher","damage":"20+","effect":"If your opponent has any Future Pokémon in play, this attack does 120 more damage."},{"cost":["Fighting","Fighting","Colorless"],"name":"Smashing Wing","damage":130,"effect":"Discard 2 Energy from this Pokémon."}]}),
-  [MIRAIDON]: battler(MIRAIDON, {"name":"Miraidon","hp":110,"types":["Dragon"],"retreat":2,"attacks":[{"cost":["Colorless"],"name":"Peak Acceleration","damage":40,"effect":"Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck."},{"cost":["Lightning","Lightning","Psychic"],"name":"Sparking Strike","damage":160}]}),
-  [GREAT_TUSK]: battler(GREAT_TUSK, {"name":"Great Tusk","hp":140,"types":["Fighting"],"retreat":3,"weaknesses":[{"type":"Psychic","value":"×2"}],"attacks":[{"cost":["Colorless","Colorless"],"name":"Land Collapse","effect":"Discard the top card of your opponent's deck. If you played an Ancient Supporter card from your hand during this turn, discard 3 more cards in this way."},{"cost":["Fighting","Fighting","Colorless","Colorless"],"name":"Giant Tusk","damage":160}]}),
-  [SCREAM_TAIL]: battler(SCREAM_TAIL, {"name":"Scream Tail","hp":90,"types":["Psychic"],"retreat":1,"weaknesses":[{"type":"Darkness","value":"×2"}],"attacks":[{"cost":["Colorless"],"name":"Supportive Singing","effect":"Heal 100 damage from 1 of your Benched Ancient Pokémon."},{"cost":["Colorless","Colorless"],"name":"Hyper Voice","damage":40}]}),
-  [FLUTTER_MANE]: battler(FLUTTER_MANE, {"name":"Flutter Mane","hp":90,"types":["Psychic"],"retreat":1,"weaknesses":[{"type":"Metal","value":"×2"}],"attacks":[{"cost":["Colorless","Colorless"],"name":"Perplexing Transfer","effect":"Move all damage counters from 1 of your Benched Ancient Pokémon to your opponent's Active Pokémon."},{"cost":["Psychic","Psychic"],"name":"Moonblast","damage":70,"effect":"During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage (before applying Weakness and Resistance)."}]}),
-  [IRON_CROWN]: battler(IRON_CROWN, {"name":"Iron Crown ex","hp":220,"types":["Psychic"],"retreat":2,"weaknesses":[{"type":"Darkness","value":"×2"}],"attacks":[{"cost":["Psychic","Colorless","Colorless"],"name":"Twin Shotels","effect":"This attack does 50 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon."}],"abilities":[{"type":"Ability","name":"Cobalt Command","effect":"Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."}]}),
-  [IRON_THORNS_EX]: battler(IRON_THORNS_EX, {"name":"Iron Thorns ex","hp":230,"types":["Lightning"],"retreat":4,"weaknesses":[{"type":"Fighting","value":"×2"}],"attacks":[{"cost":["Lightning","Colorless","Colorless"],"name":"Volt Cyclone","damage":140,"effect":"Move an Energy from this Pokémon to 1 of your Benched Pokémon."}],"abilities":[{"type":"Ability","name":"Initialization","effect":"As long as this Pokémon is in the Active Spot, Pokémon with a Rule Box in play (both yours and your opponent's) have no Abilities, except for Future Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"}]}),
-  [DRUM]: { ...trainerCard(DRUM, "Item", "Draw a card for each of your Ancient Pokémon in play."), name: "Awakening Drum" },
-  [POD]: { ...trainerCard(POD, "Item", "Attach a Basic Energy card from your discard pile to each of your Future Pokémon."), name: "Reboot Pod" },
-  [GUIDANCE]: { ...trainerCard(GUIDANCE, "Supporter", "Look at the top 6 cards of your deck and put 2 of them into your hand. Discard the other cards."), name: "Explorer's Guidance" },
-  [CIPHER]: { ...trainerCard(CIPHER, "Supporter", "Search your deck for 2 cards, shuffle your deck, then put those cards on top of it in any order."), name: "Ciphermaniac's Codebreaking" },
-  [TERAPAGOS_EX]: battler(TERAPAGOS_EX, {"name":"Terapagos ex","hp":230,"types":["Colorless"],"retreat":2,"weaknesses":[{"type":"Fighting","value":"×2"}],"attacks":[{"cost":["Colorless","Colorless"],"name":"Unified Beatdown","damage":"30×","effect":"If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon."},{"cost":["Grass","Water","Lightning"],"name":"Crown Opal","damage":180,"effect":"During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon."}]}),
+  [KORAIDON]: battler(KORAIDON, {
+    name: "Koraidon",
+    hp: 140,
+    types: ["Dragon"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Fighting", "Colorless"],
+        name: "Primordial Beatdown",
+        damage: "30×",
+        effect: "This attack does 30 damage for each of your Ancient Pokémon in play.",
+      },
+      {
+        cost: ["Fire", "Fighting", "Colorless"],
+        name: "Shred",
+        damage: 130,
+        effect:
+          "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
+      },
+    ],
+  }),
+  [ROARING_MOON]: battler(ROARING_MOON, {
+    name: "Roaring Moon",
+    hp: 140,
+    types: ["Darkness"],
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness", "Darkness"],
+        name: "Vengeance Fletching",
+        damage: "70+",
+        effect: "This attack does 10 more damage for each Ancient card in your discard pile.",
+      },
+      {
+        cost: ["Darkness", "Colorless", "Colorless", "Colorless"],
+        name: "Speed Wing",
+        damage: 120,
+      },
+    ],
+  }),
+  [IRON_VALIANT]: battler(IRON_VALIANT, {
+    name: "Iron Valiant",
+    hp: 130,
+    types: ["Psychic"],
+    retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic"],
+        name: "Calculation",
+        effect: "Look at the top 4 cards of your deck and put them back in any order.",
+      },
+      {
+        cost: ["Psychic", "Psychic", "Colorless"],
+        name: "Majestic Sword",
+        damage: "100+",
+        effect:
+          "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
+      },
+    ],
+  }),
+  [SLITHER_WING]: battler(SLITHER_WING, {
+    name: "Slither Wing",
+    hp: 140,
+    types: ["Fighting"],
+    retreat: 3,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting", "Colorless"],
+        name: "Iron Smasher",
+        damage: "20+",
+        effect:
+          "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+      },
+      {
+        cost: ["Fighting", "Fighting", "Colorless"],
+        name: "Smashing Wing",
+        damage: 130,
+        effect: "Discard 2 Energy from this Pokémon.",
+      },
+    ],
+  }),
+  [MIRAIDON]: battler(MIRAIDON, {
+    name: "Miraidon",
+    hp: 110,
+    types: ["Dragon"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Peak Acceleration",
+        damage: 40,
+        effect:
+          "Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck.",
+      },
+      { cost: ["Lightning", "Lightning", "Psychic"], name: "Sparking Strike", damage: 160 },
+    ],
+  }),
+  [GREAT_TUSK]: battler(GREAT_TUSK, {
+    name: "Great Tusk",
+    hp: 140,
+    types: ["Fighting"],
+    retreat: 3,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Land Collapse",
+        effect:
+          "Discard the top card of your opponent's deck. If you played an Ancient Supporter card from your hand during this turn, discard 3 more cards in this way.",
+      },
+      { cost: ["Fighting", "Fighting", "Colorless", "Colorless"], name: "Giant Tusk", damage: 160 },
+    ],
+  }),
+  [SCREAM_TAIL]: battler(SCREAM_TAIL, {
+    name: "Scream Tail",
+    hp: 90,
+    types: ["Psychic"],
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Supportive Singing",
+        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Hyper Voice", damage: 40 },
+    ],
+  }),
+  [FLUTTER_MANE]: battler(FLUTTER_MANE, {
+    name: "Flutter Mane",
+    hp: 90,
+    types: ["Psychic"],
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Perplexing Transfer",
+        effect:
+          "Move all damage counters from 1 of your Benched Ancient Pokémon to your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Psychic", "Psychic"],
+        name: "Moonblast",
+        damage: 70,
+        effect:
+          "During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage (before applying Weakness and Resistance).",
+      },
+    ],
+  }),
+  [IRON_CROWN]: battler(IRON_CROWN, {
+    name: "Iron Crown ex",
+    hp: 220,
+    types: ["Psychic"],
+    retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Twin Shotels",
+        effect:
+          "This attack does 50 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon.",
+      },
+    ],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Cobalt Command",
+        effect:
+          "Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+      },
+    ],
+  }),
+  [IRON_THORNS_EX]: battler(IRON_THORNS_EX, {
+    name: "Iron Thorns ex",
+    hp: 230,
+    types: ["Lightning"],
+    retreat: 4,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless", "Colorless"],
+        name: "Volt Cyclone",
+        damage: 140,
+        effect: "Move an Energy from this Pokémon to 1 of your Benched Pokémon.",
+      },
+    ],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Initialization",
+        effect:
+          "As long as this Pokémon is in the Active Spot, Pokémon with a Rule Box in play (both yours and your opponent's) have no Abilities, except for Future Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
+      },
+    ],
+  }),
+  [DRUM]: {
+    ...trainerCard(DRUM, "Item", "Draw a card for each of your Ancient Pokémon in play."),
+    name: "Awakening Drum",
+  },
+  [POD]: {
+    ...trainerCard(
+      POD,
+      "Item",
+      "Attach a Basic Energy card from your discard pile to each of your Future Pokémon.",
+    ),
+    name: "Reboot Pod",
+  },
+  [GUIDANCE]: {
+    ...trainerCard(
+      GUIDANCE,
+      "Supporter",
+      "Look at the top 6 cards of your deck and put 2 of them into your hand. Discard the other cards.",
+    ),
+    name: "Explorer's Guidance",
+  },
+  [CIPHER]: {
+    ...trainerCard(
+      CIPHER,
+      "Supporter",
+      "Search your deck for 2 cards, shuffle your deck, then put those cards on top of it in any order.",
+    ),
+    name: "Ciphermaniac's Codebreaking",
+  },
+  [TERAPAGOS_EX]: battler(TERAPAGOS_EX, {
+    name: "Terapagos ex",
+    hp: 230,
+    types: ["Colorless"],
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Unified Beatdown",
+        damage: "30×",
+        effect:
+          "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.",
+      },
+      {
+        cost: ["Grass", "Water", "Lightning"],
+        name: "Crown Opal",
+        damage: 180,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon.",
+      },
+    ],
+  }),
   [BRIAR]: {
     ...trainerCard(
       BRIAR,
@@ -98,7 +336,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     ),
     name: "Briar",
   },
-  [FILLER]: battler(FILLER, { name: "D569 Filler", hp: 900, types: ["Water"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
+  [FILLER]: battler(FILLER, {
+    name: "D569 Filler",
+    hp: 900,
+    types: ["Water"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
   [STRIKER]: battler(STRIKER, {
     name: "D569 Striker",
     hp: 900,
@@ -153,7 +396,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -169,7 +413,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -177,11 +423,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -197,7 +446,11 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
         ...next,
         players: {
           ...next.players,
-          [seat]: { ...side, hand: side.hand.filter((u) => u !== fromHand), deck: [...side.deck, fromHand] },
+          [seat]: {
+            ...side,
+            hand: side.hand.filter((u) => u !== fromHand),
+            deck: [...side.deck, fromHand],
+          },
         },
       };
       continue;
@@ -205,7 +458,8 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
     const prized = side.prizes.find((u) => next.cardIdByUid[u] === id);
     if (prized === undefined) throw new Error(`${seat} has fewer than ${k} ${id} to seat`);
     const swap =
-      side.deck.find((u) => next.cardIdByUid[u] === FILLER) ?? side.deck.find((u) => next.cardIdByUid[u] !== id);
+      side.deck.find((u) => next.cardIdByUid[u] === FILLER) ??
+      side.deck.find((u) => next.cardIdByUid[u] !== id);
     if (swap === undefined) throw new Error("no card to swap");
     next = {
       ...next,
@@ -225,7 +479,10 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
 function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameState {
   let next = state;
   const back = next.players[seat];
-  next = { ...next, players: { ...next.players, [seat]: { ...back, deck: [...back.deck, ...back.hand], hand: [] } } };
+  next = {
+    ...next,
+    players: { ...next.players, [seat]: { ...back, deck: [...back.deck, ...back.hand], hand: [] } },
+  };
   for (const id of ids) next = ensureCopies(next, seat, id, ids.filter((x) => x === id).length);
   const side = next.players[seat];
   let deck = [...side.deck];
@@ -248,7 +505,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -262,7 +524,13 @@ function energize(state: GameState, seat: Seat, spot: Spot, id: string, count = 
   let next = ensureCopies(state, seat, id, count);
   const side = next.players[seat];
   const uids = side.deck.filter((u) => next.cardIdByUid[u] === id).slice(0, count);
-  next = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => !uids.includes(u)) } } };
+  next = {
+    ...next,
+    players: {
+      ...next.players,
+      [seat]: { ...side, deck: side.deck.filter((u) => !uids.includes(u)) },
+    },
+  };
   return withBody(next, seat, spot, (p) => ({ ...p, energy: [...p.energy, ...uids] }));
 }
 
@@ -275,7 +543,11 @@ function discard(state: GameState, seat: Seat, id: string, count = 1): GameState
     ...next,
     players: {
       ...next.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => !uids.includes(u)), discard: [...side.discard, ...uids] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => !uids.includes(u)),
+        discard: [...side.discard, ...uids],
+      },
     },
   };
 }
@@ -285,7 +557,10 @@ function emptyDiscard(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, deck: [...side.deck, ...side.discard], discard: [] } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, deck: [...side.deck, ...side.discard], discard: [] },
+    },
   };
 }
 
@@ -295,7 +570,10 @@ function playedSupporter(state: GameState, seat: Seat, id: string): GameState {
   const next = discard(state, seat, id);
   const side = next.players[seat];
   const uid = side.discard[side.discard.length - 1] as string;
-  return { ...next, allowances: { ...next.allowances, supporterPlayed: true, supporterPlayedUid: uid } };
+  return {
+    ...next,
+    allowances: { ...next.allowances, supporterPlayed: true, supporterPlayedUid: uid },
+  };
 }
 
 /** Both boards laid out by surgery on p1's first turn; both hands emptied. */
@@ -308,19 +586,28 @@ function table(
   state = setActiveFromDeck(ensureCopies(state, "p1", opts.p1 ?? FILLER), "p1", opts.p1 ?? FILLER);
   state = setActiveFromDeck(ensureCopies(state, "p2", opts.p2 ?? FILLER), "p2", opts.p2 ?? FILLER);
   state = clearBench(clearBench(state, "p1"), "p2");
-  for (const id of opts.p1Bench ?? []) state = benchFromDeck(ensureCopies(state, "p1", id), "p1", id);
-  for (const id of opts.p2Bench ?? []) state = benchFromDeck(ensureCopies(state, "p2", id), "p2", id);
+  for (const id of opts.p1Bench ?? [])
+    state = benchFromDeck(ensureCopies(state, "p1", id), "p1", id);
+  for (const id of opts.p2Bench ?? [])
+    state = benchFromDeck(ensureCopies(state, "p2", id), "p2", id);
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-const benchRef = (seat: Seat, index: number): PokemonRef => ({ seat, spot: { spot: "bench", index } });
+const benchRef = (seat: Seat, index: number): PokemonRef => ({
+  seat,
+  spot: { spot: "bench", index },
+});
 
 function phasePrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -336,7 +623,8 @@ function playRejected(state: GameState, id: string): string {
   return rejected(before, { type: "playTrainer", seat: "p1", uid });
 }
 
-const dealt = (events: readonly GameEvent[]): number | undefined => all(events, "DAMAGE_DEALT")[0]?.dealt;
+const dealt = (events: readonly GameEvent[]): number | undefined =>
+  all(events, "DAMAGE_DEALT")[0]?.dealt;
 const card = (id: string): Card => POOL[id] as Card;
 const roundTrip = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
 
@@ -385,13 +673,24 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
       const k = JSON.stringify(key);
       groups.set(k, [...(groups.get(k) ?? []), id]);
     };
-    for (const [id, name, hp, attacks, abilities] of LEGAL_EX_POOL) add(id, [name, hp, attacks, abilities]);
-    for (const [id, name, , hp, attacks, abilities] of PARADOX_POOL) add(id, [name, hp, attacks, abilities]);
-    const split = [...groups.values()].filter((members) => new Set(members.map((id) => BANNER_BY_ID[id])).size > 1);
+    for (const [id, name, hp, attacks, abilities] of LEGAL_EX_POOL)
+      add(id, [name, hp, attacks, abilities]);
+    for (const [id, name, , hp, attacks, abilities] of PARADOX_POOL)
+      add(id, [name, hp, attacks, abilities]);
+    const split = [...groups.values()].filter(
+      (members) => new Set(members.map((id) => BANNER_BY_ID[id])).size > 1,
+    );
     expect(split).toEqual([]);
     // ⚠️ NOT VACUOUS: Iron Crown ex is SIX printings of one text, all Future.
     const crown = [...groups.values()].find((members) => members.includes(IRON_CROWN));
-    expect(crown?.sort()).toEqual(["sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158", "svp-146"]);
+    expect(crown?.sort()).toEqual([
+      "sv05-081",
+      "sv05-191",
+      "sv05-206",
+      "sv05-216",
+      "sv08.5-158",
+      "svp-146",
+    ]);
     for (const id of crown ?? []) expect(BANNER_BY_ID[id], id).toBe("Future");
   });
 
@@ -399,7 +698,8 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     expect(pool.get("sv07-090")?.slice(0, 2)).toEqual(["sv07-090", "Koraidon"]);
     expect(pool.get("svp-148")?.slice(0, 2)).toEqual(["svp-148", "Miraidon"]);
     expect(exPool.get("svp-197")?.slice(0, 2)).toEqual(["svp-197", "Koraidon ex"]);
-    for (const id of ["sv07-090", "svp-148", "svp-197"]) expect(BANNER_BY_ID[id], id).toBeUndefined();
+    for (const id of ["sv07-090", "svp-148", "svp-197"])
+      expect(BANNER_BY_ID[id], id).toBeUndefined();
     // …while their banner siblings ARE keyed — the table is by ID (D135).
     expect(BANNER_BY_ID[KORAIDON]).toBe("Ancient");
     expect(BANNER_BY_ID["sv05-120"]).toBe("Ancient"); // Koraidon ex
@@ -431,7 +731,10 @@ describe("§2 — `bannerCard` (any category) against `bannerPokemon` (Pokémon 
     expect(matchesFilter(card(IRON_VALIANT), ancientCard)).toBe(false);
     expect(matchesFilter(card(FILLER), ancientCard)).toBe(false);
     expect(matchesFilter(undefined, ancientCard)).toBe(false);
-    expect(retrieveNoun(ancientCard)).toEqual({ singular: "an Ancient card", plural: "Ancient cards" });
+    expect(retrieveNoun(ancientCard)).toEqual({
+      singular: "an Ancient card",
+      plural: "Ancient cards",
+    });
     expect(retrieveNoun({ kind: "bannerCard", banner: "Future" })).toEqual({
       singular: "a Future card",
       plural: "Future cards",
@@ -439,7 +742,8 @@ describe("§2 — `bannerCard` (any category) against `bannerPokemon` (Pokémon 
   });
 
   it("🛑 the Tera rule stays TERA: no Ancient or Future Pokémon is `isTeraPokemon`", () => {
-    for (const id of [KORAIDON, IRON_CROWN, MIRAIDON, IRON_THORNS_EX]) expect(isTeraPokemon(card(id)), id).toBe(false);
+    for (const id of [KORAIDON, IRON_CROWN, MIRAIDON, IRON_THORNS_EX])
+      expect(isTeraPokemon(card(id)), id).toBe(false);
     expect(isTeraPokemon(card(TERAPAGOS_EX))).toBe(true);
     expect(bannerOf(card(IRON_CROWN))).toBe("Future");
   });
@@ -461,7 +765,9 @@ describe("§3 — the two NEW board conditions, read on real boards", () => {
     const cond = { kind: "opponentBannerPokemonInPlay", banner: "Future" } as const;
     expect(conditionHolds(table({ p2Bench: [IRON_VALIANT] }), "p1", cond)).toBe(true);
     expect(conditionHolds(table({ p2: MIRAIDON }), "p1", cond)).toBe(true);
-    expect(conditionHolds(table({ p1Bench: [IRON_VALIANT], p2Bench: [KORAIDON] }), "p1", cond)).toBe(false);
+    expect(
+      conditionHolds(table({ p1Bench: [IRON_VALIANT], p2Bench: [KORAIDON] }), "p1", cond),
+    ).toBe(false);
     expect(conditionNote(cond)).toBe("your opponent has any Future Pokémon in play");
   });
 
@@ -475,32 +781,67 @@ describe("§3 — the two NEW board conditions, read on real boards", () => {
     expect(conditionHolds(guided, "p1", future)).toBe(false); // the WRONG banner
     expect(conditionHolds(guided, "p2", ancient)).toBe(false); // not the turn owner
     expect(conditionHolds(playedSupporter(base, "p1", BRIAR), "p1", ancient)).toBe(false); // a Tera Supporter
-    expect(conditionNote(ancient)).toBe("you played an Ancient Supporter card from your hand during this turn");
-    expect(conditionNote(future)).toBe("you played a Future Supporter card from your hand during this turn");
+    expect(conditionNote(ancient)).toBe(
+      "you played an Ancient Supporter card from your hand during this turn",
+    );
+    expect(conditionNote(future)).toBe(
+      "you played a Future Supporter card from your hand during this turn",
+    );
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletching, Majestic Sword, Iron Smasher", () => {
   it("🛑 the four sentences derive to the banner readers, and nothing else does the reading", () => {
-    expect(deriveAttackDamageMultiplier("This attack does 30 damage for each of your Ancient Pokémon in play.")).toEqual({
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each of your Ancient Pokémon in play.",
+      ),
+    ).toEqual({
       per: 30,
-      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "bannerPokemon", banner: "Ancient" } },
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "bannerPokemon", banner: "Ancient" },
+      },
     });
-    expect(deriveAttackDamageBonus("This attack does 10 more damage for each Ancient card in your discard pile.")).toEqual({
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 10 more damage for each Ancient card in your discard pile.",
+      ),
+    ).toEqual({
       per: 10,
-      count: { kind: "cardsInDiscardPile", seat: "you", filter: { kind: "bannerCard", banner: "Ancient" } },
+      count: {
+        kind: "cardsInDiscardPile",
+        seat: "you",
+        filter: { kind: "bannerCard", banner: "Ancient" },
+      },
     });
     expect(
       deriveAttackDamageBonus(
         "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
       )?.count,
-    ).toEqual({ kind: "boardCondition", cond: { kind: "yourPlayedBannerSupporterThisTurn", banner: "Future" } });
+    ).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "yourPlayedBannerSupporterThisTurn", banner: "Future" },
+    });
     expect(
-      deriveAttackDamageBonus("If your opponent has any Future Pokémon in play, this attack does 120 more damage.")?.count,
-    ).toEqual({ kind: "boardCondition", cond: { kind: "opponentBannerPokemonInPlay", banner: "Future" } });
+      deriveAttackDamageBonus(
+        "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+      )?.count,
+    ).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "opponentBannerPokemonInPlay", banner: "Future" },
+    });
     // No registry row: these six printings simulate off their printed text.
-    for (const id of [KORAIDON, "svp-091", ROARING_MOON, "sv08.5-065", IRON_VALIANT, SLITHER_WING]) {
+    for (const id of [
+      KORAIDON,
+      "svp-091",
+      ROARING_MOON,
+      "sv08.5-065",
+      IRON_VALIANT,
+      SLITHER_WING,
+    ]) {
       expect(programFor(id), id).toBeUndefined();
     }
   });
@@ -570,7 +911,13 @@ describe("§5 — the four registry attacks", () => {
     const answer = {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "attachCards", assignments: [{ uid: a, to: benchRef("p1", 1) }, { uid: b, to: benchRef("p1", 1) }] },
+      choice: {
+        kind: "attachCards",
+        assignments: [
+          { uid: a, to: benchRef("p1", 1) },
+          { uid: b, to: benchRef("p1", 1) },
+        ],
+      },
     } as GameAction;
     // An Ancient body is not a target — the validator refuses it by the PROMPT.
     expect(
@@ -609,7 +956,8 @@ describe("§5 — the four registry attacks", () => {
       collapse((s) => {
         const parked = play(s, GUIDANCE).state;
         const prompt = phasePrompt(parked);
-        if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
+        if (prompt.kind !== "chooseCards")
+          throw new Error(`expected chooseCards, got ${prompt.kind}`);
         return run(parked, {
           type: "resolveEffect",
           seat: "p1",
@@ -622,7 +970,8 @@ describe("§5 — the four registry attacks", () => {
   it("🛑 Supportive Singing: 100 off ONE BENCHED ANCIENT — the Active and a Future body are not candidates", () => {
     let state = table({ p1: SCREAM_TAIL, p1Bench: [IRON_VALIANT, KORAIDON] });
     state = energize(state, "p1", "active", P);
-    for (const spot of [0, 1] as const) state = withBody(state, "p1", spot, (p) => ({ ...p, damage: 120 }));
+    for (const spot of [0, 1] as const)
+      state = withBody(state, "p1", spot, (p) => ({ ...p, damage: 120 }));
     state = withBody(state, "p1", "active", (p) => ({ ...p, damage: 60 })); // Scream Tail has 90 HP
     // ONE candidate: forced, no park (`parkOrForce`).
     const forced = run(state, { type: "attack", seat: "p1", index: 0 });
@@ -635,14 +984,23 @@ describe("§5 — the four registry attacks", () => {
     two = withBody(two, "p1", 2, (p) => ({ ...p, damage: 50 }));
     const parked = run(two, { type: "attack", seat: "p1", index: 0 }).state;
     const prompt = phasePrompt(parked);
-    if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemon")
+      throw new Error(`expected choosePokemon, got ${prompt.kind}`);
     expect(prompt.candidates).toEqual([benchRef("p1", 1), benchRef("p1", 2)]);
     expect(prompt.note).toBe("Heal which of your Benched Ancient Pokémon?");
-    const answer = { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: benchRef("p1", 2) } } as GameAction;
+    const answer = {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: benchRef("p1", 2) },
+    } as GameAction;
     expect(bodyAt(run(roundTrip(parked), answer).state, "p1", 2).damage).toBe(0);
-    expect(rejected(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: benchRef("p1", 0) } } as GameAction)).toBe(
-      "BAD_EFFECT_CHOICE",
-    );
+    expect(
+      rejected(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon", ref: benchRef("p1", 0) },
+      } as GameAction),
+    ).toBe("BAD_EFFECT_CHOICE");
   });
 
   it("🛑 R-PX4 — Supportive Singing and Perplexing Transfer WHIFF with no Benched Ancient: no park, no heal, no counters", () => {
@@ -668,10 +1026,15 @@ describe("§5 — the four registry attacks", () => {
     state = withBody(state, "p1", 2, (p) => ({ ...p, damage: 30 }));
     const parked = run(state, { type: "attack", seat: "p1", index: 0 }).state;
     const prompt = phasePrompt(parked);
-    if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemon")
+      throw new Error(`expected choosePokemon, got ${prompt.kind}`);
     expect(prompt.candidates).toEqual([benchRef("p1", 1), benchRef("p1", 2)]);
     expect(prompt.note).toBe("Move the damage counters off which of your Benched Ancient Pokémon?");
-    const answer = { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: benchRef("p1", 1) } } as GameAction;
+    const answer = {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: benchRef("p1", 1) },
+    } as GameAction;
     for (const from of [parked, roundTrip(parked)]) {
       const done = run(from, answer).state;
       expect(bodyAt(done, "p1", 1).damage).toBe(0);
@@ -682,7 +1045,7 @@ describe("§5 — the four registry attacks", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§6 — Iron Crown ex \"Cobalt Command\": +20 to your FUTURE Pokémon's attacks, except any Iron Crown ex", () => {
+describe('§6 — Iron Crown ex "Cobalt Command": +20 to your FUTURE Pokémon\'s attacks, except any Iron Crown ex', () => {
   it("the row, exactly as authored, on all six printings", () => {
     for (const id of ["sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158", "svp-146"]) {
       expect(programFor(id), id).toBe(programFor(IRON_CROWN));
@@ -744,7 +1107,11 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
       {
         op: "drawCards",
         count: 1,
-        per: { kind: "pokemonInPlay", seat: "you", filter: { kind: "bannerPokemon", banner: "Ancient" } },
+        per: {
+          kind: "pokemonInPlay",
+          seat: "you",
+          filter: { kind: "bannerPokemon", banner: "Ancient" },
+        },
       },
     ]);
   });
@@ -757,10 +1124,16 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     const parked = play(state, POD).state;
     const prompt = phasePrompt(parked);
     if (prompt.kind !== "attachCards") throw new Error(`expected attachCards, got ${prompt.kind}`);
-    expect(prompt.targets).toEqual([{ seat: "p1", spot: { spot: "active" } }, benchRef("p1", 0), benchRef("p1", 2)]);
+    expect(prompt.targets).toEqual([
+      { seat: "p1", spot: { spot: "active" } },
+      benchRef("p1", 0),
+      benchRef("p1", 2),
+    ]);
     expect(prompt.maxPerTarget).toBe(1);
     expect(prompt.max).toBe(3);
-    expect(prompt.note).toBe("Attach a Basic Energy card from your discard pile to each of your Future Pokémon.");
+    expect(prompt.note).toBe(
+      "Attach a Basic Energy card from your discard pile to each of your Future Pokémon.",
+    );
     const lightning = prompt.candidates.find((u) => parked.cardIdByUid[u] === L) as string;
     // The player sends ONE assignment; the other two Future bodies are topped up from the pile.
     const answer = {
@@ -783,7 +1156,11 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
       expect(done.players.p1.discard.some((u) => done.cardIdByUid[u] === FILLER)).toBe(true);
     }
     // An EMPTY answer is not a decline: all three bodies are topped up.
-    const declined = run(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "attachCards", assignments: [] } } as GameAction);
+    const declined = run(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attachCards", assignments: [] },
+    } as GameAction);
     expect(all(declined.events, "ENERGY_ATTACHED")).toHaveLength(3);
   });
 
@@ -796,7 +1173,11 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     const parked = play(state, POD).state;
     const prompt = phasePrompt(parked);
     if (prompt.kind !== "attachCards") throw new Error(`expected attachCards, got ${prompt.kind}`);
-    expect(prompt.targets).toEqual([{ seat: "p1", spot: { spot: "active" } }, benchRef("p1", 0), benchRef("p1", 1)]);
+    expect(prompt.targets).toEqual([
+      { seat: "p1", spot: { spot: "active" } },
+      benchRef("p1", 0),
+      benchRef("p1", 1),
+    ]);
     expect(prompt.candidates).toHaveLength(1);
     expect(prompt.max).toBe(1);
     expect(prompt.maxPerTarget).toBe(1);
@@ -815,13 +1196,21 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
       expect(bodyAt(done, "p1", 0).energy).toEqual([]);
     }
     // TWO Psychic for three bodies parks too, with a ceiling of 2.
-    const two = play(discard(table({ p1: MIRAIDON, p1Bench: [IRON_VALIANT, IRON_CROWN] }), "p1", P, 2), POD).state;
+    const two = play(
+      discard(table({ p1: MIRAIDON, p1Bench: [IRON_VALIANT, IRON_CROWN] }), "p1", P, 2),
+      POD,
+    ).state;
     const twoPrompt = phasePrompt(two);
-    if (twoPrompt.kind !== "attachCards") throw new Error(`expected attachCards, got ${twoPrompt.kind}`);
+    if (twoPrompt.kind !== "attachCards")
+      throw new Error(`expected attachCards, got ${twoPrompt.kind}`);
     expect(twoPrompt.max).toBe(2);
     // An EMPTY answer on a short pile is still not a decline (R-PX1): the player forfeits the
     // choice of body, and the top-up gives the one card in target order (the Active).
-    const forfeited = run(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "attachCards", assignments: [] } } as GameAction);
+    const forfeited = run(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attachCards", assignments: [] },
+    } as GameAction);
     expect(all(forfeited.events, "ENERGY_ATTACHED")).toHaveLength(1);
     expect(bodyAt(forfeited.state, "p1", "active").energy).toEqual([psychic]);
   });
@@ -838,7 +1227,9 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
         expect(bodyAt(done, "p1", spot).energy.map((u) => done.cardIdByUid[u])).toEqual([P]);
       }
       expect(bodyAt(done, "p1", 1).energy).toEqual([]); // the Ancient Koraidon
-      expect(done.players.p1.discard.filter((u) => done.cardIdByUid[u] === P)).toHaveLength(count - 3);
+      expect(done.players.p1.discard.filter((u) => done.cardIdByUid[u] === P)).toHaveLength(
+        count - 3,
+      );
     }
   });
 
@@ -872,13 +1263,5 @@ describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initializatio
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("§9 — the version", () => {
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

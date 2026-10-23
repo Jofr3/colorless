@@ -12,7 +12,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion, logFromEvents } from "./index";
+import { applyAction, createGame, logFromEvents } from "./index";
 import type { BoardCondition, GameEvent, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
@@ -333,7 +333,8 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
     // they answer — a reader mutated to the wrong member leaves it green. §5 is what
     // covers that.
     const dual = legalAttackCorpus().filter(
-      ([, s]) => attackReaderSurface().filter((n) => (readerByName[n]?.(s) ?? null) !== null).length > 1,
+      ([, s]) =>
+        attackReaderSurface().filter((n) => (readerByName[n]?.(s) ?? null) !== null).length > 1,
     );
     expect(dual.map(([, s]) => s)).toContain(PRINTED);
     // 🆕🛑 **D539 — THREE → FOUR, AND THE FOURTH ARRIVED ON PURPOSE TOO.** Corpus FILE
@@ -404,13 +405,17 @@ describe("§3 — the axis lattice and the fork, measured over all 640 rows", ()
     // Weight 3 — quantifier AND type AND tail all substituted — is the only point, and
     // it is corpus file line 341 at this slice's printed amount.
     expect(built).toEqual(["112"]);
-    expect(point(1, 1, 2)).toBe("If you have at least 3 {D} Energy in play, this attack does 70 more damage.");
+    expect(point(1, 1, 2)).toBe(
+      "If you have at least 3 {D} Energy in play, this attack does 70 more damage.",
+    );
     // …and the AXIS COUNT is 3, not 4: the printed AMOUNT already builds (D491).
     expect(deriveAttackDamageBonus(BUILT_SIBLING.replace("50 more", "70 more"))).not.toBeNull();
   });
 
   it("🛑 (QUANTIFIER) ALONE frees NOTHING — no column row prints `N or more ⟨typed⟩ Energy in play`", () => {
-    const hits = legalAttackCorpus().filter(([, s]) => /\d+ or more \{[A-Z]\} Energy in play/.test(s));
+    const hits = legalAttackCorpus().filter(([, s]) =>
+      /\d+ or more \{[A-Z]\} Energy in play/.test(s),
+    );
     expect(hits).toEqual([]);
   });
 
@@ -475,13 +480,18 @@ describe("§3 — the axis lattice and the fork, measured over all 640 rows", ()
 describe("§4 — the anchor's TIGHT tail buys what a LOOSE one would, and looser is a DEFECT", () => {
   it("⚠️ three spellings of the tail, measured over all 640 rows (D472)", () => {
     const HEAD_SRC = "If (.+), this attack does (\\d+) more damage\\.";
-    const tight = new RegExp(`^${HEAD_SRC} This attack['’]s damage isn['’]t affected by Weakness\\.$`);
+    const tight = new RegExp(
+      `^${HEAD_SRC} This attack['’]s damage isn['’]t affected by Weakness\\.$`,
+    );
     const alternation = new RegExp(
       `^${HEAD_SRC} This attack['’]s damage isn['’]t affected by (?:Weakness or Resistance|Resistance|Weakness)\\.$`,
     );
     for (const re of [tight, alternation]) {
       const hits = legalAttackCorpus().filter(([, s]) => re.test(s));
-      expect(hits.map(([, s]) => s), re.source).toEqual([PRINTED]);
+      expect(
+        hits.map(([, s]) => s),
+        re.source,
+      ).toEqual([PRINTED]);
       expect(units(hits), re.source).toBe(1);
     }
     // 🛑 **AND THE BARE `(.+)` TAIL IS NOT MERELY UNPAID, IT IS A LIVE DEFECT** — it
@@ -506,7 +516,8 @@ describe("§4 — the anchor's TIGHT tail buys what a LOOSE one would, and loose
     // Measured over the whole column in both directions, so no guard exists and
     // correctly none does.
     const bare = /^If (.+), this attack does (\d+) more damage\.$/;
-    const compound = /^If (.+), this attack does (\d+) more damage\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
+    const compound =
+      /^If (.+), this attack does (\d+) more damage\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
     for (const [, s] of legalAttackCorpus()) {
       expect(bare.test(s) && compound.test(s), s).toBe(false);
     }
@@ -586,7 +597,9 @@ describe("§6 — the LOG row, rendered rather than reasoned about (D456)", () =
     })
       .filter((e) => e.kind === "action")
       .map((e) => (e.kind === "action" ? e.segments.map((seg) => seg.text).join("") : ""));
-    expect(rows).toContain("dealt 140 damage to D494 Wall \u00b7 scaled +70 \u00b7 resistance \u221230");
+    expect(rows).toContain(
+      "dealt 140 damage to D494 Wall \u00b7 scaled +70 \u00b7 resistance \u221230",
+    );
     // \u26a0\ufe0f **AND THE HONEST LIMIT, STATED RATHER THAN GLOSSED**: the absence of a
     // crumb cannot tell a player "Weakness was SUPPRESSED" from "this body has no
     // Weakness". That is D192's shipped design and this slice does not change it —
@@ -647,7 +660,8 @@ describe("§8 — the standalone tail is STILL refused, and three shipped rungs 
     // …and the GATE is what keeps the pair from half-building: a clause this engine has
     // never read leaves BOTH readers silent rather than one of them claiming alone
     // (D445's `.test()`-beside-an-`.exec()` defect).
-    const unread = "If you have 3 or more Rainbow Badges in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.";
+    const unread =
+      "If you have 3 or more Rainbow Badges in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.";
     expect(deriveAttackDamageBonus(unread)).toBeNull();
     expect(deriveAttackDamageSuppression(unread)).toBeNull();
     expect(claimedByAny(unread)).toBe(false);
@@ -657,7 +671,9 @@ describe("§8 — the standalone tail is STILL refused, and three shipped rungs 
   });
 
   it("🛑 the `^` end and the `$` end fail DIFFERENTLY, and only one is loud (D464)", () => {
-    expect(deriveAttackDamageSuppression(PRINTED.replace(". This attack's", ". this attack's"))).toBeNull();
+    expect(
+      deriveAttackDamageSuppression(PRINTED.replace(". This attack's", ". this attack's")),
+    ).toBeNull();
     expect(deriveAttackDamageSuppression(PRINTED.replace(/\.$/, ""))).toBeNull();
     // \u2460 THE `^` END IS LOUD. Leading text is claimed by nobody, so
     // `ATTACK_EFFECT_SKIPPED` fires and a `toBeNull` can say so — on BOTH readers,
@@ -730,13 +746,5 @@ describe("§10 — `MATCH_RECORD_VERSION` stays 29, and the slice has TWO addres
     expect(conditionHolds(after, "p1", rebuilt)).not.toBe(
       conditionHolds(after, "p1", { ...v29, energy: null }),
     );
-  });
-});
-
-describe("§11 — the version", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // A card can reach this: file line 337's printing scores a number it did not score
-    // at 0.388.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

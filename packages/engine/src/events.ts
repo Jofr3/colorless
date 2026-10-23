@@ -352,12 +352,12 @@ export type GameEvent =
       a reader may rely on the key being present whenever the status matches, and
       `log.ts` compares it against the default rather than testing for absence. */
   | {
-      type: "STATUS_APPLIED"
-      seat: Seat
-      uid: string
-      status: StatusName
-      poisonDamage?: number
-      confusionDamage?: number
+      type: "STATUS_APPLIED";
+      seat: Seat;
+      uid: string;
+      status: StatusName;
+      poisonDamage?: number;
+      confusionDamage?: number;
     }
   /** §12 (D172) — a Special Condition was REFUSED by the target's own printed
       immunity ("This Pokémon can't be Burned." / "…can't be Paralyzed."). The
@@ -760,7 +760,13 @@ export type GameEvent =
       play whiffs visibly). Not persisted (D141). */
   /** 🆕🆕🆕 D621 — `attacker` is the printed attacker noun when the print has one (Gladion's Final
       Battle, Premium Power Pro); ABSENT = every attacker. */
-  | { type: "SIDE_ATTACKS_BOOSTED"; seat: Seat; amount: number; target: CardFilter; attacker?: CardFilter }
+  | {
+      type: "SIDE_ATTACKS_BOOSTED";
+      seat: Seat;
+      amount: number;
+      target: CardFilter;
+      attacker?: CardFilter;
+    }
   /** 🆕🆕🆕 §8.5 (D564) — a Supporter installed a SIDE-WIDE post-W/R reduction for the
       opponent's next turn (Jasmine's Gaze: *"During your opponent's next turn, all of your
       Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying
@@ -802,7 +808,14 @@ export type GameEvent =
       (Glimmora "Corrosive Shards"); `endsTurn` — attaching one from hand ends `seat`'s turn
       (Hypno "Daydream"). The MERGED mark after this install. */
   // 🆕🆕🆕 D636 — `counters`: Electrified Incisors' damage counters per Energy card attached from hand (0 when none).
-  | { type: "HAND_ATTACH_MARKED"; seat: Seat; uid: string; barred: boolean; endsTurn: boolean; counters: number }
+  | {
+      type: "HAND_ATTACH_MARKED";
+      seat: Seat;
+      uid: string;
+      barred: boolean;
+      endsTurn: boolean;
+      counters: number;
+    }
   /** 🆕🆕🆕 §7 (D636) — `seat`'s Trainer plays from hand are flip-locked for its next turn (Seismitoad "Quaking
       Fist", `PlayerSide.trainerFlipLockTurn`). `seat` owns the LOCKED side (HAND_PLAY_BLOCKED's rule). */
   | { type: "TRAINER_FLIP_LOCKED"; seat: Seat }
@@ -1183,7 +1196,7 @@ export type GameEvent =
       [🆕🆕🆕 D598 (D539): *"the Basic {W} Energy that went to `seat`'s HAND"* is WITHDRAWN as the
       whole of `toHand`, kept as written — Gengar "Infinite Shadow" puts the Pokémon's own `stack`
       there too (its Energy and Tools stay in `discarded`); log.ts `koToHandTail` counts each kind.] */
-  | { type: "KNOCKED_OUT";seat: Seat; uid: string; discarded: string[]; toHand?: string[] }
+  | { type: "KNOCKED_OUT"; seat: Seat; uid: string; discarded: string[]; toHand?: string[] }
   /** `seat` owes a prize pick (which face-down cards, §8.1) — announced when
       the game parks on ko:takePrizes so an event-only client never hangs on
       an unseen prompt. Forced picks resolve straight to PRIZES_TAKEN.
@@ -1345,7 +1358,15 @@ export type GameEvent =
   /** 🆕🆕🆕 D577 — Tyme's REVEAL: `seat`'s named card `uid` prints `hp` (null: no printed HP);
       the opponent guessed `guess`, `right` or not, and `drawer` draws (the opponent when right,
       `seat` when wrong). Public — the card is revealed. */
-  | { type: "HP_GUESSED"; seat: Seat; uid: string; guess: number; hp: number | null; right: boolean; drawer: Seat }
+  | {
+      type: "HP_GUESSED";
+      seat: Seat;
+      uid: string;
+      guess: number;
+      hp: number | null;
+      right: boolean;
+      drawer: Seat;
+    }
   /** 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show": `seat` (the ATTACKER) used the effect of the
       Supporter `uid` found in the opponent's revealed hand as the effect of the attack. The card
       does not move (R-LA1). Public — the hand was revealed. Not persisted (D141).
@@ -1624,7 +1645,13 @@ export type GameEvent =
       program ran, so the board move is discard → deck, but the printed event is the played card going
       into the deck instead of the discard, and log.ts names it that way. Optional and absent on every
       other producer; events are not persisted (no bump). */
-  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck" | "bench"; uids: string[]; played?: true }
+  | {
+      type: "DISCARD_RETRIEVED";
+      seat: Seat;
+      dest: "hand" | "deck" | "bench";
+      uids: string[];
+      played?: true;
+    }
   /** A look-at-the-top-N resolved: `uids` moved deck → `dest`. The other
       looked-at cards are shuffled back — a trailing SHUFFLE in the same batch
       hides the deck order.

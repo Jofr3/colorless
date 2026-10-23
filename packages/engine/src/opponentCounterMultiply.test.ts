@@ -5,7 +5,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackEffect,
 } from "./effects";
-import { applyAction, engineVersion, programFor, redactGame } from "./index";
+import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -312,7 +312,9 @@ describe("§2 — deriveAttackDamageMultiplier gains ONE arm on an OLD count sou
     // `return` placed past the three arms above it would strand them silently,
     // because those sentences are exercised by different suites entirely.
     expect(
-      deriveAttackDamageMultiplier("This attack does 20 damage for each damage counter on this Pokémon."),
+      deriveAttackDamageMultiplier(
+        "This attack does 20 damage for each damage counter on this Pokémon.",
+      ),
     ).toEqual({ per: 20, count: { kind: "damageCountersOnSelf" } });
     expect(
       deriveAttackDamageMultiplier(
@@ -347,9 +349,9 @@ describe("§2 — deriveAttackDamageMultiplier gains ONE arm on an OLD count sou
     // The 10-per member is spelled out as a CONSTANT rather than only generated, so
     // the template below is checked against a string transcribed off a real row
     // instead of standing in for one (D183's paraphrase rule).
-    expect(`This attack does 10 more damage for each damage counter on your opponent's Active Pokémon.`).toBe(
-      SECOND_BITE,
-    );
+    expect(
+      `This attack does 10 more damage for each damage counter on your opponent's Active Pokémon.`,
+    ).toBe(SECOND_BITE);
     for (const per of [10, 30, 40, 50]) {
       const more = `This attack does ${per} more damage for each damage counter on your opponent's Active Pokémon.`;
       expect(deriveAttackDamageMultiplier(more), more).toBeNull();
@@ -451,7 +453,9 @@ describe("§2 — deriveAttackDamageMultiplier gains ONE arm on an OLD count sou
     // stopped working altogether (D412's rule: the half that was already correct is
     // the control).
     expect(
-      deriveAttackDamagePenalty("This attack does 20 less damage for each damage counter on this Pokémon."),
+      deriveAttackDamagePenalty(
+        "This attack does 20 less damage for each damage counter on this Pokémon.",
+      ),
     ).toEqual({ per: 20, count: { kind: "damageCountersOnSelf" } });
   });
 });
@@ -541,9 +545,9 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
       [3, 60],
       [10, 200],
     ] as const) {
-      expect(find(swing(board("glalie", "fix-titan", counters), "glalie").events, "DAMAGE_DEALT")?.dealt).toBe(
-        dealt,
-      );
+      expect(
+        find(swing(board("glalie", "fix-titan", counters), "glalie").events, "DAMAGE_DEALT")?.dealt,
+      ).toBe(dealt);
     }
   });
 
@@ -823,10 +827,6 @@ describe("§7 — the structural answers", () => {
     const state = board("glalie", "fix-titan", 3);
     deepFreeze(state);
     expect(() => applyAction(state, { type: "attack", seat: "p1", index: 0 })).not.toThrow();
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

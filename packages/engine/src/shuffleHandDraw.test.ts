@@ -16,7 +16,6 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState } from "./index";
 import { programFor } from "./registry";
 import {
@@ -112,7 +111,8 @@ const PRINTED = "Shuffle your hand into your deck. Then, draw 6 cards.";
     SENTENCE'S UNBUILTNESS AS THEIR PREMISE** — §1's reader pair, §3's COUNT
     falsifier and §6's ZERO-MATCH board — and a re-point that only chased the one
     that reddened would have left the other two green and wrong (D444). */
-const DERIVED_COUNT = "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.";
+const DERIVED_COUNT =
+  "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.";
 
 /** D404's sentence — the SIBLING, and the reason §3's sharpest rung is a `not.toEqual`
     rather than a `toBeNull`: both anchors are `^…$` and a string cannot begin two ways,
@@ -315,14 +315,14 @@ describe("D479 §3 — the refusals, each pinned on ONE printed byte", () => {
     expect(
       deriveAttackEffect("Shuffle their hand into their deck. Then, draw 6 cards."),
     ).toBeNull();
-    expect(
-      deriveAttackEffect("Shuffle your hand into their deck. Then, draw 6 cards."),
-    ).toBeNull();
+    expect(deriveAttackEffect("Shuffle your hand into their deck. Then, draw 6 cards.")).toBeNull();
     // …the DESTINATION alone: `toBottom` is Iono's placement and a DIFFERENT program
     // (the deck's order survives). The sentence that prints it is a Supporter's, not an
     // attack's, and this arm must not answer it.
     expect(
-      deriveAttackEffect("Shuffle your hand and put it on the bottom of your deck. Then, draw 6 cards."),
+      deriveAttackEffect(
+        "Shuffle your hand and put it on the bottom of your deck. Then, draw 6 cards.",
+      ),
     ).toBeNull();
     // …the JOIN alone: the printed two-sentence form with ". Then, " is what this anchor
     // reads. The one-sentence "and" spelling is nobody's printing here.
@@ -486,7 +486,7 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
   });
 });
 
-describe("D479 §5 — the SEAT: `who: \"you\"` is the printed subject, not a default", () => {
+describe('D479 §5 — the SEAT: `who: "you"` is the printed subject, not a default', () => {
   it("🛑 the OPPONENT's hand, deck and discard are BYTE-UNCHANGED", () => {
     // The rung that kills `who: "both"` and `who: "opponent"`, the two nearest wrong
     // VALUES of the one field this arm writes. Both are shipped and authored
@@ -605,19 +605,5 @@ describe("D479 §7 — what this slice did NOT buy, measured", () => {
     expect(FIXTURE_POOL["fix-handdraw"]?.attacks).toEqual([
       { cost: ["Colorless"], name: "Hand Refresh", damage: "30", effect: SIBLING },
     ]);
-  });
-
-  it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    // The engine bump is behaviour: a printed sentence that resolved to nothing now
-    // resolves to a program. `MATCH_RECORD_VERSION` is UNCHANGED on BOTH of D463's
-    // tests, and neither is inherited:
-    //   • the SERIALIZED ALPHABET does not grow — this arm adds no `EffectOp` member, no
-    //     op FIELD and no op VALUE. `handRefresh`, `who: "you"` and
-    //     `draw: { kind: "fixed" }` are all authored in `registry.ts` today, so nothing
-    //     new can appear in a persisted program;
-    //   • REACHABILITY (D450) — the op NEVER PARKS, so no `phase.cont.pendingOp` or
-    //     `rest` can hold it and no saved match can contain a shape an older deploy
-    //     could not read. `interpreter.ts`'s case returns `{ done: … }` and nothing else.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -96,11 +96,7 @@ function find<T extends GameEvent["type"]>(
 function armed(): GameState {
   let state = must(
     applyAction(
-      driveSetup(
-        SEED,
-        { p1: TYPED_CLASS_BLOCK_DECK, p2: TYPED_CLASS_BLOCK_DECK },
-        { first: "p2" },
-      ),
+      driveSetup(SEED, { p1: TYPED_CLASS_BLOCK_DECK, p2: TYPED_CLASS_BLOCK_DECK }, { first: "p2" }),
       { type: "endTurn", seat: "p2" },
     ),
   );
@@ -256,12 +252,16 @@ describe("the typed attacker class — derived, not authored", () => {
     ] as string[]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    expect(deriveAttackEffect("During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.")).toEqual([
-      { op: "preventDamage", fromClass: { stage: "ancient" } },
-    ]);
-    expect(deriveAttackEffect("During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.")).toEqual([
-      { op: "installSideAttackBlock", banner: "Future", fromClass: { stage: "ex" } },
-    ]);
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
+      ),
+    ).toEqual([{ op: "preventDamage", fromClass: { stage: "ancient" } }]);
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.",
+      ),
+    ).toEqual([{ op: "installSideAttackBlock", banner: "Future", fromClass: { stage: "ex" } }]);
   });
 
   it("does not read the damage-CAP sibling that shares its 14-word PREFIX", () => {
@@ -423,9 +423,12 @@ describe("the typed attacker class — the merge is STRUCTURAL", () => {
       in, carrying `cls`. Constructed rather than driven: no card prints two of
       these attacks, so the merge rule is unreachable off any printing and is
       guarded by surgery for D144's reason. */
-  function primed(state: GameState, cls: GameState["players"]["p1"]["active"] extends null
-    ? never
-    : NonNullable<NonNullable<GameState["players"]["p1"]["active"]>["attackBlock"]>["fromClass"]) {
+  function primed(
+    state: GameState,
+    cls: GameState["players"]["p1"]["active"] extends null
+      ? never
+      : NonNullable<NonNullable<GameState["players"]["p1"]["active"]>["attackBlock"]>["fromClass"],
+  ) {
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active to shield");
     return {

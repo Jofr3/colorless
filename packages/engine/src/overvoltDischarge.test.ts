@@ -308,7 +308,10 @@ function board(spec: { p1: readonly string[]; p2: readonly string[] }, seed = 4)
 const ACTIVE: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
 
-function discharge(state: GameState, target: { spot: "active" } | { spot: "bench"; index: number }) {
+function discharge(
+  state: GameState,
+  target: { spot: "active" } | { spot: "bench"; index: number },
+) {
   return step(state, { type: "useAbility", seat: "p1", target, abilityName: ABILITY });
 }
 
@@ -488,13 +491,17 @@ describe("D346 §3 — the two printed NOUNS, each narrowing a different thing",
     }
     const offered = cur.phase.prompt.candidates;
     expect(offered.map((u) => cur.cardIdByUid[u])).toEqual([ENERGY_F, ENERGY_W]);
-    cur = step(cur, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [offered[1] as string] } }).state;
+    cur = step(cur, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [offered[1] as string] },
+    }).state;
     const { state: after } = attachTo(cur, benchRef(0));
     expect(energyCount(after, benchRef(0))).toBe(2);
     expect(after.players.p1.bench[0]?.energy).toEqual([offered[1], offered[0]]);
   });
 
-  it("…but a SPECIAL Energy is out of reach — the printed word is \"Basic\"", () => {
+  it('…but a SPECIAL Energy is out of reach — the printed word is "Basic"', () => {
     // `anyEnergy` is ABSENT, so `attachableEnergies` tests `energyType === "Normal"`.
     // [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]
     // A pile of Special Energy alone makes the attach whiff, which `programPlayable`
@@ -511,7 +518,7 @@ describe("D346 §3 — the two printed NOUNS, each narrowing a different thing",
   });
 });
 
-describe("D346 §4 — the printed \"UP TO\", and the KO that is not conditional on it", () => {
+describe('D346 §4 — the printed "UP TO", and the KO that is not conditional on it', () => {
   it("one card in the pile attaches ONE and the host STILL dies", () => {
     // `min(3, available)`: ops 2 and 3 find nothing and no-op silently, and the KO
     // is not gated on how many landed — "If you use this Ability" is the whole

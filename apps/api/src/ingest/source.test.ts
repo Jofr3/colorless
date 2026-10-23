@@ -131,17 +131,17 @@ describe("createSdkSource", () => {
 });
 
 describe("politeness posture (the SDK adds none, so the seam owns it)", () => {
-  const cases: { name: string; build: (sleep: (ms: number) => Promise<void>) => CatalogSource }[] = [
-    {
-      name: "fetch",
-      build: (sleep) =>
-        createFetchSource({ fetchImpl: stubFetch({}).impl, delayMs: 50, sleep }),
-    },
-    {
-      name: "sdk",
-      build: (sleep) => createSdkSource({ client: stubClient({}).client, delayMs: 50, sleep }),
-    },
-  ];
+  const cases: { name: string; build: (sleep: (ms: number) => Promise<void>) => CatalogSource }[] =
+    [
+      {
+        name: "fetch",
+        build: (sleep) => createFetchSource({ fetchImpl: stubFetch({}).impl, delayMs: 50, sleep }),
+      },
+      {
+        name: "sdk",
+        build: (sleep) => createSdkSource({ client: stubClient({}).client, delayMs: 50, sleep }),
+      },
+    ];
 
   for (const { name, build } of cases) {
     it(`${name}: delays before every request but the first, and counts them`, async () => {

@@ -214,7 +214,11 @@ function takeLoneGust(parked: { state: GameState; events: readonly GameEvent[] }
   expect(phase.prompt.upTo).toBe(1);
   expect(phase.prompt.candidates).toHaveLength(1);
   const ref = phase.prompt.candidates[0];
-  const taken = apply(parked.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+  const taken = apply(parked.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref },
+  });
   return { state: taken.state, events: [...parked.events, ...taken.events] };
 }
 

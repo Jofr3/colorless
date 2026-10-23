@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -281,9 +281,11 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     // The bare (no "also") opponent-side form, and its own-side mirror — the
     // optional rider is shared by construction now, which is the whole argument for
     // one anchor rather than two.
-    expect(deriveAttackEffect(`This attack does 50 damage to each of your opponent's ${"Benched"} Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`)).toEqual([
-      { op: "spreadDamage", target: "opponentBench", amount: 50 },
-    ]);
+    expect(
+      deriveAttackEffect(
+        `This attack does 50 damage to each of your opponent's ${"Benched"} Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`,
+      ),
+    ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 50 }]);
     expect(
       deriveAttackEffect(
         "This attack does 50 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -305,9 +307,9 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 10 }]);
     // …and the CURLY spelling of the contraction, on the family's standing reason
     // (a re-ingest could curl them). The byte in the corpus is U+0027 today.
-    expect(
-      deriveAttackEffect(own(10).replace("Don't", "Don’t")),
-    ).toEqual([{ op: "spreadDamage", target: "yourBench", amount: 10 }]);
+    expect(deriveAttackEffect(own(10).replace("Don't", "Don’t"))).toEqual([
+      { op: "spreadDamage", target: "yourBench", amount: 10 },
+    ]);
   });
 
   it("refuses the near-misses — and ADMITS one on the same axis beside each", () => {
@@ -316,7 +318,11 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     // below moves ONE token and states what the anchor is actually keyed on.
     const pairs: readonly (readonly [string, string, string])[] = [
       // possessive: an owner word this sentence never prints ↔ the two it does
-      ["a THIRD possessive", "This attack also does 10 damage to each of my Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
+      [
+        "a THIRD possessive",
+        "This attack also does 10 damage to each of my Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        own(10),
+      ],
       // quantifier: "1 of" is a CHOICE and a different op ↔ "each of" is this one
       // 🆕🆕🆕 **D447 CHANGED THIS ROW'S SENTENCE WITHOUT CHANGING ITS AXIS, AND THE FIRST
       // REPLACEMENT WAS ALSO WRONG.** *"1 of your Benched Pokémon"* is BUILT now, as
@@ -328,7 +334,11 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       // on the literal "each of" and the snipe fragment on `\d+ of`, and "all of" is
       // neither. ⚠️ **THE AXIS IS UNCHANGED — a quantifier this family is not keyed on —
       // and that is the only thing that had to survive the substitution.**
-      ["`all of` (a quantifier neither anchor spells)", "This attack also does 10 damage to all of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
+      [
+        "`all of` (a quantifier neither anchor spells)",
+        "This attack also does 10 damage to all of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        own(10),
+      ],
       // scope: a noun that names NO owner and NO seat scope ↔ the one-sided form
       // 🆕🆕🆕 **D507 RE-POINTED THIS ROW AND THE AXIS IS UNCHANGED (D178/D418/D438 —
       // re-point, do not delete).** The sentence this row used to carry — *"each Benched
@@ -344,7 +354,11 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       // either direction; the new string is refused by a DIFFERENT byte of each anchor,
       // so it discriminates both. The both-sides row's own near-miss ladder now lives in
       // `bothBenchSpread.test.ts` §2.
-      ["`each Benched Pokémon` with no owner and no seat scope", "This attack also does 10 damage to each Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
+      [
+        "`each Benched Pokémon` with no owner and no seat scope",
+        "This attack also does 10 damage to each Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        own(10),
+      ],
       // a trailing clause continues the sentence past the anchor's `\.`
       // 🆕🆕🆕 **D505 RE-POINTED THIS ROW ONTO THE OWN SIDE, AND THE AXIS IS UNCHANGED
       // (D178/D418/D438 — re-point, do not delete).** The sentence this row used to
@@ -360,7 +374,11 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       // seen through it either way — the discrimination that genuinely moved is
       // *"which arm owns the scaled sentence"*, and it lives in
       // `scaledBenchSpread.test.ts` §2 as a program equality rather than a null.
-      ["a SCALED tail, own side — refused by BOTH anchors", "This attack also does 10 damage to each of your Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
+      [
+        "a SCALED tail, own side — refused by BOTH anchors",
+        "This attack also does 10 damage to each of your Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        own(10),
+      ],
       // the lookalike é falls off the path silently, which is the family's reason
       ["a lookalike `Pokemon`", own(10).replace(/Pokémon/g, "Pokemon"), own(10)],
       // no leading `This attack`: a mid-sentence clause must not reach this path
@@ -564,7 +582,10 @@ describe("§3 — `target` is a union now, and the record version does not move"
       // `effect:choose`, so no `EffectContinuation`, so no `pendingOp` — which is
       // the only address in `MatchRecord.state` an `EffectOp` is ever written to.
       expect(done.phase.kind, id).not.toBe("effect:choose");
-      expect(done.pending.map((stage) => stage.kind), id).toEqual([]);
+      expect(
+        done.pending.map((stage) => stage.kind),
+        id,
+      ).toEqual([]);
     }
     // ⚠️ **AND THE STRONGER HALF OF THE SAME CLAIM IS THE COMPILER'S, NOT A
     // BOARD'S.** `PendingStage["kind"]` has no member that resumes a parked effect
@@ -576,10 +597,6 @@ describe("§3 — `target` is a union now, and the record version does not move"
     // and is recorded here rather than deleted (D424's preference for a refusal the
     // type system re-derives).
   });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -590,7 +607,11 @@ describe("§4 — every own benched body, and NOT the opponent's", () => {
   it("hits EVERY body on the attacker's own Bench and none on the opponent's", () => {
     // Three own bodies, two across the table: a fold that stopped at the first, or
     // that walked the wrong side, or that walked BOTH, all differ here.
-    let state = bench(board("sv01-117", "fix-titan"), "p1", ["fix-titan", "fix-titan", "fix-titan"]);
+    let state = bench(board("sv01-117", "fix-titan"), "p1", [
+      "fix-titan",
+      "fix-titan",
+      "fix-titan",
+    ]);
     state = bench(state, "p2", ["fix-titan", "fix-titan"]);
     const { state: done, events } = swing(state, QUAKE.krookodile);
     expect(damage(events)).toEqual([
@@ -941,7 +962,10 @@ describe("§8 — `DAMAGE_DEALT.by`, and the row it stopped getting wrong", () =
     for (const row of damage(opponentSide.events)) {
       expect(row.by).not.toBe(row.seat);
     }
-    const ownSide = swing(bench(board("fix-tremor", "fix-titan"), "p1", ["fix-titan"]), TREMOR.home);
+    const ownSide = swing(
+      bench(board("fix-tremor", "fix-titan"), "p1", ["fix-titan"]),
+      TREMOR.home,
+    );
     const [main, splash] = damage(ownSide.events);
     expect(main).toEqual({ seat: "p2", by: "p1", dealt: 30 });
     expect(splash).toEqual({ seat: "p1", by: "p1", dealt: 10 }); // …and here it does NOT

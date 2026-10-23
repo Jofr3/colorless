@@ -30,10 +30,7 @@ import {
 } from "./index";
 
 /** Parse and, on failure, surface the zod issues in the assertion message. */
-function expectParses<Schema extends z.ZodType>(
-  schema: Schema,
-  data: unknown,
-): z.output<Schema> {
+function expectParses<Schema extends z.ZodType>(schema: Schema, data: unknown): z.output<Schema> {
   const result = schema.safeParse(data);
   if (!result.success) {
     expect.fail(
@@ -113,7 +110,8 @@ describe("tcgdexCardSchema (full cards)", () => {
         {
           cost: ["Grass", "Water", "Psychic"],
           name: "Fluorite",
-          effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
+          effect:
+            "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
         },
       ]);
     }

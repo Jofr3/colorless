@@ -507,7 +507,9 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
     const returned = find(result.events, "POKEMON_RETURNED");
     expect(returned?.attachmentsTo?.uids).toHaveLength(2);
     expect(result.state.players.p1.discard).toHaveLength(2);
-    expect(result.state.players.p1.hand.filter((u) => result.state.cardIdByUid[u] === UNDER)).toHaveLength(2);
+    expect(
+      result.state.players.p1.hand.filter((u) => result.state.cardIdByUid[u] === UNDER),
+    ).toHaveLength(2);
   });
 
   it("the 120 is dealt BEFORE the bounce — §8.5 order, not this op's choice", () => {
@@ -606,9 +608,7 @@ describe("D313 §4 — the printed `optional`, both directions, and its absence 
   });
 
   it("the prompt is the printed sentence, character for character", () => {
-    const parked = must(
-      applyAction(board({ attacker: CROBAT, energy: DARK, count: 2 }), ASSASSIN),
-    );
+    const parked = must(applyAction(board({ attacker: CROBAT, energy: DARK, count: 2 }), ASSASSIN));
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(parked.phase.prompt.note).toBe(CROBAT_PRINTED);
   });
@@ -682,7 +682,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the deck", () => {
-  it("🛑 a parked continuation holding `{op:\"returnSelf\"}` with NO `dest` shuffles into the deck", () => {
+  it('🛑 a parked continuation holding `{op:"returnSelf"}` with NO `dest` shuffles into the deck', () => {
     // **THIS IS THE REASON `dest` IS OPTIONAL AND IT IS DRIVEN RATHER THAN
     // ARGUED.** `MATCH_RECORD_VERSION` stays at 18 because a record written by the
     // OLD deploy can hold exactly this op inside a parked `optional` —
@@ -749,9 +749,7 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
         "sv08-131",
         "sv05-129",
         "sv07-011", // 🆕 D314
-      ].map((id) =>
-        programFor(id),
-      ),
+      ].map((id) => programFor(id)),
     );
     expect(bare).toContain('"returnSelf"');
     expect(bare).not.toContain('{"op":"returnSelf"}');

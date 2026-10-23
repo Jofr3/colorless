@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion, formatElapsed, logFromEvents } from "./index";
+import { applyAction, createGame, formatElapsed, logFromEvents } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -86,7 +86,9 @@ describe("D633 §1 — the texts", () => {
 
 describe("D633 §2 — the readings", () => {
   it("All-You-Can-Yeet: the uncapped declinable hand discard, no filter, no slot", () => {
-    expect(deriveAttackEffect(YEET)).toEqual([{ op: "payFromHand", count: "any", cap: "any", to: "discard" }]);
+    expect(deriveAttackEffect(YEET)).toEqual([
+      { op: "payFromHand", count: "any", cap: "any", to: "discard" },
+    ]);
   });
 
   it("Rocket Feathers: the same payment on the Team Rocket Supporter noun, then 60 per discarded card", () => {
@@ -177,10 +179,19 @@ const L = "d633-lightning";
 const P = "d633-psychic";
 const LEGACY = "fix-legacy-energy";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
-const supporter = (id: string, name: string): Card => ({ ...trainerCard(id, "Supporter", "Draw a card."), name });
+const supporter = (id: string, name: string): Card => ({
+  ...trainerCard(id, "Supporter", "Draw a card."),
+  name,
+});
 
 const LOCAL: Record<string, Card> = {
   "me05-029": mon("me05-029", "Slowpoke", 70, "Psychic", [
@@ -193,7 +204,12 @@ const LOCAL: Record<string, Card> = {
     130,
     "Darkness",
     [
-      { cost: ["Colorless", "Colorless"], name: "Rocket Feathers", damage: "60×", effect: ROCKET_FEATHERS },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Rocket Feathers",
+        damage: "60×",
+        effect: ROCKET_FEATHERS,
+      },
       { cost: ["Darkness", "Colorless", "Colorless"], name: "Hammer In", damage: 100 },
     ],
     { stage: "Stage1", evolveFrom: "Team Rocket's Murkrow" },
@@ -203,7 +219,14 @@ const LOCAL: Record<string, Card> = {
     "Doublade",
     100,
     "Metal",
-    [{ cost: ["Colorless", "Colorless"], name: "Weaponized Swords", damage: "60×", effect: SWORDS }],
+    [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Weaponized Swords",
+        damage: "60×",
+        effect: SWORDS,
+      },
+    ],
     { stage: "Stage1", evolveFrom: "Honedge" },
   ),
   "me02-034": mon(
@@ -215,11 +238,19 @@ const LOCAL: Record<string, Card> = {
     { stage: "Stage2", evolveFrom: "Pawmo" },
   ),
   "30th-121": mon("30th-121", "Lugia", 120, "Colorless", [
-    { cost: ["Fire", "Water", "Lightning"], name: "Elemental Blast", damage: 250, effect: ELEMENTAL_BLAST },
+    {
+      cost: ["Fire", "Water", "Lightning"],
+      name: "Elemental Blast",
+      damage: 250,
+      effect: ELEMENTAL_BLAST,
+    },
   ]),
   [FILLER]: mon(FILLER, "D633 Filler", 400, "Colorless", TAP),
   [HONEDGE]: mon(HONEDGE, "Honedge", 70, "Metal", TAP),
-  [AEGISLASH]: mon(AEGISLASH, "Aegislash", 150, "Metal", TAP, { stage: "Stage2", evolveFrom: "Doublade" }),
+  [AEGISLASH]: mon(AEGISLASH, "Aegislash", 150, "Metal", TAP, {
+    stage: "Stage2",
+    evolveFrom: "Doublade",
+  }),
   [TR_ARCHER]: supporter(TR_ARCHER, "Team Rocket's Archer"),
   [TR_PETREL]: supporter(TR_PETREL, "Team Rocket's Petrel"),
   [PLAIN_SUPPORTER]: supporter(PLAIN_SUPPORTER, "Professor's Research"),
@@ -248,7 +279,11 @@ const DECK = deckOf({
   [LEGACY]: 1,
   "fix-energy": 25,
 });
-const BOARD_IDS = new Set(Object.keys(LOCAL).filter((id) => id !== FILLER).concat([LEGACY]));
+const BOARD_IDS = new Set(
+  Object.keys(LOCAL)
+    .filter((id) => id !== FILLER)
+    .concat([LEGACY]),
+);
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -261,7 +296,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -269,15 +306,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -303,7 +346,8 @@ function table(
   hand: readonly (readonly [string, number])[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = benchFromDeck(clearBench(setActiveFromDeck(state, "p1", attacker), "p1"), "p1", FILLER);
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   for (const [id, n] of hand) state = handFromDeck(state, "p1", id, n);
@@ -316,7 +360,8 @@ const resolve = (state: GameState, choice: unknown) =>
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
-const handUids = (state: GameState, id: string) => state.players.p1.hand.filter((u) => state.cardIdByUid[u] === id);
+const handUids = (state: GameState, id: string) =>
+  state.players.p1.hand.filter((u) => state.cardIdByUid[u] === id);
 const defenderDamage = (state: GameState) => state.players.p2.active?.damage ?? -1;
 
 function parkedCards(state: GameState) {
@@ -328,10 +373,22 @@ function parkedCards(state: GameState) {
 
 describe("D633 §3 — All-You-Can-Yeet and Rocket Feathers on a board", () => {
   it("All-You-Can-Yeet: every hand card is offered, 0..all; the picks are discarded", () => {
-    const state = table("me05-029", [[P, 1]], [[TR_ARCHER, 1], [PLAIN_SUPPORTER, 2]]);
+    const state = table(
+      "me05-029",
+      [[P, 1]],
+      [
+        [TR_ARCHER, 1],
+        [PLAIN_SUPPORTER, 2],
+      ],
+    );
     const parked = mustApply(state, attack(0)).state;
     const prompt = parkedCards(parked);
-    expect([prompt.min, prompt.max, prompt.candidates.length, prompt.dest]).toEqual([0, 3, 3, "discard"]);
+    expect([prompt.min, prompt.max, prompt.candidates.length, prompt.dest]).toEqual([
+      0,
+      3,
+      3,
+      "discard",
+    ]);
     expect(prompt.note).toBe("Discard any number of cards from your hand.");
     const two = resolve(parked, { kind: "cards", uids: handUids(parked, PLAIN_SUPPORTER) }).state;
     expect(ids(two, two.players.p1.hand)).toEqual([TR_ARCHER]);
@@ -347,20 +404,37 @@ describe("D633 §3 — All-You-Can-Yeet and Rocket Feathers on a board", () => {
   });
 
   it("Rocket Feathers: only the Team Rocket Supporters are offered; 2 discarded → 120", () => {
-    const state = table("me02.5-127", [["fix-energy", 2]], [[TR_ARCHER, 2], [TR_PETREL, 1], [PLAIN_SUPPORTER, 1]]);
+    const state = table(
+      "me02.5-127",
+      [["fix-energy", 2]],
+      [
+        [TR_ARCHER, 2],
+        [TR_PETREL, 1],
+        [PLAIN_SUPPORTER, 1],
+      ],
+    );
     const parked = mustApply(state, attack(0)).state;
     const prompt = parkedCards(parked);
     expect(ids(parked, prompt.candidates)).toEqual([TR_ARCHER, TR_ARCHER, TR_PETREL]);
     expect([prompt.min, prompt.max]).toEqual([0, 3]);
-    const done = resolve(parked, { kind: "cards", uids: [...handUids(parked, TR_PETREL), ...handUids(parked, TR_ARCHER).slice(0, 1)] }).state;
+    const done = resolve(parked, {
+      kind: "cards",
+      uids: [...handUids(parked, TR_PETREL), ...handUids(parked, TR_ARCHER).slice(0, 1)],
+    }).state;
     expect(defenderDamage(done)).toBe(120);
     expect(ids(done, done.players.p1.hand).sort()).toEqual([PLAIN_SUPPORTER, TR_ARCHER].sort());
   });
 
   it("Rocket Feathers declined: 0 damage; no Team Rocket Supporter in hand: no park, 0 damage", () => {
-    const parked = mustApply(table("me02.5-127", [["fix-energy", 2]], [[TR_ARCHER, 1]]), attack(0)).state;
+    const parked = mustApply(
+      table("me02.5-127", [["fix-energy", 2]], [[TR_ARCHER, 1]]),
+      attack(0),
+    ).state;
     expect(defenderDamage(resolve(parked, { kind: "cards", uids: [] }).state)).toBe(0);
-    const bare = mustApply(table("me02.5-127", [["fix-energy", 2]], [[PLAIN_SUPPORTER, 2]]), attack(0));
+    const bare = mustApply(
+      table("me02.5-127", [["fix-energy", 2]], [[PLAIN_SUPPORTER, 2]]),
+      attack(0),
+    );
     expect(bare.state.phase.kind).not.toBe("effect:choose");
     expect(defenderDamage(bare.state)).toBe(0);
   });
@@ -368,29 +442,51 @@ describe("D633 §3 — All-You-Can-Yeet and Rocket Feathers on a board", () => {
 
 describe("D633 §4 — Weaponized Swords on a board", () => {
   it("the named cards are offered (dest `reveal`); 2 revealed → 120, both stay in the hand, the row names them", () => {
-    const state = table("me03-057", [["fix-energy", 2]], [[HONEDGE, 1], [AEGISLASH, 1], ["me03-057", 1], [PLAIN_SUPPORTER, 1]]);
+    const state = table(
+      "me03-057",
+      [["fix-energy", 2]],
+      [
+        [HONEDGE, 1],
+        [AEGISLASH, 1],
+        ["me03-057", 1],
+        [PLAIN_SUPPORTER, 1],
+      ],
+    );
     const parked = mustApply(state, attack(0)).state;
     const prompt = parkedCards(parked);
     expect(ids(parked, prompt.candidates)).toEqual([HONEDGE, AEGISLASH, "me03-057"]);
     expect([prompt.min, prompt.max, prompt.dest]).toEqual([0, 3, "reveal"]);
-    expect(prompt.note).toBe("Reveal any number of Honedge, Doublade, and Aegislash from your hand.");
+    expect(prompt.note).toBe(
+      "Reveal any number of Honedge, Doublade, and Aegislash from your hand.",
+    );
     const picked = [...handUids(parked, HONEDGE), ...handUids(parked, AEGISLASH)];
     const done = resolve(parked, { kind: "cards", uids: picked });
     expect(defenderDamage(done.state)).toBe(120);
     expect(done.state.players.p1.hand).toEqual(parked.players.p1.hand);
-    expect(of(done.events, "HAND_CARDS_REVEALED")).toEqual([{ type: "HAND_CARDS_REVEALED", seat: "p1", uids: picked }]);
+    expect(of(done.events, "HAND_CARDS_REVEALED")).toEqual([
+      { type: "HAND_CARDS_REVEALED", seat: "p1", uids: picked },
+    ]);
     const rows = logFromEvents(of(done.events, "HAND_CARDS_REVEALED"), {
       names: { p1: "P1", p2: "P2" },
       state: done.state,
       elapsed: formatElapsed(0),
     });
-    expect(rows.map((row) => (row.kind === "action" ? [row.who, row.segments.map((x) => x.text).join("")] : null))).toEqual([
-      ["p1", "revealed from their hand: Honedge, Aegislash"],
-    ]);
+    expect(
+      rows.map((row) =>
+        row.kind === "action" ? [row.who, row.segments.map((x) => x.text).join("")] : null,
+      ),
+    ).toEqual([["p1", "revealed from their hand: Honedge, Aegislash"]]);
   });
 
   it("one Honedge in hand: the lone match still asks (0 or 1), and revealing it is 60", () => {
-    const state = table("me03-057", [["fix-energy", 2]], [[HONEDGE, 1], [PLAIN_SUPPORTER, 1]]);
+    const state = table(
+      "me03-057",
+      [["fix-energy", 2]],
+      [
+        [HONEDGE, 1],
+        [PLAIN_SUPPORTER, 1],
+      ],
+    );
     const parked = mustApply(state, attack(0)).state;
     expect([parkedCards(parked).min, parkedCards(parked).max]).toEqual([0, 1]);
     const done = resolve(parked, { kind: "cards", uids: handUids(parked, HONEDGE) });
@@ -398,11 +494,17 @@ describe("D633 §4 — Weaponized Swords on a board", () => {
   });
 
   it("revealing none: 0 damage and no reveal row; nothing named in hand: no park", () => {
-    const parked = mustApply(table("me03-057", [["fix-energy", 2]], [[HONEDGE, 2]]), attack(0)).state;
+    const parked = mustApply(
+      table("me03-057", [["fix-energy", 2]], [[HONEDGE, 2]]),
+      attack(0),
+    ).state;
     const none = resolve(parked, { kind: "cards", uids: [] });
     expect(defenderDamage(none.state)).toBe(0);
     expect(of(none.events, "HAND_CARDS_REVEALED")).toEqual([]);
-    const bare = mustApply(table("me03-057", [["fix-energy", 2]], [[PLAIN_SUPPORTER, 1]]), attack(0));
+    const bare = mustApply(
+      table("me03-057", [["fix-energy", 2]], [[PLAIN_SUPPORTER, 1]]),
+      attack(0),
+    );
     expect(bare.state.phase.kind).not.toBe("effect:choose");
     expect(defenderDamage(bare.state)).toBe(0);
   });
@@ -430,28 +532,45 @@ describe("D633 §5 — Voltaic Fist on a board", () => {
 
 describe("D633 §6 — Elemental Blast on a board (the matched discard, R-EB1)", () => {
   it("{R}{W}{L} plus Legacy: the {R} pick offers both providers, then the rest is forced; three come off", () => {
-    const parked = mustApply(table("30th-121", [[R, 1], [W, 1], [L, 1], [LEGACY, 1]]), attack(0)).state;
+    const parked = mustApply(
+      table("30th-121", [
+        [R, 1],
+        [W, 1],
+        [L, 1],
+        [LEGACY, 1],
+      ]),
+      attack(0),
+    ).state;
     expect(defenderDamage(parked)).toBe(250);
     if (parked.phase.kind !== "effect:choose" || parked.phase.prompt.kind !== "discardEnergy") {
       throw new Error("expected the {R} pick");
     }
-    expect(ids(parked, parked.phase.prompt.discardable.map((d) => d.uid)).sort()).toEqual([R, LEGACY].sort());
-    const legacy = parked.phase.prompt.discardable.find((d) => parked.cardIdByUid[d.uid] === LEGACY)?.uid ?? "";
+    expect(
+      ids(
+        parked,
+        parked.phase.prompt.discardable.map((d) => d.uid),
+      ).sort(),
+    ).toEqual([R, LEGACY].sort());
+    const legacy =
+      parked.phase.prompt.discardable.find((d) => parked.cardIdByUid[d.uid] === LEGACY)?.uid ?? "";
     const done = resolve(parked, { kind: "discardEnergy", uids: [legacy] }).state;
     expect(ids(done, done.players.p1.active?.energy ?? [])).toEqual([R]);
     expect(ids(done, done.players.p1.discard).sort()).toEqual([LEGACY, W, L].sort());
   });
 
   it("{R}{W} plus Legacy (Legacy pays {L}): Legacy cannot fill the {R} slot, so all three come off, no park", () => {
-    const result = mustApply(table("30th-121", [[R, 1], [W, 1], [LEGACY, 1]]), attack(0));
+    const result = mustApply(
+      table("30th-121", [
+        [R, 1],
+        [W, 1],
+        [LEGACY, 1],
+      ]),
+      attack(0),
+    );
     expect(result.state.phase.kind).not.toBe("effect:choose");
     expect(result.state.players.p1.active?.energy).toEqual([]);
-    expect(ids(result.state, result.state.players.p1.discard).sort()).toEqual([LEGACY, R, W].sort());
-  });
-});
-
-describe("D633 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
+    expect(ids(result.state, result.state.players.p1.discard).sort()).toEqual(
+      [LEGACY, R, W].sort(),
+    );
   });
 });

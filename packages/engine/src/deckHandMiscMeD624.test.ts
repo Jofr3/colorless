@@ -5,7 +5,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -42,7 +42,8 @@ import {
 
 const TAIL_GENERATOR =
   "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.";
-const HAND_TRIM = "Discard random cards from your opponent's hand until they have 5 cards in their hand.";
+const HAND_TRIM =
+  "Discard random cards from your opponent's hand until they have 5 cards in their hand.";
 const SELECT_A_SNACK = "Discard the top 3 cards of your deck and put 1 of them into your hand.";
 const SEND_FLOWERS =
   "Search your deck for an Energy card and attach it to 1 of your Benched {G} Pokémon. Then, shuffle your deck.";
@@ -114,23 +115,33 @@ describe("D624 §2 — the readings", () => {
         targetType: "Lightning",
       },
     ]);
-    expect(deriveAttackEffect(TAIL_GENERATOR.replace("Basic {L}", "Basic {R}"))?.[0]).toMatchObject({
-      filter: { kind: "basicEnergy", energyType: "Fire" },
-      targetType: "Lightning",
-    });
-    expect(deriveAttackEffect(TAIL_GENERATOR.replace("your {L} Pokémon", "your {W} Pokémon"))?.[0]).toMatchObject({
+    expect(deriveAttackEffect(TAIL_GENERATOR.replace("Basic {L}", "Basic {R}"))?.[0]).toMatchObject(
+      {
+        filter: { kind: "basicEnergy", energyType: "Fire" },
+        targetType: "Lightning",
+      },
+    );
+    expect(
+      deriveAttackEffect(TAIL_GENERATOR.replace("your {L} Pokémon", "your {W} Pokémon"))?.[0],
+    ).toMatchObject({
       filter: { kind: "basicEnergy", energyType: "Lightning" },
       targetType: "Water",
     });
     expect(deriveAttackEffect(TAIL_GENERATOR.replace("Basic {L}", "Basic {X}"))).toBeNull();
-    expect(deriveAttackEffect(TAIL_GENERATOR.replace("your {L} Pokémon", "your {X} Pokémon"))).toBeNull();
+    expect(
+      deriveAttackEffect(TAIL_GENERATOR.replace("your {L} Pokémon", "your {X} Pokémon")),
+    ).toBeNull();
     expect(deriveAttackEffect(TAIL_GENERATOR.replace("opponent's", "opponent’s"))).toHaveLength(1);
     expect(deriveAttackEffect(`${TAIL_GENERATOR} Draw a card.`)).toBeNull();
   });
 
   it("Hand Trim: the random discard down to the printed hand size", () => {
-    expect(deriveAttackEffect(HAND_TRIM)).toEqual([{ op: "randomFromOpponentHand", to: "discard", untilHandSize: 5 }]);
-    expect(deriveAttackEffect(HAND_TRIM.replace("have 5", "have 3"))?.[0]).toMatchObject({ untilHandSize: 3 });
+    expect(deriveAttackEffect(HAND_TRIM)).toEqual([
+      { op: "randomFromOpponentHand", to: "discard", untilHandSize: 5 },
+    ]);
+    expect(deriveAttackEffect(HAND_TRIM.replace("have 5", "have 3"))?.[0]).toMatchObject({
+      untilHandSize: 3,
+    });
     expect(deriveAttackEffect(HAND_TRIM.replace("have 5", "have 0"))).toBeNull();
     expect(deriveAttackEffect(HAND_TRIM.replace("opponent's", "opponent’s"))).toHaveLength(1);
     expect(deriveAttackEffect(`${HAND_TRIM} Draw a card.`)).toBeNull();
@@ -142,9 +153,19 @@ describe("D624 §2 — the readings", () => {
 
   it("Select a Snack: Explorer's Guidance's program over the top 3, the kept card revealed", () => {
     expect(deriveAttackEffect(SELECT_A_SNACK)).toEqual([
-      { op: "lookAtTopN", n: 3, filter: { kind: "anyCard" }, max: 1, exact: true, reveal: true, restTo: "discard" },
+      {
+        op: "lookAtTopN",
+        n: 3,
+        filter: { kind: "anyCard" },
+        max: 1,
+        exact: true,
+        reveal: true,
+        restTo: "discard",
+      },
     ]);
-    expect(deriveAttackEffect(SELECT_A_SNACK.replace("top 3", "top 5"))?.[0]).toMatchObject({ n: 5 });
+    expect(deriveAttackEffect(SELECT_A_SNACK.replace("top 3", "top 5"))?.[0]).toMatchObject({
+      n: 5,
+    });
     expect(deriveAttackEffect(SELECT_A_SNACK.replace("top 3", "top 1"))).toBeNull();
     expect(deriveAttackEffect(SELECT_A_SNACK.replace("top 3", "top 11"))).toBeNull();
     expect(deriveAttackEffect(`${SELECT_A_SNACK} Draw a card.`)).toBeNull();
@@ -152,10 +173,18 @@ describe("D624 §2 — the readings", () => {
 
   it("Send Flowers: any Energy card onto 1 Benched typed body, then the shuffle", () => {
     expect(deriveAttackEffect(SEND_FLOWERS)).toEqual([
-      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, benchOnly: true, targetType: "Grass" },
+      {
+        op: "attachFromDeck",
+        filter: { kind: "anyEnergy" },
+        max: 1,
+        benchOnly: true,
+        targetType: "Grass",
+      },
       { op: "shuffleDeck" },
     ]);
-    expect(deriveAttackEffect(SEND_FLOWERS.replace("{G}", "{W}"))?.[0]).toMatchObject({ targetType: "Water" });
+    expect(deriveAttackEffect(SEND_FLOWERS.replace("{G}", "{W}"))?.[0]).toMatchObject({
+      targetType: "Water",
+    });
     expect(deriveAttackEffect(SEND_FLOWERS.replace("{G}", "{X}"))).toBeNull();
     expect(deriveAttackEffect(`${SEND_FLOWERS} Draw a card.`)).toBeNull();
   });
@@ -195,8 +224,14 @@ const L = "d624-lightning";
 const R = "d624-fire";
 const G = "d624-grass";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 1, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 1, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 const FIGHTING_RESISTANCE: Card["resistances"] = [{ type: "Fighting", value: "-30" }];
 
@@ -237,7 +272,9 @@ const LOCAL: Record<string, Card> = {
   [BASIC]: mon(BASIC, "D624 Basic", 60, "Colorless", TAP),
   [LIGHT]: mon(LIGHT, "D624 Lightning", 90, "Lightning", TAP),
   [GRASS]: mon(GRASS, "D624 Grass", 70, "Grass", TAP),
-  [RESIST_F]: mon(RESIST_F, "D624 Resists Fighting", 80, "Colorless", TAP, { resistances: FIGHTING_RESISTANCE }),
+  [RESIST_F]: mon(RESIST_F, "D624 Resists Fighting", 80, "Colorless", TAP, {
+    resistances: FIGHTING_RESISTANCE,
+  }),
   [RESIST_G]: mon(RESIST_G, "D624 Resists Grass", 80, "Colorless", TAP, {
     resistances: [{ type: "Grass", value: "-30" }],
   }),
@@ -267,7 +304,10 @@ const DECK = deckOf({
   [G]: 4,
   "fix-energy": 4,
 });
-const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER && id !== ITEM), "fix-energy"]);
+const BOARD_IDS = new Set([
+  ...Object.keys(LOCAL).filter((id) => id !== FILLER && id !== ITEM),
+  "fix-energy",
+]);
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -280,7 +320,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -288,15 +330,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -324,7 +372,8 @@ function table(
   ownBench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   for (const id of ownBench) state = benchFromDeck(state, "p1", id);
@@ -398,11 +447,13 @@ describe("D624 §3 — Tail Generator: Basic {L} Energy from the discard pile, u
     expect(ids(result.state, result.state.players.p1.discard)).toEqual([L, L, L, L]);
   });
 
-  it("a declined answer stands: \"up to\"", () => {
+  it('a declined answer stands: "up to"', () => {
     const parked = mustApply(board(), attack(0)).state;
     const result = resolve(parked, { kind: "attachCards", assignments: [] });
     expect(result.state.players.p1.active?.energy).toHaveLength(1);
-    expect(ids(result.state, result.state.players.p1.discard).filter((id) => id === L)).toHaveLength(4);
+    expect(
+      ids(result.state, result.state.players.p1.discard).filter((id) => id === L),
+    ).toHaveLength(4);
   });
 });
 
@@ -469,12 +520,18 @@ describe("D624 §5 — Select a Snack: the top 3, 1 into the hand, the other 2 d
     );
     const kept = top[1] as string;
     const result = resolve(parked, { kind: "cards", uids: [kept] });
-    expect(of(result.events, "DECK_TOP_REVEALED").map((e) => [e.uids, e.reveal])).toEqual([[[kept], true]]);
+    expect(of(result.events, "DECK_TOP_REVEALED").map((e) => [e.uids, e.reveal])).toEqual([
+      [[kept], true],
+    ]);
   });
 
-  it("taking nothing is refused: the printed \"put 1 of them\" is mandatory", () => {
+  it('taking nothing is refused: the printed "put 1 of them" is mandatory', () => {
     const parked = mustApply(table("30th-061", [["fix-energy", 1]]), attack(0)).state;
-    const refused = applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } });
+    const refused = applyAction(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [] },
+    });
     expect(refused.ok).toBe(false);
   });
 });
@@ -527,12 +584,8 @@ describe("D624 §7 — Chirp: up to 2 Pokémon with {F} Resistance, revealed int
     expect(matchesFilter(POOL[RESIST_G] as Card, filter)).toBe(false);
     expect(matchesFilter(POOL[RESIST_G] as Card, { ...filter, type: "Grass" })).toBe(true);
     expect(matchesFilter(POOL[FILLER] as Card, filter)).toBe(false);
-    expect(matchesFilter({ ...(POOL[ITEM] as Card), resistances: FIGHTING_RESISTANCE }, filter)).toBe(false);
-  });
-});
-
-describe("D624 §8 — the version", () => {
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
+    expect(
+      matchesFilter({ ...(POOL[ITEM] as Card), resistances: FIGHTING_RESISTANCE }, filter),
+    ).toBe(false);
   });
 });

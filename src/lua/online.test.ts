@@ -392,19 +392,15 @@ describe("Lua online adapter", () => {
     let current: User | null = null;
     const made: Made[] = [];
     const steps: string[] = [];
-    const online = new LuaOnline(
-      (s) => steps.push(s.split("\t")[1] ?? ""),
-      vi.fn(),
-      {
-        user: () => current,
-        client: (opts) => {
-          const fake = fakeLobbyChannel();
-          const client = new LobbyClient(opts, { channel: fake.channel });
-          made.push({ opts, client, ...fake });
-          return client;
-        },
+    const online = new LuaOnline((s) => steps.push(s.split("\t")[1] ?? ""), vi.fn(), {
+      user: () => current,
+      client: (opts) => {
+        const fake = fakeLobbyChannel();
+        const client = new LobbyClient(opts, { channel: fake.channel });
+        made.push({ opts, client, ...fake });
+        return client;
       },
-    );
+    });
     online.session("anonymous", "");
     await online.command("open");
     await online.command(`join\t${CODE}`);

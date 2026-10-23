@@ -389,9 +389,9 @@ describe("D315 §1 — the reader: ONE anchor, TWO captures, and the head it mus
     // `attachCards` map because Energy of one type are fungible — evolution cards
     // are not, so this sentence cannot collapse the same way and the two readings
     // must never meet.
-    expect(JANINE.startsWith("Choose up to 2 of your {D} Pokémon. For each of those Pokémon, ")).toBe(
-      true,
-    );
+    expect(
+      JANINE.startsWith("Choose up to 2 of your {D} Pokémon. For each of those Pokémon, "),
+    ).toBe(true);
     expect(EACH_CHOSEN.startsWith(SHARED_HEAD)).toBe(true);
     expect(JANINE.startsWith(SHARED_HEAD)).toBe(true);
     // 🛑 THE CONSEQUENT IS WHAT SEPARATES THEM, AND IT IS INSIDE THE ANCHOR — so no

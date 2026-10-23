@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -287,7 +283,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(byClause.size).toBe(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     // 🆕🆕🆕 D568 — the singleton band loses the two Tera clauses (one printing each), 5 -> 3; the three left are the Ancient/Future banners. (🆕🆕🆕 D569 (D539): ONE is left now — the two Future clauses resolve through literal rows over `banners.ts`; the Ancient "Unrelenting Onslaught" stays, on a seat-level attack record, not the banner.) (🆕🆕🆕 D579 (D539): ~~ONE~~ NONE — the Ancient clause (Koraidon `sv08-116`) resolves through a literal row; the band is EMPTY.)
     expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5 // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
-    expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(0);// 🆕🆕 D436 the 5-printing band EMPTIES with the declaration clause (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(0); // 🆕🆕 D436 the 5-printing band EMPTIES with the declaration clause (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     expect([...byClause.values()].filter((n) => n === 2)).toHaveLength(0);
   });
 });
@@ -308,9 +304,10 @@ describe("§2 — the SHAPE question, measured on the running code rather than a
     // rendering of the first. ⚠️ The equality member is shown round-tripping at a name
     // the table actually carries (`Mightyena`) — "Nidoking" has no whole-name row and
     // must NOT acquire one, which is the next assertion down.
-    expect(deriveAttackDamageBonus(`If ${conditionNote(SUBSTRING)}, this attack does 120 more damage.`)?.count).toEqual(
-      { kind: "boardCondition", cond: SUBSTRING },
-    );
+    expect(
+      deriveAttackDamageBonus(`If ${conditionNote(SUBSTRING)}, this attack does 120 more damage.`)
+        ?.count,
+    ).toEqual({ kind: "boardCondition", cond: SUBSTRING });
     const mightyena: BoardCondition = { kind: "yourBenchHasNamed", name: "Mightyena" };
     expect(
       deriveAttackDamageBonus(`If ${conditionNote(mightyena)}, this attack does 90 more damage.`)
@@ -507,16 +504,20 @@ describe("§4 — a LITERAL row, and the printed bytes it is keyed on", () => {
     expect(deriveAttackRequirement(TAKEN)).toBeNull();
     expect(deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does nothing.`)).toBeNull();
     // Lowercase `if` — the skeleton has no /i.
-    expect(deriveAttackDamageBonus(`if ${TAKEN_CLAUSE}, this attack does 120 more damage.`)).toBeNull();
+    expect(
+      deriveAttackDamageBonus(`if ${TAKEN_CLAUSE}, this attack does 120 more damage.`),
+    ).toBeNull();
     // No trailing period is not the whole sentence.
-    expect(deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does 120 more damage`)).toBeNull();
+    expect(
+      deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does 120 more damage`),
+    ).toBeNull();
     // Leading text pins `^`.
     expect(
-      deriveAttackDamageBonus(
-        `Flip a coin. If ${TAKEN_CLAUSE}, this attack does 120 more damage.`,
-      ),
+      deriveAttackDamageBonus(`Flip a coin. If ${TAKEN_CLAUSE}, this attack does 120 more damage.`),
     ).toBeNull();
     // A printed 0 adds nothing — the guard every arm in this family carries.
-    expect(deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does 0 more damage.`)).toBeNull();
+    expect(
+      deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does 0 more damage.`),
+    ).toBeNull();
   });
 });

@@ -73,7 +73,11 @@ describe("onPlayToBench — Flamigo's Insta-Flock (§9)", () => {
     let state = triggerBoard(SEED);
     state = handFromDeck(state, "p1", "sv02-170", 1);
     const uid = handUid(state, "p1", "sv02-170");
-    const { state: parked, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
+    const { state: parked, events } = mustApply(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid,
+    });
     // The bench play AND the trigger both landed in the one batch.
     expect(types(events)).toContain("POKEMON_BENCHED");
     expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Insta-Flock");
@@ -153,10 +157,20 @@ describe("onPlayToBench — Flamigo's Insta-Flock (§9)", () => {
       if (seat === undefined) throw new Error("drawExtra with every seat decided");
       state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
     }
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: "p1", uid: firstBasicInHand(state, "p1") }));
+    state = must(
+      applyAction(state, {
+        type: "setupPlaceActive",
+        seat: "p1",
+        uid: firstBasicInHand(state, "p1"),
+      }),
+    );
     state = handFromDeck(state, "p1", "sv02-170", 1);
     const uid = handUid(state, "p1", "sv02-170");
-    const { state: placed, events } = mustApply(state, { type: "setupPlaceBench", seat: "p1", uid });
+    const { state: placed, events } = mustApply(state, {
+      type: "setupPlaceBench",
+      seat: "p1",
+      uid,
+    });
     expect(types(events)).not.toContain("ABILITY_TRIGGERED");
     expect(placed.phase.kind).toBe("setup:place");
   });

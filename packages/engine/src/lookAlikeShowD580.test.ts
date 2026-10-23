@@ -7,7 +7,7 @@ import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { opponentSupporterOffer, resumeProgram } from "./interpreter";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
@@ -128,11 +128,19 @@ const SUPPORTERS: readonly (readonly [string, string])[] = [
   ["sv08-190", "Tyme"],
   ["sv06.5-064", "Xerosic's Machinations"],
 ];
-const SUPPORTER_ID: Record<string, string> = Object.fromEntries(SUPPORTERS.map(([id, name]) => [name, id]));
+const SUPPORTER_ID: Record<string, string> = Object.fromEntries(
+  SUPPORTERS.map(([id, name]) => [name, id]),
+);
 const sup = (name: string): string => SUPPORTER_ID[name] ?? "";
 
 const body = (id: string, extra: Partial<Card>): Card =>
-  battler(id, { name: id, hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }], ...extra });
+  battler(id, {
+    name: id,
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+    ...extra,
+  });
 
 const LOCAL_CARDS: Record<string, Card> = {
   [MR_MIME]: battler(MR_MIME, {
@@ -156,14 +164,26 @@ const LOCAL_CARDS: Record<string, Card> = {
   [SPECIAL]: specialEnergy(SPECIAL, "D580 Special Energy"),
   [DARK_E]: typedEnergy(DARK_E, "Darkness"),
   [L_E]: typedEnergy(L_E, "Lightning"),
-  [UNPROGRAMMED]: { ...trainerCard(UNPROGRAMMED, "Supporter", "(constructed, no program)"), name: "D580 Blank" },
-  [COMMUNITY_CENTER]: { ...trainerCard(COMMUNITY_CENTER, "Stadium", "Community Center"), name: "Community Center" },
+  [UNPROGRAMMED]: {
+    ...trainerCard(UNPROGRAMMED, "Supporter", "(constructed, no program)"),
+    name: "D580 Blank",
+  },
+  [COMMUNITY_CENTER]: {
+    ...trainerCard(COMMUNITY_CENTER, "Stadium", "Community Center"),
+    name: "Community Center",
+  },
   [EMMA]: {
-    ...trainerCard(EMMA, "Supporter", "Your opponent reveals their hand, and you draw a card for each Pokémon you find there."),
+    ...trainerCard(
+      EMMA,
+      "Supporter",
+      "Your opponent reveals their hand, and you draw a card for each Pokémon you find there.",
+    ),
     name: "Emma",
   },
   ...Object.fromEntries(
-    SUPPORTERS.map(([id, name]) => [id, { ...trainerCard(id, "Supporter", `(${name})`), name }] as const),
+    SUPPORTERS.map(
+      ([id, name]) => [id, { ...trainerCard(id, "Supporter", `(${name})`), name }] as const,
+    ),
   ),
 };
 
@@ -188,7 +208,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -197,7 +218,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -205,15 +228,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -260,7 +290,12 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const fresh = (id: string): string => {
     const m = mint(state, id);
@@ -284,15 +319,27 @@ function table(opts: {
 
 const MIME: Spot = { id: MR_MIME, energy: ["fix-energy"], damage: 30 };
 const look: GameAction = { type: "attack", seat: "p1", index: 0 };
-const use = (uid: string): GameAction => ({ type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [uid] } });
-const decline: GameAction = { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } };
+const use = (uid: string): GameAction => ({
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "cards", uids: [uid] },
+});
+const decline: GameAction = {
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "cards", uids: [] },
+};
 const types = (events: readonly GameEvent[]): string[] => events.map((e) => e.type);
-const turnPassed = (state: GameState): boolean => state.phase.kind === "turn:action" && state.phase.seat === "p2";
+const turnPassed = (state: GameState): boolean =>
+  state.phase.kind === "turn:action" && state.phase.seat === "p2";
 
 /** The populated board every rung starts from: p1's Mr. Mime (30 damage) with three Benched bodies and a
     4-card hand; p2's Active carries a Tool and a Special Energy, two Benched Basics (one with a Tool), and
     `p2Hand`. */
-function board(p2Hand: readonly string[], patch: { p1Hand?: readonly string[]; p2?: Spot } = {}): GameState {
+function board(
+  p2Hand: readonly string[],
+  patch: { p1Hand?: readonly string[]; p2?: Spot } = {},
+): GameState {
   return table({
     p1: MIME,
     p1Bench: [
@@ -308,7 +355,8 @@ function board(p2Hand: readonly string[], patch: { p1Hand?: readonly string[]; p
 }
 
 function prompt(state: GameState): EffectPrompt {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -321,17 +369,30 @@ function autoAnswer(p: EffectPrompt): EffectChoice {
     case "chooseCards":
       return { kind: "cards", uids: p.candidates.slice(0, Math.max(p.min, Math.min(1, p.max))) };
     case "choosePokemon":
-      return p.candidates[0] === undefined ? { kind: "pokemon" } : { kind: "pokemon", ref: p.candidates[0] };
+      return p.candidates[0] === undefined
+        ? { kind: "pokemon" }
+        : { kind: "pokemon", ref: p.candidates[0] };
     case "choosePokemonMulti":
-      return { kind: "pokemonMulti", refs: p.candidates.slice(0, Math.max(p.min, Math.min(1, p.max))) };
+      return {
+        kind: "pokemonMulti",
+        refs: p.candidates.slice(0, Math.max(p.min, Math.min(1, p.max))),
+      };
     case "moveEnergy": {
       const first = p.movable[0];
-      const dest = first === undefined ? undefined : p.destinations.find((d) => !sameRef(d, first.from));
-      return { kind: "moveEnergy", picks: first === undefined || dest === undefined ? [] : [{ uid: first.uid, dest }] };
+      const dest =
+        first === undefined ? undefined : p.destinations.find((d) => !sameRef(d, first.from));
+      return {
+        kind: "moveEnergy",
+        picks: first === undefined || dest === undefined ? [] : [{ uid: first.uid, dest }],
+      };
     }
     case "discardEnergy": {
       const scope = p.scope;
-      if (scope.kind === "total") return { kind: "discardEnergy", uids: p.discardable.slice(0, scope.count).map((d) => d.uid) };
+      if (scope.kind === "total")
+        return {
+          kind: "discardEnergy",
+          uids: p.discardable.slice(0, scope.count).map((d) => d.uid),
+        };
       if (scope.kind === "upTo") return { kind: "discardEnergy", uids: [] };
       const seen = new Set<string>();
       const uids: string[] = [];
@@ -349,7 +410,10 @@ function autoAnswer(p: EffectPrompt): EffectChoice {
     case "attachCards": {
       const [uid] = p.candidates;
       const [to] = p.targets;
-      return { kind: "attachCards", assignments: uid === undefined || to === undefined ? [] : [{ uid, to }] };
+      return {
+        kind: "attachCards",
+        assignments: uid === undefined || to === undefined ? [] : [{ uid, to }],
+      };
     }
     case "mayDraw":
       return { kind: "mayDraw", draw: true };
@@ -393,10 +457,6 @@ function render(events: GameEvent[], state: GameState): string[] {
 }
 
 describe("D580 Look-Alike Show §0 — the version, the registry row, the census claim", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-
   it("sv05-063 authors index 0 only: the reveal, then the NEW op; Eerie Wave (index 1) keeps deriving", () => {
     expect(programFor(MR_MIME)).toEqual({
       attack: { 0: [{ op: "revealOpponentHand" }, { op: "useOpponentSupporterEffect" }] },
@@ -418,7 +478,9 @@ describe("D580 Look-Alike Show §1 — the offer (R-LA2) and its collapse", () =
     const p = prompt(declared);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(p).toMatchObject({ min: 0, max: 1, dest: "use" });
-    expect(p.note).toBe("You may use the effect of a Supporter card you find there as the effect of this attack.");
+    expect(p.note).toBe(
+      "You may use the effect of a Supporter card you find there as the effect of this attack.",
+    );
     expect(p.candidates).toEqual([hand[1], hand[4]]);
   });
 
@@ -450,7 +512,9 @@ describe("D580 Look-Alike Show §1 — the offer (R-LA2) and its collapse", () =
   });
 
   it("the hand COST is the ATTACKER's: Kofu (2 cards to the deck bottom) refused on a 1-card hand, offered on 2", () => {
-    expect(opponentSupporterOffer(board([sup("Kofu")], { p1Hand: [FILLER] }), { seat: "p1" })).toEqual([]);
+    expect(
+      opponentSupporterOffer(board([sup("Kofu")], { p1Hand: [FILLER] }), { seat: "p1" }),
+    ).toEqual([]);
     const two = board([sup("Kofu")], { p1Hand: [FILLER, FILLER] });
     expect(opponentSupporterOffer(two, { seat: "p1" })).toEqual(two.players.p2.hand);
   });
@@ -470,11 +534,19 @@ describe("D580 Look-Alike Show §2 — a pick: the effect runs for the ATTACKER,
     expect(declared.state.allowances.supporterPlayed).toBe(false);
     const before = declared.state.players.p1.hand.length;
     const picked = run(declared.state, use(cheren));
-    expect(picked.events).toContainEqual({ type: "SUPPORTER_EFFECT_USED", seat: "p1", uid: cheren });
+    expect(picked.events).toContainEqual({
+      type: "SUPPORTER_EFFECT_USED",
+      seat: "p1",
+      uid: cheren,
+    });
     expect(types(picked.events)).not.toContain("TRAINER_PLAYED");
-    expect(render(picked.events, picked.state)).toContain("p1: Mr. Mime's Look-Alike Show used the effect of Cheren");
+    expect(render(picked.events, picked.state)).toContain(
+      "p1: Mr. Mime's Look-Alike Show used the effect of Cheren",
+    );
     // p1's turn is over, so read the draw off the events: 3 cards to p1, none to p2.
-    const draws = picked.events.filter((e): e is Extract<GameEvent, { type: "CARDS_DRAWN" }> => e.type === "CARDS_DRAWN");
+    const draws = picked.events.filter(
+      (e): e is Extract<GameEvent, { type: "CARDS_DRAWN" }> => e.type === "CARDS_DRAWN",
+    );
     expect(draws.filter((d) => d.seat === "p1").reduce((n, d) => n + d.uids.length, 0)).toBe(3);
     expect(picked.state.players.p1.hand.length).toBe(before + 3);
     expect(picked.state.players.p2.hand).toContain(cheren);
@@ -535,7 +607,9 @@ describe("D580 Look-Alike Show §3 — the decline, the empty hand, no Supporter
   it("an EMPTY opposing hand still reveals (zero uids) and asks nothing", () => {
     const state = board([]);
     const r = run(state, look);
-    expect(r.events).toContainEqual(expect.objectContaining({ type: "HAND_REVEALED", seat: "p2", uids: [] }));
+    expect(r.events).toContainEqual(
+      expect.objectContaining({ type: "HAND_REVEALED", seat: "p2", uids: [] }),
+    );
     expect(types(r.events)).not.toContain("SUPPORTER_EFFECT_USED");
     expect(turnPassed(r.state)).toBe(true);
   });
@@ -552,7 +626,12 @@ describe("D580 Look-Alike Show §4 — R-LA4: an ATTACK effect for the shields",
       [UNAWARE, false],
       [UNNERVE, true],
     ] as const) {
-      const state = table({ p1: MIME, p1Hand: [FILLER], p2: { id: shield }, p2Hand: [sup("Lisia's Appeal")] });
+      const state = table({
+        p1: MIME,
+        p1Hand: [FILLER],
+        p2: { id: shield },
+        p2Hand: [sup("Lisia's Appeal")],
+      });
       const declared = run(state, look).state;
       const picked = run(declared, use(declared.players.p2.hand[0] ?? ""));
       const done = settle(picked.state);
@@ -566,7 +645,10 @@ describe("D580 Look-Alike Show §5 — the population pins (R-LA3, R-LA6)", () =
   it("R-LA3: no Supporter program contains a copy op (no `useOpponentSupporterEffect` anywhere in the 51)", () => {
     for (const [id] of SUPPORTERS) {
       const ops = walkProgram(programFor(id)?.trainer ?? []);
-      expect(ops.some((op: EffectOp) => op.op === "useOpponentSupporterEffect"), id).toBe(false);
+      expect(
+        ops.some((op: EffectOp) => op.op === "useOpponentSupporterEffect"),
+        id,
+      ).toBe(false);
     }
   });
 
@@ -579,7 +661,10 @@ describe("D580 Look-Alike Show §5 — the population pins (R-LA3, R-LA6)", () =
       return p?.supporterKoPrizeBonus !== undefined || p?.trainerFirstTurnExempt !== undefined;
     }).map(([, name]) => name);
     expect(carriers).toEqual(["Briar", "Carmine", "Team Rocket's Proton"]);
-    expect(Object.keys(supporterEffectOf(sup("Briar")) ?? {}).sort()).toEqual(["ops", "playableIf"]);
+    expect(Object.keys(supporterEffectOf(sup("Briar")) ?? {}).sort()).toEqual([
+      "ops",
+      "playableIf",
+    ]);
   });
 
   it("R-LA2a's population: the Supporter play conditions are four, and `yourHandExactly` (Cassiopeia) is the ONLY hand-relative kind — none nests", () => {
@@ -593,7 +678,10 @@ describe("D580 Look-Alike Show §5 — the population pins (R-LA3, R-LA6)", () =
       ["Hassel", "yourPokemonKoedOnOpponentsLastTurn"],
       ["Team Rocket's Archer", "yourPokemonKoedOnOpponentsLastTurn"],
     ]);
-    expect(programFor(sup("Cassiopeia"))?.trainerPlayableIf).toEqual({ kind: "yourHandExactly", count: 1 });
+    expect(programFor(sup("Cassiopeia"))?.trainerPlayableIf).toEqual({
+      kind: "yourHandExactly",
+      count: 1,
+    });
   });
 
   it("every one of the 51 names carries a registry `trainer` program", () => {
@@ -616,7 +704,10 @@ function unlocked(name: string, state: GameState): GameState {
       return {
         ...state,
         lastKoTurn: { ...state.lastKoTurn, p1: state.turn - 1 },
-        lastKoMarks: { ...state.lastKoMarks, p1: [{ uid: "gone", name: "Team Rocket's Rattata", byAttack: true }] },
+        lastKoMarks: {
+          ...state.lastKoMarks,
+          p1: [{ uid: "gone", name: "Team Rocket's Rattata", byAttack: true }],
+        },
       };
     default:
       return state;
@@ -624,7 +715,12 @@ function unlocked(name: string, state: GameState): GameState {
 }
 
 /** The effects that may move cards of p2's HAND themselves, so the copied card may leave it. */
-const MOVES_P2_HAND = new Set(["Harlequin", "Lucian", "Team Rocket's Archer", "Xerosic's Machinations"]);
+const MOVES_P2_HAND = new Set([
+  "Harlequin",
+  "Lucian",
+  "Team Rocket's Archer",
+  "Xerosic's Machinations",
+]);
 
 describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter names, through the attack", () => {
   const parked = new Map<string, string[]>();
@@ -638,15 +734,28 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
       const card = state.players.p2.hand[0] ?? "";
       const declared = run(state, look);
       const p = prompt(declared.state);
-      expect(p.kind === "chooseCards" && p.dest === "use" && p.candidates.includes(card), name).toBe(true);
+      expect(
+        p.kind === "chooseCards" && p.dest === "use" && p.candidates.includes(card),
+        name,
+      ).toBe(true);
       const picked = run(declared.state, use(card));
-      expect(picked.events, name).toContainEqual({ type: "SUPPORTER_EFFECT_USED", seat: "p1", uid: card });
+      expect(picked.events, name).toContainEqual({
+        type: "SUPPORTER_EFFECT_USED",
+        seat: "p1",
+        uid: card,
+      });
       const done = settle(picked.state);
       parked.set(name, done.parks);
       const all = [...declared.events, ...picked.events, ...done.events];
-      expect(done.state.phase.kind === "turn:action" || done.state.phase.kind === "gameOver", name).toBe(true);
+      expect(
+        done.state.phase.kind === "turn:action" || done.state.phase.kind === "gameOver",
+        name,
+      ).toBe(true);
       if (done.state.phase.kind === "turn:action") expect(done.state.phase.seat, name).toBe("p2");
-      expect(types(all).filter((t) => t === "TRAINER_PLAYED"), name).toEqual([]);
+      expect(
+        types(all).filter((t) => t === "TRAINER_PLAYED"),
+        name,
+      ).toEqual([]);
       // The COPY never moves the card (R-LA1); only an effect that itself moves p2's hand may.
       if (!MOVES_P2_HAND.has(name)) {
         expect(done.state.players.p2.hand, name).toContain(card);
@@ -725,7 +834,9 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
     };
     // Amarys: draw 4 (4 + 4 = 8 ≥ 5), so the attacker's hand is discarded at the end of THIS turn.
     const amarys = through("Amarys");
-    expect(amarys.events).toContainEqual(expect.objectContaining({ type: "HAND_DISCARDED", seat: "p1" }));
+    expect(amarys.events).toContainEqual(
+      expect.objectContaining({ type: "HAND_DISCARDED", seat: "p1" }),
+    );
     expect(amarys.state.players.p1.hand).toEqual([]);
     // Jasmine's Gaze: the attacker's side takes 30 less during the opponent's next turn.
     // 🆕🆕🆕 D630 (D539): `not.toBeNull()` is vacuous on the D630 LIST — asked as one live entry instead.
@@ -741,8 +852,14 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
     const wire = redactGame(parked, "p1").phase;
     if (wire.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(() => redactedEffectPromptSchema.parse(wire.prompt)).not.toThrow();
-    expect(parked.phase.kind === "effect:choose" && (parked.phase.answerer ?? parked.phase.seat)).toBe("p1");
-    const theirs = applyAction(parked, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } });
+    expect(
+      parked.phase.kind === "effect:choose" && (parked.phase.answerer ?? parked.phase.seat),
+    ).toBe("p1");
+    const theirs = applyAction(parked, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: [] },
+    });
     expect(theirs.ok).toBe(false);
   });
 
@@ -761,7 +878,12 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
     const cont = { ...phase.cont, pendingOp: { op: "unknownTo0463" } as unknown as EffectOp };
     const events: GameEvent[] = [];
     const rolled = settleProgram(
-      resumeProgram(parked, cont, { kind: "cards", uids: [parked.players.p2.hand[0] ?? ""] }, events),
+      resumeProgram(
+        parked,
+        cont,
+        { kind: "cards", uids: [parked.players.p2.hand[0] ?? ""] },
+        events,
+      ),
       phase.seat,
       events,
       { resumeTail: phase.resumeTail === true, endsTurn: phase.endsTurn === true },
@@ -787,7 +909,9 @@ describe("D580 Look-Alike Show §8 — 🆕🆕🆕 D599: an `me` Supporter thro
     expect(picked.events.filter((e) => e.type === "HAND_REVEALED")).toEqual([
       expect.objectContaining({ seat: "p2", uids: declared.players.p2.hand }),
     ]);
-    const draws = picked.events.filter((e): e is Extract<GameEvent, { type: "CARDS_DRAWN" }> => e.type === "CARDS_DRAWN");
+    const draws = picked.events.filter(
+      (e): e is Extract<GameEvent, { type: "CARDS_DRAWN" }> => e.type === "CARDS_DRAWN",
+    );
     expect(draws.filter((d) => d.seat === "p1").reduce((n, d) => n + d.uids.length, 0)).toBe(2);
     expect(picked.state.players.p1.hand.length).toBe(before + 2);
     expect(picked.state.players.p2.hand).toContain(emma);

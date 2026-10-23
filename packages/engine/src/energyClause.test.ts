@@ -583,7 +583,10 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
       deriveAttackDamageBonus(
         "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
       )?.count,
-    ).toEqual({ kind: "boardCondition", cond: { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" } });
+    ).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" },
+    });
     expect(
       deriveAttackDamageBonus(
         "If 1 of your other Future Pokémon used an attack during your last turn, this attack does 150 more damage.",

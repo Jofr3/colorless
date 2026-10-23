@@ -82,7 +82,9 @@ export function numberKey(number: string): string {
 /** A tcgdex card id is "<set>-<number>"; set ids can carry hyphens ("30th-c"). */
 export function splitCardId(cardId: string): { set: string; number: string } {
   const at = cardId.lastIndexOf("-");
-  return at < 0 ? { set: cardId, number: "" } : { set: cardId.slice(0, at), number: cardId.slice(at + 1) };
+  return at < 0
+    ? { set: cardId, number: "" }
+    : { set: cardId.slice(0, at), number: cardId.slice(at + 1) };
 }
 
 /** Pick the print a line asked for among a name's reprints: the one in the

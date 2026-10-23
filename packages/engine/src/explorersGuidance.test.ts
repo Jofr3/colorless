@@ -284,7 +284,9 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
     // would tell a player "put up to 2 cards into your hand" over a sentence that
     // gives them no choice about the 2. A FIELD THAT FEEDS BOTH A PREDICATE AND A
     // STRING OWES BOTH ARMS.
-    expect(prompt.note).toBe("Look at the top 6 cards of your deck and put 2 cards into your hand.");
+    expect(prompt.note).toBe(
+      "Look at the top 6 cards of your deck and put 2 cards into your hand.",
+    );
     expect(prompt.note).not.toContain("up to");
   });
 
@@ -294,7 +296,11 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
     // The decline every OTHER row on this op permits, refused here — and this is the
     // half of `exact` that a crafted frame reaches, so it has to be checked at the
     // validator and not only in the dialog.
-    expectErr(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }, "BAD_EFFECT_CHOICE");
+    expectErr(
+      parked,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } },
+      "BAD_EFFECT_CHOICE",
+    );
     expectErr(
       parked,
       {

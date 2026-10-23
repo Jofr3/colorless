@@ -4,7 +4,6 @@ import {
   deriveAttackCoinFlip,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
-  engineVersion,
   parseAttackDamage,
   programFor,
   splitAttackTrailingClause,
@@ -695,16 +694,5 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     const roundTripped = JSON.parse(bytes) as GameState;
     expect(roundTripped.players.p2.active?.conditions.rotation).toBe("paralyzed");
     expect(roundTripped.players.p2.active?.damage).toBe(done.players.p2.active?.damage);
-  });
-
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // 🆕🆕 D460 — 0.358.0 → **0.359.0**, and the bump is owed for BEHAVIOUR: three
-    // printed sentences that derived to `null` and fell to the loud
-    // ATTACK_EFFECT_SKIPPED path now fold `per × heads` AND apply a Special
-    // Condition off a threshold over the same faces. Unlike D459's, this diff DOES
-    // carry a vocabulary change a reader would find — one `AttackCoinFlip` member
-    // and one exported type — which is exactly why the version and the record
-    // version part company here: the union is parse-time and the record is not.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

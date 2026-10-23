@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { disabledAbilityUids } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -62,17 +62,29 @@ const TEAL_DANCE_TEXT =
 
 const LOCAL_CARDS: Record<string, Card> = {
   ...Object.fromEntries(
-    BROCK.map((id) => [id, { ...trainerCard(id, "Supporter", BROCK_TEXT), name: "Brock's Scouting" }]),
+    BROCK.map((id) => [
+      id,
+      { ...trainerCard(id, "Supporter", BROCK_TEXT), name: "Brock's Scouting" },
+    ]),
   ),
-  ...Object.fromEntries(OGRE.map((id) => [id, { ...trainerCard(id, "Item", OGRE_TEXT), name: "Ogre's Mask" }])),
-  [WATCHTOWER]: { ...trainerCard(WATCHTOWER, "Stadium", WATCHTOWER_TEXT), name: "Team Rocket's Watchtower" },
+  ...Object.fromEntries(
+    OGRE.map((id) => [id, { ...trainerCard(id, "Item", OGRE_TEXT), name: "Ogre's Mask" }]),
+  ),
+  [WATCHTOWER]: {
+    ...trainerCard(WATCHTOWER, "Stadium", WATCHTOWER_TEXT),
+    name: "Team Rocket's Watchtower",
+  },
   [TEAL_EX]: battler(TEAL_EX, {
     name: "Teal Mask Ogerpon ex",
     types: ["Grass"],
     hp: 210,
     abilities: [{ type: "Ability", name: "Teal Dance", effect: TEAL_DANCE_TEXT }],
   }),
-  [HEARTH_EX]: battler(HEARTH_EX, { name: "Hearthflame Mask Ogerpon ex", types: ["Fire"], hp: 210 }),
+  [HEARTH_EX]: battler(HEARTH_EX, {
+    name: "Hearthflame Mask Ogerpon ex",
+    types: ["Fire"],
+    hp: 210,
+  }),
   [TEAL_PLAIN]: battler(TEAL_PLAIN, { name: "Teal Mask Ogerpon", types: ["Grass"], hp: 110 }),
   [TINY_EX]: battler(TINY_EX, { name: "Tiny Mask Ogerpon ex", types: ["Grass"], hp: 100 }),
   [DUDUNSPARCE]: battler(DUDUNSPARCE, {
@@ -102,7 +114,13 @@ const LOCAL_CARDS: Record<string, Card> = {
     abilities: [{ type: "Ability", name: "Sudden Shearing", effect: "…" }],
   }),
   [BASIC]: battler(BASIC, { name: "D566 Basic", types: ["Water"], hp: 60 }),
-  [EVO]: battler(EVO, { name: "D566 Evolution", stage: "Stage1", evolveFrom: "D566 Basic", types: ["Water"], hp: 90 }),
+  [EVO]: battler(EVO, {
+    name: "D566 Evolution",
+    stage: "Stage1",
+    evolveFrom: "D566 Basic",
+    types: ["Water"],
+    hp: 90,
+  }),
   [FILLER]: battler(FILLER, {
     name: "D566 Filler",
     hp: 900,
@@ -144,7 +162,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -159,7 +178,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -167,11 +188,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -231,12 +255,18 @@ function unprize(state: GameState, seat: Seat, id: string): GameState {
     Pokémon search offers exactly the kept uids. */
 function pokemonOnly(state: GameState, keep: readonly string[]): GameState {
   const side = state.players.p1;
-  const gone = side.deck.filter((u) => POOL[state.cardIdByUid[u] ?? ""]?.category === "Pokemon" && !keep.includes(u));
+  const gone = side.deck.filter(
+    (u) => POOL[state.cardIdByUid[u] ?? ""]?.category === "Pokemon" && !keep.includes(u),
+  );
   return {
     ...state,
     players: {
       ...state.players,
-      p1: { ...side, deck: side.deck.filter((u) => !gone.includes(u)), discard: [...side.discard, ...gone] },
+      p1: {
+        ...side,
+        deck: side.deck.filter((u) => !gone.includes(u)),
+        discard: [...side.discard, ...gone],
+      },
     },
   };
 }
@@ -250,7 +280,11 @@ function toDiscard(state: GameState, seat: Seat, id: string): GameState {
     ...next,
     players: {
       ...next.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), discard: [...side.discard, uid] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        discard: [...side.discard, uid],
+      },
     },
   };
 }
@@ -264,7 +298,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -274,12 +313,21 @@ function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon
 }
 
 /** TEST SURGERY — attach a deck copy of `id` to the body, as Energy or as a Tool. */
-function attach(state: GameState, seat: Seat, spot: Spot, id: string, as: "energy" | "tools" = "energy"): GameState {
+function attach(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  id: string,
+  as: "energy" | "tools" = "energy",
+): GameState {
   const next = ensureInDeck(state, seat, id);
   const side = next.players[seat];
   const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id}`);
-  const moved = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+  const moved = {
+    ...next,
+    players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+  };
   return withBody(moved, seat, spot, (p) => ({ ...p, [as]: [...p[as], uid] }));
 }
 
@@ -293,16 +341,23 @@ function table(active: string = FILLER, bench: readonly string[] = [], seed = 56
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const topOf = (p: InPlayPokemon) => p.stack[p.stack.length - 1];
 
 function play(state: GameState, id: string): { state: GameState; events: GameEvent[] } {
-  const before = setHand(state, "p1", [...idsOf(state, state.players.p1.hand).filter((x): x is string => x !== undefined), id]);
+  const before = setHand(state, "p1", [
+    ...idsOf(state, state.players.p1.hand).filter((x): x is string => x !== undefined),
+    id,
+  ]);
   const uid = before.players.p1.hand.find((u) => before.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id} in hand`);
   return run(before, { type: "playTrainer", seat: "p1", uid });
@@ -310,11 +365,16 @@ function play(state: GameState, id: string): { state: GameState; events: GameEve
 
 function playRejected(state: GameState, id: string): string {
   const before = setHand(state, "p1", [id]);
-  return rejected(before, { type: "playTrainer", seat: "p1", uid: before.players.p1.hand[0] as string });
+  return rejected(before, {
+    type: "playTrainer",
+    seat: "p1",
+    uid: before.players.p1.hand[0] as string,
+  });
 }
 
 function chooseCardsPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
   return prompt;
@@ -324,7 +384,11 @@ const cards = (uids: readonly string[]): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [...uids] } }) as GameAction;
 
 const pickOwn = (spot: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
-  ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: { seat: "p1", spot } } }) as GameAction;
+  ({
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref: { seat: "p1", spot } },
+  }) as GameAction;
 
 function logText(state: GameState, events: readonly GameEvent[]): string[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: formatElapsed(0) };
@@ -357,18 +421,19 @@ describe("§1 — the prints and the registry rows", () => {
     const first = programFor(OGRE[0]);
     expect(first).toEqual({
       trainer: [
-        { op: "switchWithDiscardNamed", filter: { kind: "pokemonNameContaining", fragment: "Ogerpon", suffix: "ex" } },
+        {
+          op: "switchWithDiscardNamed",
+          filter: { kind: "pokemonNameContaining", fragment: "Ogerpon", suffix: "ex" },
+        },
       ],
     });
     expect(programFor(OGRE[1])).toBe(first);
   });
 
   it("Team Rocket's Watchtower: a `stadium.disableAbilities` over {C} targets, both sides, and nothing else", () => {
-    expect(programFor(WATCHTOWER)).toEqual({ stadium: { disableAbilities: { side: "both", targetType: "Colorless" } } });
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
+    expect(programFor(WATCHTOWER)).toEqual({
+      stadium: { disableAbilities: { side: "both", targetType: "Colorless" } },
+    });
   });
 });
 
@@ -398,7 +463,9 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
       [new Set(basics), 2],
       [new Set(evos), 1],
     ]);
-    expect(prompt.note).toBe("Search your deck for up to 2 Basic Pokémon or 1 Evolution Pokémon into your hand.");
+    expect(prompt.note).toBe(
+      "Search your deck for up to 2 Basic Pokémon or 1 Evolution Pokémon into your hand.",
+    );
   });
 
   it("🛑 KEY RUNG: 1 Basic + 1 Evolution is REFUSED — the conjunctive caps [{Basic,2},{Evo,1}] under max 2 would pass it", () => {
@@ -409,10 +476,14 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
     const prompt = chooseCardsPrompt(state);
     const conjunctiveOk =
       mixed.length <= prompt.max &&
-      (prompt.capsAnyOf ?? []).every((entry) => mixed.filter((u) => entry.uids.includes(u)).length <= entry.max);
+      (prompt.capsAnyOf ?? []).every(
+        (entry) => mixed.filter((u) => entry.uids.includes(u)).length <= entry.max,
+      );
     expect(conjunctiveOk).toBe(true);
     expect(rejected(state, cards(mixed))).toBe("BAD_EFFECT_CHOICE");
-    expect(rejected(state, cards([evos[0] as string, basics[0] as string]))).toBe("BAD_EFFECT_CHOICE");
+    expect(rejected(state, cards([evos[0] as string, basics[0] as string]))).toBe(
+      "BAD_EFFECT_CHOICE",
+    );
   });
 
   it("two Basics are taken, revealed, and the deck is shuffled after", () => {
@@ -449,14 +520,18 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
       throw new Error("expected a chooseCards park on the wire");
     }
     const engine = chooseCardsPrompt(state).capsAnyOf;
-    expect(view.phase.prompt.capsAnyOf).toEqual(engine?.map((entry) => ({ uids: [...entry.uids], max: entry.max })));
+    expect(view.phase.prompt.capsAnyOf).toEqual(
+      engine?.map((entry) => ({ uids: [...entry.uids], max: entry.max })),
+    );
     expect(view.phase.prompt.capsAnyOf?.[0]?.uids).not.toBe(engine?.[0]?.uids);
   });
 
   it("🛑 the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and the refusal survives it", () => {
     const { state, basics, evos } = scouting();
     const revived = JSON.parse(JSON.stringify(state)) as GameState;
-    expect(rejected(revived, cards([basics[0] as string, evos[0] as string]))).toBe("BAD_EFFECT_CHOICE");
+    expect(rejected(revived, cards([basics[0] as string, evos[0] as string]))).toBe(
+      "BAD_EFFECT_CHOICE",
+    );
     expect(run(revived, cards([evos[0] as string])).state.players.p1.hand).toContain(evos[0]);
   });
 
@@ -473,7 +548,11 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
 describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
   /** p1: Teal Mask Ogerpon ex Active (damaged, Burned, one Energy, one Tool), a Hearthflame
       Mask Ogerpon ex benched, and the given discard. */
-  function masked(discard: readonly string[], bench: readonly string[] = [HEARTH_EX], seed = 5664): GameState {
+  function masked(
+    discard: readonly string[],
+    bench: readonly string[] = [HEARTH_EX],
+    seed = 5664,
+  ): GameState {
     let state = table(TEAL_EX, bench, seed);
     state = attach(attach(state, "p1", "active", GRASS), "p1", "active", TOOL, "tools");
     state = withBody(state, "p1", "active", (p) => ({
@@ -486,7 +565,7 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     return state;
   }
 
-  it("🛑 two bodies qualify and two DIFFERENT ex in the pile: TWO parks — the body, then the card (`dest \"swap\"`, mandatory)", () => {
+  it('🛑 two bodies qualify and two DIFFERENT ex in the pile: TWO parks — the body, then the card (`dest "swap"`, mandatory)', () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
     const first = play(state, OGRE[0]).state;
     if (first.phase.kind !== "effect:choose" || first.phase.prompt.kind !== "choosePokemon") {
@@ -501,7 +580,9 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     );
     const second = run(first, pickOwn({ spot: "active" })).state;
     const prompt = chooseCardsPrompt(second);
-    expect(prompt.note).toBe('Switch in which card from your discard pile (a Pokémon ex that has "Ogerpon" in its name)?');
+    expect(prompt.note).toBe(
+      'Switch in which card from your discard pile (a Pokémon ex that has "Ogerpon" in its name)?',
+    );
     expect(prompt.dest).toBe("swap");
     expect([prompt.min, prompt.max]).toEqual([1, 1]);
     expect(idsOf(second, prompt.candidates).sort()).toEqual([HEARTH_EX, TEAL_EX].sort());
@@ -513,7 +594,9 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     const before = bodyAt(state, "p1", "active");
     const oldTop = topOf(before);
     const second = run(play(state, OGRE[0]).state, pickOwn({ spot: "active" })).state;
-    const incoming = chooseCardsPrompt(second).candidates.find((u) => second.cardIdByUid[u] === HEARTH_EX) as string;
+    const incoming = chooseCardsPrompt(second).candidates.find(
+      (u) => second.cardIdByUid[u] === HEARTH_EX,
+    ) as string;
     const { state: after, events } = run(second, cards([incoming]));
     const body = bodyAt(after, "p1", "active");
     expect(topOf(body)).toBe(incoming);
@@ -546,7 +629,9 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
   it("two copies of ONE card in the pile are interchangeable: the card question is forced (D42's collapse), no park", () => {
     let state = masked([HEARTH_EX], []);
     state = toDiscard(ensureInDeck(state, "p1", HEARTH_EX), "p1", HEARTH_EX);
-    expect(state.players.p1.discard.filter((u) => state.cardIdByUid[u] === HEARTH_EX)).toHaveLength(2);
+    expect(state.players.p1.discard.filter((u) => state.cardIdByUid[u] === HEARTH_EX)).toHaveLength(
+      2,
+    );
     const { state: after, events } = play(state, OGRE[0]);
     expect(after.phase.kind).toBe("turn:action");
     expect(all(events, "POKEMON_SWAPPED_FROM_DISCARD")).toHaveLength(1);
@@ -555,7 +640,9 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
   it("the BENCH body answered: only it changes, and the Active keeps its card", () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
     const second = run(play(state, OGRE[0]).state, pickOwn({ spot: "bench", index: 0 })).state;
-    const incoming = chooseCardsPrompt(second).candidates.find((u) => second.cardIdByUid[u] === TEAL_EX) as string;
+    const incoming = chooseCardsPrompt(second).candidates.find(
+      (u) => second.cardIdByUid[u] === TEAL_EX,
+    ) as string;
     const after = run(second, cards([incoming])).state;
     expect(topOf(bodyAt(after, "p1", 0))).toBe(incoming);
     expect(idOf(after, topOf(bodyAt(after, "p1", "active")))).toBe(TEAL_EX);
@@ -576,7 +663,11 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
 
   it("…and on a mixed board the plain Ogerpon is simply not OFFERED, on either side", () => {
     let state = table(TEAL_EX, [TEAL_PLAIN, HEARTH_EX], 5667);
-    state = toDiscard(toDiscard(toDiscard(state, "p1", TEAL_PLAIN), "p1", HEARTH_EX), "p1", TEAL_EX);
+    state = toDiscard(
+      toDiscard(toDiscard(state, "p1", TEAL_PLAIN), "p1", HEARTH_EX),
+      "p1",
+      TEAL_EX,
+    );
     const first = play(state, OGRE[0]).state;
     if (first.phase.kind !== "effect:choose" || first.phase.prompt.kind !== "choosePokemon") {
       throw new Error("expected the body pick");
@@ -591,7 +682,9 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
 
   it("…and with no Ogerpon ex in the pile at all, or none in play, the Item is refused", () => {
     expect(playRejected(table(TEAL_EX, [], 5668), OGRE[0])).toBe("NO_LEGAL_TARGET");
-    expect(playRejected(toDiscard(table(FILLER, [], 5669), "p1", TEAL_EX), OGRE[0])).toBe("NO_LEGAL_TARGET");
+    expect(playRejected(toDiscard(table(FILLER, [], 5669), "p1", TEAL_EX), OGRE[0])).toBe(
+      "NO_LEGAL_TARGET",
+    );
   });
 
   it("🛑 MID-TURN KO: the new top's HP (100) is at or below the carried damage (100) → swept at once, and the Prize is the OPPONENT's", () => {
@@ -605,7 +698,9 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     expect(after.players.p1.bench).toHaveLength(0);
     // The KO'd seat's opponent takes the Prize (p2 parks or takes it).
     expect(events.some((e) => e.type === "PRIZES_OWED" || e.type === "PRIZES_TAKEN")).toBe(true);
-    const prizeSeat = events.find((e) => e.type === "PRIZES_OWED" || e.type === "PRIZES_TAKEN") as { seat: Seat };
+    const prizeSeat = events.find((e) => e.type === "PRIZES_OWED" || e.type === "PRIZES_TAKEN") as {
+      seat: Seat;
+    };
     expect(prizeSeat.seat).toBe("p2");
   });
 
@@ -622,23 +717,35 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     let state = table(TEAL_EX, [], 5672);
     state = toDiscard(state, "p1", TEAL_EX);
     state = setHand(state, "p1", [GRASS, GRASS]);
-    const dance: GameAction = { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Teal Dance" };
+    const dance: GameAction = {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Teal Dance",
+    };
     const danced = run(state, dance).state;
     const spent = danced.phase.kind === "effect:choose" ? danced : danced;
     expect(rejected(spent, dance)).toBe("ABILITY_ALREADY_USED");
     const swapped = play(spent, OGRE[0]).state;
     expect(swapped.phase.kind).toBe("turn:action");
     const again = run(swapped, dance);
-    expect(all(again.events, "ENERGY_ATTACHED").length + all(again.events, "CARDS_DRAWN").length).toBeGreaterThan(0);
+    expect(
+      all(again.events, "ENERGY_ATTACHED").length + all(again.events, "CARDS_DRAWN").length,
+    ).toBeGreaterThan(0);
   });
 
   it("the first park round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and resumes into question two", () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
     const first = JSON.parse(JSON.stringify(play(state, OGRE[0]).state)) as GameState;
-    const second = JSON.parse(JSON.stringify(run(first, pickOwn({ spot: "bench", index: 0 })).state)) as GameState;
+    const second = JSON.parse(
+      JSON.stringify(run(first, pickOwn({ spot: "bench", index: 0 })).state),
+    ) as GameState;
     expect(chooseCardsPrompt(second).dest).toBe("swap");
     if (second.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(second.phase.cont.pendingOp).toMatchObject({ op: "switchWithDiscardNamed", bodyUid: topOf(bodyAt(state, "p1", 0)) });
+    expect(second.phase.cont.pendingOp).toMatchObject({
+      op: "switchWithDiscardNamed",
+      bodyUid: topOf(bodyAt(state, "p1", 0)),
+    });
   });
 });
 
@@ -655,7 +762,8 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
     return play(state, WATCHTOWER).state;
   }
 
-  const topUidAt = (state: GameState, seat: Seat, spot: Spot) => topOf(bodyAt(state, seat, spot)) as string;
+  const topUidAt = (state: GameState, seat: Seat, spot: Spot) =>
+    topOf(bodyAt(state, seat, spot)) as string;
 
   it("🛑 BOTH seats, Active AND Bench: every {C} body is locked and the {G} body is not", () => {
     const state = towered(true);
@@ -673,34 +781,55 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
   });
 
   it("🛑 a {C} ACTIVATED Ability is refused under it (`ABILITY_DISABLED`) and used without it", () => {
-    const action: GameAction = { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Run Away Draw" };
+    const action: GameAction = {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Run Away Draw",
+    };
     expect(rejected(towered(true), action)).toBe("ABILITY_DISABLED");
     expect(all(run(towered(false), action).events, "CARDS_DRAWN")).toHaveLength(1);
   });
 
   it("🛑 a {C} ON-PLAY TRIGGER does not fire under it (Farfetch'd parks no search); the {G} control's trigger does", () => {
-    const base = setHand(ensureInDeck(ensureInDeck(towered(true), "p1", FARFETCHD), "p1", DURANT_EX), "p1", [
-      FARFETCHD,
-      DURANT_EX,
-    ]);
+    const base = setHand(
+      ensureInDeck(ensureInDeck(towered(true), "p1", FARFETCHD), "p1", DURANT_EX),
+      "p1",
+      [FARFETCHD, DURANT_EX],
+    );
     const farfetchd = base.players.p1.hand[0] as string;
     const benched = run(base, { type: "playBasicToBench", seat: "p1", uid: farfetchd });
     expect(benched.state.phase.kind).toBe("turn:action");
     expect(all(benched.events, "ABILITY_TRIGGERED")).toHaveLength(0);
-    const durant = benched.state.players.p1.hand.find((u) => benched.state.cardIdByUid[u] === DURANT_EX) as string;
+    const durant = benched.state.players.p1.hand.find(
+      (u) => benched.state.cardIdByUid[u] === DURANT_EX,
+    ) as string;
     const control = run(benched.state, { type: "playBasicToBench", seat: "p1", uid: durant });
-    expect(all(control.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Sudden Shearing"]);
+    expect(all(control.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
+      "Sudden Shearing",
+    ]);
   });
 
   it("…and without the Stadium the same Farfetch'd play DOES trigger (the control for the rung above)", () => {
     const base = setHand(ensureInDeck(towered(false), "p1", FARFETCHD), "p1", [FARFETCHD]);
-    const benched = run(base, { type: "playBasicToBench", seat: "p1", uid: base.players.p1.hand[0] as string });
-    expect(all(benched.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Impromptu Carrier"]);
+    const benched = run(base, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: base.players.p1.hand[0] as string,
+    });
+    expect(all(benched.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
+      "Impromptu Carrier",
+    ]);
   });
 
   it("the OPPONENT's {C} Active is refused too, on its own turn", () => {
     const state = run(towered(true), { type: "endTurn", seat: "p1" }).state;
-    const action: GameAction = { type: "useAbility", seat: "p2", target: { spot: "active" }, abilityName: "Run Away Draw" };
+    const action: GameAction = {
+      type: "useAbility",
+      seat: "p2",
+      target: { spot: "active" },
+      abilityName: "Run Away Draw",
+    };
     expect(rejected(state, action)).toBe("ABILITY_DISABLED");
   });
 
@@ -711,7 +840,9 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
     ] as const) {
       const view = redactGame(towered(withTower), "p1");
       if (view.phase.kind !== "turn:action") throw new Error("expected turn:action on the wire");
-      const row = view.phase.abilities.find((a) => a.abilityName === "Run Away Draw" && a.target.spot === "active");
+      const row = view.phase.abilities.find(
+        (a) => a.abilityName === "Run Away Draw" && a.target.spot === "active",
+      );
       expect(row?.disabled).toBe(disabled);
     }
   });

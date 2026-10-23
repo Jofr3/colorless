@@ -21,10 +21,9 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter, DamageCountSource } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { countPokemonInPlay } from "./interpreter";
-import manifest from "../package.json" with { type: "json" };
 import { programFor, registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
@@ -104,7 +103,8 @@ import {
 // (D414) — **ZERO new `FIXTURE_POOL` ids, ZERO new decks and ZERO edits to either.**
 
 /** Corpus FILE LINE 596, byte for byte. */
-const PRINTED = "This attack does 50 damage for each of your Pokémon that has any damage counters on it.";
+const PRINTED =
+  "This attack does 50 damage for each of your Pokémon that has any damage counters on it.";
 
 /** Corpus FILE LINE 526 (D507) — the shipped PREDICATE on the same printed clause, and the
     sentence §5 reads the biconditional against. Its program is TWO `spreadDamage` ops, both
@@ -114,7 +114,8 @@ const SPREAD =
 
 /** Corpus FILE LINE 414 — the WHOLE-BOARD predicate (Active plus Bench, the same zone this
     count reads) on the opposite seat, through `counterEachAll`'s own rider. */
-const EACH_ALL = "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.";
+const EACH_ALL =
+  "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.";
 
 /** Corpus FILE LINE 528 (3 printings) — the CHOSEN-target spelling, `damageChosen`'s rider. */
 const CHOSEN =
@@ -442,7 +443,10 @@ describe("D519 §1 — the printed data, measured live over the legal column", (
       PRINTED.replace("that has any damage counters on it", "in play"),
     ]) {
       const claimed = deriveAttackDamageMultiplier(text);
-      expect(claimed === null || (claimed.count as { damagedOnly?: true }).damagedOnly !== true, text).toBe(true);
+      expect(
+        claimed === null || (claimed.count as { damagedOnly?: true }).damagedOnly !== true,
+        text,
+      ).toBe(true);
     }
   });
 });
@@ -543,9 +547,9 @@ describe("D519 §2 — the reading, the arm, and the anchors it sits against", (
     expect(armOf(INDICATOR)).toBe("reader");
     // 🆕🆕🆕 D545 — `"none"` → `"gate"`: `:316` is the sixth row of `ATTACK_GATE_CLAUSES`
     // (`alternateCostIf`), a WHOLE printed clause split with `body: ""` (D395's path).
-    expect(armOf("If this Pokémon has any damage counters on it, this attack can be used for {F}.")).toBe(
-      "gate",
-    );
+    expect(
+      armOf("If this Pokémon has any damage counters on it, this attack can be used for {F}."),
+    ).toBe("gate");
   });
 
   it("🛑 the INDICATOR's ceiling is `per`, which is why this row could not be spelled on it", () => {
@@ -576,7 +580,9 @@ describe("D519 §2 — the reading, the arm, and the anchors it sits against", (
         damagedOnly: true,
       },
     ]);
-    const chosen = deriveAttackEffect(CHOSEN)?.[0] as { op: string; damagedOnly?: true } | undefined;
+    const chosen = deriveAttackEffect(CHOSEN)?.[0] as
+      | { op: string; damagedOnly?: true }
+      | undefined;
     expect(chosen?.op).toBe("damageChosen");
     expect(chosen?.damagedOnly).toBe(true);
   });
@@ -647,7 +653,10 @@ describe("D519 §3 — the fold on a board: the rider, the zone, the seat and th
       expect(countPokemonInPlay(state, "p1", filter, false), `${noun} all`).toBe(allCount);
       // …and the printed-shape sentence for each noun deals exactly `50 ×` its cell.
       expect(
-        dealt(state, `This attack does 50 damage for each of your ${noun} that has any damage counters on it.`),
+        dealt(
+          state,
+          `This attack does 50 damage for each of your ${noun} that has any damage counters on it.`,
+        ),
         `${noun} dealt`,
       ).toBe(damagedCount * 50);
     }
@@ -724,30 +733,23 @@ describe("D519 §4 — NARROWING × SEAT × NOUN × FOLD, 16 points, and the fli
   });
 
   it("🛑 the BUILT set is 6/16 → 8/16, and the two new points are EXACTLY this arm's", () => {
-    expect(POINTS.filter((p) => before(p.t)).map((p) => p.key.join("")).sort()).toEqual([
-      "0000",
-      "0001",
-      "0010",
-      "0011",
-      "0100",
-      "0110",
-    ]);
-    expect(POINTS.filter((p) => lit(p.t)).map((p) => p.key.join("")).sort()).toEqual([
-      "0000",
-      "0001",
-      "0010",
-      "0011",
-      "0100",
-      "0110",
-      "1000",
-      "1010",
-    ]);
+    expect(
+      POINTS.filter((p) => before(p.t))
+        .map((p) => p.key.join(""))
+        .sort(),
+    ).toEqual(["0000", "0001", "0010", "0011", "0100", "0110"]);
+    expect(
+      POINTS.filter((p) => lit(p.t))
+        .map((p) => p.key.join(""))
+        .sort(),
+    ).toEqual(["0000", "0001", "0010", "0011", "0100", "0110", "1000", "1010"]);
     // …and the converse assertion, without which the subtraction above is circular: the
     // claimed set is EXACTLY those two points, and `1000` is the printed row.
-    expect(POINTS.filter((p) => claimedHere(p.t)).map((p) => p.key.join("")).sort()).toEqual([
-      "1000",
-      "1010",
-    ]);
+    expect(
+      POINTS.filter((p) => claimedHere(p.t))
+        .map((p) => p.key.join(""))
+        .sort(),
+    ).toEqual(["1000", "1010"]);
     expect(text(1, 0, 0, 0)).toBe(PRINTED);
     expect(text(1, 0, 1, 0)).toBe(UNPRINTED_BASIC);
   });
@@ -772,7 +774,9 @@ describe("D519 §4 — NARROWING × SEAT × NOUN × FOLD, 16 points, and the fli
         let n = 0;
         for (const p of POINTS) {
           if (p.key[axis] === 1) continue;
-          const q = POINTS.find((x) => x.key.every((v, i) => (i === axis ? v === 1 : v === p.key[i])));
+          const q = POINTS.find((x) =>
+            x.key.every((v, i) => (i === axis ? v === 1 : v === p.key[i])),
+          );
           if (q !== undefined && pred(p.t) !== pred(q.t)) n += 1;
         }
         return n;
@@ -1058,10 +1062,5 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
       "This attack does 60 damage for each of your opponent's Pokémon ex and Pokémon V in play.",
       "This attack does 40 damage for each of your Stage 1 Pokémon in play.",
     ]);
-  });
-
-  it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

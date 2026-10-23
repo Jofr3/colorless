@@ -193,16 +193,12 @@
       "indexes": {
         "cards_set_id_idx": {
           "name": "cards_set_id_idx",
-          "columns": [
-            "set_id"
-          ],
+          "columns": ["set_id"],
           "isUnique": false
         },
         "cards_name_idx": {
           "name": "cards_name_idx",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": false
         }
       },
@@ -211,12 +207,8 @@
           "name": "cards_set_id_sets_id_fk",
           "tableFrom": "cards",
           "tableTo": "sets",
-          "columnsFrom": [
-            "set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["set_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -347,9 +339,7 @@
       "indexes": {
         "sets_serie_id_idx": {
           "name": "sets_serie_id_idx",
-          "columns": [
-            "serie_id"
-          ],
+          "columns": ["serie_id"],
           "isUnique": false
         }
       },
@@ -358,12 +348,8 @@
           "name": "sets_serie_id_series_id_fk",
           "tableFrom": "sets",
           "tableTo": "series",
-          "columnsFrom": [
-            "serie_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["serie_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -403,12 +389,8 @@
           "name": "deck_cards_deck_id_decks_id_fk",
           "tableFrom": "deck_cards",
           "tableTo": "decks",
-          "columnsFrom": [
-            "deck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["deck_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -416,22 +398,15 @@
           "name": "deck_cards_card_id_cards_id_fk",
           "tableFrom": "deck_cards",
           "tableTo": "cards",
-          "columnsFrom": [
-            "card_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["card_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "deck_cards_deck_id_card_id_pk": {
-          "columns": [
-            "deck_id",
-            "card_id"
-          ],
+          "columns": ["deck_id", "card_id"],
           "name": "deck_cards_deck_id_card_id_pk"
         }
       },
@@ -510,16 +485,12 @@
       "indexes": {
         "decks_user_id_idx": {
           "name": "decks_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "decks_folder_id_idx": {
           "name": "decks_folder_id_idx",
-          "columns": [
-            "folder_id"
-          ],
+          "columns": ["folder_id"],
           "isUnique": false
         }
       },
@@ -528,12 +499,8 @@
           "name": "decks_user_id_users_id_fk",
           "tableFrom": "decks",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -541,12 +508,8 @@
           "name": "decks_folder_id_folders_id_fk",
           "tableFrom": "decks",
           "tableTo": "folders",
-          "columnsFrom": [
-            "folder_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["folder_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -554,12 +517,8 @@
           "name": "decks_cover_card_id_cards_id_fk",
           "tableFrom": "decks",
           "tableTo": "cards",
-          "columnsFrom": [
-            "cover_card_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cover_card_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -611,9 +570,7 @@
       "indexes": {
         "folders_user_id_idx": {
           "name": "folders_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -622,12 +579,8 @@
           "name": "folders_user_id_users_id_fk",
           "tableFrom": "folders",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -635,12 +588,8 @@
           "name": "folders_parent_id_fk",
           "tableFrom": "folders",
           "tableTo": "folders",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -677,9 +626,7 @@
       "indexes": {
         "oauth_identities_user_id_idx": {
           "name": "oauth_identities_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -688,22 +635,15 @@
           "name": "oauth_identities_user_id_users_id_fk",
           "tableFrom": "oauth_identities",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "oauth_identities_provider_provider_id_pk": {
-          "columns": [
-            "provider",
-            "provider_id"
-          ],
+          "columns": ["provider", "provider_id"],
           "name": "oauth_identities_provider_provider_id_pk"
         }
       },
@@ -746,9 +686,7 @@
       "indexes": {
         "sessions_user_id_idx": {
           "name": "sessions_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -757,12 +695,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -829,9 +763,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -840,12 +772,8 @@
           "name": "users_favourite_deck_id_decks_id_fk",
           "tableFrom": "users",
           "tableTo": "decks",
-          "columnsFrom": [
-            "favourite_deck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["favourite_deck_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }

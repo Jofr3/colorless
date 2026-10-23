@@ -331,7 +331,9 @@ describe("the printed bytes", () => {
   it("pins the sentence the flag and the program were authored from", () => {
     // D183's class: an arm written from a PARAPHRASE passes a test written against
     // the same paraphrase and matches no real card. This is the catalog's string.
-    expect(CARMINE_TEXT).toContain("If you go first, you may use this card during your first turn.");
+    expect(CARMINE_TEXT).toContain(
+      "If you go first, you may use this card during your first turn.",
+    );
     expect(CARMINE_TEXT).toContain("Discard your hand and draw 5 cards.");
     expect(CARMINE_TEXT.split("\n\n")).toHaveLength(2);
   });

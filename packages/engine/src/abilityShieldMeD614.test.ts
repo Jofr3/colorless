@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveRetreatCost, passivesOf } from "./continuous";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {
@@ -31,7 +31,8 @@ import {
 // Two new readings, both ⚠️ UNRULED: R-LW1 (§8, continuous Ability auras are not refused) and R-LW2 (§7, an
 // Ability lock on the holder switches the shield off).
 
-const LUMINOUS_WING = "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.";
+const LUMINOUS_WING =
+  "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.";
 const SHOOTING_MOONS =
   "You may discard up to 4 Energy cards from your hand, and this attack does 40 more damage for each card you discarded in this way.";
 const CLEFABLE = ["mep-072", "me03-031", "me03-103", "me03-119"] as const;
@@ -56,8 +57,18 @@ const FILLER = "fix-basic-0";
 const P = "d614-psychic";
 const D = "d614-darkness";
 
-const ability = (id: string, card: string, name: string, effect: string, over: Partial<Card>): Card =>
-  battler(id, { name: card, abilities: [{ type: "Ability", name, effect }], ...over } as Partial<Card>);
+const ability = (
+  id: string,
+  card: string,
+  name: string,
+  effect: string,
+  over: Partial<Card>,
+): Card =>
+  battler(id, {
+    name: card,
+    abilities: [{ type: "Ability", name, effect }],
+    ...over,
+  } as Partial<Card>);
 
 const LOCAL: Record<string, Card> = {
   [CLEF]: battler(CLEF, {
@@ -69,28 +80,118 @@ const LOCAL: Record<string, Card> = {
     retreat: 1,
     abilities: [{ type: "Ability", name: "Luminous Wing", effect: LUMINOUS_WING }],
     attacks: [
-      { name: "Shooting Moons", cost: ["Psychic", "Psychic"], damage: "120+", effect: SHOOTING_MOONS },
+      {
+        name: "Shooting Moons",
+        cost: ["Psychic", "Psychic"],
+        damage: "120+",
+        effect: SHOOTING_MOONS,
+      },
       // A test-only second row with no effect text: attack.ts's own main hit. (Shooting Moons is
       // re-homed into `damageDefender`, so its hit is interpreter.ts `snipeActive`'s.)
       { name: "D614 Hit", cost: ["Colorless"], damage: 30 },
     ],
   } as Partial<Card>),
-  [DUSKNOIR]: ability(DUSKNOIR, "Dusknoir", "Cursed Blast", "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.", { stage: "Stage2", hp: 160, types: ["Psychic"], retreat: 3 }),
-  [MUNKIDORI]: ability(MUNKIDORI, "Munkidori", "Adrena-Brain", "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.", { hp: 110, types: ["Psychic"] }),
-  [GENGAR]: ability(GENGAR, "Gengar ex", "Gnawing Curse", "Whenever your opponent attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon.", { stage: "Stage2", hp: 310, types: ["Darkness"], retreat: 2 }),
-  [DUGTRIO]: ability(DUGTRIO, "Team Rocket's Dugtrio", "Holes", "Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon.", { stage: "Stage1", hp: 100, types: ["Fighting"] }),
-  [FROSLASS]: ability(FROSLASS, "Froslass", "Freezing Shroud", "During Pokémon Checkup, put 1 damage counter on each Pokémon that has an Ability (both yours and your opponent's), except any Froslass.", { stage: "Stage1", hp: 90, types: ["Water"] }),
-  [HAWLUCHA]: ability(HAWLUCHA, "Hawlucha", "Flying Entry", "When you play this Pokémon from your hand onto your Bench during your turn, you may choose 2 of your opponent's Benched Pokémon and put 1 damage counter on each of them.", { hp: 70, types: ["Fighting"] }),
-  [ROSELIA]: ability(ROSELIA, "Roselia", "Poison Point", "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), the Attacking Pokémon is now Poisoned.", { hp: 60, types: ["Grass"] }),
-  [KLAWF]: ability(KLAWF, "Klawf ex", "Counterattacking Pincer", "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), discard an Energy from the Attacking Pokémon.", { hp: 220, types: ["Fighting"], retreat: 3 }),
-  [SCRAFTY]: ability(SCRAFTY, "Mega Scrafty ex", "Counterattacking Crest", "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon.", { stage: "Stage1", hp: 330, types: ["Darkness"], retreat: 2 }),
-  [MARACTUS]: ability(MARACTUS, "Maractus", "Exploding Needles", "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, put 6 damage counters on the Attacking Pokémon.", { hp: 110, types: ["Grass"], retreat: 2 }),
-  [MAGMORTAR]: ability(MAGMORTAR, "Magmortar", "Magma Surge", "During Pokémon Checkup, put 3 more damage counters on your opponent's Burned Pokémon.", { stage: "Stage1", hp: 130, types: ["Fire"], retreat: 2 }),
-  [SPIDOPS]: ability(SPIDOPS, "Spidops ex", "Trap Territory", "Your opponent's Active Pokémon's Retreat Cost is {C} more.", { stage: "Stage1", hp: 260, types: ["Grass"], retreat: 2 }),
-  [FLUTTER]: ability(FLUTTER, "Flutter Mane", "Midnight Fluttering", "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.", { hp: 90, types: ["Psychic"] }),
+  [DUSKNOIR]: ability(
+    DUSKNOIR,
+    "Dusknoir",
+    "Cursed Blast",
+    "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.",
+    { stage: "Stage2", hp: 160, types: ["Psychic"], retreat: 3 },
+  ),
+  [MUNKIDORI]: ability(
+    MUNKIDORI,
+    "Munkidori",
+    "Adrena-Brain",
+    "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
+    { hp: 110, types: ["Psychic"] },
+  ),
+  [GENGAR]: ability(
+    GENGAR,
+    "Gengar ex",
+    "Gnawing Curse",
+    "Whenever your opponent attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon.",
+    { stage: "Stage2", hp: 310, types: ["Darkness"], retreat: 2 },
+  ),
+  [DUGTRIO]: ability(
+    DUGTRIO,
+    "Team Rocket's Dugtrio",
+    "Holes",
+    "Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon.",
+    { stage: "Stage1", hp: 100, types: ["Fighting"] },
+  ),
+  [FROSLASS]: ability(
+    FROSLASS,
+    "Froslass",
+    "Freezing Shroud",
+    "During Pokémon Checkup, put 1 damage counter on each Pokémon that has an Ability (both yours and your opponent's), except any Froslass.",
+    { stage: "Stage1", hp: 90, types: ["Water"] },
+  ),
+  [HAWLUCHA]: ability(
+    HAWLUCHA,
+    "Hawlucha",
+    "Flying Entry",
+    "When you play this Pokémon from your hand onto your Bench during your turn, you may choose 2 of your opponent's Benched Pokémon and put 1 damage counter on each of them.",
+    { hp: 70, types: ["Fighting"] },
+  ),
+  [ROSELIA]: ability(
+    ROSELIA,
+    "Roselia",
+    "Poison Point",
+    "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), the Attacking Pokémon is now Poisoned.",
+    { hp: 60, types: ["Grass"] },
+  ),
+  [KLAWF]: ability(
+    KLAWF,
+    "Klawf ex",
+    "Counterattacking Pincer",
+    "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), discard an Energy from the Attacking Pokémon.",
+    { hp: 220, types: ["Fighting"], retreat: 3 },
+  ),
+  [SCRAFTY]: ability(
+    SCRAFTY,
+    "Mega Scrafty ex",
+    "Counterattacking Crest",
+    "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon.",
+    { stage: "Stage1", hp: 330, types: ["Darkness"], retreat: 2 },
+  ),
+  [MARACTUS]: ability(
+    MARACTUS,
+    "Maractus",
+    "Exploding Needles",
+    "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, put 6 damage counters on the Attacking Pokémon.",
+    { hp: 110, types: ["Grass"], retreat: 2 },
+  ),
+  [MAGMORTAR]: ability(
+    MAGMORTAR,
+    "Magmortar",
+    "Magma Surge",
+    "During Pokémon Checkup, put 3 more damage counters on your opponent's Burned Pokémon.",
+    { stage: "Stage1", hp: 130, types: ["Fire"], retreat: 2 },
+  ),
+  [SPIDOPS]: ability(
+    SPIDOPS,
+    "Spidops ex",
+    "Trap Territory",
+    "Your opponent's Active Pokémon's Retreat Cost is {C} more.",
+    { stage: "Stage1", hp: 260, types: ["Grass"], retreat: 2 },
+  ),
+  [FLUTTER]: ability(
+    FLUTTER,
+    "Flutter Mane",
+    "Midnight Fluttering",
+    "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.",
+    { hp: 90, types: ["Psychic"] },
+  ),
   [POISONER]: battler(POISONER, {
     hp: 200,
-    attacks: [{ name: "D614 Poison", cost: ["Colorless"], damage: 10, effect: "Your opponent's Active Pokémon is now Poisoned." }],
+    attacks: [
+      {
+        name: "D614 Poison",
+        cost: ["Colorless"],
+        damage: 10,
+        effect: "Your opponent's Active Pokémon is now Poisoned.",
+      },
+    ],
   } as Partial<Card>),
   [P]: typedEnergy(P, "Psychic"),
   [D]: typedEnergy(D, "Darkness"),
@@ -135,7 +236,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -143,11 +246,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
@@ -185,11 +291,14 @@ const damages = (state: GameState, seat: Seat) => [
   state.players[seat].active?.damage ?? -1,
   ...state.players[seat].bench.map((b) => b.damage),
 ];
-const useAbility = (target: { spot: "active" } | { spot: "bench"; index: number }, abilityName: string) =>
-  ({ type: "useAbility", seat: "p1", target, abilityName }) as GameAction;
+const useAbility = (
+  target: { spot: "active" } | { spot: "bench"; index: number },
+  abilityName: string,
+) => ({ type: "useAbility", seat: "p1", target, abilityName }) as GameAction;
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
 function choosePrompt(state: GameState): { candidates: PokemonRef[] } {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt as unknown as { candidates: PokemonRef[] };
 }
 
@@ -203,7 +312,10 @@ describe("D614 §1 — the program: one object over 4 printings", () => {
 
   it("the fold reads it off the holder's Ability; the attack channel's flag is not set", () => {
     const state = table([CLEF], [FILLER]);
-    const fold = passivesOf(state, state.players.p1.active as NonNullable<GameState["players"]["p1"]["active"]>);
+    const fold = passivesOf(
+      state,
+      state.players.p1.active as NonNullable<GameState["players"]["p1"]["active"]>,
+    );
     expect([fold.preventAbilityEffects, fold.preventAttackEffects]).toEqual([true, false]);
   });
 });
@@ -218,15 +330,21 @@ describe("D614 §2 — an activated Ability's counters: Cursed Blast and Adrena-
   });
 
   it("with Luminous Wing alone it is still usable, places nothing, and Dusknoir is Knocked Out", () => {
-    const result = run(table([FILLER, DUSKNOIR], [CLEF]), useAbility({ spot: "bench", index: 0 }, "Cursed Blast"));
+    const result = run(
+      table([FILLER, DUSKNOIR], [CLEF]),
+      useAbility({ spot: "bench", index: 0 }, "Cursed Blast"),
+    );
     expect(damages(result.state, "p2")).toEqual([0]);
-    expect(of(result.events, "KNOCKED_OUT").map((e) => [e.seat, result.state.cardIdByUid[e.uid]])).toEqual([
-      ["p1", DUSKNOIR],
-    ]);
+    expect(
+      of(result.events, "KNOCKED_OUT").map((e) => [e.seat, result.state.cardIdByUid[e.uid]]),
+    ).toEqual([["p1", DUSKNOIR]]);
   });
 
   it("an unshielded body takes the 13 counters (the control)", () => {
-    const result = run(table([FILLER, DUSKNOIR], [SCRAFTY]), useAbility({ spot: "bench", index: 0 }, "Cursed Blast"));
+    const result = run(
+      table([FILLER, DUSKNOIR], [SCRAFTY]),
+      useAbility({ spot: "bench", index: 0 }, "Cursed Blast"),
+    );
     expect(damages(result.state, "p2")).toEqual([130]);
     expect(of(result.events, "ABILITY_EFFECT_PREVENTED")).toEqual([]);
   });
@@ -235,7 +353,9 @@ describe("D614 §2 — an activated Ability's counters: Cursed Blast and Adrena-
     let state = table([MUNKIDORI], [CLEF, FILLER, CLEF]);
     state = setDamage(attachFromDeck(state, "p1", D, 1), "p1", 30);
     const parked = run(state, useAbility({ spot: "active" }, "Adrena-Brain"));
-    expect(choosePrompt(parked.state).candidates).toEqual([{ seat: "p2", spot: { spot: "bench", index: 0 } }]);
+    expect(choosePrompt(parked.state).candidates).toEqual([
+      { seat: "p2", spot: { spot: "bench", index: 0 } },
+    ]);
     expect(prevented(parked.state, parked.events)).toEqual([
       ["p2", CLEF],
       ["p2", CLEF],
@@ -246,7 +366,12 @@ describe("D614 §2 — an activated Ability's counters: Cursed Blast and Adrena-
 describe("D614 §3 — triggered Abilities: Holes, Gnawing Curse, Flying Entry", () => {
   it("Holes places nothing on a Luminous Wing body that retreats; another body takes 2", () => {
     const retreat = (state: GameState) =>
-      run(state, { type: "retreat", seat: "p1", discardEnergy: [...(state.players.p1.active?.energy ?? [])], promoteBenchIndex: 0 });
+      run(state, {
+        type: "retreat",
+        seat: "p1",
+        discardEnergy: [...(state.players.p1.active?.energy ?? [])],
+        promoteBenchIndex: 0,
+      });
     const shielded = retreat(attachFromDeck(table([CLEF, FILLER], [FILLER, DUGTRIO]), "p1", P, 1));
     expect(damages(shielded.state, "p1")).toEqual([0, 0]);
     expect(prevented(shielded.state, shielded.events)).toEqual([["p1", CLEF]]);
@@ -255,9 +380,17 @@ describe("D614 §3 — triggered Abilities: Holes, Gnawing Curse, Flying Entry",
   });
 
   it("Gnawing Curse places nothing on a Luminous Wing body (Active or Benched); a Filler takes 2", () => {
-    const attach = (state: GameState, target: { spot: "active" } | { spot: "bench"; index: number }) => {
+    const attach = (
+      state: GameState,
+      target: { spot: "active" } | { spot: "bench"; index: number },
+    ) => {
       const withCard = handFromDeck(state, "p1", P, 1);
-      return run(withCard, { type: "attachEnergy", seat: "p1", uid: handUid(withCard, "p1", P), target });
+      return run(withCard, {
+        type: "attachEnergy",
+        seat: "p1",
+        uid: handUid(withCard, "p1", P),
+        target,
+      });
     };
     const base = table([CLEF, CLEF, FILLER], [FILLER, GENGAR]);
     const active = attach(base, { spot: "active" });
@@ -269,7 +402,11 @@ describe("D614 §3 — triggered Abilities: Holes, Gnawing Curse, Flying Entry",
 
   it("Flying Entry's pick leaves out a Benched Luminous Wing body", () => {
     const state = handFromDeck(table([FILLER], [FILLER, CLEF, FILLER, FILLER]), "p1", HAWLUCHA, 1);
-    const parked = run(state, { type: "playBasicToBench", seat: "p1", uid: handUid(state, "p1", HAWLUCHA) });
+    const parked = run(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(state, "p1", HAWLUCHA),
+    });
     expect(choosePrompt(parked.state).candidates.map((ref) => ref.spot)).toEqual([
       { spot: "bench", index: 1 },
       { spot: "bench", index: 2 },
@@ -289,12 +426,23 @@ describe("D614 §4 — the Pokémon Checkup: Freezing Shroud and Magma Surge", (
 
   it("Magma Surge's 3 more counters are refused on a Burned Luminous Wing body; the rulebook's 2 land", () => {
     const burn = (id: string) =>
-      run(setConditions(table([id], [FILLER, MAGMORTAR]), "p1", { burned: true }), { type: "endTurn", seat: "p1" });
+      run(setConditions(table([id], [FILLER, MAGMORTAR]), "p1", { burned: true }), {
+        type: "endTurn",
+        seat: "p1",
+      });
     const shielded = burn(CLEF);
-    expect(of(shielded.events, "COUNTERS_PLACED").filter((e) => e.source === "burn").map((e) => e.amount)).toEqual([20]);
+    expect(
+      of(shielded.events, "COUNTERS_PLACED")
+        .filter((e) => e.source === "burn")
+        .map((e) => e.amount),
+    ).toEqual([20]);
     expect(prevented(shielded.state, shielded.events)).toEqual([["p1", CLEF]]);
     const bare = burn(FILLER);
-    expect(of(bare.events, "COUNTERS_PLACED").filter((e) => e.source === "burn").map((e) => e.amount)).toEqual([50]);
+    expect(
+      of(bare.events, "COUNTERS_PLACED")
+        .filter((e) => e.source === "burn")
+        .map((e) => e.amount),
+    ).toEqual([50]);
   });
 });
 
@@ -333,14 +481,17 @@ describe("D614 §5 — reactions to Clefable's attack: Poison Point and the reco
 
   it("Exploding Needles places nothing on it when Maractus is Knocked Out", () => {
     const result = swing(MARACTUS);
-    expect(of(result.events, "KNOCKED_OUT").map((e) => result.state.cardIdByUid[e.uid])).toEqual([MARACTUS]);
+    expect(of(result.events, "KNOCKED_OUT").map((e) => result.state.cardIdByUid[e.uid])).toEqual([
+      MARACTUS,
+    ]);
     expect(result.state.players.p1.active?.damage).toBe(0);
     expect(prevented(result.state, result.events)).toEqual([["p1", CLEF]]);
   });
 
   it("the controls: an unshielded attacker takes Crest's 50 and Needles' 60", () => {
     const hit = (defender: string) =>
-      run(attachFromDeck(table([POISONER], [defender]), "p1", P, 1), attack(0)).state.players.p1.active?.damage;
+      run(attachFromDeck(table([POISONER], [defender]), "p1", P, 1), attack(0)).state.players.p1
+        .active?.damage;
     expect(hit(SCRAFTY)).toBe(50);
     const needles = run(
       attachFromDeck(setDamage(table([POISONER], [MARACTUS]), "p2", 100), "p1", P, 1),
@@ -366,7 +517,10 @@ describe("D614 §6 — what the shield does not refuse: attacks, and its own sid
 
 describe("D614 §7 — R-LW2 ⚠️ UNRULED: an Ability lock on the holder switches the shield off", () => {
   it("under Flutter Mane's Midnight Fluttering the Active Clefable takes Cursed Blast's counters", () => {
-    const result = run(table([FLUTTER, DUSKNOIR], [CLEF]), useAbility({ spot: "bench", index: 0 }, "Cursed Blast"));
+    const result = run(
+      table([FLUTTER, DUSKNOIR], [CLEF]),
+      useAbility({ spot: "bench", index: 0 }, "Cursed Blast"),
+    );
     expect(damages(result.state, "p2")).toEqual([130]);
     expect(of(result.events, "ABILITY_EFFECT_PREVENTED")).toEqual([]);
   });
@@ -382,18 +536,21 @@ describe("D614 §8 — R-LW1 ⚠️ UNRULED: a continuous Ability aura is not re
 
 describe("D614 §9 — the log row, the attack, and the version", () => {
   it("ABILITY_EFFECT_PREVENTED renders on the shielded body's seat", () => {
-    const result = run(table([FILLER, DUSKNOIR], [CLEF, FILLER]), useAbility({ spot: "bench", index: 0 }, "Cursed Blast"));
+    const result = run(
+      table([FILLER, DUSKNOIR], [CLEF, FILLER]),
+      useAbility({ spot: "bench", index: 0 }, "Cursed Blast"),
+    );
     const rows = of(result.events, "ABILITY_EFFECT_PREVENTED");
-    const log = logFromEvents(rows, { names: { p1: "P1", p2: "P2" }, state: result.state, elapsed: formatElapsed(0) });
+    const log = logFromEvents(rows, {
+      names: { p1: "P1", p2: "P2" },
+      state: result.state,
+      elapsed: formatElapsed(0),
+    });
     expect(JSON.stringify(log)).toContain("Mega Clefable ex");
     expect(JSON.stringify(log)).toContain("prevented the effect of the Ability");
   });
 
   it("the printed attack text is the one this file's Clefable carries", () => {
     expect(LOCAL[CLEF]?.attacks?.[0]?.effect).toBe(SHOOTING_MOONS);
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

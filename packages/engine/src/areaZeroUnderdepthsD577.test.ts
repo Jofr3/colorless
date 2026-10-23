@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { benchLimitForIds, benchLimitOf, benchTrimStages } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, phaseViewOf } from "./index";
+import { applyAction, createGame, phaseViewOf } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
 import { FIXTURE_POOL, battler, deckOf, trainerCard } from "./testFixtures";
@@ -76,7 +76,11 @@ const LOCAL_CARDS: Record<string, Card> = {
     name: "Megaton Blower",
   },
   [SCOOP_UP_CYCLONE]: {
-    ...trainerCard(SCOOP_UP_CYCLONE, "Item", "Put 1 of your Pokémon and all attached cards into your hand."),
+    ...trainerCard(
+      SCOOP_UP_CYCLONE,
+      "Item",
+      "Put 1 of your Pokémon and all attached cards into your hand.",
+    ),
     name: "Scoop Up Cyclone",
   },
   [TERA]: battler(TERA, {
@@ -115,7 +119,9 @@ const LOCAL_CARDS: Record<string, Card> = {
     name: "D577 Poisoner",
     hp: 900,
     types: ["Colorless"],
-    attacks: [{ cost: [], name: "Sting", effect: "Your opponent's Active Pokémon is now Poisoned." }],
+    attacks: [
+      { cost: [], name: "Sting", effect: "Your opponent's Active Pokémon is now Poisoned." },
+    ],
   }),
   [RIBOMBEE]: battler(RIBOMBEE, {
     name: "Lillie's Ribombee",
@@ -146,7 +152,11 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [LILLIES_BASIC]: battler(LILLIES_BASIC, { name: "Lillie's Clefairy", hp: 60, types: ["Psychic"] }),
+  [LILLIES_BASIC]: battler(LILLIES_BASIC, {
+    name: "Lillie's Clefairy",
+    hp: 60,
+    types: ["Psychic"],
+  }),
   [FILLER]: battler(FILLER, {
     name: "D577 Filler",
     hp: 900,
@@ -187,7 +197,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -197,7 +208,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -205,11 +218,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -219,11 +235,17 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
   const is = (u: string) => state.cardIdByUid[u] === id;
   const inDeck = side.deck.find(is);
   if (inDeck !== undefined) {
-    return { uid: inDeck, state: withSide(state, seat, { deck: side.deck.filter((u) => u !== inDeck) }) };
+    return {
+      uid: inDeck,
+      state: withSide(state, seat, { deck: side.deck.filter((u) => u !== inDeck) }),
+    };
   }
   const inHand = side.hand.find(is);
   if (inHand !== undefined) {
-    return { uid: inHand, state: withSide(state, seat, { hand: side.hand.filter((u) => u !== inHand) }) };
+    return {
+      uid: inHand,
+      state: withSide(state, seat, { hand: side.hand.filter((u) => u !== inHand) }),
+    };
   }
   const prized = side.prizes.find(is);
   const swap = side.deck.find((u) => !is(u));
@@ -237,7 +259,11 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
   };
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -257,17 +283,26 @@ function table(opts: {
     const side = state.players[seat];
     const back = [
       ...side.hand,
-      ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
+      ...(side.active === null
+        ? []
+        : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const seat = (s: Seat, active: string, bench: readonly string[]) => {
     let pulled = pull(state, s, active);
     state = withSide(pulled.state, s, { active: makeInPlay(pulled.uid, 0) });
     for (const id of bench) {
       pulled = pull(state, s, id);
-      state = withSide(pulled.state, s, { bench: [...pulled.state.players[s].bench, makeInPlay(pulled.uid, 0)] });
+      state = withSide(pulled.state, s, {
+        bench: [...pulled.state.players[s].bench, makeInPlay(pulled.uid, 0)],
+      });
     }
   };
   seat("p1", opts.p1Active, opts.p1Bench ?? []);
@@ -292,18 +327,38 @@ const handUid = (state: GameState, seat: Seat, id: string): string => {
   return uid;
 };
 
-function trimPrompt(state: GameState): { seat: Seat; min: number; max: number; candidates: number } {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+function trimPrompt(state: GameState): {
+  seat: Seat;
+  min: number;
+  max: number;
+  candidates: number;
+} {
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
-  if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
-  return { seat: state.phase.seat, min: prompt.min, max: prompt.max, candidates: prompt.candidates.length };
+  if (prompt.kind !== "choosePokemonMulti")
+    throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+  return {
+    seat: state.phase.seat,
+    min: prompt.min,
+    max: prompt.max,
+    candidates: prompt.candidates.length,
+  };
 }
 
 /** Answer the parked trim for `seat` by discarding the LAST `n` Benched bodies. */
-function trimLast(state: GameState, seat: Seat, n: number): { state: GameState; events: GameEvent[] } {
+function trimLast(
+  state: GameState,
+  seat: Seat,
+  n: number,
+): { state: GameState; events: GameEvent[] } {
   const size = state.players[seat].bench.length;
   const indices = Array.from({ length: n }, (_, i) => size - n + i);
-  return run(state, { type: "resolveEffect", seat, choice: { kind: "pokemonMulti", refs: benchRefs(seat, indices) } });
+  return run(state, {
+    type: "resolveEffect",
+    seat,
+    choice: { kind: "pokemonMulti", refs: benchRefs(seat, indices) },
+  });
 }
 
 describe("D577 §1 — the printed text, the registry row, BENCH_CEILING and the version", () => {
@@ -326,10 +381,6 @@ describe("D577 §1 — the printed text, the registry row, BENCH_CEILING and the
     expect(isBenchIndex(-1)).toBe(false);
     expect(isBenchIndex("5")).toBe(false);
   });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 describe("D577 §2 — benchLimitOf is PER SEAT (R-AZ1)", () => {
@@ -346,7 +397,11 @@ describe("D577 §2 — benchLimitOf is PER SEAT (R-AZ1)", () => {
   });
 
   it("a Tera Pokémon on the BENCH counts — 'in play', not 'Active'", () => {
-    const state = table({ p1Active: FILLER, p1Bench: [TERA], stadium: { id: UNDERDEPTHS_2, owner: "p1" } });
+    const state = table({
+      p1Active: FILLER,
+      p1Bench: [TERA],
+      stadium: { id: UNDERDEPTHS_2, owner: "p1" },
+    });
     expect(benchLimitOf(state, "p1")).toBe(8);
   });
 
@@ -371,11 +426,28 @@ describe("D577 §3 — the live limit at every Bench writer", () => {
       p1Hand: [FILLER, FILLER],
       stadium: { id: UNDERDEPTHS, owner: "p1" },
     });
-    state = run(state, { type: "playBasicToBench", seat: "p1", uid: handUid(state, "p1", FILLER) }).state;
-    state = run(state, { type: "playBasicToBench", seat: "p1", uid: handUid(state, "p1", FILLER) }).state;
+    state = run(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(state, "p1", FILLER),
+    }).state;
+    state = run(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(state, "p1", FILLER),
+    }).state;
     expect(state.players.p1.bench).toHaveLength(8);
-    state = withSide(state, "p1", { hand: [...state.players.p1.hand, state.players.p1.deck.find((u) => state.cardIdByUid[u] === FILLER) ?? ""] });
-    const refused = applyAction(state, { type: "playBasicToBench", seat: "p1", uid: handUid(state, "p1", FILLER) });
+    state = withSide(state, "p1", {
+      hand: [
+        ...state.players.p1.hand,
+        state.players.p1.deck.find((u) => state.cardIdByUid[u] === FILLER) ?? "",
+      ],
+    });
+    const refused = applyAction(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(state, "p1", FILLER),
+    });
     expect(refused.ok ? null : [refused.error.code, refused.error.message]).toEqual([
       "BENCH_FULL",
       "the bench holds at most 8 Pokémon",
@@ -383,16 +455,34 @@ describe("D577 §3 — the live limit at every Bench writer", () => {
   });
 
   it("without a Tera Pokémon the sixth Basic is refused under Underdepths", () => {
-    const state = table({ p1Active: FILLER, p1Bench: fillers(5), p1Hand: [FILLER], stadium: { id: UNDERDEPTHS, owner: "p1" } });
-    const refused = applyAction(state, { type: "playBasicToBench", seat: "p1", uid: handUid(state, "p1", FILLER) });
+    const state = table({
+      p1Active: FILLER,
+      p1Bench: fillers(5),
+      p1Hand: [FILLER],
+      stadium: { id: UNDERDEPTHS, owner: "p1" },
+    });
+    const refused = applyAction(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(state, "p1", FILLER),
+    });
     expect(refused.ok ? null : refused.error.message).toBe("the bench holds at most 5 Pokémon");
   });
 
   it("an Energy attaches to Bench index 7 — the ceiling admits the slot and the board holds it", () => {
-    let state = table({ p1Active: TERA, p1Bench: fillers(8), stadium: { id: UNDERDEPTHS, owner: "p1" } });
+    let state = table({
+      p1Active: TERA,
+      p1Bench: fillers(8),
+      stadium: { id: UNDERDEPTHS, owner: "p1" },
+    });
     const pulled = pull(state, "p1", "fix-energy");
     state = withSide(pulled.state, "p1", { hand: [pulled.uid] });
-    state = run(state, { type: "attachEnergy", seat: "p1", uid: pulled.uid, target: { spot: "bench", index: 7 } }).state;
+    state = run(state, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: pulled.uid,
+      target: { spot: "bench", index: 7 },
+    }).state;
     expect(state.players.p1.bench[7]?.energy).toEqual([pulled.uid]);
   });
 });
@@ -407,7 +497,11 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
       p1Hand: [JAMMING_TOWER],
       stadium: { id: UNDERDEPTHS, owner: "p2" },
     });
-    const played = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", JAMMING_TOWER) });
+    const played = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", JAMMING_TOWER),
+    });
     state = played.state;
     expect(trimPrompt(state)).toEqual({ seat: "p2", min: 1, max: 1, candidates: 6 });
     const view = phaseViewOf(state, "p1");
@@ -417,7 +511,9 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
     state = first.state;
     expect(state.players.p2.bench).toHaveLength(5);
     expect(state.players.p2.discard.length).toBe(p2Discard + 1);
-    expect(first.events.filter((e) => e.type === "BENCH_TRIMMED").map((e) => e.seat)).toEqual(["p2"]);
+    expect(first.events.filter((e) => e.type === "BENCH_TRIMMED").map((e) => e.seat)).toEqual([
+      "p2",
+    ]);
     expect(trimPrompt(state)).toEqual({ seat: "p1", min: 2, max: 2, candidates: 7 });
     const second = trimLast(state, "p1", 2);
     state = second.state;
@@ -425,7 +521,11 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(state.pending).toEqual([]);
     // R-AZ5 — no Knock Out, no Prize.
-    expect([...first.events, ...second.events].some((e) => e.type === "KNOCKED_OUT" || e.type === "PRIZES_OWED")).toBe(false);
+    expect(
+      [...first.events, ...second.events].some(
+        (e) => e.type === "KNOCKED_OUT" || e.type === "PRIZES_OWED",
+      ),
+    ).toBe(false);
     expect(state.players.p1.prizes).toHaveLength(6);
   });
 
@@ -438,7 +538,11 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
       p1Hand: [JAMMING_TOWER],
       stadium: { id: UNDERDEPTHS_2, owner: "p1" },
     });
-    state = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", JAMMING_TOWER) }).state;
+    state = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", JAMMING_TOWER),
+    }).state;
     expect(trimPrompt(state).seat).toBe("p1");
     state = trimLast(state, "p1", 1).state;
     expect(trimPrompt(state)).toEqual({ seat: "p2", min: 2, max: 2, candidates: 7 });
@@ -458,7 +562,11 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
     state = withSide(state, "p1", {
       bench: state.players.p1.bench.map((b, i) => (i === 5 ? { ...b, energy: [energy.uid] } : b)),
     });
-    state = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", JAMMING_TOWER) }).state;
+    state = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", JAMMING_TOWER),
+    }).state;
     const trimmed = trimLast(state, "p1", 1);
     const row = trimmed.events.find((e) => e.type === "BENCH_TRIMMED");
     expect(row).toEqual({
@@ -467,7 +575,9 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
       uids: [lastBody.stack[0]],
       discarded: [lastBody.stack[0], energy.uid],
     });
-    expect(trimmed.state.players.p1.discard).toEqual(expect.arrayContaining([lastBody.stack[0], energy.uid]));
+    expect(trimmed.state.players.p1.discard).toEqual(
+      expect.arrayContaining([lastBody.stack[0], energy.uid]),
+    );
   });
 
   it("a Bench already at 5 is not asked anything", () => {
@@ -478,7 +588,11 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
       p1Hand: [JAMMING_TOWER],
       stadium: { id: UNDERDEPTHS, owner: "p2" },
     });
-    state = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", JAMMING_TOWER) }).state;
+    state = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", JAMMING_TOWER),
+    }).state;
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p1" });
   });
 
@@ -489,7 +603,11 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
       p1Hand: [JAMMING_TOWER],
       stadium: { id: UNDERDEPTHS, owner: "p1" },
     });
-    state = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", JAMMING_TOWER) }).state;
+    state = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", JAMMING_TOWER),
+    }).state;
     const short = applyAction(state, {
       type: "resolveEffect",
       seat: "p1",
@@ -515,7 +633,11 @@ describe("D577 §5 — the Stadium DISCARDED by a program: owner-first trims at 
       p1Hand: [MEGATON_BLOWER],
       stadium: { id: UNDERDEPTHS, owner: "p2" },
     });
-    state = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", MEGATON_BLOWER) }).state;
+    state = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", MEGATON_BLOWER),
+    }).state;
     expect(state.stadium).toBeNull();
     expect(trimPrompt(state).seat).toBe("p2");
     state = trimLast(state, "p2", 1).state;
@@ -556,7 +678,9 @@ describe("D577 §5 — the Stadium DISCARDED by a program: owner-first trims at 
       { kind: "benchTrim", seat: "p2" },
       { kind: "benchTrim", seat: "p1" },
     ]);
-    expect(benchTrimStages(state, "p1", [{ kind: "benchTrim", seat: "p1" }])).toEqual([{ kind: "benchTrim", seat: "p2" }]);
+    expect(benchTrimStages(state, "p1", [{ kind: "benchTrim", seat: "p1" }])).toEqual([
+      { kind: "benchTrim", seat: "p2" },
+    ]);
   });
 });
 
@@ -571,7 +695,14 @@ describe("D577 §6 — the last Tera Pokémon LEAVES PLAY (R-AZ2), through every
     const attacked = run(state, { type: "attack", seat: "p1", index: 0 });
     state = attacked.state;
     expect(state.phase.kind).toBe("ko:takePrizes");
-    expect(state.pending.map((s) => s.kind)).toEqual(["takePrizes", "promote", "benchTrim", "endTurn", "checkup", "startTurn"]);
+    expect(state.pending.map((s) => s.kind)).toEqual([
+      "takePrizes",
+      "promote",
+      "benchTrim",
+      "endTurn",
+      "checkup",
+      "startTurn",
+    ]);
     state = run(state, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1] }).state;
     expect(state.phase.kind).toBe("ko:promote");
     state = run(state, { type: "promote", seat: "p2", benchIndex: 0 }).state;
@@ -583,7 +714,12 @@ describe("D577 §6 — the last Tera Pokémon LEAVES PLAY (R-AZ2), through every
   });
 
   it("no trim when the Bench is at 5 after the promotion", () => {
-    let state = table({ p1Active: HITTER, p2Active: TERA_2, p2Bench: fillers(6), stadium: { id: UNDERDEPTHS, owner: "p1" } });
+    let state = table({
+      p1Active: HITTER,
+      p2Active: TERA_2,
+      p2Bench: fillers(6),
+      stadium: { id: UNDERDEPTHS, owner: "p1" },
+    });
     state = run(state, { type: "attack", seat: "p1", index: 0 }).state;
     expect(state.pending.some((s) => s.kind === "benchTrim")).toBe(true);
     state = run(state, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1] }).state;
@@ -629,7 +765,10 @@ describe("D577 §6 — the last Tera Pokémon LEAVES PLAY (R-AZ2), through every
       stadium: { id: UNDERDEPTHS, owner: "p1" },
     });
     // p1's turn 2 is its FIRST turn (§4/§10): pass twice to reach turn 4.
-    state = run(run(state, { type: "endTurn", seat: "p1" }).state, { type: "endTurn", seat: "p2" }).state;
+    state = run(run(state, { type: "endTurn", seat: "p1" }).state, {
+      type: "endTurn",
+      seat: "p2",
+    }).state;
     state = run(state, {
       type: "evolve",
       seat: "p1",
@@ -648,7 +787,11 @@ describe("D577 §6 — the last Tera Pokémon LEAVES PLAY (R-AZ2), through every
       p1Hand: [SCOOP_UP_CYCLONE],
       stadium: { id: UNDERDEPTHS_2, owner: "p2" },
     });
-    state = run(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", SCOOP_UP_CYCLONE) }).state;
+    state = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", SCOOP_UP_CYCLONE),
+    }).state;
     state = run(state, {
       type: "resolveEffect",
       seat: "p1",
@@ -661,7 +804,12 @@ describe("D577 §6 — the last Tera Pokémon LEAVES PLAY (R-AZ2), through every
   });
 
   it("another Tera Pokémon still in play keeps the 8", () => {
-    let state = table({ p1Active: HITTER, p2Active: TERA_2, p2Bench: [TERA, ...fillers(6)], stadium: { id: UNDERDEPTHS, owner: "p1" } });
+    let state = table({
+      p1Active: HITTER,
+      p2Active: TERA_2,
+      p2Bench: [TERA, ...fillers(6)],
+      stadium: { id: UNDERDEPTHS, owner: "p1" },
+    });
     state = run(state, { type: "attack", seat: "p1", index: 0 }).state;
     expect(state.pending.some((s) => s.kind === "benchTrim")).toBe(false);
   });
@@ -677,7 +825,10 @@ describe("D577 §7 — the two 'any number' Bench writers reach an 8-Bench (BENC
       stadium: { id: UNDERDEPTHS, owner: "p2" },
     });
     // p1's turn 2 is its first turn (§10): pass twice, then hand p2 seven copies of one Basic.
-    state = run(run(state, { type: "endTurn", seat: "p1" }).state, { type: "endTurn", seat: "p2" }).state;
+    state = run(run(state, { type: "endTurn", seat: "p1" }).state, {
+      type: "endTurn",
+      seat: "p2",
+    }).state;
     const p2 = state.players.p2;
     state = withSide(state, "p2", {
       hand: [],
@@ -694,7 +845,11 @@ describe("D577 §7 — the two 'any number' Bench writers reach an 8-Bench (BENC
       target: { spot: "active" },
     }).state;
     if (state.phase.kind === "effect:choose" && state.phase.prompt.kind === "confirm") {
-      state = run(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } }).state;
+      state = run(state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: true },
+      }).state;
     }
     if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards") {
       throw new Error(`expected the chooseCards offer, got ${state.phase.kind}`);
@@ -703,12 +858,20 @@ describe("D577 §7 — the two 'any number' Bench writers reach an 8-Bench (BENC
     expect(state.phase.prompt.candidates).toHaveLength(7);
     expect(state.phase.prompt.max).toBe(7);
     const picks = [...state.phase.prompt.candidates];
-    state = run(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: picks } }).state;
+    state = run(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: picks },
+    }).state;
     expect(state.players.p2.bench).toHaveLength(8);
   });
 
   it("Lillie's Comfey 'Inviting Flowers' benches up to 8 with a Tera Pokémon in play", () => {
-    let state = table({ p1Active: COMFEY, p1Bench: [TERA], stadium: { id: UNDERDEPTHS, owner: "p1" } });
+    let state = table({
+      p1Active: COMFEY,
+      p1Bench: [TERA],
+      stadium: { id: UNDERDEPTHS, owner: "p1" },
+    });
     state = run(state, { type: "attack", seat: "p1", index: 0 }).state;
     if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards") {
       throw new Error(`expected the search, got ${state.phase.kind}`);
@@ -716,7 +879,11 @@ describe("D577 §7 — the two 'any number' Bench writers reach an 8-Bench (BENC
     // `max: BENCH_CEILING`, clamped to the 7 free slots (0.460: `max: BENCH_MAX`, so 5).
     expect(state.phase.prompt.max).toBe(7);
     const picks = state.phase.prompt.candidates.slice(0, 7);
-    state = run(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [...picks] } }).state;
+    state = run(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [...picks] },
+    }).state;
     expect(state.players.p1.bench).toHaveLength(8);
   });
 });

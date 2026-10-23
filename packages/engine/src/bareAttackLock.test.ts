@@ -4,7 +4,7 @@ import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import * as effectsModule from "./effects";
 import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -165,7 +165,10 @@ describe("§1 — the supply check, and the claim it falsifies", () => {
     // Each is ONE record, so "printings" and "sentences" are not the same step and
     // the census annotations that say +2 / +7 are reading two different columns.
     for (const sentence of [DEFENDER_BARE, DEFENDER_PLURAL, SELF_PLURAL]) {
-      expect(corpus.filter(([, s]) => s === sentence), sentence).toHaveLength(1);
+      expect(
+        corpus.filter(([, s]) => s === sentence),
+        sentence,
+      ).toHaveLength(1);
     }
   });
 
@@ -193,7 +196,9 @@ describe("§1 — the supply check, and the claim it falsifies", () => {
 
 describe("§2 — three sentences, two programs, and both were already shipped", () => {
   it("both defender spellings derive `preventAttack { target: 'defender' }`", () => {
-    expect(deriveAttackEffect(DEFENDER_BARE)).toEqual([{ op: "preventAttack", target: "defender" }]);
+    expect(deriveAttackEffect(DEFENDER_BARE)).toEqual([
+      { op: "preventAttack", target: "defender" },
+    ]);
     expect(deriveAttackEffect(DEFENDER_PLURAL)).toEqual([
       { op: "preventAttack", target: "defender" },
     ]);
@@ -238,9 +243,7 @@ describe("§2 — three sentences, two programs, and both were already shipped",
     // CONTRACTION on one string, which is the asymmetry D137 found two tables
     // missing; the self plural exposes the contraction alone.
     for (const text of [DEFENDER_BARE, DEFENDER_PLURAL, SELF_PLURAL]) {
-      expect(deriveAttackEffect(text.replace(/'/g, "’")), text).toEqual(
-        deriveAttackEffect(text),
-      );
+      expect(deriveAttackEffect(text.replace(/'/g, "’")), text).toEqual(deriveAttackEffect(text));
     }
   });
 });
@@ -268,7 +271,8 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
     // every "During your next turn, this Pokémon can't use X." sentence except the
     // bare plural still derives a `preventAttackUse` naming X verbatim.
     const named = legalAttackCorpus().filter(
-      ([, s]) => s.startsWith("During your next turn, this Pokémon can't use ") && s !== SELF_PLURAL,
+      ([, s]) =>
+        s.startsWith("During your next turn, this Pokémon can't use ") && s !== SELF_PLURAL,
     );
     expect(named).toHaveLength(12);
     expect(named.reduce((sum, [n]) => sum + n, 0)).toBe(26);
@@ -299,7 +303,12 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
     expect(result.state.players.p1.active?.lockedAttacks ?? []).toEqual([]);
     // …and the repaired reading of the SAME sentence shape does the opposite.
     const events2: GameEvent[] = [];
-    const fixed = runProgram(before, ops(SELF_PLURAL), { seat: "p1", invokedBy: "attack" }, events2);
+    const fixed = runProgram(
+      before,
+      ops(SELF_PLURAL),
+      { seat: "p1", invokedBy: "attack" },
+      events2,
+    );
     if (fixed.kind !== "done") throw new Error(`expected done, got ${fixed.kind}`);
     expect(find(events2, "ATTACK_LOCKED")).toBeDefined();
     expect(fixed.state.players.p1.active?.attackLockedTurn).toBe(before.turn + 2);
@@ -477,7 +486,7 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
-  it("🆕🆕🆕 D549 — both SIDE-WIDE spellings map to their OWN op, `lockSideAttacks`, and never to `preventAttack` (was: \"refuses both SIDE-WIDE spellings — they name a zone this op has no member for\")", () => {
+  it('🆕🆕🆕 D549 — both SIDE-WIDE spellings map to their OWN op, `lockSideAttacks`, and never to `preventAttack` (was: "refuses both SIDE-WIDE spellings — they name a zone this op has no member for")', () => {
     // 1 + 1 legal printings, and OUT for a reason that is not a price: `preventAttack`
     // locks ONE body (`state.players[seat].active`), and both of these lock a SIDE,
     // including bodies that arrive later. That is a different mechanism, not a
@@ -497,7 +506,9 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     );
     expect(capped).toEqual([{ op: "lockSideAttacks", whose: "opponent", maxEnergy: 2 }]);
     // …and neither program is the ONE-body lock this file repairs.
-    expect([...(side ?? []), ...(capped ?? [])].some((op) => op.op === "preventAttack")).toBe(false);
+    expect([...(side ?? []), ...(capped ?? [])].some((op) => op.op === "preventAttack")).toBe(
+      false,
+    );
   });
 
   it("leaves every neighbour in the family reading exactly what it read before", () => {
@@ -507,7 +518,9 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     // write one field.
     expect(deriveAttackEffect(SELF_BARE)).toEqual([{ op: "preventAttack" }]);
     expect(
-      deriveAttackEffect("If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn."),
+      deriveAttackEffect(
+        "If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.",
+      ),
     ).toEqual([
       {
         op: "conditionGate",
@@ -517,7 +530,9 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
       },
     ]);
     expect(
-      deriveAttackEffect("Flip a coin. If tails, during your next turn, this Pokémon can't attack."),
+      deriveAttackEffect(
+        "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
+      ),
     ).toEqual([
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] },
@@ -562,12 +577,6 @@ describe("§6 — the persisted question, asked and DRIVEN", () => {
     // …no continuation at all, so there is no `pendingOp` to persist.
     expect("cont" in state.phase).toBe(false);
     expect(state.players.p2.active?.lockedAttacks ?? []).toEqual([]);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
-    // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

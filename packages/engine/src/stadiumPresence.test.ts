@@ -209,10 +209,7 @@ const CEILING = [] as const;
     trailing anaphoric requirement split, and `OPTIONAL_DAMAGE_BOOST` with its two
     halves swapped). **THE CEILING WAS PRICED RIGHT AND CLIMBED IN TWO STEPS, WHICH
     IS WHAT A PRICE IS FOR** (D178: annotate provenance, never overwrite it). */
-const TAKEN_BY_D380 = [
-  "Discard a Stadium in play.",
-  "You may discard a Stadium in play.",
-] as const;
+const TAKEN_BY_D380 = ["Discard a Stadium in play.", "You may discard a Stadium in play."] as const;
 /** 🛑🛑 🆕🆕 **D418 — THIS LIST IS NOW EMPTY, AND ITS LAST ENTRY LEFT AT D417.**
     Eternatus `sv08-141`'s *"Discard a Stadium in play. If you can't, this attack does
     nothing."* moved to `TAKEN_SINCE`: `deriveAttackCancelRequirement` is the trailing
@@ -489,7 +486,9 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     }
     expect(CEILING).toHaveLength(0);
     const tingLu = TAKEN_SINCE[TAKEN_SINCE.length - 1] ?? "";
-    expect(tingLu).toContain("also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium.");
+    expect(tingLu).toContain(
+      "also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium.",
+    );
     expect(corpus().filter(([, s]) => s === tingLu)).toEqual([[1, tingLu]]);
     expect(readByAny(tingLu)).toBe(true);
     expect(deriveAttackEffect(tingLu)).not.toBeNull();
@@ -647,9 +646,10 @@ describe("§2 — the two keys, the printed BYTES, and two tables that must not 
       "your opponent has a Stadium in play",
       "there is no Stadium card in play",
     ]) {
-      expect(deriveAttackDamageBonus(`If ${clause}, this attack does 70 more damage.`), clause).toBe(
-        null,
-      );
+      expect(
+        deriveAttackDamageBonus(`If ${clause}, this attack does 70 more damage.`),
+        clause,
+      ).toBe(null);
       expect(deriveAttackRequirement(`If ${clause}, this attack does nothing.`), clause).toBeNull();
     }
   });
@@ -696,7 +696,9 @@ describe("§3 — PRESENCE vs OWNERSHIP on the shared zone, read from BOTH seats
     ];
     let disagreements = 0;
     for (const [label, state] of boards) {
-      expect(conditionHolds(state, "p1", PRESENT), label).toBe(conditionHolds(state, "p2", PRESENT));
+      expect(conditionHolds(state, "p1", PRESENT), label).toBe(
+        conditionHolds(state, "p2", PRESENT),
+      );
       expect(conditionHolds(state, "p1", PRESENT), label).toBe(state.stadium !== null);
       if (conditionHolds(state, "p1", OWNED) !== conditionHolds(state, "p2", OWNED)) {
         disagreements += 1;

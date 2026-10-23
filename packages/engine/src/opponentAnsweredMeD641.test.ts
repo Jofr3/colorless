@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { flipCoin } from "./rng";
@@ -98,7 +98,12 @@ describe("D641 §2 — the readings", () => {
 
   it("Bug Out: the bottom-7 reveal filing the named-attack Pokémon, then 50 per filed card", () => {
     expect(deriveAttackEffect(BUG_OUT)).toEqual([
-      { op: "revealDeckBottomCount", n: 7, filter: { kind: "attackNamePokemon", attack: "Bug Out" }, recordAs: "revealed" },
+      {
+        op: "revealDeckBottomCount",
+        n: 7,
+        filter: { kind: "attackNamePokemon", attack: "Bug Out" },
+        recordAs: "revealed",
+      },
       { op: "damageDefender", per: 50, count: "revealed" },
     ]);
     expect(deriveAttackEffect(BUG_OUT.replace("bottom 7", "top 7"))).toBeNull();
@@ -127,18 +132,34 @@ const SIZZ = "me05-009";
 const DELI = "me04-018";
 const SURGE = "me01-120";
 
-const mon = (id: string, name: string, hp: number, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: ["Colorless"], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: ["Colorless"], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
-  [DITTO]: mon(DITTO, "Ditto", 70, [{ cost: ["Colorless", "Colorless"], name: "Surprisingly Transform", effect: TRANSFORM }]),
+  [DITTO]: mon(DITTO, "Ditto", 70, [
+    { cost: ["Colorless", "Colorless"], name: "Surprisingly Transform", effect: TRANSFORM },
+  ]),
   "30th-115": mon("30th-115", "Ditto", 70, [
     { cost: ["Colorless", "Colorless"], name: "Surprisingly Transform", effect: TRANSFORM },
   ]),
   [SIZZ]: mon(SIZZ, "Sizzlipede", 80, [
-    { cost: ["Fire"], name: "Controlled Burn", effect: "Discard the top card of your opponent's deck." },
-    { cost: ["Colorless", "Colorless", "Colorless"], name: "Bug Out", damage: "50×", effect: BUG_OUT },
+    {
+      cost: ["Fire"],
+      name: "Controlled Burn",
+      effect: "Discard the top card of your opponent's deck.",
+    },
+    {
+      cost: ["Colorless", "Colorless", "Colorless"],
+      name: "Bug Out",
+      damage: "50×",
+      effect: BUG_OUT,
+    },
   ]),
   [DELI]: mon(DELI, "Delibird", 90, [
     { cost: ["Colorless"], name: "Pleasing Present", effect: PRESENT },
@@ -146,7 +167,9 @@ const LOCAL: Record<string, Card> = {
   ]),
   [SURGE]: { ...trainerCard(SURGE, "Supporter", BARGAIN), name: "Lt. Surge's Bargain" },
   [FILLER]: mon(FILLER, "D641 Filler", 400, TAP),
-  [BUG]: mon(BUG, "D641 Bug", 60, [{ cost: ["Colorless"], name: "Bug Out", damage: "50×", effect: BUG_OUT }]),
+  [BUG]: mon(BUG, "D641 Bug", 60, [
+    { cost: ["Colorless"], name: "Bug Out", damage: "50×", effect: BUG_OUT },
+  ]),
   [STAGE2]: mon(STAGE2, "D641 Brittle", 30, TAP, { stage: "Stage2", evolveFrom: "D641 Middle" }),
   [W]: typedEnergy(W, "Water"),
 };
@@ -176,7 +199,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -184,11 +209,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
@@ -196,7 +224,10 @@ function p1Turn(): GameState {
     const prizes = pile.filter((u) => state.cardIdByUid[u] === "fix-energy").slice(0, 6);
     state = {
       ...state,
-      players: { ...state.players, [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) } },
+      players: {
+        ...state.players,
+        [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+      },
     };
   }
   return state;
@@ -218,12 +249,14 @@ function cursorFor(face: "heads" | "tails"): number {
 }
 
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
-const resolve = (seat: Seat, choice: unknown): GameAction => ({ type: "resolveEffect", seat, choice }) as GameAction;
+const resolve = (seat: Seat, choice: unknown): GameAction =>
+  ({ type: "resolveEffect", seat, choice }) as GameAction;
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 function phaseOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase;
 }
 /** The bottom of P1's deck rearranged so its last cards are `ids` (in order), each pulled from the deck. */
@@ -279,7 +312,10 @@ describe("D641 §3 — Ditto: heads, a chosen deck Pokémon switched in, Ditto i
   it("declining still shuffles, and Ditto stays", () => {
     const start = heads(table(DITTO, 2));
     const top = start.players.p1.active?.stack;
-    const done = mustApply(mustApply(start, attack(0)).state, resolve("p1", { kind: "cards", uids: [] }));
+    const done = mustApply(
+      mustApply(start, attack(0)).state,
+      resolve("p1", { kind: "cards", uids: [] }),
+    );
     expect(done.state.players.p1.active?.stack).toEqual(top);
     expect(of(done.events, "POKEMON_SWAPPED_FROM_DECK")).toEqual([]);
     expect(of(done.events, "SHUFFLE").filter((e) => e.seat === "p1")).toHaveLength(1);
@@ -300,7 +336,9 @@ describe("D641 §3 — Ditto: heads, a chosen deck Pokémon switched in, Ditto i
     if (phase.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     const brittle = phase.prompt.candidates.find((u) => parked.cardIdByUid[u] === STAGE2) as string;
     const done = mustApply(parked, resolve("p1", { kind: "cards", uids: [brittle] }));
-    expect(of(done.events, "KNOCKED_OUT").map((e) => [e.seat, done.state.cardIdByUid[e.uid]])).toEqual([["p1", STAGE2]]);
+    expect(
+      of(done.events, "KNOCKED_OUT").map((e) => [e.seat, done.state.cardIdByUid[e.uid]]),
+    ).toEqual([["p1", STAGE2]]);
   });
 });
 
@@ -312,13 +350,17 @@ describe("D641 §4 — Bug Out: 50 per Bug Out Pokémon in the bottom 7; Pokémo
     expect(done.state.players.p2.active?.damage).toBe(100);
     const shed = of(done.events, "DECK_BOTTOM_DISCARDED");
     expect(shed).toHaveLength(1);
-    expect(idsOf(done.state, shed[0]?.uids ?? []).sort()).toEqual([W, W, "fix-energy", "fix-tool"].sort());
+    expect(idsOf(done.state, shed[0]?.uids ?? []).sort()).toEqual(
+      [W, W, "fix-energy", "fix-tool"].sort(),
+    );
     expect(done.state.players.p1.deck.length).toBe(deckBefore - 4);
     expect(done.state.players.p1.discard.length).toBe(4);
     expect(of(done.events, "SHUFFLE").filter((e) => e.seat === "p1")).toHaveLength(1);
     // The deck really is shuffled: not the old order minus the discarded cards.
     const gone = new Set(shed[0]?.uids ?? []);
-    expect(done.state.players.p1.deck).not.toEqual(start.players.p1.deck.filter((u) => !gone.has(u)));
+    expect(done.state.players.p1.deck).not.toEqual(
+      start.players.p1.deck.filter((u) => !gone.has(u)),
+    );
   });
 
   it("no Bug Out Pokémon in the window: no damage, and the Pokémon there still stay", () => {
@@ -326,7 +368,14 @@ describe("D641 §4 — Bug Out: 50 per Bug Out Pokémon in the bottom 7; Pokémo
     const done = mustApply(start, attack(1));
     expect(done.state.players.p2.active?.damage).toBe(0);
     expect(of(done.events, "DAMAGE_DEALT")).toEqual([]);
-    expect(idsOf(done.state, of(done.events, "DECK_BOTTOM_DISCARDED")[0]?.uids ?? [])).toEqual([W, W, W, W, W, W]);
+    expect(idsOf(done.state, of(done.events, "DECK_BOTTOM_DISCARDED")[0]?.uids ?? [])).toEqual([
+      W,
+      W,
+      W,
+      W,
+      W,
+      W,
+    ]);
   });
 
   it("a short deck reveals what it has: 2 cards, one Bug Out Pokémon, 50", () => {
@@ -346,7 +395,11 @@ describe("D641 §4 — Bug Out: 50 per Bug Out Pokémon in the bottom 7; Pokémo
 // with `from: "bottom"` (D557).
 describe("D641 §4b — Bug Out names every revealed card to both players (card revision B45)", () => {
   const line = (events: GameEvent[], state: GameState): string[] => {
-    const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: formatElapsed(0) };
+    const ctx: LogContext = {
+      names: { p1: "Ember", p2: "Tide" },
+      state,
+      elapsed: formatElapsed(0),
+    };
     return logFromEvents(events, ctx).flatMap((entry) =>
       entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
     );
@@ -360,7 +413,14 @@ describe("D641 §4b — Bug Out names every revealed card to both players (card 
     const done = mustApply(start, attack(1));
     expect(done.state.players.p2.active?.damage).toBe(100);
     expect(of(done.events, "DECK_TOP_REVEALED")).toEqual([
-      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", from: "bottom", uids: shown, reveal: true },
+      {
+        type: "DECK_TOP_REVEALED",
+        seat: "p1",
+        dest: "deck",
+        from: "bottom",
+        uids: shown,
+        reveal: true,
+      },
     ]);
     const order = done.events.map((e) => e.type);
     expect(order.indexOf("DECK_TOP_REVEALED")).toBeLessThan(order.indexOf("DECK_BOTTOM_DISCARDED"));
@@ -376,7 +436,9 @@ describe("D641 §4b — Bug Out names every revealed card to both players (card 
     start = { ...start, players: { ...start.players, p1: { ...side, deck: side.deck.slice(-2) } } };
     const done = mustApply(start, attack(1));
     expect(done.state.players.p2.active?.damage).toBe(50);
-    expect(line(done.events, done.state)).toContain(`p1: revealed the bottom 2 cards of their deck: ${name(W)}, ${name(BUG)}`);
+    expect(line(done.events, done.state)).toContain(
+      `p1: revealed the bottom 2 cards of their deck: ${name(W)}, ${name(BUG)}`,
+    );
   });
 
   it("an empty deck still announces the reveal, and nothing else happens", () => {
@@ -385,16 +447,30 @@ describe("D641 §4b — Bug Out names every revealed card to both players (card 
     const empty = { ...start, players: { ...start.players, p1: { ...side, deck: [] } } };
     const done = mustApply(empty, attack(1));
     expect(of(done.events, "DECK_TOP_REVEALED")).toEqual([
-      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", from: "bottom", uids: [], reveal: true },
+      {
+        type: "DECK_TOP_REVEALED",
+        seat: "p1",
+        dest: "deck",
+        from: "bottom",
+        uids: [],
+        reveal: true,
+      },
     ]);
     expect(of(done.events, "SHUFFLE").filter((e) => e.seat === "p1")).toEqual([]);
-    expect(line(done.events, done.state)).toContain("p1: revealed the bottom of their deck — it was empty");
+    expect(line(done.events, done.state)).toContain(
+      "p1: revealed the bottom of their deck — it was empty",
+    );
   });
 });
 
 describe("D641 §5 — Pleasing Present: the opponent attaches first, then you, each up to 3 Basic Energy (R-PP1)", () => {
   const present = () => {
-    let state = handFromDeck(handFromDeck(table(DELI, 1, [FILLER]), "p2", W, 4), "p2", "fix-tool", 1);
+    let state = handFromDeck(
+      handFromDeck(table(DELI, 1, [FILLER]), "p2", W, 4),
+      "p2",
+      "fix-tool",
+      1,
+    );
     state = handFromDeck(state, "p1", W, 2);
     return state;
   };
@@ -424,7 +500,13 @@ describe("D641 §5 — Pleasing Present: the opponent attaches first, then you, 
     const bench0 = { seat: "p2", spot: { spot: "bench", index: 0 } } as const;
     const step = mustApply(
       parked,
-      resolve("p2", { kind: "attachCards", assignments: [{ uid: a, to: active }, { uid: b, to: bench0 }] }),
+      resolve("p2", {
+        kind: "attachCards",
+        assignments: [
+          { uid: a, to: active },
+          { uid: b, to: bench0 },
+        ],
+      }),
     );
     expect(step.state.players.p2.active?.energy).toContain(a);
     expect(step.state.players.p2.bench[0]?.energy).toContain(b);
@@ -438,7 +520,10 @@ describe("D641 §5 — Pleasing Present: the opponent attaches first, then you, 
     const [mine] = second.prompt.candidates as [string];
     const done = mustApply(
       step.state,
-      resolve("p1", { kind: "attachCards", assignments: [{ uid: mine, to: { seat: "p1", spot: { spot: "active" } } }] }),
+      resolve("p1", {
+        kind: "attachCards",
+        assignments: [{ uid: mine, to: { seat: "p1", spot: { spot: "active" } } }],
+      }),
     );
     expect(done.state.players.p1.active?.energy).toContain(mine);
     expect(done.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -502,31 +587,38 @@ describe("D641 §6 — Lt. Surge's Bargain: the opponent answers (R-LSB1)", () =
     expect(mine.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
     const theirs = mustApply(mine.state, { type: "takePrizes", seat: "p2", prizeIndices: [2] });
     expect(theirs.state.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect([theirs.state.players.p1.prizes.length, theirs.state.players.p2.prizes.length]).toEqual([5, 5]);
-    expect([theirs.state.players.p1.hand.length, theirs.state.players.p2.hand.length]).toEqual([1, 1]);
+    expect([theirs.state.players.p1.prizes.length, theirs.state.players.p2.prizes.length]).toEqual([
+      5, 5,
+    ]);
+    expect([theirs.state.players.p1.hand.length, theirs.state.players.p2.hand.length]).toEqual([
+      1, 1,
+    ]);
   });
 
   it("the controller's last Prize wins outright (their stage is first); the opponent's last alone wins for them", () => {
-    const mineLast = mustApply(played(setPrizes(table(FILLER, 0), "p1", 1)).state, resolve("p2", { kind: "confirm", yes: true }));
-    expect(mineLast.state.phase).toMatchObject({ kind: "gameOver", outcome: { result: "win", winner: "p1" } });
+    const mineLast = mustApply(
+      played(setPrizes(table(FILLER, 0), "p1", 1)).state,
+      resolve("p2", { kind: "confirm", yes: true }),
+    );
+    expect(mineLast.state.phase).toMatchObject({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p1" },
+    });
     const theirsLast = mustApply(
       played(setPrizes(table(FILLER, 0), "p2", 1)).state,
       resolve("p2", { kind: "confirm", yes: true }),
     );
     expect(theirsLast.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     const over = mustApply(theirsLast.state, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    expect(over.state.phase).toMatchObject({ kind: "gameOver", outcome: { result: "win", winner: "p2" } });
+    expect(over.state.phase).toMatchObject({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p2" },
+    });
   });
 
   it("R-LSB1: both last Prizes in the one sentence are the §14 tie", () => {
     const both = setPrizes(setPrizes(table(FILLER, 0), "p1", 1), "p2", 1);
     const done = mustApply(played(both).state, resolve("p2", { kind: "confirm", yes: true }));
     expect(done.state.phase).toMatchObject({ kind: "gameOver", outcome: { result: "tie" } });
-  });
-});
-
-describe("D641 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

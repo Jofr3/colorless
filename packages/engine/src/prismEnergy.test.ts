@@ -78,11 +78,7 @@ import {
 /** Setup, then open P1's turn 2 (P2 went first and passed) — D262's opener,
     reused whole. Seed-free: nothing in this cast flips a coin. */
 function p1Turn2(seed: number): GameState {
-  const state = driveSetup(
-    seed,
-    { p1: PRISM_ENERGY_DECK, p2: PRISM_ENERGY_DECK },
-    { first: "p2" },
-  );
+  const state = driveSetup(seed, { p1: PRISM_ENERGY_DECK, p2: PRISM_ENERGY_DECK }, { first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -207,10 +203,7 @@ describe("D300 §2 — provision is gated on the HOLDER's printed stage (§6.3)"
     const stage2 = holding(6, "fix-neo-stage2", "fix-prism-energy");
     expect(providedEnergy(stage2, activeOf(stage2, "p1"))).toEqual(["Colorless"]);
     const stage2Neo = holding(7, "fix-neo-stage2", "fix-neo-upper-energy");
-    expect(providedEnergy(stage2Neo, activeOf(stage2Neo, "p1"))).toEqual([
-      ANY_ENERGY,
-      ANY_ENERGY,
-    ]);
+    expect(providedEnergy(stage2Neo, activeOf(stage2Neo, "p1"))).toEqual([ANY_ENERGY, ANY_ENERGY]);
   });
 
   it("promotes EVERY copy on the same Basic — the condition is about the HOLDER", () => {

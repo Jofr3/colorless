@@ -534,8 +534,9 @@ describe("D291 §1 — the printing, the classifier and the ACE SPEC census", ()
     expect(programFor(GENESECT)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
     // And the CLASS sibling keeps its own list — the two rows stay disjoint.
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentHandPlay).toEqual(["Stadium"]);
-    expect(programFor(COPPERAJAH)?.passive?.preventOpponentAceSpecPlayWhileToolAttached)
-      .toBeUndefined();
+    expect(
+      programFor(COPPERAJAH)?.passive?.preventOpponentAceSpecPlayWhileToolAttached,
+    ).toBeUndefined();
     expect(programFor(GENESECT)).not.toBe(programFor(COPPERAJAH));
   });
 
@@ -744,7 +745,10 @@ describe("D291 §4 — the Stadium and Tool surfaces, each with its own control"
     // The inverse control, and the reason the two fields are two. On a board
     // whose barrier is COPPERAJAH the ACE SPEC Stadium is refused (its CLASS is
     // barred) while the ACE SPEC Item and the ACE SPEC Tool are free.
-    const state = turnOf(board(SEEDS[0], "p1", "p1", { where: "active", tool: true, id: COPPERAJAH }), "p2");
+    const state = turnOf(
+      board(SEEDS[0], "p1", "p1", { where: "active", tool: true, id: COPPERAJAH }),
+      "p2",
+    );
     expect(play(state, "p2", ACE_STADIUM)).toBe("HAND_PLAY_BLOCKED");
     expect(play(state, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
     expect(play(state, "p2", ACE_ITEM)).toBe("OK");
@@ -862,13 +866,29 @@ describe("D292 §5 — the ACE SPEC Special Energy is barred, and it is the RARI
     // Driven rather than asserted, because "for free" is a claim about code.
     const seed = SEEDS[0];
     // No Tool on the holder → no window → the Energy lands.
-    expect(attachEnergy(turnOf(board(seed, "p1", "p1", { where: "active", tool: false }), "p2"), "p2", ACE_ENERGY)).toBe("OK");
+    expect(
+      attachEnergy(
+        turnOf(board(seed, "p1", "p1", { where: "active", tool: false }), "p2"),
+        "p2",
+        ACE_ENERGY,
+      ),
+    ).toBe("OK");
     // A BENCHED armed holder bars it — the loop, one surface over.
-    expect(attachEnergy(turnOf(board(seed, "p1", "p1", { where: "bench", tool: true }), "p2"), "p2", ACE_ENERGY)).toBe(
-      "HAND_PLAY_BLOCKED",
-    );
+    expect(
+      attachEnergy(
+        turnOf(board(seed, "p1", "p1", { where: "bench", tool: true }), "p2"),
+        "p2",
+        ACE_ENERGY,
+      ),
+    ).toBe("HAND_PLAY_BLOCKED");
     // No holder at all → nothing bars anything.
-    expect(attachEnergy(turnOf(board(seed, "p1", "p1", { where: "none", tool: true }), "p2"), "p2", ACE_ENERGY)).toBe("OK");
+    expect(
+      attachEnergy(
+        turnOf(board(seed, "p1", "p1", { where: "none", tool: true }), "p2"),
+        "p2",
+        ACE_ENERGY,
+      ),
+    ).toBe("OK");
     // §9 — Ting-Lu ex silences the one damaged Active holder and the Energy lands.
     let locked = board(seed, "p1", "p1", ARMED);
     locked = turnOf(setActiveFromDeck(locked, "p2", TING_LU), "p2");
@@ -960,7 +980,12 @@ describe("D291 §7 — the bar is DERIVED, and the wire greys the row it should"
     const state = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p2");
     expect(play(state, "p2", ACE_ITEM)).toBe("HAND_PLAY_BLOCKED");
     for (const seat of ["p1", "p2"] as const) {
-      expect(state.handPlayLockedTurn[seat]).toEqual({ Item: null, Supporter: null, Stadium: null, evolve: null });
+      expect(state.handPlayLockedTurn[seat]).toEqual({
+        Item: null,
+        Supporter: null,
+        Stadium: null,
+        evolve: null,
+      });
       expect(Object.keys(state.handPlayLockedTurn[seat]).sort()).toEqual([
         "Item",
         "Stadium", // 🆕🆕🆕 D636 — the stamped `Stadium` key (Scorching Earth, MRV 44 → 45)
@@ -1010,17 +1035,28 @@ describe("D291 §7 — the bar is DERIVED, and the wire greys the row it should"
 
 /** The refusal's MESSAGE (or "OK"), for the three surfaces `play`/`attach`/
     `attachEnergy` reach — those helpers report the code only. */
-function refusal(state: GameState, seat: Seat, cardId: string, how: "play" | "tool" | "energy"): string {
+function refusal(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  how: "play" | "tool" | "energy",
+): string {
   const uid = handUid(state, seat, cardId);
   const action =
     how === "play"
       ? ({ type: "playTrainer", seat, uid } as const)
-      : ({ type: how === "tool" ? "attachTool" : "attachEnergy", seat, uid, target: { spot: "active" } } as const);
+      : ({
+          type: how === "tool" ? "attachTool" : "attachEnergy",
+          seat,
+          uid,
+          target: { spot: "active" },
+        } as const);
   const result = applyAction(deepFreeze(state), action);
   return result.ok ? "OK" : `${result.error.code}: ${result.error.message}`;
 }
 
-const ACE_SPEC_REASON = "HAND_PLAY_BLOCKED: your opponent prevents you from playing ACE SPEC cards from your hand";
+const ACE_SPEC_REASON =
+  "HAND_PLAY_BLOCKED: your opponent prevents you from playing ACE SPEC cards from your hand";
 
 describe("B14 §8 — the ACE Nullifier refusal names ACE SPEC cards, on every surface", () => {
   it("🛑 an Active Genesect with a Tool: Item, second Item, Stadium, Tool and Energy all say ACE SPEC", () => {
@@ -1049,10 +1085,13 @@ describe("B14 §8 — the ACE Nullifier refusal names ACE SPEC cards, on every s
     // Stadium is refused by it alone. The ACE SPEC Item is refused by Genesect alone.
     let state = board(SEEDS[2], "p1", "p1", { where: "active", tool: false, id: COPPERAJAH });
     state = benchFromDeck(state, "p1", GENESECT);
-    const at = state.players.p1.bench.findIndex((b) => state.cardIdByUid[b.stack[b.stack.length - 1] ?? ""] === GENESECT);
+    const at = state.players.p1.bench.findIndex(
+      (b) => state.cardIdByUid[b.stack[b.stack.length - 1] ?? ""] === GENESECT,
+    );
     expect(at).toBeGreaterThanOrEqual(0);
     state = turnOf(attachToolFromDeck(state, "p1", at, TOOL), "p2");
-    const STADIUM_REASON = "HAND_PLAY_BLOCKED: your opponent prevents you from playing Stadium cards from your hand";
+    const STADIUM_REASON =
+      "HAND_PLAY_BLOCKED: your opponent prevents you from playing Stadium cards from your hand";
     expect(refusal(state, "p2", STADIUM, "play")).toBe(STADIUM_REASON);
     expect(refusal(state, "p2", ACE_STADIUM, "play")).toBe(STADIUM_REASON);
     expect(refusal(state, "p2", ACE_ITEM, "play")).toBe(ACE_SPEC_REASON);

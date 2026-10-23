@@ -76,4 +76,3 @@ export const DEFAULT_FILTERS: Filters = {
   legalOnly: true,
   sort: "name",
 };
-

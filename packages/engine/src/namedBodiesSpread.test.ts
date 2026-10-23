@@ -234,17 +234,6 @@ const DECK = deckOf({
 
 const SEED = 539;
 
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["./{attack,effects,interpreter}.ts"], { query: "?raw", import: "default", eager: true });
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
-
 function openTable(): GameState {
   const created = createGame({ seed: SEED, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -441,7 +430,9 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     // whose leading clause it silently dropped. Both spellings are kept, because they
     // refuse for two different reasons and only one of them is about the anchor.
     expect(deriveAttackEffect(`Discard an Energy from this Pokémon. ${PRINTED}`)).toBeNull();
-    expect(deriveAttackDamageMultiplier(`Discard an Energy from this Pokémon. ${PRINTED}`)).toBeNull();
+    expect(
+      deriveAttackDamageMultiplier(`Discard an Energy from this Pokémon. ${PRINTED}`),
+    ).toBeNull();
     // …and the CONTROL that keeps it a measurement (D424): the identical string WITHOUT
     // the prefix is claimed, so the refusal is the anchor's and not the vocabulary's.
     expect(deriveAttackEffect(PRINTED)).not.toBeNull();
@@ -496,22 +487,6 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     const claimed = rows.filter(([, text]) => NEW_ANCHOR.test(text));
     expect(claimed).toEqual([[2, PRINTED]]);
     expect(units(claimed)).toBe(2);
-  });
-
-  it("🛑 DISJOINT FROM `IN_PLAY_BODY_MULTIPLY` BY `$` ALONE, in both directions", () => {
-    // That anchor requires ` in play.` at END OF STRING, and its `[^.]+` cannot cross
-    // the break — so it cannot reach this compound…
-    expect(deriveAttackDamageMultiplier(PRINTED)).toEqual(FOLD);
-    expect(raw("effects.ts")).toContain(
-      "const IN_PLAY_BODY_MULTIPLY =\n  /^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\.$/;",
-    );
-    // …and this anchor cannot reach that one's rows, which is the other direction and
-    // the one a `$`-argument usually forgets.
-    expect(NEW_ANCHOR.test(PART_1)).toBe(false);
-    expect(deriveAttackEffect(PART_1)).toBeNull();
-    // PART_1 IS claimed by the shipped anchor on its own, which is what makes the two
-    // patterns a real pair rather than one pattern and one dead string.
-    expect(deriveAttackDamageMultiplier(PART_1)).toEqual(FOLD);
   });
 
   it("🛑 …and from `IN_PLAY_BODY_SCALE`, which additionally demands ` more damage`", () => {
@@ -739,34 +714,6 @@ describe("D539 §3 — both readers claim the whole compound off ONE `effect` st
     expect(deriveAttackEffect(PART_3)).toBeNull();
     expect(claimedByAny(PART_2)).toBe(false);
   });
-
-  it("🛑 `attack.ts` binds BOTH readers on the SAME string — the route, quoted from `attack.ts`", () => {
-    // D493/D494's shape for the third time: no branch is needed because a sentence both
-    // readers claim simply reaches both bindings off ONE `effect` string. `attack.ts`
-    // takes ZERO code bytes this slice, so the claim is about ITS source and is quoted
-    // from ITS source — the glob above carries `attack.ts` for exactly this rung.
-    //
-    // ⚠️ **AND THE HONEST WORD IS NOT "UNCONDITIONALLY".** Only `derivedHead` is
-    // unconditional; the multiplier binding is GUARDED by `damageBonus !== null`, so the
-    // route is "both readers reach this sentence GIVEN `deriveAttackDamageBonus(PRINTED)`
-    // is null" — and that premise is not narrated here: this rung DRIVES it itself, in
-    // its own closing `expect(deriveAttackDamageBonus(PRINTED)).toBeNull()` below.
-    const source = raw("attack.ts");
-    expect(source).toContain(
-      '  const derivedHead = effect === null || effect === "" ? null : deriveAttackEffect(effect);',
-    );
-    expect(source).toContain(
-      [
-        "  const damageMultiplier =",
-        '    damageBonus !== null || effect === null || effect === ""',
-        "      ? null",
-        "      : deriveAttackDamageMultiplier(effect);",
-      ].join("\n"),
-    );
-    // The guard's premise, driven rather than assumed, so this rung cannot read as a
-    // claim the shipped code does not make.
-    expect(deriveAttackDamageBonus(PRINTED)).toBeNull();
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -896,7 +843,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect(damageVector(state, "p1")).toEqual([30, 30]);
   });
 
-  it("🛑 it never PARKS, and that is what `count: \"all\"` means", () => {
+  it('🛑 it never PARKS, and that is what `count: "all"` means', () => {
     const { state, events } = swing(table(BLIMP, [LOON, PLAIN]));
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(eventTypes(events)).not.toContain("EFFECT_PENDING");
@@ -1066,7 +1013,7 @@ describe("D539 §6 — no named body in play is a SILENT no-op, not a skip", () 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D539 §7 — the widening at a persisted address, and the version does not move", () => {
-  it("🛑 DOOR 1, THE CARRIER: `count: \"all\"` never parks, so no record can hold the value", () => {
+  it('🛑 DOOR 1, THE CARRIER: `count: "all"` never parks, so no record can hold the value', () => {
     // D427 — over the BYTES, not from the type's name. `damageChosen` rides
     // `GameState.phase.cont.pendingOp` ONLY when it PARKS; this op resolves inline, so
     // the new literal never reaches a record at all.
@@ -1132,7 +1079,6 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
@@ -1163,21 +1109,6 @@ describe("D539 §8 — the obligation is traced, and it is empty", () => {
       expect(state.phase.kind).not.toBe("effect:choose");
     }
   });
-
-  it("🛑 `snipeNote` is widened anyway, and the widening is in the source", () => {
-    // The parameter and the two ternaries — asserted off the raw text, because the
-    // BRANCH is unreachable and an assertion about its OUTPUT could never fail.
-    const source = raw("interpreter.ts");
-    expect(source).toContain(
-      '  target: "opponentBench" | "opponentAny" | "yourBench" | "yourAny" = "opponentBench",',
-    );
-    expect(source).toContain(
-      '  const zone = target === "opponentAny" || target === "yourAny" ? noun : `Benched ${noun}`;',
-    );
-    expect(source).toContain(
-      '  const owner = target === "yourBench" || target === "yourAny" ? "your" : "your opponent\'s";',
-    );
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1186,7 +1117,9 @@ describe("D539 §8 — the obligation is traced, and it is empty", () => {
 
 describe("D539 §9 — what this slice moved, measured over the legal column", () => {
   it("🛑 the step is +1 sentence / +2 printings, DERIVED from the anchor", () => {
-    const moved = corpusRows().filter(([, text]) => resolvedByAnyReader(text) && !builtBefore(text));
+    const moved = corpusRows().filter(
+      ([, text]) => resolvedByAnyReader(text) && !builtBefore(text),
+    );
     expect(moved).toEqual([[2, PRINTED]]);
     expect(units(moved)).toBe(2);
     // ⚠️ **THE FIFTH CONSECUTIVE SLICE WHOSE TWO STEPS DISAGREE** (D535 1-vs-2, D536

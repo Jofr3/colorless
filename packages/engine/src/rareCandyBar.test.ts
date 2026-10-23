@@ -195,9 +195,7 @@ function bronzong(id: string): Card {
     retreat: 2,
     types: ["Metal"],
     stage: "Stage1",
-    attacks: [
-      { cost: ["Colorless"], name: "Evolution Jammer", damage: 30, effect: BRONZONG_TEXT },
-    ],
+    attacks: [{ cost: ["Colorless"], name: "Evolution Jammer", damage: 30, effect: BRONZONG_TEXT }],
   });
 }
 
@@ -410,7 +408,7 @@ function wireCandyOptions(state: GameState, seat: Seat): number {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D286 §1 — Rare Candy's CLASS, which is the entire argument", () => {
-  it("🛑 ALL THREE PRINTINGS ARE `trainerType: \"Item\"` — the fix is keyed on this and nothing else", () => {
+  it('🛑 ALL THREE PRINTINGS ARE `trainerType: "Item"` — the fix is keyed on this and nothing else', () => {
     // ⚠️ THE ONE FACT THE SLICE CANNOT SURVIVE BEING WRONG ABOUT. Every read site
     // asks `handPlayBarred(state, seat, "Item", undefined)` because the CARD says Item; if a
     // printing's catalog row said otherwise the bar would miss it, and this is the
@@ -460,7 +458,7 @@ describe("D286 §1 — Rare Candy's CLASS, which is the entire argument", () => 
 // 2. THE BAR BITES — through BOTH sources, on EVERY seed and BOTH assignments.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D286 §2 — the `\"Item\"` bar refuses the rareCandy action", () => {
+describe('D286 §2 — the `"Item"` bar refuses the rareCandy action', () => {
   it("🛑 THE STAMPED SOURCE — Galvantula ex's rider stops the victim's Rare Candy", () => {
     for (const seed of SEEDS) {
       for (const first of ["p1", "p2"] as const) {
@@ -533,7 +531,7 @@ describe("D286 §2 — the `\"Item\"` bar refuses the rareCandy action", () => {
 // 3. THE CLASS CONTROL — a `"Supporter"` bar must leave Rare Candy alone.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D286 §3 — the bar is the `\"Item\"` one and ONLY the `\"Item\"` one", () => {
+describe('D286 §3 — the bar is the `"Item"` one and ONLY the `"Item"` one', () => {
   it("🛑 SCREAM TAIL ex BARS SUPPORTERS AND THE RARE CANDY LANDS", () => {
     // ⚠️ THE ASSERTION THAT SEPARATES THE CLASSES. A build that asked "is this
     // seat barred at all" instead of "is it barred for Items" is green on every
@@ -699,7 +697,12 @@ describe("D286 §6 — the version does NOT move, and the claim is driven", () =
     );
     for (const seat of ["p1", "p2"] as const) {
       expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+        [
+          "Item",
+          "Supporter",
+          "Stadium",
+          "evolve",
+        ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
     }
     expect(Object.keys(barred.allowances).sort()).toEqual(Object.keys(free.allowances).sort());

@@ -76,7 +76,12 @@ import type {
 
 // The hidden/empty sentinels live in @colorless/schema (the wire redactor and
 // this projection share them).
-import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@colorless/schema";
+import {
+  EMPTY_CARD_ID,
+  EMPTY_CARD_NAME,
+  HIDDEN_CARD_ID,
+  HIDDEN_CARD_NAME,
+} from "@colorless/schema";
 
 /** The zones BoardState cannot carry: deck size and the public discard. */
 export interface ProjectedPiles {

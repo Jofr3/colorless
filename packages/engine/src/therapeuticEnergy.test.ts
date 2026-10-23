@@ -1112,7 +1112,12 @@ describe("⚠️ THE RECOVERY — a condition already present, cleared by a cont
     // Asleep body attached to this Energy wakes up and keeps burning and keeps
     // being poisoned, and the STATUS_CLEARED row names only what came off.
     let state = myTurnWith();
-    state = setConditions(state, "p2", { rotation: "asleep", burned: true, poisonDamage: 10, confusionDamage: 30 });
+    state = setConditions(state, "p2", {
+      rotation: "asleep",
+      burned: true,
+      poisonDamage: 10,
+      confusionDamage: 30,
+    });
     const done = attachFromHand(state, "sv02-193", ACTIVE);
     expect(done.state.players.p2.active?.conditions).toEqual({
       rotation: "none",
@@ -1409,7 +1414,12 @@ describe("⚠️ the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadiu
     const { state } = paralyzedThenMyTurnShared();
     for (const seat of ["p1", "p2"] as const) {
       for (const pokemon of state.players[seat].bench) {
-        expect(pokemon.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
+        expect(pokemon.conditions).toEqual({
+          rotation: "none",
+          poisonDamage: 0,
+          burned: false,
+          confusionDamage: 30,
+        });
       }
     }
   });

@@ -369,9 +369,7 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
     // the two Benched rows carry it and the bare one does not, which is the entire
     // difference between healing the attacker's own board and healing everything but
     // the attacker.
-    expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([
-      { op: "healChosen", amount: 20 },
-    ]);
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([{ op: "healChosen", amount: 20 }]);
     expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toEqual([
       { op: "healChosen", amount: 60, zone: "bench" },
     ]);

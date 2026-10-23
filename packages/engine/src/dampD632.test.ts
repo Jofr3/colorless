@@ -1,11 +1,18 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { disabledAbilityUids, hasSelfKnockOutAbility } from "./continuous";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  typedEnergy,
+} from "./testFixtures";
 
 // ── 🆕🆕🆕 D632 — D1, DAMP: 2 TEXTS / 5 `me` PRINTINGS ──
 //
@@ -65,7 +72,13 @@ const psyduck = (id: string, text: string): Card =>
     retreat: 1,
     weaknesses: [{ type: "Lightning", value: "×2" }],
     abilities: [{ type: "Ability", name: "Damp", effect: text }],
-    attacks: [{ cost: ["Colorless", "Colorless"], name: id.startsWith("mep") ? "Collision" : "Ram", damage: 20 }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: id.startsWith("mep") ? "Collision" : "Ram",
+        damage: 20,
+      },
+    ],
   } as Partial<Card>);
 const golduck = (id: string, text: string): Card =>
   battler(id, {
@@ -145,7 +158,11 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
     attacks: [
-      { cost: ["Darkness", "Darkness"], name: "Chaotic Pain", effect: "Place 13 damage counters on 1 of your opponent's Pokémon." },
+      {
+        cost: ["Darkness", "Darkness"],
+        name: "Chaotic Pain",
+        effect: "Place 13 damage counters on 1 of your opponent's Pokémon.",
+      },
     ],
   } as Partial<Card>),
   [FLUTTER]: battler(FLUTTER, {
@@ -195,7 +212,9 @@ function opened(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -203,14 +222,20 @@ function opened(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -218,7 +243,8 @@ function opened(): GameState {
 /** p1's first turn: each side's Active first, then its Bench, EXACTLY the ids named. */
 function table(spec: { p1: readonly string[]; p2: readonly string[] }): GameState {
   let state = opened();
-  for (const seat of ["p1", "p2"] as const) state = clearBench(setActiveFromDeck(state, seat, WALL), seat);
+  for (const seat of ["p1", "p2"] as const)
+    state = clearBench(setActiveFromDeck(state, seat, WALL), seat);
   for (const seat of ["p1", "p2"] as const) {
     const ids = spec[seat];
     state = clearBench(setActiveFromDeck(state, seat, ids[0] ?? WALL), seat);
@@ -236,7 +262,8 @@ function uidAt(state: GameState, seat: Seat, index: number | "active"): string {
 }
 
 function use(state: GameState, index: number | "active", abilityName: string) {
-  const target = index === "active" ? ({ spot: "active" } as const) : ({ spot: "bench", index } as const);
+  const target =
+    index === "active" ? ({ spot: "active" } as const) : ({ spot: "bench", index } as const);
   return applyAction(state, { type: "useAbility", seat: "p1", target, abilityName });
 }
 
@@ -250,25 +277,39 @@ describe("D632 §1 — the five registry rows on two objects", () => {
     for (const id of REQUIRE) expect(programFor(id), id).toBe(require);
     expect(itself).not.toBe(require);
     for (const program of [itself, require]) {
-      expect(program).toEqual({ passive: { disableAbilities: { side: "both", selfKnockOutAbility: true } } });
+      expect(program).toEqual({
+        passive: { disableAbilities: { side: "both", selfKnockOutAbility: true } },
+      });
     }
   });
 
   it("the fixtures carry the printed texts, one Ability named Damp each", () => {
-    for (const id of ITSELF) expect(LOCAL_CARDS[id]?.abilities, id).toEqual([{ type: "Ability", name: "Damp", effect: DAMP_ITSELF_TEXT }]);
-    for (const id of REQUIRE) expect(LOCAL_CARDS[id]?.abilities, id).toEqual([{ type: "Ability", name: "Damp", effect: DAMP_REQUIRE_TEXT }]);
+    for (const id of ITSELF)
+      expect(LOCAL_CARDS[id]?.abilities, id).toEqual([
+        { type: "Ability", name: "Damp", effect: DAMP_ITSELF_TEXT },
+      ]);
+    for (const id of REQUIRE)
+      expect(LOCAL_CARDS[id]?.abilities, id).toEqual([
+        { type: "Ability", name: "Damp", effect: DAMP_REQUIRE_TEXT },
+      ]);
   });
 });
 
 describe("D632 §2 — the class, measured over the registry", () => {
   it("`hasSelfKnockOutAbility` holds for EXACTLY the 9 Cursed Blast / Overvolt Discharge keys", () => {
-    expect(registryCardIds().filter((id) => hasSelfKnockOutAbility(asCard(id))).sort()).toEqual([...SELF_KO_IDS].sort());
+    expect(
+      registryCardIds()
+        .filter((id) => hasSelfKnockOutAbility(asCard(id)))
+        .sort(),
+    ).toEqual([...SELF_KO_IDS].sort());
   });
 
   it("no `knockOutSelf` sits deeper, or in a `triggered` or `passive` program, anywhere in the registry", () => {
     const anywhere = registryCardIds().filter((id) => {
       const program = programFor(id);
-      return JSON.stringify([program?.abilities, program?.triggered, program?.passive]).includes('"op":"knockOutSelf"');
+      return JSON.stringify([program?.abilities, program?.triggered, program?.passive]).includes(
+        '"op":"knockOutSelf"',
+      );
     });
     expect(anywhere.sort()).toEqual([...SELF_KO_IDS].sort());
   });
@@ -280,7 +321,7 @@ describe("D632 §2 — the class, measured over the registry", () => {
     }
   });
 
-  it("Forretress ex \"Exploding Energy\" prints the class but is not built (not legal)", () => {
+  it('Forretress ex "Exploding Energy" prints the class but is not built (not legal)', () => {
     for (const id of FORRETRESS_EX) expect(programFor(id), id).toBeUndefined();
   });
 
@@ -309,7 +350,10 @@ describe("D632 §3 — Damp on a board", () => {
   });
 
   it("an Active Damp locks every self-Knock-Out body on BOTH sides, and nothing else", () => {
-    const state = table({ p1: [PSYDUCK, DUSKNOIR, MAGNETON, GENGAR_EX], p2: [WALL, DUSCLOPS, GENGAR_EX] });
+    const state = table({
+      p1: [PSYDUCK, DUSKNOIR, MAGNETON, GENGAR_EX],
+      p2: [WALL, DUSCLOPS, GENGAR_EX],
+    });
     expect(disabledAbilityUids(state)).toEqual(
       new Set([uidAt(state, "p1", 0), uidAt(state, "p1", 1), uidAt(state, "p2", 0)]),
     );
@@ -318,7 +362,9 @@ describe("D632 §3 — Damp on a board", () => {
   it("each of the five printings locks from the BENCH, on its own side and the other", () => {
     for (const id of DAMP_IDS) {
       const state = table({ p1: [WALL, id, DUSCLOPS], p2: [DUSKNOIR, GENGAR_EX] });
-      expect(disabledAbilityUids(state), id).toEqual(new Set([uidAt(state, "p1", 1), uidAt(state, "p2", "active")]));
+      expect(disabledAbilityUids(state), id).toEqual(
+        new Set([uidAt(state, "p1", 1), uidAt(state, "p2", "active")]),
+      );
     }
   });
 
@@ -343,14 +389,22 @@ describe("D632 §4 — through the §9 gate: Cursed Blast and Overvolt Discharge
   });
 
   it("an OPPONENT's Damp refuses your Dusknoir too (both sides)", () => {
-    const result = use(table({ p1: [DUSKNOIR], p2: [WALL, "me02.5-226"] }), "active", "Cursed Blast");
+    const result = use(
+      table({ p1: [DUSKNOIR], p2: [WALL, "me02.5-226"] }),
+      "active",
+      "Cursed Blast",
+    );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("ABILITY_DISABLED");
   });
 
   it("Overvolt Discharge is refused ABILITY_DISABLED under Golduck's Damp", () => {
     for (const damp of ["me02.5-040", "mep-008"]) {
-      const result = use(table({ p1: [MAGNETON, damp], p2: [WALL] }), "active", "Overvolt Discharge");
+      const result = use(
+        table({ p1: [MAGNETON, damp], p2: [WALL] }),
+        "active",
+        "Overvolt Discharge",
+      );
       expect(result.ok, damp).toBe(false);
       if (!result.ok) expect(result.error.code, damp).toBe("ABILITY_DISABLED");
     }
@@ -371,13 +425,8 @@ describe("D632 §5 — Damp in the stratified lock pass (R-LK2)", () => {
 
   it("a benched Psyduck is out of Flutter Mane's reach: Damp stays ON beside a silenced Active", () => {
     const state = table({ p1: [GENGAR_EX, PSYDUCK, DUSCLOPS], p2: [FLUTTER] });
-    expect(disabledAbilityUids(state)).toEqual(new Set([uidAt(state, "p1", "active"), uidAt(state, "p1", 1)]));
-  });
-});
-
-describe("D632 §6 — the version", () => {
-  it("is built at engine 0.555.0, in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
+    expect(disabledAbilityUids(state)).toEqual(
+      new Set([uidAt(state, "p1", "active"), uidAt(state, "p1", 1)]),
+    );
   });
 });

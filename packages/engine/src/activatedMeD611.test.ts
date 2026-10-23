@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion, pokemonPlayBarred } from "./index";
+import { applyAction, createGame, pokemonPlayBarred } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -126,20 +126,41 @@ describe("D611 §1 — the programs: nine objects over 17 printings", () => {
       {
         op: "coinFlipGate",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" }, to: "hand" }],
+        then: [
+          {
+            op: "discardEnergy",
+            from: "opponentActive",
+            filter: { kind: "anyEnergy" },
+            to: "hand",
+          },
+        ],
       },
     ]);
     // Destructive Headbutting is Haphazard Hammer `me01-097`'s program on an activated Ability.
-    expect(abilityOf(RAMPARDOS[0])?.program).toEqual(programFor("me01-097")?.triggered?.[0]?.program);
+    expect(abilityOf(RAMPARDOS[0])?.program).toEqual(
+      programFor("me01-097")?.triggered?.[0]?.program,
+    );
     expect(abilityOf(TALONFLAME[0])?.program).toEqual([
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "discard" }] },
     ]);
     expect(abilityOf(VIVILLON)?.program).toEqual([
-      { op: "handRefresh", who: "opponent", toBottom: true, onlyIfAnyMoved: true, draw: { kind: "fixed", count: 4 } },
+      {
+        op: "handRefresh",
+        who: "opponent",
+        toBottom: true,
+        onlyIfAnyMoved: true,
+        draw: { kind: "fixed", count: 4 },
+      },
     ]);
     expect(abilityOf(DRAGONAIR)?.program).toEqual([
-      { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 1, reveal: true },
+      {
+        op: "searchDeck",
+        filter: { kind: "evolutionPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      },
       { op: "shuffleDeck" },
     ]);
   });
@@ -399,8 +420,11 @@ function table(opts: {
 
 const ACTIVE = { spot: "active" } as const;
 const bench = (index: number) => ({ spot: "bench", index }) as const;
-const use = (state: GameState, abilityName: string, target: typeof ACTIVE | ReturnType<typeof bench>) =>
-  applyAction(state, { type: "useAbility", seat: "p1", target, abilityName } as GameAction);
+const use = (
+  state: GameState,
+  abilityName: string,
+  target: typeof ACTIVE | ReturnType<typeof bench>,
+) => applyAction(state, { type: "useAbility", seat: "p1", target, abilityName } as GameAction);
 function ok(result: ReturnType<typeof applyAction>) {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result;
@@ -419,7 +443,8 @@ function prompt(state: GameState): Record<string, unknown> {
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const shuffled = (events: readonly GameEvent[]) =>
   events.filter((e) => e.type === "SHUFFLE").map((e) => (e as { seat: Seat }).seat);
-const ofType = (events: readonly GameEvent[], type: string) => events.filter((e) => e.type === type);
+const ofType = (events: readonly GameEvent[], type: string) =>
+  events.filter((e) => e.type === type);
 
 /** An rng cursor whose first flip lands on `face`. */
 function cursorFor(face: "heads" | "tails"): number {
@@ -444,7 +469,9 @@ describe("D611 §2 — Nighttime Maneuvers: Active only; any card from the deck 
     expect(done.state.players.p1.deck[0]).toBe(pick);
     expect(done.state.players.p1.deck).toHaveLength(state.players.p1.deck.length);
     expect(done.state.players.p1.hand).toEqual([]);
-    expect(refusal(use(done.state, "Nighttime Maneuvers", ACTIVE)).code).toBe("ABILITY_ALREADY_USED");
+    expect(refusal(use(done.state, "Nighttime Maneuvers", ACTIVE)).code).toBe(
+      "ABILITY_ALREADY_USED",
+    );
   });
 
   it("refused from the Bench (the printed Active-Spot clause); the second Crobat printing shares the object", () => {
@@ -497,7 +524,9 @@ describe("D611 §3 — Sinister Surge: a Basic {D} to a Benched {D} body, then 2
     expect(declined.state.players.p1.bench[0]?.damage).toBe(0);
     expect(ofType(declined.events, "COUNTERS_PLACED")).toEqual([]);
     expect(shuffled(declined.events)).toContain("p1");
-    const none = ok(use(table({ active: TOXTRICITY[0], bench: [FILLER] }), "Sinister Surge", ACTIVE));
+    const none = ok(
+      use(table({ active: TOXTRICITY[0], bench: [FILLER] }), "Sinister Surge", ACTIVE),
+    );
     expect(none.state.phase.kind).toBe("turn:action");
     expect(none.state.players.p1.bench[0]?.damage).toBe(0);
     expect(ofType(none.events, "COUNTERS_PLACED")).toEqual([]);
@@ -526,11 +555,15 @@ describe("D611 §4 — Boisterous Wind: heads, an Energy off the opponent's Acti
     expect(heads.state.players.p2.hand).toEqual([energy]);
     const tails = ok(use({ ...base, rngState: cursorFor("tails") }, "Boisterous Wind", bench(0)));
     expect(tails.state.players.p2.active?.energy).toEqual([energy]);
-    expect(refusal(use(tails.state, "Boisterous Wind", bench(0))).code).toBe("ABILITY_ALREADY_USED");
+    expect(refusal(use(tails.state, "Boisterous Wind", bench(0))).code).toBe(
+      "ABILITY_ALREADY_USED",
+    );
   });
 
   it("refused when the opponent's Active has no Energy (the coin gate's whiff rule)", () => {
-    expect(refusal(use(table({ bench: [DUSTOX[0]] }), "Boisterous Wind", bench(0))).code).toBe("NO_LEGAL_TARGET");
+    expect(refusal(use(table({ bench: [DUSTOX[0]] }), "Boisterous Wind", bench(0))).code).toBe(
+      "NO_LEGAL_TARGET",
+    );
   });
 });
 
@@ -538,11 +571,15 @@ describe("D611 §5 — Destructive Headbutting: Active only; heads, discard an E
   it("heads: the Energy goes to the opponent's discard pile; refused from the Bench", () => {
     const base = attachFromDeck(table({ active: RAMPARDOS[0] }), "p2", G, 1);
     const energy = base.players.p2.active?.energy[0] as string;
-    const heads = ok(use({ ...base, rngState: cursorFor("heads") }, "Destructive Headbutting", ACTIVE));
+    const heads = ok(
+      use({ ...base, rngState: cursorFor("heads") }, "Destructive Headbutting", ACTIVE),
+    );
     expect(heads.state.players.p2.active?.energy).toEqual([]);
     expect(heads.state.players.p2.discard).toContain(energy);
     const benched = attachFromDeck(table({ bench: [RAMPARDOS[0]] }), "p2", G, 1);
-    expect(refusal(use(benched, "Destructive Headbutting", bench(0))).code).toBe("ABILITY_ACTIVE_ONLY");
+    expect(refusal(use(benched, "Destructive Headbutting", bench(0))).code).toBe(
+      "ABILITY_ACTIVE_ONLY",
+    );
   });
 });
 
@@ -560,12 +597,16 @@ describe("D611 §6 — Evidence Gathering: switch a card from your hand with the
     expect(done.state.players.p1.deck.slice(1)).toEqual(state.players.p1.deck.slice(1));
     expect(done.state.players.p1.hand).toEqual([state.players.p1.hand[1], top]);
     const paid = ofType(done.events, "HAND_COST_PAID");
-    expect(paid).toEqual([{ type: "HAND_COST_PAID", seat: "p1", uids: [item], to: "deckTop", took: [top] }]);
+    expect(paid).toEqual([
+      { type: "HAND_COST_PAID", seat: "p1", uids: [item], to: "deckTop", took: [top] },
+    ]);
     const rows = logFromEvents(paid, {
       names: { p1: "P1", p2: "P2" },
       state: done.state,
       elapsed: formatElapsed(0),
-    }).flatMap((entry) => (entry.kind === "turn" ? [] : [entry.segments.map((seg) => seg.text).join("")]));
+    }).flatMap((entry) =>
+      entry.kind === "turn" ? [] : [entry.segments.map((seg) => seg.text).join("")],
+    );
     expect(rows).toEqual(["switched 1 card from their hand with the top card of their deck"]);
   });
 
@@ -587,7 +628,11 @@ describe("D611 §6 — Evidence Gathering: switch a card from your hand with the
       ...state,
       players: {
         ...state.players,
-        p1: { ...state.players.p1, deck: [], discard: [...state.players.p1.discard, ...state.players.p1.deck] },
+        p1: {
+          ...state.players.p1,
+          deck: [],
+          discard: [...state.players.p1.discard, ...state.players.p1.deck],
+        },
       },
     };
     expect(refusal(use(noDeck, "Evidence Gathering", bench(0))).code).toBe("ABILITY_COST_UNMET");
@@ -633,7 +678,10 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
     const trevenant = state.players.p1.hand[0] as string;
     const done = ok(use(state, "Spiteful Evolution", bench(0)));
     expect(done.state.phase.kind).toBe("turn:action");
-    expect(ids(done.state, done.state.players.p1.bench[0]?.stack ?? [])).toEqual([PHANTUMP, TREVENANT]);
+    expect(ids(done.state, done.state.players.p1.bench[0]?.stack ?? [])).toEqual([
+      PHANTUMP,
+      TREVENANT,
+    ]);
     expect(done.state.players.p1.bench[0]?.damage).toBe(20);
     expect(done.state.players.p1.hand).toEqual([state.players.p1.hand[1]]);
     expect(ofType(done.events, "POKEMON_EVOLVED")).toHaveLength(1);
@@ -648,11 +696,17 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
     const base = table({ bench: [PHANTUMP], hand: [TREVENANT] });
     const state: GameState = {
       ...base,
-      handPlayLockedTurn: { ...base.handPlayLockedTurn, p1: { ...base.handPlayLockedTurn.p1, evolve: base.turn } },
+      handPlayLockedTurn: {
+        ...base.handPlayLockedTurn,
+        p1: { ...base.handPlayLockedTurn.p1, evolve: base.turn },
+      },
     };
     expect(pokemonPlayBarred(state, "p1", "evolve", POOL[TREVENANT])).toBe(true);
     const done = ok(use(state, "Spiteful Evolution", bench(0)));
-    expect(ids(done.state, done.state.players.p1.bench[0]?.stack ?? [])).toEqual([PHANTUMP, TREVENANT]);
+    expect(ids(done.state, done.state.players.p1.bench[0]?.stack ?? [])).toEqual([
+      PHANTUMP,
+      TREVENANT,
+    ]);
     expect(done.state.players.p1.bench[0]?.damage).toBe(20);
   });
 
@@ -664,7 +718,9 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
     expect(offer.note).toBe(
       "Choose a card in your hand that evolves from Phantump and put it onto Phantump to evolve it. If you do, place 2 damage counters on that Pokémon.",
     );
-    expect(new Set(ids(parked.state, offer.candidates as string[]))).toEqual(new Set([TREVENANT, TREVENANT_SV]));
+    expect(new Set(ids(parked.state, offer.candidates as string[]))).toEqual(
+      new Set([TREVENANT, TREVENANT_SV]),
+    );
     const pick = state.players.p1.hand[1] as string;
     const done = resolve(parked.state, { kind: "cards", uids: [pick] });
     expect(done.state.players.p1.active?.stack.at(-1)).toBe(pick);
@@ -672,9 +728,9 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
   });
 
   it("refused with no evolution in hand (no whiff), and on the controller's first turn (the printed ban)", () => {
-    expect(refusal(use(table({ bench: [PHANTUMP], hand: [ITEM] }), "Spiteful Evolution", bench(0))).code).toBe(
-      "NO_LEGAL_TARGET",
-    );
+    expect(
+      refusal(use(table({ bench: [PHANTUMP], hand: [ITEM] }), "Spiteful Evolution", bench(0))).code,
+    ).toBe("NO_LEGAL_TARGET");
     const first = table({ bench: [PHANTUMP], hand: [TREVENANT], endTurns: 1 });
     expect(first.turn).toBe(2);
     const banned = refusal(use(first, "Spiteful Evolution", bench(0)));
@@ -695,7 +751,10 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
       },
     };
     const done = ok(use(fresh, "Spiteful Evolution", bench(0)));
-    expect(ids(done.state, done.state.players.p1.bench[0]?.stack ?? [])).toEqual([PHANTUMP, TREVENANT]);
+    expect(ids(done.state, done.state.players.p1.bench[0]?.stack ?? [])).toEqual([
+      PHANTUMP,
+      TREVENANT,
+    ]);
   });
 
   it("the online HUD row is live with an evolution in hand and greyed without one (the body's uid reaches the gate)", () => {
@@ -723,7 +782,9 @@ describe("D611 §10 — Evolutionary Guidance: any Energy attached; an Evolution
     expect(offered.has(TREVENANT)).toBe(true);
     expect(offered.has(CROBAT[0])).toBe(true);
     for (const id of [PHANTUMP, FILLER, DARK, ITEM, G]) expect(offered.has(id), id).toBe(false);
-    const pick = (offer.candidates as string[]).find((u) => parked.state.cardIdByUid[u] === TREVENANT) as string;
+    const pick = (offer.candidates as string[]).find(
+      (u) => parked.state.cardIdByUid[u] === TREVENANT,
+    ) as string;
     const done = resolve(parked.state, { kind: "cards", uids: [pick] });
     expect(done.state.players.p1.hand).toEqual([pick]);
     expect(shuffled(done.events)).toContain("p1");
@@ -744,9 +805,5 @@ describe("D611 §12 — `notYourFirstTurn`, and the version", () => {
     const later = p1Turn(3);
     expect(conditionHolds(later, "p1", { kind: "notYourFirstTurn" })).toBe(true);
     expect(conditionNote({ kind: "notYourFirstTurn" })).toBe("it is not your first turn");
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

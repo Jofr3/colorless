@@ -132,7 +132,9 @@ check(
   `${disagree.length} sentence(s) where builds() and arm() disagree; first: «${disagree[0] ?? "—"}»`,
 );
 const inBoth = corpus.filter(([, t]) => builtSet.has(t) && residueSet.has(t)).map(([, t]) => t);
-const inNeither = corpus.filter(([, t]) => !builtSet.has(t) && !residueSet.has(t)).map(([, t]) => t);
+const inNeither = corpus
+  .filter(([, t]) => !builtSet.has(t) && !residueSet.has(t))
+  .map(([, t]) => t);
 check(
   "§A every corpus sentence is in exactly ONE of builtSentences / rows (both directions)",
   inBoth.length === 0 && inNeither.length === 0,
@@ -169,7 +171,11 @@ const B_CASES: readonly (readonly [string, string[], boolean])[] = [
   //    or every multi-segment sentence gets `..` and loses a hit it used to have.
   //    Here the tail-span branch IS entered and correctly declines: the repair
   //    is offered only when it would CHANGE the remainder.
-  ["③ an already-terminated remainder is not re-terminated", candidates(B_PLAIN_FIRST, 3, 8), false],
+  [
+    "③ an already-terminated remainder is not re-terminated",
+    candidates(B_PLAIN_FIRST, 3, 8),
+    false,
+  ],
   // ④ THE REPAIR IS NOT OFFERED ON AN INTERIOR SPAN.
   ["④ an interior deletion gets no second candidate", candidates(B_PLAIN_FIRST, 0, 3), false],
   // ⑤ THE BLIND SPOT THAT REMAINS, PINNED. A `)`-terminated sentence — a

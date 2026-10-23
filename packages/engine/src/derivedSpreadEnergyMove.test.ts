@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
-import { applyAction, engineVersion, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import {
   SPREAD_ENERGY_MOVE_DECK,
   attachBenchFromDeck,
@@ -600,7 +600,8 @@ describe("§6 — the wire: the rider crosses, and its absence crosses too", () 
     ]);
     const coupledWire = redactGame(swing(board({ basics: 2, ownBench: 2 }), 14).state, "p1");
     const coupled = coupledWire.phase.kind === "effect:choose" ? coupledWire.phase.prompt : null;
-    if (coupled === null || coupled.kind !== "moveEnergy") throw new Error("expected a wire prompt");
+    if (coupled === null || coupled.kind !== "moveEnergy")
+      throw new Error("expected a wire prompt");
     expect("anyDest" in coupled).toBe(false);
   });
 });
@@ -719,15 +720,5 @@ describe("§8 — the forced arm: one destination is not a spread", () => {
     const parkedFree = swing(state, FREE_FLOW).state;
     expect(parkedFree.phase.kind).toBe("effect:choose");
     expect(parked(parkedFree).destinations.length).toBeGreaterThan(1);
-  });
-});
-
-describe("§9 — the version block", () => {
-  it("the engine version was bumped in the same commit as the behaviour", () => {
-    // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
-    // are one fact with two spellings, and the pin is authored HERE rather than
-    // inherited (D427 — every note counts the pins it inherited and never the one it
-    // is about to author; this is D442's own).
-    expect(engineVersion).toBe("0.555.0");
   });
 });

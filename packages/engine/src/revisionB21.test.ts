@@ -74,15 +74,25 @@ const LOCAL: Record<string, Card> = {
   [TURTONATOR]: holder(TURTONATOR, "Turtonator", "Shell Spikes", SHELL_SPIKES),
   [KLAWF]: holder(KLAWF, "Klawf ex", "Counterattacking Pincer", PINCER),
   ...Object.fromEntries(BURNERS.map((b) => [b.id, holder(b.id, b.name, b.ability, BURN_TEXT)])),
-  ...Object.fromEntries(POISONERS.map((p) => [p.id, holder(p.id, p.name, "Poison Point", POISON_TEXT)])),
+  ...Object.fromEntries(
+    POISONERS.map((p) => [p.id, holder(p.id, p.name, "Poison Point", POISON_TEXT)]),
+  ),
   [CROCONAW]: battler(CROCONAW, {
     name: "Croconaw",
     hp: 90,
     stage: "Stage1",
     attacks: [{ cost: ["Water"], name: "Reverse Thrust", effect: REVERSE_THRUST, damage: 30 }],
   }),
-  [HYPNOTIZER]: { ...trainerCard(HYPNOTIZER, "Tool", HYPNOTIZER_TEXT), name: "Team Rocket's Hypnotizer" },
-  [ROCKET]: battler(ROCKET, { name: "Team Rocket's B21", hp: 200, types: ["Darkness"], attacks: TAP }),
+  [HYPNOTIZER]: {
+    ...trainerCard(HYPNOTIZER, "Tool", HYPNOTIZER_TEXT),
+    name: "Team Rocket's Hypnotizer",
+  },
+  [ROCKET]: battler(ROCKET, {
+    name: "Team Rocket's B21",
+    hp: 200,
+    types: ["Darkness"],
+    attacks: TAP,
+  }),
   ...Object.fromEntries(
     WHIMSICOTTS.map((id) => [
       id,
@@ -172,7 +182,8 @@ function table(p1: SideSpec, p2: SideSpec): GameState {
 
 function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -186,7 +197,8 @@ const benchAt = (state: GameState, seat: Seat, index: number): InPlayPokemon => 
   if (body === undefined) throw new Error(`no ${seat} bench ${index}`);
   return body;
 };
-const idOf = (state: GameState, body: InPlayPokemon): string | undefined => state.cardIdByUid[body.stack.at(-1) ?? ""];
+const idOf = (state: GameState, body: InPlayPokemon): string | undefined =>
+  state.cardIdByUid[body.stack.at(-1) ?? ""];
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 
@@ -208,7 +220,10 @@ function reverseThrust(defender: string, tools: readonly string[] = []) {
 
 /** The control: P1's Active Filler ({G}{G}) uses Tap and stays the Active. */
 function tap(defender: string, tools: readonly string[] = []) {
-  const state = table({ active: { id: FILLER, energy: [G, G] } }, { active: { id: defender, tools } });
+  const state = table(
+    { active: { id: FILLER, energy: [G, G] } },
+    { active: { id: defender, tools } },
+  );
   return must(state, attack);
 }
 
@@ -245,15 +260,22 @@ describe("B21 §1 — Shell Spikes / Counterattacking Pincer discard from the AT
       );
       const croconaw = activeOf(state, "p1");
       const parked = must(state, attack).state;
-      if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+      if (parked.phase.kind !== "effect:choose")
+        throw new Error(`expected a park, got ${parked.phase.kind}`);
       const prompt = parked.phase.prompt;
       if (prompt.kind !== "discardEnergy") throw new Error(`unexpected prompt ${prompt.kind}`);
       expect(parked.phase.seat).toBe("p2");
       expect(prompt.note).toBe("Discard an Energy from the Attacking Pokémon.");
       expect(prompt.discardable.map((d) => d.uid).sort()).toEqual([...croconaw.energy].sort());
-      expect(prompt.discardable.every((d) => d.from.seat === "p1" && d.from.spot.spot === "bench")).toBe(true);
+      expect(
+        prompt.discardable.every((d) => d.from.seat === "p1" && d.from.spot.spot === "bench"),
+      ).toBe(true);
       const water = croconaw.energy[0] as string;
-      const after = must(parked, { type: "resolveEffect", seat: "p2", choice: { kind: "discardEnergy", uids: [water] } }).state;
+      const after = must(parked, {
+        type: "resolveEffect",
+        seat: "p2",
+        choice: { kind: "discardEnergy", uids: [water] },
+      }).state;
       expect(benchAt(after, "p1", 0).energy).toEqual([croconaw.energy[1]]);
       expect(activeOf(after, "p1").energy).toHaveLength(2);
       expect(after.players.p1.discard).toContain(water);
@@ -267,11 +289,26 @@ describe("B21 §1 — Shell Spikes / Counterattacking Pincer discard from the AT
   }
 });
 
-describe("B21 §2 — \"the Attacking Pokémon is now Burned / Poisoned / Asleep\" never lands on a Pokémon that did not attack", () => {
+describe('B21 §2 — "the Attacking Pokémon is now Burned / Poisoned / Asleep" never lands on a Pokémon that did not attack', () => {
   const cases = [
-    ...BURNERS.map((b) => ({ id: b.id, name: b.ability, status: "burned" as const, tools: [] as string[] })),
-    ...POISONERS.map((p) => ({ id: p.id, name: "Poison Point", status: "poisoned" as const, tools: [] as string[] })),
-    { id: ROCKET, name: "Team Rocket's Hypnotizer", status: "asleep" as const, tools: [HYPNOTIZER] },
+    ...BURNERS.map((b) => ({
+      id: b.id,
+      name: b.ability,
+      status: "burned" as const,
+      tools: [] as string[],
+    })),
+    ...POISONERS.map((p) => ({
+      id: p.id,
+      name: "Poison Point",
+      status: "poisoned" as const,
+      tools: [] as string[],
+    })),
+    {
+      id: ROCKET,
+      name: "Team Rocket's Hypnotizer",
+      status: "asleep" as const,
+      tools: [HYPNOTIZER],
+    },
   ];
   for (const c of cases) {
     it(`${c.id} "${c.name}": after Reverse Thrust no Special Condition lands — not on the promoted Filler, not on the benched Croconaw`, () => {
@@ -284,10 +321,15 @@ describe("B21 §2 — \"the Attacking Pokémon is now Burned / Poisoned / Asleep
     });
 
     it(`${c.id} "${c.name}", the control: an attacker that stays Active is ${c.status}`, () => {
-      const state = table({ active: { id: FILLER, energy: [G, G] } }, { active: { id: c.id, tools: c.tools } });
+      const state = table(
+        { active: { id: FILLER, energy: [G, G] } },
+        { active: { id: c.id, tools: c.tools } },
+      );
       const attacker = activeOf(state, "p1").stack.at(-1);
       const { events } = must(state, attack);
-      expect(ofType(events, "STATUS_APPLIED").map((e) => [e.seat, e.uid, e.status])).toEqual([["p1", attacker, c.status]]);
+      expect(ofType(events, "STATUS_APPLIED").map((e) => [e.seat, e.uid, e.status])).toEqual([
+        ["p1", attacker, c.status],
+      ]);
     });
   }
 });
@@ -313,7 +355,11 @@ describe("B21 §3 — Wafting Heal discards only if it healed any damage", () =>
       target: { spot: "bench", index: 0 },
     });
     if (after.phase.kind === "effect:choose") {
-      after = must(after, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } }).state;
+      after = must(after, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: true },
+      }).state;
     }
     expect(after.phase.kind).toBe("turn:action");
     return after;

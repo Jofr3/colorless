@@ -62,7 +62,14 @@ const FLIPPER_CARD: Card = {
   ...BODY_CARD,
   id: FLIPPER,
   name: "D646 Flipper",
-  attacks: [{ cost: [], name: "Hyper Fang", damage: "30", effect: "Flip a coin. If tails, this attack does nothing." }],
+  attacks: [
+    {
+      cost: [],
+      name: "Hyper Fang",
+      damage: "30",
+      effect: "Flip a coin. If tails, this attack does nothing.",
+    },
+  ],
 } as unknown as Card;
 /** The catalog row a v48 pool holds — the printed face; only this build reads it. */
 const BADGE_CARD: Card = {
@@ -105,7 +112,19 @@ const JAW_CARD: Card = {
     "Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.\n\nAt any time during your turn, you may discard this card from play.",
 } as unknown as Card;
 
-const DECK = [...Array.from({ length: 50 }, () => BODY), FLIPPER, FLIPPER, BADGE, BADGE, BADGE, BADGE, JAW, JAW, JAW, JAW];
+const DECK = [
+  ...Array.from({ length: 50 }, () => BODY),
+  FLIPPER,
+  FLIPPER,
+  BADGE,
+  BADGE,
+  BADGE,
+  BADGE,
+  JAW,
+  JAW,
+  JAW,
+  JAW,
+];
 const NAMES = { p1: "Ana", p2: "Bo" } as const;
 type Side = GameState["players"][Seat];
 
@@ -258,7 +277,10 @@ describe("D646 — what the migration writes", () => {
       expect({ ...migrated, version }).toEqual(oldRecord(version));
     }
     for (const version of [44, 43, 42, 41] as const) {
-      const migrated = migrateMatchRecord(oldRecord(version), { [JAW]: JAW_CARD, [BADGE]: BADGE_CARD });
+      const migrated = migrateMatchRecord(oldRecord(version), {
+        [JAW]: JAW_CARD,
+        [BADGE]: BADGE_CARD,
+      });
       if (migrated === null) throw new Error(`v${version} not migrated`);
       expect(migrated.version).toBe(49);
       expect(readMatchRecord(migrated)).not.toBeNull();
@@ -310,10 +332,16 @@ describe("D646 — on a board: the migrated v48 record plays Backtrack Badge", (
     if (parked.state.phase.kind !== "effect:choose") return;
     expect(parked.state.phase.cont.pendingOp.op).toBe("reflipAttackCoins");
     // The park survives the record's own JSON round trip and answers on the far side.
-    const reread = readMatchRecord(JSON.parse(JSON.stringify({ ...oldRecord(48, parked.state), version: 49 })));
+    const reread = readMatchRecord(
+      JSON.parse(JSON.stringify({ ...oldRecord(48, parked.state), version: 49 })),
+    );
     if (reread === null) throw new Error("not read");
     for (const yes of [false, true]) {
-      const answered = applyAction(reread.state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
+      const answered = applyAction(reread.state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes },
+      });
       if (!answered.ok) throw new Error(answered.error.code);
       expect(answered.state.phase.kind).not.toBe("effect:choose");
       expect(answered.events.filter((e) => e.type === "COINS_REFLIPPED")).toHaveLength(yes ? 1 : 0);

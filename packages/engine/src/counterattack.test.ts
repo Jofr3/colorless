@@ -247,12 +247,8 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
   /** The family's two halves, split by the CONDITION each pays on. Since D158 the
       one printed clause is served by two fields read at two sites, so the census
       partitions rather than mapping onto one field. */
-  const onDamage = producers.filter(
-    (p) => programFor(p.id)?.passive?.damageAttacker !== undefined,
-  );
-  const onKo = producers.filter(
-    (p) => programFor(p.id)?.passive?.damageAttackerOnKo !== undefined,
-  );
+  const onDamage = producers.filter((p) => programFor(p.id)?.passive?.damageAttacker !== undefined);
+  const onKo = producers.filter((p) => programFor(p.id)?.passive?.damageAttackerOnKo !== undefined);
 
   it("every discovered producer is AUTHORED — text census = program census", () => {
     // The two censuses must agree in both directions: a printed sentence with no
@@ -290,9 +286,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
       expect(placed[0]?.source, `${producer.id} labelled its recoil`).toBe("counterattack");
       // The amount is this producer's own plus the Helmet's, except for the
       // Helmet itself (which is not doubled up).
-      expect(placed[0]?.amount, producer.id).toBe(
-        producer.id === "sv01-193" ? own : own + HELMET,
-      );
+      expect(placed[0]?.amount, producer.id).toBe(producer.id === "sv01-193" ? own : own + HELMET);
       // …and the row is on the ATTACKER's seat, never the holder's.
       expect(placed[0]?.seat, producer.id).toBe("p1");
     }
@@ -509,12 +503,16 @@ describe("the family this label must still cover — three printings, none an Ab
     // now derives to, the paraphrase for the fact that the widened anchor admits it too
     // — stated rather than hidden, since no printing carries that spelling today.
     expect(programFor("sv02-143")).toBeUndefined(); // no registry row: it derives from the TEXT
-    expect(deriveAttackEffect("During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.")).toEqual([
-      { op: "installRecoil", amount: "damageTaken" },
-    ]);
-    expect(deriveAttackEffect("During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.")).toEqual([
-      { op: "installRecoil", amount: "damageTaken" },
-    ]);
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+      ),
+    ).toEqual([{ op: "installRecoil", amount: "damageTaken" }]);
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+      ),
+    ).toEqual([{ op: "installRecoil", amount: "damageTaken" }]);
     // …and this is the claim the file is really making, D141's stake for the FOURTH
     // time: an attack whose amount is not even a NUMBER feeds this row, and it STILL
     // needs no new `COUNTERS_PLACED.source` member.

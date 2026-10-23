@@ -95,7 +95,13 @@ describe("playTrainer — Items are unbounded (§7.1)", () => {
     state = must(applyAction(state, { type: "playTrainer", seat: "p1", uid: balls[0] as string }));
     expect(state.phase.kind).toBe("effect:choose");
     // Decline the search (take 0) — still legal, still shuffles.
-    state = must(applyAction(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }));
+    state = must(
+      applyAction(state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [] },
+      }),
+    );
     expect(state.phase.kind).toBe("turn:action");
     // Second one is fine — Items have no per-turn cap.
     const r = applyAction(state, { type: "playTrainer", seat: "p1", uid: balls[1] as string });
@@ -109,7 +115,11 @@ describe("Nest Ball — search deck → Bench, then shuffle (§15.E)", () => {
     state = handFromDeck(state, "p1", "sv01-181", 1);
     const uid = handUid(state, "p1", "sv01-181");
     const benchBefore = state.players.p1.bench.length;
-    const { state: parked, events: e1 } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
+    const { state: parked, events: e1 } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid,
+    });
     expect(parked.phase.kind).toBe("effect:choose");
     expect(types(e1)).toContain("EFFECT_PENDING");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -167,7 +177,11 @@ describe("Boss's Orders — gust the opponent's Active (§15.G)", () => {
     state = handFromDeck(state, "p1", "sv02-172", 1);
     const uid = handUid(state, "p1", "sv02-172");
     const oppActiveBefore = activeUid(state, "p2");
-    const { state: parked, events: e1 } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
+    const { state: parked, events: e1 } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid,
+    });
     expect(parked.phase.kind).toBe("effect:choose");
     expect(types(e1)).toContain("TRAINER_PLAYED");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected park");
@@ -226,7 +240,10 @@ describe("Switch — swap your own Active (§15.G)", () => {
       ...state,
       players: {
         ...state.players,
-        p1: { ...state.players.p1, active: { ...active, conditions: { ...active.conditions, rotation: "asleep" } } },
+        p1: {
+          ...state.players.p1,
+          active: { ...active, conditions: { ...active.conditions, rotation: "asleep" } },
+        },
       },
     };
     state = handFromDeck(state, "p1", "sv01-194", 1);
@@ -308,7 +325,9 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
     // beside the shared one, so it prefixed the count onto an ARTICLE and this
     // read "Search your deck for up to 2 a Basic Water Energy into your hand."
     // It survived because nothing asserted any search note; now something does.
-    expect(prompt.note).toBe("Search your deck for up to 2 Basic Water Energy cards into your hand.");
+    expect(prompt.note).toBe(
+      "Search your deck for up to 2 Basic Water Energy cards into your hand.",
+    );
     const pick = prompt.candidates.slice(0, 2);
     const handBefore = parked.players.p1.hand.length;
     const { state: done, events: e2 } = mustApply(parked, {
@@ -320,7 +339,11 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
     expect(done.players.p1.hand.length).toBe(handBefore + 2);
     expect(done.phase.kind).toBe("turn:action"); // abilities do NOT end the turn
     // Once per turn — a second use is rejected.
-    expectErr(done, { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Shivery Chill" }, "ABILITY_ALREADY_USED");
+    expectErr(
+      done,
+      { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Shivery Chill" },
+      "ABILITY_ALREADY_USED",
+    );
     void uid;
   });
 
@@ -332,7 +355,12 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
     const index = state.players.p1.bench.findIndex((p) => p.stack.includes(benchUid));
     expectErr(
       state,
-      { type: "useAbility", seat: "p1", target: { spot: "bench", index }, abilityName: "Shivery Chill" },
+      {
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "bench", index },
+        abilityName: "Shivery Chill",
+      },
       "ABILITY_ACTIVE_ONLY",
     );
   });
@@ -375,34 +403,55 @@ describe("resolveEffect — wire safety (never throw)", () => {
 
   it("rejects a card not among the search candidates (BAD_EFFECT_CHOICE)", () => {
     const state = parkedNestBall();
-    expectErr(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: ["not-a-uid"] } }, "BAD_EFFECT_CHOICE");
+    expectErr(
+      state,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: ["not-a-uid"] } },
+      "BAD_EFFECT_CHOICE",
+    );
   });
 
   it("rejects more picks than the max (BAD_EFFECT_CHOICE)", () => {
     const state = parkedNestBall();
-    if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards") throw new Error("setup");
+    if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards")
+      throw new Error("setup");
     const two = state.phase.prompt.candidates.slice(0, 2);
     if (two.length < 2) throw new Error("need 2 candidates");
-    expectErr(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: two } }, "BAD_EFFECT_CHOICE");
+    expectErr(
+      state,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: two } },
+      "BAD_EFFECT_CHOICE",
+    );
   });
 
   it("rejects the wrong choice kind (BAD_EFFECT_CHOICE)", () => {
     const state = parkedNestBall();
     expectErr(
       state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "active" } } } },
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "active" } } },
+      },
       "BAD_EFFECT_CHOICE",
     );
   });
 
   it("rejects the wrong seat (WRONG_SEAT)", () => {
     const state = parkedNestBall();
-    expectErr(state, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } }, "WRONG_SEAT");
+    expectErr(
+      state,
+      { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } },
+      "WRONG_SEAT",
+    );
   });
 
   it("rejects resolveEffect when no effect is parked (BAD_PHASE)", () => {
     const state = p1Turn2(1, both);
-    expectErr(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }, "BAD_PHASE");
+    expectErr(
+      state,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } },
+      "BAD_PHASE",
+    );
   });
 });
 
@@ -415,14 +464,20 @@ describe("playTrainer / useAbility — validation", () => {
   });
 
   it("rejects an unauthored Stadium (TRAINER_NOT_SIMULATED)", () => {
-    let state = p1Turn2(1, { p1: deckOf({ "fix-basic-1": 24, "fix-stadium": 4, "fix-energy": 32 }), p2: TRAINER_DECK });
+    let state = p1Turn2(1, {
+      p1: deckOf({ "fix-basic-1": 24, "fix-stadium": 4, "fix-energy": 32 }),
+      p2: TRAINER_DECK,
+    });
     state = handFromDeck(state, "p1", "fix-stadium", 1);
     const uid = handUid(state, "p1", "fix-stadium");
     expectErr(state, { type: "playTrainer", seat: "p1", uid }, "TRAINER_NOT_SIMULATED");
   });
 
   it("rejects an unauthored Trainer (TRAINER_NOT_SIMULATED)", () => {
-    let state = p1Turn2(1, { p1: deckOf({ "fix-basic-1": 24, "fix-item": 4, "fix-energy": 32 }), p2: TRAINER_DECK });
+    let state = p1Turn2(1, {
+      p1: deckOf({ "fix-basic-1": 24, "fix-item": 4, "fix-energy": 32 }),
+      p2: TRAINER_DECK,
+    });
     state = handFromDeck(state, "p1", "fix-item", 1);
     const uid = handUid(state, "p1", "fix-item");
     expectErr(state, { type: "playTrainer", seat: "p1", uid }, "TRAINER_NOT_SIMULATED");
@@ -478,7 +533,25 @@ function benchN(state: GameState, seat: Seat, n: number): GameState {
       [seat]: {
         ...side,
         deck: side.deck.filter((u) => !taken.has(u)),
-        bench: [...side.bench, ...uids.map((u) => ({ stack: [u], energy: [], tools: [], damage: 0, conditions: { rotation: "none" as const, poisonDamage: 0, burned: false, confusionDamage: 30 }, retreatBlocked: false, markers: [], turnPlayed: 0, promotedTurn: null }))],
+        bench: [
+          ...side.bench,
+          ...uids.map((u) => ({
+            stack: [u],
+            energy: [],
+            tools: [],
+            damage: 0,
+            conditions: {
+              rotation: "none" as const,
+              poisonDamage: 0,
+              burned: false,
+              confusionDamage: 30,
+            },
+            retreatBlocked: false,
+            markers: [],
+            turnPlayed: 0,
+            promotedTurn: null,
+          })),
+        ],
       },
     },
   };

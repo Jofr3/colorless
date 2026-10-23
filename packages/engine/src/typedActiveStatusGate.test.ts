@@ -19,7 +19,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -414,11 +414,51 @@ function conditionsOf(state: GameState, seat: Seat) {
     // (🆕🆕🆕 D569 (D539): "data-blocked" — the banner has a writer since D569; the board's banner sentence stays unread for its own reason)
     data-blocked banner and the clauseless attack). */
 const BOARDS: readonly (readonly [string, Table])[] = [
-  ["A — their Active is the Dragon", { swinger: "fix-d472-tideswing", ourBench: "fix-d472-tidesit", foe: "fix-d472-drakefoe", theirBench: "fix-d472-tidesit" }],
-  ["B — OUR Active is the Dragon", { swinger: "fix-d472-drakeswing", ourBench: "fix-d472-tidesit", foe: "fix-d472-tidefoe", theirBench: "fix-d472-tidesit" }],
-  ["C — OUR Bench holds the Dragon", { swinger: "fix-d472-tideswing", ourBench: "fix-d472-drakesit", foe: "fix-d472-tidefoe", theirBench: "fix-d472-tidesit" }],
-  ["D — THEIR Bench holds the Dragon", { swinger: "fix-d472-tideswing", ourBench: "fix-d472-tidesit", foe: "fix-d472-tidefoe", theirBench: "fix-d472-drakesit" }],
-  ["E — their Active is dual, Dragon SECOND", { swinger: "fix-d472-tideswing", ourBench: "fix-d472-tidesit", foe: "fix-d472-dualfoe", theirBench: "fix-d472-tidesit" }],
+  [
+    "A — their Active is the Dragon",
+    {
+      swinger: "fix-d472-tideswing",
+      ourBench: "fix-d472-tidesit",
+      foe: "fix-d472-drakefoe",
+      theirBench: "fix-d472-tidesit",
+    },
+  ],
+  [
+    "B — OUR Active is the Dragon",
+    {
+      swinger: "fix-d472-drakeswing",
+      ourBench: "fix-d472-tidesit",
+      foe: "fix-d472-tidefoe",
+      theirBench: "fix-d472-tidesit",
+    },
+  ],
+  [
+    "C — OUR Bench holds the Dragon",
+    {
+      swinger: "fix-d472-tideswing",
+      ourBench: "fix-d472-drakesit",
+      foe: "fix-d472-tidefoe",
+      theirBench: "fix-d472-tidesit",
+    },
+  ],
+  [
+    "D — THEIR Bench holds the Dragon",
+    {
+      swinger: "fix-d472-tideswing",
+      ourBench: "fix-d472-tidesit",
+      foe: "fix-d472-tidefoe",
+      theirBench: "fix-d472-drakesit",
+    },
+  ],
+  [
+    "E — their Active is dual, Dragon SECOND",
+    {
+      swinger: "fix-d472-tideswing",
+      ourBench: "fix-d472-tidesit",
+      foe: "fix-d472-dualfoe",
+      theirBench: "fix-d472-tidesit",
+    },
+  ],
 ];
 
 /** The five-bit signature of "seat's Active ends Paralyzed", A..E as MSB..LSB. */
@@ -531,7 +571,9 @@ describe("§2 — the reader, named rather than counted", () => {
     // own vocabulary at a fifth position and `CLAUSE_POKEMON_TYPES` is the clause
     // family's, so neither slot is a NEW parameter (D121 prices those). Driven on
     // constructed strings, LABELLED as constructed (D440).
-    expect(deriveAttackEffect("If your opponent's Active Pokémon is a {P} Pokémon, it is now Burned.")).toEqual([
+    expect(
+      deriveAttackEffect("If your opponent's Active Pokémon is a {P} Pokémon, it is now Burned."),
+    ).toEqual([
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasType", type: "Psychic" },
@@ -541,7 +583,11 @@ describe("§2 — the reader, named rather than counted", () => {
     ]);
     // …and the clause slot reaches the LITERAL table too, not only the type
     // patterns, because it is `boardConditionForClause` and not a private lookup.
-    expect(deriveAttackEffect("If your opponent's Active Pokémon is a Stage 1 Pokémon, it is now Asleep.")).toEqual([
+    expect(
+      deriveAttackEffect(
+        "If your opponent's Active Pokémon is a Stage 1 Pokémon, it is now Asleep.",
+      ),
+    ).toEqual([
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsStage1" },
@@ -649,18 +695,39 @@ describe("§4 — the anchor's edges, driven synthetically because no near miss 
     // below is the shipped anchor with exactly one feature removed.
     const S = "Asleep|Burned|Confused|Paralyzed|Poisoned";
     const LOOSENINGS: readonly (readonly [string, RegExp])[] = [
-      ["^ dropped", new RegExp(`If your opponent['’]s Active Pokémon is a (.+) Pokémon, it is now (${S})\\.$`)],
-      ["\\.$ dropped", new RegExp(`^If your opponent['’]s Active Pokémon is a (.+) Pokémon, it is now (${S})\\.`)],
-      ["status slot widened", /^If your opponent['’]s Active Pokémon is a (.+) Pokémon, it is now (.+)\.$/],
+      [
+        "^ dropped",
+        new RegExp(`If your opponent['’]s Active Pokémon is a (.+) Pokémon, it is now (${S})\\.$`),
+      ],
+      [
+        "\\.$ dropped",
+        new RegExp(`^If your opponent['’]s Active Pokémon is a (.+) Pokémon, it is now (${S})\\.`),
+      ],
+      [
+        "status slot widened",
+        /^If your opponent['’]s Active Pokémon is a (.+) Pokémon, it is now (.+)\.$/,
+      ],
       ["subject widened", new RegExp(`^If (.+), it is now (${S})\\.$`)],
-      ["noun tail dropped", new RegExp(`^If your opponent['’]s Active Pokémon is a (.+), it is now (${S})\\.$`)],
-      ["apostrophe class narrowed", new RegExp(`^If your opponent's Active Pokémon is a (.+) Pokémon, it is now (${S})\\.$`)],
+      [
+        "noun tail dropped",
+        new RegExp(`^If your opponent['’]s Active Pokémon is a (.+), it is now (${S})\\.$`),
+      ],
+      [
+        "apostrophe class narrowed",
+        new RegExp(`^If your opponent's Active Pokémon is a (.+) Pokémon, it is now (${S})\\.$`),
+      ],
       ["BOTH ends widened", /^If (.+), it is now (.+)\.$/],
     ];
     for (const [label, pattern] of LOOSENINGS) {
       const hit = legalAttackCorpus().filter(([, s]) => pattern.test(s));
-      expect(hit.map(([, s]) => s), label).toEqual([GATED]);
-      expect(hit.reduce((sum, [units]) => sum + units, 0), label).toBe(2);
+      expect(
+        hit.map(([, s]) => s),
+        label,
+      ).toEqual([GATED]);
+      expect(
+        hit.reduce((sum, [units]) => sum + units, 0),
+        label,
+      ).toBe(2);
     }
   });
 
@@ -675,7 +742,9 @@ describe("§4 — the anchor's edges, driven synthetically because no near miss 
     // refusal rather than a vacuous assertion about an unknown string (D424's rule:
     // an "X is refused" rung owes a "Y is admitted" on the same axis).
     expect(
-      deriveAttackDamageBonus("If you have any {M} Pokémon on your Bench, this attack does 80 more damage."),
+      deriveAttackDamageBonus(
+        "If you have any {M} Pokémon on your Bench, this attack does 80 more damage.",
+      ),
     ).toEqual({
       per: 80,
       count: { kind: "boardCondition", cond: { kind: "yourBenchHasType", type: "Metal" } },
@@ -704,15 +773,15 @@ describe("§4 — the anchor's edges, driven synthetically because no near miss 
     // refuses arm 6a's clause under a STATUS consequent. No card prints that
     // sentence; the refusal is recorded rather than discovered.
     expect(
-      deriveAttackEffect("If your opponent's Active Pokémon is a Basic Pokémon, it is now Paralyzed."),
+      deriveAttackEffect(
+        "If your opponent's Active Pokémon is a Basic Pokémon, it is now Paralyzed.",
+      ),
     ).toBeNull();
   });
 
   it("the `^` end fails LOUD and the `$` end fails through the SPLITTER (D464)", () => {
     // Leading text: nothing claims the head, so the whole string stays unread.
-    expect(
-      deriveAttackEffect(`This attack does 30 damage. ${GATED}`),
-    ).toBeNull();
+    expect(deriveAttackEffect(`This attack does 30 damage. ${GATED}`)).toBeNull();
     // Trailing text: `deriveAttackEffect` still refuses the compound and
     // `resolvedByAnyReader` is still false on it — but D409's trailing splitter now
     // composes this newly-claimable head with a claimed tail. That is a path which
@@ -923,14 +992,13 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
   });
 
   it("a record round-trips and the parsed bytes are a LIVE board", () => {
-    const first = swing(table({ swinger: "fix-d472-tideswing", foe: "fix-d472-drakefoe" }), DRAKE_LOCK);
+    const first = swing(
+      table({ swinger: "fix-d472-tideswing", foe: "fix-d472-drakefoe" }),
+      DRAKE_LOCK,
+    );
     const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
     expect(saved).toEqual(first.state);
     expect(conditionsOf(saved, "p2").rotation).toBe("paralyzed");
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -349,8 +345,8 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     expect(floors).toEqual([]);
     // The controls that make that mean something: the two thresholds the catalog DOES
     // print are both about the OPPONENT's hand or about an exact own count.
-    const printed = corpus().filter(([, s]) =>
-      /cards in (your|their) hand,/.test(s) && /^If /.test(s),
+    const printed = corpus().filter(
+      ([, s]) => /cards in (your|their) hand,/.test(s) && /^If /.test(s),
     );
     expect(printed.length).toBeGreaterThan(0);
   });
@@ -415,7 +411,8 @@ describe("§2 — the CONNECTIVE is a closed alternation, and every refusal is d
     // one cost's branch would be invisible to every assertion above. Both existing
     // rows are re-read under the new spelling, and the readings are IDENTICAL to the
     // printed ones.
-    const swapped = (text: string) => text.replace(". If you do,", ". If you discarded any cards in this way,");
+    const swapped = (text: string) =>
+      text.replace(". If you do,", ". If you discarded any cards in this way,");
     expect(deriveAttackOptionalCostBoost(swapped(CRUSHING_PRESS))).toEqual(
       deriveAttackOptionalCostBoost(CRUSHING_PRESS),
     );
@@ -605,40 +602,47 @@ describe("§4 — the program: D381's arm, and BOTH `otherwise`s carry the print
 });
 
 describe("§5 — the board: the hand reaches the DISCARD PILE, and the hit is 240", () => {
-  it.each(SEEDS)("seed %i — YES: the whole hand is discarded and the Defender takes 240", (seed) => {
-    const before = board(seed);
-    const hand = before.players.p1.hand;
-    expect(hand.length).toBeGreaterThan(0);
-    const pileBefore = before.players.p1.discard.length;
+  it.each(SEEDS)(
+    "seed %i — YES: the whole hand is discarded and the Defender takes 240",
+    (seed) => {
+      const before = board(seed);
+      const hand = before.players.p1.hand;
+      expect(hand.length).toBeGreaterThan(0);
+      const pileBefore = before.players.p1.discard.length;
 
-    const parked = attack(before);
-    // 🛑 NOTHING IS DEALT BEFORE THE ANSWER: the printed base is re-homed INSIDE the
-    // gate, so a `DAMAGE_DEALT` row here would be the base leaking out of the program.
-    expect(types(parked.events)).not.toContain("DAMAGE_DEALT");
-    expect(types(parked.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(parked.state.phase.kind).toBe("effect:choose");
-    expect(find(parked.events, "EFFECT_PENDING")).toEqual({
-      type: "EFFECT_PENDING",
-      seat: "p1",
-      note: PURGING,
-    });
+      const parked = attack(before);
+      // 🛑 NOTHING IS DEALT BEFORE THE ANSWER: the printed base is re-homed INSIDE the
+      // gate, so a `DAMAGE_DEALT` row here would be the base leaking out of the program.
+      expect(types(parked.events)).not.toContain("DAMAGE_DEALT");
+      expect(types(parked.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+      expect(parked.state.phase.kind).toBe("effect:choose");
+      expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+        type: "EFFECT_PENDING",
+        seat: "p1",
+        note: PURGING,
+      });
 
-    const done = say(parked.state, true);
-    // 🛑 THE ZONE, NOT MERELY THE LENGTH — a hand emptied into nowhere would be green
-    // on every "the hand is empty" assertion.
-    expect(done.state.players.p1.hand).toEqual([]);
-    expect(done.state.players.p1.discard).toHaveLength(pileBefore + hand.length);
-    for (const uid of hand) expect(done.state.players.p1.discard).toContain(uid);
-    expect(find(done.events, "HAND_DISCARDED")).toEqual({
-      type: "HAND_DISCARDED",
-      seat: "p1",
-      uids: [...hand],
-    });
-    // …and the boosted hit, ONCE.
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 240, dealt: 240 });
-    expect(done.state.players.p2.active?.damage).toBe(240);
-    expect(done.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
-  });
+      const done = say(parked.state, true);
+      // 🛑 THE ZONE, NOT MERELY THE LENGTH — a hand emptied into nowhere would be green
+      // on every "the hand is empty" assertion.
+      expect(done.state.players.p1.hand).toEqual([]);
+      expect(done.state.players.p1.discard).toHaveLength(pileBefore + hand.length);
+      for (const uid of hand) expect(done.state.players.p1.discard).toContain(uid);
+      expect(find(done.events, "HAND_DISCARDED")).toEqual({
+        type: "HAND_DISCARDED",
+        seat: "p1",
+        uids: [...hand],
+      });
+      // …and the boosted hit, ONCE.
+      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({
+        seat: "p2",
+        base: 240,
+        dealt: 240,
+      });
+      expect(done.state.players.p2.active?.damage).toBe(240);
+      expect(done.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    },
+  );
 
   it.each(SEEDS)("seed %i — NO: the hand stays put and the printed 120 still lands", (seed) => {
     const before = board(seed);
@@ -684,14 +688,17 @@ describe("§6 — the gate, driven from the REAL printing on an ORDINARY board",
     expect(attack(one).state.phase.kind).toBe("effect:choose");
   });
 
-  it.each(SEEDS)("seed %i — 🛑 ONE card is the boundary, and it pays the FULL printed bonus", (seed) => {
-    // The boundary the gate is drawn at, driven rather than described: a hand of one
-    // is payable and buys the whole +120 — the printed sentence says *"any cards"*,
-    // not *"all of them"*, so there is no proportionality anywhere in this reading.
-    const before = setHandSize(board(seed), "p1", 1);
-    const done = say(attack(before).state, true);
-    expect(find(done.events, "HAND_DISCARDED")?.uids).toHaveLength(1);
-    expect(done.state.players.p1.hand).toEqual([]);
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ base: 240, dealt: 240 });
-  });
+  it.each(SEEDS)(
+    "seed %i — 🛑 ONE card is the boundary, and it pays the FULL printed bonus",
+    (seed) => {
+      // The boundary the gate is drawn at, driven rather than described: a hand of one
+      // is payable and buys the whole +120 — the printed sentence says *"any cards"*,
+      // not *"all of them"*, so there is no proportionality anywhere in this reading.
+      const before = setHandSize(board(seed), "p1", 1);
+      const done = say(attack(before).state, true);
+      expect(find(done.events, "HAND_DISCARDED")?.uids).toHaveLength(1);
+      expect(done.state.players.p1.hand).toEqual([]);
+      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ base: 240, dealt: 240 });
+    },
+  );
 });

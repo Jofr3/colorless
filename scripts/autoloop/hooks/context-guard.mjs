@@ -24,7 +24,15 @@
 // the stream file is the source when the driver provides one, and the transcript
 // is the fallback for interactive use, where it is flushed per turn and correct.
 
-import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -77,7 +85,9 @@ function lastContextTokens(path) {
     const u = entry?.message?.usage;
     if (!u) continue;
     const used =
-      (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0);
+      (u.input_tokens ?? 0) +
+      (u.cache_creation_input_tokens ?? 0) +
+      (u.cache_read_input_tokens ?? 0);
     if (used > 0) return used;
   }
   return 0;

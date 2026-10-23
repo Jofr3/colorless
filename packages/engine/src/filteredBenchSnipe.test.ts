@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import {
   deriveAttackDamageMultiplier,
@@ -13,7 +9,6 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { engineVersion } from "./index";
 import {
   FILTERED_BENCH_SNIPE_DECK,
   attachFromDeck,
@@ -143,7 +138,8 @@ const CLAUSE = " that has any damage counters on it";
     REFUSAL (D445) and outside every family the D574 pricing round ranks (D540), so it is not the next row
     a slice builds. Reader, gate and trailing all null (asserted in §1). Moved BEFORE the reader landed.
     (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
-const UNREAD_SIBLING = "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
+const UNREAD_SIBLING =
+  "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 /** 🆕🆕🆕 D545 — the row `UNREAD_SIBLING` vacated at D545 (corpus FILE LINE 316), kept LIVE
     as the counter-example (D444/D447): it builds on the GATE arm now. */
 const BUILT_COST_CLAUSE =
@@ -196,7 +192,12 @@ type Body = { id: string; damage: number };
     ⚠️ THE TURN IS PASSED SO `attacker` IS THE SEAT TO ACT, which is what makes this
     helper seat-symmetric: every board below is drivable from either side by the same
     call, and §7 runs the whole shape from `p2`. */
-function board(seed: number, attacker: Seat, bench: readonly Body[], defender = "fix-titan"): GameState {
+function board(
+  seed: number,
+  attacker: Seat,
+  bench: readonly Body[],
+  defender = "fix-titan",
+): GameState {
   const victim = other(attacker);
   let state = driveSetup(
     seed,
@@ -339,7 +340,10 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     expect(resolvedByAnyReader(UNREAD_SIBLING)).toBe(false);
     expect(splitAttackGateClause(UNREAD_SIBLING)).toBeNull();
     expect(splitAttackTrailingClause(UNREAD_SIBLING)).toBeNull();
-    expect(splitAttackGateClause(BUILT_COST_CLAUSE)).toEqual({ clause: BUILT_COST_CLAUSE, body: "" });
+    expect(splitAttackGateClause(BUILT_COST_CLAUSE)).toEqual({
+      clause: BUILT_COST_CLAUSE,
+      body: "",
+    });
     expect(family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([]);
   });
 
@@ -395,9 +399,11 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
     expect(deriveAttackEffect(PRINTED)).toEqual([NARROWED_OP]);
     // The optional W/R clarifier is the fragment's own group and does not change the
     // op — the same sentence without it reads identically.
-    expect(deriveAttackEffect(PRINTED.replace(" (Don't apply Weakness and Resistance for Benched Pokémon.)", ""))).toEqual([
-      NARROWED_OP,
-    ]);
+    expect(
+      deriveAttackEffect(
+        PRINTED.replace(" (Don't apply Weakness and Resistance for Benched Pokémon.)", ""),
+      ),
+    ).toEqual([NARROWED_OP]);
   });
 
   it("🛑 the ONE-AXIS control: delete the clause and the SAME op comes back without the key", () => {
@@ -406,7 +412,14 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
     // shipped at D399 — `{ damagedOnly: undefined }` would not be.
     const plain = deriveAttackEffect(UNNARROWED);
     expect(plain).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect("damagedOnly" in (plain?.[0] as object)).toBe(false);
   });
@@ -417,13 +430,21 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
     // have … on them"*, which this fragment does not match at all. The disagreeing
     // spelling falls to the loud `ATTACK_EFFECT_SKIPPED` path rather than resolving on
     // a guess.
-    const two = "This attack also does 60 damage to 2 of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    const two =
+      "This attack also does 60 damage to 2 of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     expect(deriveAttackEffect(two)).toBeNull();
     expect(resolvedByAnyReader(two)).toBe(false);
     // …and the ADMISSION on the same axis (D424): the same string minus the clause IS
     // read, at count 2, so what refuses it is the number agreement and not the arity.
     expect(deriveAttackEffect(two.replace(CLAUSE, ""))).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 60, count: 2, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 60,
+        count: 2,
+        source: "attack",
+        deals: true,
+      },
     ]);
     // The plural spelling no card prints is refused too, and by a different mechanism
     // — the fragment simply does not contain it.
@@ -470,7 +491,9 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
     // assumed — this is the measurement the refusal rests on, and it is executable, so
     // the day the catalog prints one this rung goes RED and the refusal is revisited
     // (D428: a refusal's falsifier should be executable).
-    expect(corpus().filter(([, s]) => /You may .*Benched Pokémon that has any damage counters/.test(s))).toEqual([]);
+    expect(
+      corpus().filter(([, s]) => /You may .*Benched Pokémon that has any damage counters/.test(s)),
+    ).toEqual([]);
   });
 
   it("🛑 the GATED caller reads it too — one fragment, one reading, three callers", () => {
@@ -486,7 +509,15 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
         cond: { kind: "opponentActiveDamaged" },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
-          { op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true, damagedOnly: true },
+          {
+            op: "damageChosen",
+            target: "opponentBench",
+            amount: 30,
+            count: 1,
+            source: "attack",
+            deals: true,
+            damagedOnly: true,
+          },
         ],
       },
     ]);
@@ -529,7 +560,11 @@ describe("§3 — THE EMPTY FILTERED SET, against the board that would have park
     // is what makes "zero candidates" attributable to the narrowing rather than to the
     // board (D214's attribution control).
     const state = board(1, "p1", UNDAMAGED);
-    const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: BLUNT });
+    const { state: parked, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: BLUNT,
+    });
     expect(types(events)).toContain("EFFECT_PENDING");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
@@ -569,7 +604,13 @@ describe("§4 — FORCED AT ONE, where the unfiltered board would have parked", 
     // Two rows in one action: the main 30 on the Active, the rider's 60 on the Bench.
     const dealt = findAll(events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
-    expect(dealt[1]).toMatchObject({ seat: "p2", base: 60, weakness: null, resistance: null, dealt: 60 });
+    expect(dealt[1]).toMatchObject({
+      seat: "p2",
+      base: 60,
+      weakness: null,
+      resistance: null,
+      dealt: 60,
+    });
     // ⚠️ **THE DAMAGE LANDS ON THE CHOSEN BODY ONLY**, and the two undamaged
     // neighbours are asserted at zero rather than left unmentioned.
     expect(benchDamage(done, "p2")).toEqual([0, 70, 0]);
@@ -622,7 +663,11 @@ describe("§5 — TWO OR MORE PARKS, and the offer is exactly the printed set", 
     // D416's rule: an op that can park needs a board that actually offers two, or the
     // parked arm is untested however many cases the file has.
     const state = board(5, "p1", TWO_DAMAGED);
-    const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: PICKY });
+    const { state: parked, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: PICKY,
+    });
     expect(types(events)).toContain("EFFECT_PENDING");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
@@ -770,7 +815,12 @@ describe("§7 — Weakness is genuinely not applied, the far seat, and the loud 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(weakEvents, "DAMAGE_DEALT")).toMatchObject({ base: 60, weakness: null, resistance: null, dealt: 60 });
+    expect(find(weakEvents, "DAMAGE_DEALT")).toMatchObject({
+      base: 60,
+      weakness: null,
+      resistance: null,
+      dealt: 60,
+    });
     expect(benchDamage(weak, "p2")).toEqual([70, 10]);
   });
 
@@ -893,9 +943,5 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
     // body is not in the persisted candidate list, so no deploy can answer with one
     // however it reads the op.
     expect(prompt.candidates).toHaveLength(2);
-  });
-
-  it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

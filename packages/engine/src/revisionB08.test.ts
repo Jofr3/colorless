@@ -60,7 +60,9 @@ const FILLER = "b08-filler";
 const LOCAL: Record<string, Card> = {
   [PEARL]: { ...trainerCard(PEARL, "Tool", PEARL_TEXT), name: "Lillie's Pearl" },
   [LEGACY]: specialEnergy(LEGACY, "Legacy Energy", LEGACY_TEXT),
-  ...Object.fromEntries(REVERSAL_IDS.map((id) => [id, specialEnergy(id, "Reversal Energy", REVERSAL_TEXT)])),
+  ...Object.fromEntries(
+    REVERSAL_IDS.map((id) => [id, specialEnergy(id, "Reversal Energy", REVERSAL_TEXT)]),
+  ),
   [DARK]: typedEnergy(DARK, "Darkness"),
   [ABSOL]: battler(ABSOL, {
     name: "Mega Absol ex",
@@ -70,7 +72,12 @@ const LOCAL: Record<string, Card> = {
     weaknesses: [{ type: "Grass", value: "×2" }],
     attacks: [
       { cost: ["Darkness", "Colorless"], name: "Terminal Period", effect: TERMINAL_TEXT },
-      { cost: ["Darkness", "Darkness", "Colorless"], name: "Claw of Darkness", effect: CLAW_TEXT, damage: 200 },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Claw of Darkness",
+        effect: CLAW_TEXT,
+        damage: 200,
+      },
     ],
   }),
   [CLEFAIRY]: battler(CLEFAIRY, {
@@ -83,7 +90,8 @@ const LOCAL: Record<string, Card> = {
       {
         cost: ["Psychic", "Colorless"],
         name: "Full Moon Rondo",
-        effect: "This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).",
+        effect:
+          "This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).",
         damage: 20,
       },
     ],
@@ -151,7 +159,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -159,11 +169,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);
@@ -175,7 +188,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -207,7 +226,7 @@ describe("B08 §1 — Lillie's Pearl: \"… is Knocked Out by damage from an att
     });
   });
 
-  it("🛑 Terminal Period's damage-free \"that Pokémon is Knocked Out\" reduces NOTHING: P1 takes both Prizes for the ex", () => {
+  it('🛑 Terminal Period\'s damage-free "that Pokémon is Knocked Out" reduces NOTHING: P1 takes both Prizes for the ex', () => {
     const { events } = mustApply(pearlBoard(), terminalPeriod);
     expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);
     expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
@@ -225,7 +244,7 @@ describe("B08 §1 — Lillie's Pearl: \"… is Knocked Out by damage from an att
   });
 });
 
-describe("B08 §2 — Legacy Energy: \"… Knocked Out by damage from an attack … This effect of your Legacy Energy can't be applied more than once per game.\"", () => {
+describe('B08 §2 — Legacy Energy: "… Knocked Out by damage from an attack … This effect of your Legacy Energy can\'t be applied more than once per game."', () => {
   it("🛑 Terminal Period's damage-free Knock Out reduces NOTHING and leaves the once-per-game latch UNSPENT", () => {
     const { state: after, events } = mustApply(legacyBoard(), terminalPeriod);
     expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);

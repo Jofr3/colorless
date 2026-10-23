@@ -81,7 +81,14 @@ function oldRecord(version: 41 | 42, seed = 6210): MatchRecord {
     const { chosenAttackShield: _a, sideRetreatLock: _b, ...v42Side } = players[seat];
     players[seat] = v42Side as GameState["players"][Seat];
   }
-  return { version, seed, startedAt: 1_000, names: NAMES, state: { ...created.state, players }, log: [] };
+  return {
+    version,
+    seed,
+    startedAt: 1_000,
+    names: NAMES,
+    state: { ...created.state, players },
+    log: [],
+  };
 }
 
 function must(state: GameState, action: Parameters<typeof applyAction>[1]): GameState {
@@ -126,7 +133,8 @@ describe("D621 — the version and the gate", () => {
 
   it("v40 and v44 are neither read nor migrated; a v42 record missing its players is not migrated (🆕🆕🆕 D630 (D539): v40 and v45 — v44 is this build's own) (🆕🆕🆕 D636 (D539): v40 and v46 — v45 is this build's own) (🆕🆕🆕 D637 (D539): v40 and v47 — v46 is this build's own) (🆕🆕🆕 D640 (D539): v40 and v48 — v47 is this build's own) (🆕🆕🆕 D643 (D539): v40 and v49 — v48 is this build's own) (🆕🆕🆕 D646 (D539): v40 and v50 — v49 is this build's own)", () => {
     const old = oldRecord(42);
-    for (const version of [40, 50]) { // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is. 🆕🆕🆕 D646 — 49 is.
+    for (const version of [40, 50]) {
+      // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is. 🆕🆕🆕 D646 — 49 is.
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();

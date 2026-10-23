@@ -398,10 +398,7 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
     const state = field(5, {
       attacker: "fix-sniper",
       holder: "fix-bigbody",
-      bench: [
-        { id: "sv06.5-037", damage: 200 },
-        { id: "sv06.5-039" },
-      ],
+      bench: [{ id: "sv06.5-037", damage: 200 }, { id: "sv06.5-039" }],
     });
     const benched = state.players.p2.bench[0]?.stack.at(-1) ?? "";
     deepFreeze(state);
@@ -491,10 +488,7 @@ describe("⚠️ CAUSE — 'by damage from an attack from your OPPONENT'S Pokém
     const state = field(9, {
       attacker: "fix-sniper",
       holder: "fix-bigbody",
-      attackerBench: [
-        { id: "sv06.5-037", damage: 210 },
-        { id: "sv06.5-039" },
-      ],
+      attackerBench: [{ id: "sv06.5-037", damage: 210 }, { id: "sv06.5-039" }],
     });
     deepFreeze(state);
 

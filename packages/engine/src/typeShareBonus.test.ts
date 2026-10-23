@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -293,7 +289,7 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
     // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
     // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
@@ -395,7 +391,7 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -472,12 +468,15 @@ describe("§2 — the LITERAL row: 120 from the sentence, and the near misses st
 
   it("takes N FROM THE SENTENCE, not from the card", () => {
     for (const per of [10, 30, 250]) {
-      expect(deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does ${per} more damage.`))
-        .toEqual({ per, count: { kind: "boardCondition", cond: SHARED } });
+      expect(
+        deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does ${per} more damage.`),
+      ).toEqual({ per, count: { kind: "boardCondition", cond: SHARED } });
     }
     // A printed 0 adds nothing — the guard every arm in this family carries, so the
     // sentence stays LOUD rather than deriving a no-op bonus.
-    expect(deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does 0 more damage.`)).toBeNull();
+    expect(
+      deriveAttackDamageBonus(`If ${TAKEN_CLAUSE}, this attack does 0 more damage.`),
+    ).toBeNull();
   });
 
   it("pins the BYTES — a lookalike character would un-map the clause silently", () => {

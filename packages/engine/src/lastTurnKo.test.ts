@@ -131,7 +131,11 @@ const KO_GATE_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: KO_GATE_DECK, p2: KO_GATE_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: KO_GATE_DECK, p2: KO_GATE_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");

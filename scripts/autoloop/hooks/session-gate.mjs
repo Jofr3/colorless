@@ -60,7 +60,8 @@ function main() {
   try {
     dirty = git(cwd, ["status", "--porcelain"]);
     head = git(cwd, ["rev-parse", "HEAD"]);
-    committed = head === base ? "" : git(cwd, ["log", "--name-only", "--pretty=format:", `${base}..HEAD`]);
+    committed =
+      head === base ? "" : git(cwd, ["log", "--name-only", "--pretty=format:", `${base}..HEAD`]);
   } catch {
     return; // no git, detached weirdness — never block on a broken read
   }

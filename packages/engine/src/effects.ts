@@ -8974,7 +8974,13 @@ export type EffectOp =
       park carries `upTo: 1` (D358's decline, spelled through `parkOrForce`), it is ASKED at one
       candidate too, and the ref-less answer switches nothing. No candidate still resolves silently.
       Absent = the mandatory pick every Trainer and attack gust prints. */
-  | { op: "gust"; recordAs?: EffectSlot; basicOnly?: true; remainingHpAtMost?: number; optional?: true }
+  | {
+      op: "gust";
+      recordAs?: EffectSlot;
+      basicOnly?: true;
+      remainingHpAtMost?: number;
+      optional?: true;
+    }
   /** D227 — the OPPONENT-CHOSEN switch-out: *"Switch out your opponent's Active
       Pokémon to the Bench. **(Your opponent chooses the new Active Pokémon.)**"*
       — **10 Standard-legal bare printings**, 13 across the whole family
@@ -12167,7 +12173,14 @@ export type EffectOp =
           after the attack's own program, which may have benched the attacker (Croconaw "Reverse
           Thrust"), so `opponentActive` would strip the Pokémon promoted in its place. No uid, or a
           uid no longer on that board: an empty offer, the whiff. */
-      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "yourBench" | "self" | "attacker";
+      from:
+        | "opponentActive"
+        | "opponentChosen"
+        | "yourActive"
+        | "yours"
+        | "yourBench"
+        | "self"
+        | "attacker";
       filter: CardFilter;
       /** 🆕🆕🆕 **D561 (V5) — THE BODY `"self"` NAMES, WHEN IT IS NOT THE PROGRAM'S OWN
           CARD.** [🆕🆕🆕 D625 (D539): a second engine writer — Wally's Compassion's `healedEnergyToHandAnswered`
@@ -18109,7 +18122,8 @@ const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_
 /** 🆕🆕🆕 D645 — Deoxys `me04-032` "Psyspear"'s clause: *"this Pokémon has at least N extra Energy attached (in addition
     to this attack's cost)"* → `extraEnergyBeyondAttackCost` (R-PSP1), or null. `CONDITIONAL_BENCH_SNIPE`'s fallback
     only. */
-const EXTRA_ENERGY_GATE_CLAUSE = /^this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\)$/;
+const EXTRA_ENERGY_GATE_CLAUSE =
+  /^this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\)$/;
 function extraEnergyGateForClause(clause: string): BoardCondition | null {
   const extra = Number(EXTRA_ENERGY_GATE_CLAUSE.exec(clause)?.[1] ?? 0);
   return extra >= 1 ? { kind: "extraEnergyBeyondAttackCost", extra } : null;
@@ -18721,23 +18735,28 @@ const LOOK_TOP_COMMA_REVEAL_HAND =
 const SEARCH_ANY_BASIC_TO_BENCH =
   /^Search your deck for any number of Basic Pokémon and put them onto your Bench\. Then, shuffle your deck\.$/;
 // Mega Floette ex "Gentle Light" ×3: Picnic Basket's `healEachAll` (R-GLT1).
-const HEAL_EACH_BOTH_SIDES = /^Heal (\d+) damage from each Pokémon \(both yours and your opponent['’]s\)\.$/;
+const HEAL_EACH_BOTH_SIDES =
+  /^Heal (\d+) damage from each Pokémon \(both yours and your opponent['’]s\)\.$/;
 // Scraggy "Nitpick" ×2: `handRefresh` on the opponent alone (Distorted Future's `who`), a fixed draw.
-const OPPONENT_SHUFFLES_HAND_DRAWS = /^Your opponent shuffles their hand into their deck and draws (\d+) cards\.$/;
+const OPPONENT_SHUFFLES_HAND_DRAWS =
+  /^Your opponent shuffles their hand into their deck and draws (\d+) cards\.$/;
 // Ho-Oh "Flames of Revival": `discardPileRetrieval` of Basic Pokémon onto the Bench.
-const RETRIEVE_BASIC_TO_BENCH = /^Put up to (\d+) Basic Pokémon from your discard pile onto your Bench\.$/;
+const RETRIEVE_BASIC_TO_BENCH =
+  /^Put up to (\d+) Basic Pokémon from your discard pile onto your Bench\.$/;
 // Espeon "Miraculous Shine": `DEVOLVE_EACH_TO_DECK`'s sweep into the HAND (`devolveEach.toHand`).
 // One literal, not `DEVOLVE_CHOSEN_TO_HAND`'s two-line template (its D540 mutant rows quote that tail line).
 const DEVOLVE_EACH_TO_HAND =
   /^Devolve each of your opponent['’]s evolved Pokémon by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
 // Frosmoth "Cold Cyclone": `ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH` with a typed noun (`providesEnergy`).
-const MOVE_TYPED_ENERGY_SELF_TO_BENCH = /^Move a \{([A-Z])\} Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+const MOVE_TYPED_ENERGY_SELF_TO_BENCH =
+  /^Move a \{([A-Z])\} Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
 // 🆕🆕🆕 D616 — WP31b, nine more literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`, each
 // onto a shipped op (arm 6e-quater). Regice ex "Ice Prison": the self-discard, then the Paralysis.
 const SELF_DISCARD_THEN_PARALYZE =
   /^Discard (\d+) Energy from this Pokémon, and your opponent['’]s Active Pokémon is now Paralyzed\.$/;
 // Volcanion "Backfire": `PUT_SELF_ENERGY_TO_HAND`'s op at a printed typed count.
-const PUT_TYPED_SELF_ENERGY_TO_HAND = /^Put (\d+) \{([A-Z])\} Energy attached to this Pokémon into your hand\.$/;
+const PUT_TYPED_SELF_ENERGY_TO_HAND =
+  /^Put (\d+) \{([A-Z])\} Energy attached to this Pokémon into your hand\.$/;
 // Meloetta "Soothing Melody" ×2: `healChosen` on the Bench, a typed candidate filter (D569's `filter`).
 const HEAL_ONE_BENCHED_TYPED = /^Heal (\d+) damage from 1 of your Benched \{([A-Z])\} Pokémon\.$/;
 // Claydol "Devolution Ray" ×2: `devolveChosen` narrowed to the Defending Pokémon (`defenderOnly`, NEW).
@@ -18760,7 +18779,8 @@ const REVEAL_BOTTOM_ITEM =
   /^Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent['’]s deck\.$/;
 // 🆕🆕🆕 D619 — WP15, Hippowdon "Twister Spewing" (`me03-040`, LOCAL D1): a clause-table gate over the
 // opponent-side mill (arm 6e-quinquies). The clause is looked up, not captured as a name.
-const CLAUSE_GATED_OPPONENT_MILL = /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
+const CLAUSE_GATED_OPPONENT_MILL =
+  /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
 // 🆕🆕🆕 D627 — the Hide 'n' Sneak archetype (LOCAL D1, 2026-10-10), two clause-table gates (arm 6e-septies),
 // neither printed in legal `sv`. Sinistcha "Matcha Spin" (`me05-006`): arm 23e's opponent-side counter fold
 // behind the clause — its lower-case "place" is read as "put" by `normaliseMeWording`.
@@ -18784,14 +18804,14 @@ const RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO =
   /^Discard random cards from your opponent['’]s hand until they have (\d+) cards in their hand\.$/;
 // Morpeko "Select a Snack" ×2: Explorer's Guidance's program (`lookAtTopN` exact, the rest discarded),
 // the kept card revealed (R-SAS1).
-const MILL_TOP_KEEP_ONE = /^Discard the top (\d+) cards of your deck and put 1 of them into your hand\.$/;
+const MILL_TOP_KEEP_ONE =
+  /^Discard the top (\d+) cards of your deck and put 1 of them into your hand\.$/;
 // Shaymin "Send Flowers": `attachFromDeck` of ANY Energy card onto a typed Benched body.
 const SEARCH_ENERGY_ATTACH_BENCHED_TYPED =
   /^Search your deck for an Energy card and attach it to 1 of your Benched \{([A-Z])\} Pokémon\. Then, shuffle your deck\.$/;
 // Fletchling "Chirp": a revealed hand search over the NEW `pokemonWithResistance` filter.
 const SEARCH_POKEMON_WITH_RESISTANCE =
   /^Search your deck for up to (\d+) Pokémon with \{([A-Z])\} Resistance, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
-
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
 // [N cards|card] of your [opponent's] deck." 16 printings / 7 distinct clauses
@@ -20059,7 +20079,10 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // 🆕🆕🆕 D635 — the fifteenth exact key, so **15** exact keys and **37** nouns; no apostrophe. Relicanth
   // `me05-017` "Fossil Beatdown" (*"…for each of your Benched Pokémon that has "Antique" in its name."*) —
   // the Tauros key's shape; a benched Antique Fossil is read through its in-play face (`inPlayCardOf`).
-  ['Pokémon that has "Antique" in its name', { kind: "pokemonNameContaining", fragment: "Antique" }],
+  [
+    'Pokémon that has "Antique" in its name',
+    { kind: "pokemonNameContaining", fragment: "Antique" },
+  ],
   // 🆕🆕🆕 D623 — WP28b: the fourteenth exact key, so **14** exact keys and **36** nouns; no apostrophe [🆕🆕🆕 D635 (D539): 15 / 37].
   // Pikachu `30th-034` "Pika Chain" — Beedrill's name-pair shape ("Pikachu ex" is the printed name).
   [
@@ -20643,7 +20666,9 @@ function discardPileFilter(noun: string): CardFilter | null {
   const literal = literalClauseRow(DISCARD_PILE_NOUNS, noun);
   if (literal !== undefined) return literal;
   const fragment = PILE_SUPPORTER_NAME_FRAGMENT.exec(noun);
-  return fragment === null ? null : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };
+  return fragment === null
+    ? null
+    : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };
 }
 
 // 🆕🆕 D488 — MILL YOUR OWN DECK, THEN SCALE THE DAMAGE BY A **FILTERED** COUNT OF
@@ -21621,7 +21646,10 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // 🆕🆕🆕 D594 — Chi-Yu "Whirling Envy" (`me05-059`, {D}, 20+, +90, 1 legal printing, LOCAL D1),
   // read through D494's `CONDITIONAL_BONUS_SUPPRESSED` (its Weakness-only rider): Annihilape's
   // shipped `yourActiveDamageCountersAtLeast` (D560) at the printed counter count. A literal row.
-  ["this Pokémon has 2 or more damage counters on it", { kind: "yourActiveDamageCountersAtLeast", count: 2 }],
+  [
+    "this Pokémon has 2 or more damage counters on it",
+    { kind: "yourActiveDamageCountersAtLeast", count: 2 },
+  ],
   // Tyranitar ex sv03-066/-211 "Lightning Rampage" (+100) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids.
   ["your Benched Pokémon have any damage counters on them", { kind: "yourBenchDamaged" }],
@@ -22229,16 +22257,28 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // the 70 would still land here. The key carries no brace code, so unlike its two
   // neighbours it DOES round-trip from `conditionNote` byte for byte once the leading
   // "If " and the trailing comma are put back.
-  ["you have 3 or more Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: null, count: 3 }],
+  [
+    "you have 3 or more Energy in play",
+    { kind: "yourEnergyInPlayAtLeast", energy: null, count: 3 },
+  ],
   // 🆕🆕🆕 D586 — Raikou "Electro Fall" `me01-048`, Entei "Flare Fall" `me02.5-025` and Suicune
   // "Crystal Fall" `me02-026` (+90, 1 legal printing each, LOCAL D1): the Absol row two up at
   // count 4 and three types. **THE TEMPLATE IS STILL REFUSED (D119/D494), MEASURED AGAIN:** a
   // one-slot pattern `^you have at least (\d+) \{([A-Z])\} Energy in play$` would claim exactly
   // these four printed clauses over the `sv` + `me` attack columns and no fifth, so it buys
   // nothing a row does not; four literal rows, matched first, leave a later template free.
-  ["you have at least 4 {L} Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: "Lightning", count: 4 }],
-  ["you have at least 4 {R} Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: "Fire", count: 4 }],
-  ["you have at least 4 {W} Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: "Water", count: 4 }],
+  [
+    "you have at least 4 {L} Energy in play",
+    { kind: "yourEnergyInPlayAtLeast", energy: "Lightning", count: 4 },
+  ],
+  [
+    "you have at least 4 {R} Energy in play",
+    { kind: "yourEnergyInPlayAtLeast", energy: "Fire", count: 4 },
+  ],
+  [
+    "you have at least 4 {W} Energy in play",
+    { kind: "yourEnergyInPlayAtLeast", energy: "Water", count: 4 },
+  ],
   // 🆕🆕 D376 — Chandelure sv10.5w-018 "Incendiary Pillar" (50+, **+100**) and its
   // Illustration-rare reprint sv10.5w-103, byte-identical in rules text, so one row
   // and one fixture serve both. It sits directly under the row above because the two
@@ -22603,8 +22643,14 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // (`me02-059`, 20+, +70) and Zarude "Shadowy Whip" (`mep-088`/`me05-056`, 100+, +70).
   ["this Pokémon's remaining HP is 50 or less", { kind: "yourActiveRemainingHpAtMost", hp: 50 }],
   ["your opponent's Active Pokémon has no Retreat Cost", { kind: "opponentActiveNoRetreatCost" }],
-  ["Rosa's Encouragement is in your discard pile", { kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" }],
-  ["you have any Stage 2 {D} Pokémon on your Bench", { kind: "yourBenchHasStage2OfType", type: "Darkness" }],
+  [
+    "Rosa's Encouragement is in your discard pile",
+    { kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" },
+  ],
+  [
+    "you have any Stage 2 {D} Pokémon on your Bench",
+    { kind: "yourBenchHasStage2OfType", type: "Darkness" },
+  ],
   [
     "your Benched Pokémon have any Shadowy {D} Energy attached",
     { kind: "yourBenchHasNamedEnergyAttached", name: "Shadowy Darkness Energy" },
@@ -22619,7 +22665,10 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     'you played a Supporter card that has "Team Rocket" in its name from your hand during this turn',
     { kind: "youPlayedSupporterNamedThisTurn", nameContains: "Team Rocket" },
   ],
-  ["you played Emma from your hand during this turn", { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" }],
+  [
+    "you played Emma from your hand during this turn",
+    { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" },
+  ],
   [
     "you played Tarragon from your hand during this turn",
     { kind: "youPlayedSupporterNamedThisTurn", name: "Tarragon" },
@@ -22901,8 +22950,7 @@ const YOUR_BENCH_TYPE_CLAUSE = /^you have any (.+) Pokémon on your Bench$/;
     printed Resistance token that no schema value spells, or any future banner
     reach this lookup and MISS it, so the sentence falls through to null and stays
     on the loud `ATTACK_EFFECT_SKIPPED` path. */
-const OPPONENT_ACTIVE_RESISTANCE_CLAUSE =
-  /^your opponent['’]s Active Pokémon has (.+) Resistance$/;
+const OPPONENT_ACTIVE_RESISTANCE_CLAUSE = /^your opponent['’]s Active Pokémon has (.+) Resistance$/;
 
 /** 🆕 D390 — the family's FIFTH parameterised clause, and the first that reads a
     type over an OPPONENT'S WHOLE BOARD: "If your opponent has any <type> Pokémon
@@ -23316,10 +23364,7 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // or Resistance." — which `deriveAttackDamageSuppression` has read since D192
   // and which the site now hands it off `splitAttackRequirementClause`. The row
   // and the widening are one purchase: either alone would drop half the card.
-  [
-    "your opponent's Active Pokémon isn't a Pokémon ex",
-    { kind: "opponentActiveIsEx" },
-  ],
+  ["your opponent's Active Pokémon isn't a Pokémon ex", { kind: "opponentActiveIsEx" }],
   // 🆕🆕 D365 — Iron Boulder `sv07-071`/`sv08.5-046` "Adjusted Horn" ({P}{C}, 170),
   // the printed NEGATION of Bronzong's bonus clause. ZERO NEW VOCABULARY:
   // `handSizesEqual` is D118's member, spelled POSITIVE one table up as "you have
@@ -23544,7 +23589,9 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
   // 🆕🆕🆕 D629 — the clause printed second (Tar Cannon), read off the same table.
   if (nothing === null) {
     const second = ATTACK_DOES_NOTHING_SECOND.exec(text.trim());
-    return second === null ? null : (literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, second[2] ?? "") ?? null);
+    return second === null
+      ? null
+      : (literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, second[2] ?? "") ?? null);
   }
   return literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, nothing[1] ?? "") ?? null;
 }
@@ -23595,8 +23642,15 @@ export function splitAttackRequirementClause(
   // after it, under the same accounting guard.
   if (nothing === null) {
     const second = ATTACK_DOES_NOTHING_SECOND.exec(trimmed);
-    if (second === null || literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, second[2] ?? "") === undefined) return null;
-    return { clause: `If ${second[2] ?? ""}, this attack does nothing.`, body: `${second[1] ?? ""}${second[3] ?? ""}` };
+    if (
+      second === null ||
+      literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, second[2] ?? "") === undefined
+    )
+      return null;
+    return {
+      clause: `If ${second[2] ?? ""}, this attack does nothing.`,
+      body: `${second[1] ?? ""}${second[3] ?? ""}`,
+    };
   }
   const body = (nothing[2] ?? "").trim();
   // A leading sentence with nothing behind it is not a split — the whole string
@@ -23904,9 +23958,7 @@ export function attackCancelHeadRows(): readonly (readonly [string, BoardConditi
     Returns the head and the clause separately rather than the head alone, so a
     caller that wants to assert WHICH clause it accounted for can — D282's reason,
     unchanged through three successors. */
-export function splitAttackCancelClause(
-  text: string,
-): { head: string; clause: string } | null {
+export function splitAttackCancelClause(text: string): { head: string; clause: string } | null {
   const trimmed = text.trim();
   const cancel = ATTACK_CANCEL_TRAILING.exec(trimmed);
   if (cancel === null) return null;
@@ -24728,7 +24780,8 @@ const ATTACK_COIN_DECK_ATTACH_PER_HEADS =
     • `ATTACK_COIN_REVEALED_HAND_TO_DECK` — Watchog `me04-071` / `-097` "Snap Inspection":
       `programPerHeads` over `bottomFromOpponentHand` at the NEW `dest: "deck"`; 0 heads reveals nothing.
     No /i, `^…$`; the possessive carries `['’]` (D136/D137). */
-const ATTACK_COIN_BOTH_HEADS_BONUS = /^Flip 2 coins\. If both of them are heads, this attack does (\d+) more damage\.$/;
+const ATTACK_COIN_BOTH_HEADS_BONUS =
+  /^Flip 2 coins\. If both of them are heads, this attack does (\d+) more damage\.$/;
 const ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND =
   /^Flip a coin until you get tails\. Search your deck for a number of cards up to the number of heads and put them into your hand\. Then, shuffle your deck\.$/;
 const ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF =
@@ -25582,7 +25635,12 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   if (upToHeads !== null) {
     const n = Number(upToHeads[1]);
     if (n < 2 || n > MAX_PRINTED_FLIPS) return null;
-    return { kind: "retrievalUpToHeads", flips: { kind: "printed", count: n }, filter: { kind: "anyCard" }, dest: "hand" };
+    return {
+      kind: "retrievalUpToHeads",
+      flips: { kind: "printed", count: n },
+      filter: { kind: "anyCard" },
+      dest: "hand",
+    };
   }
   // 🆕🆕🆕 D528 — THE ATTACH TWIN, corpus FILE LINE 215 (1 legal printing). NO new member:
   // the reading is `programPerHeads` over ONE copy of D358's shipped discard-spread op —
@@ -25618,7 +25676,15 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     return {
       kind: "programPerHeads",
       flips: { kind: "printed", count: coins },
-      ops: [{ op: "attachEnergyFrom", source: "discard", energyType: attachType, benchOnly: true, declinable: true }],
+      ops: [
+        {
+          op: "attachEnergyFrom",
+          source: "discard",
+          energyType: attachType,
+          benchOnly: true,
+          declinable: true,
+        },
+      ],
       face: "heads",
     };
   }
@@ -25672,7 +25738,10 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     return {
       kind: "programPerHeads",
       flips: { kind: "printed", count: waltzCoins },
-      ops: [{ op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: waltzMax }, { op: "shuffleDeck" }],
+      ops: [
+        { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: waltzMax },
+        { op: "shuffleDeck" },
+      ],
       face: "heads",
     };
   }
@@ -25680,16 +25749,28 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   const lariat = ATTACK_COIN_BOTH_HEADS_BONUS.exec(effect);
   if (lariat !== null) {
     const lariatBonus = Number(lariat[1]);
-    return lariatBonus >= 1 ? { kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: lariatBonus } : null;
+    return lariatBonus >= 1
+      ? { kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: lariatBonus }
+      : null;
   }
   if (ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND.test(effect)) {
-    return { kind: "deckUpToHeads", flips: { kind: "untilTails" }, filter: { kind: "anyCard" }, to: "hand" };
+    return {
+      kind: "deckUpToHeads",
+      flips: { kind: "untilTails" },
+      filter: { kind: "anyCard" },
+      to: "hand",
+    };
   }
   const gormandize = ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF.exec(effect);
   if (gormandize !== null) {
     const gormandizeCode = gormandize[1];
     if (gormandizeCode === undefined) {
-      return { kind: "deckUpToHeads", flips: { kind: "untilTails" }, filter: { kind: "basicEnergy" }, to: "self" };
+      return {
+        kind: "deckUpToHeads",
+        flips: { kind: "untilTails" },
+        filter: { kind: "basicEnergy" },
+        to: "self",
+      };
     }
     const gormandizeType = ENERGY_TYPE_BY_CODE[gormandizeCode];
     if (gormandizeType === undefined) return null;
@@ -26432,17 +26513,26 @@ const COIN_GATE_COINS: Readonly<Record<string, number | undefined>> = {
   "Flip 2 coins. If both of them are heads": 2,
   "Flip 3 coins. If all of them are heads": 3,
 };
-const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map<string, readonly EffectOp[]>([
+const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map<
+  string,
+  readonly EffectOp[]
+>([
   // Miltank `me01-106` "Bellyful of Milk" (2 coins) — "Heal all damage from 1 of your Pokémon."
   ["heal all damage from 1 of your Pokémon.", [{ op: "healChosen", amount: "all" }]],
   // Team Rocket's Exeggutor `me02.5-078` "Tri Kinesis" (3 coins) — D416's chosen Knock Out, whole board.
   ["Knock Out 1 of your opponent's Pokémon.", [{ op: "knockOutChosen", target: "opponentAny" }]],
   // Murkrow `30th-093` "Clumsily Clutch" — "During your opponent's next turn, the Defending Pokémon can't retreat."
-  ["during your opponent's next turn, the Defending Pokémon can't retreat.", [{ op: "preventRetreat" }]],
+  [
+    "during your opponent's next turn, the Defending Pokémon can't retreat.",
+    [{ op: "preventRetreat" }],
+  ],
   // Gimmighoul `30th-081` "Strolls So Much" — "Search your deck for a card and put it into your hand. …"
   [
     "search your deck for a card and put it into your hand. Then, shuffle your deck.",
-    [{ op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 }, { op: "shuffleDeck" }],
+    [
+      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
+      { op: "shuffleDeck" },
+    ],
   ],
   // Drifloon `mep-005` "Pull" — the attacker's pick, `ATTACK_FLIP_GUST`'s op.
   ["switch 1 of your opponent's Benched Pokémon with their Active Pokémon.", [{ op: "gust" }]],
@@ -26458,7 +26548,10 @@ const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map
   // (`anyPokemon`), so D613's `benchMatches` admits Basic Pokémon only.
   [
     "search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck.",
-    [{ op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 }, { op: "shuffleDeck" }],
+    [
+      { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 },
+      { op: "shuffleDeck" },
+    ],
   ],
   // 🆕🆕🆕 D634 — Shiftry `me01-015` "Reversing Gust": "1 of your opponent's Pokémon" includes the
   // Active (`returnBenched.includeActive` on the opponent side; the emptied spot is promoted, §8.1).
@@ -26485,7 +26578,10 @@ function chooseSpecialConditionProgram(): EffectOp[] {
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: apply(word),
         otherwise: last ? apply(rest[0] as StatusWord) : ask(index + 1),
-        labels: { yes: word, no: `${rest.slice(0, -1).join(", ")}${last ? "" : " or "}${rest.at(-1) ?? ""}` },
+        labels: {
+          yes: word,
+          no: `${rest.slice(0, -1).join(", ")}${last ? "" : " or "}${rest.at(-1) ?? ""}`,
+        },
       },
     ];
   };
@@ -29755,7 +29851,6 @@ const CHOOSE_SHUFFLE_CHOSEN = new RegExp(
     `and all attached cards into your opponent['’]s deck\\.$`,
 );
 
-
 /** 🆕🆕 D380 — THE TWO BARE SPELLINGS OF THE STADIUM DISCARD, as TWO anchors and
     not one optional prefix.
 
@@ -30130,7 +30225,10 @@ const ME_WORDING_SYNONYMS: readonly (readonly [RegExp, string])[] = [
   [/\bPlace (?=(?:\d+ )?damage counters? on )/g, "Put "],
   [/\bplace (?=(?:\d+ )?damage counters on )/g, "put "],
   // Claw of Darkness ×3: ", and you discard a card you find there." → ". Discard a card …".
-  [/(?<=^Your opponent reveals their hand), and you discard a card you find there\.$/, ". Discard a card you find there."],
+  [
+    /(?<=^Your opponent reveals their hand), and you discard a card you find there\.$/,
+    ". Discard a card you find there.",
+  ],
   // Astonish: ", and your opponent reveals that card …" → ". Your opponent reveals that card …".
   [
     /(?<=^Choose a random card from your opponent['’]s hand), and your opponent reveals that card and shuffles it into their deck\.$/,
@@ -30139,7 +30237,10 @@ const ME_WORDING_SYNONYMS: readonly (readonly [RegExp, string])[] = [
   // Thunder (Miraidon): "This Pokémon does N damage to itself." → "This Pokémon also does …".
   [/^This Pokémon does (?=\d+ damage to itself\.$)/, "This Pokémon also does "],
   // Power Rush (Eternatus): the coin-flipped "can't use attacks." → "can't attack."
-  [/(?<=^Flip a coin\. If tails, during your next turn, )this Pokémon can['’]t use attacks\.$/, "this Pokémon can't attack."],
+  [
+    /(?<=^Flip a coin\. If tails, during your next turn, )this Pokémon can['’]t use attacks\.$/,
+    "this Pokémon can't attack.",
+  ],
 ];
 
 /** Apply `ME_WORDING_SYNONYMS` in order (D592). Exported for the suite's identity check over the `sv` corpus. */
@@ -30245,9 +30346,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             op: "coinFlipGate",
             // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: heads,
-            otherwise: [
-              { op: "applyStatus", target: "defender", status: statusOf(match[3]) },
-            ],
+            otherwise: [{ op: "applyStatus", target: "defender", status: statusOf(match[3]) }],
           },
         ];
   }
@@ -30636,7 +30735,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "damageSelf", amount },
         {
           op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "knockOutDefender" }],
         },
       ];
@@ -30734,7 +30833,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = KO_BY_THIS_ATTACK_MORE_PRIZES.exec(effect);
   if (match !== null) {
     const more = Number(match[1]);
-    if (more >= 1 && (more === 1) === (match[2] === "")) return [{ op: "bountyThisAttack", amount: more }];
+    if (more >= 1 && (more === 1) === (match[2] === ""))
+      return [{ op: "bountyThisAttack", amount: more }];
   }
   match = KO_EACH_AT_REMAINING_HP.exec(effect);
   if (match !== null) {
@@ -30758,7 +30858,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const attack = match[3] ?? "";
     if (n >= 1 && each >= 10) {
       return [
-        { op: "revealDeckBottomCount", n, filter: { kind: "attackNamePokemon", attack }, recordAs: "revealed" },
+        {
+          op: "revealDeckBottomCount",
+          n,
+          filter: { kind: "attackNamePokemon", attack },
+          recordAs: "revealed",
+        },
         { op: "damageDefender", per: each, count: "revealed" },
       ];
     }
@@ -30793,7 +30898,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const benchWindow = Number(match[1]);
     if (benchWindow >= 1 && benchWindow <= MAX_PRINTED_LOOK_WINDOW) {
       return [
-        { op: "lookAtTopN", n: benchWindow, filter: { kind: "anyPokemon" }, max: "any", dest: "bench" },
+        {
+          op: "lookAtTopN",
+          n: benchWindow,
+          filter: { kind: "anyPokemon" },
+          max: "any",
+          dest: "bench",
+        },
         { op: "shuffleDeck" },
       ];
     }
@@ -30803,7 +30914,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const handWindow = Number(match[1]);
     if (handWindow >= 1 && handWindow <= MAX_PRINTED_LOOK_WINDOW) {
       return [
-        { op: "lookAtTopN", n: handWindow, filter: { kind: "anyPokemon" }, max: "any", reveal: true },
+        {
+          op: "lookAtTopN",
+          n: handWindow,
+          filter: { kind: "anyPokemon" },
+          max: "any",
+          reveal: true,
+        },
         { op: "shuffleDeck" },
       ];
     }
@@ -30823,14 +30940,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const opponentDraws = Number(match[1]);
     if (opponentDraws >= 1) {
-      return [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } }];
+      return [
+        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } },
+      ];
     }
   }
   match = RETRIEVE_BASIC_TO_BENCH.exec(effect);
   if (match !== null) {
     const revived = Number(match[1]);
     if (revived >= 1 && revived <= MAX_PRINTED_ATTACH_COUNT) {
-      return [{ op: "discardPileRetrieval", filter: { kind: "basicPokemon" }, dest: "bench", max: revived }];
+      return [
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "basicPokemon" },
+          dest: "bench",
+          max: revived,
+        },
+      ];
     }
   }
   if (DEVOLVE_EACH_TO_HAND.test(effect)) return [{ op: "devolveEach", toHand: true }];
@@ -30839,7 +30965,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const movedType = ENERGY_TYPE_BY_CODE[match[1] ?? ""];
     if (movedType !== undefined) {
       return [
-        { op: "moveEnergy", filter: { kind: "providesEnergy", energyType: movedType }, max: 1, route: "selfToBench" },
+        {
+          op: "moveEnergy",
+          filter: { kind: "providesEnergy", energyType: movedType },
+          max: 1,
+          route: "selfToBench",
+        },
       ];
     }
   }
@@ -30878,7 +31009,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const healedType = POKEMON_TYPE_BY_CODE[match[2] ?? ""];
     if (healedType !== undefined && healed >= 1) {
       return [
-        { op: "healChosen", amount: healed, zone: "bench", filter: { kind: "typedPokemon", pokemonType: healedType } },
+        {
+          op: "healChosen",
+          amount: healed,
+          zone: "bench",
+          filter: { kind: "typedPokemon", pokemonType: healedType },
+        },
       ];
     }
   }
@@ -30907,7 +31043,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         note: effect,
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
-          { op: "searchDeck", filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" }, dest: "bench", max: "any" },
+          {
+            op: "searchDeck",
+            filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" },
+            dest: "bench",
+            max: "any",
+          },
           { op: "shuffleDeck" },
         ],
       },
@@ -30918,7 +31059,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const shuffledBack = Number(match[1]);
     if (shuffledBack >= 1 && shuffledBack <= MAX_PRINTED_ATTACH_COUNT) {
       return [
-        { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "deck", max: shuffledBack },
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "pokemonOrBasicEnergy" },
+          dest: "deck",
+          max: shuffledBack,
+        },
         { op: "shuffleDeck" },
       ];
     }
@@ -30931,7 +31077,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "searchDeck",
-          filter: { kind: "anyOf", filters: [{ kind: "typedPokemon", pokemonType: foundType }, { kind: "stadium" }] },
+          filter: {
+            kind: "anyOf",
+            filters: [{ kind: "typedPokemon", pokemonType: foundType }, { kind: "stadium" }],
+          },
           dest: "hand",
           max: found,
           reveal: true,
@@ -30940,7 +31089,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ];
     }
   }
-  if (REVEAL_BOTTOM_ITEM.test(effect)) return [{ op: "bottomFromOpponentHand", filter: { kind: "item" } }];
+  if (REVEAL_BOTTOM_ITEM.test(effect))
+    return [{ op: "bottomFromOpponentHand", filter: { kind: "item" } }];
 
   // 6e-quinquies. 🆕🆕🆕 D619 — WP15's gated mill (Hippowdon "Twister Spewing"): a `conditionGate` on the
   //     clause table's row (D564's `youPlayedSupporterNamedThisTurn`) around `DECK_TOP_MILL`'s op. A clause
@@ -30975,7 +31125,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           cond: foldGate,
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
-            { op: "counterEachAll", amount: foldCounters * 10, filter: { kind: "anyPokemon" }, side: "opponent", source: "attack" },
+            {
+              op: "counterEachAll",
+              amount: foldCounters * 10,
+              filter: { kind: "anyPokemon" },
+              side: "opponent",
+              source: "attack",
+            },
           ],
         },
       ];
@@ -31017,7 +31173,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           op: "conditionGate",
           cond: benchCounterGate,
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-          then: [{ op: "damageChosen", target: "opponentBench", amount: benchCounters * 10, count: 1, source: "attack" }],
+          then: [
+            {
+              op: "damageChosen",
+              target: "opponentBench",
+              amount: benchCounters * 10,
+              count: 1,
+              source: "attack",
+            },
+          ],
         },
       ];
     }
@@ -31043,14 +31207,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO.exec(effect);
   if (match !== null) {
     const keptInHand = Number(match[1]);
-    if (keptInHand >= 1) return [{ op: "randomFromOpponentHand", to: "discard", untilHandSize: keptInHand }];
+    if (keptInHand >= 1)
+      return [{ op: "randomFromOpponentHand", to: "discard", untilHandSize: keptInHand }];
   }
   match = MILL_TOP_KEEP_ONE.exec(effect);
   if (match !== null) {
     const window = Number(match[1]);
     if (window >= 2 && window <= MAX_PRINTED_ATTACH_COUNT) {
       return [
-        { op: "lookAtTopN", n: window, filter: { kind: "anyCard" }, max: 1, exact: true, reveal: true, restTo: "discard" },
+        {
+          op: "lookAtTopN",
+          n: window,
+          filter: { kind: "anyCard" },
+          max: 1,
+          exact: true,
+          reveal: true,
+          restTo: "discard",
+        },
       ];
     }
   }
@@ -31059,7 +31232,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const benchedType = POKEMON_TYPE_BY_CODE[match[1] ?? ""];
     if (benchedType !== undefined) {
       return [
-        { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, benchOnly: true, targetType: benchedType },
+        {
+          op: "attachFromDeck",
+          filter: { kind: "anyEnergy" },
+          max: 1,
+          benchOnly: true,
+          targetType: benchedType,
+        },
         { op: "shuffleDeck" },
       ];
     }
@@ -31070,7 +31249,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const resisted = POKEMON_TYPE_BY_CODE[match[2] ?? ""];
     if (resisted !== undefined && found >= 1 && found <= MAX_PRINTED_ATTACH_COUNT) {
       return [
-        { op: "searchDeck", filter: { kind: "pokemonWithResistance", type: resisted }, dest: "hand", max: found, reveal: true },
+        {
+          op: "searchDeck",
+          filter: { kind: "pokemonWithResistance", type: resisted },
+          dest: "hand",
+          max: found,
+          reveal: true,
+        },
         { op: "shuffleDeck" },
       ];
     }
@@ -31617,7 +31802,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // which is the direction `attachedEnergyFilter`'s two-nullish rule takes one helper
     // over: an UNREADABLE noun must leave the sentence LOUD, never widen the hit.
     const classNoun = match[4];
-    const narrowing = classNoun === undefined ? undefined : BENCHED_SNIPE_CLASS_NOUNS.get(classNoun);
+    const narrowing =
+      classNoun === undefined ? undefined : BENCHED_SNIPE_CLASS_NOUNS.get(classNoun);
     const damagedOnly = match[5] !== undefined;
     // 🛑 THE TWO RIDERS ARE NEVER CO-PRINTED AND THE PAIR IS REFUSED RATHER THAN
     // SILENTLY RESOLVED — `CHOSEN_ANY_TARGET`'s D448 rule verbatim. `damageChosen`
@@ -31693,7 +31879,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     // 🆕🆕🆕 D645 — Psyspear: the declaration-time extra-Energy clause, read HERE only (never in the shared table,
     //     whose other readers have no cost in scope); attack.ts `resolveDeclarationGates` answers it.
-    const cond = boardConditionForClause(match[1] ?? "") ?? extraEnergyGateForClause(match[1] ?? "");
+    const cond =
+      boardConditionForClause(match[1] ?? "") ?? extraEnergyGateForClause(match[1] ?? "");
     const amount = Number(match[2]);
     const count = Number(match[3]);
     // 🆕🆕🆕 D447 — THE SHARED BODY'S **FOURTH** CAPTURE, READ HERE FOR THE REASON
@@ -31808,7 +31995,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const perEnergyOnSelf = match[3] !== undefined;
     const ignoreWR = match[4] !== undefined;
     const number = match[5];
-    const agrees = number === undefined || (number === "those") === (count > 1);
+    const agrees = number === undefined || (number === "those") === count > 1;
     // 🆕🆕🆕 D448 — the pair is unprinted, so it is refused rather than resolved on
     // whichever rider is tested first; see the anchor's block for the measurement.
     const bothRiders = perEnergyOnSelf && ignoreWR;
@@ -31988,9 +32175,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SELF_SHUFFLE_ALL_THEN_ANY_TARGET.exec(effect);
   if (match !== null && Number(match[1]) >= 1) {
     return [
-      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "deck" },
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "anyEnergy" },
+        count: "all",
+        to: "deck",
+      },
       { op: "shuffleDeck" },
-      { op: "damageChosen", target: "opponentAny", amount: Number(match[1]), count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: Number(match[1]),
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ];
   }
   match = CHOSEN_ANY_TARGET_SPECIAL_ENERGY.exec(effect);
@@ -32011,7 +32211,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null && Number(match[1]) >= 1) {
     return [
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-      { op: "damageChosen", target: "opponentAny", amount: Number(match[1]) * 10, count: 1, source: "attack" },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: Number(match[1]) * 10,
+        count: 1,
+        source: "attack",
+      },
     ];
   }
 
@@ -32039,8 +32245,20 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const shedType = ENERGY_TYPE_BY_CODE[match[1] ?? ""];
     if (shedType !== undefined && Number(match[2]) >= 1) {
       return [
-        { op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: shedType }, count: "all" },
-        { op: "damageChosen", target: "opponentAny", amount: Number(match[2]), count: 1, source: "attack", deals: true },
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: shedType },
+          count: "all",
+        },
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: Number(match[2]),
+          count: 1,
+          source: "attack",
+          deals: true,
+        },
       ];
     }
   }
@@ -32279,7 +32497,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
-
   // 10b. 🆕🆕 D402 — "<You may discard any amount of|Discard all|Discard up to N>
   //      <{X}|Type|Basic> Energy[ cards] from <this|your> Pokémon. This attack does
   //      P damage for each card you discarded in this way." — the §9.2 record read
@@ -32416,7 +32633,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // hand" is printed nowhere and stays loud.
       if (commaCap !== undefined) {
         return [
-          { op: "payFromHand", count: "any", cap: commaCap, to: "discard", filter: commaFilter, recordAs: "discarded" },
+          {
+            op: "payFromHand",
+            count: "any",
+            cap: commaCap,
+            to: "discard",
+            filter: commaFilter,
+            recordAs: "discarded",
+          },
           commaHit,
         ];
       }
@@ -32433,7 +32657,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       count: "any",
       cap: "any",
       to: "discard",
-      ...(match[1] === undefined ? {} : { filter: { kind: "supporterNameContaining", fragment: "Team Rocket" } }),
+      ...(match[1] === undefined
+        ? {}
+        : { filter: { kind: "supporterNameContaining", fragment: "Team Rocket" } }),
       ...(match[2] === undefined ? {} : { recordAs: "discarded" }),
     };
     if (match[2] === undefined) return [pay];
@@ -33092,7 +33318,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      measured). ZERO captures, so no guard: the printed `{C}` IS the op's `type`. The
   //      target string derived `null` at HEAD under every arm, and the anchor claims exactly
   //      one of the 640 rows, so the placement beside 19f' (the shared holder) is legibility.
-  if (DEFENDER_WEAKNESS_RETYPED.test(effect)) return [{ op: "retypeDefenderWeakness", type: "Colorless" }];
+  if (DEFENDER_WEAKNESS_RETYPED.test(effect))
+    return [{ op: "retypeDefenderWeakness", type: "Colorless" }];
   // 🆕🆕🆕 D640 — Celebration: the Prize stage, then the shuffle behind it (R-CEL1).
   if (HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE.test(effect)) {
     return [
@@ -33242,7 +33469,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (COUNTER_MOVE_OPPONENT_BENCH_TO_ACTIVE.test(effect)) {
     return [{ op: "moveCountersOpponentAnyWay", from: "bench" }];
   }
-  if (COUNTER_MOVE_OPPONENT_ANY_WAY.test(effect)) return [{ op: "moveCountersOpponentAnyWay", from: "any" }];
+  if (COUNTER_MOVE_OPPONENT_ANY_WAY.test(effect))
+    return [{ op: "moveCountersOpponentAnyWay", from: "any" }];
 
   // 21. "Move all damage counters from 1 of your Benched Pokémon to your
   //     opponent's Active Pokémon." — D138's COUNTER MOVE, 2 printings on one
@@ -33317,7 +33545,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD.exec(effect);
   if (match !== null && Number(match[1]) >= 1) {
     return [
-      { op: "damageActive", amount: Number(match[1]) * 10, source: "attack", per: { kind: "cardsInYourHand" } },
+      {
+        op: "damageActive",
+        amount: Number(match[1]) * 10,
+        source: "attack",
+        per: { kind: "cardsInYourHand" },
+      },
     ];
   }
 
@@ -33920,9 +34153,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const amount = Number(match[2]);
     if (amount >= 1) {
-      return [
-        { op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount, base: true },
-      ];
+      return [{ op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount, base: true }];
     }
   }
 
@@ -34861,7 +35092,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // D485's case and is why the anchor owes the whole sentence.
   if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {
     return [
-      { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1, recordAs: "moved" },
+      {
+        op: "searchDeck",
+        filter: { kind: "basicPokemon" },
+        dest: "bench",
+        max: 1,
+        recordAs: "moved",
+      },
       { op: "shuffleDeck" },
       {
         op: "recordGate",
@@ -35845,10 +36082,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const filter = HAND_SEARCH_PLURAL.get(noun) ?? typedNounFilter(noun, true);
     const max = Number(match[1]);
     if (filter !== undefined && max >= 1 && max <= MAX_PRINTED_ATTACH_COUNT) {
-      return [
-        { op: "discardPileRetrieval", filter, dest: "deck", max },
-        { op: "shuffleDeck" },
-      ];
+      return [{ op: "discardPileRetrieval", filter, dest: "deck", max }, { op: "shuffleDeck" }];
     }
   }
 
@@ -36265,10 +36499,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           op: "conditionGate",
           cond: { kind: "stadiumInPlay" },
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-          then: [
-            { op: "spreadDamage", target: "opponentBench", amount },
-            { op: "discardStadium" },
-          ],
+          then: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
         },
       ];
     }
@@ -36317,10 +36548,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const count = Number(match[1]);
     if (count >= 1) {
-      return [
-        { op: "discardHand" },
-        { op: "drawCards", count },
-      ];
+      return [{ op: "discardHand" }, { op: "drawCards", count }];
     }
   }
 
@@ -36571,7 +36799,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = Number(nullifyingZero[1]);
     if (amount >= 1) {
       return [
-        { op: "damageChosen", target: "opponentAny", amount, count: "all", source: "attack", deals: true, flipEach: true },
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount,
+          count: "all",
+          source: "attack",
+          deals: true,
+          flipEach: true,
+        },
       ];
     }
   }
@@ -36580,7 +36816,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL.test(effect)) {
     return [
       { op: "discardTools", count: "all" },
-      { op: "discardEnergy", from: "opponentEach", filter: { kind: "specialEnergy" }, count: "all" },
+      {
+        op: "discardEnergy",
+        from: "opponentEach",
+        filter: { kind: "specialEnergy" },
+        count: "all",
+      },
     ];
   }
 
@@ -37422,7 +37663,8 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     const per = Number(lastTurnPrizes[1]);
     if (per >= 1) return { per, count: { kind: "opponentPrizesTakenLastTurn" } };
   }
-  if (DAMAGED_LAST_TURN_THAT_MUCH_MORE.test(effect)) return { per: 1, count: { kind: "attackDamageTakenLastTurnOnSelf" } };
+  if (DAMAGED_LAST_TURN_THAT_MUCH_MORE.test(effect))
+    return { per: 1, count: { kind: "attackDamageTakenLastTurnOnSelf" } };
   const retreatCost = RETREAT_COST_SCALE.exec(effect);
   if (retreatCost !== null) {
     const per = Number(retreatCost[1]);
@@ -37524,7 +37766,10 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   }
   const fireBench = YOUR_FIRE_BENCH_SCALE.exec(effect);
   if (fireBench !== null && Number(fireBench[1]) >= 1) {
-    return { per: Number(fireBench[1]), count: { kind: "benchedPokemonWithEnergy", energyType: "Fire" } };
+    return {
+      per: Number(fireBench[1]),
+      count: { kind: "benchedPokemonWithEnergy", energyType: "Fire" },
+    };
   }
   // 🆕🆕 D439 — the ATTACKER's bodies IN PLAY (Active + Bench), FILTERED by the
   // printed noun. Placed directly after the Bench trio it is the "in play" reading
@@ -37822,7 +38067,8 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
   const opponentEnergy = OPPONENT_ENERGY_PENALTY.exec(effect);
   if (opponentEnergy !== null) {
     const per = Number(opponentEnergy[1]);
-    if (per >= 1) return { per, count: { kind: "energyOnOpponent", zone: "active", energyType: null } };
+    if (per >= 1)
+      return { per, count: { kind: "energyOnOpponent", zone: "active", energyType: null } };
   }
   return null;
 }
@@ -38528,10 +38774,7 @@ export function deriveAttackDamageSuppression(text: string): AttackDamageSuppres
   // three shipped `toBeNull` rungs that rest on its refusal
   // (`damageSuppression.test.ts`, `benchNounScaling.test.ts` §10,
   // `selfEnergyScaling.test.ts`'s REASON 3) are all still GREEN after this slice.
-  if (
-    CONDITIONAL_BONUS_SUPPRESSED.test(trimmed) &&
-    deriveAttackDamageBonus(trimmed) !== null
-  ) {
+  if (CONDITIONAL_BONUS_SUPPRESSED.test(trimmed) && deriveAttackDamageBonus(trimmed) !== null) {
     return { weakness: true };
   }
   // 🆕🆕 D493 — THE ONE COMPOUND ARM, AND THE GATE IN FRONT OF IT IS THE WHOLE
@@ -39060,7 +39303,9 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
   const [boosted, otherwise] = boostedArms(base, reading.bonus, reading.ops);
   // 🆕🆕🆕 D620 — Huge Bite: the YES arm's hit is the printed override, not base + bonus.
   const then: EffectOp[] =
-    reading.baseOverride === undefined ? boosted : [{ op: "damageDefender", amount: reading.baseOverride }];
+    reading.baseOverride === undefined
+      ? boosted
+      : [{ op: "damageDefender", amount: reading.baseOverride }];
   return reading.decider.kind === "coinFlip"
     ? [{ op: "coinFlipGate", then, otherwise }]
     : [{ op: "conditionGate", cond: reading.decider.cond, then, otherwise }];
@@ -39325,7 +39570,8 @@ const OPTIONAL_COST_SHUFFLE_SELF_ENERGY =
     an arity invented for a sentence that prints no number is not evidence).
     `optionalCostEnergyToHand.test.ts` §1 drives the single-axis controls (`an` for `all`,
     `discard` for `put`, `deck` for `hand`, the opponent's Active for `this Pokémon`). */
-const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND = /^put all Energy attached to this Pokémon into your hand$/;
+const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND =
+  /^put all Energy attached to this Pokémon into your hand$/;
 /** 🆕🆕🆕 D548 — the FIFTH cost row: Cresselia `sv06.5-021` "Crescent Purge"
     (`censusAttackCorpus.ts:664`, **2 legal printings**). Whole-string `^…$`, lower-case verb
     at its own anchor (D246/D316). *"1"* is fixed, not captured: it is the only printed count,
@@ -39341,7 +39587,8 @@ const OPTIONAL_COST_TURN_PRIZE_FACE_UP = /^turn 1 of your face-down Prize cards 
     not this sentence. ⚠️ `OPTIONAL_COST_PAYOFF_MORE_DAMAGE`'s `$` is NOT widened for it:
     that `$` is D381's C5 guard, and a payoff-side widening would admit the reminder behind
     every cost row at once. */
-const OPTIONAL_COST_FACE_UP_REMINDER = " (That Prize card remains face up for the rest of the game.)";
+const OPTIONAL_COST_FACE_UP_REMINDER =
+  " (That Prize card remains face up for the rest of the game.)";
 /** 🆕🆕🆕 D589 — WP08: the THIRD skeleton and four cost rows, all from the `me` serie (LOCAL D1,
     2026-10-07; 4 sentences / 9 printings, none printed in `sv`):
 
@@ -39364,11 +39611,17 @@ const OPTIONAL_COST_AND_HAVE_BOOST = /^You may (.+) and have this attack do (\d+
     Paralyzed."* (Mega Eelektross ex "Disaster Shock" ×3, `190`). The cost goes through the same
     table (the D589 typed row: 2 {L}); the payoff is the `defenderStatus` member, built inline. The
     status is the literal printed word: no other is printed after this connective. */
-const OPTIONAL_COST_AND_MAKE_PARALYZED = /^You may (.+) and make your opponent['’]s Active Pokémon Paralyzed\.$/;
-const OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY = new RegExp(`^discard (\\d+) \\{([${ENERGY_CODES}])\\} Energy from this Pokémon$`);
+const OPTIONAL_COST_AND_MAKE_PARALYZED =
+  /^You may (.+) and make your opponent['’]s Active Pokémon Paralyzed\.$/;
+const OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY = new RegExp(
+  `^discard (\\d+) \\{([${ENERGY_CODES}])\\} Energy from this Pokémon$`,
+);
 const OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon$/;
-const OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND = new RegExp(`^put a \\{([${ENERGY_CODES}])\\} Energy attached to this Pokémon into your hand$`);
-const OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY = /^shuffle all Energy attached to this Pokémon into your deck$/;
+const OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND = new RegExp(
+  `^put a \\{([${ENERGY_CODES}])\\} Energy attached to this Pokémon into your hand$`,
+);
+const OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY =
+  /^shuffle all Energy attached to this Pokémon into your deck$/;
 const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
 /** 🆕🆕 D383 — the SECOND payoff row. Lower-case `this`, sharing its body with
     `ALSO_BENCHED_SNIPE` so the two spellings of one printed clause cannot drift. */
@@ -39437,23 +39690,94 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   // 🆕🆕🆕 D572 — the gate is now `allOf` the payability AND `yourInPlayToHandAllowed` (Milotic
   // "Mentally Calm" opposite makes the hand move WHIFF, and a whiffing cost must not be offered —
   // D385's necessary-and-sufficient obligation). Still ONE line, for the D522 (3)/D523 reason above.
-  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: "allOf", conditions: [{ kind: "yourActiveEnergyAtLeast", count: 1 }, { kind: "yourInPlayToHandAllowed" }] }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "hand" }] };
+  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost))
+    return {
+      cond: {
+        kind: "allOf",
+        conditions: [
+          { kind: "yourActiveEnergyAtLeast", count: 1 },
+          { kind: "yourInPlayToHandAllowed" },
+        ],
+      },
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count: "all",
+          to: "hand",
+        },
+      ],
+    };
   // 🆕🆕🆕 D548 — THE FIFTH ROW: a NEW op (`turnPrizeFaceUp`, field-free, the owner picks
   // WHICH prize — 🆕🆕🆕 D567 (D539): the op gained optional `side`/`recordAs` for Bother-Bot;
   // THIS row authors neither, so it is still the field-free own-row op) behind a NEW nullary gate (`yourFaceDownPrizeRemains`, D385's
   // necessary-and-sufficient obligation: the op turns exactly one prize whenever one is face
   // down, and nothing otherwise). ONE LINE for the D524 note's reason, directly above.
-  if (OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(cost)) return { cond: { kind: "yourFaceDownPrizeRemains" }, ops: [{ op: "turnPrizeFaceUp" }] };
+  if (OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(cost))
+    return { cond: { kind: "yourFaceDownPrizeRemains" }, ops: [{ op: "turnPrizeFaceUp" }] };
   // 🆕🆕🆕 D589 — WP08's four rows (see the anchors), ONE LINE each for the D524 note's reason. A
   // printed 0 charges nothing and is refused, the shuffle row's own guard below.
   const typedDiscard = OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY.exec(cost);
   const typedDiscardEnergy = ENERGY_TYPE_BY_CODE[typedDiscard?.[2] ?? ""];
-  if (typedDiscard !== null && typedDiscardEnergy !== undefined && Number(typedDiscard[1]) >= 1) return { cond: { kind: "yourActiveEnergyAtLeast", count: Number(typedDiscard[1]), energy: typedDiscardEnergy }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: typedDiscardEnergy }, count: Number(typedDiscard[1]) }] };
-  if (OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }] };
-  const typedToHandEnergy = ENERGY_TYPE_BY_CODE[OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND.exec(cost)?.[1] ?? ""];
-  if (typedToHandEnergy !== undefined) return { cond: { kind: "allOf", conditions: [{ kind: "yourActiveEnergyAtLeast", count: 1, energy: typedToHandEnergy }, { kind: "yourInPlayToHandAllowed" }] }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: typedToHandEnergy }, to: "hand" }] };
-  if (OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "deck" }, { op: "shuffleDeck" }] };
-  const shuffle =OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
+  if (typedDiscard !== null && typedDiscardEnergy !== undefined && Number(typedDiscard[1]) >= 1)
+    return {
+      cond: {
+        kind: "yourActiveEnergyAtLeast",
+        count: Number(typedDiscard[1]),
+        energy: typedDiscardEnergy,
+      },
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: typedDiscardEnergy },
+          count: Number(typedDiscard[1]),
+        },
+      ],
+    };
+  if (OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY.test(cost))
+    return {
+      cond: { kind: "yourActiveEnergyAtLeast", count: 1 },
+      ops: [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      ],
+    };
+  const typedToHandEnergy =
+    ENERGY_TYPE_BY_CODE[OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND.exec(cost)?.[1] ?? ""];
+  if (typedToHandEnergy !== undefined)
+    return {
+      cond: {
+        kind: "allOf",
+        conditions: [
+          { kind: "yourActiveEnergyAtLeast", count: 1, energy: typedToHandEnergy },
+          { kind: "yourInPlayToHandAllowed" },
+        ],
+      },
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: typedToHandEnergy },
+          to: "hand",
+        },
+      ],
+    };
+  if (OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY.test(cost))
+    return {
+      cond: { kind: "yourActiveEnergyAtLeast", count: 1 },
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count: "all",
+          to: "deck",
+        },
+        { op: "shuffleDeck" },
+      ],
+    };
+  const shuffle = OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
   if (shuffle !== null) {
     const count = Number(shuffle[1]);
     // A printed 0 charges nothing — the guard every captured amount in this file
@@ -39468,7 +39792,13 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
         // §8 makes the actor the Active, which is the exact division of labour that
         // member's own doc block draws (`self` exists for an ABILITY on a benched
         // host, where §8 supplies no such clause).
-        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count, to: "deck" },
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count,
+          to: "deck",
+        },
         // The printed verb's other half. A separate op for D342's reason, stated on
         // the `to` field: a destination that also shuffles cannot spell a deck
         // return without one.
@@ -39568,11 +39898,23 @@ export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostB
     // inline, D524's arm below with its connective swapped; a printed 0 bonus is refused.
     const andHave = OPTIONAL_COST_AND_HAVE_BOOST.exec(text.trim());
     const andHaveCost = andHave === null ? null : optionalCostOps(andHave[1] ?? "");
-    if (andHave !== null) return andHaveCost === null || Number(andHave[2]) < 1 ? null : { cond: andHaveCost.cond, ops: andHaveCost.ops, payoff: { kind: "moreDamage", bonus: Number(andHave[2]) } };
+    if (andHave !== null)
+      return andHaveCost === null || Number(andHave[2]) < 1
+        ? null
+        : {
+            cond: andHaveCost.cond,
+            ops: andHaveCost.ops,
+            payoff: { kind: "moreDamage", bonus: Number(andHave[2]) },
+          };
     // 🆕🆕🆕 D608 — THE FOURTH SKELETON (`OPTIONAL_COST_AND_MAKE_PARALYZED`): same cost table, inline payoff.
     const andMake = OPTIONAL_COST_AND_MAKE_PARALYZED.exec(text.trim());
     const andMakeCost = andMake === null ? null : optionalCostOps(andMake[1] ?? "");
-    if (andMakeCost !== null) return { cond: andMakeCost.cond, ops: andMakeCost.ops, payoff: { kind: "defenderStatus", status: "paralyzed" } };
+    if (andMakeCost !== null)
+      return {
+        cond: andMakeCost.cond,
+        ops: andMakeCost.ops,
+        payoff: { kind: "defenderStatus", status: "paralyzed" },
+      };
     // 🆕🆕🆕 D524 — THE SECOND SKELETON: the purpose connective (corpus FILE LINE 652). The
     // cost half goes through the SAME table — never read as text here — and the payoff is
     // `moreDamage` BUILT INLINE from the captured digit, because the purpose spelling's verb
@@ -39595,8 +39937,12 @@ export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostB
   // face-up row and only as the exact suffix, so the printed and the bare spellings derive
   // the SAME reading and the reminder behind any other cost still refuses (see the anchor).
   const printedPayoff = match[2] ?? "";
-  const faceUpReminder = OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(match[1] ?? "") && printedPayoff.endsWith(OPTIONAL_COST_FACE_UP_REMINDER);
-  const payoff = optionalCostPayoff(faceUpReminder ? printedPayoff.slice(0, -OPTIONAL_COST_FACE_UP_REMINDER.length) : printedPayoff);
+  const faceUpReminder =
+    OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(match[1] ?? "") &&
+    printedPayoff.endsWith(OPTIONAL_COST_FACE_UP_REMINDER);
+  const payoff = optionalCostPayoff(
+    faceUpReminder ? printedPayoff.slice(0, -OPTIONAL_COST_FACE_UP_REMINDER.length) : printedPayoff,
+  );
   return payoff === null ? null : { cond: cost.cond, ops: cost.ops, payoff };
 }
 
@@ -39653,7 +39999,10 @@ export function optionalCostBoostProgram(
   // 🆕🆕🆕 D608 — Disaster Shock: `costSnipeProgram`'s ONE gate + ONE confirm, no decline arm (the
   // printed base is dealt before the program on every answer). The status follows the cost.
   if (reading.payoff.kind === "defenderStatus") {
-    const then: EffectOp[] = [...reading.ops, { op: "applyStatus", target: "defender", status: reading.payoff.status }];
+    const then: EffectOp[] = [
+      ...reading.ops,
+      { op: "applyStatus", target: "defender", status: reading.payoff.status },
+    ];
     const offer: EffectOp = { op: "optional", note, then };
     // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     return [{ op: "conditionGate", cond: reading.cond, then: [offer] }];
@@ -40030,7 +40379,9 @@ export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScale
   if (handBoost !== null) {
     const handCap = Number(handBoost[1]);
     const handPer = Number(handBoost[2]);
-    return handCap >= 1 && handPer >= 1 ? { kind: "handDiscard", cap: handCap, per: handPer } : null;
+    return handCap >= 1 && handPer >= 1
+      ? { kind: "handDiscard", cap: handCap, per: handPer }
+      : null;
   }
   const match = BENCH_DISCARD_SCALED_BOOST.exec(text.trim());
   if (match === null) return null;
@@ -40146,7 +40497,14 @@ export function discardScaledBoostProgram(
       // 🆕🆕🆕 D597 — discard, then damage (the record-reading order, as `benchDiscard`): D489's
       // declinable hand payment files what was paid, and the printed base is kept.
       return [
-        { op: "payFromHand", count: "any", cap: reading.cap, to: "discard", filter: { kind: "anyEnergy" }, recordAs: "discarded" },
+        {
+          op: "payFromHand",
+          count: "any",
+          cap: reading.cap,
+          to: "discard",
+          filter: { kind: "anyEnergy" },
+          recordAs: "discarded",
+        },
         { op: "damageDefender", base, count: "discarded", per: reading.per },
       ];
   }
@@ -41251,12 +41609,16 @@ export interface InPlayAttackCopy {
 }
 
 /** 🆕🆕🆕 D638 — is this Skill Thief's in-play kind? */
-export function isInPlayAttackCopy(copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy): copy is InPlayAttackCopy {
+export function isInPlayAttackCopy(
+  copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy,
+): copy is InPlayAttackCopy {
   return copy.from === "opponentInPlay";
 }
 
 /** 🆕🆕🆕 D574 — does this copy resolve in the MIDDLE of the attack rather than at declaration? */
-export function isResolvedAttackCopy(copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy): copy is ResolvedAttackCopy {
+export function isResolvedAttackCopy(
+  copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy,
+): copy is ResolvedAttackCopy {
   return copy.from === "opponentDeckTop" || copy.from === "ownDeckTopMill";
 }
 
@@ -41266,14 +41628,18 @@ export function isResolvedAttackCopy(copy: AttackCopy | ResolvedAttackCopy | InP
     anchors, 6 sentences / 13 printings, the whole marker family). On the ATTACK READER
     SURFACE by its `deriveAttack` prefix (`censusAttackCorpus.ts` `surface()`), which goes
     13 → 14 with it (and stays 14 at D574: a widening, not a reader). */
-export function deriveAttackCopy(text: string): AttackCopy | ResolvedAttackCopy | InPlayAttackCopy | null {
+export function deriveAttackCopy(
+  text: string,
+): AttackCopy | ResolvedAttackCopy | InPlayAttackCopy | null {
   const trimmed = text.trim();
   if (ATTACK_COPY_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive" };
   if (ATTACK_COPY_OPPONENT_ACTIVE_TERA.test(trimmed)) return { from: "opponentActiveTera" };
   if (ATTACK_COPY_BENCHED_N.test(trimmed)) return { from: "benchOwner", owner: "N" };
   if (ATTACK_COPY_FLIP_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive", flip: true };
-  if (ATTACK_COPY_OPPONENT_DECK_TOP.test(trimmed)) return { from: "opponentDeckTop", count: 10, may: true };
+  if (ATTACK_COPY_OPPONENT_DECK_TOP.test(trimmed))
+    return { from: "opponentDeckTop", count: 10, may: true };
   if (ATTACK_COPY_OWN_DECK_TOP_MILL.test(trimmed)) return { from: "ownDeckTopMill", count: 1 };
-  if (ATTACK_COPY_OPPONENT_IN_PLAY_EMPTY_HAND.test(trimmed)) return { from: "opponentInPlay", ifEmptyHand: true };
+  if (ATTACK_COPY_OPPONENT_IN_PLAY_EMPTY_HAND.test(trimmed))
+    return { from: "opponentInPlay", ifEmptyHand: true };
   return null;
 }

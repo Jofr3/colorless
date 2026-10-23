@@ -257,7 +257,8 @@ export function gridTotals(submax: number = SUBMAX): {
     for (const onto of BUILT_SENTENCES) {
       pairs++;
       const regions = editRegions(a, onto.split(" "));
-      if (regions.length === 0 || regions.some((x) => x.alen > submax || x.blen > submax)) rejected++;
+      if (regions.length === 0 || regions.some((x) => x.alen > submax || x.blen > submax))
+        rejected++;
     }
   }
   return { pairs, rejected, admitted: pairs - rejected };
@@ -576,14 +577,14 @@ export type Anatomy = {
     (the D569 close-out's gate-witness rule — D571 builds Destructo-Press, one of the five
     live co-marker witnesses, and the three Ancient/Future ones are the next to go). */
 export function blockerMarkerOf(r: { readonly text: string }): Marker | null {
-  const marker =
-    MARKERS.find((m) => m.verdict === "blocker" && m.rx.test(r.text)) ?? null;
+  const marker = MARKERS.find((m) => m.verdict === "blocker" && m.rx.test(r.text)) ?? null;
   return marker;
 }
 
 export const ANATOMY: readonly Anatomy[] = OPAQUE.map((r) => {
   const hit = minRegionHit(r.text);
-  if (hit !== null) return { units: r.units, text: r.text, cls: `MULTI-${hit.k}`, hit, marker: null };
+  if (hit !== null)
+    return { units: r.units, text: r.text, cls: `MULTI-${hit.k}`, hit, marker: null };
   const marker = blockerMarkerOf(r);
   return {
     units: r.units,
@@ -616,7 +617,9 @@ if (import.meta.main) {
   });
   for (const c of classes) {
     const hits = ANATOMY.filter((a) => a.cls === c);
-    console.log(`${c.padEnd(24)} ${P(hits.length)}        ${P(hits.reduce((s, a) => s + a.units, 0))}`);
+    console.log(
+      `${c.padEnd(24)} ${P(hits.length)}        ${P(hits.reduce((s, a) => s + a.units, 0))}`,
+    );
   }
   const multi = ANATOMY.filter((a) => a.hit !== null);
   const far = ANATOMY.filter((a) => a.hit === null);
@@ -638,14 +641,10 @@ if (import.meta.main) {
       `${mc.marker.name.padEnd(19)} ${mc.marker.verdict.padEnd(11)} ${pair(mc.opaque)}   ${pair(mc.residue)}   ${pair(mc.built)}`,
     );
   }
-  console.log(
-    "\n⚠️ A CO-MARKER NEVER LABELS A ROW. Its built side is > 0, so the phrase is",
-  );
-  console.log(
-    "   served somewhere and is NOT why these sentences are opaque. SIX of the",
-  );
+  console.log("\n⚠️ A CO-MARKER NEVER LABELS A ROW. Its built side is > 0, so the phrase is");
+  console.log("   served somewhere and is NOT why these sentences are opaque. SIX of the");
   console.log("   seven were written as blockers and refuted by this very column —");
-  console.log("   five on the day it was written, and NAMED-ATTACK at D508, by a build."); 
+  console.log("   five on the day it was written, and NAMED-ATTACK at D508, by a build.");
 
   console.log("\n=== ROWS, BY CLASS ===");
   for (const c of classes) {
@@ -654,13 +653,13 @@ if (import.meta.main) {
       console.log(`${P(a.units)}p  ${a.text}`);
       if (a.hit !== null) {
         console.log(`     ${a.hit.k} region(s) → BUILT: ${a.hit.onto}`);
-        console.log(
-          `     regions: ${a.hit.regions.map((r) => `${r.alen}→${r.blen}`).join("  ")}`,
-        );
+        console.log(`     regions: ${a.hit.regions.map((r) => `${r.alen}→${r.blen}`).join("  ")}`);
       }
       if (a.marker !== null) console.log(`     NEEDS: ${a.marker.needs}`);
       if (a.hit === null && a.marker === null) {
-        console.log("     no bounded multi-region edit reaches a built string, and no BLOCKER marker fires.");
+        console.log(
+          "     no bounded multi-region edit reaches a built string, and no BLOCKER marker fires.",
+        );
       }
     }
   }

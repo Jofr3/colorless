@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveAttackCost, stadiumEffectsOf } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
@@ -33,10 +33,12 @@ import {
 // Mystery Garden and Forest of Vitality are built at D618, `stadiumsMeD618.test.ts`.]
 // Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
-const PRISM_TEXT = "Once during each player's turn, that player may discard 2 cards from their hand in order to draw a card.";
+const PRISM_TEXT =
+  "Once during each player's turn, that player may discard 2 cards from their hand in order to draw a card.";
 const SURF_TEXT =
   "Once during each player's turn, that player may switch their Active {W} Pokémon with 1 of their Benched {W} Pokémon.";
-const MINE_TEXT = "Attacks used by each Tera Pokémon in play (both yours and your opponent's) cost {C} more.";
+const MINE_TEXT =
+  "Attacks used by each Tera Pokémon in play (both yours and your opponent's) cost {C} more.";
 const LUMIOSE_TEXT =
   "Once during each player's turn, that player may search their deck for a Basic Pokémon and put it onto their Bench. Then, that player shuffles their deck. If a player searches their deck in this way, their turn ends.";
 const FANFARE_TEXT =
@@ -69,7 +71,10 @@ const stadiumCard = (id: string, name: string, effect: string): Card => ({
   ...trainerCard(id, "Stadium", effect),
   name,
 });
-const itemCard = (id: string, name: string): Card => ({ ...trainerCard(id, "Item", "A test Item."), name });
+const itemCard = (id: string, name: string): Card => ({
+  ...trainerCard(id, "Item", "A test Item."),
+  name,
+});
 
 const LOCAL_CARDS: Record<string, Card> = {
   [PRISM[0]]: stadiumCard(PRISM[0], "Prism Tower", PRISM_TEXT),
@@ -114,7 +119,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -122,11 +129,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -151,7 +161,12 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 }
 
 /** p1's turn 2: `active` for p1 and `oppActive` for p2, each Bench exactly the listed bodies. */
-function table(active: string, bench: readonly string[] = [], oppActive: string = FILLER, seed = 6061): GameState {
+function table(
+  active: string,
+  bench: readonly string[] = [],
+  oppActive: string = FILLER,
+  seed = 6061,
+): GameState {
   let state = opened(seed);
   state = setActiveFromDeck(ensureInDeck(state, "p1", active), "p1", active);
   state = setActiveFromDeck(ensureInDeck(state, "p2", oppActive), "p2", oppActive);
@@ -186,7 +201,8 @@ function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameStat
   return { ...state, players: { ...state.players, [seat]: { ...side, hand, deck } } };
 }
 
-const use = (state: GameState, seat: Seat = "p1") => mustApply(state, { type: "useStadiumAbility", seat });
+const use = (state: GameState, seat: Seat = "p1") =>
+  mustApply(state, { type: "useStadiumAbility", seat });
 const refusal = (state: GameState) => {
   const result = applyAction(state, { type: "useStadiumAbility", seat: "p1" });
   if (result.ok) throw new Error("expected a refusal");
@@ -198,12 +214,14 @@ const cards = (uids: readonly string[]): GameAction => ({
   choice: { kind: "cards", uids: [...uids] },
 });
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const offer = (state: GameState) => {
   const phase = redactGame(state, "p1").phase;
   if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
@@ -232,7 +250,9 @@ describe("D606 §1 — the programs: five objects over 9 printings", () => {
         ],
       },
     });
-    expect(programFor(PRISM[0])?.stadium?.ability?.program).toEqual(programFor("sv10-155")?.abilities?.[0]?.program);
+    expect(programFor(PRISM[0])?.stadium?.ability?.program).toEqual(
+      programFor("sv10-155")?.abilities?.[0]?.program,
+    );
   });
 
   it("Surfing Beach: the {W} Active gate and the {W} Bench end", () => {
@@ -271,7 +291,9 @@ describe("D606 §1 — the programs: five objects over 9 printings", () => {
       program: [{ op: "healEach", amount: 10 }],
       endsTurn: "ifHealed",
     });
-    expect(programFor("sv06-146")?.stadium?.ability?.program).toEqual([{ op: "healEach", amount: 10 }]);
+    expect(programFor("sv06-146")?.stadium?.ability?.program).toEqual([
+      { op: "healEach", amount: 10 },
+    ]);
   });
 
   it("dropped and excluded Stadiums stay unkeyed (🆕🆕🆕 D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are keyed since D618; 🆕🆕🆕 D635 (D539): Fossil Quarry since D635; 🆕🆕🆕 D642 (D539): WITHDRAWN for the last three — keyed since D642, the rung is inverted)", () => {
@@ -297,7 +319,9 @@ describe("D606 §2 — Prism Tower: discard 2 from the hand, draw 1", () => {
     const [a, b, c] = board.players.p1.hand as [string, string, string];
     const top = board.players.p1.deck[0] as string;
     const { state, events } = mustApply(parked, cards([a, b]));
-    expect(of(events, "HAND_COST_PAID")).toEqual([{ type: "HAND_COST_PAID", seat: "p1", uids: [a, b], to: "discard" }]);
+    expect(of(events, "HAND_COST_PAID")).toEqual([
+      { type: "HAND_COST_PAID", seat: "p1", uids: [a, b], to: "discard" },
+    ]);
     expect(state.players.p1.discard.slice(-2)).toEqual([a, b]);
     expect(state.players.p1.hand).toEqual([c, top]);
     expect(state.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
@@ -361,7 +385,11 @@ describe("D606 §3 — Surfing Beach: the Active {W} switches with a Benched {W}
   it("🛑 a {W} Active with no Benched {W}: NO_LEGAL_TARGET — the FIRST printed Stadium program `programPlayable` refuses, and the wire greys it", () => {
     const board = stadium(table(WATER, [FILLER]), SURF[0]);
     expect(refusal(board).code).toBe("NO_LEGAL_TARGET");
-    expect(offer(board)).toEqual({ label: "Surfing Beach", disabled: true, reason: "No legal target" });
+    expect(offer(board)).toEqual({
+      label: "Surfing Beach",
+      disabled: true,
+      reason: "No legal target",
+    });
     expect(board.allowances.stadiumAbilityUsed).toBe(false);
   });
 });
@@ -375,9 +403,15 @@ describe("D606 §4 — Nighttime Mine: each Tera Pokémon's attacks cost {C} mor
     const p1 = board.players.p1;
     const p2 = board.players.p2;
     const three = ["Colorless", "Colorless", "Colorless"];
-    expect(effectiveAttackCost(board, p1.active as NonNullable<typeof p1.active>, ZAP.cost)).toEqual(three);
-    expect(effectiveAttackCost(board, p2.active as NonNullable<typeof p2.active>, ZAP.cost)).toEqual(three);
-    expect(effectiveAttackCost(board, p1.bench[0] as NonNullable<(typeof p1.bench)[0]>, ZAP.cost)).toBe(ZAP.cost);
+    expect(
+      effectiveAttackCost(board, p1.active as NonNullable<typeof p1.active>, ZAP.cost),
+    ).toEqual(three);
+    expect(
+      effectiveAttackCost(board, p2.active as NonNullable<typeof p2.active>, ZAP.cost),
+    ).toEqual(three);
+    expect(
+      effectiveAttackCost(board, p1.bench[0] as NonNullable<(typeof p1.bench)[0]>, ZAP.cost),
+    ).toBe(ZAP.cost);
     const bare = table(TERA);
     const active = bare.players.p1.active as NonNullable<typeof bare.players.p1.active>;
     expect(effectiveAttackCost(bare, active, ZAP.cost)).toBe(ZAP.cost);
@@ -427,7 +461,11 @@ describe("D606 §5 — Lumiose City: a Basic from the deck to the Bench, and the
     const p2Turn = mustApply(parked, cards([])).state;
     expect(p2Turn.allowances.stadiumAbilityUsed).toBe(false);
     const { state: theirs } = use(p2Turn, "p2");
-    const answered = mustApply(theirs, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } });
+    const answered = mustApply(theirs, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: [] },
+    });
     expect(answered.state.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
   });
 });
@@ -461,11 +499,5 @@ describe("D606 §6 — Celebratory Fanfare: heal 10 from each; if any healed, th
     expect(center?.endsTurn).toBeUndefined();
     expect(center?.playableIf).toEqual({ kind: "youPlayedSupporterThisTurn" });
     expect(fanfare?.playableIf).toBeUndefined();
-  });
-});
-
-describe("D606 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

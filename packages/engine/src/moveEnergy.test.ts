@@ -185,7 +185,11 @@ describe("M5 op-slice — moveEnergy", () => {
     ]) {
       expectErr(
         parked,
-        { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest }] } },
+        {
+          type: "resolveEffect",
+          seat: "p1",
+          choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest }] },
+        },
         "BAD_EFFECT_CHOICE",
       );
     }
@@ -224,7 +228,13 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", picks: [{ uid: e1 as string, dest: P1_BENCH0 }, { uid: e2 as string, dest: P1_BENCH0 }] },
+        choice: {
+          kind: "moveEnergy",
+          picks: [
+            { uid: e1 as string, dest: P1_BENCH0 },
+            { uid: e2 as string, dest: P1_BENCH0 },
+          ],
+        },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -248,7 +258,13 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_BENCH0 }, { uid: energyUid, dest: P1_BENCH0 }] },
+        choice: {
+          kind: "moveEnergy",
+          picks: [
+            { uid: energyUid, dest: P1_BENCH0 },
+            { uid: energyUid, dest: P1_BENCH0 },
+          ],
+        },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -383,7 +399,13 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", picks: [{ uid: activeE, dest: P1_ACTIVE }, { uid: benchE, dest: P1_ACTIVE }] },
+        choice: {
+          kind: "moveEnergy",
+          picks: [
+            { uid: activeE, dest: P1_ACTIVE },
+            { uid: benchE, dest: P1_ACTIVE },
+          ],
+        },
       },
       "BAD_EFFECT_CHOICE",
     );

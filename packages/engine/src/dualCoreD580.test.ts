@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter, topCardOf } from "./cards";
 import { effectiveTypesOf, inPlayCardOf, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
@@ -55,7 +55,8 @@ const ironTreadsFace: Card = battler(IRON_TREADS, {
     {
       type: "Ability",
       name: "Dual Core",
-      effect: "As long as this Pokémon has a Future Booster Energy Capsule attached, it is {F} and {M} type.",
+      effect:
+        "As long as this Pokémon has a Future Booster Energy Capsule attached, it is {F} and {M} type.",
     },
   ],
   attacks: [
@@ -71,13 +72,28 @@ const ironTreadsFace: Card = battler(IRON_TREADS, {
 });
 
 const body = (id: string, extra: Partial<Card>): Card =>
-  battler(id, { name: id, hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 50 }], ...extra });
+  battler(id, {
+    name: id,
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 50 }],
+    ...extra,
+  });
 
 const LOCAL_CARDS: Record<string, Card> = {
   [IRON_TREADS]: ironTreadsFace,
-  [CAPSULE]: { ...trainerCard(CAPSULE, "Tool", "(constructed)"), name: "Future Booster Energy Capsule" },
-  [OTHER_TOOL]: { ...trainerCard(OTHER_TOOL, "Tool", "(constructed)"), name: "Future Booster Energy Capsule II" },
-  [JAMMING_TOWER]: { ...trainerCard(JAMMING_TOWER, "Stadium", "Jamming Tower"), name: "Jamming Tower" },
+  [CAPSULE]: {
+    ...trainerCard(CAPSULE, "Tool", "(constructed)"),
+    name: "Future Booster Energy Capsule",
+  },
+  [OTHER_TOOL]: {
+    ...trainerCard(OTHER_TOOL, "Tool", "(constructed)"),
+    name: "Future Booster Energy Capsule II",
+  },
+  [JAMMING_TOWER]: {
+    ...trainerCard(JAMMING_TOWER, "Stadium", "Jamming Tower"),
+    name: "Jamming Tower",
+  },
   [WEAK_F]: body(WEAK_F, { weaknesses: [{ type: "Fighting", value: "×2" }] }),
   [WEAK_M]: body(WEAK_M, { weaknesses: [{ type: "Metal", value: "×2" }] }),
   [PLAIN]: body(PLAIN, {}),
@@ -112,7 +128,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -121,7 +138,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -129,15 +148,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -167,16 +193,28 @@ interface Spot {
 
 /** p1's turn 2: each seat's Active and Bench built from `Spot`s (each with its attached Tools),
     every hand emptied back into the deck; `stadium` puts a Stadium in play. */
-function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; stadium?: string }): GameState {
+function table(opts: {
+  p1: Spot;
+  p1Bench?: readonly Spot[];
+  p2: Spot;
+  stadium?: string;
+}): GameState {
   let state = opened(5801);
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
     const back = [
       ...side.hand,
-      ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
+      ...(side.active === null
+        ? []
+        : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const make = (seat: Seat, spot: Spot): InPlayPokemon => {
     const top = pull(state, seat, spot.id);
@@ -202,7 +240,9 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; stadium?: 
 }
 
 function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DAMAGE_DEALT" }> {
-  const row = events.find((e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT");
+  const row = events.find(
+    (e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT",
+  );
   if (row === undefined) throw new Error("no DAMAGE_DEALT");
   return row;
 }
@@ -212,13 +252,12 @@ const BARE: Spot = { id: IRON_TREADS };
 const active = (state: GameState, seat: Seat) => state.players[seat].active as InPlayPokemon;
 
 describe("D580 Dual Core §0 — the version and the registry row", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-
   it("sv05-118 carries `typesInPlay` [Fighting, Metal] behind the Tool NAME, no attack key (Wheel Pass keeps deriving)", () => {
     expect(programFor(IRON_TREADS)).toEqual({
-      passive: { typesInPlay: ["Fighting", "Metal"], typesInPlayWhileToolNamed: "Future Booster Energy Capsule" },
+      passive: {
+        typesInPlay: ["Fighting", "Metal"],
+        typesInPlayWhileToolNamed: "Future Booster Energy Capsule",
+      },
     });
   });
 
@@ -232,22 +271,35 @@ describe("D580 Dual Core §1 — with the (constructed) Capsule attached it is {
   it("effectiveTypesOf is [Fighting, Metal], Active and Bench alike; the printed card stays [Metal]", () => {
     const state = table({ p1: CORED, p1Bench: [CORED], p2: { id: PLAIN } });
     expect(effectiveTypesOf(state, active(state, "p1"))).toEqual(["Fighting", "Metal"]);
-    expect(effectiveTypesOf(state, state.players.p1.bench[0] as InPlayPokemon)).toEqual(["Fighting", "Metal"]);
+    expect(effectiveTypesOf(state, state.players.p1.bench[0] as InPlayPokemon)).toEqual([
+      "Fighting",
+      "Metal",
+    ]);
     expect(POOL[IRON_TREADS]?.types).toEqual(["Metal"]);
   });
 
   it("its attacks hit a {F}-weak defender for Weakness (the {F} it IS) and a {M}-weak one (printed)", () => {
-    const f = damageRow(run(table({ p1: CORED, p2: { id: WEAK_F } }), { type: "attack", seat: "p1", index: 1 }).events);
+    const f = damageRow(
+      run(table({ p1: CORED, p2: { id: WEAK_F } }), { type: "attack", seat: "p1", index: 1 })
+        .events,
+    );
     expect(f.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(f.dealt).toBe(100);
-    const m = damageRow(run(table({ p1: CORED, p2: { id: WEAK_M } }), { type: "attack", seat: "p1", index: 1 }).events);
+    const m = damageRow(
+      run(table({ p1: CORED, p2: { id: WEAK_M } }), { type: "attack", seat: "p1", index: 1 })
+        .events,
+    );
     expect(m.dealt).toBe(100);
   });
 
   it("type-keyed reads see both: opponentActiveHasType, yourBenchHasType, a {F}-typed attach target", () => {
     const state = table({ p1: CORED, p1Bench: [CORED], p2: { id: PLAIN } });
-    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Fighting" })).toBe(true);
-    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Metal" })).toBe(true);
+    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Fighting" })).toBe(
+      true,
+    );
+    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Metal" })).toBe(
+      true,
+    );
     expect(conditionHolds(state, "p1", { kind: "yourBenchHasType", type: "Fighting" })).toBe(true);
     expect(attachEnergyTargets(state, "p1", { targetType: "Fighting" })).toEqual([
       { seat: "p1", spot: { spot: "active" } },
@@ -256,13 +308,23 @@ describe("D580 Dual Core §1 — with the (constructed) Capsule attached it is {
   });
 
   it("its OWN Weakness and Resistance stay printed: a {R} hit is ×2, a {G} hit is −30, a {F} hit is plain", () => {
-    const fire = damageRow(run(table({ p1: { id: FIRE_HITTER }, p2: CORED }), { type: "attack", seat: "p1", index: 0 }).events);
+    const fire = damageRow(
+      run(table({ p1: { id: FIRE_HITTER }, p2: CORED }), { type: "attack", seat: "p1", index: 0 })
+        .events,
+    );
     expect(fire.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(fire.dealt).toBe(100);
-    const grass = damageRow(run(table({ p1: { id: GRASS_HITTER }, p2: CORED }), { type: "attack", seat: "p1", index: 0 }).events);
+    const grass = damageRow(
+      run(table({ p1: { id: GRASS_HITTER }, p2: CORED }), { type: "attack", seat: "p1", index: 0 })
+        .events,
+    );
     expect(grass.dealt).toBe(20);
     const fighting = damageRow(
-      run(table({ p1: { id: FIGHTING_HITTER }, p2: CORED }), { type: "attack", seat: "p1", index: 0 }).events,
+      run(table({ p1: { id: FIGHTING_HITTER }, p2: CORED }), {
+        type: "attack",
+        seat: "p1",
+        index: 0,
+      }).events,
     );
     expect(fighting.weakness).toBeNull();
     expect(fighting.dealt).toBe(50);
@@ -297,8 +359,12 @@ describe("D580 Dual Core §2 — without the Capsule it is its printed {M}", () 
   });
 
   it("hand, deck and discard cards are printed (a {F} filter refuses the card)", () => {
-    expect(matchesFilter(POOL[IRON_TREADS], { kind: "typedPokemon", pokemonType: "Fighting" })).toBe(false);
-    expect(matchesFilter(POOL[IRON_TREADS], { kind: "typedPokemon", pokemonType: "Metal" })).toBe(true);
+    expect(
+      matchesFilter(POOL[IRON_TREADS], { kind: "typedPokemon", pokemonType: "Fighting" }),
+    ).toBe(false);
+    expect(matchesFilter(POOL[IRON_TREADS], { kind: "typedPokemon", pokemonType: "Metal" })).toBe(
+      true,
+    );
   });
 });
 
@@ -306,7 +372,9 @@ describe("D580 Dual Core §3 — the locks", () => {
   it("R-DC2: under a §9 Ability lock (an opposing Active Klefki, Mischievous Lock) it is printed even with the Capsule", () => {
     const state = table({ p1: CORED, p2: { id: KLEFKI } });
     expect(effectiveTypesOf(state, active(state, "p1"))).toEqual(["Metal"]);
-    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Fighting" })).toBe(false);
+    expect(conditionHolds(state, "p2", { kind: "opponentActiveHasType", type: "Fighting" })).toBe(
+      false,
+    );
   });
 
   it("R-DC1 (UNRULED): under Jamming Tower (Tools have no effect) the retype STILL applies — the condition reads ATTACHMENT", () => {

@@ -184,7 +184,9 @@ export function isSpecialEnergy(card: EnergyFace): boolean {
     whole `Card` asks the ONE predicate: the deck builder's `toBuilderCard` (src/features/builder/catalog.ts) and
     the catalog API's brief mapper (apps/api catalog/map.ts) — finding 0b, the 4-copy rule that exempted the 14
     "Normal"-tagged Special Energies. `effect` absent reads as no rules text (a brief without it keeps the tag). */
-export type EnergyFace = Pick<Card, "category" | "energyType"> & { effect?: Card["effect"] | undefined };
+export type EnergyFace = Pick<Card, "category" | "energyType"> & {
+  effect?: Card["effect"] | undefined;
+};
 
 /** 🆕🆕🆕 D583 — A BASIC Energy card (§6.1): tagged "Normal" and printing no rules text — the
     exact complement of `isSpecialEnergy` among "Normal"-tagged Energy. The ONE reader of the
@@ -225,7 +227,9 @@ export function constrainedEnergyUnit(types: readonly string[]): string {
 /** 🆕🆕🆕 §6.4 (D578) — the member types of a constrained unit, or `null` for any other unit (a
     concrete type, "Colorless", `ANY_ENERGY`). */
 export function constrainedEnergyTypes(unit: string): readonly string[] | null {
-  return unit.startsWith(CONSTRAINED_PREFIX) ? unit.slice(CONSTRAINED_PREFIX.length).split(",") : null;
+  return unit.startsWith(CONSTRAINED_PREFIX)
+    ? unit.slice(CONSTRAINED_PREFIX.length).split(",")
+    : null;
 }
 
 /** 🆕🆕🆕 D568 — MOVED here from attack.ts unchanged (see the note there).
@@ -250,7 +254,8 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
   let wild = 0;
   for (const unit of provided) {
     if (unit === ANY_ENERGY) wild++;
-    else if (constrainedEnergyTypes(unit) !== null) constrained.set(unit, (constrained.get(unit) ?? 0) + 1);
+    else if (constrainedEnergyTypes(unit) !== null)
+      constrained.set(unit, (constrained.get(unit) ?? 0) + 1);
     else counts.set(unit, (counts.get(unit) ?? 0) + 1);
   }
   // 🆕🆕🆕 D578 — THREE PASSES, NARROWEST UNIT FIRST: concrete units pay their own type; then
@@ -877,9 +882,7 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // QUESTION (which body on a board, through `topCardOf`) and shares only an
       // operator, so unifying them would buy nothing D159 asks for and would
       // re-transcribe four shipped mutant rows for zero behaviour (D359).
-      return (
-        matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment)
-      );
+      return matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment);
     case "item":
       // D231 — an Item Trainer, `supporter`'s arm one value over. ⚠️ A Pokémon
       // Tool is NOT one: since SM they are separate printed subtypes, and the
@@ -914,7 +917,10 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // 🆕🆕🆕 D624 — Fletchling "Chirp"'s *"Pokémon with {F} Resistance"*: the printed entry's `type`
       // alone (D371's read, `opponentActiveHasResistance`), on a Pokémon. `resistances` is null on
       // Trainers and Energy, hence the `?? []`; the category conjunct is kept for a fossil row.
-      return card.category === "Pokemon" && (card.resistances ?? []).some((entry) => entry.type === filter.type);
+      return (
+        card.category === "Pokemon" &&
+        (card.resistances ?? []).some((entry) => entry.type === filter.type)
+      );
     case "specialEnergy":
       // A SPECIAL Energy only (Giacomo / Mawile) — the exact complement of
       // `basicEnergy` inside `anyEnergy`, ~~off the catalog's own tag~~
@@ -1050,8 +1056,7 @@ export function weaknessOf(
   retype: string | null = null,
   rewrite: string | null = null,
 ): DamageModifier | null {
-  const printed =
-    rewrite === null ? (defender.weaknesses ?? []) : [{ type: rewrite, value: "×2" }];
+  const printed = rewrite === null ? (defender.weaknesses ?? []) : [{ type: rewrite, value: "×2" }];
   const entries =
     retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));
   return weakResModifier(attacker, entries, { op: "multiply", amount: 2 });

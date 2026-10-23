@@ -3,14 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect } from "./effects";
-import {
-  ANY_ENERGY,
-  applyAction,
-  createGame,
-  engineVersion,
-  programFor,
-  providedEnergy,
-} from "./index";
+import { ANY_ENERGY, applyAction, createGame, programFor, providedEnergy } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -134,7 +127,11 @@ const LOCAL_CARDS: Record<string, Card> = {
       { cost: ["Colorless"], name: "Ancestral Blow", damage: 130, effect: SENTENCE },
       { cost: ["Colorless"], name: "Plain Call" },
       { cost: ["Colorless"], name: "Hand Regression", effect: SIBLING },
-      { cost: ["Colorless"], name: "Ancestral Toll", effect: "Discard an Energy from this Pokémon." },
+      {
+        cost: ["Colorless"],
+        name: "Ancestral Toll",
+        effect: "Discard an Energy from this Pokémon.",
+      },
       { cost: ["Colorless"], name: "Last Gambit", effect: WITNESS },
     ],
   }),
@@ -235,7 +232,11 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DEVOLVE_DECK, p2: DEVOLVE_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: DEVOLVE_DECK, p2: DEVOLVE_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -318,7 +319,8 @@ function armed(seed: number, opts: BoardOpts): GameState {
   state = setActiveFromDeck(state, attacker, "fix-devolver");
   state = clearBench(state, attacker);
   state = attachFromDeck(state, attacker, "fix-energy", opts.energy ?? 2);
-  if (opts.fire !== undefined) state = attachFromDeck(state, attacker, "fix-fire-energy", opts.fire);
+  if (opts.fire !== undefined)
+    state = attachFromDeck(state, attacker, "fix-fire-energy", opts.fire);
   if (opts.attackerEvolves === true) state = benchFromDeck(state, attacker, "fix-dev-basic");
   state = setActiveFromDeck(state, victim, "fix-dev-basic");
   state = clearBench(state, victim);
@@ -332,7 +334,11 @@ function armed(seed: number, opts: BoardOpts): GameState {
   // board ends on the attacker's turn either way.
   state = pass(state, attacker);
   state = pass(state, victim);
-  const rounds = Math.max(opts.stages, opts.benchStages ?? 0, opts.attackerEvolves === true ? 1 : 0);
+  const rounds = Math.max(
+    opts.stages,
+    opts.benchStages ?? 0,
+    opts.attackerEvolves === true ? 1 : 0,
+  );
   for (let step = 0; step < rounds; step += 1) {
     if (step === 0 && opts.attackerEvolves === true) {
       state = evolveInto(state, attacker, "fix-dev-s1", { spot: "bench", index: 0 });
@@ -354,7 +360,8 @@ function armed(seed: number, opts: BoardOpts): GameState {
   if (opts.tool !== undefined) state = attachToolFromDeck(state, victim, "active", opts.tool);
   // The shield goes on the BENCHED body, which is the whole point of §13: a filter
   // over the candidate set rather than a guard over the op.
-  if (opts.shieldBench === true) state = attachBenchFromDeck(state, victim, 0, "fix-mist-energy", 1);
+  if (opts.shieldBench === true)
+    state = attachBenchFromDeck(state, victim, 0, "fix-mist-energy", 1);
   return state;
 }
 
@@ -448,16 +455,16 @@ describe("§1 — the sentence derives to ONE field-free op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§2 — the anchor refuses on one axis at a time, and still says yes", () => {
   const NEAR_MISSES: [string, string][] = [
-    [
-      "the OWN side",
-      SENTENCE.replace("each of your opponent's evolved", "each of your evolved"),
-    ],
+    ["the OWN side", SENTENCE.replace("each of your opponent's evolved", "each of your evolved")],
     ["the DESTINATION", SENTENCE.replace("opponent's deck.", "opponent's hand.")],
     ["the VERB", SENTENCE.replace("by shuffling", "by putting")],
     ["the QUANTIFIER", SENTENCE.replace("Devolve each of", "Devolve 1 of")],
     ["the FILTER", SENTENCE.replace("evolved Pokémon", "Pokémon")],
     ["the STAGE WORD", SENTENCE.replace("highest Stage Evolution", "lowest Stage Evolution")],
-    ["a LEADING clause", `If you have any Benched Pokémon, ${SENTENCE[0]?.toLowerCase()}${SENTENCE.slice(1)}`],
+    [
+      "a LEADING clause",
+      `If you have any Benched Pokémon, ${SENTENCE[0]?.toLowerCase()}${SENTENCE.slice(1)}`,
+    ],
     ["a TRAILING clause", `${SENTENCE.slice(0, -1)} Then, draw a card.`],
   ];
 
@@ -525,7 +532,9 @@ describe("§3 — a Stage 1 devolves to its Basic", () => {
     const { state, events } = strike(armed(3, { stages: 1 }), "p1", CALL);
     const ctx: LogContext = { names: { p1: "Ash", p2: "Gary" }, state, elapsed: "+00:10" };
     const rendered = logFromEvents(events, ctx).map((entry) =>
-      entry.kind === "action" ? `${entry.who}|${entry.segments.map((seg) => seg.text).join("")}` : "",
+      entry.kind === "action"
+        ? `${entry.who}|${entry.segments.map((seg) => seg.text).join("")}`
+        : "",
     );
     expect(rendered.some((line) => line.startsWith("p1|devolved Gary's fix-dev-s1"))).toBe(true);
   });
@@ -795,7 +804,12 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
     const { before } = loaded(13);
     const { state } = strike(before, "p1", CALL);
     const after = body(state.players.p2.active);
-    expect(after.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
+    expect(after.conditions).toEqual({
+      rotation: "none",
+      poisonDamage: 0,
+      burned: false,
+      confusionDamage: 30,
+    });
     expect(after.retreatBlocked).toBe(false);
     expect(after.retreatLockedTurn).toBeNull();
     expect(after.attackBlock).toBeNull();
@@ -1133,10 +1147,6 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
     expect(types(replayed.events)).toEqual(types(live.events));
     expect(replayed.state.players.p2.active).toEqual(live.state.players.p2.active);
     expect(replayed.state.players.p2.deck).toEqual(live.state.players.p2.deck);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

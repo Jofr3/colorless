@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { EffectOp } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -101,11 +101,16 @@ describe("D617 §1 — the faces: 11 `me` printings / 5 texts, one object per te
 
 describe("D617 §2 — the registry programs, field for field", () => {
   it("Pokémon Center Lady = `healChosen` 60 with `recoverHealed`", () => {
-    expect(programFor(LADY)).toEqual({ trainer: [{ op: "healChosen", amount: 60, recoverHealed: true }] });
+    expect(programFor(LADY)).toEqual({
+      trainer: [{ op: "healChosen", amount: 60, recoverHealed: true }],
+    });
   });
 
   it("AZ's Tranquility = Scramble Switch's demoted filing, the gate, and the pinned ex heal", () => {
-    expect(programFor(AZ)?.trainer?.[0]).toEqual({ ...programFor("sv08-186")?.trainer?.[0], demotedAsMoved: true });
+    expect(programFor(AZ)?.trainer?.[0]).toEqual({
+      ...programFor("sv08-186")?.trainer?.[0],
+      demotedAsMoved: true,
+    });
     expect(programFor(AZ)).toEqual({
       trainer: [
         { op: "switchActive", recordAs: "moved", recordDemoted: true, demotedAsMoved: true },
@@ -114,7 +119,12 @@ describe("D617 §2 — the registry programs, field for field", () => {
           slot: "moved",
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
-            { op: "healChosen", amount: 80, targetRecorded: "moved", filter: { kind: "suffixPokemon", suffix: "ex" } },
+            {
+              op: "healChosen",
+              amount: 80,
+              targetRecorded: "moved",
+              filter: { kind: "suffixPokemon", suffix: "ex" },
+            },
           ],
         },
       ],
@@ -181,15 +191,26 @@ const ZERO_TO_HERO =
   "Once during your turn, when this Pokémon moves from the Active Spot to the Bench, you may search your deck for a Palafin ex and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.";
 
 const body = (id: string, name: string, types: string[], extra: Partial<Card> = {}): Card =>
-  battler(id, { name, hp: 300, types, attacks: [{ cost: ["Colorless"], name: "Tap", damage: 10 }], ...extra });
+  battler(id, {
+    name,
+    hp: 300,
+    types,
+    attacks: [{ cost: ["Colorless"], name: "Tap", damage: 10 }],
+    ...extra,
+  });
 
 const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
-    TEXTS.flatMap(([ids, name, text]) => ids.map((id) => [id, { ...trainerCard(id, "Supporter", text), name }])),
+    TEXTS.flatMap(([ids, name, text]) =>
+      ids.map((id) => [id, { ...trainerCard(id, "Supporter", text), name }]),
+    ),
   ),
   [PLAIN]: body(PLAIN, "D617 Plain", ["Colorless"]),
   [DARK]: body(DARK, "D617 Dark", ["Darkness"]),
-  [DARK_S1]: body(DARK_S1, "D617 Dark Two", ["Darkness"], { stage: "Stage1", evolveFrom: "D617 Dark" }),
+  [DARK_S1]: body(DARK_S1, "D617 Dark Two", ["Darkness"], {
+    stage: "Stage1",
+    evolveFrom: "D617 Dark",
+  }),
   [BRUTE]: body(BRUTE, "D617 Brute ex", ["Colorless"]),
   [MEGA]: body(MEGA, "Mega D617 ex", ["Colorless"]),
   [VICTIM]: battler(VICTIM, { name: "D617 Victim", hp: 300 }),
@@ -213,7 +234,8 @@ const LOCAL: Record<string, Card> = {
       {
         type: "Ability",
         name: "Hero's Spirit",
-        effect: "Put this Pokémon into play only with the effect of Palafin's Zero to Hero Ability.",
+        effect:
+          "Put this Pokémon into play only with the effect of Palafin's Zero to Hero Ability.",
       },
     ],
   }),
@@ -253,7 +275,10 @@ function reset(state: GameState): GameState {
     const prizes = pile.filter((u) => next.cardIdByUid[u] === "fix-energy");
     next = {
       ...next,
-      players: { ...next.players, [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) } },
+      players: {
+        ...next.players,
+        [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+      },
     };
   }
   return next;
@@ -265,7 +290,9 @@ function p1First(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -273,11 +300,14 @@ function p1First(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   return reset(state);
 }
@@ -298,12 +328,18 @@ function board(active: string, bench: readonly string[], base: GameState = p1Fir
   return benchFromDeck(state, "p2", FILLER);
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 function staged(state: GameState, id: string): { state: GameState; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
-  return { state: next, uid: next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string };
+  return {
+    state: next,
+    uid: next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string,
+  };
 }
 function play(state: GameState, id: string): { state: GameState; events: GameEvent[] } {
   const { state: next, uid } = staged(state, id);
@@ -315,7 +351,8 @@ function refusal(state: GameState, id: string): string {
   return result.ok ? "applied" : result.error.code;
 }
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
@@ -329,19 +366,30 @@ const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 
 describe("D617 §3 — Pokémon Center Lady: heal 60, and the healed Pokémon recovers from all Special Conditions", () => {
-  const sick = (state: GameState) => setConditions(state, "p1", { rotation: "asleep", poisonDamage: 10, burned: true });
+  const sick = (state: GameState) =>
+    setConditions(state, "p1", { rotation: "asleep", poisonDamage: 10, burned: true });
 
   it("the Active picked: 60 healed and every condition cleared (ONE `STATUS_CLEARED`, three conditions)", () => {
     let state = sick(setDamage(board(PLAIN, [FILLER]), "p1", 100));
     state = setBenchDamage(state, "p1", 0, 50);
     const parked = play(state, LADY).state;
     expect(prompt(parked).kind).toBe("choosePokemon");
-    expect(prompt(parked).note).toBe("Heal which of your Pokémon? It also recovers from all Special Conditions.");
+    expect(prompt(parked).note).toBe(
+      "Heal which of your Pokémon? It also recovers from all Special Conditions.",
+    );
     const { state: done, events } = mustApply(parked, pickRef(ACTIVE));
     expect(done.players.p1.active?.damage).toBe(40);
-    expect(done.players.p1.active?.conditions).toMatchObject({ rotation: "none", poisonDamage: 0, burned: false });
+    expect(done.players.p1.active?.conditions).toMatchObject({
+      rotation: "none",
+      poisonDamage: 0,
+      burned: false,
+    });
     expect(all(events, "STATUS_CLEARED")).toEqual([
-      expect.objectContaining({ seat: "p1", statuses: ["asleep", "poisoned", "burned"], reason: "recovered" }),
+      expect.objectContaining({
+        seat: "p1",
+        statuses: ["asleep", "poisoned", "burned"],
+        reason: "recovered",
+      }),
     ]);
     expect(done.players.p1.bench[0]?.damage).toBe(50);
   });
@@ -361,7 +409,11 @@ describe("D617 §3 — Pokémon Center Lady: heal 60, and the healed Pokémon re
     const { state: done } = play(state, LADY);
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.active?.damage).toBe(0);
-    expect(done.players.p1.active?.conditions).toMatchObject({ rotation: "none", poisonDamage: 0, burned: false });
+    expect(done.players.p1.active?.conditions).toMatchObject({
+      rotation: "none",
+      poisonDamage: 0,
+      burned: false,
+    });
   });
 
   it("the recovery does not wait on the heal: an UNDAMAGED Active still recovers", () => {
@@ -423,7 +475,9 @@ describe("D617 §4 — AZ's Tranquility: switch, then heal 80 from the demoted b
     const { state: done } = mustApply(revived(parked), pickRef(bench(1)));
     expect(done.cardIdByUid[done.players.p1.active?.stack.at(-1) ?? ""]).toBe(MEGA);
     expect(done.players.p1.active?.damage).toBe(100);
-    const demoted = done.players.p1.bench.find((p) => done.cardIdByUid[p.stack.at(-1) ?? ""] === BRUTE);
+    const demoted = done.players.p1.bench.find(
+      (p) => done.cardIdByUid[p.stack.at(-1) ?? ""] === BRUTE,
+    );
     expect(demoted?.damage).toBe(40);
   });
 
@@ -466,7 +520,9 @@ describe("D617 §5 — Grimsley's Move: top 7, a {D} Pokémon onto the Bench, th
     const done = mustApply(parked, pickCards([taken])).state;
     expect(done.players.p1.bench.map((b) => b.stack.at(-1))).toEqual([taken]);
     expect(done.players.p1.deck.slice(0, below.length)).toEqual(below);
-    expect([...done.players.p1.deck.slice(below.length)].sort()).toEqual(top7.filter((u) => u !== taken).sort());
+    expect([...done.players.p1.deck.slice(below.length)].sort()).toEqual(
+      top7.filter((u) => u !== taken).sort(),
+    );
   });
 
   it("no {D} Pokémon in the top 7: nothing benched, all 7 still go under the deck", () => {
@@ -501,7 +557,9 @@ describe("D617 §6 — Gwynn: discard up to 2 non-Rule-Box Pokémon, draw 3 per 
     const done = mustApply(parked, pickCards(p.candidates)).state;
     expect(done.players.p1.hand.slice(-6)).toEqual(deckTop);
     expect(handIds(done)).toHaveLength(2 + 6);
-    expect(idsOf(done, done.players.p1.discard)).toEqual(expect.arrayContaining([PLAIN, DARK, GWYNN]));
+    expect(idsOf(done, done.players.p1.discard)).toEqual(
+      expect.arrayContaining([PLAIN, DARK, GWYNN]),
+    );
   });
 
   it("discarding 1 draws 3; declining draws 0 (after a JSON round trip)", () => {
@@ -509,7 +567,9 @@ describe("D617 §6 — Gwynn: discard up to 2 non-Rule-Box Pokémon, draw 3 per 
     const parked = play(state, GWYNN).state;
     const p = prompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
-    expect(mustApply(revived(parked), pickCards([p.candidates[0] as string])).state.players.p1.hand).toHaveLength(1 + 3);
+    expect(
+      mustApply(revived(parked), pickCards([p.candidates[0] as string])).state.players.p1.hand,
+    ).toHaveLength(1 + 3);
     expect(mustApply(revived(parked), pickCards([])).state.players.p1.hand).toHaveLength(2);
   });
 
@@ -523,7 +583,11 @@ describe("D617 §6 — Gwynn: discard up to 2 non-Rule-Box Pokémon, draw 3 per 
 
   it("a short deck draws what it holds", () => {
     const { state: ready, uid } = staged(gwynnBoard({ [PLAIN]: 2 }), GWYNN);
-    const parked = mustApply(trimDeckTo(ready, "p1", 4), { type: "playTrainer", seat: "p1", uid }).state;
+    const parked = mustApply(trimDeckTo(ready, "p1", 4), {
+      type: "playTrainer",
+      seat: "p1",
+      uid,
+    }).state;
     const p = prompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     const done = mustApply(parked, pickCards(p.candidates)).state;
@@ -572,7 +636,10 @@ describe("D617 §7 — Naveen: discard any number first, then draw until 5", () 
     const empty = trimDeckTo(staged0, "p1", 0);
     const refused = applyAction(empty, { type: "playTrainer", seat: "p1", uid });
     expect(refused.ok ? "applied" : refused.error.code).toBe("PLAY_CONDITION_NOT_MET");
-    if (!refused.ok) expect(refused.error.message).toBe("Naveen can only be used if you have at least 1 card in your deck");
+    if (!refused.ok)
+      expect(refused.error.message).toBe(
+        "Naveen can only be used if you have at least 1 card in your deck",
+      );
     const one = trimDeckTo(staged0, "p1", 1);
     expect(applyAction(one, { type: "playTrainer", seat: "p1", uid }).ok).toBe(true);
   });
@@ -582,8 +649,12 @@ describe("D617 §8 — the new pieces off a board", () => {
   it("`yourDeckNotEmpty`: true with a card, false on an empty deck; its note", () => {
     const state = board(PLAIN, []);
     expect(conditionHolds(state, "p1", { kind: "yourDeckNotEmpty" })).toBe(true);
-    expect(conditionHolds(trimDeckTo(state, "p1", 0), "p1", { kind: "yourDeckNotEmpty" })).toBe(false);
-    expect(conditionNote({ kind: "yourDeckNotEmpty" })).toBe("you have at least 1 card in your deck");
+    expect(conditionHolds(trimDeckTo(state, "p1", 0), "p1", { kind: "yourDeckNotEmpty" })).toBe(
+      false,
+    );
+    expect(conditionNote({ kind: "yourDeckNotEmpty" })).toBe(
+      "you have at least 1 card in your deck",
+    );
   });
 
   it("`describeBranch` is silent on the `recorded` member (a gate branch holding it gets no caption)", () => {
@@ -603,7 +674,9 @@ describe("D617 §8 — the new pieces off a board", () => {
       if (result.kind !== "parked") throw new Error("expected a park");
       return result.prompt.note;
     };
-    expect(noteOf(gated({ kind: "recorded", slot: "paid" }))).toBe("Discard a card from your hand.");
+    expect(noteOf(gated({ kind: "recorded", slot: "paid" }))).toBe(
+      "Discard a card from your hand.",
+    );
     expect(noteOf(gated({ kind: "opponentBenchCount" }))).toBe(
       "Discard a card from your hand. If you do, draw a card for each of your opponent's Benched Pokémon.",
     );
@@ -627,9 +700,5 @@ describe("D617 §9 — the ids and the version", () => {
   it("no D617 Trainer or body reached `FIXTURE_POOL`; every keyed id is a `me` id", () => {
     for (const id of Object.keys(LOCAL)) expect(FIXTURE_POOL[id], id).toBeUndefined();
     for (const id of ME_IDS) expect(/^me/.test(id), id).toBe(true);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

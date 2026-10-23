@@ -141,9 +141,9 @@ describe("Safeguard — protection reaches the BENCH (no Active-Spot clause)", (
     // The Active (fix-bigbody) still eats Spread Shot's 30…
     expect(done.players.p2.active?.damage).toBe(30);
     // …but the benched Mimikyu's 20 spread is prevented to 0 (ex attacker).
-    const benchHit = events.find(
-      (e) => e.type === "DAMAGE_DEALT" && e.uid === mimikyuUid,
-    ) as Extract<GameEvent, { type: "DAMAGE_DEALT" }> | undefined;
+    const benchHit = events.find((e) => e.type === "DAMAGE_DEALT" && e.uid === mimikyuUid) as
+      | Extract<GameEvent, { type: "DAMAGE_DEALT" }>
+      | undefined;
     expect(benchHit).toMatchObject({ seat: "p2", dealt: 0, prevented: true });
     expect(benchedMimikyu(done)?.damage).toBe(0);
   });
@@ -155,9 +155,9 @@ describe("Safeguard — protection reaches the BENCH (no Active-Spot clause)", (
 
     const { state: done, events } = mustApply(state, sniperSpread);
 
-    const benchHit = events.find(
-      (e) => e.type === "DAMAGE_DEALT" && e.uid === mimikyuUid,
-    ) as Extract<GameEvent, { type: "DAMAGE_DEALT" }> | undefined;
+    const benchHit = events.find((e) => e.type === "DAMAGE_DEALT" && e.uid === mimikyuUid) as
+      | Extract<GameEvent, { type: "DAMAGE_DEALT" }>
+      | undefined;
     expect(benchHit).toMatchObject({ dealt: 20 });
     expect(benchHit?.prevented).toBeUndefined();
     expect(benchedMimikyu(done)?.damage).toBe(20);

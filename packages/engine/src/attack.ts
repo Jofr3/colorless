@@ -303,7 +303,8 @@ export function attackCostAt(
   // not fire. Named by the printed attack NAME, so it cannot reach the holder's other
   // attack; through `passivesOf`, so a §9 lock on the holder drops it (the printed cost).
   for (const clause of passivesOf(state, pokemon).attackCostClauses) {
-    if (clause.attack !== attackName || !conditionHolds(state, seat, clause.gate.condition)) continue;
+    if (clause.attack !== attackName || !conditionHolds(state, seat, clause.gate.condition))
+      continue;
     if (clause.gate.kind === "costWaivedIf") return [];
     const clauseCost = effectiveAttackCost(state, pokemon, clause.gate.cost, attackName);
     if (costMet(clauseCost, provided)) return clauseCost;
@@ -350,7 +351,10 @@ export function attackCostAt(
     `extraEnergyUnitsBeyondCost` fold's own subtraction (D436, R-PSP1). Every other op passes through unchanged, so a
     program without the gate is returned as built; the resolved program carries only shipped ops into `runProgram`
     and any continuation it parks. */
-function resolveDeclarationGates(program: EffectOp[] | null, extraUnits: number): EffectOp[] | null {
+function resolveDeclarationGates(
+  program: EffectOp[] | null,
+  extraUnits: number,
+): EffectOp[] | null {
   if (program === null) return null;
   return program.flatMap((op) =>
     op.op === "conditionGate" && op.cond.kind === "extraEnergyBeyondAttackCost"
@@ -673,12 +677,15 @@ function scaledAttackDamage(
       return countToolsInPlay(state, attackerSeat) * bonus.per;
     case "toolsInPlayBothSides":
       // 🆕🆕🆕 D607 — WP28a: every Tool on BOTH boards (Bronzong "Tool Drop"), the arm above per seat.
-      return (countToolsInPlay(state, attackerSeat) + countToolsInPlay(state, defenderSeat)) * bonus.per;
+      return (
+        (countToolsInPlay(state, attackerSeat) + countToolsInPlay(state, defenderSeat)) * bonus.per
+      );
     case "energyInPlayBothSides":
       // 🆕🆕🆕 D607 — WP28a: every Energy CARD attached on BOTH boards (Delphox "Energized Storm"),
       // the untyped board walk of `energyOnSelf`/`energyOnOpponent` per seat.
       return (
-        (countEnergyInPlay(state, attackerSeat, null) + countEnergyInPlay(state, defenderSeat, null)) *
+        (countEnergyInPlay(state, attackerSeat, null) +
+          countEnergyInPlay(state, defenderSeat, null)) *
         bonus.per
       );
     case "basicEnergyTypesOnYourBoard":
@@ -691,14 +698,17 @@ function scaledAttackDamage(
       // 🆕🆕🆕 D623 — WP28b: Benched bodies with any Energy of the type, by provision (Armarouge).
       const { energyType } = bonus.count;
       return (
-        state.players[attackerSeat].bench.filter((p) => hasAttachedEnergy(state, p, energyType)).length *
-        bonus.per
+        state.players[attackerSeat].bench.filter((p) => hasAttachedEnergy(state, p, energyType))
+          .length * bonus.per
       );
     }
     case "benchedPokemonWithMaxHp": {
       // 🆕🆕🆕 D623 — WP28b: Benched bodies whose MODIFIED max HP is exactly `hp` (Igglybuff, R-BOC1).
       const { hp } = bonus.count;
-      return state.players[attackerSeat].bench.filter((p) => effectiveMaxHp(state, p) === hp).length * bonus.per;
+      return (
+        state.players[attackerSeat].bench.filter((p) => effectiveMaxHp(state, p) === hp).length *
+        bonus.per
+      );
     }
     case "pokemonInPlay": {
       // 🆕🆕 D439 — the ATTACKER's BODIES IN PLAY matching the printed noun
@@ -921,7 +931,9 @@ function benchBodies(state: GameState, seat: Seat, filter?: CardFilter): number 
   return state.players[seat].bench.reduce(
     (total, p) =>
       total +
-      (p !== null && (filter === undefined || matchesFilter(inPlayCardOf(state, p), filter)) ? 1 : 0),
+      (p !== null && (filter === undefined || matchesFilter(inPlayCardOf(state, p), filter))
+        ? 1
+        : 0),
     0,
   );
 }
@@ -1800,7 +1812,8 @@ export function attack(
   // 🆕🆕🆕 D574 — a RESUMED re-entry (`resolveFoundAttack`) is the SECOND HALF of an attack whose
   // ATTACK_DECLARED already went out with the first; it declares nothing again.
   // 🆕🆕🆕 D646 — and a Backtrack Badge re-entry (`coinRedo`) is the second half of one already declared.
-  const events: GameEvent[] = copiedFrom?.resumed === true || coinRedo !== undefined ? [] : [declaredEvent];
+  const events: GameEvent[] =
+    copiedFrom?.resumed === true || coinRedo !== undefined ? [] : [declaredEvent];
   let next = state;
 
   // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: "During your opponent's next turn, if
@@ -1833,13 +1846,19 @@ export function attack(
   // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any
   // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.
   // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (the first half flipped it, heads).
-  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);
+  const lockCoins =
+    copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);
   if (lockCoins > 0) {
     let lockTails = false;
     for (let coin = 0; coin < lockCoins; coin++) {
       const [face, rngState] = flipCoin(next.rngState);
       next = { ...next, rngState };
-      events.push({ type: "ATTACK_FLIP_LOCK_CHECK", seat: action.seat, uid: attackerUid, result: face });
+      events.push({
+        type: "ATTACK_FLIP_LOCK_CHECK",
+        seat: action.seat,
+        uid: attackerUid,
+        result: face,
+      });
       if (face === "tails") lockTails = true;
     }
     if (lockTails) {
@@ -1911,7 +1930,8 @@ export function attack(
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
-    if (face === "tails") return finishAttack(next, events, action.seat, attackerUid, declared.name);
+    if (face === "tails")
+      return finishAttack(next, events, action.seat, attackerUid, declared.name);
   }
   if (copied?.empty === true) {
     return finishAttack(next, events, action.seat, attackerUid, declared.name);
@@ -1931,9 +1951,16 @@ export function attack(
   // 🆕🆕🆕 D574 — a RESUMED half names what the attack became in its OWN row: ATTACK_DECLARED went
   // out with the first half, so `events[0]` here is not it and is never stamped.
   if (copiedFrom !== null && copiedFrom?.resumed === true && coinRedo === undefined) {
-    events.push({ type: "ATTACK_COPY_RESOLVED", seat: action.seat, uid: attackerUid, attack: declared.name, as: copiedFrom.attack.name });
+    events.push({
+      type: "ATTACK_COPY_RESOLVED",
+      seat: action.seat,
+      uid: attackerUid,
+      attack: declared.name,
+      as: copiedFrom.attack.name,
+    });
   }
-  if (copiedFrom !== null && copiedFrom?.resumed !== true && coinRedo === undefined) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
+  if (copiedFrom !== null && copiedFrom?.resumed !== true && coinRedo === undefined)
+    events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
 
   // Coverage strategy (simulator.md): the mechanical part of the attack
   // (numeric damage, weakness/resistance) is simulated, and effect text
@@ -1955,7 +1982,9 @@ export function attack(
   // asserted. `attackerBody` is `active` here (no pre-damage seam has run yet).
   // 🆕🆕🆕 D573 SUBSTITUTION SITE 1 of 4 — the COPIED attack's printed damage box. (The
   // boost on the next line is index-keyed and stays at the COPIER's index, R-CP6.)
-  const { base: printedBase, modifier } = parseAttackDamage((copiedFrom?.attack ?? declared).damage);
+  const { base: printedBase, modifier } = parseAttackDamage(
+    (copiedFrom?.attack ?? declared).damage,
+  );
   const base = boostedAttackBase(next, attackerBody, printedIndex) ?? printedBase;
   // 🛑 D282 — THE SPLIT ANCHOR, AND IT IS ONE REBIND RATHER THAN SEVEN WIDENINGS.
   // D281 built `CardProgram.attackGate` and enforced it at the §4/§8 declaration
@@ -2096,8 +2125,7 @@ export function attack(
   // most one of the three ever fires on a given attack. 🆕 D363 — read off
   // `gated`, NOT off `effect`: the reader's own anchor tolerates a trailing
   // companion now, and `effect` is that companion once a split has fired.
-  const leadingRequirement =
-    gated === null || gated === "" ? null : deriveAttackRequirement(gated);
+  const leadingRequirement = gated === null || gated === "" ? null : deriveAttackRequirement(gated);
   const composed = requirementSplit === null ? gated : requirementSplit.body;
   // 🆕🆕 D417 — THE FOURTH SPLIT, AND THE SECOND POINTED AT THE *TRAILING* END OF
   // THE SENTENCE — but unlike D409's it strips a clause that is SPENT rather than
@@ -2193,7 +2221,9 @@ export function attack(
   // Dive attack's lower stage, a Technical Machine's Tool row); a printed row's `entry.card` is
   // the top card and `entry.sourceIndex` IS `index`, so that lookup is the pre-D578 one.
   const authored =
-    programFor((copiedFrom?.card ?? entry.card).id)?.attack?.[copiedFrom?.index ?? entry.sourceIndex] ?? null;
+    programFor((copiedFrom?.card ?? entry.card).id)?.attack?.[
+      copiedFrom?.index ?? entry.sourceIndex
+    ] ?? null;
   const derivedHead = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   // 🆕🆕 D409 — THE COMPOSITION SITE, AND IT IS ONE CONCATENATION IN PRINTED ORDER.
   // `derivedHead` is null on the two Prize compounds (their head is a damage-bonus
@@ -2202,8 +2232,7 @@ export function attack(
   // is the PRINTED order — head first — because that is the order the card reads in
   // and the only order §8.5's fold and the post-damage ops agree on.
   const derivedTail = compoundSplit === null ? null : deriveAttackEffect(compoundSplit.tail);
-  const derived =
-    derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];
+  const derived = derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];
   // REASSIGNABLE since D130, and only from the flip block below: a
   // `programPerHeads` coin member is expanded into one copy of its ops per flip that
   // came up on the member's printed `face` (D476) and APPENDED here, so the attack's
@@ -2788,7 +2817,8 @@ export function attack(
   // 🆕🆕🆕 D646 — filed by the first half only (a Backtrack Badge re-entry has already said it).
   if (
     coinRedo === undefined &&
-    ((modifier !== null && !modifierSimulated) || (effect !== null && effect !== "" && !effectSimulated))
+    ((modifier !== null && !modifierSimulated) ||
+      (effect !== null && effect !== "" && !effectSimulated))
   ) {
     events.push({
       type: "ATTACK_EFFECT_SKIPPED",
@@ -2954,7 +2984,9 @@ export function attack(
     // 🆕🆕🆕 D646 — a Backtrack Badge "keep" re-entry takes the offered faces (no coin, no row); "again" flips anew.
     const kept = coinRedo?.kind === "keep" ? coinRedo.faces : undefined;
     const [faces, rngState] =
-      kept === undefined ? takeFlips(next, action.seat, active, printedFlips(coinFlip)) : [kept, next.rngState];
+      kept === undefined
+        ? takeFlips(next, action.seat, active, printedFlips(coinFlip))
+        : [kept, next.rngState];
     next = { ...next, rngState };
     // 🆕🆕🆕 D550 R1 — EVERY coin row is filed under the seat that FLIPS. For every member but
     // one that is the attacker; `opponentPerTails` prints *"Your opponent flips a coin"*, so
@@ -2966,7 +2998,8 @@ export function attack(
     const flipper = coinFlip.kind === "opponentPerTails" ? otherSeat(action.seat) : action.seat;
     let heads = 0;
     for (const face of faces) {
-      if (kept === undefined) events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
+      if (kept === undefined)
+        events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
       if (face === "heads") heads += 1;
     }
     // 🆕🆕🆕 D646 — Backtrack Badge `me05-074`: after the ATTACKER's own coins (not the opponent's — R-BTB2), on the first
@@ -3482,7 +3515,8 @@ export function attack(
     // the attacker's RECORD, not catalog folds. `attackerSuppressesTargetEffects`
     // is the third, reached the same way and named for the same reason.
     const suppressTargetEffects =
-      damageSuppression?.targetEffects === true || attackerSuppressesTargetEffects(next, attackerBody);
+      damageSuppression?.targetEffects === true ||
+      attackerSuppressesTargetEffects(next, attackerBody);
     // 🆕🆕🆕 D556 — AND THE THIS-TURN SIDE-WIDE BONUS a Trainer installed (Black Belt's
     // Training, *"During this turn, attacks used by your Pokémon do 40 more damage to
     // your opponent's Active Pokémon ex (before applying Weakness and Resistance)."*),
@@ -3653,14 +3687,18 @@ export function attack(
     // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1), on-target like the retype.
     const weaknessRewrite = suppressTargetEffects
       ? null
-      : (installedWeaknessRewriteOf(next, defender) ?? seatWeaknessRewrite(next, defenderSeat, defenderCard));
+      : (installedWeaknessRewriteOf(next, defender) ??
+        seatWeaknessRewrite(next, defenderSeat, defenderCard));
     const weakness =
       damageSuppression?.weakness === true ||
       seatRemovesWeakness(next, defenderSeat) ||
       installedNoWeakness(next, defender)
         ? null
         : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones": the applied ×2 as ×3 (R-SPH1).
-          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));
+          withWeaknessAmount(
+            weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),
+            weaknessAmountOverride(next),
+          );
     // D192 — Resistance has no defender-side null path (nothing in the pool prints
     // "your Pokémon have no Resistance"), so this is its FIRST, and it is its own
     // boolean because 9 legal printings suppress Resistance ALONE ("This attack's
@@ -3685,7 +3723,12 @@ export function attack(
     );
     // 🆕🆕🆕 D642 — the fold plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping), read only
     // by the recoil below (`damageAttacker`, and the Ability share Luminous Wing refuses).
-    const defenderPassives = withWatchedRecoil(next, defenderSeat, defender, passivesOf(next, defender));
+    const defenderPassives = withWatchedRecoil(
+      next,
+      defenderSeat,
+      defender,
+      passivesOf(next, defender),
+    );
     // §8.5 step 5, the reduction — the printed "takes {N} less damage from attacks
     // (after applying Weakness and Resistance)", read from BOTH of the places that
     // sentence is printed and SUMMED because each source is its own card effect:
@@ -3730,7 +3773,13 @@ export function attack(
       : berry.amount +
         defenderPassives.damageReductionAfterWR +
         // 🆕🆕🆕 D619 — the attacker-gated reduction (Sacred Charm, Thick Scale, Thick Fat), on-target.
-        attackerGatedReductionOf(next, defender, defenderPassives.damageReductionsFromAttacker, attacker, action.seat) +
+        attackerGatedReductionOf(
+          next,
+          defender,
+          defenderPassives.damageReductionsFromAttacker,
+          attacker,
+          action.seat,
+        ) +
         installedReductionOf(next, defender, attacker, attackerBody) + // 🆕🆕🆕 D630 — Metal Block's class
         seatDamageReduction(next, defender, "all", action.seat);
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
@@ -3947,7 +3996,9 @@ export function attack(
     // 🆕🆕🆕 D598 — Tenacious Body / Durable Body: the coin-flip survival, asked only when the
     // clamp did not answer (continuous.ts `koSurvivalCoinFlip`).
     const [coinSaved, survivalRng] =
-      clamped === null ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events) : [null, next.rngState];
+      clamped === null
+        ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events)
+        : [null, next.rngState];
     next = { ...next, rngState: survivalRng };
     // 🆕🆕🆕 D630 — and the damage the attack dealt is recorded on the body (Juggernaut Horn, R-JH1).
     defended = withAttackDamageTaken(
@@ -4083,7 +4134,11 @@ export function attack(
     if (dealt > 0) {
       next = detonateDeluxeBomb(next, defenderSeat, defended, action.seat, dealt, events);
       damagedToolStages = damagedToolTriggersOf(next, defenderSeat, defenderUid).map(
-        ({ toolUid }): PendingStage => ({ kind: "damagedTrigger", seat: defenderSeat, uid: toolUid }),
+        ({ toolUid }): PendingStage => ({
+          kind: "damagedTrigger",
+          seat: defenderSeat,
+          uid: toolUid,
+        }),
       );
     }
   }
@@ -4173,7 +4228,9 @@ export function attack(
           sourceUid: attackerUid,
           invokedBy: "attack",
           dealt: dealtToDefender,
-          ...(entry.origin === "printed" || copiedFrom !== null ? {} : { borrowedAttack: declared.name }),
+          ...(entry.origin === "printed" || copiedFrom !== null
+            ? {}
+            : { borrowedAttack: declared.name }),
         },
         events,
       ),
@@ -4272,7 +4329,9 @@ function usableCopies(
   body: InPlayPokemon,
   card: Card,
 ): { index: number; attack: Attack }[] {
-  return copyCandidates(card).filter(({ index }) => attackTimingBlocked(state, seat, body, index) === undefined);
+  return copyCandidates(card).filter(
+    ({ index }) => attackTimingBlocked(state, seat, body, index) === undefined,
+  );
 }
 
 /** The bodies `copy` reads for `seat`, each with ≥ 1 eligible attack, live off `state`. */
@@ -4288,7 +4347,9 @@ function copySources(
       const card = topCardOf(state, body);
       if (card === undefined || !matchesFilter(card, { kind: "ownerPokemon", owner })) return [];
       const attacks = usableCopies(state, seat, body, card);
-      return attacks.length === 0 ? [] : [{ body, card, ref: { spot: "bench" as const, index }, attacks }];
+      return attacks.length === 0
+        ? []
+        : [{ body, card, ref: { spot: "bench" as const, index }, attacks }];
     });
   }
   const body = state.players[otherSeat(seat)].active;
@@ -4311,7 +4372,12 @@ function parkCopy(
   prompt: EffectPrompt,
 ): ApplyResult {
   return settleProgram(
-    { kind: "parked", state, prompt, cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid } } },
+    {
+      kind: "parked",
+      state,
+      prompt,
+      cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid } },
+    },
     seat,
     [],
   );
@@ -4355,8 +4421,10 @@ function declareAttackCopy(
   const sources = copySources(state, action.seat, copy);
   const pairs = sources.flatMap((source) => source.attacks.map((picked) => ({ source, picked })));
   const only = pairs.length === 1 ? pairs[0] : undefined;
-  if (pairs.length === 0) return attack(state, action, { empty: true, ...(copy.flip === true ? { flip: true } : {}) });
-  if (only !== undefined) return attack(state, action, copiedOverride(only.source, only.picked, copy.flip));
+  if (pairs.length === 0)
+    return attack(state, action, { empty: true, ...(copy.flip === true ? { flip: true } : {}) });
+  if (only !== undefined)
+    return attack(state, action, copiedOverride(only.source, only.picked, copy.flip));
   const op: Extract<EffectOp, { op: "useAttackAs" }> = {
     op: "useAttackAs",
     from: copy.from,
@@ -4420,7 +4488,10 @@ export function resolveCopiedAttack(
     copy === null ||
     copy.from !== op.from
   ) {
-    return err("PHASE_DESYNC", "the copying Pokémon is no longer the Active that declared this attack");
+    return err(
+      "PHASE_DESYNC",
+      "the copying Pokémon is no longer the Active that declared this attack",
+    );
   }
   const sources = copySources(resumed, seat, op);
   if (choice.kind === "pokemon") {
@@ -4428,13 +4499,25 @@ export function resolveCopiedAttack(
     const source =
       ref === undefined || ref.seat !== seat || ref.spot.spot !== "bench"
         ? undefined
-        : sources.find((s) => s.ref?.spot === "bench" && ref.spot.spot === "bench" && s.ref.index === ref.spot.index);
+        : sources.find(
+            (s) =>
+              s.ref?.spot === "bench" &&
+              ref.spot.spot === "bench" &&
+              s.ref.index === ref.spot.index,
+          );
     if (source === undefined || source.ref === null) {
       return err("BAD_EFFECT_CHOICE", "that Pokémon has no attack this copy can use");
     }
     const forced = source.attacks.length === 1 ? source.attacks[0] : undefined;
-    if (forced !== undefined) return attack(resumed, action, copiedOverride(source, forced, op.flip));
-    return parkCopy(resumed, seat, phase.cont.ctx.sourceUid ?? "", { ...op, sourceRef: source.ref }, chooseCopiedAttack(source, printed.name));
+    if (forced !== undefined)
+      return attack(resumed, action, copiedOverride(source, forced, op.flip));
+    return parkCopy(
+      resumed,
+      seat,
+      phase.cont.ctx.sourceUid ?? "",
+      { ...op, sourceRef: source.ref },
+      chooseCopiedAttack(source, printed.name),
+    );
   }
   if (choice.kind === "attack") {
     const want = op.sourceRef;
@@ -4538,14 +4621,23 @@ export function resolveInPlayCopiedAttack(
   const seat = phase.seat;
   if (choice.kind !== "attack") return err("BAD_EFFECT_CHOICE", "expected an attack choice");
   const pair = op.candidates[choice.index];
-  if (pair === undefined) return err("BAD_EFFECT_CHOICE", "that is not an attack this copy can use");
+  if (pair === undefined)
+    return err("BAD_EFFECT_CHOICE", "that is not an attack this copy can use");
   const reopened: GameState = { ...state, phase: { kind: "turn:action", seat } };
   const copier = reopened.players[seat].active;
   const copierCard = copier === null ? undefined : topCardOf(reopened, copier);
   const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
   const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
-  if (copier === null || topUid(copier) !== phase.cont.ctx.sourceUid || copy === null || !isInPlayAttackCopy(copy)) {
-    return err("PHASE_DESYNC", "the copying Pokémon is no longer the Active that declared this attack");
+  if (
+    copier === null ||
+    topUid(copier) !== phase.cont.ctx.sourceUid ||
+    copy === null ||
+    !isInPlayAttackCopy(copy)
+  ) {
+    return err(
+      "PHASE_DESYNC",
+      "the copying Pokémon is no longer the Active that declared this attack",
+    );
   }
   return reenterInPlay(reopened, { type: "attack", seat, index: op.index }, pair);
 }
@@ -4574,18 +4666,25 @@ type FoundPair = { uid: string; attackIndex: number; name: string };
     printed alike (Persian ex `sv10-150` + `sv10-219` revealed together offer ONE "Cruel Slash" row,
     not two identical ones). `ruleBoxFree` is Seek Inspiration's printed *"doesn't have a Rule
     Box"* (`hasRuleBox`). */
-function foundPairs(state: GameState, seat: Seat, uids: readonly string[], ruleBoxFree: boolean): FoundPair[] {
+function foundPairs(
+  state: GameState,
+  seat: Seat,
+  uids: readonly string[],
+  ruleBoxFree: boolean,
+): FoundPair[] {
   const seen = new Set<string>();
   return uids.flatMap((uid) => {
     const card = cardOfUid(state, uid);
     if (card === undefined || card.category !== "Pokemon") return [];
     if (ruleBoxFree && hasRuleBox(card)) return [];
-    return usableCopies(state, seat, makeInPlay(uid, state.turn), card).flatMap(({ index, attack }) => {
-      const key = `${card.name}#${String(index)}#${JSON.stringify(attack)}`;
-      if (seen.has(key)) return [];
-      seen.add(key);
-      return [{ uid, attackIndex: index, name: `${attack.name} (${card.name})` }];
-    });
+    return usableCopies(state, seat, makeInPlay(uid, state.turn), card).flatMap(
+      ({ index, attack }) => {
+        const key = `${card.name}#${String(index)}#${JSON.stringify(attack)}`;
+        if (seen.has(key)) return [];
+        seen.add(key);
+        return [{ uid, attackIndex: index, name: `${attack.name} (${card.name})` }];
+      },
+    );
   });
 }
 
@@ -4612,13 +4711,22 @@ function parkFoundCopy(
   op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
   prompt: EffectPrompt,
 ): ApplyResult {
-  const epilogue: PendingStage = { kind: "attackEpilogue", seat, uid: attackerUid, attack: copierName };
+  const epilogue: PendingStage = {
+    kind: "attackEpilogue",
+    seat,
+    uid: attackerUid,
+    attack: copierName,
+  };
   return settleProgram(
     {
       kind: "parked",
       state: { ...state, pending: [...state.pending, epilogue] },
       prompt,
-      cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid, invokedBy: "attack", dealt: 0 } },
+      cont: {
+        pendingOp: op,
+        rest: [],
+        ctx: { seat, sourceUid: attackerUid, invokedBy: "attack", dealt: 0 },
+      },
     },
     seat,
     events,
@@ -4645,7 +4753,14 @@ function copyAtResolution(
     const owner = otherSeat(seat);
     const side = state.players[owner];
     const shown = side.deck.slice(0, copy.count);
-    events.push({ type: "DECK_TOP_REVEALED", seat: owner, dest: "deck", uids: [...shown], reveal: true, actor: seat });
+    events.push({
+      type: "DECK_TOP_REVEALED",
+      seat: owner,
+      dest: "deck",
+      uids: [...shown],
+      reveal: true,
+      actor: seat,
+    });
     const pairs = foundPairs(state, seat, shown, false);
     const [deck, rngState] = shuffle(side.deck, state.rngState);
     events.push({ type: "SHUFFLE", seat: owner });
@@ -4669,7 +4784,11 @@ function copyAtResolution(
   const top = side.deck[0];
   if (top === undefined) return finishAttack(state, events, seat, attackerUid, copierName);
   events.push({ type: "DECK_TOP_DISCARDED", seat, actor: seat, uids: [top] });
-  const milled = withSide(state, seat, { ...side, deck: side.deck.slice(1), discard: [...side.discard, top] });
+  const milled = withSide(state, seat, {
+    ...side,
+    deck: side.deck.slice(1),
+    discard: [...side.discard, top],
+  });
   const pairs = foundPairs(milled, seat, [top], true);
   const only = pairs.length === 1 ? pairs[0] : undefined;
   if (pairs.length === 0) return finishAttack(milled, events, seat, attackerUid, copierName);
@@ -4702,7 +4821,13 @@ function reenterFound(state: GameState, action: AttackAction, pair: FoundPair): 
   if (card === undefined || picked === undefined) {
     return err("PHASE_DESYNC", "the found attack is no longer one this copy can use");
   }
-  return attack(state, action, { attack: picked.attack, card, body, index: picked.index, resumed: true });
+  return attack(state, action, {
+    attack: picked.attack,
+    card,
+    body,
+    index: picked.index,
+    resumed: true,
+  });
 }
 
 /** 🆕🆕🆕 D574 — resolve a mid-attack copy park (cardplay.ts `resolveEffect` routes here, after
@@ -4747,7 +4872,9 @@ export function resolveFoundAttack(
   const restored: GameState = {
     ...state,
     phase: { kind: "turn:action", seat },
-    pending: state.pending.filter((stage) => !(stage.kind === "attackEpilogue" && stage.uid === sourceUid)),
+    pending: state.pending.filter(
+      (stage) => !(stage.kind === "attackEpilogue" && stage.uid === sourceUid),
+    ),
   };
   const copier = restored.players[seat].active;
   const copierCard = copier === null ? undefined : topCardOf(restored, copier);
@@ -4763,11 +4890,18 @@ export function resolveFoundAttack(
   // attack (continuous.ts, R-MH2), so the guarantee holds with a fourth section.]
   const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
   const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
-  const zone = op.from === "opponentDeckTop" ? restored.players[otherSeat(seat)].deck : restored.players[seat].discard;
+  const zone =
+    op.from === "opponentDeckTop"
+      ? restored.players[otherSeat(seat)].deck
+      : restored.players[seat].discard;
   if (copier === null || topUid(copier) !== sourceUid || copy === null || copy.from !== op.from) {
-    return err("PHASE_DESYNC", "the copying Pokémon is no longer the Active that declared this attack");
+    return err(
+      "PHASE_DESYNC",
+      "the copying Pokémon is no longer the Active that declared this attack",
+    );
   }
-  if (!zone.includes(pair.uid)) return err("PHASE_DESYNC", "the found card has left the zone the copy found it in");
+  if (!zone.includes(pair.uid))
+    return err("PHASE_DESYNC", "the found card has left the zone the copy found it in");
   return reenterFound(restored, { type: "attack", seat, index: op.index }, pair);
 }
 
@@ -4784,13 +4918,22 @@ function parkCoinRedo(
   attackName: string,
   op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
 ): ApplyResult {
-  const epilogue: PendingStage = { kind: "attackEpilogue", seat, uid: attackerUid, attack: attackName };
+  const epilogue: PendingStage = {
+    kind: "attackEpilogue",
+    seat,
+    uid: attackerUid,
+    attack: attackName,
+  };
   return settleProgram(
     {
       kind: "parked",
       state: { ...state, pending: [...state.pending, epilogue] },
       prompt: coinRedoPrompt(state, op.toolUid, op.faces),
-      cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid, invokedBy: "attack", dealt: 0 } },
+      cont: {
+        pendingOp: op,
+        rest: [],
+        ctx: { seat, sourceUid: attackerUid, invokedBy: "attack", dealt: 0 },
+      },
     },
     seat,
     events,
@@ -4814,14 +4957,21 @@ export function resolveCoinRedo(
   const restored: GameState = {
     ...state,
     phase: { kind: "turn:action", seat },
-    pending: state.pending.filter((stage) => !(stage.kind === "attackEpilogue" && stage.uid === sourceUid)),
+    pending: state.pending.filter(
+      (stage) => !(stage.kind === "attackEpilogue" && stage.uid === sourceUid),
+    ),
   };
   const attacker = restored.players[seat].active;
   if (attacker === null || topUid(attacker) !== sourceUid) {
-    return err("PHASE_DESYNC", "the attacking Pokémon is no longer the Active that declared this attack");
+    return err(
+      "PHASE_DESYNC",
+      "the attacking Pokémon is no longer the Active that declared this attack",
+    );
   }
   const events: GameEvent[] = [];
-  const spent = choice.yes ? spendCoinRedo(restored, seat, op.toolUid, op.faces.length, events) : restored;
+  const spent = choice.yes
+    ? spendCoinRedo(restored, seat, op.toolUid, op.faces.length, events)
+    : restored;
   const resumed = attack(
     spent,
     { type: "attack", seat, index: op.index },

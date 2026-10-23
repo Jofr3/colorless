@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { applyAction, deriveAttackEffect, engineVersion, logFromEvents } from "./index";
+import { applyAction, deriveAttackEffect, logFromEvents } from "./index";
 import type { EffectOp, GameEvent, GameState, LogContext } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -86,10 +86,9 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-function placements(events: readonly GameEvent[]): Extract<
-  GameEvent,
-  { type: "COUNTERS_PLACED" }
->[] {
+function placements(
+  events: readonly GameEvent[],
+): Extract<GameEvent, { type: "COUNTERS_PLACED" }>[] {
   return events.filter(
     (e): e is Extract<GameEvent, { type: "COUNTERS_PLACED" }> => e.type === "COUNTERS_PLACED",
   );
@@ -200,9 +199,9 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     // no longer the rung that could redden, and this rung says so out loud.
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
     expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
-    expect(
-      family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(38);
+    expect(family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0)).toBe(
+      38,
+    );
     expect(unread.map(([, t]) => t)).toHaveLength(0);
     expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(0);
     for (const [text, program] of [
@@ -215,7 +214,10 @@ describe("§1 — the three printed folds, and the placement family's remaining 
         [{ op: "installRecoil", amount: "damageTaken" }],
       ],
     ] as const) {
-      expect(unread.map(([, t]) => t), text).not.toContain(text);
+      expect(
+        unread.map(([, t]) => t),
+        text,
+      ).not.toContain(text);
       expect(deriveAttackEffect(text), text).toEqual(program);
     }
     const unbuilt = unread.map(([, t]) => t);
@@ -308,9 +310,7 @@ describe("§1 — the three printed folds, and the placement family's remaining 
       deriveAttackEffect(
         "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
       ),
-    ).toEqual([
-      { op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 },
-    ]);
+    ).toEqual([{ op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 }]);
 
     // (e) THE BOUNDED SELF-PLACEMENT — 1 printing, and it is the row D449's published
     //     pattern could NOT see, carried forward here because a hole a predecessor named
@@ -457,7 +457,9 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
         },
       ],
     );
-    expect(deriveAttackEffect("Put 0 damage counters on each of your opponent's Pokémon.")).toBeNull();
+    expect(
+      deriveAttackEffect("Put 0 damage counters on each of your opponent's Pokémon."),
+    ).toBeNull();
     expect(
       deriveAttackEffect(
         "Put 0 damage counters on each Pokémon that has an Ability (both yours and your opponent's).",
@@ -553,10 +555,6 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
     // values that would have made a loss look like a working board.
     expect(fresh).not.toMatchObject({ side: "both" });
     expect(fresh).not.toMatchObject({ source: "ability" });
-  });
-
-  it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -867,13 +865,18 @@ describe("§9 — `source` on the wire, and the shipped Ability path unchanged",
     // The arm justifies "system" by "`seat` is the attacker's OPPONENT"; on the
     // both-seats fold it is not, and the row is still system-voiced and still correct,
     // because a system row names no actor to get wrong. Driven, not argued.
-    const own = attack(fielded(81, { mine: ["fix-idlebody"], defender: "fix-bigbody" }), IDX.ability);
+    const own = attack(
+      fielded(81, { mine: ["fix-idlebody"], defender: "fix-bigbody" }),
+      IDX.ability,
+    );
     const ownRows = logFromEvents(own.events, {
       names: { p1: "Ember", p2: "Tide" },
       state: own.state,
       elapsed: "+00:08",
     }).flatMap((entry) =>
-      entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+      entry.kind === "turn"
+        ? []
+        : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
     );
     const ownPlaced = ownRows.find((r) => r.text.startsWith("Put:"));
     expect(ownPlaced?.who).toBe("system");

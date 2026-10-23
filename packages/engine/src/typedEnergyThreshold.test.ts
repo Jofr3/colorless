@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import {
   deriveAttackBonusConsequent,
@@ -282,7 +278,7 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // matters (a reader narrowing so any clause returns to 2 fails it too).
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
     expect(byClause.size).toBe(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
     // 🆕🆕🆕 D568 — the singleton band loses the two Tera clauses (one printing each), 5 -> 3; the three left are the Ancient/Future banners. (🆕🆕🆕 D569 (D539): ONE is left now — the two Future clauses resolve through literal rows over `banners.ts`; the Ancient "Unrelenting Onslaught" stays, on a seat-level attack record, not the banner.) (🆕🆕🆕 D579 (D539): ~~ONE~~ NONE — the Ancient clause (Koraidon `sv08-116`) resolves through a literal row; the band is EMPTY.)
     expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5 // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
@@ -297,9 +293,7 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // The rung is INVERTED rather than deleted (D418): it still names the clause, still
     // pins its 5 printings against the corpus, and now reddens if the claim is lost.
     expect(byClause.get(TRAP_CLAUSE)).toBeUndefined();
-    expect(
-      units(corpus().filter(([, s]) => BONUS.exec(s.trim())?.[1] === TRAP_CLAUSE)),
-    ).toBe(5);
+    expect(units(corpus().filter(([, s]) => BONUS.exec(s.trim())?.[1] === TRAP_CLAUSE))).toBe(5);
     expect(
       deriveAttackDamageBonus(`If ${TRAP_CLAUSE}, this attack does 100 more damage.`)?.count,
     ).toEqual({ kind: "extraEnergyUnitsBeyondCost", extra: 2 });
@@ -534,14 +528,18 @@ describe("§5 — the ROW, its refusals, and why it is not a sixth TEMPLATE", ()
     // `clauseTemplateAnchors.test.ts`'s cross product overlapping an existing one at
     // BOTH seams. Driven in both directions.
     expect(
-      deriveAttackDamageBonus("If this Pokémon has any {G} Energy attached, this attack does 120 more damage."),
+      deriveAttackDamageBonus(
+        "If this Pokémon has any {G} Energy attached, this attack does 120 more damage.",
+      ),
     ).toEqual({
       per: 120,
       count: { kind: "boardCondition", cond: ANY_GRASS },
     });
     // …and the template does NOT answer the digit shape, on the very code it owns.
     expect(
-      deriveAttackDamageBonus("If this Pokémon has any 2 or more {G} Energy attached, this attack does 120 more damage."),
+      deriveAttackDamageBonus(
+        "If this Pokémon has any 2 or more {G} Energy attached, this attack does 120 more damage.",
+      ),
     ).toBe(null);
   });
 
@@ -556,10 +554,14 @@ describe("§5 — the ROW, its refusals, and why it is not a sixth TEMPLATE", ()
       "this Pokémon has 2 or more Grass Energy attached",
       "this Pokémon has 2 or more {C} Energy attached",
     ]) {
-      expect(corpus().some(([, s]) => BONUS.exec(s.trim())?.[1] === clause), clause).toBe(false);
-      expect(deriveAttackDamageBonus(`If ${clause}, this attack does 120 more damage.`), clause).toBe(
-        null,
-      );
+      expect(
+        corpus().some(([, s]) => BONUS.exec(s.trim())?.[1] === clause),
+        clause,
+      ).toBe(false);
+      expect(
+        deriveAttackDamageBonus(`If ${clause}, this attack does 120 more damage.`),
+        clause,
+      ).toBe(null);
     }
   });
 
@@ -590,7 +592,11 @@ describe("§6 — the ZONE and the SEAT: your ACTIVE's own attachments, and noth
     // The near miss the import list makes available: `countEnergyInPlay` is one
     // identifier away in interpreter.ts and would read the whole SIDE. Every board
     // with an empty Bench is green either way, so this rung fields one deliberately.
-    let state = ready(4191, { "fix-water-energy": 3, "fix-energy": 1 }, { ownBench: ["fix-titan"] });
+    let state = ready(
+      4191,
+      { "fix-water-energy": 3, "fix-energy": 1 },
+      { ownBench: ["fix-titan"] },
+    );
     state = attachBenchFromDeck(state, "p1", 0, "fix-grass-energy", 2);
     const board = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     expect(countAttachedEnergy(board, activeOf(board), "Grass")).toBe(0);

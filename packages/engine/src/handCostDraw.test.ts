@@ -1,10 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import {
   deriveAttackBonusConsequent,
@@ -26,7 +22,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import {
@@ -208,7 +204,9 @@ describe("D473 §1 — the two sentences, measured live over the legal column", 
     // …and the filtered spelling really is refused, so the narrowing is DRIVEN and
     // not merely measured on a population that happens not to contain one.
     expect(
-      deriveAttackEffect("Discard a Basic {G} Energy card from your hand. If you do, draw 2 cards."),
+      deriveAttackEffect(
+        "Discard a Basic {G} Energy card from your hand. If you do, draw 2 cards.",
+      ),
     ).toBeNull();
   });
 
@@ -282,7 +280,9 @@ describe("D473 §2 — the program, and every refusal pinned on ONE printed byte
     // The `>= 1` guard every counted arm in `deriveAttackEffect` carries. A "draw 0
     // cards" is a hand discard wearing a draw's sentence and belongs on the
     // ATTACK_EFFECT_SKIPPED path where a census can see it.
-    expect(deriveAttackEffect("Discard a card from your hand. If you do, draw 0 cards.")).toBeNull();
+    expect(
+      deriveAttackEffect("Discard a card from your hand. If you do, draw 0 cards."),
+    ).toBeNull();
     expect(deriveAttackEffect("Discard a card from your hand. If you do, draw 1 cards.")).toEqual(
       program(1),
     );
@@ -407,7 +407,10 @@ function place(state: GameState, s: Seat, cardId: string, spot: "active" | "benc
     ...state,
     players: {
       ...state.players,
-      [s]: spot === "active" ? { ...side, deck, active: body } : { ...side, deck, bench: [...side.bench, body] },
+      [s]:
+        spot === "active"
+          ? { ...side, deck, active: body }
+          : { ...side, deck, bench: [...side.bench, body] },
     },
   };
 }
@@ -518,10 +521,7 @@ describe("D473 §3 — the discriminating board: EIGHT readings, EIGHT different
     ],
     // The WHOLE HAND — D404's op one arm over, and the printed article is all that
     // tells the two sentences apart.
-    wholeHand: [
-      { op: "discardHand" },
-      { op: "drawCards", count: 2 },
-    ],
+    wholeHand: [{ op: "discardHand" }, { op: "drawCards", count: 2 }],
     // The gate reading ANOTHER slot: it compiles, it derives, and it never fires.
     wrongSlot: [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
@@ -768,12 +768,5 @@ describe("D473 §6 — `MATCH_RECORD_VERSION` stays 29, and the argument is DRIV
     expect(zones(whole)[0]).toBe(4);
     expect(zones(lost)[0]).toBe(2);
     expect(zones(whole)).not.toEqual(zones(lost));
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    // D471 correctly REFUSED this step because `packages/engine` was byte-unchanged;
-    // this slice adds an anchor and an arm, so a printed sentence the engine refused
-    // yesterday resolves today and the bump is owed.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

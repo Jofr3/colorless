@@ -26067,7 +26067,13 @@ export {
   topUid,
   weaknessOf,
 } from "./cards";
-export type { DamageModifier, EnergyFace, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
+export type {
+  DamageModifier,
+  EnergyFace,
+  ParsedDamage,
+  PokemonSuffix,
+  PreventedAttackerClass,
+} from "./cards";
 // 🆕🆕🆕 D612 — the tcgdex markup normaliser, shared with the ingest (apps/api ingest/map.ts).
 export { normalizeCardText } from "./cardText";
 export {
@@ -26334,7 +26340,10 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
     const trims = toolTrimStages(cleared, cleared.phase.seat);
     if (trims.length > 0) {
       const resume = { kind: "resumeTurn" as const, seat: cleared.phase.seat };
-      return advance({ ...cleared, pending: [...trims, resume, ...cleared.pending] }, result.events);
+      return advance(
+        { ...cleared, pending: [...trims, resume, ...cleared.pending] },
+        result.events,
+      );
     }
   }
   return cleared === result.state ? result : ok(cleared, result.events);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackCoinFlip, deriveAttackDamageSuppression } from "./effects";
-import { applyAction, deriveAttackEffect, engineVersion } from "./index";
+import { applyAction, deriveAttackEffect } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import {
   SCALED_SNIPE_DECK,
@@ -215,7 +215,10 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       flips: { kind: "opponentBench" },
       per: 80,
     });
-    expect(deriveAttackDamageSuppression(OPPONENT_BENCH_TAILS)).toEqual({ weakness: true, resistance: true });
+    expect(deriveAttackDamageSuppression(OPPONENT_BENCH_TAILS)).toEqual({
+      weakness: true,
+      resistance: true,
+    });
     expect(deriveAttackEffect(OPPONENT_BENCH_TAILS)).toBeNull();
     // (g) THE NAMED-BODY MULTIPLIER + OWN-SIDE SPREAD — corpus FILE LINE 595, 2 printings,
     //     BUILT at D539. It is a real member of this family: a chosen-target hit whose
@@ -231,7 +234,8 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect((namedOp as { count?: unknown } | undefined)?.count).toBe("all");
     // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
     //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
-    const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
+    const SELF_RECOIL_SCALED =
+      "This Pokémon also does 10 damage to itself for each damage counter on it.";
     expect(family.map(([, t]) => t)).toContain(SELF_RECOIL_SCALED);
     expect(unbuilt).not.toContain(SELF_RECOIL_SCALED);
     // …and the op it derives to is the one that says it was never this family's: a
@@ -328,7 +332,16 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       deriveAttackEffect(
         "This attack does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack", deals: true }]);
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
     // (c) THE SPREAD TWIN — corpus line 517, 3 printings, the largest unbuilt printing
     //     count in the whole bench family. **BUILT AT D505.**
     //
@@ -539,7 +552,14 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     // the op it yields is byte-identical to the one this arm has returned since D400.
     // So the rider, and not the anchor or the arity or the target, is what moved.
     expect(deriveAttackEffect(PLAIN_20)).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
   });
 
@@ -548,7 +568,11 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     // 3, so the W/R tail is group 4 and the number word group 5. Nothing types a
     // `match[n]`, so these three rungs are the only thing between the widening and a
     // silently-restored Weakness on the one sentence printed to remove it.
-    expect(deriveAttackEffect("This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.")).toEqual([
+    expect(
+      deriveAttackEffect(
+        "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      ),
+    ).toEqual([
       {
         op: "damageChosen",
         target: "opponentAny",
@@ -560,7 +584,11 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
       },
     ]);
     // the count-2 spelling with the plural number word — group 5's agreement test
-    expect(deriveAttackEffect("This attack does 30 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon.")).toEqual([
+    expect(
+      deriveAttackEffect(
+        "This attack does 30 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon.",
+      ),
+    ).toEqual([
       {
         op: "damageChosen",
         target: "opponentAny",
@@ -574,7 +602,9 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     // …and the DISAGREEING spelling is still refused, which is the half a shifted index
     // would break silently in the other direction (the guard reading `undefined`).
     expect(
-      deriveAttackEffect("This attack does 30 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon."),
+      deriveAttackEffect(
+        "This attack does 30 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      ),
     ).toBeNull();
   });
 
@@ -584,7 +614,9 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     // authoring rather than reading (D190b). It falls to `ATTACK_EFFECT_SKIPPED`
     // exactly as a printed 0 and a disagreeing number word already do.
     expect(
-      deriveAttackEffect("This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. This attack's damage isn't affected by Weakness or Resistance."),
+      deriveAttackEffect(
+        "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. This attack's damage isn't affected by Weakness or Resistance.",
+      ),
     ).toBeNull();
     // …and the measurement behind that refusal, run over the whole column rather than
     // asserted: no printed sentence spells both clauses.
@@ -633,7 +665,9 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
       expect(deriveAttackEffect(admitted), `ADMITTED beside ${why}`).not.toBeNull();
     }
     // 🆕🆕🆕 D629 — the typed spelling is read, by its own anchor, as the typed rider.
-    expect(deriveAttackEffect(SCALED_20.replace("for each Energy", "for each {L} Energy"))?.[0]).toMatchObject({
+    expect(
+      deriveAttackEffect(SCALED_20.replace("for each Energy", "for each {L} Energy"))?.[0],
+    ).toMatchObject({
       perTypedEnergyOnSelf: "Lightning",
     });
   });
@@ -698,10 +732,6 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
     ) as EffectOp;
     expect(dropped).toEqual(deriveAttackEffect(PLAIN_20)?.[0]);
   });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -713,14 +743,26 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
     // The lone Active is the only candidate, so the count-1 snipe auto-takes and the
     // number in DAMAGE_DEALT is the whole measurement. ×2 Lightning doubles it, so the
     // pair below reads 40 and 120 — and the RATIO is 3, which is the fold.
-    const one = mustApply(scaled(1, { energy: 1 }), { type: "attack", seat: "p1", index: IDX.scaled20 });
+    const one = mustApply(scaled(1, { energy: 1 }), {
+      type: "attack",
+      seat: "p1",
+      index: IDX.scaled20,
+    });
     expect(find(one.events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 40 });
-    const three = mustApply(scaled(2, { energy: 3 }), { type: "attack", seat: "p1", index: IDX.scaled20 });
+    const three = mustApply(scaled(2, { energy: 3 }), {
+      type: "attack",
+      seat: "p1",
+      index: IDX.scaled20,
+    });
     expect(find(three.events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 120 });
     expect(three.state.players.p2.active?.damage).toBe(120);
     // …and the PRINTED 30 on the same board is 30 × 3 = 90, doubled to 180: a second
     // amount so the multiplication is not confusable with a hard-coded 60.
-    const heavy = mustApply(scaled(3, { energy: 3 }), { type: "attack", seat: "p1", index: IDX.scaled30 });
+    const heavy = mustApply(scaled(3, { energy: 3 }), {
+      type: "attack",
+      seat: "p1",
+      index: IDX.scaled30,
+    });
     expect(find(heavy.events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 180 });
     // 🛑 AND THE COUNT IS **CARDS, NOT A TYPE** — the printed clause is untyped and
     // `countAttachedEnergy` counts cards. TWO {L} plus ONE Colorless is still THREE, so

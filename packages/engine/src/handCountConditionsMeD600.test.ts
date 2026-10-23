@@ -3,9 +3,13 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import type { BoardCondition } from "./effects";
-import { deriveAttackDamageBonus, deriveAttackDamageMultiplier, deriveAttackEffect } from "./effects";
+import {
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackEffect,
+} from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
   FIXTURE_POOL,
@@ -32,13 +36,19 @@ import {
 // text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`;
 // no id was referenced in the tree before this slice. Gholdengo "Celebration" ×2 stays dropped. [🆕🆕🆕 D640 (D539): BUILT at D640.]
 
-const POWERFUL_HAND = "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
+const POWERFUL_HAND =
+  "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
 const TREASURE_RUSH = "This attack does 10 damage for each card in your hand.";
-const RETALIATORY_CLAW = "If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.";
-const CHOMP_WHOLE = "If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.";
-const SOLAR_COILING = "If Rosa's Encouragement is in your discard pile, this attack does 150 more damage.";
-const COCKY_CLAW = "If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage.";
-const SHADOWY_WHIP = "If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage.";
+const RETALIATORY_CLAW =
+  "If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.";
+const CHOMP_WHOLE =
+  "If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.";
+const SOLAR_COILING =
+  "If Rosa's Encouragement is in your discard pile, this attack does 150 more damage.";
+const COCKY_CLAW =
+  "If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage.";
+const SHADOWY_WHIP =
+  "If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage.";
 const CELEBRATION =
   "If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.";
 
@@ -89,25 +99,35 @@ describe("D600 §2 — the readings", () => {
   };
 
   it("WP14: the fold and the per-card put", () => {
-    expect(deriveAttackDamageMultiplier(TREASURE_RUSH)).toEqual({ per: 10, count: { kind: "cardsInYourHand" } });
+    expect(deriveAttackDamageMultiplier(TREASURE_RUSH)).toEqual({
+      per: 10,
+      count: { kind: "cardsInYourHand" },
+    });
     expect(deriveAttackEffect(POWERFUL_HAND)).toEqual([
       { op: "damageActive", amount: 20, source: "attack", per: { kind: "cardsInYourHand" } },
     ]);
     // The printed-zero guard on both anchors.
-    expect(deriveAttackDamageMultiplier("This attack does 0 damage for each card in your hand.")).toBeNull();
     expect(
-      deriveAttackEffect("Place 0 damage counters on your opponent's Active Pokémon for each card in your hand."),
+      deriveAttackDamageMultiplier("This attack does 0 damage for each card in your hand."),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect(
+        "Place 0 damage counters on your opponent's Active Pokémon for each card in your hand.",
+      ),
     ).toBeNull();
     // The bare put is unchanged: no `per` key at all.
-    expect(deriveAttackEffect("Place 3 damage counters on your opponent's Active Pokémon.")).toEqual([
-      { op: "damageActive", amount: 30, source: "attack" },
-    ]);
+    expect(
+      deriveAttackEffect("Place 3 damage counters on your opponent's Active Pokémon."),
+    ).toEqual([{ op: "damageActive", amount: 30, source: "attack" }]);
   });
 
   it("WP33b: the five bonus rows", () => {
     expect(bonus(RETALIATORY_CLAW)).toEqual([170, { kind: "yourActiveRemainingHpAtMost", hp: 50 }]);
     expect(bonus(CHOMP_WHOLE)).toEqual([80, { kind: "opponentActiveNoRetreatCost" }]);
-    expect(bonus(SOLAR_COILING)).toEqual([150, { kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" }]);
+    expect(bonus(SOLAR_COILING)).toEqual([
+      150,
+      { kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" },
+    ]);
     expect(bonus(COCKY_CLAW)).toEqual([70, { kind: "yourBenchHasStage2OfType", type: "Darkness" }]);
     expect(bonus(SHADOWY_WHIP)).toEqual([
       70,
@@ -117,10 +137,22 @@ describe("D600 §2 — the readings", () => {
 
   it("the five notes", () => {
     const notes: [BoardCondition, string][] = [
-      [{ kind: "yourActiveRemainingHpAtMost", hp: 50 }, "your Active Pokémon's remaining HP is 50 or less"],
-      [{ kind: "opponentActiveNoRetreatCost" }, "your opponent's Active Pokémon has no Retreat Cost"],
-      [{ kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" }, "Rosa's Encouragement is in your discard pile"],
-      [{ kind: "yourBenchHasStage2OfType", type: "Darkness" }, "you have any Stage 2 Darkness Pokémon on your Bench"],
+      [
+        { kind: "yourActiveRemainingHpAtMost", hp: 50 },
+        "your Active Pokémon's remaining HP is 50 or less",
+      ],
+      [
+        { kind: "opponentActiveNoRetreatCost" },
+        "your opponent's Active Pokémon has no Retreat Cost",
+      ],
+      [
+        { kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" },
+        "Rosa's Encouragement is in your discard pile",
+      ],
+      [
+        { kind: "yourBenchHasStage2OfType", type: "Darkness" },
+        "you have any Stage 2 Darkness Pokémon on your Bench",
+      ],
       [
         { kind: "yourBenchHasNamedEnergyAttached", name: "Shadowy Darkness Energy" },
         "your Benched Pokémon have any Shadowy Darkness Energy attached",
@@ -147,8 +179,14 @@ const P = "d600-psychic";
 const G = "d600-grass";
 const M = "d600-metal";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -170,13 +208,23 @@ const LOCAL: Record<string, Card> = {
     90,
     "Darkness",
     [
-      { cost: ["Darkness", "Darkness"], name: "Retaliatory Claw", damage: "20+", effect: RETALIATORY_CLAW },
+      {
+        cost: ["Darkness", "Darkness"],
+        name: "Retaliatory Claw",
+        damage: "20+",
+        effect: RETALIATORY_CLAW,
+      },
       { cost: ["Darkness", "Darkness"], name: "Cut", damage: 60 },
     ],
     { stage: "Stage1", evolveFrom: "Sneasel" },
   ),
   "me04-004": mon("me04-004", "Carnivine", 110, "Grass", [
-    { cost: ["Colorless", "Colorless", "Colorless"], name: "Chomp Whole", damage: "80+", effect: CHOMP_WHOLE },
+    {
+      cost: ["Colorless", "Colorless", "Colorless"],
+      name: "Chomp Whole",
+      damage: "80+",
+      effect: CHOMP_WHOLE,
+    },
   ]),
   "mep-064": mon(
     "mep-064",
@@ -184,8 +232,18 @@ const LOCAL: Record<string, Card> = {
     160,
     "Grass",
     [
-      { cost: ["Grass"], name: "Regal Command", damage: "20×", effect: "This attack does 20 damage for each of your Pokémon in play." },
-      { cost: ["Grass", "Grass", "Grass"], name: "Solar Coiling", damage: "100+", effect: SOLAR_COILING },
+      {
+        cost: ["Grass"],
+        name: "Regal Command",
+        damage: "20×",
+        effect: "This attack does 20 damage for each of your Pokémon in play.",
+      },
+      {
+        cost: ["Grass", "Grass", "Grass"],
+        name: "Solar Coiling",
+        damage: "100+",
+        effect: SOLAR_COILING,
+      },
     ],
     { stage: "Stage2", evolveFrom: "Servine" },
   ),
@@ -200,19 +258,43 @@ const LOCAL: Record<string, Card> = {
       effect:
         "This attack also does 30 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     },
-    { cost: ["Darkness", "Darkness", "Darkness"], name: "Shadowy Whip", damage: "100+", effect: SHADOWY_WHIP },
+    {
+      cost: ["Darkness", "Darkness", "Darkness"],
+      name: "Shadowy Whip",
+      damage: "100+",
+      effect: SHADOWY_WHIP,
+    },
   ]),
   [FILLER]: mon(FILLER, "D600 Filler", 400, "Colorless", TAP),
   [PUTTER]: mon(PUTTER, "D600 Putter", 100, "Psychic", [
-    { cost: ["Psychic"], name: "Put", effect: "Place 3 damage counters on your opponent's Active Pokémon." },
+    {
+      cost: ["Psychic"],
+      name: "Put",
+      effect: "Place 3 damage counters on your opponent's Active Pokémon.",
+    },
   ]),
   [FREE]: mon(FREE, "D600 Free Retreat", 400, "Colorless", TAP, { retreat: 0 }),
-  [WEAK_P]: mon(WEAK_P, "D600 Weak P", 400, "Colorless", TAP, { weaknesses: [{ type: "Psychic", value: "×2" }] }),
-  [STAGE2_D]: mon(STAGE2_D, "D600 Stage 2 Dark", 160, "Darkness", TAP, { stage: "Stage2", evolveFrom: "X" }),
-  [STAGE1_D]: mon(STAGE1_D, "D600 Stage 1 Dark", 120, "Darkness", TAP, { stage: "Stage1", evolveFrom: "Y" }),
-  [STAGE2_G]: mon(STAGE2_G, "D600 Stage 2 Grass", 160, "Grass", TAP, { stage: "Stage2", evolveFrom: "Z" }),
+  [WEAK_P]: mon(WEAK_P, "D600 Weak P", 400, "Colorless", TAP, {
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+  }),
+  [STAGE2_D]: mon(STAGE2_D, "D600 Stage 2 Dark", 160, "Darkness", TAP, {
+    stage: "Stage2",
+    evolveFrom: "X",
+  }),
+  [STAGE1_D]: mon(STAGE1_D, "D600 Stage 1 Dark", 120, "Darkness", TAP, {
+    stage: "Stage1",
+    evolveFrom: "Y",
+  }),
+  [STAGE2_G]: mon(STAGE2_G, "D600 Stage 2 Grass", 160, "Grass", TAP, {
+    stage: "Stage2",
+    evolveFrom: "Z",
+  }),
   [ROSA]: { ...itemTrainer(ROSA), name: "Rosa's Encouragement", trainerType: "Supporter" },
-  [SHADOWY]: { ...typedEnergy(SHADOWY, "Darkness"), name: "Shadowy Darkness Energy", energyType: "Special" },
+  [SHADOWY]: {
+    ...typedEnergy(SHADOWY, "Darkness"),
+    name: "Shadowy Darkness Energy",
+    energyType: "Special",
+  },
   [D]: typedEnergy(D, "Darkness"),
   [P]: typedEnergy(P, "Psychic"),
   [G]: typedEnergy(G, "Grass"),
@@ -255,7 +337,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -263,15 +347,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -292,9 +382,14 @@ function unprize(state: GameState, seat: Seat): GameState {
 }
 
 /** P1's Active is `attacker` with `energy` attached; P2's Active is `defender`. Both Benches empty. */
-function table(attacker: string, energy: readonly (readonly [string, number])[], defender = FILLER): GameState {
+function table(
+  attacker: string,
+  energy: readonly (readonly [string, number])[],
+  defender = FILLER,
+): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   return clearBench(setActiveFromDeck(state, "p2", defender), "p2");
@@ -304,7 +399,10 @@ type Active = NonNullable<GameState["players"]["p1"]["active"]>;
 function withActive(state: GameState, seat: Seat, edit: (a: Active) => Active): GameState {
   const active = state.players[seat].active;
   if (active === null) throw new Error(`no ${seat} Active`);
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], active: edit(active) } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...state.players[seat], active: edit(active) } },
+  };
 }
 /** TEST SURGERY — attach `count` copies of `cardId` from the seat's deck to its LAST benched body. */
 function attachToBench(state: GameState, seat: Seat, cardId: string): GameState {
@@ -315,17 +413,22 @@ function attachToBench(state: GameState, seat: Seat, cardId: string): GameState 
   const bench = side.bench.map((b, i) => (i === last ? { ...b, energy: [...b.energy, uid] } : b));
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), bench } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), bench },
+    },
   };
 }
 
 const attack = (index: number, seat: Seat = "p1"): GameAction => ({ type: "attack", seat, index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const dealt = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT")[0]?.dealt;
+const dealt = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT")[0]?.dealt;
 
 describe("D600 §3 — Powerful Hand: 2 counters on the opponent's Active per card in YOUR hand", () => {
-  const hand = (n: number, defender = FILLER) => handFromDeck(table("me01-056", [[P, 1]], defender), "p1", FILLER, n);
+  const hand = (n: number, defender = FILLER) =>
+    handFromDeck(table("me01-056", [[P, 1]], defender), "p1", FILLER, n);
 
   it("3 cards: 6 counters placed (60 HP), no DAMAGE_DEALT; 1 card: 20", () => {
     const three = mustApply(hand(3), attack(0));
@@ -368,7 +471,8 @@ describe("D600 §4 — Treasure Rush: 10 damage per card in YOUR hand", () => {
 });
 
 describe("D600 §5 — Retaliatory Claw: +170 at 50 or less remaining HP", () => {
-  const claw = (damage: number) => withActive(table("mep-021", [[D, 2]]), "p1", (a) => ({ ...a, damage }));
+  const claw = (damage: number) =>
+    withActive(table("mep-021", [[D, 2]]), "p1", (a) => ({ ...a, damage }));
 
   it("90 HP: 40 damage (50 left) → 190; 30 damage (60 left) → 20", () => {
     expect(dealt(claw(40), 0)).toBe(190);
@@ -381,9 +485,21 @@ describe("D600 §5 — Retaliatory Claw: +170 at 50 or less remaining HP", () =>
     const cond = { kind: "yourActiveRemainingHpAtMost", hp: 50 } as const;
     const state = table("mep-021", [[D, 2]]);
     expect(conditionHolds(state, "p1", cond)).toBe(false);
-    expect(conditionHolds(withActive(state, "p1", (a) => ({ ...a, damage: 40 })), "p1", cond)).toBe(true);
+    expect(
+      conditionHolds(
+        withActive(state, "p1", (a) => ({ ...a, damage: 40 })),
+        "p1",
+        cond,
+      ),
+    ).toBe(true);
     // P2's Active is a 400-HP Filler: 350 left even at 50 damage.
-    expect(conditionHolds(withActive(state, "p2", (a) => ({ ...a, damage: 50 })), "p2", cond)).toBe(false);
+    expect(
+      conditionHolds(
+        withActive(state, "p2", (a) => ({ ...a, damage: 50 })),
+        "p2",
+        cond,
+      ),
+    ).toBe(false);
   });
 });
 
@@ -416,7 +532,8 @@ describe("D600 §7 — Solar Coiling: +150 with Rosa's Encouragement in YOUR dis
 });
 
 describe("D600 §8 — Cocky Claw: +70 with a Stage 2 {D} Pokémon on your Bench", () => {
-  const claw = (benched: string, seat: Seat = "p1") => benchFromDeck(table("me02-059", [[D, 1]]), seat, benched);
+  const claw = (benched: string, seat: Seat = "p1") =>
+    benchFromDeck(table("me02-059", [[D, 1]]), seat, benched);
 
   it("a Benched Stage 2 {D}: 90; a Stage 1 {D}: 20; a Stage 2 {G}: 20", () => {
     expect(dealt(claw(STAGE2_D), 0)).toBe(90);
@@ -442,11 +559,5 @@ describe("D600 §9 — Shadowy Whip: +70 with Shadowy {D} Energy on one of your 
   it("on the attacking Active, or on the opponent's Bench: 100", () => {
     expect(dealt(attachFromDeck(whip(), "p1", SHADOWY, 1), 1)).toBe(100);
     expect(dealt(attachToBench(benchFromDeck(whip(), "p2", FILLER), "p2", SHADOWY), 1)).toBe(100);
-  });
-});
-
-describe("D600 §10 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

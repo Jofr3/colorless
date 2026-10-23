@@ -347,7 +347,9 @@ function board(
     action proves the two are the same object. */
 function playStadium(state: GameState, seat: Seat, stadiumId: string): GameState {
   const next = handFromDeck(state, seat, stadiumId, 1);
-  return must(applyAction(next, { type: "playTrainer", seat, uid: handUid(next, seat, stadiumId) }));
+  return must(
+    applyAction(next, { type: "playTrainer", seat, uid: handUid(next, seat, stadiumId) }),
+  );
 }
 
 /** `playStadium` with the EVENTS kept — §7's Knock-Out rows are the whole
@@ -592,7 +594,9 @@ describe("D324 §3 — the cap, and it is a LEDGER rather than a flag", () => {
     expect(programFor("sv10-086")?.passive?.seatDamageReductionAfterWR?.noStack).toBe(
       "Stone Palace",
     );
-    expect(programFor("sv09-117")?.passive?.seatDamageBonusBeforeWR?.noStack).toBe("Extra Helpings");
+    expect(programFor("sv09-117")?.passive?.seatDamageBonusBeforeWR?.noStack).toBe(
+      "Extra Helpings",
+    );
     expect(programFor("svp-184")?.passive?.seatDamageBonusBeforeWR?.noStack).toBe("Extra Helpings");
     expect(programFor("sv10-074")?.triggered?.[0]?.doesNotStack).toBe(true);
     expect(programFor("sv08-072")?.passive?.koPrizeBonus?.noStack).toBe(true);

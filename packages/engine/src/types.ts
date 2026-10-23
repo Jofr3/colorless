@@ -2107,7 +2107,11 @@ export interface InPlayPokemon {
 /** 🆕🆕🆕 §8.5 (D630) — `pokemon` with `dealt` attack damage recorded for `turn`: summed onto a
     record of the same turn, replacing an older one. `dealt <= 0` records nothing (a prevented or
     fully reduced hit is not "damaged"). PURE. */
-export function withAttackDamageTaken(pokemon: InPlayPokemon, turn: number, dealt: number): InPlayPokemon {
+export function withAttackDamageTaken(
+  pokemon: InPlayPokemon,
+  turn: number,
+  dealt: number,
+): InPlayPokemon {
   if (dealt <= 0) return pokemon;
   const record = pokemon.attackDamageTaken;
   const amount = record !== null && record.turn === turn ? record.amount + dealt : dealt;
@@ -3652,7 +3656,9 @@ export function evolveOnto(
   // §10/§12 — evolving removed the Pokémon's Special Conditions. Announced only
   // when there was something to remove; `uid` is the NEW top (see events.ts).
   // 🆕🆕🆕 D642 — less what the new top keeps (Dizzying Valley's Confused, R-DV1).
-  const cleared = presentStatuses(from.conditions).filter((status) => !presentStatuses(kept).includes(status));
+  const cleared = presentStatuses(from.conditions).filter(
+    (status) => !presentStatuses(kept).includes(status),
+  );
   if (cleared.length > 0) {
     events.push({
       type: "STATUS_CLEARED",

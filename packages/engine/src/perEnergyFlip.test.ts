@@ -967,7 +967,9 @@ describe("deriver disjointness — a fourth SHAPE that crosses none of the other
     // an attached-Energy one either. D452 built it; the near-miss this file cares about is
     // that neither of them reaches `attachedEnergy`.
     expect(
-      deriveAttackCoinFlip("Flip 3 coins. For each heads, discard a random card from your opponent's hand."),
+      deriveAttackCoinFlip(
+        "Flip 3 coins. For each heads, discard a random card from your opponent's hand.",
+      ),
     ).toHaveProperty("flips.kind", "printed");
   });
 });

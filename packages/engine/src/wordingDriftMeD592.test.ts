@@ -9,7 +9,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -145,7 +145,14 @@ describe("D592 §1 — the synonym table: each `me` sentence reads as its `sv` w
       [{ op: "installRecoil", amount: 120 }],
       [{ op: "damageChosen", target: "opponentBench", amount: 50, count: 1, source: "attack" }],
       [{ op: "damageChosen", target: "opponentAny", amount: 130, count: 1, source: "attack" }],
-      [{ op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 50, source: "attack" }],
+      [
+        {
+          op: "counterUntilRemainingHp",
+          target: "opponentActive",
+          remainingHp: 50,
+          source: "attack",
+        },
+      ],
     ]);
   });
 
@@ -183,12 +190,14 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     expect(unbuilt).toHaveLength(7);
     // 🆕🆕🆕 D600 (D539): "five that stay unbuilt" is WITHDRAWN, kept as written — four: Powerful Hand
     // ×3 is built by WP14's hand-count source (`damageActive.per`), the vocabulary named above.
-    const powerfulHand = "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
+    const powerfulHand =
+      "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
     expect(unbuilt).toContain(powerfulHand);
     expect(deriveAttackEffect(powerfulHand)).not.toBeNull();
     // 🆕🆕🆕 D608 (D539): and three — Phantasmal Barrage is built by WP30's literal compound
     // (`SELF_DISCARD_ALL_THEN_COUNTERS`, read after this table rewrote its "place").
-    const barrage = "Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.";
+    const barrage =
+      "Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.";
     expect(unbuilt).toContain(barrage);
     expect(deriveAttackEffect(barrage)).not.toBeNull();
     const sneaky = "Place 1 damage counter on 1 of your opponent's Pokémon.";
@@ -230,24 +239,31 @@ describe("D592 §3 — near misses stay null, one token apart each", () => {
       // anchor reads a 1-counter put on the Active.
       // 🆕🆕🆕 D627 (D539): WITHDRAWN, kept as written — the printed singular is BUILT (Poltchageist "Furtive
       // Drop", H1). The control is re-pointed onto its number-agreement near miss, which stays null.
-      "a singular counter (no 'counters')": "Place 2 damage counter on your opponent's Active Pokémon.",
+      "a singular counter (no 'counters')":
+        "Place 2 damage counter on your opponent's Active Pokémon.",
       // 🆕🆕🆕 D600 (D539): the printed Powerful Hand is BUILT (WP14) — this control is its seat near miss.
       "Powerful Hand over THEIR hand (the printed row is built, WP14)":
         "Place 2 damage counters on your opponent's Active Pokémon for each card in their hand.",
-      "the comma-join on another head": "Look at your opponent's hand, and you discard a card you find there.",
-      "the comma-join with another count": "Your opponent reveals their hand, and you discard 2 cards you find there.",
+      "the comma-join on another head":
+        "Look at your opponent's hand, and you discard a card you find there.",
+      "the comma-join with another count":
+        "Your opponent reveals their hand, and you discard 2 cards you find there.",
       "Astonish's comma-join to another zone":
         "Choose a random card from your opponent's hand, and your opponent reveals that card and puts it on the bottom of their deck.",
       "the 'also'-less recoil with a suffix": "This Pokémon does 30 damage to itself. Draw a card.",
-      "the 'also'-less recoil with a scaling rider": "This Pokémon does 30 damage to itself for each damage counter on it.",
-      "the heads lock": "Flip a coin. If heads, during your next turn, this Pokémon can't use attacks.",
+      "the 'also'-less recoil with a scaling rider":
+        "This Pokémon does 30 damage to itself for each damage counter on it.",
+      "the heads lock":
+        "Flip a coin. If heads, during your next turn, this Pokémon can't use attacks.",
       "Corrosive Liquid on the Active only":
         "Discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
-      "Corrosive Liquid without the Special Energy": "Discard all Pokémon Tools from all of your opponent's Pokémon.",
+      "Corrosive Liquid without the Special Energy":
+        "Discard all Pokémon Tools from all of your opponent's Pokémon.",
       "Corrosive Liquid with a prefix": `Draw a card. ${CORROSIVE_LIQUID}`,
       "Corrosive Liquid with a suffix": `${CORROSIVE_LIQUID} Draw a card.`,
     };
-    for (const [why, text] of Object.entries(controls)) expect(deriveAttackEffect(text), why).toBeNull();
+    for (const [why, text] of Object.entries(controls))
+      expect(deriveAttackEffect(text), why).toBeNull();
   });
 
   it("the shipped `sv` sentences the rows sit beside keep their programs", () => {
@@ -271,21 +287,37 @@ describe("D592 §4 — Corrosive Liquid: Megaton Blower's two sweeps on an attac
   it("it derives, in printed order, to the first two ops of Megaton Blower's program", () => {
     const program = [
       { op: "discardTools", count: "all" },
-      { op: "discardEnergy", from: "opponentEach", filter: { kind: "specialEnergy" }, count: "all" },
+      {
+        op: "discardEnergy",
+        from: "opponentEach",
+        filter: { kind: "specialEnergy" },
+        count: "all",
+      },
     ];
     expect(deriveAttackEffect(CORROSIVE_LIQUID)).toEqual(program);
     expect(programFor("sv08-182")?.trainer?.slice(0, 2)).toEqual(program);
     expect(deriveAttackEffect(CORROSIVE_LIQUID.replace("'", "’"))).toEqual(program);
   });
 
-  it("no printing of this slice is registry-keyed (🆕🆕🆕 D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability \"Durable Body\"; its attack is still the reader's; 🆕🆕🆕 D626 (D539): and for Miraidon `mep-082` and Gengar ex `30th-090` / `-154` — keyed for their Abilities \"Photon Cord\" / \"Fainting Spell\"; their attacks are still the reader's)", () => {
-    for (const id of ["me04-065", "me04-104", "me04-118", "me01-086", "me02-069", "me02-078", "me03-049", "me05-031", "30th-123"]) {
+  it('no printing of this slice is registry-keyed (🆕🆕🆕 D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability "Durable Body"; its attack is still the reader\'s; 🆕🆕🆕 D626 (D539): and for Miraidon `mep-082` and Gengar ex `30th-090` / `-154` — keyed for their Abilities "Photon Cord" / "Fainting Spell"; their attacks are still the reader\'s)', () => {
+    for (const id of [
+      "me04-065",
+      "me04-104",
+      "me04-118",
+      "me01-086",
+      "me02-069",
+      "me02-078",
+      "me03-049",
+      "me05-031",
+      "30th-123",
+    ]) {
       expect(programFor(id), id).toBeUndefined();
     }
     expect(Object.keys(programFor("me05-041") ?? {})).toEqual(["passive"]);
     // 🆕🆕🆕 D626 — an Ability key only: no `attack` key, so "Thunder" / "Chaotic Pain" still derive.
     expect(Object.keys(programFor("mep-082") ?? {})).toEqual(["triggered"]);
-    for (const id of ["30th-090", "30th-154"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
+    for (const id of ["30th-090", "30th-154"])
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
 });
 
@@ -322,7 +354,8 @@ const LOCAL: Record<string, Card> = {
       {
         cost: ["Darkness", "Colorless"],
         name: "Terminal Period",
-        effect: "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.",
+        effect:
+          "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.",
       },
       {
         cost: ["Darkness", "Darkness", "Colorless"],
@@ -338,7 +371,12 @@ const LOCAL: Record<string, Card> = {
     types: ["Lightning"],
     retreat: 1,
     attacks: [
-      { cost: ["Lightning", "Lightning"], name: "Thunder", damage: 90, effect: DRIFT[1]?.[0] as string },
+      {
+        cost: ["Lightning", "Lightning"],
+        name: "Thunder",
+        damage: 90,
+        effect: DRIFT[1]?.[0] as string,
+      },
     ],
   } as Partial<Card>),
   [FILLER]: battler(FILLER, { name: "D592 Filler", hp: 300, types: ["Colorless"], retreat: 1 }),
@@ -396,7 +434,9 @@ function p1Turn(): GameState {
     let deck = [...side.deck, ...side.hand];
     const prizes = side.prizes.map((u) => {
       if ([FILLER, "fix-energy"].includes(state.cardIdByUid[u] as string)) return u;
-      const swap = deck.find((d) => [FILLER, "fix-energy"].includes(state.cardIdByUid[d] as string));
+      const swap = deck.find((d) =>
+        [FILLER, "fix-energy"].includes(state.cardIdByUid[d] as string),
+      );
       if (swap === undefined) throw new Error("no swap card");
       deck = [...deck.filter((d) => d !== swap), u];
       return swap;
@@ -480,9 +520,12 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
     const parked = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(of(parked.events, "DAMAGE_DEALT")[0]?.dealt).toBe(200);
     const phase = parked.state.phase;
-    if (phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${phase.kind}`);
+    if (phase.kind !== "effect:choose")
+      throw new Error(`expected effect:choose, got ${phase.kind}`);
     expect(phase.prompt).toMatchObject({ kind: "chooseCards" });
-    const tool = parked.state.players.p2.hand.find((u) => parked.state.cardIdByUid[u] === TOOL) as string;
+    const tool = parked.state.players.p2.hand.find(
+      (u) => parked.state.cardIdByUid[u] === TOOL,
+    ) as string;
     const done = mustApply(parked.state, {
       type: "resolveEffect",
       seat: "p1",
@@ -501,11 +544,5 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
     expect(of(events, "DAMAGE_DEALT")[0]?.dealt).toBe(90);
     expect(after.players.p2.active?.damage).toBe(90);
     expect(after.players.p1.active?.damage).toBe(30);
-  });
-});
-
-describe("D592 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

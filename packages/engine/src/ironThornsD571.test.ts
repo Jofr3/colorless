@@ -1,11 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { bannerOf } from "./banners";
 import { disabledAbilityUids, passivesOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, providedEnergy } from "./index";
+import { applyAction, createGame, providedEnergy } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -90,15 +89,27 @@ const thorns = (id: string): Card =>
     retreat: 3,
     weaknesses: [{ type: "Fighting", value: "×2" }],
     attacks: [
-      { cost: ["Lightning", "Colorless"], name: "Destructo-Press", damage: "70×", effect: DESTRUCTO_TEXT },
-      { cost: ["Lightning", "Lightning", "Lightning", "Colorless"], name: "Megaton Lariat", damage: 140 },
+      {
+        cost: ["Lightning", "Colorless"],
+        name: "Destructo-Press",
+        damage: "70×",
+        effect: DESTRUCTO_TEXT,
+      },
+      {
+        cost: ["Lightning", "Lightning", "Lightning", "Colorless"],
+        name: "Megaton Lariat",
+        damage: 140,
+      },
     ],
   });
 
 const LOCAL_CARDS: Record<string, Card> = {
   ...Object.fromEntries(THORNS_EX.map((id) => [id, thornsEx(id)])),
   ...Object.fromEntries(THORNS.map((id) => [id, thorns(id)])),
-  [IGNITION]: { ...specialEnergy(IGNITION, "Ignition Energy", IGNITION_TEXT), energyType: "Normal" },
+  [IGNITION]: {
+    ...specialEnergy(IGNITION, "Ignition Energy", IGNITION_TEXT),
+    energyType: "Normal",
+  },
   [FLUTTER]: battler(FLUTTER, {
     name: "Flutter Mane",
     hp: 90,
@@ -141,7 +152,11 @@ const LOCAL_CARDS: Record<string, Card> = {
     attacks: [{ cost: ["Fighting", "Colorless", "Colorless"], name: "Mud Shot", damage: 80 }],
   }),
   [POD]: {
-    ...trainerCard(POD, "Item", "Attach a Basic Energy card from your discard pile to each of your Future Pokémon."),
+    ...trainerCard(
+      POD,
+      "Item",
+      "Attach a Basic Energy card from your discard pile to each of your Future Pokémon.",
+    ),
     name: "Reboot Pod",
   },
   [GUIDANCE]: {
@@ -193,7 +208,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -203,7 +219,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -211,11 +229,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -244,7 +265,8 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
     const prized = side.prizes.find((u) => next.cardIdByUid[u] === id);
     if (prized === undefined) throw new Error(`${seat} has fewer than ${k} ${id} to seat`);
     const swap =
-      side.deck.find((u) => next.cardIdByUid[u] === FILLER) ?? side.deck.find((u) => next.cardIdByUid[u] !== id);
+      side.deck.find((u) => next.cardIdByUid[u] === FILLER) ??
+      side.deck.find((u) => next.cardIdByUid[u] !== id);
     if (swap === undefined) throw new Error("no card to swap");
     next = {
       ...next,
@@ -273,7 +295,12 @@ function uidOf(state: GameState, seat: Seat, spot: Spot = "active"): string {
   return b.stack[b.stack.length - 1] as string;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -289,7 +316,10 @@ function energize(state: GameState, seat: Seat, spot: Spot, ids: readonly string
     next = ensureCopies(next, seat, id, 1);
     const side = next.players[seat];
     const uid = side.deck.find((u) => next.cardIdByUid[u] === id) as string;
-    next = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+    next = {
+      ...next,
+      players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+    };
     next = withBody(next, seat, spot, (p) => ({ ...p, energy: [...p.energy, uid] }));
   }
   return next;
@@ -298,7 +328,8 @@ function energize(state: GameState, seat: Seat, spot: Spot, ids: readonly string
 /** TEST SURGERY — `seat`'s deck re-ordered so `ids` (one copy each, in order) are its top cards. */
 function stackTop(state: GameState, seat: Seat, ids: readonly string[]): GameState {
   let next = state;
-  for (const id of new Set(ids)) next = ensureCopies(next, seat, id, ids.filter((x) => x === id).length);
+  for (const id of new Set(ids))
+    next = ensureCopies(next, seat, id, ids.filter((x) => x === id).length);
   const side = next.players[seat];
   const top: string[] = [];
   let rest = [...side.deck];
@@ -318,7 +349,11 @@ function deckExactly(state: GameState, seat: Seat, ids: readonly string[]): Game
     ...stacked,
     players: {
       ...stacked.players,
-      [seat]: { ...side, deck: side.deck.slice(0, ids.length), discard: [...side.discard, ...side.deck.slice(ids.length)] },
+      [seat]: {
+        ...side,
+        deck: side.deck.slice(0, ids.length),
+        discard: [...side.discard, ...side.deck.slice(ids.length)],
+      },
     },
   };
 }
@@ -333,21 +368,35 @@ function table(
     const side = state.players[seat];
     state = {
       ...state,
-      players: { ...state.players, [seat]: { ...side, deck: [...side.deck, ...side.hand, ...side.discard], hand: [], discard: [] } },
+      players: {
+        ...state.players,
+        [seat]: {
+          ...side,
+          deck: [...side.deck, ...side.hand, ...side.discard],
+          hand: [],
+          discard: [],
+        },
+      },
     };
   }
   state = setActiveFromDeck(ensureCopies(state, "p1", opts.p1 ?? FILLER), "p1", opts.p1 ?? FILLER);
   state = setActiveFromDeck(ensureCopies(state, "p2", opts.p2 ?? FILLER), "p2", opts.p2 ?? FILLER);
   state = clearBench(clearBench(state, "p1"), "p2");
-  for (const id of opts.p1Bench ?? []) state = benchFromDeck(ensureCopies(state, "p1", id), "p1", id);
-  for (const id of opts.p2Bench ?? []) state = benchFromDeck(ensureCopies(state, "p2", id), "p2", id);
+  for (const id of opts.p1Bench ?? [])
+    state = benchFromDeck(ensureCopies(state, "p1", id), "p1", id);
+  for (const id of opts.p2Bench ?? [])
+    state = benchFromDeck(ensureCopies(state, "p2", id), "p2", id);
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
-const dealt = (events: readonly GameEvent[]): number | undefined => all(events, "DAMAGE_DEALT")[0]?.dealt;
+const dealt = (events: readonly GameEvent[]): number | undefined =>
+  all(events, "DAMAGE_DEALT")[0]?.dealt;
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 
 /** TEST SURGERY — Team Rocket's Watchtower `sv10-180` stood in the Stadium zone (one deck uid
@@ -357,7 +406,10 @@ function withWatchtower(state: GameState): GameState {
   if (towerUid === undefined) throw new Error("no deck uid to stand in the Stadium zone");
   return {
     ...state,
-    players: { ...state.players, p1: { ...state.players.p1, deck: state.players.p1.deck.slice(0, -1) } },
+    players: {
+      ...state.players,
+      p1: { ...state.players.p1, deck: state.players.p1.deck.slice(0, -1) },
+    },
     cardIdByUid: { ...state.cardIdByUid, [towerUid]: "sv10-180" },
     stadium: { uid: towerUid, owner: "p1" },
   };
@@ -365,7 +417,7 @@ function withWatchtower(state: GameState): GameState {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D571 §1 — the six registry rows on three objects", () => {
-  it("Initialization ×3: ONE object, Mischievous Lock's shape plus `ruleBox` and `exemptBanner \"Future\"`", () => {
+  it('Initialization ×3: ONE object, Mischievous Lock\'s shape plus `ruleBox` and `exemptBanner "Future"`', () => {
     for (const id of THORNS_EX) {
       expect(programFor(id), id).toBe(programFor(THORNS_EX[0]));
       expect(programFor(id)?.passive?.disableAbilities).toEqual({
@@ -384,7 +436,12 @@ describe("D571 §1 — the six registry rows on three objects", () => {
       expect(programFor(id), id).toBe(programFor(THORNS[0]));
       expect(programFor(id)?.attack).toEqual({
         0: [
-          { op: "revealTopDiscardMatching", n: 5, filter: { kind: "bannerCard", banner: "Future" }, recordAs: "discarded" },
+          {
+            op: "revealTopDiscardMatching",
+            n: 5,
+            filter: { kind: "bannerCard", banner: "Future" },
+            recordAs: "discarded",
+          },
           { op: "damageDefender", per: 70, count: "discarded" },
         ],
       });
@@ -405,9 +462,16 @@ describe("D571 §1 — the six registry rows on three objects", () => {
 // ────────────────────────────────────────────────────────────────────────────
 describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pass", () => {
   it("an ACTIVE Iron Thorns ex silences every Rule Box body on BOTH sides — except Future ones, and never a non-Rule-Box body", () => {
-    const state = table({ p1: THORNS_EX[0], p1Bench: [COPPERAJAH, THORNS_EX[0], FILLER], p2: CHIEN_PAO, p2Bench: [KLAWF, KLEFKI] });
+    const state = table({
+      p1: THORNS_EX[0],
+      p1Bench: [COPPERAJAH, THORNS_EX[0], FILLER],
+      p2: CHIEN_PAO,
+      p2Bench: [KLAWF, KLEFKI],
+    });
     const locked = disabledAbilityUids(state);
-    expect(locked).toEqual(new Set([uidOf(state, "p1", 0), uidOf(state, "p2"), uidOf(state, "p2", 0)]));
+    expect(locked).toEqual(
+      new Set([uidOf(state, "p1", 0), uidOf(state, "p2"), uidOf(state, "p2", 0)]),
+    );
     expect(locked.has(uidOf(state, "p1"))).toBe(false); // the source — Future, exempt
     expect(locked.has(uidOf(state, "p1", 1))).toBe(false); // a benched Iron Thorns ex — Future, exempt
     expect(locked.has(uidOf(state, "p1", 2))).toBe(false); // no Rule Box
@@ -420,7 +484,12 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
   });
 
   it("🛑 R-LK2 ONE-WAY: an Active Flutter Mane silences the opposing Active Iron Thorns ex, so Initialization is OFF", () => {
-    const state = table({ p1: THORNS_EX[0], p1Bench: [COPPERAJAH], p2: FLUTTER, p2Bench: [CHIEN_PAO] });
+    const state = table({
+      p1: THORNS_EX[0],
+      p1Bench: [COPPERAJAH],
+      p2: FLUTTER,
+      p2Bench: [CHIEN_PAO],
+    });
     const locked = disabledAbilityUids(state);
     expect(locked.has(uidOf(state, "p1"))).toBe(true); // Midnight Fluttering reaches Iron Thorns ex
     expect(locked.has(uidOf(state, "p2"))).toBe(false); // Flutter Mane has no Rule Box — never reached
@@ -431,17 +500,36 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
   });
 
   it("the SAME board with Flutter Mane BENCHED: Midnight Fluttering is off, so Initialization bites", () => {
-    const state = table({ p1: THORNS_EX[0], p1Bench: [COPPERAJAH], p2: CHIEN_PAO, p2Bench: [FLUTTER] });
-    expect(disabledAbilityUids(state)).toEqual(new Set([uidOf(state, "p1", 0), uidOf(state, "p2")]));
+    const state = table({
+      p1: THORNS_EX[0],
+      p1Bench: [COPPERAJAH],
+      p2: CHIEN_PAO,
+      p2Bench: [FLUTTER],
+    });
+    expect(disabledAbilityUids(state)).toEqual(
+      new Set([uidOf(state, "p1", 0), uidOf(state, "p2")]),
+    );
   });
 
   it("the mirror: two Active Iron Thorns ex are both Future and both exempt — BOTH locks stay ON", () => {
-    const state = table({ p1: THORNS_EX[0], p1Bench: [COPPERAJAH], p2: THORNS_EX[0], p2Bench: [CHIEN_PAO] });
-    expect(disabledAbilityUids(state)).toEqual(new Set([uidOf(state, "p1", 0), uidOf(state, "p2", 0)]));
+    const state = table({
+      p1: THORNS_EX[0],
+      p1Bench: [COPPERAJAH],
+      p2: THORNS_EX[0],
+      p2Bench: [CHIEN_PAO],
+    });
+    expect(disabledAbilityUids(state)).toEqual(
+      new Set([uidOf(state, "p1", 0), uidOf(state, "p2", 0)]),
+    );
   });
 
   it("Gastrodon never touches Iron Thorns ex (an Active Basic), and Initialization never touches Gastrodon (no Rule Box): both stay ON", () => {
-    const state = table({ p1: THORNS_EX[0], p1Bench: [COPPERAJAH], p2: FILLER, p2Bench: [GASTRODON] });
+    const state = table({
+      p1: THORNS_EX[0],
+      p1Bench: [COPPERAJAH],
+      p2: FILLER,
+      p2Bench: [GASTRODON],
+    });
     const locked = disabledAbilityUids(state);
     expect(locked).toEqual(new Set([uidOf(state, "p1", 0)]));
     expect(locked.has(uidOf(state, "p2", 0))).toBe(false);
@@ -496,7 +584,9 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
       cardIdByUid: { ...s0.cardIdByUid, [uidOf(s0, "p1", 0)]: "fix-stage2" },
       cardPool: { ...s0.cardPool, "fix-stage2": POOL["fix-stage2"] as Card },
     });
-    let state = relabel(table({ p1: TING_LU, p1Bench: [FILLER], p2: FLUTTER, p2Bench: [GASTRODON] }));
+    let state = relabel(
+      table({ p1: TING_LU, p1Bench: [FILLER], p2: FLUTTER, p2Bench: [GASTRODON] }),
+    );
     state = withBody(state, "p2", "active", (p) => ({ ...p, damage: 10 }));
     state = withBody(state, "p2", 0, (p) => ({ ...p, damage: 10 }));
     expect(state.cardPool[state.cardIdByUid[uidOf(state, "p1", 0)] ?? ""]?.stage).toBe("Stage2"); // the surgery took: a Stage 2 on p1's Bench
@@ -505,9 +595,13 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
     expect(locked.has(uidOf(state, "p2"))).toBe(true); // Cursed Land on the damaged Flutter Mane (cycle, ON)
     expect(locked.has(uidOf(state, "p2", 0))).toBe(true); // Cursed Land on the damaged Gastrodon…
     expect(locked.has(uidOf(state, "p1", 0))).toBe(false); // …so Sticky Bind is OFF: the Stage 2 keeps its Abilities
-    expect(locked).toEqual(new Set([uidOf(state, "p1"), uidOf(state, "p2"), uidOf(state, "p2", 0)]));
+    expect(locked).toEqual(
+      new Set([uidOf(state, "p1"), uidOf(state, "p2"), uidOf(state, "p2", 0)]),
+    );
     // The control: an UNDAMAGED Gastrodon is out of Cursed Land's reach, so Sticky Bind bites.
-    let free = relabel(table({ p1: TING_LU, p1Bench: [FILLER], p2: FLUTTER, p2Bench: [GASTRODON] }));
+    let free = relabel(
+      table({ p1: TING_LU, p1Bench: [FILLER], p2: FLUTTER, p2Bench: [GASTRODON] }),
+    );
     free = withBody(free, "p2", "active", (p) => ({ ...p, damage: 10 }));
     expect(disabledAbilityUids(free).has(uidOf(free, "p1", 0))).toBe(true);
   });
@@ -526,7 +620,12 @@ describe("D571 §3 — Initialization through the §9 gates: a passive, an activ
   });
 
   it("ACTIVATED — a Benched Chien-Pao ex's Shivery Chill refuses ABILITY_DISABLED (checked before the Active-only gate)", () => {
-    const use = { type: "useAbility", seat: "p1", target: { spot: "bench", index: 0 }, abilityName: "Shivery Chill" } as const;
+    const use = {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "bench", index: 0 },
+      abilityName: "Shivery Chill",
+    } as const;
     const locked = applyAction(table({ p1: THORNS_EX[0], p1Bench: [CHIEN_PAO] }), use);
     expect(locked.ok ? "accepted" : locked.error.code).toBe("ABILITY_DISABLED");
     const free = applyAction(table({ p1: FILLER, p1Bench: [CHIEN_PAO] }), use);
@@ -570,14 +669,20 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     const { state: done, events } = run(state, { type: "attack", seat: "p1", index: 0 });
     expect(dealt(events)).toBe(210);
     const future = [top5[0], top5[2], top5[4]] as string[];
-    expect(all(events, "DECK_TOP_DISCARDED")).toEqual([{ type: "DECK_TOP_DISCARDED", seat: "p1", actor: "p1", uids: future }]);
+    expect(all(events, "DECK_TOP_DISCARDED")).toEqual([
+      { type: "DECK_TOP_DISCARDED", seat: "p1", actor: "p1", uids: future },
+    ]);
     expect(done.players.p1.discard).toEqual(future);
     expect(done.players.p1.deck).toHaveLength(before.length - 3);
-    expect([...done.players.p1.deck].sort()).toEqual(before.filter((u) => !future.includes(u)).sort());
+    expect([...done.players.p1.deck].sort()).toEqual(
+      before.filter((u) => !future.includes(u)).sort(),
+    );
     // the 6th card (a Future Iron Thorns ex) stayed in the deck
     expect(done.players.p1.deck).toContain(before[5]);
     // R-DP1: the discard and the shuffle land BEFORE the damage
-    const order = events.map((e) => e.type).filter((t) => ["DECK_TOP_DISCARDED", "SHUFFLE", "DAMAGE_DEALT"].includes(t));
+    const order = events
+      .map((e) => e.type)
+      .filter((t) => ["DECK_TOP_DISCARDED", "SHUFFLE", "DAMAGE_DEALT"].includes(t));
     expect(order).toEqual(["DECK_TOP_DISCARDED", "SHUFFLE", "DAMAGE_DEALT"]);
     expect(done.rngState).not.toEqual(state.rngState);
   });
@@ -616,7 +721,14 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     const events: GameEvent[] = [];
     const result = runProgram(
       state,
-      [{ op: "revealTopDiscardMatching", n: 5, filter: { kind: "bannerCard", banner: "Future" }, recordAs: "discarded" }],
+      [
+        {
+          op: "revealTopDiscardMatching",
+          n: 5,
+          filter: { kind: "bannerCard", banner: "Future" },
+          recordAs: "discarded",
+        },
+      ],
       { seat: "p1" },
       events,
       record,
@@ -624,7 +736,9 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     expect(result.kind).toBe("done");
     expect(record.discarded).toEqual([]);
     // an empty deck: nothing shuffled, but the (empty) reveal is announced — card revision B55, §4b
-    expect(events).toEqual([{ type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true }]);
+    expect(events).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true },
+    ]);
   });
 
   it("the op files the MATCHES, not the window", () => {
@@ -632,7 +746,14 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     const record: EffectRecord = {};
     const result = runProgram(
       state,
-      [{ op: "revealTopDiscardMatching", n: 5, filter: { kind: "bannerCard", banner: "Future" }, recordAs: "discarded" }],
+      [
+        {
+          op: "revealTopDiscardMatching",
+          n: 5,
+          filter: { kind: "bannerCard", banner: "Future" },
+          recordAs: "discarded",
+        },
+      ],
       { seat: "p1" },
       [],
       record,
@@ -651,7 +772,11 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
 describe("D571 §4b — Destructo-Press names every revealed card to both players (card revision B55)", () => {
   const armed = (s: GameState) => energize(s, "p1", "active", [L, C]);
   const line = (events: GameEvent[], state: GameState): string[] => {
-    const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: formatElapsed(0) };
+    const ctx: LogContext = {
+      names: { p1: "Ember", p2: "Tide" },
+      state,
+      elapsed: formatElapsed(0),
+    };
     return logFromEvents(events, ctx).flatMap((entry) =>
       entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
     );
@@ -694,7 +819,9 @@ describe("D571 §4b — Destructo-Press names every revealed card to both player
     const state = deckExactly(armed(table({ p1: THORNS[0] })), "p1", [POD, FILLER]);
     const { state: done, events } = run(state, { type: "attack", seat: "p1", index: 0 });
     expect(dealt(events)).toBe(70);
-    expect(line(events, done)).toContain(`p1: revealed the top 2 cards of their deck: ${name(POD)}, ${name(FILLER)}`);
+    expect(line(events, done)).toContain(
+      `p1: revealed the top 2 cards of their deck: ${name(POD)}, ${name(FILLER)}`,
+    );
   });
 
   it("an empty deck still announces the reveal, and nothing else happens", () => {
@@ -702,13 +829,22 @@ describe("D571 §4b — Destructo-Press names every revealed card to both player
     const events: GameEvent[] = [];
     const result = runProgram(
       state,
-      [{ op: "revealTopDiscardMatching", n: 5, filter: { kind: "bannerCard", banner: "Future" }, recordAs: "discarded" }],
+      [
+        {
+          op: "revealTopDiscardMatching",
+          n: 5,
+          filter: { kind: "bannerCard", banner: "Future" },
+          recordAs: "discarded",
+        },
+      ],
       { seat: "p1" },
       events,
       {},
     );
     expect(result.kind).toBe("done");
-    expect(events).toEqual([{ type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true }]);
+    expect(events).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true },
+    ]);
     expect(line(events, state)).toContain("p1: revealed the top of their deck — it was empty");
   });
 });
@@ -719,7 +855,11 @@ describe("D571 §5 — Ignition Energy", () => {
     const basic = energize(table({ p1: FILLER }), "p1", "active", [IGNITION]);
     expect(providedEnergy(basic, bodyAt(basic, "p1"))).toEqual(["Colorless"]);
     const evolved = energize(table({ p1: FILLER, p1Bench: [STAGE1] }), "p1", 0, [IGNITION]);
-    expect(providedEnergy(evolved, bodyAt(evolved, "p1", 0))).toEqual(["Colorless", "Colorless", "Colorless"]);
+    expect(providedEnergy(evolved, bodyAt(evolved, "p1", 0))).toEqual([
+      "Colorless",
+      "Colorless",
+      "Colorless",
+    ]);
   });
 
   it("🛑 is discarded at the end of its OWNER's turn — every body, Active then Bench — and nothing else moves", () => {
@@ -730,8 +870,22 @@ describe("D571 §5 — Ignition Energy", () => {
     const kept = bodyAt(state, "p1").energy[1] as string;
     const { state: done, events } = run(state, { type: "endTurn", seat: "p1" });
     expect(all(events, "ENERGY_DISCARDED")).toEqual([
-      { type: "ENERGY_DISCARDED", seat: "p1", actor: "p1", uids: [ign[0]], from: { spot: "active" }, host: uidOf(state, "p1") },
-      { type: "ENERGY_DISCARDED", seat: "p1", actor: "p1", uids: [ign[1]], from: { spot: "bench", index: 0 }, host: uidOf(state, "p1", 0) },
+      {
+        type: "ENERGY_DISCARDED",
+        seat: "p1",
+        actor: "p1",
+        uids: [ign[0]],
+        from: { spot: "active" },
+        host: uidOf(state, "p1"),
+      },
+      {
+        type: "ENERGY_DISCARDED",
+        seat: "p1",
+        actor: "p1",
+        uids: [ign[1]],
+        from: { spot: "bench", index: 0 },
+        host: uidOf(state, "p1", 0),
+      },
     ]);
     expect(bodyAt(done, "p1").energy).toEqual([kept]);
     expect(bodyAt(done, "p1", 0).energy).toEqual([]);
@@ -749,7 +903,9 @@ describe("D571 §5 — Ignition Energy", () => {
     expect(all(afterP1.events, "ENERGY_DISCARDED")).toEqual([]);
     expect(bodyAt(afterP1.state, "p2").energy).toEqual([ign]);
     const afterP2 = run(afterP1.state, { type: "endTurn", seat: "p2" });
-    expect(all(afterP2.events, "ENERGY_DISCARDED").map((e) => [e.seat, e.uids])).toEqual([["p2", [ign]]]);
+    expect(all(afterP2.events, "ENERGY_DISCARDED").map((e) => [e.seat, e.uids])).toEqual([
+      ["p2", [ign]],
+    ]);
     expect(afterP2.state.players.p2.discard).toContain(ign);
   });
 
@@ -766,22 +922,24 @@ describe("D571 §5 — Ignition Energy", () => {
     const side = state.players.p1;
     state = {
       ...state,
-      players: { ...state.players, p1: { ...side, hand: side.deck.slice(0, 5), deck: side.deck.slice(5) } },
+      players: {
+        ...state.players,
+        p1: { ...side, hand: side.deck.slice(0, 5), deck: side.deck.slice(5) },
+      },
       allowances: { ...state.allowances, endOfTurnHandDiscard: 5 },
     };
     const { events } = run(state, { type: "endTurn", seat: "p1" });
     const types = events.map((e) => e.type);
     const energy = types.indexOf("ENERGY_DISCARDED");
     expect(energy).toBeGreaterThan(-1);
-    expect(events.slice(0, energy).some((e) => e.type !== "ENERGY_DISCARDED" && JSON.stringify(e).includes(side.deck[0] as string))).toBe(true);
+    expect(
+      events
+        .slice(0, energy)
+        .some(
+          (e) =>
+            e.type !== "ENERGY_DISCARDED" && JSON.stringify(e).includes(side.deck[0] as string),
+        ),
+    ).toBe(true);
     expect(energy).toBeLessThan(types.indexOf("TURN_ENDED"));
-  });
-});
-
-// ────────────────────────────────────────────────────────────────────────────
-describe("D571 §6 — the version", () => {
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

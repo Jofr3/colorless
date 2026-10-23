@@ -612,7 +612,13 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     const anyZone = CLAUSE.replace(" Benched", "");
     expect(anyZone).not.toBe(CLAUSE);
     expect(deriveAttackEffect(anyZone)).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: LAND_SCOOP_HP, count: 1, source: "attack" },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: LAND_SCOOP_HP,
+        count: 1,
+        source: "attack",
+      },
     ]);
     expect(deriveAttackEffect(CLAUSE)).toEqual([putOp(LAND_SCOOP_HP)]);
     expect(deriveAttackEffect(anyZone)).not.toEqual(deriveAttackEffect(CLAUSE));

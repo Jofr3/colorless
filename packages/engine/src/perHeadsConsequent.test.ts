@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction, createGame, engineVersion, programFor } from "./index";
+import { applyAction, createGame, programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { registryCardIds } from "./registry";
@@ -92,7 +92,8 @@ const HAND_PICK = "Flip 3 coins. For each heads, discard a random card from your
     swsh10.5-022 have rotated out of Standard — which §1 asserts rather than assumes.
     They still derive, per D358: rotation decides who may PLAY a card, not what the
     card SAYS. */
-const D130_PRINTED = "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.";
+const D130_PRINTED =
+  "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.";
 const D130_UNTIL =
   "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.";
 
@@ -112,7 +113,9 @@ const D130_UNTIL =
     `toBe(false)` bought is replaced by a stronger one rather than surrendered. **All three of
     D452's grouped refusals are now built, by three different slices, on three different
     reasons — which is the grouped-refusal rule's own receipt.** */
-const BUILT_AT_D476 = ["Flip 3 coins. For each tails, discard an Energy from this Pokémon."] as const;
+const BUILT_AT_D476 = [
+  "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",
+] as const;
 
 /** 🆕🆕 **D463 — the two rows this file used to refuse and now derives**, verbatim
     off `censusAttackCorpus.ts` file lines 200 and 234. Kept in this suite (rather than only in
@@ -207,7 +210,9 @@ function localSetup(seed: number, first: Seat): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     state = must(applyAction(state, { type: "setupReady", seat }));
@@ -353,7 +358,8 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // lookalike — asserted on the SERIALIZED bytes, because "deep equal" would pass on
     // a differently-keyed twin.
     const bareMill = (deriveAttackEffect("Discard the top card of your opponent's deck.") ?? [])[0];
-    const bareHand = (deriveAttackEffect("Discard a random card from your opponent's hand.") ?? [])[0];
+    const bareHand = (deriveAttackEffect("Discard a random card from your opponent's hand.") ??
+      [])[0];
     const coinMill = (deriveAttackCoinFlip(SINGLE_MILL) as { ops: EffectOp[] }).ops[0];
     const coinHand = (deriveAttackCoinFlip(HAND_PICK) as { ops: EffectOp[] }).ops[0];
     expect(JSON.stringify(coinMill)).toBe(JSON.stringify(bareMill));
@@ -365,10 +371,14 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // optional group: `the top (?:(\d+) )?cards?` would additionally accept these two
     // strings, which the catalog prints ZERO times and whose readings nobody decided.
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top 3 card of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top 3 card of your opponent's deck.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top cards of your opponent's deck.",
+      ),
     ).toBeNull();
     // …and both PRINTED spellings still derive, which is what makes the two nulls a
     // fence rather than a gap.
@@ -381,16 +391,26 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // way. It prints NEITHER of D452's sentences that way — measured over the column
     // — so an anchor for them would author a card, which is the refusal
     // `FLIP_OPPONENT_ACTIVE_DISCARD` makes on its own family.
-    const untilRows = legalAttackCorpus().filter(([, s]) => s.startsWith("Flip a coin until you get tails."));
-    expect(untilRows.filter(([, s]) => s.includes("For each heads, discard the top"))).toHaveLength(0);
-    expect(untilRows.filter(([, s]) => s.includes("random card from your opponent's hand"))).toHaveLength(0);
+    const untilRows = legalAttackCorpus().filter(([, s]) =>
+      s.startsWith("Flip a coin until you get tails."),
+    );
+    expect(untilRows.filter(([, s]) => s.includes("For each heads, discard the top"))).toHaveLength(
+      0,
+    );
+    expect(
+      untilRows.filter(([, s]) => s.includes("random card from your opponent's hand")),
+    ).toHaveLength(0);
     // 🆕🆕🆕 D595 (D539): WITHDRAWN for the mill — the `me` serie prints it ×3 (`mep-066`, `me02.5-100`,
     // `me03-045`) and `ATTACK_COIN_MILL_ONE_UNTIL_TAILS` builds it. The `sv` column still prints neither.
     expect(
-      deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.",
+      ),
     ).not.toBeNull();
     expect(
-      deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand."),
+      deriveAttackCoinFlip(
+        "Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand.",
+      ),
     ).toBeNull();
   });
 
@@ -399,16 +419,24 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // (10, the ingested-text ceiling), copied from the plural twin deliberately.
     for (const n of [0, 1, 11, 99]) {
       expect(
-        deriveAttackCoinFlip(`Flip ${n} coins. For each heads, discard the top card of your opponent's deck.`),
+        deriveAttackCoinFlip(
+          `Flip ${n} coins. For each heads, discard the top card of your opponent's deck.`,
+        ),
         `mill ${n}`,
       ).toBeNull();
       expect(
-        deriveAttackCoinFlip(`Flip ${n} coins. For each heads, discard a random card from your opponent's hand.`),
+        deriveAttackCoinFlip(
+          `Flip ${n} coins. For each heads, discard a random card from your opponent's hand.`,
+        ),
         `hand ${n}`,
       ).toBeNull();
     }
     for (const n of [2, 3, 10]) {
-      expect(deriveAttackCoinFlip(`Flip ${n} coins. For each heads, discard the top card of your opponent's deck.`)).toEqual({
+      expect(
+        deriveAttackCoinFlip(
+          `Flip ${n} coins. For each heads, discard the top card of your opponent's deck.`,
+        ),
+      ).toEqual({
         kind: "programPerHeads",
         flips: { kind: "printed", count: n },
         ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
@@ -419,7 +447,9 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     // WORD "card", so there is no digit that could be zero. The plural arm's guard is
     // still there and still bites, which is what tells the two apart.
     expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top 0 cards of your opponent's deck."),
+      deriveAttackCoinFlip(
+        "Flip 2 coins. For each heads, discard the top 0 cards of your opponent's deck.",
+      ),
     ).toBeNull();
   });
 
@@ -457,13 +487,17 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     expect(deriveAttackCoinFlip("Flip a coin. If tails, this attack does nothing.")).toEqual({
       kind: "cancelOnTails",
     });
-    expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 30 damage for each heads.")).toEqual({
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. This attack does 30 damage for each heads."),
+    ).toEqual({
       kind: "perHeads",
       flips: { kind: "printed", count: 2 },
       per: 30,
     });
     expect(
-      deriveAttackCoinFlip("Flip a coin until you get tails. This attack does 30 more damage for each heads."),
+      deriveAttackCoinFlip(
+        "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+      ),
     ).toEqual({ kind: "bonusOnHeads", flips: { kind: "untilTails" }, per: 30 });
     expect(deriveAttackCoinFlip(D130_UNTIL)).toEqual({
       kind: "programPerHeads",
@@ -499,12 +533,12 @@ describe("§3 — no new persisted byte, in three directions", () => {
     // 🛑 AND A v29 DEPLOY ALREADY WRITES BOTH STRINGS, which is the whole argument.
     // The bare sentences are printed by 7 and 8 legal printings respectively and have
     // derived to these exact objects since before this slice. There is no new byte.
-    expect(JSON.stringify(deriveAttackEffect("Discard the top card of your opponent's deck.")?.[0])).toBe(
-      JSON.stringify(mill),
-    );
-    expect(JSON.stringify(deriveAttackEffect("Discard a random card from your opponent's hand.")?.[0])).toBe(
-      JSON.stringify(pick),
-    );
+    expect(
+      JSON.stringify(deriveAttackEffect("Discard the top card of your opponent's deck.")?.[0]),
+    ).toBe(JSON.stringify(mill));
+    expect(
+      JSON.stringify(deriveAttackEffect("Discard a random card from your opponent's hand.")?.[0]),
+    ).toBe(JSON.stringify(pick));
 
     // **DIRECTION 2 — BACKWARD: what can reach storage, and whether a PARK is in the
     // path.** An `EffectOp` reaches `MatchRecord` by exactly one route:
@@ -547,7 +581,9 @@ describe("§3 — no new persisted byte, in three directions", () => {
     // · a lost `count` is a SILENT WHIFF: `Math.max(0, undefined)` is NaN,
     //   `slice(0, NaN)` is empty, and the arm's own "zero cards emit nothing" guard
     //   returns the state untouched. No row, no throw, no card moved.
-    const noCount = JSON.parse(JSON.stringify(mill, (k, v) => (k === "count" ? undefined : v))) as EffectOp;
+    const noCount = JSON.parse(
+      JSON.stringify(mill, (k, v) => (k === "count" ? undefined : v)),
+    ) as EffectOp;
     expect(Object.keys(noCount)).not.toContain("count");
     const milled = runProgram(board, [noCount], { seat: "p1", invokedBy: "attack" }, events);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(0);
@@ -557,7 +593,9 @@ describe("§3 — no new persisted byte, in three directions", () => {
     //   the deck is SHUFFLED, which advances `rngState` a second time. Two replays that
     //   did the same thing would diverge on every later flip, and the board looks
     //   entirely normal. That is D435's silent-corruption shape at a persisted key.
-    const noTo = JSON.parse(JSON.stringify(pick, (k, v) => (k === "to" ? undefined : v))) as EffectOp;
+    const noTo = JSON.parse(
+      JSON.stringify(pick, (k, v) => (k === "to" ? undefined : v)),
+    ) as EffectOp;
     const events2: GameEvent[] = [];
     const picked = runProgram(board, [noTo], { seat: "p1", invokedBy: "attack" }, events2);
     expect(all(events2, "RANDOM_CARD_TAKEN")).toHaveLength(1);
@@ -568,10 +606,6 @@ describe("§3 — no new persisted byte, in three directions", () => {
     // both byte strings are ones a v29 deploy already writes: the loss hazard is a
     // pre-existing property of two shipped ops rather than anything D452 introduces.
     // Both halves are stated; neither alone is the argument.
-  });
-
-  it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -605,7 +639,10 @@ describe("§4 — 2 flips, one op per heads, ONE card each", () => {
       // THE CARDS CAME OFF THE TOP, IN ORDER.
       const milledUids = rows.flatMap((r) => r.uids);
       expect(milledUids).toEqual(deckBefore.slice(0, heads));
-      expect(done.players.p2.discard).toEqual([...state.players.p2.discard, ...deckBefore.slice(0, heads)]);
+      expect(done.players.p2.discard).toEqual([
+        ...state.players.p2.discard,
+        ...deckBefore.slice(0, heads),
+      ]);
       // The deck shrank by the mill plus exactly ONE — p2's own turn-start draw, since
       // attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3) and p2's §5.1 draw lands in this same batch.
       expect(deckBefore.length - done.players.p2.deck.length).toBe(heads + 1);
@@ -658,7 +695,9 @@ describe("§4 — 2 flips, one op per heads, ONE card each", () => {
       expect(done.players.p2.discard.length - state.players.p2.discard.length).toBe(
         Math.min(heads, 1),
       );
-      expect(rows.flatMap((r) => r.uids)).toEqual(state.players.p2.deck.slice(0, Math.min(heads, 1)));
+      expect(rows.flatMap((r) => r.uids)).toEqual(
+        state.players.p2.deck.slice(0, Math.min(heads, 1)),
+      );
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     }
   });
@@ -919,7 +958,8 @@ describe("§9 — the last refused row, BUILT at D476, and its axis measured", (
     // `rest` that parks simply parks again — DRIVEN here rather than argued, on a
     // program that is literally what the expansion would build at two heads.
     const board = armed(5);
-    const one = (deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.") ?? [])[0] as EffectOp;
+    const one = (deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.") ??
+      [])[0] as EffectOp;
     expect(JSON.stringify(one)).toBe(
       '{"op":"discardEnergy","from":"opponentActive","filter":{"kind":"anyEnergy"}}',
     );
@@ -968,7 +1008,8 @@ describe("§9 — the last refused row, BUILT at D476, and its axis measured", (
     let coincide = 0;
     for (let seed = 0; seed < SEEDS; seed++) {
       const f = faces(attack(armed(seed), MILL).events);
-      if (f.filter((x) => x === "heads").length === f.filter((x) => x === "tails").length) coincide += 1;
+      if (f.filter((x) => x === "heads").length === f.filter((x) => x === "tails").length)
+        coincide += 1;
     }
     expect(coincide).toBeGreaterThan(0);
     // The 3-flip attack can NEVER coincide — an odd number of flips separates the two

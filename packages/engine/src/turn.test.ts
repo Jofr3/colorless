@@ -445,7 +445,18 @@ describe("endTurn", () => {
     expect(types(events)).toEqual(["TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
     expect(next.turn).toBe(2);
     expect(next.phase).toEqual({ kind: "turn:action", seat: "p2" });
-    expect(next.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [], sideAttackBonuses: [], supporterPlayedUid: null, endOfTurnHandDiscard: null, attackAgainUid: null }); // 🆕🆕🆕 D570 — no Festival Lead attack-again window open, wiped with the rest (REQUIRED, MRV 36 → 37) // 🆕🆕🆕 D564 — the played Supporter's uid and Amarys's pending threshold, wiped with the rest (both REQUIRED, MRV 35 → 36) // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
+    expect(next.allowances).toEqual({
+      energyAttached: false,
+      retreated: false,
+      supporterPlayed: false,
+      stadiumPlayed: false,
+      stadiumAbilityUsed: false,
+      abilitiesUsed: [],
+      sideAttackBonuses: [],
+      supporterPlayedUid: null,
+      endOfTurnHandDiscard: null,
+      attackAgainUid: null,
+    }); // 🆕🆕🆕 D570 — no Festival Lead attack-again window open, wiped with the rest (REQUIRED, MRV 36 → 37) // 🆕🆕🆕 D564 — the played Supporter's uid and Amarys's pending threshold, wiped with the rest (both REQUIRED, MRV 35 → 36) // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
     expect(next.players.p2.hand).toHaveLength(p2HandBefore + 1);
   });
 

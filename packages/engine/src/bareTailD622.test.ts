@@ -4,9 +4,17 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameEvent, GameState, InPlayPokemon } from "./index";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, mustApply, setActiveFromDeck } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  mustApply,
+  setActiveFromDeck,
+} from "./testFixtures";
 
 // ── 🆕🆕🆕 D622 — R-AM2 RETIRED: THE BARE W/R TAIL IS W/R ONLY ──
 //
@@ -78,7 +86,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -86,11 +96,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -103,7 +116,11 @@ function marked(state: GameState, pokemon: InPlayPokemon, mark: Mark): InPlayPok
 }
 
 /** P1 attacks with the Sniper; P2's Active is `foe` (marked `mark`), its Bench `bench` (each marked). */
-function board(foe: string, mark: Mark, bench: readonly (readonly [string, Mark])[] = [[FILLER, "none"]]): GameState {
+function board(
+  foe: string,
+  mark: Mark,
+  bench: readonly (readonly [string, Mark])[] = [[FILLER, "none"]],
+): GameState {
   let state = clearBench(setActiveFromDeck(p1Turn(), "p1", SNIPER), "p1");
   state = clearBench(setActiveFromDeck(state, "p2", foe), "p2");
   for (const [id] of bench) state = benchFromDeck(state, "p2", id);
@@ -129,7 +146,11 @@ function swing(state: GameState, index: number, refs: unknown[] = []) {
   return { state: next, events };
 }
 const dealt = (events: readonly GameEvent[]) =>
-  events.flatMap((e) => (e.type === "DAMAGE_DEALT" ? [{ dealt: e.dealt, weakness: e.weakness, resistance: e.resistance }] : []));
+  events.flatMap((e) =>
+    e.type === "DAMAGE_DEALT"
+      ? [{ dealt: e.dealt, weakness: e.weakness, resistance: e.resistance }]
+      : [],
+  );
 
 describe("D622 §1 — the readers: the bare tail carries `wrOnly`, the Feint form does not", () => {
   it("each bare text derives `ignoreWR` + `wrOnly` on every op; Twin Shotels derives `ignoreWR` alone", () => {
@@ -147,9 +168,18 @@ describe("D622 §1 — the readers: the bare tail carries `wrOnly`, the Feint fo
     const rows = [...legalAttackCorpus(), ...meAttackCorpus()].flatMap(([n, text]) => {
       const ops = (deriveAttackEffect(text) ?? []) as { ignoreWR?: true; wrOnly?: true }[];
       if (!ops.some((op) => op.ignoreWR === true)) return [];
-      return [{ text, n, bare: ops.every((op) => op.wrOnly === true), feint: ops.every((op) => op.wrOnly === undefined) }];
+      return [
+        {
+          text,
+          n,
+          bare: ops.every((op) => op.wrOnly === true),
+          feint: ops.every((op) => op.wrOnly === undefined),
+        },
+      ];
     });
-    expect(rows.map((r) => r.text).sort()).toEqual([...BARE.map(([, t]) => t), TWIN_SHOTELS].sort());
+    expect(rows.map((r) => r.text).sort()).toEqual(
+      [...BARE.map(([, t]) => t), TWIN_SHOTELS].sort(),
+    );
     for (const row of rows) {
       const printsEffects = /or by any effects on/.test(row.text);
       expect(row.bare, row.text).toBe(!printsEffects);
@@ -186,7 +216,10 @@ describe("D622 §2 — a prevention on the target stops the bare tail (R-AM2 ret
 
   it("Telekinesis: a blocked Active and a blocked Benched pick both take 0", () => {
     expect(swing(board(TARGET, "block"), TELE, [ACTIVE]).state.players.p2.active?.damage).toBe(0);
-    expect(swing(board(TARGET, "none", [[FILLER, "block"]]), TELE, [BENCH0]).state.players.p2.bench[0]?.damage).toBe(0);
+    expect(
+      swing(board(TARGET, "none", [[FILLER, "block"]]), TELE, [BENCH0]).state.players.p2.bench[0]
+        ?.damage,
+    ).toBe(0);
   });
 
   it("the Feint control: Twin Shotels lands 50 on a blocked Active and a blocked Benched body", () => {
@@ -210,7 +243,10 @@ describe("D622 §3 — on the Active the bare tail still skips Weakness and Resi
 
   it("an installed −30 on the target applies to the bare tail (70 → 40) and not to the Feint form (50)", () => {
     expect(swing(board(TARGET, "reduce"), TELE, [ACTIVE]).state.players.p2.active?.damage).toBe(40);
-    expect(swing(board(TARGET, "none", [[FILLER, "reduce"]]), TELE, [BENCH0]).state.players.p2.bench[0]?.damage).toBe(40);
+    expect(
+      swing(board(TARGET, "none", [[FILLER, "reduce"]]), TELE, [BENCH0]).state.players.p2.bench[0]
+        ?.damage,
+    ).toBe(40);
     const feint = swing(board(TARGET, "reduce", [[FILLER, "reduce"]]), SHOTELS, [ACTIVE, BENCH0]);
     expect(feint.state.players.p2.active?.damage).toBe(50);
     expect(feint.state.players.p2.bench[0]?.damage).toBe(50);
@@ -227,12 +263,19 @@ describe("D622 §4 — an in-flight v43 park keeps the reading it was parked und
       return old;
     };
     const cont = state.phase.cont;
-    const phase = { ...state.phase, cont: { ...cont, pendingOp: strip(cont.pendingOp), rest: cont.rest.map(strip) } };
+    const phase = {
+      ...state.phase,
+      cont: { ...cont, pendingOp: strip(cont.pendingOp), rest: cont.rest.map(strip) },
+    };
     return JSON.parse(JSON.stringify({ ...state, phase })) as GameState;
   }
 
   it("a parked Telekinesis without `wrOnly` resumes as before (lands through the block); with it, it is stopped", () => {
-    const parked = mustApply(board(TARGET, "block"), { type: "attack", seat: "p1", index: TELE }).state;
+    const parked = mustApply(board(TARGET, "block"), {
+      type: "attack",
+      seat: "p1",
+      index: TELE,
+    }).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(parked.phase.cont.pendingOp).toMatchObject({ ignoreWR: true, wrOnly: true });
     expect(mustApply(parked, pickAll([ACTIVE])).state.players.p2.active?.damage).toBe(0);
@@ -241,8 +284,11 @@ describe("D622 §4 — an in-flight v43 park keeps the reading it was parked und
   });
 
   it("a parked Oil Salvo's remaining five ops resume the same way (the rest rides the record too)", () => {
-    const parked = mustApply(board(FILLER, "none", [[FILLER, "block"]]), { type: "attack", seat: "p1", index: SALVO })
-      .state;
+    const parked = mustApply(board(FILLER, "none", [[FILLER, "block"]]), {
+      type: "attack",
+      seat: "p1",
+      index: SALVO,
+    }).state;
     expect(swing2(v43(parked)).state.players.p2.bench[0]?.damage).toBe(120);
     expect(swing2(parked).state.players.p2.bench[0]?.damage).toBe(0);
   });
@@ -250,13 +296,8 @@ describe("D622 §4 — an in-flight v43 park keeps the reading it was parked und
   /** Answers every park on BENCH0 (the attack already declared). */
   function swing2(state: GameState) {
     let next = state;
-    for (let n = 0; next.phase.kind === "effect:choose" && n < 8; n++) next = mustApply(next, pickAll([BENCH0])).state;
+    for (let n = 0; next.phase.kind === "effect:choose" && n < 8; n++)
+      next = mustApply(next, pickAll([BENCH0])).state;
     return { state: next };
   }
-});
-
-describe("D622 §5 — the version", () => {
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });

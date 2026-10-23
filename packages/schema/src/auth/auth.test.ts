@@ -65,7 +65,9 @@ describe("updateProfileRequestSchema", () => {
         .favouriteDeckId,
     ).toBeNull();
     // Omitted → undefined: the handler reads that as "don't touch it".
-    expect(updateProfileRequestSchema.parse({ displayName: "Brock" }).favouriteDeckId).toBeUndefined();
+    expect(
+      updateProfileRequestSchema.parse({ displayName: "Brock" }).favouriteDeckId,
+    ).toBeUndefined();
   });
 
   it.each([

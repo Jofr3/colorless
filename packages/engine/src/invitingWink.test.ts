@@ -224,7 +224,10 @@ function emptyHand(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, hand: [], deck: [...side.deck, ...side.hand] },
+    },
   };
 }
 
@@ -356,7 +359,7 @@ describe("D350 §1 — the registry row, read off the LIVE registry", () => {
     expect(triggered?.program).toHaveLength(1);
   });
 
-  it("the op is Mandibuzz's, with `upTo: \"any\"` and NO `maxHp` rider", () => {
+  it('the op is Mandibuzz\'s, with `upTo: "any"` and NO `maxHp` rider', () => {
     const op = winkOp();
     expect(op.dest).toBe("bench");
     expect(op.upTo).toBe("any");
@@ -428,7 +431,7 @@ describe("D350 §2 — the trigger benches ANY NUMBER of the opponent's own Basi
     expect(done.cardIdByUid[done.players.p1.active?.stack.at(-1) ?? ""]).toBe(RIBOMBEE);
   });
 
-  it("🛑 taking NONE is a legal answer, and it is what \"any number\" buys", () => {
+  it('🛑 taking NONE is a legal answer, and it is what "any number" buys', () => {
     // The decline is the half of this field a `max`-only spelling would lose, and
     // it is the half a natural "the effect works" suite never writes (D279).
     const start = board({ oppHand: [[BASIC_A, 2]] });

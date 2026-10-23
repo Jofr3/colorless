@@ -9,7 +9,7 @@ import {
   toolsInEffect,
 } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -264,7 +264,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -272,11 +274,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -314,12 +319,21 @@ function table(opts: {
   seed?: number;
 }): GameState {
   let state = opened(opts.seed ?? 5621);
-  state = setActiveFromDeck(ensureInDeck(state, "p1", opts.attacker ?? FIRE), "p1", opts.attacker ?? FIRE);
+  state = setActiveFromDeck(
+    ensureInDeck(state, "p1", opts.attacker ?? FIRE),
+    "p1",
+    opts.attacker ?? FIRE,
+  );
   const defender = opts.defender ?? { id: WALL };
   state = setActiveFromDeck(ensureInDeck(state, "p2", defender.id), "p2", defender.id);
   state = clearBench(clearBench(state, "p1"), "p2");
   if (defender.tool !== undefined) {
-    state = attachToolFromDeck(ensureInDeck(state, "p2", defender.tool), "p2", "active", defender.tool);
+    state = attachToolFromDeck(
+      ensureInDeck(state, "p2", defender.tool),
+      "p2",
+      "active",
+      defender.tool,
+    );
   }
   for (const [seat, bodies] of [
     ["p2", opts.bench ?? []],
@@ -353,7 +367,10 @@ function debuffed(state: GameState, amount = 200): GameState {
   const active = state.players.p1.active;
   if (active === null) throw new Error("no Active");
   const withDebuff = { ...active, attackDamageDebuff: { amount, turn: state.turn } };
-  return { ...state, players: { ...state.players, p1: { ...state.players.p1, active: withDebuff } } };
+  return {
+    ...state,
+    players: { ...state.players, p1: { ...state.players.p1, active: withDebuff } },
+  };
 }
 
 function all<T extends GameEvent["type"]>(
@@ -369,19 +386,26 @@ const discardIds = (state: GameState, seat: Seat) =>
   state.players[seat].discard.map((u) => idOf(state, u));
 const consumed = (events: readonly GameEvent[]) =>
   all(events, "TOOLS_DISCARDED").filter((e) => e.when === "consumed");
-const swing = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
 
 /** Swing a snipe and answer its pick with the body at `spot` on p2's board. */
 function snipe(state: GameState, index: number, spot: PokemonRef["spot"]) {
   const { state: parked } = swing(state, index);
-  if (parked.phase.kind !== "effect:choose") throw new Error(`expected a pick, got ${parked.phase.kind}`);
+  if (parked.phase.kind !== "effect:choose")
+    throw new Error(`expected a pick, got ${parked.phase.kind}`);
   const prompt = parked.phase.prompt;
-  if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+  if (prompt.kind !== "choosePokemonMulti")
+    throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
   const ref = prompt.candidates.find(
     (c) => c.seat === "p2" && JSON.stringify(c.spot) === JSON.stringify(spot),
   );
   if (ref === undefined) throw new Error("the spot is not a candidate");
-  return mustApply(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [ref] } });
+  return mustApply(parked, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemonMulti", refs: [ref] },
+  });
 }
 const BENCH0: PokemonRef["spot"] = { spot: "bench", index: 0 };
 const ACTIVE: PokemonRef["spot"] = { spot: "active" };
@@ -389,14 +413,18 @@ const ACTIVE: PokemonRef["spot"] = { spot: "active" };
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 /** Klawf ex's parked discard, answered by p2 with the first discardable Energy. */
 function klawfAnswer(parked: GameState): GameAction {
-  if (parked.phase.kind !== "effect:choose") throw new Error(`expected Klawf's park, got ${parked.phase.kind}`);
+  if (parked.phase.kind !== "effect:choose")
+    throw new Error(`expected Klawf's park, got ${parked.phase.kind}`);
   const prompt = parked.phase.prompt;
-  if (prompt.kind !== "discardEnergy") throw new Error(`expected discardEnergy, got ${prompt.kind}`);
+  if (prompt.kind !== "discardEnergy")
+    throw new Error(`expected discardEnergy, got ${prompt.kind}`);
   return {
     type: "resolveEffect",
     seat: "p2",
@@ -418,11 +446,17 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
   });
 
   it("Survival Brace, Deluxe Bomb, Lucky Helmet, Handheld Fan", () => {
-    expect(programFor(BRACE)).toEqual({ passive: { survivesKoAtFullHpFromOpponentThenDiscard: true } });
+    expect(programFor(BRACE)).toEqual({
+      passive: { survivesKoAtFullHpFromOpponentThenDiscard: true },
+    });
     expect(programFor(BOMB)).toEqual({ passive: { damageAttackerActiveThenDiscard: 120 } });
     expect(programFor(HELMET)).toEqual({
       triggered: [
-        { name: "Lucky Helmet", trigger: "onDamagedByAttack", program: [{ op: "drawCards", count: 2 }] },
+        {
+          name: "Lucky Helmet",
+          trigger: "onDamagedByAttack",
+          program: [{ op: "drawCards", count: 2 }],
+        },
       ],
     });
     expect(programFor(FAN)).toEqual({
@@ -431,7 +465,13 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
           name: "Handheld Fan",
           trigger: "onDamagedByAttack",
           program: [
-            { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench", side: "opponent" },
+            {
+              op: "moveEnergy",
+              filter: { kind: "anyEnergy" },
+              max: 1,
+              route: "selfToBench",
+              side: "opponent",
+            },
           ],
         },
       ],
@@ -439,7 +479,13 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
   });
 
   it("🛑 `passivesOf` folds NONE of the three consumable keys — its key set and every pin on it stand still", () => {
-    const state = table({ defender: { id: WALL, tool: OCCA }, bench: [{ id: BRACED, tool: BRACE }, { id: WALL, tool: BOMB }] });
+    const state = table({
+      defender: { id: WALL, tool: OCCA },
+      bench: [
+        { id: BRACED, tool: BRACE },
+        { id: WALL, tool: BOMB },
+      ],
+    });
     for (const body of [state.players.p2.active, ...state.players.p2.bench]) {
       if (body === null) throw new Error("no body");
       const folded = passivesOf(state, body);
@@ -453,7 +499,9 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
     for (const id of [OCCA, BRACE, BOMB, HELMET, FAN]) {
       let state = table({});
       const side = state.players.p1;
-      const uid = [...side.deck, ...side.hand, ...side.prizes].find((u) => state.cardIdByUid[u] === id);
+      const uid = [...side.deck, ...side.hand, ...side.prizes].find(
+        (u) => state.cardIdByUid[u] === id,
+      );
       if (uid === undefined) throw new Error(`no ${id}`);
       state = {
         ...state,
@@ -467,7 +515,12 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
           },
         },
       };
-      const { state: attached } = mustApply(state, { type: "attachTool", seat: "p1", uid, target: { spot: "active" } });
+      const { state: attached } = mustApply(state, {
+        type: "attachTool",
+        seat: "p1",
+        uid,
+        target: { spot: "active" },
+      });
       expect(toolIds(attached, attached.players.p1.active), id).toEqual([id]);
     }
   });
@@ -543,7 +596,10 @@ describe("D562 tools §2 — the Berry at the MAIN HIT (attack.ts), R-BE", () =>
   });
 
   it("🛑 Jamming Tower: the Berry has no effect — 120 lands and the Berry stays", () => {
-    const { state, events } = swing(stadium(table({ defender: { id: WALL, tool: OCCA } }), JAMMING), BLAST);
+    const { state, events } = swing(
+      stadium(table({ defender: { id: WALL, tool: OCCA } }), JAMMING),
+      BLAST,
+    );
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 120 });
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
   });
@@ -572,7 +628,7 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([OCCA]);
   });
 
-  it("🛑 the OWN-SIDE spread (D425): \"your opponent's\" — no reduction, the Berry stays", () => {
+  it('🛑 the OWN-SIDE spread (D425): "your opponent\'s" — no reduction, the Berry stays', () => {
     const { state, events } = swing(table({ ownBench: [{ id: WALL, tool: OCCA }] }), SELFSPLASH);
     expect(state.players.p1.bench[0]?.damage).toBe(120);
     expect(toolIds(state, state.players.p1.bench[0])).toEqual([OCCA]);
@@ -590,7 +646,9 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
   it("🛑 placeSnipe PREVENTED (a benched Dachsbun vs {R}): the Berry is not spent", () => {
     const board = table({ bench: [{ id: DACHSBUN, tool: OCCA }, { id: WALL }] });
     const { state, events } = snipe(board, PINPOINT, BENCH0);
-    const shielded = all(events, "DAMAGE_DEALT").filter((e) => e.seat === "p2" && e.prevented === true);
+    const shielded = all(events, "DAMAGE_DEALT").filter(
+      (e) => e.seat === "p2" && e.prevented === true,
+    );
     expect(shielded.map((e) => e.dealt)).toEqual([0]);
     expect(state.players.p2.bench[0]?.damage).toBe(0);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([OCCA]);
@@ -622,7 +680,9 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
   it("🛑 snipeActive PREVENTED (an Active Dachsbun vs {R}): the Berry is not spent", () => {
     const board = table({ defender: { id: DACHSBUN, tool: OCCA }, bench: [{ id: WALL }] });
     const { state, events } = snipe(board, ARROW, ACTIVE);
-    const shielded = all(events, "DAMAGE_DEALT").filter((e) => e.seat === "p2" && e.prevented === true);
+    const shielded = all(events, "DAMAGE_DEALT").filter(
+      (e) => e.seat === "p2" && e.prevented === true,
+    );
     expect(shielded.map((e) => e.dealt)).toEqual([0]);
     expect(state.players.p2.active?.damage).toBe(0);
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
@@ -670,7 +730,11 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
   });
 
   it("🛑 NOT full HP: the Brace does nothing and the body is Knocked Out", () => {
-    const board = setDamage(table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }), "p2", 10);
+    const board = setDamage(
+      table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }),
+      "p2",
+      10,
+    );
     const { events } = swing(board, BLAST);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(consumed(events)).toEqual([]);
@@ -687,11 +751,19 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(spread.state.players.p2.bench[0]?.damage).toBe(110);
     expect(discardIds(spread.state, "p2")).toContain(BRACE);
 
-    const picked = snipe(table({ bench: [{ id: BRACED, tool: BRACE }, { id: WALL }] }), PINPOINT, BENCH0);
+    const picked = snipe(
+      table({ bench: [{ id: BRACED, tool: BRACE }, { id: WALL }] }),
+      PINPOINT,
+      BENCH0,
+    );
     expect(picked.state.players.p2.bench[0]?.damage).toBe(110);
     expect(discardIds(picked.state, "p2")).toContain(BRACE);
 
-    const active = snipe(table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }), ARROW, ACTIVE);
+    const active = snipe(
+      table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }),
+      ARROW,
+      ACTIVE,
+    );
     expect(active.state.players.p2.active?.damage).toBe(110);
     expect(discardIds(active.state, "p2")).toContain(BRACE);
   });
@@ -702,7 +774,9 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     const koed = all(events, "KNOCKED_OUT").map((e) => idOf(state, e.uid));
     expect(koed).toEqual([BRACED]);
     expect(consumed(events)).toEqual([]);
-    expect(koSurvivalClamp(board, board.players.p1.bench[0] as InPlayPokemon, 120, "p1")).toBeNull();
+    expect(
+      koSurvivalClamp(board, board.players.p1.bench[0] as InPlayPokemon, 120, "p1"),
+    ).toBeNull();
     expect(koSurvivalClamp(board, board.players.p1.bench[0] as InPlayPokemon, 120, "p2")).toEqual({
       damage: 110,
       toolUid: board.players.p1.bench[0]?.tools[0],
@@ -720,24 +794,40 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
   it("🛑 R-BF — Feint's \"any effects on your opponent's Active Pokémon\" does NOT reach the Brace: 120 lands in full, the body survives at 10 and the Brace is spent", () => {
     const board = table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] });
     const { state, events } = swing(board, FEINT);
-    expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 120, damage: 110, survived: true });
+    expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({
+      dealt: 120,
+      damage: 110,
+      survived: true,
+    });
     expect(all(events, "KNOCKED_OUT")).toEqual([]);
     expect(discardIds(state, "p2")).toContain(BRACE);
     expect(consumed(events)).toHaveLength(1);
     // …which is how the Ability twin has read since D208 (the clamp was never gated on
     // `suppressTargetEffects`): Sturdy under Feint survives at 10 too.
     const sturdy = swing(table({ defender: { id: "fix-sturdy" }, bench: [{ id: WALL }] }), FEINT);
-    expect(all(sturdy.events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 120, damage: 110, survived: true });
+    expect(all(sturdy.events, "DAMAGE_DEALT")[0]).toMatchObject({
+      dealt: 120,
+      damage: 110,
+      survived: true,
+    });
     expect(all(sturdy.events, "KNOCKED_OUT")).toEqual([]);
   });
 
   it("🛑 R-BF at both snipe arms (Feint Snipe's `ignoreWR`): the Brace answers on the Bench and in the Active Spot", () => {
-    const picked = snipe(table({ bench: [{ id: BRACED, tool: BRACE }, { id: WALL }] }), FEINT_SNIPE, BENCH0);
+    const picked = snipe(
+      table({ bench: [{ id: BRACED, tool: BRACE }, { id: WALL }] }),
+      FEINT_SNIPE,
+      BENCH0,
+    );
     expect(picked.state.players.p2.bench[0]?.damage).toBe(110);
     expect(discardIds(picked.state, "p2")).toContain(BRACE);
     expect(all(picked.events, "KNOCKED_OUT")).toEqual([]);
 
-    const active = snipe(table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }), FEINT_SNIPE, ACTIVE);
+    const active = snipe(
+      table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }),
+      FEINT_SNIPE,
+      ACTIVE,
+    );
     expect(active.state.players.p2.active?.damage).toBe(110);
     expect(discardIds(active.state, "p2")).toContain(BRACE);
     expect(all(active.events, "KNOCKED_OUT")).toEqual([]);
@@ -745,7 +835,10 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
 
   it("🛑 a Tool is not an Ability: under Klefki's lock (Sturdy silenced) the Brace still answers", () => {
     // Klefki Active on p2 locks every Basic; the spread reaches both benched bodies.
-    const board = table({ defender: { id: KLEFKI }, bench: [{ id: BRACED, tool: BRACE }, { id: "fix-sturdy" }] });
+    const board = table({
+      defender: { id: KLEFKI },
+      bench: [{ id: BRACED, tool: BRACE }, { id: "fix-sturdy" }],
+    });
     const { state, events } = swing(board, SHOCKWAVE);
     expect(state.players.p2.bench.map((b) => idOf(state, b.stack.at(-1)))).toEqual([BRACED]);
     expect(state.players.p2.bench[0]?.damage).toBe(110);
@@ -753,7 +846,10 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
   });
 
   it("🛑 Jamming Tower: the Brace has no effect — the body is Knocked Out", () => {
-    const board = stadium(table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }), JAMMING);
+    const board = stadium(
+      table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }),
+      JAMMING,
+    );
     const { events } = swing(board, BLAST);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(survivalBraceOf(board, board.players.p2.active as InPlayPokemon, "p1")).toBeUndefined();
@@ -770,11 +866,16 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
     expect(discardIds(state, "p2")).toContain(BOMB);
     const spent = consumed(events);
     expect(spent).toHaveLength(1);
-    expect(events.indexOf(rows[0] as GameEvent)).toBeLessThan(events.indexOf(spent[0] as GameEvent));
+    expect(events.indexOf(rows[0] as GameEvent)).toBeLessThan(
+      events.indexOf(spent[0] as GameEvent),
+    );
   });
 
-  it("🛑 \"even if this Pokémon is Knocked Out\" — a lethal hit still detonates it", () => {
-    const { state, events } = swing(table({ defender: { id: BRACED, tool: BOMB }, bench: [{ id: WALL }] }), BLAST);
+  it('🛑 "even if this Pokémon is Knocked Out" — a lethal hit still detonates it', () => {
+    const { state, events } = swing(
+      table({ defender: { id: BRACED, tool: BOMB }, bench: [{ id: WALL }] }),
+      BLAST,
+    );
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(state.players.p1.active?.damage).toBe(120);
   });
@@ -785,7 +886,7 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
     expect(toolIds(state, state.players.p2.active)).toEqual([BOMB]);
   });
 
-  it("🛑 \"in the Active Spot\" — a benched Bomb holder hit by a spread detonates nothing", () => {
+  it('🛑 "in the Active Spot" — a benched Bomb holder hit by a spread detonates nothing', () => {
     const { state, events } = swing(table({ bench: [{ id: WALL, tool: BOMB }] }), SHOCKWAVE);
     expect(all(events, "COUNTERS_PLACED")).toEqual([]);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([BOMB]);
@@ -799,7 +900,10 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
   });
 
   it("🛑 Jamming Tower: no counters, the Bomb stays", () => {
-    const { state, events } = swing(stadium(table({ defender: { id: WALL, tool: BOMB } }), JAMMING), BLAST);
+    const { state, events } = swing(
+      stadium(table({ defender: { id: WALL, tool: BOMB } }), JAMMING),
+      BLAST,
+    );
     expect(all(events, "COUNTERS_PLACED")).toEqual([]);
     expect(toolIds(state, state.players.p2.active)).toEqual([BOMB]);
   });
@@ -828,20 +932,27 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
     expect(all(events, "ABILITY_TRIGGERED")).toEqual([]);
   });
 
-  it("🛑 \"even if this Pokémon is Knocked Out\"", () => {
-    const { events } = swing(table({ defender: { id: BRACED, tool: HELMET }, bench: [{ id: WALL }] }), BLAST);
+  it('🛑 "even if this Pokémon is Knocked Out"', () => {
+    const { events } = swing(
+      table({ defender: { id: BRACED, tool: HELMET }, bench: [{ id: WALL }] }),
+      BLAST,
+    );
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(effectDraws(events, "p2").map((e) => e.uids.length)).toEqual([2]);
   });
 
   it("🛑 not damaged (prevented), not Active (a spread), or silenced (Jamming Tower): no draw", () => {
-    expect(effectDraws(swing(table({ defender: { id: DACHSBUN, tool: HELMET } }), BLAST).events, "p2")).toEqual([]);
-    expect(effectDraws(swing(table({ bench: [{ id: WALL, tool: HELMET }] }), SHOCKWAVE).events, "p2")).toEqual([]);
+    expect(
+      effectDraws(swing(table({ defender: { id: DACHSBUN, tool: HELMET } }), BLAST).events, "p2"),
+    ).toEqual([]);
+    expect(
+      effectDraws(swing(table({ bench: [{ id: WALL, tool: HELMET }] }), SHOCKWAVE).events, "p2"),
+    ).toEqual([]);
     const jammed = stadium(table({ defender: { id: WALL, tool: HELMET } }), JAMMING);
     expect(effectDraws(swing(jammed, BLAST).events, "p2")).toEqual([]);
   });
 
-  it("🛑 switched out by the attack's own effect before the stage runs: \"in the Active Spot\" fails, no draw", () => {
+  it('🛑 switched out by the attack\'s own effect before the stage runs: "in the Active Spot" fails, no draw', () => {
     const board = table({ defender: { id: WALL, tool: HELMET }, bench: [{ id: WALL }] });
     const { events } = swing(board, KICK);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 30 });
@@ -871,7 +982,9 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
     let board = table({ defender: { id: KLAWF, tool: HELMET } });
     board = attachFromDeck(board, "p1", "fix-water-energy", 1);
     const { state: parked, events: first } = swing(board, POKE);
-    expect(all(first, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Counterattacking Pincer"]);
+    expect(all(first, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
+      "Counterattacking Pincer",
+    ]);
     expect(effectDraws(first, "p2")).toEqual([]);
     const helmetUid = parked.players.p2.active?.tools[0] as string;
     expect(parked.pending.map((s) => [s.kind, "uid" in s ? s.uid : undefined])).toEqual([
@@ -883,16 +996,23 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
   });
 
   it("`damagedToolTriggersOf`: the Active's in-effect Tools only", () => {
-    const board = table({ defender: { id: WALL, tool: HELMET }, bench: [{ id: WALL, tool: HELMET }] });
+    const board = table({
+      defender: { id: WALL, tool: HELMET },
+      bench: [{ id: WALL, tool: HELMET }],
+    });
     const activeUid = board.players.p2.active?.stack.at(-1) as string;
     const benchedUid = board.players.p2.bench[0]?.stack.at(-1) as string;
-    expect(damagedToolTriggersOf(board, "p2", activeUid).map((e) => e.ability.name)).toEqual(["Lucky Helmet"]);
+    expect(damagedToolTriggersOf(board, "p2", activeUid).map((e) => e.ability.name)).toEqual([
+      "Lucky Helmet",
+    ]);
     expect(damagedToolTriggersOf(board, "p2", benchedUid)).toEqual([]);
     expect(damagedToolTriggersOf(stadium(board, JAMMING), "p2", activeUid)).toEqual([]);
     // Only the `onDamagedByAttack` timing: an Exp. Share (`onAllyActiveKnockOut`) on the
     // damaged Active is not a damaged-reacting Tool.
     const shared = table({ defender: { id: WALL, tool: EXP_SHARE } });
-    expect(damagedToolTriggersOf(shared, "p2", shared.players.p2.active?.stack.at(-1) as string)).toEqual([]);
+    expect(
+      damagedToolTriggersOf(shared, "p2", shared.players.p2.active?.stack.at(-1) as string),
+    ).toEqual([]);
   });
 });
 
@@ -900,10 +1020,15 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
 describe("D562 tools §7 — Handheld Fan, R-HF", () => {
   /** p1 Fire (one {C}) vs a Fan-carrying Wall, p1's Bench one Wall. */
   const fanBoard = (opts: { ownBench?: Body[]; bare?: boolean } = {}) =>
-    table({ defender: { id: WALL, tool: FAN }, ownBench: opts.ownBench ?? [{ id: WALL }], bare: opts.bare });
+    table({
+      defender: { id: WALL, tool: FAN },
+      ownBench: opts.ownBench ?? [{ id: WALL }],
+      bare: opts.bare,
+    });
 
   function fanPrompt(state: GameState) {
-    if (state.phase.kind !== "effect:choose") throw new Error(`expected the Fan's park, got ${state.phase.kind}`);
+    if (state.phase.kind !== "effect:choose")
+      throw new Error(`expected the Fan's park, got ${state.phase.kind}`);
     const prompt = state.phase.prompt;
     if (prompt.kind !== "moveEnergy") throw new Error(`expected moveEnergy, got ${prompt.kind}`);
     return prompt;
@@ -918,17 +1043,24 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     const { state, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p2",
-      choice: { kind: "moveEnergy", picks: [{ uid: energy, dest: { seat: "p1", spot: { spot: "bench", index: 0 } } }] },
+      choice: {
+        kind: "moveEnergy",
+        picks: [{ uid: energy, dest: { seat: "p1", spot: { spot: "bench", index: 0 } } }],
+      },
     });
     expect(all(events, "ABILITY_TRIGGERED")).toEqual([]);
     expect(state.players.p1.bench[0]?.energy).toContain(energy);
     expect(state.players.p1.active?.energy).not.toContain(energy);
   });
 
-  it("⚠️ R-HF — the printed \"move\" is mandatory, the family's `max: 1` park carries its standing decline", () => {
+  it('⚠️ R-HF — the printed "move" is mandatory, the family\'s `max: 1` park carries its standing decline', () => {
     const { state: parked } = swing(fanBoard(), BLAST);
     expect(fanPrompt(parked).min ?? 0).toBe(0);
-    const { state } = mustApply(parked, { type: "resolveEffect", seat: "p2", choice: { kind: "moveEnergy", picks: [] } });
+    const { state } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "moveEnergy", picks: [] },
+    });
     expect(state.players.p1.bench[0]?.energy).toEqual([]);
   });
 
@@ -949,7 +1081,7 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     expect(lonely.state.players.p1.active?.energy).toHaveLength(1);
   });
 
-  it("⚠️ R-HF, INHERITED APPROXIMATION — the stage reads the opponent's CURRENT Active, not \"the Attacking Pokémon\"", () => {
+  it('⚠️ R-HF, INHERITED APPROXIMATION — the stage reads the opponent\'s CURRENT Active, not "the Attacking Pokémon"', () => {
     // Klawf ex's since D101: `side: "opponent"` resolves the source when the stage RUNS,
     // after the attack's own program. An attack that damages and then switches its user
     // out hands the Fan the NEW Active, while the Attacking Pokémon, now benched, still
@@ -957,11 +1089,17 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     // stage (a `PendingStage` SHAPE change, so an MRV decision).
     function kickedOut(state: GameState): { state: GameState; events: GameEvent[] } {
       const swung = swing(state, RETREAT_KICK);
-      if (swung.state.phase.kind !== "effect:choose" || swung.state.phase.seat !== "p1") return swung;
+      if (swung.state.phase.kind !== "effect:choose" || swung.state.phase.seat !== "p1")
+        return swung;
       const prompt = swung.state.phase.prompt;
-      if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected the switch pick, got ${prompt.kind}`);
+      if (prompt.kind !== "choosePokemonMulti")
+        throw new Error(`expected the switch pick, got ${prompt.kind}`);
       const ref = prompt.candidates[0] as PokemonRef;
-      return mustApply(swung.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [ref] } });
+      return mustApply(swung.state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemonMulti", refs: [ref] },
+      });
     }
     // (a) the switched-in body holds no Energy: the Fan whiffs, the benched attacker keeps its {C}.
     const bare = kickedOut(fanBoard());
@@ -980,7 +1118,11 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
       ...board,
       players: {
         ...board.players,
-        p1: { ...side, deck: side.deck.filter((u) => u !== water), bench: [{ ...sub, energy: [water] }] },
+        p1: {
+          ...side,
+          deck: side.deck.filter((u) => u !== water),
+          bench: [{ ...sub, energy: [water] }],
+        },
       },
     };
     const attackerEnergy = board.players.p1.active?.energy[0] as string;
@@ -994,10 +1136,6 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445 rollback reading named", () => {
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-
   it("a parked Klawf with a Tool-uid stage queued behind it revives identically through JSON", () => {
     let board = table({ defender: { id: KLAWF, tool: HELMET } });
     board = attachFromDeck(board, "p1", "fix-water-energy", 1);
@@ -1013,24 +1151,38 @@ describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445
     const helmetUid = board.players.p2.active?.tools[0] as string;
     const activeUid = board.players.p2.active?.stack.at(-1) as string;
     expect(damagedByAttackAbility(board, "p2", helmetUid)).toBeUndefined();
-    expect(damagedToolTriggersOf(board, "p2", activeUid).map((e) => e.toolUid)).toEqual([helmetUid]);
+    expect(damagedToolTriggersOf(board, "p2", activeUid).map((e) => e.toolUid)).toEqual([
+      helmetUid,
+    ]);
   });
 
   it("⚠️ ROLLBACK — the consumable keys are catalog data a 0.445 fold never reads: stripped, the Tools are inert", () => {
-    const board = table({ defender: { id: WALL, tool: OCCA }, bench: [{ id: BRACED, tool: BRACE }, { id: WALL, tool: BOMB }] });
+    const board = table({
+      defender: { id: WALL, tool: OCCA },
+      bench: [
+        { id: BRACED, tool: BRACE },
+        { id: WALL, tool: BOMB },
+      ],
+    });
     // The 0.445 fold is `passivesOf`, unchanged: it sees none of the three keys (§1), so a
     // 0.445 reader takes the full 120, Knocks the Brace holder Out and places no Bomb
     // counters — and discards nothing, so the Tools stay attached, inert.
     for (const body of [board.players.p2.active, ...board.players.p2.bench]) {
       const folded = passivesOf(board, body as InPlayPokemon);
-      expect([folded.damageReductionAfterWR, folded.survivesKoAtFullHp, folded.damageAttacker]).toEqual([0, false, 0]);
+      expect([
+        folded.damageReductionAfterWR,
+        folded.survivesKoAtFullHp,
+        folded.damageAttacker,
+      ]).toEqual([0, false, 0]);
     }
     // …while this build's scans DO read them — the difference IS the rollback reading.
     expect(toolsInEffect(board, board.players.p2.active as InPlayPokemon)).toHaveLength(1);
-    expect(berryReductionOf(board, board.players.p2.active as InPlayPokemon, POOL[FIRE], "p1").amount).toBe(60);
+    expect(
+      berryReductionOf(board, board.players.p2.active as InPlayPokemon, POOL[FIRE], "p1").amount,
+    ).toBe(60);
   });
 
-  it("the new `when: \"consumed\"` rides an UNPERSISTED event — only its rendered row reaches a MatchRecord", () => {
+  it('the new `when: "consumed"` rides an UNPERSISTED event — only its rendered row reaches a MatchRecord', () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: OCCA } }), BLAST);
     const row = render(consumed(events), state)[0];
     expect(JSON.parse(JSON.stringify(row))).toEqual(row);

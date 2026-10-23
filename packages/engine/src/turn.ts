@@ -241,7 +241,10 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // spent (the card never leaves hand). Through `energyMayBeAttachedTo`, the predicate flow.ts's
   // sweep discards by. A bad bench index reads no body and is refused below.
   if (markedTarget != null && !energyMayBeAttachedTo(state, card, markedTarget)) {
-    return err("BAD_TARGET", `${card.name} can only be attached to a ${programFor(card.id)?.energy?.attachOnlyToOwner ?? ""}'s Pokémon`);
+    return err(
+      "BAD_TARGET",
+      `${card.name} can only be attached to a ${programFor(card.id)?.energy?.attachOnlyToOwner ?? ""}'s Pokémon`,
+    );
   }
 
   const hand = without(side.hand, action.uid);
@@ -301,13 +304,21 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // 🆕🆕🆕 D604 — a typed Special Energy's rider fires only onto a holder of its printed type
   // (`energyRulesApply`, read on the attach-moment board — `next`, still `atAttach` here; R-TE1).
   const energyProgram = programFor(card.id)?.energy;
-  const landedOn = action.target.spot === "active" ? next.players[action.seat].active : next.players[action.seat].bench[action.target.index];
+  const landedOn =
+    action.target.spot === "active"
+      ? next.players[action.seat].active
+      : next.players[action.seat].bench[action.target.index];
   const onAttach =
-    landedOn != null && energyRulesApply(next, landedOn, energyProgram) ? energyProgram?.onAttach : undefined;
+    landedOn != null && energyRulesApply(next, landedOn, energyProgram)
+      ? energyProgram?.onAttach
+      : undefined;
   // 🆕🆕🆕 D604 — Telepathic Psychic Energy's Bench search (R-TP1): run LAST, below, because it parks.
   const benchSearch: EffectOp[] | undefined =
     onAttach?.kind === "benchSearch"
-      ? [{ op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max }, { op: "shuffleDeck" }]
+      ? [
+          { op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max },
+          { op: "shuffleDeck" },
+        ]
       : undefined;
   // 🆕🆕🆕 D613 — `switched` records that the rider MOVED a body: `switchInto` runs the
   // `onActiveMovedToBench` triggers (Team Rocket's Dugtrio "Holes" puts 2 damage counters on the
@@ -423,7 +434,8 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     if (shocked !== next || switched) {
       next = shocked;
       // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).
-      if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
+      if (benchSearch !== undefined)
+        return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
       // The counters can be lethal, and this is the acting seat's own board
       // mid-turn — `placeEvolution`'s sweep, for `placeEvolution`'s reason.
       // 🆕🆕🆕 D575 — Hypno's turn end rides BEHIND the sweep's prize / promotion stages in
@@ -441,14 +453,20 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // 🆕🆕🆕 D575 — Hypno "Daydream": the attach onto the marked Defending Pokémon ENDS the turn,
   // seeded here after the §6.1 riders, the §12 recovery and the watched triggers have all run
   // (R-HY2 ⚠️ UNRULED) — the Koraidon "Dino Cry" fold, `settleProgram`'s `endsTurn`.
-  if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
+  if (benchSearch !== undefined)
+    return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
   if (endsTurn) return advance({ ...next, pending: turnTail(action.seat) }, events);
   return ok(next, events);
 }
 
 /** 🆕🆕🆕 D636 — the body on `seat`'s board whose top is `uid` after ONE Energy card from hand landed on it,
     through `shockHandAttach` (Electrified Incisors); `state` itself when nothing was placed. */
-function shockAttachedBody(state: GameState, seat: Seat, uid: string, events: GameEvent[]): GameState {
+function shockAttachedBody(
+  state: GameState,
+  seat: Seat,
+  uid: string,
+  events: GameEvent[],
+): GameState {
   const side = state.players[seat];
   if (side.active !== null && topUid(side.active) === uid) {
     const shocked = shockHandAttach(state, seat, side.active, 1, events);
@@ -459,7 +477,10 @@ function shockAttachedBody(state: GameState, seat: Seat, uid: string, events: Ga
   if (benched === undefined) return state;
   const shocked = shockHandAttach(state, seat, benched, 1, events);
   if (shocked === benched) return state;
-  return withSide(state, seat, { ...side, bench: side.bench.map((p, i) => (i === index ? shocked : p)) });
+  return withSide(state, seat, {
+    ...side,
+    bench: side.bench.map((p, i) => (i === index ? shocked : p)),
+  });
 }
 
 /** 🆕🆕🆕 D604 — Telepathic Psychic Energy `me03-088`'s *"search your deck for up to 2 Basic {P} Pokémon and
@@ -473,7 +494,12 @@ function searchAfterAttach(
   endsTurn: boolean,
   events: GameEvent[],
 ): ApplyResult {
-  return settleProgram(runProgram(state, program, { seat }, events), seat, events, endsTurn ? { endsTurn: true } : {});
+  return settleProgram(
+    runProgram(state, program, { seat }, events),
+    seat,
+    events,
+    endsTurn ? { endsTurn: true } : {},
+  );
 }
 
 /** 🆕 D319 — the top-card uid of the body on `seat`'s board that is CARRYING the
@@ -511,11 +537,14 @@ function benchFromHandRotation(
 ): { reject: ApplyResult } | { usedKey: string; name: string } | null {
   if (!state.players[seat].hand.includes(uid)) return null;
   const card = cardOfUid(state, uid);
-  const rotation = card === undefined || isBasicPokemon(card) ? undefined : programFor(card.id)?.benchFromHand;
+  const rotation =
+    card === undefined || isBasicPokemon(card) ? undefined : programFor(card.id)?.benchFromHand;
   if (rotation === undefined) return null;
   const usedKey = abilityUsedKey(uid, rotation);
   if (state.allowances.abilitiesUsed.includes(usedKey)) {
-    return { reject: err("ABILITY_ALREADY_USED", `${rotation.name} was already used this turn (§9)`) };
+    return {
+      reject: err("ABILITY_ALREADY_USED", `${rotation.name} was already used this turn (§9)`),
+    };
   }
   if (!conditionHolds(state, seat, rotation.playableIf)) {
     return {
@@ -592,7 +621,14 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   const events: GameEvent[] = [
     ...(rotation === null
       ? []
-      : [{ type: "ABILITY_USED" as const, seat: action.seat, uid: action.uid, ability: rotation.name }]),
+      : [
+          {
+            type: "ABILITY_USED" as const,
+            seat: action.seat,
+            uid: action.uid,
+            ability: rotation.name,
+          },
+        ]),
     { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
   ];
   // 🆕🆕🆕 D642 — Risky Ruins: the counters land with the body, before its own on-bench trigger (R-RR1).
@@ -903,7 +939,9 @@ export function placeEvolution(
   // that made this parameter necessary rides the ATTACH, not the evolve.
   const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events, next);
   const subject =
-    target.spot === "active" ? watched.players[seat].active : watched.players[seat].bench[benchIndex];
+    target.spot === "active"
+      ? watched.players[seat].active
+      : watched.players[seat].bench[benchIndex];
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
     return resolveMidTurnKnockOuts(watched, seat, [seat], events);
   }
@@ -1155,10 +1193,19 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     rngState = advanced;
     flips.push(
       { type: "ABILITY_TRIGGERED", seat: holderSeat, uid: slimy.uid, ability: slimy.ability },
-      { type: "ABILITY_COIN_FLIP", seat: holderSeat, uid: slimy.uid, ability: slimy.ability, result: face },
+      {
+        type: "ABILITY_COIN_FLIP",
+        seat: holderSeat,
+        uid: slimy.uid,
+        ability: slimy.ability,
+        result: face,
+      },
     );
     if (face === "tails") {
-      return ok({ ...state, rngState, allowances: { ...state.allowances, retreated: true } }, flips);
+      return ok(
+        { ...state, rngState, allowances: { ...state.allowances, retreated: true } },
+        flips,
+      );
     }
   }
 
@@ -1320,11 +1367,21 @@ export function discardFromPlay(state: GameState, action: DiscardFromPlayAction)
   }
   const uid = topUid(body);
   if (uid === undefined || !isFossilTop(state, body)) {
-    return err("NOT_DISCARDABLE", "only a card that prints \"discard this card from play\" can be discarded from play");
+    return err(
+      "NOT_DISCARDABLE",
+      'only a card that prints "discard this card from play" can be discarded from play',
+    );
   }
   const cleanup = discardFromStack(side, body, "all");
   const events: GameEvent[] = [
-    { type: "POKEMON_RETURNED", seat: action.seat, uid, actor: action.seat, dest: "discard", uids: cleanup.discarded },
+    {
+      type: "POKEMON_RETURNED",
+      seat: action.seat,
+      uid,
+      actor: action.seat,
+      dest: "discard",
+      uids: cleanup.discarded,
+    },
   ];
   const next = withSide(
     state,

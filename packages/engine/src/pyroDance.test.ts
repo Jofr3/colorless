@@ -335,8 +335,20 @@ describe("D351 §1 — the registry row is TWO ops, and the shape is the print",
     // 🆕 Card revision B12 — both ops gained `recordAs: "moved"` + `atLeastOne` (the printed
     // "or 1 of each" as a coupling: `revisionB12.test.ts` §1 drives the three answers).
     expect(pyroProgram()).toEqual([
-      { op: "attachEnergyFrom", source: "hand", energyType: "Fire", recordAs: "moved", atLeastOne: true },
-      { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", recordAs: "moved", atLeastOne: true },
+      {
+        op: "attachEnergyFrom",
+        source: "hand",
+        energyType: "Fire",
+        recordAs: "moved",
+        atLeastOne: true,
+      },
+      {
+        op: "attachEnergyFrom",
+        source: "hand",
+        energyType: "Fighting",
+        recordAs: "moved",
+        atLeastOne: true,
+      },
     ]);
   });
 
@@ -349,7 +361,13 @@ describe("D351 §1 — the registry row is TWO ops, and the shape is the print",
     // 🆕 Card revision B12 — plus the disjunction's two keys (`atLeastOne`, `recordAs`); the
     // absences this rung is about are unchanged.
     for (const op of pyroProgram()) {
-      expect(Object.keys(op).sort()).toEqual(["atLeastOne", "energyType", "op", "recordAs", "source"]);
+      expect(Object.keys(op).sort()).toEqual([
+        "atLeastOne",
+        "energyType",
+        "op",
+        "recordAs",
+        "source",
+      ]);
     }
   });
 
@@ -566,7 +584,9 @@ describe("D351 §5 — 'you may' and 'once during your turn'", () => {
     expect(wrongKind.ok).toBe(false);
     if (wrongKind.ok) throw new Error("the park accepted a cards answer");
     expect(wrongKind.error.code).toBe("BAD_EFFECT_CHOICE");
-    const declined = must(applyAction(afterFirst, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } }));
+    const declined = must(
+      applyAction(afterFirst, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } }),
+    );
     expect(declined.phase.kind).toBe("turn:action");
     expect(attachedTypes(declined, ACTIVE_REF)).toEqual(["Fire Energy"]);
     expect(attachedTypes(declined, BENCH_REF)).toEqual([]);

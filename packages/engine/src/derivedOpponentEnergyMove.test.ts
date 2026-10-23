@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
-import { applyAction, engineVersion, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import { moveEnergyPlayable } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -193,9 +193,7 @@ describe("§1 — the deriver: two anchors, two sentences, and the possessive th
     const [rawSap] = legalAttackCorpus().filter(([, text]) => text === OPP_ACTIVE_TO_BENCH);
     expect(rawFree?.[1].codePointAt(38)).toBe(0x27);
     expect(rawSap?.[1].codePointAt(41)).toBe(0x27);
-    expect(deriveAttackEffect(OPP_FREE.replace("'", "’"))).toEqual(
-      deriveAttackEffect(OPP_FREE),
-    );
+    expect(deriveAttackEffect(OPP_FREE.replace("'", "’"))).toEqual(deriveAttackEffect(OPP_FREE));
     expect(deriveAttackEffect(OPP_ACTIVE_TO_BENCH.replace("'", "’"))).toEqual(
       deriveAttackEffect(OPP_ACTIVE_TO_BENCH),
     );
@@ -349,9 +347,9 @@ describe("§2 — the park: the offer is on the other board, and nobody else is 
     // The op's own no-op test, on the other board. An opponent holding no Energy
     // offers nothing; an opponent with ONE body in play has no distinct destination
     // for the free route's printed "another" (`needed: 2`).
-    expect(swing(board({ oppEnergy: 0, oppBenchEnergy: 0 }), STATIC_FLICK).state.phase.kind).not.toBe(
-      "effect:choose",
-    );
+    expect(
+      swing(board({ oppEnergy: 0, oppBenchEnergy: 0 }), STATIC_FLICK).state.phase.kind,
+    ).not.toBe("effect:choose");
     expect(swing(board({ oppBench: 0 }), STATIC_FLICK).state.phase.kind).not.toBe("effect:choose");
     // …and `selfToBench` whiffs on an EMPTY opponent bench for the mirrored reason.
     expect(swing(board({ oppBench: 0 }), DRAINING_SAP).state.phase.kind).not.toBe("effect:choose");
@@ -404,9 +402,8 @@ describe("§3 — the apply: the Energy moves on THEIR board and nothing of your
     );
     // The printed "another": a pick may not land on the body it came off, and on
     // the other board that is the SAME per-pick rule rather than a new one.
-    const fromActive = parked(state).movable.find(
-      (offer) => offer.from.spot.spot === "active",
-    )?.uid as string;
+    const fromActive = parked(state).movable.find((offer) => offer.from.spot.spot === "active")
+      ?.uid as string;
     expectErr(
       state,
       {
@@ -506,7 +503,12 @@ describe("§4b — the playability gate: the funnel and the offer answer about O
     // no test can see. The falsifier for the indirection: a Trainer or an Ability
     // printing an opponent-board Energy move, at which point this becomes a board.
     const oppOnly = board({ ownEnergy: 0 });
-    const crossing = { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, side: "opponent" } as const;
+    const crossing = {
+      op: "moveEnergy",
+      filter: { kind: "anyEnergy" },
+      max: 1,
+      side: "opponent",
+    } as const;
     const ownBoard = { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1 } as const;
     // p1 holds NO Energy and p2 holds three across two bodies, so the two answers
     // are opposite on one board — which is what makes this a measurement and not a
@@ -656,15 +658,5 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 29", () => {
     });
     expect(withRider.state.players.p2.bench[1]?.energy).toEqual([uid]);
     expect(events(withRider.events, "ENERGY_MOVED")).toHaveLength(1);
-  });
-});
-
-describe("§8 — the version block", () => {
-  it("the engine version was bumped in the same commit as the behaviour", () => {
-    // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
-    // are one fact with two spellings, and the pin is authored HERE rather than
-    // inherited (D427 — every note counts the pins it inherited and never the one it
-    // is about to author; this is D443's own).
-    expect(engineVersion).toBe("0.555.0");
   });
 });

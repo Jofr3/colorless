@@ -773,27 +773,28 @@ describe("D325 §6 — these grants can SHRINK, and one of them cannot", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D325 §7 — the invariants this slice was warned about", () => {
-  it.each(SEEDS)("every new term is an ADDEND — the sum never falls below the print (seed %i)", (
-    seed,
-  ) => {
-    // 🛑 D205's INVARIANT, ASSERTED RATHER THAN ASSUMED. `koSurvivalClamp` has no
-    // `dealt <= 0` guard because this sum is never non-positive; D324 made that a
-    // `Math.max` when Gravity Mountain became the first subtrahend. These three
-    // rows cannot weaken it because none of them can be negative — and the
-    // strongest form of that is to sweep every board this file can build.
-    for (const id of [OKIDOGI, CONKELDURR, BRAMBLE]) {
-      const printed = POOL[id]?.hp ?? 0;
-      let state = board(seed, { p1Active: id });
-      expect(activeMaxHp(state, "p1")).toBe(printed);
-      state = attachFromDeck(state, "p1", WATER, 2);
-      expect(activeMaxHp(state, "p1") ?? 0).toBeGreaterThanOrEqual(printed);
-      state = attachFromDeck(state, "p1", DARK, 1);
-      state = attachFromDeck(state, "p1", FIGHT, 1);
-      expect(activeMaxHp(state, "p1") ?? 0).toBeGreaterThanOrEqual(printed);
-      state = setPrizes(state, "p2", 0);
-      expect(activeMaxHp(state, "p1") ?? 0).toBeGreaterThanOrEqual(printed);
-    }
-  });
+  it.each(SEEDS)(
+    "every new term is an ADDEND — the sum never falls below the print (seed %i)",
+    (seed) => {
+      // 🛑 D205's INVARIANT, ASSERTED RATHER THAN ASSUMED. `koSurvivalClamp` has no
+      // `dealt <= 0` guard because this sum is never non-positive; D324 made that a
+      // `Math.max` when Gravity Mountain became the first subtrahend. These three
+      // rows cannot weaken it because none of them can be negative — and the
+      // strongest form of that is to sweep every board this file can build.
+      for (const id of [OKIDOGI, CONKELDURR, BRAMBLE]) {
+        const printed = POOL[id]?.hp ?? 0;
+        let state = board(seed, { p1Active: id });
+        expect(activeMaxHp(state, "p1")).toBe(printed);
+        state = attachFromDeck(state, "p1", WATER, 2);
+        expect(activeMaxHp(state, "p1") ?? 0).toBeGreaterThanOrEqual(printed);
+        state = attachFromDeck(state, "p1", DARK, 1);
+        state = attachFromDeck(state, "p1", FIGHT, 1);
+        expect(activeMaxHp(state, "p1") ?? 0).toBeGreaterThanOrEqual(printed);
+        state = setPrizes(state, "p2", 0);
+        expect(activeMaxHp(state, "p1") ?? 0).toBeGreaterThanOrEqual(printed);
+      }
+    },
+  );
 
   it.each(SEEDS)("an EMPTY count adds exactly zero, never a floor (seed %i)", (seed) => {
     // The `amount × 0` case, stated separately from "no field at all": a build

@@ -97,7 +97,12 @@ function base(): GameState {
 }
 
 /** TEST SURGERY — fresh uids for every card placed, both Actives replaced, both Benches one filler. */
-function table(opts: { ursaluna: string; tm: boolean; fossil: boolean; opponentTook: number }): GameState {
+function table(opts: {
+  ursaluna: string;
+  tm: boolean;
+  fossil: boolean;
+  opponentTook: number;
+}): GameState {
   const state: GameState = JSON.parse(JSON.stringify(base()));
   let n = 0;
   const alloc = (id: string): string => {
@@ -108,14 +113,22 @@ function table(opts: { ursaluna: string; tm: boolean; fossil: boolean; opponentT
     state.cardPool = { ...state.cardPool, [id]: card };
     return uid;
   };
-  const body = (id: string, energy: readonly string[] = [], tools: readonly string[] = []): InPlayPokemon => ({
+  const body = (
+    id: string,
+    energy: readonly string[] = [],
+    tools: readonly string[] = [],
+  ): InPlayPokemon => ({
     ...makeInPlay(alloc(id), 1),
     energy: energy.map(alloc),
     tools: tools.map(alloc),
   });
   const p1 = state.players.p1;
   const p2 = state.players.p2;
-  state.players.p1 = { ...p1, active: body(opts.ursaluna, [G, W, P], opts.tm ? [TM] : []), bench: [body(FILLER)] };
+  state.players.p1 = {
+    ...p1,
+    active: body(opts.ursaluna, [G, W, P], opts.tm ? [TM] : []),
+    bench: [body(FILLER)],
+  };
   state.players.p2 = {
     ...p2,
     active: body(opts.fossil ? ROOT : FILLER),
@@ -158,7 +171,10 @@ describe("B17 §1 — Seasoned Skill discounts BLOOD MOON only", () => {
         const state = table({ ursaluna: id, tm: true, fossil: true, opponentTook: took });
         const menu = attackMenuOf(state, "p1", ursalunaOf(state)).map((entry) => entry.attack.name);
         expect(menu).toEqual(["Blood Moon", "Fluorite"]);
-        expect(attackCostAt(state, "p1", ursalunaOf(state), 1, GWP), `took ${took}`).toEqual([...GWP, "Colorless"]);
+        expect(attackCostAt(state, "p1", ursalunaOf(state), 1, GWP), `took ${took}`).toEqual([
+          ...GWP,
+          "Colorless",
+        ]);
         expect(rejection(state, attack(1)), `took ${took}`).toBe("ATTACK_COST_UNMET");
       }
     });
@@ -167,7 +183,9 @@ describe("B17 §1 — Seasoned Skill discounts BLOOD MOON only", () => {
   it("Blood Moon itself still takes the per-Prize {C} off, surcharge included", () => {
     // 5 printed {C} + Primal Root's 1 − 2 taken Prizes = 4 {C}.
     const surcharged = table({ ursaluna: "sv06-141", tm: true, fossil: true, opponentTook: 2 });
-    expect(attackCostAt(surcharged, "p1", ursalunaOf(surcharged), 0, GWP)).toEqual(FIVE_C.slice(0, 4));
+    expect(attackCostAt(surcharged, "p1", ursalunaOf(surcharged), 0, GWP)).toEqual(
+      FIVE_C.slice(0, 4),
+    );
     // …and with no surcharge, 5 − 4 taken = 1 {C}: the three attached Energy pay it.
     const bare = table({ ursaluna: "sv06-141", tm: true, fossil: false, opponentTook: 4 });
     expect(attackCostAt(bare, "p1", ursalunaOf(bare), 0, GWP)).toEqual(["Colorless"]);

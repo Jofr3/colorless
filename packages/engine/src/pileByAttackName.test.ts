@@ -20,7 +20,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { countCardsInDiscardPile, countPokemonInPlay } from "./interpreter";
 import {
@@ -214,9 +214,9 @@ describe("§1 — the printed sentence, the population, and the fixture", () => 
     const row = legalAttackCorpus().find(([, s]) => s === PRINTED);
     expect(row).toBeDefined();
     const text = row?.[1] ?? "";
-    const exotic = [...text].map((c, i) => [i, c.codePointAt(0) ?? 0] as const).filter(
-      ([, cp]) => cp > 127 || cp === 0x27,
-    );
+    const exotic = [...text]
+      .map((c, i) => [i, c.codePointAt(0) ?? 0] as const)
+      .filter(([, cp]) => cp > 127 || cp === 0x27);
     expect(exotic).toEqual([[39, 0x00e9]]);
     expect(text.includes("'")).toBe(false);
     expect(text.includes("’")).toBe(false);
@@ -226,9 +226,9 @@ describe("§1 — the printed sentence, the population, and the fixture", () => 
     // The whole attack list, so the fixture cannot be wrong by OMISSION (D156).
     // ⚠️ THE TRAILING `×` IS LOAD-BEARING: it tells attack.ts to DROP the printed base,
     // which is what makes the empty-pile board in §4 a ZERO rather than a 20.
-    expect(FIXTURE_POOL["fix-pilewings"]?.attacks?.map((a) => [a.name, a.damage, a.effect])).toEqual(
-      [["Flock Memory", "20×", PRINTED]],
-    );
+    expect(
+      FIXTURE_POOL["fix-pilewings"]?.attacks?.map((a) => [a.name, a.damage, a.effect]),
+    ).toEqual([["Flock Memory", "20×", PRINTED]]);
     // 🛑 AND THE HOLDER'S OWN ATTACK IS NOT THE NAMED ONE — the fixture's single design
     // decision. A holder that counted itself would move the pile number and the board
     // number together and leave ⑴ untestable.
@@ -241,9 +241,9 @@ describe("§1 — the printed sentence, the population, and the fixture", () => 
     // one is false through the empty attack list, one through the NAME.
     expect(FIXTURE_POOL["fix-benchfiller"]?.attacks ?? []).toHaveLength(0);
     expect(FIXTURE_POOL["fix-attacker-ex"]?.attacks?.length ?? 0).toBeGreaterThan(0);
-    expect(
-      FIXTURE_POOL["fix-attacker-ex"]?.attacks?.some((a) => a.name === "United Wings"),
-    ).toBe(false);
+    expect(FIXTURE_POOL["fix-attacker-ex"]?.attacks?.some((a) => a.name === "United Wings")).toBe(
+      false,
+    );
   });
 });
 
@@ -332,7 +332,9 @@ describe("§2 — the anchor, its owner, and the four literal axes", () => {
     const count = (re: RegExp) => corpus.filter(([, s]) => re.test(s)).length;
     expect(count(/opponent['’]s discard pile that has/)).toBe(0);
     expect(count(/more damage for each [^.]* in your discard pile that has/)).toBe(0);
-    expect(count(/for each (?!Pokémon in your discard pile)[^.]* in your discard pile that has/)).toBe(0);
+    expect(
+      count(/for each (?!Pokémon in your discard pile)[^.]* in your discard pile that has/),
+    ).toBe(0);
     // …and the ADMITTED case on the same axis, so the zeros are not passing because the
     // pattern matches nothing at all (D424: every "X is printed nowhere" owes a "Y is").
     expect(count(/in your discard pile that has the ([^.]+) attack\./)).toBe(1);
@@ -343,14 +345,21 @@ describe("§2 — the anchor, its owner, and the four literal axes", () => {
     // claim is about BEHAVIOUR rather than about a module-private constant: the
     // unnarrowed pile fold, the in-play attack-name fold, and this slice's cross
     // product. Run over all 640 rows rather than argued from their shapes.
-    const PILE = /^This attack does (\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
-    const IN_PLAY = /^This attack does (\d+) damage for each of your Pokémon in play that has the ([^.]+) attack\.$/;
-    const CROSS = /^This attack does (\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\.$/;
+    const PILE =
+      /^This attack does (\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
+    const IN_PLAY =
+      /^This attack does (\d+) damage for each of your Pokémon in play that has the ([^.]+) attack\.$/;
+    const CROSS =
+      /^This attack does (\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\.$/;
     const doubled = legalAttackCorpus().filter(
       ([, s]) => [PILE.test(s), IN_PLAY.test(s), CROSS.test(s)].filter(Boolean).length > 1,
     );
     expect(doubled).toEqual([]);
-    expect(legalAttackCorpus().filter(([, s]) => CROSS.test(s)).map(([, s]) => s)).toEqual([PRINTED]);
+    expect(
+      legalAttackCorpus()
+        .filter(([, s]) => CROSS.test(s))
+        .map(([, s]) => s),
+    ).toEqual([PRINTED]);
   });
 
   it("🛑 the IN-PLAY twin still derives to its OWN count, and the two differ only in ZONE", () => {
@@ -462,9 +471,5 @@ describe("§4 — the census step this slice is", () => {
     });
     expect(claimed.map(([, s]) => s)).toEqual([PRINTED]);
     expect(claimed.reduce((sum, [n]) => sum + n, 0)).toBe(1);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

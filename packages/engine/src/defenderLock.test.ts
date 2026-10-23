@@ -338,9 +338,7 @@ describe("the opponent-side lock — derived, not authored", () => {
     }
     // Outer whitespace SURVIVES by design (the deriver trims), which states which
     // drift is tolerated and which is not.
-    expect(deriveAttackEffect(`\t  ${HOUNDOOM_TEXT}\n`)).toEqual(
-      deriveAttackEffect(HOUNDOOM_TEXT),
-    );
+    expect(deriveAttackEffect(`\t  ${HOUNDOOM_TEXT}\n`)).toEqual(deriveAttackEffect(HOUNDOOM_TEXT));
   });
 
   it("Houndoom ex's INDEX 1 derives its own sentence, and no program leaks", () => {
@@ -813,10 +811,11 @@ describe("the opponent-side lock — §10 ends it, and every route is the VICTIM
     // the same attack that can end it. The row is still emitted (attack.ts runs
     // the program before the §8.1 sweep, exactly as a defender-targeted status
     // lands on a lethal hit), and the PROMOTED body carries no lock.
-    const { state, events } = mustApply(
-      armed("sv03-042", "sv01-048"),
-      { type: "attack", seat: "p1", index: INSTALL_INDEX },
-    );
+    const { state, events } = mustApply(armed("sv03-042", "sv01-048"), {
+      type: "attack",
+      seat: "p1",
+      index: INSTALL_INDEX,
+    });
     // The ORDER is the assertion, not just the presence: the lock row lands
     // BEFORE the Knock Out, because attack.ts runs the effect program at its tail
     // and sweeps §8.1 after it. Writing a stamp onto a body that is about to leave
@@ -887,7 +886,10 @@ describe("the opponent-side lock — a §11 effects block REFUSES it", () => {
       ...state,
       players: {
         ...state.players,
-        p2: { ...state.players.p2, active: { ...active, attackBlock: { turn: 2, effects: false } } },
+        p2: {
+          ...state.players.p2,
+          active: { ...active, attackBlock: { turn: 2, effects: false } },
+        },
       },
     };
     const { state: after, events } = mustApply(narrow, {

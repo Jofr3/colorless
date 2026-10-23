@@ -508,7 +508,10 @@ describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud
       "shuffle this Pokémon and all attached cards into your hand.",
       "during your opponent's next turn, this Pokémon can't attack.",
     ]) {
-      expect(deriveAttackOptionalBoost(`You may do 60 more damage. If you do, ${tail}`), tail).toBeNull();
+      expect(
+        deriveAttackOptionalBoost(`You may do 60 more damage. If you do, ${tail}`),
+        tail,
+      ).toBeNull();
     }
   });
 
@@ -656,10 +659,11 @@ describe("D316 §4 — the LOUD path closed: the sentence and its '+' are both s
     // control shares the antecedent deliberately, so what it isolates is the
     // DISPATCH and not the anchor.
     expect(deriveAttackOptionalBoost(UNREAD_TEXT)).toBeNull();
-    const { events } = apply(
-      board({ attacker: UNREAD, energy: WATER, count: 1 }),
-      { type: "attack", seat: "p1", index: 0 },
-    );
+    const { events } = apply(board({ attacker: UNREAD, energy: WATER, count: 1 }), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       effect: UNREAD_TEXT,
       damageModifier: "+",
@@ -707,7 +711,10 @@ describe("D316 §5 — 🛑 §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD 
     // is green under both readings. Kept because a suite that only ever drove
     // this board would have proved nothing about the split at all.
     const parked = must(
-      applyAction(board({ attacker: POLIWRATH, energy: WATER, count: 2, defender: WEAK }), UPPERCUT),
+      applyAction(
+        board({ attacker: POLIWRATH, energy: WATER, count: 2, defender: WEAK }),
+        UPPERCUT,
+      ),
     );
     const { state: done, events } = apply(parked, YES);
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({
@@ -1014,7 +1021,8 @@ describe("D318 §8 — the exported assembler, and the pool that can now reach i
       parseAttackDamage(attack?.damage).base,
       attack?.effect ?? "",
     )[0];
-    if (gate?.op !== "optional") throw new Error("the pooled fixture does not assemble an `optional`");
+    if (gate?.op !== "optional")
+      throw new Error("the pooled fixture does not assemble an `optional`");
     // The whole reason the pin could not move: a NON-EMPTY `otherwise` a shared
     // sweep can walk.
     expect(gate.otherwise).toEqual([{ op: "damageDefender", amount: 50 }]);

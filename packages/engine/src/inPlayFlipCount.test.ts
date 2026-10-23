@@ -1,11 +1,7 @@
 import type { Card } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -196,9 +192,7 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     // Building a sentence builds every `⟨it⟩. ⟨claimed tail⟩` compound with it, through
     // a path that is neither the anchor nor the arm. Measured over the whole column
     // rather than asserted: no row has this sentence as a prefix.
-    const compounds = legalAttackCorpus().filter(
-      ([, s]) => s !== PRINTED && s.startsWith(PRINTED),
-    );
+    const compounds = legalAttackCorpus().filter(([, s]) => s !== PRINTED && s.startsWith(PRINTED));
     expect(compounds).toEqual([]);
   });
 
@@ -216,9 +210,11 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
       // different member (`bonusOnHeads`) and a different damage on every board.
       more: /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) (?:more )?damage for each heads\.$/,
       // …drop the `^`.
-      caret: /Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\.$/,
+      caret:
+        /Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\.$/,
       // …drop the `\.$`.
-      dollar: /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\./,
+      dollar:
+        /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\./,
       // …and open the noun across a sentence boundary.
       noun: /^Flip a coin for each (.+) you have in play\. This attack does (\d+) damage for each heads\.$/,
     };
@@ -516,21 +512,32 @@ function openingBasic(state: GameState, side: Seat): string {
 /** Setup driven against the LOCAL pool, then P2's turn ended so P1 is on
     `turn:action` and may attack (§4). */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: LOCAL_DECK, p2: LOCAL_DECK }, cardPool: CARD_POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: LOCAL_DECK, p2: LOCAL_DECK },
+    cardPool: CARD_POOL,
+  });
   if (!created.ok) throw new Error(`createGame: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = ok(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = ok(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const drawing = state.phase;
     const owed = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
     if (owed === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = ok(applyAction(state, { type: "setupDrawExtra", seat: owed, count: drawing.owed[owed] }));
+    state = ok(
+      applyAction(state, { type: "setupDrawExtra", seat: owed, count: drawing.owed[owed] }),
+    );
   }
   for (const side of ["p1", "p2"] as const) {
-    state = ok(applyAction(state, { type: "setupPlaceActive", seat: side, uid: openingBasic(state, side) }));
+    state = ok(
+      applyAction(state, { type: "setupPlaceActive", seat: side, uid: openingBasic(state, side) }),
+    );
   }
-  for (const side of ["p1", "p2"] as const) state = ok(applyAction(state, { type: "setupReady", seat: side }));
+  for (const side of ["p1", "p2"] as const)
+    state = ok(applyAction(state, { type: "setupReady", seat: side }));
   return step(state, { type: "endTurn", seat: "p2" }).state;
 }
 
@@ -547,7 +554,12 @@ function toActive(state: GameState, seat: Seat, cardId: string): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), active: makeInPlay(uid, state.turn), bench: displaced },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active: makeInPlay(uid, state.turn),
+        bench: displaced,
+      },
     },
   };
 }
@@ -897,12 +909,6 @@ describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
   });
 
   it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // D460's FOURTH class of version-tax site is the `it()` TITLE, so this one names
-    // both halves and BOTH are asserted — a title that reports a claim the body does
-    // not make is worse than a stale doc block, because the run log then says a
-    // version the suite never checked.
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

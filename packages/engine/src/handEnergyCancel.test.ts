@@ -95,7 +95,8 @@ const COST2 =
   "Discard 2 Basic {G} Energy cards from your hand. If you can't discard 2 cards in this way, this attack does nothing.";
 /** Line **96**, 1 legal printing — the ANAPHORIC member, and the printing D417
     named, refused and left LOUD by name. */
-const COST1 = "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.";
+const COST1 =
+  "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.";
 
 const KO6_HEAD =
   "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.";
@@ -370,9 +371,7 @@ describe("§1 — the reader: three sentences, one member, and the anchors that 
     expect(deriveAttackCancelRequirement(UNMAPPED_TEXT)).toBeNull();
     expect(deriveAttackEffect(UNMAPPED_TEXT)).toBeNull();
     // …and a head no reader claims at all, behind a named-referent clause.
-    expect(
-      splitAttackCancelClause(`Discard your hand. ${NAMED_CLAUSE_6}`),
-    ).toBeNull();
+    expect(splitAttackCancelClause(`Discard your hand. ${NAMED_CLAUSE_6}`)).toBeNull();
   });
 
   it("🛑 the EXCLUSIONS are the anchor's shape, not a comment", () => {
@@ -385,10 +384,14 @@ describe("§1 — the reader: three sentences, one member, and the anchors that 
     ).toBeNull();
     // A non-numeric quantity, and the plural noun the alternation fixes.
     expect(
-      splitAttackCancelClause(`${COST2_HEAD} If you can't discard two cards in this way, this attack does nothing.`),
+      splitAttackCancelClause(
+        `${COST2_HEAD} If you can't discard two cards in this way, this attack does nothing.`,
+      ),
     ).toBeNull();
     expect(
-      splitAttackCancelClause(`${COST2_HEAD} If you can't discard 2 card in this way, this attack does nothing.`),
+      splitAttackCancelClause(
+        `${COST2_HEAD} If you can't discard 2 card in this way, this attack does nothing.`,
+      ),
     ).toBeNull();
   });
 
@@ -408,7 +411,7 @@ describe("§1 — the reader: three sentences, one member, and the anchors that 
     }
   });
 
-  it("🛑 the `\", and \"` JOIN is unreachable by the trailing splitter — the reason 6g is ONE arm", () => {
+  it('🛑 the `", and "` JOIN is unreachable by the trailing splitter — the reason 6g is ONE arm', () => {
     // `splitAttackTrailingClause` breaks on a SENTENCE boundary; the compound's two
     // halves are joined by a comma inside one sentence. So the composition path
     // cannot hand the Knock Out to a second reader and the compound must be claimed
@@ -428,7 +431,9 @@ describe("§1 — the reader: three sentences, one member, and the anchors that 
   it("🛑 the MEMBER: `matchesFilter`'s predicate over the OWN hand, and its note", () => {
     // The note spells the printed NAME rather than the brace code (D118), and the
     // singular branch is a PRINTED case — the pool prints "a Basic {G} Energy card".
-    expect(conditionNote(need(6))).toBe("you have at least 6 Basic Grass Energy cards in your hand");
+    expect(conditionNote(need(6))).toBe(
+      "you have at least 6 Basic Grass Energy cards in your hand",
+    );
     expect(conditionNote(need(1))).toBe("you have a Basic Grass Energy card in your hand");
     // …so it does NOT round-trip to the printed head, which is asserted rather than
     // left to be "fixed" by a successor: the table is keyed on an IMPERATIVE
@@ -495,9 +500,7 @@ describe("§2 — the guard the widening owes: the row's DIGIT is the row's COUN
 });
 
 describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 is the proof", () => {
-  it.each(
-    SEEDS.flatMap((seed) => CASES.map((c) => [seed, c.name, c.id, c.count] as const)),
-  )(
+  it.each(SEEDS.flatMap((seed) => CASES.map((c) => [seed, c.name, c.id, c.count] as const)))(
     "seed %i — %s SHORT BY ONE: the attack does NOTHING and the cost is NOT paid",
     (seed, _name, id, count) => {
       // 🛑 SHORT BY ONE AND NOT EMPTY, WHICH IS THE WHOLE POINT. An empty hand would
@@ -540,9 +543,7 @@ describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 i
     },
   );
 
-  it.each(
-    SEEDS.flatMap((seed) => CASES.map((c) => [seed, c.name, c.id, c.count, c.kos] as const)),
-  )(
+  it.each(SEEDS.flatMap((seed) => CASES.map((c) => [seed, c.name, c.id, c.count, c.kos] as const)))(
     "seed %i — %s EXACTLY PAYABLE: the cost is paid out of the HAND and the head resolves",
     (seed, _name, id, count, kos) => {
       const before = board(seed, id, count);
@@ -619,7 +620,13 @@ describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 i
     expect(conditionHolds(short, "p2", need(6))).toBe(false);
     // The wrong TYPE does not pay either — the printed noun is a card CLASS plus a
     // printed type, and `matchesFilter` is what enforces both.
-    expect(conditionHolds(exact, "p1", { kind: "yourBasicEnergyInHandAtLeast", energy: "Fire", count: 1 })).toBe(false);
+    expect(
+      conditionHolds(exact, "p1", {
+        kind: "yourBasicEnergyInHandAtLeast",
+        energy: "Fire",
+        count: 1,
+      }),
+    ).toBe(false);
   });
 });
 
@@ -793,9 +800,7 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     const gated = paying.filter(([, s]) => handCostIsSlotGated(programOf(s)));
     const scaled = paying.filter(([, s]) => handCostIsSlotScaled(programOf(s)));
     expect(cancelled.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1].sort());
-    expect(gated.map(([, s]) => s).sort()).toEqual(
-      [DRAW2, DRAW3, GATED_OPPONENT_DISCARD].sort(),
-    );
+    expect(gated.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3, GATED_OPPONENT_DISCARD].sort());
     expect(scaled.map(([, s]) => s)).toEqual([HAND_SCALED]);
     expect(cancelled.length + gated.length + scaled.length).toBe(paying.length);
     for (const [, s] of cancelled) {

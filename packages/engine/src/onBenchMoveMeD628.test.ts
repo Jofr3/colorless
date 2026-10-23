@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { attachEnergyTargets, conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -51,7 +51,8 @@ const R = "d628-fire";
 const W = "d628-water";
 const SPECIAL = "d628-special";
 
-const ability = (name: string, effect: string) => ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
+const ability = (name: string, effect: string) =>
+  ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -68,8 +69,21 @@ const LOCAL: Record<string, Card> = {
       }),
     ]),
   ),
-  [LATIOS]: battler(LATIOS, { name: "Latios", hp: 130, types: ["Dragon"], retreat: 1, attacks: TAP, ...ability("Lustrous Assist", LUSTROUS_ASSIST) }),
-  [MEGA_LATIAS]: battler(MEGA_LATIAS, { name: "Mega Latias ex", hp: 280, types: ["Dragon"], retreat: 1, attacks: TAP }),
+  [LATIOS]: battler(LATIOS, {
+    name: "Latios",
+    hp: 130,
+    types: ["Dragon"],
+    retreat: 1,
+    attacks: TAP,
+    ...ability("Lustrous Assist", LUSTROUS_ASSIST),
+  }),
+  [MEGA_LATIAS]: battler(MEGA_LATIAS, {
+    name: "Mega Latias ex",
+    hp: 280,
+    types: ["Dragon"],
+    retreat: 1,
+    attacks: TAP,
+  }),
   [KOMALA]: battler(KOMALA, {
     name: "Larry's Komala",
     hp: 90,
@@ -78,13 +92,35 @@ const LOCAL: Record<string, Card> = {
     attacks: TAP,
     ...ability("Lethargic Charge", LETHARGIC_CHARGE),
   }),
-  [FREE]: battler(FREE, { name: "D628 Free", hp: 300, types: ["Colorless"], retreat: 0, attacks: TAP }),
-  [FILLER]: battler(FILLER, { name: "D628 Filler", hp: 300, types: ["Colorless"], retreat: 1, attacks: TAP }),
-  [LARRYS]: battler(LARRYS, { name: "Larry's Tropius", hp: 120, types: ["Colorless"], retreat: 1, attacks: TAP }),
+  [FREE]: battler(FREE, {
+    name: "D628 Free",
+    hp: 300,
+    types: ["Colorless"],
+    retreat: 0,
+    attacks: TAP,
+  }),
+  [FILLER]: battler(FILLER, {
+    name: "D628 Filler",
+    hp: 300,
+    types: ["Colorless"],
+    retreat: 1,
+    attacks: TAP,
+  }),
+  [LARRYS]: battler(LARRYS, {
+    name: "Larry's Tropius",
+    hp: 120,
+    types: ["Colorless"],
+    retreat: 1,
+    attacks: TAP,
+  }),
   [SUPPORTER]: { ...trainerCard(SUPPORTER, "Supporter", "Draw 2 cards."), name: "D628 Supporter" },
   [R]: typedEnergy(R, "Fire"),
   [W]: typedEnergy(W, "Water"),
-  [SPECIAL]: specialEnergy(SPECIAL, "D628 Special Energy", "As long as this card is attached to a Pokémon, it provides {C} Energy."),
+  [SPECIAL]: specialEnergy(
+    SPECIAL,
+    "D628 Special Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.",
+  ),
 };
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL };
 const DECK = deckOf({
@@ -123,7 +159,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -131,12 +169,16 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
-  for (const s of ["p2", "p1", "p2"] as const) state = must(applyAction(state, { type: "endTurn", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p2", "p1", "p2"] as const)
+    state = must(applyAction(state, { type: "endTurn", seat: s }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
     let deck = [...side.deck, ...side.hand];
@@ -167,7 +209,11 @@ function toHand(state: GameState, seat: Seat, ids: readonly string[]): GameState
 }
 
 /** P1: `active` and `bench`, hand `hand`; P2: a FILLER Active over an empty Bench. */
-function table(opts: { active?: string; bench?: readonly string[]; hand?: readonly string[] }): GameState {
+function table(opts: {
+  active?: string;
+  bench?: readonly string[];
+  hand?: readonly string[];
+}): GameState {
   let state = p1Turn();
   state = clearBench(setActiveFromDeck(state, "p1", opts.active ?? FILLER), "p1");
   state = clearBench(setActiveFromDeck(state, "p2", FILLER), "p2");
@@ -178,8 +224,11 @@ function table(opts: { active?: string; bench?: readonly string[]; hand?: readon
 const ACTIVE = { spot: "active" } as const;
 const bench = (index: number) => ({ spot: "bench", index }) as const;
 const P1_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
-const use = (state: GameState, abilityName: string, target: typeof ACTIVE | ReturnType<typeof bench>) =>
-  applyAction(state, { type: "useAbility", seat: "p1", target, abilityName } as GameAction);
+const use = (
+  state: GameState,
+  abilityName: string,
+  target: typeof ACTIVE | ReturnType<typeof bench>,
+) => applyAction(state, { type: "useAbility", seat: "p1", target, abilityName } as GameAction);
 const resolve = (state: GameState, choice: unknown) =>
   ok(applyAction(state, { type: "resolveEffect", seat: "p1", choice } as GameAction));
 const playToBench = (state: GameState, id: string) => {
@@ -190,7 +239,8 @@ const playToBench = (state: GameState, id: string) => {
 const retreat = (state: GameState) =>
   ok(applyAction(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }));
 function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt as unknown as Record<string, unknown>;
 }
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
@@ -216,7 +266,13 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
                 note: CONFIRM_NOTE,
                 // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                 then: [
-                  { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
+                  {
+                    op: "searchDeck",
+                    filter: { kind: "supporter" },
+                    dest: "hand",
+                    max: 1,
+                    reveal: true,
+                  },
                   { op: "shuffleDeck" },
                 ],
               },
@@ -238,9 +294,20 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
           activeOnly: false,
           playableIf: {
             kind: "allOf",
-            conditions: [{ kind: "yourActivePromotedThisTurn" }, { kind: "yourActiveNamed", name: "Mega Latias ex" }],
+            conditions: [
+              { kind: "yourActivePromotedThisTurn" },
+              { kind: "yourActiveNamed", name: "Mega Latias ex" },
+            ],
           },
-          program: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "any", route: "benchToActive", anySource: true }],
+          program: [
+            {
+              op: "moveEnergy",
+              filter: { kind: "anyEnergy" },
+              max: "any",
+              route: "benchToActive",
+              anySource: true,
+            },
+          ],
         },
       ],
     });
@@ -252,7 +319,13 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
           activeOnly: false,
           benchOnly: true,
           program: [
-            { op: "attachFromHand", filter: { kind: "anyEnergy" }, one: true, activeOnly: true, ownerPokemon: "Larry" },
+            {
+              op: "attachFromHand",
+              filter: { kind: "anyEnergy" },
+              one: true,
+              activeOnly: true,
+              ownerPokemon: "Larry",
+            },
           ],
         },
       ],
@@ -261,7 +334,8 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
 
   it("Clawitzer ×2 'Fall Back to Reload' stays unkeyed: a hand-attach choice inside the non-parking Active→Bench self sweep (🆕🆕🆕 D636 (D539): WITHDRAWN — keyed at D636 on the persisted moved-to-Bench stamp, `nextTurnLocksD636.test.ts`)", () => {
     // 🆕🆕🆕 D636 (D539): both ids are keyed now, on one object (`FALL_BACK_TO_RELOAD`).
-    for (const id of CLAWITZER) expect(programFor(id)?.abilities?.[0]?.name, id).toBe("Fall Back to Reload");
+    for (const id of CLAWITZER)
+      expect(programFor(id)?.abilities?.[0]?.name, id).toBe("Fall Back to Reload");
   });
 });
 
@@ -269,17 +343,23 @@ describe("D628 §2 — Last-Ditch Catch: bench Meowth ex, confirm, search a Supp
   it("yes: the Supporter is searched, revealed and put into the hand, then the deck is shuffled", () => {
     const state = table({ hand: [MEOWTH[0]] });
     const benched = playToBench(state, MEOWTH[0]);
-    expect(of(benched.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Last-Ditch Catch"]);
+    expect(of(benched.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
+      "Last-Ditch Catch",
+    ]);
     expect(prompt(benched.state)).toStrictEqual({ kind: "confirm", note: CONFIRM_NOTE });
     const searching = resolve(benched.state, { kind: "confirm", yes: true });
     const offer = prompt(searching.state);
     expect(offer.kind).toBe("chooseCards");
-    expect(new Set(ids(searching.state, offer.candidates as string[]))).toEqual(new Set([SUPPORTER]));
+    expect(new Set(ids(searching.state, offer.candidates as string[]))).toEqual(
+      new Set([SUPPORTER]),
+    );
     const pick = (offer.candidates as string[])[0] as string;
     const done = resolve(searching.state, { kind: "cards", uids: [pick] });
     expect(done.state.phase.kind).toBe("turn:action");
     expect(done.state.players.p1.hand).toEqual([pick]);
-    expect(of(done.events, "DECK_SEARCHED")).toEqual([{ type: "DECK_SEARCHED", seat: "p1", dest: "hand", uids: [pick], reveal: true }]);
+    expect(of(done.events, "DECK_SEARCHED")).toEqual([
+      { type: "DECK_SEARCHED", seat: "p1", dest: "hand", uids: [pick], reveal: true },
+    ]);
     expect(of(done.events, "SHUFFLE").length).toBeGreaterThan(0);
     expect(done.state.allowances.abilitiesUsed).toContain("*:Last-Ditch Catch");
   });
@@ -300,7 +380,11 @@ describe("D628 §2 — Last-Ditch Catch: bench Meowth ex, confirm, search a Supp
       const state = table({ hand: [MEOWTH[0], MEOWTH[1]] });
       const benched = playToBench(state, MEOWTH[0]);
       let after = resolve(benched.state, { kind: "confirm", yes: first }).state;
-      if (first) after = resolve(after, { kind: "cards", uids: [(prompt(after).candidates as string[])[0]] }).state;
+      if (first)
+        after = resolve(after, {
+          kind: "cards",
+          uids: [(prompt(after).candidates as string[])[0]],
+        }).state;
       const second = playToBench(after, MEOWTH[1]);
       expect(of(second.events, "ABILITY_TRIGGERED"), String(first)).toEqual([]);
       expect(second.state.phase.kind).toBe("turn:action");
@@ -310,13 +394,19 @@ describe("D628 §2 — Last-Ditch Catch: bench Meowth ex, confirm, search a Supp
 
   it("the lock is per TURN: a fresh turn's Meowth ex fires again", () => {
     const state = table({ hand: [MEOWTH[0]] });
-    const spent = { ...state, allowances: { ...state.allowances, abilitiesUsed: ["*:Last-Ditch Catch"] } };
+    const spent = {
+      ...state,
+      allowances: { ...state.allowances, abilitiesUsed: ["*:Last-Ditch Catch"] },
+    };
     expect(of(playToBench(spent, MEOWTH[0]).events, "ABILITY_TRIGGERED")).toEqual([]);
     // A key for another body's Ability does not block it.
-    const other = { ...state, allowances: { ...state.allowances, abilitiesUsed: ["p1#0:Last-Ditch Catch"] } };
-    expect(of(playToBench(other, MEOWTH[0]).events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
-      "Last-Ditch Catch",
-    ]);
+    const other = {
+      ...state,
+      allowances: { ...state.allowances, abilitiesUsed: ["p1#0:Last-Ditch Catch"] },
+    };
+    expect(
+      of(playToBench(other, MEOWTH[0]).events, "ABILITY_TRIGGERED").map((e) => e.ability),
+    ).toEqual(["Last-Ditch Catch"]);
   });
 });
 
@@ -338,10 +428,24 @@ describe("D628 §3 — Lustrous Assist: after your Mega Latias ex moved up this 
     expect(offer.kind).toBe("moveEnergy");
     expect(offer.destinations).toEqual([P1_ACTIVE]);
     const movable = offer.movable as { uid: string }[];
-    expect(new Set(ids(parked.state, movable.map((m) => m.uid)))).toEqual(new Set([W, R, SPECIAL]));
-    const done = resolve(parked.state, { kind: "moveEnergy", picks: movable.map((m) => ({ uid: m.uid, dest: P1_ACTIVE })) });
-    expect(new Set(ids(done.state, done.state.players.p1.active?.energy ?? []))).toEqual(new Set([W, R, SPECIAL]));
-    expect(refusal(use(done.state, "Lustrous Assist", bench(at))).code).toBe("ABILITY_ALREADY_USED");
+    expect(
+      new Set(
+        ids(
+          parked.state,
+          movable.map((m) => m.uid),
+        ),
+      ),
+    ).toEqual(new Set([W, R, SPECIAL]));
+    const done = resolve(parked.state, {
+      kind: "moveEnergy",
+      picks: movable.map((m) => ({ uid: m.uid, dest: P1_ACTIVE })),
+    });
+    expect(new Set(ids(done.state, done.state.players.p1.active?.energy ?? []))).toEqual(
+      new Set([W, R, SPECIAL]),
+    );
+    expect(refusal(use(done.state, "Lustrous Assist", bench(at))).code).toBe(
+      "ABILITY_ALREADY_USED",
+    );
   });
 
   it("refused when the Active did not move up this turn, and when the promoted Active is not Mega Latias ex", () => {
@@ -366,20 +470,33 @@ describe("D628 §3 — Lustrous Assist: after your Mega Latias ex moved up this 
     // An intervening action (a manual attach onto the Active) does not close the window.
     const withHand = toHand(state, "p1", [W]);
     const uid = withHand.players.p1.hand[0] as string;
-    const attached = must(applyAction(withHand, { type: "attachEnergy", seat: "p1", uid, target: ACTIVE }));
-    expect(ok(use(attached, "Lustrous Assist", bench(benchIndexOf(attached, LATIOS)))).state.phase.kind).toBe(
-      "effect:choose",
+    const attached = must(
+      applyAction(withHand, { type: "attachEnergy", seat: "p1", uid, target: ACTIVE }),
     );
+    expect(
+      ok(use(attached, "Lustrous Assist", bench(benchIndexOf(attached, LATIOS)))).state.phase.kind,
+    ).toBe("effect:choose");
   });
 
   it("`yourActiveNamed` reads the Active's top card by exact name; an empty Active Spot is false", () => {
     const state = table({ active: MEGA_LATIAS });
-    expect(conditionHolds(state, "p1", { kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(true);
+    expect(conditionHolds(state, "p1", { kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(
+      true,
+    );
     expect(conditionHolds(state, "p1", { kind: "yourActiveNamed", name: "Latias ex" })).toBe(false);
-    expect(conditionHolds(state, "p2", { kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(false);
-    const empty = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: null } } };
-    expect(conditionHolds(empty, "p1", { kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(false);
-    expect(conditionNote({ kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe("your Active Pokémon is Mega Latias ex");
+    expect(conditionHolds(state, "p2", { kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(
+      false,
+    );
+    const empty = {
+      ...state,
+      players: { ...state.players, p1: { ...state.players.p1, active: null } },
+    };
+    expect(conditionHolds(empty, "p1", { kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(
+      false,
+    );
+    expect(conditionNote({ kind: "yourActiveNamed", name: "Mega Latias ex" })).toBe(
+      "your Active Pokémon is Mega Latias ex",
+    );
   });
 });
 
@@ -397,13 +514,18 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
     // The Benched Larry's Pokémon is not a target: "your ACTIVE Larry's Pokémon".
     expect(offer.targets).toEqual([P1_ACTIVE]);
     const special = (offer.candidates as string[])[1] as string;
-    const done = resolve(parked.state, { kind: "attachCards", assignments: [{ uid: special, to: P1_ACTIVE }] });
+    const done = resolve(parked.state, {
+      kind: "attachCards",
+      assignments: [{ uid: special, to: P1_ACTIVE }],
+    });
     expect(done.state.phase.kind).toBe("turn:action");
     expect(done.state.players.p1.active?.energy).toEqual([special]);
     expect(ids(done.state, done.state.players.p1.hand)).toEqual([R, SUPPORTER]);
     // Not the §6.3 manual attach.
     expect(done.state.allowances.energyAttached).toBe(false);
-    expect(refusal(use(done.state, "Lethargic Charge", bench(0))).code).toBe("ABILITY_ALREADY_USED");
+    expect(refusal(use(done.state, "Lethargic Charge", bench(0))).code).toBe(
+      "ABILITY_ALREADY_USED",
+    );
   });
 
   it("🛑 R-LGC1 (UNRULED): the attach is mandatory — an empty answer attaches the first offered card", () => {
@@ -417,13 +539,27 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
   });
 
   it("refused from the Active Spot, with no Energy card in hand, and when the Active is not a Larry's Pokémon", () => {
-    expect(refusal(use(table({ active: KOMALA, hand: [R] }), "Lethargic Charge", ACTIVE)).code).toBe("ABILITY_BENCH_ONLY");
-    expect(refusal(use(table({ active: LARRYS, bench: [KOMALA], hand: [SUPPORTER] }), "Lethargic Charge", bench(0))).code).toBe(
-      "NO_LEGAL_TARGET",
-    );
-    expect(refusal(use(table({ active: FILLER, bench: [KOMALA, LARRYS], hand: [R] }), "Lethargic Charge", bench(0))).code).toBe(
-      "NO_LEGAL_TARGET",
-    );
+    expect(
+      refusal(use(table({ active: KOMALA, hand: [R] }), "Lethargic Charge", ACTIVE)).code,
+    ).toBe("ABILITY_BENCH_ONLY");
+    expect(
+      refusal(
+        use(
+          table({ active: LARRYS, bench: [KOMALA], hand: [SUPPORTER] }),
+          "Lethargic Charge",
+          bench(0),
+        ),
+      ).code,
+    ).toBe("NO_LEGAL_TARGET");
+    expect(
+      refusal(
+        use(
+          table({ active: FILLER, bench: [KOMALA, LARRYS], hand: [R] }),
+          "Lethargic Charge",
+          bench(0),
+        ),
+      ).code,
+    ).toBe("NO_LEGAL_TARGET");
     // Komala itself is a Larry's Pokémon, but only from the Active Spot — where the Ability cannot be used.
     const swapped = table({ active: KOMALA, bench: [KOMALA], hand: [R] });
     expect(ok(use(swapped, "Lethargic Charge", bench(0))).state.phase.kind).toBe("effect:choose");
@@ -432,18 +568,16 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
   it("`activeOnly` on the shared target funnel drops the Bench; absent, the funnel is unchanged", () => {
     const state = table({ active: LARRYS, bench: [LARRYS, FILLER] });
     expect(attachEnergyTargets(state, "p1", { activeOnly: true })).toEqual([P1_ACTIVE]);
-    expect(attachEnergyTargets(state, "p1", { activeOnly: true, ownerPokemon: "Larry" })).toEqual([P1_ACTIVE]);
+    expect(attachEnergyTargets(state, "p1", { activeOnly: true, ownerPokemon: "Larry" })).toEqual([
+      P1_ACTIVE,
+    ]);
     expect(attachEnergyTargets(state, "p1", { ownerPokemon: "Larry" })).toEqual([
       P1_ACTIVE,
       { seat: "p1", spot: { spot: "bench", index: 0 } },
     ]);
     const stranger = table({ active: FILLER, bench: [LARRYS] });
-    expect(attachEnergyTargets(stranger, "p1", { activeOnly: true, ownerPokemon: "Larry" })).toEqual([]);
-  });
-});
-
-describe("D628 §5 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
+    expect(
+      attachEnergyTargets(stranger, "p1", { activeOnly: true, ownerPokemon: "Larry" }),
+    ).toEqual([]);
   });
 });

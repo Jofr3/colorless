@@ -91,7 +91,10 @@ function board(holder: string, pile: number, benched = 3, seed = 7): GameState {
   return state;
 }
 
-const benchRef = (index: number) => ({ seat: "p1" as const, spot: { spot: "bench" as const, index } });
+const benchRef = (index: number) => ({
+  seat: "p1" as const,
+  spot: { spot: "bench" as const, index },
+});
 const benchEnergy = (state: GameState) => state.players.p1.bench.map((p) => p.energy.length);
 const fInDiscard = (state: GameState) =>
   state.players.p1.discard.filter((uid) => state.cardIdByUid[uid] === F).length;
@@ -101,9 +104,11 @@ describe("B33 — Mud Stock: a short pile lets the player choose which Benched P
     const state = board(id, 1);
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(events.filter((e) => e.type === "ENERGY_ATTACHED")).toHaveLength(0);
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${parked.phase.kind}`);
     const prompt = parked.phase.prompt;
-    if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemonMulti")
+      throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
     expect(prompt.min).toBe(1);
     expect(prompt.max).toBe(1);
     expect(prompt.declinable).toBe(false);
@@ -132,9 +137,11 @@ describe("B33 — Mud Stock: a short pile lets the player choose which Benched P
   it.each(PRINTINGS)("%s: TWO {F} over THREE Benched Pokémon parks a pick of exactly 2", (id) => {
     const state = board(id, 2);
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${parked.phase.kind}`);
     const prompt = parked.phase.prompt;
-    if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemonMulti")
+      throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
     expect([prompt.min, prompt.max]).toEqual([2, 2]);
 
     // Fewer than the pile is not "as much as you can" — refused.
@@ -148,7 +155,10 @@ describe("B33 — Mud Stock: a short pile lets the player choose which Benched P
     const active = applyAction(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "pokemonMulti", refs: [{ seat: "p1", spot: { spot: "active" } }, benchRef(1)] },
+      choice: {
+        kind: "pokemonMulti",
+        refs: [{ seat: "p1", spot: { spot: "active" } }, benchRef(1)],
+      },
     });
     expect(active.ok).toBe(false);
 
@@ -190,8 +200,13 @@ describe("B33 — the short-pile park's caption names the shortfall and the coun
     [1, "Not enough Energy for all your Benched Pokémon — attach it to which one?"],
     [2, "Not enough Energy for all your Benched Pokémon — attach 1 each to which 2?"],
   ] as const)("%i {F} over three Benched Pokémon", (pile, note) => {
-    const { state: parked } = mustApply(board("sv05-092", pile), { type: "attack", seat: "p1", index: 0 });
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+    const { state: parked } = mustApply(board("sv05-092", pile), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${parked.phase.kind}`);
     expect(parked.phase.prompt.note).toBe(note);
   });
 });

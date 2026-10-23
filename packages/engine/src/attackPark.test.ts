@@ -100,7 +100,14 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       ),
     ).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-      { op: "damageChosen", target: "opponentAny", amount: 110, count: 3, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 110,
+        count: 3,
+        source: "attack",
+        deals: true,
+      },
     ]);
     // ⚠️ RE-POINTED AT D148, NOT DELETED — the THIRD row this list has moved
     // rather than dropped, and the first on the "an" form rather than the "all"
@@ -144,16 +151,16 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     // bare body claimed the gated string would return the inner op UNWRAPPED and
     // a `toBeNull` could no longer say so. The gated program's `then` is this
     // anchor's own output, byte for byte.
-    expect(deriveAttackEffect("Flip a coin. If tails, discard all Energy from this Pokémon.")).toEqual(
-      [
-        {
-          op: "coinFlipGate",
-          onTails: true,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-          then: deriveAttackEffect("Discard all Energy from this Pokémon."),
-        },
-      ],
-    );
+    expect(
+      deriveAttackEffect("Flip a coin. If tails, discard all Energy from this Pokémon."),
+    ).toEqual([
+      {
+        op: "coinFlipGate",
+        onTails: true,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: deriveAttackEffect("Discard all Energy from this Pokémon."),
+      },
+    ]);
   });
 
   // ── The park itself ──

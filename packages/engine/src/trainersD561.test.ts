@@ -135,7 +135,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -143,11 +145,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -174,7 +179,8 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
   setActiveFromDeck(ensureInDeck(state, seat, id), seat, id);
-const seatBench = (state: GameState, seat: Seat, id: string) => benchFromDeck(ensureInDeck(state, seat, id), seat, id);
+const seatBench = (state: GameState, seat: Seat, id: string) =>
+  benchFromDeck(ensureInDeck(state, seat, id), seat, id);
 
 /** p1's turn 2 with `active` / `bench` for p1 and `oppActive` / `oppBench` for p2. */
 function table(
@@ -221,7 +227,11 @@ function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameStat
 function purgeFromDeck(state: GameState, seat: Seat, id: string): GameState {
   const side = state.players[seat];
   const gone = side.deck.filter((u) => state.cardIdByUid[u] === id);
-  const next = { ...side, deck: side.deck.filter((u) => !gone.includes(u)), discard: [...side.discard, ...gone] };
+  const next = {
+    ...side,
+    deck: side.deck.filter((u) => !gone.includes(u)),
+    discard: [...side.discard, ...gone],
+  };
   return { ...state, players: { ...state.players, [seat]: next } };
 }
 
@@ -238,29 +248,43 @@ function all<T extends GameEvent["type"]>(
 ): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const cards = (uids: readonly string[], seat: Seat = "p1"): GameAction => ({
   type: "resolveEffect",
   seat,
   choice: { kind: "cards", uids: [...uids] },
 });
-const confirm = (yes: boolean): GameAction => ({ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-const pokemon = (ref: PokemonRef): GameAction => ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+const confirm = (yes: boolean): GameAction => ({
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "confirm", yes },
+});
+const pokemon = (ref: PokemonRef): GameAction => ({
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "pokemon", ref },
+});
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 function cont(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.cont;
 }
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
-const handIds = (state: GameState, seat: Seat = "p1") => state.players[seat].hand.map((u) => idOf(state, u));
+const handIds = (state: GameState, seat: Seat = "p1") =>
+  state.players[seat].hand.map((u) => idOf(state, u));
 /** A JSON copy of `state` whose parked continuation has been passed through `edit`. */
 function reviveWith(state: GameState, edit: (json: string) => string): GameState {
   return JSON.parse(edit(JSON.stringify(state))) as GameState;
@@ -268,20 +292,39 @@ function reviveWith(state: GameState, edit: (json: string) => string): GameState
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D561 §1 — the prints, and the registry rows that map them", () => {
-  const ROWS: readonly { name: string; ids: readonly string[]; subtype: string; program: unknown }[] = [
+  const ROWS: readonly {
+    name: string;
+    ids: readonly string[];
+    subtype: string;
+    program: unknown;
+  }[] = [
     {
       name: "Perrin",
       ids: PERRIN,
       subtype: "Supporter",
       program: {
         trainer: [
-          { op: "payFromHand", count: "any", cap: 2, filter: { kind: "anyPokemon" }, to: "deckBottom", recordAs: "paid" },
+          {
+            op: "payFromHand",
+            count: "any",
+            cap: 2,
+            filter: { kind: "anyPokemon" },
+            to: "deckBottom",
+            recordAs: "paid",
+          },
           {
             op: "recordGate",
             slot: "paid",
             // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [
-              { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 2, maxRecorded: "paid", reveal: true },
+              {
+                op: "searchDeck",
+                filter: { kind: "anyPokemon" },
+                dest: "hand",
+                max: 2,
+                maxRecorded: "paid",
+                reveal: true,
+              },
             ],
           },
           { op: "shuffleDeck" },
@@ -347,7 +390,9 @@ describe("D561 §1 — the prints, and the registry rows that map them", () => {
       name: "Scoop Up Cyclone",
       ids: SCOOP,
       subtype: "Item",
-      program: { trainer: [{ op: "returnBenched", whose: "self", dest: "hand", includeActive: true }] },
+      program: {
+        trainer: [{ op: "returnBenched", whose: "self", dest: "hand", includeActive: true }],
+      },
     },
     {
       name: "Scramble Switch",
@@ -408,7 +453,9 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
     const { state: parked, before } = play(table(), PERRIN[1], [PIKA, FILLER, ITEM]);
     const paid = before.players.p1.hand.slice(1, 3);
     const { state: searching, events } = mustApply(parked, cards(paid));
-    expect(all(events, "HAND_COST_PAID")).toEqual([{ type: "HAND_COST_PAID", seat: "p1", uids: paid, to: "deckBottom" }]);
+    expect(all(events, "HAND_COST_PAID")).toEqual([
+      { type: "HAND_COST_PAID", seat: "p1", uids: paid, to: "deckBottom" },
+    ]);
     const p = prompt(searching);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(p).toMatchObject({ min: 0, max: 2, dest: "hand" });
@@ -429,7 +476,7 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
     expect(p.note).toBe("Search your deck for a Pokémon into your hand.");
   });
 
-  it("🛑 NONE returned (the printed \"up to\" floor) → no search at all, and the deck is still shuffled", () => {
+  it('🛑 NONE returned (the printed "up to" floor) → no search at all, and the deck is still shuffled', () => {
     const { state: parked } = play(table(), PERRIN[0], [PIKA]);
     const { state, events } = mustApply(parked, cards([]));
     expect(all(events, "DECK_SEARCHED")).toEqual([]);
@@ -448,7 +495,10 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
 
   it("🛑 R-PR — the log counts the returned cards (hidden → hidden) and the searched ones are REVEALED", () => {
     const { state: parked, before } = play(table(), PERRIN[0], [PIKA, FILLER]);
-    const { state: searching, events: paidEvents } = mustApply(parked, cards(before.players.p1.hand.slice(1, 3)));
+    const { state: searching, events: paidEvents } = mustApply(
+      parked,
+      cards(before.players.p1.hand.slice(1, 3)),
+    );
     // 🆕🆕🆕 D561 review — R-PR's LOG sub-reading, NAMED rather than left as an accident: the caption and
     // `handCostAction` say *"put them into your deck"* (the print names no end), but the log row names the
     // ENGINE's placement — the shipped `"deckBottom"` verb — because that is where the cards physically are
@@ -518,26 +568,36 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     expect(done.players.p1.hand).toEqual([water]);
   });
 
-  it.each([{ yes: true, spot: ACTIVE }, { yes: false, spot: BENCH(0) }])(
-    "a single drop chooses the Energy and its Pokémon target ($yes)",
-    ({ yes, spot }) => {
-      const { state, fire, water } = searched(table(FILLER, [PIKA]));
-      const asked = mustApply(state, cards([fire, water])).state;
-      const dropped = mustApply(asked, { type: "resolveEffect", seat: "p1",
-        choice: { kind: "confirm", yes, target: spot } });
-      expect(dropped.state.phase.kind).toBe("turn:action");
-      const host = spot.spot.spot === "active" ? dropped.state.players.p1.active : dropped.state.players.p1.bench[spot.spot.index];
-      expect(host?.energy).toContain(yes ? fire : water);
-      expect(dropped.state.players.p1.hand).toEqual([yes ? water : fire]);
-      expect(types(dropped.events)).toContain("SHUFFLE");
-    },
-  );
+  it.each([
+    { yes: true, spot: ACTIVE },
+    { yes: false, spot: BENCH(0) },
+  ])("a single drop chooses the Energy and its Pokémon target ($yes)", ({ yes, spot }) => {
+    const { state, fire, water } = searched(table(FILLER, [PIKA]));
+    const asked = mustApply(state, cards([fire, water])).state;
+    const dropped = mustApply(asked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes, target: spot },
+    });
+    expect(dropped.state.phase.kind).toBe("turn:action");
+    const host =
+      spot.spot.spot === "active"
+        ? dropped.state.players.p1.active
+        : dropped.state.players.p1.bench[spot.spot.index];
+    expect(host?.energy).toContain(yes ? fire : water);
+    expect(dropped.state.players.p1.hand).toEqual([yes ? water : fire]);
+    expect(types(dropped.events)).toContain("SHUFFLE");
+  });
 
   it("rejects an opposing or empty target without consuming the staged cards", () => {
     const { state, fire, water } = searched(table());
     const asked = mustApply(state, cards([fire, water])).state;
     for (const target of [{ ...ACTIVE, seat: "p2" as const }, BENCH(0)]) {
-      const result = applyAction(asked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true, target } });
+      const result = applyAction(asked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: true, target },
+      });
       expect(result.ok).toBe(false);
       expect(asked.players.p1.hand).toEqual([fire, water]);
     }
@@ -547,7 +607,11 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     const { state, fire, water } = searched(table(), [FIRE]);
     const older = state.players.p1.hand[0];
     const asked = mustApply(state, cards([fire, water])).state;
-    const dropped = mustApply(asked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true, target: ACTIVE } }).state;
+    const dropped = mustApply(asked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes: true, target: ACTIVE },
+    }).state;
     expect(dropped.players.p1.active?.energy).toEqual([fire]);
     expect(dropped.players.p1.hand).toEqual([older, water]);
   });
@@ -562,10 +626,12 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     expect(done.players.p1.hand).toContain(luminous);
   });
 
-  it("⚠️ R-CR1 (UNRULED) — ONE found: *\"Attach Fire Energy\"* or *\"Keep it in your hand\"*", () => {
+  it('⚠️ R-CR1 (UNRULED) — ONE found: *"Attach Fire Energy"* or *"Keep it in your hand"*', () => {
     const { state, fire } = searched(table());
     const { state: asked } = mustApply(state, cards([fire]));
-    expect(prompt(asked)).toMatchObject({ labels: { yes: "Attach Fire Energy", no: "Keep it in your hand" } });
+    expect(prompt(asked)).toMatchObject({
+      labels: { yes: "Attach Fire Energy", no: "Keep it in your hand" },
+    });
     expect(mustApply(asked, confirm(true)).state.players.p1.active?.energy).toEqual([fire]);
     const kept = mustApply(asked, confirm(false)).state;
     expect(kept.players.p1.active?.energy).toEqual([]);
@@ -582,7 +648,11 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
 
   it("the play gate does not ask the HAND about this attach — Crispin alone in hand plays", () => {
     const board = setHand(table(), "p1", [CRISPIN[1]]);
-    const { state } = mustApply(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string });
+    const { state } = mustApply(board, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: board.players.p1.hand[0] as string,
+    });
     expect(prompt(state).kind).toBe("chooseCards");
   });
 });
@@ -687,7 +757,7 @@ describe("D561 §5 — Love Ball: a Pokémon with the SAME NAME as one of the op
     expect(new Set(q.candidates.map((u) => idOf(bench, u)))).toEqual(new Set([FILLER, PIKA_EX]));
   });
 
-  it("🛑 R-LB — the name is EXACT: \"D561 Pikachu ex\" opposite finds no \"D561 Pikachu\"; the whiff still shuffles", () => {
+  it('🛑 R-LB — the name is EXACT: "D561 Pikachu ex" opposite finds no "D561 Pikachu"; the whiff still shuffles', () => {
     const board = purgeFromDeck(table(FILLER, [], PIKA_EX, []), "p1", PIKA_EX);
     const { state, events } = play(board, LOVE_BALL);
     expect(state.phase.kind).toBe("turn:action");
@@ -723,7 +793,9 @@ describe("D561 §6 — Hand Trimmer: each player down to 5, the OPPONENT first (
     });
     const mine = second.players.p1.hand[0] as string;
     const { state, events: e2 } = mustApply(second, cards([mine]));
-    expect(all(e2, "FORCED_HAND_DISCARD")).toEqual([{ type: "FORCED_HAND_DISCARD", seat: "p1", uids: [mine] }]);
+    expect(all(e2, "FORCED_HAND_DISCARD")).toEqual([
+      { type: "FORCED_HAND_DISCARD", seat: "p1", uids: [mine] },
+    ]);
     expect(state.players.p1.hand).toHaveLength(5);
     expect(state.players.p1.discard).toContain(mine);
     expect(state.phase.kind).toBe("turn:action");
@@ -761,7 +833,10 @@ describe("D561 §7 — Scoop Up Cyclone: 1 of your Pokémon, the Active INCLUDED
     let board = attachFromDeck(table(FILLER, [PIKA]), "p1", FIRE, 1);
     board = attachToolFromDeck(board, "p1", "active", TOOL);
     const stack = [...(board.players.p1.active?.stack ?? [])];
-    const attached = [...(board.players.p1.active?.energy ?? []), ...(board.players.p1.active?.tools ?? [])];
+    const attached = [
+      ...(board.players.p1.active?.energy ?? []),
+      ...(board.players.p1.active?.tools ?? []),
+    ];
     const { state: parked } = play(board, SCOOP[0]);
     const p = prompt(parked);
     if (p.kind !== "choosePokemon") throw new Error("expected choosePokemon");
@@ -807,7 +882,11 @@ describe("D561 §7 — Scoop Up Cyclone: 1 of your Pokémon, the Active INCLUDED
 describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEMOTED body (V8, R-SS)", () => {
   function staged(bench: readonly string[] = [PIKA, PIKA_EX]) {
     const board = attachFromDeck(table(FILLER, bench), "p1", FIRE, 2);
-    return { board, energy: [...(board.players.p1.active?.energy ?? [])], demoted: board.players.p1.active?.stack[0] };
+    return {
+      board,
+      energy: [...(board.players.p1.active?.energy ?? [])],
+      demoted: board.players.p1.active?.stack[0],
+    };
   }
 
   it("the switch's caption says what the answer buys; the move offers ONLY the demoted body's Energy, to the NEW Active", () => {
@@ -826,7 +905,9 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
     expect(m.destinations).toEqual([ACTIVE]);
     expect(m.max).toBe(2);
     expect(m.min).toBeUndefined();
-    expect(m.note).toBe("Move any amount of Energy from the Pokémon you moved to your Bench to the new Active Pokémon.");
+    expect(m.note).toBe(
+      "Move any amount of Energy from the Pokémon you moved to your Bench to the new Active Pokémon.",
+    );
     const { state } = mustApply(moving, {
       type: "resolveEffect",
       seat: "p1",
@@ -836,11 +917,15 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
     expect([...(state.players.p1.active?.energy ?? [])].sort()).toEqual([...energy].sort());
   });
 
-  it("🛑 R-SS — moving NOTHING is a legal answer (\"you may\")", () => {
+  it('🛑 R-SS — moving NOTHING is a legal answer ("you may")', () => {
     const { board, energy } = staged();
     const { state: parked } = play(board, SCRAMBLE);
     const { state: moving } = mustApply(parked, pokemon(BENCH(0)));
-    const { state } = mustApply(moving, { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: [] } });
+    const { state } = mustApply(moving, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "moveEnergy", picks: [] },
+    });
     expect(state.phase.kind).toBe("turn:action");
     const benched = state.players.p1.bench.find((b) => b.energy.length > 0);
     expect([...(benched?.energy ?? [])].sort()).toEqual([...energy].sort());
@@ -863,7 +948,10 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
         p1: {
           ...board.players.p1,
           deck: board.players.p1.deck.filter((u) => u !== water),
-          bench: [board.players.p1.bench[0] as (typeof board.players.p1.bench)[number], { ...other, energy: [water] }],
+          bench: [
+            board.players.p1.bench[0] as (typeof board.players.p1.bench)[number],
+            { ...other, energy: [water] },
+          ],
         },
       },
     };
@@ -883,9 +971,13 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
     expect(all(events, "ENERGY_MOVED")).toEqual([]);
   });
 
-  it("🛑 R-SS — an EMPTY Bench refuses the play (§7, no legal target), so \"If you do\" never reads an empty slot", () => {
+  it('🛑 R-SS — an EMPTY Bench refuses the play (§7, no legal target), so "If you do" never reads an empty slot', () => {
     const board = setHand(table(), "p1", [SCRAMBLE]);
-    expectErr(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }, "NO_LEGAL_TARGET");
+    expectErr(
+      board,
+      { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string },
+      "NO_LEGAL_TARGET",
+    );
   });
 });
 
@@ -912,7 +1004,9 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     const water = p.candidates.find((u) => idOf(searching, u) === WATER) as string;
     const { state: asked } = mustApply(searching, cards([fire, water]));
     const revived = JSON.parse(JSON.stringify(asked)) as GameState;
-    expect(mustApply(revived, confirm(false)).state).toEqual(mustApply(asked, confirm(false)).state);
+    expect(mustApply(revived, confirm(false)).state).toEqual(
+      mustApply(asked, confirm(false)).state,
+    );
     const unlabelled = reviveWith(asked, (j) =>
       j.split(',"labels":{"yes":"Attach Fire Energy","no":"Attach Water Energy"}').join(""),
     );
@@ -968,7 +1062,10 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
         p1: {
           ...board.players.p1,
           deck: board.players.p1.deck.filter((u) => u !== water),
-          bench: [board.players.p1.bench[0] as (typeof board.players.p1.bench)[number], { ...other, energy: [water] }],
+          bench: [
+            board.players.p1.bench[0] as (typeof board.players.p1.bench)[number],
+            { ...other, energy: [water] },
+          ],
         },
       },
     };

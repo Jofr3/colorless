@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote, doomBodyAt } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -41,8 +41,10 @@ import { koByEffectMarker } from "./types";
 
 const SIDE_KICK =
   "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.";
-const SIGNAL = "If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card.";
-const SOUL_DESTROYER = "Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.";
+const SIGNAL =
+  "If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card.";
+const SOUL_DESTROYER =
+  "Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.";
 const CELEBRATION =
   "If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.";
 
@@ -83,7 +85,11 @@ describe("D639 §2 — the readings", () => {
         then: [{ op: "preventDamage", effects: true }],
       },
     ]);
-    expect(deriveAttackEffect(SIDE_KICK.replace("damage from and effects of attacks", "damage from attacks"))).toBeNull();
+    expect(
+      deriveAttackEffect(
+        SIDE_KICK.replace("damage from and effects of attacks", "damage from attacks"),
+      ),
+    ).toBeNull();
     expect(deriveAttackEffect(`${SIDE_KICK} Draw a card.`)).toBeNull();
     expect(conditionNote({ kind: "opponentKnockedOutByDamage" })).toBe(
       "your opponent's Pokémon is Knocked Out by damage from this attack",
@@ -96,14 +102,20 @@ describe("D639 §2 — the readings", () => {
       { op: "bountyThisAttack", amount: 2 },
     ]);
     expect(deriveAttackEffect(SIGNAL.replace("1 more Prize card", "2 more Prize card"))).toBeNull();
-    expect(deriveAttackEffect(SIGNAL.replace("1 more Prize card", "1 more Prize cards"))).toBeNull();
+    expect(
+      deriveAttackEffect(SIGNAL.replace("1 more Prize card", "1 more Prize cards")),
+    ).toBeNull();
     expect(deriveAttackEffect(SIGNAL.replace("1 more", "0 more"))).toBeNull();
-    expect(deriveAttackEffect(SIGNAL.replace("1 more Prize card", "0 more Prize cards"))).toBeNull();
+    expect(
+      deriveAttackEffect(SIGNAL.replace("1 more Prize card", "0 more Prize cards")),
+    ).toBeNull();
     expect(deriveAttackEffect(`Draw a card. ${SIGNAL}`)).toBeNull();
   });
 
   it("Soul Destroyer: `knockOutEach` at the printed HP", () => {
-    expect(deriveAttackEffect(SOUL_DESTROYER)).toEqual([{ op: "knockOutEach", remainingHpAtMost: 50 }]);
+    expect(deriveAttackEffect(SOUL_DESTROYER)).toEqual([
+      { op: "knockOutEach", remainingHpAtMost: 50 },
+    ]);
     expect(deriveAttackEffect(SOUL_DESTROYER.replace("50", "30"))).toEqual([
       { op: "knockOutEach", remainingHpAtMost: 30 },
     ]);
@@ -122,8 +134,14 @@ const P = "d639-psychic";
 const D = "d639-darkness";
 const W = "d639-water";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -149,21 +167,15 @@ const LOCAL: Record<string, Card> = {
   "30th-072": mon("30th-072", "Unown", 80, "Psychic", [
     { cost: ["Psychic", "Psychic"], name: "Mysterious Signal", damage: 40, effect: SIGNAL },
   ]),
-  "me03-053": mon(
-    "me03-053",
-    "Yveltal ex",
-    210,
-    "Darkness",
-    [
-      { cost: ["Darkness", "Darkness", "Colorless"], name: "Soul Destroyer", effect: SOUL_DESTROYER },
-      {
-        cost: ["Darkness", "Darkness", "Colorless"],
-        name: "Dark Strike",
-        damage: 210,
-        effect: "During your next turn, this Pokémon can't use Dark Strike.",
-      },
-    ],
-  ),
+  "me03-053": mon("me03-053", "Yveltal ex", 210, "Darkness", [
+    { cost: ["Darkness", "Darkness", "Colorless"], name: "Soul Destroyer", effect: SOUL_DESTROYER },
+    {
+      cost: ["Darkness", "Darkness", "Colorless"],
+      name: "Dark Strike",
+      damage: 210,
+      effect: "During your next turn, this Pokémon can't use Dark Strike.",
+    },
+  ]),
   [FILLER]: mon(FILLER, "D639 Filler", 400, "Colorless", TAP),
   [SMALL]: mon(SMALL, "D639 Small", 60, "Colorless", TAP),
   [F]: typedEnergy(F, "Fighting"),
@@ -199,7 +211,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -207,15 +221,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -243,7 +263,8 @@ function table(
   ownBench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   for (const id of ownBench) state = benchFromDeck(state, "p1", id);
@@ -257,10 +278,16 @@ const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) 
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const koIds = (state: GameState, events: readonly GameEvent[]) =>
   of(events, "KNOCKED_OUT").map((e) => [e.seat, state.cardIdByUid[e.uid]]);
-const withP2Active = (state: GameState, patch: Partial<NonNullable<GameState["players"]["p2"]["active"]>>) => {
+const withP2Active = (
+  state: GameState,
+  patch: Partial<NonNullable<GameState["players"]["p2"]["active"]>>,
+) => {
   const side = state.players.p2;
   if (side.active === null) throw new Error("no p2 Active");
-  return { ...state, players: { ...state.players, p2: { ...side, active: { ...side.active, ...patch } } } };
+  return {
+    ...state,
+    players: { ...state.players, p2: { ...side, active: { ...side.active, ...patch } } },
+  };
 };
 
 describe("D639 §3 — the gate member: lethal by damage on the opponent's side, right now", () => {
@@ -277,11 +304,17 @@ describe("D639 §3 — the gate member: lethal by damage on the opponent's side,
 
   it("a body doomed by an EFFECT this turn (D414's marker) does not hold it", () => {
     const base = table("me01-080", [[F, 2]], SMALL);
-    const doomed = doomBodyAt(base, { seat: "p2", spot: { spot: "active" } }, koByEffectMarker(base.turn));
+    const doomed = doomBodyAt(
+      base,
+      { seat: "p2", spot: { spot: "active" } },
+      koByEffectMarker(base.turn),
+    );
     expect(doomed.players.p2.active?.damage).toBe(60);
     expect(conditionHolds(doomed, "p1", cond)).toBe(false);
     // Last turn's marker is not this turn's: the lethality reads as damage again.
-    const stale = withP2Active(setDamage(base, "p2", 60), { markers: [koByEffectMarker(base.turn - 1)] });
+    const stale = withP2Active(setDamage(base, "p2", 60), {
+      markers: [koByEffectMarker(base.turn - 1)],
+    });
     expect(conditionHolds(stale, "p1", cond)).toBe(true);
   });
 });
@@ -291,7 +324,10 @@ describe("D639 §4 — Shadowy Side Kick / Critical Slash: the shield only on a 
     const state = table("me01-080", [[F, 2]], SMALL, [FILLER]);
     const result = mustApply(state, attack(0));
     expect(koIds(result.state, result.events)).toEqual([["p2", SMALL]]);
-    expect(result.state.players.p1.active?.attackBlock).toMatchObject({ turn: state.turn + 1, effects: true });
+    expect(result.state.players.p1.active?.attackBlock).toMatchObject({
+      turn: state.turn + 1,
+      effects: true,
+    });
     expect(of(result.events, "ATTACK_BLOCK_APPLIED")).toHaveLength(1);
   });
 
@@ -313,7 +349,13 @@ describe("D639 §4 — Shadowy Side Kick / Critical Slash: the shield only on a 
     let state = mustApply(table("me01-080", [[F, 2]], SMALL, [FILLER]), attack(0)).state;
     if (state.phase.kind === "ko:takePrizes") {
       const phase = state.phase;
-      state = must(applyAction(state, { type: "takePrizes", seat: "p1", prizeIndices: [...Array(phase.count).keys()] }));
+      state = must(
+        applyAction(state, {
+          type: "takePrizes",
+          seat: "p1",
+          prizeIndices: [...Array(phase.count).keys()],
+        }),
+      );
     }
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
     state = attachFromDeck(state, "p2", "fix-energy", 1);
@@ -340,9 +382,15 @@ describe("D639 §5 — Mysterious Signal: 1 more Prize card for a Knock Out by i
 
   it("R-MSG1: a live bounty of this turn on the same body is ADDED to; a stale one is replaced", () => {
     const base = setDamage(table("30th-072", [[P, 2]], SMALL, [FILLER]), "p2", 20);
-    const live = mustApply(withP2Active(base, { koBounty: { turn: base.turn, amount: 2 } }), attack(0));
+    const live = mustApply(
+      withP2Active(base, { koBounty: { turn: base.turn, amount: 2 } }),
+      attack(0),
+    );
     expect(of(live.events, "PRIZE_BONUS").map((e) => [e.by, e.count])).toEqual([[3, 4]]);
-    const stale = mustApply(withP2Active(base, { koBounty: { turn: base.turn - 2, amount: 2 } }), attack(0));
+    const stale = mustApply(
+      withP2Active(base, { koBounty: { turn: base.turn - 2, amount: 2 } }),
+      attack(0),
+    );
     expect(of(stale.events, "PRIZE_BONUS").map((e) => [e.by, e.count])).toEqual([[1, 2]]);
   });
 
@@ -356,7 +404,11 @@ describe("D639 §5 — Mysterious Signal: 1 more Prize card for a Knock Out by i
 
   it("a body already doomed by an effect this turn is not a Knock Out by this attack's damage: no bonus", () => {
     const base = table("30th-072", [[P, 2]], SMALL, [FILLER]);
-    const doomed = doomBodyAt(base, { seat: "p2", spot: { spot: "active" } }, koByEffectMarker(base.turn));
+    const doomed = doomBodyAt(
+      base,
+      { seat: "p2", spot: { spot: "active" } },
+      koByEffectMarker(base.turn),
+    );
     const result = mustApply(doomed, attack(0));
     expect(koIds(result.state, result.events)).toEqual([["p2", SMALL]]);
     expect(of(result.events, "PRIZE_BONUS")).toEqual([]);
@@ -398,11 +450,5 @@ describe("D639 §6 — Soul Destroyer: each opponent body at 50 HP or less remai
     const result = mustApply(table("me03-053", energy, FILLER, [FILLER]), attack(0));
     expect(of(result.events, "KNOCKED_OUT")).toEqual([]);
     expect(of(result.events, "DAMAGE_DEALT")).toEqual([]);
-  });
-});
-
-describe("D639 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

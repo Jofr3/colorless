@@ -81,7 +81,11 @@ function subtypeOf(card: CardBrief | Card): string {
     this subtype). A full `Card` carries the rules text the test reads; a brief carries the API's answer to the
     same test (apps/api catalog/map.ts `briefEnergyType`), so both reach one predicate. */
 function energySubtypeOf(card: CardBrief | Card): string | null {
-  const face = { category: card.category, energyType: card.energyType, effect: "effect" in card ? card.effect : undefined };
+  const face = {
+    category: card.category,
+    energyType: card.energyType,
+    effect: "effect" in card ? card.effect : undefined,
+  };
   if (isSpecialEnergy(face)) return "Special";
   return isBasicEnergy(face) ? "Normal" : card.energyType;
 }
@@ -163,8 +167,7 @@ function hpBound(value: string): number | undefined {
 export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuery {
   const name = filters.query.trim();
   const text = filters.text.trim();
-  const serverKinds =
-    filters.subtypes.length > 0 ? filters.subtypes.map(wireSubtypeOf) : undefined;
+  const serverKinds = filters.subtypes.length > 0 ? filters.subtypes.map(wireSubtypeOf) : undefined;
   return {
     name: name === "" ? undefined : name,
     category: filters.supertype === "all" ? undefined : CATEGORY_BY_SUPERTYPE[filters.supertype],

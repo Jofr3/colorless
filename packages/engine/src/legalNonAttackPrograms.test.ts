@@ -99,7 +99,7 @@ const LANDED = [
     fixture: null,
     ids: ["sv09-067", "sv09-164", "svp-183"],
     legal: 3,
-    ops: 'onEvolve trigger + optional + bottomFromOpponentHand{basicPokemon, dest bench, upTo "any"} — Mandibuzz\'s op on Arven\'s Greedent\'s trigger, at a count the card does not name',
+    ops: "onEvolve trigger + optional + bottomFromOpponentHand{basicPokemon, dest bench, upTo \"any\"} — Mandibuzz's op on Arven's Greedent's trigger, at a count the card does not name",
   },
   {
     program: "Biting Spree (Team Rocket's Crobat ex)",
@@ -2167,8 +2167,19 @@ describe("D199 — the registry map", () => {
     // its shipped form at `5ae558f3`, the day a row is added back). What replaces it is not
     // vacuous: the list IS empty, and every id its last row named now HAS a program.
     expect(DROPPED).toEqual([]);
-    for (const id of ["sv06-018", "sv06-044", "sv06-089", "sv06-170", "sv08.5-010", "sv08.5-020", "sv08.5-021"]) {
-      expect(programFor(id)?.passive?.attackTwiceIf, `${id} graduated from DROPPED at D570`).toEqual({
+    for (const id of [
+      "sv06-018",
+      "sv06-044",
+      "sv06-089",
+      "sv06-170",
+      "sv08.5-010",
+      "sv08.5-020",
+      "sv08.5-021",
+    ]) {
+      expect(
+        programFor(id)?.passive?.attackTwiceIf,
+        `${id} graduated from DROPPED at D570`,
+      ).toEqual({
         kind: "stadiumInPlayNamed",
         name: "Festival Grounds",
       });

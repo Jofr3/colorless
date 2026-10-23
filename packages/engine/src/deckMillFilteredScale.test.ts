@@ -281,19 +281,29 @@ const ZERO_DECK = [
 ] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({ seed: SEED, decks: { p1: D488_DECK, p2: D488_DECK }, cardPool: D488_POOL });
+  const created = createGame({
+    seed: SEED,
+    decks: { p1: D488_DECK, p2: D488_DECK },
+    cardPool: D488_POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let table = created.state;
   if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }));
+  table = must(
+    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  );
   while (table.phase.kind === "setup:drawExtra") {
     const drawing = table.phase;
     const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
     if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }));
+    table = must(
+      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }));
+    table = must(
+      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     table = must(applyAction(table, { type: "setupReady", seat }));
@@ -363,7 +373,10 @@ const idsIn = (state: GameState, seat: Seat, zone: "hand" | "deck" | "discard"):
 function swing(state: GameState, index: number): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "attack", seat: "p1", index });
 }
-function find<T extends GameEvent["type"]>(events: GameEvent[], type: T): Extract<GameEvent, { type: T }> | undefined {
+function find<T extends GameEvent["type"]>(
+  events: GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }> | undefined {
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 const countOf = <T extends GameEvent["type"]>(events: GameEvent[], type: T): number =>
@@ -520,7 +533,9 @@ describe("D488 §2 — AXIS DELETION: are these two rows really one row?", () =>
     // …and the CONTROL that makes the rung above mean something: the identical head
     // under the UNFILTERED tail has read since D402.
     expect(
-      readersClaiming("Discard all {W} Energy from this Pokémon. This attack does 50 damage for each card you discarded in this way."),
+      readersClaiming(
+        "Discard all {W} Energy from this Pokémon. This attack does 50 damage for each card you discarded in this way.",
+      ),
     ).toEqual(["deriveAttackEffect"]);
   });
 
@@ -528,7 +543,9 @@ describe("D488 §2 — AXIS DELETION: are these two rows really one row?", () =>
     // The third axis, and the only one that was never a blocker. `DECK_TOP_MILL` has
     // read both heads since D131 — which is what makes these rows TAIL repairs and not
     // whole-sentence ones.
-    expect(deriveAttackEffect(BARE_MILL)).toEqual([{ op: "discardDeckTop", whose: "self", count: 3 }]);
+    expect(deriveAttackEffect(BARE_MILL)).toEqual([
+      { op: "discardDeckTop", whose: "self", count: 3 },
+    ]);
     expect(deriveAttackEffect("Discard the top 7 cards of your deck.")).toEqual([
       { op: "discardDeckTop", whose: "self", count: 7 },
     ]);
@@ -562,19 +579,25 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
     // are asserted unchanged in the same object, which is what makes this a
     // discriminating rung rather than three smoke tests.
     expect(
-      deriveAttackEffect("Discard the top 5 cards of your deck, and this attack does 80 damage for each Energy card you discarded in this way."),
+      deriveAttackEffect(
+        "Discard the top 5 cards of your deck, and this attack does 80 damage for each Energy card you discarded in this way.",
+      ),
     ).toEqual([
       { op: "discardDeckTop", whose: "self", count: 5, recordAs: "discarded" },
       { op: "damageDefender", per: 80, count: "discarded", countFilter: { kind: "anyEnergy" } },
     ]);
     expect(
-      deriveAttackEffect("Discard the top 3 cards of your deck, and this attack does 10 damage for each Energy card you discarded in this way."),
+      deriveAttackEffect(
+        "Discard the top 3 cards of your deck, and this attack does 10 damage for each Energy card you discarded in this way.",
+      ),
     ).toEqual([
       { op: "discardDeckTop", whose: "self", count: 3, recordAs: "discarded" },
       { op: "damageDefender", per: 10, count: "discarded", countFilter: { kind: "anyEnergy" } },
     ]);
     expect(
-      deriveAttackEffect("Discard the top 3 cards of your deck, and this attack does 80 damage for each Item card you discarded in this way."),
+      deriveAttackEffect(
+        "Discard the top 3 cards of your deck, and this attack does 80 damage for each Item card you discarded in this way.",
+      ),
     ).toEqual([
       { op: "discardDeckTop", whose: "self", count: 3, recordAs: "discarded" },
       { op: "damageDefender", per: 80, count: "discarded", countFilter: { kind: "item" } },
@@ -601,7 +624,9 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
     // The pronoun is a SPELLING and not an axis: written or not, the program is the
     // same shape at the same fields.
     expect(
-      deriveAttackEffect("Discard the top 7 cards of your deck, and this attack does 70 damage for each Misty's Pokémon you discarded in this way."),
+      deriveAttackEffect(
+        "Discard the top 7 cards of your deck, and this attack does 70 damage for each Misty's Pokémon you discarded in this way.",
+      ),
     ).toEqual(MISTY_PROGRAM);
   });
 
@@ -660,7 +685,9 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
     }
     // …and the SIBLING readers do not pick any of them up either — D382's strong form.
     expect(
-      readersClaiming("Discard the top 3 cards of your deck, and this attack does 80 more damage for each Energy card you discarded in this way."),
+      readersClaiming(
+        "Discard the top 3 cards of your deck, and this attack does 80 more damage for each Energy card you discarded in this way.",
+      ),
     ).toEqual([]);
   });
 
@@ -680,7 +707,8 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
       { op: "damageDefender", per: 60, count: "discarded" },
     ]);
     for (const [, text] of legalAttackCorpus().filter(
-      ([, s]) => s.includes("discarded in this way") && deriveAttackEffect(s) !== null && !MILL_HEAD.test(s),
+      ([, s]) =>
+        s.includes("discarded in this way") && deriveAttackEffect(s) !== null && !MILL_HEAD.test(s),
     )) {
       for (const op of deriveAttackEffect(text) as EffectOp[]) {
         if (op.op === "damageDefender") expect(Object.keys(op), text).not.toContain("countFilter");
@@ -722,7 +750,9 @@ describe("D488 §4 — the COMPOSITION question, driven, with its counterweight"
     // …and the owner-prefixed noun is not even in that family's vocabulary, which is
     // the second half of why a map row there would have been the wrong repair.
     expect(
-      effects.deriveAttackDamageMultiplier("This attack does 70 damage for each Misty's Pokémon in your discard pile."),
+      effects.deriveAttackDamageMultiplier(
+        "This attack does 70 damage for each Misty's Pokémon in your discard pile.",
+      ),
     ).toBeNull();
   });
 
@@ -748,7 +778,12 @@ describe("D488 §4 — the COMPOSITION question, driven, with its counterweight"
     // and §6 asserts the pile CONTENTS for exactly that reason.
     const topAllMatch = ["d488-water-1", "d488-water-2", "d488-water-3"];
     expect(matching(topAllMatch, filter)).toBe(3);
-    expect(matching(topAllMatch.filter((id) => matchesFilter(D488_POOL[id], filter)), filter)).toBe(3);
+    expect(
+      matching(
+        topAllMatch.filter((id) => matchesFilter(D488_POOL[id], filter)),
+        filter,
+      ),
+    ).toBe(3);
   });
 });
 
@@ -955,7 +990,9 @@ describe("D488 §7 — BOARD B: the OWNER-PREFIXED noun, and the wrong owner bes
     expect(matchesFilter(D488_POOL["d488-plain"], misty)).toBe(false);
     // The prefix is matched WITH its trailing space and exact-case, so a card merely
     // NAMED "Misty" is not one of hers — the conjunct `ownerPokemon`'s doc names.
-    expect(matchesFilter({ ...(D488_POOL["d488-m1"] as Card), name: "Mistyveil" }, misty)).toBe(false);
+    expect(matchesFilter({ ...(D488_POOL["d488-m1"] as Card), name: "Mistyveil" }, misty)).toBe(
+      false,
+    );
     // …and an owner-prefixed NON-Pokémon is not one either (Team Rocket's Energy is the
     // printed instance of that hazard).
     expect(
@@ -1013,9 +1050,15 @@ describe("D488 §8 — the STALE SLOT: an op that ran and moved nothing must ove
     // one call with an "everything" predicate: the 13 shipped printings must keep the
     // `.length` they always had.
     const both: GameEvent[] = [];
-    runProgram(state, [{ op: "damageDefender", per: 80, count: "discarded" }], { seat: "p1" }, both, {
-      discarded: ["not-a-uid", "also-not-a-uid"],
-    });
+    runProgram(
+      state,
+      [{ op: "damageDefender", per: 80, count: "discarded" }],
+      { seat: "p1" },
+      both,
+      {
+        discarded: ["not-a-uid", "also-not-a-uid"],
+      },
+    );
     expect(both.find((e) => e.type === "DAMAGE_DEALT")).toMatchObject({ dealt: 160 });
   });
 });
@@ -1040,7 +1083,10 @@ describe("D488 §9 — `MATCH_RECORD_VERSION` stays 29, driven at the address th
     expect(millEvents.filter((e) => e.type === "DECK_TOP_DISCARDED")).toHaveLength(1);
     if (milled.kind !== "done") throw new Error("expected done");
     expect(idsIn(milled.state, "p1", "deck")).toEqual([...ENERGY_DECK.slice(3)]);
-    expect(idsIn(milled.state, "p1", "discard")).toEqual([...ENERGY_PILE, ...ENERGY_DECK.slice(0, 3)]);
+    expect(idsIn(milled.state, "p1", "discard")).toEqual([
+      ...ENERGY_PILE,
+      ...ENERGY_DECK.slice(0, 3),
+    ]);
 
     // ② The v29 scale: no `countFilter`. It counts the WHOLE slot, `.length`, exactly
     //    as it did before this slice — 3 × 80 = 240, which is §5's reading ② and is
@@ -1076,7 +1122,9 @@ describe("D488 §10 — the DESCRIBER obligation, resolved by following the CALL
     const run = runProgram(table(ENERGY_DECK, ENERGY_PILE), ENERGY_PROGRAM, { seat: "p1" }, events);
     expect(run.kind).toBe("done");
     const misty: GameEvent[] = [];
-    expect(runProgram(table(MISTY_DECK, MISTY_PILE), MISTY_PROGRAM, { seat: "p1" }, misty).kind).toBe("done");
+    expect(
+      runProgram(table(MISTY_DECK, MISTY_PILE), MISTY_PROGRAM, { seat: "p1" }, misty).kind,
+    ).toBe("done");
     // …and on the real board the state is never left pending either.
     const { state: done } = swing(table(MISTY_DECK, MISTY_PILE), MISTY_SWING);
     expect(done.pending).toEqual([]);
@@ -1108,7 +1156,9 @@ describe("D488 §11 — the LOUD control, and the neighbours that must not have 
     // `DECK_TOP_MILL`'s 16 printings are the population this widening had to leave
     // alone, and the assertion is the OP rather than the board: an emitted `recordAs`
     // here would be an inert key on every one of them.
-    expect(deriveAttackEffect(BARE_MILL)).toEqual([{ op: "discardDeckTop", whose: "self", count: 3 }]);
+    expect(deriveAttackEffect(BARE_MILL)).toEqual([
+      { op: "discardDeckTop", whose: "self", count: 3 },
+    ]);
     expect(deriveAttackEffect("Discard the top card of your opponent's deck.")).toEqual([
       { op: "discardDeckTop", whose: "opponent", count: 1 },
     ]);

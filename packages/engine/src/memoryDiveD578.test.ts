@@ -59,7 +59,8 @@ const R = "d578m-fire";
 const MEMORY_DIVE_TEXT =
   "Each of your evolved Pokémon can use any attack from its previous Evolutions. (You still need the necessary Energy to use each attack.)";
 
-const poke = (id: string, extra: Partial<Card>): Card => battler(id, { name: id, hp: 900, types: ["Colorless"], ...extra });
+const poke = (id: string, extra: Partial<Card>): Card =>
+  battler(id, { name: id, hp: 900, types: ["Colorless"], ...extra });
 
 const relicanth = (id: string): Card =>
   poke(id, {
@@ -136,7 +137,11 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [LITTEN]: poke(LITTEN, { name: "Litten", types: ["Fire"], attacks: [{ cost: [], name: "Scratch", damage: 10 }] }),
+  [LITTEN]: poke(LITTEN, {
+    name: "Litten",
+    types: ["Fire"],
+    attacks: [{ cost: [], name: "Scratch", damage: 10 }],
+  }),
   [TORRACAT]: poke(TORRACAT, {
     name: "Torracat",
     stage: "Stage1",
@@ -166,7 +171,11 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [AXEW]: poke(AXEW, { name: "Axew", types: ["Dragon"], attacks: [{ cost: [], name: "Scratch", damage: 10 }] }),
+  [AXEW]: poke(AXEW, {
+    name: "Axew",
+    types: ["Dragon"],
+    attacks: [{ cost: [], name: "Scratch", damage: 10 }],
+  }),
   [FRAXURE]: poke(FRAXURE, {
     name: "Fraxure",
     stage: "Stage1",
@@ -239,7 +248,11 @@ const LOCAL_CARDS: Record<string, Card> = {
   [COPIER]: poke(COPIER, {
     name: "D578 Copier",
     attacks: [
-      { cost: [], name: "Foul Play", effect: "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack." },
+      {
+        cost: [],
+        name: "Foul Play",
+        effect: "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
+      },
     ],
   }),
   [CHOOSER]: poke(CHOOSER, {
@@ -265,7 +278,11 @@ const LOCAL_CARDS: Record<string, Card> = {
     attacks: CATALOG_MANIFEST.trainerFaces[TM]?.attacks ?? null,
   },
   [PLAIN]: poke(PLAIN, { name: "D578 Plain", attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
-  [FILLER]: poke(FILLER, { name: "D578 Filler", retreat: 1, attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
+  [FILLER]: poke(FILLER, {
+    name: "D578 Filler",
+    retreat: 1,
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
   [G]: typedEnergy(G, "Grass"),
   [F]: typedEnergy(F, "Fighting"),
   [M]: typedEnergy(M, "Metal"),
@@ -312,7 +329,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -327,7 +345,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -335,15 +355,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -375,7 +402,12 @@ interface Spot {
 
 /** p1's turn 2: each seat's Active and Bench built from `Spot`s (an evolved body carries its
     `under` cards, bottom first, beneath the top); every hand emptied into the deck. */
-function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: readonly Spot[] }): GameState {
+function table(opts: {
+  p1: Spot;
+  p1Bench?: readonly Spot[];
+  p2: Spot;
+  p2Bench?: readonly Spot[];
+}): GameState {
   let state = opened(5783);
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
@@ -384,7 +416,12 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const take = (seat: Seat, id: string): string => {
     const pulled = pull(state, seat, id);
@@ -399,17 +436,21 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
   };
   for (const seat of ["p1", "p2"] as const) {
     const active = build(seat, seat === "p1" ? opts.p1 : opts.p2);
-    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) => build(seat, s));
+    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
+      build(seat, s),
+    );
     state = withSide(state, seat, { active, bench });
   }
   return state;
 }
 
-const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon => state.players[seat].active as InPlayPokemon;
+const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon =>
+  state.players[seat].active as InPlayPokemon;
 const names = (state: GameState, seat: Seat = "p1") =>
   attackMenuOf(state, seat, active(state, seat)).map((row) => `${row.attack.name}/${row.origin}`);
 const dealt = (events: readonly GameEvent[]) =>
-  events.find((e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT")?.dealt;
+  events.find((e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT")
+    ?.dealt;
 
 const LINE: Spot = { id: TOP, under: [LOW, MID] };
 const DIVER: Spot = { id: RELICANTH };
@@ -425,7 +466,12 @@ describe("D578 Memory Dive §2 — the section: lower stages, bottom to top, AFT
   it("a Stage 2 with a Relicanth on the Bench: Top Strike, Top Slam, then Low Strike, Mid Strike", () => {
     const state = table({ p1: LINE, p1Bench: [DIVER], p2: { id: PLAIN } });
     expect(memoryDiveLive(state, "p1")).toBe(true);
-    expect(names(state)).toEqual(["Top Strike/printed", "Top Slam/printed", "Low Strike/memoryDive", "Mid Strike/memoryDive"]);
+    expect(names(state)).toEqual([
+      "Top Strike/printed",
+      "Top Slam/printed",
+      "Low Strike/memoryDive",
+      "Mid Strike/memoryDive",
+    ]);
     const menu = attackMenuOf(state, "p1", active(state));
     expect(menu.map((r) => [r.card.id, r.sourceIndex])).toEqual([
       [TOP, 0],
@@ -448,7 +494,11 @@ describe("D578 Memory Dive §2 — the section: lower stages, bottom to top, AFT
 
   it("a stage Rare Candy SKIPPED contributes nothing — the cards in the stack only", () => {
     const state = table({ p1: { id: TOP, under: [LOW] }, p1Bench: [DIVER], p2: { id: PLAIN } });
-    expect(names(state)).toEqual(["Top Strike/printed", "Top Slam/printed", "Low Strike/memoryDive"]);
+    expect(names(state)).toEqual([
+      "Top Strike/printed",
+      "Top Slam/printed",
+      "Low Strike/memoryDive",
+    ]);
   });
 
   it("two Relicanth do not stack (one section, no duplicates)", () => {
@@ -486,12 +536,22 @@ describe("D578 Memory Dive §3 — declaring a borrowed attack (R-MD1: its own c
   it("Mid Strike (flat index 3) deals ITS damage and ATTACK_DECLARED names it, at the flat index, with no `as`", () => {
     const state = table({ p1: LINE, p1Bench: [DIVER], p2: { id: PLAIN } });
     const { events } = run(state, { type: "attack", seat: "p1", index: 3 });
-    expect(events[0]).toEqual({ type: "ATTACK_DECLARED", seat: "p1", uid: active(state).stack[2], attack: "Mid Strike", index: 3 });
+    expect(events[0]).toEqual({
+      type: "ATTACK_DECLARED",
+      seat: "p1",
+      uid: active(state).stack[2],
+      attack: "Mid Strike",
+      index: 3,
+    });
     expect(dealt(events)).toBe(40);
   });
 
   it("Low Strike costs its printed {G}: unmet on Colorless, paid by a {G}", () => {
-    const dry = table({ p1: { ...LINE, energy: ["fix-energy"] }, p1Bench: [DIVER], p2: { id: PLAIN } });
+    const dry = table({
+      p1: { ...LINE, energy: ["fix-energy"] },
+      p1Bench: [DIVER],
+      p2: { id: PLAIN },
+    });
     expect(rejected(dry, { type: "attack", seat: "p1", index: 2 })).toBe("ATTACK_COST_UNMET");
     const wet = table({ p1: { ...LINE, energy: [G] }, p1Bench: [DIVER], p2: { id: PLAIN } });
     expect(dealt(run(wet, { type: "attack", seat: "p1", index: 2 }).events)).toBe(20);
@@ -500,7 +560,11 @@ describe("D578 Memory Dive §3 — declaring a borrowed attack (R-MD1: its own c
   it("under an opposing Quaking Zone ({C} more) the borrowed cost is {G}{C}: one {G} is short, {G}+{C} pays", () => {
     const short = table({ p1: { ...LINE, energy: [G] }, p1Bench: [DIVER], p2: { id: SEISMITOAD } });
     expect(rejected(short, { type: "attack", seat: "p1", index: 2 })).toBe("ATTACK_COST_UNMET");
-    const paid = table({ p1: { ...LINE, energy: [G, "fix-energy"] }, p1Bench: [DIVER], p2: { id: SEISMITOAD } });
+    const paid = table({
+      p1: { ...LINE, energy: [G, "fix-energy"] },
+      p1Bench: [DIVER],
+      p2: { id: SEISMITOAD },
+    });
     expect(dealt(run(paid, { type: "attack", seat: "p1", index: 2 }).events)).toBe(20);
   });
 
@@ -511,12 +575,22 @@ describe("D578 Memory Dive §3 — declaring a borrowed attack (R-MD1: its own c
 });
 
 /** After p1's attack ended p1's turn: ends p2's, back to p1's next turn. */
-const nextOwnTurn = (state: GameState): GameState => run(state, { type: "endTurn", seat: "p2" }).state;
+const nextOwnTurn = (state: GameState): GameState =>
+  run(state, { type: "endTurn", seat: "p2" }).state;
 
 describe("D578 Memory Dive §4 — R-MD3: whole-body locks and all-attacks boosts reach borrowed rows", () => {
   it("Haxorus borrowing Fraxure's 'Boundless Power' installs its whole-body lock: next turn it cannot attack at all", () => {
-    const state = table({ p1: { id: HAXORUS, under: [AXEW, FRAXURE], energy: [F, M] }, p1Bench: [DIVER], p2: { id: PLAIN } });
-    expect(names(state)).toEqual(["Axe Chop/printed", "Scratch/memoryDive", "Bite/memoryDive", "Boundless Power/memoryDive"]);
+    const state = table({
+      p1: { id: HAXORUS, under: [AXEW, FRAXURE], energy: [F, M] },
+      p1Bench: [DIVER],
+      p2: { id: PLAIN },
+    });
+    expect(names(state)).toEqual([
+      "Axe Chop/printed",
+      "Scratch/memoryDive",
+      "Bite/memoryDive",
+      "Boundless Power/memoryDive",
+    ]);
     const after = run(state, { type: "attack", seat: "p1", index: 3 });
     expect(dealt(after.events)).toBe(90);
     const back = nextOwnTurn(after.state);
@@ -531,7 +605,9 @@ describe("D578 Memory Dive §4 — R-MD3: whole-body locks and all-attacks boost
   it("an ALL-ATTACKS boost (`attackIndex: null`) pays a borrowed attack; a NAMED boost at printed index 0 does not", () => {
     const state = table({ p1: LINE, p1Bench: [DIVER], p2: { id: PLAIN } });
     const boosted = (attackIndex: number | null) =>
-      withSide(state, "p1", { active: { ...active(state), boostedAttack: { turn: state.turn, attackIndex, amount: 30 } } });
+      withSide(state, "p1", {
+        active: { ...active(state), boostedAttack: { turn: state.turn, attackIndex, amount: 30 } },
+      });
     expect(dealt(run(boosted(null), { type: "attack", seat: "p1", index: 3 }).events)).toBe(70);
     expect(dealt(run(boosted(0), { type: "attack", seat: "p1", index: 3 }).events)).toBe(40);
     expect(dealt(run(boosted(0), { type: "attack", seat: "p1", index: 0 }).events)).toBe(120);
@@ -540,7 +616,11 @@ describe("D578 Memory Dive §4 — R-MD3: whole-body locks and all-attacks boost
 
 describe("D578 Memory Dive §5 — R-MD4 (RULED: fixed at the landing): a NAME-keyed self-lock from a borrowed attack binds to the row used", () => {
   it("Scizor ex borrowing Scyther's 'Slashing Strike': the lock binds by NAME; next turn that row is refused (gate and wire); the turn after it is live", () => {
-    const state = table({ p1: { id: SCIZOR, under: [SCYTHER], energy: ["fix-energy", "fix-energy"] }, p1Bench: [DIVER], p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: SCIZOR, under: [SCYTHER], energy: ["fix-energy", "fix-energy"] },
+      p1Bench: [DIVER],
+      p2: { id: PLAIN },
+    });
     expect(names(state)).toEqual([
       "Steel Wing/printed",
       "Cross Breaker/printed",
@@ -584,7 +664,12 @@ describe("D578 Memory Dive §5 — R-MD4 (RULED: fixed at the landing): a NAME-k
       p1Bench: [DIVER],
       p2: { id: PLAIN },
     });
-    expect(names(state)).toEqual(["Blaze Blast/printed", "Scratch/memoryDive", "Bite/memoryDive", "Flare Strike/memoryDive"]);
+    expect(names(state)).toEqual([
+      "Blaze Blast/printed",
+      "Scratch/memoryDive",
+      "Bite/memoryDive",
+      "Flare Strike/memoryDive",
+    ]);
     const after = run(state, { type: "attack", seat: "p1", index: 3 });
     expect(dealt(after.events)).toBe(80);
     expect(after.state.players.p1.active?.lockedAttacks).toEqual([
@@ -598,9 +683,14 @@ describe("D578 Memory Dive §5 — R-MD4 (RULED: fixed at the landing): a NAME-k
   });
 
   it("a PRINTED self-lock is unchanged: Scyther's own 'Slashing Strike' (unevolved) still stamps its printed index", () => {
-    const state = table({ p1: { id: SCYTHER, energy: ["fix-energy", "fix-energy"] }, p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: SCYTHER, energy: ["fix-energy", "fix-energy"] },
+      p2: { id: PLAIN },
+    });
     const after = run(state, { type: "attack", seat: "p1", index: 1 });
-    expect(after.state.players.p1.active?.lockedAttacks).toEqual([{ turn: state.turn + 2, attackIndex: 1 }]);
+    expect(after.state.players.p1.active?.lockedAttacks).toEqual([
+      { turn: state.turn + 2, attackIndex: 1 },
+    ]);
     const back = nextOwnTurn(after.state);
     expect(rejected(back, { type: "attack", seat: "p1", index: 1 })).toBe("ATTACK_PREVENTED");
   });
@@ -608,7 +698,11 @@ describe("D578 Memory Dive §5 — R-MD4 (RULED: fixed at the landing): a NAME-k
 
 describe("D578 Memory Dive §6 — R-MD5: a borrowed attack keeps its timing gate through its SOURCE card", () => {
   it("turn 1: Exeggutor's printed Stomp is banned; the borrowed 'Precocious Evolution' (Exeggcute's licence) is not", () => {
-    const state = table({ p1: { id: EXEGGUTOR, under: [EXEGGCUTE] }, p1Bench: [DIVER], p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: EXEGGUTOR, under: [EXEGGCUTE] },
+      p1Bench: [DIVER],
+      p2: { id: PLAIN },
+    });
     const turnOne: GameState = { ...state, turn: 1 };
     expect(names(turnOne)).toEqual(["Stomp/printed", "Precocious Evolution/memoryDive"]);
     expect(firstTurnAttackBanned(turnOne, active(turnOne), 0)).toBe(true);
@@ -623,14 +717,19 @@ describe("D578 Memory Dive §7 — R-MD2: copies and imposed attack bars read PR
     expect(attackMenuOf(state, "p2", active(state, "p2"))).toHaveLength(2);
     const { events } = run(state, { type: "attack", seat: "p1", index: 0 });
     expect(events.some((e) => e.type === "EFFECT_PENDING")).toBe(false);
-    expect(events[0]).toMatchObject({ type: "ATTACK_DECLARED", attack: "Foul Play", as: "Mid Strike" });
+    expect(events[0]).toMatchObject({
+      type: "ATTACK_DECLARED",
+      attack: "Foul Play",
+      as: "Mid Strike",
+    });
   });
 
   it("'Choose 1 of your opponent's Active Pokémon's attacks …' offers the two PRINTED attacks, not the borrowed ones", () => {
     const state = table({ p1: { id: CHOOSER }, p2: LINE, p2Bench: [DIVER] });
     expect(attackMenuOf(state, "p2", active(state, "p2"))).toHaveLength(4);
     const parked = run(state, { type: "attack", seat: "p1", index: 0 }).state;
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
     expect(parked.phase.prompt).toMatchObject({
       kind: "chooseAttack",
       candidates: [
@@ -643,10 +742,14 @@ describe("D578 Memory Dive §7 — R-MD2: copies and imposed attack bars read PR
 
 describe("D578 Memory Dive §8 — a PRINTED-index record survives the menu changing", () => {
   const barred = (state: GameState): GameState =>
-    withSide(state, "p1", { active: { ...active(state), lockedAttacks: [{ turn: state.turn, attackIndex: 0 }] } });
+    withSide(state, "p1", {
+      active: { ...active(state), lockedAttacks: [{ turn: state.turn, attackIndex: 0 }] },
+    });
 
   it("a bar on printed 0 refuses index 0 and leaves the borrowed rows live — before and after Relicanth leaves play", () => {
-    const state = barred(table({ p1: { id: MID, under: [LOW], energy: [G] }, p1Bench: [DIVER], p2: { id: PLAIN } }));
+    const state = barred(
+      table({ p1: { id: MID, under: [LOW], energy: [G] }, p1Bench: [DIVER], p2: { id: PLAIN } }),
+    );
     expect(names(state)).toEqual(["Mid Strike/printed", "Low Strike/memoryDive"]);
     expect(rejected(state, { type: "attack", seat: "p1", index: 0 })).toBe("ATTACK_PREVENTED");
     expect(dealt(run(state, { type: "attack", seat: "p1", index: 1 }).events)).toBe(20);
@@ -665,7 +768,10 @@ describe("D578 Memory Dive §8 — a PRINTED-index record survives the menu chan
   it("a NAMED boost on printed 0 still pays index 0 after a TM row is gone (the TM discarded at the turn's end)", () => {
     const state = table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } });
     expect(names(state)).toEqual(["Tap/printed", "Fluorite/tool"]);
-    const shed = run(run(state, { type: "endTurn", seat: "p1" }).state, { type: "endTurn", seat: "p2" }).state;
+    const shed = run(run(state, { type: "endTurn", seat: "p1" }).state, {
+      type: "endTurn",
+      seat: "p2",
+    }).state;
     expect(names(shed)).toEqual(["Tap/printed"]);
     const boosted = withSide(shed, "p1", {
       active: { ...active(shed), boostedAttack: { turn: shed.turn, attackIndex: 0, amount: 30 } },

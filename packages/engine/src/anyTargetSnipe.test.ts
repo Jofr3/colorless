@@ -110,13 +110,31 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
       deriveAttackEffect(
         "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack", deals: true }]);
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
   });
 
   it("the W/R clarifier tail is OPTIONAL, and the amount is CAPTURED (100)", () => {
     expect(
       deriveAttackEffect("This attack does 100 damage to 1 of your opponent's Pokémon."),
-    ).toEqual([{ op: "damageChosen", target: "opponentAny", amount: 100, count: 1, source: "attack", deals: true }]);
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 100,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
   });
 
   it("reads Umbreon 'Feint Attack' as an ignoreWR snipe — both the SV and bare wordings", () => {
@@ -130,7 +148,15 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
         "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "attack", deals: true, ignoreWR: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 50,
+        count: 1,
+        source: "attack",
+        deals: true,
+        ignoreWR: true,
+      },
     ]);
     expect(
       deriveAttackEffect(
@@ -171,13 +197,30 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
         "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true, perTakenPrize: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perTakenPrize: true,
+      },
     ]);
     expect(
       deriveAttackEffect(
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true }]);
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 30,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
   });
 });
 
@@ -321,7 +364,11 @@ describe("Umbreon 'Feint Attack' — the ignoreWR snipe skips W/R and effects on
     // sv03-174's "Bouffer" (−20 after W/R) reduces Covetous Ivy's benched snipe (60 →
     // 40); Feint Attack's "not affected by any effects on that Pokémon" reaches the
     // Bench arm too, so the −20 is skipped and the full 50 lands.
-    const state = anySnipe(2, { attacker: "fix-feint", energy: 1, benched: ["sv03-174"] }, FEINT_DECK);
+    const state = anySnipe(
+      2,
+      { attacker: "fix-feint", energy: 1, benched: ["sv03-174"] },
+      FEINT_DECK,
+    );
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
@@ -450,9 +497,8 @@ describe("§1 — D400's price and its SHAPE question, both measured off the cor
     // that reads them. So the POPULATION half is unchanged and still guards the
     // arithmetic, while the resolution half is RE-POINTED rather than deleted (D399's
     // rule, third slice running).
-    const compounds = corpus().filter(
-      ([, t]) =>
-        /^Discard .* This attack does \d+ damage to [2-9] of your opponent's Pokémon\./.test(t),
+    const compounds = corpus().filter(([, t]) =>
+      /^Discard .* This attack does \d+ damage to [2-9] of your opponent's Pokémon\./.test(t),
     );
     expect(compounds).toHaveLength(2);
     expect(units(compounds)).toBe(4);
@@ -511,14 +557,15 @@ describe("§2 — the READING: one capture, and the tail's number must AGREE wit
     // The one-word controls: flip *that*→*those* at 2 and *those*→*that* at 1 and both
     // resolve. Neither refusal above can therefore be blamed on any other byte.
     expect(singularAtTwo.replace("on that Pokémon", "on those Pokémon")).toBe(FEINT_TWO);
-    expect(deriveAttackEffect(singularAtTwo.replace("on that Pokémon", "on those Pokémon"))).toEqual(
-      [{ ...TWIN_FLAT, ignoreWR: true }],
-    );
     expect(
-      deriveAttackEffect(pluralAtOne.replace("on those Pokémon", "on that Pokémon")),
-    ).toEqual([{ ...TWIN_FLAT, count: 1, ignoreWR: true }]);
+      deriveAttackEffect(singularAtTwo.replace("on that Pokémon", "on those Pokémon")),
+    ).toEqual([{ ...TWIN_FLAT, ignoreWR: true }]);
+    expect(deriveAttackEffect(pluralAtOne.replace("on those Pokémon", "on that Pokémon"))).toEqual([
+      { ...TWIN_FLAT, count: 1, ignoreWR: true },
+    ]);
     // …and neither refused sentence is printed, which is what makes the refusal free.
-    for (const t of [singularAtTwo, pluralAtOne]) expect(corpus().some(([, c]) => c === t)).toBe(false);
+    for (const t of [singularAtTwo, pluralAtOne])
+      expect(corpus().some(([, c]) => c === t)).toBe(false);
   });
 
   it("🛑 the anchor's TERMINATOR: a COMPOUND that BEGINS with the printed sentence is refused", () => {
@@ -591,7 +638,11 @@ describe("§3 — count 2 on a real board: the Active/Bench split, twice, with W
     const dealt = findAll(e2, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     // The ACTIVE pick goes through §8.5 — a {L} attacker into a ×2 Lightning body.
-    expect(dealt[0]).toMatchObject({ base: 50, weakness: { op: "multiply", amount: 2 }, dealt: 100 });
+    expect(dealt[0]).toMatchObject({
+      base: 50,
+      weakness: { op: "multiply", amount: 2 },
+      dealt: 100,
+    });
     // The BENCHED pick is flat, and Bouffalant's −20 "Bouffer" DOES bite: 50 → 30.
     expect(dealt[1]).toMatchObject({ base: 50, weakness: null, dealt: 30 });
     expect(done.players.p2.active?.damage).toBe(100);
@@ -638,8 +689,11 @@ describe("§3 — count 2 on a real board: the Active/Bench split, twice, with W
     const one = prompt.candidates[1] as PokemonRef;
     for (const refs of [[one, one], [one], []]) {
       expect(
-        applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs } })
-          .ok,
+        applyAction(parked, {
+          type: "resolveEffect",
+          seat: "p1",
+          choice: { kind: "pokemonMulti", refs },
+        }).ok,
       ).toBe(false);
     }
   });
@@ -736,7 +790,11 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
     const family = corpus().filter(([, t]) => COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
     expect(family).toHaveLength(4);
     expect(units(family)).toBe(7);
-    for (const t of COMPOUNDS) expect(corpus().some(([, c]) => c === t), t).toBe(true);
+    for (const t of COMPOUNDS)
+      expect(
+        corpus().some(([, c]) => c === t),
+        t,
+      ).toBe(true);
     // …and nothing ELSE in the whole column derives to a self-discard followed by an
     // any-target snipe. The reach and the census are the same set, which is the
     // check D139 says a bare `(\d+)` cannot be trusted without.
@@ -793,8 +851,15 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
     // THAN ON A MECHANISM — D399's "a refusal that expired on a literal". Measured:
     // the period join carries 3 sentences / 6 printings and the comma join 1 / 1, the
     // ops are identical across the split, and both spellings resolve.
-    const period = corpus().filter(([, t]) => /Pokémon\. This attack does/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
-    const comma = corpus().filter(([, t]) => /Pokémon, and this attack does/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    const period = corpus().filter(
+      ([, t]) =>
+        /Pokémon\. This attack does/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]),
+    );
+    const comma = corpus().filter(
+      ([, t]) =>
+        /Pokémon, and this attack does/.test(t) &&
+        COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]),
+    );
     expect([period.length, units(period)]).toEqual([3, 6]);
     expect([comma.length, units(comma)]).toEqual([1, 1]);
     // The two joins are ONE relation: rewriting the comma printing's join into the
@@ -818,13 +883,24 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
       "Discard all Energy from this Pokémon. This attack does 120 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance.";
     expect(deriveAttackEffect(wr)).toBeNull();
     expect(
-      deriveAttackEffect(wr.replace(/ This attack's damage.*$/, " (Don't apply Weakness and Resistance for Benched Pokémon.)")),
+      deriveAttackEffect(
+        wr.replace(
+          / This attack's damage.*$/,
+          " (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        ),
+      ),
     ).toEqual(deriveAttackEffect(ALL_ONE));
   });
 
   it("🛑 the DISCARD quantifier is `all` or a digit, and `an` is printed ZERO times here", () => {
-    const all = corpus().filter(([, t]) => /^Discard all Energy/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
-    const numeric = corpus().filter(([, t]) => /^Discard \d+ Energy/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    const all = corpus().filter(
+      ([, t]) =>
+        /^Discard all Energy/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]),
+    );
+    const numeric = corpus().filter(
+      ([, t]) =>
+        /^Discard \d+ Energy/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]),
+    );
     expect([all.length, units(all)]).toEqual([3, 4]);
     expect([numeric.length, units(numeric)]).toEqual([1, 3]);
     // The "an" spelling `SELF_DISCARD_ONE` reads on its own is not in the alternation,
@@ -841,15 +917,36 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
   it("🛑 all four printed sentences derive, and the numbers are READ rather than remembered", () => {
     expect(deriveAttackEffect(COST_TWO)).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 2 },
-      { op: "damageChosen", target: "opponentAny", amount: 120, count: 2, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 120,
+        count: 2,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(deriveAttackEffect(ALL_THREE)).toEqual([
       DISCARD_ALL,
-      { op: "damageChosen", target: "opponentAny", amount: 110, count: 3, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 110,
+        count: 3,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(deriveAttackEffect(ALL_ONE)).toEqual([
       DISCARD_ALL,
-      { op: "damageChosen", target: "opponentAny", amount: 120, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 120,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(deriveAttackEffect(ALL_ONE_COMMA)).toEqual(deriveAttackEffect(ALL_ONE));
     // Three numbers no printing carries, at once — the guard against a reader that
@@ -860,7 +957,14 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
       ),
     ).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 4 },
-      { op: "damageChosen", target: "opponentAny", amount: 35, count: 5, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 35,
+        count: 5,
+        source: "attack",
+        deals: true,
+      },
     ]);
   });
 
@@ -873,18 +977,22 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
       (deriveAttackEffect("Discard 2 Energy from this Pokémon.") as EffectOp[])[0],
     );
     expect(compound[1]).toEqual(
-      (deriveAttackEffect(
-        "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      ) as EffectOp[])[0],
+      (
+        deriveAttackEffect(
+          "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        ) as EffectOp[]
+      )[0],
     );
     const all = deriveAttackEffect(ALL_THREE) as EffectOp[];
     expect(all[0]).toEqual(
       (deriveAttackEffect("Discard all Energy from this Pokémon.") as EffectOp[])[0],
     );
     expect(all[1]).toEqual(
-      (deriveAttackEffect(
-        "This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      ) as EffectOp[])[0],
+      (
+        deriveAttackEffect(
+          "This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        ) as EffectOp[]
+      )[0],
     );
   });
 
@@ -964,7 +1072,10 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
       const snipe = program[1];
       if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${text}`);
       expect(snipe.perRecorded, text).toBe("discarded");
-      expect(corpus().some(([, t]) => t === text), text).toBe(true);
+      expect(
+        corpus().some(([, t]) => t === text),
+        text,
+      ).toBe(true);
     }
     for (const text of [
       "Discard all Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -976,7 +1087,10 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
       if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${text}`);
       expect(snipe.target, text).toBe("opponentBench");
       expect(snipe.filter, text).toEqual({ kind: "suffixPokemon", suffix: "ex" });
-      expect(corpus().some(([, t]) => t === text), text).toBe(true);
+      expect(
+        corpus().some(([, t]) => t === text),
+        text,
+      ).toBe(true);
     }
     // 🆕🆕🆕 **D477 — THE THREE THAT LEFT, RE-POINTED ONTO WHAT NOW OWNS THEM RATHER
     // THAN DELETED (D418/D438).** A bare `.not.toBeNull()` here would be TRUE under
@@ -996,7 +1110,10 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
       const snipe = program[1];
       if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${text}`);
       expect(snipe.target, text).toBe("opponentBench");
-      expect(corpus().some(([, t]) => t === text), text).toBe(true);
+      expect(
+        corpus().some(([, t]) => t === text),
+        text,
+      ).toBe(true);
     }
     // ⚠️ AND THE ONE NEAR-MISS THAT IS **NOT** IN THIS COLUMN, NAMED AS SUCH RATHER
     // THAN LEFT IN THE LIST ABOVE. Pawmot ex "Levin Strike"'s TYPED cost is the
@@ -1047,7 +1164,14 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
         "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 120, count: 2, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 120,
+        count: 2,
+        source: "attack",
+        deals: true,
+      },
     ]);
   });
 });
@@ -1241,7 +1365,11 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
       },
     });
     const dealt = findAll(events, "DAMAGE_DEALT");
-    expect(dealt[0]).toMatchObject({ base: 120, weakness: { op: "multiply", amount: 2 }, dealt: 240 });
+    expect(dealt[0]).toMatchObject({
+      base: 120,
+      weakness: { op: "multiply", amount: 2 },
+      dealt: 240,
+    });
     expect(dealt[1]).toMatchObject({ base: 120, weakness: null, dealt: 120 });
     expect(find(events, "KNOCKED_OUT")).toBeDefined();
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");

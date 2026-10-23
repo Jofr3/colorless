@@ -112,11 +112,7 @@ function armed(
 ): GameState {
   let state = must(
     applyAction(
-      driveSetup(
-        seed,
-        { p1: TAILS_SELF_COST_DECK, p2: TAILS_SELF_COST_DECK },
-        { first: "p2" },
-      ),
+      driveSetup(seed, { p1: TAILS_SELF_COST_DECK, p2: TAILS_SELF_COST_DECK }, { first: "p2" }),
       { type: "endTurn", seat: "p2" },
     ),
   );
@@ -242,16 +238,16 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     // for one. (`FLIP_DECK_TOP_MILL`'s deliberate narrowing was about TWO axes at
     // once, where widening invents readings; one number is not that case, and
     // `FLIP_SELF_HEAL` is the closer precedent — it captures too.)
-    expect(deriveAttackEffect("Flip a coin. If tails, this Pokémon also does 10 damage to itself.")).toEqual(
-      [
-        {
-          op: "coinFlipGate",
-          onTails: true,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-          then: [{ op: "damageSelf", amount: 10 }],
-        },
-      ],
-    );
+    expect(
+      deriveAttackEffect("Flip a coin. If tails, this Pokémon also does 10 damage to itself."),
+    ).toEqual([
+      {
+        op: "coinFlipGate",
+        onTails: true,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "damageSelf", amount: 10 }],
+      },
+    ]);
     // A printed 0 is not a real card and would derive to a silent no-op — the
     // bare arm's guard, carried through the gate rather than lost behind it.
     expect(
@@ -375,7 +371,14 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       ),
     ).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-      { op: "damageChosen", target: "opponentAny", amount: 110, count: 3, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 110,
+        count: 3,
+        source: "attack",
+        deals: true,
+      },
     ]);
     // ⚠️ RE-POINTED AT D147, NOT DELETED, AND THE FORECAST ONE LINE UP IS WHAT
     // CAME TRUE. This list said of Eiscue sv02-048/-205 "Frigid Block" that "the
@@ -396,9 +399,9 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     // — the gated arm took nothing away from it. Three of its printed amounts,
     // none of which is the gated 60 (the 47 print 10/20/30/50/90).
     for (const amount of [10, 30, 90]) {
-      expect(deriveAttackEffect(`This Pokémon also does ${String(amount)} damage to itself.`)).toEqual([
-        { op: "damageSelf", amount },
-      ]);
+      expect(
+        deriveAttackEffect(`This Pokémon also does ${String(amount)} damage to itself.`),
+      ).toEqual([{ op: "damageSelf", amount }]);
     }
   });
 
@@ -463,10 +466,16 @@ describe("the tails-gated self-costs — the seed table, pinned", () => {
     // half — which on these two sentences is the ONLY half a board delta shows.
     for (const id of [...DISCARDERS.map((d) => d.id), RECOILER.id]) {
       for (const seed of TAILS_SEEDS) {
-        expect(faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index: 1 }).events), `${id}/${String(seed)}`).toBe("tails");
+        expect(
+          faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index: 1 }).events),
+          `${id}/${String(seed)}`,
+        ).toBe("tails");
       }
       for (const seed of HEADS_SEEDS) {
-        expect(faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index: 1 }).events), `${id}/${String(seed)}`).toBe("heads");
+        expect(
+          faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index: 1 }).events),
+          `${id}/${String(seed)}`,
+        ).toBe("heads");
       }
     }
     // ONE TABLE FOR THREE INSTALLERS, and the reason is structural rather than
@@ -656,9 +665,9 @@ describe("the DISCARD — `Flip a coin. If tails, discard all Energy from this P
     const text = lines(events, done);
     expect(text).toContain("Pikachu ex used Dynamic Bolt");
     expect(text).toContain("flipped tails for the effect");
-    expect(text.some((l) => l.startsWith("discarded ") && l.includes("from Ember's Pikachu ex"))).toBe(
-      true,
-    );
+    expect(
+      text.some((l) => l.startsWith("discarded ") && l.includes("from Ember's Pikachu ex")),
+    ).toBe(true);
     const at = (needle: string) => text.findIndex((line) => line.includes(needle));
     expect(at("used Dynamic Bolt")).toBeLessThan(at("flipped tails"));
     expect(at("flipped tails")).toBeLessThan(at("discarded "));
@@ -876,7 +885,12 @@ describe("the tails-gated self-costs — the whiff, and purity", () => {
     };
     const events: GameEvent[] = [];
     const bare = deriveAttackEffect(BARE_DISCARD) as EffectOp[];
-    const out = runProgram(stripped, bare, { seat: "p1", sourceUid: activeUid(stripped, "p1") }, events);
+    const out = runProgram(
+      stripped,
+      bare,
+      { seat: "p1", sourceUid: activeUid(stripped, "p1") },
+      events,
+    );
     expect("state" in out).toBe(true);
     expect(events).toEqual([]);
     // …and the same op through the GATE spends the coin and still says nothing,
@@ -966,7 +980,10 @@ describe("the tails-gated self-costs — the family, CLOSED", () => {
   it("pins the shape at 8 printings across 3 sentences, and this slice's 3 by id", () => {
     // The numbers a re-census has to reproduce, and the ids that carry them.
     const SHAPE = [
-      { sentence: "can't attack", ids: ["sv01-157", "sv01-158", "sv01-234", "sv02-130", "sv02-244"] },
+      {
+        sentence: "can't attack",
+        ids: ["sv01-157", "sv01-158", "sv01-234", "sv02-130", "sv02-244"],
+      },
       { sentence: "discard all Energy", ids: ["sv02-063", "sv03-054"] },
       { sentence: "60 damage to itself", ids: ["sv03-183"] },
     ] as const;

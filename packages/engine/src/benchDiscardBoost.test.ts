@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -149,7 +145,10 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
   it("the two printed sentences are really in the column, at 6 and 2 printings", () => {
     const rows = legalAttackCorpus();
     for (const [n, text] of TAKEN) {
-      expect(rows.filter(([, s]) => s === text).map(([c]) => c), text).toEqual([n]);
+      expect(
+        rows.filter(([, s]) => s === text).map(([c]) => c),
+        text,
+      ).toEqual([n]);
     }
     expect(units(TAKEN)).toBe(8);
   });
@@ -172,10 +171,15 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     );
     expect(claimed).toHaveLength(4);
     expect(units(claimed)).toBe(11);
-    expect([...claimed].sort()).toEqual([...TAKEN, [2, MILL] as const, [1, SELF_ATTACH] as const].sort());
-    expect(
-      claimed.map(([, s]) => reading(s).kind).sort(),
-    ).toEqual(["benchDiscard", "benchDiscard", "eachDeckMill", "selfHandAttach"]);
+    expect([...claimed].sort()).toEqual(
+      [...TAKEN, [2, MILL] as const, [1, SELF_ATTACH] as const].sort(),
+    );
+    expect(claimed.map(([, s]) => reading(s).kind).sort()).toEqual([
+      "benchDiscard",
+      "benchDiscard",
+      "eachDeckMill",
+      "selfHandAttach",
+    ]);
     // …and the other ELEVEN refuse both, which is what makes "at most one reader fires
     // per attack" a structural property rather than a rule attack.ts has to keep.
     for (const [, s] of TAKEN) {

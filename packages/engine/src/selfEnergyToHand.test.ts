@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -97,7 +93,8 @@ const TAKEN = "Put an Energy attached to this Pokémon into your hand.";
 
 /** THE DECLINABLE TWIN, printed on the OPPONENT's Active — D296's sentence, and this
     file's control at every seam where "mandatory" has to be told from "may". */
-const MAY_TWIN = "You may put an Energy attached to your opponent's Active Pokémon into their hand.";
+const MAY_TWIN =
+  "You may put an Energy attached to your opponent's Active Pokémon into their hand.";
 
 /** THE ONE REAL NEAR-MISS IN THE SAME COLUMN, and it differs in THREE printed places at
     once (the "may", the "all", and a payoff tail) — which is exactly why §3 pins the
@@ -194,7 +191,8 @@ describe("D405 §1 — the sentence, measured live over the legal column", () =>
     // walks whatever `effects.ts` exports today.
     expect(resolvedByAnyReader(ALL_FOR_DAMAGE), ALL_FOR_DAMAGE).toBe(true);
     for (const read of READERS) {
-      if (read === deriveAttackOptionalCostBoost) expect(read(ALL_FOR_DAMAGE), read.name).not.toBeNull();
+      if (read === deriveAttackOptionalCostBoost)
+        expect(read(ALL_FOR_DAMAGE), read.name).not.toBeNull();
       else expect(read(ALL_FOR_DAMAGE), read.name).toBeNull();
     }
     expect(deriveAttackEffect(ALL_FOR_DAMAGE)).toBeNull();
@@ -260,10 +258,14 @@ describe("D405 §3 — the refusals, each pinned on ONE printed token this ancho
     // …the SUBJECT alone: "your opponent's Active Pokémon" is a different body and a
     // different `from`, and this arm has no branch that could aim there.
     expect(
-      deriveAttackEffect("Put an Energy attached to your opponent's Active Pokémon into your hand."),
+      deriveAttackEffect(
+        "Put an Energy attached to your opponent's Active Pokémon into your hand.",
+      ),
     ).toBeNull();
     // …the VERB alone: "Discard" is arms 7/8/9's sentence and has no `to` at all.
-    expect(deriveAttackEffect("Discard an Energy attached to this Pokémon into your hand.")).toBeNull();
+    expect(
+      deriveAttackEffect("Discard an Energy attached to this Pokémon into your hand."),
+    ).toBeNull();
   });
 
   it("the anchor is WHOLE-SENTENCE — a leading or trailing clause is refused", () => {
@@ -410,8 +412,9 @@ describe("D405 §5 — the PARK: a real decision, and exactly ONE card comes off
     const { state: done } = mustApply(state, attack);
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(activeEnergy(done, "p1")).toHaveLength(1);
-    expect(done.players.p1.hand.filter((uid) => done.cardIdByUid[uid] === "fix-energy").length)
-      .toBeGreaterThan(0);
+    expect(
+      done.players.p1.hand.filter((uid) => done.cardIdByUid[uid] === "fix-energy").length,
+    ).toBeGreaterThan(0);
   });
 
   it("🛑 the filter is `anyEnergy` — a SPECIAL Energy on the attacker is OFFERED", () => {
@@ -420,7 +423,9 @@ describe("D405 §5 — the PARK: a real decision, and exactly ONE card comes off
     // "an Energy" with no adjective, so a Special print must be pickable — this is the
     // one board where the two readings disagree.
     const state = board(16, ["fix-energy", "fix-special"]);
-    const special = activeEnergy(state, "p1").find((uid) => state.cardIdByUid[uid] === "fix-special");
+    const special = activeEnergy(state, "p1").find(
+      (uid) => state.cardIdByUid[uid] === "fix-special",
+    );
     expect(special).toBeDefined();
     const { state: parked } = mustApply(state, attack);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -454,7 +459,12 @@ describe("D405 §6 — the ORDER of the tail, and the turn that follows", () => 
       choice: { kind: "discardEnergy", uids: [chosen] },
     });
     // …and only THEN the §5.3 tail ran, in one batch.
-    expect(types(events)).toEqual(["ENERGY_DISCARDED", "TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
+    expect(types(events)).toEqual([
+      "ENERGY_DISCARDED",
+      "TURN_ENDED",
+      "TURN_STARTED",
+      "CARDS_DRAWN",
+    ]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(done.pending).toEqual([]);
   });

@@ -266,7 +266,8 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
     // reader still refuses it and `yourBenchAtLeast` is untouched — which is exactly
     // what a re-pointing would have destroyed (D365's rename, priced at D362 and
     // RE-MEASURED at D389 as 22 executable sites across 5 files).
-    const sibling = "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.";
+    const sibling =
+      "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.";
     expect(units(corpus().filter(([, s]) => s === sibling))).toBe(1);
     expect(deriveAttackDamageBonus(sibling)?.count).toEqual({
       kind: "boardCondition",
@@ -286,13 +287,17 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
     // No trailing period is not the whole sentence.
     expect(deriveAttackRequirement(`If ${clause}, this attack does nothing`)).toBeNull();
     // Leading text pins `^` — the coin family's shape, on this clause.
-    expect(deriveAttackRequirement(`Flip a coin. If ${clause}, this attack does nothing.`)).toBeNull();
+    expect(
+      deriveAttackRequirement(`Flip a coin. If ${clause}, this attack does nothing.`),
+    ).toBeNull();
     // 🛑 AND THE TWO CONSEQUENTS STAY DISJOINT (D125): the bonus reader must not
     // see a sentence meaning CANCEL, and the requirement reader must not see one
     // meaning +N.
     expect(deriveAttackDamageBonus(V_FORCE)).toBeNull();
     expect(
-      deriveAttackRequirement("If you have 4 or fewer Benched Pokémon, this attack does 80 more damage."),
+      deriveAttackRequirement(
+        "If you have 4 or fewer Benched Pokémon, this attack does 80 more damage.",
+      ),
     ).toBeNull();
   });
 });

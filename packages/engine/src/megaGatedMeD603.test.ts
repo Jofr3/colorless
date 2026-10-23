@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { isMegaEvolutionPokemonEx, matchesFilter } from "./cards";
 import type { BoardCondition } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -82,7 +82,13 @@ describe("D603 §1 — the programs: six objects over 11 printings", () => {
       activeOnly: false,
       playableIf: { kind: "yourMegaExInPlay", type: "Fire" },
       program: [
-        { op: "attachEnergyFrom", source: "hand", energyType: "Fire", targetType: "Fire", benchOnly: true },
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Fire",
+          targetType: "Fire",
+          benchOnly: true,
+        },
       ],
     });
   });
@@ -111,14 +117,25 @@ describe("D603 §1 — the programs: six objects over 11 printings", () => {
 
   it("Excited Power: a passive +120 before W/R on the {D} gate", () => {
     expect(programFor(SEVIPER)).toEqual({
-      passive: { damageBonusBeforeWRIf: { amount: 120, cond: { kind: "yourMegaExInPlay", type: "Darkness" } } },
+      passive: {
+        damageBonusBeforeWRIf: {
+          amount: 120,
+          cond: { kind: "yourMegaExInPlay", type: "Darkness" },
+        },
+      },
     });
   });
 
   it("Mega Signal: a Mega Evolution Pokémon ex, reveal, hand, shuffle; Jett: a card per opponent's Mega ex", () => {
     expect(programFor(MEGA_SIGNAL[0])).toEqual({
       trainer: [
-        { op: "searchDeck", filter: { kind: "megaEvolutionEx" }, dest: "hand", max: 1, reveal: true },
+        {
+          op: "searchDeck",
+          filter: { kind: "megaEvolutionEx" },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
         { op: "shuffleDeck" },
       ],
     });
@@ -134,7 +151,8 @@ describe("D603 §1 — the programs: six objects over 11 printings", () => {
   });
 
   it("no printed attack is registry-keyed (each keeps deriving)", () => {
-    for (const [, ids] of TEXTS) for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
+    for (const [, ids] of TEXTS)
+      for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
   });
 });
 
@@ -194,10 +212,15 @@ const LOCAL: Record<string, Card> = {
     hp: 120,
     types: ["Darkness"],
     abilities: ability("Excited Power", EXCITED_POWER),
-    attacks: [{ cost: ["Darkness", "Darkness", "Darkness"], name: "Pitch-Black Fangs", damage: 120 }],
+    attacks: [
+      { cost: ["Darkness", "Darkness", "Darkness"], name: "Pitch-Black Fangs", damage: 120 },
+    ],
   } as Partial<Card>),
   ...Object.fromEntries(
-    MEGA_SIGNAL.map((id) => [id, { ...trainerCard(id, "Item", MEGA_SIGNAL_TEXT), name: "Mega Signal" }]),
+    MEGA_SIGNAL.map((id) => [
+      id,
+      { ...trainerCard(id, "Item", MEGA_SIGNAL_TEXT), name: "Mega Signal" },
+    ]),
   ),
   [JETT]: { ...trainerCard(JETT, "Supporter", JETT_TEXT), name: "Jett" },
   [MEGA_R]: mega(MEGA_R, "Mega Camerupt ex", "Fire"),
@@ -243,7 +266,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -251,11 +276,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -264,7 +292,9 @@ function p1Turn(): GameState {
     let deck = [...side.deck, ...side.hand];
     const prizes = side.prizes.map((u) => {
       if ([FILLER, "fix-energy"].includes(state.cardIdByUid[u] as string)) return u;
-      const swap = deck.find((d) => [FILLER, "fix-energy"].includes(state.cardIdByUid[d] as string));
+      const swap = deck.find((d) =>
+        [FILLER, "fix-energy"].includes(state.cardIdByUid[d] as string),
+      );
       if (swap === undefined) throw new Error("no swap card");
       deck = [...deck.filter((d) => d !== swap), u];
       return swap;
@@ -303,8 +333,11 @@ function table(opts: {
 const ACTIVE = { spot: "active" } as const;
 const bench = (index: number) => ({ spot: "bench", index }) as const;
 const benchRef = (index: number) => ({ seat: "p1", spot: { spot: "bench", index } }) as const;
-const use = (state: GameState, abilityName: string, target: typeof ACTIVE | ReturnType<typeof bench>) =>
-  applyAction(state, { type: "useAbility", seat: "p1", target, abilityName } as GameAction);
+const use = (
+  state: GameState,
+  abilityName: string,
+  target: typeof ACTIVE | ReturnType<typeof bench>,
+) => applyAction(state, { type: "useAbility", seat: "p1", target, abilityName } as GameAction);
 function ok(result: ReturnType<typeof applyAction>) {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result;
@@ -316,13 +349,16 @@ function refusal(result: ReturnType<typeof applyAction>): { code: string; messag
 const resolve = (state: GameState, choice: unknown) =>
   ok(applyAction(state, { type: "resolveEffect", seat: "p1", choice } as GameAction));
 function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt as unknown as Record<string, unknown>;
 }
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const top = (state: GameState, seat: Seat, at: "active" | number) => {
   const body = at === "active" ? state.players[seat].active : state.players[seat].bench[at];
-  return body === null || body === undefined ? undefined : state.cardIdByUid[body.stack.at(-1) as string];
+  return body === null || body === undefined
+    ? undefined
+    : state.cardIdByUid[body.stack.at(-1) as string];
 };
 const shuffled = (events: readonly GameEvent[]) =>
   events.filter((e) => e.type === "SHUFFLE").map((e) => (e as { seat: Seat }).seat);
@@ -347,14 +383,23 @@ describe("D603 §2 — the new vocabulary: `megaEvolutionEx` and `yourMegaExInPl
     const grass: BoardCondition = { kind: "yourMegaExInPlay", type: "Grass" };
     const any: BoardCondition = { kind: "yourMegaExInPlay" };
     const benched = table({ bench: [MEGA_R] });
-    expect([conditionHolds(benched, "p1", fire), conditionHolds(benched, "p1", grass)]).toEqual([true, false]);
+    expect([conditionHolds(benched, "p1", fire), conditionHolds(benched, "p1", grass)]).toEqual([
+      true,
+      false,
+    ]);
     expect(conditionHolds(benched, "p1", any)).toBe(true);
     const active = table({ active: MEGA_G });
-    expect([conditionHolds(active, "p1", fire), conditionHolds(active, "p1", grass)]).toEqual([false, true]);
+    expect([conditionHolds(active, "p1", fire), conditionHolds(active, "p1", grass)]).toEqual([
+      false,
+      true,
+    ]);
     expect(conditionHolds(active, "p1", any)).toBe(true);
     // A {R} ex that is not a Mega, and a "Mega"-prefixed name that is not one: neither counts.
     const nearMiss = table({ active: PLAIN_EX, bench: [MEGANIUM] });
-    expect([conditionHolds(nearMiss, "p1", fire), conditionHolds(nearMiss, "p1", any)]).toEqual([false, false]);
+    expect([conditionHolds(nearMiss, "p1", fire), conditionHolds(nearMiss, "p1", any)]).toEqual([
+      false,
+      false,
+    ]);
     // The opponent's Mega ex is not YOURS.
     const theirs = table({ foe: MEGA_R, foeBench: [MEGA_G] });
     expect(conditionHolds(theirs, "p1", any)).toBe(false);
@@ -365,7 +410,9 @@ describe("D603 §2 — the new vocabulary: `megaEvolutionEx` and `yourMegaExInPl
     expect(conditionNote({ kind: "yourMegaExInPlay", type: "Fire" })).toBe(
       "you have any Fire Mega Evolution Pokémon ex in play",
     );
-    expect(conditionNote({ kind: "yourMegaExInPlay" })).toBe("you have any Mega Evolution Pokémon ex in play");
+    expect(conditionNote({ kind: "yourMegaExInPlay" })).toBe(
+      "you have any Mega Evolution Pokémon ex in play",
+    );
   });
 });
 
@@ -382,7 +429,10 @@ describe("D603 §3 — Excited Turbo: a Basic {R} from hand to a Benched {R}, as
     expect(offer.candidates).toEqual([benchRef(0), benchRef(2)]);
     state = resolve(parked, { kind: "pokemon", ref: benchRef(2) }).state;
     expect(ids(state, state.players.p1.bench[2]?.energy ?? [])).toEqual(["fix-fire-energy"]);
-    state = resolve(ok(use(state, "Excited Turbo", bench(0))).state, { kind: "pokemon", ref: benchRef(0) }).state;
+    state = resolve(ok(use(state, "Excited Turbo", bench(0))).state, {
+      kind: "pokemon",
+      ref: benchRef(0),
+    }).state;
     expect(ids(state, state.players.p1.bench[0]?.energy ?? [])).toEqual(["fix-fire-energy"]);
     expect(ids(state, state.players.p1.hand)).toEqual(["fix-grass-energy"]);
     expect(state.players.p1.active?.energy).toEqual([]);
@@ -396,7 +446,9 @@ describe("D603 §3 — Excited Turbo: a Basic {R} from hand to a Benched {R}, as
         bench(0),
       );
       expect(refusal(result).code, active).toBe("ABILITY_CONDITION_NOT_MET");
-      expect(refusal(result).message).toContain("you have any Fire Mega Evolution Pokémon ex in play");
+      expect(refusal(result).message).toContain(
+        "you have any Fire Mega Evolution Pokémon ex in play",
+      );
     }
   });
 
@@ -410,7 +462,11 @@ describe("D603 §3 — Excited Turbo: a Basic {R} from hand to a Benched {R}, as
   });
 
   it("from the Active Spot too (no spot clause is printed): the one Benched {R} — the Mega ex — takes it", () => {
-    const state = table({ active: ORICORIO[0], bench: [FILLER, MEGA_R], hand: ["fix-fire-energy"] });
+    const state = table({
+      active: ORICORIO[0],
+      bench: [FILLER, MEGA_R],
+      hand: ["fix-fire-energy"],
+    });
     const done = ok(use(state, "Excited Turbo", ACTIVE)).state;
     expect(done.phase.kind).toBe("turn:action");
     expect(ids(done, done.players.p1.bench[1]?.energy ?? [])).toEqual(["fix-fire-energy"]);
@@ -424,7 +480,10 @@ describe("D603 §4 — Excited Heal: with a {G} Mega ex in play, heal 60 from 1 
     state = setBenchDamage(setDamage(state, "p1", 100), "p1", 0, 30);
     const parked = ok(use(state, "Excited Heal", bench(0))).state;
     expect(prompt(parked).kind).toBe("choosePokemon");
-    const done = resolve(parked, { kind: "pokemon", ref: { seat: "p1", spot: { spot: "active" } } }).state;
+    const done = resolve(parked, {
+      kind: "pokemon",
+      ref: { seat: "p1", spot: { spot: "active" } },
+    }).state;
     expect(done.players.p1.active?.damage).toBe(40);
     expect(done.players.p1.bench[0]?.damage).toBe(30);
     expect(refusal(use(done, "Excited Heal", bench(0))).code).toBe("ABILITY_ALREADY_USED");
@@ -435,7 +494,9 @@ describe("D603 §4 — Excited Heal: with a {G} Mega ex in play, heal 60 from 1 
       const state = setDamage(table({ active, bench: [LUDICOLO[0]] }), "p1", 100);
       const result = use(state, "Excited Heal", bench(0));
       expect(refusal(result).code, active).toBe("ABILITY_CONDITION_NOT_MET");
-      expect(refusal(result).message).toContain("you have any Grass Mega Evolution Pokémon ex in play");
+      expect(refusal(result).message).toContain(
+        "you have any Grass Mega Evolution Pokémon ex in play",
+      );
     }
   });
 });
@@ -447,14 +508,16 @@ describe("D603 §5 — Excited Dash: on the Bench, with any Mega ex in play, swi
       const done = ok(use(state, "Excited Dash", bench(1))).state;
       expect(done.phase.kind, mega).toBe("turn:action");
       expect(top(done, "p1", "active"), mega).toBe(LINOONE);
-      expect(done.players.p1.bench.map((_, i) => top(done, "p1", i)).sort(), mega).toEqual([FILLER, mega].sort());
+      expect(done.players.p1.bench.map((_, i) => top(done, "p1", i)).sort(), mega).toEqual(
+        [FILLER, mega].sort(),
+      );
     }
   });
 
   it("refused from the Active Spot, and with no Mega ex of YOURS in play (a plain ex; the opponent's Mega)", () => {
-    expect(refusal(use(table({ active: LINOONE, bench: [MEGA_R] }), "Excited Dash", ACTIVE)).code).toBe(
-      "ABILITY_BENCH_ONLY",
-    );
+    expect(
+      refusal(use(table({ active: LINOONE, bench: [MEGA_R] }), "Excited Dash", ACTIVE)).code,
+    ).toBe("ABILITY_BENCH_ONLY");
     const plain = use(table({ active: PLAIN_EX, bench: [LINOONE] }), "Excited Dash", bench(0));
     expect(refusal(plain).code).toBe("ABILITY_CONDITION_NOT_MET");
     expect(refusal(plain).message).toContain("you have any Mega Evolution Pokémon ex in play");
@@ -465,7 +528,12 @@ describe("D603 §5 — Excited Dash: on the Bench, with any Mega ex in play, swi
 
 describe("D603 §6 — Excited Power: with a {D} Mega ex in play, this Pokémon's attacks do 120 more", () => {
   const fangs = (opts: { bench: readonly string[] }) => {
-    const state = attachFromDeck(table({ active: SEVIPER, bench: opts.bench }), "p1", "fix-dark-energy", 3);
+    const state = attachFromDeck(
+      table({ active: SEVIPER, bench: opts.bench }),
+      "p1",
+      "fix-dark-energy",
+      3,
+    );
     return ok(applyAction(state, { type: "attack", seat: "p1", index: 0 } as GameAction)).state;
   };
 
@@ -479,8 +547,15 @@ describe("D603 §6 — Excited Power: with a {D} Mega ex in play, this Pokémon'
   });
 
   it("it is THIS Pokémon's attacks: a Benched Seviper does not boost the {D} Mega ex's own attack", () => {
-    const state = attachFromDeck(table({ active: MEGA_D, bench: [SEVIPER] }), "p1", "fix-dark-energy", 1);
-    const done = ok(applyAction(state, { type: "attack", seat: "p1", index: 0 } as GameAction)).state;
+    const state = attachFromDeck(
+      table({ active: MEGA_D, bench: [SEVIPER] }),
+      "p1",
+      "fix-dark-energy",
+      1,
+    );
+    const done = ok(
+      applyAction(state, { type: "attack", seat: "p1", index: 0 } as GameAction),
+    ).state;
     expect(done.players.p2.active?.damage).toBe(200);
   });
 });
@@ -503,7 +578,12 @@ describe("D603 §7 — Mega Signal: a Mega Evolution Pokémon ex from the deck",
 
 describe("D603 §8 — Jett: a card for each of your opponent's Mega Evolution Pokémon ex in play", () => {
   it("counts the opponent's Active and Bench Mega ex (2 here), not a plain ex, not YOUR Mega ex", () => {
-    const state = table({ active: MEGA_G, hand: [JETT], foe: MEGA_D, foeBench: [MEGA_R, PLAIN_EX, MEGANIUM] });
+    const state = table({
+      active: MEGA_G,
+      hand: [JETT],
+      foe: MEGA_D,
+      foeBench: [MEGA_R, PLAIN_EX, MEGANIUM],
+    });
     const done = ok(playTrainer(state, JETT)).state;
     expect(done.players.p1.hand).toHaveLength(2);
     expect(done.players.p1.hand).toEqual(state.players.p1.deck.slice(0, 2));
@@ -531,9 +611,5 @@ describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the vers
     for (const id of ["me01-132", "me01-176", "me01-186"]) expect(programFor(id), id).toBeDefined();
     // 🆕🆕🆕 D620 — Tremendous Bomb ×2 and Core Memory are built by WP26 (`prizesToolsMeD620.test.ts`).
     for (const id of ["me05-082", "me05-113", "me03-070"]) expect(programFor(id), id).toBeDefined();
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

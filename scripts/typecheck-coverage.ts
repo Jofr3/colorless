@@ -299,9 +299,11 @@ if (isFullyCovered(files, covered)) {
   process.exit(0);
 }
 
-const named = uncovered.slice(0, MAX_NAMED).map((f) => `  ${f}`).join("\n");
-const more =
-  uncovered.length > MAX_NAMED ? `\n  … and ${uncovered.length - MAX_NAMED} more.` : "";
+const named = uncovered
+  .slice(0, MAX_NAMED)
+  .map((f) => `  ${f}`)
+  .join("\n");
+const more = uncovered.length > MAX_NAMED ? `\n  … and ${uncovered.length - MAX_NAMED} more.` : "";
 
 fail(
   [

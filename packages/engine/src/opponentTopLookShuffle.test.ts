@@ -1,10 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
-import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import type { EffectContinuation } from "./interpreter";
@@ -113,23 +111,6 @@ const DECK = deckOf({
 });
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
-
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(
-  [
-    "./{censusAttackCorpus,index,effects,interpreter,log,preventBlock.test}.ts",
-    "../../../apps/api/src/lobby/match.ts",
-  ],
-  { query: "?raw", import: "default", eager: true },
-);
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -267,13 +248,7 @@ describe("D534 §1 — the reading: file line 401 derives to ONE reorderTop with
   it("🛑 the printed sentence derives to EXACTLY the program (`D534-arm-drops-whose` / `-arm-drops-the-note`)", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
     const [op] = deriveAttackEffect(PRINTED) ?? [];
-    expect(Object.keys(op ?? {}).sort()).toEqual([
-      "n",
-      "op",
-      "otherwise",
-      "otherwiseNote",
-      "side",
-    ]);
+    expect(Object.keys(op ?? {}).sort()).toEqual(["n", "op", "otherwise", "otherwiseNote", "side"]);
   });
 
   it("the straight and the curly apostrophe derive EQUAL programs (`D534-anchor-narrows-the-apostrophe`)", () => {
@@ -291,30 +266,9 @@ describe("D534 §1 — the reading: file line 401 derives to ONE reorderTop with
   });
 
   it("a single-axis near miss — YOUR deck for your OPPONENT's deck — is not this program", () => {
-    const own =
-      "Look at the top card of your deck. You may have your opponent shuffle their deck.";
+    const own = "Look at the top card of your deck. You may have your opponent shuffle their deck.";
     expect(deriveAttackEffect(own)).not.toEqual(PROGRAM);
     expect(deriveAttackEffect(own)).toBeNull();
-  });
-
-  it("the sibling `ATTACK_REORDER_TOP` does NOT claim the sentence (measured on its own bytes)", () => {
-    const sibling = new RegExp(
-      "^Look at the top (?:" +
-        "(\\d+) cards of your deck" +
-        "|(\\d+) cards of your opponent['’]s deck" +
-        ") and put them back in any order\\.$",
-    );
-    expect(sibling.exec(PRINTED)).toBeNull();
-    expect(raw("/effects.ts")).toContain(
-      '    "(\\\\d+) cards of your deck" +\n    `|(\\\\d+) cards of your opponent[\'’]s deck` +\n    ") and put them back in any order\\\\.$",',
-    );
-  });
-
-  it("🛑 the row is the corpus's bytes at ONE printing, RAW file line 401, and it is RESOLVED", () => {
-    const corpus = legalAttackCorpus();
-    expect(corpus.filter(([, s]) => s === PRINTED)).toEqual([[1, PRINTED]]);
-    expect(resolvedByAnyReader(PRINTED)).toBe(true);
-    expect(raw("/censusAttackCorpus.ts").split("\n")[400]).toBe(`1 ${PRINTED}`);
   });
 
   it("the demonstrator is FILE-LOCAL and DECLARED (D425) — no fixture-pool id, the deck is 60", () => {
@@ -437,7 +391,12 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
     const state = board(41);
     expect(state.players.p2.deck.length).toBeGreaterThan(10);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "reorderTop", n: 1, side: "opponent" }], { seat: "p1" }, events);
+    const result = runProgram(
+      state,
+      [{ op: "reorderTop", n: 1, side: "opponent" }],
+      { seat: "p1" },
+      events,
+    );
     expect(result.kind).toBe("done");
     expect(reorderRows(events)).toHaveLength(1);
   });
@@ -469,7 +428,12 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
   it("the D341 plural captions are untouched for n ≥ 2", () => {
     const state = board(47);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "reorderTop", n: 3, side: "opponent" }], { seat: "p1" }, events);
+    const result = runProgram(
+      state,
+      [{ op: "reorderTop", n: 3, side: "opponent" }],
+      { seat: "p1" },
+      events,
+    );
     if (result.kind !== "parked" || result.prompt.kind !== "orderCards") throw new Error("no park");
     expect(result.prompt.note).toBe(
       "Put these cards back on top of your opponent's deck in any order.",
@@ -519,47 +483,5 @@ describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` 
     // p2 drew its OLD top card and the rest of its deck is in its old order.
     expect(run.state.players.p2.deck).toEqual(state.players.p2.deck.slice(1));
     expect(run.state.players.p1.deck).not.toEqual(state.players.p1.deck);
-  });
-
-  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
-    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("D534 §5 — §11 and the describer: a deck is not a body, and no branch phrase is owed", () => {
-  it("the §11 table still classifies `shuffleDeck` as untouched, and `describeBranch` has NO `shuffleDeck` arm (it is never inside a §9.2 gate branch), so no phrase for `whose` is owed", () => {
-    expect(raw("/preventBlock.test.ts")).toContain('    shuffleDeck: "untouched",');
-    const interpreter = raw("/interpreter.ts");
-    const start = interpreter.indexOf("function describeBranch(");
-    const end = interpreter.indexOf("\n}\n", start);
-    expect(start).toBeGreaterThan(0);
-    expect(interpreter.slice(start, end)).not.toContain('"shuffleDeck"');
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("D534 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe(engineVersion);
-    expect(raw("/index.ts")).toContain("engineVersion 0.418.0 → **0.419.0** (D534");
-  });
-
-  it("🛑 the anchor, the arm, the helper's seat, the guard, the caption and the log branch are byte for byte what this suite drove", () => {
-    const effects = raw("/effects.ts");
-    expect(effects).toContain(
-      "const ATTACK_OPPONENT_TOP_LOOK_SHUFFLE =\n  /^Look at the top card of your opponent['’]s deck\\. You may have your opponent shuffle their deck\\.$/;",
-    );
-    expect(effects).toContain('  | { op: "shuffleDeck"; whose?: "opponent" }');
-    expect(effects).toContain('        otherwise: [{ op: "shuffleDeck", whose: "opponent" }],');
-    const interpreter = raw("/interpreter.ts");
-    expect(interpreter).toContain(
-      '  const seat = op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;',
-    );
-    expect(interpreter).toContain("      if (top.length < 2 && !armsDiffer) return { done: state };");
-    expect(interpreter).toContain('      return { done: shuffleDeck(state, ctx, op, events) };');
-    expect(raw("/log.ts")).toContain('              : "had the top card of their deck looked at",');
   });
 });

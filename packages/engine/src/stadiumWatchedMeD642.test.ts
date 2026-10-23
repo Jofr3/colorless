@@ -4,7 +4,7 @@ import { normalizeCardText } from "./cardText";
 import { CATALOG_MANIFEST } from "./catalogManifest";
 import { effectiveMaxHp } from "./continuous";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import { benchArrivalCounters } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -105,10 +105,20 @@ const UNWIND = 4;
 const REWIND = 5;
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
-const ability = (name: string, effect: string) => ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
-const mon = (id: string, name: string, hp: number, types: string[], attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types, retreat: 1, attacks, ...extra });
-const stadiumCard = (id: string, name: string, effect: string): Card => ({ ...trainerCard(id, "Stadium", effect), name });
+const ability = (name: string, effect: string) =>
+  ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  types: string[],
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types, retreat: 1, attacks, ...extra });
+const stadiumCard = (id: string, name: string, effect: string): Card => ({
+  ...trainerCard(id, "Stadium", effect),
+  name,
+});
 function fossilRow(id: string, name: string): Card {
   const face = CATALOG_MANIFEST.trainerFaces[id];
   if (face === undefined) throw new Error(`no catalog face for ${id}`);
@@ -128,32 +138,112 @@ const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
     SPIRITOMB.map((id) => [
       id,
-      mon(id, "Spiritomb", 80, ["Darkness"], [{ cost: ["Darkness"], name: "Mountain Breaker", damage: 10, effect: "Discard the top card of your opponent's deck." }], ability("Spiteful Swirl", SWIRL_TEXT)),
+      mon(
+        id,
+        "Spiritomb",
+        80,
+        ["Darkness"],
+        [
+          {
+            cost: ["Darkness"],
+            name: "Mountain Breaker",
+            damage: 10,
+            effect: "Discard the top card of your opponent's deck.",
+          },
+        ],
+        ability("Spiteful Swirl", SWIRL_TEXT),
+      ),
     ]),
   ),
-  [WISHIWASHI]: mon(WISHIWASHI, "Wishiwashi", 30, ["Water"], [{ cost: ["Water"], name: "Surprise Attack", damage: 30, effect: "Flip a coin. If tails, this attack does nothing." }], ability("Counterattack Grouping", GROUPING_TEXT)),
+  [WISHIWASHI]: mon(
+    WISHIWASHI,
+    "Wishiwashi",
+    30,
+    ["Water"],
+    [
+      {
+        cost: ["Water"],
+        name: "Surprise Attack",
+        damage: 30,
+        effect: "Flip a coin. If tails, this attack does nothing.",
+      },
+    ],
+    ability("Counterattack Grouping", GROUPING_TEXT),
+  ),
   [RUINS]: stadiumCard(RUINS, "Risky Ruins", RUINS_TEXT),
   [VALLEY]: stadiumCard(VALLEY, "Dizzying Valley", VALLEY_TEXT),
   [ANGE]: stadiumCard(ANGE, "Ange Floette", ANGE_TEXT),
   [TOWER]: stadiumCard(TOWER, "Prism Tower", TOWER_TEXT),
   [MEGA_FLOETTE]: mon(MEGA_FLOETTE, "Mega Floette ex", 250, ["Psychic"], TAP),
-  [CLEFABLE]: mon(CLEFABLE, "Mega Clefable ex", 330, ["Psychic"], MOVES, ability("Luminous Wing", "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.")),
-  [FLUTTER]: mon(FLUTTER, "Flutter Mane", 90, ["Psychic"], MOVES, ability("Midnight Fluttering", "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.")),
-  [ALOMOMOLA]: mon(ALOMOMOLA, "Alomomola", 130, ["Water"], TAP, ability("Gentle Fin", "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.")),
+  [CLEFABLE]: mon(
+    CLEFABLE,
+    "Mega Clefable ex",
+    330,
+    ["Psychic"],
+    MOVES,
+    ability(
+      "Luminous Wing",
+      "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.",
+    ),
+  ),
+  [FLUTTER]: mon(
+    FLUTTER,
+    "Flutter Mane",
+    90,
+    ["Psychic"],
+    MOVES,
+    ability(
+      "Midnight Fluttering",
+      "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.",
+    ),
+  ),
+  [ALOMOMOLA]: mon(
+    ALOMOMOLA,
+    "Alomomola",
+    130,
+    ["Water"],
+    TAP,
+    ability(
+      "Gentle Fin",
+      "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
+    ),
+  ),
   [JAW]: fossilRow(JAW, "Antique Jaw Fossil"),
   [TRANQUILL]: mon(TRANQUILL, "Tranquill", 80, ["Colorless"], TAP, {
     stage: "Stage1",
     evolveFrom: "Pidove",
-    ...ability("Emergency Evolution", "Once during your turn, if this Pokémon has 30 HP or less remaining, you may search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck."),
+    ...ability(
+      "Emergency Evolution",
+      "Once during your turn, if this Pokémon has 30 HP or less remaining, you may search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
+    ),
   }),
-  [UNFEZANT]: mon(UNFEZANT, "Unfezant", 150, ["Colorless"], TAP, { stage: "Stage2", evolveFrom: "Tranquill" }),
-  [PHANTUMP]: mon(PHANTUMP, "Phantump", 70, ["Psychic"], TAP, ability("Spiteful Evolution", "Once during your turn, you may use this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way. You can't use this Ability during your first turn.")),
+  [UNFEZANT]: mon(UNFEZANT, "Unfezant", 150, ["Colorless"], TAP, {
+    stage: "Stage2",
+    evolveFrom: "Tranquill",
+  }),
+  [PHANTUMP]: mon(
+    PHANTUMP,
+    "Phantump",
+    70,
+    ["Psychic"],
+    TAP,
+    ability(
+      "Spiteful Evolution",
+      "Once during your turn, you may use this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way. You can't use this Ability during your first turn.",
+    ),
+  ),
   [KLINKLANG]: mon(KLINKLANG, "Klinklang", 160, ["Metal"], TAP, {
     stage: "Stage2",
     evolveFrom: "Klang",
-    ...ability("Emergency Rotation", "Once during your turn, if this Pokémon is in your hand and your opponent has any Stage 2 Pokémon in play, you may put this Pokémon onto your Bench."),
+    ...ability(
+      "Emergency Rotation",
+      "Once during your turn, if this Pokémon is in your hand and your opponent has any Stage 2 Pokémon in play, you may put this Pokémon onto your Bench.",
+    ),
   }),
-  [TREVENANT]: mon(TREVENANT, "Trevenant", 130, ["Psychic"], TAP, { stage: "Stage1", evolveFrom: "Phantump" }),
+  [TREVENANT]: mon(TREVENANT, "Trevenant", 130, ["Psychic"], TAP, {
+    stage: "Stage1",
+    evolveFrom: "Phantump",
+  }),
   [STRIKER]: mon(STRIKER, "D642 Striker", 400, ["Colorless"], MOVES),
   [FILLER]: mon(FILLER, "D642 Filler", 400, ["Colorless"], TAP),
   [DARK]: mon(DARK, "D642 Dark", 400, ["Darkness"], TAP),
@@ -161,7 +251,10 @@ const LOCAL: Record<string, Card> = {
   [PEBBLE]: mon(PEBBLE, "D642 Pebble", 70, ["Colorless"], TAP),
   [SHADE]: mon(SHADE, "D642 Shade", 70, ["Darkness"], TAP),
   [SPROUT]: mon(SPROUT, "D642 Sprout", 70, ["Grass"], TAP),
-  [SHRUB]: mon(SHRUB, "D642 Shrub", 100, ["Grass"], TAP, { stage: "Stage1", evolveFrom: "D642 Sprout" }),
+  [SHRUB]: mon(SHRUB, "D642 Shrub", 100, ["Grass"], TAP, {
+    stage: "Stage1",
+    evolveFrom: "D642 Sprout",
+  }),
   [FLOETTE]: mon(FLOETTE, "Floette", 70, ["Psychic"], TAP),
   [SPARE]: typedEnergy(SPARE, "Metal"),
 };
@@ -197,7 +290,9 @@ const DECK = deckOf({
   [E]: 6,
   [SPARE]: 13,
 });
-const BOARD_IDS = Object.keys(LOCAL).filter((id) => id !== SPARE).concat([E, NEST_BALL]);
+const BOARD_IDS = Object.keys(LOCAL)
+  .filter((id) => id !== SPARE)
+  .concat([E, NEST_BALL]);
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -210,7 +305,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -218,17 +315,23 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -256,7 +359,8 @@ function table(
   p1Bench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   state = attachFromDeck(state, "p1", E, 1);
   for (const id of p1Bench) state = benchFromDeck(state, "p1", id);
@@ -283,7 +387,13 @@ function evolvedActive(state: GameState, seat: Seat, cardId: string): GameState 
   const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
   if (uid === undefined || side.active === null) throw new Error(`${seat} has no ${cardId}`);
   const active = { ...side.active, stack: [...side.active.stack, uid] };
-  return { ...state, players: { ...state.players, [seat]: { ...side, active, deck: side.deck.filter((u) => u !== uid) } } };
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: { ...side, active, deck: side.deck.filter((u) => u !== uid) },
+    },
+  };
 }
 
 /** TEST SURGERY — `cardId` moved from `seat`'s deck to the TOP of it. */
@@ -291,7 +401,13 @@ function onTop(state: GameState, seat: Seat, cardId: string): GameState {
   const side = state.players[seat];
   const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
   if (uid === undefined) throw new Error(`${seat} has no ${cardId}`);
-  return { ...state, players: { ...state.players, [seat]: { ...side, deck: [uid, ...side.deck.filter((u) => u !== uid)] } } };
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: { ...side, deck: [uid, ...side.deck.filter((u) => u !== uid)] },
+    },
+  };
 }
 
 /** TEST SURGERY — `cardId` moved from `seat`'s deck to its discard pile. */
@@ -301,14 +417,24 @@ function toDiscard(state: GameState, seat: Seat, cardId: string): GameState {
   if (uid === undefined) throw new Error(`${seat} has no ${cardId}`);
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), discard: [...side.discard, uid] } },
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        discard: [...side.discard, uid],
+      },
+    },
   };
 }
 
 const withDamage = (state: GameState, seat: Seat, damage: number): GameState => {
   const side = state.players[seat];
   if (side.active === null) throw new Error(`no ${seat} Active`);
-  return { ...state, players: { ...state.players, [seat]: { ...side, active: { ...side.active, damage } } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...side, active: { ...side.active, damage } } },
+  };
 };
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
 const play = (state: GameState, cardId: string, seat: Seat = "p1") => {
@@ -316,25 +442,42 @@ const play = (state: GameState, cardId: string, seat: Seat = "p1") => {
   return mustApply(withCard, { type: "playTrainer", seat, uid: handUid(withCard, seat, cardId) });
 };
 const resolveCards = (state: GameState, uids: readonly string[], seat: Seat = "p1") =>
-  mustApply(state, { type: "resolveEffect", seat, choice: { kind: "cards", uids: [...uids] } } as GameAction);
+  mustApply(state, {
+    type: "resolveEffect",
+    seat,
+    choice: { kind: "cards", uids: [...uids] },
+  } as GameAction);
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
-const topId = (state: GameState, seat: Seat) => idOf(state, state.players[seat].active?.stack.at(-1));
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
+const topId = (state: GameState, seat: Seat) =>
+  idOf(state, state.players[seat].active?.stack.at(-1));
 const recoil = (events: readonly GameEvent[]) =>
-  of(events, "COUNTERS_PLACED").filter((e) => e.source === "counterattack").map((e) => [e.seat, e.amount]);
+  of(events, "COUNTERS_PLACED")
+    .filter((e) => e.source === "counterattack")
+    .map((e) => [e.seat, e.amount]);
 
 describe("D642 §1 — the prints and the registry rows", () => {
   it("six keys on five NEW objects; the two Spiritomb printings share one", () => {
-    expect(programFor(SPIRITOMB[0])).toEqual({ passive: { damageAttackerWatched: { amount: 10, activeType: "Darkness" } } });
+    expect(programFor(SPIRITOMB[0])).toEqual({
+      passive: { damageAttackerWatched: { amount: 10, activeType: "Darkness" } },
+    });
     expect(programFor(SPIRITOMB[1])).toBe(programFor(SPIRITOMB[0]));
     expect(programFor(WISHIWASHI)).toEqual({
-      passive: { damageAttackerWatched: { amount: 30, activeNames: ["Wishiwashi", "Wishiwashi ex"] } },
+      passive: {
+        damageAttackerWatched: { amount: 30, activeNames: ["Wishiwashi", "Wishiwashi ex"] },
+      },
     });
-    expect(programFor(RUINS)).toEqual({ stadium: { benchArrivalCounters: { amount: 20, excludesType: "Darkness" } } });
+    expect(programFor(RUINS)).toEqual({
+      stadium: { benchArrivalCounters: { amount: 20, excludesType: "Darkness" } },
+    });
     expect(programFor(VALLEY)).toEqual({ stadium: { confusionSurvivesStageChange: true } });
     expect(programFor(ANGE)).toEqual({
-      stadium: { playOnlyOverStadium: "Prism Tower", hpDelta: { amount: 150, stage: "basic", name: "Mega Floette ex" } },
+      stadium: {
+        playOnlyOverStadium: "Prism Tower",
+        hpDelta: { amount: 150, stage: "basic", name: "Mega Floette ex" },
+      },
     });
   });
 
@@ -342,10 +485,6 @@ describe("D642 §1 — the prints and the registry rows", () => {
     expect(GROUPING_TEXT.split("\t")).toHaveLength(3);
     expect(normalizeCardText(GROUPING_TEXT)).toBe(GROUPING_TEXT);
     expect(normalizeCardText(SWIRL_TEXT)).toBe(SWIRL_TEXT);
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -364,9 +503,17 @@ describe("D642 §2 — Spiteful Swirl: 1 counter on the Attacking Pokémon when 
   });
 
   it("the Active Spiritomb watches itself; two Spiritombs pay 10 each (R-SSW1)", () => {
-    expect(mustApply(table(STRIKER, SPIRITOMB[0]), attack(HIT)).state.players.p1.active?.damage).toBe(10);
-    expect(mustApply(table(STRIKER, SPIRITOMB[0], [SPIRITOMB[1]]), attack(HIT)).state.players.p1.active?.damage).toBe(20);
-    expect(mustApply(table(STRIKER, SPIRITOMB[0], [SPIRITOMB[1]]), attack(MOONS)).state.players.p1.active?.damage).toBe(20);
+    expect(
+      mustApply(table(STRIKER, SPIRITOMB[0]), attack(HIT)).state.players.p1.active?.damage,
+    ).toBe(10);
+    expect(
+      mustApply(table(STRIKER, SPIRITOMB[0], [SPIRITOMB[1]]), attack(HIT)).state.players.p1.active
+        ?.damage,
+    ).toBe(20);
+    expect(
+      mustApply(table(STRIKER, SPIRITOMB[0], [SPIRITOMB[1]]), attack(MOONS)).state.players.p1.active
+        ?.damage,
+    ).toBe(20);
   });
 
   it("a non-{D} Active is not watched", () => {
@@ -384,14 +531,19 @@ describe("D642 §2 — Spiteful Swirl: 1 counter on the Attacking Pokémon when 
   it("§9 per holder: Flutter Mane silences the Active Spiritomb only; the benched one still pays", () => {
     const { state } = mustApply(table(FLUTTER, SPIRITOMB[0], [SPIRITOMB[1]]), attack(HIT));
     expect(state.players.p1.active?.damage).toBe(10);
-    expect(mustApply(table(FLUTTER, SPIRITOMB[0]), attack(HIT)).state.players.p1.active?.damage).toBe(0);
+    expect(
+      mustApply(table(FLUTTER, SPIRITOMB[0]), attack(HIT)).state.players.p1.active?.damage,
+    ).toBe(0);
   });
 
   it("Luminous Wing refuses it on both sites (an Ability's share)", () => {
     for (const index of [HIT, MOONS]) {
       const { state, events } = mustApply(table(CLEFABLE, DARK, [SPIRITOMB[0]]), attack(index));
       expect(state.players.p1.active?.damage, String(index)).toBe(0);
-      expect(of(events, "ABILITY_EFFECT_PREVENTED").map((e) => e.seat), String(index)).toEqual(["p1"]);
+      expect(
+        of(events, "ABILITY_EFFECT_PREVENTED").map((e) => e.seat),
+        String(index),
+      ).toEqual(["p1"]);
     }
   });
 });
@@ -404,13 +556,23 @@ describe("D642 §3 — Counterattack Grouping: 3 counters when your Active Wishi
   });
 
   it("a benched Wishiwashi watches an Active `Wishiwashi ex`, on both sites", () => {
-    expect(mustApply(table(STRIKER, WISHI_EX, [WISHIWASHI]), attack(HIT)).state.players.p1.active?.damage).toBe(30);
-    expect(mustApply(table(STRIKER, WISHI_EX, [WISHIWASHI]), attack(MOONS)).state.players.p1.active?.damage).toBe(30);
+    expect(
+      mustApply(table(STRIKER, WISHI_EX, [WISHIWASHI]), attack(HIT)).state.players.p1.active
+        ?.damage,
+    ).toBe(30);
+    expect(
+      mustApply(table(STRIKER, WISHI_EX, [WISHIWASHI]), attack(MOONS)).state.players.p1.active
+        ?.damage,
+    ).toBe(30);
   });
 
   it("any other name is not watched, whatever its type", () => {
-    expect(mustApply(table(STRIKER, FILLER, [WISHIWASHI]), attack(HIT)).state.players.p1.active?.damage).toBe(0);
-    expect(mustApply(table(STRIKER, DARK, [WISHIWASHI]), attack(HIT)).state.players.p1.active?.damage).toBe(0);
+    expect(
+      mustApply(table(STRIKER, FILLER, [WISHIWASHI]), attack(HIT)).state.players.p1.active?.damage,
+    ).toBe(0);
+    expect(
+      mustApply(table(STRIKER, DARK, [WISHIWASHI]), attack(HIT)).state.players.p1.active?.damage,
+    ).toBe(0);
   });
 });
 
@@ -418,38 +580,59 @@ describe("D642 §4 — Risky Ruins: 2 counters on a Basic non-{D} Pokémon put o
   const ruined = (state: GameState) => stadium(state, RUINS, "p2");
   const benchPlay = (state: GameState, cardId: string) => {
     const withCard = handFromDeck(state, "p1", cardId, 1);
-    return mustApply(withCard, { type: "playBasicToBench", seat: "p1", uid: handUid(withCard, "p1", cardId) });
+    return mustApply(withCard, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(withCard, "p1", cardId),
+    });
   };
 
   it("the hand play: the Basic {C} lands with 20, one `trainer` row; a {D} Basic and no Stadium take none", () => {
     const { state, events } = benchPlay(ruined(table(FILLER, FILLER)), PEBBLE);
     expect(state.players.p1.bench.map((b) => b.damage)).toEqual([20]);
-    expect(of(events, "COUNTERS_PLACED").map((e) => [e.seat, idOf(state, e.uid), e.amount, e.source])).toEqual([
-      ["p1", PEBBLE, 20, "trainer"],
-    ]);
-    expect(benchPlay(ruined(table(FILLER, FILLER)), SHADE).state.players.p1.bench.map((b) => b.damage)).toEqual([0]);
-    expect(benchPlay(table(FILLER, FILLER), PEBBLE).state.players.p1.bench.map((b) => b.damage)).toEqual([0]);
+    expect(
+      of(events, "COUNTERS_PLACED").map((e) => [e.seat, idOf(state, e.uid), e.amount, e.source]),
+    ).toEqual([["p1", PEBBLE, 20, "trainer"]]);
+    expect(
+      benchPlay(ruined(table(FILLER, FILLER)), SHADE).state.players.p1.bench.map((b) => b.damage),
+    ).toEqual([0]);
+    expect(
+      benchPlay(table(FILLER, FILLER), PEBBLE).state.players.p1.bench.map((b) => b.damage),
+    ).toEqual([0]);
   });
 
-  it("a Stage 2 put onto the Bench (Klinklang \"Emergency Rotation\") is no Basic and takes none", () => {
+  it('a Stage 2 put onto the Bench (Klinklang "Emergency Rotation") is no Basic and takes none', () => {
     const board = ruined(table(FILLER, UNFEZANT));
     const { state } = benchPlay(board, KLINKLANG);
-    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([[KLINKLANG, 0]]);
+    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([
+      [KLINKLANG, 0],
+    ]);
   });
 
   it("a deck search onto the Bench (Nest Ball)", () => {
     const parked = play(ruined(table(FILLER, FILLER)), NEST_BALL).state;
     const pebble = parked.players.p1.deck.find((u) => parked.cardIdByUid[u] === PEBBLE) as string;
     const { state } = resolveCards(parked, [pebble]);
-    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([[PEBBLE, 20]]);
+    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([
+      [PEBBLE, 20],
+    ]);
   });
 
   it("a discard-pile retrieval onto the Bench (Gentle Fin)", () => {
     const board = toDiscard(ruined(table(ALOMOMOLA, FILLER)), "p1", PEBBLE);
-    const parked = mustApply(board, { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Gentle Fin" }).state;
-    const pebble = parked.players.p1.discard.find((u) => parked.cardIdByUid[u] === PEBBLE) as string;
+    const parked = mustApply(board, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Gentle Fin",
+    }).state;
+    const pebble = parked.players.p1.discard.find(
+      (u) => parked.cardIdByUid[u] === PEBBLE,
+    ) as string;
     const { state } = resolveCards(parked, [pebble]);
-    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([[PEBBLE, 20]]);
+    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([
+      [PEBBLE, 20],
+    ]);
   });
 
   it("a look at the top onto the Bench (an attack's `lookAtTopN`)", () => {
@@ -466,11 +649,17 @@ describe("D642 §4 — Risky Ruins: 2 counters on a Basic non-{D} Pokémon put o
 
   it("an Antique Fossil's play: its in-play face is a Basic {C} Pokémon (R-RR2)", () => {
     const { state } = play(ruined(table(FILLER, FILLER)), JAW);
-    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([[JAW, 20]]);
+    expect(state.players.p1.bench.map((b) => [idOf(state, b.stack[0]), b.damage])).toEqual([
+      [JAW, 20],
+    ]);
   });
 
   it("only during the owner's turn (R-RR1): the same landing for the OTHER seat pays nothing", () => {
-    const board = benchFromDeck(benchFromDeck(ruined(table(FILLER, FILLER)), "p1", PEBBLE), "p2", PEBBLE);
+    const board = benchFromDeck(
+      benchFromDeck(ruined(table(FILLER, FILLER)), "p1", PEBBLE),
+      "p2",
+      PEBBLE,
+    );
     const mine = board.players.p1.bench[0]?.stack[0] as string;
     const theirs = board.players.p2.bench[0]?.stack[0] as string;
     const events: GameEvent[] = [];
@@ -497,11 +686,18 @@ describe("D642 §5 — Dizzying Valley: Confused Pokémon stay Confused through 
   it("the hand evolve keeps Confused (with its 80) and clears the Poison; without the Valley both clear", () => {
     const { state, events } = evolveHand(valley(dizzy(table(SPROUT, FILLER))));
     expect(topId(state, "p1")).toBe(SHRUB);
-    expect(state.players.p1.active?.conditions).toEqual({ rotation: "confused", poisonDamage: 0, burned: false, confusionDamage: 80 });
+    expect(state.players.p1.active?.conditions).toEqual({
+      rotation: "confused",
+      poisonDamage: 0,
+      burned: false,
+      confusionDamage: 80,
+    });
     expect(of(events, "STATUS_CLEARED").map((e) => e.statuses)).toEqual([["poisoned"]]);
     const bare = evolveHand(dizzy(table(SPROUT, FILLER)));
     expect(bare.state.players.p1.active?.conditions.rotation).toBe("none");
-    expect(of(bare.events, "STATUS_CLEARED").map((e) => [...e.statuses].sort())).toEqual([["confused", "poisoned"]]);
+    expect(of(bare.events, "STATUS_CLEARED").map((e) => [...e.statuses].sort())).toEqual([
+      ["confused", "poisoned"],
+    ]);
   });
 
   it("an Asleep body is not Confused: it still wakes on the evolve", () => {
@@ -511,9 +707,16 @@ describe("D642 §5 — Dizzying Valley: Confused Pokémon stay Confused through 
 
   it("the deck evolve (Emergency Evolution)", () => {
     const board = withDamage(valley(dizzy(table(TRANQUILL, FILLER))), "p1", 50);
-    let { state } = mustApply(board, { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Emergency Evolution" });
+    let { state } = mustApply(board, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Emergency Evolution",
+    });
     if (state.phase.kind === "effect:choose") {
-      const unfezant = state.players.p1.deck.find((u) => state.cardIdByUid[u] === UNFEZANT) as string;
+      const unfezant = state.players.p1.deck.find(
+        (u) => state.cardIdByUid[u] === UNFEZANT,
+      ) as string;
       state = resolveCards(state, [unfezant]).state;
     }
     expect(topId(state, "p1")).toBe(UNFEZANT);
@@ -522,8 +725,14 @@ describe("D642 §5 — Dizzying Valley: Confused Pokémon stay Confused through 
 
   it("the hand evolve by an Ability (Spiteful Evolution)", () => {
     const board = handFromDeck(valley(dizzy(table(PHANTUMP, FILLER))), "p1", TREVENANT, 1);
-    let { state } = mustApply(board, { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Spiteful Evolution" });
-    if (state.phase.kind === "effect:choose") state = resolveCards(state, [handUid(state, "p1", TREVENANT)]).state;
+    let { state } = mustApply(board, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Spiteful Evolution",
+    });
+    if (state.phase.kind === "effect:choose")
+      state = resolveCards(state, [handUid(state, "p1", TREVENANT)]).state;
     expect(topId(state, "p1")).toBe(TREVENANT);
     expect(state.players.p1.active?.conditions.rotation).toBe("confused");
   });
@@ -534,8 +743,14 @@ describe("D642 §5 — Dizzying Valley: Confused Pokémon stay Confused through 
       const { state, events } = mustApply(board, attack(index));
       expect(topId(state, "p2"), String(index)).toBe(SPROUT);
       expect(state.players.p2.active?.conditions.rotation, String(index)).toBe("confused");
-      expect(of(events, "STATUS_CLEARED").map((e) => e.statuses), String(index)).toEqual([["poisoned"]]);
-      const bare = mustApply(dizzy(evolvedActive(table(STRIKER, SPROUT), "p2", SHRUB), "p2"), attack(index)).state;
+      expect(
+        of(events, "STATUS_CLEARED").map((e) => e.statuses),
+        String(index),
+      ).toEqual([["poisoned"]]);
+      const bare = mustApply(
+        dizzy(evolvedActive(table(STRIKER, SPROUT), "p2", SHRUB), "p2"),
+        attack(index),
+      ).state;
       expect(bare.players.p2.active?.conditions.rotation, String(index)).toBe("none");
     }
   });
@@ -548,7 +763,8 @@ describe("D642 §6 — Ange Floette: only over a Prism Tower, the same turn too;
     return phase.trainers.find((t) => state.cardIdByUid[t.uid] === ANGE)?.disabled;
   };
   const withAnge = (state: GameState) => handFromDeck(state, "p1", ANGE, 1);
-  const playAnge = (state: GameState) => ({ type: "playTrainer", seat: "p1", uid: handUid(state, "p1", ANGE) }) as GameAction;
+  const playAnge = (state: GameState) =>
+    ({ type: "playTrainer", seat: "p1", uid: handUid(state, "p1", ANGE) }) as GameAction;
 
   it("no Stadium, or another Stadium, in play: refused (`PLAY_CONDITION_NOT_MET`) and the wire row greyed", () => {
     const bare = withAnge(table(FILLER, FILLER));
@@ -573,11 +789,19 @@ describe("D642 §6 — Ange Floette: only over a Prism Tower, the same turn too;
     const towered = withAnge(play(table(FILLER, FILLER), TOWER).state);
     expect(towered.allowances.stadiumPlayed).toBe(true);
     expect(wire(towered)).toBe(false);
-    expect(idOf(mustApply(towered, playAnge(towered)).state, mustApply(towered, playAnge(towered)).state.stadium?.uid)).toBe(ANGE);
+    expect(
+      idOf(
+        mustApply(towered, playAnge(towered)).state,
+        mustApply(towered, playAnge(towered)).state.stadium?.uid,
+      ),
+    ).toBe(ANGE);
     const valleyed = withAnge(play(table(FILLER, FILLER), VALLEY).state);
     expectErr(valleyed, playAnge(valleyed), "STADIUM_ALREADY_PLAYED");
     expect(wire(valleyed)).toBe(true);
-    const theirs = withAnge({ ...stadium(table(FILLER, FILLER), TOWER, "p2"), allowances: { ...table(FILLER, FILLER).allowances, stadiumPlayed: true } });
+    const theirs = withAnge({
+      ...stadium(table(FILLER, FILLER), TOWER, "p2"),
+      allowances: { ...table(FILLER, FILLER).allowances, stadiumPlayed: true },
+    });
     expectErr(theirs, playAnge(theirs), "STADIUM_ALREADY_PLAYED");
     expect(wire(theirs)).toBe(true);
   });
@@ -586,7 +810,12 @@ describe("D642 §6 — Ange Floette: only over a Prism Tower, the same turn too;
     const base = stadium(table(FILLER, FILLER), TOWER, "p1");
     const spent = withAnge({ ...base, allowances: { ...base.allowances, stadiumPlayed: true } });
     expect(wire(spent)).toBe(false);
-    expect(idOf(mustApply(spent, playAnge(spent)).state, mustApply(spent, playAnge(spent)).state.stadium?.uid)).toBe(ANGE);
+    expect(
+      idOf(
+        mustApply(spent, playAnge(spent)).state,
+        mustApply(spent, playAnge(spent)).state.stadium?.uid,
+      ),
+    ).toBe(ANGE);
   });
 
   it("each Mega Floette ex in play gets +150 HP (both sides); a plain Floette does not", () => {
@@ -600,7 +829,11 @@ describe("D642 §6 — Ange Floette: only over a Prism Tower, the same turn too;
   });
 
   it("replacing it Knocks Out a Mega Floette ex the +150 was holding up", () => {
-    const board = withDamage(stadium(table(MEGA_FLOETTE, FILLER, [], [FILLER]), ANGE, "p2"), "p1", 300);
+    const board = withDamage(
+      stadium(table(MEGA_FLOETTE, FILLER, [], [FILLER]), ANGE, "p2"),
+      "p1",
+      300,
+    );
     const { events, state } = play(board, VALLEY);
     expect(of(events, "KNOCKED_OUT").map((e) => idOf(state, e.uid))).toEqual([MEGA_FLOETTE]);
   });

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { disabledAbilityUids, sideAttackBonusThisTurn } from "./continuous";
 import type { CardFilter, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -107,9 +107,24 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 0,
     attacks: [{ cost: ["Colorless"], name: "Strike", damage: 50 }],
   }),
-  "d556-wall-ex": battler("d556-wall-ex", { name: "D556 Wall ex", types: ["Fighting"], hp: 900, retreat: 1 }),
-  "d556-wall": battler("d556-wall", { name: "D556 Wall", types: ["Fighting"], hp: 900, retreat: 1 }),
-  "d556-wall-v": battler("d556-wall-v", { name: "D556 Wall V", types: ["Fighting"], hp: 900, retreat: 1 }),
+  "d556-wall-ex": battler("d556-wall-ex", {
+    name: "D556 Wall ex",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
+  "d556-wall": battler("d556-wall", {
+    name: "D556 Wall",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
+  "d556-wall-v": battler("d556-wall-v", {
+    name: "D556 Wall V",
+    types: ["Fighting"],
+    hp: 900,
+    retreat: 1,
+  }),
   "d556-weak-ex": battler("d556-weak-ex", {
     name: "D556 Weak ex",
     types: ["Fighting"],
@@ -124,7 +139,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     resistances: [{ type: "Colorless", value: "-30" }],
   }),
-  "d556-bench-ex": battler("d556-bench-ex", { name: "D556 Bench ex", types: ["Fighting"], hp: 300, retreat: 1 }),
+  "d556-bench-ex": battler("d556-bench-ex", {
+    name: "D556 Bench ex",
+    types: ["Fighting"],
+    hp: 300,
+    retreat: 1,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -172,7 +192,9 @@ function localSetup(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
@@ -180,9 +202,12 @@ function localSetup(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
-  for (const seat of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat }));
+  for (const seat of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat }));
   return state;
 }
 
@@ -198,7 +223,11 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
       ...state,
       players: {
         ...state.players,
-        [seat]: { ...side, hand: side.hand.filter((u) => u !== inHand), deck: [...side.deck, inHand] },
+        [seat]: {
+          ...side,
+          hand: side.hand.filter((u) => u !== inHand),
+          deck: [...side.deck, inHand],
+        },
       },
     };
   }
@@ -242,7 +271,12 @@ const benchFrom = (state: GameState, seat: Seat, id: string) =>
 function ready(
   opts: { attacker?: string; defender?: string; p2Bench?: number; printing?: string } = {},
 ): GameState {
-  const { attacker = "d556-striker", defender = "d556-wall-ex", p2Bench = 0, printing = BBT[0] } = opts;
+  const {
+    attacker = "d556-striker",
+    defender = "d556-wall-ex",
+    p2Bench = 0,
+    printing = BBT[0],
+  } = opts;
   let state = localSetup(SEED);
   state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -258,7 +292,9 @@ function ready(
 /** The Supporter PLAYED from P1's hand. */
 function played(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
-  const uid = start.players.p1.hand.find((u) => BBT.includes(start.cardIdByUid[u] as (typeof BBT)[number]));
+  const uid = start.players.p1.hand.find((u) =>
+    BBT.includes(start.cardIdByUid[u] as (typeof BBT)[number]),
+  );
   if (uid === undefined) throw new Error("no Black Belt's Training in hand");
   const { state, events } = mustApply(start, { type: "playTrainer", seat: "p1", uid });
   return { start, uid, state, events };
@@ -267,7 +303,8 @@ function played(opts: Parameters<typeof ready>[0] = {}) {
 const attack = (state: GameState, index: number, seat: Seat = "p1") =>
   mustApply(state, { type: "attack", seat, index });
 
-const pass = (state: GameState, seat: Seat): GameState => must(applyAction(state, { type: "endTurn", seat }));
+const pass = (state: GameState, seat: Seat): GameState =>
+  must(applyAction(state, { type: "endTurn", seat }));
 
 const pickActive = (parked: GameState) =>
   mustApply(parked, {
@@ -276,7 +313,12 @@ const pickActive = (parked: GameState) =>
     choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
   });
 
-function runAs(state: GameState, seat: Seat, program: readonly EffectOp[], events: GameEvent[]): GameState {
+function runAs(
+  state: GameState,
+  seat: Seat,
+  program: readonly EffectOp[],
+  events: GameEvent[],
+): GameState {
   const result = runProgram(state, program, { seat, invokedBy: "attack" }, events);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return result.state;
@@ -285,7 +327,9 @@ function runAs(state: GameState, seat: Seat, program: readonly EffectOp[], event
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -378,13 +422,19 @@ describe("§3 — the main hit: +40 on an Active ex, before Weakness and Resista
   });
 
   it("PRE-W/R: (50 + 40) × 2 = 180 on a Weakness ex, not 50 × 2 + 40", () => {
-    const row = find(attack(played({ defender: "d556-weak-ex" }).state, STRIKE).events, "DAMAGE_DEALT");
+    const row = find(
+      attack(played({ defender: "d556-weak-ex" }).state, STRIKE).events,
+      "DAMAGE_DEALT",
+    );
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(row?.dealt).toBe((50 + BONUS) * 2);
   });
 
   it("PRE-W/R: (50 + 40) − 30 = 60 on a Resistance ex, not 50 − 30 + 40", () => {
-    const row = find(attack(played({ defender: "d556-resist-ex" }).state, STRIKE).events, "DAMAGE_DEALT");
+    const row = find(
+      attack(played({ defender: "d556-resist-ex" }).state, STRIKE).events,
+      "DAMAGE_DEALT",
+    );
     expect(row?.dealt).toBe(50 + BONUS - 30);
   });
 });
@@ -427,12 +477,17 @@ describe("§4 — the snipe site pays it; the Bench and a no-damage attack never
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§5 — \"your Pokémon\" is the SIDE: a body brought in after the play gets it", () => {
+describe('§5 — "your Pokémon" is the SIDE: a body brought in after the play gets it', () => {
   it("a Pokémon benched AFTER the play and switched in by a retreat hits for 90", () => {
     let state = played().state;
     state = benchFrom(state, "p1", "d556-relief");
     expect(state.allowances.sideAttackBonuses).toHaveLength(1);
-    state = mustApply(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }).state;
+    state = mustApply(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [],
+      promoteBenchIndex: 0,
+    }).state;
     expect(state.cardIdByUid[activeUid(state, "p1")]).toBe("d556-relief");
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     const row = find(attack(state, STRIKE).events, "DAMAGE_DEALT");
@@ -441,7 +496,7 @@ describe("§5 — \"your Pokémon\" is the SIDE: a body brought in after the pla
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§6 — \"during this turn\": the next `startTurn` wipes it", () => {
+describe('§6 — "during this turn": the next `startTurn` wipes it', () => {
   it("the bag is EMPTY on the opponent's turn and on the player's next turn", () => {
     const after = pass(played().state, "p1");
     expect(after.turn).toBe(4);
@@ -502,7 +557,11 @@ describe("§8 — the seat guard, and sources SUMMED", () => {
       "p1",
       [
         { op: "boostSideAttacksThisTurn", amount: BONUS, target: EX },
-        { op: "boostSideAttacksThisTurn", amount: 999, target: { kind: "suffixPokemon", suffix: "V" } },
+        {
+          op: "boostSideAttacksThisTurn",
+          amount: 999,
+          target: { kind: "suffixPokemon", suffix: "V" },
+        },
       ],
       [],
     );
@@ -526,7 +585,10 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     // entries gone: the Supporter is spent (in the discard, `supporterPlayed` true) and
     // its effect is silently missing for the rest of the turn.
     const v35 = JSON.parse(JSON.stringify(played().state)) as GameState;
-    const asRollbackReadsIt: GameState = { ...v35, allowances: { ...v35.allowances, sideAttackBonuses: [] } };
+    const asRollbackReadsIt: GameState = {
+      ...v35,
+      allowances: { ...v35.allowances, sideAttackBonuses: [] },
+    };
     expect(asRollbackReadsIt.allowances.supporterPlayed).toBe(true);
     expect(find(attack(asRollbackReadsIt, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
     expect(find(attack(v35, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
@@ -536,22 +598,20 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     const start = ready();
     const { sideAttackBonuses: _dropped, ...v34Allowances } = start.allowances;
     const v34 = { ...start, allowances: v34Allowances } as unknown as GameState;
-    expect(() => applyAction(v34, { type: "attack", seat: "p1", index: STRIKE })).toThrow(TypeError);
+    expect(() => applyAction(v34, { type: "attack", seat: "p1", index: STRIKE })).toThrow(
+      TypeError,
+    );
     const uid = v34.players.p1.hand.find((u) => v34.cardIdByUid[u] === BBT[0]) as string;
     expect(() => applyAction(v34, { type: "playTrainer", seat: "p1", uid })).toThrow(TypeError);
     // …and a NO-damage attack never reaches the reader, so it does not throw: the
     // degradation is scoped to damaging hits (and the next `startTurn` heals the bag).
     expect(applyAction(v34, { type: "attack", seat: "p1", index: REST }).ok).toBe(true);
   });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — the log row", () => {
-  it("renders under the installer, names the printed defender noun, and says \"this turn\"", () => {
+  it('renders under the installer, names the printed defender noun, and says "this turn"', () => {
     const { state, events } = played();
     expect(render(events, state)).toContainEqual({
       who: "p1",

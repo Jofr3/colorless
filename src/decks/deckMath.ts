@@ -120,7 +120,9 @@ export interface DeckValidation {
 function copyCapMessage(card: BuilderCard, count: number, format: Format): string | null {
   if (isBasicEnergy(card) || isAceSpec(card) || isRadiantPokemon(card)) return null;
   if (isPrismStar(card)) {
-    return count > 1 ? `${count} copies of ${card.name} — Prism Star cards are limited to 1.` : null;
+    return count > 1
+      ? `${count} copies of ${card.name} — Prism Star cards are limited to 1.`
+      : null;
   }
   return count > format.maxCopiesByName
     ? `${count} copies of ${card.name} — max ${format.maxCopiesByName}.`

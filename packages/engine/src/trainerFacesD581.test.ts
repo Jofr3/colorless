@@ -88,9 +88,12 @@ describe("D581 §2 — `attacksOf` asks the category: a Tool's printed attack is
   it("the `attackNamePokemon` filter finds the Pokémon that prints the attack, never the machine", () => {
     const filter = { kind: "attackNamePokemon", attack: "Fluorite" } as const;
     expect(matchesFilter(catalogRow(TM, "Tool"), filter)).toBe(false);
-    expect(matchesFilter(battler("d581t-body", { attacks: [{ cost: [], name: "Fluorite", damage: 10 }] }), filter)).toBe(
-      true,
-    );
+    expect(
+      matchesFilter(
+        battler("d581t-body", { attacks: [{ cost: [], name: "Fluorite", damage: 10 }] }),
+        filter,
+      ),
+    ).toBe(true);
   });
 });
 

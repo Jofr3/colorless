@@ -119,7 +119,10 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
     // The half that can go wrong silently: `costMet` consumes a FLAT LIST, so a
     // row with one entry pays every one-symbol cost and fails only a two-symbol
     // one. "…but provides only 2 Energy at a time" is a COUNT.
-    expect(programFor("sv05-162")?.energy?.promoteOnHolderStage?.units).toEqual([ANY_ENERGY, ANY_ENERGY]);
+    expect(programFor("sv05-162")?.energy?.promoteOnHolderStage?.units).toEqual([
+      ANY_ENERGY,
+      ANY_ENERGY,
+    ]);
     expect(programFor("sv05-162")?.energy?.promoteOnHolderStage?.units).toHaveLength(2);
     // And the two-ness is observable at the matcher, one layer below any board:
     // one wildcard cannot cover two typed slots.
@@ -154,8 +157,7 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
       .filter((id) => {
         const energy = programFor(id)?.energy;
         return (
-          energy?.demoteWithOtherSpecial !== undefined ||
-          energy?.promoteOnHolderStage !== undefined
+          energy?.demoteWithOtherSpecial !== undefined || energy?.promoteOnHolderStage !== undefined
         );
       })
       .sort();

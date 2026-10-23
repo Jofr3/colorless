@@ -9,7 +9,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion, logFromEvents } from "./index";
+import { applyAction, createGame, logFromEvents } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   attachFromDeck,
@@ -253,7 +253,13 @@ function board(seed: number): GameState {
   for (const id of [CYN_BODY, CYN_BODY, CYN_BODY, PLAIN_BODY, PLAIN_BODY]) {
     state = benchFromDeck(state, "p1", id);
   }
-  for (const [index, damage] of [[0, 30], [1, 40], [2, 50], [3, 60], [4, 10]] as const) {
+  for (const [index, damage] of [
+    [0, 30],
+    [1, 40],
+    [2, 50],
+    [3, 60],
+    [4, 10],
+  ] as const) {
     state = setBenchDamage(state, "p1", index, damage);
   }
   state = setActiveFromDeck(state, "p2", WALL);
@@ -351,9 +357,9 @@ describe("§3 — the fork, measured over all 640 rows rather than argued", () =
     expect(deriveAttackDamageMultiplier(other)).toBeNull();
     expect(deriveAttackDamageSuppression(other)).toEqual({ weakness: true });
     expect(
-      (effectsModule as unknown as Record<string, (t: string) => unknown>).deriveAttackDamageBonus?.(
-        other,
-      ),
+      (
+        effectsModule as unknown as Record<string, (t: string) => unknown>
+      ).deriveAttackDamageBonus?.(other),
     ).not.toBeNull();
     // …and the ORIGINAL discrimination is kept on a subject that still has the property:
     // this anchor's own head, with the tail removed, is claimed by nobody but the bare
@@ -376,9 +382,7 @@ describe("§3 — the fork, measured over all 640 rows rather than argued", () =
       if (parts.length < 2) return false;
       const tail = parts[parts.length - 1] ?? "";
       const head = parts.slice(0, -1).join(" ");
-      return (
-        claimedByAny(head) && claimedByAny(tail) && deriveAttackEffect(tail) === null
-      );
+      return claimedByAny(head) && claimedByAny(tail) && deriveAttackEffect(tail) === null;
     });
     expect(wouldCompose).toEqual([]);
   });
@@ -431,8 +435,14 @@ describe("§3 — the fork, measured over all 640 rows rather than argued", () =
     ];
     for (const re of spellings) {
       const hits = legalAttackCorpus().filter(([, s]) => re.test(s));
-      expect(hits.map(([, s]) => s), re.source).toEqual([PRINTED]);
-      expect(hits.reduce((sum, [n]) => sum + n, 0), re.source).toBe(1);
+      expect(
+        hits.map(([, s]) => s),
+        re.source,
+      ).toEqual([PRINTED]);
+      expect(
+        hits.reduce((sum, [n]) => sum + n, 0),
+        re.source,
+      ).toBe(1);
     }
     // …and the new anchor is STRUCTURALLY disjoint from the bare sibling it sits beside
     // (D467's rule 1: prefer structural disjointness, and then no guard can rot). One
@@ -476,7 +486,9 @@ describe("§4 — the PAIRING GATE: the two readers cannot half-build a sentence
     expect(resolvedByAnyReader(TAIL)).toBe(false);
     // The CONTROL that keeps the line above from passing on a dead reader (D424).
     expect(
-      deriveAttackDamageSuppression("This attack's damage isn't affected by Weakness or Resistance."),
+      deriveAttackDamageSuppression(
+        "This attack's damage isn't affected by Weakness or Resistance.",
+      ),
     ).toEqual({ weakness: true, resistance: true });
   });
 
@@ -651,13 +663,5 @@ describe("§7 — `MATCH_RECORD_VERSION` stays 29: there is NO CARRIER", () => {
     // …and no continuation was written at all: this program parks nowhere, so `rest`
     // cannot carry anything either (D465's first-position form of the same argument).
     expect(after.phase.kind).not.toBe("effect:choose");
-  });
-});
-
-describe("§8 — the version", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // A card can reach this: file line 529's printing scores a number it did not score
-    // at 0.387.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

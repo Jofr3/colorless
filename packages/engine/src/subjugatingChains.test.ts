@@ -594,7 +594,9 @@ describe("the blast radius", () => {
     expect(choosePrompt(roundTripped).candidates.length).toBe(2);
 
     const legacy = JSON.parse(
-      JSON.stringify(parked).replaceAll('"targetType":"Darkness",', "").replaceAll('"exceptNamed":"Pecharunt ex",', ""),
+      JSON.stringify(parked)
+        .replaceAll('"targetType":"Darkness",', "")
+        .replaceAll('"exceptNamed":"Pecharunt ex",', ""),
     ) as GameState;
     // 🆕 **AND THE DRIVE ANSWERS A QUESTION THE ARGUMENT WOULD HAVE GOT WRONG.**
     // The riders are NOT re-read on resume: `parkOrForce` files the CANDIDATE LIST

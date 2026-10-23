@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
 } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { PokemonRef } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -101,8 +101,12 @@ describe("D596 §2 — near misses stay null", () => {
   it("the multiply anchor: a {C} filter, a zero, the Iono subgroup, a Tool, the opponent's board", () => {
     expect(deriveAttackDamageMultiplier(T.symphonia.replace("{P}", "{C}"))).toBeNull();
     expect(deriveAttackDamageMultiplier(T.symphonia.replace("50", "0"))).toBeNull();
-    expect(deriveAttackDamageMultiplier(T.symphonia.replace("your Pokémon", "your Iono's Pokémon"))).toBeNull();
-    expect(deriveAttackDamageMultiplier(T.symphonia.replace("{P} Energy", "Energy card"))).toBeNull();
+    expect(
+      deriveAttackDamageMultiplier(T.symphonia.replace("your Pokémon", "your Iono's Pokémon")),
+    ).toBeNull();
+    expect(
+      deriveAttackDamageMultiplier(T.symphonia.replace("{P} Energy", "Energy card")),
+    ).toBeNull();
     // Sylveon ex "Colorful Harmony" (`me` ×3): a TYPE count, not an Energy count — still unbuilt.
     // [🆕🆕🆕 D607 (D539): "still unbuilt" is WITHDRAWN, kept as written — WP28a builds it on its own
     // member, `basicEnergyTypesOnYourBoard`; it is still not THIS anchor's Energy count.]
@@ -112,11 +116,15 @@ describe("D596 §2 — near misses stay null", () => {
       ),
     ).toBe(true);
     expect(
-      deriveAttackDamageMultiplier("This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.")
-        ?.count.kind,
+      deriveAttackDamageMultiplier(
+        "This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.",
+      )?.count.kind,
     ).toBe("basicEnergyTypesOnYourBoard");
     // The opponent's board stays `energyOnOpponent`'s.
-    expect(deriveAttackDamageMultiplier(T.symphonia.replace("your Pokémon", "your opponent's Pokémon"))?.count).toEqual({
+    expect(
+      deriveAttackDamageMultiplier(T.symphonia.replace("your Pokémon", "your opponent's Pokémon"))
+        ?.count,
+    ).toEqual({
       kind: "energyOnOpponent",
       zone: "board",
       energyType: "Psychic",
@@ -129,7 +137,10 @@ describe("D596 §2 — near misses stay null", () => {
       T.wishes.replace("that Pokémon", "this Pokémon"),
       T.wishes.replace(" Then, shuffle your deck.", ""),
       `${T.wishes} Draw a card.`,
-      T.wishes.replace("a Basic {P} Energy card and attach it", "up to 2 Basic {P} Energy cards and attach them"),
+      T.wishes.replace(
+        "a Basic {P} Energy card and attach it",
+        "up to 2 Basic {P} Energy cards and attach them",
+      ),
     ];
     for (const text of controls) expect(deriveAttackEffect(text), text).toBeNull();
     // The untyped spelling is unprinted and reads as the untyped search (D131).
@@ -169,7 +180,14 @@ const LOCAL: Record<string, Card> = {
     hp: 130,
     types: ["Psychic"],
     retreat: 2,
-    attacks: [{ cost: ["Psychic", "Psychic", "Psychic"], name: "Geo Storm", damage: "30×", effect: T.geoStorm }],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic", "Psychic"],
+        name: "Geo Storm",
+        damage: "30×",
+        effect: T.geoStorm,
+      },
+    ],
   } as Partial<Card>),
   [FILLER]: battler(FILLER, { name: "D596 Filler", hp: 300, types: ["Colorless"], retreat: 1 }),
   [PSYCHIC]: typedEnergy(PSYCHIC, "Psychic"),
@@ -197,7 +215,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -209,7 +229,8 @@ function p1Turn(): GameState {
     if (uid === undefined) throw new Error(`no Filler in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -217,7 +238,10 @@ function p1Turn(): GameState {
     const side = state.players[s];
     state = {
       ...state,
-      players: { ...state.players, [s]: { ...side, hand: [], prizes: [], deck: [...side.deck, ...side.hand, ...side.prizes] } },
+      players: {
+        ...state.players,
+        [s]: { ...side, hand: [], prizes: [], deck: [...side.deck, ...side.hand, ...side.prizes] },
+      },
     };
   }
   return state;
@@ -227,7 +251,8 @@ function p1Turn(): GameState {
 function onActive(state: GameState, cardId: string, count: number): GameState {
   const side = state.players.p1;
   const uids = side.deck.filter((u) => state.cardIdByUid[u] === cardId).slice(0, count);
-  if (uids.length < count || side.active === null) throw new Error(`cannot attach ${count} ${cardId}`);
+  if (uids.length < count || side.active === null)
+    throw new Error(`cannot attach ${count} ${cardId}`);
   return {
     ...state,
     players: {
@@ -259,19 +284,25 @@ function thinDeck(state: GameState, cardId: string, keep: number): GameState {
     ...state,
     players: {
       ...state.players,
-      p1: { ...side, deck: side.deck.filter((u) => !gone.has(u)), discard: [...side.discard, ...gone] },
+      p1: {
+        ...side,
+        deck: side.deck.filter((u) => !gone.has(u)),
+        discard: [...side.discard, ...gone],
+      },
     },
   };
 }
 
-const swing = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
 const of = <K extends GameEvent["type"]>(events: readonly GameEvent[], type: K) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: K }>[];
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
 
 function promptOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "attachCards") throw new Error(`expected attachCards, got ${prompt.kind}`);
   return prompt;
@@ -381,11 +412,5 @@ describe("D596 §4 — Overflowing Wishes on a board", () => {
     expect(after.phase.kind).not.toBe("effect:choose");
     expect(of(events, "SHUFFLE").length).toBeGreaterThan(0);
     expect(after.turn).toBe(state.turn + 1);
-  });
-});
-
-describe("D596 §5 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

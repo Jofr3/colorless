@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveMaxHp } from "./continuous";
 import type { GameAction, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -535,7 +535,12 @@ describe("D610 §4 — Metal Road: after moving up from the Bench, any {M} Energ
     );
     const parked = must(use(state, "Metal Road", ACTIVE));
     const prompt = movePrompt(parked);
-    expect(idsOf(parked, prompt.movable.map((m) => m.uid))).toEqual([M, M, M]);
+    expect(
+      idsOf(
+        parked,
+        prompt.movable.map((m) => m.uid),
+      ),
+    ).toEqual([M, M, M]);
     const done = must(
       answer(
         parked,
@@ -711,7 +716,7 @@ describe("D610 §8 — Tyrannically Gutsy: any Special Energy attached, +150 HP"
 });
 
 describe("D610 §9 — what WP37 leaves, and the version", () => {
-  it("the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — \"Last-Ditch Catch\" is keyed since D628; Clawitzer stays dropped) (🆕🆕🆕 D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631) (🆕🆕🆕 D636 (D539): WITHDRAWN for Clawitzer — keyed since D636)", () => {
+  it('the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — "Last-Ditch Catch" is keyed since D628; Clawitzer stays dropped) (🆕🆕🆕 D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631) (🆕🆕🆕 D636 (D539): WITHDRAWN for Clawitzer — keyed since D636)', () => {
     // 🆕🆕🆕 D636 (D539) — Clawitzer ×2 is keyed at D636 (L1 + Clawitzer, `nextTurnLocksD636.test.ts`).
     for (const id of [
       ...["me01-038", "me01-141"], // Clawitzer "Fall Back to Reload"
@@ -733,9 +738,5 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
     // 🆕🆕🆕 D628 — Meowth ex ×3 carry "Last-Ditch Catch" (onBenchMoveMeD628.test.ts §2).
     for (const id of ["me03-062", "me03-107", "me03-121"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack", "triggered"]);
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

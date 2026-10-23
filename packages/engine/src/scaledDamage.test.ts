@@ -62,7 +62,11 @@ function find<T extends GameEvent["type"]>(
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first turn with no §4 attack restriction. */
 function p1Turn2(seed: number): GameState {
-  const state = driveSetup(seed, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
+  const state = driveSetup(
+    seed,
+    { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK },
+    { first: "p2" },
+  );
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -271,9 +275,7 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
     expect(deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN)).toBeNull();
     // …and the ANCHOR is not what refuses it: the same pattern claims the same shape at a
     // noun the shared map DOES answer, so the null above is the VOCABULARY and nothing else.
-    expect(
-      deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN.replace("Future", "Basic")),
-    ).toEqual({
+    expect(deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN.replace("Future", "Basic"))).toEqual({
       per: 30,
       count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "basicPokemon" } },
     });

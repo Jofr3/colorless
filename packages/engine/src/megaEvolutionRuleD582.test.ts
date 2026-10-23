@@ -1,9 +1,14 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
-import { hasRuleBox, isExOrV, isMegaEvolutionPokemonEx, pokemonSuffixOf, prizeValueOf } from "./cards";
+import {
+  hasRuleBox,
+  isExOrV,
+  isMegaEvolutionPokemonEx,
+  pokemonSuffixOf,
+  prizeValueOf,
+} from "./cards";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { FIXTURE_POOL, battler, deckOf, setPrizes, trainerCard } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
@@ -56,7 +61,12 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
     attacks: [
-      { cost: ["Grass", "Grass", "Grass", "Grass"], name: "Jungle Dump", effect: "Heal 30 damage from this Pokémon.", damage: 240 },
+      {
+        cost: ["Grass", "Grass", "Grass", "Grass"],
+        name: "Jungle Dump",
+        effect: "Heal 30 damage from this Pokémon.",
+        damage: 240,
+      },
     ],
   }),
   [IVYSAUR]: battler(IVYSAUR, {
@@ -79,7 +89,8 @@ const LOCAL_CARDS: Record<string, Card> = {
       {
         cost: ["Darkness", "Colorless"],
         name: "Terminal Period",
-        effect: "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.",
+        effect:
+          "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.",
       },
       {
         cost: ["Darkness", "Darkness", "Colorless"],
@@ -96,7 +107,13 @@ const LOCAL_CARDS: Record<string, Card> = {
     evolveFrom: "Charmeleon",
     types: ["Fire"],
   }),
-  [MEGANIUM]: battler(MEGANIUM, { name: "Meganium", hp: 160, stage: "Stage2", evolveFrom: "Bayleef", types: ["Grass"] }),
+  [MEGANIUM]: battler(MEGANIUM, {
+    name: "Meganium",
+    hp: 160,
+    stage: "Stage2",
+    evolveFrom: "Bayleef",
+    types: ["Grass"],
+  }),
   [MEGA_SIGNAL]: {
     ...trainerCard(
       MEGA_SIGNAL,
@@ -157,7 +174,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -167,7 +185,9 @@ function opened(seed: number, rounds = 0): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -175,11 +195,14 @@ function opened(seed: number, rounds = 0): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (let i = 0; i < rounds; i += 1) {
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
@@ -188,7 +211,11 @@ function opened(seed: number, rounds = 0): GameState {
   return state;
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -226,10 +253,17 @@ function table(opts: { p1: Spot; p2: Spot; hand?: readonly string[]; rounds?: nu
     const side = state.players[seat];
     const back = [
       ...side.hand,
-      ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
+      ...(side.active === null
+        ? []
+        : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const make = (seat: Seat, spot: Spot): InPlayPokemon => {
     const top = pull(state, seat, spot.id);
@@ -257,14 +291,8 @@ function table(opts: { p1: Spot; p2: Spot; hand?: readonly string[]; rounds?: nu
 }
 
 const strike = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
-const prizesOwed = (state: GameState) => (state.phase.kind === "ko:takePrizes" ? state.phase.count : null);
-
-describe("D582 §0 — the version", () => {
-  it("is built at engine 0.555.0, in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
-  });
-});
+const prizesOwed = (state: GameState) =>
+  state.phase.kind === "ko:takePrizes" ? state.phase.count : null;
 
 describe("D582 §1 — the predicate: a Mega Evolution Pokémon ex is read off the NAME", () => {
   it("every Mega ex face answers true — whatever tcgdex's `suffix` column says (Mega Charizard X ex carries none)", () => {
@@ -311,7 +339,9 @@ describe("D582 §3 — on a board: the Knock Out owes 3, and the existing modifi
     const { state: after, events } = run(state, strike(0));
     expect(events.some((e) => e.type === "KNOCKED_OUT" && e.seat === "p2")).toBe(true);
     expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 3 });
-    const next = must(applyAction(after, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1, 2] }));
+    const next = must(
+      applyAction(after, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1, 2] }),
+    );
     expect(next.players.p1.prizes).toHaveLength(3);
   });
 
@@ -324,14 +354,18 @@ describe("D582 §3 — on a board: the Knock Out owes 3, and the existing modifi
     const state = table({ p1: { id: HITTER }, p2: { id: MEGA_ABSOL, energy: [LEGACY] } });
     const { state: after, events } = run(state, strike(0));
     expect(prizesOwed(after)).toBe(2);
-    expect(events).toContainEqual(expect.objectContaining({ type: "PRIZE_REDUCED", seat: "p2", by: 1, count: 2 }));
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: "PRIZE_REDUCED", seat: "p2", by: 1, count: 2 }),
+    );
   });
 
   it("a BONUS adds to 3: Hydreigon ex's Greedy Eater KOs a BASIC Mega ex → 4 (PRIZE_BONUS by 1, count 4)", () => {
     const state = table({ p1: { id: HYDREIGON_EX }, p2: { id: MEGA_ABSOL } });
     const { state: after, events } = run(state, strike(1));
     expect(prizesOwed(after)).toBe(4);
-    expect(events).toContainEqual(expect.objectContaining({ type: "PRIZE_BONUS", seat: "p2", by: 1, count: 4 }));
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: "PRIZE_BONUS", seat: "p2", by: 1, count: 4 }),
+    );
   });
 
   it("both at once compose in printed order: 3 − 1 + 1 = 3", () => {
@@ -357,14 +391,29 @@ describe("D582 §3 — on a board: the Knock Out owes 3, and the existing modifi
 describe("D582 §4 — evolution is the ordinary kind: no turn end, Basics are Basics", () => {
   it("Ivysaur evolves into Mega Venusaur ex and the SAME turn goes on (an Energy is still attachable)", () => {
     // p1's SECOND turn (turn 4): the first turn bans evolving (§4).
-    const state = table({ p1: { id: IVYSAUR }, p2: { id: FILLER }, hand: [MEGA_VENUSAUR, "fix-energy"], rounds: 1 });
+    const state = table({
+      p1: { id: IVYSAUR },
+      p2: { id: FILLER },
+      hand: [MEGA_VENUSAUR, "fix-energy"],
+      rounds: 1,
+    });
     const turn = state.turn;
     const [mega, energy] = state.players.p1.hand as [string, string];
-    const evolved = run(state, { type: "evolve", seat: "p1", uid: mega, target: { spot: "active" } }).state;
+    const evolved = run(state, {
+      type: "evolve",
+      seat: "p1",
+      uid: mega,
+      target: { spot: "active" },
+    }).state;
     expect(evolved.players.p1.active?.stack).toEqual([state.players.p1.active?.stack[0], mega]);
     expect(evolved.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(evolved.turn).toBe(turn);
-    const attached = run(evolved, { type: "attachEnergy", seat: "p1", uid: energy, target: { spot: "active" } }).state;
+    const attached = run(evolved, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: energy,
+      target: { spot: "active" },
+    }).state;
     expect(attached.players.p1.active?.energy).toEqual([energy]);
     expect(attached.phase).toEqual({ kind: "turn:action", seat: "p1" });
   });

@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { installedRecoilOf, passivesOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, programFor } from "./index";
@@ -201,8 +197,12 @@ function mustActive(state: GameState, seat: Seat) {
 function equip(state: GameState, seat: Seat, toolId: string): GameState {
   const withCard = handFromDeck(state, seat, toolId, 1);
   const uid = handUid(withCard, seat, toolId);
-  const done = mustApply(withCard, { type: "attachTool", seat, uid, target: { spot: "active" } })
-    .state;
+  const done = mustApply(withCard, {
+    type: "attachTool",
+    seat,
+    uid,
+    target: { spot: "active" },
+  }).state;
   expect(done.players[seat].active?.tools).toContain(uid);
   return done;
 }
@@ -247,7 +247,10 @@ function withRawRecoil(state: GameState, seat: Seat, record: InstalledRecoil): G
   if (active === null) throw new Error("no Active to stamp");
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, active: { ...active, installedRecoil: record } } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, active: { ...active, installedRecoil: record } },
+    },
   };
 }
 
@@ -928,12 +931,12 @@ describe("🆕🆕 D456 §2 — the record, the row and the merge", () => {
     // FLOOR is unchanged at 40 — under D152's one-conjunct suppression it would have
     // been swallowed — but the trap has just stopped being capped, which is emphatically
     // news. That is why the guard has two conjuncts.
-    expect(findAll(events, "RECOIL_ARMED").map((r) => [r.amount, r.ofDamageTaken ?? false])).toEqual(
-      [
-        [40, false],
-        [40, true],
-      ],
-    );
+    expect(
+      findAll(events, "RECOIL_ARMED").map((r) => [r.amount, r.ofDamageTaken ?? false]),
+    ).toEqual([
+      [40, false],
+      [40, true],
+    ]);
     // …and the answer honours the floor: a 20 hit still retaliates for 40. Read INSIDE
     // the window (the stamp is `turn + 1` and `installedRecoilOf` compares it to
     // `state.turn`), which is the same expiry-by-arithmetic every case in this file is
@@ -1189,9 +1192,9 @@ describe("🆕🆕 D456 §4 — the four questions the printed clause raises", (
     const survivor = swing(intoWindow(armScaled(ready()).state), "fix-attacker", [...BITE]);
     expect(survivor.state.players.p2.active?.damage).toBe(30);
     expect(survivor.state.players.p2.active?.markers).toEqual([]);
-    expect(
-      survivor.state.players.p2.active?.markers.some((m) => m.startsWith("koByEffect")),
-    ).toBe(false);
+    expect(survivor.state.players.p2.active?.markers.some((m) => m.startsWith("koByEffect"))).toBe(
+      false,
+    );
   });
 });
 
@@ -1220,9 +1223,7 @@ describe("🆕🆕 D456 §5 — `MATCH_RECORD_VERSION` 29, driven over the SERIA
     // for the wrong reason (D416's shape at a serialisation boundary).
     const inWindow = intoWindow(armed);
     expect(inWindow.turn).toBe(before.turn + 1);
-    const v29 = JSON.parse(
-      `{"turn":${String(before.turn + 1)},"amount":100}`,
-    ) as InstalledRecoil;
+    const v29 = JSON.parse(`{"turn":${String(before.turn + 1)},"amount":100}`) as InstalledRecoil;
     const legacy = withRawRecoil(inWindow, "p1", v29);
     expect(installedRecoilOf(legacy, mustActive(legacy, "p1"), 0)).toBe(100);
     expect(installedRecoilOf(legacy, mustActive(legacy, "p1"), 999)).toBe(100);
@@ -1239,7 +1240,7 @@ describe("🆕🆕 D456 §5 — `MATCH_RECORD_VERSION` 29, driven over the SERIA
     // drop the ALWAYS-ON Rocky Helmet share along with the installed one.
     const wire = JSON.stringify(armed.players.p1.active?.installedRecoil);
     expect(wire).toBe(`{"turn":${String(before.turn + 1)},"amount":0,"ofDamageTaken":true}`);
-    expect(wire).not.toContain("damageTaken\":\"");
+    expect(wire).not.toContain('damageTaken":"');
     expect(JSON.stringify(armed)).not.toContain('"amount":"damageTaken"');
     const round = JSON.parse(wire) as InstalledRecoil;
     const revived = withRawRecoil(inWindow, "p1", round);

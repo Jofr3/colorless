@@ -4,7 +4,14 @@ import { energyProvidesOf, isBasicEnergy, isSpecialEnergy, matchesFilter } from 
 import type { GameState } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, basicEnergy, battler, deckOf, specialEnergy, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  basicEnergy,
+  battler,
+  deckOf,
+  specialEnergy,
+  typedEnergy,
+} from "./testFixtures";
 
 // ── 🆕🆕🆕 D583 — A SPECIAL ENERGY IS ONE THAT PRINTS RULES TEXT, WHATEVER tcgdex TAGS IT ──
 //
@@ -35,20 +42,76 @@ import { FIXTURE_POOL, basicEnergy, battler, deckOf, specialEnergy, typedEnergy 
 
 /** [id, name, effect] — the 14 faces, verbatim off the LOCAL D1 (`energy_type` is `Normal` on each). */
 const MISTAGGED: readonly (readonly [string, string, string])[] = [
-  ["me02-124", "Ignition Energy", "If this card is attached to 1 of your Pokémon, discard it at the end of your turn.\n\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to an Evolution Pokémon, it provides {C}{C}{C} Energy instead."],
-  ["me02.5-216", "Prism Energy", "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time."],
-  ["me02.5-217", "Team Rocket's Energy", "This card can only be attached to a Team Rocket's Pokémon. If this card is attached to anything other than a Team Rocket's Pokémon, discard this card.\n\nAs long as this card is attached to a Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy."],
-  ["me03-086", "Growing Grass Energy", "As long as this card is attached to a Pokémon, it provides {G} Energy.\nThe {G} Pokémon this card is attached to gets +20 HP."],
-  ["me03-087", "Rocky Fighting Energy", "As long as this card is attached to a Pokémon, it provides {F} Energy.\nPrevent all effects of attacks used by your opponent's Pokémon done to the {F} Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"],
-  ["me03-088", "Telepathic Psychic Energy", "As long as this card is attached to a Pokémon, it provides {P} Energy.\nWhen you attach this card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then, shuffle your deck."],
-  ["me04-084", "Bubbly Water Energy", "As long as this card is attached to a Pokémon, it provides {W} Energy.\n\nThe {W} Pokémon this card is attached to recovers from all Special Conditions and can't be affected by any Special Conditions."],
-  ["me04-085", "Magnetic Metal Energy", "As long as this card is attached to a Pokémon, it provides {M} Energy.\n\nThe {M} Pokémon this card is attached to has no Retreat Cost."],
-  ["me04-086", "Nitro Fire Energy", "As long as this card is attached to a Pokémon, it provides {R} Energy.\n\nIf this card is discarded by an effect of an attack used by the {R} Pokémon this card is attached to, put this card into your hand after attack damage and effects."],
-  ["me05-083", "Shadowy Darkness Energy", "As long as this card is attached to a Pokémon, it provides {D} Energy.\n\nAs long as the {D} Pokémon this card is attached to is on your Bench, prevent all damage done to it by attacks from your opponent's Pokémon."],
-  ["me05-084", "Voltaic Lightning Energy", "As long as this card is attached to a Pokémon, it provides {L} Energy.\n\nAttacks used by the {L} Pokémon this card is attached to do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."],
-  ["sv04-266", "Reversal Energy", "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf you have more Prize cards remaining than your opponent, and if this card is attached to an Evolution Pokémon that doesn't have a Rule Box (Pokémon ex, Pokémon V, etc. have Rule Boxes), this card provides every type of Energy but provides only 3 Energy at a time."],
-  ["sv10.5b-086", "Prism Energy", "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time."],
-  ["sv10.5w-086", "Ignition Energy", "If this card is attached to 1 of your Pokémon, discard it at the end of your turn.\n\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to an Evolution Pokémon, it provides {C}{C}{C} Energy instead."],
+  [
+    "me02-124",
+    "Ignition Energy",
+    "If this card is attached to 1 of your Pokémon, discard it at the end of your turn.\n\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to an Evolution Pokémon, it provides {C}{C}{C} Energy instead.",
+  ],
+  [
+    "me02.5-216",
+    "Prism Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time.",
+  ],
+  [
+    "me02.5-217",
+    "Team Rocket's Energy",
+    "This card can only be attached to a Team Rocket's Pokémon. If this card is attached to anything other than a Team Rocket's Pokémon, discard this card.\n\nAs long as this card is attached to a Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy.",
+  ],
+  [
+    "me03-086",
+    "Growing Grass Energy",
+    "As long as this card is attached to a Pokémon, it provides {G} Energy.\nThe {G} Pokémon this card is attached to gets +20 HP.",
+  ],
+  [
+    "me03-087",
+    "Rocky Fighting Energy",
+    "As long as this card is attached to a Pokémon, it provides {F} Energy.\nPrevent all effects of attacks used by your opponent's Pokémon done to the {F} Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)",
+  ],
+  [
+    "me03-088",
+    "Telepathic Psychic Energy",
+    "As long as this card is attached to a Pokémon, it provides {P} Energy.\nWhen you attach this card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then, shuffle your deck.",
+  ],
+  [
+    "me04-084",
+    "Bubbly Water Energy",
+    "As long as this card is attached to a Pokémon, it provides {W} Energy.\n\nThe {W} Pokémon this card is attached to recovers from all Special Conditions and can't be affected by any Special Conditions.",
+  ],
+  [
+    "me04-085",
+    "Magnetic Metal Energy",
+    "As long as this card is attached to a Pokémon, it provides {M} Energy.\n\nThe {M} Pokémon this card is attached to has no Retreat Cost.",
+  ],
+  [
+    "me04-086",
+    "Nitro Fire Energy",
+    "As long as this card is attached to a Pokémon, it provides {R} Energy.\n\nIf this card is discarded by an effect of an attack used by the {R} Pokémon this card is attached to, put this card into your hand after attack damage and effects.",
+  ],
+  [
+    "me05-083",
+    "Shadowy Darkness Energy",
+    "As long as this card is attached to a Pokémon, it provides {D} Energy.\n\nAs long as the {D} Pokémon this card is attached to is on your Bench, prevent all damage done to it by attacks from your opponent's Pokémon.",
+  ],
+  [
+    "me05-084",
+    "Voltaic Lightning Energy",
+    "As long as this card is attached to a Pokémon, it provides {L} Energy.\n\nAttacks used by the {L} Pokémon this card is attached to do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+  ],
+  [
+    "sv04-266",
+    "Reversal Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf you have more Prize cards remaining than your opponent, and if this card is attached to an Evolution Pokémon that doesn't have a Rule Box (Pokémon ex, Pokémon V, etc. have Rule Boxes), this card provides every type of Energy but provides only 3 Energy at a time.",
+  ],
+  [
+    "sv10.5b-086",
+    "Prism Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time.",
+  ],
+  [
+    "sv10.5w-086",
+    "Ignition Energy",
+    "If this card is attached to 1 of your Pokémon, discard it at the end of your turn.\n\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to an Evolution Pokémon, it provides {C}{C}{C} Energy instead.",
+  ],
 ];
 
 /** The catalog face exactly as tcgdex hands it today: a Special Energy tagged "Normal". */
@@ -99,14 +162,19 @@ describe("D583 §2 — Basic Energy stays Basic; a Special tagged Special stays 
       expect(isBasicEnergy(card), card.id).toBe(true);
       expect(matchesFilter(card, { kind: "basicEnergy" }), card.id).toBe(true);
     }
-    expect(matchesFilter(typedEnergy("sve-002", "Fire"), { kind: "basicEnergy", energyType: "Fire" })).toBe(true);
-    expect(energyProvidesOf({ ...typedEnergy("sv06.5-098", "Darkness"), name: "Basic Darkness Energy" })).toBe(
-      "Darkness",
-    );
+    expect(
+      matchesFilter(typedEnergy("sve-002", "Fire"), { kind: "basicEnergy", energyType: "Fire" }),
+    ).toBe(true);
+    expect(
+      energyProvidesOf({ ...typedEnergy("sv06.5-098", "Darkness"), name: "Basic Darkness Energy" }),
+    ).toBe("Darkness");
   });
 
   it("a Special tagged Special (Team Rocket's Energy `sv10-182`), with or without text", () => {
-    for (const card of [specialEnergy("sv10-182", "Team Rocket's Energy"), specialEnergy("fix-special", "x", "x")]) {
+    for (const card of [
+      specialEnergy("sv10-182", "Team Rocket's Energy"),
+      specialEnergy("fix-special", "x", "x"),
+    ]) {
       expect(isSpecialEnergy(card), card.id).toBe(true);
       expect(isBasicEnergy(card), card.id).toBe(false);
     }
@@ -141,7 +209,9 @@ function p1Turn(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -149,24 +219,33 @@ function p1Turn(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-describe("D583 §3 — Energy Search `sv01-172` (\"a Basic Energy card\") over a deck holding Prism Energy", () => {
+describe('D583 §3 — Energy Search `sv01-172` ("a Basic Energy card") over a deck holding Prism Energy', () => {
   it("offers the Basic Fire Energy and never the Normal-tagged Prism Energy", () => {
     let state = p1Turn(5831);
     const side = state.players.p1;
-    const search = [...side.hand, ...side.deck].find((u) => state.cardIdByUid[u] === "sv01-172") as string;
+    const search = [...side.hand, ...side.deck].find(
+      (u) => state.cardIdByUid[u] === "sv01-172",
+    ) as string;
     state = {
       ...state,
       players: {
         ...state.players,
-        p1: { ...side, hand: [...side.hand.filter((u) => u !== search), search], deck: side.deck.filter((u) => u !== search) },
+        p1: {
+          ...side,
+          hand: [...side.hand.filter((u) => u !== search), search],
+          deck: side.deck.filter((u) => u !== search),
+        },
       },
     };
     const deckIds = state.players.p1.deck.map((u) => state.cardIdByUid[u]);
@@ -188,18 +267,30 @@ const ATTACH_POOL: Record<string, Card> = {
   ...POOL,
   [ATTACHER]: battler(ATTACHER, {
     hp: 900,
-    attacks: [{ cost: [], name: "Wrapped in Wind", effect: "Attach a Basic Energy card from your hand to this Pokémon." }],
+    attacks: [
+      {
+        cost: [],
+        name: "Wrapped in Wind",
+        effect: "Attach a Basic Energy card from your hand to this Pokémon.",
+      },
+    ],
   }),
 };
 const ATTACH_DECK = deckOf({ [ATTACHER]: 40, [PRISM]: 20 });
 
 describe("D583 §3b — the interpreter's hand attach (`attachableEnergies`) over a hand holding only Prism Energy", () => {
   it("attaches nothing: Prism Energy is not a Basic Energy card", () => {
-    const created = createGame({ seed: 5832, decks: { p1: ATTACH_DECK, p2: ATTACH_DECK }, cardPool: ATTACH_POOL });
+    const created = createGame({
+      seed: 5832,
+      decks: { p1: ATTACH_DECK, p2: ATTACH_DECK },
+      cardPool: ATTACH_POOL,
+    });
     if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
     let state = created.state;
     if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-    state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+    state = must(
+      applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+    );
     while (state.phase.kind === "setup:drawExtra") {
       const phase = state.phase;
       const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -211,12 +302,19 @@ describe("D583 §3b — the interpreter's hand attach (`attachableEnergies`) ove
       if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
       state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
     }
-    for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+    for (const s of ["p1", "p2"] as const)
+      state = must(applyAction(state, { type: "setupReady", seat: s }));
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     const side = state.players.p1;
     const all = [...side.hand, ...side.deck];
     const prism = all.find((u) => state.cardIdByUid[u] === PRISM) as string;
-    state = { ...state, players: { ...state.players, p1: { ...side, hand: [prism], deck: all.filter((u) => u !== prism) } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...side, hand: [prism], deck: all.filter((u) => u !== prism) },
+      },
+    };
     const after = must(applyAction(state, { type: "attack", seat: "p1", index: 0 }));
     expect(after.players.p1.active?.energy ?? []).not.toContain(prism);
     expect(after.players.p1.hand).toContain(prism);
@@ -245,7 +343,11 @@ const REVERSAL = "sv04-266";
 const DISCARDER = "d583-discarder";
 const DISCARD_POOL: Record<string, Card> = {
   ...POOL,
-  [REVERSAL]: asCatalog(REVERSAL, "Reversal Energy", MISTAGGED.find(([id]) => id === REVERSAL)?.[2] ?? ""),
+  [REVERSAL]: asCatalog(
+    REVERSAL,
+    "Reversal Energy",
+    MISTAGGED.find(([id]) => id === REVERSAL)?.[2] ?? "",
+  ),
   [DISCARDER]: battler(DISCARDER, {
     hp: 900,
     attacks: [{ cost: [], name: "Shed", effect: "Discard an Energy from this Pokémon." }],
@@ -255,11 +357,17 @@ const DISCARD_DECK = deckOf({ [DISCARDER]: 40, [PRISM]: 10, [REVERSAL]: 10 });
 
 /** P1's first turn with `ids` (one uid each, out of the deck) attached to its Active. */
 function discardBoard(seed: number, ids: readonly string[]): GameState {
-  const created = createGame({ seed, decks: { p1: DISCARD_DECK, p2: DISCARD_DECK }, cardPool: DISCARD_POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: DISCARD_DECK, p2: DISCARD_DECK },
+    cardPool: DISCARD_POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -271,7 +379,8 @@ function discardBoard(seed: number, ids: readonly string[]): GameState {
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   const side = state.players.p1;
   const active = side.active;
@@ -284,17 +393,25 @@ function discardBoard(seed: number, ids: readonly string[]): GameState {
     energy.push(uid);
     deck = deck.filter((u) => u !== uid);
   }
-  return { ...state, players: { ...state.players, p1: { ...side, deck, active: { ...active, energy } } } };
+  return {
+    ...state,
+    players: { ...state.players, p1: { ...side, deck, active: { ...active, energy } } },
+  };
 }
 
 describe("D583 §5 — `cardIdentity`: Prism and Reversal Energy are two answers to a one-Energy discard", () => {
   it("Prism + Reversal attached: the discard parks on BOTH (no longer one `basic:Colorless` class)", () => {
     const state = discardBoard(5833, [PRISM, REVERSAL]);
     const after = must(applyAction(state, { type: "attack", seat: "p1", index: 0 }));
-    if (after.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${after.phase.kind}`);
+    if (after.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${after.phase.kind}`);
     const prompt = after.phase.prompt;
-    if (prompt.kind !== "discardEnergy") throw new Error(`expected discardEnergy, got ${prompt.kind}`);
-    expect(prompt.discardable.map((d) => after.cardIdByUid[d.uid]).sort()).toEqual([REVERSAL, PRISM]);
+    if (prompt.kind !== "discardEnergy")
+      throw new Error(`expected discardEnergy, got ${prompt.kind}`);
+    expect(prompt.discardable.map((d) => after.cardIdByUid[d.uid]).sort()).toEqual([
+      REVERSAL,
+      PRISM,
+    ]);
     expect(after.players.p1.active?.energy).toHaveLength(2);
   });
 

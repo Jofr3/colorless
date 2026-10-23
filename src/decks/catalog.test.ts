@@ -76,9 +76,11 @@ describe("toBuilderCard", () => {
     expect(special.subtype).toBe("Special Energy");
     expect(isBasicEnergy(special)).toBe(false);
     // A brief carries the API's answer to the same test (catalog/map.ts): "Special" stays Special.
-    expect(toBuilderCard(brief({ category: "Energy", stage: null, types: null, hp: null, energyType: "Special" })).subtype).toBe(
-      "Special Energy",
-    );
+    expect(
+      toBuilderCard(
+        brief({ category: "Energy", stage: null, types: null, hp: null, energyType: "Special" }),
+      ).subtype,
+    ).toBe("Special Energy");
     // A Basic Energy face (no rules text) is still Basic and still exempt.
     const fire = toBuilderCard({ ...ignition, id: "sve-002", name: "Fire Energy", effect: null });
     expect(fire.subtype).toBe("Basic Energy");
@@ -87,9 +89,11 @@ describe("toBuilderCard", () => {
       level: "error",
       message: "5 copies of Ignition Energy — max 4.",
     });
-    expect(validateDeck([{ card: fire, quantity: 5 }], standard).issues.some((i) => i.message.includes("Fire Energy"))).toBe(
-      false,
-    );
+    expect(
+      validateDeck([{ card: fire, quantity: 5 }], standard).issues.some((i) =>
+        i.message.includes("Fire Energy"),
+      ),
+    ).toBe(false);
   });
 
   it("passes unknown printed subtypes through verbatim", () => {
@@ -289,7 +293,9 @@ describe("findCardsByName", () => {
 
   it("asks for the exact name (normalized key) and keeps only an exact-key match", async () => {
     // A fresh Response per call: the raw "Basic JOLTIK" form is asked for too.
-    const mock = vi.fn().mockImplementation(async () => json(cardsPage([brief({ name: "Joltik" })])));
+    const mock = vi
+      .fn()
+      .mockImplementation(async () => json(cardsPage([brief({ name: "Joltik" })])));
     vi.stubGlobal("fetch", mock);
 
     const [card] = await findCardsByName("Basic  JOLTIK"); // prefix + case + spacing noise

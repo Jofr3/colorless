@@ -40,7 +40,8 @@ const SYMBOL_OF: Readonly<Record<string, string>> = {
   Colorless: "C",
 };
 
-const TYPE_WORD = "Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Fairy|Dragon|Colorless";
+const TYPE_WORD =
+  "Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Fairy|Dragon|Colorless";
 
 /** Anything the rules below could touch: a tag, a bracket, or a type word. */
 const MAY_CARRY_MARKUP = new RegExp(`[<[]|${TYPE_WORD}`);
@@ -48,7 +49,10 @@ const ENERGY_SPAN = /<span class="energy-symbol ([A-Za-z]+)"[^>]*>[^<]*<\/span>/
 const EM_AFTER_SPACE = /([ \t])<em>[ \t]+/g;
 const EM_TAG = /<\/?em>/g;
 const BRACKET_SYMBOL = /\[([GRWLPFDMYNC])\]/g;
-const GLUED_TYPE_WORDS = new RegExp(`\\b(?:(?:${TYPE_WORD}){2,}\\b|(?:${TYPE_WORD})(?= (?:less|more)\\b))`, "g");
+const GLUED_TYPE_WORDS = new RegExp(
+  `\\b(?:(?:${TYPE_WORD}){2,}\\b|(?:${TYPE_WORD})(?= (?:less|more)\\b))`,
+  "g",
+);
 const TYPE_WORD_LIST_BEFORE_NOUN = new RegExp(
   `\\b(?:${TYPE_WORD})(?:(?:,? or |,? and |, )(?:${TYPE_WORD}))*(?= (?:Energy|Pokémon)\\b)`,
   "g",
@@ -72,7 +76,9 @@ export function normalizeCardText(text: string): string {
     .replace(EM_TAG, () => "")
     .replace(BRACKET_SYMBOL, (_match, letter: string) => `{${letter}}`)
     .replace(GLUED_TYPE_WORDS, (run) => symbolsOf(run))
-    .replace(TYPE_WORD_LIST_BEFORE_NOUN, (list) => list.replace(ONE_TYPE_WORD, (word) => `{${SYMBOL_OF[word]}}`));
+    .replace(TYPE_WORD_LIST_BEFORE_NOUN, (list) =>
+      list.replace(ONE_TYPE_WORD, (word) => `{${SYMBOL_OF[word]}}`),
+    );
 }
 
 function normalizedBlock<T extends Ability | Attack>(block: T): T {

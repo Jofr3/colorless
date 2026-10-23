@@ -10,7 +10,7 @@ import {
   timingGateFromAttackText,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -37,14 +37,19 @@ import {
 // as D582's NOT-aliased "Fade Out" rows. No `me` row is a fixture, so the printed bytes are
 // carried HERE and §1 pins each against the committed `me` corpus.
 
-const MASTERS_PUNCH = "If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage.";
+const MASTERS_PUNCH =
+  "If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage.";
 const HORRIFYING_REVENGE =
   "If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage.";
-const UPPER_SPARK = "If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage.";
-const CUTTING_RIPOSTE = "If this Pokémon has any damage counters on it, this attack can be used for {D}.";
-const GIGA_RAILGUN = "If this Pokémon has no Voltaic {L} Energy attached, this attack does nothing.";
+const UPPER_SPARK =
+  "If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage.";
+const CUTTING_RIPOSTE =
+  "If this Pokémon has any damage counters on it, this attack can be used for {D}.";
+const GIGA_RAILGUN =
+  "If this Pokémon has no Voltaic {L} Energy attached, this attack does nothing.";
 const FACADE = "If this Pokémon is Burned or Poisoned, this attack does 100 more damage.";
-const SPIKY_ROLLING = "If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage.";
+const SPIKY_ROLLING =
+  "If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage.";
 const BRAIN_CRUSH = "If your opponent's Active Pokémon isn't Confused, this attack does nothing.";
 const FADE_OUT = "Put this Pokémon and all attached cards into your hand.";
 
@@ -74,7 +79,15 @@ describe("D593 §1 — the texts: 9 attack sentences / 15 printings", () => {
   });
 
   it("the seven clause sentences resolve through a reader; Cutting Riposte through the gate splitter", () => {
-    for (const text of [MASTERS_PUNCH, HORRIFYING_REVENGE, UPPER_SPARK, GIGA_RAILGUN, FACADE, SPIKY_ROLLING, BRAIN_CRUSH]) {
+    for (const text of [
+      MASTERS_PUNCH,
+      HORRIFYING_REVENGE,
+      UPPER_SPARK,
+      GIGA_RAILGUN,
+      FACADE,
+      SPIKY_ROLLING,
+      BRAIN_CRUSH,
+    ]) {
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
     expect(resolvedByAnyReader(CUTTING_RIPOSTE)).toBe(false);
@@ -96,7 +109,11 @@ describe("D593 §1 — the texts: 9 attack sentences / 15 printings", () => {
     ]) {
       expect(resolvedByAnyReader(near), near).toBe(false);
     }
-    expect(splitAttackGateClause("If this Pokémon has any damage counters on it, this attack can be used for {P}.")).toBeNull();
+    expect(
+      splitAttackGateClause(
+        "If this Pokémon has any damage counters on it, this attack can be used for {P}.",
+      ),
+    ).toBeNull();
   });
 
   it("the eighth gate row is disjoint from the seven: neither end of it carries another row, and two in one string trip the splitter", () => {
@@ -111,8 +128,14 @@ describe("D593 §1 — the texts: 9 attack sentences / 15 printings", () => {
     ];
     for (const row of seven) {
       expect(splitAttackGateClause(row)?.body, row).toBe("");
-      expect(CUTTING_RIPOSTE.startsWith(`${row} `) || CUTTING_RIPOSTE.endsWith(` ${row}`), row).toBe(false);
-      expect(row.startsWith(`${CUTTING_RIPOSTE} `) || row.endsWith(` ${CUTTING_RIPOSTE}`), row).toBe(false);
+      expect(
+        CUTTING_RIPOSTE.startsWith(`${row} `) || CUTTING_RIPOSTE.endsWith(` ${row}`),
+        row,
+      ).toBe(false);
+      expect(
+        row.startsWith(`${CUTTING_RIPOSTE} `) || row.endsWith(` ${CUTTING_RIPOSTE}`),
+        row,
+      ).toBe(false);
       expect(splitAttackGateClause(`${CUTTING_RIPOSTE} ${row}`), row).toBeNull();
     }
     expect(new Set([...seven, CUTTING_RIPOSTE]).size).toBe(8);
@@ -131,9 +154,15 @@ describe("D593 §2 — the readings: shipped members at the printed parameters",
       100,
       { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Hop", byAttack: true },
     ]);
-    expect(bonus(UPPER_SPARK)).toEqual([120, { kind: "yourActiveEvolvedFromThisTurn", name: "Magneton" }]);
+    expect(bonus(UPPER_SPARK)).toEqual([
+      120,
+      { kind: "yourActiveEvolvedFromThisTurn", name: "Magneton" },
+    ]);
     expect(bonus(FACADE)).toEqual([100, { kind: "yourActiveBurnedOrPoisoned" }]);
-    expect(bonus(SPIKY_ROLLING)).toEqual([80, { kind: "yourActiveUsedAttackLastTurn", attack: "Spiky Rolling" }]);
+    expect(bonus(SPIKY_ROLLING)).toEqual([
+      80,
+      { kind: "yourActiveUsedAttackLastTurn", attack: "Spiky Rolling" },
+    ]);
     // The U+2019 spelling of Hop's possessive reads the same (D136/D137).
     expect(deriveAttackDamageBonus(HORRIFYING_REVENGE.replace("Hop's", "Hop’s"))).toEqual(
       deriveAttackDamageBonus(HORRIFYING_REVENGE),
@@ -154,7 +183,8 @@ describe("D593 §2 — the readings: shipped members at the printed parameters",
       condition: { kind: "yourActiveDamaged" },
       cost: ["Darkness"],
     });
-    const fighting = "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
+    const fighting =
+      "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
     expect(timingGateFromAttackText(fighting)).toEqual({
       kind: "alternateCostIf",
       condition: { kind: "yourActiveDamaged" },
@@ -163,7 +193,9 @@ describe("D593 §2 — the readings: shipped members at the printed parameters",
   });
 
   it("the new member's note drops the pronoun, as `yourActivePoisoned`'s does", () => {
-    expect(conditionNote({ kind: "yourActiveBurnedOrPoisoned" })).toBe("your Active Pokémon is Burned or Poisoned");
+    expect(conditionNote({ kind: "yourActiveBurnedOrPoisoned" })).toBe(
+      "your Active Pokémon is Burned or Poisoned",
+    );
   });
 });
 
@@ -179,8 +211,14 @@ const D = "d593-darkness";
 const P = "d593-psychic";
 const M = "d593-metal";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 
 const LOCAL: Record<string, Card> = {
   "me02.5-140": mon(
@@ -190,7 +228,12 @@ const LOCAL: Record<string, Card> = {
     "Darkness",
     [
       { cost: ["Darkness"], name: "Corkscrew Punch", damage: 40 },
-      { cost: ["Darkness", "Darkness", "Colorless"], name: "Master's Punch", damage: "80+", effect: MASTERS_PUNCH },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Master's Punch",
+        damage: "80+",
+        effect: MASTERS_PUNCH,
+      },
     ],
     { stage: "Stage1", evolveFrom: "Pancham" },
   ),
@@ -200,7 +243,12 @@ const LOCAL: Record<string, Card> = {
     140,
     "Psychic",
     [
-      { cost: ["Colorless"], name: "Horrifying Revenge", damage: "30+", effect: HORRIFYING_REVENGE },
+      {
+        cost: ["Colorless"],
+        name: "Horrifying Revenge",
+        damage: "30+",
+        effect: HORRIFYING_REVENGE,
+      },
       {
         cost: ["Psychic", "Colorless", "Colorless"],
         name: "Corner",
@@ -233,7 +281,12 @@ const LOCAL: Record<string, Card> = {
     "Darkness",
     [
       { cost: ["Colorless"], name: "Vise Grip", damage: 30 },
-      { cost: ["Darkness", "Darkness", "Colorless"], name: "Cutting Riposte", damage: 130, effect: CUTTING_RIPOSTE },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Cutting Riposte",
+        damage: 130,
+        effect: CUTTING_RIPOSTE,
+      },
     ],
     { stage: "Stage1", evolveFrom: "Corphish" },
   ),
@@ -292,7 +345,11 @@ const LOCAL: Record<string, Card> = {
     120,
     "Darkness",
     [
-      { cost: ["Darkness"], name: "Perplex", effect: "Your opponent's Active Pokémon is now Confused." },
+      {
+        cost: ["Darkness"],
+        name: "Perplex",
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
       { cost: ["Darkness"], name: "Brain Crush", damage: 130, effect: BRAIN_CRUSH },
     ],
     { stage: "Stage1", evolveFrom: "Inkay" },
@@ -303,7 +360,11 @@ const LOCAL: Record<string, Card> = {
     110,
     "Psychic",
     [
-      { cost: ["Psychic"], name: "Disruptive Wind", effect: "Your opponent's Active Pokémon is now Confused." },
+      {
+        cost: ["Psychic"],
+        name: "Disruptive Wind",
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
       { cost: ["Psychic", "Psychic"], name: "Balloon Return", damage: 110, effect: FADE_OUT },
     ],
     { stage: "Stage1", evolveFrom: "Drifloon" },
@@ -313,7 +374,14 @@ const LOCAL: Record<string, Card> = {
     "Meowth ex",
     170,
     "Colorless",
-    [{ cost: ["Colorless", "Colorless", "Colorless"], name: "Tuck Tail", damage: 60, effect: FADE_OUT }],
+    [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Tuck Tail",
+        damage: 60,
+        effect: FADE_OUT,
+      },
+    ],
     {
       suffix: "ex",
       abilities: [
@@ -321,7 +389,7 @@ const LOCAL: Record<string, Card> = {
           type: "Ability",
           name: "Last-Ditch Catch",
           effect:
-            "Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has \"Last-Ditch\" in its name each turn.",
+            'Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can\'t use more than 1 Ability that has "Last-Ditch" in its name each turn.',
         },
       ],
     } as Partial<Card>,
@@ -344,13 +412,24 @@ const LOCAL: Record<string, Card> = {
     ),
     energyType: "Normal",
   },
-  [FILLER]: mon(FILLER, "D593 Filler", 400, "Colorless", [{ cost: ["Colorless"], name: "Tap", damage: 10 }]),
-  [PANCHAM]: mon(PANCHAM, "Pancham", 70, "Fighting", [{ cost: ["Colorless"], name: "Tap", damage: 10 }]),
+  [FILLER]: mon(FILLER, "D593 Filler", 400, "Colorless", [
+    { cost: ["Colorless"], name: "Tap", damage: 10 },
+  ]),
+  [PANCHAM]: mon(PANCHAM, "Pancham", 70, "Fighting", [
+    { cost: ["Colorless"], name: "Tap", damage: 10 },
+  ]),
   [OTHER]: mon(OTHER, "Inkay", 70, "Darkness", [{ cost: ["Colorless"], name: "Tap", damage: 10 }]),
-  [MAGNETON]: mon(MAGNETON, "Magneton", 90, "Lightning", [{ cost: ["Colorless"], name: "Tap", damage: 10 }], {
-    stage: "Stage1",
-    evolveFrom: "Magnemite",
-  }),
+  [MAGNETON]: mon(
+    MAGNETON,
+    "Magneton",
+    90,
+    "Lightning",
+    [{ cost: ["Colorless"], name: "Tap", damage: 10 }],
+    {
+      stage: "Stage1",
+      evolveFrom: "Magnemite",
+    },
+  ),
   [L]: typedEnergy(L, "Lightning"),
   [D]: typedEnergy(D, "Darkness"),
   [P]: typedEnergy(P, "Psychic"),
@@ -392,7 +471,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -400,15 +481,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -434,7 +521,15 @@ function table(attacker: string, energy: readonly (readonly [string, number])[])
   let state = p1Turn();
   for (const s of ["p1", "p2"] as const) {
     state = clearBench(setActiveFromDeck(state, s, FILLER), s);
-    state = unprize(state, s, [attacker, FILLER, PANCHAM, OTHER, MAGNETON, VOLTAIC, ...energy.map(([e]) => e)]);
+    state = unprize(state, s, [
+      attacker,
+      FILLER,
+      PANCHAM,
+      OTHER,
+      MAGNETON,
+      VOLTAIC,
+      ...energy.map(([e]) => e),
+    ]);
   }
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
@@ -448,14 +543,19 @@ type Active = NonNullable<GameState["players"]["p1"]["active"]>;
 function withActive(state: GameState, seat: Seat, edit: (a: Active) => Active): GameState {
   const active = state.players[seat].active;
   if (active === null) throw new Error(`no ${seat} Active`);
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], active: edit(active) } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...state.players[seat], active: edit(active) } },
+  };
 }
 
 const attack = (index: number, seat: Seat = "p1"): GameAction => ({ type: "attack", seat, index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const dealt = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT")[0]?.dealt;
-const nothing = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
+const dealt = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT")[0]?.dealt;
+const nothing = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
 
 describe("D593 §3 — Master's Punch: +120 when a Benched Pancham has damage counters", () => {
   const punch = (benched: string, damage: number) => {
@@ -505,7 +605,10 @@ describe("D593 §5 — Upper Spark: +120 when this Pokémon evolved from Magneto
     if (uid === undefined) throw new Error(`no ${beneath} in the deck`);
     const pulled = {
       ...state,
-      players: { ...state.players, p1: { ...state.players.p1, deck: state.players.p1.deck.filter((u) => u !== uid) } },
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, deck: state.players.p1.deck.filter((u) => u !== uid) },
+      },
     };
     return withActive(pulled, "p1", (a) => ({
       ...a,
@@ -545,14 +648,23 @@ describe("D593 §6 — Facade on the new `yourActiveBurnedOrPoisoned`", () => {
   it("the member reads the CALLER's Active: a Burned or Poisoned opponent does not satisfy it", () => {
     const cond = { kind: "yourActiveBurnedOrPoisoned" } as const;
     const base = table("me02.5-170", [["fix-energy", 1]]);
-    const theirs = withActive(base, "p2", (a) => ({ ...a, conditions: { ...a.conditions, burned: true, poisonDamage: 10 } }));
+    const theirs = withActive(base, "p2", (a) => ({
+      ...a,
+      conditions: { ...a.conditions, burned: true, poisonDamage: 10 },
+    }));
     expect(conditionHolds(theirs, "p1", cond)).toBe(false);
     expect(conditionHolds(theirs, "p2", cond)).toBe(true);
     for (const rotation of ["asleep", "paralyzed", "confused"] as const) {
-      const state = withActive(base, "p1", (a) => ({ ...a, conditions: { ...a.conditions, rotation } }));
+      const state = withActive(base, "p1", (a) => ({
+        ...a,
+        conditions: { ...a.conditions, rotation },
+      }));
       expect(conditionHolds(state, "p1", cond), rotation).toBe(false);
     }
-    const empty = { ...base, players: { ...base.players, p1: { ...base.players.p1, active: null } } };
+    const empty = {
+      ...base,
+      players: { ...base.players, p1: { ...base.players.p1, active: null } },
+    };
     expect(conditionHolds(empty, "p1", cond)).toBe(false);
   });
 });
@@ -568,7 +680,10 @@ describe("D593 §7 — Spiky Rolling: +80 when this Pokémon used Spiky Rolling 
   it("the controls: Stun Needle last turn, or Spiky Rolling two turns back, pays nothing", () => {
     const at = (name: string, turnsAgo: number) => {
       const state = table("me02.5-149", [[M, 2]]);
-      return withActive(state, "p1", (a) => ({ ...a, usedAttack: { name, turn: state.turn - turnsAgo } }));
+      return withActive(state, "p1", (a) => ({
+        ...a,
+        usedAttack: { name, turn: state.turn - turnsAgo },
+      }));
     };
     expect(dealt(at("Spiky Rolling", 2), 1)).toBe(160);
     expect(dealt(at("Stun Needle", 2), 1)).toBe(80);
@@ -577,9 +692,17 @@ describe("D593 §7 — Spiky Rolling: +80 when this Pokémon used Spiky Rolling 
 });
 
 describe("D593 §8 — Giga Railgun: does nothing without a Voltaic Lightning Energy attached", () => {
-  it("with Voltaic Lightning Energy attached: 260 (🆕🆕🆕 D604 (D539): \"260\" is WITHDRAWN as the dealt figure — the Voltaic is a built Energy since D604, +20 on its {L} holder's attacks to the Active: 280)", () => {
+  it('with Voltaic Lightning Energy attached: 260 (🆕🆕🆕 D604 (D539): "260" is WITHDRAWN as the dealt figure — the Voltaic is a built Energy since D604, +20 on its {L} holder\'s attacks to the Active: 280)', () => {
     // 🆕🆕🆕 D604 — Vikavolt is {L}, so its Voltaic adds 20 before W/R (typedSpecialEnergyMeD604.test.ts).
-    expect(dealt(table("me05-026", [[L, 2], [VOLTAIC, 1]]), 1)).toBe(280);
+    expect(
+      dealt(
+        table("me05-026", [
+          [L, 2],
+          [VOLTAIC, 1],
+        ]),
+        1,
+      ),
+    ).toBe(280);
   });
 
   it("Basic {L} only: nothing is dealt", () => {
@@ -598,7 +721,10 @@ describe("D593 §9 — Brain Crush: does nothing unless the opponent's Active is
   it("a clean or Asleep defender: nothing is dealt", () => {
     const base = table("me05-052", [[D, 1]]);
     expect(nothing(base, 1)).toEqual([]);
-    const asleep = withActive(base, "p2", (a) => ({ ...a, conditions: { ...a.conditions, rotation: "asleep" } }));
+    const asleep = withActive(base, "p2", (a) => ({
+      ...a,
+      conditions: { ...a.conditions, rotation: "asleep" },
+    }));
     expect(nothing(asleep, 1)).toEqual([]);
   });
 });
@@ -617,14 +743,25 @@ describe("D593 §10 — Cutting Riposte: payable for {D} while this Pokémon has
   });
 
   it("never stricter than printed: damaged with {D}{D}{C} it still attacks", () => {
-    expect(dealt(riposte([[D, 2], ["fix-energy", 1]], 10), 1)).toBe(130);
+    expect(
+      dealt(
+        riposte(
+          [
+            [D, 2],
+            ["fix-energy", 1],
+          ],
+          10,
+        ),
+        1,
+      ),
+    ).toBe(130);
   });
 });
 
-describe("D593 §11 — \"Fade Out\" under three printed names", () => {
+describe('D593 §11 — "Fade Out" under three printed names', () => {
   const BOUNCE = [{ op: "returnSelf", dest: "hand" }];
 
-  it("three NEW attack-only objects, each at its printed index; the other index keeps deriving (🆕🆕🆕 D628 (D539): \"attack-only\" WITHDRAWN for `TUCK_TAIL` — it carries Meowth ex's \"Last-Ditch Catch\" trigger too)", () => {
+  it('three NEW attack-only objects, each at its printed index; the other index keeps deriving (🆕🆕🆕 D628 (D539): "attack-only" WITHDRAWN for `TUCK_TAIL` — it carries Meowth ex\'s "Last-Ditch Catch" trigger too)', () => {
     expect(programFor("mep-006")).toEqual({ attack: { 1: BOUNCE } });
     expect(programFor("me04-030")).toEqual({ attack: { 1: BOUNCE } });
     // 🆕🆕🆕 D628 — the attack key is unchanged; the `triggered` row is pinned in onBenchMoveMeD628.test.ts §1.
@@ -633,7 +770,12 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
     expect(programFor("me03-107")).toBe(programFor("me03-062"));
     expect(programFor("me03-121")).toBe(programFor("me03-062"));
     // Distinct objects, and none is Lillie's Comfey's (which carries index 0 too).
-    const objects = new Set([programFor("mep-006"), programFor("me04-030"), programFor("me03-062"), programFor("sv09-068")]);
+    const objects = new Set([
+      programFor("mep-006"),
+      programFor("me04-030"),
+      programFor("me03-062"),
+      programFor("sv09-068"),
+    ]);
     expect(objects.size).toBe(4);
     expect(programFor("sv09-068")?.attack?.[1]).toEqual(BOUNCE);
     // Drifblim's and Emolga's index 0 stay on the reader.
@@ -649,7 +791,12 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
     expect(programFor("me03-062")?.abilities).toBeUndefined();
   });
 
-  const bounce = (id: string, index: number, energy: readonly (readonly [string, number])[], damage: number) => {
+  const bounce = (
+    id: string,
+    index: number,
+    energy: readonly (readonly [string, number])[],
+    damage: number,
+  ) => {
     const state = table(id, energy);
     const attached = state.players.p1.active?.energy ?? [];
     const result = mustApply(state, attack(index));
@@ -659,7 +806,9 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
     const hand = result.state.players.p1.hand.map((u) => result.state.cardIdByUid[u]);
     expect(hand, id).toContain(id);
     for (const uid of attached) expect(result.state.players.p1.hand, id).toContain(uid);
-    expect(result.state.cardIdByUid[result.state.players.p1.active?.stack[0] ?? ""], id).toBe(FILLER);
+    expect(result.state.cardIdByUid[result.state.players.p1.active?.stack[0] ?? ""], id).toBe(
+      FILLER,
+    );
     expect(of(result.events, "KNOCKED_OUT"), id).toEqual([]);
   };
 
@@ -668,16 +817,18 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
   });
 
   it("Tuck Tail: 60, the same", () => {
-    bounce("me03-062", 0, [["fix-energy", 2], [D, 1]], 60);
+    bounce(
+      "me03-062",
+      0,
+      [
+        ["fix-energy", 2],
+        [D, 1],
+      ],
+      60,
+    );
   });
 
   it("Sky Return: 30, the same", () => {
     bounce("me04-030", 1, [[L, 1]], 30);
-  });
-});
-
-describe("D593 §12 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

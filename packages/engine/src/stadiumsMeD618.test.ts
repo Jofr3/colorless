@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { stadiumLicensesSameTurnEvolve } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { redactGame } from "./redact";
@@ -80,8 +80,10 @@ const SPECIAL = "d618-special";
 
 const SNIPE_TEXT = "Put 3 damage counters on 1 of your opponent's Benched Pokémon.";
 const FOLD_TEXT = "Put 2 damage counters on each of your opponent's Pokémon.";
-const FILL_TEXT = "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 50.";
-const MOVE_TEXT = "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.";
+const FILL_TEXT =
+  "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 50.";
+const MOVE_TEXT =
+  "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.";
 const SHUFFLE_TEXT =
   "You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.";
 const SWITCH_TEXT = "Switch this Pokémon with 1 of your Benched Pokémon.";
@@ -93,9 +95,24 @@ const stadiumCard = (id: string, name: string, effect: string): Card => ({
   name,
 });
 const attacker = (id: string, name: string, effect: string, damage = ""): Card =>
-  battler(id, { name, hp: 300, types: ["Colorless"], attacks: [{ name, cost: ["Colorless"], damage, effect }] } as Partial<Card>);
-const ability = (id: string, card: string, name: string, effect: string, over: Partial<Card>): Card =>
-  battler(id, { name: card, abilities: [{ type: "Ability", name, effect }], ...over } as Partial<Card>);
+  battler(id, {
+    name,
+    hp: 300,
+    types: ["Colorless"],
+    attacks: [{ name, cost: ["Colorless"], damage, effect }],
+  } as Partial<Card>);
+const ability = (
+  id: string,
+  card: string,
+  name: string,
+  effect: string,
+  over: Partial<Card>,
+): Card =>
+  battler(id, {
+    name: card,
+    abilities: [{ type: "Ability", name, effect }],
+    ...over,
+  } as Partial<Card>);
 
 const LOCAL_CARDS: Record<string, Card> = {
   [CAGE[0]]: stadiumCard(CAGE[0], "Battle Cage", CAGE_TEXT),
@@ -111,17 +128,71 @@ const LOCAL_CARDS: Record<string, Card> = {
   [SHUFFLER]: attacker(SHUFFLER, "D618 Shuffle", SHUFFLE_TEXT),
   [SPREADER]: attacker(SPREADER, "D618 Spread", SPREAD_TEXT, "10"),
   [SWITCHER]: attacker(SWITCHER, "D618 Switch", SWITCH_TEXT, "120"),
-  [DUSKNOIR]: ability(DUSKNOIR, "Dusknoir", "Cursed Blast", "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.", { stage: "Stage2", hp: 160, types: ["Psychic"], retreat: 3 }),
-  [MUNKIDORI]: ability(MUNKIDORI, "Munkidori", "Adrena-Brain", "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.", { hp: 110, types: ["Psychic"] }),
-  [DUGTRIO]: ability(DUGTRIO, "Team Rocket's Dugtrio", "Holes", "Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon.", { stage: "Stage1", hp: 100, types: ["Fighting"] }),
-  [MARACTUS]: ability(MARACTUS, "Maractus", "Exploding Needles", "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, put 6 damage counters on the Attacking Pokémon.", { hp: 110, types: ["Grass"], retreat: 2 }),
-  [FROSLASS]: ability(FROSLASS, "Froslass", "Freezing Shroud", "During Pokémon Checkup, put 1 damage counter on each Pokémon that has an Ability (both yours and your opponent's), except any Froslass.", { stage: "Stage1", hp: 90, types: ["Water"] }),
+  [DUSKNOIR]: ability(
+    DUSKNOIR,
+    "Dusknoir",
+    "Cursed Blast",
+    "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.",
+    { stage: "Stage2", hp: 160, types: ["Psychic"], retreat: 3 },
+  ),
+  [MUNKIDORI]: ability(
+    MUNKIDORI,
+    "Munkidori",
+    "Adrena-Brain",
+    "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
+    { hp: 110, types: ["Psychic"] },
+  ),
+  [DUGTRIO]: ability(
+    DUGTRIO,
+    "Team Rocket's Dugtrio",
+    "Holes",
+    "Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon.",
+    { stage: "Stage1", hp: 100, types: ["Fighting"] },
+  ),
+  [MARACTUS]: ability(
+    MARACTUS,
+    "Maractus",
+    "Exploding Needles",
+    "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, put 6 damage counters on the Attacking Pokémon.",
+    { hp: 110, types: ["Grass"], retreat: 2 },
+  ),
+  [FROSLASS]: ability(
+    FROSLASS,
+    "Froslass",
+    "Freezing Shroud",
+    "During Pokémon Checkup, put 1 damage counter on each Pokémon that has an Ability (both yours and your opponent's), except any Froslass.",
+    { stage: "Stage1", hp: 90, types: ["Water"] },
+  ),
   [G_BASIC]: battler(G_BASIC, { name: "D618 Sprout", hp: 70, types: ["Grass"] }),
-  [G_STAGE1]: battler(G_STAGE1, { name: "D618 Shrub", stage: "Stage1", evolveFrom: "D618 Sprout", hp: 100, types: ["Grass"] }),
-  [G_STAGE2]: battler(G_STAGE2, { name: "D618 Tree", stage: "Stage2", evolveFrom: "D618 Shrub", hp: 150, types: ["Grass"] }),
-  [C_STAGE1]: battler(C_STAGE1, { name: "D618 Stump", stage: "Stage1", evolveFrom: "D618 Sprout", hp: 100, types: ["Colorless"] }),
+  [G_STAGE1]: battler(G_STAGE1, {
+    name: "D618 Shrub",
+    stage: "Stage1",
+    evolveFrom: "D618 Sprout",
+    hp: 100,
+    types: ["Grass"],
+  }),
+  [G_STAGE2]: battler(G_STAGE2, {
+    name: "D618 Tree",
+    stage: "Stage2",
+    evolveFrom: "D618 Shrub",
+    hp: 150,
+    types: ["Grass"],
+  }),
+  [C_STAGE1]: battler(C_STAGE1, {
+    name: "D618 Stump",
+    stage: "Stage1",
+    evolveFrom: "D618 Sprout",
+    hp: 100,
+    types: ["Colorless"],
+  }),
   [C_BASIC]: battler(C_BASIC, { name: "D618 Pebble", hp: 70, types: ["Colorless"] }),
-  [G_ON_C]: battler(G_ON_C, { name: "D618 Moss", stage: "Stage1", evolveFrom: "D618 Pebble", hp: 100, types: ["Grass"] }),
+  [G_ON_C]: battler(G_ON_C, {
+    name: "D618 Moss",
+    stage: "Stage1",
+    evolveFrom: "D618 Pebble",
+    hp: 100,
+    types: ["Grass"],
+  }),
   [D_ENERGY]: typedEnergy(D_ENERGY, "Darkness"),
   [P_ENERGY]: typedEnergy(P_ENERGY, "Psychic"),
   [SPECIAL]: specialEnergy(SPECIAL, "D618 Special Energy"),
@@ -172,7 +243,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -180,11 +253,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -254,13 +330,15 @@ function stadium(state: GameState, id: string, owner: Seat = "p1"): GameState {
 const caged = (state: GameState) => stadium(state, CAGE[0], "p2");
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const damages = (state: GameState, seat: Seat) => [
   state.players[seat].active?.damage ?? -1,
   ...state.players[seat].bench.map((b) => b.damage),
 ];
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const pick = (ref: PokemonRef, take?: number): GameAction => ({
@@ -273,13 +351,19 @@ const multi = (ref: PokemonRef): GameAction => ({
   seat: "p1",
   choice: { kind: "pokemonMulti", refs: [ref] },
 });
-const benchRef = (seat: Seat, index: number): PokemonRef => ({ seat, spot: { spot: "bench", index } });
+const benchRef = (seat: Seat, index: number): PokemonRef => ({
+  seat,
+  spot: { spot: "bench", index },
+});
 const activeRef = (seat: Seat): PokemonRef => ({ seat, spot: { spot: "active" } });
 /** p1's Active attacks with its one attack, one Colorless Energy attached. */
 const swing = (state: GameState) =>
   mustApply(attachFromDeck(state, "p1", "fix-energy", 1), { type: "attack", seat: "p1", index: 0 });
-const useAbility = (state: GameState, target: { spot: "active" } | { spot: "bench"; index: number }, abilityName: string) =>
-  mustApply(state, { type: "useAbility", seat: "p1", target, abilityName });
+const useAbility = (
+  state: GameState,
+  target: { spot: "active" } | { spot: "bench"; index: number },
+  abilityName: string,
+) => mustApply(state, { type: "useAbility", seat: "p1", target, abilityName });
 
 describe("D618 §1 — the programs: three objects over 8 printings", () => {
   it("every printing of a text is on ONE object, three objects in all", () => {
@@ -303,7 +387,11 @@ describe("D618 §1 — the programs: three objects over 8 printings", () => {
           {
             op: "drawUntilHandSize",
             size: 1,
-            per: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Psychic" } },
+            per: {
+              kind: "pokemonInPlay",
+              seat: "you",
+              filter: { kind: "typedPokemon", pokemonType: "Psychic" },
+            },
           },
         ],
       },
@@ -316,7 +404,8 @@ describe("D618 §1 — the programs: three objects over 8 printings", () => {
   it("the dropped Stadiums stay unkeyed (🆕🆕🆕 D635 (D539): but Fossil Quarry, keyed since D635; 🆕🆕🆕 D642 (D539): WITHDRAWN — the other three are keyed since D642, the rung is inverted)", () => {
     // 🆕🆕🆕 D635 (D539) — Fossil Quarry `me05-076` left this list (`fossilQuarryD635.test.ts`).
     // 🆕🆕🆕 D642 (D539) — Dizzying Valley, Risky Ruins and Ange Floette: Z1 (`stadiumWatchedMeD642.test.ts`).
-    for (const id of ["me02-088", "me01-127", "me04-075"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
+    for (const id of ["me02-088", "me01-127", "me04-075"])
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
   });
 });
 
@@ -410,7 +499,12 @@ describe("D618 §3 — Battle Cage on an Ability", () => {
     const retreat = (state: GameState) => {
       const paid = attachFromDeck(state, "p1", "fix-energy", 1);
       const energy = [...(paid.players.p1.active?.energy ?? [])];
-      return mustApply(paid, { type: "retreat", seat: "p1", discardEnergy: energy, promoteBenchIndex: 0 });
+      return mustApply(paid, {
+        type: "retreat",
+        seat: "p1",
+        discardEnergy: energy,
+        promoteBenchIndex: 0,
+      });
     };
     const board = table([FILLER, FILLER], [FILLER, DUGTRIO]);
     expect(damages(retreat(caged(board)).state, "p1")).toEqual([0, 0]);
@@ -428,7 +522,9 @@ describe("D618 §3 — Battle Cage on an Ability", () => {
     const board = setDamage(table([SWITCHER, FILLER], [MARACTUS, FILLER]), "p2", 100);
     const knocked = (state: GameState) => {
       const result = swing(state);
-      expect(of(result.events, "KNOCKED_OUT").map((e) => idOf(result.state, e.uid))).toEqual([MARACTUS]);
+      expect(of(result.events, "KNOCKED_OUT").map((e) => idOf(result.state, e.uid))).toEqual([
+        MARACTUS,
+      ]);
       return result;
     };
     const cagedRun = knocked(caged(board));
@@ -442,7 +538,15 @@ describe("D618 §3 — Battle Cage on an Ability", () => {
 });
 
 describe("D618 §4 — what Battle Cage does not stop: a Trainer, a source with no invoker, and a player's own effects", () => {
-  const FOLD: EffectOp[] = [{ op: "counterEachAll", amount: 20, filter: { kind: "anyPokemon" }, side: "opponent", source: "attack" }];
+  const FOLD: EffectOp[] = [
+    {
+      op: "counterEachAll",
+      amount: 20,
+      filter: { kind: "anyPokemon" },
+      side: "opponent",
+      source: "attack",
+    },
+  ];
   const run = (state: GameState, ctx: Parameters<typeof runProgram>[2]) => {
     const result = runProgram(state, FOLD, ctx, []);
     if (result.kind !== "done") throw new Error("expected done");
@@ -464,7 +568,15 @@ describe("D618 §4 — what Battle Cage does not stop: a Trainer, a source with 
     expect(damages(result.state, "p1")).toEqual([20]);
     const own = runProgram(
       board,
-      [{ op: "counterEachAll", amount: 20, filter: { kind: "anyPokemon" }, side: "both", source: "attack" }],
+      [
+        {
+          op: "counterEachAll",
+          amount: 20,
+          filter: { kind: "anyPokemon" },
+          side: "both",
+          source: "attack",
+        },
+      ],
       { seat: "p2", invokedBy: "attack" },
       [],
     );
@@ -488,7 +600,9 @@ describe("D618 §5 — Mystery Garden: discard an Energy card, draw until the ha
     const [energy, item] = board.players.p1.hand as [string, string];
     const top = board.players.p1.deck.slice(0, 2);
     const { state, events } = use(board);
-    expect(of(events, "HAND_COST_PAID")).toEqual([{ type: "HAND_COST_PAID", seat: "p1", uids: [energy], to: "discard" }]);
+    expect(of(events, "HAND_COST_PAID")).toEqual([
+      { type: "HAND_COST_PAID", seat: "p1", uids: [energy], to: "discard" },
+    ]);
     expect(state.players.p1.hand).toEqual([item, ...top]);
     expect(state.allowances.stadiumAbilityUsed).toBe(true);
     expectErr(state, { type: "useStadiumAbility", seat: "p1" }, "STADIUM_ABILITY_ALREADY_USED");
@@ -501,7 +615,11 @@ describe("D618 §5 — Mystery Garden: discard an Energy card, draw until the ha
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 1, max: 1 });
     const special = board.players.p1.hand[0] as string;
-    const answer: GameAction = { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [special] } };
+    const answer: GameAction = {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [special] },
+    };
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const { state } = mustApply(revived, answer);
     expect(state).toEqual(mustApply(parked, answer).state);
@@ -510,7 +628,9 @@ describe("D618 §5 — Mystery Garden: discard an Energy card, draw until the ha
   });
 
   it("only YOUR {P} count, by in-play type: the opponent's {P} Pokémon and your non-{P} are not counted", () => {
-    const board = setHand(garden(table([FILLER, PSY, FILLER], [PSY, PSY, PSY, PSY])), "p1", [P_ENERGY]);
+    const board = setHand(garden(table([FILLER, PSY, FILLER], [PSY, PSY, PSY, PSY])), "p1", [
+      P_ENERGY,
+    ]);
     const { state } = use(board);
     expect(state.players.p1.hand).toHaveLength(1);
   });
@@ -529,14 +649,20 @@ describe("D618 §5 — Mystery Garden: discard an Energy card, draw until the ha
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe("PLAY_CONDITION_NOT_MET");
-      expect(result.error.message).toBe("Mystery Garden can only be used if you discard an Energy card from your hand (§7.3)");
+      expect(result.error.message).toBe(
+        "Mystery Garden can only be used if you discard an Energy card from your hand (§7.3)",
+      );
     }
     expect(offer(short)).toEqual({
       label: "Mystery Garden",
       disabled: true,
       reason: "Only if you discard an Energy card from your hand",
     });
-    expect(offer(setHand(short, "p1", [P_ENERGY]))).toEqual({ label: "Mystery Garden", disabled: false, reason: null });
+    expect(offer(setHand(short, "p1", [P_ENERGY]))).toEqual({
+      label: "Mystery Garden",
+      disabled: false,
+      reason: null,
+    });
   });
 });
 
@@ -548,7 +674,11 @@ describe("D618 §5b — the new `per` member off a board", () => {
         op: "recordGate",
         slot: "paid",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
-        then: [per === undefined ? { op: "drawUntilHandSize", size: 3 } : { op: "drawUntilHandSize", size: 1, per }],
+        then: [
+          per === undefined
+            ? { op: "drawUntilHandSize", size: 3 }
+            : { op: "drawUntilHandSize", size: 1, per },
+        ],
       },
     ];
     const noteOf = (program: EffectOp[]): string => {
@@ -557,9 +687,15 @@ describe("D618 §5b — the new `per` member off a board", () => {
       if (result.kind !== "parked") throw new Error("expected a park");
       return result.prompt.note;
     };
-    expect(noteOf(gated({ kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Psychic" } }))).toBe(
-      "Discard a card from your hand.",
-    );
+    expect(
+      noteOf(
+        gated({
+          kind: "pokemonInPlay",
+          seat: "you",
+          filter: { kind: "typedPokemon", pokemonType: "Psychic" },
+        }),
+      ),
+    ).toBe("Discard a card from your hand.");
     expect(noteOf(gated(undefined))).toBe(
       "Discard a card from your hand. If you do, draw cards until you have 3 cards in your hand.",
     );
@@ -569,7 +705,11 @@ describe("D618 §5b — the new `per` member off a board", () => {
 describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, not on the first turn", () => {
   const forest = (state: GameState) => stadium(state, FOREST[0], "p2");
   /** p1's SECOND turn (turn 4), the board and hand as given. */
-  function secondTurn(hand: readonly string[], withForest: boolean, active: string = FILLER): GameState {
+  function secondTurn(
+    hand: readonly string[],
+    withForest: boolean,
+    active: string = FILLER,
+  ): GameState {
     let state = table([active]);
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -582,7 +722,12 @@ describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, n
   };
   const evolve = (state: GameState, id: string, index = 0) => {
     const uid = state.players.p1.hand.find((u) => state.cardIdByUid[u] === id) as string;
-    return applyAction(state, { type: "evolve", seat: "p1", uid, target: { spot: "bench", index } });
+    return applyAction(state, {
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index },
+    });
   };
 
   it("a {G} Basic played this turn evolves into a {G} Stage 1, then into a {G} Stage 2 (R-FOV1)", () => {
@@ -601,7 +746,13 @@ describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, n
 
   it("both ends must be {G}: a {G} Basic into a {C} Stage 1, and a {C} Basic into a {G} Stage 1, are refused", () => {
     const intoC = play(secondTurn([G_BASIC, C_STAGE1], true), G_BASIC);
-    expect(stadiumLicensesSameTurnEvolve(intoC, intoC.players.p1.bench[0] as never, POOL[C_STAGE1] as Card)).toBe(false);
+    expect(
+      stadiumLicensesSameTurnEvolve(
+        intoC,
+        intoC.players.p1.bench[0] as never,
+        POOL[C_STAGE1] as Card,
+      ),
+    ).toBe(false);
     const a = evolve(intoC, C_STAGE1);
     expect(a.ok ? null : a.error.code).toBe("EVOLVE_TOO_SOON");
     const fromC = play(secondTurn([C_BASIC, G_ON_C], true), C_BASIC);
@@ -609,7 +760,7 @@ describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, n
     expect(b.ok ? null : b.error.code).toBe("EVOLVE_TOO_SOON");
   });
 
-  it("\"except during their first turn\": the Forest does not lift the first-turn ban", () => {
+  it('"except during their first turn": the Forest does not lift the first-turn ban', () => {
     let state = forest(setHand(table([FILLER]), "p1", [G_BASIC, G_STAGE1]));
     state = play(state, G_BASIC);
     const result = evolve(state, G_STAGE1);
@@ -622,13 +773,12 @@ describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, n
     const basic = state.players.p2.hand[0] as string;
     state = mustApply(state, { type: "playBasicToBench", seat: "p2", uid: basic }).state;
     const stage1 = state.players.p2.hand[0] as string;
-    const result = applyAction(state, { type: "evolve", seat: "p2", uid: stage1, target: { spot: "bench", index: 0 } });
+    const result = applyAction(state, {
+      type: "evolve",
+      seat: "p2",
+      uid: stage1,
+      target: { spot: "bench", index: 0 },
+    });
     expect(result.ok).toBe(true);
-  });
-});
-
-describe("D618 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

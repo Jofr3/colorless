@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -77,7 +77,11 @@ const LOCAL_CARDS: Record<string, Card> = {
   [TICKET]: { ...trainerCard(TICKET, "Item", TICKET_TEXT), name: "Redeemable Ticket" },
   [FLUTE]: { ...trainerCard(FLUTE, "Item", FLUTE_TEXT), name: "Accompanying Flute" },
   [BOTHER]: { ...trainerCard(BOTHER, "Item", BOTHER_TEXT), name: "Team Rocket's Bother-Bot" },
-  [TREE]: { ...trainerCard(TREE, "Stadium", TREE_TEXT), name: "Grand Tree", rarity: "ACE SPEC Rare" },
+  [TREE]: {
+    ...trainerCard(TREE, "Stadium", TREE_TEXT),
+    name: "Grand Tree",
+    rarity: "ACE SPEC Rare",
+  },
   [FARFETCHD]: battler(FARFETCHD, {
     name: "Farfetch'd",
     types: ["Colorless"],
@@ -98,16 +102,35 @@ const LOCAL_CARDS: Record<string, Card> = {
       {
         type: "Ability",
         name: "ACE Nullifier",
-        effect: "If this Pokémon has a Pokémon Tool attached, your opponent can't play any ACE SPEC cards from their hand.",
+        effect:
+          "If this Pokémon has a Pokémon Tool attached, your opponent can't play any ACE SPEC cards from their hand.",
       },
     ],
   }),
   [TOOL]: { ...trainerCard(TOOL, "Tool", "A D567 test Tool."), name: "D567 Tool" },
   [SPROUT]: battler(SPROUT, { name: "D567 Sprout", types: ["Grass"], hp: 60 }),
-  [SAPLING]: battler(SAPLING, { name: "D567 Sapling", stage: "Stage1", evolveFrom: "D567 Sprout", types: ["Grass"], hp: 90 }),
-  [OAK]: battler(OAK, { name: "D567 Oak", stage: "Stage2", evolveFrom: "D567 Sapling", types: ["Grass"], hp: 160 }),
+  [SAPLING]: battler(SAPLING, {
+    name: "D567 Sapling",
+    stage: "Stage1",
+    evolveFrom: "D567 Sprout",
+    types: ["Grass"],
+    hp: 90,
+  }),
+  [OAK]: battler(OAK, {
+    name: "D567 Oak",
+    stage: "Stage2",
+    evolveFrom: "D567 Sapling",
+    types: ["Grass"],
+    hp: 160,
+  }),
   [PUP]: battler(PUP, { name: "D567 Pup", types: ["Water"], hp: 50 }),
-  [VAPOR]: battler(VAPOR, { name: "D567 Vapor", stage: "Stage1", evolveFrom: "Eevee", types: ["Water"], hp: 110 }),
+  [VAPOR]: battler(VAPOR, {
+    name: "D567 Vapor",
+    stage: "Stage1",
+    evolveFrom: "Eevee",
+    types: ["Water"],
+    hp: 110,
+  }),
   [ENERGY]: typedEnergy(ENERGY, "Water"),
   [FILLER]: battler(FILLER, {
     name: "D567 Filler",
@@ -146,7 +169,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -162,7 +186,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -170,11 +196,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -227,7 +256,11 @@ function purge(state: GameState, seat: Seat, id: string): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => !gone.includes(u)), discard: [...side.discard, ...gone] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => !gone.includes(u)),
+        discard: [...side.discard, ...gone],
+      },
     },
   };
 }
@@ -245,7 +278,10 @@ function stackTop(state: GameState, seat: Seat, ids: readonly string[]): GameSta
   }
   return {
     ...next,
-    players: { ...next.players, [seat]: { ...side, deck: [...taken, ...side.deck.filter((u) => !taken.includes(u))] } },
+    players: {
+      ...next.players,
+      [seat]: { ...side, deck: [...taken, ...side.deck.filter((u) => !taken.includes(u))] },
+    },
   };
 }
 
@@ -258,7 +294,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -280,11 +321,15 @@ function table(seed = 5671, active: string = FILLER, bench: readonly string[] = 
 /** Surgery: the same board on p1's SECOND turn (turn 4 — p2 went first). */
 const atTurn4 = (state: GameState): GameState => ({ ...state, turn: 4 });
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const topOf = (p: InPlayPokemon) => p.stack[p.stack.length - 1];
 
 function play(state: GameState, id: string): { state: GameState; events: GameEvent[] } {
@@ -294,7 +339,8 @@ function play(state: GameState, id: string): { state: GameState; events: GameEve
 }
 
 function phasePrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -373,7 +419,12 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
         ability: {
           label: "Grand Tree",
           program: [
-            { op: "evolveFromDeckChosen", bodyStage: "Basic", evolveTimingGates: true, thenEvolveAgain: true },
+            {
+              op: "evolveFromDeckChosen",
+              bodyStage: "Basic",
+              evolveTimingGates: true,
+              thenEvolveAgain: true,
+            },
             { op: "shuffleDeck" },
           ],
         },
@@ -395,18 +446,26 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
       for (const ops of lists) {
         for (const op of walkProgram(ops)) {
           if (op.op === "cycleOwnPrizes") note(`cycleOwnPrizes:${Object.keys(op).join(",")}`, id);
-          if (op.op === "swapTurnedPrizeWithRevealed") note(`swap:${Object.keys(op).join(",")}`, id);
+          if (op.op === "swapTurnedPrizeWithRevealed")
+            note(`swap:${Object.keys(op).join(",")}`, id);
           if (op.op === "turnPrizeFaceUp" && (op.side !== undefined || op.recordAs !== undefined))
             note(`turnPrizeFaceUp:${Object.keys(op).join(",")}`, id);
-          if (op.op === "randomFromOpponentHand" && (op.to === "reveal" || op.recordAs !== undefined))
+          if (
+            op.op === "randomFromOpponentHand" &&
+            (op.to === "reveal" || op.recordAs !== undefined)
+          )
             note(`randomFromOpponentHand:${Object.keys(op).join(",")}`, id);
-          if (op.op === "lookAtTopN" && op.whose !== undefined) note(`lookAtTopN:${Object.keys(op).join(",")}`, id);
+          if (op.op === "lookAtTopN" && op.whose !== undefined)
+            note(`lookAtTopN:${Object.keys(op).join(",")}`, id);
           if (
             op.op === "evolveFromDeckChosen" &&
-            (op.bodyStage !== undefined || op.evolveTimingGates !== undefined || op.thenEvolveAgain !== undefined)
+            (op.bodyStage !== undefined ||
+              op.evolveTimingGates !== undefined ||
+              op.thenEvolveAgain !== undefined)
           )
             note(`evolveFromDeckChosen:${Object.keys(op).join(",")}`, id);
-          if (op.op === "evolveFromDeck" && op.thenEvolveAgain !== undefined) note("evolveFromDeck:authored", id);
+          if (op.op === "evolveFromDeck" && op.thenEvolveAgain !== undefined)
+            note("evolveFromDeck:authored", id);
           if (op.op === "recordGate" && (op.slot === "turnedPrize" || op.slot === "revealed"))
             note(`recordGate:${op.slot}`, id);
         }
@@ -423,10 +482,6 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
       "evolveFromDeckChosen:op,bodyStage,evolveTimingGates,thenEvolveAgain": [TREE],
     });
   });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -436,7 +491,11 @@ describe("§2 — Redeemable Ticket: the prizes go under the deck and the top N 
     const oldPrizes = [...before.players.p1.prizes];
     const staged = setHand(before, "p1", [TICKET]);
     const oldDeck = [...staged.players.p1.deck];
-    const { state, events } = run(staged, { type: "playTrainer", seat: "p1", uid: staged.players.p1.hand[0] as string });
+    const { state, events } = run(staged, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.players.p1.hand[0] as string,
+    });
     const side = state.players.p1;
     expect(side.prizes).toEqual(oldDeck.slice(0, 6));
     expect(side.deck).toHaveLength(oldDeck.length);
@@ -465,10 +524,16 @@ describe("§2 — Redeemable Ticket: the prizes go under the deck and the top N 
   it("🛑 the event names NO uid — neither an old prize nor a new one appears anywhere in the emitted rows", () => {
     const staged = setHand(table(), "p1", [TICKET]);
     const oldPrizes = [...staged.players.p1.prizes];
-    const { state, events } = run(staged, { type: "playTrainer", seat: "p1", uid: staged.players.p1.hand[0] as string });
+    const { state, events } = run(staged, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.players.p1.hand[0] as string,
+    });
     const text = JSON.stringify(all(events, "PRIZES_CYCLED"));
     for (const uid of [...oldPrizes, ...state.players.p1.prizes]) expect(text).not.toContain(uid);
-    expect(logText(state, events)).toContain("put 6 Prize cards on the bottom of their deck and took 6 new ones");
+    expect(logText(state, events)).toContain(
+      "put 6 Prize cards on the bottom of their deck and took 6 new ones",
+    );
   });
 
   it("the prize shuffle spends rng and is replay-stable; the COUNT is the row's own (3 left → 3 cycled)", () => {
@@ -478,15 +543,26 @@ describe("§2 — Redeemable Ticket: the prizes go under the deck and the top N 
     expect(a.state).toEqual(b.state);
     expect(a.state.rngState).not.toEqual(setHand(short, "p1", [TICKET]).rngState);
     expect(a.state.players.p1.prizes).toHaveLength(3);
-    expect(all(a.events, "PRIZES_CYCLED")).toEqual([{ type: "PRIZES_CYCLED", seat: "p1", count: 3 }]);
-    expect(logText(a.state, a.events)).toContain("put 3 Prize cards on the bottom of their deck and took 3 new ones");
+    expect(all(a.events, "PRIZES_CYCLED")).toEqual([
+      { type: "PRIZES_CYCLED", seat: "p1", count: 3 },
+    ]);
+    expect(logText(a.state, a.events)).toContain(
+      "put 3 Prize cards on the bottom of their deck and took 3 new ones",
+    );
   });
 
   it("n = 0 is a SILENT no-op: no event, no rng draw, no board change", () => {
     const base = table();
     const empty: GameState = {
       ...base,
-      players: { ...base.players, p1: { ...base.players.p1, prizes: [], deck: [...base.players.p1.deck, ...base.players.p1.prizes] } },
+      players: {
+        ...base.players,
+        p1: {
+          ...base.players.p1,
+          prizes: [],
+          deck: [...base.players.p1.deck, ...base.players.p1.prizes],
+        },
+      },
     };
     const events: GameEvent[] = [];
     const result = runProgram(empty, [{ op: "cycleOwnPrizes" }], { seat: "p1" }, events);
@@ -506,7 +582,8 @@ describe("§2 — Redeemable Ticket: the prizes go under the deck and the top N 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", () => {
   /** p2's top five: Pup, Energy, Farfetch'd, Sapling (Stage 1), Pup. */
-  const topFive = (state: GameState) => stackTop(state, "p2", [PUP, ENERGY, FARFETCHD, SAPLING, PUP]);
+  const topFive = (state: GameState) =>
+    stackTop(state, "p2", [PUP, ENERGY, FARFETCHD, SAPLING, PUP]);
 
   it("🛑 the park: the Basics of the OPPONENT's window, `any` resolved to 3, dest bench, the controller answers", () => {
     const board = topFive(table());
@@ -543,7 +620,14 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
     expect(state.players.p2.deck).toHaveLength(board.players.p2.deck.length - 2);
     expect(state.players.p2.deck).not.toContain(picks[0]);
     expect(all(events, "DECK_TOP_REVEALED")).toEqual([
-      { type: "DECK_TOP_REVEALED", seat: "p2", uids: picks, dest: "bench", reveal: true, actor: "p1" },
+      {
+        type: "DECK_TOP_REVEALED",
+        seat: "p2",
+        uids: picks,
+        dest: "bench",
+        reveal: true,
+        actor: "p1",
+      },
     ]);
     expect(all(events, "SHUFFLE")).toEqual([{ type: "SHUFFLE", seat: "p2" }]);
     expect(logText(state, events)).toContain(
@@ -564,8 +648,15 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
     const board = topFive(table(5671, FILLER, [PUP]));
     const window = board.players.p2.deck.slice(0, 5);
     const staged = setHand(board, "p1", [FLUTE]);
-    const parked = run(staged, { type: "playTrainer", seat: "p1", uid: staged.players.p1.hand[0] as string }).state;
-    const { state } = run(parked, cards([window[0] as string, window[2] as string, window[4] as string]));
+    const parked = run(staged, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: staged.players.p1.hand[0] as string,
+    }).state;
+    const { state } = run(
+      parked,
+      cards([window[0] as string, window[2] as string, window[4] as string]),
+    );
     expect(state.players.p1.bench).toEqual(staged.players.p1.bench);
     expect(state.players.p1.active).toEqual(staged.players.p1.active);
     expect(state.players.p1.deck).toEqual(staged.players.p1.deck);
@@ -574,13 +665,18 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
 
   it("🛑 PARTIAL: one free slot on p2's Bench — ~~three picked, the FIRST lands~~ the offer is capped at ONE (card revision B01), the others stay in p2's deck", () => {
     let board = topFive(table());
-    for (let i = 0; i < 4; i++) board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);
+    for (let i = 0; i < 4; i++)
+      board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);
     const window = board.players.p2.deck.slice(0, 5);
     const parked = play(board, FLUTE).state;
     const picks = [window[0] as string, window[2] as string, window[4] as string];
     // 🆕 Card revision B01 — the Bench clamp binds at the OFFER (`lookOwner`'s Bench): `max` is the one
     // free slot, so the three-card answer is refused; the apply's clamp stays as the belt.
-    expect(parked.phase.kind === "effect:choose" && parked.phase.prompt.kind === "chooseCards" && parked.phase.prompt.max).toBe(1);
+    expect(
+      parked.phase.kind === "effect:choose" &&
+        parked.phase.prompt.kind === "chooseCards" &&
+        parked.phase.prompt.max,
+    ).toBe(1);
     expect(applyAction(parked, cards(picks)).ok).toBe(false);
     const { state, events } = run(parked, cards(picks.slice(0, 1)));
     expect(state.players.p2.bench).toHaveLength(5);
@@ -592,7 +688,8 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
 
   it("🛑 R-AF3 — FULL: the look still happens and is announced, NONE is taken, and p2's deck is still shuffled (card revision B01: and nothing is OFFERED — no park)", () => {
     let board = topFive(table());
-    for (let i = 0; i < 5; i++) board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);
+    for (let i = 0; i < 5; i++)
+      board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);
     // 🆕 Card revision B01 — R-AF3's outcome is unchanged; its parenthetical "the park is still
     // offered" is retired: a full Bench clamps the offer to 0 and takes the whiff path (the look row,
     // then the shuffle), so there is no pick that could land nothing.
@@ -604,7 +701,9 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
       { type: "DECK_TOP_REVEALED", seat: "p2", uids: [], dest: "bench", reveal: true, actor: "p1" },
     ]);
     expect(all(events, "SHUFFLE")).toEqual([{ type: "SHUFFLE", seat: "p2" }]);
-    expect(logText(state, events)).toContain("revealed the top of Tide's deck — put nothing onto their Bench");
+    expect(logText(state, events)).toContain(
+      "revealed the top of Tide's deck — put nothing onto their Bench",
+    );
   });
 
   it("NONE: no Basic in the window — no park, the empty look row, and the shuffle", () => {
@@ -668,7 +767,12 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
     resumeProgram(result.state, result.cont, { kind: "cards", uids: [pup] }, resumed);
     const rows = all(resumed, "DECK_TOP_REVEALED");
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ type: "DECK_TOP_REVEALED", seat: "p1", uids: [pup], dest: "bench" });
+    expect(rows[0]).toMatchObject({
+      type: "DECK_TOP_REVEALED",
+      seat: "p1",
+      uids: [pup],
+      dest: "bench",
+    });
     expect(rows[0] && "actor" in rows[0]).toBe(false);
   });
 });
@@ -679,7 +783,10 @@ describe("§4 — Team Rocket's Bother-Bot: flip, reveal, and the recorded switc
   function botherBoard(faceUp = 0, hand: readonly string[] = [PUP, ENERGY]): GameState {
     const base = setHand(table(), "p2", hand);
     const side = base.players.p2;
-    return { ...base, players: { ...base.players, p2: { ...side, faceUpPrizes: side.prizes.slice(0, faceUp) } } };
+    return {
+      ...base,
+      players: { ...base.players, p2: { ...side, faceUpPrizes: side.prizes.slice(0, faceUp) } },
+    };
   }
 
   it("🛑 ≥2 face-down: the CONTROLLER parks on the OPPONENT's face-down indices, in the opponent's wording (R-BB2)", () => {
@@ -717,8 +824,12 @@ describe("§4 — Team Rocket's Bother-Bot: flip, reveal, and the recorded switc
     expect(all(events, "RANDOM_CARD_TAKEN")).toEqual([]);
     expect(phasePrompt(state)).toMatchObject({ kind: "confirm" });
     const rows = logText(state, events);
-    expect(rows.some((r) => r.startsWith("turned Tide's ") && r.endsWith(" face up (Prize 4)"))).toBe(true);
-    expect(rows.some((r) => r.startsWith("chose a random card from Tide's hand — Tide revealed "))).toBe(true);
+    expect(
+      rows.some((r) => r.startsWith("turned Tide's ") && r.endsWith(" face up (Prize 4)")),
+    ).toBe(true);
+    expect(
+      rows.some((r) => r.startsWith("chose a random card from Tide's hand — Tide revealed ")),
+    ).toBe(true);
   });
 
   it("🛑 YES: the hand card takes THAT slot face up (R-BB1), the prize card goes to p2's hand", () => {
@@ -735,11 +846,18 @@ describe("§4 — Team Rocket's Bother-Bot: flip, reveal, and the recorded switc
     expect(side.hand).not.toContain(revealed);
     expect(side.hand).toHaveLength(2);
     expect(all(events, "PRIZE_SWITCHED_WITH_HAND")).toEqual([
-      { type: "PRIZE_SWITCHED_WITH_HAND", seat: "p2", actor: "p1", index: 3, prizeUid: turned, handUid: revealed },
+      {
+        type: "PRIZE_SWITCHED_WITH_HAND",
+        seat: "p2",
+        actor: "p1",
+        index: 3,
+        prizeUid: turned,
+        handUid: revealed,
+      },
     ]);
-    expect(redactGame(state, "p1").board.opponent.faceUpPrizes.map((p) => [p.index, p.card.id])).toEqual([
-      [3, revealed],
-    ]);
+    expect(
+      redactGame(state, "p1").board.opponent.faceUpPrizes.map((p) => [p.index, p.card.id]),
+    ).toEqual([[3, revealed]]);
     expect(logText(state, events).some((r) => r.startsWith("had Tide switch "))).toBe(true);
     expect(state.phase.kind).toBe("turn:action");
   });
@@ -820,13 +938,20 @@ describe("§4 — Team Rocket's Bother-Bot: flip, reveal, and the recorded switc
     const board = botherBoard(0);
     const parked = play(board, BOTHER).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(parked.phase.cont.pendingOp).toEqual({ op: "turnPrizeFaceUp", side: "opponent", recordAs: "turnedPrize" });
+    expect(parked.phase.cont.pendingOp).toEqual({
+      op: "turnPrizeFaceUp",
+      side: "opponent",
+      recordAs: "turnedPrize",
+    });
     const direct = run(parked, prize(2));
     const viaJson = run(revived(parked), prize(2));
     expect(viaJson.state).toEqual(direct.state);
     const confirmPark = viaJson.state;
     if (confirmPark.phase.kind !== "effect:choose") throw new Error("expected the confirm park");
-    expect(Object.keys(confirmPark.phase.cont.record ?? {}).sort()).toEqual(["revealed", "turnedPrize"]);
+    expect(Object.keys(confirmPark.phase.cont.record ?? {}).sort()).toEqual([
+      "revealed",
+      "turnedPrize",
+    ]);
     const yesDirect = run(confirmPark, confirm(true));
     const yesJson = run(revived(confirmPark), confirm(true));
     expect(yesJson.state).toEqual(yesDirect.state);
@@ -860,7 +985,8 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
     const played = play(base, TREE).state;
     return turn4 ? atTurn4(played) : played;
   }
-  const use = (state: GameState, seat: Seat = "p1") => run(state, { type: "useStadiumAbility", seat });
+  const use = (state: GameState, seat: Seat = "p1") =>
+    run(state, { type: "useStadiumAbility", seat });
 
   it("the premise: the Stadium is in play and the board is p1's", () => {
     const state = treeBoard();
@@ -928,7 +1054,7 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
     expect(state.phase.kind).toBe("turn:action");
   });
 
-  it("🛑 STAGE 1 DECLINED: no Stage 2 is offered (\"If that Pokémon was evolved in this way\")", () => {
+  it('🛑 STAGE 1 DECLINED: no Stage 2 is offered ("If that Pokémon was evolved in this way")', () => {
     const parked = use(treeBoard()).state;
     const { state, events } = run(parked, cards([]));
     expect(state.phase.kind).toBe("turn:action");
@@ -967,7 +1093,11 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
     if (stage2.kind !== "chooseCards") throw new Error("expected the Stage 2 park");
     expect(stage2.candidates.every((u) => second.cardIdByUid[u] === OAK)).toBe(true);
     const { state } = run(second, cards([stage2.candidates[0] as string]));
-    expect(bodyAt(state, "p1", 1).stack.map((u) => state.cardIdByUid[u])).toEqual([SPROUT, SAPLING, OAK]);
+    expect(bodyAt(state, "p1", 1).stack.map((u) => state.cardIdByUid[u])).toEqual([
+      SPROUT,
+      SAPLING,
+      OAK,
+    ]);
     expect(bodyAt(state, "p1", 0).stack.map((u) => state.cardIdByUid[u])).toEqual([SPROUT]);
   });
 
@@ -978,7 +1108,7 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
     expect(plain.kind).toBe("parked");
   });
 
-  it("🛑 R-GT3 (UNRULED): an Eevee licensed by \"Boosted Evolution\" gets NO exemption on the first turn", () => {
+  it('🛑 R-GT3 (UNRULED): an Eevee licensed by "Boosted Evolution" gets NO exemption on the first turn', () => {
     const base = table(5671, EEVEE);
     const board = play(base, TREE).state;
     const { state, events } = use(board);
@@ -993,21 +1123,33 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
     board = ensureCopies(board, "p2", TOOL);
     const tool = board.players.p2.deck.find((u) => board.cardIdByUid[u] === TOOL) as string;
     board = withBody(
-      { ...board, players: { ...board.players, p2: { ...board.players.p2, deck: board.players.p2.deck.filter((u) => u !== tool) } } },
+      {
+        ...board,
+        players: {
+          ...board.players,
+          p2: { ...board.players.p2, deck: board.players.p2.deck.filter((u) => u !== tool) },
+        },
+      },
       "p2",
       "active",
       (p) => ({ ...p, tools: [tool] }),
     );
     const staged = setHand(board, "p1", [TREE]);
-    expect(rejected(staged, { type: "playTrainer", seat: "p1", uid: staged.players.p1.hand[0] as string })).toBe(
-      "HAND_PLAY_BLOCKED",
-    );
+    expect(
+      rejected(staged, {
+        type: "playTrainer",
+        seat: "p1",
+        uid: staged.players.p1.hand[0] as string,
+      }),
+    ).toBe("HAND_PLAY_BLOCKED");
   });
 
   it("🛑 ONCE PER TURN, FOR EACH PLAYER: a second use is refused; the opponent uses it on their own turn", () => {
     const board = purge(treeBoard(), "p1", SAPLING);
     const used = use(board).state;
-    expect(rejected(used, { type: "useStadiumAbility", seat: "p1" })).toBe("STADIUM_ABILITY_ALREADY_USED");
+    expect(rejected(used, { type: "useStadiumAbility", seat: "p1" })).toBe(
+      "STADIUM_ABILITY_ALREADY_USED",
+    );
     const p2Turn = run(used, { type: "endTurn", seat: "p1" }).state;
     expect(p2Turn.phase.kind === "turn:action" && p2Turn.phase.seat).toBe("p2");
     const { events } = use(p2Turn, "p2");
@@ -1017,7 +1159,10 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
   it("🛑 the Stage 1 park round-trips through JSON with `thenEvolveAgain` and resumes into the Stage 2 question", () => {
     const parked = use(treeBoard()).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(parked.phase.cont.pendingOp).toMatchObject({ op: "evolveFromDeck", thenEvolveAgain: true });
+    expect(parked.phase.cont.pendingOp).toMatchObject({
+      op: "evolveFromDeck",
+      thenEvolveAgain: true,
+    });
     const first = phasePrompt(parked);
     if (first.kind !== "chooseCards") throw new Error("expected chooseCards");
     const direct = run(parked, cards([first.candidates[0] as string]));

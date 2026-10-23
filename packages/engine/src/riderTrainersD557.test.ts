@@ -57,14 +57,16 @@ const SCRAPPER = "sv10.5w-085";
 
 const MORTY_TEXT =
   "You can use this card only if you discard another card from your hand. Draw a card for each of your opponent's Benched Pokémon.";
-const XEROSIC_TEXT = "Your opponent discards cards from their hand until they have 3 cards in their hand.";
+const XEROSIC_TEXT =
+  "Your opponent discards cards from their hand until they have 3 cards in their hand.";
 const LUCIAN_TEXT =
   "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player flips a coin. If heads, that player draws 6 cards. If tails, they draw 3 cards.";
 const SANDWICH_TEXT =
   "Heal 30 damage from your Active Pokémon. If that Pokémon is an Arven's Pokémon, heal 100 damage from it instead.";
 const MEGATON_TEXT =
   "Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon, and discard a Stadium in play.";
-const BLENDER_TEXT = "Search your deck for up to 5 cards and discard them. Then, shuffle your deck.";
+const BLENDER_TEXT =
+  "Search your deck for up to 5 cards and discard them. Then, shuffle your deck.";
 const TM_TEXT =
   'Search your deck for up to 3 Pokémon Tool cards that have "Technical Machine" in their name, reveal them, and put them into your hand. Then, shuffle your deck.';
 const DUSK_TEXT =
@@ -86,7 +88,8 @@ function printed(id: string, name: string, trainerType: string, effect: string):
 function printings(ids: readonly string[], name: string, trainerType: string, effect: string) {
   return Object.fromEntries(ids.map((id) => [id, printed(id, name, trainerType, effect)]));
 }
-const toolNamed = (id: string, name: string): Card => ({ ...FIXTURE_POOL["fix-tool"], id, name }) as Card;
+const toolNamed = (id: string, name: string): Card =>
+  ({ ...FIXTURE_POOL["fix-tool"], id, name }) as Card;
 
 const LOCAL_CARDS: Record<string, Card> = {
   ...printings(MORTY, "Morty's Conviction", "Supporter", MORTY_TEXT),
@@ -150,7 +153,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -158,11 +163,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -189,7 +197,8 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
   setActiveFromDeck(ensureInDeck(state, seat, id), seat, id);
-const seatBench = (state: GameState, seat: Seat, id: string) => benchFromDeck(ensureInDeck(state, seat, id), seat, id);
+const seatBench = (state: GameState, seat: Seat, id: string) =>
+  benchFromDeck(ensureInDeck(state, seat, id), seat, id);
 
 /** p1's turn 2 with `active` / `bench` for p1 and `oppActive` / `oppBench` for p2. */
 function table(
@@ -244,28 +253,32 @@ function cursorFor(face: "heads" | "tails"): number {
   throw new Error("no cursor");
 }
 
-
 function all<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
   type: T,
 ): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
-const find = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) => all(events, type)[0];
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const find = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
+  all(events, type)[0];
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const cards = (uids: readonly string[], seat: Seat = "p1"): GameAction => ({
   type: "resolveEffect",
   seat,
   choice: { kind: "cards", uids: [...uids] },
 });
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 const toolsOn = (state: GameState, seat: Seat, spot: "active" | number) => {
@@ -276,7 +289,12 @@ const toolsOn = (state: GameState, seat: Seat, spot: "active" | number) => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §1 — the prints, and the registry rows that map them", () => {
-  const ROWS: readonly { name: string; ids: readonly string[]; subtype: string; program: unknown }[] = [
+  const ROWS: readonly {
+    name: string;
+    ids: readonly string[];
+    subtype: string;
+    program: unknown;
+  }[] = [
     {
       name: "Morty's Conviction",
       ids: MORTY,
@@ -333,7 +351,12 @@ describe("D557 §1 — the prints, and the registry rows that map them", () => {
       program: {
         trainer: [
           { op: "discardTools", count: "all" },
-          { op: "discardEnergy", from: "opponentEach", filter: { kind: "specialEnergy" }, count: "all" },
+          {
+            op: "discardEnergy",
+            from: "opponentEach",
+            filter: { kind: "specialEnergy" },
+            count: "all",
+          },
           { op: "discardStadium" },
         ],
       },
@@ -372,7 +395,14 @@ describe("D557 §1 — the prints, and the registry rows that map them", () => {
       subtype: "Item",
       program: {
         trainer: [
-          { op: "lookAtTopN", n: 7, from: "bottom", filter: { kind: "anyPokemon" }, max: 1, reveal: true },
+          {
+            op: "lookAtTopN",
+            n: 7,
+            from: "bottom",
+            filter: { kind: "anyPokemon" },
+            max: 1,
+            reveal: true,
+          },
           { op: "shuffleDeck" },
         ],
       },
@@ -401,9 +431,13 @@ describe("D557 §1 — the prints, and the registry rows that map them", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's Bench at resolve", () => {
-  it("🛑 a hand holding Morty ALONE is refused — the printed \"another card\"", () => {
+  it('🛑 a hand holding Morty ALONE is refused — the printed "another card"', () => {
     const board = setHand(table(), "p1", [MORTY[0]]);
-    expectErr(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }, "PLAY_CONDITION_NOT_MET");
+    expectErr(
+      board,
+      { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string },
+      "PLAY_CONDITION_NOT_MET",
+    );
   });
 
   it("pays 1, then draws ONE PER opponent's Benched Pokémon (3 → 3)", () => {
@@ -436,9 +470,12 @@ describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's 
   it("🛑 `per` RIDES the parked cost's `rest`: a JSON round trip of the parked state still draws per the OPPONENT's Bench", () => {
     const board = table(FILLER, [FILLER, FILLER, FILLER], FILLER, [FILLER, FILLER]);
     const { state: parked, before } = play(board, MORTY[0], [TOOL, "fix-energy"]);
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${parked.phase.kind}`);
     expect(parked.phase.cont.pendingOp).toEqual({ op: "payFromHand", count: 1, to: "discard" });
-    expect(parked.phase.cont.rest).toEqual([{ op: "drawCards", count: 1, per: { kind: "opponentBenchCount" } }]);
+    expect(parked.phase.cont.rest).toEqual([
+      { op: "drawCards", count: 1, per: { kind: "opponentBenchCount" } },
+    ]);
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(revived).toEqual(parked);
     const tool = before.players.p1.hand.find((u) => before.cardIdByUid[u] === TOOL) as string;
@@ -447,15 +484,24 @@ describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's 
     expect(resumed.state.phase.kind).toBe("turn:action");
     // own Bench 3, theirs 2 → draws 2
     expect(all(resumed.events, "CARDS_DRAWN").map((e) => e.uids.length)).toEqual([2]);
-    expect(resumed.state.players.p1.discard.map((u) => resumed.state.cardIdByUid[u])).toContain(TOOL);
-    expect(resumed.state.players.p1.hand.map((u) => resumed.state.cardIdByUid[u])).toContain("fix-energy");
+    expect(resumed.state.players.p1.discard.map((u) => resumed.state.cardIdByUid[u])).toContain(
+      TOOL,
+    );
+    expect(resumed.state.players.p1.hand.map((u) => resumed.state.cardIdByUid[u])).toContain(
+      "fix-energy",
+    );
     expect(resumed.state.players.p1.hand).toHaveLength(1 + 2);
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §3 — Xerosic's Machinations: the OWNER discards DOWN TO 3", () => {
-  const withOppHand = (n: number) => setHand(table(), "p2", Array.from({ length: n }, () => FILLER));
+  const withOppHand = (n: number) =>
+    setHand(
+      table(),
+      "p2",
+      Array.from({ length: n }, () => FILLER),
+    );
 
   it("a hand of 7 PARKS a mandatory pick of exactly 4, answered by the OWNER", () => {
     const { state } = play(withOppHand(7), XEROSIC[0]);
@@ -496,12 +542,30 @@ describe("D557 §3 — Xerosic's Machinations: the OWNER discards DOWN TO 3", ()
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §4 — Lucian: each player flips their OWN coin (heads 6 / tails 3)", () => {
   const both = (n1: number, n2: number) =>
-    setHand(setHand(table(), "p1", Array.from({ length: n1 }, () => FILLER)), "p2", Array.from({ length: n2 }, () => FILLER));
+    setHand(
+      setHand(
+        table(),
+        "p1",
+        Array.from({ length: n1 }, () => FILLER),
+      ),
+      "p2",
+      Array.from({ length: n2 }, () => FILLER),
+    );
 
   function lucian(board: GameState, cursor: number) {
-    const before = setHand(board, "p1", [LUCIAN[0], ...board.players.p1.hand.map((u) => board.cardIdByUid[u] as string)]);
+    const before = setHand(board, "p1", [
+      LUCIAN[0],
+      ...board.players.p1.hand.map((u) => board.cardIdByUid[u] as string),
+    ]);
     const primed = { ...before, rngState: cursor };
-    return { before: primed, ...mustApply(primed, { type: "playTrainer", seat: "p1", uid: primed.players.p1.hand[0] as string }) };
+    return {
+      before: primed,
+      ...mustApply(primed, {
+        type: "playTrainer",
+        seat: "p1",
+        uid: primed.players.p1.hand[0] as string,
+      }),
+    };
   }
   /** Lucian played on `board` from the first cursor whose TWO flips (taken after the two
       hand shuffles spend their own rng) land on `first` then `second`. */
@@ -536,7 +600,7 @@ describe("D557 §4 — Lucian: each player flips their OWN coin (heads 6 / tails
     expect([state.players.p1.hand.length, state.players.p2.hand.length]).toEqual([6, 3]);
   });
 
-  it("only ONE hand non-empty still counts as \"either player put any cards\": both flip, both draw", () => {
+  it('only ONE hand non-empty still counts as "either player put any cards": both flip, both draw', () => {
     const { events, state } = lucianFaces(both(0, 3), "tails", "tails");
     expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(2);
     expect([state.players.p1.hand.length, state.players.p2.hand.length]).toEqual([3, 3]);
@@ -558,7 +622,7 @@ describe("D557 §4 — Lucian: each player flips their OWN coin (heads 6 / tails
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D557 §5 — Arven's Sandwich: `yourActiveOwner`, and \"instead\" is a REPLACEMENT", () => {
+describe('D557 §5 — Arven\'s Sandwich: `yourActiveOwner`, and "instead" is a REPLACEMENT', () => {
   const cond: BoardCondition = { kind: "yourActiveOwner", owner: "Arven" };
 
   it("conditionHolds both ways, on the PREFIX rule (\"Arven's Friend\" is not an Arven's Pokémon)", () => {
@@ -566,7 +630,10 @@ describe("D557 §5 — Arven's Sandwich: `yourActiveOwner`, and \"instead\" is a
     expect(conditionHolds(table(FILLER), "p1", cond)).toBe(false);
     expect(conditionHolds(table(ARVENISH), "p1", cond)).toBe(false);
     expect(conditionHolds(table(FILLER, [], ARVEN), "p1", cond)).toBe(false);
-    const empty = { ...table(ARVEN), players: { ...table(ARVEN).players, p1: { ...table(ARVEN).players.p1, active: null } } };
+    const empty = {
+      ...table(ARVEN),
+      players: { ...table(ARVEN).players, p1: { ...table(ARVEN).players.p1, active: null } },
+    };
     expect(conditionHolds(empty, "p1", cond)).toBe(false);
   });
 
@@ -600,14 +667,25 @@ describe("D557 §6 — Megaton Blower: three sweeps, no question, refused only w
     state = attachToolFromDeck(ensureInDeck(state, "p2", TOOL), "p2", 0, TOOL);
     state = attachToolFromDeck(ensureInDeck(state, "p2", TM_A), "p2", 1, TM_A);
     state = attachFromDeck(ensureInDeck(state, "p2", "fix-special"), "p2", "fix-special", 1);
-    state = attachBenchFromDeck(ensureInDeck(state, "p2", "fix-special"), "p2", 1, "fix-special", 1);
+    state = attachBenchFromDeck(
+      ensureInDeck(state, "p2", "fix-special"),
+      "p2",
+      1,
+      "fix-special",
+      1,
+    );
     state = attachToolFromDeck(ensureInDeck(state, "p1", TOOL), "p1", "active", TOOL);
     const stadium = ensureInDeck(state, "p1", "fix-stadium");
-    const uid = stadium.players.p1.deck.find((u) => stadium.cardIdByUid[u] === "fix-stadium") as string;
+    const uid = stadium.players.p1.deck.find(
+      (u) => stadium.cardIdByUid[u] === "fix-stadium",
+    ) as string;
     return {
       ...stadium,
       stadium: { uid, owner: "p1" },
-      players: { ...stadium.players, p1: { ...stadium.players.p1, deck: stadium.players.p1.deck.filter((u) => u !== uid) } },
+      players: {
+        ...stadium.players,
+        p1: { ...stadium.players.p1, deck: stadium.players.p1.deck.filter((u) => u !== uid) },
+      },
     };
   }
 
@@ -619,7 +697,9 @@ describe("D557 §6 — Megaton Blower: three sweeps, no question, refused only w
     expect(state.players.p2.active?.energy).toEqual([]);
     expect(state.stadium).toBeNull();
     expect(all(events, "TOOLS_DISCARDED").map((e) => e.seat)).toEqual(["p2", "p2"]);
-    expect(state.players.p2.discard.map((u) => state.cardIdByUid[u]).filter((id) => id === TOOL)).toHaveLength(2);
+    expect(
+      state.players.p2.discard.map((u) => state.cardIdByUid[u]).filter((id) => id === TOOL),
+    ).toHaveLength(2);
   });
 
   it("🛑 the SHIELDED body (preventTrainerEffects) keeps its Tool AND its Special Energy; YOUR own Tool is untouched", () => {
@@ -635,23 +715,36 @@ describe("D557 §6 — Megaton Blower: three sweeps, no question, refused only w
     onlyTool = attachToolFromDeck(ensureInDeck(onlyTool, "p2", TOOL), "p2", "active", TOOL);
     expect(toolsOn(play(onlyTool, MEGATON).state, "p2", "active")).toEqual([]);
     let onlyEnergy = table();
-    onlyEnergy = attachFromDeck(ensureInDeck(onlyEnergy, "p2", "fix-special"), "p2", "fix-special", 1);
+    onlyEnergy = attachFromDeck(
+      ensureInDeck(onlyEnergy, "p2", "fix-special"),
+      "p2",
+      "fix-special",
+      1,
+    );
     expect(play(onlyEnergy, MEGATON).state.players.p2.active?.energy).toEqual([]);
     const base = table();
     const withStadium = ensureInDeck(base, "p2", "fix-stadium");
-    const uid = withStadium.players.p2.deck.find((u) => withStadium.cardIdByUid[u] === "fix-stadium") as string;
-    expect(play({ ...withStadium, stadium: { uid, owner: "p2" } }, MEGATON).state.stadium).toBeNull();
+    const uid = withStadium.players.p2.deck.find(
+      (u) => withStadium.cardIdByUid[u] === "fix-stadium",
+    ) as string;
+    expect(
+      play({ ...withStadium, stadium: { uid, owner: "p2" } }, MEGATON).state.stadium,
+    ).toBeNull();
   });
 
   it("…and a board with NONE of the three is refused (NO_LEGAL_TARGET), the card kept", () => {
     const board = setHand(table(), "p1", [MEGATON]);
-    expectErr(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }, "NO_LEGAL_TARGET");
+    expectErr(
+      board,
+      { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string },
+      "NO_LEGAL_TARGET",
+    );
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §7 — Brilliant Blender: up to 5 cards to the DISCARD PILE, then the shuffle", () => {
-  it("parks an up-to-5 pick over the WHOLE deck with `dest: \"discard\"` and the printed caption", () => {
+  it('parks an up-to-5 pick over the WHOLE deck with `dest: "discard"` and the printed caption', () => {
     const { state } = play(table(), BLENDER);
     const p = prompt(state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -666,7 +759,11 @@ describe("D557 §7 — Brilliant Blender: up to 5 cards to the DISCARD PILE, the
     const { state, events } = mustApply(parked, cards(picks));
     expect(state.players.p1.discard.slice(-5)).toEqual(picks);
     expect(state.players.p1.hand).toEqual([]);
-    expect(find(events, "DECK_SEARCHED")).toMatchObject({ seat: "p1", dest: "discard", uids: picks });
+    expect(find(events, "DECK_SEARCHED")).toMatchObject({
+      seat: "p1",
+      dest: "discard",
+      uids: picks,
+    });
     expect(types(events)).toContain("SHUFFLE");
     const row = render(events, state).find((r) => r.text.startsWith("searched their deck"));
     expect(row?.text.startsWith("searched their deck — discarded ")).toBe(true);
@@ -717,13 +814,18 @@ describe("D557 §9 — Dusk Ball: the BOTTOM 7, never the top", () => {
   function deckWithPokemonAt(at: "top" | "bottom") {
     const board = setHand(table(), "p1", [DUSK_BALL]);
     const side = board.players.p1;
-    const pokemon = side.deck.filter((u) => POOL[board.cardIdByUid[u] ?? ""]?.category === "Pokemon");
+    const pokemon = side.deck.filter(
+      (u) => POOL[board.cardIdByUid[u] ?? ""]?.category === "Pokemon",
+    );
     const rest = side.deck.filter((u) => !pokemon.includes(u));
     const one = pokemon[0] as string;
     const deck = at === "top" ? [one, ...rest] : [...rest, one];
     const primed: GameState = {
       ...board,
-      players: { ...board.players, p1: { ...side, deck, discard: [...side.discard, ...pokemon.slice(1)] } },
+      players: {
+        ...board.players,
+        p1: { ...side, deck, discard: [...side.discard, ...pokemon.slice(1)] },
+      },
     };
     return mustApply(primed, { type: "playTrainer", seat: "p1", uid: side.hand[0] as string });
   }
@@ -733,14 +835,18 @@ describe("D557 §9 — Dusk Ball: the BOTTOM 7, never the top", () => {
     const p = prompt(state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(p.candidates).toHaveLength(1);
-    expect(p.note).toBe("Look at the bottom 7 cards of your deck and put a Pokémon into your hand.");
+    expect(p.note).toBe(
+      "Look at the bottom 7 cards of your deck and put a Pokémon into your hand.",
+    );
   });
 
-  it("🛑 a Pokémon on TOP is NOT offered — the look whiffs and says \"bottom\" in the log", () => {
+  it('🛑 a Pokémon on TOP is NOT offered — the look whiffs and says "bottom" in the log', () => {
     const { state, events } = deckWithPokemonAt("top");
     expect(state.phase.kind).toBe("turn:action");
     expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ uids: [], from: "bottom" });
-    expect(render(events, state).map((r) => r.text)).toContain("looked at the bottom of their deck — took nothing");
+    expect(render(events, state).map((r) => r.text)).toContain(
+      "looked at the bottom of their deck — took nothing",
+    );
     expect(types(events)).toContain("SHUFFLE");
   });
 
@@ -758,7 +864,9 @@ describe("D557 §9 — Dusk Ball: the BOTTOM 7, never the top", () => {
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
   function tooled(opts: { ownShielded?: boolean } = {}): GameState {
-    let state = table(opts.ownShielded === true ? "fix-unnerve" : FILLER, [], "fix-unnerve", [FILLER]);
+    let state = table(opts.ownShielded === true ? "fix-unnerve" : FILLER, [], "fix-unnerve", [
+      FILLER,
+    ]);
     state = attachToolFromDeck(ensureInDeck(state, "p1", TOOL), "p1", "active", TOOL);
     state = attachToolFromDeck(ensureInDeck(state, "p2", TM_A), "p2", "active", TM_A);
     state = attachToolFromDeck(ensureInDeck(state, "p2", TOOL), "p2", 0, TOOL);
@@ -811,14 +919,19 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
   it("the wire carries the own-side ref and the schema parses it", () => {
     const parked = play(tooled(), SCRAPPER).state;
     const wire = redactGame(parked, "p1");
-    if (wire.phase.kind !== "effect:choose" || wire.phase.prompt === null) throw new Error("expected a prompt");
+    if (wire.phase.kind !== "effect:choose" || wire.phase.prompt === null)
+      throw new Error("expected a prompt");
     expect(redactedEffectPromptSchema.safeParse(wire.phase.prompt).success).toBe(true);
     expect(JSON.stringify(wire.phase.prompt)).toContain('"seat":"p1"');
   });
 
   it("…and a board with NO Tool on either side is refused (NO_LEGAL_TARGET)", () => {
     const board = setHand(table(), "p1", [SCRAPPER]);
-    expectErr(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }, "NO_LEGAL_TARGET");
+    expectErr(
+      board,
+      { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string },
+      "NO_LEGAL_TARGET",
+    );
   });
 
   it("🛑 `MATCH_RECORD_VERSION` holds: the parked op round-trips through JSON and resolves identically", () => {

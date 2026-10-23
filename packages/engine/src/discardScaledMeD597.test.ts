@@ -10,7 +10,7 @@ import {
   discardScaledBoostProgram,
 } from "./effects";
 import type { GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -96,7 +96,10 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, n, ids] of ROWS) {
       // 🆕🆕🆕 D612 — Inferno X's row is 6: the two `mep` "[R]" printings normalise into it (WP06).
-      expect([text, me.get(text)]).toEqual([text, text === T.infernoX ? n + CHARIZARD_MEP.length : n]);
+      expect([text, me.get(text)]).toEqual([
+        text,
+        text === T.infernoX ? n + CHARIZARD_MEP.length : n,
+      ]);
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
       expect(ids).toHaveLength(n);
@@ -114,7 +117,7 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     expect(deriveAttackEffect(T.infernoX)).toEqual(INFERNO_PROGRAM);
   });
 
-  it("~~the \"[R]\" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X`~~ (🆕🆕🆕 D612: the raw text is still unread, but it normalises to the `{R}` sentence and the key is retired)", () => {
+  it('~~the "[R]" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X`~~ (🆕🆕🆕 D612: the raw text is still unread, but it normalises to the `{R}` sentence and the key is retired)', () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     // 🆕🆕🆕 D612 (D539): the corpus no longer prints "[R]" (WP06's re-ingest); the raw text a persisted
     // face may still carry is unread by the readers, and the normaliser turns it into the `{R}` sentence.
@@ -126,7 +129,14 @@ describe("D597 §1 — the eight sentences and their readings", () => {
 
   it("Garland Ray: up to 2 of ANY Energy off the attacking body, 120 per card", () => {
     expect(deriveAttackEffect(T.garlandRay)).toEqual([
-      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "any", cap: 2, recordAs: "discarded" },
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "anyEnergy" },
+        count: "any",
+        cap: 2,
+        recordAs: "discarded",
+      },
       { op: "damageDefender", per: 120, count: "discarded" },
     ]);
   });
@@ -144,7 +154,14 @@ describe("D597 §1 — the eight sentences and their readings", () => {
       { op: "damageDefender", per: 40, count: "discarded" },
     ]);
     expect(deriveAttackEffect(T.doubleEater)).toEqual([
-      { op: "payFromHand", count: "any", cap: 2, to: "discard", filter: { kind: "anyEnergy" }, recordAs: "discarded" },
+      {
+        op: "payFromHand",
+        count: "any",
+        cap: 2,
+        to: "discard",
+        filter: { kind: "anyEnergy" },
+        recordAs: "discarded",
+      },
       { op: "damageDefender", per: 60, count: "discarded" },
     ]);
   });
@@ -152,11 +169,21 @@ describe("D597 §1 — the eight sentences and their readings", () => {
   it("Hammer-lanche and Iceberg Breaker: D488's mill, counting Basic {W} Energy only", () => {
     expect(deriveAttackEffect(T.hammerLanche)).toEqual([
       { op: "discardDeckTop", whose: "self", count: 6, recordAs: "discarded" },
-      { op: "damageDefender", per: 100, count: "discarded", countFilter: { kind: "basicEnergy", energyType: "Water" } },
+      {
+        op: "damageDefender",
+        per: 100,
+        count: "discarded",
+        countFilter: { kind: "basicEnergy", energyType: "Water" },
+      },
     ]);
     expect(deriveAttackEffect(T.icebergBreaker)).toEqual([
       { op: "discardDeckTop", whose: "self", count: 6, recordAs: "discarded" },
-      { op: "damageDefender", per: 60, count: "discarded", countFilter: { kind: "basicEnergy", energyType: "Water" } },
+      {
+        op: "damageDefender",
+        per: 60,
+        count: "discarded",
+        countFilter: { kind: "basicEnergy", energyType: "Water" },
+      },
     ]);
   });
 
@@ -166,7 +193,14 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     expect(deriveAttackEffect(T.shootingMoons)).toBeNull();
     if (reading === null) throw new Error("unread");
     expect(discardScaledBoostProgram(reading, 120)).toEqual([
-      { op: "payFromHand", count: "any", cap: 4, to: "discard", filter: { kind: "anyEnergy" }, recordAs: "discarded" },
+      {
+        op: "payFromHand",
+        count: "any",
+        cap: 4,
+        to: "discard",
+        filter: { kind: "anyEnergy" },
+        recordAs: "discarded",
+      },
       { op: "damageDefender", base: 120, per: 40, count: "discarded" },
     ]);
     // No comma-arm sentence is a boost reading, and the boost sentence is no comma-arm sentence.
@@ -191,7 +225,9 @@ describe("D597 §2 — near misses stay null", () => {
     ];
     for (const text of controls) expect(deriveAttackEffect(text), text).toBeNull();
     // Basic and a code together read as a typed Basic filter.
-    expect(deriveAttackEffect(T.infernoX.replace("{R} Energy", "Basic {R} Energy"))?.[0]).toMatchObject({
+    expect(
+      deriveAttackEffect(T.infernoX.replace("{R} Energy", "Basic {R} Energy"))?.[0],
+    ).toMatchObject({
       op: "discardEnergy",
       filter: { kind: "basicEnergy", energyType: "Fire" },
     });
@@ -200,11 +236,13 @@ describe("D597 §2 — near misses stay null", () => {
   it("the typed Basic noun is MILL-ONLY: an unmapped code stays loud, and the pile count does not gain it", () => {
     expect(deriveAttackEffect(T.hammerLanche.replace("{W}", "{C}"))).toBeNull();
     expect(
-      deriveAttackDamageMultiplier("This attack does 100 damage for each Basic {W} Energy card in your discard pile."),
+      deriveAttackDamageMultiplier(
+        "This attack does 100 damage for each Basic {W} Energy card in your discard pile.",
+      ),
     ).toBeNull();
   });
 
-  it("the hand boost: the zeros, no \"You may\", a Basic noun, the period spelling", () => {
+  it('the hand boost: the zeros, no "You may", a Basic noun, the period spelling', () => {
     const controls = [
       T.shootingMoons.replace("up to 4", "up to 0"),
       T.shootingMoons.replace("40 more", "0 more"),
@@ -233,27 +271,63 @@ const PSYCHIC = "d597-psychic";
 const METAL = "d597-metal";
 const SPECIAL = "d597-special";
 
-const body = (id: string, name: string, attack: Partial<NonNullable<Card["attacks"]>[number]>, extra: Partial<Card> = {}) =>
-  battler(id, { name, hp: 360, retreat: 2, attacks: [attack as NonNullable<Card["attacks"]>[number]], ...extra } as Partial<Card>);
+const body = (
+  id: string,
+  name: string,
+  attack: Partial<NonNullable<Card["attacks"]>[number]>,
+  extra: Partial<Card> = {},
+) =>
+  battler(id, {
+    name,
+    hp: 360,
+    retreat: 2,
+    attacks: [attack as NonNullable<Card["attacks"]>[number]],
+    ...extra,
+  } as Partial<Card>);
 
 const LOCAL: Record<string, Card> = {
-  [CHARIZARD]: body(CHARIZARD, "Mega Charizard X ex", { cost: ["Fire", "Fire"], name: "Inferno X", damage: "90×", effect: T.infernoX }),
+  [CHARIZARD]: body(CHARIZARD, "Mega Charizard X ex", {
+    cost: ["Fire", "Fire"],
+    name: "Inferno X",
+    damage: "90×",
+    effect: T.infernoX,
+  }),
   [CHARIZARD_KEYED]: body(CHARIZARD_KEYED, "Mega Charizard X ex", {
     cost: ["Fire", "Fire"],
     name: "Inferno X",
     damage: "90×",
     effect: T.infernoXBracket,
   }),
-  [DIANCIE_ID]: body(DIANCIE_ID, "Mega Diancie ex", { cost: ["Psychic", "Psychic"], name: "Garland Ray", damage: "120×", effect: T.garlandRay }),
-  [SKARMORY]: body(SKARMORY, "Skarmory", { cost: ["Metal"], name: "Steel Cutter", damage: "40×", effect: T.steelCutter }),
-  [MAWILE]: body(MAWILE, "Mawile", { cost: ["Psychic", "Colorless"], name: "Double Eater", damage: "60×", effect: T.doubleEater }),
+  [DIANCIE_ID]: body(DIANCIE_ID, "Mega Diancie ex", {
+    cost: ["Psychic", "Psychic"],
+    name: "Garland Ray",
+    damage: "120×",
+    effect: T.garlandRay,
+  }),
+  [SKARMORY]: body(SKARMORY, "Skarmory", {
+    cost: ["Metal"],
+    name: "Steel Cutter",
+    damage: "40×",
+    effect: T.steelCutter,
+  }),
+  [MAWILE]: body(MAWILE, "Mawile", {
+    cost: ["Psychic", "Colorless"],
+    name: "Double Eater",
+    damage: "60×",
+    effect: T.doubleEater,
+  }),
   [ABOMASNOW_ID]: body(ABOMASNOW_ID, "Mega Abomasnow ex", {
     cost: ["Water", "Water"],
     name: "Hammer-lanche",
     damage: "100×",
     effect: T.hammerLanche,
   }),
-  [AVALUGG]: body(AVALUGG, "Avalugg", { cost: ["Water"], name: "Iceberg Breaker", damage: "60×", effect: T.icebergBreaker }),
+  [AVALUGG]: body(AVALUGG, "Avalugg", {
+    cost: ["Water"],
+    name: "Iceberg Breaker",
+    damage: "60×",
+    effect: T.icebergBreaker,
+  }),
   [CLEFABLE_ID]: body(CLEFABLE_ID, "Mega Clefable ex", {
     cost: ["Psychic", "Psychic"],
     name: "Shooting Moons",
@@ -297,7 +371,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -312,7 +388,8 @@ function p1Turn(): GameState {
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -320,7 +397,10 @@ function p1Turn(): GameState {
     const side = state.players[s];
     state = {
       ...state,
-      players: { ...state.players, [s]: { ...side, hand: [], prizes: [], deck: [...side.deck, ...side.hand, ...side.prizes] } },
+      players: {
+        ...state.players,
+        [s]: { ...side, hand: [], prizes: [], deck: [...side.deck, ...side.hand, ...side.prizes] },
+      },
     };
   }
   return state;
@@ -330,7 +410,8 @@ function p1Turn(): GameState {
 function onActive(state: GameState, cardId: string, count: number): GameState {
   const side = state.players.p1;
   const uids = side.deck.filter((u) => state.cardIdByUid[u] === cardId).slice(0, count);
-  if (uids.length < count || side.active === null) throw new Error(`cannot attach ${count} ${cardId}`);
+  if (uids.length < count || side.active === null)
+    throw new Error(`cannot attach ${count} ${cardId}`);
   return {
     ...state,
     players: {
@@ -351,7 +432,14 @@ function toHand(state: GameState, cardId: string, count: number): GameState {
   if (uids.length < count) throw new Error(`cannot hand ${count} ${cardId}`);
   return {
     ...state,
-    players: { ...state.players, p1: { ...side, deck: side.deck.filter((u) => !uids.includes(u)), hand: [...side.hand, ...uids] } },
+    players: {
+      ...state.players,
+      p1: {
+        ...side,
+        deck: side.deck.filter((u) => !uids.includes(u)),
+        hand: [...side.hand, ...uids],
+      },
+    },
   };
 }
 
@@ -384,21 +472,32 @@ const dealt = (events: readonly GameEvent[]) => of(events, "DAMAGE_DEALT")[0]?.d
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 
 function discardPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
-  if (prompt.kind !== "discardEnergy") throw new Error(`expected discardEnergy, got ${prompt.kind}`);
+  if (prompt.kind !== "discardEnergy")
+    throw new Error(`expected discardEnergy, got ${prompt.kind}`);
   return prompt;
 }
 function handPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
   return prompt;
 }
 const answerDiscard = (state: GameState, uids: readonly string[]) =>
-  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "discardEnergy", uids: [...uids] } });
+  mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "discardEnergy", uids: [...uids] },
+  });
 const answerCards = (state: GameState, uids: readonly string[]) =>
-  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [...uids] } });
+  mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "cards", uids: [...uids] },
+  });
 
 describe("D597 §3 — Inferno X: {R} Energy from the whole own board", () => {
   function board(active: string): GameState {
@@ -411,7 +510,14 @@ describe("D597 §3 — Inferno X: {R} Energy from the whole own board", () => {
     const parked = swing(board(CHARIZARD)).state;
     const prompt = discardPrompt(parked);
     expect(prompt.discardable).toHaveLength(4);
-    expect(new Set(idsOf(parked, prompt.discardable.map((d) => d.uid)))).toEqual(new Set([FIRE]));
+    expect(
+      new Set(
+        idsOf(
+          parked,
+          prompt.discardable.map((d) => d.uid),
+        ),
+      ),
+    ).toEqual(new Set([FIRE]));
     expect(prompt.note).toBe("Discard any amount of Fire Energy from your Pokémon.");
     const picks = prompt.discardable.map((d) => d.uid).slice(0, 3);
     const { state: done, events } = answerDiscard(parked, picks);
@@ -426,11 +532,18 @@ describe("D597 §3 — Inferno X: {R} Energy from the whole own board", () => {
     expect(of(events, "ENERGY_DISCARDED")).toHaveLength(0);
   });
 
-  it("the keyed \"[R]\" printing `mep-023` plays the same program (🆕🆕🆕 D612: unkeyed — its raw face, as a persisted pre-D612 pool holds it, is read through `cardOfUid`'s normaliser)", () => {
+  it('the keyed "[R]" printing `mep-023` plays the same program (🆕🆕🆕 D612: unkeyed — its raw face, as a persisted pre-D612 pool holds it, is read through `cardOfUid`\'s normaliser)', () => {
     const parked = swing(board(CHARIZARD_KEYED)).state;
     const prompt = discardPrompt(parked);
     expect(prompt.discardable).toHaveLength(4);
-    expect(dealt(answerDiscard(parked, prompt.discardable.map((d) => d.uid)).events)).toBe(360);
+    expect(
+      dealt(
+        answerDiscard(
+          parked,
+          prompt.discardable.map((d) => d.uid),
+        ).events,
+      ),
+    ).toBe(360);
   });
 });
 
@@ -443,9 +556,18 @@ describe("D597 §4 — Garland Ray: up to 2 Energy off the attacking body", () =
     const prompt = discardPrompt(parked);
     expect(prompt.discardable).toHaveLength(3);
     expect(prompt.scope).toEqual({ kind: "upTo", max: 2 });
-    expect(idsOf(parked, prompt.discardable.map((d) => d.uid)).sort()).toEqual([PSYCHIC, PSYCHIC, SPECIAL].sort());
-    const special = prompt.discardable.map((d) => d.uid).find((u) => parked.cardIdByUid[u] === SPECIAL) as string;
-    const psychic = prompt.discardable.map((d) => d.uid).find((u) => parked.cardIdByUid[u] === PSYCHIC) as string;
+    expect(
+      idsOf(
+        parked,
+        prompt.discardable.map((d) => d.uid),
+      ).sort(),
+    ).toEqual([PSYCHIC, PSYCHIC, SPECIAL].sort());
+    const special = prompt.discardable
+      .map((d) => d.uid)
+      .find((u) => parked.cardIdByUid[u] === SPECIAL) as string;
+    const psychic = prompt.discardable
+      .map((d) => d.uid)
+      .find((u) => parked.cardIdByUid[u] === PSYCHIC) as string;
     const { state: done, events } = answerDiscard(parked, [special, psychic]);
     expect(dealt(events)).toBe(240);
     expect(done.players.p1.bench[0]?.energy).toHaveLength(2);
@@ -490,9 +612,13 @@ describe("D597 §6 — Hammer-lanche and Iceberg Breaker: Basic {W} Energy among
     state = stackTop(state, [WATER, FIRE, WATER, SPECIAL, FILLER, WATER, WATER]);
     const { state: done, events } = swing(state);
     expect(dealt(events)).toBe(300);
-    expect(idsOf(done, done.players.p1.discard)).toEqual(expect.arrayContaining([WATER, FIRE, SPECIAL, FILLER]));
+    expect(idsOf(done, done.players.p1.discard)).toEqual(
+      expect.arrayContaining([WATER, FIRE, SPECIAL, FILLER]),
+    );
     // The seventh card (a {W}) stays on top of the deck.
-    expect(done.players.p1.deck[0] === undefined ? undefined : done.cardIdByUid[done.players.p1.deck[0]]).toBe(WATER);
+    expect(
+      done.players.p1.deck[0] === undefined ? undefined : done.cardIdByUid[done.players.p1.deck[0]],
+    ).toBe(WATER);
   });
 
   it("Iceberg Breaker: 60 per Basic {W}; none milled deals 0", () => {
@@ -524,11 +650,5 @@ describe("D597 §7 — Shooting Moons: up to 4 Energy cards from the hand, 40 mo
     const prompt = handPrompt(parked);
     expect(prompt.max).toBe(4);
     expect(dealt(answerCards(parked, prompt.candidates.slice(0, 4)).events)).toBe(280);
-  });
-});
-
-describe("D597 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

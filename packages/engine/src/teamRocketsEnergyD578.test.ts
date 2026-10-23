@@ -47,7 +47,13 @@ const R = "d578r-fire";
 const PD = constrainedEnergyUnit(["Psychic", "Darkness"]);
 
 const body = (id: string, extra: Partial<Card>): Card =>
-  battler(id, { name: id, hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }], ...extra });
+  battler(id, {
+    name: id,
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+    ...extra,
+  });
 
 const LOCAL_CARDS: Record<string, Card> = {
   [TR_ENERGY]: specialEnergy(TR_ENERGY, "Team Rocket's Energy", TR_TEXT),
@@ -56,10 +62,18 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Psychic"],
     attacks: [{ cost: ["Psychic", "Darkness"], name: "Dark Psy", damage: 60 }],
   }),
-  [TR_EVO]: body(TR_EVO, { name: "Team Rocket's Evo", stage: "Stage1", evolveFrom: "Team Rocket's Mewtwo" }),
+  [TR_EVO]: body(TR_EVO, {
+    name: "Team Rocket's Evo",
+    stage: "Stage1",
+    evolveFrom: "Team Rocket's Mewtwo",
+  }),
   // CONSTRUCTED (no printing does this): a non-Team Rocket's Stage 1 that evolves FROM a Team
   // Rocket's Pokémon — the evolve route onto a different owner, a non-program path with no drain.
-  [DEFECTOR]: body(DEFECTOR, { name: "D578 Defector", stage: "Stage1", evolveFrom: "Team Rocket's Mewtwo" }),
+  [DEFECTOR]: body(DEFECTOR, {
+    name: "D578 Defector",
+    stage: "Stage1",
+    evolveFrom: "Team Rocket's Mewtwo",
+  }),
   [PLAIN]: body(PLAIN, {
     name: "D578 Plain",
     attacks: [{ cost: ["Psychic", "Darkness"], name: "Dark Psy", damage: 60 }],
@@ -90,7 +104,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -105,7 +120,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -113,15 +130,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -151,7 +175,12 @@ interface Spot {
 }
 
 /** p1's turn 2: each seat's Active and Bench built from `Spot`s; `hand` ids pulled into p1's hand. */
-function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; hand?: readonly string[] }): GameState {
+function table(opts: {
+  p1: Spot;
+  p1Bench?: readonly Spot[];
+  p2: Spot;
+  hand?: readonly string[];
+}): GameState {
   let state = opened(5784);
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
@@ -160,7 +189,12 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; hand?: rea
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const take = (seat: Seat, id: string): string => {
     const pulled = pull(state, seat, id);
@@ -181,7 +215,8 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; hand?: rea
   return withSide(state, "p1", { hand });
 }
 
-const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon => state.players[seat].active as InPlayPokemon;
+const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon =>
+  state.players[seat].active as InPlayPokemon;
 
 describe("D578 Team Rocket's Energy §1 — the registry row and the ONE constrained set", () => {
   it("provides TWO {P}/{D} constrained units, restricted to Team Rocket's Pokémon", () => {
@@ -198,7 +233,11 @@ describe("D578 Team Rocket's Energy §1 — the registry row and the ONE constra
     const sets = new Set<string>();
     for (const id of registryCardIds()) {
       const energy = programFor(id)?.energy;
-      const units = [...(energy?.provides ?? []), ...(energy?.demoteWithOtherSpecial ?? []), ...(energy?.promoteOnHolderStage?.units ?? [])];
+      const units = [
+        ...(energy?.provides ?? []),
+        ...(energy?.demoteWithOtherSpecial ?? []),
+        ...(energy?.promoteOnHolderStage?.units ?? []),
+      ];
       for (const unit of units) if (constrainedEnergyTypes(unit) !== null) sets.add(unit);
     }
     expect([...sets]).toEqual([PD]);
@@ -256,32 +295,64 @@ describe("D578 Team Rocket's Energy §4 — 'can only be attached to a Team Rock
   it("the hand attach onto a Team Rocket's Pokémon is accepted", () => {
     const state = table({ p1: { id: TR_MON }, p2: { id: PLAIN }, hand: [TR_ENERGY] });
     const uid = state.players.p1.hand[0] ?? "";
-    const after = run(state, { type: "attachEnergy", seat: "p1", uid, target: { spot: "active" } }).state;
+    const after = run(state, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid,
+      target: { spot: "active" },
+    }).state;
     expect(active(after).energy).toEqual([uid]);
   });
 
   it("onto any other Pokémon it is REFUSED (BAD_TARGET), the card stays in hand and the allowance is NOT spent", () => {
-    const state = table({ p1: { id: PLAIN }, p1Bench: [{ id: TR_MON }], p2: { id: PLAIN }, hand: [TR_ENERGY, P] });
+    const state = table({
+      p1: { id: PLAIN },
+      p1Bench: [{ id: TR_MON }],
+      p2: { id: PLAIN },
+      hand: [TR_ENERGY, P],
+    });
     const [trUid, pUid] = state.players.p1.hand;
-    expect(rejected(state, { type: "attachEnergy", seat: "p1", uid: trUid ?? "", target: { spot: "active" } })).toBe(
-      "BAD_TARGET",
-    );
-    const after = run(state, { type: "attachEnergy", seat: "p1", uid: pUid ?? "", target: { spot: "active" } }).state;
+    expect(
+      rejected(state, {
+        type: "attachEnergy",
+        seat: "p1",
+        uid: trUid ?? "",
+        target: { spot: "active" },
+      }),
+    ).toBe("BAD_TARGET");
+    const after = run(state, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: pUid ?? "",
+      target: { spot: "active" },
+    }).state;
     expect(active(after).energy).toEqual([pUid]);
     expect(after.players.p1.hand).toEqual([trUid]);
   });
 
   it("onto the Benched Team Rocket's Pokémon it is accepted", () => {
-    const state = table({ p1: { id: PLAIN }, p1Bench: [{ id: TR_MON }], p2: { id: PLAIN }, hand: [TR_ENERGY] });
+    const state = table({
+      p1: { id: PLAIN },
+      p1Bench: [{ id: TR_MON }],
+      p2: { id: PLAIN },
+      hand: [TR_ENERGY],
+    });
     const uid = state.players.p1.hand[0] ?? "";
-    const after = run(state, { type: "attachEnergy", seat: "p1", uid, target: { spot: "bench", index: 0 } }).state;
+    const after = run(state, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index: 0 },
+    }).state;
     expect(after.players.p1.bench[0]?.energy).toEqual([uid]);
   });
 
   it("`energyMayBeAttachedTo`: false only for the restricted card off its owner; true for every other Energy", () => {
     const state = table({ p1: { id: PLAIN }, p1Bench: [{ id: TR_MON }], p2: { id: PLAIN } });
     expect(energyMayBeAttachedTo(state, POOL[TR_ENERGY], active(state))).toBe(false);
-    expect(energyMayBeAttachedTo(state, POOL[TR_ENERGY], state.players.p1.bench[0] as InPlayPokemon)).toBe(true);
+    expect(
+      energyMayBeAttachedTo(state, POOL[TR_ENERGY], state.players.p1.bench[0] as InPlayPokemon),
+    ).toBe(true);
     expect(energyMayBeAttachedTo(state, POOL[P], active(state))).toBe(true);
   });
 });
@@ -306,7 +377,10 @@ describe("D578 Team Rocket's Energy §5 — 'If this card is attached to anythin
   });
 
   it("the holder is read by its TOP card: an evolved Team Rocket's Pokémon keeps it through the drain", () => {
-    const state = table({ p1: { id: TR_EVO, under: [TR_MON], energy: [TR_ENERGY] }, p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: TR_EVO, under: [TR_MON], energy: [TR_ENERGY] },
+      p2: { id: PLAIN },
+    });
     // The Stage 1 is a Team Rocket's Pokémon too, so the card stays.
     expect(energyMayBeAttachedTo(state, POOL[TR_ENERGY], active(state))).toBe(true);
     const after = run(state, { type: "endTurn", seat: "p1" }).state;
@@ -324,7 +398,9 @@ describe("D578 Team Rocket's Energy §5 — 'If this card is attached to anythin
   it("both seats are swept: a card on the OPPONENT's non-Team Rocket's body is discarded into THEIR pile", () => {
     let state = table({ p1: { id: TR_MON }, p2: { id: PLAIN } });
     const pulled = pull(state, "p2", TR_ENERGY);
-    state = withSide(pulled.state, "p2", { active: { ...active(pulled.state, "p2"), energy: [pulled.uid] } });
+    state = withSide(pulled.state, "p2", {
+      active: { ...active(pulled.state, "p2"), energy: [pulled.uid] },
+    });
     const after = run(state, { type: "endTurn", seat: "p1" }).state;
     expect(after.players.p2.discard).toContain(pulled.uid);
     expect(after.players.p2.active?.energy).toEqual([]);
@@ -334,7 +410,12 @@ describe("D578 Team Rocket's Energy §5 — 'If this card is attached to anythin
 describe("D578 Team Rocket's Energy §6 — R-TRE1 (RULED: fixed at the landing): it never REMAINS on a non-Team Rocket's body", () => {
   const discardHolding = (state: GameState): { state: GameState; uid: string } => {
     const pulled = pull(state, "p1", TR_ENERGY);
-    return { uid: pulled.uid, state: withSide(pulled.state, "p1", { discard: [...pulled.state.players.p1.discard, pulled.uid] }) };
+    return {
+      uid: pulled.uid,
+      state: withSide(pulled.state, "p1", {
+        discard: [...pulled.state.players.p1.discard, pulled.uid],
+      }),
+    };
   };
 
   it("an op inside a program that attaches it to one: discarded at THAT step, before the program's next op (`runProgram`)", () => {
@@ -342,7 +423,12 @@ describe("D578 Team Rocket's Energy §6 — R-TRE1 (RULED: fixed at the landing)
     const events: GameEvent[] = [];
     // A forced attach (one identity, one body — Reboot Pod's inline path), straight through the
     // runner: no action wrapper and no `advance` behind it.
-    const result = runProgram(state, [{ op: "attachFromDiscard", filter: { kind: "anyEnergy" }, max: 1, each: true }], { seat: "p1" }, events);
+    const result = runProgram(
+      state,
+      [{ op: "attachFromDiscard", filter: { kind: "anyEnergy" }, max: 1, each: true }],
+      { seat: "p1" },
+      events,
+    );
     if (result.kind !== "done") throw new Error("expected done");
     expect(result.state.players.p1.active?.energy).toEqual([]);
     expect(result.state.players.p1.discard).toContain(uid);
@@ -354,7 +440,11 @@ describe("D578 Team Rocket's Energy §6 — R-TRE1 (RULED: fixed at the landing)
     const events: GameEvent[] = [];
     const result = resumeProgram(
       state,
-      { pendingOp: { op: "attachFromDiscard", filter: { kind: "anyEnergy" }, max: 1 }, rest: [], ctx: { seat: "p1" } },
+      {
+        pendingOp: { op: "attachFromDiscard", filter: { kind: "anyEnergy" }, max: 1 },
+        rest: [],
+        ctx: { seat: "p1" },
+      },
       { kind: "attachCards", assignments: [{ uid, to: { seat: "p1", spot: { spot: "active" } } }] },
       events,
     );
@@ -365,16 +455,29 @@ describe("D578 Team Rocket's Energy §6 — R-TRE1 (RULED: fixed at the landing)
   });
 
   it("a non-program route with no drain (an evolve onto a different owner): discarded before the action returns (`applyAction`)", () => {
-    const table4 = table({ p1: { id: TR_MON, energy: [TR_ENERGY] }, p2: { id: PLAIN }, hand: [DEFECTOR] });
+    const table4 = table({
+      p1: { id: TR_MON, energy: [TR_ENERGY] },
+      p2: { id: PLAIN },
+      hand: [DEFECTOR],
+    });
     const state: GameState = { ...table4, turn: 4 };
     const energyUid = active(state).energy[0] ?? "";
     const evoUid = state.players.p1.hand[0] ?? "";
-    const { state: after, events } = run(state, { type: "evolve", seat: "p1", uid: evoUid, target: { spot: "active" } });
+    const { state: after, events } = run(state, {
+      type: "evolve",
+      seat: "p1",
+      uid: evoUid,
+      target: { spot: "active" },
+    });
     expect(active(after).stack).toContain(evoUid);
     expect(active(after).energy).toEqual([]);
     expect(after.players.p1.discard).toContain(energyUid);
     expect(after.phase.kind).toBe("turn:action");
-    expect(events.at(-1)).toMatchObject({ type: "ENERGY_DISCARDED", seat: "p1", uids: [energyUid] });
+    expect(events.at(-1)).toMatchObject({
+      type: "ENERGY_DISCARDED",
+      seat: "p1",
+      uids: [energyUid],
+    });
   });
 
   it("`advance` itself still sweeps (a 0.461-era record's first drain)", () => {

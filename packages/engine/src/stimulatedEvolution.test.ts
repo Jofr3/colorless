@@ -530,9 +530,7 @@ describe("D279 — `yourNamedPokemonInPlay`", () => {
     state = handFromDeck(state, first, ACCELGOR, 1);
     state = passTurns(state, 2); // clear the first-turn ban so the evolve is legal
     expect(conditionHolds(state, first, SHELMET_IN_PLAY), "before").toBe(true);
-    const evolved = must(
-      applyAction(state, evolveAt(first, handUidOf(state, first, ACCELGOR), 0)),
-    );
+    const evolved = must(applyAction(state, evolveAt(first, handUidOf(state, first, ACCELGOR), 0)));
     // 🛑 NOT JUST THE PREDICATE — the Stage 1 really landed, or this would pass on
     // an evolve that did nothing to a board that never had a Shelmet.
     const body = benchAt(evolved, first, 0);
@@ -641,7 +639,14 @@ describe("D279 — `evolveEarlyLicensed` and the partner gate", () => {
     // silenced and not the condition.
     for (const first of ["p1", "p2"] as const) {
       const second = first === "p1" ? "p2" : "p1";
-      let state = board(SEEDS[1], first, first, "sv10.5w-008", [PLAIN_KARRABLAST, BYSTANDER], ACCELGOR);
+      let state = board(
+        SEEDS[1],
+        first,
+        first,
+        "sv10.5w-008",
+        [PLAIN_KARRABLAST, BYSTANDER],
+        ACCELGOR,
+      );
       expect(evolveEarlyLicensed(state, first, activeOf(state, first)), `control/${first}`).toBe(
         true,
       );
@@ -654,7 +659,10 @@ describe("D279 — `evolveEarlyLicensed` and the partner gate", () => {
         `partner-unaffected/${first}`,
       ).toBe(true);
       // …and the ban is really handed back at the handler, not only at the read.
-      const result = applyAction(state, evolveAt(first, handUidOf(state, first, ACCELGOR), "active"));
+      const result = applyAction(
+        state,
+        evolveAt(first, handUidOf(state, first, ACCELGOR), "active"),
+      );
       expect(result.ok, `${first}`).toBe(false);
       if (result.ok) throw new Error("expected a refusal");
       expect(result.error.code, `${first}`).toBe("FIRST_TURN_EVOLVE");
@@ -688,7 +696,10 @@ describe("D279 — `evolve` under the partner licence", () => {
     for (const seed of SEEDS) {
       for (const first of ["p1", "p2"] as const) {
         const state = board(seed, first, first, "sv10.5b-009", [BYSTANDER, "fix-basic-1"]);
-        const result = applyAction(state, evolveAt(first, handUidOf(state, first, ESCAVALIER), "active"));
+        const result = applyAction(
+          state,
+          evolveAt(first, handUidOf(state, first, ESCAVALIER), "active"),
+        );
         expect(result.ok, `${seed}/${first}`).toBe(false);
         if (result.ok) throw new Error("expected a refusal");
         expect(result.error.code, `${seed}/${first}`).toBe("FIRST_TURN_EVOLVE");
@@ -721,7 +732,14 @@ describe("D279 — `evolve` under the partner licence", () => {
     // `turnPlayed = 0` and `0 >= 1` is false, so ban 2 never fires there; only a
     // LATER turn with a body stamped THIS turn can see it.
     for (const first of ["p1", "p2"] as const) {
-      let state = board(SEEDS[2], first, first, "sv10.5w-008", [PLAIN_KARRABLAST, BYSTANDER], ACCELGOR);
+      let state = board(
+        SEEDS[2],
+        first,
+        first,
+        "sv10.5w-008",
+        [PLAIN_KARRABLAST, BYSTANDER],
+        ACCELGOR,
+      );
       state = passTurns(state, 2);
       state = stampPlayedThisTurn(state, first, "active");
       const uid = handUidOf(state, first, ACCELGOR);
@@ -738,10 +756,20 @@ describe("D279 — `evolve` under the partner licence", () => {
     // every board above and would refuse HERE too — with the same code — so this
     // arm is the control for the PREVIOUS `it` rather than for §4's.
     for (const first of ["p1", "p2"] as const) {
-      let state = board(SEEDS[2], first, first, "sv10.5w-008", [BYSTANDER, "fix-basic-1"], ACCELGOR);
+      let state = board(
+        SEEDS[2],
+        first,
+        first,
+        "sv10.5w-008",
+        [BYSTANDER, "fix-basic-1"],
+        ACCELGOR,
+      );
       state = passTurns(state, 2);
       state = stampPlayedThisTurn(state, first, "active");
-      const result = applyAction(state, evolveAt(first, handUidOf(state, first, ACCELGOR), "active"));
+      const result = applyAction(
+        state,
+        evolveAt(first, handUidOf(state, first, ACCELGOR), "active"),
+      );
       expect(result.ok, `${first}`).toBe(false);
       if (result.ok) throw new Error("expected a refusal");
       expect(result.error.code, `${first}`).toBe("EVOLVE_TOO_SOON");
@@ -789,7 +817,10 @@ describe("D279 — MATCH_RECORD_VERSION stays 14, and the claim is MEASURED", ()
     // (a) the licensed first-turn evolve — only possible since D279.
     const licensedBoard = board(SEEDS[0], first, first, "sv10.5b-009", [PLAIN_SHELMET, BYSTANDER]);
     const viaLicence = must(
-      applyAction(licensedBoard, evolveAt(first, handUidOf(licensedBoard, first, ESCAVALIER), "active")),
+      applyAction(
+        licensedBoard,
+        evolveAt(first, handUidOf(licensedBoard, first, ESCAVALIER), "active"),
+      ),
     );
     // (b) the SAME evolve with no licence anywhere, on a turn where it is legal
     //     for everyone — the pre-D279 path, byte for byte.

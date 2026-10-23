@@ -97,7 +97,9 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
@@ -114,7 +116,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -140,7 +148,7 @@ const sonar: GameAction = { type: "attack", seat: "p1", index: 0 };
 const answer = (choice: unknown): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice }) as GameAction;
 
-describe("B06 §1 — Poké Vital A: \"This card can't be put into your hand or deck from the discard pile.\"", () => {
+describe('B06 §1 — Poké Vital A: "This card can\'t be put into your hand or deck from the discard pile."', () => {
   it("both printings of the sentence carry the card-borne pile lock, beside their own program", () => {
     expect(programFor(VITAL)).toEqual({
       trainer: [{ op: "healChosen", amount: 150 }],
@@ -154,9 +162,10 @@ describe("B06 §1 — Poké Vital A: \"This card can't be put into your hand or 
     expect(programFor(HEADSET)?.discardPileLocked).toBeUndefined();
   });
 
-  it("Dedenne's \"Put a Trainer card from your discard pile into your hand.\" offers Miracle Headset alone", () => {
+  it('Dedenne\'s "Put a Trainer card from your discard pile into your hand." offers Miracle Headset alone', () => {
     const parked = mustApply(board([VITAL, HEADSET, ZONE]), sonar).state;
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
     expect(ids(parked, prompt.candidates)).toEqual([HEADSET]);
@@ -190,7 +199,7 @@ describe("B06 §1 — Poké Vital A: \"This card can't be put into your hand or 
     expect(events.some((e) => e.type === "DISCARD_RETRIEVED")).toBe(false);
   });
 
-  it("\"or deck\": a shuffle-back retrieval offer (dest deck) drops the locked cards too", () => {
+  it('"or deck": a shuffle-back retrieval offer (dest deck) drops the locked cards too', () => {
     const state = board([VITAL, HEADSET, ZONE]);
     const offer = discardRetrievalCandidates(state, "p1", {
       op: "discardPileRetrieval",

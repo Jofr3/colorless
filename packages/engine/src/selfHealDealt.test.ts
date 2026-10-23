@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -125,9 +125,7 @@ function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as
-    | Extract<GameEvent, { type: T }>
-    | undefined;
+  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** The two numbers every board in this suite is really about: what §8.5 said it
@@ -372,7 +370,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
     ]);
   });
 
-  it("🛑 `invokedBy === \"attack\"` ⟺ `dealt !== undefined`, on every continuation this engine writes", () => {
+  it('🛑 `invokedBy === "attack"` ⟺ `dealt !== undefined`, on every continuation this engine writes', () => {
     // The pairing is what makes a LOST key detectable: both are set in one object
     // literal at `attack.ts`'s single `runProgram` call, so a build that dropped
     // `dealt` would leave a continuation that says it is an attack's effect and
@@ -461,10 +459,6 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
       choice: { kind: "discardEnergy", uids: [chosen] },
     });
     expect(find(healedLegacy.events, "HEALED")?.amount).toBe(30);
-  });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

@@ -122,7 +122,12 @@ function wrapped(note: string, then: EffectOp[]): EffectOp[] {
     arithmetic is asserted rather than described. */
 const CLAUSES = [
   { text: AN, program: wrapped(AN, [put()]), legalPrintings: 1, ids: ["sv09-034"] },
-  { text: TWO, program: wrapped(TWO, [put(2)]), legalPrintings: 2, ids: ["sv05-135", "sv08.5-019"] },
+  {
+    text: TWO,
+    program: wrapped(TWO, [put(2)]),
+    legalPrintings: 2,
+    ids: ["sv05-135", "sv08.5-019"],
+  },
   {
     text: TWO_STAGE2,
     program: [
@@ -163,7 +168,9 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
     // only differences this row's inner op carries are the DESTINATION and the
     // count, both of which are named here explicitly.
     const bare = deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.");
-    expect(bare).toEqual([{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }]);
+    expect(bare).toEqual([
+      { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+    ]);
     const gate = deriveAttackEffect(AN)?.[0];
     expect(gate?.op).toBe("optional");
     const inner = gate?.op === "optional" ? gate.then : [];
@@ -291,7 +298,9 @@ describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
   it("is ANCHORED at both ends and CASE-COMMITTED", () => {
     for (const { text } of CLAUSES) {
       expect(deriveAttackEffect(`${text} Then, shuffle your deck.`), text).toBeNull();
-      expect(deriveAttackEffect(`Your opponent's Active Pokémon is now Confused. ${text}`)).toBeNull();
+      expect(
+        deriveAttackEffect(`Your opponent's Active Pokémon is now Confused. ${text}`),
+      ).toBeNull();
       expect(deriveAttackEffect(text.toLowerCase()), text).toBeNull();
       expect(deriveAttackEffect(text.toUpperCase()), text).toBeNull();
       expect(deriveAttackEffect(text.slice(0, -1)), text).toBeNull(); // no trailing period
@@ -309,9 +318,7 @@ describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
       // The note is the MATCHED string, so the curly sentence's note is curly —
       // and that is the ONLY byte that may differ between the two programs.
       const straight = JSON.stringify(program);
-      expect(JSON.stringify(deriveAttackEffect(curly)), curly).toBe(
-        straight.replace(text, curly),
-      );
+      expect(JSON.stringify(deriveAttackEffect(curly)), curly).toBe(straight.replace(text, curly));
     }
   });
 });
@@ -465,7 +472,10 @@ function matchup(
     const side = next.players[seat];
     next = {
       ...next,
-      players: { ...next.players, [seat]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+      players: {
+        ...next.players,
+        [seat]: { ...side, hand: [], deck: [...side.deck, ...side.hand] },
+      },
     };
   }
   return next;
@@ -613,16 +623,11 @@ describe("§4 — the COUNT: 'you may put 2' is a decline or a pair, never a sin
     // Three DISTINCT Energy prints, so nothing collapses and the pick is a real
     // decision behind the confirm — two parks in sequence, which is the
     // sequencing the one-Energy rows cannot exercise.
-    const state = matchup(
-      29,
-      "fix-washslate",
-      "fix-bigbody",
-      [
-        ["fix-energy", 1],
-        ["fix-special", 1],
-        ["fix-special-2", 1],
-      ],
-    );
+    const state = matchup(29, "fix-washslate", "fix-bigbody", [
+      ["fix-energy", 1],
+      ["fix-special", 1],
+      ["fix-special-2", 1],
+    ]);
     const watch = attachedUids(state);
     const { state: parked } = attack(state);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the confirm");
@@ -655,16 +660,11 @@ describe("§4 — the COUNT: 'you may put 2' is a decline or a pair, never a sin
   it("REFUSES a pick of one where an `upTo` scope would allow it", () => {
     // The sharpest single assertion in the file. `{count:"any", cap:2}` derives
     // a park this board would accept a ONE-uid answer to; `total: 2` does not.
-    const state = matchup(
-      29,
-      "fix-washslate",
-      "fix-bigbody",
-      [
-        ["fix-energy", 1],
-        ["fix-special", 1],
-        ["fix-special-2", 1],
-      ],
-    );
+    const state = matchup(29, "fix-washslate", "fix-bigbody", [
+      ["fix-energy", 1],
+      ["fix-special", 1],
+      ["fix-special-2", 1],
+    ]);
     const { state: picking } = answerConfirm(attack(state).state, true);
     if (picking.phase.kind !== "effect:choose") throw new Error("expected the discard park");
     const prompt = picking.phase.prompt;
@@ -862,7 +862,5 @@ describe("§7 — the version", () => {
     // whichever slice bumped it last. `tonguePull.test.ts` carries the literal —
     // the same hand-off D296 made to this file.
     expect(manifest.version).toBe(engineVersion);
-    expect(manifest.version).not.toBe("0.206.0");
-    expect(manifest.version).not.toBe("0.207.0");
   });
 });

@@ -196,7 +196,15 @@ describe("D335 §1 — the two programs, and the axis they consume", () => {
     // 🛑 D330's finding kept as a standing check: a union value can be wired at
     // every site, type-check everywhere and have ZERO printed consumers. These six
     // keys are what stop `restTo`'s two new values from being that.
-    for (const id of ["sv06-129", "sv08.5-072", "sv04-172", "sv04-241", "sv04-258", "fix-drakloak", "fix-rika"]) {
+    for (const id of [
+      "sv06-129",
+      "sv08.5-072",
+      "sv04-172",
+      "sv04-241",
+      "sv04-258",
+      "fix-drakloak",
+      "fix-rika",
+    ]) {
       expect(programFor(id), id).toBeDefined();
     }
     expect(programFor("sv08.5-072")).toBe(programFor("sv06-129"));
@@ -323,10 +331,11 @@ describe("D335 §2 — Recon Directive puts the other card UNDER the deck", () =
     const tail = state.players.p1.deck.slice(2);
     const before = census(state);
 
-    const { state: done } = mustApply(
-      mustApply(state, reconDirective).state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [taken] } },
-    );
+    const { state: done } = mustApply(mustApply(state, reconDirective).state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [taken] },
+    });
     expect(done.players.p1.hand).toContain(taken);
     // THE WHOLE POINT: the leftover is under EVERYTHING, and everything else kept
     // its order. Read as `at(-1)` and as the full sequence, because "the leftover
@@ -346,7 +355,11 @@ describe("D335 §2 — Recon Directive puts the other card UNDER the deck", () =
     const state = reconBoard(5);
     const taken = deckAt(state, 0);
     const { state: parked, events: parkEvents } = mustApply(state, reconDirective);
-    const { events } = mustApply(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [taken] } });
+    const { events } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [taken] },
+    });
     const all = [...parkEvents, ...events];
     expect(find(all, "DECK_TOP_REVEALED")?.uids).toEqual([taken]);
     expect(types(all)).not.toContain("DECK_TOP_DISCARDED");
@@ -357,20 +370,22 @@ describe("D335 §2 — Recon Directive puts the other card UNDER the deck", () =
   it("🛑 and `rngState` is UNTOUCHED — the difference from Rika is not cosmetic", () => {
     const state = reconBoard(6);
     const taken = deckAt(state, 0);
-    const { state: done } = mustApply(
-      mustApply(state, reconDirective).state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [taken] } },
-    );
+    const { state: done } = mustApply(mustApply(state, reconDirective).state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [taken] },
+    });
     expect(done.rngState).toBe(state.rngState);
   });
 
   it("is once per turn, and works from the BENCH (activeOnly: false)", () => {
     const state = reconBoard(7);
     const taken = deckAt(state, 0);
-    const { state: done } = mustApply(
-      mustApply(state, reconDirective).state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [taken] } },
-    );
+    const { state: done } = mustApply(mustApply(state, reconDirective).state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [taken] },
+    });
     // It ran at all, from bench index 0 — the `activeOnly: false` half.
     expect(done.players.p1.hand).toContain(taken);
     expectErr(done, reconDirective, "ABILITY_ALREADY_USED");
@@ -423,7 +438,9 @@ describe("D335 §3 — Rika shuffles the other cards and puts them under the dec
     expect(prompt.max).toBe(2);
     // D334's caption arm, on a second consumer: `max > 1` and `exact`, so the words
     // "up to" are gone and the number stays.
-    expect(prompt.note).toBe("Look at the top 4 cards of your deck and put 2 cards into your hand.");
+    expect(prompt.note).toBe(
+      "Look at the top 4 cards of your deck and put 2 cards into your hand.",
+    );
     // The window really did hold four different card classes, so `anyCard` is
     // attributable — a narrowed filter would lose three of these rows.
     expect(top.map((u) => cardIdOf(parked, u))).toEqual([

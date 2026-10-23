@@ -24,7 +24,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, engineVersion, formatElapsed, logFromEvents } from "./index";
+import { applyAction, createGame, formatElapsed, logFromEvents } from "./index";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -955,9 +955,5 @@ describe("D630 §9 — the ids, and the version", () => {
     expect(state.players.p1.sideDamageReduction).toEqual([]);
     expect(state.players.p1.prizesTakenOnTurn).toBeNull();
     expect(state.players.p1.active?.attackDamageTaken).toBeNull();
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

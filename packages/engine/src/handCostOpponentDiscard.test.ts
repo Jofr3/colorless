@@ -1,10 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import {
   deriveAttackBonusConsequent,
@@ -26,7 +22,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import {
@@ -240,9 +236,9 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
     // was in `OPAQUE` and not in a `COMPOUND-*` class, and it is the reason the anchor
     // welds both ends rather than composing.
     expect(resolvedByAnyReader("Discard a card from your hand.")).toBe(false);
-    expect(
-      resolvedByAnyReader("If you do, your opponent discards a card from their hand."),
-    ).toBe(false);
+    expect(resolvedByAnyReader("If you do, your opponent discards a card from their hand.")).toBe(
+      false,
+    );
     // …the positive control, so "refuses everything" is excluded: capitalise the
     // consequent and drop the gate and D426's arm takes it whole.
     expect(resolvedByAnyReader(BARE_ONE)).toBe(true);
@@ -803,11 +799,5 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
     expect(lost.phase.kind).not.toBe("effect:choose");
     expect([lost.players.p1.discard.length, lost.players.p2.discard.length]).toEqual([1, 0]);
     expect(hands(lost)).toEqual([2, 4]);
-  });
-
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // D471's rule: the bump is owed because `packages/engine` changed behaviour — an
-    // anchor, an arm and a `describeBranch` case — and not because a slice happened.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

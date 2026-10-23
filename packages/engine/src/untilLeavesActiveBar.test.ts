@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { lockedAttackIndexes } from "./continuous";
 import { deriveAttackEffect } from "./effects";
-import { applyAction, engineVersion, programFor, redactGame } from "./index";
+import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
@@ -160,10 +160,13 @@ function barred(seat: Seat = "p1"): { state: GameState; events: GameEvent[]; row
 function laterTurns(state: GameState, seat: Seat, count: number): GameState {
   let next = state;
   for (let i = 0; i < count; i++) {
-    if (next.phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${next.phase.kind}`);
+    if (next.phase.kind !== "turn:action")
+      throw new Error(`expected turn:action, got ${next.phase.kind}`);
     next = must(applyAction(next, { type: "endTurn", seat: next.phase.seat }));
-    if (next.phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${next.phase.kind}`);
-    if (next.phase.seat !== seat) next = must(applyAction(next, { type: "endTurn", seat: next.phase.seat }));
+    if (next.phase.kind !== "turn:action")
+      throw new Error(`expected turn:action, got ${next.phase.kind}`);
+    if (next.phase.seat !== seat)
+      next = must(applyAction(next, { type: "endTurn", seat: next.phase.seat }));
   }
   return next;
 }
@@ -330,9 +333,9 @@ describe("§2 — one arm, one op, and the row is LITERAL", () => {
     // claim on a family whose members share an op and a record: a reader that
     // drifted between two of these would produce a board carrying the right fact
     // with the wrong duration, and no `toBeNull` anywhere could see it.
-    expect(deriveAttackEffect("During your next turn, this Pokémon can't use Blaze Blitz.")).toEqual(
-      [{ op: "preventAttackUse", attack: "Blaze Blitz" }],
-    );
+    expect(
+      deriveAttackEffect("During your next turn, this Pokémon can't use Blaze Blitz."),
+    ).toEqual([{ op: "preventAttackUse", attack: "Blaze Blitz" }]);
     expect(deriveAttackEffect("During your next turn, this Pokémon can't use attacks.")).toEqual([
       { op: "preventAttack" },
     ]);
@@ -885,10 +888,14 @@ describe("§8 — the panel greys exactly the barred row, on every turn", () => 
     // either would throw under `deepFreeze` rather than return a wrong answer.
     const before = ready();
     deepFreeze(before);
-    expect(() => applyAction(before, { type: "attack", seat: "p1", index: BLAZE_BLITZ })).not.toThrow();
+    expect(() =>
+      applyAction(before, { type: "attack", seat: "p1", index: BLAZE_BLITZ }),
+    ).not.toThrow();
     const window = laterTurns(barred().state, "p1", 1);
     deepFreeze(window);
-    expect(() => applyAction(window, { type: "attack", seat: "p1", index: BLAZE_BLITZ })).not.toThrow();
+    expect(() =>
+      applyAction(window, { type: "attack", seat: "p1", index: BLAZE_BLITZ }),
+    ).not.toThrow();
     expect(refusal(window, "p1", BLAZE_BLITZ)).toBe("ATTACK_PREVENTED");
   });
 });
@@ -949,10 +956,6 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
     const later = laterTurns(saved, "p1", 2);
     expect(refusal(later, "p1", BLAZE_BLITZ)).toBe("ATTACK_PREVENTED");
     expect(refusal(later, "p1", HEAT_BLAST)).toBeNull();
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

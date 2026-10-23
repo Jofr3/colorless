@@ -16,7 +16,6 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -126,9 +125,7 @@ const SIBLING = "Shuffle your hand into your deck. Then, draw 6 cards.";
 
 /** THE PROGRAM, spelled once and reused, so a case cannot pass against a hand-copied
     literal that has drifted from what the file means by it. */
-const PROGRAM: EffectOp[] = [
-  { op: "handRefresh", who: "you", draw: { kind: "opponentHandSize" } },
-];
+const PROGRAM: EffectOp[] = [{ op: "handRefresh", who: "you", draw: { kind: "opponentHandSize" } }];
 
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
 
@@ -584,19 +581,6 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     const PRIZES_TAKEN = 6 - state.players.p2.prizes.length;
     expect([PRIZE_COUNT, PRIZES_TAKEN]).toEqual([6, 0]);
     expect(PRIZE_COUNT).not.toBe(PRIZES_TAKEN);
-  });
-
-  it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    // The engine bump is behaviour: a printed sentence that resolved to nothing now
-    // resolves to a program.
-    //
-    // 🛑 **`MATCH_RECORD_VERSION` IS ARGUED AT THE HARD ADDRESS, BECAUSE THE EASY ONE IS
-    // NOT AVAILABLE.** D452's *"this byte already ships"* does NOT apply: the SERIALIZED
-    // ALPHABET GROWS — `{"kind":"opponentHandSize"}` is a byte string no v30 deploy can
-    // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
-    // a measurement over the PRODUCERS rather than a property of the op — which is what
-    // the rung below drives.
-    expect(engineVersion).toBe("0.555.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {

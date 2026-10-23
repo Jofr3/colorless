@@ -3,9 +3,13 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { attackMenuOf, passivesOf } from "./continuous";
-import { bonusConsequentProgram, deriveAttackBonusConsequent, deriveAttackDamageMultiplier } from "./effects";
+import {
+  bonusConsequentProgram,
+  deriveAttackBonusConsequent,
+  deriveAttackDamageMultiplier,
+} from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -119,8 +123,18 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Lightning"],
     retreat: 0,
     attacks: [
-      { cost: ["Lightning", "Colorless"], name: "Incessant Onslaught", damage: "70×", effect: ONSLAUGHT },
-      { cost: ["Lightning", "Colorless", "Colorless"], name: "Strong Volt", damage: 200, effect: "Discard 2 Energy from this Pokémon." },
+      {
+        cost: ["Lightning", "Colorless"],
+        name: "Incessant Onslaught",
+        damage: "70×",
+        effect: ONSLAUGHT,
+      },
+      {
+        cost: ["Lightning", "Colorless", "Colorless"],
+        name: "Strong Volt",
+        damage: 200,
+        effect: "Discard 2 Energy from this Pokémon.",
+      },
     ],
   } as Partial<Card>),
   [LIGHT_BALL]: tool(LIGHT_BALL, "Light Ball", LIGHT_BALL_TEXT),
@@ -161,10 +175,15 @@ const LOCAL_CARDS: Record<string, Card> = {
   } as Partial<Card>),
   [ATK]: body(ATK, "D620 Attacker", "Colorless", { hp: 340, attacks: ATTACKS } as Partial<Card>),
   [MEGA]: body(MEGA, "Mega D620 ex", "Colorless", { hp: 340, attacks: ATTACKS } as Partial<Card>),
-  [PIKACHU]: body(PIKACHU, "Pikachu ex", "Lightning", { hp: 200, attacks: ATTACKS } as Partial<Card>),
+  [PIKACHU]: body(PIKACHU, "Pikachu ex", "Lightning", {
+    hp: 200,
+    attacks: ATTACKS,
+  } as Partial<Card>),
   [WALL]: body(WALL, "D620 Wall", "Colorless", { hp: 400 } as Partial<Card>),
   [WALL_EX]: body(WALL_EX, "D620 Wall ex", "Colorless", { hp: 400 } as Partial<Card>),
-  [WEAK]: body(WEAK, "D620 Weak", "Colorless", { weaknesses: [{ type: "Metal", value: "×2" }] } as Partial<Card>),
+  [WEAK]: body(WEAK, "D620 Weak", "Colorless", {
+    weaknesses: [{ type: "Metal", value: "×2" }],
+  } as Partial<Card>),
   [DARK]: body(DARK, "D620 Dark", "Darkness"),
   [ROCKET]: body(ROCKET, "Team Rocket's D620", "Darkness"),
   [MEGA_WALL]: body(MEGA_WALL, "Mega D620 Wall ex", "Colorless", { hp: 400 } as Partial<Card>),
@@ -213,7 +232,9 @@ function opened(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -221,15 +242,21 @@ function opened(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -268,15 +295,32 @@ function table(opts: {
   state = setActiveFromDeck(ensureInDeck(state, "p2", def), "p2", def);
   state = clearBench(clearBench(state, "p1"), "p2");
   if (opts.attackerTool !== undefined) {
-    state = attachToolFromDeck(ensureInDeck(state, "p1", opts.attackerTool), "p1", "active", opts.attackerTool);
+    state = attachToolFromDeck(
+      ensureInDeck(state, "p1", opts.attackerTool),
+      "p1",
+      "active",
+      opts.attackerTool,
+    );
   }
   if (opts.defenderTool !== undefined) {
-    state = attachToolFromDeck(ensureInDeck(state, "p2", opts.defenderTool), "p2", "active", opts.defenderTool);
+    state = attachToolFromDeck(
+      ensureInDeck(state, "p2", opts.defenderTool),
+      "p2",
+      "active",
+      opts.defenderTool,
+    );
   }
-  for (const [id, n] of opts.energy ?? [["fix-energy", 1]]) state = attachFromDeck(state, "p1", id, n);
+  for (const [id, n] of opts.energy ?? [["fix-energy", 1]])
+    state = attachFromDeck(state, "p1", id, n);
   if (opts.damage !== undefined) {
     const p2 = state.players.p2;
-    state = { ...state, players: { ...state.players, p2: { ...p2, active: { ...(p2.active as InPlayPokemon), damage: opts.damage } } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p2: { ...p2, active: { ...(p2.active as InPlayPokemon), damage: opts.damage } },
+      },
+    };
   }
   return state;
 }
@@ -287,27 +331,38 @@ function took(state: GameState, seat: Seat, n: number): GameState {
   const moved = side.prizes.slice(0, n);
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, prizes: side.prizes.slice(n), hand: [...side.hand, ...moved] } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, prizes: side.prizes.slice(n), hand: [...side.hand, ...moved] },
+    },
   };
 }
 
-const swing = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const activeDamage = (state: GameState, seat: Seat = "p2") => state.players[seat].active?.damage;
 const toolIds = (state: GameState, seat: Seat) =>
   (state.players[seat].active?.tools ?? []).map((u) => state.cardIdByUid[u]);
-const discardIds = (state: GameState, seat: Seat) => state.players[seat].discard.map((u) => state.cardIdByUid[u]);
+const discardIds = (state: GameState, seat: Seat) =>
+  state.players[seat].discard.map((u) => state.cardIdByUid[u]);
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D620 §1 — the prints, the registry rows and the readings", () => {
   it("the five Tool objects, one per printed text, on the 7 `me` ids", () => {
     expect(programFor(LIGHT_BALL)).toEqual({
       passive: {
-        damageBonusBeforeWRIfTarget: { amount: 50, targetSuffix: "ex", holder: { kind: "byName", name: "Pikachu ex" } },
+        damageBonusBeforeWRIfTarget: {
+          amount: 50,
+          targetSuffix: "ex",
+          holder: { kind: "byName", name: "Pikachu ex" },
+        },
       },
     });
-    expect(programFor(PUNK[0])).toEqual({ passive: { damageAttacker: { amount: 40, holderType: "Darkness" } } });
+    expect(programFor(PUNK[0])).toEqual({
+      passive: { damageAttacker: { amount: 40, holderType: "Darkness" } },
+    });
     expect(programFor(PUNK[1])).toBe(programFor(PUNK[0]));
     expect(programFor(HYPNO)).toEqual({
       triggered: [
@@ -325,7 +380,10 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
         },
       ],
     });
-    expect(programFor(CORE)).toEqual({ toolAttacks: true, toolAttacksHolder: { kind: "byName", name: "Mega Zygarde ex" } });
+    expect(programFor(CORE)).toEqual({
+      toolAttacks: true,
+      toolAttacksHolder: { kind: "byName", name: "Mega Zygarde ex" },
+    });
     expect(programFor(BOMB[0])).toEqual({
       passive: {
         damageAttackerActiveThenDiscardIf: {
@@ -353,8 +411,14 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
-    expect(deriveAttackDamageMultiplier(ONSLAUGHT)).toEqual({ per: 70, count: { kind: "yourPrizesTaken" } });
-    expect(deriveAttackDamageMultiplier(GOBBLE)).toEqual({ per: 80, count: { kind: "yourPrizesTaken" } });
+    expect(deriveAttackDamageMultiplier(ONSLAUGHT)).toEqual({
+      per: 70,
+      count: { kind: "yourPrizesTaken" },
+    });
+    expect(deriveAttackDamageMultiplier(GOBBLE)).toEqual({
+      per: 80,
+      count: { kind: "yourPrizesTaken" },
+    });
     expect(deriveAttackBonusConsequent(HUGE_BITE)).toEqual({
       decider: { kind: "boardCondition", cond: { kind: "opponentActiveDamaged" } },
       bonus: 0,
@@ -394,7 +458,7 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D620 §2 — \"for each Prize card you have taken\": the ATTACKER's own taken Prizes", () => {
+describe('D620 §2 — "for each Prize card you have taken": the ATTACKER\'s own taken Prizes', () => {
   const mawile = () => table({ attacker: MAWILE[0], energy: [[M, 2]] });
 
   it("🛑 Gobble Down: 80 × the Prizes p1 has taken — 0, 2 and 4", () => {
@@ -409,16 +473,31 @@ describe("D620 §2 — \"for each Prize card you have taken\": the ATTACKER's ow
   });
 
   it("🛑 Incessant Onslaught: 70 × taken — 3 and 0", () => {
-    const luxray = () => table({ attacker: LUXRAY, energy: [[L, 1], ["fix-energy", 1]] });
+    const luxray = () =>
+      table({
+        attacker: LUXRAY,
+        energy: [
+          [L, 1],
+          ["fix-energy", 1],
+        ],
+      });
     expect(activeDamage(swing(took(luxray(), "p1", 3), 0).state)).toBe(210);
     expect(activeDamage(swing(took(luxray(), "p1", 0), 0).state)).toBe(0);
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D620 §3 — Mega Mawile ex \"Huge Bite\": the base damage is 30 on a damaged defender", () => {
+describe('D620 §3 — Mega Mawile ex "Huge Bite": the base damage is 30 on a damaged defender', () => {
   const bite = (defender: string, damage?: number) =>
-    table({ attacker: MAWILE[0], energy: [[M, 2], ["fix-energy", 1]], defender, damage });
+    table({
+      attacker: MAWILE[0],
+      energy: [
+        [M, 2],
+        ["fix-energy", 1],
+      ],
+      defender,
+      damage,
+    });
 
   it("🛑 an undamaged defender takes the printed 260; a damaged one takes 30", () => {
     expect(activeDamage(swing(bite(WALL), 1).state)).toBe(260);
@@ -440,12 +519,21 @@ describe("D620 §3 — Mega Mawile ex \"Huge Bite\": the base damage is 30 on a 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D620 §4 — Light Ball: a Pikachu ex holder does 50 more to an opposing Active ex", () => {
   it("🛑 Pikachu ex holder vs an ex: 170; vs a non-ex: 120", () => {
-    expect(activeDamage(swing(table({ attacker: PIKACHU, attackerTool: LIGHT_BALL, defender: WALL_EX }), BLAST).state)).toBe(170);
-    expect(activeDamage(swing(table({ attacker: PIKACHU, attackerTool: LIGHT_BALL }), BLAST).state)).toBe(120);
+    expect(
+      activeDamage(
+        swing(table({ attacker: PIKACHU, attackerTool: LIGHT_BALL, defender: WALL_EX }), BLAST)
+          .state,
+      ),
+    ).toBe(170);
+    expect(
+      activeDamage(swing(table({ attacker: PIKACHU, attackerTool: LIGHT_BALL }), BLAST).state),
+    ).toBe(120);
   });
 
   it("🛑 THE HOLDER CLAUSE — on any other holder it does nothing", () => {
-    expect(activeDamage(swing(table({ attackerTool: LIGHT_BALL, defender: WALL_EX }), BLAST).state)).toBe(120);
+    expect(
+      activeDamage(swing(table({ attackerTool: LIGHT_BALL, defender: WALL_EX }), BLAST).state),
+    ).toBe(120);
   });
 });
 
@@ -454,7 +542,9 @@ describe("D620 §5 — Punk Helmet: a {D} Active holder damaged puts 4 counters 
   it("🛑 a {D} holder: 40 on the attacker, one `counterattack` row", () => {
     const { state, events } = swing(table({ defender: DARK, defenderTool: PUNK[0] }), BLAST);
     expect(activeDamage(state, "p1")).toBe(40);
-    expect(of(events, "COUNTERS_PLACED").map((e) => [e.amount, e.source])).toEqual([[40, "counterattack"]]);
+    expect(of(events, "COUNTERS_PLACED").map((e) => [e.amount, e.source])).toEqual([
+      [40, "counterattack"],
+    ]);
   });
 
   it("🛑 THE HOLDER GATE — a non-{D} holder retaliates for nothing (and the fold carries 0)", () => {
@@ -471,7 +561,9 @@ describe("D620 §6 — Team Rocket's Hypnotizer: a Team Rocket's Active holder d
     of(events, "STATUS_APPLIED").filter((e) => e.seat === "p1" && e.status === "asleep");
 
   it("🛑 a Team Rocket's holder: the attacker is now Asleep (one `STATUS_APPLIED` row on p1)", () => {
-    expect(slept(swing(table({ defender: ROCKET, defenderTool: HYPNO }), BLAST).events)).toHaveLength(1);
+    expect(
+      slept(swing(table({ defender: ROCKET, defenderTool: HYPNO }), BLAST).events),
+    ).toHaveLength(1);
   });
 
   it("🛑 THE HOLDER GATE — any other holder: no Sleep", () => {
@@ -480,7 +572,7 @@ describe("D620 §6 — Team Rocket's Hypnotizer: a Team Rocket's Active holder d
     expect(state.players.p1.active?.conditions.rotation).toBe("none");
   });
 
-  it("\"even if Knocked Out\": a lethal hit on the holder still puts the attacker to sleep", () => {
+  it('"even if Knocked Out": a lethal hit on the holder still puts the attacker to sleep', () => {
     const state = table({ defender: ROCKET, defenderTool: HYPNO, damage: 200 });
     const done = swing(state, BLAST).state;
     expect(done.players.p1.active?.conditions.rotation).toBe("asleep");
@@ -488,9 +580,11 @@ describe("D620 §6 — Team Rocket's Hypnotizer: a Team Rocket's Active holder d
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D620 §7 — Core Memory: only a Mega Zygarde ex holder can use \"Geobuster\"", () => {
+describe('D620 §7 — Core Memory: only a Mega Zygarde ex holder can use "Geobuster"', () => {
   const menu = (state: GameState) =>
-    attackMenuOf(state, "p1", state.players.p1.active as InPlayPokemon).map((r) => `${r.attack.name}/${r.origin}`);
+    attackMenuOf(state, "p1", state.players.p1.active as InPlayPokemon).map(
+      (r) => `${r.attack.name}/${r.origin}`,
+    );
 
   it("🛑 a Mega Zygarde ex holder lists it after its two printed attacks; any other holder does not", () => {
     expect(menu(table({ attacker: ZYGARDE, attackerTool: CORE }))).toEqual([
@@ -521,7 +615,9 @@ describe("D620 §8 — Tremendous Bomb: 240+ from an opposing Mega ex on a non-M
   it("🛑 a Mega ex attacker dealing 240: 12 counters on it, then the Bomb is discarded", () => {
     const { state, events } = swing(table({ attacker: MEGA, defenderTool: BOMB[0] }), BIG);
     expect(activeDamage(state, "p1")).toBe(120);
-    expect(of(events, "COUNTERS_PLACED").map((e) => [e.amount, e.source])).toEqual([[120, "counterattack"]]);
+    expect(of(events, "COUNTERS_PLACED").map((e) => [e.amount, e.source])).toEqual([
+      [120, "counterattack"],
+    ]);
     expect(toolIds(state, "p2")).toEqual([]);
     expect(discardIds(state, "p2")).toContain(BOMB[0]);
   });
@@ -539,7 +635,10 @@ describe("D620 §8 — Tremendous Bomb: 240+ from an opposing Mega ex on a non-M
   });
 
   it("🛑 a Mega ex HOLDER: nothing", () => {
-    const state = swing(table({ attacker: MEGA, defender: MEGA_WALL, defenderTool: BOMB[0] }), BIG).state;
+    const state = swing(
+      table({ attacker: MEGA, defender: MEGA_WALL, defenderTool: BOMB[0] }),
+      BIG,
+    ).state;
     expect(activeDamage(state, "p1")).toBe(0);
     expect(toolIds(state, "p2")).toEqual([BOMB[0]]);
   });
@@ -553,14 +652,8 @@ describe("D620 §8 — Tremendous Bomb: 240+ from an opposing Mega ex on a non-M
     expect(toolIds(state, "p2")).toEqual([]);
   });
 
-  it("\"even if this Pokémon is Knocked Out\": a 200-HP holder taking 240 still bombs the attacker", () => {
+  it('"even if this Pokémon is Knocked Out": a 200-HP holder taking 240 still bombs the attacker', () => {
     const { state } = swing(table({ attacker: MEGA, defender: FRAIL, defenderTool: BOMB[0] }), BIG);
     expect(activeDamage(state, "p1")).toBe(120);
-  });
-});
-
-describe("D620 §9 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

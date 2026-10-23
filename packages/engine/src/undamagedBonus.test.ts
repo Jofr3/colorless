@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -303,7 +299,9 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
       // that carrier, and the arm now falls back to `extraEnergyGateForClause` (NOT the table, which still holds no
       // row: the two BONUS_CONSEQUENT sites still refuse), answered at declaration by attack.ts. Inverted below.]
       if (site === "CONDITIONAL_BENCH_SNIPE") {
-        expect(JSON.stringify(read(carrier(DECLARATION_CLAUSE))), site).toContain('"extraEnergyBeyondAttackCost"');
+        expect(JSON.stringify(read(carrier(DECLARATION_CLAUSE))), site).toContain(
+          '"extraEnergyBeyondAttackCost"',
+        );
       } else {
         expect(read(carrier(DECLARATION_CLAUSE)), site).toBeNull();
       }
@@ -314,8 +312,9 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
     // …and the pre-emption itself, so the reason this rung exists cannot rot into
     // prose: at the ONE site the anchor covers, the SAME clause resolves — through
     // the anchor, not through the table.
-    expect(deriveAttackDamageBonus(`If ${DECLARATION_CLAUSE}, this attack does 80 more damage.`)
-      ?.count).toEqual({ kind: "extraEnergyUnitsBeyondCost", extra: 2 });
+    expect(
+      deriveAttackDamageBonus(`If ${DECLARATION_CLAUSE}, this attack does 80 more damage.`)?.count,
+    ).toEqual({ kind: "extraEnergyUnitsBeyondCost", extra: 2 });
   });
 
   it("🛑 and 3 printings for a BOARD fact beat 5 printings for a fact of the wrong shape", () => {

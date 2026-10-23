@@ -241,7 +241,9 @@ function offeredIds(state: GameState): string[] {
 }
 
 function benchIds(state: GameState, seat: Seat): string[] {
-  return state.players[seat].bench.map((p) => state.cardIdByUid[p.stack[p.stack.length - 1] ?? ""] ?? "?");
+  return state.players[seat].bench.map(
+    (p) => state.cardIdByUid[p.stack[p.stack.length - 1] ?? ""] ?? "?",
+  );
 }
 
 /** `runProgram` with the two out-parameters this file does not want to thread:
@@ -328,7 +330,7 @@ describe("the DEFAULT destination is untouched — `dest` absent is the M5 op", 
     expect(out.events.some((e: GameEvent) => e.type === "POKEMON_BENCHED")).toBe(false);
   });
 
-  it("🛑 the SAME op with `dest: \"bench\"` moves the SAME card the OTHER way", () => {
+  it('🛑 the SAME op with `dest: "bench"` moves the SAME card the OTHER way', () => {
     // The pair is the whole widening: one field, two destinations, everything
     // else identical — which is what makes `dest` falsifiable rather than
     // decorative.
@@ -438,11 +440,15 @@ describe("Look for Prey on a real board", () => {
     const parked = must(useLookForPrey(state, seat));
     const uid = cardsPrompt(parked).candidates.find((u) => parked.cardIdByUid[u] === pickId);
     if (uid === undefined) throw new Error(`no ${pickId} in the offer`);
-    return { before: state, parked, resolved: mustApply(parked, {
-      type: "resolveEffect",
-      seat,
-      choice: { kind: "cards", uids: [uid] },
-    }) };
+    return {
+      before: state,
+      parked,
+      resolved: mustApply(parked, {
+        type: "resolveEffect",
+        seat,
+        choice: { kind: "cards", uids: [uid] },
+      }),
+    };
   }
 
   it("🛑 the chosen Basic lands on the OPPONENT's Bench and NOT the actor's", () => {
@@ -714,7 +720,7 @@ describe("what this slice REFUSED and why", () => {
     for (const id of ["sv05-124", "sv05-180"]) expect(programFor(id), id).toBeUndefined();
   });
 
-  it("🛑 the op has NO `dest: \"hand\"` — a member no printing reaches", () => {
+  it('🛑 the op has NO `dest: "hand"` — a member no printing reaches', () => {
     // The obvious third destination, refused on the D104 minimal-shape rule.
     // Chill Teaser Toy's "into their hand" moves an ATTACHED ENERGY, which this
     // op's source cannot see, so a `"hand"` arm here would be unreachable.
@@ -773,7 +779,11 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     const uid = cardsPrompt(revived).candidates[0];
     if (uid === undefined) throw new Error("empty offer");
     const out = must(
-      applyAction(revived, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [uid] } }),
+      applyAction(revived, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [uid] },
+      }),
     );
     expect(out.players.p2.bench.length).toBe(1);
   });
@@ -798,9 +808,5 @@ describe("the engine version", () => {
     // D275's guard; this re-states the literal because the literal IS this
     // assertion (D275's own note about `D275-engine-version-drifts-again`).
     expect(engineVersion).toBe(manifest.version);
-    // 🆕 D295 moved it again (0.205.0 → 0.206.0), so this suite asserts the TIE
-    // and the DIRECTION rather than re-stating a literal that belongs to whichever
-    // slice bumped it last. `chillTeaserToy.test.ts` carries the current literal.
-    expect(manifest.version).not.toBe("0.204.0");
   });
 });

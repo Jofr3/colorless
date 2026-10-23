@@ -119,10 +119,7 @@ function attackerDamage(state: GameState): number | undefined {
 
 /** The rendered log a player actually reads — the same helper shape
     counterattack.test.ts uses, so the two suites' rows are comparable. */
-function render(
-  events: GameEvent[],
-  state: GameState,
-): { who: string; text: string }[] {
+function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:14" };
   return logFromEvents(events, ctx).flatMap((entry) =>
     entry.kind === "turn"
@@ -146,7 +143,11 @@ function equip(
   } = {},
 ): GameState {
   const holderId = opts.holder ?? "fix-wall";
-  let state = driveSetup(seed, { p1: VENGEFUL_PUNCH_DECK, p2: VENGEFUL_PUNCH_DECK }, { first: "p2" });
+  let state = driveSetup(
+    seed,
+    { p1: VENGEFUL_PUNCH_DECK, p2: VENGEFUL_PUNCH_DECK },
+    { first: "p2" },
+  );
   // P2's turn — plant the holder, clear the setup bench, then build the exact one.
   state = setActiveFromDeck(state, "p2", holderId);
   state = { ...state, players: { ...state.players, p2: { ...state.players.p2, bench: [] } } };
@@ -837,7 +838,12 @@ describe("⚠️ the Attacking Pokémon is a UID the epilogue CARRIES — D189 p
     // …and it is the ATTACKER's uid, not the spot's — the two are still the same
     // body here (the switch has not resolved yet), which is exactly why this case
     // asserts the DECLARED uid rather than reading the Active back.
-    expect(attackerUid).toBe(find(mustApply(state, { type: "attack", seat: "p1", index: SPIN_TURN }).events, "ATTACK_DECLARED")?.uid);
+    expect(attackerUid).toBe(
+      find(
+        mustApply(state, { type: "attack", seat: "p1", index: SPIN_TURN }).events,
+        "ATTACK_DECLARED",
+      )?.uid,
+    );
   });
 
   it("⚠️ PINNED ABSENCE: only the STAGE path can see a moved actor — the other four are equivalent", () => {

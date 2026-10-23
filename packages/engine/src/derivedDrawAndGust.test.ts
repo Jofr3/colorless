@@ -866,7 +866,9 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
     expect(SELF_SWITCH_BARE).not.toContain("'");
     expect(SELF_SWITCH_BARE).not.toContain("\u2019");
     expect(SELF_SWITCH_FLIP).not.toContain("'");
-    expect(deriveAttackEffect("Switch this Pokémon with 1 of your opponent's Benched Pokémon.")).toBeNull();
+    expect(
+      deriveAttackEffect("Switch this Pokémon with 1 of your opponent's Benched Pokémon."),
+    ).toBeNull();
   });
 
   it("ALL SEVEN: a SUBSTRING matcher instead of a whole-string anchor", () => {
@@ -964,7 +966,11 @@ describe("end to end — the two DRAW arms", () => {
     const state = ready(1, 1, 1);
     const before = state.players.p1.hand.length;
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: COLLECT });
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: COLLECT,
+    });
     expect(done.players.p1.hand.length).toBe(before + 1);
     expect(effectDraws(events)[0]).toMatchObject({ seat: "p1", reason: "effect" });
     expect(effectDraws(events)[0]?.uids).toHaveLength(1);
@@ -1017,7 +1023,11 @@ describe("end to end — the two DRAW arms", () => {
       ...big,
       players: {
         ...big.players,
-        p1: { ...side, hand: [...side.hand, ...side.deck.slice(0, owed)], deck: side.deck.slice(owed) },
+        p1: {
+          ...side,
+          hand: [...side.hand, ...side.deck.slice(0, owed)],
+          deck: side.deck.slice(owed),
+        },
       },
     };
     const handBefore = big.players.p1.hand.length;
@@ -1033,7 +1043,6 @@ describe("end to end — the two DRAW arms", () => {
     expect(all(noneEvents, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
   });
 });
-
 
 describe("end to end — the GUST moves the OPPONENT'S side, and only theirs", () => {
   it("drags the opponent's bench up, leaving the attacker untouched", () => {

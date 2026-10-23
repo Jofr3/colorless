@@ -186,8 +186,7 @@ const IN_PLAY_TARGET_CENSUS = [
     needs: "the in-play target rider — and NOTHING else. D199's highest-value item.",
   },
   {
-    sentence:
-      "Attach a Basic Energy card from your discard pile to 1 of your Benched N's Pokémon.",
+    sentence: "Attach a Basic Energy card from your discard pile to 1 of your Benched N's Pokémon.",
     card: "N's PP Up",
     surface: "trainer",
     ids: ["sv09-153"],
@@ -819,7 +818,7 @@ describe("Spikemuth Gym sv10-169 — the row held back for scope only", () => {
     ]);
     // ⚠️ VERIFIED, not taken on trust: it uses only D200's CARD filter — no
     // in-play target rider anywhere in it.
-    expect(JSON.stringify(gym?.program)).not.toContain("ownerPokemon\":\"Marnie\",\"stage");
+    expect(JSON.stringify(gym?.program)).not.toContain('ownerPokemon":"Marnie","stage');
     // A SEPARATE object from Champion's Call (D199's near-twin rule).
     expect(gym?.program).not.toBe(programFor("sv10-103")?.abilities?.[0]?.program);
   });
@@ -954,9 +953,10 @@ describe("the re-derived census — what landed, and what is still owed a piece"
     expect(programFor("sv09-098")?.abilities?.[0]?.name).toBe("Trade");
     expect(programFor("sv09-098")?.attack).toBeUndefined();
     // 🆕🆕🆕 D573 — …and the attack is built through the READER, not the registry.
-    expect(deriveAttackCopy("Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.")).not.toBeNull();
+    expect(
+      deriveAttackCopy("Choose 1 of your Benched N's Pokémon's attacks and use it as this attack."),
+    ).not.toBeNull();
   });
-
 
   it("holds the census shape D200 measured (80 units / 13 owners / 46 sentences)", () => {
     // Re-derived with GLOB (case-sensitive) on 2026-08-04 and reproduced EXACTLY;

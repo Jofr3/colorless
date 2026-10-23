@@ -30,7 +30,12 @@ const LOCAL_CARDS: Record<string, Card> = {
   [TYME_2]: { ...trainerCard(TYME_2, "Supporter", "Tyme"), name: "Tyme" },
   [PIKA]: battler(PIKA, { name: "D577 Pika", hp: 70, types: ["Lightning"] }),
   [BIG]: battler(BIG, { name: "D577 Big", hp: 230, types: ["Colorless"] }),
-  [FOSSIL]: { ...trainerCard(FOSSIL, "Item", "Play this card as if it were a 60-HP Basic {C} Pokémon."), name: "Antique Cover Fossil", hp: null, abilities: null },
+  [FOSSIL]: {
+    ...trainerCard(FOSSIL, "Item", "Play this card as if it were a 60-HP Basic {C} Pokémon."),
+    name: "Antique Cover Fossil",
+    hp: null,
+    abilities: null,
+  },
   [FILLER]: battler(FILLER, {
     name: "D577 Filler",
     hp: 900,
@@ -58,7 +63,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -67,7 +73,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -75,15 +83,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -98,7 +113,10 @@ function table(hand: readonly string[], oppDeck?: number): GameState {
     const is = (u: string) => state.cardIdByUid[u] === id;
     const inDeck = side.deck.find(is);
     if (inDeck !== undefined) {
-      state = withSide(state, "p1", { deck: side.deck.filter((u) => u !== inDeck), hand: [...side.hand, inDeck] });
+      state = withSide(state, "p1", {
+        deck: side.deck.filter((u) => u !== inDeck),
+        hand: [...side.hand, inDeck],
+      });
       continue;
     }
     const prized = side.prizes.find(is);
@@ -112,7 +130,10 @@ function table(hand: readonly string[], oppDeck?: number): GameState {
   }
   if (oppDeck !== undefined) {
     const p2 = state.players.p2;
-    state = withSide(state, "p2", { deck: p2.deck.slice(0, oppDeck), discard: [...p2.discard, ...p2.deck.slice(oppDeck)] });
+    state = withSide(state, "p2", {
+      deck: p2.deck.slice(0, oppDeck),
+      discard: [...p2.discard, ...p2.deck.slice(oppDeck)],
+    });
   }
   return state;
 }
@@ -139,7 +160,11 @@ describe("D577 Tyme §1 — the registry row", () => {
 describe("D577 Tyme §2 — what can be named (R-TY1)", () => {
   it("a hand with no Pokémon refuses the play — an Antique Fossil in hand is an Item there", () => {
     const state = table([TYME, FOSSIL, "fix-energy"]);
-    const refused = applyAction(state, { type: "playTrainer", seat: "p1", uid: uidOf(state, TYME) });
+    const refused = applyAction(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: uidOf(state, TYME),
+    });
     expect(refused.ok ? null : refused.error.code).toBe("NO_LEGAL_TARGET");
   });
 
@@ -181,7 +206,11 @@ describe("D577 Tyme §2 — what can be named (R-TY1)", () => {
       choice: { kind: "cards", uids: [uidOf(state, BIG)] },
     }).state;
     if (named.phase.kind !== "effect:choose") throw new Error("not parked");
-    expect(named.phase.prompt).toEqual({ kind: "guessHp", name: "D577 Big", note: "Guess the HP of your opponent's D577 Big." });
+    expect(named.phase.prompt).toEqual({
+      kind: "guessHp",
+      name: "D577 Big",
+      note: "Guess the HP of your opponent's D577 Big.",
+    });
     expect(named.phase.answerer).toBe("p2");
     // No zone move (R-TY3): the named card is still in the hand.
     expect(named.players.p1.hand).toContain(uidOf(state, BIG));
@@ -199,7 +228,11 @@ describe("D577 Tyme §3 — the guess and the draw (R-TY2)", () => {
   it("RIGHT (70): the opponent draws 4; the named card is back in (never left) the hand", () => {
     const { state, pika, handBefore } = parked();
     const p2Hand = state.players.p2.hand.length;
-    const guessed = run(state, { type: "resolveEffect", seat: "p2", choice: { kind: "hpGuess", hp: 70 } });
+    const guessed = run(state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "hpGuess", hp: 70 },
+    });
     expect(guessed.state.players.p2.hand.length).toBe(p2Hand + 4);
     expect(guessed.state.players.p1.hand.length).toBe(handBefore);
     expect(guessed.state.players.p1.hand).toContain(pika);
@@ -218,21 +251,33 @@ describe("D577 Tyme §3 — the guess and the draw (R-TY2)", () => {
   it("WRONG (60): the controller draws 4, the opponent draws nothing", () => {
     const { state, handBefore } = parked();
     const p2Hand = state.players.p2.hand.length;
-    const guessed = run(state, { type: "resolveEffect", seat: "p2", choice: { kind: "hpGuess", hp: 60 } }).state;
+    const guessed = run(state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "hpGuess", hp: 60 },
+    }).state;
     expect(guessed.players.p1.hand.length).toBe(handBefore + 4);
     expect(guessed.players.p2.hand.length).toBe(p2Hand);
   });
 
   it("an OVER-guess (80 against 70) is wrong too — exact equality, not a threshold", () => {
     const { state, handBefore } = parked();
-    const guessed = run(state, { type: "resolveEffect", seat: "p2", choice: { kind: "hpGuess", hp: 80 } }).state;
+    const guessed = run(state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "hpGuess", hp: 80 },
+    }).state;
     expect(guessed.players.p1.hand.length).toBe(handBefore + 4);
   });
 
   it("a THIN deck draws what it has — no loss, no refusal", () => {
     const { state } = parked(2);
     const p2Hand = state.players.p2.hand.length;
-    const guessed = run(state, { type: "resolveEffect", seat: "p2", choice: { kind: "hpGuess", hp: 70 } }).state;
+    const guessed = run(state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "hpGuess", hp: 70 },
+    }).state;
     expect(guessed.players.p2.hand.length).toBe(p2Hand + 2);
     expect(guessed.players.p2.deck).toEqual([]);
     expect(guessed.phase.kind).toBe("turn:action");
@@ -241,7 +286,11 @@ describe("D577 Tyme §3 — the guess and the draw (R-TY2)", () => {
   it("refuses a guess that is not a whole number ≥ 0, and refuses the CONTROLLER answering", () => {
     const { state } = parked();
     for (const hp of [59.5, -10, Number.NaN]) {
-      const refused = applyAction(state, { type: "resolveEffect", seat: "p2", choice: { kind: "hpGuess", hp } });
+      const refused = applyAction(state, {
+        type: "resolveEffect",
+        seat: "p2",
+        choice: { kind: "hpGuess", hp },
+      });
       expect(refused.ok ? null : refused.error.code).toBe("BAD_EFFECT_CHOICE");
     }
     const asString = applyAction(state, {
@@ -250,7 +299,11 @@ describe("D577 Tyme §3 — the guess and the draw (R-TY2)", () => {
       choice: { kind: "hpGuess", hp: "70" as unknown as number },
     });
     expect(asString.ok).toBe(false);
-    const wrongSeat = applyAction(state, { type: "resolveEffect", seat: "p1", choice: { kind: "hpGuess", hp: 70 } });
+    const wrongSeat = applyAction(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "hpGuess", hp: 70 },
+    });
     expect(wrongSeat.ok).toBe(false);
   });
 });
@@ -259,12 +312,20 @@ describe("D577 Tyme §4 — the wire: the name only, to the opponent only (R-TY3
   it("the guesser's frame carries { guessHp, name, note } and no uid or HP; the controller's carries no prompt", () => {
     const state = table([TYME, PIKA]);
     const pika = uidOf(state, PIKA);
-    const parkedState = run(state, { type: "playTrainer", seat: "p1", uid: uidOf(state, TYME) }).state;
+    const parkedState = run(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: uidOf(state, TYME),
+    }).state;
     const forP2 = redactGame(parkedState, "p2");
     expect(redactedGameSchema.parse(forP2)).toEqual(forP2);
     expect(forP2.phase).toEqual({
       kind: "effect:choose",
-      prompt: { kind: "guessHp", name: "D577 Pika", note: "Guess the HP of your opponent's D577 Pika." },
+      prompt: {
+        kind: "guessHp",
+        name: "D577 Pika",
+        note: "Guess the HP of your opponent's D577 Pika.",
+      },
     });
     expect(JSON.stringify(forP2)).not.toContain(pika);
     expect(redactGame(parkedState, "p1").phase).toEqual({ kind: "effect:choose", prompt: null });
@@ -276,7 +337,11 @@ describe("D577 Tyme §4 — the wire: the name only, to the opponent only (R-TY3
     const named = logFromEvents(played.events, ctxOf(played.state));
     expect(JSON.stringify(named)).toContain("D577 Pika");
     expect(JSON.stringify(named)).not.toContain("70");
-    const guessed = run(played.state, { type: "resolveEffect", seat: "p2", choice: { kind: "hpGuess", hp: 60 } });
+    const guessed = run(played.state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "hpGuess", hp: 60 },
+    });
     const reveal = logFromEvents(guessed.events, ctxOf(guessed.state));
     expect(JSON.stringify(reveal)).toContain("(70 HP) — the guess 60 was ");
   });

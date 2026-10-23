@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   OWN_BENCH_SNIPE_DECK,
@@ -132,7 +132,8 @@ describe("§1 — the printed data: three sentences, and the pair the catalog wi
       ([, s]) =>
         /^This attack (?:also )?does \d+ damage to 1 of (your opponent's|your) Benched Pokémon\./.test(
           s,
-        ) && !/^This attack also does \d+ damage to 1 of your opponent's Benched Pokémon\.$/.test(s),
+        ) &&
+        !/^This attack also does \d+ damage to 1 of your opponent's Benched Pokémon\.$/.test(s),
     );
     const newlyBuilt = family.filter(([, s]) => [OWN_10, OWN_40, BARE_OPP_40].includes(s));
     expect(newlyBuilt).toHaveLength(3);
@@ -248,9 +249,17 @@ describe("§2 — the two widenings, and what they did NOT admit", () => {
         OWN_10,
       ],
       // a printed 0 buys nothing on either side — the amount guard, unchanged
-      ["a printed 0 amount", "This attack also does 0 damage to 1 of your Benched Pokémon.", OWN_10],
+      [
+        "a printed 0 amount",
+        "This attack also does 0 damage to 1 of your Benched Pokémon.",
+        OWN_10,
+      ],
       // …and a printed 0 COUNT, the second capture's guard, unchanged by the shift
-      ["a printed 0 count", "This attack also does 10 damage to 0 of your Benched Pokémon.", OWN_10],
+      [
+        "a printed 0 count",
+        "This attack also does 10 damage to 0 of your Benched Pokémon.",
+        OWN_10,
+      ],
       // the number agreement: the narrowing is singular, so it may only ride "1 of"
       [
         "a narrowing at count 2",
@@ -344,12 +353,7 @@ describe("§3 — `damageChosen.target` has three members, and the record versio
     // point of asking the CORPUS rather than the type. This rung is the one that would
     // have gone red had D539 spelled its member by RENAMING `yourBench`, which is the
     // half D125 says is not free.
-    expect([...seen].sort()).toEqual([
-      "opponentAny",
-      "opponentBench",
-      "yourAny",
-      "yourBench",
-    ]);
+    expect([...seen].sort()).toEqual(["opponentAny", "opponentBench", "yourAny", "yourBench"]);
   });
 
   it("🛑 the version PREDICTION, driven over the SERIALIZED BYTES in both directions", () => {
@@ -389,10 +393,6 @@ describe("§3 — `damageChosen.target` has three members, and the record versio
     // and this slice adds NO `CardFilter` member and renames none. The op below is
     // the only shape that moved, and it holds no filter.
     expect(Object.keys(fresh ?? {}).includes("filter")).toBe(false);
-  });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

@@ -1,17 +1,12 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { effectiveAttackCost, effectiveRetreatCost, installedCostTaxOf } from "./continuous";
 import * as effectsModule from "./effects";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameState, InPlayPokemon, PlayerSide, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -108,7 +103,11 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 2,
     types: ["Psychic"],
     abilities: [
-      { type: "Ability", name: "Skyliner", effect: "Your Basic Pokémon in play have no Retreat Cost." },
+      {
+        type: "Ability",
+        name: "Skyliner",
+        effect: "Your Basic Pokémon in play have no Retreat Cost.",
+      },
     ],
   }),
 };
@@ -284,7 +283,10 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       `${S171} Draw a card.`,
     ];
     for (const text of misses) {
-      expect((deriveAttackEffect(text) ?? []).some((op) => op.op === "taxDefender"), text).toBe(false);
+      expect(
+        (deriveAttackEffect(text) ?? []).some((op) => op.op === "taxDefender"),
+        text,
+      ).toBe(false);
     }
   });
 });
@@ -621,12 +623,9 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
       // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT (D124).
       delete side.sideAttackLock;
     }
-    expect(() => applyAction(revived, { type: "attack", seat: "p2", index: JAB })).toThrow(TypeError);
+    expect(() => applyAction(revived, { type: "attack", seat: "p2", index: JAB })).toThrow(
+      TypeError,
+    );
     expect(() => redactGame(revived, "p2")).toThrow(TypeError);
-  });
-
-  it("the engine version stepped to 0.555.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

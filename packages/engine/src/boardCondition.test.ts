@@ -44,7 +44,11 @@ function findAll<T extends GameEvent["type"]>(
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so a Supporter is legal (§4). */
 function board(seed: number): GameState {
-  const state = driveSetup(seed, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK }, { first: "p2" });
+  const state = driveSetup(
+    seed,
+    { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK },
+    { first: "p2" },
+  );
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
@@ -157,8 +161,12 @@ describe("M5 op-slice — conditionHolds (the shared BoardCondition evaluator)",
     expect(conditionHolds(oppEnergy, "p1", { kind: "noEnergyOnYourPokemon" })).toBe(true);
 
     // One Energy anywhere on YOUR side breaks it — Active OR Bench.
-    expect(conditionHolds(attachEnergy(clean, "p1", "active"), "p1", { kind: "noEnergyOnYourPokemon" })).toBe(false);
-    expect(conditionHolds(attachEnergy(clean, "p1", 0), "p1", { kind: "noEnergyOnYourPokemon" })).toBe(false);
+    expect(
+      conditionHolds(attachEnergy(clean, "p1", "active"), "p1", { kind: "noEnergyOnYourPokemon" }),
+    ).toBe(false);
+    expect(
+      conditionHolds(attachEnergy(clean, "p1", 0), "p1", { kind: "noEnergyOnYourPokemon" }),
+    ).toBe(false);
   });
 });
 
@@ -239,7 +247,11 @@ describe("M5 op-slice — Falkner (a one-armed conditionGate)", () => {
   it("does NOT get the bonus off the OPPONENT's Stadium (the ownership reading)", () => {
     // The zone is occupied, but by P2's card — "if YOU have a Stadium in play".
     // P2 goes first, so it plays the Beach Court on its own turn 1, then passes.
-    const p2Turn = driveSetup(13, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK }, { first: "p2" });
+    const p2Turn = driveSetup(
+      13,
+      { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK },
+      { first: "p2" },
+    );
     const state = playStadium(p2Turn, "p2");
     expect(state.stadium?.owner).toBe("p2");
     const p1Turn = mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -340,7 +352,11 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
       ...state,
       players: {
         ...state.players,
-        p1: { ...side, deck: side.deck.slice(0, 2), discard: [...side.discard, ...side.deck.slice(2)] },
+        p1: {
+          ...side,
+          deck: side.deck.slice(0, 2),
+          discard: [...side.discard, ...side.deck.slice(2)],
+        },
       },
     };
     const played = mustApply(state, { type: "playTrainer", seat: "p1", uid });
@@ -403,7 +419,10 @@ describe("M5 op-slice — the gate mechanism itself", () => {
     expect("state" in result).toBe(false);
     expect(state.allowances.supporterPlayed).toBe(false);
     const real = handFromDeck(state, "p1", "sv02-184", 1);
-    expect(applyAction(real, { type: "playTrainer", seat: "p1", uid: handUid(real, "p1", "sv02-184") }).ok).toBe(true);
+    expect(
+      applyAction(real, { type: "playTrainer", seat: "p1", uid: handUid(real, "p1", "sv02-184") })
+        .ok,
+    ).toBe(true);
   });
 
   it("names the unmet condition in the reject message (the HUD tooltip copy)", () => {

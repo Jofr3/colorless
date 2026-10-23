@@ -90,7 +90,8 @@ const TEXT: Record<string, string> = {
   Postwick:
     "Attacks used by Hop's Pokémon (both yours and your opponent's) do 30 more damage to the opponent's Active Pokémon (before applying Weakness and Resistance).",
   "N's Castle": "N's Pokémon in play (both yours and your opponent's) have no Retreat Cost.",
-  "Paradise Resort": "The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less.",
+  "Paradise Resort":
+    "The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less.",
 };
 
 function printed(id: string, name: string, trainerType: string): Card {
@@ -129,8 +130,20 @@ const LOCAL_CARDS: Record<string, Card> = {
   [POSTWICK]: printed(POSTWICK, "Postwick", "Stadium"),
   [NS_CASTLE]: printed(NS_CASTLE, "N's Castle", "Stadium"),
   ...printings(PARADISE, "Paradise Resort", "Stadium"),
-  [PLAIN]: battler(PLAIN, { name: "D558 Plain", hp: 200, retreat: 3, types: ["Colorless"], attacks: STRIKE }),
-  [HOP]: battler(HOP, { name: "Hop's D558 Wooloo", hp: 200, retreat: 2, types: ["Colorless"], attacks: STRIKE }),
+  [PLAIN]: battler(PLAIN, {
+    name: "D558 Plain",
+    hp: 200,
+    retreat: 3,
+    types: ["Colorless"],
+    attacks: STRIKE,
+  }),
+  [HOP]: battler(HOP, {
+    name: "Hop's D558 Wooloo",
+    hp: 200,
+    retreat: 2,
+    types: ["Colorless"],
+    attacks: STRIKE,
+  }),
   [HOP_EVO]: battler(HOP_EVO, {
     name: "D558 Dubwool",
     stage: "Stage1",
@@ -140,12 +153,29 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Colorless"],
     attacks: STRIKE,
   }),
-  [EX_BODY]: battler(EX_BODY, { name: "D558 Striker ex", hp: 300, retreat: 2, types: ["Colorless"], attacks: STRIKE }),
+  [EX_BODY]: battler(EX_BODY, {
+    name: "D558 Striker ex",
+    hp: 300,
+    retreat: 2,
+    types: ["Colorless"],
+    attacks: STRIKE,
+  }),
   [WALL]: battler(WALL, { name: "D558 Wall", hp: 900, retreat: 2, types: ["Fighting"] }),
   [WALL_EX]: battler(WALL_EX, { name: "D558 Wall ex", hp: 900, retreat: 2, types: ["Fighting"] }),
   [WALL_V]: battler(WALL_V, { name: "D558 Wall V", hp: 900, retreat: 2, types: ["Fighting"] }),
-  [METAL]: battler(METAL, { name: "D558 Steel", hp: 900, retreat: 2, types: ["Metal"], attacks: STRIKE }),
-  [STEVEN]: battler(STEVEN, { name: "Steven's D558 Beldum", hp: 900, retreat: 2, types: ["Psychic"] }),
+  [METAL]: battler(METAL, {
+    name: "D558 Steel",
+    hp: 900,
+    retreat: 2,
+    types: ["Metal"],
+    attacks: STRIKE,
+  }),
+  [STEVEN]: battler(STEVEN, {
+    name: "Steven's D558 Beldum",
+    hp: 900,
+    retreat: 2,
+    types: ["Psychic"],
+  }),
   [N_BASIC]: battler(N_BASIC, { name: "N's D558 Zorua", hp: 200, retreat: 2, types: ["Darkness"] }),
   [N_STAGE1]: battler(N_STAGE1, {
     name: "N's D558 Zoroark",
@@ -234,7 +264,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -242,11 +274,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -359,14 +394,20 @@ function runAttackProgram(state: GameState, text: string): GameState {
 }
 const BENCH_CLAUSE = "(Don't apply Weakness and Resistance for Benched Pokémon.)";
 const ownSpread = (state: GameState) =>
-  runAttackProgram(state, `This attack also does 30 damage to each of your Benched Pokémon. ${BENCH_CLAUSE}`);
+  runAttackProgram(
+    state,
+    `This attack also does 30 damage to each of your Benched Pokémon. ${BENCH_CLAUSE}`,
+  );
 const oppSpread = (state: GameState) =>
   runAttackProgram(
     state,
     `This attack also does 30 damage to each of your opponent's Benched Pokémon. ${BENCH_CLAUSE}`,
   );
 const ownSnipe = (state: GameState) =>
-  runAttackProgram(state, `This attack also does 40 damage to 1 of your Benched Pokémon. ${BENCH_CLAUSE}`);
+  runAttackProgram(
+    state,
+    `This attack also does 40 damage to 1 of your Benched Pokémon. ${BENCH_CLAUSE}`,
+  );
 const oppSnipe = (state: GameState) =>
   runAttackProgram(
     state,
@@ -407,19 +448,30 @@ describe("D558 §1 — the prints, and the registry rows that map them", () => {
         },
       },
     },
-    { name: "Air Balloon", ids: [BALLOON], program: { passive: { retreatCostDiscount: { amount: 2 } } } },
+    {
+      name: "Air Balloon",
+      ids: [BALLOON],
+      program: { passive: { retreatCostDiscount: { amount: 2 } } },
+    },
     {
       name: "Rescue Board",
       ids: RESCUE,
       program: { passive: { retreatCostDiscount: { amount: 1, freeAtRemainingHpAtMost: 30 } } },
     },
-    { name: "Gravity Gemstone", ids: [GEMSTONE], program: { passive: { activeRetreatSurchargeBoth: 1 } } },
+    {
+      name: "Gravity Gemstone",
+      ids: [GEMSTONE],
+      program: { passive: { activeRetreatSurchargeBoth: 1 } },
+    },
     {
       name: "Full Metal Lab",
       ids: [FML],
       program: {
         stadium: {
-          damageReductionAfterWR: { amount: 30, beneficiary: { kind: "typedPokemon", pokemonType: "Metal" } },
+          damageReductionAfterWR: {
+            amount: 30,
+            beneficiary: { kind: "typedPokemon", pokemonType: "Metal" },
+          },
         },
       },
     },
@@ -427,23 +479,36 @@ describe("D558 §1 — the prints, and the registry rows that map them", () => {
       name: "Granite Cave",
       ids: [GRANITE],
       program: {
-        stadium: { damageReductionAfterWR: { amount: 30, beneficiary: { kind: "ownerPokemon", owner: "Steven" } } },
+        stadium: {
+          damageReductionAfterWR: {
+            amount: 30,
+            beneficiary: { kind: "ownerPokemon", owner: "Steven" },
+          },
+        },
       },
     },
     {
       name: "Postwick",
       ids: [POSTWICK],
-      program: { stadium: { damageBonusBeforeWR: { amount: 30, attacker: { kind: "ownerPokemon", owner: "Hop" } } } },
+      program: {
+        stadium: {
+          damageBonusBeforeWR: { amount: 30, attacker: { kind: "ownerPokemon", owner: "Hop" } },
+        },
+      },
     },
     {
       name: "N's Castle",
       ids: [NS_CASTLE],
-      program: { stadium: { retreat: { filter: { kind: "ownerPokemon", owner: "N" }, free: true } } },
+      program: {
+        stadium: { retreat: { filter: { kind: "ownerPokemon", owner: "N" }, free: true } },
+      },
     },
     {
       name: "Paradise Resort",
       ids: PARADISE,
-      program: { stadium: { retreat: { filter: { kind: "byName", name: "Psyduck" }, discount: 1 } } },
+      program: {
+        stadium: { retreat: { filter: { kind: "byName", name: "Psyduck" }, discount: 1 } },
+      },
     },
   ];
 
@@ -474,7 +539,12 @@ describe("D558 §1 — the prints, and the registry rows that map them", () => {
           p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] },
         },
       };
-      const { state } = mustApply(board, { type: "attachTool", seat: "p1", uid, target: { spot: "active" } });
+      const { state } = mustApply(board, {
+        type: "attachTool",
+        seat: "p1",
+        uid,
+        target: { spot: "active" },
+      });
       expect(body(state, "p1").tools, id).toEqual([uid]);
     }
     for (const id of [FML, GRANITE, POSTWICK, NS_CASTLE, PARADISE[0]]) {
@@ -526,7 +596,12 @@ describe("D558 §2 — Counter Gain: {C} less while YOU have more Prizes remaini
   });
 
   it("a {C}{C}{C} attack is PAYABLE with TWO Energy (attack.ts reads the same cost)", () => {
-    const two = attachFromDeck(ensureInDeck(p1Ahead(table(BIG)), "p1", "fix-energy"), "p1", "fix-energy", 1);
+    const two = attachFromDeck(
+      ensureInDeck(p1Ahead(table(BIG)), "p1", "fix-energy"),
+      "p1",
+      "fix-energy",
+      1,
+    );
     expect(body(two, "p1").energy).toHaveLength(2);
     expect(applyAction(two, { type: "attack", seat: "p1", index: 0 }).ok).toBe(false);
     expect(dealt(tool(two, "p1", "active", COUNTER_GAIN[0])).dealt).toBe(60);
@@ -617,7 +692,9 @@ describe("D558 §4 — Brave Bangle: +30 to an ex, only on a holder with no Rule
     expect(passivesOf(state, body(state, "p1")).targetConditionalDamageBonusBeforeWR).toEqual([]);
     expect(dealt(state).dealt).toBe(50);
     const plain = tool(table(PLAIN, [], WALL_EX), "p1", "active", BANGLE);
-    expect(passivesOf(plain, body(plain, "p1")).targetConditionalDamageBonusBeforeWR).toHaveLength(1);
+    expect(passivesOf(plain, body(plain, "p1")).targetConditionalDamageBonusBeforeWR).toHaveLength(
+      1,
+    );
   });
 
   it("🛑 R-T1 — a §9 lock over the holder leaves the +30 standing", () => {
@@ -648,7 +725,8 @@ describe("D558 §5 — Air Balloon: {C}{C} less, inside the one floored sum", ()
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D558 §6 — Rescue Board: {C} less, and FREE at 30 remaining HP or less (R-RB)", () => {
-  const board = (damage: number) => setDamage(tool(table(PLAIN), "p1", "active", RESCUE[0]), "p1", damage);
+  const board = (damage: number) =>
+    setDamage(tool(table(PLAIN), "p1", "active", RESCUE[0]), "p1", damage);
 
   it("full HP: 3 → 2", () => {
     expect(retreat(board(0))).toBe(2);
@@ -827,7 +905,7 @@ describe("D558 §10 — Postwick: Hop's Pokémon do 30 more, matched on the ATTA
     expect(seatPreWRDamageBonus(state, "p2", cardOf(HOP), cardOf(PLAIN))).toBe(30);
   });
 
-  it("stacks with Hop's Snorlax \"Extra Helpings\" (noStack keys an Ability name) and the Band", () => {
+  it('stacks with Hop\'s Snorlax "Extra Helpings" (noStack keys an Ability name) and the Band', () => {
     let state = stadium(table(HOP_SNORLAX), POSTWICK);
     expect(dealt(state).bonus).toBe(60);
     state = tool(state, "p1", "active", HOPS_BAND);

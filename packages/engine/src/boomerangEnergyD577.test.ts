@@ -40,25 +40,43 @@ const LOCAL_CARDS: Record<string, Card> = {
     name: "D577 Discarder",
     hp: 900,
     types: ["Colorless"],
-    attacks: [{ cost: [], name: "Fling", damage: 30, effect: "Discard an Energy from this Pokémon." }],
+    attacks: [
+      { cost: [], name: "Fling", damage: 30, effect: "Discard an Energy from this Pokémon." },
+    ],
   }),
   [DOUBLE_DISCARDER]: battler(DOUBLE_DISCARDER, {
     name: "D577 Double Discarder",
     hp: 900,
     types: ["Colorless"],
-    attacks: [{ cost: [], name: "Double Fling", damage: 30, effect: "Discard 2 Energy from this Pokémon." }],
+    attacks: [
+      { cost: [], name: "Double Fling", damage: 30, effect: "Discard 2 Energy from this Pokémon." },
+    ],
   }),
   [TO_HAND]: battler(TO_HAND, {
     name: "D577 To Hand",
     hp: 900,
     types: ["Colorless"],
-    attacks: [{ cost: [], name: "Recall", damage: 10, effect: "Put an Energy attached to this Pokémon into your hand." }],
+    attacks: [
+      {
+        cost: [],
+        name: "Recall",
+        damage: 10,
+        effect: "Put an Energy attached to this Pokémon into your hand.",
+      },
+    ],
   }),
   [STRIPPER]: battler(STRIPPER, {
     name: "D577 Stripper",
     hp: 900,
     types: ["Colorless"],
-    attacks: [{ cost: [], name: "Strip", damage: 10, effect: "Discard an Energy from your opponent's Active Pokémon." }],
+    attacks: [
+      {
+        cost: [],
+        name: "Strip",
+        damage: 10,
+        effect: "Discard an Energy from your opponent's Active Pokémon.",
+      },
+    ],
   }),
   [COPIER]: battler(COPIER, {
     name: "D577 Copier",
@@ -108,7 +126,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -117,7 +136,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -125,15 +146,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -172,7 +200,12 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const place = (seat: Seat, id: string, energyIds: readonly string[]): string[] => {
     let pulled = pull(state, seat, id);
@@ -191,14 +224,18 @@ function table(opts: {
   const oppEnergy = place("p2", opts.oppActive ?? FILLER, opts.oppEnergy ?? []);
   for (const id of opts.bench ?? []) {
     const pulled = pull(state, "p1", id);
-    state = withSide(pulled.state, "p1", { bench: [...pulled.state.players.p1.bench, makeInPlay(pulled.uid, 0)] });
+    state = withSide(pulled.state, "p1", {
+      bench: [...pulled.state.players.p1.bench, makeInPlay(pulled.uid, 0)],
+    });
   }
   return { state, energy, oppEnergy };
 }
 
 describe("D577 Boomerang §1 — the registry row", () => {
   it("provides {C} and carries the one flag", () => {
-    expect(programFor(BOOMERANG)).toEqual({ energy: { provides: ["Colorless"], returnAfterAttackDiscard: true } });
+    expect(programFor(BOOMERANG)).toEqual({
+      energy: { provides: ["Colorless"], returnAfterAttackDiscard: true },
+    });
   });
 
   it("returnsAfterAttackDiscard reads the card, not the zone", () => {
@@ -206,7 +243,10 @@ describe("D577 Boomerang §1 — the registry row", () => {
     // 🆕🆕🆕 D604 — the predicate takes the holder too (Nitro Fire's {R} gate); Boomerang names no type.
     const holder = state.players.p1.active;
     if (holder === null) throw new Error("no Active");
-    expect(energy.map((uid) => returnsAfterAttackDiscard(state, uid, holder))).toEqual([true, false]);
+    expect(energy.map((uid) => returnsAfterAttackDiscard(state, uid, holder))).toEqual([
+      true,
+      false,
+    ]);
   });
 });
 
@@ -236,7 +276,10 @@ describe("D577 Boomerang §2 — its holder's attack discards it: it comes back 
   });
 
   it("a plain Energy discarded beside a Boomerang stays in the discard pile", () => {
-    const { state, energy } = table({ active: DOUBLE_DISCARDER, energy: [BOOMERANG, "fix-energy"] });
+    const { state, energy } = table({
+      active: DOUBLE_DISCARDER,
+      energy: [BOOMERANG, "fix-energy"],
+    });
     const attacked = run(state, { type: "attack", seat: "p1", index: 0 });
     expect(attacked.state.players.p1.active?.energy).toEqual([energy[0]]);
     expect(attacked.state.players.p1.discard).toContain(energy[1]);
@@ -250,7 +293,11 @@ describe("D577 Boomerang §2 — its holder's attack discards it: it comes back 
   });
 
   it("discarded by the OPPONENT's attack: not 'used by the Pokémon this card is attached to' — it stays", () => {
-    const { state, oppEnergy } = table({ active: STRIPPER, oppActive: PLAIN, oppEnergy: [BOOMERANG] });
+    const { state, oppEnergy } = table({
+      active: STRIPPER,
+      oppActive: PLAIN,
+      oppEnergy: [BOOMERANG],
+    });
     const attacked = run(state, { type: "attack", seat: "p1", index: 0 });
     expect(attacked.state.players.p2.active?.energy).toEqual([]);
     expect(attacked.state.players.p2.discard).toContain(oppEnergy[0]);
@@ -260,7 +307,11 @@ describe("D577 Boomerang §2 — its holder's attack discards it: it comes back 
     const { state, energy } = table({ active: COPIER, energy: [BOOMERANG], oppActive: DISCARDER });
     let next = run(state, { type: "attack", seat: "p1", index: 0 }).state;
     if (next.phase.kind === "effect:choose") {
-      next = run(next, { type: "resolveEffect", seat: "p1", choice: { kind: "attack", index: 0 } }).state;
+      next = run(next, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "attack", index: 0 },
+      }).state;
     }
     expect(next.players.p1.active?.energy).toEqual(energy);
     expect(next.players.p1.discard).not.toContain(energy[0]);
@@ -269,11 +320,16 @@ describe("D577 Boomerang §2 — its holder's attack discards it: it comes back 
 
 describe("D577 Boomerang §3 — the epilogue's re-attach, driven at the stage (R-BE2)", () => {
   /** p1's attacker `uid` somewhere on the board, a Boomerang `b` in p1's discard, and the epilogue queued. */
-  function epilogueBoard(where: "active" | "bench" | "gone", damage = 0): { state: GameState; b: string; uid: string } {
+  function epilogueBoard(
+    where: "active" | "bench" | "gone",
+    damage = 0,
+  ): { state: GameState; b: string; uid: string } {
     const { state: base } = table({ active: PLAIN, bench: [FILLER] });
     let state = base;
     const pulled = pull(state, "p1", BOOMERANG);
-    state = withSide(pulled.state, "p1", { discard: [...pulled.state.players.p1.discard, pulled.uid] });
+    state = withSide(pulled.state, "p1", {
+      discard: [...pulled.state.players.p1.discard, pulled.uid],
+    });
     const active = state.players.p1.active;
     const benched = state.players.p1.bench[0];
     if (active === null || benched === undefined) throw new Error("no bodies");
@@ -287,7 +343,13 @@ describe("D577 Boomerang §3 — the epilogue's re-attach, driven at the stage (
     if (damage > 0 && state.players.p1.active !== null) {
       state = withSide(state, "p1", { active: { ...state.players.p1.active, damage } });
     }
-    const epilogue: PendingStage = { kind: "attackEpilogue", seat: "p1", uid, attack: "Tap", boomerang: [pulled.uid] };
+    const epilogue: PendingStage = {
+      kind: "attackEpilogue",
+      seat: "p1",
+      uid,
+      attack: "Tap",
+      boomerang: [pulled.uid],
+    };
     return { state: { ...state, pending: [epilogue] }, b: pulled.uid, uid };
   }
 
@@ -346,7 +408,12 @@ describe("D577 Boomerang §4 — only an ATTACK's program records it (R-BE1, the
     const asAbility = runProgram(state, [op], { seat: "p1", sourceUid: uid }, []);
     expect(asAbility.state.pending).toEqual([epilogue]);
     expect(asAbility.state.players.p1.discard).toContain(energy[0]);
-    const asAttack = runProgram(state, [op], { seat: "p1", sourceUid: uid, invokedBy: "attack" }, []);
+    const asAttack = runProgram(
+      state,
+      [op],
+      { seat: "p1", sourceUid: uid, invokedBy: "attack" },
+      [],
+    );
     expect(asAttack.state.pending).toEqual([{ ...epilogue, boomerang: energy }]);
   });
 
@@ -359,7 +426,12 @@ describe("D577 Boomerang §4 — only an ATTACK's program records it (R-BE1, the
     const uid = state0.players.p1.active?.stack[0] ?? "";
     const epilogue: PendingStage = { kind: "attackEpilogue", seat: "p1", uid, attack: "Fling" };
     const state = { ...state0, pending: [epilogue] };
-    const sweep = { op: "discardEnergy", from: "yours", filter: { kind: "anyEnergy" }, count: "all" } as const;
+    const sweep = {
+      op: "discardEnergy",
+      from: "yours",
+      filter: { kind: "anyEnergy" },
+      count: "all",
+    } as const;
     const ran = runProgram(state, [sweep], { seat: "p1", sourceUid: uid, invokedBy: "attack" }, []);
     expect(ran.kind).toBe("done");
     expect(ran.state.players.p1.discard).toContain(pulled.uid);

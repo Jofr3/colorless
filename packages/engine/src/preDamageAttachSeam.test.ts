@@ -156,9 +156,7 @@ const SPLITTERS = {
 } as const;
 
 function splitVerdicts(text: string): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(SPLITTERS).map(([name, split]) => [name, split(text)]),
-  );
+  return Object.fromEntries(Object.entries(SPLITTERS).map(([name, split]) => [name, split(text)]));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -430,7 +428,9 @@ describe("§6 every branch frees the SAME single row, so the fork was never a fo
     // (B) a destination narrowing on the unbounded hand attach.
     const branchB = residue.filter(([, t]) => /attach[^.]*from your hand/i.test(t));
     // (C) the scaling fold recomputed after the pre-damage hook.
-    const branchC = residue.filter(([, t]) => /[Bb]efore doing damage/.test(t) && /for each/i.test(t));
+    const branchC = residue.filter(
+      ([, t]) => /[Bb]efore doing damage/.test(t) && /for each/i.test(t),
+    );
 
     // 🆕🆕🆕 D552 — INVERTED (D516): the row is BUILT, so it has LEFT the residue and every
     // branch's solo payoff is now EMPTY — none of the three was the route taken (the
@@ -441,8 +441,14 @@ describe("§6 every branch frees the SAME single row, so the fork was never a fo
       ["B", branchB],
       ["C", branchC],
     ] as const) {
-      expect(branch.map(([, t]) => t), `branch ${label}`).toEqual([]);
-      expect(branch.reduce((sum, [n]) => sum + n, 0), `branch ${label}`).toBe(0);
+      expect(
+        branch.map(([, t]) => t),
+        `branch ${label}`,
+      ).toEqual([]);
+      expect(
+        branch.reduce((sum, [n]) => sum + n, 0),
+        `branch ${label}`,
+      ).toBe(0);
     }
     expect(residue.some(([, t]) => t === PRINTED)).toBe(false);
   });

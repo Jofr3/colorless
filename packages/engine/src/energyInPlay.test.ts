@@ -507,7 +507,11 @@ describe("Darkfall — the threshold on a real board", () => {
     // Bench arms the bonus while the Weakness doubles it, and the two layers
     // cannot be confused for each other. A fold that applied the bonus after the
     // multiplier would read 20 × 2 + 50 = 90.
-    const armed = benchDark(absol(setActiveFromDeck(board(10), "p2", "fix-darkness-weak"), "p1"), "p1", 3);
+    const armed = benchDark(
+      absol(setActiveFromDeck(board(10), "p2", "fix-darkness-weak"), "p1"),
+      "p1",
+      3,
+    );
     const { events } = mustApply(armed, { type: "attack", seat: "p1", index: 0 });
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
@@ -546,7 +550,13 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
     // provides every type while it is the only Special attached, so it is a {D}
     // Energy for this clause exactly as it is a {D} Energy for a cost — the D118
     // rule, and the reason the predicate lives beside the provision code.
-    const state = attachBenchFromDeck(benchDark(absol(board(20), "p1"), "p1", 2), "p1", 0, "sv02-191", 1);
+    const state = attachBenchFromDeck(
+      benchDark(absol(board(20), "p1"), "p1", 2),
+      "p1",
+      0,
+      "sv02-191",
+      1,
+    );
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
@@ -558,7 +568,13 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
     // demote each other to {C}, neither counts any more, and the same attacker on
     // the same board scores 20 instead of 70. Provision is a board fact, so the
     // count is too.
-    const state = attachBenchFromDeck(benchDark(absol(board(21), "p1"), "p1", 2), "p1", 0, "sv02-191", 2);
+    const state = attachBenchFromDeck(
+      benchDark(absol(board(21), "p1"), "p1", 2),
+      "p1",
+      0,
+      "sv02-191",
+      2,
+    );
     expect(state.players.p1.bench[0]?.energy).toHaveLength(4); // MORE Energy than the case above
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(2);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
@@ -608,7 +624,12 @@ describe("countEnergyInPlay — the helper, directly", () => {
   });
 
   it("sums the Active and the whole Bench", () => {
-    const state = attachFromDeck(benchDark(absol(board(31), "p1"), "p1", 2), "p1", "fix-darkness-energy", 2);
+    const state = attachFromDeck(
+      benchDark(absol(board(31), "p1"), "p1", 2),
+      "p1",
+      "fix-darkness-energy",
+      2,
+    );
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(4);
   });
 
@@ -629,7 +650,13 @@ describe("countEnergyInPlay — the helper, directly", () => {
     // predicate is `isSpecialEnergy`, the same list Luminous's own condition is
     // evaluated against) and it answers correctly if a printing lands, so it is
     // asserted rather than left untested.
-    const state = attachBenchFromDeck(benchDark(absol(board(33), "p1"), "p1", 2), "p1", 0, "sv02-191", 1);
+    const state = attachBenchFromDeck(
+      benchDark(absol(board(33), "p1"), "p1", 2),
+      "p1",
+      0,
+      "sv02-191",
+      1,
+    );
     expect(countEnergyInPlay(state, "p1", "special")).toBe(1);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3); // the Luminous, both ways
     // Basic Energy are not Special, however many of them there are.
@@ -675,9 +702,9 @@ describe("conditionHolds / conditionNote — the member on its own", () => {
   });
 
   it("renders a note from BOTH parameters", () => {
-    expect(
-      conditionNote({ kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 }),
-    ).toBe("you have at least 3 Darkness Energy in play");
+    expect(conditionNote({ kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 })).toBe(
+      "you have at least 3 Darkness Energy in play",
+    );
     expect(conditionNote({ kind: "yourEnergyInPlayAtLeast", energy: "Metal", count: 1 })).toBe(
       "you have at least 1 Metal Energy in play",
     );

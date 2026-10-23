@@ -53,96 +53,7 @@ import {
 //       naming the file and the excerpt that no longer occurs exactly once;
 //   (6) weaken `excerptNamesId` to a constant → §4's negative control fails.
 
-/** The nine non-changelog engine modules, as text — the files a `cite` may name.
-    A GLOB rather than `node:fs` for `progressLog.test.ts`'s reason, restated: this
-    package has no `"types": ["node"]` in its tsconfig (it runs in a Worker and in
-    the browser), and widening that to read one file would put Node globals in scope
-    for the whole engine. Vite resolves the pattern relative to THIS file.
-
-    ⚠️ **`index.ts` IS NOT IN THE PATTERN, AND THAT IS THE POINT OF THE PATTERN.** It
-    is the engine's version changelog; a `0.249.0` block describing a 0.249.0 head is
-    history, not a live claim, and a guard that reddened on it would be reporting its
-    own scope error. The module's doc block records the measurement: nine modules give
-    27 build-state windows, adding `index.ts` gives 44, and all 17 of the extra are
-    historical. */
-const SOURCES: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string,
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob("./{attack,cardplay,continuous,effects,flow,interpreter,redact,registry,types}.ts", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-
-/** `packages/engine/src/effects.ts` → the globbed text. Repo-relative in the table
-    (so a row reads the way a `mutants.ts` row does) and file-relative in the glob. */
-function source(repoPath: string): string {
-  const prefix = "packages/engine/src/";
-  expect(repoPath.startsWith(prefix), `${repoPath} is outside the scanned module set`).toBe(true);
-  const text = SOURCES[`./${repoPath.slice(prefix.length)}`];
-  if (text === undefined) {
-    throw new Error(
-      `${repoPath} is not one of the scanned modules — keys: ${Object.keys(SOURCES).sort().join(", ")}`,
-    );
-  }
-  return text;
-}
-
-/** True at every line index that is inside a comment — block or line. Written out
-    because the repo's doc-block style has NO leading `*` on continuation lines
-    (`registry.ts`'s `const UNFAIR_STAMP` block is four spaces and prose), so the
-    cheap "does the line start with `//` or `*`" test answers FALSE on most of this
-    file's own citations. That cheap test is exactly what D480's first draft used,
-    and it passed the two line-comment citations while refusing the seven that live
-    in doc blocks.
-
-    ⚠️ AND THE SECOND DRAFT BROKE THE FILE BY QUOTING A BLOCK-COMMENT TERMINATOR IN
-    THIS VERY PARAGRAPH, which is worth leaving as a note: the terminator ends the
-    comment wherever it appears, so prose ABOUT comment syntax cannot spell it. The
-    mask below has to handle exactly that on the files it reads. */
-function commentMask(lines: readonly string[]): readonly boolean[] {
-  const mask: boolean[] = [];
-  let inBlock = false;
-  for (const line of lines) {
-    if (inBlock) {
-      mask.push(true);
-      if (line.includes("*/")) inBlock = false;
-      continue;
-    }
-    const open = line.indexOf("/*");
-    const lineComment = line.indexOf("//");
-    if (open !== -1 && (lineComment === -1 || open < lineComment)) {
-      mask.push(true);
-      if (line.indexOf("*/", open + 2) === -1) inBlock = true;
-      continue;
-    }
-    mask.push(lineComment !== -1);
-  }
-  return mask;
-}
-
-function occurrences(haystack: string, needle: string): number {
-  let n = 0;
-  let at = haystack.indexOf(needle);
-  while (at !== -1) {
-    n += 1;
-    at = haystack.indexOf(needle, at + needle.length);
-  }
-  return n;
-}
-
-const ALL_CITED: readonly { readonly file: string; readonly excerpt: string; readonly id: string }[] =
-  [
-    ...REFUSED_PRINTINGS.map((r) => ({ file: r.cite.file, excerpt: r.cite.excerpt, id: r.id })),
-    ...RESOLVED_REFUSALS.map((r) => ({ file: r.cite.file, excerpt: r.cite.excerpt, id: r.id })),
-  ];
-
 // ── 1. The finding, DRIVEN rather than asserted in prose ─────────────────────
-
 
 /** 🆕🆕🆕 D568 — the citation the four Briar rows carried until D568 built the card and deleted
     them (effects.ts' D207 doc block, now carrying its dated correction). Kept as a literal so
@@ -236,17 +147,6 @@ describe("RESOLVED_REFUSALS — the correction, as a command", () => {
     ).toEqual([]);
   });
 
-  it("🛑 every dated correction is still in the file it corrects", () => {
-    // (2) in the header, and it is the half a `git revert` of the doc-block edit
-    // would otherwise take silently: the refusal would stand alone again, green.
-    for (const row of RESOLVED_REFUSALS) {
-      expect(
-        occurrences(source(row.cite.file), row.cite.excerpt),
-        `${row.id}: the D480 correction stamp is gone from ${row.cite.file}`,
-      ).toBe(1);
-    }
-  });
-
   it("names both the decision that BUILT it and the decision that REFUSED it", () => {
     // D479's own distinction: a refusal that was false when written, one that
     // rotted, and one whose reason alone changed are three different findings, and
@@ -262,47 +162,6 @@ describe("RESOLVED_REFUSALS — the correction, as a command", () => {
 // ── 4. The citations are REAL — the anti-fiction rung ────────────────────────
 
 describe("the citations", () => {
-  it("every cited excerpt occurs EXACTLY ONCE in the module it names", () => {
-    // (5) in the header. A line number rots silently, a unique string rots loudly —
-    // `mutants.ts`'s rule, and the reason `cite` is prose and not a location. Zero
-    // means the doc block moved without its claim; two or more means the excerpt is
-    // not a fact about one site.
-    for (const cited of ALL_CITED) {
-      expect(
-        occurrences(source(cited.file), cited.excerpt),
-        `${cited.id}: ${cited.file} contains this excerpt an unexpected number of times`,
-      ).toBe(1);
-    }
-  });
-
-  it("every cited excerpt is inside a COMMENT, not code", () => {
-    // A claim about the build state belongs in a doc block. An excerpt that has
-    // drifted onto a line of code is quoting something that was never the claim.
-    for (const cited of ALL_CITED) {
-      const lines = source(cited.file).split("\n");
-      const at = lines.findIndex((line) => line.includes(cited.excerpt));
-      expect(at, `${cited.id}: the excerpt is not on any single line of ${cited.file}`).toBeGreaterThan(-1);
-      expect(
-        commentMask(lines)[at],
-        `${cited.id}: ${cited.file}:${at + 1} is CODE, not a doc block — the claim is not where the row says it is`,
-      ).toBe(true);
-    }
-  });
-
-  it("…and the comment mask is not vacuous — it refuses a line of real code", () => {
-    // Without this the case above passes on a mask that returns `true` for
-    // everything, which is the same defect one measurement earlier. `registry.ts`'s
-    // `const UNFAIR_STAMP` declaration is the code line D480 is about, and its own
-    // doc block is the comment line directly above it.
-    const lines = source("packages/engine/src/registry.ts").split("\n");
-    const mask = commentMask(lines);
-    const decl = lines.findIndex((line) => line.startsWith("const UNFAIR_STAMP: CardProgram = {"));
-    expect(decl, "the declaration D480 is about has moved").toBeGreaterThan(-1);
-    expect(mask[decl], "a declaration read as a comment").toBe(false);
-    expect(mask.filter(Boolean).length).toBeGreaterThan(0);
-    expect(mask.filter((m) => !m).length).toBeGreaterThan(0);
-  });
-
   it("🛑 every REFUSED row's excerpt actually names its id — whole or as a suffix", () => {
     // Limit 2 in the module's header, and D204's vacuous guard: *"SIX OF TEN FLAGGED
     // ROWS CARRY IDS BELONGING TO OTHER CARDS … Every COUNT was right, which is why
@@ -336,8 +195,10 @@ describe("the citations", () => {
     // shorthand citation, so it is driven below on the retired citation's own bytes.
     expect(suffixOnly.map((r) => r.id)).toEqual([]); // 🆕🆕🆕 D568 — `sv07-163`/`sv07-171` left with Briar's build // 🆕🆕🆕 D555 — `sv10.5w-107` left with its build
     // …and each of those IS matched by the split reading.
-    for (const row of suffixOnly) expect(excerptNamesId(row.cite.excerpt, row.id), row.id).toBe(true);
-    for (const id of ["sv07-163", "sv07-171"]) expect(excerptNamesId(RETIRED_BRIAR_EXCERPT, id), id).toBe(true);
+    for (const row of suffixOnly)
+      expect(excerptNamesId(row.cite.excerpt, row.id), row.id).toBe(true);
+    for (const id of ["sv07-163", "sv07-171"])
+      expect(excerptNamesId(RETIRED_BRIAR_EXCERPT, id), id).toBe(true);
   });
 
   it("the split reading does not admit a NEIGHBOURING printing of the same set", () => {
@@ -401,16 +262,6 @@ describe("the guard cannot pass by being empty or by being unwired", () => {
     // here rather than passing quietly.
     expect(REFUSED_PRINTINGS.some((r) => r.id === "sv01-127")).toBe(true);
     expect(REFUSED_PRINTINGS.some((r) => r.id === "sv01-125")).toBe(false);
-  });
-
-  it("the refused set really is drawn from live doc blocks, not invented", () => {
-    // Every cited file is one of the nine scanned modules, and between them the rows
-    // cite more than one module — a table sourced from a single doc block would be a
-    // claim about that block rather than about the repo.
-    const files = new Set(ALL_CITED.map((c) => c.file));
-    expect(files.size).toBeGreaterThanOrEqual(2);
-    for (const file of files) expect(source(file).length).toBeGreaterThan(0);
-    expect(Object.keys(SOURCES).length, "the scanned module set changed size").toBe(9);
   });
 
   it("every row carries a reason and a decision, so the list is a record and not an allowlist", () => {

@@ -349,7 +349,8 @@ globalThis.Module = {
       document.title = pageTitle();
       canvas.focus({ preventScroll: true });
     } else if (message.startsWith("COLORLESS:transition-art:")) {
-      const [, action, token] = message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
+      const [, action, token] =
+        message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
       if (token) void consumeTransitionArt(Number(token), action === "invalid");
     } else if (message.startsWith("COLORLESS:transition:")) {
       transitionOpen = message.endsWith(":open");
@@ -488,7 +489,8 @@ canvas.addEventListener("webglcontextlost", (event) => {
 canvas.addEventListener("keydown", (event) => {
   if (
     ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code) ||
-    ((settingsOpen || libraryPage) && ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code))
+    ((settingsOpen || libraryPage) &&
+      ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code))
   )
     event.preventDefault();
 });
@@ -524,13 +526,16 @@ addEventListener(
 // (simulator), /online, /online/<code> and /online/<code>/play (match). Old
 // query URLs (/?page=decks, /?lobby=CODE), /simulator, /match/<code> and
 // React's /lobby/<code> still resolve and are rewritten.
-const pages = ["decks","builder","sandbox","simulator","online","match"];
+const pages = ["decks", "builder", "sandbox", "simulator", "online", "match"];
 const pageIds = { builder: "deck", online: "lobby", match: "lobby" };
 function routeFromLocation() {
   const params = new URLSearchParams(location.search);
   const legacy = params.get("page") || (params.has("lobby") ? "online" : "");
   if (legacy) return { page: legacy, id: params.get(pageIds[legacy] || "deck") || "" };
-  const [first = "", second = "", third = ""] = location.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+  const [first = "", second = "", third = ""] = location.pathname
+    .split("/")
+    .filter(Boolean)
+    .map(decodeURIComponent);
   if (first === "decks" && second) return { page: "builder", id: second };
   if (first === "sandbox" && second === "play") return { page: "simulator", id: "" };
   if (first === "online" && second && third === "play") return { page: "match", id: second };
@@ -548,7 +553,7 @@ function routeUrl(page, id) {
   const url = new URL(location.href);
   url.pathname = routePath(page, id);
   // Only rewrite the query when a legacy parameter is present, so ?settings keeps its form.
-  const legacy = ["page", ...Object.values(pageIds)].filter(param => url.searchParams.has(param));
+  const legacy = ["page", ...Object.values(pageIds)].filter((param) => url.searchParams.has(param));
   for (const param of legacy) url.searchParams.delete(param);
   return url;
 }
@@ -574,47 +579,72 @@ function pageTitle() {
   return `Colorless — ${currentPage === "simulator" ? "Simulator" : currentPage === "match" ? "Online match" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : currentPage === "online" ? "Online" : libraryPage ? "Decks" : "Home"}`;
 }
 function canvasLabel() {
-  return currentPage === "simulator" ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "match" ? "Online game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : currentPage === "online" ? "Online lobby. Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back." : libraryPage
-    ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
-    : "Colorless main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
+  return currentPage === "simulator"
+    ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options."
+    : currentPage === "match"
+      ? "Online game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options."
+      : currentPage === "sandbox"
+        ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home."
+        : currentPage === "online"
+          ? "Online lobby. Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back."
+          : libraryPage
+            ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
+            : "Colorless main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
 }
 function syncPage() {
   syncModalAccessibility();
-  writeMailbox("__page.txt", [ ++pageRevision, currentPage, pageId ].map(encodeURIComponent).join("\t"));
+  writeMailbox(
+    "__page.txt",
+    [++pageRevision, currentPage, pageId].map(encodeURIComponent).join("\t"),
+  );
   document.title = pageTitle();
   canvas.setAttribute("aria-label", canvasLabel());
 }
 function setPage(page, push = true, id = "", saved = false) {
-  if(currentPage === "builder" && !saved && (page !== currentPage || id !== pageId)) {
+  if (currentPage === "builder" && !saved && (page !== currentPage || id !== pageId)) {
     finishBuilderInput();
-    history.replaceState(null,"",routeUrl("builder",pageId));
-    document.dispatchEvent(new CustomEvent("colorless:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
+    history.replaceState(null, "", routeUrl("builder", pageId));
+    document.dispatchEvent(
+      new CustomEvent("colorless:builder-leave", { detail: () => setPage(page, push, id, true) }),
+    );
+    return;
   }
-  finishLibraryInput(); finishBuilderInput();
+  finishLibraryInput();
+  finishBuilderInput();
   currentPage = pages.includes(page) ? page : "home";
   pageId = pageIds[currentPage] ? id : "";
   libraryPage = currentPage !== "home";
   const url = routeUrl(currentPage, pageId);
   url.searchParams.delete("account");
   url.searchParams.delete("settings");
-  if (push) history.pushState(null, "", url); else history.replaceState(null, "", url);
+  if (push) history.pushState(null, "", url);
+  else history.replaceState(null, "", url);
   syncPage();
 }
 addEventListener("popstate", () => {
   const { page, id } = routeFromLocation();
   setPage(page, false, id);
 });
-document.getElementById("decks-link").addEventListener("click", event => {
+document.getElementById("decks-link").addEventListener("click", (event) => {
   if (!ready) return;
-  event.preventDefault(); setPage("decks"); canvas.focus({preventScroll:true});
+  event.preventDefault();
+  setPage("decks");
+  canvas.focus({ preventScroll: true });
 });
-document.getElementById("online-link").addEventListener("click", event => {
+document.getElementById("online-link").addEventListener("click", (event) => {
   if (!ready) return;
-  event.preventDefault(); setPage("online"); canvas.focus({preventScroll:true});
+  event.preventDefault();
+  setPage("online");
+  canvas.focus({ preventScroll: true });
 });
-document.addEventListener("colorless:library-state", event => writeMailbox("__library.txt", event.detail));
+document.addEventListener("colorless:library-state", (event) =>
+  writeMailbox("__library.txt", event.detail),
+);
 function libraryCommand(command, owner = "library") {
-  if (!accountReady) { pendingLibraryCommands.push(command); return; }
+  if (!accountReady) {
+    pendingLibraryCommands.push(command);
+    return;
+  }
   const [action, field, value] = command.split("\t").map(decodeURIComponent);
   if (action === "input") {
     finishLibraryInput();
@@ -624,19 +654,27 @@ function libraryCommand(command, owner = "library") {
     // The code field caps itself in normalizeCode, so a pasted link or "AB-CD" survives.
     libraryInput.maxLength = 100;
     libraryInput.inputMode = "text";
-    if (code) { libraryInput.autocapitalize = "characters"; libraryInput.spellcheck = false; }
-    else { libraryInput.removeAttribute("autocapitalize"); libraryInput.removeAttribute("spellcheck"); }
+    if (code) {
+      libraryInput.autocapitalize = "characters";
+      libraryInput.spellcheck = false;
+    } else {
+      libraryInput.removeAttribute("autocapitalize");
+      libraryInput.removeAttribute("spellcheck");
+    }
     libraryInput.value = value || "";
     libraryOriginal = libraryInput.value;
-    libraryInput.setAttribute("aria-label", code ? "Lobby code" : field === "search" ? "Search decks" : "Deck name");
+    libraryInput.setAttribute(
+      "aria-label",
+      code ? "Lobby code" : field === "search" ? "Search decks" : "Deck name",
+    );
     libraryInput.hidden = false;
-    libraryInput.focus({preventScroll:true});
+    libraryInput.focus({ preventScroll: true });
     // A code typed before the field opened keeps its caret at the end.
     if (code) libraryInput.setSelectionRange(libraryInput.value.length, libraryInput.value.length);
     else libraryInput.select();
     publishLibraryInput();
   } else if (action === "finish-input") finishLibraryInput();
-  else document.dispatchEvent(new CustomEvent("colorless:library-command", {detail:command}));
+  else document.dispatchEvent(new CustomEvent("colorless:library-command", { detail: command }));
 }
 const libraryInput = document.createElement("input");
 libraryInput.className = "sr-only";
@@ -650,8 +688,19 @@ let libraryField = "";
 let libraryOriginal = "";
 let libraryInputRevision = 0;
 function publishLibraryInput(action = "input", field = libraryField) {
-  writeMailbox(`__${libraryInputOwner}_input.txt`, [++libraryInputRevision, field, libraryInput.value,
-    libraryInput.selectionStart || 0, libraryInput.selectionEnd || 0, action].map(encodeURIComponent).join("\t"));
+  writeMailbox(
+    `__${libraryInputOwner}_input.txt`,
+    [
+      ++libraryInputRevision,
+      field,
+      libraryInput.value,
+      libraryInput.selectionStart || 0,
+      libraryInput.selectionEnd || 0,
+      action,
+    ]
+      .map(encodeURIComponent)
+      .join("\t"),
+  );
 }
 function finishLibraryInput(action = "done", cancel = false) {
   if (!libraryField) return;
@@ -660,177 +709,340 @@ function finishLibraryInput(action = "done", cancel = false) {
   libraryField = "";
   libraryInput.hidden = true;
   publishLibraryInput(action, field);
-  canvas.focus({preventScroll:true});
+  canvas.focus({ preventScroll: true });
 }
 // Lobby codes use normalizeLobbyCode's alphabet: upper-case, no look-alikes.
 const lobbyAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-const normalizeCode = value => [...value.toUpperCase()].filter(c => lobbyAlphabet.includes(c)).join("").slice(0, 4);
+const normalizeCode = (value) =>
+  [...value.toUpperCase()]
+    .filter((c) => lobbyAlphabet.includes(c))
+    .join("")
+    .slice(0, 4);
 libraryInput.addEventListener("input", () => {
   if (libraryInputOwner === "online" && libraryField === "code") {
     // A pasted invite link (/online/CODE, or an old /?lobby=CODE) yields its code.
     const link = /(?:[?&]lobby=|\/(?:online|lobby|match)\/)([^&#?/\s]+)/i.exec(libraryInput.value);
     const value = normalizeCode(link ? link[1] : libraryInput.value);
-    const caret = link ? value.length : normalizeCode(libraryInput.value.slice(0, libraryInput.selectionStart || 0)).length;
+    const caret = link
+      ? value.length
+      : normalizeCode(libraryInput.value.slice(0, libraryInput.selectionStart || 0)).length;
     libraryInput.value = value;
     libraryInput.setSelectionRange(caret, caret);
   }
   publishLibraryInput();
 });
-libraryInput.addEventListener("select", () => { if (libraryField) publishLibraryInput(); });
+libraryInput.addEventListener("select", () => {
+  if (libraryField) publishLibraryInput();
+});
 libraryInput.addEventListener("blur", () => finishLibraryInput());
-for (const type of ["keydown", "keyup", "keypress"]) window.addEventListener(type, event => {
-  if (event.target !== libraryInput) return;
-  event.stopImmediatePropagation();
-  if (type === "keyup" && libraryField) publishLibraryInput();
-  if (type === "keydown" && !event.isComposing && ["Enter", "Escape", "Tab"].includes(event.key)) {
-    event.preventDefault(); finishLibraryInput(event.key === "Enter" ? "enter" : "done", event.key === "Escape");
-  }
-}, true);
+for (const type of ["keydown", "keyup", "keypress"])
+  window.addEventListener(
+    type,
+    (event) => {
+      if (event.target !== libraryInput) return;
+      event.stopImmediatePropagation();
+      if (type === "keyup" && libraryField) publishLibraryInput();
+      if (
+        type === "keydown" &&
+        !event.isComposing &&
+        ["Enter", "Escape", "Tab"].includes(event.key)
+      ) {
+        event.preventDefault();
+        finishLibraryInput(event.key === "Enter" ? "enter" : "done", event.key === "Escape");
+      }
+    },
+    true,
+  );
 
 // Deck builder: browser-native text/clipboard and artwork transport only.
-document.addEventListener("colorless:route", e => setPage(e.detail.page, !e.detail.replace, e.detail.id || ""));
-document.addEventListener("colorless:builder-state", e => {
+document.addEventListener("colorless:route", (e) =>
+  setPage(e.detail.page, !e.detail.replace, e.detail.id || ""),
+);
+document.addEventListener("colorless:builder-state", (e) => {
   writeMailbox("__builder.txt", e.detail);
-  if(currentPage === "builder") {
-    const f=e.detail.split("\n")[0].split("\t").map(decodeURIComponent);
-    document.title=`Colorless — ${f[2] || "Deck builder"}`;
-    canvas.setAttribute("aria-label", `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`);
+  if (currentPage === "builder") {
+    const f = e.detail.split("\n")[0].split("\t").map(decodeURIComponent);
+    document.title = `Colorless — ${f[2] || "Deck builder"}`;
+    canvas.setAttribute(
+      "aria-label",
+      `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`,
+    );
   }
 });
 const builderInput = document.createElement("textarea");
-builderInput.className="sr-only"; builderInput.hidden=true; builderInput.style.fontSize="16px";
+builderInput.className = "sr-only";
+builderInput.hidden = true;
+builderInput.style.fontSize = "16px";
 document.querySelector("main").append(builderInput);
-let builderField="", builderOriginal="", builderInputRevision=0;
-function publishBuilderInput(action="input",field=builderField) {
-  writeMailbox("__builder_input.txt",[++builderInputRevision,field,builderInput.value,builderInput.selectionStart,builderInput.selectionEnd,action].map(encodeURIComponent).join("\t"));
-  if(field!=="transfer")builderInput.value=builderInput.value.replace(/[\r\n]/g," ");
-  if(field==="name") dispatchBuilder("name",builderInput.value);
-  else if(field==="optionQuery") dispatchBuilder("option-query",builderInput.value);
-  else if(field!=="transfer") dispatchBuilder("filter",field,builderInput.value);
+let builderField = "",
+  builderOriginal = "",
+  builderInputRevision = 0;
+function publishBuilderInput(action = "input", field = builderField) {
+  writeMailbox(
+    "__builder_input.txt",
+    [
+      ++builderInputRevision,
+      field,
+      builderInput.value,
+      builderInput.selectionStart,
+      builderInput.selectionEnd,
+      action,
+    ]
+      .map(encodeURIComponent)
+      .join("\t"),
+  );
+  if (field !== "transfer") builderInput.value = builderInput.value.replace(/[\r\n]/g, " ");
+  if (field === "name") dispatchBuilder("name", builderInput.value);
+  else if (field === "optionQuery") dispatchBuilder("option-query", builderInput.value);
+  else if (field !== "transfer") dispatchBuilder("filter", field, builderInput.value);
 }
-function dispatchBuilder(...args) {document.dispatchEvent(new CustomEvent("colorless:builder-command",{detail:args.map(encodeURIComponent).join("\t")}));}
-function finishBuilderInput(cancel=false) {
-  if(!builderField)return;
-  const field=builderField;builderField="";
-  if(cancel)builderInput.value=builderOriginal;
-  publishBuilderInput("done",field);builderInput.hidden=true;canvas.focus({preventScroll:true});
+function dispatchBuilder(...args) {
+  document.dispatchEvent(
+    new CustomEvent("colorless:builder-command", {
+      detail: args.map(encodeURIComponent).join("\t"),
+    }),
+  );
+}
+function finishBuilderInput(cancel = false) {
+  if (!builderField) return;
+  const field = builderField;
+  builderField = "";
+  if (cancel) builderInput.value = builderOriginal;
+  publishBuilderInput("done", field);
+  builderInput.hidden = true;
+  canvas.focus({ preventScroll: true });
 }
 function builderCommand(command) {
-  if(!accountReady){pendingBuilderCommands.push(command);return;}
-  const [action,field,value]=command.split("\t").map(decodeURIComponent);
-  if(action==="input") {
-    finishBuilderInput();builderField=field;builderInput.value=value||"";builderOriginal=builderInput.value;
-    builderInput.maxLength=field==="transfer"?30000:field==="name"?100:300;
-    builderInput.setAttribute("aria-label",field==="transfer"?"Decklist. Paste your list here.":field);
-    builderInput.hidden=false;builderInput.focus({preventScroll:true});builderInput.select();publishBuilderInput();
-  } else if(action==="finish-input")finishBuilderInput();
-  else if(action==="copy") {
-    navigator.clipboard.writeText(field).then(()=>writeMailbox("__builder_clipboard.txt",`${Date.now()}\tCopied decklist.`),()=>writeMailbox("__builder_clipboard.txt",`${Date.now()}\tCopy failed. Select the decklist and use your copy shortcut.`));
-  } else document.dispatchEvent(new CustomEvent("colorless:builder-command",{detail:command}));
-}
-builderInput.addEventListener("input",()=>publishBuilderInput());
-builderInput.addEventListener("select",()=>{if(builderField)publishBuilderInput();});
-builderInput.addEventListener("blur",()=>finishBuilderInput());
-for(const type of ["keydown","keyup","keypress"])window.addEventListener(type,event=>{
-  if(event.target!==builderInput)return;
-  event.stopImmediatePropagation();
-  if(type==="keyup"&&builderField)publishBuilderInput();
-  if(type==="keydown"&&!event.isComposing&&(event.key==="Escape"||event.key==="Tab"||(event.key==="Enter"&&builderField!=="transfer"))) {
-    event.preventDefault();finishBuilderInput(event.key==="Escape");
+  if (!accountReady) {
+    pendingBuilderCommands.push(command);
+    return;
   }
-},true);
-const artCache=new Map(), artPending=new Set(), artFailed=new Map();
-let artRevision=0, artSerial=0, artActive=0, wantedArt=[];
-function publishArt(){writeMailbox("__builder_art.txt",[++artRevision,...[...artCache].map(([id,path])=>[id,path].map(encodeURIComponent).join("\t"))].join("\n"));}
+  const [action, field, value] = command.split("\t").map(decodeURIComponent);
+  if (action === "input") {
+    finishBuilderInput();
+    builderField = field;
+    builderInput.value = value || "";
+    builderOriginal = builderInput.value;
+    builderInput.maxLength = field === "transfer" ? 30000 : field === "name" ? 100 : 300;
+    builderInput.setAttribute(
+      "aria-label",
+      field === "transfer" ? "Decklist. Paste your list here." : field,
+    );
+    builderInput.hidden = false;
+    builderInput.focus({ preventScroll: true });
+    builderInput.select();
+    publishBuilderInput();
+  } else if (action === "finish-input") finishBuilderInput();
+  else if (action === "copy") {
+    navigator.clipboard.writeText(field).then(
+      () => writeMailbox("__builder_clipboard.txt", `${Date.now()}\tCopied decklist.`),
+      () =>
+        writeMailbox(
+          "__builder_clipboard.txt",
+          `${Date.now()}\tCopy failed. Select the decklist and use your copy shortcut.`,
+        ),
+    );
+  } else document.dispatchEvent(new CustomEvent("colorless:builder-command", { detail: command }));
+}
+builderInput.addEventListener("input", () => publishBuilderInput());
+builderInput.addEventListener("select", () => {
+  if (builderField) publishBuilderInput();
+});
+builderInput.addEventListener("blur", () => finishBuilderInput());
+for (const type of ["keydown", "keyup", "keypress"])
+  window.addEventListener(
+    type,
+    (event) => {
+      if (event.target !== builderInput) return;
+      event.stopImmediatePropagation();
+      if (type === "keyup" && builderField) publishBuilderInput();
+      if (
+        type === "keydown" &&
+        !event.isComposing &&
+        (event.key === "Escape" ||
+          event.key === "Tab" ||
+          (event.key === "Enter" && builderField !== "transfer"))
+      ) {
+        event.preventDefault();
+        finishBuilderInput(event.key === "Escape");
+      }
+    },
+    true,
+  );
+const artCache = new Map(),
+  artPending = new Set(),
+  artFailed = new Map();
+let artRevision = 0,
+  artSerial = 0,
+  artActive = 0,
+  wantedArt = [];
+function publishArt() {
+  writeMailbox(
+    "__builder_art.txt",
+    [
+      ++artRevision,
+      ...[...artCache].map(([id, path]) => [id, path].map(encodeURIComponent).join("\t")),
+    ].join("\n"),
+  );
+}
 // The full pool stays in IndexedDB. Stage one PNG for the next transition;
 // Lua acknowledges it only after retaining the image and border on the GPU.
-let transitionArt=null, transitionArtSerial=0, transitionPreparing=null, transitionConsuming=false;
+let transitionArt = null,
+  transitionArtSerial = 0,
+  transitionPreparing = null,
+  transitionConsuming = false;
 async function prepareTransitionArt() {
-  const cache=window.colorlessArtworkCache;
-  if(!runtime||!cache||transitionArt||transitionConsuming)return;
-  if(transitionPreparing)return transitionPreparing;
-  transitionPreparing=(async()=>{
-    const selected=await cache.pick();if(!selected)return;
-    const bytes=new Uint8Array(await selected.blob.arrayBuffer());
-    const token=++transitionArtSerial,path=`__transition_art_${token}.png`;
-    runtime.FS_createDataFile("/",path,bytes,true,true);
-    transitionArt={token,id:selected.id,path};
-    writeMailbox("__transition_art.txt",[token,selected.id,path].map(encodeURIComponent).join("\t"));
-  })().catch(()=>{}).finally(()=>{transitionPreparing=null;});
+  const cache = window.colorlessArtworkCache;
+  if (!runtime || !cache || transitionArt || transitionConsuming) return;
+  if (transitionPreparing) return transitionPreparing;
+  transitionPreparing = (async () => {
+    const selected = await cache.pick();
+    if (!selected) return;
+    const bytes = new Uint8Array(await selected.blob.arrayBuffer());
+    const token = ++transitionArtSerial,
+      path = `__transition_art_${token}.png`;
+    runtime.FS_createDataFile("/", path, bytes, true, true);
+    transitionArt = { token, id: selected.id, path };
+    writeMailbox(
+      "__transition_art.txt",
+      [token, selected.id, path].map(encodeURIComponent).join("\t"),
+    );
+  })()
+    .catch(() => {})
+    .finally(() => {
+      transitionPreparing = null;
+    });
   return transitionPreparing;
 }
-async function consumeTransitionArt(token,invalid) {
-  if(!transitionArt||transitionArt.token!==token)return;
-  transitionConsuming=true;
-  const selected=transitionArt;transitionArt=null;
-  writeMailbox("__transition_art.txt","");
-  try{runtime.FS_unlink(`/${selected.path}`);}catch{}
-  const cache=window.colorlessArtworkCache;
+async function consumeTransitionArt(token, invalid) {
+  if (!transitionArt || transitionArt.token !== token) return;
+  transitionConsuming = true;
+  const selected = transitionArt;
+  transitionArt = null;
+  writeMailbox("__transition_art.txt", "");
   try {
-    if(invalid)await cache?.remove(selected.id);
+    runtime.FS_unlink(`/${selected.path}`);
+  } catch {}
+  const cache = window.colorlessArtworkCache;
+  try {
+    if (invalid) await cache?.remove(selected.id);
     else await cache?.markShown(selected.id);
-  } finally {transitionConsuming=false;}
+  } finally {
+    transitionConsuming = false;
+  }
   await prepareTransitionArt();
 }
 async function loadArt(card) {
-  artActive++;artPending.add(card.id);
+  artActive++;
+  artPending.add(card.id);
   try {
-    const cache=window.colorlessArtworkCache;
-    let blob=await cache?.get(card.id);
-    if(!blob){
-      const response=await fetch(card.url);if(!response.ok)throw Error("art");
-      const bitmap=await createImageBitmap(await response.blob());
+    const cache = window.colorlessArtworkCache;
+    let blob = await cache?.get(card.id);
+    if (!blob) {
+      const response = await fetch(card.url);
+      if (!response.ok) throw Error("art");
+      const bitmap = await createImageBitmap(await response.blob());
       // Twice card_dimensions.lua's 136×187 artwork area (the scan's 8:11
       // ratio), excluding the equal inset added by the Lua frame renderer.
-      const c=document.createElement("canvas");c.width=272;c.height=374;
-      c.getContext("2d").drawImage(bitmap,0,0,c.width,c.height);bitmap.close();
-      blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
-      if(blob&&cache)void cache.put(card.id,blob).then(()=>prepareTransitionArt());
+      const c = document.createElement("canvas");
+      c.width = 272;
+      c.height = 374;
+      c.getContext("2d").drawImage(bitmap, 0, 0, c.width, c.height);
+      bitmap.close();
+      blob = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
+      if (blob && cache) void cache.put(card.id, blob).then(() => prepareTransitionArt());
     }
-    if(!runtime||!blob)throw Error("art");
-    const path=`__card_art_${++artSerial}.png`;
-    runtime.FS_createDataFile("/",path,new Uint8Array(await blob.arrayBuffer()),true,true);
-    artCache.set(card.id,path);
-    while(artCache.size>96){const [id,old]=artCache.entries().next().value;runtime.FS_unlink(`/${old}`);artCache.delete(id);}
+    if (!runtime || !blob) throw Error("art");
+    const path = `__card_art_${++artSerial}.png`;
+    runtime.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
+    artCache.set(card.id, path);
+    while (artCache.size > 96) {
+      const [id, old] = artCache.entries().next().value;
+      runtime.FS_unlink(`/${old}`);
+      artCache.delete(id);
+    }
     publishArt();
-  } catch {artFailed.set(card.id,Date.now());}
-  finally {artPending.delete(card.id);artActive--;pumpArt();}
+  } catch {
+    artFailed.set(card.id, Date.now());
+  } finally {
+    artPending.delete(card.id);
+    artActive--;
+    pumpArt();
+  }
 }
-function pumpArt(){
-  for(const card of wantedArt){
-    if(artActive>=4)break;
-    if(!artCache.has(card.id)&&!artPending.has(card.id)&&Date.now()-(artFailed.get(card.id)||0)>30000)void loadArt(card);
+function pumpArt() {
+  for (const card of wantedArt) {
+    if (artActive >= 4) break;
+    if (
+      !artCache.has(card.id) &&
+      !artPending.has(card.id) &&
+      Date.now() - (artFailed.get(card.id) || 0) > 30000
+    )
+      void loadArt(card);
   }
 }
 // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
 // them at the 96 kept here); touch them lowest first so eviction spares the head.
-document.addEventListener("colorless:builder-images",e=>{wantedArt=e.detail;for(const c of [...wantedArt].reverse()){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});
+document.addEventListener("colorless:builder-images", (e) => {
+  wantedArt = e.detail;
+  for (const c of [...wantedArt].reverse()) {
+    if (artCache.has(c.id)) {
+      const path = artCache.get(c.id);
+      artCache.delete(c.id);
+      artCache.set(c.id, path);
+    }
+  }
+  pumpArt();
+});
 
 // Sandbox API transport. The chooser and its controls are rendered in Lua.
-document.addEventListener("colorless:sandbox-state", event => writeMailbox("__sandbox.txt", event.detail));
+document.addEventListener("colorless:sandbox-state", (event) =>
+  writeMailbox("__sandbox.txt", event.detail),
+);
 function sandboxCommand(command) {
-  if (!accountReady) { pendingSandboxCommands.push(command); return; }
+  if (!accountReady) {
+    pendingSandboxCommands.push(command);
+    return;
+  }
   const action = command.split("\t")[0];
-  if (action === "input" || action === "finish-input") { libraryCommand(command, "sandbox"); return; }
-  document.dispatchEvent(new CustomEvent("colorless:sandbox-command", {detail: command}));
+  if (action === "input" || action === "finish-input") {
+    libraryCommand(command, "sandbox");
+    return;
+  }
+  document.dispatchEvent(new CustomEvent("colorless:sandbox-command", { detail: command }));
 }
-document.getElementById("sandbox-link").addEventListener("click", event => {
+document.getElementById("sandbox-link").addEventListener("click", (event) => {
   if (!ready) return;
-  event.preventDefault(); simulatorCommand("resume"); canvas.focus({preventScroll:true});
+  event.preventDefault();
+  simulatorCommand("resume");
+  canvas.focus({ preventScroll: true });
 });
 
 // Full Lua game page; it shares the existing image cache and local engine host.
-document.addEventListener("colorless:simulator-state", event => writeMailbox("__simulator.txt", event.detail));
+document.addEventListener("colorless:simulator-state", (event) =>
+  writeMailbox("__simulator.txt", event.detail),
+);
 function simulatorCommand(command) {
-  if (!accountReady) { pendingSimulatorCommands.push(command); return; }
-  document.dispatchEvent(new CustomEvent("colorless:simulator-command", {detail: command}));
+  if (!accountReady) {
+    pendingSimulatorCommands.push(command);
+    return;
+  }
+  document.dispatchEvent(new CustomEvent("colorless:simulator-command", { detail: command }));
 }
 
 // Online lobby transport. The modal is Lua; LuaOnline (online.ts) owns the socket.
-document.addEventListener("colorless:online-state", event => writeMailbox("__online.txt", event.detail));
+document.addEventListener("colorless:online-state", (event) =>
+  writeMailbox("__online.txt", event.detail),
+);
 function onlineCommand(command) {
-  if (!accountReady) { pendingOnlineCommands.push(command); return; }
+  if (!accountReady) {
+    pendingOnlineCommands.push(command);
+    return;
+  }
   const action = command.split("\t")[0];
-  if (action === "input" || action === "finish-input") { libraryCommand(command, "online"); return; }
-  document.dispatchEvent(new CustomEvent("colorless:online-command", {detail: command}));
+  if (action === "input" || action === "finish-input") {
+    libraryCommand(command, "online");
+    return;
+  }
+  document.dispatchEvent(new CustomEvent("colorless:online-command", { detail: command }));
 }

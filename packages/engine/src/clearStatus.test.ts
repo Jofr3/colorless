@@ -134,7 +134,12 @@ function board(mine: string, theirs = "fix-titan", seed = SEED): GameState {
 /** {P}{P}{C} onto the seat's Active — Miracle Force's printed cost, and the only
     typed cost anything in `CLEAR_STATUS_DECK` can pay. */
 function energised(state: GameState, seat: Seat = "p1"): GameState {
-  return attachFromDeck(attachFromDeck(state, seat, "fix-psychic-energy", 2), seat, "fix-energy", 1);
+  return attachFromDeck(
+    attachFromDeck(state, seat, "fix-psychic-energy", 2),
+    seat,
+    "fix-energy",
+    1,
+  );
 }
 
 /** A Gardevoir ex on turn, energised, with `conditions` already on it. */
@@ -324,7 +329,11 @@ describe("the ATTACK half — Miracle Force", () => {
       confusionDamage: 30,
     });
     const cleared = find(done.events, "STATUS_CLEARED");
-    expect(cleared).toMatchObject({ seat: "p1", statuses: ["poisoned", "burned"], reason: "recovered" });
+    expect(cleared).toMatchObject({
+      seat: "p1",
+      statuses: ["poisoned", "burned"],
+      reason: "recovered",
+    });
     // The recovery is a RIDER, not a replacement: the attack's own damage is
     // untouched by it (fix-titan is 340 HP, so nothing dies and the number shows).
     expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 190 });
@@ -370,11 +379,7 @@ describe("the ATTACK half — Miracle Force", () => {
     // Poisons Gardevoir for 20/checkup, the Checkup ticks it once, and p1's own
     // Miracle Force takes it off — so the condition, its damage and its removal
     // are all the engine's, and the ONE thing surgery placed is the energy.
-    let state = driveSetup(
-      SEED,
-      { p1: CLEAR_STATUS_DECK, p2: CLEAR_STATUS_DECK },
-      { first: "p1" },
-    );
+    let state = driveSetup(SEED, { p1: CLEAR_STATUS_DECK, p2: CLEAR_STATUS_DECK }, { first: "p1" });
     state = setActiveFromDeck(state, "p1", "sv01-086");
     state = energised(state, "p1");
     state = setActiveFromDeck(state, "p2", "fix-statuser");
@@ -416,7 +421,12 @@ describe("the ATTACK half — Miracle Force", () => {
     // ATTACKER's. The printed subject is "This Pokémon"; a `target` field guessed
     // at from one reading is what this case exists to refuse.
     let state = gardevoir({ burned: true });
-    state = setConditions(state, "p2", { rotation: "asleep", poisonDamage: 10, burned: true, confusionDamage: 30 });
+    state = setConditions(state, "p2", {
+      rotation: "asleep",
+      poisonDamage: 10,
+      burned: true,
+      confusionDamage: 30,
+    });
     const done = swing(state, "miracleForce");
     expect(conditionsOf(done.state, "p1")?.burned).toBe(false);
     const theirs = conditionsOf(done.state, "p2");
@@ -434,7 +444,9 @@ describe("the ATTACK half — Miracle Force", () => {
     // One vocabulary word for one printed verb: the CONTINUOUS half (sv02-193)
     // renders through the same log arm, which is D131's widen-don't-add rule
     // holding on the read side as well as the write side.
-    expect(logLines(done.state, done.events).filter((l) => l.includes("recovered"))).toHaveLength(1);
+    expect(logLines(done.state, done.events).filter((l) => l.includes("recovered"))).toHaveLength(
+      1,
+    );
   });
 });
 
@@ -583,14 +595,15 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
     // inert. Driven with a rotation state, Poison AND Burn on one body at once,
     // which is the maximum §12 can hold (one rotation slot).
     const done = mustApply(
-      blisseyBoard("active", { rotation: "asleep", poisonDamage: 30, burned: true, confusionDamage: 30 }),
+      blisseyBoard("active", {
+        rotation: "asleep",
+        poisonDamage: 30,
+        burned: true,
+        confusionDamage: 30,
+      }),
       nurse(),
     );
-    expect(find(done.events, "STATUS_CLEARED")?.statuses).toEqual([
-      "asleep",
-      "poisoned",
-      "burned",
-    ]);
+    expect(find(done.events, "STATUS_CLEARED")?.statuses).toEqual(["asleep", "poisoned", "burned"]);
     expect(conditionsOf(done.state, "p1")).toEqual({
       rotation: "none",
       poisonDamage: 0,
@@ -613,8 +626,14 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
     // What IS shared with the continuous half, and deliberately: the `reason`. The
     // card says "recovers" in both mouths, log.ts renders one row for both, and a
     // second reason would have been a second rendering of the same word (D131).
-    const fromAttack = find(swing(gardevoir({ burned: true }), "miracleForce").events, "STATUS_CLEARED");
-    const fromAbility = find(mustApply(blisseyBoard("active", { burned: true }), nurse()).events, "STATUS_CLEARED");
+    const fromAttack = find(
+      swing(gardevoir({ burned: true }), "miracleForce").events,
+      "STATUS_CLEARED",
+    );
+    const fromAbility = find(
+      mustApply(blisseyBoard("active", { burned: true }), nurse()).events,
+      "STATUS_CLEARED",
+    );
     expect(fromAttack?.reason).toBe("recovered");
     expect(fromAbility?.reason).toBe("recovered");
     // …and it is the reason D174 introduced, not a sixth one invented here.
@@ -731,7 +750,9 @@ describe("the structural questions", () => {
 
   it("never mutates the input state (both entry points, frozen boards)", () => {
     const gard = gardevoir({ burned: true });
-    expect(() => applyAction(deepFreeze(gard), { type: "attack", seat: "p1", index: 0 })).not.toThrow();
+    expect(() =>
+      applyAction(deepFreeze(gard), { type: "attack", seat: "p1", index: 0 }),
+    ).not.toThrow();
     const bliss = blisseyBoard("active", { burned: true });
     expect(() => applyAction(deepFreeze(bliss), nurse())).not.toThrow();
   });

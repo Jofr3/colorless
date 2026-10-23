@@ -464,7 +464,8 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
     // 🆕🆕🆕 D525 — and the coin reader DOES read it now (the same op, the count at the fold).
-    for (const [text] of UNREAD) expect(deriveAttackCoinFlip(text)?.kind, text).toBe("retrievalUpToHeads");
+    for (const [text] of UNREAD)
+      expect(deriveAttackCoinFlip(text)?.kind, text).toBe("retrievalUpToHeads");
     // 14 + 2 = 16, which is still exactly what the backlog row measured. D237
     // read 10 of the 16 and D238 takes the 4 it had pinned on the brace code —
     // the SAME total, re-derived a second time by a second slice.

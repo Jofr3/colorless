@@ -15,13 +15,7 @@ import {
   mustApply,
   mustCreate,
 } from "../../packages/engine/src/testFixtures";
-import {
-  hostReducer,
-  initHost,
-  stepTarget,
-  waitingSeatOf,
-  type LocalGameSetup,
-} from "./localHost";
+import { hostReducer, initHost, stepTarget, waitingSeatOf, type LocalGameSetup } from "./localHost";
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 

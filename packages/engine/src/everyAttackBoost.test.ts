@@ -5,7 +5,7 @@ import { boostedAttackBase, boostedAttackDamage, everyAttackBoostOf } from "./co
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -103,7 +103,12 @@ const LOCAL_CARDS: Record<string, Card> = {
   /** ONE body carrying the `:148` installer and five other attacks: two plain
       damage numbers (the EVERY-index claim needs two), a no-damage attack, a chosen
       snipe and a Bench spread. */
-  "d546-buffer": battler("d546-buffer", { types: ["Colorless"], hp: 300, retreat: 1, attacks: ATTACKS }),
+  "d546-buffer": battler("d546-buffer", {
+    types: ["Colorless"],
+    hp: 300,
+    retreat: 1,
+    attacks: ATTACKS,
+  }),
   /** Evolves from `d546-buffer` with the SAME attacks at the same indexes, so a record
       that survived evolution would pay the new card. */
   "d546-buffer-evolved": battler("d546-buffer-evolved", {
@@ -199,9 +204,7 @@ function localSetup(seed: number): GameState {
 
 /** P1's turn 3: P1 fields `attacker` with three Energy and one benched body, P2
     fields `defender` and, when asked, `p2Bench` benched bodies. */
-function ready(
-  opts: { attacker?: string; defender?: string; p2Bench?: number } = {},
-): GameState {
+function ready(opts: { attacker?: string; defender?: string; p2Bench?: number } = {}): GameState {
   const { attacker = "d546-buffer", defender = "d546-wall", p2Bench = 0 } = opts;
   let state = localSetup(SEED);
   state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
@@ -252,7 +255,10 @@ function withRawBoost(state: GameState, record: BoostedAttack | null): GameState
   const active = body(state.players.p1.active);
   return {
     ...state,
-    players: { ...state.players, p1: { ...state.players.p1, active: { ...active, boostedAttack: record } } },
+    players: {
+      ...state.players,
+      p1: { ...state.players.p1, active: { ...active, boostedAttack: record } },
+    },
   };
 }
 
@@ -562,7 +568,9 @@ describe("§5 — `:76`: both Actives fall Asleep, and the holder may sleep thro
     const start = attachFromDeck(ready({ attacker: "d546-lullaby" }), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, 0);
     expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
-    expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([["p1", "asleep"]]);
+    expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([
+      ["p1", "asleep"],
+    ]);
     // The Checkup flips for the holder alone — the defender never fell Asleep.
     expect(
       all(events, "CHECKUP_COIN_FLIP")
@@ -642,7 +650,12 @@ describe("§6 — retreat, a forced switch, evolution and devolution each clear 
     }).state;
     state = attack(state, REV_UP).state;
     expect(state.players.p1.active?.boostedAttack?.attackIndex).toBeNull();
-    const result = runProgram(state, [{ op: "devolveEach" }], { seat: "p2", invokedBy: "attack" }, []);
+    const result = runProgram(
+      state,
+      [{ op: "devolveEach" }],
+      { seat: "p2", invokedBy: "attack" },
+      [],
+    );
     if (result.kind !== "done") throw new Error("devolveEach parked");
     const devolved = body(result.state.players.p1.active);
     expect(result.state.cardIdByUid[devolved.stack.at(-1) ?? ""]).toBe("d546-buffer");
@@ -663,7 +676,11 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
     let s = runOne(ready(), [ALL(100)], loud);
     s = runOne(s, [ALL(120)], loud);
     expect(all(loud, "ATTACK_BOOSTED").map((e) => e.amount)).toEqual([100, 120]);
-    expect(s.players.p1.active?.boostedAttack).toStrictEqual({ turn: 5, attackIndex: null, amount: 120 });
+    expect(s.players.p1.active?.boostedAttack).toStrictEqual({
+      turn: 5,
+      attackIndex: null,
+      amount: 120,
+    });
     const quiet: GameEvent[] = [];
     const again = runOne(s, [ALL(100)], quiet);
     expect(quiet).toEqual([]);
@@ -673,13 +690,21 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
   it("named THEN null: the null address replaces the named record outright", () => {
     let s = runOne(ready(), [NAMED], []);
     s = runOne(s, [ALL(120)], []);
-    expect(s.players.p1.active?.boostedAttack).toStrictEqual({ turn: 5, attackIndex: null, amount: 120 });
+    expect(s.players.p1.active?.boostedAttack).toStrictEqual({
+      turn: 5,
+      attackIndex: null,
+      amount: 120,
+    });
   });
 
   it("null THEN named: the named address replaces the all-attacks record outright", () => {
     let s = runOne(ready(), [ALL(120)], []);
     s = runOne(s, [NAMED], []);
-    expect(s.players.p1.active?.boostedAttack).toStrictEqual({ turn: 5, attackIndex: STRIKE, amount: 30 });
+    expect(s.players.p1.active?.boostedAttack).toStrictEqual({
+      turn: 5,
+      attackIndex: STRIKE,
+      amount: 30,
+    });
   });
 
   it("a BAR and an all-attacks buff on one body: the barred attack is refused, the other pays +120", () => {
@@ -696,7 +721,11 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
   it("🛑 a constructed `{ attack: null, base: true }` is REFUSED whole — no record, no row", () => {
     const start = ready();
     const events: GameEvent[] = [];
-    const after = runOne(start, [{ op: "boostAttack", attack: null, amount: 240, base: true }], events);
+    const after = runOne(
+      start,
+      [{ op: "boostAttack", attack: null, amount: 240, base: true }],
+      events,
+    );
     expect(after).toBe(start);
     expect(events).toEqual([]);
   });
@@ -704,7 +733,8 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
   it("`boostedAttackBase` answers null on every index of an all-attacks record", () => {
     const window = inWindow(installed().state);
     const holder = body(window.players.p1.active);
-    for (const i of [REV_UP, STRIKE, SWIPE]) expect(boostedAttackBase(window, holder, i)).toBeNull();
+    for (const i of [REV_UP, STRIKE, SWIPE])
+      expect(boostedAttackBase(window, holder, i)).toBeNull();
   });
 });
 
@@ -713,10 +743,13 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the row names no attack, under both seats, and never prints 'null'", () => {
-  it("renders the install as \"'s attacks do 120 more damage next turn\"", () => {
+  it('renders the install as "\'s attacks do 120 more damage next turn"', () => {
     const { state, events } = installed();
     const rows = render(events, state);
-    expect(rows).toContainEqual({ who: "p1", text: "d546-buffer's attacks do 120 more damage next turn" });
+    expect(rows).toContainEqual({
+      who: "p1",
+      text: "d546-buffer's attacks do 120 more damage next turn",
+    });
     expect(rows.some((r) => r.text.includes("null"))).toBe(false);
     const boosted = find(events, "ATTACK_BOOSTED");
     expect(render(boosted === undefined ? [] : [{ ...boosted, seat: "p2" }], state)).toEqual([
@@ -755,7 +788,9 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
 
   it("🛑 a v30 (numbered) record still means ONE attack", () => {
     const window = inWindow(installed().state);
-    const v30 = JSON.parse(`{"turn":5,"attackIndex":${String(STRIKE)},"amount":30}`) as BoostedAttack;
+    const v30 = JSON.parse(
+      `{"turn":5,"attackIndex":${String(STRIKE)},"amount":30}`,
+    ) as BoostedAttack;
     const legacy = withRawBoost(window, v30);
     expect(find(attack(legacy, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + 30);
     expect(find(attack(legacy, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20);
@@ -779,7 +814,5 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
     const v30Reader = (index: number, turn: number) =>
       revived.turn !== turn || revived.attackIndex !== index ? 0 : revived.amount;
     for (const i of [REV_UP, STRIKE, SWIPE, REST, PICK_OFF, SPRAY]) expect(v30Reader(i, 5)).toBe(0);
-    // …and the version is a widening, not a bump.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

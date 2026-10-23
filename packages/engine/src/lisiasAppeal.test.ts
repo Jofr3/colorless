@@ -132,9 +132,13 @@ function find<T extends GameEvent["type"]>(
     which this card is playable at all. `captivatingInvitation.test.ts`'s idiom,
     which took it from `carmine.test.ts`. */
 function supporterTurn(seed: number): GameState {
-  const first = driveSetup(seed, { p1: LISIAS_APPEAL_DECK, p2: LISIAS_APPEAL_DECK }, {
-    first: "p2",
-  });
+  const first = driveSetup(
+    seed,
+    { p1: LISIAS_APPEAL_DECK, p2: LISIAS_APPEAL_DECK },
+    {
+      first: "p2",
+    },
+  );
   return mustApply(first, { type: "endTurn", seat: "p2" }).state;
 }
 
@@ -437,9 +441,7 @@ describe("§4 the resolution", () => {
     // assertion above passes on a board where `applyStatus` hit the wrong body
     // and the switch never happened — D328's §7 lesson (a pin can be
     // mutation-proof and still assert the wrong thing).
-    const benched = done.players.p2.bench.find(
-      (b) => b.stack[b.stack.length - 1] === incumbent,
-    );
+    const benched = done.players.p2.bench.find((b) => b.stack[b.stack.length - 1] === incumbent);
     expect(benched).toBeDefined();
     expect(benched?.conditions.rotation ?? "none").toBe("none");
   });

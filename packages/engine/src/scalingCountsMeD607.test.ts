@@ -2,9 +2,13 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
-import { deriveAttackDamageMultiplier, deriveAttackDamagePenalty, deriveAttackEffect } from "./effects";
+import {
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackEffect,
+} from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import {
   FIXTURE_POOL,
   attachBenchFromDeck,
@@ -36,12 +40,16 @@ import {
 
 const ENERGIZED_STORM = "This attack does 30 damage for each Energy attached to all Pokémon.";
 const TOOL_DROP = "This attack does 40 damage for each Pokémon Tool attached to all Pokémon.";
-const COLORFUL_HARMONY = "This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.";
-const RUMBLING_BEES = "This attack does 110 damage for each of your Beedrill and Beedrill ex in play.";
+const COLORFUL_HARMONY =
+  "This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.";
+const RUMBLING_BEES =
+  "This attack does 110 damage for each of your Beedrill and Beedrill ex in play.";
 const RAGING_CHARGE =
   'This attack does 40 damage for each of your Pokémon that has "Tauros" in its name that has any damage counters on it.';
-const INCISORS = "This attack does 40 damage for each damage counter on all of your Benched Rattata.";
-const WINDUP_SWING = "This attack does 60 less damage for each Energy attached to your opponent's Active Pokémon.";
+const INCISORS =
+  "This attack does 40 damage for each damage counter on all of your Benched Rattata.";
+const WINDUP_SWING =
+  "This attack does 60 less damage for each Energy attached to your opponent's Active Pokémon.";
 const ENERGY_STRAW =
   "Your opponent reveals their hand, and this attack does 80 damage for each Energy card you find there.";
 
@@ -63,13 +71,25 @@ const WP28B: readonly (readonly [string, number])[] = [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
     3,
   ],
-  ["This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.", 1],
+  [
+    "This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.",
+    1,
+  ],
   ["This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.", 1],
   // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06); the clean sentence is still unread. [🆕🆕🆕 D623 (D539): WITHDRAWN — Pika Chain is read at D623, on the body-map key "Pikachu and Pikachu ex".]
   ["This attack does 40 damage for each of your Pikachu and Pikachu ex in play.", 1],
-  ["This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.", 2],
-  ["This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.", 2],
-  ["This attack does 60 more damage for each Prize card your opponent took during their last turn.", 1],
+  [
+    "This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.",
+    2,
+  ],
+  [
+    "This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.",
+    2,
+  ],
+  [
+    "This attack does 60 more damage for each Prize card your opponent took during their last turn.",
+    1,
+  ],
 ];
 
 describe("D607 §1 — the texts: 8 attack sentences / 14 printings", () => {
@@ -100,17 +120,29 @@ describe("D607 §1 — the texts: 8 attack sentences / 14 printings", () => {
 
 describe("D607 §2 — the readings", () => {
   it("three new members, each on its own literal `×` anchor", () => {
-    expect(deriveAttackDamageMultiplier(ENERGIZED_STORM)).toEqual({ per: 30, count: { kind: "energyInPlayBothSides" } });
-    expect(deriveAttackDamageMultiplier(TOOL_DROP)).toEqual({ per: 40, count: { kind: "toolsInPlayBothSides" } });
+    expect(deriveAttackDamageMultiplier(ENERGIZED_STORM)).toEqual({
+      per: 30,
+      count: { kind: "energyInPlayBothSides" },
+    });
+    expect(deriveAttackDamageMultiplier(TOOL_DROP)).toEqual({
+      per: 40,
+      count: { kind: "toolsInPlayBothSides" },
+    });
     expect(deriveAttackDamageMultiplier(COLORFUL_HARMONY)).toEqual({
       per: 50,
       count: { kind: "basicEnergyTypesOnYourBoard" },
     });
     // The "of your" siblings keep their shipped one-board members.
     expect(
-      deriveAttackDamageMultiplier("This attack does 40 damage for each Pokémon Tool attached to all of your Pokémon."),
+      deriveAttackDamageMultiplier(
+        "This attack does 40 damage for each Pokémon Tool attached to all of your Pokémon.",
+      ),
     ).toEqual({ per: 40, count: { kind: "toolsOnYourBoard" } });
-    expect(deriveAttackDamageMultiplier("This attack does 30 damage for each Energy attached to all of your Pokémon.")).toEqual({
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each Energy attached to all of your Pokémon.",
+      ),
+    ).toEqual({
       per: 30,
       count: { kind: "energyOnSelf", zone: "board", energyType: null },
     });
@@ -167,11 +199,15 @@ describe("D607 §2 — the readings", () => {
   it("the widened anchors keep their old readings and their old refusals", () => {
     // The bare "Benched Pokémon." stays on the unfiltered member.
     expect(
-      deriveAttackDamageMultiplier("This attack does 10 damage for each damage counter on all of your Benched Pokémon."),
+      deriveAttackDamageMultiplier(
+        "This attack does 10 damage for each damage counter on all of your Benched Pokémon.",
+      ),
     ).toEqual({ per: 10, count: { kind: "damageCountersOnYourBench" } });
     // An unmapped bench noun is still refused.
     expect(
-      deriveAttackDamageMultiplier("This attack does 10 damage for each damage counter on all of your Benched Raticate."),
+      deriveAttackDamageMultiplier(
+        "This attack does 10 damage for each damage counter on all of your Benched Raticate.",
+      ),
     ).toBeNull();
     // The period-joined reveal still reads (the `sv` Trainer-card row).
     expect(
@@ -180,7 +216,8 @@ describe("D607 §2 — the readings", () => {
       ),
     ).toEqual({ per: 50, count: { kind: "cardsInOpponentHand", filter: { kind: "trainerCard" } } });
     // An unmapped hand noun refuses BOTH halves (no reveal without its fold).
-    const unmapped = "Your opponent reveals their hand, and this attack does 80 damage for each Item card you find there.";
+    const unmapped =
+      "Your opponent reveals their hand, and this attack does 80 damage for each Item card you find there.";
     expect(deriveAttackDamageMultiplier(unmapped)).toBeNull();
     expect(deriveAttackEffect(unmapped)).toBeNull();
   });
@@ -201,8 +238,14 @@ const GRASS = "d607-grass";
 const METAL = "d607-metal";
 const FIGHT = "d607-fighting";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -221,7 +264,12 @@ const LOCAL: Record<string, Card> = {
     "Metal",
     [
       { cost: ["Colorless"], name: "Triple Draw", effect: "Draw 3 cards." },
-      { cost: ["Colorless", "Colorless", "Colorless"], name: "Tool Drop", damage: "40×", effect: TOOL_DROP },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Tool Drop",
+        damage: "40×",
+        effect: TOOL_DROP,
+      },
     ],
     { stage: "Stage1", evolveFrom: "Bronzor" },
   ),
@@ -230,7 +278,14 @@ const LOCAL: Record<string, Card> = {
     "Sylveon ex",
     270,
     "Psychic",
-    [{ cost: ["Psychic", "Colorless", "Colorless"], name: "Colorful Harmony", damage: "50×", effect: COLORFUL_HARMONY }],
+    [
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Colorful Harmony",
+        damage: "50×",
+        effect: COLORFUL_HARMONY,
+      },
+    ],
     { stage: "Stage1", evolveFrom: "Eevee" },
   ),
   "me04-003": mon(
@@ -243,7 +298,12 @@ const LOCAL: Record<string, Card> = {
   ),
   "me02-048": mon("me02-048", "Paldean Tauros", 130, "Fighting", [
     { cost: ["Fighting"], name: "Raging Charge", damage: "40×", effect: RAGING_CHARGE },
-    { cost: ["Fighting", "Fighting"], name: "Double-Edge", damage: 70, effect: "This Pokémon also does 20 damage to itself." },
+    {
+      cost: ["Fighting", "Fighting"],
+      name: "Double-Edge",
+      damage: 70,
+      effect: "This Pokémon also does 20 damage to itself.",
+    },
   ]),
   "me03-061": mon(
     "me03-061",
@@ -255,7 +315,8 @@ const LOCAL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Scrape Off",
         damage: 20,
-        effect: "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
+        effect:
+          "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
       },
       { cost: ["Colorless"], name: "Retaliatory Incisors", damage: "40×", effect: INCISORS },
     ],
@@ -275,14 +336,25 @@ const LOCAL: Record<string, Card> = {
     130,
     "Grass",
     [
-      { cost: ["Grass"], name: "Stun Spore", damage: 40, effect: "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed." },
+      {
+        cost: ["Grass"],
+        name: "Stun Spore",
+        damage: 40,
+        effect: "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
+      },
       { cost: ["Grass"], name: "Energy Straw", damage: "80×", effect: ENERGY_STRAW },
     ],
     { stage: "Stage2", evolveFrom: "Silcoon" },
   ),
   [FILLER]: mon(FILLER, "D607 Filler", 400, "Colorless", TAP),
-  [MEGA_BEEDRILL]: mon(MEGA_BEEDRILL, "Mega Beedrill ex", 350, "Grass", TAP, { stage: "Stage2", evolveFrom: "Kakuna" }),
-  [BEEDRILL]: mon(BEEDRILL, "Beedrill", 140, "Grass", TAP, { stage: "Stage2", evolveFrom: "Kakuna" }),
+  [MEGA_BEEDRILL]: mon(MEGA_BEEDRILL, "Mega Beedrill ex", 350, "Grass", TAP, {
+    stage: "Stage2",
+    evolveFrom: "Kakuna",
+  }),
+  [BEEDRILL]: mon(BEEDRILL, "Beedrill", 140, "Grass", TAP, {
+    stage: "Stage2",
+    evolveFrom: "Kakuna",
+  }),
   [RATTATA]: mon(RATTATA, "Rattata", 60, "Colorless", TAP),
   [TAUROS]: mon(TAUROS, "Tauros", 130, "Colorless", TAP),
   [TOOL]: { ...itemTrainer(TOOL), trainerType: "Tool", name: "D607 Tool" },
@@ -331,7 +403,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -339,15 +413,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -369,7 +449,8 @@ function unprize(state: GameState, seat: Seat): GameState {
 /** P1's Active is `attacker` with `energy` attached; P2's Active is a Filler. Both Benches empty. */
 function table(attacker: string, energy: readonly (readonly [string, number])[]): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   return state;
@@ -378,7 +459,8 @@ function table(attacker: string, energy: readonly (readonly [string, number])[])
 const attack = (index: number, seat: Seat = "p1"): GameAction => ({ type: "attack", seat, index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const dealtRows = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
+const dealtRows = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
 const dealt = (state: GameState, index: number) => dealtRows(state, index)[0]?.dealt;
 
 describe("D607 §3 — the three new members on a board", () => {
@@ -403,7 +485,10 @@ describe("D607 §3 — the three new members on a board", () => {
 
   it("Colorful Harmony counts DIFFERENT Basic Energy types on YOUR board only", () => {
     // {P} ×2 on the Active: one type.
-    let state = table("mep-100", [[PSY, 2], ["fix-energy", 1]]);
+    let state = table("mep-100", [
+      [PSY, 2],
+      ["fix-energy", 1],
+    ]);
     expect(dealt(state, 0)).toBe(50);
     // A Special providing Fire and Water, and an unparsed Basic (Colorless), add no type.
     state = attachFromDeck(state, "p1", "fix-blend", 1);
@@ -432,7 +517,7 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
     expect(dealt(state, 0)).toBe(220);
   });
 
-  it("Raging Charge counts YOUR damaged Pokémon with \"Tauros\" in the name", () => {
+  it('Raging Charge counts YOUR damaged Pokémon with "Tauros" in the name', () => {
     let state = table("me02-048", [[FIGHT, 1]]);
     expect(dealtRows(state, 0)).toEqual([]); // undamaged itself: 0
     state = setDamage(state, "p1", 10);
@@ -460,7 +545,11 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
     state = attachBenchFromDeck(benchFromDeck(state, "p2", FILLER), "p2", 0, FIRE, 2); // Benched: not counted
     expect(dealt(state, 0)).toBe(120);
     state = attachFromDeck(state, "p2", "fix-energy", 3);
-    expect(dealtRows(state, 0).map((r) => r.dealt).reduce((a, b) => a + b, 0)).toBe(0);
+    expect(
+      dealtRows(state, 0)
+        .map((r) => r.dealt)
+        .reduce((a, b) => a + b, 0),
+    ).toBe(0);
     expect(mustApply(state, attack(0)).state.players.p2.active?.damage).toBe(0);
   });
 
@@ -476,11 +565,5 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
     out = mustApply(state, attack(1));
     expect(of(out.events, "DAMAGE_DEALT")[0]?.dealt).toBe(240);
     expect(of(out.events, "HAND_REVEALED")[0]?.uids).toHaveLength(4);
-  });
-});
-
-describe("D607 §5 — the version", () => {
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

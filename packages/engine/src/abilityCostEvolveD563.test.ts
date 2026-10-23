@@ -2,11 +2,19 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { intoPlayOnlyViaOf, passivesOf, providedEnergy } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, attackCostAt, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, attackCostAt, createGame, redactGame } from "./index";
 import type { GameAction, GameState, InPlayPokemon, Seat } from "./index";
 import { conditionHolds, conditionNote, evolveAliasLicensed } from "./interpreter";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck, trainerCard } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  trainerCard,
+} from "./testFixtures";
 
 // ── 🆕🆕🆕 D563 — TWO OWN-ATTACK COST CLAUSES, AN EVOLVE ALIAS AND A CARD-BORNE PLAY RESTRICTION ──
 //
@@ -48,7 +56,8 @@ const PLASMA_BANE =
   'If your opponent has any cards in their discard pile that have "Colress" in the name, this Pokémon can use the Trifrost attack for {C}.';
 const RAINBOW_DNA =
   "This Pokémon can evolve into any Pokémon ex that evolves from Eevee if you play it from your hand onto this Pokémon. (This Pokémon can't evolve during your first turn or the turn you play it.)";
-const HEROS_SPIRIT = "Put this Pokémon into play only with the effect of Palafin's Zero to Hero Ability.";
+const HEROS_SPIRIT =
+  "Put this Pokémon into play only with the effect of Palafin's Zero to Hero Ability.";
 const TRIFROST_TEXT =
   "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
@@ -93,7 +102,9 @@ const LOCAL_CARDS: Record<string, Card> = {
         types: ["Colorless"],
         hp: 200,
         abilities: [{ type: "Ability", name: "Rainbow DNA", effect: RAINBOW_DNA }],
-        attacks: [{ cost: ["Fire", "Water", "Lightning"], name: "Coruscating Quartz", damage: 200 }],
+        attacks: [
+          { cost: ["Fire", "Water", "Lightning"], name: "Coruscating Quartz", damage: 200 },
+        ],
       }),
     ]),
   ),
@@ -139,8 +150,14 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [COLRESS]: { ...trainerCard(COLRESS, "Supporter", "Colress's text."), name: "Colress's Tenacity" },
-  [COLRESS_LOWER]: { ...trainerCard(COLRESS_LOWER, "Item", "Lowercase control."), name: "Lab of colress" },
+  [COLRESS]: {
+    ...trainerCard(COLRESS, "Supporter", "Colress's text."),
+    name: "Colress's Tenacity",
+  },
+  [COLRESS_LOWER]: {
+    ...trainerCard(COLRESS_LOWER, "Item", "Lowercase control."),
+    name: "Lab of colress",
+  },
   [WALL]: battler(WALL, { name: "D563 Wall", types: ["Colorless"], hp: 900 }),
   [EEVEE]: battler(EEVEE, { name: "Eevee", types: ["Colorless"], hp: 60 }),
   [UMBREON_EX]: battler(UMBREON_EX, {
@@ -150,7 +167,13 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Darkness"],
     hp: 280,
   }),
-  [UMBREON]: battler(UMBREON, { name: "Umbreon", stage: "Stage1", evolveFrom: "Eevee", types: ["Darkness"], hp: 130 }),
+  [UMBREON]: battler(UMBREON, {
+    name: "Umbreon",
+    stage: "Stage1",
+    evolveFrom: "Eevee",
+    types: ["Darkness"],
+    hp: 130,
+  }),
   [PIDGEOT_EX]: battler(PIDGEOT_EX, {
     name: "Pidgeot ex",
     stage: "Stage2",
@@ -208,7 +231,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -224,7 +248,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -232,11 +258,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -262,7 +291,12 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 }
 
 /** TEST SURGERY — move one `id` from `seat`'s deck to `zone`; returns its uid. */
-function pull(state: GameState, seat: Seat, id: string, zone: "hand" | "discard"): { state: GameState; uid: string } {
+function pull(
+  state: GameState,
+  seat: Seat,
+  id: string,
+  zone: "hand" | "discard",
+): { state: GameState; uid: string } {
   const seated = ensureInDeck(state, seat, id);
   const side = seated.players[seat];
   const uid = side.deck.find((u) => seated.cardIdByUid[u] === id);
@@ -278,13 +312,19 @@ function handOf(state: GameState, seat: Seat, n: number): GameState {
   if (side.hand.length >= n) {
     const keep = side.hand.slice(0, n);
     const back = side.hand.slice(n);
-    return { ...state, players: { ...state.players, [seat]: { ...side, hand: keep, deck: [...side.deck, ...back] } } };
+    return {
+      ...state,
+      players: { ...state.players, [seat]: { ...side, hand: keep, deck: [...side.deck, ...back] } },
+    };
   }
   const need = n - side.hand.length;
   const drawn = side.deck.slice(0, need);
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, hand: [...side.hand, ...drawn], deck: side.deck.slice(need) } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, hand: [...side.hand, ...drawn], deck: side.deck.slice(need) },
+    },
   };
 }
 
@@ -299,7 +339,11 @@ function energize(state: GameState, seat: Seat, count: number): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => !taken.has(u)), active: { ...active, energy: [...active.energy, ...uids] } },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => !taken.has(u)),
+        active: { ...active, energy: [...active.energy, ...uids] },
+      },
     },
   };
 }
@@ -334,12 +378,19 @@ function attackRows(state: GameState) {
   return phase.attacks;
 }
 
-const declare = (state: GameState, index = 0) => applyAction(state, { type: "attack", seat: "p1", index });
+const declare = (state: GameState, index = 0) =>
+  applyAction(state, { type: "attack", seat: "p1", index });
 
 /** The D549 attack-installed cost tax, live on p1's Active this turn (TEST SURGERY). */
 function taxed(state: GameState): GameState {
   const active = activeOf(state, "p1");
-  return { ...state, players: { ...state.players, p1: { ...state.players.p1, active: { ...active, costTaxTurn: state.turn } } } };
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      p1: { ...state.players.p1, active: { ...active, costTaxTurn: state.turn } },
+    },
+  };
 }
 
 /** Advance to p1's turn 4 (past §4's first-turn evolve ban). */
@@ -354,7 +405,6 @@ function laterTurn(state: GameState): GameState {
 
 describe("§1 — five objects on eleven ids, no `attack` key, and the right SEAM for each", () => {
   it("Noivern and Kyurem carry ONE `passive.attackCostClause` each, D545's two shapes", () => {
-    expect(engineVersion).toBe("0.555.0");
     expect(programFor(NOIVERN)).toEqual({
       passive: {
         attackCostClause: {
@@ -426,7 +476,9 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
   it("🛑 unequal hands, no Energy: charged the printed {C}{C}{C} and §8.2 REJECTS", () => {
     const state = unequalHands(table(NOIVERN, 0));
     expect(charged(state)).toEqual(HOWL_PRINTED);
-    expect(refused(state, { type: "attack", seat: "p1", index: HOWL }).code).toBe("ATTACK_COST_UNMET");
+    expect(refused(state, { type: "attack", seat: "p1", index: HOWL }).code).toBe(
+      "ATTACK_COST_UNMET",
+    );
   });
 
   it("unequal hands with {C}{C}{C} attached: the print pays (the control)", () => {
@@ -438,13 +490,17 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
   it("🛑 the clause is keyed by NAME: the body's other attack keeps its printed cost", () => {
     const state = equalHands(table(NOIVERN, 0));
     expect(charged(state, CONTROL_HOWL)).toEqual(HOWL_PRINTED);
-    expect(refused(state, { type: "attack", seat: "p1", index: CONTROL_HOWL }).code).toBe("ATTACK_COST_UNMET");
+    expect(refused(state, { type: "attack", seat: "p1", index: CONTROL_HOWL }).code).toBe(
+      "ATTACK_COST_UNMET",
+    );
   });
 
   it("🛑 a §9 lock (Flutter Mane Active) restores the printed cost even with equal hands", () => {
     const state = equalHands(table(NOIVERN, 0, FLUTTER_MANE));
     expect(charged(state)).toEqual(HOWL_PRINTED);
-    expect(refused(state, { type: "attack", seat: "p1", index: HOWL }).code).toBe("ATTACK_COST_UNMET");
+    expect(refused(state, { type: "attack", seat: "p1", index: HOWL }).code).toBe(
+      "ATTACK_COST_UNMET",
+    );
   });
 
   it("🛑 WAIVE-LAST: under the D549 cost tax, equal hands still charge `[]`", () => {
@@ -485,7 +541,7 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
 // §3 — Kyurem "Plasma Bane".
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§3 — Kyurem: a \"Colress\" card in the OPPONENT's discard makes Trifrost cost {C}", () => {
+describe('§3 — Kyurem: a "Colress" card in the OPPONENT\'s discard makes Trifrost cost {C}', () => {
   it("no Colress anywhere, one {C}: charged the print and §8.2 REJECTS", () => {
     const state = table(KYUREM, 1);
     expect(charged(state)).toEqual(TRIFROST_PRINTED);
@@ -506,7 +562,7 @@ describe("§3 — Kyurem: a \"Colress\" card in the OPPONENT's discard makes Tri
     expect(refused(state, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_COST_UNMET");
   });
 
-  it("CASE-SENSITIVE: a \"colress\" in lowercase does not satisfy it", () => {
+  it('CASE-SENSITIVE: a "colress" in lowercase does not satisfy it', () => {
     const state = pull(table(KYUREM, 1), "p2", COLRESS_LOWER, "discard").state;
     expect(charged(state)).toEqual(TRIFROST_PRINTED);
   });
@@ -536,7 +592,11 @@ describe("§3 — Kyurem: a \"Colress\" card in the OPPONENT's discard makes Tri
 
   it("the wire publishes `effectiveCost: [Colorless]`, playable", () => {
     const rows = attackRows(pull(table(KYUREM, 1), "p2", COLRESS, "discard").state);
-    expect(rows[0]).toMatchObject({ cost: TRIFROST_PRINTED, effectiveCost: ["Colorless"], playable: true });
+    expect(rows[0]).toMatchObject({
+      cost: TRIFROST_PRINTED,
+      effectiveCost: ["Colorless"],
+      playable: true,
+    });
   });
 
   it("the new member: seat-relative, any card kind, and its note is the printed clause", () => {
@@ -549,7 +609,12 @@ describe("§3 — Kyurem: a \"Colress\" card in the OPPONENT's discard makes Tri
     );
     // A Pokémon card counts as much as a Trainer ("any cards").
     const kyuremInPile = pull(table(KYUREM, 1), "p2", KYUREM, "discard").state;
-    expect(conditionHolds(kyuremInPile, "p1", { kind: "opponentDiscardHasNameContaining", fragment: "Kyu" })).toBe(true);
+    expect(
+      conditionHolds(kyuremInPile, "p1", {
+        kind: "opponentDiscardHasNameContaining",
+        fragment: "Kyu",
+      }),
+    ).toBe(true);
   });
 });
 
@@ -558,7 +623,11 @@ describe("§3 — Kyurem: a \"Colress\" card in the OPPONENT's discard makes Tri
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** p1's turn 4 with `target` Active (played at setup), `hand` put in p1's hand. */
-function evolveTable(target: string, handIds: string[], defender = WALL): { state: GameState; uids: string[] } {
+function evolveTable(
+  target: string,
+  handIds: string[],
+  defender = WALL,
+): { state: GameState; uids: string[] } {
   let state = laterTurn(table(target, 0, defender));
   const uids: string[] = [];
   for (const id of handIds) {
@@ -569,10 +638,15 @@ function evolveTable(target: string, handIds: string[], defender = WALL): { stat
   return { state, uids };
 }
 
-const evolveActive = (uid: string): GameAction => ({ type: "evolve", seat: "p1", uid, target: { spot: "active" } });
+const evolveActive = (uid: string): GameAction => ({
+  type: "evolve",
+  seat: "p1",
+  uid,
+  target: { spot: "active" },
+});
 
 describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from the HAND", () => {
-  it("🛑 Umbreon ex (evolves from \"Eevee\") evolves an Eevee ex from the hand", () => {
+  it('🛑 Umbreon ex (evolves from "Eevee") evolves an Eevee ex from the hand', () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON_EX]);
     const { state: after, events } = run(state, evolveActive(uids[0] ?? ""));
     expect(events.some((e) => e.type === "POKEMON_EVOLVED")).toBe(true);
@@ -591,11 +665,16 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
     state = benchFromDeck(ensureInDeck(state, "p1", EEVEE_EX[1]), "p1", EEVEE_EX[1]);
     const index = state.players.p1.bench.length - 1;
     expect(
-      applyAction(state, { type: "evolve", seat: "p1", uid: uids[0] ?? "", target: { spot: "bench", index } }).ok,
+      applyAction(state, {
+        type: "evolve",
+        seat: "p1",
+        uid: uids[0] ?? "",
+        target: { spot: "bench", index },
+      }).ok,
     ).toBe(true);
   });
 
-  it("🛑 a NON-ex Umbreon is refused EVOLVE_MISMATCH (the print says \"Pokémon ex\")", () => {
+  it('🛑 a NON-ex Umbreon is refused EVOLVE_MISMATCH (the print says "Pokémon ex")', () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON]);
     expect(refused(state, evolveActive(uids[0] ?? "")).code).toBe("EVOLVE_MISMATCH");
   });
@@ -628,7 +707,13 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
   it("🛑 …and an Eevee ex put into play THIS turn is EVOLVE_TOO_SOON", () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON_EX]);
     const active = activeOf(state, "p1");
-    const fresh = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: { ...active, turnPlayed: state.turn } } } };
+    const fresh = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: { ...active, turnPlayed: state.turn } },
+      },
+    };
     expect(refused(fresh, evolveActive(uids[0] ?? "")).code).toBe("EVOLVE_TOO_SOON");
   });
 
@@ -661,7 +746,9 @@ describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which D565 built 
       const { state, uids } = evolveTable(FINIZEN, [id]);
       const error = refused(state, evolveActive(uids[0] ?? ""));
       expect(error.code, id).toBe("EVOLVE_ONLY_VIA_ABILITY");
-      expect(error.message).toBe("Palafin ex can be put into play only with the effect of the Zero to Hero Ability");
+      expect(error.message).toBe(
+        "Palafin ex can be put into play only with the effect of the Zero to Hero Ability",
+      );
     }
   });
 
@@ -726,7 +813,11 @@ describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which D565 built 
     });
     const swapped = after.players.p1.bench[0];
     expect(swapped?.stack[0]).toBe(finizen);
-    expect((PALAFIN_EX as readonly string[]).includes(after.cardIdByUid[swapped?.stack.at(-1) ?? ""] ?? "")).toBe(true);
+    expect(
+      (PALAFIN_EX as readonly string[]).includes(
+        after.cardIdByUid[swapped?.stack.at(-1) ?? ""] ?? "",
+      ),
+    ).toBe(true);
     expect(after.players.p1.deck).toContain(uids[0]);
     expect(events.some((e) => e.type === "POKEMON_SWAPPED_FROM_DECK")).toBe(true);
     expect(events.some((e) => e.type === "POKEMON_EVOLVED")).toBe(false);

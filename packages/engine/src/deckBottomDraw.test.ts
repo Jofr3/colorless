@@ -94,7 +94,8 @@ const TOP = "Draw 3 cards.";
     `sv05-063` "Look-Alike Show" — a REAL printing held by a RECORDED REFUSAL (D445), unread by every
     reader and splitter, and outside every family the D574 pricing round ranks (D540).
     (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
-const LOUD = "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
+const LOUD =
+  "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
 const PROGRAM: readonly EffectOp[] = [{ op: "drawCards", count: 3, from: "bottom" }];
 /** The v29 byte string: the SAME op with the key absent. §8 reads it back. */
@@ -171,19 +172,29 @@ const BOTTOM_THREE = ["d487-c6", "d487-c7", "d487-c8"] as const;
 const TOP_THREE = ["d487-c1", "d487-c2", "d487-c3"] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({ seed: SEED, decks: { p1: BOTTOM_DECK, p2: BOTTOM_DECK }, cardPool: BOTTOM_POOL });
+  const created = createGame({
+    seed: SEED,
+    decks: { p1: BOTTOM_DECK, p2: BOTTOM_DECK },
+    cardPool: BOTTOM_POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let table = created.state;
   if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }));
+  table = must(
+    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  );
   while (table.phase.kind === "setup:drawExtra") {
     const drawing = table.phase;
     const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
     if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }));
+    table = must(
+      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }));
+    table = must(
+      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     table = must(applyAction(table, { type: "setupReady", seat }));
@@ -208,7 +219,10 @@ function withDeck(state: GameState, seat: Seat, ids: readonly string[]): GameSta
   }
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, deck: picked, discard: [...side.discard, ...pool] } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, deck: picked, discard: [...side.discard, ...pool] },
+    },
   };
 }
 
@@ -238,7 +252,10 @@ const idsIn = (state: GameState, seat: Seat, zone: "hand" | "deck" | "discard"):
 function swing(state: GameState, index: number): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "attack", seat: "p1", index });
 }
-function find<T extends GameEvent["type"]>(events: GameEvent[], type: T): Extract<GameEvent, { type: T }> | undefined {
+function find<T extends GameEvent["type"]>(
+  events: GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }> | undefined {
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
@@ -252,7 +269,10 @@ const effectDraws = (events: GameEvent[]): GameEvent[] =>
 /** 🛑 **THE FIVE CANDIDATE READINGS, AS PURE FUNCTIONS OF THE DECK.** Written BEFORE any
     board is chosen (D484) so §7 can prove the board separates them rather than hoping it
     does. Each answers `[handGained, deckLeft]`. */
-type Reading = (deck: readonly string[], count: number) => readonly [readonly string[], readonly string[]];
+type Reading = (
+  deck: readonly string[],
+  count: number,
+) => readonly [readonly string[], readonly string[]];
 const READINGS: Record<string, Reading> = {
   /** ① SHIPPED — the bottom `count`, in DECK order, cut off the bottom. */
   bottomInDeckOrder: (deck, count) => {
@@ -300,7 +320,9 @@ describe("D487 §1 — the sentence and its family, measured rather than quoted"
     // some other way ("the last card of your deck"), and a draw whose source is implied by
     // an earlier clause. TWO rows in 640, and only one of them is a DRAW — the other puts
     // a card on the bottom of the OPPONENT's deck and has been built since D232.
-    const ends = legalAttackCorpus().filter(([, s]) => /bottom of|top of (?:your|their) deck/.test(s));
+    const ends = legalAttackCorpus().filter(([, s]) =>
+      /bottom of|top of (?:your|their) deck/.test(s),
+    );
     expect(ends.map(([n, s]) => `${String(n)} ${s}`).sort()).toEqual(
       [
         "1 Draw 3 cards from the bottom of your deck.",
@@ -385,7 +407,8 @@ describe("D487 §3 — the yield, and five widenings that buy nothing", () => {
     // D473's finding at a second address: a widening that claims the same rows buys
     // nothing and costs a wrong program. All five are asked over the whole column.
     const column = legalAttackCorpus();
-    const yields = (re: RegExp): string => JSON.stringify(column.filter(([, s]) => re.test(s)).map(([, s]) => s));
+    const yields = (re: RegExp): string =>
+      JSON.stringify(column.filter(([, s]) => re.test(s)).map(([, s]) => s));
     const mine = JSON.stringify([BOTTOM]);
     // ① a singular alternation, `ATTACK_DRAW`'s own shape;
     expect(yields(/^Draw (?:(\d+) cards|a card) from the bottom of your deck\.$/)).toBe(mine);
@@ -423,7 +446,9 @@ describe("D487 §4 — the axes, refused independently", () => {
     // Here only the plural is, so a singular branch would invent a `1` no census reaches
     // and no mutant can kill — D231's unkillable-arm test on an alternation.
     expect(deriveAttackEffect("Draw a card from the bottom of your deck.")).toBeNull();
-    expect(legalAttackCorpus().some(([, s]) => s === "Draw a card from the bottom of your deck.")).toBe(false);
+    expect(
+      legalAttackCorpus().some(([, s]) => s === "Draw a card from the bottom of your deck."),
+    ).toBe(false);
   });
 
   it("the COUNT alone — 0 is refused by the family's `>= 1` guard, 1 and 5 are read", () => {
@@ -468,7 +493,10 @@ describe("D487 §5 — no composition of shipped ops spells a bottom draw", () =
     const events: GameEvent[] = [];
     const rotated = runProgram(
       state,
-      [{ op: "bottomDeckTop", n: 5 }, { op: "drawCards", count: 3 }],
+      [
+        { op: "bottomDeckTop", n: 5 },
+        { op: "drawCards", count: 3 },
+      ],
       { seat: "p1" },
       events,
     );
@@ -724,7 +752,7 @@ describe("D487 §8 — the version question, asked at the hard address", () => {
     expect(parked(undefined)).not.toContain("bottom");
   });
 
-  it("the ABSENT key and an explicit top draw are the same bytes — there is no `\"top\"`", () => {
+  it('the ABSENT key and an explicit top draw are the same bytes — there is no `"top"`', () => {
     // A `from: "top"` value would be a SECOND spelling of one state, and two spellings of
     // one state is how a wire and a reader drift apart. The union has one member and the
     // absence; the corpus and the registry are swept for the other spelling.

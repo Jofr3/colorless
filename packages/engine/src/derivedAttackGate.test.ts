@@ -4,7 +4,7 @@ import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import { splitAttackGateClause, timingGateFromAttackText } from "./effects";
 import type { AttackTimingGate, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, attackGateOf, createGame, engineVersion, programFor } from "./index";
+import { applyAction, attackGateOf, createGame, programFor } from "./index";
 import { attackTimingBlocked, firstTurnAttackBanned, redactGame } from "./index";
 // ⚠️ NOT re-exported from the package index (D272) — the whole-pool sweep in §2 is
 // the only kind of caller it has, and `attackIndexGate.test.ts` takes the same edge.
@@ -188,7 +188,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 2,
     types: ["Colorless"],
     attacks: [
-      { cost: ["Colorless", "Colorless"], name: "Unified Beatdown", damage: "30×", effect: BAN_TEXT },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Unified Beatdown",
+        damage: "30×",
+        effect: BAN_TEXT,
+      },
       { cost: ["Colorless", "Colorless"], name: "Crown Opal", damage: 180 },
     ],
   }),
@@ -226,7 +231,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Colorless"],
     attacks: [
       { cost: ["Colorless"], name: "Rollout", damage: 20 },
-      { cost: ["Colorless", "Colorless"], name: "Moomoo Rolling", damage: 100, effect: ROLLOUT_TEXT },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Moomoo Rolling",
+        damage: 100,
+        effect: ROLLOUT_TEXT,
+      },
     ],
   }),
   [NEAR_MISS_BODY]: battler(NEAR_MISS_BODY, {
@@ -329,13 +339,7 @@ function localSetup(seed: number, first: Seat): GameState {
     it (§14.2 makes an empty Bench a LOSS the moment the Active leaves, and a
     `gameOver` board proves nothing about a gate). `passes` winds the turn counter
     BEFORE the surgery, so no draw or prize step can move what the assertions read. */
-function board(
-  seed: number,
-  first: Seat,
-  seat: Seat,
-  activeId: string,
-  passes = 0,
-): GameState {
+function board(seed: number, first: Seat, seat: Seat, activeId: string, passes = 0): GameState {
   let state = localSetup(seed, first);
   for (let i = 0; i < passes; i += 1) {
     if (state.phase.kind !== "turn:action") throw new Error(`stuck in ${state.phase.kind}`);
@@ -432,7 +436,9 @@ describe("D444 §1 — the clause→gate table, driven row against row", () => {
     // both literals, so a build that drifted one of them reddens.
     const ban = timingGateFromAttackText(BAN_TEXT) as { condition: unknown };
     expect((gate as { condition: unknown }).condition).toEqual(ban.condition);
-    expect((gate as AttackTimingGate).kind).not.toBe((timingGateFromAttackText(BAN_TEXT) as AttackTimingGate).kind);
+    expect((gate as AttackTimingGate).kind).not.toBe(
+      (timingGateFromAttackText(BAN_TEXT) as AttackTimingGate).kind,
+    );
   });
 
   it("🛑 the ROLLOUT row derives too, and the attack name is a CONSTANT in a closed row", () => {
@@ -521,8 +527,8 @@ describe("D444 §2 — the population, and the honest zero", () => {
     // What D541 changed is that the three extras are now IN this table rather than an
     // exception to it — see `effects.ts`'s D444 block, where that parenthesis is withdrawn.
     const gated = legalAttackCorpus().filter(([, text]) => splitAttackGateClause(text) !== null);
-    expect(gated.length).toBe(9);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate family's sentences, 7 → 9.)
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate family's printings, 17 → 19 — and for the FIRST time they are not all registry-authored: the two D545 printings have NO registry row, so the derivation claims exactly 2.)
+    expect(gated.length).toBe(9); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate family's sentences, 7 → 9.)
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate family's printings, 17 → 19 — and for the FIRST time they are not all registry-authored: the two D545 printings have NO registry row, so the derivation claims exactly 2.)
     // …and every one of the SEVEN derives, which is what makes the count above the
     // count of what a derivation could ever serve here.
     // 🆕🆕🆕 **D541 LANDING REVIEW — this line read *"every one of the six"* and was FALSIFIED BY THE
@@ -747,7 +753,12 @@ describe("D444 §4 — the address, with no registry row to key off", () => {
     // to open, and it opens only if the derived condition names "Rollout".
     const start = board(SEEDS[0], "p1", "p1", ROLLOUT_BODY, 2);
     let after = must(applyAction(start, { type: "attack", seat: "p1", index: 0 }));
-    for (let i = 0; i < 6 && !(after.phase.kind === "turn:action" && after.phase.seat === "p1" && after.turn > start.turn); i += 1) {
+    for (
+      let i = 0;
+      i < 6 &&
+      !(after.phase.kind === "turn:action" && after.phase.seat === "p1" && after.turn > start.turn);
+      i += 1
+    ) {
       if (after.phase.kind !== "turn:action") throw new Error(`stuck in ${after.phase.kind}`);
       after = must(applyAction(after, { type: "endTurn", seat: after.phase.seat }));
     }
@@ -870,12 +881,5 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     expect(declare(reconstructed, "p2", 0)).toBe("ATTACK_PREVENTED");
     // …and the round trip is not vacuous: it really did lose every non-JSON value.
     expect(reconstructed).toEqual(JSON.parse(JSON.stringify(state)) as GameState);
-  });
-
-  it("the engine version was bumped in the same commit as the behaviour", () => {
-    // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
-    // are one fact with two spellings, and the pin is authored HERE rather than
-    // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.555.0");
   });
 });

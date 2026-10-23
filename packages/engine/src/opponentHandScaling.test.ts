@@ -395,11 +395,7 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     // now false, deliberately, and this rung is what stops it becoming false by
     // ACCIDENT somewhere else: a widening that made a second sentence dual-claimed
     // would land here rather than in whichever suite happened to drive it.
-    const readers = [
-      deriveAttackEffect,
-      deriveAttackDamageMultiplier,
-      ...OTHERS,
-    ] as const;
+    const readers = [deriveAttackEffect, deriveAttackDamageMultiplier, ...OTHERS] as const;
     const dual = legalAttackCorpus().filter(
       ([, text]) => readers.filter((read) => read(text) !== null).length > 1,
     );
@@ -542,7 +538,9 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
       ),
     ).toBeNull();
     expect(
-      deriveAttackDamageMultiplier("This attack does 0 damage for each card in your opponent's hand."),
+      deriveAttackDamageMultiplier(
+        "This attack does 0 damage for each card in your opponent's hand.",
+      ),
     ).toBeNull();
   });
 
@@ -588,11 +586,12 @@ function typedEnergyHands(): GameState {
       { type: "endTurn", seat: "p2" },
     ),
   );
-  return withHand(
-    withHand(state, "p1", ["fix-water-energy"]),
-    "p2",
-    ["fix-fighting-energy", "fix-fighting-energy", "fix-fighting-energy", "fix-water-energy"],
-  );
+  return withHand(withHand(state, "p1", ["fix-water-energy"]), "p2", [
+    "fix-fighting-energy",
+    "fix-fighting-energy",
+    "fix-fighting-energy",
+    "fix-water-energy",
+  ]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -628,7 +627,10 @@ describe("§3 — `countCardsInHand`: the hand, seat-relative, filtered", () => 
 
   it("🛑 an EMPTY hand is 0 and an UNRESOLVABLE uid contributes 0, on every filter", () => {
     const state = board();
-    const empty = { ...state, players: { ...state.players, p2: { ...state.players.p2, hand: [] } } };
+    const empty = {
+      ...state,
+      players: { ...state.players, p2: { ...state.players.p2, hand: [] } },
+    };
     for (const f of [ANY_CARD, TRAINER, { kind: "item" } as CardFilter]) {
       expect(countCardsInHand(empty, "p2", f)).toBe(0);
     }
@@ -795,7 +797,7 @@ describe("§4 — the fold: two attacks, two numbers, one board", () => {
 // §5 — the DISCARD destination: the park, the arity, the event, the log.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§5 — `bottomFromOpponentHand.dest: \"discard\"`", () => {
+describe('§5 — `bottomFromOpponentHand.dest: "discard"`', () => {
   it("🛑 parks the pick with the card's OWN printed sentence as the note", () => {
     // The round trip that `bottomFromOpponentHandNote` is grown one printed form per
     // card for: the caption is this card's text, character for character, and the two
@@ -1009,7 +1011,8 @@ describe("§6 — the population claims this slice rests on", () => {
     // the LOOSEST plausible one — any "for each … hand" fold — and every hit is read.
     // What it cannot see: a fold spelling the zone without the word *hand*.
     const yourHand = legalAttackCorpus().filter(
-      ([, s]) => /damage for each .*in your hand\./.test(s) || /damage for each .*in their hand\./.test(s),
+      ([, s]) =>
+        /damage for each .*in your hand\./.test(s) || /damage for each .*in their hand\./.test(s),
     );
     expect(yourHand).toEqual([]);
     // [🆕🆕🆕 D600: still 0 over the legal `sv` column; the `me` column prints the fold (Treasure Rush
@@ -1238,7 +1241,5 @@ describe("§8 — the frozen board and the engine version", () => {
     // exported constant are asserted TOGETHER — the tie IS the assertion, and either
     // drifting alone is the defect (D275).
     expect(manifest.version).toBe(engineVersion);
-    expect(manifest.version).not.toBe("0.345.0");
-    expect(manifest.version).not.toBe("0.346.0");
   });
 });

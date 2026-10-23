@@ -147,13 +147,7 @@ const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[
 ];
 
 /** The five ids this slice's three sentences are printed on. */
-const BOUGHT_IDS = [
-  "sv07-071",
-  "sv08.5-046",
-  "sv09-138",
-  "sv08-079",
-  "sv08-204",
-] as const;
+const BOUGHT_IDS = ["sv07-071", "sv08.5-046", "sv09-138", "sv08-079", "sv08-204"] as const;
 
 /** Setup, then open P1's turn 2 (P2 went first and passed). A DEDICATED deck
     (D270), so no other suite's seeded shuffles move. */
@@ -450,7 +444,9 @@ describe("§4 — the two 'widenings' are not widenings, and that is DRIVEN", ()
     // hold on a board the printed card cancels on.
     let state = ready(2202, "fix-cramorant", [["fix-energy", 1]]);
     const withBurn = burn(state, "p2");
-    expect(conditionHolds(withBurn, "p1", { kind: "opponentActiveHasSpecialCondition" })).toBe(true);
+    expect(conditionHolds(withBurn, "p1", { kind: "opponentActiveHasSpecialCondition" })).toBe(
+      true,
+    );
     const withSleep = rotate(state, "p2", "asleep");
     expect(conditionHolds(withSleep, "p1", { kind: "opponentActiveHasSpecialCondition" })).toBe(
       true,
@@ -560,16 +556,17 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // while this file's board cases still pass their non-Mesprit halves. A control
     // that shares a fixture with the thing it controls is an attribution control,
     // not an independence one, and the two are worth keeping apart.
-    const state = setActiveFromDeck(
-      clearBench(board(3104), "p1"),
-      "p1",
-      "fix-uxie",
-    );
+    const state = setActiveFromDeck(clearBench(board(3104), "p1"), "p1", "fix-uxie");
     // `fix-uxie` prints no attack at all, so declaring one is rejected rather than
     // cancelled — the loudest possible statement that nothing above is a no-op.
     expect(state.players.p1.active).not.toBeNull();
     const after = mustApply(
-      attachFromDeck(setActiveFromDeck(state, "p1", "fix-ironboulder"), "p1", "fix-psychic-energy", 2),
+      attachFromDeck(
+        setActiveFromDeck(state, "p1", "fix-ironboulder"),
+        "p1",
+        "fix-psychic-energy",
+        2,
+      ),
       { type: "attack", seat: "p1", index: 0 },
     );
     // Hands are dealt EQUAL at setup (7 each, both seats drew the same), so this

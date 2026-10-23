@@ -113,7 +113,8 @@ const CLAUSE = "If you can't, this attack does nothing.";
     the `deriveAttackEffect` arm together, which is the shape `ATTACK_CANCEL_HEADS`'
     own doc block is corrected for. Everything this file said about the ANAPHOR is
     unchanged; only the population moved. */
-const OGERPON = "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.";
+const OGERPON =
+  "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.";
 
 /** 🆕🆕 D420 — the UNMAPPED head this file now needs, and it is CONSTRUCTED rather
     than printed: a sentence `deriveAttackEffect` claims ("Discard 3 Energy from this
@@ -528,93 +529,102 @@ describe("§2 — the whole legal column: what this reader claims, and what it c
 });
 
 describe("§3 — a REAL BOARD, driven BOTH WAYS off the one printed sentence", () => {
-  it.each(SEEDS)("seed %i — a Stadium in play: the attack RESOLVES and the zone is vacated", (seed) => {
-    const before = board(seed, true);
-    const stadium = before.stadium;
-    if (stadium === null) throw new Error("expected P2's Beach Court in the zone");
-    expect(stadium.owner).toBe("p2");
-    const p1Discard = before.players.p1.discard.length;
+  it.each(SEEDS)(
+    "seed %i — a Stadium in play: the attack RESOLVES and the zone is vacated",
+    (seed) => {
+      const before = board(seed, true);
+      const stadium = before.stadium;
+      if (stadium === null) throw new Error("expected P2's Beach Court in the zone");
+      expect(stadium.owner).toBe("p2");
+      const p1Discard = before.players.p1.discard.length;
 
-    const result = attack(before);
-    const state = result.state;
+      const result = attack(before);
+      const state = result.state;
 
-    // The gate HOLDS, so §8.5 runs: a flat printed 230 on a 340 HP body with no
-    // Weakness and no Resistance, which survives so the number can be read.
-    expect(types(result.events)).not.toContain("ATTACK_FAILED");
-    expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
-    expect(state.players.p2.active?.damage).toBe(230);
-    expect(types(result.events)).not.toContain("KNOCKED_OUT");
-    // …and the HEAD resolved too: the zone is empty and the card is in its OWNER's
-    // pile, not the actor's (D380's ownership line, re-driven through this seam).
-    expect(state.stadium).toBeNull();
-    expect(state.players.p2.discard).toContain(stadium.uid);
-    expect(state.players.p1.discard).toHaveLength(p1Discard);
-    expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
-    // 🛑 THE PROGRAM RUNS AT THE TAIL, AFTER THE PIPELINE — D125's placement, read
-    // off the event ORDER rather than asserted in prose.
-    const order = types(result.events);
-    expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("STADIUM_DISCARDED"));
-    // BOTH printed sentences are accounted for, so nothing is reported as skipped.
-    expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-  });
+      // The gate HOLDS, so §8.5 runs: a flat printed 230 on a 340 HP body with no
+      // Weakness and no Resistance, which survives so the number can be read.
+      expect(types(result.events)).not.toContain("ATTACK_FAILED");
+      expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
+      expect(state.players.p2.active?.damage).toBe(230);
+      expect(types(result.events)).not.toContain("KNOCKED_OUT");
+      // …and the HEAD resolved too: the zone is empty and the card is in its OWNER's
+      // pile, not the actor's (D380's ownership line, re-driven through this seam).
+      expect(state.stadium).toBeNull();
+      expect(state.players.p2.discard).toContain(stadium.uid);
+      expect(state.players.p1.discard).toHaveLength(p1Discard);
+      expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
+      // 🛑 THE PROGRAM RUNS AT THE TAIL, AFTER THE PIPELINE — D125's placement, read
+      // off the event ORDER rather than asserted in prose.
+      const order = types(result.events);
+      expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("STADIUM_DISCARDED"));
+      // BOTH printed sentences are accounted for, so nothing is reported as skipped.
+      expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    },
+  );
 
-  it.each(SEEDS)("seed %i — 🛑 NO Stadium: the attack does NOTHING, and 230 is the proof", (seed) => {
-    const before = board(seed, false);
-    expect(before.stadium).toBeNull();
-    const uid = before.players.p1.active?.stack[0];
-    if (uid === undefined) throw new Error("expected P1's Active");
-    const p1Discard = before.players.p1.discard.length;
-    const p2Discard = before.players.p2.discard.length;
+  it.each(SEEDS)(
+    "seed %i — 🛑 NO Stadium: the attack does NOTHING, and 230 is the proof",
+    (seed) => {
+      const before = board(seed, false);
+      expect(before.stadium).toBeNull();
+      const uid = before.players.p1.active?.stack[0];
+      if (uid === undefined) throw new Error("expected P1's Active");
+      const p1Discard = before.players.p1.discard.length;
+      const p2Discard = before.players.p2.discard.length;
 
-    const result = attack(before);
-    const state = result.state;
+      const result = attack(before);
+      const state = result.state;
 
-    // The event, with D125's reason — the confusion path's row, one gate later.
-    expect(find(result.events, "ATTACK_FAILED")).toEqual({
-      type: "ATTACK_FAILED",
-      seat: "p1",
-      uid,
-      reason: "requirement",
-    });
-    // 🛑🛑 **NOTHING IS EXACTLY WHAT HAPPENED, AND THE ABSENCE OF DAMAGE IS THE
-    // WHOLE POINT.** An op that aborted from inside the program — the shape D125
-    // closed — would deal this attack's printed 230 FIRST and then decline to
-    // discard, and would be green on every other line in this file. It is asserted
-    // as an absence AND as a number, because a defender at 0 damage is the only
-    // form the claim survives a widened event union in.
-    expect(types(result.events)).not.toContain("DAMAGE_DEALT");
-    expect(types(result.events)).not.toContain("COUNTERS_PLACED");
-    expect(types(result.events)).not.toContain("KNOCKED_OUT");
-    expect(state.players.p2.active?.damage).toBe(0);
-    // No effect ops ran. ⚠️ NAMED RATHER THAN OVERCLAIMED: this row's condition and
-    // its head read the SAME singleton zone, so on this board the discard would have
-    // been a silent no-op anyway (§8.6) and the absence below cannot tell a skipped
-    // program from an empty one. The DAMAGE lines above are what carry the claim.
-    expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
-    expect(state.players.p1.discard).toHaveLength(p1Discard);
-    expect(state.players.p2.discard).toHaveLength(p2Discard);
-    expect(state.phase.kind).not.toBe("effect:choose");
-    // The sentence was SIMULATED — a cancelled attack is not a skipped effect, and
-    // the HEAD is simulated by `deriveAttackEffect` rather than by the requirement.
-    expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    // 🛑 THE TURN STILL ENDS. A cancelled attack is an attack that was USED, which
-    // is why the gate returns through `finishAttack` rather than with a bare state.
-    expect(types(result.events)).toContain("TURN_ENDED");
-    expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
-  });
+      // The event, with D125's reason — the confusion path's row, one gate later.
+      expect(find(result.events, "ATTACK_FAILED")).toEqual({
+        type: "ATTACK_FAILED",
+        seat: "p1",
+        uid,
+        reason: "requirement",
+      });
+      // 🛑🛑 **NOTHING IS EXACTLY WHAT HAPPENED, AND THE ABSENCE OF DAMAGE IS THE
+      // WHOLE POINT.** An op that aborted from inside the program — the shape D125
+      // closed — would deal this attack's printed 230 FIRST and then decline to
+      // discard, and would be green on every other line in this file. It is asserted
+      // as an absence AND as a number, because a defender at 0 damage is the only
+      // form the claim survives a widened event union in.
+      expect(types(result.events)).not.toContain("DAMAGE_DEALT");
+      expect(types(result.events)).not.toContain("COUNTERS_PLACED");
+      expect(types(result.events)).not.toContain("KNOCKED_OUT");
+      expect(state.players.p2.active?.damage).toBe(0);
+      // No effect ops ran. ⚠️ NAMED RATHER THAN OVERCLAIMED: this row's condition and
+      // its head read the SAME singleton zone, so on this board the discard would have
+      // been a silent no-op anyway (§8.6) and the absence below cannot tell a skipped
+      // program from an empty one. The DAMAGE lines above are what carry the claim.
+      expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
+      expect(state.players.p1.discard).toHaveLength(p1Discard);
+      expect(state.players.p2.discard).toHaveLength(p2Discard);
+      expect(state.phase.kind).not.toBe("effect:choose");
+      // The sentence was SIMULATED — a cancelled attack is not a skipped effect, and
+      // the HEAD is simulated by `deriveAttackEffect` rather than by the requirement.
+      expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+      // 🛑 THE TURN STILL ENDS. A cancelled attack is an attack that was USED, which
+      // is why the gate returns through `finishAttack` rather than with a bare state.
+      expect(types(result.events)).toContain("TURN_ENDED");
+      expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    },
+  );
 
-  it.each(SEEDS)("seed %i — the CONTROL: an UNMAPPED cancel stays LOUD and is not gated", (seed) => {
-    // The accounting guard on a board. This body prints a head `deriveAttackEffect`
-    // READS under the anaphoric clause, and no row carries it — so the split does not
-    // fire, no requirement is read, the WHOLE printed string is reported, and the
-    // attack is NOT cancelled on an empty zone. Delete the guard and this rung goes
-    // red twice: the report shrinks to the head and the attack starts cancelling on
-    // whatever condition some other row happens to hold.
-    const result = attack(board(seed, false, UNMAPPED_CANCEL));
-    expect(types(result.events)).not.toContain("ATTACK_FAILED");
-    expect(find(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      effect: UNMAPPED_PRINTING,
-    });
-    expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
-  });
+  it.each(SEEDS)(
+    "seed %i — the CONTROL: an UNMAPPED cancel stays LOUD and is not gated",
+    (seed) => {
+      // The accounting guard on a board. This body prints a head `deriveAttackEffect`
+      // READS under the anaphoric clause, and no row carries it — so the split does not
+      // fire, no requirement is read, the WHOLE printed string is reported, and the
+      // attack is NOT cancelled on an empty zone. Delete the guard and this rung goes
+      // red twice: the report shrinks to the head and the attack starts cancelling on
+      // whatever condition some other row happens to hold.
+      const result = attack(board(seed, false, UNMAPPED_CANCEL));
+      expect(types(result.events)).not.toContain("ATTACK_FAILED");
+      expect(find(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+        effect: UNMAPPED_PRINTING,
+      });
+      expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
+    },
+  );
 });

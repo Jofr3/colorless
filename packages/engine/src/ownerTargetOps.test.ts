@@ -465,8 +465,9 @@ describe("`attachEnergyFrom.count` — ONE decision, N Energy, ONE body", () => 
     expect(done.players.p1.hand).toHaveLength(handBefore - 2);
     // `energyType: "Fire"` — the two {L} in hand are untouched, so a build that
     // filled the count from "any Basic Energy" reads four in hand, not two.
-    expect(done.players.p1.hand.filter((uid) => done.cardIdByUid[uid] === "fix-lightning-energy"))
-      .toHaveLength(2);
+    expect(
+      done.players.p1.hand.filter((uid) => done.cardIdByUid[uid] === "fix-lightning-energy"),
+    ).toHaveLength(2);
   });
 
   it("⚠️ 'UP TO' — one matching Energy in hand attaches ONE, silently", () => {
@@ -483,8 +484,9 @@ describe("`attachEnergyFrom.count` — ONE decision, N Energy, ONE body", () => 
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
     // A shortfall is the PRINT ("up to"), not an error and not a refusal: the
     // Ability was usable and it did what it could.
-    expect(done.players.p1.hand.filter((uid) => done.cardIdByUid[uid] === "fix-fire-energy"))
-      .toHaveLength(0);
+    expect(
+      done.players.p1.hand.filter((uid) => done.cardIdByUid[uid] === "fix-fire-energy"),
+    ).toHaveLength(0);
   });
 
   it("⚠️ the caption names the COUNT — the one fact the offered rows cannot show", () => {
@@ -673,14 +675,10 @@ describe("`COUNTER_MOVE_TO_DEFENDER` — one optional capture, three refusals", 
   it("refuses a lowercase owner, and a possessive that is not a subgroup", () => {
     // No `/i`: the capture is `[A-Z]`-anchored, matching the exact-case rule the
     // predicate itself enforces. A lowercase prefix is not an owner.
-    expect(
-      deriveAttackEffect(ROCKET_MIRROR.replace("Team Rocket's", "team rocket's")),
-    ).toBeNull();
+    expect(deriveAttackEffect(ROCKET_MIRROR.replace("Team Rocket's", "team rocket's"))).toBeNull();
     // `'d`, not `'s ` — the Farfetch'd class, on the anchor rather than on the
     // predicate.
-    expect(
-      deriveAttackEffect(ROCKET_MIRROR.replace("Team Rocket's", "Farfetch'd")),
-    ).toBeNull();
+    expect(deriveAttackEffect(ROCKET_MIRROR.replace("Team Rocket's", "Farfetch'd"))).toBeNull();
   });
 
   it("keeps the apostrophe FOLD on both slots (D136/D137)", () => {
@@ -956,7 +954,8 @@ describe("🆕🆕🆕 LANDED at D565 (was FLAGGED) — Team Rocket's Orbeetle s
     const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // Forced (one damaged? no — both are candidates; the pick is parked), so
     // resolve it explicitly.
-    const settled = done.phase.kind === "effect:choose" ? mustApply(done, pick(BENCH_0)).state : done;
+    const settled =
+      done.phase.kind === "effect:choose" ? mustApply(done, pick(BENCH_0)).state : done;
     expect(settled.players.p1.bench[0]?.damage).toBe(0);
     // ⚠️ THE FLAG: the counters went to the OPPONENT. Orbeetle needs them on the
     // controller's other body — 🆕🆕🆕 D565: ~~"and no op in the union can put them

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cardOfUid } from "./cards";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -191,8 +187,9 @@ function damageDealt(state: GameState, seat: Seat = "p1"): number {
 function prefixReading(state: GameState, seat: Seat): boolean {
   const active = state.players[seat].active;
   if (active === null) return false;
-  return active.energy.some((uid) => cardOfUid(state, uid)?.name.startsWith("Team Rocket's ") ===
-    true);
+  return active.energy.some(
+    (uid) => cardOfUid(state, uid)?.name.startsWith("Team Rocket's ") === true,
+  );
 }
 
 /** The names the engine can actually SEE on `seat`'s Active's attached Energy, read
@@ -243,7 +240,7 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
     // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
     // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
@@ -340,7 +337,7 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -538,7 +535,7 @@ describe("§3 — THE SHAPE CHOICE: one NAME, not the prefix — with its attrib
 });
 
 describe("§4 — the near miss: a NAME against a PROVISION, on one board", () => {
-  it("🛑 a plain Special satisfies `energy: \"special\"` and NOT this member", () => {
+  it('🛑 a plain Special satisfies `energy: "special"` and NOT this member', () => {
     // THE REASON `yourActiveHasEnergyAttached` WAS NOT WIDENED. That member reads by
     // PROVISION and by CARD CLASS; this one reads a printed NAME. `fix-special` is a
     // Special Energy with no prefix at all, so the two disagree on it — which is what
@@ -640,7 +637,9 @@ describe("§6 — the clause row, D118's refusal, the note and D154's fold", () 
     // own sentences must keep resolving to the PROVISION member — otherwise the row
     // has been added by breaking the pattern rather than beside it.
     expect(
-      deriveAttackDamageBonus("If this Pokémon has any {R} Energy attached, this attack does 90 more damage."),
+      deriveAttackDamageBonus(
+        "If this Pokémon has any {R} Energy attached, this attack does 90 more damage.",
+      ),
     ).toEqual({
       per: 90,
       count: {
@@ -649,7 +648,9 @@ describe("§6 — the clause row, D118's refusal, the note and D154's fold", () 
       },
     });
     expect(
-      deriveAttackDamageBonus("If this Pokémon has any Special Energy attached, this attack does 140 more damage."),
+      deriveAttackDamageBonus(
+        "If this Pokémon has any Special Energy attached, this attack does 140 more damage.",
+      ),
     ).toEqual({
       per: 140,
       count: {

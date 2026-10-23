@@ -49,11 +49,7 @@ function setActiveDamage(state: GameState, seat: Seat, damage: number): GameStat
 
 /** The top uid of the Pokémon in a spot — fix-basic-1 stacks are single cards,
     so the top uid identifies the body a HEALED event should name. */
-function topUidAt(
-  state: GameState,
-  seat: Seat,
-  spot: "active" | number,
-): string {
+function topUidAt(state: GameState, seat: Seat, spot: "active" | number): string {
   const side = state.players[seat];
   const pokemon = spot === "active" ? side.active : side.bench[spot];
   if (pokemon == null) throw new Error(`${seat} has no Pokémon at ${spot}`);
@@ -99,7 +95,11 @@ describe("Picnic Basket — healEachAll (both boards)", () => {
     // Each heal is clamped to min(30, damage): the p2 Active's 20 heals 20, the rest 30.
     expect(healed.map((h) => h.amount).sort((a, b) => a - b)).toEqual([20, 30, 30, 30]);
     // Own-seat tagging: the p2 events name p2's damaged bodies, never p1's.
-    const uidsFor = (s: Seat) => healed.filter((h) => h.seat === s).map((h) => h.uid).sort();
+    const uidsFor = (s: Seat) =>
+      healed
+        .filter((h) => h.seat === s)
+        .map((h) => h.uid)
+        .sort();
     expect(uidsFor("p1")).toEqual([p1ActiveUid, p1BenchUid].sort());
     expect(uidsFor("p2")).toEqual([p2ActiveUid, p2BenchUid].sort());
     // The undamaged Pokémon is never named.
@@ -136,8 +136,6 @@ describe("Picnic Basket — healEachAll (both boards)", () => {
     const withCard = handFromDeck(state, "p1", "sv01-184", 1);
     const uid = handUid(withCard, "p1", "sv01-184");
     deepFreeze(withCard);
-    expect(() =>
-      applyAction(withCard, { type: "playTrainer", seat: "p1", uid }),
-    ).not.toThrow();
+    expect(() => applyAction(withCard, { type: "playTrainer", seat: "p1", uid })).not.toThrow();
   });
 });

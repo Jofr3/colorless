@@ -101,9 +101,7 @@ export function spliceReport(): SpliceReport {
   if (patchesLiterally) {
     return {
       ok: true,
-      lines: [
-        `${APPLY_SITE} patches LITERALLY (${String(spliceable.length)} row(s) depend on it)`,
-      ],
+      lines: [`${APPLY_SITE} patches LITERALLY (${String(spliceable.length)} row(s) depend on it)`],
       spliceable: spliceable.length,
     };
   }

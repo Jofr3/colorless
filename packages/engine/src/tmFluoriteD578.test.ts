@@ -40,20 +40,37 @@ const W = "d578t-water";
 const P = "d578t-psychic";
 
 const body = (id: string, extra: Partial<Card> = {}): Card =>
-  battler(id, { name: id, hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }], ...extra });
+  battler(id, {
+    name: id,
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+    ...extra,
+  });
 
 /** 🆕 D581 — the attack the catalog row prints (`apps/api/src/ingest/map.ts` keeps it since D581). */
 const TM_ATTACKS = CATALOG_MANIFEST.trainerFaces[TM]?.attacks ?? null;
 
 const LOCAL_CARDS: Record<string, Card> = {
-  [TM]: { ...trainerCard(TM, "Tool", TM_TEXT), name: "Technical Machine: Fluorite", attacks: TM_ATTACKS },
+  [TM]: {
+    ...trainerCard(TM, "Tool", TM_TEXT),
+    name: "Technical Machine: Fluorite",
+    attacks: TM_ATTACKS,
+  },
   [HOLDER]: body(HOLDER, { name: "D578 Holder" }),
   [TERA]: body(TERA, { name: "Lapras ex" }),
   [TERA_2]: body(TERA_2, { name: "Tatsugiri ex" }),
   [PLAIN]: body(PLAIN, { name: "D578 Plain" }),
-  [JAMMING_TOWER]: { ...trainerCard(JAMMING_TOWER, "Stadium", "Pokémon Tools in play have no effect."), name: "Jamming Tower" },
+  [JAMMING_TOWER]: {
+    ...trainerCard(JAMMING_TOWER, "Stadium", "Pokémon Tools in play have no effect."),
+    name: "Jamming Tower",
+  },
   [VITALITY_BAND]: {
-    ...trainerCard(VITALITY_BAND, "Tool", "The attacks of the Pokémon this card is attached to do 10 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."),
+    ...trainerCard(
+      VITALITY_BAND,
+      "Tool",
+      "The attacks of the Pokémon this card is attached to do 10 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+    ),
     name: "Vitality Band",
   },
   [FILLER]: body(FILLER, { name: "D578 Filler", retreat: 1 }),
@@ -86,7 +103,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -101,7 +119,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -109,15 +129,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -164,7 +191,12 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const take = (seat: Seat, id: string): string => {
     const pulled = pull(state, seat, id);
@@ -179,14 +211,17 @@ function table(opts: {
   };
   for (const seat of ["p1", "p2"] as const) {
     const active = build(seat, seat === "p1" ? opts.p1 : opts.p2);
-    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) => build(seat, s));
+    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
+      build(seat, s),
+    );
     state = withSide(state, seat, { active, bench });
   }
   const hand = (opts.hand ?? []).map((id) => take("p1", id));
   return withSide(state, "p1", { hand });
 }
 
-const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon => state.players[seat].active as InPlayPokemon;
+const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon =>
+  state.players[seat].active as InPlayPokemon;
 
 describe("D578 TM Fluorite §1 — the data and the registry row", () => {
   it("the granted attack is the card JSON's, verbatim — on the CATALOG row (D581)", () => {
@@ -195,7 +230,8 @@ describe("D578 TM Fluorite §1 — the data and the registry row", () => {
       {
         cost: ["Grass", "Water", "Psychic"],
         name: "Fluorite",
-        effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
+        effect:
+          "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
       },
     ]);
   });
@@ -224,7 +260,12 @@ describe("D578 TM Fluorite §2 — offered only while attached, AFTER the printe
     const state = table({ p1: { id: HOLDER }, p2: { id: PLAIN }, hand: [TM] });
     expect(attackMenuOf(state, "p1", active(state)).map((r) => r.attack.name)).toEqual(["Tap"]);
     const tmUid = state.players.p1.hand[0] ?? "";
-    const attached = run(state, { type: "attachTool", seat: "p1", uid: tmUid, target: { spot: "active" } }).state;
+    const attached = run(state, {
+      type: "attachTool",
+      seat: "p1",
+      uid: tmUid,
+      target: { spot: "active" },
+    }).state;
     const menu = attackMenuOf(attached, "p1", active(attached));
     expect(menu.map((r) => [r.attack.name, r.origin, r.sourceIndex])).toEqual([
       ["Tap", "printed", 0],
@@ -287,7 +328,10 @@ describe("D578 TM Fluorite §4 — the attack: all Energy discarded, every Tera 
   it("discards ALL the holder's Energy and heals all damage from each Tera Pokémon (Active and Bench); a non-Tera body keeps its damage", () => {
     const state = table({
       p1: { id: TERA, tools: [TM], energy: [G, W, P, "fix-energy"], damage: 120 },
-      p1Bench: [{ id: TERA_2, damage: 50 }, { id: PLAIN, damage: 30 }],
+      p1Bench: [
+        { id: TERA_2, damage: 50 },
+        { id: PLAIN, damage: 30 },
+      ],
       p2: { id: PLAIN },
     });
     const energy = [...active(state).energy];
@@ -307,7 +351,13 @@ describe("D578 TM Fluorite §4 — the attack: all Energy discarded, every Tera 
     const declared = run(state, { type: "attack", seat: "p1", index: 1 }).events.find(
       (e) => e.type === "ATTACK_DECLARED",
     );
-    expect(declared).toEqual({ type: "ATTACK_DECLARED", seat: "p1", uid: active(state).stack[0], attack: "Fluorite", index: 1 });
+    expect(declared).toEqual({
+      type: "ATTACK_DECLARED",
+      seat: "p1",
+      uid: active(state).stack[0],
+      attack: "Fluorite",
+      index: 1,
+    });
   });
 });
 
@@ -346,7 +396,11 @@ describe("D578 TM Fluorite §5 — 'discard it at the end of your turn'", () => 
   });
 
   it("ONLY the TM: another Tool (Vitality Band) on the owner's Bench stays through the same turn end", () => {
-    const state = table({ p1: { id: HOLDER, tools: [TM] }, p1Bench: [{ id: PLAIN, tools: [VITALITY_BAND] }], p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: HOLDER, tools: [TM] },
+      p1Bench: [{ id: PLAIN, tools: [VITALITY_BAND] }],
+      p2: { id: PLAIN },
+    });
     const band = state.players.p1.bench[0]?.tools[0];
     const after = run(state, { type: "endTurn", seat: "p1" }).state;
     expect(after.players.p1.active?.tools).toEqual([]);
@@ -385,9 +439,14 @@ describe("D581 TM Fluorite — the granted attack is the Tool card's catalog row
   /** Re-point p1's Active's first Tool uid at `id`, carrying `card` in the state's pool. */
   const retool = (state: GameState, id: string, card: Card): GameState => {
     const uid = active(state).tools[0] ?? "";
-    return { ...state, cardPool: { ...state.cardPool, [id]: card }, cardIdByUid: { ...state.cardIdByUid, [uid]: id } };
+    return {
+      ...state,
+      cardPool: { ...state.cardPool, [id]: card },
+      cardIdByUid: { ...state.cardIdByUid, [uid]: id },
+    };
   };
-  const origins = (state: GameState) => attackMenuOf(state, "p1", active(state)).map((e) => `${e.attack.name}/${e.origin}`);
+  const origins = (state: GameState) =>
+    attackMenuOf(state, "p1", active(state)).map((e) => `${e.attack.name}/${e.origin}`);
 
   it("the menu's Tool row is the catalog row's attack object, at its printed index", () => {
     const state = table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } });
@@ -406,7 +465,11 @@ describe("D581 TM Fluorite — the granted attack is the Tool card's catalog row
       name: face?.name ?? BLINDSIDE,
       attacks: face?.attacks ?? null,
     };
-    const state = retool(table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } }), BLINDSIDE, blindside);
+    const state = retool(
+      table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } }),
+      BLINDSIDE,
+      blindside,
+    );
     expect(origins(state)).toEqual(["Tap/printed"]);
   });
 

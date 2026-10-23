@@ -94,7 +94,9 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
     expect(prompt.declinable).toBe(false);
     expect(prompt.candidates).toEqual([ACTIVE, BENCH_0, BENCH_1]);
     // The heading is the printed sentence.
-    expect(prompt.note).toBe("Choose up to 2 of your Pokémon and heal 50 damage from each of them.");
+    expect(prompt.note).toBe(
+      "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
+    );
   });
 
   it("heals 50 from EACH of the two picks, and the played card is discarded", () => {
@@ -171,7 +173,9 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
     if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect(prompt.min).toBe(0);
     expect(prompt.max).toBe(1);
-    expect(prompt.note).toBe("Choose up to 1 of your Pokémon and heal 50 damage from each of them.");
+    expect(prompt.note).toBe(
+      "Choose up to 1 of your Pokémon and heal 50 damage from each of them.",
+    );
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
@@ -222,9 +226,17 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
     const resolve = (choice: unknown) =>
       ({ type: "resolveEffect", seat: "p1", choice }) as Parameters<typeof applyAction>[1];
     // Three refs: over the printed "up to 2".
-    expectErr(parked, resolve({ kind: "pokemonMulti", refs: [ACTIVE, BENCH_0, BENCH_1] }), "BAD_EFFECT_CHOICE");
+    expectErr(
+      parked,
+      resolve({ kind: "pokemonMulti", refs: [ACTIVE, BENCH_0, BENCH_1] }),
+      "BAD_EFFECT_CHOICE",
+    );
     // The same Pokémon twice is not two picks.
-    expectErr(parked, resolve({ kind: "pokemonMulti", refs: [ACTIVE, ACTIVE] }), "BAD_EFFECT_CHOICE");
+    expectErr(
+      parked,
+      resolve({ kind: "pokemonMulti", refs: [ACTIVE, ACTIVE] }),
+      "BAD_EFFECT_CHOICE",
+    );
     // "your Pokémon" — the opponent's Active is not offered.
     expectErr(
       parked,

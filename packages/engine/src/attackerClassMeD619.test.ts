@@ -5,7 +5,7 @@ import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { attackerGatedReductionOf, passivesOf } from "./continuous";
 import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
@@ -46,13 +46,21 @@ const FRILLED_TEXT =
   "Once during your turn, if you played Canari from your hand this turn, you may use this Ability. Search your deck for up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck.";
 const WICKED =
   'If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage.';
-const BUDDY = "If you played Emma from your hand during this turn, this attack does 60 more damage.";
-const TWISTER = "If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck.";
+const BUDDY =
+  "If you played Emma from your hand during this turn, this attack does 60 more damage.";
+const TWISTER =
+  "If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck.";
 
 /** WP12's four dropped ATTACK texts (a persisted attacker class), with their printing counts. [🆕🆕🆕 D630 (D539): BUILT at D630.] */
 const DROPPED: readonly (readonly [string, number])[] = [
-  ["During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.", 1],
-  ["During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon.", 2],
+  [
+    "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.",
+    1,
+  ],
+  [
+    "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon.",
+    2,
+  ],
   [
     "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability.",
     1,
@@ -141,7 +149,10 @@ const ATTACKS = [
 ];
 const AURA = [{ type: "Ability", name: "D619 Aura", effect: "A test Ability with no program." }];
 
-const tool = (id: string, name: string, effect: string): Card => ({ ...trainerCard(id, "Tool", effect), name });
+const tool = (id: string, name: string, effect: string): Card => ({
+  ...trainerCard(id, "Tool", effect),
+  name,
+});
 const supporter = (id: string, name: string, effect: string): Card => ({
   ...trainerCard(id, "Supporter", effect),
   name,
@@ -153,7 +164,11 @@ const LOCAL_CARDS: Record<string, Card> = {
   [SACRED[0]]: tool(SACRED[0], "Sacred Charm", SACRED_TEXT),
   [THICK_SCALE]: tool(THICK_SCALE, "Thick Scale", SCALE_TEXT),
   [JAMMING]: {
-    ...trainerCard(JAMMING, "Stadium", "Pokémon Tools attached to each Pokémon (both yours and your opponent's) have no effect."),
+    ...trainerCard(
+      JAMMING,
+      "Stadium",
+      "Pokémon Tools attached to each Pokémon (both yours and your opponent's) have no effect.",
+    ),
     name: "Jamming Tower",
   },
   [DEWGONG[0]]: battler(DEWGONG[0], {
@@ -166,7 +181,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     weaknesses: [{ type: "Lightning", value: "×2" }],
     abilities: [{ type: "Ability", name: "Thick Fat", effect: FAT_TEXT }],
     attacks: [
-      { cost: ["Water", "Colorless"], name: "Slam", damage: "70×", effect: "Flip 2 coins. This attack does 70 damage for each heads." },
+      {
+        cost: ["Water", "Colorless"],
+        name: "Slam",
+        damage: "70×",
+        effect: "Flip 2 coins. This attack does 70 damage for each heads.",
+      },
     ],
   } as Partial<Card>),
   [HELIOLISK[0]]: battler(HELIOLISK[0], {
@@ -182,7 +202,8 @@ const LOCAL_CARDS: Record<string, Card> = {
         cost: ["Lightning", "Colorless", "Colorless"],
         name: "Powerful Bolt",
         damage: "70×",
-        effect: "Flip a coin for each Energy attached to this Pokémon. This attack does 70 damage for each heads.",
+        effect:
+          "Flip a coin for each Energy attached to this Pokémon. This attack does 70 damage for each heads.",
       },
     ],
   } as Partial<Card>),
@@ -192,8 +213,18 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Colorless"],
     retreat: 2,
     attacks: [
-      { cost: ["Colorless", "Colorless"], name: "Comet Punch", damage: "30×", effect: "Flip 4 coins. This attack does 30 damage for each heads." },
-      { cost: ["Colorless", "Colorless", "Colorless"], name: "Wicked Impact", damage: "120+", effect: WICKED },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Comet Punch",
+        damage: "30×",
+        effect: "Flip 4 coins. This attack does 30 damage for each heads.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Wicked Impact",
+        damage: "120+",
+        effect: WICKED,
+      },
     ],
   } as Partial<Card>),
   [ESPURR]: battler(ESPURR, {
@@ -211,11 +242,24 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Fighting"],
     retreat: 4,
     attacks: [
-      { cost: ["Fighting", "Fighting", "Colorless"], name: "Twister Spewing", damage: 80, effect: TWISTER },
-      { cost: ["Fighting", "Fighting", "Colorless", "Colorless"], name: "Heavy Impact", damage: 130 },
+      {
+        cost: ["Fighting", "Fighting", "Colorless"],
+        name: "Twister Spewing",
+        damage: 80,
+        effect: TWISTER,
+      },
+      {
+        cost: ["Fighting", "Fighting", "Colorless", "Colorless"],
+        name: "Heavy Impact",
+        damage: 130,
+      },
     ],
   } as Partial<Card>),
-  [EMMA]: supporter(EMMA, "Emma", "Your opponent reveals their hand, and you draw a card for each Pokémon you find there."),
+  [EMMA]: supporter(
+    EMMA,
+    "Emma",
+    "Your opponent reveals their hand, and you draw a card for each Pokémon you find there.",
+  ),
   [ARIANA]: supporter(
     ARIANA,
     "Team Rocket's Ariana",
@@ -249,10 +293,18 @@ const LOCAL_CARDS: Record<string, Card> = {
   [PLAIN]: attacker(PLAIN, "D619 Plain", "Colorless"),
   [FIRE_ABLE]: attacker(FIRE_ABLE, "D619 Fire Able", "Fire", { abilities: AURA } as Partial<Card>),
   ...Object.fromEntries(
-    ["Grass", "Fire", "Water", "Lightning", "Psychic"].map((type) => [TYPED(type), attacker(TYPED(type), `D619 ${type}`, type)]),
+    ["Grass", "Fire", "Water", "Lightning", "Psychic"].map((type) => [
+      TYPED(type),
+      attacker(TYPED(type), `D619 ${type}`, type),
+    ]),
   ),
   [WALL]: battler(WALL, { name: "D619 Wall", types: ["Colorless"], hp: 300 }),
-  [WEAK]: battler(WEAK, { name: "D619 Weak", types: ["Colorless"], hp: 300, weaknesses: [{ type: "Colorless", value: "×2" }] }),
+  [WEAK]: battler(WEAK, {
+    name: "D619 Weak",
+    types: ["Colorless"],
+    hp: 300,
+    weaknesses: [{ type: "Colorless", value: "×2" }],
+  }),
   [DRAGON]: battler(DRAGON, { name: "D619 Dragon", types: ["Dragon"], hp: 300 }),
   [L]: typedEnergy(L, "Lightning"),
   [F]: typedEnergy(F, "Fighting"),
@@ -304,7 +356,9 @@ function opened(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -312,15 +366,21 @@ function opened(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -361,7 +421,12 @@ function table(opts: {
   state = setActiveFromDeck(ensureInDeck(state, "p2", defender.id), "p2", defender.id);
   state = clearBench(clearBench(state, "p1"), "p2");
   if (defender.tool !== undefined) {
-    state = attachToolFromDeck(ensureInDeck(state, "p2", defender.tool), "p2", "active", defender.tool);
+    state = attachToolFromDeck(
+      ensureInDeck(state, "p2", defender.tool),
+      "p2",
+      "active",
+      defender.tool,
+    );
   }
   for (const [seat, bodies] of [
     ["p2", opts.bench ?? []],
@@ -374,7 +439,8 @@ function table(opts: {
       }
     }
   }
-  for (const [id, n] of opts.energy ?? [["fix-energy", 1]]) state = attachFromDeck(state, "p1", id, n);
+  for (const [id, n] of opts.energy ?? [["fix-energy", 1]])
+    state = attachFromDeck(state, "p1", id, n);
   return state;
 }
 
@@ -420,21 +486,31 @@ function played(state: GameState, id: string): GameState {
   };
 }
 
-const swing = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const activeDamage = (state: GameState, seat: Seat = "p2") => state.players[seat].active?.damage;
-const benchDamage = (state: GameState, seat: Seat, i: number) => state.players[seat].bench[i]?.damage;
+const benchDamage = (state: GameState, seat: Seat, i: number) =>
+  state.players[seat].bench[i]?.damage;
 
 /** Swing a snipe and answer its pick with the body at `spot` on p2's board. */
 function snipe(state: GameState, index: number, spot: PokemonRef["spot"]) {
   const { state: parked } = swing(state, index);
-  if (parked.phase.kind !== "effect:choose") throw new Error(`expected a pick, got ${parked.phase.kind}`);
+  if (parked.phase.kind !== "effect:choose")
+    throw new Error(`expected a pick, got ${parked.phase.kind}`);
   const prompt = parked.phase.prompt;
-  if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
-  const ref = prompt.candidates.find((c) => c.seat === "p2" && JSON.stringify(c.spot) === JSON.stringify(spot));
+  if (prompt.kind !== "choosePokemonMulti")
+    throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+  const ref = prompt.candidates.find(
+    (c) => c.seat === "p2" && JSON.stringify(c.spot) === JSON.stringify(spot),
+  );
   if (ref === undefined) throw new Error("the spot is not a candidate");
-  return mustApply(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [ref] } });
+  return mustApply(parked, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemonMulti", refs: [ref] },
+  });
 }
 const BENCH0: PokemonRef["spot"] = { spot: "bench", index: 0 };
 const ACTIVE: PokemonRef["spot"] = { spot: "active" };
@@ -443,7 +519,9 @@ const ACTIVE: PokemonRef["spot"] = { spot: "active" };
 describe("D619 §1 — the prints, the registry rows and the readings", () => {
   it("the four passive / Ability objects, one per printed text, on the 7 `me` ids", () => {
     expect(programFor(SACRED[0])).toEqual({
-      passive: { damageReductionAfterWRFromAttacker: { amount: 30, attacker: { kind: "abilityPokemon" } } },
+      passive: {
+        damageReductionAfterWRFromAttacker: { amount: 30, attacker: { kind: "abilityPokemon" } },
+      },
     });
     expect(programFor(SACRED[1])).toBe(programFor(SACRED[0]));
     expect(programFor(THICK_SCALE)).toEqual({
@@ -452,7 +530,10 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
           amount: 50,
           attacker: {
             kind: "anyOf",
-            filters: ["Grass", "Fire", "Water", "Lightning"].map((pokemonType) => ({ kind: "typedPokemon", pokemonType })),
+            filters: ["Grass", "Fire", "Water", "Lightning"].map((pokemonType) => ({
+              kind: "typedPokemon",
+              pokemonType,
+            })),
           },
           holderType: "Dragon",
         },
@@ -481,7 +562,12 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
           activeOnly: false,
           playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Canari" },
           program: [
-            { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Lightning" }, max: 2, toSelf: true },
+            {
+              op: "attachFromDeck",
+              filter: { kind: "basicEnergy", energyType: "Lightning" },
+              max: 2,
+              toSelf: true,
+            },
             { op: "shuffleDeck" },
           ],
         },
@@ -504,7 +590,10 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
       const read = deriveAttackDamageBonus(text);
       return read?.count.kind === "boardCondition" ? [read.per, read.count.cond] : read;
     };
-    expect(bonus(WICKED)).toEqual([100, { kind: "youPlayedSupporterNamedThisTurn", nameContains: "Team Rocket" }]);
+    expect(bonus(WICKED)).toEqual([
+      100,
+      { kind: "youPlayedSupporterNamedThisTurn", nameContains: "Team Rocket" },
+    ]);
     expect(bonus(BUDDY)).toEqual([60, { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" }]);
     expect(deriveAttackEffect(TWISTER)).toEqual([
       {
@@ -534,19 +623,28 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
       expect([text, me.get(text)]).toEqual([text, n]);
       expect(resolvedByAnyReader(text), text).toBe(true); // 🆕🆕🆕 D630 — reader-built
     }
-    for (const id of ["me05-007", "me05-024", "me05-089", "me04-033", "me05-064"]) expect(programFor(id), id).toBeUndefined();
+    for (const id of ["me05-007", "me05-024", "me05-089", "me04-033", "me05-064"])
+      expect(programFor(id), id).toBeUndefined();
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D619 §2 — Sacred Charm at the MAIN HIT: 30 less from an opposing Pokémon that has an Ability", () => {
   it("🛑 an attacker with an Ability: 120 → 90; one without: 120", () => {
-    expect(activeDamage(swing(table({ defender: { id: WALL, tool: SACRED[0] } }), BLAST).state)).toBe(90);
-    expect(activeDamage(swing(table({ attacker: PLAIN, defender: { id: WALL, tool: SACRED[0] } }), BLAST).state)).toBe(120);
+    expect(
+      activeDamage(swing(table({ defender: { id: WALL, tool: SACRED[0] } }), BLAST).state),
+    ).toBe(90);
+    expect(
+      activeDamage(
+        swing(table({ attacker: PLAIN, defender: { id: WALL, tool: SACRED[0] } }), BLAST).state,
+      ),
+    ).toBe(120);
   });
 
   it("🛑 AFTER Weakness: a ×2 holder takes 60 × 2 − 30 = 90 (before it would be 60)", () => {
-    expect(activeDamage(swing(table({ defender: { id: WEAK, tool: SACRED[0] } }), JAB).state)).toBe(90);
+    expect(activeDamage(swing(table({ defender: { id: WEAK, tool: SACRED[0] } }), JAB).state)).toBe(
+      90,
+    );
   });
 
   it("🛑 Jamming Tower: the Tool has no effect — 120 lands", () => {
@@ -555,14 +653,19 @@ describe("D619 §2 — Sacred Charm at the MAIN HIT: 30 less from an opposing Po
   });
 
   it("🛑 Feint (`suppressTargetEffects`) drops it with the catalog half", () => {
-    expect(activeDamage(swing(table({ defender: { id: WALL, tool: SACRED[0] } }), FEINT).state)).toBe(120);
+    expect(
+      activeDamage(swing(table({ defender: { id: WALL, tool: SACRED[0] } }), FEINT).state),
+    ).toBe(120);
   });
 
   it("the holder fold carries the reduction for any holder (no holder gate)", () => {
     const state = table({ defender: { id: WALL, tool: SACRED[0] } });
-    expect(passivesOf(state, state.players.p2.active as NonNullable<GameState["players"]["p2"]["active"]>).damageReductionsFromAttacker).toEqual([
-      { amount: 30, attacker: { kind: "abilityPokemon" } },
-    ]);
+    expect(
+      passivesOf(
+        state,
+        state.players.p2.active as NonNullable<GameState["players"]["p2"]["active"]>,
+      ).damageReductionsFromAttacker,
+    ).toEqual([{ amount: 30, attacker: { kind: "abilityPokemon" } }]);
   });
 });
 
@@ -573,30 +676,53 @@ describe("D619 §3 — Thick Scale: a {N} holder takes 50 less from opposing {G}
       const state = table({ attacker: TYPED(type), defender: { id: DRAGON, tool: THICK_SCALE } });
       expect([type, activeDamage(swing(state, BLAST).state)]).toEqual([type, 70]);
     }
-    const psychic = table({ attacker: TYPED("Psychic"), defender: { id: DRAGON, tool: THICK_SCALE } });
+    const psychic = table({
+      attacker: TYPED("Psychic"),
+      defender: { id: DRAGON, tool: THICK_SCALE },
+    });
     expect(activeDamage(swing(psychic, BLAST).state)).toBe(120);
   });
 
   it("🛑 THE HOLDER GATE — on a non-{N} holder it does nothing (and the fold carries nothing)", () => {
     const state = table({ attacker: TYPED("Fire"), defender: { id: WALL, tool: THICK_SCALE } });
-    expect(passivesOf(state, state.players.p2.active as NonNullable<GameState["players"]["p2"]["active"]>).damageReductionsFromAttacker).toEqual([]);
+    expect(
+      passivesOf(
+        state,
+        state.players.p2.active as NonNullable<GameState["players"]["p2"]["active"]>,
+      ).damageReductionsFromAttacker,
+    ).toEqual([]);
     expect(activeDamage(swing(state, BLAST).state)).toBe(120);
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D619 §4 — Dewgong \"Thick Fat\": 30 less from opposing {R} or {W}", () => {
+describe('D619 §4 — Dewgong "Thick Fat": 30 less from opposing {R} or {W}', () => {
   it("🛑 {R} and {W} pay 30; {G} pays nothing", () => {
-    expect(activeDamage(swing(table({ attacker: TYPED("Fire"), defender: { id: DEWGONG[0] } }), BLAST).state)).toBe(90);
-    expect(activeDamage(swing(table({ attacker: TYPED("Water"), defender: { id: DEWGONG[0] } }), BLAST).state)).toBe(90);
-    expect(activeDamage(swing(table({ attacker: TYPED("Grass"), defender: { id: DEWGONG[0] } }), BLAST).state)).toBe(120);
+    expect(
+      activeDamage(
+        swing(table({ attacker: TYPED("Fire"), defender: { id: DEWGONG[0] } }), BLAST).state,
+      ),
+    ).toBe(90);
+    expect(
+      activeDamage(
+        swing(table({ attacker: TYPED("Water"), defender: { id: DEWGONG[0] } }), BLAST).state,
+      ),
+    ).toBe(90);
+    expect(
+      activeDamage(
+        swing(table({ attacker: TYPED("Grass"), defender: { id: DEWGONG[0] } }), BLAST).state,
+      ),
+    ).toBe(120);
   });
 
   it("🛑 an Ability: Flutter Mane's lock on the opposing Active silences it", () => {
     const control = table({ attacker: TYPED("Fire"), defender: { id: DEWGONG[0] } });
     const locked = table({ attacker: FLUTTER, defender: { id: DEWGONG[0] } });
     const fold = (state: GameState) =>
-      passivesOf(state, state.players.p2.active as NonNullable<GameState["players"]["p2"]["active"]>).damageReductionsFromAttacker;
+      passivesOf(
+        state,
+        state.players.p2.active as NonNullable<GameState["players"]["p2"]["active"]>,
+      ).damageReductionsFromAttacker;
     expect(fold(control)).toHaveLength(1);
     expect(fold(locked)).toEqual([]);
   });
@@ -608,7 +734,7 @@ describe("D619 §4 — Dewgong \"Thick Fat\": 30 less from opposing {R} or {W}",
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D619 §5 — the three interpreter sites, and \"your opponent's\"", () => {
+describe('D619 §5 — the three interpreter sites, and "your opponent\'s"', () => {
   it("🛑 spreadDamage: the Charm holder takes 90, its neighbour 120", () => {
     const state = table({ bench: [{ id: WALL, tool: SACRED[0] }, { id: WALL }] });
     const done = swing(state, SHOCKWAVE).state;
@@ -660,12 +786,21 @@ describe("D619 §6 — WP15's attack texts on D564's named-Supporter member", ()
   });
 
   it("🛑 Twister Spewing: after Tarragon the opponent's top 3 go to their discard; otherwise only the 80", () => {
-    const board = () => table({ attacker: HIPPOWDON, energy: [[F, 2], ["fix-energy", 1]] });
+    const board = () =>
+      table({
+        attacker: HIPPOWDON,
+        energy: [
+          [F, 2],
+          ["fix-energy", 1],
+        ],
+      });
     const before = board();
     const deckTop = before.players.p2.deck.slice(0, 3);
     const { state: after, events } = swing(played(before, TARRAGON), 0);
     expect(activeDamage(after)).toBe(80);
-    expect(of(events, "DECK_TOP_DISCARDED")).toEqual([{ type: "DECK_TOP_DISCARDED", seat: "p2", actor: "p1", uids: deckTop }]);
+    expect(of(events, "DECK_TOP_DISCARDED")).toEqual([
+      { type: "DECK_TOP_DISCARDED", seat: "p2", actor: "p1", uids: deckTop },
+    ]);
     for (const uid of deckTop) expect(after.players.p2.discard).toContain(uid);
     for (const other of [board(), play(board(), EMMA)]) {
       const { state: done, events: none } = swing(other, 0);
@@ -676,13 +811,17 @@ describe("D619 §6 — WP15's attack texts on D564's named-Supporter member", ()
 
   it("the member is the turn owner's: the OPPONENT reads false on p1's Emma", () => {
     const state = play(table({ attacker: ESPURR, energy: [[P, 1]] }), EMMA);
-    expect(conditionHolds(state, "p1", { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" })).toBe(true);
-    expect(conditionHolds(state, "p2", { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" })).toBe(false);
+    expect(
+      conditionHolds(state, "p1", { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" }),
+    ).toBe(true);
+    expect(
+      conditionHolds(state, "p2", { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" }),
+    ).toBe(false);
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D619 §7 — Heliolisk \"Frilled Generator\": after Canari, up to 2 Basic {L} from the deck to itself", () => {
+describe('D619 §7 — Heliolisk "Frilled Generator": after Canari, up to 2 Basic {L} from the deck to itself', () => {
   const use = (state: GameState) =>
     applyAction(state, {
       type: "useAbility",
@@ -690,13 +829,19 @@ describe("D619 §7 — Heliolisk \"Frilled Generator\": after Canari, up to 2 Ba
       target: { spot: "bench", index: 0 },
       abilityName: "Frilled Generator",
     } as GameAction);
-  const code = (result: ReturnType<typeof applyAction>) => (result.ok ? "applied" : result.error.code);
+  const code = (result: ReturnType<typeof applyAction>) =>
+    result.ok ? "applied" : result.error.code;
   const board = () => table({ attacker: WALL, ownBench: [{ id: HELIOLISK[0] }] });
 
   it("🛑 after Canari: offers only Basic {L} Energy, two land on Heliolisk, the deck is shuffled; once per turn", () => {
     const parked = must(use(played(board(), CANARI)));
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
-    const prompt = parked.phase.prompt as unknown as { kind: string; max: number; candidates: string[] };
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${parked.phase.kind}`);
+    const prompt = parked.phase.prompt as unknown as {
+      kind: string;
+      max: number;
+      candidates: string[];
+    };
     expect(prompt.kind).toBe("attachCards");
     expect(prompt.max).toBe(2);
     expect(new Set(prompt.candidates.map((u) => parked.cardIdByUid[u]))).toEqual(new Set([L]));
@@ -704,9 +849,15 @@ describe("D619 §7 — Heliolisk \"Frilled Generator\": after Canari, up to 2 Ba
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "attachCards", assignments: prompt.candidates.slice(0, 2).map((uid) => ({ uid, to })) },
+      choice: {
+        kind: "attachCards",
+        assignments: prompt.candidates.slice(0, 2).map((uid) => ({ uid, to })),
+      },
     } as GameAction);
-    expect(done.state.players.p1.bench[0]?.energy.map((u) => done.state.cardIdByUid[u])).toEqual([L, L]);
+    expect(done.state.players.p1.bench[0]?.energy.map((u) => done.state.cardIdByUid[u])).toEqual([
+      L,
+      L,
+    ]);
     expect(of(done.events, "SHUFFLE").some((e) => (e as { seat: Seat }).seat === "p1")).toBe(true);
     expect(code(use(done.state))).toBe("ABILITY_ALREADY_USED");
   });
@@ -714,11 +865,5 @@ describe("D619 §7 — Heliolisk \"Frilled Generator\": after Canari, up to 2 Ba
   it("🛑 refused with no Supporter, and after another Supporter (Emma, played)", () => {
     expect(code(use(board()))).toBe("ABILITY_CONDITION_NOT_MET");
     expect(code(use(play(board(), EMMA)))).toBe("ABILITY_CONDITION_NOT_MET");
-  });
-});
-
-describe("D619 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -93,10 +93,10 @@ function find<T extends GameEvent["type"]>(
     makes one seed table right for every installer. */
 function armed(seed: number, installer: string): GameState {
   let state = must(
-    applyAction(
-      driveSetup(seed, { p1: TAILS_GATE_DECK, p2: TAILS_GATE_DECK }, { first: "p2" }),
-      { type: "endTurn", seat: "p2" },
-    ),
+    applyAction(driveSetup(seed, { p1: TAILS_GATE_DECK, p2: TAILS_GATE_DECK }, { first: "p2" }), {
+      type: "endTurn",
+      seat: "p2",
+    }),
   );
   state = setActiveFromDeck(state, "p2", "fix-titan");
   state = setActiveFromDeck(state, "p1", installer);
@@ -262,7 +262,13 @@ describe("the tails gate — derived, not authored", () => {
     // CLOSED (8 printings / 3 sentences), so there should never be a fourth
     // without a new census in front of it.
     const producers = new Set(tailsGates.map((g) => g.where.split(" ")[0]));
-    expect([...producers].sort()).toEqual(["sv01-157", "sv02-063", "sv02-130", "sv03-054", "sv03-183"]);
+    expect([...producers].sort()).toEqual([
+      "sv01-157",
+      "sv02-063",
+      "sv02-130",
+      "sv03-054",
+      "sv03-183",
+    ]);
   });
 
   it("refuses the OTHER FIVE tails-carrying sentences in the pool", () => {
@@ -384,14 +390,14 @@ describe("the tails gate — the seed table, pinned", () => {
     // expected a lock and found none would still pass its "not locked" half.
     for (const { id, index } of INSTALLERS) {
       for (const seed of TAILS_SEEDS) {
-        expect(faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index }).events)).toBe(
-          "tails",
-        );
+        expect(
+          faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index }).events),
+        ).toBe("tails");
       }
       for (const seed of HEADS_SEEDS) {
-        expect(faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index }).events)).toBe(
-          "heads",
-        );
+        expect(
+          faceOf(mustApply(armed(seed, id), { type: "attack", seat: "p1", index }).events),
+        ).toBe("heads");
       }
     }
     // ONE TABLE FOR BOTH INSTALLERS, and the reason is structural rather than
@@ -640,8 +646,10 @@ describe("the tails gate — the WINDOW, driven across the turn boundary on both
     // no gate, so what is owed here is EVIDENCE that the new producer reaches the
     // same line. Swept over both attacks in both directions and on both faces,
     // because a projection that agreed only under a lock would be untestable.
-    const locked = redactGame(heldTurn(installed(TAILS_SEEDS[5] as number, "sv01-157", 1)), "p1")
-      .phase;
+    const locked = redactGame(
+      heldTurn(installed(TAILS_SEEDS[5] as number, "sv01-157", 1)),
+      "p1",
+    ).phase;
     if (locked.kind !== "turn:action") throw new Error(`expected turn:action, got ${locked.kind}`);
     expect(locked.attacks).toHaveLength(2);
     for (const attack of locked.attacks) {
@@ -680,7 +688,9 @@ describe("the tails gate — the WINDOW, driven across the turn boundary on both
         promoteBenchIndex: 0,
       }),
     );
-    expect(held.players.p1.bench.find((p) => p.stack.includes(locked))?.attackLockedTurn).toBeNull();
+    expect(
+      held.players.p1.bench.find((p) => p.stack.includes(locked))?.attackLockedTurn,
+    ).toBeNull();
   });
 });
 
@@ -763,7 +773,10 @@ describe("the tails gate — the census, asserted as a shape", () => {
       { op: "damageSelf", amount: 60 },
     ]);
     for (const [gated, bare] of [
-      ["Flip a coin. If tails, discard all Energy from this Pokémon.", "Discard all Energy from this Pokémon."],
+      [
+        "Flip a coin. If tails, discard all Energy from this Pokémon.",
+        "Discard all Energy from this Pokémon.",
+      ],
       [
         "Flip a coin. If tails, this Pokémon also does 60 damage to itself.",
         "This Pokémon also does 60 damage to itself.",

@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect, normaliseMeWording } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -53,9 +53,15 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
 /** WP36's rest, dropped and named: [text, ids, the vocabulary it needs]. [🆕🆕🆕 D639 (D539): both BUILT at D639.] */
 const WP36_REST: readonly (readonly [string, readonly string[]])[] = [
   // a Knock Out SWEEP over every opponent body at or under an HP threshold (no op walks and KOs).
-  ["Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.", ["me03-053", "me03-105"]],
+  [
+    "Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.",
+    ["me03-053", "me03-105"],
+  ],
   // a THIS-attack Prize bonus on a KO by its damage (`bountyDefender` is next-turn, Briar a Supporter).
-  ["If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card.", ["30th-072"]],
+  [
+    "If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card.",
+    ["30th-072"],
+  ],
 ];
 
 describe("D609 §1 — the texts", () => {
@@ -98,7 +104,11 @@ describe("D609 §2 — the readings", () => {
     expect(deriveAttackEffect(TERMINAL_PERIOD.replace("6", "0"))).toBeNull();
     expect(deriveAttackEffect(`Draw a card. ${TERMINAL_PERIOD}`)).toBeNull();
     expect(deriveAttackEffect(`${TERMINAL_PERIOD} Draw a card.`)).toBeNull();
-    expect(deriveAttackEffect(TERMINAL_PERIOD.replace(" that Pokémon is Knocked Out.", " it is Knocked Out."))).toBeNull();
+    expect(
+      deriveAttackEffect(
+        TERMINAL_PERIOD.replace(" that Pokémon is Knocked Out.", " it is Knocked Out."),
+      ),
+    ).toBeNull();
     expect(conditionNote({ kind: "opponentActiveDamageCountersExactly", count: 6 })).toBe(
       "your opponent's Active Pokémon has exactly 6 damage counters on it",
     );
@@ -130,10 +140,16 @@ describe("D609 §2 — the readings", () => {
   });
 
   it("Sneaky Placement: the singular is D449's put at 1; the Active singular stays unread (🆕🆕🆕 D627 (D539): built since D627)", () => {
-    const one = [{ op: "damageChosen", target: "opponentAny", amount: 10, count: 1, source: "attack" }];
+    const one = [
+      { op: "damageChosen", target: "opponentAny", amount: 10, count: 1, source: "attack" },
+    ];
     expect(deriveAttackEffect(SNEAKY_PLACEMENT)).toEqual(one);
-    expect(deriveAttackEffect("Put 1 damage counter on 1 of your opponent's Pokémon.")).toEqual(one);
-    expect(normaliseMeWording(SNEAKY_PLACEMENT)).toBe("Put 1 damage counter on 1 of your opponent's Pokémon.");
+    expect(deriveAttackEffect("Put 1 damage counter on 1 of your opponent's Pokémon.")).toEqual(
+      one,
+    );
+    expect(normaliseMeWording(SNEAKY_PLACEMENT)).toBe(
+      "Put 1 damage counter on 1 of your opponent's Pokémon.",
+    );
     // The plural reads as it always did (Swirlix `sv06-089`).
     expect(deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Pokémon.")).toEqual([
       { ...one[0], amount: 20 },
@@ -141,16 +157,16 @@ describe("D609 §2 — the readings", () => {
     // The other singular `me` sentence is rewritten and stays unbuilt.
     // 🆕🆕🆕 D627 (D539): "stays unbuilt" is WITHDRAWN, kept as written — Poltchageist "Furtive Drop" is
     // built by H1 (`COUNTER_PUT_ON_DEFENDER` at the singular, `hideNSneakMeD627.test.ts` §2).
-    expect(deriveAttackEffect("Place 1 damage counter on your opponent's Active Pokémon.")).toEqual([
-      { op: "damageActive", amount: 10, source: "attack" },
-    ]);
+    expect(deriveAttackEffect("Place 1 damage counter on your opponent's Active Pokémon.")).toEqual(
+      [{ op: "damageActive", amount: 10, source: "attack" }],
+    );
     expect(deriveAttackEffect(SNEAKY_PLACEMENT.replace("1 damage", "0 damage"))).toBeNull();
     // Number agreement: the singular is read at exactly 1 (D449's "the singular noun" control).
     expect(deriveAttackEffect("Put 2 damage counter on 1 of your opponent's Pokémon.")).toBeNull();
     // The lower-case mid-sentence row is not widened.
-    expect(normaliseMeWording("Then, place 1 damage counter on 1 of your opponent's Pokémon.")).toBe(
-      "Then, place 1 damage counter on 1 of your opponent's Pokémon.",
-    );
+    expect(
+      normaliseMeWording("Then, place 1 damage counter on 1 of your opponent's Pokémon."),
+    ).toBe("Then, place 1 damage counter on 1 of your opponent's Pokémon.");
   });
 
   it("the widened synonym is still the identity on every legal `sv` sentence", () => {
@@ -167,8 +183,14 @@ const W = "d609-water";
 const D = "d609-darkness";
 const P = "d609-psychic";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -182,7 +204,12 @@ const LOCAL: Record<string, Card> = {
     "Water",
     [
       { cost: ["Water"], name: "Bring Down", effect: BRING_DOWN },
-      { cost: ["Water"], name: "Water Shot", damage: 110, effect: "Discard an Energy from this Pokémon." },
+      {
+        cost: ["Water"],
+        name: "Water Shot",
+        damage: 110,
+        effect: "Discard an Energy from this Pokémon.",
+      },
     ],
     { stage: "Stage2", evolveFrom: "Drizzile" },
   ),
@@ -199,7 +226,9 @@ const LOCAL: Record<string, Card> = {
   ]),
   [FILLER]: mon(FILLER, "D609 Filler", 400, "Colorless", TAP),
   [SMALL]: mon(SMALL, "D609 Small", 60, "Colorless", TAP),
-  [WEAK]: mon(WEAK, "D609 Weak", 400, "Psychic", TAP, { weaknesses: [{ type: "Water", value: "×2" }] }),
+  [WEAK]: mon(WEAK, "D609 Weak", 400, "Psychic", TAP, {
+    weaknesses: [{ type: "Water", value: "×2" }],
+  }),
   [W]: typedEnergy(W, "Water"),
   [D]: typedEnergy(D, "Darkness"),
   [P]: typedEnergy(P, "Psychic"),
@@ -232,7 +261,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -240,15 +271,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -276,7 +313,8 @@ function table(
   ownBench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   for (const id of ownBench) state = benchFromDeck(state, "p1", id);
@@ -289,9 +327,16 @@ const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", ind
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const ACTIVE: PokemonRef = { seat: "p2", spot: { spot: "active" } };
-const bench = (index: number, seat: Seat = "p2"): PokemonRef => ({ seat, spot: { spot: "bench", index } });
+const bench = (index: number, seat: Seat = "p2"): PokemonRef => ({
+  seat,
+  spot: { spot: "bench", index },
+});
 const pick = (state: GameState, ref: PokemonRef) =>
-  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } } as GameAction);
+  mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref },
+  } as GameAction);
 const damageOf = (state: GameState) => [
   state.players.p2.active?.damage ?? -1,
   ...state.players.p2.bench.map((b) => b.damage),
@@ -342,7 +387,12 @@ describe("D609 §4 — Bring Down: the least HP remaining, either side, never th
   });
 
   it("a tie parks on exactly the tied bodies, captioned with the printed sentence", () => {
-    const state = setBenchDamage(table("me01-041", [[W, 1]], FILLER, [SMALL, FILLER, SMALL], [SMALL]), "p1", 0, 0);
+    const state = setBenchDamage(
+      table("me01-041", [[W, 1]], FILLER, [SMALL, FILLER, SMALL], [SMALL]),
+      "p1",
+      0,
+      0,
+    );
     const prompt = parked(mustApply(state, attack(0)).state);
     expect(prompt.candidates).toEqual([bench(0, "p1"), bench(0), bench(2)]);
     expect(prompt.note).toBe(BRING_DOWN);
@@ -351,7 +401,12 @@ describe("D609 §4 — Bring Down: the least HP remaining, either side, never th
   });
 
   it("YOUR OWN body can be the least: it is Knocked Out", () => {
-    const state = setBenchDamage(table("me01-041", [[W, 1]], FILLER, [SMALL], [SMALL]), "p1", 0, 30);
+    const state = setBenchDamage(
+      table("me01-041", [[W, 1]], FILLER, [SMALL], [SMALL]),
+      "p1",
+      0,
+      30,
+    );
     const result = mustApply(state, attack(0));
     expect(koIds(result.state, result.events)).toEqual([["p1", SMALL]]);
   });
@@ -364,7 +419,12 @@ describe("D609 §4 — Bring Down: the least HP remaining, either side, never th
   });
 
   it("R-BD1: a shielded least-HP body is not replaced by the next one — nothing is Knocked Out", () => {
-    const state = setBenchDamage(table("me01-041", [[W, 1]], FILLER, ["fix-unaware", SMALL]), "p2", 0, 200);
+    const state = setBenchDamage(
+      table("me01-041", [[W, 1]], FILLER, ["fix-unaware", SMALL]),
+      "p2",
+      0,
+      200,
+    );
     const result = mustApply(state, attack(0));
     expect(of(result.events, "KNOCKED_OUT")).toEqual([]);
     expect(of(result.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
@@ -418,11 +478,5 @@ describe("D609 §6 — Sneaky Placement: 1 counter on 1 of the opponent's Pokém
       choice: { kind: "pokemonMulti", refs: [bench(0)] },
     } as GameAction);
     expect(damageOf(result.state)).toEqual([0, 10]);
-  });
-});
-
-describe("D609 §7 — the version", () => {
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

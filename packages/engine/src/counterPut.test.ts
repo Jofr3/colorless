@@ -458,17 +458,23 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // opponent's Active Pokémon"* — so nothing but the QUANTITY tells them apart, and
     // an anchor whose count went optional would claim it and place 10 HP where the card
     // means "fill to 10 remaining". Both positives are asserted beside the inequality.
-    const HP_TARGET = "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
+    const HP_TARGET =
+      "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
     expect(deriveAttackEffect(HP_TARGET)).toEqual([
-      { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 10, source: "attack" },
+      {
+        op: "counterUntilRemainingHp",
+        target: "opponentActive",
+        remainingHp: 10,
+        source: "attack",
+      },
     ]);
     expect(deriveAttackEffect(HP_TARGET)).not.toEqual(deriveAttackEffect(clauseText(1)));
     // …and the printed 10 is HP, NOT counters: `damageActive` at a printed 10 carries
     // `amount: 100` and the HP target carries `remainingHp: 10`. The two numbers read
     // the same on the page and mean different things, which is the whole §12 hazard.
-    expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual([
-      { op: "damageActive", amount: 100, source: "attack" },
-    ]);
+    expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual(
+      [{ op: "damageActive", amount: 100, source: "attack" }],
+    );
 
     // 🆕🆕🆕 **D538 — THE SCALED TWIN, THE ROW THAT LEFT THIS LIST THIS SLICE, AS AN
     // INEQUALITY PLUS THE POSITIVE.** Arm 23b-bis claims corpus line 412 whole. The
@@ -635,7 +641,13 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // would have gone red for that AND for the unrelated fact that nobody read it.
     const anyZone = "Put 7 damage counters on 1 of your opponent's Pokémon.";
     expect(deriveAttackEffect(anyZone)).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: GHOST_EYE_HP, count: 1, source: "attack" },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: GHOST_EYE_HP,
+        count: 1,
+        source: "attack",
+      },
     ]);
     expect(deriveAttackEffect(anyZone)).not.toEqual(deriveAttackEffect(clauseText(7)));
     expect(deriveAttackEffect(anyZone)).not.toContainEqual(

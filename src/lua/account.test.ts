@@ -176,9 +176,7 @@ describe("Lua authentication", () => {
     const { impl } = stubFetch({ "GET /auth/oauth/google": () => json({}, 503) });
     const { account } = setup();
     await account.google();
-    expect(new URL(String(impl.mock.calls[0]?.[0])).searchParams.get("redirect")).toBe(
-      "/?account",
-    );
+    expect(new URL(String(impl.mock.calls[0]?.[0])).searchParams.get("redirect")).toBe("/?account");
     expect(account.message).toBe("Google sign-in is not set up yet.");
     expect(account.busy).toBe(false);
   });

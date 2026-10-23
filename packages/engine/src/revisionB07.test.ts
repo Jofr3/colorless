@@ -52,7 +52,12 @@ const LOCAL: Record<string, Card> = {
     weaknesses: [{ type: "Grass", value: "×2" }],
     attacks: [
       { cost: ["Darkness", "Colorless"], name: "Terminal Period", effect: TERMINAL_TEXT },
-      { cost: ["Darkness", "Darkness", "Colorless"], name: "Claw of Darkness", effect: CLAW_TEXT, damage: 200 },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Claw of Darkness",
+        effect: CLAW_TEXT,
+        damage: 200,
+      },
     ],
   }),
   [ONIX]: battler(ONIX, {
@@ -102,7 +107,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -110,11 +117,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);
@@ -126,7 +136,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -150,12 +166,12 @@ const clawOfDarkness: GameAction = { type: "attack", seat: "p1", index: 1 };
 const knockOuts = (events: readonly GameEvent[]) =>
   events.filter((e): e is Extract<GameEvent, { type: "KNOCKED_OUT" }> => e.type === "KNOCKED_OUT");
 
-describe("B07 §1 — Heavy Baton: \"… and is Knocked Out by damage from an attack from your opponent's Pokémon …\"", () => {
+describe('B07 §1 — Heavy Baton: "… and is Knocked Out by damage from an attack from your opponent\'s Pokémon …"', () => {
   it("the row is the self-timing move this suite drives (registry unchanged)", () => {
     expect(programFor(BATON)?.triggered?.[0]?.trigger).toBe("onHolderActiveKnockedOut");
   });
 
-  it("🛑 Terminal Period's damage-free \"that Pokémon is Knocked Out\" offers NO move: the Onix goes down with its three Energy", () => {
+  it('🛑 Terminal Period\'s damage-free "that Pokémon is Knocked Out" offers NO move: the Onix goes down with its three Energy', () => {
     const state = board(60);
     const energy = state.players.p2.active?.energy ?? [];
     expect(energy).toHaveLength(3);
@@ -173,7 +189,8 @@ describe("B07 §1 — Heavy Baton: \"… and is Knocked Out by damage from an at
     const state = board(60);
     const energy = state.players.p2.active?.energy ?? [];
     const { state: after } = mustApply(state, clawOfDarkness);
-    if (after.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${after.phase.kind}`);
+    if (after.phase.kind !== "effect:choose")
+      throw new Error(`expected effect:choose, got ${after.phase.kind}`);
     expect(after.phase.seat).toBe("p2");
     const prompt = after.phase.prompt;
     if (prompt.kind !== "moveEnergy") throw new Error(`expected moveEnergy, got ${prompt.kind}`);

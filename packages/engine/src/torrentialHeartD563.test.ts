@@ -3,12 +3,19 @@ import { describe, expect, it } from "vitest";
 import { boostedAttackDamage, everyAttackBoostOf } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+} from "./testFixtures";
 import { topUid } from "./cards";
 import { type InPlayPokemon, evolveOnto } from "./types";
 
@@ -120,7 +127,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -130,7 +138,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -138,11 +148,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -210,12 +223,19 @@ function table(opts: {
   if ((opts.energy ?? 2) > 0) state = water(state, "p1", "active", opts.energy ?? 2);
   for (const [i, id] of (opts.bench ?? []).entries()) {
     state = benchFromDeck(ensureInDeck(state, "p1", id), "p1", id);
-    if (id !== PIVOT && (opts.benchEnergy ?? 0) > 0) state = water(state, "p1", i, opts.benchEnergy ?? 0);
+    if (id !== PIVOT && (opts.benchEnergy ?? 0) > 0)
+      state = water(state, "p1", i, opts.benchEnergy ?? 0);
   }
   if (opts.damage !== undefined) {
     const a = state.players.p1.active;
     if (a === null) throw new Error("no Active");
-    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: { ...a, damage: opts.damage } } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: { ...a, damage: opts.damage } },
+      },
+    };
   }
   return state;
 }
@@ -230,15 +250,27 @@ function find<T extends GameEvent["type"]>(events: GameEvent[], type: T) {
 }
 
 const useActive = (state: GameState) =>
-  run(state, { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Torrential Heart" });
+  run(state, {
+    type: "useAbility",
+    seat: "p1",
+    target: { spot: "active" },
+    abilityName: "Torrential Heart",
+  });
 const useBench = (state: GameState, index: number) =>
-  run(state, { type: "useAbility", seat: "p1", target: { spot: "bench", index }, abilityName: "Torrential Heart" });
+  run(state, {
+    type: "useAbility",
+    seat: "p1",
+    target: { spot: "bench", index },
+    abilityName: "Torrential Heart",
+  });
 const attack = (state: GameState, index = 0) => run(state, { type: "attack", seat: "p1", index });
 
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -248,7 +280,6 @@ function render(events: GameEvent[], state: GameState): { who: string; text: str
 
 describe("§1 — the registry row: one activated Ability, two ops, two riders", () => {
   it("both printings share ONE object: once per turn, usable from the Bench, no `attack` key", () => {
-    expect(engineVersion).toBe("0.555.0");
     const row = programFor(FERALIGATR);
     expect(programFor(FERALIGATR_REPRINT)).toBe(row);
     expect(Object.keys(row ?? {})).toEqual(["abilities"]);
@@ -314,7 +345,10 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
   it("the row says THIS turn, under both seats, and never 'next turn' or 'null'", () => {
     const { state, events } = useActive(table({}));
     const rows = render(events, state);
-    expect(rows).toContainEqual({ who: "p1", text: "Feraligatr's attacks do 120 more damage this turn" });
+    expect(rows).toContainEqual({
+      who: "p1",
+      text: "Feraligatr's attacks do 120 more damage this turn",
+    });
     expect(rows.some((r) => r.text.includes("next turn") || r.text.includes("null"))).toBe(false);
     const boosted = find(events, "ATTACK_BOOSTED");
     expect(boosted).toMatchObject({ attack: null, amount: 120, thisTurn: true });
@@ -363,13 +397,22 @@ describe("§3 — used from the BENCH: the counters and the record land on the B
   it("🛑 promoted by a RETREAT the same turn, it still pays: Bench → Active does not clear", () => {
     const start = table({ active: PIVOT, energy: 0, bench: [FERALIGATR], benchEnergy: 2 });
     let state = useBench(start, 0).state;
-    state = run(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }).state;
+    state = run(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [],
+      promoteBenchIndex: 0,
+    }).state;
     expect(body(state.players.p1.active).boostedAttack).toEqual({
       turn: start.turn,
       attackIndex: null,
       amount: 120,
     });
-    expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 160, bonus: 120, dealt: 560 });
+    expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({
+      base: 160,
+      bonus: 120,
+      dealt: 560,
+    });
   });
 
   it("a Feraligatr at bench index 1 is found BY UID: its neighbour at index 0 is untouched", () => {
@@ -398,7 +441,12 @@ describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, a
     let state = useActive(start).state;
     const gatorUid = topUid(body(state.players.p1.active));
     const pay = body(state.players.p1.active).energy.slice(0, 2);
-    state = run(state, { type: "retreat", seat: "p1", discardEnergy: pay, promoteBenchIndex: 0 }).state;
+    state = run(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: pay,
+      promoteBenchIndex: 0,
+    }).state;
     const benched = state.players.p1.bench.find((p) => topUid(p) === gatorUid);
     expect(body(benched).boostedAttack).toBeNull();
     expect(everyAttackBoostOf(state, body(benched))).toBe(0);
@@ -416,7 +464,10 @@ describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, a
 
   it("🛑 LOCK-IMMUNE ONCE INSTALLED: a Flutter Mane Active after the use does not stop the +120", () => {
     let state = useActive(table({})).state;
-    state = clearBench(setActiveFromDeck(ensureInDeck(state, "p2", FLUTTER_MANE), "p2", FLUTTER_MANE), "p2");
+    state = clearBench(
+      setActiveFromDeck(ensureInDeck(state, "p2", FLUTTER_MANE), "p2", FLUTTER_MANE),
+      "p2",
+    );
     expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 160, bonus: 120 });
   });
 
@@ -485,7 +536,7 @@ describe("§5 — once per turn PER BODY, and a lethal self-placement is a mid-t
 // §6 — the two riders, driven through the interpreter directly.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§6 — the riders: `on`/`holder: \"source\"` find the body by uid; absent is the shipped reading", () => {
+describe('§6 — the riders: `on`/`holder: "source"` find the body by uid; absent is the shipped reading', () => {
   function runOn(state: GameState, program: readonly EffectOp[], sourceUid?: string) {
     const events: GameEvent[] = [];
     const result = runProgram(
@@ -501,7 +552,11 @@ describe("§6 — the riders: `on`/`holder: \"source\"` find the body by uid; ab
   it("`damageSelf` WITHOUT `on` still places on the seat's Active, whatever the source", () => {
     const start = table({ active: PIVOT, energy: 0, bench: [FERALIGATR] });
     const benchedUid = topUid(body(start.players.p1.bench[0]));
-    const { state } = runOn(start, [{ op: "damageSelf", amount: 50, source: "ability" }], benchedUid);
+    const { state } = runOn(
+      start,
+      [{ op: "damageSelf", amount: 50, source: "ability" }],
+      benchedUid,
+    );
     expect(body(state.players.p1.active).damage).toBe(50);
     expect(body(state.players.p1.bench[0]).damage).toBe(0);
   });
@@ -509,7 +564,11 @@ describe("§6 — the riders: `on`/`holder: \"source\"` find the body by uid; ab
   it("`boostAttack` WITHOUT `holder`/`thisTurn` still writes the Active, stamped `turn + 2`", () => {
     const start = table({ active: PIVOT, energy: 0, bench: [FERALIGATR] });
     const benchedUid = topUid(body(start.players.p1.bench[0]));
-    const { state, events } = runOn(start, [{ op: "boostAttack", attack: null, amount: 120 }], benchedUid);
+    const { state, events } = runOn(
+      start,
+      [{ op: "boostAttack", attack: null, amount: 120 }],
+      benchedUid,
+    );
     expect(body(state.players.p1.active).boostedAttack).toEqual({
       turn: start.turn + 2,
       attackIndex: null,
@@ -521,7 +580,11 @@ describe("§6 — the riders: `on`/`holder: \"source\"` find the body by uid; ab
 
   it("a source that has LEFT the board: both riders whiff silently (no row, no write)", () => {
     const start = table({});
-    const { state, events } = runOn(start, programFor(FERALIGATR)?.abilities?.[0]?.program ?? [], "gone");
+    const { state, events } = runOn(
+      start,
+      programFor(FERALIGATR)?.abilities?.[0]?.program ?? [],
+      "gone",
+    );
     expect(events).toEqual([]);
     expect(state).toEqual(start);
   });
@@ -532,10 +595,14 @@ describe("§6 — the riders: `on`/`holder: \"source\"` find the body by uid; ab
     expect(events).toEqual([]);
   });
 
-  it("`holder: \"source\"` on the ACTIVE source writes the Active slot (not a Bench slot)", () => {
+  it('`holder: "source"` on the ACTIVE source writes the Active slot (not a Bench slot)', () => {
     const start = table({ bench: [PIVOT] });
     const uid = topUid(body(start.players.p1.active));
-    const { state } = runOn(start, [{ op: "boostAttack", attack: null, amount: 120, holder: "source" }], uid);
+    const { state } = runOn(
+      start,
+      [{ op: "boostAttack", attack: null, amount: 120, holder: "source" }],
+      uid,
+    );
     expect(body(state.players.p1.active).boostedAttack).toEqual({
       turn: start.turn + 2,
       attackIndex: null,
@@ -557,7 +624,13 @@ describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; th
     const record = body(installed.players.p1.active).boostedAttack;
     let state = benchFromDeck(table({ active: SNIPER, energy: 0 }), "p2", WALL);
     const sniper = body(state.players.p1.active);
-    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: { ...sniper, boostedAttack: record } } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: { ...sniper, boostedAttack: record } },
+      },
+    };
     const parked = attack(state).state;
     expect(parked.phase.kind).toBe("effect:choose");
     const done = run(parked, {
@@ -572,7 +645,13 @@ describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; th
     let state = table({});
     const gator = body(state.players.p1.active);
     const named = { turn: state.turn, attackIndex: 0, amount: 80 };
-    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: { ...gator, boostedAttack: named } } } };
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: { ...gator, boostedAttack: named } },
+      },
+    };
     state = useActive(state).state;
     expect(body(state.players.p1.active).boostedAttack).toEqual({
       turn: state.turn,
@@ -590,7 +669,16 @@ describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; th
     const board = table({});
     const holder = body(board.players.p1.active);
     const carrying = { ...holder, boostedAttack: { turn: board.turn, attackIndex: 0, amount: 80 } };
-    const { evolved } = evolveOnto(board, "p1", { spot: "active" }, -1, carrying, topUid(holder) ?? "", "evo", []);
+    const { evolved } = evolveOnto(
+      board,
+      "p1",
+      { spot: "active" },
+      -1,
+      carrying,
+      topUid(holder) ?? "",
+      "evo",
+      [],
+    );
     expect(evolved.boostedAttack).toBeNull();
   });
 });

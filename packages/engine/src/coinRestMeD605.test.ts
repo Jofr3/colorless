@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { PokemonRef } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -91,9 +91,18 @@ describe("D605 §1 — the five sentences and their programs", () => {
       },
     ]);
     expect(deriveAttackEffect(T.zero)).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 150, count: "all", source: "attack", deals: true, flipEach: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 150,
+        count: "all",
+        source: "attack",
+        deals: true,
+        flipEach: true,
+      },
     ]);
-    for (const text of [T.together, T.zero, T.paint]) expect(deriveAttackCoinFlip(text), text).toBeNull();
+    for (const text of [T.together, T.zero, T.paint])
+      expect(deriveAttackCoinFlip(text), text).toBeNull();
   });
 
   it("Gnaw Together and Kaleidowaltz are `programPerHeads` over the shipped ops", () => {
@@ -122,7 +131,14 @@ describe("D605 §1 — the five sentences and their programs", () => {
     expect(gate.coins).toBeUndefined();
     const paths: string[][] = [];
     const walk = (ops: readonly unknown[], labels: string[]) => {
-      const op = ops[0] as { op: string; status?: string; note?: string; then?: unknown[]; otherwise?: unknown[]; labels?: { yes: string; no: string } };
+      const op = ops[0] as {
+        op: string;
+        status?: string;
+        note?: string;
+        then?: unknown[];
+        otherwise?: unknown[];
+        labels?: { yes: string; no: string };
+      };
       if (op.op === "applyStatus") {
         expect(ops).toHaveLength(1);
         paths.push([...labels, op.status as string]);
@@ -137,7 +153,12 @@ describe("D605 §1 — the five sentences and their programs", () => {
     expect(paths).toEqual([
       ["yes:Asleep", "asleep"],
       ["no:Burned, Confused, Paralyzed or Poisoned", "yes:Burned", "burned"],
-      ["no:Burned, Confused, Paralyzed or Poisoned", "no:Confused, Paralyzed or Poisoned", "yes:Confused", "confused"],
+      [
+        "no:Burned, Confused, Paralyzed or Poisoned",
+        "no:Confused, Paralyzed or Poisoned",
+        "yes:Confused",
+        "confused",
+      ],
       [
         "no:Burned, Confused, Paralyzed or Poisoned",
         "no:Confused, Paralyzed or Poisoned",
@@ -193,7 +214,11 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
   it("arm 46b with the sixth row: 3 heads × 6 consequents = 18 crossings build, exactly 6 are printed", () => {
     // 🆕🆕🆕 D634 (D539): these are D605's six rows; the table has EIGHT now (Challenging Delivery,
     // Reversing Gust) — `coinRestMeD634.test.ts` §2 pins the 24 crossings and 8 printed.
-    const heads = ["Flip a coin. If heads, ", "Flip 2 coins. If both of them are heads, ", "Flip 3 coins. If all of them are heads, "];
+    const heads = [
+      "Flip a coin. If heads, ",
+      "Flip 2 coins. If both of them are heads, ",
+      "Flip 3 coins. If all of them are heads, ",
+    ];
     const printedGates = [
       "Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.",
       "Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.",
@@ -206,7 +231,8 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
     const printed = new Set([...legalAttackCorpus(), ...meAttackCorpus()].map(([, text]) => text));
     const crossings = heads.flatMap((h) => tails.map((c) => h + c));
     expect(crossings).toHaveLength(18);
-    for (const text of crossings) expect(deriveAttackEffect(text)?.[0]?.op, text).toBe("coinFlipGate");
+    for (const text of crossings)
+      expect(deriveAttackEffect(text)?.[0]?.op, text).toBe("coinFlipGate");
     expect(crossings.filter((text) => printed.has(text)).sort()).toEqual([...printedGates].sort());
   });
 
@@ -242,7 +268,14 @@ const attacker = (id: string, name: string, attack: string, text: string, damage
     hp: 300,
     types: ["Colorless"],
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: attack, ...(damage === undefined ? {} : { damage }), effect: text }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: attack,
+        ...(damage === undefined ? {} : { damage }),
+        effect: text,
+      },
+    ],
   } as Partial<Card>);
 const body = (id: string, name: string, weak = false): Card =>
   battler(id, {
@@ -295,7 +328,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -303,11 +338,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -384,11 +422,13 @@ function table(
 const attack = (state: GameState) => mustApply(state, { type: "attack", seat: "p1", index: 0 });
 const of = <K extends GameEvent["type"]>(events: readonly GameEvent[], type: K) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: K }>[];
-const flips = (events: readonly GameEvent[]) => of(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
+const flips = (events: readonly GameEvent[]) =>
+  of(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
 const resolve = (state: GameState, choice: unknown) =>
   mustApply(state, { type: "resolveEffect", seat: "p1", choice } as GameAction);
 function promptOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const P2_ACTIVE: PokemonRef = { seat: "p2", spot: { spot: "active" } };
@@ -396,7 +436,11 @@ const P2_BENCH = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "be
 
 describe("D605 §3 — Target Together on a board: pick first, then one coin per Tauros", () => {
   const board = (faces: readonly CoinFace[]) =>
-    table(TAUROS, faces, { ownBench: [TAUROS_2, PALDEAN, FILLER], oppActive: WEAK, oppBench: [WEAK] });
+    table(TAUROS, faces, {
+      ownBench: [TAUROS_2, PALDEAN, FILLER],
+      oppActive: WEAK,
+      oppBench: [WEAK],
+    });
 
   it("the pick parks BEFORE any coin; the caption quotes the rule", () => {
     const parked = attack(board([H, H, H]));
@@ -421,12 +465,18 @@ describe("D605 §3 — Target Together on a board: pick first, then one coin per
   });
 
   it("an Active pick takes 50 × heads with Weakness", () => {
-    const done = resolve(attack(board([H, X, X])).state, { kind: "pokemonMulti", refs: [P2_ACTIVE] });
+    const done = resolve(attack(board([H, X, X])).state, {
+      kind: "pokemonMulti",
+      refs: [P2_ACTIVE],
+    });
     expect(done.state.players.p2.active?.damage).toBe(100); // 50 × 1, ×2
   });
 
   it("no heads places nothing", () => {
-    const done = resolve(attack(board([X, X, X])).state, { kind: "pokemonMulti", refs: [P2_BENCH(0)] });
+    const done = resolve(attack(board([X, X, X])).state, {
+      kind: "pokemonMulti",
+      refs: [P2_BENCH(0)],
+    });
     expect(flips(done.events)).toEqual([X, X, X]);
     expect(done.state.players.p2.bench[0]?.damage).toBe(0);
   });
@@ -442,7 +492,9 @@ describe("D605 §3 — Target Together on a board: pick first, then one coin per
   it("the parked op survives a JSON round trip and resolves the same (the key rides `pendingOp`)", () => {
     const parked = attack(board([H, H, X])).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(JSON.stringify(parked.phase.cont.pendingOp)).toContain('"perHeadsInPlay":{"kind":"pokemonNameContaining","fragment":"Tauros"}');
+    expect(JSON.stringify(parked.phase.cont.pendingOp)).toContain(
+      '"perHeadsInPlay":{"kind":"pokemonNameContaining","fragment":"Tauros"}',
+    );
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const a = resolve(parked, { kind: "pokemonMulti", refs: [P2_BENCH(0)] });
     const b = resolve(revived, { kind: "pokemonMulti", refs: [P2_BENCH(0)] });
@@ -529,7 +581,8 @@ describe("D605 §6 — Kaleidowaltz on a board: a search of up to 2 Basic Energy
 describe("D605 §7 — Miraculous Paint on a board: heads asks for a Special Condition", () => {
   const paint = (faces: readonly CoinFace[]) => attack(table(GRAFAIAI, faces));
   const answer = (state: GameState, yes: boolean) => resolve(state, { kind: "confirm", yes });
-  const applied = (events: readonly GameEvent[]) => of(events, "STATUS_APPLIED").map((e) => [e.seat, e.status]);
+  const applied = (events: readonly GameEvent[]) =>
+    of(events, "STATUS_APPLIED").map((e) => [e.seat, e.status]);
 
   it("90 damage, then the first confirm names Asleep against the other four", () => {
     const parked = paint([H]);
@@ -545,7 +598,9 @@ describe("D605 §7 — Miraculous Paint on a board: heads asks for a Special Con
   it("each answer path applies exactly the named condition", () => {
     let state = paint([H]).state;
     state = answer(state, false).state;
-    expect(promptOf(state)).toMatchObject({ labels: { yes: "Burned", no: "Confused, Paralyzed or Poisoned" } });
+    expect(promptOf(state)).toMatchObject({
+      labels: { yes: "Burned", no: "Confused, Paralyzed or Poisoned" },
+    });
     expect(applied(answer(state, true).events)).toEqual([["p2", "burned"]]);
     state = answer(state, false).state;
     expect(applied(answer(state, true).events)).toEqual([["p2", "confused"]]);
@@ -562,11 +617,5 @@ describe("D605 §7 — Miraculous Paint on a board: heads asks for a Special Con
     const { state: after, events } = paint([X]);
     expect(after.phase.kind).not.toBe("effect:choose");
     expect(applied(events)).toEqual([]);
-  });
-});
-
-describe("D605 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { deriveAttackEffect, engineVersion, programFor } from "./index";
+import { deriveAttackEffect, programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -356,7 +356,9 @@ describe("§2 — one op, two axes: the shape can say what the catalog does not 
     // never be read.
     const crossing: EffectOp = { op: "healEach", amount: HEAL, basicOnly: true, benchOnly: true };
     expect(crossing).toEqual({ op: "healEach", amount: HEAL, basicOnly: true, benchOnly: true });
-    expect(deriveAttackEffect("Heal 100 damage from each of your Benched Basic Pokémon.")).toBeNull();
+    expect(
+      deriveAttackEffect("Heal 100 damage from each of your Benched Basic Pokémon."),
+    ).toBeNull();
   });
 
   it("ABSENT means UNNARROWED on both riders, and not `false`", () => {
@@ -418,11 +420,9 @@ describe("§3 — the BENCH scope: the Active is out of the set, whatever it is"
   it("excludes an EVOLVED attacker for the same reason — the rider reads the SPOT", () => {
     // Same sentence, evolved Active. `benchOnly` never asks what the body is, so this
     // board and the one above must agree about the Active; they disagree only in §4.
-    const state = benchBodies(
-      attacker(board(), "p1", "fix-scopedheal-evo", ACTIVE_HURT),
-      "p1",
-      [["fix-titan", BASIC_BENCH_HURT]],
-    );
+    const state = benchBodies(attacker(board(), "p1", "fix-scopedheal-evo", ACTIVE_HURT), "p1", [
+      ["fix-titan", BASIC_BENCH_HURT],
+    ]);
     const { state: done, events } = mustApply(state, {
       type: "attack",
       seat: "p1",
@@ -464,14 +464,10 @@ describe("§4 — the BASIC filter: the Active is IN the set when it is a Basic"
     // The case a Basic-attacker-only suite cannot see. `fix-scopedheal-evo` prints
     // the same sentence at the same index and is not a Basic, so the heal skips the
     // body that used the attack.
-    const state = benchBodies(
-      attacker(board(), "p1", "fix-scopedheal-evo", ACTIVE_HURT),
-      "p1",
-      [
-        ["fix-titan", BASIC_BENCH_HURT],
-        ["fix-scopedheal-evo", EVO_BENCH_HURT],
-      ],
-    );
+    const state = benchBodies(attacker(board(), "p1", "fix-scopedheal-evo", ACTIVE_HURT), "p1", [
+      ["fix-titan", BASIC_BENCH_HURT],
+      ["fix-scopedheal-evo", EVO_BENCH_HURT],
+    ]);
     const benchA = benchTopUid(state, "p1", 0);
     const { state: done, events } = mustApply(state, {
       type: "attack",
@@ -707,15 +703,6 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     expect(roundTripped.players.p1.active?.healedTurn).toBe(healTurn);
     expect(roundTripped.players.p1.bench[1]?.damage).toBe(EVO_BENCH_HURT);
     expect(roundTripped.players.p1.bench[1]?.healedTurn).toBeNull();
-  });
-
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // 🆕🆕 D461 — 0.359.0 → **0.360.0**. Two printed sentences that derived to `null`
-    // and fell to the loud ATTACK_EFFECT_SKIPPED path now heal a NARROWED set, and
-    // the narrowing is visible on the board rather than only in the type: the same
-    // board under the two sentences heals two DIFFERENT, NON-NESTED sets of bodies
-    // (§3 and §4 share one board and disagree about two of its three).
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

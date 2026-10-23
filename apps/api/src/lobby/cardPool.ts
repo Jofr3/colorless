@@ -32,10 +32,7 @@ export function poolFromRows(rows: readonly CardRow[]): Record<string, Card> {
 /** Resolve `ids` to their full catalog Cards, keyed by id. Missing ids are
     simply absent from the result — `createGame` then reports `UNKNOWN_CARD_ID`,
     so the caller never has to pre-check the catalog. */
-export async function loadCardPool(
-  db: Db,
-  ids: readonly string[],
-): Promise<Record<string, Card>> {
+export async function loadCardPool(db: Db, ids: readonly string[]): Promise<Record<string, Card>> {
   const distinct = [...new Set(ids)];
   if (distinct.length === 0) {
     return {};

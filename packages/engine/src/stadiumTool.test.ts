@@ -41,7 +41,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-
 describe("playTrainer — Stadiums (§7.3)", () => {
   it("moves the card into the shared zone, not the discard", () => {
     let state = p1Turn2(1);
@@ -108,7 +107,12 @@ describe("playTrainer — Stadiums (§7.3)", () => {
     expect(next.players.p1.discard).toContain(beachCourt);
     expect(next.players.p2.discard).not.toContain(beachCourt);
     const discarded = find(events, "STADIUM_DISCARDED");
-    expect(discarded).toEqual({ type: "STADIUM_DISCARDED", seat: "p1", uid: beachCourt, cause: "replaced" });
+    expect(discarded).toEqual({
+      type: "STADIUM_DISCARDED",
+      seat: "p1",
+      uid: beachCourt,
+      cause: "replaced",
+    });
     expect(types(events)).toEqual(["TRAINER_PLAYED", "STADIUM_DISCARDED"]);
   });
 });
@@ -140,7 +144,12 @@ describe("Beach Court — Basic retreat discount (continuous, both players)", ()
     let p2State = must(applyAction(afterRetreat, { type: "endTurn", seat: "p1" }));
     expect(p2State.phase.kind).toBe("turn:action");
     p2State = must(
-      applyAction(p2State, { type: "retreat", seat: "p2", discardEnergy: [], promoteBenchIndex: 0 }),
+      applyAction(p2State, {
+        type: "retreat",
+        seat: "p2",
+        discardEnergy: [],
+        promoteBenchIndex: 0,
+      }),
     );
     expect(p2State.players.p2.bench.length).toBeGreaterThan(0);
   });
@@ -455,7 +464,12 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     state = handFromDeck(state, "p2", "sv02-173", 1);
     const charm = handUid(state, "p2", "sv02-173");
     state = must(
-      applyAction(state, { type: "attachTool", seat: "p2", uid: charm, target: { spot: "active" } }),
+      applyAction(state, {
+        type: "attachTool",
+        seat: "p2",
+        uid: charm,
+        target: { spot: "active" },
+      }),
     );
     const charmed = state.players.p2.active;
     if (charmed === null) throw new Error("unreachable");
@@ -473,7 +487,12 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     state = handFromDeck(state, "p1", "sv02-173", 1);
     const charm = handUid(state, "p1", "sv02-173");
     state = must(
-      applyAction(state, { type: "attachTool", seat: "p1", uid: charm, target: { spot: "active" } }),
+      applyAction(state, {
+        type: "attachTool",
+        seat: "p1",
+        uid: charm,
+        target: { spot: "active" },
+      }),
     );
     const basic = state.players.p1.active;
     if (basic === null) throw new Error("unreachable");
@@ -504,7 +523,12 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     state = handFromDeck(state, "p1", "sv02-173", 1);
     const charm = handUid(state, "p1", "sv02-173");
     state = must(
-      applyAction(state, { type: "attachTool", seat: "p1", uid: charm, target: { spot: "active" } }),
+      applyAction(state, {
+        type: "attachTool",
+        seat: "p1",
+        uid: charm,
+        target: { spot: "active" },
+      }),
     );
     // Displace to the bench (a second Basic promotes), carrying the charm, then
     // put 90 damage on it — survivable at 110 effective, lethal vs fix-stage1's
@@ -565,7 +589,12 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     state = handFromDeck(state, "p2", "sv02-173", 1);
     const charm = handUid(state, "p2", "sv02-173");
     state = must(
-      applyAction(state, { type: "attachTool", seat: "p2", uid: charm, target: { spot: "active" } }),
+      applyAction(state, {
+        type: "attachTool",
+        seat: "p2",
+        uid: charm,
+        target: { spot: "active" },
+      }),
     );
     // 60 pre-damage + Bite's 30 ≥ the charmed 80 → a KO after all.
     state = setDamage(state, "p2", 60);

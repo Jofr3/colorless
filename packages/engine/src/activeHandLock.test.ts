@@ -303,7 +303,12 @@ function play(state: GameState, seat: Seat, cardId: string): string {
 }
 
 /** The §7.4 twin — the read site `playTrainer` cannot reach. */
-function attach(state: GameState, seat: Seat, cardId: string, spot: "bench" | "active" = "bench"): string {
+function attach(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  spot: "bench" | "active" = "bench",
+): string {
   const uid = handUid(state, seat, cardId);
   const target =
     spot === "active" ? ({ spot: "active" } as const) : ({ spot: "bench", index: 0 } as const);
@@ -507,7 +512,10 @@ describe("D284 §3 — attachTool, the read site playTrainer cannot reach", () =
         ...barred.players,
         p2: {
           ...barred.players.p2,
-          bench: [{ ...host, tools: [handUid(barred, "p2", TOOL)] }, ...barred.players.p2.bench.slice(1)],
+          bench: [
+            { ...host, tools: [handUid(barred, "p2", TOOL)] },
+            ...barred.players.p2.bench.slice(1),
+          ],
         },
       },
     };
@@ -547,7 +555,10 @@ describe("D284 §4 — the printed window", () => {
     expect(play(state, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
     // ⚠️ AND IT LEAVES WITH THE BODY, in the same run — the other half of
     // "continuous", and the half a stamp could never have.
-    const lifted = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: null } } };
+    const lifted = {
+      ...state,
+      players: { ...state.players, p1: { ...state.players.p1, active: null } },
+    };
     expect(handPlayBarred(lifted, "p2", "Item", undefined)).toBe(false);
   });
 
@@ -721,7 +732,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     );
   });
 
-  it("🆕 D285 — THE PERSISTED KEYS ARE EXACTLY THREE, AND `\"Tool\"` IS STILL NOT ONE (🆕🆕🆕 D636 (D539): FOUR — `Stadium` joined; `Tool` still is not one)", () => {
+  it('🆕 D285 — THE PERSISTED KEYS ARE EXACTLY THREE, AND `"Tool"` IS STILL NOT ONE (🆕🆕🆕 D636 (D539): FOUR — `Stadium` joined; `Tool` still is not one)', () => {
     // D284's line read "STILL EXACTLY TWO": `HandPlayClass` had gained `"Tool"`
     // and, had `handPlayLockedTurn` been keyed by it, every board would have grown
     // a key NO WRITER CAN SET. D285 added a third key that a writer CAN set
@@ -731,7 +742,14 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
     for (const seat of ["p1", "p2"] as const) {
       const keys = Object.keys(barred.handPlayLockedTurn[seat]).sort();
-      expect(keys).toEqual(["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */);
+      expect(keys).toEqual(
+        [
+          "Item",
+          "Supporter",
+          "Stadium",
+          "evolve",
+        ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+      );
       expect(keys).not.toContain("Tool");
       expect(keys).not.toContain("bench");
     }

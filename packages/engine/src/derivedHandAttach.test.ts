@@ -269,7 +269,8 @@ function parkedTargets(state: GameState): readonly PokemonRef[] {
     throw new Error(`expected a park, got ${state.phase.kind}`);
   }
   const prompt = state.phase.prompt;
-  if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+  if (prompt.kind !== "choosePokemon")
+    throw new Error(`expected choosePokemon, got ${prompt.kind}`);
   return prompt.candidates;
 }
 
@@ -433,9 +434,9 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
     expect(
       deriveAttackEffect("Attach up to 2 Basic Energy cards from your hand to 1 of your Pokémon."),
     ).toEqual([{ op: "attachEnergyFrom", source: "hand", count: 2 }]);
-    expect(
-      CLAUSES.some((c) => c.text.includes("up to") && c.text.includes("to 1 of your")),
-    ).toBe(false);
+    expect(CLAUSES.some((c) => c.text.includes("up to") && c.text.includes("to 1 of your"))).toBe(
+      false,
+    );
   });
 
   it("refuses the anchor, grammar, punctuation and case rewrites", () => {
@@ -766,7 +767,10 @@ describe("end to end — an ATTACK pulling Energy out of the HAND", () => {
     // 🛑 AND THE TYPE FILTER BIT: the hand held two {P} and two {C}, and only the
     // {P} moved. A build that dropped `energyType` takes the first two Basic
     // Energy in hand order, whatever they are.
-    const moved = [...all(first.events, "ENERGY_ATTACHED"), ...all(second.events, "ENERGY_ATTACHED")];
+    const moved = [
+      ...all(first.events, "ENERGY_ATTACHED"),
+      ...all(second.events, "ENERGY_ATTACHED"),
+    ];
     for (const e of moved) expect(second.state.cardIdByUid[e.uid]).toBe("fix-psychic-energy");
   });
 
@@ -776,7 +780,10 @@ describe("end to end — an ATTACK pulling Energy out of the HAND", () => {
     // clause says "that Pokémon", so the damage that clears is the one on the body
     // the attach chose, and the program is OVER — a gate-plus-healChosen build
     // parks a SECOND time here and lets the controller heal bench[1] instead.
-    let state = ready(9, { bench: ["fix-basic-1", "fix-basic-1"], hand: { "fix-grass-energy": 2 } });
+    let state = ready(9, {
+      bench: ["fix-basic-1", "fix-basic-1"],
+      hand: { "fix-grass-energy": 2 },
+    });
     state = setBenchDamage(state, "p1", 0, 50);
     state = setBenchDamage(state, "p1", 1, 30);
     deepFreeze(state);

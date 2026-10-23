@@ -66,7 +66,6 @@ function handOnly(state: GameState, seat: Seat, keep: string[]): GameState {
   return { ...state, players: { ...state.players, [seat]: updated } };
 }
 
-
 describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () => {
   it("registry resolves a program for each authored id (incl. the Katy/Iono reprints)", () => {
     const ids = ["sv01-198", "sv01-176", "sv03-187", "sv01-177", "sv01-237"];

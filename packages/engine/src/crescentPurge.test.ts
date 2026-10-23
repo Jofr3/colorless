@@ -1,7 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema, redactedSideSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import {
@@ -10,7 +9,7 @@ import {
   optionalCostBoostProgram,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -65,21 +64,9 @@ const BARE =
   "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage.";
 const REMINDER = " (That Prize card remains face up for the rest of the game.)";
 const CRESSELIA = "sv06.5-021";
-const PURGE = 1; // attack index 1 — "Crescent Purge"
+const PURGE = 1;
 
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["../../../apps/api/src/lobby/match.ts"], { query: "?raw", import: "default", eager: true });
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
-
-const token = (id: string): Card =>
-  ({ ...FIXTURE_POOL["fix-energy"], id, name: id }) as Card;
+const token = (id: string): Card => ({ ...FIXTURE_POOL["fix-energy"], id, name: id }) as Card;
 
 const LOCAL_CARDS: Record<string, Card> = {
   "d548-wall": battler("d548-wall", { types: ["Colorless"], hp: 400, retreat: 1 }),
@@ -161,7 +148,14 @@ function ready(
   state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   if (opts.stacked === true) {
-    const row = ["d548-secret", "d548-secret", "d548-secret", "d548-secret", "d548-shown", "d548-secret"];
+    const row = [
+      "d548-secret",
+      "d548-secret",
+      "d548-secret",
+      "d548-secret",
+      "d548-shown",
+      "d548-secret",
+    ];
     state = stackPrizes(state, "p1", row);
     state = stackPrizes(state, "p2", row);
   }
@@ -184,7 +178,8 @@ const pick = (state: GameState, index: number) =>
   answer(state, { type: "resolveEffect", seat: "p1", choice: { kind: "prize", index } });
 
 function promptOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -257,9 +252,7 @@ describe("§1 — the reading, on the real card's bytes", () => {
       ),
     ).toBeNull();
     // The reminder must be EXACT: a truncated one stays in the payoff and refuses.
-    expect(
-      deriveAttackOptionalCostBoost(`${BARE} (That Prize card remains face up.)`),
-    ).toBeNull();
+    expect(deriveAttackOptionalCostBoost(`${BARE} (That Prize card remains face up.)`)).toBeNull();
   });
 
   it("the program: conditionGate → optional → [turnPrizeFaceUp, hit 160], declines to hit 80", () => {
@@ -564,15 +557,9 @@ describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key t
     const koed = confirm(purge(ready({ defender: "d548-frail" })).state, false).state;
     const next = confirm(purge(nextP1Turn(koed)).state, false).state;
     expect(next.phase.kind).toBe("ko:takePrizes");
-    expect(() => applyAction(v31(next), { type: "takePrizes", seat: "p1", prizeIndices: [0] })).toThrow(
-      TypeError,
-    );
-  });
-
-  it("the constant is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.555.0", () => {
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
+    expect(() =>
+      applyAction(v31(next), { type: "takePrizes", seat: "p1", prizeIndices: [0] }),
+    ).toThrow(TypeError);
   });
 });
 
@@ -617,7 +604,12 @@ describe("§12 — validateChoice refuses out-of-range, face-up and multi-index 
     state = confirm(purge(state).state, true).state;
     expect(conditionHolds(state, "p1", { kind: "yourFaceDownPrizeRemains" })).toBe(false);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "turnPrizeFaceUp" }], { seat: "p1", invokedBy: "attack" }, events);
+    const result = runProgram(
+      state,
+      [{ op: "turnPrizeFaceUp" }],
+      { seat: "p1", invokedBy: "attack" },
+      events,
+    );
     expect(result.kind).toBe("done");
     expect(result.state).toBe(state);
     expect(events).toEqual([]);

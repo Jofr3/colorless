@@ -250,7 +250,13 @@ describe("Lua simulator", () => {
     sim.command(`menu-page\t${menuId}\t10\t5`);
     const ids: string[] = images.mock.lastCall?.[0].map((image: { id: string }) => image.id);
     const page = (from: number) => Array.from({ length: 5 }, (_, i) => `test-${from + i}`);
-    expect(ids.slice(0, 25)).toEqual([...page(10), ...page(15), ...page(5), ...page(20), ...page(0)]);
+    expect(ids.slice(0, 25)).toEqual([
+      ...page(10),
+      ...page(15),
+      ...page(5),
+      ...page(20),
+      ...page(0),
+    ]);
     expect(ids).toContain("test-29");
     // A window for a menu that has since closed is ignored.
     sim.command("menu-page\tstale\t25\t5");
@@ -680,7 +686,12 @@ describe("Lua simulator", () => {
         .filter((r: string[]) => r[0] === "A")
         .map((r: string[]) => r[2]);
     expect(labels()).toEqual([
-      "End turn", "Undo turn", "Undo action", "New game", "Redo action", "Redo turn",
+      "End turn",
+      "Undo turn",
+      "Undo action",
+      "New game",
+      "Redo action",
+      "Redo turn",
     ]);
     const disabled = () =>
       Object.fromEntries(
@@ -717,8 +728,11 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.turn).toBe(2);
     expect(sim.menu?.title).toBe("Start new game with different decks?");
     sim.command("dismiss");
-    expect(rows(publish).filter((r: string[]) => r[0] === "A").map((r: string[]) => r.slice(2)))
-      .toEqual(beforeDialog);
+    expect(
+      rows(publish)
+        .filter((r: string[]) => r[0] === "A")
+        .map((r: string[]) => r.slice(2)),
+    ).toEqual(beforeDialog);
   });
   it("keeps the board unchanged on invalid drags and surfaces the engine reason", () => {
     const { sim, publish } = setup();

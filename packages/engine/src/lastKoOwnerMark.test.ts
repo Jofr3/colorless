@@ -226,7 +226,9 @@ function settle(state: GameState): GameState {
 /** The whole board arrangement for "P1 lost `victim` to P2's ATTACK on turn 2",
     settled and handed back on P1's turn 3. */
 function koedByAttack(seed: number, victim: string): GameState {
-  return settle(mustApply(sniperOnP2(seed, victim), { type: "attack", seat: "p2", index: 0 }).state);
+  return settle(
+    mustApply(sniperOnP2(seed, victim), { type: "attack", seat: "p2", index: 0 }).state,
+  );
 }
 
 function toHand(state: GameState, seat: Seat, cardId: string): GameState {
@@ -457,7 +459,9 @@ describe("owner AND byAttack together — Ethan's Pinsir's clause", () => {
     poisoned = setDamage(poisoned, "p1", 20);
     const settled = settle(must(applyAction(poisoned, { type: "endTurn", seat: "p2" })));
     expect(settled.lastKoMarks.p1[0]?.name).toBe("Ethan's Victim");
-    expect(conditionHolds(settled, "p1", { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Ethan" })).toBe(true); // the owner half holds …
+    expect(
+      conditionHolds(settled, "p1", { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Ethan" }),
+    ).toBe(true); // the owner half holds …
     expect(conditionHolds(settled, "p1", ETHAN_BY_ATTACK)).toBe(false); // … the cause half does not
   });
 });

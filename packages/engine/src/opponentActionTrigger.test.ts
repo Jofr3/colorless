@@ -332,7 +332,9 @@ function damageAt(state: GameState, seat: Seat, index: number | "active"): numbe
 
 function triggeredNames(events: readonly { type: string }[]): string[] {
   return events
-    .filter((e): e is { type: "ABILITY_TRIGGERED"; ability: string } => e.type === "ABILITY_TRIGGERED")
+    .filter(
+      (e): e is { type: "ABILITY_TRIGGERED"; ability: string } => e.type === "ABILITY_TRIGGERED",
+    )
     .map((e) => e.ability);
 }
 

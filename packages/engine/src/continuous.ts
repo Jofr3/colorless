@@ -68,7 +68,15 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { BENCH_MAX, SEATS, noConditions, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
+import {
+  BENCH_MAX,
+  SEATS,
+  noConditions,
+  otherSeat,
+  stampedActBarFor,
+  stampedBarFor,
+  takenPrizes,
+} from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -104,7 +112,9 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
     `benchLimitWithTera` (Area Zero Underdepths: 8) when `teraInPlay`, else `BENCH_MAX` (R-AZ1). */
 function benchLimitFrom(stadiumCardId: string | undefined, teraInPlay: boolean): number {
   const widened =
-    stadiumCardId === undefined ? undefined : programFor(stadiumCardId)?.stadium?.benchLimitWithTera;
+    stadiumCardId === undefined
+      ? undefined
+      : programFor(stadiumCardId)?.stadium?.benchLimitWithTera;
   return widened !== undefined && teraInPlay ? widened : BENCH_MAX;
 }
 
@@ -205,7 +215,10 @@ function toolCapNames(): readonly string[] {
 export function owesToolTrim(state: GameState, seat: Seat, body: InPlayPokemon): boolean {
   if (body.tools.length <= 1) return false;
   const name = topCardOf(state, body)?.name ?? "";
-  return toolCapNames().some((part) => name.includes(part)) && body.tools.length > toolCapOf(state, seat, body);
+  return (
+    toolCapNames().some((part) => name.includes(part)) &&
+    body.tools.length > toolCapOf(state, seat, body)
+  );
 }
 
 /** 🆕🆕🆕 §7.4 (D643) — Multi Adapter's *"If this Ability goes away, discard Pokémon Tools from those Pokémon until
@@ -233,7 +246,11 @@ export function toolTrimStages(
 /** 🆕🆕🆕 §6.1 (D577) — does the Energy card `uid` print Boomerang Energy's *"attach this card
     from your discard pile to that Pokémon after attacking"* (`EnergyProgram.returnAfterAttackDiscard`)?
     The ONE read interpreter.ts `discardEnergyApply` asks of a card it discarded. */
-export function returnsAfterAttackDiscard(state: GameState, uid: string, holder: InPlayPokemon): boolean {
+export function returnsAfterAttackDiscard(
+  state: GameState,
+  uid: string,
+  holder: InPlayPokemon,
+): boolean {
   const id = state.cardIdByUid[uid];
   const energy = id === undefined ? undefined : programFor(id)?.energy;
   // 🆕🆕🆕 D604 — `"hand"` (Nitro Fire) is recorded the same way; its {R} is the holder gate (R-NF1).
@@ -315,14 +332,23 @@ export function coinRedoToolOf(state: GameState, body: InPlayPokemon): string | 
 
 /** 🆕🆕🆕 §7.4 / §8 (D646) — a Backtrack Badge offer answered YES: `COINS_REFLIPPED` (the `count` coins ignored) and the
     Badge's once-per-turn key on `allowances.abilitiesUsed`. A uid carrying no `reflipAttackCoins` spends nothing. */
-export function spendCoinRedo(state: GameState, seat: Seat, toolUid: string, count: number, events: GameEvent[]): GameState {
+export function spendCoinRedo(
+  state: GameState,
+  seat: Seat,
+  toolUid: string,
+  count: number,
+  events: GameEvent[],
+): GameState {
   const id = state.cardIdByUid[toolUid];
   const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
   if (redo === undefined) return state;
   events.push({ type: "COINS_REFLIPPED", seat, uid: toolUid, count });
   return {
     ...state,
-    allowances: { ...state.allowances, abilitiesUsed: [...state.allowances.abilitiesUsed, coinRedoKey(toolUid, redo.name)] },
+    allowances: {
+      ...state.allowances,
+      abilitiesUsed: [...state.allowances.abilitiesUsed, coinRedoKey(toolUid, redo.name)],
+    },
   };
 }
 
@@ -404,7 +430,8 @@ export function attackerGatedReductionOf(
   const holderSeat = seatOfPokemon(state, holder);
   if (holderSeat === undefined || holderSeat === attackerSeat) return 0;
   let amount = 0;
-  for (const reduction of reductions) if (matchesFilter(attacker, reduction.attacker)) amount += reduction.amount;
+  for (const reduction of reductions)
+    if (matchesFilter(attacker, reduction.attacker)) amount += reduction.amount;
   return amount;
 }
 
@@ -443,7 +470,9 @@ export function deluxeBombOf(
   let amount = 0;
   const toolUids: string[] = [];
   for (const { uid, passive } of opposedToolPassives(state, holder, attackerSeat)) {
-    const bomb = passive.damageAttackerActiveThenDiscard ?? gatedBombOf(state, holder, attackerSeat, dealt, passive);
+    const bomb =
+      passive.damageAttackerActiveThenDiscard ??
+      gatedBombOf(state, holder, attackerSeat, dealt, passive);
     if (bomb === undefined) continue;
     amount += bomb;
     toolUids.push(uid);
@@ -467,7 +496,9 @@ function gatedBombOf(
   const attackerCard = attacking === null ? undefined : inPlayCardOf(state, attacking);
   const holderCard = inPlayCardOf(state, holder);
   if (attackerCard === undefined || !matchesFilter(attackerCard, gated.attacker)) return undefined;
-  return holderCard === undefined || matchesFilter(holderCard, gated.holderNot) ? undefined : gated.amount;
+  return holderCard === undefined || matchesFilter(holderCard, gated.holderNot)
+    ? undefined
+    : gated.amount;
 }
 
 /** 🆕🆕🆕 §12 (D562) — does the in-play Stadium shield `pokemon` from every Special
@@ -479,7 +510,9 @@ function gatedBombOf(
     `recoverStatuses` (the recovery half) — the same two-clause split Therapeutic Energy's
     `statusImmunities`/`statusRecovery` pair makes (R-FG). */
 export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): boolean {
-  return stadiumEffectsOf(state)?.statusShieldIfEnergyAttached === true && pokemon.energy.length > 0;
+  return (
+    stadiumEffectsOf(state)?.statusShieldIfEnergyAttached === true && pokemon.energy.length > 0
+  );
 }
 
 /** 🆕🆕🆕 §10 (D618) — does the in-play Stadium let `target` evolve into `evolution` although it came
@@ -488,10 +521,16 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
     types (`effectiveTypesOf`) and the evolution card's PRINTED types must both include the Stadium's
     `type`. Asked by turn.ts `evolve` at the §10 ban only; §4's first-turn ban is not lifted (R-FOV1).
     No seat ("each player's") and no §9 gate (a Stadium). */
-export function stadiumLicensesSameTurnEvolve(state: GameState, target: InPlayPokemon, evolution: Card): boolean {
+export function stadiumLicensesSameTurnEvolve(
+  state: GameState,
+  target: InPlayPokemon,
+  evolution: Card,
+): boolean {
   const type = stadiumEffectsOf(state)?.sameTurnEvolution?.type;
   return (
-    type !== undefined && effectiveTypesOf(state, target).includes(type) && (evolution.types ?? []).includes(type)
+    type !== undefined &&
+    effectiveTypesOf(state, target).includes(type) &&
+    (evolution.types ?? []).includes(type)
   );
 }
 
@@ -586,7 +625,11 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       // 🆕🆕🆕 D559 — Gastrodon's *"As long as this Pokémon is on your Bench"*, the
       // mirror of the line above and spelled with the same test.
       if (aura.sourceOnBench === true && holder === side.active) continue;
-      auras.push({ aura, sourceSeat: seat, holder: { body: holder, top, isActive: holder === side.active } });
+      auras.push({
+        aura,
+        sourceSeat: seat,
+        holder: { body: holder, top, isActive: holder === side.active },
+      });
     }
   }
   // 🆕🆕🆕 D566 — THE STADIUM'S LOCK (Team Rocket's Watchtower `sv10-180`, *"{C} Pokémon in
@@ -724,7 +767,11 @@ function auraSuppresses(
   // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization": *"Pokémon with a Rule Box in play … except
   // for Future Pokémon"* — the Rule Box narrowing, then the banner exemption (by printing id).
   if (aura.ruleBox === true && !hasRuleBox(top)) return false;
-  if (aura.exemptBanner !== undefined && matchesFilter(top, { kind: "bannerPokemon", banner: aura.exemptBanner })) return false;
+  if (
+    aura.exemptBanner !== undefined &&
+    matchesFilter(top, { kind: "bannerPokemon", banner: aura.exemptBanner })
+  )
+    return false;
   // 🆕🆕🆕 D632 — Damp: only a body with an Ability that Knocks Out the Pokémon using it (R-DMP1).
   if (aura.selfKnockOutAbility === true && !hasSelfKnockOutAbility(top)) return false;
   if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
@@ -741,7 +788,9 @@ function auraSuppresses(
     Dusknoir) and Overvolt Discharge (Magneton). A registry walk in `dampD632.test.ts` pins that no
     `knockOutSelf` sits deeper, or in a `triggered` program, and that each holder prints that one Ability. */
 export function hasSelfKnockOutAbility(top: Card): boolean {
-  return (programFor(top.id)?.abilities ?? []).some((ability) => ability.program.some((op) => op.op === "knockOutSelf"));
+  return (programFor(top.id)?.abilities ?? []).some((ability) =>
+    ability.program.some((op) => op.op === "knockOutSelf"),
+  );
 }
 
 /** §8.5 — does `seat` currently have a live "Your Pokémon in play have no
@@ -817,7 +866,8 @@ export function weaknessAmountOverride(state: GameState): number | null {
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
     for (const holder of holders) {
       const top = topCardOf(state, holder);
-      const rule = top === undefined ? undefined : programFor(top.id)?.passive?.weaknessTimesWithNamedInPlay;
+      const rule =
+        top === undefined ? undefined : programFor(top.id)?.passive?.weaknessTimesWithNamedInPlay;
       if (rule === undefined) continue;
       const uid = topUid(holder);
       if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
@@ -830,7 +880,10 @@ export function weaknessAmountOverride(state: GameState): number | null {
 /** 🆕🆕🆕 §8.5 (D644) — `weaknessAmountOverride`'s amount laid over a Weakness that applies. R-SPH1 ⚠️ UNRULED: only a
     MULTIPLICATIVE Weakness is rewritten (every Standard Weakness is ×2, a Fairy Zone / Overwriting Bolt rewrite
     included); no Weakness stays none, and an old-era additive one is left as printed. */
-export function withWeaknessAmount(weakness: DamageModifier | null, amount: number | null): DamageModifier | null {
+export function withWeaknessAmount(
+  weakness: DamageModifier | null,
+  amount: number | null,
+): DamageModifier | null {
   if (weakness === null || amount === null || weakness.op !== "multiply") return weakness;
   return { op: "multiply", amount };
 }
@@ -903,7 +956,8 @@ export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean 
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
   for (const holder of holders) {
     const top = topCardOf(state, holder);
-    if (top === undefined || programFor(top.id)?.passive?.opponentInPlayToHandBlocked !== true) continue;
+    if (top === undefined || programFor(top.id)?.passive?.opponentInPlayToHandBlocked !== true)
+      continue;
     const uid = topUid(holder);
     if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
     return true;
@@ -946,7 +1000,8 @@ export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPok
   }
   if (rescued === undefined) return [];
   // 🆕🆕🆕 D578 — the KO'd body's IN-PLAY types (`inPlayCardOf`): it is still on the board here.
-  if (!matchesFilter(inPlayCardOf(state, body), { kind: "typedPokemon", pokemonType: rescued })) return [];
+  if (!matchesFilter(inPlayCardOf(state, body), { kind: "typedPokemon", pokemonType: rescued }))
+    return [];
   if (inPlayToHandBlocked(state, seat)) return [];
   const energyType = rescued;
   return body.energy.filter((uid) =>
@@ -1093,7 +1148,11 @@ export function inPlayCardOf(state: GameState, pokemon: InPlayPokemon): Card | u
   // `pokemon.tools`, not `toolsInEffect`) prints this exact NAME (R-DC3). BEFORE the cache, which
   // is keyed by the top card while this condition is per body.
   const whileTool = programFor(top.id)?.passive?.typesInPlayWhileToolNamed;
-  if (whileTool !== undefined && !pokemon.tools.some((t) => cardOfUid(state, t)?.name === whileTool)) return top;
+  if (
+    whileTool !== undefined &&
+    !pokemon.tools.some((t) => cardOfUid(state, t)?.name === whileTool)
+  )
+    return top;
   const cached = retypedViews.get(top);
   if (cached !== undefined) return cached;
   const view: Card = { ...top, types: [...typesInPlay] };
@@ -2041,7 +2100,10 @@ export function passivesOf(
       fromAttacker !== undefined &&
       (fromAttacker.holderType === undefined || holderTypes.includes(fromAttacker.holderType))
     )
-      damageReductionsFromAttacker.push({ amount: fromAttacker.amount, attacker: fromAttacker.attacker });
+      damageReductionsFromAttacker.push({
+        amount: fromAttacker.amount,
+        attacker: fromAttacker.attacker,
+      });
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
@@ -2089,7 +2151,8 @@ export function passivesOf(
     // `Math.max` floor in `effectiveMaxHp` is not weakened by it and Gravity
     // Mountain stays the engine's only subtrahend.
     const scaled = passive.hpBonusPer;
-    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
+    if (scaled !== undefined)
+      hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
     // 🆕🆕🆕 D559 — Orthworm ex's *"for each {M} Energy attached to this Pokémon"*: the
     // amount MULTIPLIED by the holder's count of that type (provision, D118), here, so
     // both read sites take a zero diff. 0 {M} Energy pays 0.
@@ -2272,7 +2335,8 @@ export function passivesOf(
     // inside `koSurvivalClamp`. This field still has no Tool or Energy writer.
     if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
     // 🆕🆕🆕 D598 — Tenacious Body / Durable Body, in this loop for the same §9 reason (an Ability).
-    if (passive.survivesKoOnCoinFlip !== undefined) survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
+    if (passive.survivesKoOnCoinFlip !== undefined)
+      survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
     // D242 — the §8 attack GATE, collected RAW exactly like the two conditional
     // damage-bonus lists above it, and IN THIS LOOP for `survivesKoAtFullHp`'s
     // reason: the §9 drop on `sources[0]` is what makes Klefki's Ability-lock
@@ -2527,7 +2591,8 @@ export function koSurvivalCoinFlip(
   const ability = passivesOf(state, pokemon).survivesKoOnCoinFlip;
   if (ability === null) return [null, state.rngState];
   const hp = effectiveMaxHp(state, pokemon);
-  if (hp === null || pokemon.damage >= hp || pokemon.damage + dealt < hp) return [null, state.rngState];
+  if (hp === null || pokemon.damage >= hp || pokemon.damage + dealt < hp)
+    return [null, state.rngState];
   const uid = topUid(pokemon);
   if (uid === undefined) return [null, state.rngState];
   const [face, rngState] = flipCoin(state.rngState);
@@ -2857,7 +2922,8 @@ export function attackBlockOf(
   // whenever the body's own block does not apply: two independent installations, either of
   // which refuses the attack, so this function returns the body's when it applies and the
   // side's otherwise. The three callers are unchanged.
-  if (block === null || block.turn !== state.turn) return sideAttackBlockOf(state, pokemon, attacker, attackerBody);
+  if (block === null || block.turn !== state.turn)
+    return sideAttackBlockOf(state, pokemon, attacker, attackerBody);
   // D240 — the CAP, checked before the class for no reason but reading order:
   // the two narrowings are independent conjuncts and no printing carries both.
   // `<=` is the printed "or less", inclusive: a 40-cap refuses a 40 and lets a 41
@@ -3027,7 +3093,10 @@ function attackerMatchesStage(
     expired one stops answering without anyone having cleared it. The ONE read of the field
     (turn.ts `attachEnergy`, interpreter.ts `attachEnergyTargets` / `attachEnergyFrom`; 🆕🆕🆕 D636: and
     interpreter.ts `shockHandAttach`, Electrified Incisors' counters). */
-export function liveHandAttachMark(state: GameState, pokemon: InPlayPokemon): HandAttachMark | null {
+export function liveHandAttachMark(
+  state: GameState,
+  pokemon: InPlayPokemon,
+): HandAttachMark | null {
   const mark = pokemon.handAttachMark;
   return mark !== null && mark.turn === state.turn ? mark : null;
 }
@@ -3148,9 +3217,14 @@ export function installedWeaknessRetypeOf(state: GameState, pokemon: InPlayPokem
     opponent-side `seatWeaknessRewrite` (R-OWB1 ⚠️ UNRULED: the body's installed rewrite wins over a seat's Fairy
     Zone). The retype above answers the same type for this record and re-points whichever rewrite applies (R-FZ1),
     so the `??` order is not observable at HEAD: R-OWB1's answer is {L}×2 either way. */
-export function installedWeaknessRewriteOf(state: GameState, pokemon: InPlayPokemon): string | null {
+export function installedWeaknessRewriteOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+): string | null {
   const installed = pokemon.weaknessRetype;
-  return installed === null || installed.turn !== state.turn || installed.asTimesTwo !== true ? null : installed.type;
+  return installed === null || installed.turn !== state.turn || installed.asTimesTwo !== true
+    ? null
+    : installed.type;
 }
 
 /** 🆕🆕 §8.5/§11 (D432) — does `pokemon` currently carry an attack-installed
@@ -3343,9 +3417,11 @@ export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPok
     const uid = topUid(holder);
     if (uid === undefined || disabled.has(uid)) continue;
     const top = topCardOf(state, holder);
-    const recoil = top === undefined ? undefined : programFor(top.id)?.passive?.damageAttackerWatched;
+    const recoil =
+      top === undefined ? undefined : programFor(top.id)?.passive?.damageAttackerWatched;
     if (recoil === undefined) continue;
-    if (recoil.activeType !== undefined && !(watched.types ?? []).includes(recoil.activeType)) continue;
+    if (recoil.activeType !== undefined && !(watched.types ?? []).includes(recoil.activeType))
+      continue;
     if (recoil.activeNames !== undefined && !recoil.activeNames.includes(watched.name)) continue;
     total += recoil.amount;
   }
@@ -3356,12 +3432,9 @@ export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPok
     numbers: `damageAttacker` (what is placed) and `damageAttackerFromAbility` (the share Luminous Wing refuses).
     The two recoil sites wrap their fold in it, so their placement, refusal and one `"counterattack"` row take a
     zero diff. The same object when nothing watches (every board without a holder). */
-export function withWatchedRecoil<P extends { damageAttacker: number; damageAttackerFromAbility: number }>(
-  state: GameState,
-  seat: Seat,
-  damaged: InPlayPokemon,
-  passives: P,
-): P {
+export function withWatchedRecoil<
+  P extends { damageAttacker: number; damageAttackerFromAbility: number },
+>(state: GameState, seat: Seat, damaged: InPlayPokemon, passives: P): P {
   const watched = watchedRecoilOf(state, seat, damaged);
   if (watched === 0) return passives;
   return {
@@ -3375,8 +3448,14 @@ export function withWatchedRecoil<P extends { damageAttacker: number; damageAtta
     devolution: none (§12), except Confused — with its `confusionDamage` — while Dizzying Valley is the Stadium in
     play (`StadiumEffects.confusionSurvivesStageChange`, R-DV1). The ONE answer `evolveOnto` (types.ts) and
     `devolvedBodyOf`'s callers (interpreter.ts) are handed. Not §9-gated (a Stadium is no Ability). */
-export function stageChangeConditions(state: GameState, conditions: SpecialConditions): SpecialConditions {
-  if (stadiumEffectsOf(state)?.confusionSurvivesStageChange !== true || conditions.rotation !== "confused") {
+export function stageChangeConditions(
+  state: GameState,
+  conditions: SpecialConditions,
+): SpecialConditions {
+  if (
+    stadiumEffectsOf(state)?.confusionSurvivesStageChange !== true ||
+    conditions.rotation !== "confused"
+  ) {
     return noConditions();
   }
   return { ...noConditions(), rotation: "confused", confusionDamage: conditions.confusionDamage };
@@ -3526,7 +3605,10 @@ export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): bool
     (two printed effects — R-JOI1 ⚠️ UNRULED: every coin is flipped and any tails stops the attack). 0 = no
     lock, so `attack.ts` draws no rng. ONE caller, `attack.ts`'s §8 step-3 seam. */
 export function attackFlipLockCoins(state: GameState, pokemon: InPlayPokemon): number {
-  return (attackFlipLocked(state, pokemon) ? 1 : 0) + (pokemon.attackTwoFlipLockTurn === state.turn ? 2 : 0);
+  return (
+    (attackFlipLocked(state, pokemon) ? 1 : 0) +
+    (pokemon.attackTwoFlipLockTurn === state.turn ? 2 : 0)
+  );
 }
 
 /** §11 (D412) — is `pokemon` held in place right now by an ATTACK EFFECT, from
@@ -3585,7 +3667,9 @@ export function sideRetreatLocked(state: GameState, pokemon: InPlayPokemon): boo
     const side = state.players[seat];
     const lock = side.sideRetreatLock;
     if (lock === null || lock.turn !== state.turn) continue;
-    const onSide = (side.active !== null && topUid(side.active) === uid) || side.bench.some((b) => topUid(b) === uid);
+    const onSide =
+      (side.active !== null && topUid(side.active) === uid) ||
+      side.bench.some((b) => topUid(b) === uid);
     if (onSide) return true;
   }
   return false;
@@ -3820,7 +3904,9 @@ export function attackMenuOf(
   for (const toolUid of toolsInEffect(state, pokemon)) {
     const tool = cardOfUid(state, toolUid);
     const granted =
-      tool === undefined || programFor(tool.id)?.toolAttacks !== true ? undefined : (tool.attacks ?? undefined);
+      tool === undefined || programFor(tool.id)?.toolAttacks !== true
+        ? undefined
+        : (tool.attacks ?? undefined);
     if (tool === undefined || granted === undefined) continue;
     // 🆕🆕🆕 D620 — Core Memory's "The Mega Zygarde ex this card is attached to": the holder's TOP card.
     const holderGate = programFor(tool.id)?.toolAttacksHolder;
@@ -3844,7 +3930,8 @@ export function attackMenuOf(
       const card = topCardOf(state, benched);
       if (card === undefined) continue;
       attacksOf(card).forEach((attack, sourceIndex) => {
-        if (!COPY_FAMILY_MARKER.test(attack.effect ?? "")) menu.push({ attack, card, sourceIndex, origin: "memoryHelix" });
+        if (!COPY_FAMILY_MARKER.test(attack.effect ?? ""))
+          menu.push({ attack, card, sourceIndex, origin: "memoryHelix" });
       });
     }
   }
@@ -3928,8 +4015,9 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
 /** The live entries of `pokemon.lockedAttacks` — `lockedAttackIndexes`' turn rule (D154 / D421),
     shared by both readers so the window lives in one place. */
 function liveLockedAttacks(state: GameState, pokemon: InPlayPokemon): LockedAttack[] {
-  return pokemon.lockedAttacks
-    .filter((locked) => locked.until === "leavesActive" || locked.turn === state.turn);
+  return pokemon.lockedAttacks.filter(
+    (locked) => locked.until === "leavesActive" || locked.turn === state.turn,
+  );
 }
 
 /** 🆕🆕🆕 §8/§11 (D578, R-MD4 — RULED: fixed at the landing) — the PRINTED NAMES of the attacks
@@ -4412,7 +4500,9 @@ export function energyMayBeAttachedTo(
   holder: InPlayPokemon,
 ): boolean {
   const owner = card === undefined ? undefined : programFor(card.id)?.energy?.attachOnlyToOwner;
-  return owner === undefined || matchesFilter(topCardOf(state, holder), { kind: "ownerPokemon", owner });
+  return (
+    owner === undefined || matchesFilter(topCardOf(state, holder), { kind: "ownerPokemon", owner })
+  );
 }
 
 /** Does `uid`, attached to `pokemon`, provide `energyType` (§6.3)? The
@@ -4881,13 +4971,17 @@ function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokem
     answers, so two Meganium double once (the printed "doesn't stack"). Read by `unitsOf` for a Basic Energy card,
     so every provision reader moves together; a card COUNT does not (R-WGR1). The lock scan runs only once a holder
     is found. */
-function doubledBasicEnergyType(state: GameState, pokemon: InPlayPokemon): BasicEnergyType | undefined {
+function doubledBasicEnergyType(
+  state: GameState,
+  pokemon: InPlayPokemon,
+): BasicEnergyType | undefined {
   const seat = seatOfPokemon(state, pokemon);
   if (seat === undefined) return undefined;
   const side = state.players[seat];
   for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
     const top = topCardOf(state, holder);
-    const doubled = top === undefined ? undefined : programFor(top.id)?.passive?.basicEnergyProvidesTwice;
+    const doubled =
+      top === undefined ? undefined : programFor(top.id)?.passive?.basicEnergyProvidesTwice;
     if (doubled === undefined) continue;
     const uid = topUid(holder);
     if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
@@ -4903,11 +4997,15 @@ function doubledBasicEnergyType(state: GameState, pokemon: InPlayPokemon): Basic
     Ability `disabledAbilityUids` does not silence; the first live one answers (one coin however many, the printed
     "doesn't stack"). `uid` names the holder and `ability` the printed name, for the `ABILITY_COIN_FLIP` row. Asked
     by ONE caller, turn.ts `retreat`, after every retreat check has passed (R-SLD1). */
-export function retreatCoinFlipSource(state: GameState, seat: Seat): { uid: string; ability: string } | undefined {
+export function retreatCoinFlipSource(
+  state: GameState,
+  seat: Seat,
+): { uid: string; ability: string } | undefined {
   const side = state.players[otherSeat(seat)];
   for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
     const top = topCardOf(state, holder);
-    const ability = top === undefined ? undefined : programFor(top.id)?.passive?.retreatFailsOnTails;
+    const ability =
+      top === undefined ? undefined : programFor(top.id)?.passive?.retreatFailsOnTails;
     const uid = topUid(holder);
     if (ability === undefined || uid === undefined) continue;
     if (disabledAbilityUids(state).has(uid)) continue; // §9
@@ -4929,7 +5027,9 @@ function unitsOf(
   if (program === undefined) {
     const provided = energyProvidesOf(card);
     // 🆕🆕🆕 D645 — Meganium "Wild Growth": a Basic Energy of the doubled type provides two units (R-WGR1).
-    return provided !== "Colorless" && doubledBasicEnergyType(state, pokemon) === provided ? [provided, provided] : [provided];
+    return provided !== "Colorless" && doubledBasicEnergyType(state, pokemon) === provided
+      ? [provided, provided]
+      : [provided];
   }
   // 🆕🆕🆕 D578 — R-TRE1: a restricted card on a body it may not sit on provides NOTHING (it is
   // discarded at the next drain point, flow.ts `discardMisplacedEnergy`) [🆕🆕🆕 D578 landing
@@ -4954,7 +5054,8 @@ function unitsOf(
       // D302 — the riders NARROW the stage gate; absent means ungated, so Neo
       // Upper and Prism reach the same `return` they always did.
       (promote.noRuleBox !== true || !hasRuleBox(top)) &&
-      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))
+      (promote.whileMorePrizesRemaining !== true ||
+        holderSideLeadsOnPrizesRemaining(state, pokemon))
     )
       return [...promote.units];
   }
@@ -5113,7 +5214,8 @@ export function alliedRetreatDiscount(state: GameState, pokemon: InPlayPokemon):
     let discount = 0;
     for (const source of sources) {
       const top = topCardOf(state, source);
-      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
+      const aura =
+        top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
       if (aura === undefined) continue;
       const sourceUid = topUid(source);
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
@@ -5261,9 +5363,15 @@ export function opposingToolAttackDebuff(
     let amount = 0;
     for (const holder of holders) {
       const top = topCardOf(state, holder);
-      const term = top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveToolAttackDebuff;
+      const term =
+        top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveToolAttackDebuff;
       const holderUid = topUid(holder);
-      if (term === undefined || holderUid === undefined || disabledAbilityUids(state).has(holderUid)) continue; // §9
+      if (
+        term === undefined ||
+        holderUid === undefined ||
+        disabledAbilityUids(state).has(holderUid)
+      )
+        continue; // §9
       if (exceptHolder !== undefined && topUid(exceptHolder) === holderUid) continue; // R-GG1
       amount += term;
     }
@@ -5511,7 +5619,10 @@ export function seatShieldedFromLowEnergyAttacker(
     const holderUid = topUid(holder);
     if (holderUid === undefined || (scope === "othersOnly" && holderUid === uid)) continue;
     const top = topCardOf(state, holder);
-    const ceiling = top === undefined ? undefined : programFor(top.id)?.passive?.preventSeatDamageWhileBenchedFromEnergyAtMost;
+    const ceiling =
+      top === undefined
+        ? undefined
+        : programFor(top.id)?.passive?.preventSeatDamageWhileBenchedFromEnergyAtMost;
     if (ceiling === undefined || energy > ceiling) continue;
     if (disabledAbilityUids(state).has(holderUid)) continue; // §9
     return true;
@@ -5827,7 +5938,8 @@ export function handPlayBarredReason(
 ): string {
   const byClass =
     stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);
-  const noun = !byClass && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];
+  const noun =
+    !byClass && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];
   return `your opponent prevents you from playing ${noun} cards from your hand`;
 }
 
@@ -5890,8 +6002,7 @@ export function pokemonPlayBarred(
   card: Card | undefined,
 ): boolean {
   return (
-    stampedActBarFor(state, seat, act) ||
-    pokemonPlayBarredByOpponentActive(state, seat, act, card)
+    stampedActBarFor(state, seat, act) || pokemonPlayBarredByOpponentActive(state, seat, act, card)
   );
 }
 
@@ -6165,11 +6276,18 @@ export function seatDamageReduction(
     🆕🆕🆕 D630 — a SUMMED list (Iron Defender's two plays stack; D539: *"the record's `amount`"* is
     WITHDRAWN): every live entry whose printed holder type (`pokemonType`, absent = every Pokémon)
     the damaged body's in-play card has. */
-function sideDamageReductionOf(state: GameState, side: PlayerSide, damagedCard: Card | undefined): number {
+function sideDamageReductionOf(
+  state: GameState,
+  side: PlayerSide,
+  damagedCard: Card | undefined,
+): number {
   let amount = 0;
   for (const record of side.sideDamageReduction) {
     if (record.turn !== state.turn) continue;
-    if (record.pokemonType !== undefined && !matchesFilter(damagedCard, { kind: "typedPokemon", pokemonType: record.pokemonType }))
+    if (
+      record.pokemonType !== undefined &&
+      !matchesFilter(damagedCard, { kind: "typedPokemon", pokemonType: record.pokemonType })
+    )
       continue;
     amount += record.amount;
   }
@@ -6567,7 +6685,11 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   // 🆕🆕🆕 D558 — the free tier's TOOL and STADIUM members, each its own top-level
   // predicate: Rescue Board at 30 remaining HP or less (R-RB, live-read), N's Castle
   // over its filter at any stage (R-NC). Neither is an Ability, so neither is gated.
-  if (toolFreesRetreat(state, pokemon) || energyFreesRetreat(state, pokemon) || stadiumFreesRetreat(state, top))
+  if (
+    toolFreesRetreat(state, pokemon) ||
+    energyFreesRetreat(state, pokemon) ||
+    stadiumFreesRetreat(state, top)
+  )
     return 0;
   const printed = retreatCostOf(top);
   // 🆕🆕🆕 D549 — the attack-installed COST TAX is a FIFTH term in the ONE floored sum
@@ -6594,7 +6716,8 @@ export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): n
   let discount = 0;
   for (const toolUid of toolsInEffect(state, pokemon)) {
     const id = state.cardIdByUid[toolUid];
-    discount += (id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount)?.amount ?? 0;
+    discount +=
+      (id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount)?.amount ?? 0;
   }
   return discount;
 }
@@ -6609,7 +6732,9 @@ export function toolFreesRetreat(state: GameState, pokemon: InPlayPokemon): bool
   return toolsInEffect(state, pokemon).some((toolUid) => {
     const id = state.cardIdByUid[toolUid];
     const atMost =
-      id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount?.freeAtRemainingHpAtMost;
+      id === undefined
+        ? undefined
+        : programFor(id)?.passive?.retreatCostDiscount?.freeAtRemainingHpAtMost;
     return atMost !== undefined && remainingHpWithin(state, pokemon, atMost);
   });
 }
@@ -6623,7 +6748,9 @@ export function energyFreesRetreat(state: GameState, pokemon: InPlayPokemon): bo
   return pokemon.energy.some((uid) => {
     const id = state.cardIdByUid[uid];
     const energy = id === undefined ? undefined : programFor(id)?.energy;
-    return energy?.passive?.noRetreatCostSelf !== undefined && energyRulesApply(state, pokemon, energy);
+    return (
+      energy?.passive?.noRetreatCostSelf !== undefined && energyRulesApply(state, pokemon, energy)
+    );
   });
 }
 
@@ -6645,7 +6772,8 @@ export function activeRetreatSurcharge(state: GameState, pokemon: InPlayPokemon)
   for (const active of actives) {
     for (const toolUid of toolsInEffect(state, active)) {
       const id = state.cardIdByUid[toolUid];
-      added += (id === undefined ? undefined : programFor(id)?.passive?.activeRetreatSurchargeBoth) ?? 0;
+      added +=
+        (id === undefined ? undefined : programFor(id)?.passive?.activeRetreatSurchargeBoth) ?? 0;
     }
   }
   return added;
@@ -6814,8 +6942,10 @@ export function selfAttackCostDiscount(
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     let discount = tools;
     if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));
-    if (perNamed !== undefined) discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
-    if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;
+    if (perNamed !== undefined)
+      discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
+    if (perBenched !== undefined)
+      discount += perBenched * state.players[otherSeat(seat)].bench.length;
     return discount;
   }
   return tools;
@@ -6884,7 +7014,6 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   return discount;
 }
 
-
 /** 🆕🆕🆕 §8.2 (D568) — how many Energy of ANY type `pokemon`'s attached Tools take off its
     attacks: Sparkling Crystal `sv07-142`/`sv08.5-129`, *"When the Tera Pokémon this card is
     attached to uses an attack, that attack costs 1 Energy less. (The Energy can be of any
@@ -6899,13 +7028,11 @@ export function toolAnyTypeCostDiscount(state: GameState, pokemon: InPlayPokemon
   let total = 0;
   for (const attachedUid of toolsInEffect(state, pokemon)) {
     const cardId = state.cardIdByUid[attachedUid];
-    const anyTerm = cardId === undefined ? undefined : programFor(cardId)?.passive?.attackCostDiscount;
+    const anyTerm =
+      cardId === undefined ? undefined : programFor(cardId)?.passive?.attackCostDiscount;
     if (anyTerm === undefined || anyTerm.anyType !== true) continue;
     if (anyTerm.holder !== undefined && !matchesFilter(holderTop, anyTerm.holder)) continue;
-    if (
-      anyTerm.ifMorePrizesRemaining === true &&
-      !holderSideLeadsOnPrizesRemaining(state, pokemon)
-    )
+    if (anyTerm.ifMorePrizesRemaining === true && !holderSideLeadsOnPrizesRemaining(state, pokemon))
       continue;
     total += anyTerm.amount;
   }

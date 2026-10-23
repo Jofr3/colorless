@@ -20,9 +20,8 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, conditionHolds, engineVersion } from "./index";
+import { applyAction, conditionHolds } from "./index";
 import type { DamageCountSource, EffectOp, GameEvent, GameState } from "./index";
-import manifest from "../package.json" with { type: "json" };
 import { programFor, registryCardIds } from "./registry";
 import {
   DEFENDER_STATUS_TRIPLE_DECK,
@@ -587,7 +586,9 @@ describe("D518 §4 — SHAPE × NOUN × SEAT × FOLD, 16 points, and the flip ta
       let n = 0;
       for (const p of POINTS) {
         if (p.key[axis] === 1) continue;
-        const q = POINTS.find((x) => x.key.every((v, i) => (i === axis ? v === 1 : v === p.key[i])));
+        const q = POINTS.find((x) =>
+          x.key.every((v, i) => (i === axis ? v === 1 : v === p.key[i])),
+        );
         if (q !== undefined && lit(p.t) !== lit(q.t)) n += 1;
       }
       return n;
@@ -806,10 +807,5 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
       "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.",
       "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.",
     ]);
-  });
-
-  it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

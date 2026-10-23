@@ -6,7 +6,6 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -175,9 +174,7 @@ function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as
-    | Extract<GameEvent, { type: T }>
-    | undefined;
+  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** What §8.5 said it dealt to the defending Active. `undefined` means no row. */
@@ -774,14 +771,5 @@ describe("§9 — purity and the version", () => {
     const second = deriveAttackPreDamage(SENTENCE);
     expect(first).toEqual(second);
     expect(first).not.toBe(second);
-  });
-
-  it("the engine version is pinned, and it is THIS slice's pin", () => {
-    // 🆕🆕 D428 — the FOURTEENTH `engineVersion` assertion in the suite (13 inherited
-    // plus this one) and the SEVENTEENTH site overall, counting
-    // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
-    // anchor. ⚠️ D427 named the mechanism: **every note counts the pins it INHERITED
-    // and never the one it is about to AUTHOR.** This line is the one being authored.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

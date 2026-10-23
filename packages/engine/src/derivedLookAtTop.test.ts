@@ -535,9 +535,13 @@ describe("Summoning Gate — the look that BENCHES", () => {
     // ceiling is the ONE free slot, so the four-card answer this rung used to send is refused by the
     // validator, and the apply's own clamp stays as the belt behind it (a stale answer).
     expect(cardsPrompt(parked).max).toBe(1);
-    expect(applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: picks } }).ok).toBe(
-      false,
-    );
+    expect(
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: picks },
+      }).ok,
+    ).toBe(false);
     const { state: done } = resolveCards(parked, picks.slice(0, 1));
     expect(done.players.p1.bench).toHaveLength(5); // §4's cap
     // Exactly ONE left the deck; the other three are still in it. Card

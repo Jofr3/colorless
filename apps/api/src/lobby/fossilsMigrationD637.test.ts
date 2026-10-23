@@ -182,7 +182,8 @@ describe("D637 — the version and the gate", () => {
 
   it("v40 and v47 (🆕🆕🆕 D640 (D539): v48 — v47 is this build's own; 🆕🆕🆕 D643 (D539): v49 — v48 is; 🆕🆕🆕 D646 (D539): v50 — v49 is) are neither read nor migrated; a v45 record missing its players or its log is not migrated", () => {
     const old = oldRecord(45);
-    for (const version of [40, 50]) { // 🆕🆕🆕 D643 — 48 is this build's own 🆕🆕🆕 D646 — 49 is.
+    for (const version of [40, 50]) {
+      // 🆕🆕🆕 D643 — 48 is this build's own 🆕🆕🆕 D646 — 49 is.
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -213,9 +214,15 @@ describe("D637 — what the migration writes", () => {
       players: {
         ...board.players,
         p1: { ...board.players.p1, trainerFlipLockTurn: board.turn },
-        p2: { ...board.players.p2, active: { ...active, attackTwoFlipLockTurn: board.turn, benchedTurn: 1 } },
+        p2: {
+          ...board.players.p2,
+          active: { ...active, attackTwoFlipLockTurn: board.turn, benchedTurn: 1 },
+        },
       },
-      handPlayLockedTurn: { ...board.handPlayLockedTurn, p1: { ...board.handPlayLockedTurn.p1, Stadium: board.turn } },
+      handPlayLockedTurn: {
+        ...board.handPlayLockedTurn,
+        p1: { ...board.handPlayLockedTurn.p1, Stadium: board.turn },
+      },
     };
     const migrated = migrateMatchRecord(oldRecord(45, live), {});
     if (migrated === null) throw new Error("not migrated");
@@ -250,13 +257,19 @@ describe("D637 — on a board: the migrated v45 record plays a `me` fossil", () 
   it("an Antique Jaw Fossil in a v45 hand is benched as a 60-HP body after the migration", () => {
     let board = p1Turn(fresh());
     const side = board.players.p1;
-    const jaw = side.deck.find((u) => board.cardIdByUid[u] === JAW) ?? side.hand.find((u) => board.cardIdByUid[u] === JAW);
+    const jaw =
+      side.deck.find((u) => board.cardIdByUid[u] === JAW) ??
+      side.hand.find((u) => board.cardIdByUid[u] === JAW);
     if (jaw === undefined) throw new Error("no Antique Jaw Fossil");
     board = {
       ...board,
       players: {
         ...board.players,
-        p1: { ...side, deck: side.deck.filter((u) => u !== jaw), hand: [...side.hand.filter((u) => u !== jaw), jaw] },
+        p1: {
+          ...side,
+          deck: side.deck.filter((u) => u !== jaw),
+          hand: [...side.hand.filter((u) => u !== jaw), jaw],
+        },
       },
     };
     const migrated = migrateMatchRecord(oldRecord(45, board), {});

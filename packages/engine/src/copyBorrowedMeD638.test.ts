@@ -6,7 +6,7 @@ import { attackMenuOf } from "./continuous";
 import { COPY_FAMILY_MARKER, deriveAttackCopy, deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -71,7 +71,9 @@ const mew = (id: string): Card =>
     retreat: 0,
     weaknesses: [{ type: "Darkness", value: "×2" }],
     abilities: [{ type: "Ability", name: "Memory Helix", effect: MEMORY_HELIX }],
-    attacks: [{ cost: ["Psychic"], name: "Teleportation Burst", effect: TELEPORTATION_BURST, damage: 30 }],
+    attacks: [
+      { cost: ["Psychic"], name: "Teleportation Burst", effect: TELEPORTATION_BURST, damage: 30 },
+    ],
   });
 const thievul = (id: string): Card =>
   battler(id, {
@@ -127,7 +129,9 @@ const LOCAL: Record<string, Card> = {
   [CASSIOPEIA]: { ...trainerCard(CASSIOPEIA, "Supporter", "(Cassiopeia)"), name: "Cassiopeia" },
   [PLAIN]: body(PLAIN, "D638 Plain", [{ cost: [], name: "Tap", damage: 10 }]),
   [HITTER]: body(HITTER, "D638 Hitter", [{ cost: ["Fire"], name: "Big Hit", damage: 60 }]),
-  [GATED]: body(GATED, "D638 Gated", [{ cost: [], name: "Opening Shot", damage: 50, effect: FIRST_TURN_GATE }]),
+  [GATED]: body(GATED, "D638 Gated", [
+    { cost: [], name: "Opening Shot", damage: 50, effect: FIRST_TURN_GATE },
+  ]),
   [FILLER]: body(FILLER, "D638 Filler", [{ cost: [], name: "Tap", damage: 10 }]),
   [ITEM]: { ...trainerCard(ITEM, "Item", "(constructed)"), name: "D638 Item" },
   [R]: typedEnergy(R, "Fire"),
@@ -143,7 +147,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -153,7 +158,9 @@ function opened(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -161,15 +168,22 @@ function opened(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -180,7 +194,14 @@ function mint(state: GameState, id: string): { state: GameState; uid: string } {
   const uid = `d638-${minted}`;
   const card = POOL[id];
   if (card === undefined) throw new Error(`no ${id} in POOL`);
-  return { uid, state: { ...state, cardIdByUid: { ...state.cardIdByUid, [uid]: id }, cardPool: { ...state.cardPool, [id]: card } } };
+  return {
+    uid,
+    state: {
+      ...state,
+      cardIdByUid: { ...state.cardIdByUid, [uid]: id },
+      cardPool: { ...state.cardPool, [id]: card },
+    },
+  };
 }
 
 interface Spot {
@@ -206,14 +227,22 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const fresh = (id: string): string => {
     const m = mint(state, id);
     state = m.state;
     return m.uid;
   };
-  const build = (spot: Spot): InPlayPokemon => ({ ...makeInPlay(fresh(spot.id), 0), energy: (spot.energy ?? []).map(fresh) });
+  const build = (spot: Spot): InPlayPokemon => ({
+    ...makeInPlay(fresh(spot.id), 0),
+    energy: (spot.energy ?? []).map(fresh),
+  });
   for (const seat of ["p1", "p2"] as const) {
     const active = build(seat === "p1" ? opts.p1 : opts.p2);
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map(build);
@@ -228,14 +257,21 @@ function table(opts: {
 }
 
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
-const pick = (index: number): GameAction => ({ type: "resolveEffect", seat: "p1", choice: { kind: "attack", index } });
+const pick = (index: number): GameAction => ({
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "attack", index },
+});
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const defenderDamage = (state: GameState) => state.players.p2.active?.damage ?? -1;
-const turnPassed = (state: GameState) => state.phase.kind === "turn:action" && state.phase.seat === "p2";
+const turnPassed = (state: GameState) =>
+  state.phase.kind === "turn:action" && state.phase.seat === "p2";
 const menuNames = (state: GameState) => {
   const active = state.players.p1.active;
-  return active === null ? [] : attackMenuOf(state, "p1", active).map((e) => [e.attack.name, e.origin]);
+  return active === null
+    ? []
+    : attackMenuOf(state, "p1", active).map((e) => [e.attack.name, e.origin]);
 };
 
 function render(events: GameEvent[], state: GameState): string[] {
@@ -262,12 +298,14 @@ describe("D638 §1 — the texts and the keys", () => {
   });
 
   it("Mew ex ×3 is keyed `passive: { memoryHelix }` alone; Thievul ×2 and Ninetales stay unkeyed (readers)", () => {
-    for (const id of [MEW, MEW_ALT, MEW_ALT2]) expect(programFor(id), id).toEqual({ passive: { memoryHelix: true } });
+    for (const id of [MEW, MEW_ALT, MEW_ALT2])
+      expect(programFor(id), id).toEqual({ passive: { memoryHelix: true } });
     for (const id of [THIEVUL, THIEVUL_ALT, NINETALES]) expect(programFor(id), id).toBeUndefined();
   });
 
   it("no new anchor claims a legal `sv` sentence: no `sv` row opens like either", () => {
-    const opening = /^If you have no cards in your hand, choose an attack|^Discard the top card of your deck, and if that card is a Supporter/;
+    const opening =
+      /^If you have no cards in your hand, choose an attack|^Discard the top card of your deck, and if that card is a Supporter/;
     expect(legalAttackCorpus().filter(([, text]) => opening.test(text))).toEqual([]);
   });
 });
@@ -275,7 +313,10 @@ describe("D638 §1 — the texts and the keys", () => {
 describe("D638 §2 — the readings", () => {
   it("Skill Thief: the NEW in-play kind; its wording variants stay loud", () => {
     expect(deriveAttackCopy(SKILL_THIEF)).toEqual({ from: "opponentInPlay", ifEmptyHand: true });
-    expect(deriveAttackCopy(SKILL_THIEF.replace("’", "'"))).toEqual({ from: "opponentInPlay", ifEmptyHand: true });
+    expect(deriveAttackCopy(SKILL_THIEF.replace("’", "'"))).toEqual({
+      from: "opponentInPlay",
+      ifEmptyHand: true,
+    });
     expect(deriveAttackCopy(SKILL_THIEF.replace("no cards", "1 card"))).toBeNull();
     expect(deriveAttackCopy(SKILL_THIEF.replace(" in play", " on the Bench"))).toBeNull();
     expect(deriveAttackEffect(SKILL_THIEF)).toBeNull();
@@ -329,22 +370,38 @@ describe("D638 §3 — Memory Helix on a board (R-MH1 / R-MH2)", () => {
   });
 
   it("the licence is the holder's: a Benched Mew ex gives the Active nothing", () => {
-    const state = table({ p1: { id: HITTER, energy: [R] }, p1Bench: [{ id: MEW }, { id: PLAIN }], p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: HITTER, energy: [R] },
+      p1Bench: [{ id: MEW }, { id: PLAIN }],
+      p2: { id: PLAIN },
+    });
     expect(menuNames(state)).toEqual([["Big Hit", "printed"]]);
   });
 
   it("§9: an opponent's Active Klefki silences the Ability — the printed attack only", () => {
-    expect(menuNames(helixBoard([P], { id: KLEFKI }))).toEqual([["Teleportation Burst", "printed"]]);
+    expect(menuNames(helixBoard([P], { id: KLEFKI }))).toEqual([
+      ["Teleportation Burst", "printed"],
+    ]);
   });
 
   it("an empty Bench offers nothing borrowed", () => {
-    expect(menuNames(table({ p1: { id: MEW, energy: [P] }, p2: { id: PLAIN } }))).toEqual([["Teleportation Burst", "printed"]]);
+    expect(menuNames(table({ p1: { id: MEW, energy: [P] }, p2: { id: PLAIN } }))).toEqual([
+      ["Teleportation Burst", "printed"],
+    ]);
   });
 });
 
 describe("D638 §4 — Skill Thief on a board (R-SKT1)", () => {
-  const thiefBoard = (hand: readonly string[] = [], p2Bench: readonly Spot[] = [{ id: HITTER }, { id: THIEVUL_ALT }]) =>
-    table({ p1: { id: THIEVUL, energy: ["fix-energy", "fix-energy"] }, p1Hand: hand, p2: { id: PLAIN }, p2Bench });
+  const thiefBoard = (
+    hand: readonly string[] = [],
+    p2Bench: readonly Spot[] = [{ id: HITTER }, { id: THIEVUL_ALT }],
+  ) =>
+    table({
+      p1: { id: THIEVUL, energy: ["fix-energy", "fix-energy"] },
+      p1Hand: hand,
+      p2: { id: PLAIN },
+      p2Bench,
+    });
 
   it("an empty hand: ONE prompt over every eligible (Pokémon, attack) pair in play, Active first; Skill Thief itself is not offered", () => {
     const parked = run(thiefBoard(), attack(0)).state;
@@ -364,7 +421,10 @@ describe("D638 §4 — Skill Thief on a board (R-SKT1)", () => {
   it("picking a BENCHED attack: the copier does it (60, its cost ignored — R-CP1), stamped `as`", () => {
     const parked = run(thiefBoard(), attack(0)).state;
     const done = run(parked, pick(1));
-    expect(of(done.events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Skill Thief", as: "Big Hit" });
+    expect(of(done.events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Skill Thief",
+      as: "Big Hit",
+    });
     expect(defenderDamage(done.state)).toBe(60);
     expect(turnPassed(done.state)).toBe(true);
   });
@@ -390,12 +450,19 @@ describe("D638 §4 — Skill Thief on a board (R-SKT1)", () => {
     const bad = applyAction(parked, pick(7));
     expect(bad.ok ? null : bad.error.code).toBe("BAD_EFFECT_CHOICE");
     const swapped = withSide(parked, "p1", { active: { ...makeInPlay("d638-stale", 0) } });
-    const stale = applyAction({ ...swapped, cardIdByUid: { ...swapped.cardIdByUid, "d638-stale": THIEVUL } }, pick(0));
+    const stale = applyAction(
+      { ...swapped, cardIdByUid: { ...swapped.cardIdByUid, "d638-stale": THIEVUL } },
+      pick(0),
+    );
     expect(stale.ok ? null : stale.error.code).toBe("PHASE_DESYNC");
   });
 
   it("Mew ex never borrows Skill Thief (R-MH2), so no copy park is made at a non-printed index", () => {
-    const state = table({ p1: { id: MEW, energy: [P] }, p1Bench: [{ id: THIEVUL }], p2: { id: PLAIN } });
+    const state = table({
+      p1: { id: MEW, energy: [P] },
+      p1Bench: [{ id: THIEVUL }],
+      p2: { id: PLAIN },
+    });
     expect(menuNames(state)).toEqual([
       ["Teleportation Burst", "printed"],
       ["Sharp Fang", "memoryHelix"],
@@ -416,14 +483,27 @@ describe("D638 §5 — Supernatural Shapeshifter on a board (R-NS1)", () => {
     const state = foxBoard(CHEREN);
     const top = state.players.p1.deck[0] ?? "";
     const done = run(state, attack(0));
-    expect(of(done.events, "DECK_TOP_DISCARDED")).toEqual([{ type: "DECK_TOP_DISCARDED", seat: "p1", actor: "p1", uids: [top] }]);
-    expect(done.events).toContainEqual({ type: "SUPPORTER_EFFECT_USED", seat: "p1", uid: top, milled: true });
-    expect(of(done.events, "CARDS_DRAWN").filter((d) => d.seat === "p1").reduce((n, d) => n + d.uids.length, 0)).toBe(3);
+    expect(of(done.events, "DECK_TOP_DISCARDED")).toEqual([
+      { type: "DECK_TOP_DISCARDED", seat: "p1", actor: "p1", uids: [top] },
+    ]);
+    expect(done.events).toContainEqual({
+      type: "SUPPORTER_EFFECT_USED",
+      seat: "p1",
+      uid: top,
+      milled: true,
+    });
+    expect(
+      of(done.events, "CARDS_DRAWN")
+        .filter((d) => d.seat === "p1")
+        .reduce((n, d) => n + d.uids.length, 0),
+    ).toBe(3);
     expect(done.state.players.p1.hand).toHaveLength(4);
     expect(done.state.players.p1.discard).toContain(top);
     expect(of(done.events, "TRAINER_PLAYED")).toEqual([]);
     expect(done.state.allowances.supporterPlayed).toBe(false);
-    expect(render(done.events, done.state)).toContain("p1: Ninetales's Supernatural Shapeshifter used the effect of Cheren");
+    expect(render(done.events, done.state)).toContain(
+      "p1: Ninetales's Supernatural Shapeshifter used the effect of Cheren",
+    );
     expect(turnPassed(done.state)).toBe(true);
   });
 
@@ -448,11 +528,5 @@ describe("D638 §5 — Supernatural Shapeshifter on a board (R-NS1)", () => {
     expect(turnPassed(held.state)).toBe(true);
     const empty = run(foxBoard(CASSIOPEIA, []), attack(0));
     expect(of(empty.events, "SUPPORTER_EFFECT_USED")).toHaveLength(1);
-  });
-});
-
-describe("D638 §6 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

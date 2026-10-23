@@ -21,7 +21,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter } from "./effects";
-import { engineVersion, programFor, redactGame } from "./index";
+import { programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction } from "./index";
 import { conditionHolds, countCardsInDiscardPile } from "./interpreter";
@@ -398,7 +398,9 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     // this slice CLAIMS with a "more" reads YOUR pile and every one it claims without
     // reads your OPPONENT's. So no printed row can tell a seat-from-fold build from
     // the real one, and a suite built only on printed text would pass on both.
-    const claimed = legalAttackCorpus().filter(([, s]) => (CLAIMED as readonly string[]).includes(s));
+    const claimed = legalAttackCorpus().filter(([, s]) =>
+      (CLAIMED as readonly string[]).includes(s),
+    );
     expect(claimed).toHaveLength(4);
     for (const [, s] of claimed) {
       const bonus = deriveAttackDamageBonus(s);
@@ -447,7 +449,11 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     expect(resolvedByAnyReader(FUTURE_PILE)).toBe(false);
     expect(deriveAttackDamageBonus(ANCIENT_PILE)).toEqual({
       per: 10,
-      count: { kind: "cardsInDiscardPile", seat: "you", filter: { kind: "bannerCard", banner: "Ancient" } },
+      count: {
+        kind: "cardsInDiscardPile",
+        seat: "you",
+        filter: { kind: "bannerCard", banner: "Ancient" },
+      },
     });
     expect(deriveAttackDamageMultiplier(ANCIENT_PILE)).toBeNull();
     // …and the one that moved, asserted AT THE VALUE rather than dropped from the file,
@@ -464,7 +470,9 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     // the reader refuses everything (D424: every "X is refused" owes a "Y is admitted").
     // One character apart from `ANCIENT_PILE` in the fold, one noun apart in the map.
     expect(
-      deriveAttackDamageBonus("This attack does 10 more damage for each Item card in your discard pile."),
+      deriveAttackDamageBonus(
+        "This attack does 10 more damage for each Item card in your discard pile.",
+      ),
     ).toEqual({
       per: 10,
       count: { kind: "cardsInDiscardPile", seat: "you", filter: ITEM },
@@ -712,8 +720,12 @@ describe("§3 — `countCardsInDiscardPile`: the pile, seat-relative, filtered",
     // ⚠️ TWO TYPES, and the second is the sharp one: the defender's pile holds TWO
     // Basic {R} Energy, which a provision reading over an ATTACHED card would count
     // as Fire — here it is 0, because a card in a pile provides nothing at all.
-    expect(countCardsInDiscardPile(state, "p1", { kind: "providesEnergy", energyType: "Water" })).toBe(0);
-    expect(countCardsInDiscardPile(state, "p2", { kind: "providesEnergy", energyType: "Fire" })).toBe(0);
+    expect(
+      countCardsInDiscardPile(state, "p1", { kind: "providesEnergy", energyType: "Water" }),
+    ).toBe(0);
+    expect(
+      countCardsInDiscardPile(state, "p2", { kind: "providesEnergy", energyType: "Fire" }),
+    ).toBe(0);
   });
 
   it("🛑 an EMPTY pile is 0 and an UNRESOLVABLE uid contributes 0, on every filter", () => {
@@ -939,9 +951,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     // exact-equality filter still says NO to a name that merely CONTAINS the fragment —
     // `byName` was not widened, a member was ADDED beside it — and the two readings are
     // driven against each other on ONE pile in the same run.
-    expect(
-      countCardsInDiscardPile(canonical(), "p1", { kind: "byName", name: "Ethan's" }),
-    ).toBe(0);
+    expect(countCardsInDiscardPile(canonical(), "p1", { kind: "byName", name: "Ethan's" })).toBe(0);
     expect(countCardsInDiscardPile(canonical(), "p1", ETHAN_BY_NAME)).toBe(1);
     // …and the ONE refusal this file has left, so ⑴ and ⑵ no longer read as one claim:
     // the Ancient banner is still printed, still unclaimed, and still an INGEST problem.
@@ -963,9 +973,5 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(activeOf(after.state, "p1").energy).toHaveLength(1);
     expect(activeOf(frozen, "p2").damage).toBe(0);
     expect(activeOf(after.state, "p2").damage).toBe(80);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

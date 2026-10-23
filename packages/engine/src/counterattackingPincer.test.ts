@@ -131,7 +131,11 @@ describe("Counterattacking Pincer — the DEFENDER-side discard PARKS during the
     // The turn is P1's, but this reactive decision is the DEFENDER's alone.
     expectErr(
       parked,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "discardEnergy", uids: [attackerEnergy[0] as string] } },
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "discardEnergy", uids: [attackerEnergy[0] as string] },
+      },
       "WRONG_SEAT",
     );
   });

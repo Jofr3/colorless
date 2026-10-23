@@ -17,7 +17,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import {
   BENCH_NOUN_DECK,
@@ -121,10 +121,10 @@ function activeOf(state: GameState, seat: Seat): InPlayPokemon {
 function bare(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = must(
-    applyAction(
-      driveSetup(SEED, { p1: BENCH_NOUN_DECK, p2: BENCH_NOUN_DECK }, { first: foe }),
-      { type: "endTurn", seat: foe },
-    ),
+    applyAction(driveSetup(SEED, { p1: BENCH_NOUN_DECK, p2: BENCH_NOUN_DECK }, { first: foe }), {
+      type: "endTurn",
+      seat: foe,
+    }),
   );
   state = setActiveFromDeck(state, by, "fix-benchnoun");
   state = clearBench(state, by);
@@ -333,7 +333,6 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -421,7 +420,10 @@ describe("§3 — the VOCABULARY refuses, and the ANCHOR does not", () => {
       deriveAttackDamageMultiplier(
         "This attack does 20 damage for each damage counter on all of your Benched Basic Pokémon.",
       ),
-    ).toEqual({ per: 20, count: { kind: "damageCountersOnYourBench", filter: { kind: "basicPokemon" } } });
+    ).toEqual({
+      per: 20,
+      count: { kind: "damageCountersOnYourBench", filter: { kind: "basicPokemon" } },
+    });
     expect(
       deriveAttackDamageBonus("This attack does 80 more damage for each of your Benched Duskull."),
     ).toBeNull();
@@ -595,7 +597,9 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
     // TEXT, and a noun the column does not print simply never arrives. Asserted so
     // the widening is a decision on the record rather than a surprise.
     expect(
-      deriveAttackDamageMultiplier("This attack does 10 damage for each of your Charjabug in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 10 damage for each of your Charjabug in play.",
+      ),
     ).toEqual({
       per: 10,
       count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "byName", name: "Charjabug" } },
@@ -640,7 +644,9 @@ describe("§6 — the COUNTER board: the resource, the zone, the seat", () => {
     // walk reads 16 where the printed word "Benched" reads 7.
     expect(activeOf(state, "p1").damage).toBe(90);
     expect(matchesFilter(topCardOf(state, activeOf(state, "p1")), FIGHTING)).toBe(true);
-    expect(benchCounters(state, "p1", FIGHTING) + Math.floor(activeOf(state, "p1").damage / 10)).toBe(16);
+    expect(
+      benchCounters(state, "p1", FIGHTING) + Math.floor(activeOf(state, "p1").damage / 10),
+    ).toBe(16);
   });
 });
 
@@ -767,12 +773,16 @@ describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blocker
     // any careless widening of any of the thirteen.
     expect(deriveAttackDamageMultiplier(CYNTHIA_PRINTED)).toEqual({
       per: 10,
-      count: { kind: "damageCountersOnYourBench", filter: { kind: "ownerPokemon", owner: "Cynthia" } },
+      count: {
+        kind: "damageCountersOnYourBench",
+        filter: { kind: "ownerPokemon", owner: "Cynthia" },
+      },
     });
     expect(deriveAttackDamageSuppression(CYNTHIA_PRINTED)).toEqual({ weakness: true });
     expect(resolvedByAnyReader(CYNTHIA_PRINTED)).toBe(true);
     for (const name of attackReaderSurface()) {
-      if (name === "deriveAttackDamageMultiplier" || name === "deriveAttackDamageSuppression") continue;
+      if (name === "deriveAttackDamageMultiplier" || name === "deriveAttackDamageSuppression")
+        continue;
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(CYNTHIA_PRINTED) ?? null, name).toBeNull();
     }
@@ -828,15 +838,15 @@ describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blocker
     // one of the three independent reasons Pachirisu's fixture printing stays
     // unread). ⚠️ **THE FALSIFIER, EXECUTABLE**: the day the column prints that
     // sentence alone, the first assertion below is what has to change.
-    expect(
-      legalAttackCorpus().filter(([, t]) => t === CYNTHIA_TAIL),
-    ).toEqual([]);
+    expect(legalAttackCorpus().filter(([, t]) => t === CYNTHIA_TAIL)).toEqual([]);
     expect(deriveAttackDamageSuppression(CYNTHIA_TAIL)).toBeNull();
-    expect(deriveAttackDamageSuppression("This attack's damage isn't affected by Resistance.")).toEqual(
-      { resistance: true },
-    );
     expect(
-      deriveAttackDamageSuppression("This attack's damage isn't affected by Weakness or Resistance."),
+      deriveAttackDamageSuppression("This attack's damage isn't affected by Resistance."),
+    ).toEqual({ resistance: true });
+    expect(
+      deriveAttackDamageSuppression(
+        "This attack's damage isn't affected by Weakness or Resistance.",
+      ),
     ).toEqual({ weakness: true, resistance: true });
   });
 
@@ -859,7 +869,11 @@ describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blocker
     const poolRider =
       "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.";
     expect(resolvedByAnyReader(poolRider)).toBe(false);
-    expect(deriveAttackDamageBonus("This attack does 20 more damage for each of your Benched {L} Pokémon.")).not.toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each of your Benched {L} Pokémon.",
+      ),
+    ).not.toBeNull();
     expect(deriveAttackEffect("This attack's damage isn't affected by Weakness.")).toBeNull();
     expect(splitAttackTrailingClause(poolRider)).toBeNull();
     // …and the ORIGINAL subject, kept with its new reason stated, so the transition

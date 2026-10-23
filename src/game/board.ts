@@ -153,6 +153,7 @@ const BENCH_EXPANDING_STADIUM_CARD_IDS: ReadonlySet<string> = new Set(["me3-111"
 
 export function benchLimitFor(board: BoardState, owner: PlayerId): number {
   const stadiumCardId = board.stadium?.cardId;
-  if (stadiumCardId && BENCH_EXPANDING_STADIUM_CARD_IDS.has(stadiumCardId)) return EXPANDED_BENCH_LIMIT;
+  if (stadiumCardId && BENCH_EXPANDING_STADIUM_CARD_IDS.has(stadiumCardId))
+    return EXPANDED_BENCH_LIMIT;
   return board[owner].benchLimit ?? DEFAULT_BENCH_LIMIT;
 }

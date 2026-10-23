@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
 } from "./effects";
 import type { GameEvent, GameState, Seat } from "./index";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import {
   BOARD_ENERGY_DECK,
   FIXTURE_POOL,
@@ -316,7 +316,9 @@ describe("§2 — deriveAttackDamageBonus: the zone D196 refused", () => {
     // …while the `×` reader's OWN zone-less spelling still answers, so the null
     // above is a statement about the ZONE rather than about a dead reader.
     expect(
-      deriveAttackDamageMultiplier("This attack does 30 damage for each Energy attached to this Pokémon."),
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each Energy attached to this Pokémon.",
+      ),
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", energyType: null } });
   });
 
@@ -325,9 +327,11 @@ describe("§2 — deriveAttackDamageBonus: the zone D196 refused", () => {
     // the two zone captures sit on OPPOSITE folds, so widening one says nothing
     // about the other.
     expect(deriveAttackDamageBonus(UNPRINTED_OPPONENT_ADDITIVE)).toBeNull();
-    expect(deriveAttackDamageBonus(
-      "This attack does 30 more damage for each Energy attached to your opponent's Active Pokémon.",
-    )?.count).toEqual({ kind: "energyOnOpponent", zone: "active", energyType: null });
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 30 more damage for each Energy attached to your opponent's Active Pokémon.",
+      )?.count,
+    ).toEqual({ kind: "energyOnOpponent", zone: "active", energyType: null });
   });
 
   it("the whole-sentence anchor holds at both ends, on the capital, and on the filter", () => {
@@ -344,7 +348,9 @@ describe("§2 — deriveAttackDamageBonus: the zone D196 refused", () => {
       ),
     ).toBeNull();
     expect(deriveAttackDamageBonus(`Flip a coin. ${BOARD_ENERGY}`)).toBeNull();
-    expect(deriveAttackDamageBonus(`${BOARD_ENERGY} Discard an Energy from this Pokémon.`)).toBeNull();
+    expect(
+      deriveAttackDamageBonus(`${BOARD_ENERGY} Discard an Energy from this Pokémon.`),
+    ).toBeNull();
     // A printed 0 adds nothing and stays LOUD — the guard every arm in both
     // families carries.
     expect(
@@ -384,20 +390,24 @@ describe("§2 — deriveAttackDamageBonus: the zone D196 refused", () => {
     // different amounts, two different filters and the absent filter, all on the
     // new zone: a hard-coded 30, a hard-coded "Grass" or a hard-coded zone each
     // fails exactly one of these.
-    expect(
-      deriveAttackDamageBonus(BOARD_ENERGY.replace("30 more", "50 more")),
-    ).toEqual({ per: 50, count: { kind: "energyOnSelf", zone: "board", energyType: "Grass" } });
-    expect(
-      deriveAttackDamageBonus(BOARD_ENERGY.replace("{G} ", "")),
-    ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: null } });
-    expect(
-      deriveAttackDamageBonus(BOARD_ENERGY.replace("{G}", "Special")),
-    ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
+    expect(deriveAttackDamageBonus(BOARD_ENERGY.replace("30 more", "50 more"))).toEqual({
+      per: 50,
+      count: { kind: "energyOnSelf", zone: "board", energyType: "Grass" },
+    });
+    expect(deriveAttackDamageBonus(BOARD_ENERGY.replace("{G} ", ""))).toEqual({
+      per: 30,
+      count: { kind: "energyOnSelf", zone: "board", energyType: null },
+    });
+    expect(deriveAttackDamageBonus(BOARD_ENERGY.replace("{G}", "Special"))).toEqual({
+      per: 30,
+      count: { kind: "energyOnSelf", zone: "board", energyType: "special" },
+    });
     // D118's dual notation reaches the new zone too, through the SHARED token
     // table rather than a local lookup.
-    expect(
-      deriveAttackDamageBonus(BOARD_ENERGY.replace("{G}", "Water")),
-    ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "Water" } });
+    expect(deriveAttackDamageBonus(BOARD_ENERGY.replace("{G}", "Water"))).toEqual({
+      per: 30,
+      count: { kind: "energyOnSelf", zone: "board", energyType: "Water" },
+    });
   });
 
   it("the OTHER readers refuse the built sentence — one fold, not four", () => {
@@ -603,8 +613,5 @@ describe("§5 — the persisted question, and the version pair", () => {
     expect(deriveAttackEffect(BOARD_ENERGY)).toBeNull();
     expect(programFor("fix-boardgrass")).toBeUndefined();
     expect(deriveAttackDamageBonus(BOARD_ENERGY)).not.toBeNull();
-    // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
-    // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

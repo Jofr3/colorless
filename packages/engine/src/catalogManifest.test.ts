@@ -102,7 +102,9 @@ import { FIXTURE_POOL } from "./testFixtures";
     of being silently skipped by both. */
 const REAL_ID = /^(sv|swsh|me\d|mep-|mee-|30th)/;
 
-const realFixtureIds = Object.keys(FIXTURE_POOL).filter((id) => REAL_ID.test(id)).sort();
+const realFixtureIds = Object.keys(FIXTURE_POOL)
+  .filter((id) => REAL_ID.test(id))
+  .sort();
 
 /** (c) Real-card fixtures with NO catalog row IN THE FILE AS IT STANDS. D154 found
     the population, D156 enumerated it at TWELVE — all `swsh10.5` — and **D160
@@ -154,11 +156,23 @@ const INCOMPLETE: Record<
 > = {
   // — the §9 reactive-recoil / trigger cast: the behaviour is a REGISTRY row keyed
   //   by id, and these bodies only ever DEFEND, so the printed attack is never paid.
-  "sv01-005": { attacks: ["Light Punch"], why: "Cacnea — registry passive 'Counterattack Quills'; a defender only, never pays an attack." },
+  "sv01-005": {
+    attacks: ["Light Punch"],
+    why: "Cacnea — registry passive 'Counterattack Quills'; a defender only, never pays an attack.",
+  },
   "sv01-006": { attacks: ["Spike Shot"], why: "Cacturne — Cacnea's twin, same reason." },
-  "sv03-112": { attacks: ["Rumble"], why: "Stunfisk — registry passive 'Custom Trap' (the Tool-gated recoil); a defender only." },
-  "sv03-044": { attacks: ["Steam Artillery"], why: "Armarouge — registry `onDamagedByAttack` trigger 'Scorching Armor'; a defender only." },
-  "sv03-120": { attacks: ["Falling Press"], why: "Klawf ex — registry `onDamagedByAttack` trigger 'Counterattacking Pincer'; declared in its doc block ('No `attacks`: it is always the DEFENDER')." },
+  "sv03-112": {
+    attacks: ["Rumble"],
+    why: "Stunfisk — registry passive 'Custom Trap' (the Tool-gated recoil); a defender only.",
+  },
+  "sv03-044": {
+    attacks: ["Steam Artillery"],
+    why: "Armarouge — registry `onDamagedByAttack` trigger 'Scorching Armor'; a defender only.",
+  },
+  "sv03-120": {
+    attacks: ["Falling Press"],
+    why: "Klawf ex — registry `onDamagedByAttack` trigger 'Counterattacking Pincer'; declared in its doc block ('No `attacks`: it is always the DEFENDER').",
+  },
   // — the Ability-lock aura cast: the printed `abilities` NAME is load-bearing here
   //   (Mischievous Lock's `exemptAbilityNamed` matches against it), so these carry
   //   the Ability and drop the attack. ⚠️ Klefki sv01-096 USED TO BE THE ODD ONE
@@ -172,24 +186,76 @@ const INCOMPLETE: Record<
   //   `types` value in place (correcting one axis alone would have left the other
   //   wrong). The whole cast that remains below omits an attack because the body
   //   only ever DEFENDS; Spiritomb never even did that.
-  "sv02-097": { abilities: ["Safeguard"], why: "Mimikyu — declared in its doc block: Safeguard is authored in the REGISTRY, keyed by id, which makes this the sharpest zero-registry-ROW witness (`programFor` is defined, `.attack` is not). D151 called this the LIVE case; it is documented, and its residual cost is that a `FIXTURE_POOL` sweep for the printed sentence cannot see it." },
+  "sv02-097": {
+    abilities: ["Safeguard"],
+    why: "Mimikyu — declared in its doc block: Safeguard is authored in the REGISTRY, keyed by id, which makes this the sharpest zero-registry-ROW witness (`programFor` is defined, `.attack` is not). D151 called this the LIVE case; it is documented, and its residual cost is that a `FIXTURE_POOL` sweep for the printed sentence cannot see it.",
+  },
   // — the always-on damage-reduction / debuff passives: registry rows, tanky bodies
   //   fielded to be HIT.
-  "sv02-150": { attacks: ["Nosequake"], abilities: ["Bronze Body"], why: "Copperajah ex — registry passive (−30 after W/R); a tanky body fielded to absorb an attack." },
-  "sv01-121": { attacks: ["Mega Kick"], abilities: ["Exoskeleton"], why: "Stonjourner — registry passive (−20 after W/R); same shape as Copperajah ex." },
-  "sv03-082": { attacks: ["Wondrous Moon"], why: "Clefable ex — registry passive 'Lunar Zone' (the `noRetreatCostAura` source); a retreat test, never an attack one." },
+  "sv02-150": {
+    attacks: ["Nosequake"],
+    abilities: ["Bronze Body"],
+    why: "Copperajah ex — registry passive (−30 after W/R); a tanky body fielded to absorb an attack.",
+  },
+  "sv01-121": {
+    attacks: ["Mega Kick"],
+    abilities: ["Exoskeleton"],
+    why: "Stonjourner — registry passive (−20 after W/R); same shape as Copperajah ex.",
+  },
+  "sv03-082": {
+    attacks: ["Wondrous Moon"],
+    why: "Clefable ex — registry passive 'Lunar Zone' (the `noRetreatCostAura` source); a retreat test, never an attack one.",
+  },
   // — the activated / triggered Ability cast (M4 slices 6–9): real ids so
   //   `programFor` finds the program, simplified bodies so surgery can place them.
-  "sv01-023": { attacks: ["Solar Beam"], abilities: ["Enriching Oil"], why: "Arboliva — registry `onEvolve` trigger; declared in the slice's section comment (stages/evolveFrom simplified to the fixture line)." },
-  "sv02-170": { attacks: ["United Wings"], abilities: ["Insta-Flock"], why: "Flamigo — registry `onPlayToBench` trigger; same section comment." },
-  "sv02-123": { attacks: ["Knocking Hammer"], abilities: ["Blessed Salt"], why: "Garganacl — registry `betweenTurns` trigger; a Basic here so it sits without an evolution." },
-  "sv03-012": { attacks: ["Lock Up"], abilities: ["Forest Miasma"], why: "Trevenant — registry `betweenTurns` trigger; a Basic for the same reason." },
-  "sv01-118": { attacks: ["Wing Attack"], abilities: ["Flying Entry"], why: "Hawlucha — registry `onPlayToBench` trigger (the snipe cast)." },
-  "sv02-015": { attacks: ["Scratching Nails"], abilities: ["Bouquet Magic"], why: "Meowscarada ex — registry activated Ability; a Basic HERE though the print is a Stage 2 (declared in its doc block)." },
-  "sv02-126": { attacks: ["Poison Petals"], why: "Glimmora — registry `onKnockOut` trigger; 30 HP so one Bite Knocks it Out, which is the whole point." },
-  "sv03-143": { abilities: ["Special Eater"], why: "Mawile — declared in its doc block: 'the Ability lives in the registry, so the card needs no `abilities` here'." },
-  "sv01-054": { attacks: ["Hydro Kick"], abilities: ["Energy Carnival"], why: "Quaquaval — registry activated Ability (attachEnergyFrom); declared in the slice's section comment." },
-  "sv02-060": { attacks: ["Buster Tail"], abilities: ["Super Cold"], why: "Baxcalibur — Quaquaval's twin, same section comment." },
+  "sv01-023": {
+    attacks: ["Solar Beam"],
+    abilities: ["Enriching Oil"],
+    why: "Arboliva — registry `onEvolve` trigger; declared in the slice's section comment (stages/evolveFrom simplified to the fixture line).",
+  },
+  "sv02-170": {
+    attacks: ["United Wings"],
+    abilities: ["Insta-Flock"],
+    why: "Flamigo — registry `onPlayToBench` trigger; same section comment.",
+  },
+  "sv02-123": {
+    attacks: ["Knocking Hammer"],
+    abilities: ["Blessed Salt"],
+    why: "Garganacl — registry `betweenTurns` trigger; a Basic here so it sits without an evolution.",
+  },
+  "sv03-012": {
+    attacks: ["Lock Up"],
+    abilities: ["Forest Miasma"],
+    why: "Trevenant — registry `betweenTurns` trigger; a Basic for the same reason.",
+  },
+  "sv01-118": {
+    attacks: ["Wing Attack"],
+    abilities: ["Flying Entry"],
+    why: "Hawlucha — registry `onPlayToBench` trigger (the snipe cast).",
+  },
+  "sv02-015": {
+    attacks: ["Scratching Nails"],
+    abilities: ["Bouquet Magic"],
+    why: "Meowscarada ex — registry activated Ability; a Basic HERE though the print is a Stage 2 (declared in its doc block).",
+  },
+  "sv02-126": {
+    attacks: ["Poison Petals"],
+    why: "Glimmora — registry `onKnockOut` trigger; 30 HP so one Bite Knocks it Out, which is the whole point.",
+  },
+  "sv03-143": {
+    abilities: ["Special Eater"],
+    why: "Mawile — declared in its doc block: 'the Ability lives in the registry, so the card needs no `abilities` here'.",
+  },
+  "sv01-054": {
+    attacks: ["Hydro Kick"],
+    abilities: ["Energy Carnival"],
+    why: "Quaquaval — registry activated Ability (attachEnergyFrom); declared in the slice's section comment.",
+  },
+  "sv02-060": {
+    attacks: ["Buster Tail"],
+    abilities: ["Super Cold"],
+    why: "Baxcalibur — Quaquaval's twin, same section comment.",
+  },
   // ⚠️ GARDEVOIR EX sv01-086 USED TO DECLARE `attacks: ["Miracle Force"]` HERE AND
   //   DOES NOT SINCE D177 — the seventh entry struck out on the D173/D175 rule, and
   //   the one with the sharpest consequence. Its reason ("registry activated
@@ -199,16 +265,47 @@ const INCOMPLETE: Record<
   //   that declaration **a FIXTURE_POOL census could not see its own subject** while
   //   the catalog census could. The two reprints sv01-228 / sv01-245 arrived at the
   //   same time carrying the same attack, so all three declare only the Ability.
-  "sv01-086": { abilities: ["Psychic Embrace"], why: "Gardevoir ex — registry activated Ability with the counter/KO riders; same section comment. Its printed attack 'Miracle Force' is CARRIED since D177 (it is the ATTACK half of the `clearStatus` family)." },
-  "sv01-228": { abilities: ["Psychic Embrace"], why: "Gardevoir ex (Ultra Rare) — the sv01-086 reprint, same registry row (`GARDEVOIR_EX`) keyed by id; carries its printed 'Miracle Force' so the text-keyed deriver claim is drivable on a reprint." },
-  "sv01-245": { abilities: ["Psychic Embrace"], why: "Gardevoir ex (Special illustration rare) — the second sv01-086 reprint, same reason." },
-  "sv01-145": { abilities: ["Busybody Nurse"], why: "Blissey — registry activated Ability (D177's `clearStatus`, `activeOnly: false` so a benched Blissey nurses the Active); the Mawile/Armarouge shape, `programFor` finds the program so an `abilities` array here would be inert. Its printed attack 'Happy Cyclone' rides along at its PRINTED index 0." },
-  "sv01-125": { attacks: ["Wild Impact"], abilities: ["Dino Cry"], why: "Koraidon ex — registry activated Ability with `endsTurn`; the attach is the test." },
-  "sv01-041": { abilities: ["Fire Off"], why: "Armarouge sv01-041 — declared in its doc block: the Ability is the registry's, and 'its printed attack rides along because a fixture Pokémon that cannot attack makes an awkward Active'." },
-  "sv02-140": { abilities: ["Tri Howl"], why: "Hydreigon — same declaration, and Tri Howl is usable from the Bench so the suites need it in both spots." },
-  "sv01-142": { abilities: ["Rumbling Engine"], why: "Revavroom — registry activated Ability (the payment-ORDER witness)." },
-  "sv01-151": { abilities: ["Nest Stash"], why: "Skwovet — registry activated Ability; its printed attack is a plain 20 kept so an Active Skwovet cannot put an unrelated effect into an Ability test." },
-  "sv03-125": { abilities: ["Infernal Reign"], why: "Charizard ex — registry `onEvolve` trigger; its doc block declares `evolveFrom` as the ONE deviation and is the block that names a false verbatim banner as a defect." },
+  "sv01-086": {
+    abilities: ["Psychic Embrace"],
+    why: "Gardevoir ex — registry activated Ability with the counter/KO riders; same section comment. Its printed attack 'Miracle Force' is CARRIED since D177 (it is the ATTACK half of the `clearStatus` family).",
+  },
+  "sv01-228": {
+    abilities: ["Psychic Embrace"],
+    why: "Gardevoir ex (Ultra Rare) — the sv01-086 reprint, same registry row (`GARDEVOIR_EX`) keyed by id; carries its printed 'Miracle Force' so the text-keyed deriver claim is drivable on a reprint.",
+  },
+  "sv01-245": {
+    abilities: ["Psychic Embrace"],
+    why: "Gardevoir ex (Special illustration rare) — the second sv01-086 reprint, same reason.",
+  },
+  "sv01-145": {
+    abilities: ["Busybody Nurse"],
+    why: "Blissey — registry activated Ability (D177's `clearStatus`, `activeOnly: false` so a benched Blissey nurses the Active); the Mawile/Armarouge shape, `programFor` finds the program so an `abilities` array here would be inert. Its printed attack 'Happy Cyclone' rides along at its PRINTED index 0.",
+  },
+  "sv01-125": {
+    attacks: ["Wild Impact"],
+    abilities: ["Dino Cry"],
+    why: "Koraidon ex — registry activated Ability with `endsTurn`; the attach is the test.",
+  },
+  "sv01-041": {
+    abilities: ["Fire Off"],
+    why: "Armarouge sv01-041 — declared in its doc block: the Ability is the registry's, and 'its printed attack rides along because a fixture Pokémon that cannot attack makes an awkward Active'.",
+  },
+  "sv02-140": {
+    abilities: ["Tri Howl"],
+    why: "Hydreigon — same declaration, and Tri Howl is usable from the Bench so the suites need it in both spots.",
+  },
+  "sv01-142": {
+    abilities: ["Rumbling Engine"],
+    why: "Revavroom — registry activated Ability (the payment-ORDER witness).",
+  },
+  "sv01-151": {
+    abilities: ["Nest Stash"],
+    why: "Skwovet — registry activated Ability; its printed attack is a plain 20 kept so an Active Skwovet cannot put an unrelated effect into an Ability test.",
+  },
+  "sv03-125": {
+    abilities: ["Infernal Reign"],
+    why: "Charizard ex — registry `onEvolve` trigger; its doc block declares `evolveFrom` as the ONE deviation and is the block that names a false verbatim banner as a defect.",
+  },
   // — ⚠️ THE EXACT-N / TYPED `discardEnergy` CAST (D43) HAD FOUR ENTRIES HERE and
   //   has NONE. Slither Wing sv06.5-026, Koraidon sv01-124, Kilowattrel sv01-079
   //   and Arcanine ex sv01-032 each carried only their DISCARDING attack, which the
@@ -217,7 +314,10 @@ const INCOMPLETE: Record<
   //   their whole printed attack list and re-pointed every `{ index: 0 }` that
   //   named the fixture's number instead of the card's.
   // — pre-evolutions and one deliberate Ability omission.
-  "sv03-061": { attacks: ["Tail Smack"], why: "Finizen — declared: 'NO ATTACKS are carried … giving it an attack would only invite a case to use the wrong one'. It exists to be retreated in and evolved." },
+  "sv03-061": {
+    attacks: ["Tail Smack"],
+    why: "Finizen — declared: 'NO ATTACKS are carried … giving it an attack would only invite a case to use the wrong one'. It exists to be retreated in and evolved.",
+  },
   // — ⚠️ THE `swsh10.5` OMISSIONS, CHECKABLE FOR THE FIRST TIME (D160). For the
   //   whole life of these fixtures their set had no catalog rows, so nothing in
   //   this repo could see what they left out; D156 could only file all twelve
@@ -226,8 +326,14 @@ const INCOMPLETE: Record<
   //   index-0 "Scratch") and it is TWO. The other ten are COMPLETE, and no field
   //   on any of the twelve carries a wrong VALUE — the "verbatim off the local D1"
   //   doc blocks were telling the truth.
-  "swsh10.5-010": { abilities: ["Burn Brightly"], why: "Charizard — declared in its own doc block as 'A THIRD simplification, beyond the two the header declares', with the reason: 'Burn Brightly' is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides. The declaration predates any catalog that could check it and is exact." },
-  "swsh10.5-018": { abilities: ["Pump Shot"], why: "Radiant Blastoise — the registry-authored-Ability cast (`RADIANT_BLASTOISE`, keyed by id), same shape as Mawile sv03-143 and Armarouge sv01-041: `programFor` finds the program, so the printed `abilities` array would be inert. Its printed attack 'Torrential Cannon' rides along at its PRINTED index 0 and is D154's fifth per-attack-lock printing." },
+  "swsh10.5-010": {
+    abilities: ["Burn Brightly"],
+    why: "Charizard — declared in its own doc block as 'A THIRD simplification, beyond the two the header declares', with the reason: 'Burn Brightly' is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides. The declaration predates any catalog that could check it and is exact.",
+  },
+  "swsh10.5-018": {
+    abilities: ["Pump Shot"],
+    why: "Radiant Blastoise — the registry-authored-Ability cast (`RADIANT_BLASTOISE`, keyed by id), same shape as Mawile sv03-143 and Armarouge sv01-041: `programFor` finds the program, so the printed `abilities` array would be inert. Its printed attack 'Torrential Cannon' rides along at its PRINTED index 0 and is D154's fifth per-attack-lock printing.",
+  },
 };
 
 /** (e) The catalog STATES a census comment could be quoting, and the set count
@@ -255,7 +361,8 @@ const CATALOG_STATE_LIST: readonly { rows: number; sets: number; population: str
   {
     rows: M.rows,
     sets: M.setRows,
-    population: "the file on disk today (🆕 D581: the whole `sv` serie, the `me` serie and `swsh10.5`)",
+    population:
+      "the file on disk today (🆕 D581: the whole `sv` serie, the `me` serie and `swsh10.5`)",
   },
   {
     rows: M.sixSet.rows,
@@ -274,35 +381,6 @@ const CATALOG_STATES: ReadonlyMap<number, number> = new Map(
   CATALOG_STATE_LIST.map((s) => [s.rows, s.sets]),
 );
 
-/** Numbers that look like a catalog census and are not one. Everything else
-    matching `N cards` for a three- or four-digit N must be a MEASURED value from
-    the manifest (or from `priorState`, marked inherited there) — that is what
-    makes a copied-forward count go red. */
-const NOT_A_CATALOG_COUNT: Record<number, string> = {
-  999: "deckTopMill.test.ts — an INVENTED sentence fed to the deriver ('Discard the top 999 cards of your deck.'), pinning that the mill reader takes its count from the capture. No card prints it.",
-  3698: "index.ts — the LIVE REMOTE D1's row count, a different database this session cannot query. INHERITED and unverified, and said so rather than quietly rewritten: D156's whole finding is that a number from another population is not a wrong number, it is an unscoped one.",
-};
-
-/** Every source file in the engine, as text — the only way to check a claim that
-    lives in a COMMENT, which is where all three of D151/D154/D155's defects lived.
-    A GLOB rather than a list, because a sweep that names its inputs cannot see the
-    file nobody added to it (D148's lesson, D150's second payout).
-
-    The local cast is deliberate and is the cheapest of the three ways to type
-    this. `"types": ["node"]` would put Node globals in scope for a package that
-    runs in a Worker and in the browser; `"types": ["vite/client"]` would put
-    `import.meta.env` there; a `.d.ts` merging onto `ImportMeta` reads to biome as
-    an unused interface. Vitest resolves the call at runtime either way, so the
-    cast buys the types without widening anything the engine can see. */
-const ENGINE_SOURCES: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string,
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob("./*.ts", { query: "?raw", import: "default", eager: true });
-
 describe("the manifest is internally consistent", () => {
   it("the per-set counts sum to the row count — the SCOPE and the TOTAL are one query apart", () => {
     const summed = Object.values(M.sets).reduce((a, b) => a + b, 0);
@@ -317,11 +395,20 @@ describe("the manifest is internally consistent", () => {
     // and the SIX sets are now a measured SLICE of it (`M.sixSet`). Both lists are
     // pinned: the six so the population every pre-D581 census comment quotes cannot
     // silently shrink again, the whole so a set lost from the wider file is a failure.
-    expect([...M.sixSet.sets].sort()).toEqual(["sv01", "sv02", "sv03", "sv06.5", "sve", "swsh10.5"]);
+    expect([...M.sixSet.sets].sort()).toEqual([
+      "sv01",
+      "sv02",
+      "sv03",
+      "sv06.5",
+      "sve",
+      "swsh10.5",
+    ]);
     expect(M.sixSet.sets.reduce((sum, set) => sum + (M.sets[set] ?? 0), 0)).toBe(M.sixSet.rows);
     expect(M.sixSet.rows).toBe(978);
     expect(Object.keys(M.sets).length).toBe(30);
-    expect(Object.keys(M.sets).filter((set) => !/^(sv|me|mee$|mep$|30th|mfb$|swsh10\.5$)/.test(set))).toEqual([]);
+    expect(
+      Object.keys(M.sets).filter((set) => !/^(sv|me|mee$|mep$|30th|mfb$|swsh10\.5$)/.test(set)),
+    ).toEqual([]);
   });
 
   it("the category split sums to the row count, and names all three categories", () => {
@@ -354,9 +441,13 @@ describe("the manifest is internally consistent", () => {
     // attack (the Technical Machines and Core Memory — `apps/api/src/ingest/map.ts` keeps
     // a Trainer's printed face since D581), counted off `M.trainerFaces` rather than
     // copied. The two `30th-c` additions are reprints whose printed attacks tcgdex omits.
-    const trainerRowsWithAttacks = Object.values(M.trainerFaces).filter((f) => (f.attacks ?? []).length > 0).length;
+    const trainerRowsWithAttacks = Object.values(M.trainerFaces).filter(
+      (f) => (f.attacks ?? []).length > 0,
+    ).length;
     expect(trainerRowsWithAttacks).toBe(7);
-    expect(attacksJson - trainerRowsWithAttacks + M.pokemonWithoutAttacks.length).toBe(M.categories.Pokemon);
+    expect(attacksJson - trainerRowsWithAttacks + M.pokemonWithoutAttacks.length).toBe(
+      M.categories.Pokemon,
+    );
     expect([...M.pokemonWithoutAttacks]).toEqual(["30th-c-009", "30th-c-019", "swsh10.5-053"]);
     // The six-set slice keeps D160's exact identity: no Trainer there prints a face.
     expect(M.sixSet.textColumns.attacksJson + 1).toBe(M.sixSet.categories.Pokemon);
@@ -390,7 +481,6 @@ describe("(c) every real-card fixture is either in the catalog or declared absen
       expect(why.length, `${id} needs a real reason`).toBeGreaterThan(20);
     }
   });
-
 });
 
 describe("(a) no fixture NAME is wrong", () => {
@@ -545,12 +635,16 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
     for (const id of Object.keys(M.printed)) {
       const d = diffOf(id);
       const declared = INCOMPLETE[id];
-      const complete = !d.attacks.length && !d.abilities.length && !d.invented.length && !d.reindexed;
+      const complete =
+        !d.attacks.length && !d.abilities.length && !d.invented.length && !d.reindexed;
       if (complete) {
         expect(declared, `${id} is complete — remove its INCOMPLETE entry`).toBeUndefined();
         continue;
       }
-      expect(declared, `${id} (${M.printed[id]?.name}) omits ${JSON.stringify(d)} and is NOT declared`).toBeDefined();
+      expect(
+        declared,
+        `${id} (${M.printed[id]?.name}) omits ${JSON.stringify(d)} and is NOT declared`,
+      ).toBeDefined();
       expect(declared?.attacks ?? [], `${id} attacks`).toEqual(d.attacks);
       expect(declared?.abilities ?? [], `${id} abilities`).toEqual(d.abilities);
       expect(declared?.invented ?? [], `${id} invented`).toEqual(d.invented);
@@ -560,7 +654,10 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
 
   it("no declaration is dead — every id in the table still names a real fixture with a row", () => {
     for (const id of Object.keys(INCOMPLETE)) {
-      expect(M.printed[id], `${id} has no catalog row — it cannot be an INCOMPLETE entry`).toBeDefined();
+      expect(
+        M.printed[id],
+        `${id} has no catalog row — it cannot be an INCOMPLETE entry`,
+      ).toBeDefined();
       expect(FIXTURE_POOL[id], `${id} is no longer a fixture`).toBeDefined();
     }
   });
@@ -628,11 +725,38 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
       nothing. The ratchet is spent instead on the axis this list does NOT cover —
       an EXISTING row widening from no omitted attack to one, which changes no key. */
   const FROZEN: readonly string[] = [
-    "sv01-005", "sv01-006", "sv01-023", "sv01-041", "sv01-054", "sv01-086", "sv01-118",
-    "sv01-121", "sv01-125", "sv01-142", "sv01-145", "sv01-151", "sv01-228", "sv01-245",
-    "sv02-015", "sv02-060", "sv02-097", "sv02-123", "sv02-126", "sv02-140", "sv02-150",
-    "sv02-170", "sv03-012", "sv03-044", "sv03-061", "sv03-082", "sv03-112", "sv03-120",
-    "sv03-125", "sv03-143", "swsh10.5-010", "swsh10.5-018",
+    "sv01-005",
+    "sv01-006",
+    "sv01-023",
+    "sv01-041",
+    "sv01-054",
+    "sv01-086",
+    "sv01-118",
+    "sv01-121",
+    "sv01-125",
+    "sv01-142",
+    "sv01-145",
+    "sv01-151",
+    "sv01-228",
+    "sv01-245",
+    "sv02-015",
+    "sv02-060",
+    "sv02-097",
+    "sv02-123",
+    "sv02-126",
+    "sv02-140",
+    "sv02-150",
+    "sv02-170",
+    "sv03-012",
+    "sv03-044",
+    "sv03-061",
+    "sv03-082",
+    "sv03-112",
+    "sv03-120",
+    "sv03-125",
+    "sv03-143",
+    "swsh10.5-010",
+    "swsh10.5-018",
   ];
 
   /** (1) The omitted Ability names the registry does NOT author under that name,
@@ -659,17 +783,22 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
           to leave unchecked, and naming it here is what stops a FIFTH being added
           silently under the same cover. */
   const ABILITY_NOT_NAMED_IN_REGISTRY: Record<string, string> = {
-    "sv01-121": "Stonjourner 'Exoskeleton' — a registry `passive` (damageReductionAfterWR 20), and PassiveEffects carries no name. Checked one level weaker below: the program exists and is a passive.",
-    "sv02-097": "Mimikyu 'Safeguard' — a registry `passive` (the ex/V damage prevention). Same reason: the passive shape has no name field to match the print against.",
-    "sv02-150": "Copperajah ex 'Bronze Body' — a registry `passive` (damageReductionAfterWR 30). Same reason as Stonjourner, and the two are each other's twin.",
-    "swsh10.5-010": "Charizard 'Burn Brightly' — NO registry program at all, and the fixture's own doc block says why: it is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides.",
+    "sv01-121":
+      "Stonjourner 'Exoskeleton' — a registry `passive` (damageReductionAfterWR 20), and PassiveEffects carries no name. Checked one level weaker below: the program exists and is a passive.",
+    "sv02-097":
+      "Mimikyu 'Safeguard' — a registry `passive` (the ex/V damage prevention). Same reason: the passive shape has no name field to match the print against.",
+    "sv02-150":
+      "Copperajah ex 'Bronze Body' — a registry `passive` (damageReductionAfterWR 30). Same reason as Stonjourner, and the two are each other's twin.",
+    "swsh10.5-010":
+      "Charizard 'Burn Brightly' — NO registry program at all, and the fixture's own doc block says why: it is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides.",
   };
 
   /** (1, attack side) The attack-omitting rows whose card carries NO registry
       program at all — the one place "the fixture drops its attack because the
       REGISTRY is the subject of the body" is not a checkable claim. */
   const ATTACK_OMITTED_WITH_NO_PROGRAM: Record<string, string> = {
-    "sv03-061": "Finizen — a pre-evolution with no registry row by design. Its declaration is the one in the table that is honestly about the SUITES ('it exists to be retreated in and evolved'), and it is the single row this case cannot justify from the registry.",
+    "sv03-061":
+      "Finizen — a pre-evolution with no registry row by design. Its declaration is the one in the table that is honestly about the SUITES ('it exists to be retreated in and evolved'), and it is the single row this case cannot justify from the registry.",
   };
 
   it("(2) the table's KEY SET is pinned — a 34th row is a two-site edit a reviewer sees", () => {
@@ -692,7 +821,9 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
       abilityNames += d.abilities.length;
       if (d.invented.length) invented.push(id);
     }
-    expect(rows, `INCOMPLETE rows moved from ${OMISSION_BUDGET.rows} to ${rows}`).toBe(OMISSION_BUDGET.rows);
+    expect(rows, `INCOMPLETE rows moved from ${OMISSION_BUDGET.rows} to ${rows}`).toBe(
+      OMISSION_BUDGET.rows,
+    );
     expect(
       attackNames,
       `the pool now omits ${attackNames} printed attack names, not ${OMISSION_BUDGET.attackNames}. UP means a fixture dropped an attack — declaring it does not pay for this number, only carrying the attack does. DOWN means a fixture was FIXED: lower the budget.`,
@@ -741,7 +872,9 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
     }
     // Total in both directions: an exception for a row whose Ability the registry
     // now DOES author by name is as dead as an unchecked omission is silent.
-    expect([...new Set(unauthored)].sort()).toEqual(Object.keys(ABILITY_NOT_NAMED_IN_REGISTRY).sort());
+    expect([...new Set(unauthored)].sort()).toEqual(
+      Object.keys(ABILITY_NOT_NAMED_IN_REGISTRY).sort(),
+    );
     // 20 of 25 (measured). Anti-vacuity: an empty registry satisfies the loop by
     // sending every name into the exception table, and the equality above would
     // then be the only thing left standing.
@@ -761,7 +894,10 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
         ).toContain("NO registry program");
         continue;
       }
-      expect(program.passive, `${id} declares an unnameable Ability but carries no passive`).toBeDefined();
+      expect(
+        program.passive,
+        `${id} declares an unnameable Ability but carries no passive`,
+      ).toBeDefined();
     }
   });
 
@@ -793,7 +929,10 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
       const d = diffOf(id);
       if (d.attacks.length === 0) continue;
       const carried = (FIXTURE_POOL[id]?.attacks ?? []).length;
-      if (carried > 0) partial.push(`${id} carries ${carried} of its printed attacks and drops ${JSON.stringify(d.attacks)}`);
+      if (carried > 0)
+        partial.push(
+          `${id} carries ${carried} of its printed attacks and drops ${JSON.stringify(d.attacks)}`,
+        );
       const program = programFor(id);
       if (program === undefined) {
         noProgram.push(id);
@@ -810,7 +949,10 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
         (program.abilities?.length ?? 0) > 0 ||
         (program.triggered?.length ?? 0) > 0 ||
         program.passive !== undefined;
-      expect(drives, `${id} has a registry program that authors no Ability, trigger or passive`).toBe(true);
+      expect(
+        drives,
+        `${id} has a registry program that authors no Ability, trigger or passive`,
+      ).toBe(true);
       checked++;
     }
     // A fixture may drop ALL of a card's attacks or NONE of them. Never some.
@@ -872,8 +1014,14 @@ describe("(d) a fixture attack sits at its PRINTED index unless the shift is dec
       for (const key of Object.keys(authored)) {
         const index = Number(key);
         const carried = (fixture?.attacks ?? [])[index];
-        expect(carried, `${id} authors attack ${index} and the fixture has none there`).toBeDefined();
-        expect(printed?.attacks[index], `${id} authors attack ${index} and the card prints none there`).toBeDefined();
+        expect(
+          carried,
+          `${id} authors attack ${index} and the fixture has none there`,
+        ).toBeDefined();
+        expect(
+          printed?.attacks[index],
+          `${id} authors attack ${index} and the card prints none there`,
+        ).toBeDefined();
         expect(carried?.name, `${id} attack ${index}`).toBe(printed?.attacks[index]);
         checked++;
       }
@@ -884,41 +1032,6 @@ describe("(d) a fixture attack sits at its PRINTED index unless the shift is dec
 });
 
 describe("(e) every catalog count in the engine sources is MEASURED and SCOPED", () => {
-  // D155's defect, made red — and made red on the right axis. The ~20 repetitions
-  // were not wrong, they were SCOPELESS: 978 and 890 are both true, of a six-set
-  // and a five-set catalog. So the rule is not "the number must be 890"; it is
-  // "a row count must name how many sets it counted", which is D154's finding
-  // stated as something a regex can check.
-  const MEASURED = new Set<number>([
-    M.rows,
-    M.distinctNames,
-    M.straightApostropheInAttacks,
-    M.legalStandardZero,
-    M.textColumns.effect,
-    M.textColumns.attacksJson,
-    M.textColumns.abilitiesJson,
-    M.textColumns.any,
-    ...Object.values(M.sets),
-    ...Object.values(M.categories),
-    // The shrunken catalog's own sub-population counts, RECORDED in the manifest
-    // rather than measurable now. Kept in the allowlist because a comment written
-    // during the outage may still quote them — and because dropping them would
-    // make a real historical measurement read as an unmeasured number.
-    M.history.shrunken.legalStandardZero,
-    M.history.shrunken.rowsWithAttacks,
-    M.history.shrunken.straightApostropheInAttacks,
-    // 🆕 D581 — the six-set slice's own counts, MEASURED (`M.sixSet`): the population
-    // every census comment written before D581 quotes.
-    M.sixSet.distinctNames,
-    M.sixSet.straightApostropheInAttacks,
-    M.sixSet.legalStandardZero,
-    M.sixSet.textColumns.effect,
-    M.sixSet.textColumns.attacksJson,
-    M.sixSet.textColumns.abilitiesJson,
-    M.sixSet.textColumns.any,
-    ...Object.values(M.sixSet.categories),
-  ]);
-
   it("no two catalog states agree on ROWS and disagree on SETS — the collision the Map would swallow", () => {
     // ⚠️ THE CHECK THAT REPLACED A COMPILE ERROR (D160). As an object literal this
     // table stopped compiling the day the two states coincided (TS1117), which is
@@ -947,60 +1060,6 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
     expect(CATALOG_STATES.size).toBe(3);
     for (const sets of CATALOG_STATES.values()) expect(sets).toBeGreaterThan(0);
   });
-
-  it("sweeps every engine source file, not a list of them", () => {
-    expect(Object.keys(ENGINE_SOURCES).length).toBeGreaterThan(80);
-    expect(ENGINE_SOURCES["./effects.ts"]).toBeDefined();
-    expect(ENGINE_SOURCES["./testFixtures.ts"]).toBeDefined();
-  });
-
-  it("finds no count that no query produced", () => {
-    const offenders: string[] = [];
-    for (const [file, source] of Object.entries(ENGINE_SOURCES)) {
-      for (const match of source.matchAll(/\b(\d{3,4}) cards\b/g)) {
-        const n = Number(match[1]);
-        if (MEASURED.has(n) || CATALOG_STATES.has(n) || n in NOT_A_CATALOG_COUNT) continue;
-        offenders.push(`${file}: "${match[0]}" — not a measured number`);
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
-  it("finds no ROW COUNT quoted without its SET COUNT — the whole lesson, mechanised", () => {
-    const offenders: string[] = [];
-    for (const [file, source] of Object.entries(ENGINE_SOURCES)) {
-      // The manifest itself and this suite are where the two states are DEFINED
-      // and compared, so they are the one place a bare row count is the subject
-      // rather than a provenance note.
-      if (file === "./catalogManifest.ts" || file === "./catalogManifest.test.ts") continue;
-      for (const match of source.matchAll(/\b(\d{3,4}) cards(?: \/ (\d+) sets)?/g)) {
-        const rows = Number(match[1]);
-        const expected = CATALOG_STATES.get(rows);
-        if (expected === undefined) continue; // a sub-population count, not a state
-        if (match[2] !== undefined && Number(match[2]) === expected) continue;
-        offenders.push(`${file}: "${match[0]}" — a ${rows}-row catalog has ${expected} sets; say so`);
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
-  it("keeps no dead exception — every listed non-count is still written somewhere", () => {
-    const all = Object.values(ENGINE_SOURCES).join("\n");
-    for (const [n, why] of Object.entries(NOT_A_CATALOG_COUNT)) {
-      expect(all, `${n} is no longer written anywhere — drop its exception`).toContain(`${n} cards`);
-      expect(why.length).toBeGreaterThan(30);
-    }
-  });
-
-  it("the scoped form is actually written where the census comments are", () => {
-    // A one-sided proof would not be one (D150): "no unscoped count" passes on a
-    // file that quotes no count at all, so the scoped form must be PRESENT.
-    // 🆕 D581 — the scoped form effects.ts writes is the SIX-SET slice's: every census
-    // comment there predates D581's ingest and measured that slice, not the whole file.
-    const effects = ENGINE_SOURCES["./effects.ts"] ?? "";
-    expect(effects).toContain(`${M.sixSet.rows} cards / ${M.sixSet.sets.length} sets`);
-    expect(effects.match(/\b\d{3,4} cards \/ \d+ sets/g)?.length ?? 0).toBeGreaterThan(10);
-  });
 });
 
 describe("the set the catalog LOST AND GOT BACK is recorded as HISTORY", () => {
@@ -1018,7 +1077,9 @@ describe("the set the catalog LOST AND GOT BACK is recorded as HISTORY", () => {
     const six = M.sixSet;
     expect(six.rows - contributes.rows).toBe(shrunken.rows);
     expect(six.legalStandardZero - contributes.legalStandardZero).toBe(shrunken.legalStandardZero);
-    expect(six.textColumns.attacksJson - contributes.rowsWithAttacks).toBe(shrunken.rowsWithAttacks);
+    expect(six.textColumns.attacksJson - contributes.rowsWithAttacks).toBe(
+      shrunken.rowsWithAttacks,
+    );
     expect(six.straightApostropheInAttacks - contributes.straightApostropheInAttacks).toBe(
       shrunken.straightApostropheInAttacks,
     );

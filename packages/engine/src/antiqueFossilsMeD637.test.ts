@@ -5,7 +5,7 @@ import { CATALOG_MANIFEST } from "./catalogManifest";
 import { opposingAttackDebuff, passivesOf, seatDamageReduction } from "./continuous";
 import type { GameEvent } from "./events";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -84,9 +84,16 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Water"],
     hp: 100,
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: "Fossil Beatdown", damage: "10+", effect: BEATDOWN_TEXT }],
+    attacks: [
+      { cost: ["Colorless"], name: "Fossil Beatdown", damage: "10+", effect: BEATDOWN_TEXT },
+    ],
   }),
-  [TAP]: battler(TAP, { name: "D637 Tap", hp: 300, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: "50" }] }),
+  [TAP]: battler(TAP, {
+    name: "D637 Tap",
+    hp: 300,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: "50" }],
+  }),
   [SMASH]: battler(SMASH, {
     name: "D637 Smash",
     hp: 300,
@@ -128,7 +135,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -136,11 +145,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -149,7 +161,12 @@ function emptied(state: GameState): GameState {
   const players = { ...state.players };
   for (const seat of ["p1", "p2"] as const) {
     const side = players[seat];
-    players[seat] = { ...side, deck: [...side.deck, ...side.hand, ...side.prizes], hand: [], prizes: [] };
+    players[seat] = {
+      ...side,
+      deck: [...side.deck, ...side.hand, ...side.prizes],
+      hand: [],
+      prizes: [],
+    };
   }
   return { ...state, players };
 }
@@ -181,7 +198,8 @@ function table(
 const hit = (state: GameState) => mustApply(state, { type: "attack", seat: "p1", index: 0 });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const idOf = (state: GameState, body: InPlayPokemon | null | undefined) => state.cardIdByUid[body?.stack[0] ?? ""];
+const idOf = (state: GameState, body: InPlayPokemon | null | undefined) =>
+  state.cardIdByUid[body?.stack[0] ?? ""];
 
 function play(state: GameState, cardId: string, seat: Seat = "p1") {
   const withCard = handFromDeck(state, seat, cardId, 1);
@@ -204,22 +222,38 @@ function offered(state: GameState): string[] {
 describe("D637 §1 — the prints and the programs", () => {
   it("the four catalog faces print the texts this slice built (LOCAL D1)", () => {
     const texts = { [JAW]: JAW_TEXT, [SAIL]: SAIL_TEXT, [ARMOR]: ARMOR_TEXT, [SKULL]: SKULL_TEXT };
-    const names = { [JAW]: "Intimidating Jaw", [SAIL]: "Protective Sail", [ARMOR]: "Protective Armor", [SKULL]: "Spiny Skull" };
+    const names = {
+      [JAW]: "Intimidating Jaw",
+      [SAIL]: "Protective Sail",
+      [ARMOR]: "Protective Armor",
+      [SKULL]: "Spiny Skull",
+    };
     for (const id of ME_FOSSILS) {
       const face = CATALOG_MANIFEST.trainerFaces[id];
       expect(face?.hp, id).toBe(60);
-      expect(face?.abilities, id).toEqual([{ type: "Ability", name: names[id], effect: texts[id] }]);
+      expect(face?.abilities, id).toEqual([
+        { type: "Ability", name: names[id], effect: texts[id] },
+      ]);
     }
   });
 
   it("each is a fossil program: `playAsPokemon` and its printed Ability as the passive", () => {
-    expect(programFor(JAW)).toEqual({ playAsPokemon: true, passive: { opponentActiveAttackDebuff: 30 } });
-    expect(programFor(SAIL)).toEqual({ playAsPokemon: true, passive: { preventSupporterEffects: true } });
+    expect(programFor(JAW)).toEqual({
+      playAsPokemon: true,
+      passive: { opponentActiveAttackDebuff: 30 },
+    });
+    expect(programFor(SAIL)).toEqual({
+      playAsPokemon: true,
+      passive: { preventSupporterEffects: true },
+    });
     expect(programFor(ARMOR)).toEqual({
       playAsPokemon: true,
       passive: { seatDamageReductionAfterWR: { amount: 10, sourceActive: true } },
     });
-    expect(programFor(SKULL)).toEqual({ playAsPokemon: true, passive: { damageAttacker: { amount: 30 } } });
+    expect(programFor(SKULL)).toEqual({
+      playAsPokemon: true,
+      passive: { damageAttacker: { amount: 30 } },
+    });
   });
 
   it("the two word-for-word twins share their twin's field and number", () => {
@@ -248,18 +282,25 @@ describe("D637 §2 — played from the hand onto the Bench, with the card rules"
       expect(idOf(state, body), id).toBe(id);
       const face = cardOfUid(state, body?.stack[0] ?? "");
       expect(face?.category, id).toBe("Pokemon");
-      expect(state.players.p1.discard.some((u) => state.cardIdByUid[u] === id), id).toBe(false);
+      expect(
+        state.players.p1.discard.some((u) => state.cardIdByUid[u] === id),
+        id,
+      ).toBe(false);
     }
   });
 
   it("an Active `me` fossil can't retreat (the card rule rides `FOSSIL_IDS`)", () => {
     let state = table(SKULL, [WALL]);
     state = attachFromDeck(state, "p1", ENERGY, 1);
-    expectErr(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }, "RETREAT_PREVENTED");
+    expectErr(
+      state,
+      { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 },
+      "RETREAT_PREVENTED",
+    );
   });
 });
 
-describe("D637 §3 — Antique Jaw Fossil \"Intimidating Jaw\": the opposing Active's attacks do 30 less", () => {
+describe('D637 §3 — Antique Jaw Fossil "Intimidating Jaw": the opposing Active\'s attacks do 30 less', () => {
   it("Active: a 50 Tap on the Jaw does 20", () => {
     const { state } = hit(table(TAP, [], JAW));
     expect(state.players.p2.active?.damage).toBe(20);
@@ -279,11 +320,13 @@ describe("D637 §3 — Antique Jaw Fossil \"Intimidating Jaw\": the opposing Act
   });
 });
 
-describe("D637 §4 — Antique Sail Fossil \"Protective Sail\": the opponent's Supporters, not their Items", () => {
+describe('D637 §4 — Antique Sail Fossil "Protective Sail": the opponent\'s Supporters, not their Items', () => {
   it("Boss's Orders does not offer a benched Sail; the other two are offered", () => {
     const { state, events } = play(table(TAP, [], WALL, [SAIL, WALL, WALL]), BOSS);
     expect(offered(state)).toEqual(["bench:1", "bench:2"]);
-    expect(of(events, "TRAINER_EFFECT_PREVENTED")).toMatchObject([{ seat: "p2", trainerType: "supporter" }]);
+    expect(of(events, "TRAINER_EFFECT_PREVENTED")).toMatchObject([
+      { seat: "p2", trainerType: "supporter" },
+    ]);
   });
 
   it("a lone benched Sail: Boss's Orders gusts nothing and the Wall stays Active", () => {
@@ -308,15 +351,19 @@ describe("D637 §4 — Antique Sail Fossil \"Protective Sail\": the opponent's S
     expect(passivesOf(board, sail).preventSupporterEffects).toBe(true);
     expect(passivesOf(board, sail).preventTrainerEffects).toBe(false);
     const active = table(TAP, [], SAIL);
-    expect(passivesOf(active, active.players.p2.active as InPlayPokemon).preventSupporterEffects).toBe(true);
+    expect(
+      passivesOf(active, active.players.p2.active as InPlayPokemon).preventSupporterEffects,
+    ).toBe(true);
     const locked = table(KLEFKI, [], WALL, [SAIL]);
-    expect(passivesOf(locked, locked.players.p2.bench[0] as InPlayPokemon).preventSupporterEffects).toBe(false);
+    expect(
+      passivesOf(locked, locked.players.p2.bench[0] as InPlayPokemon).preventSupporterEffects,
+    ).toBe(false);
     const { state } = play(table(KLEFKI, [], WALL, [SAIL, WALL]), BOSS);
     expect(offered(state)).toEqual(["bench:0", "bench:1"]);
   });
 });
 
-describe("D637 §5 — Antique Armor Fossil \"Protective Armor\": all of yours take 10 less while it is Active", () => {
+describe('D637 §5 — Antique Armor Fossil "Protective Armor": all of yours take 10 less while it is Active', () => {
   it("Active: the Armor itself takes 40 from a 50 Tap", () => {
     const { state } = hit(table(TAP, [], ARMOR, [WALL]));
     expect(state.players.p2.active?.damage).toBe(40);
@@ -333,7 +380,9 @@ describe("D637 §5 — Antique Armor Fossil \"Protective Armor\": all of yours t
     for (const body of [side.active, ...side.bench]) {
       expect(seatDamageReduction(active, body as InPlayPokemon, "all", "p1")).toBe(10);
     }
-    expect(seatDamageReduction(active, active.players.p1.active as InPlayPokemon, "all", "p2")).toBe(0);
+    expect(
+      seatDamageReduction(active, active.players.p1.active as InPlayPokemon, "all", "p2"),
+    ).toBe(0);
     const benched = table(TAP, [], WALL, [ARMOR, WALL]);
     for (const body of [benched.players.p2.active, ...benched.players.p2.bench]) {
       expect(seatDamageReduction(benched, body as InPlayPokemon, "all", "p1")).toBe(0);
@@ -342,11 +391,13 @@ describe("D637 §5 — Antique Armor Fossil \"Protective Armor\": all of yours t
 
   it("§9: Klefki's lock takes it down", () => {
     const board = table(KLEFKI, [], ARMOR);
-    expect(seatDamageReduction(board, board.players.p2.active as InPlayPokemon, "all", "p1")).toBe(0);
+    expect(seatDamageReduction(board, board.players.p2.active as InPlayPokemon, "all", "p1")).toBe(
+      0,
+    );
   });
 });
 
-describe("D637 §6 — Antique Skull Fossil \"Spiny Skull\": 3 counters on the attacker when the Active Skull is hit", () => {
+describe('D637 §6 — Antique Skull Fossil "Spiny Skull": 3 counters on the attacker when the Active Skull is hit', () => {
   it("Active and damaged: the attacker takes 30", () => {
     const { state } = hit(table(TAP, [], SKULL, [WALL]));
     expect(state.players.p2.active?.damage).toBe(50);
@@ -364,7 +415,7 @@ describe("D637 §6 — Antique Skull Fossil \"Spiny Skull\": 3 counters on the a
     expect(state.players.p1.active?.damage).toBe(0);
   });
 
-  it("Benched AND damaged: a spread hit on the benched Skull pays no counters (\"in the Active Spot\")", () => {
+  it('Benched AND damaged: a spread hit on the benched Skull pays no counters ("in the Active Spot")', () => {
     const { state } = hit(attachFromDeck(table(SNIPER, [], WALL, [SKULL]), "p1", ENERGY, 1));
     expect(idOf(state, state.players.p2.bench[0])).toBe(SKULL);
     expect(state.players.p2.bench[0]?.damage).toBe(20);
@@ -383,17 +434,14 @@ describe("D637 §7 — Fossil Quarry and Fossil Beatdown reach the new fossils",
       players: { ...board.players, p1: { ...side, deck: side.deck.filter((u) => u !== uid) } },
     };
     const { state } = mustApply(board, { type: "useStadiumAbility", seat: "p1" });
-    if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards") throw new Error("no prompt");
+    if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards")
+      throw new Error("no prompt");
     const ids = new Set(state.phase.prompt.candidates.map((u) => state.cardIdByUid[u]));
     expect(ids).toEqual(new Set([...ME_FOSSILS, COVER]));
   });
 
-  it("Relicanth \"Fossil Beatdown\" counts a benched `me` fossil (+30 each)", () => {
+  it('Relicanth "Fossil Beatdown" counts a benched `me` fossil (+30 each)', () => {
     const charged = attachFromDeck(table(RELICANTH, [JAW, SKULL]), "p1", ENERGY, 1);
     expect(hit(charged).state.players.p2.active?.damage).toBe(70);
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

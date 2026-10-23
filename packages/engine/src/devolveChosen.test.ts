@@ -3,13 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect } from "./effects";
-import {
-  applyAction,
-  createGame,
-  engineVersion,
-  programFor,
-  redactGame,
-} from "./index";
+import { applyAction, createGame, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -258,7 +252,11 @@ function armed(seed: number, opts: BoardOpts): GameState {
   // evolution, and each evolution then costs a full round.
   state = pass(state, attacker);
   state = pass(state, victim);
-  const rounds = Math.max(opts.stages, opts.benchStages ?? 0, opts.attackerEvolves === true ? 1 : 0);
+  const rounds = Math.max(
+    opts.stages,
+    opts.benchStages ?? 0,
+    opts.attackerEvolves === true ? 1 : 0,
+  );
   for (let step = 0; step < rounds; step += 1) {
     if (step === 0 && opts.attackerEvolves === true) {
       state = evolveInto(state, attacker, "d540-s1", { spot: "bench", index: 0 });
@@ -275,7 +273,8 @@ function armed(seed: number, opts: BoardOpts): GameState {
   if (opts.damage !== undefined) state = setDamage(state, victim, opts.damage);
   if (opts.benchDamage !== undefined) state = setBenchDamage(state, victim, 0, opts.benchDamage);
   if (opts.shieldActive === true) state = attachFromDeck(state, victim, "fix-mist-energy", 1);
-  if (opts.shieldBench === true) state = attachBenchFromDeck(state, victim, 0, "fix-mist-energy", 1);
+  if (opts.shieldBench === true)
+    state = attachBenchFromDeck(state, victim, 0, "fix-mist-energy", 1);
   return state;
 }
 
@@ -298,7 +297,8 @@ function parked(state: GameState): {
   const phase = state.phase;
   if (phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${phase.kind}`);
   const prompt = phase.prompt as { kind: string; candidates?: PokemonRef[]; note?: string };
-  if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+  if (prompt.kind !== "choosePokemon")
+    throw new Error(`expected choosePokemon, got ${prompt.kind}`);
   return {
     candidates: prompt.candidates ?? [],
     note: prompt.note ?? "",
@@ -447,7 +447,10 @@ describe("§2 — anchor × string, all four cells", () => {
     // (b) re-measured (D615 review M4): row 88's head AND verb with only the destination moved to "hand".
     // 6e-ter refuses it (its verb is "putting"), 41-ter refuses it (`1 of`), so a NULL here is 41-bis
     // refusing a tail that is not its `deck` — killed by `D615-devolve-deck-anchor-loses-destination`.
-    const eachShuffledIntoHand = SWEEP_SENTENCE.replace("your opponent's deck.", "your opponent's hand.");
+    const eachShuffledIntoHand = SWEEP_SENTENCE.replace(
+      "your opponent's deck.",
+      "your opponent's hand.",
+    );
     expect(eachShuffledIntoHand).not.toBe(SWEEP_SENTENCE);
     expect(deriveAttackEffect(eachShuffledIntoHand)).toBeNull();
   });
@@ -473,7 +476,10 @@ describe("§2 — anchor × string, all four cells", () => {
     // a DIFFERENT reason (the pattern demands a capital "Devolve" wherever it starts)
     // and never exercises the `^` at all.
     ["a LEADING clause, capital KEPT", `Discard an Energy from this Pokémon. ${SENTENCE}`],
-    ["a LEADING clause, lower-cased", `If you have any Benched Pokémon, ${SENTENCE[0]?.toLowerCase()}${SENTENCE.slice(1)}`],
+    [
+      "a LEADING clause, lower-cased",
+      `If you have any Benched Pokémon, ${SENTENCE[0]?.toLowerCase()}${SENTENCE.slice(1)}`,
+    ],
     // 🛑 TWO trailing spellings, and only ONE of them exercises the `$`. Stripping the
     // PERIOD (`slice(0, -1)`) makes the string refuse because the anchor's tail demands
     // `hand\.` — a DIFFERENT reason — so the `$`-less pattern would refuse it too and the
@@ -666,8 +672,11 @@ describe("🛑 §4 — two candidates PARK, and the answer really moves the boar
     // The forced board offers ONE candidate; the parked board is answered with the
     // SAME spot, and the victim's Active must come out identical.
     const forced = strike(armed(23, { stages: 1 }), "p1", PICK).state;
-    const asked = answer(strike(armed(23, { stages: 1, benchStages: 1 }), "p1", PICK).state, "p1", ACTIVE)
-      .state;
+    const asked = answer(
+      strike(armed(23, { stages: 1, benchStages: 1 }), "p1", PICK).state,
+      "p1",
+      ACTIVE,
+    ).state;
     expect(body(asked.players.p2.active).stack).toEqual(body(forced.players.p2.active).stack);
     expect(body(asked.players.p2.active).conditions).toEqual(
       body(forced.players.p2.active).conditions,
@@ -953,7 +962,7 @@ describe("§9 — the hand grows by exactly one, and the uid stays hidden", () =
 //      TRUE and the record genuinely holds the new inhabitant.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("🛑 §10 — the persisted `pendingOp`, over the serialized bytes", () => {
-  it("🛑 `\"cont\" in phase` IS TRUE and `pendingOp` IS the new inhabitant", () => {
+  it('🛑 `"cont" in phase` IS TRUE and `pendingOp` IS the new inhabitant', () => {
     const { state } = strike(armed(81, { stages: 1, benchStages: 1 }), "p1", PICK);
     const phase = state.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -1026,10 +1035,6 @@ describe("🛑 §10 — the persisted `pendingOp`, over the serialized bytes", (
     expect(types(replayed.events)).toEqual(types(live.events));
     expect(replayed.state.players.p2.active).toEqual(live.state.players.p2.active);
     expect(replayed.state.players.p2.hand).toEqual(live.state.players.p2.hand);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

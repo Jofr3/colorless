@@ -91,7 +91,13 @@ describe("spread attack damage (§8.5)", () => {
     expect(after.players.p2.bench[0]?.damage).toBe(20);
     expect(after.players.p2.bench[1]?.damage).toBe(20);
     const weakHit = events.find((e) => e.type === "DAMAGE_DEALT" && e.uid === benchedWeak);
-    expect(weakHit).toMatchObject({ seat: "p2", base: 20, dealt: 20, weakness: null, resistance: null });
+    expect(weakHit).toMatchObject({
+      seat: "p2",
+      base: 20,
+      dealt: 20,
+      weakness: null,
+      resistance: null,
+    });
   });
 
   it("still applies a benched Pokémon's own damage-reduction passive (Bouffer) to spread", () => {
@@ -101,9 +107,9 @@ describe("spread attack damage (§8.5)", () => {
     const state = sniperVs(7, "fix-wall", ["sv03-174"]); // Bouffalant benched
     const benchedBouff = benchTopUid(state, "p2", 0);
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const hit = events.find(
-      (e) => e.type === "DAMAGE_DEALT" && e.uid === benchedBouff,
-    ) as Extract<GameEvent, { type: "DAMAGE_DEALT" }> | undefined;
+    const hit = events.find((e) => e.type === "DAMAGE_DEALT" && e.uid === benchedBouff) as
+      | Extract<GameEvent, { type: "DAMAGE_DEALT" }>
+      | undefined;
     expect(hit).toMatchObject({ base: 20, reduction: 20, dealt: 0 });
     expect(after.players.p2.bench[0]?.damage).toBe(0); // 20 spread − 20 Bouffer
   });

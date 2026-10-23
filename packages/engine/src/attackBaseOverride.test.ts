@@ -253,7 +253,10 @@ function withRawBoost(state: GameState, record: BoostedAttack | null): GameState
   const active = must0(state.players.p1.active);
   return {
     ...state,
-    players: { ...state.players, p1: { ...state.players.p1, active: { ...active, boostedAttack: record } } },
+    players: {
+      ...state.players,
+      p1: { ...state.players.p1, active: { ...active, boostedAttack: record } },
+    },
   };
 }
 
@@ -721,8 +724,21 @@ describe("§9 — a second install on the SAME address merges FIELDWISE by max",
       base: 240,
     });
     expect(events.filter((e) => e.type === "ATTACK_BOOSTED")).toStrictEqual([
-      { type: "ATTACK_BOOSTED", seat: "p1", uid: activeUid(s, "p1"), attack: "Hyper Fang", amount: 240, base: true },
-      { type: "ATTACK_BOOSTED", seat: "p1", uid: activeUid(s, "p1"), attack: "Hyper Fang", amount: 30 },
+      {
+        type: "ATTACK_BOOSTED",
+        seat: "p1",
+        uid: activeUid(s, "p1"),
+        attack: "Hyper Fang",
+        amount: 240,
+        base: true,
+      },
+      {
+        type: "ATTACK_BOOSTED",
+        seat: "p1",
+        uid: activeUid(s, "p1"),
+        attack: "Hyper Fang",
+        amount: 30,
+      },
     ]);
   });
 

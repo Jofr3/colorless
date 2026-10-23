@@ -222,7 +222,8 @@ const TAKEN_BY_D522 =
     ({R}{C}, `60+`) spent this slice's `discardStadium` and D378's `stadiumInPlay`
     through D317's assembler, on ZERO new readers and ZERO new ops — the SECOND row
     to leave this list that way, after D381's. */
-const TAKEN_BY_D382 = "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.";
+const TAKEN_BY_D382 =
+  "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.";
 
 /** 🆕🆕 D417 — the THIRD row to leave `STILL_OWED`, kept rather than deleted (D178)
     and asserted RESOLVED in §6. Eternatus `sv08-141` "World Ender" ({R}{D}{D}, 230)
@@ -376,9 +377,9 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // …and no printing spells the discard with a lower-case noun or a possessive,
     // which is the pair of variants a `GLOB` census would have had to rule out.
     expect(corpus().filter(([, s]) => /discard .{0,12}stadium/i.test(s))).toHaveLength(6);
-    expect(
-      corpus().some(([, s]) => /discard (your|their|your opponent's) Stadium/.test(s)),
-    ).toBe(false);
+    expect(corpus().some(([, s]) => /discard (your|their|your opponent's) Stadium/.test(s))).toBe(
+      false,
+    );
   });
 
   it("🛑 it is worth SIX times the best remaining clause row, which is why the era ended", () => {
@@ -536,7 +537,11 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
     // …and the near misses a floating match would have swallowed. Neither is a printed
     // sentence; both are the fragments the four compounds are built out of.
     expect(deriveAttackEffect("discard that Stadium.")).toBeNull();
-    expect(deriveAttackEffect("You may discard a Stadium in play. If you do, this attack does 10 more damage.")).toBeNull();
+    expect(
+      deriveAttackEffect(
+        "You may discard a Stadium in play. If you do, this attack does 10 more damage.",
+      ),
+    ).toBeNull();
   });
 });
 
@@ -599,51 +604,60 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
     expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it.each(SEEDS)("seed %i — the zone's CONTINUOUS effect stops applying, which a pile write cannot fake", (seed) => {
-    // 🛑 THE ANTI-VACUITY RUNG. An op that appended the uid to a pile and left
-    // `state.stadium` occupied passes every assertion above about the pile; an op that
-    // nulled the zone and forgot the pile passes every assertion about the zone. Beach
-    // Court prints *"Basic Pokémon retreat cost {C} less"*, so its departure is
-    // readable off a body that was already on the board before the attack.
-    let state = blazingDestruction(board(seed, "p2"));
-    const defender = state.players.p2.active;
-    if (defender === null) throw new Error("expected P2's Active");
-    // `fix-bigbody` is a Basic with retreat 1, discounted to 0 while the zone holds it.
-    expect(effectiveRetreatCost(state, defender)).toBe(0);
-    state = attack(state).state;
-    const after = state.players.p2.active;
-    if (after === null) throw new Error("expected P2's Active");
-    expect(effectiveRetreatCost(state, after)).toBe(1);
-  });
+  it.each(SEEDS)(
+    "seed %i — the zone's CONTINUOUS effect stops applying, which a pile write cannot fake",
+    (seed) => {
+      // 🛑 THE ANTI-VACUITY RUNG. An op that appended the uid to a pile and left
+      // `state.stadium` occupied passes every assertion above about the pile; an op that
+      // nulled the zone and forgot the pile passes every assertion about the zone. Beach
+      // Court prints *"Basic Pokémon retreat cost {C} less"*, so its departure is
+      // readable off a body that was already on the board before the attack.
+      let state = blazingDestruction(board(seed, "p2"));
+      const defender = state.players.p2.active;
+      if (defender === null) throw new Error("expected P2's Active");
+      // `fix-bigbody` is a Basic with retreat 1, discounted to 0 while the zone holds it.
+      expect(effectiveRetreatCost(state, defender)).toBe(0);
+      state = attack(state).state;
+      const after = state.players.p2.active;
+      if (after === null) throw new Error("expected P2's Active");
+      expect(effectiveRetreatCost(state, after)).toBe(1);
+    },
+  );
 
-  it.each(SEEDS)("seed %i — the same op on the attacker's OWN Stadium routes to the attacker", (seed) => {
-    // The other half of the ownership read: `stadium.owner` is not a constant, and a
-    // hard-coded `otherSeat(ctx.seat)` would be green on the case above and red here.
-    let state = blazingDestruction(board(seed, "p1"));
-    const stadium = state.stadium;
-    if (stadium === null) throw new Error("expected P1's Stadium in the zone");
-    const p2Discard = state.players.p2.discard.length;
-    const result = attack(state);
-    state = result.state;
-    expect(state.stadium).toBeNull();
-    expect(state.players.p1.discard).toContain(stadium.uid);
-    expect(state.players.p2.discard).toHaveLength(p2Discard);
-    expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
-  });
+  it.each(SEEDS)(
+    "seed %i — the same op on the attacker's OWN Stadium routes to the attacker",
+    (seed) => {
+      // The other half of the ownership read: `stadium.owner` is not a constant, and a
+      // hard-coded `otherSeat(ctx.seat)` would be green on the case above and red here.
+      let state = blazingDestruction(board(seed, "p1"));
+      const stadium = state.stadium;
+      if (stadium === null) throw new Error("expected P1's Stadium in the zone");
+      const p2Discard = state.players.p2.discard.length;
+      const result = attack(state);
+      state = result.state;
+      expect(state.stadium).toBeNull();
+      expect(state.players.p1.discard).toContain(stadium.uid);
+      expect(state.players.p2.discard).toHaveLength(p2Discard);
+      expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
+    },
+  );
 
-  it.each(SEEDS)("seed %i — it works from the FAR SEAT too: the op reads the zone, not p1", (seed) => {
-    // The op is seat-INDEPENDENT on its face (it never looks at `ctx.seat`), and a
-    // P1-only suite cannot tell "reads the zone" apart from "reads p1's Stadium".
-    let state = mustApply(board(seed, "p1"), { type: "endTurn", seat: "p1" }).state;
-    state = blazingDestruction(state, "p2");
-    const stadium = state.stadium;
-    if (stadium === null) throw new Error("expected P1's Stadium in the zone");
-    const result = attack(state, "p2");
-    expect(result.state.stadium).toBeNull();
-    // P2 attacked; the Stadium is P1's; it goes to P1's pile.
-    expect(result.state.players.p1.discard).toContain(stadium.uid);
-    expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
-  });
+  it.each(SEEDS)(
+    "seed %i — it works from the FAR SEAT too: the op reads the zone, not p1",
+    (seed) => {
+      // The op is seat-INDEPENDENT on its face (it never looks at `ctx.seat`), and a
+      // P1-only suite cannot tell "reads the zone" apart from "reads p1's Stadium".
+      let state = mustApply(board(seed, "p1"), { type: "endTurn", seat: "p1" }).state;
+      state = blazingDestruction(state, "p2");
+      const stadium = state.stadium;
+      if (stadium === null) throw new Error("expected P1's Stadium in the zone");
+      const result = attack(state, "p2");
+      expect(result.state.stadium).toBeNull();
+      // P2 attacked; the Stadium is P1's; it goes to P1's pile.
+      expect(result.state.players.p1.discard).toContain(stadium.uid);
+      expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
+    },
+  );
 });
 
 describe("§4 — the EMPTY zone: a silent no-op, and not a skipped effect", () => {
@@ -667,31 +681,34 @@ describe("§4 — the EMPTY zone: a silent no-op, and not a skipped effect", () 
 });
 
 describe("§5 — the printed 'You may': a confirm that is asked ONLY when it has a stake", () => {
-  it.each(SEEDS)("seed %i — an OCCUPIED zone parks a confirm, and YES discards to the owner", (seed) => {
-    let state = knockOver(board(seed, "p2"));
-    const stadium = state.stadium;
-    if (stadium === null) throw new Error("expected P2's Stadium in the zone");
-    const parked = attack(state);
-    expect(parked.state.phase.kind).toBe("effect:choose");
-    expect(find(parked.events, "EFFECT_PENDING")).toEqual({
-      type: "EFFECT_PENDING",
-      seat: "p1",
-      note: MAY,
-    });
-    // …and the printed 30 has already landed: the confirm is about the discard, not
-    // about the attack.
-    expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+  it.each(SEEDS)(
+    "seed %i — an OCCUPIED zone parks a confirm, and YES discards to the owner",
+    (seed) => {
+      let state = knockOver(board(seed, "p2"));
+      const stadium = state.stadium;
+      if (stadium === null) throw new Error("expected P2's Stadium in the zone");
+      const parked = attack(state);
+      expect(parked.state.phase.kind).toBe("effect:choose");
+      expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+        type: "EFFECT_PENDING",
+        seat: "p1",
+        note: MAY,
+      });
+      // …and the printed 30 has already landed: the confirm is about the discard, not
+      // about the attack.
+      expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
 
-    const done = mustApply(parked.state, {
-      type: "resolveEffect",
-      seat: "p1",
-      choice: { kind: "confirm", yes: true },
-    });
-    state = done.state;
-    expect(state.stadium).toBeNull();
-    expect(state.players.p2.discard).toContain(stadium.uid);
-    expect(find(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
-  });
+      const done = mustApply(parked.state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: true },
+      });
+      state = done.state;
+      expect(state.stadium).toBeNull();
+      expect(state.players.p2.discard).toContain(stadium.uid);
+      expect(find(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
+    },
+  );
 
   it.each(SEEDS)("seed %i — and NO leaves the zone exactly as it was", (seed) => {
     const state = knockOver(board(seed, "p2"));
@@ -710,20 +727,23 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
     expect(types(done.events)).not.toContain("STADIUM_DISCARDED");
   });
 
-  it.each(SEEDS)("seed %i — 🛑 an EMPTY zone is not asked at all, which is the gate's whole job", (seed) => {
-    // The rung a dropped `conditionGate` reddens on, and the ONLY one it can: without
-    // the gate the program parks a confirm whose "yes" and "no" leave the identical
-    // board — a decision with no stake, and a dialog the player cannot answer usefully.
-    const state = knockOver(board(seed, null));
-    expect(state.stadium).toBeNull();
-    const result = attack(state);
-    expect(result.state.phase.kind).not.toBe("effect:choose");
-    expect(types(result.events)).not.toContain("EFFECT_PENDING");
-    expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
-    // The attack still resolves its printed 30 — the gate refuses the question, not
-    // the attack.
-    expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
-  });
+  it.each(SEEDS)(
+    "seed %i — 🛑 an EMPTY zone is not asked at all, which is the gate's whole job",
+    (seed) => {
+      // The rung a dropped `conditionGate` reddens on, and the ONLY one it can: without
+      // the gate the program parks a confirm whose "yes" and "no" leave the identical
+      // board — a decision with no stake, and a dialog the player cannot answer usefully.
+      const state = knockOver(board(seed, null));
+      expect(state.stadium).toBeNull();
+      const result = attack(state);
+      expect(result.state.phase.kind).not.toBe("effect:choose");
+      expect(types(result.events)).not.toContain("EFFECT_PENDING");
+      expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
+      // The attack still resolves its printed 30 — the gate refuses the question, not
+      // the attack.
+      expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+    },
+  );
 });
 
 describe("§6 — what this slice did NOT buy", () => {

@@ -142,7 +142,9 @@ function localSetup(seed: number, first: Seat): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   state = completeSetup(state);
   return state;
 }
@@ -199,13 +201,23 @@ describe("D207 — `opponentPrizesRemaining` was ALREADY THERE", () => {
     // If this member were new, this test would be the one that could not have
     // been written before the slice. It could have been written at D199.
     const state = withPrizes(21, 3, 5);
-    expect(conditionHolds(state, "p1", { kind: "opponentPrizesRemaining", counts: [3] })).toBe(true);
-    expect(conditionHolds(state, "p1", { kind: "opponentPrizesRemaining", counts: [2, 4] })).toBe(false);
-    expect(conditionHolds(state, "p1", { kind: "opponentPrizesRemaining", counts: [2, 3, 4] })).toBe(true);
+    expect(conditionHolds(state, "p1", { kind: "opponentPrizesRemaining", counts: [3] })).toBe(
+      true,
+    );
+    expect(conditionHolds(state, "p1", { kind: "opponentPrizesRemaining", counts: [2, 4] })).toBe(
+      false,
+    );
+    expect(
+      conditionHolds(state, "p1", { kind: "opponentPrizesRemaining", counts: [2, 3, 4] }),
+    ).toBe(true);
     // …and it is SEAT-RELATIVE, which is the whole content of "opponent": read
     // from p2, the number in question is P1's 5.
-    expect(conditionHolds(state, "p2", { kind: "opponentPrizesRemaining", counts: [5] })).toBe(true);
-    expect(conditionHolds(state, "p2", { kind: "opponentPrizesRemaining", counts: [3] })).toBe(false);
+    expect(conditionHolds(state, "p2", { kind: "opponentPrizesRemaining", counts: [5] })).toBe(
+      true,
+    );
+    expect(conditionHolds(state, "p2", { kind: "opponentPrizesRemaining", counts: [3] })).toBe(
+      false,
+    );
   });
 
   it("⚠️ set MEMBERSHIP, not a threshold — 3 reads FALSE between two true values", () => {

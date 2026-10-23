@@ -2,12 +2,8 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
 import { installedNoWeakness, seatRemovesWeakness } from "./continuous";
-import {
-  deriveAttackEffect,
-  splitAttackGateClause,
-  splitAttackTrailingClause,
-} from "./effects";
-import { applyAction, engineVersion, otherSeat, programFor } from "./index";
+import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
+import { applyAction, otherSeat, programFor } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
@@ -276,14 +272,14 @@ describe("§2 — the anchor claims the sentence WHOLE, and each near-miss diffe
     // (a) the DURATION — "your" for "your opponent's". A real printed duration
     //     elsewhere in the pool, and it names the installer's own turn, on which the
     //     holder is the ATTACKER and its Weakness is never consulted.
-    expect(
-      deriveAttackEffect("During your next turn, this Pokémon has no Weakness."),
-    ).toBeNull();
+    expect(deriveAttackEffect("During your next turn, this Pokémon has no Weakness.")).toBeNull();
     // (b) the BODY — "the Defending Pokémon" for "this Pokémon". The stamp would have
     //     to land on the other seat, which is `weakenDefenderAttacks`'s address and
     //     not this op's; the op has no `target` field to say so with.
     expect(
-      deriveAttackEffect("During your opponent's next turn, the Defending Pokémon has no Weakness."),
+      deriveAttackEffect(
+        "During your opponent's next turn, the Defending Pokémon has no Weakness.",
+      ),
     ).toBeNull();
     // (c) the OBJECT — "Resistance" for "Weakness". Nothing in the pool prints it,
     //     and `resistanceOf` has no defender-side null path at all (D192 says so at
@@ -388,11 +384,21 @@ describe("§3 — what the install writes, and what it announces", () => {
     // `reduceDamage`'s.
     const state = armed("p1", "fix-bolt");
     const events: GameEvent[] = [];
-    const once = runProgram(state, [{ op: "installNoWeakness" }], { seat: "p1", invokedBy: "attack" }, events);
+    const once = runProgram(
+      state,
+      [{ op: "installNoWeakness" }],
+      { seat: "p1", invokedBy: "attack" },
+      events,
+    );
     expect(count(events, "WEAKNESS_REMOVED")).toBe(1);
     expect(must0(once.state.players.p1.active).noWeaknessTurn).toBe(3);
     const again: GameEvent[] = [];
-    const twice = runProgram(once.state, [{ op: "installNoWeakness" }], { seat: "p1", invokedBy: "attack" }, again);
+    const twice = runProgram(
+      once.state,
+      [{ op: "installNoWeakness" }],
+      { seat: "p1", invokedBy: "attack" },
+      again,
+    );
     expect(count(again, "WEAKNESS_REMOVED")).toBe(0);
     expect(must0(twice.state.players.p1.active).noWeaknessTurn).toBe(3);
   });
@@ -518,7 +524,12 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
     const before = armed("p1", "fix-bolt");
     expect(before.turn).toBe(2);
     const events: GameEvent[] = [];
-    const ran = runProgram(before, [{ op: "installNoWeakness" }], { seat: "p1", invokedBy: "attack" }, events);
+    const ran = runProgram(
+      before,
+      [{ op: "installNoWeakness" }],
+      { seat: "p1", invokedBy: "attack" },
+      events,
+    );
     expect(must0(ran.state.players.p1.active).noWeaknessTurn).toBe(3);
     expect(installedNoWeakness(ran.state, must0(ran.state.players.p1.active))).toBe(false);
   });
@@ -541,8 +552,11 @@ describe("§7 — leaving the Active Spot LIFTS it, and all three literals are d
   // is why this section reads it directly and why `attackLock.test.ts`'s three-route
   // sweep carries `noWeaknessTurn` too.
   function barred(): GameState {
-    const state = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL })
-      .state;
+    const state = mustApply(armed("p1", "fix-bolt"), {
+      type: "attack",
+      seat: "p1",
+      index: VEIL,
+    }).state;
     // Turn 4 — p1's own turn, where all three routes are legal. The stamp (3) is
     // stale but PRESENT, which is `attackLock.test.ts`'s `99` sentinel reached off a
     // real install instead of by surgery.
@@ -628,8 +642,11 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   // driven HERE is the ENGINE-side fact the constant is about: whether a record
   // written by the previous deploy can be read benignly by this one.
   function inWindow(): GameState {
-    const state = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL })
-      .state;
+    const state = mustApply(armed("p1", "fix-bolt"), {
+      type: "attack",
+      seat: "p1",
+      index: VEIL,
+    }).state;
     expect(state.turn).toBe(3);
     return JSON.parse(JSON.stringify(state)) as GameState;
   }
@@ -678,9 +695,11 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     // that grew on both (D279).
     const live = must0(inWindow().players.p1.active);
     expect(Object.keys(body).sort()).not.toEqual(Object.keys(live).sort());
-    expect(Object.keys(live).sort().filter((k) => !Object.keys(body).includes(k))).toEqual([
-      "noWeaknessTurn",
-    ]);
+    expect(
+      Object.keys(live)
+        .sort()
+        .filter((k) => !Object.keys(body).includes(k)),
+    ).toEqual(["noWeaknessTurn"]);
   });
 
   it("🛑 THE OPTIONAL-KEY ROAD WAS DRIVEN TOO, and it is the reason the constant moved", () => {
@@ -706,10 +725,6 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     expect([find(a.events, "DAMAGE_DEALT")?.dealt, find(b.events, "DAMAGE_DEALT")?.dealt]).toEqual([
       50, 100,
     ]);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -739,8 +754,11 @@ describe("§10 — the bar is neither the aura nor the parse, and all three null
     // `seatRemovesWeakness` (the aura) this rung would read `true` on the seat, and
     // if it had been folded into `AttackDamageSuppression.weakness` (the parse) it
     // would be a property of the swinger's sentence rather than of the holder.
-    const state = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL })
-      .state;
+    const state = mustApply(armed("p1", "fix-bolt"), {
+      type: "attack",
+      seat: "p1",
+      index: VEIL,
+    }).state;
     expect(installedNoWeakness(state, must0(state.players.p1.active))).toBe(true);
     // (a) NOT the seat-wide aura: no body on p1's side prints "Your Pokémon in play
     //     have no Weakness", so the catalog fold answers false while the bar is live.
@@ -755,8 +773,11 @@ describe("§10 — the bar is neither the aura nor the parse, and all three null
   it("the bar is per-BODY, not per-seat — a benched teammate is untouched", () => {
     // The sharpest available separation from the aura, which reaches every body on
     // the seat regardless of zone.
-    const state = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL })
-      .state;
+    const state = mustApply(armed("p1", "fix-bolt"), {
+      type: "attack",
+      seat: "p1",
+      index: VEIL,
+    }).state;
     const benched = benchFromDeck(state, "p1", "fix-nowk");
     expect(must0(benched.players.p1.active).noWeaknessTurn).toBe(3);
     expect(benched.players.p1.bench[0]?.noWeaknessTurn).toBeNull();

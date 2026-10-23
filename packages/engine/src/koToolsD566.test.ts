@@ -54,7 +54,9 @@ const FILLER = "d566k-filler";
 const LOCAL_CARDS: Record<string, Card> = {
   [HEAVY_BATON]: { ...trainerCard(HEAVY_BATON, "Tool", "…"), name: "Heavy Baton" },
   [AMULET]: { ...trainerCard(AMULET, "Tool", "…"), name: "Amulet of Hope" },
-  ...Object.fromEntries(POWERGLASS.map((id) => [id, { ...trainerCard(id, "Tool", "…"), name: "Powerglass" }])),
+  ...Object.fromEntries(
+    POWERGLASS.map((id) => [id, { ...trainerCard(id, "Tool", "…"), name: "Powerglass" }]),
+  ),
   [JAMMING_TOWER]: { ...trainerCard(JAMMING_TOWER, "Stadium", "…"), name: "Jamming Tower" },
   [AMARYS]: { ...trainerCard(AMARYS, "Supporter", "…"), name: "Amarys" },
   [ATTACKER]: battler(ATTACKER, {
@@ -70,8 +72,17 @@ const LOCAL_CARDS: Record<string, Card> = {
         damage: 30,
         effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
       },
-      { cost: ["Colorless"], name: "Recoil", damage: 30, effect: "This Pokémon also does 30 damage to itself." },
-      { cost: ["Colorless"], name: "Yawn", effect: "Your opponent's Active Pokémon is now Asleep." },
+      {
+        cost: ["Colorless"],
+        name: "Recoil",
+        damage: 30,
+        effect: "This Pokémon also does 30 damage to itself.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Yawn",
+        effect: "Your opponent's Active Pokémon is now Asleep.",
+      },
       {
         cost: ["Colorless"],
         name: "Doom",
@@ -84,7 +95,14 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Fire"],
     hp: 30,
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: "Recoil", damage: 30, effect: "This Pokémon also does 30 damage to itself." }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Recoil",
+        damage: 30,
+        effect: "This Pokémon also does 30 damage to itself.",
+      },
+    ],
   }),
   [HEAVY]: battler(HEAVY, { name: "D566 Heavy", types: ["Water"], hp: 30, retreat: 4 }),
   [THREE]: battler(THREE, { name: "D566 Three", types: ["Water"], hp: 30, retreat: 3 }),
@@ -123,7 +141,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -132,7 +151,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -140,11 +161,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -184,7 +208,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -194,12 +223,21 @@ function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon
 }
 
 /** TEST SURGERY — attach a deck copy of `id` to the body, as Energy or as a Tool. */
-function attach(state: GameState, seat: Seat, spot: Spot, id: string, as: "energy" | "tools" = "energy"): GameState {
+function attach(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  id: string,
+  as: "energy" | "tools" = "energy",
+): GameState {
   const next = ensureInDeck(state, seat, id);
   const side = next.players[seat];
   const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id}`);
-  const moved = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+  const moved = {
+    ...next,
+    players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+  };
   return withBody(moved, seat, spot, (p) => ({ ...p, [as]: [...p[as], uid] }));
 }
 
@@ -221,7 +259,14 @@ function toDiscard(state: GameState, seat: Seat, id: string): GameState {
   const uid = side.deck.find((u) => next.cardIdByUid[u] === id) as string;
   return {
     ...next,
-    players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), discard: [...side.discard, uid] } },
+    players: {
+      ...next.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        discard: [...side.discard, uid],
+      },
+    },
   };
 }
 
@@ -239,23 +284,31 @@ function field(opts: Field = {}): GameState {
   const victim = opts.victim ?? HEAVY;
   state = setActiveFromDeck(ensureInDeck(state, "p2", victim), "p2", victim);
   state = clearBench(state, "p2");
-  for (const id of opts.bench ?? [FILLER, FILLER]) state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
+  for (const id of opts.bench ?? [FILLER, FILLER])
+    state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
   const attacker = opts.attacker ?? ATTACKER;
   state = setActiveFromDeck(ensureInDeck(state, "p1", attacker), "p1", attacker);
   state = clearBench(state, "p1");
-  for (const id of opts.attackerBench ?? [FILLER]) state = benchFromDeck(ensureInDeck(state, "p1", id), "p1", id);
+  for (const id of opts.attackerBench ?? [FILLER])
+    state = benchFromDeck(ensureInDeck(state, "p1", id), "p1", id);
   return attach(state, "p1", "active", ENERGY);
 }
 
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
 /** Answer every prize / promotion interrupt with its first option, collecting events, until the
     board parks on an effect or the turn changes hands. */
-function drain(start: { state: GameState; events: GameEvent[] }): { state: GameState; events: GameEvent[] } {
+function drain(start: { state: GameState; events: GameEvent[] }): {
+  state: GameState;
+  events: GameEvent[];
+} {
   let { state, events } = start;
   for (let i = 0; i < 20; i++) {
     const phase = state.phase;
@@ -279,7 +332,8 @@ function drain(start: { state: GameState; events: GameEvent[] }): { state: GameS
 }
 
 function parked(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase;
 }
 
@@ -292,7 +346,15 @@ describe("§1 — the prints and the registry rows", () => {
           name: "Heavy Baton",
           trigger: "onHolderActiveKnockedOut",
           optional: true,
-          program: [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 3, route: "selfToBench", anyDest: true }],
+          program: [
+            {
+              op: "moveEnergy",
+              filter: { kind: "basicEnergy" },
+              max: 3,
+              route: "selfToBench",
+              anyDest: true,
+            },
+          ],
         },
       ],
     });
@@ -304,13 +366,16 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Amulet of Hope",
           trigger: "onHolderKnockedOut",
-          program: [{ op: "searchDeck", filter: { kind: "anyCard" }, max: 3, dest: "hand" }, { op: "shuffleDeck" }],
+          program: [
+            { op: "searchDeck", filter: { kind: "anyCard" }, max: 3, dest: "hand" },
+            { op: "shuffleDeck" },
+          ],
         },
       ],
     });
   });
 
-  it("Powerglass: the NEW end-of-turn timing, Charging Up's discard attach to itself plus the printed \"you may\"; the reprint shares the object", () => {
+  it('Powerglass: the NEW end-of-turn timing, Charging Up\'s discard attach to itself plus the printed "you may"; the reprint shares the object', () => {
     const first = programFor(POWERGLASS[0]);
     expect(first).toEqual({
       triggered: [
@@ -362,7 +427,14 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
       run(after, {
         type: "resolveEffect",
         seat: "p2",
-        choice: { kind: "moveEnergy", picks: [{ uid: a, dest: bench0 }, { uid: b, dest: bench0 }, { uid: c, dest: bench1 }] },
+        choice: {
+          kind: "moveEnergy",
+          picks: [
+            { uid: a, dest: bench0 },
+            { uid: b, dest: bench0 },
+            { uid: c, dest: bench1 },
+          ],
+        },
       }),
     );
     const ko = all(answered.events, "KNOCKED_OUT");
@@ -373,12 +445,16 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     expect(carried).toEqual(expect.arrayContaining([a, b, c]));
   });
 
-  it("the printed \"you may\": an empty answer declines, and the Energy goes down with the body", () => {
+  it('the printed "you may": an empty answer declines, and the Energy goes down with the body', () => {
     const state = baton();
     const energy = bodyAt(state, "p2", "active").energy;
     const after = run(state, attack(0)).state;
-    const declined = drain(run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "moveEnergy", picks: [] } }));
-    expect(all(declined.events, "KNOCKED_OUT")[0]?.discarded).toEqual(expect.arrayContaining([...energy]));
+    const declined = drain(
+      run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "moveEnergy", picks: [] } }),
+    );
+    expect(all(declined.events, "KNOCKED_OUT")[0]?.discarded).toEqual(
+      expect.arrayContaining([...energy]),
+    );
   });
 
   it("🛑 Retreat 3 and Retreat 5: NOT exactly 4 — no park, the Energy is discarded with the body", () => {
@@ -424,13 +500,18 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     let state = baton();
     state = attach(state, "p2", 0, EXP_SHARE, "tools");
     const koed = bodyAt(state, "p2", "active").stack.at(-1) as string;
-    expect(koToolTriggersOf(state, "p2", koed).map((e) => e.ability.name)).toEqual(["Heavy Baton", "Exp. Share"]);
+    expect(koToolTriggersOf(state, "p2", koed).map((e) => e.ability.name)).toEqual([
+      "Heavy Baton",
+      "Exp. Share",
+    ]);
     const after = run(state, attack(0)).state;
     const prompt = parked(after).prompt;
     if (prompt.kind !== "moveEnergy") throw new Error("expected moveEnergy");
     expect(prompt.anyDest).toBe(true);
     expect(prompt.max).toBe(3);
-    const done = drain(run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "moveEnergy", picks: [] } }));
+    const done = drain(
+      run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "moveEnergy", picks: [] } }),
+    );
     expect(done.state.phase.kind).not.toBe("effect:choose");
   });
 
@@ -438,7 +519,13 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     const after = JSON.parse(JSON.stringify(run(baton(), attack(0)).state)) as GameState;
     const [a] = bodyAt(after, "p2", "active").energy as [string];
     const dest = { seat: "p2", spot: { spot: "bench", index: 1 } } as const;
-    const done = drain(run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "moveEnergy", picks: [{ uid: a, dest }] } }));
+    const done = drain(
+      run(after, {
+        type: "resolveEffect",
+        seat: "p2",
+        choice: { kind: "moveEnergy", picks: [{ uid: a, dest }] },
+      }),
+    );
     expect(done.state.players.p2.bench.some((p) => p.energy.includes(a))).toBe(true);
   });
 });
@@ -448,7 +535,8 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
   function amulet(opts: Field & { amuletOn?: readonly Spot[] } = {}): GameState {
     let state = field({ victim: FILLER, bench: [FRAIL, FILLER], ...opts });
     state = withBody(state, "p2", "active", (p) => ({ ...p, damage: 890 }));
-    for (const spot of opts.amuletOn ?? ["active"]) state = attach(state, "p2", spot, AMULET, "tools");
+    for (const spot of opts.amuletOn ?? ["active"])
+      state = attach(state, "p2", spot, AMULET, "tools");
     return state;
   }
 
@@ -461,7 +549,9 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
   it("🛑 an ACTIVE KO'd by an attack: PRIZES → the Amulet's search (p2, up to 3, any card, NOT revealed) → PROMOTION", () => {
     const state = amulet();
     const { state: after, events } = drain(run(state, attack(0)));
-    expect(all(events, "PRIZES_TAKEN").length + all(events, "PRIZES_OWED").length).toBeGreaterThan(0);
+    expect(all(events, "PRIZES_TAKEN").length + all(events, "PRIZES_OWED").length).toBeGreaterThan(
+      0,
+    );
     const { phase, prompt } = searchPark(after);
     expect(phase.seat).toBe("p2");
     expect(prompt.max).toBe(3);
@@ -469,7 +559,11 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(prompt.candidates).toHaveLength(after.players.p2.deck.length);
     expect(after.pending.some((stage) => stage.kind === "promote")).toBe(true);
     const picks = after.players.p2.deck.slice(0, 3);
-    const answered = run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: picks } });
+    const answered = run(after, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: picks },
+    });
     expect(picks.every((u) => answered.state.players.p2.hand.includes(u))).toBe(true);
     expect(all(answered.events, "DECK_SEARCHED")[0]?.reveal).toBeUndefined();
     expect(all(answered.events, "SHUFFLE")).toHaveLength(1);
@@ -480,7 +574,10 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     const toolUid = bodyAt(state, "p2", "active").tools[0] as string;
     const after = run(state, attack(0)).state;
     const kinds = after.pending.map((stage) => stage.kind);
-    const trigger = after.pending.find((stage) => stage.kind === "koTrigger") as Extract<PendingStage, { kind: "koTrigger" }>;
+    const trigger = after.pending.find((stage) => stage.kind === "koTrigger") as Extract<
+      PendingStage,
+      { kind: "koTrigger" }
+    >;
     expect(trigger.toolUid).toBe(toolUid);
     expect(kinds.indexOf("koTrigger")).toBeLessThan(kinds.indexOf("promote"));
     expect(kinds.indexOf("takePrizes")).toBeLessThan(kinds.indexOf("koTrigger"));
@@ -497,15 +594,23 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     const state = amulet({ amuletOn: ["active", 0], seed: 5686 });
     const first = drain(run(state, attack(1))).state;
     expect(first.pending.filter((stage) => stage.kind === "koTrigger")).toHaveLength(1);
-    const second = drain(run(first, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } })).state;
+    const second = drain(
+      run(first, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } }),
+    ).state;
     expect(searchPark(second).phase.seat).toBe("p2");
-    const done = drain(run(second, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } })).state;
+    const done = drain(
+      run(second, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [] } }),
+    ).state;
     expect(done.phase.kind).not.toBe("effect:choose");
   });
 
   it("🛑 a CHECKUP KO does not fire it (no attack)", () => {
     let state = amulet({ seed: 5687 });
-    state = withBody(state, "p2", "active", (p) => ({ ...p, damage: 890, conditions: { ...p.conditions, poisonDamage: 10 } }));
+    state = withBody(state, "p2", "active", (p) => ({
+      ...p,
+      damage: 890,
+      conditions: { ...p.conditions, poisonDamage: 10 },
+    }));
     const { state: after, events } = drain(run(state, { type: "endTurn", seat: "p1" }));
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(after.phase.kind).not.toBe("effect:choose");
@@ -529,9 +634,14 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(after.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 a KO WITHOUT DAMAGE (Doom's \"it is Knocked Out\") does not fire it (\"by damage from an attack\")", () => {
+  it('🛑 a KO WITHOUT DAMAGE (Doom\'s "it is Knocked Out") does not fire it ("by damage from an attack")', () => {
     const state = amulet({ seed: 5690 });
-    const { state: after, events } = drain(run(withBody(state, "p2", "active", (p) => ({ ...p, damage: 0 })), attack(4)));
+    const { state: after, events } = drain(
+      run(
+        withBody(state, "p2", "active", (p) => ({ ...p, damage: 0 })),
+        attack(4),
+      ),
+    );
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(after.phase.kind).not.toBe("effect:choose");
   });
@@ -545,9 +655,15 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
   });
 
   it("the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36)", () => {
-    const after = JSON.parse(JSON.stringify(drain(run(amulet({ seed: 5692 }), attack(0))).state)) as GameState;
+    const after = JSON.parse(
+      JSON.stringify(drain(run(amulet({ seed: 5692 }), attack(0))).state),
+    ) as GameState;
     const pick = after.players.p2.deck[0] as string;
-    const done = run(after, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [pick] } });
+    const done = run(after, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: [pick] },
+    });
     expect(done.state.players.p2.hand).toContain(pick);
   });
 });
@@ -579,7 +695,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
     expect(answered.state.phase.kind).toBe("turn:action");
   });
 
-  it("the printed \"you may\": a decline attaches nothing, and the turn still ends", () => {
+  it('the printed "you may": a decline attaches nothing, and the turn still ends', () => {
     const after = run(glass(5694), { type: "endTurn", seat: "p1" }).state;
     const declined = run(after, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } });
     expect(bodyAt(declined.state, "p1", "active").energy).toHaveLength(1);
@@ -599,7 +715,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
     expect(all(events, "TURN_ENDED")).toHaveLength(1);
   });
 
-  it("a Powerglass on a BENCH body is not seeded (\"in the Active Spot\")", () => {
+  it('a Powerglass on a BENCH body is not seeded ("in the Active Spot")', () => {
     let state = field({ victim: FILLER, seed: 5697 });
     state = attach(state, "p1", 0, POWERGLASS[1], "tools");
     state = toDiscard(state, "p1", ENERGY);
@@ -626,7 +742,9 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
   });
 
   it("the parked question round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36): the re-queued `endTurn` carries `toolsDone`", () => {
-    const after = JSON.parse(JSON.stringify(run(glass(5700), { type: "endTurn", seat: "p1" }).state)) as GameState;
+    const after = JSON.parse(
+      JSON.stringify(run(glass(5700), { type: "endTurn", seat: "p1" }).state),
+    ) as GameState;
     expect(after.pending[0]).toEqual({ kind: "endTurn", seat: "p1", toolsDone: true });
     const done = run(after, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } });
     expect(all(done.events, "TURN_ENDED")).toHaveLength(1);

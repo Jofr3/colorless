@@ -134,7 +134,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 300,
     retreat: 1,
     attacks: [
-      { cost: [...WAIVE_PRINTED], name: "Surplus Vine", damage: "40+", effect: `${WAIVE} ${EXTRA}` },
+      {
+        cost: [...WAIVE_PRINTED],
+        name: "Surplus Vine",
+        damage: "40+",
+        effect: `${WAIVE} ${EXTRA}`,
+      },
     ],
   },
   "d545-wall": {
@@ -170,7 +175,11 @@ const WAIVE_INDEX = 0;
 const PLAIN_INDEX = 1;
 
 function localSetup(): GameState {
-  const created = createGame({ seed: SEED, decks: { p1: COST_DECK, p2: COST_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed: SEED,
+    decks: { p1: COST_DECK, p2: COST_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -252,7 +261,9 @@ function rejected(state: GameState, index: number, code: string): string {
 function applied(state: GameState, index: number): GameEvent[] {
   const result = declare(state, index);
   if (!result.ok) {
-    throw new Error(`expected the attack to apply, got ${result.error.code}: ${result.error.message}`);
+    throw new Error(
+      `expected the attack to apply, got ${result.error.code}: ${result.error.message}`,
+    );
   }
   const names = types(result.events);
   expect(names).toContain("ATTACK_DECLARED");
@@ -279,7 +290,7 @@ describe("§1 — both sentences are WHOLE gate clauses, and nothing else moved"
     expect(legalAttackCorpus().filter(([, s]) => s === WAIVE)).toEqual([[1, WAIVE]]);
   });
 
-  it("each splits as the WHOLE text — `body: \"\"`, D395's path — and no reader claims it", () => {
+  it('each splits as the WHOLE text — `body: ""`, D395\'s path — and no reader claims it', () => {
     expect(splitAttackGateClause(ALT)).toEqual({ clause: ALT, body: "" });
     expect(splitAttackGateClause(WAIVE)).toEqual({ clause: WAIVE, body: "" });
     for (const text of [ALT, WAIVE]) {
@@ -312,7 +323,9 @@ describe("§1 — both sentences are WHOLE gate clauses, and nothing else moved"
       }
       // …and each old row still maps to what it mapped to: none of them is a cost clause.
       if (!([ALT, WAIVE] as string[]).includes(a)) {
-        expect(["onlyIf", "barredIf", "firstTurnExempt"]).toContain(timingGateFromAttackText(a)?.kind);
+        expect(["onlyIf", "barredIf", "firstTurnExempt"]).toContain(
+          timingGateFromAttackText(a)?.kind,
+        );
       }
     }
     // Two gate clauses in one string is the splitter's tripwire, so neither new row can ride
@@ -623,7 +636,11 @@ describe("§7 — `redactedAttacksOf` publishes the charged array as `effectiveC
 
   it("`:316` TRUE and `{F}` attached: `effectiveCost` is `[Fighting]` and the row is playable", () => {
     const rows = attackRows(damaged(ready("d545-alt", { F: 1 })));
-    expect(rows[ALT_INDEX]).toMatchObject({ cost: ALT_PRINTED, effectiveCost: ["Fighting"], playable: true });
+    expect(rows[ALT_INDEX]).toMatchObject({
+      cost: ALT_PRINTED,
+      effectiveCost: ["Fighting"],
+      playable: true,
+    });
     expect(redactedAttackSchema.safeParse(rows[ALT_INDEX]).success).toBe(true);
     // The index-1 control on the same body is the print, unpayable.
     expect(rows[PLAIN_INDEX]?.effectiveCost).toBeUndefined();
@@ -638,7 +655,11 @@ describe("§7 — `redactedAttacksOf` publishes the charged array as `effectiveC
 
   it("`:324` TRUE: `effectiveCost` is `[]` and the row is playable with no Energy attached", () => {
     const rows = attackRows(setConditions(ready("d545-waive", {}), "p1", { poisonDamage: 10 }));
-    expect(rows[WAIVE_INDEX]).toMatchObject({ cost: WAIVE_PRINTED, effectiveCost: [], playable: true });
+    expect(rows[WAIVE_INDEX]).toMatchObject({
+      cost: WAIVE_PRINTED,
+      effectiveCost: [],
+      playable: true,
+    });
     expect(redactedAttackSchema.safeParse(rows[WAIVE_INDEX]).success).toBe(true);
   });
 

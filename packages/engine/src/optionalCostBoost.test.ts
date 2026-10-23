@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -278,9 +274,8 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     // property that lets attack.ts SUM its terms instead of choosing between them.
     for (const [, s] of family) {
       expect(
-        [deriveAttackOptionalBoost(s), deriveAttackOptionalCostBoost(s)].filter(
-          (r) => r !== null,
-        ).length,
+        [deriveAttackOptionalBoost(s), deriveAttackOptionalCostBoost(s)].filter((r) => r !== null)
+          .length,
         s,
       ).toBeLessThan(2);
     }
@@ -410,7 +405,13 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
       // The one new `BoardCondition` member, carrying the digit the anchor CAPTURED.
       cond: { kind: "yourActiveEnergyAtLeast", count: 3 },
       ops: [
-        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 3, to: "deck" },
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count: 3,
+          to: "deck",
+        },
         { op: "shuffleDeck" },
       ],
       // 🆕🆕 D399 — `count` is the shared fragment's second capture. All 5 printings
@@ -474,7 +475,13 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
     ).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 2 },
       ops: [
-        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 2, to: "deck" },
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count: 2,
+          to: "deck",
+        },
         { op: "shuffleDeck" },
       ],
       payoff: { kind: "moreDamage", bonus: 120 },
@@ -507,9 +514,7 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
       ),
     ).toBeNull();
     expect(
-      deriveAttackOptionalCostBoost(
-        "You may discard a Stadium in play. If you do, draw 3 cards.",
-      ),
+      deriveAttackOptionalCostBoost("You may discard a Stadium in play. If you do, draw 3 cards."),
     ).toBeNull();
     // …and the printed 0 guard on the SECOND payoff too, which has its own captured
     // amount and therefore its own `>= 1`.
@@ -640,50 +645,59 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
     // The OWNER's pile, asserted as an EXTENSION of its own former contents (D380's
     // repair — "contains the uid" and "grew by one" are both true of a cross-seat
     // write on a symmetric board).
-    expect(done.state.players.p2.discard).toEqual([...parked.state.players.p2.discard, stadium.uid]);
+    expect(done.state.players.p2.discard).toEqual([
+      ...parked.state.players.p2.discard,
+      stadium.uid,
+    ]);
     expect(done.state.players.p1.discard).toEqual(parked.state.players.p1.discard);
     expect(find(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
     expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
     expect(types(done.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it.each(SEEDS)("seed %i — 🛑 NEUTRALIZATION ZONE: the order is observable, and it is 280", (seed) => {
-    // 🛑🛑 **THE RUNG THAT SEPARATES THE PRINTED ORDER FROM `boostedArms`' ORDER, AND
-    // THE ONLY ONE THAT CAN.** Neutralization Zone `sv06.5-060` prevents damage to a
-    // Pokémon WITHOUT a Rule Box from an attacking Pokémon **ex**. `fix-titan` has no
-    // Rule Box and `Fixceti ex` is an ex, so while the Zone is in the shared zone this
-    // attack deals NOTHING. Discard first and the hit lands for 280; hit first and it
-    // is prevented for 0 and the Zone is then discarded by an attack that did nothing.
-    // Every board in this file that carries Beach Court instead is green EITHER WAY.
-    const before = board(seed, NEUTRALIZATION_ZONE);
-    const stadium = before.stadium;
-    if (stadium === null) throw new Error("expected P2's Stadium in the zone");
-    const defender = before.players.p2.active;
-    if (defender === null) throw new Error("expected P2's Active");
-    expect(defender.damage).toBe(0);
+  it.each(SEEDS)(
+    "seed %i — 🛑 NEUTRALIZATION ZONE: the order is observable, and it is 280",
+    (seed) => {
+      // 🛑🛑 **THE RUNG THAT SEPARATES THE PRINTED ORDER FROM `boostedArms`' ORDER, AND
+      // THE ONLY ONE THAT CAN.** Neutralization Zone `sv06.5-060` prevents damage to a
+      // Pokémon WITHOUT a Rule Box from an attacking Pokémon **ex**. `fix-titan` has no
+      // Rule Box and `Fixceti ex` is an ex, so while the Zone is in the shared zone this
+      // attack deals NOTHING. Discard first and the hit lands for 280; hit first and it
+      // is prevented for 0 and the Zone is then discarded by an attack that did nothing.
+      // Every board in this file that carries Beach Court instead is green EITHER WAY.
+      const before = board(seed, NEUTRALIZATION_ZONE);
+      const stadium = before.stadium;
+      if (stadium === null) throw new Error("expected P2's Stadium in the zone");
+      const defender = before.players.p2.active;
+      if (defender === null) throw new Error("expected P2's Active");
+      expect(defender.damage).toBe(0);
 
-    const done = say(attack(before).state, true);
-    expect(done.state.stadium).toBeNull();
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
-    const after = done.state.players.p2.active;
-    if (after === null) throw new Error("expected P2's Active");
-    expect(after.damage).toBe(280);
-  });
+      const done = say(attack(before).state, true);
+      expect(done.state.stadium).toBeNull();
+      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
+      const after = done.state.players.p2.active;
+      if (after === null) throw new Error("expected P2's Active");
+      expect(after.damage).toBe(280);
+    },
+  );
 
-  it.each(SEEDS)("seed %i — and the CONTROL: the same Zone with the confirm DECLINED deals 0", (seed) => {
-    // The other end of the same board, and it is what proves the 280 above came from
-    // the DISCARD rather than from the Zone never mattering: decline, the Zone stays,
-    // and the printed 140 is prevented in full.
-    const before = board(seed, NEUTRALIZATION_ZONE);
-    const stadium = before.stadium;
-    if (stadium === null) throw new Error("expected P2's Stadium in the zone");
-    const done = say(attack(before).state, false);
-    expect(done.state.stadium).toEqual(stadium);
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0 });
-    const after = done.state.players.p2.active;
-    if (after === null) throw new Error("expected P2's Active");
-    expect(after.damage).toBe(0);
-  });
+  it.each(SEEDS)(
+    "seed %i — and the CONTROL: the same Zone with the confirm DECLINED deals 0",
+    (seed) => {
+      // The other end of the same board, and it is what proves the 280 above came from
+      // the DISCARD rather than from the Zone never mattering: decline, the Zone stays,
+      // and the printed 140 is prevented in full.
+      const before = board(seed, NEUTRALIZATION_ZONE);
+      const stadium = before.stadium;
+      if (stadium === null) throw new Error("expected P2's Stadium in the zone");
+      const done = say(attack(before).state, false);
+      expect(done.state.stadium).toEqual(stadium);
+      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0 });
+      const after = done.state.players.p2.active;
+      if (after === null) throw new Error("expected P2's Active");
+      expect(after.damage).toBe(0);
+    },
+  );
 });
 
 describe("§5 — the confirm: a decline still deals the base, and an empty zone is not asked", () => {
@@ -700,36 +714,42 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
     expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
   });
 
-  it.each(SEEDS)("seed %i — 🛑 an EMPTY zone is not asked at all, and pays 140 rather than 280", (seed) => {
-    // 🛑 THE RUNG A DROPPED `conditionGate` REDDENS ON, AND IT IS TWO RUNGS AT ONCE:
-    // without the gate the program parks a confirm on an empty zone whose "yes"
-    // discards NOTHING and still pays the +140 — a **FREE 140**, which is D380's
-    // stakeless dialog with damage at stake.
-    const before = board(seed, null);
-    expect(before.stadium).toBeNull();
-    const result = attack(before);
-    expect(result.state.phase.kind).not.toBe("effect:choose");
-    expect(types(result.events)).not.toContain("EFFECT_PENDING");
-    expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
-    expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    // The gate refuses the QUESTION, never the attack — the rung a dropped
-    // `conditionGate.otherwise` reddens on.
-    expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
-  });
+  it.each(SEEDS)(
+    "seed %i — 🛑 an EMPTY zone is not asked at all, and pays 140 rather than 280",
+    (seed) => {
+      // 🛑 THE RUNG A DROPPED `conditionGate` REDDENS ON, AND IT IS TWO RUNGS AT ONCE:
+      // without the gate the program parks a confirm on an empty zone whose "yes"
+      // discards NOTHING and still pays the +140 — a **FREE 140**, which is D380's
+      // stakeless dialog with damage at stake.
+      const before = board(seed, null);
+      expect(before.stadium).toBeNull();
+      const result = attack(before);
+      expect(result.state.phase.kind).not.toBe("effect:choose");
+      expect(types(result.events)).not.toContain("EFFECT_PENDING");
+      expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
+      expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+      // The gate refuses the QUESTION, never the attack — the rung a dropped
+      // `conditionGate.otherwise` reddens on.
+      expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
+    },
+  );
 
-  it.each(SEEDS)("seed %i — ONE §8.5 hit, never two: exactly one DAMAGE_DEALT per answer", (seed) => {
-    // D316's arithmetic, inherited: Weakness DISTRIBUTES over a split hit but
-    // Resistance and the defender's reduction are SUBTRACTIONS paid once per hit, so a
-    // base landed pre-program AND a bonus landed inside the gate would emit two rows
-    // for one printed number. `scaledBase` is 0 for this reader for exactly that
-    // reason, and this is the observation that would catch its removal.
-    for (const yes of [true, false]) {
-      const done = say(attack(board(seed, BEACH_COURT)).state, yes);
-      expect(types(done.events).filter((t) => t === "DAMAGE_DEALT")).toHaveLength(1);
-    }
-    const empty = attack(board(seed, null));
-    expect(types(empty.events).filter((t) => t === "DAMAGE_DEALT")).toHaveLength(1);
-  });
+  it.each(SEEDS)(
+    "seed %i — ONE §8.5 hit, never two: exactly one DAMAGE_DEALT per answer",
+    (seed) => {
+      // D316's arithmetic, inherited: Weakness DISTRIBUTES over a split hit but
+      // Resistance and the defender's reduction are SUBTRACTIONS paid once per hit, so a
+      // base landed pre-program AND a bonus landed inside the gate would emit two rows
+      // for one printed number. `scaledBase` is 0 for this reader for exactly that
+      // reason, and this is the observation that would catch its removal.
+      for (const yes of [true, false]) {
+        const done = say(attack(board(seed, BEACH_COURT)).state, yes);
+        expect(types(done.events).filter((t) => t === "DAMAGE_DEALT")).toHaveLength(1);
+      }
+      const empty = attack(board(seed, null));
+      expect(types(empty.events).filter((t) => t === "DAMAGE_DEALT")).toHaveLength(1);
+    },
+  );
 });
 
 describe("§6 — what this slice did NOT buy", () => {
@@ -746,12 +766,20 @@ describe("§6 — what this slice did NOT buy", () => {
     expect([left.length, units(left)]).toEqual([0, 0]);
     // 🆕🆕🆕 D548 — RE-POINTED BY OWNER (D438): the row left `STILL_OWED` for `TAKEN_SINCE`,
     // and its printing count is asserted there, beside a POSITIVE resolution rung.
-    expect(corpus().filter(([, s]) => s === TAKEN_SINCE.prize).map(([n]) => n)).toEqual([2]);
+    expect(
+      corpus()
+        .filter(([, s]) => s === TAKEN_SINCE.prize)
+        .map(([n]) => n),
+    ).toEqual([2]);
     expect(resolvedByAnyReader(TAKEN_SINCE.prize)).toBe(true);
     // 🛑 AND THE DEPARTED ROW IS ASSERTED RESOLVED, WHICH IS WHAT KEEPS THE RUNG ABOVE
     // FROM GOING GREEN BY BEING SHORTENED (D382's repair, one file over).
     expect(resolvedByAnyReader(TAKEN_SINCE.energy)).toBe(true);
-    expect(corpus().filter(([, s]) => s === TAKEN_SINCE.energy).map(([n]) => n)).toEqual([5]);
+    expect(
+      corpus()
+        .filter(([, s]) => s === TAKEN_SINCE.energy)
+        .map(([n]) => n),
+    ).toEqual([5]);
   });
 
   it("bought no new op and no new BoardCondition member — every step already existed", () => {

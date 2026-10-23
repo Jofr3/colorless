@@ -66,7 +66,15 @@ const ironHands = builderCard({
 // A reprint of Charmander in a later set: the same name, a different print.
 const charmanderReprint: BuilderCard = { ...charmander, cardId: "sv08.5-109", number: "109" };
 
-const pool = [charizard, charmander, charmanderReprint, research, fireEnergy, fireEnergyArt, ironHands];
+const pool = [
+  charizard,
+  charmander,
+  charmanderReprint,
+  research,
+  fireEnergy,
+  fireEnergyArt,
+  ironHands,
+];
 const deckOf = (...entries: [BuilderCard, number][]): Deck =>
   entries.map(([card, quantity]) => ({ card, quantity }));
 
@@ -204,10 +212,7 @@ describe("resolveDecklist", () => {
   });
 
   it("matches our own export's upper-cased set ids without a code map", async () => {
-    const { entries } = await resolveDecklist(
-      parseDecklist("3 Charmander SV08.5 109"),
-      findInPool,
-    );
+    const { entries } = await resolveDecklist(parseDecklist("3 Charmander SV08.5 109"), findInPool);
     expect(entries).toEqual([{ card: charmanderReprint, quantity: 3 }]);
   });
 

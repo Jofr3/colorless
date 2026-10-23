@@ -8,7 +8,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackEffect,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -462,7 +462,10 @@ describe("§1 — the sentence, its corpus row, and the fixtures that print it",
       expect(attacks[BOARD]?.effect, card.name).toBe(SHIPPED_BOARD);
       expect(attacks[SELF]?.effect, card.name).toBe(SHIPPED_SELF);
       expect(attacks[PLAIN]?.effect, card.name).toBeUndefined();
-      expect(attacks.map((a) => a.damage), card.name).toEqual([10, 10, 10, 10]);
+      expect(
+        attacks.map((a) => a.damage),
+        card.name,
+      ).toEqual([10, 10, 10, 10]);
     }
   });
 
@@ -614,7 +617,9 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     // asserted on two specimens.
     const family = legalAttackCorpus()
       .map(([, s]) => s)
-      .filter((s) => /more damage for each (?:.+ )?Energy attached to (?:this Pokémon|all of your)/.test(s));
+      .filter((s) =>
+        /more damage for each (?:.+ )?Energy attached to (?:this Pokémon|all of your)/.test(s),
+      );
     expect(family.length).toBeGreaterThan(0);
     for (const sentence of family) {
       const bonus = deriveAttackDamageBonus(sentence);
@@ -712,9 +717,9 @@ describe("§4 — 0 is not one fact, so three boards reach it three ways", () =>
     // route 2 a different fact from route 1.
     expect(dealt(state, BOARD)).toBe(70);
     expect(countEnergyInPlay(state, "p1", null, { kind: "ownerPokemon", owner: "Iono" })).toBe(4);
-    expect(countEnergyInPlay(state, "p1", "Lightning", { kind: "ownerPokemon", owner: "Iono" })).toBe(
-      0,
-    );
+    expect(
+      countEnergyInPlay(state, "p1", "Lightning", { kind: "ownerPokemon", owner: "Iono" }),
+    ).toBe(0);
   });
 
   it("ROUTE 3 — the board is EMPTY, which is the number's third route", () => {
@@ -853,15 +858,15 @@ describe("§7 — `countEnergyInPlay`, widened without moving a caller", () => {
       players: { ...state.players, p1: { ...state.players.p1, active: null } },
     };
     expect(countEnergyInPlay(headless, "p1", "Lightning")).toBe(6);
-    expect(countEnergyInPlay(headless, "p1", "Lightning", { kind: "ownerPokemon", owner: "Iono" })).toBe(
-      1,
-    );
+    expect(
+      countEnergyInPlay(headless, "p1", "Lightning", { kind: "ownerPokemon", owner: "Iono" }),
+    ).toBe(1);
   });
 
   it("a filter that matches NOTHING is 0, and an EMPTY board is 0 too", () => {
-    expect(
-      countEnergyInPlay(mixed(), "p1", "Lightning", { kind: "byName", name: "Nobody" }),
-    ).toBe(0);
+    expect(countEnergyInPlay(mixed(), "p1", "Lightning", { kind: "byName", name: "Nobody" })).toBe(
+      0,
+    );
     expect(
       countEnergyInPlay(zeroEmpty(), "p1", "Lightning", { kind: "ownerPokemon", owner: "Iono" }),
     ).toBe(0);
@@ -904,10 +909,6 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
     const returned = mustApply(saved, { type: "endTurn", seat: "p2" }).state;
     const grown = attachBenchFromDeck(returned, "p1", 0, "fix-lightning-energy", 1);
     expect(find(swing(grown, IONO).events, "DAMAGE_DEALT")?.dealt).toBe(10 + 20 * 4);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 

@@ -19,7 +19,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter } from "./effects";
-import { engineVersion, programFor } from "./index";
+import { programFor } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction } from "./index";
 import { countOwnerPokemonInPlay, countPokemonInPlay } from "./interpreter";
@@ -101,7 +101,8 @@ const ANY_BODIES = "This attack does 20 damage for each of your Pokémon in play
 const BASIC_BODIES = "This attack does 20 damage for each of your Basic Pokémon in play.";
 const TR_BODIES = "This attack does 30 damage for each of your Team Rocket's Pokémon in play.";
 const GRASS_BODIES = "This attack does 30 damage for each of your {G} Pokémon in play.";
-const EVOLUTION_BODIES = "This attack does 40 more damage for each of your Evolution Pokémon in play.";
+const EVOLUTION_BODIES =
+  "This attack does 40 more damage for each of your Evolution Pokémon in play.";
 
 /** The five, in fixture-attack order. */
 const CLAIMED = [ANY_BODIES, BASIC_BODIES, TR_BODIES, GRASS_BODIES, EVOLUTION_BODIES] as const;
@@ -155,7 +156,8 @@ const DRIFLOON_FIRST_SENTENCE =
     record in this family and the one this slice does NOT take. Its noun is not a
     prefix noun (" in play" sits in the MIDDLE), so it cannot ride these anchors at
     all, and it needs a `CardFilter` member reading `attacksOf`. */
-const ROUND_BODIES = "This attack does 20 damage for each of your Pokémon in play that has the Round attack.";
+const ROUND_BODIES =
+  "This attack does 20 damage for each of your Pokémon in play that has the Round attack.";
 
 /** The BENCHED twin of this member's noun — a real printing, already built as
     `yourBenchCount` (D282). It is the whole of ⑴ above stated as printed text:
@@ -751,10 +753,16 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     // anchors (D159). So the pair separates the two anchors on exactly the seat
     // token and on nothing else: same noun, same filter, different `seat`.
     expect(
-      deriveAttackDamageMultiplier("This attack does 60 damage for each of your Pokémon ex in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 60 damage for each of your Pokémon ex in play.",
+      ),
     ).toEqual({
       per: 60,
-      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "suffixPokemon", suffix: "ex" } },
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "suffixPokemon", suffix: "ex" },
+      },
     });
     // …and the same edit on a noun the map has held since D439 reads the same way,
     // which is what makes "one vocabulary, two seats" a testable claim rather than
@@ -864,7 +872,9 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     // consulted and claiming the head buys ZERO census printings.
     expect(splitAttackTrailingClause(DRIFLOON_COMPOUND)).toBeNull();
     expect(splitAttackGateClause(DRIFLOON_COMPOUND)).toBeNull();
-    expect(deriveAttackEffect("(Don't apply Weakness and Resistance for Benched Pokémon.)")).toBeNull();
+    expect(
+      deriveAttackEffect("(Don't apply Weakness and Resistance for Benched Pokémon.)"),
+    ).toBeNull();
     // 🆕🛑 **D539 — THE THREE RUNGS ABOVE ARE KEPT AND ARE STILL TRUE; ONLY THE LAST ONE
     // FLIPS.** The composition route is refused exactly as this rung has always said —
     // `COMPOUND_CLAUSE_BREAK` still splits the row into THREE parts, the tail is still
@@ -900,8 +910,8 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       });
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }
-    const round = legalAttackCorpus().filter(
-      ([, s]) => s.includes("in play that has the Round attack"),
+    const round = legalAttackCorpus().filter(([, s]) =>
+      s.includes("in play that has the Round attack"),
     );
     expect(round).toHaveLength(3);
     expect(round.reduce((sum, [n]) => sum + n, 0)).toBe(6);
@@ -951,10 +961,14 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     // admitted by a search-style pattern, and each differs from `GRASS_BODIES` on
     // exactly ONE axis.
     expect(
-      deriveAttackDamageMultiplier("this attack does 30 damage for each of your {G} Pokémon in play."),
+      deriveAttackDamageMultiplier(
+        "this attack does 30 damage for each of your {G} Pokémon in play.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackDamageMultiplier("This attack does 30 damage for each of your {G} Pokémon in play"),
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each of your {G} Pokémon in play",
+      ),
     ).toBeNull();
     expect(deriveAttackDamageMultiplier(`Flip a coin. ${GRASS_BODIES}`)).toBeNull();
     expect(
@@ -964,18 +978,28 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     // families carries, and it is a SEPARATE guard from the vocabulary: this string
     // has a noun the map holds, so only `per >= 1` can be refusing it.
     expect(
-      deriveAttackDamageMultiplier("This attack does 0 damage for each of your {G} Pokémon in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 0 damage for each of your {G} Pokémon in play.",
+      ),
     ).toBeNull();
     expect(
-      deriveAttackDamageBonus("This attack does 0 more damage for each of your Evolution Pokémon in play."),
+      deriveAttackDamageBonus(
+        "This attack does 0 more damage for each of your Evolution Pokémon in play.",
+      ),
     ).toBeNull();
     // …and the capture really is a capture, driven on CONSTRUCTED text that is
     // labelled as constructed rather than presented as a card (D121).
     expect(
-      deriveAttackDamageMultiplier("This attack does 70 damage for each of your {G} Pokémon in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 70 damage for each of your {G} Pokémon in play.",
+      ),
     ).toEqual({
       per: 70,
-      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Grass" } },
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "typedPokemon", pokemonType: "Grass" },
+      },
     });
   });
 
@@ -1002,7 +1026,9 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       expect(deriveAttackDamageMultiplier(`Flip a coin. ${head}`)).toBeNull();
       // …and the printed-zero guard, which is a SEPARATE guard from the anchor:
       // these strings carry a noun both readers hold, so only `per >= 1` refuses.
-      expect(deriveAttackDamageMultiplier(head.replace(/does \d+ damage/, "does 0 damage"))).toBeNull();
+      expect(
+        deriveAttackDamageMultiplier(head.replace(/does \d+ damage/, "does 0 damage")),
+      ).toBeNull();
     }
   });
 
@@ -1024,10 +1050,16 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       // …and every one of them really does reach the typed reading, which is what
       // stops this being a vacuous assertion about strings nobody parses.
       expect(
-        deriveAttackDamageMultiplier(`This attack does 10 damage for each of your ${type} Pokémon in play.`),
+        deriveAttackDamageMultiplier(
+          `This attack does 10 damage for each of your ${type} Pokémon in play.`,
+        ),
       ).toEqual({
         per: 10,
-        count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: type } },
+        count: {
+          kind: "pokemonInPlay",
+          seat: "you",
+          filter: { kind: "typedPokemon", pokemonType: type },
+        },
       });
     }
     // …and the three EXACT nouns carry no apostrophe either, so they cannot reach
@@ -1037,23 +1069,39 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     }
     expect(deriveAttackDamageMultiplier(TR_BODIES)).toEqual({
       per: 30,
-      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "ownerPokemon", owner: "Team Rocket" } },
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "ownerPokemon", owner: "Team Rocket" },
+      },
     });
     // The owner is CAPTURED, not listed — a second prefix is admitted the day it is
     // ingested and this file never learns a card name. Constructed, and labelled so.
     expect(
-      deriveAttackDamageMultiplier("This attack does 30 damage for each of your Ethan's Pokémon in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each of your Ethan's Pokémon in play.",
+      ),
     ).toEqual({
       per: 30,
-      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "ownerPokemon", owner: "Ethan" } },
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "ownerPokemon", owner: "Ethan" },
+      },
     });
     // …and the SPELLED-OUT type notation resolves through the same shared map, so a
     // token meaning Grass in one clause of this file means Grass in every other.
     expect(
-      deriveAttackDamageMultiplier("This attack does 30 damage for each of your Grass Pokémon in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each of your Grass Pokémon in play.",
+      ),
     ).toEqual({
       per: 30,
-      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Grass" } },
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "typedPokemon", pokemonType: "Grass" },
+      },
     });
   });
 
@@ -1180,7 +1228,17 @@ describe("§3 — `countPokemonInPlay`: Active + Bench, seat-relative, filtered"
     //     filter would not have shown it.
     const state = canonical();
     const benchOnly = (f: CardFilter) =>
-      state.players.p1.bench.filter((b) => countPokemonInPlay({ ...state, players: { ...state.players, p1: { ...state.players.p1, active: b, bench: [] } } }, "p1", f) === 1).length;
+      state.players.p1.bench.filter(
+        (b) =>
+          countPokemonInPlay(
+            {
+              ...state,
+              players: { ...state.players, p1: { ...state.players.p1, active: b, bench: [] } },
+            },
+            "p1",
+            f,
+          ) === 1,
+      ).length;
     expect(FILTERS.map(benchOnly)).toEqual([5, 2, 0, 3, 3]);
     //   • so the Active's own contribution, filter by filter, is the difference:
     const BENCH_ONLY = [5, 2, 0, 3, 3] as const;
@@ -1317,7 +1375,9 @@ describe("§4 — the fold: five attacks, five numbers, one board", () => {
     // proves the skip channel could fire at all. Its witnesses live in the suites
     // that own an unread printing.
     const floor = benched(bare(), "p1", ["fix-benchfiller"]);
-    expect(swing(floor, 3).events.filter((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    expect(swing(floor, 3).events.filter((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toHaveLength(
+      0,
+    );
   });
 });
 
@@ -1554,14 +1614,16 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // …and the control that keeps the sweep above from being vacuous (D424): the
     // cast really does separate the members, so a `matchesFilter` that answered a
     // constant would not survive this line.
-    const answers = Object.values(EVERY_KIND).map((f) =>
-      CAST.filter((id) => matchesFilter(FIXTURE_POOL[id], f)).length,
+    const answers = Object.values(EVERY_KIND).map(
+      (f) => CAST.filter((id) => matchesFilter(FIXTURE_POOL[id], f)).length,
     );
     expect(new Set(answers).size).toBeGreaterThan(1);
     expect(matchesFilter(FIXTURE_POOL["fix-attacker-ex"], EVERY_KIND.suffixPokemon)).toBe(true);
     expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.suffixPokemon)).toBe(false);
     expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.attackNamePokemon)).toBe(true);
-    expect(matchesFilter(FIXTURE_POOL["fix-attacker-ex"], EVERY_KIND.attackNamePokemon)).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-attacker-ex"], EVERY_KIND.attackNamePokemon)).toBe(
+      false,
+    );
     // 🆕🆕 D466 — the new member's positive and its THREE different negatives, each a
     // different reason to be false: a Stage 1 (the other ordinal), a Basic (the wrong
     // end of the chain) and a Trainer (not a Pokémon at all, refused inside the
@@ -1579,18 +1641,18 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // 🆕🆕🆕 D510 — the new member's positive and its THREE different negatives, each
     // false for a DIFFERENT reason: an Item carrying the fragment (the head noun), a
     // Supporter carrying none (the fragment), and a Pokémon (neither conjunct).
-    expect(
-      matchesFilter(FIXTURE_POOL["fix-trsupporter"], EVERY_KIND.supporterNameContaining),
-    ).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-trsupporter"], EVERY_KIND.supporterNameContaining)).toBe(
+      true,
+    );
     expect(
       matchesFilter(FIXTURE_POOL["fix-trtransceiver"], EVERY_KIND.supporterNameContaining),
     ).toBe(false);
     expect(
       matchesFilter(FIXTURE_POOL["fix-ethansadventure"], EVERY_KIND.supporterNameContaining),
     ).toBe(false);
-    expect(
-      matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.supporterNameContaining),
-    ).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.supporterNameContaining)).toBe(
+      false,
+    );
     // …and the NEIGHBOURS it must not be, on the same three cards in the same run:
     // `supporter` admits the Supporter this member refuses, and `byName` — the EXACT
     // read — refuses the very card this member's fragment was taken from.
@@ -1604,9 +1666,9 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // ONLY observable witness this conjunct has anywhere), a Pokémon carrying NO
     // fragment (the fragment), and a Pokémon carrying the OTHER printed fragment (the
     // disjunct, which is what makes the printed `or` an axis rather than a decoration).
-    expect(
-      matchesFilter(FIXTURE_POOL["fix-galarweezing"], EVERY_KIND.pokemonNameContaining),
-    ).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-galarweezing"], EVERY_KIND.pokemonNameContaining)).toBe(
+      true,
+    );
     expect(
       matchesFilter(FIXTURE_POOL["fix-weezingcanister"], EVERY_KIND.pokemonNameContaining),
     ).toBe(false);
@@ -1691,10 +1753,6 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     expect(kinds.has("opponentPokemonInPlay")).toBe(false);
     expect(kinds.has("yourPokemonInPlay")).toBe(false);
   });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1718,7 +1776,9 @@ describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zo
     expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "Bite" })).toBe(1);
     // …and a name nothing prints is a genuine ZERO rather than a data gap, which is
     // the property that made a CAPTURE safe here where D440 refused one.
-    expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "Rounds" })).toBe(0);
+    expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "Rounds" })).toBe(
+      0,
+    );
     expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "round" })).toBe(0);
     // 🛑 **EQUALITY AND NOT A SUBSTRING, DRIVEN FROM BOTH SIDES.** "Rounds" is longer
     // than the printed name and "Roun" is a PREFIX of it, so a `.includes` or a
@@ -1830,7 +1890,6 @@ describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zo
   });
 });
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 🆕🆕 §8 (D466) — the PRINTED EVOLUTION-STAGE ORDINAL as a `CardFilter`: the two
 // printed rows, the two zones, the two folds, and the seat.
@@ -1909,7 +1968,9 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     // vocabulary now spells, deliberately: see `IN_PLAY_BODY_NOUNS`) prove the noun is
     // what decides, not the anchor.
     expect(
-      deriveAttackDamageMultiplier("This attack does 40 damage for each of your Stage 2 Pokémon in play."),
+      deriveAttackDamageMultiplier(
+        "This attack does 40 damage for each of your Stage 2 Pokémon in play.",
+      ),
     ).toEqual({
       per: 40,
       count: {
@@ -1919,7 +1980,9 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
       },
     });
     expect(
-      deriveAttackDamageBonus("This attack does 40 more damage for each Stage 1 Pokémon on your Bench."),
+      deriveAttackDamageBonus(
+        "This attack does 40 more damage for each Stage 1 Pokémon on your Bench.",
+      ),
     ).toEqual({
       per: 40,
       count: { kind: "yourBenchCount", filter: { kind: "stagePokemon", stage: "Stage1" } },
@@ -1945,12 +2008,16 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     // for Ancient (the map's "Ancient Pokémon" key, `banners.ts`), so the witness is the OTHER
     // Paradox banner, which the map does not spell (constructed; one axis, the noun).
     expect(
-      deriveAttackDamageBonus("This attack does 40 more damage for each Future Pokémon on your Bench."),
+      deriveAttackDamageBonus(
+        "This attack does 40 more damage for each Future Pokémon on your Bench.",
+      ),
     ).toBeNull();
     // …the printed ZERO, which is a SEPARATE guard from the vocabulary: the noun here
     // is one the map holds, so only `per >= 1` can be doing the refusing.
     expect(
-      deriveAttackDamageBonus("This attack does 0 more damage for each Stage 2 Pokémon on your Bench."),
+      deriveAttackDamageBonus(
+        "This attack does 0 more damage for each Stage 2 Pokémon on your Bench.",
+      ),
     ).toBeNull();
     // …the leading CAPITAL, and the prefix ENDS A SENTENCE so the lowercase `t` is the
     // only thing that moved (D452's finding: a leading-text near-miss that also
@@ -1963,7 +2030,9 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     // …and the ADMISSION that makes all five mean something (D424): the near-miss one
     // axis from the Ancient row is claimed.
     expect(
-      deriveAttackDamageBonus("This attack does 40 more damage for each Basic Pokémon on your Bench."),
+      deriveAttackDamageBonus(
+        "This attack does 40 more damage for each Basic Pokémon on your Bench.",
+      ),
     ).toEqual({ per: 40, count: { kind: "yourBenchCount", filter: { kind: "basicPokemon" } } });
   });
 
@@ -1973,18 +2042,24 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     const hits = legalAttackCorpus().filter(([, s]) => / on your Bench\.$/.test(s));
     expect(hits.map(([, s]) => s)).toEqual([BENCH_STAGE2]);
     // …and the five shipped Bench sentences still land on their own members, unfiltered.
-    expect(deriveAttackDamageBonus("This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).")).toEqual(
-      { per: 20, count: { kind: "bothSidesBenchCount" } },
-    );
-    expect(deriveAttackDamageBonus("This attack does 20 more damage for each of your opponent's Benched Pokémon.")).toEqual(
-      { per: 20, count: { kind: "opponentBenchCount" } },
-    );
-    expect(deriveAttackDamageMultiplier("This attack does 20 damage for each of your Benched Pokémon.")).toEqual(
-      { per: 20, count: { kind: "yourBenchCount" } },
-    );
-    expect(deriveAttackDamageMultiplier("This attack does 20 damage for each damage counter on all of your Benched Pokémon.")).toEqual(
-      { per: 20, count: { kind: "damageCountersOnYourBench" } },
-    );
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).",
+      ),
+    ).toEqual({ per: 20, count: { kind: "bothSidesBenchCount" } });
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each of your opponent's Benched Pokémon.",
+      ),
+    ).toEqual({ per: 20, count: { kind: "opponentBenchCount" } });
+    expect(
+      deriveAttackDamageMultiplier("This attack does 20 damage for each of your Benched Pokémon."),
+    ).toEqual({ per: 20, count: { kind: "yourBenchCount" } });
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 20 damage for each damage counter on all of your Benched Pokémon.",
+      ),
+    ).toEqual({ per: 20, count: { kind: "damageCountersOnYourBench" } });
     // 🛑 **AND BOTH NEW SENTENCES ARE CLAIMED BY EXACTLY ONE READER EACH.** A named
     // owner plus the refusals, never `resolvedByAnyReader === true` alone (D438).
     expect(deriveAttackDamageBonus(STAGE1_BODIES)).toBeNull();
@@ -2004,7 +2079,9 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     expect(countPokemonInPlay(state, "p1", { kind: "anyPokemon" })).toBe(6);
     expect(countPokemonInPlay(state, "p2", S1)).toBe(2);
     // …and the BENCH-ONLY walk, which is the one the printed word "in play" excludes.
-    expect(state.players.p1.bench.filter((p) => matchesFilter(topCardOf(state, p), S1))).toHaveLength(3);
+    expect(
+      state.players.p1.bench.filter((p) => matchesFilter(topCardOf(state, p), S1)),
+    ).toHaveLength(3);
   });
 
   it("🛑 the STAGE-1 fold: 160 dealt, and the printed base is DROPPED", () => {
@@ -2128,7 +2205,9 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     expect(Object.hasOwn(lossy.count, "filter")).toBe(false);
     const board = stage2Board();
     const S2: CardFilter = { kind: "stagePokemon", stage: "Stage2" };
-    expect(board.players.p1.bench.filter((p) => matchesFilter(topCardOf(board, p), S2))).toHaveLength(1);
+    expect(
+      board.players.p1.bench.filter((p) => matchesFilter(topCardOf(board, p), S2)),
+    ).toHaveLength(1);
     expect(board.players.p1.bench).toHaveLength(5);
   });
 

@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackCostAt } from "./attack";
 import { BANNER_BY_ID, bannerOf } from "./banners";
 import { LEGAL_EX_POOL } from "./bannerPool";
@@ -17,7 +16,7 @@ import {
 import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import { briarPrizeBonus } from "./flow";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
@@ -105,21 +104,279 @@ const FEINT =
   "This attack does 30 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.";
 
 const LOCAL_CARDS: Record<string, Card> = {
-  [CYCLIZAR]: battler(CYCLIZAR, { name: "Cyclizar ex", hp: 210, types: ["Colorless"], retreat: 1, weaknesses: [{"type": "Fighting", "value": "×2"}], attacks: [{"cost": ["Colorless", "Colorless", "Colorless"], "name": "Break Through", "damage": 130, "effect": "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"}, {"cost": ["Grass", "Fire", "Psychic"], "name": "Zircon Road", "damage": 180, "effect": "You may draw 5 cards."}] }),
-  [UMBREON]: battler(UMBREON, { name: "Umbreon ex", stage: "Stage1", evolveFrom: "Eevee", hp: 280, types: ["Darkness"], retreat: 2, weaknesses: [{"type": "Grass", "value": "×2"}], attacks: [{"cost": ["Darkness", "Colorless", "Colorless"], "name": "Moon Mirage", "damage": 160, "effect": "Your opponent's Active Pokémon is now Confused."}, {"cost": ["Lightning", "Psychic", "Darkness"], "name": "Onyx", "effect": "Discard all Energy from this Pokémon, and take a Prize card."}] }),
-  [TERAPAGOS_EX]: battler(TERAPAGOS_EX, { name: "Terapagos ex", hp: 230, types: ["Colorless"], retreat: 2, weaknesses: [{"type": "Fighting", "value": "×2"}], attacks: [{"cost": ["Colorless", "Colorless"], "name": "Unified Beatdown", "damage": "30×", "effect": "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon."}, {"cost": ["Grass", "Water", "Lightning"], "name": "Crown Opal", "damage": 180, "effect": "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon."}] }),
-  [PIKACHU_EX]: battler(PIKACHU_EX, { name: "Pikachu ex", hp: 190, types: ["Lightning"], retreat: 1, weaknesses: [{"type": "Fighting", "value": "×2"}], attacks: [{"cost": ["Colorless"], "name": "Tail Whap", "damage": 30}, {"cost": ["Lightning", "Lightning", "Colorless"], "name": "Thunder", "damage": 220, "effect": "This Pokémon also does 30 damage to itself."}] }),
-  [MILOTIC]: battler(MILOTIC, { name: "Milotic ex", stage: "Stage1", evolveFrom: "Feebas", hp: 270, types: ["Water"], retreat: 2, weaknesses: [{"type": "Lightning", "value": "×2"}], attacks: [{"cost": ["Water", "Colorless", "Colorless"], "name": "Hypno Splash", "damage": 160, "effect": "Your opponent's Active Pokémon is now Asleep."}], abilities: [{"type": "Ability", "name": "Sparkling Scales", "effect": "Prevent all damage from and effects of attacks from your opponent's Tera Pokémon done to this Pokémon."}] }),
-  [HOOTHOOT]: battler(HOOTHOOT, { name: "Hoothoot", hp: 70, types: ["Colorless"], retreat: 1, weaknesses: [{"type": "Lightning", "value": "×2"}], attacks: [{"cost": ["Colorless"], "name": "Triple Stab", "damage": "10×", "effect": "Flip 3 coins. This attack does 10 damage for each heads."}] }),
-  [NOCTOWL]: battler(NOCTOWL, { name: "Noctowl", stage: "Stage1", evolveFrom: "Hoothoot", hp: 100, types: ["Colorless"], retreat: 1, weaknesses: [{"type": "Lightning", "value": "×2"}], attacks: [{"cost": ["Colorless", "Colorless"], "name": "Speed Wing", "damage": 60}], abilities: [{"type": "Ability", "name": "Jewel Seeker", "effect": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, if you have any Tera Pokémon in play, you may search your deck for up to 2 Trainer cards, reveal them, and put them into your hand. Then, shuffle your deck."}] }),
-  [MARILL]: battler(MARILL, { name: "Marill", hp: 60, types: ["Psychic"], retreat: 1, weaknesses: [{"type": "Metal", "value": "×2"}], attacks: [{"cost": ["Psychic"], "name": "Rolling Tackle", "damage": 20}] }),
-  [AZUMARILL]: battler(AZUMARILL, { name: "Azumarill", stage: "Stage1", evolveFrom: "Marill", hp: 120, types: ["Psychic"], retreat: 2, weaknesses: [{"type": "Metal", "value": "×2"}], attacks: [{"cost": ["Psychic", "Psychic", "Psychic", "Psychic"], "name": "Double-Edge", "damage": 230, "effect": "This Pokémon also does 50 damage to itself."}], abilities: [{"type": "Ability", "name": "Glistening Bubbles", "effect": "If you have any Tera Pokémon in play, this Pokémon can use the Double-Edge attack for {P}."}] }),
-  [HO_OH]: battler(HO_OH, { name: "Ho-Oh", hp: 130, types: ["Fire"], retreat: 2, weaknesses: [{"type": "Lightning", "value": "×2"}], attacks: [{"cost": ["Fire", "Colorless"], "name": "Flap", "damage": 50}, {"cost": ["Fire", "Fire", "Colorless"], "name": "Shining Blaze", "damage": "100+", "effect": "If you have any Tera Pokémon on your Bench, this attack does 100 more damage."}] }),
-  [REGIGIGAS]: battler(REGIGIGAS, { name: "Regigigas", hp: 160, types: ["Colorless"], retreat: 4, weaknesses: [{"type": "Fighting", "value": "×2"}], attacks: [{"cost": ["Colorless", "Colorless", "Colorless", "Colorless"], "name": "Jewel Breaker", "damage": "100+", "effect": "If your opponent's Active Pokémon is a Tera Pokémon, this attack does 230 more damage."}] }),
-  [TERAPAGOS]: battler(TERAPAGOS, { name: "Terapagos", hp: 120, types: ["Colorless"], retreat: 2, weaknesses: [{"type": "Fighting", "value": "×2"}], attacks: [{"cost": ["Colorless"], "name": "Prism Charge", "effect": "Search your deck for up to 3 Basic Energy cards of different types and attach them to your Tera Pokémon in any way you like. Then, shuffle your deck."}, {"cost": ["Colorless", "Colorless", "Colorless"], "name": "Hard Tackle", "damage": 100}] }),
-  [CINDERACE]: battler(CINDERACE, { name: "Cinderace ex", stage: "Stage2", evolveFrom: "Raboot", hp: 320, types: ["Fire"], retreat: 0, weaknesses: [{"type": "Water", "value": "×2"}], attacks: [{"cost": ["Fire", "Colorless", "Colorless"], "name": "Flare Strike", "damage": 280, "effect": "During your next turn, this Pokémon can't use Flare Strike."}, {"cost": ["Fire", "Fighting", "Darkness"], "name": "Garnet Volley", "effect": "This attack does 180 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"}] }),
-  [FLYGON]: battler(FLYGON, { name: "Flygon ex", stage: "Stage2", evolveFrom: "Vibrava", hp: 310, types: ["Fighting"], retreat: 1, weaknesses: [{"type": "Grass", "value": "×2"}], attacks: [{"cost": ["Fighting"], "name": "Reversing Storm", "damage": 130, "effect": "You may switch this Pokémon with 1 of your Benched Pokémon."}, {"cost": ["Water", "Fighting", "Metal"], "name": "Sonic Peridot", "effect": "This attack does 100 damage to each of your opponent's Pokémon ex and Pokémon V. This attack's damage isn't affected by Weakness or Resistance."}] }),
-  [CRYSTAL]: { ...trainerCard(CRYSTAL, "Tool", CRYSTAL_TEXT), name: "Sparkling Crystal", rarity: "ACE SPEC Rare" },
+  [CYCLIZAR]: battler(CYCLIZAR, {
+    name: "Cyclizar ex",
+    hp: 210,
+    types: ["Colorless"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Break Through",
+        damage: 130,
+        effect:
+          "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Grass", "Fire", "Psychic"],
+        name: "Zircon Road",
+        damage: 180,
+        effect: "You may draw 5 cards.",
+      },
+    ],
+  }),
+  [UMBREON]: battler(UMBREON, {
+    name: "Umbreon ex",
+    stage: "Stage1",
+    evolveFrom: "Eevee",
+    hp: 280,
+    types: ["Darkness"],
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness", "Colorless", "Colorless"],
+        name: "Moon Mirage",
+        damage: 160,
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
+      {
+        cost: ["Lightning", "Psychic", "Darkness"],
+        name: "Onyx",
+        effect: "Discard all Energy from this Pokémon, and take a Prize card.",
+      },
+    ],
+  }),
+  [TERAPAGOS_EX]: battler(TERAPAGOS_EX, {
+    name: "Terapagos ex",
+    hp: 230,
+    types: ["Colorless"],
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Unified Beatdown",
+        damage: "30×",
+        effect:
+          "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.",
+      },
+      {
+        cost: ["Grass", "Water", "Lightning"],
+        name: "Crown Opal",
+        damage: 180,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon.",
+      },
+    ],
+  }),
+  [PIKACHU_EX]: battler(PIKACHU_EX, {
+    name: "Pikachu ex",
+    hp: 190,
+    types: ["Lightning"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless"], name: "Tail Whap", damage: 30 },
+      {
+        cost: ["Lightning", "Lightning", "Colorless"],
+        name: "Thunder",
+        damage: 220,
+        effect: "This Pokémon also does 30 damage to itself.",
+      },
+    ],
+  }),
+  [MILOTIC]: battler(MILOTIC, {
+    name: "Milotic ex",
+    stage: "Stage1",
+    evolveFrom: "Feebas",
+    hp: 270,
+    types: ["Water"],
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water", "Colorless", "Colorless"],
+        name: "Hypno Splash",
+        damage: 160,
+        effect: "Your opponent's Active Pokémon is now Asleep.",
+      },
+    ],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Sparkling Scales",
+        effect:
+          "Prevent all damage from and effects of attacks from your opponent's Tera Pokémon done to this Pokémon.",
+      },
+    ],
+  }),
+  [HOOTHOOT]: battler(HOOTHOOT, {
+    name: "Hoothoot",
+    hp: 70,
+    types: ["Colorless"],
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Triple Stab",
+        damage: "10×",
+        effect: "Flip 3 coins. This attack does 10 damage for each heads.",
+      },
+    ],
+  }),
+  [NOCTOWL]: battler(NOCTOWL, {
+    name: "Noctowl",
+    stage: "Stage1",
+    evolveFrom: "Hoothoot",
+    hp: 100,
+    types: ["Colorless"],
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [{ cost: ["Colorless", "Colorless"], name: "Speed Wing", damage: 60 }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Jewel Seeker",
+        effect:
+          "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, if you have any Tera Pokémon in play, you may search your deck for up to 2 Trainer cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+      },
+    ],
+  }),
+  [MARILL]: battler(MARILL, {
+    name: "Marill",
+    hp: 60,
+    types: ["Psychic"],
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [{ cost: ["Psychic"], name: "Rolling Tackle", damage: 20 }],
+  }),
+  [AZUMARILL]: battler(AZUMARILL, {
+    name: "Azumarill",
+    stage: "Stage1",
+    evolveFrom: "Marill",
+    hp: 120,
+    types: ["Psychic"],
+    retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic", "Psychic", "Psychic"],
+        name: "Double-Edge",
+        damage: 230,
+        effect: "This Pokémon also does 50 damage to itself.",
+      },
+    ],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Glistening Bubbles",
+        effect:
+          "If you have any Tera Pokémon in play, this Pokémon can use the Double-Edge attack for {P}.",
+      },
+    ],
+  }),
+  [HO_OH]: battler(HO_OH, {
+    name: "Ho-Oh",
+    hp: 130,
+    types: ["Fire"],
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      { cost: ["Fire", "Colorless"], name: "Flap", damage: 50 },
+      {
+        cost: ["Fire", "Fire", "Colorless"],
+        name: "Shining Blaze",
+        damage: "100+",
+        effect: "If you have any Tera Pokémon on your Bench, this attack does 100 more damage.",
+      },
+    ],
+  }),
+  [REGIGIGAS]: battler(REGIGIGAS, {
+    name: "Regigigas",
+    hp: 160,
+    types: ["Colorless"],
+    retreat: 4,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless", "Colorless"],
+        name: "Jewel Breaker",
+        damage: "100+",
+        effect:
+          "If your opponent's Active Pokémon is a Tera Pokémon, this attack does 230 more damage.",
+      },
+    ],
+  }),
+  [TERAPAGOS]: battler(TERAPAGOS, {
+    name: "Terapagos",
+    hp: 120,
+    types: ["Colorless"],
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Prism Charge",
+        effect:
+          "Search your deck for up to 3 Basic Energy cards of different types and attach them to your Tera Pokémon in any way you like. Then, shuffle your deck.",
+      },
+      { cost: ["Colorless", "Colorless", "Colorless"], name: "Hard Tackle", damage: 100 },
+    ],
+  }),
+  [CINDERACE]: battler(CINDERACE, {
+    name: "Cinderace ex",
+    stage: "Stage2",
+    evolveFrom: "Raboot",
+    hp: 320,
+    types: ["Fire"],
+    retreat: 0,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire", "Colorless", "Colorless"],
+        name: "Flare Strike",
+        damage: 280,
+        effect: "During your next turn, this Pokémon can't use Flare Strike.",
+      },
+      {
+        cost: ["Fire", "Fighting", "Darkness"],
+        name: "Garnet Volley",
+        effect:
+          "This attack does 180 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
+  [FLYGON]: battler(FLYGON, {
+    name: "Flygon ex",
+    stage: "Stage2",
+    evolveFrom: "Vibrava",
+    hp: 310,
+    types: ["Fighting"],
+    retreat: 1,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Reversing Storm",
+        damage: 130,
+        effect: "You may switch this Pokémon with 1 of your Benched Pokémon.",
+      },
+      {
+        cost: ["Water", "Fighting", "Metal"],
+        name: "Sonic Peridot",
+        effect:
+          "This attack does 100 damage to each of your opponent's Pokémon ex and Pokémon V. This attack's damage isn't affected by Weakness or Resistance.",
+      },
+    ],
+  }),
+  [CRYSTAL]: {
+    ...trainerCard(CRYSTAL, "Tool", CRYSTAL_TEXT),
+    name: "Sparkling Crystal",
+    rarity: "ACE SPEC Rare",
+  },
   [ORB]: { ...trainerCard(ORB, "Item", ORB_TEXT), name: "Tera Orb" },
   [TRUMPET]: { ...trainerCard(TRUMPET, "Item", TRUMPET_TEXT), name: "Glass Trumpet" },
   [BRIAR]: { ...trainerCard(BRIAR, "Supporter", BRIAR_TEXT), name: "Briar" },
@@ -129,7 +386,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Water"],
     attacks: [{ cost: [], name: "Tap", damage: 10 }],
   }),
-  [WEAK]: battler(WEAK, { name: "D568 Weak", hp: 30, types: ["Water"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
+  [WEAK]: battler(WEAK, {
+    name: "D568 Weak",
+    hp: 30,
+    types: ["Water"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
   [STRIKER]: battler(STRIKER, {
     name: "D568 Striker",
     hp: 900,
@@ -155,7 +417,11 @@ const LOCAL_CARDS: Record<string, Card> = {
 };
 const WATCHTOWER = "sv10-180";
 LOCAL_CARDS[WATCHTOWER] = {
-  ...trainerCard(WATCHTOWER, "Stadium", "Colorless Pokémon in play (both yours and your opponent's) have no Abilities."),
+  ...trainerCard(
+    WATCHTOWER,
+    "Stadium",
+    "Colorless Pokémon in play (both yours and your opponent's) have no Abilities.",
+  ),
   name: "Team Rocket's Watchtower",
 };
 
@@ -203,7 +469,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -219,7 +486,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -227,11 +496,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -247,7 +519,11 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
         ...next,
         players: {
           ...next.players,
-          [seat]: { ...side, hand: side.hand.filter((u) => u !== fromHand), deck: [...side.deck, fromHand] },
+          [seat]: {
+            ...side,
+            hand: side.hand.filter((u) => u !== fromHand),
+            deck: [...side.deck, fromHand],
+          },
         },
       };
       continue;
@@ -255,7 +531,8 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
     const prized = side.prizes.find((u) => next.cardIdByUid[u] === id);
     if (prized === undefined) throw new Error(`${seat} has fewer than ${k} ${id} to seat`);
     const swap =
-      side.deck.find((u) => next.cardIdByUid[u] === FILLER) ?? side.deck.find((u) => next.cardIdByUid[u] !== id);
+      side.deck.find((u) => next.cardIdByUid[u] === FILLER) ??
+      side.deck.find((u) => next.cardIdByUid[u] !== id);
     if (swap === undefined) throw new Error("no card to swap");
     next = {
       ...next,
@@ -275,7 +552,10 @@ function ensureCopies(state: GameState, seat: Seat, id: string, k = 1): GameStat
 function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameState {
   let next = state;
   const back = next.players[seat];
-  next = { ...next, players: { ...next.players, [seat]: { ...back, deck: [...back.deck, ...back.hand], hand: [] } } };
+  next = {
+    ...next,
+    players: { ...next.players, [seat]: { ...back, deck: [...back.deck, ...back.hand], hand: [] } },
+  };
   for (const id of ids) {
     next = ensureCopies(next, seat, id, ids.filter((x) => x === id).length);
   }
@@ -300,7 +580,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -314,7 +599,13 @@ function energize(state: GameState, seat: Seat, spot: Spot, id: string, count = 
   let next = ensureCopies(state, seat, id, count);
   const side = next.players[seat];
   const uids = side.deck.filter((u) => next.cardIdByUid[u] === id).slice(0, count);
-  next = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => !uids.includes(u)) } } };
+  next = {
+    ...next,
+    players: {
+      ...next.players,
+      [seat]: { ...side, deck: side.deck.filter((u) => !uids.includes(u)) },
+    },
+  };
   return withBody(next, seat, spot, (p) => ({ ...p, energy: [...p.energy, ...uids] }));
 }
 
@@ -327,7 +618,11 @@ function discard(state: GameState, seat: Seat, id: string, count = 1): GameState
     ...next,
     players: {
       ...next.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => !uids.includes(u)), discard: [...side.discard, ...uids] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => !uids.includes(u)),
+        discard: [...side.discard, ...uids],
+      },
     },
   };
 }
@@ -340,7 +635,11 @@ function purge(state: GameState, seat: Seat, id: string): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => !gone.includes(u)), discard: [...side.discard, ...gone] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => !gone.includes(u)),
+        discard: [...side.discard, ...gone],
+      },
     },
   };
 }
@@ -366,30 +665,45 @@ function table(
   state = setActiveFromDeck(ensureCopies(state, "p1", opts.p1 ?? FILLER), "p1", opts.p1 ?? FILLER);
   state = setActiveFromDeck(ensureCopies(state, "p2", opts.p2 ?? FILLER), "p2", opts.p2 ?? FILLER);
   state = clearBench(clearBench(state, "p1"), "p2");
-  for (const id of opts.p1Bench ?? []) state = benchFromDeck(ensureCopies(state, "p1", id), "p1", id);
-  for (const id of opts.p2Bench ?? []) state = benchFromDeck(ensureCopies(state, "p2", id), "p2", id);
+  for (const id of opts.p1Bench ?? [])
+    state = benchFromDeck(ensureCopies(state, "p1", id), "p1", id);
+  for (const id of opts.p2Bench ?? [])
+    state = benchFromDeck(ensureCopies(state, "p2", id), "p2", id);
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
 const topOf = (p: InPlayPokemon) => p.stack[p.stack.length - 1] as string;
-const benchRef = (seat: Seat, index: number): PokemonRef => ({ seat, spot: { spot: "bench", index } });
+const benchRef = (seat: Seat, index: number): PokemonRef => ({
+  seat,
+  spot: { spot: "bench", index },
+});
 
 function phasePrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
 /** Declare attack `index` for p1; if it parks on a Pokémon pick, answer `pick`. */
-function attack(state: GameState, index: number, pick?: PokemonRef): { state: GameState; events: GameEvent[] } {
+function attack(
+  state: GameState,
+  index: number,
+  pick?: PokemonRef,
+): { state: GameState; events: GameEvent[] } {
   const first = run(state, { type: "attack", seat: "p1", index });
   if (first.state.phase.kind !== "effect:choose" || pick === undefined) return first;
   const prompt = first.state.phase.prompt;
   const choice =
-    prompt.kind === "choosePokemonMulti" ? { kind: "pokemonMulti", refs: [pick] } : { kind: "pokemon", ref: pick };
+    prompt.kind === "choosePokemonMulti"
+      ? { kind: "pokemonMulti", refs: [pick] }
+      : { kind: "pokemon", ref: pick };
   const second = run(first.state, { type: "resolveEffect", seat: "p1", choice } as GameAction);
   return { state: second.state, events: [...first.events, ...second.events] };
 }
@@ -452,13 +766,26 @@ describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the
     // first source missed (`sv08.5-092`) splits it — the rung is the reason that id is here.
     const terapagos = [...groups.values()].find((members) => members.includes("sv08.5-092"));
     expect(terapagos?.sort()).toEqual(
-      ["sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165"].sort(),
+      [
+        "sv07-128",
+        "sv07-170",
+        "sv07-173",
+        "sv08.5-092",
+        "sv08.5-169",
+        "sv08.5-180",
+        "svp-165",
+      ].sort(),
     );
   });
 
   it("🛑 the two CORRECTIONS are pinned by name, and the promo additions by id", () => {
     // Removed: pokemon-tcg-data lists it as Tera; limitless and the printed face do not.
-    expect(pool.get("sv08.5-028")?.slice(0, 4)).toEqual(["sv08.5-028", "Pikachu ex", 190, ["Tail Whap", "Thunder"]]);
+    expect(pool.get("sv08.5-028")?.slice(0, 4)).toEqual([
+      "sv08.5-028",
+      "Pikachu ex",
+      190,
+      ["Tail Whap", "Thunder"],
+    ]);
     expect(bannerOf(POOL[PIKACHU_EX])).toBeUndefined();
     // Added: the first source omits it; limitless and the printed face say Tera.
     expect(pool.get("sv08.5-092")?.slice(0, 4)).toEqual([
@@ -469,7 +796,15 @@ describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the
     ]);
     expect(BANNER_BY_ID["sv08.5-092"]).toBe("Tera");
     // The promos the first source stops short of (it ends at svp-165), and the one it cannot see.
-    for (const id of ["svp-163", "svp-164", "svp-165", "svp-166", "svp-174", "svp-175", "svp-176"]) {
+    for (const id of [
+      "svp-163",
+      "svp-164",
+      "svp-165",
+      "svp-166",
+      "svp-174",
+      "svp-175",
+      "svp-176",
+    ]) {
       expect(BANNER_BY_ID[id], id).toBe("Tera");
     }
     expect(BANNER_BY_ID["svp-215"]).toBeUndefined();
@@ -503,7 +838,7 @@ describe("§2 — THE PRINTED TERA RULE: a benched Tera Pokémon takes no damage
     expect(bodyAt(after, "p2", 1).damage).toBe(20);
   });
 
-  it("🛑 YOUR OWN attack too (\"both yours and your opponent's\"): the own-bench spread skips it", () => {
+  it('🛑 YOUR OWN attack too ("both yours and your opponent\'s"): the own-bench spread skips it', () => {
     const state = table({ p1: STRIKER, p1Bench: [CYCLIZAR, FILLER] });
     const after = attack(state, 1).state;
     expect(bodyAt(after, "p1", 0).damage).toBe(0);
@@ -538,7 +873,7 @@ describe("§2 — THE PRINTED TERA RULE: a benched Tera Pokémon takes no damage
     expect(bodyAt(attack(state, 0).state, "p2", 0).damage).toBe(0);
   });
 
-  it("🛑 R-TB1 (⚠️ UNRULED): Feint Attack's \"any effects on that Pokémon\" does NOT null the printed rule", () => {
+  it('🛑 R-TB1 (⚠️ UNRULED): Feint Attack\'s "any effects on that Pokémon" does NOT null the printed rule', () => {
     const state = table({ p1: STRIKER, p2Bench: [CYCLIZAR, FILLER] });
     const benched = bodyAt(state, "p2", 0);
     expect(benchShieldedFromDamage(state, benched, "othersOnly")).toBe(true);
@@ -559,7 +894,9 @@ describe("§2 — THE PRINTED TERA RULE: a benched Tera Pokémon takes no damage
 describe("§3 — the rows, exactly as authored", () => {
   it("the Trainers: Crystal, Tera Orb, Glass Trumpet, Briar (one object per text, reprints share it)", () => {
     const tera = { kind: "bannerPokemon", banner: "Tera" } as const;
-    expect(programFor(CRYSTAL)).toEqual({ passive: { attackCostDiscount: { amount: 1, holder: tera, anyType: true } } });
+    expect(programFor(CRYSTAL)).toEqual({
+      passive: { attackCostDiscount: { amount: 1, holder: tera, anyType: true } },
+    });
     expect(programFor("sv08.5-129")).toBe(programFor(CRYSTAL));
     expect(programFor(ORB)).toEqual({
       trainer: [
@@ -586,7 +923,8 @@ describe("§3 — the rows, exactly as authored", () => {
       trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [2] },
       supporterKoPrizeBonus: { amount: 1, attacker: tera },
     });
-    for (const id of ["sv07-163", "sv07-171", "sv08.5-100"]) expect(programFor(id)).toBe(programFor(BRIAR));
+    for (const id of ["sv07-163", "sv07-171", "sv08.5-100"])
+      expect(programFor(id)).toBe(programFor(BRIAR));
   });
 
   it("the Abilities: Sparkling Scales, Jewel Seeker, Glistening Bubbles", () => {
@@ -604,7 +942,13 @@ describe("§3 — the rows, exactly as authored", () => {
               cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
               // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [
-                { op: "searchDeck", filter: { kind: "trainerCard" }, dest: "hand", max: 2, reveal: true },
+                {
+                  op: "searchDeck",
+                  filter: { kind: "trainerCard" },
+                  dest: "hand",
+                  max: 2,
+                  reveal: true,
+                },
                 { op: "shuffleDeck" },
               ],
             },
@@ -695,7 +1039,9 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
   function crystal(holder: string, energy: readonly string[], withCrystal = true): GameState {
     let state = table({ p1: holder });
     for (const id of energy) state = energize(state, "p1", "active", id);
-    return withCrystal ? attachToolFromDeck(ensureCopies(state, "p1", CRYSTAL), "p1", "active", CRYSTAL) : state;
+    return withCrystal
+      ? attachToolFromDeck(ensureCopies(state, "p1", CRYSTAL), "p1", "active", CRYSTAL)
+      : state;
   }
   const cost = (state: GameState, printed: readonly string[]) =>
     effectiveAttackCost(state, bodyAt(state, "p1", "active"), printed);
@@ -706,7 +1052,9 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
     expect(charged).toEqual(["Fire", "Colorless"]);
     expect(costMet(charged, providedEnergy(state, bodyAt(state, "p1", "active")))).toBe(true);
     // The Colorless-only loop would have charged {R}{R} — unpayable on this very board.
-    expect(costMet(["Fire", "Fire"], providedEnergy(state, bodyAt(state, "p1", "active")))).toBe(false);
+    expect(costMet(["Fire", "Fire"], providedEnergy(state, bodyAt(state, "p1", "active")))).toBe(
+      false,
+    );
   });
 
   it("an already-payable cost loses a Colorless (the printed typed symbols stay visible)", () => {
@@ -715,7 +1063,10 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
   });
 
   it("an all-Colorless cost loses a Colorless", () => {
-    expect(cost(crystal(CYCLIZAR, []), ["Colorless", "Colorless", "Colorless"])).toEqual(["Colorless", "Colorless"]);
+    expect(cost(crystal(CYCLIZAR, []), ["Colorless", "Colorless", "Colorless"])).toEqual([
+      "Colorless",
+      "Colorless",
+    ]);
   });
 
   it("🛑 a NON-Tera holder gets nothing (the printed noun), and no Crystal is the printed array itself", () => {
@@ -726,8 +1077,14 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
   });
 
   it("`anyTypeCostRemoval`, pure: the short typed symbol, never a covered one", () => {
-    expect(anyTypeCostRemoval(["Fire", "Water", "Colorless"], ["Fire", "Colorless"], 1)).toEqual(["Fire", "Colorless"]);
-    expect(anyTypeCostRemoval(["Fire", "Water", "Colorless"], ["Colorless"], 1)).toEqual(["Fire", "Colorless"]);
+    expect(anyTypeCostRemoval(["Fire", "Water", "Colorless"], ["Fire", "Colorless"], 1)).toEqual([
+      "Fire",
+      "Colorless",
+    ]);
+    expect(anyTypeCostRemoval(["Fire", "Water", "Colorless"], ["Colorless"], 1)).toEqual([
+      "Fire",
+      "Colorless",
+    ]);
     expect(anyTypeCostRemoval(["Fire", "Water"], ["Water", "Water"], 1)).toEqual(["Water"]);
     expect(anyTypeCostRemoval([], ["Fire"], 1)).toEqual([]);
     expect(anyTypeCostRemoval(["Fire", "Fire", "Colorless"], ["Fire", "Colorless"], 0)).toEqual([
@@ -739,15 +1096,14 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
 
   it("🛑 end to end: Cyclizar ex's Break Through ({C}{C}{C}) is declared with TWO Energy under a Crystal, refused without it", () => {
     const withCrystal = crystal(CYCLIZAR, [R, W]);
-    expect(attackCostAt(withCrystal, "p1", bodyAt(withCrystal, "p1", "active"), 0, ["Fire", "Water"])).toEqual([
-      "Colorless",
-      "Colorless",
-    ]);
+    expect(
+      attackCostAt(withCrystal, "p1", bodyAt(withCrystal, "p1", "active"), 0, ["Fire", "Water"]),
+    ).toEqual(["Colorless", "Colorless"]);
     const hit = run(withCrystal, { type: "attack", seat: "p1", index: 0 });
     expect(all(hit.events, "DAMAGE_DEALT").some((e) => e.dealt === 130)).toBe(true);
-    expect(rejected(crystal(CYCLIZAR, [R, W], false), { type: "attack", seat: "p1", index: 0 })).toBe(
-      "ATTACK_COST_UNMET",
-    );
+    expect(
+      rejected(crystal(CYCLIZAR, [R, W], false), { type: "attack", seat: "p1", index: 0 }),
+    ).toBe("ATTACK_COST_UNMET");
   });
 });
 
@@ -755,7 +1111,8 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
 describe("§5 — Tera Orb and Glass Trumpet", () => {
   it("🛑 Tera Orb offers ONLY the deck's Tera Pokémon (never Terapagos, never Pikachu ex `sv08.5-028`)", () => {
     let state = table();
-    for (const id of [CYCLIZAR, TERAPAGOS_EX, UMBREON, CINDERACE, FLYGON]) state = ensureCopies(state, "p1", id);
+    for (const id of [CYCLIZAR, TERAPAGOS_EX, UMBREON, CINDERACE, FLYGON])
+      state = ensureCopies(state, "p1", id);
     const parked = play(state, ORB).state;
     const prompt = phasePrompt(parked);
     if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
@@ -766,7 +1123,8 @@ describe("§5 — Tera Orb and Glass Trumpet", () => {
 
   it("Tera Orb with no Tera Pokémon in the deck whiffs into the shuffle — no park", () => {
     let state = table();
-    for (const id of [CYCLIZAR, TERAPAGOS_EX, UMBREON, CINDERACE, FLYGON]) state = purge(state, "p1", id);
+    for (const id of [CYCLIZAR, TERAPAGOS_EX, UMBREON, CINDERACE, FLYGON])
+      state = purge(state, "p1", id);
     const { state: after, events } = play(state, ORB);
     expect(after.phase.kind).toBe("turn:action");
     expect(all(events, "SHUFFLE").length).toBeGreaterThan(0);
@@ -777,9 +1135,15 @@ describe("§5 — Tera Orb and Glass Trumpet", () => {
     expect(playRejected(state, TRUMPET)).toBe("PLAY_CONDITION_NOT_MET");
     // The REASON, not only the code: the refusal names the printed "only if" clause.
     const before = setHand(state, "p1", [TRUMPET]);
-    const result = applyAction(before, { type: "playTrainer", seat: "p1", uid: before.players.p1.hand[0] as string });
+    const result = applyAction(before, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: before.players.p1.hand[0] as string,
+    });
     if (result.ok) throw new Error("Glass Trumpet was accepted");
-    expect(result.error.message).toBe("Glass Trumpet can only be used if you have any Tera Pokémon in play");
+    expect(result.error.message).toBe(
+      "Glass Trumpet can only be used if you have any Tera Pokémon in play",
+    );
   });
 
   it("🛑 with a Tera Pokémon in play: ONE attach park, the Benched {C} bodies only, max 2, one per body", () => {
@@ -803,22 +1167,39 @@ describe("§5 — Tera Orb and Glass Trumpet", () => {
       rejected(parked, {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "attachCards", assignments: [{ uid: first, to: benchRef("p1", 0) }, { uid: second, to: benchRef("p1", 0) }] },
+        choice: {
+          kind: "attachCards",
+          assignments: [
+            { uid: first, to: benchRef("p1", 0) },
+            { uid: second, to: benchRef("p1", 0) },
+          ],
+        },
       } as GameAction),
     ).toBe("BAD_EFFECT_CHOICE");
     const done = run(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "attachCards", assignments: [{ uid: first, to: benchRef("p1", 0) }, { uid: second, to: benchRef("p1", 2) }] },
+      choice: {
+        kind: "attachCards",
+        assignments: [
+          { uid: first, to: benchRef("p1", 0) },
+          { uid: second, to: benchRef("p1", 2) },
+        ],
+      },
     } as GameAction).state;
     expect(bodyAt(done, "p1", 0).energy).toEqual([first]);
     expect(bodyAt(done, "p1", 2).energy).toEqual([second]);
     expect(done.players.p1.discard).not.toContain(first);
-    expect(all(run(parked, {
-      type: "resolveEffect",
-      seat: "p1",
-      choice: { kind: "attachCards", assignments: [{ uid: first, to: benchRef("p1", 0) }] },
-    } as GameAction).events, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(
+      all(
+        run(parked, {
+          type: "resolveEffect",
+          seat: "p1",
+          choice: { kind: "attachCards", assignments: [{ uid: first, to: benchRef("p1", 0) }] },
+        } as GameAction).events,
+        "ENERGY_ATTACHED",
+      ),
+    ).toHaveLength(1);
   });
 
   it("a Tera BENCHED body satisfies the gate too; an empty discard pile makes the card unplayable", () => {
@@ -828,7 +1209,9 @@ describe("§5 — Tera Orb and Glass Trumpet", () => {
     const prompt = phasePrompt(play(benchedTera, TRUMPET).state);
     if (prompt.kind !== "attachCards") throw new Error("expected attachCards");
     expect(prompt.targets).toEqual([benchRef("p1", 0), benchRef("p1", 1)]);
-    expect(playRejected(table({ p1: CYCLIZAR, p1Bench: [PLAIN_C] }), TRUMPET)).toBe("NO_LEGAL_TARGET");
+    expect(playRejected(table({ p1: CYCLIZAR, p1Bench: [PLAIN_C] }), TRUMPET)).toBe(
+      "NO_LEGAL_TARGET",
+    );
   });
 });
 
@@ -838,9 +1221,19 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
   function briarBoard(
     attacker: string,
     victim: string,
-    opts: { prizes?: number; play?: boolean; p1Bench?: readonly string[]; p2Bench?: readonly string[] } = {},
+    opts: {
+      prizes?: number;
+      play?: boolean;
+      p1Bench?: readonly string[];
+      p2Bench?: readonly string[];
+    } = {},
   ) {
-    let state = table({ p1: attacker, p1Bench: opts.p1Bench ?? [], p2: victim, p2Bench: opts.p2Bench ?? [] });
+    let state = table({
+      p1: attacker,
+      p1Bench: opts.p1Bench ?? [],
+      p2: victim,
+      p2Bench: opts.p2Bench ?? [],
+    });
     if (attacker === CYCLIZAR) state = energize(state, "p1", "active", R, 3);
     if (attacker === FLYGON) state = energize(state, "p1", "active", F, 1);
     state = setPrizes(state, "p2", opts.prizes ?? 2);
@@ -877,20 +1270,32 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
   });
 
   it("🛑 a BENCHED body Knocked Out by the Tera attacker's snipe: no bonus (the Active only)", () => {
-    const { events } = attack(briarBoard(CYCLIZAR, FILLER, { p2Bench: [WEAK] }), 0, benchRef("p2", 0));
+    const { events } = attack(
+      briarBoard(CYCLIZAR, FILLER, { p2Bench: [WEAK] }),
+      0,
+      benchRef("p2", 0),
+    );
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(all(events, "PRIZE_BONUS")).toEqual([]);
   });
 
   /** Flygon ex's Reversing Storm into the 30-HP Active, answering its printed "may" with `yes`. */
   function reversingStorm(yes: boolean) {
-    const first = run(briarBoard(FLYGON, WEAK, { p1Bench: [FILLER] }), { type: "attack", seat: "p1", index: 0 });
+    const first = run(briarBoard(FLYGON, WEAK, { p1Bench: [FILLER] }), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
     expect(phasePrompt(first.state).kind).toBe("confirm");
-    const second = run(first.state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
+    const second = run(first.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes },
+    });
     return { state: second.state, events: [...first.events, ...second.events] };
   }
 
-  it("🛑 \"used by your Tera Pokémon\" is the USER, not the spot: Flygon ex switched ITSELF out and still pays", () => {
+  it('🛑 "used by your Tera Pokémon" is the USER, not the spot: Flygon ex switched ITSELF out and still pays', () => {
     // Reversing Storm: "130. You may switch this Pokémon with 1 of your Benched Pokémon." The
     // switch lands BEFORE the Knock Out resolves, so at Knock Out time the Active is the
     // (non-Tera) Filler — and the attack was still used by a Tera Pokémon. The bonus is read off
@@ -907,10 +1312,12 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     const { state, events } = reversingStorm(false);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(state.cardIdByUid[topOf(bodyAt(state, "p1", "active"))]).toBe(FLYGON);
-    expect(all(events, "PRIZE_BONUS")).toEqual([expect.objectContaining({ seat: "p2", by: 1, count: 2 })]);
+    expect(all(events, "PRIZE_BONUS")).toEqual([
+      expect.objectContaining({ seat: "p2", by: 1, count: 2 }),
+    ]);
   });
 
-  it("🛑 the Checkup is not \"damage from an attack\": a Poison Knock Out of the Active pays nothing, with a Tera Pokémon Active", () => {
+  it('🛑 the Checkup is not "damage from an attack": a Poison Knock Out of the Active pays nothing, with a Tera Pokémon Active', () => {
     // A TERA attacker stands Active (Cyclizar ex) and Briar is played, so every conjunct but
     // "by an attack" holds. ⚠️ What this end-to-end rung does and does NOT redden: the Checkup
     // hands `koPrizeBonus` no `attackerUid` (flow.ts' Checkup batch omits it), so dropping
@@ -948,20 +1355,51 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     // …and the attacker's card is read off its UID, wherever it now stands: a benched Tera
     // body's uid pays (Flygon ex's switch-out, end to end above), a non-Tera one does not.
     const benched = briarBoard(FILLER, WEAK, { p1Bench: [CYCLIZAR] });
-    expect(briarPrizeBonus(benched, "p1", bodyAt(benched, "p2", "active"), "p1", topOf(bodyAt(benched, "p1", 0)), false)).toBe(1);
-    expect(briarPrizeBonus(benched, "p1", bodyAt(benched, "p2", "active"), "p1", topOf(bodyAt(benched, "p1", "active")), false)).toBe(0);
+    expect(
+      briarPrizeBonus(
+        benched,
+        "p1",
+        bodyAt(benched, "p2", "active"),
+        "p1",
+        topOf(bodyAt(benched, "p1", 0)),
+        false,
+      ),
+    ).toBe(1);
+    expect(
+      briarPrizeBonus(
+        benched,
+        "p1",
+        bodyAt(benched, "p2", "active"),
+        "p1",
+        topOf(bodyAt(benched, "p1", "active")),
+        false,
+      ),
+    ).toBe(0);
     // A non-Tera attacker in the same seat: nothing.
     const plain = briarBoard(STRIKER, WEAK);
-    expect(briarPrizeBonus(plain, "p1", bodyAt(plain, "p2", "active"), "p1", topOf(bodyAt(plain, "p1", "active")), false)).toBe(0);
+    expect(
+      briarPrizeBonus(
+        plain,
+        "p1",
+        bodyAt(plain, "p2", "active"),
+        "p1",
+        topOf(bodyAt(plain, "p1", "active")),
+        false,
+      ),
+    ).toBe(0);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§7 — Milotic ex \"Sparkling Scales\": damage AND effects from the opponent's Tera Pokémon", () => {
+describe('§7 — Milotic ex "Sparkling Scales": damage AND effects from the opponent\'s Tera Pokémon', () => {
   it("the fold: one banner, off the holder's own row; empty on every other body", () => {
     const state = table({ p2: MILOTIC });
-    expect(passivesOf(state, bodyAt(state, "p2", "active")).preventDamageAndEffectsFromBanners).toEqual(["Tera"]);
-    expect(passivesOf(state, bodyAt(state, "p1", "active")).preventDamageAndEffectsFromBanners).toEqual([]);
+    expect(
+      passivesOf(state, bodyAt(state, "p2", "active")).preventDamageAndEffectsFromBanners,
+    ).toEqual(["Tera"]);
+    expect(
+      passivesOf(state, bodyAt(state, "p1", "active")).preventDamageAndEffectsFromBanners,
+    ).toEqual([]);
     expect(preventsAttackerBanner(["Tera"], POOL[UMBREON])).toBe(true);
     expect(preventsAttackerBanner(["Tera"], POOL[PIKACHU_EX])).toBe(false);
     expect(preventsAttackerBanner([], POOL[UMBREON])).toBe(false);
@@ -993,8 +1431,17 @@ describe("§7 — Milotic ex \"Sparkling Scales\": damage AND effects from the o
   it("🛑 the `snipeActive` arm: Cinderace ex's Garnet Volley aimed at the ACTIVE Milotic ex does nothing, at a filler 180", () => {
     const volley = (victim: string) => {
       let state = table({ p1: CINDERACE, p2: victim, p2Bench: [FILLER] });
-      state = energize(energize(energize(state, "p1", "active", R), "p1", "active", F), "p1", "active", D);
-      return bodyAt(attack(state, 1, { seat: "p2", spot: { spot: "active" } }).state, "p2", "active").damage;
+      state = energize(
+        energize(energize(state, "p1", "active", R), "p1", "active", F),
+        "p1",
+        "active",
+        D,
+      );
+      return bodyAt(
+        attack(state, 1, { seat: "p2", spot: { spot: "active" } }).state,
+        "p2",
+        "active",
+      ).damage;
     };
     expect(volley(MILOTIC)).toBe(0);
     expect(volley(FILLER)).toBe(180);
@@ -1009,14 +1456,19 @@ describe("§7 — Milotic ex \"Sparkling Scales\": damage AND effects from the o
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§8 — Noctowl \"Jewel Seeker\" and Azumarill \"Glistening Bubbles\"", () => {
+describe('§8 — Noctowl "Jewel Seeker" and Azumarill "Glistening Bubbles"', () => {
   function evolveNoctowl(active: string): { state: GameState; events: GameEvent[] } {
     let state = table({ p1: active, p1Bench: [HOOTHOOT] });
     state = { ...state, turn: 4 }; // p1's SECOND turn: the benched Hoothoot may evolve
     state = withBody(state, "p1", 0, (p) => ({ ...p, turnPlayed: 1 }));
     state = setHand(state, "p1", [NOCTOWL]);
     const uid = state.players.p1.hand[0] as string;
-    return run(state, { type: "evolve", seat: "p1", uid, target: { spot: "bench", index: 0 } } as GameAction);
+    return run(state, {
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index: 0 },
+    } as GameAction);
   }
 
   it("🛑 evolved from the hand with a Tera Pokémon in play: the search parks, Trainer cards only, up to 2", () => {
@@ -1024,7 +1476,8 @@ describe("§8 — Noctowl \"Jewel Seeker\" and Azumarill \"Glistening Bubbles\""
     const prompt = phasePrompt(state);
     if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
     expect(prompt.max).toBe(2);
-    for (const uid of prompt.candidates) expect(POOL[state.cardIdByUid[uid] ?? ""]?.category).toBe("Trainer");
+    for (const uid of prompt.candidates)
+      expect(POOL[state.cardIdByUid[uid] ?? ""]?.category).toBe("Trainer");
   });
 
   it("🛑 …and with NO Tera Pokémon in play the Ability does nothing — no park, no search, no shuffle", () => {
@@ -1035,7 +1488,9 @@ describe("§8 — Noctowl \"Jewel Seeker\" and Azumarill \"Glistening Bubbles\""
 
   it("🛑 Double-Edge costs {P} with a Tera Pokémon in play, its printed {P}{P}{P}{P} without", () => {
     const withTera = energize(table({ p1: AZUMARILL, p1Bench: [TERAPAGOS_EX] }), "p1", "active", P);
-    expect(attackCostAt(withTera, "p1", bodyAt(withTera, "p1", "active"), 0, ["Psychic"])).toEqual(["Psychic"]);
+    expect(attackCostAt(withTera, "p1", bodyAt(withTera, "p1", "active"), 0, ["Psychic"])).toEqual([
+      "Psychic",
+    ]);
     const without = energize(table({ p1: AZUMARILL }), "p1", "active", P);
     expect(attackCostAt(without, "p1", bodyAt(without, "p1", "active"), 0, ["Psychic"])).toEqual([
       "Psychic",
@@ -1120,13 +1575,5 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
     expect(after.phase.kind).not.toBe("effect:choose");
     expect(all(events, "SHUFFLE").length).toBeGreaterThan(0);
     expect(all(events, "ENERGY_ATTACHED")).toEqual([]);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("§10 — the version", () => {
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

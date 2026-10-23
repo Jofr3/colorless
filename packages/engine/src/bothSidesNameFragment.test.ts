@@ -19,7 +19,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter, CountSeat } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { countPokemonInPlay } from "./interpreter";
 import {
@@ -673,9 +673,5 @@ describe("§4 — the census step this slice is", () => {
     expect(countPokemonInPlay(state, "p1", NAMED) + countPokemonInPlay(state, "p2", NAMED)).toBe(
       bothSides(state, NAMED),
     );
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

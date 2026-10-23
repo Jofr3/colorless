@@ -309,11 +309,7 @@ function drainKo(state: GameState): GameState {
   throw new Error(`KO interrupt never drained (${next.phase.kind})`);
 }
 
-function playTrainer(
-  state: GameState,
-  seat: Seat,
-  cardId: string,
-): ReturnType<typeof applyAction> {
+function playTrainer(state: GameState, seat: Seat, cardId: string): ReturnType<typeof applyAction> {
   const withCard = handFromDeck(state, seat, cardId, 1);
   return applyAction(deepFreeze(withCard), {
     type: "playTrainer",
@@ -500,9 +496,7 @@ describe("§6 — a Knocked Out Active goes to the DISCARD, so nothing moved to 
     // The KO resolved and p2's lone benched body came up.
     expect(activeId(next, "p2")).toBe(BASIC);
     expect(burned(next, "p2")).toBe(false);
-    expect(
-      triggerEvents(result).filter((e) => e.ability === "Lava Zone"),
-    ).toEqual([]);
+    expect(triggerEvents(result).filter((e) => e.ability === "Lava Zone")).toEqual([]);
   });
 });
 

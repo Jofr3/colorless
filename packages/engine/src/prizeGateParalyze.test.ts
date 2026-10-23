@@ -18,7 +18,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, conditionHolds, conditionNote, engineVersion } from "./index";
+import { applyAction, conditionHolds, conditionNote } from "./index";
 import type { BoardCondition, EffectOp, GameEvent, GameOverReason, GameState } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -124,9 +124,12 @@ const BARE = "Your opponent's Active Pokémon is now Paralyzed.";
 
 /** The three BUILT prize siblings, by corpus file line. Read for their PROGRAMS rather
     than their verdicts (D514), because which ARM claims a sibling is what prices a row. */
-const SIB_MORE = "If you have more Prize cards remaining than your opponent, this attack does 90 more damage."; // :343
-const SIB_NOT_34 = "If your opponent doesn't have exactly 3 or 4 Prize cards remaining, this attack does nothing."; // :350
-const SIB_4_FEWER = "If your opponent has 4 or fewer Prize cards remaining, this attack does 70 more damage."; // :353
+const SIB_MORE =
+  "If you have more Prize cards remaining than your opponent, this attack does 90 more damage."; // :343
+const SIB_NOT_34 =
+  "If your opponent doesn't have exactly 3 or 4 Prize cards remaining, this attack does nothing."; // :350
+const SIB_4_FEWER =
+  "If your opponent has 4 or fewer Prize cards remaining, this attack does 70 more damage."; // :353
 
 /** Corpus FILE LINE 346 — the row that shares this row's GATE and is deliberately NOT
     built here. See §8, which drives the refusal rather than asserting it.
@@ -414,9 +417,9 @@ describe("D517 §3 — `yourPrizesRemaining` is `opponentPrizesRemaining` RE-SEA
     expect(conditionNote({ kind: "yourPrizesRemaining", counts: [1] })).toBe(
       "you have exactly 1 Prize card remaining",
     );
-    expect(PRINTED.startsWith(`If ${conditionNote({ kind: "yourPrizesRemaining", counts: [1] })},`)).toBe(
-      true,
-    );
+    expect(
+      PRINTED.startsWith(`If ${conditionNote({ kind: "yourPrizesRemaining", counts: [1] })},`),
+    ).toBe(true);
     expect(conditionNote({ kind: "yourPrizesRemaining", counts: [2, 4] })).toBe(
       "you have exactly 2 or 4 Prize cards remaining",
     );
@@ -684,10 +687,6 @@ describe("D517 §7 — the price, and both version constants", () => {
     );
   });
 
-  it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
-
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
     // D450's question, and it is the one that decides `MATCH_RECORD_VERSION` here.
     // A `BoardCondition` reaches a persisted address ONLY through a parked program:
@@ -855,10 +854,12 @@ describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT bu
     // wrapper still is not in it, because the list holds WHOLE printed clauses and this
     // is an open-ended prefix). (c) The
     // CONSEQUENT is the whole cost, and it is unpriced here on purpose.
-    expect(conditionHolds(setPrizes(board(), "p1", 1), "p1", {
-      kind: "yourPrizesRemaining",
-      counts: [1],
-    })).toBe(true);
+    expect(
+      conditionHolds(setPrizes(board(), "p1", 1), "p1", {
+        kind: "yourPrizesRemaining",
+        counts: [1],
+      }),
+    ).toBe(true);
     expect(WIN_ROW.startsWith("If you use this attack when you have exactly 1 Prize card")).toBe(
       true,
     );

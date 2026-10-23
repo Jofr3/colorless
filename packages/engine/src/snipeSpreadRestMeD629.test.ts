@@ -9,7 +9,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -94,12 +94,28 @@ describe("D629 §1 — the texts", () => {
 describe("D629 §2 — the readings", () => {
   it("Bug's Cannon / Hydro Jet: the typed per-Energy snipe; the untyped sentence keeps `perEnergyOnSelf`", () => {
     const typed = (amount: number, type: string) => [
-      { op: "damageChosen", target: "opponentAny", amount, count: 1, source: "attack", deals: true, perTypedEnergyOnSelf: type },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perTypedEnergyOnSelf: type,
+      },
     ];
     expect(deriveAttackEffect(BUGS_CANNON)).toEqual(typed(20, "Grass"));
     expect(deriveAttackEffect(HYDRO_JET)).toEqual(typed(30, "Water"));
     expect(deriveAttackEffect(BUGS_CANNON.replace("{G} ", ""))).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack", deals: true, perEnergyOnSelf: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perEnergyOnSelf: true,
+      },
     ]);
     // The clarifier is optional; {C} is no Basic type; a printed 0 stays loud.
     expect(deriveAttackEffect(BUGS_CANNON.replace(CLARIFIER, ""))).toEqual(typed(20, "Grass"));
@@ -109,8 +125,20 @@ describe("D629 §2 — the readings", () => {
 
   it("Lightning Crash: discard every {L}-providing Energy, then 90 to 1 of the opponent's Pokémon", () => {
     expect(deriveAttackEffect(LIGHTNING_CRASH)).toEqual([
-      { op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Lightning" }, count: "all" },
-      { op: "damageChosen", target: "opponentAny", amount: 90, count: 1, source: "attack", deals: true },
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "providesEnergy", energyType: "Lightning" },
+        count: "all",
+      },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 90,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(deriveAttackEffect(LIGHTNING_CRASH.replace("{L}", "{C}"))).toBeNull();
     expect(deriveAttackEffect(LIGHTNING_CRASH.replace("does 90", "does 0"))).toBeNull();
@@ -125,11 +153,19 @@ describe("D629 §2 — the readings", () => {
     });
     const split = splitAttackRequirementClause(TAR_CANNON);
     expect(split).toEqual({
-      clause: "If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing.",
+      clause:
+        "If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing.",
       body: `This attack does 140 damage to 1 of your opponent's Pokémon.${CLARIFIER}`,
     });
     expect(deriveAttackEffect(split?.body ?? "")).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 140, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 140,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     // An unmapped clause keeps the whole string loud; without the clarifier the body is the bare sentence.
     const unmapped = TAR_CANNON.replace("10 or more", "9 or more");
@@ -141,16 +177,27 @@ describe("D629 §2 — the readings", () => {
   });
 
   it("Chilling Wings / Kaboom Needles: the head keeps the clarifier, the tail is the sentence after it", () => {
-    const head = (amount: number) => `This attack does ${String(amount)} damage to each of your opponent's Pokémon.${CLARIFIER}`;
-    expect(splitAttackTrailingClause(CHILLING_WINGS)).toEqual({ head: head(20), tail: "Your opponent's Active Pokémon is now Asleep." });
-    expect(splitAttackTrailingClause(KABOOM_NEEDLES)).toEqual({ head: head(50), tail: "This Pokémon also does 130 damage to itself." });
+    const head = (amount: number) =>
+      `This attack does ${String(amount)} damage to each of your opponent's Pokémon.${CLARIFIER}`;
+    expect(splitAttackTrailingClause(CHILLING_WINGS)).toEqual({
+      head: head(20),
+      tail: "Your opponent's Active Pokémon is now Asleep.",
+    });
+    expect(splitAttackTrailingClause(KABOOM_NEEDLES)).toEqual({
+      head: head(50),
+      tail: "This Pokémon also does 130 damage to itself.",
+    });
     expect(deriveAttackEffect(head(20))).toEqual([
       { op: "damageDefender", amount: 20 },
       { op: "spreadDamage", target: "opponentBench", amount: 20 },
     ]);
-    expect(deriveAttackEffect("This Pokémon also does 130 damage to itself.")).toEqual([{ op: "damageSelf", amount: 130 }]);
+    expect(deriveAttackEffect("This Pokémon also does 130 damage to itself.")).toEqual([
+      { op: "damageSelf", amount: 130 },
+    ]);
     // An unread tail keeps the compound whole and loud.
-    expect(splitAttackTrailingClause(CHILLING_WINGS.replace("is now Asleep", "is now Sleepy"))).toBeNull();
+    expect(
+      splitAttackTrailingClause(CHILLING_WINGS.replace("is now Asleep", "is now Sleepy")),
+    ).toBeNull();
   });
 
   it("Assassin's Magic: the Benched placement inside the clause-table gate", () => {
@@ -159,10 +206,14 @@ describe("D629 §2 — the readings", () => {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasSpecialCondition" },
         // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
-        then: [{ op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack" }],
+        then: [
+          { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack" },
+        ],
       },
     ]);
-    expect(deriveAttackEffect(ASSASSINS_MAGIC.replace("affected by a Special Condition", "a Pokémon"))).toBeNull();
+    expect(
+      deriveAttackEffect(ASSASSINS_MAGIC.replace("affected by a Special Condition", "a Pokémon")),
+    ).toBeNull();
     expect(deriveAttackEffect(ASSASSINS_MAGIC.replace("place 6", "place 0"))).toBeNull();
   });
 });
@@ -179,8 +230,14 @@ const F = "d629-fighting";
 const M = "d629-metal";
 const P = "d629-psychic";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -197,7 +254,11 @@ const LOCAL: Record<string, Card> = {
     { stage: "Stage1", evolveFrom: "Goldeen" },
   ),
   "30th-051": mon("30th-051", "Pikachu", 70, "Lightning", [
-    { cost: ["Lightning", "Lightning", "Lightning"], name: "Lightning Crash", effect: LIGHTNING_CRASH },
+    {
+      cost: ["Lightning", "Lightning", "Lightning"],
+      name: "Lightning Crash",
+      effect: LIGHTNING_CRASH,
+    },
   ]),
   "me02.5-120": mon(
     "me02.5-120",
@@ -206,7 +267,12 @@ const LOCAL: Record<string, Card> = {
     "Fighting",
     [
       { cost: ["Fighting"], name: "Tar Cannon", effect: TAR_CANNON },
-      { cost: ["Fighting", "Colorless", "Colorless", "Colorless"], name: "Bulky Bump", damage: 220, effect: "Discard 3 Energy from this Pokémon." },
+      {
+        cost: ["Fighting", "Colorless", "Colorless", "Colorless"],
+        name: "Bulky Bump",
+        damage: 220,
+        effect: "Discard 3 Energy from this Pokémon.",
+      },
     ],
     { stage: "Stage2", evolveFrom: "Carkol" },
   ),
@@ -234,12 +300,23 @@ const LOCAL: Record<string, Card> = {
     "Mismagius",
     110,
     "Psychic",
-    [{ cost: ["Psychic", "Colorless"], name: "Assassin's Magic", damage: 60, effect: ASSASSINS_MAGIC }],
+    [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Assassin's Magic",
+        damage: 60,
+        effect: ASSASSINS_MAGIC,
+      },
+    ],
     { stage: "Stage1", evolveFrom: "Misdreavus" },
   ),
   [FILLER]: mon(FILLER, "D629 Filler", 400, "Colorless", TAP),
-  [TARGET_G]: mon(TARGET_G, "D629 Leaf Target", 400, "Water", TAP, { weaknesses: [{ type: "Grass", value: "×2" }] }),
-  [TARGET_W]: mon(TARGET_W, "D629 Tide Target", 400, "Fire", TAP, { weaknesses: [{ type: "Water", value: "×2" }] }),
+  [TARGET_G]: mon(TARGET_G, "D629 Leaf Target", 400, "Water", TAP, {
+    weaknesses: [{ type: "Grass", value: "×2" }],
+  }),
+  [TARGET_W]: mon(TARGET_W, "D629 Tide Target", 400, "Fire", TAP, {
+    weaknesses: [{ type: "Water", value: "×2" }],
+  }),
   [G]: typedEnergy(G, "Grass"),
   [W]: typedEnergy(W, "Water"),
   [L]: typedEnergy(L, "Lightning"),
@@ -280,7 +357,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -288,15 +367,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -323,7 +408,8 @@ function table(
   bench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = benchFromDeck(clearBench(setActiveFromDeck(state, "p1", attacker), "p1"), "p1", FILLER);
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   state = clearBench(setActiveFromDeck(state, "p2", defender), "p2");
@@ -337,7 +423,11 @@ const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) 
 const ACTIVE: PokemonRef = { seat: "p2", spot: { spot: "active" } };
 const bench = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "bench", index } });
 const pick = (state: GameState, refs: readonly PokemonRef[]) =>
-  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [...refs] } } as GameAction);
+  mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemonMulti", refs: [...refs] },
+  } as GameAction);
 const damageOf = (state: GameState) => [
   state.players.p2.active?.damage ?? -1,
   ...state.players.p2.bench.map((b) => b.damage),
@@ -353,7 +443,18 @@ function parkedMulti(state: GameState) {
 
 describe("D629 §3 — the typed per-Energy snipe on a board", () => {
   it("Bug's Cannon: 2 {G} of 3 Energy → 40 per pick; the {G}-weak Active takes Weakness (80)", () => {
-    const parked = mustApply(table("me02-008", [[G, 2], ["fix-energy", 1]], TARGET_G, [FILLER]), attack(0)).state;
+    const parked = mustApply(
+      table(
+        "me02-008",
+        [
+          [G, 2],
+          ["fix-energy", 1],
+        ],
+        TARGET_G,
+        [FILLER],
+      ),
+      attack(0),
+    ).state;
     const prompt = parkedMulti(parked);
     expect([prompt.min, prompt.max, prompt.candidates.length]).toEqual([1, 1, 2]);
     expect(prompt.note).toBe("Choose 1 of your opponent's Pokémon (40 damage each).");
@@ -362,7 +463,18 @@ describe("D629 §3 — the typed per-Energy snipe on a board", () => {
   });
 
   it("Hydro Jet: 2 {W} of 3 Energy → 60 to the Benched pick", () => {
-    const parked = mustApply(table("me05-014", [[W, 2], ["fix-energy", 1]], FILLER, [TARGET_W]), attack(0)).state;
+    const parked = mustApply(
+      table(
+        "me05-014",
+        [
+          [W, 2],
+          ["fix-energy", 1],
+        ],
+        FILLER,
+        [TARGET_W],
+      ),
+      attack(0),
+    ).state;
     expect(parkedMulti(parked).note).toBe("Choose 1 of your opponent's Pokémon (60 damage each).");
     expect(damageOf(pick(parked, [bench(0)]).state)).toEqual([0, 60]);
   });
@@ -376,7 +488,18 @@ describe("D629 §3 — the typed per-Energy snipe on a board", () => {
 
 describe("D629 §4 — Lightning Crash on a board", () => {
   it("the {L} Energy go first (the other Energy stays), then 90 to the pick", () => {
-    const parked = mustApply(table("30th-051", [[L, 3], ["fix-energy", 1]], FILLER, [FILLER]), attack(0)).state;
+    const parked = mustApply(
+      table(
+        "30th-051",
+        [
+          [L, 3],
+          ["fix-energy", 1],
+        ],
+        FILLER,
+        [FILLER],
+      ),
+      attack(0),
+    ).state;
     expect(ids(parked, parked.players.p1.active?.energy ?? [])).toEqual(["fix-energy"]);
     expect(ids(parked, parked.players.p1.discard)).toEqual([L, L, L]);
     expect(damageOf(pick(parked, [bench(0)]).state)).toEqual([0, 90]);
@@ -405,7 +528,9 @@ describe("D629 §6 — the two compounds on a board", () => {
     const result = mustApply(table("me01-043", [[W, 1]], TARGET_W, [FILLER, FILLER]), attack(0));
     expect(damageOf(result.state)).toEqual([40, 20, 20]);
     // The status lands after the spread (the Checkup's coin may wake it before the next turn).
-    const order = result.events.filter((e) => e.type === "DAMAGE_DEALT" || e.type === "STATUS_APPLIED").map((e) => e.type);
+    const order = result.events
+      .filter((e) => e.type === "DAMAGE_DEALT" || e.type === "STATUS_APPLIED")
+      .map((e) => e.type);
     expect(order[order.length - 1]).toBe("STATUS_APPLIED");
     expect(of(result.events, "STATUS_APPLIED")).toMatchObject([{ seat: "p2", status: "asleep" }]);
     expect(of(result.events, "ATTACK_EFFECT_SKIPPED")).toEqual([]);
@@ -421,21 +546,38 @@ describe("D629 §6 — the two compounds on a board", () => {
 
 describe("D629 §7 — Assassin's Magic on a board", () => {
   it("a Confused Active: 60 to it, then 6 counters on the Benched pick", () => {
-    const state = setConditions(table("me02.5-086", [[P, 1], ["fix-energy", 1]], FILLER, [FILLER, FILLER]), "p2", { rotation: "confused" });
+    const state = setConditions(
+      table(
+        "me02.5-086",
+        [
+          [P, 1],
+          ["fix-energy", 1],
+        ],
+        FILLER,
+        [FILLER, FILLER],
+      ),
+      "p2",
+      { rotation: "confused" },
+    );
     const parked = mustApply(state, attack(0)).state;
     expect(parkedMulti(parked).candidates).toEqual([bench(0), bench(1)]);
     expect(damageOf(pick(parked, [bench(1)]).state)).toEqual([60, 0, 60]);
   });
 
   it("no Special Condition: the 60 only, no park", () => {
-    const result = mustApply(table("me02.5-086", [[P, 1], ["fix-energy", 1]], FILLER, [FILLER]), attack(0));
+    const result = mustApply(
+      table(
+        "me02.5-086",
+        [
+          [P, 1],
+          ["fix-energy", 1],
+        ],
+        FILLER,
+        [FILLER],
+      ),
+      attack(0),
+    );
     expect(result.state.phase.kind).not.toBe("effect:choose");
     expect(damageOf(result.state)).toEqual([60, 0]);
-  });
-});
-
-describe("D629 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -420,31 +420,37 @@ describe("D356 §2 — the self direction fires, and it heals the body just fed"
     expect(healedRows(result.events)[0]?.amount).toBe(90);
   });
 
-  it.each(SEEDS)("seed %i — the ACTIVE can be the subject too (Magearna feeding itself)", (seed) => {
-    // Magearna is HP 90, so it cannot carry 90 damage; 80 is the most it can hold
-    // and still be standing, and the heal clamps to it. The point of the line is
-    // the SPOT, not the number: `healSubject` searches the Active BEFORE the Bench.
-    let state = board(seed, "p1", MAGEARNA, [TANK]);
-    state = turnOf(state, "p1");
-    state = { ...state, players: { ...state.players } };
-    const active = state.players.p1.active;
-    if (active === null) throw new Error("no active");
-    state = {
-      ...state,
-      players: { ...state.players, p1: { ...state.players.p1, active: { ...active, damage: 80 } } },
-    };
-    const result = attach(state, "p1", { spot: "active" });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(activeDamage(result.state, "p1")).toBe(0);
-    expect(healedRows(result.events)).toHaveLength(1);
-    expect(healedRows(result.events)[0]?.amount).toBe(80);
-    // The HEALED row names the body that was fed, and here that body is the
-    // Active — asserted against the state rather than against the row itself, so
-    // the line cannot pass by comparing an event to a copy of itself.
-    const activeStack = result.state.players.p1.active?.stack ?? [];
-    expect(healedRows(result.events)[0]?.uid).toBe(activeStack[activeStack.length - 1]);
-  });
+  it.each(SEEDS)(
+    "seed %i — the ACTIVE can be the subject too (Magearna feeding itself)",
+    (seed) => {
+      // Magearna is HP 90, so it cannot carry 90 damage; 80 is the most it can hold
+      // and still be standing, and the heal clamps to it. The point of the line is
+      // the SPOT, not the number: `healSubject` searches the Active BEFORE the Bench.
+      let state = board(seed, "p1", MAGEARNA, [TANK]);
+      state = turnOf(state, "p1");
+      state = { ...state, players: { ...state.players } };
+      const active = state.players.p1.active;
+      if (active === null) throw new Error("no active");
+      state = {
+        ...state,
+        players: {
+          ...state.players,
+          p1: { ...state.players.p1, active: { ...active, damage: 80 } },
+        },
+      };
+      const result = attach(state, "p1", { spot: "active" });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(activeDamage(result.state, "p1")).toBe(0);
+      expect(healedRows(result.events)).toHaveLength(1);
+      expect(healedRows(result.events)[0]?.amount).toBe(80);
+      // The HEALED row names the body that was fed, and here that body is the
+      // Active — asserted against the state rather than against the row itself, so
+      // the line cannot pass by comparing an event to a copy of itself.
+      const activeStack = result.state.players.p1.active?.stack ?? [];
+      expect(healedRows(result.events)[0]?.uid).toBe(activeStack[activeStack.length - 1]);
+    },
+  );
 
   it.each(SEEDS)("seed %i — §2b THE CONTROL: no Magearna, no heal, same board", (seed) => {
     // The line every §2 assertion needs. Without it, a build that healed on EVERY

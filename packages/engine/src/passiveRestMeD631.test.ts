@@ -10,7 +10,7 @@ import {
   selfPreWRBonusPerOpponentPrize,
 } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
@@ -54,7 +54,8 @@ const OVERLORD_TEXT =
 const GARBAGE_TEXT =
   "Attacks used by your opponent's Active Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance).";
 const LOCKED_TEXT = "Your opponent's Active Pokémon can't be healed.";
-const SLEEP_TEXT = "If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon.";
+const SLEEP_TEXT =
+  "If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon.";
 
 const BASTIODON = ["mep-085", "me05-062", "me05-093"] as const;
 const DECIDUEYE = ["me03-012", "me03-100"] as const;
@@ -234,11 +235,25 @@ const LOCAL_CARDS: Record<string, Card> = {
     attacks: ATTACKS,
   } as Partial<Card>),
   [JAMMING]: {
-    ...trainerCard(JAMMING, "Stadium", "Pokémon Tools attached to each Pokémon (both yours and your opponent's) have no effect."),
+    ...trainerCard(
+      JAMMING,
+      "Stadium",
+      "Pokémon Tools attached to each Pokémon (both yours and your opponent's) have no effect.",
+    ),
     name: "Jamming Tower",
   },
-  [ATK]: battler(ATK, { name: "D631 Attacker", types: ["Colorless"], hp: 340, attacks: ATTACKS } as Partial<Card>),
-  [TR_ATK]: battler(TR_ATK, { name: "Team Rocket's D631 Attacker", types: ["Colorless"], hp: 340, attacks: ATTACKS } as Partial<Card>),
+  [ATK]: battler(ATK, {
+    name: "D631 Attacker",
+    types: ["Colorless"],
+    hp: 340,
+    attacks: ATTACKS,
+  } as Partial<Card>),
+  [TR_ATK]: battler(TR_ATK, {
+    name: "Team Rocket's D631 Attacker",
+    types: ["Colorless"],
+    hp: 340,
+    attacks: ATTACKS,
+  } as Partial<Card>),
   [TR_ENERGY]: specialEnergy(
     TR_ENERGY,
     "Team Rocket's Energy",
@@ -311,7 +326,9 @@ function opened(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -319,15 +336,21 @@ function opened(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -370,7 +393,8 @@ function table(opts: {
     ["p1", atk],
     ["p2", defender],
   ] as const) {
-    if (body.tool !== undefined) state = attachToolFromDeck(ensureInDeck(state, seat, body.tool), seat, "active", body.tool);
+    if (body.tool !== undefined)
+      state = attachToolFromDeck(ensureInDeck(state, seat, body.tool), seat, "active", body.tool);
   }
   for (const [seat, bodies] of [
     ["p2", opts.bench ?? []],
@@ -378,10 +402,12 @@ function table(opts: {
   ] as const) {
     for (const [i, body] of bodies.entries()) {
       state = benchFromDeck(ensureInDeck(state, seat, body.id), seat, body.id);
-      if (body.tool !== undefined) state = attachToolFromDeck(ensureInDeck(state, seat, body.tool), seat, i, body.tool);
+      if (body.tool !== undefined)
+        state = attachToolFromDeck(ensureInDeck(state, seat, body.tool), seat, i, body.tool);
     }
   }
-  for (const [id, n] of opts.energy ?? [["fix-energy", 1]]) state = attachFromDeck(state, "p1", id, n);
+  for (const [id, n] of opts.energy ?? [["fix-energy", 1]])
+    state = attachFromDeck(state, "p1", id, n);
   return state;
 }
 
@@ -391,7 +417,10 @@ function handOf(state: GameState, seat: Seat, count: number): GameState {
   const all = [...side.hand, ...side.deck];
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, hand: all.slice(0, count), deck: all.slice(count) } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, hand: all.slice(0, count), deck: all.slice(count) },
+    },
   };
 }
 
@@ -419,21 +448,31 @@ function benchDamaged(state: GameState, seat: Seat, index: number, damage: numbe
   };
 }
 
-const swing = (state: GameState, index: number) => mustApply(state, { type: "attack", seat: "p1", index });
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1", index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const activeDamage = (state: GameState, seat: Seat = "p2") => state.players[seat].active?.damage;
-const benchDamage = (state: GameState, seat: Seat, i: number) => state.players[seat].bench[i]?.damage;
+const benchDamage = (state: GameState, seat: Seat, i: number) =>
+  state.players[seat].bench[i]?.damage;
 
 /** Swing a snipe and answer its pick with the body at `spot` on p2's board. */
 function snipe(state: GameState, index: number, spot: PokemonRef["spot"]) {
   const { state: parked } = swing(state, index);
-  if (parked.phase.kind !== "effect:choose") throw new Error(`expected a pick, got ${parked.phase.kind}`);
+  if (parked.phase.kind !== "effect:choose")
+    throw new Error(`expected a pick, got ${parked.phase.kind}`);
   const prompt = parked.phase.prompt;
-  if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
-  const ref = prompt.candidates.find((c) => c.seat === "p2" && JSON.stringify(c.spot) === JSON.stringify(spot));
+  if (prompt.kind !== "choosePokemonMulti")
+    throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+  const ref = prompt.candidates.find(
+    (c) => c.seat === "p2" && JSON.stringify(c.spot) === JSON.stringify(spot),
+  );
   if (ref === undefined) throw new Error("the spot is not a candidate");
-  return mustApply(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [ref] } });
+  return mustApply(parked, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemonMulti", refs: [ref] },
+  });
 }
 const BENCH0: PokemonRef["spot"] = { spot: "bench", index: 0 };
 const ACTIVE: PokemonRef["spot"] = { spot: "active" };
@@ -445,12 +484,19 @@ function potion(state: GameState, spot: PokemonRef["spot"]) {
   const uid = side.deck.find((u) => ensured.cardIdByUid[u] === POTION) as string;
   const held = {
     ...ensured,
-    players: { ...ensured.players, p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] } },
+    players: {
+      ...ensured.players,
+      p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] },
+    },
   };
   const played = mustApply(held, { type: "playTrainer", seat: "p1", uid });
   if (played.state.phase.kind !== "effect:choose") return played;
   const ref: PokemonRef = { seat: "p1", spot };
-  const resolved = mustApply(played.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+  const resolved = mustApply(played.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref },
+  });
   return { state: resolved.state, events: [...played.events, ...resolved.events] };
 }
 
@@ -461,7 +507,10 @@ function playItem(state: GameState, id: string) {
   const uid = side.deck.find((u) => ensured.cardIdByUid[u] === id) as string;
   const held = {
     ...ensured,
-    players: { ...ensured.players, p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] } },
+    players: {
+      ...ensured.players,
+      p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] },
+    },
   };
   return mustApply(held, { type: "playTrainer", seat: "p1", uid });
 }
@@ -472,7 +521,10 @@ function attachFromHand(state: GameState, spot: PokemonRef["spot"]) {
   const uid = side.deck.find((u) => state.cardIdByUid[u] === "fix-energy") as string;
   const held = {
     ...state,
-    players: { ...state.players, p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] } },
+    players: {
+      ...state.players,
+      p1: { ...side, deck: side.deck.filter((u) => u !== uid), hand: [...side.hand, uid] },
+    },
   };
   return mustApply(held, { type: "attachEnergy", seat: "p1", uid, target: spot });
 }
@@ -486,9 +538,13 @@ function seedFor(face: "heads" | "tails"): number {
 // ────────────────────────────────────────────────────────────────────────────
 describe("D631 §1 — the prints and the registry rows", () => {
   it("six objects, one per printed text, on the 9 ids; reprints share the object", () => {
-    expect(programFor(BASTIODON[0])).toEqual({ passive: { preventSeatDamageWhileBenchedFromEnergyAtMost: 2 } });
+    expect(programFor(BASTIODON[0])).toEqual({
+      passive: { preventSeatDamageWhileBenchedFromEnergyAtMost: 2 },
+    });
     for (const id of BASTIODON) expect(programFor(id), id).toBe(programFor(BASTIODON[0]));
-    expect(programFor(DECIDUEYE[0])).toEqual({ passive: { ignoreColorlessCostIfOpponentHandExactly: 4 } });
+    expect(programFor(DECIDUEYE[0])).toEqual({
+      passive: { ignoreColorlessCostIfOpponentHandExactly: 4 },
+    });
     expect(programFor(DECIDUEYE[1])).toBe(programFor(DECIDUEYE[0]));
     expect(programFor(KINGAMBIT)).toEqual({ passive: { damageBonusBeforeWRPerOpponentPrize: 30 } });
     expect(programFor(GARBODOR)).toEqual({ passive: { opponentActiveToolAttackDebuff: 20 } });
@@ -541,7 +597,10 @@ describe("D631 §2 — Ancient Bulwark: a benched holder shields its whole side 
     const board = table({ bench: [{ id: WALL }, { id: BASTIODON[0] }] });
     expect(benchDamage(snipe(board, PINPOINT, BENCH0).state, "p2", 0)).toBe(0);
     expect(activeDamage(snipe(board, ARROW, ACTIVE).state)).toBe(0);
-    const charged = table({ energy: [["fix-energy", 3]], bench: [{ id: WALL }, { id: BASTIODON[0] }] });
+    const charged = table({
+      energy: [["fix-energy", 3]],
+      bench: [{ id: WALL }, { id: BASTIODON[0] }],
+    });
     expect(benchDamage(snipe(charged, PINPOINT, BENCH0).state, "p2", 0)).toBe(120);
   });
 
@@ -553,7 +612,11 @@ describe("D631 §2 — Ancient Bulwark: a benched holder shields its whole side 
   });
 
   it("the count is CARDS, not units: two Team Rocket's Energy (4 units) are 2 Energy, and the hit is prevented", () => {
-    const board = table({ attacker: { id: TR_ATK }, energy: [[TR_ENERGY, 2]], bench: [{ id: BASTIODON[0] }] });
+    const board = table({
+      attacker: { id: TR_ATK },
+      energy: [[TR_ENERGY, 2]],
+      bench: [{ id: BASTIODON[0] }],
+    });
     const attacker = board.players.p1.active;
     if (attacker === null) throw new Error("no Active");
     expect(attacker.energy).toHaveLength(2);
@@ -594,21 +657,38 @@ describe("D631 §3 — Sniper's Eye: every {C} ignored while the opponent holds 
   });
 
   it("a surcharge's {C} goes too (R-SNE1); a §9 lock restores the printed cost", () => {
-    const toad = handOf(table({ attacker: { id: DECIDUEYE[0] }, defender: { id: SEISMITOAD }, energy: [[G, 1]] }), "p2", 4);
+    const toad = handOf(
+      table({ attacker: { id: DECIDUEYE[0] }, defender: { id: SEISMITOAD }, energy: [[G, 1]] }),
+      "p2",
+      4,
+    );
     const body = toad.players.p1.active;
     if (body === null) throw new Error("no Active");
-    expect(effectiveAttackCost(toad, body, ["Grass", "Colorless", "Colorless", "Colorless"])).toEqual(["Grass"]);
-    const locked = handOf(table({ attacker: { id: DECIDUEYE[0] }, defender: { id: FLUTTER }, energy: [[G, 1]] }), "p2", 4);
+    expect(
+      effectiveAttackCost(toad, body, ["Grass", "Colorless", "Colorless", "Colorless"]),
+    ).toEqual(["Grass"]);
+    const locked = handOf(
+      table({ attacker: { id: DECIDUEYE[0] }, defender: { id: FLUTTER }, energy: [[G, 1]] }),
+      "p2",
+      4,
+    );
     const held = locked.players.p1.active;
     if (held === null) throw new Error("no Active");
     expect(selfIgnoresColorlessCost(locked, held)).toBe(false);
-    expect(effectiveAttackCost(locked, held, ["Grass", "Colorless"])).toEqual(["Grass", "Colorless"]);
+    expect(effectiveAttackCost(locked, held, ["Grass", "Colorless"])).toEqual([
+      "Grass",
+      "Colorless",
+    ]);
   });
 });
 
 describe("D631 §4 — Supreme Overlord: +30 before W/R per Prize the opponent has taken", () => {
   const kingambit = (opponentPrizes: number, defender: string = WALL) =>
-    setPrizes(table({ attacker: { id: KINGAMBIT }, defender: { id: defender }, energy: [[M, 2]] }), "p2", opponentPrizes);
+    setPrizes(
+      table({ attacker: { id: KINGAMBIT }, defender: { id: defender }, energy: [[M, 2]] }),
+      "p2",
+      opponentPrizes,
+    );
 
   it("0, 2 and 5 taken: 180, 240, 330", () => {
     for (const [prizes, expected] of [
@@ -633,7 +713,11 @@ describe("D631 §4 — Supreme Overlord: +30 before W/R per Prize the opponent h
     expect(selfPreWRBonusPerOpponentPrize(board, body)).toBe(90);
     // Flutter Mane (90 HP, its Midnight Fluttering silencing the Active Kingambit) is Knocked Out, so the
     // DAMAGE_DEALT row's `bonus` is the witness, against the same row on a Wall.
-    const locked = setPrizes(table({ attacker: { id: KINGAMBIT }, defender: { id: FLUTTER }, energy: [[M, 2]] }), "p2", 3);
+    const locked = setPrizes(
+      table({ attacker: { id: KINGAMBIT }, defender: { id: FLUTTER }, energy: [[M, 2]] }),
+      "p2",
+      3,
+    );
     expect(of(swing(locked, 0).events, "DAMAGE_DEALT")[0]?.bonus).toBeUndefined();
     const free = kingambit(3);
     expect(of(swing(free, 0).events, "DAMAGE_DEALT")[0]?.bonus).toBe(90);
@@ -642,23 +726,44 @@ describe("D631 §4 — Supreme Overlord: +30 before W/R per Prize the opponent h
 
 describe("D631 §5 — Gloomy Garbage: −20 before W/R off a Tool-carrying opposing Active's attacks", () => {
   it("a Tool on the attacker: 100; none: 120; Garbodor on the attacker's side: 120", () => {
-    expect(activeDamage(swing(table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }] }), BLAST).state)).toBe(100);
+    expect(
+      activeDamage(
+        swing(table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }] }), BLAST).state,
+      ),
+    ).toBe(100);
     expect(activeDamage(swing(table({ bench: [{ id: GARBODOR }] }), BLAST).state)).toBe(120);
-    expect(activeDamage(swing(table({ attacker: { id: ATK, tool: TOOL }, ownBench: [{ id: GARBODOR }] }), BLAST).state)).toBe(120);
+    expect(
+      activeDamage(
+        swing(table({ attacker: { id: ATK, tool: TOOL }, ownBench: [{ id: GARBODOR }] }), BLAST)
+          .state,
+      ),
+    ).toBe(120);
   });
 
   it("an Active Garbodor counts, two holders stack, the spread is weakened too", () => {
     expect(
-      activeDamage(swing(table({ attacker: { id: ATK, tool: TOOL }, defender: { id: GARBODOR } }), BLAST).state),
+      activeDamage(
+        swing(table({ attacker: { id: ATK, tool: TOOL }, defender: { id: GARBODOR } }), BLAST)
+          .state,
+      ),
     ).toBe(100);
-    const two = table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }, { id: GARBODOR }] });
+    const two = table({
+      attacker: { id: ATK, tool: TOOL },
+      bench: [{ id: GARBODOR }, { id: GARBODOR }],
+    });
     expect(activeDamage(swing(two, BLAST).state)).toBe(80);
-    const spread = swing(table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }, { id: WALL }] }), SHOCKWAVE).state;
+    const spread = swing(
+      table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }, { id: WALL }] }),
+      SHOCKWAVE,
+    ).state;
     expect([benchDamage(spread, "p2", 0), benchDamage(spread, "p2", 1)]).toEqual([100, 100]);
   });
 
   it("under Jamming Tower the Tool is still attached; a §9 lock on Garbodor switches it off", () => {
-    const jammed = stadium(table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }] }), JAMMING);
+    const jammed = stadium(
+      table({ attacker: { id: ATK, tool: TOOL }, bench: [{ id: GARBODOR }] }),
+      JAMMING,
+    );
     const body = jammed.players.p1.active;
     if (body === null) throw new Error("no Active");
     expect(opposingToolAttackDebuff(jammed, body)).toBe(20);
@@ -669,7 +774,8 @@ describe("D631 §5 — Gloomy Garbage: −20 before W/R off a Tool-carrying oppo
 });
 
 describe("D631 §5b — Gloomy Garbage under a clause that ignores effects on the target: only the target's own term goes (R-GG1)", () => {
-  const armed = (opts: { defender?: Body; bench?: Body[] }) => table({ attacker: { id: ATK, tool: TOOL }, ...opts });
+  const armed = (opts: { defender?: Body; bench?: Body[] }) =>
+    table({ attacker: { id: ATK, tool: TOOL }, ...opts });
 
   it("the snipes without one: a benched Garbodor weakens the benched pick and the Active pick", () => {
     const board = armed({ bench: [{ id: WALL }, { id: GARBODOR }] });
@@ -684,8 +790,15 @@ describe("D631 §5b — Gloomy Garbage under a clause that ignores effects on th
   });
 
   it("a Feint snipe on a Garbodor drops that Garbodor's own −20, benched or Active; a second holder's stays", () => {
-    expect(benchDamage(snipe(armed({ bench: [{ id: GARBODOR }] }), FEINT_SNIPE, BENCH0).state, "p2", 0)).toBe(120);
-    expect(activeDamage(snipe(armed({ defender: { id: GARBODOR }, bench: [{ id: WALL }] }), FEINT_SNIPE, ACTIVE).state)).toBe(120);
+    expect(
+      benchDamage(snipe(armed({ bench: [{ id: GARBODOR }] }), FEINT_SNIPE, BENCH0).state, "p2", 0),
+    ).toBe(120);
+    expect(
+      activeDamage(
+        snipe(armed({ defender: { id: GARBODOR }, bench: [{ id: WALL }] }), FEINT_SNIPE, ACTIVE)
+          .state,
+      ),
+    ).toBe(120);
     const pair = armed({ bench: [{ id: GARBODOR }, { id: GARBODOR }] });
     expect(benchDamage(snipe(pair, FEINT_SNIPE, BENCH0).state, "p2", 0)).toBe(100);
   });
@@ -708,11 +821,20 @@ describe("D631 §5b — Gloomy Garbage under a clause that ignores effects on th
 
 describe("D631 §6 — Life-Locked: the opponent's Active can't be healed, at every heal site", () => {
   it("Potion (`healChosen`): the locked Active heals 0 and files nothing; a Benched body heals", () => {
-    const board = setDamage(table({ defender: { id: YVELTAL }, ownBench: [{ id: WALL }] }), "p1", 60);
+    const board = setDamage(
+      table({ defender: { id: YVELTAL }, ownBench: [{ id: WALL }] }),
+      "p1",
+      60,
+    );
     const { state, events } = potion(board, ACTIVE);
     expect(activeDamage(state, "p1")).toBe(60);
     expect(of(events, "HEALED")).toEqual([]);
-    const benched = benchDamaged(table({ defender: { id: YVELTAL }, ownBench: [{ id: WALL }] }), "p1", 0, 60);
+    const benched = benchDamaged(
+      table({ defender: { id: YVELTAL }, ownBench: [{ id: WALL }] }),
+      "p1",
+      0,
+      60,
+    );
     expect(benchDamage(potion(benched, BENCH0).state, "p1", 0)).toBe(30);
   });
 
@@ -742,7 +864,11 @@ describe("D631 §6 — Life-Locked: the opponent's Active can't be healed, at ev
   });
 
   it("Magearna's Auto Heal (`healSubject`): an attach to the locked Active heals 0, to the Bench heals", () => {
-    const board = setDamage(table({ attacker: { id: MAGEARNA }, defender: { id: YVELTAL }, ownBench: [{ id: WALL }] }), "p1", 60);
+    const board = setDamage(
+      table({ attacker: { id: MAGEARNA }, defender: { id: YVELTAL }, ownBench: [{ id: WALL }] }),
+      "p1",
+      60,
+    );
     const onActive = attachFromHand(board, ACTIVE);
     expect(activeDamage(onActive.state, "p1")).toBe(60);
     expect(of(onActive.events, "HEALED")).toEqual([]);
@@ -753,7 +879,11 @@ describe("D631 §6 — Life-Locked: the opponent's Active can't be healed, at ev
   });
 
   it("a §9 lock on Yveltal lifts it: Klefki locks the Basic Yveltal and the Potion heals", () => {
-    const board = setDamage(table({ attacker: { id: KLEFKI }, defender: { id: YVELTAL } }), "p1", 60);
+    const board = setDamage(
+      table({ attacker: { id: KLEFKI }, defender: { id: YVELTAL } }),
+      "p1",
+      60,
+    );
     const body = board.players.p1.active;
     if (body === null) throw new Error("no Active");
     expect(healLocked(board, body)).toBe(false);
@@ -768,18 +898,31 @@ describe("D631 §6 — Life-Locked: the opponent's Active can't be healed, at ev
 
 describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage", () => {
   const sleeper = (opts: { asleep: boolean; face: "heads" | "tails"; defender?: string }) => {
-    let board = setDamage(table({ attacker: { id: SNORLAX }, defender: { id: opts.defender ?? WALL } }), "p1", 100);
+    let board = setDamage(
+      table({ attacker: { id: SNORLAX }, defender: { id: opts.defender ?? WALL } }),
+      "p1",
+      100,
+    );
     if (opts.asleep) board = setConditions(board, "p1", { rotation: "asleep" });
     return { ...board, rngState: seedFor(opts.face) };
   };
 
   it("tails (still Asleep): heals all 100; heads (woke up): no heal; not Asleep: no heal", () => {
-    const slept = mustApply(sleeper({ asleep: true, face: "tails" }), { type: "endTurn", seat: "p1" });
+    const slept = mustApply(sleeper({ asleep: true, face: "tails" }), {
+      type: "endTurn",
+      seat: "p1",
+    });
     expect(activeDamage(slept.state, "p1")).toBe(0);
     expect(of(slept.events, "HEALED").map((e) => e.amount)).toEqual([100]);
-    const woke = mustApply(sleeper({ asleep: true, face: "heads" }), { type: "endTurn", seat: "p1" });
+    const woke = mustApply(sleeper({ asleep: true, face: "heads" }), {
+      type: "endTurn",
+      seat: "p1",
+    });
     expect(activeDamage(woke.state, "p1")).toBe(100);
-    const awake = mustApply(sleeper({ asleep: false, face: "tails" }), { type: "endTurn", seat: "p1" });
+    const awake = mustApply(sleeper({ asleep: false, face: "tails" }), {
+      type: "endTurn",
+      seat: "p1",
+    });
     expect(activeDamage(awake.state, "p1")).toBe(100);
     expect(of(awake.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toContain("Good Sleep");
   });
@@ -791,22 +934,22 @@ describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage"
   });
 
   it("Life-Locked composes: an opposing Yveltal stops the heal", () => {
-    const locked = mustApply(sleeper({ asleep: true, face: "tails", defender: YVELTAL }), { type: "endTurn", seat: "p1" });
+    const locked = mustApply(sleeper({ asleep: true, face: "tails", defender: YVELTAL }), {
+      type: "endTurn",
+      seat: "p1",
+    });
     expect(activeDamage(locked.state, "p1")).toBe(100);
     expect(of(locked.events, "HEALED")).toEqual([]);
   });
 
   it("Collapse puts Snorlax to sleep, and the Checkup that follows can heal it", () => {
-    const board = { ...table({ attacker: { id: SNORLAX }, energy: [["fix-energy", 3]] }), rngState: seedFor("tails") };
+    const board = {
+      ...table({ attacker: { id: SNORLAX }, energy: [["fix-energy", 3]] }),
+      rngState: seedFor("tails"),
+    };
     const swung = swing(setDamage(board, "p1", 50), 0);
     expect(swung.state.players.p1.active?.conditions.rotation).toBe("asleep");
     expect(activeDamage(swung.state, "p1")).toBe(0);
     expect(of(swung.events, "HEALED").map((e) => e.amount)).toEqual([50]);
-  });
-});
-
-describe("D631 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

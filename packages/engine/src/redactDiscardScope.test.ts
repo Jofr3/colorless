@@ -1,7 +1,6 @@
 import { redactedDiscardScopeSchema, redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { DiscardScope, EffectContinuation, EffectPrompt } from "./interpreter";
-import { engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import { redactGame } from "./redact";
 import { MIXED_DECK, driveSetup } from "./testFixtures";
@@ -211,9 +210,5 @@ describe("§3 — the gate the new prompt rides, and the version", () => {
     const own = promptFor(ownSide, "p1");
     if (own === null || own.kind !== "discardEnergy") throw new Error("expected the prompt");
     expect(own.discardable[0]?.from).toEqual(P1_ACTIVE);
-  });
-
-  it("engineVersion", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

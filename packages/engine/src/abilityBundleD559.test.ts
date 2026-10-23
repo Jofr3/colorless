@@ -230,10 +230,34 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [PSY]: battler(PSY, { name: "D559 Psy", hp: 300, retreat: 1, types: ["Psychic"], attacks: ATTACKS }),
-  [NORM]: battler(NORM, { name: "D559 Norm", hp: 300, retreat: 1, types: ["Colorless"], attacks: ATTACKS }),
-  [GRASSY]: battler(GRASSY, { name: "D559 Grassy", hp: 300, retreat: 1, types: ["Grass"], attacks: ATTACKS }),
-  [DRAGON]: battler(DRAGON, { name: "D559 Drake", hp: 900, retreat: 2, types: ["Dragon"], weaknesses: null }),
+  [PSY]: battler(PSY, {
+    name: "D559 Psy",
+    hp: 300,
+    retreat: 1,
+    types: ["Psychic"],
+    attacks: ATTACKS,
+  }),
+  [NORM]: battler(NORM, {
+    name: "D559 Norm",
+    hp: 300,
+    retreat: 1,
+    types: ["Colorless"],
+    attacks: ATTACKS,
+  }),
+  [GRASSY]: battler(GRASSY, {
+    name: "D559 Grassy",
+    hp: 300,
+    retreat: 1,
+    types: ["Grass"],
+    attacks: ATTACKS,
+  }),
+  [DRAGON]: battler(DRAGON, {
+    name: "D559 Drake",
+    hp: 900,
+    retreat: 2,
+    types: ["Dragon"],
+    weaknesses: null,
+  }),
   [DRAGON_GRASS]: battler(DRAGON_GRASS, {
     name: "D559 Moss Drake",
     hp: 900,
@@ -249,7 +273,13 @@ const LOCAL_CARDS: Record<string, Card> = {
     weaknesses: null,
     resistances: [{ type: "Psychic", value: "-30" }],
   }),
-  [WALL]: battler(WALL, { name: "D559 Wall", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
+  [WALL]: battler(WALL, {
+    name: "D559 Wall",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -295,7 +325,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -303,11 +335,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -373,8 +408,11 @@ const cardOf = (id: string) => POOL[id] as Card;
 
 function dealtBy(state: GameState, index: number): number | undefined {
   const { events } = mustApply(state, { type: "attack", seat: "p1", index });
-  return (events.find((e) => e.type === "DAMAGE_DEALT") as Extract<GameEvent, { type: "DAMAGE_DEALT" }> | undefined)
-    ?.dealt;
+  return (
+    events.find((e) => e.type === "DAMAGE_DEALT") as
+      | Extract<GameEvent, { type: "DAMAGE_DEALT" }>
+      | undefined
+  )?.dealt;
 }
 
 /** The snipe site (`snipeActive`): Pick Off, answered onto p2's ACTIVE. */
@@ -387,14 +425,20 @@ function snipedActive(state: GameState): number | undefined {
     seat: "p1",
     choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
   });
-  return (done.events.find((e) => e.type === "DAMAGE_DEALT") as Extract<GameEvent, { type: "DAMAGE_DEALT" }> | undefined)
-    ?.dealt;
+  return (
+    done.events.find((e) => e.type === "DAMAGE_DEALT") as
+      | Extract<GameEvent, { type: "DAMAGE_DEALT" }>
+      | undefined
+  )?.dealt;
 }
 
 /** TEST SURGERY — rewrite `seat`'s Active with `patch` (turn-neutral). */
 function patchActive(state: GameState, seat: Seat, patch: Partial<InPlayPokemon>): GameState {
   const side = state.players[seat];
-  return { ...state, players: { ...state.players, [seat]: { ...side, active: { ...body(state, seat), ...patch } } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...side, active: { ...body(state, seat), ...patch } } },
+  };
 }
 /** D552's retype, constructed live on THIS turn (R-FZ1's board). */
 const retyped = (state: GameState, seat: Seat = "p2") =>
@@ -424,7 +468,12 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
       name: "Gastrodon",
       ids: [GASTRODON],
       passive: {
-        disableAbilities: { side: "both", stage: "Stage2", sourceOnBench: true, targetZone: "bench" },
+        disableAbilities: {
+          side: "both",
+          stage: "Stage2",
+          sourceOnBench: true,
+          targetZone: "bench",
+        },
       },
     },
     {
@@ -432,7 +481,11 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
       ids: ORTHWORM,
       passive: { damageAttacker: { amount: 20, perAttachedEnergy: "Metal" } },
     },
-    { name: "Maractus", ids: MARACTUS, passive: { damageAttackerOnKo: { amount: 60, activeOnly: true } } },
+    {
+      name: "Maractus",
+      ids: MARACTUS,
+      passive: { damageAttackerOnKo: { amount: 60, activeOnly: true } },
+    },
     {
       name: "Klinklang",
       ids: KLINKLANG,
@@ -526,7 +579,7 @@ describe("D559 §3 — the null paths win (R-FZ2), suppression drops it (R-FZ3),
   // prints it at the main hit (derived as `damageSuppression.weakness`), Sigilyph
   // sv10.5w-038/-121 "Telekinesis" at the snipe (`ignoreWR`). Clean Strike carries the
   // same sentence on a flat 50 so the Weakness step is the only variable.
-  it("🛑 R-FZ2: \"isn't affected by Weakness or Resistance\" → 50", () => {
+  it('🛑 R-FZ2: "isn\'t affected by Weakness or Resistance" → 50', () => {
     expect(dealtBy(table(PSY, [LILLIE[0]], DRAGON), I_CLEAN)).toBe(50);
   });
   it("🛑 R-FZ3: \"isn't affected by any effects on your opponent's Active Pokémon\" drops the rewrite → 50", () => {
@@ -550,7 +603,10 @@ describe("D559 §3 — the null paths win (R-FZ2), suppression drops it (R-FZ3),
     expect(weaknessOf(psy, cardOf(DRAGON), null, "Psychic")).toEqual({ op: "multiply", amount: 2 });
     expect(weaknessOf(grassy, mossDrake, null, "Psychic")).toBeNull();
     expect(weaknessOf(grassy, mossDrake, null, null)).toEqual({ op: "multiply", amount: 2 });
-    expect(weaknessOf(norm, cardOf(DRAGON), "Colorless", "Psychic")).toEqual({ op: "multiply", amount: 2 });
+    expect(weaknessOf(norm, cardOf(DRAGON), "Colorless", "Psychic")).toEqual({
+      op: "multiply",
+      amount: 2,
+    });
     expect(weaknessOf(psy, cardOf(DRAGON), "Colorless", "Psychic")).toBeNull();
   });
 });
@@ -727,7 +783,7 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
     const state = table(FLUTTER[0], [GASTRODON], FLUTTER[1], [GASTRODON]);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it("🆕🆕🆕 D571 — the tripwire FIRED: Iron Thorns ex \"Initialization\" is BUILT (and the stratified pass with it, `ironThornsD571.test.ts`); Team Rocket's Watchtower is BUILT (D566) and silences neither built lock source", () => {
+  it('🆕🆕🆕 D571 — the tripwire FIRED: Iron Thorns ex "Initialization" is BUILT (and the stratified pass with it, `ironThornsD571.test.ts`); Team Rocket\'s Watchtower is BUILT (D566) and silences neither built lock source', () => {
     // Iron Thorns ex "Initialization" (Active-sourced; Rule Box bodies except Future
     // Pokémon) is a legal lock whose source an Active Flutter Mane silences from across
     // the table — by the rules its lock then switches off. 🆕🆕🆕 D571 (D539): this rung was
@@ -749,7 +805,10 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
     // 🆕🆕🆕 D566 — INVERTED: the Watchtower is BUILT (a Stadium lock, which no lock can
     // silence), and with it in play NEITHER legal Pokémon lock source is silenced — both
     // are off {C} — so R-LK1 still holds. Driven on the pair board above.
-    expect(programFor("sv10-180")?.stadium?.disableAbilities).toEqual({ side: "both", targetType: "Colorless" });
+    expect(programFor("sv10-180")?.stadium?.disableAbilities).toEqual({
+      side: "both",
+      targetType: "Colorless",
+    });
     const pair = table(FLUTTER[0], [GASTRODON], FLUTTER[1], [GASTRODON]);
     // TEST SURGERY: one deck uid re-labelled as the Watchtower and stood in the Stadium zone
     // (this suite's pool carries no Stadium card; `stadiumEffectsOf` reads the id alone).

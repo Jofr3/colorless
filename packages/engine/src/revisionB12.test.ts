@@ -103,7 +103,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: [...result.events] };
 }
 
@@ -114,7 +115,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -122,11 +125,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);
@@ -138,7 +144,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -154,7 +166,11 @@ function give(state: GameState, zone: "hand" | "discard", ids: readonly string[]
     if (uid === undefined) throw new Error(`no ${id} in p1's deck`);
     moved.push(uid);
   }
-  side = { ...side, deck: side.deck.filter((u) => !moved.includes(u)), [zone]: [...side[zone], ...moved] };
+  side = {
+    ...side,
+    deck: side.deck.filter((u) => !moved.includes(u)),
+    [zone]: [...side[zone], ...moved],
+  };
   return { ...state, players: { ...state.players, p1: side } };
 }
 
@@ -197,7 +213,9 @@ describe("B12 §1 — Infernape 'Pyro Dance': {R}, {F} or 1 of each, and never n
     const program = programFor(INFERNAPE[0])?.abilities?.[0]?.program;
     expect(program).toBeDefined();
     for (const id of INFERNAPE) expect(programFor(id)?.abilities?.[0]?.program, id).toBe(program);
-    expect(program?.map((op) => (op.op === "attachEnergyFrom" ? [op.source, op.energyType] : op.op))).toEqual([
+    expect(
+      program?.map((op) => (op.op === "attachEnergyFrom" ? [op.source, op.energyType] : op.op)),
+    ).toEqual([
       ["hand", "Fire"],
       ["hand", "Fighting"],
     ]);
@@ -248,7 +266,10 @@ describe("B12 §1 — Infernape 'Pyro Dance': {R}, {F} or 1 of each, and never n
   });
 
   it("Infernape the ONLY Pokémon, hand {R}{F}: the choice is asked, not forced, and {R} alone lands", () => {
-    const used = run(board(INFERNAPE[1], { alone: true, hand: [FIRE, FIGHTING] }), use("Pyro Dance"));
+    const used = run(
+      board(INFERNAPE[1], { alone: true, hand: [FIRE, FIGHTING] }),
+      use("Pyro Dance"),
+    );
     expect(used.state.phase.kind).toBe("effect:choose");
     expect(used.events.filter((e) => e.type === "ENERGY_ATTACHED")).toEqual([]);
     let state = run(used.state, pick(ACTIVE)).state;
@@ -260,7 +281,10 @@ describe("B12 §1 — Infernape 'Pyro Dance': {R}, {F} or 1 of each, and never n
   });
 
   it("Infernape the ONLY Pokémon, hand {R}{F}: decline {R}, and the lone {F} target is forced", () => {
-    let state = run(board(INFERNAPE[2], { alone: true, hand: [FIRE, FIGHTING] }), use("Pyro Dance")).state;
+    let state = run(
+      board(INFERNAPE[2], { alone: true, hand: [FIRE, FIGHTING] }),
+      use("Pyro Dance"),
+    ).state;
     state = run(state, DECLINE).state;
     expect(state.phase.kind).toBe("turn:action");
     expect(energyNames(state, ACTIVE)).toEqual(["Fighting Energy"]);
@@ -293,14 +317,17 @@ describe("B12 §1 — Infernape 'Pyro Dance': {R}, {F} or 1 of each, and never n
 });
 
 function rows(events: readonly GameEvent[], state: GameState): string[] {
-  return logFromEvents(events, { names: { p1: "P1", p2: "P2" }, state, elapsed: "+00:00" }).flatMap((entry) =>
-    entry.kind === "action" ? [entry.segments.map((s) => s.text).join("")] : [],
+  return logFromEvents(events, { names: { p1: "P1", p2: "P2" }, state, elapsed: "+00:00" }).flatMap(
+    (entry) => (entry.kind === "action" ? [entry.segments.map((s) => s.text).join("")] : []),
   );
 }
 
 /** Answer Overvolt Discharge's parks: the target is always the Active Magneton, and the card
     question (an unlike pile) takes the next of `order` by name. Returns every log line written. */
-function discharge(state: GameState, order: readonly string[]): { state: GameState; lines: string[] } {
+function discharge(
+  state: GameState,
+  order: readonly string[],
+): { state: GameState; lines: string[] } {
   let step = run(state, use("Overvolt Discharge"));
   const lines: string[] = [];
   let next = 0;
@@ -311,9 +338,15 @@ function discharge(state: GameState, order: readonly string[]): { state: GameSta
     } else if (prompt.kind === "chooseCards") {
       const wanted = order[next];
       next += 1;
-      const uid = prompt.candidates.find((u) => POOL[step.state.cardIdByUid[u] ?? ""]?.name === wanted);
+      const uid = prompt.candidates.find(
+        (u) => POOL[step.state.cardIdByUid[u] ?? ""]?.name === wanted,
+      );
       if (uid === undefined) throw new Error(`no ${wanted} offered`);
-      step = run(step.state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [uid] } } as GameAction);
+      step = run(step.state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [uid] },
+      } as GameAction);
     } else {
       throw new Error(`unexpected prompt ${prompt.kind}`);
     }

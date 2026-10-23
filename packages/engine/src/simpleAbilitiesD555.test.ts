@@ -97,10 +97,26 @@ function bodies(
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
-  ...bodies(VOLCARONA, "Volcarona", "Stage1", "Larvesta", "Torrid Scales", TORRID_TEXT, "Fire Wing"),
+  ...bodies(
+    VOLCARONA,
+    "Volcarona",
+    "Stage1",
+    "Larvesta",
+    "Torrid Scales",
+    TORRID_TEXT,
+    "Fire Wing",
+  ),
   ...bodies(ARCHEOPS, "Archeops", "Stage2", "Archen", "Ancient Wing", WING_TEXT, "Rock Throw"),
   ...bodies(MEOWSTIC, "Meowstic", "Stage1", "Espurr", "Beckoning Tail", TAIL_TEXT, "Psyshot"),
-  ...bodies(SAMUROTT, "Samurott", "Stage2", "Dewott", "Torrential Whirlpool", WHIRLPOOL_TEXT, "Energized Slash"),
+  ...bodies(
+    SAMUROTT,
+    "Samurott",
+    "Stage2",
+    "Dewott",
+    "Torrential Whirlpool",
+    WHIRLPOOL_TEXT,
+    "Energized Slash",
+  ),
   ...bodies(
     TYRANITAR,
     "Team Rocket's Tyranitar",
@@ -175,7 +191,9 @@ function opened(first: Seat, seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   state = completeSetup(state);
   return state;
 }
@@ -204,7 +222,8 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
   setActiveFromDeck(ensureInDeck(state, seat, id), seat, id);
-const seatBench = (state: GameState, seat: Seat, id: string) => benchFromDeck(ensureInDeck(state, seat, id), seat, id);
+const seatBench = (state: GameState, seat: Seat, id: string) =>
+  benchFromDeck(ensureInDeck(state, seat, id), seat, id);
 
 /** p1 on its own (unrestricted) turn 2 — p2 went first and passed — with `active`
     Active, `bench` benched in order, and a FILLER Active and `oppBench` for p2. */
@@ -251,7 +270,12 @@ function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameStat
 
 /** TEST SURGERY — put `id` (from `seat`'s deck) on top of the body at `spot`, as an
     evolution would, so the body is an EVOLVED Pokémon (stack length 2). */
-function evolveBySurgery(prior: GameState, seat: Seat, spot: "active" | number, id: string): GameState {
+function evolveBySurgery(
+  prior: GameState,
+  seat: Seat,
+  spot: "active" | number,
+  id: string,
+): GameState {
   const state = ensureInDeck(prior, seat, id);
   const side = state.players[seat];
   const uid = side.deck.find((u) => state.cardIdByUid[u] === id);
@@ -262,7 +286,10 @@ function evolveBySurgery(prior: GameState, seat: Seat, spot: "active" | number, 
     if (active === null) throw new Error("no Active");
     return {
       ...state,
-      players: { ...state.players, [seat]: { ...side, deck, active: { ...active, stack: [...active.stack, uid] } } },
+      players: {
+        ...state.players,
+        [seat]: { ...side, deck, active: { ...active, stack: [...active.stack, uid] } },
+      },
     };
   }
   const bench = side.bench.map((p, i) => (i === spot ? { ...p, stack: [...p.stack, uid] } : p));
@@ -282,7 +309,11 @@ function stadiumOf(prior: GameState, owner: Seat): GameState {
   };
 }
 
-function use(abilityName: string, index: number | "active" = "active", seat: Seat = "p1"): GameAction {
+function use(
+  abilityName: string,
+  index: number | "active" = "active",
+  seat: Seat = "p1",
+): GameAction {
   return {
     type: "useAbility",
     seat,
@@ -305,19 +336,31 @@ function parkOf(state: GameState) {
 }
 
 const P2_BENCH = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "bench", index } });
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const topOf = (stack: readonly string[] | undefined) => stack?.[stack.length - 1];
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D555 B §1 — the print, and the registry rows that map it", () => {
-  const ACTIVATED: readonly [ids: readonly string[], name: string, text: string, activeOnly: boolean, program: EffectOp[]][] = [
+  const ACTIVATED: readonly [
+    ids: readonly string[],
+    name: string,
+    text: string,
+    activeOnly: boolean,
+    program: EffectOp[],
+  ][] = [
     [
       VOLCARONA,
       "Torrid Scales",
       TORRID_TEXT,
       false,
       [
-        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Fire" } },
+        {
+          op: "payFromHand",
+          count: 1,
+          to: "discard",
+          filter: { kind: "basicEnergy", energyType: "Fire" },
+        },
         { op: "applyStatus", target: "defender", status: "burned" },
       ],
     ],
@@ -384,7 +427,13 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
         trigger: "betweenTurns",
         activeOnly: true,
         program: [
-          { op: "counterEachAll", amount: 20, filter: { kind: "basicPokemon" }, side: "opponent", source: "ability" },
+          {
+            op: "counterEachAll",
+            amount: 20,
+            filter: { kind: "basicPokemon" },
+            side: "opponent",
+            source: "ability",
+          },
         ],
       },
       SAND_TEXT,
@@ -452,8 +501,8 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
   });
 
   it("seven texts, seven DISTINCT objects (D199)", () => {
-    const firsts = [VOLCARONA, ARCHEOPS, MEOWSTIC, SAMUROTT, TYRANITAR, CHIEN_PAO, AMBIPOM].map((ids) =>
-      programFor(ids[0] as string),
+    const firsts = [VOLCARONA, ARCHEOPS, MEOWSTIC, SAMUROTT, TYRANITAR, CHIEN_PAO, AMBIPOM].map(
+      (ids) => programFor(ids[0] as string),
     );
     expect(new Set(firsts).size).toBe(7);
   });
@@ -512,7 +561,8 @@ describe("D555 B §3 — Ancient Wing: Active only, devolve 1 of the opponent's 
     before = evolveBySurgery(evolveBySurgery(before, "p2", "active", STAGE1), "p2", 0, STAGE1);
     const parked = mustApply(before, use("Ancient Wing")).state;
     const prompt = parkOf(parked);
-    if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemon")
+      throw new Error(`expected choosePokemon, got ${prompt.kind}`);
     expect(prompt.candidates).toHaveLength(2);
     expect(prompt.note).toBe(
       "Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.",
@@ -562,7 +612,8 @@ describe("D555 B §4 — Beckoning Tail: discard a Chill Teaser Toy card, gust",
     const toy = before.players.p1.hand[0] as string;
     const parked = mustApply(before, use("Beckoning Tail", 0)).state;
     const prompt = parkOf(parked);
-    if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemon")
+      throw new Error(`expected choosePokemon, got ${prompt.kind}`);
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
@@ -577,7 +628,11 @@ describe("D555 B §4 — Beckoning Tail: discard a Chill Teaser Toy card, gust",
 // ────────────────────────────────────────────────────────────────────────────
 describe("D555 B §5 — Torrential Whirlpool: switch; if you do, the OPPONENT switches out", () => {
   it("is refused NO_LEGAL_TARGET with its own Bench empty (`switchActive` gates the use)", () => {
-    expectErr(table(SAMUROTT[0], [], [FILLER, FILLER]), use("Torrential Whirlpool"), "NO_LEGAL_TARGET");
+    expectErr(
+      table(SAMUROTT[0], [], [FILLER, FILLER]),
+      use("Torrential Whirlpool"),
+      "NO_LEGAL_TARGET",
+    );
   });
 
   it("with the opponent's Bench EMPTY the self-switch still happens and the opponent is never asked", () => {
@@ -596,7 +651,8 @@ describe("D555 B §5 — Torrential Whirlpool: switch; if you do, the OPPONENT s
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.answerer).toBe("p2");
     const prompt = parked.phase.prompt;
-    if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemon")
+      throw new Error(`expected choosePokemon, got ${prompt.kind}`);
     expect(prompt.candidates).toEqual([P2_BENCH(0), P2_BENCH(1)]);
     const answer: GameAction = {
       type: "resolveEffect",
@@ -611,7 +667,10 @@ describe("D555 B §5 — Torrential Whirlpool: switch; if you do, the OPPONENT s
   });
 
   it("the park round-trips through JSON: the revived state answers identically", () => {
-    const parked = mustApply(table(SAMUROTT[0], [FILLER], [FILLER, STAGE1]), use("Torrential Whirlpool")).state;
+    const parked = mustApply(
+      table(SAMUROTT[0], [FILLER], [FILLER, STAGE1]),
+      use("Torrential Whirlpool"),
+    ).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(revived).toEqual(parked);
     const answer: GameAction = {
@@ -628,7 +687,9 @@ describe("D555 B §6 — Sand Stream: at every Checkup, while Active, 2 counters
   /** Tyranitar Active (or benched) for p1 beside a filler; p2 a filler Active with a
       Basic and a surgery-seated STAGE 1 on its Bench. */
   function sandTable(active: boolean): GameState {
-    const state = active ? table(TYRANITAR[0], [FILLER], [FILLER, STAGE1]) : table(FILLER, [TYRANITAR[0]], [FILLER, STAGE1]);
+    const state = active
+      ? table(TYRANITAR[0], [FILLER], [FILLER, STAGE1])
+      : table(FILLER, [TYRANITAR[0]], [FILLER, STAGE1]);
     return state;
   }
   const damageOf = (state: GameState, seat: Seat) => [
@@ -709,7 +770,7 @@ describe("D555 B §7 — Snow Sink: benched from hand, you MAY discard a Stadium
     expect(all(events, "STADIUM_DISCARDED").map((e) => [e.seat, e.uid])).toEqual([["p2", uid]]);
   });
 
-  it("…and YOUR OWN Stadium too: \"a Stadium in play\" is either player's (D555 R2)", () => {
+  it('…and YOUR OWN Stadium too: "a Stadium in play" is either player\'s (D555 R2)', () => {
     const { before, state } = bench((s) => stadiumOf(s, "p1"), CHIEN_PAO[1]);
     const done = mustApply(state, answer(true)).state;
     expect(done.stadium).toBeNull();
@@ -718,12 +779,22 @@ describe("D555 B §7 — Snow Sink: benched from hand, you MAY discard a Stadium
 
   it("it does NOT fire when the card reaches the Bench other than from hand (Nest Ball)", () => {
     const before = stadiumOf(setHand(table(FILLER), "p1", [NEST_BALL]), "p2");
-    const parked = mustApply(before, { type: "playTrainer", seat: "p1", uid: before.players.p1.hand[0] as string }).state;
+    const parked = mustApply(before, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: before.players.p1.hand[0] as string,
+    }).state;
     const prompt = parkOf(parked);
     if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
-    const chienPao = prompt.candidates.find((u) => CHIEN_PAO.includes(parked.cardIdByUid[u] as (typeof CHIEN_PAO)[number]));
+    const chienPao = prompt.candidates.find((u) =>
+      CHIEN_PAO.includes(parked.cardIdByUid[u] as (typeof CHIEN_PAO)[number]),
+    );
     if (chienPao === undefined) throw new Error("no Chien-Pao on offer");
-    const done = mustApply(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [chienPao] } }).state;
+    const done = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [chienPao] },
+    }).state;
     expect(done.players.p1.bench.map((p) => topOf(p.stack))).toEqual([chienPao]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(done.stadium).toEqual(before.stadium);
@@ -744,7 +815,12 @@ describe("D555 B §8 — Wicked Tail: on evolve, 2 coins, a random opponent hand
     state = setHand(state, "p1", [AMBIPOM[0]]);
     const before = setHand(state, "p2", oppHand);
     const uid = before.players.p1.hand[0] as string;
-    const result = mustApply(before, { type: "evolve", seat: "p1", uid, target: { spot: "bench", index: 0 } });
+    const result = mustApply(before, {
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index: 0 },
+    });
     const flips = all(result.events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
     return { before, uid, flips, ...result };
   }
@@ -789,7 +865,9 @@ describe("D555 B §8 — Wicked Tail: on evolve, 2 coins, a random opponent hand
   it("an EMPTY opponent hand whiffs silently — the coins are flipped, nothing moves", () => {
     // The seed is re-scanned on the EMPTY board: a take draws from `rngState`, so the
     // second coin of an empty-hand run is not the second coin of a full-hand one.
-    const empty = SEEDS.map((seed) => wicked(seed, [])).find((r) => outcome(r.flips) === "heads/heads");
+    const empty = SEEDS.map((seed) => wicked(seed, [])).find(
+      (r) => outcome(r.flips) === "heads/heads",
+    );
     if (empty === undefined) throw new Error("no heads/heads seed on the empty board");
     expect(all(empty.events, "RANDOM_CARD_TAKEN")).toHaveLength(0);
     expect(empty.state.players.p2.deck).toEqual(empty.before.players.p2.deck);

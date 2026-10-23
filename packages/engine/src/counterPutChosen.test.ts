@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { applyAction, deriveAttackEffect, engineVersion } from "./index";
+import { applyAction, deriveAttackEffect } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import {
   COUNTER_PUT_CHOSEN_DECK,
@@ -195,13 +195,13 @@ describe("§1 — the two printed sentences, and what the placement family still
     // pins the OP that row went to, which is the part that can still redden.
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
     expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
-    expect(
-      family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(38);
+    expect(family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0)).toBe(
+      38,
+    );
     expect(unbuilt).toHaveLength(0);
-    expect(
-      family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(0);
+    expect(family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0)).toBe(
+      0,
+    );
 
     // (a) THE SCALED TWIN — corpus line 412, **3 printings**, the largest unbuilt row in
     //     this family and this slice's own nearest neighbour: `BARE` with a count clause
@@ -315,7 +315,9 @@ describe("§1 — the two printed sentences, and what the placement family still
       expect(deriveAttackEffect(s)?.[0]?.op, s).toBe("counterUntilRemainingHp");
     }
     expect(deriveAttackEffect(BARE)).not.toEqual(
-      deriveAttackEffect("Put damage counters on your opponent's Active Pokémon until its remaining HP is 10."),
+      deriveAttackEffect(
+        "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+      ),
     );
     // (f) THE CONFUSION SUBSTITUTION — 1 printing. *"Your opponent's Active Pokémon is
     //     now Confused. Put 8 damage counters instead of 3 on that Pokémon for this
@@ -335,9 +337,7 @@ describe("§1 — the two printed sentences, and what the placement family still
       deriveAttackEffect(
         "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
       ),
-    ).toEqual([
-      { op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 },
-    ]);
+    ).toEqual([{ op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 }]);
     // 🛑 **AND HERE IS WHAT THE PUBLISHED PATTERN CANNOT SEE, MEASURED RATHER THAN
     // IMAGINED (D425).** `/put \d* ?damage counters/i` requires the count to sit
     // immediately before the noun, so it misses the BOUNDED spelling — corpus line 433,
@@ -460,31 +460,52 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       // A printed 0 AMOUNT would park a real pick that places nothing.
       ["a printed 0 amount", "Put 0 damage counters on 1 of your opponent's Pokémon."],
       // A printed 0 ARITY would park a prompt asking for nothing.
-      ["a printed 0 arity", "Choose 0 of your opponent's Pokémon and put 3 damage counters on each of them."],
-      ["a printed 0 amount, choose-first", "Choose 2 of your opponent's Pokémon and put 0 damage counters on each of them."],
+      [
+        "a printed 0 arity",
+        "Choose 0 of your opponent's Pokémon and put 3 damage counters on each of them.",
+      ],
+      [
+        "a printed 0 amount, choose-first",
+        "Choose 2 of your opponent's Pokémon and put 0 damage counters on each of them.",
+      ],
       // THE SEAT, dropped — the catastrophic miss: `target` has no own-side member for
       // the ANY zone, so a reader that lost "opponent's" could not even be expressed.
       ["the seat dropped", "Put 2 damage counters on 1 of your Pokémon."],
-      ["the seat dropped, choose-first", "Choose 2 of your Pokémon and put 3 damage counters on each of them."],
+      [
+        "the seat dropped, choose-first",
+        "Choose 2 of your Pokémon and put 3 damage counters on each of them.",
+      ],
       // ⚠️ THE ZONE WORD IS NOT LISTED HERE, AND THE ABSENCE IS THE POINT: adding
       // "Benched" gives arm 23's REAL sentence, which derives to arm 23's op. Its
       // disjointness is asserted as an INEQUALITY in the case above, never as a null —
       // a `toBeNull` there would have gone red the day D140 shipped. The choose-first
       // spelling of the same rewrite has no anchor at all, so IT is a null.
-      ["the zone word, choose-first", "Choose 2 of your opponent's Benched Pokémon and put 3 damage counters on each of them."],
+      [
+        "the zone word, choose-first",
+        "Choose 2 of your opponent's Benched Pokémon and put 3 damage counters on each of them.",
+      ],
       // "up to", a BOUNDED count — the op's `count` is EXACT by its own doc block.
       ["an up-to arity", "Put up to 2 damage counters on 1 of your opponent's Pokémon."],
       // LOWERCASE, which is the whole of what keeps the SIX "Cursed Blast" ABILITY
       // printings of this identical action off this path — there is no /i anywhere.
       ["a lowercase verb", "put 2 damage counters on 1 of your opponent's Pokémon."],
-      ["a lowercase verb, choose-first", "choose 2 of your opponent's Pokémon and put 3 damage counters on each of them."],
+      [
+        "a lowercase verb, choose-first",
+        "choose 2 of your opponent's Pokémon and put 3 damage counters on each of them.",
+      ],
       // NO TRAILING PERIOD and a "!" — the `$` from both sides.
       ["no trailing period", "Put 2 damage counters on 1 of your opponent's Pokémon"],
       ["an exclamation", "Put 2 damage counters on 1 of your opponent's Pokémon!"],
       // A LEADING RIDER pins `^` — this is how a gated printing arrives.
-      ["a leading flip", "Flip a coin. If heads, put 2 damage counters on 1 of your opponent's Pokémon."],
+      [
+        "a leading flip",
+        "Flip a coin. If heads, put 2 damage counters on 1 of your opponent's Pokémon.",
+      ],
       // A TRAILING sentence the engine has never seen — the `$`'s reason for existing.
-      ["an unknown remainder", "Put 2 damage counters on 1 of your opponent's Pokémon. Draw a card."],
+      [
+        "an unknown remainder",
+        "Put 2 damage counters on 1 of your opponent's Pokémon. Draw a card.",
+      ],
       // NON-INTEGER and SIGNED counts — `\d+` takes neither, and a -2 would HEAL.
       ["a fractional amount", "Put 2.5 damage counters on 1 of your opponent's Pokémon."],
       ["a signed amount", "Put -2 damage counters on 1 of your opponent's Pokémon."],
@@ -497,7 +518,10 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       // The lookalike `Pokemon`.
       ["a lookalike Pokemon", "Put 2 damage counters on 1 of your opponent's Pokemon."],
       // The choose-first spelling with its JOIN re-worded — "and put" is the hinge.
-      ["a reworded join", "Choose 2 of your opponent's Pokémon, then put 3 damage counters on each of them."],
+      [
+        "a reworded join",
+        "Choose 2 of your opponent's Pokémon, then put 3 damage counters on each of them.",
+      ],
       // …and its TAIL re-worded: "on each of them" is what makes the arity a fan-out.
       ["a reworded tail", "Choose 2 of your opponent's Pokémon and put 3 damage counters on them."],
       // THE REAL CATALOG NEIGHBOUR on the choose-first opening (corpus line 82), still a
@@ -520,7 +544,10 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       // and "empty" all remain, so this guard still has something to guard — MEASURED by the
       // rung below rather than eyeballed, because a guard with nothing left to guard reads
       // exactly like coverage.
-      ["a bench shuffle", "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used."],
+      [
+        "a bench shuffle",
+        "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.",
+      ],
       ["empty", ""],
     ] as const) {
       expect(deriveAttackEffect(text), why).toBeNull();
@@ -559,7 +586,10 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
     expect((ops ?? []).every((op) => (op as { deals?: true }).deals === true)).toBe(true);
     for (const text of [BARE, CHOSEN]) {
       const mine = deriveAttackEffect(text) ?? [];
-      expect(mine.every((op) => (op as { deals?: true }).deals === undefined), text).toBe(true);
+      expect(
+        mine.every((op) => (op as { deals?: true }).deals === undefined),
+        text,
+      ).toBe(true);
     }
     // …and the corpus row itself, read at its printed count rather than retyped.
     expect(legalAttackCorpus().filter(([, s]) => s === PICK_WITH_REPLACEMENT)).toEqual([
@@ -583,7 +613,10 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
     );
     for (const text of [BARE, CHOSEN]) {
       const mine = deriveAttackEffect(text) ?? [];
-      expect(mine.every((op) => op.op === "damageChosen"), text).toBe(true);
+      expect(
+        mine.every((op) => op.op === "damageChosen"),
+        text,
+      ).toBe(true);
     }
     // …and the corpus row itself, read at its printed count rather than retyped.
     expect(legalAttackCorpus().filter(([, s]) => s === KEEP_THREE)).toEqual([[2, KEEP_THREE]]);
@@ -622,7 +655,9 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       { op: "damageChosen", target: "opponentAny", amount: 10, count: 1, source: "attack" },
     ]);
     expect(
-      deriveAttackEffect("Choose 3 of your opponent's Pokémon and put 1 damage counters on each of them."),
+      deriveAttackEffect(
+        "Choose 3 of your opponent's Pokémon and put 1 damage counters on each of them.",
+      ),
     ).toEqual([
       { op: "damageChosen", target: "opponentAny", amount: 10, count: 3, source: "attack" },
     ]);
@@ -668,7 +703,9 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
     // …and the first of those three IS the compound's stored op, so the backward claim is
     // about a record this engine really writes rather than a string typed here.
     expect(
-      JSON.parse('{"op":"damageChosen","target":"opponentAny","amount":90,"count":1,"source":"attack"}'),
+      JSON.parse(
+        '{"op":"damageChosen","target":"opponentAny","amount":90,"count":1,"source":"attack"}',
+      ),
     ).toEqual(shipped);
 
     // **DIRECTION 3 — THE LOSS DIRECTION, and it is VACUOUS BY CONSTRUCTION, which is
@@ -693,10 +730,6 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
     expect(JSON.stringify(deriveAttackEffect(CHOSEN)?.[0])).toBe(
       '{"op":"damageChosen","target":"opponentAny","amount":30,"count":2,"source":"attack"}',
     );
-  });
-
-  it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -723,7 +756,14 @@ describe("§4 — the placement is FLAT, and the control on the same body is not
     // `deals: true` bolted on and nothing else changed. Without this the pair below is
     // two attacks that happen to differ, rather than one axis.
     expect(deriveAttackEffect(DEALS_CONTROL)).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     const control = mustApply(fielded(1), { type: "attack", seat: "p1", index: IDX.control });
     expect(find(control.events, "DAMAGE_DEALT")).toMatchObject({
@@ -952,7 +992,12 @@ describe("§6 — a lethal placement Knocks Out, pays a Prize, and counts as dam
       seat: "p1",
       index: IDX.bare,
     });
-    expect(types(events)).toEqual(["ATTACK_DECLARED", "COUNTERS_PLACED", "KNOCKED_OUT", "PRIZES_OWED"]);
+    expect(types(events)).toEqual([
+      "ATTACK_DECLARED",
+      "COUNTERS_PLACED",
+      "KNOCKED_OUT",
+      "PRIZES_OWED",
+    ]);
     expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
     // …and the flow really stops on the Prize rather than ending the turn through it

@@ -399,9 +399,7 @@ describe("D312 §3 — 🛑 the §8.1 PROMOTION, which THIS card owes UNCONDITIO
     // an Ability does not end a turn (§9), which is the whole reason D311 put the
     // seam in front of `resumeTurn` there and D312 put it in front of `turnTail`
     // in `finishAttack`.
-    const promoted = must(
-      applyAction(after, { type: "promote", seat: "p1", benchIndex: 1 }),
-    );
+    const promoted = must(applyAction(after, { type: "promote", seat: "p1", benchIndex: 1 }));
     expect(promoted.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(promoted.players.p1.active).not.toBeNull();
     expect(promoted.players.p1.bench).toHaveLength(1);
@@ -548,9 +546,17 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
     // Gholdengo); 🆕 D313 builds SEVEN (Comfey, Revavroom ex ×2, Crobat ex ×4).
     // Eleven of thirteen, and the two left are the COMPOUNDS.
     const built = [
-      "sv05-129", "sv08.5-080", ABRA, "sv08-131",
-      "sv09-068", "sv06.5-015", "sv06.5-081",
-      "sv10-122", "sv10-217", "sv10-234", "sv10-242",
+      "sv05-129",
+      "sv08.5-080",
+      ABRA,
+      "sv08-131",
+      "sv09-068",
+      "sv06.5-015",
+      "sv06.5-081",
+      "sv10-122",
+      "sv10-217",
+      "sv10-234",
+      "sv10-242",
       "sv07-011", // 🆕 D314 — Eldegoss "Breezy Gift", attack idx 0
     ];
     expect(built).toHaveLength(12);

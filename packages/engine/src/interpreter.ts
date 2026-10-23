@@ -530,7 +530,19 @@ export type EffectPrompt =
           🆕🆕🆕 **D633 — `"reveal"` IS THE TWELFTH MEMBER** (Doublade "Weaponized Swords",
           `revealFromHand`): the controller's OWN picked cards are shown and stay in the hand. A union
           widening; the wire enum widens with it, so DEPLOY THE CLIENT FIRST. */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap" | "name" | "use" | "reveal";
+      dest:
+        | "bench"
+        | "hand"
+        | "deck"
+        | "deckBottom"
+        | "deckTop"
+        | "discard"
+        | "evolve"
+        | "attach"
+        | "swap"
+        | "name"
+        | "use"
+        | "reveal";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -664,7 +676,13 @@ export type EffectPrompt =
       **DEPLOY THE CLIENT FIRST** (apps/api match.ts "D579"): the wire schema was
       `z.literal("move")`, so a 0.462 client's parse REFUSES a frame carrying `"put"` — a strict
       literal does not strip an unknown VALUE the way it strips an unknown KEY. */
-  | { kind: "choosePokemon"; candidates: PokemonRef[]; upTo?: number; takeVerb?: "move" | "put"; note: string }
+  | {
+      kind: "choosePokemon";
+      candidates: PokemonRef[];
+      upTo?: number;
+      takeVerb?: "move" | "put";
+      note: string;
+    }
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe (damageChosen:
       Hawlucha's "choose 2", Meowscarada ex / Radiant Blastoise's "on 1 of your
       opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
@@ -1457,7 +1475,8 @@ function atLeastOneDecline(
         later.anyEnergy,
         later.energyName,
       ) !== undefined &&
-      (later.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, later)).length > 0,
+      (later.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, later))
+        .length > 0,
   );
   return earlierLanded || laterCanLand ? { ...op, declinable: true } : op;
 }
@@ -2094,7 +2113,11 @@ function counterSourceAnswered(
     `evolveFromDeckOffer` reads `state.players[ctx.seat]`, so a target is
     seat-relative by construction — carrying the seat would create a second place
     for the two to disagree. */
-function evolveBodyAnswered(ref: PokemonRef, noAbilities?: true, thenEvolveAgain?: true): EffectOp[] {
+function evolveBodyAnswered(
+  ref: PokemonRef,
+  noAbilities?: true,
+  thenEvolveAgain?: true,
+): EffectOp[] {
   // 🆕🆕🆕 D558 — Salvatore's *"a card that has no Abilities"* rides onto the card
   // question as a CONDITIONAL SPREAD, so every D309/D315 answer stays byte-identical.
   // 🆕🆕🆕 D567 — Grand Tree's chained Stage 2 step rides the same way (no printing
@@ -2182,7 +2205,14 @@ function healedEnergyToHandAnswered(state: GameState, ref: PokemonRef): EffectOp
   const uid = topUid(body);
   if (uid === undefined) return [];
   return [
-    { op: "discardEnergy", from: "self", filter: { kind: "anyEnergy" }, count: "all", to: "hand", bodyUid: uid },
+    {
+      op: "discardEnergy",
+      from: "self",
+      filter: { kind: "anyEnergy" },
+      count: "all",
+      to: "hand",
+      bodyUid: uid,
+    },
   ];
 }
 
@@ -2327,8 +2357,8 @@ function evolvableOwnRefs(
       if (!matchesFilter(card, { kind: "typedPokemon", pokemonType })) return false;
     }
     return (
-      (evolveFromDeckOffer(state, ctx, ref.spot, undefined, noAbilities)?.candidates.length ??
-        0) > 0
+      (evolveFromDeckOffer(state, ctx, ref.spot, undefined, noAbilities)?.candidates.length ?? 0) >
+      0
     );
   });
 }
@@ -2371,7 +2401,12 @@ function continuationOps(
     const take = attachTake(op, choice.take);
     return energyPickOffer(before, op, cont.ctx.seat, take) === undefined
       ? []
-      : [{ ...op, pickOnto: { ref: { seat: choice.ref.seat, spot: { ...choice.ref.spot } }, take } }];
+      : [
+          {
+            ...op,
+            pickOnto: { ref: { seat: choice.ref.seat, spot: { ...choice.ref.spot } }, take },
+          },
+        ];
   }
   // 🆕🆕🆕 D646 — Target Together's resumed pick: the op again, with the targets, so `stepOp` flips its coins.
   if (op.op === "damageChosen" && op.perHeadsInPlay !== undefined && op.hitRefs === undefined) {
@@ -2383,7 +2418,9 @@ function continuationOps(
   // 🆕🆕🆕 D625 — and Wally's Compassion's parked pick buys the Energy-to-hand move.
   if (
     op.op === "healChosen" &&
-    (op.discardEnergyFromHealed === true || op.recoverHealed === true || op.energyToHandFromHealed === true)
+    (op.discardEnergyFromHealed === true ||
+      op.recoverHealed === true ||
+      op.energyToHandFromHealed === true)
   ) {
     return pickedPokemon(choice) ? healedRiderOps(before, choice.ref, op) : [];
   }
@@ -2399,7 +2436,8 @@ function continuationOps(
   // its base on the decline, and the base is inside the gate because §8.5 runs
   // once per damage op (effects.ts).
   if (op.op === "optional") {
-    if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined) return [];
+    if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined)
+      return [];
     return choice.kind === "confirm" && choice.yes ? [...op.then] : [...(op.otherwise ?? [])];
   }
   // 🆕🆕 D344 — **THE FIFTH MEMBER, AND THE FIRST WHOSE TWO ARMS ARE BOTH PRINTED
@@ -2437,7 +2475,9 @@ function continuationOps(
   // answer is the DECLINE and ends the loop (no round follows).
   if (op.op === "moveCountersOpponentAnyWay") {
     if (!pickedPokemon(choice)) return [];
-    return op.source === undefined ? [anyWaySourceAnswered(before, op, choice.ref, choice.take)] : [nextAnyWayRound(op)];
+    return op.source === undefined
+      ? [anyWaySourceAnswered(before, op, choice.ref, choice.take)]
+      : [nextAnyWayRound(op)];
   }
   // 🆕🆕🆕 D575 — Blipbug's BLIND slot answer buys the LOOK (the same op with `index` set,
   // which parks the private one-card `orderCards` show). The show's own answer buys nothing.
@@ -2536,7 +2576,9 @@ export function resumeProgram(
 /** 🆕🆕🆕 §8 (D646) — `retry` carrying the declined Backtrack Badge `faces`: the two coin ops that read them
     (`coinFlipGate.faces`, `damageChosen.faces`). Every other op is returned unchanged (no other op schedules an offer). */
 function withKeptFaces(retry: EffectOp, faces: readonly CoinFace[]): EffectOp {
-  return retry.op === "coinFlipGate" || retry.op === "damageChosen" ? { ...retry, faces: [...faces] } : retry;
+  return retry.op === "coinFlipGate" || retry.op === "damageChosen"
+    ? { ...retry, faces: [...faces] }
+    : retry;
 }
 
 /** One synchronous step, or a park request. Parking ops compute their
@@ -2588,7 +2630,11 @@ export function startlingDropRetort(
     const top = side.deck.slice(0, retort.count);
     if (top.length === 0) continue;
     events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: victim, uids: top });
-    next = withSide(next, ctx.seat, { ...side, deck: side.deck.slice(top.length), discard: [...side.discard, ...top] });
+    next = withSide(next, ctx.seat, {
+      ...side,
+      deck: side.deck.slice(top.length),
+      discard: [...side.discard, ...top],
+    });
   }
   return next;
 }
@@ -2628,7 +2674,10 @@ function stepOp(
     // 🆕🆕🆕 D625 — Blowtorch's *"Choose 1"*: only the branches with a target are offered, as the
     // labelled binary chain (`chooseOneChain`); one offered branch runs, none is a no-op (R-BT1).
     case "chooseOneOffered":
-      return { done: state, schedule: chooseOneChain(op.note, offeredBranches(state, ctx.seat, op)) };
+      return {
+        done: state,
+        schedule: chooseOneChain(op.note, offeredBranches(state, ctx.seat, op)),
+      };
     case "recoverOneStatus": {
       const active = state.players[ctx.seat].active;
       const present = active === null ? [] : presentStatuses(active.conditions);
@@ -2693,7 +2742,16 @@ function stepOp(
     case "boostAttack":
       // 🆕🆕🆕 D563 — `op.holder` / `op.thisTurn` ride through (Feraligatr "Torrential Heart").
       return {
-        done: boostAttack(state, op.attack, op.amount, op.base, ctx, events, op.holder, op.thisTurn),
+        done: boostAttack(
+          state,
+          op.attack,
+          op.amount,
+          op.base,
+          ctx,
+          events,
+          op.holder,
+          op.thisTurn,
+        ),
       };
     // 🆕🆕🆕 D556 — the THIS-TURN side-wide bonus (Black Belt's Training), on the bag.
     case "boostSideAttacksThisTurn":
@@ -2791,9 +2849,17 @@ function stepOp(
       // Active, not two); its clamp and silent whiff are unchanged.
       // 🆕 Card revision B21 — Wafting Heal's "if you healed any damage in this way" rides the
       // heal itself (healEach's per-healed-body helper), so a Life-Locked heal of 0 discards nothing.
-      const healed = healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events);
+      const healed = healSelf(
+        state,
+        op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount,
+        ctx,
+        events,
+      );
       return {
-        done: op.discardEnergyFromHealed === true ? discardEnergyFromHealed(state, healed, ctx, events) : healed,
+        done:
+          op.discardEnergyFromHealed === true
+            ? discardEnergyFromHealed(state, healed, ctx, events)
+            : healed,
       };
     }
     case "healEach": {
@@ -2818,7 +2884,9 @@ function stepOp(
       return {
         done: damageActive(
           state,
-          op.per === undefined ? op.amount : op.amount * countCardsInHand(state, ctx.seat, { kind: "anyCard" }),
+          op.per === undefined
+            ? op.amount
+            : op.amount * countCardsInHand(state, ctx.seat, { kind: "anyCard" }),
           op.source,
           ctx,
           events,
@@ -2869,7 +2937,9 @@ function stepOp(
         ),
         (ref) => moveCountersToDefender(state, ref, ctx, events),
         `Move the damage counters off which of your Benched ${
-          op.filter === undefined ? `${ownerNoun(op.ownerPokemon)}Pokémon` : retrieveNoun(op.filter).plural
+          op.filter === undefined
+            ? `${ownerNoun(op.ownerPokemon)}Pokémon`
+            : retrieveNoun(op.filter).plural
         }?`,
       );
     case "moveCountersChosen": {
@@ -3030,7 +3100,10 @@ function stepOp(
       const lone = dests.length === 1 ? dests[0] : undefined;
       if (dests.length === 0) return { done: state };
       if (lone !== undefined) {
-        return { done: moveCountersBetweenOpponents(state, from, lone, take, ctx, events), schedule: [nextAnyWayRound(op)] };
+        return {
+          done: moveCountersBetweenOpponents(state, from, lone, take, ctx, events),
+          schedule: [nextAnyWayRound(op)],
+        };
       }
       return {
         park: {
@@ -3064,7 +3137,8 @@ function stepOp(
       // answers (D47/D358). `upTo` is the PRINTED ceiling and is not clamped (redact.ts); the
       // mover clamps the take to the source's counters. A source with no counters left is the
       // silent whiff (no question about nothing).
-      if ((refPokemon(state, { seat: ctx.seat, spot: source })?.damage ?? 0) <= 0) return { done: state };
+      if ((refPokemon(state, { seat: ctx.seat, spot: source })?.damage ?? 0) <= 0)
+        return { done: state };
       // 🆕🆕🆕 D614 — through the §11 funnel: a Luminous Wing body is not a destination (the moved
       // counters are the Ability's effect done to it).
       const opposing = unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events);
@@ -3103,7 +3177,8 @@ function stepOp(
       const bodies = unshieldedRefs(state, ruffianBodies(state, ctx.seat), ctx, events);
       if (bodies.length === 0) return { done: state };
       const forced = bodies.length === 1 ? bodies[0] : undefined;
-      if (forced !== undefined) return { done: state, schedule: ruffianBodyAnswered(state, forced) };
+      if (forced !== undefined)
+        return { done: state, schedule: ruffianBodyAnswered(state, forced) };
       return {
         park: {
           kind: "choosePokemon",
@@ -3125,7 +3200,9 @@ function stepOp(
         return { done: switchWithDeckCard(state, undefined, ctx, events) };
       }
       const note = `Search your deck for ${retrieveNoun(op.filter).singular} to switch with this Pokémon.`;
-      return { park: { kind: "chooseCards", candidates: offered, min: 0, max: 1, dest: "swap", note } };
+      return {
+        park: { kind: "chooseCards", candidates: offered, min: 0, max: 1, dest: "swap", note },
+      };
     }
     case "switchWithDiscardNamed": {
       // 🆕🆕🆕 D566 — Ogre's Mask's two questions, told apart by the ENGINE-WRITTEN `bodyUid`
@@ -3139,7 +3216,8 @@ function stepOp(
           return { done: state };
         }
         const onlyBody = bodies.length === 1 ? bodies[0] : undefined;
-        if (onlyBody !== undefined) return { done: state, schedule: swapBodyAnswered(state, op, onlyBody) };
+        if (onlyBody !== undefined)
+          return { done: state, schedule: swapBodyAnswered(state, op, onlyBody) };
         return {
           park: {
             kind: "choosePokemon",
@@ -3204,7 +3282,8 @@ function stepOp(
       // (Feraligatr "Torrential Heart", used from the Bench or the Active). The recoil
       // fold is not asked there: its one rider reads the Active, and no printing pairs it
       // with the source-body placement, so the printed amount is placed as written.
-      if (op.on === "source") return { done: damageSourceBody(state, op.amount, ctx, events, op.source) };
+      if (op.on === "source")
+        return { done: damageSourceBody(state, op.amount, ctx, events, op.source) };
       return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, events, op.source) };
     case "damageDefender": {
       // Chien-Pao ex "Hail Blade": `per` (60) HP per card an earlier op filed
@@ -3281,7 +3360,15 @@ function stepOp(
       // 🆕🆕🆕 D646 — a resumed Target Together pick (`hitRefs`, scheduled by `continuationOps`): its coins are
       // flipped HERE, where a Backtrack Badge offer can park, rather than inside `applyChoice`.
       if (op.hitRefs !== undefined && op.perHeadsInPlay !== undefined) {
-        return perHeadsHit(state, op, op.perHeadsInPlay, op.hitRefs, snipeAmount(op, state, ctx, record), ctx, events);
+        return perHeadsHit(
+          state,
+          op,
+          op.perHeadsInPlay,
+          op.hitRefs,
+          snipeAmount(op, state, ctx, record),
+          ctx,
+          events,
+        );
       }
       // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
       // Benched Pokémon and put counters on each. An empty Bench is a no-op.
@@ -3365,13 +3452,30 @@ function stepOp(
         // 🆕🆕🆕 D605 — Nullifying Zero: one coin per candidate, every coin before any damage;
         // the heads targets take the hit together (R-NZ1).
         if (op.flipEach === true) {
-          const [flipped, faces] = op.faces === undefined ? flipCoinsFor(state, candidates.length, ctx, events) : [state, op.faces];
+          const [flipped, faces] =
+            op.faces === undefined
+              ? flipCoinsFor(state, candidates.length, ctx, events)
+              : [state, op.faces];
           // 🆕🆕🆕 D646 — a live Backtrack Badge offers after the coins, before any damage.
           const redo = op.faces === undefined ? coinRedoOffer(flipped, ctx, faces) : null;
-          if (redo !== null) return { done: flipped, schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: op }] };
+          if (redo !== null)
+            return {
+              done: flipped,
+              schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: op }],
+            };
           const hit = candidates.filter((_, index) => faces[index] === "heads");
           return {
-            done: placeSnipe(flipped, hit, amount, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true),
+            done: placeSnipe(
+              flipped,
+              hit,
+              amount,
+              op.deals === true,
+              op.ignoreWR === true,
+              op.source,
+              ctx,
+              events,
+              op.wrOnly === true,
+            ),
           };
         }
         // 🆕🆕🆕 D605 — Target Together with one candidate: the pick is forced, then the coins.
@@ -3510,8 +3614,17 @@ function stepOp(
         // Drum's walk), counted HERE, after the program's payment. Absent `per`, the arm below is
         // byte-identical.
         const perSeat = op.per.seat === "you" ? ctx.seat : otherSeat(ctx.seat);
-        const target = op.size * countPokemonInPlay(state, perSeat, op.per.filter, op.per.damagedOnly === true);
-        return { done: drawToHand(state, ctx.seat, target - state.players[ctx.seat].hand.length, "effect", events) };
+        const target =
+          op.size * countPokemonInPlay(state, perSeat, op.per.filter, op.per.damagedOnly === true);
+        return {
+          done: drawToHand(
+            state,
+            ctx.seat,
+            target - state.players[ctx.seat].hand.length,
+            "effect",
+            events,
+          ),
+        };
       }
       return {
         done: drawToHand(
@@ -3588,7 +3701,8 @@ function stepOp(
           i === 0 && op.sameNameAsOpponentInPlay === true
             ? opponentInPlayNameFilter(state, ctx)
             : g.filter,
-        max: i === 0 && op.maxRecorded !== undefined ? recorded(record, op.maxRecorded).length : g.max,
+        max:
+          i === 0 && op.maxRecorded !== undefined ? recorded(record, op.maxRecorded).length : g.max,
       }));
       // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches` (Basic only unless the noun names its
       // card) on the group sizes and, one line below the union, on the offer; every other
@@ -3596,14 +3710,14 @@ function stepOp(
       const onBench = (uid: string, filter: CardFilter) =>
         op.dest !== "bench" || benchMatches(cardOf(state, uid), filter);
       const groupMatches = (filter: CardFilter) =>
-        state.players[ctx.seat].deck.filter((uid) => matchesFilter(cardOf(state, uid), filter) && onBench(uid, filter));
+        state.players[ctx.seat].deck.filter(
+          (uid) => matchesFilter(cardOf(state, uid), filter) && onBench(uid, filter),
+        );
       // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
       // matching two filters appears exactly once in the offer — the caps below
       // are what make it count against both (effects.ts states the rule).
       const candidates = state.players[ctx.seat].deck
-        .filter((uid) =>
-        groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)),
-        )
+        .filter((uid) => groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)))
         .filter((uid) => groups.some((g) => onBench(uid, g.filter)))
         // 🆕🆕🆕 D565 — Impromptu Carrier's attach offers SIMULATED Tools only (R-IC1),
         // through the ONE predicate `attachTool` asks (`toolCardSimulated`), and only while
@@ -3920,7 +4034,10 @@ function stepOp(
       // §QUESTION 1's argument, verbatim, at its second site).
       const forced = eligible.length === 1 ? eligible[0] : undefined;
       if (forced !== undefined)
-        return { done: state, schedule: evolveBodyAnswered(forced, op.noAbilities, op.thenEvolveAgain) };
+        return {
+          done: state,
+          schedule: evolveBodyAnswered(forced, op.noAbilities, op.thenEvolveAgain),
+        };
       return {
         park: {
           kind: "choosePokemon",
@@ -4074,7 +4191,9 @@ function stepOp(
       const top = lookWindow(state.players[lookOwner(op, ctx)].deck, op);
       // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches` (Basic only unless the noun names its card).
       const matches = (uid: string, filter: CardFilter) =>
-        op.dest === "bench" ? benchMatches(cardOf(state, uid), filter) : matchesFilter(cardOf(state, uid), filter);
+        op.dest === "bench"
+          ? benchMatches(cardOf(state, uid), filter)
+          : matchesFilter(cardOf(state, uid), filter);
       const also = op.also;
       const candidates = top.filter(
         (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),
@@ -4101,7 +4220,8 @@ function stepOp(
       // whiff path below — the look is announced and the window goes to `restTo` (R-AF3's outcome on the
       // Flute, with no prompt). `exact`'s floor below still reads `totalMax`: no printing pairs `exact`
       // with a Bench destination.
-      const offerMax = op.dest === "bench" ? Math.min(totalMax, benchSpace(state, lookOwner(op, ctx))) : totalMax;
+      const offerMax =
+        op.dest === "bench" ? Math.min(totalMax, benchSpace(state, lookOwner(op, ctx))) : totalMax;
       if (candidates.length === 0 || offerMax <= 0) {
         // 🛑 D241 — THE WHIFF ANNOUNCES THE LOOK. This used to be a bare
         // `return { done: state }`, which is exactly the leak the backlog's
@@ -4155,7 +4275,16 @@ function stepOp(
                   { uids: groupMatches(also.filter), max: also.max },
                 ],
               }),
-          note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true, op.from, op.whose),
+          note: lookNote(
+            op.filter,
+            op.n,
+            op.max,
+            op.dest,
+            also,
+            op.exact === true,
+            op.from,
+            op.whose,
+          ),
         },
       };
     }
@@ -4405,7 +4534,13 @@ function stepOp(
       recordMoved(record, op.recordAs, matched);
       // 🆕 Card revision B55 — the printed "Reveal": the whole top window is named to both players before
       // anything moves, the whiff and the empty deck too (D241) — Bug Out's B45 row at the top end.
-      events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, dest: "deck", uids: [...window], reveal: true });
+      events.push({
+        type: "DECK_TOP_REVEALED",
+        seat: ctx.seat,
+        dest: "deck",
+        uids: [...window],
+        reveal: true,
+      });
       if (window.length === 0) return { done: state };
       const taken = new Set(matched);
       const [deck, rngState] = shuffle(
@@ -4436,18 +4571,31 @@ function stepOp(
       // 🆕 Card revision B45 — the printed "Reveal": the whole window is named to both players before
       // anything moves (D241: the look is announced even when it finds nothing, the empty deck too), on
       // Haughty Order's public row (D574 `dest: "deck"`) at the end the window took (D557 `from`).
-      events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, dest: "deck", from: "bottom", uids: [...window], reveal: true });
+      events.push({
+        type: "DECK_TOP_REVEALED",
+        seat: ctx.seat,
+        dest: "deck",
+        from: "bottom",
+        uids: [...window],
+        reveal: true,
+      });
       if (window.length === 0) return { done: state };
-      const shed = window.filter((uid) => !matchesFilter(cardOfUid(state, uid), { kind: "anyPokemon" }));
+      const shed = window.filter(
+        (uid) => !matchesFilter(cardOfUid(state, uid), { kind: "anyPokemon" }),
+      );
       const gone = new Set(shed);
       const [deck, rngState] = shuffle(
         side.deck.filter((uid) => !gone.has(uid)),
         state.rngState,
       );
-      if (shed.length > 0) events.push({ type: "DECK_BOTTOM_DISCARDED", seat: ctx.seat, uids: shed });
+      if (shed.length > 0)
+        events.push({ type: "DECK_BOTTOM_DISCARDED", seat: ctx.seat, uids: shed });
       events.push({ type: "SHUFFLE", seat: ctx.seat });
       return {
-        done: { ...withSide(state, ctx.seat, { ...side, deck, discard: [...side.discard, ...shed] }), rngState },
+        done: {
+          ...withSide(state, ctx.seat, { ...side, deck, discard: [...side.discard, ...shed] }),
+          rngState,
+        },
       };
     }
     case "attachFromDeck": {
@@ -4473,7 +4621,11 @@ function stepOp(
       // branch remembered. With three recording ops now, the one that differed
       // would have been this one.
       // 🆕🆕🆕 D596 — `each` is offered as the per-target map it means (`perBodyDeckOp`).
-      const { candidates, targets, max } = attachFromDeckOffer(state, ctx, perBodyDeckOp(state, ctx, op));
+      const { candidates, targets, max } = attachFromDeckOffer(
+        state,
+        ctx,
+        perBodyDeckOp(state, ctx, op),
+      );
       if (candidates.length === 0 || targets.length === 0 || max <= 0) {
         recordMoved(record, op.recordAs, []);
         return { done: state };
@@ -4533,7 +4685,8 @@ function stepOp(
           targets,
           max,
           ...(perTarget === undefined ? {} : { maxPerTarget: perTarget }),
-          note: op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op, ceiling),
+          note:
+            op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op, ceiling),
         },
       };
     }
@@ -4562,8 +4715,12 @@ function stepOp(
       if (op.whose === "opponent") {
         const owner = { ...ctx, seat: otherSeat(ctx.seat) };
         const offer = attachFromHandOffer(state, owner, op);
-        if (offer.candidates.length === 0 || offer.targets.length === 0 || offer.max <= 0) return { done: state };
-        return { park: { kind: "attachCards", ...offer, note: attachFromHandNote(op) }, decider: owner.seat };
+        if (offer.candidates.length === 0 || offer.targets.length === 0 || offer.max <= 0)
+          return { done: state };
+        return {
+          park: { kind: "attachCards", ...offer, note: attachFromHandNote(op) },
+          decider: owner.seat,
+        };
       }
       const { candidates, targets, max } = attachFromHandOffer(state, ctx, op);
       if (candidates.length === 0 || targets.length === 0 || max <= 0) {
@@ -5006,13 +5163,22 @@ function stepOp(
       // 🆕🆕🆕 D633 — Weaponized Swords: 0..every match, so any non-empty offer parks (D489's rule:
       // revealing one card and revealing none are two damage numbers). No collapse: the count is the
       // answer. An empty offer files `[]` and asks nothing.
-      const candidates = state.players[ctx.seat].hand.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
+      const candidates = state.players[ctx.seat].hand.filter((uid) =>
+        matchesFilter(cardOf(state, uid), op.filter),
+      );
       if (candidates.length === 0) {
         recordMoved(record, op.recordAs, []);
         return { done: state };
       }
       return {
-        park: { kind: "chooseCards", candidates, min: 0, max: candidates.length, dest: "reveal", note: op.note },
+        park: {
+          kind: "chooseCards",
+          candidates,
+          min: 0,
+          max: candidates.length,
+          dest: "reveal",
+          note: op.note,
+        },
       };
     }
     case "payFromHand": {
@@ -5203,7 +5369,11 @@ function stepOp(
       const top = side.deck[0];
       if (top === undefined) return { done: state };
       events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [top] });
-      const milled = withSide(state, ctx.seat, { ...side, deck: side.deck.slice(1), discard: [...side.discard, top] });
+      const milled = withSide(state, ctx.seat, {
+        ...side,
+        deck: side.deck.slice(1),
+        discard: [...side.discard, top],
+      });
       const ops = copiedSupporterOps(milled, ctx, top);
       if (ops === undefined) return { done: milled };
       events.push({ type: "SUPPORTER_EFFECT_USED", seat: ctx.seat, uid: top, milled: true });
@@ -5232,7 +5402,8 @@ function stepOp(
     case "randomFromOpponentHand":
       // D232 — the FIRST op whose outcome is drawn from `rngState`. Never parks:
       // "random" is precisely the absence of a chooser, so neither seat is asked.
-      if (op.untilHandSize === undefined) return { done: randomFromOpponentHand(state, op, ctx, events, record) };
+      if (op.untilHandSize === undefined)
+        return { done: randomFromOpponentHand(state, op, ctx, events, record) };
       // 🆕🆕🆕 D624 — Hand Trim: the take is read off the opponent's hand once, then each card is its own
       // D232 draw (`randomFromOpponentHand` unchanged, called with the key dropped).
       return { done: randomDiscardDownTo(state, op, op.untilHandSize, ctx, events, record) };
@@ -5377,10 +5548,15 @@ function stepOp(
       // QUESTION TWO: the name is told (public), the card stays face down (in the hand —
       // nothing moves), and the OPPONENT guesses: the park's decider (R-TY3).
       const card = cardOf(state, op.uid);
-      if (card === undefined || !state.players[ctx.seat].hand.includes(op.uid)) return { done: state };
+      if (card === undefined || !state.players[ctx.seat].hand.includes(op.uid))
+        return { done: state };
       events.push({ type: "POKEMON_NAMED", seat: ctx.seat, name: card.name });
       return {
-        park: { kind: "guessHp", name: card.name, note: `Guess the HP of your opponent's ${card.name}.` },
+        park: {
+          kind: "guessHp",
+          name: card.name,
+          note: `Guess the HP of your opponent's ${card.name}.`,
+        },
         decider: otherSeat(ctx.seat),
       };
     }
@@ -5420,7 +5596,9 @@ function stepOp(
           note: op.note,
           ...(op.labels === undefined ? {} : { labels: { yes: op.labels.yes, no: op.labels.no } }),
           ...(op.cards === undefined ? {} : { cards: { ...op.cards } }),
-          ...(op.targets === undefined ? {} : { targets: op.targets.map((ref) => ({ ...ref, spot: { ...ref.spot } })) }),
+          ...(op.targets === undefined
+            ? {}
+            : { targets: op.targets.map((ref) => ({ ...ref, spot: { ...ref.spot } })) }),
         },
         // 🆕🆕🆕 D641 — Lt. Surge's Bargain's printed "Ask your opponent": the OPPONENT answers (D52's channel).
         ...(op.askOpponent === true ? { decider: otherSeat(ctx.seat) } : {}),
@@ -5758,7 +5936,12 @@ function stepOp(
       // `byAttackFor` all already scan the Active AND the Bench.
       return parkOrForce(
         state,
-        unshieldedRefs(state, knockOutChosenTargets(state, ctx.seat, op, ctx.sourceUid), ctx, events),
+        unshieldedRefs(
+          state,
+          knockOutChosenTargets(state, ctx.seat, op, ctx.sourceUid),
+          ctx,
+          events,
+        ),
         (ref) => doomBodyAt(state, ref, koByEffectMarker(state.turn)),
         knockOutChosenNote(op),
       );
@@ -5772,7 +5955,14 @@ function stepOp(
     case "eachPlayerTakesPrize":
       // 🆕🆕🆕 D641 — Lt. Surge's Bargain's "each player takes a Prize card": the controller's stage, then the
       // opponent's, each through the ONE queueing function (R-LSB1; flow.ts `settleProgram` drains them).
-      return { done: queueTakePrize(queueTakePrize(state, ctx, 1, false), { ...ctx, seat: otherSeat(ctx.seat) }, 1, false) };
+      return {
+        done: queueTakePrize(
+          queueTakePrize(state, ctx, 1, false),
+          { ...ctx, seat: otherSeat(ctx.seat) },
+          1,
+          false,
+        ),
+      };
     case "discardStadium":
       // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
       // this file that can change a body's MAXIMUM without touching its damage (a
@@ -5792,7 +5982,12 @@ function stepOp(
     // see `devolveEach` for D414's `koByEffect` stamp and the `wasLethal` conjunct.
     case "devolveEach":
       // 🆕🆕🆕 D615 — `toHand` (Miraculous Shine): the sweep's offer, `devolveChosen`'s writer per body.
-      return { done: op.toHand === true ? devolveEachToHand(state, ctx, events) : devolveEach(state, ctx, events) };
+      return {
+        done:
+          op.toHand === true
+            ? devolveEachToHand(state, ctx, events)
+            : devolveEach(state, ctx, events),
+      };
     // 🆕🆕🆕 D540 — THE SAME DEVOLUTION WITH A PICK IN IT, corpus row 87, and the
     // arm is three shipped pieces with nothing between them — `knockOutChosen`'s
     // byte template one op over:
@@ -5830,7 +6025,8 @@ function stepOp(
       // 🆕🆕🆕 D625 — Strange Timepiece, the OWN side: the engine-written shed applies at once; the
       // authored pick forces one body (its answer scheduled) or parks a `choosePokemon`.
       if (op.whose === "self") {
-        if (op.bodyUid !== undefined) return { done: shedOwnBody(state, ctx, op.bodyUid, op.shed ?? 1, events) };
+        if (op.bodyUid !== undefined)
+          return { done: shedOwnBody(state, ctx, op.bodyUid, op.shed ?? 1, events) };
         const own = ownDevolveTargets(state, ctx.seat, op.pokemonType);
         const [only] = own;
         if (only === undefined) return { done: state };
@@ -5839,7 +6035,8 @@ function stepOp(
       }
       // 🆕🆕🆕 D616 — `defenderOnly` (Devolution Ray): the evolved set narrowed to the Active, before §11.
       const evolved = devolveTargets(state, ctx.seat);
-      const narrowed = op.defenderOnly === true ? evolved.filter((ref) => ref.spot.spot === "active") : evolved;
+      const narrowed =
+        op.defenderOnly === true ? evolved.filter((ref) => ref.spot.spot === "active") : evolved;
       const offered = unshieldedRefs(state, narrowed, ctx, events);
       return parkOrForce(
         state,
@@ -5890,7 +6087,9 @@ function stepOp(
       // 🆕🆕🆕 D617 — Pokémon Center Lady's `recoverHealed` rides the same entrance (`healedRiderOps`).
       // 🆕🆕🆕 D625 — and Wally's Compassion's `energyToHandFromHealed`.
       if (
-        (op.discardEnergyFromHealed === true || op.recoverHealed === true || op.energyToHandFromHealed === true) &&
+        (op.discardEnergyFromHealed === true ||
+          op.recoverHealed === true ||
+          op.energyToHandFromHealed === true) &&
         candidates.length === 1
       ) {
         const forced = candidates[0] as PokemonRef;
@@ -5918,7 +6117,17 @@ function stepOp(
       if (op.pickOnto !== undefined) {
         const offer = energyPickOffer(state, op, ctx.seat, op.pickOnto.take);
         if (offer === undefined) {
-          return { done: attachEnergyFrom(state, op, op.pickOnto.ref, ctx, events, record, op.pickOnto.take) };
+          return {
+            done: attachEnergyFrom(
+              state,
+              op,
+              op.pickOnto.ref,
+              ctx,
+              events,
+              record,
+              op.pickOnto.take,
+            ),
+          };
         }
         return {
           park: {
@@ -6051,7 +6260,8 @@ function stepOp(
       // scheduled again with the target pinned (`pickOnto`) and parks the card pick above. The
       // targets are the SAME expression `parkOrForce` is handed below.
       if (upTo === undefined && energyPickOffer(state, op, ctx.seat, 1) !== undefined) {
-        const targets = op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op);
+        const targets =
+          op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op);
         const [onlyTarget] = targets;
         if (targets.length === 1 && onlyTarget !== undefined) {
           return { done: state, schedule: [{ ...op, pickOnto: { ref: onlyTarget, take: 1 } }] };
@@ -6646,7 +6856,10 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // FALSE, as with the two other card-reading members.
       const spot = activeTop(state, otherSeat(seat));
       // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.
-      return spot !== null && ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type);
+      return (
+        spot !== null &&
+        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)
+      );
     }
     case "yourActiveHasType": {
       // 🆕🆕🆕 D556 — Dragon Elixir's *"your Active {N} Pokémon"*: the arm directly above
@@ -6654,7 +6867,10 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.
       const spot = activeTop(state, seat);
       // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`), the arm above's read.
-      return spot !== null && ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type);
+      return (
+        spot !== null &&
+        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)
+      );
     }
     case "opponentActiveHasResistance": {
       // 🆕 D371 — the BODY of the arm directly above and a different COLUMN of it:
@@ -6772,7 +6988,11 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // 🆕🆕🆕 D600 — Sableye "Cocky Claw": the arm above AND `isStage2Pokemon`, on ONE benched body.
       return state.players[seat].bench.some((p) => {
         const benched = inPlayCardOf(state, p);
-        return benched !== undefined && isStage2Pokemon(benched) && (benched.types ?? []).includes(cond.type);
+        return (
+          benched !== undefined &&
+          isStage2Pokemon(benched) &&
+          (benched.types ?? []).includes(cond.type)
+        );
       });
     case "opponentInPlayHasType":
       // 🆕 D390 — Electivire sv05-054 "Short-Circuit Knuckle" ({C}{C}, 40+): "If
@@ -7307,7 +7527,9 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         return (
           discarded !== undefined &&
           discarded.category === "Pokemon" &&
-          (discarded.abilities ?? []).some((printed) => foldApostrophes(printed.name) === cond.ability)
+          (discarded.abilities ?? []).some(
+            (printed) => foldApostrophes(printed.name) === cond.ability,
+          )
         );
       });
       return holders.length >= cond.count;
@@ -7382,7 +7604,10 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         (entry) =>
           entry.turn === state.turn - 2 &&
           !own.includes(entry.uid) &&
-          matchesFilter(cardOfUid(state, entry.uid), { kind: "bannerPokemon", banner: cond.banner }),
+          matchesFilter(cardOfUid(state, entry.uid), {
+            kind: "bannerPokemon",
+            banner: cond.banner,
+          }),
       );
     }
     case "yourPlayedBannerSupporterThisTurn": {
@@ -7632,11 +7857,7 @@ export function countPokemonInPlay(
     ⚠️ `cardOfUid` returns `undefined` for a uid the catalog cannot resolve and
     `matchesFilter`'s first line answers false for it, so an unreadable card in the pile
     contributes 0 rather than throwing. An EMPTY pile is 0. */
-export function countCardsInDiscardPile(
-  state: GameState,
-  seat: Seat,
-  filter: CardFilter,
-): number {
+export function countCardsInDiscardPile(state: GameState, seat: Seat, filter: CardFilter): number {
   let matched = 0;
   for (const uid of state.players[seat].discard) {
     if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;
@@ -7762,14 +7983,8 @@ export function attackBarredByAbility(
     [🆕 D570 landing (D539): that names two moments — the THIRD is flow.ts `resumeTurn`, which
     reads the licence through `attackAgainBarred` before it files the `ATTACK_AGAIN_OFFERED`
     row; so three sites: `finishAttack`, the second declaration (attack.ts), the offer]. */
-export function attackAgainLicensed(
-  state: GameState,
-  seat: Seat,
-  pokemon: InPlayPokemon,
-): boolean {
-  return passivesOf(state, pokemon).attackTwiceIf.some((cond) =>
-    conditionHolds(state, seat, cond),
-  );
+export function attackAgainLicensed(state: GameState, seat: Seat, pokemon: InPlayPokemon): boolean {
+  return passivesOf(state, pokemon).attackTwiceIf.some((cond) => conditionHolds(state, seat, cond));
 }
 
 /** 🆕🆕🆕 §5.3/§8 (D570) — is a declaration by `seat`'s Active `active` barred because the
@@ -7782,11 +7997,7 @@ export function attackAgainLicensed(
     `disabled`) [🆕 D570 landing (D539): and a FOURTH caller, flow.ts `resumeTurn`'s offer
     row — `ATTACK_AGAIN_OFFERED` is filed only while this returns false], `attackLocked`'s
     doctrine. The bag describes the TURN'S OWNER only, and every caller asks for that seat. */
-export function attackAgainBarred(
-  state: GameState,
-  seat: Seat,
-  active: InPlayPokemon,
-): boolean {
+export function attackAgainBarred(state: GameState, seat: Seat, active: InPlayPokemon): boolean {
   const uid = state.allowances.attackAgainUid;
   if (uid === null) return false;
   return topUid(active) !== uid || !attackAgainLicensed(state, seat, active);
@@ -8866,7 +9077,9 @@ export function applyChoice(
   switch (op.op) {
     // 🆕🆕🆕 D646 — Backtrack Badge: "yes" spends the once-per-turn key and files `COINS_REFLIPPED`; "no" moves nothing.
     case "reflipCoins":
-      return choice.kind === "confirm" && choice.yes ? spendCoinRedo(state, ctx.seat, op.toolUid, op.faces.length, events) : state;
+      return choice.kind === "confirm" && choice.yes
+        ? spendCoinRedo(state, ctx.seat, op.toolUid, op.faces.length, events)
+        : state;
     case "searchDeck": {
       // 🆕🆕 D502 — THE §9.2 FILING, AND IT COMES OFF `searchMove`'s OWN `moved`
       // RATHER THAN OFF `choice.uids` — `retrieveMove`'s rule one op over, verbatim:
@@ -8892,7 +9105,8 @@ export function applyChoice(
     case "evolveFromDeck":
       // 🆕🆕🆕 D611 — the HAND route (Spiteful Evolution) files the placement for its "If you do".
       if (op.fromHand === true) {
-        const placed = choice.kind === "cards" ? evolveFromHandMove(state, choice.uids, ctx, events) : undefined;
+        const placed =
+          choice.kind === "cards" ? evolveFromHandMove(state, choice.uids, ctx, events) : undefined;
         recordMoved(record, op.recordAs, placed?.moved ?? []);
         return placed?.state ?? state;
       }
@@ -8926,7 +9140,12 @@ export function applyChoice(
     case "lookAtTopN":
       // 🆕🆕🆕 D642 — Risky Ruins on what landed on the controller's own Bench (the picked uids that did).
       return choice.kind === "cards"
-        ? benchArrivalCounters(revealFromTop(state, choice.uids, op, ctx, events), ctx.seat, choice.uids, events)
+        ? benchArrivalCounters(
+            revealFromTop(state, choice.uids, op, ctx, events),
+            ctx.seat,
+            choice.uids,
+            events,
+          )
         : state;
     case "reorderTop": {
       // 🆕 D341 — THE ANSWER'S POSITIONS ARE THE EFFECT. `validateChoice` has
@@ -8976,7 +9195,8 @@ export function applyChoice(
       for (const uid of choice.kind === "cards" ? choice.uids : []) {
         if (hand.has(uid) && !revealed.includes(uid)) revealed.push(uid);
       }
-      if (revealed.length > 0) events.push({ type: "HAND_CARDS_REVEALED", seat: ctx.seat, uids: revealed });
+      if (revealed.length > 0)
+        events.push({ type: "HAND_CARDS_REVEALED", seat: ctx.seat, uids: revealed });
       recordMoved(record, op.recordAs, revealed);
       return state;
     }
@@ -9065,7 +9285,9 @@ export function applyChoice(
         const attach = (choice.yes ? op.then : op.otherwise)?.[0];
         const uid = choice.yes ? op.cards.yes : op.cards.no;
         if (attach?.op === "attachEnergyFrom" && uid !== undefined) {
-          return attachEnergyFrom(state, attach, choice.target, ctx, events, record, undefined, [uid]);
+          return attachEnergyFrom(state, attach, choice.target, ctx, events, record, undefined, [
+            uid,
+          ]);
         }
       }
       // Other optional prompts splice their branch through continuationOps.
@@ -9138,11 +9360,15 @@ export function applyChoice(
       // refs to the candidates and the exact count). Omitting this arm would typecheck green
       // and discard the owner's answer silently (D541's measurement at the neighbour), so it
       // is driven parked in `areaZeroUnderdepthsD577.test.ts`.
-      return choice.kind === "pokemonMulti" ? discardBenchedRefs(state, choice.refs, ctx, events) : state;
+      return choice.kind === "pokemonMulti"
+        ? discardBenchedRefs(state, choice.refs, ctx, events)
+        : state;
     case "trimTools":
       // 🆕🆕🆕 §7.4 (D643) — the RESUMED half of Multi Adapter's trim: the answer names the Tools that GO (the
       // owner's one over-cap body; `validateChoice` already held them to the offer and the exact count).
-      return choice.kind === "discardTools" ? trimToolsApply(state, choice.uids, ctx, events) : state;
+      return choice.kind === "discardTools"
+        ? trimToolsApply(state, choice.uids, ctx, events)
+        : state;
     case "returnBenchedChosen": {
       // 🛑🛑 **🆕🆕🆕 D541 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE
       // THE COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns
@@ -9198,20 +9424,18 @@ export function applyChoice(
           state,
         );
       }
-      return pickedPokemon(choice)
-        ? healChosen(state, choice.ref, op.amount, ctx, events)
-        : state;
+      return pickedPokemon(choice) ? healChosen(state, choice.ref, op.amount, ctx, events) : state;
     // 🆕🆕🆕 D621 — Acerola's Mischief's parked pick (`healChosen`'s single-pick shape).
     case "installChosenAttackShield":
-      return pickedPokemon(choice) ? installChosenAttackShield(state, choice.ref, op, ctx, events) : state;
+      return pickedPokemon(choice)
+        ? installChosenAttackShield(state, choice.ref, op, ctx, events)
+        : state;
     case "moveCountersToDefender":
       // D138 — the parked half of the counter move. Same shape as `healChosen`'s
       // single-pick arm above and for the same reason: `validateChoice` matches
       // the answer against the PARKED prompt, so the wrong choice kind is the
       // wire belt rather than a case that can fire in a real match.
-      return pickedPokemon(choice)
-        ? moveCountersToDefender(state, choice.ref, ctx, events)
-        : state;
+      return pickedPokemon(choice) ? moveCountersToDefender(state, choice.ref, ctx, events) : state;
     // 🛑🛑 **🆕🆕🆕 D540 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE THE
     // COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns `state`
     // unchanged — *"Synchronous ops never park, so never reach the choice path"* —
@@ -9373,14 +9597,29 @@ export function applyChoice(
       // chosen body, in the order named, re-finding each card against the evolving board.
       // (Any other answer kind falls through to the arms below, which move nothing for it.)
       if (op.toEach === true && choice.kind === "pokemonMulti") {
-        return choice.refs.reduce((board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record), state);
+        return choice.refs.reduce(
+          (board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record),
+          state,
+        );
       }
       if (op.pickOnto !== undefined) {
         return choice.kind === "cards"
-          ? attachEnergyFrom(state, op, op.pickOnto.ref, ctx, events, record, op.pickOnto.take, choice.uids)
+          ? attachEnergyFrom(
+              state,
+              op,
+              op.pickOnto.ref,
+              ctx,
+              events,
+              record,
+              op.pickOnto.take,
+              choice.uids,
+            )
           : state;
       }
-      if (pickedPokemon(choice) && energyPickOffer(state, op, ctx.seat, attachTake(op, choice.take)) !== undefined) {
+      if (
+        pickedPokemon(choice) &&
+        energyPickOffer(state, op, ctx.seat, attachTake(op, choice.take)) !== undefined
+      ) {
         return state;
       }
       return pickedPokemon(choice)
@@ -9406,14 +9645,21 @@ export function applyChoice(
       // 🆕🆕🆕 D641 — Pleasing Present's first half: the answer is applied out of the OPPONENT's hand onto their
       // board, under their seat (they are the one attaching).
       if (op.whose === "opponent") {
-        return attachFromZoneApply(state, choice.assignments, "hand", { ...ctx, seat: otherSeat(ctx.seat) }, events)
-          .state;
+        return attachFromZoneApply(
+          state,
+          choice.assignments,
+          "hand",
+          { ...ctx, seat: otherSeat(ctx.seat) },
+          events,
+        ).state;
       }
       // 🆕🆕🆕 D628 — the printed singular is MANDATORY (Lethargic Charge, R-LGC1): an empty answer is topped up
       // with the first offered card onto the first offered target, both re-read off the live offer.
       const attached = attachFromZoneApply(
         state,
-        op.one === true && choice.assignments.length === 0 ? handTopUp(state, ctx, op) : choice.assignments,
+        op.one === true && choice.assignments.length === 0
+          ? handTopUp(state, ctx, op)
+          : choice.assignments,
         "hand",
         ctx,
         events,
@@ -9455,7 +9701,9 @@ export function applyChoice(
       // +80 is still paid. `crescentPurge.test.ts` drives the ≥2 park through `resolveEffect`.
       // 🆕🆕🆕 D567 — the op is threaded: `side` picks the ROW (Bother-Bot's is the opponent's)
       // and `recordAs` files the uid actually turned, exactly as the forced path does.
-      return choice.kind === "prize" ? turnPrizeFaceUpAt(state, choice.index, op, ctx, events, record) : state;
+      return choice.kind === "prize"
+        ? turnPrizeFaceUpAt(state, choice.index, op, ctx, events, record)
+        : state;
     case "preventChosenAttack":
       // D157 — the parked half of the opponent-side per-attack lock. Same shape as
       // `healChosen`'s single-pick arm and for the same reason: `validateChoice`
@@ -9834,7 +10082,13 @@ function clearStatus(
   // `recoverStatuses`' per-condition clear verbatim.
   if (only !== undefined) {
     if (!cleared.includes(only)) return state;
-    events.push({ type: "STATUS_CLEARED", seat: ctx.seat, uid, statuses: [only], reason: "recovered" });
+    events.push({
+      type: "STATUS_CLEARED",
+      seat: ctx.seat,
+      uid,
+      statuses: [only],
+      reason: "recovered",
+    });
     const conditions =
       only === "burned"
         ? { ...active.conditions, burned: false }
@@ -10173,7 +10427,12 @@ function preventAttack(
     The row is ATTACK_LOCKED with `flip: true` — without the rider it would say
     "can't attack next turn", which is false (D421). Never parks; NO rng here: the
     coin belongs to the locked player's declaration, not to this install. */
-function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[], coins?: 2): GameState {
+function flipLockAttack(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+  coins?: 2,
+): GameState {
   const seat = otherSeat(ctx.seat);
   const active = state.players[seat].active;
   if (active === null) return state;
@@ -10278,7 +10537,13 @@ function boostSideAttacksThisTurn(
 ): GameState {
   // 🆕🆕🆕 D621 — the printed ATTACKER noun rides the entry and the row when the print has one.
   const attacker = op.attacker === undefined ? {} : { attacker: op.attacker };
-  events.push({ type: "SIDE_ATTACKS_BOOSTED", seat: ctx.seat, amount: op.amount, target: op.target, ...attacker });
+  events.push({
+    type: "SIDE_ATTACKS_BOOSTED",
+    seat: ctx.seat,
+    amount: op.amount,
+    target: op.target,
+    ...attacker,
+  });
   return {
     ...state,
     allowances: {
@@ -10337,7 +10602,12 @@ function installChosenAttackShield(
   const base = body?.stack[0];
   const top = body === undefined ? undefined : topUid(body);
   if (base === undefined || top === undefined) return state;
-  events.push({ type: "CHOSEN_ATTACK_SHIELD_INSTALLED", seat: ctx.seat, uid: top, fromClass: { ...op.fromClass } });
+  events.push({
+    type: "CHOSEN_ATTACK_SHIELD_INSTALLED",
+    seat: ctx.seat,
+    uid: top,
+    fromClass: { ...op.fromClass },
+  });
   return withSide(state, ctx.seat, {
     ...state.players[ctx.seat],
     chosenAttackShield: { turn: state.turn + 1, uid: base, fromClass: { ...op.fromClass } },
@@ -10346,7 +10616,9 @@ function installChosenAttackShield(
 
 /** 🆕🆕🆕 D621 — Acerola's Mischief's dialog caption: the printed sentence, the class spelled as
     printed ("Pokémon ex"; the other two members for totality). */
-function chosenAttackShieldNote(op: Extract<EffectOp, { op: "installChosenAttackShield" }>): string {
+function chosenAttackShieldNote(
+  op: Extract<EffectOp, { op: "installChosenAttackShield" }>,
+): string {
   // 🆕🆕🆕 D630 — the three new members spelled for totality (only "ex" is printed on this op).
   const noun = {
     ex: "Pokémon ex",
@@ -10392,7 +10664,8 @@ function installSideAttackBlock(
 ): GameState {
   const side = state.players[ctx.seat];
   const source = side.active === null ? undefined : topUid(side.active);
-  if (source === undefined || (ctx.sourceUid !== undefined && ctx.sourceUid !== source)) return state;
+  if (source === undefined || (ctx.sourceUid !== undefined && ctx.sourceUid !== source))
+    return state;
   events.push({
     type: "SIDE_ATTACK_BLOCK_APPLIED",
     seat: ctx.seat,
@@ -10402,7 +10675,12 @@ function installSideAttackBlock(
   });
   return withSide(state, ctx.seat, {
     ...side,
-    sideAttackBlock: { turn: state.turn + 1, sourceUid: source, banner: op.banner, fromClass: { ...op.fromClass } },
+    sideAttackBlock: {
+      turn: state.turn + 1,
+      sourceUid: source,
+      banner: op.banner,
+      fromClass: { ...op.fromClass },
+    },
   });
 }
 
@@ -10431,8 +10709,16 @@ function markHandAttach(
   const endsTurn = op.endsTurn === true || (same && prior.endsTurn);
   // 🆕🆕🆕 D636 — Electrified Incisors' counters SUM inside one window (two printed effects, R-EIC1).
   const counters = (op.counters ?? 0) + (same ? prior.counters : 0);
-  if (same && barred === prior.barred && endsTurn === prior.endsTurn && counters === prior.counters) return state;
-  events.push({ type: "HAND_ATTACH_MARKED", seat: victimSeat, uid: markedUid, barred, endsTurn, counters });
+  if (same && barred === prior.barred && endsTurn === prior.endsTurn && counters === prior.counters)
+    return state;
+  events.push({
+    type: "HAND_ATTACH_MARKED",
+    seat: victimSeat,
+    uid: markedUid,
+    barred,
+    endsTurn,
+    counters,
+  });
   return withActive(state, victimSeat, {
     ...marked,
     handAttachMark: { turn, barred, endsTurn, tripped: false, counters },
@@ -10486,7 +10772,11 @@ function lookAtPrize(
     cleared, so the attack's queued epilogue never runs — nothing else resolves, R-VS1 ⚠️
     UNRULED). Reached only behind `conditionGate { yourPrizesRemaining [1] }`. */
 function winGame(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
-  const result = finishGame(state, { result: "win", winner: ctx.seat, reason: "cardEffect" }, events);
+  const result = finishGame(
+    state,
+    { result: "win", winner: ctx.seat, reason: "cardEffect" },
+    events,
+  );
   return result.ok ? result.state : state;
 }
 
@@ -10523,7 +10813,13 @@ function shufflePlayedCardIntoDeck(
   const [deck, rngState] = shuffle([...side.deck, uid], state.rngState);
   // 🆕 CARD REVISION B02 — `played: true`: the row names the played card going into the deck
   // "instead of discarding it", not a discard-pile retrieval (log.ts).
-  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest: "deck", uids: [uid], played: true });
+  events.push({
+    type: "DISCARD_RETRIEVED",
+    seat: ctx.seat,
+    dest: "deck",
+    uids: [uid],
+    played: true,
+  });
   events.push({ type: "SHUFFLE", seat: ctx.seat });
   return {
     ...withSide(state, ctx.seat, { ...side, discard: without(side.discard, uid), deck }),
@@ -10760,7 +11056,9 @@ function preventAttackUse(
   // index is never persisted. Asked BEFORE the printed lookup: the row actually used is the
   // referent of "this Pokémon can't use X". A copy never sets the field (R-CP9 unchanged).
   const borrowed =
-    ctx.borrowedAttack !== undefined && foldApostrophes(ctx.borrowedAttack) === attack ? ctx.borrowedAttack : undefined;
+    ctx.borrowedAttack !== undefined && foldApostrophes(ctx.borrowedAttack) === attack
+      ? ctx.borrowedAttack
+      : undefined;
   const attackIndex = borrowed === undefined ? printedAttackIndex(printed, attack) : -1;
   if (attackIndex < 0 && borrowed === undefined) return state;
   // The one rule, D143's: the window is the holder's own next turn, and declaring
@@ -10774,7 +11072,14 @@ function preventAttackUse(
   // bar stamped for a turn its holder has already spent, which never bites once,
   // where `+ 2` would have degraded quietly into D154's next-turn lock.
   const turn = until === undefined ? state.turn + 2 : state.turn;
-  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex, until, borrowed);
+  const locks = addLockedAttack(
+    active.lockedAttacks,
+    state.turn,
+    turn,
+    attackIndex,
+    until,
+    borrowed,
+  );
   if (locks === null) return state;
   // The RESOLVED row's own name and not the op's token: the two differ only in
   // punctuation (the op's is folded, the card's is as printed), and a log row is
@@ -10909,7 +11214,9 @@ function boostAttack(
   // SOURCE body found by uid (`sourceRef`), which may be Benched. `active` keeps its name
   // for the lines below; it is the holder either way. A departed source installs nothing.
   const [holderRef] =
-    holder === "source" ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: { spot: "active" } } as const];
+    holder === "source"
+      ? sourceRef(state, ctx)
+      : [{ seat: ctx.seat, spot: { spot: "active" } } as const];
   const active = holderRef === undefined ? null : (refPokemon(state, holderRef) ?? null);
   if (active === null || holderRef === undefined) return state;
   const uid = topUid(active);
@@ -10963,7 +11270,9 @@ function boostAttack(
     seat: ctx.seat,
     uid,
     attack: attackIndex === null ? null : (printed[attackIndex]?.name ?? attack),
-    ...(base === true ? { amount: merged.base ?? amount, base: true as const } : { amount: merged.amount }),
+    ...(base === true
+      ? { amount: merged.base ?? amount, base: true as const }
+      : { amount: merged.amount }),
     ...(thisTurn === true ? { thisTurn: true as const } : {}),
   });
   // 🆕🆕🆕 D563 — written back where the holder SITS (the Active, or its Bench slot).
@@ -11168,8 +11477,13 @@ function reduceDamage(
   // Evolution install plus a 30-from-all one would take 100 off a Basic attacker's hit (the exact
   // answer is per-class amounts, a list). Unreachable off any printing (only attacks install this,
   // one per turn), constructed and pinned; the day it is reachable the field becomes a list.
-  const mergedClass = stacking ? (sameAttackerClass(existing.fromClass, fromClass) ? fromClass : undefined) : fromClass;
-  if (stacking && merged === existing.amount && sameAttackerClass(mergedClass, existing.fromClass)) return state;
+  const mergedClass = stacking
+    ? sameAttackerClass(existing.fromClass, fromClass)
+      ? fromClass
+      : undefined
+    : fromClass;
+  if (stacking && merged === existing.amount && sameAttackerClass(mergedClass, existing.fromClass))
+    return state;
   events.push({
     type: "DAMAGE_REDUCTION_APPLIED",
     seat: ctx.seat,
@@ -11179,7 +11493,10 @@ function reduceDamage(
   });
   return withActive(state, ctx.seat, {
     ...active,
-    damageReduction: mergedClass === undefined ? { turn, amount: merged } : { turn, amount: merged, fromClass: { ...mergedClass } },
+    damageReduction:
+      mergedClass === undefined
+        ? { turn, amount: merged }
+        : { turn, amount: merged, fromClass: { ...mergedClass } },
   });
 }
 
@@ -11343,7 +11660,12 @@ function exposeDefender(
     of the SAME window (R-PH1 ⚠️ UNRULED): the opponent's `exposeDefender` on their previous turn
     stamps the same turn on this body, and the two printed effects are separate, so both land. No
     §11 check: a self effect, like `reduceDamage`. Never parks. */
-function exposeSelf(state: GameState, amount: number, ctx: EffectContext, events: GameEvent[]): GameState {
+function exposeSelf(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
   const uid = topUid(active);
@@ -11501,13 +11823,21 @@ function bountyThisAttack(state: GameState, amount: number, ctx: EffectContext):
   if (marked.markers.includes(koByEffectMarker(state.turn))) return state;
   const prior = marked.koBounty;
   const live = prior !== null && prior.turn === state.turn ? prior.amount : 0;
-  return withActive(state, seat, { ...marked, koBounty: { turn: state.turn, amount: live + amount } });
+  return withActive(state, seat, {
+    ...marked,
+    koBounty: { turn: state.turn, amount: live + amount },
+  });
 }
 
 /** 🆕🆕🆕 §8.1/§11 (D639) — Yveltal ex "Soul Destroyer": every opponent body with `atMost` HP or
     less remaining (`remainingHpWithin`, read over the whole side BEFORE any doom), minus each §11-
     shielded one (`unshieldedRefs`, announced), doomed with D414's `koByEffect` marker (R-SDS1). */
-function knockOutEach(state: GameState, atMost: number, ctx: EffectContext, events: GameEvent[]): GameState {
+function knockOutEach(
+  state: GameState,
+  atMost: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   const inWindow = oppAnyRefs(state, ctx.seat).filter((ref) => {
     const pokemon = refPokemon(state, ref);
     return pokemon !== undefined && remainingHpWithin(state, pokemon, atMost);
@@ -11870,7 +12200,10 @@ function attackDamageBlocked(
   // 🆕🆕🆕 D630 — the attacking body (Lava Wall's `"burned"` class reads its conditions).
   attackerBody: InPlayPokemon | undefined,
 ): boolean {
-  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker, damage, attackerBody) !== null;
+  return (
+    ctx.invokedBy === "attack" &&
+    attackBlockOf(state, pokemon, attacker, damage, attackerBody) !== null
+  );
 }
 
 /** 🆕 D259 — THE PURE HALF OF THE FUNNEL, SPLIT OUT SO A PER-CANDIDATE READER CAN
@@ -11914,7 +12247,8 @@ function effectRefusedOn(
     // zone clause, no source clause, and BOTH trainer types refused.
     if (passivesOf(state, target).preventTrainerEffects) return true;
     // 🆕🆕🆕 D637 — Antique Sail Fossil "Protective Sail": the HOLDER rule, Supporters only.
-    if (ctx.invokedBy === "supporter" && passivesOf(state, target).preventSupporterEffects) return true;
+    if (ctx.invokedBy === "supporter" && passivesOf(state, target).preventSupporterEffects)
+      return true;
     // Rhyperior: the SEAT rule, Supporters only. `seat` and not `target` because
     // the printed target is "all of your Pokémon" — the scan is about the side.
     return ctx.invokedBy === "supporter" && seatShieldedFromSupporterEffects(state, seat);
@@ -12074,7 +12408,10 @@ function effectRefusedOn(
       attackerHasSpecialEnergy(state, attackerTop?.active)) ||
     // 🆕🆕🆕 D568 — Sparkling Scales' EFFECTS half ("from and effects of attacks from your
     // opponent's Tera Pokémon"), the FIFTH read site; the seat guard above is "opponent's".
-    preventsAttackerBanner(passivesOf(state, target).preventDamageAndEffectsFromBanners, attacker) ||
+    preventsAttackerBanner(
+      passivesOf(state, target).preventDamageAndEffectsFromBanners,
+      attacker,
+    ) ||
     passivesOf(state, target).preventDamageAndEffectsWhileBenched ||
     passivesOf(state, target).preventAttackEffects ||
     benchShieldedFromEffects(state, target) ||
@@ -12361,7 +12698,13 @@ function spreadDamage(
       berry.amount +
       passives.damageReductionAfterWR +
       // 🆕🆕🆕 D619 — the attacker-gated reduction (Sacred Charm, Thick Scale, Thick Fat).
-      attackerGatedReductionOf(state, pokemon, passives.damageReductionsFromAttacker, attackerCard, ctx.seat) +
+      attackerGatedReductionOf(
+        state,
+        pokemon,
+        passives.damageReductionsFromAttacker,
+        attackerCard,
+        ctx.seat,
+      ) +
       installedReductionOf(state, pokemon, attackerCard, attackerTop?.active) +
       seatDamageReduction(state, pokemon, "all", ctx.seat);
     // 🆕🆕🆕 D547 — …and the installed NEXT-TURN VULNERABILITY, ADDED at the same
@@ -12458,7 +12801,9 @@ function spreadDamage(
     const clamped = koSurvivalClamp(state, pokemon, dealt, ctx.seat);
     // 🆕🆕🆕 D598 — the coin-flip survival (Tenacious Body), after the clamp, on the loop's rng.
     const [coinSaved, survivalRng] =
-      clamped === null ? koSurvivalCoinFlip({ ...state, rngState: rng }, pokemon, victim, dealt, events) : [null, rng];
+      clamped === null
+        ? koSurvivalCoinFlip({ ...state, rngState: rng }, pokemon, victim, dealt, events)
+        : [null, rng];
     rng = survivalRng;
     const damage = clamped?.damage ?? coinSaved ?? pokemon.damage + dealt;
     events.push({
@@ -12488,7 +12833,13 @@ function spreadDamage(
     const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
     consumed.push(...spent);
     // 🆕🆕🆕 D630 — the splash is attack damage: recorded on the body (Juggernaut Horn, R-JH1).
-    bench.push(withAttackDamageTaken({ ...consumeTools(pokemon, spent, victim, events), damage }, state.turn, dealt));
+    bench.push(
+      withAttackDamageTaken(
+        { ...consumeTools(pokemon, spent, victim, events), damage },
+        state.turn,
+        dealt,
+      ),
+    );
   }
   return withSide({ ...state, rngState: rng }, victim, {
     ...side,
@@ -12538,7 +12889,8 @@ function flipCoinsFor(
     faces.push(drawn);
     rngState = advanced;
   }
-  for (const drawn of faces) events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: drawn });
+  for (const drawn of faces)
+    events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: drawn });
   return [{ ...state, rngState }, faces];
 }
 
@@ -12556,14 +12908,29 @@ function perHeadsHit(
   // 🆕🆕🆕 D646 — the declined faces (`op.faces`) in place of new coins; otherwise the coins, then a Backtrack Badge
   // offer whose `retry` carries the targets (`hitRefs`), so the re-run hits the same bodies.
   const [flipped, faces] =
-    op.faces === undefined ? flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events) : [state, op.faces];
+    op.faces === undefined
+      ? flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events)
+      : [state, op.faces];
   const redo = op.faces === undefined ? coinRedoOffer(flipped, ctx, faces) : null;
   if (redo !== null) {
-    return { done: flipped, schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: { ...op, hitRefs: [...refs] } }] };
+    return {
+      done: flipped,
+      schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: { ...op, hitRefs: [...refs] } }],
+    };
   }
   const heads = faces.filter((face) => face === "heads").length;
   return {
-    done: placeSnipe(flipped, refs, amount * heads, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true),
+    done: placeSnipe(
+      flipped,
+      refs,
+      amount * heads,
+      op.deals === true,
+      op.ignoreWR === true,
+      op.source,
+      ctx,
+      events,
+      op.wrOnly === true,
+    ),
   };
 }
 
@@ -12571,7 +12938,11 @@ function perHeadsHit(
     one), the uid of a Badge on the ATTACKING body (`ctx.sourceUid`, found on its owner's board) that may re-flip them
     now (continuous.ts `coinRedoToolOf`), or `null`. Only an attack's program asks (`invokedBy`), so a Trainer's or an
     Ability's coin is never offered (R-BTB2). */
-function coinRedoOffer(state: GameState, ctx: EffectContext, faces: readonly CoinFace[]): string | null {
+function coinRedoOffer(
+  state: GameState,
+  ctx: EffectContext,
+  faces: readonly CoinFace[],
+): string | null {
   if (ctx.invokedBy !== "attack" || faces.length === 0) return null;
   const [ref] = sourceRef(state, ctx);
   const body = ref === undefined ? undefined : refPokemon(state, ref);
@@ -12580,7 +12951,11 @@ function coinRedoOffer(state: GameState, ctx: EffectContext, faces: readonly Coi
 
 /** 🆕🆕🆕 §8 (D646) — the Backtrack Badge offer's prompt: the printed *"you may"*, with the faces it would ignore.
     Shared by `stepOp`'s `reflipCoins` park and attack.ts's printed-coin park. */
-export function coinRedoPrompt(state: GameState, toolUid: string, faces: readonly CoinFace[]): EffectPrompt {
+export function coinRedoPrompt(
+  state: GameState,
+  toolUid: string,
+  faces: readonly CoinFace[],
+): EffectPrompt {
   const name = cardOf(state, toolUid)?.name ?? "Backtrack Badge";
   const these = faces.length === 1 ? "this coin flip" : `these ${String(faces.length)} coin flips`;
   return {
@@ -12790,7 +13165,9 @@ function placeSnipe(
     // 🆕🆕🆕 D631 — plus Gloomy Garbage; under `ignoreWR` a pick that is itself a holder drops its own term (R-GG1).
     const attackerDebuff =
       sharedDebuff +
-      (attackerTop === null ? 0 : opposingToolAttackDebuff(next, attackerTop.active, ignoreWR ? pokemon : undefined));
+      (attackerTop === null
+        ? 0
+        : opposingToolAttackDebuff(next, attackerTop.active, ignoreWR ? pokemon : undefined));
     // `ignoreWR` (Feint Attack — "not affected by any effects on that Pokémon")
     // bypasses the prevention just as it bypasses the reduction passive.
     //
@@ -12826,7 +13203,13 @@ function placeSnipe(
       : berry.amount +
         targetPassives.damageReductionAfterWR +
         // 🆕🆕🆕 D619 — the attacker-gated reduction, on-target (`ignoreWR` nulls it).
-        attackerGatedReductionOf(next, pokemon, targetPassives.damageReductionsFromAttacker, attackerCard, ctx.seat) +
+        attackerGatedReductionOf(
+          next,
+          pokemon,
+          targetPassives.damageReductionsFromAttacker,
+          attackerCard,
+          ctx.seat,
+        ) +
         installedReductionOf(next, pokemon, attackerCard, attackerTop?.active) +
         seatDamageReduction(next, pokemon, "all", ctx.seat);
     // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
@@ -12908,7 +13291,13 @@ function placeSnipe(
       // the extent the damaged body is the one granting it.
       benchShieldedFromDamage(next, pokemon, ignoreWR ? "othersOnly" : "all") ||
       // 🆕🆕🆕 D631 — Ancient Bulwark; a Feint snipe on the holder drops its own shield (D254's scope).
-      seatShieldedFromLowEnergyAttacker(next, pokemon, attackerTop?.active, ctx.seat, ignoreWR ? "othersOnly" : "all") ||
+      seatShieldedFromLowEnergyAttacker(
+        next,
+        pokemon,
+        attackerTop?.active,
+        ctx.seat,
+        ignoreWR ? "othersOnly" : "all",
+      ) ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
     // D258 — the EIGHTH prevent, at the THIRD of its FOUR read sites. `ignoreWR` is
     // folded into the ARGUMENT rather than spelled as a guard around it, which is the
@@ -12939,7 +13328,9 @@ function placeSnipe(
     const clamped = koSurvivalClamp(next, pokemon, dealt, ctx.seat);
     // 🆕🆕🆕 D598 — the coin-flip survival, `spreadDamage`'s lines verbatim (the sniped body's seat).
     const [coinSaved, survivalRng] =
-      clamped === null ? koSurvivalCoinFlip({ ...next, rngState: rng }, pokemon, benchVictim, dealt, events) : [null, rng];
+      clamped === null
+        ? koSurvivalCoinFlip({ ...next, rngState: rng }, pokemon, benchVictim, dealt, events)
+        : [null, rng];
     rng = survivalRng;
     const damage = clamped?.damage ?? coinSaved ?? pokemon.damage + dealt;
     // 🆕🆕 D425 said of the row below: *"placeSnipe's `deals` arm aims across the
@@ -12974,7 +13365,13 @@ function placeSnipe(
     const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
     consumed.push(...spent);
     // 🆕🆕🆕 D630 — `spreadDamage`'s record, verbatim (the `deals` arm is attack damage).
-    bench.push(withAttackDamageTaken({ ...consumeTools(pokemon, spent, benchVictim, events), damage }, next.turn, dealt));
+    bench.push(
+      withAttackDamageTaken(
+        { ...consumeTools(pokemon, spent, benchVictim, events), damage },
+        next.turn,
+        dealt,
+      ),
+    );
   }
   return withSide({ ...next, rngState: rng }, benchVictim, {
     ...side,
@@ -13165,19 +13562,21 @@ function snipeActive(
   // it with the rest of Weakness. Driven on its OWN board (`abilityBundleD559.test.ts`),
   // D432's reason.
   // 🆕🆕🆕 D622 — the bare tail (`wrOnly`) nulls Weakness and Resistance, and only those.
-  const weakness = noWeakness || wrOnly
-    ? null
-    : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones", as at the main hit (R-SPH1).
-      withWeaknessAmount(
-        weaknessOf(
-          attacker.card,
-          target.card,
-          installedWeaknessRetypeOf(state, target.active),
-          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).
-          installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),
-        ),
-        weaknessAmountOverride(state),
-      );
+  const weakness =
+    noWeakness || wrOnly
+      ? null
+      : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones", as at the main hit (R-SPH1).
+        withWeaknessAmount(
+          weaknessOf(
+            attacker.card,
+            target.card,
+            installedWeaknessRetypeOf(state, target.active),
+            // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).
+            installedWeaknessRewriteOf(state, target.active) ??
+              seatWeaknessRewrite(state, opponent, target.card),
+          ),
+          weaknessAmountOverride(state),
+        );
   const resistance =
     ignoreWR || wrOnly || attacker === null ? null : resistanceOf(attacker.card, target.card);
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
@@ -13220,7 +13619,13 @@ function snipeActive(
     : berry.amount +
       targetPassives.damageReductionAfterWR +
       // 🆕🆕🆕 D619 — the attacker-gated reduction, on-target (`ignoreWR` nulls it).
-      attackerGatedReductionOf(state, target.active, targetPassives.damageReductionsFromAttacker, attacker?.card, ctx.seat) +
+      attackerGatedReductionOf(
+        state,
+        target.active,
+        targetPassives.damageReductionsFromAttacker,
+        attacker?.card,
+        ctx.seat,
+      ) +
       installedReductionOf(state, target.active, attacker?.card, attacker?.active) +
       seatDamageReduction(state, target.active, "all", ctx.seat);
   // ⚠️ D240 — the damage CAP is read against the number that would actually be
@@ -13236,9 +13641,7 @@ function snipeActive(
   // the rulebook's damage step 2 STOPPED (attack.ts's main hit quotes it): when the
   // before-W/R sum `amount + bonus - debuff` is 0 or less, nothing past step 2 runs.
   const activeExposure =
-    ignoreWR || amount + bonus - debuff <= 0
-      ? 0
-      : installedVulnerabilityOf(state, target.active);
+    ignoreWR || amount + bonus - debuff <= 0 ? 0 : installedVulnerabilityOf(state, target.active);
   const wouldDeal = Math.max(0, afterWR + activeExposure - reduction);
   // D258 — RENAMED for attack.ts's reason verbatim.
   const preventedBeforeFlip =
@@ -13280,7 +13683,14 @@ function snipeActive(
         // REASON READ OFF THE PRINT: "done to this Pokémon" names no zone, so
         // neither the Active arms nor the Bench arms can be dead by construction.
         preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
-        attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx, attacker?.active))) ||
+        attackDamageBlocked(
+          state,
+          target.active,
+          attacker?.card,
+          wouldDeal,
+          ctx,
+          attacker?.active,
+        ))) ||
     // D254 — "all", and DEAD for both sentences for `attack.ts`'s reason verbatim:
     // `snipeActive` damages `target.active` and the shared TARGET clause reads
     // "your BENCHED Pokémon". Total, not case-covering; no mutant, because none
@@ -13310,7 +13720,9 @@ function snipeActive(
   const clamped = koSurvivalClamp(state, target.active, dealt, ctx.seat);
   // 🆕🆕🆕 D598 — the coin-flip survival, on the shield's advanced rng.
   const [coinSaved, survivalRng] =
-    clamped === null ? koSurvivalCoinFlip({ ...state, rngState }, target.active, opponent, dealt, events) : [null, rngState];
+    clamped === null
+      ? koSurvivalCoinFlip({ ...state, rngState }, target.active, opponent, dealt, events)
+      : [null, rngState];
   const damage = clamped?.damage ?? coinSaved ?? target.active.damage + dealt;
   events.push({
     type: "DAMAGE_DEALT",
@@ -13336,7 +13748,11 @@ function snipeActive(
   const struck = withActive(
     { ...state, rngState: survivalRng },
     opponent,
-    withAttackDamageTaken({ ...consumeTools(target.active, spent, opponent, events), damage }, state.turn, dealt),
+    withAttackDamageTaken(
+      { ...consumeTools(target.active, spent, opponent, events), damage },
+      state.turn,
+      dealt,
+    ),
   );
   const hit = discardToPile(struck, opponent, spent);
   // 🆕 §9 — THE TWO REACTIONS THE DAMAGED ACTIVE OWES, SEEDED AT THE DAMAGE AND
@@ -13452,7 +13868,12 @@ function reactWithRecoilAndAbility(
   let next = state;
   const attacker = activeTop(next, attackerSeat);
   // 🆕🆕🆕 D642 — plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping): an Ability's share.
-  const damagedPassives = withWatchedRecoil(next, damagedSeat, damagedBody, passivesOf(next, damagedBody));
+  const damagedPassives = withWatchedRecoil(
+    next,
+    damagedSeat,
+    damagedBody,
+    passivesOf(next, damagedBody),
+  );
   // 🆕🆕🆕 D614 — Luminous Wing on the attacker refuses the Ability share (attack.ts's main-hit rule).
   const refusedRecoil =
     attacker !== null && passivesOf(next, attacker.active).preventAbilityEffects
@@ -13462,7 +13883,9 @@ function reactWithRecoilAndAbility(
     events.push({ type: "ABILITY_EFFECT_PREVENTED", seat: attackerSeat, uid: attacker.uid });
   }
   const recoil =
-    damagedPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, damagedBody, damageTaken);
+    damagedPassives.damageAttacker -
+    refusedRecoil +
+    installedRecoilOf(next, damagedBody, damageTaken);
   if (attacker !== null && recoil > 0) {
     next = withActive(next, attackerSeat, {
       ...attacker.active,
@@ -13570,10 +13993,7 @@ export function detonateDeluxeBomb(
 /** 🆕🆕🆕 D562 — the Tools one §8.5 hit CONSUMED: the Berries that reduced it (the
     caller passes `[]` for a prevented hit — R-BE) and the Survival Brace the clamp
     answered with, if any (R-BR). */
-export function consumedTools(
-  berryUids: readonly string[],
-  clamped: KoSurvival | null,
-): string[] {
+export function consumedTools(berryUids: readonly string[], clamped: KoSurvival | null): string[] {
   return clamped?.toolUid === undefined ? [...berryUids] : [...berryUids, clamped.toolUid];
 }
 
@@ -13704,13 +14124,14 @@ function snipeAmount(
   // the hit deals are the same value on both sides of the park.
   // ⚠️ **`undefined` AND NOT A BOOLEAN**: an `EffectSlot` is an ADDRESS and there
   // are three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `"placed"`, one entry per damage counter placed; the address argument only strengthens), so the rider names the one it reads (see effects.ts).
-  if (op.perRecorded !== undefined)
-    return op.amount * recorded(record, op.perRecorded).length;
+  if (op.perRecorded !== undefined) return op.amount * recorded(record, op.perRecorded).length;
   // 🆕🆕🆕 D629 — the TYPED twin of the `perEnergyOnSelf` line (Bug's Cannon, Hydro Jet): the attacker's Energy cards
   // that provide the printed type. Placed ABOVE that line, which returns for every other op.
   if (op.perTypedEnergyOnSelf !== undefined) {
     const typedHolder = activeTop(state, ctx.seat);
-    return typedHolder === null ? 0 : op.amount * countAttachedEnergy(state, typedHolder.active, op.perTypedEnergyOnSelf);
+    return typedHolder === null
+      ? 0
+      : op.amount * countAttachedEnergy(state, typedHolder.active, op.perTypedEnergyOnSelf);
   }
   // 🆕🆕🆕 **D538 — THE FIFTH RIDER, AND IT IS FOUR LINES BECAUSE THE READER ALREADY
   // LIVES IN THIS FILE.** `countCardsInDiscardPile` is an `export function` here (the
@@ -13728,7 +14149,9 @@ function snipeAmount(
   // seconds. The repair is the NAME rather than a wider anchor, so the two sites cannot
   // be tidied back into twins.
   const thisPokemon = activeTop(state, ctx.seat);
-  return thisPokemon === null ? 0 : op.amount * countAttachedEnergy(state, thisPokemon.active, null);
+  return thisPokemon === null
+    ? 0
+    : op.amount * countAttachedEnergy(state, thisPokemon.active, null);
 }
 
 /** The choosePokemonMulti prompt string. For the put-counter snipe, counters are
@@ -13838,7 +14261,8 @@ function snipeNote(
     // bytes as before.
     return `${verb} ${count} of ${owner} ${zone}${window} (${each} for each damage counter on it).`;
   }
-  if (perHeads) return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each heads).`;
+  if (perHeads)
+    return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each heads).`;
   return `${verb} ${count} of ${owner} ${zone}${window} (${each} each).`;
 }
 
@@ -14151,7 +14575,9 @@ function counterEachAll(
       // 🆕🆕🆕 D609 — Snow Coating: the printed amount once per counter already on this body, read
       // before it changes; a body with none takes nothing and is not asked §11.
       const amount =
-        op.perDamageCounterOnTarget === true ? printedAmount * damageCountersOn(pokemon) : printedAmount;
+        op.perDamageCounterOnTarget === true
+          ? printedAmount * damageCountersOn(pokemon)
+          : printedAmount;
       if (amount <= 0) return pokemon;
       if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;
       const uid = topUid(pokemon);
@@ -14350,7 +14776,8 @@ function countersOnRecordedBody(
     });
     return { ...pokemon, damage: pokemon.damage + op.amount };
   };
-  if (side.active !== null && holds(side.active)) return withActive(state, ctx.seat, place(side.active));
+  if (side.active !== null && holds(side.active))
+    return withActive(state, ctx.seat, place(side.active));
   const index = side.bench.findIndex(holds);
   if (index === -1) return state;
   return withSide(state, ctx.seat, {
@@ -14714,7 +15141,13 @@ function moveCountersToOpponent(
   // 🆕 Card revision B10 (D539) — a direct write, not `healChosen` (R-LL1; see `moveOneOwnCounter`).
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
   const relieved = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));
-  events.push({ type: "COUNTERS_PLACED", seat: dest.seat, uid: targetUid, amount: moved, source: "moved" });
+  events.push({
+    type: "COUNTERS_PLACED",
+    seat: dest.seat,
+    uid: targetUid,
+    amount: moved,
+    source: "moved",
+  });
   const landing = refPokemon(relieved, dest) ?? target;
   const loaded: InPlayPokemon = { ...landing, damage: landing.damage + moved };
   const theirs = relieved.players[dest.seat];
@@ -14770,7 +15203,9 @@ function anyWayDestinations(
 /** A round's SOURCES: damaged, unshielded opponent bodies in the zone that have at least one
     destination to move to (a source with nowhere to go is not offered — the M1 rule). */
 function anyWaySources(state: GameState, ctx: EffectContext, zone: "bench" | "any"): PokemonRef[] {
-  const damaged = anyWayZone(state, ctx.seat, zone).filter((ref) => (refPokemon(state, ref)?.damage ?? 0) >= 10);
+  const damaged = anyWayZone(state, ctx.seat, zone).filter(
+    (ref) => (refPokemon(state, ref)?.damage ?? 0) >= 10,
+  );
   return unshieldedRefs(state, damaged, ctx, []).filter(
     (ref) => anyWayDestinations(state, ctx, zone, ref).length > 0,
   );
@@ -14791,7 +15226,11 @@ function anyWaySourceAnswered(
 
 /** The round after a move: the same op, the budget SPENT by what this round took (R-AK1). */
 function nextAnyWayRound(op: Extract<EffectOp, { op: "moveCountersOpponentAnyWay" }>): EffectOp {
-  return { op: "moveCountersOpponentAnyWay", from: op.from, budget: (op.budget ?? 0) - (op.take ?? 0) };
+  return {
+    op: "moveCountersOpponentAnyWay",
+    from: op.from,
+    budget: (op.budget ?? 0) - (op.take ?? 0),
+  };
 }
 
 /** 🆕🆕🆕 D574 — MOVE `count` DAMAGE COUNTERS between two of the OPPONENT's bodies (both ends on
@@ -14820,7 +15259,13 @@ function moveCountersBetweenOpponents(
   if (sourceUid === undefined || targetUid === undefined || moved <= 0) return state;
   events.push({ type: "HEALED", seat: opp, uid: sourceUid, amount: moved });
   const relieved = withBodyAt(state, from, healedBody(source, moved, state.turn));
-  events.push({ type: "COUNTERS_PLACED", seat: opp, uid: targetUid, amount: moved, source: "moved" });
+  events.push({
+    type: "COUNTERS_PLACED",
+    seat: opp,
+    uid: targetUid,
+    amount: moved,
+    source: "moved",
+  });
   const landing = refPokemon(relieved, dest) ?? target;
   return withBodyAt(relieved, dest, { ...landing, damage: landing.damage + moved });
 }
@@ -14961,14 +15406,23 @@ function switchWithDeckCard(
   const [ref] = sourceRef(state, ctx);
   const body = ref === undefined ? undefined : refPokemon(state, ref);
   const oldTop = body === undefined ? undefined : topUid(body);
-  if (ref === undefined || body === undefined || oldTop === undefined || found === undefined || !side.deck.includes(found)) {
+  if (
+    ref === undefined ||
+    body === undefined ||
+    oldTop === undefined ||
+    found === undefined ||
+    !side.deck.includes(found)
+  ) {
     const [deck, rngState] = shuffle([...side.deck], state.rngState);
     events.push({ type: "SHUFFLE", seat });
     const unswapped = withSide(state, seat, { ...side, deck });
     return { ...unswapped, rngState };
   }
   const switched: InPlayPokemon = { ...body, stack: [...body.stack.slice(0, -1), found] };
-  const [deck, rngState] = shuffle([...side.deck.filter((uid) => uid !== found), oldTop], state.rngState);
+  const [deck, rngState] = shuffle(
+    [...side.deck.filter((uid) => uid !== found), oldTop],
+    state.rngState,
+  );
   events.push({ type: "POKEMON_SWAPPED_FROM_DECK", seat, toUid: found, fromUid: oldTop });
   events.push({ type: "SHUFFLE", seat });
   return { ...withBodyAt(withSide(state, seat, { ...side, deck }), ref, switched), rngState };
@@ -15417,7 +15871,12 @@ export function benchArrivalCounters(
     const uid = topUid(body);
     if (uid === undefined || !landed.has(uid)) return body;
     const card = inPlayCardOf(state, body);
-    if (card === undefined || !isBasicPokemon(card) || (card.types ?? []).includes(rule.excludesType)) return body;
+    if (
+      card === undefined ||
+      !isBasicPokemon(card) ||
+      (card.types ?? []).includes(rule.excludesType)
+    )
+      return body;
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount: rule.amount, source: "trainer" });
     return { ...body, damage: body.damage + rule.amount };
   });
@@ -15532,7 +15991,8 @@ function searchAttachToSelf(
   const uid = uids.find((u) => side.deck.includes(u) && attachableToolCard(state, u));
   if (ref === undefined || uid === undefined) return { state, moved: [] };
   const body = refPokemon(state, ref);
-  if (body === undefined || body.tools.length >= toolCapOf(state, ctx.seat, body)) return { state, moved: [] };
+  if (body === undefined || body.tools.length >= toolCapOf(state, ctx.seat, body))
+    return { state, moved: [] };
   const withTool: InPlayPokemon = { ...body, tools: [...body.tools, uid] };
   const deck = side.deck.filter((u) => u !== uid);
   const updated: PlayerSide =
@@ -15751,21 +16211,39 @@ function evolveFromHandMove(
 ): { state: GameState; moved: string[] } {
   const offer = evolveFromDeckOffer(state, ctx, undefined, undefined, undefined, true);
   const uid = uids[0];
-  if (offer === undefined || uid === undefined || !offer.candidates.includes(uid)) return { state, moved: [] };
+  if (offer === undefined || uid === undefined || !offer.candidates.includes(uid))
+    return { state, moved: [] };
   const side = state.players[ctx.seat];
-  const pulled = withSide(state, ctx.seat, { ...side, hand: side.hand.filter((inHand) => inHand !== uid) });
+  const pulled = withSide(state, ctx.seat, {
+    ...side,
+    hand: side.hand.filter((inHand) => inHand !== uid),
+  });
   const kept = stageChangeConditions(pulled, offer.body.conditions); // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)
-  const evolved = evolveOnto(pulled, ctx.seat, offer.target, offer.benchIndex, offer.body, offer.bodyUid, uid, events, kept);
+  const evolved = evolveOnto(
+    pulled,
+    ctx.seat,
+    offer.target,
+    offer.benchIndex,
+    offer.body,
+    offer.bodyUid,
+    uid,
+    events,
+    kept,
+  );
   return { state: evolved.state, moved: [uid] };
 }
 
 /** 🆕🆕🆕 D611 — does `seat`'s hand hold a card that evolves from the body `sourceUid` names?
     `programPlayable`'s gate for `evolveFromDeck { fromHand }` (Spiteful Evolution), so the
     Ability is refused rather than spent on a whiff. The offer's own predicate, asked once. */
-export function evolveFromHandAvailable(state: GameState, seat: Seat, sourceUid: string | undefined): boolean {
+export function evolveFromHandAvailable(
+  state: GameState,
+  seat: Seat,
+  sourceUid: string | undefined,
+): boolean {
   return (
-    (evolveFromDeckOffer(state, { seat, sourceUid }, undefined, undefined, undefined, true)?.candidates
-      .length ?? 0) > 0
+    (evolveFromDeckOffer(state, { seat, sourceUid }, undefined, undefined, undefined, true)
+      ?.candidates.length ?? 0) > 0
   );
 }
 
@@ -15954,9 +16432,7 @@ function revealFromTop(
   pushDeckTopLook(op, moved, ctx, events);
   const picked = new Set(moved);
   const rest =
-    op.restTo === undefined
-      ? []
-      : lookWindow(side.deck, op).filter((uid) => !picked.has(uid));
+    op.restTo === undefined ? [] : lookWindow(side.deck, op).filter((uid) => !picked.has(uid));
   if (moved.length === 0 && rest.length === 0) return state;
   const removed = new Set([...picked, ...rest]);
   const kept = side.deck.filter((uid) => !removed.has(uid));
@@ -16050,7 +16526,14 @@ function payFromHandApply(
   // deck is refused before the use (`handCostUnmet`, R-EG1), so `took` is never empty here.
   if (op.swapWithTop === true) {
     const took = side.deck.slice(0, 1);
-    events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to, took, ...asEffect });
+    events.push({
+      type: "HAND_COST_PAID",
+      seat: ctx.seat,
+      uids: [...paid],
+      to: op.to,
+      took,
+      ...asEffect,
+    });
     return {
       state: withSide(state, ctx.seat, {
         ...side,
@@ -16065,7 +16548,10 @@ function payFromHandApply(
   // IN FRONT of the deck, in the order picked. Taken ahead of the two-arm spread below
   // so its bytes are D455's, unchanged.
   if (op.to === "deckTop") {
-    return { state: withSide(state, ctx.seat, { ...side, hand, deck: [...paid, ...side.deck] }), paid };
+    return {
+      state: withSide(state, ctx.seat, { ...side, hand, deck: [...paid, ...side.deck] }),
+      paid,
+    };
   }
   return {
     state: withSide(
@@ -16126,7 +16612,8 @@ function bottomFromOpponentHandOffer(
   for (const uid of hand) {
     if (op.filter !== undefined && !matchesFilter(cardOf(state, uid), op.filter)) continue;
     // 🆕🆕🆕 D613 — onto their Bench, Basic only (every printing already says "Basic Pokémon").
-    if (op.dest === "bench" && !benchMatches(cardOf(state, uid), op.filter ?? { kind: "anyCard" })) continue;
+    if (op.dest === "bench" && !benchMatches(cardOf(state, uid), op.filter ?? { kind: "anyCard" }))
+      continue;
     const key = cardIdentity(state, uid);
     const already = kept.get(key) ?? 0;
     if (already >= cap) continue;
@@ -16173,11 +16660,16 @@ export function opponentSupporterOffer(state: GameState, ctx: EffectContext): st
   const kept = new Set<string>();
   for (const uid of state.players[otherSeat(ctx.seat)].hand) {
     const card = cardOf(state, uid);
-    if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter") continue;
+    if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter")
+      continue;
     if (kept.has(card.id)) continue;
     const effect = supporterEffectOf(card.id);
     if (effect === undefined) continue;
-    if (effect.playableIf !== undefined && !conditionHolds(state, ctx.seat, copiedPlayableIf(effect.playableIf))) continue;
+    if (
+      effect.playableIf !== undefined &&
+      !conditionHolds(state, ctx.seat, copiedPlayableIf(effect.playableIf))
+    )
+      continue;
     if (handCostUnmet(state, ctx.seat, effect.ops) !== null) continue;
     kept.add(card.id);
     candidates.push(uid);
@@ -16189,12 +16681,21 @@ export function opponentSupporterOffer(state: GameState, ctx: EffectContext): st
     Supporter with a registry `trainer` program whose PRINTED play conditions hold for the attacker — Look-Alike
     Show's filter (`opponentSupporterOffer`) for one card wherever it lies (R-LA2 / R-LA2a carried). `undefined`
     when the card is not one. */
-function copiedSupporterOps(state: GameState, ctx: EffectContext, uid: string): readonly EffectOp[] | undefined {
+function copiedSupporterOps(
+  state: GameState,
+  ctx: EffectContext,
+  uid: string,
+): readonly EffectOp[] | undefined {
   const card = cardOf(state, uid);
-  if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter") return undefined;
+  if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter")
+    return undefined;
   const effect = supporterEffectOf(card.id);
   if (effect === undefined) return undefined;
-  if (effect.playableIf !== undefined && !conditionHolds(state, ctx.seat, copiedPlayableIf(effect.playableIf))) return undefined;
+  if (
+    effect.playableIf !== undefined &&
+    !conditionHolds(state, ctx.seat, copiedPlayableIf(effect.playableIf))
+  )
+    return undefined;
   if (handCostUnmet(state, ctx.seat, effect.ops) !== null) return undefined;
   return effect.ops;
 }
@@ -16287,7 +16788,11 @@ function bottomFromOpponentHandApply(
     events.push({ type: "SHUFFLE", seat: owner });
     return {
       state: {
-        ...withSide(state, owner, { ...side, hand: side.hand.filter((uid) => !kept.has(uid)), deck: shuffledDeck }),
+        ...withSide(state, owner, {
+          ...side,
+          hand: side.hand.filter((uid) => !kept.has(uid)),
+          deck: shuffledDeck,
+        }),
         rngState,
       },
       moved: landing,
@@ -16416,10 +16921,14 @@ function randomDiscardDownTo(
   events: GameEvent[],
   record: EffectRecord,
 ): GameState {
-  const single: Extract<EffectOp, { op: "randomFromOpponentHand" }> = { op: "randomFromOpponentHand", to: op.to };
+  const single: Extract<EffectOp, { op: "randomFromOpponentHand" }> = {
+    op: "randomFromOpponentHand",
+    to: op.to,
+  };
   const take = Math.max(0, state.players[otherSeat(ctx.seat)].hand.length - size);
   let next = state;
-  for (let n = 0; n < take; n += 1) next = randomFromOpponentHand(next, single, ctx, events, record);
+  for (let n = 0; n < take; n += 1)
+    next = randomFromOpponentHand(next, single, ctx, events, record);
   return next;
 }
 
@@ -16507,7 +17016,14 @@ function returnOwnActive(
   // 🆕🆕🆕 D572 — the Active arm's Milotic guard (Scoop Up Cyclone): the body stays Active.
   if (op.dest === "hand" && inPlayToHandBlocked(state, owner)) return state;
   const pile = stackUids(body);
-  events.push({ type: "POKEMON_RETURNED", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids: pile });
+  events.push({
+    type: "POKEMON_RETURNED",
+    seat: owner,
+    uid,
+    actor: ctx.seat,
+    dest: op.dest,
+    uids: pile,
+  });
   if (op.dest === "hand") {
     return withSide(state, owner, { ...side, active: null, hand: [...side.hand, ...pile] });
   }
@@ -16667,11 +17183,19 @@ function hpGuessApply(
 
 /** 🆕🆕🆕 §7.4 (D643) — the controller's first body (Active, then the Bench in order) that `owesToolTrim`, with its
     ref, or `undefined`. */
-function overCapToolBody(state: GameState, seat: Seat): { body: InPlayPokemon; ref: PokemonRef } | undefined {
+function overCapToolBody(
+  state: GameState,
+  seat: Seat,
+): { body: InPlayPokemon; ref: PokemonRef } | undefined {
   const side = state.players[seat];
   const refs: { body: InPlayPokemon; ref: PokemonRef }[] = [
-    ...(side.active === null ? [] : [{ body: side.active, ref: { seat, spot: { spot: "active" as const } } }]),
-    ...side.bench.map((body, index) => ({ body, ref: { seat, spot: { spot: "bench" as const, index } } })),
+    ...(side.active === null
+      ? []
+      : [{ body: side.active, ref: { seat, spot: { spot: "active" as const } } }]),
+    ...side.bench.map((body, index) => ({
+      body,
+      ref: { seat, spot: { spot: "bench" as const, index } },
+    })),
   ];
   return refs.find(({ body }) => owesToolTrim(state, seat, body));
 }
@@ -16679,7 +17203,12 @@ function overCapToolBody(state: GameState, seat: Seat): { body: InPlayPokemon; r
 /** 🆕🆕🆕 §7.4 (D643) — Multi Adapter's discard: the controller's own Tools `uids` names come off their hosts into
     the controller's discard pile, one `TOOLS_DISCARDED` row per host at `when: "trimmed"` (the owner discards their
     own, so `seat === actor`). A uid on no own body is ignored; an empty answer changes nothing. */
-function trimToolsApply(state: GameState, uids: readonly string[], ctx: EffectContext, events: GameEvent[]): GameState {
+function trimToolsApply(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   const picks = new Set(uids);
   const side = state.players[ctx.seat];
   const discarded: string[] = [];
@@ -16700,7 +17229,12 @@ function trimToolsApply(state: GameState, uids: readonly string[], ctx: EffectCo
   const active = side.active === null ? null : strip(side.active);
   const bench = side.bench.map(strip);
   if (discarded.length === 0) return state;
-  return withSide(state, ctx.seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+  return withSide(state, ctx.seat, {
+    ...side,
+    active,
+    bench,
+    discard: [...side.discard, ...discarded],
+  });
 }
 
 /** 🆕🆕🆕 §7.3 (D577) — discard the controller's Benched bodies `refs` names, each with its
@@ -17098,7 +17632,8 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
       from,
       // 🆕🆕🆕 D642 — less the Confusion Dizzying Valley keeps (R-DV1).
       cleared: presentStatuses(body.conditions).filter(
-        (status) => !presentStatuses(stageChangeConditions(state, body.conditions)).includes(status),
+        (status) =>
+          !presentStatuses(stageChangeConditions(state, body.conditions)).includes(status),
       ),
       wasLethal: isLethallyDamaged(state, body),
       // 🆕🆕🆕 **D540 EXTRACTED THIS §10/§12 SHED OBJECT INTO `devolvedBodyOf`**
@@ -17237,7 +17772,9 @@ function devolveBodyToHand(
   if (from === undefined) return state;
   // 🆕🆕🆕 D642 — what the devolved top keeps (Dizzying Valley's Confused, R-DV1), and the rest cleared.
   const kept = stageChangeConditions(state, body.conditions);
-  const cleared = presentStatuses(body.conditions).filter((status) => !presentStatuses(kept).includes(status));
+  const cleared = presentStatuses(body.conditions).filter(
+    (status) => !presentStatuses(kept).includes(status),
+  );
   const wasLethal = isLethallyDamaged(state, body);
   const devolved = devolvedBodyOf(body, kept);
   let next = withSide(
@@ -17380,8 +17917,14 @@ function ownDevolveTargets(state: GameState, seat: Seat, pokemonType?: PokemonTy
 
 /** 🆕🆕🆕 D625 — exported for `programPlayable` (cardplay.ts): may Strange Timepiece act? Some own body is on
     offer and an opposing Milotic "Mentally Calm" does not stop the cards reaching the hand (D572). */
-export function ownDevolveAvailable(state: GameState, seat: Seat, pokemonType?: PokemonType): boolean {
-  return ownDevolveTargets(state, seat, pokemonType).length > 0 && !inPlayToHandBlocked(state, seat);
+export function ownDevolveAvailable(
+  state: GameState,
+  seat: Seat,
+  pokemonType?: PokemonType,
+): boolean {
+  return (
+    ownDevolveTargets(state, seat, pokemonType).length > 0 && !inPlayToHandBlocked(state, seat)
+  );
 }
 
 function ownDevolveNote(op: Extract<EffectOp, { op: "devolveChosen" }>): string {
@@ -17401,7 +17944,12 @@ function ownDevolveAnswered(
   const body = refPokemon(state, ref);
   const uid = body === undefined ? undefined : topUid(body);
   if (body === undefined || uid === undefined || body.stack.length < 2) return [];
-  const shedOp = (shed: number): EffectOp => ({ op: "devolveChosen", whose: "self", bodyUid: uid, shed });
+  const shedOp = (shed: number): EffectOp => ({
+    op: "devolveChosen",
+    whose: "self",
+    bodyUid: uid,
+    shed,
+  });
   const n = op.depth === "any" ? body.stack.length - 1 : 1;
   const cards = (k: number) => (k === 1 ? "1 Evolution card" : `${k} Evolution cards`);
   const chain = (k: number): EffectOp =>
@@ -17410,7 +17958,10 @@ function ownDevolveAnswered(
       : {
           op: "optional",
           note: "Put how many Evolution cards on it into your hand?",
-          labels: { yes: cards(k), no: k + 1 === n ? cards(n) : `${k + 1} to ${n} Evolution cards` },
+          labels: {
+            yes: cards(k),
+            no: k + 1 === n ? cards(n) : `${k + 1} to ${n} Evolution cards`,
+          },
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [shedOp(k)],
           otherwise: [chain(k + 1)],
@@ -17471,18 +18022,24 @@ export function offeredBranches(
   op: Extract<EffectOp, { op: "chooseOneOffered" }>,
 ): { label: string; op: EffectOp }[] {
   const acts = (branch: EffectOp): boolean => {
-    if (branch.op === "discardTools") return discardableTools(state, seat, branch.sides, branch.bodyUid).length > 0;
+    if (branch.op === "discardTools")
+      return discardableTools(state, seat, branch.sides, branch.bodyUid).length > 0;
     if (branch.op === "discardEnergy") return discardableEnergies(state, seat, branch).length > 0;
     if (branch.op === "discardStadium") return state.stadium !== null;
     return true;
   };
-  return op.branches.flatMap((branch, i) => (acts(branch) ? [{ label: op.labels[i] ?? "", op: branch }] : []));
+  return op.branches.flatMap((branch, i) =>
+    acts(branch) ? [{ label: op.labels[i] ?? "", op: branch }] : [],
+  );
 }
 
 /** 🆕🆕🆕 D625 — the offered branches as D557's labelled binary chain (D560's `recoverOneStatus` shape): `yes`
     is the first branch, `no` the rest joined by "or", recursively. One branch is its op alone; none is
     nothing. */
-function chooseOneChain(note: string, offered: readonly { label: string; op: EffectOp }[]): EffectOp[] {
+function chooseOneChain(
+  note: string,
+  offered: readonly { label: string; op: EffectOp }[],
+): EffectOp[] {
   const [first, ...rest] = offered;
   if (first === undefined) return [];
   if (rest.length === 0) return [first.op];
@@ -17735,7 +18292,12 @@ function discardStadium(state: GameState, events: GameEvent[]): GameState {
     discard: [...ownerSide.discard, stadium.uid],
   });
   // Card revision B22 — `cause: "effect"`: nothing replaced it, the zone is now empty.
-  events.push({ type: "STADIUM_DISCARDED", seat: stadium.owner, uid: stadium.uid, cause: "effect" });
+  events.push({
+    type: "STADIUM_DISCARDED",
+    seat: stadium.owner,
+    uid: stadium.uid,
+    cause: "effect",
+  });
   // The zone is cleared LAST, off `next`, so the pile update and the vacancy are one
   // reduction — nothing can observe a Stadium that is in neither place.
   return { ...next, stadium: null };
@@ -17837,11 +18399,18 @@ function queueStadiumLeaveTrims(before: GameState, after: GameState): GameState 
     rather than parking on a row it cannot fill — its comment says so and
     `takePrizeAttack.test.ts` §6 pins it. Asking either question here would be a second
     answer to a question that already has exactly one. */
-function queueTakePrize(state: GameState, ctx: EffectContext, count: number, thenShuffleHand: boolean): GameState {
+function queueTakePrize(
+  state: GameState,
+  ctx: EffectContext,
+  count: number,
+  thenShuffleHand: boolean,
+): GameState {
   const taken: PendingStage = { kind: "takePrizes", seat: ctx.seat, count };
   // 🆕🆕🆕 D640 — Celebration's "If you do, shuffle your hand into your deck.": the NEW stage goes DIRECTLY BEHIND the
   // Prize stage, so it drains once the Prizes are in the hand (R-CEL1); a take that ends the game never reaches it.
-  const prize: PendingStage[] = thenShuffleHand ? [taken, { kind: "shuffleHandIntoDeck", seat: ctx.seat }] : [taken];
+  const prize: PendingStage[] = thenShuffleHand
+    ? [taken, { kind: "shuffleHandIntoDeck", seat: ctx.seat }]
+    : [taken];
   const tail = state.pending.findIndex(
     (queued) =>
       queued.kind === "damagedTrigger" ||
@@ -17892,7 +18461,8 @@ function turnPrizeFaceUp(
   const owner = prizeRowOwner(op, ctx);
   const indices = faceDownPrizeIndices(state, owner);
   if (indices.length === 0) return { done: state };
-  if (indices.length === 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, op, ctx, events, record) };
+  if (indices.length === 1)
+    return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, op, ctx, events, record) };
   return {
     park: {
       kind: "choosePrize",
@@ -17975,11 +18545,12 @@ function cycleOwnPrizes(state: GameState, ctx: EffectContext, events: GameEvent[
   const [shuffled, rngState] = shuffle([...side.prizes], state.rngState);
   const pile = [...side.deck, ...shuffled];
   events.push({ type: "PRIZES_CYCLED", seat: ctx.seat, count });
-  return withSide(
-    { ...state, rngState },
-    ctx.seat,
-    { ...side, prizes: pile.slice(0, count), deck: pile.slice(count), faceUpPrizes: [] },
-  );
+  return withSide({ ...state, rngState }, ctx.seat, {
+    ...side,
+    prizes: pile.slice(0, count),
+    deck: pile.slice(count),
+    faceUpPrizes: [],
+  });
 }
 
 /** 🆕🆕🆕 **D567 — `swapTurnedPrizeWithRevealed`: Bother-Bot's *"You may have your opponent
@@ -18006,7 +18577,14 @@ function swapTurnedPrizeWithRevealed(
   if (prizeUid === undefined || handUid === undefined) return state;
   const index = side.prizes.indexOf(prizeUid);
   if (index < 0 || !side.hand.includes(handUid)) return state;
-  events.push({ type: "PRIZE_SWITCHED_WITH_HAND", seat: owner, actor: ctx.seat, index, prizeUid, handUid });
+  events.push({
+    type: "PRIZE_SWITCHED_WITH_HAND",
+    seat: owner,
+    actor: ctx.seat,
+    index,
+    prizeUid,
+    handUid,
+  });
   return withSide(state, owner, {
     ...side,
     prizes: side.prizes.map((uid) => (uid === prizeUid ? handUid : uid)),
@@ -18028,7 +18606,8 @@ function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): stri
     return "Shuffle which of your opponent's Benched Pokémon into their deck?";
   }
   // 🆕🆕🆕 D561 (V7) — Scoop Up Cyclone's *"1 of your Pokémon"*, Active included.
-  if (op.includeActive === true) return "Put which of your Pokémon and all attached cards into your hand?";
+  if (op.includeActive === true)
+    return "Put which of your Pokémon and all attached cards into your hand?";
   return op.dest === "deck"
     ? "Shuffle which of your Benched Pokémon into your deck?"
     : "Put which of your Benched Pokémon into your hand?";
@@ -18403,7 +18982,8 @@ function handCostCandidates(
   // spelled by the field the printed *"up to N"* lands in. `discardEnergy`'s own
   // reason for keeping `count` copies rather than one, verbatim.
   // 🆕🆕🆕 D617 — `cap: "any"` (Naveen) keeps every copy: the pick may take the whole hand.
-  const keepPer = op.count !== "any" ? op.count : op.cap === "any" ? Number.POSITIVE_INFINITY : op.cap;
+  const keepPer =
+    op.count !== "any" ? op.count : op.cap === "any" ? Number.POSITIVE_INFINITY : op.cap;
   for (const uid of state.players[seat].hand) {
     if (uid === excludeUid) continue;
     const card = cardOf(state, uid);
@@ -18489,7 +19069,8 @@ export function handCostPhrase(
   // PLURAL unconditionally: the column prints no "up to 1", and inventing a singular
   // branch for it would be a rung nothing can reach (D205).
   // 🆕🆕🆕 D617 — Naveen's uncapped arm prints *"any number of cards"*.
-  if (op.count === "any" && op.cap === "any") return `any number of ${other ? "other " : ""}${plural}`;
+  if (op.count === "any" && op.cap === "any")
+    return `any number of ${other ? "other " : ""}${plural}`;
   if (op.count === "any") return `up to ${op.cap} ${other ? "other " : ""}${plural}`;
   if (op.count > 1) return `${op.count} ${other ? "other " : ""}${plural}`;
   // "a card" → "another card"; no printed card pairs `other` with a filter, but
@@ -18510,7 +19091,8 @@ export function handCostAction(
 ): string {
   const phrase = handCostPhrase(op, other);
   // 🆕🆕🆕 D611 — Evidence Gathering's printed verb, ahead of the plain top-of-deck payment.
-  if (op.swapWithTop === true) return `switch ${phrase} from your hand with the top card of your deck`;
+  if (op.swapWithTop === true)
+    return `switch ${phrase} from your hand with the top card of your deck`;
   // 🆕🆕🆕 D561 (V1) — the two new destinations speak their own printed verbs, ahead of
   // the older two so those stay byte-identical: Academy at Night's *"put a card from
   // their hand on top of their deck"*, and Perrin's declinable *"Reveal up to 2 Pokémon
@@ -18936,11 +19518,14 @@ export function healChosenTargets(
   // 🆕🆕🆕 D617 — `targetRecorded`: only a body whose stack holds a uid the slot filed (the demoted
   // body AZ's switch filed), `moveEnergy.sourceRecorded`'s stack test.
   const slot = op.targetRecorded;
-  const filed = slot === undefined ? undefined : new Set(record === undefined ? [] : recorded(record, slot));
+  const filed =
+    slot === undefined ? undefined : new Set(record === undefined ? [] : recorded(record, slot));
   const zoned =
     filed === undefined
       ? zonedAll
-      : zonedAll.filter((ref) => (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)));
+      : zonedAll.filter((ref) =>
+          (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)),
+        );
   // 🆕🆕🆕 D569 — Supportive Singing's printed BANNER subgroup ("your Benched Ancient
   // Pokémon"), a conjunct over the same set; absent = byte-identical (`filteredRefs`).
   const banded = filteredRefs(state, zoned, op.filter);
@@ -18985,7 +19570,9 @@ function healTargetNoun(op: Extract<EffectOp, { op: "healChosen" }>): string {
   const rider = op.recoverHealed === true ? " It also recovers from all Special Conditions." : "";
   // 🆕🆕🆕 D625 — `energyToHandFromHealed` (Wally's Compassion): the pick also decides whose Energy moves.
   const toHand =
-    op.energyToHandFromHealed === true ? " If it heals any damage, all its Energy goes into your hand." : "";
+    op.energyToHandFromHealed === true
+      ? " If it heals any damage, all its Energy goes into your hand."
+      : "";
   return `Heal which of your ${zoneWord}${noun}${window}?${rider}${toHand}`;
 }
 
@@ -19289,7 +19876,10 @@ function attachableEnergies(
 /** 🆕 Card revision B01 — how many cards an attach whose target is answered moves: the answered
     `take` clamped to the printed count, or the whole printed batch when no take was sent
     (`attachEnergyFrom`'s own reading of the two fields). */
-function attachTake(op: Extract<EffectOp, { op: "attachEnergyFrom" }>, take: number | undefined): number {
+function attachTake(
+  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  take: number | undefined,
+): number {
   const printed = op.count ?? 1;
   return take === undefined ? printed : Math.min(take, printed);
 }
@@ -19324,7 +19914,9 @@ function energyPickOffer(
   // `cardIdentity` — the interchangeability key the mandatory discards already ask (a Basic by its
   // type, anything else by its print), so "would picking this one rather than that one differ?" has
   // ONE answer across the attach and the discard families.
-  return new Set(candidates.map((uid) => cardIdentity(state, uid))).size > 1 ? { candidates, take: n } : undefined;
+  return new Set(candidates.map((uid) => cardIdentity(state, uid))).size > 1
+    ? { candidates, take: n }
+    : undefined;
 }
 
 /** 🆕 Card revision B01 — the card question's caption, naming the body the cards go onto. */
@@ -19332,7 +19924,10 @@ function energyPickNote(state: GameState, ref: PokemonRef, take: number): string
   const body = refPokemon(state, ref);
   const top = body === undefined ? undefined : topUid(body);
   const name = top === undefined ? undefined : cardOf(state, top)?.name;
-  const what = take === 1 ? "Which Energy card do you want to attach" : `Which ${take} Energy cards do you want to attach`;
+  const what =
+    take === 1
+      ? "Which Energy card do you want to attach"
+      : `Which ${take} Energy cards do you want to attach`;
   return name === undefined ? `${what}?` : `${what} to ${name}?`;
 }
 
@@ -19426,7 +20021,8 @@ export function attachEnergyTargets(
       }
       if (riders.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
       // 🆕🆕🆕 D588 — Rosa's Encouragement's printed "Stage 2", `basicOnly`'s line one stage word over.
-      if (riders.stage2Only === true && (card === undefined || !isStage2Pokemon(card))) return false;
+      if (riders.stage2Only === true && (card === undefined || !isStage2Pokemon(card)))
+        return false;
       // The owner-prefixed subgroup, read through `matchesFilter`'s OWN
       // `ownerPokemon` arm rather than re-implemented here. What is shared is the
       // PREDICATE, not the type: three conjuncts D200 established against the
@@ -19463,7 +20059,8 @@ export function attachEnergyTargets(
       if (hp !== null && pokemon.damage + riders.bonusCounters >= hp) return false;
     }
     // 🆕🆕🆕 D575 — Glimmora's bar on the effect path (R-GL1): a hand attach skips a barred body.
-    if (riders.source === "hand" && liveHandAttachMark(state, pokemon)?.barred === true) return false;
+    if (riders.source === "hand" && liveHandAttachMark(state, pokemon)?.barred === true)
+      return false;
     return true;
   };
   const refs: PokemonRef[] = [];
@@ -19552,7 +20149,10 @@ function attachedBasicEnergyTypedFilter(state: GameState, ctx: EffectContext): C
     const pokemonType = provided as PokemonType;
     if (!types.includes(pokemonType)) types.push(pokemonType);
   }
-  return { kind: "anyOf", filters: types.map((pokemonType) => ({ kind: "typedPokemon", pokemonType })) };
+  return {
+    kind: "anyOf",
+    filters: types.map((pokemonType) => ({ kind: "typedPokemon", pokemonType })),
+  };
 }
 
 /** 🆕🆕🆕 D561 (V3) — the filter Love Ball's printed *"a Pokémon with the same name as 1
@@ -19755,7 +20355,9 @@ function discardAttachCeiling(
   seat: Seat,
   op: Extract<EffectOp, { op: "attachFromDiscard" }>,
 ): number {
-  return op.max === "opponentEnergyInPlay" ? countEnergyInPlay(state, otherSeat(seat), null) : op.max;
+  return op.max === "opponentEnergyInPlay"
+    ? countEnergyInPlay(state, otherSeat(seat), null)
+    : op.max;
 }
 
 /** 🆕🆕🆕 D569 — Reboot Pod's MANDATORY "to each of your Future Pokémon" (R-PX1 ⚠️ UNRULED):
@@ -19845,7 +20447,11 @@ function attachFromHandOffer(
   // `{ source: "hand" }`, so Glimmora's bar (R-GL1) drops a barred body from the offer; the
   // `toSelf` arm filters its one body through the same mark.
   if (op.toSelf === true) {
-    return { candidates, targets: handOpenRefs(state, sourceRef(state, ctx)), max: candidates.length };
+    return {
+      candidates,
+      targets: handOpenRefs(state, sourceRef(state, ctx)),
+      max: candidates.length,
+    };
   }
   // 🆕🆕🆕 D628 — the printed singular "Attach AN Energy card … to your Active Larry's Pokémon" (Lethargic
   // Charge): the two riders reach `attachEnergyTargets` and the cap is ONE card. An EARLY RETURN so D247's
@@ -19856,7 +20462,11 @@ function attachFromHandOffer(
       ...(op.activeOnly === true ? { activeOnly: true as const } : {}),
       ...(op.ownerPokemon === undefined ? {} : { ownerPokemon: op.ownerPokemon }),
     };
-    return { candidates, targets: attachEnergyTargets(state, seat, riders), max: Math.min(1, candidates.length) };
+    return {
+      candidates,
+      targets: attachEnergyTargets(state, seat, riders),
+      max: Math.min(1, candidates.length),
+    };
   }
   // 🆕🆕🆕 D641 — the printed "up to N" (Pleasing Present): D247's offer under a cap. `ctx.seat` is the hand's owner
   // here (the opponent's half passes their seat), so the board read is theirs too.
@@ -19867,7 +20477,11 @@ function attachFromHandOffer(
       max: Math.min(op.max, candidates.length),
     };
   }
-  return { candidates, targets: attachEnergyTargets(state, seat, { source: "hand" }), max: candidates.length };
+  return {
+    candidates,
+    targets: attachEnergyTargets(state, seat, { source: "hand" }),
+    max: candidates.length,
+  };
 }
 
 /** 🆕🆕🆕 D628 — R-LGC1's top-up: the first offered hand card onto the first offered target, or nothing. */
@@ -19890,7 +20504,11 @@ export function attachFromHandPlayable(
   op: Extract<EffectOp, { op: "attachFromHand" }>,
   sourceUid?: string,
 ): boolean {
-  const offer = attachFromHandOffer(state, sourceUid === undefined ? { seat } : { seat, sourceUid }, op);
+  const offer = attachFromHandOffer(
+    state,
+    sourceUid === undefined ? { seat } : { seat, sourceUid },
+    op,
+  );
   return offer.candidates.length > 0 && offer.targets.length > 0;
 }
 
@@ -19958,7 +20576,9 @@ function handAttachWatched(
   let next = state;
   for (const energyUid of energyUids) {
     const side = next.players[actor];
-    const host = [side.active, ...side.bench].find((body) => body?.energy.includes(energyUid) === true);
+    const host = [side.active, ...side.bench].find(
+      (body) => body?.energy.includes(energyUid) === true,
+    );
     const subject = host == null ? undefined : topUid(host);
     if (subject === undefined) continue;
     next = runSelfWatchedTriggers(next, actor, subject, "onEnergyAttach", events, atMoment);
@@ -19970,7 +20590,12 @@ function handAttachWatched(
 
 /** 🆕 Card revision B19 — `shockHandAttach` (one Energy card) on `actor`'s body whose top is `subject`,
     re-found on the live board; the board unchanged when nothing is placed. */
-function shockHandAttachHost(state: GameState, actor: Seat, subject: string, events: GameEvent[]): GameState {
+function shockHandAttachHost(
+  state: GameState,
+  actor: Seat,
+  subject: string,
+  events: GameEvent[],
+): GameState {
   const side = state.players[actor];
   if (side.active !== null && topUid(side.active) === subject) {
     const shocked = shockHandAttach(state, actor, side.active, 1, events);
@@ -19982,7 +20607,10 @@ function shockHandAttachHost(state: GameState, actor: Seat, subject: string, eve
   const shocked = shockHandAttach(state, actor, benched, 1, events);
   return shocked === benched
     ? state
-    : withSide(state, actor, { ...side, bench: side.bench.map((body, i) => (i === index ? shocked : body)) });
+    : withSide(state, actor, {
+        ...side,
+        bench: side.bench.map((body, i) => (i === index ? shocked : body)),
+      });
 }
 
 /** Apply a deck-search attach (Charizard ex "Infernal Reign" / Janine's Secret
@@ -20070,7 +20698,10 @@ function attachFromZoneApply(
     [zone]: side[zone].filter((uid) => !attached.has(uid)),
   });
   // 🆕 Card revision B19 — a HAND attach is the moment `onEnergyAttach` watches (Auto Heal, Gnawing Curse).
-  return { state: zone === "hand" ? handAttachWatched(moved, ctx.seat, [...attached], events) : moved, attached: [...attached] };
+  return {
+    state: zone === "hand" ? handAttachWatched(moved, ctx.seat, [...attached], events) : moved,
+    attached: [...attached],
+  };
 }
 
 /** Attach the first matching Basic Energy cards from `op.source` (hand/discard)
@@ -20145,7 +20776,9 @@ function attachEnergyFrom(
     op.source,
     op.energyType,
     chosenUids === undefined
-      ? take === undefined ? printed : Math.min(take, printed)
+      ? take === undefined
+        ? printed
+        : Math.min(take, printed)
       : state.players[seat][op.source].length,
     op.anyEnergy, // D246 — absent = the printed "a BASIC Energy card"
     op.energyName, // D353 — absent = the printed noun is a CATEGORY, not a NAME
@@ -20227,11 +20860,14 @@ function attachEnergyFrom(
   // ⚠️ ONCE PER OP, NOT ONCE PER CARD — `bonusCounters`' rule, on `bonusCounters`'
   // mirror, so a `count: 2` attach heals once rather than twice. The two riders
   // still do not co-occur on any printing.
-  const fed = op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);
+  const fed =
+    op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);
   // 🆕 Card revision B19 — the watched attach moment, AFTER the op's own riders (turn.ts's order: the
   // attach and its riders, then the watched triggers). Only an attach out of the ATTACHING player's own
   // hand is *"attach an Energy card from your hand"*; `whose` never names a hand today.
-  return op.source === "hand" && seat === ctx.seat ? handAttachWatched(fed, seat, energyUids, events) : fed;
+  return op.source === "hand" && seat === ctx.seat
+    ? handAttachWatched(fed, seat, energyUids, events)
+    : fed;
 }
 
 /** Apply a from-the-top attach (Electric Generator / Hydreigon "Tri Howl"): move
@@ -20470,7 +21106,9 @@ function moveEnergyApply(
   // function appended before the map existed.
   const addTo = (pokemon: InPlayPokemon, key: string): InPlayPokemon => {
     const inbound = arrivals.get(key);
-    return inbound === undefined ? pokemon : { ...pokemon, energy: [...pokemon.energy, ...inbound] };
+    return inbound === undefined
+      ? pokemon
+      : { ...pokemon, energy: [...pokemon.energy, ...inbound] };
   };
   const active = activeStripped === null ? null : addTo(activeStripped, "active");
   const bench = benchStripped.map((pokemon, index) => addTo(pokemon, `bench:${index}`));
@@ -20610,7 +21248,9 @@ function discardEnergyApply(
       : pulled
           .filter((entry) => entry.host === ctx.sourceUid)
           // 🆕🆕🆕 D604 — the pre-strip attacker answers Nitro Fire's {R} gate (R-NF1).
-          .flatMap((entry) => entry.uids.filter((uid) => returnsAfterAttackDiscard(state, uid, entry.body)));
+          .flatMap((entry) =>
+            entry.uids.filter((uid) => returnsAfterAttackDiscard(state, uid, entry.body)),
+          );
   return { ...result, state: recordBoomerang(result.state, ctx.sourceUid, boomerang) };
 }
 
@@ -20624,11 +21264,16 @@ function recordBoomerang(
   uids: readonly string[],
 ): GameState {
   if (uids.length === 0) return state;
-  const at = state.pending.findIndex((stage) => stage.kind === "attackEpilogue" && stage.uid === attackerUid);
+  const at = state.pending.findIndex(
+    (stage) => stage.kind === "attackEpilogue" && stage.uid === attackerUid,
+  );
   const stage = state.pending[at];
   if (stage === undefined || stage.kind !== "attackEpilogue") return state;
   const carried: PendingStage = { ...stage, boomerang: [...(stage.boomerang ?? []), ...uids] };
-  return { ...state, pending: state.pending.map((queued, index) => (index === at ? carried : queued)) };
+  return {
+    ...state,
+    pending: state.pending.map((queued, index) => (index === at ? carried : queued)),
+  };
 }
 
 /** 🆕🆕🆕 **D543 — strip the picked Pokémon Tools off the OPPONENT's bodies and
@@ -20880,25 +21525,48 @@ function reservedDiscards(
   offered: readonly { uid: string; from: PokemonRef }[],
   reserve: readonly BasicEnergyType[],
 ): { uid: string; from: PokemonRef }[] {
-  const pool = discardableEnergies(state, seat, { op: "discardEnergy", from, filter: { kind: "anyEnergy" } });
-  const provides = (entry: { uid: string; from: PokemonRef }, energyType: BasicEnergyType): boolean => {
+  const pool = discardableEnergies(state, seat, {
+    op: "discardEnergy",
+    from,
+    filter: { kind: "anyEnergy" },
+  });
+  const provides = (
+    entry: { uid: string; from: PokemonRef },
+    energyType: BasicEnergyType,
+  ): boolean => {
     const host = refPokemon(state, entry.from);
-    return host !== undefined && matchesAttached(state, host, entry.uid, { kind: "providesEnergy", energyType });
+    return (
+      host !== undefined &&
+      matchesAttached(state, host, entry.uid, { kind: "providesEnergy", energyType })
+    );
   };
   // The largest number of `types` one-to-one matchable by `rest` (a tiny exhaustive search: <= 2 types).
-  const matched = (types: readonly BasicEnergyType[], rest: readonly { uid: string; from: PokemonRef }[]): number => {
+  const matched = (
+    types: readonly BasicEnergyType[],
+    rest: readonly { uid: string; from: PokemonRef }[],
+  ): number => {
     const [head, ...tail] = types;
     if (head === undefined) return 0;
     let best = matched(tail, rest);
     rest.forEach((entry, index) => {
       if (!provides(entry, head)) return;
-      best = Math.max(best, 1 + matched(tail, rest.filter((_, other) => other !== index)));
+      best = Math.max(
+        best,
+        1 +
+          matched(
+            tail,
+            rest.filter((_, other) => other !== index),
+          ),
+      );
     });
     return best;
   };
   const scored = offered.map((entry) => ({
     entry,
-    score: matched(reserve, pool.filter((other) => other.uid !== entry.uid)),
+    score: matched(
+      reserve,
+      pool.filter((other) => other.uid !== entry.uid),
+    ),
   }));
   const top = Math.max(...scored.map((s) => s.score));
   return scored.filter((s) => s.score === top).map((s) => s.entry);
@@ -20934,9 +21602,7 @@ function reservedDiscards(
 function cardIdentity(state: GameState, uid: string): string {
   const card = cardOf(state, uid);
   if (card === undefined) return `?${uid}`;
-  return isBasicEnergy(card)
-    ? `basic:${energyProvidesOf(card)}`
-    : `card:${card.id}`;
+  return isBasicEnergy(card) ? `basic:${energyProvidesOf(card)}` : `card:${card.id}`;
 }
 
 /** The discardable Energy with INTERCHANGEABLE candidates collapsed to at most
@@ -21589,7 +22255,10 @@ function searchDeckOrElse(
     deck.filter((uid) => {
       const card = cardOf(state, uid);
       // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches` (no printing benches here today).
-      return card !== undefined && (op.dest === "bench" ? benchMatches(card, filter) : matchesFilter(card, filter));
+      return (
+        card !== undefined &&
+        (op.dest === "bench" ? benchMatches(card, filter) : matchesFilter(card, filter))
+      );
     });
   const firstMatches = matching(op.filter);
   const firstMax =
@@ -22290,7 +22959,10 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
 /** 🆕🆕🆕 D568 — Glass Trumpet's caption: *"Choose up to 2 of your Benched Colorless
     Pokémon and attach a Basic Energy card from your discard pile to each of them."* —
     the printed sentence with the brace code written out (`attachTargetNoun`, D238). */
-function attachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }>, ceiling: number): string {
+function attachFromDiscardNote(
+  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
+  ceiling: number,
+): string {
   const { singular, plural } = retrieveNoun(op.filter);
   // 🆕🆕🆕 D624 — Tail Generator's printed sentence, the resolved ceiling spelled beside its source.
   if (op.max === "opponentEnergyInPlay") {
@@ -22705,7 +23377,10 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
       return { singular: "an Energy card", plural: "Energy cards" };
     case "pokemonWithResistance":
       // 🆕🆕🆕 D624 — Fletchling "Chirp"'s noun, the type written out (D238), invariant in number.
-      return { singular: `a Pokémon with ${filter.type} Resistance`, plural: `Pokémon with ${filter.type} Resistance` };
+      return {
+        singular: `a Pokémon with ${filter.type} Resistance`,
+        plural: `Pokémon with ${filter.type} Resistance`,
+      };
     case "specialEnergy":
       return { singular: "a Special Energy card", plural: "Special Energy cards" };
     case "byName": {
@@ -22759,30 +23434,29 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
         : { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
     case "evolutionPokemon":
       return { singular: "an Evolution Pokémon", plural: "Evolution Pokémon" };
-    case "stagePokemon":
-      // 🆕🆕 D466 — the printed STAGE ORDINAL, whole: "a Stage 1 Pokémon",
-      // "Stage 2 Pokémon". INVARIANT IN NUMBER, exactly like the bare "Basic
-      // Pokémon" two arms up and the "Evolution Pokémon" one arm up — the ordinal
-      // is part of the printed noun and takes no "s" — so only the article moves,
-      // and the article is a literal "a" for `suffixPokemon`'s reason: `stage` is
-      // CLOSED at two values and BOTH spell "Stage", so no vowel branch is
-      // reachable and `ownerPokemon`'s `/^[AEIOU]/` rule is deliberately not copied.
-      //
-      // ⚠️ **NO PRINTED RETRIEVAL, PROMPT OR ATTACH NAMES THIS FILTER TODAY**, which
-      // makes it a reachability arm exactly like `attackNamePokemon`'s and
-      // `suffixPokemon`'s below rather than a caption any board renders: the
-      // member's only producer is `inPlayBodyFilter`, which feeds a
-      // `DamageCountSource` and never an op, and every caller of this function reads
-      // an `op.filter`. The arm exists because this switch is exhaustive over
-      // `CardFilter` — which is what makes a new member impossible to add without
-      // answering the noun question — and because a REGISTRY author can hand-write
-      // the filter into an op tomorrow. The property that makes it unreachable is
-      // pinned in `bodiesInPlayScaling.test.ts` §8 rather than a caption asserted
-      // against a board that cannot emit one (D446's call, verbatim).
-      {
-        const ordinal = filter.stage === "Stage1" ? "Stage 1" : "Stage 2";
-        return { singular: `a ${ordinal} Pokémon`, plural: `${ordinal} Pokémon` };
-      }
+    case "stagePokemon": // 🆕🆕 D466 — the printed STAGE ORDINAL, whole: "a Stage 1 Pokémon",
+    // "Stage 2 Pokémon". INVARIANT IN NUMBER, exactly like the bare "Basic
+    // Pokémon" two arms up and the "Evolution Pokémon" one arm up — the ordinal
+    // is part of the printed noun and takes no "s" — so only the article moves,
+    // and the article is a literal "a" for `suffixPokemon`'s reason: `stage` is
+    // CLOSED at two values and BOTH spell "Stage", so no vowel branch is
+    // reachable and `ownerPokemon`'s `/^[AEIOU]/` rule is deliberately not copied.
+    //
+    // ⚠️ **NO PRINTED RETRIEVAL, PROMPT OR ATTACH NAMES THIS FILTER TODAY**, which
+    // makes it a reachability arm exactly like `attackNamePokemon`'s and
+    // `suffixPokemon`'s below rather than a caption any board renders: the
+    // member's only producer is `inPlayBodyFilter`, which feeds a
+    // `DamageCountSource` and never an op, and every caller of this function reads
+    // an `op.filter`. The arm exists because this switch is exhaustive over
+    // `CardFilter` — which is what makes a new member impossible to add without
+    // answering the noun question — and because a REGISTRY author can hand-write
+    // the filter into an op tomorrow. The property that makes it unreachable is
+    // pinned in `bodiesInPlayScaling.test.ts` §8 rather than a caption asserted
+    // against a board that cannot emit one (D446's call, verbatim).
+    {
+      const ordinal = filter.stage === "Stage1" ? "Stage 1" : "Stage 2";
+      return { singular: `a ${ordinal} Pokémon`, plural: `${ordinal} Pokémon` };
+    }
     case "typedPokemon": {
       // D238 — and this is the ONE place in the vocabulary where the caption
       // DELIBERATELY does not reproduce the printed bytes. The card prints a

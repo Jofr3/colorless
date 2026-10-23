@@ -310,7 +310,10 @@ describe("D336 — the three- and four-noun searchDeck", () => {
     // what makes a uid countable against one cap and not another.
     const pokemon = new Set([...deckUids(state, "fix-basic-1"), ...deckUids(state, "fix-basic-2")]);
     expect(new Set(prompt.caps?.[0]?.uids)).toEqual(pokemon);
-    const energy = new Set([...deckUids(state, "fix-energy"), ...deckUids(state, "fix-fire-energy")]);
+    const energy = new Set([
+      ...deckUids(state, "fix-energy"),
+      ...deckUids(state, "fix-fire-energy"),
+    ]);
     expect(new Set(prompt.caps?.[2]?.uids)).toEqual(energy);
   });
 

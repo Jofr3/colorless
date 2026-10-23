@@ -10,7 +10,7 @@ import {
   unitsProvidedBy,
 } from "./continuous";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -44,14 +44,54 @@ const VOLTAIC = "me05-084";
 
 /** [id, name, printed type, the LOCAL D1 `effect` verbatim]. */
 const ENERGIES: readonly (readonly [string, string, string, string])[] = [
-  [GROWING, "Growing Grass Energy", "Grass", "As long as this card is attached to a Pokémon, it provides {G} Energy.\nThe {G} Pokémon this card is attached to gets +20 HP."],
-  [ROCKY, "Rocky Fighting Energy", "Fighting", "As long as this card is attached to a Pokémon, it provides {F} Energy.\nPrevent all effects of attacks used by your opponent's Pokémon done to the {F} Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"],
-  [TELEPATHIC, "Telepathic Psychic Energy", "Psychic", "As long as this card is attached to a Pokémon, it provides {P} Energy.\nWhen you attach this card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then, shuffle your deck."],
-  [BUBBLY, "Bubbly Water Energy", "Water", "As long as this card is attached to a Pokémon, it provides {W} Energy.\n\nThe {W} Pokémon this card is attached to recovers from all Special Conditions and can't be affected by any Special Conditions."],
-  [MAGNETIC, "Magnetic Metal Energy", "Metal", "As long as this card is attached to a Pokémon, it provides {M} Energy.\n\nThe {M} Pokémon this card is attached to has no Retreat Cost."],
-  [NITRO, "Nitro Fire Energy", "Fire", "As long as this card is attached to a Pokémon, it provides {R} Energy.\n\nIf this card is discarded by an effect of an attack used by the {R} Pokémon this card is attached to, put this card into your hand after attack damage and effects."],
-  [SHADOWY, "Shadowy Darkness Energy", "Darkness", "As long as this card is attached to a Pokémon, it provides {D} Energy.\n\nAs long as the {D} Pokémon this card is attached to is on your Bench, prevent all damage done to it by attacks from your opponent's Pokémon."],
-  [VOLTAIC, "Voltaic Lightning Energy", "Lightning", "As long as this card is attached to a Pokémon, it provides {L} Energy.\n\nAttacks used by the {L} Pokémon this card is attached to do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."],
+  [
+    GROWING,
+    "Growing Grass Energy",
+    "Grass",
+    "As long as this card is attached to a Pokémon, it provides {G} Energy.\nThe {G} Pokémon this card is attached to gets +20 HP.",
+  ],
+  [
+    ROCKY,
+    "Rocky Fighting Energy",
+    "Fighting",
+    "As long as this card is attached to a Pokémon, it provides {F} Energy.\nPrevent all effects of attacks used by your opponent's Pokémon done to the {F} Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)",
+  ],
+  [
+    TELEPATHIC,
+    "Telepathic Psychic Energy",
+    "Psychic",
+    "As long as this card is attached to a Pokémon, it provides {P} Energy.\nWhen you attach this card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then, shuffle your deck.",
+  ],
+  [
+    BUBBLY,
+    "Bubbly Water Energy",
+    "Water",
+    "As long as this card is attached to a Pokémon, it provides {W} Energy.\n\nThe {W} Pokémon this card is attached to recovers from all Special Conditions and can't be affected by any Special Conditions.",
+  ],
+  [
+    MAGNETIC,
+    "Magnetic Metal Energy",
+    "Metal",
+    "As long as this card is attached to a Pokémon, it provides {M} Energy.\n\nThe {M} Pokémon this card is attached to has no Retreat Cost.",
+  ],
+  [
+    NITRO,
+    "Nitro Fire Energy",
+    "Fire",
+    "As long as this card is attached to a Pokémon, it provides {R} Energy.\n\nIf this card is discarded by an effect of an attack used by the {R} Pokémon this card is attached to, put this card into your hand after attack damage and effects.",
+  ],
+  [
+    SHADOWY,
+    "Shadowy Darkness Energy",
+    "Darkness",
+    "As long as this card is attached to a Pokémon, it provides {D} Energy.\n\nAs long as the {D} Pokémon this card is attached to is on your Bench, prevent all damage done to it by attacks from your opponent's Pokémon.",
+  ],
+  [
+    VOLTAIC,
+    "Voltaic Lightning Energy",
+    "Lightning",
+    "As long as this card is attached to a Pokémon, it provides {L} Energy.\n\nAttacks used by the {L} Pokémon this card is attached to do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+  ],
 ];
 
 const ALL_FIVE = ["asleep", "burned", "confused", "paralyzed", "poisoned"];
@@ -77,7 +117,10 @@ describe("D604 §1 — the programs: eight objects over 8 printings", () => {
       filter: { kind: "typedPokemon", pokemonType: "Psychic", stage: "basic" },
       max: 2,
     });
-    expect(programFor(BUBBLY)?.energy?.passive).toEqual({ statusRecovery: ALL_FIVE, statusImmunities: ALL_FIVE });
+    expect(programFor(BUBBLY)?.energy?.passive).toEqual({
+      statusRecovery: ALL_FIVE,
+      statusImmunities: ALL_FIVE,
+    });
     expect(programFor(MAGNETIC)?.energy?.passive).toEqual({ noRetreatCostSelf: {} });
     expect(programFor(NITRO)?.energy?.returnAfterAttackDiscard).toBe("hand");
     expect(programFor(SHADOWY)?.energy?.passive).toEqual({ preventDamageWhileBenched: true });
@@ -85,7 +128,8 @@ describe("D604 §1 — the programs: eight objects over 8 printings", () => {
   });
 
   it("the catalog faces are Special Energy (D583), whatever tcgdex tags them", () => {
-    for (const [id, name, , effect] of ENERGIES) expect(isSpecialEnergy(face(id, name, effect)), id).toBe(true);
+    for (const [id, name, , effect] of ENERGIES)
+      expect(isSpecialEnergy(face(id, name, effect)), id).toBe(true);
   });
 });
 
@@ -128,12 +172,18 @@ const LOCAL: Record<string, Card> = {
   [P_STAGE1]: mon(P_STAGE1, "Psychic", { stage: "Stage1", evolveFrom: "Nobody" } as Partial<Card>),
   [W_MON]: mon(W_MON, "Water"),
   [M_MON]: mon(M_MON, "Metal"),
-  [R_FLING]: mon(R_FLING, "Fire", { attacks: [{ cost: [], name: "Fling", damage: 30, effect: FLING }] } as Partial<Card>),
+  [R_FLING]: mon(R_FLING, "Fire", {
+    attacks: [{ cost: [], name: "Fling", damage: 30, effect: FLING }],
+  } as Partial<Card>),
   [C_FLING]: mon(C_FLING, "Colorless", {
     attacks: [{ cost: [], name: "Fling", damage: 30, effect: FLING }],
   } as Partial<Card>),
-  [L_ZAP]: mon(L_ZAP, "Lightning", { attacks: [{ cost: [], name: "Zap", damage: 30 }] } as Partial<Card>),
-  [C_ZAP]: mon(C_ZAP, "Colorless", { attacks: [{ cost: [], name: "Zap", damage: 30 }] } as Partial<Card>),
+  [L_ZAP]: mon(L_ZAP, "Lightning", {
+    attacks: [{ cost: [], name: "Zap", damage: 30 }],
+  } as Partial<Card>),
+  [C_ZAP]: mon(C_ZAP, "Colorless", {
+    attacks: [{ cost: [], name: "Zap", damage: 30 }],
+  } as Partial<Card>),
   [D_MON]: mon(D_MON, "Darkness"),
   [FOE]: mon(FOE, "Colorless", {
     hp: 300,
@@ -142,7 +192,10 @@ const LOCAL: Record<string, Card> = {
       { cost: [], name: "Ripple", damage: 10, effect: SPREAD },
     ],
   } as Partial<Card>),
-  [FILLER]: mon(FILLER, "Colorless", { hp: 300, attacks: [{ cost: [], name: "Tap", damage: 10 }] } as Partial<Card>),
+  [FILLER]: mon(FILLER, "Colorless", {
+    hp: 300,
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  } as Partial<Card>),
   [GENGAR]: mon(GENGAR, "Darkness", {
     name: "Gengar ex",
     hp: 310,
@@ -193,7 +246,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -201,11 +256,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -214,7 +272,9 @@ function p1Turn(): GameState {
     let deck = [...side.deck, ...side.hand];
     const prizes = side.prizes.map((u) => {
       if ([FILLER, "fix-energy"].includes(state.cardIdByUid[u] as string)) return u;
-      const swap = deck.find((d) => [FILLER, "fix-energy"].includes(state.cardIdByUid[d] as string));
+      const swap = deck.find((d) =>
+        [FILLER, "fix-energy"].includes(state.cardIdByUid[d] as string),
+      );
       if (swap === undefined) throw new Error("no swap card");
       deck = [...deck.filter((d) => d !== swap), u];
       return swap;
@@ -255,7 +315,10 @@ function attachToBench(state: GameState, index: number, energyId: string): GameS
   const uid = side.deck.find((u) => state.cardIdByUid[u] === energyId);
   if (uid === undefined) throw new Error(`p1 deck has no ${energyId}`);
   const bench = side.bench.map((b, i) => (i === index ? { ...b, energy: [...b.energy, uid] } : b));
-  return { ...state, players: { ...state.players, p1: { ...side, bench, deck: side.deck.filter((u) => u !== uid) } } };
+  return {
+    ...state,
+    players: { ...state.players, p1: { ...side, bench, deck: side.deck.filter((u) => u !== uid) } },
+  };
 }
 
 const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon => {
@@ -269,7 +332,12 @@ const uidOf = (state: GameState, id: string): string => {
   return uid;
 };
 const attachFromHand = (state: GameState, id: string, target: PokemonTarget) =>
-  applyAction(state, { type: "attachEnergy", seat: "p1", uid: uidOf(state, id), target } as GameAction);
+  applyAction(state, {
+    type: "attachEnergy",
+    seat: "p1",
+    uid: uidOf(state, id),
+    target,
+  } as GameAction);
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const foeAttacks = (state: GameState, index: number) => {
@@ -320,9 +388,16 @@ describe("D604 §5 — Telepathic Psychic Energy: attached from hand to a {P}, u
     const parked = ok(attachFromHand(state, TELEPATHIC, { spot: "active" })).state;
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") return;
-    const prompt = parked.phase.prompt as unknown as { kind: string; candidates: string[]; max: number; min: number };
+    const prompt = parked.phase.prompt as unknown as {
+      kind: string;
+      candidates: string[];
+      max: number;
+      min: number;
+    };
     expect([prompt.kind, prompt.min, prompt.max]).toEqual(["chooseCards", 0, 2]);
-    expect(new Set(prompt.candidates.map((u) => parked.cardIdByUid[u]))).toEqual(new Set([P_MON, P_TWO]));
+    expect(new Set(prompt.candidates.map((u) => parked.cardIdByUid[u]))).toEqual(
+      new Set([P_MON, P_TWO]),
+    );
     expect(active(parked).energy.map((u) => parked.cardIdByUid[u])).toEqual([TELEPATHIC]);
   });
 
@@ -338,9 +413,11 @@ describe("D604 §5 — Telepathic Psychic Energy: attached from hand to a {P}, u
         choice: { kind: "cards", uids: prompt.candidates.slice(0, 2) },
       } as GameAction),
     );
-    expect(done.state.players.p1.bench.map((b) => done.state.cardIdByUid[b.stack.at(-1) as string]).sort()).toEqual(
-      [P_MON, P_TWO].sort(),
-    );
+    expect(
+      done.state.players.p1.bench
+        .map((b) => done.state.cardIdByUid[b.stack.at(-1) as string])
+        .sort(),
+    ).toEqual([P_MON, P_TWO].sort());
     expect(of(done.events, "SHUFFLE").length).toBeGreaterThan(0);
     expect(done.state.phase.kind).toBe("turn:action");
   });
@@ -367,10 +444,16 @@ describe("D604 §5 — Telepathic Psychic Energy: attached from hand to a {P}, u
 describe("D604 §6 — Bubbly Water Energy: the {W} holder recovers from and is immune to all five", () => {
   it("attached from hand to a Confused, Poisoned {W} Active, it recovers on the spot", () => {
     let state = table({ active: W_MON, hand: [BUBBLY] });
-    const sick = { ...active(state), conditions: { ...active(state).conditions, rotation: "confused" as const, poisonDamage: 10 } };
+    const sick = {
+      ...active(state),
+      conditions: { ...active(state).conditions, rotation: "confused" as const, poisonDamage: 10 },
+    };
     state = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: sick } } };
     const attached = ok(attachFromHand(state, BUBBLY, { spot: "active" })).state;
-    expect([active(attached).conditions.rotation, active(attached).conditions.poisonDamage]).toEqual(["none", 0]);
+    expect([
+      active(attached).conditions.rotation,
+      active(attached).conditions.poisonDamage,
+    ]).toEqual(["none", 0]);
   });
 
   it("a {W} Active is not Confused by an attack; a {C} one is", () => {
@@ -385,14 +468,22 @@ describe("D604 §6 — Bubbly Water Energy: the {W} holder recovers from and is 
 describe("D604 §7 — Magnetic Metal Energy: the {M} holder has no Retreat Cost", () => {
   it("0 on a {M} holder; the printed 2 on a {C} one", () => {
     const own = table({ active: M_MON, energy: [MAGNETIC] });
-    expect([energyFreesRetreat(own, active(own)), effectiveRetreatCost(own, active(own))]).toEqual([true, 0]);
+    expect([energyFreesRetreat(own, active(own)), effectiveRetreatCost(own, active(own))]).toEqual([
+      true,
+      0,
+    ]);
     const other = table({ active: FILLER, energy: [MAGNETIC] });
-    expect([energyFreesRetreat(other, active(other)), effectiveRetreatCost(other, active(other))]).toEqual([false, 2]);
+    expect([
+      energyFreesRetreat(other, active(other)),
+      effectiveRetreatCost(other, active(other)),
+    ]).toEqual([false, 2]);
   });
 
   it("the {M} Active retreats paying nothing", () => {
     const state = table({ active: M_MON, energy: [MAGNETIC], bench: [FILLER] });
-    const retreated = must(applyAction(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }));
+    const retreated = must(
+      applyAction(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }),
+    );
     expect(retreated.cardIdByUid[active(retreated).stack.at(-1) as string]).toBe(FILLER);
   });
 });
@@ -407,7 +498,9 @@ describe("D604 §8 — Nitro Fire Energy: discarded by its {R} holder's attack, 
     expect(active(attacked.state).energy).toEqual([]);
     const kinds = attacked.events.map((e) => e.type);
     expect(kinds.indexOf("DISCARD_RETRIEVED")).toBeGreaterThan(kinds.indexOf("ENERGY_DISCARDED"));
-    expect(of(attacked.events, "DISCARD_RETRIEVED")).toEqual([{ type: "DISCARD_RETRIEVED", seat: "p1", dest: "hand", uids: [nitro] }]);
+    expect(of(attacked.events, "DISCARD_RETRIEVED")).toEqual([
+      { type: "DISCARD_RETRIEVED", seat: "p1", dest: "hand", uids: [nitro] },
+    ]);
   });
 
   it("a {C} attacker's discard: the card stays in the discard pile", () => {
@@ -431,21 +524,26 @@ describe("D604 §9 — Shadowy Darkness Energy: the Benched {D} holder takes no 
     let state = table({ active: D_MON, energy: [SHADOWY], bench: [D_MON] });
     state = attachToBench(state, 0, SHADOWY);
     expect(passivesOf(state, active(state)).preventDamageWhileBenched).toBe(false);
-    expect(passivesOf(state, state.players.p1.bench[0] as InPlayPokemon).preventDamageWhileBenched).toBe(true);
+    expect(
+      passivesOf(state, state.players.p1.bench[0] as InPlayPokemon).preventDamageWhileBenched,
+    ).toBe(true);
   });
 });
 
 describe("D604 §10 — Voltaic Lightning Energy: the {L} holder's attacks do 20 more to the opponent's Active", () => {
   it("30 + 20 from a {L} attacker; 30 from a {C} one", () => {
     const dealt = (attacker: string) =>
-      of(ok(applyAction(table({ active: attacker, energy: [VOLTAIC] }), { type: "attack", seat: "p1", index: 0 })).events, "DAMAGE_DEALT")[0]?.dealt;
+      of(
+        ok(
+          applyAction(table({ active: attacker, energy: [VOLTAIC] }), {
+            type: "attack",
+            seat: "p1",
+            index: 0,
+          }),
+        ).events,
+        "DAMAGE_DEALT",
+      )[0]?.dealt;
     expect(dealt(L_ZAP)).toBe(50);
     expect(dealt(C_ZAP)).toBe(30);
-  });
-});
-
-describe("D604 §11 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

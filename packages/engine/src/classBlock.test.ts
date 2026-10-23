@@ -144,7 +144,9 @@ function swing(
 
 describe("the attacker-CLASS filter — derived, not authored", () => {
   it("derives to a BARE preventDamage carrying `fromClass` — no gate at all", () => {
-    expect(deriveAttackEffect(BASIC_TEXT)).toEqual([{ op: "preventDamage", fromClass: BASIC_CLASS }]);
+    expect(deriveAttackEffect(BASIC_TEXT)).toEqual([
+      { op: "preventDamage", fromClass: BASIC_CLASS },
+    ]);
     // The typographic apostrophe derives identically — a re-ingest that changes
     // only punctuation must not silently un-simulate three printings (D136/D137).
     expect(deriveAttackEffect(BASIC_TEXT.replace(/'/g, "’"))).toEqual(
@@ -216,7 +218,9 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     // are kept as the record (D418). D575 BUILDS the Ancient spelling: `AttackerClass.stage`
     // gained `"ancient"` (read through `bannerOf`, by printing id — never a species table, so the
     // Great Tusk ex argument above still holds) and `MATCH_RECORD_VERSION` stepped 37 → 38.
-    expect(deriveAttackEffect(ANCIENT_TEXT)).toEqual([{ op: "preventDamage", fromClass: { stage: "ancient" } }]);
+    expect(deriveAttackEffect(ANCIENT_TEXT)).toEqual([
+      { op: "preventDamage", fromClass: { stage: "ancient" } },
+    ]);
     // The two sentences differ in ONE WORD, so the refusal is a property of the
     // anchor rather than of the shape — assert that they really are one word apart.
     expect(ANCIENT_TEXT).toBe(BASIC_TEXT.replace("Basic Pokémon", "Ancient Pokémon"));
@@ -608,7 +612,10 @@ describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarde
         ...state.players,
         p1: {
           ...state.players.p1,
-          active: { ...active, attackBlock: { turn: state.turn, effects: true, fromClass: BASIC_CLASS } },
+          active: {
+            ...active,
+            attackBlock: { turn: state.turn, effects: true, fromClass: BASIC_CLASS },
+          },
         },
       },
     };
@@ -681,7 +688,10 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
         p1: {
           ...state.players.p1,
           // biome-ignore lint/style/noNonNullAssertion: the surgery above set it.
-          active: { ...state.players.p1.active!, attackBlock: { turn: 99, effects: false, fromClass: BASIC_CLASS } },
+          active: {
+            ...state.players.p1.active!,
+            attackBlock: { turn: 99, effects: false, fromClass: BASIC_CLASS },
+          },
         },
       },
     };

@@ -31,7 +31,12 @@ function find<T extends GameEvent["type"]>(
 }
 
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
-const EMBRACE = { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Psychic Embrace" } as const;
+const EMBRACE = {
+  type: "useAbility",
+  seat: "p1",
+  target: { spot: "active" },
+  abilityName: "Psychic Embrace",
+} as const;
 
 function gardBoard(seed: number): GameState {
   const state = driveSetup(seed, { p1: GARDEVOIR_DECK, p2: GARDEVOIR_DECK }, { first: "p2" });
@@ -42,7 +47,11 @@ function gardBoard(seed: number): GameState {
 function useEmbrace(state: GameState, ref: PokemonRef): { state: GameState; events: GameEvent[] } {
   const first = mustApply(state, EMBRACE);
   if (first.state.phase.kind !== "effect:choose") return first; // forced (a single target)
-  return mustApply(first.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+  return mustApply(first.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref },
+  });
 }
 
 describe("Gardevoir ex — Psychic Embrace (the attachEnergyFrom riders)", () => {
@@ -73,8 +82,12 @@ describe("Gardevoir ex — Psychic Embrace (the attachEnergyFrom riders)", () =>
     state = setActiveFromDeck(state, "p1", "sv01-086");
     state = discardFromDeck(state, "p1", "fix-energy", 1); // a Colorless (non-{P}) basic first
     state = discardFromDeck(state, "p1", "fix-psychic-energy", 1); // the {P}
-    const psychicUid = state.players.p1.discard.find((u) => state.cardIdByUid[u] === "fix-psychic-energy");
-    const colorlessUid = state.players.p1.discard.find((u) => state.cardIdByUid[u] === "fix-energy");
+    const psychicUid = state.players.p1.discard.find(
+      (u) => state.cardIdByUid[u] === "fix-psychic-energy",
+    );
+    const colorlessUid = state.players.p1.discard.find(
+      (u) => state.cardIdByUid[u] === "fix-energy",
+    );
     const { state: done } = useEmbrace(state, ACTIVE_REF);
     expect(done.players.p1.active?.energy).toContain(psychicUid);
     expect(done.players.p1.discard).not.toContain(psychicUid);

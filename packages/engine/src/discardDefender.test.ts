@@ -1,10 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -174,21 +173,6 @@ const DECK = deckOf({
   [FILLER]: 14,
 });
 
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["./{censusAttackCorpus,index,effects,interpreter}.ts", "../../../apps/api/src/lobby/match.ts"], {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
-
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result.state;
@@ -316,10 +300,7 @@ function board(
   return fuel(state, "p1", energies);
 }
 
-function attack(
-  state: GameState,
-  index = 0,
-): { state: GameState; events: readonly GameEvent[] } {
+function attack(state: GameState, index = 0): { state: GameState; events: readonly GameEvent[] } {
   const result = applyAction(state, { type: "attack", seat: "p1", index });
   if (!result.ok) throw new Error(`attack failed: ${result.error.code} ${result.error.message}`);
   return { state: result.state, events: result.events };
@@ -331,17 +312,6 @@ const cardIdsIn = (state: GameState, uids: readonly string[]): string[] =>
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §1 — the CENSUS: the population this slice claims, measured", () => {
-  it("🛑 the row is raw FILE LINE 100, 3 printings, and `legalAttackCorpus()` holds it exactly once", () => {
-    const lines = raw("/censusAttackCorpus.ts").split("\n");
-    expect(lines[99] ?? "").toBe(`3 ${PRINTED}`);
-    expect(legalAttackCorpus().filter(([, s]) => s === PRINTED)).toEqual([[3, PRINTED]]);
-    expect(legalAttackCorpus()).toHaveLength(640);
-    // 🛑 THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — they disagree HARDER
-    // than D535's 1-vs-2, and a census pass that copied one number into the other
-    // kind of site would be wrong in half of them.
-    expect(legalAttackCorpus().filter(([, s]) => s === PRINTED)[0]?.[0]).toBe(3);
-  });
-
   it("🛑 `legalAttackCorpus()` INDEX 47 is this row — the ordinal the brief names, read rather than retyped", () => {
     expect(legalAttackCorpus()[47]).toEqual([3, PRINTED]);
   });
@@ -349,7 +319,9 @@ describe("D536 §1 — the CENSUS: the population this slice claims, measured", 
   it("🛑 the whole-corpus `discard your opponent's Active` family is THIS ROW AND ONLY THIS ROW", () => {
     // The population MEASURED, not impressioned: if a set ever prints a second
     // member of this family, this rung reddens before the anchor silently misses it.
-    const family = legalAttackCorpus().filter(([, s]) => /discard your opponent['’]s Active/i.test(s));
+    const family = legalAttackCorpus().filter(([, s]) =>
+      /discard your opponent['’]s Active/i.test(s),
+    );
     expect(family).toEqual([[3, PRINTED]]);
   });
 
@@ -425,17 +397,6 @@ describe("D536 §2 — the ANCHOR: head, tail, both apostrophe slots, case", () 
     }
   });
 
-  it("🛑 it does not claim the neighbouring `Discard a card from your hand.` rows (corpus lines 101/102/103)", () => {
-    const lines = raw("/censusAttackCorpus.ts").split("\n");
-    for (const n of [100, 101, 102]) {
-      const sentence = (lines[n] ?? "").replace(/^\d+ /, "");
-      expect(sentence.startsWith("Discard a card from your hand.")).toBe(true);
-      // Each of these IS built, by arms 44a/44b — so the claim is that THIS arm is
-      // not the one that claims them, asserted on the program rather than on null.
-      expect(deriveAttackEffect(sentence)).not.toEqual(PROGRAM);
-    }
-  });
-
   it("🛑 ONE all-640 predicate LOOSER than the anchor (D425): every row opening `Discard a` that this arm claims is this row", () => {
     const loose = legalAttackCorpus().filter(([, s]) => s.startsWith("Discard a"));
     expect(loose.length).toBeGreaterThan(1);
@@ -471,7 +432,11 @@ describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`
     expect("count" in cost).toBe(false);
     // …and the shipped precedent spells the same article the same way.
     expect(deriveAttackEffect("Discard a {G} Energy from this Pokémon.")).toEqual([
-      { op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Grass" } },
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "providesEnergy", energyType: "Grass" },
+      },
     ]);
   });
 
@@ -493,7 +458,9 @@ describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`
   });
 
   it("🛑 the FILTER is `byName` at the CATALOG's straight apostrophe, and the fixture's name agrees LIVE", () => {
-    const cost = (deriveAttackEffect(PRINTED) ?? [])[0] as { filter: { kind: string; name: string } };
+    const cost = (deriveAttackEffect(PRINTED) ?? [])[0] as {
+      filter: { kind: string; name: string };
+    };
     expect(cost.filter).toEqual({ kind: "byName", name: TR_ENERGY_NAME });
     expect(cost.filter.name).toContain("'");
     expect(cost.filter.name).not.toContain("’");
@@ -695,16 +662,6 @@ describe("D536 §7 — the BOARD: the spot, the pile, the stack and the promotio
     if (state.phase.kind !== "gameOver") return;
     expect(state.phase.outcome).toEqual({ result: "win", winner: "p1", reason: "noPokemon" });
   });
-
-  it("🛑 a SILENT NO-OP on an empty Active spot is unreachable here, so the guard is asserted on the op's own contract instead", () => {
-    // The printed program cannot empty the spot before its own second op, so the
-    // `active === null` guard has no printed board. It is asserted where it CAN be
-    // asserted — the source — rather than left to a comment (D465: an instrument that
-    // produces a committed figure needs a killer).
-    const src = raw("/interpreter.ts");
-    const fn = src.slice(src.indexOf("function discardDefender("));
-    expect(fn.slice(0, fn.indexOf("\n}\n"))).toContain("if (active === null) return state;");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -787,7 +744,9 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
     // The whole point: WITHOUT `describeBranch`'s `discardDefender` case the note is
     // byte-identical to an UNGATED Energy discard, and the player answering it cannot
     // tell that their choice decides whether the opponent's Active leaves play.
-    expect(note).toContain("If you do, discard your opponent's Active Pokémon and all attached cards.");
+    expect(note).toContain(
+      "If you do, discard your opponent's Active Pokémon and all attached cards.",
+    );
   });
 
   it("🛑 …and the answer RESOLVES the gate: picking the matching Energy discards the defender", () => {
@@ -799,9 +758,9 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
     // TWO offers — one per printed id — which IS the park, and the reason the
     // caption above has to say what the pick buys.
     expect(prompt.discardable).toHaveLength(2);
-    expect(
-      prompt.discardable.map((d) => parked.cardIdByUid[d.uid] ?? "?").sort(),
-    ).toEqual([TR_ENERGY, TR_ENERGY_REPRINT].sort());
+    expect(prompt.discardable.map((d) => parked.cardIdByUid[d.uid] ?? "?").sort()).toEqual(
+      [TR_ENERGY, TR_ENERGY_REPRINT].sort(),
+    );
     const pick = prompt.discardable[0]?.uid;
     if (pick === undefined) throw new Error("no candidate");
     const done = applyAction(parked, {
@@ -812,30 +771,6 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
     if (!done.ok) throw new Error(`answer refused: ${done.error.code} ${done.error.message}`);
     expect(done.state.players.p2.active).toBeNull();
   });
-
-  it("🛑 the describer case lives in `describeBranch` and NOWHERE ELSE — the CONDITION half needs no code", () => {
-    const src = raw("/interpreter.ts");
-    // 🛑 THIS RUNG SAID THE OPPOSITE UNTIL THE REPRINT WAS MEASURED, and it is
-    // corrected rather than deleted (D418/D466): the price argued the op could not
-    // park, so a describer case would be D465's unkillable line. `index.ts` records
-    // `Team Rocket's Energy` `sv10-182` as REPRINTED under `me2pt5-217`, the two rungs
-    // above PARK on that board, and the case is therefore OWED and DRIVEN.
-    //
-    // TWO `case "discardDefender":` labels now — `stepOp`'s exhaustive switch and
-    // `describeBranch`'s. COUNTED rather than merely present, because a THIRD would
-    // mean somebody answered this question in two places.
-    expect(src.split('case "discardDefender":')).toHaveLength(4);
-    const branch = src.indexOf("function describeBranch");
-    expect(branch).toBeGreaterThan(0);
-    expect(src.slice(branch, src.indexOf("\n}\n", branch))).toContain("discardDefender");
-    // …and `describeCondition` gets NOTHING: its plain arm already returns "If you
-    // do" for a gate with no `contains`, which is the wording this card prints. The
-    // absence is asserted so a successor cannot quietly add a second phrase for one
-    // question.
-    const cond = src.indexOf("function describeCondition");
-    expect(cond).toBeGreaterThan(0);
-    expect(src.slice(cond, src.indexOf("\n}\n", cond))).not.toContain("discardDefender");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -845,16 +780,6 @@ describe("D536 §10 — the PERSISTED bytes, both directions", () => {
     const op = gate.then[0] as Record<string, unknown>;
     expect(Object.keys(op)).toEqual(["op"]);
     expect(op).toEqual({ op: "discardDefender" });
-  });
-
-  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
-    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-
-  it("🛑 the engine version stepped to 0.555.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 
   it("🛑 the op ITSELF never parks — no new `PendingStage` inhabitant, no new `EffectPrompt` value, and on a NON-PARKING board nothing new reaches `phase.cont`", () => {

@@ -1,10 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   bonusConsequentProgram,
   deriveAttackBonusConsequent,
@@ -432,9 +428,9 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
     // NARROWER, and narrower is invisible: the missing reader is simply never asked
     // and the rung stays green. This list ran short of the module until this slice,
     // so every refusal below was quantified over a strict subset of the surface.
-    expect([...OTHER_READERS.map((read) => read.name), "deriveAttackBonusConsequent"].sort()).toEqual(
-      attackReaderSurface(),
-    );
+    expect(
+      [...OTHER_READERS.map((read) => read.name), "deriveAttackBonusConsequent"].sort(),
+    ).toEqual(attackReaderSurface());
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
     // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
     // module and from this list in the SAME commit, and the refusals would quietly

@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -138,27 +134,6 @@ const TAKEN_CLAUSE = "this Pokémon was healed during this turn";
 const HEALED: BoardCondition = { kind: "yourActiveHealedThisTurn" };
 const PROMOTED: BoardCondition = { kind: "yourActivePromotedThisTurn" };
 
-/** interpreter.ts as TEXT, for §8's stamp-site census. A GLOB rather than `node:fs`
-    for `progressLog.test.ts`'s reason verbatim: this package has no `"types": ["node"]`
-    in its tsconfig (it runs in a Worker and in the browser), and widening that to read
-    one file would put Node globals in scope for the whole engine. */
-const SOURCES: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string,
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob("./interpreter.ts", { query: "?raw", import: "default", eager: true });
-
-function interpreterSource(): string {
-  const text = SOURCES["./interpreter.ts"];
-  if (text === undefined) {
-    throw new Error(`interpreter.ts is not readable from the glob — keys: ${Object.keys(SOURCES).join(", ")}`);
-  }
-  return text;
-}
-
 // ── boards ─────────────────────────────────────────────────────────────────────
 
 /** P2 opens and immediately ends, so every case below runs inside P1's turn 2 with a
@@ -206,15 +181,18 @@ function find<T extends GameEvent["type"]>(
     `{ op: "healChosen", amount: 30 }`, which PARKS whenever two or more of the
     controller's Pokémon are in play and resolves INLINE when exactly one is
     (`parkOrForce`), so both shapes are handled here rather than at each call site. */
-function potion(state: GameState, seat: Seat, ref?: PokemonRef): { state: GameState; events: GameEvent[] } {
+function potion(
+  state: GameState,
+  seat: Seat,
+  ref?: PokemonRef,
+): { state: GameState; events: GameEvent[] } {
   const withCard = handFromDeck(state, seat, "sv01-188", 1);
   const uid = handUid(withCard, seat, "sv01-188");
   const played = mustApply(withCard, { type: "playTrainer", seat, uid });
   if (played.state.phase.kind !== "effect:choose") return played;
   const prompt = played.state.phase.prompt;
   if (prompt.kind !== "choosePokemon") throw new Error("expected a choosePokemon prompt");
-  const pick =
-    ref ?? prompt.candidates.find((c) => c.spot.spot === "active");
+  const pick = ref ?? prompt.candidates.find((c) => c.spot.spot === "active");
   if (pick === undefined) throw new Error("no candidate matched");
   const done = mustApply(played.state, {
     type: "resolveEffect",
@@ -425,8 +403,16 @@ describe("§2 — the reading: ONE clause row, and every other reader refuses th
   it("🛑 a NEAR-MISS spelling is refused rather than mapped", () => {
     // The table is keyed on the whole clause, so a paraphrase the catalog does not
     // print falls through to null and stays LOUD (D183).
-    expect(deriveAttackDamageBonus("If this Pokémon was healed this turn, this attack does 100 more damage.")).toBeNull();
-    expect(deriveAttackDamageBonus("If this Pokémon healed during this turn, this attack does 100 more damage.")).toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "If this Pokémon was healed this turn, this attack does 100 more damage.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "If this Pokémon healed during this turn, this attack does 100 more damage.",
+      ),
+    ).toBeNull();
   });
 });
 
@@ -459,8 +445,9 @@ describe("§3 — the board: the REAL printing, healed and unhealed", () => {
   it.each(SEEDS)("🛑 seed %i — the two arms differ by exactly the printed 100", (seed) => {
     const base = ready(seed);
     const cold = find(attack(base).events, "DAMAGE_DEALT")?.damage ?? 0;
-    const warm = find(attack(potion(setDamage(base, "p1", 50), "p1").state).events, "DAMAGE_DEALT")
-      ?.damage ?? 0;
+    const warm =
+      find(attack(potion(setDamage(base, "p1", 50), "p1").state).events, "DAMAGE_DEALT")?.damage ??
+      0;
     // 🛑 THE SUBTRACTION IS THE ASSERTION. A build that re-homed the printed base
     // OUTSIDE the gate would still deal 120 on the warm arm and would deal 0 on the
     // cold one, so checking only the boosted number cannot see it.
@@ -470,17 +457,20 @@ describe("§3 — the board: the REAL printing, healed and unhealed", () => {
 });
 
 describe("§4 — a WHIFF is not a heal, and the board is ordinary", () => {
-  it.each(SEEDS)("🛑 seed %i — a Potion on an UNDAMAGED Active files no event and writes no stamp", (seed) => {
-    const state = ready(seed);
-    expect(state.players.p1.active?.damage).toBe(0);
-    const played = potion(state, "p1");
-    // The play is LEGAL — Potion prints no precondition (the Potion doctrine) — and it
-    // heals nothing, so no HEALED row is filed and no stamp is written.
-    expect(find(played.events, "HEALED")).toBeUndefined();
-    expect(played.state.players.p1.active?.healedTurn).toBeNull();
-    expect(conditionHolds(played.state, "p1", HEALED)).toBe(false);
-    expect(find(attack(played.state).events, "DAMAGE_DEALT")?.damage).toBe(20);
-  });
+  it.each(SEEDS)(
+    "🛑 seed %i — a Potion on an UNDAMAGED Active files no event and writes no stamp",
+    (seed) => {
+      const state = ready(seed);
+      expect(state.players.p1.active?.damage).toBe(0);
+      const played = potion(state, "p1");
+      // The play is LEGAL — Potion prints no precondition (the Potion doctrine) — and it
+      // heals nothing, so no HEALED row is filed and no stamp is written.
+      expect(find(played.events, "HEALED")).toBeUndefined();
+      expect(played.state.players.p1.active?.healedTurn).toBeNull();
+      expect(conditionHolds(played.state, "p1", HEALED)).toBe(false);
+      expect(find(attack(played.state).events, "DAMAGE_DEALT")?.damage).toBe(20);
+    },
+  );
 });
 
 describe("§5 — the SUBJECT is 'this Pokémon', not the seat", () => {
@@ -502,62 +492,68 @@ describe("§5 — the SUBJECT is 'this Pokémon', not the seat", () => {
     // …and the PER-SEAT reading, computed here beside the member off the same board,
     // disagrees — which is the whole content of the shape decision.
     const perSeatReading =
-      (state.players.p1.active?.healedTurn === state.turn) ||
+      state.players.p1.active?.healedTurn === state.turn ||
       state.players.p1.bench.some((b) => b.healedTurn === state.turn);
     expect(perSeatReading).toBe(true);
     expect(perSeatReading).not.toBe(conditionHolds(state, "p1", HEALED));
     expect(find(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
   });
 
-  it.each(SEEDS)("🛑 seed %i — the stamp SURVIVES the bench→Active move, and so does the clause", (seed) => {
-    // The same board, promoted: heal the Benched body and then RETREAT it into the
-    // Active Spot. `retreat` spreads the whole Pokémon, so the stamp travels with it —
-    // the printed sentence asks whether THIS POKÉMON was healed, not where it was
-    // standing at the time. ⚠️ And it lands on a body that is now ALSO
-    // `promotedTurn`-stamped, which is the board that shows the two per-turn stamps are
-    // two facts and not one.
-    let state = benchFromDeck(ready(seed), "p1", "fix-lively");
-    state = setBenchDamage(state, "p1", 0, 50);
-    const benchRef: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
-    state = potion(state, "p1", benchRef).state;
-    const healedUid = benchTopUid(state, "p1", 0);
-    // The retreat cost is paid by the {G} `ready` attached to the body that is
-    // LEAVING — the one card on this board that is not the subject of anything here.
-    const paying = state.players.p1.active?.energy ?? [];
-    expect(paying).toHaveLength(1);
-    state = mustApply(state, {
-      type: "retreat",
-      seat: "p1",
-      discardEnergy: [...paying],
-      promoteBenchIndex: 0,
-    }).state;
-    expect(activeUid(state, "p1")).toBe(healedUid);
-    expect(state.players.p1.active?.healedTurn).toBe(state.turn);
-    expect(state.players.p1.active?.promotedTurn).toBe(state.turn);
-    expect(conditionHolds(state, "p1", HEALED)).toBe(true);
-    expect(conditionHolds(state, "p1", PROMOTED)).toBe(true);
-  });
+  it.each(SEEDS)(
+    "🛑 seed %i — the stamp SURVIVES the bench→Active move, and so does the clause",
+    (seed) => {
+      // The same board, promoted: heal the Benched body and then RETREAT it into the
+      // Active Spot. `retreat` spreads the whole Pokémon, so the stamp travels with it —
+      // the printed sentence asks whether THIS POKÉMON was healed, not where it was
+      // standing at the time. ⚠️ And it lands on a body that is now ALSO
+      // `promotedTurn`-stamped, which is the board that shows the two per-turn stamps are
+      // two facts and not one.
+      let state = benchFromDeck(ready(seed), "p1", "fix-lively");
+      state = setBenchDamage(state, "p1", 0, 50);
+      const benchRef: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
+      state = potion(state, "p1", benchRef).state;
+      const healedUid = benchTopUid(state, "p1", 0);
+      // The retreat cost is paid by the {G} `ready` attached to the body that is
+      // LEAVING — the one card on this board that is not the subject of anything here.
+      const paying = state.players.p1.active?.energy ?? [];
+      expect(paying).toHaveLength(1);
+      state = mustApply(state, {
+        type: "retreat",
+        seat: "p1",
+        discardEnergy: [...paying],
+        promoteBenchIndex: 0,
+      }).state;
+      expect(activeUid(state, "p1")).toBe(healedUid);
+      expect(state.players.p1.active?.healedTurn).toBe(state.turn);
+      expect(state.players.p1.active?.promotedTurn).toBe(state.turn);
+      expect(conditionHolds(state, "p1", HEALED)).toBe(true);
+      expect(conditionHolds(state, "p1", PROMOTED)).toBe(true);
+    },
+  );
 });
 
 describe("§6 — the CLOCK: a turn STAMP expires by arithmetic, with no boundary clear", () => {
-  it.each(SEEDS)("🛑 seed %i — healed on this turn, cold on the NEXT one this seat owns", (seed) => {
-    let state = setDamage(ready(seed), "p1", 50);
-    state = potion(state, "p1").state;
-    const healedOn = state.turn;
-    expect(state.players.p1.active?.healedTurn).toBe(healedOn);
-    expect(conditionHolds(state, "p1", HEALED)).toBe(true);
-    // Round-trip to P1's next turn. Nothing walks the board at a turn boundary and
-    // nothing clears the field — the comparison is what expires.
-    state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
-    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-    expect(state.turn).toBeGreaterThan(healedOn);
-    // 🛑 THE FIELD IS STILL SET — this is the assertion that separates a STAMP from a
-    // FLAG, and a build that cleared it at `startTurn` would fail here while passing
-    // every other case in this file.
-    expect(state.players.p1.active?.healedTurn).toBe(healedOn);
-    expect(conditionHolds(state, "p1", HEALED)).toBe(false);
-    expect(find(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
-  });
+  it.each(SEEDS)(
+    "🛑 seed %i — healed on this turn, cold on the NEXT one this seat owns",
+    (seed) => {
+      let state = setDamage(ready(seed), "p1", 50);
+      state = potion(state, "p1").state;
+      const healedOn = state.turn;
+      expect(state.players.p1.active?.healedTurn).toBe(healedOn);
+      expect(conditionHolds(state, "p1", HEALED)).toBe(true);
+      // Round-trip to P1's next turn. Nothing walks the board at a turn boundary and
+      // nothing clears the field — the comparison is what expires.
+      state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+      state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+      expect(state.turn).toBeGreaterThan(healedOn);
+      // 🛑 THE FIELD IS STILL SET — this is the assertion that separates a STAMP from a
+      // FLAG, and a build that cleared it at `startTurn` would fail here while passing
+      // every other case in this file.
+      expect(state.players.p1.active?.healedTurn).toBe(healedOn);
+      expect(conditionHolds(state, "p1", HEALED)).toBe(false);
+      expect(find(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
+    },
+  );
 });
 
 describe("§7 — the SEAT: the arm reads the ASKER's Active, on a board that can tell", () => {
@@ -571,66 +567,31 @@ describe("§7 — the SEAT: the arm reads the ASKER's Active, on a board that ca
     expect(find(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(120);
   });
 
-  it.each(SEEDS)("🛑 seed %i — a CROSS-BOARD heal stamps the opponent, and expires before they can ask", (seed) => {
-    // Picnic Basket (`healEachAll`) is the one route in this pool that writes onto the
-    // OTHER seat's bodies, and it is what makes "during this turn" a question about
-    // WHOSE turn rather than about whose Pokémon. P1 plays it while P2's Maractus is
-    // wounded: the stamp lands with P1's turn number.
-    let state = ready(seed);
-    state = setActiveFromDeck(state, "p2", "fix-lively");
-    state = attachFromDeck(state, "p2", "fix-grass-energy", 1);
-    state = setDamage(state, "p2", 50);
-    const played = picnicBasket(state, "p1");
-    state = played.state;
-    const p1Turn = state.turn;
-    expect(state.players.p2.active?.healedTurn).toBe(p1Turn);
-    // …and inside P1's own turn the clause is TRUE for P2, which is correct and
-    // unobservable: P2 cannot attack during P1's turn.
-    expect(conditionHolds(state, "p2", HEALED)).toBe(true);
-    // Hand the turn over. `state.turn` advances, so the stamp P1 wrote reads FALSE for
-    // the seat that owns the body — which is the printed reading of "this turn".
-    state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
-    expect(state.turn).toBeGreaterThan(p1Turn);
-    expect(state.players.p2.active?.healedTurn).toBe(p1Turn);
-    expect(conditionHolds(state, "p2", HEALED)).toBe(false);
-    expect(find(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(20);
-  });
-});
-
-describe("§8 — the STAMP SITES: one helper, and the count is the guard", () => {
-  it("🛑 every `HEALED` event site writes its body through `healedBody`", () => {
-    // 🛑 WHAT THIS IS FOR. Six of the seven heal routes are unreachable from this
-    // suite's 60 cards, so a behavioural guard here would cover two of them and be
-    // silent about the rest. The invariant that actually matters is STRUCTURAL — the
-    // event and the stamp are written together — so it is checked where it lives.
-    //
-    // WHAT TURNS IT RED: adding a `HEALED` event site without routing its body write
-    // through the helper (the counts diverge), deleting a call (the same), or
-    // introducing a second body-writing helper that skips the stamp (the pushes stay
-    // at 7 and the calls drop). ⚠️ It cannot be satisfied by a doc comment — D210's
-    // failure mode — because the pattern it counts includes `events.push({`, which no
-    // prose in this file spells.
-    const src = interpreterSource();
-    const pushes = src.split('events.push({ type: "HEALED"').length - 1;
-    const declarations = src.split("function healedBody(").length - 1;
-    const calls = src.split("healedBody(").length - 1 - declarations;
-    expect(declarations).toBe(1);
-    // 🆕🆕🆕 D574 — 7 → 8: `moveCountersBetweenOpponents` (Sableye / Alakazam) files a `HEALED` on the
-    // SOURCE body and writes it through `healedBody` — the mover precedent (Cofagrigus, Munkidori).
-    // 🆕 Card revision B10 — 8 → 10: `moveOneOwnCounter` (Rocket Brain) and `moveCountersToOpponent`
-    // (Adrena-Brain) no longer borrow `healChosen`'s push (it asks the Life-Locked heal lock, R-LL1);
-    // each files its own `HEALED` on the SOURCE and writes it through `healedBody`, as the other movers do.
-    expect(pushes).toBe(10);
-    expect(calls).toBe(pushes);
-  });
-
-  it("🛑 the helper is the ONLY writer of the field, outside its own initialiser", () => {
-    // `healedTurn:` appears in interpreter.ts exactly once — inside `healedBody` — so
-    // no arm can stamp the field on its own terms. (`makeInPlay`'s `healedTurn: null`
-    // lives in types.ts and is the absence, not a write.)
-    const src = interpreterSource();
-    expect(src.split("healedTurn:").length - 1).toBe(1);
-    // …and it is READ exactly once, in the `conditionHolds` arm.
-    expect(src.split("healedTurn ===").length - 1).toBe(1);
-  });
+  it.each(SEEDS)(
+    "🛑 seed %i — a CROSS-BOARD heal stamps the opponent, and expires before they can ask",
+    (seed) => {
+      // Picnic Basket (`healEachAll`) is the one route in this pool that writes onto the
+      // OTHER seat's bodies, and it is what makes "during this turn" a question about
+      // WHOSE turn rather than about whose Pokémon. P1 plays it while P2's Maractus is
+      // wounded: the stamp lands with P1's turn number.
+      let state = ready(seed);
+      state = setActiveFromDeck(state, "p2", "fix-lively");
+      state = attachFromDeck(state, "p2", "fix-grass-energy", 1);
+      state = setDamage(state, "p2", 50);
+      const played = picnicBasket(state, "p1");
+      state = played.state;
+      const p1Turn = state.turn;
+      expect(state.players.p2.active?.healedTurn).toBe(p1Turn);
+      // …and inside P1's own turn the clause is TRUE for P2, which is correct and
+      // unobservable: P2 cannot attack during P1's turn.
+      expect(conditionHolds(state, "p2", HEALED)).toBe(true);
+      // Hand the turn over. `state.turn` advances, so the stamp P1 wrote reads FALSE for
+      // the seat that owns the body — which is the printed reading of "this turn".
+      state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+      expect(state.turn).toBeGreaterThan(p1Turn);
+      expect(state.players.p2.active?.healedTurn).toBe(p1Turn);
+      expect(conditionHolds(state, "p2", HEALED)).toBe(false);
+      expect(find(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(20);
+    },
+  );
 });

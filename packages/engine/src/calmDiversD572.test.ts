@@ -5,13 +5,22 @@ import { abilityUsedKey, programPlayable } from "./cardplay";
 import { disabledAbilityUids, inPlayToHandBlocked, koEnergyRescueUids } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  trainerCard,
+  typedEnergy,
+} from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
 // ── 🆕🆕🆕 D572 — "CALM DIVERS": SIX PRINTINGS, FOUR TEXTS ──
@@ -63,7 +72,8 @@ const SPECIAL = "fix-special";
 
 const ADRENA_BRAIN =
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.";
-const MENTALLY_CALM = "Your opponent's Pokémon in play and all attached cards can't be put into your opponent's hand.";
+const MENTALLY_CALM =
+  "Your opponent's Pokémon in play and all attached cards can't be put into your opponent's hand.";
 const DIVERS_CATCH =
   "When 1 of your {W} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, you may put all Basic {W} Energy attached to that Pokémon into your hand instead of the discard pile.";
 const EMERGENCY_ROTATION =
@@ -82,7 +92,12 @@ const LOCAL_CARDS: Record<string, Card> = {
         resistances: [{ type: "Fighting", value: "-30" }],
         abilities: [{ type: "Ability", name: "Adrena-Brain", effect: ADRENA_BRAIN }],
         attacks: [
-          { cost: ["Psychic", "Colorless"], name: "Mind Bend", damage: 60, effect: "Your opponent's Active Pokémon is now Confused." },
+          {
+            cost: ["Psychic", "Colorless"],
+            name: "Mind Bend",
+            damage: 60,
+            effect: "Your opponent's Active Pokémon is now Confused.",
+          },
         ],
       }),
     ]),
@@ -119,7 +134,14 @@ const LOCAL_CARDS: Record<string, Card> = {
     weaknesses: [{ type: "Fire", value: "×2" }],
     resistances: [{ type: "Grass", value: "-30" }],
     abilities: [{ type: "Ability", name: "Emergency Rotation", effect: EMERGENCY_ROTATION }],
-    attacks: [{ cost: ["Colorless", "Colorless"], name: "Hyper Ray", damage: 130, effect: "Discard all Energy from this Pokémon." }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Hyper Ray",
+        damage: 130,
+        effect: "Discard all Energy from this Pokémon.",
+      },
+    ],
   }),
   [MUNKIDORI_EX]: battler(MUNKIDORI_EX, {
     name: "Munkidori ex",
@@ -143,7 +165,12 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [PECHARUNT_EX]: battler(PECHARUNT_EX, { name: "Pecharunt ex", types: ["Darkness"], hp: 190, retreat: 1 }),
+  [PECHARUNT_EX]: battler(PECHARUNT_EX, {
+    name: "Pecharunt ex",
+    types: ["Darkness"],
+    hp: 190,
+    retreat: 1,
+  }),
   [AMULET]: {
     ...trainerCard(
       AMULET,
@@ -200,7 +227,12 @@ const LOCAL_CARDS: Record<string, Card> = {
         effect:
           "Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck.",
       },
-      { cost: ["Colorless", "Colorless"], name: "Energy Loop", damage: 140, effect: "Put an Energy attached to this Pokémon into your hand." },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Energy Loop",
+        damage: 140,
+        effect: "Put an Energy attached to this Pokémon into your hand.",
+      },
     ],
   }),
   [SWOOBAT]: battler(SWOOBAT, {
@@ -211,7 +243,11 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 90,
     retreat: 1,
     attacks: [
-      { cost: ["Colorless"], name: "Happy Return", effect: "Put 1 of your Benched Pokémon and all attached cards into your hand." },
+      {
+        cost: ["Colorless"],
+        name: "Happy Return",
+        effect: "Put 1 of your Benched Pokémon and all attached cards into your hand.",
+      },
       { cost: ["Colorless", "Colorless"], name: "Gust", damage: 50 },
     ],
   }),
@@ -224,9 +260,15 @@ const LOCAL_CARDS: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Inviting Flowers",
-        effect: "You may search your deck for any number of Basic Lillie's Pokémon and put them onto your Bench. Then, shuffle your deck.",
+        effect:
+          "You may search your deck for any number of Basic Lillie's Pokémon and put them onto your Bench. Then, shuffle your deck.",
       },
-      { cost: ["Psychic"], name: "Fade Out", damage: 30, effect: "Put this Pokémon and all attached cards into your hand." },
+      {
+        cost: ["Psychic"],
+        name: "Fade Out",
+        damage: 30,
+        effect: "Put this Pokémon and all attached cards into your hand.",
+      },
     ],
   }),
   [ESPATHRA]: battler(ESPATHRA, {
@@ -243,7 +285,12 @@ const LOCAL_CARDS: Record<string, Card> = {
         effect:
           "Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.",
       },
-      { cost: ["Psychic", "Colorless"], name: "Spiral Drain", damage: 60, effect: "Heal 30 damage from this Pokémon." },
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Spiral Drain",
+        damage: 60,
+        effect: "Heal 30 damage from this Pokémon.",
+      },
     ],
   }),
   [ZARUDE]: battler(ZARUDE, {
@@ -252,17 +299,27 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 120,
     retreat: 1,
     attacks: [
-      { cost: ["Grass"], name: "Leaf Drain", damage: 20, effect: "Heal 20 damage from this Pokémon." },
+      {
+        cost: ["Grass"],
+        name: "Leaf Drain",
+        damage: 20,
+        effect: "Heal 20 damage from this Pokémon.",
+      },
       {
         cost: ["Grass", "Grass", "Colorless"],
         name: "Jungle Whip",
         damage: "80+",
-        effect: "You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.",
+        effect:
+          "You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.",
       },
     ],
   }),
   [SCOOP_UP]: {
-    ...trainerCard(SCOOP_UP, "Item", "Put 1 of your Pokémon and all attached cards into your hand."),
+    ...trainerCard(
+      SCOOP_UP,
+      "Item",
+      "Put 1 of your Pokémon and all attached cards into your hand.",
+    ),
     name: "Scoop Up Cyclone",
   },
   [CHILL_TOY]: {
@@ -289,8 +346,20 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [STAGE2]: battler(STAGE2, { name: "D572 Stage Two", stage: "Stage2", evolveFrom: "D572 Stage One", hp: 900, types: ["Colorless"] }),
-  [STAGE1]: battler(STAGE1, { name: "D572 Stage One", stage: "Stage1", evolveFrom: "D572 Filler", hp: 900, types: ["Colorless"] }),
+  [STAGE2]: battler(STAGE2, {
+    name: "D572 Stage Two",
+    stage: "Stage2",
+    evolveFrom: "D572 Stage One",
+    hp: 900,
+    types: ["Colorless"],
+  }),
+  [STAGE1]: battler(STAGE1, {
+    name: "D572 Stage One",
+    stage: "Stage1",
+    evolveFrom: "D572 Filler",
+    hp: 900,
+    types: ["Colorless"],
+  }),
   [HITTER]: battler(HITTER, {
     name: "D572 Hitter",
     hp: 900,
@@ -314,7 +383,14 @@ const LOCAL_CARDS: Record<string, Card> = {
     name: "D572 Recoiler",
     hp: 60,
     types: ["Water"],
-    attacks: [{ cost: [], name: "Reckless Dive", damage: 10, effect: "This Pokémon also does 60 damage to itself." }],
+    attacks: [
+      {
+        cost: [],
+        name: "Reckless Dive",
+        damage: 10,
+        effect: "This Pokémon also does 60 damage to itself.",
+      },
+    ],
   }),
   [WATER_MON]: battler(WATER_MON, { name: "D572 Water", hp: 100, types: ["Water"], retreat: 1 }),
   [FILLER]: battler(FILLER, {
@@ -378,7 +454,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -394,7 +471,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -402,11 +481,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -479,7 +561,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -492,14 +579,24 @@ const damaged = (state: GameState, seat: Seat, spot: Spot, damage: number) =>
   withBody(state, seat, spot, (p) => ({ ...p, damage }));
 
 /** TEST SURGERY — attach `n` copies of deck card `id` to the body (Energy or Tool by kind). */
-function attach(state: GameState, seat: Seat, spot: Spot, id: string, n = 1, as: "energy" | "tools" = "energy"): GameState {
+function attach(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  id: string,
+  n = 1,
+  as: "energy" | "tools" = "energy",
+): GameState {
   let next = state;
   for (let i = 0; i < n; i++) {
     next = ensureInDeck(next, seat, id);
     const side = next.players[seat];
     const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
     if (uid === undefined) throw new Error(`no ${id} in the deck`);
-    next = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+    next = {
+      ...next,
+      players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+    };
     next = withBody(next, seat, spot, (p) => ({ ...p, [as]: [...p[as], uid] }));
   }
   return next;
@@ -511,11 +608,17 @@ function underneath(state: GameState, seat: Seat, spot: Spot, id: string): GameS
   const side = next.players[seat];
   const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id}`);
-  const moved = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+  const moved = {
+    ...next,
+    players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+  };
   return withBody(moved, seat, spot, (p) => ({ ...p, stack: [uid, ...p.stack] }));
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
@@ -529,8 +632,10 @@ function render(events: GameEvent[], state: GameState): string[] {
   );
 }
 
-const use = (name: string, target: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
-  ({ type: "useAbility", seat: "p1", target, abilityName: name }) as GameAction;
+const use = (
+  name: string,
+  target: { spot: "active" } | { spot: "bench"; index: number },
+): GameAction => ({ type: "useAbility", seat: "p1", target, abilityName: name }) as GameAction;
 const ACTIVE = { spot: "active" as const };
 type Ref = { seat: Seat; spot: { spot: "active" } | { spot: "bench"; index: number } };
 const pick = (ref: Ref, take?: number): GameAction =>
@@ -539,17 +644,32 @@ const pick = (ref: Ref, take?: number): GameAction =>
     seat: "p1",
     choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
   }) as GameAction;
-const decline: GameAction = { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } } as GameAction;
+const decline: GameAction = {
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "pokemon" },
+} as GameAction;
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index }) as GameAction;
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
 /** p1's Munkidori (`MUNKIDORI[i]`) Active with one {D} and `own` damage, p2 `oppActive` + bench. */
-function brainBoard(own = 30, oppActive: string = FILLER, oppBench: readonly string[] = [], i = 0): GameState {
-  return damaged(attach(table(MUNKIDORI[i] ?? MUNKIDORI[0], [], oppActive, oppBench), "p1", "active", DARK), "p1", "active", own);
+function brainBoard(
+  own = 30,
+  oppActive: string = FILLER,
+  oppBench: readonly string[] = [],
+  i = 0,
+): GameState {
+  return damaged(
+    attach(table(MUNKIDORI[i] ?? MUNKIDORI[0], [], oppActive, oppBench), "p1", "active", DARK),
+    "p1",
+    "active",
+    own,
+  );
 }
 
 /** The owed Prize count for p1 after a Knock Out: the parked pick, the PRIZES_OWED row, or the row delta. */
@@ -583,7 +703,10 @@ describe("§1 — the prints and the registry rows", () => {
     expect(programFor(MILOTIC)).toEqual({ passive: { opponentInPlayToHandBlocked: true } });
     expect(programFor(HUNTAIL)).toEqual({ passive: { koBasicEnergyToHand: "Water" } });
     expect(programFor(KLINKLANG)).toEqual({
-      benchFromHand: { name: "Emergency Rotation", playableIf: { kind: "opponentStage2PokemonInPlay" } },
+      benchFromHand: {
+        name: "Emergency Rotation",
+        playableIf: { kind: "opponentStage2PokemonInPlay" },
+      },
     });
   });
 
@@ -595,7 +718,9 @@ describe("§1 — the prints and the registry rows", () => {
   });
 
   it("the two NEW BoardCondition members read their printed clauses back", () => {
-    expect(conditionNote({ kind: "opponentStage2PokemonInPlay" })).toBe("your opponent has any Stage 2 Pokémon in play");
+    expect(conditionNote({ kind: "opponentStage2PokemonInPlay" })).toBe(
+      "your opponent has any Stage 2 Pokémon in play",
+    );
     expect(conditionNote({ kind: "yourInPlayToHandAllowed" })).toBe(
       "your Pokémon in play and attached cards can be put into your hand",
     );
@@ -603,12 +728,14 @@ describe("§1 — the prints and the registry rows", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent)", () => {
+describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)', () => {
   it("🛑 the {D} BODY GATE: no {D} attached → refused with the printed clause, and both HUD mirrors grey the row with it", () => {
     const bare = damaged(table(MUNKIDORI[0]), "p1", "active", 30);
     const no = refused(bare, use("Adrena-Brain", ACTIVE));
     expect(no.code).toBe("ABILITY_CONDITION_NOT_MET");
-    expect(no.message).toBe("Adrena-Brain can only be used if this Pokémon has any Darkness Energy attached (§9)");
+    expect(no.message).toBe(
+      "Adrena-Brain can only be used if this Pokémon has any Darkness Energy attached (§9)",
+    );
     const phase = redactGame(bare, "p1").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action");
     const row = phase.abilities.find((a) => a.abilityName === "Adrena-Brain");
@@ -623,7 +750,7 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
     expect(lit.abilities.find((a) => a.abilityName === "Adrena-Brain")?.disabled).toBe(false);
   });
 
-  it("🛑 Q1 FORCED (one damaged own body), Q2 ALWAYS PARKED even over a LONE opponent body — `upTo: 3`, `takeVerb: \"move\"`", () => {
+  it('🛑 Q1 FORCED (one damaged own body), Q2 ALWAYS PARKED even over a LONE opponent body — `upTo: 3`, `takeVerb: "move"`', () => {
     const { state } = run(brainBoard(), use("Adrena-Brain", ACTIVE));
     const p = prompt(state);
     expect(p).toEqual({
@@ -635,7 +762,8 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
     });
     // The wire carries the verb (D135 conditional spread) — and the ceiling unclamped.
     const wire = redactGame(state, "p1").phase;
-    if (wire.kind !== "effect:choose" || !("prompt" in wire)) throw new Error("expected the answerer's prompt");
+    if (wire.kind !== "effect:choose" || !("prompt" in wire))
+      throw new Error("expected the answerer's prompt");
     expect(wire.prompt).toMatchObject({ kind: "choosePokemon", upTo: 3, takeVerb: "move" });
     // …and the WIRE SCHEMA keeps it (zod strips an undeclared key, so a schema without the field
     // would silently turn every Adrena-Brain row back into "attach").
@@ -650,15 +778,27 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
     expect(bodyAt(state, "p1", "active").damage).toBe(30);
     expect(bodyAt(state, "p2", "active").damage).toBe(20);
     expect(all(events, "COUNTERS_PLACED")).toEqual([
-      { type: "COUNTERS_PLACED", seat: "p2", uid: top(bodyAt(start, "p2", "active")), amount: 20, source: "moved" },
+      {
+        type: "COUNTERS_PLACED",
+        seat: "p2",
+        uid: top(bodyAt(start, "p2", "active")),
+        amount: 20,
+        source: "moved",
+      },
     ]);
   });
 
   it("🛑 an ABSENT `take` is the printed 3 — and it is CLAMPED to what the source carries (2 counters moves 2)", () => {
-    const full = run(run(brainBoard(50), use("Adrena-Brain", ACTIVE)).state, pick({ seat: "p2", spot: { spot: "active" } })).state;
+    const full = run(
+      run(brainBoard(50), use("Adrena-Brain", ACTIVE)).state,
+      pick({ seat: "p2", spot: { spot: "active" } }),
+    ).state;
     expect(bodyAt(full, "p1", "active").damage).toBe(20);
     expect(bodyAt(full, "p2", "active").damage).toBe(30);
-    const short = run(run(brainBoard(20), use("Adrena-Brain", ACTIVE)).state, pick({ seat: "p2", spot: { spot: "active" } }, 3)).state;
+    const short = run(
+      run(brainBoard(20), use("Adrena-Brain", ACTIVE)).state,
+      pick({ seat: "p2", spot: { spot: "active" } }, 3),
+    ).state;
     expect(bodyAt(short, "p1", "active").damage).toBe(0);
     expect(bodyAt(short, "p2", "active").damage).toBe(20);
   });
@@ -672,13 +812,21 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
     expect(bodyAt(state, "p2", "active").damage).toBe(0);
     expect(all(events, "COUNTERS_PLACED")).toEqual([]);
     expect(state.allowances.abilitiesUsed).toContain(
-      abilityUsedKey(top(bodyAt(start, "p1", "active")), { name: "Adrena-Brain", oncePerTurn: true }),
+      abilityUsedKey(top(bodyAt(start, "p1", "active")), {
+        name: "Adrena-Brain",
+        oncePerTurn: true,
+      }),
     );
     expect(refused(state, use("Adrena-Brain", ACTIVE)).code).toBe("ABILITY_ALREADY_USED");
   });
 
   it("🛑 Q1 PARKS over two damaged own bodies (the Munkidori and a benched one); its answer buys Q2 over the opponent's WHOLE board", () => {
-    let start = damaged(attach(table(MUNKIDORI[1], [FILLER], FILLER, [WATER_MON]), "p1", "active", DARK), "p1", 0, 40);
+    let start = damaged(
+      attach(table(MUNKIDORI[1], [FILLER], FILLER, [WATER_MON]), "p1", "active", DARK),
+      "p1",
+      0,
+      40,
+    );
     start = damaged(start, "p1", "active", 10);
     const first = run(start, use("Adrena-Brain", ACTIVE)).state;
     const q1 = prompt(first);
@@ -705,7 +853,9 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
   it("refused when NO own body carries damage (could only whiff — D222's grey-out agrees)", () => {
     const clean = attach(table(MUNKIDORI[2]), "p1", "active", DARK);
     expect(refused(clean, use("Adrena-Brain", ACTIVE)).code).toBe("NO_LEGAL_TARGET");
-    expect(programPlayable(clean, [{ op: "moveCountersToOpponentChosen", upTo: 3 }], "p1")).toBe(false);
+    expect(programPlayable(clean, [{ op: "moveCountersToOpponentChosen", upTo: 3 }], "p1")).toBe(
+      false,
+    );
   });
 
   it("🛑 a LETHAL move is swept mid-turn and is NOT \"by an attack\": the Prize is p1's, but Oh No You Don't does not reduce it", () => {
@@ -752,7 +902,9 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
 
   it("a `take` above the printed 3 is refused by the validator (the ceiling is the print's)", () => {
     const parked = run(brainBoard(50), use("Adrena-Brain", ACTIVE)).state;
-    expect(refused(parked, pick({ seat: "p2", spot: { spot: "active" } }, 4)).code).toBe("BAD_EFFECT_CHOICE");
+    expect(refused(parked, pick({ seat: "p2", spot: { spot: "active" } }, 4)).code).toBe(
+      "BAD_EFFECT_CHOICE",
+    );
   });
 
   it("Mind Bend still derives: 60 and Confused", () => {
@@ -765,7 +917,7 @@ describe("§2 — Munkidori \"Adrena-Brain\" (up to 3 counters, own → opponent
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => {
+describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
   it("🛑 THE DIRECTION: p2's Milotic locks p1's cards and never p2's own", () => {
     const state = table(FILLER, [], MILOTIC);
     expect(inPlayToHandBlocked(state, "p1")).toBe(true);
@@ -780,16 +932,28 @@ describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => 
     const state = table(FLUTTER_MANE, [], MILOTIC);
     expect(inPlayToHandBlocked(state, "p1")).toBe(false);
     expect(conditionHolds(state, "p1", { kind: "yourInPlayToHandAllowed" })).toBe(true);
-    expect(conditionHolds(table(FILLER, [], MILOTIC), "p1", { kind: "yourInPlayToHandAllowed" })).toBe(false);
+    expect(
+      conditionHolds(table(FILLER, [], MILOTIC), "p1", { kind: "yourInPlayToHandAllowed" }),
+    ).toBe(false);
   });
 
   it("🛑 returnBenched (bench): Swoobat's Happy Return WHIFFS — the body stays on the Bench", () => {
-    const start = attach(attach(table(SWOOBAT, [WATER_MON], MILOTIC), "p1", "active", COLORLESS), "p1", 0, WATER);
+    const start = attach(
+      attach(table(SWOOBAT, [WATER_MON], MILOTIC), "p1", "active", COLORLESS),
+      "p1",
+      0,
+      WATER,
+    );
     const { state, events } = run(start, attack(0));
     expect(state.players.p1.bench).toHaveLength(1);
     expect(all(events, "POKEMON_RETURNED")).toEqual([]);
     // Control: no Milotic, the same attack returns it.
-    const free = attach(attach(table(SWOOBAT, [WATER_MON]), "p1", "active", COLORLESS), "p1", 0, WATER);
+    const free = attach(
+      attach(table(SWOOBAT, [WATER_MON]), "p1", "active", COLORLESS),
+      "p1",
+      0,
+      WATER,
+    );
     const ok = run(free, attack(0)).state;
     expect(ok.players.p1.bench).toHaveLength(0);
     expect(ok.players.p1.hand.map((u) => idOf(ok, u)).sort()).toEqual([WATER, WATER_MON].sort());
@@ -798,7 +962,9 @@ describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => 
   it("🛑 returnBenched (Active arm, Scoop Up Cyclone's writer): the Active stays", () => {
     const start = table(FILLER, [WATER_MON], MILOTIC);
     const events: GameEvent[] = [];
-    const program: EffectOp[] = [{ op: "returnBenched", whose: "self", dest: "hand", includeActive: true }];
+    const program: EffectOp[] = [
+      { op: "returnBenched", whose: "self", dest: "hand", includeActive: true },
+    ];
     const out = runProgram(start, program, { seat: "p1" }, events);
     if (out.kind !== "parked") throw new Error("expected the two-body pick to park");
     // Answer the ACTIVE through the resumed path is not reachable here; ask the writer on a ONE-body board instead.
@@ -816,7 +982,9 @@ describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => 
   it("🛑 R-MC2: Scoop Up Cyclone with every own body locked is REFUSED (no afford-then-reject), and Chill Teaser Toy by the Milotic OWNER is unplayable", () => {
     const locked = setHand(table(FILLER, [WATER_MON], MILOTIC), "p1", [SCOOP_UP]);
     const uid = locked.players.p1.hand[0] as string;
-    expect(refused(locked, { type: "playTrainer", seat: "p1", uid } as GameAction).code).toBe("NO_LEGAL_TARGET");
+    expect(refused(locked, { type: "playTrainer", seat: "p1", uid } as GameAction).code).toBe(
+      "NO_LEGAL_TARGET",
+    );
     const free = setHand(table(FILLER, [WATER_MON]), "p1", [SCOOP_UP]);
     expect(programPlayable(free, programFor(SCOOP_UP)?.trainer ?? [], "p1")).toBe(true);
     // R-MC1 + R-MC2 — p1 OWNS Milotic: the Toy would put p2's Energy into p2's hand, which p1's own lock stops.
@@ -846,7 +1014,7 @@ describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => 
     expect(bodyAt(run(free, attack(0)).state, "p2", "active").stack).toHaveLength(1);
   });
 
-  it("🛑 discardEnergy `to: \"hand\"`: Shiftry's Energy Loop keeps its Energy attached under the lock (the 140 still lands)", () => {
+  it('🛑 discardEnergy `to: "hand"`: Shiftry\'s Energy Loop keeps its Energy attached under the lock (the 140 still lands)', () => {
     const start = attach(table(SHIFTRY, [], MILOTIC), "p1", "active", COLORLESS, 2);
     const { state, events } = run(start, attack(1));
     expect(bodyAt(state, "p1", "active").energy).toHaveLength(2);
@@ -855,8 +1023,13 @@ describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => 
     expect(bodyAt(free, "p1", "active").energy).toHaveLength(1);
   });
 
-  it("🛑 D385 — Zarude's Jungle Whip does NOT offer its cost under the lock (a \"yes\" would buy +80 for a whiff): the base 80 lands with no prompt", () => {
-    const locked = attach(attach(table(ZARUDE, [], MILOTIC), "p1", "active", GRASS, 2), "p1", "active", COLORLESS);
+  it('🛑 D385 — Zarude\'s Jungle Whip does NOT offer its cost under the lock (a "yes" would buy +80 for a whiff): the base 80 lands with no prompt', () => {
+    const locked = attach(
+      attach(table(ZARUDE, [], MILOTIC), "p1", "active", GRASS, 2),
+      "p1",
+      "active",
+      COLORLESS,
+    );
     const { state } = run(locked, attack(1));
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(bodyAt(state, "p2", "active").damage).toBe(80);
@@ -873,9 +1046,13 @@ describe("§3 — Milotic \"Mentally Calm\" (the in-play → hand lock)", () => 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§4 — Huntail \"Diver's Catch\" (the Knock Out rescue, auto-fired per D27)", () => {
+describe('§4 — Huntail "Diver\'s Catch" (the Knock Out rescue, auto-fired per D27)', () => {
   /** p1 Hitter Active (300 for nothing); p2 `koed` Active carrying 2 {W} + 1 {C} Basic + 1 Special, `oppBench`. */
-  function catchBoard(koed: string = WATER_MON, oppBench: readonly string[] = [HUNTAIL], p1Bench: readonly string[] = []): GameState {
+  function catchBoard(
+    koed: string = WATER_MON,
+    oppBench: readonly string[] = [HUNTAIL],
+    p1Bench: readonly string[] = [],
+  ): GameState {
     let state = table(HITTER, p1Bench, koed, oppBench);
     state = attach(state, "p2", "active", WATER, 2);
     state = attach(state, "p2", "active", COLORLESS, 1);
@@ -940,7 +1117,7 @@ describe("§4 — Huntail \"Diver's Catch\" (the Knock Out rescue, auto-fired pe
     expect([...state.players.p2.hand].sort()).toEqual([...benchWater, ...ownWater].sort());
   });
 
-  it("🛑 a CHECKUP Knock Out (Poison) is not \"by an attack\" — no rescue", () => {
+  it('🛑 a CHECKUP Knock Out (Poison) is not "by an attack" — no rescue', () => {
     let start = catchBoard();
     start = withBody(damaged(start, "p2", "active", 90), "p2", "active", (p) => ({
       ...p,
@@ -969,15 +1146,21 @@ describe("§4 — Huntail \"Diver's Catch\" (the Knock Out rescue, auto-fired pe
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§5 — Klinklang \"Emergency Rotation\" (the first in-hand Ability)", () => {
+describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', () => {
   const benchIt = (state: GameState): GameAction =>
-    ({ type: "playBasicToBench", seat: "p1", uid: state.players.p1.hand[0] as string }) as GameAction;
+    ({
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: state.players.p1.hand[0] as string,
+    }) as GameAction;
 
   it("🛑 refused without an opposing Stage 2, with the printed clause", () => {
     const state = setHand(table(FILLER), "p1", [KLINKLANG]);
     const no = refused(state, benchIt(state));
     expect(no.code).toBe("ABILITY_CONDITION_NOT_MET");
-    expect(no.message).toBe("Emergency Rotation can only be used if your opponent has any Stage 2 Pokémon in play (§9)");
+    expect(no.message).toBe(
+      "Emergency Rotation can only be used if your opponent has any Stage 2 Pokémon in play (§9)",
+    );
   });
 
   it("🛑 an opposing Stage 2 (Active OR Bench) admits it: benched, ABILITY_USED filed, the allowance spent", () => {
@@ -1002,11 +1185,12 @@ describe("§5 — Klinklang \"Emergency Rotation\" (the first in-hand Ability)",
     const scoop = state.players.p1.hand[1] as string;
     state = run(state, { type: "playBasicToBench", seat: "p1", uid: klink } as GameAction).state;
     state = run(state, { type: "playTrainer", seat: "p1", uid: scoop } as GameAction).state;
-    if (state.phase.kind === "effect:choose") state = run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
+    if (state.phase.kind === "effect:choose")
+      state = run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
     expect(state.players.p1.hand).toContain(klink);
-    expect(refused(state, { type: "playBasicToBench", seat: "p1", uid: klink } as GameAction).code).toBe(
-      "ABILITY_ALREADY_USED",
-    );
+    expect(
+      refused(state, { type: "playBasicToBench", seat: "p1", uid: klink } as GameAction).code,
+    ).toBe("ABILITY_ALREADY_USED");
   });
 
   it("🛑 R-KR1: Potent Glare (a Pokémon-PLAY bar) refuses it", () => {
@@ -1025,7 +1209,10 @@ describe("§5 — Klinklang \"Emergency Rotation\" (the first in-hand Ability)",
     expect(disabledAbilityUids(board).has(top(bodyAt(board, "p1", 1)))).toBe(true);
     // (b) the in-hand Klinklang still uses Emergency Rotation (R-KR2: the lock reaches in-play bodies only);
     const { state: after, events } = run(board, benchIt(board));
-    expect(after.players.p1.bench.map(top)).toEqual([...board.players.p1.bench.map(top), klinklang]);
+    expect(after.players.p1.bench.map(top)).toEqual([
+      ...board.players.p1.bench.map(top),
+      klinklang,
+    ]);
     expect(all(events, "ABILITY_USED")).toHaveLength(1);
     // (c) and ONCE LANDED the same lock does reach it — the witness is a lock that silences this very card.
     expect(disabledAbilityUids(after).has(klinklang)).toBe(true);
@@ -1048,12 +1235,5 @@ describe("§5 — Klinklang \"Emergency Rotation\" (the first in-hand Ability)",
     const after = run(start, attack(0)).state;
     expect(bodyAt(after, "p2", "active").damage).toBe(130);
     expect(bodyAt(after, "p1", "active").energy).toEqual([]);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("§6 — the version", () => {
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

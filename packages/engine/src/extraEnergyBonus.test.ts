@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
-import { effectiveAttackCost, engineVersion } from "./index";
+import { effectiveAttackCost } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import {
   EXTRA_ENERGY_DECK,
@@ -149,7 +145,10 @@ function activeOf(state: GameState, seat: Seat): InPlayPokemon {
 }
 
 /** The printed cost of the Active's attack 0, and the cost §8.2 actually charges. */
-function costs(state: GameState, seat: Seat): { printed: readonly string[]; effective: readonly string[] } {
+function costs(
+  state: GameState,
+  seat: Seat,
+): { printed: readonly string[]; effective: readonly string[] } {
   const body = activeOf(state, seat);
   const card = state.cardIdByUid[body.stack[body.stack.length - 1] ?? ""] ?? "";
   const printed = FIXTURE_COSTS[card] ?? [];
@@ -206,10 +205,16 @@ describe("§1 — the price, RE-DERIVED, and D368's refusal collected rather tha
     // printing prints 30. The catalog prints the threshold ONLY at 2 (asserted on the
     // POPULATION below, not on this specimen), so a constant `2` would pass every
     // corpus rung and fail here.
-    expect(deriveAttackDamageBonus(`If ${CLAUSE.replace("least 2", "least 3")}, this attack does 80 more damage.`)).toEqual(
-      { per: 80, count: { kind: "extraEnergyUnitsBeyondCost", extra: 3 } },
-    );
-    expect(corpus().filter(([, s]) => /at least \d+ extra Energy/.test(s) && !s.includes("at least 2 extra"))).toHaveLength(0);
+    expect(
+      deriveAttackDamageBonus(
+        `If ${CLAUSE.replace("least 2", "least 3")}, this attack does 80 more damage.`,
+      ),
+    ).toEqual({ per: 80, count: { kind: "extraEnergyUnitsBeyondCost", extra: 3 } });
+    expect(
+      corpus().filter(
+        ([, s]) => /at least \d+ extra Energy/.test(s) && !s.includes("at least 2 extra"),
+      ),
+    ).toHaveLength(0);
   });
 
   it("🛑 D368's disqualification is RE-DRIVEN and still holds — two costs, one board", () => {
@@ -225,8 +230,16 @@ describe("§1 — the price, RE-DERIVED, and D368's refusal collected rather tha
     expect([...thresholds].sort()).toEqual([4, 5]);
     // …and it is a DIFFERENCE ON A BOARD, not on paper: four single-unit Energy arms
     // the cost-2 printing and leaves the cost-3 one unarmed, board for board.
-    expect(damageDealt(ready(4360, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 }))).toBe(100);
-    expect(damageDealt(ready(4361, "p1", "fix-highvoltage", { "fix-lightning-energy": 2, "fix-energy": 2 }))).toBe(20);
+    expect(
+      damageDealt(
+        ready(4360, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 }),
+      ),
+    ).toBe(100);
+    expect(
+      damageDealt(
+        ready(4361, "p1", "fix-highvoltage", { "fix-lightning-energy": 2, "fix-energy": 2 }),
+      ),
+    ).toBe(20);
   });
 
   it("the two CONSEQUENTS stay disjoint — D125's rule, on this clause", () => {
@@ -297,7 +310,13 @@ describe("§2 — CARDS versus UNITS: the discriminating boards", () => {
 describe("§3 — the cost is the EFFECTIVE one, on both live surcharge sources", () => {
   it("🛑 the STADIUM's Basic surcharge takes the bonus away — same attachment", () => {
     const bare = ready(4367, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 });
-    const charged = ready(4368, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 }, { stadium: true });
+    const charged = ready(
+      4368,
+      "p1",
+      "fix-powerpress",
+      { "fix-psychic-energy": 1, "fix-energy": 3 },
+      { stadium: true },
+    );
     // The two costs really do differ, which is what makes the damage difference
     // attributable to the fold and not to the board.
     expect(costs(bare, "p1").effective).toEqual(["Psychic", "Colorless"]);
@@ -314,7 +333,13 @@ describe("§3 — the cost is the EFFECTIVE one, on both live surcharge sources"
     // the reading for the two real printings (a Stage 1 and a Stage 2) that the
     // Stadium's "each Basic Pokémon" gate would never have reached.
     const bare = ready(4369, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 });
-    const aura = ready(4370, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 }, { defender: "sv03-052" });
+    const aura = ready(
+      4370,
+      "p1",
+      "fix-powerpress",
+      { "fix-psychic-energy": 1, "fix-energy": 3 },
+      { defender: "sv03-052" },
+    );
     expect(aura.stadium).toBeNull();
     expect(costs(aura, "p1").effective).toHaveLength(3);
     expect(damageDealt(bare)).toBe(100);
@@ -383,7 +408,9 @@ describe("§5 — near-misses, ONE axis apiece, each with an ADMITTED twin", () 
   });
 
   it("the parenthetical is LOAD-BEARING — dropping it drops the cost from the sentence", () => {
-    refused("If this Pokémon has at least 2 extra Energy attached, this attack does 80 more damage.");
+    refused(
+      "If this Pokémon has at least 2 extra Energy attached, this attack does 80 more damage.",
+    );
     admitted(SENTENCE_80);
   });
 
@@ -462,9 +489,5 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(activeOf(after.state, "p1").energy).toHaveLength(attachedBefore);
     expect(activeOf(frozen, "p2").damage).toBe(0);
     expect(activeOf(after.state, "p2").damage).toBe(100);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

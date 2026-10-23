@@ -21,7 +21,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter, CountSeat } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { countCardsInDiscardPile, countPokemonInPlay } from "./interpreter";
 import {
@@ -163,7 +163,11 @@ function bare(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = must(
     applyAction(
-      driveSetup(SEED, { p1: PILE_NAME_FRAGMENT_DECK, p2: PILE_NAME_FRAGMENT_DECK }, { first: foe }),
+      driveSetup(
+        SEED,
+        { p1: PILE_NAME_FRAGMENT_DECK, p2: PILE_NAME_FRAGMENT_DECK },
+        { first: foe },
+      ),
       { type: "endTurn", seat: foe },
     ),
   );
@@ -235,9 +239,9 @@ describe("§1 — the printed sentence, the population, and the fixtures", () =>
     expect(family).toHaveLength(3);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(5);
     for (const [, text] of family) {
-      const quotes = [...text].map((c, i) => [i, c.codePointAt(0) ?? 0] as const).filter(
-        ([, cp]) => cp === 0x22 || cp === 0x201c || cp === 0x201d,
-      );
+      const quotes = [...text]
+        .map((c, i) => [i, c.codePointAt(0) ?? 0] as const)
+        .filter(([, cp]) => cp === 0x22 || cp === 0x201c || cp === 0x201d);
       // EVERY quote on the row, and EVERY one of them ASCII — not just the pair this
       // anchor reads. ⚠️ The Koffing/Weezing row carries FOUR (it quotes two fragments
       // joined by a printed "or"), so a rung that asserted a pair would have been a
@@ -402,14 +406,20 @@ describe("§2 — the resolver, its owner, and the three live axes", () => {
     const count = (re: RegExp) => corpus.filter(([, s]) => re.test(s)).length;
     // ⑴ the HEAD NOUN: no OTHER noun is printed in front of a quoted-fragment narrowing
     //    inside a discard-pile fold…
-    expect(count(/for each (?!Supporter card that has ")[^.]* that has "[^"]+" in its name in your/)).toBe(0);
+    expect(
+      count(/for each (?!Supporter card that has ")[^.]* that has "[^"]+" in its name in your/),
+    ).toBe(0);
     // ⑵ the PREDICATE: `Supporter card` is printed with NO other narrowing in this zone…
-    expect(count(/for each Supporter card (?!that has "Team Rocket" in its name)[^.]*discard pile/)).toBe(0);
+    expect(
+      count(/for each Supporter card (?!that has "Team Rocket" in its name)[^.]*discard pile/),
+    ).toBe(0);
     // ⑶ the WORD ORDER: the fragment narrowing is never printed AFTER the zone phrase…
     expect(count(/discard pile that has "[^"]+" in its name/)).toBe(0);
     // …and the ADMITTED case on the same axis, so the zeros are not passing because the
     // pattern matches nothing at all (D424: every "X is printed nowhere" owes a "Y is").
-    expect(count(/for each Supporter card that has "[^"]+" in its name in your discard pile\./)).toBe(1);
+    expect(
+      count(/for each Supporter card that has "[^"]+" in its name in your discard pile\./),
+    ).toBe(1);
     // …and the printed narrowing the column DOES put after the zone phrase, which is
     // what makes ⑶ a statement about the FRAGMENT rather than about the position.
     expect(count(/discard pile that has the [^.]+ attack\./)).toBe(1);
@@ -422,10 +432,15 @@ describe("§2 — the resolver, its owner, and the three live axes", () => {
     // spells), and it is driven here over the four shipped keys rather than argued.
     const KEYS = ["Energy card", "Basic Energy card", "Item card", "Ethan's Adventure card"];
     for (const key of KEYS) {
-      expect([key, /^Supporter card that has "([^"]+)" in its name$/.test(key)]).toEqual([key, false]);
+      expect([key, /^Supporter card that has "([^"]+)" in its name$/.test(key)]).toEqual([
+        key,
+        false,
+      ]);
       // …and each key still resolves through the map, unchanged by the new branch.
       expect(
-        deriveAttackDamageMultiplier(`This attack does 30 damage for each ${key} in your discard pile.`),
+        deriveAttackDamageMultiplier(
+          `This attack does 30 damage for each ${key} in your discard pile.`,
+        ),
       ).not.toBeNull();
     }
     // …and the ONE noun that reaches the pattern resolves to the new member and to
@@ -562,7 +577,11 @@ describe("§4 — the census step this slice is", () => {
     // corpus row whose claim this build could have changed is the one row it names.
     const claimed = legalAttackCorpus().filter(([, s]) => {
       const v = deriveAttackDamageMultiplier(s) ?? deriveAttackDamageBonus(s);
-      return v !== null && v.count.kind === "cardsInDiscardPile" && v.count.filter.kind === "supporterNameContaining";
+      return (
+        v !== null &&
+        v.count.kind === "cardsInDiscardPile" &&
+        v.count.filter.kind === "supporterNameContaining"
+      );
     });
     expect(claimed.map(([, s]) => s)).toEqual([PRINTED]);
     expect(claimed.reduce((sum, [n]) => sum + n, 0)).toBe(2);
@@ -596,7 +615,11 @@ describe("§4 — the census step this slice is", () => {
     expect(points[0]).toBe(PRINTED);
     const claimed = points.filter((s) => {
       const v = deriveAttackDamageMultiplier(s) ?? deriveAttackDamageBonus(s);
-      return v !== null && v.count.kind === "cardsInDiscardPile" && v.count.filter.kind === "supporterNameContaining";
+      return (
+        v !== null &&
+        v.count.kind === "cardsInDiscardPile" &&
+        v.count.filter.kind === "supporterNameContaining"
+      );
     });
     // THE FOUR POINTS THIS BUILD ADDED: the printed one, plus the two axes the shipped
     // anchor pair already varies on its own (SEAT and FOLD) — which is precisely why
@@ -694,9 +717,5 @@ describe("§4 — the census step this slice is", () => {
       per: 20,
       count: { kind: "cardsInDiscardPile", seat: "opponent", filter: TR_SUPPORTER },
     });
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

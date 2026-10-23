@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCopy,
@@ -1161,7 +1157,9 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // claimed: the SAME board fact resolves from the OTHER printed notation, which
     // no literal row spells anywhere in the table.
     for (const clause of TEMPLATE_OWNED) {
-      expect(deriveAttackDamageBonus(`If ${clause}, this attack does 30 more damage.`)).not.toBeNull();
+      expect(
+        deriveAttackDamageBonus(`If ${clause}, this attack does 30 more damage.`),
+      ).not.toBeNull();
     }
     // 🛑🆕🆕 **AND THE ANCHOR HALF REALLY IS ANCHOR-OWNED — DRIVEN, AS ITS TWO
     // NEIGHBOURS ARE.** D436 added this bucket and no driver for it, so membership was

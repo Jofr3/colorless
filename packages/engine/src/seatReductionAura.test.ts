@@ -478,12 +478,15 @@ describe("D321 §2 — Stone Palace", () => {
     expect(seatDamageReduction(activeSource, ally, "all", "p2")).toBe(0);
   });
 
-  it.each(SEEDS)("a NON-Steven's ally is not shielded — the beneficiary clause (seed %i)", (seed) => {
-    // `fix-plain-ally` differs from `fix-steven-ally` in the NAME PREFIX and in
-    // nothing else the scan reads. Without this line a build that dropped
-    // `beneficiary` would be green on every other board in this section.
-    expect(dealt(board(seed, PLAIN_ALLY, [CARBINK]))).toBe(100);
-  });
+  it.each(SEEDS)(
+    "a NON-Steven's ally is not shielded — the beneficiary clause (seed %i)",
+    (seed) => {
+      // `fix-plain-ally` differs from `fix-steven-ally` in the NAME PREFIX and in
+      // nothing else the scan reads. Without this line a build that dropped
+      // `beneficiary` would be green on every other board in this section.
+      expect(dealt(board(seed, PLAIN_ALLY, [CARBINK]))).toBe(100);
+    },
+  );
 
   it.each(SEEDS)("TWO benched Carbink still shield 30, not 60 — the cap (seed %i)", (seed) => {
     // "The effect of Stone Palace doesn't stack." A summing scan pays 60 here and
@@ -540,13 +543,19 @@ describe("D321 §3 — Curly Wall", () => {
     expect(dealt(board(seed, C_BASIC, [BOUFFALANT_REPRINT, BOUFFALANT_REPRINT]))).toBe(40);
   });
 
-  it.each(SEEDS)("an EVOLUTION {C} body is not shielded — the `stage` conjunct (seed %i)", (seed) => {
-    expect(dealt(board(seed, C_EVO, [BOUFFALANT, BOUFFALANT_REPRINT]))).toBe(100);
-  });
+  it.each(SEEDS)(
+    "an EVOLUTION {C} body is not shielded — the `stage` conjunct (seed %i)",
+    (seed) => {
+      expect(dealt(board(seed, C_EVO, [BOUFFALANT, BOUFFALANT_REPRINT]))).toBe(100);
+    },
+  );
 
-  it.each(SEEDS)("a Basic that is NOT {C} is not shielded — the type conjunct (seed %i)", (seed) => {
-    expect(dealt(board(seed, M_BASIC, [BOUFFALANT, BOUFFALANT_REPRINT]))).toBe(100);
-  });
+  it.each(SEEDS)(
+    "a Basic that is NOT {C} is not shielded — the type conjunct (seed %i)",
+    (seed) => {
+      expect(dealt(board(seed, M_BASIC, [BOUFFALANT, BOUFFALANT_REPRINT]))).toBe(100);
+    },
+  );
 
   it("a Bouffalant shields ITSELF once the partner is there — and neither one twice", () => {
     // Bouffalant is a Basic {C} Pokémon, so each is inside the set it pays. Both
@@ -633,13 +642,16 @@ describe("D321 §4 — the field", () => {
     expect(seatDamageReduction(state, shielded, "all", "p2")).toBe(30);
   });
 
-  it.each(SEEDS)("the damage EVENT reports the reduced number, not the printed one (seed %i)", (seed) => {
-    const dealtEvent = events(board(seed, STEVEN_ALLY, [CARBINK])).find(
-      (e) => e.type === "DAMAGE_DEALT",
-    );
-    expect(dealtEvent?.type).toBe("DAMAGE_DEALT");
-    if (dealtEvent?.type !== "DAMAGE_DEALT") throw new Error("expected DAMAGE_DEALT");
-    expect(dealtEvent.base).toBe(100);
-    expect(dealtEvent.dealt).toBe(70);
-  });
+  it.each(SEEDS)(
+    "the damage EVENT reports the reduced number, not the printed one (seed %i)",
+    (seed) => {
+      const dealtEvent = events(board(seed, STEVEN_ALLY, [CARBINK])).find(
+        (e) => e.type === "DAMAGE_DEALT",
+      );
+      expect(dealtEvent?.type).toBe("DAMAGE_DEALT");
+      if (dealtEvent?.type !== "DAMAGE_DEALT") throw new Error("expected DAMAGE_DEALT");
+      expect(dealtEvent.base).toBe(100);
+      expect(dealtEvent.dealt).toBe(70);
+    },
+  );
 });

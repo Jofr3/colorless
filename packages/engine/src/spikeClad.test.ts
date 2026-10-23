@@ -369,8 +369,9 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY, SPIKY]);
     // `count: 2` and not 3 — the printed "up to 2" is a CAP, and the remainder is
     // what a raised count would eat.
-    expect(after.state.players.p1.discard.filter((uid) => idOf(after.state, uid) === SPIKY).length)
-      .toBe(1);
+    expect(
+      after.state.players.p1.discard.filter((uid) => idOf(after.state, uid) === SPIKY).length,
+    ).toBe(1);
     // …and the trigger really fired, rather than the Energy arriving some other way.
     expect(after.events.map((e: GameEvent) => e.type)).toContain("ABILITY_TRIGGERED");
   });
@@ -457,7 +458,7 @@ describe("D353 §3 — the three spellings that would have avoided the field, re
     return uid === undefined ? undefined : idOf(state, uid);
   }
 
-  it("`energyType: \"Colorless\" + anyEnergy` reaches MIST — the wrong card", () => {
+  it('`energyType: "Colorless" + anyEnergy` reaches MIST — the wrong card', () => {
     // `energyProvidesOf` (cards.ts) returns "Colorless" for EVERY Special Energy
     // and for every `Normal`-typed Energy whose name is not a basic type word. In
     // Standard that is SEVEN Special names (Boomerang, Enriching, Legacy, Mist,
@@ -470,7 +471,7 @@ describe("D353 §3 — the three spellings that would have avoided the field, re
     expect(reachable({ anyEnergy: true })).toBe(FIGHTING);
   });
 
-  it("`energyType: \"Spiky\"` matches the EMPTY SET — the silent-whiff failure", () => {
+  it('`energyType: "Spiky"` matches the EMPTY SET — the silent-whiff failure', () => {
     // `energyProvidesOf` only ever returns a member of `BASIC_ENERGY_TYPES`, so no
     // card in any zone can answer this. It is not merely wrong, it is INVISIBLY
     // wrong: `programPlayable` refuses an Ability whose attach could only whiff,
@@ -544,10 +545,12 @@ describe("D353 §4 — `energyName` is orthogonal to `source` and to the riders"
 
   it("the two source zones are independent — a name in the DISCARD is not in the HAND", () => {
     const { state } = board([SPIKY, SPIKY]);
-    expect(firstAttachableEnergy(state, "p1", "discard", undefined, undefined, "Spiky Energy"))
-      .toBeDefined();
-    expect(firstAttachableEnergy(state, "p1", "hand", undefined, undefined, "Spiky Energy"))
-      .toBeUndefined();
+    expect(
+      firstAttachableEnergy(state, "p1", "discard", undefined, undefined, "Spiky Energy"),
+    ).toBeDefined();
+    expect(
+      firstAttachableEnergy(state, "p1", "hand", undefined, undefined, "Spiky Energy"),
+    ).toBeUndefined();
   });
 });
 
@@ -594,7 +597,9 @@ describe("D353/D359 §5 — the attach lands on the EVOLVED body, and now it ASK
     const one = evolveAndTake(state, evolveUid, 1);
     expect(energyIdsOn(one.state, ACTIVE_REF)).toEqual([SPIKY]);
     // …and the second Spiky is still in the discard pile, not consumed.
-    expect(one.state.players.p1.discard.filter((u) => idOf(one.state, u) === SPIKY)).toHaveLength(1);
+    expect(one.state.players.p1.discard.filter((u) => idOf(one.state, u) === SPIKY)).toHaveLength(
+      1,
+    );
     // ZERO — the decline, which no route on this card could reach before either:
     // the trigger is a *"you may"*, but a board trigger auto-fires and the pick
     // beneath it was mandatory.
@@ -671,8 +676,9 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
     // would ship a narrowing that reached one consumer of four.
     const { state } = board([FIGHTING, MIST]);
     // A pile with no Spiky in it answers "nothing to attach" to the gate…
-    expect(firstAttachableEnergy(state, "p1", "discard", undefined, undefined, "Spiky Energy"))
-      .toBeUndefined();
+    expect(
+      firstAttachableEnergy(state, "p1", "discard", undefined, undefined, "Spiky Energy"),
+    ).toBeUndefined();
     // …while the UNNARROWED question answers "yes", which is exactly the divergence
     // a gate that ignored the name would produce.
     expect(firstAttachableEnergy(state, "p1", "discard", undefined)).toBeDefined();

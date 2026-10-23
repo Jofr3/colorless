@@ -48,7 +48,8 @@ const COMMUNITY_CENTER = "sv06-146";
 
 const ARIANA_TEXT =
   "Draw cards until you have 5 cards in your hand. If all of your Pokémon in play are Team Rocket's Pokémon, draw cards until you have 8 cards in your hand instead.";
-const BILLY_TEXT = "Draw 2 cards. Then, if you have 10 or more cards in your hand, draw 2 more cards.";
+const BILLY_TEXT =
+  "Draw 2 cards. Then, if you have 10 or more cards in your hand, draw 2 more cards.";
 const ELIXIR_TEXT = "Heal 60 damage from your Active {N} Pokémon.";
 const GREAT_BALL_TEXT =
   "Flip a coin. If heads, search your deck for an Evolution Team Rocket's Pokémon, reveal it, and put it into your hand. If tails, search your deck for a Basic Team Rocket's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.";
@@ -152,7 +153,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -165,7 +168,8 @@ function opened(seed: number): GameState {
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -192,7 +196,8 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
   setActiveFromDeck(ensureInDeck(state, seat, id), seat, id);
-const seatBench = (state: GameState, seat: Seat, id: string) => benchFromDeck(ensureInDeck(state, seat, id), seat, id);
+const seatBench = (state: GameState, seat: Seat, id: string) =>
+  benchFromDeck(ensureInDeck(state, seat, id), seat, id);
 
 /** p1's turn 2 with `active` / `bench` for p1 and `oppActive` / `oppBench` for p2. */
 function table(
@@ -246,7 +251,11 @@ function evolveActive(prior: GameState, seat: Seat, id: string): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), active: { ...active, stack: [...active.stack, uid] } },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active: { ...active, stack: [...active.stack, uid] },
+      },
     },
   };
 }
@@ -256,10 +265,15 @@ function afflict(state: GameState, seat: Seat, status: "poisoned" | "burned"): G
   const active = state.players[seat].active;
   if (active === null) throw new Error("no Active");
   const conditions =
-    status === "poisoned" ? { ...active.conditions, poisonDamage: 10 } : { ...active.conditions, burned: true };
+    status === "poisoned"
+      ? { ...active.conditions, poisonDamage: 10 }
+      : { ...active.conditions, burned: true };
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...state.players[seat], active: { ...active, conditions } } },
+    players: {
+      ...state.players,
+      [seat]: { ...state.players[seat], active: { ...active, conditions } },
+    },
   };
 }
 
@@ -283,8 +297,10 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-const drawn = (events: readonly GameEvent[]) => all(events, "CARDS_DRAWN").map((e) => e.uids.length);
-const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ? undefined : state.cardIdByUid[uid]);
+const drawn = (events: readonly GameEvent[]) =>
+  all(events, "CARDS_DRAWN").map((e) => e.uids.length);
+const idOf = (state: GameState, uid: string | undefined) =>
+  uid === undefined ? undefined : state.cardIdByUid[uid];
 const cards = (uids: readonly string[]): GameAction => ({
   type: "resolveEffect",
   seat: "p1",
@@ -293,7 +309,13 @@ const cards = (uids: readonly string[]): GameAction => ({
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D556 §1 — the prints, and the registry rows that map them", () => {
-  const ROWS: readonly { name: string; ids: readonly string[]; text: string; subtype: string; program: unknown }[] = [
+  const ROWS: readonly {
+    name: string;
+    ids: readonly string[];
+    text: string;
+    subtype: string;
+    program: unknown;
+  }[] = [
     {
       name: "Team Rocket's Ariana",
       ids: ARIANA,
@@ -320,7 +342,11 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
         trainer: [
           { op: "drawCards", count: 2 },
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
-          { op: "conditionGate", cond: { kind: "yourHandAtLeast", count: 10 }, then: [{ op: "drawCards", count: 2 }] },
+          {
+            op: "conditionGate",
+            cond: { kind: "yourHandAtLeast", count: 10 },
+            then: [{ op: "drawCards", count: 2 }],
+          },
         ],
       },
     },
@@ -439,7 +465,9 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
 
   it("six texts, six DISTINCT objects (D199)", () => {
     const objects = new Set(
-      [ARIANA[0], BILLY[0], ELIXIR[0], GREAT_BALL[0], CARETAKER[0], PECHARUNT[0]].map((id) => programFor(id)),
+      [ARIANA[0], BILLY[0], ELIXIR[0], GREAT_BALL[0], CARETAKER[0], PECHARUNT[0]].map((id) =>
+        programFor(id),
+      ),
     );
     expect(objects.size).toBe(6);
   });
@@ -464,10 +492,15 @@ describe("D556 §2 — the three NEW members, driven both ways", () => {
   });
 
   it("`yourPokemonAllOwner` reads the stack TOP, and an EMPTY side is false (no vacuous truth)", () => {
-    expect(conditionHolds(evolveActive(table(FILLER), "p1", ROCKET_EVO), "p1", ALL_ROCKET)).toBe(true);
+    expect(conditionHolds(evolveActive(table(FILLER), "p1", ROCKET_EVO), "p1", ALL_ROCKET)).toBe(
+      true,
+    );
     expect(conditionHolds(evolveActive(table(ROCKET), "p1", EVO), "p1", ALL_ROCKET)).toBe(false);
     const board = table(ROCKET);
-    const empty: GameState = { ...board, players: { ...board.players, p1: { ...board.players.p1, active: null } } };
+    const empty: GameState = {
+      ...board,
+      players: { ...board.players, p1: { ...board.players.p1, active: null } },
+    };
     expect(conditionHolds(empty, "p1", ALL_ROCKET)).toBe(false);
   });
 
@@ -477,7 +510,11 @@ describe("D556 §2 — the three NEW members, driven both ways", () => {
     expect(conditionHolds(setHand(board, "p1", Array(10).fill(FILLER)), "p1", TEN)).toBe(true);
     expect(conditionHolds(setHand(board, "p1", Array(11).fill(FILLER)), "p1", TEN)).toBe(true);
     // The opponent's 10 is not yours.
-    const theirs = setHand(setHand(board, "p1", Array(3).fill(FILLER)), "p2", Array(10).fill(FILLER));
+    const theirs = setHand(
+      setHand(board, "p1", Array(3).fill(FILLER)),
+      "p2",
+      Array(10).fill(FILLER),
+    );
     expect(conditionHolds(theirs, "p1", TEN)).toBe(false);
   });
 
@@ -487,9 +524,14 @@ describe("D556 §2 — the three NEW members, driven both ways", () => {
     const theirs = table(FILLER, [], DRAGON);
     expect(conditionHolds(theirs, "p1", DRAGON_ACTIVE)).toBe(false);
     expect(conditionHolds(theirs, "p2", DRAGON_ACTIVE)).toBe(true);
-    expect(conditionHolds(table(DRAGON), "p1", { kind: "yourActiveHasType", type: "Fire" })).toBe(false);
+    expect(conditionHolds(table(DRAGON), "p1", { kind: "yourActiveHasType", type: "Fire" })).toBe(
+      false,
+    );
     const board = table(DRAGON);
-    const empty: GameState = { ...board, players: { ...board.players, p1: { ...board.players.p1, active: null } } };
+    const empty: GameState = {
+      ...board,
+      players: { ...board.players, p1: { ...board.players.p1, active: null } },
+    };
     expect(conditionHolds(empty, "p1", DRAGON_ACTIVE)).toBe(false);
   });
 
@@ -515,7 +557,7 @@ describe("D556 §3 — Team Rocket's Ariana: to 5, or to 8 when ALL your Pokémo
     expect(drawn(events)).toEqual([4]);
   });
 
-  it("a hand already at the size draws nothing — the \"until\" is a ceiling, not a count", () => {
+  it('a hand already at the size draws nothing — the "until" is a ceiling, not a count', () => {
     const { state, events } = play(table(FILLER), ARIANA[0], Array(6).fill(FILLER));
     expect(state.players.p1.hand).toHaveLength(6);
     expect(all(events, "CARDS_DRAWN")).toHaveLength(0);
@@ -619,9 +661,15 @@ describe("D556 §6 — Team Rocket's Great Ball: the coin picks the stage; the s
       const { state, events } = mustApply(parked, cards([pick]));
       expect(state.players.p1.hand, face).toContain(pick);
       const searched = all(events, "DECK_SEARCHED");
-      expect(searched.map((e) => [e.uids, e.reveal]), face).toEqual([[[pick], true]]);
+      expect(
+        searched.map((e) => [e.uids, e.reveal]),
+        face,
+      ).toEqual([[[pick], true]]);
       const order = types(events);
-      expect(order.filter((t) => t === "SHUFFLE"), face).toHaveLength(1);
+      expect(
+        order.filter((t) => t === "SHUFFLE"),
+        face,
+      ).toHaveLength(1);
       expect(order.indexOf("SHUFFLE"), face).toBeGreaterThan(order.indexOf("DECK_SEARCHED"));
       expect(state.phase, face).toEqual({ kind: "turn:action", seat: "p1" });
       expect(idOf(state, pick), face).toBe(face === "heads" ? ROCKET_EVO : ROCKET);
@@ -659,7 +707,11 @@ describe("D556 §7 — Caretaker: draw 2, and the Community Center clause (🆕�
   it("🛑 GUARD, INVERTED (D564) — Community Center is BUILT and PLAYABLE, so Caretaker's second sentence has a board and runs", () => {
     expect(programFor(COMMUNITY_CENTER)?.stadium?.ability).toBeDefined();
     const board = setHand(table(FILLER), "p1", [COMMUNITY_CENTER]);
-    const staged = mustApply(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }).state;
+    const staged = mustApply(board, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: board.players.p1.hand[0] as string,
+    }).state;
     expect(staged.stadium?.uid).toBe(board.players.p1.hand[0]);
     const { uid, state } = play(staged, CARETAKER[0], [FILLER]);
     expect(state.players.p1.discard).not.toContain(uid);
@@ -668,7 +720,7 @@ describe("D556 §7 — Caretaker: draw 2, and the Community Center clause (🆕�
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D556 §8 — Pecharunt \"Toxic Subjugation\": +50 on a Poisoned Active at every Checkup", () => {
+describe('D556 §8 — Pecharunt "Toxic Subjugation": +50 on a Poisoned Active at every Checkup', () => {
   const checkup = (board: GameState) => mustApply(board, { type: "endTurn", seat: "p1" });
 
   it("🛑 R7 — the Poison tick (10) lands FIRST, then +50 from the Ability, then the KO sweep", () => {
@@ -682,7 +734,9 @@ describe("D556 §8 — Pecharunt \"Toxic Subjugation\": +50 on a Poisoned Active
     const order = types(events);
     const poison = order.indexOf("COUNTERS_PLACED");
     expect(order.indexOf("ABILITY_TRIGGERED")).toBeGreaterThan(poison);
-    expect(order.lastIndexOf("COUNTERS_PLACED")).toBeGreaterThan(order.indexOf("ABILITY_TRIGGERED"));
+    expect(order.lastIndexOf("COUNTERS_PLACED")).toBeGreaterThan(
+      order.indexOf("ABILITY_TRIGGERED"),
+    );
   });
 
   it("R7 — a lethal total is swept THAT Checkup: 150 + 10 + 50 on a 200 HP body is a Knock Out", () => {

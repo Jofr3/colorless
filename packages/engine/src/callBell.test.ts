@@ -216,7 +216,10 @@ describe("D280 — the registry row", () => {
       expect(programFor(id)?.trainerPlayableIf?.kind, id).toBe("allOf");
     }
     expect(programFor("sv02-181")?.trainerPlayableIf).toEqual({ kind: "morePrizesThanOpponent" });
-    expect(programFor("sv01-172")?.trainerPlayableIf, "Energy Search prints no gate").toBeUndefined();
+    expect(
+      programFor("sv01-172")?.trainerPlayableIf,
+      "Energy Search prints no gate",
+    ).toBeUndefined();
   });
 });
 
@@ -329,7 +332,11 @@ describe("D280 — `allOf` folds with EVERY, and both conjuncts are load-bearing
     expect(
       conditionHolds(state, "p1", {
         kind: "allOf",
-        conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }, { kind: "yourBenchDamaged" }],
+        conditions: [
+          { kind: "youGoSecond" },
+          { kind: "yourFirstTurn" },
+          { kind: "yourBenchDamaged" },
+        ],
       }),
     ).toBe(false);
   });
@@ -533,7 +540,18 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     ).toEqual(
       // 🆕🆕🆕 D628 — plus Latios `me01-101` "Lustrous Assist" (promoted this turn AND named Mega Latias ex), the
       // same registry-read gate: never in a continuation.
-      ["mep-096", "30th-011", "30th-130", "mep-098", "30th-055", "30th-133", "mep-097", "30th-018", "30th-132", "me01-101"].sort(),
+      [
+        "mep-096",
+        "30th-011",
+        "30th-130",
+        "mep-098",
+        "30th-055",
+        "30th-133",
+        "mep-097",
+        "30th-018",
+        "30th-132",
+        "me01-101",
+      ].sort(),
     );
     expect(abilityGates.filter((c) => c.kind === "allOf")).toHaveLength(10);
   });

@@ -53,7 +53,10 @@ function stage1(id: string, name: string, from: string, abilities: Card["abiliti
 
 const LOCAL_CARDS: Record<string, Card> = {
   ...Object.fromEntries(
-    SALVATORE.map((id) => [id, { ...trainerCard(id, "Supporter", SALVATORE_TEXT), name: "Salvatore" }]),
+    SALVATORE.map((id) => [
+      id,
+      { ...trainerCard(id, "Supporter", SALVATORE_TEXT), name: "Salvatore" },
+    ]),
   ),
   [SEED]: battler(SEED, { name: "D558 Seed", hp: 300, types: ["Grass"] }),
   [OTHER]: battler(OTHER, { name: "D558 Other", hp: 300, types: ["Grass"] }),
@@ -94,7 +97,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -102,18 +107,26 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
 /** TEST SURGERY — `seat`'s hand, deck and prizes re-dealt: the hand becomes `hand`, the
     deck holds EXACTLY `deck` (in order), the Prize row keeps its size, and every other
     card goes to the discard pile. Every uid stays in exactly one zone. */
-function arrange(state: GameState, seat: Seat, hand: readonly string[], deck: readonly string[]): GameState {
+function arrange(
+  state: GameState,
+  seat: Seat,
+  hand: readonly string[],
+  deck: readonly string[],
+): GameState {
   const side = state.players[seat];
   let pool = [...side.deck, ...side.hand, ...side.prizes];
   const take = (id: string): string => {
@@ -129,7 +142,13 @@ function arrange(state: GameState, seat: Seat, hand: readonly string[], deck: re
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, hand: newHand, deck: newDeck, prizes, discard: [...side.discard, ...pool] },
+      [seat]: {
+        ...side,
+        hand: newHand,
+        deck: newDeck,
+        prizes,
+        discard: [...side.discard, ...pool],
+      },
     },
   };
 }
@@ -154,11 +173,13 @@ const play = (state: GameState) =>
   mustApply(state, { type: "playTrainer", seat: "p1", uid: state.players.p1.hand[0] as string });
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 function pendingOp(state: GameState): EffectOp {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.cont.pendingOp;
 }
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
@@ -186,7 +207,10 @@ const pickBody = (state: GameState, spot: "active" | number) =>
     seat: "p1",
     choice: {
       kind: "pokemon",
-      ref: { seat: "p1", spot: spot === "active" ? { spot: "active" } : { spot: "bench", index: spot } },
+      ref: {
+        seat: "p1",
+        spot: spot === "active" ? { spot: "active" } : { spot: "bench", index: spot },
+      },
     },
   });
 const revive = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
@@ -225,17 +249,30 @@ describe("D558 Salvatore §2 — the OFFER keeps only the Ability-free cards (R-
   it("an Ability-bearing evolution is NOT offered; null and [] abilities both are", () => {
     const parked = play(table(SEED, [], [BLOOM, BLOOM_EMPTY, BLOOM_ABLE])).state;
     expect(candidateIds(parked)).toEqual([BLOOM, BLOOM_EMPTY]);
-    expect(pendingOp(parked)).toEqual({ op: "evolveFromDeck", onto: { spot: "active" }, noAbilities: true });
+    expect(pendingOp(parked)).toEqual({
+      op: "evolveFromDeck",
+      onto: { spot: "active" },
+      noAbilities: true,
+    });
   });
 
   it("the CONTROL — the same deck under D309's key-free op offers the Ability card too", () => {
     const board = table(SEED, [], [BLOOM, BLOOM_EMPTY, BLOOM_ABLE]);
     const events: GameEvent[] = [];
-    const result = runProgram(board, [{ op: "evolveFromDeckChosen" }], { seat: "p1", invokedBy: "supporter" }, events);
+    const result = runProgram(
+      board,
+      [{ op: "evolveFromDeckChosen" }],
+      { seat: "p1", invokedBy: "supporter" },
+      events,
+    );
     if (result.kind !== "parked") throw new Error(`expected parked, got ${result.kind}`);
     const p = result.prompt;
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
-    expect([...new Set(idsOf(board, p.candidates))].sort()).toEqual([BLOOM, BLOOM_ABLE, BLOOM_EMPTY]);
+    expect([...new Set(idsOf(board, p.candidates))].sort()).toEqual([
+      BLOOM,
+      BLOOM_ABLE,
+      BLOOM_EMPTY,
+    ]);
   });
 
   it("the prompt names the printed noun, and the pick evolves the body then shuffles", () => {
@@ -272,7 +309,12 @@ describe("D558 Salvatore §3 — the BODY narrowing asks the same noun (evolvabl
 
   it("the CONTROL — without the key the same board asks WHICH body (two are eligible)", () => {
     const board = table(SEED, [OTHER], [BLOOM, OTHER_ABLE]);
-    const result = runProgram(board, [{ op: "evolveFromDeckChosen" }], { seat: "p1", invokedBy: "supporter" }, []);
+    const result = runProgram(
+      board,
+      [{ op: "evolveFromDeckChosen" }],
+      { seat: "p1", invokedBy: "supporter" },
+      [],
+    );
     if (result.kind !== "parked") throw new Error(`expected parked, got ${result.kind}`);
     expect(result.prompt.kind).toBe("choosePokemon");
     expect(result.prompt.kind === "choosePokemon" ? result.prompt.candidates : []).toHaveLength(2);
@@ -283,7 +325,11 @@ describe("D558 Salvatore §3 — the BODY narrowing asks the same noun (evolvabl
     expect(prompt(parked).kind).toBe("choosePokemon");
     expect(pendingOp(parked)).toEqual({ op: "evolveFromDeckChosen", noAbilities: true });
     const card = pickBody(parked, 0).state;
-    expect(pendingOp(card)).toEqual({ op: "evolveFromDeck", onto: { spot: "bench", index: 0 }, noAbilities: true });
+    expect(pendingOp(card)).toEqual({
+      op: "evolveFromDeck",
+      onto: { spot: "bench", index: 0 },
+      noAbilities: true,
+    });
     expect(candidateIds(card)).toEqual([BLOOM]);
     const { state } = pickCard(card, deckUid(card, BLOOM));
     expect(topId(state, 0)).toBe(BLOOM);
@@ -320,7 +366,10 @@ describe("D558 Salvatore §4 — the MOVE re-derives the offer under the key (a 
       phase: {
         ...parked.phase,
         prompt: { ...parked.phase.prompt, candidates: [...parked.phase.prompt.candidates, able] },
-        cont: { ...parked.phase.cont, pendingOp: { op: "evolveFromDeck", onto: { spot: "active" } } },
+        cont: {
+          ...parked.phase.cont,
+          pendingOp: { op: "evolveFromDeck", onto: { spot: "active" } },
+        },
       },
     };
     const { state } = pickCard(crafted, able);
@@ -336,12 +385,20 @@ describe("D558 Salvatore §5 — MATCH_RECORD_VERSION HOLDS: the optional key su
     expect(revived).toEqual(parked);
     const card = pickBody(revived, "active").state;
     expect(candidateIds(card)).toEqual([BLOOM]);
-    expect(pendingOp(card)).toEqual({ op: "evolveFromDeck", onto: { spot: "active" }, noAbilities: true });
+    expect(pendingOp(card)).toEqual({
+      op: "evolveFromDeck",
+      onto: { spot: "active" },
+      noAbilities: true,
+    });
   });
 
   it("a parked CARD question revived from JSON keeps `noAbilities` in `phase.cont.pendingOp`", () => {
     const parked = revive(play(table(SEED, [], [BLOOM, BLOOM_ABLE])).state);
-    expect(pendingOp(parked)).toEqual({ op: "evolveFromDeck", onto: { spot: "active" }, noAbilities: true });
+    expect(pendingOp(parked)).toEqual({
+      op: "evolveFromDeck",
+      onto: { spot: "active" },
+      noAbilities: true,
+    });
     expect(candidateIds(parked)).toEqual([BLOOM]);
     const { state } = pickCard(parked, deckUid(parked, BLOOM));
     expect(topId(state, "active")).toBe(BLOOM);
@@ -352,7 +409,10 @@ describe("D558 Salvatore §5 — MATCH_RECORD_VERSION HOLDS: the optional key su
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     const old: GameState = {
       ...parked,
-      phase: { ...parked.phase, cont: { ...parked.phase.cont, pendingOp: { op: "evolveFromDeckChosen" } } },
+      phase: {
+        ...parked.phase,
+        cont: { ...parked.phase.cont, pendingOp: { op: "evolveFromDeckChosen" } },
+      },
     };
     const card = pickBody(old, "active").state;
     expect(pendingOp(card)).toEqual({ op: "evolveFromDeck", onto: { spot: "active" } });
@@ -374,10 +434,18 @@ describe("D558 Salvatore §6 — R-SV1 (UNRULED): the first turn and a body put 
 
   it("a Pokémon put into play THIS turn is evolved too (the third sentence)", () => {
     let board = table(SEED, [], [BLOOM], SALVATORE[1], [SEED]);
-    board = mustApply(board, { type: "playBasicToBench", seat: "p1", uid: board.players.p1.hand[0] as string }).state;
+    board = mustApply(board, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: board.players.p1.hand[0] as string,
+    }).state;
     expect(board.players.p1.bench[0]?.turnPlayed).toBe(board.turn);
     // Two bodies now — the setup Active and the fresh Bench Seed — and the answer is the new one.
-    const parked = mustApply(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }).state;
+    const parked = mustApply(board, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: board.players.p1.hand[0] as string,
+    }).state;
     const card = pickBody(parked, 0).state;
     const { state } = pickCard(card, deckUid(card, BLOOM));
     expect(topId(state, 0)).toBe(BLOOM);

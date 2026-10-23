@@ -4,7 +4,14 @@
 // Fluorite `sv08-188` with `attacks: null` (the pre-D581 ingest dropped a Trainer's printed
 // face); read as-is by this build, the TM grants no attack for the rest of the match.
 
-import { applyAction, formatElapsed, type GameAction, type GameState, logFromEvents, redactGame } from "@colorless/engine";
+import {
+  applyAction,
+  formatElapsed,
+  type GameAction,
+  type GameState,
+  logFromEvents,
+  redactGame,
+} from "@colorless/engine";
 import { type Card, tcgdexCardSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
@@ -68,7 +75,11 @@ function v41Record(seed = 5830): MatchRecord {
     cardPool: { [TM]: STALE_TM, [FOSSIL]: STALE_FOSSIL, [BODY]: BODY_CARD },
   });
   if (!created.ok) throw new Error(created.error.message);
-  const log = logFromEvents(created.events, { names: NAMES, state: created.state, elapsed: formatElapsed(0) });
+  const log = logFromEvents(created.events, {
+    names: NAMES,
+    state: created.state,
+    elapsed: formatElapsed(0),
+  });
   return { version: 41, seed, startedAt: 1_000, names: NAMES, state: created.state, log };
 }
 
@@ -97,7 +108,9 @@ function tmOnActive(start: GameState): GameState {
   for (const s of ["p1", "p2"] as const) state = must(state, { type: "setupReady", seat: s });
   state = must(state, { type: "endTurn", seat: "p2" });
   const side = state.players.p1;
-  const zone = (["hand", "deck", "prizes"] as const).find((z) => side[z].some((u) => state.cardIdByUid[u] === TM));
+  const zone = (["hand", "deck", "prizes"] as const).find((z) =>
+    side[z].some((u) => state.cardIdByUid[u] === TM),
+  );
   if (zone === undefined) throw new Error("p1 has no TM");
   const tm = side[zone].find((u) => state.cardIdByUid[u] === TM) as string;
   const filler = side.deck.find((u) => u !== tm) as string;
@@ -132,14 +145,19 @@ describe("D583 — the version and the gate", () => {
     const old = v41Record();
     expect(readMatchRecord(old)).toBeNull();
     expect(migratablePoolIdsOf(old)?.sort()).toEqual([BODY, FOSSIL, TM].sort());
-    const migrated = migrateMatchRecord(old, { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: BODY_CARD });
+    const migrated = migrateMatchRecord(old, {
+      [TM]: FRESH_TM,
+      [FOSSIL]: FRESH_FOSSIL,
+      [BODY]: BODY_CARD,
+    });
     expect(migrated?.version).toBe(49); // 🆕🆕🆕 D621 — 42 → 43 (the migration lands on this build's version). 🆕🆕🆕 D630 — 43 → 44. 🆕🆕🆕 D636 — 44 → 45. 🆕🆕🆕 D637 — 45 → 46. 🆕🆕🆕 D640 — 46 → 47 🆕🆕🆕 D643 — 47 → 48. 🆕🆕🆕 D646 — 48 → 49.
     expect(readMatchRecord(migrated)).not.toBeNull();
   });
 
   it("every other version is neither read nor migrated (v40, v42, v43, none) (🆕🆕🆕 D621 (D539): v40, v44 and none; v42 IS migrated now, v43 is this build's own) (🆕🆕🆕 D630 (D539): v40, v45 and none; v43 IS migrated now, v44 is this build's own) (🆕🆕🆕 D636 (D539): v40, v46 and none; v44 IS migrated now, v45 is this build's own) (🆕🆕🆕 D637 (D539): v40, v47 and none; v45 IS migrated now, v46 is this build's own) (🆕🆕🆕 D640 (D539): v40, v48 and none; v46 IS migrated now, v47 is this build's own) (🆕🆕🆕 D646 (D539): v40, v50 and none; v47 and v48 ARE migrated now, v49 is this build's own)", () => {
     const old = v41Record();
-    for (const version of [40, 50]) { // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is. 🆕🆕🆕 D646 — 49 is.
+    for (const version of [40, 50]) {
+      // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is. 🆕🆕🆕 D646 — 49 is.
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -184,7 +202,11 @@ describe("D583 — what the migration writes", () => {
   it("replaces each stale Trainer face with its D1 row, and nothing else", () => {
     const old = v41Record();
     const otherBody: Card = { ...BODY_CARD, hp: 10 };
-    const migrated = migrateMatchRecord(old, { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: otherBody });
+    const migrated = migrateMatchRecord(old, {
+      [TM]: FRESH_TM,
+      [FOSSIL]: FRESH_FOSSIL,
+      [BODY]: otherBody,
+    });
     if (migrated === null) throw new Error("not migrated");
     expect(migrated.state.cardPool[TM]).toEqual(FRESH_TM);
     expect(migrated.state.cardPool[FOSSIL]).toEqual(FRESH_FOSSIL);
@@ -204,7 +226,9 @@ describe("D583 — what the migration writes", () => {
 
   it("keeps the persisted face when D1 has no row, or a row of another category", () => {
     const old = v41Record();
-    const migrated = migrateMatchRecord(old, { [FOSSIL]: { ...FRESH_FOSSIL, category: "Pokemon" } });
+    const migrated = migrateMatchRecord(old, {
+      [FOSSIL]: { ...FRESH_FOSSIL, category: "Pokemon" },
+    });
     if (migrated === null) throw new Error("not migrated");
     expect(migrated.state.cardPool[TM]).toBe(old.state.cardPool[TM]);
     expect(migrated.state.cardPool[FOSSIL]).toBe(old.state.cardPool[FOSSIL]);
@@ -223,7 +247,11 @@ describe("D583 — on a board: the v41 record's TM grants its attack after the l
     const old = v41Record();
     expect(old.state.cardPool[TM]?.attacks).toBeNull();
     expect(attackNames(tmOnActive(old.state))).toEqual(["Tap"]);
-    const migrated = migrateMatchRecord(old, { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: BODY_CARD });
+    const migrated = migrateMatchRecord(old, {
+      [TM]: FRESH_TM,
+      [FOSSIL]: FRESH_FOSSIL,
+      [BODY]: BODY_CARD,
+    });
     if (migrated === null) throw new Error("not migrated");
     expect(attackNames(tmOnActive(migrated.state))).toEqual(["Tap", "Fluorite"]);
   });

@@ -223,7 +223,9 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
 
     // The clamp, given the PRE-damage body, tells them apart — which is the whole
     // argument for its placement.
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP, "p1")?.damage).toBe(STURDY_SURVIVES_AT);
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP, "p1")?.damage).toBe(
+      STURDY_SURVIVES_AT,
+    );
     expect(koSurvivalClamp(state, { ...pokemon, damage: 10 }, STURDY_HP - 10, "p1")).toBeNull();
   });
 
@@ -244,7 +246,9 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
     // …and the boundary really is where it is claimed to be, spelled out so the
     // loop above cannot pass vacuously on an all-false or all-true run.
     expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP - 1, "p1")).toBeNull();
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP, "p1")?.damage).toBe(STURDY_SURVIVES_AT);
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP, "p1")?.damage).toBe(
+      STURDY_SURVIVES_AT,
+    );
   });
 
   it("refuses a ZERO or PREVENTED hit — there is no Knock Out to refuse", () => {
@@ -682,7 +686,9 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
     const ctx: LogContext = { names: { p1: "Ember", p2: "Wren" }, state, elapsed: "+00:11" };
     return logFromEvents(events, ctx)
       .flatMap((entry) =>
-        entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
+        entry.kind === "turn"
+          ? []
+          : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
       )
       .join("\n");
   }

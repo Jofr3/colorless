@@ -50,7 +50,8 @@ const HURRIED_GAIT_TEXT = "Once during your turn, you may draw a card.";
 const ALLURING_LIGHT_TEXT = "Once during your turn, you may have each player draw a card.";
 const HAPPY_SWITCH_TEXT =
   "Once during your turn, you may move a Basic Energy from 1 of your Pokémon to another of your Pokémon.";
-const HEALING_LEAVES_TEXT = "Once during your turn, you may heal 20 damage from your Active Pokémon.";
+const HEALING_LEAVES_TEXT =
+  "Once during your turn, you may heal 20 damage from your Active Pokémon.";
 
 const RAPIDASH = "sv10-030";
 const RAPIDASH_2 = "sv10-189";
@@ -88,13 +89,69 @@ function body(
 /** The LOCAL pool. Each printed sentence is carried VERBATIM on every printing
     (D183), so §1 can assert the bytes the registry row was read off. */
 const LOCAL_CARDS: Record<string, Card> = {
-  [RAPIDASH]: body(RAPIDASH, "Rapidash", "Stage1", "Ponyta", "Hurried Gait", HURRIED_GAIT_TEXT, "Fire Mane"),
-  [RAPIDASH_2]: body(RAPIDASH_2, "Rapidash", "Stage1", "Ponyta", "Hurried Gait", HURRIED_GAIT_TEXT, "Fire Mane"),
-  [CHANDELURE]: body(CHANDELURE, "Chandelure", "Stage2", "Lampent", "Alluring Light", ALLURING_LIGHT_TEXT, "Mind Ruler"),
-  [BLISSEY]: body(BLISSEY, "Blissey ex", "Stage1", "Chansey", "Happy Switch", HAPPY_SWITCH_TEXT, "Return"),
-  [BLISSEY_2]: body(BLISSEY_2, "Blissey ex", "Stage1", "Chansey", "Happy Switch", HAPPY_SWITCH_TEXT, "Return"),
-  [SWADLOON]: body(SWADLOON, "Swadloon", "Stage1", "Sewaddle", "Healing Leaves", HEALING_LEAVES_TEXT, "Bug Buzz"),
-  [SWADLOON_2]: body(SWADLOON_2, "Swadloon", "Stage1", "Sewaddle", "Healing Leaves", HEALING_LEAVES_TEXT, "Bug Buzz"),
+  [RAPIDASH]: body(
+    RAPIDASH,
+    "Rapidash",
+    "Stage1",
+    "Ponyta",
+    "Hurried Gait",
+    HURRIED_GAIT_TEXT,
+    "Fire Mane",
+  ),
+  [RAPIDASH_2]: body(
+    RAPIDASH_2,
+    "Rapidash",
+    "Stage1",
+    "Ponyta",
+    "Hurried Gait",
+    HURRIED_GAIT_TEXT,
+    "Fire Mane",
+  ),
+  [CHANDELURE]: body(
+    CHANDELURE,
+    "Chandelure",
+    "Stage2",
+    "Lampent",
+    "Alluring Light",
+    ALLURING_LIGHT_TEXT,
+    "Mind Ruler",
+  ),
+  [BLISSEY]: body(
+    BLISSEY,
+    "Blissey ex",
+    "Stage1",
+    "Chansey",
+    "Happy Switch",
+    HAPPY_SWITCH_TEXT,
+    "Return",
+  ),
+  [BLISSEY_2]: body(
+    BLISSEY_2,
+    "Blissey ex",
+    "Stage1",
+    "Chansey",
+    "Happy Switch",
+    HAPPY_SWITCH_TEXT,
+    "Return",
+  ),
+  [SWADLOON]: body(
+    SWADLOON,
+    "Swadloon",
+    "Stage1",
+    "Sewaddle",
+    "Healing Leaves",
+    HEALING_LEAVES_TEXT,
+    "Bug Buzz",
+  ),
+  [SWADLOON_2]: body(
+    SWADLOON_2,
+    "Swadloon",
+    "Stage1",
+    "Sewaddle",
+    "Healing Leaves",
+    HEALING_LEAVES_TEXT,
+    "Bug Buzz",
+  ),
   [FILLER]: battler(FILLER, {
     name: "D553 Filler",
     hp: 200,
@@ -136,7 +193,9 @@ function turnOf(seat: Seat, seed = 553): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -148,7 +207,8 @@ function turnOf(seat: Seat, seed = 553): GameState {
     if (uid === undefined) throw new Error(`no filler Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: first }));
 }
 
@@ -190,14 +250,24 @@ function all<T extends GameEvent["type"]>(
 describe("D553 A §1 — the print, and the registry rows that map it", () => {
   const ROWS: readonly [ids: readonly string[], name: string, text: string, program: unknown][] = [
     [[RAPIDASH, RAPIDASH_2], "Hurried Gait", HURRIED_GAIT_TEXT, [{ op: "drawCards", count: 1 }]],
-    [[CHANDELURE], "Alluring Light", ALLURING_LIGHT_TEXT, [{ op: "drawCards", count: 1, who: "eachPlayer" }]],
+    [
+      [CHANDELURE],
+      "Alluring Light",
+      ALLURING_LIGHT_TEXT,
+      [{ op: "drawCards", count: 1, who: "eachPlayer" }],
+    ],
     [
       [BLISSEY, BLISSEY_2],
       "Happy Switch",
       HAPPY_SWITCH_TEXT,
       [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1 }],
     ],
-    [[SWADLOON, SWADLOON_2], "Healing Leaves", HEALING_LEAVES_TEXT, [{ op: "heal", target: "self", amount: 20 }]],
+    [
+      [SWADLOON, SWADLOON_2],
+      "Healing Leaves",
+      HEALING_LEAVES_TEXT,
+      [{ op: "heal", target: "self", amount: 20 }],
+    ],
   ];
 
   for (const [ids, name, text, program] of ROWS) {
@@ -266,9 +336,9 @@ describe("D553 A §2 — once per turn, per BODY, and usable from the Bench", ()
     expect(mustApply(hg, use("p1", "Hurried Gait")).state.phase.kind).toBe("turn:action");
     hg = active("p1", RAPIDASH);
     expect(mustApply(hg, use("p1", "Hurried Gait", "active")).state.phase.kind).toBe("turn:action");
-    expect(mustApply(benched("p1", [CHANDELURE]), use("p1", "Alluring Light")).state.phase.kind).toBe(
-      "turn:action",
-    );
+    expect(
+      mustApply(benched("p1", [CHANDELURE]), use("p1", "Alluring Light")).state.phase.kind,
+    ).toBe("turn:action");
     const hs = attachFromDeck(benched("p1", [BLISSEY]), "p1", ENERGY, 1);
     expect(mustApply(hs, use("p1", "Happy Switch")).state.phase.kind).toBe("effect:choose");
     const hl = setDamage(benched("p1", [SWADLOON]), "p1", 30);
@@ -372,7 +442,9 @@ describe("D553 A §5 — Happy Switch: move a Basic Energy, own → own", () => 
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "moveEnergy") throw new Error("expected a moveEnergy prompt");
     expect(prompt.max).toBe(1);
-    expect(prompt.note).toBe("Move a Basic Energy from 1 of your Pokémon to another of your Pokémon.");
+    expect(prompt.note).toBe(
+      "Move a Basic Energy from 1 of your Pokémon to another of your Pokémon.",
+    );
     expect(prompt.movable.map((m) => m.uid)).toEqual([energy]);
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",

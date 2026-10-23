@@ -96,7 +96,8 @@ const LOCAL_CARDS: Record<string, Card> = {
           {
             type: "Ability",
             name: "Born to Slack",
-            effect: "If your opponent has no Pokémon ex or Pokémon V in play, this Pokémon can't attack.",
+            effect:
+              "If your opponent has no Pokémon ex or Pokémon V in play, this Pokémon can't attack.",
           },
         ],
         attacks: [
@@ -136,7 +137,8 @@ const LOCAL_CARDS: Record<string, Card> = {
       {
         type: "Ability",
         name: "Magma Surge",
-        effect: "During Pokémon Checkup, put 3 more damage counters on your opponent's Burned Pokémon.",
+        effect:
+          "During Pokémon Checkup, put 3 more damage counters on your opponent's Burned Pokémon.",
       },
     ],
     attacks: [
@@ -263,10 +265,34 @@ const LOCAL_CARDS: Record<string, Card> = {
     ],
     attacks: [{ cost: ["Fighting", "Colorless", "Colorless"], name: "Mud Shot", damage: 80 }],
   }),
-  [NORM]: battler(NORM, { name: "D560 Norm", hp: 300, retreat: 1, types: ["Colorless"], attacks: [STRIKE, PICK_OFF] }),
-  [WALL]: battler(WALL, { name: "D560 Wall", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
-  [WALL_EX]: battler(WALL_EX, { name: "D560 Wall ex", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
-  [WALL_V]: battler(WALL_V, { name: "D560 Wall V", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
+  [NORM]: battler(NORM, {
+    name: "D560 Norm",
+    hp: 300,
+    retreat: 1,
+    types: ["Colorless"],
+    attacks: [STRIKE, PICK_OFF],
+  }),
+  [WALL]: battler(WALL, {
+    name: "D560 Wall",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
+  [WALL_EX]: battler(WALL_EX, {
+    name: "D560 Wall ex",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
+  [WALL_V]: battler(WALL_V, {
+    name: "D560 Wall V",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
   [WALL_VMAX]: battler(WALL_VMAX, {
     name: "D560 Wall VMAX",
     hp: 900,
@@ -342,7 +368,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -350,11 +378,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -367,7 +398,11 @@ function ensureInDeck(state: GameState, seat: Seat, id: string, count = 1): Game
     if (side.deck.filter((u) => next.cardIdByUid[u] === id).length >= count) return next;
     const held = side.hand.find((u) => next.cardIdByUid[u] === id);
     if (held !== undefined) {
-      const moved = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
+      const moved = {
+        ...side,
+        hand: side.hand.filter((u) => u !== held),
+        deck: [...side.deck, held],
+      };
       next = { ...next, players: { ...next.players, [seat]: moved } };
       continue;
     }
@@ -407,7 +442,8 @@ function table(
   state = clearBench(state, "p2");
   for (const id of bench) state = benchFromDeck(ensureInDeck(state, "p1", id), "p1", id);
   for (const id of oppBench) state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
-  for (const [id, n] of energy) state = attachFromDeck(ensureInDeck(state, "p1", id, n), "p1", id, n);
+  for (const [id, n] of energy)
+    state = attachFromDeck(ensureInDeck(state, "p1", id, n), "p1", id, n);
   return state;
 }
 
@@ -468,15 +504,23 @@ describe("D560 §1 — the four NEW `BoardCondition` members: arms and notes", (
 
   it("every arm is seat-relative: the same board answers differently from the two seats", () => {
     const state = table(GOLDEEN, [], WALL_EX, [], []);
-    expect(conditionHolds(state, "p1", { kind: "yourActiveHasAbility", name: "Festival Lead" })).toBe(true);
-    expect(conditionHolds(state, "p2", { kind: "yourActiveHasAbility", name: "Festival Lead" })).toBe(false);
+    expect(
+      conditionHolds(state, "p1", { kind: "yourActiveHasAbility", name: "Festival Lead" }),
+    ).toBe(true);
+    expect(
+      conditionHolds(state, "p2", { kind: "yourActiveHasAbility", name: "Festival Lead" }),
+    ).toBe(false);
     expect(conditionHolds(state, "p1", { kind: "opponentHasExOrVInPlay" })).toBe(true);
     expect(conditionHolds(state, "p2", { kind: "opponentHasExOrVInPlay" })).toBe(false);
     expect(conditionHolds(state, "p2", { kind: "opponentActiveHasAbility" })).toBe(true);
     expect(conditionHolds(state, "p1", { kind: "opponentActiveHasAbility" })).toBe(false);
     const hurt = setDamage(state, "p1", 20);
-    expect(conditionHolds(hurt, "p1", { kind: "yourActiveDamageCountersAtLeast", count: 2 })).toBe(true);
-    expect(conditionHolds(hurt, "p2", { kind: "yourActiveDamageCountersAtLeast", count: 2 })).toBe(false);
+    expect(conditionHolds(hurt, "p1", { kind: "yourActiveDamageCountersAtLeast", count: 2 })).toBe(
+      true,
+    );
+    expect(conditionHolds(hurt, "p2", { kind: "yourActiveDamageCountersAtLeast", count: 2 })).toBe(
+      false,
+    );
   });
 
   it("an EMPTY Active Spot is FALSE for all four", () => {
@@ -488,20 +532,28 @@ describe("D560 §1 — the four NEW `BoardCondition` members: arms and notes", (
         p2: { ...state.players.p2, active: null },
       },
     };
-    expect(conditionHolds(empty, "p1", { kind: "yourActiveHasAbility", name: "Festival Lead" })).toBe(false);
+    expect(
+      conditionHolds(empty, "p1", { kind: "yourActiveHasAbility", name: "Festival Lead" }),
+    ).toBe(false);
     expect(conditionHolds(empty, "p1", { kind: "opponentActiveHasAbility" })).toBe(false);
-    expect(conditionHolds(empty, "p1", { kind: "yourActiveDamageCountersAtLeast", count: 0 })).toBe(false);
+    expect(conditionHolds(empty, "p1", { kind: "yourActiveDamageCountersAtLeast", count: 0 })).toBe(
+      false,
+    );
     expect(conditionHolds(empty, "p1", { kind: "opponentHasExOrVInPlay" })).toBe(false);
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §2 — Slaking ex \"Born to Slack\": can't attack with no ex / V opposite (R-SL)", () => {
+describe('D560 §2 — Slaking ex "Born to Slack": can\'t attack with no ex / V opposite (R-SL)', () => {
   const slaking = (oppActive: string, oppBench: readonly string[] = []) =>
     table(SLAKING[0], [], oppActive, oppBench, [["fix-energy", 2]]);
 
   it("no Pokémon ex or V anywhere on the other side: ATTACK_PREVENTED, naming the clause", () => {
-    const result = applyAction(slaking(WALL, [WALL, ABLE]), { type: "attack", seat: "p1", index: 0 });
+    const result = applyAction(slaking(WALL, [WALL, ABLE]), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe("ATTACK_PREVENTED");
@@ -512,13 +564,15 @@ describe("D560 §2 — Slaking ex \"Born to Slack\": can't attack with no ex / V
     expect(dealtBy(slaking(WALL_EX), 0)?.dealt).toBe(280);
   });
 
-  it("🛑 an opposing BENCHED ex or V is enough — the Bench is \"in play\" (R-SL)", () => {
+  it('🛑 an opposing BENCHED ex or V is enough — the Bench is "in play" (R-SL)', () => {
     expect(dealtBy(slaking(WALL, [WALL_EX]), 0)?.dealt).toBe(280);
     expect(dealtBy(slaking(WALL, [WALL_V]), 0)?.dealt).toBe(280);
   });
 
-  it("a VMAX is not \"ex or V\" (D107's `isExOrV`), and OWN ex do not count", () => {
-    expect(applyAction(slaking(WALL_VMAX), { type: "attack", seat: "p1", index: 0 }).ok).toBe(false);
+  it('a VMAX is not "ex or V" (D107\'s `isExOrV`), and OWN ex do not count', () => {
+    expect(applyAction(slaking(WALL_VMAX), { type: "attack", seat: "p1", index: 0 }).ok).toBe(
+      false,
+    );
     const ownEx = table(SLAKING[1], [WALL_EX, WALL_V], WALL, [], [["fix-energy", 2]]);
     expect(applyAction(ownEx, { type: "attack", seat: "p1", index: 0 }).ok).toBe(false);
   });
@@ -536,7 +590,7 @@ describe("D560 §2 — Slaking ex \"Born to Slack\": can't attack with no ex / V
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §3 — Annihilape \"Lose Cool\": +120 at 2+ counters, at BOTH pre-W/R sites (R-AN)", () => {
+describe('D560 §3 — Annihilape "Lose Cool": +120 at 2+ counters, at BOTH pre-W/R sites (R-AN)', () => {
   const ape = (damage: number, oppBench: readonly string[] = []) =>
     setDamage(
       table(ANNIHILAPE, [], WALL, oppBench, [
@@ -572,15 +626,22 @@ describe("D560 §3 — Annihilape \"Lose Cool\": +120 at 2+ counters, at BOTH pr
     const side = state.players.p1;
     state = {
       ...state,
-      players: { ...state.players, p1: { ...side, bench: side.bench.map((b) => ({ ...b, damage: 50 })) } },
+      players: {
+        ...state.players,
+        p1: { ...side, bench: side.bench.map((b) => ({ ...b, damage: 50 })) },
+      },
     };
     expect(dealtBy(state, 0)?.dealt).toBe(50);
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §4 — Galvantula \"Compound Eyes\": +50 into an Active that HAS an Ability (R-GV)", () => {
-  const galv = (oppActive: string, oppBench: readonly string[] = [], bench: readonly string[] = []) =>
+describe('D560 §4 — Galvantula "Compound Eyes": +50 into an Active that HAS an Ability (R-GV)', () => {
+  const galv = (
+    oppActive: string,
+    oppBench: readonly string[] = [],
+    bench: readonly string[] = [],
+  ) =>
     table(GALVANTULA, bench, oppActive, oppBench, [
       ["fix-grass-energy", 1],
       ["fix-energy", 1],
@@ -608,7 +669,9 @@ describe("D560 §4 — Galvantula \"Compound Eyes\": +50 into an Active that HAS
     const state = galv(ABLE);
     const card = POOL[ABLE] as Card;
     expect(attackerPreWRBonus(state, body(state, "p1"), "p1", card)).toBe(50);
-    expect(attackerPreWRBonus(galv(WALL), body(galv(WALL), "p1"), "p1", POOL[WALL] as Card)).toBe(0);
+    expect(attackerPreWRBonus(galv(WALL), body(galv(WALL), "p1"), "p1", POOL[WALL] as Card)).toBe(
+      0,
+    );
   });
 
   it("the lock boards: an Active Klefki and an Active Gastrodon each HAVE an Ability", () => {
@@ -636,9 +699,14 @@ describe("D560 §4 — Galvantula \"Compound Eyes\": +50 into an Active that HAS
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §5 — Magmortar \"Magma Surge\": 3 more counters on the opposing Burn (R-MG)", () => {
+describe('D560 §5 — Magmortar "Magma Surge": 3 more counters on the opposing Burn (R-MG)', () => {
   /** p1's board with `mine` in play, p2's Active Burned; p1 ends the turn → the Checkup. */
-  function checkup(active: string, bench: readonly string[], oppActive = WALL, face?: "heads" | "tails") {
+  function checkup(
+    active: string,
+    bench: readonly string[],
+    oppActive = WALL,
+    face?: "heads" | "tails",
+  ) {
     let state = setConditions(table(active, bench, oppActive, [], []), "p2", { burned: true });
     if (face !== undefined) state = withCoin(state, face);
     return mustApply(state, { type: "endTurn", seat: "p1" });
@@ -689,13 +757,16 @@ describe("D560 §5 — Magmortar \"Magma Surge\": 3 more counters on the opposin
   });
 
   it("an un-Burned Active takes nothing, Magmortar or not", () => {
-    const { events } = mustApply(table(MAGMORTAR, [], WALL, [], []), { type: "endTurn", seat: "p1" });
+    const { events } = mustApply(table(MAGMORTAR, [], WALL, [], []), {
+      type: "endTurn",
+      seat: "p1",
+    });
     expect(burnRow(events, "p2")).toBeUndefined();
   });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §6 — Thwackey \"Boom Boom Groove\": the printed Festival Lead gate (R-TW)", () => {
+describe('D560 §6 — Thwackey "Boom Boom Groove": the printed Festival Lead gate (R-TW)', () => {
   const use = (state: GameState) =>
     applyAction(state, {
       type: "useAbility",
@@ -710,7 +781,8 @@ describe("D560 §6 — Thwackey \"Boom Boom Groove\": the printed Festival Lead 
       expect(result.ok, lead).toBe(true);
       if (!result.ok) continue;
       expect(result.state.phase.kind).toBe("effect:choose");
-      const prompt = (result.state.phase as { prompt: { kind: string; max: number; dest: string } }).prompt;
+      const prompt = (result.state.phase as { prompt: { kind: string; max: number; dest: string } })
+        .prompt;
       expect(prompt).toMatchObject({ kind: "chooseCards", max: 1, dest: "hand" });
     }
   });
@@ -750,7 +822,7 @@ describe("D560 §6 — Thwackey \"Boom Boom Groove\": the printed Festival Lead 
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §7 — Cradily \"Selective Slime\": heads, then two binary picks (R-CR)", () => {
+describe('D560 §7 — Cradily "Selective Slime": heads, then two binary picks (R-CR)', () => {
   const use = (face: "heads" | "tails") =>
     mustApply(withCoin(table(NORM, [CRADILY], WALL, [], []), face), {
       type: "useAbility",
@@ -760,7 +832,8 @@ describe("D560 §7 — Cradily \"Selective Slime\": heads, then two binary picks
     });
   const confirm = (state: GameState, yes: boolean) =>
     mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-  const labels = (state: GameState) => (state.phase as { prompt: { labels?: unknown } }).prompt.labels;
+  const labels = (state: GameState) =>
+    (state.phase as { prompt: { labels?: unknown } }).prompt.labels;
 
   it("tails: nothing is asked and nothing lands", () => {
     const { state, events } = use("tails");
@@ -768,22 +841,34 @@ describe("D560 §7 — Cradily \"Selective Slime\": heads, then two binary picks
     expect(events.some((e) => e.type === "STATUS_APPLIED")).toBe(false);
   });
 
-  it("heads → yes \"Burned\": the opposing Active is Burned", () => {
+  it('heads → yes "Burned": the opposing Active is Burned', () => {
     const parked = use("heads").state;
     expect(labels(parked)).toEqual({ yes: "Burned", no: "Confused or Poisoned" });
     const done = confirm(parked, true).state;
-    expect(body(done, "p2").conditions).toMatchObject({ burned: true, rotation: "none", poisonDamage: 0 });
+    expect(body(done, "p2").conditions).toMatchObject({
+      burned: true,
+      rotation: "none",
+      poisonDamage: 0,
+    });
   });
 
-  it("heads → no → yes \"Confused\"", () => {
+  it('heads → no → yes "Confused"', () => {
     const second = confirm(use("heads").state, false).state;
     expect(labels(second)).toEqual({ yes: "Confused", no: "Poisoned" });
     const done = confirm(second, true).state;
-    expect(body(done, "p2").conditions).toMatchObject({ burned: false, rotation: "confused", poisonDamage: 0 });
+    expect(body(done, "p2").conditions).toMatchObject({
+      burned: false,
+      rotation: "confused",
+      poisonDamage: 0,
+    });
   });
 
-  it("heads → no → no \"Poisoned\"", () => {
+  it('heads → no → no "Poisoned"', () => {
     const done = confirm(confirm(use("heads").state, false).state, false).state;
-    expect(body(done, "p2").conditions).toMatchObject({ burned: false, rotation: "none", poisonDamage: 10 });
+    expect(body(done, "p2").conditions).toMatchObject({
+      burned: false,
+      rotation: "none",
+      poisonDamage: 10,
+    });
   });
 });

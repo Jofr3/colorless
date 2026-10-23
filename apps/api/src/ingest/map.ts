@@ -240,7 +240,10 @@ function textBlocks<T extends { effect?: string }>(blocks: T[] | undefined): T[]
     D1, 2026-10-07), so a "Normal" Energy that PRINTS RULES TEXT is written "Special": a Basic
     Energy card prints none. The engine reads the same rule off the face (cards.ts
     `isSpecialEnergy`), so a row ingested before this fix still plays right. */
-export function energyTypeOf(energyType: string | undefined, effect: string | undefined): string | null {
+export function energyTypeOf(
+  energyType: string | undefined,
+  effect: string | undefined,
+): string | null {
   const tag = normalizeSentinel(energyType);
   return tag === "Normal" && (effect ?? "").trim() !== "" ? "Special" : tag;
 }

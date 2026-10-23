@@ -68,8 +68,7 @@ import {
 const SAWK =
   "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.";
 /** Its leading requirement sentence. */
-const SAWK_HEAD =
-  "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.";
+const SAWK_HEAD = "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.";
 /** Its trailing companion — `deriveAttackDamageSuppression`'s since D192. */
 const SAWK_TAIL = "This attack's damage isn't affected by Weakness or Resistance.";
 /** 🆕🆕 D417 — Eternatus `sv08-141` "World Ender", as PRINTED: the TRAILING,
@@ -612,9 +611,7 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
       // ⚠️ PREFIX, not equality: since D363 the skeleton tolerates a trailing
       // companion, so the Sawk row's printed string is the COMPOUND. Matching on
       // equality scores that row 0 and would have shipped a false "dead row".
-      const printed = corpus().filter(
-        ([, s]) => s === sentence || s.startsWith(`${sentence} `),
-      );
+      const printed = corpus().filter(([, s]) => s === sentence || s.startsWith(`${sentence} `));
       expect(units(printed), key).toBe(expected);
     }
   });
@@ -672,7 +669,9 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // lines above. It does not — the constructed near-miss one parameter value over is
     // refused, and so is a sentence with no skeleton at all.
     expect(
-      deriveAttackRequirement("If you don't have exactly 4 cards in your hand, this attack does nothing."),
+      deriveAttackRequirement(
+        "If you don't have exactly 4 cards in your hand, this attack does nothing.",
+      ),
     ).toBeNull();
     expect(deriveAttackRequirement("Discard your hand and draw 6 cards.")).toBeNull();
     // The parts sum, which is what makes a partition a partition.

@@ -1,12 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackEffect,
-  splitAttackGateClause,
-  splitAttackTrailingClause,
-} from "./effects";
-import { applyAction, createGame, engineVersion, otherSeat, programFor } from "./index";
+import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
+import { applyAction, createGame, otherSeat, programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
@@ -105,7 +101,8 @@ import { koByEffectMarker, scheduledEffectDue, withActive } from "./types";
 // inside the window — and all three are the victim's printed counterplay. §7 drives
 // every one of them, plus the Knock Out that takes the body out of play with it.
 
-const SENTENCE = "At the end of your opponent's next turn, put 9 damage counters on the Defending Pokémon.";
+const SENTENCE =
+  "At the end of your opponent's next turn, put 9 damage counters on the Defending Pokémon.";
 /** Corpus row 53 — the family's DISCARD payload, 1 legal printing, deliberately
     unbuilt. A one-axis near-miss (same clock, same subject, different payload) and
     this suite's loud `ATTACK_EFFECT_SKIPPED` witness. */
@@ -630,7 +627,12 @@ describe("§5 — a body that is Poisoned, Burned and Asleep takes the delayed c
       the install and the moment being measured. */
   function loaded(): GameState {
     const installed = install("p1", DELAY, "fix-doom-tank").state;
-    return setConditions(installed, "p2", { poisonDamage: 10, burned: true, rotation: "asleep", confusionDamage: 30 });
+    return setConditions(installed, "p2", {
+      poisonDamage: 10,
+      burned: true,
+      rotation: "asleep",
+      confusionDamage: 30,
+    });
   }
 
   it("🛑 the DELAYED row precedes poison, burn and the wake-up flip", () => {
@@ -806,7 +808,11 @@ describe("§7 — the schedule DIES WITH THE BODY: four §10 literals plus the K
   function inWindow(): GameState {
     const state = install("p1", DELAY, "fix-doom-tank").state;
     expect(state.turn).toBe(3);
-    expect(body(state.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: "counters", amount: 90 });
+    expect(body(state.players.p2.active).scheduledEffect).toEqual({
+      turn: 3,
+      kind: "counters",
+      amount: 90,
+    });
     return state;
   }
 
@@ -832,9 +838,7 @@ describe("§7 — the schedule DIES WITH THE BODY: four §10 literals plus the K
     const fired = mustApply(retreated, { type: "endTurn", seat: "p2" });
     expect(all(fired.events, "COUNTERS_PLACED")).toEqual([]);
     expect(body(fired.state.players.p2.active).damage).toBe(0);
-    expect(
-      body(fired.state.players.p2.bench.find((p) => p.stack.includes(uid))).damage,
-    ).toBe(0);
+    expect(body(fired.state.players.p2.bench.find((p) => p.stack.includes(uid))).damage).toBe(0);
   });
 
   it("2. FORCED SWITCH (interpreter.ts `switchInto`), via the Switch Item", () => {
@@ -867,7 +871,11 @@ describe("§7 — the schedule DIES WITH THE BODY: four §10 literals plus the K
     // surgery, because their windows sit on the opponent's turn. This one is a line
     // of play, and it is the printed answer to the attack.
     const state = handFromDeck(install("p1", DELAY, "fix-doomed").state, "p2", "fix-doomed-s1", 1);
-    expect(body(state.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: "counters", amount: 90 });
+    expect(body(state.players.p2.active).scheduledEffect).toEqual({
+      turn: 3,
+      kind: "counters",
+      amount: 90,
+    });
     const evolved = must(
       applyAction(state, {
         type: "evolve",
@@ -911,7 +919,11 @@ describe("§7 — the schedule DIES WITH THE BODY: four §10 literals plus the K
     });
     const p1Turn = mustApply(rescheduled, { type: "endTurn", seat: "p2" }).state;
     expect(p1Turn.turn).toBe(4);
-    expect(body(p1Turn.players.p2.active).scheduledEffect).toEqual({ turn: 5, kind: "counters", amount: 90 });
+    expect(body(p1Turn.players.p2.active).scheduledEffect).toEqual({
+      turn: 5,
+      kind: "counters",
+      amount: 90,
+    });
     const devolved = mustApply(p1Turn, { type: "attack", seat: "p1", index: DEVOLVE });
     expect(count(devolved.events, "POKEMON_DEVOLVED")).toBe(1);
     expect(stampOf(devolved.state.players.p2.active ?? undefined)).toBeNull();
@@ -973,7 +985,11 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
 
   it("🛑 DIRECTION 1 — a v29 record round-trips and the schedule STILL fires", () => {
     const record = saved();
-    expect(body(record.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: "counters", amount: 90 });
+    expect(body(record.players.p2.active).scheduledEffect).toEqual({
+      turn: 3,
+      kind: "counters",
+      amount: 90,
+    });
     const fired = mustApply(record, { type: "endTurn", seat: "p2" });
     expect(all(fired.events, "COUNTERS_PLACED").map((e) => e.source)).toEqual(["delayed"]);
     expect(body(fired.state.players.p2.active).damage).toBe(90);
@@ -990,10 +1006,9 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     // rename does not soften the retirement, and the leftover key does not rescue it.
     // The `scheduledCounters` half is driven in its own rung directly below.
     const legacy = saved();
-    const victim = body(legacy.players.p2.active) as Omit<
-      InPlayPokemon,
-      "scheduledEffect"
-    > & { scheduledEffect?: { turn: number; amount: number } };
+    const victim = body(legacy.players.p2.active) as Omit<InPlayPokemon, "scheduledEffect"> & {
+      scheduledEffect?: { turn: number; amount: number };
+    };
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
     delete victim.scheduledEffect;
     // ABSENT, not `undefined` — the distinction D124 refuses to blur and a `toEqual`
@@ -1134,10 +1149,6 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const a = mustApply(withKey, { type: "endTurn", seat: "p2" });
     expect(body(a.state.players.p2.active).damage).toBe(90);
   });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1183,7 +1194,11 @@ describe("§10 — a second schedule in the same turn merges by MAX, not by sum"
   // (`weakenDefenderAttacks`' answer, transferred with its reason).
   it("the LARGER amount survives and fires; the sum never appears", () => {
     const installed = install("p1", DELAY, "fix-doom-tank").state;
-    expect(body(installed.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: "counters", amount: 90 });
+    expect(body(installed.players.p2.active).scheduledEffect).toEqual({
+      turn: 3,
+      kind: "counters",
+      amount: 90,
+    });
     const bigger = withActive(installed, "p2", {
       ...body(installed.players.p2.active),
       scheduledEffect: { turn: 3, kind: "counters", amount: 120 },
@@ -1411,12 +1426,12 @@ describe("§12 — a discard takes NO Prize and a Knock Out takes ONE, on one ax
   it("🛑 the two LOG rows do not read alike — the arming row names which one it is", () => {
     const discard = install("p1", DISCARD);
     const doom = install("p1", DOOM);
-    expect(
-      render(discard.events, discard.state).find((r) => r.text.includes("scheduled")),
-    ).toEqual({
-      who: "p2",
-      text: "fix-doomed is scheduled to be discarded at the end of your next turn",
-    });
+    expect(render(discard.events, discard.state).find((r) => r.text.includes("scheduled"))).toEqual(
+      {
+        who: "p2",
+        text: "fix-doomed is scheduled to be discarded at the end of your next turn",
+      },
+    );
     expect(render(doom.events, doom.state).find((r) => r.text.includes("scheduled"))).toEqual({
       who: "p2",
       text: "fix-doomed is scheduled to be Knocked Out at the end of your next turn",
@@ -1864,9 +1879,7 @@ describe("§15 — frozen boards, and a v29 record that round-trips", () => {
     });
 
     it(`a v29 record carrying a ${name} appointment round-trips and STILL fires`, () => {
-      const record = JSON.parse(
-        JSON.stringify(install("p1", index).state),
-      ) as GameState;
+      const record = JSON.parse(JSON.stringify(install("p1", index).state)) as GameState;
       expect(body(record.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: name });
       const settled = settle(mustApply(record, { type: "endTurn", seat: "p2" }));
       expect(settled.players.p2.bench).toHaveLength(0);

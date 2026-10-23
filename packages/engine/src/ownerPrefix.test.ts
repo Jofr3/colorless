@@ -434,7 +434,12 @@ const LOCAL_CARDS: Record<string, Card> = {
         effect:
           "You may search your deck for any number of Basic Lillie's Pokémon and put them onto your Bench. Then, shuffle your deck.",
       },
-      { name: "Fade Out", cost: ["Psychic"], effect: "Put this Pokémon and all attached cards into your hand.", damage: 30 },
+      {
+        name: "Fade Out",
+        cost: ["Psychic"],
+        effect: "Put this Pokémon and all attached cards into your hand.",
+        damage: 30,
+      },
     ],
   }),
   // ── The search targets, two stages per owner where the stage rider is read.
@@ -457,7 +462,11 @@ const LOCAL_CARDS: Record<string, Card> = {
   ),
   /** A prefixed TRAINER sitting in the same deck as the Pokémon it shares an
       owner with — the in-deck negative for every `owner: "Cynthia"` search. */
-  "fix-cynthia-trainer": trainerCard("fix-cynthia-trainer", "Tool", "The Cynthia's Pokémon this card is attached to gets +70 HP."),
+  "fix-cynthia-trainer": trainerCard(
+    "fix-cynthia-trainer",
+    "Tool",
+    "The Cynthia's Pokémon this card is attached to gets +70 HP.",
+  ),
   /** `Farfetch'd` — the catalog's apostrophe-bearing name that is NOT a
       possessive prefix, and the reason the trailing `'s ` is matched whole. */
   "fix-farfetchd": battler("fix-farfetchd", { name: "Farfetch'd" }),
@@ -500,7 +509,9 @@ function localSetup(seed: number, first: Seat): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
@@ -508,7 +519,9 @@ function localSetup(seed: number, first: Seat): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     state = must(applyAction(state, { type: "setupReady", seat }));
@@ -534,7 +547,8 @@ function withActive(seed: number, bodyId: string): GameState {
 }
 
 function cardsPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   if (state.phase.prompt.kind !== "chooseCards") {
     throw new Error(`expected chooseCards, got ${state.phase.prompt.kind}`);
   }
@@ -557,7 +571,10 @@ const resolve = (state: GameState, uids: string[]) =>
 describe("D200 — the census, as data", () => {
   it("totals 80 legal text units across 13 owners and 3 columns", () => {
     for (const row of CENSUS) {
-      expect(row.effect + row.attack + row.ability, `${row.owner}: columns disagree with total`).toBe(row.total);
+      expect(
+        row.effect + row.attack + row.ability,
+        `${row.owner}: columns disagree with total`,
+      ).toBe(row.total);
     }
     expect(CENSUS.reduce((n, r) => n + r.total, 0)).toBe(80);
     expect(CENSUS.reduce((n, r) => n + r.attack, 0)).toBe(25);
@@ -586,7 +603,9 @@ describe("D200 — the census, as data", () => {
 describe("D200 — the registry map", () => {
   it("registers all 6 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
-      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
+      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
+        legal,
+      );
       const first = programFor(ids[0] as string);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
@@ -672,7 +691,9 @@ describe("D200 — the registry map", () => {
   it("🆕 DROPPED is EMPTY — and every row added back must still be UNBUILT on its own SURFACE", () => {
     expect(DROPPED).toHaveLength(0);
     for (const { sentence, ids, legal, surface } of DROPPED) {
-      expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(legal);
+      expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(
+        legal,
+      );
       for (const id of ids) {
         expect(
           programFor(id)?.[surface],
@@ -1025,7 +1046,9 @@ describe("D200 — Inviting Flowers (Lillie's Comfey sv09-068): the printed 'any
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const prompt = cardsPrompt(parked);
     expect(prompt.max).toBe(5);
-    expect(prompt.note).toBe("Search your deck for up to 5 Basic Lillie's Pokémon onto your Bench.");
+    expect(prompt.note).toBe(
+      "Search your deck for up to 5 Basic Lillie's Pokémon onto your Bench.",
+    );
     expect(new Set(offered(parked))).toEqual(new Set(["fix-lillie-basic", "fix-invitingflowers"]));
     // D186's finding, driven rather than quoted: the printed "You may" needs no
     // `optional` wrapper because THIS prompt already legalises taking none.

@@ -31,25 +31,57 @@ const assets = [
   "fonts/m6x11plus.ttf",
   "textures/2x/Enhancers.png",
   "textures/2x/chips.png",
-  ...["splash", "background", "CRT", "dissolve", "played", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
+  ...["splash", "background", "CRT", "dissolve", "played", "foil", "holo", "polychrome"].map(
+    (n) => `shaders/${n}.fs`,
+  ),
   ...[
-    "button", "card1", "cardSlide1", "cardSlide2", "cardFan2", "highlight1", "paper1", "music1",
-    "chips1", "multhit1", "multhit2", "cancel", "coin1", "coin3", "tarot2", "whoosh", "win", "glass2",
-    "whoosh2", "crumple1", "crumple2", "crumple3", "crumple4", "crumple5", "generic1", "gold_seal",
+    "button",
+    "card1",
+    "cardSlide1",
+    "cardSlide2",
+    "cardFan2",
+    "highlight1",
+    "paper1",
+    "music1",
+    "chips1",
+    "multhit1",
+    "multhit2",
+    "cancel",
+    "coin1",
+    "coin3",
+    "tarot2",
+    "whoosh",
+    "win",
+    "glass2",
+    "whoosh2",
+    "crumple1",
+    "crumple2",
+    "crumple3",
+    "crumple4",
+    "crumple5",
+    "generic1",
+    "gold_seal",
   ].map((n) => `sounds/${n}.ogg`),
 ];
 try {
   for (const name of ["conf.lua", "main.lua", "ui", "assets"])
     cpSync(join(here, name), join(stage, name), { recursive: true });
   const manifest = {};
-  for (const name of ['colorless.png','colorless-menu.png','colorless-menu-base.png','colorless-energy-star.png']) {
-    manifest[`branding/${name}`] = createHash('sha256')
-      .update(readFileSync(join(here, 'assets/branding', name))).digest('hex');
+  for (const name of [
+    "colorless.png",
+    "colorless-menu.png",
+    "colorless-menu-base.png",
+    "colorless-energy-star.png",
+  ]) {
+    manifest[`branding/${name}`] = createHash("sha256")
+      .update(readFileSync(join(here, "assets/branding", name)))
+      .digest("hex");
   }
   for (const name of readdirSync(join(here, "assets/transition_cards"))) {
     if (!name.endsWith(".png")) continue;
     manifest[`transition_cards/${name}`] = createHash("sha256")
-      .update(readFileSync(join(here, "assets/transition_cards", name))).digest("hex");
+      .update(readFileSync(join(here, "assets/transition_cards", name)))
+      .digest("hex");
   }
   for (const asset of assets) {
     const from = join(source, "resources", asset);
@@ -84,10 +116,12 @@ try {
   // its locateFile for love.wasm and game.js for game.data), then
   // versions.json lists every file for the Vite plugin that versions
   // index.html's own /love/ references (vite.config.ts).
-  const shortHash = (path) => createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 12);
+  const shortHash = (path) =>
+    createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 12);
   const versions = {};
   for (const name of readdirSync(output).sort()) {
-    if (!["host.js", "host.css", "versions.json"].includes(name)) versions[name] = shortHash(join(output, name));
+    if (!["host.js", "host.css", "versions.json"].includes(name))
+      versions[name] = shortHash(join(output, name));
   }
   const marker = "/* love-versions */ {}";
   const host = readFileSync(join(here, "web/host.js"), "utf8");

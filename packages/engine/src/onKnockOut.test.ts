@@ -107,7 +107,9 @@ describe("Glimmora's Shattering Crystal — on-KO prize denial (§8.1)", () => {
         // A prize IS owed — P1 parks on ko:takePrizes for exactly it.
         expect(types(events)).not.toContain("PRIZE_PREVENTED");
         expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
-        const taken = must(applyAction(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] }));
+        const taken = must(
+          applyAction(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] }),
+        );
         expect(taken.players.p1.prizes.length).toBe(5);
       }
     }
@@ -207,7 +209,12 @@ describe("on-KO parking — the resume-the-tail continuation (§8.1)", () => {
     expect(parked.phase.cont.ctx.sourceUid).toBe(fixOnko);
     expect(parked.phase.prompt.kind).toBe("chooseCards");
     // The prize/promotion tail is still queued behind the park.
-    expect(parked.pending.map((s) => s.kind)).toEqual(["promote", "endTurn", "checkup", "startTurn"]);
+    expect(parked.pending.map((s) => s.kind)).toEqual([
+      "promote",
+      "endTurn",
+      "checkup",
+      "startTurn",
+    ]);
 
     // Resolve it (take a Basic into hand) → the sweep RESUMES: P2 promotes the
     // lone bench (forced → auto), the turn ends and passes to P2.
@@ -270,7 +277,11 @@ describe("on-KO parking — the resume-the-tail continuation (§8.1)", () => {
       prizeIndices: [0],
     }).state;
     // P1 (the turn owner / attacker) is NOT the one who owes this decision.
-    expectErr(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }, "WRONG_SEAT");
+    expectErr(
+      parked,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } },
+      "WRONG_SEAT",
+    );
   });
 });
 
@@ -295,6 +306,8 @@ describe("on-KO triggers — non-regression and purity", () => {
     // And the parking path over a frozen board.
     const state2 = deepFreeze(onkoBoard(SEED, "fix-onko"));
     const after = must(applyAction(state2, bite));
-    expect(() => applyAction(deepFreeze(after), { type: "takePrizes", seat: "p1", prizeIndices: [0] })).not.toThrow();
+    expect(() =>
+      applyAction(deepFreeze(after), { type: "takePrizes", seat: "p1", prizeIndices: [0] }),
+    ).not.toThrow();
   });
 });

@@ -31,7 +31,14 @@ const MIST_TEXT =
   "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nPrevent all effects of attacks used by your opponent's Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)";
 const PREVENTED = " prevented the effect of the attack";
 
-type Printing = { id: string; name: string; attack: string; index: number; cost: string[]; damage: number };
+type Printing = {
+  id: string;
+  name: string;
+  attack: string;
+  index: number;
+  cost: string[];
+  damage: number;
+};
 
 const G = "Grass";
 const C = "Colorless";
@@ -43,9 +50,30 @@ const LIVELY = {
 };
 const PRINTINGS: readonly Printing[] = [
   { id: "me02-003", name: "Vileplume", attack: "Pollen Bomb", index: 0, cost: [G], damage: 30 },
-  { id: "me02.5-003", name: "Erika's Vileplume ex", attack: "Bloom Powder", index: 0, cost: [G, G, C], damage: 160 },
-  { id: "me02.5-015", name: "Dustox", attack: "Twilight Poison", index: 0, cost: [G, G], damage: 100 },
-  { id: "me02.5-220", name: "Dustox", attack: "Twilight Poison", index: 0, cost: [G, G], damage: 100 },
+  {
+    id: "me02.5-003",
+    name: "Erika's Vileplume ex",
+    attack: "Bloom Powder",
+    index: 0,
+    cost: [G, G, C],
+    damage: 160,
+  },
+  {
+    id: "me02.5-015",
+    name: "Dustox",
+    attack: "Twilight Poison",
+    index: 0,
+    cost: [G, G],
+    damage: 100,
+  },
+  {
+    id: "me02.5-220",
+    name: "Dustox",
+    attack: "Twilight Poison",
+    index: 0,
+    cost: [G, G],
+    damage: 100,
+  },
 ];
 
 const MIST = "sv05-161";
@@ -145,13 +173,19 @@ function render(events: readonly GameEvent[], state: GameState): string[] {
   );
 }
 const label = (p: Printing) => `${p.id} ${p.name} "${p.attack}"`;
-const attack = (state: GameState, p: Printing) => must(state, { type: "attack", seat: "p1", index: p.index });
+const attack = (state: GameState, p: Printing) =>
+  must(state, { type: "attack", seat: "p1", index: p.index });
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('B52 §1 — "is now Asleep and Poisoned" into Mist Energy: both conditions refused, one prevention row PER OP (U0264 / U0356 / U0367, deferred: D142 reading pinned, NOT changed)', () => {
   it("the census: every printing is wired, and the printed sentence is the attack's text", () => {
-    expect(PRINTINGS.map((p) => p.id)).toEqual(["me02-003", "me02.5-003", "me02.5-015", "me02.5-220"]);
+    expect(PRINTINGS.map((p) => p.id)).toEqual([
+      "me02-003",
+      "me02.5-003",
+      "me02.5-015",
+      "me02.5-220",
+    ]);
     for (const p of PRINTINGS) expect(LOCAL[p.id]?.attacks?.[p.index]?.effect).toBe(TEXT);
   });
 

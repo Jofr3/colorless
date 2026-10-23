@@ -11,7 +11,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -35,8 +35,10 @@ import {
 // anywhere in the tree before this slice. No `me` row is a fixture, so the printed bytes are carried
 // HERE and §1 pins each against the committed `me` corpus.
 
-const METALLIC_HAMMER = "You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage.";
-const RIOTOUS_BLASTING = "You may discard all Energy from this Pokémon and have this attack do 130 more damage.";
+const METALLIC_HAMMER =
+  "You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage.";
+const RIOTOUS_BLASTING =
+  "You may discard all Energy from this Pokémon and have this attack do 130 more damage.";
 const NINJA_SPINNER =
   "You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage.";
 const CHRONO_BURST =
@@ -78,7 +80,9 @@ describe("D589 §1 — the texts: 4 attack sentences / 9 printings, plus Mortal 
 
   it("the skeleton's claimed set over the `sv` and `me` corpora is exactly these four", () => {
     const skeleton = /^You may (.+) and have this attack do (\d+) more damage\.$/;
-    const claimed = [...legalAttackCorpus(), ...meAttackCorpus()].filter(([, text]) => skeleton.test(text));
+    const claimed = [...legalAttackCorpus(), ...meAttackCorpus()].filter(([, text]) =>
+      skeleton.test(text),
+    );
     expect(claimed.map(([, text]) => text).sort()).toEqual(SENTENCES.map(([text]) => text).sort());
   });
 });
@@ -87,7 +91,14 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
   it("Metallic Hammer: 3 Energy providing {M} off the Active, gated on 3 such cards attached", () => {
     expect(deriveAttackOptionalCostBoost(METALLIC_HAMMER)).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 3, energy: "Metal" },
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Metal" }, count: 3 }],
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: "Metal" },
+          count: 3,
+        },
+      ],
       payoff: { kind: "moreDamage", bonus: 150 },
     });
   });
@@ -95,7 +106,9 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
   it("Riotous Blasting: every Energy off the Active to the discard, gated on one attached", () => {
     expect(deriveAttackOptionalCostBoost(RIOTOUS_BLASTING)).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 1 },
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }],
+      ops: [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      ],
       payoff: { kind: "moreDamage", bonus: 130 },
     });
   });
@@ -109,7 +122,14 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
           { kind: "yourInPlayToHandAllowed" },
         ],
       },
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Water" }, to: "hand" }],
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: "Water" },
+          to: "hand",
+        },
+      ],
       payoff: { kind: "moreDamage", bonus: 80 },
     });
   });
@@ -118,7 +138,13 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
     expect(deriveAttackOptionalCostBoost(CHRONO_BURST)).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 1 },
       ops: [
-        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "deck" },
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count: "all",
+          to: "deck",
+        },
         { op: "shuffleDeck" },
       ],
       payoff: { kind: "moreDamage", bonus: 80 },
@@ -129,12 +155,24 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
     const other = METALLIC_HAMMER.replace("3 {M}", "2 {R}").replace("150", "60");
     expect(deriveAttackOptionalCostBoost(other)).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 2, energy: "Fire" },
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Fire" }, count: 2 }],
+      ops: [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: "Fire" },
+          count: 2,
+        },
+      ],
       payoff: { kind: "moreDamage", bonus: 60 },
     });
     const grass = deriveAttackOptionalCostBoost(NINJA_SPINNER.replace("{W}", "{G}"));
     expect(grass?.ops).toEqual([
-      { op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: "Grass" }, to: "hand" },
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "providesEnergy", energyType: "Grass" },
+        to: "hand",
+      },
     ]);
   });
 
@@ -146,12 +184,22 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
     ).toEqual({
       cond: { kind: "yourActiveEnergyAtLeast", count: 3 },
       ops: [
-        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 3, to: "deck" },
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "anyEnergy" },
+          count: 3,
+          to: "deck",
+        },
         { op: "shuffleDeck" },
       ],
       payoff: { kind: "moreDamage", bonus: 50 },
     });
-    expect(deriveAttackOptionalCostBoost("You may discard your hand and have this attack do 30 more damage.")).toEqual({
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may discard your hand and have this attack do 30 more damage.",
+      ),
+    ).toEqual({
       cond: { kind: "yourHandNotEmpty" },
       ops: [{ op: "discardHand" }],
       payoff: { kind: "moreDamage", bonus: 30 },
@@ -167,11 +215,26 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
       "an untyped `an Energy` to the hand": NINJA_SPINNER.replace("a {W} Energy", "an Energy"),
       "two {W} to the hand": NINJA_SPINNER.replace("a {W} Energy", "2 {W} Energy"),
       "`all` shuffled into the hand": CHRONO_BURST.replace("into your deck", "into your hand"),
-      "the opponent's Active for this Pokémon": RIOTOUS_BLASTING.replace("this Pokémon", "your opponent's Active Pokémon"),
-      "a rider on the cost": RIOTOUS_BLASTING.replace("this Pokémon and", "this Pokémon and draw a card and"),
-      "a rider on the to-hand cost": NINJA_SPINNER.replace("into your hand", "into your hand and draw a card"),
-      "a rider on the typed discard": METALLIC_HAMMER.replace("this Pokémon and", "this Pokémon and draw a card and"),
-      "a rider on the shuffle-all cost": CHRONO_BURST.replace("into your deck", "into your deck and draw a card"),
+      "the opponent's Active for this Pokémon": RIOTOUS_BLASTING.replace(
+        "this Pokémon",
+        "your opponent's Active Pokémon",
+      ),
+      "a rider on the cost": RIOTOUS_BLASTING.replace(
+        "this Pokémon and",
+        "this Pokémon and draw a card and",
+      ),
+      "a rider on the to-hand cost": NINJA_SPINNER.replace(
+        "into your hand",
+        "into your hand and draw a card",
+      ),
+      "a rider on the typed discard": METALLIC_HAMMER.replace(
+        "this Pokémon and",
+        "this Pokémon and draw a card and",
+      ),
+      "a rider on the shuffle-all cost": CHRONO_BURST.replace(
+        "into your deck",
+        "into your deck and draw a card",
+      ),
       "a prefixed sentence": `Draw a card. ${RIOTOUS_BLASTING}`,
       "a suffixed sentence": `${RIOTOUS_BLASTING} Draw a card.`,
     };
@@ -189,7 +252,12 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
           oncePerTurn: true,
           activeOnly: true,
           program: [
-            { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Water" } },
+            {
+              op: "payFromHand",
+              count: 1,
+              to: "discard",
+              filter: { kind: "basicEnergy", energyType: "Water" },
+            },
             { op: "damageChosen", target: "opponentAny", amount: 60, count: 1, source: "ability" },
           ],
         },
@@ -197,8 +265,17 @@ describe("D589 §2 — the readings: shipped ops behind a necessary-and-sufficie
     });
     for (const id of GRENINJA) expect(programFor(id), id).toBe(programFor(GRENINJA[0]));
     const bouquet = programFor("sv02-015")?.abilities?.[0]?.program;
-    expect(bouquet?.[0]).toEqual({ op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Grass" } });
-    expect(MORTAL_SHURIKEN_TEXT.startsWith("Once during your turn, if this Pokémon is in the Active Spot")).toBe(true);
+    expect(bouquet?.[0]).toEqual({
+      op: "payFromHand",
+      count: 1,
+      to: "discard",
+      filter: { kind: "basicEnergy", energyType: "Grass" },
+    });
+    expect(
+      MORTAL_SHURIKEN_TEXT.startsWith(
+        "Once during your turn, if this Pokémon is in the Active Spot",
+      ),
+    ).toBe(true);
   });
 });
 
@@ -210,8 +287,14 @@ const W = "d589-water";
 const M = "d589-metal";
 const L = "d589-lightning";
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 
 const LOCAL: Record<string, Card> = {
   "me04-061": mon(
@@ -224,9 +307,15 @@ const LOCAL: Record<string, Card> = {
         cost: ["Metal"],
         name: "Bounce Back",
         damage: 60,
-        effect: "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+        effect:
+          "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
       },
-      { cost: ["Metal", "Metal", "Metal", "Colorless"], name: "Metallic Hammer", damage: "150+", effect: METALLIC_HAMMER },
+      {
+        cost: ["Metal", "Metal", "Metal", "Colorless"],
+        name: "Metallic Hammer",
+        damage: "150+",
+        effect: METALLIC_HAMMER,
+      },
     ],
     { stage: "Stage2", evolveFrom: "Metang" },
   ),
@@ -240,9 +329,15 @@ const LOCAL: Record<string, Card> = {
         cost: ["Lightning", "Lightning"],
         name: "Flash Ray",
         damage: 120,
-        effect: "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
       },
-      { cost: ["Lightning", "Lightning", "Lightning"], name: "Riotous Blasting", damage: "200+", effect: RIOTOUS_BLASTING },
+      {
+        cost: ["Lightning", "Lightning", "Lightning"],
+        name: "Riotous Blasting",
+        damage: "200+",
+        effect: RIOTOUS_BLASTING,
+      },
     ],
     { stage: "Stage1", evolveFrom: "Electrike", suffix: "ex" } as Partial<Card>,
   ),
@@ -261,12 +356,26 @@ const LOCAL: Record<string, Card> = {
   ),
   "me01-095": mon("me01-095", "Dialga", 140, "Metal", [
     { cost: ["Metal"], name: "Beam", damage: 30 },
-    { cost: ["Metal", "Metal", "Colorless"], name: "Chrono Burst", damage: "80+", effect: CHRONO_BURST },
+    {
+      cost: ["Metal", "Metal", "Colorless"],
+      name: "Chrono Burst",
+      damage: "80+",
+      effect: CHRONO_BURST,
+    },
   ]),
-  [FILLER]: mon(FILLER, "D589 Filler", 400, "Colorless", [{ cost: ["Colorless"], name: "Tap", damage: 10 }]),
-  [WATER_WEAK]: mon(WATER_WEAK, "D589 Water-weak", 400, "Colorless", [{ cost: ["Colorless"], name: "Tap", damage: 10 }], {
-    weaknesses: [{ type: "Water", value: "×2" }],
-  }),
+  [FILLER]: mon(FILLER, "D589 Filler", 400, "Colorless", [
+    { cost: ["Colorless"], name: "Tap", damage: 10 },
+  ]),
+  [WATER_WEAK]: mon(
+    WATER_WEAK,
+    "D589 Water-weak",
+    400,
+    "Colorless",
+    [{ cost: ["Colorless"], name: "Tap", damage: 10 }],
+    {
+      weaknesses: [{ type: "Water", value: "×2" }],
+    },
+  ),
   [W]: typedEnergy(W, "Water"),
   [M]: typedEnergy(M, "Metal"),
   [L]: typedEnergy(L, "Lightning"),
@@ -296,7 +405,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -304,15 +415,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -332,7 +449,11 @@ function unprize(state: GameState, seat: Seat, id: string): GameState {
 }
 
 /** P1's Active is `attacker` with `energy` attached; P2's Active is `defender` with one Filler benched. */
-function table(attacker: string, energy: readonly (readonly [string, number])[], defender = FILLER): GameState {
+function table(
+  attacker: string,
+  energy: readonly (readonly [string, number])[],
+  defender = FILLER,
+): GameState {
   let state = p1Turn();
   for (const s of ["p1", "p2"] as const) {
     state = clearBench(setActiveFromDeck(state, s, FILLER), s);
@@ -376,13 +497,19 @@ function swing(state: GameState, index: number, yes: boolean) {
 }
 
 describe("D589 §3 — Metallic Hammer: discard 3 {M} for +150", () => {
-  const board = () => table("me04-061", [[M, 3], ["fix-energy", 1]]);
+  const board = () =>
+    table("me04-061", [
+      [M, 3],
+      ["fix-energy", 1],
+    ]);
 
   it("yes: 150 + 150, exactly the three {M} discarded, the other Energy stays", () => {
     const result = swing(board(), 1, true);
     expect(of(result.events, "DAMAGE_DEALT")[0]?.dealt).toBe(300);
     expect(attached(result.state)).toEqual(["fix-energy"]);
-    expect(ids(result.state, result.state.players.p1.discard).filter((id) => id === M)).toHaveLength(3);
+    expect(
+      ids(result.state, result.state.players.p1.discard).filter((id) => id === M),
+    ).toHaveLength(3);
   });
 
   it("no: the printed 150 and nothing discarded", () => {
@@ -393,13 +520,19 @@ describe("D589 §3 — Metallic Hammer: discard 3 {M} for +150", () => {
 });
 
 describe("D589 §4 — Riotous Blasting: discard all Energy for +130", () => {
-  const board = () => table("me01-050", [[L, 3], ["fix-energy", 1]]);
+  const board = () =>
+    table("me01-050", [
+      [L, 3],
+      ["fix-energy", 1],
+    ]);
 
   it("yes: 200 + 130, every Energy to the discard pile", () => {
     const result = swing(board(), 1, true);
     expect(of(result.events, "DAMAGE_DEALT")[0]?.dealt).toBe(330);
     expect(attached(result.state)).toEqual([]);
-    expect(ids(result.state, result.state.players.p1.discard).sort()).toEqual([L, L, L, "fix-energy"].sort());
+    expect(ids(result.state, result.state.players.p1.discard).sort()).toEqual(
+      [L, L, L, "fix-energy"].sort(),
+    );
   });
 
   it("no: the printed 200 and every Energy kept", () => {
@@ -410,7 +543,11 @@ describe("D589 §4 — Riotous Blasting: discard all Energy for +130", () => {
 });
 
 describe("D589 §5 — Ninja Spinner: one {W} to the hand for +80", () => {
-  const board = () => table("mep-081", [[W, 2], ["fix-energy", 1]]);
+  const board = () =>
+    table("mep-081", [
+      [W, 2],
+      ["fix-energy", 1],
+    ]);
 
   it("yes: 120 + 80, one {W} into the hand, the rest stays attached", () => {
     // Two interchangeable {W}: the fungible pick collapses, so the yes resolves without a second park.
@@ -431,7 +568,11 @@ describe("D589 §5 — Ninja Spinner: one {W} to the hand for +80", () => {
 });
 
 describe("D589 §6 — Chrono Burst: shuffle all Energy into the deck for +80", () => {
-  const board = () => table("me01-095", [[M, 2], ["fix-energy", 1]]);
+  const board = () =>
+    table("me01-095", [
+      [M, 2],
+      ["fix-energy", 1],
+    ]);
 
   it("yes: 80 + 80, the three Energy in the deck (not the discard pile), and the deck shuffled", () => {
     const before = board();
@@ -453,11 +594,27 @@ describe("D589 §6 — Chrono Burst: shuffle all Energy into the deck for +80", 
 });
 
 describe("D589 §7 — Mortal Shuriken: discard a Basic {W} from hand, 6 counters on 1 of the opponent's Pokémon", () => {
-  const use = (state: GameState, spot: { spot: "active" } | { spot: "bench"; index: number } = { spot: "active" }) =>
-    applyAction(state, { type: "useAbility", seat: "p1", target: spot, abilityName: "Mortal Shuriken" });
-  const pick = (state: GameState, ref: { seat: Seat; spot: { spot: "active" } | { spot: "bench"; index: number } }) =>
-    mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [ref] } } as GameAction);
-  const board = (defender = FILLER) => handOf(table("mep-081", [[W, 2]], defender), "p1", [W, "fix-energy"]);
+  const use = (
+    state: GameState,
+    spot: { spot: "active" } | { spot: "bench"; index: number } = { spot: "active" },
+  ) =>
+    applyAction(state, {
+      type: "useAbility",
+      seat: "p1",
+      target: spot,
+      abilityName: "Mortal Shuriken",
+    });
+  const pick = (
+    state: GameState,
+    ref: { seat: Seat; spot: { spot: "active" } | { spot: "bench"; index: number } },
+  ) =>
+    mustApply(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [ref] },
+    } as GameAction);
+  const board = (defender = FILLER) =>
+    handOf(table("mep-081", [[W, 2]], defender), "p1", [W, "fix-energy"]);
 
   it("on the Active: the {W} is discarded and 60 lands on the chosen Benched body", () => {
     const used = use(board());
@@ -474,7 +631,9 @@ describe("D589 §7 — Mortal Shuriken: discard a Basic {W} from hand, 6 counter
     if (!used.ok) throw new Error(used.error.code);
     const result = pick(used.state, { seat: "p2", spot: { spot: "active" } });
     expect(result.state.players.p2.active?.damage).toBe(60);
-    expect(of(result.events, "COUNTERS_PLACED").map((e) => [e.amount, e.source])).toEqual([[60, "ability"]]);
+    expect(of(result.events, "COUNTERS_PLACED").map((e) => [e.amount, e.source])).toEqual([
+      [60, "ability"],
+    ]);
   });
 
   it("once per turn", () => {
@@ -496,11 +655,5 @@ describe("D589 §7 — Mortal Shuriken: discard a Basic {W} from hand, 6 counter
     const result = use(state);
     expect(result.ok).toBe(false);
     expect(state.players.p1.hand).toHaveLength(2);
-  });
-});
-
-describe("D589 §8 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

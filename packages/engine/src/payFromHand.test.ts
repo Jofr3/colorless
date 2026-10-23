@@ -278,11 +278,7 @@ describe("payFromHand — the play GATE is the card's own printed rule", () => {
     // the gate excludes the played uid.
     state = withHand(state, [ULTRA_BALL, "fix-item"]);
     const ballUid = handUid(state, "p1", ULTRA_BALL);
-    expectErr(
-      state,
-      { type: "playTrainer", seat: "p1", uid: ballUid },
-      "PLAY_CONDITION_NOT_MET",
-    );
+    expectErr(state, { type: "playTrainer", seat: "p1", uid: ballUid }, "PLAY_CONDITION_NOT_MET");
     const result = applyAction(state, { type: "playTrainer", seat: "p1", uid: ballUid });
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable");

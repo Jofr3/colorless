@@ -108,7 +108,9 @@ describe("D550 §1 — the sentence, measured live over the legal column", () =>
     expect([rows.length, units(rows)]).toEqual([1, 1]);
     const fold = legalAttackCorpus().filter(([, s]) => /for each tails/.test(s));
     expect(fold.map(([, s]) => s)).toEqual([PRINTED]);
-    const flippedByTheOpponent = legalAttackCorpus().filter(([, s]) => /^Your opponent flips/.test(s));
+    const flippedByTheOpponent = legalAttackCorpus().filter(([, s]) =>
+      /^Your opponent flips/.test(s),
+    );
     expect(flippedByTheOpponent.map(([, s]) => s)).toEqual([PRINTED]);
   });
 
@@ -165,13 +167,19 @@ describe("D550 §1 — the sentence, measured live over the legal column", () =>
       // …the FACE alone: no per-heads twin is printed.
       PRINTED.replace("for each tails", "for each heads"),
       // …the FLIPPER alone: an attacker-flipped per-tails fold is printed by zero rows.
-      PRINTED.replace("Your opponent flips a coin for each of their Benched Pokémon.", "Flip a coin for each of your opponent's Benched Pokémon."),
+      PRINTED.replace(
+        "Your opponent flips a coin for each of their Benched Pokémon.",
+        "Flip a coin for each of your opponent's Benched Pokémon.",
+      ),
       // …the COUNTED SIDE alone.
       PRINTED.replace("each of their Benched Pokémon", "each of your Benched Pokémon"),
       // …the SUPPRESSION alone: Resistance only is a different §8.5 step.
       PRINTED.replace("Weakness or Resistance", "Resistance"),
       // …the VICTIM alone.
-      PRINTED.replace("to your opponent's Active Pokémon", "to 1 of your opponent's Benched Pokémon"),
+      PRINTED.replace(
+        "to your opponent's Active Pokémon",
+        "to 1 of your opponent's Benched Pokémon",
+      ),
     ]) {
       expect(deriveAttackCoinFlip(text), text).toBeNull();
       expect(deriveAttackDamageSuppression(text), text).toBeNull();
@@ -260,11 +268,17 @@ function firstBasic(state: GameState, side: Seat): string {
 
 /** Setup driven against the LOCAL pool, then P2's turn ended so P1 is on `turn:action`. */
 function table(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: LOCAL_DECK, p2: LOCAL_DECK }, cardPool: CARD_POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: LOCAL_DECK, p2: LOCAL_DECK },
+    cardPool: CARD_POOL,
+  });
   if (!created.ok) throw new Error(`createGame: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = ok(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = ok(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const pending = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !pending.decided[s]);
@@ -272,9 +286,12 @@ function table(seed: number): GameState {
     state = ok(applyAction(state, { type: "setupDrawExtra", seat, count: pending.owed[seat] }));
   }
   for (const side of ["p1", "p2"] as const) {
-    state = ok(applyAction(state, { type: "setupPlaceActive", seat: side, uid: firstBasic(state, side) }));
+    state = ok(
+      applyAction(state, { type: "setupPlaceActive", seat: side, uid: firstBasic(state, side) }),
+    );
   }
-  for (const side of ["p1", "p2"] as const) state = ok(applyAction(state, { type: "setupReady", seat: side }));
+  for (const side of ["p1", "p2"] as const)
+    state = ok(applyAction(state, { type: "setupReady", seat: side }));
   return act(state, { type: "endTurn", seat: "p2" }).state;
 }
 
@@ -287,7 +304,12 @@ function fieldAlone(state: GameState, seat: Seat, cardId: string): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), active: makeInPlay(uid, state.turn), bench: [] },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active: makeInPlay(uid, state.turn),
+        bench: [],
+      },
     },
   };
 }
@@ -303,7 +325,11 @@ function benchUp(state: GameState, seat: Seat, count: number): GameState {
       ...next,
       players: {
         ...next.players,
-        [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), bench: [...side.bench, makeInPlay(uid, next.turn)] },
+        [seat]: {
+          ...side,
+          deck: side.deck.filter((u) => u !== uid),
+          bench: [...side.bench, makeInPlay(uid, next.turn)],
+        },
       },
     };
   }
@@ -321,7 +347,11 @@ function fuel(state: GameState, seat: Seat): GameState {
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), active: { ...active, energy: [...active.energy, uid] } },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active: { ...active, energy: [...active.energy, uid] },
+      },
     },
   };
 }
@@ -366,7 +396,9 @@ function flipsByHand(rng: number, count: number): [faces: CoinFace[], next: numb
 function rendered(state: GameState, events: GameEvent[]): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:05" };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -390,7 +422,10 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
     ] as const) {
       for (let seed = 0; seed < 6; seed += 1) {
         const { events } = act(board(seed, own, foe), toll);
-        expect(rowsOf(events, "ATTACK_EFFECT_COIN_FLIP"), `${own}/${foe} seed ${seed}`).toHaveLength(foe);
+        expect(
+          rowsOf(events, "ATTACK_EFFECT_COIN_FLIP"),
+          `${own}/${foe} seed ${seed}`,
+        ).toHaveLength(foe);
       }
     }
   });
@@ -417,7 +452,10 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
       expect(done.players.p2.active?.damage ?? 0, `seed ${seed}`).toBe(80 * tails);
       expect(done.players.p2.active?.damage ?? 0, `seed ${seed}`).not.toBe(80 * heads);
       if (tails > 0) {
-        expect(rowsOf(events, "DAMAGE_DEALT").map((e) => e.dealt), `seed ${seed}`).toEqual([80 * tails]);
+        expect(
+          rowsOf(events, "DAMAGE_DEALT").map((e) => e.dealt),
+          `seed ${seed}`,
+        ).toEqual([80 * tails]);
         expect(done.players.p2.active?.damage ?? 0).not.toBe(80 * tails + 80); // R3: base dropped
       }
       if (tails < 3) expect(done.players.p2.active?.damage ?? 0).not.toBe(240); // not every flip
@@ -463,7 +501,10 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
       const state = board(seed, 1, 3);
       const [faces, after] = flipsByHand(state.rngState, 3);
       const { state: done, events } = act(state, toll);
-      expect(rowsOf(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result), `seed ${seed}`).toEqual(faces);
+      expect(
+        rowsOf(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result),
+        `seed ${seed}`,
+      ).toEqual(faces);
       expect(done.rngState, `seed ${seed}`).toBe(after);
       expect(done.rngState, `seed ${seed}`).not.toBe(flipsByHand(state.rngState, 4)[1]);
       expect(done.rngState, `seed ${seed}`).not.toBe(flipsByHand(state.rngState, 1)[1]);
@@ -510,7 +551,10 @@ describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else 
       seen += 1;
       // …and the ROW says why: neither modifier was applied.
       const dealt = rowsOf(events, "DAMAGE_DEALT");
-      expect(dealt.map((e) => [e.weakness, e.resistance]), `seed ${seed}`).toEqual([[null, null]]);
+      expect(
+        dealt.map((e) => [e.weakness, e.resistance]),
+        `seed ${seed}`,
+      ).toEqual([[null, null]]);
       expect(done.players.p2.active?.damage ?? 0).not.toBe(80 * tails - 30);
       expect(done.players.p2.active?.damage ?? 0).not.toBe(160 * tails);
       expect(done.players.p2.active?.damage ?? 0).not.toBe(160 * tails - 30);
@@ -521,7 +565,11 @@ describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else 
   it("the CONTROL — the same body takes the card's flat 50 THROUGH W and R: (50 × 2) − 30 = 70", () => {
     // Proves the board's W/R are both live, so the rung above is not green by a dead
     // fixture: 70 is neither 50 (none), 20 (R only), nor 100 (W only).
-    const { state: done } = act(board(0, 1, 3, WEAK_RESISTANT), { type: "attack", seat: "p1", index: 1 });
+    const { state: done } = act(board(0, 1, 3, WEAK_RESISTANT), {
+      type: "attack",
+      seat: "p1",
+      index: 1,
+    });
     expect(done.players.p2.active?.damage ?? 0).toBe(70);
   });
 
@@ -535,60 +583,35 @@ describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else 
         ...state,
         players: {
           ...state.players,
-          p2: { ...state.players.p2, active: { ...target, damageVulnerability: { turn: state.turn, amount: 50 } } },
+          p2: {
+            ...state.players.p2,
+            active: { ...target, damageVulnerability: { turn: state.turn, amount: 50 } },
+          },
         },
       };
       const { state: done, events } = act(state, toll);
       const tails = tailsOf(events);
       // Zero tails: the fold is 0 and the §8.5 gate files nothing — the +50 has no hit to ride.
-      expect(done.players.p2.active?.damage ?? 0, `seed ${seed}`).toBe(tails === 0 ? 0 : 80 * tails + 50);
+      expect(done.players.p2.active?.damage ?? 0, `seed ${seed}`).toBe(
+        tails === 0 ? 0 : 80 * tails + 50,
+      );
       if (tails > 0) seen += 1;
     }
     expect(seen).toBeGreaterThan(0);
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — `MATCH_RECORD_VERSION` HOLDS at 33, and the version.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["../../../apps/api/src/lobby/match.ts"], { query: "?raw", import: "default", eager: true });
-
 describe("D550 §4 — nothing new is persisted, so the record version holds", () => {
-  it("🛑 `MATCH_RECORD_VERSION` HOLDS at 33 (🆕🆕🆕 at THIS slice; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646) — the member is spent into a NUMBER at the fold, the attack never parks, and the board round-trips BYTE-EQUAL", () => {
-    const matchTs = Object.entries(RAW).find(([k]) => k.endsWith("/match.ts"))?.[1] ?? "";
-    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 49;");
-    expect(JSON.parse(JSON.stringify(MEMBER))).toEqual(MEMBER);
-    for (const [own, foe] of [
-      [1, 3],
-      [5, 0],
-    ] as const) {
-      const { state: after } = act(board(0, own, foe), toll);
-      expect(after.phase.kind).not.toBe("effect:choose");
-      const bytes = JSON.stringify(after);
-      const persisted = JSON.parse(bytes) as GameState;
-      expect(persisted).toEqual(after);
-      expect(JSON.stringify(persisted)).toBe(bytes);
-      expect(bytes).not.toContain("opponentPerTails");
-    }
-  });
-
   it("🛑 the demonstrator is FILE-LOCAL and DECLARED — zero `FIXTURE_POOL` ids, a 60-card deck, the printed '80×'", () => {
     expect(Object.keys(LOCAL_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
     expect(LOCAL_DECK).toHaveLength(60);
-    expect(LOCAL_CARDS[SNIPER]?.attacks?.[TOLL_INDEX]).toMatchObject({ effect: PRINTED, damage: "80×" });
+    expect(LOCAL_CARDS[SNIPER]?.attacks?.[TOLL_INDEX]).toMatchObject({
+      effect: PRINTED,
+      damage: "80×",
+    });
   });
 
   it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

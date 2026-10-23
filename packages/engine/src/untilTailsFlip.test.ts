@@ -655,7 +655,8 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     // …and the sentence [1] was MEANT to be — Masquerain sv03-007's, corpus file line 216
     // — is in the column, is 78 characters, and opens with a PRINTED count. Named so the
     // absence above is attributable to the opening rather than to the consequent.
-    const masquerain = "Flip 3 coins. For each heads, discard a random card from your opponent's hand.";
+    const masquerain =
+      "Flip 3 coins. For each heads, discard a random card from your opponent's hand.";
     expect(corpus.has(masquerain)).toBe(true);
     expect(masquerain).toHaveLength(78);
     expect(FOR_EACH_HEADS[1].endsWith(masquerain.slice("Flip 3 coins. ".length))).toBe(true);
@@ -943,7 +944,9 @@ describe("the two `For each heads` sentences — one BUILT at D463, one never pr
     expect(deriveAttackCoinFlip(FOR_EACH_HEADS[1])).toBeNull();
     // …while the same consequent at the opening the column really prints IS read (D452).
     expect(
-      deriveAttackCoinFlip("Flip 3 coins. For each heads, discard a random card from your opponent's hand."),
+      deriveAttackCoinFlip(
+        "Flip 3 coins. For each heads, discard a random card from your opponent's hand.",
+      ),
     ).not.toBeNull();
     // …and swapping each one's consequent for the mapped one turns it into a sentence
     // this deriver reads, which is what makes the three nulls above a claim about

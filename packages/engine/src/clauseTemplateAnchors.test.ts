@@ -141,7 +141,10 @@ describe("§1 — every template answers its OWN printed sentence, and the fifth
       const text = sentence(clauseOf(t), t.per);
       // The population is the committed `legal_standard = 1` attack column, and
       // the count is re-derived from it rather than carried in prose (D206).
-      expect(corpus().filter(([, s]) => s === text), t.pattern).toHaveLength(1);
+      expect(
+        corpus().filter(([, s]) => s === text),
+        t.pattern,
+      ).toHaveLength(1);
       expect(units(corpus().filter(([, s]) => s === text)), t.pattern).toBe(t.printings);
     }
     // 8 printings across 5 shapes — the arithmetic closed so a row that quietly
@@ -196,7 +199,10 @@ describe("§2 — THE CROSS PRODUCT: no pattern's head reaches another pattern's
         // …and the hybrid is a CONSTRUCTED sentence, never a printed one, so a
         // refusal here can never be refusing something the catalog actually
         // prints (the failure mode a hand-written near-miss list has).
-        expect(corpus().some(([, s]) => s === sentence(hybrid, from.per)), hybrid).toBe(false);
+        expect(
+          corpus().some(([, s]) => s === sentence(hybrid, from.per)),
+          hybrid,
+        ).toBe(false);
       }
     }
     // N×(N−1) with N = 5. Stated as arithmetic so deleting a row from
@@ -275,7 +281,10 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
         { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" },
       ],
     ] as const) {
-      expect(corpus().some(([, s]) => s === text), text).toBe(true);
+      expect(
+        corpus().some(([, s]) => s === text),
+        text,
+      ).toBe(true);
       expect(deriveAttackDamageBonus(text)?.count, text).toEqual({ kind: "boardCondition", cond });
     }
     // These are PRINTED (D207's banner: `Tera` is demand with no supply column),
@@ -296,7 +305,10 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
     for (const text of [
       "If 1 of your other Future Pokémon used an attack during your last turn, this attack does 150 more damage.",
     ]) {
-      expect(corpus().some(([, s]) => s === text), text).toBe(false);
+      expect(
+        corpus().some(([, s]) => s === text),
+        text,
+      ).toBe(false);
       expect(deriveAttackDamageBonus(text), text).toBeNull();
     }
   });
@@ -314,12 +326,18 @@ describe("§4 — the LITERAL table is the one place ORDER decides something", (
       deriveAttackDamageBonus(
         "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.",
       ),
-    ).toEqual({ per: 90, count: { kind: "boardCondition", cond: { kind: "opponentActiveIsStage1" } } });
+    ).toEqual({
+      per: 90,
+      count: { kind: "boardCondition", cond: { kind: "opponentActiveIsStage1" } },
+    });
     expect(
       deriveAttackDamageBonus(
         "If your opponent's Active Pokémon is a Stage 2 Pokémon, this attack does 140 more damage.",
       ),
-    ).toEqual({ per: 140, count: { kind: "boardCondition", cond: { kind: "opponentActiveIsStage2" } } });
+    ).toEqual({
+      per: 140,
+      count: { kind: "boardCondition", cond: { kind: "opponentActiveIsStage2" } },
+    });
     // Both are printed, so this rung is about the catalog and not about a
     // constructed collision.
     expect(

@@ -1,10 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -23,13 +19,7 @@ import {
   splitAttackGateClause,
 } from "./effects";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import {
-  applyAction,
-  attackGateOf,
-  createGame,
-  programFor,
-  redactGame,
-} from "./index";
+import { applyAction, attackGateOf, createGame, programFor, redactGame } from "./index";
 import { attackTimingBlocked, attackTimingNote } from "./index";
 import {
   FIXTURE_POOL,
@@ -332,7 +322,11 @@ function firstBasicInHand(state: GameState, seat: Seat): string {
 /** D275's `localSetup` with the FIRST PLAYER as a parameter, so every assertion
     below can be made from both seats under both assignments. */
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: ROLLOUT_DECK, p2: ROLLOUT_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: ROLLOUT_DECK, p2: ROLLOUT_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -729,7 +723,7 @@ describe("D395 §4 — the §9 rule, and the payability mirrors", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D395 §5 — the clause-only split and the report it silences", () => {
-  it("🛑 `splitAttackGateClause` answers `{clause, body: \"\"}` — a MATCH, not a miss", () => {
+  it('🛑 `splitAttackGateClause` answers `{clause, body: ""}` — a MATCH, not a miss', () => {
     // D282's empty-remainder branch returned `null` and its comment named its own
     // expiry date: *"No legal printing is clause-only today (all 13 carry a body),
     // so this is a guard against a future one."* This is that printing.
@@ -776,9 +770,7 @@ describe("D395 §5 — the clause-only split and the report it silences", () => 
     // REPRESENTED — which is the two-key check `D282-split-fires-without-a-gate`
     // exists to keep, and the one a derived gate would have dissolved.
     const gated = afterRollout(SEEDS[0], "p1", "p1", MILTANK);
-    const skipped = declareEvents(gated, "p1", 1).filter(
-      (e) => e.type === "ATTACK_EFFECT_SKIPPED",
-    );
+    const skipped = declareEvents(gated, "p1", 1).filter((e) => e.type === "ATTACK_EFFECT_SKIPPED");
     expect(skipped).toEqual([]);
 
     // 🆕🆕 **D444 — THE SECOND HALF USED TO BE `UNGATED_TWIN`, AND IT HAS MOVED TO
@@ -799,9 +791,9 @@ describe("D395 §5 — the clause-only split and the report it silences", () => 
     // …and the twin, on the same board, emits NONE — the payoff stated beside the
     // control rather than in place of it.
     const twin = untilTurnOf(afterRollout(SEEDS[0], "p1", "p1", UNGATED_TWIN), "p1");
-    expect(
-      declareEvents(twin, "p1", 1).filter((e) => e.type === "ATTACK_EFFECT_SKIPPED"),
-    ).toEqual([]);
+    expect(declareEvents(twin, "p1", 1).filter((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toEqual(
+      [],
+    );
   });
 
   // 🆕🆕 **D444 — THIS RUNG HAS FLIPPED, AND THE FLIP IS THE WHOLE SLICE.** It read

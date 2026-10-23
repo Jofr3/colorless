@@ -355,9 +355,9 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
       line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 30, source: "confusion" }).text,
     ).toBe(`Confusion: ${name} hit itself for 30`);
     // M4 slice 6 — a between-turns Ability counter (Trevenant) is a system row.
-    expect(line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 10, source: "ability" })).toEqual(
-      { text: `Ability: 10 damage to ${name}`, who: "system" },
-    );
+    expect(
+      line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 10, source: "ability" }),
+    ).toEqual({ text: `Ability: 10 damage to ${name}`, who: "system" });
     // D141 — the §9 reactive recoil. A system row for a reason of its own: `seat`
     // is the ATTACKER's (it owns the damaged Pokémon) while the CAUSER is the
     // defender, so an active-voice row would credit the wrong player. It is
@@ -375,15 +375,13 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     // row credits the right player — and the two printed spellings get two
     // phrasings, because the difference is the whole reason the field exists.
     const { uid, name } = settled;
-    expect(
-      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true }),
-    ).toEqual({
+    expect(line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true })).toEqual({
       text: `${name} is protected from damage and effects of attacks during your opponent's next turn`,
       who: "p1",
     });
-    expect(
-      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false }).text,
-    ).toBe(`${name} is protected from damage from attacks during your opponent's next turn`);
+    expect(line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false }).text).toBe(
+      `${name} is protected from damage from attacks during your opponent's next turn`,
+    );
     // D146's THIRD phrasing, and it is the one a reader most needs: a
     // class-filtered block lets EVERY evolved attacker through at full damage,
     // so the row above would be an outright lie about the very next turn. The
@@ -391,7 +389,13 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     // `fromClass` — the printed token — so the wording cannot drift from what
     // `attackBlockOf` will actually enforce.
     expect(
-      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false, fromClass: { stage: "basic" } }),
+      line({
+        type: "ATTACK_BLOCK_APPLIED",
+        seat: "p1",
+        uid,
+        effects: false,
+        fromClass: { stage: "basic" },
+      }),
     ).toEqual({
       text: `${name} is protected from damage from Basic Pokémon's attacks during your opponent's next turn`,
       who: "p1",
@@ -402,8 +406,13 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     // information than naming the breadth, and a row that said "damage and
     // effects" while letting a Stage 1 through unharmed would be the worse lie.
     expect(
-      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true, fromClass: { stage: "basic" } })
-        .text,
+      line({
+        type: "ATTACK_BLOCK_APPLIED",
+        seat: "p1",
+        uid,
+        effects: true,
+        fromClass: { stage: "basic" },
+      }).text,
     ).toContain("Basic Pokémon's attacks");
     // The refusal itself. Filed under the PROTECTED Pokémon's seat, which is also
     // whose block did the refusing — causer and affected body are one card.
@@ -459,10 +468,12 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
       text: "discarded 1 card from their hand to pay a cost",
       who: "p1",
     });
-    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1", "u2"], to: "discard" })).toEqual({
-      text: "discarded 2 cards from their hand to pay a cost",
-      who: "p1",
-    });
+    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1", "u2"], to: "discard" })).toEqual(
+      {
+        text: "discarded 2 cards from their hand to pay a cost",
+        who: "p1",
+      },
+    );
   });
 
   it("says PUT UNDER THE DECK for a cost paid there (M5 Dendra) — still count only", () => {
@@ -484,7 +495,13 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
   it("names an on-KO Ability's coin flip and its prize denial (M4 slice 9)", () => {
     const { uid, name } = settled;
     expect(
-      line({ type: "ABILITY_COIN_FLIP", seat: "p1", uid, ability: "Shattering Crystal", result: "heads" }),
+      line({
+        type: "ABILITY_COIN_FLIP",
+        seat: "p1",
+        uid,
+        ability: "Shattering Crystal",
+        result: "heads",
+      }),
     ).toEqual({ text: `${name} flipped heads for Shattering Crystal`, who: "p1" });
     // The prize denial is a system row (the flip above named the Ability).
     expect(line({ type: "PRIZE_PREVENTED", seat: "p1", uid })).toEqual({
@@ -567,11 +584,7 @@ describe("logFromEvents — resilience and viewer mapping", () => {
 describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
   /** p1 on turn 2 (p2 first, passed) with the slice-3 cards pulled to hand. */
   function stadiumToolState(): GameState {
-    let state = driveSetup(
-      31,
-      { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK },
-      { first: "p2" },
-    );
+    let state = driveSetup(31, { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     state = handFromDeck(state, "p1", "sv01-167", 1);
     return handFromDeck(state, "p1", "sv01-197", 1);
@@ -629,11 +642,7 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
   it("shows the Vitality Band boost in the damage math", () => {
     // fix-attacker (Bite [C] 30) + Vitality Band vs a plain no-weakness Basic
     // (fix-basic-1 — 8 copies, so the surgery finds one at any seed).
-    let state = driveSetup(
-      31,
-      { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK },
-      { first: "p2" },
-    );
+    let state = driveSetup(31, { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = setActiveFromDeck(state, "p2", "fix-basic-1");
@@ -656,11 +665,7 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
     // 9 counters (90 HP) × 10 = 90 over base 10 → 100 vs fix-wall (120 HP, no
     // weakness), so the DAMAGE_DEALT `scaled` field surfaces as a `· scaled +90`
     // breadcrumb — the sibling of `· boosted +N`, pinned the same way.
-    let state = driveSetup(
-      12,
-      { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK },
-      { first: "p2" },
-    );
+    let state = driveSetup(12, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = setActiveFromDeck(state, "p2", "fix-wall");
@@ -674,7 +679,11 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
 
 describe("ENERGY_ATTACHED — host resolved by uid, robust to Jet's switch (§6.1)", () => {
   it("names the Pokémon the energy landed on even after Jet switches it Active", () => {
-    let state = driveSetup(7, { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK }, { first: "p2" });
+    let state = driveSetup(
+      7,
+      { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK },
+      { first: "p2" },
+    );
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     // A single, distinctly-named benched Pokémon at index 0.
@@ -798,7 +807,11 @@ describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () =
     // Both Actives pinned to fix-titan (340 HP, no attacks) so Wild Splash's 230
     // cannot KO and park mid-batch — deckTopMill.test.ts's board, and for its reason.
     const millBoard = (): GameState => {
-      let state = driveSetup(7, { p1: DECK_TOP_MILL_DECK, p2: DECK_TOP_MILL_DECK }, { first: "p2" });
+      let state = driveSetup(
+        7,
+        { p1: DECK_TOP_MILL_DECK, p2: DECK_TOP_MILL_DECK },
+        { first: "p2" },
+      );
       state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
       state = setActiveFromDeck(state, "p1", "fix-titan");
       return setActiveFromDeck(state, "p2", "fix-titan");
@@ -965,7 +978,11 @@ describe("logFromEvents — reveal-and-bottom (M5): HAND_REVEALED / CARD_TO_BOTT
     // that justifies it sits two rows above in the Iono test: a hand SHUFFLED
     // under a deck stays hidden, a hand REVEALED does not. Driven through
     // playTrainer + resolveEffect, so the order is the real one.
-    let state = driveSetup(20260722, { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK }, { first: "p2" });
+    let state = driveSetup(
+      20260722,
+      { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
+      { first: "p2" },
+    );
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
     // P2's hand, exactly: two classes so the pick is a real question.
     const p2Side = state.players.p2;
@@ -992,9 +1009,9 @@ describe("logFromEvents — reveal-and-bottom (M5): HAND_REVEALED / CARD_TO_BOTT
     ]);
     // The reveal is filed under the seat whose hand it is, not the actor —
     // the row above it already named the cause.
-    expect(logFromEvents(played, ctx(parked)).map((e) => (e.kind === "turn" ? null : e.who))).toEqual(
-      ["p1", "p2"],
-    );
+    expect(
+      logFromEvents(played, ctx(parked)).map((e) => (e.kind === "turn" ? null : e.who)),
+    ).toEqual(["p1", "p2"]);
 
     const picked = handUid(parked, "p2", "sv01-105");
     const { state: after, events } = mustApply(parked, {
@@ -1008,9 +1025,9 @@ describe("logFromEvents — reveal-and-bottom (M5): HAND_REVEALED / CARD_TO_BOTT
       "put Greavard on the bottom of Tide's deck",
     ]);
     // Filed under the ACTOR (whose card did it), the ENERGY_DISCARDED rule.
-    expect(logFromEvents(events, ctx(after)).map((e) => (e.kind === "turn" ? null : e.who))).toEqual([
-      "p1",
-    ]);
+    expect(
+      logFromEvents(events, ctx(after)).map((e) => (e.kind === "turn" ? null : e.who)),
+    ).toEqual(["p1"]);
   });
 
   it("says so plainly when the revealed hand is empty", () => {
@@ -1026,7 +1043,11 @@ describe("logFromEvents — reveal-and-bottom (M5): HAND_REVEALED / CARD_TO_BOTT
     // A revealed hand is the first batch that routinely holds several copies of
     // one card, and a run of identical names reads as a stutter rather than a
     // quantity (countedNames' rule, arriving here from the discard rows).
-    let state = driveSetup(20260722, { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK }, { first: "p2" });
+    let state = driveSetup(
+      20260722,
+      { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
+      { first: "p2" },
+    );
     const side = state.players.p2;
     state = {
       ...state,
@@ -1043,7 +1064,11 @@ describe("logFromEvents — reveal-and-bottom (M5): HAND_REVEALED / CARD_TO_BOTT
 
 describe("logFromEvents — moveEnergy (M5): ENERGY_MOVED", () => {
   it("names the source and destination Pokémon (both stay put — no compaction)", () => {
-    let state = driveSetup(7, { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK }, { first: "p2" });
+    let state = driveSetup(
+      7,
+      { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK },
+      { first: "p2" },
+    );
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
@@ -1142,11 +1167,7 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
     // The case the old "read it off the other seat" rule got backwards: Paldean
     // Tauros' Blaze Dash discards from ITS OWN Active, so `event.seat` is p1 and
     // the row must stay p1. Inferring the actor would have filed it under p2.
-    let state = driveSetup(
-      5,
-      { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK },
-      { first: "p2" },
-    );
+    let state = driveSetup(5, { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     state = setActiveFromDeck(state, "p1", "sv02-028");
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
@@ -1270,7 +1291,11 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
 describe("board-condition cards — the log rides existing rows (M5 board conditions)", () => {
   /** P1's turn 2 on the board-condition deck (P2 went first and passed). */
   function p1Turn2(seed: number): GameState {
-    const state = driveSetup(seed, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK }, { first: "p2" });
+    const state = driveSetup(
+      seed,
+      { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK },
+      { first: "p2" },
+    );
     return mustApply(state, { type: "endTurn", seat: "p2" }).state;
   }
   function playFrom(state: GameState, cardId: string) {

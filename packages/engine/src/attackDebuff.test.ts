@@ -221,12 +221,7 @@ function swingBack(state: GameState, index = 0) {
 /** A live debuff written straight onto a body — for the boards no printing can
     reach (a second install in one turn; a debuff that outlives its installer).
     D144/D146's precedent for pinning a rule with no card behind it. */
-function withDebuff(
-  state: GameState,
-  seat: Seat,
-  amount: number,
-  turn = state.turn,
-): GameState {
+function withDebuff(state: GameState, seat: Seat, amount: number, turn = state.turn): GameState {
   const side = state.players[seat];
   const active = side.active;
   if (active === null) throw new Error("no Active to stamp");
@@ -256,10 +251,15 @@ function withReduction(
     if (active === null) throw new Error("no Active to stamp");
     return {
       ...state,
-      players: { ...state.players, [seat]: { ...side, active: { ...active, damageReduction: stamp } } },
+      players: {
+        ...state.players,
+        [seat]: { ...side, active: { ...active, damageReduction: stamp } },
+      },
     };
   }
-  const bench = side.bench.map((p, i) => (i === where.bench ? { ...p, damageReduction: stamp } : p));
+  const bench = side.bench.map((p, i) =>
+    i === where.bench ? { ...p, damageReduction: stamp } : p,
+  );
   return { ...state, players: { ...state.players, [seat]: { ...side, bench } } };
 }
 
@@ -285,7 +285,9 @@ function withWideBlock(state: GameState, seat: Seat, turn = state.turn): GameSta
 function rendered(state: GameState, events: GameEvent[]): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Wren" }, state, elapsed: "+00:07" };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -300,9 +302,7 @@ describe("the attacker-side debuff — derived, not authored", () => {
     expect(deriveAttackEffect(possessive(30))).toEqual([
       { op: "weakenDefenderAttacks", amount: 30 },
     ]);
-    expect(deriveAttackEffect(usedBy(100))).toEqual([
-      { op: "weakenDefenderAttacks", amount: 100 },
-    ]);
+    expect(deriveAttackEffect(usedBy(100))).toEqual([{ op: "weakenDefenderAttacks", amount: 100 }]);
     // …and an amount nothing prints derives on BOTH, which is what makes each
     // capture a capture rather than a two-row table with a regex around it.
     expect(deriveAttackEffect(possessive(70))).toEqual([
@@ -347,12 +347,12 @@ describe("the attacker-side debuff — derived, not authored", () => {
     );
     // …and mixing the two spellings within one sentence still derives, which is the
     // only assertion that proves BOTH slots are classed rather than one of them.
-    expect(
-      deriveAttackEffect(possessive(20).replace("opponent's", "opponent’s")),
-    ).toEqual(deriveAttackEffect(possessive(20)));
-    expect(
-      deriveAttackEffect(possessive(20).replace("Pokémon's", "Pokémon’s")),
-    ).toEqual(deriveAttackEffect(possessive(20)));
+    expect(deriveAttackEffect(possessive(20).replace("opponent's", "opponent’s"))).toEqual(
+      deriveAttackEffect(possessive(20)),
+    );
+    expect(deriveAttackEffect(possessive(20).replace("Pokémon's", "Pokémon’s"))).toEqual(
+      deriveAttackEffect(possessive(20)),
+    );
   });
 
   it("is UNGATED — no coin is printed on any of the five", () => {
@@ -373,7 +373,9 @@ describe("the attacker-side debuff — derived, not authored", () => {
       expect(deriveAttackEffect(`${text} Draw a card.`)).toBeNull();
       // The parenthetical is IN both anchors, so dropping it is a different
       // sentence — and the pool prints no such sentence, so it stays LOUD.
-      expect(deriveAttackEffect(text.replace(" (before applying Weakness and Resistance)", ""))).toBeNull();
+      expect(
+        deriveAttackEffect(text.replace(" (before applying Weakness and Resistance)", "")),
+      ).toBeNull();
     }
   });
 
@@ -389,7 +391,9 @@ describe("the attacker-side debuff — derived, not authored", () => {
     ]);
     // …and the ONE WORD that separates them is load-bearing IN BOTH DIRECTIONS.
     expect(deriveAttackEffect(AFTER_WR.replace("after applying", "before applying"))).toBeNull();
-    expect(deriveAttackEffect(possessive(30).replace("before applying", "after applying"))).toBeNull();
+    expect(
+      deriveAttackEffect(possessive(30).replace("before applying", "after applying")),
+    ).toBeNull();
   });
 
   it("refuses the ALWAYS-ON Ability — the duration AND the body are the difference", () => {
@@ -1227,9 +1231,7 @@ describe("the attacker-side debuff — the LOG", () => {
     expect(line?.text).toContain("weakness");
     // …and the crumb sits BEFORE the Weakness one, so the log reconstructs §8.5 in
     // printed order rather than in field order.
-    expect((line?.text.indexOf("weakened") ?? -1)).toBeLessThan(
-      line?.text.indexOf("weakness") ?? 0,
-    );
+    expect(line?.text.indexOf("weakened") ?? -1).toBeLessThan(line?.text.indexOf("weakness") ?? 0);
   });
 
   it("says nothing at all when the debuff is not live", () => {

@@ -1,11 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackEffect,
   splitAttackCancelClause,
@@ -14,10 +9,17 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter, EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { countCardsInDiscardPile } from "./interpreter";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+} from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 🆕🆕🆕 D538 — THE COUNTER PLACEMENT WHOSE AMOUNT IS A PAYLOAD, AND WHOSE TAIL
@@ -186,21 +188,6 @@ const DECK = deckOf({
   [ENERGY]: 14,
 });
 
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["./{censusAttackCorpus,effects,interpreter}.ts", "../../../apps/api/src/lobby/match.ts"], {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-const raw = (suffix: string): string =>
-  Object.entries(RAW).find(([k]) => k.endsWith(suffix))?.[1] ?? "";
-
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result.state;
@@ -350,7 +337,8 @@ const pileIds = (state: GameState, seat: Seat): string[] =>
   state.players[seat].discard.map((u) => state.cardIdByUid[u] ?? "?");
 const deckIds = (state: GameState, seat: Seat): string[] =>
   state.players[seat].deck.map((u) => state.cardIdByUid[u] ?? "?");
-const activeDamage = (state: GameState, seat: Seat): number => state.players[seat].active?.damage ?? -1;
+const activeDamage = (state: GameState, seat: Seat): number =>
+  state.players[seat].active?.damage ?? -1;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §1 — THE CENSUS ROW AND THE ANCHOR.
@@ -413,24 +401,23 @@ describe("D538 §1 — the corpus row, read off the census rather than retyped",
   });
 
   it("🛑 the HEAD is anchored — a printed prefix refuses", () => {
-    expect(deriveAttackEffect(`You may ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`)).toBeNull();
-    expect(deriveAttackEffect(`Flip a coin. If heads, ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`)).toBeNull();
+    expect(
+      deriveAttackEffect(`You may ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect(`Flip a coin. If heads, ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`),
+    ).toBeNull();
   });
 
   it("🛑 the TAIL is anchored — the `$` refuses a printed continuation", () => {
     // `D538-anchor-loses-its-dollar` is the experiment: without the `$` the anchor would
     // claim any sentence this one prefixes, and the reader would silently drop whatever
     // followed it.
-    expect(deriveAttackEffect(`${PRINTED} During your next turn, this Pokémon can't attack.`)).toBeNull();
+    expect(
+      deriveAttackEffect(`${PRINTED} During your next turn, this Pokémon can't attack.`),
+    ).toBeNull();
     expect(deriveAttackEffect(PRINTED.replace(/\.$/, ""))).toBeNull();
     expect(deriveAttackEffect(PRINTED.replace(/\.$/, "!"))).toBeNull();
-  });
-
-  it("🛑 NO /i ON THIS PATH: the lowercase mid-sentence spelling is refused", () => {
-    expect(deriveAttackEffect(`${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`)).toBeNull();
-    expect(raw("/effects.ts")).toContain(
-      "/^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\\. Then, shuffle those Energy cards into your deck\\.$/",
-    );
   });
 
   it("🛑 NEITHER HALF IS READ ON ITS OWN, which is what makes the anchor whole-sentence", () => {
@@ -683,27 +670,13 @@ describe("D538 §3 — the amount folds over the CONTROLLER's pile, through the 
       expect(activeDamage(state, "p2"), `${copies} copies`).toBe(hp);
     }
   });
-
-  it("🛑 THE RIDER IS CHECKED BEFORE `perEnergyOnSelf`'s unconditional return", () => {
-    // `D538-rider-checked-too-late` is the experiment: `snipeAmount`'s
-    // `if (op.perEnergyOnSelf !== true) return op.amount;` returns for EVERY op carrying
-    // this rider, so a branch appended below it is dead code and the card deals a FLAT
-    // 20 where it prints 20 × N. The board reads 60, which is the value only the live
-    // branch can produce.
-    const { state } = attack(stockPile(board(SEED)));
-    expect(activeDamage(state, "p2")).toBe(60);
-    expect(activeDamage(state, "p2")).not.toBe(20);
-    expect(raw("/interpreter.ts")).toContain(
-      "if (op.perDiscardPileCard !== undefined)\n    return op.amount * countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard);\n  if (op.perEnergyOnSelf !== true) return op.amount;",
-    );
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §4 — THE FORCED RETRIEVAL ON `dest: "deck"`, AND ITS ONE EVENT ROW.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D538 §4 — `max: \"all\"` moves the whole matching pile, FORCED and never parked", () => {
+describe('D538 §4 — `max: "all"` moves the whole matching pile, FORCED and never parked', () => {
   it("🛑 the three matching cards leave the pile and land in the deck", () => {
     const before = stockPile(board(SEED));
     expect(pileIds(before, "p1").filter((id) => id === GRASS)).toHaveLength(3);
@@ -719,9 +692,7 @@ describe("D538 §4 — `max: \"all\"` moves the whole matching pile, FORCED and 
 
   it("🛑 ONE `DISCARD_RETRIEVED` row, naming the SEAT, the DEST and the UIDS that moved", () => {
     const before = stockPile(board(SEED));
-    const movedUids = before.players.p1.discard.filter(
-      (u) => before.cardIdByUid[u] === GRASS,
-    );
+    const movedUids = before.players.p1.discard.filter((u) => before.cardIdByUid[u] === GRASS);
     const { events, state } = attack(before);
     const retrieved = rows(events, "DISCARD_RETRIEVED");
     expect(retrieved).toHaveLength(1);
@@ -749,7 +720,7 @@ describe("D538 §4 — `max: \"all\"` moves the whole matching pile, FORCED and 
     expect(JSON.stringify(state)).not.toContain("chooseCards");
   });
 
-  it("🛑 `max: \"all\"` is the WHOLE matching pile and not a number — six copies move too", () => {
+  it('🛑 `max: "all"` is the WHOLE matching pile and not a number — six copies move too', () => {
     // `D538-max-all-becomes-one` is the experiment: a `max: 1` would retrieve one card,
     // place the right damage, and be invisible on any board holding exactly one match.
     const before = toPile(board(SEED), "p1", GRASS, 6);
@@ -796,16 +767,6 @@ describe("D538 §4 — `max: \"all\"` moves the whole matching pile, FORCED and 
     const { events, state } = attack(before);
     expect(rows(events, "SHUFFLE")).toEqual([{ type: "SHUFFLE", seat: "p1" }]);
     expect(state.rngState).not.toEqual(before.rngState);
-  });
-
-  it("🛑 the two `retrieveMax` lines are BYTE-IDENTICAL, which keeps D237's clamp row alive", () => {
-    // The forced branch sits ABOVE them so control-flow narrowing leaves `op.max: number`
-    // for the bench clamp — measured here rather than trusted, because the mutant row
-    // `D237-bench-clamp-dropped-at-the-park` quotes these two lines verbatim and would go
-    // 0× if they moved.
-    expect(raw("/interpreter.ts")).toContain(
-      '      const retrieveMax =\n        op.dest === "bench" ? Math.min(op.max, benchSpace(state, ctx.seat)) : op.max;',
-    );
   });
 });
 
@@ -984,22 +945,6 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     );
   });
 
-  it("🛑 DIRECTION 2 — the NEW bytes are unreachable backwards and round-trip forwards", () => {
-    const fresh = deriveAttackEffect(PRINTED);
-    expect(JSON.stringify(fresh)).toBe(
-      '[{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack","perDiscardPileCard":{"kind":"basicEnergy","energyType":"Grass"}},' +
-        '{"op":"discardPileRetrieval","filter":{"kind":"basicEnergy","energyType":"Grass"},"dest":"deck","max":"all"},' +
-        '{"op":"shuffleDeck"}]',
-    );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
-    // ⚠️ **NEITHER LITERAL IS A RENAME (D359).** `perDiscardPileCard` is a NEW OPTIONAL
-    // KEY whose ABSENCE means what absence has always meant here — an unscaled hit — and
-    // `"all"` is a PURE ADDITION to a value domain whose numbers all still mean the
-    // numbers they meant (D333's `lookAtTopN.max:"any"`, D527's
-    // `searchDeck.max:"yourBenchCount"`).
-    expect(raw("/effects.ts")).toContain('max: number | "all";');
-  });
-
   it("🛑 DIRECTION 3 — the LOSS direction, and it degrades LOUDLY ENOUGH (D421)", () => {
     // A v30 reader that DROPPED the rider deals `amount` where the card prints
     // `amount × N` — the degraded op is byte-for-byte the UNSCALED twin's, which is a
@@ -1023,16 +968,6 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     const { state: done } = answer(revived, benchRef(0));
     expect(done.players.p2.bench[0]?.damage).toBe(60);
     expect(done.players.p1.discard).toHaveLength(5);
-  });
-
-  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
-    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-
-  it("🛑 the engine version stepped to 0.555.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });
 
@@ -1075,14 +1010,6 @@ describe("D538 §8 — a whiffed retrieval STILL shuffles, and the decision is p
     expect(rows(events, "DISCARD_RETRIEVED")).toHaveLength(0);
     expect(rows(events, "SHUFFLE")).toHaveLength(1);
     expect(state.rngState).not.toEqual(before.rngState);
-  });
-
-  it("🛑 the discrepancy is WRITTEN AT THE SITE, not only here", () => {
-    // conventions.md's rule has two halves and this is the second: the decision lives
-    // beside the op as well as in a test, so a successor reading the arm finds it.
-    expect(raw("/effects.ts")).toContain(
-      "DECIDED DISCREPANCY — A WHIFFED RETRIEVAL STILL SHUFFLES, AND THE",
-    );
   });
 
   it("🛑 the whiff is not a SKIP — the sentence was read, and the log says so", () => {

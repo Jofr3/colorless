@@ -459,7 +459,10 @@ describe("D309 §2 — the printed attack on a real board: the BODY park, then t
     const applied = mustApply(second, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "cards", uids: [offered(second, cardsPrompt(second).candidates, "bc-evo-a1")] },
+      choice: {
+        kind: "cards",
+        uids: [offered(second, cardsPrompt(second).candidates, "bc-evo-a1")],
+      },
     });
     const types = applied.events.map((event) => event.type);
     expect(types).toContain("POKEMON_EVOLVED");
@@ -500,12 +503,7 @@ describe("D309 §3 — the NARROWING: a body the deck cannot evolve is not a cho
     // the deriver's trailing `shuffleDeck` still fires. That is the silent ending
     // `searchDeck` and `evolveFromDeck` both already take, and it is why
     // `programPlayable` was left alone.
-    const barren = stripDeck(board(37), [
-      "bc-evo-a1",
-      "bc-evo-a2",
-      "bc-evo-b",
-      "bc-evo-active",
-    ]);
+    const barren = stripDeck(board(37), ["bc-evo-a1", "bc-evo-a2", "bc-evo-b", "bc-evo-active"]);
     const applied = mustApply(barren, { type: "attack", seat: "p1", index: 0 });
     expect(applied.state.phase.kind).not.toBe("effect:choose");
     expect(benchTopId(applied.state, 0)).toBe("bc-basic-a");

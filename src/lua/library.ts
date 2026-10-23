@@ -87,21 +87,19 @@ export class LuaLibrary {
           0,
           this.result,
         ]),
-        ...decks
-          .slice((this.page - 1) * this.size, this.page * this.size)
-          .map((d) => {
-            const legal = this.legality.get(d.id);
-            return encodeFields([
-              "D",
-              d.id,
-              d.name,
-              "",
-              d.cardCount,
-              d.tint,
-              "",
-              legal === undefined ? "" : +!legal,
-            ]);
-          }),
+        ...decks.slice((this.page - 1) * this.size, this.page * this.size).map((d) => {
+          const legal = this.legality.get(d.id);
+          return encodeFields([
+            "D",
+            d.id,
+            d.name,
+            "",
+            d.cardCount,
+            d.tint,
+            "",
+            legal === undefined ? "" : +!legal,
+          ]);
+        }),
       ].join("\n"),
     );
   }

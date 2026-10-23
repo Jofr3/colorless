@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -115,7 +115,12 @@ describe("D602 §1 — the programs: six objects over 9 printings", () => {
     expect(abilityOf(VILEPLUME)?.requiresEnergyType).toBeUndefined();
     expect(abilityOf(VILEPLUME)?.program).toEqual([{ op: "healEach", amount: 30 }]);
     expect(abilityOf(SOLGALEO)?.program).toEqual([
-      { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Metal" }, max: 2, toSelf: true },
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Metal" },
+        max: 2,
+        toSelf: true,
+      },
       { op: "shuffleDeck" },
     ]);
   });
@@ -169,11 +174,17 @@ const LOCAL: Record<string, Card> = {
     types: ["Colorless"],
     retreat: 2,
   }),
-  [TANGELA[0]]: body(TANGELA[0], "Erika's Tangela", "Gathering of Blossoms", GATHERING_OF_BLOSSOMS, {
-    hp: 80,
-    types: ["Grass"],
-    retreat: 2,
-  }),
+  [TANGELA[0]]: body(
+    TANGELA[0],
+    "Erika's Tangela",
+    "Gathering of Blossoms",
+    GATHERING_OF_BLOSSOMS,
+    {
+      hp: 80,
+      types: ["Grass"],
+      retreat: 2,
+    },
+  ),
   [VIVILLON]: body(VIVILLON, "Vivillon", "Guiding Dance", GUIDING_DANCE, {
     stage: "Stage2",
     hp: 120,
@@ -204,7 +215,10 @@ const LOCAL: Record<string, Card> = {
   [SUPPORTER]: trainerCard(SUPPORTER, "Supporter", "Draw 2 cards."),
   [ERIKAS_ODDISH]: battler(ERIKAS_ODDISH, { name: "Erika's Oddish", hp: 60, types: ["Grass"] }),
   [ODDISH]: battler(ODDISH, { name: "Oddish", hp: 60, types: ["Grass"] }),
-  [ERIKAS_TRAINER]: { ...trainerCard(ERIKAS_TRAINER, "Supporter", "Draw a card."), name: "Erika's Invitation" },
+  [ERIKAS_TRAINER]: {
+    ...trainerCard(ERIKAS_TRAINER, "Supporter", "Draw a card."),
+    name: "Erika's Invitation",
+  },
   [ITEM]: itemTrainer(ITEM),
   [G]: typedEnergy(G, "Grass"),
   [R]: typedEnergy(R, "Fire"),
@@ -386,8 +400,10 @@ describe("D602 §3 — Gathering of Blossoms: an Erika's Pokémon from the deck"
 
   it("is used from the Active Spot as well, and once per Pokémon", () => {
     let state = table({ active: TANGELA[0], hand: [] });
-    state = resolve(ok(use(state, "Gathering of Blossoms", ACTIVE)).state, { kind: "cards", uids: [] })
-      .state;
+    state = resolve(ok(use(state, "Gathering of Blossoms", ACTIVE)).state, {
+      kind: "cards",
+      uids: [],
+    }).state;
     expect(refusal(use(state, "Gathering of Blossoms", ACTIVE))).toBe("ABILITY_ALREADY_USED");
   });
 });
@@ -400,7 +416,8 @@ describe("D602 §4 — Guiding Dance: a coin; heads, a Pokémon from the deck", 
     expect(offer.kind).toBe("chooseCards");
     expect(offer.max).toBe(1);
     const candidates = offer.candidates as string[];
-    for (const id of ids(parked.state, candidates)) expect(POOL[id as string]?.category, id).toBe("Pokemon");
+    for (const id of ids(parked.state, candidates))
+      expect(POOL[id as string]?.category, id).toBe("Pokemon");
     expect(ids(parked.state, candidates)).toContain(ODDISH);
     const done = resolve(parked.state, { kind: "cards", uids: [candidates[0]] });
     expect(done.state.players.p1.hand).toEqual([candidates[0]]);
@@ -453,7 +470,9 @@ describe("D602 §5 — Fermented Juice: any {G} Energy on this Pokémon; heal 30
     const state = attachFromDeck(table({ active: SHUCKLE[0], hand: [] }), "p1", G, 1);
     const after = ok(use(state, "Fermented Juice", ACTIVE)).state;
     expect(after.players.p1.active?.damage).toBe(0);
-    expect(after.allowances.abilitiesUsed).toEqual([`${state.players.p1.active?.stack.at(-1)}:Fermented Juice`]);
+    expect(after.allowances.abilitiesUsed).toEqual([
+      `${state.players.p1.active?.stack.at(-1)}:Fermented Juice`,
+    ]);
   });
 });
 
@@ -504,13 +523,9 @@ describe("D602 §7 — Sunrise: on the Bench, up to 2 Basic {M} Energy from the 
   });
 });
 
-describe("D602 §8 — the two dropped texts stay unkeyed, and the version (🆕🆕🆕 D611 (D539): \"stay unkeyed\" WITHDRAWN for Dragonair — keyed at D611)", () => {
+describe('D602 §8 — the two dropped texts stay unkeyed, and the version (🆕🆕🆕 D611 (D539): "stay unkeyed" WITHDRAWN for Dragonair — keyed at D611)', () => {
   it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry no program (🆕🆕🆕 D611 (D539): WITHDRAWN for Dragonair — it carries its D611 Ability; 🆕🆕🆕 D628 (D539): WITHDRAWN for Larry's Komala — it carries its D628 Ability)", () => {
     expect(programFor("me02.5-151")?.abilities?.[0]?.name).toBe("Evolutionary Guidance");
     expect(programFor("me02.5-175")?.abilities?.[0]?.name).toBe("Lethargic Charge");
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

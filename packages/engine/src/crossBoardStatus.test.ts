@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -146,8 +142,7 @@ const ROASTING_HEAT =
   "If your opponent's Active Pokémon is Burned, this attack does 40 more damage.";
 const MENTAL_CRUSH =
   "If your opponent's Active Pokémon is Confused, this attack does 90 more damage.";
-const CHARRING_BREATH =
-  "If your opponent's Active Pokémon isn't Burned, this attack does nothing.";
+const CHARRING_BREATH = "If your opponent's Active Pokémon isn't Burned, this attack does nothing.";
 
 const BURNED_CLAUSE = "your opponent's Active Pokémon is Burned";
 const CONFUSED_CLAUSE = "your opponent's Active Pokémon is Confused";
@@ -288,7 +283,7 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // 22 / 26 could not tell "the two rows landed" from "a reader broke".
     expect(refused.some(([, s]) => s === ROASTING_HEAT)).toBe(false);
     expect(refused.some(([, s]) => s === MENTAL_CRUSH)).toBe(false);
-        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
     // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
     // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
@@ -385,7 +380,9 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
       expect(rows, clause).toHaveLength(1);
       expect(units(rows), clause).toBe(1);
     }
-    const cancelRows = corpus().filter(([, s]) => NOTHING.exec(s.trim())?.[1] === NOT_BURNED_CLAUSE);
+    const cancelRows = corpus().filter(
+      ([, s]) => NOTHING.exec(s.trim())?.[1] === NOT_BURNED_CLAUSE,
+    );
     expect(cancelRows).toHaveLength(1);
     expect(units(cancelRows)).toBe(1);
     // ⚠️ THE IDS ARE NOT READ FROM THE CATALOG — D369's constraint, unchanged: this
@@ -403,7 +400,9 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // member is not safety but ARITHMETIC.
     const read = new Map<string, { sentences: number; printings: number }>();
     for (const word of PRINTED_STATUSES) {
-      const rows = corpus().filter(([, s]) => s.includes(`is ${word}`) || s.includes(`isn't ${word}`));
+      const rows = corpus().filter(
+        ([, s]) => s.includes(`is ${word}`) || s.includes(`isn't ${word}`),
+      );
       read.set(word, { sentences: rows.length, printings: units(rows) });
     }
     expect(Object.fromEntries(read)).toEqual({
@@ -425,13 +424,16 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // …so the token serves EXACTLY the 3 printings this slice's two rows serve, and
     // the only way it could serve more is by absorbing the two Poison members — which
     // is a RENAME (D362: 31 sites across 7 files), not a widening.
-    const tokenServes = (read.get("Burned")?.printings ?? 0) + (read.get("Confused")?.printings ?? 0);
+    const tokenServes =
+      (read.get("Burned")?.printings ?? 0) + (read.get("Confused")?.printings ?? 0);
     expect(tokenServes).toBe(3);
     // ⚠️ AND THE SETTER SIDE IS ENORMOUS BY COMPARISON, which is the measurement that
     // says why the vocabulary "feels" bigger than the read population is. The pool
     // prints these five words as CONSEQUENTS far more often than as antecedents; that
     // half is `applyStatus`'s and has been built since M3.
-    const setters = corpus().filter(([, s]) => PRINTED_STATUSES.some((w) => s.includes(`is now ${w}`)));
+    const setters = corpus().filter(([, s]) =>
+      PRINTED_STATUSES.some((w) => s.includes(`is now ${w}`)),
+    );
     expect(setters.length).toBeGreaterThan(read.get("Poisoned")?.sentences ?? 0);
     expect(resolvedByAnyReader(SINGE)).toBe(true);
     expect(resolvedByAnyReader(PERPLEX)).toBe(true);
@@ -456,7 +458,7 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band2).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -563,7 +565,11 @@ describe("§2 — the THREE keys, the printed BYTES, and two tables that must no
     // count. A substring-keyed lookup would be undetectable here.
     expect(CONFUSED_CLAUSE).toHaveLength(42);
     expect("your opponent's Active Pokémon is Poisoned").toHaveLength(42);
-    expect(deriveAttackDamageBonus("If your opponent's Active Pokémon is Poisoned, this attack does 120 more damage.")).toEqual({
+    expect(
+      deriveAttackDamageBonus(
+        "If your opponent's Active Pokémon is Poisoned, this attack does 120 more damage.",
+      ),
+    ).toEqual({
       per: 120,
       count: { kind: "boardCondition", cond: { kind: "opponentActivePoisoned" } },
     });
@@ -627,12 +633,12 @@ describe("§2 — the THREE keys, the printed BYTES, and two tables that must no
     // and the board is either Burned or it is not.
     expect(conditionNote(BURNED)).toBe(BURNED_CLAUSE);
     expect(conditionNote(CONFUSED)).toBe(CONFUSED_CLAUSE);
-    expect(deriveAttackDamageBonus(`If ${conditionNote(BURNED)}, this attack does 40 more damage.`)).toEqual(
-      { per: 40, count: { kind: "boardCondition", cond: BURNED } },
-    );
-    expect(deriveAttackDamageBonus(`If ${conditionNote(CONFUSED)}, this attack does 90 more damage.`)).toEqual(
-      { per: 90, count: { kind: "boardCondition", cond: CONFUSED } },
-    );
+    expect(
+      deriveAttackDamageBonus(`If ${conditionNote(BURNED)}, this attack does 40 more damage.`),
+    ).toEqual({ per: 40, count: { kind: "boardCondition", cond: BURNED } });
+    expect(
+      deriveAttackDamageBonus(`If ${conditionNote(CONFUSED)}, this attack does 90 more damage.`),
+    ).toEqual({ per: 90, count: { kind: "boardCondition", cond: CONFUSED } });
     expect(conditionNote(BURNED)).not.toBe(NOT_BURNED_CLAUSE);
     // ⚠️ AND THE WIDER MEMBER'S NOTE IS STILL ITS OWN, so a successor cannot collapse
     // the three §12 pills into one.
@@ -640,7 +646,14 @@ describe("§2 — the THREE keys, the printed BYTES, and two tables that must no
       "your opponent's Active Pokémon is affected by a Special Condition",
     );
     expect(conditionNote(POISONED)).toBe("your opponent's Active Pokémon is Poisoned");
-    expect(new Set([conditionNote(BURNED), conditionNote(CONFUSED), conditionNote(POISONED), conditionNote(ANY_STATUS)]).size).toBe(4);
+    expect(
+      new Set([
+        conditionNote(BURNED),
+        conditionNote(CONFUSED),
+        conditionNote(POISONED),
+        conditionNote(ANY_STATUS),
+      ]).size,
+    ).toBe(4);
   });
 });
 
@@ -723,7 +736,10 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     // The same member, read through `ATTACK_REQUIREMENT_CLAUSES`. A cancelled attack
     // is an attack that was USED: no damage, and the turn still ends.
     const clean = mustApply(charbreath(board(32)), { type: "attack", seat: "p1", index: 1 });
-    expect(find(clean.events, "ATTACK_FAILED")).toMatchObject({ seat: "p1", reason: "requirement" });
+    expect(find(clean.events, "ATTACK_FAILED")).toMatchObject({
+      seat: "p1",
+      reason: "requirement",
+    });
     expect(find(clean.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(clean.events)).toContain("TURN_ENDED");
     expect(types(clean.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -925,7 +941,11 @@ describe("§5 — the §12 cluster: four rows, one board, and the NESTING swept"
     expect(crushDealt?.scaled).toBeUndefined();
 
     const confusedOnly = setConditions(board(44), "p2", { rotation: "confused" });
-    const roast = mustApply(roastheat(confusedOnly), { type: "attack", seat: "p1", index: 0 }).events;
+    const roast = mustApply(roastheat(confusedOnly), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    }).events;
     const roastDealt = find(roast, "DAMAGE_DEALT");
     expect(roastDealt).toMatchObject({ base: 10, dealt: 10 });
     expect(roastDealt?.scaled).toBeUndefined();
@@ -953,11 +973,19 @@ describe("§6 — the SEAT axis: cross-board, per seat, and FALSE with no Active
     // A p1-only suite cannot tell "reads the OPPONENT's Active" apart from "reads p2's
     // Active", so both printings are declared from the far seat on real boards.
     const burned = setConditions(boardP2(47), "p1", { burned: true });
-    const roast = mustApply(roastheat(burned, "p2"), { type: "attack", seat: "p2", index: 0 }).events;
+    const roast = mustApply(roastheat(burned, "p2"), {
+      type: "attack",
+      seat: "p2",
+      index: 0,
+    }).events;
     expect(find(roast, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
 
     const confused = setConditions(boardP2(48), "p1", { rotation: "confused" });
-    const crush = mustApply(mindcrush(confused, "p2"), { type: "attack", seat: "p2", index: 1 }).events;
+    const crush = mustApply(mindcrush(confused, "p2"), {
+      type: "attack",
+      seat: "p2",
+      index: 1,
+    }).events;
     expect(find(crush, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 

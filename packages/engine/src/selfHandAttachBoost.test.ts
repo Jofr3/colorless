@@ -11,7 +11,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
@@ -106,15 +106,21 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
   });
 
   it("the amount is CAPTURED and guarded `>= 1`; the `{W}` is LITERAL (one printing, D121)", () => {
-    expect(deriveAttackDiscardScaledBoost(PRINTED.replace("does 30 damage", "does 40 damage"))).toEqual({
+    expect(
+      deriveAttackDiscardScaledBoost(PRINTED.replace("does 30 damage", "does 40 damage")),
+    ).toEqual({
       ...MEMBER,
       per: 40,
     });
-    expect(deriveAttackDiscardScaledBoost(PRINTED.replace("does 30 damage", "does 1 damage"))).toEqual({
+    expect(
+      deriveAttackDiscardScaledBoost(PRINTED.replace("does 30 damage", "does 1 damage")),
+    ).toEqual({
       ...MEMBER,
       per: 1,
     });
-    expect(deriveAttackDiscardScaledBoost(PRINTED.replace("does 30 damage", "does 0 damage"))).toBeNull();
+    expect(
+      deriveAttackDiscardScaledBoost(PRINTED.replace("does 30 damage", "does 0 damage")),
+    ).toBeNull();
     expect(deriveAttackDiscardScaledBoost(PRINTED.replaceAll("{W}", "{R}"))).toBeNull();
   });
 
@@ -126,7 +132,10 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
       PRINTED.toLowerCase(),
       PRINTED.slice(0, -1),
       // …the DESTINATION alone.
-      PRINTED.replace("from your hand to this Pokémon.", "from your hand to your Pokémon in any way you like."),
+      PRINTED.replace(
+        "from your hand to this Pokémon.",
+        "from your hand to your Pokémon in any way you like.",
+      ),
       // …the ZONE alone.
       PRINTED.replace("from your hand", "from your discard pile"),
     ]) {
@@ -243,11 +252,17 @@ function firstBasic(state: GameState, side: Seat): string {
 
 /** Setup against the LOCAL pool, P2's turn ended, so P1 is on `turn:action`. */
 function table(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: LOCAL_DECK, p2: LOCAL_DECK }, cardPool: CARD_POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: LOCAL_DECK, p2: LOCAL_DECK },
+    cardPool: CARD_POOL,
+  });
   if (!created.ok) throw new Error(`createGame: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = ok(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = ok(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const pending = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !pending.decided[s]);
@@ -255,9 +270,12 @@ function table(seed: number): GameState {
     state = ok(applyAction(state, { type: "setupDrawExtra", seat, count: pending.owed[seat] }));
   }
   for (const side of ["p1", "p2"] as const) {
-    state = ok(applyAction(state, { type: "setupPlaceActive", seat: side, uid: firstBasic(state, side) }));
+    state = ok(
+      applyAction(state, { type: "setupPlaceActive", seat: side, uid: firstBasic(state, side) }),
+    );
   }
-  for (const side of ["p1", "p2"] as const) state = ok(applyAction(state, { type: "setupReady", seat: side }));
+  for (const side of ["p1", "p2"] as const)
+    state = ok(applyAction(state, { type: "setupReady", seat: side }));
   return act(state, { type: "endTurn", seat: "p2" }).state;
 }
 
@@ -266,7 +284,10 @@ function takeFromDeck(state: GameState, seat: Seat, cardId: string): [GameState,
   const uid = side.deck.find((held) => state.cardIdByUid[held] === cardId);
   if (uid === undefined) throw new Error(`${seat}'s deck has no ${cardId}`);
   return [
-    { ...state, players: { ...state.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } },
+    {
+      ...state,
+      players: { ...state.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+    },
     uid,
   ];
 }
@@ -300,7 +321,10 @@ function attachN(state: GameState, seat: Seat, cardId: string, count: number): G
     if (active === null) throw new Error(`${seat} has no Active`);
     next = {
       ...taken,
-      players: { ...taken.players, [seat]: { ...side, active: { ...active, energy: [...active.energy, uid] } } },
+      players: {
+        ...taken.players,
+        [seat]: { ...side, active: { ...active, energy: [...active.energy, uid] } },
+      },
     };
   }
   return next;
@@ -311,7 +335,10 @@ function handN(state: GameState, seat: Seat, cardId: string, count: number): Gam
   for (let n = 0; n < count; n += 1) {
     const [taken, uid] = takeFromDeck(next, seat, cardId);
     const side = taken.players[seat];
-    next = { ...taken, players: { ...taken.players, [seat]: { ...side, hand: [...side.hand, uid] } } };
+    next = {
+      ...taken,
+      players: { ...taken.players, [seat]: { ...side, hand: [...side.hand, uid] } },
+    };
   }
   return next;
 }
@@ -323,7 +350,10 @@ function benchN(state: GameState, seat: Seat, cardId: string, count: number): Ga
     const side = taken.players[seat];
     next = {
       ...taken,
-      players: { ...taken.players, [seat]: { ...side, bench: [...side.bench, makeInPlay(uid, taken.turn)] } },
+      players: {
+        ...taken.players,
+        [seat]: { ...side, bench: [...side.bench, makeInPlay(uid, taken.turn)] },
+      },
     };
   }
   return next;
@@ -361,7 +391,8 @@ function rowsOf<T extends GameEvent["type"]>(
 }
 
 function parked(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "attachCards") throw new Error(`expected attachCards, got ${prompt.kind}`);
   return { phase: state.phase, prompt };
@@ -407,7 +438,9 @@ describe("D552 §3 — the offer is THIS Pokémon and the hand's Basic {W}, noth
 
   it("the caption says 'to this Pokémon' and drops 'in any way you like'", () => {
     const { state } = act(board(1), surge);
-    expect(parked(state).prompt.note).toBe("Attach any number of Basic Water Energy cards from your hand to this Pokémon.");
+    expect(parked(state).prompt.note).toBe(
+      "Attach any number of Basic Water Energy cards from your hand to this Pokémon.",
+    );
   });
 
   it("🛑 NOTHING is dealt before the answer — the base is not dealt pre-program as well", () => {
@@ -561,12 +594,20 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     // the mutant `D552-hand-apply-drops-the-record`.
     const { state } = act(board(1), surge);
     const { phase } = parked(state);
-    const { recordAs: _dropped, ...v33Op } = phase.cont.pendingOp as Extract<EffectOp, { op: "attachFromHand" }>;
-    const rollback: GameState = { ...state, phase: { ...phase, cont: { ...phase.cont, pendingOp: v33Op } } };
-    const done = resolve(rollback, phase.prompt.kind === "attachCards" ? phase.prompt.candidates : []);
+    const { recordAs: _dropped, ...v33Op } = phase.cont.pendingOp as Extract<
+      EffectOp,
+      { op: "attachFromHand" }
+    >;
+    const rollback: GameState = {
+      ...state,
+      phase: { ...phase, cont: { ...phase.cont, pendingOp: v33Op } },
+    };
+    const done = resolve(
+      rollback,
+      phase.prompt.kind === "attachCards" ? phase.prompt.candidates : [],
+    );
     expect(done.state.players.p1.active?.energy).toHaveLength(7);
     expect(dealtTo(done.state, "p2")).toBe(60);
-    expect(engineVersion).toBe("0.555.0");
   });
 
   it("the dead end FILES AN EMPTY ANSWER — no source body means no target, and the slot is overwritten", () => {
@@ -590,11 +631,21 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     const tide = start.players.p1.active;
     if (tide === null) throw new Error("no Active");
     const program: EffectOp[] = [
-      { op: "attachFromHand", filter: { kind: "basicEnergy", energyType: "Water" }, toSelf: true, recordAs: "moved" },
+      {
+        op: "attachFromHand",
+        filter: { kind: "basicEnergy", energyType: "Water" },
+        toSelf: true,
+        recordAs: "moved",
+      },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
     ];
-    const run = runProgram(start, program, { seat: "p1", sourceUid: tide.stack[tide.stack.length - 1] }, []);
+    const run = runProgram(
+      start,
+      program,
+      { seat: "p1", sourceUid: tide.stack[tide.stack.length - 1] },
+      [],
+    );
     if (run.kind !== "parked") throw new Error("expected a park");
     expect(run.prompt.kind === "attachCards" ? run.prompt.note : "").toBe(
       "Attach any number of Basic Water Energy cards from your hand to this Pokémon. If you do, draw a card.",

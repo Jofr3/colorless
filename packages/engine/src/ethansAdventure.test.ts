@@ -237,7 +237,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
     expect(prompt.candidates).not.toContain(deckUids(parked, "fix-grass-energy")[0]);
   });
 
-  it("🛑 REFUSES a SPECIAL Energy — the printed \"Basic\"", () => {
+  it('🛑 REFUSES a SPECIAL Energy — the printed "Basic"', () => {
     const state = board(8);
     const { prompt, parked } = play(state, "fix-ethansadventure");
     expect(prompt.candidates).not.toContain(deckUids(parked, "fix-special")[0]);
@@ -282,7 +282,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
     expect(prompt.caps ?? []).toEqual([]);
   });
 
-  it("🛑 THREE ETHAN'S POKÉMON IS A LEGAL ANSWER — \"in any combination\", not \"one of each\"", () => {
+  it('🛑 THREE ETHAN\'S POKÉMON IS A LEGAL ANSWER — "in any combination", not "one of each"', () => {
     // 🛑 THE CASE THE `also` BUILD FAILS. Three cards of ONE member, taken
     // against a flat total of three — the answer the card explicitly permits and
     // a per-noun cap of 1 explicitly refuses. It is driven over THREE DISTINCT
@@ -379,7 +379,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
     );
   });
 
-  it("takes FEWER than the cap — the printed \"up to\"", () => {
+  it('takes FEWER than the cap — the printed "up to"', () => {
     const state = board(17);
     const { parked } = play(state, "fix-ethansadventure");
     const a = deckUids(parked, "fix-ethans-cyndaquil")[0] as string;
@@ -392,7 +392,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
     expect(done.players.p1.hand).toContain(a);
   });
 
-  it("takes NOTHING — the empty answer the printed \"up to\" also permits", () => {
+  it('takes NOTHING — the empty answer the printed "up to" also permits', () => {
     const state = board(18);
     const { parked } = play(state, "fix-ethansadventure");
     const handBefore = parked.players.p1.hand.length;
@@ -407,7 +407,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
 
   // ── §4 THE CAPTION — THE CLAUSE THE PRICE WAS FLAGGED ON ──────────────────
 
-  it("🛑 the caption joins with \" or \" — the THIRD witness, settled at D264", () => {
+  it('🛑 the caption joins with " or " — the THIRD witness, settled at D264', () => {
     // 🛑 **THE CLAUSE THE WORK ORDER SAID WAS MOST LIKELY FALSE, AND IT IS
     // TRUE.** `retrieveNoun`'s `anyOf` arm joins " or " where this card prints
     // "and", deliberately: the predicate is a union asked about ONE card, and an
@@ -443,7 +443,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
 
   // ── §5 THE EPILOGUE — THE PRINTED SHUFFLE AND THE PLAYED CARD ─────────────
 
-  it("the deck is SHUFFLED after the search — the printed \"Then, shuffle your deck\"", () => {
+  it('the deck is SHUFFLED after the search — the printed "Then, shuffle your deck"', () => {
     const state = board(21);
     const { parked } = play(state, "fix-ethansadventure");
     const a = deckUids(parked, "fix-ethans-cyndaquil")[0] as string;

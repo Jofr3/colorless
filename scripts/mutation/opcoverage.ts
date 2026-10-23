@@ -227,7 +227,10 @@ function switchArms(lines: string[]): Arm[] {
     // whole body to every kind in the group.
     for (let k = 0; k < labels.length; k++) {
       let last = k;
-      while (last + 1 < labels.length && (labels[last + 1]?.line ?? -1) === (labels[last]?.line ?? -1) + 1) {
+      while (
+        last + 1 < labels.length &&
+        (labels[last + 1]?.line ?? -1) === (labels[last]?.line ?? -1) + 1
+      ) {
         last++;
       }
       const start = labels[k]?.line ?? 0;
@@ -402,7 +405,9 @@ console.log(
     ` declarations — ${DECLARATIONS - KINDS.length} kind(s) declared twice)  FANIN=${FANIN}  LEV=${LEV}`,
 );
 if (absent > 0) {
-  console.log(`⚠ ${absent} row(s) whose \`find\` does not occur — run scripts/mutation/precheck.ts`);
+  console.log(
+    `⚠ ${absent} row(s) whose \`find\` does not occur — run scripts/mutation/precheck.ts`,
+  );
 }
 
 let prodPairs = 0;

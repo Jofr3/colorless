@@ -231,11 +231,7 @@ function withDeck(state: GameState, seat: Seat, deckIds: readonly string[]): Gam
     🛑 **THE SEAT IS A PARAMETER BECAUSE THE ORDERING CLAIM IS INERT FROM P1's CHAIR**
     (D490). Controller-first and absolute `SEATS` agree on every board where p1 attacks,
     so §6 runs from p2's. */
-function table(
-  attacker: Seat,
-  selfDeck: readonly string[],
-  foeDeck: readonly string[],
-): GameState {
+function table(attacker: Seat, selfDeck: readonly string[], foeDeck: readonly string[]): GameState {
   const defender: Seat = attacker === "p1" ? "p2" : "p1";
   let state = openTable(defender);
   state = mustApply(state, { type: "endTurn", seat: defender }).state;
@@ -286,7 +282,6 @@ function effectDraws(
       : [],
   );
 }
-
 
 /** The ids that JOINED `seat`'s hand across the swing, in arrival order. A delta rather
     than a whole-hand pin, because the setup draw's contents are a function of the seed and
@@ -469,7 +464,9 @@ describe("D491 §2 — the 2⁴ lattice, and the one axis that decides it", () =
     // D472: before generalising an anchor, measure what the generalisation would claim
     // over the whole corpus. Here the shipped shape and the count-captured shape claim the
     // same single row, and the capture is D121's *read a printed digit, never invent one*.
-    const claimed = legalAttackCorpus().filter(([, t]) => /^Each player draws (\d+) cards\.$/.test(t));
+    const claimed = legalAttackCorpus().filter(([, t]) =>
+      /^Each player draws (\d+) cards\.$/.test(t),
+    );
     expect(claimed).toEqual([[1, PRINTED]]);
   });
 
@@ -499,14 +496,21 @@ describe("D491 §3 — three draw anchors, disjoint by STRUCTURE", () => {
     for (const [text, expected] of [
       [PRINTED, [{ op: "drawCards", count: 3, who: "eachPlayer" }]],
       ["Draw 3 cards.", [{ op: "drawCards", count: 3 }]],
-      ["Draw 3 cards from the bottom of your deck.", [{ op: "drawCards", count: 3, from: "bottom" }]],
+      [
+        "Draw 3 cards from the bottom of your deck.",
+        [{ op: "drawCards", count: 3, from: "bottom" }],
+      ],
     ] as const) {
       expect(deriveAttackEffect(text), text).toEqual(expected);
     }
     // …and the CROSSINGS are nobody's sentence, so no anchor grew an optional group it
     // was not owed (D451: two tokens that co-vary need two anchors, not two optionals).
-    expect(deriveAttackEffect("Each player draws 3 cards from the bottom of their deck.")).toBeNull();
-    expect(deriveAttackEffect("Your opponent draws 3 cards from the bottom of their deck.")).toBeNull();
+    expect(
+      deriveAttackEffect("Each player draws 3 cards from the bottom of their deck."),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect("Your opponent draws 3 cards from the bottom of their deck."),
+    ).toBeNull();
   });
 
   it("🛑 both ENDS of the anchor are pinned, and they fail DIFFERENTLY (D464)", () => {
@@ -612,7 +616,10 @@ describe("D491 §4 — both hands grow, and the ids say whose deck they came off
     // table whose two decks share no id at the top.
     for (const row of rows) {
       const prefix = row.seat === "p1" ? "d491-a" : "d491-b";
-      expect(row.ids.every((id) => id.startsWith(prefix)), row.seat).toBe(true);
+      expect(
+        row.ids.every((id) => id.startsWith(prefix)),
+        row.seat,
+      ).toBe(true);
     }
     // …and reading 6 dies on the ORDER within each row: the TOP three, in deck order.
     expect(rows.map((r) => r.ids[0])).toEqual(["d491-a1", "d491-b1"]);
@@ -869,7 +876,6 @@ describe("D491 §9 — the version question, asked at the address that persists"
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

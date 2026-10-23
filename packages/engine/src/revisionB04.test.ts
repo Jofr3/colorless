@@ -93,7 +93,10 @@ const LOCAL: Record<string, Card> = {
 function deck(withStage1: boolean): string[] {
   return deckOf({
     ...Object.fromEntries(
-      [...RARE_CANDY_IDS, ...SWITCH_IDS, ...ULTRA_BALL_IDS, ...POKE_PAD_IDS, SHOVEL].map((id) => [id, 1]),
+      [...RARE_CANDY_IDS, ...SWITCH_IDS, ...ULTRA_BALL_IDS, ...POKE_PAD_IDS, SHOVEL].map((id) => [
+        id,
+        1,
+      ]),
     ),
     [ABRA]: 4,
     ...(withStage1 ? { [KADABRA]: 1 } : {}),
@@ -130,7 +133,9 @@ function p1Turn(pool: Record<string, Card>, withStage1 = true): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => pool[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => pool[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
@@ -148,7 +153,13 @@ function p1Turn(pool: Record<string, Card>, withStage1 = true): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -156,7 +167,11 @@ function p1Turn(pool: Record<string, Card>, withStage1 = true): GameState {
 }
 
 /** P1's Active is a Filler and the Bench is `bench` (benched on an earlier turn); P2 a Filler. */
-function board(bench: readonly string[], pool: Record<string, Card> = POOL, withStage1 = true): GameState {
+function board(
+  bench: readonly string[],
+  pool: Record<string, Card> = POOL,
+  withStage1 = true,
+): GameState {
   let state = clearBench(setActiveFromDeck(p1Turn(pool, withStage1), "p1", FILLER), "p1");
   for (const id of bench) state = benchFromDeck(state, "p1", id);
   state = clearBench(setActiveFromDeck(state, "p2", FILLER), "p2");
@@ -178,7 +193,10 @@ const idOf = (state: GameState, uid: string | undefined) =>
 const handOf = (state: GameState, id: string) =>
   state.players.p1.hand.find((u) => idOf(state, u) === id) as string;
 
-function play(state: GameState, id: string): { state: GameState; events: GameEvent[]; uid: string } {
+function play(
+  state: GameState,
+  id: string,
+): { state: GameState; events: GameEvent[]; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
   const uid = handOf(next, id);
   return { ...mustApply(next, { type: "playTrainer", seat: "p1", uid }), uid };
@@ -243,7 +261,8 @@ describe("B04 §1/§2 — every Standard-legal printing of Rare Candy, Switch, U
       const state = play(handFromDeck(board([]), "p1", "fix-energy", 2), id).state;
       expect(state.players.p1.hand).toEqual([]);
       const search = prompt(state);
-      if (search.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${search.kind}`);
+      if (search.kind !== "chooseCards")
+        throw new Error(`expected chooseCards, got ${search.kind}`);
       expect(search).toMatchObject({ min: 0, max: 1 });
       const pick = search.candidates.find((u) => idOf(state, u) === EX) as string;
       const done = mustApply(state, answer({ kind: "cards", uids: [pick] })).state;
@@ -296,7 +315,10 @@ describe("B04 §3 — Rare Candy with no copy of the Stage 1 in either deck (DEF
 
   it("the link is a POOL fact only: the Stage 1 face in the match pool, in no zone, makes the same play legal", () => {
     const { state: bare, action } = noStage1Board();
-    const state: GameState = { ...bare, cardPool: { ...bare.cardPool, [KADABRA]: POOL[KADABRA] as Card } };
+    const state: GameState = {
+      ...bare,
+      cardPool: { ...bare.cardPool, [KADABRA]: POOL[KADABRA] as Card },
+    };
     // No uid anywhere in the match is a Kadabra: the face is in the pool and nowhere else.
     expect(Object.values(state.cardIdByUid)).not.toContain(KADABRA);
     const done = mustApply(state, action).state;
@@ -320,7 +342,11 @@ describe("B04 §4 — Hole-Digging Shovel: an empty deck refuses the Item", () =
     };
   }
   const playShovel = (state: GameState) =>
-    applyAction(state, { type: "playTrainer", seat: "p1", uid: state.players.p1.hand[0] as string });
+    applyAction(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: state.players.p1.hand[0] as string,
+    });
 
   it("deck = 0: refused NO_LEGAL_TARGET, the Shovel stays in the hand", () => {
     const state = withDeck(0);

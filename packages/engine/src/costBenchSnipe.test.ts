@@ -242,7 +242,8 @@ function dealtRows(events: GameEvent[]): { seat: Seat; by: Seat; dealt: number }
 function payTheCost(state: GameState): { state: GameState; events: GameEvent[] } {
   if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
   const prompt = state.phase.prompt;
-  if (prompt.kind !== "discardEnergy") throw new Error(`expected discardEnergy, got ${prompt.kind}`);
+  if (prompt.kind !== "discardEnergy")
+    throw new Error(`expected discardEnergy, got ${prompt.kind}`);
   if (prompt.scope.kind !== "total") throw new Error("expected a total-scoped discard");
   const uids = prompt.discardable.slice(0, prompt.scope.count).map((offer) => offer.uid);
   if (uids.length < prompt.scope.count) throw new Error("a discardEnergy park short of offers");
@@ -315,7 +316,10 @@ describe("§1 — three printed rows, and the family they belong to", () => {
     // 🛑 D452's LESSON: a byte pin on a hand-typed string is green by construction, so the
     // pin is taken against the CORPUS ROW and not against the literal above.
     for (const printed of [TWO_THEN_120, ALL_THEN_90, TYPED_THEN_180, ALL_THEN_ANY_120]) {
-      expect(corpusRows().some(([, s]) => s === printed), printed).toBe(true);
+      expect(
+        corpusRows().some(([, s]) => s === printed),
+        printed,
+      ).toBe(true);
       expect(printed).not.toContain("’");
       expect(printed).toContain("'");
     }
@@ -333,8 +337,8 @@ describe("§1 — three printed rows, and the family they belong to", () => {
     // D425/D419: state the pattern, and state what it cannot see. This one is the
     // LOOSEST plausible shape — any self-discard head joined to any snipe — run over all
     // 640 rows rather than a list somebody thought of (D448).
-    const family = corpusRows().filter(
-      ([, s]) => /^Discard .* from this Pokémon[.,] (and )?[Tt]his attack .*damage to /.test(s),
+    const family = corpusRows().filter(([, s]) =>
+      /^Discard .* from this Pokémon[.,] (and )?[Tt]his attack .*damage to /.test(s),
     );
     expect(family).toHaveLength(8);
     expect(family.reduce((n, [units]) => n + units, 0)).toBe(13);
@@ -961,17 +965,6 @@ describe("§8 — the surface, the version, and the mechanisms this slice did no
   });
 
   it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // 🆕🆕🆕 D477 — 0.374.0 → **0.375.0**, and the bump is owed for BEHAVIOUR: five legal
-    // printings that derived to `null` and fell to the loud `ATTACK_EFFECT_SKIPPED` path
-    // now pay a §8 cost and park a benched snipe. **`MATCH_RECORD_VERSION` STAYS 29** on
-    // D463's SERIALIZED-ALPHABET argument, and NOT on reachability — this program parks
-    // twice, so `phase.cont.pendingOp` and `phase.cont.rest` really are written (§7). What
-    // makes the byte argument true is that every op the new arm emits is one a v29 deploy
-    // already writes from a shipped anchor: `discardEnergy {from:"yourActive", filter,
-    // count}` is `SELF_DISCARD_N` / `TYPED_SELF_DISCARD`'s output and `damageChosen
-    // {target:"opponentBench", …}` is `ALSO_BENCHED_SNIPE`'s. No new op, no new op FIELD,
-    // no new op VALUE — so there is no byte for a version to be about.
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

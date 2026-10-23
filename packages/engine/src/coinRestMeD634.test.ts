@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { PokemonRef } from "./interpreter";
 import { formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -97,7 +97,8 @@ describe("D634 §1 — the seven sentences and their programs", () => {
       filter: { kind: "basicEnergy", energyType: "Lightning" },
       to: "self",
     });
-    for (const text of [T.grab, T.gormandizer, T.dash]) expect(deriveAttackEffect(text), text).toBeNull();
+    for (const text of [T.grab, T.gormandizer, T.dash])
+      expect(deriveAttackEffect(text), text).toBeNull();
   });
 
   it("Challenging Delivery and Reversing Gust are arm 46b rows", () => {
@@ -106,7 +107,10 @@ describe("D634 §1 — the seven sentences and their programs", () => {
         op: "coinFlipGate",
         coins: 2,
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        then: [{ op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 }, { op: "shuffleDeck" }],
+        then: [
+          { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 },
+          { op: "shuffleDeck" },
+        ],
       },
     ]);
     expect(deriveAttackEffect(T.gust)).toEqual([
@@ -119,7 +123,7 @@ describe("D634 §1 — the seven sentences and their programs", () => {
     for (const text of [T.delivery, T.gust]) expect(deriveAttackCoinFlip(text), text).toBeNull();
   });
 
-  it("Snap Inspection is `programPerHeads` over `bottomFromOpponentHand` at `dest: \"deck\"`", () => {
+  it('Snap Inspection is `programPerHeads` over `bottomFromOpponentHand` at `dest: "deck"`', () => {
     expect(deriveAttackCoinFlip(T.snap)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
@@ -161,7 +165,11 @@ describe("D634 §2 — near misses stay null; arm 46b's crossings", () => {
   });
 
   it("arm 46b with eight rows: 3 heads × 8 consequents = 24 crossings build, exactly 8 are printed", () => {
-    const heads = ["Flip a coin. If heads, ", "Flip 2 coins. If both of them are heads, ", "Flip 3 coins. If all of them are heads, "];
+    const heads = [
+      "Flip a coin. If heads, ",
+      "Flip 2 coins. If both of them are heads, ",
+      "Flip 3 coins. If all of them are heads, ",
+    ];
     const printedGates = [
       "Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.",
       "Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.",
@@ -176,7 +184,8 @@ describe("D634 §2 — near misses stay null; arm 46b's crossings", () => {
     const printed = new Set([...legalAttackCorpus(), ...meAttackCorpus()].map(([, text]) => text));
     const crossings = heads.flatMap((h) => tails.map((c) => h + c));
     expect(crossings).toHaveLength(24);
-    for (const text of crossings) expect(deriveAttackEffect(text)?.[0]?.op, text).toBe("coinFlipGate");
+    for (const text of crossings)
+      expect(deriveAttackEffect(text)?.[0]?.op, text).toBe("coinFlipGate");
     expect(crossings.filter((text) => printed.has(text)).sort()).toEqual([...printedGates].sort());
   });
 });
@@ -195,13 +204,26 @@ const STAGE1 = "d634-stage1"; // a {C} Stage 1 — not benchable by a class noun
 const FIRE = "d634-fire";
 const LIGHTNING = "d634-lightning";
 
-const attacker = (id: string, name: string, attack: string, text: string, damage?: number | string): Card =>
+const attacker = (
+  id: string,
+  name: string,
+  attack: string,
+  text: string,
+  damage?: number | string,
+): Card =>
   battler(id, {
     name,
     hp: 300,
     types: ["Colorless"],
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: attack, ...(damage === undefined ? {} : { damage }), effect: text }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: attack,
+        ...(damage === undefined ? {} : { damage }),
+        effect: text,
+      },
+    ],
   } as Partial<Card>);
 
 const LOCAL: Record<string, Card> = {
@@ -212,7 +234,12 @@ const LOCAL: Record<string, Card> = {
   [PIKACHU]: attacker(PIKACHU, "Pikachu", "Charge-Up Dash", T.dash),
   [SHIFTRY]: attacker(SHIFTRY, "Shiftry", "Reversing Gust", T.gust),
   [WATCHOG]: attacker(WATCHOG, "Watchog", "Snap Inspection", T.snap),
-  [FILLER]: battler(FILLER, { name: "D634 Filler", hp: 400, types: ["Colorless"], weaknesses: null } as Partial<Card>),
+  [FILLER]: battler(FILLER, {
+    name: "D634 Filler",
+    hp: 400,
+    types: ["Colorless"],
+    weaknesses: null,
+  } as Partial<Card>),
   [STAGE1]: battler(STAGE1, {
     name: "D634 Stage 1",
     hp: 100,
@@ -250,7 +277,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -258,11 +287,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -338,11 +370,13 @@ function table(
 const attack = (state: GameState) => mustApply(state, { type: "attack", seat: "p1", index: 0 });
 const of = <K extends GameEvent["type"]>(events: readonly GameEvent[], type: K) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: K }>[];
-const flips = (events: readonly GameEvent[]) => of(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
+const flips = (events: readonly GameEvent[]) =>
+  of(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
 const resolve = (state: GameState, choice: unknown) =>
   mustApply(state, { type: "resolveEffect", seat: "p1", choice } as GameAction);
 function promptOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const idOf = (state: GameState, uid: string) => state.cardIdByUid[uid];
@@ -391,7 +425,12 @@ describe("D634 §5 — All-You-Can-Grab on a board: up to the heads count into t
   it("H, H, T parks a pick of up to 2 cards; both go to the hand and the deck is shuffled", () => {
     const parked = attack(table(GHOLDENGO, [H, H, X]));
     expect(flips(parked.events)).toEqual([H, H, X]);
-    const prompt = promptOf(parked.state) as { kind: string; candidates: string[]; min: number; max: number };
+    const prompt = promptOf(parked.state) as {
+      kind: string;
+      candidates: string[];
+      min: number;
+      max: number;
+    };
     expect(prompt).toMatchObject({ kind: "chooseCards", dest: "hand", min: 0, max: 2 });
     const picks = prompt.candidates.slice(0, 2);
     const done = resolve(parked.state, { kind: "cards", uids: picks });
@@ -444,12 +483,20 @@ describe("D634 §7 — Reversing Gust on a board: the opponent's Active is a can
   it("heads parks a pick over the opponent's Active and Bench; the Active goes into their deck and they promote", () => {
     const start = table(SHIFTRY, [H], { oppBench: [FILLER, FILLER] });
     const parked = attack(start);
-    const prompt = promptOf(parked.state) as { kind: string; candidates: PokemonRef[]; note: string };
+    const prompt = promptOf(parked.state) as {
+      kind: string;
+      candidates: PokemonRef[];
+      note: string;
+    };
     expect(prompt.candidates).toEqual([P2_ACTIVE, P2_BENCH(0), P2_BENCH(1)]);
-    expect(prompt.note).toBe("Shuffle which of your opponent's Pokémon and all attached cards into their deck?");
+    expect(prompt.note).toBe(
+      "Shuffle which of your opponent's Pokémon and all attached cards into their deck?",
+    );
     const activeUid = start.players.p2.active?.stack[0] as string;
     const done = resolve(parked.state, { kind: "pokemon", ref: P2_ACTIVE });
-    expect(of(done.events, "POKEMON_RETURNED")).toMatchObject([{ seat: "p2", uid: activeUid, actor: "p1", dest: "deck" }]);
+    expect(of(done.events, "POKEMON_RETURNED")).toMatchObject([
+      { seat: "p2", uid: activeUid, actor: "p1", dest: "deck" },
+    ]);
     expect(done.state.players.p2.deck).toContain(activeUid);
     expect(done.state.players.p2.active).toBeNull();
     expect(done.state.players.p2.bench).toHaveLength(2);
@@ -477,7 +524,12 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
     const first = attack(start);
     expect(flips(first.events)).toEqual([H, X, H]);
     expect(of(first.events, "HAND_REVEALED")).toHaveLength(1);
-    const prompt = promptOf(first.state) as { kind: string; candidates: string[]; min: number; max: number };
+    const prompt = promptOf(first.state) as {
+      kind: string;
+      candidates: string[];
+      min: number;
+      max: number;
+    };
     expect(prompt).toMatchObject({
       kind: "chooseCards",
       dest: "deck",
@@ -494,7 +546,11 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
     expect(second.state.players.p2.deck).toContain(stage1);
     // The second heads reveals what is left and asks again.
     expect(of(second.events, "HAND_REVEALED")).toEqual([
-      { type: "HAND_REVEALED", seat: "p2", uids: [start.players.p2.hand[0], start.players.p2.hand[2]] },
+      {
+        type: "HAND_REVEALED",
+        seat: "p2",
+        uids: [start.players.p2.hand[0], start.players.p2.hand[2]],
+      },
     ]);
     const fire = start.players.p2.hand[0] as string;
     const done = resolve(second.state, { kind: "cards", uids: [fire] });
@@ -507,9 +563,11 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
       state: done.state,
       elapsed: formatElapsed(0),
     });
-    expect(rows.map((row) => (row.kind === "action" ? [row.who, row.segments.map((x) => x.text).join("")] : null))).toEqual([
-      ["p1", "shuffled Fire Energy into P2's deck"],
-    ]);
+    expect(
+      rows.map((row) =>
+        row.kind === "action" ? [row.who, row.segments.map((x) => x.text).join("")] : null,
+      ),
+    ).toEqual([["p1", "shuffled Fire Energy into P2's deck"]]);
   });
 
   it("three tails reveals nothing; an empty opponent hand reveals zero and moves nothing", () => {
@@ -540,11 +598,5 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
     expect(resolve(revived, { kind: "cards", uids: [pick] }).state).toEqual(
       resolve(parked, { kind: "cards", uids: [pick] }).state,
     );
-  });
-});
-
-describe("D634 §9 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

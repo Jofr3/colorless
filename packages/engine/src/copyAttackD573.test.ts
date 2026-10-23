@@ -2,11 +2,16 @@ import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { COPY_FAMILY_MARKER, deriveAttackCopy, deriveAttackEffect, isResolvedAttackCopy } from "./effects";
+import {
+  COPY_FAMILY_MARKER,
+  deriveAttackCopy,
+  deriveAttackEffect,
+  isResolvedAttackCopy,
+} from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { resumeProgram } from "./interpreter";
 import type { EffectChoice } from "./interpreter";
@@ -68,7 +73,8 @@ const COLORLESS = "fix-energy";
 
 const NIGHT_JOKER = "Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.";
 const FOUL_PLAY = "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.";
-const GEMSTONE = "Choose 1 of your opponent's Active Tera Pokémon's attacks and use it as this attack.";
+const GEMSTONE =
+  "Choose 1 of your opponent's Active Tera Pokémon's attacks and use it as this attack.";
 const TRY_TO_IMITATE =
   "Flip a coin. If heads, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.";
 const HAUGHTY_ORDER =
@@ -118,7 +124,8 @@ const LOCAL_CARDS: Record<string, Card> = {
           {
             type: "Ability",
             name: "Trade",
-            effect: "You must discard a card from your hand in order to use this Ability. Once during your turn, you may draw 2 cards.",
+            effect:
+              "You must discard a card from your hand in order to use this Ability. Once during your turn, you may draw 2 cards.",
           },
         ],
         attacks: [{ cost: ["Darkness", "Darkness"], name: "Night Joker", effect: NIGHT_JOKER }],
@@ -170,7 +177,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Grass", value: "×2" }],
     attacks: [
-      { cost: ["Fighting"], name: "Impound", damage: 20, effect: "During your opponent's next turn, the Defending Pokémon can't retreat." },
+      {
+        cost: ["Fighting"],
+        name: "Impound",
+        damage: 20,
+        effect: "During your opponent's next turn, the Defending Pokémon can't retreat.",
+      },
       { cost: ["Colorless", "Colorless"], name: "Try to Imitate", effect: TRY_TO_IMITATE },
     ],
   }),
@@ -184,7 +196,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     weaknesses: [{ type: "Fighting", value: "×2" }],
     attacks: [
       { cost: ["Colorless", "Colorless"], name: "Haughty Order", effect: HAUGHTY_ORDER },
-      { cost: ["Colorless", "Colorless", "Colorless"], name: "Cruel Slash", damage: 140, effect: CRUEL_SLASH_TEXT },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Cruel Slash",
+        damage: 140,
+        effect: CRUEL_SLASH_TEXT,
+      },
     ],
   }),
   [GREAT_TUSK]: battler(GREAT_TUSK, {
@@ -212,7 +229,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 2,
     weaknesses: [{ type: "Grass", value: "×2" }],
     abilities: [
-      { type: "Ability", name: "Armor Tail", effect: "Prevent all damage done to this Pokémon by attacks from your opponent's Basic Pokémon ex." },
+      {
+        type: "Ability",
+        name: "Armor Tail",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's Basic Pokémon ex.",
+      },
     ],
     attacks: [
       {
@@ -239,7 +261,12 @@ const LOCAL_CARDS: Record<string, Card> = {
         effect:
           "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       },
-      { cost: ["Water", "Water"], name: "Numbing Hold", damage: 120, effect: "During your opponent's next turn, the Defending Pokémon can't retreat." },
+      {
+        cost: ["Water", "Water"],
+        name: "Numbing Hold",
+        damage: 120,
+        effect: "During your opponent's next turn, the Defending Pokémon can't retreat.",
+      },
     ],
   }),
   [N_ONE]: battler(N_ONE, {
@@ -339,7 +366,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     attacks: [
       { cost: ["Colorless"], name: "Cut Up", damage: 10 },
-      { cost: ["Colorless", "Colorless"], name: "Slashing Strike", damage: 60, effect: SLASHING_TEXT },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Slashing Strike",
+        damage: 60,
+        effect: SLASHING_TEXT,
+      },
     ],
   }),
   [BLITZER]: battler(BLITZER, {
@@ -406,7 +438,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -422,7 +455,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -430,11 +465,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -448,7 +486,13 @@ function later(state: GameState): GameState {
 /** TEST SURGERY — the seat's hand back into its deck. */
 function emptyHand(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
-  return { ...state, players: { ...state.players, [seat]: { ...side, deck: [...side.deck, ...side.hand], hand: [] } } };
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: { ...side, deck: [...side.deck, ...side.hand], hand: [] },
+    },
+  };
 }
 
 /** TEST SURGERY — one copy of `id` into `seat`'s DECK (swapped out of the Prizes when needed). */
@@ -475,7 +519,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -492,7 +541,10 @@ function attach(state: GameState, seat: Seat, spot: Spot, ids: readonly string[]
     const side = next.players[seat];
     const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
     if (uid === undefined) throw new Error(`no ${id} in the deck`);
-    next = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+    next = {
+      ...next,
+      players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+    };
     next = withBody(next, seat, spot, (p) => ({ ...p, energy: [...p.energy, uid] }));
   }
   return next;
@@ -522,7 +574,10 @@ const COPIERS: Record<string, Copier> = {
     NIGHT_JOKER_IDS.map((id) => [id, { id, index: 0, name: "Night Joker", energy: [DARK, DARK] }]),
   ),
   ...Object.fromEntries(
-    ZOROARK.map((id) => [id, { id, index: 1, name: "Foul Play", energy: [COLORLESS, COLORLESS, COLORLESS] }]),
+    ZOROARK.map((id) => [
+      id,
+      { id, index: 1, name: "Foul Play", energy: [COLORLESS, COLORLESS, COLORLESS] },
+    ]),
   ),
   [CLEFABLE]: { id: CLEFABLE, index: 0, name: "Metronome", energy: [COLORLESS, COLORLESS] },
   [MIMIKYU]: { id: MIMIKYU, index: 0, name: "Gemstone Mimicry", energy: [PSYCHIC, COLORLESS] },
@@ -536,7 +591,12 @@ function copierOf(id: string): Copier {
 }
 
 /** The copier Active with its cost paid, on `table`'s board. */
-function armed(copier: string, bench: readonly string[] = [], oppActive: string = FILLER, oppBench: readonly string[] = []): GameState {
+function armed(
+  copier: string,
+  bench: readonly string[] = [],
+  oppActive: string = FILLER,
+  oppBench: readonly string[] = [],
+): GameState {
   return attach(table(copier, bench, oppActive, oppBench), "p1", "active", copierOf(copier).energy);
 }
 
@@ -558,7 +618,10 @@ function withFaces(state: GameState, faces: readonly CoinFace[]): GameState {
   throw new Error("no rngState found");
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
@@ -571,14 +634,23 @@ function render(events: GameEvent[], state: GameState): string[] {
   );
 }
 
-const declare = (copier: string): GameAction => ({ type: "attack", seat: "p1", index: copierOf(copier).index });
+const declare = (copier: string): GameAction => ({
+  type: "attack",
+  seat: "p1",
+  index: copierOf(copier).index,
+});
 const pickAttack = (index: number): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "attack", index } }) as GameAction;
 const pickBench = (index: number): GameAction =>
-  ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index } } } }) as GameAction;
+  ({
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index } } },
+  }) as GameAction;
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -586,7 +658,8 @@ function prompt(state: GameState) {
 const oppActiveDamage = (state: GameState): number => bodyAt(state, "p2", "active").damage;
 
 /** Whether p1's turn ended: the turn passed to p2 (or a KO decision is parked on p1). */
-const turnPassed = (state: GameState): boolean => state.phase.kind === "turn:action" && state.phase.seat === "p2";
+const turnPassed = (state: GameState): boolean =>
+  state.phase.kind === "turn:action" && state.phase.seat === "p2";
 
 const OPPONENT_COPIERS = [...ZOROARK, CLEFABLE] as const;
 
@@ -601,18 +674,40 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
   it("🛑 ~~refuses the two mid-attack-park members (they stay BLOCKED)~~ (🆕🆕🆕 D574: claims them as RESOLVE-TIME kinds) and refuses every one-token near miss", () => {
     // 🆕🆕🆕 D574 — INVERTED (D539): the two mid-attack-park members are BUILT
     // (`copyRemainderBundleD574.test.ts`), as the second KIND — never as one of these four sources.
-    expect(deriveAttackCopy(HAUGHTY_ORDER)).toEqual({ from: "opponentDeckTop", count: 10, may: true });
+    expect(deriveAttackCopy(HAUGHTY_ORDER)).toEqual({
+      from: "opponentDeckTop",
+      count: 10,
+      may: true,
+    });
     expect(deriveAttackCopy(SEEK_INSPIRATION)).toEqual({ from: "ownDeckTopMill", count: 1 });
-    expect(deriveAttackCopy("Choose 1 of your Benched Pokémon's attacks and use it as this attack.")).toBeNull();
-    expect(deriveAttackCopy("Choose 1 of your opponent's Benched Pokémon's attacks and use it as this attack.")).toBeNull();
-    expect(deriveAttackCopy("choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.")).toBeNull();
+    expect(
+      deriveAttackCopy("Choose 1 of your Benched Pokémon's attacks and use it as this attack."),
+    ).toBeNull();
+    expect(
+      deriveAttackCopy(
+        "Choose 1 of your opponent's Benched Pokémon's attacks and use it as this attack.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackCopy(
+        "choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
+      ),
+    ).toBeNull();
     expect(deriveAttackCopy(`${FOUL_PLAY} Then, shuffle your deck.`)).toBeNull();
-    expect(deriveAttackCopy("Flip a coin. If tails, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.")).toBeNull();
+    expect(
+      deriveAttackCopy(
+        "Flip a coin. If tails, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
+      ),
+    ).toBeNull();
     // A typographic apostrophe is the same printed sentence (D136/D137) on EVERY slot.
     expect(deriveAttackCopy(FOUL_PLAY.split("'").join("’"))).toEqual({ from: "opponentActive" });
-    expect(deriveAttackCopy(NIGHT_JOKER.split("'").join("’"))).toEqual({ from: "benchOwner", owner: "N" });
+    expect(deriveAttackCopy(NIGHT_JOKER.split("'").join("’"))).toEqual({
+      from: "benchOwner",
+      owner: "N",
+    });
     // The deriver returns no PROGRAM: `deriveAttackEffect` keeps refusing every copy sentence.
-    for (const text of [FOUL_PLAY, GEMSTONE, NIGHT_JOKER, TRY_TO_IMITATE]) expect(deriveAttackEffect(text)).toBeNull();
+    for (const text of [FOUL_PLAY, GEMSTONE, NIGHT_JOKER, TRY_TO_IMITATE])
+      expect(deriveAttackEffect(text)).toBeNull();
   });
 
   it("the corpus: 4 sentences / 9 legal printings claimed at DECLARATION; the marker spans all 6 family sentences / 13 printings", () => {
@@ -663,7 +758,8 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
   });
 
   it("every copier's REAL printing carries no registry attack row at the copy index (the reader is the whole build)", () => {
-    for (const c of Object.values(COPIERS)) expect(programFor(c.id)?.attack?.[c.index]).toBeUndefined();
+    for (const c of Object.values(COPIERS))
+      expect(programFor(c.id)?.attack?.[c.index]).toBeUndefined();
   });
 });
 
@@ -673,7 +769,13 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
     it(`${id} ${c.name}: 0 candidates (an Active with no attacks) — declared, nothing resolves, the turn ends`, () => {
       const { state, events } = run(armed(id, [], BLANK), declare(id));
       expect(all(events, "ATTACK_DECLARED")).toEqual([
-        { type: "ATTACK_DECLARED", seat: "p1", uid: expect.any(String), attack: c.name, index: c.index },
+        {
+          type: "ATTACK_DECLARED",
+          seat: "p1",
+          uid: expect.any(String),
+          attack: c.name,
+          index: c.index,
+        },
       ]);
       expect(types(events)).not.toContain("EFFECT_PENDING");
       expect(types(events)).not.toContain("DAMAGE_DEALT");
@@ -698,7 +800,11 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
         ],
       });
       const { state, events } = run(parked.state, pickAttack(1));
-      expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: c.name, as: "Smash", index: c.index });
+      expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+        attack: c.name,
+        as: "Smash",
+        index: c.index,
+      });
       expect(oppActiveDamage(state)).toBe(60);
       expect(turnPassed(state)).toBe(true);
     });
@@ -715,7 +821,10 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
   it(`${MIMIKYU} Gemstone Mimicry: 1 candidate (Tera Farigiraf ex, one attack) — forced: 160, and Armor Tail does not stop a non-ex`, () => {
     const { state, events } = run(armed(MIMIKYU, [], FARIGIRAF), declare(MIMIKYU));
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Gemstone Mimicry", as: "Dirty Beam" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Gemstone Mimicry",
+      as: "Dirty Beam",
+    });
     expect(oppActiveDamage(state)).toBe(160);
   });
   it(`${MIMIKYU} Gemstone Mimicry: 2 candidates (Tera Wugtrio ex) — parks, then the pick resolves`, () => {
@@ -732,15 +841,26 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
   });
 
   it(`${SUDOWOODO} Try to Imitate: 0 candidates — the coin is still flipped, nothing resolves`, () => {
-    const { state, events } = run(withFaces(armed(SUDOWOODO, [], BLANK), ["heads"]), declare(SUDOWOODO));
-    expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual([{ type: "ATTACK_EFFECT_COIN_FLIP", seat: "p1", result: "heads" }]);
+    const { state, events } = run(
+      withFaces(armed(SUDOWOODO, [], BLANK), ["heads"]),
+      declare(SUDOWOODO),
+    );
+    expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual([
+      { type: "ATTACK_EFFECT_COIN_FLIP", seat: "p1", result: "heads" },
+    ]);
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(turnPassed(state)).toBe(true);
   });
   it(`${SUDOWOODO} Try to Imitate: 1 candidate, HEADS — forced, the copied attack resolves`, () => {
-    const { state, events } = run(withFaces(armed(SUDOWOODO, [], SOLO), ["heads"]), declare(SUDOWOODO));
+    const { state, events } = run(
+      withFaces(armed(SUDOWOODO, [], SOLO), ["heads"]),
+      declare(SUDOWOODO),
+    );
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Try to Imitate", as: "Smash" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Try to Imitate",
+      as: "Smash",
+    });
     expect(oppActiveDamage(state)).toBe(60);
   });
   it(`${SUDOWOODO} Try to Imitate: 2 candidates — the PICK is parked before the coin (R-CP8), then heads resolves it`, () => {
@@ -765,7 +885,10 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
     it(`${id} Night Joker: 1 candidate (one N's body, one attack) — forced; the copied cost is ignored (R-CP1)`, () => {
       const { state, events } = run(armed(id, [ZORUA, N_ONE], SOLO), declare(id));
       expect(types(events)).not.toContain("EFFECT_PENDING");
-      expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Night Joker", as: "Flare Burst" });
+      expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+        attack: "Night Joker",
+        as: "Flare Burst",
+      });
       expect(oppActiveDamage(state)).toBe(50);
     });
     it(`${id} Night Joker: 2 candidates on one body — chooseAttack on THAT body (sourceRef), then the pick`, () => {
@@ -810,14 +933,20 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     const { state, events } = run(armed(ZOROARK[1], [], PERSIAN), declare(ZOROARK[1]));
     // R-CP3's bound: Haughty Order is a copy-family attack, so Cruel Slash is the only candidate and it is FORCED.
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Foul Play", as: "Cruel Slash" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Foul Play",
+      as: "Cruel Slash",
+    });
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 140, dealt: 140 });
     expect(bodyAt(state, "p2", "active").conditions.rotation).toBe("confused");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
   it("🛑 SITE 1's modifier — a copied `30×` multiplier reads the COPIER's side (Mind Jack counts the copier's opponent's Bench)", () => {
-    const { state, events } = run(armed(ZOROARK[0], [], ZOROARK[1], [FILLER, FILLER]), declare(ZOROARK[0]));
+    const { state, events } = run(
+      armed(ZOROARK[0], [], ZOROARK[1], [FILLER, FILLER]),
+      declare(ZOROARK[0]),
+    );
     // Foul Play against a Foul Play Zoroark offers only Mind Jack: forced.
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Mind Jack" });
@@ -829,7 +958,10 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
   // and enshrining a deleted rule. It now runs a turn LATER, where the clause bars nothing; the
   // barred board is §3b's.
   it("🛑 SITE 3 — a copied attack carrying a TIMING clause is split on the SOURCE, where it is printed (R-CP4): on a turn it does not bar, the body resolves, nothing is skipped", () => {
-    const { state, events } = run(later(armed(ZOROARK[0], [FILLER, FILLER, FILLER], GATED)), declare(ZOROARK[0]));
+    const { state, events } = run(
+      later(armed(ZOROARK[0], [FILLER, FILLER, FILLER], GATED)),
+      declare(ZOROARK[0]),
+    );
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Gated Count" });
     // "your Benched Pokémon" is the COPIER's (R-CP2): 3 × 30.
@@ -841,7 +973,13 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     expect(legalAttackCorpus().some(([, s]) => s === UNREAD_TEXT)).toBe(true);
     const { events } = run(armed(ZOROARK[0], [], UNREAD), declare(ZOROARK[0]));
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toEqual([
-      { type: "ATTACK_EFFECT_SKIPPED", seat: "p1", attack: "Foul Play", effect: UNREAD_TEXT, damageModifier: null },
+      {
+        type: "ATTACK_EFFECT_SKIPPED",
+        seat: "p1",
+        attack: "Foul Play",
+        effect: UNREAD_TEXT,
+        damageModifier: null,
+      },
     ]);
     // The printed 10 still applied.
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 10 });
@@ -850,7 +988,10 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
   it("R-CP1 — the COPIED attack's cost is ignored: Metronome on {C}{C} uses Giant Tusk's {F}{F}{C}{C} 160", () => {
     const parked = run(armed(CLEFABLE, [], GREAT_TUSK), declare(CLEFABLE));
     const { events } = run(parked.state, pickAttack(1));
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Metronome", as: "Giant Tusk" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Metronome",
+      as: "Giant Tusk",
+    });
     // Great Tusk is weak to Psychic ×2 — and Clefable IS Psychic (R-CP2): 160 → 320, a Knock Out.
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 160, dealt: 320 });
     expect(types(events)).toContain("KNOCKED_OUT");
@@ -872,7 +1013,10 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     });
     expect(oppActiveDamage(direct.state)).toBe(0);
     // The copy: the copier is a STAGE 1 ex, so Armor Tail does not apply.
-    const copied = run(armed(NIGHT_JOKER_IDS[0], [N_BASIC_EX], FARIGIRAF), declare(NIGHT_JOKER_IDS[0]));
+    const copied = run(
+      armed(NIGHT_JOKER_IDS[0], [N_BASIC_EX], FARIGIRAF),
+      declare(NIGHT_JOKER_IDS[0]),
+    );
     expect(all(copied.events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Test Blast" });
     expect(oppActiveDamage(copied.state)).toBe(90);
   });
@@ -882,7 +1026,11 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     expect(bodyAt(state, "p1", "active").usedAttack).toMatchObject({ name: "Foul Play" });
     expect(render(events, state)).toContain("p1: Zoroark used Foul Play (as Cruel Slash)");
     // …and an ordinary declaration renders as it always did (the key is absent, D135).
-    const plain = run(attach(table(ZOROARK[1]), "p1", "active", [DARK]), { type: "attack", seat: "p1", index: 0 });
+    const plain = run(attach(table(ZOROARK[1]), "p1", "active", [DARK]), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
     expect(all(plain.events, "ATTACK_DECLARED")[0]).not.toHaveProperty("as");
     expect(render(plain.events, plain.state)).toContain("p1: Zoroark used Mind Jack");
   });
@@ -897,10 +1045,19 @@ describe("D573 §3b — R-CP4: a copied timing clause BINDS THE COPIER (looked u
   });
 
   it("🛑 Foul Play cannot copy it on that turn: it is not a candidate, so the copy is EMPTY — declared, no `as`, no damage, no skip", () => {
-    const { state, events } = run(armed(ZOROARK[0], [FILLER, FILLER, FILLER], GATED), declare(ZOROARK[0]));
+    const { state, events } = run(
+      armed(ZOROARK[0], [FILLER, FILLER, FILLER], GATED),
+      declare(ZOROARK[0]),
+    );
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_DECLARED")).toEqual([
-      { type: "ATTACK_DECLARED", seat: "p1", uid: expect.any(String), attack: "Foul Play", index: 1 },
+      {
+        type: "ATTACK_DECLARED",
+        seat: "p1",
+        uid: expect.any(String),
+        attack: "Foul Play",
+        index: 1,
+      },
     ]);
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -913,9 +1070,15 @@ describe("D573 §3b — R-CP4: a copied timing clause BINDS THE COPIER (looked u
     expect(refused(direct, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_PREVENTED");
     const first = run(armed(NIGHT_JOKER_IDS[0], [N_GATED], SOLO), declare(NIGHT_JOKER_IDS[0]));
     expect(types(first.events)).not.toContain("EFFECT_PENDING");
-    expect(all(first.events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Night Joker", as: "Gate Tap" });
+    expect(all(first.events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Night Joker",
+      as: "Gate Tap",
+    });
     expect(oppActiveDamage(first.state)).toBe(20);
-    const parked = run(later(armed(NIGHT_JOKER_IDS[0], [N_GATED], SOLO)), declare(NIGHT_JOKER_IDS[0]));
+    const parked = run(
+      later(armed(NIGHT_JOKER_IDS[0], [N_GATED], SOLO)),
+      declare(NIGHT_JOKER_IDS[0]),
+    );
     expect(prompt(parked.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [
@@ -936,12 +1099,18 @@ describe("D573 §3b — R-CP4: a copied timing clause BINDS THE COPIER (looked u
 function retyped(state: GameState, seat: Seat, spot: Spot, id: string): GameState {
   const uid = bodyAt(state, seat, spot).stack.at(-1);
   const card = POOL[id];
-  if (uid === undefined || card === undefined) throw new Error(`no top card at ${seat} ${String(spot)} / no ${id}`);
-  return { ...state, cardPool: { ...state.cardPool, [id]: card }, cardIdByUid: { ...state.cardIdByUid, [uid]: id } };
+  if (uid === undefined || card === undefined)
+    throw new Error(`no top card at ${seat} ${String(spot)} / no ${id}`);
+  return {
+    ...state,
+    cardPool: { ...state.cardPool, [id]: card },
+    cardIdByUid: { ...state.cardIdByUid, [uid]: id },
+  };
 }
 
 /** p2 passes its turn, back to p1. */
-const p2Passes = (state: GameState): GameState => must(applyAction(state, { type: "endTurn", seat: "p2" }));
+const p2Passes = (state: GameState): GameState =>
+  must(applyAction(state, { type: "endTurn", seat: "p2" }));
 
 // 🆕🆕🆕 D573 second review — a COPIED self-lock / self-boost that NAMES the source attack. Its
 // installer (interpreter.ts `preventAttackUse` and the boost installer) resolves the printed name
@@ -970,7 +1139,10 @@ describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAME
     const board = retyped(armed(ZOROARK[0]), "p2", "active", SLASHER);
     const parked = run(board, declare(ZOROARK[0]));
     const { state, events } = run(parked.state, pickAttack(1));
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Foul Play", as: "Slashing Strike" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Foul Play",
+      as: "Slashing Strike",
+    });
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 60 });
     expect(types(events)).not.toContain("ATTACK_LOCKED");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -994,7 +1166,10 @@ describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAME
   it("control — the SOURCE using Echoed Voice directly records its next-turn boost", () => {
     const board = retyped(armed(ZOROARK[0]), "p1", "active", ECHOER);
     const { state } = run(board, { type: "attack", seat: "p1", index: 0 });
-    expect(bodyAt(state, "p1", "active").boostedAttack).toMatchObject({ attackIndex: 0, amount: 80 });
+    expect(bodyAt(state, "p1", "active").boostedAttack).toMatchObject({
+      attackIndex: 0,
+      amount: 80,
+    });
   });
 
   it("🛑 Foul Play copying Echoed Voice: 30, NO boost recorded, and the next turn's copy is 30 again", () => {
@@ -1018,7 +1193,10 @@ describe("D573 §4 — the bounds and the empty readings", () => {
   it("🛑 R-CP3 — Foul Play against a Foul Play Zoroark offers ONLY Mind Jack", () => {
     const { events } = run(armed(CLEFABLE, [], ZOROARK[0]), declare(CLEFABLE));
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Metronome", as: "Mind Jack" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Metronome",
+      as: "Mind Jack",
+    });
   });
 
   it("🛑 Gemstone Mimicry against a NON-Tera Active does nothing — even one carrying two attacks", () => {
@@ -1046,20 +1224,32 @@ describe("D573 §4 — the bounds and the empty readings", () => {
 
   it("🛑 a CONFUSED tails resolves no copy — and Try to Imitate spends no second coin", () => {
     const confuse = (s: GameState) =>
-      withBody(s, "p1", "active", (p) => ({ ...p, conditions: { ...p.conditions, rotation: "confused" } }));
-    const foul = run(withFaces(confuse(armed(ZOROARK[0], [], SOLO)), ["tails"]), declare(ZOROARK[0]));
+      withBody(s, "p1", "active", (p) => ({
+        ...p,
+        conditions: { ...p.conditions, rotation: "confused" },
+      }));
+    const foul = run(
+      withFaces(confuse(armed(ZOROARK[0], [], SOLO)), ["tails"]),
+      declare(ZOROARK[0]),
+    );
     expect(all(foul.events, "ATTACK_FAILED")[0]).toMatchObject({ reason: "confusion" });
     expect(oppActiveDamage(foul.state)).toBe(0);
     // Nothing resolved, so nothing was copied: no `as` (D573 review, events.ts).
     expect(all(foul.events, "ATTACK_DECLARED")[0]).not.toHaveProperty("as");
-    const imitate = run(withFaces(confuse(armed(SUDOWOODO, [], SOLO)), ["tails"]), declare(SUDOWOODO));
+    const imitate = run(
+      withFaces(confuse(armed(SUDOWOODO, [], SOLO)), ["tails"]),
+      declare(SUDOWOODO),
+    );
     expect(all(imitate.events, "CONFUSION_CHECK")).toHaveLength(1);
     expect(all(imitate.events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
     expect(oppActiveDamage(imitate.state)).toBe(0);
   });
 
   it("🛑 Night Joker with 2+ N's bodies: choosePokemon (only eligible bodies) → chooseAttack → the pick", () => {
-    const parked = run(armed(NIGHT_JOKER_IDS[0], [ZORUA, N_ONE, NIGHT_JOKER_IDS[1], N_TWO], SOLO), declare(NIGHT_JOKER_IDS[0]));
+    const parked = run(
+      armed(NIGHT_JOKER_IDS[0], [ZORUA, N_ONE, NIGHT_JOKER_IDS[1], N_TWO], SOLO),
+      declare(NIGHT_JOKER_IDS[0]),
+    );
     expect(prompt(parked.state)).toMatchObject({
       kind: "choosePokemon",
       candidates: [
@@ -1072,14 +1262,23 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     expect(refused(parked.state, pickBench(2)).code).toBe("BAD_EFFECT_CHOICE");
     const second = run(parked.state, pickBench(3));
     expect(types(second.events)).toEqual(["EFFECT_PENDING"]);
-    expect(prompt(second.state)).toMatchObject({ kind: "chooseAttack", candidates: [{ index: 0 }, { index: 1 }] });
+    expect(prompt(second.state)).toMatchObject({
+      kind: "chooseAttack",
+      candidates: [{ index: 0 }, { index: 1 }],
+    });
     const { state, events } = run(second.state, pickAttack(0));
-    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ attack: "Night Joker", as: "Gear Hit" });
+    expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
+      attack: "Night Joker",
+      as: "Gear Hit",
+    });
     expect(oppActiveDamage(state)).toBe(30);
   });
 
   it("Night Joker's body pick FORCES the attack when that body has one", () => {
-    const parked = run(armed(NIGHT_JOKER_IDS[0], [N_ONE, N_TWO], SOLO), declare(NIGHT_JOKER_IDS[0]));
+    const parked = run(
+      armed(NIGHT_JOKER_IDS[0], [N_ONE, N_TWO], SOLO),
+      declare(NIGHT_JOKER_IDS[0]),
+    );
     const { state, events } = run(parked.state, pickBench(0));
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Flare Burst" });
@@ -1099,7 +1298,11 @@ describe("D573 §4 — the bounds and the empty readings", () => {
       ...parked.state,
       players: {
         ...parked.state.players,
-        p1: { ...side, active: bodyAt(parked.state, "p1", 0), bench: [bodyAt(parked.state, "p1", "active")] },
+        p1: {
+          ...side,
+          active: bodyAt(parked.state, "p1", 0),
+          bench: [bodyAt(parked.state, "p1", "active")],
+        },
       },
     };
     expect(refused(swapped, pickAttack(1)).code).toBe("PHASE_DESYNC");
@@ -1107,7 +1310,10 @@ describe("D573 §4 — the bounds and the empty readings", () => {
 
   it("🛑 every declaration gate runs AGAIN on the copier at the answer: a cost no longer met is refused", () => {
     const parked = run(armed(ZOROARK[0], [], TARGET), declare(ZOROARK[0]));
-    const stripped = withBody(parked.state, "p1", "active", (p) => ({ ...p, energy: p.energy.slice(1) }));
+    const stripped = withBody(parked.state, "p1", "active", (p) => ({
+      ...p,
+      energy: p.energy.slice(1),
+    }));
     expect(refused(stripped, pickAttack(1)).code).toBe("ATTACK_COST_UNMET");
   });
 });
@@ -1118,7 +1324,9 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
   it("🛑 the park leaves the state byte-identical except `phase`; its only event is EFFECT_PENDING", () => {
     const before = armed(ZOROARK[0], [], TARGET);
     const parked = run(before, declare(ZOROARK[0]));
-    expect(parked.events).toEqual([{ type: "EFFECT_PENDING", seat: "p1", note: expect.any(String) }]);
+    expect(parked.events).toEqual([
+      { type: "EFFECT_PENDING", seat: "p1", note: expect.any(String) },
+    ]);
     const { phase: _a, ...restBefore } = before;
     const { phase: _b, ...restAfter } = parked.state;
     expect(JSON.stringify(restAfter)).toBe(JSON.stringify(restBefore));
@@ -1135,7 +1343,9 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
     const nj = run(armed(NIGHT_JOKER_IDS[0], [N_ONE, N_TWO], SOLO), declare(NIGHT_JOKER_IDS[0]));
     const njWire = redactGame(nj.state, "p1").phase;
     if (njWire.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(redactedEffectPromptSchema.parse(njWire.prompt)).toMatchObject({ kind: "choosePokemon" });
+    expect(redactedEffectPromptSchema.parse(njWire.prompt)).toMatchObject({
+      kind: "choosePokemon",
+    });
   });
 
   it("🛑 a JSON round-trip of the parked state resolves identically", () => {
@@ -1154,10 +1364,15 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
     expect((phase.cont.pendingOp as EffectOp).op).toBe("useAttackAs");
     const events: GameEvent[] = [];
     const choice: EffectChoice = { kind: "attack", index: 1 };
-    const rolled = settleProgram(resumeProgram(parked, phase.cont, choice, events), phase.seat, events, {
-      resumeTail: phase.resumeTail === true,
-      endsTurn: phase.endsTurn === true,
-    });
+    const rolled = settleProgram(
+      resumeProgram(parked, phase.cont, choice, events),
+      phase.seat,
+      events,
+      {
+        resumeTail: phase.resumeTail === true,
+        endsTurn: phase.endsTurn === true,
+      },
+    );
     if (!rolled.ok) throw new Error("the rollback reading failed");
     expect(rolled.state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(JSON.stringify(rolled.state.players)).toBe(JSON.stringify(parked.players));
@@ -1166,13 +1381,8 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
     expect(rolled.events).toEqual([]);
     expect(bodyAt(rolled.state, "p1", "active").usedAttack).toBeNull();
     // …and the player may simply declare again (the turn was never spent).
-    expect(run(rolled.state, declare(ZOROARK[0])).events.map((e) => e.type)).toEqual(["EFFECT_PENDING"]);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("D573 §6 — the version", () => {
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
+    expect(run(rolled.state, declare(ZOROARK[0])).events.map((e) => e.type)).toEqual([
+      "EFFECT_PENDING",
+    ]);
   });
 });

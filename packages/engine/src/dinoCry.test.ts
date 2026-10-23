@@ -25,7 +25,12 @@ import {
 // Targets are the controller's own Basic {F} Pokémon (targetType + basicOnly).
 
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
-const DINO_CRY = { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Dino Cry" } as const;
+const DINO_CRY = {
+  type: "useAbility",
+  seat: "p1",
+  target: { spot: "active" },
+  abilityName: "Dino Cry",
+} as const;
 
 /** Open P1's turn 2 with Koraidon ex as their Active and an EMPTY bench, so each
     test places exactly the {F}/non-{F} target set it needs (the sniperVs pattern
@@ -56,7 +61,11 @@ describe("Koraidon ex — Dino Cry (attachEnergyFrom multi + endsTurn)", () => {
     expect(p1.phase.prompt.kind).toBe("choosePokemon");
 
     // Attach #1 → Koraidon (Active); the program re-parks for attach #2.
-    const p2 = mustApply(p1, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: ACTIVE_REF } }).state;
+    const p2 = mustApply(p1, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: ACTIVE_REF },
+    }).state;
     expect(p2.phase.kind).toBe("effect:choose");
     if (p2.phase.kind !== "effect:choose") throw new Error("expected a second park");
     expect(p2.phase.endsTurn).toBe(true); // the flag survived the re-park
@@ -169,7 +178,11 @@ describe("Koraidon ex — Dino Cry (attachEnergyFrom multi + endsTurn)", () => {
     let cur = mustApply(state, DINO_CRY).state;
     for (let i = 0; i < 2; i++) {
       if (cur.phase.kind !== "effect:choose") throw new Error(`expected park ${i + 1}`);
-      cur = mustApply(cur, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } }).state;
+      cur = mustApply(cur, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon" },
+      }).state;
     }
     expect(cur.players.p1.active?.energy.length).toBe(0);
     expect(cur.players.p1.bench[0]?.energy.length).toBe(0);
@@ -192,7 +205,11 @@ describe("Koraidon ex — Dino Cry (attachEnergyFrom multi + endsTurn)", () => {
     const parked = mustApply(state, DINO_CRY).state;
     if (parked.phase.kind === "effect:choose") {
       expect(() =>
-        applyAction(deepFreeze(parked), { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: ACTIVE_REF } }),
+        applyAction(deepFreeze(parked), {
+          type: "resolveEffect",
+          seat: "p1",
+          choice: { kind: "pokemon", ref: ACTIVE_REF },
+        }),
       ).not.toThrow();
     }
   });

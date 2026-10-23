@@ -15,18 +15,23 @@ const SEAT_LOG: SeatLogEntry[] = [
 
 describe("viewLogEntries", () => {
   it("maps seats into the current viewer's vocabulary", () => {
-    expect(viewLogEntries(SEAT_LOG, "p1").map((e) => (e.kind === "action" ? e.who : e.turn))).toEqual(
-      ["you", "opponent", "system", 3],
-    );
+    expect(
+      viewLogEntries(SEAT_LOG, "p1").map((e) => (e.kind === "action" ? e.who : e.turn)),
+    ).toEqual(["you", "opponent", "system", 3]);
     // The SAME seat log read from the other seat flips you/opponent — the
     // property the online broadcast relies on (one array, two viewers).
-    expect(viewLogEntries(SEAT_LOG, "p2").map((e) => (e.kind === "action" ? e.who : e.turn))).toEqual(
-      ["opponent", "you", "system", 3],
-    );
+    expect(
+      viewLogEntries(SEAT_LOG, "p2").map((e) => (e.kind === "action" ? e.who : e.turn)),
+    ).toEqual(["opponent", "you", "system", 3]);
   });
 
   it("carries elapsed + segments through untouched", () => {
     const [row] = viewLogEntries(SEAT_LOG, "p1");
-    expect(row).toEqual({ kind: "action", who: "you", elapsed: "+00:01", segments: [{ text: "a" }] });
+    expect(row).toEqual({
+      kind: "action",
+      who: "you",
+      elapsed: "+00:01",
+      segments: [{ text: "a" }],
+    });
   });
 });

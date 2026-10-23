@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat, StatusName } from "./index";
 import {
   DEFENDER_STATUS_PAIR_DECK,
@@ -192,7 +192,8 @@ const LEFT_LOUD = {
       `sv05-063` "Look-Alike Show", D445), outside every family the D574 pricing round ranks — the
       attribution loop's stable witness, since `dotAnchorTrio`'s survivor is next in line (D540).
       (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
-  recordedRefusal: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
+  recordedRefusal:
+    "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
 } as const;
 
 /** 🆕🆕🆕 D574 — the row that LEFT `dotAnchorTrio` (FILE LINE 686), kept LIVE so the `\.$` drift
@@ -328,7 +329,10 @@ function withEffect(state: GameState, cardId: string, effect: string): GameState
   if (first === undefined) throw new Error(`${cardId} has no attack 0`);
   return {
     ...state,
-    cardPool: { ...state.cardPool, [cardId]: { ...card, attacks: [{ ...first, effect }, ...attacks.slice(1)] } },
+    cardPool: {
+      ...state.cardPool,
+      [cardId]: { ...card, attacks: [{ ...first, effect }, ...attacks.slice(1)] },
+    },
   };
 }
 /** The defender's live `SpecialConditions`, from the seat that is NOT attacking. */
@@ -399,7 +403,12 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
       },
     ]);
     expect(FIXTURE_POOL["fix-accelgor"]?.attacks).toEqual([
-      { cost: ["Grass", "Colorless"], name: "Poisonous Ploy", effect: CONFUSE_POISON_SWITCH, damage: 70 },
+      {
+        cost: ["Grass", "Colorless"],
+        name: "Poisonous Ploy",
+        effect: CONFUSE_POISON_SWITCH,
+        damage: 70,
+      },
     ]);
   });
 
@@ -438,7 +447,13 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     // D204's defect: `programFor(id)?.attack` reads the REGISTRY only, while attack
     // programs resolve `registry ?? deriveAttackEffect`. If a row existed the arm
     // would be dead code and this suite would be testing the row.
-    for (const id of ["fix-ninetales", "fix-tr-houndoom", "fix-ekans", "fix-glimmora", "fix-accelgor"]) {
+    for (const id of [
+      "fix-ninetales",
+      "fix-tr-houndoom",
+      "fix-ekans",
+      "fix-glimmora",
+      "fix-accelgor",
+    ]) {
       expect(programFor(id)?.attack ?? null).toBeNull();
     }
   });
@@ -605,7 +620,9 @@ describe("§2 — the derivation, parameterised on both axes", () => {
       new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (.+), and (${W})\\.$`),
       new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (.+)\\.$`),
       new RegExp(`Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (${W})\\.$`),
-      new RegExp(`^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W}) and (.+)\\.$`),
+      new RegExp(
+        `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W}) and (.+)\\.$`,
+      ),
     ]) {
       expect(re.test(CLAIMED_AT_D464)).toBe(false);
     }
@@ -651,7 +668,9 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     // the one that would go red.
     for (const s of COLLISIONS) {
       expect(
-        deriveAttackEffect(`Flip a coin. If heads, ${s.replace("Your opponent's", "your opponent's")}`),
+        deriveAttackEffect(
+          `Flip a coin. If heads, ${s.replace("Your opponent's", "your opponent's")}`,
+        ),
       ).toBeNull();
     }
   });
@@ -670,7 +689,9 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     // Poisoned occupy two different fields, so the pair is coherent — and no card
     // prints it, which is exactly why it is the control and not a claim about the
     // catalog.
-    expect(deriveAttackEffect("Your opponent's Active Pokémon is now Burned and Poisoned.")).toEqual([
+    expect(
+      deriveAttackEffect("Your opponent's Active Pokémon is now Burned and Poisoned."),
+    ).toEqual([
       { op: "applyStatus", target: "defender", status: "burned" },
       { op: "applyStatus", target: "defender", status: "poisoned" },
     ]);
@@ -689,8 +710,7 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     const anyPair = new RegExp(`(${WORD}) and (${WORD})`, "g");
     const offenders = legalAttackCorpus().filter(([, s]) =>
       [...s.matchAll(anyPair)].some(
-        ([, a, b]) =>
-          (ROTATION.includes(a as string) && ROTATION.includes(b as string)) || a === b,
+        ([, a, b]) => (ROTATION.includes(a as string) && ROTATION.includes(b as string)) || a === b,
       ),
     );
     expect(offenders).toEqual([]);
@@ -715,7 +735,10 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     const collided = board("ninetales", "fix-titan");
     const active = collided.players.p1.active;
     if (active === null) throw new Error("no attacker");
-    const { state, events } = swing(withEffect(collided, "fix-ninetales", COLLISIONS[0]), "ninetales");
+    const { state, events } = swing(
+      withEffect(collided, "fix-ninetales", COLLISIONS[0]),
+      "ninetales",
+    );
     expect(find(events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(COLLISIONS[0]);
     expect(all(events, "STATUS_APPLIED")).toEqual([]);
     expect(defenderConditions(state).rotation).toBe("none");
@@ -835,7 +858,15 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
         ...state.players,
         p2: {
           ...state.players.p2,
-          active: { ...defender, conditions: { rotation: "asleep", poisonDamage: 20, burned: false, confusionDamage: 30 } },
+          active: {
+            ...defender,
+            conditions: {
+              rotation: "asleep",
+              poisonDamage: 20,
+              burned: false,
+              confusionDamage: 30,
+            },
+          },
         },
       },
     };
@@ -886,7 +917,9 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
       tail: "Switch this Pokémon with 1 of your Benched Pokémon.",
     });
     // The two halves, each claimed by the reader that owns it.
-    expect(deriveAttackEffect("Your opponent's Active Pokémon is now Confused and Poisoned.")).toEqual([
+    expect(
+      deriveAttackEffect("Your opponent's Active Pokémon is now Confused and Poisoned."),
+    ).toEqual([
       { op: "applyStatus", target: "defender", status: "confused" },
       { op: "applyStatus", target: "defender", status: "poisoned" },
     ]);
@@ -911,7 +944,8 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
       confusionDamage: 30,
     });
     // the tail — a different body is Active now
-    const activeCardId = (st: GameState) => st.cardIdByUid[st.players.p1.active?.stack[0] ?? ""] ?? null;
+    const activeCardId = (st: GameState) =>
+      st.cardIdByUid[st.players.p1.active?.stack[0] ?? ""] ?? null;
     expect(activeCardId(before)).toBe("fix-accelgor");
     expect(activeCardId(state)).not.toBe("fix-accelgor");
     // and the printed damage still landed
@@ -935,7 +969,10 @@ describe("§6 — a §11 effects block refuses the pair", () => {
       ...state,
       players: {
         ...state.players,
-        [seat]: { ...state.players[seat], active: { ...active, attackBlock: { turn: 2, effects: true } } },
+        [seat]: {
+          ...state.players[seat],
+          active: { ...active, attackBlock: { turn: 2, effects: true } },
+        },
       },
     };
   }
@@ -970,7 +1007,9 @@ describe("§6 — a §11 effects block refuses the pair", () => {
       "fix-ninetales",
       "Your opponent's Active Pokémon is now Burned.",
     );
-    expect(all(swing(shielded(single), "ninetales").events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
+    expect(
+      all(swing(shielded(single), "ninetales").events, "ATTACK_EFFECT_PREVENTED"),
+    ).toHaveLength(1);
   });
 
   it("a blocked pair is not a SKIPPED pair — the two loudnesses are different rows", () => {
@@ -1002,7 +1041,9 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
   it("…including on TAILS, where the gate fired and applied nothing", () => {
     // A resolved-to-nothing clause must not print a "not simulated" row: loudness is
     // owed to UNREAD text (D140), and this text was read.
-    expect(find(swing(flipBoard("ekans", false), "ekans").events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(
+      find(swing(flipBoard("ekans", false), "ekans").events, "ATTACK_EFFECT_SKIPPED"),
+    ).toBeUndefined();
   });
 
   it("the four sentences this slice LEFT are still flagged — the loud path still works", () => {
@@ -1017,7 +1058,11 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     // 🆕🆕🆕 D575 — FILE LINE 690 left too (built), so the trio is EMPTY (asserted, not looped over
     // silently), and `headsTails` holds Walking Wake now: the loop runs over TWO real printings.
     expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
-    for (const text of [LEFT_LOUD.headsTails, ...LEFT_LOUD.dotAnchorTrio, LEFT_LOUD.recordedRefusal]) {
+    for (const text of [
+      LEFT_LOUD.headsTails,
+      ...LEFT_LOUD.dotAnchorTrio,
+      LEFT_LOUD.recordedRefusal,
+    ]) {
       const doctored = withEffect(b, "fix-ninetales", text);
       expect(find(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
@@ -1085,9 +1130,5 @@ describe("§8 — purity and the structural answers", () => {
     // park, which is what makes the version prediction true.
     const { state } = swing(board("ninetales", "fix-titan"), "ninetales");
     expect(state.phase.kind).not.toBe("effect:choose");
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

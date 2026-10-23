@@ -208,9 +208,7 @@ function galvantula(id: string): Card {
     retreat: 1,
     types: ["Lightning"],
     stage: "Basic",
-    attacks: [
-      { name: "Electro Web", cost: ["Lightning"], damage: "180", effect: GALVANTULA_TEXT },
-    ],
+    attacks: [{ name: "Electro Web", cost: ["Lightning"], damage: "180", effect: GALVANTULA_TEXT }],
   });
 }
 
@@ -292,7 +290,11 @@ function firstBasicInHand(state: GameState, seat: Seat): string {
 /** D275's `localSetup` with the FIRST PLAYER as a PARAMETER — a one-seat board is
     vacuous on a per-seat fact, and "whose hand is barred" is exactly one. */
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: STADIUM_DECK, p2: STADIUM_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: STADIUM_DECK, p2: STADIUM_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -427,13 +429,18 @@ describe("D287 §1 — the printing, the class list, and the census that priced 
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
   });
 
-  it("🛑 `\"Stadium\"` IS A `HandPlayClass` AND *NOT* A `StampedHandPlayClass` — the seam (🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth stamps it, so the key is present and `null` here; the continuous half still answers)", () => {
+  it('🛑 `"Stadium"` IS A `HandPlayClass` AND *NOT* A `StampedHandPlayClass` — the seam (🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth stamps it, so the key is present and `null` here; the continuous half still answers)', () => {
     // The type says so and tsc enforces it; what a TEST can drive is the
     // CONSEQUENCE, which is that the persisted record has no key for it. §7
     // drives the round trip; this is the literal anchor beside it.
     const state = turnOf(board(SEEDS[0], "p1", "p1", COPPERAJAH), "p2");
     expect(Object.keys(state.handPlayLockedTurn.p2).sort()).toEqual(
-      ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+      [
+        "Item",
+        "Supporter",
+        "Stadium",
+        "evolve",
+      ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
     );
     // 🆕🆕🆕 D636 (D539): the key IS present now (`Stadium: null` — no attack stamped it on this board).
     expect(state.handPlayLockedTurn.p2.Stadium).toBeNull();
@@ -463,7 +470,7 @@ describe("D287 §2 — `playStadium` asks `handPlayBarred`, and the CONTROL says
     }
   });
 
-  it("🛑 THE BARRING SEAT'S OWN HAND IS FREE — *\"your opponent\"*, on one board", () => {
+  it('🛑 THE BARRING SEAT\'S OWN HAND IS FREE — *"your opponent"*, on one board', () => {
     // The sentence is printed on the holder and names the OTHER seat. A build
     // that barred both seats (or the wrong one) is green on every line above.
     for (const seed of SEEDS) {
@@ -739,10 +746,20 @@ describe("D287 §7 — the version does NOT move, and the claim is driven both w
     );
     for (const seat of ["p1", "p2"] as const) {
       expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+        [
+          "Item",
+          "Supporter",
+          "Stadium",
+          "evolve",
+        ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
       expect(Object.keys(free.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+        [
+          "Item",
+          "Supporter",
+          "Stadium",
+          "evolve",
+        ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
     }
   });

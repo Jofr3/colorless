@@ -515,7 +515,7 @@ describe("the pick — forced on one candidate, parked on two", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the event and the log row", () => {
-  it("ENERGY_DISCARDED carries `to: \"hand\"`, with seat = the VICTIM and actor = the player", () => {
+  it('ENERGY_DISCARDED carries `to: "hand"`, with seat = the VICTIM and actor = the player', () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const uid = activeEnergy(state, "p2")[0] as string;

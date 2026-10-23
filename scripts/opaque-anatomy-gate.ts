@@ -158,11 +158,7 @@ const B_CASES: readonly (readonly [string, EditRegion[], string])[] = [
   // ④ THE OPPOSITE ERROR. Adjacent edits with nothing matching between them are
   //    ONE region, not two. Over-splitting inflates every k and empties MULTI-2
   //    silently — a narrowing dressed as precision, and § A stays green through it.
-  [
-    "④ adjacent edits merge into ONE region",
-    editRegions(T("a b c d"), T("a x y z d")),
-    "2→3",
-  ],
+  ["④ adjacent edits merge into ONE region", editRegions(T("a b c d"), T("a x y z d")), "2→3"],
   // ⑤ A PURE DELETION IS A REGION WITH blen === 0, and a pure insertion the
   //    mirror. The bound is applied to BOTH sides, so a region that is empty on
   //    one side must still be counted or the size check has nothing to read.
@@ -221,7 +217,8 @@ check(
 // `PRIZE-ZONE` witness's own words, held here as a literal (🆕🆕🆕 D575 (D539): the sentence is BUILT now — no longer
 // "live" — and the literal is exactly why that changes nothing here). A co-marker matches it and no
 // blocker does, so only a labeller that lets a co-marker label returns non-null.
-const CO_PIN = "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
+const CO_PIN =
+  "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
 const coPinned = blockerMarkerOf({ text: CO_PIN });
 check(
   "§C the PINNED far sentence was labelled by a CO-MARKER — only a BLOCKER may label",

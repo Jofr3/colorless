@@ -46,11 +46,16 @@ function attachBoard(seed: number): GameState {
     `fix-water-energy` (the card these rungs stage), else the first candidate. */
 function answerEnergyPick(state: GameState): { state: GameState; events: GameEvent[] } {
   const phase = state.phase;
-  if (phase.kind !== "effect:choose" || phase.prompt.kind !== "chooseCards") return { state, events: [] };
+  if (phase.kind !== "effect:choose" || phase.prompt.kind !== "chooseCards")
+    return { state, events: [] };
   expect(phase.prompt).toMatchObject({ dest: "attach", min: 1, max: 1 });
   const water = phase.prompt.candidates.find((u) => state.cardIdByUid[u] === "fix-water-energy");
   const uid = water ?? (phase.prompt.candidates[0] as string);
-  return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [uid] } });
+  return mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "cards", uids: [uid] },
+  });
 }
 
 /** Use an Ability, then (if it parked on the target choice) attach to the ref.
@@ -62,13 +67,22 @@ function useAttach(
   abilityName: string,
   ref: PokemonRef,
 ): { state: GameState; uid: string | undefined } {
-  const first = mustApply(state, { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName });
+  const first = mustApply(state, {
+    type: "useAbility",
+    seat: "p1",
+    target: { spot: "active" },
+    abilityName,
+  });
   if (first.state.phase.kind !== "effect:choose") {
     return { state: first.state, uid: find(first.events, "ENERGY_ATTACHED")?.uid }; // forced
   }
   const atTarget =
     first.state.phase.prompt.kind === "choosePokemon"
-      ? mustApply(first.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } })
+      ? mustApply(first.state, {
+          type: "resolveEffect",
+          seat: "p1",
+          choice: { kind: "pokemon", ref },
+        })
       : first;
   const res = answerEnergyPick(atTarget.state);
   const events = [...atTarget.events, ...res.events];
@@ -147,7 +161,12 @@ describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
     const s1 = useAttach(state, "Energy Carnival", ACTIVE_REF).state;
     expectErr(
       s1,
-      { type: "useAbility", seat: "p1", target: { spot: "active" }, abilityName: "Energy Carnival" },
+      {
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "active" },
+        abilityName: "Energy Carnival",
+      },
       "ABILITY_ALREADY_USED",
     );
   });
@@ -193,7 +212,11 @@ describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     expectErr(
       parked,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: { seat: "p2", spot: { spot: "active" } } } },
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon", ref: { seat: "p2", spot: { spot: "active" } } },
+      },
       "BAD_EFFECT_CHOICE",
     );
   });

@@ -72,7 +72,9 @@ export type CardBriefRow = Pick<CardRow, keyof typeof cardBriefColumns>;
     `isSpecialEnergy`, D583): a "Normal"-tagged Energy that prints rules text is "Special". Every other row keeps
     its stored tag, sentinel-normalised. The full `/cards/:id` row is NOT rewritten (the engine reads the face's
     text itself, and a persisted `GameState.cardPool` face keeps its tag either way). */
-function briefEnergyType(row: Pick<CardBriefRow, "category" | "energyType" | "effect">): string | null {
+function briefEnergyType(
+  row: Pick<CardBriefRow, "category" | "energyType" | "effect">,
+): string | null {
   const energyType = normalizeSentinel(row.energyType);
   const face = { category: row.category, energyType, effect: row.effect };
   if (isSpecialEnergy(face)) return "Special";
@@ -91,7 +93,12 @@ function setAssetPath(setId: string): string {
 
 /** A print's served legality: the reprint-rule verdict when the ingest
     post-pass has written it, else its own tcgdex flags (db/catalog.ts). */
-function legalOf(row: Pick<CardRow, "legalStandard" | "legalExpanded" | "legalStandardEffective" | "legalExpandedEffective">) {
+function legalOf(
+  row: Pick<
+    CardRow,
+    "legalStandard" | "legalExpanded" | "legalStandardEffective" | "legalExpandedEffective"
+  >,
+) {
   return {
     standard: row.legalStandardEffective ?? row.legalStandard,
     expanded: row.legalExpandedEffective ?? row.legalExpanded,

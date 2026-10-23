@@ -291,9 +291,7 @@ function turnOf(state: GameState, seat: Seat): GameState {
     the returned board is the BARRED seat's. */
 function swing(state: GameState, seat: Seat, index: number): GameState {
   let next = state;
-  const energy = next.players[seat].hand.find(
-    (h) => next.cardIdByUid[h] === "fix-psychic-energy",
-  );
+  const energy = next.players[seat].hand.find((h) => next.cardIdByUid[h] === "fix-psychic-energy");
   if (energy === undefined) throw new Error(`${seat} has no energy in hand`);
   next = must(
     applyAction(next, { type: "attachEnergy", seat, uid: energy, target: { spot: "active" } }),
@@ -429,7 +427,11 @@ describe("D285 §1 — the census, and the two printings it reaches", () => {
 
 describe("D285 §2 — GameState.handPlayLockedTurn gains an ACT key", () => {
   it("a fresh game has no lock on either seat, for any of the three keys (🆕🆕🆕 D636 (D539): four — `Stadium`)", () => {
-    const created = createGame({ seed: SEEDS[0], decks: { p1: LOCK_DECK, p2: LOCK_DECK }, cardPool: POOL });
+    const created = createGame({
+      seed: SEEDS[0],
+      decks: { p1: LOCK_DECK, p2: LOCK_DECK },
+      cardPool: POOL,
+    });
     if (!created.ok) throw new Error("createGame failed");
     expect(created.state.handPlayLockedTurn).toEqual({
       p1: { Item: null, Supporter: null, Stadium: null, evolve: null },
@@ -441,7 +443,11 @@ describe("D285 §2 — GameState.handPlayLockedTurn gains an ACT key", () => {
     it(`Evolution Jammer stamps the OPPONENT's next turn and NOTHING else (first: ${first})`, () => {
       const attacker = first;
       const victim = first === "p1" ? "p2" : "p1";
-      const state = swing(turnOf(board(SEEDS[0], first, attacker, BRONZONG), attacker), attacker, 0);
+      const state = swing(
+        turnOf(board(SEEDS[0], first, attacker, BRONZONG), attacker),
+        attacker,
+        0,
+      );
       // The stamp names the turn the bar APPLIES to, so the reader is one `===`.
       expect(state.handPlayLockedTurn[victim].evolve).toBe(state.turn);
       // 🛑 AND ONLY THE ACT KEY — a build that reached for a class would have had
@@ -508,7 +514,11 @@ describe("D285 §3 — turn.ts's evolve gate", () => {
     for (const first of ["p1", "p2"] as const) {
       const attacker = first;
       const victim = first === "p1" ? "p2" : "p1";
-      const stamped = swing(turnOf(board(SEEDS[1], first, attacker, BRONZONG), attacker), attacker, 0);
+      const stamped = swing(
+        turnOf(board(SEEDS[1], first, attacker, BRONZONG), attacker),
+        attacker,
+        0,
+      );
       expect(evolve(stamped, victim, EVO_PLAIN)).toBe("HAND_PLAY_BLOCKED");
       // Walk to the attacker's own turn: its record was never stamped, so it
       // evolves. A build that stamped the wrong seat is green on the line above.
@@ -533,14 +543,21 @@ describe("D285 §4 — two acts, and the stamp names exactly one", () => {
     expect(bench(stamped, "p2", BASIC_ABILITY)).toBe("OK");
   });
 
-  it("`\"bench\"` IS NOT A STAMPABLE KEY — the reader turns it away by the type", () => {
+  it('`"bench"` IS NOT A STAMPABLE KEY — the reader turns it away by the type', () => {
     const stamped = swing(turnOf(board(SEEDS[0], "p1", "p1", BRONZONG), "p1"), "p1", 0);
     expect(pokemonPlayBarred(stamped, "p2", "evolve", POOL[EVO_PLAIN])).toBe(true);
     expect(pokemonPlayBarred(stamped, "p2", "bench", POOL[BASIC_PLAIN])).toBe(false);
     // …and the record itself never grew the key. `"Tool"` (D284) is absent for
     // the same measured reason: no printed writer can set either.
     const keys = Object.keys(stamped.handPlayLockedTurn.p2);
-    expect(keys.sort()).toEqual(["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */);
+    expect(keys.sort()).toEqual(
+      [
+        "Item",
+        "Supporter",
+        "Stadium",
+        "evolve",
+      ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+    );
   });
 
   it("the TRAINER surface is untouched by an act stamp, and vice versa", () => {
@@ -617,7 +634,7 @@ describe("D285 §5 — the continuous bar, narrowed and then re-widened", () => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D285 §6 — MATCH_RECORD_VERSION 15 → 16, driven both directions", () => {
-  it("🛑 A v15 BAG DOES NOT THROW — IT SILENTLY ANSWERS \"no lock\", WHICH IS THE POINT", () => {
+  it('🛑 A v15 BAG DOES NOT THROW — IT SILENTLY ANSWERS "no lock", WHICH IS THE POINT', () => {
     // 🛑 THE DIAGNOSIS IS THE OPPOSITE OF D283's AND THE CONCLUSION IS THE SAME,
     // SO IT IS RE-DERIVED RATHER THAN CITED. D283 added a whole FIELD, so
     // `handPlayBarred` indexed twice and a version-14 bag threw a `TypeError` on
@@ -660,7 +677,12 @@ describe("D285 §6 — MATCH_RECORD_VERSION 15 → 16, driven both directions", 
           Object.keys(plain.handPlayLockedTurn[seat]).sort(),
         );
         expect(Object.keys(stamped.handPlayLockedTurn[seat]).sort()).toEqual(
-          ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+          [
+            "Item",
+            "Supporter",
+            "Stadium",
+            "evolve",
+          ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
         );
       }
     }

@@ -155,9 +155,7 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     types: ["Lightning"],
     stage: "Basic",
-    attacks: [
-      { name: "Electro Web", cost: ["Lightning"], damage: "180", effect: GALVANTULA_TEXT },
-    ],
+    attacks: [{ name: "Electro Web", cost: ["Lightning"], damage: "180", effect: GALVANTULA_TEXT }],
   }),
   [PLAIN]: battler(PLAIN, {
     name: "Plain Blocker",
@@ -447,7 +445,7 @@ describe("D288 §3 — the wire row is greyed EXACTLY when the engine refuses", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D288 §4 — a STAMPED Item bar greys Items and leaves Stadiums lit", () => {
-  it("🛑 a STAMPED ITEM bar leaves the Stadium rows LIT, DRIVEN OFF A REAL ATTACK (🆕🆕🆕 D636 (D539): ~~`StampedHandPlayClass` HAS NO `\"Stadium\"` MEMBER~~ WITHDRAWN — Scorching Earth stamps it, keyed apart from `Item`)", () => {
+  it('🛑 a STAMPED ITEM bar leaves the Stadium rows LIT, DRIVEN OFF A REAL ATTACK (🆕🆕🆕 D636 (D539): ~~`StampedHandPlayClass` HAS NO `"Stadium"` MEMBER~~ WITHDRAWN — Scorching Earth stamps it, keyed apart from `Item`)', () => {
     // The mirror asks `handPlayBarred` — ONE funnel that consults BOTH the
     // continuous source and the turn-stamped one — rather than a fifth predicate
     // of its own. This drives the stamped half through a printed attack rider, so
@@ -599,7 +597,12 @@ describe("D288 §7 — the version does NOT move, and the claim is driven", () =
     );
     for (const seat of ["p1", "p2"] as const) {
       expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
+        [
+          "Item",
+          "Supporter",
+          "Stadium",
+          "evolve",
+        ].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
     }
     // And the wire phase's own key list — the surface this slice DID change, whose

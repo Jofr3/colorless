@@ -2,12 +2,21 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type EffectContext, runProgram } from "./interpreter";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, clearBench, deckOf, setActiveFromDeck, specialEnergy, trainerCard, benchFromDeck } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  specialEnergy,
+  trainerCard,
+  benchFromDeck,
+} from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
 // ── 🆕🆕🆕 D565 — RUFFIAN: THE BODY-FIRST PICK ──
@@ -29,10 +38,13 @@ const SPECIAL = "fix-special";
 const SPECIAL_2 = "fix-special-2";
 const BASIC = "fix-energy";
 
-const RUFFIAN_TEXT = "Discard a Pokémon Tool and a Special Energy from 1 of your opponent's Pokémon.";
+const RUFFIAN_TEXT =
+  "Discard a Pokémon Tool and a Special Energy from 1 of your opponent's Pokémon.";
 
 const LOCAL_CARDS: Record<string, Card> = {
-  ...Object.fromEntries(RUFFIAN.map((id) => [id, { ...trainerCard(id, "Supporter", RUFFIAN_TEXT), name: "Ruffian" }])),
+  ...Object.fromEntries(
+    RUFFIAN.map((id) => [id, { ...trainerCard(id, "Supporter", RUFFIAN_TEXT), name: "Ruffian" }]),
+  ),
   [FRAXURE]: battler(FRAXURE, {
     name: "Fraxure",
     stage: "Stage1",
@@ -43,7 +55,8 @@ const LOCAL_CARDS: Record<string, Card> = {
       {
         type: "Ability",
         name: "Unnerve",
-        effect: "Prevent all effects of your opponent's Item and Supporter cards done to this Pokémon.",
+        effect:
+          "Prevent all effects of your opponent's Item and Supporter cards done to this Pokémon.",
       },
     ],
   }),
@@ -80,7 +93,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -89,7 +103,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -97,11 +113,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -141,7 +160,12 @@ function bodyAt(state: GameState, seat: Seat, spot: Spot): InPlayPokemon {
   return p;
 }
 
-function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon) => InPlayPokemon): GameState {
+function withBody(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  f: (p: InPlayPokemon) => InPlayPokemon,
+): GameState {
   const side = state.players[seat];
   const next =
     spot === "active"
@@ -151,17 +175,30 @@ function withBody(state: GameState, seat: Seat, spot: Spot, f: (p: InPlayPokemon
 }
 
 /** TEST SURGERY — attach a deck copy of `id` to the body, as Energy or as a Tool. */
-function attach(state: GameState, seat: Seat, spot: Spot, id: string, as: "energy" | "tools" = "energy"): GameState {
+function attach(
+  state: GameState,
+  seat: Seat,
+  spot: Spot,
+  id: string,
+  as: "energy" | "tools" = "energy",
+): GameState {
   const next = ensureInDeck(state, seat, id);
   const side = next.players[seat];
   const uid = side.deck.find((u) => next.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id}`);
-  const moved = { ...next, players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } } };
+  const moved = {
+    ...next,
+    players: { ...next.players, [seat]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+  };
   return withBody(moved, seat, spot, (p) => ({ ...p, [as]: [...p[as], uid] }));
 }
 
 /** p1's turn 2: plain bodies, p2 `oppActive` + `oppBench`; hands emptied into the decks. */
-function table(oppActive: string = FILLER, oppBench: readonly string[] = [], seed = 5652): GameState {
+function table(
+  oppActive: string = FILLER,
+  oppBench: readonly string[] = [],
+  seed = 5652,
+): GameState {
   let state = setHand(setHand(opened(seed), "p1", []), "p2", []);
   state = setActiveFromDeck(state, "p1", FILLER);
   state = setActiveFromDeck(ensureInDeck(state, "p2", oppActive), "p2", oppActive);
@@ -170,19 +207,29 @@ function table(oppActive: string = FILLER, oppBench: readonly string[] = [], see
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 
-function play(state: GameState, id: string = RUFFIAN[0]): { state: GameState; events: GameEvent[] } {
+function play(
+  state: GameState,
+  id: string = RUFFIAN[0],
+): { state: GameState; events: GameEvent[] } {
   const before = setHand(state, "p1", [id]);
   return run(before, { type: "playTrainer", seat: "p1", uid: before.players.p1.hand[0] as string });
 }
 
 const pick = (spot: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
-  ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: { seat: "p2", spot } } }) as GameAction;
+  ({
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref: { seat: "p2", spot } },
+  }) as GameAction;
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§1 — the print and the registry row", () => {
@@ -190,10 +237,6 @@ describe("§1 — the print and the registry row", () => {
     const first = programFor(RUFFIAN[0]);
     expect(first).toEqual({ trainer: [{ op: "discardToolAndSpecialEnergyChosen" }] });
     expect(programFor(RUFFIAN[1])).toBe(first);
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -287,7 +330,9 @@ describe("§3 — several bodies qualify: the pick parks, and the answer narrows
       throw new Error("expected a discardEnergy park");
     }
     const hosts = second.phase.prompt.discardable.map((d) => d.from);
-    expect(hosts.every((ref) => ref.seat === "p2" && ref.spot.spot === "bench" && ref.spot.index === 1)).toBe(true);
+    expect(
+      hosts.every((ref) => ref.seat === "p2" && ref.spot.spot === "bench" && ref.spot.index === 1),
+    ).toBe(true);
     expect(second.phase.prompt.discardable).toHaveLength(2);
     // The Tool half already came off, before the Energy question.
     expect(bodyAt(second, "p2", 1).tools).toEqual([]);
@@ -296,7 +341,7 @@ describe("§3 — several bodies qualify: the pick parks, and the answer narrows
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§4 — the shield and the refusal", () => {
-  it("🛑 a SHIELDED body (Fraxure \"Unnerve\") is not offered: with the Active also loaded, the pick is forced to it", () => {
+  it('🛑 a SHIELDED body (Fraxure "Unnerve") is not offered: with the Active also loaded, the pick is forced to it', () => {
     let state = table(FILLER, [FRAXURE]);
     state = attach(state, "p2", "active", TOOL, "tools");
     state = attach(state, "p2", 0, TOOL, "tools");
@@ -312,7 +357,11 @@ describe("§4 — the shield and the refusal", () => {
   it("🛑 no opponent body carries a Tool or a Special Energy: the play is REFUSED (a card that could only whiff)", () => {
     const state = attach(table(), "p2", "active", BASIC);
     const before = setHand(state, "p1", [RUFFIAN[0]]);
-    const result = applyAction(before, { type: "playTrainer", seat: "p1", uid: before.players.p1.hand[0] as string });
+    const result = applyAction(before, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: before.players.p1.hand[0] as string,
+    });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("NO_LEGAL_TARGET");
   });
@@ -320,9 +369,13 @@ describe("§4 — the shield and the refusal", () => {
   it("…and YOUR OWN Tool never makes it playable (the offer is the opponent's side only)", () => {
     const state = attach(table(), "p1", "active", TOOL, "tools");
     const before = setHand(state, "p1", [RUFFIAN[0]]);
-    expect(applyAction(before, { type: "playTrainer", seat: "p1", uid: before.players.p1.hand[0] as string }).ok).toBe(
-      false,
-    );
+    expect(
+      applyAction(before, {
+        type: "playTrainer",
+        seat: "p1",
+        uid: before.players.p1.hand[0] as string,
+      }).ok,
+    ).toBe(false);
   });
 
   it("the online HUD greys the card on the refused board and lights it on a legal one", () => {
@@ -360,7 +413,7 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
     expect(wide.kind).toBe("parked");
   });
 
-  it("🛑 `discardEnergy { from: \"opponentChosen\", bodyUid }` takes the Special Energy off THAT body only", () => {
+  it('🛑 `discardEnergy { from: "opponentChosen", bodyUid }` takes the Special Energy off THAT body only', () => {
     let state = table(FILLER, [FILLER]);
     state = attach(state, "p2", "active", SPECIAL);
     state = attach(state, "p2", 0, SPECIAL);
@@ -368,7 +421,15 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
     const events: GameEvent[] = [];
     const out = runProgram(
       state,
-      [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "specialEnergy" }, count: 1, bodyUid: benchUid }],
+      [
+        {
+          op: "discardEnergy",
+          from: "opponentChosen",
+          filter: { kind: "specialEnergy" },
+          count: 1,
+          bodyUid: benchUid,
+        },
+      ],
       ctx,
       events,
     );

@@ -402,7 +402,8 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     // way you like"* opens a distribution where *"until its remaining HP is N"* closes
     // an arithmetic. An anchor that dropped its tail would claim both, so the claim is
     // made in the form that still goes red on that defect.
-    const HP_TARGET = "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
+    const HP_TARGET =
+      "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
     expect(deriveAttackEffect(HP_TARGET)?.[0]?.op).toBe("counterUntilRemainingHp");
     expect(deriveAttackEffect(HP_TARGET)).not.toEqual(spread(2, "opponentBench"));
     // …and it derives to ONE op where this anchor unrolls to N, which is the structural
@@ -493,7 +494,10 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
     for (const [sentence] of LEGAL_SPREAD) {
       const ops = deriveAttackEffect(sentence) ?? [];
       expect(ops.length, sentence).toBeGreaterThan(1);
-      expect(ops.every((op) => (op as { deals?: true }).deals === undefined), sentence).toBe(true);
+      expect(
+        ops.every((op) => (op as { deals?: true }).deals === undefined),
+        sentence,
+      ).toBe(true);
     }
   });
 

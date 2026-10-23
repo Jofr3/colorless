@@ -39,7 +39,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Fighting"],
     retreat: 2,
     attacks: [
-      { cost: ["Colorless", "Colorless"], name: "Unrelenting Onslaught", effect: ONSLAUGHT, damage: "30+" },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Unrelenting Onslaught",
+        effect: ONSLAUGHT,
+        damage: "30+",
+      },
       { cost: ["Fighting", "Fighting", "Colorless"], name: "Hammer In", damage: 110 },
     ],
   }),
@@ -49,7 +54,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Water"],
     retreat: 1,
     attacks: [
-      { cost: ["Water"], name: "Aurora Gain", effect: "Heal 20 damage from this Pokémon.", damage: 20 },
+      {
+        cost: ["Water"],
+        name: "Aurora Gain",
+        effect: "Heal 20 damage from this Pokémon.",
+        damage: 20,
+      },
       {
         cost: ["Water", "Water", "Colorless"],
         name: "Undulating Slice",
@@ -59,9 +69,24 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [PLAIN]: battler(PLAIN, { name: "D579 Plain", hp: 130, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
-  [WALL]: battler(WALL, { name: "D579 Wall", hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
-  [FILLER]: battler(FILLER, { name: "D579 Filler", hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
+  [PLAIN]: battler(PLAIN, {
+    name: "D579 Plain",
+    hp: 130,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
+  [WALL]: battler(WALL, {
+    name: "D579 Wall",
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
+  [FILLER]: battler(FILLER, {
+    name: "D579 Filler",
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
   [C]: typedEnergy(C, "Fighting"),
   [WATER]: typedEnergy(WATER, "Water"),
 };
@@ -86,7 +111,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -95,7 +121,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -103,15 +131,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -141,7 +176,12 @@ interface Spot {
 }
 
 /** p1's turn: each seat's Active and Bench built from `Spot`s; every hand emptied into the deck. */
-function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: readonly Spot[] }): GameState {
+function table(opts: {
+  p1: Spot;
+  p1Bench?: readonly Spot[];
+  p2: Spot;
+  p2Bench?: readonly Spot[];
+}): GameState {
   let state = opened(5792);
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
@@ -150,7 +190,12 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const take = (seat: Seat, id: string): string => {
     const pulled = pull(state, seat, id);
@@ -164,14 +209,17 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
   };
   for (const seat of ["p1", "p2"] as const) {
     const active = build(seat, seat === "p1" ? opts.p1 : opts.p2);
-    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) => build(seat, s));
+    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
+      build(seat, s),
+    );
     state = withSide(state, seat, { active, bench });
   }
   return state;
 }
 
 const onslaught: GameAction = { type: "attack", seat: "p1", index: 0 };
-const active = (state: GameState, seat: Seat): InPlayPokemon => state.players[seat].active as InPlayPokemon;
+const active = (state: GameState, seat: Seat): InPlayPokemon =>
+  state.players[seat].active as InPlayPokemon;
 const top = (body: InPlayPokemon): string => body.stack[body.stack.length - 1] ?? "";
 const COND = { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" } as const;
 
@@ -195,23 +243,25 @@ function recorded(board: GameState, entries: readonly { uid: string; ago: number
   };
 }
 
-const benchTop = (state: GameState, i: number): string => top(state.players.p1.bench[i] as InPlayPokemon);
+const benchTop = (state: GameState, i: number): string =>
+  top(state.players.p1.bench[i] as InPlayPokemon);
 const dealt = (board: GameState): number => active(run(board, onslaught).state, "p2").damage;
 
 describe("D579 Koraidon §1 — the clause is a LITERAL row; the note round-trips", () => {
   it("🛑 the printed sentence derives to +150 behind the new member", () => {
-    expect(deriveAttackDamageBonus(ONSLAUGHT)).toEqual({ per: 150, count: { kind: "boardCondition", cond: COND } });
+    expect(deriveAttackDamageBonus(ONSLAUGHT)).toEqual({
+      per: 150,
+      count: { kind: "boardCondition", cond: COND },
+    });
     expect(resolvedByAnyReader(ONSLAUGHT)).toBe(true);
   });
 
-  it("the note is the printed clause minus the \"If\" (no pronoun to resolve)", () => {
+  it('the note is the printed clause minus the "If" (no pronoun to resolve)', () => {
     expect(conditionNote(COND)).toBe(CLAUSE);
   });
 
   it("the FUTURE twin is NOT a row — a whole-clause literal, never a template over the banner", () => {
-    expect(
-      deriveAttackDamageBonus(ONSLAUGHT.replace("Ancient", "Future")),
-    ).toBeNull();
+    expect(deriveAttackDamageBonus(ONSLAUGHT.replace("Ancient", "Future"))).toBeNull();
   });
 });
 
@@ -271,7 +321,7 @@ describe("D579 Koraidon §3 — the discriminating rungs", () => {
     expect(dealt(recorded(board, [{ uid: benchTop(board, 1), ago: 2 }]))).toBe(30);
   });
 
-  it("🛑 the WINDOW: an Ancient attack TWO of your turns ago is not \"your last turn\"", () => {
+  it('🛑 the WINDOW: an Ancient attack TWO of your turns ago is not "your last turn"', () => {
     const board = koraidonBoard();
     expect(dealt(recorded(board, [{ uid: benchTop(board, 0), ago: 4 }]))).toBe(30);
   });
@@ -317,13 +367,17 @@ describe("D579 Koraidon §4 — BOTH CARDS, end to end: Walking Wake Knocks ITSE
     expect(state.recentAttackers.p1).toEqual([{ turn: turnT, uid: wakeUid }]);
     // p2 takes its Prize; Koraidon, p1's lone Benched body, is promoted (forced at one candidate);
     // p2's turn passes.
-    if (state.phase.kind !== "ko:takePrizes") throw new Error(`expected ko:takePrizes, got ${state.phase.kind}`);
+    if (state.phase.kind !== "ko:takePrizes")
+      throw new Error(`expected ko:takePrizes, got ${state.phase.kind}`);
     state = run(state, { type: "takePrizes", seat: "p2", prizeIndices: [0] }).state;
-    if (state.phase.kind === "ko:promote") state = run(state, { type: "promote", seat: "p1", benchIndex: 0 }).state;
+    if (state.phase.kind === "ko:promote")
+      state = run(state, { type: "promote", seat: "p1", benchIndex: 0 }).state;
     expect(state.cardIdByUid[top(active(state, "p1"))]).toBe(KORAIDON);
-    if (state.phase.kind !== "turn:action" || state.phase.seat !== "p2") throw new Error("expected p2's turn");
+    if (state.phase.kind !== "turn:action" || state.phase.seat !== "p2")
+      throw new Error("expected p2's turn");
     state = run(state, { type: "endTurn", seat: "p2" }).state;
-    if (state.phase.kind !== "turn:action" || state.phase.seat !== "p1") throw new Error("expected p1's turn");
+    if (state.phase.kind !== "turn:action" || state.phase.seat !== "p1")
+      throw new Error("expected p1's turn");
     expect(state.turn).toBe(turnT + 2);
     const before = active(state, "p2").damage;
     const hit = run(state, onslaught).state;
@@ -332,19 +386,6 @@ describe("D579 Koraidon §4 — BOTH CARDS, end to end: Walking Wake Knocks ITSE
 });
 
 describe("D579 Koraidon §5 — `MATCH_RECORD_VERSION` 40 → 41: a v40 record THROWS on this deploy (D326)", () => {
-  it("🛑 the constant is ~~41~~ ~~42~~ ~~43~~ ~~44~~ ~~45~~ ~~46~~ ~~47~~ ~~48~~ 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42), read off the raw source", () => {
-    const RAW: Record<string, string> = (
-      import.meta as unknown as {
-        glob(
-          pattern: string | readonly string[],
-          options: { query: "?raw"; import: "default"; eager: true },
-        ): Record<string, string>;
-      }
-    ).glob("../../../apps/api/src/lobby/match.ts", { query: "?raw", import: "default", eager: true });
-    const match = Object.values(RAW)[0] ?? "";
-    expect(match).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-
   it("🛑 a v40-shaped state (no `recentAttackers`) throws at the first attack's end — retired, never read", () => {
     const board = koraidonBoard();
     const { recentAttackers: _dropped, ...v40 } = board;

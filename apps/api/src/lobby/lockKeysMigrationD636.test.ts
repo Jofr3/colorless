@@ -188,7 +188,8 @@ describe("D636 — the version and the gate", () => {
 
   it("v40 and v46 are neither read nor migrated; a v44 record missing its players is not migrated (🆕🆕🆕 D637 (D539): v40 and v47 — v46 is this build's own) (🆕🆕🆕 D640 (D539): v40 and v48 — v47 is this build's own) (🆕🆕🆕 D643 (D539): v40 and v49 — v48 is this build's own) (🆕🆕🆕 D646 (D539): v40 and v50 — v49 is this build's own)", () => {
     const old = oldRecord(44);
-    for (const version of [40, 50]) { // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is. 🆕🆕🆕 D646 — 49 is.
+    for (const version of [40, 50]) {
+      // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is. 🆕🆕🆕 D646 — 49 is.
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -250,7 +251,9 @@ describe("D636 — what the migration writes", () => {
       expect(migrated.state.players.p1.chosenAttackShield).toBeNull();
       expect(migrated.state.players.p2.trainerFlipLockTurn).toBeNull();
       expect(migrated.state.handPlayLockedTurn.p1.Stadium).toBeNull();
-      expect(migrated.state.cardPool[TRAINER]).toEqual(version === 41 ? FRESH_TRAINER : STALE_TRAINER);
+      expect(migrated.state.cardPool[TRAINER]).toEqual(
+        version === 41 ? FRESH_TRAINER : STALE_TRAINER,
+      );
     }
   });
 

@@ -428,7 +428,9 @@ describe("D232 — deriveAttackEffect over the three printed sentences", () => {
 
   it("anchors WHOLE — a leading or trailing clause is refused, both directions", () => {
     for (const clause of CLAUSES) {
-      expect(deriveAttackEffect(`If heads, ${clause.text[0]?.toLowerCase()}${clause.text.slice(1)}`)).toBeNull();
+      expect(
+        deriveAttackEffect(`If heads, ${clause.text[0]?.toLowerCase()}${clause.text.slice(1)}`),
+      ).toBeNull();
       expect(deriveAttackEffect(`${clause.text} Draw a card.`)).toBeNull();
     }
   });
@@ -845,10 +847,7 @@ describe("D232 — the read sites, measured rather than assumed", () => {
     for (let s = -5; s <= 5; s++) {
       for (const count of [1, 2, 7, 13, 60]) {
         const [value, next] = nextU32(s);
-        expect(randomIndex(count, s)).toEqual([
-          Math.floor((value / 4294967296) * count),
-          next,
-        ]);
+        expect(randomIndex(count, s)).toEqual([Math.floor((value / 4294967296) * count), next]);
       }
     }
     // The zero case takes NO step — the branch the empty-hand whiff rides.

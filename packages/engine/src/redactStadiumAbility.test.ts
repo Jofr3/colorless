@@ -56,7 +56,9 @@ const BOTH = { p1: STADIUM_ABILITY_DECK, p2: STADIUM_ABILITY_DECK };
     Borrowed verbatim from `stadiumAbility.test.ts`, which drives the same action
     from the engine side. */
 function p1Turn2(seed = 1): GameState {
-  return must(applyAction(driveSetup(seed, BOTH, { first: "p2" }), { type: "endTurn", seat: "p2" }));
+  return must(
+    applyAction(driveSetup(seed, BOTH, { first: "p2" }), { type: "endTurn", seat: "p2" }),
+  );
 }
 
 /** Put a Stadium into `seat`'s hand and PLAY it — the real `playTrainer` drag the
@@ -227,12 +229,20 @@ describe("redactGame — the offer AGREES WITH THE ENGINE GATE, state for state"
 
     const cases: { name: string; state: GameState; actor: Seat }[] = [
       { name: "no Stadium in play", state: p1Turn2(1), actor: "p1" },
-      { name: "a continuous-only Stadium", state: withStadium(p1Turn2(1), "p1", "sv01-167"), actor: "p1" },
+      {
+        name: "a continuous-only Stadium",
+        state: withStadium(p1Turn2(1), "p1", "sv01-167"),
+        actor: "p1",
+      },
       { name: "an activated Stadium, unused", state: townStore, actor: "p1" },
       { name: "an activated Stadium, already used", state: spent, actor: "p1" },
       { name: "Artazon, unused", state: withStadium(p1Turn2(2), "p1", "sv02-171"), actor: "p1" },
       { name: "Mesagoza, unused", state: withStadium(p1Turn2(3), "p1", "sv01-178"), actor: "p1" },
-      { name: "the OPPONENT's turn", state: must(applyAction(townStore, { type: "endTurn", seat: "p1" })), actor: "p2" },
+      {
+        name: "the OPPONENT's turn",
+        state: must(applyAction(townStore, { type: "endTurn", seat: "p1" })),
+        actor: "p2",
+      },
     ];
     // The biconditional, per case: a lit button ⟺ the engine accepts. Every term
     // of the fold (a Stadium in play, that Stadium having an ability, the
@@ -337,7 +347,7 @@ describe("redactGame — Levincia sv09-150, the Standard-legal driver (D209's fi
 // ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
-describe("the `programPlayable` term in the fold is correct and, today, UNREACHABLE (🆕🆕🆕 D606 (D539): \"UNREACHABLE\" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)", () => {
+describe('the `programPlayable` term in the fold is correct and, today, UNREACHABLE (🆕🆕🆕 D606 (D539): "UNREACHABLE" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)', () => {
   /** Every printed Stadium ability the registry implements — D209's census, kept
       as a literal because `REGISTRY` is not exported and this list is the claim. */
   const STADIUM_ABILITY_IDS = [
@@ -456,20 +466,32 @@ function surfingBeachBoard(benchedWater: boolean): GameState {
       },
       [D606_WATER]: battler(D606_WATER, { name: "D606 Water", hp: 200, types: ["Water"] }),
     },
-    cardIdByUid: { ...base.cardIdByUid, [surfUid]: SURFING_BEACH, [activeUid]: D606_WATER, [waterUid]: D606_WATER },
-    players: { ...base.players, p1: { ...side, hand: [...side.hand, surfUid], deck: [...side.deck, waterUid] } },
+    cardIdByUid: {
+      ...base.cardIdByUid,
+      [surfUid]: SURFING_BEACH,
+      [activeUid]: D606_WATER,
+      [waterUid]: D606_WATER,
+    },
+    players: {
+      ...base.players,
+      p1: { ...side, hand: [...side.hand, surfUid], deck: [...side.deck, waterUid] },
+    },
   };
   const played = must(applyAction(grafted, { type: "playTrainer", seat: "p1", uid: surfUid }));
   return benchedWater ? benchFromDeck(played, "p1", D606_WATER) : played;
 }
 
 describe("🆕🆕🆕 D606 — the `programPlayable` term, REACHED by Surfing Beach", () => {
-  it("a {W} Active with no Benched {W}: the row greys \"No legal target\" and the engine refuses NO_LEGAL_TARGET", () => {
+  it('a {W} Active with no Benched {W}: the row greys "No legal target" and the engine refuses NO_LEGAL_TARGET', () => {
     const board = deepFreeze(surfingBeachBoard(false));
     expect(board.players.p1.bench).toEqual([]);
     // RED IF the fold drops `!programPlayable` (D210-programPlayable): the row would light for a click
     // `useStadiumAbility` answers NO_LEGAL_TARGET.
-    expect(offerFor(board, "p1")).toEqual({ label: "Surfing Beach", disabled: true, reason: "No legal target" });
+    expect(offerFor(board, "p1")).toEqual({
+      label: "Surfing Beach",
+      disabled: true,
+      reason: "No legal target",
+    });
     const refused = applyAction(board, { type: "useStadiumAbility", seat: "p1" });
     expect(refused.ok).toBe(false);
     if (!refused.ok) expect(refused.error.code).toBe("NO_LEGAL_TARGET");
@@ -477,7 +499,11 @@ describe("🆕🆕🆕 D606 — the `programPlayable` term, REACHED by Surfing B
 
   it("a Benched {W} lights the row, and the engine accepts the use", () => {
     const board = deepFreeze(surfingBeachBoard(true));
-    expect(offerFor(board, "p1")).toEqual({ label: "Surfing Beach", disabled: false, reason: null });
+    expect(offerFor(board, "p1")).toEqual({
+      label: "Surfing Beach",
+      disabled: false,
+      reason: null,
+    });
     const { state } = mustApply(board, { type: "useStadiumAbility", seat: "p1" });
     expect(state.cardIdByUid[state.players.p1.active?.stack[0] as string]).toBe(D606_WATER);
     expect(state.players.p1.bench).toHaveLength(1);

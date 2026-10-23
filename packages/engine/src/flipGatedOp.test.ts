@@ -378,7 +378,10 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     // `switchWithDeckChosen` (`opponentAnsweredMeD641.test.ts`).
     expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      { op: "coinFlipGate", then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }] },
+      {
+        op: "coinFlipGate",
+        then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
+      },
     ]);
   });
 

@@ -238,10 +238,15 @@ function withReduction(
     if (active === null) throw new Error("no Active to stamp");
     return {
       ...state,
-      players: { ...state.players, [seat]: { ...side, active: { ...active, damageReduction: stamp } } },
+      players: {
+        ...state.players,
+        [seat]: { ...side, active: { ...active, damageReduction: stamp } },
+      },
     };
   }
-  const bench = side.bench.map((p, i) => (i === where.bench ? { ...p, damageReduction: stamp } : p));
+  const bench = side.bench.map((p, i) =>
+    i === where.bench ? { ...p, damageReduction: stamp } : p,
+  );
   return { ...state, players: { ...state.players, [seat]: { ...side, bench } } };
 }
 
@@ -250,7 +255,9 @@ function withReduction(
 function rendered(state: GameState, events: GameEvent[]): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Wren" }, state, elapsed: "+00:11" };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -555,9 +562,7 @@ describe("the durated damage reduction — installing it", () => {
       const order = types(events);
       // The §8.5 hit lands FIRST and the install rides the tail behind it — free
       // rather than lucky, since the reduction's whole effect is in the future.
-      expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(
-        order.indexOf("DAMAGE_REDUCTION_APPLIED"),
-      );
+      expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("DAMAGE_REDUCTION_APPLIED"));
       const row = find(events, "DAMAGE_DEALT");
       expect(row?.dealt, id).toBe(spec.hit);
       if (row !== undefined) expectAfterWR(row);
@@ -660,10 +665,15 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
     //   printed  60 × 2 = 120, − 50 = 70
     //   reversed (60 − 50) × 2 = 20
     let state = clearBench(installed("sv01-139"), "p1");
-    const forretress = swing(state, "fix-attacker", [
-      { id: "fix-fire-energy", count: 1 },
-      { id: "fix-energy", count: 1 },
-    ], 1);
+    const forretress = swing(
+      state,
+      "fix-attacker",
+      [
+        { id: "fix-fire-energy", count: 1 },
+        { id: "fix-energy", count: 1 },
+      ],
+      1,
+    );
     const tank = find(forretress.events, "DAMAGE_DEALT");
     expect(tank?.dealt).toBe(70);
     if (tank !== undefined) {
@@ -676,10 +686,15 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
     //                                        assertion is on the NUMBER as well
     state = clearBench(installed("sv01-001"), "p1");
     state = benchFromDeck(state, "p1", "fix-titan"); // a promote target
-    const pineco = swing(state, "fix-attacker", [
-      { id: "fix-fire-energy", count: 1 },
-      { id: "fix-energy", count: 1 },
-    ], 1);
+    const pineco = swing(
+      state,
+      "fix-attacker",
+      [
+        { id: "fix-fire-energy", count: 1 },
+        { id: "fix-energy", count: 1 },
+      ],
+      1,
+    );
     const small = find(pineco.events, "DAMAGE_DEALT");
     expect(small?.dealt).toBe(90);
     if (small !== undefined) {
@@ -707,7 +722,12 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
     ];
     for (const board of boards) {
       const state = clearBench(installed(board.installer), "p1");
-      const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }], board.index);
+      const { events } = swing(
+        state,
+        "fix-attacker",
+        [{ id: "fix-energy", count: 1 }],
+        board.index,
+      );
       const row = find(events, "DAMAGE_DEALT");
       expect(row?.dealt, board.installer).toBe(board.dealt);
       if (row !== undefined) {
@@ -982,7 +1002,10 @@ describe("the durated damage reduction — beside D142's block", () => {
       ...state,
       players: {
         ...state.players,
-        p1: { ...state.players.p1, active: { ...active, attackBlock: { turn: 3, effects: false } } },
+        p1: {
+          ...state.players.p1,
+          active: { ...active, attackBlock: { turn: 3, effects: false } },
+        },
       },
     };
     const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
@@ -1011,15 +1034,23 @@ describe("the durated damage reduction — beside D142's block", () => {
         p1: {
           ...state.players.p1,
           // A block that only refuses BASIC attackers…
-          active: { ...active, attackBlock: { turn: 3, effects: false, fromClass: { stage: "basic" } } },
+          active: {
+            ...active,
+            attackBlock: { turn: 3, effects: false, fromClass: { stage: "basic" } },
+          },
         },
       },
     };
     // …met by a BASIC attacker: the block matches and nulls everything.
-    const basic = swing(state, "fix-attacker", [
-      { id: "fix-fire-energy", count: 1 },
-      { id: "fix-energy", count: 1 },
-    ], 1);
+    const basic = swing(
+      state,
+      "fix-attacker",
+      [
+        { id: "fix-fire-energy", count: 1 },
+        { id: "fix-energy", count: 1 },
+      ],
+      1,
+    );
     expect(find(basic.events, "DAMAGE_DEALT")?.prevented).toBe(true);
     expect(find(basic.events, "DAMAGE_DEALT")?.dealt).toBe(0);
     // …and by a STAGE 1 (Forretress itself, Metal): the block declines, the attack

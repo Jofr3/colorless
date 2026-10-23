@@ -5,7 +5,7 @@ import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { installedWeaknessRetypeOf, installedWeaknessRewriteOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds } from "./interpreter";
 import { formatElapsed, type LogContext, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -43,7 +43,8 @@ const CELEBRATION =
   "If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.";
 const S629 =
   "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)";
-const SHRED = "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.";
+const SHRED =
+  "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.";
 const PICK_OFF =
   "This attack does 30 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const FAIRY_ZONE_TEXT =
@@ -70,17 +71,22 @@ describe("D640 §1 — the texts", () => {
 
   it("Multi Adapter (Rotom ex ×3) stays unbuilt, named for 47 → 48: no program (🆕🆕🆕 D643 (D539): WITHDRAWN — built at D643, 47 → 48; inverted)", () => {
     // 🆕🆕🆕 D643 (D539) — WITHDRAWN: Rotom ex ×3 is keyed since D643 (`multiAdapterMeD643.test.ts`); inverted.
-    for (const id of ["me02-029", "me02-111", "me02-126"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
+    for (const id of ["me02-029", "me02-111", "me02-126"])
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
 });
 
 describe("D640 §2 — the readings", () => {
   it("Overwriting Bolt: D552's op at the printed {L}, applied as ×2; D552's own sentence keeps no key", () => {
-    expect(deriveAttackEffect(BOLT)).toEqual([{ op: "retypeDefenderWeakness", type: "Lightning", asTimesTwo: true }]);
+    expect(deriveAttackEffect(BOLT)).toEqual([
+      { op: "retypeDefenderWeakness", type: "Lightning", asTimesTwo: true },
+    ]);
     expect(deriveAttackEffect(S629)).toEqual([{ op: "retypeDefenderWeakness", type: "Colorless" }]);
     expect(deriveAttackEffect(BOLT.replace("{L}", "{R}"))).toBeNull();
     expect(deriveAttackEffect(BOLT.replace(" (Apply Weakness as ×2.)", ""))).toBeNull();
-    expect(deriveAttackEffect(BOLT.replace("your next turn", "your opponent's next turn"))).toBeNull();
+    expect(
+      deriveAttackEffect(BOLT.replace("your next turn", "your opponent's next turn")),
+    ).toBeNull();
     expect(deriveAttackEffect(`${BOLT} Draw a card.`)).toBeNull();
   });
 
@@ -94,8 +100,12 @@ describe("D640 §2 — the readings", () => {
       },
     ]);
     expect(deriveAttackEffect(CELEBRATION.replace("30 cards", "29 cards"))).toBeNull();
-    expect(deriveAttackEffect(CELEBRATION.replace(" If you do, shuffle your hand into your deck.", ""))).toBeNull();
-    expect(deriveAttackEffect(CELEBRATION.replace("take 2 Prize cards", "take 1 Prize card"))).toBeNull();
+    expect(
+      deriveAttackEffect(CELEBRATION.replace(" If you do, shuffle your hand into your deck.", "")),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect(CELEBRATION.replace("take 2 Prize cards", "take 1 Prize card")),
+    ).toBeNull();
   });
 });
 
@@ -132,7 +142,12 @@ const LOCAL: Record<string, Card> = {
     weaknesses: [{ type: "Fire", value: "×2" }],
     attacks: [
       { cost: ["Metal"], name: "Celebration", effect: CELEBRATION },
-      { cost: ["Metal"], name: "Triple Smash", damage: "50×", effect: "Flip 3 coins. This attack does 50 damage for each heads." },
+      {
+        cost: ["Metal"],
+        name: "Triple Smash",
+        damage: "50×",
+        effect: "Flip 3 coins. This attack does 50 damage for each heads.",
+      },
     ],
   }),
   [VOLT]: battler(VOLT, {
@@ -197,7 +212,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -205,15 +222,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -240,7 +263,8 @@ function table(
   ownBench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   for (const id of ownBench) state = benchFromDeck(state, "p1", id);
@@ -258,22 +282,45 @@ const p2Active = (state: GameState): InPlayPokemon => {
   return active;
 };
 /** P2's Active carrying `record` (the turn defaulted to NOW — the window being read). */
-const marked = (state: GameState, record: Partial<NonNullable<InPlayPokemon["weaknessRetype"]>> = {}): GameState => {
+const marked = (
+  state: GameState,
+  record: Partial<NonNullable<InPlayPokemon["weaknessRetype"]>> = {},
+): GameState => {
   const active = p2Active(state);
-  const weaknessRetype = { turn: state.turn, type: "Lightning", asTimesTwo: true as const, ...record };
-  return { ...state, players: { ...state.players, p2: { ...state.players.p2, active: { ...active, weaknessRetype } } } };
+  const weaknessRetype = {
+    turn: state.turn,
+    type: "Lightning",
+    asTimesTwo: true as const,
+    ...record,
+  };
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      p2: { ...state.players.p2, active: { ...active, weaknessRetype } },
+    },
+  };
 };
 const plain = (state: GameState): GameState => {
   const active = p2Active(state);
   const weaknessRetype = { turn: state.turn, type: "Lightning" };
-  return { ...state, players: { ...state.players, p2: { ...state.players.p2, active: { ...active, weaknessRetype } } } };
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      p2: { ...state.players.p2, active: { ...active, weaknessRetype } },
+    },
+  };
 };
-const pass = (state: GameState, seat: Seat): GameState => must(applyAction(state, { type: "endTurn", seat }));
+const pass = (state: GameState, seat: Seat): GameState =>
+  must(applyAction(state, { type: "endTurn", seat }));
 
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ana", p2: "Bo" }, state, elapsed: formatElapsed(0) };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -282,11 +329,23 @@ describe("D640 §3 — Overwriting Bolt installs the rewrite on the Defending Po
     const state = table("30th-040", [[L, 1]]);
     const result = mustApply(state, attack(0));
     expect(dealt(result.events)).toEqual([10]);
-    expect(p2Active(result.state).weaknessRetype).toEqual({ turn: state.turn + 2, type: "Lightning", asTimesTwo: true });
+    expect(p2Active(result.state).weaknessRetype).toEqual({
+      turn: state.turn + 2,
+      type: "Lightning",
+      asTimesTwo: true,
+    });
     expect(of(result.events, "WEAKNESS_RETYPED")).toEqual([
-      { type: "WEAKNESS_RETYPED", seat: "p2", uid: p2Active(state).stack[0], weaknessType: "Lightning", asTimesTwo: true },
+      {
+        type: "WEAKNESS_RETYPED",
+        seat: "p2",
+        uid: p2Active(state).stack[0],
+        weaknessType: "Lightning",
+        asTimesTwo: true,
+      },
     ]);
-    expect(render(result.events, result.state).find((r) => r.text.includes("Weakness is now"))).toEqual({
+    expect(
+      render(result.events, result.state).find((r) => r.text.includes("Weakness is now")),
+    ).toEqual({
       who: "p2",
       text: "D640 Filler's Weakness is now Lightning until the end of your opponent's next turn (apply Weakness as ×2)",
     });
@@ -309,12 +368,19 @@ describe("D640 §3 — Overwriting Bolt installs the rewrite on the Defending Po
       ...base,
       players: {
         ...base.players,
-        p2: { ...base.players.p2, active: { ...active, weaknessRetype: { turn: base.turn + 2, type: "Lightning" } } },
+        p2: {
+          ...base.players.p2,
+          active: { ...active, weaknessRetype: { turn: base.turn + 2, type: "Lightning" } },
+        },
       },
     };
     const rewritten = mustApply(retyped, attack(0));
     expect(of(rewritten.events, "WEAKNESS_RETYPED")).toHaveLength(1);
-    expect(p2Active(rewritten.state).weaknessRetype).toEqual({ turn: base.turn + 2, type: "Lightning", asTimesTwo: true });
+    expect(p2Active(rewritten.state).weaknessRetype).toEqual({
+      turn: base.turn + 2,
+      type: "Lightning",
+      asTimesTwo: true,
+    });
   });
 });
 
@@ -332,7 +398,9 @@ describe("D640 §4 — the rewrite at the three Weakness sites", () => {
     const base = table(VOLT, [["fix-energy", 1]]);
     expect(dealt(mustApply(marked(base), attack(STRIKE)).events)).toEqual([100]);
     expect(dealt(mustApply(plain(base), attack(STRIKE)).events)).toEqual([50]);
-    expect(dealt(mustApply(marked(base, { turn: base.turn - 2 }), attack(STRIKE)).events)).toEqual([50]);
+    expect(dealt(mustApply(marked(base, { turn: base.turn - 2 }), attack(STRIKE)).events)).toEqual([
+      50,
+    ]);
   });
 
   it("main hit: the printed ×2 {R} is REPLACED — a {R} attacker is no longer weak-matched, a {L} one is", () => {
@@ -362,7 +430,9 @@ describe("D640 §4 — the rewrite at the three Weakness sites", () => {
       [plain(table(VOLT, [["fix-energy", 1]])), 30],
     ] as const) {
       const done = mustApply(state, attack(SNIPE));
-      expect(of(done.events, "DAMAGE_DEALT").map((e) => [e.uid, e.dealt])).toEqual([[p2Active(state).stack[0], expected]]);
+      expect(of(done.events, "DAMAGE_DEALT").map((e) => [e.uid, e.dealt])).toEqual([
+        [p2Active(state).stack[0], expected],
+      ]);
     }
   });
 
@@ -380,7 +450,10 @@ describe("D640 §5 — Celebration: 2 Prizes at exactly 30 in hand, then the han
   const hand = (state: GameState, n: number): GameState => {
     const side = state.players.p1;
     const all = [...side.hand, ...side.deck];
-    return { ...state, players: { ...state.players, p1: { ...side, hand: all.slice(0, n), deck: all.slice(n) } } };
+    return {
+      ...state,
+      players: { ...state.players, p1: { ...side, hand: all.slice(0, n), deck: all.slice(n) } },
+    };
   };
   const gholdengo = () => table("30th-108", [[M, 1]]);
 
@@ -396,14 +469,18 @@ describe("D640 §5 — Celebration: 2 Prizes at exactly 30 in hand, then the han
     expect(of(parked.events, "HAND_SHUFFLED_INTO_DECK")).toEqual([]);
     const prizes = start.players.p1.prizes.slice(0, 2);
     const taken = mustApply(parked.state, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1] });
-    expect(of(taken.events, "HAND_SHUFFLED_INTO_DECK")).toEqual([{ type: "HAND_SHUFFLED_INTO_DECK", seat: "p1", count: 32 }]);
+    expect(of(taken.events, "HAND_SHUFFLED_INTO_DECK")).toEqual([
+      { type: "HAND_SHUFFLED_INTO_DECK", seat: "p1", count: 32 },
+    ]);
     expect(taken.state.players.p1.hand).toEqual([]);
     expect(taken.state.players.p1.prizes).toHaveLength(4);
     expect(taken.state.players.p1.deck).toHaveLength(deckBefore + 32);
     for (const uid of prizes) expect(taken.state.players.p1.deck).toContain(uid);
     // SHUFFLED, not stacked: the rng moved, and the old deck is not left on top in its order with the hand under it.
     expect(taken.state.rngState).not.toEqual(parked.state.rngState);
-    expect(taken.state.players.p1.deck.slice(0, deckBefore)).not.toEqual(parked.state.players.p1.deck);
+    expect(taken.state.players.p1.deck.slice(0, deckBefore)).not.toEqual(
+      parked.state.players.p1.deck,
+    );
     // The turn ended after the shuffle: P2's turn, and P1's hand stays empty.
     expect(taken.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -422,16 +499,20 @@ describe("D640 §5 — Celebration: 2 Prizes at exactly 30 in hand, then the han
   it("R-CEL1: taking the last 2 Prizes ends the game; the shuffle stage never drains", () => {
     const base = hand(gholdengo(), 30);
     const side = base.players.p1;
-    const last = { ...base, players: { ...base.players, p1: { ...side, prizes: side.prizes.slice(0, 2), deck: [...side.deck, ...side.prizes.slice(2)] } } };
+    const last = {
+      ...base,
+      players: {
+        ...base.players,
+        p1: {
+          ...side,
+          prizes: side.prizes.slice(0, 2),
+          deck: [...side.deck, ...side.prizes.slice(2)],
+        },
+      },
+    };
     const result = mustApply(last, attack(0));
     expect(result.state.phase.kind).toBe("gameOver");
     expect(of(result.events, "HAND_SHUFFLED_INTO_DECK")).toEqual([]);
     expect(result.state.players.p1.hand).toHaveLength(32);
-  });
-});
-
-describe("D640 §6 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

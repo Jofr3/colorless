@@ -43,10 +43,20 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     attacks: [
       { cost: ["Water"], name: "Aurora Gain", effect: AURORA_GAIN, damage: 20 },
-      { cost: ["Water", "Water", "Colorless"], name: "Undulating Slice", effect: UNDULATING, damage: "20×" },
+      {
+        cost: ["Water", "Water", "Colorless"],
+        name: "Undulating Slice",
+        effect: UNDULATING,
+        damage: "20×",
+      },
     ],
   }),
-  [WALL]: battler(WALL, { name: "D579 Wall", hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
+  [WALL]: battler(WALL, {
+    name: "D579 Wall",
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
   [WEAK]: battler(WEAK, {
     name: "D579 Weak",
     hp: 900,
@@ -61,8 +71,18 @@ const LOCAL_CARDS: Record<string, Card> = {
     resistances: [{ type: "Water", value: "-30" }],
     attacks: [{ cost: [], name: "Tap", damage: 10 }],
   }),
-  [FRAIL]: battler(FRAIL, { name: "D579 Frail", hp: 100, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
-  [FILLER]: battler(FILLER, { name: "D579 Filler", hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
+  [FRAIL]: battler(FRAIL, {
+    name: "D579 Frail",
+    hp: 100,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
+  [FILLER]: battler(FILLER, {
+    name: "D579 Filler",
+    hp: 900,
+    types: ["Colorless"],
+    attacks: [{ cost: [], name: "Tap", damage: 10 }],
+  }),
   [W]: typedEnergy(W, "Water"),
 };
 
@@ -86,7 +106,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -101,7 +122,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -109,15 +132,22 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(state: GameState, seat: Seat, patch: Partial<GameState["players"]["p1"]>): GameState {
+function withSide(
+  state: GameState,
+  seat: Seat,
+  patch: Partial<GameState["players"]["p1"]>,
+): GameState {
   return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
@@ -147,7 +177,12 @@ interface Spot {
 }
 
 /** p1's turn: each seat's Active and Bench built from `Spot`s; every hand emptied into the deck. */
-function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: readonly Spot[] }): GameState {
+function table(opts: {
+  p1: Spot;
+  p1Bench?: readonly Spot[];
+  p2: Spot;
+  p2Bench?: readonly Spot[];
+}): GameState {
   let state = opened(5791);
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
@@ -156,7 +191,12 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, { hand: [], active: null, bench: [], deck: [...side.deck, ...back] });
+    state = withSide(state, seat, {
+      hand: [],
+      active: null,
+      bench: [],
+      deck: [...side.deck, ...back],
+    });
   }
   const take = (seat: Seat, id: string): string => {
     const pulled = pull(state, seat, id);
@@ -170,7 +210,9 @@ function table(opts: { p1: Spot; p1Bench?: readonly Spot[]; p2: Spot; p2Bench?: 
   };
   for (const seat of ["p1", "p2"] as const) {
     const active = build(seat, seat === "p1" ? opts.p1 : opts.p2);
-    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) => build(seat, s));
+    const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
+      build(seat, s),
+    );
     state = withSide(state, seat, { active, bench });
   }
   return state;
@@ -184,14 +226,20 @@ const put = (take?: number): GameAction =>
     seat: "p1",
     choice: { kind: "pokemon", ref: ACTIVE_REF, ...(take === undefined ? {} : { take }) },
   }) as GameAction;
-const decline: GameAction = { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } } as GameAction;
+const decline: GameAction = {
+  type: "resolveEffect",
+  seat: "p1",
+  choice: { kind: "pokemon" },
+} as GameAction;
 
 const wake = (damage = 0): Spot => ({ id: WAKE, energy: [W, W, W], damage });
-const active = (state: GameState, seat: Seat): InPlayPokemon => state.players[seat].active as InPlayPokemon;
+const active = (state: GameState, seat: Seat): InPlayPokemon =>
+  state.players[seat].active as InPlayPokemon;
 const top = (body: InPlayPokemon): string => body.stack[body.stack.length - 1] ?? "";
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -218,7 +266,7 @@ describe("D579 Walking Wake §1 — the registry row, and the sentence stays REG
   });
 });
 
-describe("D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`, `takeVerb: \"put\"`", () => {
+describe('D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`, `takeVerb: "put"`', () => {
   it("🛑 the lone candidate does NOT auto-resolve the quantity: the prompt is the whole question", () => {
     const { state } = run(table({ p1: wake(), p2: { id: WALL } }), slice);
     expect(prompt(state)).toEqual({
@@ -233,13 +281,16 @@ describe("D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`,
     expect(active(state, "p2").damage).toBe(0);
   });
 
-  it("🛑 the WIRE carries the verb, and the wire SCHEMA keeps `\"put\"` (a strict literal would refuse the frame)", () => {
+  it('🛑 the WIRE carries the verb, and the wire SCHEMA keeps `"put"` (a strict literal would refuse the frame)', () => {
     const { state } = run(table({ p1: wake(), p2: { id: WALL } }), slice);
     const wire = redactGame(state, "p1").phase;
-    if (wire.kind !== "effect:choose" || !("prompt" in wire)) throw new Error("expected the answerer's prompt");
+    if (wire.kind !== "effect:choose" || !("prompt" in wire))
+      throw new Error("expected the answerer's prompt");
     expect(wire.prompt).toMatchObject({ kind: "choosePokemon", upTo: 9, takeVerb: "put" });
     expect(redactedEffectPromptSchema.parse(wire.prompt)).toMatchObject({ takeVerb: "put" });
-    expect(redactedEffectPromptSchema.safeParse({ ...wire.prompt, takeVerb: "pour" }).success).toBe(false);
+    expect(redactedEffectPromptSchema.safeParse({ ...wire.prompt, takeVerb: "pour" }).success).toBe(
+      false,
+    );
   });
 
   it("a quantity over the printed ceiling is refused (BAD_EFFECT_CHOICE); 0 beside a body is refused too", () => {
@@ -256,7 +307,13 @@ describe("D579 Walking Wake §3 — `take` counters on itself, 20 × that many t
     expect(active(state, "p1").damage).toBe(30);
     expect(active(state, "p2").damage).toBe(60);
     expect(events.filter((e) => e.type === "COUNTERS_PLACED")).toEqual([
-      { type: "COUNTERS_PLACED", seat: "p1", uid: top(active(board, "p1")), amount: 30, source: "self" },
+      {
+        type: "COUNTERS_PLACED",
+        seat: "p1",
+        uid: top(active(board, "p1")),
+        amount: 30,
+        source: "self",
+      },
     ]);
   });
 
@@ -277,7 +334,10 @@ describe("D579 Walking Wake §3 — `take` counters on itself, 20 × that many t
   it("each count from 1 to 9 deals exactly 20 × the count — the slot holds ONE entry per counter", () => {
     for (const n of [1, 2, 5, 9]) {
       const { state } = sliced(table({ p1: wake(), p2: { id: WALL } }), put(n));
-      expect([active(state, "p1").damage, active(state, "p2").damage], `take ${n}`).toEqual([10 * n, 20 * n]);
+      expect([active(state, "p1").damage, active(state, "p2").damage], `take ${n}`).toEqual([
+        10 * n,
+        20 * n,
+      ]);
     }
   });
 });
@@ -299,7 +359,9 @@ describe("D579 Walking Wake §5 — R-W1: Walking Wake may Knock ITSELF Out, and
     const board = table({ p1: wake(60), p2: { id: WALL }, p1Bench: [{ id: FILLER }] });
     const { state, events } = sliced(board, put(9));
     const kos = events.filter((e) => e.type === "KNOCKED_OUT");
-    expect(kos.map((e) => (e.type === "KNOCKED_OUT" ? [e.seat, e.uid] : []))).toEqual([["p1", top(active(board, "p1"))]]);
+    expect(kos.map((e) => (e.type === "KNOCKED_OUT" ? [e.seat, e.uid] : []))).toEqual([
+      ["p1", top(active(board, "p1"))],
+    ]);
     expect(active(state, "p2").damage).toBe(180);
     // The opponent takes the Prize for the attacker's own Knock Out (§8.1's two-seat sweep).
     expect(state.phase.kind).toBe("ko:takePrizes");
@@ -307,9 +369,16 @@ describe("D579 Walking Wake §5 — R-W1: Walking Wake may Knock ITSELF Out, and
   });
 
   it("🛑 BOTH Knock Outs are swept by the one epilogue: the 100-HP Defender falls to the same 9-counter hit", () => {
-    const board = table({ p1: wake(60), p2: { id: FRAIL }, p1Bench: [{ id: FILLER }], p2Bench: [{ id: FILLER }] });
+    const board = table({
+      p1: wake(60),
+      p2: { id: FRAIL },
+      p1Bench: [{ id: FILLER }],
+      p2Bench: [{ id: FILLER }],
+    });
     const { events } = sliced(board, put(9));
-    const kos = events.filter((e) => e.type === "KNOCKED_OUT").map((e) => (e.type === "KNOCKED_OUT" ? e.seat : ""));
+    const kos = events
+      .filter((e) => e.type === "KNOCKED_OUT")
+      .map((e) => (e.type === "KNOCKED_OUT" ? e.seat : ""));
     expect(kos.sort()).toEqual(["p1", "p2"]);
   });
 });

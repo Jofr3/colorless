@@ -175,8 +175,10 @@ for (const [dir, group] of [...byDir].sort()) {
   }
 }
 
-const named = uncovered.length > 0 ? uncovered.map((f) => `  ${f}`).join("\n") : "  (none isolated)";
-const more = uncovered.length >= MAX_NAMED ? `\n  … and more (drill-down capped at ${MAX_NAMED}).` : "";
+const named =
+  uncovered.length > 0 ? uncovered.map((f) => `  ${f}`).join("\n") : "  (none isolated)";
+const more =
+  uncovered.length >= MAX_NAMED ? `\n  … and more (drill-down capped at ${MAX_NAMED}).` : "";
 
 fail(
   [

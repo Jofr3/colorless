@@ -1,10 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -484,9 +480,7 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     //    reversal, stated as an equality rather than as a boolean so that a build
     //    which resolved it to the WRONG op is not green here.
     expect(resolvedByAnyReader(ANGELITE_BODY)).toBe(true);
-    expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([
-      { op: "returnBenchedChosen", count: 2 },
-    ]);
+    expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([{ op: "returnBenchedChosen", count: 2 }]);
     // ③ THE BODY CARRIES NO CLAUSE OF ITS OWN — unmoved, and the one assertion in
     //    this rung that did NOT invert. It is what says the split is idempotent:
     //    splitting the body again answers `null`, so nothing can be stripped twice.
@@ -503,8 +497,8 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     //    add an `ATTACK_GATE_CLAUSES` row — the exact inversion of the sentence
     //    that used to sit here. Driven off the module, never retyped.
     const gated = legalAttackCorpus().filter(([, t]) => splitAttackGateClause(t) !== null);
-    expect(gated.length).toBe(9);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate corpus's sentences, 7 → 9 (D541's step 6 → 7 is the comment above, kept as history).)
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate corpus's printings, 17 → 19.)
+    expect(gated.length).toBe(9); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate corpus's sentences, 7 → 9 (D541's step 6 → 7 is the comment above, kept as history).)
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate corpus's printings, 17 → 19.)
     expect(gated.some(([, t]) => t === ANGELITE)).toBe(true);
     // ⑤ …and the RAW row is still claimed by NO reader whole, which is the half of
     //    the old rung that survives untouched: the printing resolves through the
@@ -656,17 +650,17 @@ describe("D396 §2 — the row an INDEX-BLIND read confiscates", () => {
     // 🛑 AND THE NOTE IS THE PRINTED CLAUSE WITH NOTHING RESOLVED, which is the
     // family's first — every sibling arm rewrites a "this Pokémon" pronoun (D116)
     // and this printed subject carries none.
-    expect(
-      conditionNote({ kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" }),
-    ).toBe("1 of your Pokémon used Angelite during your last turn");
+    expect(conditionNote({ kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" })).toBe(
+      "1 of your Pokémon used Angelite during your last turn",
+    );
     expect(ANGELITE).toContain(
       `If ${conditionNote({ kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" })},`,
     );
     // …and it is NOT the sibling's note, which is what a `zone?` field defaulting
     // to the Active would have printed on this very board.
-    expect(
-      conditionNote({ kind: "yourActiveUsedAttackLastTurn", attack: "Angelite" }),
-    ).toBe("your Active Pokémon used Angelite during your last turn");
+    expect(conditionNote({ kind: "yourActiveUsedAttackLastTurn", attack: "Angelite" })).toBe(
+      "your Active Pokémon used Angelite during your last turn",
+    );
   });
 });
 
@@ -788,10 +782,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
         other,
       );
       const mine = payBoth(untilTurnOf(afterTheirs, seat, theirTurn.turn), seat);
-      expect(
-        afterTheirs.players[other].active?.usedAttack?.name,
-        seat,
-      ).toBe("Angelite");
+      expect(afterTheirs.players[other].active?.usedAttack?.name, seat).toBe("Angelite");
       expect(declare(mine, seat, 1), seat).toBe("OK");
     }
   });
@@ -905,9 +896,7 @@ describe("D396 §5 — the report, which is the SAME on the gated body and on th
     // asserted POSITIVELY as well — the body the split hands the readers derives,
     // and it derives to the op this slice built.
     expect(splitAttackGateClause(ANGELITE)?.body).toBe(ANGELITE_BODY);
-    expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([
-      { op: "returnBenchedChosen", count: 2 },
-    ]);
+    expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([{ op: "returnBenchedChosen", count: 2 }]);
   });
 
   it("🆕🆕🆕 D541 — the twin is CANCELLED TOO now, because the printed TEXT gates it (INVERTED)", () => {

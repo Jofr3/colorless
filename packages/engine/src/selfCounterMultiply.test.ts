@@ -238,15 +238,17 @@ describe("the printed data — re-queried, not recognised", () => {
       }
     }
     expect(bare.sort()).toEqual(["sv01-089[1]", "swsh10.5-036[1]"]);
-    expect(adjectived.sort()).toEqual([
-      "fix-attacker[3]",
-      "fix-attacker[4]",
-      "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
-      "sv01-060[1]",
-      "sv02-037[1]",
-      "sv02-028[0]",
-      "sv03-161[0]",
-    ].sort());
+    expect(adjectived.sort()).toEqual(
+      [
+        "fix-attacker[3]",
+        "fix-attacker[4]",
+        "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
+        "sv01-060[1]",
+        "sv02-037[1]",
+        "sv02-028[0]",
+        "sv03-161[0]",
+      ].sort(),
+    );
   });
 
   it("AUTHORS nothing — both printings are read off the TEXT", () => {

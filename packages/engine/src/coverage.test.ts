@@ -162,6 +162,8 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
     let state = covBoard(4);
     state = handFromDeck(state, "p1", "sv01-185", 1);
     const uid = handUid(state, "p1", "sv01-185");
-    expect(() => applyAction(deepFreeze(state), { type: "playTrainer", seat: "p1", uid })).not.toThrow();
+    expect(() =>
+      applyAction(deepFreeze(state), { type: "playTrainer", seat: "p1", uid }),
+    ).not.toThrow();
   });
 });

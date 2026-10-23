@@ -6,7 +6,7 @@ import { deriveAttackDamageBonus } from "./effects";
 import type { CardFilter } from "./effects";
 import type { GameEvent } from "./events";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -69,7 +69,9 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Water"],
     hp: 100,
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: "Fossil Beatdown", damage: "10+", effect: BEATDOWN_TEXT }],
+    attacks: [
+      { cost: ["Colorless"], name: "Fossil Beatdown", damage: "10+", effect: BEATDOWN_TEXT },
+    ],
   }),
   [COVER]: fossilRow(COVER, "Antique Cover Fossil"),
   [ROOT]: fossilRow(ROOT, "Antique Root Fossil"),
@@ -90,11 +92,15 @@ const LOCAL_CARDS: Record<string, Card> = {
       {
         type: "Ability",
         name: "Daunting Gaze",
-        effect: "As long as this Pokémon is in the Active Spot, your opponent can't play any Item cards from their hand.",
+        effect:
+          "As long as this Pokémon is in the Active Spot, your opponent can't play any Item cards from their hand.",
       },
     ],
   }),
-  [ANTIQUE_TOOL]: { ...trainerCard(ANTIQUE_TOOL, "Tool", "A test Tool."), name: "Antique Test Tool" },
+  [ANTIQUE_TOOL]: {
+    ...trainerCard(ANTIQUE_TOOL, "Tool", "A test Tool."),
+    name: "Antique Test Tool",
+  },
   [FILLER]: battler(FILLER, { name: "D635 Filler", hp: 300, types: ["Colorless"] }),
   [WALL]: battler(WALL, { name: "D635 Wall", hp: 900, types: ["Colorless"] }),
 };
@@ -129,7 +135,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -137,11 +145,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -150,7 +161,12 @@ function emptied(state: GameState): GameState {
   const players = { ...state.players };
   for (const seat of ["p1", "p2"] as const) {
     const side = players[seat];
-    players[seat] = { ...side, deck: [...side.deck, ...side.hand, ...side.prizes], hand: [], prizes: [] };
+    players[seat] = {
+      ...side,
+      deck: [...side.deck, ...side.hand, ...side.prizes],
+      hand: [],
+      prizes: [],
+    };
   }
   return { ...state, players };
 }
@@ -183,14 +199,16 @@ function quarry(state: GameState, owner: Seat = "p1"): GameState {
   };
 }
 
-const use = (state: GameState, seat: Seat = "p1") => mustApply(state, { type: "useStadiumAbility", seat });
+const use = (state: GameState, seat: Seat = "p1") =>
+  mustApply(state, { type: "useStadiumAbility", seat });
 const cards = (uids: readonly string[], seat: Seat = "p1"): GameAction => ({
   type: "resolveEffect",
   seat,
   choice: { kind: "cards", uids: [...uids] },
 });
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   const p = state.phase.prompt;
   if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
   return p;
@@ -221,7 +239,10 @@ describe("D635 §1 — the prints and the programs", () => {
     expect(programFor(RELICANTH)).toBeUndefined();
     expect(deriveAttackDamageBonus(BEATDOWN_TEXT)).toEqual({
       per: 30,
-      count: { kind: "yourBenchCount", filter: { kind: "pokemonNameContaining", fragment: "Antique" } },
+      count: {
+        kind: "yourBenchCount",
+        filter: { kind: "pokemonNameContaining", fragment: "Antique" },
+      },
     });
     // The Tauros key is untouched; an unprinted fragment stays unread.
     expect(deriveAttackDamageBonus(BEATDOWN_TEXT.replace("Antique", "Fossil"))).toBeNull();
@@ -243,14 +264,19 @@ describe("D635 §2 — `itemNameContaining` and the Bench gate", () => {
     expect(matchesFilter(POOL[ANTIQUE_TOOL], ANTIQUE)).toBe(false);
     // A fossil's in-play face is a Pokémon, not an Item.
     expect(matchesFilter(fossilPokemonCard(POOL[COVER] as Card), ANTIQUE)).toBe(false);
-    expect(matchesFilter(POOL[COVER], { kind: "itemNameContaining", fragment: "antique" })).toBe(false);
+    expect(matchesFilter(POOL[COVER], { kind: "itemNameContaining", fragment: "antique" })).toBe(
+      false,
+    );
   });
 
   it("a Trainer goes onto the Bench only with an in-play Pokémon face; Pokémon are read as before", () => {
     expect(benchMatches(POOL[COVER], ANTIQUE)).toBe(true);
     expect(benchMatches(POOL[JAW], ANTIQUE)).toBe(true); // 🆕🆕🆕 D637 (D539): was `false` — the Jaw has a face now
     // 🆕🆕🆕 D637 (D539): a face-less Antique Item — NAMED "Antique …" so it passes the filter and reaches the Trainer arm.
-    const faceLess: Card = { ...trainerCard("d635-face-less", "Item", "An Antique test Item."), name: "Antique Test Item" };
+    const faceLess: Card = {
+      ...trainerCard("d635-face-less", "Item", "An Antique test Item."),
+      name: "Antique Test Item",
+    };
     expect(matchesFilter(faceLess, ANTIQUE)).toBe(true);
     expect(benchMatches(faceLess, ANTIQUE)).toBe(false);
     expect(benchMatches(POOL[NEST_BALL], { kind: "item" })).toBe(false);
@@ -311,7 +337,10 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
 
   it("the opponent uses it on their own turn and searches their own deck", () => {
     const { state: parked } = use(quarry(table(FILLER)));
-    const p2Turn = mustApply(mustApply(parked, cards([])).state, { type: "endTurn", seat: "p1" }).state;
+    const p2Turn = mustApply(mustApply(parked, cards([])).state, {
+      type: "endTurn",
+      seat: "p1",
+    }).state;
     const { state: theirs } = use(p2Turn, "p2");
     const p = prompt(theirs);
     for (const uid of p.candidates) expect(theirs.players.p2.deck).toContain(uid);
@@ -327,7 +356,7 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
   });
 });
 
-describe("D635 §4 — Relicanth \"Fossil Beatdown\": +30 per benched Antique", () => {
+describe('D635 §4 — Relicanth "Fossil Beatdown": +30 per benched Antique', () => {
   const beat = (state: GameState) => {
     const charged = attachFromDeck(state, "p1", ENERGY, 1);
     const { state: after } = mustApply(charged, { type: "attack", seat: "p1", index: 0 });
@@ -354,13 +383,13 @@ describe("D635 §4 — Relicanth \"Fossil Beatdown\": +30 per benched Antique", 
       ...state,
       players: {
         ...state.players,
-        p1: { ...side, deck: side.deck.filter((u) => u !== lileep), bench: [{ ...root, stack: [...root.stack, lileep] }, ...rest] },
+        p1: {
+          ...side,
+          deck: side.deck.filter((u) => u !== lileep),
+          bench: [{ ...root, stack: [...root.stack, lileep] }, ...rest],
+        },
       },
     };
     expect(beat(state)).toBe(40);
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

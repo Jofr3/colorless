@@ -136,10 +136,10 @@ const ENERGY = { drain: 0, siphon: 1, field: 2, flare: 3 } as const;
 function board(attacker: string, defender: string, by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   let state = must(
-    applyAction(
-      driveSetup(SEED, { p1: BENCH_BODY_DECK, p2: BENCH_BODY_DECK }, { first: opener }),
-      { type: "endTurn", seat: opener },
-    ),
+    applyAction(driveSetup(SEED, { p1: BENCH_BODY_DECK, p2: BENCH_BODY_DECK }, { first: opener }), {
+      type: "endTurn",
+      seat: opener,
+    }),
   );
   state = setActiveFromDeck(state, by, attacker);
   state = clearBench(state, by);
@@ -293,7 +293,9 @@ describe("deriveAttackDamageBonus — three body/Energy counts on the ADDITIVE f
 
   it("KEEPS its five older count sources — no arm was stranded", () => {
     expect(
-      deriveAttackDamageBonus("This attack does 10 more damage for each damage counter on this Pokémon."),
+      deriveAttackDamageBonus(
+        "This attack does 10 more damage for each damage counter on this Pokémon.",
+      ),
     ).toEqual({ per: 10, count: { kind: "damageCountersOnSelf" } });
     expect(
       deriveAttackDamageBonus(
@@ -311,11 +313,13 @@ describe("deriveAttackDamageBonus — three body/Energy counts on the ADDITIVE f
       ),
     ).toEqual({ per: 10, count: { kind: "damageCountersOnOpponentActive" } });
     expect(
-      deriveAttackDamageBonus("If this Pokémon has a Pokémon Tool attached, this attack does 30 more damage."),
+      deriveAttackDamageBonus(
+        "If this Pokémon has a Pokémon Tool attached, this attack does 30 more damage.",
+      ),
     ).toMatchObject({ per: 30, count: { kind: "boardCondition" } });
   });
 
-  it("⚠️ CANNOT PRODUCE `zone: \"board\"` — the additive board spelling is UNPRINTED", () => {
+  it('⚠️ CANNOT PRODUCE `zone: "board"` — the additive board spelling is UNPRINTED', () => {
     // Not merely zero-legal: absent from every text column of the D1. The `zone`
     // field exists because the MULTIPLY reader varies it; this reader hard-codes
     // "active" rather than capturing a value it can never produce, and the next
@@ -404,7 +408,9 @@ describe("deriveAttackDamageMultiplier — the same two resources on the `×` fo
 
   it("KEEPS its four older count sources — no arm was stranded", () => {
     expect(
-      deriveAttackDamageMultiplier("This attack does 30 damage for each damage counter on this Pokémon."),
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each damage counter on this Pokémon.",
+      ),
     ).toEqual({ per: 30, count: { kind: "damageCountersOnSelf" } });
     expect(
       deriveAttackDamageMultiplier(
@@ -445,7 +451,8 @@ describe("the FOLD is the printed adjective — driven in BOTH directions", () =
     // `damage counter on all of your` before its noun; these three have no "damage
     // counter" at all, and all four are `^…$`-anchored — so no side needs a
     // negative lookahead. Asserted rather than argued.
-    const counters = "This attack does 10 damage for each damage counter on all of your Benched Pokémon.";
+    const counters =
+      "This attack does 10 damage for each damage counter on all of your Benched Pokémon.";
     expect(deriveAttackDamageMultiplier(counters)).toEqual({
       per: 10,
       count: { kind: "damageCountersOnYourBench" },

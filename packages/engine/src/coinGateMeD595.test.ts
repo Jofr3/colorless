@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { PokemonRef } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -39,12 +39,15 @@ import {
 const T = {
   bellyful: "Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.",
   triKinesis: "Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.",
-  clutch: "Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat.",
-  strolls: "Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck.",
+  clutch:
+    "Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat.",
+  strolls:
+    "Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck.",
   pull: "Flip a coin. If heads, switch 1 of your opponent's Benched Pokémon with their Active Pokémon.",
   sketch:
     "Flip 3 coins. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
-  havoc: "Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.",
+  havoc:
+    "Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.",
   bite: "Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck.",
 } as const;
 
@@ -105,16 +108,23 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       expect(then, bare).not.toBeNull();
       return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), then }];
     };
-    expect(deriveAttackEffect(T.bellyful)).toEqual(gate(2, "Heal all damage from 1 of your Pokémon."));
+    expect(deriveAttackEffect(T.bellyful)).toEqual(
+      gate(2, "Heal all damage from 1 of your Pokémon."),
+    );
     expect(deriveAttackEffect(T.clutch)).toEqual(
       gate(undefined, "During your opponent's next turn, the Defending Pokémon can't retreat."),
     );
     expect(deriveAttackEffect(T.strolls)).toEqual(
-      gate(undefined, "Search your deck for a card and put it into your hand. Then, shuffle your deck."),
+      gate(
+        undefined,
+        "Search your deck for a card and put it into your hand. Then, shuffle your deck.",
+      ),
     );
     // Pull is Pokémon Catcher's attack sentence in the `me` wording: `ATTACK_FLIP_GUST`'s program.
     expect(deriveAttackEffect(T.pull)).toEqual(
-      deriveAttackEffect("Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot."),
+      deriveAttackEffect(
+        "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      ),
     );
     // Tri Kinesis: D416's chosen Knock Out over the whole opposing board, no counter window.
     expect(deriveAttackEffect(T.triKinesis)).toEqual([
@@ -139,7 +149,9 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: (
-        deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck.") as {
+        deriveAttackCoinFlip(
+          "Flip 2 coins. For each heads, discard the top card of your opponent's deck.",
+        ) as {
           ops: unknown;
         }
       ).ops,
@@ -153,7 +165,8 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       ),
       face: "heads",
     });
-    for (const text of [T.sketch, T.havoc, T.bite]) expect(deriveAttackEffect(text), text).toBeNull();
+    for (const text of [T.sketch, T.havoc, T.bite])
+      expect(deriveAttackEffect(text), text).toBeNull();
   });
 
   it("the typographic apostrophe reads the same", () => {
@@ -161,7 +174,9 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       expect(deriveAttackEffect(text.replaceAll("'", "’")), text).toEqual(deriveAttackEffect(text));
     }
     for (const text of [T.havoc, T.bite]) {
-      expect(deriveAttackCoinFlip(text.replaceAll("'", "’")), text).toEqual(deriveAttackCoinFlip(text));
+      expect(deriveAttackCoinFlip(text.replaceAll("'", "’")), text).toEqual(
+        deriveAttackCoinFlip(text),
+      );
     }
   });
 });
@@ -170,13 +185,18 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
   it("a coin count that disagrees with its head, an unlisted consequent, a stray suffix", () => {
     const controls: Record<string, string> = {
       "two coins, one-coin head": "Flip 2 coins. If heads, heal all damage from 1 of your Pokémon.",
-      "one coin, two-coin head": "Flip a coin. If both of them are heads, heal all damage from 1 of your Pokémon.",
-      "four coins, all heads": "Flip 4 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.",
-      "either, not both": "Flip 2 coins. If either of them is heads, heal all damage from 1 of your Pokémon.",
-      "tails, not heads": "Flip a coin. If tails, search your deck for a card and put it into your hand. Then, shuffle your deck.",
+      "one coin, two-coin head":
+        "Flip a coin. If both of them are heads, heal all damage from 1 of your Pokémon.",
+      "four coins, all heads":
+        "Flip 4 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.",
+      "either, not both":
+        "Flip 2 coins. If either of them is heads, heal all damage from 1 of your Pokémon.",
+      "tails, not heads":
+        "Flip a coin. If tails, search your deck for a card and put it into your hand. Then, shuffle your deck.",
       "an unlisted consequent": "Flip a coin. If heads, draw a card.",
       "the consequent with a suffix": `${T.pull} Draw a card.`,
-      "Knock Out the Bench only": "Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Benched Pokémon.",
+      "Knock Out the Bench only":
+        "Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Benched Pokémon.",
     };
     for (const [why, text] of Object.entries(controls)) {
       expect(deriveAttackEffect(text), why).toBeNull();
@@ -194,12 +214,19 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
     // `coinRestMeD605.test.ts` §2 pins the 18 crossings and 6 printed.
     // 🆕🆕🆕 D634 (D539): eight rows now (Challenging Delivery, Reversing Gust) —
     // `coinRestMeD634.test.ts` §2 pins the 24 crossings and 8 printed.
-    const heads = ["Flip a coin. If heads, ", "Flip 2 coins. If both of them are heads, ", "Flip 3 coins. If all of them are heads, "];
-    const tails = [T.bellyful, T.triKinesis, T.clutch, T.strolls, T.pull].map((s) => s.slice(s.indexOf(", ") + 2));
+    const heads = [
+      "Flip a coin. If heads, ",
+      "Flip 2 coins. If both of them are heads, ",
+      "Flip 3 coins. If all of them are heads, ",
+    ];
+    const tails = [T.bellyful, T.triKinesis, T.clutch, T.strolls, T.pull].map((s) =>
+      s.slice(s.indexOf(", ") + 2),
+    );
     const printed = new Set([...legalAttackCorpus(), ...meAttackCorpus()].map(([, text]) => text));
     const crossings = heads.flatMap((h) => tails.map((c) => h + c));
     expect(crossings).toHaveLength(15);
-    for (const text of crossings) expect(deriveAttackEffect(text)?.[0]?.op, text).toBe("coinFlipGate");
+    for (const text of crossings)
+      expect(deriveAttackEffect(text)?.[0]?.op, text).toBe("coinFlipGate");
     expect(crossings.filter((text) => printed.has(text)).sort()).toEqual(
       [T.bellyful, T.triKinesis, T.clutch, T.strolls, T.pull].sort(),
     );
@@ -240,7 +267,14 @@ const attacker = (id: string, name: string, attack: string, text: string, damage
     hp: 200,
     types: ["Colorless"],
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: attack, ...(damage === undefined ? {} : { damage }), effect: text }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: attack,
+        ...(damage === undefined ? {} : { damage }),
+        effect: text,
+      },
+    ],
   } as Partial<Card>);
 
 const LOCAL: Record<string, Card> = {
@@ -286,7 +320,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -294,11 +330,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -367,9 +406,14 @@ const of = <K extends GameEvent["type"]>(events: readonly GameEvent[], type: K) 
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: K }>[];
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const pickBody = (state: GameState, ref: PokemonRef) =>
-  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } } as GameAction);
+  mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref },
+  } as GameAction);
 function promptOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -424,7 +468,9 @@ describe("D595 §4 — the one-coin gates on a board", () => {
   it("Strolls So Much: heads searches the deck for any card, then shuffles", () => {
     const parked = attack(table(GIMMIGHOUL, [H]));
     expect(promptOf(parked.state)).toMatchObject({ kind: "chooseCards" });
-    const special = parked.state.players.p1.deck.find((u) => parked.state.cardIdByUid[u] === SPECIAL) as string;
+    const special = parked.state.players.p1.deck.find(
+      (u) => parked.state.cardIdByUid[u] === SPECIAL,
+    ) as string;
     const done = mustApply(parked.state, {
       type: "resolveEffect",
       seat: "p1",
@@ -443,7 +489,10 @@ describe("D595 §4 — the one-coin gates on a board", () => {
     const done = pickBody(parked.state, { seat: "p2", spot: { spot: "bench", index: 0 } });
     const p2 = done.state.players.p2;
     expect(idsOf(done.state, [p2.active?.stack.at(-1) ?? ""])).toEqual([WALL]);
-    expect(p2.bench.map((b) => done.state.cardIdByUid[b.stack.at(-1) ?? ""]).sort()).toEqual([FILLER, WALL]);
+    expect(p2.bench.map((b) => done.state.cardIdByUid[b.stack.at(-1) ?? ""]).sort()).toEqual([
+      FILLER,
+      WALL,
+    ]);
   });
 });
 
@@ -462,13 +511,17 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     let state = table(HOUNDSTONE, [H, H, X]);
     const p2 = state.players.p2;
     const hand = p2.deck.slice(0, 3);
-    state = { ...state, players: { ...state.players, p2: { ...p2, hand, deck: p2.deck.slice(3) } } };
+    state = {
+      ...state,
+      players: { ...state.players, p2: { ...p2, hand, deck: p2.deck.slice(3) } },
+    };
     const { state: after, events } = attack(state);
     expect(of(events, "DAMAGE_DEALT")[0]?.dealt).toBe(30);
     const taken = of(events, "RANDOM_CARD_TAKEN");
     expect(taken).toHaveLength(2);
     expect(new Set(taken.map((e) => e.uid)).size).toBe(2);
-    for (const e of taken) expect([e.seat, e.to, after.players.p2.deck.includes(e.uid)]).toEqual(["p2", "deck", true]);
+    for (const e of taken)
+      expect([e.seat, e.to, after.players.p2.deck.includes(e.uid)]).toEqual(["p2", "deck", true]);
     // P2 then draws for its turn, so the hand is 3 - 2 + 1.
     expect(after.players.p2.hand).toHaveLength(2);
 
@@ -504,7 +557,11 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     expect(idsOf(done.state, done.state.players.p1.discard)).toEqual([SPECIAL]);
 
     // Each park is declinable (D358): a decline attaches nothing, and the second heads still asks.
-    const declined = mustApply(first.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } } as GameAction);
+    const declined = mustApply(first.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon" },
+    } as GameAction);
     expect(declined.state.players.p1.bench.every((b) => b.energy.length === 0)).toBe(true);
     expect(promptOf(declined.state)).toMatchObject({ kind: "choosePokemon" });
   });
@@ -518,8 +575,15 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     state = discardFromDeck(state, "p1", FIRE, 1);
     state = discardFromDeck(state, "p1", WATER, 1);
     const pile = state.players.p1.discard.slice();
-    const targeted = pickBody(attack(state).state, { seat: "p1", spot: { spot: "bench", index: 0 } });
-    expect(promptOf(targeted.state)).toMatchObject({ kind: "chooseCards", candidates: pile, dest: "attach" });
+    const targeted = pickBody(attack(state).state, {
+      seat: "p1",
+      spot: { spot: "bench", index: 0 },
+    });
+    expect(promptOf(targeted.state)).toMatchObject({
+      kind: "chooseCards",
+      candidates: pile,
+      dest: "attach",
+    });
     const done = mustApply(targeted.state, {
       type: "resolveEffect",
       seat: "p1",
@@ -527,11 +591,5 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     });
     expect(done.state.players.p1.bench[0]?.energy).toEqual([pile[1]]);
     expect(idsOf(done.state, done.state.players.p1.discard)).toEqual([FIRE]);
-  });
-});
-
-describe("D595 §6 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

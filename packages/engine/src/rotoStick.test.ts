@@ -207,7 +207,7 @@ describe("D333 — Roto-Stick, the unbounded lookAtTopN window", () => {
     expect(prompt.candidates).not.toContain(deckAt(seededState, 1));
   });
 
-  it("🛑 the resolved cap is the SUPPORTERS in the window, not the window — `\"any\"`, not 4", () => {
+  it('🛑 the resolved cap is the SUPPORTERS in the window, not the window — `"any"`, not 4', () => {
     const state = board(12);
     const { prompt } = play(state, "fix-rotostick");
     // 🛑 **THIS IS THE CASE THE WHOLE BOARD WAS SHAPED FOR.** `max: "any"` and

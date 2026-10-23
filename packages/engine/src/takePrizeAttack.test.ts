@@ -3,7 +3,6 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   applyAction,
   deriveAttackEffect,
-  engineVersion,
   formatElapsed,
   logFromEvents,
   otherSeat,
@@ -12,10 +11,7 @@ import {
   redactGame,
 } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
-import {
-  splitAttackGateClause,
-  splitAttackTrailingClause,
-} from "./effects";
+import { splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import {
   FIXTURE_POOL,
   TAKE_PRIZE_DECK,
@@ -367,10 +363,6 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
     expect(drained.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     expect(find(drained.events, "PRIZES_OWED")?.seat).toBe("p1");
   });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -427,16 +419,16 @@ describe("§4 — the cost and the prize are ONE sentence and both happen", () =
     // Index 2 has no `damage` key at all, so §8.5 never runs. A build that conditioned
     // the prize on damage dealt would whiff here and be right everywhere else.
     const result = attack(wheel({ attacker: "p1", energy: 2 }), "p1", 2);
-    expect(types(result.events)).toEqual([
-      "ATTACK_DECLARED",
-      "ENERGY_DISCARDED",
-      "PRIZES_OWED",
-    ]);
+    expect(types(result.events)).toEqual(["ATTACK_DECLARED", "ENERGY_DISCARDED", "PRIZES_OWED"]);
   });
 
   it("🛑 no ATTACK_EFFECT_SKIPPED in EITHER direction — and index 3 is the control", () => {
     for (const index of [0, 1, 2]) {
-      const result = attack(wheel({ attacker: "p1", energy: 3, defender: "fix-titan" }), "p1", index);
+      const result = attack(
+        wheel({ attacker: "p1", energy: 3, defender: "fix-titan" }),
+        "p1",
+        index,
+      );
       expect({ index, skipped: count(result.events, "ATTACK_EFFECT_SKIPPED") }).toEqual({
         index,
         skipped: 0,

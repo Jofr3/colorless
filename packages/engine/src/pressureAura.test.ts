@@ -121,8 +121,20 @@ function expectBeforeWR(row: Extract<GameEvent, { type: "DAMAGE_DEALT" }>): void
 /** Every attacker this suite declares, with the INDEX and the energy its cost
     needs — read off the local D1 per printing (D144's rule, D146's names). */
 const ATTACKERS = {
-  "sv02-062": { index: 1, energy: [{ id: "fix-lightning-energy", count: 1 }, { id: "fix-energy", count: 1 }] }, // Pikachu "Pika Bolt" (30)
-  "sv01-048": { index: 0, energy: [{ id: "fix-water-energy", count: 1 }, { id: "fix-energy", count: 1 }] }, // Alomomola "Surf" (30, WATER)
+  "sv02-062": {
+    index: 1,
+    energy: [
+      { id: "fix-lightning-energy", count: 1 },
+      { id: "fix-energy", count: 1 },
+    ],
+  }, // Pikachu "Pika Bolt" (30)
+  "sv01-048": {
+    index: 0,
+    energy: [
+      { id: "fix-water-energy", count: 1 },
+      { id: "fix-energy", count: 1 },
+    ],
+  }, // Alomomola "Surf" (30, WATER)
   "sv02-127": { index: 0, energy: [{ id: "fix-fighting-energy", count: 3 }] }, // Ting-Lu ex "Land Scoop" (150)
   "sv01-069": { index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // Rotom "Linear Attack" (snipe 20)
   "fix-feint": { index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // "Feint Attack" ({C}, 50, ignoreWR)
@@ -178,7 +190,10 @@ function withDamage(state: GameState, seat: Seat, damage: number): GameState {
   const side = state.players[seat];
   const active = side.active;
   if (active === null) throw new Error("no Active to damage");
-  return { ...state, players: { ...state.players, [seat]: { ...side, active: { ...active, damage } } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...side, active: { ...active, damage } } },
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -502,7 +517,9 @@ describe("the log — rendered and READ, not copied", () => {
     const ctx: LogContext = { names: { p1: "Ember", p2: "Wren" }, state, elapsed: "+00:07" };
     const rendered = logFromEvents(events, ctx)
       .flatMap((entry) =>
-        entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
+        entry.kind === "turn"
+          ? []
+          : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
       )
       .join("\n");
     expect(rendered).toContain("weakened −20");

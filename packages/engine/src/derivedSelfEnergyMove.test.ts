@@ -174,7 +174,11 @@ function board(seed: number): GameState {
     builds this file guards against would reach for the other seat's. */
 function ready(
   seed: number,
-  { basics = 1, specials = 0, ownBench = 2 }: { basics?: number; specials?: number; ownBench?: number },
+  {
+    basics = 1,
+    specials = 0,
+    ownBench = 2,
+  }: { basics?: number; specials?: number; ownBench?: number },
 ): GameState {
   let state = setActiveFromDeck(board(seed), "p1", "fix-trainerops");
   if (basics > 0) state = attachFromDeck(state, "p1", "fix-energy", basics);
@@ -202,7 +206,8 @@ function parkedMove(state: GameState): {
   max: number;
   note?: string;
 } {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   const prompt = state.phase.prompt;
   if (prompt.kind !== "moveEnergy") throw new Error(`expected moveEnergy, got ${prompt.kind}`);
   return prompt;
@@ -278,9 +283,9 @@ describe("the two anchors — three printed sentences, one new route value", () 
     // has to walk past this line: the noun is bare, and the number is a `\d+`
     // directly in front of it.
     expect(TYPED_NEAR_MISS).toContain("{D} Energy from this Pokémon");
-    expect(deriveAttackEffect("Move 2 Energy from this Pokémon to 1 of your Benched Pokémon.")).toEqual(
-      [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2, route: "selfToBench" }],
-    );
+    expect(
+      deriveAttackEffect("Move 2 Energy from this Pokémon to 1 of your Benched Pokémon."),
+    ).toEqual([{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2, route: "selfToBench" }]);
   });
 
   it("the numeric and article forms are ONE anchor, and the missing group IS max 1", () => {
@@ -294,9 +299,9 @@ describe("the two anchors — three printed sentences, one new route value", () 
     expect(three).toEqual({ ...one, max: 3 });
     // …and a number the catalog does not print today rides the same arm, which is
     // the whole reason the count is captured rather than alternated over 1 and 3.
-    expect(deriveAttackEffect("Move 12 Energy from this Pokémon to 1 of your Benched Pokémon.")).toEqual(
-      [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 12, route: "selfToBench" }],
-    );
+    expect(
+      deriveAttackEffect("Move 12 Energy from this Pokémon to 1 of your Benched Pokémon."),
+    ).toEqual([{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 12, route: "selfToBench" }]);
   });
 
   it("the BASIC arm differs by its filter and by nothing else", () => {
@@ -496,7 +501,17 @@ describe("end to end — off the ATTACKER, onto the attacker's OWN Bench", () =>
     // …and with the Energy on a BENCHED body instead, the verdicts swap. Neither
     // route can be quietly substituted for the other on any board.
     const flipped = attachBenchFromDeck(
-      { ...state, players: { ...state.players, p1: { ...state.players.p1, active: state.players.p1.active === null ? null : { ...state.players.p1.active, energy: [] } } } },
+      {
+        ...state,
+        players: {
+          ...state.players,
+          p1: {
+            ...state.players.p1,
+            active:
+              state.players.p1.active === null ? null : { ...state.players.p1.active, energy: [] },
+          },
+        },
+      },
       "p1",
       0,
       "fix-energy",
@@ -657,7 +672,10 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", picks: picks.map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })) },
+      choice: {
+        kind: "moveEnergy",
+        picks: picks.map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })),
+      },
     });
     expect(done.state.players.p1.active?.energy).toHaveLength(1);
     expect(done.state.players.p1.bench[0]?.energy).toEqual(picks);
@@ -675,7 +693,9 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        picks: prompt.movable.map((m) => m.uid).map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })),
+        picks: prompt.movable
+          .map((m) => m.uid)
+          .map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })),
       },
     });
     expect(tooMany.ok).toBe(false);
@@ -695,7 +715,10 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        picks: singlePrompt.movable.slice(0, 2).map((m) => m.uid).map((uid) => ({ uid, dest: singlePrompt.destinations[0] as PokemonRef })),
+        picks: singlePrompt.movable
+          .slice(0, 2)
+          .map((m) => m.uid)
+          .map((uid) => ({ uid, dest: singlePrompt.destinations[0] as PokemonRef })),
       },
     });
     expect(pair.ok).toBe(false);
@@ -727,7 +750,10 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       choice: {
         kind: "moveEnergy",
         picks: [
-          { uid: prompt.movable[0]?.uid as string, dest: { seat: "p2", spot: { spot: "bench", index: 0 } } },
+          {
+            uid: prompt.movable[0]?.uid as string,
+            dest: { seat: "p2", spot: { spot: "bench", index: 0 } },
+          },
         ],
       },
     });

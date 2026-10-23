@@ -196,7 +196,10 @@ describe("Rare Candy: the evolve-below-HP mid-turn KO (§8.1)", () => {
 
     // The evolved-then-KO'd Stage 2 leaves play; the opponent takes the prize.
     expect(types(events)).toContain("KNOCKED_OUT");
-    expect(events.find((e) => e.type === "KNOCKED_OUT")).toMatchObject({ seat: "p1", uid: frailUid });
+    expect(events.find((e) => e.type === "KNOCKED_OUT")).toMatchObject({
+      seat: "p1",
+      uid: frailUid,
+    });
     // Mid-turn KO: the opponent's prize pick is owed (§8.1) before p1 resumes.
     expect(next.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
 
@@ -229,7 +232,10 @@ describe("Rare Candy: the evolve-below-HP mid-turn KO (§8.1)", () => {
       target: { spot: "bench", index: 0 },
       evolutionUid: frailUid,
     });
-    expect(events.find((e) => e.type === "KNOCKED_OUT")).toMatchObject({ seat: "p1", uid: frailUid });
+    expect(events.find((e) => e.type === "KNOCKED_OUT")).toMatchObject({
+      seat: "p1",
+      uid: frailUid,
+    });
     expect(next.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
     const afterPrize = mustApply(next, { type: "takePrizes", seat: "p2", prizeIndices: [0] }).state;
     expect(afterPrize.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
@@ -265,7 +271,13 @@ describe("Rare Candy: timing rules (§4/§7.1)", () => {
     const [withCandy, rareUid, stage2Uid] = withRareCandy(state, "p1");
     expectErr(
       withCandy,
-      { type: "rareCandy", seat: "p1", uid: rareUid, target: { spot: "bench", index: 0 }, evolutionUid: stage2Uid },
+      {
+        type: "rareCandy",
+        seat: "p1",
+        uid: rareUid,
+        target: { spot: "bench", index: 0 },
+        evolutionUid: stage2Uid,
+      },
       "EVOLVE_TOO_SOON",
     );
   });
@@ -278,7 +290,12 @@ describe("Rare Candy: chain + target rejections (§7.1)", () => {
     let state = rareCandyBoard(SEED);
     state = handFromDeck(state, "p1", "fix-stage1", 1);
     const stage1Uid = handUid(state, "p1", "fix-stage1");
-    state = mustApply(state, { type: "evolve", seat: "p1", uid: stage1Uid, target: { spot: "active" } }).state;
+    state = mustApply(state, {
+      type: "evolve",
+      seat: "p1",
+      uid: stage1Uid,
+      target: { spot: "active" },
+    }).state;
     // Advance to p1's next turn so the Stage 1 is no longer "played this turn".
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -301,7 +318,13 @@ describe("Rare Candy: chain + target rejections (§7.1)", () => {
     );
     expectErr(
       withCandy,
-      { type: "rareCandy", seat: "p1", uid: rareUid, target: { spot: "bench", index: benchIndex }, evolutionUid: stage2Uid },
+      {
+        type: "rareCandy",
+        seat: "p1",
+        uid: rareUid,
+        target: { spot: "bench", index: benchIndex },
+        evolutionUid: stage2Uid,
+      },
       "RARE_CANDY_NO_STAGE2",
     );
   });
@@ -368,7 +391,12 @@ describe("rareCandyOptions (the HUD authority)", () => {
     let state = rareCandyBoard(SEED);
     state = handFromDeck(state, "p1", "fix-stage1", 1);
     const stage1Uid = handUid(state, "p1", "fix-stage1");
-    state = mustApply(state, { type: "evolve", seat: "p1", uid: stage1Uid, target: { spot: "active" } }).state;
+    state = mustApply(state, {
+      type: "evolve",
+      seat: "p1",
+      uid: stage1Uid,
+      target: { spot: "active" },
+    }).state;
     state = handFromDeck(state, "p1", "fix-stage2", 1);
     expect(rareCandyOptions(state, "p1")).toEqual([]);
   });
@@ -379,7 +407,13 @@ describe("Rare Candy: wire-safety (types are not validation, D14)", () => {
     const [state, rareUid, stage2Uid] = withRareCandy(rareCandyBoard(SEED), "p1");
     expectErr(
       state,
-      { type: "rareCandy", seat: "p1", uid: rareUid, target: null, evolutionUid: stage2Uid } as unknown as RareCandyAction,
+      {
+        type: "rareCandy",
+        seat: "p1",
+        uid: rareUid,
+        target: null,
+        evolutionUid: stage2Uid,
+      } as unknown as RareCandyAction,
       "BAD_TARGET",
     );
     expectErr(

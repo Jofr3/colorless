@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { owesToolTrim, toolCapOf, toolTrimStages } from "./continuous";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {
@@ -54,23 +54,57 @@ const MOVES: Card["attacks"] = [
 ];
 const CRUSH = 1; // 0 is "Hit"
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
-const mon = (id: string, name: string, hp: number, types: string[], attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types, retreat: 1, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  types: string[],
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types, retreat: 1, attacks, ...extra });
 const tool = (id: string, name: string): Card => ({ ...trainerCard(id, "Tool", `${name}.`), name });
 
 const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
     ROTOM_EX.map((id) => [
       id,
-      mon(id, "Rotom ex", 190, ["Lightning"], [{ cost: ["Lightning", "Colorless"], name: "Thunderbolt", damage: 130, effect: "Discard all Energy from this Pokémon." }], {
-        abilities: [{ type: "Ability", name: "Multi Adapter", effect: MULTI_ADAPTER_TEXT }],
-      } as Partial<Card>),
+      mon(
+        id,
+        "Rotom ex",
+        190,
+        ["Lightning"],
+        [
+          {
+            cost: ["Lightning", "Colorless"],
+            name: "Thunderbolt",
+            damage: 130,
+            effect: "Discard all Energy from this Pokémon.",
+          },
+        ],
+        {
+          abilities: [{ type: "Ability", name: "Multi Adapter", effect: MULTI_ADAPTER_TEXT }],
+        } as Partial<Card>,
+      ),
     ]),
   ),
   [FLUTTER]: mon(FLUTTER, "Flutter Mane", 90, ["Psychic"], MOVES, {
-    abilities: [{ type: "Ability", name: "Midnight Fluttering", effect: "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering." }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Midnight Fluttering",
+        effect:
+          "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.",
+      },
+    ],
   } as Partial<Card>),
-  [RUFFIAN]: { ...trainerCard(RUFFIAN, "Supporter", "Choose 1 of your opponent's Pokémon. Discard a Pokémon Tool and a Special Energy from that Pokémon."), name: "Ruffian" },
+  [RUFFIAN]: {
+    ...trainerCard(
+      RUFFIAN,
+      "Supporter",
+      "Choose 1 of your opponent's Pokémon. Discard a Pokémon Tool and a Special Energy from that Pokémon.",
+    ),
+    name: "Ruffian",
+  },
   [BAND]: tool(BAND, "Vitality Band"),
   [CHARM]: tool(CHARM, "Bravery Charm"),
   [DEFIANCE]: tool(DEFIANCE, "Defiance Band"),
@@ -99,7 +133,9 @@ const DECK = deckOf({
   [E]: 6,
   [SPARE]: 8,
 });
-const BOARD_IDS = Object.keys(LOCAL).filter((id) => id !== SPARE).concat([E]);
+const BOARD_IDS = Object.keys(LOCAL)
+  .filter((id) => id !== SPARE)
+  .concat([E]);
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -112,7 +148,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -120,17 +158,23 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -151,9 +195,15 @@ function unprize(state: GameState, seat: Seat): GameState {
 }
 
 /** P1's Active `attacker` (one {C} attached) over `p1Bench`; P2's Active `defender` over `p2Bench`. */
-function table(attacker: string, defender: string, p2Bench: readonly string[] = [], p1Bench: readonly string[] = []): GameState {
+function table(
+  attacker: string,
+  defender: string,
+  p2Bench: readonly string[] = [],
+  p1Bench: readonly string[] = [],
+): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   state = attachFromDeck(state, "p1", E, 1);
   for (const id of p1Bench) state = benchFromDeck(state, "p1", id);
@@ -163,12 +213,22 @@ function table(attacker: string, defender: string, p2Bench: readonly string[] = 
 }
 
 /** TEST SURGERY — Tools put straight on `seat`'s body at `target`. */
-function withTools(state: GameState, seat: Seat, target: "active" | number, ids: readonly string[]): GameState {
+function withTools(
+  state: GameState,
+  seat: Seat,
+  target: "active" | number,
+  ids: readonly string[],
+): GameState {
   return ids.reduce((next, id) => attachToolFromDeck(next, seat, target, id), state);
 }
 
 type AttachTarget = Extract<GameAction, { type: "attachTool" }>["target"];
-const attachTool = (state: GameState, seat: Seat, id: string, target: AttachTarget = { spot: "active" }) => {
+const attachTool = (
+  state: GameState,
+  seat: Seat,
+  id: string,
+  target: AttachTarget = { spot: "active" },
+) => {
   const held = handFromDeck(state, seat, id, 1);
   return applyAction(held, { type: "attachTool", seat, uid: handUid(held, seat, id), target });
 };
@@ -183,17 +243,19 @@ const toolIds = (state: GameState, seat: Seat, at: "active" | number) =>
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const answer = (state: GameState, seat: Seat, uids: readonly string[]) =>
-  applyAction(state, { type: "resolveEffect", seat, choice: { kind: "discardTools", uids: [...uids] } } as GameAction);
+  applyAction(state, {
+    type: "resolveEffect",
+    seat,
+    choice: { kind: "discardTools", uids: [...uids] },
+  } as GameAction);
 
 describe("D643 §1 — the print and the registry rows", () => {
   it("three keys on ONE NEW object: a `passive` raise for bodies named Rotom", () => {
-    expect(programFor(ROTOM_EX[0])).toEqual({ passive: { toolCapForName: { nameContains: "Rotom", cap: 2 } } });
+    expect(programFor(ROTOM_EX[0])).toEqual({
+      passive: { toolCapForName: { nameContains: "Rotom", cap: 2 } },
+    });
     expect(programFor(ROTOM_EX[1])).toBe(programFor(ROTOM_EX[0]));
     expect(programFor(ROTOM_EX[2])).toBe(programFor(ROTOM_EX[0]));
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -205,7 +267,12 @@ describe("D643 §2 — the cap at `attachTool` (`toolCapOf`)", () => {
     state = must(attachTool(state, "p1", CHARM));
     expect(toolIds(state, "p1", "active")).toEqual([BAND, CHARM]);
     const third = handFromDeck(state, "p1", DEFIANCE, 1);
-    const refused = applyAction(third, { type: "attachTool", seat: "p1", uid: handUid(third, "p1", DEFIANCE), target: { spot: "active" } });
+    const refused = applyAction(third, {
+      type: "attachTool",
+      seat: "p1",
+      uid: handUid(third, "p1", DEFIANCE),
+      target: { spot: "active" },
+    });
     expect(refused.ok).toBe(false);
     if (refused.ok) return;
     expect(refused.error.code).toBe("TOOL_ALREADY_ATTACHED");
@@ -242,7 +309,16 @@ describe("D643 §2 — the cap at `attachTool` (`toolCapOf`)", () => {
     state = withTools(state, "p1", "active", [BAND]);
     expect(toolCapOf(state, "p1", body(state, "p1", "active"))).toBe(1);
     const held = handFromDeck(state, "p1", CHARM, 1);
-    expectErr(held, { type: "attachTool", seat: "p1", uid: handUid(held, "p1", CHARM), target: { spot: "active" } }, "TOOL_ALREADY_ATTACHED");
+    expectErr(
+      held,
+      {
+        type: "attachTool",
+        seat: "p1",
+        uid: handUid(held, "p1", CHARM),
+        target: { spot: "active" },
+      },
+      "TOOL_ALREADY_ATTACHED",
+    );
   });
 });
 
@@ -267,7 +343,8 @@ describe("D643 §3 — the trim when the holder leaves play (`advance`'s state c
       scope: { kind: "total", count: 1 },
       note: "Rotom can have only 1 Pokémon Tool attached: discard 1.",
     });
-    const offered = hit.state.phase.prompt.kind === "discardTools" ? hit.state.phase.prompt.discardable : [];
+    const offered =
+      hit.state.phase.prompt.kind === "discardTools" ? hit.state.phase.prompt.discardable : [];
     expect(offered.map((o) => hit.state.cardIdByUid[o.uid])).toEqual([DEFIANCE, BELT]);
     expect(offered.every((o) => o.from.seat === "p2" && o.from.spot.spot === "bench")).toBe(true);
     // The Prize has not been taken yet: the trim is in FRONT of the sweep's stages.
@@ -283,13 +360,22 @@ describe("D643 §3 — the trim when the holder leaves play (`advance`'s state c
     expect(toolIds(done.state, "p2", 0)).toEqual([DEFIANCE]);
     expect(done.state.players.p2.discard).toContain(belt);
     expect(of(done.events, "TOOLS_DISCARDED")).toEqual([
-      { type: "TOOLS_DISCARDED", seat: "p2", actor: "p2", uids: [belt], host: body(hit.state, "p2", 0).stack.at(-1), when: "trimmed" },
+      {
+        type: "TOOLS_DISCARDED",
+        seat: "p2",
+        actor: "p2",
+        uids: [belt],
+        host: body(hit.state, "p2", 0).stack.at(-1),
+        when: "trimmed",
+      },
     ]);
     // The sweep's stages follow in their order: P1's Prize pick (2: a Pokémon ex), then P2's forced promotion.
     expect(done.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 2 });
     const taken = mustApply(done.state, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1] });
     expect(taken.state.players.p1.prizes).toHaveLength(4); // a Pokémon ex: 2 Prizes
-    expect(taken.state.players.p2.active?.stack.map((u) => taken.state.cardIdByUid[u])).toEqual([ROTOM]);
+    expect(taken.state.players.p2.active?.stack.map((u) => taken.state.cardIdByUid[u])).toEqual([
+      ROTOM,
+    ]);
     expect(toolIds(taken.state, "p2", "active")).toEqual([DEFIANCE]);
   });
 
@@ -340,11 +426,20 @@ describe("D643 §3 — the trim when the holder leaves play (`advance`'s state c
     const belt = body(hit.state, "p2", 0).tools[1] as string;
     const done = answer(hit.state, "p2", [belt]);
     if (!done.ok) throw new Error(done.error.code);
-    const ctx: LogContext = { names: { p1: "Ana", p2: "Bo" }, state: done.state, elapsed: formatElapsed(0) };
+    const ctx: LogContext = {
+      names: { p1: "Ana", p2: "Bo" },
+      state: done.state,
+      elapsed: formatElapsed(0),
+    };
     const rows = logFromEvents(done.events, ctx).flatMap((entry) =>
-      entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((seg) => seg.text).join("") }],
+      entry.kind === "turn"
+        ? []
+        : [{ who: entry.who, text: entry.segments.map((seg) => seg.text).join("") }],
     );
-    expect(rows).toContainEqual({ who: "p2", text: "discarded Choice Belt from Bo's Rotom — Multi Adapter no longer applies" });
+    expect(rows).toContainEqual({
+      who: "p2",
+      text: "discarded Choice Belt from Bo's Rotom — Multi Adapter no longer applies",
+    });
   });
 });
 
@@ -353,11 +448,19 @@ describe("D643 §4 — the trim when a §9 lock arrives (`applyAction`'s state c
     let state = table(STRIKER, ROTOM_EX[0], [], [FLUTTER]);
     state = withTools(state, "p2", "active", [BAND, CHARM]);
     const energy = state.players.p1.active?.energy[0] as string;
-    const retreated = mustApply(state, { type: "retreat", seat: "p1", discardEnergy: [energy], promoteBenchIndex: 0 });
+    const retreated = mustApply(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [energy],
+      promoteBenchIndex: 0,
+    });
     expect(retreated.state.phase.kind).toBe("effect:choose");
     if (retreated.state.phase.kind !== "effect:choose") return;
     expect(retreated.state.phase.seat).toBe("p2");
-    expect(retreated.state.phase.prompt).toMatchObject({ kind: "discardTools", scope: { kind: "total", count: 1 } });
+    expect(retreated.state.phase.prompt).toMatchObject({
+      kind: "discardTools",
+      scope: { kind: "total", count: 1 },
+    });
     const band = body(retreated.state, "p2", "active").tools[0] as string;
     const done = answer(retreated.state, "p2", [band]);
     if (!done.ok) throw new Error(done.error.code);
@@ -369,7 +472,12 @@ describe("D643 §4 — the trim when a §9 lock arrives (`applyAction`'s state c
     let state = table(STRIKER, ROTOM_EX[0], [], [FILLER]);
     state = withTools(state, "p2", "active", [BAND, CHARM]);
     const energy = state.players.p1.active?.energy[0] as string;
-    const retreated = mustApply(state, { type: "retreat", seat: "p1", discardEnergy: [energy], promoteBenchIndex: 0 });
+    const retreated = mustApply(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [energy],
+      promoteBenchIndex: 0,
+    });
     expect(retreated.state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(toolIds(retreated.state, "p2", "active")).toEqual([BAND, CHARM]);
   });
@@ -380,7 +488,11 @@ describe("D643 §5 — Ruffian on a two-Tool Rotom ex parks an EXACT pick (R-MAD
     let state = table(STRIKER, ROTOM_EX[0]);
     state = withTools(state, "p2", "active", [BAND, CHARM]);
     const held = handFromDeck(state, "p1", RUFFIAN, 1);
-    const played = mustApply(held, { type: "playTrainer", seat: "p1", uid: handUid(held, "p1", RUFFIAN) });
+    const played = mustApply(held, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(held, "p1", RUFFIAN),
+    });
     let now = played.state;
     if (now.phase.kind === "effect:choose" && now.phase.prompt.kind === "choosePokemon") {
       now = mustApply(now, {

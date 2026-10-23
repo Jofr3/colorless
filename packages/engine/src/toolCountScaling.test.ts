@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
 } from "./effects";
 import type { GameEvent, GameState, Seat } from "./index";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import {
   FIXTURE_POOL,
   TOOL_COUNT_DECK,
@@ -72,7 +72,8 @@ import {
 /** The printed sentence, byte for byte off `legalAttackCorpus()` — the committed
     `legal_standard = 1` attack column. `Pokémon` carries the real é (U+00E9) in
     both slots and there is no apostrophe anywhere in it. */
-const TOOL_COUNT = "This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon.";
+const TOOL_COUNT =
+  "This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon.";
 
 /** The "more" twin. **PRINTED NOWHERE** — the column holds exactly one "for each
     Pokémon Tool" sentence and it is this bare one — so this is an ABSENCE and is
@@ -91,14 +92,16 @@ const UNPRINTED_OPPONENT =
     printed EXISTENCE clauses, already built as `BoardCondition`s (D369 and its twin)
     and reached through the 0-or-1 indicator on the ADDITIVE fold. Same noun, one body,
     a boolean rather than a count. */
-const OWN_TOOL_EXISTS = "If this Pokémon has a Pokémon Tool attached, this attack does 40 more damage.";
+const OWN_TOOL_EXISTS =
+  "If this Pokémon has a Pokémon Tool attached, this attack does 40 more damage.";
 const FOE_TOOL_EXISTS =
   "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.";
 /** ⚠️ **AND THE LARGEST ONE, WHICH IS THE SAME NOUN DISCARDED RATHER THAN COUNTED** —
     5 legal printings, and blocked on a pre-damage execution point this engine has no
     seam for (`deriveAttackDamageBonus`'s own doc block: the deriver's ops all run
     AFTER damage). It must stay LOUD. */
-const TOOL_DISCARD = "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.";
+const TOOL_DISCARD =
+  "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.";
 
 /** ⚠️ **THE NEAR MISS ONE RESOURCE OVER, AND IT CONTRADICTED A CLAIM `effects.ts`
     ALREADY MADE.** `energyOnSelf`'s block said it carries no `zone` because *"the
@@ -109,7 +112,8 @@ const TOOL_DISCARD = "Before doing damage, discard all Pokémon Tools from your 
     `zone`. The constant stays here because the rung below is the one that reddened
     when it landed, which is what a correction written as a GUARD buys over one
     written as a comment. */
-const BOARD_WIDE_ENERGY = "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.";
+const BOARD_WIDE_ENERGY =
+  "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.";
 
 /** One seed for the whole suite. Nothing here flips a coin and every Active, every
     Benched body and every Tool is placed by surgery, so a seed table would describe
@@ -258,10 +262,20 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
     // The family's stated anchor discipline: no /i, a required trailing period, a
     // capital `This`, and no leading or trailing text. Each of these would be
     // admitted by a search-style pattern.
-    expect(deriveAttackDamageMultiplier("this attack does 30 damage for each Pokémon Tool attached to all of your Pokémon.")).toBeNull();
-    expect(deriveAttackDamageMultiplier("This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon")).toBeNull();
+    expect(
+      deriveAttackDamageMultiplier(
+        "this attack does 30 damage for each Pokémon Tool attached to all of your Pokémon.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon",
+      ),
+    ).toBeNull();
     expect(deriveAttackDamageMultiplier(`Flip a coin. ${TOOL_COUNT}`)).toBeNull();
-    expect(deriveAttackDamageMultiplier(`${TOOL_COUNT} Discard an Energy from this Pokémon.`)).toBeNull();
+    expect(
+      deriveAttackDamageMultiplier(`${TOOL_COUNT} Discard an Energy from this Pokémon.`),
+    ).toBeNull();
     // A printed 0 does nothing and stays LOUD — the guard every arm in both
     // families carries.
     expect(
@@ -460,8 +474,5 @@ describe("§5 — the persisted question, asked and answered", () => {
     // saved record at all.
     expect(deriveAttackEffect(TOOL_COUNT)).toBeNull();
     expect(deriveAttackDamageMultiplier(TOOL_COUNT)).not.toBeNull();
-    // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
-    // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

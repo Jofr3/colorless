@@ -99,7 +99,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -107,11 +109,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -167,7 +172,10 @@ function poison(state: GameState, seat: Seat): GameState {
   const conditions = { ...active.conditions, poisonDamage: 10 };
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...state.players[seat], active: { ...active, conditions } } },
+    players: {
+      ...state.players,
+      [seat]: { ...state.players[seat], active: { ...active, conditions } },
+    },
   };
 }
 
@@ -178,7 +186,10 @@ function burn(state: GameState, seat: Seat): GameState {
   const conditions = { ...active.conditions, burned: true };
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...state.players[seat], active: { ...active, conditions } } },
+    players: {
+      ...state.players,
+      [seat]: { ...state.players[seat], active: { ...active, conditions } },
+    },
   };
 }
 
@@ -208,13 +219,16 @@ const cards = (uids: readonly string[], seat: Seat = "p1"): GameAction => ({
   choice: { kind: "cards", uids: [...uids] },
 });
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 const checkup = (board: GameState) => mustApply(board, { type: "endTurn", seat: "p1" });
@@ -227,7 +241,10 @@ describe("D561 stadiums §1 — the prints, and the registry rows that map them"
     const program = programFor(ACADEMY);
     expect(program).toEqual({
       stadium: {
-        ability: { label: "Academy at Night", program: [{ op: "payFromHand", count: 1, to: "deckTop" }] },
+        ability: {
+          label: "Academy at Night",
+          program: [{ op: "payFromHand", count: 1, to: "deckTop" }],
+        },
       },
     });
     expect(Object.keys(program ?? {})).toEqual(["stadium"]);
@@ -236,7 +253,9 @@ describe("D561 stadiums §1 — the prints, and the registry rows that map them"
 
   it("Perilous Jungle: `poisonExtraCounters { 20, excludesType Darkness }`, only a `stadium` key", () => {
     const program = programFor(JUNGLE);
-    expect(program).toEqual({ stadium: { poisonExtraCounters: { amount: 20, excludesType: "Darkness" } } });
+    expect(program).toEqual({
+      stadium: { poisonExtraCounters: { amount: 20, excludesType: "Darkness" } },
+    });
     expect(Object.keys(program ?? {})).toEqual(["stadium"]);
     expect(POOL[JUNGLE]?.trainerType).toBe("Stadium");
   });
@@ -270,12 +289,16 @@ describe("D561 stadiums §2 — Perilous Jungle: +20 on each Poisoned non-{D} Po
 
   it("with NO Stadium, or a different one, the tick is the condition's own 10", () => {
     expect(checkup(poison(table(), "p2")).state.players.p2.active?.damage).toBe(10);
-    expect(checkup(poison(stadium(table(), "fix-stadium"), "p2")).state.players.p2.active?.damage).toBe(10);
+    expect(
+      checkup(poison(stadium(table(), "fix-stadium"), "p2")).state.players.p2.active?.damage,
+    ).toBe(10);
   });
 
   it("an UN-Poisoned body takes nothing, and a BURNED one takes the Burn's 20 alone", () => {
     expect(placed(checkup(stadium(table(), JUNGLE)).events)).toEqual([]);
-    expect(placed(checkup(burn(stadium(table(), JUNGLE), "p2")).events)).toEqual([["p2", 20, "burn"]]);
+    expect(placed(checkup(burn(stadium(table(), JUNGLE), "p2")).events)).toEqual([
+      ["p2", 20, "burn"],
+    ]);
   });
 
   it("🛑 R-PJ with Pecharunt — the SUMMED poison row (30) lands FIRST, then Toxic Subjugation's 50 (D556 R7's order)", () => {
@@ -287,7 +310,9 @@ describe("D561 stadiums §2 — Perilous Jungle: +20 on each Poisoned non-{D} Po
     ]);
     const order = types(events as GameEvent[]);
     expect(order.indexOf("ABILITY_TRIGGERED")).toBeGreaterThan(order.indexOf("COUNTERS_PLACED"));
-    expect(order.lastIndexOf("COUNTERS_PLACED")).toBeGreaterThan(order.indexOf("ABILITY_TRIGGERED"));
+    expect(order.lastIndexOf("COUNTERS_PLACED")).toBeGreaterThan(
+      order.indexOf("ABILITY_TRIGGERED"),
+    );
   });
 
   it("the scan itself: 20 for a non-{D} top card, 0 for {D}, 0 without the Stadium", () => {
@@ -307,22 +332,32 @@ describe("D561 stadiums §2 — Perilous Jungle: +20 on each Poisoned non-{D} Po
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck, once per player's turn (R-AN)", () => {
-  const activate = (board: GameState, seat: Seat = "p1") => mustApply(board, { type: "useStadiumAbility", seat });
+  const activate = (board: GameState, seat: Seat = "p1") =>
+    mustApply(board, { type: "useStadiumAbility", seat });
 
   it("two different cards in hand: the pick PARKS (mandatory 1), and the answer goes ON TOP of the deck", () => {
     const board = setHand(stadium(table(), ACADEMY), "p1", [ITEM_A, ITEM_B]);
     const { state: parked, events } = activate(board);
     const p = prompt(parked);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
-    expect(p).toMatchObject({ min: 1, max: 1, dest: "deckTop", note: "Put a card from your hand on top of your deck." });
+    expect(p).toMatchObject({
+      min: 1,
+      max: 1,
+      dest: "deckTop",
+      note: "Put a card from your hand on top of your deck.",
+    });
     expect(types(events as GameEvent[])[0]).toBe("STADIUM_ABILITY_ACTIVATED");
     const chosen = board.players.p1.hand[1] as string;
     const { state, events: paid } = mustApply(parked, cards([chosen]));
     expect(state.players.p1.deck[0]).toBe(chosen);
     expect(state.players.p1.hand).toEqual([board.players.p1.hand[0]]);
     expect(state.players.p1.deck).toHaveLength(board.players.p1.deck.length + 1);
-    expect(all(paid, "HAND_COST_PAID")).toEqual([{ type: "HAND_COST_PAID", seat: "p1", uids: [chosen], to: "deckTop" }]);
-    expect(render(paid, state).map((r) => r.text)).toContain("put 1 card from their hand on top of their deck");
+    expect(all(paid, "HAND_COST_PAID")).toEqual([
+      { type: "HAND_COST_PAID", seat: "p1", uids: [chosen], to: "deckTop" },
+    ]);
+    expect(render(paid, state).map((r) => r.text)).toContain(
+      "put 1 card from their hand on top of their deck",
+    );
     expect(state.phase.kind).toBe("turn:action");
   });
 

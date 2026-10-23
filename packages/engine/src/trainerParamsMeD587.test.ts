@@ -104,7 +104,12 @@ const FACES: readonly (readonly [
     "Tarragon",
     "Put up to 4 in any combination of {F} Pokémon and Basic {F} Energy cards from your discard pile into your hand.",
     "Put up to 5 in any combination of Pokémon and Basic Energy cards from your discard pile into your hand.",
-    [["up to 5 in any combination of Pokémon and Basic Energy", "up to 4 in any combination of {F} Pokémon and Basic {F} Energy"]],
+    [
+      [
+        "up to 5 in any combination of Pokémon and Basic Energy",
+        "up to 4 in any combination of {F} Pokémon and Basic {F} Energy",
+      ],
+    ],
   ],
   [
     ["me02.5-198", "me03-081", "me03-113"],
@@ -125,7 +130,10 @@ const FACES: readonly (readonly [
     "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck. If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
     [
       ["choose a card", "choose an Energy card"],
-      [" If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.", ""],
+      [
+        " If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
+        "",
+      ],
     ],
   ],
 ];
@@ -186,13 +194,22 @@ describe("D587 §2 — the registry: one NEW object per text, the twin's op at t
       },
     ]);
     expect(programFor("me04-079")?.trainer).toEqual([
-      { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal", count: 2 },
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: "Metal",
+        targetType: "Metal",
+        count: 2,
+      },
     ]);
   });
 
   it("Jacinthe = Poké Vital A's heal with the {P} filter", () => {
     expect(programFor("me03-075")?.trainer).toEqual([
-      { ...programFor("sv06.5-062")?.trainer?.[0], filter: { kind: "typedPokemon", pokemonType: "Psychic" } },
+      {
+        ...programFor("sv06.5-062")?.trainer?.[0],
+        filter: { kind: "typedPokemon", pokemonType: "Psychic" },
+      },
     ]);
   });
 
@@ -310,7 +327,8 @@ const LOCAL: Record<string, Card> = {
       {
         cost: ["Fighting", "Fighting", "Colorless"],
         name: "Counter Jewel",
-        effect: "If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage.",
+        effect:
+          "If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage.",
         damage: "70+",
       },
     ],
@@ -430,7 +448,8 @@ function refused(state: GameState, id: string): void {
 }
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const bench = (index: number) => ({ seat: "p1", spot: { spot: "bench", index } }) as const;
@@ -487,7 +506,9 @@ describe("D587 §4 — Philippe: up to 2 Basic {M} Energy from the discard to 1 
       "fix-metal-energy",
       "fix-metal-energy",
     ]);
-    expect(ids(done, done.players.p1.discard).filter((x) => x === "fix-metal-energy")).toHaveLength(1);
+    expect(ids(done, done.players.p1.discard).filter((x) => x === "fix-metal-energy")).toHaveLength(
+      1,
+    );
     expect(ids(done, done.players.p1.discard)).toContain("fix-fire-energy");
   });
 
@@ -499,7 +520,10 @@ describe("D587 §4 — Philippe: up to 2 Basic {M} Energy from the discard to 1 
       choice: { kind: "pokemon", ref: bench(1), take: 1 },
     } as GameAction).state;
     expect(ids(one, one.players.p1.bench[1]?.energy ?? [])).toEqual(["fix-metal-energy"]);
-    const single = play(discardFromDeck(board(MET, []), "p1", "fix-metal-energy", 1), PHILIPPE).state;
+    const single = play(
+      discardFromDeck(board(MET, []), "p1", "fix-metal-energy", 1),
+      PHILIPPE,
+    ).state;
     const done = mustApply(single, pick("p1", { seat: "p1", spot: { spot: "active" } })).state;
     expect(ids(done, done.players.p1.active?.energy ?? [])).toEqual(["fix-metal-energy"]);
   });
@@ -524,7 +548,7 @@ describe("D587 §5 — Jacinthe: heal 150 from 1 of your {P} Pokémon", () => {
     expect(done.players.p1.bench.map((b) => b.damage)).toEqual([50, 30]);
   });
 
-  it("Carbink's in-play {P} (\"Double Type\") makes it a {P} Pokémon; no {P} body refuses it", () => {
+  it('Carbink\'s in-play {P} ("Double Type") makes it a {P} Pokémon; no {P} body refuses it', () => {
     let state = board(FILLER, [CARBINK, FIGHT]);
     state = setBenchDamage(setBenchDamage(state, "p1", 0, 60), "p1", 1, 60);
     const done = play(state, JACINTHE).state;
@@ -547,7 +571,9 @@ describe("D587 §6 — Firebreather: up to 7 Basic {R} Energy from the deck to t
     for (const uid of take) expect(done.players.p1.hand).toContain(uid);
     expect(events.some((e) => e.type === "SHUFFLE")).toBe(true);
     // The printed "reveal them": the search event carries the reveal flag (D225).
-    expect(all(events, "DECK_SEARCHED")).toMatchObject([{ seat: "p1", dest: "hand", reveal: true }]);
+    expect(all(events, "DECK_SEARCHED")).toMatchObject([
+      { seat: "p1", dest: "hand", reveal: true },
+    ]);
   });
 });
 
@@ -558,7 +584,9 @@ describe("D587 §7 — Fighting Gong: a Basic {F} Energy card or a Basic {F} Pok
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 0, max: 1, dest: "hand" });
     // Carbink is a printed Basic {F} Pokémon too.
-    expect(new Set(ids(parked, p.candidates))).toEqual(new Set(["fix-fighting-energy", FIGHT, CARBINK]));
+    expect(new Set(ids(parked, p.candidates))).toEqual(
+      new Set(["fix-fighting-energy", FIGHT, CARBINK]),
+    );
     const gong = p.candidates.find((u) => idOf(parked, u) === FIGHT) as string;
     const done = mustApply(parked, cards([gong])).state;
     expect(done.players.p1.hand).toContain(gong);
@@ -603,7 +631,8 @@ describe("D587 §9 — Poké Pad: a Pokémon that doesn't have a Rule Box", () =
     expect(p).toMatchObject({ min: 0, max: 1, dest: "hand" });
     const offered = new Set(ids(parked, p.candidates));
     expect(offered.has(EX)).toBe(false);
-    for (const id of [PSY, MET, FIGHT, FIGHT_S1, CARBINK, FILLER]) expect(offered.has(id), id).toBe(true);
+    for (const id of [PSY, MET, FIGHT, FIGHT_S1, CARBINK, FILLER])
+      expect(offered.has(id), id).toBe(true);
     for (const id of offered) expect(POOL[id ?? ""]?.category, id).toBe("Pokemon");
   });
 });
@@ -623,7 +652,9 @@ describe("D587 §10 — Energy Swatter: an Energy card from the opponent's revea
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 1, max: 1 });
     expect(p.note).toBe(text(SWATTER));
-    expect(new Set(ids(parked, p.candidates))).toEqual(new Set(["fix-fire-energy", "fix-water-energy"]));
+    expect(new Set(ids(parked, p.candidates))).toEqual(
+      new Set(["fix-fire-energy", "fix-water-energy"]),
+    );
     const water = p.candidates.find((u) => idOf(parked, u) === "fix-water-energy") as string;
     const done = mustApply(parked, cards([water])).state;
     expect(done.players.p2.deck.at(-1)).toBe(water);
@@ -654,7 +685,10 @@ describe("D587 §11 — Repel: switch out the opponent's Active; the opponent ch
     const p = parked.phase.prompt;
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.note).toBe("Choose your new Active Pokémon.");
-    const done = mustApply(parked, pick("p2", { seat: "p2", spot: { spot: "bench", index: 1 } })).state;
+    const done = mustApply(
+      parked,
+      pick("p2", { seat: "p2", spot: { spot: "bench", index: 1 } }),
+    ).state;
     expect(idOf(done, done.players.p2.active?.stack.at(-1))).toBe(MET);
     expect(done.players.p2.bench.map((b) => b.stack.at(-1))).toContain(wasActive);
   });

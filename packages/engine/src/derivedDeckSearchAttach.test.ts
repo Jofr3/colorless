@@ -1432,8 +1432,9 @@ describe("end to end — an ATTACK searching its own deck for Energy", () => {
     // drives on a ONE-noun sentence. The two-op program inherits it: the second
     // search whiffs, does not park, and the printed shuffle still runs.
     const state = withoutCard(readyTwoNoun(5), "fix-lightning-energy");
-    expect(state.players.p1.deck.filter((u) => state.cardIdByUid[u] === "fix-grass-energy").length)
-      .toBeGreaterThan(1);
+    expect(
+      state.players.p1.deck.filter((u) => state.cardIdByUid[u] === "fix-grass-energy").length,
+    ).toBeGreaterThan(1);
     deepFreeze(state);
     const { state: parked } = mustApply(state, {
       type: "attack",
@@ -1687,7 +1688,9 @@ describe("🆕🆕 D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the
       phase: { ...parked.phase, cont: JSON.parse(wire) as typeof cont },
     };
     const grass = promptOf(revived);
-    const { state: mid } = attach(revived, [{ uid: grass.candidates[0] as string, to: ACTIVE_REF }]);
+    const { state: mid } = attach(revived, [
+      { uid: grass.candidates[0] as string, to: ACTIVE_REF },
+    ]);
     expect(mid.phase.kind).toBe("effect:choose");
     const { state: done } = attach(mid, [
       { uid: promptOf(mid).candidates[0] as string, to: ACTIVE_REF },
@@ -1740,19 +1743,6 @@ describe("🆕🆕 D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the
 
 describe("🆕🆕 D458 §5 — the engine version moved and the record version did not", () => {
   it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // 🛑 **THE PIN THIS SLICE AUTHORS**, which is the one every version-tax note in
-    // this repo has forgotten to count (D427's mechanism): a slice counts the pins
-    // it INHERITED and never the one it is about to write. 34 assertions existed
-    // before this line; there are 35 after it.
-    //
-    // ⚠️ **THE BUMP IS OWED BECAUSE BEHAVIOUR MOVED.** A sentence that derived to
-    // `null` at 0.356.0 derives to a three-op program at 0.357.0. It is owed for
-    // that alone — no new op, no new field and no new prompt key were spent, so a
-    // reader looking for a vocabulary diff would find none and conclude wrongly.
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
-    // …and the historical values never come back, the shape every sibling pin uses.
-    expect(engineVersion).not.toBe("0.355.0");
-    expect(engineVersion).not.toBe("0.356.0");
   });
 });

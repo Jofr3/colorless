@@ -163,7 +163,8 @@ describe("mapCard", () => {
       {
         cost: ["Grass", "Water", "Psychic"],
         name: "Fluorite",
-        effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
+        effect:
+          "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
       },
     ]);
     expect(row.hp).toBeNull();
@@ -198,7 +199,7 @@ describe("mapCard", () => {
 
   // 🆕🆕🆕 D583 — tcgdex tags 14 legal Special Energies "Normal" (every `me` one; `sv` Reversal,
   // Prism, Ignition). The verbatim Prism Energy payload (fetched 2026-10-07) is one of them.
-  it("writes \"Special\" for a Normal-tagged Energy that prints rules text (Prism Energy sv10.5b-086)", () => {
+  it('writes "Special" for a Normal-tagged Energy that prints rules text (Prism Energy sv10.5b-086)', () => {
     const card = tcgdexCardSchema.parse(cardEnergyNormalTag);
     expect(card.category === "Energy" ? card.energyType : null).toBe("Normal");
     const row = mapCard(card);
@@ -215,7 +216,13 @@ describe("mapCard", () => {
     if (base.category !== "Pokemon") throw new Error("fixture is a Pokémon");
     const row = mapCard({
       ...base,
-      abilities: [{ type: "Ability", name: "Nighttime Byway", effect: "Your Active Pokémon's Retreat Cost is ColorlessColorless less." }],
+      abilities: [
+        {
+          type: "Ability",
+          name: "Nighttime Byway",
+          effect: "Your Active Pokémon's Retreat Cost is ColorlessColorless less.",
+        },
+      ],
       attacks: [
         { cost: ["Colorless"], name: "Tackle", damage: 10 },
         {
@@ -224,20 +231,39 @@ describe("mapCard", () => {
           effect:
             'This attack does 30 more damage for each <span class="energy-symbol Water" title="Water">Water</span> Energy attached to this Pokémon. <em>(Hi.)</em>',
         },
-        { cost: ["Fire"], name: "Inferno X", effect: "Discard any amount of [R] Energy from among your Pokémon." },
+        {
+          cost: ["Fire"],
+          name: "Inferno X",
+          effect: "Discard any amount of [R] Energy from among your Pokémon.",
+        },
       ],
     });
     expect(row.abilitiesJson).toEqual([
-      { type: "Ability", name: "Nighttime Byway", effect: "Your Active Pokémon's Retreat Cost is {C}{C} less." },
+      {
+        type: "Ability",
+        name: "Nighttime Byway",
+        effect: "Your Active Pokémon's Retreat Cost is {C}{C} less.",
+      },
     ]);
     expect(row.attacksJson).toEqual([
       { cost: ["Colorless"], name: "Tackle", damage: 10 },
-      { cost: ["Water"], name: "Hydro Pump", effect: "This attack does 30 more damage for each {W} Energy attached to this Pokémon. (Hi.)" },
-      { cost: ["Fire"], name: "Inferno X", effect: "Discard any amount of {R} Energy from among your Pokémon." },
+      {
+        cost: ["Water"],
+        name: "Hydro Pump",
+        effect:
+          "This attack does 30 more damage for each {W} Energy attached to this Pokémon. (Hi.)",
+      },
+      {
+        cost: ["Fire"],
+        name: "Inferno X",
+        effect: "Discard any amount of {R} Energy from among your Pokémon.",
+      },
     ]);
     const trainer = tcgdexCardSchema.parse(cardTrainer);
     if (trainer.category !== "Trainer") throw new Error("fixture is a Trainer");
-    expect(mapCard({ ...trainer, effect: "Attach a Basic Fire Energy card." }).effect).toBe("Attach a Basic {R} Energy card.");
+    expect(mapCard({ ...trainer, effect: "Attach a Basic Fire Energy card." }).effect).toBe(
+      "Attach a Basic {R} Energy card.",
+    );
     // A clean `sv` row maps byte for byte as before.
     expect(mapCard(base).attacksJson).toEqual(base.attacks);
     expect(mapCard(base).abilitiesJson).toEqual(base.abilities);
@@ -249,17 +275,21 @@ describe("mapCard", () => {
   it("writes an Energy's rules text and a Trainer's printed attack in the `sv` spelling", () => {
     const energy = tcgdexCardSchema.parse(cardEnergySpecial);
     if (energy.category !== "Energy") throw new Error("fixture is an Energy");
-    expect(mapCard({ ...energy, effect: "This card provides ColorlessColorless Energy." }).effect).toBe(
-      "This card provides {C}{C} Energy.",
-    );
+    expect(
+      mapCard({ ...energy, effect: "This card provides ColorlessColorless Energy." }).effect,
+    ).toBe("This card provides {C}{C} Energy.");
     const tm = tcgdexCardSchema.parse(cardTrainerTm);
     if (tm.category !== "Trainer") throw new Error("fixture is a Trainer");
-    const attacks = (tm.attacks ?? []).map((attack) => ({ ...attack, effect: `${attack.effect} <em>(Hi.)</em>` }));
+    const attacks = (tm.attacks ?? []).map((attack) => ({
+      ...attack,
+      effect: `${attack.effect} <em>(Hi.)</em>`,
+    }));
     expect(mapCard({ ...tm, attacks }).attacksJson).toEqual([
       {
         cost: ["Grass", "Water", "Psychic"],
         name: "Fluorite",
-        effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon. (Hi.)",
+        effect:
+          "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon. (Hi.)",
       },
     ]);
   });
@@ -298,7 +328,10 @@ describe("mapCard", () => {
   // rarity's did (D194). Cheaper to guard at ingest than to discover later.
   it("normalises a 'None' suffix to NULL, and an absent one too", () => {
     const sentinel = mapCard(
-      tcgdexCardSchema.parse({ ...(cardPokemonAbility as Record<string, unknown>), suffix: "None" }),
+      tcgdexCardSchema.parse({
+        ...(cardPokemonAbility as Record<string, unknown>),
+        suffix: "None",
+      }),
     );
     expect(sentinel.suffix).toBeNull();
 
@@ -351,8 +384,17 @@ describe("Weakness / Resistance supplement (card revision B39)", () => {
   // The Miraidon ex fixture with its id moved into White Flare and tcgdex's two
   // fields dropped — the shape every sv10.5w / sv10.5b payload arrives in.
   function bare(id: string, overrides: Record<string, unknown> = {}) {
-    const { weaknesses: _w, resistances: _r, ...rest } = cardPokemonAbility as Record<string, unknown>;
-    return tcgdexCardSchema.parse({ ...rest, id, legal: { standard: true, expanded: true }, ...overrides });
+    const {
+      weaknesses: _w,
+      resistances: _r,
+      ...rest
+    } = cardPokemonAbility as Record<string, unknown>;
+    return tcgdexCardSchema.parse({
+      ...rest,
+      id,
+      legal: { standard: true, expanded: true },
+      ...overrides,
+    });
   }
 
   it("fills both fields from the table when tcgdex sends neither", () => {
@@ -375,7 +417,9 @@ describe("Weakness / Resistance supplement (card revision B39)", () => {
 
   it("feeds the print key, so a patched print is not keyed as a weakless one", () => {
     const patched = mapCard(bare("sv10.5w-063"));
-    expect(patched.printKey).not.toBe(printKey({ ...patched, weaknessesJson: null, resistancesJson: null }));
+    expect(patched.printKey).not.toBe(
+      printKey({ ...patched, weaknessesJson: null, resistancesJson: null }),
+    );
   });
 
   it("leaves an id outside the table null", () => {
@@ -394,7 +438,17 @@ describe("Weakness / Resistance supplement (card revision B39)", () => {
   });
 
   it("holds only well-formed entries", () => {
-    const types = new Set(["Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Darkness", "Metal", "Colorless"]);
+    const types = new Set([
+      "Grass",
+      "Fire",
+      "Water",
+      "Lightning",
+      "Psychic",
+      "Fighting",
+      "Darkness",
+      "Metal",
+      "Colorless",
+    ]);
     const ids = Object.keys(WEAK_RES_SUPPLEMENT);
     expect(ids).toHaveLength(345);
     for (const [id, entry] of Object.entries(WEAK_RES_SUPPLEMENT)) {

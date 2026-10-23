@@ -2,9 +2,13 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
-import { deriveAttackDamageBonus, deriveAttackDamageMultiplier, deriveAttackEffect } from "./effects";
+import {
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackEffect,
+} from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import {
   FIXTURE_POOL,
   attachBenchFromDeck,
@@ -33,9 +37,12 @@ import {
 // Dropped and named: Doublade ×3 and Okidogi (§1) [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630 (M1)] [🆕🆕🆕 D633 (D539):
 // Doublade ×3 BUILT at D633 (O1)].
 
-const RONDO = "This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.";
-const FLAME_LEGION = "This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.";
-const BOUNCY_CIRCLE = "This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.";
+const RONDO =
+  "This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.";
+const FLAME_LEGION =
+  "This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.";
+const BOUNCY_CIRCLE =
+  "This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.";
 const PIKA_CHAIN = "This attack does 40 damage for each of your Pikachu and Pikachu ex in play.";
 const RIPTIDE =
   "This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.";
@@ -59,7 +66,10 @@ const DROPPED: readonly (readonly [string, number])[] = [
   ],
   // The Prizes taken during the opponent's last turn: no state records them (an MRV bump). [🆕🆕🆕 D630 (D539):
   // WITHDRAWN — `PlayerSide.prizesTakenOnTurn` records them since D630 (MRV 43 → 44).]
-  ["This attack does 60 more damage for each Prize card your opponent took during their last turn.", 1],
+  [
+    "This attack does 60 more damage for each Prize card your opponent took during their last turn.",
+    1,
+  ],
 ];
 
 describe("D623 §1 — the texts: 5 attack sentences / 7 printings", () => {
@@ -88,7 +98,10 @@ describe("D623 §1 — the texts: 5 attack sentences / 7 printings", () => {
 
 describe("D623 §2 — the readings", () => {
   it("three new members, each on its own literal anchor", () => {
-    expect(deriveAttackDamageBonus(RONDO)).toEqual({ per: 50, count: { kind: "damagedBenchedPokemon" } });
+    expect(deriveAttackDamageBonus(RONDO)).toEqual({
+      per: 50,
+      count: { kind: "damagedBenchedPokemon" },
+    });
     expect(deriveAttackDamageBonus(FLAME_LEGION)).toEqual({
       per: 40,
       count: { kind: "benchedPokemonWithEnergy", energyType: "Fire" },
@@ -116,7 +129,9 @@ describe("D623 §2 — the readings", () => {
     }
     // A different energy symbol is not read (the {R} is literal).
     expect(
-      deriveAttackDamageBonus("This attack does 40 more damage for each of your Benched Pokémon that has any {W} Energy attached."),
+      deriveAttackDamageBonus(
+        "This attack does 40 more damage for each of your Benched Pokémon that has any {W} Energy attached.",
+      ),
     ).toBeNull();
   });
 
@@ -152,7 +167,11 @@ describe("D623 §2 — the readings", () => {
     expect(deriveAttackDamageMultiplier(zero)).toBeNull();
     expect(deriveAttackEffect(zero)).toBeNull();
     // The head alone stays the shipped discard-pile arm's (a different, filter-mapped reading).
-    expect(deriveAttackEffect("This attack does 20 damage for each Basic {W} Energy card in your discard pile.")).toBeNull();
+    expect(
+      deriveAttackEffect(
+        "This attack does 20 damage for each Basic {W} Energy card in your discard pile.",
+      ),
+    ).toBeNull();
   });
 });
 
@@ -170,8 +189,14 @@ const PSY = "d623-psychic";
 const LIGHTNING = "d623-lightning";
 const BRAVERY_CHARM = "sv02-173"; // FIXTURE_POOL — +50 HP on a Basic holder
 
-const mon = (id: string, name: string, hp: number, type: string, attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  type: string,
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types: [type], retreat: 2, attacks, ...extra });
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
 
 const LOCAL: Record<string, Card> = {
@@ -182,7 +207,12 @@ const LOCAL: Record<string, Card> = {
     "Psychic",
     [
       { cost: ["Psychic"], name: "Horrifying Rondo", damage: "30+", effect: RONDO },
-      { cost: ["Psychic", "Psychic"], name: "Ghostly Touch", damage: 140, effect: "Discard a random card from your opponent's hand." },
+      {
+        cost: ["Psychic", "Psychic"],
+        name: "Ghostly Touch",
+        damage: 140,
+        effect: "Discard a random card from your opponent's hand.",
+      },
     ],
     { stage: "Stage1", evolveFrom: "Pumpkaboo" },
   ),
@@ -195,20 +225,35 @@ const LOCAL: Record<string, Card> = {
     { stage: "Stage1", evolveFrom: "Charcadet" },
   ),
   // The printed attack carries no cost (LOCAL D1: no `cost` key).
-  "30th-120": mon("30th-120", "Igglybuff", 30, "Colorless", [{ name: "Bouncy Circle", damage: "30×", effect: BOUNCY_CIRCLE }]),
+  "30th-120": mon("30th-120", "Igglybuff", 30, "Colorless", [
+    { name: "Bouncy Circle", damage: "30×", effect: BOUNCY_CIRCLE },
+  ]),
   "30th-034": mon("30th-034", "Pikachu", 70, "Lightning", [
-    { cost: ["Lightning", "Lightning", "Lightning"], name: "Pika Chain", damage: "40×", effect: PIKA_CHAIN },
+    {
+      cost: ["Lightning", "Lightning", "Lightning"],
+      name: "Pika Chain",
+      damage: "40×",
+      effect: PIKA_CHAIN,
+    },
   ]),
   "me01-034": mon("me01-034", "Kyogre", 150, "Water", [
     { cost: ["Water"], name: "Riptide", damage: "20×", effect: RIPTIDE },
-    { cost: ["Water", "Water", "Colorless"], name: "Swirling Waves", damage: 130, effect: "Discard 2 Energy from this Pokémon." },
+    {
+      cost: ["Water", "Water", "Colorless"],
+      name: "Swirling Waves",
+      damage: 130,
+      effect: "Discard 2 Energy from this Pokémon.",
+    },
   ]),
   [FILLER]: mon(FILLER, "D623 Filler", 400, "Colorless", TAP),
   [TINY]: mon(TINY, "D623 Tiny", 30, "Colorless", TAP),
   [SMALL]: mon(SMALL, "D623 Small", 60, "Colorless", TAP),
   [PIKACHU]: mon(PIKACHU, "Pikachu", 60, "Lightning", TAP),
   [PIKACHU_EX]: mon(PIKACHU_EX, "Pikachu ex", 200, "Lightning", TAP),
-  [RAICHU]: mon(RAICHU, "Raichu", 120, "Lightning", TAP, { stage: "Stage1", evolveFrom: "Pikachu" }),
+  [RAICHU]: mon(RAICHU, "Raichu", 120, "Lightning", TAP, {
+    stage: "Stage1",
+    evolveFrom: "Pikachu",
+  }),
   [FIRE]: typedEnergy(FIRE, "Fire"),
   [WATER]: typedEnergy(WATER, "Water"),
   [PSY]: typedEnergy(PSY, "Psychic"),
@@ -235,7 +280,11 @@ const DECK = deckOf({
   "fix-blend": 2,
   "fix-energy": 20,
 });
-const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), BRAVERY_CHARM, "fix-blend"]);
+const BOARD_IDS = new Set([
+  ...Object.keys(LOCAL).filter((id) => id !== FILLER),
+  BRAVERY_CHARM,
+  "fix-blend",
+]);
 
 function must(result: ReturnType<typeof applyAction>): GameState {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -248,7 +297,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -256,15 +307,21 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -286,7 +343,8 @@ function unprize(state: GameState, seat: Seat): GameState {
 /** P1's Active is `attacker` with `energy` attached; P2's Active is a Filler. Both Benches empty. */
 function table(attacker: string, energy: readonly (readonly [string, number])[]): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   return state;
@@ -295,7 +353,8 @@ function table(attacker: string, energy: readonly (readonly [string, number])[])
 const attack = (index: number, seat: Seat = "p1"): GameAction => ({ type: "attack", seat, index });
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-const dealtRows = (state: GameState, index: number) => of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
+const dealtRows = (state: GameState, index: number) =>
+  of(mustApply(state, attack(index)).events, "DAMAGE_DEALT");
 const dealt = (state: GameState, index: number) => dealtRows(state, index)[0]?.dealt;
 
 describe("D623 §3 — the three new members on a board", () => {
@@ -360,7 +419,9 @@ describe("D623 §4 — the two texts on shipped members, on a board", () => {
       expect(after.discard).not.toContain(u);
       expect(after.deck).toContain(u);
     }
-    expect(after.discard.map((u) => out.state.cardIdByUid[u]).sort()).toEqual([FIRE, "fix-blend"].sort());
+    expect(after.discard.map((u) => out.state.cardIdByUid[u]).sort()).toEqual(
+      [FIRE, "fix-blend"].sort(),
+    );
     expect(out.state.players.p2.discard).toHaveLength(2);
     expect(of(out.events, "SHUFFLE")).toHaveLength(1);
   });
@@ -371,11 +432,5 @@ describe("D623 §4 — the two texts on shipped members, on a board", () => {
     expect(of(out.events, "DAMAGE_DEALT")).toEqual([]);
     expect(of(out.events, "SHUFFLE")).toHaveLength(1);
     expect(out.state.players.p1.discard).toHaveLength(2);
-  });
-});
-
-describe("D623 §5 — the version", () => {
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

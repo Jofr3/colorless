@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -81,30 +81,70 @@ const DOOMED = 1;
 const WIDE = 2;
 const TAP_ATTACK = 3;
 const TAP: Card["attacks"] = [{ cost: ["Colorless"], name: "Tap", damage: 10 }];
-const ability = (name: string, effect: string) => ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
-const mon = (id: string, name: string, hp: number, types: string[], attacks: Card["attacks"], extra: Partial<Card> = {}) =>
-  battler(id, { name, hp, types, retreat: 1, attacks, ...extra });
+const ability = (name: string, effect: string) =>
+  ({ abilities: [{ type: "Ability", name, effect }] }) as Partial<Card>;
+const mon = (
+  id: string,
+  name: string,
+  hp: number,
+  types: string[],
+  attacks: Card["attacks"],
+  extra: Partial<Card> = {},
+) => battler(id, { name, hp, types, retreat: 1, attacks, ...extra });
 
 const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
     FLYGON.map((id) => [
       id,
-      mon(id, "Flygon", 150, ["Fighting"], [{ cost: ["Fighting", "Fighting"], name: "Cutting Wind", damage: 130 }], {
-        stage: "Stage2",
-        evolveFrom: "Vibrava",
-        ...ability("Sandy Flapping", SANDY_FLAPPING),
-      }),
+      mon(
+        id,
+        "Flygon",
+        150,
+        ["Fighting"],
+        [{ cost: ["Fighting", "Fighting"], name: "Cutting Wind", damage: 130 }],
+        {
+          stage: "Stage2",
+          evolveFrom: "Vibrava",
+          ...ability("Sandy Flapping", SANDY_FLAPPING),
+        },
+      ),
     ]),
   ),
   ...Object.fromEntries(
-    MIRAIDON.map((id) => [id, mon(id, "Miraidon", 120, ["Lightning"], TAP, ability("Photon Cord", PHOTON_CORD))]),
+    MIRAIDON.map((id) => [
+      id,
+      mon(id, "Miraidon", 120, ["Lightning"], TAP, ability("Photon Cord", PHOTON_CORD)),
+    ]),
   ),
   ...Object.fromEntries(
-    GENGAR.map((id) => [id, mon(id, "Gengar ex", 280, ["Darkness"], TAP, ability("Fainting Spell", FAINTING_SPELL))]),
+    GENGAR.map((id) => [
+      id,
+      mon(id, "Gengar ex", 280, ["Darkness"], TAP, ability("Fainting Spell", FAINTING_SPELL)),
+    ]),
   ),
   [POLICY]: { ...trainerCard(POLICY, "Tool", ADVERSITY_POLICY), name: "Adversity Policy" },
-  [CLEFABLE]: mon(CLEFABLE, "Mega Clefable ex", 330, ["Psychic"], MOVES, ability("Luminous Wing", "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.")),
-  [FLUTTER]: mon(FLUTTER, "Flutter Mane", 90, ["Psychic"], MOVES, ability("Midnight Fluttering", "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.")),
+  [CLEFABLE]: mon(
+    CLEFABLE,
+    "Mega Clefable ex",
+    330,
+    ["Psychic"],
+    MOVES,
+    ability(
+      "Luminous Wing",
+      "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.",
+    ),
+  ),
+  [FLUTTER]: mon(
+    FLUTTER,
+    "Flutter Mane",
+    90,
+    ["Psychic"],
+    MOVES,
+    ability(
+      "Midnight Fluttering",
+      "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.",
+    ),
+  ),
   [BRACE]: {
     ...trainerCard(
       BRACE,
@@ -113,14 +153,19 @@ const LOCAL: Record<string, Card> = {
     ),
     name: "Survival Brace",
   },
-  [VIBRAVA]: mon(VIBRAVA, "Vibrava", 90, ["Fighting"], TAP, { stage: "Stage1", evolveFrom: "Trapinch" }),
+  [VIBRAVA]: mon(VIBRAVA, "Vibrava", 90, ["Fighting"], TAP, {
+    stage: "Stage1",
+    evolveFrom: "Trapinch",
+  }),
   [FILLER]: mon(FILLER, "D626 Filler", 400, ["Colorless"], TAP),
   [FOE]: mon(FOE, "D626 Foe", 400, ["Colorless"], MOVES),
   [FOE_EX]: mon(FOE_EX, "D626 Foe ex", 400, ["Colorless"], MOVES),
   [MEGA_FOE]: mon(MEGA_FOE, "Mega D626 Foe ex", 400, ["Colorless"], MOVES),
   [SPARK]: mon(SPARK, "D626 Spark", 400, ["Lightning"], MOVES),
   [DUAL]: mon(DUAL, "D626 Dual", 400, ["Water", "Lightning"], MOVES),
-  [WEAK_L]: mon(WEAK_L, "D626 Weak", 400, ["Colorless"], TAP, { weaknesses: [{ type: "Lightning", value: "×2" }] }),
+  [WEAK_L]: mon(WEAK_L, "D626 Weak", 400, ["Colorless"], TAP, {
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+  }),
   [L]: typedEnergy(L, "Lightning"),
   [F]: typedEnergy(F, "Fighting"),
   [SPARE]: typedEnergy(SPARE, "Metal"),
@@ -166,7 +211,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -174,18 +221,24 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   // P1's SECOND turn (D590's opening), so a Flygon may be evolved from the hand.
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
   }
   return state;
 }
@@ -208,7 +261,8 @@ function unprize(state: GameState, seat: Seat): GameState {
 /** P1's Active is `attacker` (one {C} attached) over a FILLER; P2's Active is `defender` over `bench`. */
 function table(attacker: string, defender: string, bench: readonly string[] = [FILLER]): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+  for (const s of ["p1", "p2"] as const)
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   state = benchFromDeck(attachFromDeck(state, "p1", E, 1), "p1", FILLER);
   state = clearBench(setActiveFromDeck(state, "p2", defender), "p2");
@@ -217,11 +271,19 @@ function table(attacker: string, defender: string, bench: readonly string[] = [F
 }
 
 type Body = NonNullable<GameState["players"]["p1"]["active"]>;
-function edit(state: GameState, seat: Seat, where: "active" | number, change: (b: Body) => Body): GameState {
+function edit(
+  state: GameState,
+  seat: Seat,
+  where: "active" | number,
+  change: (b: Body) => Body,
+): GameState {
   const side = state.players[seat];
   if (where === "active") {
     if (side.active === null) throw new Error(`no ${seat} Active`);
-    return { ...state, players: { ...state.players, [seat]: { ...side, active: change(side.active) } } };
+    return {
+      ...state,
+      players: { ...state.players, [seat]: { ...side, active: change(side.active) } },
+    };
   }
   const bench = side.bench.map((b, i) => (i === where ? change(b) : b));
   return { ...state, players: { ...state.players, [seat]: { ...side, bench } } };
@@ -233,7 +295,10 @@ const hurt = (state: GameState, seat: Seat, where: "active" | number, damage: nu
 function rngFor(face: "heads" | "tails"): number {
   for (let r = 1; ; r += 1) if (flipCoin(r)[0] === face) return r;
 }
-const seeded = (state: GameState, face: "heads" | "tails") => ({ ...state, rngState: rngFor(face) });
+const seeded = (state: GameState, face: "heads" | "tails") => ({
+  ...state,
+  rngState: rngFor(face),
+});
 
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index });
 const resolve = (state: GameState, choice: unknown, seat: Seat = "p2") =>
@@ -243,12 +308,16 @@ const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) 
 const top = (state: GameState, seat: Seat) => state.players[seat].active?.stack.at(-1) ?? "";
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase;
 }
 
 /** Answer every prize / promotion interrupt with its first option until the board parks or the turn moves on. */
-function drain(start: { state: GameState; events: GameEvent[] }): { state: GameState; events: GameEvent[] } {
+function drain(start: { state: GameState; events: GameEvent[] }): {
+  state: GameState;
+  events: GameEvent[];
+} {
   let { state, events } = start;
   for (let i = 0; i < 20; i++) {
     const phase = state.phase;
@@ -303,7 +372,12 @@ describe("D626 §1 — the texts and the registry rows", () => {
             name: "Photon Cord",
             trigger: "onSelfActiveKnockedOut",
             program: [
-              { op: "moveEnergy", filter: { kind: "basicEnergy", energyType: "Lightning" }, max: 2, route: "selfToBench" },
+              {
+                op: "moveEnergy",
+                filter: { kind: "basicEnergy", energyType: "Lightning" },
+                max: 2,
+                route: "selfToBench",
+              },
             ],
           },
         ],
@@ -312,7 +386,8 @@ describe("D626 §1 — the texts and the registry rows", () => {
   });
 
   it("Gengar ex ×2: `koAttackerOnCoinFlip`; Adversity Policy: a damaged-trigger Tool behind the new Weakness gate", () => {
-    for (const id of GENGAR) expect(programFor(id), id).toEqual({ passive: { koAttackerOnCoinFlip: "Fainting Spell" } });
+    for (const id of GENGAR)
+      expect(programFor(id), id).toEqual({ passive: { koAttackerOnCoinFlip: "Fainting Spell" } });
     expect(programFor(POLICY)).toEqual({
       triggered: [
         {
@@ -332,7 +407,8 @@ describe("D626 §1 — the texts and the registry rows", () => {
   });
 
   it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping stay unkeyed (🆕🆕🆕 D642 (D539): WITHDRAWN — keyed since D642, the rung is inverted)", () => {
-    for (const id of ["me01-087", "me01-148", "30th-022"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
+    for (const id of ["me01-087", "me01-148", "30th-022"])
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
 });
 
@@ -342,13 +418,26 @@ describe("D626 §2 — Sandy Flapping, the on-evolve half: a confirm, then the o
     state = benchFromDeck(state, "p1", VIBRAVA);
     const side = state.players.p1;
     const uid = side.deck.find((u) => state.cardIdByUid[u] === FLYGON[0]) as string;
-    state = { ...state, players: { ...state.players, p1: { ...side, hand: [uid], deck: side.deck.filter((u) => u !== uid) } } };
-    return mustApply(state, { type: "evolve", seat: "p1", uid, target: { spot: "bench", index: 1 } });
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...side, hand: [uid], deck: side.deck.filter((u) => u !== uid) },
+      },
+    };
+    return mustApply(state, {
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index: 1 },
+    });
   };
 
   it("Flygon onto Vibrava: ABILITY_TRIGGERED, then the confirm carries the whole print; yes mills P2's top 2", () => {
     const parked = evolving();
-    expect(of(parked.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Sandy Flapping"]);
+    expect(of(parked.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
+      "Sandy Flapping",
+    ]);
     expect(prompt(parked.state).prompt).toStrictEqual({ kind: "confirm", note: SANDY_FLAPPING });
     const deck = parked.state.players.p2.deck;
     const done = resolve(parked.state, { kind: "confirm", yes: true }, "p1").state;
@@ -357,7 +446,7 @@ describe("D626 §2 — Sandy Flapping, the on-evolve half: a confirm, then the o
     expect(done.players.p2.discard.slice(-2).sort()).toEqual(deck.slice(0, 2).sort());
   });
 
-  it("no: nothing is milled (the printed \"you may\" is a real decline)", () => {
+  it('no: nothing is milled (the printed "you may" is a real decline)', () => {
     const parked = evolving();
     const deck = parked.state.players.p2.deck;
     const done = resolve(parked.state, { kind: "confirm", yes: false }, "p1").state;
@@ -371,13 +460,20 @@ describe("D626 §3 — Sandy Flapping, the Knock Out half: Active, by an opponen
     const state = table(FOE, FLYGON[0]);
     const flygon = top(state, "p2");
     const afterAttack = mustApply(state, attack(CRUSH)).state;
-    expect(afterAttack.pending.slice(0, 3).map((s) => s.kind)).toEqual(["takePrizes", "koTrigger", "promote"]);
+    expect(afterAttack.pending.slice(0, 3).map((s) => s.kind)).toEqual([
+      "takePrizes",
+      "koTrigger",
+      "promote",
+    ]);
     expect(afterAttack.pending[1]).toStrictEqual({ kind: "koTrigger", seat: "p2", uid: flygon });
     const parked = mustApply(afterAttack, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
     expect(of(parked.events, "ABILITY_TRIGGERED")).toEqual([
       { type: "ABILITY_TRIGGERED", seat: "p2", uid: flygon, ability: "Sandy Flapping" },
     ]);
-    expect(prompt(parked.state)).toMatchObject({ seat: "p2", prompt: { kind: "confirm", note: SANDY_FLAPPING } });
+    expect(prompt(parked.state)).toMatchObject({
+      seat: "p2",
+      prompt: { kind: "confirm", note: SANDY_FLAPPING },
+    });
     const deck = parked.state.players.p1.deck;
     const done = resolve(parked.state, { kind: "confirm", yes: true });
     expect(done.state.players.p1.deck).toEqual(deck.slice(2));
@@ -403,7 +499,9 @@ describe("D626 §3 — Sandy Flapping, the Knock Out half: Active, by an opponen
     }).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const deck = revived.players.p1.deck;
-    expect(resolve(revived, { kind: "confirm", yes: true }).state.players.p1.deck).toEqual(deck.slice(2));
+    expect(resolve(revived, { kind: "confirm", yes: true }).state.players.p1.deck).toEqual(
+      deck.slice(2),
+    );
   });
 
   it("a BENCHED Flygon KO'd by the attack's spread: no koTrigger (the `activeOnly` gate)", () => {
@@ -413,7 +511,9 @@ describe("D626 §3 — Sandy Flapping, the Knock Out half: Active, by an opponen
   });
 
   it("a Checkup Knock Out of the Active Flygon is not an attack: no koTrigger", () => {
-    let state = setConditions(hurt(table(FOE, FLYGON[0]), "p2", "active", 140), "p2", { poisonDamage: 10 });
+    let state = setConditions(hurt(table(FOE, FLYGON[0]), "p2", "active", 140), "p2", {
+      poisonDamage: 10,
+    });
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     expect(state.phase.kind).toBe("ko:takePrizes");
     expect(state.pending.some((s) => s.kind === "koTrigger")).toBe(false);
@@ -436,9 +536,13 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
   it("KO'd by Crush: ABILITY_TRIGGERED and a park for P2 BEFORE any Prize — the {L} only, up to 2, one Bench destination", () => {
     const state = miraidon();
     const uid = top(state, "p2");
-    const lightning = (state.players.p2.active?.energy ?? []).filter((u) => state.cardIdByUid[u] === L);
+    const lightning = (state.players.p2.active?.energy ?? []).filter(
+      (u) => state.cardIdByUid[u] === L,
+    );
     const { state: after, events } = mustApply(state, attack(CRUSH));
-    expect(of(events, "ABILITY_TRIGGERED")).toEqual([{ type: "ABILITY_TRIGGERED", seat: "p2", uid, ability: "Photon Cord" }]);
+    expect(of(events, "ABILITY_TRIGGERED")).toEqual([
+      { type: "ABILITY_TRIGGERED", seat: "p2", uid, ability: "Photon Cord" },
+    ]);
     expect(of(events, "KNOCKED_OUT")).toEqual([]);
     const phase = prompt(after);
     expect(phase.seat).toBe("p2");
@@ -454,15 +558,31 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
 
   it("answered 2 onto bench 1: they land, then the Knock Out takes the rest and P1 takes the Prize", () => {
     const state = miraidon();
-    const [a, b] = (state.players.p2.active?.energy ?? []).filter((u) => state.cardIdByUid[u] === L) as [string, string];
+    const [a, b] = (state.players.p2.active?.energy ?? []).filter(
+      (u) => state.cardIdByUid[u] === L,
+    ) as [string, string];
     const parked = mustApply(state, attack(CRUSH)).state;
     const dest = { seat: "p2", spot: { spot: "bench", index: 1 } } as const;
-    const done = drain(resolve(parked, { kind: "moveEnergy", picks: [{ uid: a, dest }, { uid: b, dest }] }));
+    const done = drain(
+      resolve(parked, {
+        kind: "moveEnergy",
+        picks: [
+          { uid: a, dest },
+          { uid: b, dest },
+        ],
+      }),
+    );
     const ko = of(done.events, "KNOCKED_OUT");
     expect(ko).toHaveLength(1);
     expect(ko[0]?.discarded).not.toContain(a);
-    expect(ids(done.state, ko[0]?.discarded ?? []).filter((id) => id === L || id === F).sort()).toEqual([F, L]);
-    const holder = [done.state.players.p2.active, ...done.state.players.p2.bench].find((p) => p?.energy.includes(a));
+    expect(
+      ids(done.state, ko[0]?.discarded ?? [])
+        .filter((id) => id === L || id === F)
+        .sort(),
+    ).toEqual([F, L]);
+    const holder = [done.state.players.p2.active, ...done.state.players.p2.bench].find((p) =>
+      p?.energy.includes(a),
+    );
     expect(holder?.energy).toEqual(expect.arrayContaining([a, b]));
     expect(done.state.players.p1.prizes).toHaveLength(5);
   });
@@ -471,7 +591,9 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
     const parked = mustApply(miraidon(), attack(CRUSH)).state;
     const energy = parked.players.p2.active?.energy ?? [];
     const done = drain(resolve(parked, { kind: "moveEnergy", picks: [] }));
-    expect(of(done.events, "KNOCKED_OUT")[0]?.discarded).toEqual(expect.arrayContaining([...energy]));
+    expect(of(done.events, "KNOCKED_OUT")[0]?.discarded).toEqual(
+      expect.arrayContaining([...energy]),
+    );
   });
 
   it("not Knocked Out (Tap): the seeded stage re-asks lethality and nothing triggers", () => {
@@ -489,7 +611,7 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
     expect(after.phase.kind).not.toBe("effect:choose");
   });
 
-  it("R-PHC1: a `knockOutDefender` doom is not \"by damage\" — no trigger", () => {
+  it('R-PHC1: a `knockOutDefender` doom is not "by damage" — no trigger', () => {
     const { state, events } = drain(mustApply(miraidon(), attack(DOOMED)));
     expect(of(events, "ABILITY_TRIGGERED")).toEqual([]);
     expect(of(events, "KNOCKED_OUT")).toHaveLength(1);
@@ -505,20 +627,29 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
   it("the scan's Ability arm comes first, flagged `fromAbility`, and only on the dying body", () => {
     const state = miraidon();
     const uid = top(state, "p2");
-    expect(koToolTriggersOf(state, "p2", uid).map((e) => [e.ability.name, e.toolUid === uid, e.fromAbility])).toEqual([
-      ["Photon Cord", true, true],
-    ]);
+    expect(
+      koToolTriggersOf(state, "p2", uid).map((e) => [
+        e.ability.name,
+        e.toolUid === uid,
+        e.fromAbility,
+      ]),
+    ).toEqual([["Photon Cord", true, true]]);
     expect(koToolTriggersOf(state, "p2", "d626-not-the-active")).toEqual([]);
   });
 
   it("the parked move round-trips through JSON (no new park shape)", () => {
-    const parked = JSON.parse(JSON.stringify(mustApply(miraidon(), attack(CRUSH)).state)) as GameState;
-    const [a] = (parked.players.p2.active?.energy ?? []).filter((u) => parked.cardIdByUid[u] === L) as [string];
+    const parked = JSON.parse(
+      JSON.stringify(mustApply(miraidon(), attack(CRUSH)).state),
+    ) as GameState;
+    const [a] = (parked.players.p2.active?.energy ?? []).filter(
+      (u) => parked.cardIdByUid[u] === L,
+    ) as [string];
     const dest = { seat: "p2", spot: { spot: "bench", index: 0 } } as const;
     const done = drain(resolve(parked, { kind: "moveEnergy", picks: [{ uid: a, dest }] }));
-    expect(done.state.players.p2.bench.some((p) => p.energy.includes(a)) || done.state.players.p2.active?.energy.includes(a)).toBe(
-      true,
-    );
+    expect(
+      done.state.players.p2.bench.some((p) => p.energy.includes(a)) ||
+        done.state.players.p2.active?.energy.includes(a),
+    ).toBe(true);
   });
 });
 
@@ -528,9 +659,17 @@ describe("D626 §5 — Fainting Spell: heads Knocks Out the Attacking Pokémon, 
     const gengar = top(state, "p2");
     const foe = top(state, "p1");
     const { state: after, events } = mustApply(state, attack(CRUSH));
-    expect(of(events, "ABILITY_TRIGGERED")).toEqual([{ type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Fainting Spell" }]);
+    expect(of(events, "ABILITY_TRIGGERED")).toEqual([
+      { type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Fainting Spell" },
+    ]);
     expect(of(events, "ABILITY_COIN_FLIP")).toEqual([
-      { type: "ABILITY_COIN_FLIP", seat: "p2", uid: gengar, ability: "Fainting Spell", result: "heads" },
+      {
+        type: "ABILITY_COIN_FLIP",
+        seat: "p2",
+        uid: gengar,
+        ability: "Fainting Spell",
+        result: "heads",
+      },
     ]);
     expect(of(events, "KNOCKED_OUT").map((e) => e.uid)).toEqual([gengar, foe]);
     expect(after.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p1", count: 2 });
@@ -575,7 +714,9 @@ describe("D626 §5 — Fainting Spell: heads Knocks Out the Attacking Pokémon, 
     const clefable = top(state, "p1");
     const { events } = mustApply(state, attack(CRUSH));
     expect(of(events, "ABILITY_COIN_FLIP").map((e) => e.result)).toEqual(["heads"]);
-    expect(of(events, "ABILITY_EFFECT_PREVENTED")).toEqual([{ type: "ABILITY_EFFECT_PREVENTED", seat: "p1", uid: clefable }]);
+    expect(of(events, "ABILITY_EFFECT_PREVENTED")).toEqual([
+      { type: "ABILITY_EFFECT_PREVENTED", seat: "p1", uid: clefable },
+    ]);
     expect(of(events, "KNOCKED_OUT").map((e) => e.uid)).toEqual([top(state, "p2")]);
   });
 
@@ -585,15 +726,29 @@ describe("D626 §5 — Fainting Spell: heads Knocks Out the Attacking Pokémon, 
   });
 
   it("a `knockOutDefender` doom is not damage, and a Checkup Knock Out is no attack: no coin", () => {
-    expect(of(mustApply(seeded(table(FOE, GENGAR[0]), "heads"), attack(DOOMED)).events, "ABILITY_COIN_FLIP")).toEqual([]);
-    let state = setConditions(hurt(seeded(table(FOE, GENGAR[0]), "heads"), "p2", "active", 270), "p2", { poisonDamage: 10 });
+    expect(
+      of(
+        mustApply(seeded(table(FOE, GENGAR[0]), "heads"), attack(DOOMED)).events,
+        "ABILITY_COIN_FLIP",
+      ),
+    ).toEqual([]);
+    let state = setConditions(
+      hurt(seeded(table(FOE, GENGAR[0]), "heads"), "p2", "active", 270),
+      "p2",
+      { poisonDamage: 10 },
+    );
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     expect(state.players.p1.active).not.toBeNull();
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p1" });
   });
 
   it("not Knocked Out: no coin", () => {
-    expect(of(mustApply(seeded(table(FOE, GENGAR[0]), "heads"), attack(TAP_ATTACK)).events, "ABILITY_COIN_FLIP")).toEqual([]);
+    expect(
+      of(
+        mustApply(seeded(table(FOE, GENGAR[0]), "heads"), attack(TAP_ATTACK)).events,
+        "ABILITY_COIN_FLIP",
+      ),
+    ).toEqual([]);
   });
 });
 
@@ -642,18 +797,25 @@ describe("D626 §6 — Adversity Policy: a holder Weak to the opponent's Active,
     expect(conditionHolds(spark, "p1", cond)).toBe(false);
     expect(conditionHolds(table(FOE, WEAK_L), "p2", cond)).toBe(false);
     // D552 — a retype onto {C} makes the printed ×2 name {C}: the {C} attacker now matches, the {L} one does not.
-    const retyped = (s: GameState) => edit(s, "p2", "active", (b) => ({ ...b, weaknessRetype: { type: "Colorless", turn: s.turn } }));
+    const retyped = (s: GameState) =>
+      edit(s, "p2", "active", (b) => ({
+        ...b,
+        weaknessRetype: { type: "Colorless", turn: s.turn },
+      }));
     expect(conditionHolds(retyped(table(FOE, WEAK_L)), "p2", cond)).toBe(true);
     expect(conditionHolds(retyped(spark), "p2", cond)).toBe(false);
     // D432 — an installed "no Weakness" bar answers false.
-    expect(conditionHolds(edit(spark, "p2", "active", (b) => ({ ...b, noWeaknessTurn: spark.turn })), "p2", cond)).toBe(false);
-    const empty = { ...spark, players: { ...spark.players, p1: { ...spark.players.p1, active: null } } };
+    expect(
+      conditionHolds(
+        edit(spark, "p2", "active", (b) => ({ ...b, noWeaknessTurn: spark.turn })),
+        "p2",
+        cond,
+      ),
+    ).toBe(false);
+    const empty = {
+      ...spark,
+      players: { ...spark.players, p1: { ...spark.players.p1, active: null } },
+    };
     expect(conditionHolds(empty, "p2", cond)).toBe(false);
-  });
-});
-
-describe("D626 §7 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

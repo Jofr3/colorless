@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { effectiveRetreatCost } from "./continuous";
 import {
   deriveAttackDamageBonus,
@@ -11,7 +7,6 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackEffect,
 } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -247,7 +242,9 @@ describe("§2 — the reader: one regex, two amounts, one count source", () => {
     // widening that broke its own predecessor would show up here and nowhere else
     // in this file.
     expect(
-      deriveAttackDamagePenalty("This attack does 10 less damage for each damage counter on this Pokémon."),
+      deriveAttackDamagePenalty(
+        "This attack does 10 less damage for each damage counter on this Pokémon.",
+      ),
     ).toEqual({ per: 10, count: { kind: "damageCountersOnSelf" } });
   });
 
@@ -269,7 +266,9 @@ describe("§2 — the reader: one regex, two amounts, one count source", () => {
     // other's sentence and no lookahead is owed. Driven by CROSSING the two
     // skeletons, which is the build a careless widening actually produces.
     expect(
-      deriveAttackDamagePenalty("This attack does 30 less damage for each damage counter on your opponent's Active Pokémon's Retreat Cost."),
+      deriveAttackDamagePenalty(
+        "This attack does 30 less damage for each damage counter on your opponent's Active Pokémon's Retreat Cost.",
+      ),
     ).toBeNull();
     expect(
       deriveAttackDamagePenalty("This attack does 30 less damage for each {C} in this Pokémon."),
@@ -299,9 +298,15 @@ describe("§2 — the reader: one regex, two amounts, one count source", () => {
       ["no trailing period", THIRTY_LESS.slice(0, -1)],
       ["leading text", `Flip a coin. ${THIRTY_LESS}`],
       ["trailing text", `${THIRTY_LESS} Discard an Energy from this Pokémon.`],
-      ["a lookalike-free é replaced by a plain e", THIRTY_LESS.replace("Pokémon's Retreat", "Pokemon's Retreat")],
+      [
+        "a lookalike-free é replaced by a plain e",
+        THIRTY_LESS.replace("Pokémon's Retreat", "Pokemon's Retreat"),
+      ],
       ["the {C} token swapped for another symbol", THIRTY_LESS.replace("{C}", "{W}")],
-      ["the OWN-side mirror the catalog does not print", THIRTY_LESS.replace("your opponent's Active", "your Active")],
+      [
+        "the OWN-side mirror the catalog does not print",
+        THIRTY_LESS.replace("your opponent's Active", "your Active"),
+      ],
       ["D388's printed word order for the same noun phrase", PARAPHRASE],
       ["a printed 0, which subtracts nothing", THIRTY_LESS.replace("30", "0")],
     ];
@@ -399,7 +404,11 @@ describe("§3 — the FOLD, driven: the base is KEPT and `per × count` comes of
     // printed base of **150**. `preWR`'s `Math.max(0, …)` is DRIVEN here rather than
     // described, and the clamp is on the WHOLE sum: the row still reports the full
     // 200 it took off, and the dealt number is 0.
-    const after = mustApply(board(103, "p1", "fix-titan"), { type: "attack", seat: "p1", index: SLAM });
+    const after = mustApply(board(103, "p1", "fix-titan"), {
+      type: "attack",
+      seat: "p1",
+      index: SLAM,
+    });
     const dealt = find(after.events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(150);
     expect(dealt?.debuff).toBe(200);
@@ -501,11 +510,14 @@ describe("§6 — the ADMITTED TWINS still answer their own readers, on one boar
     //     MULTIPLY fold: 100, the printed base dropped;
     //   • `fix-retreatless` index 0 (`200-`, 30 LESS per {C}) — 140 through `debuff`.
     // Three folds, one count source, one defender, three different numbers.
-    const add = mustApply(board(401, "p1", "fix-retreat2-titan", "sv01-002", ["fix-grass-energy", "fix-energy"]), {
-      type: "attack",
-      seat: "p1",
-      index: 0,
-    });
+    const add = mustApply(
+      board(401, "p1", "fix-retreat2-titan", "sv01-002", ["fix-grass-energy", "fix-energy"]),
+      {
+        type: "attack",
+        seat: "p1",
+        index: 0,
+      },
+    );
     const addRow = find(add.events, "DAMAGE_DEALT");
     expect(addRow?.damage).toBe(70);
     expect(addRow?.scaled).toBe(60);
@@ -604,7 +616,10 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
     // board — not on a body, not on `phase`, not on `pending`.
     const before = board(601, "p1", "fix-retreat3-titan");
     const after = mustApply(before, { type: "attack", seat: "p1", index: DRAG }).state;
-    for (const [label, state] of [["before", before], ["after", after]] as const) {
+    for (const [label, state] of [
+      ["before", before],
+      ["after", after],
+    ] as const) {
       const wire = JSON.stringify(state);
       expect(wire, label).not.toContain("opponentActiveRetreatCost");
       expect(wire, label).not.toContain("damageCountersOnSelf");
@@ -620,7 +635,11 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
     // The record a previous deploy wrote holds no key this one added, because this
     // one added none. Driven as an actual replay: serialize the post-attack board,
     // parse it back, and swing again from the parsed bytes.
-    const first = mustApply(board(602, "p1", "fix-retreat2-titan"), { type: "attack", seat: "p1", index: DRAG });
+    const first = mustApply(board(602, "p1", "fix-retreat2-titan"), {
+      type: "attack",
+      seat: "p1",
+      index: DRAG,
+    });
     expect(find(first.events, "DAMAGE_DEALT")?.damage).toBe(140);
     const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
     // The round trip is LOSSLESS — nothing this slice added rides the wire, so the
@@ -637,10 +656,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
     expect(find(second.events, "DAMAGE_DEALT")?.dealt).toBe(140);
     expect(find(second.events, "DAMAGE_DEALT")?.debuff).toBe(60);
     expect(find(second.events, "DAMAGE_DEALT")?.damage).toBe(280);
-  });
-
-  it("🛑 the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {

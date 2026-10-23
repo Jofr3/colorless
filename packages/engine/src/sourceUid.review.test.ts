@@ -142,7 +142,12 @@ describe("'this Pokémon' is the board TOP, not the stack", () => {
     };
     const before = census(state, "p1");
     const events: GameEvent[] = [];
-    const result = runProgram(deepFreeze(state), ELECTROGENESIS, { seat: "p1", sourceUid: pawmotUid }, events);
+    const result = runProgram(
+      deepFreeze(state),
+      ELECTROGENESIS,
+      { seat: "p1", sourceUid: pawmotUid },
+      events,
+    );
     expect(result.kind).toBe("done");
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
     expect(types(events)).toContain("SHUFFLE");
@@ -174,7 +179,12 @@ describe("'this Pokémon' is the board TOP — the ACTIVE arm", () => {
       },
     };
     const events: GameEvent[] = [];
-    const result = runProgram(deepFreeze(state), ELECTROGENESIS, { seat: "p1", sourceUid: pawmotUid }, events);
+    const result = runProgram(
+      deepFreeze(state),
+      ELECTROGENESIS,
+      { seat: "p1", sourceUid: pawmotUid },
+      events,
+    );
     expect(result.kind).toBe("done");
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
     expect(types(events)).toContain("SHUFFLE");
@@ -300,7 +310,12 @@ describe("the plural toSelf note — the branch no shipped card reaches", () => 
       },
       { op: "shuffleDeck" },
     ];
-    const result = runProgram(state, program, { seat: "p1", sourceUid: activeUid(state, "p1") }, []);
+    const result = runProgram(
+      state,
+      program,
+      { seat: "p1", sourceUid: activeUid(state, "p1") },
+      [],
+    );
     if (result.kind !== "parked") throw new Error("expected a park");
     expect(result.prompt.note).toBe(
       "Search your deck for up to 2 Basic Lightning Energy cards and attach them to this Pokémon.",

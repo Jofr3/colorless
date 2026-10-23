@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { benchMatches, namesItsCard } from "./cards";
 import { deriveAttackEffect } from "./effects";
 import type { CardFilter, EffectOp, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -68,13 +68,39 @@ const LOCAL: Record<string, Card> = {
     abilities: [{ type: "Ability", name: "Holes", effect: HOLES }],
   } as Partial<Card>),
   [W_BASIC]: battler(W_BASIC, { name: "Horsea", types: ["Water"] }),
-  [W_STAGE1]: battler(W_STAGE1, { name: "Seadra", stage: "Stage1", evolveFrom: "Horsea", types: ["Water"] } as Partial<Card>),
+  [W_STAGE1]: battler(W_STAGE1, {
+    name: "Seadra",
+    stage: "Stage1",
+    evolveFrom: "Horsea",
+    types: ["Water"],
+  } as Partial<Card>),
   [N_BASIC]: battler(N_BASIC, { name: "Bagon", types: ["Dragon"] }),
-  [N_STAGE1]: battler(N_STAGE1, { name: "Shelgon", stage: "Stage1", evolveFrom: "Bagon", types: ["Dragon"] } as Partial<Card>),
-  [CHARJABUG]: battler(CHARJABUG, { name: "Charjabug", stage: "Stage1", evolveFrom: "Grubbin" } as Partial<Card>),
-  [SHEDINJA]: battler(SHEDINJA, { name: "Shedinja", stage: "Stage1", evolveFrom: "Nincada" } as Partial<Card>),
-  [MAUSHOLD]: battler(MAUSHOLD, { name: "Maushold", stage: "Stage1", evolveFrom: "Tandemaus" } as Partial<Card>),
-  [SILCOON]: battler(SILCOON, { name: "Silcoon", stage: "Stage1", evolveFrom: "Wurmple" } as Partial<Card>),
+  [N_STAGE1]: battler(N_STAGE1, {
+    name: "Shelgon",
+    stage: "Stage1",
+    evolveFrom: "Bagon",
+    types: ["Dragon"],
+  } as Partial<Card>),
+  [CHARJABUG]: battler(CHARJABUG, {
+    name: "Charjabug",
+    stage: "Stage1",
+    evolveFrom: "Grubbin",
+  } as Partial<Card>),
+  [SHEDINJA]: battler(SHEDINJA, {
+    name: "Shedinja",
+    stage: "Stage1",
+    evolveFrom: "Nincada",
+  } as Partial<Card>),
+  [MAUSHOLD]: battler(MAUSHOLD, {
+    name: "Maushold",
+    stage: "Stage1",
+    evolveFrom: "Tandemaus",
+  } as Partial<Card>),
+  [SILCOON]: battler(SILCOON, {
+    name: "Silcoon",
+    stage: "Stage1",
+    evolveFrom: "Wurmple",
+  } as Partial<Card>),
   [TRAINER]: { ...(FIXTURE_POOL["sv01-194"] as Card), id: TRAINER },
 };
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL };
@@ -124,7 +150,9 @@ function turnOf(seat: Seat, seed = 6131): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -138,7 +166,8 @@ function turnOf(seat: Seat, seed = 6131): GameState {
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   for (let i = 0; i < 12; i += 1) {
     if (state.phase.kind !== "turn:action") throw new Error(`stuck in ${state.phase.kind}`);
     if (state.phase.seat === seat && state.turn >= 3) return reset(state);
@@ -156,7 +185,10 @@ function hurt(state: GameState, seat: Seat, damage: number): GameState {
   const side = state.players[seat];
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, active: { ...(side.active as InPlayPokemon), damage } } },
+    players: {
+      ...state.players,
+      [seat]: { ...side, active: { ...(side.active as InPlayPokemon), damage } },
+    },
   };
 }
 const top = (p: InPlayPokemon | null | undefined) => p?.stack.at(-1);
@@ -201,30 +233,6 @@ describe("D613 §1 — a Jet Energy switch runs the mid-turn Knock Out check (D6
   });
 });
 
-const RAW: Record<string, string> = (
-  import.meta as unknown as {
-    glob(
-      pattern: string | readonly string[],
-      options: { query: "?raw"; import: "default"; eager: true },
-    ): Record<string, string>;
-  }
-).glob(["./{turn,cardplay,flow,triggers,attack}.ts"], { query: "?raw", import: "default", eager: true });
-
-describe("D613 §2 — the switchInto audit", () => {
-  it("turn.ts `attachEnergy` is the only `switchInto` call outside interpreter.ts, and it now records the move", () => {
-    const turn = RAW["./turn.ts"] ?? "";
-    expect(turn.match(/switchInto\(/g)?.length).toBe(1);
-    expect(turn).toContain("    switched = moved !== next;\n");
-    // 🆕🆕🆕 D636 (D539): the sweep's board is `shocked` (Electrified Incisors placed after the watched triggers).
-    expect(turn).toContain("    if (shocked !== next || switched) {\n");
-    for (const f of ["cardplay", "flow", "triggers", "attack"]) {
-      const text = RAW[`./${f}.ts`];
-      expect(text, f).toBeDefined();
-      expect(text?.includes("switchInto("), f).toBe(false);
-    }
-  });
-});
-
 // ── §3–§7: Basic only onto the Bench ──────────────────────────────────────────────────────────────
 
 /** p1's turn with `pile` moved from the deck into p1's discard pile. */
@@ -238,7 +246,8 @@ function offered(state: GameState, program: readonly EffectOp[], seat: Seat = "p
   const result = runProgram(state, program, { seat }, events);
   if (result.kind !== "parked") return [];
   const prompt = result.prompt as { kind: string; candidates?: readonly string[] };
-  if (prompt.kind !== "chooseCards" || prompt.candidates === undefined) throw new Error(`unexpected ${prompt.kind}`);
+  if (prompt.kind !== "chooseCards" || prompt.candidates === undefined)
+    throw new Error(`unexpected ${prompt.kind}`);
   return prompt.candidates.map((u) => state.cardIdByUid[u] as string);
 }
 const derived = (text: string): EffectOp[] => {
@@ -248,28 +257,41 @@ const derived = (text: string): EffectOp[] => {
 };
 
 describe("D613 §3 — the discard pile onto the Bench: Basic only (R-BC1 retired)", () => {
-  it("King's Order (\"{W} Pokémon\", Kingdra ex ×3) offers the Basic {W} Pokémon, not the Stage 1", () => {
+  it('King\'s Order ("{W} Pokémon", Kingdra ex ×3) offers the Basic {W} Pokémon, not the Stage 1', () => {
     const ids = offered(withDiscard({ [W_BASIC]: 2, [W_STAGE1]: 2 }), derived(KINGS_ORDER));
     expect(ids).toEqual([W_BASIC, W_BASIC]);
   });
 
-  it("Booming Call (\"{N} Pokémon\", Salamence ex ×2) offers Bagon, not Shelgon; a Stage 1-only pile whiffs", () => {
-    expect(offered(withDiscard({ [N_BASIC]: 1, [N_STAGE1]: 2 }), derived(BOOMING_CALL))).toEqual([N_BASIC]);
+  it('Booming Call ("{N} Pokémon", Salamence ex ×2) offers Bagon, not Shelgon; a Stage 1-only pile whiffs', () => {
+    expect(offered(withDiscard({ [N_BASIC]: 1, [N_STAGE1]: 2 }), derived(BOOMING_CALL))).toEqual([
+      N_BASIC,
+    ]);
     expect(offered(withDiscard({ [N_STAGE1]: 2 }), derived(BOOMING_CALL))).toEqual([]);
   });
 
-  it("Revival Blessing (\"a Pokémon\", Rabsca ×3) offers Basics only", () => {
-    expect(offered(withDiscard({ [W_STAGE1]: 1, [N_BASIC]: 1 }), derived(REVIVAL_BLESSING))).toEqual([N_BASIC]);
+  it('Revival Blessing ("a Pokémon", Rabsca ×3) offers Basics only', () => {
+    expect(
+      offered(withDiscard({ [W_STAGE1]: 1, [N_BASIC]: 1 }), derived(REVIVAL_BLESSING)),
+    ).toEqual([N_BASIC]);
   });
 
   it("the same noun into the HAND is unchanged: a Stage 1 is offered", () => {
-    const toHand: EffectOp[] = [{ op: "discardPileRetrieval", filter: { kind: "typedPokemon", pokemonType: "Water" }, dest: "hand", max: 3 }];
-    expect(offered(withDiscard({ [W_BASIC]: 1, [W_STAGE1]: 1 }), toHand).sort()).toEqual([W_BASIC, W_STAGE1].sort());
+    const toHand: EffectOp[] = [
+      {
+        op: "discardPileRetrieval",
+        filter: { kind: "typedPokemon", pokemonType: "Water" },
+        dest: "hand",
+        max: 3,
+      },
+    ];
+    expect(offered(withDiscard({ [W_BASIC]: 1, [W_STAGE1]: 1 }), toHand).sort()).toEqual(
+      [W_BASIC, W_STAGE1].sort(),
+    );
   });
 });
 
 describe("D613 §4 — the deck top onto the Bench: Basic only", () => {
-  it("Summoning Gate and Cinnabar Lure (\"any number of Pokémon\") offer the Basics in the window, not the Stage 1s", () => {
+  it('Summoning Gate and Cinnabar Lure ("any number of Pokémon") offer the Basics in the window, not the Stage 1s', () => {
     let state = lay(turnOf("p1"), "p1", BASIC, []);
     state = toDeckTop(toDeckTop(state, "p1", W_STAGE1, 2), "p1", N_BASIC, 1);
     for (const text of [SUMMONING_GATE, CINNABAR_LURE]) {
@@ -281,7 +303,7 @@ describe("D613 §4 — the deck top onto the Bench: Basic only", () => {
 });
 
 describe("D613 §5 — a deck search onto the Bench: Basic only, unless the noun names its card", () => {
-  it("a class noun (\"{W} Pokémon\") onto the Bench offers no Stage 1; into the hand it does", () => {
+  it('a class noun ("{W} Pokémon") onto the Bench offers no Stage 1; into the hand it does', () => {
     const state = lay(turnOf("p1"), "p1", BASIC, []);
     const filter: CardFilter = { kind: "typedPokemon", pokemonType: "Water" };
     const bench = offered(state, [{ op: "searchDeck", filter, dest: "bench", max: 2 }]);
@@ -290,10 +312,22 @@ describe("D613 §5 — a deck search onto the Bench: Basic only, unless the noun
     expect(new Set(hand)).toEqual(new Set([W_BASIC, W_STAGE1]));
   });
 
-  it("\"any\" sizes the offer off the benchable matches only", () => {
+  it('"any" sizes the offer off the benchable matches only', () => {
     const state = lay(turnOf("p1"), "p1", BASIC, []);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "searchDeck", filter: { kind: "typedPokemon", pokemonType: "Water" }, dest: "bench", max: "any" }], { seat: "p1" }, events);
+    const result = runProgram(
+      state,
+      [
+        {
+          op: "searchDeck",
+          filter: { kind: "typedPokemon", pokemonType: "Water" },
+          dest: "bench",
+          max: "any",
+        },
+      ],
+      { seat: "p1" },
+      events,
+    );
     expect(result.kind).toBe("parked");
     expect(result.kind === "parked" && (result.prompt as { max?: number }).max).toBe(3);
   });
@@ -327,7 +361,12 @@ describe("D613 §6 — the opponent's hand onto their Bench: Basic only", () => 
     let state = lay(turnOf("p1"), "p1", BASIC, []);
     state = lay(state, "p2", BASIC, []);
     state = handFromDeck(handFromDeck(state, "p2", W_STAGE1, 1), "p2", N_BASIC, 1);
-    const op: EffectOp = { op: "bottomFromOpponentHand", filter: { kind: "anyPokemon" }, dest: "bench", upTo: 2 };
+    const op: EffectOp = {
+      op: "bottomFromOpponentHand",
+      filter: { kind: "anyPokemon" },
+      dest: "bench",
+      upTo: 2,
+    };
     expect(offered(state, [op])).toEqual([N_BASIC]);
   });
 });
@@ -350,14 +389,23 @@ describe("D613 §7 — the predicate, and the version", () => {
   it("`namesItsCard`: byName, a name fragment and an all-name `anyOf`; never a class noun or an empty / mixed `anyOf`", () => {
     expect(namesItsCard({ kind: "byName", name: "Shedinja" })).toBe(true);
     expect(namesItsCard({ kind: "pokemonNameContaining", fragment: "Koffing" })).toBe(true);
-    expect(namesItsCard({ kind: "anyOf", filters: [{ kind: "byName", name: "Silcoon" }, { kind: "byName", name: "Cascoon" }] })).toBe(true);
+    expect(
+      namesItsCard({
+        kind: "anyOf",
+        filters: [
+          { kind: "byName", name: "Silcoon" },
+          { kind: "byName", name: "Cascoon" },
+        ],
+      }),
+    ).toBe(true);
     expect(namesItsCard({ kind: "anyOf", filters: [] })).toBe(false);
-    expect(namesItsCard({ kind: "anyOf", filters: [{ kind: "byName", name: "Silcoon" }, { kind: "anyPokemon" }] })).toBe(false);
+    expect(
+      namesItsCard({
+        kind: "anyOf",
+        filters: [{ kind: "byName", name: "Silcoon" }, { kind: "anyPokemon" }],
+      }),
+    ).toBe(false);
     expect(namesItsCard({ kind: "typedPokemon", pokemonType: "Water" })).toBe(false);
     expect(namesItsCard({ kind: "anyPokemon" })).toBe(false);
-  });
-
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

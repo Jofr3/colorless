@@ -242,7 +242,7 @@ describe("D333 — Bug Catching Set, a flat cap over a two-member union", () => 
     expect(prompt.candidates).not.toContain(plainEnergy);
   });
 
-  it("⚠️ refuses the SPECIAL Energy — the printed word \"Basic\"", () => {
+  it('⚠️ refuses the SPECIAL Energy — the printed word "Basic"', () => {
     const state = board(25);
     const { seededState, prompt } = play(state, "fix-bugcatchingset");
     const special = deckAt(seededState, 5);
@@ -253,7 +253,7 @@ describe("D333 — Bug Catching Set, a flat cap over a two-member union", () => 
     expect(prompt.candidates).not.toContain(special);
   });
 
-  it("🛑 TWO {G} POKÉMON IS A LEGAL ANSWER — \"in any combination\", not \"one of each\"", () => {
+  it('🛑 TWO {G} POKÉMON IS A LEGAL ANSWER — "in any combination", not "one of each"', () => {
     const state = board(26);
     const { seededState, parked, prompt } = play(state, "fix-bugcatchingset");
     const bothPokemon = [deckAt(seededState, 0), deckAt(seededState, 1)];
@@ -282,7 +282,7 @@ describe("D333 — Bug Catching Set, a flat cap over a two-member union", () => 
     expect(done.phase.kind).toBe("turn:action");
   });
 
-  it("⚠️ a THIRD admissible card is refused — the printed \"up to 2\"", () => {
+  it('⚠️ a THIRD admissible card is refused — the printed "up to 2"', () => {
     const state = board(27);
     const { seededState, parked } = play(state, "fix-bugcatchingset");
     const three = [deckAt(seededState, 0), deckAt(seededState, 1), deckAt(seededState, 2)];
@@ -315,7 +315,7 @@ describe("D333 — Bug Catching Set, a flat cap over a two-member union", () => 
     expect(prompt.candidates).not.toContain(buried);
   });
 
-  it("🛑 the caption joins with \" or \", exactly as Lana's Aid has since D264", () => {
+  it('🛑 the caption joins with " or ", exactly as Lana\'s Aid has since D264', () => {
     const state = board(29);
     const { prompt } = play(state, "fix-bugcatchingset");
     // 🛑 **THE PROSE THE WORK ORDER EXPECTED TO OWE, AND IT WAS SETTLED AT D264.**

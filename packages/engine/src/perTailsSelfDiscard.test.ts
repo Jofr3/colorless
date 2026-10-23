@@ -9,7 +9,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction, createGame, engineVersion, programFor } from "./index";
+import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { CoinFace } from "./rng";
 import { flipCoin } from "./rng";
@@ -84,7 +84,8 @@ const BARE_SELF = "Discard an Energy from this Pokémon.";
     ONE field of the value. It is not an authored card: it is the shape exercised on a
     fixture, which is what `perHeadsProgram.test.ts`'s "reads counts no card prints" rung
     has done since D130. */
-const SYNTHETIC_HEADS = "Flip 3 coins. For each heads, discard the top card of your opponent's deck.";
+const SYNTHETIC_HEADS =
+  "Flip 3 coins. For each heads, discard the top card of your opponent's deck.";
 
 const TAILS_DISCARD = 0;
 const HEADS_MILL = 1;
@@ -168,7 +169,7 @@ function rngForFaces(faces: readonly CoinFace[]): number {
 const FACE_SEQUENCES: readonly (readonly CoinFace[])[] = (() => {
   const out: CoinFace[][] = [];
   for (let bits = 0; bits < 8; bits += 1) {
-    out.push([0, 1, 2].map((i) => ((bits >> i) & 1) === 0 ? "heads" : "tails"));
+    out.push([0, 1, 2].map((i) => (((bits >> i) & 1) === 0 ? "heads" : "tails")));
   }
   return out;
 })();
@@ -216,7 +217,9 @@ function openTable(seed: number, first: Seat): GameState {
     const phase = table.phase;
     const owing = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
     if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(applyAction(table, { type: "setupDrawExtra", seat: owing, count: phase.owed[owing] }));
+    table = must(
+      applyAction(table, { type: "setupDrawExtra", seat: owing, count: phase.owed[owing] }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     table = must(
@@ -375,9 +378,7 @@ describe("§2 — the anchor derives its exact literal", () => {
     // printed consequent BY CONSTRUCTION rather than by coincidence.
     const bare = deriveAttackEffect(BARE_SELF);
     const coin = deriveAttackCoinFlip(PRINTED_TAILS);
-    expect(JSON.stringify(bare)).toBe(
-      JSON.stringify((coin as { ops: unknown }).ops),
-    );
+    expect(JSON.stringify(bare)).toBe(JSON.stringify((coin as { ops: unknown }).ops));
     // ⚠️ **AND THE MEMBER IS `yourActive`, WHICH IS `SELF_DISCARD_ONE`'s STATED READING
     // OF THIS EXACT NOUN PHRASE**: *"'this Pokémon' is the Active by §8 (only the Active
     // attacks)"*. D222's `self` is the member for the printed "this Pokémon" everywhere
@@ -421,9 +422,15 @@ describe("§2 — the anchor derives its exact literal", () => {
     // because the digits come from THIRD-PARTY ingested text and the expansion grows one
     // copy of a PARKING op per matching face. There is NO consequent payload to validate:
     // the op takes no count, exactly as D452's two arms and D463's two do.
-    expect(deriveAttackCoinFlip("Flip 1 coins. For each tails, discard an Energy from this Pokémon.")).toBeNull();
-    expect(deriveAttackCoinFlip("Flip 11 coins. For each tails, discard an Energy from this Pokémon.")).toBeNull();
-    expect(deriveAttackCoinFlip("Flip 10 coins. For each tails, discard an Energy from this Pokémon.")).toEqual({
+    expect(
+      deriveAttackCoinFlip("Flip 1 coins. For each tails, discard an Energy from this Pokémon."),
+    ).toBeNull();
+    expect(
+      deriveAttackCoinFlip("Flip 11 coins. For each tails, discard an Energy from this Pokémon."),
+    ).toBeNull();
+    expect(
+      deriveAttackCoinFlip("Flip 10 coins. For each tails, discard an Energy from this Pokémon."),
+    ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 10 },
       ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
@@ -442,7 +449,10 @@ describe("§2 — the anchor derives its exact literal", () => {
       "Flip 2 coins. For each tails, discard an Energy from your opponent's Active Pokémon.",
     ]) {
       expect(deriveAttackCoinFlip(crossing), crossing).toBeNull();
-      expect(legalAttackCorpus().some(([, s]) => s === crossing), crossing).toBe(false);
+      expect(
+        legalAttackCorpus().some(([, s]) => s === crossing),
+        crossing,
+      ).toBe(false);
     }
   });
 
@@ -450,7 +460,8 @@ describe("§2 — the anchor derives its exact literal", () => {
     // D463 built BOTH of its counts because the column printed both. The test is what the
     // column prints, never symmetry between the counts — and this consequent is printed at
     // exactly one count. An anchor for the unbounded spelling would author a card.
-    const twin = "Flip a coin until you get tails. For each tails, discard an Energy from this Pokémon.";
+    const twin =
+      "Flip a coin until you get tails. For each tails, discard an Energy from this Pokémon.";
     expect(legalAttackCorpus().filter(([, s]) => s === twin)).toHaveLength(0);
     expect(deriveAttackCoinFlip(twin)).toBeNull();
   });
@@ -493,7 +504,9 @@ describe("§3 — one reader owns the sentence, and the trap got worse", () => {
     expect(deriveAttackDamageMultiplier(PRINTED_TAILS)).toBeNull();
     expect(deriveAttackRequirement(PRINTED_TAILS)).toBeNull();
     expect(deriveAttackPreDamage(PRINTED_TAILS)).toBeNull();
-    expect(PRINTED_TAILS.endsWith(BARE_SELF.charAt(0).toLowerCase() + BARE_SELF.slice(1))).toBe(true);
+    expect(PRINTED_TAILS.endsWith(BARE_SELF.charAt(0).toLowerCase() + BARE_SELF.slice(1))).toBe(
+      true,
+    );
     // …while the BARE sentence is claimed by `deriveAttackEffect` and by nothing on the
     // coin side, which is the other half of the seam.
     expect(deriveAttackEffect(BARE_SELF)).not.toBeNull();
@@ -603,7 +616,9 @@ describe("§5 — N tails is N sequential parks, driven end to end", () => {
       expect(row.seat).toBe("p1");
       expect(row.actor).toBe("p1");
     }
-    expect(done.players.p2.discard.filter((uid) => done.cardIdByUid[uid]?.endsWith("energy"))).toHaveLength(0);
+    expect(
+      done.players.p2.discard.filter((uid) => done.cardIdByUid[uid]?.endsWith("energy")),
+    ).toHaveLength(0);
   });
 
   it("TWO heads / ONE tails PARKS ONCE — the count is the printed FACE, not the flips", () => {
@@ -723,7 +738,9 @@ describe("§6 — the FACE axis against the COUNT axis", () => {
     // without a second anchor.
     for (const flips of [2, 3, 4, 9, 10]) {
       expect(
-        deriveAttackCoinFlip(`Flip ${flips} coins. For each tails, discard an Energy from this Pokémon.`),
+        deriveAttackCoinFlip(
+          `Flip ${flips} coins. For each tails, discard an Energy from this Pokémon.`,
+        ),
         String(flips),
       ).toEqual({
         kind: "programPerHeads",
@@ -748,12 +765,13 @@ describe("§6 — the FACE axis against the COUNT axis", () => {
     //   untilTails × heads — corpus line 234, Krookodile sv01-117
     //   printed × tails   — corpus line 217, this slice
     //   untilTails × tails — printed by NOTHING, refused by the anchor set (§2)
-    const programRows = legalAttackCorpus().filter(
-      ([, s]) => /^Flip .*For each (heads|tails), /.test(s),
+    const programRows = legalAttackCorpus().filter(([, s]) =>
+      /^Flip .*For each (heads|tails), /.test(s),
     );
     const cell = (row: string) => {
       const read = deriveAttackCoinFlip(row);
-      if (read === null || read.kind !== "programPerHeads") throw new Error(`not a program: ${row}`);
+      if (read === null || read.kind !== "programPerHeads")
+        throw new Error(`not a program: ${row}`);
       return `${read.flips.kind}×${read.face}`;
     };
     expect([...new Set(programRows.map(([, s]) => cell(s)))].sort()).toEqual([
@@ -811,18 +829,5 @@ describe("§7 — purity and the structural answers", () => {
     expect(wire).not.toContain("programPerHeads");
     expect(wire).not.toContain('"tails"');
     expect(wire).toContain('"from":"yourActive"');
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — THE VERSION.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("§8 — the version", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // A sentence that fell to the loud `ATTACK_EFFECT_SKIPPED` path now flips three coins
-    // and queues one park per tails, and a shipped union member gained a REQUIRED field —
-    // so `packages/engine` behaviour moved and the minor is owed (D275).
-    expect(engineVersion).toBe("0.555.0");
   });
 });

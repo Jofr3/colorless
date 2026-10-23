@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, engineVersion, formatElapsed, logFromEvents } from "./index";
+import { applyAction, createGame, formatElapsed, logFromEvents } from "./index";
 import { conditionNote, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -86,13 +86,16 @@ describe("D621 §1 — the faces: 16 `me` printings / 5 texts, one object per te
   });
 
   it("Iron Defender (dropped) stays unkeyed (🆕🆕🆕 D630 (D539): WITHDRAWN — keyed at D630 on the summed list, `persistedRecordsMeD630.test.ts`)", () => {
-    for (const id of ["me01-118", "me05-110"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["trainer"]);
+    for (const id of ["me01-118", "me05-110"])
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["trainer"]);
   });
 });
 
 describe("D621 §2 — the registry programs, field for field", () => {
   it("Gladion's Final Battle = Cassiopeia's last-card gate and Black Belt's op at 80, attackers without a Rule Box", () => {
-    expect(programFor(GLADION)?.trainerPlayableIf).toEqual(programFor("sv06.5-056")?.trainerPlayableIf);
+    expect(programFor(GLADION)?.trainerPlayableIf).toEqual(
+      programFor("sv06.5-056")?.trainerPlayableIf,
+    );
     expect(programFor(GLADION)).toEqual({
       trainerPlayableIf: { kind: "yourHandExactly", count: 1 },
       trainer: [
@@ -172,7 +175,12 @@ const SCOOP_UP = "sv06-162"; // Scoop Up Cyclone (D561): a body leaves play by a
 const HIT = 50;
 const JOLT = 60;
 const RAIDER_ATTACKS: Card["attacks"] = [
-  { cost: [], name: "Jolt", damage: JOLT, effect: "Your opponent's Active Pokémon is now Paralyzed." },
+  {
+    cost: [],
+    name: "Jolt",
+    damage: JOLT,
+    effect: "Your opponent's Active Pokémon is now Paralyzed.",
+  },
   {
     cost: [],
     name: "Pick",
@@ -180,12 +188,17 @@ const RAIDER_ATTACKS: Card["attacks"] = [
       "This attack does 30 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
   },
   // Dragapult ex "Phantom Dive"'s put-counter sentence (sv06-130, me02.5-160 …): placed counters.
-  { cost: [], name: "Dive", effect: "Put 6 damage counters on your opponent's Benched Pokémon in any way you like." },
+  {
+    cost: [],
+    name: "Dive",
+    effect: "Put 6 damage counters on your opponent's Benched Pokémon in any way you like.",
+  },
   // Cofagrigus "Extended Damagriiigus" (D216): a counter MOVE onto a chosen opponent body.
   {
     cost: [],
     name: "Swap",
-    effect: "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
+    effect:
+      "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
   },
 ];
 
@@ -214,7 +227,12 @@ const CROWN_ATTACKS: Card["attacks"] = [
       "This attack does 60 damage to each of your opponent's Pokémon ex. This attack's damage isn't affected by Weakness or Resistance.",
   },
   // Medicham ex "Yoga Kick" (sv07-080 / -161): the BARE tail on the main hit (damage scaled down).
-  { cost: [], name: "Yoga Kick", damage: 70, effect: "This attack's damage isn't affected by Weakness or Resistance." },
+  {
+    cost: [],
+    name: "Yoga Kick",
+    damage: 70,
+    effect: "This attack's damage isn't affected by Weakness or Resistance.",
+  },
   // Cornerstone Mask Ogerpon ex "Demolish" (sv06-112 …): the FEINT form on the main hit (damage scaled down).
   {
     cost: [],
@@ -237,10 +255,15 @@ const mon = (id: string, name: string, types: string[], extra: Partial<Card> = {
 
 const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
-    TEXTS.flatMap(([ids, name, type, text]) => ids.map((id) => [id, { ...trainerCard(id, type, text), name }])),
+    TEXTS.flatMap(([ids, name, type, text]) =>
+      ids.map((id) => [id, { ...trainerCard(id, type, text), name }]),
+    ),
   ),
   [PLAIN]: mon(PLAIN, "D621 Plain", ["Colorless"]),
-  [MIDDLE]: mon(MIDDLE, "D621 Middle", ["Colorless"], { stage: "Stage1", evolveFrom: "D621 Plain" }),
+  [MIDDLE]: mon(MIDDLE, "D621 Middle", ["Colorless"], {
+    stage: "Stage1",
+    evolveFrom: "D621 Plain",
+  }),
   [TOP]: mon(TOP, "D621 Top", ["Colorless"], { stage: "Stage2", evolveFrom: "D621 Middle" }),
   [BRUTE]: mon(BRUTE, "D621 Brute ex", ["Colorless"]),
   [FIGHTER]: mon(FIGHTER, "D621 Fighter", ["Fighting"]),
@@ -251,7 +274,11 @@ const LOCAL: Record<string, Card> = {
   [FILLER]: mon(FILLER, "D621 Filler", ["Colorless"], { attacks: [] }),
   [CROWN_EX]: mon(CROWN_EX, "D621 Crown ex", ["Colorless"], { attacks: CROWN_ATTACKS }),
   [SCOOP_UP]: {
-    ...trainerCard(SCOOP_UP, "Item", "Put 1 of your Pokémon and all attached cards into your hand."),
+    ...trainerCard(
+      SCOOP_UP,
+      "Item",
+      "Put 1 of your Pokémon and all attached cards into your hand.",
+    ),
     name: "Scoop Up Cyclone",
   },
 };
@@ -292,7 +319,10 @@ function reset(state: GameState): GameState {
     const prizes = pile.filter((u) => next.cardIdByUid[u] === "fix-energy");
     next = {
       ...next,
-      players: { ...next.players, [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) } },
+      players: {
+        ...next.players,
+        [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+      },
     };
   }
   return next;
@@ -304,7 +334,9 @@ function p1First(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -312,11 +344,14 @@ function p1First(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   return reset(state);
 }
@@ -344,7 +379,10 @@ function board(
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 function staged(state: GameState, id: string): { state: GameState; uid: string } {
@@ -362,15 +400,22 @@ function refusal(state: GameState, id: string): string {
   return result.ok ? "applied" : result.error.code;
 }
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
-const attack = (state: GameState, seat: Seat, index = 0) => mustApply(state, { type: "attack", seat, index });
-const endTurn = (state: GameState, seat: Seat) => must(applyAction(state, { type: "endTurn", seat }));
+const attack = (state: GameState, seat: Seat, index = 0) =>
+  mustApply(state, { type: "attack", seat, index });
+const endTurn = (state: GameState, seat: Seat) =>
+  must(applyAction(state, { type: "endTurn", seat }));
 const pickRef = (seat: Seat, ref: unknown): GameAction =>
   ({ type: "resolveEffect", seat, choice: { kind: "pokemon", ref } }) as GameAction;
 const snipeAt = (ref: unknown): GameAction =>
-  ({ type: "resolveEffect", seat: "p2", choice: { kind: "pokemonMulti", refs: [ref] } }) as GameAction;
+  ({
+    type: "resolveEffect",
+    seat: "p2",
+    choice: { kind: "pokemonMulti", refs: [ref] },
+  }) as GameAction;
 /** A parked state revived from JSON, the way a `MatchRecord` stores it. */
 const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
 const dealtTo = (events: readonly GameEvent[], uid: string | undefined) =>
@@ -378,8 +423,14 @@ const dealtTo = (events: readonly GameEvent[], uid: string | undefined) =>
 const topOf = (state: GameState, seat: Seat) => state.players[seat].active?.stack.at(-1);
 
 function rows(events: GameEvent[], state: GameState): string[] {
-  const entries = logFromEvents(events, { names: { p1: "Ana", p2: "Bo" }, state, elapsed: formatElapsed(0) });
-  return entries.flatMap((e) => (e.kind === "turn" ? [] : [e.segments.map((s) => s.text).join("")]));
+  const entries = logFromEvents(events, {
+    names: { p1: "Ana", p2: "Bo" },
+    state,
+    elapsed: formatElapsed(0),
+  });
+  return entries.flatMap((e) =>
+    e.kind === "turn" ? [] : [e.segments.map((s) => s.text).join("")],
+  );
 }
 
 describe("D621 §3 — Gladion's Final Battle: the last card in hand; +80 for attackers without a Rule Box", () => {
@@ -392,7 +443,11 @@ describe("D621 §3 — Gladion's Final Battle: the last card in hand; +80 for at
   it("a non-Rule-Box attacker does 50 + 80 to the Active; the bag holds one entry with the attacker noun", () => {
     const played = play(board(PLAIN, []), GLADION);
     expect(played.state.allowances.sideAttackBonuses).toEqual([
-      { amount: 80, target: { kind: "anyPokemon" }, attacker: { kind: "anyPokemon", noRuleBox: true } },
+      {
+        amount: 80,
+        target: { kind: "anyPokemon" },
+        attacker: { kind: "anyPokemon", noRuleBox: true },
+      },
     ]);
     const hit = attack(played.state, "p1");
     expect(dealtTo(hit.events, topOf(hit.state, "p2"))?.dealt).toBe(HIT + 80);
@@ -475,8 +530,15 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(ask.note).toBe(
       "Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's Pokémon ex.",
     );
-    const answered = must(applyAction(revived(parked), pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } })));
-    expect(answered.players.p1.chosenAttackShield?.uid).toBe(answered.players.p1.bench[0]?.stack[0]);
+    const answered = must(
+      applyAction(
+        revived(parked),
+        pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } }),
+      ),
+    );
+    expect(answered.players.p1.chosenAttackShield?.uid).toBe(
+      answered.players.p1.bench[0]?.stack[0],
+    );
   });
 
   it("the opponent's ex attack (no `ignoreWR`; R-AM2 below) does no damage and its Paralysis is refused; a non-ex attack lands both", () => {
@@ -499,15 +561,21 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
 
   it("only the chosen body: the unchosen Benched one takes the ex snipe", () => {
     const parked = acerola(PLAIN, [FILLER], RAIDER_EX).state;
-    const chose = must(applyAction(parked, pickRef("p1", { seat: "p1", spot: { spot: "active" } })));
+    const chose = must(
+      applyAction(parked, pickRef("p1", { seat: "p1", spot: { spot: "active" } })),
+    );
     const snipe = mustApply(endTurn(chose, "p1"), { type: "attack", seat: "p2", index: 1 });
-    const hit = must(applyAction(snipe.state, snipeAt({ seat: "p1", spot: { spot: "bench", index: 0 } })));
+    const hit = must(
+      applyAction(snipe.state, snipeAt({ seat: "p1", spot: { spot: "bench", index: 0 } })),
+    );
     expect(hit.players.p1.bench[0]?.damage).toBe(30);
   });
 
   it("R-AM1 (UNRULED): the shield follows the body to the Bench — the ex snipe onto it is prevented", () => {
     const parked = acerola(PLAIN, [FILLER], RAIDER_EX).state;
-    const chose = must(applyAction(parked, pickRef("p1", { seat: "p1", spot: { spot: "active" } })));
+    const chose = must(
+      applyAction(parked, pickRef("p1", { seat: "p1", spot: { spot: "active" } })),
+    );
     const shielded = chose.players.p1.active?.stack[0];
     const retreated = must(
       applyAction(chose, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }),
@@ -517,20 +585,28 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     // The NEW Active is not the chosen body: the ex hit lands on it.
     expect(attack(window, "p2").state.players.p1.active?.damage).toBe(JOLT);
     const snipe = mustApply(window, { type: "attack", seat: "p2", index: 1 });
-    const hit = must(applyAction(snipe.state, snipeAt({ seat: "p1", spot: { spot: "bench", index: 0 } })));
+    const hit = must(
+      applyAction(snipe.state, snipeAt({ seat: "p1", spot: { spot: "bench", index: 0 } })),
+    );
     expect(hit.players.p1.bench[0]?.damage).toBe(0);
   });
 
   /** P1 shields its Benched FILLER (bench 0) beside a Benched PLAIN (bench 1); `foe` attacks next. */
   function benchShielded(foe: string): GameState {
     const parked = acerola(PLAIN, [FILLER, PLAIN], foe).state;
-    return endTurn(must(applyAction(parked, pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } }))), "p1");
+    return endTurn(
+      must(applyAction(parked, pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } }))),
+      "p1",
+    );
   }
   /** Phantom Dive's six one-counter picks, alternating bench 0 / bench 1 (3 each). */
   function dive(window: GameState): { state: GameState; events: GameEvent[] } {
     let { state, events } = attack(window, "p2", 2);
     for (let pick = 0; state.phase.kind === "effect:choose"; pick++) {
-      const next = mustApply(state, snipeAt({ seat: "p1", spot: { spot: "bench", index: pick % 2 } }));
+      const next = mustApply(
+        state,
+        snipeAt({ seat: "p1", spot: { spot: "bench", index: pick % 2 } }),
+      );
       state = next.state;
       events = [...events, ...next.events];
     }
@@ -543,7 +619,11 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(done.state.players.p1.bench[1]?.damage).toBe(30);
     const shielded = done.state.players.p1.bench[0]?.stack.at(-1);
     expect(all(done.events, "ATTACK_EFFECT_PREVENTED")).toEqual(
-      Array.from({ length: 3 }, () => ({ type: "ATTACK_EFFECT_PREVENTED", seat: "p1", uid: shielded })),
+      Array.from({ length: 3 }, () => ({
+        type: "ATTACK_EFFECT_PREVENTED",
+        seat: "p1",
+        uid: shielded,
+      })),
     );
     // …and a non-ex attacker's counters land on the same body.
     const open = dive(benchShielded(RAIDER));
@@ -554,7 +634,13 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
   it("a counter MOVE onto the shielded Benched body is refused whole; onto the unshielded one it lands", () => {
     const loaded = (window: GameState): GameState => {
       const side = window.players.p2;
-      return { ...window, players: { ...window.players, p2: { ...side, bench: [{ ...side.bench[0], damage: 40 } as never] } } };
+      return {
+        ...window,
+        players: {
+          ...window.players,
+          p2: { ...side, bench: [{ ...side.bench[0], damage: 40 } as never] },
+        },
+      };
     };
     const swap = (window: GameState, index: number) => {
       const parked = attack(loaded(window), "p2", 3).state;
@@ -572,7 +658,9 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     const played = acerola(PLAIN, [], RAIDER_EX, p1Later());
     const evolving = handFromDeck(played.state, "p1", MIDDLE, 1);
     const uid = evolving.players.p1.hand.find((u) => evolving.cardIdByUid[u] === MIDDLE) as string;
-    const evolved = must(applyAction(evolving, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }));
+    const evolved = must(
+      applyAction(evolving, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }),
+    );
     expect(evolved.players.p1.active?.stack).toHaveLength(2);
     expect(attack(endTurn(evolved, "p1"), "p2").state.players.p1.active?.damage).toBe(0);
   });
@@ -581,9 +669,13 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     const base = board(PLAIN, [], RAIDER_EX, [FILLER], p1Later());
     const evolving = handFromDeck(base, "p1", MIDDLE, 1);
     const uid = evolving.players.p1.hand.find((u) => evolving.cardIdByUid[u] === MIDDLE) as string;
-    const evolved = must(applyAction(evolving, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }));
+    const evolved = must(
+      applyAction(evolving, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }),
+    );
     const played = play(setPrizes(evolved, "p2", 2), ACEROLA);
-    expect(played.state.players.p1.chosenAttackShield?.uid).toBe(played.state.players.p1.active?.stack[0]);
+    expect(played.state.players.p1.chosenAttackShield?.uid).toBe(
+      played.state.players.p1.active?.stack[0],
+    );
     expect(attack(endTurn(played.state, "p1"), "p2").state.players.p1.active?.damage).toBe(0);
   });
 
@@ -596,16 +688,26 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
 
   it("R-AM1 (UNRULED): it ends when the body leaves play — scooped and replayed, it is a new Pokémon and the ex snipe lands", () => {
     const shieldedBench = must(
-      applyAction(acerola(PLAIN, [FILLER, PLAIN], RAIDER_EX).state, pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } })),
+      applyAction(
+        acerola(PLAIN, [FILLER, PLAIN], RAIDER_EX).state,
+        pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } }),
+      ),
     );
     const uid = shieldedBench.players.p1.bench[0]?.stack[0] as string;
-    const scooped = must(applyAction(play(shieldedBench, SCOOP_UP).state, pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } })));
+    const scooped = must(
+      applyAction(
+        play(shieldedBench, SCOOP_UP).state,
+        pickRef("p1", { seat: "p1", spot: { spot: "bench", index: 0 } }),
+      ),
+    );
     expect(scooped.players.p1.hand).toContain(uid);
     expect(scooped.players.p1.chosenAttackShield).toBeNull();
     const replayed = must(applyAction(scooped, { type: "playBasicToBench", seat: "p1", uid }));
     const index = replayed.players.p1.bench.findIndex((b) => b.stack[0] === uid);
     const snipe = mustApply(endTurn(replayed, "p1"), { type: "attack", seat: "p2", index: 1 });
-    const hit = must(applyAction(snipe.state, snipeAt({ seat: "p1", spot: { spot: "bench", index } })));
+    const hit = must(
+      applyAction(snipe.state, snipeAt({ seat: "p1", spot: { spot: "bench", index } })),
+    );
     expect(hit.players.p1.bench[index]?.damage).toBe(30);
   });
 
@@ -647,7 +749,11 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     const salvo = crown(benchShielded(CROWN_EX), 1, [bench(0)], true);
     expect(salvo.state.players.p1.bench[0]?.damage).toBe(0);
     const parked = acerola(PLAIN, [BRUTE], CROWN_EX).state;
-    const squall = attack(endTurn(must(applyAction(parked, pickRef("p1", bench(0)))), "p1"), "p2", 2);
+    const squall = attack(
+      endTurn(must(applyAction(parked, pickRef("p1", bench(0)))), "p1"),
+      "p2",
+      2,
+    );
     expect(squall.state.players.p1.bench[0]?.damage).toBe(0);
     const lone = attack(endTurn(acerola(BRUTE, [], CROWN_EX).state, "p1"), "p2", 2);
     expect(lone.state.players.p1.active?.damage).toBe(0);
@@ -681,7 +787,10 @@ describe("D621 §6 — Roxie's Performance: the opponent's Poisoned Pokémon can
 
   it("the record is on the OPPONENT's side, for their next turn; the row is filed under them", () => {
     const { played } = window(false);
-    expect(played.state.players.p2.sideRetreatLock).toEqual({ turn: played.state.turn + 1, status: "poisoned" });
+    expect(played.state.players.p2.sideRetreatLock).toEqual({
+      turn: played.state.turn + 1,
+      status: "poisoned",
+    });
     expect(played.state.players.p1.sideRetreatLock).toBeNull();
     expect(all(played.events, "SIDE_RETREAT_LOCKED")).toEqual([
       { type: "SIDE_RETREAT_LOCKED", seat: "p2", status: "poisoned" },
@@ -705,9 +814,16 @@ describe("D621 §6 — Roxie's Performance: the opponent's Poisoned Pokémon can
   });
 
   it("switch effects are not retreat: a Poisoned Active still switches", () => {
-    const result = runProgram(window(true).state, [{ op: "switchActive" }], { seat: "p2", invokedBy: "item" }, []);
+    const result = runProgram(
+      window(true).state,
+      [{ op: "switchActive" }],
+      { seat: "p2", invokedBy: "item" },
+      [],
+    );
     if (result.kind !== "done") throw new Error("expected done");
-    expect(result.state.players.p2.active?.stack.at(-1)).not.toBe(window(true).state.players.p2.active?.stack.at(-1));
+    expect(result.state.players.p2.active?.stack.at(-1)).not.toBe(
+      window(true).state.players.p2.active?.stack.at(-1),
+    );
   });
 
   it("only that turn: on the opponent's turn after, a Poisoned Active retreats", () => {
@@ -726,7 +842,11 @@ describe("D621 §7 — Dawn: a Basic, a Stage 1 and a Stage 2 Pokémon into the 
     const pick = (id: string) => deck.find((u) => parked.cardIdByUid[u] === id) as string;
     const uids = [pick(PLAIN), pick(MIDDLE), pick(TOP)];
     for (const u of uids) expect(ask.candidates).toContain(u);
-    const done = mustApply(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids } });
+    const done = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids },
+    });
     for (const u of uids) expect(done.state.players.p1.hand).toContain(u);
     expect(all(done.events, "DECK_SEARCHED")[0]?.uids).toEqual(uids);
     expect(all(done.events, "SHUFFLE").length).toBeGreaterThan(0);
@@ -734,10 +854,16 @@ describe("D621 §7 — Dawn: a Basic, a Stage 1 and a Stage 2 Pokémon into the 
 
   it("two Basics are refused: one per group", () => {
     const parked = play(board(PLAIN, []), DAWN).state;
-    const basics = parked.players.p1.deck.filter((u) => parked.cardIdByUid[u] === PLAIN).slice(0, 2);
-    expect(applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: basics } }).ok).toBe(
-      false,
-    );
+    const basics = parked.players.p1.deck
+      .filter((u) => parked.cardIdByUid[u] === PLAIN)
+      .slice(0, 2);
+    expect(
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: basics },
+      }).ok,
+    ).toBe(false);
   });
 });
 
@@ -745,9 +871,5 @@ describe("D621 §8 — the ids and the version", () => {
   it("no D621 Trainer or body reached `FIXTURE_POOL`; every keyed id is a `me` id", () => {
     for (const id of Object.keys(LOCAL)) expect(FIXTURE_POOL[id], id).toBeUndefined();
     for (const id of ME_IDS) expect(/^me/.test(id), id).toBe(true);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

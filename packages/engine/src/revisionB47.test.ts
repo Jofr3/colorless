@@ -38,7 +38,9 @@ const skarmory = (id: string): Card =>
     name: "Mega Skarmory ex",
     hp: 260,
     types: ["Metal"],
-    attacks: [{ cost: ["Metal", "Metal", "Colorless"], name: "Sonic Ripper", effect: SONIC_RIPPER }],
+    attacks: [
+      { cost: ["Metal", "Metal", "Colorless"], name: "Sonic Ripper", effect: SONIC_RIPPER },
+    ],
   });
 const ogerpon = (id: string): Card =>
   battler(id, {
@@ -47,7 +49,12 @@ const ogerpon = (id: string): Card =>
     types: ["Water"],
     attacks: [
       { cost: ["Colorless"], name: "Sob", effect: SOB, damage: 20 },
-      { cost: ["Water", "Colorless", "Colorless"], name: "Torrential Pump", effect: TORRENTIAL_PUMP, damage: 100 },
+      {
+        cost: ["Water", "Colorless", "Colorless"],
+        name: "Torrential Pump",
+        effect: TORRENTIAL_PUMP,
+        damage: 100,
+      },
     ],
   });
 const LOCAL: Record<string, Card> = {
@@ -139,7 +146,8 @@ function render(events: readonly GameEvent[], state: GameState): string[] {
   );
 }
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
@@ -210,7 +218,7 @@ describe("B47 §1 — an attack that shuffles its own Energy into the deck says 
   );
 });
 
-describe("B47 §2 — the control: an Energy discard to the pile still reads \"discarded\"", () => {
+describe('B47 §2 — the control: an Energy discard to the pile still reads "discarded"', () => {
   it('"Discard all Energy from this Pokémon." — the pile row is byte-identical', () => {
     const board = table(PILE, [M, D]);
     const { state, events } = must(board, { type: "attack", seat: "p1", index: 0 });

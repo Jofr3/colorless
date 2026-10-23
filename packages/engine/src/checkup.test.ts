@@ -268,7 +268,12 @@ describe("checkup: paralysis (§13.4)", () => {
 describe("checkup: the fixed §13 order, conditions coexisting (§12)", () => {
   it("poison, then burn + flip, then paralysis — one Pokémon, one batch", () => {
     let state = walls(TAILS); // the burn flip is tails — nothing cures
-    state = setConditions(state, "p1", { rotation: "paralyzed", poisonDamage: 10, burned: true, confusionDamage: 30 });
+    state = setConditions(state, "p1", {
+      rotation: "paralyzed",
+      poisonDamage: 10,
+      burned: true,
+      confusionDamage: 30,
+    });
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
     expect(types(events)).toEqual([
       "TURN_ENDED",
@@ -408,7 +413,12 @@ describe("confusion at attack time (§8 step 3, §12)", () => {
 describe("retreat clears conditions (§11/§12)", () => {
   it("emits one STATUS_CLEARED listing exactly what was present", () => {
     let board = attackerBoard(HEADS, { p1: 1 });
-    board = setConditions(board, "p1", { rotation: "confused", poisonDamage: 20, burned: true, confusionDamage: 30 });
+    board = setConditions(board, "p1", {
+      rotation: "confused",
+      poisonDamage: 20,
+      burned: true,
+      confusionDamage: 30,
+    });
     const uid = activeUid(board, "p1");
     const { state: done, events } = mustApply(board, retreatAction(board, "p1"));
     expect(types(events)).toEqual(["RETREATED", "STATUS_CLEARED"]);
@@ -593,7 +603,12 @@ describe("derived attack effects in play (effects.ts)", () => {
 
   it("a rotation status REPLACES the previous one; poison and burn ride along (§12)", () => {
     let board = statuserBoard(TAILS);
-    board = setConditions(board, "p2", { rotation: "confused", poisonDamage: 10, burned: true, confusionDamage: 30 });
+    board = setConditions(board, "p2", {
+      rotation: "confused",
+      poisonDamage: 10,
+      burned: true,
+      confusionDamage: 30,
+    });
     const { state: done, events } = mustApply(board, { type: "attack", seat: "p1", index: 0 }); // Hypnosis
     expect(events.find((e) => e.type === "STATUS_APPLIED")).toMatchObject({ status: "asleep" });
     // Asleep replaced Confused; the checkup then ticked poison 10 + burn 20
@@ -743,7 +758,11 @@ describe("derived attack effects in play (effects.ts)", () => {
     // answers. A Basic fielded by surgery, energied for its {L}{C} cost with
     // Lightning (Fire cannot pay the {L}); fix-bigbody (200 HP) survives the base 10
     // so the KO tail stays out of the way.
-    let board = driveSetup(HEADS, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
+    let board = driveSetup(
+      HEADS,
+      { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK },
+      { first: "p2" },
+    );
     board = must(applyAction(board, { type: "endTurn", seat: "p2" }));
     board = setActiveFromDeck(board, "p1", "sv01-068");
     board = attachFromDeck(board, "p1", "fix-lightning-energy", 2);

@@ -110,7 +110,9 @@ function nameOf(state: GameState, uid: string): string {
 /** Setup then open P1's turn 2 (P2 went first and passed) — Trainers play
     freely, the shared board shape of cardplay.test.ts. */
 function p1Turn2(seed: number, decks: { p1: string[]; p2: string[] }): GameState {
-  return must(applyAction(driveSetup(seed, decks, { first: "p2" }), { type: "endTurn", seat: "p2" }));
+  return must(
+    applyAction(driveSetup(seed, decks, { first: "p2" }), { type: "endTurn", seat: "p2" }),
+  );
 }
 
 /** Play `cardId` from p1's hand and answer its chooseCards park with the first
@@ -175,7 +177,9 @@ describe("D225 — log.ts's DECK_SEARCHED arm reads the printed clause, not the 
 
   it("agrees its verb and pronoun with the count on BOTH endings", () => {
     expect(
-      searchRow(board, [{ type: "DECK_SEARCHED", seat: "p1", dest: "hand", uids: [one, two], reveal: true }]),
+      searchRow(board, [
+        { type: "DECK_SEARCHED", seat: "p1", dest: "hand", uids: [one, two], reveal: true },
+      ]),
     ).toContain(" and put them in hand");
     expect(
       searchRow(board, [{ type: "DECK_SEARCHED", seat: "p1", dest: "hand", uids: [one] }]),
@@ -193,13 +197,15 @@ describe("D225 — log.ts's DECK_SEARCHED arm reads the printed clause, not the 
 
   it("ignores the flag entirely on a BENCH search — that destination was never the debt", () => {
     const counted = "searched their deck — benched 1 Pokémon";
-    expect(searchRow(board, [{ type: "DECK_SEARCHED", seat: "p1", dest: "bench", uids: [one] }])).toBe(
-      counted,
-    );
+    expect(
+      searchRow(board, [{ type: "DECK_SEARCHED", seat: "p1", dest: "bench", uids: [one] }]),
+    ).toBe(counted);
     // Even if some future row spelled it, a benched card is public by the move
     // itself and the row must not grow a second voice for it.
     expect(
-      searchRow(board, [{ type: "DECK_SEARCHED", seat: "p1", dest: "bench", uids: [one], reveal: true }]),
+      searchRow(board, [
+        { type: "DECK_SEARCHED", seat: "p1", dest: "bench", uids: [one], reveal: true },
+      ]),
     ).toBe(counted);
   });
 });
@@ -236,7 +242,7 @@ describe("D225 — driven through real programs, the clause is the only differen
     expect(types(events)).toContain("SHUFFLE");
   });
 
-  it("Nest Ball stays a count — same op, `dest: \"bench\"`, no printed reveal", () => {
+  it('Nest Ball stays a count — same op, `dest: "bench"`, no printed reveal', () => {
     const start = p1Turn2(1, { p1: TRAINER_DECK, p2: TRAINER_DECK });
     const { state, events, picked } = playAndTake(start, "sv01-181", 1);
     const searched = find(events, "DECK_SEARCHED");
@@ -416,10 +422,7 @@ const REVEALING: readonly [id: string, printed: string][] = [
   // printed "reveal" is about whether the taking is ANNOUNCED. Great Ball and
   // Pokégear have made exactly that separation since D225.
   ["sv08.5-127", "Roto-Stick (lookAtTopN) — 'You may reveal any number of Supporter cards'"],
-  [
-    "sv06-143",
-    "Bug Catching Set (lookAtTopN) — 'You may reveal up to 2 in any combination of …'",
-  ],
+  ["sv06-143", "Bug Catching Set (lookAtTopN) — 'You may reveal up to 2 in any combination of …'"],
   // 🆕 D336 — the two MULTI-NOUN `searchDeck` rows. Both print the word, and both
   // are tabled at their REAL catalog id on D333's reading of D330's rule: these
   // ids DO resolve a program (the registry carries all three), so the table names
@@ -482,8 +485,14 @@ const REVEALING: readonly [id: string, printed: string][] = [
   // the first REAL id of each text (the reprints ride the same object, which is what
   // `classified.size` counts). PREDICTING THE RIGHT TABLE IS THE CLAIM (D339): all
   // three land HERE, and `NOT_REVEALING` stands still at 16.
-  ["sv09-079", "Mamoswine ex 'Mammoth Hauler' (Ability) — 'search your deck for a Pokémon, reveal it'"],
-  ["sv05-017", "Sawsbuck 'Changing Seasons' (Ability) — 'search your deck for a Stadium card, reveal it'"],
+  [
+    "sv09-079",
+    "Mamoswine ex 'Mammoth Hauler' (Ability) — 'search your deck for a Pokémon, reveal it'",
+  ],
+  [
+    "sv05-017",
+    "Sawsbuck 'Changing Seasons' (Ability) — 'search your deck for a Stadium card, reveal it'",
+  ],
   [
     "sv10-033",
     "Ethan's Quilava 'Bonded by the Journey' (Ability) — 'search your deck for an Ethan's Adventure card, reveal it'",
@@ -500,26 +509,41 @@ const REVEALING: readonly [id: string, printed: string][] = [
     "sv10-178",
     "Team Rocket's Transceiver — 'a Supporter card that has \"Team Rocket\" in its name, reveal it'",
   ],
-  ["sv08-176", "Energy Search Pro — 'any number of Basic Energy cards of different types, reveal them'"],
+  [
+    "sv08-176",
+    "Energy Search Pro — 'any number of Basic Energy cards of different types, reveal them'",
+  ],
   ["sv05-143", "Boxed Order — 'up to 2 Item cards, reveal them' (then the turn ends)"],
   // 🆕🆕🆕 D556 — Team Rocket's Great Ball `sv10-175` prints "reveal it" on BOTH coin faces.
   // `searchOps` walks `then` and not `otherwise`, so it reaches the HEADS search alone and
   // the length-1 rung below holds; the TAILS arm's reveal is pinned by its own rung.
-  ["sv10-175", "Team Rocket's Great Ball — 'an Evolution / a Basic Team Rocket's Pokémon, reveal it' (both faces)"],
+  [
+    "sv10-175",
+    "Team Rocket's Great Ball — 'an Evolution / a Basic Team Rocket's Pokémon, reveal it' (both faces)",
+  ],
   // 🆕🆕🆕 D557 — TWO of the eleven Trainers land HERE: TM Machine (*"…Pokémon Tool cards
   // that have "Technical Machine" in their name, reveal them…"*) and Dusk Ball (*"You may
   // reveal a Pokémon you find there"*, the BOTTOM-window `lookAtTopN`). Brilliant Blender
   // prints no reveal and goes to `NOT_REVEALING`.
-  ["sv10-181", "TM Machine — 'up to 3 Pokémon Tool cards that have \"Technical Machine\" in their name, reveal them'"],
+  [
+    "sv10-181",
+    "TM Machine — 'up to 3 Pokémon Tool cards that have \"Technical Machine\" in their name, reveal them'",
+  ],
   ["sv08-175", "Dusk Ball — 'Look at the bottom 7 … You may reveal a Pokémon you find there'"],
   // 🆕🆕🆕 D561 — THREE of the nine Trainers land HERE, each PRINTING a reveal: Perrin
   // (*"search your deck for up to that many Pokémon, reveal them"* — behind its `recordGate`,
   // which `searchOps` descends through `then`), Crispin (*"up to 2 Basic Energy cards of
   // different types, reveal them"*) and Love Ball (*"a Pokémon with the same name as 1 of
   // your opponent's Pokémon in play, reveal it"*). None goes to `NOT_REVEALING`.
-  ["sv06-160", "Perrin — 'search your deck for up to that many Pokémon, reveal them' (behind its recordGate)"],
+  [
+    "sv06-160",
+    "Perrin — 'search your deck for up to that many Pokémon, reveal them' (behind its recordGate)",
+  ],
   ["sv07-133", "Crispin — 'up to 2 Basic Energy cards of different types, reveal them'"],
-  ["sv06-156", "Love Ball — 'a Pokémon with the same name as 1 of your opponent's Pokémon in play, reveal it'"],
+  [
+    "sv06-156",
+    "Love Ball — 'a Pokémon with the same name as 1 of your opponent's Pokémon in play, reveal it'",
+  ],
   // 🆕🆕🆕 D566 — Brock's Scouting (*"up to 2 Basic Pokémon or 1 Evolution Pokémon, reveal them"*):
   // ONE `searchDeck` whose `orElse` alternative is a field of the same literal, printing a reveal.
   ["sv09-146", "Brock's Scouting — 'up to 2 Basic Pokémon or 1 Evolution Pokémon, reveal them'"],
@@ -533,7 +557,10 @@ const REVEALING: readonly [id: string, printed: string][] = [
   // `conditionGate`, which `searchOps` descends through `then`). Terapagos "Prism Charge" spells
   // no search op (`attachFromDeck` is not counted by `searchOps`), so it enters neither table.
   ["sv08-189", "Tera Orb — 'a Tera Pokémon, reveal it'"],
-  ["sv07-115", "Noctowl 'Jewel Seeker' — 'up to 2 Trainer cards, reveal them' (behind its conditionGate)"],
+  [
+    "sv07-115",
+    "Noctowl 'Jewel Seeker' — 'up to 2 Trainer cards, reveal them' (behind its conditionGate)",
+  ],
   // 🆕🆕🆕 D585 — Aromatisse "Scent Collection" (`SCENT_COLLECTION`, a NEW object: Shivery Chill with {P}).
   ["me03-036", "Aromatisse 'Scent Collection' (Ability) — 'reveal them'"],
   // 🆕🆕🆕 D587 — WP04's three NEW hand searches, each printing the reveal.
@@ -545,15 +572,24 @@ const REVEALING: readonly [id: string, printed: string][] = [
   // 🆕🆕🆕 D602 — WP20b's three NEW Ability hand searches, each printing "reveal it" (Guiding Dance's
   // inside its `coinFlipGate.then`, Poké Ball's shape).
   ["me05-070", "Silvally 'Call a Buddy' (Ability) — 'a Supporter card, reveal it'"],
-  ["me02.5-007", "Erika's Tangela 'Gathering of Blossoms' (Ability) — 'an Erika's Pokémon, reveal it'"],
+  [
+    "me02.5-007",
+    "Erika's Tangela 'Gathering of Blossoms' (Ability) — 'an Erika's Pokémon, reveal it'",
+  ],
   ["30th-008", "Vivillon 'Guiding Dance' (Ability) — 'If heads, … a Pokémon, reveal it'"],
   // 🆕🆕🆕 D603 — WP11's NEW Item hand search, printing "reveal it".
   ["me01-121", "Mega Signal — 'a Mega Evolution Pokémon ex, reveal it'"],
   // 🆕🆕🆕 D611 — WP20b's dropped Dragonair, built: an Ability hand search printing "reveal it".
   ["me02.5-151", "Dragonair 'Evolutionary Guidance' (Ability) — 'an Evolution Pokémon, reveal it'"],
-  ["me02-087", "Dawn (Supporter) — 'a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them'"],
+  [
+    "me02-087",
+    "Dawn (Supporter) — 'a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them'",
+  ],
   // 🆕🆕🆕 D628 — Meowth ex ×3 "Last-Ditch Catch" on `TUCK_TAIL` (an `onPlayToBench` trigger, inside its confirm).
-  ["me03-062", "Meowth ex 'Last-Ditch Catch' (Ability) — 'a Supporter card, reveal it, and put it into your hand'"],
+  [
+    "me03-062",
+    "Meowth ex 'Last-Ditch Catch' (Ability) — 'a Supporter card, reveal it, and put it into your hand'",
+  ],
 ];
 
 /** The rows that DO NOT carry it, and why — **FIVE** printed bench moves (public by
@@ -574,7 +610,10 @@ const REVEALING: readonly [id: string, printed: string][] = [
     reveal"*, and this one does not print it because there is no *"you may"* in the
     sentence at all. Nothing is offered, so nothing is announced. */
 const NOT_REVEALING: readonly [id: string, why: string][] = [
-  ["sv01-081", "Miraidon ex Tandem Unit — Basic Lightning Pokémon onto the Bench; no reveal printed"],
+  [
+    "sv01-081",
+    "Miraidon ex Tandem Unit — Basic Lightning Pokémon onto the Bench; no reveal printed",
+  ],
   ["sv01-181", "Nest Ball — 'put it onto your Bench', no reveal printed"],
   ["sv02-171", "Artazon (Stadium) — onto the Bench"],
   ["sv09-147", "Hop's Bag — onto the Bench"],
@@ -596,10 +635,7 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
     "sv06-129",
     "Drakloak 'Recon Directive' (lookAtTopN, ABILITY) — 'put 1 of them into your hand', mandatory, no reveal printed",
   ],
-  [
-    "sv04-172",
-    "Rika (lookAtTopN) — 'put 2 of them into your hand', mandatory, no reveal printed",
-  ],
+  ["sv04-172", "Rika (lookAtTopN) — 'put 2 of them into your hand', mandatory, no reveal printed"],
   // 🆕 D339 — MAUSHOLD, AND **THIS TABLE MOVES FOR THE FIRST TIME IN THIS RUN OF
   // SLICES**. D333, D334, D336, D337 and D338 all landed in `REVEALING`; this
   // sentence benches its cards and prints no reveal clause, so it lands HERE and
@@ -664,7 +700,10 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
   // printed); Cassiopeia goes to the HAND and prints no reveal — *"Search your deck for
   // up to 2 cards and put them into your hand"*, uncategorised "cards", D225's
   // "Cassiopeia ending" now spoken by the card itself rather than by `fix-onko` alone.
-  ["sv08-185", "Precious Trolley — 'any number of Basic Pokémon and put them onto your Bench', no reveal printed"],
+  [
+    "sv08-185",
+    "Precious Trolley — 'any number of Basic Pokémon and put them onto your Bench', no reveal printed",
+  ],
   [
     "sv06.5-056",
     "Cassiopeia — 'Search your deck for up to 2 cards and put them into your hand', no reveal printed",
@@ -673,36 +712,69 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
   // them."* No reveal is PRINTED, and none is needed: the picks land in the DISCARD PILE,
   // a public zone, and `DECK_SEARCHED`'s new `"discard"` branch names them anyway (the
   // pile would show them a moment later). The flag is the SENTENCE, never the destination.
-  ["sv08-164", "Brilliant Blender — 'Search your deck for up to 5 cards and discard them', no reveal printed (public pile)"],
+  [
+    "sv08-164",
+    "Brilliant Blender — 'Search your deck for up to 5 cards and discard them', no reveal printed (public pile)",
+  ],
   // 🆕🆕🆕 D560 — three Ability searches on three objects, none PRINTING a reveal: Drilbur
   // "Dig Dig Dig" (to the DISCARD PILE, public — Brilliant Blender's reading), Team Rocket's
   // Koffing "Smog Signals" (onto the BENCH, public by the move) and Thwackey "Boom Boom
   // Groove" (*"search your deck for a card and put it into your hand"* — Cassiopeia's
   // reading). The flag is the SENTENCE, never the destination.
-  ["sv05-085", "Drilbur 'Dig Dig Dig' — 'up to 3 Basic {F} Energy cards and discard them', no reveal printed (public pile)"],
-  ["sv10-125", "Team Rocket's Koffing 'Smog Signals' — 'put them onto your Bench', no reveal printed (a bench move)"],
-  ["sv06-015", "Thwackey 'Boom Boom Groove' — 'a card and put it into your hand', no reveal printed"],
+  [
+    "sv05-085",
+    "Drilbur 'Dig Dig Dig' — 'up to 3 Basic {F} Energy cards and discard them', no reveal printed (public pile)",
+  ],
+  [
+    "sv10-125",
+    "Team Rocket's Koffing 'Smog Signals' — 'put them onto your Bench', no reveal printed (a bench move)",
+  ],
+  [
+    "sv06-015",
+    "Thwackey 'Boom Boom Groove' — 'a card and put it into your hand', no reveal printed",
+  ],
   // 🆕🆕🆕 D565 — Farfetch'd "Impromptu Carrier": the Tool is ATTACHED (face up in play), and the
   // print carries no "reveal". The flag is the SENTENCE, never the destination.
-  ["sv06-132", "Farfetch'd 'Impromptu Carrier' — 'a Pokémon Tool card and attach it to this Pokémon', no reveal printed"],
+  [
+    "sv06-132",
+    "Farfetch'd 'Impromptu Carrier' — 'a Pokémon Tool card and attach it to this Pokémon', no reveal printed",
+  ],
   // 🆕🆕🆕 D566 — Amulet of Hope (a Tool's after-the-KO search, `triggered[].program`): *"search your
   // deck for up to 3 cards and put them into your hand"* — the uncategorised "cards" noun this file's
   // header names in its own no-reveal census (the D225 list), and no reveal is printed or authored.
-  ["sv08-162", "Amulet of Hope — 'search your deck for up to 3 cards and put them into your hand', no reveal printed"],
+  [
+    "sv08-162",
+    "Amulet of Hope — 'search your deck for up to 3 cards and put them into your hand', no reveal printed",
+  ],
   // 🆕🆕🆕 D590 — two `onEvolve` searches onto the BENCH (public by the move), none printing a reveal:
   // Ninjask "Cast-Off Shell" and Silcoon "Multiplying Cocoon". Smog Signals' reading.
-  ["me01-017", "Ninjask 'Cast-Off Shell' — 'a Shedinja and put it onto your Bench', no reveal printed (a bench move)"],
-  ["me02.5-012", "Silcoon 'Multiplying Cocoon' — 'a Silcoon or a Cascoon and put it onto your Bench', no reveal printed (a bench move)"],
+  [
+    "me01-017",
+    "Ninjask 'Cast-Off Shell' — 'a Shedinja and put it onto your Bench', no reveal printed (a bench move)",
+  ],
+  [
+    "me02.5-012",
+    "Silcoon 'Multiplying Cocoon' — 'a Silcoon or a Cascoon and put it onto your Bench', no reveal printed (a bench move)",
+  ],
   // 🆕🆕🆕 D598 — Pecharunt "Final Chain", an on-KO search (`triggered[].program`): Thwackey's reading.
-  ["me02.5-143", "Pecharunt 'Final Chain' — 'search your deck for a card and put it into your hand', no reveal printed"],
+  [
+    "me02.5-143",
+    "Pecharunt 'Final Chain' — 'search your deck for a card and put it into your hand', no reveal printed",
+  ],
   // 🆕🆕🆕 D606 — WP25a's NEW Stadium Bench search, Artazon's shape without the Rule Box narrowing.
   ["me03-077", "Lumiose City (Stadium) — a Basic Pokémon onto the Bench, no reveal printed"],
   // 🆕🆕🆕 D635 — Fossil Quarry (a Stadium, Antique Items onto the Bench, none printed).
   ["me05-076", "Fossil Quarry (Stadium) — up to 2 Antique Items onto the Bench, no reveal printed"],
   // 🆕🆕🆕 D611 — Crobat "Nighttime Maneuvers": Ciphermaniac's deck-top search at one card.
-  ["me04-051", "Crobat 'Nighttime Maneuvers' (Ability) — 'a card … put that card on top of it', no reveal printed (a FACE-DOWN zone)"],
+  [
+    "me04-051",
+    "Crobat 'Nighttime Maneuvers' (Ability) — 'a card … put that card on top of it', no reveal printed (a FACE-DOWN zone)",
+  ],
   // 🆕🆕🆕 D617 — Grimsley's Move: a look at the top 7, a {D} Pokémon onto the BENCH (public by the move).
-  ["me02-090", "Grimsley's Move (Supporter) — 'put a {D} Pokémon you find there onto your Bench', no reveal printed (a bench move)"],
+  [
+    "me02-090",
+    "Grimsley's Move (Supporter) — 'put a {D} Pokémon you find there onto your Bench', no reveal printed (a bench move)",
+  ],
 ];
 
 describe("D225 — which registry rows carry the rider", () => {

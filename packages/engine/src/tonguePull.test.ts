@@ -335,7 +335,9 @@ describe("D297 — the printed sentence, as ops", () => {
     expect(deriveAttackEffect(joined)).toEqual([{ op: "bottomFromOpponentHand" }]);
     // The imperative form with the OTHER family's destination is nobody's sentence.
     expect(
-      deriveAttackEffect("Your opponent reveals their hand. Put up to 2 Basic Pokémon you find there onto your Bench."),
+      deriveAttackEffect(
+        "Your opponent reveals their hand. Put up to 2 Basic Pokémon you find there onto your Bench.",
+      ),
     ).toBeNull();
   });
 });
@@ -366,7 +368,7 @@ describe("the ABSENT `upTo` is the M5 op, unchanged in every respect", () => {
     expect([prompt.min, prompt.max]).toEqual([1, 1]);
   });
 
-  it("`dest: \"bench\"` with NO `upTo` is D294's Mandibuzz, byte for byte", () => {
+  it('`dest: "bench"` with NO `upTo` is D294\'s Mandibuzz, byte for byte', () => {
     const state = board(SEEDS[2], [["fix-victim", 1]]);
     const out = runOps(state, [{ op: "bottomFromOpponentHand", dest: "bench" }], "p1");
     expect(out.parked).toBe(false);
@@ -386,7 +388,10 @@ describe("the interchangeable collapse, on the board the doubt did not name", ()
     const state = pull(SEEDS[0], [["fix-victim", 2]]);
     const prompt = cardsPrompt(state);
     expect(prompt.candidates).toHaveLength(2);
-    expect(prompt.candidates.map((u) => state.cardIdByUid[u])).toEqual(["fix-victim", "fix-victim"]);
+    expect(prompt.candidates.map((u) => state.cardIdByUid[u])).toEqual([
+      "fix-victim",
+      "fix-victim",
+    ]);
   });
 
   it("🛑 and BOTH of them can actually land — the second copy is reachable", () => {
@@ -435,7 +440,7 @@ describe("the interchangeable collapse, on the board the doubt did not name", ()
 // 4. THE DECLINE — "up to" means the controller may say no.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("the printed \"up to\" is declinable, and a LONE candidate is still asked", () => {
+describe('the printed "up to" is declinable, and a LONE candidate is still asked', () => {
   it("🛑 ONE candidate under `upTo` PARKS — the auto-resolve does not fire", () => {
     // The sharpest line in the diff. Under the old arm this board resolved inline
     // and put a Basic on the opponent's Bench with nobody asked.
@@ -493,9 +498,9 @@ describe("the printed \"up to\" is declinable, and a LONE candidate is still ask
     expect(state.players.p2.bench).toEqual([]);
     // Nothing left the hand. (The count is 4, not 3: the attack ended the turn and
     // p2 drew — which is exactly why every hand assertion in this file names uids.)
-    expect(
-      state.players.p2.hand.filter((u) => state.cardIdByUid[u] === "fix-item"),
-    ).toHaveLength(2);
+    expect(state.players.p2.hand.filter((u) => state.cardIdByUid[u] === "fix-item")).toHaveLength(
+      2,
+    );
   });
 });
 
@@ -667,7 +672,14 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     expect(keys).toContain("phase");
     expect(keys).not.toContain("benchPuts");
     const prompt = cardsPrompt(state);
-    expect(Object.keys(prompt).sort()).toEqual(["candidates", "dest", "kind", "max", "min", "note"]);
+    expect(Object.keys(prompt).sort()).toEqual([
+      "candidates",
+      "dest",
+      "kind",
+      "max",
+      "min",
+      "note",
+    ]);
   });
 });
 
@@ -684,7 +696,5 @@ describe("the engine version", () => {
     // whichever slice bumped it last. `legacyEnergy.test.ts` carries the literal —
     // the same hand-off this file received from `aquaWash.test.ts`.
     expect(manifest.version).toBe(engineVersion);
-    expect(manifest.version).not.toBe("0.207.0");
-    expect(manifest.version).not.toBe("0.208.0");
   });
 });

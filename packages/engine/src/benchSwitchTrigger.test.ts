@@ -348,7 +348,10 @@ describe("D244 §3 — 'If you do, you may move any amount of Energy…'", () =>
     const { state: done, events } = mustApply(state, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", picks: all.map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })) },
+      choice: {
+        kind: "moveEnergy",
+        picks: all.map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })),
+      },
     });
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.active?.energy).toHaveLength(4);
@@ -374,9 +377,7 @@ describe("D244 §3 — 'If you do, you may move any amount of Energy…'", () =>
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        picks: [
-          { uid: special[0]?.uid as string, dest: prompt.destinations[0] as PokemonRef },
-        ],
+        picks: [{ uid: special[0]?.uid as string, dest: prompt.destinations[0] as PokemonRef }],
       },
     });
     expect(done.players.p1.active?.energy).toEqual([special[0]?.uid]);

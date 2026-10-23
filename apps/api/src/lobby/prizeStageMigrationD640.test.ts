@@ -94,7 +94,17 @@ const JAW_CARD: Card = {
     "Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.\n\nAt any time during your turn, you may discard this card from play.",
 } as unknown as Card;
 
-const DECK = [...Array.from({ length: 52 }, () => BODY), BOLT_ID, BOLT_ID, BOLT_ID, BOLT_ID, JAW, JAW, JAW, JAW];
+const DECK = [
+  ...Array.from({ length: 52 }, () => BODY),
+  BOLT_ID,
+  BOLT_ID,
+  BOLT_ID,
+  BOLT_ID,
+  JAW,
+  JAW,
+  JAW,
+  JAW,
+];
 const NAMES = { p1: "Ana", p2: "Bo" } as const;
 type Side = GameState["players"][Seat];
 
@@ -198,7 +208,8 @@ describe("D640 — the version and the gate", () => {
 
   it("v40 and v48 (🆕🆕🆕 D643 (D539): v49 — v48 is this build's own) (🆕🆕🆕 D646 (D539): v50 — v49 is) are neither read nor migrated; a v46 record missing its players or its log is not migrated", () => {
     const old = oldRecord(46);
-    for (const version of [40, 50]) { // 🆕🆕🆕 D643 — 48 is this build's own 🆕🆕🆕 D646 — 49 is.
+    for (const version of [40, 50]) {
+      // 🆕🆕🆕 D643 — 48 is this build's own 🆕🆕🆕 D646 — 49 is.
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -212,7 +223,9 @@ describe("D640 — what the migration writes", () => {
   it("v46: the version and nothing else — every byte of the state kept, the pool unread", () => {
     const board = p1Turn(fresh());
     const old = oldRecord(46, board);
-    const migrated = migrateMatchRecord(old, { [BOLT_ID]: { ...BOLT_CARD, name: "stale" } as Card });
+    const migrated = migrateMatchRecord(old, {
+      [BOLT_ID]: { ...BOLT_CARD, name: "stale" } as Card,
+    });
     if (migrated === null) throw new Error("not migrated");
     expect(migrated.version).toBe(49); // 🆕🆕🆕 D643 — 47 → 48 🆕🆕🆕 D646 — 48 → 49.
     expect(readMatchRecord(migrated)).not.toBeNull();
@@ -231,13 +244,20 @@ describe("D640 — what the migration writes", () => {
         p1: { ...board.players.p1, trainerFlipLockTurn: board.turn },
         p2: {
           ...board.players.p2,
-          active: { ...active, weaknessRetype: { turn: board.turn + 2, type: "Colorless" }, benchedTurn: 1 },
+          active: {
+            ...active,
+            weaknessRetype: { turn: board.turn + 2, type: "Colorless" },
+            benchedTurn: 1,
+          },
         },
       },
     };
     const migrated = migrateMatchRecord(oldRecord(46, live), {});
     if (migrated === null) throw new Error("not migrated");
-    expect(migrated.state.players.p2.active?.weaknessRetype).toEqual({ turn: board.turn + 2, type: "Colorless" });
+    expect(migrated.state.players.p2.active?.weaknessRetype).toEqual({
+      turn: board.turn + 2,
+      type: "Colorless",
+    });
     expect(migrated.state.players.p2.active?.benchedTurn).toBe(1);
     expect(migrated.state.players.p1.trainerFlipLockTurn).toBe(board.turn);
   });
@@ -247,7 +267,10 @@ describe("D640 — what the migration writes", () => {
     expect(v45?.version).toBe(49); // 🆕🆕🆕 D643 — 47 → 48 🆕🆕🆕 D646 — 48 → 49.
     expect({ ...v45, version: 45 }).toEqual(oldRecord(45));
     for (const version of [44, 43, 42, 41] as const) {
-      const migrated = migrateMatchRecord(oldRecord(version), { [JAW]: JAW_CARD, [BOLT_ID]: BOLT_CARD });
+      const migrated = migrateMatchRecord(oldRecord(version), {
+        [JAW]: JAW_CARD,
+        [BOLT_ID]: BOLT_CARD,
+      });
       if (migrated === null) throw new Error(`v${version} not migrated`);
       expect(migrated.version).toBe(49); // 🆕🆕🆕 D643 — 47 → 48 🆕🆕🆕 D646 — 48 → 49.
       expect(readMatchRecord(migrated)).not.toBeNull();
@@ -270,7 +293,9 @@ describe("D640 — on a board: the migrated v46 record plays Overwriting Bolt", 
   it("a Pikachu in the Active Spot of a migrated v46 record installs the ×2 rewrite", () => {
     let board = p1Turn(fresh());
     const side = board.players.p1;
-    const pikachu = side.deck.find((u) => board.cardIdByUid[u] === BOLT_ID) ?? side.hand.find((u) => board.cardIdByUid[u] === BOLT_ID);
+    const pikachu =
+      side.deck.find((u) => board.cardIdByUid[u] === BOLT_ID) ??
+      side.hand.find((u) => board.cardIdByUid[u] === BOLT_ID);
     if (pikachu === undefined || side.active === null) throw new Error("no Pikachu");
     board = {
       ...board,

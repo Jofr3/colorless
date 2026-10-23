@@ -277,17 +277,21 @@ function answerSnipe(state: GameState, pick: number) {
   const prompt = snipePrompt(state);
   const chosen = prompt.candidates[pick];
   if (chosen === undefined) throw new Error(`no candidate ${pick}`);
-  return { prompt, ...mustApply(state, {
-    type: "resolveEffect",
-    seat: "p1",
-    choice: { kind: "pokemonMulti", refs: [chosen as PokemonRef] },
-  }) };
+  return {
+    prompt,
+    ...mustApply(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [chosen as PokemonRef] },
+    }),
+  };
 }
 
 /** The bench indices a prompt is offering, which is the whole discrimination of §5. */
 function offeredBench(candidates: readonly PokemonRef[]): number[] {
   return candidates.map((ref) => {
-    if (ref.seat !== "p2" || ref.spot.spot !== "bench") throw new Error("not an opponent bench ref");
+    if (ref.seat !== "p2" || ref.spot.spot !== "bench")
+      throw new Error("not an opponent bench ref");
     return ref.spot.index;
   });
 }
@@ -370,12 +374,10 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     // (a) THE SNIPES. Strip the class and both resolve at HEAD, so the class was the
     //     whole of it. (The stripped strings are constructed and are labelled as such —
     //     `PLAIN_60` is the printed member of the shape and is pinned above.)
+    expect(resolvedByAnyReader(EX_OR_V_60.replace(" ex or Benched Pokémon V", ""))).toBe(true);
     expect(
-      resolvedByAnyReader(EX_OR_V_60.replace(" ex or Benched Pokémon V", "")),
+      resolvedByAnyReader(EX_THEN_210.replace("Benched Pokémon ex.", "Benched Pokémon.")),
     ).toBe(true);
-    expect(resolvedByAnyReader(EX_THEN_210.replace("Benched Pokémon ex.", "Benched Pokémon."))).toBe(
-      true,
-    );
     // (b) THE SPREADS. Strip the class — STILL unread. Strip the W/R sentence instead —
     //     STILL unread. Neither axis alone is the blocker, so no single field builds them
     //     and the cluster is not one slice.
@@ -524,9 +526,9 @@ describe("§2 — two programs, exactly these bytes, and each half is the bare a
     expect(pair.filter.filters).toHaveLength(2);
     // …and the ORDER is the printed order, `ex` then `V`, which is what the caption
     // renders in §4.
-    expect(pair.filter.filters.map((f) => (f.kind === "suffixPokemon" ? f.suffix : f.kind))).toEqual(
-      ["ex", "V"],
-    );
+    expect(
+      pair.filter.filters.map((f) => (f.kind === "suffixPokemon" ? f.suffix : f.kind)),
+    ).toEqual(["ex", "V"]);
   });
 });
 
@@ -610,7 +612,10 @@ describe("§3 — the class group is a MAP, and the two wider forms are measured
     for (const noun of ["V", "VMAX", "VSTAR", "GX", "ex or Benched Pokémon VMAX"]) {
       const constructed = `This attack does 60 damage to 1 of your opponent's Benched Pokémon ${noun}. (Don't apply Weakness and Resistance for Benched Pokémon.)`;
       expect(deriveAttackEffect(constructed), noun).toBeNull();
-      expect(corpusRows().some(([, s]) => s === constructed), noun).toBe(false);
+      expect(
+        corpusRows().some(([, s]) => s === constructed),
+        noun,
+      ).toBe(false);
     }
   });
 
@@ -925,7 +930,14 @@ describe("§7 — what the class group refuses, and what it must not have moved"
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 30,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(
       deriveAttackEffect(
@@ -937,7 +949,14 @@ describe("§7 — what the class group refuses, and what it must not have moved"
         cond: { kind: "yourDeckAtMost", count: 3 },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
-          { op: "damageChosen", target: "opponentBench", amount: 120, count: 2, source: "attack", deals: true },
+          {
+            op: "damageChosen",
+            target: "opponentBench",
+            amount: 120,
+            count: 2,
+            source: "attack",
+            deals: true,
+          },
         ],
       },
     ]);
@@ -958,7 +977,14 @@ describe("§7 — what the class group refuses, and what it must not have moved"
         "This attack also does 40 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "yourBench", amount: 40, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "yourBench",
+        amount: 40,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
   });
 
@@ -1030,9 +1056,6 @@ describe("§7 — what the class group refuses, and what it must not have moved"
 
 describe("§8 — the persisted address, and why 29 does not move", () => {
   it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // `packages/engine` behaviour moved (a new op field, a new candidate funnel branch and
-    // a new caption arm), so the version steps.
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

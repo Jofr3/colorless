@@ -214,7 +214,10 @@ function localSetup(seed: number, first: Seat): GameState {
 
 /** p1 with Vivillon Active, `bench` on the Bench in the order given, one {C}
     attached. p2 goes FIRST and ends their turn, so p1 attacks on turn 2. */
-function board(seed: number, bench: readonly string[] = ["eb-basic-a", "eb-basic-b", "eb-basic-c"]) {
+function board(
+  seed: number,
+  bench: readonly string[] = ["eb-basic-a", "eb-basic-b", "eb-basic-c"],
+) {
   let state = localSetup(seed, "p2");
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   state = setActiveFromDeck(state, "p1", "sv08-007");
@@ -377,10 +380,7 @@ describe("D308 §1 — the reader: ONE anchor, and the two refusals that stay re
     // family really does hold five sentences and every one of them resolves.
     expect(family.length).toBe(5);
     for (const [, text] of family) {
-      expect(
-        deriveAttackEffect(splitAttackGateClause(text)?.body ?? text),
-        text,
-      ).not.toBeNull();
+      expect(deriveAttackEffect(splitAttackGateClause(text)?.body ?? text), text).not.toBeNull();
     }
   });
 });

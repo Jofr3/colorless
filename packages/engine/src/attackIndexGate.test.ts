@@ -196,7 +196,9 @@ function exeggcute(id: string): Card {
     hp: 30,
     retreat: 1,
     types: ["Grass"],
-    attacks: [{ cost: ["Colorless"], name: "Precocious Evolution", effect: LICENCE_TEXT_EXEGGCUTE }],
+    attacks: [
+      { cost: ["Colorless"], name: "Precocious Evolution", effect: LICENCE_TEXT_EXEGGCUTE },
+    ],
   });
 }
 
@@ -394,9 +396,10 @@ describe("D281 — the census, and the per-INDEX claim checked against the print
       expect(attacks[0]?.effect, id).toBe(text);
       // …and no OTHER row on the card prints the clause, which is the half that
       // catches "the fixture happens to start with it".
-      expect(attacks.slice(1).filter((a) => (a.effect ?? "").includes("first turn")), id).toEqual(
-        [],
-      );
+      expect(
+        attacks.slice(1).filter((a) => (a.effect ?? "").includes("first turn")),
+        id,
+      ).toEqual([]);
     }
     // Four of the five carry a SECOND attack that must not inherit the clause;
     // Exeggcute carries exactly ONE, which is why registry.ts argues the per-index
@@ -505,9 +508,9 @@ describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () =
     expect(ban?.kind === "barredIf" ? ban.condition : undefined).toEqual(expected);
     expect(gate?.kind === "onlyIf" ? gate.condition : undefined).toEqual(expected);
     // ZERO new `BoardCondition` members: every leaf here shipped at D275/D280.
-    expect(new Set(expected.kind === "allOf" ? expected.conditions.map((c) => c.kind) : [])).toEqual(
-      new Set(["youGoSecond", "yourFirstTurn"]),
-    );
+    expect(
+      new Set(expected.kind === "allOf" ? expected.conditions.map((c) => c.kind) : []),
+    ).toEqual(new Set(["youGoSecond", "yourFirstTurn"]));
   });
 
   it("🛑 on the ONE board the condition holds, they answer OPPOSITELY", () => {
@@ -775,9 +778,7 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
         // A structural read rather than a `kind` switch: the point is that no
         // shape reachable from this value is an op, whatever the arms become.
         expect(seen.includes('"op":'), id).toBe(false);
-        opsInGates += walkProgram(
-          (gate as unknown as { then?: [] }).then ?? [],
-        ).length;
+        opsInGates += walkProgram((gate as unknown as { then?: [] }).then ?? []).length;
       }
     }
     // THE ATTRIBUTION CONTROLS: the sweep really walked programs and really found

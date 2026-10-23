@@ -152,11 +152,7 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     // Key-for-key, not just deep-equal: a stray `count: undefined` would pass
     // `toEqual` and change the persisted byte string (an `EffectOp` IS stored in
     // `EffectContinuation.pendingOp`).
-    expect(Object.keys((bare as EffectOp[])[0] as object).sort()).toEqual([
-      "filter",
-      "from",
-      "op",
-    ]);
+    expect(Object.keys((bare as EffectOp[])[0] as object).sort()).toEqual(["filter", "from", "op"]);
     // And the coin-gated twin is untouched by the widening — it reads its own
     // anchor, which §4's refusal list proves was NOT widened alongside.
     expect(
@@ -203,7 +199,9 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     // provision FALLBACK, so a `{C}` filter would quietly match every unauthored
     // Special. It must stay on the LOUD skipped path here as it does on the self
     // form.
-    expect(deriveAttackEffect("Discard a {C} Energy from your opponent's Active Pokémon.")).toBeNull();
+    expect(
+      deriveAttackEffect("Discard a {C} Energy from your opponent's Active Pokémon."),
+    ).toBeNull();
     expect(
       deriveAttackEffect("Discard a Colorless Energy from your opponent's Active Pokémon."),
     ).toBeNull();
@@ -218,9 +216,7 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     expect(deriveAttackEffect(TYPED_ACTIVE.replace("'", "’"))).toEqual(
       deriveAttackEffect(TYPED_ACTIVE),
     );
-    expect(deriveAttackEffect(SWEEP_ALL.replace("'", "’"))).toEqual(
-      deriveAttackEffect(SWEEP_ALL),
-    );
+    expect(deriveAttackEffect(SWEEP_ALL.replace("'", "’"))).toEqual(deriveAttackEffect(SWEEP_ALL));
     // The control that stops the three above passing on a broken import: a
     // sentence with no apostrophe at all still derives to something.
     expect(deriveAttackEffect("Discard an Energy from this Pokémon.")).not.toBeNull();
@@ -260,9 +256,7 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
     // offered. Under `anyEnergy` this list is four long and the player can strip
     // a Basic the card does not name.
     expect(
-      parked.phase.prompt.discardable
-        .map((d) => parked.cardIdByUid[d.uid] ?? "?")
-        .sort(),
+      parked.phase.prompt.discardable.map((d) => parked.cardIdByUid[d.uid] ?? "?").sort(),
     ).toEqual(["fix-special", "fix-special-2"]);
     expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides, about a board they do not own
     // The caption is the printed sentence, byte for byte.
@@ -276,7 +270,11 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
       choice: { kind: "discardEnergy", uids: [pick] },
     });
     // ONE came off, and it is a Special. Both Basics survive.
-    expect(energyIds(done, "p2").sort()).toEqual(["fix-energy", "fix-special-2", "fix-water-energy"]);
+    expect(energyIds(done, "p2").sort()).toEqual([
+      "fix-energy",
+      "fix-special-2",
+      "fix-water-energy",
+    ]);
     // It landed in the VICTIM's pile, not the actor's — `discardVictimSeat`.
     expect(discardIds(done, "p2")).toContain("fix-special");
     expect(discardIds(done, "p1")).not.toContain("fix-special");
@@ -379,7 +377,7 @@ describe("D361 §3 — the TYPED arm: PROVISION, not print, and on THEIR side", 
   });
 });
 
-describe("D361 §4 — the SWEEP: `count: \"all\"` is EVERY match on EVERY body, not one each", () => {
+describe('D361 §4 — the SWEEP: `count: "all"` is EVERY match on EVERY body, not one each', () => {
   it("🛑 strips ALL Special Energy from ALL of their Pokémon, INLINE, and asks nothing", () => {
     // 🛑 THE CLAIM `count: "all"` BUYS, AND THE ONE GIACOMO'S SHAPE CANNOT MAKE.
     // Their Active holds TWO Specials and their Bench holds one. Giacomo's
@@ -444,7 +442,7 @@ describe("D361 §4 — the SWEEP: `count: \"all\"` is EVERY match on EVERY body,
 });
 
 describe("D361 §5 — the SHAPE RULE over BOTH producers, stated so neither can drift", () => {
-  it("🛑 EVERY `opponentEach` discard carries EITHER no count OR `\"all\"` — never a number", () => {
+  it('🛑 EVERY `opponentEach` discard carries EITHER no count OR `"all"` — never a number', () => {
     // The biconditional the type widening makes checkable, walked over BOTH
     // producers with a RECURSIVE flatten. A number on this arm would be silently
     // ignored by the interpreter (the scope is `{kind:"each"}` regardless), which
@@ -588,23 +586,23 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
     // NOT REACH. This file went red unpredicted at D362; running the PLANNED
     // ANCHOR over every string literal in `packages/engine/src` would have found
     // it, and that step was skipped. Recorded here so the next slice runs it.
-    expect(
-      deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon ex."),
-    ).toEqual([
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveIsEx" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      },
-    ]);
+    expect(deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon ex.")).toEqual(
+      [
+        {
+          op: "conditionGate",
+          cond: { kind: "opponentActiveIsEx" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        },
+      ],
+    );
     // The bare sentence one word shorter STILL derives, and now the claim is
     // sharper than "it is not null": it derives to a DIFFERENT program — no gate
     // at all — so the printed adjective is the whole behavioural difference,
     // exactly as it was the whole refusal before.
-    expect(
-      deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon."),
-    ).toEqual([{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }]);
+    expect(deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.")).toEqual([
+      { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+    ]);
   });
 
   it("the ROTATED typed printing derives anyway — rotation decides who may PLAY a card, not what it SAYS", () => {
@@ -612,13 +610,15 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
     // `{W}` and is `legal_standard = 0`. It is NOT in this slice's 8-printing
     // figure (the corpus is legal-only) and the arm covers it regardless — D358's
     // lesson applied prospectively rather than discovered afterwards.
-    expect(deriveAttackEffect("Discard a {W} Energy from your opponent's Active Pokémon.")).toEqual([
-      {
-        op: "discardEnergy",
-        from: "opponentActive",
-        filter: { kind: "providesEnergy", energyType: "Water" },
-      },
-    ]);
+    expect(deriveAttackEffect("Discard a {W} Energy from your opponent's Active Pokémon.")).toEqual(
+      [
+        {
+          op: "discardEnergy",
+          from: "opponentActive",
+          filter: { kind: "providesEnergy", energyType: "Water" },
+        },
+      ],
+    );
     // And it is genuinely absent from the legal corpus, which is what makes the
     // sentence above a claim rather than a slogan.
     expect(

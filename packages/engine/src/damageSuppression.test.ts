@@ -431,7 +431,10 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     expect(deriveAttackDamageSuppression(DEFERRED_RIDERS[2])).toEqual({ weakness: true });
     expect(deriveAttackDamageMultiplier(DEFERRED_RIDERS[2])).toEqual({
       per: 10,
-      count: { kind: "damageCountersOnYourBench", filter: { kind: "ownerPokemon", owner: "Cynthia" } },
+      count: {
+        kind: "damageCountersOnYourBench",
+        filter: { kind: "ownerPokemon", owner: "Cynthia" },
+      },
     });
     // 🆕🆕🆕 **D494 — RIDER [1] IS BUILT NOW, AND NOT BY THIS READER EITHER.** A THIRD
     // whole-sentence anchor, `CONDITIONAL_BONUS_SUPPRESSED`, spelling the printed
@@ -461,7 +464,10 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     // coin reader, D445) for the §8.5 step. NAMED BY VALUE AND BY OWNER, with the other eleven
     // refusals kept (D438): a `.not.toBeNull()` would be true under a mistaken widening of
     // `DAMAGE_SUPPRESSION` too.
-    expect(deriveAttackDamageSuppression(DEFERRED_RIDERS[3])).toEqual({ weakness: true, resistance: true });
+    expect(deriveAttackDamageSuppression(DEFERRED_RIDERS[3])).toEqual({
+      weakness: true,
+      resistance: true,
+    });
     expect(deriveAttackCoinFlip(DEFERRED_RIDERS[3])).toEqual({
       kind: "opponentPerTails",
       flips: { kind: "opponentBench" },
@@ -514,7 +520,9 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     // The diff names the drifting reader; the COUNT is pinned separately because a
     // diff alone stays GREEN when a slice deletes a reader from the module and from
     // this list in the same commit.
-    expect([...others.map((read) => read.name), "deriveAttackDamageSuppression"].sort()).toEqual(attackReaderSurface());
+    expect([...others.map((read) => read.name), "deriveAttackDamageSuppression"].sort()).toEqual(
+      attackReaderSurface(),
+    );
     expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
 
     for (const sentence of [S_EFFECTS, S_RESISTANCE, S_WR_EFFECTS, S_WR]) {

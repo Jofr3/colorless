@@ -487,7 +487,12 @@ type SpanHit = {
     STILL BLIND to a sentence whose last character is `)` (a parenthetical
     rider), because there is no terminator to re-attach. */
 export const TERMINATOR = /[.!?]$/;
-export function keptAfterDeletion(text: string, tok: readonly string[], i: number, len: number): string[] {
+export function keptAfterDeletion(
+  text: string,
+  tok: readonly string[],
+  i: number,
+  len: number,
+): string[] {
   const plain = [...tok.slice(0, i), ...tok.slice(i + len)].join(" ");
   if (i + len !== tok.length || i === 0) return [plain];
   const term = TERMINATOR.exec(text)?.[0] ?? "";
@@ -542,7 +547,12 @@ function substProbe(text: string, built: readonly string[]): SubstHit | null {
     if (fromLen === 0 || toLen === 0) continue;
     const size = fromLen + toLen;
     if (best === null || size < best.size) {
-      best = { from: a.slice(p, p + fromLen).join(" "), to: b.slice(p, p + toLen).join(" "), onto: b0, size };
+      best = {
+        from: a.slice(p, p + fromLen).join(" "),
+        to: b.slice(p, p + toLen).join(" "),
+        onto: b0,
+        size,
+      };
     }
   }
   return best;
@@ -622,7 +632,15 @@ if (import.meta.main && NEEDLE === null) {
 
   const classes = [...new Set(rows.map((r) => r.cls))].sort();
   const family = (c: string) =>
-    c.startsWith("COMPOSE") ? 0 : c.startsWith("COMPOUND") ? 1 : c.startsWith("SUBST") ? 2 : c.startsWith("PHRASE") ? 3 : 4;
+    c.startsWith("COMPOSE")
+      ? 0
+      : c.startsWith("COMPOUND")
+        ? 1
+        : c.startsWith("SUBST")
+          ? 2
+          : c.startsWith("PHRASE")
+            ? 3
+            : 4;
   const size = (c: string) => Number(/-(\d+)$/.exec(c)?.[1] ?? 0);
   classes.sort(
     (a, b) => family(a) - family(b) || size(a) - size(b) || (a < b ? -1 : a > b ? 1 : 0),
@@ -646,12 +664,12 @@ if (import.meta.main && NEEDLE === null) {
       report(r, "     ");
     }
   }
-// ⚠️ `NEEDLE !== null` IS REDUNDANT AT RUNTIME AND REQUIRED FOR THE TYPES
-// (D481). The branch above already consumed the `NEEDLE === null` case, so
-// this clause can never be false where it is reached — but TypeScript does
-// not narrow through the NEGATION of a conjunction, so without it `NEEDLE`
-// stays `string | null` and both `.includes(NEEDLE)` calls below are
-// errors. Stating the case the branch is FOR is cheaper than re-nesting it.
+  // ⚠️ `NEEDLE !== null` IS REDUNDANT AT RUNTIME AND REQUIRED FOR THE TYPES
+  // (D481). The branch above already consumed the `NEEDLE === null` case, so
+  // this clause can never be false where it is reached — but TypeScript does
+  // not narrow through the NEGATION of a conjunction, so without it `NEEDLE`
+  // stays `string | null` and both `.includes(NEEDLE)` calls below are
+  // errors. Stating the case the branch is FOR is cheaper than re-nesting it.
 } else if (import.meta.main && NEEDLE !== null) {
   const hits = rows.filter((r) => r.text.includes(NEEDLE));
   console.log(`=== ${hits.length} residue row(s) matching ${JSON.stringify(NEEDLE)} ===`);
@@ -669,7 +687,9 @@ function report(r: Row, pad: string): void {
     console.log(`${pad}SEGMENT ${r.seg.index + 1}/${r.seg.total} removed.`);
     console.log(`${pad}  KEPT  ✅ builds (${arm(r.seg.kept)}): ${r.seg.kept}`);
     console.log(`${pad}        ${derivation(r.seg.kept)}`);
-    console.log(`${pad}  CUT   ${r.seg.cutBuilds ? `✅ builds (${arm(r.seg.cut)})` : "🛑 does NOT build"}: ${r.seg.cut}`);
+    console.log(
+      `${pad}  CUT   ${r.seg.cutBuilds ? `✅ builds (${arm(r.seg.cut)})` : "🛑 does NOT build"}: ${r.seg.cut}`,
+    );
   }
   if (r.sub !== null) {
     console.log(`${pad}SUBST ${r.sub.size} token(s): «${r.sub.from}» → «${r.sub.to}»`);
@@ -686,6 +706,8 @@ function report(r: Row, pad: string): void {
     if (r.seg === null) console.log(`${pad}      ${derivation(r.span.kept)}`);
   }
   if (r.seg === null && r.sub === null && r.span === null) {
-    console.log(`${pad}no deletion and no substitution this instrument can make reaches a built string.`);
+    console.log(
+      `${pad}no deletion and no substitution this instrument can make reaches a built string.`,
+    );
   }
 }

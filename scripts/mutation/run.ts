@@ -238,14 +238,18 @@ function recoverFromJournal(): JournalDisposition {
   // refusing would make the tool permanently unusable until someone deleted a
   // file by hand.
   if (journal.pid !== process.pid && pidIsAlive(journal.pid)) {
-    console.error(`\n🛑  A mutation run is ALREADY IN FLIGHT (pid ${journal.pid}, started ${journal.startedAt}).`);
+    console.error(
+      `\n🛑  A mutation run is ALREADY IN FLIGHT (pid ${journal.pid}, started ${journal.startedAt}).`,
+    );
     console.error("    Refusing to recover: its journal is not wreckage, it is that run's net.");
     console.error("    Restoring from it would overwrite the mutant that run has on disk right");
     console.error("    now, and its row would report CLOBBER against this process.\n");
     for (const entry of journal.files) {
       console.error(`    in flight: ${entry.path}`);
     }
-    console.error("\n    Wait for it to finish, or stop it (a SIGINT/SIGTERM restores and clears).");
+    console.error(
+      "\n    Wait for it to finish, or stop it (a SIGINT/SIGTERM restores and clears).",
+    );
     console.error("    If you are certain that pid is NOT this harness (pids are reused), delete");
     console.error(`    ${JOURNAL} by hand — but read it first: it holds the only copy of the`);
     console.error("    original bytes.\n");

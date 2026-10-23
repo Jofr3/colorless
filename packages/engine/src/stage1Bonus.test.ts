@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isStage1Pokemon, isStage2Pokemon } from "./cards";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -99,7 +95,8 @@ const READERS: readonly ((text: string) => unknown)[] = [
 ];
 
 /** THE SENTENCE THIS SLICE BUYS, byte for byte off the printing. */
-const TAKEN = "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.";
+const TAKEN =
+  "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.";
 
 /** The one id behind it — Paldean Tauros `sv08-018`, "Spirited Tackle" at index 1
     of two, confirmed by id against tcgdex (`/v2/en/cards/sv08-018`), which returns
@@ -115,9 +112,18 @@ const EVOLUTION_SENTENCES: readonly (readonly [string, number])[] = [
     "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 140 more damage, and discard all Energy from this Pokémon.",
     5,
   ],
-  ["If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 50 more damage.", 1],
-  ["If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 80 more damage.", 2],
-  ["If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 90 more damage.", 1],
+  [
+    "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 50 more damage.",
+    1,
+  ],
+  [
+    "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 80 more damage.",
+    2,
+  ],
+  [
+    "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 90 more damage.",
+    1,
+  ],
 ];
 
 /** The stage ladder this file's deck IS — one body per printed `stage` word, with
@@ -618,7 +624,7 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // the 2-printing band by construction and is what keeps this rung able to go red
     // for the reason that matters: a reader narrowing so any clause returns to 2
     // fails it, as does that clause being claimed.
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left the singleton band,
     // the same trade one slice on — a 1-printing clause bought for ONE parameterised
     // member plus one anchored template. The band above is STILL empty, and the only

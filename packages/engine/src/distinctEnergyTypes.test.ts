@@ -20,7 +20,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState } from "./index";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -789,9 +789,5 @@ describe("§4 — the census step this slice is", () => {
     // With it present the same continuation parks caps, so "absent means unconstrained"
     // is a statement about behaviour rather than about a spread.
     expect(cardsPrompt(parked).caps).toHaveLength(4);
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

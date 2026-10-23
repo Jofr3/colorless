@@ -66,7 +66,12 @@ const LOCAL: Record<string, Card> = {
     weaknesses: [{ type: "Grass", value: "×2" }],
     attacks: [
       { cost: ["Darkness", "Colorless"], name: "Terminal Period", effect: TERMINAL_TEXT },
-      { cost: ["Darkness", "Darkness", "Colorless"], name: "Claw of Darkness", effect: CLAW_TEXT, damage: 200 },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Claw of Darkness",
+        effect: CLAW_TEXT,
+        damage: 200,
+      },
     ],
   }),
   [MIMIKYU]: battler(MIMIKYU, {
@@ -118,7 +123,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -126,11 +133,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);
@@ -142,7 +152,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -167,7 +183,7 @@ const mischievousHands: GameAction = { type: "attack", seat: "p1", index: 0 };
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 
-describe("B20 §1 — Munkidori ex \"Oh No You Don't\": a damage-free Knock Out is not \"Knocked Out by damage from an attack\"", () => {
+describe('B20 §1 — Munkidori ex "Oh No You Don\'t": a damage-free Knock Out is not "Knocked Out by damage from an attack"', () => {
   it("every printing carries the printed sentence and the one `onKoPrizeReduction` row", () => {
     for (const id of MUNKIDORI_IDS) {
       expect(POOL[id]?.abilities?.[0]?.effect, id).toBe(OH_NO_TEXT);
@@ -183,14 +199,16 @@ describe("B20 §1 — Munkidori ex \"Oh No You Don't\": a damage-free Knock Out 
   });
 
   it.each(MUNKIDORI_IDS)(
-    "🛑 %s: Terminal Period's \"that Pokémon is Knocked Out\" (no damage) reduces NOTHING — P1 takes both Prizes",
+    '🛑 %s: Terminal Period\'s "that Pokémon is Knocked Out" (no damage) reduces NOTHING — P1 takes both Prizes',
     (id) => {
       const { events } = mustApply(board(id, ABSOL, DARK, 60), terminalPeriod);
       expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);
       expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
       expect(ofType(events, "ABILITY_TRIGGERED")).toEqual([]);
       expect(ofType(events, "PRIZE_REDUCED")).toEqual([]);
-      expect(ofType(events, "PRIZES_OWED")).toEqual([{ type: "PRIZES_OWED", seat: "p1", count: 2 }]);
+      expect(ofType(events, "PRIZES_OWED")).toEqual([
+        { type: "PRIZES_OWED", seat: "p1", count: 2 },
+      ]);
     },
   );
 
@@ -200,23 +218,32 @@ describe("B20 §1 — Munkidori ex \"Oh No You Don't\": a damage-free Knock Out 
       const { events } = mustApply(board(id, ABSOL, DARK, 60), clawOfDarkness);
       expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
       expect(ofType(events, "ABILITY_TRIGGERED")).toEqual([
-        { type: "ABILITY_TRIGGERED", seat: "p2", uid: expect.any(String), ability: "Oh No You Don't" },
+        {
+          type: "ABILITY_TRIGGERED",
+          seat: "p2",
+          uid: expect.any(String),
+          ability: "Oh No You Don't",
+        },
       ]);
-      expect(ofType(events, "PRIZES_OWED")).toEqual([{ type: "PRIZES_OWED", seat: "p1", count: 1 }]);
+      expect(ofType(events, "PRIZES_OWED")).toEqual([
+        { type: "PRIZES_OWED", seat: "p1", count: 1 },
+      ]);
     },
   );
 });
 
-describe("B20 §2 — R-PD1 ⚠️ UNRULED, pinned and NOT changed: a Knock Out from counters an attack placed counts as \"by damage\"", () => {
+describe('B20 §2 — R-PD1 ⚠️ UNRULED, pinned and NOT changed: a Knock Out from counters an attack placed counts as "by damage"', () => {
   it("Mischievous Hands' 3 counters on a 200-damage Munkidori ex take 1 fewer Prize (the recorded reading)", () => {
     const state = board("sv06.5-037", MIMIKYU, PSYCHIC, 200);
     const parked = mustApply(state, mischievousHands).state;
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "choosePokemonMulti") throw new Error(`unexpected prompt ${prompt.kind}`);
     const active = prompt.candidates.find((ref) => ref.spot.spot === "active");
     const bench = prompt.candidates.find((ref) => ref.spot.spot === "bench");
-    if (active === undefined || bench === undefined) throw new Error("expected Active and Bench candidates");
+    if (active === undefined || bench === undefined)
+      throw new Error("expected Active and Bench candidates");
     const { events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",

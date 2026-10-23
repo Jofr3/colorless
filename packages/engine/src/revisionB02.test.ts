@@ -56,8 +56,12 @@ const mon = (id: string, name: string): Card =>
   });
 
 const LOCAL: Record<string, Card> = {
-  ...Object.fromEntries(CARETAKER.map((id) => [id, trainer(id, "Caretaker", "Supporter", CARETAKER_TEXT)])),
-  ...Object.fromEntries(ROXIE.map((id) => [id, trainer(id, "Roxie's Performance", "Supporter", ROXIE_TEXT)])),
+  ...Object.fromEntries(
+    CARETAKER.map((id) => [id, trainer(id, "Caretaker", "Supporter", CARETAKER_TEXT)]),
+  ),
+  ...Object.fromEntries(
+    ROXIE.map((id) => [id, trainer(id, "Roxie's Performance", "Supporter", ROXIE_TEXT)]),
+  ),
   [COMMUNITY_CENTER]: trainer(COMMUNITY_CENTER, "Community Center", "Stadium", CC_TEXT),
   [BASIC]: mon(BASIC, "B02 Basic"),
   [FILLER]: mon(FILLER, "B02 Filler"),
@@ -93,22 +97,34 @@ function p1Turn(): GameState {
     const pile = [...side.deck, ...side.hand, ...side.prizes, ...side.discard];
     const prizes = pile.filter((u) => state.cardIdByUid[u] === "fix-energy").slice(0, 6);
     const deck = pile.filter((u) => !prizes.includes(u));
-    state = { ...state, players: { ...state.players, [s]: { ...side, hand: [], discard: [], prizes, deck } } };
+    state = {
+      ...state,
+      players: { ...state.players, [s]: { ...side, hand: [], discard: [], prizes, deck } },
+    };
   }
   state = clearBench(setActiveFromDeck(state, "p1", BASIC), "p1");
   state = clearBench(setActiveFromDeck(state, "p2", BASIC), "p2");
   return benchFromDeck(state, "p2", FILLER);
 }
 
-function play(state: GameState, id: string): { state: GameState; events: GameEvent[]; uid: string } {
+function play(
+  state: GameState,
+  id: string,
+): { state: GameState; events: GameEvent[]; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
   const uid = next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string;
   return { ...mustApply(next, { type: "playTrainer", seat: "p1", uid }), uid };
 }
 
 function rows(events: readonly GameEvent[], state: GameState): string[] {
-  const entries = logFromEvents(events, { names: { p1: "Ana", p2: "Bo" }, state, elapsed: formatElapsed(0) });
-  return entries.flatMap((e) => (e.kind === "turn" ? [] : [e.segments.map((s) => s.text).join("")]));
+  const entries = logFromEvents(events, {
+    names: { p1: "Ana", p2: "Bo" },
+    state,
+    elapsed: formatElapsed(0),
+  });
+  return entries.flatMap((e) =>
+    e.kind === "turn" ? [] : [e.segments.map((s) => s.text).join("")],
+  );
 }
 
 describe("B02 §1 — Caretaker: the log names the played Caretaker going into the deck", () => {
@@ -150,7 +166,9 @@ describe("B02 §2 — Roxie's Performance: the refusal names a Trainer effect, n
       const refused = retreat(poisoned);
       if (refused.ok) throw new Error("expected the retreat to be refused");
       expect(refused.error.code).toBe("RETREAT_PREVENTED");
-      expect(refused.error.message).toBe("a Trainer effect prevents Poisoned Pokémon from retreating this turn (§11)");
+      expect(refused.error.message).toBe(
+        "a Trainer effect prevents Poisoned Pokémon from retreating this turn (§11)",
+      );
       expect(refused.error.message).not.toMatch(/attack/);
       // The unpoisoned body is free (the lock is the printed condition, nothing more).
       expect(retreat(setConditions(theirTurn, "p2", { poisonDamage: 0 })).ok).toBe(true);
@@ -165,10 +183,15 @@ describe("B02 §2 — Roxie's Performance: the refusal names a Trainer effect, n
     if (active === null) throw new Error("no Active");
     const both: GameState = {
       ...poisoned,
-      players: { ...poisoned.players, p2: { ...poisoned.players.p2, active: { ...active, retreatBlocked: true } } },
+      players: {
+        ...poisoned.players,
+        p2: { ...poisoned.players.p2, active: { ...active, retreatBlocked: true } },
+      },
     };
     const refused = retreat(both);
     if (refused.ok) throw new Error("expected the retreat to be refused");
-    expect(refused.error.message).toBe("an attack effect prevents this Pokémon from retreating (§11)");
+    expect(refused.error.message).toBe(
+      "an attack effect prevents this Pokémon from retreating (§11)",
+    );
   });
 });

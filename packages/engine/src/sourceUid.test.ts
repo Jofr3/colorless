@@ -152,7 +152,11 @@ describe("the context carries the source — the mechanism", () => {
     // The WHOLE context, not just the field: `{seat, sourceUid}` and nothing
     // else is what the continuation serializes (D14).
     // 🆕🆕🆕 D614 (D539): ~~"and nothing else"~~ — plus `invokedBy: "ability"`, the §11 ability channel.
-    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", sourceUid: pawmotUid, invokedBy: "ability" });
+    expect(parked.phase.cont.ctx).toEqual({
+      seat: "p1",
+      sourceUid: pawmotUid,
+      invokedBy: "ability",
+    });
   });
 
   it("a board trigger parks with the PLAYED Pokémon's uid", () => {

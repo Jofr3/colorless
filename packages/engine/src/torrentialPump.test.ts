@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "@colorless/schema";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import {
   deriveAttackBonusConsequent,
@@ -415,7 +411,9 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
     expect(at("shuffle 0 Energy attached to this Pokémon into your deck")).toBeNull();
     // The BODY: `yourActive` is the printed "this Pokémon" (§8), so the opponent's is
     // a different op and a different member and is refused rather than re-seated.
-    expect(at("shuffle 3 Energy attached to your opponent's Active Pokémon into your deck")).toBeNull();
+    expect(
+      at("shuffle 3 Energy attached to your opponent's Active Pokémon into your deck"),
+    ).toBeNull();
     // The ZONE: the pile is `discardEnergy`'s DEFAULT and would need no field at all,
     // which is exactly why an unanchored verb here would be free.
     expect(at("shuffle 3 Energy attached to this Pokémon into your discard pile")).toBeNull();
@@ -429,13 +427,13 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
     const then = (payoff: string) =>
       deriveAttackOptionalCostBoost(`You may discard a Stadium in play. If you do, ${payoff}`);
     // The control: the SAME cost with the payoff this slice adds.
-    expect(then("this attack also does 90 damage to 1 of your opponent's Benched Pokémon.")).toEqual(
-      {
-        cond: { kind: "stadiumInPlay" },
-        ops: [{ op: "discardStadium" }],
-        payoff: { kind: "benchSnipe", amount: 90, count: 1 },
-      },
-    );
+    expect(
+      then("this attack also does 90 damage to 1 of your opponent's Benched Pokémon."),
+    ).toEqual({
+      cond: { kind: "stadiumInPlay" },
+      ops: [{ op: "discardStadium" }],
+      payoff: { kind: "benchSnipe", amount: 90, count: 1 },
+    });
     // "Pokémon" without "Benched" is `opponentAny` — a DIFFERENT op, where a hit on
     // the Active takes Weakness and Resistance (§8.5).
     expect(then("this attack also does 90 damage to 1 of your opponent's Pokémon.")).toBeNull();
@@ -448,19 +446,21 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
     // clause keeps ONE reading, and this payoff shares that fragment on purpose. No
     // printing of THIS sentence carries a 2 (all 5 spell 1, pinned in §1), so no
     // board below moves — what moves is that the number comes off the sentence.
-    expect(then("this attack also does 90 damage to 2 of your opponent's Benched Pokémon.")).toEqual(
-      {
-        cond: { kind: "stadiumInPlay" },
-        ops: [{ op: "discardStadium" }],
-        payoff: { kind: "benchSnipe", amount: 90, count: 2 },
-      },
-    );
+    expect(
+      then("this attack also does 90 damage to 2 of your opponent's Benched Pokémon."),
+    ).toEqual({
+      cond: { kind: "stadiumInPlay" },
+      ops: [{ op: "discardStadium" }],
+      payoff: { kind: "benchSnipe", amount: 90, count: 2 },
+    });
     // …and a printed 0-COUNT is refused by the same `>= 1` guard the amount carries.
     expect(
       then("this attack also does 90 damage to 0 of your opponent's Benched Pokémon."),
     ).toBeNull();
     // A printed 0 buys nothing, on the second payoff exactly as on the first.
-    expect(then("this attack also does 0 damage to 1 of your opponent's Benched Pokémon.")).toBeNull();
+    expect(
+      then("this attack also does 0 damage to 1 of your opponent's Benched Pokémon."),
+    ).toBeNull();
   });
 
   it("🛑 the OTHER NINE readers refuse it, which is what makes ten readers one answer", () => {
@@ -477,7 +477,14 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
         "This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 120, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 120,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     // A leading or trailing sentence denies the compound, as it denies D316's reader.
     expect(deriveAttackOptionalCostBoost(`Draw a card. ${TORRENTIAL}`)).toBeNull();
@@ -676,7 +683,11 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
 
     const parked = attack(before);
     // 🛑 THE PRINTED BASE LANDS BEFORE THE PROGRAM AND IS NOT WAITING ON THE ANSWER.
-    expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 100, dealt: 100 });
+    expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      base: 100,
+      dealt: 100,
+    });
     expect(types(parked.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(parked.state.phase.kind).toBe("effect:choose");
     expect(find(parked.events, "EFFECT_PENDING")).toEqual({
@@ -763,114 +774,130 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
     expect(findAll(done.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([120]);
   });
 
-  it.each(SEEDS)("seed %i — NO: nothing moves, nothing is sniped, and the 100 still lands", (seed) => {
-    const before = board(seed, { bench: 1 });
-    const attacker = before.players.p1.active;
-    if (attacker === null) throw new Error("expected P1's Active");
-    const deckBefore = before.players.p1.deck.length;
-    const parked = attack(before);
-    expect(findAll(parked.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([100]);
-    const done = say(parked.state, false);
-    // 🛑 THE DEFECT `optional`'s own doc names: a confirm that silently applies on "no".
-    expect(done.state.players.p1.active?.energy).toEqual(attacker.energy);
-    expect(done.state.players.p1.deck).toHaveLength(deckBefore);
-    expect(types(done.events)).not.toContain("SHUFFLE");
-    expect(types(done.events)).not.toContain("ENERGY_DISCARDED");
-    expect(done.state.players.p2.bench[0]?.damage).toBe(0);
-    // …and the rung a decline arm added "for symmetry" would redden on: the printed
-    // base was dealt ONCE, by the pipeline before the park, and the DECLINE deals
-    // nothing at all — where D381's decline deals the base a second time over.
-    expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(0);
-    expect(done.state.players.p2.active?.damage).toBe(100);
-  });
+  it.each(SEEDS)(
+    "seed %i — NO: nothing moves, nothing is sniped, and the 100 still lands",
+    (seed) => {
+      const before = board(seed, { bench: 1 });
+      const attacker = before.players.p1.active;
+      if (attacker === null) throw new Error("expected P1's Active");
+      const deckBefore = before.players.p1.deck.length;
+      const parked = attack(before);
+      expect(findAll(parked.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([100]);
+      const done = say(parked.state, false);
+      // 🛑 THE DEFECT `optional`'s own doc names: a confirm that silently applies on "no".
+      expect(done.state.players.p1.active?.energy).toEqual(attacker.energy);
+      expect(done.state.players.p1.deck).toHaveLength(deckBefore);
+      expect(types(done.events)).not.toContain("SHUFFLE");
+      expect(types(done.events)).not.toContain("ENERGY_DISCARDED");
+      expect(done.state.players.p2.bench[0]?.damage).toBe(0);
+      // …and the rung a decline arm added "for symmetry" would redden on: the printed
+      // base was dealt ONCE, by the pipeline before the park, and the DECLINE deals
+      // nothing at all — where D381's decline deals the base a second time over.
+      expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(0);
+      expect(done.state.players.p2.active?.damage).toBe(100);
+    },
+  );
 
-  it.each(SEEDS)("seed %i — an EMPTY opponent Bench: the offer is still asked, and whiffs", (seed) => {
-    // The gate is about the COST's payability and says nothing about the payoff's
-    // target, so a Bench of zero still parks the confirm — and a "yes" pays the cost
-    // for nothing, which is what the printed sentence says. **NAMED RATHER THAN
-    // FIXED**: `damageChosen`'s own whiff, one op over.
-    const parked = attack(board(seed, { bench: 0 }));
-    expect(parked.state.phase.kind).toBe("effect:choose");
-    const done = say(parked.state, true);
-    expect(done.state.players.p1.active?.energy).toEqual([]);
-    expect(types(done.events)).toContain("SHUFFLE");
-    expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(0);
-    expect(done.state.players.p2.active?.damage).toBe(100);
-  });
+  it.each(SEEDS)(
+    "seed %i — an EMPTY opponent Bench: the offer is still asked, and whiffs",
+    (seed) => {
+      // The gate is about the COST's payability and says nothing about the payoff's
+      // target, so a Bench of zero still parks the confirm — and a "yes" pays the cost
+      // for nothing, which is what the printed sentence says. **NAMED RATHER THAN
+      // FIXED**: `damageChosen`'s own whiff, one op over.
+      const parked = attack(board(seed, { bench: 0 }));
+      expect(parked.state.phase.kind).toBe("effect:choose");
+      const done = say(parked.state, true);
+      expect(done.state.players.p1.active?.energy).toEqual([]);
+      expect(types(done.events)).toContain("SHUFFLE");
+      expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(0);
+      expect(done.state.players.p2.active?.damage).toBe(100);
+    },
+  );
 });
 
 describe("§6 — the gate, and the TWO consecutive parks inside one confirm", () => {
-  it.each(SEEDS)("seed %i — 🛑 an UNPAYABLE cost is never offered, and the 100 still lands", (seed) => {
-    // 🛑 THE FALSE ARM, DRIVEN FROM OUTSIDE THE POPULATION (see the header). The
-    // synthetic printing charges FOUR against a printed cost of three units, so the
-    // attack is declared legally on three Energy cards and the offer cannot be paid.
-    // Without the gate `optional` parks unconditionally and a "yes" shuffles THREE
-    // ("do as much as you can" is `discardEnergy`'s rule for a MANDATORY discard) and
-    // collects the whole printed 120.
-    const before = board(seed, { attacker: FOUR, bench: 1 });
-    expect(before.players.p1.active?.energy).toHaveLength(3);
-    expect(conditionHolds(before, "p1", { kind: "yourActiveEnergyAtLeast", count: 4 })).toBe(false);
-    const done = attack(before);
-    expect(done.state.phase.kind).not.toBe("effect:choose");
-    expect(types(done.events)).not.toContain("EFFECT_PENDING");
-    expect(types(done.events)).not.toContain("ENERGY_DISCARDED");
-    expect(types(done.events)).not.toContain("SHUFFLE");
-    // 🛑 THE GATE REFUSES THE QUESTION, NEVER THE ATTACK — and here that is carried by
-    // the ABSENT `otherwise` plus the base staying outside the program, not by a
-    // decline arm. §4 pins the absence; this is what it means on a board.
-    expect(types(done.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(1);
-    expect(done.state.players.p2.active?.damage).toBe(100);
-    expect(done.state.players.p2.bench[0]?.damage).toBe(0);
-    // …and the CONTROL: the same board, the same seed, the REAL printing — which
-    // charges three and is offered.
-    expect(attack(board(seed, { bench: 1 })).state.phase.kind).toBe("effect:choose");
-  });
+  it.each(SEEDS)(
+    "seed %i — 🛑 an UNPAYABLE cost is never offered, and the 100 still lands",
+    (seed) => {
+      // 🛑 THE FALSE ARM, DRIVEN FROM OUTSIDE THE POPULATION (see the header). The
+      // synthetic printing charges FOUR against a printed cost of three units, so the
+      // attack is declared legally on three Energy cards and the offer cannot be paid.
+      // Without the gate `optional` parks unconditionally and a "yes" shuffles THREE
+      // ("do as much as you can" is `discardEnergy`'s rule for a MANDATORY discard) and
+      // collects the whole printed 120.
+      const before = board(seed, { attacker: FOUR, bench: 1 });
+      expect(before.players.p1.active?.energy).toHaveLength(3);
+      expect(conditionHolds(before, "p1", { kind: "yourActiveEnergyAtLeast", count: 4 })).toBe(
+        false,
+      );
+      const done = attack(before);
+      expect(done.state.phase.kind).not.toBe("effect:choose");
+      expect(types(done.events)).not.toContain("EFFECT_PENDING");
+      expect(types(done.events)).not.toContain("ENERGY_DISCARDED");
+      expect(types(done.events)).not.toContain("SHUFFLE");
+      // 🛑 THE GATE REFUSES THE QUESTION, NEVER THE ATTACK — and here that is carried by
+      // the ABSENT `otherwise` plus the base staying outside the program, not by a
+      // decline arm. §4 pins the absence; this is what it means on a board.
+      expect(types(done.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+      expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(1);
+      expect(done.state.players.p2.active?.damage).toBe(100);
+      expect(done.state.players.p2.bench[0]?.damage).toBe(0);
+      // …and the CONTROL: the same board, the same seed, the REAL printing — which
+      // charges three and is offered.
+      expect(attack(board(seed, { bench: 1 })).state.phase.kind).toBe("effect:choose");
+    },
+  );
 
-  it.each(SEEDS)("seed %i — 🛑 the cost PARKS on a 4-Energy body, then the snipe parks again", (seed) => {
-    // 🛑 TWO CONSECUTIVE PARKS INSIDE ONE CONFIRM'S `then`, which no board in D381's
-    // suite reaches: `runProgram` splices a gate's branch into the SAME work queue it
-    // walks, so the second park's `rest` is simply what is left of that queue.
-    const before = board(seed, { colorless: 3, bench: 2 });
-    expect(before.players.p1.active?.energy).toHaveLength(4);
-    const parked = attack(before);
-    const afterYes = say(parked.state, true);
+  it.each(SEEDS)(
+    "seed %i — 🛑 the cost PARKS on a 4-Energy body, then the snipe parks again",
+    (seed) => {
+      // 🛑 TWO CONSECUTIVE PARKS INSIDE ONE CONFIRM'S `then`, which no board in D381's
+      // suite reaches: `runProgram` splices a gate's branch into the SAME work queue it
+      // walks, so the second park's `rest` is simply what is left of that queue.
+      const before = board(seed, { colorless: 3, bench: 2 });
+      expect(before.players.p1.active?.energy).toHaveLength(4);
+      const parked = attack(before);
+      const afterYes = say(parked.state, true);
 
-    if (afterYes.state.phase.kind !== "effect:choose") throw new Error("expected the discard park");
-    const pick = afterYes.state.phase.prompt;
-    if (pick.kind !== "discardEnergy") throw new Error("expected a discardEnergy prompt");
-    // 🛑 THE CAPTION NAMES THE DESTINATION AND THE PRINTED VERB. A prompt still
-    // reading "Discard 3 Energy from this Pokémon." over a pick that SHUFFLES is
-    // D295's caption defect one destination over: the board would be right and the one
-    // screen telling the player what their pick does would be wrong.
-    expect(pick.note).toBe("Shuffle 3 Energy attached to this Pokémon into your deck.");
-    expect(pick.scope).toEqual({ kind: "total", count: 3 });
-    // FOUR offers and not two: `interchangeableCandidates` keeps `count` copies per
-    // class, and the printed count is 3 — so all three identical {C} survive beside
-    // the {W}, because a pick of three could want all of them.
-    expect(pick.discardable).toHaveLength(4);
-    const chosen = before.players.p1.active?.energy.slice(0, 3) ?? [];
-    const afterPick = apply(afterYes.state, {
-      type: "resolveEffect",
-      seat: "p1",
-      choice: { kind: "discardEnergy", uids: chosen },
-    });
+      if (afterYes.state.phase.kind !== "effect:choose")
+        throw new Error("expected the discard park");
+      const pick = afterYes.state.phase.prompt;
+      if (pick.kind !== "discardEnergy") throw new Error("expected a discardEnergy prompt");
+      // 🛑 THE CAPTION NAMES THE DESTINATION AND THE PRINTED VERB. A prompt still
+      // reading "Discard 3 Energy from this Pokémon." over a pick that SHUFFLES is
+      // D295's caption defect one destination over: the board would be right and the one
+      // screen telling the player what their pick does would be wrong.
+      expect(pick.note).toBe("Shuffle 3 Energy attached to this Pokémon into your deck.");
+      expect(pick.scope).toEqual({ kind: "total", count: 3 });
+      // FOUR offers and not two: `interchangeableCandidates` keeps `count` copies per
+      // class, and the printed count is 3 — so all three identical {C} survive beside
+      // the {W}, because a pick of three could want all of them.
+      expect(pick.discardable).toHaveLength(4);
+      const chosen = before.players.p1.active?.energy.slice(0, 3) ?? [];
+      const afterPick = apply(afterYes.state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "discardEnergy", uids: chosen },
+      });
 
-    // …and then the SECOND park, on a Bench of two.
-    if (afterPick.state.phase.kind !== "effect:choose") throw new Error("expected the snipe park");
-    const snipe = afterPick.state.phase.prompt;
-    if (snipe.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
-    expect(snipe.max).toBe(1);
-    expect(snipe.note).toContain("120 damage");
-    const done = apply(afterPick.state, {
-      type: "resolveEffect",
-      seat: "p1",
-      choice: { kind: "pokemonMulti", refs: [snipe.candidates[0] as PokemonRef] },
-    });
-    // ONE Energy stayed on the body — the printed 3, not "all".
-    expect(done.state.players.p1.active?.energy).toHaveLength(1);
-    expect(done.state.players.p2.bench[0]?.damage).toBe(120);
-    expect(done.state.players.p2.bench[1]?.damage).toBe(0);
-    expect(done.state.players.p2.active?.damage).toBe(100);
-  });
+      // …and then the SECOND park, on a Bench of two.
+      if (afterPick.state.phase.kind !== "effect:choose")
+        throw new Error("expected the snipe park");
+      const snipe = afterPick.state.phase.prompt;
+      if (snipe.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
+      expect(snipe.max).toBe(1);
+      expect(snipe.note).toContain("120 damage");
+      const done = apply(afterPick.state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemonMulti", refs: [snipe.candidates[0] as PokemonRef] },
+      });
+      // ONE Energy stayed on the body — the printed 3, not "all".
+      expect(done.state.players.p1.active?.energy).toHaveLength(1);
+      expect(done.state.players.p2.bench[0]?.damage).toBe(120);
+      expect(done.state.players.p2.bench[1]?.damage).toBe(0);
+      expect(done.state.players.p2.active?.damage).toBe(100);
+    },
+  );
 });

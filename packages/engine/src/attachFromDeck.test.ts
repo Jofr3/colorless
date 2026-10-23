@@ -577,7 +577,10 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
     const second = resumeProgram(
       first.state,
       first.cont,
-      { kind: "attachCards", assignments: [{ uid: attachPrompt.candidates[0] as string, to: ACTIVE }] },
+      {
+        kind: "attachCards",
+        assignments: [{ uid: attachPrompt.candidates[0] as string, to: ACTIVE }],
+      },
       events2,
     );
     if (second.kind !== "parked") throw new Error("expected the search to park");
@@ -607,7 +610,10 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
     const second = resumeProgram(
       first.state,
       first.cont,
-      { kind: "attachCards", assignments: [{ uid: first.prompt.candidates[0] as string, to: bench(0) }] },
+      {
+        kind: "attachCards",
+        assignments: [{ uid: first.prompt.candidates[0] as string, to: bench(0) }],
+      },
       [],
     );
     if (second.kind !== "parked") throw new Error("expected the search to park");
@@ -1192,9 +1198,7 @@ describe('§9.2 `contains: "yourActive"` resolves on the LATER truth', () => {
           result.cont,
           {
             kind: "moveEnergy",
-            picks: [
-              { uid: p.movable[0]?.uid as string, dest: p.destinations[0] as PokemonRef },
-            ],
+            picks: [{ uid: p.movable[0]?.uid as string, dest: p.destinations[0] as PokemonRef }],
           },
           events,
         );
@@ -1262,9 +1266,15 @@ describe("wire safety — the hostile shapes applyAction must survive (D14)", ()
         assignments: [{ uid: good, to: { seat: "p3", spot: { spot: "active" } } }],
       },
     ],
-    ["a bench index as a string", { kind: "attachCards", assignments: [{ uid: good, to: at("0") }] }],
+    [
+      "a bench index as a string",
+      { kind: "attachCards", assignments: [{ uid: good, to: at("0") }] },
+    ],
     ["a bench index of 99", { kind: "attachCards", assignments: [{ uid: good, to: at(99) }] }],
-    ["a fractional bench index", { kind: "attachCards", assignments: [{ uid: good, to: at(1.5) }] }],
+    [
+      "a fractional bench index",
+      { kind: "attachCards", assignments: [{ uid: good, to: at(1.5) }] },
+    ],
     [
       "a card from the opponent's deck",
       { kind: "attachCards", assignments: [{ uid: HOSTILE.players.p2.deck[0], to: ACTIVE }] },

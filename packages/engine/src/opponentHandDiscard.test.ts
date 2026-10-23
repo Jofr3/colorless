@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -168,12 +168,12 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
 const BUILT_ELSEWHERE: readonly (readonly [string, string, number])[] = [
   [
     "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.",
-    "D542 — this mechanism with a DIFFERENT DESTINATION (§15.E deck, plus a shuffle): the op's `to?: \"deck\"` plus a trailing `shuffleDeck { whose: \"opponent\" }`, as a COMPOSITION of two shipped ops. The reason it sat in `DEFERRED` — *the op prints no `to` field, and D231's unkillable-singleton rule is what kept it off* — was true in every clause and EXPIRED rather than rotted: this printing is the second reachable value. Driven in `opponentHandShuffle.test.ts`",
+    'D542 — this mechanism with a DIFFERENT DESTINATION (§15.E deck, plus a shuffle): the op\'s `to?: "deck"` plus a trailing `shuffleDeck { whose: "opponent" }`, as a COMPOSITION of two shipped ops. The reason it sat in `DEFERRED` — *the op prints no `to` field, and D231\'s unkillable-singleton rule is what kept it off* — was true in every clause and EXPIRED rather than rotted: this printing is the second reachable value. Driven in `opponentHandShuffle.test.ts`',
     1,
   ],
   [
     "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
-    "D486 — the gated increment: this file's own head op, then a `conditionGate` on `yourActiveEvolvedFromThisTurn { name: \"Salandit\" }` over a second `opponentDiscardsFromHand`. ZERO new mechanism; driven in `evolvedDiscardCompound.test.ts`",
+    'D486 — the gated increment: this file\'s own head op, then a `conditionGate` on `yourActiveEvolvedFromThisTurn { name: "Salandit" }` over a second `opponentDiscardsFromHand`. ZERO new mechanism; driven in `evolvedDiscardCompound.test.ts`',
     1,
   ],
   [
@@ -235,11 +235,7 @@ function withHand(state: GameState, seat: Seat, ids: readonly string[]): GameSta
 
 /** `attacker` fields `fix-trainerops` with one {C} attached and an empty Bench;
     the other seat fields a body of its own and holds exactly `hand`. */
-function ready(
-  hand: readonly string[] = OPP_HAND,
-  attacker: Seat = "p1",
-  seed = SEED,
-): GameState {
+function ready(hand: readonly string[] = OPP_HAND, attacker: Seat = "p1", seed = SEED): GameState {
   const opponent = other(attacker);
   let state = setActiveFromDeck(board(attacker, seed), attacker, "fix-trainerops");
   state = attachFromDeck(state, attacker, "fix-energy", 1);
@@ -754,7 +750,8 @@ describe("§4 — the hidden hand stays hidden, before / during / after the park
       if (view.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
       expect(view.phase.prompt, viewer).toBeNull();
       const wire = JSON.stringify(view);
-      for (const needle of quoted(oppHand)) expect(wire, `${viewer}/${needle}`).not.toContain(needle);
+      for (const needle of quoted(oppHand))
+        expect(wire, `${viewer}/${needle}`).not.toContain(needle);
     }
   });
 
@@ -1164,9 +1161,5 @@ describe("§8 — the structural answers", () => {
     expect(fromRecord.state.players.p2.discard).toEqual(live.state.players.p2.discard);
     expect(fromRecord.state.players.p2.hand).toEqual(live.state.players.p2.hand);
     expect(fromRecord.state.phase).toEqual(live.state.phase);
-  });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

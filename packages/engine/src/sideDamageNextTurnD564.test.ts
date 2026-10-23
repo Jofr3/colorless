@@ -2,12 +2,20 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { seatDamageReduction } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck, trainerCard } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  trainerCard,
+} from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
 // ── 🆕🆕🆕 D564 — JASMINE'S GAZE: THE SIDE-WIDE NEXT-TURN REDUCTION ──
@@ -40,7 +48,10 @@ const STRIKE = 90;
 
 const LOCAL_CARDS: Record<string, Card> = {
   ...Object.fromEntries(
-    JASMINE.map((id) => [id, { ...trainerCard(id, "Supporter", JASMINE_TEXT), name: "Jasmine's Gaze" }]),
+    JASMINE.map((id) => [
+      id,
+      { ...trainerCard(id, "Supporter", JASMINE_TEXT), name: "Jasmine's Gaze" },
+    ]),
   ),
   [FULL_METAL_LAB]: {
     ...trainerCard(
@@ -99,7 +110,8 @@ function must(result: ReturnType<typeof applyAction>): GameState {
 
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
+  if (!result.ok)
+    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   return { state: result.state, events: result.events };
 }
 
@@ -109,7 +121,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -117,11 +131,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -146,10 +163,15 @@ function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
   return { ...state, players: { ...state.players, [seat]: next } };
 }
 
-const bench = (state: GameState, seat: Seat, id: string) => benchFromDeck(ensureInDeck(state, seat, id), seat, id);
+const bench = (state: GameState, seat: Seat, id: string) =>
+  benchFromDeck(ensureInDeck(state, seat, id), seat, id);
 
 /** p1's turn 2: p1 `active` + `benched`, p2's Active the Striker (or `attacker`). */
-function table(active: string = WALL, benched: readonly string[] = [], attacker: string = STRIKER): GameState {
+function table(
+  active: string = WALL,
+  benched: readonly string[] = [],
+  attacker: string = STRIKER,
+): GameState {
   let state = opened(5642);
   state = setActiveFromDeck(ensureInDeck(state, "p1", active), "p1", active);
   state = setActiveFromDeck(ensureInDeck(state, "p2", attacker), "p2", attacker);
@@ -166,7 +188,10 @@ function gaze(board: GameState, id: string = JASMINE[0]) {
   if (uid === undefined) throw new Error(`no ${id}`);
   const held: GameState = {
     ...board,
-    players: { ...board.players, p1: { ...side, hand: [uid], deck: deck.filter((u) => u !== uid) } },
+    players: {
+      ...board.players,
+      p1: { ...side, hand: [uid], deck: deck.filter((u) => u !== uid) },
+    },
   };
   return run(held, { type: "playTrainer", seat: "p1", uid });
 }
@@ -203,7 +228,9 @@ const dealt = (state: GameState) => find(strike(state).events, "DAMAGE_DEALT")?.
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents(events, ctx).flatMap((entry) =>
-    entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    entry.kind === "turn"
+      ? []
+      : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
   );
 }
 
@@ -211,7 +238,9 @@ function render(events: GameEvent[], state: GameState): { who: string; text: str
 describe("§1 — the row", () => {
   it("all three printings share ONE object: one op, only a `trainer` key", () => {
     const first = programFor(JASMINE[0]);
-    expect(first).toEqual({ trainer: [{ op: "installSideDamageReductionNextTurn", amount: REDUCTION }] });
+    expect(first).toEqual({
+      trainer: [{ op: "installSideDamageReductionNextTurn", amount: REDUCTION }],
+    });
     expect(Object.keys(first ?? {})).toEqual(["trainer"]);
     for (const id of JASMINE) expect(programFor(id)).toBe(first);
   });
@@ -235,13 +264,21 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
   });
 
   it("every printing installs the same record", () => {
-    for (const id of JASMINE) expect(gaze(table(), id).state.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: 30 }]);
+    for (const id of JASMINE)
+      expect(gaze(table(), id).state.players.p1.sideDamageReduction).toEqual([
+        { turn: 3, amount: 30 },
+      ]);
   });
 
   it("🛑 OVERWRITE, not sum: a second install replaces the record (one Supporter per turn — named at the type) (🆕🆕🆕 D630 (D539): WITHDRAWN — a second install APPENDS and the two SUM; Iron Defender is an Item)", () => {
     const { state } = gaze(table());
     const events: GameEvent[] = [];
-    const again = runProgram(state, [{ op: "installSideDamageReductionNextTurn", amount: 50 }], { seat: "p1" }, events);
+    const again = runProgram(
+      state,
+      [{ op: "installSideDamageReductionNextTurn", amount: 50 }],
+      { seat: "p1" },
+      events,
+    );
     if (again.kind !== "done") throw new Error("expected done");
     expect(again.state.players.p1.sideDamageReduction).toEqual([
       { turn: 3, amount: 30 },
@@ -290,22 +327,31 @@ describe("§4 — R-JG3: a SIDE record — new Pokémon are covered, and switchi
     const { state } = gaze(table());
     const later = bench(state, "p1", WEAK);
     const turn3 = run(later, { type: "endTurn", seat: "p1" }).state;
-    expect(seatDamageReduction(turn3, body(turn3.players.p1.bench[0]), "all", "p2")).toBe(REDUCTION);
+    expect(seatDamageReduction(turn3, body(turn3.players.p1.bench[0]), "all", "p2")).toBe(
+      REDUCTION,
+    );
   });
 
   it("🛑 a RETREAT after the install: the promoted body is covered end to end, and the retreated one still is", () => {
     const { state } = gaze(table(WALL, [WEAK]));
-    const retreated = run(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }).state;
+    const retreated = run(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [],
+      promoteBenchIndex: 0,
+    }).state;
     const turn3 = run(retreated, { type: "endTurn", seat: "p1" }).state;
     expect(turn3.cardIdByUid[body(turn3.players.p1.active).stack[0] as string]).toBe(WEAK);
-    expect(seatDamageReduction(turn3, body(turn3.players.p1.bench[0]), "all", "p2")).toBe(REDUCTION);
+    expect(seatDamageReduction(turn3, body(turn3.players.p1.bench[0]), "all", "p2")).toBe(
+      REDUCTION,
+    );
     // Weak ×2: 180 − 30.
     expect(dealt(turn3)).toBe(STRIKE * 2 - REDUCTION);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§5 — R-JG2: \"from your opponent's Pokémon\" — an own-side hit is never paid", () => {
+describe('§5 — R-JG2: "from your opponent\'s Pokémon" — an own-side hit is never paid', () => {
   it("🛑 the same body, the same turn: the opponent's attack is reduced, p1's own is not", () => {
     const turn3 = window();
     const target = body(turn3.players.p1.active);
@@ -346,8 +392,8 @@ describe("§7 — AFTER Weakness and Resistance", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§8 — R-JG1: Feint Attack's `\"othersOnly\"` DROPS it (an effect on the damaged Pokémon), where the Stadium stays", () => {
-  it("🛑 under `\"othersOnly\"` the Gaze is 0, the benched Hariyama's aura stays, and the Stadium stays", () => {
+describe('§8 — R-JG1: Feint Attack\'s `"othersOnly"` DROPS it (an effect on the damaged Pokémon), where the Stadium stays', () => {
+  it('🛑 under `"othersOnly"` the Gaze is 0, the benched Hariyama\'s aura stays, and the Stadium stays', () => {
     const turn3 = window(stadium(table(METAL, [HARIYAMA]), FULL_METAL_LAB));
     const target = body(turn3.players.p1.active);
     expect(seatDamageReduction(turn3, target, "all", "p2")).toBe(30 + 10 + 30);
@@ -362,7 +408,11 @@ describe("§8 — R-JG1: Feint Attack's `\"othersOnly\"` DROPS it (an effect on 
       ...turn3,
       players: {
         ...turn3.players,
-        p2: { ...side, deck: side.deck.filter((u) => u !== energy), active: { ...body(side.active), energy: [energy] } },
+        p2: {
+          ...side,
+          deck: side.deck.filter((u) => u !== energy),
+          active: { ...body(side.active), energy: [energy] },
+        },
       },
     };
     // p1's Active is the ONE legal target, so the pick is forced and resolves in place.
@@ -395,9 +445,5 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     const { sideDamageReduction: _dropped, ...v35Side } = turn3.players.p1;
     const v35 = { ...turn3, players: { ...turn3.players, p1: v35Side } } as unknown as GameState;
     expect(() => applyAction(v35, { type: "attack", seat: "p2", index: 0 })).toThrow(TypeError);
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -211,9 +211,7 @@ const LOCAL_CARDS: Record<string, Card> = {
   [UNREAD]: battler(UNREAD, {
     types: ["Fire"],
     hp: 200,
-    attacks: [
-      { cost: ["Fire"], name: "Unread Blaze", effect: UNREAD_TEXT, damage: "10+" },
-    ],
+    attacks: [{ cost: ["Fire"], name: "Unread Blaze", effect: UNREAD_TEXT, damage: "10+" }],
   }),
   /** 🛑 THE POSITIVE SIDE OF THE GATE, AND IT IS WHY THIS SUITE CAN CLAIM THE ARM
       IS NOT DEAD. `opponentActiveIsEvolution` reads `evolveFrom` (D105), so a
@@ -392,7 +390,9 @@ describe("D317 §1 — the print, and the reading each of the two sentences gets
     expect(deriveAttackBonusConsequent(OGERPON_TEXT)).toEqual({
       decider: { kind: "boardCondition", cond: { kind: "opponentActiveIsEvolution" } },
       bonus: 140,
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }],
+      ops: [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      ],
     });
     expect(deriveAttackBonusConsequent(FLORAGATO_TEXT)).toEqual({
       decider: { kind: "coinFlip" },
@@ -430,31 +430,38 @@ describe("D317 §1 — the print, and the reading each of the two sentences gets
 
   it("🛑 the ASSEMBLER puts the whole hit inside the gate, on BOTH arms", () => {
     // The base is the argument, so this is the one place the two halves meet.
-    expect(bonusConsequentProgram(deriveAttackBonusConsequent(OGERPON_TEXT) as never, 140)).toEqual([
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveIsEvolution" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        then: [
-          { op: "damageDefender", amount: 280 },
-          { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-        ],
-        otherwise: [{ op: "damageDefender", amount: 140 }],
-      },
-    ]);
-    expect(bonusConsequentProgram(deriveAttackBonusConsequent(FLORAGATO_TEXT) as never, 30)).toEqual(
+    expect(bonusConsequentProgram(deriveAttackBonusConsequent(OGERPON_TEXT) as never, 140)).toEqual(
       [
         {
-          op: "coinFlipGate",
+          op: "conditionGate",
+          cond: { kind: "opponentActiveIsEvolution" },
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
-            { op: "damageDefender", amount: 60 },
-            { op: "heal", target: "self", amount: 30 },
+            { op: "damageDefender", amount: 280 },
+            {
+              op: "discardEnergy",
+              from: "yourActive",
+              filter: { kind: "anyEnergy" },
+              count: "all",
+            },
           ],
-          otherwise: [{ op: "damageDefender", amount: 30 }],
+          otherwise: [{ op: "damageDefender", amount: 140 }],
         },
       ],
     );
+    expect(
+      bonusConsequentProgram(deriveAttackBonusConsequent(FLORAGATO_TEXT) as never, 30),
+    ).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "damageDefender", amount: 60 },
+          { op: "heal", target: "self", amount: 30 },
+        ],
+        otherwise: [{ op: "damageDefender", amount: 30 }],
+      },
+    ]);
   });
 
   it("🛑 THE DECLINE ARM IS THE PRINTED BASE, NEVER AN ABSENT BRANCH", () => {
@@ -502,9 +509,9 @@ describe("D317 §2 — the REFUSALS, which are what keep an unread sentence loud
     // narrower is invisible: the missing reader is simply never asked and the rung
     // stays green. This list ran short of the module until this slice, so the
     // refusal below was quantified over a strict subset of the surface.
-    expect([...OTHER_READERS.map((read) => read.name), "deriveAttackBonusConsequent"].sort()).toEqual(
-      attackReaderSurface(),
-    );
+    expect(
+      [...OTHER_READERS.map((read) => read.name), "deriveAttackBonusConsequent"].sort(),
+    ).toEqual(attackReaderSurface());
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
     // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
     // module and from this list in the SAME commit, and the refusals would quietly
@@ -656,7 +663,9 @@ describe("D317 §2 — the REFUSALS, which are what keep an unread sentence loud
     ).toEqual({
       decider: { kind: "boardCondition", cond: { kind: "yourStadiumInPlay" } },
       bonus: 20,
-      ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }],
+      ops: [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      ],
     });
   });
 });
@@ -859,8 +868,9 @@ describe("D317 §7 — 🛑 `coinFlipGate.otherwise`'s FIRST PRODUCER, structura
       deriveAttackBonusConsequent(FLORAGATO_TEXT) as never,
       30,
     );
-    expect([...programBranchCarriers(program).entries()].map(([op, keys]) => [op, [...keys].sort()]))
-      .toEqual([["coinFlipGate", ["otherwise", "then"]]]);
+    expect(
+      [...programBranchCarriers(program).entries()].map(([op, keys]) => [op, [...keys].sort()]),
+    ).toEqual([["coinFlipGate", ["otherwise", "then"]]]);
     // …and the structural walk descends BOTH arms, so the decline arm's hit is a
     // reachable op rather than one only the interpreter ever sees.
     expect(walkProgram(program).map((op) => op.op)).toEqual([

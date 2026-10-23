@@ -169,8 +169,20 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  [STRIKER]: battler(STRIKER, { name: "D559 Striker", hp: 300, retreat: 1, types: ["Colorless"], attacks: ATTACKS }),
-  [WALL]: battler(WALL, { name: "D559 Bulwark", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
+  [STRIKER]: battler(STRIKER, {
+    name: "D559 Striker",
+    hp: 300,
+    retreat: 1,
+    types: ["Colorless"],
+    attacks: ATTACKS,
+  }),
+  [WALL]: battler(WALL, {
+    name: "D559 Bulwark",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -202,7 +214,9 @@ function opened(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -210,11 +224,14 @@ function opened(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -227,7 +244,11 @@ function ensureInDeck(state: GameState, seat: Seat, id: string, count = 1): Game
     if (side.deck.filter((u) => next.cardIdByUid[u] === id).length >= count) return next;
     const held = side.hand.find((u) => next.cardIdByUid[u] === id);
     if (held !== undefined) {
-      const moved = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
+      const moved = {
+        ...side,
+        hand: side.hand.filter((u) => u !== held),
+        deck: [...side.deck, held],
+      };
       next = { ...next, players: { ...next.players, [seat]: moved } };
       continue;
     }
@@ -254,7 +275,11 @@ function seatActive(state: GameState, seat: Seat, id: string): GameState {
 
 /** p1's turn 2 with STRIKER Active (one Colorless Energy) plus `bench`, and `oppActive` /
     `oppBench` for p2. */
-function table(bench: readonly string[], oppActive: string, oppBench: readonly string[] = []): GameState {
+function table(
+  bench: readonly string[],
+  oppActive: string,
+  oppBench: readonly string[] = [],
+): GameState {
   let state = opened(5592);
   state = seatActive(state, "p1", STRIKER);
   state = seatActive(state, "p2", oppActive);
@@ -266,16 +291,27 @@ function table(bench: readonly string[], oppActive: string, oppBench: readonly s
 }
 
 /** TEST SURGERY — `count` copies of Energy `id` from `seat`'s deck onto its Active or bench[i]. */
-function energize(state: GameState, seat: Seat, spot: "active" | number, id: string, count: number): GameState {
+function energize(
+  state: GameState,
+  seat: Seat,
+  spot: "active" | number,
+  id: string,
+  count: number,
+): GameState {
   const ready = ensureInDeck(state, seat, id, count);
   if (spot === "active") return attachFromDeck(ready, seat, id, count);
   const side = ready.players[seat];
   const uids = side.deck.filter((u) => ready.cardIdByUid[u] === id).slice(0, count);
   const taken = new Set(uids);
-  const bench = side.bench.map((b, i) => (i === spot ? { ...b, energy: [...b.energy, ...uids] } : b));
+  const bench = side.bench.map((b, i) =>
+    i === spot ? { ...b, energy: [...b.energy, ...uids] } : b,
+  );
   return {
     ...ready,
-    players: { ...ready.players, [seat]: { ...side, deck: side.deck.filter((u) => !taken.has(u)), bench } },
+    players: {
+      ...ready.players,
+      [seat]: { ...side, deck: side.deck.filter((u) => !taken.has(u)), bench },
+    },
   };
 }
 
@@ -321,8 +357,12 @@ describe("D559 §1 — Pummeling Payback: 2 counters on the attacker per {M} Ene
     expect(body(after, "p1").damage).toBe(40);
   });
   it("three {M} → 60; the reprint `sv07-162` is the same program → 40 on two", () => {
-    expect(recoilTotal(swing(energize(table([], ORTHWORM[0]), "p2", "active", METAL, 3), STRIKE).events)).toBe(60);
-    expect(recoilTotal(swing(energize(table([], ORTHWORM[1]), "p2", "active", METAL, 2), STRIKE).events)).toBe(40);
+    expect(
+      recoilTotal(swing(energize(table([], ORTHWORM[0]), "p2", "active", METAL, 3), STRIKE).events),
+    ).toBe(60);
+    expect(
+      recoilTotal(swing(energize(table([], ORTHWORM[1]), "p2", "active", METAL, 2), STRIKE).events),
+    ).toBe(40);
   });
   it("🛑 0 {M} Energy pays 0 — two Colorless-only Energy attached, no row at all", () => {
     const state = energize(table([], ORTHWORM[0]), "p2", "active", PLAIN_ENERGY, 2);
@@ -335,7 +375,7 @@ describe("D559 §1 — Pummeling Payback: 2 counters on the attacker per {M} Ene
     state = energize(state, "p2", "active", LUMINOUS, 1);
     expect(recoilTotal(swing(state, STRIKE).events)).toBe(40);
   });
-  it("🛑 \"even if this Pokémon is Knocked Out\": a lethal hit still pays 40 (read before the §8.1 sweep)", () => {
+  it('🛑 "even if this Pokémon is Knocked Out": a lethal hit still pays 40 (read before the §8.1 sweep)', () => {
     let state = energize(table([], ORTHWORM[0], [WALL]), "p2", "active", METAL, 2);
     state = setDamage(state, "p2", 200); // 220 HP: the 50 is lethal
     const { state: after, events } = swing(state, STRIKE);
@@ -409,7 +449,7 @@ describe("D559 §4 — Gear Coating: {M}-Energy bodies take 20 less (after W/R),
     const state = energize(table([], WALL, [KLINKLANG[0]]), "p2", "active", PLAIN_ENERGY, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(50);
   });
-  it("🛑 TWO Klinklang STACK (no \"doesn't stack\" printed) → 50 − 40 = 10", () => {
+  it('🛑 TWO Klinklang STACK (no "doesn\'t stack" printed) → 50 − 40 = 10', () => {
     const state = energize(table([], WALL, [KLINKLANG[0], KLINKLANG[1]]), "p2", "active", METAL, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(10);
     expect(seatDamageReduction(state, body(state, "p2"), "all", "p1")).toBe(40);
@@ -450,7 +490,7 @@ describe("D559 §5 — Rock Armor: 30 less (after W/R) while ANY Energy is attac
     const state = table([], REGIROCK);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(50);
   });
-  it("any TYPE counts — a {M} Energy is \"any Energy\" too → 20", () => {
+  it('any TYPE counts — a {M} Energy is "any Energy" too → 20', () => {
     const state = energize(table([], REGIROCK), "p2", "active", METAL, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(20);
   });
@@ -458,7 +498,7 @@ describe("D559 §5 — Rock Armor: 30 less (after W/R) while ANY Energy is attac
     const state = energize(table([], WALL, [REGIROCK]), "p2", 0, PLAIN_ENERGY, 1);
     expect(dealtTo(swing(state, SWEEP).events, "p2", topOf(body(state, "p2", 0)))).toBe(0);
   });
-  it("🛑 R-RA: \"from attacks\" (no \"opponent's\") — an OWN-side spread is reduced too → 0; without Energy → 30", () => {
+  it('🛑 R-RA: "from attacks" (no "opponent\'s") — an OWN-side spread is reduced too → 0; without Energy → 30', () => {
     const armed = energize(table([REGIROCK], WALL), "p1", 0, PLAIN_ENERGY, 1);
     expect(dealtTo(swing(armed, BACKFIRE).events, "p1", topOf(body(armed, "p1", 0)))).toBe(0);
     const bare = table([REGIROCK], WALL);

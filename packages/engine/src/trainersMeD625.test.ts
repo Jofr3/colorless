@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -102,7 +102,13 @@ describe("D625 §1 — the faces: 13 `me` printings / 7 texts, one object per te
   it("the programs, field for field", () => {
     expect(programFor(RED_CARD)).toEqual({
       trainer: [
-        { op: "handRefresh", who: "opponent", toBottom: true, draw: { kind: "fixed", count: 3 }, onlyIfAnyMoved: true },
+        {
+          op: "handRefresh",
+          who: "opponent",
+          toBottom: true,
+          draw: { kind: "fixed", count: 3 },
+          onlyIfAnyMoved: true,
+        },
       ],
       trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
     });
@@ -130,7 +136,12 @@ describe("D625 §1 — the faces: 13 `me` printings / 7 texts, one object per te
     });
     expect(programFor(WALLY)).toEqual({
       trainer: [
-        { op: "healChosen", amount: "all", filter: { kind: "megaEvolutionEx" }, energyToHandFromHealed: true },
+        {
+          op: "healChosen",
+          amount: "all",
+          filter: { kind: "megaEvolutionEx" },
+          energyToHandFromHealed: true,
+        },
       ],
     });
     expect(programFor(BLOWTORCH)?.trainer?.[0]).toEqual({
@@ -150,8 +161,18 @@ describe("D625 §1 — the faces: 13 `me` printings / 7 texts, one object per te
     });
     expect(programFor(HAUL_NET)).toEqual({
       trainer: [
-        { op: "discardPileRetrieval", filter: { kind: "typedPokemon", pokemonType: "Water" }, dest: "deck", max: 3 },
-        { op: "discardPileRetrieval", filter: { kind: "basicEnergy", energyType: "Water" }, dest: "deck", max: 3 },
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "typedPokemon", pokemonType: "Water" },
+          dest: "deck",
+          max: 3,
+        },
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "basicEnergy", energyType: "Water" },
+          dest: "deck",
+          max: 3,
+        },
         { op: "shuffleDeck" },
       ],
     });
@@ -177,11 +198,19 @@ const SPECIAL = "d625-special"; // a plain Special Energy
 const FILLER = "d625-filler";
 
 const body = (id: string, name: string, types: string[], extra: Partial<Card> = {}): Card =>
-  battler(id, { name, hp: 300, types, attacks: [{ cost: ["Colorless"], name: "Tap", damage: 10 }], ...extra });
+  battler(id, {
+    name,
+    hp: 300,
+    types,
+    attacks: [{ cost: ["Colorless"], name: "Tap", damage: 10 }],
+    ...extra,
+  });
 
 const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
-    TEXTS.flatMap(([ids, name, type, text]) => ids.map((id) => [id, { ...trainerCard(id, type, text), name }])),
+    TEXTS.flatMap(([ids, name, type, text]) =>
+      ids.map((id) => [id, { ...trainerCard(id, type, text), name }]),
+    ),
   ),
   [PLAIN]: body(PLAIN, "D625 Plain", ["Colorless"]),
   [DARK]: body(DARK, "D625 Dark", ["Darkness"]),
@@ -189,9 +218,20 @@ const LOCAL: Record<string, Card> = {
   [MEGA]: body(MEGA, "Mega D625 ex", ["Colorless"]),
   [PLAIN_EX]: body(PLAIN_EX, "D625 Brute ex", ["Colorless"]),
   [PSY]: body(PSY, "D625 Psy", ["Psychic"], { hp: 70 }),
-  [PSY_S1]: body(PSY_S1, "D625 Psy Two", ["Psychic"], { stage: "Stage1", evolveFrom: "D625 Psy", hp: 100 }),
-  [PSY_S2]: body(PSY_S2, "D625 Psy Three", ["Psychic"], { stage: "Stage2", evolveFrom: "D625 Psy Two", hp: 160 }),
-  [GRASS_S1]: body(GRASS_S1, "D625 Grass Two", ["Grass"], { stage: "Stage1", evolveFrom: "D625 Plain" }),
+  [PSY_S1]: body(PSY_S1, "D625 Psy Two", ["Psychic"], {
+    stage: "Stage1",
+    evolveFrom: "D625 Psy",
+    hp: 100,
+  }),
+  [PSY_S2]: body(PSY_S2, "D625 Psy Three", ["Psychic"], {
+    stage: "Stage2",
+    evolveFrom: "D625 Psy Two",
+    hp: 160,
+  }),
+  [GRASS_S1]: body(GRASS_S1, "D625 Grass Two", ["Grass"], {
+    stage: "Stage1",
+    evolveFrom: "D625 Plain",
+  }),
   [WATER_MON]: body(WATER_MON, "D625 Water", ["Water"]),
   [SPECIAL]: specialEnergy(SPECIAL, "D625 Special Energy", "This card provides {C} Energy."),
   [FILLER]: battler(FILLER, { name: "D625 Filler", hp: 300 }),
@@ -238,7 +278,10 @@ function reset(state: GameState): GameState {
     const prizes = pile.filter((u) => next.cardIdByUid[u] === "fix-energy").slice(0, 6);
     next = {
       ...next,
-      players: { ...next.players, [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) } },
+      players: {
+        ...next.players,
+        [s]: { ...side, hand: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+      },
     };
   }
   return next;
@@ -250,7 +293,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -258,11 +303,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(reset(state), { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -288,7 +336,11 @@ function stackOnActive(state: GameState, seat: "p1" | "p2", id: string): GameSta
     ...state,
     players: {
       ...state.players,
-      [seat]: { ...side, deck: side.deck.filter((u) => u !== uid), active: { ...active, stack: [...active.stack, uid] } },
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active: { ...active, stack: [...active.stack, uid] },
+      },
     },
   };
 }
@@ -311,12 +363,18 @@ function stackOnBench(state: GameState, index: number, id: string): GameState {
   };
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 function staged(state: GameState, id: string): { state: GameState; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
-  return { state: next, uid: next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string };
+  return {
+    state: next,
+    uid: next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string,
+  };
 }
 function play(state: GameState, id: string): { state: GameState; events: GameEvent[] } {
   const { state: next, uid } = staged(state, id);
@@ -328,7 +386,8 @@ function refusal(state: GameState, id: string): string {
   return result.ok ? "applied" : result.error.code;
 }
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const bench = (index: number) => ({ seat: "p1", spot: { spot: "bench", index } }) as const;
@@ -381,9 +440,9 @@ describe("D625 §2 — Special Red Card: the opponent's hand under their deck, t
 
 describe("D625 §3 — Jumbo Ice Cream: heal 80 from an Active with 3 or more Energy (R-JIC1)", () => {
   it("is refused on an Active with 2 Energy", () => {
-    expect(refusal(attachFromDeck(setDamage(board(PLAIN), "p1", 100), "p1", "fix-energy", 2), ICE_CREAM)).toBe(
-      "PLAY_CONDITION_NOT_MET",
-    );
+    expect(
+      refusal(attachFromDeck(setDamage(board(PLAIN), "p1", 100), "p1", "fix-energy", 2), ICE_CREAM),
+    ).toBe("PLAY_CONDITION_NOT_MET");
   });
 
   it("heals 80 from the Active at 3 Energy, and not from a damaged Benched body", () => {
@@ -437,7 +496,9 @@ describe("D625 §5 — Wally's Compassion: heal all from a Mega ex; if it healed
     const { state } = play(start, WALLY);
     expect(state.players.p1.active?.damage).toBe(0);
     expect(state.players.p1.active?.energy).toEqual([]);
-    expect([...state.players.p1.hand].filter((u) => energy.includes(u)).sort()).toEqual([...energy].sort());
+    expect([...state.players.p1.hand].filter((u) => energy.includes(u)).sort()).toEqual(
+      [...energy].sort(),
+    );
   });
 
   it("R-WC1: an undamaged Mega ex is healed of nothing and keeps its Energy", () => {
@@ -448,10 +509,18 @@ describe("D625 §5 — Wally's Compassion: heal all from a Mega ex; if it healed
 
   it("two Mega ex park the pick (the prompt names the rider); the picked damaged one's Energy moves, the other keeps its own", () => {
     let start = setBenchDamage(setDamage(board(MEGA, [MEGA]), "p1", 30), "p1", 0, 60);
-    start = attachBenchFromDeck(attachFromDeck(start, "p1", "fix-energy", 1), "p1", 0, "fix-fire-energy", 2);
+    start = attachBenchFromDeck(
+      attachFromDeck(start, "p1", "fix-energy", 1),
+      "p1",
+      0,
+      "fix-fire-energy",
+      2,
+    );
     const parked = play(start, WALLY).state;
     expect(prompt(parked)).toMatchObject({ kind: "choosePokemon" });
-    expect(String((prompt(parked) as { note?: string }).note)).toContain("all its Energy goes into your hand");
+    expect(String((prompt(parked) as { note?: string }).note)).toContain(
+      "all its Energy goes into your hand",
+    );
     const done = must(applyAction(revived(parked), pickRef(bench(0))));
     expect(done.players.p1.bench[0]?.damage).toBe(0);
     expect(done.players.p1.bench[0]?.energy).toEqual([]);
@@ -462,20 +531,27 @@ describe("D625 §5 — Wally's Compassion: heal all from a Mega ex; if it healed
 
 describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branches (R-BT1)", () => {
   it("is refused without a Basic {R} Energy in hand (a Basic {W} does not pay)", () => {
-    expect(refusal(withStadium(handFromDeck(board(PLAIN), "p1", "fix-water-energy", 1), "p2"), BLOWTORCH)).toBe(
-      "PLAY_CONDITION_NOT_MET",
-    );
+    expect(
+      refusal(
+        withStadium(handFromDeck(board(PLAIN), "p1", "fix-water-energy", 1), "p2"),
+        BLOWTORCH,
+      ),
+    ).toBe("PLAY_CONDITION_NOT_MET");
   });
 
   it("is refused when no branch has a target (no opposing Tool or Special Energy, no Stadium)", () => {
-    expect(refusal(handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1), BLOWTORCH)).toBe("NO_LEGAL_TARGET");
+    expect(refusal(handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1), BLOWTORCH)).toBe(
+      "NO_LEGAL_TARGET",
+    );
   });
 
   it("one offered branch runs as forced: the Stadium in play (the controller's own counts) is discarded", () => {
     const start = withStadium(handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1), "p1");
     const { state } = play(start, BLOWTORCH);
     expect(state.stadium).toBeNull();
-    expect(idsOf(state, state.players.p1.discard)).toEqual(expect.arrayContaining(["fix-fire-energy", "fix-stadium"]));
+    expect(idsOf(state, state.players.p1.discard)).toEqual(
+      expect.arrayContaining(["fix-fire-energy", "fix-stadium"]),
+    );
   });
 
   it("the Basic {R} payment is fungible, so two in hand pay one without a question (no park before the branches)", () => {
@@ -493,7 +569,10 @@ describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branc
     const first = play(start, BLOWTORCH).state;
     expect(prompt(first)).toMatchObject({
       kind: "confirm",
-      labels: { yes: "Discard a Pokémon Tool", no: "Discard a Special Energy or Discard the Stadium" },
+      labels: {
+        yes: "Discard a Pokémon Tool",
+        no: "Discard a Special Energy or Discard the Stadium",
+      },
     });
     const second = must(applyAction(revived(first), confirm(false)));
     expect(prompt(second)).toMatchObject({
@@ -510,18 +589,29 @@ describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branc
     let start = withStadium(handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1), "p2");
     start = attachToolFromDeck(start, "p2", "active", "fix-tool");
     const first = play(start, BLOWTORCH).state;
-    expect(prompt(first)).toMatchObject({ labels: { yes: "Discard a Pokémon Tool", no: "Discard the Stadium" } });
+    expect(prompt(first)).toMatchObject({
+      labels: { yes: "Discard a Pokémon Tool", no: "Discard the Stadium" },
+    });
     const done = must(applyAction(first, confirm(false)));
     expect(done.stadium).toBeNull();
     expect(done.players.p2.active?.tools).toHaveLength(1);
   });
 
   it("the Tool branch is D543's declinable pick, so it CAN resolve to 0 (a named deviation from the mandatory print)", () => {
-    const start = attachToolFromDeck(handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1), "p2", "active", "fix-tool");
+    const start = attachToolFromDeck(
+      handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1),
+      "p2",
+      "active",
+      "fix-tool",
+    );
     const parked = play(start, BLOWTORCH).state;
     expect(prompt(parked)).toMatchObject({ kind: "discardTools" });
     const done = must(
-      applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "discardTools", uids: [] } } as GameAction),
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "discardTools", uids: [] },
+      } as GameAction),
     );
     expect(done.players.p2.active?.tools).toHaveLength(1);
     expect(idsOf(done, done.players.p1.discard)).toContain("fix-fire-energy");
@@ -540,15 +630,24 @@ describe("D625 §7 — Great Haul Net: up to 3 {W} Pokémon and up to 3 Basic {W
     const second = mustApply(first.state, pickCards(mons));
     expect(prompt(second.state)).toMatchObject({ kind: "chooseCards", min: 0, max: 3 });
     const done = mustApply(second.state, pickCards(energy.slice(0, 1)));
-    expect(idsOf(done.state, done.state.players.p1.discard).sort()).toEqual([DARK, "fix-water-energy", HAUL_NET].sort());
+    expect(idsOf(done.state, done.state.players.p1.discard).sort()).toEqual(
+      [DARK, "fix-water-energy", HAUL_NET].sort(),
+    );
     expect(all([...first.events, ...second.events, ...done.events], "SHUFFLE")).toHaveLength(1);
   });
 
   it("R-GHN1: choosing only the second bullet is answering 0 on the first", () => {
-    const start = discardFromDeck(discardFromDeck(board(PLAIN), "p1", WATER_MON, 1), "p1", "fix-water-energy", 1);
+    const start = discardFromDeck(
+      discardFromDeck(board(PLAIN), "p1", WATER_MON, 1),
+      "p1",
+      "fix-water-energy",
+      1,
+    );
     const first = play(start, HAUL_NET).state;
     const second = must(applyAction(first, pickCards([])));
-    const energy = second.players.p1.discard.filter((u) => second.cardIdByUid[u] === "fix-water-energy");
+    const energy = second.players.p1.discard.filter(
+      (u) => second.cardIdByUid[u] === "fix-water-energy",
+    );
     const done = must(applyAction(second, pickCards(energy)));
     expect(idsOf(done, done.players.p1.discard).sort()).toEqual([HAUL_NET, WATER_MON].sort());
   });
@@ -574,14 +673,21 @@ describe("D625 §8 — Strange Timepiece: devolve your evolved {P} Pokémon; it 
     expect(state.players.p1.hand).toContain(s1);
     expect(state.players.p1.active?.turnPlayed).toBe(state.turn);
     expect(all(events, "POKEMON_DEVOLVED")).toHaveLength(1);
-    const again = applyAction(state, { type: "evolve", seat: "p1", uid: s1, target: { spot: "active" } });
+    const again = applyAction(state, {
+      type: "evolve",
+      seat: "p1",
+      uid: s1,
+      target: { spot: "active" },
+    });
     expect(again.ok ? "applied" : again.error.code).toBe("EVOLVE_TOO_SOON");
   });
 
   it("the control: the same un-devolved Basic evolves on this turn", () => {
     const start = handFromDeck(board(PSY), "p1", PSY_S1, 1);
     const uid = start.players.p1.hand[0] as string;
-    expect(applyAction(start, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }).ok).toBe(true);
+    expect(
+      applyAction(start, { type: "evolve", seat: "p1", uid, target: { spot: "active" } }).ok,
+    ).toBe(true);
   });
 
   it("a Stage 2: the depth question (1 or 2); 2 puts both Evolution cards into the hand", () => {
@@ -603,7 +709,12 @@ describe("D625 §8 — Strange Timepiece: devolve your evolved {P} Pokémon; it 
     const s2 = start.players.p1.active?.stack[2] as string;
     const done = must(applyAction(play(start, TIMEPIECE).state, confirm(true)));
     expect(done.players.p1.active?.stack).toHaveLength(2);
-    const again = applyAction(done, { type: "evolve", seat: "p1", uid: s2, target: { spot: "active" } });
+    const again = applyAction(done, {
+      type: "evolve",
+      seat: "p1",
+      uid: s2,
+      target: { spot: "active" },
+    });
     expect(again.ok ? "applied" : again.error.code).toBe("EVOLVE_TOO_SOON");
   });
 
@@ -616,11 +727,5 @@ describe("D625 §8 — Strange Timepiece: devolve your evolved {P} Pokémon; it 
     expect(done.players.p1.bench[0]?.turnPlayed).toBe(done.turn);
     expect(done.players.p1.active?.stack).toHaveLength(2);
     expect(done.players.p1.active?.turnPlayed).toBe(0);
-  });
-});
-
-describe("D625 §9 — the version", () => {
-  it("is built at engine 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

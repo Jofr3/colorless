@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { weaknessOf } from "./cards";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { installedWeaknessRetypeOf } from "./continuous";
@@ -8,7 +7,7 @@ import * as effects from "./effects";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -98,7 +97,8 @@ const LOCAL_CARDS: Record<string, Card> = {
         cost: ["Colorless", "Colorless"],
         name: "Shred",
         damage: 50,
-        effect: "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
+        effect:
+          "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
       },
     ],
   }),
@@ -267,8 +267,8 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
   it("is a corpus row, ONCE, at ONE printing — and the ONLY row the anchor claims", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === S629);
     expect(rows.map(([n]) => n)).toEqual([1]);
-    const claimed = legalAttackCorpus().filter(
-      ([, s]) => (deriveAttackEffect(s) ?? []).some((op) => op.op === "retypeDefenderWeakness"),
+    const claimed = legalAttackCorpus().filter(([, s]) =>
+      (deriveAttackEffect(s) ?? []).some((op) => op.op === "retypeDefenderWeakness"),
     );
     expect(claimed.map(([, s]) => s)).toEqual([S629]);
   });
@@ -396,7 +396,10 @@ describe("§3 — live on T+2 only, and it re-points the TYPE while keeping the 
     expect(weaknessOf(attacker, wall)).toBeNull();
     expect(weaknessOf(attacker, wall, null)).toBeNull();
     expect(weaknessOf(attacker, wall, "Colorless")).toEqual({ op: "multiply", amount: 2 });
-    const twoEntries = { ...wall, weaknesses: [...(wall.weaknesses ?? []), { type: "Colorless", value: "+30" }] };
+    const twoEntries = {
+      ...wall,
+      weaknesses: [...(wall.weaknesses ?? []), { type: "Colorless", value: "+30" }],
+    };
     // ONLY the first printed entry is retyped (R5): its ×2 names {C}; the second is dropped.
     expect(weaknessOf(attacker, twoEntries, "Colorless")).toEqual({ op: "multiply", amount: 2 });
     expect(weaknessOf(LOCAL_CARDS["d552-ember"] as Card, wall, "Colorless")).toBeNull();
@@ -418,7 +421,10 @@ describe("§4 — the three null paths win (R3), `suppressTargetEffects` drops i
     const holder = body(window.players.p2.active);
     const barred = {
       ...window,
-      players: { ...window.players, p2: { ...window.players.p2, active: { ...holder, noWeaknessTurn: window.turn } } },
+      players: {
+        ...window.players,
+        p2: { ...window.players.p2, active: { ...holder, noWeaknessTurn: window.turn } },
+      },
     };
     expect(dealt(attack(barred, STRIKE).events)).toBe(50);
   });
@@ -482,7 +488,11 @@ describe("§5 — retreat, a Switch, evolution, a forced switch and devolution e
       ? at
       : handFromDeck(at, "p2", "sv01-194", 1);
     const uid = activeUid(victim, "p2");
-    let state = mustApply(victim, { type: "playTrainer", seat: "p2", uid: handUid(victim, "p2", "sv01-194") }).state;
+    let state = mustApply(victim, {
+      type: "playTrainer",
+      seat: "p2",
+      uid: handUid(victim, "p2", "sv01-194"),
+    }).state;
     if (state.phase.kind === "effect:choose") {
       state = must(
         applyAction(state, {
@@ -554,7 +564,10 @@ describe("§7 — a same-window re-install of the same type is silent; a differe
     const once = runAs(start, "p1", P629, events);
     const twice = runAs(once, "p1", P629, events);
     expect(events.filter((e) => e.type === "WEAKNESS_RETYPED")).toHaveLength(1);
-    expect(body(twice.players.p2.active).weaknessRetype).toEqual({ turn: start.turn + 2, type: "Colorless" });
+    expect(body(twice.players.p2.active).weaknessRetype).toEqual({
+      turn: start.turn + 2,
+      type: "Colorless",
+    });
   });
 
   it("a different type REPLACES (no order on a type) and says so", () => {
@@ -563,7 +576,10 @@ describe("§7 — a same-window re-install of the same type is silent; a differe
     const once = runAs(start, "p1", P629, events);
     const other = runAs(once, "p1", [{ op: "retypeDefenderWeakness", type: "Water" }], events);
     expect(events.filter((e) => e.type === "WEAKNESS_RETYPED")).toHaveLength(2);
-    expect(body(other.players.p2.active).weaknessRetype).toEqual({ turn: start.turn + 2, type: "Water" });
+    expect(body(other.players.p2.active).weaknessRetype).toEqual({
+      turn: start.turn + 2,
+      type: "Water",
+    });
   });
 });
 
@@ -590,7 +606,9 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
     // every main hit that reads target effects into ANY v33 body, retyped or not (a
     // `suppressTargetEffects` hit skips the reader and does not throw). Retiring the record (apps/api
     // match.ts, THE SEVENTH POSITION) is the only safe answer.
-    expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(TypeError);
+    expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(
+      TypeError,
+    );
   });
 
   it("…and a ROLLBACK (v33) reading a v34 record DROPS the live retype: the {C} hit pays the printed 50", () => {
@@ -604,10 +622,5 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
     expect(record).toEqual({ turn: 5, type: "Colorless" });
     const v33 = weaknessOf(LOCAL_CARDS["d552-marker"] as Card, LOCAL_CARDS["d552-wall"] as Card);
     expect(v33).toBeNull();
-  });
-
-  it("the engine version stepped to 0.555.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

@@ -1,11 +1,7 @@
 import type { Card } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, countEnergyInPlay, providedEnergy } from "./continuous";
 import {
   deriveAttackBonusConsequent,
@@ -129,7 +125,8 @@ const BODY_SIDE =
     printings) — `deriveAttackDamageBonus`'s `bothActivesEnergyCount`, shipped at
     D196. It is the reason the counter is shared rather than re-derived, and §2 drives
     that the two readers keep their own halves. */
-const DAMAGE_TWIN = "This attack does 30 more damage for each Energy attached to both Active Pokémon.";
+const DAMAGE_TWIN =
+  "This attack does 30 more damage for each Energy attached to both Active Pokémon.";
 
 /** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
     "unread" is unread by the WHOLE engine and not by the one reader it is about.
@@ -315,9 +312,7 @@ describe("D475 §2 — the derived value, and every refusal pinned on ONE printe
   it("a printed 0 stays LOUD, and 1 does not — the family's `per >= 1` guard", () => {
     // A printed zero would spend a flip, and an `rngState` step, to add nothing.
     // ⚠️ THE ADMISSION IS THE LINE BELOW, one axis away (D424).
-    expect(
-      deriveAttackCoinFlip(PRINTED.replace("does 60 damage", "does 0 damage")),
-    ).toBeNull();
+    expect(deriveAttackCoinFlip(PRINTED.replace("does 60 damage", "does 0 damage"))).toBeNull();
     expect(deriveAttackCoinFlip(PRINTED.replace("does 60 damage", "does 1 damage"))).toEqual({
       kind: "perHeads",
       flips: { kind: "bothActivesEnergy" },
@@ -453,7 +448,10 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 200,
     retreat: 1,
     types: ["Water"],
-    attacks: [{ ...TIDE_ATTACK, cost: [] }, { cost: [], name: "Flat Slap", damage: "10" }],
+    attacks: [
+      { ...TIDE_ATTACK, cost: [] },
+      { cost: [], name: "Flat Slap", damage: "10" },
+    ],
   }),
   [BULWARK]: battler(BULWARK, {
     name: "D475 Bulwark",
@@ -893,7 +891,10 @@ describe("D475 §4 — ZERO FLIPS and ALL TAILS deal the same damage and are NOT
       // `pokemonInPlay` flips where the real one does not.
       const shape = readings(state);
       expect(shape.slice(0, 5), `seed ${seed}`).toEqual([0, 0, 0, 0, 0]);
-      expect(shape.slice(5).every((n) => n > 0), `seed ${seed} / ${shape.join(",")}`).toBe(true);
+      expect(
+        shape.slice(5).every((n) => n > 0),
+        `seed ${seed} / ${shape.join(",")}`,
+      ).toBe(true);
       const before = state.rngState;
       const { state: done, events } = play(state, tally);
       expect(rowsOf(events, "ATTACK_EFFECT_COIN_FLIP"), `seed ${seed}`).toHaveLength(0);
@@ -1007,12 +1008,6 @@ describe("D475 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
   });
 
   it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    // D460's FOURTH class of version-tax site is the `it()` TITLE, so this one names
-    // both halves and BOTH are asserted — a title that reports a claim the body does
-    // not make is worse than a stale doc block, because the run log then says a
-    // version the suite never checked.
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

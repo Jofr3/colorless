@@ -327,7 +327,9 @@ describe("deriveAttackDamagePenalty — one regex, two amounts", () => {
     // The zero guard every arm in this family carries: a 0 subtracts nothing, so it
     // must stay LOUD rather than claim a simulated sentence that does nothing.
     expect(
-      deriveAttackDamagePenalty("This attack does 0 less damage for each damage counter on this Pokémon."),
+      deriveAttackDamagePenalty(
+        "This attack does 0 less damage for each damage counter on this Pokémon.",
+      ),
     ).toBeNull();
     for (const near of [
       // a lowercased first word
@@ -617,7 +619,10 @@ describe("`debuff` — the third source on a field that already summed two", () 
   it("…with BOTH halves of that sum separated on their own boards", () => {
     // Pressure alone: 20. The penalty alone: 60. Neither control can be produced by
     // an implementation that reported only one of the two sources.
-    const pressureOnly = find(swing(board("cetitan", "sv03-030"), "cetitan").events, "DAMAGE_DEALT");
+    const pressureOnly = find(
+      swing(board("cetitan", "sv03-030"), "cetitan").events,
+      "DAMAGE_DEALT",
+    );
     expect(pressureOnly).toMatchObject({ debuff: 20, dealt: 360 });
     let penaltyOnly = board("cetitan", "fix-titan");
     penaltyOnly = setDamage(penaltyOnly, "p1", 30);

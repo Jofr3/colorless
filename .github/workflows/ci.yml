@@ -39,6 +39,17 @@ jobs:
       - name: Lint
         run: bun run lint:ci
 
+      - name: Format
+        run: bun run format:check
+
+      - name: Lua tests
+        run: |
+          sudo apt-get install -y lua5.2
+          LUA=lua5.2 bun run test:lua
+
+      - name: Mutation corpus precheck
+        run: bun run mutants:precheck
+
       - name: Test
         run: bun run test:run
 

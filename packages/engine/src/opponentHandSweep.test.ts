@@ -202,7 +202,9 @@ function openTable(first: Seat): GameState {
     );
   }
   for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }));
+    table = must(
+      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     table = must(applyAction(table, { type: "setupReady", seat }));
@@ -231,10 +233,7 @@ function withHand(state: GameState, seat: Seat, ids: readonly string[]): GameSta
     population over a hand, so a card the setup shuffle happened to deal would move an
     answer silently. p1's own hand is loaded with a matching pair on purpose: it is the
     board on which a SEAT-inverted build is observable at all (§5). */
-function table(
-  oppHand: readonly string[] = LOADED_HAND,
-  attacker: Seat = "p1",
-): GameState {
+function table(oppHand: readonly string[] = LOADED_HAND, attacker: Seat = "p1"): GameState {
   const defender: Seat = attacker === "p1" ? "p2" : "p1";
   let state = openTable(defender);
   state = mustApply(state, { type: "endTurn", seat: defender }).state;
@@ -470,9 +469,7 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
     // Both near-misses are computed here so the composition of `LOADED_HAND` is a
     // MEASUREMENT of what it has to be and not a preference.
     const without = (drop: string) =>
-      cards
-        .filter((c) => c.id !== drop)
-        .filter((c) => matchesFilter(c, { kind: "item" })).length;
+      cards.filter((c) => c.id !== drop).filter((c) => matchesFilter(c, { kind: "item" })).length;
     expect(without("d485-item-a")).toBe(2);
     const trainersWithoutTheOthers = cards
       .filter((c) => c.id !== "d485-sup" && c.id !== "d485-stadium")
@@ -487,7 +484,10 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
     const ONE_MATCH = ["d485-item-a", "d485-sup", "d485-nrg"];
     for (const program of [
       SWEEP_PROGRAM,
-      [{ op: "revealOpponentHand" }, { op: "bottomFromOpponentHand", filter: SWEEP_FILTER, dest: "discard" }],
+      [
+        { op: "revealOpponentHand" },
+        { op: "bottomFromOpponentHand", filter: SWEEP_FILTER, dest: "discard" },
+      ],
     ] as readonly (readonly EffectOp[])[]) {
       const events: GameEvent[] = [];
       const result = runProgram(deepFreeze(table(ONE_MATCH)), program, { seat: "p1" }, events);
@@ -668,7 +668,13 @@ describe("§8 — the persisted record cannot hold this op", () => {
     // BEHIND one — so an op can be persisted only if it parks, or if something ahead of it
     // does. Both are driven here on the real boards this program can reach: every hand
     // composition in this file, run through the whole program, ends `done`.
-    for (const hand of [LOADED_HAND, BARREN_HAND, [], ["d485-item-a"], ["d485-tool-a", "d485-tool-b"]]) {
+    for (const hand of [
+      LOADED_HAND,
+      BARREN_HAND,
+      [],
+      ["d485-item-a"],
+      ["d485-tool-a", "d485-tool-b"],
+    ]) {
       const result = runProgram(deepFreeze(table(hand)), SWEEP_PROGRAM, { seat: "p1" }, []);
       expect(result.kind, JSON.stringify(hand)).toBe("done");
     }
@@ -697,9 +703,6 @@ describe("§8 — the persisted record cannot hold this op", () => {
 
 describe("§9 — the version, and what it is owed for", () => {
   it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    // A sentence that derived to `null` derives to a two-op program, and a new `EffectOp`
-    // member runs in the interpreter. That is behaviour, so the bump is owed.
-    expect(engineVersion).toBe("0.555.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

@@ -137,10 +137,22 @@ const DAMAGE_RIDER =
     printings" was a measured claim, and the measurement is what the next reader
     needs to check the promise against what landed. */
 const GUST_DAMAGE_RIDERS = [
-  ["Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.", 2],
-  ["Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 20 damage to the new Active Pokémon.", 2],
-  ["Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 40 damage to the new Active Pokémon.", 2],
-  ["Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 70 damage to the new Active Pokémon.", 1],
+  [
+    "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
+    2,
+  ],
+  [
+    "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 20 damage to the new Active Pokémon.",
+    2,
+  ],
+  [
+    "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 40 damage to the new Active Pokémon.",
+    2,
+  ],
+  [
+    "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 70 damage to the new Active Pokémon.",
+    1,
+  ],
 ] as const;
 
 /** U+2019, spelled as an escape: this pair of characters renders nearly
@@ -435,7 +447,9 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
     // …and the distinction D227's block warned the builder about held: the rider
     // is genuine ATTACK damage, where the counter-put sentence one op over is not
     // and never became it (`damageActive`'s own doc: "an effect, not damage").
-    const counterPut = deriveAttackEffect("Put 5 damage counters on your opponent's Active Pokémon.");
+    const counterPut = deriveAttackEffect(
+      "Put 5 damage counters on your opponent's Active Pokémon.",
+    );
     expect(counterPut).toEqual([{ op: "damageActive", amount: 50, source: "attack" }]);
   });
 });
@@ -486,7 +500,10 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
       seat: "p1",
       index: KICK_AWAY,
     });
-    const choice = { kind: "pokemon", ref: { seat: "p2", spot: { spot: "bench", index: 0 } } } as const;
+    const choice = {
+      kind: "pokemon",
+      ref: { seat: "p2", spot: { spot: "bench", index: 0 } },
+    } as const;
     const refused = applyAction(parked, { type: "resolveEffect", seat: "p1", choice });
     expect(refused.ok).toBe(false);
     expect(refused.ok === false ? refused.error.code : undefined).toBe("WRONG_SEAT");
@@ -517,8 +534,9 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
     expect(pushed.phase.answerer).toBe("p2");
     // …and the OFFER is identical, which is what isolates the difference to the
     // seat rather than to the candidate computation.
-    expect(pushed.phase.prompt.kind === "choosePokemon" ? pushed.phase.prompt.candidates : null)
-      .toEqual(gusted.phase.prompt.kind === "choosePokemon" ? gusted.phase.prompt.candidates : []);
+    expect(
+      pushed.phase.prompt.kind === "choosePokemon" ? pushed.phase.prompt.candidates : null,
+    ).toEqual(gusted.phase.prompt.kind === "choosePokemon" ? gusted.phase.prompt.candidates : []);
   });
 
   it("moves the OPPONENT's Active, never the attacker's — the other crossed build", () => {
@@ -757,7 +775,11 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
     const wasActive = activeUid(state, "p2");
     expect(state.players.p1.bench).toHaveLength(0);
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: INTERJET });
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: INTERJET,
+    });
     expect(activeUid(done, "p1")).toBe(attacker); // nobody switched
     expect(activeUid(done, "p2")).toBe(wasActive); // …so nobody was pushed out
     expect(done.phase.kind).not.toBe("effect:choose"); // …and nothing was asked

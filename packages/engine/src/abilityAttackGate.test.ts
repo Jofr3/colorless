@@ -433,7 +433,12 @@ describe("D242 — Seasoned Skill, the six printings that cost nothing", () => {
     state = opponentTook(state, "p2", 2);
     expect(selfAttackCostDiscount(state, activeOf(state, "p1"), "Blood Moon")).toBe(2);
     expect(
-      effectiveAttackCost(state, activeOf(state, "p1"), ["Colorless", "Colorless", "Colorless"], "Blood Moon"),
+      effectiveAttackCost(
+        state,
+        activeOf(state, "p1"),
+        ["Colorless", "Colorless", "Colorless"],
+        "Blood Moon",
+      ),
     ).toEqual(["Colorless"]);
     // …and through the attack menu: row 0 is Blood Moon, {C}{C}{C} − 2.
     expect(attackCostAt(state, "p1", activeOf(state, "p1"), 0, [])).toEqual(["Colorless"]);
@@ -460,11 +465,17 @@ describe("D242 — Seasoned Skill, the six printings that cost nothing", () => {
     // (`revisionB17.test.ts`). The term is scoped to "Blood Moon"; Rough Swing pays its print.
     let state = setActiveFromDeck(board(), "p1", "fix-seasoned");
     state = opponentTook(state, "p2", 1);
-    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 1, [])).toEqual(["Colorless", "Colorless"]);
+    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 1, [])).toEqual([
+      "Colorless",
+      "Colorless",
+    ]);
     expect(
       effectiveAttackCost(state, activeOf(state, "p1"), ["Colorless", "Colorless"], "Rough Swing"),
     ).toEqual(["Colorless", "Colorless"]);
-    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 0, [])).toEqual(["Colorless", "Colorless"]);
+    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 0, [])).toEqual([
+      "Colorless",
+      "Colorless",
+    ]);
   });
 
   it("is §9-suppressible and BENCH-INERT, like every other printed-Ability passive", () => {

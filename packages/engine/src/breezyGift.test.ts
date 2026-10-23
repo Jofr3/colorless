@@ -623,7 +623,9 @@ describe("D314 §7 — the family at TWELVE of thirteen, and why the last one is
 
   it("TWELVE of the thirteen carry a `returnSelf`, and the thirteenth is Poliwrath", () => {
     expect(FAMILY).toHaveLength(13);
-    const built = FAMILY.filter((id) => JSON.stringify(programFor(id) ?? null).includes("returnSelf"));
+    const built = FAMILY.filter((id) =>
+      JSON.stringify(programFor(id) ?? null).includes("returnSelf"),
+    );
     expect(built).toHaveLength(12);
     expect(FAMILY.filter((id) => !built.includes(id))).toEqual([POLIWRATH]);
   });

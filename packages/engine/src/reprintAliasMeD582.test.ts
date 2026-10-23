@@ -153,16 +153,47 @@ const NOT_ALIASED: readonly (readonly [string, string])[] = [
 
 /** 🆕🆕🆕 D584 — the `me` ids the D584 tier 2 keys (reprintAliasMeD584.test.ts pins each one). */
 const KEYED_AT_D584 = [
-  "me02.5-213", "me02.5-264", "30th-096", "me02.5-068", "me04-073", "me04-105", "me04-119", "me03-017",
-  "me02.5-027", "me02.5-223", "me05-068", "me05-094", "mep-101", "30th-088", "me01-024", "mep-086",
-  "30th-073", "30th-136",
+  "me02.5-213",
+  "me02.5-264",
+  "30th-096",
+  "me02.5-068",
+  "me04-073",
+  "me04-105",
+  "me04-119",
+  "me03-017",
+  "me02.5-027",
+  "me02.5-223",
+  "me05-068",
+  "me05-094",
+  "mep-101",
+  "30th-088",
+  "me01-024",
+  "mep-086",
+  "30th-073",
+  "30th-136",
 ];
 
 /** 🆕🆕🆕 D585 — the `me` ids WP19's parameter copies key (paramCopiesMeD585.test.ts pins each one). */
 const KEYED_AT_D585 = [
-  "me03-024", "me03-092", "me03-019", "me01-084", "me01-147", "me02.5-135", "me02.5-270", "me02.5-285",
-  "mep-065", "me03-043", "me03-036", "me02.5-152", "me02.5-271", "me02.5-290", "me02.5-295", "mep-091",
-  "me04-029", "me04-090", "mep-075",
+  "me03-024",
+  "me03-092",
+  "me03-019",
+  "me01-084",
+  "me01-147",
+  "me02.5-135",
+  "me02.5-270",
+  "me02.5-285",
+  "mep-065",
+  "me03-043",
+  "me03-036",
+  "me02.5-152",
+  "me02.5-271",
+  "me02.5-290",
+  "me02.5-295",
+  "mep-091",
+  "me04-029",
+  "me04-090",
+  "mep-075",
 ];
 
 /** 🆕🆕🆕 D586 — the `me` ids WP03 keys: Carbink "Double Type" (conditionRowsMeD586.test.ts pins the face). */
@@ -170,15 +201,45 @@ const KEYED_AT_D586 = ["me02.5-117", "me02.5-242"];
 
 /** 🆕🆕🆕 D587 — the `me` ids WP04 keys: nine Trainer texts (trainerParamsMeD587.test.ts pins each face). */
 const KEYED_AT_D587 = [
-  "me02-094", "me03-117", "me04-079", "me04-110", "me03-075", "me03-110", "me03-122", "me02-089",
-  "me02-119", "me01-116", "me01-168", "me02.5-187", "me03-085", "me03-116", "me02.5-198", "me03-081",
-  "me03-113", "me03-073", "me01-126",
+  "me02-094",
+  "me03-117",
+  "me04-079",
+  "me04-110",
+  "me03-075",
+  "me03-110",
+  "me03-122",
+  "me02-089",
+  "me02-119",
+  "me01-116",
+  "me01-168",
+  "me02.5-187",
+  "me03-085",
+  "me03-116",
+  "me02.5-198",
+  "me03-081",
+  "me03-113",
+  "me03-073",
+  "me01-126",
 ];
 
 /** 🆕🆕🆕 D588 — the `me` ids WP22 keys: eight Trainer texts (trainerParamsMeD588.test.ts pins each face). */
 const KEYED_AT_D588 = [
-  "me02.5-185", "me02.5-257", "me02.5-291", "me01-119", "me01-169", "me01-184", "me02.5-192", "me05-080",
-  "me05-111", "me03-084", "me03-114", "me03-123", "me05-081", "me05-112", "me02.5-215", "me03-074",
+  "me02.5-185",
+  "me02.5-257",
+  "me02.5-291",
+  "me01-119",
+  "me01-169",
+  "me01-184",
+  "me02.5-192",
+  "me05-080",
+  "me05-111",
+  "me03-084",
+  "me03-114",
+  "me03-123",
+  "me05-081",
+  "me05-112",
+  "me02.5-215",
+  "me03-074",
   "me03-078",
 ];
 
@@ -273,10 +334,29 @@ const KEYED_AT_D603 = [
 ];
 
 /** 🆕🆕🆕 D604 — the `me` ids WP18 keys: the 8 typed Special Energies (typedSpecialEnergyMeD604.test.ts pins the programs). */
-const KEYED_AT_D604 = ["me03-086", "me03-087", "me03-088", "me04-084", "me04-085", "me04-086", "me05-083", "me05-084"];
+const KEYED_AT_D604 = [
+  "me03-086",
+  "me03-087",
+  "me03-088",
+  "me04-084",
+  "me04-085",
+  "me04-086",
+  "me05-083",
+  "me05-084",
+];
 
 /** 🆕🆕🆕 D606 — the `me` ids WP25a keys: the 9 Stadiums (stadiumsMeD606.test.ts pins the programs). */
-const KEYED_AT_D606 = ["me04-080", "me04-111", "me01-129", "me04-114", "me02.5-197", "me03-077", "me03-111", "mep-028", "mep-120"];
+const KEYED_AT_D606 = [
+  "me04-080",
+  "me04-111",
+  "me01-129",
+  "me04-114",
+  "me02.5-197",
+  "me03-077",
+  "me03-111",
+  "mep-028",
+  "mep-120",
+];
 
 /** 🆕🆕🆕 D608 — the `30th` ids WP30 keys: Photon Bullets ×3, Stealthy Slash ×2 (snipeSpreadMeD608.test.ts). */
 const KEYED_AT_D608 = ["30th-064", "30th-151", "30th-157", "30th-021", "30th-148"];
@@ -310,7 +390,17 @@ const KEYED_AT_D628 = ["me01-101", "me02.5-175"];
 const KEYED_AT_D630 = ["me01-118", "me05-110"];
 
 /** 🆕🆕🆕 D631 — the `me` / `30th` ids P1 keys (passiveRestMeD631.test.ts). */
-const KEYED_AT_D631 = ["mep-085", "me05-062", "me05-093", "me03-012", "me03-100", "me02.5-148", "me04-057", "30th-100", "30th-119"];
+const KEYED_AT_D631 = [
+  "mep-085",
+  "me05-062",
+  "me05-093",
+  "me03-012",
+  "me03-100",
+  "me02.5-148",
+  "me04-057",
+  "30th-100",
+  "30th-119",
+];
 
 /** 🆕🆕🆕 D632 — the `me` ids D1 keys: Damp ×5 (dampD632.test.ts). */
 const KEYED_AT_D632 = ["me02.5-039", "me02.5-040", "me02.5-226", "mep-007", "mep-008"];
@@ -352,7 +442,10 @@ const KEYED_AT_D621 = [
 
 /** 🆕🆕🆕 D620 — the `me` ids WP26 keys: Light Ball, Punk Helmet ×2, Team Rocket's Hypnotizer, Core Memory,
     Tremendous Bomb ×2 (prizesToolsMeD620.test.ts). */
-const KEYED_AT_D620 = [...["me02.5-191", "me02-092", "me02-121", "me02.5-206"], ...["me03-070", "me05-082", "me05-113"]];
+const KEYED_AT_D620 = [
+  ...["me02.5-191", "me02-092", "me02-121", "me02.5-206"],
+  ...["me03-070", "me05-082", "me05-113"],
+];
 
 /** 🆕🆕🆕 D619 — the `me` ids WP12 / WP15 key: Sacred Charm ×2, Thick Scale, Dewgong ×2, Heliolisk ×2
     (attackerClassMeD619.test.ts). */
@@ -389,14 +482,51 @@ const KEYED_AT_D614 = ["mep-072", "me03-031", "me03-103", "me03-119"];
 
 /** 🆕🆕🆕 D611 — the `me` ids WP21 (+ Dragonair) keys: 17 activated Ability printings (activatedMeD611.test.ts). */
 const KEYED_AT_D611 = [
-  ...["me04-051", "me04-093", "mep-076", "me02-068", "me02-103", "mep-017", "me02.5-015", "me02.5-220", "me05-045"],
-  ...["me05-100", "me01-110", "me01-153", "me03-014", "me03-091", "me03-009", "me04-038", "me02.5-151"],
+  ...[
+    "me04-051",
+    "me04-093",
+    "mep-076",
+    "me02-068",
+    "me02-103",
+    "mep-017",
+    "me02.5-015",
+    "me02.5-220",
+    "me05-045",
+  ],
+  ...[
+    "me05-100",
+    "me01-110",
+    "me01-153",
+    "me03-014",
+    "me03-091",
+    "me03-009",
+    "me04-038",
+    "me02.5-151",
+  ],
 ];
 
 /** 🆕🆕🆕 D610 — the `me` ids WP37a keys: 16 Ability / trigger / passive printings (onMoveHpMeD610.test.ts). */
 const KEYED_AT_D610 = [
-  ...["me01-003", "me01-155", "me01-177", "mep-013", "me02.5-084", "me04-064", "me04-103", "me02-036"],
-  ...["me02-112", "me02.5-101", "me02.5-239", "mep-094", "30th-002", "30th-129", "mep-066", "me03-045"],
+  ...[
+    "me01-003",
+    "me01-155",
+    "me01-177",
+    "mep-013",
+    "me02.5-084",
+    "me04-064",
+    "me04-103",
+    "me02-036",
+  ],
+  ...[
+    "me02-112",
+    "me02.5-101",
+    "me02.5-239",
+    "mep-094",
+    "30th-002",
+    "30th-129",
+    "mep-066",
+    "me03-045",
+  ],
 ];
 
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
@@ -466,7 +596,9 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
   it("resolves every `me` id to the SAME PROGRAM OBJECT as its twin", () => {
     for (const [id, twin, , name] of ALIASES) {
       expect(programFor(twin), `${twin} (twin of ${id}) has no program`).toBeDefined();
-      expect(programFor(id), `${id} (${name}) does not SHARE ${twin}'s program`).toBe(programFor(twin));
+      expect(programFor(id), `${id} (${name}) does not SHARE ${twin}'s program`).toBe(
+        programFor(twin),
+      );
     }
   });
 
@@ -702,7 +834,9 @@ function p1Turn(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -710,11 +844,14 @@ function p1Turn(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -727,7 +864,10 @@ describe("D582 — an aliased `me` Supporter on a board", () => {
       uid = side.deck.find((u) => state.cardIdByUid[u] === URBAIN) as string;
       state = {
         ...state,
-        players: { ...state.players, p1: { ...side, hand: [...side.hand, uid], deck: side.deck.filter((u) => u !== uid) } },
+        players: {
+          ...state.players,
+          p1: { ...side, hand: [...side.hand, uid], deck: side.deck.filter((u) => u !== uid) },
+        },
       };
     }
     const before = state.players.p1.hand.length;

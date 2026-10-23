@@ -1,12 +1,11 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { attackFlipLocked, attackLocked } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, redactGame } from "./index";
+import { applyAction, createGame, redactGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -284,9 +283,10 @@ describe("§1 — the anchor claims the TWO-sentence row WHOLE, and only it", ()
       "If tails, that attack doesn't happen.",
     ];
     for (const text of misses) {
-      expect((deriveAttackEffect(text) ?? []).some((op) => op.op === "flipLockAttack"), text).toBe(
-        false,
-      );
+      expect(
+        (deriveAttackEffect(text) ?? []).some((op) => op.op === "flipLockAttack"),
+        text,
+      ).toBe(false);
     }
   });
 });
@@ -304,7 +304,12 @@ describe("§2 — the install stamps the DEFENDER at T+1 and nothing else", () =
     expect(target.attackLockedTurn).toBeNull();
     expect(state.players.p1.active?.attackFlipLockTurn).toBeNull();
     const row = find(events, "ATTACK_LOCKED");
-    expect(row).toEqual({ type: "ATTACK_LOCKED", seat: "p2", uid: activeUid(start, "p2"), flip: true });
+    expect(row).toEqual({
+      type: "ATTACK_LOCKED",
+      seat: "p2",
+      uid: activeUid(start, "p2"),
+      flip: true,
+    });
   });
 
   it("consumes NO rng at the install — the coin belongs to the declaration it gates", () => {
@@ -374,7 +379,9 @@ describe("§3 — the locked player flips at the declaration", () => {
 describe("§4 — live on T+1 only", () => {
   it("is not live on the installer's own turn, and has expired by T+3", () => {
     const { start, state } = installed();
-    expect(attackFlipLocked(start, body(runAs(start, "p1", P176, []).players.p2.active))).toBe(false);
+    expect(attackFlipLocked(start, body(runAs(start, "p1", P176, []).players.p2.active))).toBe(
+      false,
+    );
     expect(attackFlipLocked(state, body(state.players.p2.active))).toBe(true);
     const later = pass(pass(state, "p2"), "p1");
     expect(later.turn).toBe(6);
@@ -494,14 +501,17 @@ describe("§8 — `playable` stays TRUE while only the flip lock is live", () =>
     const phase = redactGame(window, "p2").phase;
     if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
     expect(phase.attacks.map((a) => a.playable)).toEqual([true, true]);
-    expect(applyAction(withFaces(window, ["heads"]), { type: "attack", seat: "p2", index: JAB }).ok).toBe(
-      true,
-    );
+    expect(
+      applyAction(withFaces(window, ["heads"]), { type: "attack", seat: "p2", index: JAB }).ok,
+    ).toBe(true);
     expect(attackLocked(window, body(window.players.p2.active))).toBe(false);
   });
 
   it("…while a HARD lock on the same board greys them (the control)", () => {
-    const hard = pass(runAs(ready(), "p1", [{ op: "preventAttack", target: "defender" }], []), "p1");
+    const hard = pass(
+      runAs(ready(), "p1", [{ op: "preventAttack", target: "defender" }], []),
+      "p1",
+    );
     const phase = redactGame(hard, "p2").phase;
     if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
     expect(phase.attacks.map((a) => a.playable)).toEqual([false, false]);
@@ -617,7 +627,8 @@ describe("§10 — a §11 shield refuses the install", () => {
 describe("§11 — the rows say what this path keeps true (D421)", () => {
   it("the install row names the COIN, not a hard lock, under both seats", () => {
     const { state, events } = installed();
-    const text = "d547-target must flip a coin to attack next turn — tails, the attack doesn't happen";
+    const text =
+      "d547-target must flip a coin to attack next turn — tails, the attack doesn't happen";
     expect(render(events, state)).toContainEqual({ who: "p2", text });
     expect(render(events, state).some((r) => r.text.includes("can't attack"))).toBe(false);
     const row = find(events, "ATTACK_LOCKED");
@@ -649,16 +660,6 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, 42 since D583, 43 since D621, 44 since D630, 45 since D636, 46 since D637, 47 since D640, 48 since D643, 49 since D646, and still carries the field)", () => {
-  const RAW: Record<string, string> = (
-    import.meta as unknown as {
-      glob(
-        pattern: string | readonly string[],
-        options: { query: "?raw"; import: "default"; eager: true },
-      ): Record<string, string>;
-    }
-  ).glob(["../../../apps/api/src/lobby/match.ts"], { query: "?raw", import: "default", eager: true });
-  const matchTs = Object.values(RAW)[0] ?? "";
-
   it("🛑 v31: the stamp is in the serialized state, and a JSON round-trip still flips", () => {
     const window = installed().state;
     const bytes = JSON.stringify(window);
@@ -679,14 +680,5 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     // why a v30 record is RETIRED rather than read (apps/api match.ts, D547).
     expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
-  });
-
-  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; this slice's own bump was 30 → 31) — read off the raw source, not retyped", () => {
-    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 49;");
-  });
-
-  it("the engine version stepped to 0.555.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.555.0");
-    expect(manifest.version).toBe("0.555.0");
   });
 });

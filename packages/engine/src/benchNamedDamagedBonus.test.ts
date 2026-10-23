@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -246,7 +242,10 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(sibling).toHaveLength(3);
     expect(units(sibling)).toBe(3);
     for (const sentence of SIBLING_SENTENCES) {
-      expect(corpus().some(([, s]) => s === sentence), sentence).toBe(true);
+      expect(
+        corpus().some(([, s]) => s === sentence),
+        sentence,
+      ).toBe(true);
       expect(deriveAttackDamageBonus(sentence)?.count).toEqual({
         kind: "boardCondition",
         cond: ANY,
@@ -277,7 +276,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(byClause.size).toBe(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 7 -> 6, the DECK-SIZE READ
     // 🆕🆕🆕 D568 — the singleton band loses the two Tera clauses (one printing each), 5 -> 3; the three left are the Ancient/Future banners. (🆕🆕🆕 D569 (D539): ONE is left now — the two Future clauses resolve through literal rows over `banners.ts`; the Ancient "Unrelenting Onslaught" stays, on a seat-level attack record, not the banner.) (🆕🆕🆕 D579 (D539): ~~ONE~~ NONE — the Ancient clause (Koraidon `sv08-116`) resolves through a literal row; the band is EMPTY.)
     expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5
-    expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(0);// 🆕🆕 D436 the 5-printing band EMPTIES with the declaration clause (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(0); // 🆕🆕 D436 the 5-printing band EMPTIES with the declaration clause (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     expect([...byClause.values()].filter((n) => n === 2)).toHaveLength(0);
   });
 
@@ -287,8 +286,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // taking a D207 BANNER, two OWNER prefixes and a BRACE CODE — none of which is a
     // `Card.name` and every one of which a `(.+)` capture would hand to an exact-name
     // equality that succeeds against nothing.
-    const slot = (needle: string): number =>
-      corpus().filter(([, s]) => s.includes(needle)).length;
+    const slot = (needle: string): number => corpus().filter(([, s]) => s.includes(needle)).length;
     expect(slot("Benched Ancient Pokémon")).toBeGreaterThanOrEqual(1);
     expect(slot("Benched Team Rocket's Pokémon")).toBeGreaterThanOrEqual(1);
     expect(slot("Benched Cynthia's Pokémon")).toBeGreaterThanOrEqual(1);
@@ -466,9 +464,9 @@ describe("§4 — the member on the board: seat, zone, empty set", () => {
     let cubone = armed(3995, ["fix-cubone"]);
     cubone = setBenchDamage(cubone, "p1", 0, 10);
     expect(conditionHolds(cubone, "p1", NAMED)).toBe(true);
-    expect(
-      conditionHolds(cubone, "p1", { kind: "yourBenchNamedDamaged", name: "Marowak" }),
-    ).toBe(false);
+    expect(conditionHolds(cubone, "p1", { kind: "yourBenchNamedDamaged", name: "Marowak" })).toBe(
+      false,
+    );
     expect(conditionHolds(cubone, "p1", { kind: "yourBenchNamedDamaged", name: "cubone" })).toBe(
       false,
     );

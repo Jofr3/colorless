@@ -197,7 +197,9 @@ function p1Turn(): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -205,11 +207,14 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
@@ -234,18 +239,20 @@ function board(active: string, bench: readonly string[]): GameState {
   return benchFromDeck(state, "p2", FILLER);
 }
 /** All six named bodies in play: N's Zekrom Active, the other five benched. */
-const allSix = () =>
-  board(
-    N_ZEKROM,
-    SIX.filter((n) => n !== "N's Zekrom").map(nId),
-  );
+const allSix = () => board(N_ZEKROM, SIX.filter((n) => n !== "N's Zekrom").map(nId));
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 function staged(state: GameState, id: string): { state: GameState; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
-  return { state: next, uid: next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string };
+  return {
+    state: next,
+    uid: next.players.p1.hand.find((u) => next.cardIdByUid[u] === id) as string,
+  };
 }
 function play(state: GameState, id: string): { state: GameState; events: GameEvent[] } {
   const { state: next, uid } = staged(state, id);
@@ -258,7 +265,11 @@ function refusal(state: GameState, id: string): string {
 }
 /** The Active (re)powered with one {C} and attacking with "Tap" (30) into the 30-HP Victim. */
 function tap(state: GameState): { state: GameState; events: GameEvent[] } {
-  return mustApply(attachFromDeck(state, "p1", "fix-fire-energy", 1), { type: "attack", seat: "p1", index: 0 });
+  return mustApply(attachFromDeck(state, "p1", "fix-fire-energy", 1), {
+    type: "attack",
+    seat: "p1",
+    index: 0,
+  });
 }
 
 describe("D599 §3 — Anthea & Concordia's play gate: all six named Pokémon in play", () => {
@@ -282,7 +293,9 @@ describe("D599 §4 — Anthea & Concordia: +3 Prizes when an N's Pokémon's atta
     const played = play(allSix(), ANTHEA).state;
     const { state, events } = tap(played);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
-    expect(all(events, "PRIZE_BONUS")).toEqual([expect.objectContaining({ seat: "p2", by: 3, count: 4 })]);
+    expect(all(events, "PRIZE_BONUS")).toEqual([
+      expect.objectContaining({ seat: "p2", by: 3, count: 4 }),
+    ]);
     expect(all(events, "PRIZES_OWED")).toEqual([{ type: "PRIZES_OWED", seat: "p1", count: 4 }]);
     expect(state.players.p1.prizes).toHaveLength(6); // owed, then picked
   });
@@ -337,7 +350,9 @@ describe("D599 §5 — Emma: the opponent reveals their hand; draw a card per Po
     const oppHand = [...state.players.p2.hand];
     const deckTop = state.players.p1.deck.slice(0, 3);
     const { state: done, events } = play(state, EMMA);
-    expect(all(events, "HAND_REVEALED")).toEqual([expect.objectContaining({ seat: "p2", uids: oppHand })]);
+    expect(all(events, "HAND_REVEALED")).toEqual([
+      expect.objectContaining({ seat: "p2", uids: oppHand }),
+    ]);
     expect(done.players.p1.hand).toEqual(deckTop.slice(0, 2));
     expect(done.players.p2.hand).toEqual(oppHand);
     expect(done.phase.kind).toBe("turn:action");
@@ -358,7 +373,9 @@ describe("D599 §5 — Emma: the opponent reveals their hand; draw a card per Po
 
   it("R-EM1 (UNRULED): an empty or Pokémon-less opponent hand still plays — it reveals and draws 0", () => {
     const empty = play(emmaBoard({}), EMMA);
-    expect(all(empty.events, "HAND_REVEALED")).toEqual([expect.objectContaining({ seat: "p2", uids: [] })]);
+    expect(all(empty.events, "HAND_REVEALED")).toEqual([
+      expect.objectContaining({ seat: "p2", uids: [] }),
+    ]);
     expect(empty.state.players.p1.hand).toEqual([]);
     expect(all(empty.events, "CARDS_DRAWN")).toEqual([]);
     const none = play(emmaBoard({ [ITEM]: 2 }), EMMA);

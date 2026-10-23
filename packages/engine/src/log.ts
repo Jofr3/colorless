@@ -213,7 +213,9 @@ function energyHostName(
   if (host !== undefined) return topCardOf(state, host)?.name ?? "a Pokémon";
   // 🆕 Card revision B12 — no body carries it: the host left play in this same batch (above).
   const knockedOut = koHosts.get(energyUid);
-  return knockedOut === undefined ? "a Pokémon" : (cardOfUid(state, knockedOut)?.name ?? "a Pokémon");
+  return knockedOut === undefined
+    ? "a Pokémon"
+    : (cardOfUid(state, knockedOut)?.name ?? "a Pokémon");
 }
 
 function modifierText(kind: "weakness" | "resistance", modifier: DamageModifier): string {
@@ -362,9 +364,7 @@ function formatEvent(
         strong(`${names[event.seat]}'s ${cardName(state, event.from)}`),
         plain(" → "),
         strong(cardName(state, event.to)),
-        ...(event.zone === "hand"
-          ? [plain(` — to ${names[event.seat]}'s hand`)]
-          : []),
+        ...(event.zone === "hand" ? [plain(` — to ${names[event.seat]}'s hand`)] : []),
       ]);
     case "COMPENSATION_DECIDED":
       // A draw already logged its own CARDS_DRAWN row; only the decline is
@@ -591,10 +591,7 @@ function formatEvent(
       // since M3, so that row needed no change at all and is the reason this slice
       // touches one log arm rather than four. What this row adds is the WARNING
       // BEFORE the flip; without it a player meets the 80 only after paying for it.
-      if (
-        event.confusionDamage !== undefined &&
-        event.confusionDamage > DEFAULT_CONFUSION_DAMAGE
-      ) {
+      if (event.confusionDamage !== undefined && event.confusionDamage > DEFAULT_CONFUSION_DAMAGE) {
         segments.push(plain(` (${event.confusionDamage} damage on a missed flip)`));
       }
       return row(event.seat, segments);
@@ -814,7 +811,9 @@ function formatEvent(
       if (event.flip === true && event.coins === 2) {
         return row(event.seat, [
           strong(cardName(state, event.uid)),
-          plain(" must flip 2 coins to attack next turn — if either is tails, the attack doesn't happen"),
+          plain(
+            " must flip 2 coins to attack next turn — if either is tails, the attack doesn't happen",
+          ),
         ]);
       }
       if (event.flip === true) {
@@ -990,7 +989,9 @@ function formatEvent(
     // the printed terminator named so the opponent knows a gust ends it.
     case "SIDE_ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
-        plain(`${event.banner} Pokémon are protected from damage from ${attackerClassAttacks(event.fromClass)} during the opponent's next turn, while `),
+        plain(
+          `${event.banner} Pokémon are protected from damage from ${attackerClassAttacks(event.fromClass)} during the opponent's next turn, while `,
+        ),
         strong(cardName(state, event.uid)),
         plain(" stays in the Active Spot"),
       ]);
@@ -1004,10 +1005,14 @@ function formatEvent(
     case "HAND_ATTACH_MARKED": {
       const parts = [
         ...(event.barred ? ["can't have Energy cards attached from hand"] : []),
-        ...(event.endsTurn ? ["ends its owner's turn if an Energy card is attached to it from hand"] : []),
+        ...(event.endsTurn
+          ? ["ends its owner's turn if an Energy card is attached to it from hand"]
+          : []),
         // 🆕🆕🆕 D636 — Electrified Incisors.
         ...(event.counters > 0
-          ? [`takes ${event.counters} damage counters for each Energy card attached to it from hand`]
+          ? [
+              `takes ${event.counters} damage counters for each Energy card attached to it from hand`,
+            ]
           : []),
       ];
       return row(event.seat, [
@@ -1033,7 +1038,9 @@ function formatEvent(
     // 🆕🆕🆕 §11 — Roxie's Performance (D621), filed under the LOCKED side, victim-voiced.
     case "SIDE_RETREAT_LOCKED":
       return row(event.seat, [
-        plain("Poisoned Pokémon can't retreat during their next turn, including newly Poisoned Pokémon"),
+        plain(
+          "Poisoned Pokémon can't retreat during their next turn, including newly Poisoned Pokémon",
+        ),
       ]);
     case "SIDE_DAMAGE_REDUCTION_INSTALLED":
       return row(event.seat, [
@@ -1046,7 +1053,9 @@ function formatEvent(
     // so the row carries it; the discard itself files the shipped HAND_DISCARDED row.
     case "HAND_DISCARD_SCHEDULED":
       return row(event.seat, [
-        plain(`will discard their hand at the end of this turn if it holds ${event.atLeast} or more cards`),
+        plain(
+          `will discard their hand at the end of this turn if it holds ${event.atLeast} or more cards`,
+        ),
       ]);
     // 🆕🆕🆕 §5.3/§8 — Festival Lead's attack-again window (D570). The Ability is named so the
     // row explains why the turn did not end.
@@ -1222,7 +1231,10 @@ function formatEvent(
         ),
       ]);
     case "ABILITY_EFFECT_PREVENTED":
-      return row(event.seat, [strong(cardName(state, event.uid)), plain(" prevented the effect of the Ability")]);
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" prevented the effect of the Ability"),
+      ]);
     case "COUNTERS_PLACED": {
       // Checkup ticks and the confusion self-hit are the game's doing, not a
       // player action — system rows, like the coin toss.
@@ -1320,12 +1332,7 @@ function formatEvent(
         // The label matches the EFFECT_SCHEDULED row that armed it a turn earlier,
         // so the pair reads as one mechanism — RECOIL_ARMED/"counterattack"'s rule.
         case "delayed":
-          return row("system", [
-            plain("Delayed: "),
-            amount,
-            plain(" damage to "),
-            strong(name),
-          ]);
+          return row("system", [plain("Delayed: "), amount, plain(" damage to "), strong(name)]);
         // 🆕🆕🆕 D557 — counters an ITEM placed (Team Rocket's Venture Bomb, either face).
         // A SYSTEM row for the `"attack"` arm's reason: `seat` owns the DAMAGED body,
         // which on heads is the player's OPPONENT, so an active-voice row under it would
@@ -1359,7 +1366,9 @@ function formatEvent(
     // the ATTACK_FAILED row that follows a tails.
     // 🆕🆕🆕 D636 — Seismitoad "Quaking Fist": the lock, then each coin at a Trainer play.
     case "TRAINER_FLIP_LOCKED":
-      return row(event.seat, [plain("must flip a coin to use each Trainer card from hand next turn")]);
+      return row(event.seat, [
+        plain("must flip a coin to use each Trainer card from hand next turn"),
+      ]);
     case "TRAINER_FLIP_LOCK_CHECK":
       return row(event.seat, [
         plain("flipped for "),
@@ -1373,7 +1382,9 @@ function formatEvent(
       return row(event.seat, [
         plain("used "),
         strong(cardName(state, event.uid)),
-        plain(` — ignored ${event.count === 1 ? "the coin flip" : `${String(event.count)} coin flips`} and flipped again`),
+        plain(
+          ` — ignored ${event.count === 1 ? "the coin flip" : `${String(event.count)} coin flips`} and flipped again`,
+        ),
       ]);
     case "ATTACK_FLIP_LOCK_CHECK":
       return row(event.seat, [
@@ -1550,7 +1561,9 @@ function formatEvent(
       // 🆕🆕🆕 D567 — Redeemable Ticket. COUNT-ONLY: every card on both rows is hidden.
       const n = event.count;
       return row(event.seat, [
-        plain(`put ${n} Prize card${n === 1 ? "" : "s"} on the bottom of their deck and took ${n} new ones`),
+        plain(
+          `put ${n} Prize card${n === 1 ? "" : "s"} on the bottom of their deck and took ${n} new ones`,
+        ),
       ]);
     }
     case "PRIZE_SWITCHED_WITH_HAND":
@@ -1638,13 +1651,20 @@ function formatEvent(
       ]);
     case "POKEMON_NAMED":
       // 🆕🆕🆕 D577 — Tyme: the told name only (the card is face down — no HP here).
-      return row(event.seat, [plain("named "), strong(event.name), plain(" — the opponent guesses its HP")]);
+      return row(event.seat, [
+        plain("named "),
+        strong(event.name),
+        plain(" — the opponent guesses its HP"),
+      ]);
     case "SUPPORTER_EFFECT_USED":
       // 🆕🆕🆕 D580 — Look-Alike Show, under the ATTACKER. The op's one producer is Mr. Mime
       // `sv05-063` (registry.ts `MR_MIME_LOOK_ALIKE_SHOW`), so the attack is named as printed.
       // 🆕🆕🆕 D638 — `milled`: Ninetales `me01-020` (`useMilledSupporterEffect`'s one producer).
       if (event.milled === true) {
-        return row(event.seat, [plain("Ninetales's Supernatural Shapeshifter used the effect of "), strong(cardName(state, event.uid))]);
+        return row(event.seat, [
+          plain("Ninetales's Supernatural Shapeshifter used the effect of "),
+          strong(cardName(state, event.uid)),
+        ]);
       }
       return row(event.seat, [
         plain("Mr. Mime's Look-Alike Show used the effect of "),
@@ -1770,7 +1790,9 @@ function formatEvent(
       // the deck bottom, so the count and the verb are all there is to say.
       // 🆕🆕🆕 D611 — Evidence Gathering's swap: the old top card went into the hand.
       if (event.took !== undefined) {
-        return row(event.seat, [plain(`switched ${cards} from their hand with the top card of their deck`)]);
+        return row(event.seat, [
+          plain(`switched ${cards} from their hand with the top card of their deck`),
+        ]);
       }
       if (event.to === "deckTop") {
         return row(event.seat, [plain(`put ${cards} from their hand on top of their deck`)]);
@@ -1967,7 +1989,9 @@ function formatEvent(
       // 🆕🆕🆕 D567 — Bother-Bot's random REVEAL: the card stayed in the hand. Named (it was
       // printed as revealed), "random" in the row for RANDOM_CARD_TAKEN's reason below.
       return row(event.actor, [
-        plain(`chose a random card from ${names[event.seat]}'s hand — ${names[event.seat]} revealed `),
+        plain(
+          `chose a random card from ${names[event.seat]}'s hand — ${names[event.seat]} revealed `,
+        ),
         strong(cardName(state, event.uid)),
       ]);
     case "RANDOM_CARD_TAKEN":
@@ -2127,9 +2151,13 @@ function formatEvent(
       if (event.dest === "deck") {
         // 🆕 Card revision B45 — Bug Out reveals its OWN deck (no `actor`): "their deck", as every
         // own-deck row reads; Haughty Order's seat-crossing row still names the owner.
-        const owner = event.actor === undefined || event.actor === event.seat ? "their" : `${names[event.seat]}'s`;
+        const owner =
+          event.actor === undefined || event.actor === event.seat
+            ? "their"
+            : `${names[event.seat]}'s`;
         const who = event.actor ?? event.seat;
-        if (n === 0) return row(who, [plain(`revealed the ${end} of ${owner} deck — it was empty`)]);
+        if (n === 0)
+          return row(who, [plain(`revealed the ${end} of ${owner} deck — it was empty`)]);
         return row(who, [
           plain(`revealed the ${end} ${n} card${n === 1 ? "" : "s"} of ${owner} deck: `),
           strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
@@ -2138,7 +2166,9 @@ function formatEvent(
       if (event.actor !== undefined) {
         const owner = names[event.seat];
         if (n === 0) {
-          return row(event.actor, [plain(`revealed the ${end} of ${owner}'s deck — put nothing onto their Bench`)]);
+          return row(event.actor, [
+            plain(`revealed the ${end} of ${owner}'s deck — put nothing onto their Bench`),
+          ]);
         }
         return row(event.actor, [
           plain(`revealed the ${end} of ${owner}'s deck — put `),

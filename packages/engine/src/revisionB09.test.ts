@@ -36,7 +36,10 @@ const FILLER = "b09-filler";
 
 const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
-    PARADISE_IDS.map((id) => [id, { ...trainerCard(id, "Stadium", PARADISE_TEXT), name: "Paradise Resort" }]),
+    PARADISE_IDS.map((id) => [
+      id,
+      { ...trainerCard(id, "Stadium", PARADISE_TEXT), name: "Paradise Resort" },
+    ]),
   ),
   [PSYDUCK]: battler(PSYDUCK, {
     name: "Psyduck",
@@ -94,7 +97,9 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
@@ -111,7 +116,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -139,7 +150,10 @@ function at(state: GameState, seat: Seat, spot: "active" | number = "active"): I
 const rc = (state: GameState, seat: Seat, spot: "active" | number = "active") =>
   effectiveRetreatCost(state, at(state, seat, spot));
 
-function play(state: GameState, id: string): { state: GameState; events: GameEvent[]; uid: string } {
+function play(
+  state: GameState,
+  id: string,
+): { state: GameState; events: GameEvent[]; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
   const uid = next.players.p1.hand.find((u) => idOf(next, u) === id) as string;
   return { ...mustApply(next, { type: "playTrainer", seat: "p1", uid }), uid };
@@ -157,8 +171,15 @@ describe("B09 §1 — every Standard-legal printing of Paradise Resort runs its 
   it("the CONTROL — with no Stadium in play every body keeps its printed Retreat Cost of 1", () => {
     const state = board();
     expect(state.stadium).toBeNull();
-    expect([rc(state, "p1"), rc(state, "p1", 0), rc(state, "p1", 1), rc(state, "p2")]).toEqual([1, 1, 1, 1]);
-    const refused = applyAction(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 1 });
+    expect([rc(state, "p1"), rc(state, "p1", 0), rc(state, "p1", 1), rc(state, "p2")]).toEqual([
+      1, 1, 1, 1,
+    ]);
+    const refused = applyAction(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [],
+      promoteBenchIndex: 1,
+    });
     expect(refused.ok).toBe(false);
   });
 
@@ -166,7 +187,10 @@ describe("B09 §1 — every Standard-legal printing of Paradise Resort runs its 
     "Paradise Resort %s is played from the hand as a Stadium and stays in play",
     (id) => {
       const { state, events, uid } = play(board(), id);
-      expect(events.find((e) => e.type === "TRAINER_PLAYED")).toMatchObject({ uid, trainerType: "Stadium" });
+      expect(events.find((e) => e.type === "TRAINER_PLAYED")).toMatchObject({
+        uid,
+        trainerType: "Stadium",
+      });
       expect(state.stadium).toEqual({ uid, owner: "p1" });
       expect(state.players.p1.hand).not.toContain(uid);
       expect(state.players.p1.discard).not.toContain(uid);
@@ -174,7 +198,7 @@ describe("B09 §1 — every Standard-legal printing of Paradise Resort runs its 
   );
 
   it.each(PARADISE_IDS)(
-    "Paradise Resort %s: \"The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less.\"",
+    'Paradise Resort %s: "The Retreat Cost of each Psyduck in play (both yours and your opponent\'s) is {C} less."',
     (id) => {
       const { state } = play(board(), id);
       // each Psyduck — yours AND your opponent's — 1 → 0; Golduck and the Filler are not Psyduck.

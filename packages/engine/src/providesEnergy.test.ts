@@ -594,9 +594,7 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        picks: [
-          { uid: benched as string, dest: { seat: "p1", spot: { spot: "active" } } },
-        ],
+        picks: [{ uid: benched as string, dest: { seat: "p1", spot: { spot: "active" } } }],
       },
     });
     expect(activeEnergy(done, "p1")).toEqual([benched]);
@@ -693,9 +691,7 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
         seat: "p1",
         choice: {
           kind: "moveEnergy",
-          picks: [
-            { uid: own as string, dest: { seat: "p1", spot: { spot: "active" } } },
-          ],
+          picks: [{ uid: own as string, dest: { seat: "p1", spot: { spot: "active" } } }],
         },
       },
     );
@@ -767,9 +763,7 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
         seat: "p1",
         choice: {
           kind: "moveEnergy",
-          picks: [
-            { uid: onActive as string, dest: { seat: "p1", spot: { spot: "active" } } },
-          ],
+          picks: [{ uid: onActive as string, dest: { seat: "p1", spot: { spot: "active" } } }],
         },
       },
       "BAD_EFFECT_CHOICE",

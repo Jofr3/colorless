@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -169,7 +169,13 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     types: ["Colorless"],
   }),
-  [WALL]: battler(WALL, { name: "D560 Wall", hp: 900, retreat: 2, types: ["Colorless"], weaknesses: null }),
+  [WALL]: battler(WALL, {
+    name: "D560 Wall",
+    hp: 900,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: null,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -209,7 +215,9 @@ function opened(seed: number, evolve = false): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -217,11 +225,14 @@ function opened(seed: number, evolve = false): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (!evolve) return state;
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
@@ -237,7 +248,11 @@ function ensureInDeck(state: GameState, seat: Seat, id: string, count = 1): Game
     if (side.deck.filter((u) => next.cardIdByUid[u] === id).length >= count) return next;
     const held = side.hand.find((u) => next.cardIdByUid[u] === id);
     if (held !== undefined) {
-      const moved = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
+      const moved = {
+        ...side,
+        hand: side.hand.filter((u) => u !== held),
+        deck: [...side.deck, held],
+      };
       next = { ...next, players: { ...next.players, [seat]: moved } };
       continue;
     }
@@ -257,7 +272,11 @@ function ensureInDeck(state: GameState, seat: Seat, id: string, count = 1): Game
 function purgeFromDeck(state: GameState, seat: Seat, id: string): GameState {
   const side = state.players[seat];
   const gone = side.deck.filter((u) => state.cardIdByUid[u] === id);
-  const moved = { ...side, deck: side.deck.filter((u) => !gone.includes(u)), discard: [...side.discard, ...gone] };
+  const moved = {
+    ...side,
+    deck: side.deck.filter((u) => !gone.includes(u)),
+    discard: [...side.discard, ...gone],
+  };
   return { ...state, players: { ...state.players, [seat]: moved } };
 }
 
@@ -287,8 +306,10 @@ function table(
   state = clearBench(state, "p1");
   state = clearBench(state, "p2");
   for (const id of opts.bench ?? []) state = benchFromDeck(ensureInDeck(state, "p1", id), "p1", id);
-  for (const id of opts.oppBench ?? []) state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
-  for (const id of opts.hand ?? []) state = handFromDeck(ensureInDeck(state, "p1", id), "p1", id, 1);
+  for (const id of opts.oppBench ?? [])
+    state = benchFromDeck(ensureInDeck(state, "p2", id), "p2", id);
+  for (const id of opts.hand ?? [])
+    state = handFromDeck(ensureInDeck(state, "p1", id), "p1", id, 1);
   return state;
 }
 
@@ -311,7 +332,8 @@ function benchDamage(state: GameState, seat: Seat, index: number, damage: number
 }
 
 function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt as unknown as Record<string, unknown>;
 }
 const confirm = (state: GameState, yes: boolean, seat: Seat = "p1") =>
@@ -336,7 +358,11 @@ function revived(state: GameState, stripLabels = false): GameState {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D560 §1 — the eleven registry rows: 17 printings, 11 objects, NO `attack` key", () => {
-  const ROWS: readonly { ids: readonly string[]; key: "triggered" | "abilities" | "passive"; name?: string }[] = [
+  const ROWS: readonly {
+    ids: readonly string[];
+    key: "triggered" | "abilities" | "passive";
+    name?: string;
+  }[] = [
     { ids: [DRILBUR], key: "triggered", name: "Dig Dig Dig" },
     { ids: [KOFFING_TR], key: "triggered", name: "Smog Signals" },
     { ids: ["sv06-015", "svp-115"], key: "abilities", name: "Boom Boom Groove" },
@@ -395,21 +421,35 @@ describe("D560 §1 — the eleven registry rows: 17 printings, 11 objects, NO `a
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §2 — Drilbur \"Dig Dig Dig\": up to 3 Basic {F} Energy to the discard pile", () => {
+describe('D560 §2 — Drilbur "Dig Dig Dig": up to 3 Basic {F} Energy to the discard pile', () => {
   function bench(fighting: number) {
     let state = table({ active: WALL, hand: [DRILBUR] });
-    state = purgeFromDeck(ensureInDeck(state, "p1", "fix-fighting-energy", 4), "p1", "fix-fighting-energy");
+    state = purgeFromDeck(
+      ensureInDeck(state, "p1", "fix-fighting-energy", 4),
+      "p1",
+      "fix-fighting-energy",
+    );
     // …then put back exactly `fighting` of them.
     const side = state.players.p1;
-    const back = side.discard.filter((u) => state.cardIdByUid[u] === "fix-fighting-energy").slice(0, fighting);
+    const back = side.discard
+      .filter((u) => state.cardIdByUid[u] === "fix-fighting-energy")
+      .slice(0, fighting);
     state = {
       ...state,
       players: {
         ...state.players,
-        p1: { ...side, discard: side.discard.filter((u) => !back.includes(u)), deck: [...side.deck, ...back] },
+        p1: {
+          ...side,
+          discard: side.discard.filter((u) => !back.includes(u)),
+          deck: [...side.deck, ...back],
+        },
       },
     };
-    return mustApply(state, { type: "playBasicToBench", seat: "p1", uid: handUidOf(state, DRILBUR) });
+    return mustApply(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUidOf(state, DRILBUR),
+    });
   }
 
   it("0 {F} Energy in the deck: nothing is asked, and the deck still shuffles", () => {
@@ -425,7 +465,11 @@ describe("D560 §2 — Drilbur \"Dig Dig Dig\": up to 3 Basic {F} Energy to the 
     expect(p).toMatchObject({ kind: "chooseCards", min: 0, max: 3, dest: "discard" });
     const picks = p.candidates as string[];
     expect(picks).toHaveLength(3);
-    const done = mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: picks } });
+    const done = mustApply(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: picks },
+    });
     for (const uid of picks) expect(done.state.players.p1.discard).toContain(uid);
     expect(done.events.some((e) => e.type === "SHUFFLE")).toBe(true);
   });
@@ -435,10 +479,16 @@ describe("D560 §2 — Drilbur \"Dig Dig Dig\": up to 3 Basic {F} Energy to the 
     const p = prompt(state);
     expect((p.candidates as string[]).length).toBe(4);
     expect(p.max).toBe(3);
-    const none = mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } });
-    expect(none.state.players.p1.discard.filter((u) => none.state.cardIdByUid[u] === "fix-fighting-energy")).toHaveLength(
-      0,
-    );
+    const none = mustApply(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [] },
+    });
+    expect(
+      none.state.players.p1.discard.filter(
+        (u) => none.state.cardIdByUid[u] === "fix-fighting-energy",
+      ),
+    ).toHaveLength(0);
   });
 });
 
@@ -452,11 +502,16 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
       1,
     );
   const koffingsIn = (state: GameState, seat: Seat) =>
-    state.players[seat].deck.filter((u) => /Koffing/.test(POOL[state.cardIdByUid[u] ?? ""]?.name ?? ""));
+    state.players[seat].deck.filter((u) =>
+      /Koffing/.test(POOL[state.cardIdByUid[u] ?? ""]?.name ?? ""),
+    );
 
   it("damaged, not Knocked Out: parks a p2 search (p2 decides, on p1's turn) for up to 2 onto the Bench", () => {
     const { state, events } = mustApply(koffingBoard(), { type: "attack", seat: "p1", index: 0 });
-    expect(events.find((e) => e.type === "ABILITY_TRIGGERED")).toMatchObject({ seat: "p2", ability: "Smog Signals" });
+    expect(events.find((e) => e.type === "ABILITY_TRIGGERED")).toMatchObject({
+      seat: "p2",
+      ability: "Smog Signals",
+    });
     expect(state.phase.kind).toBe("effect:choose");
     if (state.phase.kind !== "effect:choose") return;
     expect(state.phase.seat).toBe("p2");
@@ -466,7 +521,11 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
     // Both Koffing-named cards the deck holds, and nothing else.
     expect([...(p.candidates as string[])].sort()).toEqual([...koffingsIn(state, "p2")].sort());
     const picks = (p.candidates as string[]).slice(0, 2);
-    const done = mustApply(state, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: picks } });
+    const done = mustApply(state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: picks },
+    });
     expect(done.state.players.p2.bench.map((b) => b.stack[0])).toEqual(picks);
     // The tail resumed: p1's turn ended, so it is now p2's.
     expect(done.state.phase.kind).toBe("turn:action");
@@ -477,7 +536,11 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
     let { state } = mustApply(koffingBoard(), { type: "attack", seat: "p1", index: 1 });
     expect(state.phase.kind).toBe("effect:choose");
     const pick = (prompt(state).candidates as string[])[0] as string;
-    state = mustApply(state, { type: "resolveEffect", seat: "p2", choice: { kind: "cards", uids: [pick] } }).state;
+    state = mustApply(state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: [pick] },
+    }).state;
     expect(state.players.p2.active).toBeNull();
     for (let guard = 0; guard < 6 && state.phase.kind !== "turn:action"; guard++) {
       const phase = state.phase as { kind: string; seat?: Seat; count?: number };
@@ -517,7 +580,7 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §4 — Whimsicott \"Wafting Heal\": gates, then a real confirm (R-DB)", () => {
+describe('D560 §4 — Whimsicott "Wafting Heal": gates, then a real confirm (R-DB)', () => {
   function evolve(active: string, damage: number, id: string = WHIMSICOTT[0]) {
     let state = table({ active, bench: [COTTONEE], hand: [id], evolve: true });
     state = attachFromDeck(ensureInDeck(state, "p1", "fix-energy", 2), "p1", "fix-energy", 2);
@@ -566,19 +629,31 @@ describe("D560 §4 — Whimsicott \"Wafting Heal\": gates, then a real confirm (
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §5 — Dachsbun ex \"Time to Chow Down\": every Evolution Pokémon, per healed body (R-DB)", () => {
+describe('D560 §5 — Dachsbun ex "Time to Chow Down": every Evolution Pokémon, per healed body (R-DB)', () => {
   /** p1: Active `active` (undamaged unless stated), Bench [Fidough, SPROUT (Evolution),
       WALL (Basic)]; the Sprout and the Wall carry 50 damage and 1 Energy each. */
-  function evolve(opts: { activeDamage?: number; fidoughDamage?: number; benchDamage?: number } = {}) {
-    let state = table({ active: GRASS, bench: [FIDOUGH, SPROUT, WALL], hand: [DACHSBUN[0]], evolve: true });
+  function evolve(
+    opts: { activeDamage?: number; fidoughDamage?: number; benchDamage?: number } = {},
+  ) {
+    let state = table({
+      active: GRASS,
+      bench: [FIDOUGH, SPROUT, WALL],
+      hand: [DACHSBUN[0]],
+      evolve: true,
+    });
     state = attachFromDeck(ensureInDeck(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
     for (const index of [0, 1, 2]) {
       const side = state.players.p1;
       const uid = side.deck.find((u) => state.cardIdByUid[u] === "fix-energy") as string;
-      const bench = side.bench.map((b, i) => (i === index ? { ...b, energy: [...b.energy, uid] } : b));
+      const bench = side.bench.map((b, i) =>
+        i === index ? { ...b, energy: [...b.energy, uid] } : b,
+      );
       state = {
         ...state,
-        players: { ...state.players, p1: { ...side, deck: side.deck.filter((u) => u !== uid), bench } },
+        players: {
+          ...state.players,
+          p1: { ...side, deck: side.deck.filter((u) => u !== uid), bench },
+        },
       };
     }
     state = setDamage(state, "p1", opts.activeDamage ?? 0);
@@ -625,9 +700,13 @@ describe("D560 §5 — Dachsbun ex \"Time to Chow Down\": every Evolution Pokém
     expect(body(state, "p1", 1).energy).toHaveLength(1);
   });
 
-  it("a damaged Evolution ACTIVE heals and loses its Energy too — \"each of your\", not \"Benched\"", () => {
+  it('a damaged Evolution ACTIVE heals and loses its Energy too — "each of your", not "Benched"', () => {
     let state = table({ active: SPROUT, bench: [FIDOUGH], hand: [DACHSBUN[1]], evolve: true });
-    state = setDamage(attachFromDeck(ensureInDeck(state, "p1", "fix-energy", 2), "p1", "fix-energy", 2), "p1", 80);
+    state = setDamage(
+      attachFromDeck(ensureInDeck(state, "p1", "fix-energy", 2), "p1", "fix-energy", 2),
+      "p1",
+      80,
+    );
     const parked = mustApply(state, {
       type: "evolve",
       seat: "p1",
@@ -637,7 +716,9 @@ describe("D560 §5 — Dachsbun ex \"Time to Chow Down\": every Evolution Pokém
     const { state: done, events } = confirm(parked, true);
     expect(body(done, "p1").damage).toBe(0);
     expect(body(done, "p1").energy).toHaveLength(0);
-    expect(events.find((e) => e.type === "ENERGY_DISCARDED")).toMatchObject({ from: { spot: "active" } });
+    expect(events.find((e) => e.type === "ENERGY_DISCARDED")).toMatchObject({
+      from: { spot: "active" },
+    });
   });
 
   it("🛑 Dachsbun ex ITSELF is an Evolution Pokémon and keeps Fidough's damage: it heals and discards too", () => {
@@ -649,8 +730,12 @@ describe("D560 §5 — Dachsbun ex \"Time to Chow Down\": every Evolution Pokém
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D560 §6 — Indeedee \"Obliging Heal\": heal 30, then recover from ONE Special Condition", () => {
-  function play(conditions: Parameters<typeof setConditions>[2], damage = 50, id: string = INDEEDEE[0]) {
+describe('D560 §6 — Indeedee "Obliging Heal": heal 30, then recover from ONE Special Condition', () => {
+  function play(
+    conditions: Parameters<typeof setConditions>[2],
+    damage = 50,
+    id: string = INDEEDEE[0],
+  ) {
     let state = table({ active: WALL, hand: [id] });
     state = setDamage(setConditions(state, "p1", conditions), "p1", damage);
     return mustApply(state, { type: "playBasicToBench", seat: "p1", uid: handUidOf(state, id) });
@@ -668,7 +753,9 @@ describe("D560 §6 — Indeedee \"Obliging Heal\": heal 30, then recover from ON
     const { state, events } = play({ poisonDamage: 10 });
     expect(state.phase.kind).toBe("turn:action");
     expect(body(state, "p1").conditions.poisonDamage).toBe(0);
-    expect(events.find((e) => e.type === "STATUS_CLEARED")).toMatchObject({ statuses: ["poisoned"] });
+    expect(events.find((e) => e.type === "STATUS_CLEARED")).toMatchObject({
+      statuses: ["poisoned"],
+    });
   });
 
   it("2 conditions: one labelled confirm between them; each answer clears exactly one", () => {
@@ -689,7 +776,11 @@ describe("D560 §6 — Indeedee \"Obliging Heal\": heal 30, then recover from ON
     const second = confirm(parked, false).state;
     expect(prompt(second).labels).toEqual({ yes: "Poisoned", no: "Burned" });
     const poisoned = body(confirm(second, true).state, "p1").conditions;
-    expect([poisoned.rotation, poisoned.poisonDamage, poisoned.burned]).toEqual(["asleep", 0, true]);
+    expect([poisoned.rotation, poisoned.poisonDamage, poisoned.burned]).toEqual([
+      "asleep",
+      0,
+      true,
+    ]);
     const burned = body(confirm(second, false).state, "p1").conditions;
     expect([burned.rotation, burned.poisonDamage, burned.burned]).toEqual(["asleep", 10, false]);
   });
@@ -708,7 +799,7 @@ describe("D560 §6 — Indeedee \"Obliging Heal\": heal 30, then recover from ON
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D560 §7 — `MATCH_RECORD_VERSION` HOLDS AT 35: the widened ops ride parked records, DRIVEN", () => {
-  it("a parked Whimsicott record carries `amount: \"all\"` and, revived from JSON, heals all", () => {
+  it('a parked Whimsicott record carries `amount: "all"` and, revived from JSON, heals all', () => {
     let state = table({ active: GRASS, bench: [COTTONEE], hand: [WHIMSICOTT[1]], evolve: true });
     state = setDamage(state, "p1", 90);
     const parked = mustApply(state, {
@@ -723,7 +814,12 @@ describe("D560 §7 — `MATCH_RECORD_VERSION` HOLDS AT 35: the widened ops ride 
   });
 
   it("a parked Dachsbun ex record carries the three `healEach` widenings and resolves them", () => {
-    let state = table({ active: GRASS, bench: [FIDOUGH, SPROUT], hand: [DACHSBUN[2]], evolve: true });
+    let state = table({
+      active: GRASS,
+      bench: [FIDOUGH, SPROUT],
+      hand: [DACHSBUN[2]],
+      evolve: true,
+    });
     state = benchDamage(state, "p1", 1, 120);
     const parked = mustApply(state, {
       type: "evolve",
@@ -732,7 +828,11 @@ describe("D560 §7 — `MATCH_RECORD_VERSION` HOLDS AT 35: the widened ops ride 
       target: { spot: "bench", index: 0 },
     }).state;
     const wire = JSON.stringify(parked.phase);
-    for (const key of ['"amount":"all"', '"evolutionOnly":true', '"discardEnergyFromHealed":true']) {
+    for (const key of [
+      '"amount":"all"',
+      '"evolutionOnly":true',
+      '"discardEnergyFromHealed":true',
+    ]) {
       expect(wire).toContain(key);
     }
     expect(body(confirm(revived(parked), true).state, "p1", 1).damage).toBe(0);
@@ -749,9 +849,5 @@ describe("D560 §7 — `MATCH_RECORD_VERSION` HOLDS AT 35: the widened ops ride 
     expect(JSON.stringify(parked.phase)).toContain('"only":"poisoned"');
     const after = body(confirm(revived(parked), true).state, "p1").conditions;
     expect([after.poisonDamage, after.burned]).toEqual([0, true]);
-  });
-
-  it("the engine is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
-import { POKEMON_TYPE_BY_CODE, POKEMON_TYPES, deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
+import {
+  POKEMON_TYPE_BY_CODE,
+  POKEMON_TYPES,
+  deriveAttackCoinFlip,
+  deriveAttackEffect,
+} from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -248,7 +253,7 @@ const BUILT_ELSEWHERE: readonly (readonly [string, number, string])[] = [
   [
     "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
     1,
-    "BUILT at D528 on `deriveAttackCoinFlip` (`ATTACK_COIN_ATTACH_UP_TO_HEADS`) as `programPerHeads` over one `attachEnergyFrom { discard, Lightning, benchOnly, declinable }` — this arm's own op for the printed-digit sibling, with N = heads; THIS anchor never spans the \"Flip N coins.\" head",
+    'BUILT at D528 on `deriveAttackCoinFlip` (`ATTACK_COIN_ATTACH_UP_TO_HEADS`) as `programPerHeads` over one `attachEnergyFrom { discard, Lightning, benchOnly, declinable }` — this arm\'s own op for the printed-digit sibling, with N = heads; THIS anchor never spans the "Flip N coins." head',
   ],
 ] as const;
 
@@ -262,7 +267,7 @@ const LITERAL: readonly (readonly [string, number, string])[] = [
   [
     "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
     1,
-    "BUILT at D532 on `deriveAttackEffect` (`ATTACK_OPPONENT_DISCARD_ATTACH`, a separate zero-capture literal) as D360's spread one key over — `whose: \"opponent\"` on the op and on `AttachTargetRiders`, read through `attachSeat` for the pile and the board together",
+    'BUILT at D532 on `deriveAttackEffect` (`ATTACK_OPPONENT_DISCARD_ATTACH`, a separate zero-capture literal) as D360\'s spread one key over — `whose: "opponent"` on the op and on `AttachTargetRiders`, read through `attachSeat` for the pile and the board together',
   ],
 ] as const;
 
@@ -353,7 +358,8 @@ function parkedTargets(state: GameState): readonly PokemonRef[] {
     throw new Error(`expected a park, got ${state.phase.kind}`);
   }
   const prompt = state.phase.prompt;
-  if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+  if (prompt.kind !== "choosePokemon")
+    throw new Error(`expected choosePokemon, got ${prompt.kind}`);
   return prompt.candidates;
 }
 
@@ -429,7 +435,13 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
       expect(derived, text).not.toBeNull();
       expect(derived, text).toHaveLength(3);
       for (const op of derived ?? []) {
-        expect(op, text).toEqual({ op: "attachEnergyFrom", source: "discard", anyEnergy: true, declinable: true, whose: "opponent" });
+        expect(op, text).toEqual({
+          op: "attachEnergyFrom",
+          source: "discard",
+          anyEnergy: true,
+          declinable: true,
+          whose: "opponent",
+        });
       }
       expect(text.includes(" from your discard pile"), text).toBe(false);
       expect(deriveAttackCoinFlip(text), text).toBeNull();
@@ -738,7 +750,14 @@ describe("PROVENANCE — the demonstrator carries six of the sentences at 29-34"
     // prints 20 and this fixture drops it, so a Benched body receiving Energy can
     // never be Knocked Out by the same attack that fed it — a promotion prompt in
     // front of the assertion would read as a park that means something else.
-    for (const index of [REGI_CHARGE, SAND_GIFT, FAULT_LINE, PICK_AND_STICK, DRAGONS_FURY, MUD_STOCK]) {
+    for (const index of [
+      REGI_CHARGE,
+      SAND_GIFT,
+      FAULT_LINE,
+      PICK_AND_STICK,
+      DRAGONS_FURY,
+      MUD_STOCK,
+    ]) {
       expect(attacks()[index]?.damage, `index ${index}`).toBeUndefined();
     }
     // …and the neighbouring index that DOES print a number still does.
@@ -961,8 +980,9 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
     expect(done.players.p1.active?.energy).toHaveLength(2); // the {C} cost + one {F}
     // The second {F} is still in the pile — the whole point of the middle answer.
-    expect(done.players.p1.discard.filter((u) => done.cardIdByUid[u] === "fix-fighting-energy"))
-      .toHaveLength(1);
+    expect(
+      done.players.p1.discard.filter((u) => done.cardIdByUid[u] === "fix-fighting-energy"),
+    ).toHaveLength(1);
   });
 
   it("✅ D248 — the SPREAD feeds every Benched body at once and asks NOTHING", () => {
@@ -1024,9 +1044,11 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
       index: MUD_STOCK,
     });
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
-    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+    if (parked.phase.kind !== "effect:choose")
+      throw new Error(`expected a park, got ${parked.phase.kind}`);
     const prompt = parked.phase.prompt;
-    if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+    if (prompt.kind !== "choosePokemonMulti")
+      throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
     expect([prompt.min, prompt.max]).toEqual([1, 1]);
     expect(prompt.candidates).toEqual([benchRef(0), benchRef(1), benchRef(2)]);
     const { state: done, events: fed } = mustApply(parked, {
@@ -1250,7 +1272,6 @@ describe("D248 — the distribution axis has THREE members and a print is exactl
   });
 });
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. 🆕 D360 — THE PRINTED "up to" REACHES THE SPREAD
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1319,7 +1340,7 @@ describe("D360 §6 — the discriminator is the PRINTED word, not the derived co
     }
   });
 
-  it("🆕🆕🆕 D532 — the CROSS-SEAT hedge is BUILT (re-pointed in place, D418): three declinable ops carrying `whose: \"opponent\"` and `anyEnergy` on its OWN anchor, and the D234 anchor still cannot match it", () => {
+  it('🆕🆕🆕 D532 — the CROSS-SEAT hedge is BUILT (re-pointed in place, D418): three declinable ops carrying `whose: "opponent"` and `anyEnergy` on its OWN anchor, and the D234 anchor still cannot match it', () => {
     // Grafaiai `sv08-121` — "Attach up to 3 Energy cards from your **opponent's**
     // discard pile to **their** Pokémon in any way you like." — 1 Standard-legal
     // printing. From D360 to D531 this rung read *"the one member of the family no op in
@@ -1329,15 +1350,26 @@ describe("D360 §6 — the discriminator is the PRINTED word, not the derived co
     // you like"* says. What the old `toBeNull` could catch — the D234 anchor claiming the
     // row through a widened clause — is kept: every op carries two keys that arm can never
     // emit, and the factory's zone phrase is not in the print.
-    const cross = "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.";
+    const cross =
+      "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.";
     const derived = deriveAttackEffect(cross);
     expect(derived).toHaveLength(3);
     for (const op of derived ?? []) {
-      expect(op).toEqual({ op: "attachEnergyFrom", source: "discard", anyEnergy: true, declinable: true, whose: "opponent" });
+      expect(op).toEqual({
+        op: "attachEnergyFrom",
+        source: "discard",
+        anyEnergy: true,
+        declinable: true,
+        whose: "opponent",
+      });
     }
     expect(cross.includes(" from your discard pile")).toBe(false);
     // …and the own-seat bare-plural twin (the SECOND axis, D489) stays DARK: no bare plural in the clause.
-    expect(deriveAttackEffect("Attach up to 3 Energy cards from your discard pile to your Pokémon in any way you like.")).toBeNull();
+    expect(
+      deriveAttackEffect(
+        "Attach up to 3 Energy cards from your discard pile to your Pokémon in any way you like.",
+      ),
+    ).toBeNull();
   });
 });
 

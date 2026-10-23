@@ -468,11 +468,14 @@ describe("D278 — `evolveEarlyLicensed`, the extracted §4/§10 read", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         const licensed = board(SEEDS[0], first, seat, "sv08-143");
-        expect(evolveEarlyLicensed(licensed, seat, activeOf(licensed, seat)), `${first}/${seat}`).toBe(
-          true,
-        );
+        expect(
+          evolveEarlyLicensed(licensed, seat, activeOf(licensed, seat)),
+          `${first}/${seat}`,
+        ).toBe(true);
         const plain = board(SEEDS[0], first, seat, UNLICENSED);
-        expect(evolveEarlyLicensed(plain, seat, activeOf(plain, seat)), `${first}/${seat}`).toBe(false);
+        expect(evolveEarlyLicensed(plain, seat, activeOf(plain, seat)), `${first}/${seat}`).toBe(
+          false,
+        );
       }
     }
   });
@@ -572,7 +575,10 @@ describe("D278 — BAN 2 (§10 came into play this turn), the half turn 1 cannot
   it("🛑 REFUSES an unlicensed body played THIS turn with EVOLVE_TOO_SOON, on a LATER turn", () => {
     for (const first of ["p1", "p2"] as const) {
       // Turn 3 — nobody's first turn, so BAN 1 is silent and only BAN 2 can speak.
-      const state = stampPlayedThisTurn(passTurns(board(SEEDS[0], first, first, UNLICENSED), 2), first);
+      const state = stampPlayedThisTurn(
+        passTurns(board(SEEDS[0], first, first, UNLICENSED), 2),
+        first,
+      );
       expect(state.turn, `${first}`).toBe(3);
       expect(activeOf(state, first).turnPlayed, `${first}`).toBe(3);
       const result = applyAction(state, evolveActive(first, handUidOf(state, first, STAGE1)));
@@ -588,7 +594,10 @@ describe("D278 — BAN 2 (§10 came into play this turn), the half turn 1 cannot
     // every turn-1 one, because a setup Pokémon carries `turnPlayed = 0` and
     // `0 >= 1` is false — and RED here, and only here.
     for (const first of ["p1", "p2"] as const) {
-      const state = stampPlayedThisTurn(passTurns(board(SEEDS[0], first, first, "sv08-143"), 2), first);
+      const state = stampPlayedThisTurn(
+        passTurns(board(SEEDS[0], first, first, "sv08-143"), 2),
+        first,
+      );
       expect(state.turn, `${first}`).toBe(3);
       expect(activeOf(state, first).turnPlayed, `${first}`).toBe(3);
       const uid = handUidOf(state, first, STAGE1);
@@ -614,9 +623,9 @@ describe("D278 — BAN 2 (§10 came into play this turn), the half turn 1 cannot
       expect(r.error.code, `${first}`).toBe("FIRST_TURN_EVOLVE");
 
       const licensed = stampPlayedThisTurn(board(SEEDS[4], first, first, "sv08.5-074"), first);
-      expect(applyAction(licensed, evolveActive(first, handUidOf(licensed, first, STAGE1))).ok).toBe(
-        true,
-      );
+      expect(
+        applyAction(licensed, evolveActive(first, handUidOf(licensed, first, STAGE1))).ok,
+      ).toBe(true);
     }
   });
 
@@ -683,10 +692,12 @@ describe("D278 — the licence DOES NOT reach the Rare Candy sites (§7.1)", () 
       const licensed = candyBoard(SEEDS[0], first, first, "sv08-143");
       // The control FIRST: the very same body IS licensed for a plain `evolve` on
       // this very board, so the refusal below is about the CARD and not the body.
-      expect(evolveEarlyLicensed(licensed, first, activeOf(licensed, first)), `${first}`).toBe(true);
-      expect(applyAction(licensed, evolveActive(first, handUidOf(licensed, first, STAGE1))).ok).toBe(
+      expect(evolveEarlyLicensed(licensed, first, activeOf(licensed, first)), `${first}`).toBe(
         true,
       );
+      expect(
+        applyAction(licensed, evolveActive(first, handUidOf(licensed, first, STAGE1))).ok,
+      ).toBe(true);
       const refused = applyAction(licensed, candyAction(licensed, first));
       expect(refused.ok, `${first}`).toBe(false);
       if (refused.ok) throw new Error("expected a refusal");
@@ -704,7 +715,9 @@ describe("D278 — the licence DOES NOT reach the Rare Candy sites (§7.1)", () 
         first,
       );
       expect(state.turn, `${first}`).toBe(3);
-      expect(applyAction(state, evolveActive(first, handUidOf(state, first, STAGE1))).ok).toBe(true);
+      expect(applyAction(state, evolveActive(first, handUidOf(state, first, STAGE1))).ok).toBe(
+        true,
+      );
       const refused = applyAction(state, candyAction(state, first));
       expect(refused.ok, `${first}`).toBe(false);
       if (refused.ok) throw new Error("expected a refusal");

@@ -183,7 +183,10 @@ function answerPark(state: GameState, take?: number): GameState {
   }).state;
 }
 
-function benchAndAnswer(state: GameState, take?: number): { state: GameState; events: GameEvent[] } {
+function benchAndAnswer(
+  state: GameState,
+  take?: number,
+): { state: GameState; events: GameEvent[] } {
   const uid = handUid(state, "p1", "sv06.5-025");
   const played = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
   if (played.state.phase.kind !== "effect:choose") return played;

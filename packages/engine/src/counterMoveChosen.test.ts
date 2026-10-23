@@ -121,9 +121,13 @@ const VICTIM_HP = 30;
     fatal to one whose every claim is a CANDIDATE LIST). Every benched body below
     is put there by a case, on purpose. */
 function board(): GameState {
-  let state = driveSetup(11, { p1: COUNTER_MOVE_CHOSEN_DECK, p2: COUNTER_MOVE_CHOSEN_DECK }, {
-    first: "p2",
-  });
+  let state = driveSetup(
+    11,
+    { p1: COUNTER_MOVE_CHOSEN_DECK, p2: COUNTER_MOVE_CHOSEN_DECK },
+    {
+      first: "p2",
+    },
+  );
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   state = setActiveFromDeck(state, "p1", "fix-cofagrigus");
   state = setActiveFromDeck(state, "p2", "fix-titan");
@@ -155,12 +159,14 @@ function pick(ref: PokemonRef) {
 }
 
 function promptOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 
 function contOf(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.cont;
 }
 

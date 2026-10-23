@@ -60,21 +60,83 @@ const GARCHOMP = (id: string): Printing => ({
   size: 6,
 });
 const PRINTINGS: readonly Printing[] = [
-  { id: "me01-090", name: "Thievul", attack: "Greedy Hunt", index: 0, cost: [C], damage: 20, text: UNTIL_6, size: 6 },
+  {
+    id: "me01-090",
+    name: "Thievul",
+    attack: "Greedy Hunt",
+    index: 0,
+    cost: [C],
+    damage: 20,
+    text: UNTIL_6,
+    size: 6,
+  },
   ...["me02-036", "me02-112"].map(
-    (id): Printing => ({ id, name: "Mismagius ex", attack: "Hexa-Magic", index: 0, cost: [P, P], damage: 150, text: UNTIL_6, size: 6 }),
+    (id): Printing => ({
+      id,
+      name: "Mismagius ex",
+      attack: "Hexa-Magic",
+      index: 0,
+      cost: [P, P],
+      damage: 150,
+      text: UNTIL_6,
+      size: 6,
+    }),
   ),
   ...["me02.5-111", "sv10-104", "sv10-215", "sv10-232", "sv10-241", "svp-204"].map(GARCHOMP),
   ...["sv06-134", "sv06-201"].map(
-    (id): Printing => ({ id, name: "Blissey ex", attack: "Return", index: 0, cost: [C, C, C], damage: 180, text: UNTIL_6, size: 6 }),
+    (id): Printing => ({
+      id,
+      name: "Blissey ex",
+      attack: "Return",
+      index: 0,
+      cost: [C, C, C],
+      damage: 180,
+      text: UNTIL_6,
+      size: 6,
+    }),
   ),
-  { id: "sv07-036", name: "Lumineon", attack: "Return", index: 0, cost: [C], damage: 20, text: UNTIL_6, size: 6 },
+  {
+    id: "sv07-036",
+    name: "Lumineon",
+    attack: "Return",
+    index: 0,
+    cost: [C],
+    damage: 20,
+    text: UNTIL_6,
+    size: 6,
+  },
   ...["sv10.5b-074", "sv10.5b-151"].map(
-    (id): Printing => ({ id, name: "Audino", attack: "Return", index: 0, cost: [C], damage: 30, text: UNTIL_6, size: 6 }),
+    (id): Printing => ({
+      id,
+      name: "Audino",
+      attack: "Return",
+      index: 0,
+      cost: [C],
+      damage: 30,
+      text: UNTIL_6,
+      size: 6,
+    }),
   ),
-  { id: "me04-034", name: "Deoxys", attack: "Psyspeed", index: 0, cost: [P], damage: 30, text: UNTIL_5, size: 5 },
+  {
+    id: "me04-034",
+    name: "Deoxys",
+    attack: "Psyspeed",
+    index: 0,
+    cost: [P],
+    damage: 30,
+    text: UNTIL_5,
+    size: 5,
+  },
   ...["sv08-159", "sv08-228"].map(
-    (id): Printing => ({ id, name: "Cyclizar ex", attack: "Zircon Road", index: 1, cost: [G, R, P], damage: 180, text: DRAW_5 }),
+    (id): Printing => ({
+      id,
+      name: "Cyclizar ex",
+      attack: "Zircon Road",
+      index: 1,
+      cost: [G, R, P],
+      damage: 180,
+      text: DRAW_5,
+    }),
   ),
 ];
 
@@ -180,7 +242,8 @@ function must(state: GameState, action: GameAction): { state: GameState; events:
 }
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);
-const attack = (state: GameState, p: Printing) => must(state, { type: "attack", seat: "p1", index: p.index });
+const attack = (state: GameState, p: Printing) =>
+  must(state, { type: "attack", seat: "p1", index: p.index });
 const until = PRINTINGS.filter((p) => p.size !== undefined);
 const flat = PRINTINGS.filter((p) => p.size === undefined);
 const label = (p: Printing) => `${p.id} ${p.name} "${p.attack}"`;
@@ -196,13 +259,20 @@ function bothAnswers(board: GameState, p: Printing) {
     expect(parked.phase.prompt).toEqual(expect.objectContaining({ kind: "confirm", note: p.text }));
   }
   const answer = (yes: boolean) => {
-    const done = must(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-    return { state: done.state, drawn: ofType(done.events, "CARDS_DRAWN").filter((e) => e.seat === "p1") };
+    const done = must(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes },
+    });
+    return {
+      state: done.state,
+      drawn: ofType(done.events, "CARDS_DRAWN").filter((e) => e.seat === "p1"),
+    };
   };
   return { yes: answer(true), no: answer(false) };
 }
 
-describe("B51 §1 — a moot \"You may draw …\" still asks, and both answers reach the same board (U0217 / U0294 / U0462 / U0693 / U1155 / U1513, deferred: D186 / D202 reading pinned, NOT changed)", () => {
+describe('B51 §1 — a moot "You may draw …" still asks, and both answers reach the same board (U0217 / U0294 / U0462 / U0693 / U1155 / U1513, deferred: D186 / D202 reading pinned, NOT changed)', () => {
   it("the census: every printing is wired, and the printed sentence is the attack's text", () => {
     expect(PRINTINGS.map((p) => p.id)).toHaveLength(17);
     for (const p of PRINTINGS) expect(LOCAL[p.id]?.attacks?.[p.index]?.effect).toBe(p.text);
@@ -250,12 +320,22 @@ describe("B51 §2 — the controls: with a draw available the printed question i
       const parked = attack(board, p).state;
       expect(parked.phase.kind).toBe("effect:choose");
       if (parked.phase.kind !== "effect:choose") return;
-      expect(parked.phase.prompt).toEqual(expect.objectContaining({ kind: "confirm", note: p.text }));
-      const yes = must(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } }).state;
+      expect(parked.phase.prompt).toEqual(
+        expect.objectContaining({ kind: "confirm", note: p.text }),
+      );
+      const yes = must(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: true },
+      }).state;
       const drawn = p.size === undefined ? 5 : 1;
       expect(yes.players.p1.hand).toHaveLength(held + drawn);
       expect(yes.players.p1.deck).toHaveLength(10 - drawn);
-      const no = must(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: false } }).state;
+      const no = must(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: false },
+      }).state;
       expect(no.players.p1.hand).toHaveLength(held);
       expect(no.players.p1.deck).toHaveLength(10);
       expect(yes.players.p2.active?.damage).toBe(p.damage);
@@ -267,7 +347,11 @@ describe("B51 §2 — the controls: with a draw available the printed question i
     (_, p) => {
       const parked = attack(table(p, 0, 1), p).state;
       expect(parked.phase.kind).toBe("effect:choose");
-      const yes = must(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } }).state;
+      const yes = must(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "confirm", yes: true },
+      }).state;
       expect(yes.players.p1.hand).toHaveLength(1);
       expect(yes.players.p1.deck).toEqual([]);
     },

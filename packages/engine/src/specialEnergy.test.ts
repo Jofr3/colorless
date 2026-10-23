@@ -25,7 +25,11 @@ import {
 
 /** Setup then open P1's turn 2 (P2 went first, passed). */
 function p1Turn2(seed: number): GameState {
-  const state = driveSetup(seed, { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK }, { first: "p2" });
+  const state = driveSetup(
+    seed,
+    { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK },
+    { first: "p2" },
+  );
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -89,7 +93,9 @@ describe("providedEnergy — provision as data (§6.3)", () => {
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = attachFromDeck(state, "p1", "sv02-191", 1); // Luminous
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // basic
-    expect(providedEnergy(state, activeOf(state, "p1")).sort()).toEqual([ANY_ENERGY, "Fire"].sort());
+    expect(providedEnergy(state, activeOf(state, "p1")).sort()).toEqual(
+      [ANY_ENERGY, "Fire"].sort(),
+    );
   });
 
   it("DEMOTES Luminous to Colorless when another Special Energy is attached", () => {
@@ -190,7 +196,12 @@ describe("Jet Energy — on-attach switch (§6.1)", () => {
     const jet = handUid(state, "p1", "sv02-190");
     deepFreeze(state);
     expect(() =>
-      applyAction(state, { type: "attachEnergy", seat: "p1", uid: jet, target: { spot: "bench", index: 0 } }),
+      applyAction(state, {
+        type: "attachEnergy",
+        seat: "p1",
+        uid: jet,
+        target: { spot: "bench", index: 0 },
+      }),
     ).not.toThrow();
   });
 });

@@ -68,7 +68,11 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
     state = benchFromDeck(state, "p2", "fix-basic-1"); // 3 → a real choice of 2
     state = handFromDeck(state, "p1", "sv01-118", 1);
     const uid = handUid(state, "p1", "sv01-118");
-    const { state: parked, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
+    const { state: parked, events } = mustApply(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid,
+    });
     // The bench play AND the auto-fired trigger land in the one batch.
     expect(types(events)).toContain("POKEMON_BENCHED");
     expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
@@ -115,7 +119,11 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
     state = benchFromDeck(state, "p2", "fix-basic-1"); // exactly 2 → both, or none
     state = handFromDeck(state, "p1", "sv01-118", 1);
     const uid = handUid(state, "p1", "sv01-118");
-    const { state: parked, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
+    const { state: parked, events } = mustApply(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid,
+    });
     expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -320,7 +328,11 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
     // More than max (2).
     expectErr(
       parked,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: prompt.candidates } },
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemonMulti", refs: prompt.candidates },
+      },
       "BAD_EFFECT_CHOICE",
     );
     // A ref that is not a candidate (the opponent's Active).

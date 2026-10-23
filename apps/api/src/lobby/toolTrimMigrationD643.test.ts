@@ -72,12 +72,38 @@ const ROTOM_CARD: Card = {
   retreat: 1,
   suffix: "EX",
   abilities: [{ type: "Ability", name: "Multi Adapter", effect: MULTI_ADAPTER_TEXT }],
-  attacks: [{ cost: ["Lightning", "Colorless"], name: "Thunderbolt", damage: "130", effect: "Discard all Energy from this Pokémon." }],
+  attacks: [
+    {
+      cost: ["Lightning", "Colorless"],
+      name: "Thunderbolt",
+      damage: "130",
+      effect: "Discard all Energy from this Pokémon.",
+    },
+  ],
 } as unknown as Card;
 const tool = (id: string, name: string, effect: string): Card =>
-  ({ ...BODY_CARD, id, name, category: "Trainer", hp: null, stage: null, types: null, attacks: null, trainerType: "Tool", effect }) as unknown as Card;
-const BAND_CARD = tool(BAND, "Vitality Band", "The attacks of the Pokémon this card is attached to do 10 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).");
-const CHARM_CARD = tool(CHARM, "Bravery Charm", "The Basic Pokémon this card is attached to gets +50 HP.");
+  ({
+    ...BODY_CARD,
+    id,
+    name,
+    category: "Trainer",
+    hp: null,
+    stage: null,
+    types: null,
+    attacks: null,
+    trainerType: "Tool",
+    effect,
+  }) as unknown as Card;
+const BAND_CARD = tool(
+  BAND,
+  "Vitality Band",
+  "The attacks of the Pokémon this card is attached to do 10 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+);
+const CHARM_CARD = tool(
+  CHARM,
+  "Bravery Charm",
+  "The Basic Pokémon this card is attached to gets +50 HP.",
+);
 /** The catalog row as a pool holds it (D581's ingest keeps the printed face). */
 const JAW_CARD: Card = {
   ...BODY_CARD,
@@ -153,7 +179,13 @@ function fresh(seed = 6430): GameState {
     seed,
     hostDeck: DECK,
     guestDeck: DECK,
-    cardPool: { [BODY]: BODY_CARD, [ROTOM_ID]: ROTOM_CARD, [BAND]: BAND_CARD, [CHARM]: CHARM_CARD, [JAW]: JAW_CARD },
+    cardPool: {
+      [BODY]: BODY_CARD,
+      [ROTOM_ID]: ROTOM_CARD,
+      [BAND]: BAND_CARD,
+      [CHARM]: CHARM_CARD,
+      [JAW]: JAW_CARD,
+    },
   });
   if (!created.ok) throw new Error(created.error.message);
   return created.state;
@@ -222,7 +254,8 @@ describe("D643 — the version and the gate", () => {
 
   it("v40 and v49 (🆕🆕🆕 D646 (D539): v40 and v50 — v49 is this build's own) are neither read nor migrated; a v47 record missing its players or its log is not migrated", () => {
     const old = oldRecord(47);
-    for (const version of [40, 50]) { // 🆕🆕🆕 D646 — 49 is this build's own
+    for (const version of [40, 50]) {
+      // 🆕🆕🆕 D646 — 49 is this build's own
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -236,7 +269,9 @@ describe("D643 — what the migration writes", () => {
   it("v47: the version and nothing else — every byte of the state kept, the pool unread", () => {
     const board = p1Turn(fresh());
     const old = oldRecord(47, board);
-    const migrated = migrateMatchRecord(old, { [ROTOM_ID]: { ...ROTOM_CARD, name: "stale" } as Card });
+    const migrated = migrateMatchRecord(old, {
+      [ROTOM_ID]: { ...ROTOM_CARD, name: "stale" } as Card,
+    });
     if (migrated === null) throw new Error("not migrated");
     expect(migrated.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
     expect(readMatchRecord(migrated)).not.toBeNull();
@@ -269,7 +304,10 @@ describe("D643 — what the migration writes", () => {
       expect({ ...migrated, version }).toEqual(oldRecord(version));
     }
     for (const version of [44, 43, 42, 41] as const) {
-      const migrated = migrateMatchRecord(oldRecord(version), { [JAW]: JAW_CARD, [ROTOM_ID]: ROTOM_CARD });
+      const migrated = migrateMatchRecord(oldRecord(version), {
+        [JAW]: JAW_CARD,
+        [ROTOM_ID]: ROTOM_CARD,
+      });
       if (migrated === null) throw new Error(`v${version} not migrated`);
       expect(migrated.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
       expect(readMatchRecord(migrated)).not.toBeNull();
@@ -293,7 +331,9 @@ describe("D643 — on a board: the migrated v47 record plays Multi Adapter", () 
     let board = p1Turn(fresh());
     const side = board.players.p1;
     const pick = (id: string, not: readonly string[] = []) => {
-      const uid = [...side.deck, ...side.hand].find((u) => board.cardIdByUid[u] === id && !not.includes(u));
+      const uid = [...side.deck, ...side.hand].find(
+        (u) => board.cardIdByUid[u] === id && !not.includes(u),
+      );
       if (uid === undefined) throw new Error(`no ${id}`);
       return uid;
     };
@@ -316,7 +356,12 @@ describe("D643 — on a board: the migrated v47 record plays Multi Adapter", () 
     };
     const migrated = migrateMatchRecord(oldRecord(47, board), {});
     if (migrated === null) throw new Error("not migrated");
-    const attached = applyAction(migrated.state, { type: "attachTool", seat: "p1", uid: charm, target: { spot: "active" } });
+    const attached = applyAction(migrated.state, {
+      type: "attachTool",
+      seat: "p1",
+      uid: charm,
+      target: { spot: "active" },
+    });
     if (!attached.ok) throw new Error(attached.error.code);
     expect(attached.state.players.p1.active?.tools).toEqual([band, charm]);
   });

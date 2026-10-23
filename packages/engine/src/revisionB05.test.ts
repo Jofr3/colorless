@@ -43,7 +43,9 @@ const mon = (id: string, name: string): Card =>
   });
 
 const LOCAL: Record<string, Card> = {
-  ...Object.fromEntries(POTION_IDS.map((id) => [id, { ...trainerCard(id, "Item", POTION_TEXT), name: "Potion" }])),
+  ...Object.fromEntries(
+    POTION_IDS.map((id) => [id, { ...trainerCard(id, "Item", POTION_TEXT), name: "Potion" }]),
+  ),
   [BODY]: mon(BODY, "B05 Body"),
   [FILLER]: mon(FILLER, "B05 Filler"),
 };
@@ -78,7 +80,9 @@ function p1Turn(): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
@@ -95,7 +99,13 @@ function p1Turn(): GameState {
       ...state,
       players: {
         ...state.players,
-        [s]: { ...side, hand: [], discard: [], prizes, deck: pile.filter((u) => !prizes.includes(u)) },
+        [s]: {
+          ...side,
+          hand: [],
+          discard: [],
+          prizes,
+          deck: pile.filter((u) => !prizes.includes(u)),
+        },
       },
     };
   }
@@ -113,7 +123,10 @@ function board(bench: readonly string[]): GameState {
 const idOf = (state: GameState, uid: string | undefined) =>
   uid === undefined ? undefined : state.cardIdByUid[uid];
 
-function play(state: GameState, id: string): { state: GameState; events: GameEvent[]; uid: string } {
+function play(
+  state: GameState,
+  id: string,
+): { state: GameState; events: GameEvent[]; uid: string } {
   const next = handFromDeck(state, "p1", id, 1);
   const uid = next.players.p1.hand.find((u) => idOf(next, u) === id) as string;
   return { ...mustApply(next, { type: "playTrainer", seat: "p1", uid }), uid };
@@ -129,7 +142,7 @@ describe("B05 §1 — every Standard-legal printing of Potion runs its twin's pr
   });
 
   it.each(POTION_IDS)(
-    "Potion %s: \"Heal 30 damage from 1 of your Pokémon.\" — the only Pokémon in play heals 30 of its 50",
+    'Potion %s: "Heal 30 damage from 1 of your Pokémon." — the only Pokémon in play heals 30 of its 50',
     (id) => {
       const { state: done, events } = play(board([]), id);
       expect(done.phase.kind).toBe("turn:action");
@@ -143,9 +156,11 @@ describe("B05 §1 — every Standard-legal printing of Potion runs its twin's pr
     "Potion %s: with a Benched Pokémon too, the heal goes to the CHOSEN one (1 of your Pokémon)",
     (id) => {
       const parked = play(board([BODY]), id).state;
-      if (parked.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
+      if (parked.phase.kind !== "effect:choose")
+        throw new Error(`expected effect:choose, got ${parked.phase.kind}`);
       const prompt = parked.phase.prompt;
-      if (prompt.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${prompt.kind}`);
+      if (prompt.kind !== "choosePokemon")
+        throw new Error(`expected choosePokemon, got ${prompt.kind}`);
       const active = prompt.candidates.find((c) => c.seat === "p1" && c.spot.spot === "active");
       expect(active).toBeDefined();
       const done = mustApply(parked, answer({ kind: "pokemon", ref: active })).state;

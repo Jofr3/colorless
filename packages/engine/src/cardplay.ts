@@ -9,7 +9,12 @@ import type {
   UseStadiumAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { resolveCoinRedo, resolveCopiedAttack, resolveFoundAttack, resolveInPlayCopiedAttack } from "./attack";
+import {
+  resolveCoinRedo,
+  resolveCopiedAttack,
+  resolveFoundAttack,
+  resolveInPlayCopiedAttack,
+} from "./attack";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
   // 🆕🆕🆕 D577 — the live per-seat Bench limit (Area Zero Underdepths, R-AZ1).
@@ -208,10 +213,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   // own play was otherwise legal. `trainerFirstTurnExempt` does NOT reach here:
   // Carmine's printed sentence licenses §4's timing, not an opponent's lock.
   if (handPlayBarred(state, action.seat, trainerType, card)) {
-    return err(
-      "HAND_PLAY_BLOCKED",
-      handPlayBarredReason(state, action.seat, trainerType, card),
-    );
+    return err("HAND_PLAY_BLOCKED", handPlayBarredReason(state, action.seat, trainerType, card));
   }
   // The card's own printed "You can use this card only if …" line (Fighting Au
   // Lait). Checked HERE — before the card leaves hand below — so a rejected play
@@ -380,10 +382,7 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   // line now meets that stamp] — is consulted and answers `false` without this line
   // knowing there are two sources at all.
   if (handPlayBarred(state, action.seat, "Stadium", card)) {
-    return err(
-      "HAND_PLAY_BLOCKED",
-      handPlayBarredReason(state, action.seat, "Stadium", card),
-    );
+    return err("HAND_PLAY_BLOCKED", handPlayBarredReason(state, action.seat, "Stadium", card));
   }
   if (programFor(card.id)?.stadium === undefined) {
     // Coverage strategy, same as the Item/Supporter path: an unauthored
@@ -405,13 +404,19 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   }
   // 🆕🆕🆕 D642 — Ange Floette's *"only if you discard a Prism Tower in play"* (R-ANF1).
   if (stadiumPlayOverUnmet(state, card)) {
-    return err("PLAY_CONDITION_NOT_MET", `${card.name} can be put into play only by discarding the Stadium it names`);
+    return err(
+      "PLAY_CONDITION_NOT_MET",
+      `${card.name} can be put into play only by discarding the Stadium it names`,
+    );
   }
 
   // 🆕🆕🆕 D636 — Quaking Fist (R-QF1): tails discards the Stadium and spends the turn's Stadium play.
   const flip = trainerFlipFails(state, action.seat, action.uid);
   if (flip?.failed === true) {
-    return ok({ ...flip.state, allowances: { ...flip.state.allowances, stadiumPlayed: true } }, flip.events);
+    return ok(
+      { ...flip.state, allowances: { ...flip.state.allowances, stadiumPlayed: true } },
+      flip.events,
+    );
   }
   const events: GameEvent[] = [
     ...(flip?.events ?? []),
@@ -430,7 +435,12 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
       ...ownerSide,
       discard: [...ownerSide.discard, current.uid],
     });
-    events.push({ type: "STADIUM_DISCARDED", seat: current.owner, uid: current.uid, cause: "replaced" });
+    events.push({
+      type: "STADIUM_DISCARDED",
+      seat: current.owner,
+      uid: current.uid,
+      cause: "replaced",
+    });
   }
   next = {
     ...next,
@@ -488,7 +498,10 @@ function stadiumPlayOverMet(state: GameState, card: Card): boolean {
     answer `playStadium` refuses on (`PLAY_CONDITION_NOT_MET`) and both Trainer lists (redact.ts
     `redactedTrainersOf`, GameHud.tsx) grey a Stadium row on. */
 export function stadiumPlayOverUnmet(state: GameState, card: Card): boolean {
-  return programFor(card.id)?.stadium?.playOnlyOverStadium !== undefined && !stadiumPlayOverMet(state, card);
+  return (
+    programFor(card.id)?.stadium?.playOnlyOverStadium !== undefined &&
+    !stadiumPlayOverMet(state, card)
+  );
 }
 
 /** 🆕🆕🆕 §7.3 (D642) — Ange Floette's *"you can put this card into play during the same turn you play Prism
@@ -507,7 +520,9 @@ export function stadiumSpentPlayLifted(state: GameState, seat: Seat, card: Card)
     continuous (continuous.ts), so nothing runs here. */
 /** 🆕🆕🆕 D643 — the refusal's words: §7.4's one Tool, or the Multi Adapter cap a body already carries. */
 function toolCapMessage(carried: number): string {
-  return carried <= 1 ? "one Tool per Pokémon (§7.4)" : `at most ${carried} Pokémon Tools on this Pokémon (Multi Adapter)`;
+  return carried <= 1
+    ? "one Tool per Pokémon (§7.4)"
+    : `at most ${carried} Pokémon Tools on this Pokémon (Multi Adapter)`;
 }
 
 export function attachTool(state: GameState, action: AttachToolAction): ApplyResult {
@@ -544,10 +559,7 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   // `"Tool"`, by `StampedHandPlayClass`) is asked and answers `false` here
   // without this line knowing there are two sources at all.
   if (handPlayBarred(state, action.seat, "Tool", card)) {
-    return err(
-      "HAND_PLAY_BLOCKED",
-      handPlayBarredReason(state, action.seat, "Tool", card),
-    );
+    return err("HAND_PLAY_BLOCKED", handPlayBarredReason(state, action.seat, "Tool", card));
   }
   // 🆕🆕🆕 D565 — the predicate is EXTRACTED to `toolCardSimulated` (continuous.ts) and
   // shared with Impromptu Carrier's deck-search attach, so the two cannot disagree.
@@ -697,10 +709,7 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   // the target resolution below them is board fact that a barred seat has no
   // business being told about at all (`attachTool`'s reason).
   if (handPlayBarred(state, action.seat, "Item", card)) {
-    return err(
-      "HAND_PLAY_BLOCKED",
-      handPlayBarredReason(state, action.seat, "Item", card),
-    );
+    return err("HAND_PLAY_BLOCKED", handPlayBarredReason(state, action.seat, "Item", card));
   }
   // Resolve the target Basic (the actor's own in-play) — wire shape check, then
   // the string-index trap at the bench use site (same as attachEnergy/evolve).
@@ -942,7 +951,10 @@ export function abilityBodyGateMet(
   // through `hasAttachedEnergy` (the D118 provision rule). Asked FIRST and returning only on a
   // fail, so a row carrying no such field falls through to the HP gate byte-identically.
   // 🆕🆕🆕 D611 — and Dragonair's untyped `"any"`, which `hasAttachedEnergy` answers as "any card".
-  if (ability.requiresEnergyType !== undefined && !hasAttachedEnergy(state, pokemon, ability.requiresEnergyType)) {
+  if (
+    ability.requiresEnergyType !== undefined &&
+    !hasAttachedEnergy(state, pokemon, ability.requiresEnergyType)
+  ) {
     return false;
   }
   // 🆕🆕🆕 D636 — Fall Back to Reload's moment as a use-time gate (R-FBR1): this body went down from the
@@ -973,7 +985,8 @@ export function abilityBodyGateClause(ability: AbilityProgram): string | null {
     return `this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`;
   }
   // 🆕🆕🆕 D636 — Fall Back to Reload (R-FBR1).
-  if (ability.benchedThisTurn === true) return "this Pokémon moved from the Active Spot to your Bench this turn";
+  if (ability.benchedThisTurn === true)
+    return "this Pokémon moved from the Active Spot to your Bench this turn";
   return null;
 }
 
@@ -1109,7 +1122,12 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   }
   return settleProgram(
     // 🆕🆕🆕 D614 — `invokedBy: "ability"`: the §11 ability channel (Luminous Wing).
-    runProgram(next, ability.program, { seat: action.seat, sourceUid: uid, invokedBy: "ability" }, events),
+    runProgram(
+      next,
+      ability.program,
+      { seat: action.seat, sourceUid: uid, invokedBy: "ability" },
+      events,
+    ),
     action.seat,
     events,
     { endsTurn: ability.endsTurn === true },
@@ -1202,7 +1220,12 @@ export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAct
     ...state,
     allowances: { ...state.allowances, stadiumAbilityUsed: true },
   };
-  const result = runProgram(next, ability.program, { seat: action.seat, sourceUid: stadium.uid }, events);
+  const result = runProgram(
+    next,
+    ability.program,
+    { seat: action.seat, sourceUid: stadium.uid },
+    events,
+  );
   return settleProgram(result, action.seat, events, {
     endsTurn: stadiumUseEndsTurn(ability, events, action.seat),
   });
@@ -1213,7 +1236,11 @@ export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAct
     asks whether the use's own program emitted a `HEALED` row for the actor — `events` holds
     only this action's rows, and the program (`healEach`) never parks, so the answer is final
     here. Absent = false (every pre-D606 Stadium). */
-function stadiumUseEndsTurn(ability: StadiumAbility, events: readonly GameEvent[], seat: Seat): boolean {
+function stadiumUseEndsTurn(
+  ability: StadiumAbility,
+  events: readonly GameEvent[],
+  seat: Seat,
+): boolean {
   if (ability.endsTurn === "always") return true;
   if (ability.endsTurn !== "ifHealed") return false;
   return events.some((event) => event.type === "HEALED" && event.seat === seat && event.amount > 0);
@@ -1252,18 +1279,22 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // route and reads the park as inert — `applyChoice`'s default, an empty `rest`, back to
   // `turn:action`; decisions.md D573.)
   const pendingOp = phase.cont.pendingOp;
-  if (pendingOp.op === "useAttackAs") return resolveCopiedAttack(state, phase, pendingOp, action.choice);
+  if (pendingOp.op === "useAttackAs")
+    return resolveCopiedAttack(state, phase, pendingOp, action.choice);
   // 🆕🆕🆕 D638 — Skill Thief's in-play copy park, the same route (a 0.520 deploy has none: inert, D125).
-  if (pendingOp.op === "useInPlayAttackAs") return resolveInPlayCopiedAttack(state, phase, pendingOp, action.choice);
+  if (pendingOp.op === "useInPlayAttackAs")
+    return resolveInPlayCopiedAttack(state, phase, pendingOp, action.choice);
   // 🆕🆕🆕 D574 — the MID-ATTACK copy park (Haughty Order / Seek Inspiration), routed the same way —
   // EXCEPT Haughty Order's *"You may"* DECLINE, which takes the default drain below: no arm applies,
   // the empty `rest` finishes and `resumeTail` runs the queued attack epilogue (exactly what a
   // 0.457 deploy reads off any answer to this park — decisions.md D574).
   const declined = action.choice.kind === "confirm" && !action.choice.yes;
-  if (pendingOp.op === "useFoundAttackAs" && !declined) return resolveFoundAttack(state, phase, pendingOp, action.choice);
+  if (pendingOp.op === "useFoundAttackAs" && !declined)
+    return resolveFoundAttack(state, phase, pendingOp, action.choice);
   // 🆕🆕🆕 D646 — Backtrack Badge's offer at the printed coin flip: BOTH answers re-enter `attack()` (a 0.528 deploy has no
   // route: the default drain ends the attack after its coins, its damage lost — why `MATCH_RECORD_VERSION` 48 → 49).
-  if (pendingOp.op === "reflipAttackCoins") return resolveCoinRedo(state, phase, pendingOp, action.choice);
+  if (pendingOp.op === "reflipAttackCoins")
+    return resolveCoinRedo(state, phase, pendingOp, action.choice);
   const events: GameEvent[] = [];
   // resumeTail (§9 on-KO trigger, flow.ts): this park was made MID-KO-SWEEP, so
   // finishing the program resumes the remaining prize/promotion tail rather than
@@ -1507,7 +1538,11 @@ export function programPlayable(
     // 🆕🆕🆕 D611 — Spiteful Evolution's *"Choose a card in your hand that evolves from this
     // Pokémon"*: a hand with no such card can only whiff, so the use is refused (the hand is the
     // controller's own zone, unlike the deck `evolveFromDeck` otherwise reads, which stays ungated).
-    if (op.op === "evolveFromDeck" && op.fromHand === true && !evolveFromHandAvailable(state, seat, sourceUid)) {
+    if (
+      op.op === "evolveFromDeck" &&
+      op.fromHand === true &&
+      !evolveFromHandAvailable(state, seat, sourceUid)
+    ) {
       return false;
     }
     // 🆕🆕🆕 D587 — Repel `me01-126`, the first Trainer with a top-level `opponentSwitchOut`: the
@@ -1573,7 +1608,11 @@ export function programPlayable(
     if (op.op === "chooseOneOffered" && offeredBranches(state, seat, op).length === 0) return false;
     // 🆕🆕🆕 D625 — Strange Timepiece: no own evolved body of the type, or Milotic stopping the cards reaching
     // the hand, and the Item can only whiff (R-ST1). The opponent-side pick (an attack) is never asked here.
-    if (op.op === "devolveChosen" && op.whose === "self" && !ownDevolveAvailable(state, seat, op.pokemonType)) {
+    if (
+      op.op === "devolveChosen" &&
+      op.whose === "self" &&
+      !ownDevolveAvailable(state, seat, op.pokemonType)
+    ) {
       return false;
     }
     // D294 — the BENCH arm's own public whiff, and it is a DIFFERENT fact from
@@ -1671,7 +1710,11 @@ export function programPlayable(
     // Pokémon → the attach can only whiff (§7, the gust rule), on the op's OWN offer funnel. Asked of the
     // printed singular (`one`) ONLY: D247's "any number" rows are attacks and stay ungated
     // (`derivedAnyNumberAttach.test.ts` §5 pins that answer).
-    if (op.op === "attachFromHand" && op.one === true && !attachFromHandPlayable(state, seat, op, sourceUid)) {
+    if (
+      op.op === "attachFromHand" &&
+      op.one === true &&
+      !attachFromHandPlayable(state, seat, op, sourceUid)
+    ) {
       return false;
     }
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {
@@ -1719,14 +1762,20 @@ export function programPlayable(
     if (
       op.op === "moveCountersToOpponentChosen" &&
       (counterToOpponentSources(state, seat).length === 0 ||
-        (state.players[otherSeat(seat)].active === null && state.players[otherSeat(seat)].bench.length === 0))
+        (state.players[otherSeat(seat)].active === null &&
+          state.players[otherSeat(seat)].bench.length === 0))
     ) {
       return false;
     }
     // 🆕🆕🆕 D572 — R-MC2 (⚠️ UNRULED): a hand return the Milotic lock wholly blocks can only
     // whiff, so the card is refused (Scoop Up Cyclone with every own body locked). Own board
     // only — the one `returnBenched … dest: "hand"` population is `whose: "self"`.
-    if (op.op === "returnBenched" && op.dest === "hand" && op.whose === "self" && inPlayToHandBlocked(state, seat)) {
+    if (
+      op.op === "returnBenched" &&
+      op.dest === "hand" &&
+      op.whose === "self" &&
+      inPlayToHandBlocked(state, seat)
+    ) {
       return false;
     }
     // 🆕🆕🆕 D565 — Rocket Brain with no damaged own Team Rocket's body, or no OTHER own body
@@ -2200,7 +2249,10 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       if (prompt.scope.kind === "total" && choice.uids.length !== prompt.scope.count) {
         return err("BAD_EFFECT_CHOICE", `discard exactly ${prompt.scope.count} Pokémon Tools`);
       }
-      const scope = prompt.scope.kind === "total" ? { kind: "upTo" as const, max: prompt.scope.count } : prompt.scope;
+      const scope =
+        prompt.scope.kind === "total"
+          ? { kind: "upTo" as const, max: prompt.scope.count }
+          : prompt.scope;
       // The prompt is authored `upTo`-only today. [🆕🆕🆕 D643 (D539): ~~`upTo`-only~~ — `total` too, read above.] A future `total`/`each` Tool
       // discard would arrive here as a scope this branch does not read, so the
       // NON-`upTo` case is refused rather than waved through: an unrecognised scope
@@ -2331,11 +2383,13 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         return err("BAD_EFFECT_CHOICE", "expected a yes/no confirmation");
       }
       const target = choice.target;
-      if (target !== undefined && (
-        prompt.cards === undefined || (!choice.yes && prompt.cards.no === undefined) ||
-        !isPokemonRef(target) ||
-        !prompt.targets?.some((ref) => refEquals(ref, target))
-      )) {
+      if (
+        target !== undefined &&
+        (prompt.cards === undefined ||
+          (!choice.yes && prompt.cards.no === undefined) ||
+          !isPokemonRef(target) ||
+          !prompt.targets?.some((ref) => refEquals(ref, target)))
+      ) {
         return err("BAD_EFFECT_CHOICE", "not a legal attachment target");
       }
       return null;
@@ -2425,7 +2479,10 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         return err("BAD_EFFECT_CHOICE", "expected exactly one prize choice");
       }
       if (!prompt.indices.includes(choice.index)) {
-        return err("BAD_EFFECT_CHOICE", `${String(choice.index)} is not a face-down Prize you can turn`);
+        return err(
+          "BAD_EFFECT_CHOICE",
+          `${String(choice.index)} is not a face-down Prize you can turn`,
+        );
       }
       return null;
     }

@@ -294,7 +294,11 @@ function promptOf(state: GameState): Extract<EffectPrompt, { kind: "attachCards"
 
 function attach(state: GameState, assignments: { uid: string; to: PokemonRef }[]): GameState {
   return must(
-    applyAction(state, { type: "resolveEffect", seat: "p1", choice: { kind: "attachCards", assignments } }),
+    applyAction(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attachCards", assignments },
+    }),
   );
 }
 
@@ -432,7 +436,7 @@ describe("D354 §2 — the printed union: a Basic {P} Energy on a {M} body", () 
 // ── 3. THE REFUTATIONS, FROM SOURCE ON A BOARD ───────────────────────────────
 
 describe("D354 §3 — the spellings that would have cost nothing, refuted on a board", () => {
-  it("🛑 `targetType: \"Psychic\"` — the PAIRING reading — cannot reach the {M} body", () => {
+  it('🛑 `targetType: "Psychic"` — the PAIRING reading — cannot reach the {M} body', () => {
     // Refuted FROM SOURCE rather than by argument (D353's standard): this is the
     // exact zero-diff spelling the free reading would have shipped.
     const state = board([PSY_BODY, METAL_BODY, NEITHER], [PSY_ENERGY]);
@@ -445,7 +449,7 @@ describe("D354 §3 — the spellings that would have cost nothing, refuted on a 
     ]);
   });
 
-  it("`targetType: \"Metal\"` alone is the OTHER half of the same refutation", () => {
+  it('`targetType: "Metal"` alone is the OTHER half of the same refutation', () => {
     const state = board([PSY_BODY, METAL_BODY, NEITHER], [PSY_ENERGY]);
     expect(attachEnergyTargets(state, "p1", { targetType: "Metal" })).toEqual([
       ACTIVE,

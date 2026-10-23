@@ -80,16 +80,47 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
       deriveAttackEffect(
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true }]);
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 30,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
   });
 
   it("the W/R clarifier tail is OPTIONAL, and the amount is CAPTURED (10, 60)", () => {
     expect(
-      deriveAttackEffect("This attack also does 10 damage to 1 of your opponent's Benched Pokémon."),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 10, count: 1, source: "attack", deals: true }]);
+      deriveAttackEffect(
+        "This attack also does 10 damage to 1 of your opponent's Benched Pokémon.",
+      ),
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 10,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
     expect(
-      deriveAttackEffect("This attack also does 60 damage to 1 of your opponent's Benched Pokémon."),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true }]);
+      deriveAttackEffect(
+        "This attack also does 60 damage to 1 of your opponent's Benched Pokémon.",
+      ),
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
   });
 
   it("REFUSES the near-misses — Flamigo's gate, 'YOUR', a 0 amount and a 0 count", () => {
@@ -131,21 +162,37 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
         "This attack also does 20 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "yourBench", amount: 20, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "yourBench",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     expect(
       deriveAttackEffect(
         "This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack", deals: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
     ]);
     // · the "also" axis — the BARE wording derives to the SAME op as the "also" one,
     //   which is the whole argument for dropping the word (`SPREAD_EACH_BENCH`'s).
     expect(
       deriveAttackEffect("This attack does 20 damage to 1 of your opponent's Benched Pokémon."),
     ).toEqual(
-      deriveAttackEffect("This attack also does 20 damage to 1 of your opponent's Benched Pokémon."),
+      deriveAttackEffect(
+        "This attack also does 20 damage to 1 of your opponent's Benched Pokémon.",
+      ),
     );
     // 🛑 …AND THE SEPARATOR THAT KEPT COVETOUS IVY OFF THIS PATH IS STILL THE `\.`,
     // NOT THE WORD. Dropping "also" must NOT let the Prize-scaled sentence through this
@@ -173,8 +220,8 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
     // so this case cannot pass against a paraphrase the catalog never printed (D183).
     // They are also the whole count-2 population of this anchor, which is what makes
     // "+4 printings" a measurement instead of a claim.
-    const twos = legalAttackCorpus().filter(
-      ([, s]) => /^This attack also does \d+ damage to 2 of your opponent's Benched Pokémon\./.test(s),
+    const twos = legalAttackCorpus().filter(([, s]) =>
+      /^This attack also does \d+ damage to 2 of your opponent's Benched Pokémon\./.test(s),
     );
     expect(twos).toHaveLength(2);
     expect(twos.reduce((sum, [n]) => sum + n, 0)).toBe(4);
@@ -182,7 +229,14 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
     for (const [, s] of twos) {
       const amount = Number(/does (\d+) damage/.exec(s)?.[1]);
       expect(deriveAttackEffect(s), s).toEqual([
-        { op: "damageChosen", target: "opponentBench", amount, count: 2, source: "attack", deals: true },
+        {
+          op: "damageChosen",
+          target: "opponentBench",
+          amount,
+          count: 2,
+          source: "attack",
+          deals: true,
+        },
       ]);
     }
     // …and the count is READ rather than defaulted: the fifteen-printing `1 of`
@@ -192,7 +246,16 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
       deriveAttackEffect(
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true }]);
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 30,
+        count: 1,
+        source: "attack",
+        deals: true,
+      },
+    ]);
   });
 
   it("hands the 'each of' also-rider to the SPREAD op, not this single-target snipe", () => {
@@ -216,7 +279,15 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
         "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true, perTakenPrize: true },
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perTakenPrize: true,
+      },
     ]);
   });
 });
@@ -245,7 +316,12 @@ describe("the rider fires — main hit to the Defender, N to 1 chosen Benched", 
     });
     // The rider is DAMAGE_DEALT (not a counter), flat, on the chosen Benched.
     expect(types(e2)).not.toContain("COUNTERS_PLACED");
-    expect(find(e2, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 30, weakness: null, dealt: 30 });
+    expect(find(e2, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      base: 30,
+      weakness: null,
+      dealt: 30,
+    });
     expect(done.players.p2.active?.damage).toBe(90);
     expect(done.players.p2.bench[0]?.damage).toBe(30);
     expect(done.players.p2.bench[1]?.damage).toBe(0);

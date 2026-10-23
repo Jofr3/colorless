@@ -107,9 +107,9 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     ]);
     // The catalog's straight apostrophe and the typographic one both parse, so a
     // re-ingest changing only punctuation cannot silently un-derive the family.
-    expect(deriveAttackEffect("Discard an Energy from your opponent’s Active Pokémon.")).toEqual(
-      [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-    );
+    expect(deriveAttackEffect("Discard an Energy from your opponent’s Active Pokémon.")).toEqual([
+      { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+    ]);
   });
 
   it("derives the exact-N self-discard at every printed count", () => {
@@ -341,13 +341,13 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
       expect(after.pending).toEqual([
         {
-        kind: "attackEpilogue",
-        seat: "p1",
-        uid: find(events, "ATTACK_DECLARED")?.uid,
-        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
-        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
-        attack: find(events, "ATTACK_DECLARED")?.attack,
-      },
+          kind: "attackEpilogue",
+          seat: "p1",
+          uid: find(events, "ATTACK_DECLARED")?.uid,
+          // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
+          // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
+          attack: find(events, "ATTACK_DECLARED")?.attack,
+        },
       ]);
     }
     expect(parkedSomewhere).toBe(true);
@@ -407,9 +407,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     // FOUR interchangeable Fighting is not a question at all: the fourth copy is
     // beyond anything the pick could want, so the collapse drops it and the
     // remaining three are exactly the count.
-    const forced = matchup(8, "sv01-124", "fix-bigbody", [
-      { id: "fix-fighting-energy", count: 4 },
-    ]);
+    const forced = matchup(8, "sv01-124", "fix-bigbody", [{ id: "fix-fighting-energy", count: 4 }]);
     const before = activeEnergy(forced, "p1");
     const { state: after, events } = mustApply(forced, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");

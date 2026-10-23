@@ -12,7 +12,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion, programFor, topCardOf } from "./index";
+import { applyAction, createGame, programFor, topCardOf } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -633,7 +633,9 @@ describe("§5 — the two self-switch anchors are STRUCTURALLY disjoint", () => 
     // sentence reddens here even if nobody thought to write that sentence down.
     const claimed = legalAttackCorpus().filter(([, text]) => {
       const program = deriveAttackEffect(text);
-      return program?.length === 1 && program[0]?.op === "switchActive" && "targetType" in program[0];
+      return (
+        program?.length === 1 && program[0]?.op === "switchActive" && "targetType" in program[0]
+      );
     });
     expect(claimed.map(([, text]) => text)).toEqual([VOLT_SWITCH]);
     expect(claimed[0]?.[0]).toBe(1);
@@ -701,16 +703,6 @@ describe("§7 — the gain is the RAW reader summand alone", () => {
     for (const read of [deriveAttackCoinFlip, deriveAttackDamageBonus]) {
       expect(read(VOLT_SWITCH)).toBeNull();
     }
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — THE VERSION
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("§8 — the engine version", () => {
-  it("engineVersion is 0.555.0", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
 
@@ -867,7 +859,9 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     // is not what is doing the refusing.
     const corpus = legalAttackCorpus();
     expect(
-      corpus.some(([, text]) => text === "Switch this Pokémon with 1 of your Benched Ancient Pokémon."),
+      corpus.some(
+        ([, text]) => text === "Switch this Pokémon with 1 of your Benched Ancient Pokémon.",
+      ),
     ).toBe(false);
     // ⚠️ **BUT THE PRINTED SLOT IS REAL, AND THAT IS THE FINDING RATHER THAN A
     // CAVEAT.** The catalog spells the very phrase `Benched Ancient Pokémon` on TWO

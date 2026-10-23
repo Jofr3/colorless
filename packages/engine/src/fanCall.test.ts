@@ -460,7 +460,8 @@ describe("CardFilter.typedPokemon.maxHp — the printed HP threshold", () => {
     // dual {C} body under 100 HP in `FIXTURE_POOL`, so the witness is built here.
     const dual = battler("t-dual-c", { hp: 90, types: ["Water", "Colorless"] });
     expect(matchesFilter(dual, FAN)).toBe(true);
-    expect(matchesFilter(battler("t-dual-big", { hp: 130, types: ["Water", "Colorless"] }), FAN),
+    expect(
+      matchesFilter(battler("t-dual-big", { hp: 130, types: ["Water", "Colorless"] }), FAN),
     ).toBe(false);
   });
 
@@ -524,7 +525,11 @@ describe("the Fan Call park — `retrieveNoun` and the candidate set", () => {
     const picks = cardsPrompt(parked).candidates.slice(0, 3);
     expect(picks.length).toBe(3);
     const after = must(
-      applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: picks } }),
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: picks },
+      }),
     );
     expect(after.phase.kind).toBe("turn:action");
     expect(after.players.p1.hand.length).toBe(handBefore + 3);
@@ -532,7 +537,11 @@ describe("the Fan Call park — `retrieveNoun` and the candidate set", () => {
     for (const uid of picks) expect(after.players.p1.hand).toContain(uid);
     // "up to 3" — the park's own `min: 0` is what makes taking FEWER legal.
     const none = must(
-      applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }),
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [] },
+      }),
     );
     expect(none.players.p1.hand.length).toBe(handBefore);
   });
@@ -602,7 +611,11 @@ describe("Fan Call on a real board", () => {
     state = benchFromDeck(state, "p1", "sv08.5-085");
     const parked = must(useFanCall(state, "p1", ACTIVE));
     const resolved = must(
-      applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }),
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [] },
+      }),
     );
     // The SECOND Fan Rotom, a different catalog id, on the same turn. It sits at
     // bench index 1 — `board` fills slot 0 with `fix-basic-1`, and naming the
@@ -624,7 +637,11 @@ describe("Fan Call on a real board", () => {
     const state = board(SEEDS[3], "p1", "p1");
     const parked = must(useFanCall(state, "p1", ACTIVE));
     const resolved = must(
-      applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [] } }),
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [] },
+      }),
     );
     const again = useFanCall(resolved, "p1", ACTIVE);
     expect(again.ok).toBe(false);

@@ -160,7 +160,9 @@ describe("D588 §2 — the registry: each twin's op at the printed parameter", (
     expect(programFor(ROSA)?.trainerPlayableIf).toEqual(programFor("sv02-181")?.trainerPlayableIf);
     expect(programFor(ROSA)?.trainerPlayableIf).toEqual({ kind: "morePrizesThanOpponent" });
     expect(programFor(GRUNT)?.trainerPlayableIf).toEqual(programFor("sv06-151")?.trainerPlayableIf);
-    expect(programFor(GRUNT)?.trainerPlayableIf).toEqual({ kind: "yourPokemonKoedOnOpponentsLastTurn" });
+    expect(programFor(GRUNT)?.trainerPlayableIf).toEqual({
+      kind: "yourPokemonKoedOnOpponentsLastTurn",
+    });
   });
 
   it("the Grunt = Crushing Hammer's heads op without the coin", () => {
@@ -170,7 +172,11 @@ describe("D588 §2 — the registry: each twin's op at the printed parameter", (
 
   it("Waitress = Electric Generator's look at 6 / 1, any Basic Energy, to any of your Pokémon", () => {
     const generator = programFor("sv01-170")?.trainer ?? [];
-    const { targetType: _type, benchOnly: _bench, ...look } = generator[0] as {
+    const {
+      targetType: _type,
+      benchOnly: _bench,
+      ...look
+    } = generator[0] as {
       targetType?: string;
       benchOnly?: true;
     };
@@ -180,7 +186,7 @@ describe("D588 §2 — the registry: each twin's op at the printed parameter", (
     ]);
   });
 
-  it("Lumiose Galette = Indeedee \"Obliging Heal\"'s program at 20", () => {
+  it('Lumiose Galette = Indeedee "Obliging Heal"\'s program at 20', () => {
     const heal = programFor("sv08-093")?.triggered?.[0]?.program ?? [];
     expect(programFor(GALETTE)?.trainer).toEqual([{ ...heal[0], amount: 20 }, heal[1]]);
   });
@@ -314,17 +320,23 @@ function play(state: GameState, id: string): { state: GameState; events: GameEve
   const { state: next, uid } = staged(state, id);
   return mustApply(next, { type: "playTrainer", seat: "p1", uid });
 }
-function refused(state: GameState, id: string, code: "NO_LEGAL_TARGET" | "PLAY_CONDITION_NOT_MET"): void {
+function refused(
+  state: GameState,
+  id: string,
+  code: "NO_LEGAL_TARGET" | "PLAY_CONDITION_NOT_MET",
+): void {
   const { state: next, uid } = staged(state, id);
   expectErr(next, { type: "playTrainer", seat: "p1", uid }, code);
 }
 
 function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   return state.phase.prompt;
 }
 const ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
-const bench = (index: number, seat: Seat = "p1") => ({ seat, spot: { spot: "bench", index } }) as const;
+const bench = (index: number, seat: Seat = "p1") =>
+  ({ seat, spot: { spot: "bench", index } }) as const;
 const pick = (ref: unknown, take?: number): GameAction =>
   ({
     type: "resolveEffect",
@@ -346,7 +358,12 @@ const assign = (pairs: readonly (readonly [string, unknown])[]): GameAction =>
 describe("D588 §3 — Canari: discard another card, then up to 4 {L} Pokémon from the deck", () => {
   it("asks for the hand cost first (never Canari itself), then offers {L} Pokémon of any stage at 4", () => {
     // Two DIFFERENT cards, so the cost is a decision (one card, or two copies, is paid inline).
-    const withCost = handFromDeck(handFromDeck(board(FILLER, []), "p1", "fix-fire-energy", 1), "p1", "fix-water-energy", 1);
+    const withCost = handFromDeck(
+      handFromDeck(board(FILLER, []), "p1", "fix-fire-energy", 1),
+      "p1",
+      "fix-water-energy",
+      1,
+    );
     const cost = withCost.players.p1.hand[0] as string;
     const { state: parked } = play(withCost, CANARI);
     const pay = prompt(parked);
@@ -363,7 +380,9 @@ describe("D588 §3 — Canari: discard another card, then up to 4 {L} Pokémon f
     const take = p.candidates.slice(0, 4);
     const { state: done, events } = mustApply(searching, cards(take));
     for (const uid of take) expect(done.players.p1.hand).toContain(uid);
-    expect(all(events, "DECK_SEARCHED")).toMatchObject([{ seat: "p1", dest: "hand", reveal: true }]);
+    expect(all(events, "DECK_SEARCHED")).toMatchObject([
+      { seat: "p1", dest: "hand", reveal: true },
+    ]);
     expect(events.some((e) => e.type === "SHUFFLE")).toBe(true);
   });
 
@@ -381,7 +400,10 @@ describe("D588 §4 — Lillie's Determination: refresh, 8 at exactly 6 Prizes re
     expect(done.players.p1.prizes).toHaveLength(6);
     expect(done.players.p1.hand).toHaveLength(8);
     expect(all(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject([{ seat: "p1", count: 2 }]);
-    const five = play(handFromDeck(setPrizes(board(FILLER, []), "p1", 5), "p1", "fix-fire-energy", 2), LILLIE).state;
+    const five = play(
+      handFromDeck(setPrizes(board(FILLER, []), "p1", 5), "p1", "fix-fire-energy", 2),
+      LILLIE,
+    ).state;
     expect(five.players.p1.hand).toHaveLength(6);
   });
 });
@@ -397,17 +419,27 @@ describe("D588 §5 — Misty's Vitality: up to 4 Basic {W} onto ONE body, then t
     expect(p.targets).toEqual([ACTIVE, bench(0)]);
     const four = p.candidates.slice(0, 4);
     const { state: done, events } = mustApply(parked, assign(four.map((u) => [u, bench(0)])));
-    expect(ids(done, done.players.p1.bench[0]?.energy ?? [])).toEqual(Array(4).fill("fix-water-energy"));
+    expect(ids(done, done.players.p1.bench[0]?.energy ?? [])).toEqual(
+      Array(4).fill("fix-water-energy"),
+    );
     expect(done.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
     expect(events.some((e) => e.type === "SHUFFLE")).toBe(true);
   });
 
-  it("\"to 1 of your Pokémon\": a split over two bodies is refused", () => {
+  it('"to 1 of your Pokémon": a split over two bodies is refused', () => {
     const { state: parked } = play(board(MON_W, [BASIC]), MISTY);
     const p = prompt(parked);
     if (p.kind !== "attachCards") throw new Error(`expected attachCards, got ${p.kind}`);
     const [a, b] = p.candidates as [string, string];
-    expect(applyAction(parked, assign([[a, ACTIVE], [b, bench(0)]])).ok).toBe(false);
+    expect(
+      applyAction(
+        parked,
+        assign([
+          [a, ACTIVE],
+          [b, bench(0)],
+        ]),
+      ).ok,
+    ).toBe(false);
   });
 });
 
@@ -433,7 +465,9 @@ describe("D588 §6 — Rosa's Encouragement: behind on Prizes, up to 2 Basic Ene
     const waters = asked.players.p1.discard.filter((u) => idOf(asked, u) === "fix-water-energy");
     const done = mustApply(asked, cards(waters)).state;
     expect(done.players.p1.bench[1]?.energy).toEqual(waters);
-    expect(done.players.p1.discard.filter((u) => /energy/.test(idOf(done, u) ?? ""))).toHaveLength(1);
+    expect(done.players.p1.discard.filter((u) => /energy/.test(idOf(done, u) ?? ""))).toHaveLength(
+      1,
+    );
     const askedOne = mustApply(parked, pick(bench(1), 1)).state;
     expect(prompt(askedOne)).toMatchObject({ kind: "chooseCards", min: 1, max: 1 });
     const one = mustApply(askedOne, cards(waters.slice(0, 1))).state;
@@ -480,9 +514,17 @@ describe("D588 §7 — Rust Syndicate Grunt: after a KO last turn, an Energy off
 
   it("refused with no KO last turn, and on an Energy-less opponent board", () => {
     const state = gruntBoard();
-    refused({ ...state, lastKoTurn: { ...state.lastKoTurn, p1: null } }, GRUNT, "PLAY_CONDITION_NOT_MET");
+    refused(
+      { ...state, lastKoTurn: { ...state.lastKoTurn, p1: null } },
+      GRUNT,
+      "PLAY_CONDITION_NOT_MET",
+    );
     const bare = board(FILLER, []);
-    refused({ ...bare, lastKoTurn: { ...bare.lastKoTurn, p1: bare.turn - 1 } }, GRUNT, "NO_LEGAL_TARGET");
+    refused(
+      { ...bare, lastKoTurn: { ...bare.lastKoTurn, p1: bare.turn - 1 } },
+      GRUNT,
+      "NO_LEGAL_TARGET",
+    );
   });
 });
 
@@ -499,7 +541,10 @@ describe("D588 §8 — Waitress: look at the top 6, attach a Basic Energy to 1 o
     expect(p.max).toBe(1);
     expect(p.candidates).toEqual(window.filter((u) => idOf(state, u) === "fix-fire-energy"));
     expect(p.targets).toEqual([ACTIVE, bench(0)]);
-    const { state: done, events } = mustApply(parked, assign([[p.candidates[0] as string, bench(0)]]));
+    const { state: done, events } = mustApply(
+      parked,
+      assign([[p.candidates[0] as string, bench(0)]]),
+    );
     expect(ids(done, done.players.p1.bench[0]?.energy ?? [])).toEqual(["fix-fire-energy"]);
     expect(events.some((e) => e.type === "SHUFFLE")).toBe(true);
   });
@@ -557,6 +602,8 @@ describe("D588 §12 — the ids: real `me` ids in a LOCAL pool; Pokémon Center 
     for (const id of Object.keys(LOCAL)) expect(FIXTURE_POOL[id], id).toBeUndefined();
     for (const id of ME_IDS) expect(/^me/.test(id), id).toBe(true);
     // 🆕🆕🆕 D617 — `healChosen` 60 with the D617 rider `recoverHealed` (supportersMeD617.test.ts).
-    expect(programFor(CENTER_LADY)).toEqual({ trainer: [{ op: "healChosen", amount: 60, recoverHealed: true }] });
+    expect(programFor(CENTER_LADY)).toEqual({
+      trainer: [{ op: "healChosen", amount: 60, recoverHealed: true }],
+    });
   });
 });

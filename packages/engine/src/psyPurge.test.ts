@@ -158,7 +158,9 @@ describe("Psy Purge — 90 damage for each card discarded in this way", () => {
     const state = psyPurge(3, { energy: 5 });
     deepFreeze(state);
     const { state: parked } = mustApply(state, attack);
-    const picks = discardPrompt(parked).discardable.map((d) => d.uid).slice(0, 3);
+    const picks = discardPrompt(parked)
+      .discardable.map((d) => d.uid)
+      .slice(0, 3);
 
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
@@ -289,7 +291,9 @@ describe("Psy Purge — genuine attack damage, not flat counters (§8.5)", () =>
     state = setDamage(state, "p2", 20);
     const koed = state.players.p2.active?.stack.at(-1) ?? "";
     const { state: parked } = mustApply(state, attack);
-    const picks = discardPrompt(parked).discardable.map((d) => d.uid).slice(0, 3);
+    const picks = discardPrompt(parked)
+      .discardable.map((d) => d.uid)
+      .slice(0, 3);
 
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",

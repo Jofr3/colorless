@@ -122,7 +122,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     types: ["Grass"],
     attacks: [
-      { cost: ["Colorless", "Colorless"], name: "Magical Leaf", effect: FLORAGATO_TEXT, damage: "30+" },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Magical Leaf",
+        effect: FLORAGATO_TEXT,
+        damage: "30+",
+      },
     ],
   }),
   /** ⚠️ 400 HP AND NOT THE PRINTED 120 — the header says why, and §5 drives the
@@ -397,7 +402,13 @@ describe("§3 — D317's `conditionGate`: both sides of the board condition", ()
 // ────────────────────────────────────────────────────────────────────────────
 describe("§4 — D317's `coinFlipGate`: both faces of one flip", () => {
   function leaf(seed: number) {
-    const state = board({ attacker: FLORAGATO, energy: GRASS, count: 2, defender: ARMAROUGE, seed });
+    const state = board({
+      attacker: FLORAGATO,
+      energy: GRASS,
+      count: 2,
+      defender: ARMAROUGE,
+      seed,
+    });
     const { events } = must2(applyAction(state, LEAF));
     return {
       face: find(events, "ATTACK_EFFECT_COIN_FLIP")?.result,
@@ -407,9 +418,7 @@ describe("§4 — D317's `coinFlipGate`: both faces of one flip", () => {
   }
 
   it("🛑 BOTH faces are reached across the seed sweep — neither arm is dead", () => {
-    expect(new Set(COIN_SEEDS.map((seed) => leaf(seed).face))).toEqual(
-      new Set(["heads", "tails"]),
-    );
+    expect(new Set(COIN_SEEDS.map((seed) => leaf(seed).face))).toEqual(new Set(["heads", "tails"]));
   });
 
   for (const seed of COIN_SEEDS) {

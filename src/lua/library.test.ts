@@ -98,7 +98,15 @@ describe("Lua deck library", () => {
     });
     const complete = [
       ...decks,
-      { id: "d", name: "Rotated", folderId: null, cardCount: 60, tint: 0, coverCardId: null, position: 3 },
+      {
+        id: "d",
+        name: "Rotated",
+        folderId: null,
+        cardCount: 60,
+        tint: 0,
+        coverCardId: null,
+        position: 3,
+      },
     ];
     stubFetch({
       "GET /decks": () => json(complete),

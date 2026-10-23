@@ -133,9 +133,21 @@ const NAMED = 3;
     are here so the "4 legal" figure has four live subjects rather than one and a
     multiplication — the shape D229's near-miss note asks for. */
 const OTHER_NAMED: readonly (readonly [string, string, number])[] = [
-  ["Search your deck for up to 2 Grubbin and put them onto your Bench. Then, shuffle your deck.", "Grubbin", 2],
-  ["Search your deck for up to 2 Froakie and put them onto your Bench. Then, shuffle your deck.", "Froakie", 2],
-  ["Search your deck for a Pikachu and put it onto your Bench. Then, shuffle your deck.", "Pikachu", 1],
+  [
+    "Search your deck for up to 2 Grubbin and put them onto your Bench. Then, shuffle your deck.",
+    "Grubbin",
+    2,
+  ],
+  [
+    "Search your deck for up to 2 Froakie and put them onto your Bench. Then, shuffle your deck.",
+    "Froakie",
+    2,
+  ],
+  [
+    "Search your deck for a Pikachu and put it onto your Bench. Then, shuffle your deck.",
+    "Pikachu",
+    1,
+  ],
 ];
 
 /** ⚠️⚠️ D238 — THE ONE CATALOG SENTENCE THIS ANCHOR GAINED, and the ONLY printed
@@ -578,7 +590,9 @@ describe("PROVENANCE — the demonstrator carries the three forms at 17-19", () 
     expect(attacks[FORM_RANKS]?.effect).toBe(CLAUSES[TWO].text);
     expect(attacks[PARALLEL_PLACEMENT]?.effect).toBe(CLAUSES[NAMED].text);
     // The indices the sibling suites address by constant did not move.
-    expect(attacks[14]?.effect).toBe("Move an Energy from this Pokémon to 1 of your Benched Pokémon.");
+    expect(attacks[14]?.effect).toBe(
+      "Move an Energy from this Pokémon to 1 of your Benched Pokémon.",
+    );
     expect(attacks[2]?.effect).toBe(
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
     );
@@ -647,7 +661,9 @@ describe("end to end — out of the ATTACKER's deck, onto the ATTACKER's Bench",
     // …and every one of them is a BASIC: `fix-charjabug` is in this deck and is a
     // Stage 1, so the filter has something to refuse rather than admitting the
     // whole deck by accident.
-    expect(new Set(offered(parked))).toEqual(new Set(["fix-basic-1", "fix-bigbody", "fix-trainerops"]));
+    expect(new Set(offered(parked))).toEqual(
+      new Set(["fix-basic-1", "fix-bigbody", "fix-trainerops"]),
+    );
     expect(offered(parked)).not.toContain("fix-charjabug");
     // Nothing has moved yet.
     expect(parked.players.p1.bench).toHaveLength(0);
@@ -717,7 +733,9 @@ describe("end to end — out of the ATTACKER's deck, onto the ATTACKER's Bench",
     const state = ready(15, { ownBench: 3 });
     const { state: parked } = attack(state, PARALLEL_PLACEMENT);
     expect(cardsPrompt(parked).max).toBe(2);
-    expect(cardsPrompt(parked).note).toBe("Search your deck for up to 2 Charjabug onto your Bench.");
+    expect(cardsPrompt(parked).note).toBe(
+      "Search your deck for up to 2 Charjabug onto your Bench.",
+    );
   });
 
   it("a FULL Bench takes no park at all — and the deck is still shuffled", () => {

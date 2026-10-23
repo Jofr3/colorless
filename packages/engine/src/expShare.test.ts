@@ -460,7 +460,10 @@ describe("the park — who is asked, and what resumes", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", picks: [{ uid: energy as string, dest: destinationOf(parked) }] },
+        choice: {
+          kind: "moveEnergy",
+          picks: [{ uid: energy as string, dest: destinationOf(parked) }],
+        },
       },
       "WRONG_SEAT",
     );

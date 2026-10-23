@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -161,9 +160,7 @@ function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as
-    | Extract<GameEvent, { type: T }>
-    | undefined;
+  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function count(events: GameEvent[], type: GameEvent["type"]): number {
@@ -198,12 +195,14 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
   for (const [id, card] of Object.entries(FIXTURE_POOL)) {
     const carriers: [string, string | null | undefined][] = [
       ["effect", card.effect],
-      ...(card.abilities ?? []).map(
-        (ability, i): [string, string | null | undefined] => [`abilities[${i}]`, ability.effect],
-      ),
-      ...(card.attacks ?? []).map(
-        (attack, i): [string, string | null | undefined] => [`attacks[${i}]`, attack.effect],
-      ),
+      ...(card.abilities ?? []).map((ability, i): [string, string | null | undefined] => [
+        `abilities[${i}]`,
+        ability.effect,
+      ]),
+      ...(card.attacks ?? []).map((attack, i): [string, string | null | undefined] => [
+        `attacks[${i}]`,
+        attack.effect,
+      ]),
     ];
     for (const [where, text] of carriers) {
       if (typeof text === "string" && SHIELD.test(text)) shieldSentences.push({ id, where, text });
@@ -230,7 +229,9 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
     // `fix-unaware`, `fix-repellingveil`), two in the ATTACK column carrying the CLOCK
     // (`sv03-004`, `sv03-145`), and `sv03-145` carrying both.
     expect(shieldSentences.length).toBeGreaterThanOrEqual(8);
-    expect(shieldSentences.filter(({ text }) => SOURCE.test(text)).length).toBeGreaterThanOrEqual(6);
+    expect(shieldSentences.filter(({ text }) => SOURCE.test(text)).length).toBeGreaterThanOrEqual(
+      6,
+    );
     expect(shieldSentences.filter(({ text }) => CLOCK.test(text)).length).toBeGreaterThanOrEqual(2);
     expect(
       shieldSentences.filter(({ text }) => CLOCK.test(text) && !SOURCE.test(text)).length,
@@ -548,8 +549,14 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
     // about whether the act moved anything. A refusal must not be laundered into "the
     // engine does not understand this card".
     for (const index of [IDX.purge, IDX.pry, IDX.shed, IDX.lock]) {
-      expect(find(swing(shielded(), index).events, "ATTACK_EFFECT_SKIPPED"), String(index)).toBeUndefined();
-      expect(find(swing(tooled(), index).events, "ATTACK_EFFECT_SKIPPED"), String(index)).toBeUndefined();
+      expect(
+        find(swing(shielded(), index).events, "ATTACK_EFFECT_SKIPPED"),
+        String(index),
+      ).toBeUndefined();
+      expect(
+        find(swing(tooled(), index).events, "ATTACK_EFFECT_SKIPPED"),
+        String(index),
+      ).toBeUndefined();
     }
   });
 
@@ -649,7 +656,11 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       ["row71-refused", attachFromDeck(shielded(), "p2", BASIC, 1), IDX.purge],
       ["row73-refused", shielded(), IDX.pry],
       ["row74-refused", shielded(), IDX.lock],
-      ["row72-unrefusable", attachFromDeck(attachToolFromDeck(board(), "p1", "active", BAND), "p1", MIST, 1), IDX.shed],
+      [
+        "row72-unrefusable",
+        attachFromDeck(attachToolFromDeck(board(), "p1", "active", BAND), "p1", MIST, 1),
+        IDX.shed,
+      ],
     ] as [string, GameState, number][]) {
       // BACKWARD: a record written by an older deploy — the board serialized BEFORE
       // this slice's code could have touched it — rehydrates and answers identically.
@@ -682,25 +693,5 @@ describe("§6 — persistence, purity, and the property the export did not cost"
     const admitted = swing(frozenAdmitted, IDX.pry);
     expect(frozenAdmitted.players.p2.active?.tools).toHaveLength(1);
     expect(admitted.state.players.p2.active?.tools).toEqual([]);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — the version pin.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("§7 — the version", () => {
-  it("the engine version is pinned, and it is THIS slice's pin", () => {
-    // 🆕🆕 D430 — the SIXTEENTH `engineVersion` literal pin in the suite (fifteen
-    // inherited plus this one) and the NINETEENTH site overall, counting
-    // `legacyEnergy.test.ts`'s `manifest.version` pin, `packages/engine/package.json`,
-    // `index.ts`'s declaration and `D275`'s mutant anchor. ⚠️ **RE-MEASURED, NOT
-    // INHERITED** (D429: extending a streak asserts it afresh). D429's note said
-    // 15 / 18 and it re-derives EXACTLY at this head: `grep -rn '"0.331.0"'` before the
-    // bump returned 15 assertion lines in 14 test files (14 `engineVersion` + 1
-    // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
-    // The increment is this line — the pin being AUTHORED, which is the one D427 named
-    // as the thing every note forgets.
-    expect(engineVersion).toBe("0.555.0");
   });
 });

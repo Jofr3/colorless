@@ -52,7 +52,12 @@ import type {
   RedactedTrainer,
   Viewer,
 } from "@colorless/schema";
-import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@colorless/schema";
+import {
+  EMPTY_CARD_ID,
+  EMPTY_CARD_NAME,
+  HIDDEN_CARD_ID,
+  HIDDEN_CARD_NAME,
+} from "@colorless/schema";
 import { attackCostAt, costMet } from "./attack";
 import { pendingMulligansOf } from "./mulligans";
 import {

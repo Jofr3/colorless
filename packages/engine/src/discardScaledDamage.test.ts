@@ -192,7 +192,8 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     // …and the two D488 took are claimed by the OTHER arm, named here so the 8 / 15 the
     // old predicate now answers is attributable rather than merely different.
     const mills = rows.filter(
-      ([, s]) => s.includes("discarded in this way") && deriveAttackEffect(s)?.[0]?.op === "discardDeckTop",
+      ([, s]) =>
+        s.includes("discarded in this way") && deriveAttackEffect(s)?.[0]?.op === "discardDeckTop",
     );
     expect(mills).toHaveLength(2);
     expect(units(mills)).toBe(2);
@@ -302,7 +303,9 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect([openedBy("discardDeckTop").length, units(openedBy("discardDeckTop"))]).toEqual([2, 2]);
     expect([openedBy("payFromHand").length, units(openedBy("payFromHand"))]).toEqual([1, 2]);
     expect(
-      openedBy("discardEnergy").length + openedBy("discardDeckTop").length + openedBy("payFromHand").length,
+      openedBy("discardEnergy").length +
+        openedBy("discardDeckTop").length +
+        openedBy("payFromHand").length,
     ).toBe(multiply.length);
     // 🆕🆕🆕 **D489's ROW, PINNED BY VALUE RATHER THAN BY MEMBERSHIP.** The old rung
     // asserted this sentence STARTS with the hand-discard head and derives to null; a
@@ -311,7 +314,9 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     // and the slot that joins them — the ONE thing a wrong build gets wrong.
     const [handRow] = openedBy("payFromHand");
     if (handRow === undefined) throw new Error("the hand-discard row left the family");
-    expect(handRow[1].startsWith("Discard up to 3 Energy cards from your hand."), handRow[1]).toBe(true);
+    expect(handRow[1].startsWith("Discard up to 3 Energy cards from your hand."), handRow[1]).toBe(
+      true,
+    );
     expect(deriveAttackEffect(handRow[1])).toEqual([
       {
         op: "payFromHand",
@@ -369,7 +374,11 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     for (const [, s] of built) {
       const program = deriveAttackEffect(s) as EffectOp[];
       expect(program, s).toHaveLength(2);
-      expect(program[0], s).toMatchObject({ op: "discardDeckTop", whose: "self", recordAs: "discarded" });
+      expect(program[0], s).toMatchObject({
+        op: "discardDeckTop",
+        whose: "self",
+        recordAs: "discarded",
+      });
       const scale = program[1];
       if (scale?.op !== "damageDefender") throw new Error(`not a damageDefender: ${s}`);
       expect(scale.count, s).toBe("discarded");
@@ -694,7 +703,7 @@ function discardPrompt(state: GameState) {
   return state.phase.prompt;
 }
 
-describe("D402 §4 — the `count: \"all\"` arm: the record filed with NOTHING parking", () => {
+describe('D402 §4 — the `count: "all"` arm: the record filed with NOTHING parking', () => {
   it("strips every {L}, keeps the rest, and deals 50 × 3 = 150 in ONE action", () => {
     // "Discard all {L} Energy from this Pokémon." asks nothing — every match comes
     // off — so this is the first program in the engine to file a §9.2 record from the

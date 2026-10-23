@@ -483,7 +483,14 @@ describe("D358 §1 — which printings carry the decline, walked off the registr
     // 🆕🆕🆕 D636 — and Clawitzer ×2 "Fall Back to Reload" (`me01-038` / `-141`): *"up to 2"* to "this Pokémon" as
     // two declinable `toSelf` hand attaches (the guard fired by name; this is the slice saying why).
     expect(declinable).toEqual(
-      [...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS, ...POWERGLASS_IDS, "me01-038", "me01-141"].sort(),
+      [
+        ...ARCHALUDON_IDS,
+        ...MAGNETON_IDS,
+        ...KORAIDON_IDS,
+        ...POWERGLASS_IDS,
+        "me01-038",
+        "me01-141",
+      ].sort(),
     );
     // The two halves of the set, kept apart on purpose: the printed-legal six this
     // engine can be played with today, and the four rotated ones that print the
@@ -539,12 +546,18 @@ describe("D358 §1 — which printings carry the decline, walked off the registr
     // every one of the eight carries a `count`, which is the field that pins the
     // batch to ONE body and therefore the field a decline cannot subdivide.
     for (const id of REFUSED.slice(3)) {
-      expect((ops.get(id) ?? []).every((op) => op.count !== undefined), id).toBe(true);
+      expect(
+        (ops.get(id) ?? []).every((op) => op.count !== undefined),
+        id,
+      ).toBe(true);
     }
     // Infernape's are `count`-FREE — its refusal is the missing empty arm, a
     // different reason, and the two must not be readable as one.
     for (const id of REFUSED.slice(0, 3)) {
-      expect((ops.get(id) ?? []).every((op) => op.count === undefined), id).toBe(true);
+      expect(
+        (ops.get(id) ?? []).every((op) => op.count === undefined),
+        id,
+      ).toBe(true);
     }
   });
 
@@ -605,7 +618,9 @@ describe("D358 §2 — Archaludon ex's printed {0, 1, 2}, all three reachable", 
     // The declined card is STILL IN THE PILE — a decline moves nothing, which is
     // the claim `applyChoice`'s arm makes and the one a "discard it instead"
     // implementation would fail.
-    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === ENERGY_M)).toHaveLength(1);
+    expect(
+      done.state.players.p1.discard.filter((u) => idOf(done.state, u) === ENERGY_M),
+    ).toHaveLength(1);
   });
 
   it("🛑 ZERO — declining BOTH is the printed 'up to', and the trigger's `optional` is not the only route to it", () => {
@@ -615,7 +630,9 @@ describe("D358 §2 — Archaludon ex's printed {0, 1, 2}, all three reachable", 
     expect(done.state.phase.kind).toBe("turn:action");
     expect(energyIdsOn(done.state, ACTIVE)).toEqual([]);
     expect(energyIdsOn(done.state, benchRef(0))).toEqual([]);
-    expect(done.state.players.p1.discard.filter((u) => idOf(done.state, u) === ENERGY_M)).toHaveLength(2);
+    expect(
+      done.state.players.p1.discard.filter((u) => idOf(done.state, u) === ENERGY_M),
+    ).toHaveLength(2);
   });
 
   it("a decline emits NO attach event — nothing moved, so nothing is announced", () => {
@@ -808,9 +825,10 @@ describe("D358 §4 — the validator, the redaction, and the refuted map-prompt 
     // …and the two bought families really are discard-sourced, so the refutation
     // applies to THEM and not to some other row.
     for (const id of [...ARCHALUDON_IDS, ...MAGNETON_IDS]) {
-      expect((attachOpsByCardId().get(id) ?? []).every((op) => op.source === "discard"), id).toBe(
-        true,
-      );
+      expect(
+        (attachOpsByCardId().get(id) ?? []).every((op) => op.source === "discard"),
+        id,
+      ).toBe(true);
     }
   });
 });
@@ -848,7 +866,10 @@ describe("D358 §5 — the refused families still behave exactly as they did", (
     for (const id of ["svp-116", "sv06-033", "sv06-173"]) {
       const ops = attachOpsByCardId().get(id) ?? [];
       expect(ops, id).toHaveLength(2);
-      expect(ops.every((op) => op.declinable === undefined), id).toBe(true);
+      expect(
+        ops.every((op) => op.declinable === undefined),
+        id,
+      ).toBe(true);
     }
   });
 
@@ -894,7 +915,6 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
   });
 });
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 🆕 7. D360 — THE FAMILY CLOSES, ASSERTED OVER **BOTH** PRODUCERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -926,7 +946,10 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
 describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N", () => {
   /** Every op the DERIVER emits for a Standard-legal attack sentence, with the
       sentence that produced it — the surface `registryCardIds()` cannot see. */
-  function derivedSpreads(): { text: string; ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[] }[] {
+  function derivedSpreads(): {
+    text: string;
+    ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[];
+  }[] {
     const out: { text: string; ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[] }[] = [];
     for (const [, text] of legalAttackCorpus()) {
       const ops = attachOpsIn(deriveAttackEffect(text));
@@ -935,7 +958,7 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     return out;
   }
 
-  it("🛑 the DERIVER's spreads are EXACTLY four sentences (🆕🆕🆕 D532: the CROSS-SEAT one joined — corpus FILE LINE 70, three ops carrying `whose: \"opponent\"`), and all four are hedged", () => {
+  it('🛑 the DERIVER\'s spreads are EXACTLY four sentences (🆕🆕🆕 D532: the CROSS-SEAT one joined — corpus FILE LINE 70, three ops carrying `whose: "opponent"`), and all four are hedged', () => {
     // ⚠️ THE CONTROL THAT KEEPS THIS FROM BEING VACUOUS: the corpus is the whole
     // Standard-legal attack column (640 sentences) and the readers run LIVE
     // against it, so a broken deriver returns an empty list — which this asserts
@@ -1007,7 +1030,9 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     // the claim "every hedged spread op carries the flag" has its third producer on record.
     const ceilinged = legalAttackCorpus().filter(([, text]) => {
       const coin = deriveAttackCoinFlip(text);
-      return coin?.kind === "programPerHeads" && coin.ops.some((op) => op.op === "attachEnergyFrom");
+      return (
+        coin?.kind === "programPerHeads" && coin.ops.some((op) => op.op === "attachEnergyFrom")
+      );
     });
     expect(ceilinged.map(([, text]) => text)).toEqual([
       "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
@@ -1035,7 +1060,10 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     const INFERNAPE = ["svp-116", "sv06-033", "sv06-173"];
     for (const [id, ops] of attachOpsByCardId()) {
       if (ops.length <= 1) continue;
-      expect(ops.every((op) => op.declinable === true), id).toBe(!INFERNAPE.includes(id));
+      expect(
+        ops.every((op) => op.declinable === true),
+        id,
+      ).toBe(!INFERNAPE.includes(id));
     }
     // Both halves of the biconditional over the registry too: a flagged op is
     // always part of a multi-op program, never a lone one.
@@ -1044,7 +1072,9 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     // biconditional above never applied to it). The half stands for every OTHER id.
     for (const [id, ops] of attachOpsByCardId()) {
       if ((POWERGLASS_IDS as readonly string[]).includes(id)) {
-        expect(ops, id).toEqual([{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }]);
+        expect(ops, id).toEqual([
+          { op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true },
+        ]);
         continue;
       }
       if (ops.some((op) => op.declinable === true)) expect(ops.length, id).toBeGreaterThan(1);

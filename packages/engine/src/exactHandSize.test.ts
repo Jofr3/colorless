@@ -167,10 +167,12 @@ const READERS: readonly ((text: string) => unknown)[] = [
 const TRIO_CHEEHOO = "If you don't have exactly 3 cards in your hand, this attack does nothing.";
 /** The NEAR MISS: the same noun, the other seat, the other comparator — and it has
     been in the union since D115. Every board below is measured against it. */
-const CURSED_SLUG = "If your opponent has 3 or fewer cards in their hand, this attack does 120 more damage.";
+const CURSED_SLUG =
+  "If your opponent has 3 or fewer cards in their hand, this attack does 120 more damage.";
 /** …and the third hand clause, the SEAT-SYMMETRIC one (D119), kept in view because
     it is the reading a lazy "both hands" arm would drift into. */
-const EXTRASENSORY = "If you have the same number of cards in your hand as your opponent, this attack does 90 more damage.";
+const EXTRASENSORY =
+  "If you have the same number of cards in your hand as your opponent, this attack does 90 more damage.";
 
 const EXACT_CLAUSE = "you don't have exactly 3 cards in your hand";
 
@@ -465,7 +467,9 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // below are `opponentHandAtMost` and `handSizesEqual`; the third is that member's
     // second threshold (Mienshao's *"5 or fewer"*), and the fourth is unresolved and is
     // not a hand-SIZE read at all — it asks what was PLAYED from the hand this turn.
-    const handBonus = corpus().filter(([, s]) => (BONUS.exec(s.trim())?.[1] ?? "").includes("hand"));
+    const handBonus = corpus().filter(([, s]) =>
+      (BONUS.exec(s.trim())?.[1] ?? "").includes("hand"),
+    );
     expect(handBonus).toHaveLength(4);
     // 🆕🆕🆕 D569 (D539) — 3 → **4**: "the fourth is unresolved" is WITHDRAWN. The fourth — Iron
     // Valiant `sv05-080` "Majestic Sword", *"If you played a Future Supporter card from your hand
@@ -474,7 +478,10 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // four resolves to this member, which is the claim that matters here.
     expect(handBonus.filter(([, s]) => readByAny(s))).toHaveLength(4);
     for (const sentence of [CURSED_SLUG, EXTRASENSORY]) {
-      expect(handBonus.some(([, s]) => s === sentence), sentence).toBe(true);
+      expect(
+        handBonus.some(([, s]) => s === sentence),
+        sentence,
+      ).toBe(true);
       expect(readByAny(sentence), sentence).toBe(true);
     }
     // (🆕🆕🆕 D569: the unresolved list is EMPTY — the Future-Supporter clause above resolves.)
@@ -503,7 +510,9 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // …and there is no own-hand THRESHOLD either, which is the other shape this
     // member could have been mistaken for. Every "or fewer"/"or more" hand clause in
     // the column reads the OPPONENT's hand.
-    for (const [, s] of corpus().filter(([, s]) => /or (fewer|more) cards in (your|their) hand/.test(s))) {
+    for (const [, s] of corpus().filter(([, s]) =>
+      /or (fewer|more) cards in (your|their) hand/.test(s),
+    )) {
       expect(s, s).toContain("in their hand");
       expect(s, s).not.toContain("in your hand");
     }
@@ -677,7 +686,9 @@ describe("§2 — the key, the printed BYTES, and the tables that must not meet"
       null,
     );
     expect(
-      deriveAttackDamageBonus("If you have exactly 3 cards in your hand, this attack does 120 more damage."),
+      deriveAttackDamageBonus(
+        "If you have exactly 3 cards in your hand, this attack does 120 more damage.",
+      ),
     ).toBeNull();
     expect(deriveAttackRequirement(TRIO_CHEEHOO)).not.toBeNull();
   });
@@ -939,7 +950,9 @@ describe("§6 — the guard this slice EXPIRED, and what it did NOT buy", () => 
     // the companion. The printed 3 resolves; the constructed 4 does not.
     expect(deriveAttackRequirement(TRIO_CHEEHOO)).not.toBeNull();
     expect(
-      deriveAttackRequirement("If you don't have exactly 4 cards in your hand, this attack does nothing."),
+      deriveAttackRequirement(
+        "If you don't have exactly 4 cards in your hand, this attack does nothing.",
+      ),
     ).toBeNull();
     // …and no sentence in the legal attack column carries the constructed clause, so
     // the rider is not quietly asserting on a printing.

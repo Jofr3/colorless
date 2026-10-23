@@ -122,10 +122,17 @@ function board(holder: string, mist: Shield, seed = 11): GameState {
     throw new Error(`expected P1's turn, got ${state.phase.kind}`);
   }
   const back = (s: GameState, seat: Seat) =>
-    [holder, "fix-bigbody", "fix-basic-1", MIST, SPECIAL, SPECIAL_2, WATER, TOOL, "fix-energy"].reduce(
-      (acc, id) => handToDeck(acc, seat, id),
-      s,
-    );
+    [
+      holder,
+      "fix-bigbody",
+      "fix-basic-1",
+      MIST,
+      SPECIAL,
+      SPECIAL_2,
+      WATER,
+      TOOL,
+      "fix-energy",
+    ].reduce((acc, id) => handToDeck(acc, seat, id), s);
   state = back(back(state, "p1"), "p2");
   state = setActiveFromDeck(state, "p1", holder);
   state = clearBench(state, "p1");
@@ -191,14 +198,17 @@ describe("B35 — Cursed Edge: Mist Energy on the Active shields only the Active
     },
   );
 
-  it.each(CERULEDGE)("%s: CONTROL — Mist on a Benched body keeps only that body's Special Energy", (id) => {
-    const state = board(id, "bench0");
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(energyIds(done, "active")).toEqual([]);
-    expect(energyIds(done, 0)).toEqual([SPECIAL, MIST, WATER].sort());
-    expect(energyIds(done, 1)).toEqual([]);
-    expect(prevented(events).map((e) => e.uid)).toEqual([bench0Uid(state)]);
-  });
+  it.each(CERULEDGE)(
+    "%s: CONTROL — Mist on a Benched body keeps only that body's Special Energy",
+    (id) => {
+      const state = board(id, "bench0");
+      const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+      expect(energyIds(done, "active")).toEqual([]);
+      expect(energyIds(done, 0)).toEqual([SPECIAL, MIST, WATER].sort());
+      expect(energyIds(done, 1)).toEqual([]);
+      expect(prevented(events).map((e) => e.uid)).toEqual([bench0Uid(state)]);
+    },
+  );
 });
 
 describe("B35 — Corrosive Liquid: the Tool half and the Energy half read the same board the same way", () => {

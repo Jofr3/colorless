@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader,
-} from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -497,8 +493,14 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     // pinned just below as the member each maps to. Neither is PRINTED behind this
     // consequent, so no census moves for it.
     for (const [clause, cond] of [
-      ["your opponent's Active Pokémon is a Tera Pokémon", { kind: "opponentActiveIsBanner", banner: "Tera" }],
-      ["you have any Tera Pokémon on your Bench", { kind: "yourBannerPokemonOnBench", banner: "Tera" }],
+      [
+        "your opponent's Active Pokémon is a Tera Pokémon",
+        { kind: "opponentActiveIsBanner", banner: "Tera" },
+      ],
+      [
+        "you have any Tera Pokémon on your Bench",
+        { kind: "yourBannerPokemonOnBench", banner: "Tera" },
+      ],
       // 🆕🆕🆕 D579 — the ANCIENT clause joins them: a `CONDITIONAL_DAMAGE_CLAUSES` row over the new
       // seat-level record, so this skeleton reads it too (not printed behind this consequent).
       [
@@ -608,14 +610,23 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     // caller's SIDE is observable. It is an ADMISSION now, with the side asserted —
     // which is what re-arms it against `D447-gated-caller-drops-the-side`.
     expect(
-      deriveAttackEffect(`If ${TAKEN_CLAUSE}, this attack also does 30 damage to 2 of your Benched Pokémon.`),
+      deriveAttackEffect(
+        `If ${TAKEN_CLAUSE}, this attack also does 30 damage to 2 of your Benched Pokémon.`,
+      ),
     ).toEqual([
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
-          { op: "damageChosen", target: "yourBench", amount: 30, count: 2, source: "attack", deals: true },
+          {
+            op: "damageChosen",
+            target: "yourBench",
+            amount: 30,
+            count: 2,
+            source: "attack",
+            deals: true,
+          },
         ],
       },
     ]);

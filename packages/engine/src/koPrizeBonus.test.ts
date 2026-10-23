@@ -436,7 +436,9 @@ describe("D323 §1 — the two registry rows", () => {
     expect(programFor("sv10-086")?.passive?.seatDamageReductionAfterWR?.noStack).toBe(
       "Stone Palace",
     );
-    expect(programFor("sv09-117")?.passive?.seatDamageBonusBeforeWR?.noStack).toBe("Extra Helpings");
+    expect(programFor("sv09-117")?.passive?.seatDamageBonusBeforeWR?.noStack).toBe(
+      "Extra Helpings",
+    );
     expect(programFor("svp-184")?.passive?.seatDamageBonusBeforeWR?.noStack).toBe("Extra Helpings");
     expect(programFor("sv10-074")?.triggered?.[0]?.doesNotStack).toBe(true);
     // 🛑 **AND THE HANDOFF'S OWN ARITHMETIC WAS WRONG, WHICH IS THE THIRD THING
@@ -635,7 +637,9 @@ describe("D323 §3 — Wonder Kiss on a real KO", () => {
     const kinds = events
       .filter(
         (e) =>
-          e.type === "ABILITY_TRIGGERED" || e.type === "ABILITY_COIN_FLIP" || e.type === "PRIZE_BONUS",
+          e.type === "ABILITY_TRIGGERED" ||
+          e.type === "ABILITY_COIN_FLIP" ||
+          e.type === "PRIZE_BONUS",
       )
       .map((e) => e.type);
     expect(kinds).toEqual(["ABILITY_TRIGGERED", "ABILITY_COIN_FLIP", "PRIZE_BONUS"]);

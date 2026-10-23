@@ -240,7 +240,11 @@ function firstBasicInHand(state: GameState, seat: Seat): string {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: RETREAT_DECK, p2: RETREAT_DECK }, cardPool: POOL });
+  const created = createGame({
+    seed,
+    decks: { p1: RETREAT_DECK, p2: RETREAT_DECK },
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -349,8 +353,9 @@ describe("D322 §1 — the three registry rows", () => {
     // The two riders on this field are INDEPENDENT and both optional, which is
     // asserted in both directions: Melt Away carries the holder gate and NOT the
     // cross-board one, and Punk Out (Wimpod `sv08-041`) carries the reverse.
-    expect(programFor(MAGCARGO)?.passive?.noRetreatCostSelf?.requiresOpponentSuffixInPlay)
-      .toBeUndefined();
+    expect(
+      programFor(MAGCARGO)?.passive?.noRetreatCostSelf?.requiresOpponentSuffixInPlay,
+    ).toBeUndefined();
     // 🛑 AND IT IS NOT THE AURA. `noRetreatCostSelf` frees its HOLDER; a build on
     // `noRetreatCostAura` would free every teammate off a Magcargo with nothing
     // attached, which is the board this card is actually played on.

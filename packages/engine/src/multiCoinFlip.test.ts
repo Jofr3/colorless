@@ -298,7 +298,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(FIXTURE_POOL["sv06.5-048"]?.abilities).toBeNull();
   });
 
-  it("splits both printed markers into base + \"×\" through parseAttackDamage", () => {
+  it('splits both printed markers into base + "×" through parseAttackDamage', () => {
     // The exact hand-off the slice depends on: `parseAttackDamage` produces the
     // `base` that `scaledBase` then DROPS and the `modifier` that
     // `modifierSimulated` then claims. Asserting the split here means the two
@@ -334,7 +334,9 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(FIXTURE_POOL["sv01-160"]?.types).toEqual(["Colorless"]);
     expect(FIXTURE_POOL["sv01-160"]?.hp).toBe(40);
     expect(FIXTURE_POOL["sv01-160"]?.retreat).toBe(1);
-    expect(FIXTURE_POOL["sv01-160"]?.weaknesses).toEqual([{ type: "Fighting", value: `${TIMES}2` }]);
+    expect(FIXTURE_POOL["sv01-160"]?.weaknesses).toEqual([
+      { type: "Fighting", value: `${TIMES}2` },
+    ]);
     expect(FIXTURE_POOL["sv01-160"]?.resistances).toBeNull();
 
     expect(FIXTURE_POOL["sv06.5-048"]?.name).toBe("Meowth");
@@ -485,9 +487,9 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     // NOT travel to the board-counted one: a bound belongs to the SOURCE of the
     // number, and an attached-Energy count is read off the engine's own state, where
     // a ceiling would refuse a legal board rather than a malformed row.
-    expect(deriveAttackCoinFlip("Flip 10 coins. This attack does 10 damage for each heads.")).toEqual(
-      { kind: "perHeads", flips: { kind: "printed", count: 10 }, per: 10 },
-    );
+    expect(
+      deriveAttackCoinFlip("Flip 10 coins. This attack does 10 damage for each heads."),
+    ).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 10 }, per: 10 });
     expect(deriveAttackCoinFlip("Flip 11 coins. This attack does 10 damage for each heads.")).toBe(
       null,
     );
@@ -498,9 +500,9 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     ).toBe(null);
     // The pool's own maximum sits comfortably inside the bound (Unfezant
     // swsh10.5-063 is the family's only 4).
-    expect(deriveAttackCoinFlip("Flip 4 coins. This attack does 30 damage for each heads.")).toEqual(
-      { kind: "perHeads", flips: { kind: "printed", count: 4 }, per: 30 },
-    );
+    expect(
+      deriveAttackCoinFlip("Flip 4 coins. This attack does 30 damage for each heads."),
+    ).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 4 }, per: 30 });
   });
 
   it("refuses a printed ZERO per — the `per >= 1` guard every arm carries", () => {
@@ -512,11 +514,13 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
       null,
     );
     // …while the smallest REAL value one digit away is read fine.
-    expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 1 damage for each heads.")).toEqual({
-      kind: "perHeads",
-      flips: { kind: "printed", count: 2 },
-      per: 1,
-    });
+    expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 1 damage for each heads.")).toEqual(
+      {
+        kind: "perHeads",
+        flips: { kind: "printed", count: 2 },
+        per: 1,
+      },
+    );
   });
 });
 
@@ -635,7 +639,11 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
     const magikarp = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
     // 🆕🆕🆕 D634 (D539): no longer null — D634's `bonusOnAllHeads` reads it (20 on two heads only), and
     // never as this slice's per-heads fold.
-    expect(deriveAttackCoinFlip(magikarp)).toEqual({ kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: 20 });
+    expect(deriveAttackCoinFlip(magikarp)).toEqual({
+      kind: "bonusOnAllHeads",
+      flips: { kind: "printed", count: 2 },
+      bonus: 20,
+    });
     // Its OPENING is Tandemaus's, word for word — so this is the consequent being
     // refused, not the count.
     expect(magikarp.startsWith("Flip 2 coins. ")).toBe(true);
@@ -687,9 +695,9 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
     expect(torkoal.endsWith("This attack does 80 damage for each heads.")).toBe(true);
     // …and this slice's own reading of that same consequent is untouched by the arm
     // that now sits between the two regexes.
-    expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 80 damage for each heads.")).toEqual(
-      { kind: "perHeads", flips: { kind: "printed", count: 2 }, per: 80 },
-    );
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. This attack does 80 damage for each heads."),
+    ).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 2 }, per: 80 });
   });
 
   it("reads the STEPPED PAYOUT table as its OWN member — a TABLE, not `perHeads` (BUILT at D526)", () => {
@@ -708,7 +716,11 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
     const bisharp =
       "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.";
     const member = deriveAttackCoinFlip(bisharp);
-    expect(member).toEqual({ kind: "bonusLadder", flips: { kind: "printed", count: 3 }, ladder: [20, 60, 120] });
+    expect(member).toEqual({
+      kind: "bonusLadder",
+      flips: { kind: "printed", count: 3 },
+      ladder: [20, 60, 120],
+    });
     expect(member?.kind).toBe("bonusLadder");
     // NOT perHeads: the payout is a table, not per × heads.
     expect(member).not.toHaveProperty("per");
@@ -1077,7 +1089,9 @@ describe("ZERO HEADS — a RESOLVED attack that dealt nothing, not a cancelled o
         // Every flip still happened and was still announced — the attack was fully
         // resolved, it simply totalled nothing.
         expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(flips);
-        expect(all(events, "ATTACK_EFFECT_COIN_FLIP").every((e) => e.result === "tails")).toBe(true);
+        expect(all(events, "ATTACK_EFFECT_COIN_FLIP").every((e) => e.result === "tails")).toBe(
+          true,
+        );
         // NOTHING LANDED, stated as a list of absences.
         expect(types(events)).not.toContain("DAMAGE_DEALT");
         expect(types(events)).not.toContain("COUNTERS_PLACED");
@@ -1308,12 +1322,7 @@ describe("🆕🆕 D413 — the ADDITIVE printed-count fold, on real seeds", () 
       { first: "p2", active: { p1: "fix-bigbody", p2: "fix-bigbody" } },
     );
     const opened = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-    return attachFromDeck(
-      setActiveFromDeck(opened, "p1", "fix-coinbonus"),
-      "p1",
-      "fix-energy",
-      2,
-    );
+    return attachFromDeck(setActiveFromDeck(opened, "p1", "fix-coinbonus"), "p1", "fix-energy", 2);
   }
 
   it("keeps the printed base and adds per heads — swept, every outcome reached", () => {

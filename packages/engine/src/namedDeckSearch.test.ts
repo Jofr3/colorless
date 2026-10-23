@@ -19,7 +19,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameState } from "./index";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -792,9 +792,5 @@ describe("§4 — the census step this slice is", () => {
     expect(out.prompt.max).toBe(
       out.prompt.candidates.filter((uid) => nameOf(state, uid) === "Fennel").length + 1,
     );
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });

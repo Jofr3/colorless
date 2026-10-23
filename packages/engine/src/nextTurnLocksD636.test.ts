@@ -22,7 +22,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, engineVersion, formatElapsed, logFromEvents } from "./index";
+import { applyAction, createGame, formatElapsed, logFromEvents } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { type CoinFace, flipCoin } from "./rng";
@@ -90,7 +90,8 @@ const ME_FACES: Record<string, Card> = {
         cost: [],
         name: "Overwhelming Pain",
         damage: "60+",
-        effect: "This attack does 10 more damage for each damage counter on all of your opponent's Pokémon.",
+        effect:
+          "This attack does 10 more damage for each damage counter on all of your opponent's Pokémon.",
       },
     ],
   }),
@@ -146,12 +147,24 @@ const ME_FACES: Record<string, Card> = {
         types: ["Water"],
         retreat: 0,
         weaknesses: weak("Lightning"),
-        abilities: [{ type: "Ability", name: "Fall Back to Reload", effect: FALL_BACK }] as Card["abilities"],
-        attacks: [{ cost: [], name: "Aqua Launcher", damage: 210, effect: "Discard all Energy from this Pokémon." }],
+        abilities: [
+          { type: "Ability", name: "Fall Back to Reload", effect: FALL_BACK },
+        ] as Card["abilities"],
+        attacks: [
+          {
+            cost: [],
+            name: "Aqua Launcher",
+            damage: 210,
+            effect: "Discard all Energy from this Pokémon.",
+          },
+        ],
       }),
     ]),
   ),
-  [SWITCH]: { ...trainerCard(SWITCH, "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."), name: "Switch" },
+  [SWITCH]: {
+    ...trainerCard(SWITCH, "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."),
+    name: "Switch",
+  },
   [RESEARCH]: {
     ...trainerCard(RESEARCH, "Supporter", "Discard your hand and draw 7 cards."),
     name: "Professor's Research",
@@ -165,7 +178,11 @@ const ME_FACES: Record<string, Card> = {
     name: "Artazon",
   },
   [BEACH_COURT]: {
-    ...trainerCard(BEACH_COURT, "Stadium", "The Retreat Cost of each Basic Pokémon in play (both yours and your opponent's) is {C} less."),
+    ...trainerCard(
+      BEACH_COURT,
+      "Stadium",
+      "The Retreat Cost of each Basic Pokémon in play (both yours and your opponent's) is {C} less.",
+    ),
     name: "Beach Court",
   },
   [CHARM]: {
@@ -180,9 +197,16 @@ const ME_FACES: Record<string, Card> = {
     ),
     name: "Rare Candy",
   },
-  [FOSSIL]: { ...trainerCard(FOSSIL, "Item", "Play this card as if it were a 60-HP Basic {C} Pokémon."), name: "Antique Cover Fossil" },
+  [FOSSIL]: {
+    ...trainerCard(FOSSIL, "Item", "Play this card as if it were a 60-HP Basic {C} Pokémon."),
+    name: "Antique Cover Fossil",
+  },
   [BOSS]: {
-    ...trainerCard(BOSS, "Supporter", "Switch in 1 of your opponent's Benched Pokémon to the Active Spot."),
+    ...trainerCard(
+      BOSS,
+      "Supporter",
+      "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+    ),
     name: "Boss's Orders",
   },
 };
@@ -289,7 +313,9 @@ function p1FirstAt(seed: number): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
@@ -297,11 +323,14 @@ function p1FirstAt(seed: number): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
   }
   for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    const uid = state.players[s].hand.find(
+      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
+    );
     if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
     state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
   }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  for (const s of ["p1", "p2"] as const)
+    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   return reset(state);
 }
@@ -320,19 +349,29 @@ function board(
   return state;
 }
 
-function all<T extends GameEvent["type"]>(events: readonly GameEvent[], type: T): Extract<GameEvent, { type: T }>[] {
+function all<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 /** An attack ENDS the turn (§5.3): the returned state is the opponent's next turn unless a ko:* park holds it. */
-const attack = (state: GameState, seat: Seat, index = 0) => mustApply(state, { type: "attack", seat, index });
-const endTurn = (state: GameState, seat: Seat) => must(applyAction(state, { type: "endTurn", seat }));
+const attack = (state: GameState, seat: Seat, index = 0) =>
+  mustApply(state, { type: "attack", seat, index });
+const endTurn = (state: GameState, seat: Seat) =>
+  must(applyAction(state, { type: "endTurn", seat }));
 function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
   if (pokemon === null || pokemon === undefined) throw new Error("no body");
   return pokemon;
 }
 const topOf = (pokemon: InPlayPokemon | null | undefined) => body(pokemon).stack.at(-1) as string;
 /** `count` copies of `id` from `seat`'s deck into the hand, and the last one's uid. */
-function inHand(state: GameState, seat: Seat, id: string, count = 1): { state: GameState; uid: string } {
+function inHand(
+  state: GameState,
+  seat: Seat,
+  id: string,
+  count = 1,
+): { state: GameState; uid: string } {
   const next = handFromDeck(state, seat, id, count);
   const uid = next.players[seat].hand.filter((u) => next.cardIdByUid[u] === id).pop() as string;
   return { state: next, uid };
@@ -354,11 +393,20 @@ function seedFor(faces: readonly CoinFace[]): number {
   }
   throw new Error("no seed");
 }
-const rolled = (state: GameState, faces: readonly CoinFace[]): GameState => ({ ...state, rngState: seedFor(faces) });
+const rolled = (state: GameState, faces: readonly CoinFace[]): GameState => ({
+  ...state,
+  rngState: seedFor(faces),
+});
 const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
 function rows(events: GameEvent[], state: GameState): string[] {
-  const entries = logFromEvents(events, { names: { p1: "Ana", p2: "Bo" }, state, elapsed: formatElapsed(0) });
-  return entries.flatMap((e) => (e.kind === "turn" ? [] : [e.segments.map((s) => s.text).join("")]));
+  const entries = logFromEvents(events, {
+    names: { p1: "Ana", p2: "Bo" },
+    state,
+    elapsed: formatElapsed(0),
+  });
+  return entries.flatMap((e) =>
+    e.kind === "turn" ? [] : [e.segments.map((s) => s.text).join("")],
+  );
 }
 const attachWater = (state: GameState, seat: Seat, target: PokemonTarget) => {
   const held = inHand(state, seat, WATER);
@@ -367,10 +415,12 @@ const attachWater = (state: GameState, seat: Seat, target: PokemonTarget) => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D636 §1 — the readers and the registry row", () => {
-  it("Cursed Roots is Glimmora's bar alone; Electrified Incisors carries the counters (the printed \"place\" read as \"put\")", () => {
+  it('Cursed Roots is Glimmora\'s bar alone; Electrified Incisors carries the counters (the printed "place" read as "put")', () => {
     expect(deriveAttackEffect(CURSED_ROOTS)).toEqual([{ op: "markHandAttach", barred: true }]);
     expect(deriveAttackEffect(INCISORS)).toEqual([{ op: "markHandAttach", counters: 8 }]);
-    expect(deriveAttackEffect(INCISORS.replace("place 8", "put 8"))).toEqual([{ op: "markHandAttach", counters: 8 }]);
+    expect(deriveAttackEffect(INCISORS.replace("place 8", "put 8"))).toEqual([
+      { op: "markHandAttach", counters: 8 },
+    ]);
     for (const near of [
       INCISORS.replace("8", "0"),
       INCISORS.replace("the Defending Pokémon", "this Pokémon"),
@@ -417,14 +467,27 @@ describe("D636 §1 — the readers and the registry row", () => {
           benchOnly: true,
           benchedThisTurn: true,
           program: [
-            { op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true, declinable: true },
-            { op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true, declinable: true },
+            {
+              op: "attachEnergyFrom",
+              source: "hand",
+              energyType: "Water",
+              toSelf: true,
+              declinable: true,
+            },
+            {
+              op: "attachEnergyFrom",
+              source: "hand",
+              energyType: "Water",
+              toSelf: true,
+              declinable: true,
+            },
           ],
         },
       ],
     });
     // Every L1 attack id is a reader row: no key.
-    for (const id of [TREVENANT, PACHIRISU, OCTILLERY, SEISMITOAD, CHIYU]) expect(programFor(id), id).toBeUndefined();
+    for (const id of [TREVENANT, PACHIRISU, OCTILLERY, SEISMITOAD, CHIYU])
+      expect(programFor(id), id).toBeUndefined();
   });
 });
 
@@ -455,7 +518,13 @@ describe("D636 §3 — Electrified Incisors: 8 damage counters per Energy card f
   it("installs `counters: 8` on the Defending Pokémon, and the attach action places 80 on it", () => {
     const { state } = attack(board(PACHIRISU), "p1");
     const defender = body(state.players.p2.active);
-    expect(defender.handAttachMark).toEqual({ turn: state.turn, barred: false, endsTurn: false, tripped: false, counters: 8 });
+    expect(defender.handAttachMark).toEqual({
+      turn: state.turn,
+      barred: false,
+      endsTurn: false,
+      tripped: false,
+      counters: 8,
+    });
     const result = attachWater(state, "p2", { spot: "active" });
     if (!result.ok) throw new Error(result.error.code);
     expect(body(result.state.players.p2.active).damage).toBe(defender.damage + 80);
@@ -504,10 +573,17 @@ describe("D636 §3 — Electrified Incisors: 8 damage counters per Energy card f
   it("an `attachFromHand` answer is placed on too: the card onto the marked Active, none for the Benched one", () => {
     const { state } = attack(board(PACHIRISU), "p1");
     const held = handFromDeck(state, "p2", WATER, 2);
-    const [toActive, toBench] = held.players.p2.hand.filter((u) => held.cardIdByUid[u] === WATER) as [string, string];
+    const [toActive, toBench] = held.players.p2.hand.filter(
+      (u) => held.cardIdByUid[u] === WATER,
+    ) as [string, string];
     const defender = body(held.players.p2.active);
     const events: GameEvent[] = [];
-    const parked = runProgram(held, [{ op: "attachFromHand", filter: { kind: "basicEnergy" } }], { seat: "p2" }, events);
+    const parked = runProgram(
+      held,
+      [{ op: "attachFromHand", filter: { kind: "basicEnergy" } }],
+      { seat: "p2" },
+      events,
+    );
     if (parked.kind !== "parked") throw new Error("expected the attachCards park");
     const run = resumeProgram(
       parked.state,
@@ -526,7 +602,9 @@ describe("D636 §3 — Electrified Incisors: 8 damage counters per Energy card f
     expect(body(run.state.players.p2.bench[0]).energy).toContain(toBench);
     expect(body(run.state.players.p2.active).damage).toBe(defender.damage + 80);
     expect(body(run.state.players.p2.bench[0]).damage).toBe(0);
-    expect(all(events, "COUNTERS_PLACED").map((e) => [e.uid, e.amount])).toEqual([[topOf(defender), 80]]);
+    expect(all(events, "COUNTERS_PLACED").map((e) => [e.uid, e.amount])).toEqual([
+      [topOf(defender), 80],
+    ]);
   });
 
   it("two installs in one window SUM (two printed effects): 16 counters per card", () => {
@@ -559,7 +637,11 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
   });
 
   it("heads, heads: the attack resolves, two coin rows", () => {
-    const { events, state } = mustApply(rolled(inked(), ["heads", "heads"]), { type: "attack", seat: "p2", index: 0 });
+    const { events, state } = mustApply(rolled(inked(), ["heads", "heads"]), {
+      type: "attack",
+      seat: "p2",
+      index: 0,
+    });
     expect(all(events, "ATTACK_FLIP_LOCK_CHECK").map((e) => e.result)).toEqual(["heads", "heads"]);
     expect(all(events, "ATTACK_FAILED")).toEqual([]);
     expect(body(state.players.p1.active).damage).toBe(JAB);
@@ -570,7 +652,11 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
     ["tails", "heads"],
   ] as const) {
     it(`${faces.join(", ")}: the attack doesn't happen, and BOTH coins are flipped`, () => {
-      const { events, state } = mustApply(rolled(inked(), faces), { type: "attack", seat: "p2", index: 0 });
+      const { events, state } = mustApply(rolled(inked(), faces), {
+        type: "attack",
+        seat: "p2",
+        index: 0,
+      });
       expect(all(events, "ATTACK_FLIP_LOCK_CHECK").map((e) => e.result)).toEqual([...faces]);
       expect(all(events, "ATTACK_FAILED").map((e) => e.reason)).toEqual(["flipLock"]);
       expect(body(state.players.p1.active).damage).toBe(0);
@@ -583,18 +669,36 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
       ...base,
       players: {
         ...base.players,
-        p2: { ...base.players.p2, active: { ...body(base.players.p2.active), attackFlipLockTurn: base.turn } },
+        p2: {
+          ...base.players.p2,
+          active: { ...body(base.players.p2.active), attackFlipLockTurn: base.turn },
+        },
       },
     };
-    const pass = mustApply(rolled(both, ["heads", "heads", "heads"]), { type: "attack", seat: "p2", index: 0 });
+    const pass = mustApply(rolled(both, ["heads", "heads", "heads"]), {
+      type: "attack",
+      seat: "p2",
+      index: 0,
+    });
     expect(all(pass.events, "ATTACK_FLIP_LOCK_CHECK")).toHaveLength(3);
     expect(body(pass.state.players.p1.active).damage).toBe(JAB);
-    const fail = mustApply(rolled(both, ["heads", "heads", "tails"]), { type: "attack", seat: "p2", index: 0 });
+    const fail = mustApply(rolled(both, ["heads", "heads", "tails"]), {
+      type: "attack",
+      seat: "p2",
+      index: 0,
+    });
     expect(all(fail.events, "ATTACK_FAILED").map((e) => e.reason)).toEqual(["flipLock"]);
   });
 
   it("§10: the victim's retreat sheds it — the promoted body attacks with no coin, the benched one carries nothing", () => {
-    const retreated = must(applyAction(inked(), { type: "retreat", seat: "p2", discardEnergy: [], promoteBenchIndex: 0 }));
+    const retreated = must(
+      applyAction(inked(), {
+        type: "retreat",
+        seat: "p2",
+        discardEnergy: [],
+        promoteBenchIndex: 0,
+      }),
+    );
     expect(body(retreated.players.p2.bench[0]).attackTwoFlipLockTurn).toBeNull();
     const { events } = mustApply(retreated, { type: "attack", seat: "p2", index: 0 });
     expect(all(events, "ATTACK_FLIP_LOCK_CHECK")).toEqual([]);
@@ -603,7 +707,9 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
   it("§10: a Switch sheds it too — the switched-out body carries nothing (`switchInto`)", () => {
     const held = inHand(inked(), "p2", SWITCH);
     const lockedUid = topOf(held.state.players.p2.active);
-    const switched = must(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid }));
+    const switched = must(
+      applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid }),
+    );
     const benched = body(switched.players.p2.bench.find((b) => b.stack.includes(lockedUid)));
     expect(benched.attackTwoFlipLockTurn).toBeNull();
   });
@@ -613,7 +719,12 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
     expect(body(sprouted.players.p2.active).attackTwoFlipLockTurn).toBe(sprouted.turn);
     const shoot = inHand(sprouted, "p2", SHOOT);
     const evolved = must(
-      applyAction(shoot.state, { type: "evolve", seat: "p2", uid: shoot.uid, target: { spot: "active" } }),
+      applyAction(shoot.state, {
+        type: "evolve",
+        seat: "p2",
+        uid: shoot.uid,
+        target: { spot: "active" },
+      }),
     );
     expect(body(evolved.players.p2.active).attackTwoFlipLockTurn).toBeNull();
     const { events } = mustApply(evolved, { type: "attack", seat: "p2", index: 0 });
@@ -624,11 +735,21 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
     const p2turn = endTurn(board(OCTILLERY, [], SPROUT), "p1");
     const shoot = inHand(p2turn, "p2", SHOOT);
     const evolved = must(
-      applyAction(shoot.state, { type: "evolve", seat: "p2", uid: shoot.uid, target: { spot: "active" } }),
+      applyAction(shoot.state, {
+        type: "evolve",
+        seat: "p2",
+        uid: shoot.uid,
+        target: { spot: "active" },
+      }),
     );
     const inkedShoot = attack(endTurn(evolved, "p2"), "p1").state;
     expect(body(inkedShoot.players.p2.active).attackTwoFlipLockTurn).toBe(inkedShoot.turn);
-    const run = runProgram(inkedShoot, [{ op: "devolveEach" }], { seat: "p1", invokedBy: "attack" }, []);
+    const run = runProgram(
+      inkedShoot,
+      [{ op: "devolveEach" }],
+      { seat: "p1", invokedBy: "attack" },
+      [],
+    );
     if (run.kind !== "done") throw new Error("expected done");
     const devolved = body(run.state.players.p2.active);
     expect(run.state.cardIdByUid[topOf(devolved)]).toBe(SPROUT);
@@ -643,26 +764,34 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
 
 describe("D636 §5 — Quaking Fist: a coin at each Trainer play from hand next turn; tails discards it instead (R-QF1)", () => {
   const fisted = (foe: string = WALL) => attack(board(SEISMITOAD, [], foe), "p1").state;
-  const play = (state: GameState, uid: string) => applyAction(state, { type: "playTrainer", seat: "p2", uid });
+  const play = (state: GameState, uid: string) =>
+    applyAction(state, { type: "playTrainer", seat: "p2", uid });
 
   it("stamps the OPPONENT's side for its next turn and says so", () => {
     const { state, events } = attack(board(SEISMITOAD), "p1");
     expect(state.players.p2.trainerFlipLockTurn).toBe(state.turn);
     expect(state.players.p1.trainerFlipLockTurn).toBeNull();
-    expect(all(events, "TRAINER_FLIP_LOCKED")).toEqual([{ type: "TRAINER_FLIP_LOCKED", seat: "p2" }]);
+    expect(all(events, "TRAINER_FLIP_LOCKED")).toEqual([
+      { type: "TRAINER_FLIP_LOCKED", seat: "p2" },
+    ]);
   });
 
   it("an Item, tails: the card goes to the discard pile and nothing happens; heads: it is played", () => {
     const { state, uid } = inHand(fisted(), "p2", SWITCH);
     const tails = play(rolled(state, ["tails"]), uid);
     if (!tails.ok) throw new Error(tails.error.code);
-    expect(tails.events).toEqual([{ type: "TRAINER_FLIP_LOCK_CHECK", seat: "p2", uid, result: "tails" }]);
+    expect(tails.events).toEqual([
+      { type: "TRAINER_FLIP_LOCK_CHECK", seat: "p2", uid, result: "tails" },
+    ]);
     expect(tails.state.players.p2.discard).toContain(uid);
     expect(tails.state.players.p2.hand).not.toContain(uid);
     expect(topOf(tails.state.players.p2.active)).toBe(topOf(state.players.p2.active));
     const heads = play(rolled(state, ["heads"]), uid);
     if (!heads.ok) throw new Error(heads.error.code);
-    expect(heads.events.slice(0, 2).map((e) => e.type)).toEqual(["TRAINER_FLIP_LOCK_CHECK", "TRAINER_PLAYED"]);
+    expect(heads.events.slice(0, 2).map((e) => e.type)).toEqual([
+      "TRAINER_FLIP_LOCK_CHECK",
+      "TRAINER_PLAYED",
+    ]);
     expect(topOf(heads.state.players.p2.active)).toBe(topOf(state.players.p2.bench[0]));
   });
 
@@ -674,7 +803,9 @@ describe("D636 §5 — Quaking Fist: a coin at each Trainer play from hand next 
     expect(tails.state.players.p2.hand).toHaveLength(handBefore - 1);
     expect(tails.state.allowances.supporterPlayed).toBe(true);
     expect(tails.state.allowances.supporterPlayedUid).toBeNull();
-    const second = tails.state.players.p2.hand.find((u) => tails.state.cardIdByUid[u] === RESEARCH) as string;
+    const second = tails.state.players.p2.hand.find(
+      (u) => tails.state.cardIdByUid[u] === RESEARCH,
+    ) as string;
     expect(refusal(play(tails.state, second))).toBe("SUPPORTER_ALREADY_PLAYED");
   });
 
@@ -691,7 +822,8 @@ describe("D636 §5 — Quaking Fist: a coin at each Trainer play from hand next 
 
   it("a Tool, tails: discarded, nothing attached; heads: attached", () => {
     const { state, uid } = inHand(fisted(), "p2", CHARM);
-    const tool = (s: GameState) => applyAction(s, { type: "attachTool", seat: "p2", uid, target: { spot: "active" } });
+    const tool = (s: GameState) =>
+      applyAction(s, { type: "attachTool", seat: "p2", uid, target: { spot: "active" } });
     const tails = tool(rolled(state, ["tails"]));
     if (!tails.ok) throw new Error(tails.error.code);
     expect(body(tails.state.players.p2.active).tools).toEqual([]);
@@ -705,7 +837,13 @@ describe("D636 §5 — Quaking Fist: a coin at each Trainer play from hand next 
     const candy = inHand(fisted(SPROUT), "p2", RARE_CANDY);
     const tree = inHand(candy.state, "p2", TREE);
     const use = (s: GameState) =>
-      applyAction(s, { type: "rareCandy", seat: "p2", uid: candy.uid, evolutionUid: tree.uid, target: { spot: "active" } });
+      applyAction(s, {
+        type: "rareCandy",
+        seat: "p2",
+        uid: candy.uid,
+        evolutionUid: tree.uid,
+        target: { spot: "active" },
+      });
     const tails = use(rolled(tree.state, ["tails"]));
     if (!tails.ok) throw new Error(tails.error.code);
     expect(tails.state.players.p2.hand).toContain(tree.uid);
@@ -784,10 +922,14 @@ describe("D636 §6 — Scorching Earth: the opponent's Stadium discarded, then n
     expect(state.stadium).toBeNull();
     expect(state.players.p2.discard).toContain(stadiumUid);
     expect(state.handPlayLockedTurn.p2.Stadium).toBe(state.turn);
-    expect(all(events, "HAND_PLAY_BLOCKED")).toEqual([{ type: "HAND_PLAY_BLOCKED", seat: "p2", bars: "Stadium" }]);
+    expect(all(events, "HAND_PLAY_BLOCKED")).toEqual([
+      { type: "HAND_PLAY_BLOCKED", seat: "p2", bars: "Stadium" },
+    ]);
     expect(body(state.players.p2.active).damage).toBe(40);
     const held = inHand(state, "p2", BEACH_COURT);
-    expect(refusal(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid }))).toBe("HAND_PLAY_BLOCKED");
+    expect(
+      refusal(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid })),
+    ).toBe("HAND_PLAY_BLOCKED");
   });
 
   it("the attacker's OWN Stadium is not discarded and nothing is barred; with no Stadium nothing happens", () => {
@@ -798,7 +940,9 @@ describe("D636 §6 — Scorching Earth: the opponent's Stadium discarded, then n
       expect(state.handPlayLockedTurn.p2.Stadium).toBeNull();
       expect(body(state.players.p2.active).damage).toBe(40);
       const held = inHand(state, "p2", BEACH_COURT);
-      expect(refusal(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid }))).toBe("OK");
+      expect(
+        refusal(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid })),
+      ).toBe("OK");
     }
   });
 
@@ -806,7 +950,9 @@ describe("D636 §6 — Scorching Earth: the opponent's Stadium discarded, then n
     const { state } = attack(withStadium(board(CHIYU), "p2", ARTAZON), "p1");
     const later = endTurn(endTurn(state, "p2"), "p1");
     const held = inHand(later, "p2", BEACH_COURT);
-    expect(refusal(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid }))).toBe("OK");
+    expect(
+      refusal(applyAction(held.state, { type: "playTrainer", seat: "p2", uid: held.uid })),
+    ).toBe("OK");
   });
 });
 
@@ -827,11 +973,19 @@ describe("D636 §7 — Fall Back to Reload: after this Pokémon moved Active→B
       } as GameAction),
     );
   const decline = (state: GameState) =>
-    must(applyAction(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } } as GameAction));
+    must(
+      applyAction(state, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon" },
+      } as GameAction),
+    );
   /** Clawitzer Active, a Wall benched, `water` Basic {W} in hand; then the retreat (Clawitzer to Bench 0). */
   function retreated(water = 2): GameState {
     const held = handFromDeck(board(CLAWITZER, [WALL]), "p1", WATER, water);
-    return must(applyAction(held, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }));
+    return must(
+      applyAction(held, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }),
+    );
   }
 
   it("a Clawitzer that has not moved this turn may not use it", () => {
@@ -862,8 +1016,12 @@ describe("D636 §7 — Fall Back to Reload: after this Pokémon moved Active→B
 
   it("a Switch stamps it too (`switchInto`, the other Active→Bench move)", () => {
     const held = inHand(handFromDeck(board(CLAWITZER, [WALL]), "p1", WATER, 1), "p1", SWITCH);
-    const switched = must(applyAction(held.state, { type: "playTrainer", seat: "p1", uid: held.uid }));
-    const clawitzer = switched.players.p1.bench.findIndex((b) => switched.cardIdByUid[b.stack[0] ?? ""] === CLAWITZER);
+    const switched = must(
+      applyAction(held.state, { type: "playTrainer", seat: "p1", uid: held.uid }),
+    );
+    const clawitzer = switched.players.p1.bench.findIndex(
+      (b) => switched.cardIdByUid[b.stack[0] ?? ""] === CLAWITZER,
+    );
     expect(body(switched.players.p1.bench[clawitzer]).benchedTurn).toBe(switched.turn);
     expect(refusal(use(switched, clawitzer))).toBe("OK");
   });
@@ -871,11 +1029,17 @@ describe("D636 §7 — Fall Back to Reload: after this Pokémon moved Active→B
   it("dragged to the Bench on the OPPONENT's turn (Boss's Orders) it stamps their turn: not usable on yours", () => {
     const p2turn = endTurn(board(CLAWITZER, [WALL]), "p1");
     const boss = inHand(p2turn, "p2", BOSS);
-    const gusted = must(applyAction(boss.state, { type: "playTrainer", seat: "p2", uid: boss.uid }));
-    const clawitzer = body(gusted.players.p1.bench.find((b) => gusted.cardIdByUid[b.stack[0] ?? ""] === CLAWITZER));
+    const gusted = must(
+      applyAction(boss.state, { type: "playTrainer", seat: "p2", uid: boss.uid }),
+    );
+    const clawitzer = body(
+      gusted.players.p1.bench.find((b) => gusted.cardIdByUid[b.stack[0] ?? ""] === CLAWITZER),
+    );
     expect(clawitzer.benchedTurn).toBe(p2turn.turn);
     const mine = handFromDeck(endTurn(gusted, "p2"), "p1", WATER, 1);
-    const index = mine.players.p1.bench.findIndex((b) => mine.cardIdByUid[b.stack[0] ?? ""] === CLAWITZER);
+    const index = mine.players.p1.bench.findIndex(
+      (b) => mine.cardIdByUid[b.stack[0] ?? ""] === CLAWITZER,
+    );
     expect(refusal(use(mine, index))).toBe("ABILITY_CONDITION_NOT_MET");
   });
 
@@ -883,10 +1047,22 @@ describe("D636 §7 — Fall Back to Reload: after this Pokémon moved Active→B
     // P1's second turn (turn 4): a Clauncher Active since an earlier turn, so it may evolve.
     const later = endTurn(endTurn(board(CLAUNCHER, [WALL]), "p1"), "p2");
     const held = inHand(handFromDeck(later, "p1", WATER, 1), "p1", CLAWITZER);
-    const benched = must(applyAction(held.state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }));
+    const benched = must(
+      applyAction(held.state, {
+        type: "retreat",
+        seat: "p1",
+        discardEnergy: [],
+        promoteBenchIndex: 0,
+      }),
+    );
     expect(benched.cardIdByUid[topOf(benched.players.p1.bench[0])]).toBe(CLAUNCHER);
     const evolved = must(
-      applyAction(benched, { type: "evolve", seat: "p1", uid: held.uid, target: { spot: "bench", index: 0 } }),
+      applyAction(benched, {
+        type: "evolve",
+        seat: "p1",
+        uid: held.uid,
+        target: { spot: "bench", index: 0 },
+      }),
     );
     expect(topOf(evolved.players.p1.bench[0])).toBe(held.uid);
     expect(body(evolved.players.p1.bench[0]).benchedTurn).toBe(evolved.turn);
@@ -908,10 +1084,18 @@ describe("D636 §8 — the log rows, the fresh keys and the version", () => {
     const { state: held, uid } = inHand(state, "p2", SWITCH);
     const tails = applyAction(rolled(held, ["tails"]), { type: "playTrainer", seat: "p2", uid });
     if (!tails.ok) throw new Error(tails.error.code);
-    expect(rows(tails.events, tails.state)).toEqual(["flipped for Switch — tails: it is discarded instead of used"]);
+    expect(rows(tails.events, tails.state)).toEqual([
+      "flipped for Switch — tails: it is discarded instead of used",
+    ]);
     const inked = attack(board(OCTILLERY), "p1");
     expect(all(inked.events, "ATTACK_LOCKED")).toEqual([
-      { type: "ATTACK_LOCKED", seat: "p2", uid: topOf(inked.state.players.p2.active), flip: true, coins: 2 },
+      {
+        type: "ATTACK_LOCKED",
+        seat: "p2",
+        uid: topOf(inked.state.players.p2.active),
+        flip: true,
+        coins: 2,
+      },
     ]);
     expect(rows(all(inked.events, "ATTACK_LOCKED"), inked.state)).toEqual([
       "D636 Wall must flip 2 coins to attack next turn — if either is tails, the attack doesn't happen",
@@ -931,9 +1115,5 @@ describe("D636 §8 — the log rows, the fresh keys and the version", () => {
       expect(state.players[seat].trainerFlipLockTurn).toBeNull();
       expect(state.handPlayLockedTurn[seat].Stadium).toBeNull();
     }
-  });
-
-  it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.555.0");
   });
 });
