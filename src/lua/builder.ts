@@ -1,6 +1,6 @@
 import * as api from "../lib/api";
 import { MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
-import { encodeFields } from "./account";
+import { decodeFields, encodeRows } from "./wire";
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
 import { formatById, ENERGY_TYPES, type BuilderCard } from "../decks/cards";
 import {
@@ -285,7 +285,7 @@ export class LuaBuilder {
       }
     }
     for (const k of ["query", "text", "hpMin", "hpMax", "sort"]) rows.push(["F", k, this.value(k)]);
-    this.publish(rows.map(encodeFields).join("\n"));
+    this.publish(encodeRows(rows));
     this.publishImages();
   }
   /** Visible artwork first, then the prefetched pages nearest to this one. */
@@ -541,7 +541,9 @@ export class LuaBuilder {
     else this.back();
   }
   async command(raw: string) {
-    const [action, a = "", b = ""] = raw.split("\t").map(decodeURIComponent);
+    const fields = decodeFields(raw);
+    if (!fields) return;
+    const [action, a = "", b = ""] = fields;
     if (action === "open") {
       if (this.active && this.id === a && this.phase === "ready") return;
       this.active = true;

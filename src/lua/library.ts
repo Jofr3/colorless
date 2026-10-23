@@ -1,7 +1,7 @@
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
-import { encodeFields } from "./account";
+import { decodeFields, encodeFields } from "./wire";
 
 const sorts: [string, ...string[]] = ["name-asc", "name-desc", "cards-desc"];
 const stored = (key: string, allowed: [string, ...string[]]) => {
@@ -184,12 +184,8 @@ export class LuaLibrary {
   }
 
   async command(raw: string) {
-    let fields: string[];
-    try {
-      fields = raw.split("\t").map(decodeURIComponent);
-    } catch {
-      return;
-    }
+    const fields = decodeFields(raw);
+    if (!fields) return;
     const [action, a = "", b = "", c = ""] = fields;
     if (action === "open") {
       this.active = true;

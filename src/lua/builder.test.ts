@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LuaBuilder } from "./builder";
-import { encodeFields } from "./account";
+import { encodeFields } from "./wire";
 import * as api from "../lib/api";
 import type { CardBrief, Deck } from "@colorless/schema";
 vi.mock("../lib/api", () => ({

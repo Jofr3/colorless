@@ -69,6 +69,11 @@ afterEach(() => {
 });
 
 describe("Lua sandbox setup", () => {
+  it("ignores a command with a malformed percent-sequence", async () => {
+    const publish = vi.fn();
+    await expect(new LuaSandbox(publish, vi.fn()).command("pick\t%")).resolves.toBeUndefined();
+    expect(publish).not.toHaveBeenCalled();
+  });
   it("loads decks across folders, escapes names and selects each player independently", async () => {
     const { calls } = stubFetch(reads);
     const { sandbox, publish } = await setup();

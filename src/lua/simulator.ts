@@ -6,18 +6,7 @@ import {
   type PokemonRef,
 } from "@colorless/engine";
 import type { Card, RedactedCard, RedactedInPlay, RedactedGame } from "@colorless/schema";
-import { encodeFields } from "./account";
-
-/** m6x11plus has no arrow, middle dot, em dash, minus or ellipsis glyphs; the
-    engine's log and card text use them, so spell them in ASCII for Lua. */
-function pixelText(text: string): string {
-  return text
-    .replace(/\s*→\s*/g, " -> ")
-    .replace(/\s*·\s*/g, ", ")
-    .replace(/\s*—\s*/g, " - ")
-    .replace(/−/g, "-")
-    .replace(/…/g, "...");
-}
+import { decodeFields, encodeFields, pixelText } from "./wire";
 import type { LocalGameSetup } from "../game/localHost";
 import { GAME_OVER_DETAIL } from "../game/projection";
 import { moveToAction } from "../game/moveToAction";
@@ -764,7 +753,9 @@ export class LuaSimulator {
     this.images([...ordered].slice(0, LUA_ART_SLOTS).map(([id, url]) => ({ id, url })));
   }
   command(raw: string) {
-    const [cmd, ...args] = raw.split("\t").map(decodeURIComponent);
+    const fields = decodeFields(raw);
+    if (!fields) return;
+    const [cmd, ...args] = fields;
     if (cmd === "menu-page") {
       this.menuWindow = {
         menuId: args[0] ?? "",

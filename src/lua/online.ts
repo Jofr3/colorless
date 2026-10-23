@@ -21,7 +21,7 @@ import {
   stakeIdentity,
 } from "../online/session";
 import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
-import { encodeFields } from "./account";
+import { decodeFields, encodeFields } from "./wire";
 import { type CardPool, LuaOnlineMatch } from "./onlineTable";
 
 export type OnlineStep =
@@ -230,7 +230,9 @@ export class LuaOnline {
   }
 
   async command(raw: string) {
-    const [action, a] = raw.split("\t").map(decodeURIComponent);
+    const fields = decodeFields(raw);
+    if (!fields) return;
+    const [action, a] = fields;
     if (action === "open") {
       this.surface = "modal";
       this.routed = "";

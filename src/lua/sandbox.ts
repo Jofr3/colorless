@@ -3,7 +3,7 @@ import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
 import { prepareSandbox, SandboxSetupError } from "../game/prepareSandbox";
 import { validSandboxDecks } from "../game/sandboxDecks";
-import { encodeFields } from "./account";
+import { decodeFields, encodeFields } from "./wire";
 
 /** Read-only deck selection; Lua owns all layout, controls and animation. */
 export class LuaSandbox {
@@ -83,7 +83,9 @@ export class LuaSandbox {
   }
 
   async command(raw: string) {
-    const [action, a, b] = raw.split("\t").map(decodeURIComponent);
+    const fields = decodeFields(raw);
+    if (!fields) return;
+    const [action, a, b] = fields;
     if (action === "close") {
       this.active = false;
       this.epoch++;
