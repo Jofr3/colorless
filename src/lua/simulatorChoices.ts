@@ -1,6 +1,6 @@
 import type { EffectChoice, PokemonRef } from "@colorless/engine";
 import type { RedactedEffectPrompt, RedactedCard } from "@colorless/schema";
-import type { LuaSimulator, SimMenu, SimOption } from "./simulator";
+import type { LuaSimulator, SimMenu, SimOption, ThemeColour } from "./simulator";
 
 /** Shared engine prompt shapes, rendered by Lua as button lists, real card
  * rows (the pack picker), board targets or prize slots. Board/prize menus name
@@ -37,7 +37,7 @@ export function effectMenu(
     !transfer?.from ||
     (!!selectedCounterSource && refUid(selectedCounterSource) === refUid(transfer.from));
   const card = (uid: string): RedactedCard | undefined => attached.find((c) => c.id === uid);
-  const confirm = (choice: EffectChoice, label = "Confirm", colour = "blue") =>
+  const confirm = (choice: EffectChoice, label = "Confirm", colour: ThemeColour = "blue") =>
     sim.action(label, { type: "resolveEffect", seat, choice }, colour);
   const refresh = () => {
     sim.menu = build();

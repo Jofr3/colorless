@@ -17,9 +17,29 @@ import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
 import { LUA_ART_SLOTS } from "./artworkCache";
-import { LocalTableSource, type TableSource } from "./tableSource";
+import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
 import { LuaOnlineMatch, onlineGate } from "./onlineTable";
 
+/** A colour key of frontend/lua/ui/theme.lua; Lua falls back to blue for unknown keys. */
+export type ThemeColour =
+  | "red"
+  | "blue"
+  | "green"
+  | "gold"
+  | "orange"
+  | "paleGreen"
+  | "tray"
+  | "profile"
+  | "ink"
+  | "panel"
+  | "white"
+  | "paper"
+  | "jokerGrey"
+  | "grey"
+  | "textDark"
+  | "money"
+  | "paleGold"
+  | "purple";
 export interface SimOption {
   label: string;
   run: () => void;
@@ -28,7 +48,7 @@ export interface SimOption {
   dimmed?: boolean;
   selected?: boolean;
   card?: RedactedCard;
-  colour?: string;
+  colour?: ThemeColour;
   /** Board/prize menus: the top-card uid or `prize:<index>` Lua highlights. */
   uid?: string;
   /** Sidebar placement: primary (blue, big), danger (red), minor. */
@@ -62,7 +82,7 @@ export interface SimCardAction {
   label: string;
   run: () => void;
   disabled?: boolean;
-  colour?: string;
+  colour?: ThemeColour;
   targetUid?: string;
   group?: string;
   cost?: readonly string[];
@@ -304,7 +324,7 @@ export class LuaSimulator {
     this.open(next.setup);
     this.persist();
   }
-  action(label: string, action: GameAction, colour = "blue"): SimOption {
+  action(label: string, action: GameAction, colour: ThemeColour = "blue"): SimOption {
     return { label, colour, disabled: !this.allowed(action), run: () => this.dispatch(action) };
   }
   private cancelRareCandy() {
@@ -404,7 +424,7 @@ export class LuaSimulator {
       uid: string,
       label: string,
       action: GameAction,
-      colour = "blue",
+      colour: ThemeColour = "blue",
       extra: Partial<SimCardAction> = {},
     ) =>
       push(uid, {
@@ -596,9 +616,7 @@ export class LuaSimulator {
     draw();
     this.emit();
   }
-  history(
-    type: "previousTurn" | "nextTurn" | "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
-  ) {
+  history(type: HistoryStep) {
     const local = this.local;
     if (!local) return;
     if (this.pendingRareCandy) {
@@ -822,7 +840,7 @@ export class LuaSimulator {
         redoAction: "redoAction",
         undoTurn: "undoTurn",
         redoTurn: "redoTurn",
-      } as const;
+      } as const satisfies Record<string, HistoryStep>;
       const type = kinds[args[0] as keyof typeof kinds];
       if (type) this.history(type);
       return;

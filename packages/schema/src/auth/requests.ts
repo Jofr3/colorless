@@ -3,6 +3,8 @@
 
 import { z } from "zod";
 
+export const DISPLAY_NAME_MAX = 64;
+
 /** Emails are normalized to lowercase AT the boundary: `users.email` is
     UNIQUE and every lookup is exact, so one canonical casing everywhere. */
 const emailField = z
@@ -18,7 +20,7 @@ const newPasswordField = z.string().min(8).max(256);
 export const registerRequestSchema = z.object({
   email: emailField,
   password: newPasswordField,
-  displayName: z.string().trim().min(1).max(64).optional(),
+  displayName: z.string().trim().min(1).max(DISPLAY_NAME_MAX).optional(),
 });
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 
@@ -33,7 +35,7 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
     part, while explicitly saving a blank one would only cost you your name —
     the lobby would fall back to a generated "Player 4271" handle (P5-1). */
 export const updateProfileRequestSchema = z.object({
-  displayName: z.string().trim().min(1).max(64),
+  displayName: z.string().trim().min(1).max(DISPLAY_NAME_MAX),
   /** Your favourite deck (P5-7): one of your OWN decks — the api 400s an id
       that isn't yours — or null to clear it. ABSENT (undefined) leaves it
       unchanged, so a name-only save need not carry it, and older clients keep

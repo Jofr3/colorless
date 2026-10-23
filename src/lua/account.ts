@@ -1,4 +1,4 @@
-import type { User } from "@colorless/schema";
+import { DISPLAY_NAME_MAX, type User } from "@colorless/schema";
 import { ApiError, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
@@ -14,9 +14,11 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
 
 /** The Lua scene owns the UI; this adapter shares the typed API client
  * and cookie session. No credentials or profile data go into localStorage. */
+export type AccountStatus = "loading" | "authenticated" | "anonymous" | "error";
+
 export class LuaAccount {
   user: User | null = null;
-  status = "loading";
+  status: AccountStatus = "loading";
   busy = false;
   message = "";
   private operation = 0;
@@ -75,8 +77,8 @@ export class LuaAccount {
   async save(name: string) {
     if (this.busy || !this.user) return;
     const trimmed = name.trim();
-    if (!trimmed || trimmed.length > 64) {
-      this.message = "Use 1 to 64 characters for your name.";
+    if (!trimmed || trimmed.length > DISPLAY_NAME_MAX) {
+      this.message = `Use 1 to ${DISPLAY_NAME_MAX} characters for your name.`;
       this.emit();
       return;
     }
@@ -145,8 +147,8 @@ export class LuaAccount {
     else if (mode === "register" && password.length < 8)
       this.message = "Passwords need at least 8 characters.";
     else if (password.length > 256) this.message = "Password is too long.";
-    else if (mode === "register" && name.trim().length > 64)
-      this.message = "Use up to 64 characters for your name.";
+    else if (mode === "register" && name.trim().length > DISPLAY_NAME_MAX)
+      this.message = `Use up to ${DISPLAY_NAME_MAX} characters for your name.`;
     if (this.message) {
       this.emit();
       return;

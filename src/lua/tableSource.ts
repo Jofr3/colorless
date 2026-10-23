@@ -2,6 +2,7 @@ import {
   applyAction,
   cardOfUid,
   createGame,
+  DECK_SIZE,
   otherSeat,
   redactGame,
   type GameAction,
@@ -25,9 +26,16 @@ export interface TableEvents {
   /** The Adrena-Brain source just picked, so its destination menu keeps it raised. */
   counterSource?: PokemonRef;
 }
+export type LifecycleFlag =
+  | "undo"
+  | "newgame"
+  | "choosedecks"
+  | "concede"
+  | "rematch"
+  | "rematch-sent"
+  | "leave";
 export interface TableLifecycle {
-  /** undo, newgame, choosedecks, concede, rematch, rematch-sent, leave */
-  flags: string[];
+  flags: LifecycleFlag[];
   opponentAway: { name: string; forfeitAt: number | null } | null;
   /** The last rejected `send`, null once one is accepted. */
   error: string | null;
@@ -61,7 +69,7 @@ export interface TableSource {
   release?(): void;
 }
 type Host = ReturnType<typeof initHost>;
-type HistoryStep =
+export type HistoryStep =
   | "previousTurn"
   | "nextTurn"
   | "undoAction"
@@ -192,7 +200,7 @@ export class LocalTableSource implements TableSource {
   turns() {
     return { index: this.host.turnIndex, count: this.host.turns.length };
   }
-  canStep(type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn") {
+  canStep(type: Exclude<HistoryStep, "previousTurn" | "nextTurn">) {
     return stepTarget(this.host, type) !== null;
   }
   history(type: HistoryStep) {
@@ -224,7 +232,7 @@ export class LocalTableSource implements TableSource {
     // createGame assigns p1#0..59 / p2#0..59 once. This immutable mapping
     // retains the full original decks, including cards moved out of play.
     const deck = (seat: Seat) =>
-      Array.from({ length: 60 }, (_, i) => h.game.cardIdByUid[`${seat}#${i}`]).filter(
+      Array.from({ length: DECK_SIZE }, (_, i) => h.game.cardIdByUid[`${seat}#${i}`]).filter(
         (id): id is string => id !== undefined,
       );
     const startedAt = Math.max(Date.now(), h.startedAt + 1);

@@ -13,7 +13,10 @@ import { deckCardSchema } from "./deck";
     200 leaves room for oversized casual lists while bounding request size. */
 export const MAX_DECK_CARD_ENTRIES = 200;
 
-const nameField = z.string().trim().min(1).max(100);
+/** Deck and folder names. */
+export const DECK_NAME_MAX = 100;
+
+const nameField = z.string().trim().min(1).max(DECK_NAME_MAX);
 const tintField = z.number().int().min(0).max(360);
 const formatField = z.string().trim().min(1).max(32);
 

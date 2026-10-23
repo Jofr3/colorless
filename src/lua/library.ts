@@ -1,9 +1,12 @@
+import { DECK_SIZE } from "@colorless/engine";
+import { DECK_NAME_MAX } from "@colorless/schema";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import { reportError } from "../lib/reportError";
 import { readPersisted, writePersisted } from "../lib/persistedState";
+import type { AccountStatus } from "./account";
 
 const sorts = ["name-asc", "name-desc", "cards-desc"];
 const SORT_KEY = "decks.sortKey";
@@ -30,7 +33,7 @@ export class LuaLibrary {
     private openDeck: (id: string) => void,
   ) {}
 
-  session(status: string, id: string) {
+  session(status: AccountStatus, id: string) {
     if (id === this.user && status === "authenticated") return;
     if (status === "loading") return;
     this.epoch++;
@@ -114,7 +117,7 @@ export class LuaLibrary {
       this.decks = decks;
       // Incomplete decks are illegal on sight; complete ones are judged below.
       this.legality = new Map(
-        decks.filter((d) => d.cardCount !== 60).map((d) => [d.id, false] as const),
+        decks.filter((d) => d.cardCount !== DECK_SIZE).map((d) => [d.id, false] as const),
       );
       this.phase = "ready";
       void this.judge(epoch);
@@ -229,8 +232,8 @@ export class LuaLibrary {
     }
     if (action === "create" || (action === "rename" && item)) {
       const name = (action === "create" ? b : c).trim();
-      if (!name || name.length > 100) {
-        this.message = "Use 1 to 100 characters for the name.";
+      if (!name || name.length > DECK_NAME_MAX) {
+        this.message = `Use 1 to ${DECK_NAME_MAX} characters for the name.`;
         this.emit();
         return;
       }

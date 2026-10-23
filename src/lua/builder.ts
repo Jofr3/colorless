@@ -1,5 +1,5 @@
 import * as api from "../lib/api";
-import { MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
+import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
 import { formatById, ENERGY_TYPES, type BuilderCard } from "../decks/cards";
@@ -22,12 +22,15 @@ import { toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
+import type { AccountStatus } from "./account";
 
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
 type CatalogPage = { items: BuilderCard[]; total: number };
 type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; key: string };
 /** Pages fetched on each side of the visible one, so paging never waits. */
 const PREFETCH_PAGES = 2;
+const SEARCH_DEBOUNCE_MS = 250;
+const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
 /** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
 export class LuaBuilder {
@@ -81,7 +84,7 @@ export class LuaBuilder {
     private back: () => void,
     private images: (cards: { id: string; url: string }[]) => void = () => {},
   ) {}
-  session(status: string, user: string) {
+  session(status: AccountStatus, user: string) {
     if (status === "loading" || (status === "authenticated" && user === this.user)) return;
     this.epoch++;
     this.searchEpoch++;
@@ -605,7 +608,7 @@ export class LuaBuilder {
       return;
     }
     if (action === "name") {
-      this.name = a.slice(0, 100);
+      this.name = a.slice(0, DECK_NAME_MAX);
       this.changed();
       return;
     }
@@ -758,7 +761,8 @@ export class LuaBuilder {
         this.page = 1;
         this.searchEpoch++;
         clearTimeout(this.searchTimer);
-        if (action === "filter") this.searchTimer = setTimeout(() => void this.search(), 250);
+        if (action === "filter")
+          this.searchTimer = setTimeout(() => void this.search(), SEARCH_DEBOUNCE_MS);
         else await this.search();
       }
       return;
@@ -827,7 +831,7 @@ export class LuaBuilder {
         } else {
           for (const e of result.entries) this.cards.set(e.card.cardId, e.card);
           this.entries = new Map(
-            result.entries.map((e) => [e.card.cardId, Math.min(99, e.quantity)]),
+            result.entries.map((e) => [e.card.cardId, Math.min(MAX_IMPORT_COPIES, e.quantity)]),
           );
           this.transfer = a;
           this.changed();

@@ -1,9 +1,11 @@
+import { DECK_SIZE } from "@colorless/engine";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
 import { prepareSandbox, SandboxSetupError } from "../game/prepareSandbox";
 import { validSandboxDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
+import type { AccountStatus } from "./account";
 
 /** Read-only deck selection; Lua owns all layout, controls and animation. */
 export class LuaSandbox {
@@ -22,7 +24,7 @@ export class LuaSandbox {
     private launch: (setup: LocalGameSetup) => void,
   ) {}
 
-  session(status: string, id: string) {
+  session(status: AccountStatus, id: string) {
     if (status === "loading" || (status === "authenticated" && id === this.user)) return;
     this.epoch++;
     this.user = status === "authenticated" ? id : "";
@@ -108,7 +110,7 @@ export class LuaSandbox {
       this.message = "";
     } else if (
       action === "start" &&
-      this.selected.every((id) => this.decks.some((d) => d.id === id && d.cardCount === 60))
+      this.selected.every((id) => this.decks.some((d) => d.id === id && d.cardCount === DECK_SIZE))
     ) {
       const epoch = ++this.epoch;
       this.busy = true;

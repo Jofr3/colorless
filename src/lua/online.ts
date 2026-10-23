@@ -24,6 +24,7 @@ import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import { type CardPool, LuaOnlineMatch } from "./onlineTable";
 import { reportError } from "../lib/reportError";
+import type { AccountStatus } from "./account";
 
 export type OnlineStep =
   | "menu"
@@ -203,7 +204,7 @@ export class LuaOnline {
     );
   }
 
-  session(status: string, id: string) {
+  session(status: AccountStatus, id: string) {
     const account =
       status === "authenticated" ? status : status === "loading" ? status : "anonymous";
     const user = account === "authenticated" ? id : "";
