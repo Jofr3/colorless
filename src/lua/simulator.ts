@@ -1,17 +1,9 @@
-import {
-  energyProvidesOf,
-  otherSeat,
-  type GameAction,
-  type PokemonTarget,
-  type PokemonRef,
-} from "@colorless/engine";
-import type { Card, RedactedCard, RedactedInPlay, RedactedGame } from "@colorless/schema";
-import { decodeFields, encodeFields, pixelText } from "./wire";
+import { otherSeat, type GameAction, type PokemonTarget, type PokemonRef } from "@colorless/engine";
+import type { RedactedCard, RedactedGame } from "@colorless/schema";
+import { decodeFields } from "./wire";
 import type { LocalGameSetup } from "../game/localHost";
-import { GAME_OVER_DETAIL } from "../game/projection";
 import { moveToAction } from "../game/moveToAction";
 import { loadSimulatorSave, clearSimulatorSave } from "../game/simulatorSave";
-import { cardImageUrl } from "../lib/api";
 import { effectMenu } from "./simulatorChoices";
 import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../game/usedTrainers";
@@ -19,6 +11,19 @@ import { SimulatorOrder } from "./simulatorOrder";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
 import { LuaOnlineMatch, onlineGate } from "./onlineTable";
+import {
+  boardRows,
+  cardActionRows,
+  EmitFrame,
+  type EmitEvents,
+  type EmitState,
+  headerRow,
+  infoRows,
+  menuRows,
+  sidebarRows,
+  type TablePiles,
+  tableRows,
+} from "./simulatorRows";
 
 const HISTORY_COMMANDS = new Map<string, HistoryStep>([
   ["previous", "previousTurn"],
@@ -52,54 +57,6 @@ export function rareCandyTarget(
       option.stage2.some((e) => e.uid === uid),
   );
   return matches ? target : null;
-}
-
-/** The header's outcome key, title and hint for the viewer's current phase. */
-function headerText(
-  v: RedactedGame | null,
-  names: { you: string; opponent: string } | undefined,
-  online: boolean,
-  rareCandyPending: boolean,
-) {
-  const outcome = v?.outcome
-    ? v.outcome.result === "tie"
-      ? "tie"
-      : v.outcome.winner === "you"
-        ? "win"
-        : "loss"
-    : "";
-  let title = v?.outcome
-    ? v.outcome.result === "tie"
-      ? "Draw"
-      : `${v.outcome.winner === "you" ? names?.you : names?.opponent} wins`
-    : v?.phase.kind === "setup:chooseFirst"
-      ? "Choose who goes first"
-      : v?.phase.kind === "setup:place"
-        ? "Place your Pokémon"
-        : v?.phase.kind === "turn:action"
-          ? "Your turn"
-          : "Choose your next move";
-  let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
-  if (v?.phase.kind === "setup:drawExtra") hint = "Drawing mulligan bonus cards.";
-  if (v?.phase.kind === "ko:takePrizes")
-    hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
-  if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
-  if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
-    hint = GAME_OVER_DETAIL[v.outcome.reason];
-  if (online && v && names && !v.outcome) {
-    const them = names.opponent;
-    // Online, only a rematch's loser chooses; a first game's order is the coin's.
-    if (v.phase.kind === "setup:chooseFirst" && v.waitingOn !== "you")
-      hint = `${them} lost the last game and is choosing who goes first.`;
-    else if (v.phase.kind === "setup:chooseFirst")
-      hint = "You lost the last game. Choose who goes first.";
-    else if (v.phase.kind === "setup:place" && v.phase.ready.you)
-      hint = `Waiting for ${them} to finish placing.`;
-    else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
-    if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
-  }
-  if (rareCandyPending) hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
-  return { outcome, title, hint };
 }
 
 /** A colour key of frontend/lua/ui/theme.lua; Lua falls back to blue for unknown keys. */
@@ -171,17 +128,6 @@ export interface SimCardAction {
   /** Printed damage, drawn at the right of an attack row. */
   damage?: string;
 }
-const RS = "\x1e";
-const US = "\x1f";
-const HINTS = {
-  "setup:chooseFirst": "Choose who goes first.",
-  "setup:place": "Drag a Basic Pokémon to your Active spot, then fill your Bench and press Ready.",
-  "turn:action": "Attach Energy, play Trainers and Pokémon, then attack or end your turn.",
-  "ko:takePrizes": "Take your Prize cards.",
-  "ko:promote": "Choose a new Active Pokémon from your Bench.",
-  "effect:choose": "Resolve the card effect.",
-  gameOver: "The game is over.",
-} as const;
 /** Lua renders a full table. The table source remains the sole rules/state owner. */
 export class LuaSimulator {
   source: TableSource | null = null;
@@ -226,7 +172,7 @@ export class LuaSimulator {
   }
   /** Stage resolved Items/Supporters without changing the engine's discard
    * order or making those cards unavailable to recovery effects. */
-  private tablePiles(view: RedactedGame) {
+  private tablePiles(view: RedactedGame): TablePiles {
     const src = this.source;
     const used = new Set(
       src
@@ -1121,308 +1067,49 @@ export class LuaSimulator {
       this.emit();
     }
   }
-  private infoRow(card: Card): string {
-    const abilities = (card.abilities ?? [])
-      .map((a) => [a.name, a.effect ?? "", a.type ?? "Ability"].join(US))
-      .join(RS);
-    const attacks = (card.attacks ?? [])
-      .map((a) =>
-        [
-          a.name,
-          (a.cost ?? []).join(","),
-          a.damage === undefined || a.damage === null ? "" : String(a.damage),
-          a.effect ?? "",
-        ].join(US),
-      )
-      .join(RS);
-    const wr = (list: { type: string; value?: string }[] | null) =>
-      list?.[0] ? `${list[0].type}:${list[0].value ?? ""}` : "";
-    return encodeFields(
-      [
-        "I",
-        card.id,
-        card.category,
-        card.trainerType ?? "",
-        card.stage ?? "",
-        card.hp ?? "",
-        (card.category === "Energy" ? [energyProvidesOf(card)] : (card.types ?? [])).join(","),
-        card.retreat ?? "",
-        wr(card.weaknesses),
-        wr(card.resistances),
-        card.effect ?? "",
-        abilities,
-        attacks,
-        card.energyType ?? "",
-        card.name,
-      ].map((f) => pixelText(String(f))),
-    );
+  /** The one-shot events this emit hands to Lua; later emits do not repeat them. */
+  private takeEmitEvents(): EmitEvents {
+    const shuffled = this.shuffled;
+    this.shuffled = "";
+    return { shuffled };
+  }
+  private emitState(): EmitState {
+    const src = this.source;
+    return {
+      src,
+      view: this.view(),
+      names: src?.names(),
+      online: !!this.online,
+      turns: this.local?.turns(),
+      message: this.message,
+      pendingRareCandy: this.pendingRareCandy,
+      knockedOut: this.knockedOut,
+      menu: this.menu,
+      menuId: this.menuId,
+      cardOrder: this.cardOrder,
+      now: Date.now(),
+    };
   }
   emit() {
     if (!this.active) return;
-    const src = this.source;
-    const v = this.view();
-    const names = src?.names();
-    this.handlers.clear();
-    const rows: string[] = [];
-    const art = new Map<string, string>();
-    const menuArt: ([string, string] | null)[] = [];
-    const infoIds = new Set<string>();
-    const row = (...fields: (string | number | boolean)[]) =>
-      rows.push(encodeFields(fields.map((f) => pixelText(String(f)))));
-    let token = 0;
-    const register = (o: { run: () => void; disabled?: boolean }) => {
-      const id = String(++token);
-      if (!o.disabled) this.handlers.set(id, o.run);
-      return id;
-    };
-    const noteArt = (c: RedactedCard | undefined) => {
-      if (!c || c.cardId === "hidden" || c.cardId === "empty") return;
-      infoIds.add(c.cardId);
-      if (c.hasImage) art.set(c.cardId, cardImageUrl(c.cardId, "high"));
-    };
-    const option = (kind: string, o: SimOption) => {
-      row(
-        kind,
-        register(o),
-        o.label,
-        o.colour ?? "blue",
-        !!o.disabled,
-        !!o.selected,
-        o.card?.cardId ?? "",
-        o.uid ?? "",
-        !!o.dimmed,
-      );
-      if (kind === "O") {
-        const c = o.card;
-        menuArt.push(
-          c?.hasImage && c.cardId !== "hidden" && c.cardId !== "empty"
-            ? [c.cardId, cardImageUrl(c.cardId, "high")]
-            : null,
-        );
-        if (c && c.cardId !== "hidden" && c.cardId !== "empty") infoIds.add(c.cardId);
-      } else noteArt(o.card);
-    };
-    const { outcome, title, hint } = headerText(v, names, !!this.online, !!this.pendingRareCandy);
-    const allow = src?.allowances();
-    const turns = this.local?.turns();
-    row(
-      ++this.revision,
-      src ? "ready" : "empty",
-      names?.you ?? "",
-      names ? names.opponent : "",
-      v?.turn ?? 0,
-      v?.phase.kind ?? "",
-      this.message,
-      title,
-      hint,
-      turns?.index ?? 0,
-      turns?.count ?? 0,
-      v?.waitingOn ?? "",
-      v?.activePlayer ?? "",
-      v?.seat ?? "",
-      allow?.energy ? 1 : 0,
-      allow?.supporter ? 1 : 0,
-      allow?.retreated ? 1 : 0,
-      outcome,
-      v?.outcome?.result === "win"
-        ? GAME_OVER_DETAIL[v.outcome.reason]
-        : outcome === "tie"
-          ? "Both players ran out of options."
-          : "",
-      this.shuffled,
-      src?.matchId() ?? "",
-    );
-    this.shuffled = "";
-    if (src) {
-      const life = src.lifecycle();
-      const away = life.opponentAway;
-      // awayMs: the forfeit clock at emit time (Lua counts down from receipt),
-      // -1 away with no clock, '' present.
-      row(
-        "L",
-        src.mode,
-        src.spectating,
-        away?.name ?? "",
-        !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - Date.now()),
-        life.flags.join(","),
-        this.online ? "partial" : "full",
-      );
-    }
-    if (this.pendingRareCandy) row("R", this.pendingRareCandy);
-    for (const uid of this.knockedOut) row("D", uid);
+    const events = this.takeEmitEvents();
+    const revision = ++this.revision;
+    const s = this.emitState();
+    const { src, view: v } = s;
+    const f = new EmitFrame();
+    headerRow(f, s, revision, events);
+    tableRows(f, s);
     if (v && src) {
-      const piles = this.tablePiles(v);
-      const isViewerTurn = v.phase.kind === "turn:action" && v.activePlayer === "you";
-      const canDragHand = v.phase.kind === "setup:place" || isViewerTurn;
-      const candyEvolutions = new Set(
-        v.phase.kind === "turn:action" && this.pendingRareCandy
-          ? v.phase.rareCandy.flatMap((option) => option.stage2.map((e) => e.uid))
-          : [],
-      );
-      for (const owner of ["you", "opponent"] as const) {
-        const side = v.board[owner];
-        const hand = side.hand.filter((c) => owner !== "you" || c.id !== this.pendingRareCandy);
-        const seat = owner === "you" ? v.seat : otherSeat(v.seat);
-        const benchKeys = side.bench.map((c, i) => src.benchKey(owner, i) || c.id);
-        const handOrder = this.cardOrder.sorted(
-          seat,
-          "hand",
-          hand.map((c) => c.id),
-        );
-        const benchOrder = this.cardOrder.sorted(seat, "bench", benchKeys);
-        row(
-          "S",
-          owner,
-          side.deckCount,
-          side.prizesRemaining,
-          hand.length,
-          piles[owner].discard.length,
-          side.mulliganCount ?? 0,
-        );
-        const cardRow = (c: RedactedCard, zone: string, index: number) => {
-          const b = (c as RedactedInPlay).battle;
-          const a = (c as RedactedInPlay).attached;
-          const full = c.cardId === "hidden" ? undefined : src.face(c);
-          // Attached cards travel as "type|uid|cardId" so Lua can draw the
-          // real Energy card tucked behind the Pokémon.
-          const energies = (a?.energies ?? []).map((e) => {
-            const ec = src.face(e);
-            // Catalog basic energies carry no `types`; the name is the datum.
-            const type = !ec
-              ? "Colorless"
-              : ec.energyType === "Special"
-                ? "Special"
-                : energyProvidesOf(ec);
-            return [type, e.id, e.cardId].join("|");
-          });
-          const tools = (a?.tools ?? []).map((t) => [t.id, t.cardId].join("|"));
-          const status = b
-            ? [
-                b.conditions.rotation !== "none" ? b.conditions.rotation : "",
-                b.conditions.poisonDamage > 0 ? "poisoned" : "",
-                b.conditions.burned ? "burned" : "",
-              ].filter(Boolean)
-            : [];
-          const draggable =
-            owner === "you" &&
-            c.cardId !== "hidden" &&
-            (!this.pendingRareCandy || (zone === "hand" && candyEvolutions.has(c.id))) &&
-            ((zone === "hand" && canDragHand) ||
-              (zone === "bench" && (v.phase.kind === "setup:place" || isViewerTurn)) ||
-              (zone === "active" && isViewerTurn));
-          row(
-            "C",
-            c.id,
-            c.cardId,
-            c.name,
-            owner,
-            zone,
-            index,
-            c.cardId === "hidden",
-            c.category,
-            c.trainerType ?? "",
-            c.stage ?? full?.stage ?? "",
-            b?.hp ?? "",
-            b?.damage ?? 0,
-            energies.join(","),
-            tools.join(","),
-            status.join(","),
-            (full?.types ?? []).join(","),
-            draggable,
-            zone === "hand"
-              ? handOrder.indexOf(c.id)
-              : zone === "bench"
-                ? benchOrder.indexOf(benchKeys[index] ?? c.id)
-                : index,
-          );
-          noteArt(c);
-          for (const e of a?.energies ?? []) noteArt(e);
-          for (const t of a?.tools ?? []) noteArt(t);
-        };
-        hand.forEach((c, i) => cardRow(c, "hand", i));
-        if (side.active) cardRow(side.active, "active", 0);
-        side.bench.forEach((c, i) => cardRow(c, "bench", i));
-        for (const prize of side.faceUpPrizes) cardRow(prize.card, "prize", prize.index);
-        piles[owner].played.forEach((c, i) => cardRow(c, "played", i));
-        // Send every public discard in its authoritative order so simultaneous
-        // cost discards and turn cleanup can animate without guessing the top.
-        piles[owner].discard.forEach((c, i) => cardRow(c, "discard", i));
-      }
-      if (v.board.stadium) {
-        const c = v.board.stadium;
-        row(
-          "C",
-          c.id,
-          c.cardId,
-          c.name,
-          "global",
-          "stadium",
-          0,
-          false,
-          c.category,
-          c.trainerType ?? "",
-          "",
-          "",
-          0,
-          "",
-          0,
-          "",
-          "",
-          false,
-        );
-        noteArt(c);
-      }
-      if (!this.menu) {
-        for (const [uid, actions] of this.cardActions())
-          for (const a of actions)
-            row(
-              "K",
-              register(a),
-              uid,
-              a.label,
-              a.colour ?? "blue",
-              !!a.disabled,
-              a.targetUid ?? "",
-              a.group ?? "",
-              (a.cost ?? []).join(","),
-              a.damage ?? "",
-              a.cost !== undefined,
-            );
-      }
+      boardRows(f, s, v, src, this.tablePiles(v));
+      if (!s.menu) cardActionRows(f, this.cardActions());
     }
-    // Preserve the sidebar behind dialogs, without registering background actions.
-    for (const o of this.sidebar())
-      row(
-        "A",
-        this.menu ? "" : register(o),
-        o.label,
-        o.colour ?? "blue",
-        !!o.disabled,
-        o.slot ?? "minor",
-      );
-    if (this.menu) {
-      row(
-        "M",
-        this.menu.kind,
-        this.menu.title,
-        this.menu.note ?? "",
-        !!this.menu.mandatory,
-        this.menuId,
-        !!this.menu.hideTargetOutline,
-        this.menu.counterSourceUid ?? "",
-        !!this.menu.counterTransfer,
-      );
-      for (const o of this.menu.options) option("O", o);
-      for (const o of this.menu.footer ?? []) option("F", o);
-    }
-    if (src)
-      for (const id of infoIds) {
-        const card = src.card(id);
-        if (card) rows.push(this.infoRow(card));
-      }
-    this.boardArt = art;
-    this.menuArt = menuArt;
+    sidebarRows(f, this.sidebar(), !!s.menu);
+    if (s.menu) menuRows(f, s.menu, s.menuId);
+    if (src) infoRows(f, src);
+    this.handlers = f.handlers;
+    this.boardArt = f.art;
+    this.menuArt = f.menuArt;
     this.publishImages();
-    this.publish(rows.join("\n"));
+    this.publish(f.rows.join("\n"));
   }
 }
