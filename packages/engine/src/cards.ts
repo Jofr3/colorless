@@ -7,6 +7,7 @@ import { normalizedFace } from "./cardText";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 import type { CardFilter, PokemonSuffix } from "./effectTypes";
 import type { GameState, InPlayPokemon, Seat } from "./types";
+import { SEATS } from "./types";
 
 export type { PokemonSuffix };
 
@@ -28,7 +29,7 @@ export function cardOfUid(state: GameState, uid: string): Card | undefined {
  * stack cards.
  */
 function uidInPlayStack(state: GameState, uid: string): boolean {
-  for (const seat of ["p1", "p2"] as const) {
+  for (const seat of SEATS) {
     const side = state.players[seat];
     if (side.active?.stack.includes(uid) === true) return true;
     if (side.bench.some((body) => body.stack.includes(uid))) return true;
