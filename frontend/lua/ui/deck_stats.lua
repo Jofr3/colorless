@@ -2,6 +2,7 @@
 -- inset black values, 0.05-tile emboss, and half-alpha blue progress fills.
 local T=require('ui.theme')
 local Button=require('ui.button')
+local Limits=require('ui.limits')
 local Stats={}
 function Stats.rows(deck)
   local basic=0
@@ -10,10 +11,10 @@ function Stats.rows(deck)
       if (item.kind=='Pokémon' or item.kind=='Pokemon') and item.subtype=='Basic' then basic=basic+item.quantity end
     end
   end
-  local total=deck.count
+  local total,size=deck.count,Limits.deckSizeFor(deck.format)
   local left={
     {label='Format',value=deck.format=='expanded' and 'Expanded' or 'Standard'},
-    {label='Total cards',value=total..'/60',colour=total>60 and T.red or total==60 and T.paleGold or T.blue},
+    {label='Total cards',value=total..'/'..size,colour=total>size and T.red or total==size and T.paleGold or T.blue},
     {label='Basic Pokemon',value=tostring(basic),colour=basic==0 and T.red or T.white},
   }
   local right={}

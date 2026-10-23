@@ -42,6 +42,9 @@ jobs:
       - name: Format
         run: bun run format:check
 
+      - name: Lua constants
+        run: bun run lua-constants:check
+
       - name: Lua tests
         run: |
           sudo apt-get install -y lua5.2

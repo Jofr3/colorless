@@ -81,13 +81,16 @@ function accountCommand(command) {
   accountRefreshPending = false;
   document.dispatchEvent(new CustomEvent("colorless:account-command", { detail: command }));
 }
+// build:lua replaces the empty object with web/limits.json, generated from the
+// TypeScript name limits by scripts/lua-constants.ts.
+const limits = /* lua-limits */ {};
 // A native text-input proxy gives the Lua field IME, paste, selection and a
 // mobile keyboard. The visible field and caret are drawn in the Lua canvas.
 const nameInput = document.createElement("input");
 nameInput.className = "sr-only";
 nameInput.setAttribute("aria-label", "Display name");
 nameInput.autocomplete = "nickname";
-nameInput.maxLength = 64;
+nameInput.maxLength = limits.displayNameMax;
 nameInput.style.fontSize = "16px";
 nameInput.hidden = true;
 document.querySelector("main").append(nameInput);
@@ -149,7 +152,7 @@ let authRevision = 0;
 for (const [key, label, type, maxLength] of [
   ["email", "Email", "text", 254],
   ["password", "Password", "password", 256],
-  ["name", "Display name (optional)", "text", 64],
+  ["name", "Display name (optional)", "text", limits.displayNameMax],
 ]) {
   const input = document.createElement("input");
   input.className = "sr-only";
@@ -655,7 +658,7 @@ function libraryCommand(command, owner = "library") {
     libraryField = field;
     const code = owner === "online" && field === "code";
     // The code field caps itself in normalizeCode, so a pasted link or "AB-CD" survives.
-    libraryInput.maxLength = 100;
+    libraryInput.maxLength = limits.deckNameMax;
     libraryInput.inputMode = "text";
     if (code) {
       libraryInput.autocapitalize = "characters";
@@ -681,7 +684,7 @@ function libraryCommand(command, owner = "library") {
 }
 const libraryInput = document.createElement("input");
 libraryInput.className = "sr-only";
-libraryInput.maxLength = 100;
+libraryInput.maxLength = limits.deckNameMax;
 libraryInput.autocomplete = "off";
 libraryInput.style.fontSize = "16px";
 libraryInput.hidden = true;
@@ -826,7 +829,8 @@ function builderCommand(command) {
     builderField = field;
     builderInput.value = value || "";
     builderOriginal = builderInput.value;
-    builderInput.maxLength = field === "transfer" ? 30000 : field === "name" ? 100 : 300;
+    builderInput.maxLength =
+      field === "transfer" ? 30000 : field === "name" ? limits.deckNameMax : 300;
     builderInput.setAttribute(
       "aria-label",
       field === "transfer" ? "Decklist. Paste your list here." : field,

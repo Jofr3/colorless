@@ -90,6 +90,11 @@ assert(#left==3 and #right==3 and left[2].value=='9/60' and left[3].value=='4')
 assert(right[1].value=='7' and right[1].suffix==' (77%)')
 example.count=0;example.deck={};example.groups={0,0,0};left,right=Stats.rows(example)
 assert(left[3].value=='0' and right[2].progress==0 and right[2].suffix==' (0%)')
+for _,format in ipairs({'expanded','unknown'})do
+ assert((Stats.rows({format=format,count=60,groups={0,0,0},deck={}}))[2].value=='60/60')
+end
+local deckTab;for _,c in ipairs(tabs.controls)do if c.action=='tab' and c.arg=='deck' then deckTab=c.label end end
+assert(deckTab=='Deck '..tabs.count..'/60')
 activate('deck-info');assert(tabs.modal.mode=='stats')
 assert(#tabs.controls==1 and tabs.controls[1].action=='close','Stats only has the Back button')
 local sx,sy,sw,rx,ry=Stats.layout(tabs.modal)

@@ -4,6 +4,7 @@ local D=require('ui.card_dimensions')
 local Card=require('ui.card')
 local Motion=require('ui.motion')
 local Collection=require('ui.collection_motion')
+local Limits=require('ui.limits')
 local Pile=setmetatable({}, {__index=Card})
 Pile.__index=Pile
 local g=love.graphics
@@ -41,8 +42,8 @@ function Pile.grey(count,rank)
   return rank>3 and 0.5+((count-rank)%7)/50 or 1
 end
 -- CardArea config.deck_height: Balatro stacks its full 52-card deck 0.15
--- tiles high. Give a full 60-card Pokémon deck that same height.
-Pile.DECK_HEIGHT=0.15*52/60
+-- tiles high. Give a full Pokémon deck that same height.
+Pile.DECK_HEIGHT=0.15*52/Limits.deckSize
 function Pile:target(rank,roomWidth,cardParallax)
   local areaParallax=Pile.parallax()
   local depth=Pile.DECK_HEIGHT/52*(self.count-rank)*self.unit
