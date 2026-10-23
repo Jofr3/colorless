@@ -980,10 +980,8 @@ const FOSSIL_CARD_RULE: PassiveEffects = {
   statusImmunities: ["asleep", "burned", "confused", "paralyzed", "poisoned"],
 };
 
-export function passivesOf(
-  state: GameState,
-  pokemon: InPlayPokemon,
-): {
+/** The fold of every passive source on one in-play Pokémon (`passivesOf`). */
+export interface PokemonPassives {
   /**
    * §8.5 post-W/R reduction, summed over the holder's passive and every attached Tool, including
    * type-gated Tools (Rock Chestplate). That gate names the holder, so it is resolved here against
@@ -1175,7 +1173,63 @@ export function passivesOf(
   survivesKoAtFullHp: boolean;
   /** The name of this body's coin-flip survival Ability (Tenacious Body, Durable Body), or null. */
   survivesKoOnCoinFlip: string | null;
-} {
+}
+
+function emptyPassives(): PokemonPassives {
+  return {
+    damageReductionAfterWR: 0,
+    damageBonusBeforeWR: 0,
+    conditionalDamageBonusBeforeWR: [],
+    targetConditionalDamageBonusBeforeWR: [],
+    cantAttackUnless: [],
+    attackTwiceIf: [],
+    attackFirstTurnExempt: false,
+    evolveEarlyExempt: [],
+    attackCostClauses: [],
+    evolveAsNamed: [],
+    hpBonus: 0,
+    damageAttacker: 0,
+    damageAttackerOnKo: 0,
+    damageAttackerFromAbility: 0,
+    damageAttackerOnKoFromAbility: 0,
+    preventDamageFromExV: false,
+    preventDamageFromTypes: [],
+    preventDamageFromHasAbility: false,
+    preventDamageAndEffectsFromSpecialEnergy: false,
+    preventDamageAndEffectsWhileBenched: false,
+    preventDamageWhileBenched: false,
+    preventTrainerEffects: false,
+    preventSupporterEffects: false,
+    preventAttackEffects: false,
+    preventAbilityEffects: false,
+    preventDamageFromAttackerClasses: [],
+    preventDamageAndEffectsFromBanners: [],
+    damageReductionsFromAttacker: [],
+    // `undefined` means no threshold aura, rather than `Infinity`.
+    preventDamageAtOrAbove: undefined,
+    preventDamageOnCoinFlip: [],
+    koPrizeReductions: [],
+    statusImmunities: [],
+    statusRecovery: [],
+    suppressTargetEffectsOnAttack: false,
+    survivesKoAtFullHp: false,
+    survivesKoOnCoinFlip: null,
+  };
+}
+
+/** The holder facts every passive source is gated against. */
+interface PassiveHolder {
+  state: GameState;
+  pokemon: InPlayPokemon;
+  /** The in-play card, or the printed one for a locked holder. */
+  card: Card | undefined;
+  types: readonly string[];
+  isBasic: boolean;
+  onBench: boolean;
+  hasTool: boolean;
+}
+
+export function passivesOf(state: GameState, pokemon: InPlayPokemon): PokemonPassives {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools are not Abilities
   // and keep contributing (Jamming Tower is a separate gate via `toolsInEffect`). The lock aura is
@@ -1213,260 +1267,234 @@ export function passivesOf(
   // leaving the Bench ends the prevention.
   const onBench = isOnBench(state, pokemon);
   const hasTool = pokemon.tools.length > 0;
-  let damageReductionAfterWR = 0;
-  let damageBonusBeforeWR = 0;
-  let hpBonus = 0;
-  let damageAttacker = 0;
-  let damageAttackerOnKo = 0;
-  let damageAttackerFromAbility = 0;
-  let damageAttackerOnKoFromAbility = 0;
-  let preventAbilityEffects = false;
-  let preventDamageFromExV = false;
-  let preventDamageFromHasAbility = false;
-  let preventDamageAndEffectsFromSpecialEnergy = false;
-  let preventDamageAndEffectsWhileBenched = false;
-  let preventDamageWhileBenched = false;
-  let preventTrainerEffects = false;
-  let preventSupporterEffects = false;
-  let preventAttackEffects = false;
-  let suppressTargetEffectsOnAttack = false;
-  let survivesKoAtFullHp = false;
-  let survivesKoOnCoinFlip: string | null = null;
-  // `undefined` means no threshold aura, rather than `Infinity`.
-  let preventDamageAtOrAbove: number | undefined;
-  const preventDamageFromTypes: PokemonType[] = [];
-  const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
-  const preventDamageAndEffectsFromBanners: Banner[] = [];
-  const damageReductionsFromAttacker: { amount: number; attacker: CardFilter }[] = [];
-  // Collected with their Ability names because `ABILITY_COIN_FLIP` has to name one.
-  const preventDamageOnCoinFlip: { ability: string }[] = [];
-  const koPrizeReductions: KoPrizeReduction[] = [];
-  const statusImmunities: StatusName[] = [];
-  const statusRecovery: StatusName[] = [];
-  const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
-  const targetConditionalDamageBonusBeforeWR: {
-    amount: number;
-    targetSuffix: PokemonSuffix;
-  }[] = [];
-  const cantAttackUnless: BoardCondition[] = [];
-  const attackTwiceIf: BoardCondition[] = [];
-  let attackFirstTurnExempt = false;
-  const evolveEarlyExempt: (BoardCondition | undefined)[] = [];
-  const attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[] = [];
-  const evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[] = [];
+  const holder: PassiveHolder = {
+    state,
+    pokemon,
+    card: holderCard,
+    types: holderTypes,
+    isBasic,
+    onBench,
+    hasTool,
+  };
+  const out = emptyPassives();
   for (const [index, passive] of sources.entries()) {
     if (passive === undefined) continue;
     // `sources[0]` is the top card's own printed passive, i.e. its Ability.
     const fromAbility = index === 0;
-    damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
-    // The same reduction gated on the holder's in-play type, summed into the ungated total: it is
-    // the same sentence at the same §8.5 step.
-    const typed = passive.damageReductionAfterWRIfType;
-    if (typed !== undefined && holderTypes.includes(typed.type)) {
-      damageReductionAfterWR += typed.amount;
-    }
-    // Regirock "Rock Armor": the same reduction gated on the holder having any Energy attached (a
-    // card count).
-    if (passive.damageReductionAfterWRIfEnergy !== undefined && pokemon.energy.length > 0)
-      damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
-    // The attacker-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is answered
-    // here, the attacker gate only at the read sites.
-    const fromAttacker = passive.damageReductionAfterWRFromAttacker;
-    if (
-      fromAttacker !== undefined &&
-      (fromAttacker.holderType === undefined || holderTypes.includes(fromAttacker.holderType))
-    )
-      damageReductionsFromAttacker.push({
-        amount: fromAttacker.amount,
-        attacker: fromAttacker.attacker,
-      });
-    damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
-    if (passive.damageBonusBeforeWRIf !== undefined)
-      conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
-    // Brave Bangle's holder clause ("If the Pokémon this card is attached to doesn't have a Rule
-    // Box"), resolved here because only the fold holds the holder.
-    const targeted = passive.damageBonusBeforeWRIfTarget;
-    if (
-      targeted !== undefined &&
-      (targeted.holder === undefined || matchesFilter(holderCard, targeted.holder))
-    )
-      targetConditionalDamageBonusBeforeWR.push(targeted);
-    if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
-    // Stage-free HP bonus, summed into the same accumulator: Hero's Cape has no stage clause so it
-    // must not take `isBasic`; Cynthia's Power Weight gates on `beneficiary`; Okidogi gates on
-    // having any {D} Energy attached (`hasAttachedEnergy`, since the printed word is "any").
-    const stageFree = passive.hpBonus;
-    if (
-      stageFree !== undefined &&
-      (stageFree.beneficiary === undefined || matchesFilter(holderCard, stageFree.beneficiary)) &&
-      (stageFree.requiresEnergyType === undefined ||
-        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType)) &&
-      // Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no threshold).
-      // Counts Energy cards by provision.
-      (stageFree.requiresEnergyCount === undefined ||
-        countAttachedEnergy(state, pokemon, stageFree.requiresEnergyType ?? null) >=
-          stageFree.requiresEnergyCount)
-    ) {
-      hpBonus += stageFree.amount;
-    }
-    // Scaled max-HP bonus: `amount × count`, summed into the same accumulator as the flat bonuses.
-    // The count is never negative, so this only ever adds.
-    const scaled = passive.hpBonusPer;
-    if (scaled !== undefined)
-      hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
-    // Orthworm ex: "for each {M} Energy attached to this Pokémon" multiplies the amount by the
-    // holder's count of that type.
-    const recoil = passive.damageAttacker;
-    if (
-      recoil !== undefined &&
-      (recoil.requiresTool !== true || hasTool) &&
-      // Punk Helmet: "{D} Pokémon this card is attached to" checks the holder's in-play types.
-      (recoil.holderType === undefined || holderTypes.includes(recoil.holderType))
-    ) {
-      const amount =
-        recoil.perAttachedEnergy === undefined
-          ? recoil.amount
-          : recoil.amount * countAttachedEnergy(state, pokemon, recoil.perAttachedEnergy);
-      damageAttacker += amount;
-      if (fromAbility) damageAttackerFromAbility += amount;
-    }
-    // Being in this loop means a §9 lock silences an Ability printing (Maractus "Exploding
-    // Needles") but never an attached Tool. `activeOnly` is answered off `onBench`; `koRecoilOf`
-    // reads this fold before `knockOut` moves the body, so the zone is still the one it was Knocked
-    // Out in.
-    const onKo = passive.damageAttackerOnKo;
-    if (onKo !== undefined && (onKo.activeOnly !== true || !onBench)) {
-      damageAttackerOnKo += onKo.amount;
-      if (fromAbility) damageAttackerOnKoFromAbility += onKo.amount;
-    }
-    if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
-    if (passive.preventDamageFromType !== undefined)
-      preventDamageFromTypes.push(passive.preventDamageFromType);
-    // Read in this loop so a §9 Ability-lock switches the prevention off; reading the program off
-    // `top` at the damage sites would miss that.
-    if (passive.preventDamageFromHasAbility === true) preventDamageFromHasAbility = true;
-    // Separate from the damage-only flag: "prevent all damage" does not imply "and effects of".
-    if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
-      preventDamageAndEffectsFromSpecialEnergy = true;
-    // "As long as this Pokémon is on your Bench": the zone clause is answered here.
-    if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
-      preventDamageAndEffectsWhileBenched = true;
-    // Plume Protection: the same Bench gate, damage only.
-    if (passive.preventDamageWhileBenched === true && onBench) preventDamageWhileBenched = true;
-    // Trainer-borne shield with no conditions. In this loop so a §9 lock switches it off.
-    if (passive.preventTrainerEffects === true) preventTrainerEffects = true;
-    // Protective Sail: the same shield, Supporters only (read at the funnel).
-    if (passive.preventSupporterEffects === true) preventSupporterEffects = true;
-    // Attack-effect shield with no conditions. In this loop so a §9 lock switches it off.
-    if (passive.preventAttackEffects === true) preventAttackEffects = true;
-    if (passive.preventAbilityEffects === true) preventAbilityEffects = true;
-    // Pushed rather than OR'd because sources can name different classes ("Pokémon ex", "Basic
-    // Pokémon ex"). In this loop so a §9 lock switches it off.
-    if (passive.preventDamageFromAttackerClass !== undefined)
-      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
-    // Sparkling Scales, in this loop so a §9 lock switches it off.
-    if (passive.preventDamageAndEffectsFromBanner !== undefined)
-      preventDamageAndEffectsFromBanners.push(passive.preventDamageAndEffectsFromBanner);
-    // `Math.min` because a lower threshold shields strictly more damage, so the minimum keeps every
-    // source's promise. In this loop so a §9 lock switches it off.
-    if (passive.preventDamageAtOrAbove !== undefined)
-      preventDamageAtOrAbove =
-        preventDamageAtOrAbove === undefined
-          ? passive.preventDamageAtOrAbove
-          : Math.min(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
-    // `requiresEnergyType` (Fezandipiti's "has any {D} Energy attached") is a holder fact resolved
-    // here; absent means the unconditional printing. Pushed, not OR'd: each source is its own coin
-    // flip. In this loop so a locked holder draws no coin.
-    if (
-      passive.preventDamageOnCoinFlip !== undefined &&
-      (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||
-        hasAttachedEnergy(state, pokemon, passive.preventDamageOnCoinFlip.requiresEnergyType))
-    )
-      preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
-    // §8.1 Prize reduction, pushed raw: its riders concern the seat, the attack cause or the game,
-    // which this fold cannot answer.
-    if (passive.onKoPrizeReduction !== undefined)
-      koPrizeReductions.push(passive.onKoPrizeReduction);
-    // §12 immunity, collected in this loop so a §9 lock drops the holder's own passive while Tools
-    // and Energy still apply.
-    if (passive.statusImmunities !== undefined) statusImmunities.push(...passive.statusImmunities);
-    // §12 recovery, deliberately not derived from the immunity: most immunity printings refuse
-    // without recovering.
-    if (passive.statusRecovery !== undefined) statusRecovery.push(...passive.statusRecovery);
-    // Attacker-side suppression ("Azure Seas"), in this loop so a §9 lock silences it.
-    if (passive.suppressTargetEffectsOnAttack === true) suppressTargetEffectsOnAttack = true;
-    // §8.1 KO survival ("Resolute Heart", "Sturdy"), in this loop so a §9 lock silences it.
-    // Survival Brace uses `survivesKoAtFullHpFromOpponentThenDiscard` instead because it needs the
-    // Tool's uid.
-    if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
-    // Tenacious Body / Durable Body, in this loop so a §9 lock silences it.
-    if (passive.survivesKoOnCoinFlip !== undefined)
-      survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
-    // §8 attack gate, collected raw; in this loop so a §9 lock silences it ("Power Saver").
-    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);
-    // Attack-again licence (Festival Lead), pushed raw; a locked holder loses the window.
-    if (passive.attackTwiceIf !== undefined) attackTwiceIf.push(passive.attackTwiceIf);
-    // §4 first-turn attack licence ("Debut Performance"); in this loop so a §9 lock hands the ban
-    // back.
-    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;
-    // §4/§10 evolve licence, collected raw because its conditions differ in kind. `activeOnly`
-    // (Eevee) is answered here via `!onBench`; it is per printing, since Karrablast and Shelmet
-    // print no Active Spot clause. `ifInPlay` and `ifCondition` are seat-relative and resolved by
-    // `evolveEarlyLicensed` (boardCondition.ts). In this loop so a §9 lock silences the licence.
-    const licence = passive.evolveEarlyExempt;
-    if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {
-      evolveEarlyExempt.push(
-        licence.ifInPlay === undefined
-          ? // Luxio "Fighting Roar"
-            licence.ifCondition
-          : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
-      );
-    }
-    // Ability-printed cost clause (Noivern, Kyurem), pushed raw because the condition is
-    // seat-relative and `attackCostAt` evaluates it. In this loop so a §9 lock restores the printed
-    // cost.
-    if (passive.attackCostClause !== undefined) attackCostClauses.push(passive.attackCostClause);
-    // Evolve alias (Eevee ex "Rainbow DNA"); a locked Eevee ex evolves by §10 name match alone.
-    if (passive.evolveAsNamed !== undefined) evolveAsNamed.push(passive.evolveAsNamed);
+    foldDamageModifiers(out, passive, holder);
+    foldHpBonus(out, passive, holder);
+    foldRecoil(out, passive, holder, fromAbility);
+    foldPreventions(out, passive, holder);
+    foldStatuses(out, passive);
+    foldLicences(out, passive, holder);
   }
-  return {
-    damageReductionAfterWR,
-    damageBonusBeforeWR,
-    conditionalDamageBonusBeforeWR,
-    targetConditionalDamageBonusBeforeWR,
-    cantAttackUnless,
-    attackTwiceIf,
-    attackFirstTurnExempt,
-    evolveEarlyExempt,
-    attackCostClauses,
-    evolveAsNamed,
-    hpBonus,
-    damageAttacker,
-    damageAttackerOnKo,
-    damageAttackerFromAbility,
-    damageAttackerOnKoFromAbility,
-    preventDamageFromExV,
-    preventDamageFromTypes,
-    preventDamageFromHasAbility,
-    preventDamageAndEffectsFromSpecialEnergy,
-    preventDamageAndEffectsWhileBenched,
-    preventDamageWhileBenched,
-    preventTrainerEffects,
-    preventSupporterEffects,
-    preventAttackEffects,
-    preventAbilityEffects,
-    preventDamageFromAttackerClasses,
-    preventDamageAndEffectsFromBanners,
-    damageReductionsFromAttacker,
-    preventDamageAtOrAbove,
-    preventDamageOnCoinFlip,
-    koPrizeReductions,
-    statusImmunities,
-    statusRecovery,
-    suppressTargetEffectsOnAttack,
-    survivesKoAtFullHp,
-    survivesKoOnCoinFlip,
-  };
+  return out;
+}
+
+/** §8.5 reductions and pre-W/R bonuses. */
+function foldDamageModifiers(
+  out: PokemonPassives,
+  passive: PassiveEffects,
+  holder: PassiveHolder,
+): void {
+  out.damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
+  // The same reduction gated on the holder's in-play type, summed into the ungated total: it is
+  // the same sentence at the same §8.5 step.
+  const typed = passive.damageReductionAfterWRIfType;
+  if (typed !== undefined && holder.types.includes(typed.type)) {
+    out.damageReductionAfterWR += typed.amount;
+  }
+  // Regirock "Rock Armor": the same reduction gated on the holder having any Energy attached (a
+  // card count).
+  if (passive.damageReductionAfterWRIfEnergy !== undefined && holder.pokemon.energy.length > 0)
+    out.damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
+  // The attacker-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is answered
+  // here, the attacker gate only at the read sites.
+  const fromAttacker = passive.damageReductionAfterWRFromAttacker;
+  if (
+    fromAttacker !== undefined &&
+    (fromAttacker.holderType === undefined || holder.types.includes(fromAttacker.holderType))
+  )
+    out.damageReductionsFromAttacker.push({
+      amount: fromAttacker.amount,
+      attacker: fromAttacker.attacker,
+    });
+  out.damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
+  if (passive.damageBonusBeforeWRIf !== undefined)
+    out.conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
+  // Brave Bangle's holder clause ("If the Pokémon this card is attached to doesn't have a Rule
+  // Box"), resolved here because only the fold holds the holder.
+  const targeted = passive.damageBonusBeforeWRIfTarget;
+  if (
+    targeted !== undefined &&
+    (targeted.holder === undefined || matchesFilter(holder.card, targeted.holder))
+  )
+    out.targetConditionalDamageBonusBeforeWR.push(targeted);
+}
+
+function foldHpBonus(out: PokemonPassives, passive: PassiveEffects, holder: PassiveHolder): void {
+  const { state, pokemon } = holder;
+  if (holder.isBasic) out.hpBonus += passive.basicHpBonus ?? 0;
+  // Stage-free HP bonus, summed into the same accumulator: Hero's Cape has no stage clause so it
+  // must not take `isBasic`; Cynthia's Power Weight gates on `beneficiary`; Okidogi gates on
+  // having any {D} Energy attached (`hasAttachedEnergy`, since the printed word is "any").
+  const stageFree = passive.hpBonus;
+  if (
+    stageFree !== undefined &&
+    (stageFree.beneficiary === undefined || matchesFilter(holder.card, stageFree.beneficiary)) &&
+    (stageFree.requiresEnergyType === undefined ||
+      hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType)) &&
+    // Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no threshold).
+    // Counts Energy cards by provision.
+    (stageFree.requiresEnergyCount === undefined ||
+      countAttachedEnergy(state, pokemon, stageFree.requiresEnergyType ?? null) >=
+        stageFree.requiresEnergyCount)
+  ) {
+    out.hpBonus += stageFree.amount;
+  }
+  // Scaled max-HP bonus: `amount × count`, summed into the same accumulator as the flat bonuses.
+  // The count is never negative, so this only ever adds.
+  const scaled = passive.hpBonusPer;
+  if (scaled !== undefined)
+    out.hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
+}
+
+/** §9/§8.1 recoil on the attacker, with the holder's own Ability share kept apart. */
+function foldRecoil(
+  out: PokemonPassives,
+  passive: PassiveEffects,
+  holder: PassiveHolder,
+  fromAbility: boolean,
+): void {
+  // Orthworm ex: "for each {M} Energy attached to this Pokémon" multiplies the amount by the
+  // holder's count of that type.
+  const recoil = passive.damageAttacker;
+  if (
+    recoil !== undefined &&
+    (recoil.requiresTool !== true || holder.hasTool) &&
+    // Punk Helmet: "{D} Pokémon this card is attached to" checks the holder's in-play types.
+    (recoil.holderType === undefined || holder.types.includes(recoil.holderType))
+  ) {
+    const amount =
+      recoil.perAttachedEnergy === undefined
+        ? recoil.amount
+        : recoil.amount *
+          countAttachedEnergy(holder.state, holder.pokemon, recoil.perAttachedEnergy);
+    out.damageAttacker += amount;
+    if (fromAbility) out.damageAttackerFromAbility += amount;
+  }
+  // A §9 lock silences an Ability printing (Maractus "Exploding Needles") but never an attached
+  // Tool. `activeOnly` is answered off `onBench`; `koRecoilOf` reads this fold before `knockOut`
+  // moves the body, so the zone is still the one it was Knocked Out in.
+  const onKo = passive.damageAttackerOnKo;
+  if (onKo !== undefined && (onKo.activeOnly !== true || !holder.onBench)) {
+    out.damageAttackerOnKo += onKo.amount;
+    if (fromAbility) out.damageAttackerOnKoFromAbility += onKo.amount;
+  }
+}
+
+/**
+ * §8.5/§11 damage and effect preventions, KO survival and target-effect suppression. Folded per
+ * source, so a §9 lock on the holder switches its Ability's share off.
+ */
+function foldPreventions(
+  out: PokemonPassives,
+  passive: PassiveEffects,
+  holder: PassiveHolder,
+): void {
+  if (passive.preventDamageFromExV === true) out.preventDamageFromExV = true;
+  if (passive.preventDamageFromType !== undefined)
+    out.preventDamageFromTypes.push(passive.preventDamageFromType);
+  if (passive.preventDamageFromHasAbility === true) out.preventDamageFromHasAbility = true;
+  // Separate from the damage-only flag: "prevent all damage" does not imply "and effects of".
+  if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
+    out.preventDamageAndEffectsFromSpecialEnergy = true;
+  // "As long as this Pokémon is on your Bench": the zone clause is answered here.
+  if (passive.preventDamageAndEffectsWhileBenched === true && holder.onBench)
+    out.preventDamageAndEffectsWhileBenched = true;
+  // Plume Protection: the same Bench gate, damage only.
+  if (passive.preventDamageWhileBenched === true && holder.onBench)
+    out.preventDamageWhileBenched = true;
+  if (passive.preventTrainerEffects === true) out.preventTrainerEffects = true;
+  // Protective Sail: the same shield, Supporters only (read at the funnel).
+  if (passive.preventSupporterEffects === true) out.preventSupporterEffects = true;
+  if (passive.preventAttackEffects === true) out.preventAttackEffects = true;
+  if (passive.preventAbilityEffects === true) out.preventAbilityEffects = true;
+  // Pushed rather than OR'd because sources can name different classes ("Pokémon ex", "Basic
+  // Pokémon ex").
+  if (passive.preventDamageFromAttackerClass !== undefined)
+    out.preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
+  // Sparkling Scales.
+  if (passive.preventDamageAndEffectsFromBanner !== undefined)
+    out.preventDamageAndEffectsFromBanners.push(passive.preventDamageAndEffectsFromBanner);
+  // `Math.min` because a lower threshold shields strictly more damage, so the minimum keeps every
+  // source's promise.
+  if (passive.preventDamageAtOrAbove !== undefined)
+    out.preventDamageAtOrAbove =
+      out.preventDamageAtOrAbove === undefined
+        ? passive.preventDamageAtOrAbove
+        : Math.min(out.preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
+  // `requiresEnergyType` (Fezandipiti's "has any {D} Energy attached") is a holder fact resolved
+  // here; absent means the unconditional printing. Pushed, not OR'd: each source is its own coin
+  // flip, collected with its Ability name because `ABILITY_COIN_FLIP` has to name one.
+  if (
+    passive.preventDamageOnCoinFlip !== undefined &&
+    (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||
+      hasAttachedEnergy(
+        holder.state,
+        holder.pokemon,
+        passive.preventDamageOnCoinFlip.requiresEnergyType,
+      ))
+  )
+    out.preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
+  // §8.1 Prize reduction, pushed raw: its riders concern the seat, the attack cause or the game,
+  // which this fold cannot answer.
+  if (passive.onKoPrizeReduction !== undefined)
+    out.koPrizeReductions.push(passive.onKoPrizeReduction);
+  // Attacker-side suppression ("Azure Seas").
+  if (passive.suppressTargetEffectsOnAttack === true) out.suppressTargetEffectsOnAttack = true;
+  // §8.1 KO survival ("Resolute Heart", "Sturdy"). Survival Brace uses
+  // `survivesKoAtFullHpFromOpponentThenDiscard` instead because it needs the Tool's uid.
+  if (passive.survivesKoAtFullHp === true) out.survivesKoAtFullHp = true;
+  // Tenacious Body / Durable Body.
+  if (passive.survivesKoOnCoinFlip !== undefined)
+    out.survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
+}
+
+/** §12 immunity and recovery; a §9 lock drops the holder's own share while Tools and Energy apply. */
+function foldStatuses(out: PokemonPassives, passive: PassiveEffects): void {
+  if (passive.statusImmunities !== undefined)
+    out.statusImmunities.push(...passive.statusImmunities);
+  // Deliberately not derived from the immunity: most immunity printings refuse without recovering.
+  if (passive.statusRecovery !== undefined) out.statusRecovery.push(...passive.statusRecovery);
+}
+
+/** §4/§5.3/§8/§10 attack and evolve gates and licences, collected raw where seat-relative. */
+function foldLicences(out: PokemonPassives, passive: PassiveEffects, holder: PassiveHolder): void {
+  // §8 attack gate ("Power Saver").
+  if (passive.cantAttackUnless !== undefined) out.cantAttackUnless.push(passive.cantAttackUnless);
+  // Attack-again licence (Festival Lead); a locked holder loses the window.
+  if (passive.attackTwiceIf !== undefined) out.attackTwiceIf.push(passive.attackTwiceIf);
+  // §4 first-turn attack licence ("Debut Performance"); a §9 lock hands the ban back.
+  if (passive.attackFirstTurnExempt === true) out.attackFirstTurnExempt = true;
+  // §4/§10 evolve licence, collected raw because its conditions differ in kind. `activeOnly`
+  // (Eevee) is answered here via `!onBench`; it is per printing, since Karrablast and Shelmet
+  // print no Active Spot clause. `ifInPlay` and `ifCondition` are seat-relative and resolved by
+  // `evolveEarlyLicensed` (boardCondition.ts).
+  const licence = passive.evolveEarlyExempt;
+  if (licence !== undefined && (licence.activeOnly !== true || !holder.onBench)) {
+    out.evolveEarlyExempt.push(
+      licence.ifInPlay === undefined
+        ? // Luxio "Fighting Roar"
+          licence.ifCondition
+        : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
+    );
+  }
+  // Ability-printed cost clause (Noivern, Kyurem), pushed raw because the condition is
+  // seat-relative and `attackCostAt` evaluates it; a §9 lock restores the printed cost.
+  if (passive.attackCostClause !== undefined) out.attackCostClauses.push(passive.attackCostClause);
+  // Evolve alias (Eevee ex "Rainbow DNA"); a locked Eevee ex evolves by §10 name match alone.
+  if (passive.evolveAsNamed !== undefined) out.evolveAsNamed.push(passive.evolveAsNamed);
 }
 
 /** §8.1 KO SURVIVAL — the HP `remaining` a clamped body is left with. The printed
