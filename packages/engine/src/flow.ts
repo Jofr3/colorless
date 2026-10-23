@@ -122,70 +122,73 @@ export { isLethallyDamaged } from "./continuous";
  */
 export function knockOut(
   state: GameState,
-  koedSeat: Seat,
-  koedUid: string,
-  prizeSeat: Seat,
+  ko: {
+    koedSeat: Seat;
+    koedUid: string;
+    prizeSeat: Seat;
+    byAttack: boolean;
+    /**
+     * Uids that go to `koedSeat`'s hand instead of the discard pile (Diver's Catch, Infinite
+     * Shadow). Empty on every other Knock Out.
+     */
+    toHand: readonly string[];
+  },
   events: GameEvent[],
-  byAttack = false,
-  /**
-   * Uids that go to `koedSeat`'s hand instead of the discard pile (Diver's Catch, Infinite Shadow).
-   * Empty on every other Knock Out.
-   */
-  toHand: readonly string[] = [],
 ): { state: GameState; stages: PendingStage[] } {
+  const { koedSeat, koedUid, prizeSeat, byAttack, toHand } = ko;
   const side = state.players[koedSeat];
-  // Stamp the turn this seat lost a Pokémon and which body it was. The mark list restarts on a
-  // later turn and appends otherwise, keyed on uid so the speculative tie probe and the real call
-  // agree. Only a Knock Out on the opponent's turn is stamped, judged by turn parity, because
-  // readers only ask about the opponent's last turn.
-  const ownTurn = turnOwnerOf(state) === koedSeat;
-  const stampFor = (card: Card | undefined): GameState => {
-    if (ownTurn) return state;
-    const carried = state.lastKoTurn[koedSeat] === state.turn ? state.lastKoMarks[koedSeat] : [];
-    // `card` is undefined only when a stack outruns the catalog; the empty name matches no owner
-    // prefix, so narrowed gates read false while the bare turn stamp still reads true.
-    const mark: KnockOutMark = { uid: koedUid, name: card?.name ?? "", byAttack };
-    return {
-      ...state,
-      lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn },
-      lastKoMarks: {
-        ...state.lastKoMarks,
-        [koedSeat]: carried.some((m) => m.uid === koedUid) ? carried : [...carried, mark],
-      },
-    };
-  };
-  // The Active?
-  if (side.active !== null && topUid(side.active) === koedUid) {
-    const card = topCardOf(state, side.active);
-    const stamped = stampFor(card);
-    const cleanup = koCleanup(side, side.active, toHand);
-    events.push(knockedOutEvent(koedSeat, koedUid, cleanup));
-    return {
-      state: withSide(stamped, koedSeat, { ...cleanup.side, active: null }),
-      stages: [
-        { kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) },
-        { kind: "promote", seat: koedSeat },
-      ],
-    };
-  }
-  // A benched one? (§8.1 — no promotion; the bench stays dense.)
-  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === koedUid);
-  const benched = index === -1 ? undefined : side.bench[index];
-  if (benched !== undefined) {
-    const card = topCardOf(state, benched);
-    const stamped = stampFor(card);
-    const cleanup = koCleanup(side, benched, toHand);
-    const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
-    events.push(knockedOutEvent(koedSeat, koedUid, cleanup));
-    return {
-      state: withSide(stamped, koedSeat, { ...cleanup.side, bench }),
-      stages: [
-        { kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) },
-      ],
-    };
-  }
+  const isActive = side.active !== null && topUid(side.active) === koedUid;
+  // §8.1: a benched Knock Out owes no promotion and the bench stays dense.
+  const index = isActive ? -1 : side.bench.findIndex((pokemon) => topUid(pokemon) === koedUid);
+  const body = isActive ? side.active : index === -1 ? undefined : side.bench[index];
   // Not in play — unreachable (every caller just scanned it lethal). No-op.
-  return { state, stages: [] };
+  if (body === null || body === undefined) return { state, stages: [] };
+  const card = topCardOf(state, body);
+  const cleanup = koCleanup(side, body, toHand);
+  events.push(knockedOutEvent(koedSeat, koedUid, cleanup));
+  const patch: Partial<PlayerSide> = isActive
+    ? { active: null }
+    : { bench: [...side.bench.slice(0, index), ...side.bench.slice(index + 1)] };
+  const takePrizes: PendingStage = {
+    kind: "takePrizes",
+    seat: prizeSeat,
+    count: card === undefined ? 1 : prizeValueOf(card),
+  };
+  return {
+    state: withSide(stampKnockOut(state, koedSeat, koedUid, card, byAttack), koedSeat, {
+      ...cleanup.side,
+      ...patch,
+    }),
+    stages: isActive ? [takePrizes, { kind: "promote", seat: koedSeat }] : [takePrizes],
+  };
+}
+
+/**
+ * Stamp the turn `seat` lost a Pokémon and which body it was. The mark list restarts on a later
+ * turn and appends otherwise, keyed on uid so the speculative tie probe and the real call agree.
+ * Only a Knock Out on the opponent's turn is stamped, judged by turn parity, because readers only
+ * ask about the opponent's last turn.
+ */
+function stampKnockOut(
+  state: GameState,
+  seat: Seat,
+  uid: string,
+  card: Card | undefined,
+  byAttack: boolean,
+): GameState {
+  if (turnOwnerOf(state) === seat) return state;
+  const carried = state.lastKoTurn[seat] === state.turn ? state.lastKoMarks[seat] : [];
+  // `card` is undefined only when a stack outruns the catalog; the empty name matches no owner
+  // prefix, so narrowed gates read false while the bare turn stamp still reads true.
+  const mark: KnockOutMark = { uid, name: card?.name ?? "", byAttack };
+  return {
+    ...state,
+    lastKoTurn: { ...state.lastKoTurn, [seat]: state.turn },
+    lastKoMarks: {
+      ...state.lastKoMarks,
+      [seat]: carried.some((m) => m.uid === uid) ? carried : [...carried, mark],
+    },
+  };
 }
 
 /**
@@ -716,18 +719,21 @@ function collectKnockOutPass(
         : undefined;
     const ko = knockOut(
       next,
-      entry.ref.seat,
-      entry.ref.uid,
-      otherSeat(entry.ref.seat),
+      {
+        koedSeat: entry.ref.seat,
+        koedUid: entry.ref.uid,
+        prizeSeat: otherSeat(entry.ref.seat),
+        byAttack: byAttackFor(entry.ref),
+        toHand:
+          rescuable === undefined
+            ? []
+            : // Infinite Shadow's own stack also returns via `toHand`.
+              [
+                ...koEnergyRescueUids(state, entry.ref.seat, rescuable),
+                ...koSelfToHandUids(state, entry.ref.seat, rescuable),
+              ],
+      },
       events,
-      byAttackFor(entry.ref),
-      rescuable === undefined
-        ? []
-        : // Infinite Shadow's own stack also returns via `toHand`.
-          [
-            ...koEnergyRescueUids(state, entry.ref.seat, rescuable),
-            ...koSelfToHandUids(state, entry.ref.seat, rescuable),
-          ],
     );
     next = ko.state;
     for (const guardEvent of entry.guardEvents) events.push(guardEvent);
@@ -2072,122 +2078,20 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
   const stage = state.pending[0];
   if (stage === undefined) return ok(state, events);
   switch (stage.kind) {
-    case "takePrizes": {
-      const side = state.players[stage.seat];
-      const count = Math.min(stage.count, side.prizes.length);
-      // Nothing left to take — only reachable if a future effect empties the
-      // row mid-KO; the game would already be over otherwise.
-      if (count === 0) return advance(popStage(state), events);
-      if (count < side.prizes.length) {
-        const next: GameState = {
-          ...state,
-          phase: { kind: "ko:takePrizes", seat: stage.seat, count },
-        };
-        events.push({ type: "PRIZES_OWED", seat: stage.seat, count });
-        return ok(next, events);
-      }
-      // Taking the LAST prize(s) is forced — auto-resolve; the row is now
-      // empty, so the shared win check always ends the game (§14.1, or a
-      // tie via §14).
-      return resolvePrizesAndResume(
-        state,
-        stage.seat,
-        side.prizes.map((_, index) => index),
-        events,
-      );
-    }
-    case "shuffleHandIntoDeck": {
-      // Celebration: "If you do, shuffle your hand into your deck." Runs after its Prize stage.
-      // Never parks.
-      const side = state.players[stage.seat];
-      const [deck, rngState] = shuffle([...side.deck, ...side.hand], state.rngState);
-      events.push({ type: "HAND_SHUFFLED_INTO_DECK", seat: stage.seat, count: side.hand.length });
-      return advance(
-        popStage({ ...withSide(state, stage.seat, { ...side, hand: [], deck }), rngState }),
-        events,
-      );
-    }
-    case "promote": {
-      const side = state.players[stage.seat];
-      // Already occupied (a future effect re-filled the spot) — nothing owed.
-      // The promote action handler mirrors this guard (attack.ts).
-      if (side.active !== null) return advance(popStage(state), events);
-      if (side.bench.length <= 1) {
-        // A lone benched Pokémon is a forced promotion (M1 doctrine: a
-        // choice with no choice in it is not a choice) and an EMPTY bench is
-        // the §14.2 loss — both auto-resolve through the shared helper:
-        // promoting from an empty bench is the identity, and the win check
-        // sees the whole empty board, so a simultaneous condition
-        // (unreachable in M2: attacks never KO the attacker's own side)
-        // resolves to a tie per §14 rather than a hardcoded winner.
-        return resolvePromotionAndResume(state, stage.seat, 0, events);
-      }
-      const next: GameState = { ...state, phase: { kind: "ko:promote", seat: stage.seat } };
-      events.push({ type: "PROMOTION_REQUIRED", seat: stage.seat });
-      return ok(next, events);
-    }
-    case "endTurn": {
-      // Powerglass can park, so queue one trigger per live end-of-turn Tool on the Active ahead of
-      // a copy of this stage marked `toolsDone`.
-      if (stage.toolsDone !== true) {
-        const powerglass = endTurnToolTriggersOf(state, stage.seat);
-        if (powerglass.length > 0) {
-          return advance(
-            {
-              ...state,
-              pending: [
-                ...powerglass.map(
-                  ({ toolUid }): PendingStage => ({
-                    kind: "endTurnToolTrigger",
-                    seat: stage.seat,
-                    toolUid,
-                  }),
-                ),
-                { ...stage, toolsDone: true },
-                ...state.pending.slice(1),
-              ],
-            },
-            events,
-          );
-        }
-      }
-      // Amarys: "At the end of this turn, if you have 5 or more cards in your hand, discard your
-      // hand." Paid before `TURN_ENDED` and before `startTurn` resets allowances. On an
-      // attack-ended turn this runs after the prize stages, so prizes count toward the threshold.
-      const threshold = state.allowances.endOfTurnHandDiscard;
-      const ended =
-        threshold !== null && state.players[stage.seat].hand.length >= threshold
-          ? discardHand(state, { seat: stage.seat }, events)
-          : state;
-      // Ignition Energy: "discard it at the end of your turn", turn owner only. Never parks.
-      const ignited = discardEndOfTurnEnergy(ended, stage.seat, events);
-      // Technical Machine end-of-turn discard, turn owner only.
-      const toolsShed = discardEndOfTurnTools(ignited, stage.seat, events);
-      events.push({ type: "TURN_ENDED", turn: state.turn, seat: stage.seat });
-      return advance(popStage(toolsShed), events);
-    }
+    case "takePrizes":
+      return runTakePrizesStage(state, stage, events);
+    case "shuffleHandIntoDeck":
+      return runShuffleHandStage(state, stage, events);
+    case "promote":
+      return runPromoteStage(state, stage, events);
+    case "endTurn":
+      return runEndTurnStage(state, stage, events);
     case "checkup":
       // runCheckup pops the stage itself: its KO stage-pairs go in front of
       // the remainder, and a double-KO tie ends the game outright.
       return runCheckup(state, stage.seat, events);
-    case "resumeTurn": {
-      // A mid-turn KO has resolved: hand the turn back to the actor. Always the last stage.
-      // Festival Lead's attack-again offer is announced here, when the actor regains control, and
-      // only while a second attack is not barred.
-      const offerActive = state.players[stage.seat].active;
-      if (
-        state.allowances.attackAgainUid !== null &&
-        offerActive !== null &&
-        !attackAgainBarred(state, stage.seat, offerActive)
-      ) {
-        events.push({
-          type: "ATTACK_AGAIN_OFFERED",
-          seat: stage.seat,
-          uid: state.allowances.attackAgainUid,
-        });
-      }
-      return ok({ ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } }, events);
-    }
+    case "resumeTurn":
+      return runResumeTurnStage(state, stage, events);
     case "koTrigger":
       // §9 The Knocked Out Pokémon's on-KO Ability, or an attached Amulet of Hope. Pop first so the
       // stages behind resume if the program parks.
@@ -2221,4 +2125,141 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }
+}
+
+type StageOf<K extends PendingStage["kind"]> = Extract<PendingStage, { kind: K }>;
+
+function runTakePrizesStage(
+  state: GameState,
+  stage: StageOf<"takePrizes">,
+  events: GameEvent[],
+): ApplyResult {
+  const side = state.players[stage.seat];
+  const count = Math.min(stage.count, side.prizes.length);
+  // Nothing left to take — only reachable if a future effect empties the
+  // row mid-KO; the game would already be over otherwise.
+  if (count === 0) return advance(popStage(state), events);
+  if (count < side.prizes.length) {
+    const next: GameState = {
+      ...state,
+      phase: { kind: "ko:takePrizes", seat: stage.seat, count },
+    };
+    events.push({ type: "PRIZES_OWED", seat: stage.seat, count });
+    return ok(next, events);
+  }
+  // Taking the LAST prize(s) is forced — auto-resolve; the row is now
+  // empty, so the shared win check always ends the game (§14.1, or a
+  // tie via §14).
+  return resolvePrizesAndResume(
+    state,
+    stage.seat,
+    side.prizes.map((_, index) => index),
+    events,
+  );
+}
+
+/** Celebration: "If you do, shuffle your hand into your deck." Runs after its Prize stage. Never parks. */
+function runShuffleHandStage(
+  state: GameState,
+  stage: StageOf<"shuffleHandIntoDeck">,
+  events: GameEvent[],
+): ApplyResult {
+  const side = state.players[stage.seat];
+  const [deck, rngState] = shuffle([...side.deck, ...side.hand], state.rngState);
+  events.push({ type: "HAND_SHUFFLED_INTO_DECK", seat: stage.seat, count: side.hand.length });
+  return advance(
+    popStage({ ...withSide(state, stage.seat, { ...side, hand: [], deck }), rngState }),
+    events,
+  );
+}
+
+function runPromoteStage(
+  state: GameState,
+  stage: StageOf<"promote">,
+  events: GameEvent[],
+): ApplyResult {
+  const side = state.players[stage.seat];
+  // Already occupied (a future effect re-filled the spot) — nothing owed.
+  // The promote action handler mirrors this guard (attack.ts).
+  if (side.active !== null) return advance(popStage(state), events);
+  if (side.bench.length <= 1) {
+    // A lone benched Pokémon is a forced promotion (a choice with no choice in it is not a choice)
+    // and an EMPTY bench is the §14.2 loss — both auto-resolve through the shared helper:
+    // promoting from an empty bench is the identity, and the win check sees the whole empty board,
+    // so a simultaneous condition resolves to a tie per §14 rather than a hardcoded winner.
+    return resolvePromotionAndResume(state, stage.seat, 0, events);
+  }
+  const next: GameState = { ...state, phase: { kind: "ko:promote", seat: stage.seat } };
+  events.push({ type: "PROMOTION_REQUIRED", seat: stage.seat });
+  return ok(next, events);
+}
+
+function runEndTurnStage(
+  state: GameState,
+  stage: StageOf<"endTurn">,
+  events: GameEvent[],
+): ApplyResult {
+  // Powerglass can park, so queue one trigger per live end-of-turn Tool on the Active ahead of
+  // a copy of this stage marked `toolsDone`.
+  if (stage.toolsDone !== true) {
+    const powerglass = endTurnToolTriggersOf(state, stage.seat);
+    if (powerglass.length > 0) {
+      return advance(
+        {
+          ...state,
+          pending: [
+            ...powerglass.map(
+              ({ toolUid }): PendingStage => ({
+                kind: "endTurnToolTrigger",
+                seat: stage.seat,
+                toolUid,
+              }),
+            ),
+            { ...stage, toolsDone: true },
+            ...state.pending.slice(1),
+          ],
+        },
+        events,
+      );
+    }
+  }
+  // Amarys: "At the end of this turn, if you have 5 or more cards in your hand, discard your
+  // hand." Paid before `TURN_ENDED` and before `startTurn` resets allowances. On an
+  // attack-ended turn this runs after the prize stages, so prizes count toward the threshold.
+  const threshold = state.allowances.endOfTurnHandDiscard;
+  const ended =
+    threshold !== null && state.players[stage.seat].hand.length >= threshold
+      ? discardHand(state, { seat: stage.seat }, events)
+      : state;
+  // Ignition Energy: "discard it at the end of your turn", turn owner only. Never parks.
+  const ignited = discardEndOfTurnEnergy(ended, stage.seat, events);
+  // Technical Machine end-of-turn discard, turn owner only.
+  const toolsShed = discardEndOfTurnTools(ignited, stage.seat, events);
+  events.push({ type: "TURN_ENDED", turn: state.turn, seat: stage.seat });
+  return advance(popStage(toolsShed), events);
+}
+
+/**
+ * A mid-turn KO has resolved: hand the turn back to the actor. Always the last stage. Festival
+ * Lead's attack-again offer is announced here, when the actor regains control, and only while a
+ * second attack is not barred.
+ */
+function runResumeTurnStage(
+  state: GameState,
+  stage: StageOf<"resumeTurn">,
+  events: GameEvent[],
+): ApplyResult {
+  const offerActive = state.players[stage.seat].active;
+  if (
+    state.allowances.attackAgainUid !== null &&
+    offerActive !== null &&
+    !attackAgainBarred(state, stage.seat, offerActive)
+  ) {
+    events.push({
+      type: "ATTACK_AGAIN_OFFERED",
+      seat: stage.seat,
+      uid: state.allowances.attackAgainUid,
+    });
+  }
+  return ok({ ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } }, events);
 }
