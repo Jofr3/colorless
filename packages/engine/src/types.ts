@@ -31,6 +31,15 @@ export function otherSeat(seat: Seat): Seat {
 }
 
 // Rule constants (docs/reference/ptcg-rules.md §2–§3).
+/**
+ * The seat whose turn number `state.turn` is: odd turns belong to firstPlayer. Null before the
+ * first turn. At the Checkup it is still the ended turn's owner.
+ */
+export function turnOwnerOf(state: GameState): Seat | null {
+  if (state.turn < 1 || state.firstPlayer === null) return null;
+  return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);
+}
+
 export const DECK_SIZE = 60;
 export const HAND_SIZE = 7;
 export const PRIZE_COUNT = 6;

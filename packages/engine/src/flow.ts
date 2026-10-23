@@ -68,6 +68,7 @@ import type {
 import {
   bodyAt,
   inPlayOf,
+  turnOwnerOf,
   BENCH_CEILING,
   SEATS,
   discardFromStack,
@@ -139,7 +140,7 @@ export function knockOut(
   // later turn and appends otherwise, keyed on uid so the speculative tie probe and the real call
   // agree. Only a Knock Out on the opponent's turn is stamped, judged by turn parity, because
   // readers only ask about the opponent's last turn.
-  const ownTurn = (state.turn % 2 === 1) === (koedSeat === state.firstPlayer);
+  const ownTurn = turnOwnerOf(state) === koedSeat;
   const stampFor = (card: Card | undefined): GameState => {
     if (ownTurn) return state;
     const carried = state.lastKoTurn[koedSeat] === state.turn ? state.lastKoMarks[koedSeat] : [];
@@ -1839,7 +1840,7 @@ function resolveTakePrizes(
   // Record the take for its turn (Okidogi "Settle the Score"). Only takes on the taker's own turn
   // are recorded, since an off-turn take would overwrite the record about to be read. Turn
   // ownership comes from turn-number parity; at the Checkup `state.turn` is still the ended turn.
-  const ownTurn = (state.turn % 2 === 1) === (seat === state.firstPlayer);
+  const ownTurn = turnOwnerOf(state) === seat;
   const recorded = side.prizesTakenOnTurn;
   const prizesTakenOnTurn =
     uids.length === 0 || !ownTurn

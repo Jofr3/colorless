@@ -5,7 +5,7 @@
 import type { EffectPrompt } from "./interpreter";
 import { cardOfUid, isBasicPokemon } from "./cards";
 import type { GameOutcome, GameState, Seat } from "./types";
-import { SEATS, otherSeat } from "./types";
+import { SEATS, turnOwnerOf } from "./types";
 
 /** A parked KO interrupt (§8.1 resolution — mid-turn from an attack, or between
     turns from the Checkup) awaiting `waitingSeat`'s decision. Without this a
@@ -135,15 +135,6 @@ function koParkActiveSeat(state: GameState): Seat | null {
       stage.kind === "attackEpilogue",
   );
   return inTurn ? turnOwnerOf(state) : null;
-}
-
-/**
- * Odd turns belong to firstPlayer. Only meaningful while a turn is in progress; `koParkActiveSeat`
- * guards the between-turns case.
- */
-function turnOwnerOf(state: GameState): Seat | null {
-  if (state.turn < 1 || state.firstPlayer === null) return null;
-  return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);
 }
 
 /** Both seats can owe a simultaneous setup decision; a single waitingSeat must

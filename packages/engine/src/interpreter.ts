@@ -149,6 +149,7 @@ import {
   bodyAt,
   inPlayOf,
   pokemonAt,
+  turnOwnerOf,
   BENCH_CEILING,
   BENCH_MAX,
   DEFAULT_CONFUSION_DAMAGE,
@@ -1361,8 +1362,8 @@ export function startlingDropRetort(
   events: GameEvent[],
 ): GameState {
   if (victim === ctx.seat || ctx.invokedBy === undefined) return state;
-  // "During your opponent's turn" — the controller's turn: odd turns belong to `firstPlayer` (`benchArrivalCounters`).
-  if ((state.turn % 2 === 1) !== (ctx.seat === state.firstPlayer)) return state;
+  // "During your opponent's turn": the controller's turn.
+  if (turnOwnerOf(state) !== ctx.seat) return state;
   let next = state;
   for (const uid of milled) {
     const retort = opponentMillRetortOf(state, uid);
@@ -9000,8 +9001,8 @@ export function benchArrivalCounters(
 ): GameState {
   const rule = stadiumEffectsOf(state)?.benchArrivalCounters;
   if (rule === undefined) return state;
-  // "during their turn" — odd turns belong to `firstPlayer` (types.ts `isFirstTurnOf`'s reading).
-  if ((state.turn % 2 === 1) !== (seat === state.firstPlayer)) return state;
+  // "During their turn".
+  if (turnOwnerOf(state) !== seat) return state;
   const landed = new Set(uids);
   const side = state.players[seat];
   const bench = side.bench.map((body) => {
