@@ -588,7 +588,7 @@ function attachedPrizeReductions(
  * `done` is that tie. Prize guards such as Glimmora's coin flip are resolved up front so the
  * speculation and the real KO agree.
  */
-export type KnockOutBatch =
+type KnockOutBatch =
   | { done: GameOutcome; state: GameState }
   | { done: null; state: GameState; stages: PendingStage[] };
 

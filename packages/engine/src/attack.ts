@@ -2263,7 +2263,7 @@ export function resolveFoundAttack(
 }
 
 /** Backtrack Badge re-entry: `keep` the offered faces, or flip `again`. */
-export type CoinRedo = { kind: "keep"; faces: CoinFace[] } | { kind: "again" };
+type CoinRedo = { kind: "keep"; faces: CoinFace[] } | { kind: "again" };
 
 /** Park Backtrack Badge's offer after the printed coin flip. */
 function parkCoinRedo(
