@@ -12,6 +12,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { cards, sets } from "../db/schema";
 import type { Env } from "../env";
+import { CACHE_STATUS_HEADER } from "../httpCache";
 import {
   cardAssetKey,
   cardOriginUrl,
@@ -37,7 +38,7 @@ function assetResponse(
     headers: {
       "Content-Type": contentType,
       "Cache-Control": CACHE_FOREVER,
-      "x-colorless-cache": cache,
+      [CACHE_STATUS_HEADER]: cache,
     },
   });
 }

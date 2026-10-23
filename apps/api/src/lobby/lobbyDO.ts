@@ -40,6 +40,7 @@ import {
 import { loadCardPool } from "./cardPool";
 import { loadPlayerDeck } from "./deckLoad";
 import { loadDisplayName } from "./displayName";
+import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
   ABANDON_GRACE_MS,
   abandonsMatch,
@@ -154,8 +155,8 @@ export class LobbyDO {
   async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
 
-    if (request.method === "POST" && path === "/create") {
-      const code = request.headers.get("x-lobby-code");
+    if (request.method === "POST" && path === DO_CREATE_PATH) {
+      const code = request.headers.get(LOBBY_CODE_HEADER);
       if (code === null || !isValidLobbyCode(code)) {
         return Response.json({ error: "invalid lobby code" }, { status: 400 });
       }
@@ -168,8 +169,8 @@ export class LobbyDO {
       return Response.json({ code }, { status: 201 });
     }
 
-    if (request.method === "GET" && path === "/ws") {
-      if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
+    if (request.method === "GET" && path === DO_WS_PATH) {
+      if (!isWebSocketUpgrade(request.headers.get("Upgrade"))) {
         return Response.json({ error: "expected a websocket upgrade" }, { status: 426 });
       }
       if ((await this.state.storage.get(CREATED_KEY)) === undefined) {
