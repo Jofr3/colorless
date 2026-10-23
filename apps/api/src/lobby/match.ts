@@ -161,36 +161,43 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
 
 /**
  * Migrate an older record to this deploy's version, or `null` if it is not a well-formed migratable
- * record. A v41 record has every persisted Trainer face replaced by its `fresh` row; each version
- * then takes only the key-adding steps it lacks, since a later step would clobber live values it
- * already holds.
+ * record. A record runs its own version's step and every later one, so each version takes only the
+ * key-adding steps it lacks; an earlier step would clobber live values it already holds.
  */
 export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
-  if (
-    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||
-    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||
-    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION ||
-    record.version === COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION
-  )
-    return { ...record, version: MATCH_RECORD_VERSION };
-  const cardPool: Record<string, Card> = { ...record.state.cardPool };
-  if (record.version === MIGRATABLE_MATCH_RECORD_VERSION) {
-    for (const [id, card] of Object.entries(cardPool)) {
-      const row = fresh[id];
-      if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;
-    }
+  let state = record.state;
+  for (const [version, step] of MIGRATION_STEPS) {
+    if (version >= record.version) state = step(state, fresh);
   }
-  const withPool = { ...record.state, cardPool };
-  const v44 = record.version === LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION;
-  const sided =
-    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION
-      ? withPool
-      : withD621SideKeys(withPool);
-  const keyed = v44 ? sided : withD630RecordKeys(sided);
-  const state = withD636LockKeys(keyed);
   return { ...record, version: MATCH_RECORD_VERSION, state };
+}
+
+type MigrationStep = (state: GameState, fresh: Record<string, Card>) => GameState;
+
+const unchanged: MigrationStep = (state) => state;
+
+/** Each migratable version, ascending, with the step that brings its records up to the next. */
+const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
+  [MIGRATABLE_MATCH_RECORD_VERSION, withFreshTrainerFaces],
+  [SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION, withD621SideKeys],
+  [RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION, withD630RecordKeys],
+  [LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION, withD636LockKeys],
+  [FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
+  [PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
+  [TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
+  [COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
+]);
+
+/** Replaces every persisted Trainer face of a v41 record with its `fresh` catalog row. */
+function withFreshTrainerFaces(state: GameState, fresh: Record<string, Card>): GameState {
+  const cardPool: Record<string, Card> = { ...state.cardPool };
+  for (const [id, card] of Object.entries(cardPool)) {
+    const row = fresh[id];
+    if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;
+  }
+  return { ...state, cardPool };
 }
 
 /**
@@ -302,17 +309,7 @@ export async function loadMatchRecord(
 function readMigratableRecord(raw: unknown): MatchRecord | null {
   if (typeof raw !== "object" || raw === null) return null;
   const version = (raw as { version?: unknown }).version;
-  if (
-    version !== MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION
-  )
-    return null;
+  if (typeof version !== "number" || !MIGRATION_STEPS.has(version)) return null;
   const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });
   if (record === null) return null;
   const pool = (record.state as { cardPool?: unknown }).cardPool;
