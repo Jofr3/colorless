@@ -631,16 +631,35 @@ export function scheduledEffectDue(pokemon: InPlayPokemon, turn: number): Schedu
   return scheduled !== null && scheduled.turn === turn ? scheduled : null;
 }
 
-export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
+/** Per-body effect fields that §10 sheds when a Pokémon evolves, devolves or leaves the Active Spot. */
+type AttackEffectField =
+  | "retreatBlocked"
+  | "attackBlock"
+  | "attackLockedTurn"
+  | "attackFlipLockTurn"
+  | "attackTwoFlipLockTurn"
+  | "retreatLockedTurn"
+  | "damageReduction"
+  | "noWeaknessTurn"
+  | "scheduledEffect"
+  | "attackDamageDebuff"
+  | "damageVulnerability"
+  | "weaknessRetype"
+  | "costTaxTurn"
+  | "koBounty"
+  | "handAttachMark"
+  | "installedRecoil"
+  | "lockedAttacks"
+  | "boostedAttack";
+
+/**
+ * The cleared value of every §10 effect field: what a card entering play carries and what
+ * evolving, devolving or leaving the Active Spot resets. Spread it so each caller adds only its
+ * own extras (conditions, markers, turn stamps).
+ */
+export function clearedAttackEffects(): Pick<InPlayPokemon, AttackEffectField> {
   return {
-    stack: [uid],
-    energy: [],
-    tools: [],
-    damage: 0,
-    conditions: noConditions(),
     retreatBlocked: false,
-    // Nothing has attacked with it yet — a card entering play carries no
-    // effect of an attack (§10's carry-over rule read from the other end).
     attackBlock: null,
     attackLockedTurn: null,
     attackFlipLockTurn: null,
@@ -658,6 +677,18 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     installedRecoil: null,
     lockedAttacks: [],
     boostedAttack: null,
+  };
+}
+
+export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
+  return {
+    stack: [uid],
+    energy: [],
+    tools: [],
+    damage: 0,
+    conditions: noConditions(),
+    // A card entering play carries no effect of an attack.
+    ...clearedAttackEffects(),
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck
@@ -1242,33 +1273,9 @@ export function evolveOnto(
     ...from,
     stack: [...from.stack, evolutionUid],
     conditions: kept,
-    // §10: evolving sheds the effects of attacks too, not just conditions, including the
-    // attack-installed damage block even though no legal sequence can evolve inside its window.
-    retreatBlocked: false,
-    attackBlock: null,
-    // Evolving also sheds an attack-installed attack lock, so a locked Pokémon can evolve on its
-    // own next turn and attack.
-    attackLockedTurn: null,
-    attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null,
-    retreatLockedTurn: null,
-    damageReduction: null,
-    noWeaknessTurn: null,
-    // Evolving the Defending Pokémon cancels a scheduled delayed effect (counters, discard or Knock
-    // Out) before it resolves.
-    scheduledEffect: null,
-    attackDamageDebuff: null,
-    damageVulnerability: null,
-    weaknessRetype: null,
-    costTaxTurn: null,
-    koBounty: null,
-    handAttachMark: null,
-    installedRecoil: null,
-    // Sheds the whole list of per-attack bars, not just one.
-    lockedAttacks: [],
-    // Evolving also throws away a beneficial per-attack buff; §10 sheds attack effects whether or
-    // not the holder wanted it.
-    boostedAttack: null,
+    // §10: evolving sheds every effect of an attack, beneficial ones included, so a locked Pokémon
+    // can evolve and attack and a scheduled delayed effect is cancelled.
+    ...clearedAttackEffects(),
     markers: [],
     turnPlayed: state.turn,
     // Records that this Pokémon evolved this turn. This is the only write site, shared by every

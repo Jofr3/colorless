@@ -148,6 +148,7 @@ import type {
 import {
   bodyAt,
   inPlayOf,
+  clearedAttackEffects,
   pokemonAt,
   turnOwnerOf,
   BENCH_CEILING,
@@ -10087,27 +10088,8 @@ function devolvedBodyOf(body: InPlayPokemon, kept: SpecialConditions): InPlayPok
     // §12: devolving removes Special Conditions, except those in `kept` (Confused under Dizzying
     // Valley).
     conditions: kept,
-    // §10: also shed the effects of attacks that `switchInto` and `clearOnLeavingActive` clear.
-    retreatBlocked: false,
-    retreatLockedTurn: null,
-    attackBlock: null,
-    attackLockedTurn: null,
-    attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null,
-    damageReduction: null,
-    noWeaknessTurn: null,
-    // Cleared for consistency with the other §10 clears, though no legal sequence reaches it here.
-    scheduledEffect: null,
-    attackDamageDebuff: null,
-    damageVulnerability: null,
-    // The Weakness retype is shed with the devolved card.
-    weaknessRetype: null,
-    costTaxTurn: null,
-    koBounty: null,
-    handAttachMark: null,
-    installedRecoil: null,
-    lockedAttacks: [],
-    boostedAttack: null,
+    // §10: also shed the effects of attacks.
+    ...clearedAttackEffects(),
     // …and the evolution stamp, which belongs to the card that left. See
     // `devolveEach`'s block for why this is `null` and why `turnPlayed` and `markers`
     // are NOT touched (clearing `markers` would erase the `koByEffect` stamp for a
@@ -11410,34 +11392,9 @@ export function switchInto(
     // Record when the body went to the Bench (`benchedTurn`).
     benchedTurn: state.turn,
     conditions: noConditions(),
-    retreatBlocked: false,
-    // Unlike the retreat path, this clear is reachable: a gust inside the window sheds the
-    // self-lock.
-    retreatLockedTurn: null,
-    attackBlock: null,
-    attackLockedTurn: null,
-    attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null,
-    damageReduction: null,
-    noWeaknessTurn: null,
-    scheduledEffect: null,
-    attackDamageDebuff: null,
-    // The victim's own Switch on the turn in between moves the exposed body out from under the
-    // next-turn vulnerability.
-    damageVulnerability: null,
-    weaknessRetype: null,
-    costTaxTurn: null,
-    koBounty: null,
-    handAttachMark: null,
-    // Armed recoil lives on the opponent's turn, so only the opponent (e.g. Boss's Orders) can move
-    // the body and clear it.
-    installedRecoil: null,
-    // A per-attack lock is shed with the move (§10), so a Pokémon switched out and back in on the
-    // same turn may use the barred attack. The whole list is cleared; per-entry expiry is the
-    // reader's turn comparison.
-    lockedAttacks: [],
-    // Unlike the other fields, a per-attack buff is lost by its holder when the body moves.
-    boostedAttack: null,
+    // A Pokémon switched out and back in on the same turn may use an attack that was barred, and
+    // loses any per-attack buff.
+    ...clearedAttackEffects(),
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

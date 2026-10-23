@@ -74,6 +74,7 @@ import {
   evolveOnto,
   isFirstTurnOf,
   isImmobilized,
+  clearedAttackEffects,
   makeInPlay,
   noConditions,
   otherSeat,
@@ -701,30 +702,9 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return {
     ...pokemon,
     conditions: noConditions(),
-    retreatBlocked: false,
-    // Cannot fire on a retreat (it forbids retreating), but kept so the three §10 clears stay in
-    // agreement.
-    retreatLockedTurn: null,
-    attackBlock: null,
-    attackLockedTurn: null,
-    attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null,
-    damageReduction: null,
-    noWeaknessTurn: null,
-    // Retreating the Defending Pokémon during its own turn is the printed counterplay to the
-    // scheduled effect.
-    scheduledEffect: null,
-    attackDamageDebuff: null,
-    damageVulnerability: null,
-    weaknessRetype: null,
-    // The retreat pays the taxed cost, since the surcharge is live as the cost is read.
-    costTaxTurn: null,
-    koBounty: null,
-    handAttachMark: null,
-    installedRecoil: null,
-    // Sheds the whole list: keeping a bar imposed by the opponent would contradict §10.
-    lockedAttacks: [],
-    boostedAttack: null,
+    // Retreating the Defending Pokémon during its own turn is the printed counterplay to a
+    // scheduled effect. The retreat has already paid any taxed cost.
+    ...clearedAttackEffects(),
   };
 }
 
