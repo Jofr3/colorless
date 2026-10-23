@@ -108,7 +108,7 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     const stripped = JSON.parse(
       JSON.stringify(filtered).replace(',"fromClass":{"stage":"basic"}', ""),
     );
-    expect(stripped).toEqual(gate.then);
+    expect(stripped).toEqual(gate.ops);
   });
 
   it("is anchored end to end", () => {
@@ -146,7 +146,7 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentKnockedOutByDamage" },
-        then: [{ op: "preventDamage", effects: true }],
+        ops: [{ op: "preventDamage", effects: true }],
       },
     ]);
   });
@@ -183,7 +183,7 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     const producers = new Set<string>();
     const walk = (ops: EffectOp[], id: string) => {
       for (const op of ops) {
-        if (op.op === "coinFlipGate") walk(op.then, id);
+        if (op.op === "coinFlipGate") walk(op.ops, id);
         else if (op.op === "preventDamage" && op.fromClass !== undefined) {
           expect(op.fromClass.stage).toBe("basic");
           if (op.fromClass.excludingType !== undefined) {

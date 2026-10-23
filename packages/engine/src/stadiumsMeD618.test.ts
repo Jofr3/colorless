@@ -633,7 +633,7 @@ describe("D618 §5b — the new `per` member off a board", () => {
       {
         op: "recordGate",
         slot: "paid",
-        then: [
+        ops: [
           per === undefined
             ? { op: "drawUntilHandSize", size: 3 }
             : { op: "drawUntilHandSize", size: 1, per },

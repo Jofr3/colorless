@@ -283,7 +283,7 @@ describe("§5 — the REFUSALS, driven from OUTSIDE the population as well as in
       {
         op: "conditionGate",
         cond: DECK,
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "opponentBench",

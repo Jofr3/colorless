@@ -89,7 +89,7 @@ describe("D595 §1 — the eight sentences and their programs", () => {
     const gate = (coins: number | undefined, bare: string) => {
       const then = deriveAttackEffect(bare);
       expect(then, bare).not.toBeNull();
-      return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), then }];
+      return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), ops: then }];
     };
     expect(deriveAttackEffect(T.bellyful)).toEqual(
       gate(2, "Heal all damage from 1 of your Pokémon."),
@@ -110,7 +110,7 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       ),
     );
     expect(deriveAttackEffect(T.triKinesis)).toEqual([
-      { op: "coinFlipGate", coins: 3, then: [{ op: "knockOutChosen", target: "opponentAny" }] },
+      { op: "coinFlipGate", coins: 3, ops: [{ op: "knockOutChosen", target: "opponentAny" }] },
     ]);
     for (const text of [T.bellyful, T.triKinesis, T.clutch, T.strolls, T.pull]) {
       expect(deriveAttackCoinFlip(text), text).toBeNull();

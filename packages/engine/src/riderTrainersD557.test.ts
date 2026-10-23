@@ -271,7 +271,7 @@ describe("D557 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourActiveOwner", owner: "Arven" },
-            then: [{ op: "heal", target: "self", amount: 100 }],
+            ops: [{ op: "heal", target: "self", amount: 100 }],
             otherwise: [{ op: "heal", target: "self", amount: 30 }],
           },
         ],

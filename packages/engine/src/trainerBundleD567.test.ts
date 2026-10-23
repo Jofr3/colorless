@@ -336,15 +336,15 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
         {
           op: "recordGate",
           slot: "turnedPrize",
-          then: [
+          ops: [
             {
               op: "recordGate",
               slot: "revealed",
-              then: [
+              ops: [
                 {
                   op: "optional",
                   note: "You may have your opponent switch the revealed card with the Prize card you turned face up.",
-                  then: [{ op: "swapTurnedPrizeWithRevealed" }],
+                  ops: [{ op: "swapTurnedPrizeWithRevealed" }],
                 },
               ],
             },

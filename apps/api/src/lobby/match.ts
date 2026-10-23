@@ -132,7 +132,7 @@ export interface MatchRecord {
  * `phase.cont`. Widenings (new union members, optional fields) do not bump it. A mismatched record
  * is retired and the players are told to re-ready, because the Durable Object has no migrations.
  */
-export const MATCH_RECORD_VERSION = 49;
+export const MATCH_RECORD_VERSION = 50;
 
 /** The oldest record version this deploy migrates; its pool is refreshed from D1. */
 export const MIGRATABLE_MATCH_RECORD_VERSION = 41;
@@ -150,6 +150,8 @@ export const PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46;
 export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 47;
 
 export const COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION = 48;
+
+export const GATE_OPS_MIGRATABLE_MATCH_RECORD_VERSION = 49;
 
 /**
  * The catalog ids a migratable record's pool holds (what `loadMatchRecord` re-reads from D1): the
@@ -193,7 +195,47 @@ const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
   [PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
   [TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
   [COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
+  [GATE_OPS_MIGRATABLE_MATCH_RECORD_VERSION, withGateOpsKey],
 ]);
+
+const GATE_OPS: ReadonlySet<unknown> = new Set([
+  "coinFlipGate",
+  "conditionGate",
+  "recordGate",
+  "optional",
+]);
+
+/**
+ * Renames `then` to `ops` on every gate op anywhere in a v49 state (programs, parked continuations,
+ * scheduled ops), keeping the key's position. Only the objects on a path to a renamed key are
+ * copied; everything else is returned as it was.
+ */
+function withGateOpsKey(state: GameState): GameState {
+  return renamedGateKeys(state) as GameState;
+}
+
+function renamedGateKeys(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) return value;
+  if (Array.isArray(value)) {
+    let copy: unknown[] | null = null;
+    for (const [i, item] of value.entries()) {
+      const next = renamedGateKeys(item);
+      if (next === item) continue;
+      copy ??= [...value];
+      copy[i] = next;
+    }
+    return copy ?? value;
+  }
+  const object = value as Record<string, unknown>;
+  const gate = GATE_OPS.has(object.op) && Object.hasOwn(object, "then");
+  let changed = gate;
+  const entries = Object.entries(object).map(([key, item]): [string, unknown] => {
+    const next = renamedGateKeys(item);
+    if (next !== item) changed = true;
+    return [gate && key === "then" ? "ops" : key, next];
+  });
+  return changed ? Object.fromEntries(entries) : value;
+}
 
 /** Replaces every persisted Trainer face of a v41 record with its `fresh` catalog row. */
 function withFreshTrainerFaces(state: GameState, fresh: Record<string, Card>): GameState {

@@ -527,7 +527,7 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
         // A structural read rather than a `kind` switch: the point is that no
         // shape reachable from this value is an op, whatever the arms become.
         expect(seen.includes('"op":'), id).toBe(false);
-        opsInGates += walkProgram((gate as unknown as { then?: [] }).then ?? []).length;
+        opsInGates += walkProgram((gate as unknown as { ops?: [] }).ops ?? []).length;
       }
     }
     // THE ATTRIBUTION CONTROLS: the sweep really walked programs and really found

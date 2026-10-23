@@ -172,7 +172,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(COMMA_NEAR_MISS)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
         ],

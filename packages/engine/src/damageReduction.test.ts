@@ -333,7 +333,7 @@ describe("the durated damage reduction — derived, not authored", () => {
     const producers = new Map<string, number[]>();
     const walk = (ops: EffectOp[], id: string) => {
       for (const op of ops) {
-        if (op.op === "coinFlipGate") walk(op.then, id);
+        if (op.op === "coinFlipGate") walk(op.ops, id);
         else if (op.op === "reduceDamage") {
           producers.set(id, [...(producers.get(id) ?? []), op.amount]);
         }

@@ -708,7 +708,7 @@ describe("D316 §7 — THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSERTED"
       {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
-        then: [{ op: "returnSelf", dest: "deck" }],
+        ops: [{ op: "returnSelf", dest: "deck" }],
       },
     ]);
   });
@@ -723,7 +723,7 @@ describe("D318 §8 — the exported assembler, and the pool that can now reach i
       {
         op: "optional",
         note: POLIWRATH_TEXT,
-        then: [
+        ops: [
           { op: "damageDefender", amount: 240 },
           { op: "returnSelf", dest: "deck" },
         ],
@@ -759,13 +759,13 @@ describe("D318 §8 — the exported assembler, and the pool that can now reach i
         expect(gate.otherwise, `${text} @ ${trial}`).toEqual([
           { op: "damageDefender", amount: trial },
         ]);
-        expect(gate.then[0], `${text} @ ${trial}`).toEqual({
+        expect(gate.ops[0], `${text} @ ${trial}`).toEqual({
           op: "damageDefender",
           amount: trial + bonus,
         });
         // The consequent rides BEHIND the hit, in printed order, and is never
         // swallowed — the failure this reader's `^…$` dispatch exists against.
-        expect(gate.then.length).toBe(2);
+        expect(gate.ops.length).toBe(2);
         expect(gate.note).toBe(text);
       }
     }

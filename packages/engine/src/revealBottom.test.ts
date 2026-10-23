@@ -102,7 +102,7 @@ describe("the registry rows and the derived twin", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "opponentMayDraw", count: 1 }],
+          ops: [{ op: "opponentMayDraw", count: 1 }],
         },
       ]);
     }
@@ -356,7 +356,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "paid",
-          then: [{ op: "opponentMayDraw", count: 1 }],
+          ops: [{ op: "opponentMayDraw", count: 1 }],
         },
       ],
       { seat: "p1" },
@@ -537,7 +537,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "opponentMayDraw", count: 1 }],
+          ops: [{ op: "opponentMayDraw", count: 1 }],
         },
       ],
       { seat: "p1" },
@@ -661,7 +661,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "drawCards", count: 1 }],
+          ops: [{ op: "drawCards", count: 1 }],
         },
       ],
       { seat: "p1" },

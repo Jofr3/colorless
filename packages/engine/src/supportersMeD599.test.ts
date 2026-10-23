@@ -355,7 +355,7 @@ describe("D599 §7 — `describeBranch` is silent on the new member (a gate bran
     {
       op: "recordGate",
       slot: "paid",
-      then: [{ op: "drawCards", count: 1, per }],
+      ops: [{ op: "drawCards", count: 1, per }],
     },
   ];
   const noteOf = (program: EffectOp[]): string => {

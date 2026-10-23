@@ -80,7 +80,7 @@ describe("D640 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "yourHandExactly", count: 30 },
-        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],
+        ops: [{ op: "takePrize", count: 2, thenShuffleHand: true }],
       },
     ]);
     expect(deriveAttackEffect(CELEBRATION.replace("30 cards", "29 cards"))).toBeNull();

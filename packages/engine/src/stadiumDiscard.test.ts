@@ -178,11 +178,11 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        then: [
+        ops: [
           {
             op: "optional",
             note: MAY,
-            then: [{ op: "discardStadium" }],
+            ops: [{ op: "discardStadium" }],
           },
         ],
       },
@@ -192,7 +192,7 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
     // own contract, and what the dialog shows.
     const gate = deriveAttackEffect(MAY)?.[0];
     if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
-    const inner = gate.then[0];
+    const inner = gate.ops[0];
     if (inner === undefined || inner.op !== "optional") throw new Error("expected the confirm");
     expect(inner.note).toBe(MAY);
     expect(gate.otherwise).toBeUndefined();
@@ -208,7 +208,7 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        then: [
+        ops: [
           { op: "spreadDamage", target: "opponentBench", amount: 30 },
           { op: "discardStadium" },
         ],

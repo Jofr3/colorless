@@ -445,7 +445,7 @@ describe("§1 — the prints and the registry rows", () => {
             {
               op: "recordGate",
               slot: "moved",
-              then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
+              ops: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
             },
           ],
         },

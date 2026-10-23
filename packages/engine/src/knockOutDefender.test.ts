@@ -190,7 +190,7 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
   });
@@ -207,7 +207,7 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
       { op: "damageSelf", amount: 100 },
       {
         op: "coinFlipGate",
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
   });
@@ -265,7 +265,7 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
       { op: "damageSelf", amount: 60 },
       {
         op: "coinFlipGate",
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
     // …and the `amount >= 1` guard every self-damage arm carries: a printed 0 is
@@ -696,7 +696,7 @@ describe("§7.1 D415's deriver — arm 6a with the `cond` swapped and nothing el
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
   });
@@ -708,7 +708,7 @@ describe("§7.1 D415's deriver — arm 6a with the `cond` swapped and nothing el
       expect(program).toHaveLength(1);
       expect(program?.[0]).toMatchObject({
         op: "conditionGate",
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       });
     }
     expect(basic?.[0]).toMatchObject({ cond: { kind: "opponentActiveIsBasic" } });

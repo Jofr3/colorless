@@ -154,7 +154,7 @@ describe("D299 §1 — the anchor reads exactly the four printed spellings", () 
     expect(deriveAttackEffect(CHIMECHO_TEXT)).toEqual([SELF_DECK]);
     expect(deriveAttackEffect(SWOOBAT_TEXT)).toEqual([SELF_HAND]);
     expect(deriveAttackEffect(ILLUMISE_BODY)).toEqual([FOE_DECK]);
-    expect(deriveAttackEffect(SYLVEON_TEXT)).toEqual([{ op: "coinFlipGate", then: [FOE_DECK] }]);
+    expect(deriveAttackEffect(SYLVEON_TEXT)).toEqual([{ op: "coinFlipGate", ops: [FOE_DECK] }]);
   });
 
   it("the CURLY apostrophe reads the same as the ASCII one, on both possessives", () => {
@@ -162,7 +162,7 @@ describe("D299 §1 — the anchor reads exactly the four printed spellings", () 
     expect(curly).not.toBe(ILLUMISE_BODY);
     expect(deriveAttackEffect(curly)).toEqual([FOE_DECK]);
     const curlySylveon = SYLVEON_TEXT.replace("opponent's", `opponent${"’"}s`);
-    expect(deriveAttackEffect(curlySylveon)).toEqual([{ op: "coinFlipGate", then: [FOE_DECK] }]);
+    expect(deriveAttackEffect(curlySylveon)).toEqual([{ op: "coinFlipGate", ops: [FOE_DECK] }]);
   });
 
   it("refuses the NINE legal printings it does not reach, each on its own word", () => {
@@ -234,7 +234,7 @@ describe("D299 §2 — the population is six, and it is the corpus that says so"
       .map(([, text]) => text);
     const mine = claimed.filter((text) => {
       const ops = deriveAttackEffect(splitAttackGateClause(text)?.body ?? text) ?? [];
-      const flat = ops.flatMap((op) => (op.op === "coinFlipGate" ? op.then : [op]));
+      const flat = ops.flatMap((op) => (op.op === "coinFlipGate" ? op.ops : [op]));
       return flat.some((op) => op.op === "returnBenched");
     });
     expect(new Set(mine)).toEqual(

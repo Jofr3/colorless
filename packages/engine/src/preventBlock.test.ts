@@ -78,7 +78,7 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     expect(deriveAttackEffect(WIDE_TEXT)).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "preventDamage", effects: true }],
+        ops: [{ op: "preventDamage", effects: true }],
       },
     ]);
     expect(deriveAttackEffect(WIDE_TEXT.replace(/'/g, "’"))).toEqual(deriveAttackEffect(WIDE_TEXT));
@@ -89,11 +89,11 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     expect(derived).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "preventDamage" }],
+        ops: [{ op: "preventDamage" }],
       },
     ]);
     const gate = derived?.[0] as Extract<EffectOp, { op: "coinFlipGate" }>;
-    expect(Object.keys(gate.then[0] as object)).toEqual(["op"]);
+    expect(Object.keys(gate.ops[0] as object)).toEqual(["op"]);
     expect(deriveAttackEffect(NARROW_TEXT.replace(/'/g, "’"))).toEqual(derived);
   });
 
@@ -133,7 +133,7 @@ describe("the gated PREVENT clause — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentKnockedOutByDamage" },
-        then: [{ op: "preventDamage", effects: true }],
+        ops: [{ op: "preventDamage", effects: true }],
       },
     ]);
     expect(
@@ -769,7 +769,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
             {
               op: "conditionGate",
               cond: { kind: "opponentActiveIsBasic" },
-              then: [{ op: "preventAttack", target: "defender" }],
+              ops: [{ op: "preventAttack", target: "defender" }],
               otherwise: [{ op: "preventRetreat" }],
             },
           ],
@@ -1073,7 +1073,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       // A procedure: the evidence it ran is that the COIN WAS TAKEN. Its body is
       // classified on its own line, which is what makes this the right witness
       // rather than a weaker one about the branch.
-      op: { op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 10 }] },
+      op: { op: "coinFlipGate", ops: [{ op: "heal", target: "self", amount: 10 }] },
       landed: (r) => types(r.events).includes("ATTACK_EFFECT_COIN_FLIP"),
     },
     conditionGate: {
@@ -1082,20 +1082,20 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       op: {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "heal", target: "self", amount: 10 }],
+        ops: [{ op: "heal", target: "self", amount: 10 }],
         otherwise: [{ op: "heal", target: "self", amount: 10 }],
       },
       landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
     },
     optional: {
-      op: { op: "optional", note: "You may draw a card.", then: [{ op: "drawCards", count: 1 }] },
+      op: { op: "optional", note: "You may draw a card.", ops: [{ op: "drawCards", count: 1 }] },
       landed: (r) => r.parked,
     },
     recordGate: {
       op: {
         op: "recordGate",
         slot: "discarded",
-        then: [{ op: "heal", target: "self", amount: 10 }],
+        ops: [{ op: "heal", target: "self", amount: 10 }],
       },
       landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
     },

@@ -515,7 +515,7 @@ describe("D631 §1 — the prints and the registry rows", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourActiveAsleep" },
-              then: [{ op: "heal", target: "self", amount: "all" }],
+              ops: [{ op: "heal", target: "self", amount: "all" }],
             },
           ],
         },

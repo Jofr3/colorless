@@ -1090,7 +1090,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       expect(ability?.activeOnly, `${id} is counted for a clause it does not print`).toBe(false);
       expect(ability?.program).toEqual([
         { op: "drawCards", count: 3, recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "returnSelf", dest: "deck" }] },
       ]);
     }
     for (const id of TELEPORTER_IDS) {

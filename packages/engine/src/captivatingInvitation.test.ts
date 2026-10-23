@@ -124,7 +124,7 @@ describe("D330 §1 — the two programs, and the clauses they each spell", () =>
     expect(ability?.program).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
+        ops: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
       },
     ]);
   });
@@ -134,7 +134,7 @@ describe("D330 §1 — the two programs, and the clauses they each spell", () =>
     const gate = program?.[0];
     expect(program).toHaveLength(1);
     expect(gate?.op).toBe("coinFlipGate");
-    expect(gate?.op === "coinFlipGate" ? gate.then : []).toHaveLength(2);
+    expect(gate?.op === "coinFlipGate" ? gate.ops : []).toHaveLength(2);
     // No `otherwise`: the printed sentence has no "If tails" arm.
     expect(gate?.op === "coinFlipGate" ? gate.otherwise : undefined).toBeUndefined();
     expect(gate?.op === "coinFlipGate" ? gate.onTails : undefined).toBeUndefined();
@@ -146,7 +146,7 @@ describe("D330 §1 — the two programs, and the clauses they each spell", () =>
     // Both orders switch someone and Confuse someone; only one is the card.
     const then = (() => {
       const gate = programFor(FLORGES)?.abilities?.[0]?.program?.[0];
-      return gate?.op === "coinFlipGate" ? gate.then : [];
+      return gate?.op === "coinFlipGate" ? gate.ops : [];
     })();
     expect(then.map((op) => op.op)).toEqual(["gust", "applyStatus"]);
   });

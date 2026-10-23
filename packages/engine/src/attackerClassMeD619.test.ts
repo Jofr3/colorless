@@ -556,7 +556,7 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Tarragon" },
-        then: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+        ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
       },
     ]);
   });

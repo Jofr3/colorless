@@ -274,7 +274,7 @@ describe("the record itself", () => {
       {
         op: "recordGate",
         slot: "moved",
-        then: [{ op: "drawCards", count: 3 }],
+        ops: [{ op: "drawCards", count: 3 }],
         otherwise: [{ op: "drawCards", count: 1 }],
       },
     ];
@@ -295,12 +295,12 @@ describe("the record itself", () => {
       {
         op: "recordGate",
         slot: "moved",
-        then: [{ op: "drawCards", count: 3 }],
+        ops: [{ op: "drawCards", count: 3 }],
       },
       {
         op: "recordGate",
         slot: "paid",
-        then: [{ op: "drawCards", count: 1 }],
+        ops: [{ op: "drawCards", count: 1 }],
       },
     ];
     const events: GameEvent[] = [];
@@ -343,7 +343,7 @@ describe("the registry rows", () => {
       {
         op: "recordGate",
         slot: "moved",
-        then: [{ op: "drawCards", count: 3 }],
+        ops: [{ op: "drawCards", count: 3 }],
       },
     ]);
     // SER: the cost that records → the retrieval that bars what it recorded.
@@ -383,7 +383,7 @@ describe("the record ACROSS a park — the claim the shipped cards never exercis
       {
         op: "recordGate",
         slot: "paid",
-        then: [{ op: "drawCards", count: 1 }],
+        ops: [{ op: "drawCards", count: 1 }],
       },
     ];
   }
@@ -712,7 +712,7 @@ describe("the prompt states what the ANSWER buys", () => {
       {
         op: "recordGate",
         slot: "paid",
-        then: [{ op: "drawCards", count: 2 }],
+        ops: [{ op: "drawCards", count: 2 }],
       },
     ];
     const opaque: EffectOp[] = [
@@ -720,7 +720,7 @@ describe("the prompt states what the ANSWER buys", () => {
       {
         op: "recordGate",
         slot: "paid",
-        then: [{ op: "drawCards", count: 2 }, { op: "shuffleDeck" }],
+        ops: [{ op: "drawCards", count: 2 }, { op: "shuffleDeck" }],
       },
     ];
     const noteOf = (program: EffectOp[]): string => {
@@ -760,7 +760,7 @@ describe("a whiff overwrites the slot it would have written", () => {
       {
         op: "recordGate",
         slot: "moved",
-        then: [{ op: "drawCards", count: 3 }],
+        ops: [{ op: "drawCards", count: 3 }],
       },
     ];
     const events: GameEvent[] = [];

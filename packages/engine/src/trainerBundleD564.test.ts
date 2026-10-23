@@ -337,11 +337,11 @@ describe("§1 — the prints and the registry rows", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [
+          ops: [
             {
               op: "conditionGate",
               cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
-              then: [{ op: "shufflePlayedCardIntoDeck" }],
+              ops: [{ op: "shufflePlayedCardIntoDeck" }],
             },
           ],
         },

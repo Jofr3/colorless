@@ -336,7 +336,7 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
       false,
       [
         { op: "switchActive", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "opponentSwitchOut" }] },
       ],
     ],
   ];
@@ -361,7 +361,7 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
     expect(JSON.stringify(programFor(SAMUROTT[0])?.abilities?.[0]?.program)).toBe(
       JSON.stringify([
         { op: "switchActive", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "opponentSwitchOut" }] },
       ]),
     );
   });
@@ -394,11 +394,11 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
           {
             op: "conditionGate",
             cond: { kind: "stadiumInPlay" },
-            then: [
+            ops: [
               {
                 op: "optional",
                 note: "You may discard a Stadium in play.",
-                then: [{ op: "discardStadium" }],
+                ops: [{ op: "discardStadium" }],
               },
             ],
           },
@@ -412,8 +412,8 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
         name: "Wicked Tail",
         trigger: "onEvolve",
         program: [
-          { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
-          { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
+          { op: "coinFlipGate", ops: [{ op: "randomFromOpponentHand", to: "deck" }] },
+          { op: "coinFlipGate", ops: [{ op: "randomFromOpponentHand", to: "deck" }] },
         ],
       },
       WICKED_TEXT,

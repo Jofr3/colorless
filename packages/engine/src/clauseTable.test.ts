@@ -312,7 +312,7 @@ describe("the two derivers stay disjoint, and stay INDEX-KEYED", () => {
       {
         op: "recordGate",
         slot: "moved",
-        then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+        ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ]);
     expect(deriveAttackDamageBonus(musculature)).toBeNull();

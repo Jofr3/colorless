@@ -52,7 +52,7 @@ const PROGRAM: EffectOp[] = [
   {
     op: "conditionGate",
     cond: { kind: "yourPrizesRemaining", counts: [1] },
-    then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+    ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
   },
 ];
 
@@ -186,7 +186,7 @@ describe("D517 §2 — the program, read against the consequent and against the 
     expect(mine).toHaveLength(1);
     const gate = mine?.[0];
     expect(gate?.op).toBe("conditionGate");
-    expect(gate !== undefined && gate.op === "conditionGate" ? gate.then : null).toEqual(bare);
+    expect(gate !== undefined && gate.op === "conditionGate" ? gate.ops : null).toEqual(bare);
   });
 
   it("no `otherwise` arm, and the key is ABSENT rather than `undefined`-valued", () => {
@@ -195,7 +195,7 @@ describe("D517 §2 — the program, read against the consequent and against the 
     expect(Object.keys(deriveAttackEffect(PRINTED)?.[0] ?? {}).sort()).toEqual([
       "cond",
       "op",
-      "then",
+      "ops",
     ]);
   });
 
@@ -601,7 +601,7 @@ describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT bu
       {
         op: "conditionGate",
         cond: { kind: "yourPrizesRemaining", counts: [1] },
-        then: [{ op: "winGame" }],
+        ops: [{ op: "winGame" }],
       },
     ]);
   });

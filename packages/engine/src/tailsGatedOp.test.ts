@@ -97,19 +97,19 @@ describe("the tails gate — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        then: [{ op: "preventAttack" }],
+        ops: [{ op: "preventAttack" }],
       },
     ]);
     // The key set, not just the value: the op takes NO other field, and `toEqual`
     // alone would not catch a stray one.
     const op = mustDerive(deriveAttackEffect, TAILS_TEXT)[0] as object;
-    expect(Object.keys(op).sort()).toEqual(["onTails", "op", "then"]);
+    expect(Object.keys(op).sort()).toEqual(["onTails", "op", "ops"]);
   });
 
   it("wraps D143's BARE program byte for byte — one action, printed three ways", () => {
     const gated = mustDerive(deriveAttackEffect, TAILS_TEXT);
     expect(gated).toHaveLength(1);
-    expect(gated[0]).toMatchObject({ then: deriveAttackEffect(BARE_TEXT) });
+    expect(gated[0]).toMatchObject({ ops: deriveAttackEffect(BARE_TEXT) });
     // …and the two anchors are NOT the same reading: the bare one derives a naked
     // op, the gated one a gate. A reader that let either claim the other's string
     // would return the inner op unwrapped (or wrap a sentence with no coin in it).
@@ -483,8 +483,8 @@ describe("the tails gate — `programPlayable` is FACE-AGNOSTIC, asserted", () =
     for (const onTails of [undefined, true] as const) {
       const gated: EffectOp[] =
         onTails === undefined
-          ? [{ op: "coinFlipGate", then: gust }]
-          : [{ op: "coinFlipGate", onTails, then: gust }];
+          ? [{ op: "coinFlipGate", ops: gust }]
+          : [{ op: "coinFlipGate", onTails, ops: gust }];
       expect(programPlayable(emptyBench, gated, "p1"), `onTails=${String(onTails)}`).toBe(false);
       // …and PLAYABLE again the moment the branch has a target, on both faces —
       // so the refusal above is about the empty Bench and not about the gate.
@@ -530,7 +530,7 @@ describe("the tails gate — the census, asserted as a shape", () => {
         {
           op: "coinFlipGate",
           onTails: true,
-          then: deriveAttackEffect(bare),
+          ops: deriveAttackEffect(bare),
         },
       ]);
     }

@@ -608,12 +608,12 @@ describe("D574 §1 — the readers: two resolve-time copy anchors, two counter-m
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic's Machinations" },
-        then: [
+        ops: [
           { op: "gust", recordAs: "moved" },
           {
             op: "recordGate",
             slot: "moved",
-            then: [{ op: "damageNewActive", amount: 120 }],
+            ops: [{ op: "damageNewActive", amount: 120 }],
           },
         ],
       },

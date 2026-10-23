@@ -70,36 +70,36 @@ function positiveInt(digits: string | undefined): number | null {
 
 // Gate-op builders. Each returns a fresh object with the fields in the order the hand-written
 // literals used, and leaves optional fields absent rather than undefined.
-function headsGate(then: EffectOp[], otherwise?: EffectOp[]): OpOf<"coinFlipGate"> {
+function headsGate(ops: EffectOp[], otherwise?: EffectOp[]): OpOf<"coinFlipGate"> {
   return otherwise === undefined
-    ? { op: "coinFlipGate", then }
-    : { op: "coinFlipGate", then, otherwise };
+    ? { op: "coinFlipGate", ops }
+    : { op: "coinFlipGate", ops, otherwise };
 }
 
-function tailsGate(then: EffectOp[], coins?: number): OpOf<"coinFlipGate"> {
+function tailsGate(ops: EffectOp[], coins?: number): OpOf<"coinFlipGate"> {
   return coins === undefined
-    ? { op: "coinFlipGate", onTails: true, then }
-    : { op: "coinFlipGate", coins, onTails: true, then };
+    ? { op: "coinFlipGate", onTails: true, ops }
+    : { op: "coinFlipGate", coins, onTails: true, ops };
 }
 
 function conditionGate(
   cond: BoardCondition,
-  then: EffectOp[],
+  ops: EffectOp[],
   otherwise?: EffectOp[],
 ): OpOf<"conditionGate"> {
   return otherwise === undefined
-    ? { op: "conditionGate", cond, then }
-    : { op: "conditionGate", cond, then, otherwise };
+    ? { op: "conditionGate", cond, ops }
+    : { op: "conditionGate", cond, ops, otherwise };
 }
 
-function optionalStep(note: string, then: EffectOp[], otherwise?: EffectOp[]): OpOf<"optional"> {
+function optionalStep(note: string, ops: EffectOp[], otherwise?: EffectOp[]): OpOf<"optional"> {
   return otherwise === undefined
-    ? { op: "optional", note, then }
-    : { op: "optional", note, then, otherwise };
+    ? { op: "optional", note, ops }
+    : { op: "optional", note, ops, otherwise };
 }
 
-function recordGate(slot: EffectSlot, then: EffectOp[]): OpOf<"recordGate"> {
-  return { op: "recordGate", slot, then };
+function recordGate(slot: EffectSlot, ops: EffectOp[]): OpOf<"recordGate"> {
+  return { op: "recordGate", slot, ops };
 }
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
@@ -1596,7 +1596,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   // The bare cancel runs first so that if its `$` were lost, it would claim the compound sentence
   // observably rather than silently.
   if (ATTACK_COIN_CANCEL.test(effect)) return { kind: "cancelOnTails" };
-  // The ops match what `FLIP_PREVENT_DAMAGE_AND_EFFECTS` puts in its `coinFlipGate.then`; only the
+  // The ops match what `FLIP_PREVENT_DAMAGE_AND_EFFECTS` puts in its `coinFlipGate.ops`; only the
   // gate differs.
   if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {
     return {
@@ -1629,7 +1629,7 @@ function chooseSpecialConditionProgram(): EffectOp[] {
       {
         op: "optional",
         note: "Choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
-        then: apply(word),
+        ops: apply(word),
         otherwise: last ? apply(rest[0] as StatusWord) : ask(index + 1),
         labels: {
           yes: word,
@@ -5079,7 +5079,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (amount >= 1 && scope !== undefined) return [{ op: "healEach", amount, ...scope }];
   }
 
-  // "Flip a coin. If heads, <action>." `coinFlipGate` splices `then` only on heads; a tails is a
+  // "Flip a coin. If heads, <action>." `coinFlipGate` splices `ops` only on heads; a tails is a
   // resolved attack, not a skipped effect.
   match = FLIP_SELF_HEAL.exec(effect);
   if (match !== null) {
@@ -5713,7 +5713,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         op: "coinFlipGate",
         // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.
         onTails: true,
-        then: [{ op: "preventAttack" }],
+        ops: [{ op: "preventAttack" }],
       },
     ];
   }
@@ -5744,7 +5744,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // BYTE-IDENTICAL to the second op of the arm above, which is the family's
         // checkable claim on this pair: there is ONE action here, printed two ways,
         // and the gate is a condition in front of it.
-        then: [{ op: "preventAttack", target: "defender" }],
+        ops: [{ op: "preventAttack", target: "defender" }],
       },
     ];
   }
@@ -6620,13 +6620,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // would give a choice with no effect.
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        then: [
+        ops: [
           {
             op: "optional",
             // The WHOLE printed sentence, the op's own contract: it is what the
             // confirm dialog shows, and "you may" is the only thing being asked.
             note: effect,
-            then: [{ op: "discardStadium" }],
+            ops: [{ op: "discardStadium" }],
           },
         ],
       },
@@ -6728,7 +6728,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const gated = literalClauseRow(COIN_GATED_CONSEQUENTS, coinGate[2] ?? "");
     if (gated !== undefined) {
       const coins = COIN_GATE_COINS[coinGate[1] ?? ""];
-      return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), then: [...gated] }];
+      return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), ops: [...gated] }];
     }
   }
 
@@ -7592,9 +7592,7 @@ export function deriveAttackDamageSuppression(text: string): AttackDamageSuppres
 export interface AttackOptionalBoost {
   /** The printed extra damage a "yes" adds to the attack's own base. */
   bonus: number;
-  /** What the printed "If you do," buys, in printed order. Named `ops` rather
-      than `then` for `programPerHeads.ops`'s reason: it is a program reached
-      through a READING, not a branch hanging off a gate op. */
+  /** What the printed "If you do," buys, in printed order. */
   ops: EffectOp[];
 }
 
@@ -7639,7 +7637,7 @@ export function optionalBoostProgram(
   base: number,
   note: string,
 ): EffectOp[] {
-  const [then, otherwise] = boostedArms(base, reading.bonus, reading.ops);
+  const [ops, otherwise] = boostedArms(base, reading.bonus, reading.ops);
   return [
     {
       op: "optional",
@@ -7647,7 +7645,7 @@ export function optionalBoostProgram(
       // dialog shows, and the player is being asked to agree to the drawback as
       // much as to the damage.
       note,
-      then,
+      ops,
       otherwise,
     },
   ];
@@ -7655,8 +7653,7 @@ export function optionalBoostProgram(
 
 /**
  * The yes and no arms shared by every boost decider; the no arm deals the printed base, not
- * nothing. Returns a tuple so callers can splice a local `then` without a `then:` key tripping
- * lint.
+ * nothing.
  */
 function boostedArms(
   base: number,
@@ -8116,33 +8113,31 @@ export function optionalCostBoostProgram(
   // One gate and one confirm with no decline arm: the printed base is dealt before the program on
   // every answer. The status follows the cost.
   if (reading.payoff.kind === "defenderStatus") {
-    const then: EffectOp[] = [
+    const ops: EffectOp[] = [
       ...reading.ops,
       { op: "applyStatus", target: "defender", status: reading.payoff.status },
     ];
-    const offer: EffectOp = optionalStep(note, then);
+    const offer: EffectOp = optionalStep(note, ops);
     return [conditionGate(reading.cond, [offer])];
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
-  const then = [...reading.ops, ...boosted];
+  const ops = [...reading.ops, ...boosted];
   const ask: EffectOp = {
     op: "optional",
     // The WHOLE printed sentence, the op's own contract — it is what the confirm
     // dialog shows, and the player is agreeing to the COST as much as to the damage.
     note,
-    then,
+    ops,
     otherwise,
   };
   // A second call rather than reusing `otherwise`: the two gates must not share one array, or the
   // program becomes a DAG and identity-based walkers miscount.
   const [, vacantZone] = boostedArms(base, reading.payoff.bonus, []);
-  // Only the outer gate needs the lint suppression; the shorthand `then` local is used by the
-  // confirm.
   return [
     {
       op: "conditionGate",
       cond: reading.cond,
-      then: [ask],
+      ops: [ask],
       // The empty board's arm, and it is the printed base rather than nothing: the
       // gate refuses the QUESTION, never the attack.
       otherwise: vacantZone,
@@ -8175,7 +8170,7 @@ function costSnipeProgram(
       // collects the whole printed snipe ("do as much as you can" is the op's rule
       // for a MANDATORY discard, and this one is a purchase).
       cond: reading.cond,
-      then: [offer],
+      ops: [offer],
     },
   ];
 }

@@ -243,7 +243,7 @@ describe("§4 — the discard anchor is defended by TWO independent printed word
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsEx" },
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
     // One printed adjective shorter is a DIFFERENT program — no gate at all — and

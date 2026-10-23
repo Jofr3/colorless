@@ -874,7 +874,7 @@ describe("§3 — the rows, exactly as authored", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
-              then: [
+              ops: [
                 {
                   op: "searchDeck",
                   filter: { kind: "trainerCard" },

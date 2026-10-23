@@ -5261,7 +5261,7 @@ Two consecutive slices, a work order predicted describer work from the fact that
 times the obligation was **empty**.
 
 `withConsequence` returns the prompt unchanged unless the QUEUE holds a `recordGate` on the slot the
-parking op files; `describeBranch`/`describeCondition` are reached only from `recordGate.then`.
+parking op files; `describeBranch`/`describeCondition` are reached only from `recordGate.ops`.
 **Parking is not the trigger — a gate is.** Trace the one call site; do not argue from the op's
 category.
 

@@ -124,9 +124,9 @@ describe("D405 §2 — the program, and the two producers that must NOT be confu
   it("NO `optional` WRAPPER — and the declinable twin still HAS one", () => {
     const mine = deriveAttackEffect(TAKEN) as { op: string }[];
     expect(mine.map((op) => op.op)).toEqual(["discardEnergy"]);
-    const twin = deriveAttackEffect(MAY_TWIN) as { op: string; then?: unknown[] }[];
+    const twin = deriveAttackEffect(MAY_TWIN) as { op: string; ops?: unknown[] }[];
     expect(twin.map((op) => op.op)).toEqual(["optional"]);
-    expect(twin[0]?.then).toEqual([
+    expect(twin[0]?.ops).toEqual([
       { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" }, to: "hand" },
     ]);
   });

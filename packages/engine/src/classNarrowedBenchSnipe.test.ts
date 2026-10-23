@@ -615,7 +615,7 @@ describe("§7 — what the class group refuses, and what it must not have moved"
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "opponentBench",
@@ -633,7 +633,7 @@ describe("§7 — what the class group refuses, and what it must not have moved"
     );
     const gate = gatedClass[0];
     if (gate?.op !== "conditionGate") throw new Error("expected a conditionGate");
-    const inner = gate.then[0];
+    const inner = gate.ops[0];
     if (inner?.op !== "damageChosen") throw new Error("expected a gated damageChosen");
     expect(inner.filter).toEqual({ kind: "suffixPokemon", suffix: "ex" });
     expect(

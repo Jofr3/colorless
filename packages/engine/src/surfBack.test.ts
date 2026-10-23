@@ -165,7 +165,7 @@ describe("D312 §1 — the print, the index-precision, and the `optional` that I
       {
         op: "optional",
         note: PRINTED,
-        then: [{ op: "returnSelf", dest: "deck" }],
+        ops: [{ op: "returnSelf", dest: "deck" }],
       },
     ]);
   });

@@ -508,7 +508,7 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
       op: "recordGate",
       slot: "moved",
       contains: "yourActive",
-      then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+      ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     },
   ];
 
@@ -788,7 +788,7 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
       max: 1,
       recordAs: "moved",
     },
-    { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
+    { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 1 }] },
   ];
 
   function drivePlain(to: PokemonRef) {
@@ -834,7 +834,7 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         op: "recordGate",
         slot: "moved",
         contains: "yourActive",
-        then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+        ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ];
     const first = runProgram(state, gateProgram, { seat: "p1" }, {}, []);
@@ -872,7 +872,7 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         max: 1,
         recordAs: "moved",
       },
-      { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 1 }] },
     ];
     const first = runProgram(janineBoard(SEED, 1), twoWriters, { seat: "p1" }, {}, []);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
@@ -906,7 +906,7 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         op: "recordGate",
         slot: "moved",
         contains: "yourActive",
-        then: [{ op: "drawCards", count: 1 }],
+        ops: [{ op: "drawCards", count: 1 }],
       },
     ];
     const first = runProgram(janineBoard(SEED, 1), gate, { seat: "p1" }, {}, []);
@@ -971,7 +971,7 @@ describe("the prompt note — the branches no shipped card reaches", () => {
           op: "recordGate",
           slot: "moved",
           contains: "yourActive",
-          then: [{ op: "applyStatus", target: "self", status: "burned" }],
+          ops: [{ op: "applyStatus", target: "self", status: "burned" }],
         },
       ]),
     ).toBe(
@@ -987,7 +987,7 @@ describe("the prompt note — the branches no shipped card reaches", () => {
           op: "recordGate",
           slot: "moved",
           contains: "yourActive",
-          then: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
+          ops: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
         },
       ]),
     ).toBe("Search your deck for a Basic Darkness Energy card and attach it to your Pokémon.");
@@ -1051,7 +1051,7 @@ describe('§9.2 `contains: "yourActive"` resolves on the LATER truth', () => {
     op: "recordGate",
     slot: "moved",
     contains: "yourActive",
-    then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+    ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
   };
 
   function drive(program: EffectOp[], to: PokemonRef): GameState {

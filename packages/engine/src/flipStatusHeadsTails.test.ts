@@ -170,7 +170,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "applyStatus", target: "defender", status: "poisoned" },
         ],
@@ -184,7 +184,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     if (gate?.op !== "coinFlipGate") throw new Error("expected a coinFlipGate");
     const headsSibling = deriveAttackEffect(HEADS_ARM_ALONE)?.[0];
     if (headsSibling?.op !== "coinFlipGate") throw new Error("expected a coinFlipGate");
-    expect(gate.then).toEqual(headsSibling.then);
+    expect(gate.ops).toEqual(headsSibling.ops);
     expect(gate.otherwise).toEqual(deriveAttackEffect(TAILS_ARM_ALONE));
     expect(headsSibling.otherwise).toBeUndefined();
   });
@@ -228,7 +228,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     ] as const) {
       const text = PRINTED.replace("Paralyzed and Poisoned", `${x} and ${y}`);
       const ops = deriveAttackEffect(text);
-      expect(ops?.[0]?.op === "coinFlipGate" ? ops[0].then : null).toEqual([
+      expect(ops?.[0]?.op === "coinFlipGate" ? ops[0].ops : null).toEqual([
         { op: "applyStatus", target: "defender", status: sx },
         { op: "applyStatus", target: "defender", status: sy },
       ]);
@@ -243,7 +243,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
         ops?.length === 1 &&
         head?.op === "coinFlipGate" &&
         head.otherwise !== undefined &&
-        head.then.every((o) => o.op === "applyStatus") &&
+        head.ops.every((o) => o.op === "applyStatus") &&
         head.otherwise.every((o) => o.op === "applyStatus")
       );
     });
@@ -307,7 +307,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(HEADS_ARM_ALONE)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "applyStatus", target: "defender", status: "poisoned" },
         ],
@@ -321,7 +321,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     ).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
   });
@@ -508,7 +508,7 @@ describe("§5 — what this anchor refuses, and what it still admits", () => {
     expect(new Map(legalAttackCorpus()).get(2)).toBeDefined();
     const gate = deriveAttackEffect(PRINTED)?.[0];
     if (gate?.op !== "coinFlipGate") throw new Error("expected a coinFlipGate");
-    const rotations = [...gate.then, ...(gate.otherwise ?? [])]
+    const rotations = [...gate.ops, ...(gate.otherwise ?? [])]
       .map((o) => (o.op === "applyStatus" ? o.status : null))
       .filter((s) => s === "paralyzed" || s === "confused" || s === "asleep");
     expect(rotations).toEqual(["paralyzed", "confused"]);
@@ -569,7 +569,7 @@ describe("§7 — engineVersion, and why MATCH_RECORD_VERSION does not move", ()
     expect(program).toHaveLength(1);
     const gate = program?.[0];
     if (gate?.op !== "coinFlipGate") throw new Error("expected a coinFlipGate");
-    for (const op of [...gate.then, ...(gate.otherwise ?? [])]) {
+    for (const op of [...gate.ops, ...(gate.otherwise ?? [])]) {
       expect(op.op).toBe("applyStatus");
     }
     for (const wantHeads of [true, false]) {
@@ -579,9 +579,9 @@ describe("§7 — engineVersion, and why MATCH_RECORD_VERSION does not move", ()
     }
     // The emitted ops are byte-identical to programs the catalog already prints
     // STANDALONE, which is the alphabet argument as an equality rather than a sentence.
-    expect(JSON.stringify(gate.then)).toBe(
+    expect(JSON.stringify(gate.ops)).toBe(
       JSON.stringify(
-        (deriveAttackEffect(HEADS_ARM_ALONE)?.[0] as { then: EffectOp[] } | undefined)?.then,
+        (deriveAttackEffect(HEADS_ARM_ALONE)?.[0] as { ops: EffectOp[] } | undefined)?.ops,
       ),
     );
     expect(JSON.stringify(gate.otherwise)).toBe(

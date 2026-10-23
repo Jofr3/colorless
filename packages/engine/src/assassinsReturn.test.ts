@@ -232,7 +232,7 @@ describe("D313 §1 — the three prints, the three registry rows, and what diffe
       {
         op: "optional",
         note: CROBAT_PRINTED,
-        then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
+        ops: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
       },
     ]);
   });
@@ -543,7 +543,7 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
         ...parked.phase,
         cont: {
           ...cont,
-          pendingOp: { ...cont.pendingOp, then: [{ op: "returnSelf" }] },
+          pendingOp: { ...cont.pendingOp, ops: [{ op: "returnSelf" }] },
         },
       },
     };

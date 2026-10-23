@@ -153,7 +153,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
 describe("§2 — the READING: one gate, one op, and the arity read off the sentence", () => {
   it("the printed sentence derives to a conditionGate over D398's member", () => {
     expect(deriveAttackEffect(TAKEN)).toEqual([
-      { op: "conditionGate", cond: { kind: "yourDeckAtMost", count: 3 }, then: [SNIPE] },
+      { op: "conditionGate", cond: { kind: "yourDeckAtMost", count: 3 }, ops: [SNIPE] },
     ]);
   });
 
@@ -175,7 +175,7 @@ describe("§2 — the READING: one gate, one op, and the arity read off the sent
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        then: [{ ...SNIPE, amount: 55, count: 3 }],
+        ops: [{ ...SNIPE, amount: 55, count: 3 }],
       },
     ]);
   });
@@ -408,7 +408,7 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "yourBench",
@@ -428,7 +428,7 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "opponentBench",

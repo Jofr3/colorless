@@ -107,14 +107,14 @@ describe("D244 §1 — the two programs and the printings they serve", () => {
     expect(program?.length).toBe(1);
     const outer = program?.[0];
     if (outer?.op !== "optional") throw new Error("expected the printed 'you may' wrapper");
-    const [sw, gate] = outer.then;
+    const [sw, gate] = outer.ops;
     if (sw?.op !== "switchActive") throw new Error("expected switchActive first");
     expect(sw.fromSource).toBe(true);
     expect(sw.recordAs).toBe("moved");
     // "If you do" — the §9.2 record gate on the uid that ACTUALLY became Active.
     if (gate?.op !== "recordGate") throw new Error("expected the 'If you do' gate");
     expect(gate.slot).toBe("moved");
-    const move = gate.then[0];
+    const move = gate.ops[0];
     if (move?.op !== "moveEnergy") throw new Error("expected moveEnergy inside the gate");
     expect(move.route).toBe("othersToSelf");
     expect(move.max).toBe("any"); // "any amount"

@@ -84,7 +84,7 @@ describe("D586 §2 — the readings: shipped members at the printed parameters",
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasSpecialCondition" },
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
     expect(deriveAttackEffect(ABYSS_EYE.replace("'", "’"))).toEqual(deriveAttackEffect(ABYSS_EYE));

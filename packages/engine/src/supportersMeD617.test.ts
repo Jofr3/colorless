@@ -108,7 +108,7 @@ describe("D617 §2 — the registry programs, field for field", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [
+          ops: [
             {
               op: "healChosen",
               amount: 80,
@@ -620,7 +620,7 @@ describe("D617 §8 — the new pieces off a board", () => {
       {
         op: "recordGate",
         slot: "paid",
-        then: [{ op: "drawCards", count: 1, per }],
+        ops: [{ op: "drawCards", count: 1, per }],
       },
     ];
     const noteOf = (program: EffectOp[]): string => {

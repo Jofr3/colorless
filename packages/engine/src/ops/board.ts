@@ -940,7 +940,7 @@ export function ownDevolveAnswered(
             yes: cards(k),
             no: k + 1 === n ? cards(n) : `${k + 1} to ${n} Evolution cards`,
           },
-          then: [shedOp(k)],
+          ops: [shedOp(k)],
           otherwise: [chain(k + 1)],
         };
   return [chain(1)];
@@ -1021,7 +1021,7 @@ export function chooseOneChain(
       op: "optional",
       note,
       labels: { yes: first.label, no: rest.map((b) => b.label).join(" or ") },
-      then: [first.op],
+      ops: [first.op],
       otherwise: chooseOneChain(note, rest),
     },
   ];
@@ -1181,7 +1181,7 @@ export function queueTakePrize(
 /**
  * Turn one face-down Prize face up, of the controller's row or the opponent's (`side: "opponent"`).
  * The player picks rather than the engine. Zero face-down prizes is a silent no-op, one is forced,
- * more parks a choice inside the confirm's `then`.
+ * more parks a choice inside the confirm's `ops`.
  */
 export function turnPrizeFaceUp(
   state: GameState,

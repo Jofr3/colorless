@@ -36,7 +36,7 @@ const PROGRAMS: Record<string, EffectOp[]> = {
     {
       op: "recordGate",
       slot: "moved",
-      then: [
+      ops: [
         { op: "attachEnergyFrom", source: "hand", energyType: "Lightning", toSelf: true, count: 2 },
       ],
     },
@@ -166,7 +166,7 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
     expect(gated?.[1]).toMatchObject({
       op: "recordGate",
       slot: "moved",
-      then: deriveAttackEffect(consequent) ?? [],
+      ops: deriveAttackEffect(consequent) ?? [],
     });
   });
 

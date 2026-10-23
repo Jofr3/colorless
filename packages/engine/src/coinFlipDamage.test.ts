@@ -341,7 +341,7 @@ describe("the rest of the coin family stays LOUD", () => {
     expect(deriveAttackEffect(paralysisFlip)).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
     // Its prefix is Tarountula's leading sentence verbatim — so this is the

@@ -66,7 +66,7 @@ function statusPairOf(text: string): StatusName[] | null {
   if (ops === null) return null;
   const head = ops[0];
   const steps: EffectOp[] =
-    ops.length === 1 && head !== undefined && head.op === "coinFlipGate" ? head.then : ops;
+    ops.length === 1 && head !== undefined && head.op === "coinFlipGate" ? head.ops : ops;
   if (steps.length !== 2) return null;
   const statuses = steps.map((o) => (o.op === "applyStatus" ? o.status : null));
   return statuses.every((x): x is StatusName => x !== null) ? statuses : null;
@@ -299,7 +299,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(deriveAttackEffect(FLIP_CONFUSE_POISON)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "applyStatus", target: "defender", status: "confused" },
           { op: "applyStatus", target: "defender", status: "poisoned" },
         ],
@@ -308,7 +308,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(deriveAttackEffect(FLIP_PARALYZE_POISON)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "applyStatus", target: "defender", status: "poisoned" },
         ],
@@ -388,7 +388,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     ).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
   });

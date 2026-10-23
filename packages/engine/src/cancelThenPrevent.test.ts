@@ -124,7 +124,7 @@ describe("§2 — one reader owns the sentence, and the ops are the sibling's", 
     expect(sibling).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "preventDamage", effects: true }],
+        ops: [{ op: "preventDamage", effects: true }],
       },
     ]);
     const gate = sibling?.[0];
@@ -132,10 +132,10 @@ describe("§2 — one reader owns the sentence, and the ops are the sibling's", 
     expect(deriveAttackCoinFlip(PRINTED)?.kind).toBe("cancelOnTailsElseProgram");
     const mine = deriveAttackCoinFlip(PRINTED);
     if (mine === null || mine.kind !== "cancelOnTailsElseProgram") throw new Error("unreachable");
-    expect(mine.ops).toEqual(gate.then);
+    expect(mine.ops).toEqual(gate.ops);
     // …and the other direction: the sibling's `then` is exactly what this member carries,
     // so neither can gain a field without the other being re-read.
-    expect(gate.then).toEqual(mine.ops);
+    expect(gate.ops).toEqual(mine.ops);
   });
 
   it("EXACTLY ONE of the thirteen readers claims it — named, with the twelve refusals kept", () => {

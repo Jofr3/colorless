@@ -71,7 +71,7 @@ const GATED_PROGRAM = [
   {
     op: "conditionGate",
     cond: { kind: "opponentActiveHasType", type: "Dragon" },
-    then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+    ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
   },
 ];
 
@@ -360,7 +360,7 @@ describe("§2 — the reader, named rather than counted", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasType", type: "Psychic" },
-        then: [{ op: "applyStatus", target: "defender", status: "burned" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "burned" }],
       },
     ]);
     // …and the clause slot reaches the LITERAL table too, not only the type
@@ -373,7 +373,7 @@ describe("§2 — the reader, named rather than counted", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsStage1" },
-        then: [{ op: "applyStatus", target: "defender", status: "asleep" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "asleep" }],
       },
     ]);
   });
@@ -503,7 +503,7 @@ describe("§4 — the anchor's edges, driven synthetically because no near miss 
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
     expect(deriveAttackEffect(BASIC_KO)).not.toEqual(deriveAttackEffect(GATED));
@@ -671,7 +671,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveHasType", type: "Dragon" },
-          then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+          ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
         },
       ]),
     );

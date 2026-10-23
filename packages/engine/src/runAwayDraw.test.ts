@@ -195,7 +195,7 @@ describe("D311 §1 — the print, the population, and the registry row that maps
     const program = programFor(DUDUNSPARCE)?.abilities?.[0]?.program ?? [];
     expect(program).toEqual([
       { op: "drawCards", count: 3, recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "returnSelf", dest: "deck" }] },
     ]);
     // The gate has NO `otherwise`: the printed sentence says what happens if you
     // drew, and nothing at all about the other branch.

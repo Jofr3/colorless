@@ -122,7 +122,7 @@ describe("D633 §2 — the readings", () => {
       {
         op: "optional",
         note: VOLTAIC_FIST,
-        then: [
+        ops: [
           { op: "damageSelf", amount: 60 },
           { op: "applyStatus", target: "defender", status: "paralyzed" },
         ],

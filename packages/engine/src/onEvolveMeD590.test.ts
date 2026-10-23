@@ -88,7 +88,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
       [KADABRA, PSYCHIC_DRAW_2, 2],
     ] as const) {
       expect(triggerOf(id)?.program).toEqual([
-        { op: "optional", note: text, then: [{ op: "drawCards", count }] },
+        { op: "optional", note: text, ops: [{ op: "drawCards", count }] },
       ]);
       expect(deriveAttackEffect(consequent(text))).toEqual([{ op: "drawCards", count }]);
     }
@@ -99,7 +99,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
       {
         op: "optional",
         note: PRISON_PANIC,
-        then: [{ op: "applyStatus", target: "defender", status: "confused" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "confused" }],
       },
     ]);
   });
@@ -144,7 +144,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     expect(triggerOf(TINKATUFF)?.program).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
   });

@@ -250,7 +250,7 @@ describe("D561 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "recordGate",
             slot: "paid",
-            then: [
+            ops: [
               {
                 op: "searchDeck",
                 filter: { kind: "anyPokemon" },
@@ -338,7 +338,7 @@ describe("D561 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "recordGate",
             slot: "moved",
-            then: [
+            ops: [
               {
                 op: "moveEnergy",
                 filter: { kind: "anyEnergy" },

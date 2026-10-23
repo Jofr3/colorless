@@ -64,7 +64,7 @@ const program = (amount: number): EffectOp[] => [
   {
     op: "conditionGate",
     cond: { kind: "stadiumInPlay" },
-    then: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
+    ops: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
   },
 ];
 const PROGRAM = program(30);
@@ -237,14 +237,14 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
   it("the gate's sorted KEY SET is exactly [cond, op, then] — no `otherwise` (D135), and the spread carries no `damagedOnly` (D507's rider is not printed)", () => {
     const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
-    expect(Object.keys(gate).sort()).toEqual(["cond", "op", "then"]);
+    expect(Object.keys(gate).sort()).toEqual(["cond", "op", "ops"]);
     expect(gate.otherwise).toBeUndefined();
-    const [spread, discard] = gate.then;
+    const [spread, discard] = gate.ops;
     if (spread?.op !== "spreadDamage") throw new Error("then[0] is not a spreadDamage");
     if (discard?.op !== "discardStadium") throw new Error("then[1] is not a discardStadium");
     expect(Object.keys(spread).sort()).toEqual(["amount", "op", "target"]);
     expect(Object.keys(discard)).toEqual(["op"]);
-    expect(gate.then).toHaveLength(2);
+    expect(gate.ops).toHaveLength(2);
   });
 
   it("the `then` is BYTE-EQUAL to the two bare halves' OWN derivations, concatenated in printed order (measured, not quoted)", () => {
@@ -254,7 +254,7 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
     const discard = deriveAttackEffect(BARE_DISCARD);
     expect(spread).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 30 }]);
     expect(discard).toEqual([{ op: "discardStadium" }]);
-    expect(gate.then).toEqual([...(spread as EffectOp[]), ...(discard as EffectOp[])]);
+    expect(gate.ops).toEqual([...(spread as EffectOp[]), ...(discard as EffectOp[])]);
     const may = mustDerive(deriveAttackEffect, "You may discard a Stadium in play.")[0];
     if (may?.op !== "conditionGate") throw new Error("arm 43's op 0 is not a conditionGate");
     expect(gate.cond).toEqual(may.cond);

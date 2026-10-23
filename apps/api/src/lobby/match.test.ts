@@ -441,7 +441,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
 
   it("refuses a version this build doesn't write (older AND newer)", () => {
     const { record } = freshRecord();
-    expect(MATCH_RECORD_VERSION).toBe(49);
+    expect(MATCH_RECORD_VERSION).toBe(50);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

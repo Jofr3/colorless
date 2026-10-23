@@ -409,7 +409,7 @@ describe("D636 §1 — the readers and the registry row", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentStadiumInPlay" },
-        then: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
+        ops: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
       },
     ]);
     expect(deriveAttackEffect(SCORCHING_EARTH.replace("Stadium cards", "Item cards"))).toBeNull();

@@ -766,7 +766,7 @@ describe("D558 §8 — Full Metal Lab: {M} Pokémon take 30 less, both sides, bo
     // The CONTROL: the same two ops in the SWAPPED order pay the {M} body the full 30.
     const gate = program[0];
     if (gate?.op !== "conditionGate") throw new Error("expected the Stadium gate");
-    const swapped = run([...gate.then].reverse());
+    const swapped = run([...gate.ops].reverse());
     expect(swapped.players.p2.bench.map((b) => b.damage)).toEqual([30, 30]);
   });
 

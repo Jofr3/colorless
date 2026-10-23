@@ -323,11 +323,11 @@ describe("§4 — the program: D381's arm, and BOTH `otherwise`s carry the print
       {
         op: "conditionGate",
         cond: { kind: "yourHandNotEmpty" },
-        then: [
+        ops: [
           {
             op: "optional",
             note: PURGING,
-            then: [{ op: "discardHand" }, { op: "damageDefender", amount: 240 }],
+            ops: [{ op: "discardHand" }, { op: "damageDefender", amount: 240 }],
             otherwise: [{ op: "damageDefender", amount: 120 }],
           },
         ],
@@ -340,15 +340,15 @@ describe("§4 — the program: D381's arm, and BOTH `otherwise`s carry the print
   it("the COST goes IN FRONT of the hit, which is `boostedArms`' order REVERSED", () => {
     const gate = optionalCostBoostProgram(reading(), 120, PURGING)[0];
     if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
-    const ask = gate.then[0];
+    const ask = gate.ops[0];
     if (ask === undefined || ask.op !== "optional") throw new Error("expected the confirm");
-    expect(ask.then.map((o) => o.op)).toEqual(["discardHand", "damageDefender"]);
+    expect(ask.ops.map((o) => o.op)).toEqual(["discardHand", "damageDefender"]);
   });
 
   it("the two decline arms are DISTINCT OBJECTS, so the program is a tree", () => {
     const gate = optionalCostBoostProgram(reading(), 120, PURGING)[0];
     if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
-    const ask = gate.then[0];
+    const ask = gate.ops[0];
     if (ask === undefined || ask.op !== "optional") throw new Error("expected the confirm");
     expect(ask.otherwise).toEqual(gate.otherwise);
     expect(ask.otherwise).not.toBe(gate.otherwise);

@@ -318,11 +318,11 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "preventAttack", target: "defender" }],
+        ops: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
-    const gate = mustDerive(deriveAttackEffect, PRINTED)[0] as { then: EffectOp[] };
-    expect(gate.then).toEqual(deriveAttackEffect(DEFENDER_BARE));
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0] as { ops: EffectOp[] };
+    expect(gate.ops).toEqual(deriveAttackEffect(DEFENDER_BARE));
     expect(
       deriveAttackEffect(
         "Flip a coin. If tails, during your opponent's next turn, the Defending Pokémon can't attack.",
@@ -361,14 +361,14 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "preventAttack", target: "defender" }],
+        ops: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
     expect(
       deriveAttackEffect(
         "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
       ),
-    ).toEqual([{ op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] }]);
+    ).toEqual([{ op: "coinFlipGate", onTails: true, ops: [{ op: "preventAttack" }] }]);
     expect(
       deriveAttackEffect(
         "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",

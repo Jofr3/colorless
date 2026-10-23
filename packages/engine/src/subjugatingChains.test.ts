@@ -164,7 +164,7 @@ describe("Pecharunt ex — the five printings as registry data", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+          ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
         },
       ]);
     }

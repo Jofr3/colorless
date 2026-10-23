@@ -116,7 +116,7 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     ).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
   });
@@ -450,7 +450,7 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveIsEx" },
-          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+          ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
         },
       ],
     );

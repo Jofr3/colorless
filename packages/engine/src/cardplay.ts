@@ -1044,12 +1044,12 @@ export function programPlayable(
   for (const op of program) {
     if (op.op === "coinFlipGate") {
       // A coin flip is procedure, not effect, so if the branches that could run would only whiff,
-      // the card can only whiff and cannot be played (§7). A one-armed gate is checked on `then`;
+      // the card can only whiff and cannot be played (§7). A one-armed gate is checked on `ops`;
       // with `otherwise` the card is refused only if both arms would whiff. Not extended to
       // `optional` (declining is a legal resolution) or to `conditionGate`. The source uid is
       // passed down so a gated `self` cost is still that Pokémon's.
       if (
-        !programPlayable(state, op.then, seat, sourceUid) &&
+        !programPlayable(state, op.ops, seat, sourceUid) &&
         (op.otherwise === undefined || !programPlayable(state, op.otherwise, seat, sourceUid))
       ) {
         return false;

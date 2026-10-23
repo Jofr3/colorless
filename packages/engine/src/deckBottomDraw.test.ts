@@ -476,7 +476,7 @@ describe("D487 §8 — the version question, asked at the hard address", () => {
       state,
       [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 3, from: "bottom" }] },
+        { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 3, from: "bottom" }] },
       ],
       { seat: "p1" },
       {},
@@ -504,7 +504,7 @@ describe("D487 §8 — the version question, asked at the hard address", () => {
         table(),
         [
           { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-          { op: "recordGate", slot: "paid", then: [draw] },
+          { op: "recordGate", slot: "paid", ops: [draw] },
         ],
         { seat: "p1" },
         {},

@@ -53,7 +53,7 @@ const CLAUSES = [
     text: "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) If you do, this attack does 160 damage to the new Active Pokémon.",
     program: [
       { op: "opponentSwitchOut", recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: 160 }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "damageNewActive", amount: 160 }] },
     ] as EffectOp[],
     printings: 1,
     legalPrintings: 1,
@@ -141,7 +141,7 @@ describe("the two anchors — one new op, and the promotion each sentence prints
     ).toEqual({
       op: "recordGate",
       slot: "moved",
-      then: [{ op: "damageNewActive", amount: 55 }],
+      ops: [{ op: "damageNewActive", amount: 55 }],
     });
   });
 

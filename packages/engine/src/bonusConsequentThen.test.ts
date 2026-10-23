@@ -279,7 +279,7 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        then: [
+        ops: [
           { op: "spreadDamage", target: "opponentBench", amount: 30 },
           { op: "discardStadium" },
         ],
@@ -377,7 +377,7 @@ describe("D382 §4 — the ASSEMBLER: both arms, and the PRINTED ORDER inside th
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        then: [{ op: "damageDefender", amount: 120 }, { op: "discardStadium" }],
+        ops: [{ op: "damageDefender", amount: 120 }, { op: "discardStadium" }],
         otherwise: [{ op: "damageDefender", amount: 60 }],
       },
     ]);
@@ -392,13 +392,13 @@ describe("D382 §4 — the ASSEMBLER: both arms, and the PRINTED ORDER inside th
   });
 
   it("THE DAMAGE COMES FIRST AND THE DISCARD SECOND — the PRINTED order", () => {
-    const gate = program()[0] as { then: EffectOp[] };
-    expect(gate.then.map((op) => op.op)).toEqual(["damageDefender", "discardStadium"]);
+    const gate = program()[0] as { ops: EffectOp[] };
+    expect(gate.ops.map((op) => op.op)).toEqual(["damageDefender", "discardStadium"]);
   });
 
   it("the two arms are DISTINCT OBJECTS, not one array shared", () => {
-    const gate = program()[0] as { then: EffectOp[]; otherwise: EffectOp[] };
-    expect(gate.then).not.toBe(gate.otherwise);
+    const gate = program()[0] as { ops: EffectOp[]; otherwise: EffectOp[] };
+    expect(gate.ops).not.toBe(gate.otherwise);
     expect(walkProgram(program()).map((op) => op.op)).toEqual([
       "conditionGate",
       "damageDefender",

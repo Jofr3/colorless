@@ -35,7 +35,7 @@ const DRAW_UNTIL_6: EffectOp = { op: "drawUntilHandSize", size: 6 };
 const DRAW_1: EffectOp = { op: "drawCards", count: 1 };
 
 function wrapped(note: string, ops: EffectOp[]): EffectOp[] {
-  return [{ op: "optional", note, then: ops }];
+  return [{ op: "optional", note, ops: ops }];
 }
 
 /** The ordering program: "you may draw until 6", then an unconditional draw. */
@@ -71,7 +71,7 @@ describe("the `optional` op parks a `confirm`", () => {
     const events: GameEvent[] = [];
     const result = runProgram(
       full,
-      [{ op: "optional", note: SENTENCE, then: [{ op: "drawUntilHandSize", size: 0 }] }],
+      [{ op: "optional", note: SENTENCE, ops: [{ op: "drawUntilHandSize", size: 0 }] }],
       CTX,
       {},
       events,
@@ -141,7 +141,7 @@ describe("composition — the gate nests like the other three", () => {
     }
     const parked = runProgram(
       bench,
-      [{ op: "optional", note: "You may switch.", then: [{ op: "switchActive" }] }],
+      [{ op: "optional", note: "You may switch.", ops: [{ op: "switchActive" }] }],
       CTX,
       {},
       events,
@@ -171,7 +171,7 @@ describe("composition — the gate nests like the other three", () => {
         [
           {
             op: "coinFlipGate",
-            then: [{ op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] }],
+            ops: [{ op: "optional", note: SENTENCE, ops: [DRAW_UNTIL_6] }],
           },
         ],
         CTX,
@@ -201,8 +201,8 @@ describe("what this op deliberately does NOT touch", () => {
     const result = runProgram(
       board(),
       [
-        { op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] },
-        { op: "recordGate", slot: "moved", then: [DRAW_1] },
+        { op: "optional", note: SENTENCE, ops: [DRAW_UNTIL_6] },
+        { op: "recordGate", slot: "moved", ops: [DRAW_1] },
       ],
       CTX,
       {},
@@ -217,8 +217,8 @@ describe("what this op deliberately does NOT touch", () => {
     const result = runProgram(
       board(),
       [
-        { op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] },
-        { op: "recordGate", slot: "moved", then: [DRAW_1] },
+        { op: "optional", note: SENTENCE, ops: [DRAW_UNTIL_6] },
+        { op: "recordGate", slot: "moved", ops: [DRAW_1] },
       ],
       CTX,
       { moved: ["seeded-uid"] },
@@ -353,7 +353,7 @@ describe("RE-POINTED at D202 — the pins that were written to go red, and did",
       // consumed, not a rebuild of it, because both HUDs render it as the
       // dialog's only prose.
       expect(op?.op === "optional" ? op.note : undefined).toBe(text);
-      expect(op?.op === "optional" ? op.then : undefined).toEqual(deriveAttackEffect(inner));
+      expect(op?.op === "optional" ? op.ops : undefined).toEqual(deriveAttackEffect(inner));
     });
   }
 

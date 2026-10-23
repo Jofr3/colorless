@@ -59,7 +59,7 @@ const program = (amount: number): EffectOp[] => [
   {
     op: "conditionGate",
     cond: { kind: "opponentActiveDamaged" },
-    then: [{ op: "damageDefender", amount }],
+    ops: [{ op: "damageDefender", amount }],
   },
   { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },
   { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },
@@ -312,8 +312,8 @@ describe("D520 §2 — the program, spelled whole, and the base rule's witnesses
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
     expect(gate.cond).toEqual({ kind: "opponentActiveDamaged" });
     expect(gate.otherwise).toBeUndefined();
-    expect(gate.then).toEqual([{ op: "damageDefender", amount: AMOUNT }]);
-    const hit = gate.then[0];
+    expect(gate.ops).toEqual([{ op: "damageDefender", amount: AMOUNT }]);
+    const hit = gate.ops[0];
     if (hit?.op !== "damageDefender") throw new Error("gated op is not a damageDefender");
     expect(hit.amount).toBe(AMOUNT);
     expect("per" in hit).toBe(false);
@@ -507,7 +507,7 @@ describe("D520 §5 — the order is Active → own Bench → opponent Bench, and
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamaged" },
-        then: [{ op: "damageDefender", amount: 50 }],
+        ops: [{ op: "damageDefender", amount: 50 }],
       },
       { op: "spreadDamage", target: "yourBench", amount: 50, damagedOnly: true },
       { op: "spreadDamage", target: "opponentBench", amount: 50, damagedOnly: true },

@@ -78,7 +78,7 @@ const FIX_GATEORDER: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "noEnergyOnYourPokemon" },
-      then: [{ op: "drawCards", count: 3 }],
+      ops: [{ op: "drawCards", count: 3 }],
       otherwise: [
         { op: "drawCards", count: 1 },
         { op: "drawCards", count: 4 },
@@ -132,7 +132,7 @@ const FIX_CONDGATE: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "morePrizesThanOpponent" },
-      then: [{ op: "healChosen", amount: 30 }],
+      ops: [{ op: "healChosen", amount: 30 }],
       otherwise: [{ op: "gust" }],
     },
   ],

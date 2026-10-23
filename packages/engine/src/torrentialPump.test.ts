@@ -391,11 +391,11 @@ describe("§4 — the program: ONE gate, ONE confirm, and NO decline arm on eith
       {
         op: "conditionGate",
         cond: { kind: "yourActiveEnergyAtLeast", count: 3 },
-        then: [
+        ops: [
           {
             op: "optional",
             note: TORRENTIAL,
-            then: [
+            ops: [
               {
                 op: "discardEnergy",
                 from: "yourActive",
@@ -435,7 +435,7 @@ describe("§4 — the program: ONE gate, ONE confirm, and NO decline arm on eith
     const gate = optionalCostBoostProgram(reading(), 100, TORRENTIAL)[0];
     if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
     expect(gate.otherwise).toBeUndefined();
-    const ask = gate.then[0];
+    const ask = gate.ops[0];
     if (ask === undefined || ask.op !== "optional") throw new Error("expected the confirm");
     expect(ask.otherwise).toBeUndefined();
     expect(Object.hasOwn(ask, "otherwise")).toBe(false);

@@ -287,7 +287,7 @@ describe("D317 §1 — the print, and the reading each of the two sentences gets
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveIsEvolution" },
-          then: [
+          ops: [
             { op: "damageDefender", amount: 280 },
             {
               op: "discardEnergy",
@@ -305,7 +305,7 @@ describe("D317 §1 — the print, and the reading each of the two sentences gets
     ).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "damageDefender", amount: 60 },
           { op: "heal", target: "self", amount: 30 },
         ],
@@ -642,7 +642,7 @@ describe("D317 §7 — `coinFlipGate.otherwise`'s FIRST PRODUCER, structurally",
     );
     expect(
       [...programBranchCarriers(program).entries()].map(([op, keys]) => [op, [...keys].sort()]),
-    ).toEqual([["coinFlipGate", ["otherwise", "then"]]]);
+    ).toEqual([["coinFlipGate", ["ops", "otherwise"]]]);
     // …and the structural walk descends BOTH arms, so the decline arm's hit is a
     // reachable op rather than one only the interpreter ever sees.
     expect(walkProgram(program).map((op) => op.op)).toEqual([

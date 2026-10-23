@@ -165,11 +165,11 @@ describe("§1 the deriver — two sentences, six printings, one parking op", () 
     expect(deriveAttackEffect(FLIP_KO_TEXT)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           {
             op: "conditionGate",
             cond: { kind: "opponentActiveIsBasic" },
-            then: [{ op: "knockOutDefender" }],
+            ops: [{ op: "knockOutDefender" }],
           },
         ],
         otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],

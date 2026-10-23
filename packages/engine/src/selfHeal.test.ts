@@ -156,7 +156,7 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
     const gated = REAL_NEAR_MISSES[3];
     expect(gated.startsWith("Heal")).toBe(false);
     expect(deriveAttackEffect(gated)).toEqual([
-      { op: "coinFlipGate", then: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
+      { op: "coinFlipGate", ops: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
     ]);
     // And the COIN reader still does not claim it: a gated heal is not an
     // `AttackCoinFlip` shape (those fold pre-damage). So exactly one reader answers

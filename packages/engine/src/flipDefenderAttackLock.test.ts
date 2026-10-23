@@ -150,18 +150,18 @@ describe("§1 — the datum and the anchor", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "preventAttack", target: "defender" }],
+        ops: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
     const gate = mustDerive(deriveAttackEffect, PRINTED)[0] as {
       op: string;
-      then: EffectOp[];
+      ops: EffectOp[];
     };
-    expect(gate.then).toEqual(deriveAttackEffect(DEFENDER_BARE));
+    expect(gate.ops).toEqual(deriveAttackEffect(DEFENDER_BARE));
     // …and it is the ONE-op program: nothing is appended, so nothing rides behind
     // the gate into a continuation (§8's reachability half).
     expect(mustDerive(deriveAttackEffect, PRINTED).length).toBe(1);
-    expect(Object.keys(gate).sort()).toEqual(["op", "then"]);
+    expect(Object.keys(gate).sort()).toEqual(["op", "ops"]);
   });
 
   it("D472 — the VERB-WIDENED anchor claims exactly the same rows, so the tight one ships", () => {
@@ -193,7 +193,7 @@ describe("§1 — the datum and the anchor", () => {
       deriveAttackEffect(
         "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
       ),
-    ).toEqual([{ op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] }]);
+    ).toEqual([{ op: "coinFlipGate", onTails: true, ops: [{ op: "preventAttack" }] }]);
     // A prefix, a suffix and a truncation are all refused — the `^`, the `$` and the
     // terminator each doing their own job.
     expect(deriveAttackEffect(`Then, ${PRINTED}`)).toBeNull();
@@ -484,9 +484,7 @@ describe("§7 — what this slice does NOT owe, traced rather than argued", () =
     expect(Object.keys(built[0] as object).sort()).toEqual(
       Object.keys(shippedGate[0] as object).sort(),
     );
-    expect(JSON.stringify((built[0] as { then: EffectOp[] }).then)).toBe(
-      JSON.stringify(shippedLock),
-    );
+    expect(JSON.stringify((built[0] as { ops: EffectOp[] }).ops)).toBe(JSON.stringify(shippedLock));
     expect(built).toHaveLength(1);
     expect(swing(flipBoard(true)).state.phase.kind).not.toBe("effect:choose");
     expect(swing(flipBoard(false)).state.phase.kind).not.toBe("effect:choose");

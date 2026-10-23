@@ -788,7 +788,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     const walk = (ops: readonly EffectOp[], where: string): void => {
       ops.forEach((op, i) => {
         if (op.op === "discardDeckTop" && op.whose === "eachPlayer") sites.push(`${where}[${i}]`);
-        for (const key of ["then", "otherwise", "ops"] as const) {
+        for (const key of ["ops", "otherwise"] as const) {
           const sub = (op as unknown as Record<string, unknown>)[key];
           if (Array.isArray(sub)) walk(sub as EffectOp[], `${where}.${op.op}.${key}`);
         }

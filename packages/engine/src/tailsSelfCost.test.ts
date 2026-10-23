@@ -112,7 +112,7 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        then: [
+        ops: [
           { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
         ],
       },
@@ -121,12 +121,12 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        then: [{ op: "damageSelf", amount: 60 }],
+        ops: [{ op: "damageSelf", amount: 60 }],
       },
     ]);
     for (const text of [DISCARD_TEXT, RECOIL_TEXT]) {
       const op = mustDerive(deriveAttackEffect, text)[0] as object;
-      expect(Object.keys(op).sort(), text).toEqual(["onTails", "op", "then"]);
+      expect(Object.keys(op).sort(), text).toEqual(["onTails", "op", "ops"]);
     }
   });
 
@@ -137,7 +137,7 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     ] as const) {
       const gated = mustDerive(deriveAttackEffect, gatedText);
       expect(gated, gatedText).toHaveLength(1);
-      expect(gated[0], gatedText).toMatchObject({ then: deriveAttackEffect(bareText) });
+      expect(gated[0], gatedText).toMatchObject({ ops: deriveAttackEffect(bareText) });
       // …and the two anchors are NOT the same reading. A build where either
       // claimed the other's string would return the inner op UNWRAPPED (or wrap a
       // sentence with no coin in it), which is what this pair catches.
@@ -157,7 +157,7 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        then: [{ op: "damageSelf", amount: 10 }],
+        ops: [{ op: "damageSelf", amount: 10 }],
       },
     ]);
     // A printed 0 is not a real card and would derive to a silent no-op — the

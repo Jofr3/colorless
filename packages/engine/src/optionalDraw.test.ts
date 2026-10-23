@@ -43,7 +43,7 @@ const UNTIL = 0;
 const FIVE = 1;
 
 function wrapped(text: string, inner: EffectOp): EffectOp[] {
-  return [{ op: "optional", note: text, then: [inner] }];
+  return [{ op: "optional", note: text, ops: [inner] }];
 }
 
 const NEAR_MISSES = [
@@ -85,7 +85,7 @@ describe("the two anchors — 12 legal printings, and the four words in front of
       expect(gated, text).toHaveLength(1);
       const gate = gated?.[0];
       expect(gate?.op).toBe("optional");
-      expect(gate?.op === "optional" ? gate.then : undefined).toEqual(deriveAttackEffect(bare));
+      expect(gate?.op === "optional" ? gate.ops : undefined).toEqual(deriveAttackEffect(bare));
     }
   });
 
@@ -145,10 +145,10 @@ describe("the two anchors — 12 legal printings, and the four words in front of
   it("the two anchors are DISJOINT — neither reaches the other's sentence", () => {
     const untilProgram = deriveAttackEffect(CLAUSES[UNTIL].text)?.[0];
     const fiveProgram = deriveAttackEffect(CLAUSES[FIVE].text)?.[0];
-    expect(untilProgram?.op === "optional" ? untilProgram.then : undefined).toEqual([
+    expect(untilProgram?.op === "optional" ? untilProgram.ops : undefined).toEqual([
       { op: "drawUntilHandSize", size: 6 },
     ]);
-    expect(fiveProgram?.op === "optional" ? fiveProgram.then : undefined).toEqual([
+    expect(fiveProgram?.op === "optional" ? fiveProgram.ops : undefined).toEqual([
       { op: "drawCards", count: 5 },
     ]);
   });
@@ -208,7 +208,7 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
       const built = deriveAttackEffect(text);
       expect(built, text).toEqual([
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count }] },
+        { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count }] },
       ]);
       const hasOptional = (value: unknown): boolean =>
         Array.isArray(value)
@@ -609,7 +609,7 @@ describe("the wire and the seat gate, on the DERIVED park", () => {
     expect(thawed.phase.cont.pendingOp).toEqual({
       op: "optional",
       note: CLAUSES[UNTIL].text,
-      then: [{ op: "drawUntilHandSize", size: 6 }],
+      ops: [{ op: "drawUntilHandSize", size: 6 }],
     });
     const { state: done } = mustApply(thawed, {
       type: "resolveEffect",

@@ -186,7 +186,7 @@ describe("D629 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasSpecialCondition" },
-        then: [
+        ops: [
           { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack" },
         ],
       },

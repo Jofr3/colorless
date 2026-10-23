@@ -547,7 +547,7 @@ describe("D491 §9 — the version question, asked at the address that persists"
   it("the ADDRESS does persist, so this is NOT a no-carrier argument", () => {
     expect(deriveAttackEffect("Discard a card from your hand. If you do, draw 2 cards.")).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
     ]);
   });
 

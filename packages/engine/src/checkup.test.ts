@@ -796,7 +796,7 @@ describe("deriveAttackEffect (effects.ts)", () => {
     ).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
     expect(deriveAttackEffect("This Pokémon is now Confused.")).toEqual([

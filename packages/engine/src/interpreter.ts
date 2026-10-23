@@ -413,7 +413,7 @@ export function runProgram(
       // The winning face defaults to heads. Either branch is spliced by the same `unshift`, so an
       // op inside it can park; an absent `otherwise` splices nothing.
       queue.unshift(
-        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : (op.otherwise ?? [])),
+        ...(face === (op.onTails === true ? "tails" : "heads") ? op.ops : (op.otherwise ?? [])),
       );
       continue;
     }
@@ -423,7 +423,7 @@ export function runProgram(
       // against `next` — the board AS OF this point, with every earlier op in
       // the program applied. No event: the condition is public (BoardCondition),
       // so unlike a coin flip it tells the opponent nothing they can't see.
-      queue.unshift(...(conditionHolds(next, ctx.seat, op.cond) ? op.then : (op.otherwise ?? [])));
+      queue.unshift(...(conditionHolds(next, ctx.seat, op.cond) ? op.ops : (op.otherwise ?? [])));
       continue;
     }
     if (op.op === "recordGate") {
@@ -434,7 +434,7 @@ export function runProgram(
       // must see writes made since the run started — including one made by an
       // op that parked and resolved through resolveEffect. No event: the
       // recording op already announced these cards by uid.
-      queue.unshift(...(recordGateHolds(next, ctx, op, record) ? op.then : (op.otherwise ?? [])));
+      queue.unshift(...(recordGateHolds(next, ctx, op, record) ? op.ops : (op.otherwise ?? [])));
       continue;
     }
     // An `atLeastOne` attach learns here whether it may be declined; the queue and record are only
@@ -597,7 +597,7 @@ function withConsequence(
   if (slot === undefined) return prompt;
   const gate = queue.find((q) => q.op === "recordGate" && q.slot === slot);
   if (gate === undefined || gate.op !== "recordGate") return prompt;
-  const clause = describeBranch(gate.then);
+  const clause = describeBranch(gate.ops);
   if (clause === null) return prompt;
   // The CONDITION, not just the consequence. "If you do" is right for a gate that
   // asks whether the op did anything at all; it is wrong — and quietly wrong, the
@@ -980,7 +980,7 @@ function oneOfRecordedChoice(
       },
       cards: { yes: first.uid, ...(second === undefined ? {} : { no: second.uid }) },
       targets,
-      then: attach(first.type),
+      ops: attach(first.type),
       ...(second === undefined ? {} : { otherwise: attach(second.type) }),
     },
   ];
@@ -1077,7 +1077,7 @@ function continuationOps(
   if (op.op === "optional") {
     if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined)
       return [];
-    return choice.kind === "confirm" && choice.yes ? [...op.then] : [...(op.otherwise ?? [])];
+    return choice.kind === "confirm" && choice.yes ? [...op.ops] : [...(op.otherwise ?? [])];
   }
   // Deduction Kit: an empty ordering is the printed alternative (shuffle them onto the bottom).
   // `validateChoice` only admits it when the prompt carries `alt`.
@@ -1270,7 +1270,7 @@ function stepOp(
                 op: "optional",
                 note,
                 labels: { yes: word(second), no: word(third) },
-                then: clear(second),
+                ops: clear(second),
                 otherwise: clear(third),
               },
             ];
@@ -1284,7 +1284,7 @@ function stepOp(
               yes: word(first),
               no: third === undefined ? word(second) : `${word(second)} or ${word(third)}`,
             },
-            then: clear(first),
+            ops: clear(first),
             otherwise: tail,
           },
         ],
@@ -3590,7 +3590,7 @@ export function applyChoice(
         : state;
     case "optional":
       if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined) {
-        const attach = (choice.yes ? op.then : op.otherwise)?.[0];
+        const attach = (choice.yes ? op.ops : op.otherwise)?.[0];
         const uid = choice.yes ? op.cards.yes : op.cards.no;
         if (attach?.op === "attachEnergyFrom" && uid !== undefined) {
           return attachEnergyFrom(

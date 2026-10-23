@@ -115,7 +115,7 @@ describe("D611 §1 — the programs: nine objects over 17 printings", () => {
     expect(abilityOf(DUSTOX[0])?.program).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           {
             op: "discardEnergy",
             from: "opponentActive",
@@ -130,7 +130,7 @@ describe("D611 §1 — the programs: nine objects over 17 printings", () => {
       programFor("me01-097")?.triggered?.[0]?.program,
     );
     expect(abilityOf(TALONFLAME[0])?.program).toEqual([
-      { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "discard" }] },
+      { op: "coinFlipGate", ops: [{ op: "randomFromOpponentHand", to: "discard" }] },
     ]);
     expect(abilityOf(VIVILLON)?.program).toEqual([
       {

@@ -39,7 +39,7 @@ function put(count?: number): EffectOp {
 }
 
 function wrapped(note: string, then: EffectOp[]): EffectOp[] {
-  return [{ op: "optional", note, then }];
+  return [{ op: "optional", note, ops: then }];
 }
 
 const CLAUSES = [
@@ -56,7 +56,7 @@ const CLAUSES = [
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsStage2" },
-        then: wrapped(TWO_STAGE2, [put(2)]),
+        ops: wrapped(TWO_STAGE2, [put(2)]),
       },
     ] as EffectOp[],
     legalPrintings: 1,
@@ -89,7 +89,7 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
     ]);
     const gate = deriveAttackEffect(AN)?.[0];
     expect(gate?.op).toBe("optional");
-    const inner = gate?.op === "optional" ? gate.then : [];
+    const inner = gate?.op === "optional" ? gate.ops : [];
     expect(inner).toHaveLength(1);
     const only = inner[0];
     expect(only?.op === "discardEnergy" ? only.from : undefined).toBe("opponentActive");
@@ -102,7 +102,7 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
       const top = deriveAttackEffect(text)?.[0];
       // Tauros's program is gated, so the ask is one level down — descend
       // rather than special-case, so the loop asserts all three sentences.
-      const ask = top?.op === "conditionGate" ? top.then[0] : top;
+      const ask = top?.op === "conditionGate" ? top.ops[0] : top;
       expect(ask?.op === "optional" ? ask.note : undefined, text).toBe(text);
     }
     // …and the whitespace tolerance the reader documents: the note is the
@@ -112,7 +112,7 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
     // …and the note is what BOTH surfaces render, so the sentence with the
     // adjective keeps the adjective — the gate does not eat a printed word.
     const tauros = deriveAttackEffect(TWO_STAGE2)?.[0];
-    const inner = tauros?.op === "conditionGate" ? tauros.then[0] : undefined;
+    const inner = tauros?.op === "conditionGate" ? tauros.ops[0] : undefined;
     expect(inner?.op === "optional" ? inner.note : "").toContain("Stage 2");
   });
 
@@ -128,12 +128,12 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
     // The gate's BODY is the ungated sentence's WHOLE program, with only the
     // note differing (the note is the matched string, so it carries the
     // adjective the gate reads).
-    const body = gated?.op === "conditionGate" ? gated.then : [];
+    const body = gated?.op === "conditionGate" ? gated.ops : [];
     expect(body).toEqual(wrapped(TWO_STAGE2, [put(2)]));
     const bodyAsk = body[0];
     const plainAsk = ungated[0];
-    expect(bodyAsk?.op === "optional" ? bodyAsk.then : undefined).toEqual(
-      plainAsk?.op === "optional" ? plainAsk.then : undefined,
+    expect(bodyAsk?.op === "optional" ? bodyAsk.ops : undefined).toEqual(
+      plainAsk?.op === "optional" ? plainAsk.ops : undefined,
     );
   });
 });
@@ -586,9 +586,9 @@ describe("§6 — the wire and the record", () => {
     // "every body grew a key" cannot hide inside a same-tree diff.
     const cont = roundTrip.phase.cont;
     const pending = (cont as { pendingOp?: unknown }).pendingOp as Record<string, unknown>;
-    expect(Object.keys(pending).sort()).toEqual(["note", "op", "then"]);
+    expect(Object.keys(pending).sort()).toEqual(["note", "op", "ops"]);
     expect(pending.op).toBe("optional");
-    const inner = (pending.then as Record<string, unknown>[])[0] ?? {};
+    const inner = (pending.ops as Record<string, unknown>[])[0] ?? {};
     expect(Object.keys(inner).sort()).toEqual(["filter", "from", "op", "to"]);
 
     // BACKWARD: the rehydrated record answers, and reaches the same board the
@@ -613,8 +613,8 @@ describe("§6 — the wire and the record", () => {
       string,
       unknown
     >;
-    expect(Object.keys(pending).sort()).toEqual(["note", "op", "then"]);
-    const inner = (pending.then as Record<string, unknown>[])[0] ?? {};
+    expect(Object.keys(pending).sort()).toEqual(["note", "op", "ops"]);
+    const inner = (pending.ops as Record<string, unknown>[])[0] ?? {};
     expect(Object.keys(inner).sort()).toEqual(["count", "filter", "from", "op", "to"]);
     expect(inner.count).toBe(2);
   });

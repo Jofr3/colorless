@@ -120,7 +120,7 @@ describe("D221 — the registry rows", () => {
           {
             op: "recordGate",
             slot: "moved",
-            then: [{ op: "drawCards", count: 1 }],
+            ops: [{ op: "drawCards", count: 1 }],
           },
         ],
       },

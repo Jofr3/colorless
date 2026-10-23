@@ -162,7 +162,7 @@ describe("§2 — the arm COMPOSES: two shipped ops, zero new vocabulary", () =>
       {
         op: "optional",
         note: SENTENCE,
-        then: [{ op: "switchActive" }],
+        ops: [{ op: "switchActive" }],
       },
     ]);
   });
@@ -172,7 +172,7 @@ describe("§2 — the arm COMPOSES: two shipped ops, zero new vocabulary", () =>
     expect(gated).toHaveLength(1);
     const gate = gated?.[0];
     expect(gate?.op).toBe("optional");
-    expect(gate?.op === "optional" ? gate.then : undefined).toEqual(deriveAttackEffect(BARE));
+    expect(gate?.op === "optional" ? gate.ops : undefined).toEqual(deriveAttackEffect(BARE));
     // …and it also equals the REGISTRY program printed on the Switch ITEM, which is
     // the same board action read off two different seams by two different readers.
     expect(deriveAttackEffect(BARE)).toEqual(programFor("sv01-194")?.trainer);
@@ -199,8 +199,8 @@ describe("§2 — the arm COMPOSES: two shipped ops, zero new vocabulary", () =>
     expect(mine?.op).toBe("optional");
     expect(theirs?.op).toBe("optional");
     expect(Object.keys(mine ?? {}).sort()).toEqual(Object.keys(theirs ?? {}).sort());
-    expect(mine?.op === "optional" ? mine.then : undefined).toEqual([{ op: "switchActive" }]);
-    expect(theirs?.op === "optional" ? theirs.then : undefined).toEqual([
+    expect(mine?.op === "optional" ? mine.ops : undefined).toEqual([{ op: "switchActive" }]);
+    expect(theirs?.op === "optional" ? theirs.ops : undefined).toEqual([
       { op: "opponentSwitchOut" },
     ]);
   });

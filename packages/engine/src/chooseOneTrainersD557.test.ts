@@ -300,7 +300,7 @@ describe("D557 §1 — Kieran: the print, and the registry row that maps it", ()
           op: "optional",
           note: KIERAN_TEXT,
           labels: LABELS,
-          then: [{ op: "switchActive" }],
+          ops: [{ op: "switchActive" }],
           otherwise: [{ op: "boostSideAttacksThisTurn", amount: KIERAN_BONUS, target: EX_OR_V }],
         },
       ],
@@ -370,7 +370,7 @@ describe("D557 §2 — the park: a labelled `confirm`, answered by the controlle
   it("an UNLABELED `optional` parks the byte-identical two-field prompt (D135)", () => {
     const start = ready();
     const program: EffectOp[] = [
-      { op: "optional", note: "You may draw a card.", then: [{ op: "drawCards", count: 1 }] },
+      { op: "optional", note: "You may draw a card.", ops: [{ op: "drawCards", count: 1 }] },
     ];
     const run = runProgram(start, program, { seat: "p1" }, {}, []);
     if (run.kind !== "parked") throw new Error(`expected parked, got ${run.kind}`);
@@ -558,7 +558,7 @@ describe("D557 §7 — Venture Bomb: the print, and the registry row that maps i
       trainer: [
         {
           op: "coinFlipGate",
-          then: [
+          ops: [
             { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" },
           ],
           otherwise: [{ op: "damageSelf", amount: 20, source: "trainer" }],

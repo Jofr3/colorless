@@ -471,7 +471,7 @@ describe("D575 §1 — the six printed sentences, measured", () => {
       {
         op: "conditionGate",
         cond: { kind: "yourPrizesRemaining", counts: [1] },
-        then: [{ op: "winGame" }],
+        ops: [{ op: "winGame" }],
       },
     ]);
   });

@@ -248,7 +248,7 @@ function resolveDeclarationGates(
   return program.flatMap((op) =>
     op.op === "conditionGate" && op.cond.kind === "extraEnergyBeyondAttackCost"
       ? extraUnits >= op.cond.extra
-        ? op.then
+        ? op.ops
         : (op.otherwise ?? [])
       : [op],
   );

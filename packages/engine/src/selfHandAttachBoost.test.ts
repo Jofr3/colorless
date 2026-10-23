@@ -576,7 +576,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
         toSelf: true,
         recordAs: "moved",
       },
-      { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 1 }] },
     ];
     const run = runProgram(
       start,

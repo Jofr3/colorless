@@ -193,11 +193,11 @@ describe("D608 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: reading.cond,
-        then: [
+        ops: [
           {
             op: "optional",
             note: DISASTER_SHOCK,
-            then: [...reading.ops, { op: "applyStatus", target: "defender", status: "paralyzed" }],
+            ops: [...reading.ops, { op: "applyStatus", target: "defender", status: "paralyzed" }],
           },
         ],
       },

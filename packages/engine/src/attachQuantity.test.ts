@@ -249,7 +249,7 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
       {
         op: "recordGate",
         slot: "moved",
-        then: [
+        ops: [
           {
             op: "attachEnergyFrom",
             source: "hand",
