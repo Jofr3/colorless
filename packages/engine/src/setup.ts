@@ -24,6 +24,7 @@ import {
   drawToHand,
   freshAllowances,
   freshHandPlayLocks,
+  isSeat,
   makeInPlay,
   otherSeat,
   withSide,
@@ -207,7 +208,7 @@ export function chooseFirstPlayer(state: GameState, action: ChooseFirstPlayerAct
   // `first` is a seat the caller NAMES, not the acting seat applyAction
   // already guarded — an unvalidated one lands in state.firstPlayer and only
   // explodes later, inside startTurn, several actions past the offender.
-  if (action.first !== "p1" && action.first !== "p2") {
+  if (!isSeat(action.first)) {
     return err("UNKNOWN_SEAT", `"${String(action.first)}" is not a seat`);
   }
 

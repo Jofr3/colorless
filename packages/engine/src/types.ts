@@ -22,6 +22,10 @@ export type Seat = "p1" | "p2";
     first (rules §3.3), recorded in `GameState.firstPlayer`. */
 export const SEATS: readonly Seat[] = ["p1", "p2"];
 
+export function isSeat(value: unknown): value is Seat {
+  return value === "p1" || value === "p2";
+}
+
 export function otherSeat(seat: Seat): Seat {
   return seat === "p1" ? "p2" : "p1";
 }

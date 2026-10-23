@@ -12920,9 +12920,8 @@ function forcedDiscards(
   return picks;
 }
 
-/** A stable key for grouping/comparing refs inside the interpreter (cardplay.ts
-    has its own copy for wire validation — the two never share a value). */
-function refKeyOf(ref: PokemonRef): string {
+/** A stable key for grouping and de-duping refs. */
+export function refKeyOf(ref: PokemonRef): string {
   return `${ref.seat}:${ref.spot.spot}:${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
 }
 

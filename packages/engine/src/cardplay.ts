@@ -64,13 +64,14 @@ import {
   switchActiveTargets,
   benchArrivalCounters,
   isCounterMoveOp,
+  refKeyOf,
 } from "./interpreter";
 import type { AbilityProgram, StadiumAbility } from "./registry";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "./types";
+import { SEATS, isFirstTurnOf, isSeat, makeInPlay, otherSeat, withSide, without } from "./types";
 
 // Card-play actions (§7 Trainers, §9 Abilities) and the resolver for the mid-effect decisions they
 // park on. Stadiums and Tools are different: they stay in play with continuous effects read by
@@ -1319,7 +1320,7 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (!isPokemonRef(ref) || !prompt.candidates.some((c) => refEquals(c, ref))) {
           return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
         }
-        const key = refKey(ref);
+        const key = refKeyOf(ref);
         if (seen.has(key)) return err("BAD_EFFECT_CHOICE", "a Pokémon picked twice");
         seen.add(key);
       }
@@ -1458,7 +1459,7 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       const required =
         scope.kind === "total"
           ? scope.count
-          : new Set(prompt.discardable.map((d) => refKey(d.from))).size;
+          : new Set(prompt.discardable.map((d) => refKeyOf(d.from))).size;
       if (choice.uids.length !== required) {
         return err("BAD_EFFECT_CHOICE", `discard exactly ${required} Energy`);
       }
@@ -1472,7 +1473,7 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
         seen.add(uid);
         if (scope.kind === "each") {
-          const key = refKey(from);
+          const key = refKeyOf(from);
           if (sources.has(key)) {
             return err("BAD_EFFECT_CHOICE", "only one Energy per Pokémon");
           }
@@ -1548,7 +1549,7 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (!isPokemonRef(to) || !prompt.targets.some((t) => refEquals(t, to))) {
           return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal attach target");
         }
-        const key = refKey(to);
+        const key = refKeyOf(to);
         const count = (perTarget.get(key) ?? 0) + 1;
         if (prompt.maxPerTarget !== undefined && count > prompt.maxPerTarget) {
           return err(
@@ -1667,14 +1668,8 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
 function isPokemonRef(value: unknown): value is PokemonRef {
   if (typeof value !== "object" || value === null) return false;
   const ref = value as { seat?: unknown; spot?: unknown };
-  if (ref.seat !== "p1" && ref.seat !== "p2") return false;
+  if (!isSeat(ref.seat)) return false;
   return isPokemonTarget(ref.spot);
-}
-
-/** A stable string key for de-duping picked refs (the multi-choice's "no
-    Pokémon twice" check). */
-function refKey(ref: PokemonRef): string {
-  return `${ref.seat}:${ref.spot.spot}:${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
 }
 
 function refEquals(a: PokemonRef, b: PokemonRef): boolean {

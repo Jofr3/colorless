@@ -26,7 +26,8 @@ import {
   setupReady,
 } from "./setup";
 import { attachEnergy, discardFromPlay, endTurn, evolve, playBasicToBench, retreat } from "./turn";
-import type { GameState, Seat } from "./types";
+import type { GameState } from "./types";
+import { isSeat } from "./types";
 
 export const engineVersion = "0.555.0";
 
@@ -315,8 +316,4 @@ function dispatchAction(state: GameState, action: GameAction): ApplyResult {
     default:
       return err("UNKNOWN_ACTION", `unknown action type "${(action as { type: string }).type}"`);
   }
-}
-
-function isSeat(value: unknown): value is Seat {
-  return value === "p1" || value === "p2";
 }
