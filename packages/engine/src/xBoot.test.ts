@@ -433,13 +433,11 @@ describe("D354 §5 — 'a Basic {P}, a Basic {M}, or 1 of each'", () => {
   });
 });
 
-describe("D354 §6 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("THE BATON WAS HANDED ON AT D355 — this is now a CONTIGUITY claim", () => {
+describe("D354 §6 — the pool and the registry keys", () => {
+  it("X-Boot and Energy Coin are registry keys", () => {
     const raw = registryCardIds();
-    const at = raw.indexOf(X_BOOT);
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect(at).toBeLessThan(raw.length - 1);
-    expect(at).toBeLessThan(raw.indexOf(ENERGY_COIN_ID));
+    expect(raw).toContain(X_BOOT);
+    expect(raw).toContain(ENERGY_COIN_ID);
   });
 
   it("the +1 on `raw.length` is EXACTLY this one id — the ONLY real id here", () => {

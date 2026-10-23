@@ -477,10 +477,9 @@ describe("D356 §6 — clamped to the damage present, and silent when there is n
   });
 });
 
-describe("D356 §7 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("THE BATON, CARRIED RATHER THAN READ. NINTH HAND-OFF", () => {
-    const raw = registryCardIds();
-    expect(raw.slice(-1)).toEqual([MAGEARNA]);
+describe("D356 §7 — the pool and the registry keys", () => {
+  it("Magearna is a registry key", () => {
+    expect(registryCardIds()).toContain(MAGEARNA);
   });
 
   it("the +1 on `raw.length` is EXACTLY this one id", () => {

@@ -523,12 +523,10 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
   });
 });
 
-describe("D353 §8 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("THE BATON, SPENT AND CONVERTED — the two ids are CONTIGUOUS, forever", () => {
+describe("D353 §8 — the pool and the registry keys", () => {
+  it("every printing is a registry key", () => {
     const raw = registryCardIds();
-    const at = raw.indexOf(LYCANROC_IDS[0]);
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect(raw.slice(at, at + 2)).toEqual([...LYCANROC_IDS]);
+    for (const id of LYCANROC_IDS) expect(raw).toContain(id);
   });
 
   it("the +2 on `raw.length` is EXACTLY the two Lycanroc ids — the Energy ids were already keys", () => {

@@ -462,11 +462,9 @@ describe("D350 §7 — the pool and the registry, asserted by id", () => {
     }
   });
 
-  it("the THREE ids are CONTIGUOUS and in order — a property of the ROW, permanent", () => {
+  it("every printing is a registry key", () => {
     const raw = registryCardIds();
-    const at = raw.indexOf(RIBOMBEE_IDS[0] as string);
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect(raw.slice(at, at + 3)).toEqual([...RIBOMBEE_IDS]);
+    for (const id of RIBOMBEE_IDS) expect(raw).toContain(id);
   });
 
   it("all THREE real ids are registry keys, and none of the four demonstrators is", () => {

@@ -373,9 +373,8 @@ describe("D560 §1 — the eleven registry rows: 17 printings, 11 objects, NO `a
     }
   });
 
-  it("MID-MAP: every id is keyed and `raw[last]` is still `sv09-107`", () => {
+  it("every id is keyed", () => {
     const keys = registryCardIds();
-    expect(keys[keys.length - 1]).toBe("sv09-107");
     for (const row of ROWS) for (const id of row.ids) expect(keys).toContain(id);
   });
 
