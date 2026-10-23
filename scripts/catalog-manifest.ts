@@ -11,6 +11,7 @@ import { Database } from "bun:sqlite";
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { FIXTURE_POOL } from "../packages/engine/src/testFixtures";
+import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 
 const D1_DIR = "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject";
 
@@ -19,7 +20,7 @@ const D1_DIR = "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject";
 function localD1Path(): string {
   let names: string[];
   try {
-    names = readdirSync(D1_DIR);
+    names = readdirSync(repoPath(D1_DIR));
   } catch {
     throw new Error(`no local D1 at ${D1_DIR}; run the catalog ingest first`);
   }
@@ -56,10 +57,23 @@ interface Row {
   abilities_json: string | null;
 }
 
-const db = new Database(DB_PATH, { readonly: true });
-const stat = statSync(DB_PATH);
+/** Row predicates: the text column holds something. */
+const HAS_ATTACKS = "(attacks_json is not null and attacks_json <> '[]')";
+const HAS_ABILITIES = "(abilities_json is not null and abilities_json <> '[]')";
+const HAS_EFFECT = "(effect is not null and effect <> '')";
+const HAS_ANY_TEXT = `(${HAS_ATTACKS} or ${HAS_ABILITIES} or ${HAS_EFFECT})`;
+
+const db = new Database(repoPath(DB_PATH), { readonly: true });
+const stat = statSync(repoPath(DB_PATH));
 const q = <T>(sql: string): T[] => db.query(sql).all() as T[];
-const one = (sql: string): number => (db.query(sql).get() as { n: number }).n;
+
+/** A query's single `n` column. */
+function one(sql: string): number {
+  const row = db.query(sql).get();
+  const n = typeof row === "object" && row !== null && "n" in row ? row.n : undefined;
+  if (typeof n !== "number") throw new Error(`expected a numeric \`n\` from: ${sql}`);
+  return n;
+}
 
 const rows = one("select count(*) as n from cards");
 const perSet = q<{ set_id: string; n: number }>(
@@ -69,18 +83,10 @@ const perCategory = q<{ category: string; n: number }>(
   "select category, count(*) as n from cards group by category order by category",
 );
 const distinctNames = one("select count(distinct name) as n from cards");
-const withEffect = one("select count(*) as n from cards where effect is not null and effect <> ''");
-const withAttacks = one(
-  "select count(*) as n from cards where attacks_json is not null and attacks_json <> '[]'",
-);
-const withAbilities = one(
-  "select count(*) as n from cards where abilities_json is not null and abilities_json <> '[]'",
-);
-const withAnyText = one(
-  `select count(*) as n from cards where (attacks_json is not null and attacks_json <> '[]')
-     or (abilities_json is not null and abilities_json <> '[]')
-     or (effect is not null and effect <> '')`,
-);
+const withEffect = one(`select count(*) as n from cards where ${HAS_EFFECT}`);
+const withAttacks = one(`select count(*) as n from cards where ${HAS_ATTACKS}`);
+const withAbilities = one(`select count(*) as n from cards where ${HAS_ABILITIES}`);
+const withAnyText = one(`select count(*) as n from cards where ${HAS_ANY_TEXT}`);
 const straightApostropheInAttacks = one(
   "select count(*) as n from cards where attacks_json like '%''%'",
 );
@@ -104,8 +110,7 @@ const restoredLegalStandardZero = one(
   `select count(*) as n from cards where set_id = '${RESTORED_SET}' and legal_standard = 0`,
 );
 const restoredWithAttacks = one(
-  `select count(*) as n from cards where set_id = '${RESTORED_SET}'
-     and attacks_json is not null and attacks_json <> '[]'`,
+  `select count(*) as n from cards where set_id = '${RESTORED_SET}' and ${HAS_ATTACKS}`,
 );
 const restoredStraightApostrophe = one(
   `select count(*) as n from cards where set_id = '${RESTORED_SET}' and attacks_json like '%''%'`,
@@ -115,24 +120,14 @@ const sixRows = one(`select count(*) as n from cards where ${SIX}`);
 const sixLegalStandardZero = one(
   `select count(*) as n from cards where ${SIX} and legal_standard = 0`,
 );
-const sixWithAttacks = one(
-  `select count(*) as n from cards where ${SIX} and attacks_json is not null and attacks_json <> '[]'`,
-);
+const sixWithAttacks = one(`select count(*) as n from cards where ${SIX} and ${HAS_ATTACKS}`);
 const sixStraightApostrophe = one(
   `select count(*) as n from cards where ${SIX} and attacks_json like '%''%'`,
 );
 const sixDistinctNames = one(`select count(distinct name) as n from cards where ${SIX}`);
-const sixWithEffect = one(
-  `select count(*) as n from cards where ${SIX} and effect is not null and effect <> ''`,
-);
-const sixWithAbilities = one(
-  `select count(*) as n from cards where ${SIX} and abilities_json is not null and abilities_json <> '[]'`,
-);
-const sixWithAnyText = one(
-  `select count(*) as n from cards where ${SIX} and ((attacks_json is not null and attacks_json <> '[]')
-     or (abilities_json is not null and abilities_json <> '[]')
-     or (effect is not null and effect <> ''))`,
-);
+const sixWithEffect = one(`select count(*) as n from cards where ${SIX} and ${HAS_EFFECT}`);
+const sixWithAbilities = one(`select count(*) as n from cards where ${SIX} and ${HAS_ABILITIES}`);
+const sixWithAnyText = one(`select count(*) as n from cards where ${SIX} and ${HAS_ANY_TEXT}`);
 const sixPerCategory = q<{ category: string; n: number }>(
   `select category, count(*) as n from cards where ${SIX} group by category order by category`,
 );
@@ -326,10 +321,13 @@ ${trainerFaceRows
     passes the format check and `--check` compares like with like. Formats a temp
     file in place (biome's stdin mode mangles emoji). */
 function formatted(source: string): string {
-  const temp = `${OUT}.tmp.ts`;
+  const temp = repoPath(`${OUT}.tmp.ts`);
   writeFileSync(temp, source);
   try {
-    const run = spawnSync("bunx", ["biome", "format", "--write", temp], { encoding: "utf8" });
+    const run = spawnSync(localBin("biome"), ["format", "--write", temp], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    });
     if (run.status !== 0) throw new Error(`biome format failed: ${run.stderr}`);
     return readFileSync(temp, "utf8");
   } finally {
@@ -339,10 +337,18 @@ function formatted(source: string): string {
 
 const body = formatted(source);
 
+/** The committed manifest, or "" when there is none yet. */
+function currentManifest(): string {
+  try {
+    return readFileSync(repoPath(OUT), "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return "";
+    throw error;
+  }
+}
+
 if (process.argv.includes("--check")) {
-  const current = await Bun.file(OUT)
-    .text()
-    .catch(() => "");
+  const current = currentManifest();
   // The provenance stamps (local file name, mtime, run date) differ per machine and
   // per run; compare everything else.
   const strip = (s: string) => s.replace(/(path|mtime|generated): "[^"]*"/g, "");
@@ -352,7 +358,7 @@ if (process.argv.includes("--check")) {
   }
   console.log(`${OUT} is current (${rows} rows, sqlite mtime ${stat.mtime.toISOString()}).`);
 } else {
-  writeFileSync(OUT, body);
+  writeFileSync(repoPath(OUT), body);
   console.log(
     `${OUT} written — ${rows} rows, ${perSet.length} sets, ${Object.keys(printed).length} fixture rows, ${absent.length} absent.`,
   );
