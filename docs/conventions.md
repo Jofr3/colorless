@@ -65,6 +65,9 @@ only the conclusion.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
   (2026-10-23) after measuring zero residue; sections below that describe them
   are history.
+- An engine function that appends to an `events: GameEvent[]` out-parameter takes it as its last
+  positional parameter, after any options record; optional parameters before it are passed
+  explicitly (`undefined`, or `{}` for a fresh `EffectRecord`).
 - Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
   opt into jsdom per-file (`// @vitest-environment jsdom`).
 - **Never inherit a suite figure from prose — six were stale in one session**
