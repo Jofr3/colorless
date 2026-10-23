@@ -20,6 +20,7 @@ local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
 local Library=require('ui.library')
+local Limits=require('ui.limits')
 local g=love.graphics
 local Online={}
 Online.__index=Online
@@ -163,7 +164,7 @@ function Online:makePiles()
   if not shown then return end
   if you and you.deckId~='' then
     local deck=self:deck(you.deckId)
-    local item={count=deck and deck.count or 60,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
+    local item={count=deck and deck.count or Limits.deckSize,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
     item.drawFace=function(w,h) Library.face(self,item,w,h) end
     local box=self:deckBox(self.panels.you)
     local pile=Pile.new(item,1);pile:place(box.cx,box.cy,box.scale,false,self.width)

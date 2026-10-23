@@ -14,6 +14,7 @@ local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
 local Input=require('ui.text_input')
 local Library=require('ui.library')
+local Limits=require('ui.limits')
 local g=love.graphics
 local Sandbox={}
 Sandbox.__index=Sandbox
@@ -34,7 +35,7 @@ function Sandbox:deck(seat)
 end
 function Sandbox:canStart()
   if self.phase~='ready' or self.busy then return false end
-  for seat=1,2 do local d=self:deck(seat); if not d or d.count~=60 then return false end end
+  for seat=1,2 do local d=self:deck(seat); if not d or d.count~=Limits.deckSize then return false end end
   return true
 end
 function Sandbox:layout(w,h)
@@ -221,7 +222,7 @@ function Sandbox:draw()
   end
   local message=self.message
   if message=='' and self.phase=='ready' then
-    for seat=1,2 do local d=self:deck(seat);if d and d.count~=60 then message='Player '..seat..': choose a 60-card deck.';break end end
+    for seat=1,2 do local d=self:deck(seat);if d and d.count~=Limits.deckSize then message='Player '..seat..': choose a '..Limits.deckSize..'-card deck.';break end end
   end
   if message~='' then local text,size=Fit.fit(message,18,w-40);T.text(text,size,x+20,y+h-124,w-40,T.red) end
   for i,b in ipairs(self.controls) do

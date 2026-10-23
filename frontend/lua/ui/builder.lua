@@ -8,6 +8,7 @@ local Collection=require('ui.collection_motion')
 local CardFrame=require('ui.card_frame')
 local DeckLabels=require('ui.deck_labels')
 local DeckStats=require('ui.deck_stats')
+local Limits=require('ui.limits')
 local DeckRow=require('ui.deck_row')
 local Alert=require('ui.card_alert')
 local Energy=require('ui.energy')
@@ -313,7 +314,7 @@ function Builder:build()
   if not p then self:field('name','',DECK_X,38,DECK_WIDTH,42,'Deck name')end
   if p then
     self:add('Browse cards',24,38,208,42,'tab',self.tab=='catalog' and T.blue or T.red,'catalog')
-    self:add('Deck '..self.count..'/60',248,38,208,42,'tab',self.tab=='deck' and T.blue or T.red,'deck')
+    self:add('Deck '..self.count..'/'..Limits.deckSizeFor(self.format),248,38,208,42,'tab',self.tab=='deck' and T.blue or T.red,'deck')
   else
     self:add('Import / Export',816,h-132,286,44,'transfer',T.blue)
     self:add('Clear',1118,h-132,114,44,'confirm-clear',T.red)
@@ -717,7 +718,7 @@ function Builder:drawModal(shaders)
     DeckStats.draw(self,m,p)
   elseif m.mode=='validation'then
     T.text('Deck details',36,x,m.y+22,bw)
-    T.text(self.count..'/60 cards - '..self.format,28,x,y,bw,T.paper)
+    T.text(self.count..'/'..Limits.deckSizeFor(self.format)..' cards - '..self.format,28,x,y,bw,T.paper)
     local _,lines=T.font(24):getWrap(self.validation,bw-24);local max=16;local start=math.max(1,math.min(math.max(1,#lines-max+1),math.floor((m.scroll or 0)/28)+1))
     for i=start,math.min(#lines,start+max-1)do T.text(lines[i],24,x+12,y+60+(i-start)*28,bw-24,T.paper,'left')end
   elseif m.mode=='clear'then
