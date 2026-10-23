@@ -7,12 +7,11 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 // the bundled bridge and the love.js runtime under /love/); the api origin
 // (card images fetched for the Lua artwork cache, the api client, and its
 // ws(s) twin for the lobby WebSocket); 'wasm-unsafe-eval' to compile
-// love.wasm; data:/blob: for the SVG favicon and the runtime's decoded
-// images and audio. Scripts stay tight: the build emits external scripts
-// only, no inline script or handler. The api origin mirrors
-// src/lib/apiOrigin.ts: `VITE_API_ORIGIN` (from the environment or a .env
-// file such as .env.production, via loadEnv), falling back to wrangler dev's
-// default port.
+// love.wasm; data:/blob: for the runtime's decoded images and audio. Scripts
+// stay tight: the build emits external scripts only, no inline script or
+// handler. The api origin mirrors src/lib/apiOrigin.ts: `VITE_API_ORIGIN`
+// (from the environment or a .env file such as .env.production, via
+// loadEnv), falling back to wrangler dev's default port.
 function buildCsp(apiOrigin: string): string {
   const apiWsOrigin = apiOrigin.replace(/^http/, "ws");
   return [

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- The logo's colorless energy (frontend/lua/tools/logo_energy.js): dark
+       slate rim, silver face lit from the upper right, six-ray star. Light
+       browser themes get it reversed (dark face, silver star, pale rim) so the
+       disc stands out against a pale tab strip. -->
+  <defs>
+    <radialGradient id="silver" cx=".72" cy=".27" r=".8">
+      <stop offset="0" stop-color="#fcfbfa"/>
+      <stop offset=".45" stop-color="#e2e1df"/>
+      <stop offset="1" stop-color="#c4c3c1"/>
+    </radialGradient>
+    <radialGradient id="ink" cx=".72" cy=".27" r=".5">
+      <stop offset="0" stop-color="#40444a"/>
+      <stop offset="1" stop-color="#15191b"/>
+    </radialGradient>
+    <radialGradient id="ink-face" cx=".72" cy=".27" r=".8">
+      <stop offset="0" stop-color="#40444a"/>
+      <stop offset="1" stop-color="#15191b"/>
+    </radialGradient>
+    <radialGradient id="silver-star" cx=".72" cy=".27" r=".5">
+      <stop offset="0" stop-color="#fcfbfa"/>
+      <stop offset="1" stop-color="#c4c3c1"/>
+    </radialGradient>
+  </defs>
+  <style>
+    .rim { fill: #313a3c }
+    .ledge { fill: #5b757b }
+    .face { fill: url(#silver) }
+    .star { fill: url(#ink) }
+    @media (prefers-color-scheme: light) {
+      .rim { fill: #5b757b }
+      .ledge { fill: #cbbba7 }
+      .face { fill: url(#ink-face) }
+      .star { fill: url(#silver-star) }
+    }
+  </style>
+  <circle class="rim" cx="50" cy="50" r="50"/>
+  <circle class="ledge" cx="50" cy="50" r="45.5"/>
+  <circle class="face" cx="50" cy="50" r="44"/>
+  <path class="star" d="M50 10C53.5 35.9 53.5 44.7 86.1 29.8C65 46.5 58.8 49.1 84.8 69.8C56.2 57.9 54.4 57.9 50 89.6C45.6 57.9 43.8 57.9 16.1 69.8C41.2 50 40.3 49.1 15.7 30.2C46.5 44.7 45.6 36.8 50 10Z"/>
+</svg>
