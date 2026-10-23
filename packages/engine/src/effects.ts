@@ -7637,7 +7637,7 @@ export function optionalBoostProgram(
   base: number,
   note: string,
 ): EffectOp[] {
-  const [ops, otherwise] = boostedArms(base, reading.bonus, reading.ops);
+  const [then, otherwise] = boostedArms(base, reading.bonus, reading.ops);
   return [
     {
       op: "optional",
@@ -7645,7 +7645,7 @@ export function optionalBoostProgram(
       // dialog shows, and the player is being asked to agree to the drawback as
       // much as to the damage.
       note,
-      ops,
+      ops: then,
       otherwise,
     },
   ];
@@ -8113,21 +8113,21 @@ export function optionalCostBoostProgram(
   // One gate and one confirm with no decline arm: the printed base is dealt before the program on
   // every answer. The status follows the cost.
   if (reading.payoff.kind === "defenderStatus") {
-    const ops: EffectOp[] = [
+    const then: EffectOp[] = [
       ...reading.ops,
       { op: "applyStatus", target: "defender", status: reading.payoff.status },
     ];
-    const offer: EffectOp = optionalStep(note, ops);
+    const offer: EffectOp = optionalStep(note, then);
     return [conditionGate(reading.cond, [offer])];
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
-  const ops = [...reading.ops, ...boosted];
+  const then = [...reading.ops, ...boosted];
   const ask: EffectOp = {
     op: "optional",
     // The WHOLE printed sentence, the op's own contract — it is what the confirm
     // dialog shows, and the player is agreeing to the COST as much as to the damage.
     note,
-    ops,
+    ops: then,
     otherwise,
   };
   // A second call rather than reusing `otherwise`: the two gates must not share one array, or the
