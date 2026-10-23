@@ -1078,6 +1078,11 @@ export interface GameState {
   cardPool: Record<string, Card>;
 }
 
+/** The seat that answers a parked prompt: the filed answerer, else the controller. */
+export function answererOf(phase: Extract<Phase, { kind: "effect:choose" }>): Seat {
+  return phase.answerer ?? phase.seat;
+}
+
 export function withSide(state: GameState, seat: Seat, side: PlayerSide): GameState {
   return { ...state, players: { ...state.players, [seat]: side } };
 }

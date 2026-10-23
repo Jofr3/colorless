@@ -55,6 +55,13 @@ export function isBasicPokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
 }
 
+export function handHasBasic(state: GameState, seat: Seat): boolean {
+  return state.players[seat].hand.some((uid) => {
+    const card = cardOfUid(state, uid);
+    return card !== undefined && isBasicPokemon(card);
+  });
+}
+
 /**
  * Is `card` a Stage 1 Pokémon (§10)? Reads the printed stage word, since a VSTAR or VMAX is an
  * Evolution but not a Stage 1.

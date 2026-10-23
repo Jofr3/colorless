@@ -3,9 +3,9 @@
 // playmat projection and the server redactor.
 
 import type { EffectPrompt } from "./interpreter";
-import { cardOfUid, isBasicPokemon } from "./cards";
+import { handHasBasic } from "./cards";
 import type { GameOutcome, GameState, Seat } from "./types";
-import { SEATS, turnOwnerOf } from "./types";
+import { SEATS, answererOf, turnOwnerOf } from "./types";
 
 /** A parked KO interrupt (§8.1 resolution — mid-turn from an attack, or between
     turns from the Checkup) awaiting `waitingSeat`'s decision. Without this a
@@ -61,10 +61,7 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
               !phase.ready[seat] &&
               (phase.stage !== "opening" ||
                 state.players[seat].active !== null ||
-                state.players[seat].hand.some((uid) => {
-                  const card = cardOfUid(state, uid);
-                  return card !== undefined && isBasicPokemon(card);
-                })),
+                handHasBasic(state, seat)),
           ),
           viewerSeat,
         ),
@@ -92,7 +89,7 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     // marks the mid-tail parks, which read the turn owner off the pending queue instead
     // (`koParkActiveSeat`).
     case "effect:choose": {
-      const answerer = phase.answerer ?? phase.seat;
+      const answerer = answererOf(phase);
       const withheld = phase.answerer !== undefined && phase.answerer !== viewerSeat;
       return {
         activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,

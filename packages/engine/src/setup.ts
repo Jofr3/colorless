@@ -9,7 +9,7 @@ import type {
   SetupReadyAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { basicFromHandError, cardOfUid, isBasicPokemon } from "./cards";
+import { basicFromHandError, cardOfUid, handHasBasic, isBasicPokemon } from "./cards";
 import type { GameEvent } from "./events";
 import { startTurn } from "./flow";
 import { flipCoin, shuffle } from "./rng";
@@ -165,13 +165,6 @@ function emptySide(deck: string[]): PlayerSide {
     bench: [],
     mulligans: 0,
   };
-}
-
-function handHasBasic(state: GameState, seat: Seat): boolean {
-  return state.players[seat].hand.some((uid) => {
-    const card = cardOfUid(state, uid);
-    return card !== undefined && isBasicPokemon(card);
-  });
 }
 
 /** §3.5 mulligan loop, auto-resolved (no player choice): reveal, shuffle the

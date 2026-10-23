@@ -72,7 +72,16 @@ import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { SEATS, isFirstTurnOf, isSeat, makeInPlay, otherSeat, withSide, without } from "./types";
+import {
+  SEATS,
+  answererOf,
+  isFirstTurnOf,
+  isSeat,
+  makeInPlay,
+  otherSeat,
+  withSide,
+  without,
+} from "./types";
 
 // Card-play actions (§7 Trainers, §9 Abilities) and the resolver for the mid-effect decisions they
 // park on. Stadiums and Tools are different: they stay in play with continuous effects read by
@@ -899,10 +908,8 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     return err("BAD_PHASE", `resolveEffect is not legal during ${state.phase.kind}`);
   }
   const phase = state.phase;
-  // Who may ANSWER: the phase's answerer when one is filed (the opponent's
-  // printed "may" — Ortega's mayDraw park), else the controller as ever. The
-  // controller cannot answer the opponent's "may" for them, and vice versa.
-  const answerer = phase.answerer ?? phase.seat;
+  // The controller cannot answer the opponent's printed "may" for them, and vice versa.
+  const answerer = answererOf(phase);
   if (answerer !== action.seat) {
     return err("WRONG_SEAT", `only ${answerer} resolves this effect`);
   }

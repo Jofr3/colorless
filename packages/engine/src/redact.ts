@@ -76,7 +76,7 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { bodyAt, isImmobilized, otherSeat } from "./types";
+import { answererOf, bodyAt, isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state.
@@ -179,7 +179,7 @@ function redactedPromptOf(
   phase: Extract<Phase, { kind: "effect:choose" }>,
   viewerSeat: Seat,
 ): RedactedEffectPrompt | null {
-  const answerer = phase.answerer ?? phase.seat;
+  const answerer = answererOf(phase);
   if (answerer !== viewerSeat) return null;
   const prompt = redactPrompt(state, phase.prompt);
   const op = phase.cont.pendingOp;
