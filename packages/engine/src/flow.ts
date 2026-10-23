@@ -31,15 +31,12 @@ import {
 } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import type { PokemonRef, RunResult } from "./interpreter";
-import {
-  attackAgainBarred,
-  attackAgainLicensed,
-  discardHand,
-  doomBodyAt,
-  effectRefused,
-  runProgram,
-} from "./interpreter";
+import type { PokemonRef, RunResult } from "./effectPrompt";
+import { attackAgainBarred, attackAgainLicensed } from "./boardCondition";
+import { discardHand } from "./ops/cards";
+import { doomBodyAt } from "./ops/board";
+import { effectRefused } from "./effectTargets";
+import { runProgram } from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
 import { programFor } from "./registry";
 import { flipCoin, shuffle } from "./rng";

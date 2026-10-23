@@ -32,41 +32,50 @@ import {
 import type { EffectOp, OpOf } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
-import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
+import type { EffectChoice, EffectPrompt, PokemonRef } from "./effectPrompt";
 import {
   attachEnergyTargets,
   attachFromDiscardOffer,
   attachFromHandPlayable,
   attachSeat,
-  conditionHolds,
-  conditionNote,
+  firstAttachableEnergy,
+} from "./ops/energy";
+import { conditionHolds, conditionNote } from "./boardCondition";
+import {
   counterOwnDestinations,
   counterOwnSources,
   counterToOpponentSources,
-  discardEnergyPlayable,
-  discardRetrievalCandidates,
-  discardableTools,
-  evolveFromHandAvailable,
-  firstAttachableEnergy,
-  gustTargets,
   healChosenTargets,
-  handCostAction,
+  ruffianBodies,
+} from "./ops/damage";
+import {
+  discardEnergyPlayable,
+  discardableTools,
+  moveEnergyPlayable,
+  snipeTargets,
+  refKeyOf,
+} from "./effectTargets";
+import {
+  discardRetrievalCandidates,
+  resumeProgram,
+  runProgram,
+  isCounterMoveOp,
+} from "./interpreter";
+import {
+  evolveFromHandAvailable,
   handCostUnmet,
   handPokemonUids,
-  moveEnergyPlayable,
+  benchArrivalCounters,
+} from "./ops/cards";
+import {
+  gustTargets,
   offeredBranches,
   ownDevolveAvailable,
-  resumeProgram,
-  ruffianBodies,
-  runProgram,
-  snipeTargets,
   swapBodies,
   swapDiscardCards,
   switchActiveTargets,
-  benchArrivalCounters,
-  isCounterMoveOp,
-  refKeyOf,
-} from "./interpreter";
+} from "./ops/board";
+import { handCostAction } from "./promptText";
 import type { AbilityProgram, StadiumAbility } from "./registry";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";

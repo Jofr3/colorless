@@ -979,7 +979,7 @@ export function passivesOf(
   /** Pre-W/R bonuses gated on a board condition (Defiance Band), collected RAW
       and UNEVALUATED: the condition is seat-relative and this aggregation has no
       seat, so the two pre-W/R read sites fold them via `conditionHolds`
-      (interpreter.ts `attackerPreWRBonus`). Kept out of `damageBonusBeforeWR` so
+      (boardCondition.ts `attackerPreWRBonus`). Kept out of `damageBonusBeforeWR` so
       the defender-reduction / HP reads, which never look at either, can't be
       accidentally credited an attacker's conditional bonus. */
   conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[];
@@ -1396,7 +1396,7 @@ export function passivesOf(
     // §4/§10 evolve licence, collected raw because its conditions differ in kind. `activeOnly`
     // (Eevee) is answered here via `!onBench`; it is per printing, since Karrablast and Shelmet
     // print no Active Spot clause. `ifInPlay` and `ifCondition` are seat-relative and resolved by
-    // `evolveEarlyLicensed` (interpreter.ts). In this loop so a §9 lock silences the licence.
+    // `evolveEarlyLicensed` (boardCondition.ts). In this loop so a §9 lock silences the licence.
     const licence = passive.evolveEarlyExempt;
     if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {
       evolveEarlyExempt.push(
@@ -2563,7 +2563,7 @@ const BASIC_ENERGY_CARD: CardFilter = { kind: "basicEnergy" };
 
 /**
  * Does the side that controls `pokemon` have strictly more Prize cards remaining than its opponent
- * (i.e. it is behind)? Read here rather than through `conditionHolds` because interpreter.ts
+ * (i.e. it is behind)? Read here rather than through `conditionHolds` because boardCondition.ts
  * imports this file. A holder with no top card matches no seat and answers false.
  */
 function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokemon): boolean {

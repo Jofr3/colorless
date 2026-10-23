@@ -4,7 +4,7 @@
 
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
 import type { StatusName } from "./events";
-import type { PokemonRef } from "./interpreter";
+import type { PokemonRef } from "./effectPrompt";
 // Type-only import, so no runtime cycle with registry.ts.
 import type { AttackTimingGate } from "./registry";
 // Type-only import; a value import would create a cycle with cards.ts.
@@ -5035,7 +5035,7 @@ const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
 );
 
 // Printed noun phrases this reader can resolve, singular and plural, with their filters. The
-// strings must match `retrieveNoun`'s output in interpreter.ts so the search prompt uses the
+// strings must match `retrieveNoun`'s output in promptText.ts so the search prompt uses the
 // printed noun.
 const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
   ["a card", "cards", { kind: "anyCard" }],

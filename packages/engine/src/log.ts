@@ -8,8 +8,8 @@ import type { LogSegment, SeatLogEntry } from "@colorless/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import type { AttackerClass } from "./effects";
 import type { GameEvent, StatusName } from "./events";
-// interpreter.ts imports nothing from this file, so there is no cycle.
-import { retrieveNoun } from "./interpreter";
+// promptText.ts imports nothing from this file, so there is no cycle.
+import { retrieveNoun } from "./promptText";
 import {
   bodyAt,
   inPlayOf,

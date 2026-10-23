@@ -9,7 +9,7 @@ import type {
   StampedPlayLockKey,
 } from "./effects";
 import type { DrawReason, GameEvent, StatusName } from "./events";
-import type { EffectContinuation, EffectPrompt } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 
 // The whole GameState is a plain JSON-safe value — no classes, no Date, no
 // functions — so snapshots serialize, replay and structurally share. Nothing
@@ -114,7 +114,7 @@ export function isImmobilized(conditions: SpecialConditions): boolean {
 /** The conditions present, in the event vocabulary — the stable order
     (rotation, then poisoned, then burned) that a "benched"/"evolved"/switched
     STATUS_CLEARED lists. Shared by retreat + evolve (turn.ts) and the effect
-    switch (interpreter.ts) so the ordering can't drift between them. */
+    switch (ops/board.ts) so the ordering can't drift between them. */
 export function presentStatuses(conditions: SpecialConditions): StatusName[] {
   const statuses: StatusName[] = [];
   if (conditions.rotation !== "none") statuses.push(conditions.rotation);

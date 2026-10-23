@@ -1,5 +1,5 @@
 import type { GameEvent } from "./events";
-import type { EffectChoice } from "./interpreter";
+import type { EffectChoice } from "./effectPrompt";
 import type { GameState, PokemonTarget, Seat } from "./types";
 
 // Player-decision actions. Everything with no choice in it (mulligan

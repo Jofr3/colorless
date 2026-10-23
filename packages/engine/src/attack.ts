@@ -131,27 +131,29 @@ import {
   resolvePromotionAndResume,
   settleProgram,
 } from "./flow";
+import { applyStatus } from "./ops/locks";
 import {
-  applyStatus,
   attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
   attackTimingNote,
   attackerPreWRBonus,
-  coinRedoPrompt,
   conditionHolds,
   conditionNote,
   countCardsInDiscardPile,
   countCardsInHand,
   countPokemonInPlay,
+} from "./boardCondition";
+import {
+  coinRedoPrompt,
   consumeTools,
   consumedTools,
   detonateDeluxeBomb,
   discardToPile,
-  effectRefused,
-  runProgram,
-} from "./interpreter";
-import type { EffectChoice, EffectContext, EffectPrompt } from "./interpreter";
+} from "./ops/damage";
+import { effectRefused } from "./effectTargets";
+import { runProgram } from "./interpreter";
+import type { EffectChoice, EffectContext, EffectPrompt } from "./effectPrompt";
 import { programFor } from "./registry";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS, shuffle } from "./rng";
 import type { CoinFace } from "./rng";

@@ -640,7 +640,7 @@ export interface PassiveEffects {
   /**
    * §11 This Pokémon alone has no Retreat Cost, optionally only while the opponent has a Pokémon of
    * `requiresOpponentSuffixInPlay` in play or while it has no Energy cards attached. Kept off
-   * `BoardCondition` to avoid an import cycle with interpreter.ts.
+   * `BoardCondition` to avoid an import cycle with boardCondition.ts.
    */
   noRetreatCostSelf?: {
     requiresOpponentSuffixInPlay?: PokemonSuffix;

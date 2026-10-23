@@ -2,7 +2,7 @@
 // parked, and how the game ended. This is the one exhaustive switch over `Phase`, shared by the web
 // playmat projection and the server redactor.
 
-import type { EffectPrompt } from "./interpreter";
+import type { EffectPrompt } from "./effectPrompt";
 import { handHasBasic } from "./cards";
 import type { GameOutcome, GameState, Seat } from "./types";
 import { SEATS, answererOf, turnOwnerOf } from "./types";

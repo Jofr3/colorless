@@ -47,16 +47,16 @@ import {
   settleProgram,
   turnTail,
 } from "./flow";
+import { benchArrivalCounters } from "./ops/cards";
 import {
-  benchArrivalCounters,
   conditionHolds,
   conditionNote,
   evolveAliasLicensed,
   evolveEarlyLicensed,
-  runProgram,
-  shockHandAttach,
-  switchInto,
-} from "./interpreter";
+} from "./boardCondition";
+import { runProgram } from "./interpreter";
+import { shockHandAttach } from "./ops/energy";
+import { switchInto } from "./ops/board";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
