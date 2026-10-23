@@ -26,6 +26,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -817,7 +818,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   function parkedMidAttack(seed: number): GameState {
     const parked = strike(armed(seed, { stages: 1, energy: 2, fire: 1 }), "p1", TOLL).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    return JSON.parse(JSON.stringify(parked)) as GameState;
+    return roundTrip(parked);
   }
 
   it("DIRECTION 1 — a v27 `cont.rest` WITHOUT the op still drains", () => {
@@ -844,7 +845,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
     const chosen = (phase.prompt as { discardable: { uid: string }[] }).discardable[0]?.uid;
     const newOp: EffectOp = { op: "devolveEach" };
     (phase as unknown as { cont: { rest: EffectOp[] } }).cont.rest = [newOp];
-    const roundTripped = JSON.parse(JSON.stringify(carrying)) as GameState;
+    const roundTripped = roundTrip(carrying);
     const drained = mustApply(roundTripped, {
       type: "resolveEffect",
       seat: "p1",
@@ -860,7 +861,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
     expect(Object.keys(active)).toContain("stack");
     expect(Object.keys(active)).toContain("markers");
     expect(Object.keys(active)).toContain("evolvedTurn");
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     const live = strike(before, "p1", CALL);
     const replayed = strike(revived, "p1", CALL);
     expect(types(replayed.events)).toEqual(types(live.events));
@@ -884,7 +885,7 @@ describe("§12 — the op is a pure reduction", () => {
     // Without this the case above passes on an op that mutates a board nobody
     // froze deeply enough.
     const before = armed(23, { stages: 2, damage: 100, benchStages: 1 });
-    const snapshot = JSON.parse(JSON.stringify(before)) as GameState;
+    const snapshot = roundTrip(before);
     strike(before, "p1", CALL);
     expect(before).toEqual(snapshot);
   });

@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED_BOTH =
@@ -595,8 +596,8 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
       );
       expect(differing).toEqual(["damagedOnly"]);
     });
-    expect(JSON.parse(JSON.stringify(V30_PROGRAM))).toEqual(V30_PROGRAM);
-    expect(JSON.parse(JSON.stringify(deriveAttackEffect(PRINTED_BOTH)))).toEqual(
+    expect(roundTrip(V30_PROGRAM)).toEqual(V30_PROGRAM);
+    expect(roundTrip(deriveAttackEffect(PRINTED_BOTH))).toEqual(
       V30_PROGRAM.map((o) => ({ ...o, amount: 10 })),
     );
   });

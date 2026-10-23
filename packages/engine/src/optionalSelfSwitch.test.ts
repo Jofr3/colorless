@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  roundTrip,
 } from "./testFixtures";
 
 /** The printed sentence, verbatim — the byte source for every case below. */
@@ -696,7 +697,7 @@ describe("§7 — no ATTACK_EFFECT_SKIPPED on ANY branch, and no log row a decli
 describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven through a round trip", () => {
   it("the CONFIRM park round-trips and replays, and carries no key the MIRROR's lacks", () => {
     const live = mustApply(ready(100, 2, 2), { type: "attack", seat: "p1", index: STRAFE }).state;
-    const saved = JSON.parse(JSON.stringify(live)) as GameState;
+    const saved = roundTrip(live);
     // The park survived the trip intact.
     const park = parkOf(saved);
     expect(park.prompt.kind).toBe("confirm");
@@ -733,7 +734,7 @@ describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven thr
       mustApply(ready(101, 2, 2), { type: "attack", seat: "p1", index: STRAFE }).state,
       { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } },
     ).state;
-    const saved = JSON.parse(JSON.stringify(wrapped)) as GameState;
+    const saved = roundTrip(wrapped);
     const park = parkOf(saved);
     if (park.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     // No ceiling key — the pick is MANDATORY and stayed that way.
@@ -769,11 +770,9 @@ describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven thr
   it("the DECLINE replays off a saved board too — the other answer, same record", () => {
     // A saved `confirm` park has TWO legal answers and a version claim about it is
     // only half-driven if the suite always says yes.
-    const saved = JSON.parse(
-      JSON.stringify(
-        mustApply(ready(102, 2, 2), { type: "attack", seat: "p1", index: STRAFE }).state,
-      ),
-    ) as GameState;
+    const saved = roundTrip(
+      mustApply(ready(102, 2, 2), { type: "attack", seat: "p1", index: STRAFE }).state,
+    );
     const attacker = activeUid(saved, "p1");
     const { state: done, events } = mustApply(saved, {
       type: "resolveEffect",

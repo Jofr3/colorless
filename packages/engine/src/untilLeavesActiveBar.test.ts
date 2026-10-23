@@ -20,6 +20,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const BLAZE_BLITZ_BAR = "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot.";
@@ -668,9 +669,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   it("A v26 ENTRY WITH THE KEY ABSENT REPLAYS AS AN ORDINARY NEXT-TURN LOCK", () => {
     const window = laterTurns(barred().state, "p1", 1);
     expect(window.turn).toBe(4);
-    const legacy = JSON.parse(
-      JSON.stringify(setLocks(window, "p1", [{ turn: 4, attackIndex: BLAZE_BLITZ }])),
-    ) as GameState;
+    const legacy = roundTrip(setLocks(window, "p1", [{ turn: 4, attackIndex: BLAZE_BLITZ }]));
     const entry = must0(legacy.players.p1.active).lockedAttacks[0];
     expect(entry).toBeDefined();
     expect("until" in (entry ?? {})).toBe(false);
@@ -690,7 +689,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
     // The control the case above needs: if the replay path silently dropped
     // unknown keys, the first case would pass for the wrong reason.
     const window = laterTurns(barred().state, "p1", 1);
-    const saved = JSON.parse(JSON.stringify(window)) as GameState;
+    const saved = roundTrip(window);
     expect(must0(saved.players.p1.active).lockedAttacks).toEqual([
       { turn: 2, attackIndex: BLAZE_BLITZ, until: "leavesActive" },
     ]);

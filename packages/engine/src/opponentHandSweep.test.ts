@@ -24,6 +24,7 @@ import {
   trainerCard,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SWEEP =
@@ -494,7 +495,7 @@ describe("§8 — the persisted record cannot hold this op", () => {
 
   it("the SERIALIZED ALPHABET does not grow: a round trip is byte-identical", () => {
     const { state } = mustApply(table(), { type: "attack", seat: "p1", index: SWEEP_ATTACK });
-    const round = JSON.parse(JSON.stringify(state)) as GameState;
+    const round = roundTrip(state);
     expect(round).toEqual(state);
     expect(JSON.stringify(state)).not.toContain("discardFromOpponentHand");
   });

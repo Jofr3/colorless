@@ -15,6 +15,7 @@ import {
   specialEnergy,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -678,7 +679,7 @@ describe("D536 §10 — the PERSISTED bytes, both directions", () => {
     const { state } = attack(start);
     const phase = state.phase;
     if (phase.kind !== "effect:choose") throw new Error(`expected a park: ${phase.kind}`);
-    expect(JSON.parse(JSON.stringify(phase.cont.rest))).toEqual([PROGRAM[1]]);
+    expect(roundTrip(phase.cont.rest)).toEqual([PROGRAM[1]]);
     expect(JSON.stringify(state)).toContain('{"op":"discardDefender"}');
   });
 });

@@ -23,6 +23,7 @@ import {
   effectPrompt,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRISM_TEXT =
@@ -387,7 +388,7 @@ describe("D606 §5 — Lumiose City: a Basic from the deck to the Bench, and the
 
   it("a parked Lumiose City round-trips through JSON and still ends the turn", () => {
     const { state: parked } = use(stadium(table(FILLER), LUMIOSE[0]));
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     expect(mustApply(revived, cards([])).state).toEqual(mustApply(parked, cards([])).state);
   });

@@ -13,6 +13,7 @@ import {
   must,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SUBJUGATING_CHAINS_TEXT =
@@ -408,7 +409,7 @@ describe("the blast radius", () => {
   it("`MATCH_RECORD_VERSION` STAYS 14 — DRIVEN by replaying a v14-shaped park", () => {
     const state = board(3, "sv06.5-039", ["fix-lightbench", "fix-darkbench", "fix-dualdark"]);
     const parked = must(useChains(state, ACTIVE));
-    const roundTripped = JSON.parse(JSON.stringify(parked)) as GameState;
+    const roundTripped = roundTrip(parked);
     // A JSON round trip alone changes nothing — the whole union is JSON-safe.
     expect(choosePrompt(roundTripped).candidates.length).toBe(2);
 

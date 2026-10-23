@@ -11,6 +11,7 @@ import {
   trainerCard,
   typedEnergy,
   mustApply as must,
+  roundTrip,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -82,7 +83,7 @@ function base(): GameState {
 /** TEST SURGERY — P1's Active is `attacker` with one {C}, P2's Active a 400-HP Filler, and P1's hand
     `hand`. Fresh uids for every card placed. */
 function table(attacker: string, hand: readonly string[]): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b36#${n++}`;

@@ -13,6 +13,7 @@ import {
   expectErr,
   mustApply,
   setActiveFromDeck,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE = "Move all Energy from this Pokémon to 1 of your Benched Pokémon.";
@@ -301,7 +302,7 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
     const live = swing(board({ basics: 3, ownBench: 2 })).state;
     expect(parked(live).min).toBe(3);
 
-    const v29: GameState = JSON.parse(JSON.stringify(live)) as GameState;
+    const v29: GameState = roundTrip(live);
     if (v29.phase.kind !== "effect:choose" || v29.phase.prompt.kind !== "moveEnergy") {
       throw new Error("expected a serialized moveEnergy park");
     }

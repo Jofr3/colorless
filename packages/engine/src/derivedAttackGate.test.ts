@@ -20,6 +20,7 @@ import {
   must,
   activeOf,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const BAN_TEXT =
@@ -456,6 +457,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     );
     expect(declare(reconstructed, "p2", 0)).toBe("ATTACK_PREVENTED");
     // …and the round trip is not vacuous: it really did lose every non-JSON value.
-    expect(reconstructed).toEqual(JSON.parse(JSON.stringify(state)) as GameState);
+    expect(reconstructed).toEqual(roundTrip(state));
   });
 });

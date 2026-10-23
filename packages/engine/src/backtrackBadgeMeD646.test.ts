@@ -19,6 +19,7 @@ import {
   trainerCard,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const BADGE_TEXT =
@@ -351,7 +352,7 @@ describe("D646 §2 — the printed coin flip (attack.ts): the offer parks before
 
   it("the park survives a JSON round trip and answers the same", () => {
     const parked = attack(table(FURY, [X, X, X, H, X, H])).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(answer(revived, true).state).toEqual(answer(parked, true).state);
     expect(answer(revived, false).state).toEqual(answer(parked, false).state);
   });
@@ -510,7 +511,7 @@ describe("D646 §4 — an attack program's coin (`coinFlipGate`): the offer is t
 
   it("the park survives a JSON round trip", () => {
     const parked = attack(table(SLAM, [X, H])).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(answer(revived, true).state).toEqual(answer(parked, true).state);
   });
 });

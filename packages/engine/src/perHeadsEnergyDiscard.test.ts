@@ -23,6 +23,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED_TWO =
@@ -525,7 +526,7 @@ describe("§7 — purity and the structural answers", () => {
     // DIRECTION 1 — FORWARD. Round-trip the PARKED board through JSON, which is what
     // persistence actually does to it, and resume from the bytes. A continuation that
     // did not survive serialization diverges here.
-    const persisted = JSON.parse(JSON.stringify(parked)) as GameState;
+    const persisted = roundTrip(parked);
     const pick = discardPrompt(parked).discardable[0]?.uid as string;
     const live = mustApply(parked, {
       type: "resolveEffect",
@@ -548,7 +549,7 @@ describe("§7 — purity and the structural answers", () => {
     // alphabet argument stated as an equality rather than as an inventory.
     expect(JSON.stringify(deriveAttackEffect(BARE)?.[0])).toBe(shipped);
 
-    const lossy = JSON.parse(JSON.stringify(parked)) as GameState;
+    const lossy = roundTrip(parked);
     if (lossy.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     (lossy.phase.cont as unknown as { rest: unknown[] }).rest = [];
     const truncated = mustApply(lossy, {

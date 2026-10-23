@@ -16,6 +16,7 @@ import {
   must,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const ELDEGOSS = "sv07-011";
@@ -360,7 +361,7 @@ describe("D314 §4 — the first program that PARKS with its own Active Spot emp
     // A park stores its continuation inside `GameState`; this one stores it with
     // the source body no longer on the board, which is the new part.
     const parked = must(applyAction(board({ bench: 2, under: 1, energy: 2 }), BREEZY));
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived.phase).toEqual(parked.phase);
     const prompt = cardsPrompt(revived);
     expect(prompt.dest).toBe("hand");

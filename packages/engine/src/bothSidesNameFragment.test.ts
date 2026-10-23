@@ -35,6 +35,7 @@ import {
   setActiveFromDeck,
   activeOf,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -302,7 +303,7 @@ describe("§2 — the resolver, its owner, and the live axes", () => {
 
   it("the derived value survives the `MatchRecord` round trip byte for byte", () => {
     const derived = deriveAttackDamageMultiplier(PRINTED);
-    expect(JSON.parse(JSON.stringify(derived))).toEqual(derived);
+    expect(roundTrip(derived)).toEqual(derived);
   });
 });
 

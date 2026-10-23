@@ -16,6 +16,7 @@ import {
   setBenchDamage,
   setDamage,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 function placements(
@@ -334,7 +335,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
       '{"op":"counterUntilRemainingHp","target":"opponentActive","remainingHp":50,"source":"attack"}',
     );
     expect(Object.keys(fresh).sort()).toEqual(["op", "remainingHp", "source", "target"]);
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
     const bench = (deriveAttackEffect(BENCH_100) as EffectOp[])[0] as EffectOp;
     expect(JSON.stringify(bench)).toBe(
       '{"op":"counterUntilRemainingHp","target":"opponentBench","remainingHp":100,"source":"attack"}',

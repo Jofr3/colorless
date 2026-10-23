@@ -44,6 +44,7 @@ import {
   setActiveFromDeck,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -490,7 +491,7 @@ describe("D531 §3 — a new optional rider on a PERSISTED op, and the record ve
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"searchDeck","filter":{"kind":"anyPokemon"},"dest":"hand","max":5,"reveal":true,"typedAsAttachedBasicEnergy":true}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
 
     const dropped = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "typedAsAttachedBasicEnergy" ? undefined : v)),
@@ -910,7 +911,7 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
     expect(b.before).toEqual(a.before);
     expect(b.after).toEqual(a.after);
     expect(b.events).toEqual(a.events);
-    const persisted = JSON.parse(JSON.stringify(a.after)) as GameState;
+    const persisted = roundTrip(a.after);
     expect(persisted).toEqual(a.after);
     expect(JSON.stringify(persisted)).toBe(JSON.stringify(a.after));
     const [x] = cardsPrompt(a.after).candidates;

@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { BENCH_MAX, otherSeat } from "./types";
 
@@ -613,7 +614,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     // record written HERE, read back HERE. If the park did not survive
     // serialisation the version question would be moot and the bug louder.
     const before = parked();
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     expect(revived.phase).toEqual(before.phase);
     const uid = cardsPrompt(revived).candidates[0];
     if (uid === undefined) throw new Error("empty offer");

@@ -26,6 +26,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { WeaknessRetype } from "./types";
 
@@ -528,7 +529,7 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
   });
 
   it("v33-SHAPED body (the key genuinely ABSENT): the first main hit THROWS (D326)", () => {
-    const revived = JSON.parse(JSON.stringify(inWindow(installed().state))) as GameState;
+    const revived = roundTrip(inWindow(installed().state));
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v33 record looks like (D124).
     delete target.weaknessRetype;
@@ -540,7 +541,7 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
 
   it("…and a ROLLBACK (v33) reading a v34 record DROPS the live retype: the {C} hit pays the printed 50", () => {
     const window = inWindow(installed().state);
-    const revived = JSON.parse(JSON.stringify(window)) as GameState;
+    const revived = roundTrip(window);
     const record = body(revived.players.p2.active).weaknessRetype as WeaknessRetype;
     expect(record).toEqual({ turn: 5, type: "Colorless" });
     const v33 = weaknessOf(LOCAL_CARDS["d552-marker"] as Card, LOCAL_CARDS["d552-wall"] as Card);

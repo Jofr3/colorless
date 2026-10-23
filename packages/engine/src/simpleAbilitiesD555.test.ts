@@ -19,6 +19,7 @@ import {
   must,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const TORRID_TEXT =
@@ -611,7 +612,7 @@ describe("D555 B §5 — Torrential Whirlpool: switch; if you do, the OPPONENT s
       table(SAMUROTT[0], [FILLER], [FILLER, STAGE1]),
       use("Torrential Whirlpool"),
     ).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer: GameAction = {
       type: "resolveEffect",

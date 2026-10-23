@@ -2,7 +2,14 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState } from "./index";
 import { applyAction, createGame } from "./index";
-import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  typedEnergy,
+  mustApply as must,
+  roundTrip,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const UNTIL_6 = "You may draw cards until you have 6 cards in your hand.";
@@ -175,7 +182,7 @@ function base(): GameState {
 }
 
 function table(p: Printing, hand: number, deck: number): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b51#${n++}`;

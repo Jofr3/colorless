@@ -27,6 +27,7 @@ import {
   must,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -453,7 +454,7 @@ describe("§10 — `MATCH_RECORD_VERSION` stays 29, and the slice has TWO addres
     // …and no continuation was written at all: this program parks nowhere.
     expect(after.phase.kind).not.toBe("effect:choose");
     const v29 = { kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 } as const;
-    const rebuilt = JSON.parse(JSON.stringify(v29)) as BoardCondition;
+    const rebuilt = roundTrip(v29);
     expect(conditionHolds(after, "p1", rebuilt)).toBe(false); // 2 {W} + 1 {D} in play
     expect(conditionHolds(after, "p1", { ...v29, energy: null })).toBe(true);
     // …and the two answers DIFFER on this board, which is what makes the widening a real

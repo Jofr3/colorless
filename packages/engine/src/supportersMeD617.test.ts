@@ -23,6 +23,7 @@ import {
   must,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const LADY = "me01-123";
@@ -318,7 +319,7 @@ const pickRef = (ref: unknown): GameAction =>
 const pickCards = (uids: readonly string[]): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [...uids] } }) as GameAction;
 /** A parked state revived from JSON, the way a `MatchRecord` stores it. */
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 
 describe("D617 §3 — Pokémon Center Lady: heal 60, and the healed Pokémon recovers from all Special Conditions", () => {

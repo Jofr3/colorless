@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   trainerCard,
   must,
+  roundTrip,
 } from "./testFixtures";
 import { type PokemonTarget, makeInPlay } from "./types";
 
@@ -372,7 +373,7 @@ const rolled = (state: GameState, faces: readonly CoinFace[]): GameState => ({
   ...state,
   rngState: seedFor(faces),
 });
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 function rows(events: GameEvent[], state: GameState): string[] {
   const entries = logFromEvents(events, {
     names: { p1: "Ana", p2: "Bo" },

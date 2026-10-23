@@ -22,6 +22,7 @@ import {
   mustApply as run,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 import { freshAllowances } from "./types";
@@ -671,7 +672,7 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
 describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 → 37)", () => {
   it("the window round-trips through JSON and still narrows the turn", () => {
     const first = swing(table()).state;
-    const revived = JSON.parse(JSON.stringify(first)) as GameState;
+    const revived = roundTrip(first);
     expect(revived.allowances.attackAgainUid).toBe(first.allowances.attackAgainUid);
     expect(
       refused(revived, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 })
@@ -684,7 +685,7 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     // A 0.453 engine never reads the key, which is this engine with the key at its fresh
     // value: an Energy attachment (and every other main-phase play) is accepted between
     // the two attacks, which the printed card never allows.
-    const first = JSON.parse(JSON.stringify(swing(table()).state)) as GameState;
+    const first = roundTrip(swing(table()).state);
     const rolled: GameState = {
       ...first,
       allowances: { ...first.allowances, attackAgainUid: null },

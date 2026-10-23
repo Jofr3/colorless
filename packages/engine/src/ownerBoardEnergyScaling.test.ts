@@ -23,6 +23,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -634,7 +635,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   it("DIRECTION 2 — a v29 record round-trips and the NEXT swing reads the same", () => {
     const first = swing(mixed(), IONO);
     expect(findEvent(first.events, "DAMAGE_DEALT")?.dealt).toBe(70);
-    const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
+    const saved = roundTrip(first.state);
     expect(saved).toEqual(first.state);
     // …and the parsed record is a LIVE board: hand the turn back and swing the same
     // clause off the bytes that came out of `JSON.parse`, after one more {L} lands on

@@ -16,6 +16,7 @@ import {
   setDamage,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const MASSIVE_BODY_TEXT =
@@ -358,12 +359,12 @@ describe("D288 §7 — the version does NOT move, and the claim is driven", () =
   it("A v16 RECORD ANSWERS THE NEW QUESTION — a PROJECTION, not a persisted byte", () => {
     for (const seed of SEEDS) {
       const barred = turnOf(board(seed, "p1", "p1", COPPERAJAH), "p2");
-      const reloaded = JSON.parse(JSON.stringify(barred)) as GameState;
+      const reloaded = roundTrip(barred);
       expect(wireTrainerIds(reloaded, "p2")).toContain(STADIUM);
       expect(wireDisabled(reloaded, "p2", STADIUM)).toBe(true);
       expect(play(reloaded, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
       const free = turnOf(board(seed, "p1", "p1", PLAIN), "p2");
-      const freeReloaded = JSON.parse(JSON.stringify(free)) as GameState;
+      const freeReloaded = roundTrip(free);
       expect(wireTrainerIds(freeReloaded, "p2")).toContain(STADIUM);
       expect(wireDisabled(freeReloaded, "p2", STADIUM)).toBe(false);
       expect(play(freeReloaded, "p2", STADIUM)).toBe("OK");

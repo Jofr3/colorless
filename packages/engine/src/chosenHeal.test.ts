@@ -21,6 +21,7 @@ import {
   setDamage,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -652,7 +653,7 @@ describe("end to end — Nacli 'Salt Coating' (heal 20, ANY zone, NO printed dam
     let state = nacliActive(board(), "p1", ATTACKER_HURT);
     state = benchTitans(state, "p1", [BENCH_HURT, BENCH_BARELY_HURT]);
     const { state: parked } = declare(state, SALT_COATING_INDEX);
-    const rehydrated = JSON.parse(JSON.stringify(parked)) as GameState;
+    const rehydrated = roundTrip(parked);
     expect(rehydrated).toEqual(parked);
     const answer = {
       type: "resolveEffect",

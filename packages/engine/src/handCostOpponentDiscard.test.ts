@@ -32,6 +32,7 @@ import {
   deckOf,
   itemTrainer,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -560,8 +561,8 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
     ).state;
     const phase = parked.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(JSON.parse(JSON.stringify(phase.cont.pendingOp))).toEqual(program(1)[0]);
-    expect(JSON.parse(JSON.stringify(phase.cont.rest))).toEqual([program(1)[1]]);
+    expect(roundTrip(phase.cont.pendingOp)).toEqual(program(1)[0]);
+    expect(roundTrip(phase.cont.rest)).toEqual([program(1)[1]]);
   });
 
   it("the LOSS direction, driven: a truncated `rest` degrades into a DIFFERENT board", () => {

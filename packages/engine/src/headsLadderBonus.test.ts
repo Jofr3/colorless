@@ -38,6 +38,7 @@ import {
   setActiveFromDeck,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const LADDER_ROW = legalAttackCorpus().find(([, s]) =>
@@ -624,11 +625,11 @@ describe("D526 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30 — DRIVEN: the member is never serialized (it is spent into a NUMBER at the fold), the attack never parks, and the post-attack board is BYTE-EQUAL through a JSON round-trip", () => {
-    expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
+    expect(roundTrip(READING)).toEqual(READING);
     for (const faces of [HHH, HHT, HTT, TTT]) {
       const { after } = swing({ faces });
       expect(after.phase.kind, faces.join("-")).not.toBe("effect:choose");
-      const persisted = JSON.parse(JSON.stringify(after)) as GameState;
+      const persisted = roundTrip(after);
       expect(persisted, faces.join("-")).toEqual(after);
       expect(JSON.stringify(persisted), faces.join("-")).toBe(JSON.stringify(after));
       // Nothing in the persisted bytes names the member or its table.

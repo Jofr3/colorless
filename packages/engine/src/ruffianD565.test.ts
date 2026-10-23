@@ -19,6 +19,7 @@ import {
   must,
   mustApply as run,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -400,7 +401,7 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
     state = attach(state, "p2", "active", TOOL, "tools");
     state = attach(state, "p2", 0, SPECIAL);
     const parked = play(state).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(revived.phase.cont.pendingOp).toEqual({ op: "discardToolAndSpecialEnergyChosen" });

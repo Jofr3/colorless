@@ -10,6 +10,7 @@ import {
   specialEnergy,
   typedEnergy,
   mustApply as must,
+  roundTrip,
 } from "./testFixtures";
 import { type InPlayPokemon, type Seat, makeInPlay } from "./types";
 
@@ -109,7 +110,7 @@ function base(): GameState {
 }
 
 function table(p: Printing, defenderEnergy: readonly string[]): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b52#${n++}`;

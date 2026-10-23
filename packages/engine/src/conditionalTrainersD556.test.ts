@@ -20,6 +20,7 @@ import {
   types,
   must,
   ensureInDeck,
+  roundTrip,
 } from "./testFixtures";
 
 const ARIANA = ["sv10-171", "sv10-224", "sv10-237"] as const;
@@ -628,7 +629,7 @@ describe("D556 §6 — Team Rocket's Great Ball: the coin picks the stage; the s
 
   it("the park round-trips through JSON and resumes identically", () => {
     const { state: parked } = flipped("heads");
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     if (parked.phase.kind !== "effect:choose" || parked.phase.prompt.kind !== "chooseCards") {
       throw new Error("expected chooseCards");

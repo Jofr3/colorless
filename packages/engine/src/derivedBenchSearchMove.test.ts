@@ -23,6 +23,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE =
@@ -754,7 +755,7 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
 
   it("A v30 `searchDeck` PARK — no `recordAs` — RESUMES EXACTLY AS IT DID", () => {
     const swung = swing(table({ ownBench: 1 }), BENCH_CALL);
-    const v30: GameState = JSON.parse(JSON.stringify(swung.state)) as GameState;
+    const v30: GameState = roundTrip(swung.state);
     if (v30.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(Object.keys(v30.phase.cont.pendingOp).sort()).toEqual(["dest", "filter", "max", "op"]);
     expect("record" in v30.phase.cont).toBe(false);
@@ -770,7 +771,7 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
 
   it("AND THE OTHER DIRECTION: the keys DELETED by hand answer a DIFFERENT NUMBER", () => {
     const live = swing(table({ ownBench: 1 })).state;
-    const bytes: GameState = JSON.parse(JSON.stringify(live)) as GameState;
+    const bytes: GameState = roundTrip(live);
     if (bytes.phase.kind !== "effect:choose") throw new Error("expected a park");
     const { recordAs: _filed, ...v30Search } = bytes.phase.cont.pendingOp as unknown as Record<
       string,

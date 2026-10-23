@@ -15,6 +15,7 @@ import {
   mustApply,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -79,11 +80,6 @@ function chooseCardsPrompt(state: GameState) {
 function chooseCardsPromptOf(prompt: { kind: string }) {
   if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
   return prompt as Extract<EffectPrompt, { kind: "chooseCards" }>;
-}
-
-/** A host that persists state between actions round-trips it through JSON. */
-function roundTrip(state: GameState): GameState {
-  return JSON.parse(JSON.stringify(state)) as GameState;
 }
 
 describe("Superior Energy Retrieval — the cost that must not refund itself", () => {

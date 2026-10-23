@@ -26,6 +26,7 @@ import {
   must,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const CAGE_TEXT =
@@ -578,7 +579,7 @@ describe("D618 §5 — Mystery Garden: discard an Energy card, draw until the ha
       seat: "p1",
       choice: { kind: "cards", uids: [special] },
     };
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const { state } = mustApply(revived, answer);
     expect(state).toEqual(mustApply(parked, answer).state);
     expect(state.players.p1.discard.at(-1)).toBe(special);

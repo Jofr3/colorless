@@ -38,6 +38,7 @@ import {
   setDamage,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const FOUR_ZONE =
@@ -692,7 +693,7 @@ describe("D520 §9 — no new op kind, the producer counts moved as stated, and 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, no op parks, the gate is spliced", () => {
     // Every kind, field and value in the program already ships — a v30 deploy could already
     // write these bytes — so the program survives a JSON round trip unchanged.
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // Neither damage op parks and the gate is spliced: `runProgram` answers `done` over the
     // WHOLE program on a board where a CHOSEN sibling would genuinely park (five benched
     // bodies), so `phase.cont.pendingOp` and `rest` are never written.

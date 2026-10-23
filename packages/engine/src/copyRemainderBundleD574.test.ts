@@ -34,6 +34,7 @@ import {
   mustApply as run,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -1404,7 +1405,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
       [seekPark().state, pickAttack(1)],
       [loopPark().state, pickOpp(0, 2)],
     ] as const) {
-      const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+      const revived = roundTrip(parked);
       const direct = run(parked, action);
       const viaJson = run(revived, action);
       expect(JSON.stringify(viaJson.state)).toBe(JSON.stringify(direct.state));

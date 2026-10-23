@@ -20,6 +20,7 @@ import {
   findEvent,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -358,11 +359,11 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
   it("the side record round-trips through JSON and still pays", () => {
     const turn3 = window();
     expect(JSON.stringify(turn3.players.p1.sideDamageReduction)).toBe('[{"turn":3,"amount":30}]');
-    expect(dealt(JSON.parse(JSON.stringify(turn3)) as GameState)).toBe(STRIKE - REDUCTION);
+    expect(dealt(roundTrip(turn3))).toBe(STRIKE - REDUCTION);
   });
 
   it("(i) A v35 ROLLBACK resuming a v36 record in the window drops the 30 — a played Supporter's effect silently gone, NOT inert", () => {
-    const v36 = JSON.parse(JSON.stringify(window())) as GameState;
+    const v36 = roundTrip(window());
     const asRollbackReadsIt: GameState = {
       ...v36,
       players: { ...v36.players, p1: { ...v36.players.p1, sideDamageReduction: [] } },

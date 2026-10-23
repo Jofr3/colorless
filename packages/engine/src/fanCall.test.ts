@@ -15,6 +15,7 @@ import {
   must,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { isFirstTurnOf } from "./types";
 
@@ -471,7 +472,7 @@ describe("Fan Call on a real board", () => {
 describe("MATCH_RECORD_VERSION stays 14", () => {
   it("a v14-shaped park — a `searchDeck` with NO `maxHp` — replays BENIGNLY", () => {
     const parked = must(useFanCall(board(SEEDS[2], "p1", "p1"), "p1", ACTIVE));
-    const roundTripped = JSON.parse(JSON.stringify(parked)) as GameState;
+    const roundTripped = roundTrip(parked);
     expect(cardsPrompt(roundTripped).candidates.length).toBeGreaterThan(0);
 
     const legacy = JSON.parse(
@@ -495,7 +496,7 @@ describe("MATCH_RECORD_VERSION stays 14", () => {
     // `firstPlayer` have been on the record since M1, so a v14 snapshot answers
     // the new condition with no migration, no default and no `?? 0`.
     const state = board(SEEDS[0], "p1", "p1");
-    const legacy = JSON.parse(JSON.stringify(state)) as GameState;
+    const legacy = roundTrip(state);
     expect(conditionHolds(legacy, "p1", { kind: "yourFirstTurn" })).toBe(true);
     expect(useFanCall(legacy, "p1", ACTIVE).ok).toBe(true);
   });

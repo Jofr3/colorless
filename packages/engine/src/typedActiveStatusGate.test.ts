@@ -32,6 +32,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -691,7 +692,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
       table({ swinger: "fix-d472-tideswing", foe: "fix-d472-drakefoe" }),
       DRAKE_LOCK,
     );
-    const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
+    const saved = roundTrip(first.state);
     expect(saved).toEqual(first.state);
     expect(conditionsOf(saved, "p2").rotation).toBe("paralyzed");
   });

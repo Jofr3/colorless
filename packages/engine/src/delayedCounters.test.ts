@@ -25,6 +25,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koByEffectMarker, scheduledEffectDue, withActive } from "./types";
 
@@ -712,7 +713,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   function saved(): GameState {
     const state = install("p1", DELAY, "fix-doom-tank").state;
     expect(state.turn).toBe(3);
-    return JSON.parse(JSON.stringify(state)) as GameState;
+    return roundTrip(state);
   }
 
   it("DIRECTION 1 — a v29 record round-trips and the schedule STILL fires", () => {
@@ -1384,7 +1385,7 @@ describe("§15 — frozen boards, and a v29 record that round-trips", () => {
     });
 
     it(`a v29 record carrying a ${name} appointment round-trips and STILL fires`, () => {
-      const record = JSON.parse(JSON.stringify(install("p1", index).state)) as GameState;
+      const record = roundTrip(install("p1", index).state);
       expect(body(record.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: name });
       const settled = settle(mustApply(record, { type: "endTurn", seat: "p2" }));
       expect(settled.players.p2.bench).toHaveLength(0);

@@ -28,6 +28,7 @@ import {
   must,
   mustApply as run,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -576,7 +577,6 @@ function playRejected(state: GameState, id: string): string {
 const dealt = (events: readonly GameEvent[]): number | undefined =>
   all(events, "DAMAGE_DEALT")[0]?.dealt;
 const card = (id: string): Card => POOL[id] as Card;
-const roundTrip = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the printed face", () => {

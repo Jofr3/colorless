@@ -24,6 +24,7 @@ import {
   effectPrompt,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PERRIN = ["sv06-160", "sv06-209", "sv06-220"] as const;
@@ -752,7 +753,7 @@ describe("D561 §6 — Hand Trimmer: each player down to 5, the OPPONENT first (
   it("the controller's park round-trips through JSON and resumes identically", () => {
     const board = setHand(table(), "p2", [ITEM]);
     const { state: parked } = play(board, HAND_TRIMMER, [ITEM, ITEM, FILLER, FILLER, FIRE, WATER]);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const answer = cards([parked.players.p1.hand[0] as string]);
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);
   });
@@ -912,7 +913,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
   it("Perrin: the parked payment revives identically; stripped of `maxRecorded` (the 0.444 reading) ONE paid Pokémon buys a search of TWO", () => {
     const { state: parked, before } = play(table(), PERRIN[0], [PIKA, FILLER]);
     const one = cards([before.players.p1.hand[1] as string]);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     expect(mustApply(revived, one).state).toEqual(mustApply(parked, one).state);
     expect(JSON.stringify(cont(parked).rest)).toContain('"maxRecorded":"paid"');
@@ -929,7 +930,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     const fire = p.candidates.find((u) => idOf(searching, u) === FIRE) as string;
     const water = p.candidates.find((u) => idOf(searching, u) === WATER) as string;
     const { state: asked } = mustApply(searching, cards([fire, water]));
-    const revived = JSON.parse(JSON.stringify(asked)) as GameState;
+    const revived = roundTrip(asked);
     expect(mustApply(revived, confirm(false)).state).toEqual(
       mustApply(asked, confirm(false)).state,
     );
@@ -955,7 +956,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     board = setDamage(board, "p1", 60);
     const { state: parked } = play(board, SUPER_POTION);
     const answer = pokemon(ACTIVE);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);
     expect(mustApply(parked, answer).state.players.p1.active?.energy).toEqual([]);
     const pending = JSON.stringify(cont(parked).pendingOp);
@@ -988,7 +989,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     };
     const { state: parked } = play(board, SCRAMBLE);
     const answer = pokemon(BENCH(0));
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);
     // The shipped reading first: only the DEMOTED body's two Fire are offered.
     const shipped = effectPrompt(mustApply(parked, answer).state);

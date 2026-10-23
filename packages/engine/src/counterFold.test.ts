@@ -15,6 +15,7 @@ import {
   setBenchDamage,
   setDamage,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 function placements(
@@ -309,7 +310,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
       '{"op":"counterEachAll","amount":20,"filter":{"kind":"anyPokemon"},"side":"opponent","source":"attack"}',
     );
     expect(Object.keys(fresh).sort()).toEqual(["amount", "filter", "op", "side", "source"]);
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
     // …and the registry's own literal, which gained the SAME two keys in the same commit.
     const shroud = programFor("sv06-053")?.triggered?.[0]?.program?.[0] as EffectOp;
     expect(JSON.stringify(shroud)).toBe(

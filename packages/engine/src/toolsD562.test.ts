@@ -28,6 +28,7 @@ import {
   must,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggers";
 import type { InPlayPokemon } from "./types";
@@ -1059,7 +1060,7 @@ describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445
     let board = table({ defender: { id: KLAWF, tool: HELMET } });
     board = attachFromDeck(board, "p1", "fix-water-energy", 1);
     const { state: parked } = swing(board, POKE);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer = klawfAnswer(parked);
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);
@@ -1104,6 +1105,6 @@ describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445
   it('the new `when: "consumed"` rides an UNPERSISTED event — only its rendered row reaches a MatchRecord', () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: OCCA } }), BLAST);
     const row = render(consumed(events), state)[0];
-    expect(JSON.parse(JSON.stringify(row))).toEqual(row);
+    expect(roundTrip(row)).toEqual(row);
   });
 });

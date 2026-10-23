@@ -43,6 +43,7 @@ import {
   setActiveFromDeck,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -739,7 +740,7 @@ describe("D528 §2 — H heads park H sequential `choosePokemon { upTo 1 }` over
     expect(b.before.rngState).toBe(a.before.rngState);
     expect(b.after).toEqual(a.after);
     expect(b.events).toEqual(a.events);
-    const persisted = JSON.parse(JSON.stringify(a.after)) as GameState;
+    const persisted = roundTrip(a.after);
     expect(persisted).toEqual(a.after);
     expect(JSON.stringify(persisted)).toBe(JSON.stringify(a.after));
     const live = pick(a.after, benchRef(1));
@@ -816,7 +817,7 @@ describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 ( held at THIS slice; 
     expect(bytes).not.toContain('"flips"');
     expect(bytes).toContain('"op":"attachEnergyFrom"');
     // …and the member itself is plain data (no functions, no cycles) — round-trippable if it ever were.
-    expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
+    expect(roundTrip(READING)).toEqual(READING);
   });
 });
 

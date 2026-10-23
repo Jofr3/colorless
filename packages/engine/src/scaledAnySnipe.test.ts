@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 /** The two printed sentences, transcribed byte for byte off the committed column. */
@@ -394,7 +395,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack","deals":true,"perEnergyOnSelf":true}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
 
     const dropped = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "perEnergyOnSelf" ? undefined : v)),

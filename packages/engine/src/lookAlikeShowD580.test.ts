@@ -26,6 +26,7 @@ import {
   mustApply as run,
   patchSide,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -789,7 +790,7 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
   it("a JSON round-trip of the parked state resolves identically", () => {
     const parked = parkedState();
     const pick = use(parked.players.p2.hand[0] ?? "");
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(JSON.stringify(run(revived, pick).state)).toBe(JSON.stringify(run(parked, pick).state));
   });
 

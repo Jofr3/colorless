@@ -20,6 +20,7 @@ import {
   findEvent,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { topUid } from "./cards";
 import { type InPlayPokemon, evolveOnto, noConditions } from "./types";
@@ -629,7 +630,7 @@ describe("§8 — `MATCH_RECORD_VERSION` holds at 35: the record Torrential Hear
 
   it("a record saved MID-TURN (after the use, before the attack) revives through JSON and still pays", () => {
     const { state } = useActive(table({}));
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(revived).toEqual(state);
     expect(findEvent(attack(revived).events, "DAMAGE_DEALT")).toMatchObject({
       bonus: 120,

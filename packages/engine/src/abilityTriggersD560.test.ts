@@ -17,6 +17,7 @@ import {
   setDamage,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const DRILBUR = "sv05-085";
@@ -312,7 +313,7 @@ function revived(state: GameState, stripLabels = false): GameState {
         .map(([key, inner]) => [key, strip(inner)]),
     );
   };
-  const copy = JSON.parse(JSON.stringify(state)) as GameState;
+  const copy = roundTrip(state);
   return (stripLabels ? { ...copy, phase: strip(copy.phase) } : copy) as GameState;
 }
 

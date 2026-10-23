@@ -37,6 +37,7 @@ import {
   setActiveFromDeck,
   activeOf,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const ANY_BODIES = "This attack does 20 damage for each of your Pokémon in play.";
@@ -863,7 +864,7 @@ describe("§5 — the same five numbers from the other chair", () => {
 
 describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses", () => {
   it("DIRECTION 1 — a v29 record round-trips and STILL scores all five counts", () => {
-    const record = JSON.parse(JSON.stringify(canonical())) as GameState;
+    const record = roundTrip(canonical());
     expect([0, 1, 2, 3, 4].map((i) => dealt(record, i))).toEqual([120, 40, 30, 90, 200]);
   });
 
@@ -943,7 +944,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       "fix-weezingcanister",
     ];
     for (const [kind, filter] of Object.entries(EVERY_KIND)) {
-      const readBack = JSON.parse(JSON.stringify(filter)) as CardFilter;
+      const readBack = roundTrip(filter);
       expect(readBack).toEqual(filter);
       for (const id of CAST) {
         expect([kind, id, matchesFilter(FIXTURE_POOL[id], readBack)]).toEqual([

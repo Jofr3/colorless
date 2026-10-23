@@ -22,6 +22,7 @@ import {
   types,
   must,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const HILDA_TEXT =
@@ -815,7 +816,7 @@ describe("D554 §8 — Boxed Order: the first trainerEndsTurn program that PARKS
 
   it("a SERIALIZED park round-trips with endsTurn, and the resumed answer still ends the turn", () => {
     const { state } = play(BOXED[0]);
-    const wire = JSON.parse(JSON.stringify(state)) as GameState;
+    const wire = roundTrip(state);
     expect(wire).toEqual(state);
     expect(wire.phase.kind === "effect:choose" && wire.phase.endsTurn).toBe(true);
     const { state: after } = mustApply(wire, resolve(pickOf(wire, ITEM)));

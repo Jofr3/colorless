@@ -6,7 +6,14 @@ import { attackMenuOf, selfAttackCostDiscount } from "./continuous";
 import type { GameAction, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
-import { battler, completeSetup, deckOf, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  roundTrip,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const SEASONED_SKILL =
@@ -89,7 +96,7 @@ function table(opts: {
   fossil: boolean;
   opponentTook: number;
 }): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b17#${n++}`;

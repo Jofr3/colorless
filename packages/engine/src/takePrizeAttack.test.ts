@@ -24,6 +24,7 @@ import {
   setPrizes,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE = "Discard all Energy from this Pokémon, and take a Prize card.";
@@ -214,14 +215,14 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
     const state = wheel({ attacker: "p1", energy: 1, fire: 1 });
     const parked = attack(state, "p1", 4).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    return JSON.parse(JSON.stringify(parked)) as GameState;
+    return roundTrip(parked);
   }
 
   it("DIRECTION 1 — a v26 record holding the PARKED PRIZE STAGE replays unchanged", () => {
     const parked = attack(wheel({ attacker: "p1", energy: 3 }), "p1", 0).state;
     expect(parked.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     expect(parked.pending[0]).toEqual({ kind: "takePrizes", seat: "p1", count: 1 });
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const live = mustApply(parked, { type: "takePrizes", seat: "p1", prizeIndices: [2] });
     const replayed = mustApply(revived, { type: "takePrizes", seat: "p1", prizeIndices: [2] });
     expect(replayed.state.players.p1.hand).toEqual(live.state.players.p1.hand);
@@ -251,7 +252,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
     if (carryingPhase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const newOp: EffectOp = { op: "takePrize" };
     (carryingPhase as unknown as { cont: { rest: EffectOp[] } }).cont.rest = [newOp];
-    const roundTripped = JSON.parse(JSON.stringify(carrying)) as GameState;
+    const roundTripped = roundTrip(carrying);
     const drained = mustApply(roundTripped, {
       type: "resolveEffect",
       seat: "p1",

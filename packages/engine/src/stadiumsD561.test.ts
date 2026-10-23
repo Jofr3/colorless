@@ -21,6 +21,7 @@ import {
   effectPrompt,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const ACADEMY = "sv06.5-054";
@@ -356,7 +357,7 @@ describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck
   it("a parked Academy at Night round-trips through JSON and resumes identically", () => {
     const board = setHand(stadium(table(), ACADEMY), "p1", [ITEM_A, ITEM_B]);
     const { state: parked } = activate(board);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer = cards([board.players.p1.hand[0] as string]);
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);

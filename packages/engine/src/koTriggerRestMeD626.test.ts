@@ -22,6 +22,7 @@ import {
   must,
   unprize,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koToolTriggersOf } from "./triggers";
 
@@ -443,7 +444,7 @@ describe("D626 §3 — Sandy Flapping, the Knock Out half: Active, by an opponen
       seat: "p1",
       prizeIndices: [0],
     }).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const deck = revived.players.p1.deck;
     expect(resolve(revived, { kind: "confirm", yes: true }).state.players.p1.deck).toEqual(
       deck.slice(2),
@@ -584,9 +585,7 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
   });
 
   it("the parked move round-trips through JSON (no new park shape)", () => {
-    const parked = JSON.parse(
-      JSON.stringify(mustApply(miraidon(), attack(CRUSH)).state),
-    ) as GameState;
+    const parked = roundTrip(mustApply(miraidon(), attack(CRUSH)).state);
     const [a] = (parked.players.p2.active?.energy ?? []).filter(
       (u) => parked.cardIdByUid[u] === L,
     ) as [string];

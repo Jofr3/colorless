@@ -24,6 +24,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { type SideAttackLock, makeInPlay } from "./types";
 
@@ -564,7 +565,7 @@ describe("§12 — the v33 bytes round-trip, and a v32-shaped state THROWS (D549
   });
 
   it("v32-SHAPED sides (the key genuinely ABSENT): the declaration and the projection THROW", () => {
-    const revived = JSON.parse(JSON.stringify(ready())) as GameState;
+    const revived = roundTrip(ready());
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;
       // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).

@@ -21,6 +21,7 @@ import {
   typedEnergy,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const T = {
@@ -551,7 +552,7 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
 
   it("the parked board survives a JSON round trip and resumes the same", () => {
     const parked = attack(table(WATCHOG, [H, H, X], { oppHand: hand })).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const pick = parked.players.p2.hand[0] as string;
     expect(resolve(revived, { kind: "cards", uids: [pick] }).state).toEqual(

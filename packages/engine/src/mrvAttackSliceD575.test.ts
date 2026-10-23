@@ -23,6 +23,7 @@ import {
   mustApply as run,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -1131,7 +1132,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
       );
       return run(s, attack("p1", 0)).state;
     })();
-    const revived = JSON.parse(JSON.stringify(protectedState)) as GameState;
+    const revived = roundTrip(protectedState);
     expect(revived.players.p1.sideAttackBlock).toEqual(protectedState.players.p1.sideAttackBlock);
     expect(bodyAt(run(revived, attack("p2", 0)).state, "p1", 0).damage).toBe(0);
   });

@@ -21,6 +21,7 @@ import {
   typedEnergy,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const HEAD =
@@ -508,7 +509,7 @@ describe("D590 §3 — Psychic Draw: a real confirm, then the draw", () => {
 
   it("the parked confirm survives a JSON round trip (no new persisted key)", () => {
     const parked = evolve(table({ bench: [ABRA], hand: [KADABRA] }), KADABRA).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(resolve(revived, { kind: "confirm", yes: true }).state.players.p1.hand).toHaveLength(2);
   });
 });

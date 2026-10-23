@@ -20,6 +20,7 @@ import {
   mustApply as run,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -845,11 +846,11 @@ describe("§8 — the online offer follows the gate (redact.ts), term for term w
 describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 → 36)", () => {
   it("both allowance keys round-trip through JSON and still act", () => {
     const amarys = play(table(), AMARYS[0], [FILLER]).state;
-    const revivedAmarys = JSON.parse(JSON.stringify(amarys)) as GameState;
+    const revivedAmarys = roundTrip(amarys);
     expect(revivedAmarys.allowances.endOfTurnHandDiscard).toBe(5);
     expect(endTurn(revivedAmarys).state.players.p1.hand).toEqual([]);
     const licensed = play(withStadium(table(), FACTORY), ARIANA).state;
-    const revived = JSON.parse(JSON.stringify(licensed)) as GameState;
+    const revived = roundTrip(licensed);
     expect(revived.allowances.supporterPlayedUid).toBe(licensed.allowances.supporterPlayedUid);
     expect(drawn(useStadium(revived).events)).toEqual([2]);
   });
@@ -857,18 +858,14 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
   it("(i) A v35 ROLLBACK resuming a v36 record mid-turn DROPS a pending Amarys discard and a Factory licence — NOT inert", () => {
     // A v35 engine never reads either key, which is this engine with the key at its
     // fresh value: the Supporter is spent (`supporterPlayed` true) and its effect is gone.
-    const amarys = JSON.parse(
-      JSON.stringify(play(table(), AMARYS[0], [FILLER]).state),
-    ) as GameState;
+    const amarys = roundTrip(play(table(), AMARYS[0], [FILLER]).state);
     const rolledAmarys: GameState = {
       ...amarys,
       allowances: { ...amarys.allowances, endOfTurnHandDiscard: null },
     };
     expect(rolledAmarys.allowances.supporterPlayed).toBe(true);
     expect(endTurn(rolledAmarys).state.players.p1.hand).toHaveLength(5);
-    const licensed = JSON.parse(
-      JSON.stringify(play(withStadium(table(), FACTORY), ARIANA).state),
-    ) as GameState;
+    const licensed = roundTrip(play(withStadium(table(), FACTORY), ARIANA).state);
     const rolledLicence: GameState = {
       ...licensed,
       allowances: { ...licensed.allowances, supporterPlayedUid: null },

@@ -24,6 +24,7 @@ import {
   must,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const RED_CARD = "me04-082";
@@ -355,7 +356,7 @@ const pickCards = (uids: readonly string[]): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [...uids] } }) as GameAction;
 const confirm = (yes: boolean): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } }) as GameAction;
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const withStadium = (state: GameState, owner: "p1" | "p2"): GameState => {
   const side = state.players[owner];

@@ -22,6 +22,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE =
@@ -611,7 +612,7 @@ describe("§9 — the persisted op, over the serialized bytes", () => {
 
   it("DIRECTION 1 — the parked program survives a JSON round trip and resolves", () => {
     const parked = attack(ready(), SHUFFLE).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const picked = parkedPrompt(revived).candidates.slice(0, 3);
     const { state, events } = answerWith(revived, "p2", picked);
     expect(findEvent(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");

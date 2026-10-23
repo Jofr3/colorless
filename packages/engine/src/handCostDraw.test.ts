@@ -34,6 +34,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -541,8 +542,8 @@ describe("D473 §6 — `MATCH_RECORD_VERSION` stays 29, and the argument is DRIV
     const parked = mustStep(handOf(fielded(10, DRAWER), 3), attack).state;
     const phase = parked.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(JSON.parse(JSON.stringify(phase.cont.pendingOp))).toEqual(program(2)[0]);
-    expect(JSON.parse(JSON.stringify(phase.cont.rest))).toEqual([program(2)[1]]);
+    expect(roundTrip(phase.cont.pendingOp)).toEqual(program(2)[0]);
+    expect(roundTrip(phase.cont.rest)).toEqual([program(2)[1]]);
   });
 
   it("the LOSS direction, driven: a truncated `rest` degrades into a DIFFERENT board", () => {

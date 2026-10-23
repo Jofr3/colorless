@@ -20,6 +20,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -601,7 +602,7 @@ describe("the wire and the seat gate, on the DERIVED park", () => {
 
   it("MATCH_RECORD_VERSION stays 12 — and D186's SECOND leg has retired, so this is the check", () => {
     const state = parked();
-    const thawed = JSON.parse(JSON.stringify(state)) as GameState;
+    const thawed = roundTrip(state);
     if (thawed.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(thawed.phase.prompt).toEqual({ kind: "confirm", note: CLAUSES[UNTIL].text });
     expect(thawed.phase.cont.pendingOp).toEqual({

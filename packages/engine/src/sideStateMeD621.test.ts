@@ -19,6 +19,7 @@ import {
   must,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const GLADION = "me05-077";
@@ -375,7 +376,7 @@ const snipeAt = (ref: unknown): GameAction =>
     choice: { kind: "pokemonMulti", refs: [ref] },
   }) as GameAction;
 /** A parked state revived from JSON, the way a `MatchRecord` stores it. */
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 const dealtTo = (events: readonly GameEvent[], uid: string | undefined) =>
   all(events, "DAMAGE_DEALT").find((e) => e.uid === uid);
 const topOf = (state: GameState, seat: Seat) => state.players[seat].active?.stack.at(-1);

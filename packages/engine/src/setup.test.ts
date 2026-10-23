@@ -15,6 +15,7 @@ import {
   mustApply,
   mustCreate,
   types,
+  roundTrip,
 } from "./testFixtures";
 
 // Seeds found by deterministic scan (see the engine test conventions): the
@@ -279,7 +280,7 @@ describe("setupDrawExtra", () => {
     expect(openingAttempt.ok).toBe(false);
     if (!openingAttempt.ok) expect(openingAttempt.error.code).toBe("SETUP_BONUS_ONLY");
     // A saved bonus step retains the eligible uids and the locked Active.
-    const restored = JSON.parse(JSON.stringify(drawn)) as GameState;
+    const restored = roundTrip(drawn);
     const benched = mustApply(restored, {
       type: "setupPlaceBench",
       seat: "p1",

@@ -39,6 +39,7 @@ import {
   setActiveFromDeck,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -579,12 +580,12 @@ describe("D524 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes — the reading and the program round-trip unchanged, and the park is D381's shipped confirm", () => {
-    expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
+    expect(roundTrip(READING)).toEqual(READING);
     const program = optionalCostBoostProgram(READING, BASE, PRINTED);
-    expect(JSON.parse(JSON.stringify(program))).toEqual(program);
+    expect(roundTrip(program)).toEqual(program);
     const { after } = swing();
     const prompt = confirmPrompt(after);
-    expect(JSON.parse(JSON.stringify(prompt))).toEqual(prompt);
+    expect(roundTrip(prompt)).toEqual(prompt);
   });
 
   it("the demonstrator is FILE-LOCAL — zero `FIXTURE_POOL` ids, the deck is 60, the Energy are the shared pool's Colorless Basic and unauthored Special", () => {

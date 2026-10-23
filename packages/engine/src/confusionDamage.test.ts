@@ -22,6 +22,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const RAISED =
@@ -509,7 +510,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
   function saved(): GameState {
     const raised = mustApply(table(), { type: "attack", seat: "p1", index: RAISE });
     // A genuine JSON round-trip, which is what `MatchRecord.state` actually is.
-    return JSON.parse(JSON.stringify(raised.state)) as GameState;
+    return roundTrip(raised.state);
   }
 
   it("THE ADDRESS: the field really is inside the serialized state", () => {
@@ -526,7 +527,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       const start = table(s);
       const inf = applyAction(start, { type: "attack", seat: "p1", index: RAISE });
       if (!inf.ok) continue;
-      const round = JSON.parse(JSON.stringify(inf.state)) as GameState;
+      const round = roundTrip(inf.state);
       const sw = applyAction(round, { type: "attack", seat: "p2", index: 0 });
       if (sw.ok && findEvent(sw.events, "CONFUSION_CHECK")?.result === "tails") {
         expect(findEvent(sw.events, "COUNTERS_PLACED")?.amount).toBe(80);
@@ -548,7 +549,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       const start = table(s);
       const inf = applyAction(start, { type: "attack", seat: "p1", index: RAISE });
       if (!inf.ok) continue;
-      const round = JSON.parse(JSON.stringify(inf.state)) as GameState;
+      const round = roundTrip(inf.state);
       const probe = applyAction(round, { type: "attack", seat: "p2", index: 0 });
       if (probe.ok && findEvent(probe.events, "CONFUSION_CHECK")?.result === "tails") {
         legacy = round;

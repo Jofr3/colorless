@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const OXFORD = "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.";
@@ -432,7 +433,7 @@ describe("§7 — purity and the structural answers", () => {
 
   it("`MATCH_RECORD_VERSION` STAYS 29 — DRIVEN, in three directions", () => {
     const live = board();
-    const persisted = JSON.parse(JSON.stringify(live)) as GameState;
+    const persisted = roundTrip(live);
     const liveRun = swing(live, 0);
     const replayed = swing(persisted, 0);
     expect(replayed.events).toEqual(liveRun.events);
@@ -451,9 +452,9 @@ describe("§7 — purity and the structural answers", () => {
       confusionDamage: 30,
     });
 
-    const after = JSON.parse(JSON.stringify(liveRun.state)) as GameState;
+    const after = roundTrip(liveRun.state);
     for (const key of ["burned", "poisonDamage", "rotation"] as const) {
-      const lossy = JSON.parse(JSON.stringify(after)) as GameState;
+      const lossy = roundTrip(after);
       const active = lossy.players.p2.active;
       if (active === null) throw new Error("no defender");
       delete (active.conditions as unknown as Record<string, unknown>)[key];

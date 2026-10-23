@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SPREAD_SEED = 492_0492;
@@ -650,7 +651,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
     );
     expect(differing).toEqual(["count", "wrOnly"]);
     // The v29 bytes survive a JSON round trip unchanged — this is what a record holds.
-    expect(JSON.parse(JSON.stringify(V29_SNIPE))).toEqual(V29_SNIPE);
+    expect(roundTrip(V29_SNIPE)).toEqual(V29_SNIPE);
   });
 
   it("a v29 `count: 1` over the SAME board still asks for ONE and PARKS", () => {

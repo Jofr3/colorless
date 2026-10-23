@@ -22,6 +22,7 @@ import {
   must,
   mustApply as run,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -295,7 +296,7 @@ const confirm = (yes: boolean): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } }) as GameAction;
 
 /** The JSON round trip a `MatchRecord` puts a parked state through. */
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 
 function logText(state: GameState, events: readonly GameEvent[]): string[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: formatElapsed(0) };

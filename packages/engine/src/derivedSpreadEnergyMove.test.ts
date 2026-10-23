@@ -12,6 +12,7 @@ import {
   expectErr,
   mustApply,
   setActiveFromDeck,
+  roundTrip,
 } from "./testFixtures";
 
 const SPREAD_ALL = "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.";
@@ -479,7 +480,7 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 29", () => {
     const live = swing(board({ basics: 2, ownBench: 2 }), SPREAD_CYCLONE).state;
     expect(parked(live).anyDest).toBe(true);
 
-    const v29: GameState = JSON.parse(JSON.stringify(live)) as GameState;
+    const v29: GameState = roundTrip(live);
     if (v29.phase.kind !== "effect:choose" || v29.phase.prompt.kind !== "moveEnergy") {
       throw new Error("expected a serialized moveEnergy park");
     }

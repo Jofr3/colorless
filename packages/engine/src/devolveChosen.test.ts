@@ -25,6 +25,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -755,7 +756,7 @@ describe("§10 — the persisted `pendingOp`, over the serialized bytes", () => 
   });
 
   it("DIRECTION 1 — the parked op survives a JSON round trip and resolves", () => {
-    // The whole board through `JSON.parse(JSON.stringify(...))`: what a `MatchRecord`
+    // The whole board through `roundTrip(...)`: what a `MatchRecord`
     // actually stores, rather than the in-memory object.
     const parkedState = strike(armed(81, { stages: 1, benchStages: 1 }), "p1", PICK).state;
     const bytes = JSON.stringify(parkedState);
@@ -795,7 +796,7 @@ describe("§10 — the persisted `pendingOp`, over the serialized bytes", () => 
     expect(Object.keys(active)).toContain("stack");
     expect(Object.keys(active)).toContain("markers");
     expect(Object.keys(active)).toContain("evolvedTurn");
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     const live = strike(before, "p1", PICK);
     const replayed = strike(revived, "p1", PICK);
     expect(types(replayed.events)).toEqual(types(live.events));

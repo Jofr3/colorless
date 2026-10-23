@@ -38,6 +38,7 @@ import {
   setActiveFromDeck,
   activeOf,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const ENERGY_PILE = "This attack does 20 more damage for each Energy card in your discard pile.";
@@ -570,7 +571,7 @@ describe("§5 — the same four numbers from the other chair", () => {
 
 describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", () => {
   it("DIRECTION 1 — a v29 record round-trips and STILL scores all four counts", () => {
-    const record = JSON.parse(JSON.stringify(canonical())) as GameState;
+    const record = roundTrip(canonical());
     expect([0, 1, 2, 3].map((i) => dealt(record, i))).toEqual([80, 120, 90, 60]);
   });
 

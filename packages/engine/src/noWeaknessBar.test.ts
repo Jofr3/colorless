@@ -22,6 +22,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE = "During your opponent's next turn, this Pokémon has no Weakness.";
@@ -474,7 +475,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
       index: VEIL,
     }).state;
     expect(state.turn).toBe(3);
-    return JSON.parse(JSON.stringify(state)) as GameState;
+    return roundTrip(state);
   }
 
   it("DIRECTION 1 — a v27 record round-trips and the bar STILL bites", () => {

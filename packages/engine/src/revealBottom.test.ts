@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -615,13 +616,13 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       uid: handUid(state, "p1", ORTEGA),
     });
-    const thawedPick = JSON.parse(JSON.stringify(parked)) as GameState;
+    const thawedPick = roundTrip(parked);
     const { state: asked } = mustApply(thawedPick, {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "cards", uids: [handUid(thawedPick, "p2", GREAVARD)] },
     });
-    const thawedMay = JSON.parse(JSON.stringify(asked)) as GameState;
+    const thawedMay = roundTrip(asked);
     if (thawedMay.phase.kind !== "effect:choose") throw new Error("expected the mayDraw park");
     expect(thawedMay.phase.answerer).toBe("p2");
     const { state: drawn } = mustApply(thawedMay, {

@@ -22,6 +22,7 @@ import {
   setDamage,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -530,10 +531,10 @@ describe("D285 §6 — MATCH_RECORD_VERSION 15 → 16, driven both directions", 
     // survives only because the number is written down. Both directions asserted
     // on one board, which is what makes the two sources' costs comparable.
     const stamped = swing(turnOf(board(SEEDS[0], "p1", "p1", BRONZONG), "p1"), "p1", 0);
-    const reloaded = JSON.parse(JSON.stringify(stamped)) as GameState;
+    const reloaded = roundTrip(stamped);
     expect(pokemonPlayBarred(reloaded, "p2", "evolve", POOL[EVO_PLAIN])).toBe(true);
     const arbok = turnOf(board(SEEDS[0], "p1", "p1", ARBOK), "p2");
-    const arbokReloaded = JSON.parse(JSON.stringify(arbok)) as GameState;
+    const arbokReloaded = roundTrip(arbok);
     expect(arbokReloaded.handPlayLockedTurn.p2.evolve).toBeNull();
     expect(pokemonPlayBarred(arbokReloaded, "p2", "evolve", POOL[EVO_ABILITY])).toBe(true);
   });

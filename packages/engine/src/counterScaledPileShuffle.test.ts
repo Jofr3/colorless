@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -678,7 +679,7 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
   it("THE FIRST DOOR, MEASURED: the rider rides `phase.cont.pendingOp`", () => {
     const { state } = attack(stockPile(board(SEED, [B1, B2])));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(JSON.parse(JSON.stringify(state.phase.cont.pendingOp))).toEqual(PROGRAM[0]);
+    expect(roundTrip(state.phase.cont.pendingOp)).toEqual(PROGRAM[0]);
     expect(JSON.stringify(state)).toContain(
       '"perDiscardPileCard":{"kind":"basicEnergy","energyType":"Grass"}',
     );
@@ -724,7 +725,7 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
 
   it("the parked record REPLAYS — the rider is applied from `pendingOp` and nothing else", () => {
     const { state } = attack(stockPile(board(SEED, [B1, B2])));
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(revived.phase.kind).toBe("effect:choose");
     const { state: done } = answer(revived, benchRef(0));
     expect(done.players.p2.bench[0]?.damage).toBe(60);

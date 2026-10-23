@@ -23,6 +23,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const KIERAN = ["sv06-154", "sv06-206", "sv06-218", "sv08.5-113", "sv08.5-174"] as const;
@@ -495,7 +496,7 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
 
 describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a widening, DRIVEN", () => {
   function stripped(parked: GameState): GameState {
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const phase = revived.phase as unknown as {
       prompt: Record<string, unknown>;
@@ -503,7 +504,7 @@ describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a wide
     };
     phase.prompt.labels = undefined;
     phase.cont.pendingOp.labels = undefined;
-    return JSON.parse(JSON.stringify(revived)) as GameState;
+    return roundTrip(revived);
   }
 
   it("the parked record really carries the labels on the prompt AND on the pending op", () => {

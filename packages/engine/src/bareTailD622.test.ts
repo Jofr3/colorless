@@ -16,6 +16,7 @@ import {
   setActiveFromDeck,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 /** Arboliva ex "Oil Salvo" — sv10-023, sv10-207. */
@@ -231,7 +232,7 @@ describe("D622 §4 — an in-flight v43 park keeps the reading it was parked und
       ...state.phase,
       cont: { ...cont, pendingOp: strip(cont.pendingOp), rest: cont.rest.map(strip) },
     };
-    return JSON.parse(JSON.stringify({ ...state, phase })) as GameState;
+    return roundTrip({ ...state, phase });
   }
 
   it("a parked Telekinesis without `wrOnly` resumes as before (lands through the block); with it, it is stopped", () => {

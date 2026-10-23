@@ -42,6 +42,7 @@ import {
   trimDeckTo,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -592,7 +593,7 @@ describe("D527 §2 — the literal resolves to the ATTACKER's Bench length at ST
     expect(b.before).toEqual(a.before);
     expect(b.after).toEqual(a.after);
     expect(b.events).toEqual(a.events);
-    const persisted = JSON.parse(JSON.stringify(a.after)) as GameState;
+    const persisted = roundTrip(a.after);
     expect(persisted).toEqual(a.after);
     expect(JSON.stringify(persisted)).toBe(JSON.stringify(a.after));
     const [x, y] = cardsPrompt(a.after).candidates;

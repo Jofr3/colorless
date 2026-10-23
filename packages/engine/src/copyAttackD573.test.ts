@@ -32,6 +32,7 @@ import {
   mustApply as run,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -1256,7 +1257,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
 
   it("a JSON round-trip of the parked state resolves identically", () => {
     const parked = parkedBoard();
-    const revived = JSON.parse(JSON.stringify(parked.state)) as GameState;
+    const revived = roundTrip(parked.state);
     const direct = run(parked.state, pickAttack(1));
     const viaJson = run(revived, pickAttack(1));
     expect(JSON.stringify(viaJson.state)).toBe(JSON.stringify(direct.state));

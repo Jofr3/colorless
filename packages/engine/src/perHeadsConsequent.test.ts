@@ -26,6 +26,7 @@ import {
   trimDeckTo,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SINGLE_MILL = "Flip 2 coins. For each heads, discard the top card of your opponent's deck.";
@@ -354,8 +355,8 @@ describe("§3 — no new persisted byte, in three directions", () => {
     expect(JSON.stringify(pick)).toBe('{"op":"randomFromOpponentHand","to":"discard"}');
     expect(Object.keys(mill).sort()).toEqual(["count", "op", "whose"]);
     expect(Object.keys(pick).sort()).toEqual(["op", "to"]);
-    expect(JSON.parse(JSON.stringify(mill))).toEqual(mill);
-    expect(JSON.parse(JSON.stringify(pick))).toEqual(pick);
+    expect(roundTrip(mill)).toEqual(mill);
+    expect(roundTrip(pick)).toEqual(pick);
     expect(
       JSON.stringify(deriveAttackEffect("Discard the top card of your opponent's deck.")?.[0]),
     ).toBe(JSON.stringify(mill));

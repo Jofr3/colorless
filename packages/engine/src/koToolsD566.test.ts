@@ -16,6 +16,7 @@ import {
   must,
   mustApply as run,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koHolderToolTriggersOf, koToolTriggersOf } from "./triggers";
 import type { InPlayPokemon } from "./types";
@@ -466,7 +467,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
   });
 
   it("the parked move round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36)", () => {
-    const after = JSON.parse(JSON.stringify(run(baton(), attack(0)).state)) as GameState;
+    const after = roundTrip(run(baton(), attack(0)).state);
     const [a] = bodyAt(after, "p2", "active").energy as [string];
     const dest = { seat: "p2", spot: { spot: "bench", index: 1 } } as const;
     const done = drain(
@@ -605,9 +606,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
   });
 
   it("the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36)", () => {
-    const after = JSON.parse(
-      JSON.stringify(drain(run(amulet({ seed: 5692 }), attack(0))).state),
-    ) as GameState;
+    const after = roundTrip(drain(run(amulet({ seed: 5692 }), attack(0))).state);
     const pick = after.players.p2.deck[0] as string;
     const done = run(after, {
       type: "resolveEffect",
@@ -692,9 +691,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
   });
 
   it("the parked question round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36): the re-queued `endTurn` carries `toolsDone`", () => {
-    const after = JSON.parse(
-      JSON.stringify(run(glass(5700), { type: "endTurn", seat: "p1" }).state),
-    ) as GameState;
+    const after = roundTrip(run(glass(5700), { type: "endTurn", seat: "p1" }).state);
     expect(after.pending[0]).toEqual({ kind: "endTurn", seat: "p1", toolsDone: true });
     const done = run(after, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } });
     expect(all(done.events, "TURN_ENDED")).toHaveLength(1);

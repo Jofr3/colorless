@@ -27,6 +27,7 @@ import {
   setActiveFromDeck,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
@@ -528,7 +529,7 @@ describe("§7 — `MATCH_RECORD_VERSION` HOLDS AT 30 ( held at THIS slice; 31 si
 
   it("DIRECTION 1 — the parked program survives a JSON round trip and resolves", () => {
     const parked = attack(ready(), STRIP).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const uids = parkedPrompt(revived).discardable.map((d) => d.uid);
     const { state, events } = answerWith(revived, "p1", uids);
     expect(all(events, "TOOLS_DISCARDED")).toHaveLength(2);

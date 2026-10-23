@@ -41,6 +41,7 @@ import {
   setBenchDamage,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -597,7 +598,7 @@ describe("D522 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, neither op parks, the gate is spliced", () => {
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // The declaration never parks: no board above ended in `effect:choose`.
     for (const board of [{}, { stadium: false }, { oppBench: [] }] as const) {
       expect(swing(board).after.phase.kind).not.toBe("effect:choose");

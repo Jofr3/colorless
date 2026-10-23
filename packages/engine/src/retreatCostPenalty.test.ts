@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   findEvent,
   activeOf,
+  roundTrip,
 } from "./testFixtures";
 
 const THIRTY_LESS =
@@ -462,7 +463,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
       index: DRAG,
     });
     expect(findEvent(first.events, "DAMAGE_DEALT")?.damage).toBe(140);
-    const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
+    const saved = roundTrip(first.state);
     expect(saved).toEqual(first.state);
     // …and the parsed record is a LIVE board, not a snapshot: hand the turn back
     // and swing the SAME clause again off the bytes that came out of `JSON.parse`.

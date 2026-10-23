@@ -20,6 +20,7 @@ import {
   typedEnergy,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const T = {
@@ -451,7 +452,7 @@ describe("D605 §3 — Target Together on a board: pick first, then one coin per
     expect(JSON.stringify(parked.phase.cont.pendingOp)).toContain(
       '"perHeadsInPlay":{"kind":"pokemonNameContaining","fragment":"Tauros"}',
     );
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const a = resolve(parked, { kind: "pokemonMulti", refs: [P2_BENCH(0)] });
     const b = resolve(revived, { kind: "pokemonMulti", refs: [P2_BENCH(0)] });
     expect(b.state).toEqual(a.state);

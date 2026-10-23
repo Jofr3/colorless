@@ -41,6 +41,7 @@ import {
   trainerCard,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -666,7 +667,7 @@ describe("§8 — what this program can put into a persisted `phase.cont`", () =
     const state = ready({ from: "d486-salandit", to: "d486-salazzle" });
     const parked = mustApply(state, { type: "attack", seat: "p1", index: GATED_DISCARD }).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the discard park");
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer = (from: GameState): GameState => {
       let now = from;

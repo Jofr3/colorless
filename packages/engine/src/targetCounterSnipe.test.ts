@@ -41,6 +41,7 @@ import {
   setBenchDamage,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -445,7 +446,7 @@ describe("D530 §3 — a new optional rider on a PERSISTED op, and the record ve
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"opponentBench","amount":20,"count":1,"source":"attack","deals":true,"perDamageCounterOnTarget":true}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
 
     const dropped = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "perDamageCounterOnTarget" ? undefined : v)),
@@ -637,7 +638,7 @@ describe("D530 §4 — the pick reads the CHOSEN body's counters: 3 → 60, 7 �
     const b = swing([pal(30), pal(70)]);
     expect(b.after).toEqual(a.after);
     expect(b.events).toEqual(a.events);
-    const persisted = JSON.parse(JSON.stringify(a.after)) as GameState;
+    const persisted = roundTrip(a.after);
     expect(persisted).toEqual(a.after);
     expect(JSON.stringify(persisted)).toBe(JSON.stringify(a.after));
     const live = pick(a.after, benchRef(1));

@@ -20,6 +20,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { otherSeat } from "./types";
 
@@ -439,7 +440,7 @@ describe("D299 §5 — the persisted shape, and the bump a slice ago never made"
 
   it("the SAME board round-trips through JSON with the key intact", () => {
     const state = board(SEEDS[0], "sv06-085", 1, 1);
-    const round = JSON.parse(JSON.stringify(state)) as GameState;
+    const round = roundTrip(state);
     expect(round.oncePerGameSpent).toEqual({ p1: [], p2: [] });
     expect(round).toEqual(state);
   });

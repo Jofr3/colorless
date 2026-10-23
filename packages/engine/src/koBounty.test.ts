@@ -26,6 +26,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { KoBounty } from "./types";
 
@@ -641,7 +642,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
   });
 
   it("v32-SHAPED body (the key genuinely ABSENT): the Knock Out THROWS", () => {
-    const revived = JSON.parse(JSON.stringify(inWindow(installed().state))) as GameState;
+    const revived = roundTrip(inWindow(installed().state));
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
     delete target.koBounty;

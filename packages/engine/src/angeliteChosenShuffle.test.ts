@@ -23,6 +23,7 @@ import {
   must,
   activeOf,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { stackUids } from "./types";
 
@@ -856,7 +857,7 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
   it("THE FIRST DOOR: `phase.cont.pendingOp` carries the op as a LITERAL byte string", () => {
     const { state } = attack(board(SEED, [B1, B2, B3]));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(JSON.parse(JSON.stringify(state.phase.cont.pendingOp))).toEqual(PROGRAM[0]);
+    expect(roundTrip(state.phase.cont.pendingOp)).toEqual(PROGRAM[0]);
     expect(JSON.stringify(state)).toContain('{"op":"returnBenchedChosen","count":2}');
   });
 

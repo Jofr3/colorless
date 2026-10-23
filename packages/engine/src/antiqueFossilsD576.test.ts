@@ -31,6 +31,7 @@ import {
   must,
   mustApply as run,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -1118,7 +1119,7 @@ describe('D576 §6 — R-FO6 ( UNRULED → ruled): Lileep evolves from "Antique 
 describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlayPokemon.stack`", () => {
   it("the bytes round-trip through JSON and still read as the Pokémon face", () => {
     const s = table(FILLER, [PLUME]);
-    const revived = JSON.parse(JSON.stringify(s)) as GameState;
+    const revived = roundTrip(s);
     const body = bodyAt(revived, "p1", 0);
     expect(cardOfUid(revived, top(body))?.hp).toBe(60);
     expect(isFossilTop(revived, body)).toBe(true);

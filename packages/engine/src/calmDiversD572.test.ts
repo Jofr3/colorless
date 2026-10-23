@@ -24,6 +24,7 @@ import {
   mustApply as run,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -829,7 +830,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
 
   it("a PARKED Adrena-Brain round-trips through JSON (pendingOp + the engine-written `from`) and resumes", () => {
     const parked = run(brainBoard(30), use("Adrena-Brain", ACTIVE)).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(revived.phase.cont.pendingOp).toEqual({

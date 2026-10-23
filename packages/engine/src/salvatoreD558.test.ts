@@ -18,6 +18,7 @@ import {
   must,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SALVATORE = ["sv05-160", "sv05-202", "sv05-212"] as const;
@@ -159,7 +160,7 @@ const pickBody = (state: GameState, spot: "active" | number) =>
       },
     },
   });
-const revive = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revive = (state: GameState): GameState => roundTrip(state);
 const shuffled = (events: readonly GameEvent[]) => events.some((e) => e.type === "SHUFFLE");
 
 // ────────────────────────────────────────────────────────────────────────────

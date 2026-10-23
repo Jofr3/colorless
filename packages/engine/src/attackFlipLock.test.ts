@@ -25,6 +25,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const S176 =
@@ -615,7 +616,7 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
   });
 
   it("v30-SHAPED body (the key genuinely ABSENT): the gate silently never flips", () => {
-    const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
+    const revived = roundTrip(installed().state);
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v30 record looks like (D124).
     delete target.attackFlipLockTurn;

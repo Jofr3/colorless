@@ -29,6 +29,7 @@ import {
   effectPrompt,
   ensureInDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const MORTY = ["sv05-155", "sv05-201", "sv05-211"] as const;
@@ -404,7 +405,7 @@ describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's 
     expect(parked.phase.cont.rest).toEqual([
       { op: "drawCards", count: 1, per: { kind: "opponentBenchCount" } },
     ]);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const tool = before.players.p1.hand.find((u) => before.cardIdByUid[u] === TOOL) as string;
     const resumed = mustApply(revived, cards([tool]));
@@ -864,7 +865,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
 
   it("`MATCH_RECORD_VERSION` holds: the parked op round-trips through JSON and resolves identically", () => {
     const parked = play(tooled(), SCRAPPER).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const p = effectPrompt(parked);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
     const answer: GameAction = {

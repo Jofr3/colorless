@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   setPrizes,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -542,7 +543,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
         JSON.stringify((V30_SPREAD as unknown as Record<string, unknown>)[k]),
     );
     expect(differing).toEqual(["perTakenPrize"]);
-    expect(JSON.parse(JSON.stringify(V30_SPREAD))).toEqual(V30_SPREAD);
+    expect(roundTrip(V30_SPREAD)).toEqual(V30_SPREAD);
     expect(deriveAttackEffect(PRINTED)).toHaveLength(1);
   });
 

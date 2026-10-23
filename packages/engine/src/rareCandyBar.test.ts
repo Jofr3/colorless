@@ -17,6 +17,7 @@ import {
   typedEnergy,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const RARE_CANDY_TEXT =
@@ -447,12 +448,12 @@ describe("D286 §6 — the version does NOT move, and the claim is driven", () =
       // The STAMPED half, whose answer is written down in the record…
       const stamped = swing(turnOf(board(seed, "p1", "p1", BUDEW), "p1"), "p1");
       const open = turnOf(stamped, "p2");
-      const reloaded = JSON.parse(JSON.stringify(open)) as GameState;
+      const reloaded = roundTrip(open);
       expect(handPlayBarred(reloaded, "p2", "Item", undefined)).toBe(true);
       expect(candy(reloaded, "p2")).toBe("HAND_PLAY_BLOCKED");
       // …and the CONTINUOUS half, whose answer is RECOMPUTED from the board.
       const passive = turnOf(board(seed, "p1", "p1", TYRANITAR), "p2");
-      const passiveReloaded = JSON.parse(JSON.stringify(passive)) as GameState;
+      const passiveReloaded = roundTrip(passive);
       expect(passiveReloaded.handPlayLockedTurn.p2.Item).toBeNull();
       expect(candy(passiveReloaded, "p2")).toBe("HAND_PLAY_BLOCKED");
     }

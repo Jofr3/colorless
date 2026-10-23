@@ -20,6 +20,7 @@ import {
   trainerCard,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { attackDamageTakenLastTurn, prizesTakenOnLastTurn, withAttackDamageTaken } from "./types";
 
@@ -340,7 +341,7 @@ const endTurn = (state: GameState, seat: Seat) =>
   must(applyAction(state, { type: "endTurn", seat }));
 const snipeAt = (seat: Seat, ref: unknown): GameAction =>
   ({ type: "resolveEffect", seat, choice: { kind: "pokemonMulti", refs: [ref] } }) as GameAction;
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 const topOf = (state: GameState, seat: Seat) => state.players[seat].active?.stack.at(-1);
 const dealtTo = (events: readonly GameEvent[], uid: string | undefined) =>
   all(events, "DAMAGE_DEALT").find((e) => e.uid === uid)?.dealt;

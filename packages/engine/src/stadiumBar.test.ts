@@ -16,6 +16,7 @@ import {
   setDamage,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const MASSIVE_BODY_TEXT =
@@ -436,12 +437,12 @@ describe("D287 §7 — the version does NOT move, and the claim is driven both w
   it("A REAL JSON ROUND TRIP CARRIES THE WHOLE ANSWER — the bar is a DERIVED READ", () => {
     for (const seed of SEEDS) {
       const barred = turnOf(board(seed, "p1", "p1", COPPERAJAH), "p2");
-      const reloaded = JSON.parse(JSON.stringify(barred)) as GameState;
+      const reloaded = roundTrip(barred);
       expect(reloaded.handPlayLockedTurn.p2.Item).toBeNull();
       expect(handPlayBarred(reloaded, "p2", "Stadium", undefined)).toBe(true);
       expect(play(reloaded, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
       const free = turnOf(board(seed, "p1", "p1", PLAIN), "p2");
-      const freeReloaded = JSON.parse(JSON.stringify(free)) as GameState;
+      const freeReloaded = roundTrip(free);
       expect(handPlayBarred(freeReloaded, "p2", "Stadium", undefined)).toBe(false);
       expect(play(freeReloaded, "p2", STADIUM)).toBe("OK");
     }

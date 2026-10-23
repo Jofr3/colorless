@@ -22,6 +22,7 @@ import {
   trainerCard,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const QUARRY_TEXT =
@@ -309,7 +310,7 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
 
   it("a parked Fossil Quarry round-trips through JSON", () => {
     const { state: parked } = use(quarry(table(FILLER)));
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const pick = [prompt(parked).candidates[0] as string];
     expect(mustApply(revived, cards(pick)).state).toEqual(mustApply(parked, cards(pick)).state);

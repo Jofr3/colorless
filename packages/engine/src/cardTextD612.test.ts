@@ -17,6 +17,7 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  roundTrip,
 } from "./testFixtures";
 
 const RAW = {
@@ -202,7 +203,7 @@ describe("D612 §4 — a raw face in a persisted pool reads like the re-ingested
     ) as string;
     expect(cardOfUid(state, uid)?.attacks?.[0]?.effect).toBe(CLEAN.hydroPump);
     // The JSON round trip a MatchRecord takes changes nothing.
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(cardOfUid(revived, uid)?.attacks?.[0]?.effect).toBe(CLEAN.hydroPump);
     // A clean face is the pool's own object.
     const filler = Object.keys(state.cardIdByUid).find(

@@ -4,7 +4,14 @@ import { seatDamageReduction } from "./continuous";
 import type { GameAction, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor, registryCardIds } from "./registry";
-import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  typedEnergy,
+  mustApply as must,
+  roundTrip,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const AUTO_HEAL =
@@ -182,7 +189,7 @@ interface SideSpec {
 
 /** TEST SURGERY — fresh uids for every card placed; both boards replaced. */
 function table(p1: SideSpec, p2: SideSpec): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b19#${n++}`;

@@ -8,3 +8,8 @@ export function deepFreeze<T>(value: T): T {
   }
   return value;
 }
+
+/** A JSON round trip: what survives persistence and the wire. */
+export function roundTrip<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}

@@ -20,6 +20,7 @@ import {
   setActiveFromDeck,
   setDamage,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const DAMAGE_BEAT =
@@ -500,7 +501,7 @@ describe("§6 — the crumb, rendered under BOTH seats and READ", () => {
 describe("§7 — the structural answers", () => {
   it("`MATCH_RECORD_VERSION` STAYS 26, and it is DRIVEN rather than reasoned", () => {
     const live = board("glalie", "fix-titan", 3);
-    const persisted = JSON.parse(JSON.stringify(live)) as GameState;
+    const persisted = roundTrip(live);
     const liveRow = findEvent(swing(live, "glalie").events, "DAMAGE_DEALT");
     const replayedRow = findEvent(swing(persisted, "glalie").events, "DAMAGE_DEALT");
     expect(replayedRow).toEqual(liveRow);

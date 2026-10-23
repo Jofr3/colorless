@@ -25,6 +25,7 @@ import {
   setActiveFromDeck,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const S171 =
@@ -550,7 +551,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
   });
 
   it("a v32-shaped BODY (the key genuinely ABSENT) reads the tax as 0 — the silent soft landing", () => {
-    const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
+    const revived = roundTrip(installed().state);
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
     delete target.costTaxTurn;
@@ -559,7 +560,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
   });
 
   it("a v32-shaped STATE (no `sideAttackLock` on either side) THROWS on the declaration and the projection", () => {
-    const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
+    const revived = roundTrip(installed().state);
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;
       // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT (D124).

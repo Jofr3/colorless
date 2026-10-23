@@ -22,6 +22,7 @@ import {
   mustApply as run,
   effectPrompt,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -1106,7 +1107,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
       20,
     );
     const parked = run(state, use("Rocket Brain", ACTIVE)).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(revived.phase.cont.pendingOp).toEqual({
@@ -1120,7 +1121,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
       ownerPokemon: "Team Rocket",
       from: { spot: "bench", index: 0 },
     });
-    const again = JSON.parse(JSON.stringify(second)) as GameState;
+    const again = roundTrip(second);
     const done = run(again, pick({ seat: "p1", spot: { spot: "active" } })).state;
     expect(bodyAt(done, "p1", "active").damage).toBe(40);
   });
@@ -1133,7 +1134,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
       seat: "p1",
       uid: before.players.p1.hand[0] as string,
     }).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const p = effectPrompt(revived);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");

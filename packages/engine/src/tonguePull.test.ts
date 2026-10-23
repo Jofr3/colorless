@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { BENCH_MAX, otherSeat } from "./types";
 
@@ -511,7 +512,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
 
   it("BACKWARD: the parked prompt round-trips through JSON unchanged", () => {
     const before = parked();
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     expect(revived.phase).toEqual(before.phase);
     const uids = cardsPrompt(revived).candidates;
     const done = mustApply(revived, {

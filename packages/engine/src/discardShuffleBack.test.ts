@@ -38,6 +38,7 @@ import {
   setActiveFromDeck,
   types,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED = "Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.";
@@ -600,11 +601,11 @@ describe("D523 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes — the program round-trips unchanged and the park is Pal Pad's shipped shape", () => {
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // The park's prompt is a shipped shape too: `chooseCards` with `dest: "deck"`.
     const { after } = swing();
     const prompt = cardsPrompt(after);
-    expect(JSON.parse(JSON.stringify(prompt))).toEqual(prompt);
+    expect(roundTrip(prompt)).toEqual(prompt);
     expect(prompt.dest).toBe("deck");
   });
 

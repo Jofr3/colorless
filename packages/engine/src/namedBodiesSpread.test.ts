@@ -23,6 +23,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -751,7 +752,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"yourAny","amount":30,"count":"all","source":"attack","deals":true,"filter":{"kind":"anyOf","filters":[{"kind":"byName","name":"Drifloon"},{"kind":"byName","name":"Drifblim"}]}}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
   });
 
   it("a v30 `yourBench` op over THIS board still means the bench and NOT the Active", () => {

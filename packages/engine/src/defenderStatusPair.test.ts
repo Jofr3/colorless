@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const BURN_CONFUSE = "Your opponent's Active Pokémon is now Burned and Confused.";
@@ -763,7 +764,7 @@ describe("§8 — purity and the structural answers", () => {
 
   it("`MATCH_RECORD_VERSION` STAYS 26, and it is DRIVEN rather than reasoned", () => {
     const live = board("ninetales", "fix-titan");
-    const persisted = JSON.parse(JSON.stringify(live)) as GameState;
+    const persisted = roundTrip(live);
     const liveRun = swing(live, "ninetales");
     const replayedRun = swing(persisted, "ninetales");
     expect(replayedRun.events).toEqual(liveRun.events);

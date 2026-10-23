@@ -19,6 +19,7 @@ import {
   must,
   mustApply as run,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -481,7 +482,7 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
 
   it("the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and the refusal survives it", () => {
     const { state, basics, evos } = scouting();
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(rejected(revived, cards([basics[0] as string, evos[0] as string]))).toBe(
       "BAD_EFFECT_CHOICE",
     );
@@ -689,10 +690,8 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
 
   it("the first park round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and resumes into question two", () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
-    const first = JSON.parse(JSON.stringify(play(state, OGRE[0]).state)) as GameState;
-    const second = JSON.parse(
-      JSON.stringify(run(first, pickOwn({ spot: "bench", index: 0 })).state),
-    ) as GameState;
+    const first = roundTrip(play(state, OGRE[0]).state);
+    const second = roundTrip(run(first, pickOwn({ spot: "bench", index: 0 })).state);
     expect(chooseCardsPrompt(second).dest).toBe("swap");
     if (second.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(second.phase.cont.pendingOp).toMatchObject({

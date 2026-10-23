@@ -15,6 +15,7 @@ import {
   setDamage,
   must,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -507,7 +508,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
 
   it("AN OLD RECORD READS BACK IDENTICALLY — a JSON round trip keeps the bar", () => {
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
-    const round = JSON.parse(JSON.stringify(barred)) as GameState;
+    const round = roundTrip(barred);
     expect(round).toEqual(barred);
     expect(handPlayBarred(round, "p2", "Item", undefined)).toBe(true);
     expect(handPlayBarred(round, "p2", "Tool", undefined)).toBe(true);

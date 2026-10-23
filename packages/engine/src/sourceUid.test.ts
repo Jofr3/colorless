@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -250,7 +251,7 @@ describe("Pawmot's Electrogenesis — the printed 'this Pokémon'", () => {
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const { state: parked } = useElectrogenesis(state, 0);
     const prompt = promptOf(parked);
-    const wire = JSON.parse(JSON.stringify(parked)) as GameState;
+    const wire = roundTrip(parked);
     if (wire.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(wire.phase.cont.ctx.sourceUid).toBeDefined();
     const direct = attach(parked, [{ uid: prompt.candidates[0] as string, to: bench(0) }]);

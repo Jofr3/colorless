@@ -24,6 +24,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const BBT = [
@@ -523,7 +524,7 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     const state = played().state;
     const wire = JSON.stringify(state.allowances.sideAttackBonuses);
     expect(wire).toBe('[{"amount":40,"target":{"kind":"suffixPokemon","suffix":"ex"}}]');
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(findEvent(attack(revived, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
   });
 
@@ -531,7 +532,7 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     // A v34 engine never reads the key, which is exactly this engine with the bag's
     // entries gone: the Supporter is spent (in the discard, `supporterPlayed` true) and
     // its effect is silently missing for the rest of the turn.
-    const v35 = JSON.parse(JSON.stringify(played().state)) as GameState;
+    const v35 = roundTrip(played().state);
     const asRollbackReadsIt: GameState = {
       ...v35,
       allowances: { ...v35.allowances, sideAttackBonuses: [] },
