@@ -1,6 +1,7 @@
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
 import { searchTopOrderProgram } from "./effects";
 import type { CardProgram } from "./programTypes";
+import { activated, berry, searchThenShuffle } from "./registryBuilders";
 import { BENCH_CEILING } from "./types";
 
 export type {
@@ -33,10 +34,7 @@ const PROFESSORS_RESEARCH: CardProgram = {
 /** "Search your deck for a Basic Pokémon and put it onto your Bench. Then,
     shuffle your deck." (Item) */
 const NEST_BALL: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "bench", max: 1 }),
 };
 
 /** "Switch in 1 of your opponent's Benched Pokémon to the Active Spot."
@@ -95,20 +93,24 @@ const PICNIC_BASKET: CardProgram = {
 /** "Search your deck for a Basic Energy card, reveal it, and put it into your
     hand. Then, shuffle your deck." (Item) */
 const ENERGY_SEARCH: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicEnergy" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
  * Jacq: search for up to 2 Evolution Pokémon to hand, revealed. Playable even if the deck has none.
  */
 const JACQ: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 2, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "evolutionPokemon" },
+    dest: "hand",
+    max: 2,
+    reveal: true,
+  }),
 };
 
 /**
@@ -133,16 +135,12 @@ const CHIEN_PAO: CardProgram = {
       name: "Shivery Chill",
       oncePerTurn: true,
       activeOnly: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicEnergy", energyType: "Water" },
-          dest: "hand",
-          max: 2,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "basicEnergy", energyType: "Water" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -543,15 +541,11 @@ const ARTAZON: CardProgram = {
   stadium: {
     ability: {
       label: "Artazon",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicPokemon", noRuleBox: true },
-          dest: "bench",
-          max: 1,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "basicPokemon", noRuleBox: true },
+        dest: "bench",
+        max: 1,
+      }),
     },
   },
 };
@@ -568,16 +562,12 @@ const MESAGOZA: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [
-            {
-              op: "searchDeck",
-              filter: { kind: "anyPokemon" },
-              dest: "hand",
-              max: 1,
-              reveal: true,
-            },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "anyPokemon" },
+            dest: "hand",
+            max: 1,
+            reveal: true,
+          }),
         },
       ],
     },
@@ -592,10 +582,12 @@ const TOWN_STORE: CardProgram = {
   stadium: {
     ability: {
       label: "Town Store",
-      program: [
-        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 1, reveal: true },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "toolCard" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
     },
   },
 };
@@ -741,16 +733,12 @@ const FLAMIGO: CardProgram = {
     {
       name: "Insta-Flock",
       trigger: "onPlayToBench",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "byName", name: "Flamigo" },
-          dest: "hand",
-          max: 3,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "byName", name: "Flamigo" },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -884,10 +872,8 @@ const HAWLUCHA: CardProgram = {
  */
 const MEOWSCARADA: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Bouquet Magic",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -897,7 +883,7 @@ const MEOWSCARADA: CardProgram = {
         },
         { op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "ability" },
       ],
-    },
+    }),
   ],
 };
 
@@ -908,10 +894,8 @@ const MEOWSCARADA: CardProgram = {
  */
 const RADIANT_BLASTOISE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Pump Shot",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -921,7 +905,7 @@ const RADIANT_BLASTOISE: CardProgram = {
         },
         { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "ability" },
       ],
-    },
+    }),
   ],
 };
 
@@ -931,15 +915,13 @@ const RADIANT_BLASTOISE: CardProgram = {
  */
 const REVAVROOM: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Rumbling Engine",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard", filter: { kind: "anyEnergy" } },
         { op: "drawUntilHandSize", size: 6 },
       ],
-    },
+    }),
   ],
 };
 
@@ -950,15 +932,13 @@ const REVAVROOM: CardProgram = {
     `AbilityCost` field could not express. */
 const TINKATON: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Gather Materials",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard" },
         { op: "drawCards", count: 3 },
       ],
-    },
+    }),
   ],
 };
 
@@ -1017,16 +997,12 @@ const FAN_CALL: CardProgram = {
       oncePerTurn: "sharedByName",
       activeOnly: false,
       playableIf: { kind: "yourFirstTurn" },
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "typedPokemon", pokemonType: "Colorless", maxHp: 100 },
-          dest: "hand",
-          max: 3,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "typedPokemon", pokemonType: "Colorless", maxHp: 100 },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -1038,8 +1014,7 @@ const FAN_CALL: CardProgram = {
 const ULTRA_BALL: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 2, to: "discard" },
-    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
+    ...searchThenShuffle({ filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true }),
   ],
 };
 
@@ -1051,8 +1026,7 @@ const ULTRA_BALL: CardProgram = {
 const EARTHEN_VESSEL: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 1, to: "discard" },
-    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 2, reveal: true },
-    { op: "shuffleDeck" },
+    ...searchThenShuffle({ filter: { kind: "basicEnergy" }, dest: "hand", max: 2, reveal: true }),
   ],
 };
 
@@ -1063,8 +1037,7 @@ const EARTHEN_VESSEL: CardProgram = {
 const LARRYS_SKILL: CardProgram = {
   trainer: [
     { op: "discardHand" },
-    {
-      op: "searchDeck",
+    ...searchThenShuffle({
       filter: { kind: "anyPokemon" },
       dest: "hand",
       max: 1,
@@ -1073,25 +1046,20 @@ const LARRYS_SKILL: CardProgram = {
         { filter: { kind: "supporter" }, max: 1 },
         { filter: { kind: "basicEnergy" }, max: 1 },
       ],
-    },
-    { op: "shuffleDeck" },
+    }),
   ],
 };
 
 /** Arven's rotated printings remain usable in existing decks. One search with
     separate caps lets the player take an Item, a Tool, either one, or neither. */
 const ARVEN: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "item" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [{ filter: { kind: "toolCard" }, max: 1 }],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "item" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [{ filter: { kind: "toolCard" }, max: 1 }],
+  }),
 };
 
 /**
@@ -1101,8 +1069,7 @@ const ARVEN: CardProgram = {
 const SECRET_BOX: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 3, to: "discard" },
-    {
-      op: "searchDeck",
+    ...searchThenShuffle({
       filter: { kind: "item" },
       dest: "hand",
       max: 1,
@@ -1112,8 +1079,7 @@ const SECRET_BOX: CardProgram = {
         { filter: { kind: "supporter" }, max: 1 },
         { filter: { kind: "stadium" }, max: 1 },
       ],
-    },
-    { op: "shuffleDeck" },
+    }),
   ],
 };
 
@@ -1125,60 +1091,44 @@ const SECRET_BOX: CardProgram = {
  * included.
  */
 const HILDA: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "evolutionPokemon" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "evolutionPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
+  }),
 };
 
 /** Colress's Tenacity. Hilda's shape with a Stadium as the first noun. */
 const COLRESSS_TENACITY: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "stadium" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "stadium" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
+  }),
 };
 
 /** Cyrano. `suffixPokemon` "ex" matches only Pokémon ex, not Pokémon V. */
 const CYRANO: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "suffixPokemon", suffix: "ex" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "suffixPokemon", suffix: "ex" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /** Hyper Aroma. Stage 1 Pokémon only. */
 const HYPER_AROMA: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "stagePokemon", stage: "Stage1" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "stagePokemon", stage: "Stage1" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /**
@@ -1186,16 +1136,12 @@ const HYPER_AROMA: CardProgram = {
  * not Team Rocket's Items.
  */
 const TEAM_ROCKETS_TRANSCEIVER: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
@@ -1203,17 +1149,13 @@ const TEAM_ROCKETS_TRANSCEIVER: CardProgram = {
  * dialog ceiling can exceed any legal answer; the validator refuses a repeated type.
  */
 const ENERGY_SEARCH_PRO: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicEnergy" },
-      dest: "hand",
-      max: "any",
-      reveal: true,
-      distinctEnergyTypes: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicEnergy" },
+    dest: "hand",
+    max: "any",
+    reveal: true,
+    distinctEnergyTypes: true,
+  }),
 };
 
 /**
@@ -1221,10 +1163,7 @@ const ENERGY_SEARCH_PRO: CardProgram = {
  * nothing, and shuffles.
  */
 const PRECIOUS_TROLLEY: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: "any" },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "bench", max: "any" }),
 };
 
 /**
@@ -1232,10 +1171,7 @@ const PRECIOUS_TROLLEY: CardProgram = {
  * decline, or no park at all.
  */
 const BOXED_ORDER: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "item" }, dest: "hand", max: 2, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "item" }, dest: "hand", max: 2, reveal: true }),
   trainerEndsTurn: true,
 };
 
@@ -1245,10 +1181,7 @@ const BOXED_ORDER: CardProgram = {
  */
 const CASSIOPEIA: CardProgram = {
   trainerPlayableIf: { kind: "yourHandExactly", count: 1 },
-  trainer: [
-    { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 2 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 2 }),
 };
 
 /** Cook. Heals the controller's Active; playable even when the Active is undamaged. */
@@ -1310,22 +1243,18 @@ const MEDDLING_MEMO: CardProgram = {
  * `also`. `ownerPokemon` admits any stage; the Energy side is Basic {R} only.
  */
 const ETHANS_ADVENTURE: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: {
-        kind: "anyOf",
-        filters: [
-          { kind: "ownerPokemon", owner: "Ethan" },
-          { kind: "basicEnergy", energyType: "Fire" },
-        ],
-      },
-      dest: "hand",
-      max: 3,
-      reveal: true,
+  trainer: searchThenShuffle({
+    filter: {
+      kind: "anyOf",
+      filters: [
+        { kind: "ownerPokemon", owner: "Ethan" },
+        { kind: "basicEnergy", energyType: "Fire" },
+      ],
     },
-    { op: "shuffleDeck" },
-  ],
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /**
@@ -1334,22 +1263,18 @@ const ETHANS_ADVENTURE: CardProgram = {
  */
 const LICKING_CATCH: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: {
-          kind: "anyOf",
-          filters: [
-            { kind: "typedPokemon", pokemonType: "Fire" },
-            { kind: "basicEnergy", energyType: "Fire" },
-          ],
-        },
-        dest: "hand",
-        max: 3,
-        reveal: true,
+    0: searchThenShuffle({
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Fire" },
+          { kind: "basicEnergy", energyType: "Fire" },
+        ],
       },
-      { op: "shuffleDeck" },
-    ],
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    }),
   },
 };
 
@@ -1359,21 +1284,17 @@ const LICKING_CATCH: CardProgram = {
  */
 const FAMILIAL_MARCH: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: {
-          kind: "anyOf",
-          filters: [
-            { kind: "byName", name: "Maushold" },
-            { kind: "byName", name: "Maushold ex" },
-          ],
-        },
-        dest: "bench",
-        max: 2,
+    0: searchThenShuffle({
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "byName", name: "Maushold" },
+          { kind: "byName", name: "Maushold ex" },
+        ],
       },
-      { op: "shuffleDeck" },
-    ],
+      dest: "bench",
+      max: 2,
+    }),
   },
 };
 
@@ -1398,10 +1319,8 @@ const DENDRA: CardProgram = {
  */
 const SKWOVET: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Nest Stash",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "handRefresh",
@@ -1411,7 +1330,7 @@ const SKWOVET: CardProgram = {
           onlyIfAnyMoved: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -1472,10 +1391,7 @@ const FIX_ONKO: CardProgram = {
     {
       name: "Last Wish",
       trigger: "onKnockOut",
-      program: [
-        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "hand", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "hand", max: 1 }),
     },
   ],
 };
@@ -1502,10 +1418,12 @@ const POKE_BALL: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [
-        { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
-        { op: "shuffleDeck" },
-      ],
+      then: searchThenShuffle({
+        filter: { kind: "anyPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -1697,21 +1615,15 @@ const PRIMAL_KNOWLEDGE: CardProgram = {
  */
 const METALLIC_SIGNAL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Metallic Signal",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },
-          dest: "hand",
-          max: 2,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -1723,12 +1635,10 @@ const METALLIC_SIGNAL: CardProgram = {
     Energy card from your hand to 1 of your Pokémon." (activated, once/turn) */
 const QUAQUAVAL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Energy Carnival",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "hand" }],
-    },
+    }),
   ],
 };
 
@@ -1752,22 +1662,18 @@ const BAXCALIBUR: CardProgram = {
     "Dino Cry" (multi + "your turn ends") still needs later ops. */
 const FIX_ATTACHER: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Recharge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Fire" }],
-    },
+    }),
   ],
 };
 
 /** Koraidon ex — "Dino Cry". Two attach ops, each `declinable`, so "up to 2" allows 0, 1 or 2. */
 const KORAIDON_EX: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Dino Cry",
-      oncePerTurn: true,
-      activeOnly: false,
       endsTurn: true,
       program: [
         {
@@ -1787,7 +1693,7 @@ const KORAIDON_EX: CardProgram = {
           declinable: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -1823,12 +1729,10 @@ const GARDEVOIR_EX: CardProgram = {
  */
 const BLISSEY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Busybody Nurse",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "clearStatus" }],
-    },
+    }),
   ],
 };
 
@@ -1978,10 +1882,8 @@ const ELECTRIC_GENERATOR: CardProgram = {
  */
 const HYDREIGON: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Tri Howl",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromTop",
@@ -1991,7 +1893,7 @@ const HYDREIGON: CardProgram = {
           restTo: "discard",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -2050,15 +1952,11 @@ const FIX_GRASSDOUBLE: CardProgram = {
  * read while attached.
  */
 const FIX_PILESCAN: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "providesEnergy", energyType: "Fire" },
-      dest: "hand",
-      max: 1,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "providesEnergy", energyType: "Fire" },
+    dest: "hand",
+    max: 1,
+  }),
 };
 
 /**
@@ -2160,10 +2058,7 @@ const CALL_BELL: CardProgram = {
     kind: "allOf",
     conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
   },
-  trainer: [
-    { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true }),
 };
 
 /**
@@ -2218,10 +2113,8 @@ const ILLUMISE_SLOWING_PERFUME: CardProgram = {
  */
 const LOOK_FOR_PREY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Look for Prey",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "bottomFromOpponentHand",
@@ -2229,7 +2122,7 @@ const LOOK_FOR_PREY: CardProgram = {
           dest: "bench",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -2477,10 +2370,8 @@ const JANINES_SECRET_ART: CardProgram = {
  */
 const PAWMOT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Electrogenesis",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromDeck",
@@ -2490,7 +2381,7 @@ const PAWMOT: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -2528,15 +2419,13 @@ const POISON_POINT: CardProgram = {
     `handCostUnmet`). 4 legal printings of 4 in the catalog. */
 const NS_ZOROARK_EX: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Trade",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard" },
         { op: "drawCards", count: 2 },
       ],
-    },
+    }),
   ],
 };
 
@@ -2791,12 +2680,10 @@ const RAPID_VERNIER: CardProgram = {
  */
 const SHOWTIME: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Showtime",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "switchActive", fromSource: true }],
-    },
+    }),
   ],
 };
 
@@ -2806,10 +2693,8 @@ const SHOWTIME: CardProgram = {
  */
 const GATHER_INWARD: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Gather Inward",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "moveEnergy",
@@ -2819,7 +2704,7 @@ const GATHER_INWARD: CardProgram = {
           anySource: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -2845,12 +2730,10 @@ const INFERNO_FANDANGO: CardProgram = {
 /** Blaziken ex — "Seething Spirit". */
 const SEETHING_SPIRIT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Seething Spirit",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard" }],
-    },
+    }),
   ],
 };
 
@@ -2860,26 +2743,22 @@ const SEETHING_SPIRIT: CardProgram = {
  */
 const CHARGING_UP: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Charging Up",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true }],
-    },
+    }),
   ],
 };
 
 /** Eelektrik — "Dynamotor". `benchOnly` stops the usually-Active holder from feeding itself. */
 const DYNAMOTOR: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Dynamotor",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true },
       ],
-    },
+    }),
   ],
 };
 
@@ -2920,12 +2799,10 @@ const ASSEMBLE_ALLOY: CardProgram = {
     "1 of your Pokémon") on the Ability surface. 1 legal printing. */
 const CONFECTIONARY_GIFT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Confectionary Gift",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "healChosen", amount: 30 }],
-    },
+    }),
   ],
 };
 
@@ -2938,15 +2815,13 @@ const INSOMNIA: CardProgram = { passive: { statusImmunities: ["asleep"] } };
  */
 const RECONSTITUTE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Reconstitute",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 2, to: "discard" },
         { op: "drawCards", count: 1 },
       ],
-    },
+    }),
   ],
 };
 
@@ -2956,15 +2831,13 @@ const RECONSTITUTE: CardProgram = {
  */
 const UP_TEMPO: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Up-Tempo",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "deckBottom" },
         { op: "drawUntilHandSize", size: 5 },
       ],
-    },
+    }),
   ],
 };
 
@@ -3073,10 +2946,8 @@ const INVITING_WINK: CardProgram = {
  */
 const PYRO_DANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Pyro Dance",
-      oncePerTurn: true,
-      activeOnly: false,
       // `atLeastOne` over one `recordAs` slot: {R}, {F} or 1 of each are all reachable, and the
       // empty answer is not.
       program: [
@@ -3095,7 +2966,7 @@ const PYRO_DANCE: CardProgram = {
           atLeastOne: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3105,10 +2976,8 @@ const PYRO_DANCE: CardProgram = {
  */
 const METAL_MAKER: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Metal Maker",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromTop",
@@ -3118,7 +2987,7 @@ const METAL_MAKER: CardProgram = {
           restTo: "shuffledBottom",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3128,12 +2997,10 @@ const METAL_MAKER: CardProgram = {
  */
 const SNACK_SEEK: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Snack Seek",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "lookAtTopN", n: 1, filter: { kind: "anyCard" }, max: 1, dest: "discard" }],
-    },
+    }),
   ],
 };
 
@@ -3165,10 +3032,11 @@ const SPIKE_CLAD: CardProgram = {
  * onto your Bench. Then, shuffle your deck."
  */
 const BUDDY_BUDDY_POFFIN: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicPokemon", maxHp: 70 },
+    dest: "bench",
+    max: 2,
+  }),
 };
 
 /**
@@ -3225,10 +3093,12 @@ const SACRED_ASH: CardProgram = {
     the coin gate REMOVED, i.e. Mesagoza's gated pair lifted to the top level.
     1 legal printing. */
 const MASTER_BALL: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "anyPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Treasure Tracker sv08.5-131 — "Search your deck for up to 5 Pokémon Tool
@@ -3236,10 +3106,7 @@ const MASTER_BALL: CardProgram = {
     (Item) — Town Store's `toolCard` filter searched to HAND at `max: 5`.
     1 legal printing. */
 const TREASURE_TRACKER: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "toolCard" }, dest: "hand", max: 5, reveal: true }),
 };
 
 /** Dangerous Laser sv06.5-058 — "Your opponent's Active Pokémon is now Burned
@@ -3611,20 +3478,14 @@ const LILLIES_PEARL: CardProgram = {
     Photon Blaster's printed damage and next-turn lock already derive from text. */
 const TANDEM_UNIT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Tandem Unit",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "typedPokemon", pokemonType: "Lightning", stage: "basic" },
-          dest: "bench",
-          max: 2,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "typedPokemon", pokemonType: "Lightning", stage: "basic" },
+        dest: "bench",
+        max: 2,
+      }),
+    }),
   ],
 };
 
@@ -3634,21 +3495,15 @@ const TANDEM_UNIT: CardProgram = {
  */
 const CHAMPIONS_CALL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Champion's Call",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "ownerPokemon", owner: "Cynthia" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "ownerPokemon", owner: "Cynthia" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -3658,16 +3513,12 @@ const CHAMPIONS_CALL: CardProgram = {
  */
 const SWIM_TOGETHER: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: { kind: "ownerPokemon", owner: "Misty" },
-        dest: "hand",
-        max: 3,
-        reveal: true,
-      },
-      { op: "shuffleDeck" },
-    ],
+    0: searchThenShuffle({
+      filter: { kind: "ownerPokemon", owner: "Misty" },
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    }),
   },
 };
 
@@ -3680,15 +3531,11 @@ const SWIM_TOGETHER: CardProgram = {
     anything leaves the deck, so a full Bench makes this a no-op that still
     shuffles rather than a card-destroying overflow. 1 legal printing of 1. */
 const HOPS_BAG: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },
-      dest: "bench",
-      max: 2,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },
+    dest: "bench",
+    max: 2,
+  }),
 };
 
 /**
@@ -3697,15 +3544,11 @@ const HOPS_BAG: CardProgram = {
  */
 const SUMMONING_SIGN: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: { kind: "ownerPokemon", owner: "Steven", stage: "basic" },
-        dest: "bench",
-        max: 2,
-      },
-      { op: "shuffleDeck" },
-    ],
+    0: searchThenShuffle({
+      filter: { kind: "ownerPokemon", owner: "Steven", stage: "basic" },
+      dest: "bench",
+      max: 2,
+    }),
   },
 };
 
@@ -3715,17 +3558,12 @@ const SUMMONING_SIGN: CardProgram = {
  */
 const LILLIES_COMFEY: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: { kind: "ownerPokemon", owner: "Lillie", stage: "basic" },
-        dest: "bench",
-        // `BENCH_CEILING`, not `BENCH_MAX`: Area Zero Underdepths can allow 8 Benched Pokémon, and
-        // `benchSpace` still clamps to the live limit.
-        max: BENCH_CEILING,
-      },
-      { op: "shuffleDeck" },
-    ],
+    0: searchThenShuffle({
+      filter: { kind: "ownerPokemon", owner: "Lillie", stage: "basic" },
+      dest: "bench", // `BENCH_CEILING`, not `BENCH_MAX`: Area Zero Underdepths can allow 8 Benched Pokémon, and
+      // `benchSpace` still clamps to the live limit.
+      max: BENCH_CEILING,
+    }),
     1: [{ op: "returnSelf", dest: "hand" }],
   },
 };
@@ -3745,16 +3583,12 @@ const SPIKEMUTH_GYM: CardProgram = {
   stadium: {
     ability: {
       label: "Spikemuth Gym",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "ownerPokemon", owner: "Marnie" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "ownerPokemon", owner: "Marnie" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
     },
   },
 };
@@ -3823,10 +3657,8 @@ const MARNIES_GRIMMSNARL_EX: CardProgram = {
  */
 const ETHANS_HO_OH_EX: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Golden Flame",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachEnergyFrom",
@@ -3837,7 +3669,7 @@ const ETHANS_HO_OH_EX: CardProgram = {
           benchOnly: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3951,10 +3783,8 @@ const EMCEES_HYPE: CardProgram = {
  */
 const TEAL_DANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Teal Dance",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachEnergyFrom",
@@ -3969,7 +3799,7 @@ const TEAL_DANCE: CardProgram = {
           then: [{ op: "drawCards", count: 1 }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3980,10 +3810,8 @@ const TEAL_DANCE: CardProgram = {
  */
 const RIPENING_CHARGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Ripening Charge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachEnergyFrom",
@@ -3992,7 +3820,7 @@ const RIPENING_CHARGE: CardProgram = {
           healTarget: 30,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -4025,10 +3853,8 @@ const BATTLE_HARDENED: CardProgram = {
  */
 const FLASHING_DRAW: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flashing Draw",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "discardEnergy",
@@ -4037,7 +3863,7 @@ const FLASHING_DRAW: CardProgram = {
         },
         { op: "drawUntilHandSize", size: 6 },
       ],
-    },
+    }),
   ],
 };
 
@@ -4056,16 +3882,12 @@ const CARMINE: CardProgram = {
  * shuffle your deck."
  */
 const TEAM_ROCKETS_PROTON: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
   trainerFirstTurnExempt: true,
 };
 
@@ -4144,17 +3966,15 @@ const HUSTLE_PLAY: CardProgram = {
  */
 const CAPTIVATING_INVITATION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Captivating Invitation",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
           then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -4245,10 +4065,8 @@ const EXPLORERS_GUIDANCE: CardProgram = {
  */
 const DRAKLOAK: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Recon Directive",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "lookAtTopN",
@@ -4259,7 +4077,7 @@ const DRAKLOAK: CardProgram = {
           restTo: "bottom",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -4285,10 +4103,12 @@ const RIKA: CardProgram = {
  * Then, shuffle your deck."
  */
 const TRAINER_SEARCH: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "trainerCard" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "trainerCard" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
@@ -4297,16 +4117,14 @@ const TRAINER_SEARCH: CardProgram = {
  */
 const EMERGENCY_EVOLUTION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Emergency Evolution",
-      oncePerTurn: true,
-      activeOnly: false,
       remainingHpAtMost: 30,
       program: [
         { op: "evolveFromDeck", names: ["Unfezant", "Unfezant ex"] },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -4316,15 +4134,13 @@ const EMERGENCY_EVOLUTION: CardProgram = {
  */
 const RUN_AWAY_DRAW: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Run Away Draw",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "drawCards", count: 3, recordAs: "moved" },
         { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
       ],
-    },
+    }),
   ],
 };
 
@@ -4364,8 +4180,7 @@ const BREEZY_GIFT: CardProgram = {
   attack: {
     0: [
       { op: "returnSelf", dest: "deck" },
-      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },
-      { op: "shuffleDeck" },
+      ...searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 3 }),
     ],
   },
 };
@@ -4382,30 +4197,26 @@ const CIPHERMANIACS_CODEBREAKING: CardProgram = { trainer: searchTopOrderProgram
  */
 const CURSED_BLAST_5: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Cursed Blast",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },
         { op: "knockOutSelf" },
       ],
-    },
+    }),
   ],
 };
 
 /** Dusknoir's version of the Cursed Blast sentence (13 counters). */
 const CURSED_BLAST_13: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Cursed Blast",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "damageChosen", target: "opponentAny", amount: 130, count: 1, source: "ability" },
         { op: "knockOutSelf" },
       ],
-    },
+    }),
   ],
 };
 
@@ -4415,17 +4226,15 @@ const CURSED_BLAST_13: CardProgram = {
  */
 const OVERVOLT_DISCHARGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Overvolt Discharge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
         { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
         { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
         { op: "knockOutSelf" },
       ],
-    },
+    }),
   ],
 };
 
@@ -4470,10 +4279,8 @@ const BIANCAS_DEVOTION: CardProgram = {
 /** Steven's Metagross ex — "X-Boot". */
 const X_BOOT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "X-Boot",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromDeck",
@@ -4489,7 +4296,7 @@ const X_BOOT: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -4513,69 +4320,55 @@ const ENERGY_COIN: CardProgram = {
 /** Rapidash — "Hurried Gait": once during your turn, you may draw a card. */
 const HURRIED_GAIT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Hurried Gait",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "drawCards", count: 1 }],
-    },
+    }),
   ],
 };
 
 /** Chandelure — "Alluring Light": once during your turn, you may have each player draw a card. */
 const ALLURING_LIGHT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Alluring Light",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "drawCards", count: 1, who: "eachPlayer" }],
-    },
+    }),
   ],
 };
 
 /** Blissey ex — "Happy Switch": move a Basic Energy from 1 of your Pokémon to another. */
 const HAPPY_SWITCH: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Happy Switch",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1 }],
-    },
+    }),
   ],
 };
 
 /** Swadloon — "Healing Leaves": once during your turn, heal 20 damage from your Active Pokémon. */
 const HEALING_LEAVES: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Healing Leaves",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "heal", target: "self", amount: 20 }],
-    },
+    }),
   ],
 };
 
 /** Mamoswine ex — "Mammoth Hauler". */
 const MAMMOTH_HAULER: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Mammoth Hauler",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "anyPokemon" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "anyPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -4587,21 +4380,15 @@ const MAMMOTH_HAULER: CardProgram = {
     `retrieveNoun`'s "a Stadium card". */
 const CHANGING_SEASONS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Changing Seasons",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "stadium" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "stadium" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -4611,31 +4398,23 @@ const CHANGING_SEASONS: CardProgram = {
  */
 const BONDED_BY_THE_JOURNEY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Bonded by the Journey",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "byName", name: "Ethan's Adventure", cardNoun: true },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "byName", name: "Ethan's Adventure", cardNoun: true },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
 /** Volcarona — "Torrid Scales"; requires discarding a Basic {R} Energy from hand. */
 const TORRID_SCALES: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Torrid Scales",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -4645,7 +4424,7 @@ const TORRID_SCALES: CardProgram = {
         },
         { op: "applyStatus", target: "defender", status: "burned" },
       ],
-    },
+    }),
   ],
 };
 
@@ -4664,10 +4443,8 @@ const ANCIENT_WING: CardProgram = {
 /** Meowstic — "Beckoning Tail"; requires discarding a Chill Teaser Toy from hand. */
 const BECKONING_TAIL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Beckoning Tail",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -4677,22 +4454,20 @@ const BECKONING_TAIL: CardProgram = {
         },
         { op: "gust" },
       ],
-    },
+    }),
   ],
 };
 
 /** Samurott — "Torrential Whirlpool". */
 const TORRENTIAL_WHIRLPOOL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Torrential Whirlpool",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "switchActive", recordAs: "moved" },
         { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
       ],
-    },
+    }),
   ],
 };
 
@@ -4895,13 +4670,11 @@ const COMMUNITY_CENTER: CardProgram = {
 /** Crobat — "Shadowy Envoy": usable only if you played Janine's Secret Art this turn. */
 const SHADOWY_ENVOY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Shadowy Envoy",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Janine's Secret Art" },
       program: [{ op: "drawUntilHandSize", size: 8 }],
-    },
+    }),
   ],
 };
 
@@ -5037,24 +4810,17 @@ const MEGATON_BLOWER: CardProgram = {
  * Brilliant Blender (ACE SPEC): search your deck for up to 5 cards and discard them, then shuffle.
  */
 const BRILLIANT_BLENDER: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "anyCard" }, dest: "discard", max: 5 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "discard", max: 5 }),
 };
 
 /** TM Machine: search your deck for up to 3 Technical Machine Tools. */
 const TM_MACHINE: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "toolNameContaining", fragment: "Technical Machine" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "toolNameContaining", fragment: "Technical Machine" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /**
@@ -5205,15 +4971,11 @@ const DIG_DIG_DIG: CardProgram = {
     {
       name: "Dig Dig Dig",
       trigger: "onPlayToBench",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicEnergy", energyType: "Fighting" },
-          dest: "discard",
-          max: 3,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "basicEnergy", energyType: "Fighting" },
+        dest: "discard",
+        max: 3,
+      }),
     },
   ],
 };
@@ -5225,15 +4987,11 @@ const SMOG_SIGNALS: CardProgram = {
       name: "Smog Signals",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "pokemonNameContaining", fragment: "Koffing" },
-          dest: "bench",
-          max: 2,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "pokemonNameContaining", fragment: "Koffing" },
+        dest: "bench",
+        max: 2,
+      }),
     },
   ],
 };
@@ -5241,16 +4999,11 @@ const SMOG_SIGNALS: CardProgram = {
 /** Thwackey — "Boom Boom Groove". */
 const BOOM_BOOM_GROOVE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Boom Boom Groove",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "yourActiveHasAbility", name: "Festival Lead" },
-      program: [
-        { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 1 }),
+    }),
   ],
 };
 
@@ -5355,10 +5108,8 @@ const OBLIGING_HEAL: CardProgram = {
 /** Cradily — "Selective Slime". */
 const SELECTIVE_SLIME: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Selective Slime",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
@@ -5381,7 +5132,7 @@ const SELECTIVE_SLIME: CardProgram = {
           ],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5441,17 +5192,13 @@ const SUPER_POTION: CardProgram = {
 
 /** Love Ball. */
 const LOVE_BALL: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "anyPokemon" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      sameNameAsOpponentInPlay: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "anyPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    sameNameAsOpponentInPlay: true,
+  }),
 };
 
 /** Hand Trimmer: each player discards down to 5 cards; your opponent discards first. */
@@ -5506,24 +5253,12 @@ const PERILOUS_JUNGLE: CardProgram = {
 };
 
 /** The six type Berries (Tools). */
-const HABAN_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Dragon" } },
-};
-const OCCA_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Fire" } },
-};
-const PAYAPA_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Psychic" } },
-};
-const BABIRI_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Metal" } },
-};
-const COLBUR_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Darkness" } },
-};
-const PASSHO_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Water" } },
-};
+const HABAN_BERRY = berry("Dragon");
+const OCCA_BERRY = berry("Fire");
+const PAYAPA_BERRY = berry("Psychic");
+const BABIRI_BERRY = berry("Metal");
+const COLBUR_BERRY = berry("Darkness");
+const PASSHO_BERRY = berry("Water");
 
 /** Survival Brace (Tool, ACE SPEC). */
 const SURVIVAL_BRACE: CardProgram = {
@@ -5601,15 +5336,13 @@ const PLASMA_BANE: CardProgram = {
 /** Feraligatr — "Torrential Heart". */
 const TORRENTIAL_HEART: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Torrential Heart",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "damageSelf", amount: 50, on: "source", source: "ability" },
         { op: "boostAttack", attack: null, amount: 120, holder: "source", thisTurn: true },
       ],
-    },
+    }),
   ],
 };
 
@@ -5619,10 +5352,8 @@ const HEROS_SPIRIT: CardProgram = { intoPlayOnlyVia: "Zero to Hero" };
 /** Misty's Psyduck — "Flustered Leap". */
 const FLUSTERED_LEAP: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flustered Leap",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       program: [
         { op: "discardDeckBottom", count: 1, recordAs: "moved" },
@@ -5632,7 +5363,7 @@ const FLUSTERED_LEAP: CardProgram = {
           then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5657,10 +5388,7 @@ const IMPROMPTU_CARRIER: CardProgram = {
     {
       name: "Impromptu Carrier",
       trigger: "onPlayToBench",
-      program: [
-        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 }),
     },
   ],
 };
@@ -5679,17 +5407,13 @@ const ZERO_TO_HERO: CardProgram = {
 
 /** Brock's Scouting: search for up to 2 Basic Pokémon or 1 Evolution Pokémon. */
 const BROCKS_SCOUTING: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicPokemon" },
-      max: 2,
-      dest: "hand",
-      reveal: true,
-      orElse: { filter: { kind: "evolutionPokemon" }, max: 1 },
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicPokemon" },
+    max: 2,
+    dest: "hand",
+    reveal: true,
+    orElse: { filter: { kind: "evolutionPokemon" }, max: 1 },
+  }),
 };
 
 /** Ogre's Mask. */
@@ -5727,10 +5451,7 @@ const AMULET_OF_HOPE: CardProgram = {
     {
       name: "Amulet of Hope",
       trigger: "onHolderKnockedOut",
-      program: [
-        { op: "searchDeck", filter: { kind: "anyCard" }, max: 3, dest: "hand" },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "anyCard" }, max: 3, dest: "hand" }),
     },
   ],
 };
@@ -5828,16 +5549,12 @@ const SPARKLING_CRYSTAL: CardProgram = {
 
 /** Tera Orb: search your deck for a Tera Pokémon and put it into your hand. */
 const TERA_ORB: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "bannerPokemon", banner: "Tera" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "bannerPokemon", banner: "Tera" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Glass Trumpet: usable only if you have a Tera Pokémon in play. */
@@ -5877,16 +5594,12 @@ const JEWEL_SEEKER: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
-          then: [
-            {
-              op: "searchDeck",
-              filter: { kind: "trainerCard" },
-              dest: "hand",
-              max: 2,
-              reveal: true,
-            },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "trainerCard" },
+            dest: "hand",
+            max: 2,
+            reveal: true,
+          }),
         },
       ],
     },
@@ -6039,13 +5752,11 @@ const IGNITION_ENERGY: CardProgram = {
 /** Munkidori — "Adrena-Brain". */
 const ADRENA_BRAIN: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Adrena-Brain",
-      oncePerTurn: true,
-      activeOnly: false,
       requiresEnergyType: "Darkness",
       program: [{ op: "moveCountersToOpponentChosen", upTo: 3 }],
-    },
+    }),
   ],
 };
 
@@ -6165,12 +5876,10 @@ const INCANDESCENT_BODY: CardProgram = {
     `me` wording; `HURRIED_GAIT`'s program under the printed name (`useAbility` matches it). */
 const AERIAL_DRAW: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Aerial Draw",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "drawCards", count: 1 }],
-    },
+    }),
   ],
 };
 
@@ -6179,12 +5888,10 @@ const AERIAL_DRAW: CardProgram = {
     Gift" in the `me` wording; `CONFECTIONARY_GIFT`'s program under the printed name. */
 const SHARE_HAPPINESS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Share Happiness",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "healChosen", amount: 30 }],
-    },
+    }),
   ],
 };
 
@@ -6269,14 +5976,12 @@ const COUNTERATTACKING_CREST: CardProgram = { passive: { damageAttacker: { amoun
     (`targetType`, Gardevoir ex's rider). */
 const STONE_ARMS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Stone Arms",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", targetType: "Fighting" },
       ],
-    },
+    }),
   ],
 };
 
@@ -6286,21 +5991,15 @@ const STONE_ARMS: CardProgram = {
     {P} for {W} and without its Active Spot clause. */
 const SCENT_COLLECTION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Scent Collection",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicEnergy", energyType: "Psychic" },
-          dest: "hand",
-          max: 2,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "basicEnergy", energyType: "Psychic" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -6310,12 +6009,10 @@ const SCENT_COLLECTION: CardProgram = {
     without its "If you do" rider. */
 const SKY_TRANSPORT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sky Transport",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "switchActive" }],
-    },
+    }),
   ],
 };
 
@@ -6380,16 +6077,12 @@ const JACINTHE: CardProgram = {
  * into your hand. Then, shuffle your deck."
  */
 const FIREBREATHER: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicEnergy", energyType: "Fire" },
-      dest: "hand",
-      max: 7,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicEnergy", energyType: "Fire" },
+    dest: "hand",
+    max: 7,
+    reveal: true,
+  }),
 };
 
 /** Fighting Gong `me01-116` / `-168`, `me02.5-187` (Item) — *"Search your deck for a Basic {F}
@@ -6398,22 +6091,18 @@ const FIREBREATHER: CardProgram = {
     nouns in the printed order: a Basic {F} Energy card, a BASIC {F} Pokémon (`typedPokemon`
     `stage: "basic"` — a Stage 1 {F} is not offered). */
 const FIGHTING_GONG: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: {
-        kind: "anyOf",
-        filters: [
-          { kind: "basicEnergy", energyType: "Fighting" },
-          { kind: "typedPokemon", pokemonType: "Fighting", stage: "basic" },
-        ],
-      },
-      dest: "hand",
-      max: 1,
-      reveal: true,
+  trainer: searchThenShuffle({
+    filter: {
+      kind: "anyOf",
+      filters: [
+        { kind: "basicEnergy", energyType: "Fighting" },
+        { kind: "typedPokemon", pokemonType: "Fighting", stage: "basic" },
+      ],
     },
-    { op: "shuffleDeck" },
-  ],
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Tarragon `me03-085` / `-116` (Supporter) — *"Put up to 4 in any combination of {F} Pokémon and
@@ -6444,16 +6133,12 @@ const TARRAGON: CardProgram = {
     Lana's Aid's `noRuleBox` on `anyPokemon` (any stage; a Mega Evolution Pokémon ex is an "ex",
     `hasRuleBox`). `30th-126` prints no text and is not keyed. */
 const POKE_PAD: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "anyPokemon", noRuleBox: true },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "anyPokemon", noRuleBox: true },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Energy Swatter `me03-073` (Item) — *"Your opponent reveals their hand, and you choose an Energy
@@ -6479,14 +6164,12 @@ const REPEL: CardProgram = { trainer: [{ op: "opponentSwitchOut" }] };
 const CANARI: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 1, to: "discard" },
-    {
-      op: "searchDeck",
+    ...searchThenShuffle({
       filter: { kind: "typedPokemon", pokemonType: "Lightning" },
       dest: "hand",
       max: 4,
       reveal: true,
-    },
-    { op: "shuffleDeck" },
+    }),
   ],
 };
 
@@ -6806,10 +6489,11 @@ const CAST_OFF_SHELL: CardProgram = {
     {
       name: "Cast-Off Shell",
       trigger: "onEvolve",
-      program: [
-        { op: "searchDeck", filter: { kind: "byName", name: "Shedinja" }, dest: "bench", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "byName", name: "Shedinja" },
+        dest: "bench",
+        max: 1,
+      }),
     },
   ],
 };
@@ -6831,21 +6515,17 @@ const MULTIPLYING_COCOON: CardProgram = {
     {
       name: "Multiplying Cocoon",
       trigger: "onEvolve",
-      program: [
-        {
-          op: "searchDeck",
-          filter: {
-            kind: "anyOf",
-            filters: [
-              { kind: "byName", name: "Silcoon" },
-              { kind: "byName", name: "Cascoon" },
-            ],
-          },
-          dest: "bench",
-          max: 1,
+      program: searchThenShuffle({
+        filter: {
+          kind: "anyOf",
+          filters: [
+            { kind: "byName", name: "Silcoon" },
+            { kind: "byName", name: "Cascoon" },
+          ],
         },
-        { op: "shuffleDeck" },
-      ],
+        dest: "bench",
+        max: 1,
+      }),
     },
   ],
 };
@@ -6906,10 +6586,8 @@ const ALLURING_WINGS: CardProgram = {
  */
 const FIERY_FLAPPING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Fiery Flapping",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -6918,17 +6596,15 @@ const FIERY_FLAPPING: CardProgram = {
         ],
       },
       program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Fire", toSelf: true }],
-    },
+    }),
   ],
 };
 
 /** Zapdos — Flash-Pop Flapping: Fiery Flapping at {L} over Moltres and Articuno. */
 const FLASH_POP_FLAPPING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flash-Pop Flapping",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -6937,17 +6613,15 @@ const FLASH_POP_FLAPPING: CardProgram = {
         ],
       },
       program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Lightning", toSelf: true }],
-    },
+    }),
   ],
 };
 
 /** Articuno — Frosty Flapping: Fiery Flapping at {W} over Moltres and Zapdos. */
 const FROSTY_FLAPPING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Frosty Flapping",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -6956,7 +6630,7 @@ const FROSTY_FLAPPING: CardProgram = {
         ],
       },
       program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true }],
-    },
+    }),
   ],
 };
 
@@ -6990,10 +6664,8 @@ const LUNAR_CYCLE: CardProgram = {
  */
 const FLARING_MAGIC: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flaring Magic",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -7003,7 +6675,7 @@ const FLARING_MAGIC: CardProgram = {
         },
         { op: "drawUntilHandSize", size: 7 },
       ],
-    },
+    }),
   ],
 };
 
@@ -7031,10 +6703,12 @@ const TUCK_TAIL: CardProgram = {
         {
           op: "optional",
           note: "You may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
-          then: [
-            { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "supporter" },
+            dest: "hand",
+            max: 1,
+            reveal: true,
+          }),
         },
       ],
     },
@@ -7114,10 +6788,7 @@ const FINAL_CHAIN: CardProgram = {
       name: "Final Chain",
       trigger: "onKnockOut",
       byOpponentAttack: true,
-      program: [
-        { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 1 }),
     },
   ],
 };
@@ -7128,16 +6799,16 @@ const FINAL_CHAIN: CardProgram = {
  */
 const CALL_A_BUDDY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Call a Buddy",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "yourHandExactly", count: 0 },
-      program: [
-        { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "supporter" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -7147,21 +6818,15 @@ const CALL_A_BUDDY: CardProgram = {
  */
 const GATHERING_OF_BLOSSOMS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Gathering of Blossoms",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "ownerPokemon", owner: "Erika" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "ownerPokemon", owner: "Erika" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -7171,51 +6836,41 @@ const GATHERING_OF_BLOSSOMS: CardProgram = {
  */
 const GUIDING_DANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Guiding Dance",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
-          then: [
-            {
-              op: "searchDeck",
-              filter: { kind: "anyPokemon" },
-              dest: "hand",
-              max: 1,
-              reveal: true,
-            },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "anyPokemon" },
+            dest: "hand",
+            max: 1,
+            reveal: true,
+          }),
         },
       ],
-    },
+    }),
   ],
 };
 
 /** Shuckle — Fermented Juice: with any {G} Energy attached, heal 30 from 1 of your Pokémon. */
 const FERMENTED_JUICE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Fermented Juice",
-      oncePerTurn: true,
-      activeOnly: false,
       requiresEnergyType: "Grass",
       program: [{ op: "healChosen", amount: 30 }],
-    },
+    }),
   ],
 };
 
 /** Erika's Vileplume ex — Lovely Fragrance: heal 30 from each of your Pokémon. */
 const LOVELY_FRAGRANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Lovely Fragrance",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "healEach", amount: 30 }],
-    },
+    }),
   ],
 };
 
@@ -7225,10 +6880,8 @@ const LOVELY_FRAGRANCE: CardProgram = {
  */
 const SUNRISE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sunrise",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       program: [
         {
@@ -7239,7 +6892,7 @@ const SUNRISE: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -7273,13 +6926,11 @@ const EXCITED_TURBO: CardProgram = {
  */
 const EXCITED_HEAL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Excited Heal",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "yourMegaExInPlay", type: "Grass" },
       program: [{ op: "healChosen", amount: 60 }],
-    },
+    }),
   ],
 };
 
@@ -7289,14 +6940,12 @@ const EXCITED_HEAL: CardProgram = {
  */
 const EXCITED_DASH: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Excited Dash",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       playableIf: { kind: "yourMegaExInPlay" },
       program: [{ op: "switchActive", fromSource: true }],
-    },
+    }),
   ],
 };
 
@@ -7312,10 +6961,12 @@ const EXCITED_POWER: CardProgram = {
 
 /** Mega Signal — search for a Mega Evolution Pokémon ex, reveal it, put it in hand, shuffle. */
 const MEGA_SIGNAL: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "megaEvolutionEx" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "megaEvolutionEx" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
@@ -7465,10 +7116,7 @@ const LUMIOSE_CITY: CardProgram = {
   stadium: {
     ability: {
       label: "Lumiose City",
-      program: [
-        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "bench", max: 1 }),
       endsTurn: "always",
     },
   },
@@ -7585,10 +7233,8 @@ const THICK_FAT: CardProgram = {
  */
 const FRILLED_GENERATOR: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Frilled Generator",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Canari" },
       program: [
         {
@@ -7599,7 +7245,7 @@ const FRILLED_GENERATOR: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -7717,20 +7363,16 @@ const ROXIES_PERFORMANCE: CardProgram = {
 
 /** Dawn — search a Basic, a Stage 1 and a Stage 2 Pokémon into hand, then shuffle. */
 const DAWN: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicPokemon" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [
-        { filter: { kind: "stagePokemon", stage: "Stage1" }, max: 1 },
-        { filter: { kind: "stagePokemon", stage: "Stage2" }, max: 1 },
-      ],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [
+      { filter: { kind: "stagePokemon", stage: "Stage1" }, max: 1 },
+      { filter: { kind: "stagePokemon", stage: "Stage2" }, max: 1 },
+    ],
+  }),
 };
 
 /**
@@ -7949,10 +7591,8 @@ const HIDE_N_SNEAK: CardProgram = {
  */
 const LUSTROUS_ASSIST: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Lustrous Assist",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -7969,7 +7609,7 @@ const LUSTROUS_ASSIST: CardProgram = {
           anySource: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -7979,10 +7619,8 @@ const LUSTROUS_ASSIST: CardProgram = {
  */
 const LETHARGIC_CHARGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Lethargic Charge",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       program: [
         {
@@ -7993,7 +7631,7 @@ const LETHARGIC_CHARGE: CardProgram = {
           ownerPokemon: "Larry",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -8067,15 +7705,11 @@ const FOSSIL_QUARRY: CardProgram = {
   stadium: {
     ability: {
       label: "Fossil Quarry",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "itemNameContaining", fragment: "Antique" },
-          dest: "bench",
-          max: 2,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "itemNameContaining", fragment: "Antique" },
+        dest: "bench",
+        max: 2,
+      }),
     },
   },
 };
@@ -8086,10 +7720,8 @@ const FOSSIL_QUARRY: CardProgram = {
  */
 const FALL_BACK_TO_RELOAD: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Fall Back to Reload",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       benchedThisTurn: true,
       program: [
@@ -8108,7 +7740,7 @@ const FALL_BACK_TO_RELOAD: CardProgram = {
           declinable: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -8252,10 +7884,8 @@ const NIGHTTIME_MANEUVERS: CardProgram = {
  */
 const SINISTER_SURGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sinister Surge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromDeck",
@@ -8268,7 +7898,7 @@ const SINISTER_SURGE: CardProgram = {
         { op: "shuffleDeck" },
         { op: "countersOnRecordedBody", slot: "moved", amount: 20 },
       ],
-    },
+    }),
   ],
 };
 
@@ -8278,10 +7908,8 @@ const SINISTER_SURGE: CardProgram = {
  */
 const BOISTEROUS_WIND: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Boisterous Wind",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
@@ -8295,7 +7923,7 @@ const BOISTEROUS_WIND: CardProgram = {
           ],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -8325,29 +7953,25 @@ const DESTRUCTIVE_HEADBUTTING: CardProgram = {
  */
 const EVIDENCE_GATHERING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Evidence Gathering",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "payFromHand", count: 1, to: "deckTop", swapWithTop: true }],
-    },
+    }),
   ],
 };
 
 /** Talonflame — Sky Hunt: flip; on heads discard a random card from the opponent's hand. */
 const SKY_HUNT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sky Hunt",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
           then: [{ op: "randomFromOpponentHand", to: "discard" }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -8357,10 +7981,8 @@ const SKY_HUNT: CardProgram = {
  */
 const GRAND_WING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Grand Wing",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "handRefresh",
@@ -8370,7 +7992,7 @@ const GRAND_WING: CardProgram = {
           draw: { kind: "fixed", count: 4 },
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -8380,16 +8002,14 @@ const GRAND_WING: CardProgram = {
  */
 const SPITEFUL_EVOLUTION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Spiteful Evolution",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "notYourFirstTurn" },
       program: [
         { op: "evolveFromDeck", fromHand: true, recordAs: "moved" },
         { op: "countersOnRecordedBody", slot: "moved", amount: 20 },
       ],
-    },
+    }),
   ],
 };
 
@@ -8399,22 +8019,16 @@ const SPITEFUL_EVOLUTION: CardProgram = {
  */
 const EVOLUTIONARY_GUIDANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Evolutionary Guidance",
-      oncePerTurn: true,
-      activeOnly: false,
       requiresEnergyType: "any",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "evolutionPokemon" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "evolutionPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
