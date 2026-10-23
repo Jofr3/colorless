@@ -1588,8 +1588,11 @@ function formatEvent(
       }
       return row("system", [strong("The game ends in a tie")]);
     }
+    case "EFFECT_PENDING":
+      return null;
     default:
-      // A future engine event lands here — skipped, never a crash.
+      // Fails to compile when an event type has no case; an unknown runtime event logs nothing.
+      event satisfies never;
       return null;
   }
 }
