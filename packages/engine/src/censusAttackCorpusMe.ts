@@ -11,6 +11,8 @@
 //
 // Same format as `censusAttackCorpus.ts`. Data: never hand-edit; re-run the query.
 
+import { parseAttackCorpus } from "./censusAttackCorpus";
+
 /** The `me` serie's `legal_standard = 1` Pokémon attack column, grouped by sentence. */
 const CORPUS_ME = `
 1 At the end of your opponent's next turn, discard the Defending Pokémon and all attached cards.
@@ -457,21 +459,7 @@ const CORPUS_ME = `
 2 Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat.
 `;
 
-/** The parsed `me` corpus: `[legal printings, printed sentence]`, one entry per DISTINCT
-    sentence. The parser is `legalAttackCorpus()`'s, with its three throws. */
+/** The parsed `me` corpus: `[legal printings, printed sentence]`, one entry per DISTINCT sentence. */
 export function meAttackCorpus(): readonly (readonly [number, string])[] {
-  return CORPUS_ME.split("\n")
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const cut = line.indexOf(" ");
-      const units = Number(line.slice(0, cut));
-      const sentence = line.slice(cut + 1);
-      if (cut < 1 || !Number.isInteger(units) || units < 1) {
-        throw new Error(`me census corpus: malformed record ${JSON.stringify(line)}`);
-      }
-      if (sentence.length === 0 || sentence !== sentence.trim()) {
-        throw new Error(`me census corpus: padded sentence ${JSON.stringify(line)}`);
-      }
-      return [units, sentence] as const;
-    });
+  return parseAttackCorpus(CORPUS_ME, "me census corpus");
 }
