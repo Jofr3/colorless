@@ -42,14 +42,8 @@ export function cardsPage(items: CardBrief[], total = items.length) {
   return { items, page: 1, pageSize: items.length, total };
 }
 
-// --- Hand-built builder cards ----------------------------------------------
-// `BuilderCard.legal` is required (D191): the catalog's structured verdict is
-// the app's one legality mechanism. A fixture typed by hand has no catalog to
-// ask, so THIS is where a printed regulation mark becomes a verdict — the one
-// reader of the mark list below, and the one site a rotation edits. It used to
-// be two: the same allow-list also sat on STANDARD_FORMAT, consulted by
-// isLegalInFormat whenever `legal` was absent, so a rotation had to be applied
-// twice and nothing failed if it wasn't.
+// `BuilderCard.legal` is required. Hand-built fixtures have no catalog, so this is where a printed
+// regulation mark becomes a verdict, and the one place a rotation edits.
 
 /** The regulation marks a fixture's Standard verdict is derived from — the
     marks after the April 2026 rotation (G rotated out). "J" is ASPIRATIONAL:

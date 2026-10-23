@@ -1,19 +1,6 @@
-// Browser HTTP caching for api responses — the layer IN FRONT of the KV/R2
-// caches, saving the round trip (fresh hit) or the body (304) rather than
-// the D1 query.
-//
-// Two policies, both paired with an ETag so an expired entry revalidates for
-// a bodiless 304 instead of a full download:
-// - public catalog bodies: fresh for a few minutes, then served stale while
-//   the browser revalidates in the background (./catalog/cache.ts);
-// - per-user reads (/decks, /folders, /auth/me): `private, no-cache` — the
-//   browser stores them but asks every time, so a deck edited in another tab
-//   or a different account signing in can never read an old body. The win is
-//   the 304 when nothing changed.
-//
-// workers.dev has no edge Cache API (caches.default is a no-op there), so the
-// browser cache is the only HTTP cache available until the api moves to a
-// custom domain.
+// Browser HTTP caching in front of the KV and R2 caches. Public catalog bodies are briefly fresh
+// then stale-while-revalidate; per-user reads are `private, no-cache` with an ETag. workers.dev has
+// no edge Cache API, so the browser cache is the only HTTP cache.
 
 import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";

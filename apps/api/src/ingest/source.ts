@@ -1,44 +1,8 @@
-// tcgdex transport seam (P1 milestone 4, D188) — the ONE place the ingest
-// touches the network, with two interchangeable implementations behind one
-// interface.
-//
-// WHY A SEAM AND NOT A SWAP. The design property this repo has always held
-// (D5, and `scripts/ingest.ts`'s abort-on-failure) is that EVERY external
-// payload is parsed at the boundary before it reaches the mapper: a schema
-// drift upstream must be a loud failure, never a corrupt D1 row. The SDK ships
-// TypeScript *types*, which are erased at runtime and so cannot hold that
-// property. Therefore the SDK is used for TRANSPORT ONLY and every method here
-// returns `unknown`: the raw, unvalidated payload, exactly as the API served
-// it. @colorless/schema's Zod schemas remain the validation boundary, one layer
-// up in the CLI. `unknown` is the seam's whole point — it makes bypassing the
-// boundary a type error rather than a matter of discipline.
-//
-// WHY THE SDK's RAW `client.fetch(...)` AND NOT ITS MODEL ENDPOINTS. The model
-// endpoints (`client.card.get(id)`) run the payload through `Model.build`,
-// which in @tcgdex/sdk 2.9.0 (a) RENAMES `variants_detailed` → `variantsDetailed`
-// (src/models/Card.ts `fill`) and (b) hangs an `sdk` back-reference off every
-// model instance. Both are lossy relative to "what the API served": Zod's strip
-// mode would silently drop the renamed key rather than fail, which is the exact
-// failure mode the boundary exists to prevent. `client.fetch("cards", id)`
-// returns the parsed JSON verbatim, so the boundary sees the real payload.
-//
-// WHY THE FETCH PATH STAYS, AND STAYS THE DEFAULT. It is the only path ever
-// proven end-to-end against the live API, and the SDK's error model is strictly
-// weaker: `actualFetch` returns `undefined` for ANY non-200 below 500, discarding
-// the status, so a 404, a 429 rate-limit and an empty result are indistinguishable
-// (and its >=500 branch throws inside its own try, so every 5xx surfaces as the
-// same fixed string). The seam converts that `undefined` into a thrown error so
-// abort-on-failure still holds, but it cannot recover what the SDK threw away.
-//
-// POLITENESS IS OURS, NOT THE SDK's. @tcgdex/sdk 2.9.0 adds no pacing or
-// backoff of its own — only a per-URL in-process cache — so the seam owns the
-// inter-request delay for BOTH transports, preserving the 50ms spacing that
-// validate-live.ts and the ingest have always used.
-//
-// Lives under src/ (inside tsconfig `include`) rather than next to the CLI so
-// it typechecks and is unit-tested; nothing in the Worker imports it, and it is
-// deliberately NOT re-exported from ./index.ts so the SDK cannot drift into the
-// Worker bundle through the barrel.
+// The only place the ingest touches the network. Both transports return raw `unknown` payloads so
+// Zod validation upstream cannot be bypassed. The SDK path uses `client.fetch` because its model
+// endpoints rename keys. The fetch transport is the default because the SDK discards non-5xx error
+// statuses. The seam owns the inter-request delay for both. Not re-exported from ./index.ts, to
+// keep the SDK out of the Worker bundle.
 
 import TCGdex from "@tcgdex/sdk";
 

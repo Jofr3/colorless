@@ -1,24 +1,6 @@
-// D1 row → canonical catalog domain mapping (P1 milestone 5, §5.2/§6).
-//
-// The inverse altitude of ../ingest/map.ts (tcgdex payload → row): here rows
-// come back out as the domain shapes in @colorless/schema/catalog. Pure —
-// routes.ts owns the queries — so every branch unit-tests as a plain function.
-//
-// The mappers ALSO normalise "no value" sentinels (the literal "None") to
-// null — ../sentinel.ts documents the sweep and the argument. The mirror of
-// the same guard in ../ingest/map.ts, and not redundant with it: ingest fixes
-// what gets WRITTEN and can only take effect on the next re-ingest, whereas
-// 34 rows (36 sentinel values across two columns) are already in production
-// carrying it TODAY, and no deploy can rewrite them. Read-side
-// normalisation is what makes the live API and the deck builder's facet rail
-// clean now; the write-side guard is what stops it coming back.
-//
-// Asset rewriting is the one real transform: rows store tcgdex ORIGIN base
-// URLs (extensionless, §4.4), the domain stores OUR asset base paths
-// (`/assets/cards/{id}`, `/assets/sets/{id}`) served by the lazy R2 mirror.
-// A path is emitted ONLY when the corresponding origin column is non-null —
-// a card with image_url NULL maps to `image: null`, and a set missing just
-// its logo gets `logo: null` while keeping `symbol`.
+// Maps D1 rows to the catalog domain shapes. The mappers normalise the "None" sentinel to null,
+// since rows already written may still carry it. Asset columns are rewritten from tcgdex origin
+// bases to our /assets paths, and only when the origin column is non-null.
 
 // The domain `Set` is aliased locally so it can't be confused with the global.
 import type {
@@ -57,9 +39,10 @@ export const cardBriefColumns = {
   stage: cards.stage,
   trainerType: cards.trainerType,
   energyType: cards.energyType,
-  /** 🆕🆕🆕 D628 (finding 0b) — the rules text of an ENERGY row only (NULL for every other category, so a list
-      never drags Trainer text off disk): `mapCardBriefRow` reads it to answer the engine's Basic / Special test,
-      because tcgdex tags 14 legal Special Energies "Normal" and a row ingested before D583's map.ts fix keeps it. */
+  /**
+   * Rules text of Energy rows only (null otherwise), so the brief can tell Special Energy that
+   * tcgdex tags "Normal".
+   */
   effect: sql<string | null>`CASE WHEN ${cards.category} = 'Energy' THEN ${cards.effect} END`,
   legalStandard: cards.legalStandard,
   legalExpanded: cards.legalExpanded,
@@ -68,10 +51,10 @@ export const cardBriefColumns = {
 };
 export type CardBriefRow = Pick<CardRow, keyof typeof cardBriefColumns>;
 
-/** 🆕🆕🆕 D628 (finding 0b) — the brief's Energy subtype, as the ENGINE classes it (cards.ts `isBasicEnergy` /
-    `isSpecialEnergy`, D583): a "Normal"-tagged Energy that prints rules text is "Special". Every other row keeps
-    its stored tag, sentinel-normalised. The full `/cards/:id` row is NOT rewritten (the engine reads the face's
-    text itself, and a persisted `GameState.cardPool` face keeps its tag either way). */
+/**
+ * The brief's Energy subtype as the engine classifies it: a "Normal"-tagged Energy that prints
+ * rules text is "Special".
+ */
 function briefEnergyType(
   row: Pick<CardBriefRow, "category" | "energyType" | "effect">,
 ): string | null {

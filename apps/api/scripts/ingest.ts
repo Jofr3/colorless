@@ -1,32 +1,7 @@
-// tcgdex → D1 catalog ingest (P1 milestone 4, §3.4). Card DATA only — images
-// are mirrored lazily by the /assets Worker routes (D9), never here.
-//
-//   bun scripts/ingest.ts                      # whole `sv` serie, local D1
-//   bun scripts/ingest.ts --sets sve,sv06.5    # specific sets
-//   bun scripts/ingest.ts --serie sv --remote  # remote D1 (the real backfill)
-//   bun scripts/ingest.ts --dry-run            # write SQL files, apply nothing
-//   bun scripts/ingest.ts --transport=sdk      # fetch via @tcgdex/sdk (D188)
-//
-// Flow: resolve target sets → per set, fetch every card's FULL detail
-// (sequentially, 50ms apart — same politeness as validate-live.ts), validate
-// each payload with @colorless/schema; any failure aborts that set with a
-// report → write chunked upsert SQL files → apply in FK order (series → set →
-// card chunks) via `wrangler d1 execute`. Idempotent: everything is an
-// ON CONFLICT DO UPDATE upsert, so reruns are always safe.
-//
-// TRANSPORT (D188). Network access lives behind ../src/ingest/source.ts, which
-// has two implementations: `fetch` (the historical raw-fetch path) and `sdk`
-// (@tcgdex/sdk). The seam returns RAW UNVALIDATED payloads either way, so the
-// Zod boundary below is unchanged and unconditional — swapping transport can
-// never swap out validation. Default is `fetch`: it is the only transport ever
-// proven end-to-end, and the SDK discards HTTP statuses below 500 (see the
-// source.ts header). `--transport=sdk` is the path to exercise when validating
-// the SDK against the live API.
-//
-// Deliberately OUTSIDE tsconfig's `include` (bun executes it directly; Biome
-// still lints it), mirroring packages/schema/scripts/validate-live.ts. It
-// imports ../src/ingest/source directly rather than through the ../src/ingest
-// barrel, so the SDK dependency cannot reach the Worker via that barrel.
+// tcgdex to D1 catalog ingest. Card data only; images are mirrored lazily by the /assets routes.
+// Every payload is validated with @colorless/schema before mapping, and all writes are upserts, so
+// reruns are safe. Imports ../src/ingest/source directly so the SDK cannot reach the Worker through
+// the ingest barrel.
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";

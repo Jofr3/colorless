@@ -433,12 +433,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D210",
     what: "the wire's `!programPlayable` whiff gate is dropped — D210's ONE survivor, PINNED as vacuity rather than shipped as a fifth vacuous guard (🆕🆕🆕 D606: no longer a survivor — Surfing Beach reaches the term and kills it)",
     file: "packages/engine/src/redact.ts",
-    find:
-      "  const noTarget = !programPlayable(state, ability.program, viewerSeat);\n" +
-      "  // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the\n",
-    replace:
-      "  const noTarget = false;\n" +
-      "  // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the\n",
+    find: "const noTarget = !programPlayable(state, ability.program, viewerSeat);",
+    replace: "  const noTarget = false;\n",
     expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
   },
 
@@ -969,9 +965,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D228",
     what: "the RESUMED switch-out drops its recording — D227's own line, restored — so the §9.2 slot is empty on exactly the boards where the opponent was asked, and the 160 vanishes on every parked board while the forced one stays green",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // gate reading an empty slot. Driven on a two-body Bench.\n      return pickedPokemon(choice)\n        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;",
+    find: '        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;\n    case "healChosen":',
     replace:
-      "      // gate reading an empty slot. Driven on a two-body Bench.\n      return pickedPokemon(choice) ? gust(state, choice.ref, ctx, events) : state;",
+      '        ? gust(state, choice.ref, ctx, events)\n        : state;\n    case "healChosen":',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -1180,8 +1176,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: 'the `max >= 1` guard goes — the guard every arm in this file carries — so a printed "up to 0" would derive to a search the interpreter turns into a silent no-op that still shuffles, an attack reporting an effect that moved nothing',
     file: "packages/engine/src/effects.ts",
-    find: "    if (max >= 1) {\n      // Still dispatched on WHICH GROUP MATCHED",
-    replace: "    if (max >= 0) {\n      // Still dispatched on WHICH GROUP MATCHED",
+    find: "    // shuffles — an attack reporting a simulated effect that moved nothing.\n    if (max >= 1) {",
+    replace:
+      "    // shuffles — an attack reporting a simulated effect that moved nothing.\n    if (max >= 0) {",
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
 
@@ -1273,9 +1270,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D231",
     what: '`anyCard` is `anyPokemon`\'s arm copied verbatim from four cases up — the uncategorised noun read as the most common category — so "You may search your deck for a card" (3 legal) offers only Pokémon and no Energy or Trainer the player is entitled to',
     file: "packages/engine/src/cards.ts",
-    find: '      // keeps a dangling uid out, so this arm means "any card" and not "any uid".\n      return true;',
-    replace:
-      '      // keeps a dangling uid out, so this arm means "any card" and not "any uid".\n      return card.category === "Pokemon";',
+    find: "      return true;",
+    replace: '      return card.category === "Pokemon";',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -1960,9 +1956,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D239",
     what: '🛑 THE DEFECT THE RETYPE INTRODUCED, restored. `sameAttackerClass` becomes the `===` it replaced — exact while the field was a string literal, REFERENCE equality against two records. Two installs of the SAME printed class then "disagree" and collapse to an UNFILTERED block: strictly MORE protection than either printing says, the one direction this family\'s merge rule forbids, and invisible to every test that installs only once',
     file: "packages/engine/src/interpreter.ts",
-    find: "  const mergedClass = stacking\n    ? sameAttackerClass(existing.fromClass, fromClass)\n      ? fromClass\n      : undefined\n    : fromClass;\n  // D240",
+    find: "    ? sameAttackerClass(existing.fromClass, fromClass)\n      ? fromClass\n      : undefined\n    : fromClass;\n  const mergedMax = stacking",
     replace:
-      "  const mergedClass = stacking\n    ? (existing.fromClass as unknown) === (fromClass as unknown)\n      ? fromClass\n      : undefined\n    : fromClass;\n  // D240",
+      "    ? (existing.fromClass as unknown) === (fromClass as unknown)\n      ? fromClass\n      : undefined\n    : fromClass;\n  const mergedMax = stacking",
     expectKilledBy: ["packages/engine/src/typedClassBlock.test.ts"],
   },
   {
@@ -2455,7 +2451,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D246",
     what: "`programPlayable` asks the pre-D246 question, so a card whose printed 'an Energy card' is sitting in the hand as a Special is refused as unplayable — the gate and the apply disagree about the same board, which is D222's afford-then-reject wearing the other face",
     file: "packages/engine/src/cardplay.ts",
-    find: "        op.anyEnergy,\n        op.energyName, // D353 — the play gate asks the apply's question",
+    find: "op.anyEnergy,\n        op.energyName,",
     replace: "        undefined,\n        op.energyName,",
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
@@ -2812,7 +2808,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D252",
     what: "🛑 the EFFECTS half is deleted from `attackEffectRefused`, leaving the aura as D251's NARROW spelling. Every damage assertion in the suite still passes and the card silently stops refusing statuses, retreat locks and discards — the half the printed sentence is longer for",
     file: "packages/engine/src/interpreter.ts",
-    find: 'const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    // 🆕🆕🆕 D568 — Sparkling Scales\' EFFECTS half ("from and effects of attacks from your\n    // opponent\'s Tera Pokémon"), the FIFTH read site; the seat guard above is "opponent\'s".\n    preventsAttackerBanner(\n      passivesOf(state, target).preventDamageAndEffectsFromBanners,\n      attacker,\n    ) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched ||\n    passivesOf(state, target).preventAttackEffects ||\n    benchShieldedFromEffects(state, target) ||\n    groupShieldedFromAttackEffects(state, target);',
+    find: "const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    // Sparkling Scales' effects half: \"from and effects of attacks from your opponent's Tera\n    // Pokémon\".\n    preventsAttackerBanner(\n      passivesOf(state, target).preventDamageAndEffectsFromBanners,\n      attacker,\n    ) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched ||\n    passivesOf(state, target).preventAttackEffects ||\n    benchShieldedFromEffects(state, target) ||\n    groupShieldedFromAttackEffects(state, target);",
     replace: "  const auraRefuses = false;",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
@@ -2870,8 +2866,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D253",
     what: "the disjunct is deleted from the SPREAD arm — one of only TWO read sites this field can ever fire at. A spread is the commonest way anything reaches a bench at all, so this is the half of the printing that matters most in play",
     file: "packages/engine/src/interpreter.ts",
-    find: "      passives.preventDamageAndEffectsWhileBenched ||\n      // D257 — the SEVENTH prevent, at the SECOND of its four read sites.",
-    replace: "      // D257 — the SEVENTH prevent, at the SECOND of its four read sites.",
+    find: "passives.preventDamageAndEffectsWhileBenched ||",
+    replace: "",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
   {
@@ -2879,8 +2875,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D253",
     what: "the disjunct is deleted from `placeSnipe`'s `deals` arm — the OTHER of the two live sites. The spread assertions all still pass, so a suite that drove only one bench path would go green with half the printing missing",
     file: "packages/engine/src/interpreter.ts",
-    find: "          targetPassives.preventDamageAndEffectsWhileBenched ||\n          // D257 — the THIRD of the seventh prevent's four read sites",
-    replace: "          // D257 — the THIRD of the seventh prevent's four read sites",
+    find: "          targetPassives.preventDamageAndEffectsWhileBenched ||\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
   {
@@ -2926,8 +2922,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D254",
     what: "the §9 gate is deleted from the per-SOURCE helper, so a Klefki 'Mischievous Lock' no longer silences either bench-shield field. The scan reads a printed Ability that the board has switched off",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false; // §9\n  return true;\n}\n\n/** Whether the damaged body's OWN contribution",
-    replace: "  return true;\n}\n\n/** Whether the damaged body's OWN contribution",
+    find: "  if (top === undefined || programFor(top.id)?.passive?.[field] !== true) return false;\n  if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false;",
+    replace:
+      "  if (top === undefined || programFor(top.id)?.passive?.[field] !== true) return false;\n",
     expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
   {
@@ -3603,9 +3600,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D266",
     what: '🛑 an ABSENT `pokemonType` is defaulted to `Colorless` instead of meaning UNGATED. Clemont\'s Quick Wit is untouched and every assertion this slice wrote stays green; what breaks is FENNEL — the printed "each of your Pokémon" would stop healing a {L} body. The attribution control is the only thing that can see it, which is why the suite drives the ungated sentence on the same board',
     file: "packages/engine/src/interpreter.ts",
-    find: "    if (pokemonType !== undefined) {\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      const card = inPlayCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;\n    }",
+    find: "if (pokemonType !== undefined) {\n      // The in-play types (`inPlayCardOf`).\n      const card = inPlayCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;\n    }",
     replace:
-      '    {\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      const card = inPlayCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType ?? "Colorless")) return pokemon;\n    }',
+      '    {\n      const card = inPlayCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType ?? "Colorless")) return pokemon;\n    }',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4378,7 +4375,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D540",
     what: "🛑🛑 **THE ROW THIS SLICE EXISTS TO GUARD, AND THE COMPILER CANNOT SEE IT.** `applyChoice`'s arm is DELETED and the op falls through to `default: return state;` — *“Synchronous ops never park, so never reach the choice path”*. `tsc -b --force` is GREEN (MEASURED at this head: deleting this arm prints nothing, while deleting the `stepOp` arm prints `interpreter.ts(1768,4) TS2366`), the op parks, the prompt is answered, the state comes back UNCHANGED, and there is no event, no log row and no census figure to notice. ⚠️ **IT MUST BE KILLED BY A PARKED RESOLUTION AND NOT BY A FORCED ONE**: every §3 rung stays green under it, because the forced path never reaches `applyChoice` at all",
     file: "packages/engine/src/interpreter.ts",
-    find: '    case "devolveChosen":\n      // 🆕🆕🆕 D625 — an own-side pick moves nothing here: its answer buys the shed (`continuationOps`).\n      if (op.whose === "self") return state;\n      return pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state;\n',
+    find: 'case "devolveChosen":\n      // An own-side pick moves nothing here; `continuationOps` schedules the shed.\n      if (op.whose === "self") return state;\n      return pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state;',
     replace: "",
     expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
   },
@@ -4473,9 +4470,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D539",
     what: "🛑 THE NINTH EXACT KEY IS REMOVED, so `inPlayBodyFilter` answers `null` for the printed noun, BOTH arms decline their guard and the sentence falls to the LOUD `ATTACK_EFFECT_SKIPPED` path (D190b). It is the loud failure rather than a wrong board — which is the point: the map is what refuses, not the regex, and this row is what says the vocabulary is read",
     file: "packages/engine/src/effects.ts",
-    find: '  [\n    "Drifloon and Drifblim",\n    {\n      kind: "anyOf",\n      filters: [\n        { kind: "byName", name: "Drifloon" },\n        { kind: "byName", name: "Drifblim" },\n      ],\n    },\n  ],\n  // 🆕🆕🆕 **D569 — THE TENTH EXACT KEY: THE PRINTED ANCIENT BANNER.** Koraidon `sv05-119`/',
-    replace:
-      "  // 🆕🆕🆕 **D569 — THE TENTH EXACT KEY: THE PRINTED ANCIENT BANNER.** Koraidon `sv05-119`/",
+    find: '[\n    "Drifloon and Drifblim",\n    {\n      kind: "anyOf",\n      filters: [\n        { kind: "byName", name: "Drifloon" },\n        { kind: "byName", name: "Drifblim" },\n      ],\n    },\n  ],',
+    replace: "",
     expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
   },
   {
@@ -4483,9 +4479,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D539",
     what: "🛑 THE `anyOf` COLLAPSES TO ONE `byName`, so the printed pair names only Drifblim: the × fold counts HALF the board and the spread hits HALF the bodies. Nothing crashes, nothing is logged differently and every op shape is still well-formed — the only thing that moves is the number on the defender and which own bodies took 30. D492's `“Pokémon ex and Pokémon V”` row has the same shape one key up, and D245's argument for the combinator is that the printed *“and”* names a SET",
     file: "packages/engine/src/effects.ts",
-    find: '  [\n    "Drifloon and Drifblim",\n    {\n      kind: "anyOf",\n      filters: [\n        { kind: "byName", name: "Drifloon" },\n        { kind: "byName", name: "Drifblim" },\n      ],\n    },\n  ],\n  // 🆕🆕🆕 **D569 — THE TENTH EXACT KEY: THE PRINTED ANCIENT BANNER.** Koraidon `sv05-119`/',
-    replace:
-      '  [\n    "Drifloon and Drifblim",\n    { kind: "byName", name: "Drifblim" },\n  ],\n  // 🆕🆕🆕 **D569 — THE TENTH EXACT KEY: THE PRINTED ANCIENT BANNER.** Koraidon `sv05-119`/',
+    find: '[\n    "Drifloon and Drifblim",\n    {\n      kind: "anyOf",\n      filters: [\n        { kind: "byName", name: "Drifloon" },\n        { kind: "byName", name: "Drifblim" },\n      ],\n    },\n  ],',
+    replace: '  [\n    "Drifloon and Drifblim",\n    { kind: "byName", name: "Drifblim" },\n  ],',
     expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
   },
   {
@@ -5541,9 +5536,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "the §9 conjunct is dropped, so a SILENCED Ability keeps barring. `disabledAbilityUids` is still called and the line still reads as a §9 check — it just always answers TRUE on a real board, which is the shape a §9 gate degrades into rather than the shape it disappears in",
     file: "packages/engine/src/continuous.ts",
-    find: "  const sourceUid = topUid(barrier);\n  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
+    find: "  if (classes === undefined || !classes.includes(klass)) return false;\n  const sourceUid = topUid(barrier);\n  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid);",
     replace:
-      "  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
+      "  if (classes === undefined || !classes.includes(klass)) return false;\n  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid);",
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -5770,9 +5765,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D288",
     what: '🛑 THE AFFORD-THEN-REJECT DEFECT ITSELF, AND THE REASON THE ROW AND ITS BAR HAD TO SHIP ON ONE EDIT: the `barred` term loses its `"Stadium"` arm, so the projection emits a Stadium row and leaves it LIT for a seat Copperajah has barred. The player clicks a button the engine refuses — strictly WORSE than the gap D288 closed, because before it there was no row to click. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `"Item" | "Supporter"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names rather than of a type error (D287\'s `stampedBarFor` row failed exactly that test and was not written)',
     file: "packages/engine/src/redact.ts",
-    find: '      (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**',
-    replace:
-      '      (klass === "Item" || klass === "Supporter") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**',
+    find: '(klass === "Item" || klass === "Supporter" || klass === "Stadium") &&',
+    replace: '      (klass === "Item" || klass === "Supporter") &&',
     expectKilledBy: [
       "packages/engine/src/stadiumWireMirror.test.ts",
       "packages/engine/src/stadiumBar.test.ts",
@@ -7738,8 +7732,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D321",
     what: "the ledger is built and never summed in, so every aura that prints the stacking clause reduces NOTHING. The loudest row in the set and the cheapest to get wrong: a `capped` map that is written but not read is what a copy of `seatPreWRDamageBonus` looks like with its last two lines missing",
     file: "packages/engine/src/continuous.ts",
-    find: "    for (const amount of capped.values()) taken += amount;\n    // 🆕🆕🆕 D558 — the in-play STADIUM's reduction (Full Metal Lab, Granite Cave),",
-    replace: "    // 🆕🆕🆕 D558 — the in-play STADIUM's reduction (Full Metal Lab, Granite Cave),",
+    find: "for (const amount of capped.values()) taken += amount;",
+    replace: "",
     expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
   },
   {
@@ -8840,7 +8834,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D327",
     what: "the §9 suppression check goes, so an Active Klefki no longer silences a BASIC holder's Food Prep. D113's rule says reachability follows the SOURCE's stage, and this slice is the first on this seam that can show the rule failing in the direction it holds AND the direction it does not",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;\n  if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only",
+    find: "if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;\n  if (disabledAbilityUids(state).has(uid)) return tools;",
     replace:
       "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
@@ -9181,9 +9175,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D333",
     what: "D241's derived bench arm goes back to `max: n`, so ONE OP CARRIES TWO SPELLINGS OF ONE PRINTED PHRASE. As a predicate the two agree - the candidate set is a subset of the top n either way - so nothing about which cards are offered moves; what moves is that Summoning Gate's four printings again say \"put up to 8 Pokemon onto your Bench\" over a sentence carrying no number. The mutant an author makes by reverting the half of the slice that looked cosmetic",
     file: "packages/engine/src/effects.ts",
-    find: '          // `revealFromTop` clamps there (§4\'s five) exactly as before.\n          max: "any",\n          dest: "bench",\n',
-    replace:
-      '          // `revealFromTop` clamps there (§4\'s five) exactly as before.\n          max: n,\n          dest: "bench",\n',
+    find: '          // still caps the take.\n          max: "any",',
+    replace: "          // still caps the take.\n          max: n,",
     expectKilledBy: [
       "packages/engine/src/derivedLookAtTop.test.ts",
       "packages/engine/src/rotoStick.test.ts",
@@ -9223,9 +9216,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D333",
     what: '🛑 THE ROW AUTHORED WITH D332\'s FIELD, WHICH IS THE MISTAKE THIS PRINT INVITES. `also` reads almost identically off "X and Y" and means the opposite about a legal answer: one cap per noun refuses the TWO-{G}-POKEMON take that "up to 2 in any combination of" explicitly permits. Every refusal arm stays green - the union offers exactly the same three cards - and only the answer the card\'s own grammar is about goes away',
     file: "packages/engine/src/registry.ts",
-    find: '      max: 2,\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer\'s Guidance',
+    find: "      },\n      max: 2,",
     replace:
-      '      max: 1,\n      also: { filter: { kind: "basicEnergy", energyType: "Grass" }, max: 1 },\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer\'s Guidance',
+      '      },\n      max: 1,\n      also: { filter: { kind: "basicEnergy", energyType: "Grass" }, max: 1 },',
     expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
   },
 
@@ -9321,8 +9314,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "the REGISTRY row drops `exact`, so `lookAtTopN.exact` stays fully wired, type-checked and reachable with ZERO printed consumers - D330's green-and-dead shape, which this run has now found four times. Nothing about the cards, the window, the discard or the events moves; only the floor and the caption can see it, and both are asserted",
     file: "packages/engine/src/registry.ts",
-    find: "      max: 2,\n      exact: true,\n      // 🆕 D335 — was `discardRest: true`;",
-    replace: "      max: 2,\n      // 🆕 D335 — was `discardRest: true`;",
+    find: '      exact: true,\n      restTo: "discard",',
+    replace: '      restTo: "discard",',
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -9348,9 +9341,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "🛑 EVERY `restTo` VALUE ROUTES TO THE PILE, so Drakloak's leftover is DISCARDED rather than put under the deck and Rika's two go with it. This is the copy an author makes from D334's row - the arm it was modelled on - and it is the single most likely wrong build of this slice: the take is right, the look row is right, the card count is right, and a card the print puts back into the deck is destroyed for the rest of the game",
     file: "packages/engine/src/interpreter.ts",
-    find: '  // value), and the two names exist so that a future value cannot silently be both.\n  const toPile = op.restTo === "discard" ? rest : [];',
-    replace:
-      "  // value), and the two names exist so that a future value cannot silently be both.\n  const toPile = rest;",
+    find: '  // announces anything.\n  const toPile = op.restTo === "discard" ? rest : [];',
+    replace: "  // announces anything.\n  const toPile = rest;",
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -9395,9 +9387,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "the `DECK_TOP_DISCARDED` guard reads `underneath` instead of `toPile`, so the DISCARD value silently stops announcing itself while the two D335 values keep producing nothing. Explorer's Guidance's four leftovers still reach the pile - the board is untouched - and the only casualty is the log row that is the lasting record of it. The two names exist in that fork for exactly this reason",
     file: "packages/engine/src/interpreter.ts",
-    find: '  // with `restTo`, so this row is still own-deck on every shipped path.)\n  if (toPile.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
+    find: '  if (toPile.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED", seat: owner, actor: ctx.seat, uids: [...toPile] });',
     replace:
-      '  // with `restTo`, so this row is still own-deck on every shipped path.)\n  if (underneath.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
+      '  if (underneath.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED", seat: owner, actor: ctx.seat, uids: [...toPile] });',
     expectKilledBy: [
       "packages/engine/src/explorersGuidance.test.ts",
       "packages/engine/src/reconDirective.test.ts",
@@ -10504,9 +10496,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D342",
     what: '🛑 THE `"deckTop"` HEADING FALLS THROUGH TO "into your hand", so the dialog names a zone the cards will never reach while the engine puts them somewhere else. The exact failure `CHOOSE_CARDS_VERB`\'s total record was written to prevent, on the caption side rather than the button side',
     file: "packages/engine/src/interpreter.ts",
-    find: '        dest === "deckTop"\n        ? "on top of your deck"\n        : // 🆕🆕🆕 D557 — Brilliant Blender',
-    replace:
-      '        dest === "deckTop"\n        ? "into your hand"\n        : // 🆕🆕🆕 D557 — Brilliant Blender',
+    find: 'dest === "deckTop"\n        ? "on top of your deck"\n        :',
+    replace: '        dest === "deckTop"\n        ? "into your hand"\n        :',
     expectKilledBy: ["packages/engine/src/derivedSearchTopOrder.test.ts"],
   },
   {
@@ -10883,7 +10874,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D351",
     what: '🛑 THE OTHER HALF OF THE GATE FALLS OUT IN THE MOVE. The `attachEnergyTargets(...).length === 0` conjunct is dropped when the question moves out of the per-op loop, so a program whose Energy is in reach but whose printed TARGET CLASS is not in play is called playable — Koraidon "Dino Cry" with Basic {F} in the discard and no {F} Pokémon on the board offers a park with no candidates in it, which is D222\'s afford-then-reject exactly. **INVISIBLE ON EVERY BOARD `pyroDance.test.ts` BUILDS FOR ITS OWN CARD**, because Pyro Dance prints no target rider at all and its candidate set is never empty (§1.1); it is reachable only through the Koraidon control, which is why that control drives THREE boards and not one. **MEASURED INDIVIDUALLY: 5 of 7,382 across FIVE files, one assertion each — the widest file-spread of the four and the narrowest per-file, which is the signature of a rule that many cards touch lightly**',
     file: "packages/engine/src/cardplay.ts",
-    find: "      attachEnergyTargets(state, seat, op).length === 0,",
+    find: "attachEnergyTargets(state, seat, op).length === 0,",
     replace: "      false,",
     expectKilledBy: [
       "packages/engine/src/derivedDiscardAttach.test.ts",
@@ -10929,9 +10920,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D352",
     what: "🛑 THE FORK COLLAPSES TO ITS OTHER ARM: every leftover is treated as a DISCARD, so Metang mills itself two-to-four cards a turn and pushes a `DECK_TOP_DISCARDED` row nobody printed. The mirror of the row above - one arm swallowing the other - and it is here because a rename that keeps ONE surviving value is exactly the change that can quietly redirect the other. Tri Howl is unaffected, so a suite that only drives the discard card is green",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const toPile = op.restTo === "discard" ? rest : [];\n  // `"shuffledBottom"` is the only path that touches `rngState`, and `shuffle`\n  // leaves it alone for a leftover of 0 or 1 (its loop starts at `length - 1`), so',
+    find: '  // `toPile` is the cards that left the deck; `underneath` the cards that stayed and moved.\n  const toPile = op.restTo === "discard" ? rest : [];',
     replace:
-      '  const toPile = rest;\n  // `"shuffledBottom"` is the only path that touches `rngState`, and `shuffle`\n  // leaves it alone for a leftover of 0 or 1 (its loop starts at `length - 1`), so',
+      "  // `toPile` is the cards that left the deck; `underneath` the cards that stayed and moved.\n  const toPile = rest;",
     expectKilledBy: ["packages/engine/src/metalMaker.test.ts"],
   },
   {
@@ -10985,7 +10976,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D353",
     what: "the gate and the apply disagree about the same board: `programPlayable` asks the UN-narrowed question, so an Ability whose printed Energy is nowhere in the zone is still offered on a zone full of ordinary Basic Energy — D222's afford-then-reject wearing D246's face, one field later. NOTHING in the registry reaches this today (Spike-Clad is a board trigger and no gate runs on `onEvolve`), which is precisely why `spikeClad.test.ts` §7 drives `firstAttachableEnergy` directly",
     file: "packages/engine/src/cardplay.ts",
-    find: "        op.anyEnergy,\n        op.energyName, // D353 — the play gate asks the apply's question",
+    find: "op.anyEnergy,\n        op.energyName,",
     replace: "        op.anyEnergy,\n        undefined,",
     expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
   },
@@ -11265,7 +11256,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D357",
     what: "🛑 THE CAPTURE POINT, WHICH IS A PLACEMENT AND NOT AN ARGUMENT. `atAttach` is still threaded to both sweeps and still named `atAttach`, but it is assigned AFTER the §6.1 rider block instead of before it — so every call site reads correctly and the value is wrong. **THIS IS THE ROW A READER WOULD SKIP AS A DUPLICATE OF THE ONE ABOVE AND IT IS NOT**: that one can be fixed by changing an argument at the call site, this one cannot be seen from the call site at all. The declaration is the whole claim, which is why the mutation moves the LINE rather than the expression",
     file: "packages/engine/src/turn.ts",
-    find: 'const atAttach = next;\n  // §6.1 — a Special Energy\'s on-attach effect. Jet Energy: attaching from hand\n  // to a BENCHED Pokémon switches it to the Active Spot (the energy just landed\n  // rides in with it). Nothing fires on an Active attach. Reuses the shared\n  // switch move (interpreter.ts), which clears the outgoing Active\'s conditions\n  // and emits POKEMON_SWITCHED — the bench index is still valid (attaching does\n  // not reorder the bench).\n  // 🆕🆕🆕 D604 — a typed Special Energy\'s rider fires only onto a holder of its printed type\n  // (`energyRulesApply`, read on the attach-moment board — `next`, still `atAttach` here; R-TE1).\n  const energyProgram = programFor(card.id)?.energy;\n  const landedOn =\n    action.target.spot === "active"\n      ? next.players[action.seat].active\n      : next.players[action.seat].bench[action.target.index];\n  const onAttach =\n    landedOn != null && energyRulesApply(next, landedOn, energyProgram)\n      ? energyProgram?.onAttach\n      : undefined;\n  // 🆕🆕🆕 D604 — Telepathic Psychic Energy\'s Bench search (R-TP1): run LAST, below, because it parks.\n  const benchSearch: EffectOp[] | undefined =\n    onAttach?.kind === "benchSearch"\n      ? [\n          { op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max },\n          { op: "shuffleDeck" },\n        ]\n      : undefined;\n  // 🆕🆕🆕 D613 — `switched` records that the rider MOVED a body: `switchInto` runs the\n  // `onActiveMovedToBench` triggers (Team Rocket\'s Dugtrio "Holes" puts 2 damage counters on the\n  // body that moved), and this is the one `switchInto` route outside a program, so no\n  // `settleProgram` sweep follows it. The Knock Out check below runs whenever it is true.\n  let switched = false;\n  if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {\n    const moved = switchInto(\n      next,\n      action.seat,\n      { seat: action.seat, spot: { spot: "bench", index: action.target.index } },\n      events,\n    );\n    switched = moved !== next;\n    next = moved;\n  }',
+    find: 'const atAttach = next;\n  // §6.1 on-attach effects. Jet Energy attached from hand to a Benched Pokémon switches it into the\n  // Active Spot. A typed Special Energy\'s rider fires only onto a holder of its printed type.\n  const energyProgram = programFor(card.id)?.energy;\n  const landedOn =\n    action.target.spot === "active"\n      ? next.players[action.seat].active\n      : next.players[action.seat].bench[action.target.index];\n  const onAttach =\n    landedOn != null && energyRulesApply(next, landedOn, energyProgram)\n      ? energyProgram?.onAttach\n      : undefined;\n  // Telepathic Psychic Energy\'s Bench search runs last because it can park.\n  const benchSearch: EffectOp[] | undefined =\n    onAttach?.kind === "benchSearch"\n      ? [\n          { op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max },\n          { op: "shuffleDeck" },\n        ]\n      : undefined;\n  // `switched` records that the rider moved a body; `switchInto` runs move triggers that can place\n  // counters, and no `settleProgram` sweep follows, so the Knock Out check below runs when it is\n  // set.\n  let switched = false;\n  if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {\n    const moved = switchInto(\n      next,\n      action.seat,\n      { seat: action.seat, spot: { spot: "bench", index: action.target.index } },\n      events,\n    );\n    switched = moved !== next;\n    next = moved;\n  }',
     replace:
       '  const energyProgram = programFor(card.id)?.energy;\n  const landedOn = action.target.spot === "active" ? next.players[action.seat].active : next.players[action.seat].bench[action.target.index];\n  const onAttach =\n    landedOn != null && energyRulesApply(next, landedOn, energyProgram) ? energyProgram?.onAttach : undefined;\n  const benchSearch: EffectOp[] | undefined =\n    onAttach?.kind === "benchSearch"\n      ? [{ op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max }, { op: "shuffleDeck" }]\n      : undefined;\n  let switched = false;\n  if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {\n    const moved = switchInto(\n      next,\n      action.seat,\n      { seat: action.seat, spot: { spot: "bench", index: action.target.index } },\n      events,\n    );\n    switched = moved !== next;\n    next = moved;\n  }\n  const atAttach = next;',
     expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
@@ -11503,9 +11494,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D362",
     what: "🛑 THE NOTE STOPS BEING THE PRINTED CLAUSE: `conditionNote` returns the WIDER sibling's wording for the narrower member, so the reject/tooltip fragment tells a player the attack cares about a Pokémon V when it does not, AND the one-step round trip breaks — `If ${conditionNote(cond)}, this attack does N more damage.` no longer re-derives to the member it came from. A note is rendered text a player acts on, so a note that lies is a live defect and not a cosmetic one",
     file: "packages/engine/src/interpreter.ts",
-    find: '    case "opponentActiveIsEx":\n      // 🆕 D362 — byte-identical to the clause table\'s KEY, which is what makes',
+    find: '    case "opponentActiveIsEx":\n      return "your opponent\'s Active Pokémon is a Pokémon ex";',
     replace:
-      '    case "opponentActiveIsEx":\n      return "your opponent\'s Active Pokémon is a Pokémon ex or Pokémon V";\n      // 🆕 D362 — byte-identical to the clause table\'s KEY, which is what makes',
+      '    case "opponentActiveIsEx":\n      return "your opponent\'s Active Pokémon is a Pokémon ex or Pokémon V";\n      return "your opponent\'s Active Pokémon is a Pokémon ex";',
     expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts"],
   },
   {
@@ -11909,9 +11900,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D370",
     what: "🛑 C1 — THE ZONE WIDENS AND THE CLAUSE SATISFIES ITSELF: `state.players[seat].bench` becomes `[side.active, ...side.bench]`, the in-play spread `yourNamedPokemonInPlay` two arms down legitimately uses — a neighbouring arm's REAL code copied verbatim, which is the likeliest mistake when a Bench member is written beside an in-play one. ⚠️ **BOTH LEGAL PRINTINGS OF THIS SENTENCE ARE ON METAL ATTACKERS**, so the mutant makes the conditional +80 UNCONDITIONAL on every board the card ever reaches, and every case with a matching body already on the Bench answers identically under both readings. Only a board with the attacker Active and an EMPTY Bench can tell them apart. It is D279's Falinks refusal one field over, and the reason `fix-benchtype` is deliberately typed",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return state.players[seat].bench.some(\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    find: "return state.players[seat].bench.some(\n        // Reads in-play types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     replace:
-      "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+      "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
   },
   {
@@ -11919,9 +11910,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D370",
     what: '🛑 C2 — THE SEAT FLIPS: `state.players[seat]` becomes `state.players[otherSeat(seat)]`, so a member whose printed subject is "you" reads the OPPONENT\'s Bench. The slip is one identifier and the file is full of cross-board arms that legitimately spell it — `opponentActiveHasType` eleven lines up is one. Every board with the SAME types benched on both sides answers identically under both readings, so the kill comes from the asymmetric boards alone',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return state.players[seat].bench.some(\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    find: "return state.players[seat].bench.some(\n        // Reads in-play types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     replace:
-      "      return state.players[otherSeat(seat)].bench.some(\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+      "      return state.players[otherSeat(seat)].bench.some(\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
   },
   {
@@ -11929,9 +11920,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D370",
     what: '🛑 C3 — THE ARRAY BECOMES A SCALAR: `(topCardOf(state, p)?.types ?? []).includes(cond.type)` becomes an equality on `types[0]`. **THE MUTANT IS RIGHT ON EVERY SINGLE-TYPED BODY**, which is every fixture in the file except one and the overwhelming majority of the catalog — so nothing but a DUAL-TYPED benched body can see it. `Card.types` is an array because dual types are a real printing, and §8.5\'s Weakness read makes the same `.includes` two lines later; a scalar read here would disagree with the multiplier on the same card. `fix-dualbody` (`["Water", "Metal"]`) exists for this row and nothing else',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return state.players[seat].bench.some(\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    find: "return state.players[seat].bench.some(\n        // Reads in-play types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     replace:
-      "      return state.players[seat].bench.some(\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? [])[0] === cond.type,\n      );",
+      "      return state.players[seat].bench.some(\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? [])[0] === cond.type,\n      );",
     expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
   },
   {
@@ -12208,9 +12199,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D375",
     what: "🛑 C1 — HALF THE ZONE, YOUR HALF: the left-hand set collapses from `[side.active, ...side.bench]` to the ATTACKER'S OWN BODY. ⚠️ **THIS IS THE DANGEROUS KIND OF WRONG, NOT THE VACUOUS KIND** — D370's Bench clause broke LOUDLY under the opposite edit (an in-play reading would have satisfied itself off the attacker and gone unconditionally true), but here the attacker's type IS a legitimate term: the printing is a PSYCHIC Enamorus and means it. So this mutant pays correctly on most boards and silently under-pays only when the shared type sits on YOUR Bench. `typeShareBonus.test.ts` §4 fields exactly that board — a Colorless body benched against a Colorless defender behind a FAIRY attacker — and §4's second rung is the attribution control showing the narrowed reading is not merely always-false",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    find: "const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // Reads in-play types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
     replace:
-      "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      const own = state.players[seat].active;\n      return own !== null && (inPlayCardOf(state, own)?.types ?? []).some((type) => theirs.has(type));",
+      "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      const own = state.players[seat].active;\n      return own !== null && (inPlayCardOf(state, own)?.types ?? []).some((type) => theirs.has(type));",
     expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
   },
   {
@@ -12218,9 +12209,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D375",
     what: "🛑 C2 — HALF THE ZONE, THE OTHER HALF: the right-hand set collapses to the DEFENDER'S ACTIVE, spelled with `activeTop` — which is the line `opponentActiveHasType` legitimately uses fifty lines up in this same `switch`, copied verbatim. The printed words say *\"your opponent's Pokémon **in play**\"* and the clause has two of them. ⚠️ **IT IS RIGHT WHENEVER THE OPPONENT'S BENCH IS EMPTY**, which is most boards this family builds, so the separating board has to bench a matching body across the table and leave their Active a non-match — `typeShareBonus.test.ts` §4 does that, and §4's BENCH-against-BENCH rung kills BOTH narrowings at once",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    find: "const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // Reads in-play types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
     replace:
-      "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const spot = activeTop(state, otherSeat(seat));\n      const theirs = new Set(spot === null ? [] : (spot.card.types ?? []));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+      "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const spot = activeTop(state, otherSeat(seat));\n      const theirs = new Set(spot === null ? [] : (spot.card.types ?? []));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
     expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
   },
   {
@@ -12228,7 +12219,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D375",
     what: '🛑 C3 — **THE SLICE\'S OTHER WHOLE POINT**: the INTERSECTION becomes an ARRAY EQUALITY. *"The same type"* reads to an author as *"the same `types`"*, and `Card.types` is an array, so this is the code that gets written. ⚠️ **IT IS INDISTINGUISHABLE FROM THE RIGHT ANSWER ON THE ENTIRE PRINTED CATALOG** — no Standard-legal Pokémon is dual-typed (measured on the remote D1 at D238: `json_array_length(types_json) > 1` returns zero rows) — so every board built out of real cards makes the two readings agree and only `fix-dualbody` (`["Water", "Metal"]`, D370) can separate them. `typeShareBonus.test.ts` §5 fields it against a single `["Water"]`, computes the equality reading beside the member, and carries two CONTROL boards where all three readings agree',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    find: "const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // Reads in-play types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
     replace:
       "      const typesOf = (s: Seat): string[][] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : [inPlayCardOf(state, p)?.types ?? []],\n        );\n      };\n      const theirs = typesOf(otherSeat(seat));\n      return typesOf(seat).some((mine) =>\n        theirs.some((t) => t.length === mine.length && t.every((v, i) => v === mine[i])),\n      );",
     expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
@@ -12238,7 +12229,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D375",
     what: '🛑 C4 — `types[0]` INSTEAD OF THE WHOLE ARRAY, which is the OTHER wrong read of an array column and the one D238\'s `fix-dual-basic` was built for one filter over. It differs from C3: an equality misses a dual body against any single body, while this one misses only when the shared type sits SECOND. **SO THE BOARD THAT KILLS C3 DOES NOT KILL THIS ONE** — `["Water", "Metal"]` against `["Water"]` still meets at index 0 — and `typeShareBonus.test.ts` §5 therefore fields a SECOND dual-type board, the same fixture against a single `["Metal"]`, where the shared member is at index 1. Two wrong readings, two boards, and the difference between them is the whole reason both rungs exist',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };",
+    find: "const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          // Reads in-play types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),\n        );\n      };",
     replace:
       "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) => {\n          const type = p === null ? undefined : inPlayCardOf(state, p)?.types?.[0];\n          return type === undefined ? [] : [type];\n        });\n      };",
     expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
@@ -12248,7 +12239,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D375",
     what: '🛑 C5 — THE IDENTITY BECOMES THE STACK BASE: `topCardOf(state, p)` becomes `cardOfUid(state, p.stack[0])`, the card a body EVOLVED FROM rather than the Pokémon that is in play. §1.2 says a stack\'s TOP is the Pokémon, and every sibling arm in this `switch` reads it that way. ⚠️ **IT IS IDENTICAL ON EVERY UNEVOLVED BOARD**, which is every board in this file except two: `typeShareBonus.test.ts` §6 pushes a card onto a benched stack in each direction — one that DISARMS the clause and one that ARMS it — because a rung in only one direction cannot tell "reads the top" from "reads whichever is false"',
     file: "packages/engine/src/interpreter.ts",
-    find: "          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),",
+    find: "p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),",
     replace: '          p === null ? [] : (cardOfUid(state, p.stack[0] ?? "")?.types ?? []),',
     expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
   },
@@ -13316,7 +13307,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D390",
     what: "🛑 C1 — THE ZONE COLLAPSES TO THE ACTIVE SPOT: the two-zone spread becomes `activeTop(state, otherSeat(seat))`, which is `opponentActiveHasType`'s arm two cases up copied VERBATIM (D190b's rule — a neighbouring arm's real code, never a straw). It is the SILENT under-pay: the printed words are \"in play\", so a {W} body on the opponent's BENCH satisfies the clause and this reading answers false on exactly the boards the card is for, while agreeing on every board where the {W} happens to be Active. §5 fields the {W} on the opponent's Bench with a Colorless body Active, so the two readings are driven APART on one board",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
+    find: "return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // Reads in-play types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
     replace:
       "      return (\n        activeTop(state, otherSeat(seat)) !== null &&\n        (activeTop(state, otherSeat(seat))?.card.types ?? []).includes(cond.type)\n      );",
     expectKilledBy: ["packages/engine/src/inPlayTypeBonus.test.ts"],
@@ -13326,7 +13317,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D390",
     what: "🛑 C2 — THE SEAT COLLAPSES: `otherSeat(seat)` becomes `seat` in BOTH terms of the spread, which is `inPlayTypesIntersect`'s own-side half copied verbatim. It is green on every symmetric board (D380's defect) and it lets the ATTACKER'S OWN side arm the clause — the widening the member's doc block refuses. ⚠️ AND THE ATTACKER'S PRINTED TYPE IS WHAT MAKES THIS KILLABLE AT ALL: Electivire is Lightning reading a {W} clause, so §5 has to FIELD a Water body on P1's Bench, which is a board D370's Metal-on-Metal printings never needed",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
+    find: "return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // Reads in-play types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
     replace:
       "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     expectKilledBy: ["packages/engine/src/inPlayTypeBonus.test.ts"],
@@ -13336,7 +13327,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D390",
     what: '🛑 C3 — THE OTHER NARROWING, AND IT IS THE SIBLING\'S ZONE ONE SEAT OVER: the `active` term leaves the spread, leaving `yourBenchHasType`\'s bench-only read (D370, seven cases up) pointed at the opponent. The printed word is "in play" and not "Benched", and in a legal game the opponent ALWAYS has an Active — so this reading is wrong on the single most common board the clause meets. §5 puts the {W} in the opponent\'s Active Spot with an empty Bench',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
+    find: "return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // Reads in-play types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
     replace:
       "      return state.players[otherSeat(seat)].bench.some(\n        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
     expectKilledBy: ["packages/engine/src/inPlayTypeBonus.test.ts"],
@@ -13346,9 +13337,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D390",
     what: '⚠️ C4 — `.includes(cond.type)` BECOMES AN EQUALITY ON `types[0]`. `Card.types` is an ARRAY and dual types are a real printing; the two readings agree on every single-typed body, which is every body the catalog can build (no Standard-legal Pokémon is dual-typed, measured at D238). So this row can only die on a fixture, and §5 casts one for it: `fix-inplaydual` is `["Fire", "Water"]` with Water at a NON-ZERO index. ⚠️ D370\'s `fix-dualbody` is `["Water", "Metal"]` and would NOT kill this row — under a {W} clause its Water sits at index 0 — which is exactly why this file casts its own body rather than reusing the neighbour\'s',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
+    find: "return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // Reads in-play types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));",
     replace:
-      "      return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? [])[0] === cond.type);",
+      "      return [\n        state.players[otherSeat(seat)].active,\n        ...state.players[otherSeat(seat)].bench,\n      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? [])[0] === cond.type);",
     expectKilledBy: ["packages/engine/src/inPlayTypeBonus.test.ts"],
   },
   {
@@ -14737,9 +14728,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D412",
     what: "🛑 C1 — THE POLARITY TRAP, AS `preventAttack`'s TERNARY COPIED VERBATIM. **THE TWO OPS SPELL THE SAME FIELD NAME AND THEIR ABSENT VALUE MEANS OPPOSITE SEATS** — `preventAttack` shipped self-first so bare means SELF, this op shipped defender-first so bare must mean DEFENDER — and the sibling arm is one function away in the same file. ⚠️ **THE SELF ARM STAYS CORRECT UNDER THIS MUTANT**, which is what makes it nasty: `target` is never `\"defender\"` on this op, so the ternary collapses to `ctx.seat` and it is the **35 SHIPPED BARE PRINTINGS** that silently invert onto the attacker. A suite that only drove the NEW sentence would pass. ⚠️ **ANCHORED ON THE COMMENT ABOVE THE LINE, NOT ON THE LINE**: the bare ternary occurs TWICE in this file (an unrelated op shares the expression), which is D404's wrong-arm trap exactly",
     file: "packages/engine/src/interpreter.ts",
-    find: '  // operands silently inverts every one of the 35 shipped bare printings.\n  //\n  // ⚠️ THE EXPRESSION IS DESCRIBED RATHER THAN QUOTED, WHICH IS D210\'s RULE AND IT\n  // PAID HERE: a doc block reproducing the line at its own indentation is a second\n  // occurrence, and the mutant anchored on it would edit PROSE and survive.\n  const seat = op.target === "self" ? ctx.seat : otherSeat(ctx.seat);',
+    find: '  // A bare target means the opponent here, unlike `preventAttack` where bare means self.\n  const seat = op.target === "self" ? ctx.seat : otherSeat(ctx.seat);',
     replace:
-      '  // operands silently inverts every one of the 35 shipped bare printings.\n  //\n  // ⚠️ THE EXPRESSION IS DESCRIBED RATHER THAN QUOTED, WHICH IS D210\'s RULE AND IT\n  // PAID HERE: a doc block reproducing the line at its own indentation is a second\n  // occurrence, and the mutant anchored on it would edit PROSE and survive.\n  const seat = op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat;',
+      '  // A bare target means the opponent here, unlike `preventAttack` where bare means self.\n  const seat = op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat;',
     expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
   },
   {
@@ -14775,8 +14766,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D412",
     what: '🛑 C5 — ONE OF THE THREE §10 CLEARS IS MISSED: `switchInto`\'s literal loses `retreatLockedTurn: null`. **THE COMPILER CANNOT SEE THIS** — all three clears are hand-written spreads, so an unlisted field rides through unchanged and nothing fails to build. `attackLock.test.ts` names this hazard about ITSELF ("a fourth stamped field would have to be added to all three by hand with nothing failing if one were missed"); D412 is that fourth field, and this row is the proof the sweep now catches it',
     file: "packages/engine/src/interpreter.ts",
-    find: "    // D412 — and unlike the retreat path's copy of this line, THIS one is live:\n    // a Boss's Orders dragging the self-locked body off the Active Spot inside\n    // its own window sheds the lock with the rest of the effects of the attack.\n    retreatLockedTurn: null,\n",
-    replace: "",
+    find: "    retreatLockedTurn: null,\n    attackBlock: null,\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,\n    damageReduction: null,\n    noWeaknessTurn: null,\n    scheduledEffect: null,",
+    replace:
+      "    attackBlock: null,\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,\n    damageReduction: null,\n    noWeaknessTurn: null,\n    scheduledEffect: null,",
     expectKilledBy: ["packages/engine/src/attackLock.test.ts"],
   },
   {
@@ -15157,9 +15149,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D420",
     what: '🛑 C2 — THE COST STOPS BEING TYPED: `filter` is dropped, so *"Discard 6 **Basic {G} Energy** cards from your hand"* discards any six cards at all. **THE PROGRAM STILL HAS THE RIGHT SHAPE, THE RIGHT COUNT AND THE RIGHT DESTINATION**, and the cancel still gates on the typed member — so a hand holding six Grass pays correctly and only a MIXED hand separates the builds. ⚠️ It is the field an author omits precisely because the cancel already names the type, which is the trap: the gate and the payment are two readers of one printed noun and must not disagree',
     file: "packages/engine/src/effects.ts",
-    find: '          op: "payFromHand",\n          count,\n          to: "discard",\n          filter: { kind: "basicEnergy", energyType },\n        },\n      ];\n    }\n  }\n\n  // 6g.',
+    find: 'op: "payFromHand",\n          count,\n          to: "discard",\n          filter: { kind: "basicEnergy", energyType },\n        },\n      ];\n    }\n  }',
     replace:
-      '          op: "payFromHand",\n          count,\n          to: "discard",\n        },\n      ];\n    }\n  }\n\n  // 6g.',
+      '          op: "payFromHand",\n          count,\n          to: "discard",\n        },\n      ];\n    }\n  }\n',
     expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
   },
   {
@@ -15589,8 +15581,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D426",
     what: 'the park\'s floor drops to 0 — `searchDeck`\'s and `discardPileRetrieval`\'s REAL SPELLING copied verbatim (both are printed "up to" picks and both park at `min: 0`), which is exactly the neighbour-copy this corpus is built out of. The sentence prints no "may" and no "up to": under the mutant the player being attacked can answer with an empty list and discard NOTHING, and both HUDs grow a "Take none" button off `prompt.min > 0`. The candidates, the `decider`, the answerer gate, the destination and every census figure are untouched',
     file: "packages/engine/src/interpreter.ts",
-    find: "          min: take,\n          max: take,\n          // 🆕🆕🆕 **D542",
-    replace: "          min: 0,\n          max: take,\n          // 🆕🆕🆕 **D542",
+    find: "          candidates: [...hand],\n          min: take,",
+    replace: "          candidates: [...hand],\n          min: 0,",
     expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
   },
   {
@@ -15667,8 +15659,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D427",
     what: "`wouldDeal` is published instead of `dealt`, which is the SAME expression minus the prevention ternary on the line directly above (`const dealt = prevented ? 0 : wouldDeal`). Weakness, Resistance and reduction are all still honoured, so every board in §4 stays green — and a hit a shield PREVENTED still heals its full amount, which is the card paying out for damage it did not do. Dies only on the `fix-imperviousshell` board",
     file: "packages/engine/src/attack.ts",
-    find: "    dealtToDefender = dealt;\n    // §8.1 (D208)",
-    replace: "    dealtToDefender = wouldDeal;\n    // §8.1 (D208)",
+    find: "dealtToDefender = dealt;",
+    replace: "    dealtToDefender = wouldDeal;",
     expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
   },
   {
@@ -16027,9 +16019,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D430",
     what: "🛑 SILENT IN EVERY CENSUS. `effectRefusedOn`'s attack channel loses its own-side guard, so an effect an attack aims at its OWN board is judged against shields printed *\"used by your opponent's Pokémon\"*. Corpus row 72 — *\"Before doing damage, discard all Pokémon Tools from THIS POKÉMON. If you can't discard any, this attack does nothing.\"* — is then REFUSED by the attacker's own Mist Energy, and because a refused act discarded none, the printed cancel fires: the attacker's own card makes its own attack do nothing. Three shipped self arms ride the same line (`applyStatus target: \"self\"`, `preventRetreat`, `preventAttack`), which is why the rule lives in the FUNNEL and not at one call site (D222). ⚠️ The neutering keeps the line syntactically identical to D259's trainer-channel row so the two cannot be confused; the anchor carries the following line because a bare 2-space `find` is a SUBSTRING of the trainer channel's 4-space one (D404's wrong-arm trap, caught by `precheck` at 2×)",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (seat === ctx.seat) return false;\n  // The ATTACKER is `ctx.seat`'s Active by construction",
+    find: "  // aims at its own side is refused by nothing.\n  if (seat === ctx.seat) return false;",
     replace:
-      "  if (seat === ctx.seat && false) return false;\n  // The ATTACKER is `ctx.seat`'s Active by construction",
+      "  // aims at its own side is refused by nothing.\n  if (seat === ctx.seat && false) return false;",
     expectKilledBy: ["packages/engine/src/preDamageRefusal.test.ts"],
   },
   {
@@ -16163,7 +16155,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D432",
     what: "\u{1f6d1} THE PRE-SLICE TERNARY, RESTORED. `attack.ts`'s §8.5 Weakness step ignores the installed bar and only consults D192's parse and Blooming Garden's aura, so the record is written, the row is logged, the field survives every §10 clear — and the number does not move. D428's built-but-dead defect at the read end instead of the write end: everything observable except the damage is correct",
     file: "packages/engine/src/attack.ts",
-    find: 'const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones": the applied ×2 as ×3 (R-SPH1).\n          withWeaknessAmount(\n            weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),\n            weaknessAmountOverride(next),\n          );',
+    find: 'const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : // Illumise "Supereffective Pheromones": Weakness applies as ×3 instead of ×2.\n          withWeaknessAmount(\n            weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),\n            weaknessAmountOverride(next),\n          );',
     replace:
       "    const weakness =\n      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)\n        ? null\n        :\n          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));",
     expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
@@ -16239,8 +16231,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D432",
     what: "The §10 EVOLVE literal (types.ts `placeEvolution`) forgets the new field, so an evolved body keeps a bar its pre-evolution installed. THE FOUR CLEAR LITERALS ARE HAND-KEPT AND NOTHING MAKES THEM AGREE — that is the whole reason this family sweeps the set rather than listing it — and this is the site D147's own doc block calls unreachable-by-construction and writes anyway. The mutation is a DELETION of one line from a spread, so the stale stamp survives",
     file: "packages/engine/src/types.ts",
-    find: "    // this is one) and pinned STRUCTURALLY rather than by a number.\n    noWeaknessTurn: null,\n",
-    replace: "    // this is one) and pinned STRUCTURALLY rather than by a number.\n",
+    find: "    noWeaknessTurn: null,\n    // Evolving the Defending Pokémon cancels a scheduled delayed effect (counters, discard or Knock",
+    replace:
+      "    // Evolving the Defending Pokémon cancels a scheduled delayed effect (counters, discard or Knock",
     expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
   },
   {
@@ -16248,8 +16241,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D432",
     what: "The §10 FORCED-SWITCH literal (interpreter.ts `switchInto`) forgets the new field, so a body dragged off the Active Spot by a Boss's Orders or a Switch carries its bar to the Bench. This is the REACHABLE half of the clear on this record's window — the opponent owns the turn the bar is live on, so they are the only player who can move the body inside it — and it is the literal three of the four swept clear-set assertions in this repo were still missing `retreatLockedTurn` from when this slice landed",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // structurally off the field instead (`noWeaknessBar.test.ts`).\n    noWeaknessTurn: null,\n",
-    replace: "    // structurally off the field instead (`noWeaknessBar.test.ts`).\n",
+    find: "    noWeaknessTurn: null,\n    scheduledEffect: null,",
+    replace: "    scheduledEffect: null,",
     expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
   },
   {
@@ -16529,9 +16522,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE ORDERING DECISION, INVERTED — the placement moves BEHIND §13.1 Poison, which is the plausible wrong choice because the engine's existing home for non-condition between-turns work (`runCheckupTriggers`) sits after the four condition steps. 🛑 THE BOARD IS IDENTICAL UNDER BOTH BUILDS: damage is additive and the KO sweep runs once for the whole batch, so only the EVENT SEQUENCE moves — D430's rule read from the other side, and the reason §5's rung asserts the sequence rather than a total",
     file: "packages/engine/src/flow.ts",
-    find: '  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 — counters. §12\'s one-counter-is-10 conversion happened at the ARM.\n        case "counters": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: "COUNTERS_PLACED",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: "delayed",\n          });\n          break;\n        }\n        // 🆕🆕 D435 — the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case "discard": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, "all");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: "POKEMON_RETURNED",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: "discard",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // 🆕🆕 D435 — the KNOCK OUT (corpus row 113\'s tail). §8.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case "knockOut": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: "active" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n\n  // §13.1 Poison — the condition\'s own counter amount (10 unless raised).\n  // 🆕🆕🆕 D561 — "(10 unless raised)" is the CONDITION\'s amount and no longer always the\n  // whole tick: Perilous Jungle (*"During Pokémon Checkup, put 2 more damage counters on\n  // each Poisoned non-{D} Pokémon (both yours and your opponent\'s)."*) adds 20 on either\n  // seat while it is the Stadium in play (`stadiumPoisonExtraCounters`, the top card\'s\n  // types decide the {D} exemption), SUMMED into this one `COUNTERS_PLACED { source:\n  // "poison" }` row, which therefore still lands BEFORE Pecharunt\'s Checkup trigger row\n  // (R-PJ; reversal: split the Stadium\'s share onto its own row when a reader needs it).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount =\n      // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): Jungle\'s {D} exemption reads the types it has.\n      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, inPlayCardOf(next, active));\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "poison" });\n  }\n',
+    find: '{\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        case "counters": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: "COUNTERS_PLACED",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: "delayed",\n          });\n          break;\n        }\n        // Discard payload: no Prize is taken.\n        case "discard": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, "all");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: "POKEMON_RETURNED",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: "discard",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // Knock Out payload: marked here, resolved with its Prize by the §8.1 sweep below.\n        case "knockOut": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: "active" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n\n  // §13.1 Poison: the condition\'s own counter amount plus Perilous Jungle\'s 2 extra counters on\n  // non-{D} Pokémon, summed into one `COUNTERS_PLACED` row.\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount =\n      // Perilous Jungle\'s {D} exemption reads the in-play card\'s types.\n      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, inPlayCardOf(next, active));\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "poison" });\n  }',
     replace:
-      '  // §13.1 Poison — the condition\'s own counter amount (10 unless raised).\n  // 🆕🆕🆕 D561 — "(10 unless raised)" is the CONDITION\'s amount and no longer always the\n  // whole tick: Perilous Jungle (*"During Pokémon Checkup, put 2 more damage counters on\n  // each Poisoned non-{D} Pokémon (both yours and your opponent\'s)."*) adds 20 on either\n  // seat while it is the Stadium in play (`stadiumPoisonExtraCounters`, the top card\'s\n  // types decide the {D} exemption), SUMMED into this one `COUNTERS_PLACED { source:\n  // "poison" }` row, which therefore still lands BEFORE Pecharunt\'s Checkup trigger row\n  // (R-PJ; reversal: split the Stadium\'s share onto its own row when a reader needs it).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount =\n      // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): Jungle\'s {D} exemption reads the types it has.\n      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, inPlayCardOf(next, active));\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "poison" });\n  }\n\n  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 — counters. §12\'s one-counter-is-10 conversion happened at the ARM.\n        case "counters": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: "COUNTERS_PLACED",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: "delayed",\n          });\n          break;\n        }\n        // 🆕🆕 D435 — the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case "discard": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, "all");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: "POKEMON_RETURNED",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: "discard",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // 🆕🆕 D435 — the KNOCK OUT (corpus row 113\'s tail). §8.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case "knockOut": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: "active" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n',
+      '  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount =\n      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, inPlayCardOf(next, active));\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "poison" });\n  }\n\n  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        case "counters": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: "COUNTERS_PLACED",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: "delayed",\n          });\n          break;\n        }\n        case "discard": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, "all");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: "POKEMON_RETURNED",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: "discard",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        case "knockOut": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: "active" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n',
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -16559,9 +16552,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the retreat literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/turn.ts",
-    find: "    // schedule goes with the body. NINE durated effects on one clear, SIX\n    // reachability stories.\n    scheduledEffect: null,",
-    replace:
-      "    // schedule goes with the body. NINE durated effects on one clear, SIX\n    // reachability stories.",
+    find: "scheduledEffect: null,",
+    replace: "",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -16569,8 +16561,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the switch literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // witness that the clear is real (the Checkup that follows places nothing).\n    scheduledEffect: null,",
-    replace: "    // witness that the clear is real (the Checkup that follows places nothing).",
+    find: "    noWeaknessTurn: null,\n    scheduledEffect: null,\n",
+    replace: "    noWeaknessTurn: null,\n",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -16578,8 +16570,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the devolve literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // reachability argument is not a licence to leave a hole in it.\n    scheduledEffect: null,",
-    replace: "    // reachability argument is not a licence to leave a hole in it.",
+    find: "    scheduledEffect: null,\n    attackDamageDebuff: null,\n    damageVulnerability: null,",
+    replace: "    attackDamageDebuff: null,\n    damageVulnerability: null,",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -16587,8 +16579,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the evolve literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/types.ts",
-    find: "    // which is the same printed counterplay at a much higher stake.\n    scheduledEffect: null,",
-    replace: "    // which is the same printed counterplay at a much higher stake.",
+    find: "    // Out) before it resolves.\n    scheduledEffect: null,\n",
+    replace: "    // Out) before it resolves.\n",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -17050,9 +17042,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D439",
     what: "⚠️ C11 — **THE GENERALISED WALK STOPS REFUSING A NULL BODY**, so an empty Active Spot dereferences. `[side.active, ...side.bench]` is the ONLY expression in this function that can hold a null, and a seat with no Active is a real mid-resolution board (§8.1, before the promotion is answered). ⚠️ **THE MUTATION IS A THROW AND NOT A WRONG NUMBER**, which is why it is written as `body !== null ? … : true` rather than as a deletion: a deletion would be a TypeError the runner reports as a crash rather than as a verdict, while this admits the null and counts it, so the null-Active board reads one MORE body than it holds. §3's null-Active rung reads 5/2/0/3/3 and would read 6/3/1/4/4",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return [side.active, ...side.bench].filter((body) => {\n    if (body === null) return false;\n    if (damagedOnly && !hasAnyDamageCounters(body)) return false;\n    // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed count reads the types each body has.\n    const card = inPlayCardOf(state, body);\n    return card !== undefined && matchesFilter(card, filter);\n  }).length;",
+    find: "return [side.active, ...side.bench].filter((body) => {\n    if (body === null) return false;\n    if (damagedOnly && !hasAnyDamageCounters(body)) return false;\n    // The in-play card, so a typed count reads the types each body has in play.\n    const card = inPlayCardOf(state, body);\n    return card !== undefined && matchesFilter(card, filter);\n  }).length;",
     replace:
-      "  return [side.active, ...side.bench].filter((body) => {\n    if (body === null) return true;\n    if (damagedOnly && !hasAnyDamageCounters(body)) return false;\n    // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed count reads the types each body has.\n    const card = inPlayCardOf(state, body);\n    return card !== undefined && matchesFilter(card, filter);\n  }).length;",
+      "  return [side.active, ...side.bench].filter((body) => {\n    if (body === null) return true;\n    if (damagedOnly && !hasAnyDamageCounters(body)) return false;\n    const card = inPlayCardOf(state, body);\n    return card !== undefined && matchesFilter(card, filter);\n  }).length;",
     expectKilledBy: [
       "packages/engine/src/bodiesInPlayScaling.test.ts",
       "packages/engine/src/abilityAttackGate.test.ts",
@@ -17210,9 +17202,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D441",
     what: "🛑 C2 — the new arm emits `benchToActive` — D229's crossed build, installed on the THIRD anchor of the family it was written for. The Energy moves the right distance in the WRONG direction, and D229's own row cannot see it: that one quotes the numeric arm's lines, which this slice deliberately did not touch",
     file: "packages/engine/src/effects.ts",
-    find: '    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" }];\n  }\n  // ⚠️⚠️ D230',
+    find: 'return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" }];\n  }',
     replace:
-      '    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "benchToActive" }];\n  }\n  // ⚠️⚠️ D230',
+      '    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "benchToActive" }];\n  }',
     expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
   },
   {
@@ -18159,9 +18151,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D449",
     what: "🛑🛑 **`deals: true` ADDED TO THE PLACEMENT** — the flag every OTHER any-target arm in this deriver sets, so it is the single most likely wrong edit in the slice. It routes the Active pick through `snipeActive`'s full §8.5 pipeline instead of `damageActive`, so a placed counter DOUBLES on a Weakness and is cut by a Resistance, against this engine's standing D138/D139 ruling. It also flips the emitted event from COUNTERS_PLACED to DAMAGE_DEALT and re-admits every reduction passive. **SILENT IN EVERY CENSUS**: the sentence still resolves whole",
     file: "packages/engine/src/effects.ts",
-    find: "          count: 1,\n          // 🛑 D449 — THESE FOUR LINES ARE DELIBERATELY NOT ARM 25's BYTES.",
-    replace:
-      "          count: 1,\n          deals: true,\n          // 🛑 D449 — THESE FOUR LINES ARE DELIBERATELY NOT ARM 25's BYTES.",
+    find: '          count: 1,\n          source: "attack",\n        },',
+    replace: '          count: 1,\n          deals: true,\n          source: "attack",\n        },',
     expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
   },
   {
@@ -18178,9 +18169,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D449",
     what: '🛑 **THE PROVENANCE FLIPS TO `"ability"`**, which is the value the three REGISTRY producers of this op really carry and the literal `placeSnipe` hardcoded until 0.89.0 — D136\'s finding 1, which this repo has now caught three times (D138, D139, D140). The `COUNTERS_PLACED` row then prints the literal word **Ability** in the log for a card that has none. **SILENT IN EVERY CENSUS AND IN EVERY DAMAGE TOTAL**: the counters land on the right body in the right amount and only the label lies',
     file: "packages/engine/src/effects.ts",
-    find: '          // not and a row anchored here cannot drift onto the compound.\n          source: "attack",',
-    replace:
-      '          // not and a row anchored here cannot drift onto the compound.\n          source: "ability",',
+    find: '          count: 1,\n          source: "attack",\n        },',
+    replace: '          count: 1,\n          source: "ability",\n        },',
     expectKilledBy: [
       "packages/engine/src/counterPutChosen.test.ts",
       "packages/engine/src/counterBenchPut.test.ts",
@@ -18314,9 +18304,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D450",
     what: "🛑 **ARM 23f STOPS EMITTING `damagedOnly`** — ⚠️ **AND THE FIRST DRAFT OF THIS ROW WAS AN INERT MUTATION**: its `replace` prepended a comment to the line ABOVE the field instead of deleting the field, so the harness compiled byte-equivalent code and reported SURVIVED(undeclared). A GAP whose cause is neither a suite hole nor a wrong tally but a row that never mutated anything — re-anchored onto the FIELD. ⚠️ **RE-POINTED AT D451** onto arm 23g's opening comment — the row anchored on arm 23f running into arm **24**, and D451 inserts two arms between them; the deleted TOKEN is unchanged, so the mutation still says what it said. , so corpus line 414 derives to line 415's program exactly. The two anchors stay disjoint and the two SENTENCES stop being: the windowed printing counters the opponent's whole board. Killed by the inequality rung the anchors' prefix hazard exists for",
     file: "packages/engine/src/effects.ts",
-    find: "          damagedOnly: true,\n        },\n      ];\n    }\n  }\n\n  // 23g. \"Put damage counters on your opponent's Active Pokémon until its remaining",
-    replace:
-      "        },\n      ];\n    }\n  }\n\n  // 23g. \"Put damage counters on your opponent's Active Pokémon until its remaining",
+    find: "          damagedOnly: true,\n        },",
+    replace: "        },",
     expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
   },
   {
@@ -18374,9 +18363,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D451",
     what: '🛑 **D136\'s FINDING 1 FOR THE FIFTH TIME ON THIS AXIS** (D138, D139, D140, D450 paid the first four) — an attack\'s placement files a `COUNTERS_PLACED` whose provenance says `"ability"`, and `log.ts` renders it as *"Ability: 150 damage to X"*: a row naming a mechanism the board never used. Killed in TWO files, because `counterBenchPut.test.ts`\'s pool-wide sweep partitions every derived op carrying a `source` and refuses `"ability"` on the provenance side',
     file: "packages/engine/src/effects.ts",
-    find: '          // D136\'s finding 1 refused at the front for the fifth time: an attack that\n          // filed `"ability"` would render as *"Ability: 150 damage to X"*.\n          source: "attack",',
+    find: '          // Marked as an attack so the log does not render it as an Ability.\n          source: "attack",',
     replace:
-      '          // D136\'s finding 1 refused at the front for the fifth time: an attack that\n          // filed `"ability"` would render as *"Ability: 150 damage to X"*.\n          source: "ability",',
+      '          // Marked as an attack so the log does not render it as an Ability.\n          source: "ability",',
     expectKilledBy: [
       "packages/engine/src/counterUntilHp.test.ts",
       "packages/engine/src/counterBenchPut.test.ts",
@@ -18501,9 +18490,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D451",
     what: "⚠️ **THE PER-BODY GATE BECOMES A PER-SEAT ONE** — dropping `effectRefused`'s D259 `target` argument defaults it to that seat's ACTIVE, so a shielded BENCHED body is countered anyway while an unshielded one can be refused on its Active's behalf. The row that makes the fold's §11 reach a claim about the body rather than about the side",
     file: "packages/engine/src/interpreter.ts",
-    find: "    if (effectRefused(state, victim, ctx, events, pokemon)) return pokemon;\n    // 🆕🆕🆕 D618 — Battle Cage, on a Benched body only.\n",
-    replace:
-      "    if (effectRefused(state, victim, ctx, events)) return pokemon;\n    // 🆕🆕🆕 D618 — Battle Cage, on a Benched body only.\n",
+    find: "if (effectRefused(state, victim, ctx, events, pokemon)) return pokemon;",
+    replace: "    if (effectRefused(state, victim, ctx, events)) return pokemon;\n",
     expectKilledBy: ["packages/engine/src/counterUntilHp.test.ts"],
   },
   {
@@ -18670,9 +18658,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D453",
     what: "⚠ **THE STACKING MERGE TAKES THE MINIMUM** — two reductions installed on the same body for the same turn must resolve to the STRONGER shield; `Math.min` makes a second 10-less printing overwrite an existing 30-less one and the log row announces the downgrade as though it were an install. D434's `Math.max`-becomes-`+` defect on the delayed-counter merge, one function over and in the other direction",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const merged = stacking ? Math.max(existing.amount, amount) : amount;\n  // 🆕🆕🆕 D630 — `preventDamage`'s class rule",
+    find: "  const existing = active.damageReduction;\n  const stacking = existing !== null && existing.turn === turn;\n  const merged = stacking ? Math.max(existing.amount, amount) : amount;",
     replace:
-      "  const merged = stacking ? Math.min(existing.amount, amount) : amount;\n  // 🆕🆕🆕 D630 — `preventDamage`'s class rule",
+      "  const existing = active.damageReduction;\n  const stacking = existing !== null && existing.turn === turn;\n  const merged = stacking ? Math.min(existing.amount, amount) : amount;",
     expectKilledBy: [
       "packages/engine/src/damageReduction.test.ts",
       "packages/engine/src/alwaysOnReduction.test.ts",
@@ -18683,9 +18671,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D453",
     what: "⚠ **THE DEBUFF CROSSES THE SEAT** — the mirror of D453's `reduceDamage` seat row and the same copy in the other direction: `ctx.seat` is `reduceDamage`'s real line. The printed sentence is *\"attacks used by the **Defending** Pokémon do N less damage\"*, so `otherSeat` is the whole target of the op; at `ctx.seat` the attacker weakens ITSELF and the defender swings at full. 4 sentences / 8 legal printings",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const seat = otherSeat(ctx.seat);\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  // §11 (D142) — checked BEFORE the idempotence early-return",
+    find: "function weakenDefenderAttacks(\n  state: GameState,\n  amount: number,\n  ctx: EffectContext,\n  events: GameEvent[],\n): GameState {\n  const seat = otherSeat(ctx.seat);",
     replace:
-      "  const seat = ctx.seat;\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  // §11 (D142) — checked BEFORE the idempotence early-return",
+      "function weakenDefenderAttacks(\n  state: GameState,\n  amount: number,\n  ctx: EffectContext,\n  events: GameEvent[],\n): GameState {\n  const seat = ctx.seat;",
     expectKilledBy: [
       "packages/engine/src/attackDebuff.test.ts",
       "packages/engine/src/damageReduction.test.ts",
@@ -18907,9 +18895,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D454",
     what: "⚠ **THE RECOIL IS PLACED ON THE DEFENDER** — `damageActive` (D453's own new row, one op over) resolves `otherSeat(ctx.seat)` and this one must not: the printed subject is *\"this Pokémon also does N damage to ITSELF\"*. Crossed, Skeledirge's 30 is added to the 190 it just dealt, the attacker never pays its printed cost, and the two-seat KO sweep flow.ts `finishAttack` exists for has nothing on its own side to find. D447's across-the-table defect on the one op whose whole content is a SEAT. 10 sentences / 66 legal printings",
     file: "packages/engine/src/interpreter.ts",
-    find: 'function damageSelf(\n  state: GameState,\n  amount: number,\n  ctx: EffectContext,\n  events: GameEvent[],\n  // 🆕🆕🆕 D557 — the op\'s optional provenance; absent is the shipped `"self"` recoil.\n  source?: "trainer" | "ability",\n): GameState {\n  if (amount <= 0) return state;\n  const active = state.players[ctx.seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: source ?? "self" });\n  return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });\n}',
+    find: 'function damageSelf(\n  state: GameState,\n  amount: number,\n  ctx: EffectContext,\n  events: GameEvent[],\n  // Optional provenance; absent means the `"self"` recoil.\n  source?: "trainer" | "ability",\n): GameState {\n  if (amount <= 0) return state;\n  const active = state.players[ctx.seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: source ?? "self" });\n  return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });\n}',
     replace:
-      'function damageSelf(\n  state: GameState,\n  amount: number,\n  ctx: EffectContext,\n  events: GameEvent[],\n  // 🆕🆕🆕 D557 — the op\'s optional provenance; absent is the shipped `"self"` recoil.\n  source?: "trainer" | "ability",\n): GameState {\n  if (amount <= 0) return state;\n  const active = state.players[otherSeat(ctx.seat)].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  events.push({ type: "COUNTERS_PLACED", seat: otherSeat(ctx.seat), uid, amount, source: source ?? "self" });\n  return withActive(state, otherSeat(ctx.seat), { ...active, damage: active.damage + amount });\n}',
+      'function damageSelf(\n  state: GameState,\n  amount: number,\n  ctx: EffectContext,\n  events: GameEvent[],\n  source?: "trainer" | "ability",\n): GameState {\n  if (amount <= 0) return state;\n  const active = state.players[otherSeat(ctx.seat)].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  events.push({ type: "COUNTERS_PLACED", seat: otherSeat(ctx.seat), uid, amount, source: source ?? "self" });\n  return withActive(state, otherSeat(ctx.seat), { ...active, damage: active.damage + amount });\n}',
     expectKilledBy: [
       "packages/engine/src/selfDamage.test.ts",
       "packages/engine/src/tailsSelfCost.test.ts",
@@ -18933,9 +18921,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D454",
     what: "⚠ **THE REACTIVE RECOIL IS ARMED ON THE BODY IT IS SUPPOSED TO PUNISH** — `weakenDefenderAttacks`, the function 200 lines up that this one's own doc block tabulates itself against, opens on `otherSeat(ctx.seat)`; copied here it arms the DEFENDER, so the attacker retaliates against nothing and the defender retaliates against the attacker it was already going to hit. The table in the doc block above lists the holder as `ctx.seat`'s Active in the very first row, and until now NOTHING executed that claim: `installRecoil` had one mutant row and it was on `effects.ts`. 1 sentence / 5 legal printings",
     file: "packages/engine/src/interpreter.ts",
-    find: 'function installRecoil(\n  state: GameState,\n  amount: number | "damageTaken",\n  ctx: EffectContext,\n  events: GameEvent[],\n): GameState {\n  const active = state.players[ctx.seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  const existing = active.installedRecoil;\n  const stacking = existing !== null && existing.turn === turn;\n  // 🆕🆕 D456 — the op\'s TWO inhabitants collapse into the record\'s TWO fields here,\n  // and this is the only place that knows the mapping. The printed floor of the\n  // unprinted member is 0: line 180 promises nothing but the hit.\n  const floor = amount === "damageTaken" ? 0 : amount;\n  const merged = stacking ? Math.max(existing.amount, floor) : floor;\n  // 🛑 BOTH READS OF `existing` ARE GATED ON `stacking`, AND THE FLAG\'S GATE IS THE\n  // ONE THAT IS EASY TO DROP. A record whose window has PASSED is still sitting on the\n  // body — D124\'s expiry is by arithmetic and nothing sweeps it — so an ungated\n  // `existing.ofDamageTaken === true` would let a spent line-180 stamp turn a fresh FLAT\n  // install into a scaled one two turns later. The `amount` read one line up has carried\n  // that gate since D152; this one is new and needs it for the same reason.\n  const wasTaken = stacking && existing.ofDamageTaken === true;\n  const taken = amount === "damageTaken" || wasTaken;\n  // ⚠️ THE SUPPRESSION NOW HAS TWO CONJUNCTS AND BOTH ARE LOAD-BEARING. D152\'s rule\n  // is *say nothing when the merge says nothing new*; a flat 60 arriving on a body\n  // already holding 100 moves no number and prints no row. But a `"damageTaken"`\n  // install arriving on a body holding a flat 100 moves the FLAG while leaving the\n  // floor alone, and that is emphatically news — the trap stops being capped.\n  if (stacking && merged === existing.amount && taken === wasTaken) return state;\n  events.push({\n    type: "RECOIL_ARMED",\n    seat: ctx.seat,\n    uid,\n    amount: merged,\n    // ⚠️ THE SAME SPELLING AND THE SAME OMISSION RULE AS THE RECORD BELOW (D421\'s\n    // "same fact, same spelling, every surface"), because the row would otherwise\n    // announce a 0-damage counterattack on the one printing whose amount is unknown\n    // until it fires. `log.ts` has the second arm.\n    ...(taken ? { ofDamageTaken: true } : {}),\n  });\n  return withActive(state, ctx.seat, {\n    ...active,\n    // ⚠️ THE KEY IS OMITTED RATHER THAN WRITTEN `false` — `ofDamageTaken?: true` has\n    // exactly two inhabitants and `undefined` is one of them, so a `false` would be a\n    // second spelling of absent in a PERSISTED record (types.ts).\n    installedRecoil: { turn, amount: merged, ...(taken ? { ofDamageTaken: true } : {}) },\n  });\n}',
+    find: 'function installRecoil(\n  state: GameState,\n  amount: number | "damageTaken",\n  ctx: EffectContext,\n  events: GameEvent[],\n): GameState {\n  const active = state.players[ctx.seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  const existing = active.installedRecoil;\n  const stacking = existing !== null && existing.turn === turn;\n  // The "equal to the damage done" form has a printed floor of 0.\n  const floor = amount === "damageTaken" ? 0 : amount;\n  const merged = stacking ? Math.max(existing.amount, floor) : floor;\n  // Gated on `stacking` because an expired record still sits on the body and must not turn a fresh\n  // flat install into a scaled one.\n  const wasTaken = stacking && existing.ofDamageTaken === true;\n  const taken = amount === "damageTaken" || wasTaken;\n  // A `damageTaken` install on a flat record changes the flag without changing the amount, which is\n  // still news.\n  if (stacking && merged === existing.amount && taken === wasTaken) return state;\n  events.push({\n    type: "RECOIL_ARMED",\n    seat: ctx.seat,\n    uid,\n    amount: merged,\n    // Same omission rule as the record, so the row doesn\'t announce a 0-damage counterattack.\n    ...(taken ? { ofDamageTaken: true } : {}),\n  });\n  return withActive(state, ctx.seat, {\n    ...active,\n    // Omitted rather than `false`, so absent has one spelling in the persisted record.\n    installedRecoil: { turn, amount: merged, ...(taken ? { ofDamageTaken: true } : {}) },\n  });\n}',
     replace:
-      'function installRecoil(\n  state: GameState,\n  amount: number | "damageTaken",\n  ctx: EffectContext,\n  events: GameEvent[],\n): GameState {\n  const active = state.players[otherSeat(ctx.seat)].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  const existing = active.installedRecoil;\n  const stacking = existing !== null && existing.turn === turn;\n  // 🆕🆕 D456 — the op\'s TWO inhabitants collapse into the record\'s TWO fields here,\n  // and this is the only place that knows the mapping. The printed floor of the\n  // unprinted member is 0: line 180 promises nothing but the hit.\n  const floor = amount === "damageTaken" ? 0 : amount;\n  const merged = stacking ? Math.max(existing.amount, floor) : floor;\n  // 🛑 BOTH READS OF `existing` ARE GATED ON `stacking`, AND THE FLAG\'S GATE IS THE\n  // ONE THAT IS EASY TO DROP. A record whose window has PASSED is still sitting on the\n  // body — D124\'s expiry is by arithmetic and nothing sweeps it — so an ungated\n  // `existing.ofDamageTaken === true` would let a spent line-180 stamp turn a fresh FLAT\n  // install into a scaled one two turns later. The `amount` read one line up has carried\n  // that gate since D152; this one is new and needs it for the same reason.\n  const wasTaken = stacking && existing.ofDamageTaken === true;\n  const taken = amount === "damageTaken" || wasTaken;\n  // ⚠️ THE SUPPRESSION NOW HAS TWO CONJUNCTS AND BOTH ARE LOAD-BEARING. D152\'s rule\n  // is *say nothing when the merge says nothing new*; a flat 60 arriving on a body\n  // already holding 100 moves no number and prints no row. But a `"damageTaken"`\n  // install arriving on a body holding a flat 100 moves the FLAG while leaving the\n  // floor alone, and that is emphatically news — the trap stops being capped.\n  if (stacking && merged === existing.amount && taken === wasTaken) return state;\n  events.push({\n    type: "RECOIL_ARMED",\n    seat: otherSeat(ctx.seat),\n    uid,\n    amount: merged,\n    // ⚠️ THE SAME SPELLING AND THE SAME OMISSION RULE AS THE RECORD BELOW (D421\'s\n    // "same fact, same spelling, every surface"), because the row would otherwise\n    // announce a 0-damage counterattack on the one printing whose amount is unknown\n    // until it fires. `log.ts` has the second arm.\n    ...(taken ? { ofDamageTaken: true } : {}),\n  });\n  return withActive(state, otherSeat(ctx.seat), {\n    ...active,\n    // ⚠️ THE KEY IS OMITTED RATHER THAN WRITTEN `false` — `ofDamageTaken?: true` has\n    // exactly two inhabitants and `undefined` is one of them, so a `false` would be a\n    // second spelling of absent in a PERSISTED record (types.ts).\n    installedRecoil: { turn, amount: merged, ...(taken ? { ofDamageTaken: true } : {}) },\n  });\n}',
+      'function installRecoil(\n  state: GameState,\n  amount: number | "damageTaken",\n  ctx: EffectContext,\n  events: GameEvent[],\n): GameState {\n  const active = state.players[otherSeat(ctx.seat)].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  const existing = active.installedRecoil;\n  const stacking = existing !== null && existing.turn === turn;\n  const floor = amount === "damageTaken" ? 0 : amount;\n  const merged = stacking ? Math.max(existing.amount, floor) : floor;\n  const wasTaken = stacking && existing.ofDamageTaken === true;\n  const taken = amount === "damageTaken" || wasTaken;\n  if (stacking && merged === existing.amount && taken === wasTaken) return state;\n  events.push({\n    type: "RECOIL_ARMED",\n    seat: otherSeat(ctx.seat),\n    uid,\n    amount: merged,\n    ...(taken ? { ofDamageTaken: true } : {}),\n  });\n  return withActive(state, otherSeat(ctx.seat), {\n    ...active,\n    installedRecoil: { turn, amount: merged, ...(taken ? { ofDamageTaken: true } : {}) },\n  });\n}',
     expectKilledBy: [
       "packages/engine/src/installedRecoil.test.ts",
       "packages/engine/src/counterattack.test.ts",
@@ -20754,9 +20742,9 @@ export const MUTANTS: Mutant[] = [
         "The two anchors are STRUCTURALLY disjoint, so either order computes the identical function and no string can tell them apart: both are `^…$` over the whole sentence and they disagree on a MANDATORY run of bytes — `ATTACK_SELF_SWITCH` spells the literal `Benched Pokémon\\.` and `ATTACK_SELF_SWITCH_TYPED` demands `Benched \\{([A-Z])\\} Pokémon\\.` at the same position — and a string cannot both have and not have `{X} ` there. ⚠️ THE DECLARATION IS PREFERRED OVER DELETING THE ROW FOR D427's REASON, AND ITS TRIGGER IS THE EDIT A SUCCESSOR IS ACTUALLY LIKELY TO MAKE: the moment either pattern's `{X}` group becomes OPTIONAL — the `(?:\\{([A-Z])\\} )?` widening this slice deliberately refused, because it would put a dead capture into all five spellings of `SELF_SWITCH_CLAUSE` and rot every mutant row that quotes them (D441) — the two overlap, this mutation becomes observable and the row reports STALE-SURVIVOR. 🛑 IT IS ALSO THE HALF THAT MAKES D467's RULE CHECKABLE HERE: D467 earned *a disjointness guard is only killable where the pattern that needs it runs FIRST*, and this pair is the OTHER case that rule distinguishes — structural disjointness, so there is no guard to be vacuous and the placement is legibility. A slice that copied D467's placement rule without asking WHICH mechanism supplied the disjointness would have moved this arm for no reason.",
     },
     file: "packages/engine/src/effects.ts",
-    find: '  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: "switchActive" }];\n  }\n  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt\n  // `sv07-053` "Volt Switch", 1 legal). STRUCTURALLY disjoint from the bare arm\n  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one\n  // string — so this arm needs no lookahead and its position is legibility, which\n  // D467 requires stating rather than leaving to the reader. The narrowing itself\n  // is D273\'s shipped `targetType`, read by `switchBenchNarrowing` and spelled by\n  // `switchTargetNoun`; only the ATTACK-surface reader was missing.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? ""];\n    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:\n    // dropping the rider would silently offer the WHOLE Bench, a superset the\n    // card does not print, and every board assertion would stay green (D461).\n    if (targetType !== undefined) return [{ op: "switchActive", targetType }];\n  }',
+    find: 'if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: "switchActive" }];\n  }\n  // Bench switch narrowed to a type (`targetType`); disjoint from the bare anchor.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? ""];\n    // An unreadable code returns null rather than an unnarrowed switch, which would offer the whole\n    // Bench.\n    if (targetType !== undefined) return [{ op: "switchActive", targetType }];\n  }',
     replace:
-      '  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt\n  // `sv07-053` "Volt Switch", 1 legal). STRUCTURALLY disjoint from the bare arm\n  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one\n  // string — so this arm needs no lookahead and its position is legibility, which\n  // D467 requires stating rather than leaving to the reader. The narrowing itself\n  // is D273\'s shipped `targetType`, read by `switchBenchNarrowing` and spelled by\n  // `switchTargetNoun`; only the ATTACK-surface reader was missing.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? ""];\n    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:\n    // dropping the rider would silently offer the WHOLE Bench, a superset the\n    // card does not print, and every board assertion would stay green (D461).\n    if (targetType !== undefined) return [{ op: "switchActive", targetType }];\n  }\n  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: "switchActive" }];\n  }',
+      '  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? ""];\n    if (targetType !== undefined) return [{ op: "switchActive", targetType }];\n  }\n  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: "switchActive" }];\n  }',
     expectKilledBy: [
       "packages/engine/src/typedSelfSwitch.test.ts",
       "packages/engine/src/optionalSelfSwitch.test.ts",
@@ -20850,9 +20838,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D469",
     what: "C — THE NEW ARM IS MOVED BEHIND THE SHIPPED ACTIVE-ONLY ARM. Written to test the placement claim in `OPPONENT_BOARD_COUNTER_SCALE`'s block: that the ORDER of these two arms is LEGIBILITY, because the disjointness is STRUCTURAL rather than guarded. Paired with `D469-board-counter-anchor-drops-the-all-of` (KILLED), the two rows are the two halves of one claim — the ORDER is legibility and the LITERAL is behaviour.",
     file: "packages/engine/src/effects.ts",
-    find: '  const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };\n  }\n  // 🆕🆕 D469 — THE SAME SEAT, THE WHOLE BOARD. Corpus file line 534, 1 legal\n  // printing. Same fold and the same `per >= 1` printed-zero guard as every arm in\n  // this reader; what differs is one literal run of bytes in the anchored tail, and\n  // that literal is the ONLY thing separating this arm from the one directly above\n  // — which is why the two anchors are structurally disjoint and neither carries a\n  // lookahead. Arm ORDER here is legibility: no string reaches both `exec`s, and\n  // the corpus row that swaps them is a declared structural `equivalent`.\n  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };\n  }\n',
+    find: 'const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };\n  }\n  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };\n  }',
     replace:
-      '  // 🆕🆕 D469 — THE SAME SEAT, THE WHOLE BOARD. Corpus file line 534, 1 legal\n  // printing. Same fold and the same `per >= 1` printed-zero guard as every arm in\n  // this reader; what differs is one literal run of bytes in the anchored tail, and\n  // that literal is the ONLY thing separating this arm from the one directly above\n  // — which is why the two anchors are structurally disjoint and neither carries a\n  // lookahead. Arm ORDER here is legibility: no string reaches both `exec`s, and\n  // the corpus row that swaps them is a declared structural `equivalent`.\n  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };\n  }\n  const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };\n  }\n',
+      '  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };\n  }\n  const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };\n  }\n',
     survives: {
       kind: "equivalent",
       reason:
@@ -21052,9 +21040,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D470",
     what: "E \u2014 THE NEW FILTERED ARM IS MOVED AHEAD OF THE UNFILTERED ONE IT NARROWS. Written to test the placement claim in `SELF_ENERGY_FILTERED_SCALE`'s block: that the ORDER of these two arms is LEGIBILITY, because the disjointness is STRUCTURAL rather than guarded. Paired with `D470-owner-board-anchor-loses-the-opponent-lookahead` (KILLED), the two rows are the two halves of one distinction \u2014 the ORDER is legibility, and the LOOKAHEAD is behaviour but is about a DIFFERENT pattern (a seat, not the sibling anchor).",
     file: "packages/engine/src/effects.ts",
-    find: '  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === "this Pok\u00e9mon"\n        ? { per, count: { kind: "energyOnSelf", energyType } }\n        : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };\n    }\n  }\n  // \ud83c\udd95\ud83c\udd95 D470 \u2014 THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly\n  // after the unfiltered arm it narrows so a reader meeting one meets the other \u2014\n  // `YOUR_BENCH_FILTERED_SCALE`\'s placement at D466 and `IN_PLAY_BODY_SCALE`\'s at\n  // D439, verbatim. \u26a0\ufe0f **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS\n  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint\n  // (both `^\u2026$`, and this one demands a run of bytes ending in a space where the\n  // shipped literal spends none), so a swap of the two blocks changes no answer. That\n  // is D468\'s kind of disjointness rather than D467\'s, and it is why the order row in\n  // the mutation corpus is a DECLARED survivor with no companion deletion row \u2014 a\n  // guard here would be unkillable by construction.\n  //\n  // THREE guards, and each refuses for its own reason \u2014 `DISCARD_PILE_COUNT_SCALE`\'s\n  // trio, at this family\'s address. `per >= 1` is the printed-zero guard every arm in\n  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so\n  // *"{C}"* falls through to `return null` and stays LOUD exactly as it does one arm\n  // up (\ud83c\udd95\ud83c\udd95 **D500 \u2014 *"Basic Energy"* WAS THE SECOND EXAMPLE HERE AND RESOLVES NOW**,\n  // to the card CATEGORY `"basic"`; the guard is unchanged and only its example set\n  // shrank, which `ownerBoardEnergyScaling.test.ts` \u00a7GUARD 3 now drives from the\n  // ADMITTED side with `{C}` keeping the refused side); and `filter !== null` is the BODY vocabulary, so\n  // *"\u2026attached to all of your Ancient Pok\u00e9mon."* leaves this arm on the loud\n  // (\ud83c\udd95\ud83c\udd95\ud83c\udd95 D569 (D539): that noun resolves through the body map now; "Future Pok\u00e9mon" is the loud witness)\n  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes\n  // another, and the middle one is the one a reader is likeliest to drop because the\n  // arm above already spells it.\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? "");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: "board"` is HARD-CODED and the anchor\'s own literal is why \u2014 it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`\'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: "energyOnSelf", zone: "board", energyType, filter } };\n    }\n  }\n',
+    find: 'const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === "this Pokémon"\n        ? { per, count: { kind: "energyOnSelf", energyType } }\n        : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };\n    }\n  }\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? "");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: "board"` is HARD-CODED and the anchor\'s own literal is why — it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`\'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: "energyOnSelf", zone: "board", energyType, filter } };\n    }\n  }',
     replace:
-      '  // \ud83c\udd95\ud83c\udd95 D470 \u2014 THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly\n  // after the unfiltered arm it narrows so a reader meeting one meets the other \u2014\n  // `YOUR_BENCH_FILTERED_SCALE`\'s placement at D466 and `IN_PLAY_BODY_SCALE`\'s at\n  // D439, verbatim. \u26a0\ufe0f **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS\n  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint\n  // (both `^\u2026$`, and this one demands a run of bytes ending in a space where the\n  // shipped literal spends none), so a swap of the two blocks changes no answer. That\n  // is D468\'s kind of disjointness rather than D467\'s, and it is why the order row in\n  // the mutation corpus is a DECLARED survivor with no companion deletion row \u2014 a\n  // guard here would be unkillable by construction.\n  //\n  // THREE guards, and each refuses for its own reason \u2014 `DISCARD_PILE_COUNT_SCALE`\'s\n  // trio, at this family\'s address. `per >= 1` is the printed-zero guard every arm in\n  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so\n  // *"{C}"* falls through to `return null` and stays LOUD exactly as it does one arm\n  // up (\ud83c\udd95\ud83c\udd95 **D500 \u2014 *"Basic Energy"* WAS THE SECOND EXAMPLE HERE AND RESOLVES NOW**,\n  // to the card CATEGORY `"basic"`; the guard is unchanged and only its example set\n  // shrank, which `ownerBoardEnergyScaling.test.ts` \u00a7GUARD 3 now drives from the\n  // ADMITTED side with `{C}` keeping the refused side); and `filter !== null` is the BODY vocabulary, so\n  // *"\u2026attached to all of your Ancient Pok\u00e9mon."* leaves this arm on the loud\n  // (\ud83c\udd95\ud83c\udd95\ud83c\udd95 D569 (D539): that noun resolves through the body map now; "Future Pok\u00e9mon" is the loud witness)\n  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes\n  // another, and the middle one is the one a reader is likeliest to drop because the\n  // arm above already spells it.\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? "");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: "board"` is HARD-CODED and the anchor\'s own literal is why \u2014 it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`\'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: "energyOnSelf", zone: "board", energyType, filter } };\n    }\n  }\n  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === "this Pok\u00e9mon"\n        ? { per, count: { kind: "energyOnSelf", energyType } }\n        : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };\n    }\n  }\n',
+      '  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? "");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      return { per, count: { kind: "energyOnSelf", zone: "board", energyType, filter } };\n    }\n  }\n  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === "this Pokémon"\n        ? { per, count: { kind: "energyOnSelf", energyType } }\n        : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };\n    }\n  }\n',
     survives: {
       kind: "equivalent",
       reason:
@@ -21255,9 +21243,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D472",
     what: "🛑 **THE IMPLEMENTATION SIDE, AND IT HAD NO ROW AT ALL FOR 352 DECISIONS.** `conditionHolds`'s `opponentActiveHasType` arm — shipped at D120 and the arm EVERY clause in this family evaluates through — is quoted by ZERO rows in the 2,120-row corpus (measured by span, D453's predicate, not by op name), while its immediate neighbour `opponentActiveHasResistance` carries five. This row is the first evidence the arm discriminates at all. It reads `state`'s ASKER seat instead of `otherSeat(seat)` — `D387-condition-reads-the-asker-seat` is the same edit on a sibling arm, so it is a defect this file has already shipped once. Killed by §5's both-seats rung and by §6, where it takes the defender signature from 17 to **8**.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const spot = activeTop(state, otherSeat(seat));\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
+    find: "const spot = activeTop(state, otherSeat(seat));\n      // Reads in-play types (`inPlayCardOf`), so a retyped body counts.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
     replace:
-      "      const spot = activeTop(state, seat);\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
+      "      const spot = activeTop(state, seat);\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
     expectKilledBy: ["packages/engine/src/typedActiveStatusGate.test.ts"],
   },
   {
@@ -21265,9 +21253,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D472",
     what: '⚠️ **`types` IS AN ARRAY AND DUAL TYPES ARE A REAL PRINTING.** `.includes(cond.type)` becomes `[0] === cond.type`, which is `D371-resistance-clause-reads-only-the-first-entry`\'s edit one column over on the arm directly above it. **It agrees with the correct build on every single-typed body**, so it is invisible to every board in the engine except one — which is why `fix-d472-dualfoe` prints `["Water", "Dragon"]` with `Dragon` SECOND and why §5 drives it as its own case. It takes §6\'s defender signature from 17 to **16**.',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const spot = activeTop(state, otherSeat(seat));\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
+    find: "const spot = activeTop(state, otherSeat(seat));\n      // Reads in-play types (`inPlayCardOf`), so a retyped body counts.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
     replace:
-      "      const spot = activeTop(state, otherSeat(seat));\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? [])[0] === cond.type\n      );",
+      "      const spot = activeTop(state, otherSeat(seat));\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? [])[0] === cond.type\n      );",
     expectKilledBy: ["packages/engine/src/typedActiveStatusGate.test.ts"],
   },
   {
@@ -23226,9 +23214,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D489",
     what: "\ud83d\uded1 B6 \u2014 **THE FLOOR BECOMES THE CEILING**, i.e. the declinable park is built with `min === max` \u2014 the EXACT arm's real shape, four lines down, copied onto this one. The printed *\"up to\"* stops being an up-to: the player must discard the full three or the frame is rejected, and on a hand of one Energy the pick is forced. D441's rule at the same field one op over (*a quantifier that answers two questions is ONE field*), read from the losing side.",
     file: "packages/engine/src/interpreter.ts",
-    find: '            min: 0,\n            // 🆕🆕🆕 D617 — `cap: "any"`',
+    find: '            kind: "chooseCards",\n            candidates,\n            min: 0,',
     replace:
-      '            min: op.cap === "any" ? candidates.length : Math.min(op.cap, candidates.length),\n            // 🆕🆕🆕 D617 — `cap: "any"`',
+      '            kind: "chooseCards",\n            candidates,\n            min: op.cap === "any" ? candidates.length : Math.min(op.cap, candidates.length),',
     expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
@@ -23327,9 +23315,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D490",
     what: "🛑 **THE MIRROR, AND IT IS ITS TWIN'S CONTROL** (D443: a one-sided rung is green under BOTH defects). *\"Each player's deck\"* read as *\"your opponent's deck\"* is the other half of the same wrong reading, and on a suite whose boards all put the Energy on the attacker's side it is invisible. Board A deals 50 where the sentence deals 190; board B agrees with the correct build on the NUMBER and disagrees on which pile grew, which is why the pair needs both boards and the contents.",
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "discardDeckTop", whose: "eachPlayer", count: 1, recordAs: "discarded" },\n        // 🛑 THE PRINTED NOUN',
+    find: '{ op: "discardDeckTop", whose: "eachPlayer", count: 1, recordAs: "discarded" },',
     replace:
-      '        { op: "discardDeckTop", whose: "opponent", count: 1, recordAs: "discarded" },\n        // 🛑 THE PRINTED NOUN',
+      '        { op: "discardDeckTop", whose: "opponent", count: 1, recordAs: "discarded" },',
     expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
@@ -24133,9 +24121,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "🛑 F1 — **THE LOSING FACE STOPS LOSING**: `onTails` is dropped, so D144's drawback installs on HEADS and the printed 50%-of-the-time self-lock fires on exactly the declarations that did NOT earn it. D144's own file says this is the family's whole point — every other gated sentence in the pool pays out on heads, so *nothing happened* and *the coin missed* look identical from a board delta, and here they are INVERTED. Killed by `tailsGatedOp`'s paired face boards and by its ABSENT-not-`false` producer sweep, which loses a member",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135\'s absent-field rule).\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135\'s absent-field rule).\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
+      '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
@@ -24143,9 +24131,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "⚠️ F2 — the neighbouring op copied verbatim: `preventRetreat` where `preventAttack` belongs. Both are durated one-field locks installed by a coin-gated sentence, both are named side by side in `preventBlock.test.ts`'s own refusal list, and nothing about the arm's SHAPE objects — only a board does. `D495-arm-emits-the-neighbours-op` is this same swap one sentence over, and `D410-pronoun-lock-installs-the-attack-lock` is it in the opposite direction",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135\'s absent-field rule).\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135\'s absent-field rule).\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventRetreat" }],\n      },\n    ];\n  }',
+      '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        onTails: true,\n        then: [{ op: "preventRetreat" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
@@ -25077,9 +25065,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D508",
     what: "🛑 A3 — THE FILTER DROPPED ENTIRELY: every Pokémon in the pile counts, not only the ones printing the named attack. It deals 140 where the card prints 60, and it is the mutation that would make the whole slice a re-spelling of a count `DamageCountSource` could already express — so a suite that only asserted «the sentence is claimed» would be green on it. `pileByAttackName.test.ts` §3 reads the two counts on ONE board",
     file: "packages/engine/src/effects.ts",
-    find: '          filter: { kind: "attackNamePokemon", attack: attackName },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445',
+    find: '          kind: "cardsInDiscardPile",\n          seat: "you",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
     replace:
-      '          filter: { kind: "anyPokemon" },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445',
+      '          kind: "cardsInDiscardPile",\n          seat: "you",\n          filter: { kind: "anyPokemon" },',
     expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
   },
   {
@@ -25087,9 +25075,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D508",
     what: "🛑 A4 — THE CAPTURE THROWN AWAY for a hand-written name, which is the shape D440 refused at the vocabulary and the reason the attack name is a CAPTURE rather than a map row: a printed attack name is `attacks_json[].name`, a persisted column, so the capture is answerable and a literal is a claim about one card forever. The board reads 1 instead of 3 and deals 20, because `fix-roundbody` is in the same pile — the near-miss is a real body rather than an absence, so the mutant deals the WRONG number rather than zero",
     file: "packages/engine/src/effects.ts",
-    find: 'filter: { kind: "attackNamePokemon", attack: attackName },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445',
+    find: '          kind: "cardsInDiscardPile",\n          seat: "you",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
     replace:
-      'filter: { kind: "attackNamePokemon", attack: "Round" },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445',
+      '          kind: "cardsInDiscardPile",\n          seat: "you",\n          filter: { kind: "attackNamePokemon", attack: "Round" },',
     expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
   },
   {
@@ -25160,8 +25148,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D508",
     what: "🛑 D1 — THE INSTRUMENT'S OWN CLAIM, PUT BACK TO THE ONE THIS SLICE FALSIFIED. `NAMED-ATTACK` is re-declared a `blocker` while the corpus now BUILDS one of its rows, which is `opaque-anatomy-gate.ts` §C's stated failure mode arriving for real: *«the day a slice builds an attack-copy sentence, its built side goes positive and this gate goes RED and names it»*. ⚠️ THE KILLER IS A SCRIPT AND NOT A SUITE (D212's `killedByCommand` precedent): `scripts/**` is outside vitest's include globs and outside `tsc -b`'s project references, so nothing in `bun run check` reads this file at all — which is exactly why the gate exists. It also re-labels three OPAQUE rows, so the row is not merely a verdict string",
     file: "scripts/opaque-anatomy.ts",
-    find: '    verdict: "co-marker",\n    needs:\n      // 🛑🛑 D479',
-    replace: '    verdict: "blocker",\n    needs:\n      // 🛑🛑 D479',
+    find: '    rx: /used (?:Angelite|Rollout)|Hyper Fang|United Wings/,\n    verdict: "co-marker",',
+    replace:
+      '    rx: /used (?:Angelite|Rollout)|Hyper Fang|United Wings/,\n    verdict: "blocker",',
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
   },
@@ -26014,9 +26003,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D520",
     what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: *\"<row> Then, draw a card.\"* derives as though the second sentence were not printed and the attack reports SIMULATED while doing half of what the card says. ⚠️ **SILENT IN EVERY CENSUS** — the printed row still derives and no other row newly matches. ⚠️ `find` and `replace` were DIFFED before shipping (D519 (4): a row that is its own experiment is a no-op the probe alone can see) — and this row still SURVIVED the first probe, for the same reason as C1: no lattice point of §6 carries a trailing clause. `fourZoneSpread.test.ts` §7's both-ends rung (a SUFFIXED print derives null) is what kills it.",
     file: "packages/engine/src/effects.ts",
-    find: "    ` \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,\n);\n// 🆕🆕🆕 **D482",
+    find: "` \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,\n);",
     replace:
-      "    ` \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?`,\n);\n// 🆕🆕🆕 **D482",
+      "    ` \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?`,\n);",
     expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
   },
   {
@@ -26286,7 +26275,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D523",
     what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: *\"<row> Then, draw a card.\"* derives as though the second sentence were not there — a sentence the D237 anchor's own dropped-`$` mutant guards against one constant up. Killed by the both-ends rung's SUFFIXED print. Silent to the census.",
     file: "packages/engine/src/effects.ts",
-    find: "    `${SOURCE_ZONE_PHRASE} into your deck\\\\.$`,",
+    find: "`${SOURCE_ZONE_PHRASE} into your deck\\\\.$`,",
     replace: "    `${SOURCE_ZONE_PHRASE} into your deck\\\\.`,",
     expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
   },
@@ -26983,9 +26972,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D530",
     what: "🛑 C3 — **THE ARM DERIVES THE RIGHT OP WITHOUT THE RIDER, AND THE CENSUS STILL MOVES** (D465's `-rider-not-set` shape, one op over). `BUILT.attack` reads 1649, the residue 57/83, every census rung in forty files stays green — and the card deals a FLAT 20 forever where it prints 20 × N. **The census cannot see a wrong VALUE, only a wrong CLAIM.** Killed by §1's `toEqual` on the program (the key set is pinned), by §3's fresh-bytes rung, and by §4 (ii)/(iii)/(iv) on the board (20 against 60 / 140); the four re-pointed refusal suites pin the rider too. ⚠️ The `find` runs to the `// 6c.` comment so that its `replace` — which is otherwise the flat arm's own five lines — occurs ZERO times in the file.",
     file: "packages/engine/src/effects.ts",
-    find: '          source: "attack",\n          deals: true,\n          perDamageCounterOnTarget: true,\n        },\n      ];\n    }\n  }\n\n  // 6c.',
+    find: 'source: "attack",\n          deals: true,\n          perDamageCounterOnTarget: true,\n        },\n      ];\n    }\n  }',
     replace:
-      '          source: "attack",\n          deals: true,\n        },\n      ];\n    }\n  }\n\n  // 6c.',
+      '          source: "attack",\n          deals: true,\n        },\n      ];\n    }\n  }\n',
     expectKilledBy: [
       "packages/engine/src/targetCounterSnipe.test.ts",
       "packages/engine/src/scaledAnySnipe.test.ts",
@@ -27245,7 +27234,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D532",
     what: "🛑 C8 — **THE APPLY DRAINS `state.players[ctx.seat].discard` — the WRONG PILE.** `attachableEnergies` is asked with the actor's seat, so the uids it returns are the ATTACKER's {W} Basics; they are written onto the opponent's body, the `drop` over the OPPONENT's pile removes nothing (the uids are not there), and the attacker's pile keeps them — one uid in two zones. Killed by §4 (ii) (`ENERGY_ATTACHED.uid` must be the OPPONENT's `pile[0]`, the opponent's pile must shrink, the attacker's must NOT), by (v) (the Special-only opponent pile must be what moves) and by (vi) (an EMPTY opponent pile must WHIFF while the own pile is stocked — the mutant parks and feeds off the wrong pile).",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const energyUids = attachableEnergies(\n    state,\n    seat, // D532 — the printed pile's owner\n    op.source,",
+    find: "const energyUids = attachableEnergies(\n    state,\n    seat, // the printed pile's owner\n    op.source,",
     replace: "  const energyUids = attachableEnergies(\n    state,\n    ctx.seat,\n    op.source,",
     expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
   },
@@ -27254,9 +27243,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D532",
     what: "🛑 C8′ — **THE APPLY LOOKS THE REF UP ON THE ACTOR's BOARD: `const side = state.players[ctx.seat]`** — the pile is the opponent's and the guard passes, but `side.active` is the ATTACKER's Active, so the Energy lands on the attacker's own body and the opponent's SEAT is then rewritten with the attacker's side data through `withSide(state, seat, …)` — a corrupted board that passes every 'was something attached' assertion. Killed by §4 (ii) (the OPPONENT's Active must carry the {R}; the attacker's Active must still hold exactly its {C}), (iii) and (iv)'s board-as-it-was checks. One read site of five (D412: find every read site before fixing any).",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const side = state.players[seat]; // D532 — the OWNER's side (the actor's unless `whose`)",
+    find: "  if (energyUids.length === 0) return state;\n  const side = state.players[seat];",
     replace:
-      "  const side = state.players[ctx.seat]; // D532 — the OWNER's side (the actor's unless `whose`)",
+      "  if (energyUids.length === 0) return state;\n  const side = state.players[ctx.seat];",
     expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
   },
   {
@@ -27282,9 +27271,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D532",
     what: "⚠️ C11 — **`programPlayable`'s WHIFF GATE ASKS THE ACTOR's PILE** — `attachAlternativesAllWhiff` passes `seat` where the apply resolves `attachSeat(op, seat)`, so a `whose: \"opponent\"` program is offered when the ATTACKER's pile holds an Energy and refused when it does not — the afford-then-reject D222 named, one read site over (cardplay.ts is unreachable from attack.ts/flow.ts, grep 0, but D222: EVERY read site). CONDITIONAL in the brief, WRITTEN because it is drivable through the exported gate: §5 pins `false` on an EMPTY opponent pile with the own pile STOCKED and `true` on a STOCKED opponent pile with the own pile EMPTY — the mutant answers both the other way — and the flagless twin's answers as the control.",
     file: "packages/engine/src/cardplay.ts",
-    find: "        attachSeat(op, seat), // 🆕 D532 — the printed pile's owner; the gate asks the apply's question",
-    replace:
-      "        seat, // 🆕 D532 — the printed pile's owner; the gate asks the apply's question",
+    find: "attachSeat(op, seat),",
+    replace: "        seat,",
     expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
   },
   {
@@ -27991,7 +27979,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D538",
     what: '🛑 (i) **THE `basicEnergy` GUARD DROPPED — THE ANAPHORA UNMADE.** The printed tail says *"those **Energy** cards"*, so a head noun resolving to anything else cannot be the population it shuffles; without the guard a derived *"for each Basic {G} Pokémon in your discard pile…"* would shuffle POKÉMON into the deck under a clause naming Energy. 0 printings today, which is why the guard is DRIVEN rather than trusted (D190b: a guard nothing reaches is a guard nobody can trust).',
     file: "packages/engine/src/effects.ts",
-    find: '      pileFilter !== undefined &&\n      // 🛑 THE ANAPHORA MADE MECHANICAL. The tail says "those ENERGY cards", so a head\n      // noun that is not a Basic Energy card cannot be the population it shuffles.\n      // Nothing downstream re-checks it and a derived "for each Trainer card …" would\n      // put Trainers into the deck under a caption naming Energy — `searchDeck`\'s\n      // upstream-guard precedent, one op over. 0 printings today, refused to the loud\n      // ATTACK_EFFECT_SKIPPED path and driven as a near miss.\n      pileFilter.kind === "basicEnergy"',
+    find: 'pileFilter !== undefined &&\n      // The tail says "those Energy cards", so a head noun that is not a Basic Energy card is\n      // refused.\n      pileFilter.kind === "basicEnergy"',
     replace: "      pileFilter !== undefined",
     expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
   },
@@ -28079,7 +28067,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D541",
     what: "🛑🛑 **THE ROW THIS SLICE EXISTS TO GUARD, AND THE COMPILER CANNOT SEE IT.** `applyChoice`'s arm is DELETED and the op falls through to `default: return state;` — *“Synchronous ops never park, so never reach the choice path”*. MEASURED at this head rather than inherited from D540: `bunx tsc -b --force` is GREEN with this arm gone. The op parks, the prompt is shown, `validateChoice` ACCEPTS the two refs, and the board comes back BYTE-IDENTICAL — no `POKEMON_RETURNED`, no `SHUFFLE`, no log row, no census figure. ⚠️ **IT MUST BE KILLED BY A PARKED RESOLUTION AND NOT BY A FORCED ONE**: this op has no forced path at all — it parks on every board carrying a candidate, §8.6's clamped one included — and every §1/§2/§3 rung stays green under it, because none of them reaches `applyChoice`",
     file: "packages/engine/src/interpreter.ts",
-    find: '    case "returnBenchedChosen": {\n      // 🛑🛑 **🆕🆕🆕 D541 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE\n      // THE COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns\n      // `state` unchanged — *"Synchronous ops never park, so never reach the choice\n      // path"* — so OMITTING this arm TYPECHECKS GREEN and then SILENTLY DISCARDS\n      // the player\'s answer: the op parks, the prompt is shown, `validateChoice`\n      // accepts the two refs, and the board comes back BYTE-IDENTICAL with no event,\n      // no log row and no census figure moving. D540 measured this at the\n      // neighbouring op (`tsc -b --force` names the `stepOp` arm with TS2366 and says\n      // NOTHING about this one) and the measurement is re-run for this arm rather\n      // than inherited. `angeliteChosenShuffle.test.ts` §4 is the rung that can see\n      // it, and it must drive the PARKED path through `resolveEffect` on a real board\n      // and assert the VICTIM\'S BENCH and DECK — never the op\'s shape (D421).\n      // ⚠️ **A FORCED-PATH RUNG CANNOT KILL IT**, because the forced path never\n      // reaches `applyChoice` at all — which is exactly why §4 parks.\n      if (choice.kind !== "pokemonMulti") return state;\n      // The ANSWER, not the complement — the whole difference between this arm and\n      // the one directly above. NO `unshieldedRefs` here: the shield filtered the\n      // CANDIDATES before the prompt was ever written (see this op\'s `stepOp` arm for\n      // why that is the right end for THIS op), and `validateChoice` refuses any ref\n      // that is not among them, so a shielded body cannot reach this line.\n      // NO `recordAs`: this op is on neither side of any printed "If you do".\n      // The funnel re-reads the LIVE bench inside itself, so a wire answer whose body\n      // has since left play simply matches nothing — `returnBenched`\'s trust level,\n      // verbatim.\n      return shuffleBenchedRefsIntoDeck(state, choice.refs, ctx, events);\n    }\n',
+    find: 'case "returnBenchedChosen": {\n      // The resumed half. The compiler cannot catch a missing arm here: `default` returns the state\n      // unchanged, so the answer would be silently dropped.\n      if (choice.kind !== "pokemonMulti") return state;\n      // The answer itself, not the complement. No shield check: shielded bodies were filtered from\n      // the candidates. No `recordAs`. The funnel re-reads the live Bench.\n      return shuffleBenchedRefsIntoDeck(state, choice.refs, ctx, events);\n    }',
     replace: "",
     expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
   },
@@ -28088,9 +28076,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D541",
     what: "🛑 **THE §11 SHIELD MOVED OFF THE PARK, WHICH IS THE *OTHER* OP'S RULE APPLIED TO THIS ONE.** `returnBenchedRest` filters in `applyChoice` AFTER the complement narrows, because its pick names the bodies that are SPARED; here the pick IS the effect, so the candidates ARE the bodies the op will reach. With this filter gone the prompt OFFERS a shielded benched body, the player spends one of two picks on it, and the funnel then refuses to move it — a pick wasted under a correct-looking caption, and NO `ATTACK_EFFECT_PREVENTED` row is filed at all because nothing asks. ⚠️ Silent in every census and green on every board with no shield on it",
     file: "packages/engine/src/interpreter.ts",
-    find: '      const candidates = unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events);\n      // §8.6 "DO AS MUCH AS YOU CAN", AND IT IS A CLAMP RATHER THAN A REFUSAL.\n',
-    replace:
-      '      const candidates = oppBenchRefs(state, ctx.seat);\n      // §8.6 "DO AS MUCH AS YOU CAN", AND IT IS A CLAMP RATHER THAN A REFUSAL.\n',
+    find: "const candidates = unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events);",
+    replace: "      const candidates = oppBenchRefs(state, ctx.seat);\n",
     expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
   },
   {
@@ -28772,8 +28759,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D545",
     what: '🛑 **THE TRAP, SPRUNG: `attackTimingBlocked` NO LONGER RETURNS EARLY FOR THE COST CLAUSES**, so it reads each as a `barredIf` and REFUSES the attack with `ATTACK_PREVENTED` exactly when its condition holds — a printed *"this attack can be used for {F}"* makes the attack UNUSABLE on the board it makes it cheaper. (The `Exclude` is type-only; this is its run-time half.) Killed by §4.',
     file: "packages/engine/src/interpreter.ts",
-    find: '  // makes the attack CHEAPER, and reaching the polarity line below would refuse it.\n  if (gate.kind === "alternateCostIf" || gate.kind === "costWaivedIf") return undefined;',
-    replace: "  // makes the attack CHEAPER, and reaching the polarity line below would refuse it.",
+    find: 'if (gate.kind === "alternateCostIf" || gate.kind === "costWaivedIf") return undefined;',
+    replace: "",
     expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
   },
   {
@@ -28837,9 +28824,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D545",
     what: "⚠️ **`yourActiveHasSpecialCondition` READS THE OPPONENT'S ACTIVE** — the self twin collapses onto `opponentActiveHasSpecialCondition`, so `:324` waives the cost when the DEFENDER is Poisoned and charges a Poisoned attacker in full. Killed by §2's seat rung and §5's opponent-Poisoned board.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // by a Special Condition, ignore all Energy in this attack's cost.\").\n      const active = state.players[seat].active;",
+    find: "      const active = state.players[seat].active;\n      return active !== null && presentStatuses(active.conditions).length > 0;",
     replace:
-      "      // by a Special Condition, ignore all Energy in this attack's cost.\").\n      const active = state.players[otherSeat(seat)].active;",
+      "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && presentStatuses(active.conditions).length > 0;",
     expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
   },
   {
@@ -29079,9 +29066,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE §11 REFUSAL IS DELETED FROM THE FLIP INSTALLER** — Mist Energy on the Defending Pokémon no longer stops the lock (an effect of an attack done TO it). Killed by §10.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
-    replace:
-      "  const turn = state.turn + 1;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
+    find: "  // body.\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;",
+    replace: "  // body.\n  const turn = state.turn + 1;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29089,9 +29075,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "⚠️ **THE FLIP LOCK IS STAMPED `turn + 2`** — the installer's own turn, when the locked body cannot attack; the victim's real window (T+1) has no coin at all. `preventAttack`'s defender-arm number, which this op must share. Killed by §2/§3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const turn = state.turn + 1;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
+    find: "  // body.\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;",
     replace:
-      "  const turn = state.turn + 2;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
+      "  // body.\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 2;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29119,8 +29105,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `evolve` §10 CLEAR OF `attackFlipLockTurn` IS DELETED** — a spread literal, so `tsc` cannot see it (only `makeInPlay` is compiler-forced, D412 C5): the body carries the lock through the evolve and the victim still flips. Killed by §9.",
     file: "packages/engine/src/types.ts",
-    find: "    // (evolve clear, D547).\n    attackFlipLockTurn: null,",
-    replace: "    // (evolve clear, D547).",
+    find: "    // own next turn and attack.\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n",
+    replace: "    // own next turn and attack.\n    attackLockedTurn: null,\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29128,9 +29114,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `retreat` §10 CLEAR OF `attackFlipLockTurn` IS DELETED** — a spread literal, so `tsc` cannot see it (only `makeInPlay` is compiler-forced, D412 C5): the body carries the lock through the retreat and the victim still flips. Killed by §9.",
     file: "packages/engine/src/turn.ts",
-    find: "    // the victim retreats out of it on the very turn it is live (retreat clear, D547).\n    attackFlipLockTurn: null,",
-    replace:
-      "    // the victim retreats out of it on the very turn it is live (retreat clear, D547).",
+    find: "attackFlipLockTurn: null,",
+    replace: "",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29138,8 +29123,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `switch` §10 CLEAR OF `attackFlipLockTurn` IS DELETED** — a spread literal, so `tsc` cannot see it (only `makeInPlay` is compiler-forced, D412 C5): the body carries the lock through the switch and the victim still flips. Killed by §9.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // victim Switches out of it and attacks with no coin (switch clear, D547).\n    attackFlipLockTurn: null,",
-    replace: "    // victim Switches out of it and attacks with no coin (switch clear, D547).",
+    find: "    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,\n    damageReduction: null,\n    noWeaknessTurn: null,\n    scheduledEffect: null,",
+    replace:
+      "    attackTwoFlipLockTurn: null,\n    damageReduction: null,\n    noWeaknessTurn: null,\n    scheduledEffect: null,",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29147,8 +29133,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `devolve` §10 CLEAR OF `attackFlipLockTurn` IS DELETED** — a spread literal, so `tsc` cannot see it (only `makeInPlay` is compiler-forced, D412 C5): the body carries the lock through the devolve and the victim still flips. Killed by §9.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // 🆕🆕🆕 D547 — the flip-to-attack lock (devolve clear, D547).\n    attackFlipLockTurn: null,",
-    replace: "    // 🆕🆕🆕 D547 — the flip-to-attack lock (devolve clear, D547).",
+    find: "    retreatBlocked: false,\n    retreatLockedTurn: null,\n    attackBlock: null,\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n",
+    replace:
+      "    retreatBlocked: false,\n    retreatLockedTurn: null,\n    attackBlock: null,\n    attackLockedTurn: null,\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29175,7 +29162,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: '🛑 **THE CONFUSION COIN IS FLIPPED BEFORE THE LOCK\'S** — the two blocks swapped, which is the order D547\'s first draft shipped as "UNRULED" and review withdrew: the official rulebook\'s "Full details of attacking" puts B) "Apply any effects that might alter or cancel the attack" (its printed example IS this sentence family) before C) the Confusion check (docs/decisions.md D547 ruling 1). On the swapped build a flip-locked Confused body whose Confusion coin comes up tails takes its counters and never flips for the lock. Killed by §6.',
     file: "packages/engine/src/attack.ts",
-    find: 'const lockCoins =\n    copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({\n        type: "ATTACK_FLIP_LOCK_CHECK",\n        seat: action.seat,\n        uid: attackerUid,\n        result: face,\n      });\n      if (face === "tails") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: "ATTACK_FAILED",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: "flipLock",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (R-BTB2: the Confusion coin is never re-flipped).\n  if (rotation === "confused" && copiedFrom?.resumed !== true && coinRedo === undefined) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });\n    if (face === "tails") {\n      events.push({\n        type: "ATTACK_FAILED",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: "confusion",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook\'s 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER\'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: "COUNTERS_PLACED",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: "confusion",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO\'s prize to the KO\'d side\'s opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker\'s own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }',
+    find: 'const lockCoins =\n    copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({\n        type: "ATTACK_FLIP_LOCK_CHECK",\n        seat: action.seat,\n        uid: attackerUid,\n        result: face,\n      });\n      if (face === "tails") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: "ATTACK_FAILED",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: "flipLock",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3: the Confusion flip, after every gate and the cost check. Tails: the attack does not\n  // resolve and the attacker damages itself. Not repeated on a resumed half or a Backtrack Badge\n  // re-entry.\n  if (rotation === "confused" && copiedFrom?.resumed !== true && coinRedo === undefined) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });\n    if (face === "tails") {\n      events.push({\n        type: "ATTACK_FAILED",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: "confusion",\n      });\n      // The self-damage amount is read off the body\'s `confusionDamage` (3 counters unless raised).\n      // `active` is correct here since nothing has rebound the body before §8.5.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: "COUNTERS_PLACED",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: "confusion",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO\'s prize to the KO\'d side\'s opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker\'s own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }',
     replace:
       '  if (rotation === "confused" && copiedFrom?.resumed !== true && coinRedo === undefined) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });\n    if (face === "tails") {\n      events.push({\n        type: "ATTACK_FAILED",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: "confusion",\n      });\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: "COUNTERS_PLACED",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: "confusion",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: "ATTACK_FLIP_LOCK_CHECK", seat: action.seat, uid: attackerUid, result: face });\n      if (face === "tails") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: "ATTACK_FAILED",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: "flipLock",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n',
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
@@ -29231,8 +29218,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE §11 REFUSAL IS DELETED FROM `exposeDefender`** — Mist Energy no longer stops an effect of an attack done TO the Defending Pokémon. Killed by §6.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  // ordering, so a refusal is announced even on an already-exposed body.\n  if (effectRefused(state, seat, ctx, events)) return state;",
-    replace: "  // ordering, so a refusal is announced even on an already-exposed body.",
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 2;\n  const existing = active.damageVulnerability;",
+    replace: "  const turn = state.turn + 2;\n  const existing = active.damageVulnerability;",
     expectKilledBy: ["packages/engine/src/damageVulnerability.test.ts"],
   },
   {
@@ -29367,8 +29354,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `evolve` §10 CLEAR OF `damageVulnerability` IS DELETED** — a spread literal, invisible to `tsc` (D412 C5): the exposed body carries the +50 through the evolve. Killed by §5.",
     file: "packages/engine/src/types.ts",
-    find: "    // exposed body on it is a PLAYED line that sheds the +50 (evolve clear, D547).\n    damageVulnerability: null,",
-    replace: "    // exposed body on it is a PLAYED line that sheds the +50 (evolve clear, D547).",
+    find: "    // Out) before it resolves.\n    scheduledEffect: null,\n    attackDamageDebuff: null,\n    damageVulnerability: null,\n",
+    replace:
+      "    // Out) before it resolves.\n    scheduledEffect: null,\n    attackDamageDebuff: null,\n",
     expectKilledBy: ["packages/engine/src/damageVulnerability.test.ts"],
   },
   {
@@ -29376,8 +29364,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `retreat` §10 CLEAR OF `damageVulnerability` IS DELETED** — a spread literal, invisible to `tsc` (D412 C5): the exposed body carries the +50 through the retreat. Killed by §5.",
     file: "packages/engine/src/turn.ts",
-    find: "    // clear, D547) — and so is the forced half (`switchInto`).\n    damageVulnerability: null,",
-    replace: "    // clear, D547) — and so is the forced half (`switchInto`).",
+    find: "damageVulnerability: null,",
+    replace: "",
     expectKilledBy: ["packages/engine/src/damageVulnerability.test.ts"],
   },
   {
@@ -29385,8 +29373,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `switch` §10 CLEAR OF `damageVulnerability` IS DELETED** — a spread literal, invisible to `tsc` (D412 C5): the exposed body carries the +50 through the switch. Killed by §5.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // from under the +50 (switch clear, D547).\n    damageVulnerability: null,",
-    replace: "    // from under the +50 (switch clear, D547).",
+    find: "    damageVulnerability: null,\n    weaknessRetype: null,",
+    replace: "    weaknessRetype: null,",
     expectKilledBy: ["packages/engine/src/damageVulnerability.test.ts"],
   },
   {
@@ -29394,8 +29382,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE `devolve` §10 CLEAR OF `damageVulnerability` IS DELETED** — a spread literal, invisible to `tsc` (D412 C5): the exposed body carries the +50 through the devolve. Killed by §5.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // 🆕🆕🆕 D547 — the next-turn vulnerability (devolve clear, D547).\n    damageVulnerability: null,",
-    replace: "    // 🆕🆕🆕 D547 — the next-turn vulnerability (devolve clear, D547).",
+    find: "    attackDamageDebuff: null,\n    damageVulnerability: null,\n",
+    replace: "    attackDamageDebuff: null,\n",
     expectKilledBy: ["packages/engine/src/damageVulnerability.test.ts"],
   },
   {
@@ -29403,9 +29391,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 30 WHILE TWO REQUIRED `InPlayPokemon` FIELDS LAND** — this deploy accepts a v30 record whose bodies lack both keys: a live flip lock silently never flips, and EVERY hit into ANY body THROWS (`installedVulnerabilityOf` dereferences `.turn` of `undefined`). A different experiment from `D326-`/`D501-record-version-not-bumped` (D484): this one asserts D547 is why the head moved, and is killed by the engine suites' raw pins.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 30;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -29559,9 +29546,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D548",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 31 WHILE `PlayerSide.faceUpPrizes` LANDS REQUIRED** — this deploy accepts a v31 record with no key, and every projection (`redactedSideOf`) and every prize take (`resolveTakePrizes`) THROWS on it (D326's class). A different experiment from `D326-`/`D501-`/`D547-record-version-not-bumped` (D484): it asserts D548 itself, anchored on D548's own doc tail. Killed by `crescentPurge.test.ts` §11's raw pin (and `match.test.ts`).",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 31;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: [
       "packages/engine/src/crescentPurge.test.ts",
       "apps/api/src/lobby/match.test.ts",
@@ -29959,8 +29945,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `evolve` §10 CLEAR OF `costTaxTurn` IS DELETED — a spread literal, so `tsc` cannot see it (only `makeInPlay` is compiler-forced, D412 C5). Killed by a PLAYED evolve.",
     file: "packages/engine/src/types.ts",
-    find: "(evolve clear, D549 tax).\n    costTaxTurn: null,",
-    replace: "(evolve clear, D549 tax).",
+    find: "    costTaxTurn: null,\n    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,\n    // Sheds the whole list of per-attack bars, not just one.",
+    replace:
+      "    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,\n    // Sheds the whole list of per-attack bars, not just one.",
     expectKilledBy: ["packages/engine/src/costTax.test.ts"],
   },
   {
@@ -29968,8 +29955,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `retreat` §10 CLEAR OF `costTaxTurn` IS DELETED (turn.ts `clearOnLeavingActive`) — a spread literal. Killed by a PLAYED retreat.",
     file: "packages/engine/src/turn.ts",
-    find: "(retreat clear, D549 tax).\n    costTaxTurn: null,",
-    replace: "(retreat clear, D549 tax).",
+    find: "    costTaxTurn: null,\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/costTax.test.ts"],
   },
   {
@@ -29977,8 +29964,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `switch` §10 CLEAR OF `costTaxTurn` IS DELETED (`switchInto`) — a spread literal. Killed by a PLAYED Switch and by the gust rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "(switch clear, D549 tax).\n    costTaxTurn: null,",
-    replace: "(switch clear, D549 tax).",
+    find: "    damageVulnerability: null,\n    weaknessRetype: null,\n    costTaxTurn: null,\n",
+    replace: "    damageVulnerability: null,\n    weaknessRetype: null,\n",
     expectKilledBy: ["packages/engine/src/costTax.test.ts"],
   },
   {
@@ -29986,8 +29973,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `devolve` §10 CLEAR OF `costTaxTurn` IS DELETED (`devolvedBodyOf`) — a spread literal. Killed by the devolve rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "(devolve clear, D549 tax).\n    costTaxTurn: null,",
-    replace: "(devolve clear, D549 tax).",
+    find: "    costTaxTurn: null,\n    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,",
+    replace: "    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,",
     expectKilledBy: ["packages/engine/src/costTax.test.ts"],
   },
   {
@@ -29995,8 +29982,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `evolve` §10 CLEAR OF `koBounty` IS DELETED — a spread literal, so `tsc` cannot see it (only `makeInPlay` is compiler-forced, D412 C5). Killed by a PLAYED evolve.",
     file: "packages/engine/src/types.ts",
-    find: "(evolve clear, D549 bounty).\n    koBounty: null,",
-    replace: "(evolve clear, D549 bounty).",
+    find: "    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,\n    // Sheds the whole list of per-attack bars, not just one.",
+    replace:
+      "    handAttachMark: null,\n    installedRecoil: null,\n    // Sheds the whole list of per-attack bars, not just one.",
     expectKilledBy: ["packages/engine/src/koBounty.test.ts"],
   },
   {
@@ -30004,8 +29992,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `retreat` §10 CLEAR OF `koBounty` IS DELETED (turn.ts `clearOnLeavingActive`) — a spread literal. Killed by a PLAYED retreat.",
     file: "packages/engine/src/turn.ts",
-    find: "(retreat clear, D549 bounty).\n    koBounty: null,",
-    replace: "(retreat clear, D549 bounty).",
+    find: "    koBounty: null,\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/koBounty.test.ts"],
   },
   {
@@ -30013,8 +30001,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `switch` §10 CLEAR OF `koBounty` IS DELETED (`switchInto`) — a spread literal. Killed by a PLAYED Switch and by the gust rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "(switch clear, D549 bounty).\n    koBounty: null,",
-    replace: "(switch clear, D549 bounty).",
+    find: "    damageVulnerability: null,\n    weaknessRetype: null,\n    costTaxTurn: null,\n    koBounty: null,\n",
+    replace: "    damageVulnerability: null,\n    weaknessRetype: null,\n    costTaxTurn: null,\n",
     expectKilledBy: ["packages/engine/src/koBounty.test.ts"],
   },
   {
@@ -30022,8 +30010,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 THE `devolve` §10 CLEAR OF `koBounty` IS DELETED (`devolvedBodyOf`) — a spread literal. Killed by the devolve rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "(devolve clear, D549 bounty).\n    koBounty: null,",
-    replace: "(devolve clear, D549 bounty).",
+    find: "    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,",
+    replace: "    handAttachMark: null,\n    installedRecoil: null,",
     expectKilledBy: ["packages/engine/src/koBounty.test.ts"],
   },
   {
@@ -30050,9 +30038,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 32 WHILE THREE REQUIRED FIELDS LAND** (`costTaxTurn`, `koBounty`, `sideAttackLock`) — this deploy accepts a v32 record, and every declaration and the turn player's every projection THROW on its missing side record (D326's class). Killed by the engine suites' raw pins and match.test.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: [
       "packages/engine/src/sideAttackLock.test.ts",
       "apps/api/src/lobby/match.test.ts",
@@ -30492,7 +30479,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "🛑 C23 — **THE SNIPE SITE NEVER READS THE RETYPE** (D432's one-sided build, at the retype): the main hit honours it and an op-borne hit on the Active (`snipeActive`) does not. Killed by §4's snipe rung, driven on its own board.",
     file: "packages/engine/src/interpreter.ts",
-    find: "installedWeaknessRetypeOf(state, target.active),\n            // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n            installedWeaknessRewriteOf(state, target.active) ??\n              seatWeaknessRewrite(state, opponent, target.card),",
+    find: "installedWeaknessRetypeOf(state, target.active),\n            // Overwriting Bolt's installed rewrite first.\n            installedWeaknessRewriteOf(state, target.active) ??\n              seatWeaknessRewrite(state, opponent, target.card),",
     replace:
       "          null,\n          installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
@@ -30520,7 +30507,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "🛑 C26 — **R3 UNDONE**: a live retype is applied even when a null path says there is no Weakness step (the attack's own 'isn't affected by Weakness', Blooming Garden, D432's bar). Killed by §4's Clean Strike and bar rungs.",
     file: "packages/engine/src/attack.ts",
-    find: 'const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones": the applied ×2 as ×3 (R-SPH1).\n          withWeaknessAmount(\n            weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),\n            weaknessAmountOverride(next),\n          );',
+    find: 'const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : // Illumise "Supereffective Pheromones": Weakness applies as ×3 instead of ×2.\n          withWeaknessAmount(\n            weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),\n            weaknessAmountOverride(next),\n          );',
     replace:
       "    const weakness =\n      weaknessRetype !== null\n        ? weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite)\n        : damageSuppression?.weakness === true ||\n            seatRemovesWeakness(next, defenderSeat) ||\n            installedNoWeakness(next, defender)\n          ? null\n          : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
@@ -30559,9 +30546,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C30 — **THE RETREAT CLEAR DROPPED** (`clearOnLeavingActive`): the retyped body retreats and keeps the record. Killed by §5's retreat rung.",
     file: "packages/engine/src/turn.ts",
-    find: "    // Weakness type (retreat clear, D552 R5), and so is the forced half (`switchInto`).\n    weaknessRetype: null,\n",
-    replace:
-      "    // Weakness type (retreat clear, D552 R5), and so is the forced half (`switchInto`).\n",
+    find: "weaknessRetype: null,",
+    replace: "",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -30569,8 +30555,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C31 — **THE EVOLVE CLEAR DROPPED** (`evolveOnto`): the evolved card inherits the retype, and at T+2 a {C} hit doubles on a body the victim evolved to escape it. Killed by §5's evolve rung (number and field).",
     file: "packages/engine/src/types.ts",
-    find: "    // Weakness type — evolve clear, D552 R5).\n    weaknessRetype: null,\n",
-    replace: "    // Weakness type — evolve clear, D552 R5).\n",
+    find: "    // Out) before it resolves.\n    scheduledEffect: null,\n    attackDamageDebuff: null,\n    damageVulnerability: null,\n    weaknessRetype: null,\n",
+    replace:
+      "    // Out) before it resolves.\n    scheduledEffect: null,\n    attackDamageDebuff: null,\n    damageVulnerability: null,\n",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -30578,9 +30565,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C32 — **THE FORCED-SWITCH CLEAR DROPPED** (`switchInto`): a gusted-out retyped body keeps the record on the Bench. Killed by §5's forced-switch rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // line up (a Switch on the turn in between is the victim's played line — D552 R5).\n    weaknessRetype: null,\n",
-    replace:
-      "    // line up (a Switch on the turn in between is the victim's played line — D552 R5).\n",
+    find: "    damageVulnerability: null,\n    weaknessRetype: null,\n",
+    replace: "    damageVulnerability: null,\n",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -30588,8 +30574,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C33 — **THE DEVOLVE CLEAR DROPPED** (`devolvedBodyOf`): the devolved card keeps the retype. Killed by §5's devolve rung (constructed).",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // story one line up (§10: a devolved body is a new Pokémon — D552 R5).\n    weaknessRetype: null,\n",
-    replace: "    // story one line up (§10: a devolved body is a new Pokémon — D552 R5).\n",
+    find: "    weaknessRetype: null,\n    costTaxTurn: null,\n    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,",
+    replace:
+      "    costTaxTurn: null,\n    koBounty: null,\n    handAttachMark: null,\n    installedRecoil: null,",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -30606,9 +30593,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "🛑 C35 — **`MATCH_RECORD_VERSION` STAYS 33 WHILE THE SEVENTH POSITION LANDS** — this deploy accepts a v33 record, whose bodies lack `weaknessRetype` (every main hit that reads target effects THROWS, D326) and whose parks this deploy would resume correctly while a rollback would not. Anchored on D552's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`. 🆕🆕🆕 D556: RE-ANCHORED onto D556's doc tail (the eighth position now sits between), so the patch is now TWO steps, 35 → 33 — the experiment is unchanged (a deploy that accepts a v33 record), the anchor moved.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -31390,9 +31376,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "`yourHandAtLeast` reads `>` for the printed \"10 or more\": exactly 10 fails. Killed by §2's 9/10/11 rung and §4's 12-card rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[seat].hand.length >= cond.count;",
-    replace:
-      "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[seat].hand.length > cond.count;",
+    find: "return state.players[seat].hand.length >= cond.count;",
+    replace: "      return state.players[seat].hand.length > cond.count;",
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -31400,9 +31385,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "`yourHandAtLeast` counts the OPPONENT's hand. Killed by §2's \"the opponent's 10 is not yours\" rung and §4.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[seat].hand.length >= cond.count;",
-    replace:
-      "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[otherSeat(seat)].hand.length >= cond.count;",
+    find: "return state.players[seat].hand.length >= cond.count;",
+    replace: "      return state.players[otherSeat(seat)].hand.length >= cond.count;",
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -31428,9 +31412,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "`yourActiveHasType` reads the OPPONENT's Active (`opponentActiveHasType`'s seat): a Dragon across the table heals a non-Dragon. Killed by §2's mirror rung and §5.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.\n      const spot = activeTop(state, seat);",
+    find: "      const spot = activeTop(state, seat);\n      // Reads in-play types (`inPlayCardOf`).",
     replace:
-      "      // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.\n      const spot = activeTop(state, otherSeat(seat));",
+      "      const spot = activeTop(state, otherSeat(seat));\n      // Reads in-play types (`inPlayCardOf`).",
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -31525,8 +31509,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "Team Rocket's Great Ball never shuffles (\"Then, shuffle your deck.\" dropped). Killed by the pin and §6's resume rung (exactly one SHUFFLE after the search).",
     file: "packages/engine/src/registry.ts",
-    find: '      ],\n    },\n    { op: "shuffleDeck" },\n  ],\n};\n\n/** 🆕🆕🆕 **D556 — Caretaker',
-    replace: "      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D556 — Caretaker",
+    find: '          max: 1,\n          reveal: true,\n        },\n      ],\n    },\n    { op: "shuffleDeck" },\n',
+    replace: "          max: 1,\n          reveal: true,\n        },\n      ],\n    },\n",
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -31581,9 +31565,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 34 WHILE THE EIGHTH POSITION LANDS** — this deploy accepts a v34 record, whose allowance bag lacks `sideAttackBonuses` (the turn owner's first damaging attack THROWS, D326), and a rollback would drop a played +40 (`sideAttackBonusThisTurn.test.ts` §9). Anchored on D556's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -31826,9 +31809,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D558",
     what: "R-T1 reversed at the SUM: `selfAttackCostDiscount`'s §9 return answers 0 instead of the Tools' sum, so a locked holder that ALSO prints a discount (Radiant Charizard) loses Counter Gain's {C} with its own. Killed by §2's Radiant Charizard rung.",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only",
-    replace:
-      "  if (disabledAbilityUids(state).has(uid)) return 0; // §9 — the top card's terms only",
+    find: "if (disabledAbilityUids(state).has(uid)) return tools;",
+    replace: "  if (disabledAbilityUids(state).has(uid)) return 0;",
     expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
   },
   {
@@ -33605,9 +33587,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D562",
     what: "R-BE at the spread: a prevented splash spends the Berry. Killed by tools §3's benched-Dachsbun rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);\n    consumed.push(...spent);\n    // 🆕🆕🆕 D630 — the splash is attack damage: recorded on the body (Juggernaut Horn, R-JH1).",
+    find: "    // unprevented hit it reduced, a Brace only when the clamp used it.\n    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);",
     replace:
-      "    const spent = consumedTools(berry.toolUids, clamped);\n    consumed.push(...spent);\n    // 🆕🆕🆕 D630 — the splash is attack damage: recorded on the body (Juggernaut Horn, R-JH1).",
+      "    // unprevented hit it reduced, a Brace only when the clamp used it.\n    const spent = consumedTools(berry.toolUids, clamped);",
     expectKilledBy: ["packages/engine/src/toolsD562.test.ts"],
   },
   {
@@ -33661,9 +33643,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D562",
     what: "🛑 R-BE at the Bench snipe: a prevented pick spends the Berry — Dachsbun's {R} shield holds on the Bench and the Berry is discarded anyway. Killed by tools §3's placeSnipe benched-Dachsbun rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);\n    consumed.push(...spent);\n    // 🆕🆕🆕 D630 — `spreadDamage`'s record, verbatim (the `deals` arm is attack damage).",
-    replace:
-      "    const spent = consumedTools(berry.toolUids, clamped);\n    consumed.push(...spent);\n    // 🆕🆕🆕 D630 — `spreadDamage`'s record, verbatim (the `deals` arm is attack damage).",
+    find: "    });\n    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);",
+    replace: "    });\n    const spent = consumedTools(berry.toolUids, clamped);",
     expectKilledBy: ["packages/engine/src/toolsD562.test.ts"],
   },
   {
@@ -33727,9 +33708,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D562",
     what: "🛑 R-BE at the Active snipe: a prevented pick spends the Berry — Dachsbun's {R} shield holds in the Active Spot and the Berry is discarded anyway. Killed by tools §3's snipeActive Dachsbun rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);\n  // 🆕🆕🆕 D630 — recorded on the sniped Active (Juggernaut Horn, R-JH1).",
+    find: "  const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);\n  // Recorded on the sniped Active (Juggernaut Horn).",
     replace:
-      "  const spent = consumedTools(berry.toolUids, clamped);\n  // 🆕🆕🆕 D630 — recorded on the sniped Active (Juggernaut Horn, R-JH1).",
+      "  const spent = consumedTools(berry.toolUids, clamped);\n  // Recorded on the sniped Active (Juggernaut Horn).",
     expectKilledBy: ["packages/engine/src/toolsD562.test.ts"],
   },
   {
@@ -33937,9 +33918,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D562",
     what: "Handheld Fan's `side: \"opponent\"` is lost: the holder moves its OWN Energy to its own Bench instead of the Attacking Pokémon's. Killed by tools §1's row and §7's move rung.",
     file: "packages/engine/src/registry.ts",
-    find: '          route: "selfToBench",\n          side: "opponent",\n        },\n      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D562 — Jamming Tower',
-    replace:
-      '          route: "selfToBench",\n        },\n      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D562 — Jamming Tower',
+    find: 'route: "selfToBench",\n          side: "opponent",\n        },\n      ],\n    },\n  ],\n};',
+    replace: '          route: "selfToBench",\n        },\n      ],\n    },\n  ],\n};\n',
     expectKilledBy: ["packages/engine/src/toolsD562.test.ts"],
   },
   {
@@ -34208,8 +34188,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D563",
     what: "Plasma Bane's alternate is {W}, not the printed {C}: a Colorless Energy cannot pay it. Killed by §1 and §3's applies rung.",
     file: "packages/engine/src/registry.ts",
-    find: '        cost: ["Colorless"],\n      },\n    },\n  },\n};\n\n/** 🆕🆕🆕 D563 — Feraligatr',
-    replace: '        cost: ["Water"],\n      },\n    },\n  },\n};\n\n/** 🆕🆕🆕 D563 — Feraligatr',
+    find: 'cost: ["Colorless"],\n      },\n    },\n  },\n};',
+    replace: '        cost: ["Water"],\n      },\n    },\n  },\n};\n',
     expectKilledBy: ["packages/engine/src/abilityCostEvolveD563.test.ts"],
   },
   {
@@ -34236,7 +34216,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D563",
     what: "One Palafin ex printing loses its row and evolves from the hand. Killed by §1 and §5's every-printing rung.",
     file: "packages/engine/src/registry.ts",
-    find: '  "sv08.5-151": HEROS_SPIRIT, // Palafin ex (reprint)\n',
+    find: '"sv08.5-151": HEROS_SPIRIT,',
     replace: "",
     expectKilledBy: ["packages/engine/src/abilityCostEvolveD563.test.ts"],
   },
@@ -34689,9 +34669,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "The record lands on the OPPONENT's side: the attacker is shielded against its own victim. Killed by §2 (p2 stays null) and §3.",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const side = state.players[ctx.seat];\n  const pokemonType = op.pokemonType;\n  events.push({\n    type: "SIDE_DAMAGE_REDUCTION_INSTALLED",\n    seat: ctx.seat,\n    amount: op.amount,\n    ...(pokemonType === undefined ? {} : { pokemonType }),\n  });\n  // 🆕🆕🆕 D630 — APPENDED (Iron Defender\'s two plays stack), with every entry whose window has passed\n  // pruned so the list never grows past the live ones. D539: *"OVERWRITES any standing record"* above\n  // is WITHDRAWN.\n  const live = side.sideDamageReduction.filter((record) => record.turn > state.turn);\n  const record: SideDamageReduction =\n    pokemonType === undefined\n      ? { turn: state.turn + 1, amount: op.amount }\n      : { turn: state.turn + 1, amount: op.amount, pokemonType };\n  return withSide(state, ctx.seat, { ...side, sideDamageReduction: [...live, record] });',
+    find: 'const side = state.players[ctx.seat];\n  const pokemonType = op.pokemonType;\n  events.push({\n    type: "SIDE_DAMAGE_REDUCTION_INSTALLED",\n    seat: ctx.seat,\n    amount: op.amount,\n    ...(pokemonType === undefined ? {} : { pokemonType }),\n  });\n  // Appended so two plays in one turn stack; expired entries are pruned.\n  const live = side.sideDamageReduction.filter((record) => record.turn > state.turn);\n  const record: SideDamageReduction =\n    pokemonType === undefined\n      ? { turn: state.turn + 1, amount: op.amount }\n      : { turn: state.turn + 1, amount: op.amount, pokemonType };\n  return withSide(state, ctx.seat, { ...side, sideDamageReduction: [...live, record] });',
     replace:
-      '  const side = state.players[otherSeat(ctx.seat)];\n  const pokemonType = op.pokemonType;\n  events.push({\n    type: "SIDE_DAMAGE_REDUCTION_INSTALLED",\n    seat: ctx.seat,\n    amount: op.amount,\n    ...(pokemonType === undefined ? {} : { pokemonType }),\n  });\n  // 🆕🆕🆕 D630 — APPENDED (Iron Defender\'s two plays stack), with every entry whose window has passed\n  // pruned so the list never grows past the live ones. D539: *"OVERWRITES any standing record"* above\n  // is WITHDRAWN.\n  const live = side.sideDamageReduction.filter((record) => record.turn > state.turn);\n  const record: SideDamageReduction =\n    pokemonType === undefined\n      ? { turn: state.turn + 1, amount: op.amount }\n      : { turn: state.turn + 1, amount: op.amount, pokemonType };\n  return withSide(state, otherSeat(ctx.seat), { ...side, sideDamageReduction: [...live, record] });',
+      '  const side = state.players[otherSeat(ctx.seat)];\n  const pokemonType = op.pokemonType;\n  events.push({\n    type: "SIDE_DAMAGE_REDUCTION_INSTALLED",\n    seat: ctx.seat,\n    amount: op.amount,\n    ...(pokemonType === undefined ? {} : { pokemonType }),\n  });\n  const live = side.sideDamageReduction.filter((record) => record.turn > state.turn);\n  const record: SideDamageReduction =\n    pokemonType === undefined\n      ? { turn: state.turn + 1, amount: op.amount }\n      : { turn: state.turn + 1, amount: op.amount, pokemonType };\n  return withSide(state, otherSeat(ctx.seat), { ...side, sideDamageReduction: [...live, record] });',
     expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
   },
   {
@@ -34917,9 +34897,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 35 WHILE THE NINTH POSITION LANDS** — this deploy accepts a v35 record, whose `PlayerSide` lacks `sideDamageReduction` (the first damaging hit across the table THROWS, D326) and whose bag lacks the two allowance keys; a rollback would drop a played Gaze window, a pending Amarys discard or a Factory/Crobat licence (§9 of both D564 suites). Anchored on D564's own doc tail, one step. Killed by `match.test.ts` (and the sixteen engine raw pins).",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -34946,7 +34925,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D565",
     what: "the online HUD row forgets `benchOnly` — an Active Psyduck's row is lit and its click refused (D222). Killed by §2's redact rung.",
     file: "packages/engine/src/redact.ts",
-    find: '        // 🆕🆕🆕 D565 — `benchOnly`, `activeOnly`\'s mirror (Flustered Leap).\n        (ability.benchOnly === true && target.spot !== "bench") ||\n',
+    find: '(ability.benchOnly === true && target.spot !== "bench") ||',
     replace: "",
     expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts"],
   },
@@ -35785,9 +35764,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D566",
     what: "the card offer is every discard card — a plain Ogerpon (and any Item) is offered. Killed by §3's plain-pile and mixed-board rungs.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    return card !== undefined && matchesFilter(card, filter);\n  });\n}\n\n/** 🆕🆕🆕 D566 — Ogre's Mask's body answer",
-    replace:
-      "    return card !== undefined;\n  });\n}\n\n/** 🆕🆕🆕 D566 — Ogre's Mask's body answer",
+    find: "return card !== undefined && matchesFilter(card, filter);\n  });\n}",
+    replace: "    return card !== undefined;\n  });\n}\n",
     expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
@@ -36446,7 +36424,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D567",
     what: "the look row loses `actor` — the log files the Flute under the deck's owner. Killed by §3's event pins.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    ...(op.from === undefined ? {} : { from: op.from }),\n    // 🆕🆕🆕 D567 — Accompanying Flute: the looker is not the deck's owner (D135: present\n    // only on that path, so every own-deck row is byte-identical).\n    ...(owner === ctx.seat ? {} : { actor: ctx.seat }),\n",
+    find: "...(op.from === undefined ? {} : { from: op.from }),\n    // Accompanying Flute: the looker is not the deck's owner.\n    ...(owner === ctx.seat ? {} : { actor: ctx.seat }),",
     replace: "    ...(op.from === undefined ? {} : { from: op.from }),\n",
     expectKilledBy: ["packages/engine/src/trainerBundleD567.test.ts"],
   },
@@ -37668,9 +37646,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D570",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 36 WHILE THE TENTH POSITION LANDS** — this deploy accepts a v36 record, whose allowance bag lacks `attackAgainUid` (read as an OPEN window: every action but `endTurn` refused, D326's class), and a 0.453 rollback would grant a main phase between the two attacks (`festivalLeadD570.test.ts` §8). Anchored on D570's own doc tail, one step. Killed by `match.test.ts` (and the sixteen engine raw pins).",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -37776,7 +37753,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D571",
     what: "the filing moves BEHIND the zero-card return: an empty deck leaves a STALE `discarded` slot standing, and the trailing count answers for an earlier op (`discardDeckTop`'s overwrite rule). Killed by §4's runProgram rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: 'recordMoved(record, op.recordAs, matched);\n      // 🆕 Card revision B55 — the printed "Reveal": the whole top window is named to both players before\n      // anything moves, the whiff and the empty deck too (D241) — Bug Out\'s B45 row at the top end.\n      events.push({\n        type: "DECK_TOP_REVEALED",\n        seat: ctx.seat,\n        dest: "deck",\n        uids: [...window],\n        reveal: true,\n      });\n      if (window.length === 0) return { done: state };',
+    find: 'recordMoved(record, op.recordAs, matched);\n      // The printed "Reveal": the whole window is shown to both players before anything moves, even\n      // on a whiff or empty deck.\n      events.push({\n        type: "DECK_TOP_REVEALED",\n        seat: ctx.seat,\n        dest: "deck",\n        uids: [...window],\n        reveal: true,\n      });\n      if (window.length === 0) return { done: state };',
     replace:
       '      events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, dest: "deck", uids: [...window], reveal: true });\n      if (window.length === 0) return { done: state };\n      recordMoved(record, op.recordAs, matched);',
     expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
@@ -38477,9 +38454,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D573",
     what: "the D573 review's MEDIUM, RE-INSTALLED: `as` is written at declaration again, so Try to Imitate's TAILS (and a Confusion tails) declares 'used Try to Imitate (as Smash)' over an attack that did nothing — contradicting events.ts's contract. Killed by §4's tails rung and the Confused-tails rung.",
     file: "packages/engine/src/attack.ts",
-    find: "    attack: declared.name,\n    index,\n  };\n  // 🆕🆕🆕 D574 — a RESUMED re-entry",
+    find: "attack: declared.name,\n    index,\n  };",
     replace:
-      "    attack: declared.name,\n    index,\n    ...(copiedFrom === null ? {} : { as: copiedFrom.attack.name }),\n  };\n  // 🆕🆕🆕 D574 — a RESUMED re-entry",
+      "    attack: declared.name,\n    index,\n    ...(copiedFrom === null ? {} : { as: copiedFrom.attack.name }),\n  };",
     expectKilledBy: ["packages/engine/src/copyAttackD573.test.ts"],
   },
   {
@@ -38792,8 +38769,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "`makeInPlay` omits the REQUIRED `handAttachMark` (the one literal the compiler forces — the runner does not typecheck): every fresh body reads the mark as `undefined` and `liveHandAttachMark` throws on the first attach. Killed by §4/§5.",
     file: "packages/engine/src/types.ts",
-    find: "    // spread literals are held by mutants.\n    handAttachMark: null,\n",
-    replace: "    // spread literals are held by mutants.\n",
+    find: "    handAttachMark: null,\n    installedRecoil: null,\n    lockedAttacks: [],",
+    replace: "    installedRecoil: null,\n    lockedAttacks: [],",
     expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
   },
   {
@@ -38801,8 +38778,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "🛑 THE `switch` §10 CLEAR OF `handAttachMark` IS DELETED (`switchInto`) — a spread literal, so `tsc` cannot see it. Killed by §4's played Switch and by `attackLock.test.ts`'s three-route sweep.",
     file: "packages/engine/src/interpreter.ts",
-    find: "(switch clear, D575 hand mark).\n    handAttachMark: null,",
-    replace: "(switch clear, D575 hand mark).",
+    find: "    damageVulnerability: null,\n    weaknessRetype: null,\n    costTaxTurn: null,\n    koBounty: null,\n    handAttachMark: null,\n",
+    replace:
+      "    damageVulnerability: null,\n    weaknessRetype: null,\n    costTaxTurn: null,\n    koBounty: null,\n",
     expectKilledBy: [
       "packages/engine/src/mrvAttackSliceD575.test.ts",
       "packages/engine/src/attackLock.test.ts",
@@ -38813,8 +38791,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "🛑 THE `retreat` §10 CLEAR OF `handAttachMark` IS DELETED (turn.ts `clearOnLeavingActive`) — a spread literal. Killed by `attackLock.test.ts`'s three-route sweep.",
     file: "packages/engine/src/turn.ts",
-    find: "(retreat clear, D575 hand mark).\n    handAttachMark: null,",
-    replace: "(retreat clear, D575 hand mark).",
+    find: "    handAttachMark: null,\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/attackLock.test.ts"],
   },
   {
@@ -38822,8 +38800,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "🛑 THE `evolve` §10 CLEAR OF `handAttachMark` IS DELETED (`evolveOnto`) — a spread literal. Killed by `attackLock.test.ts`'s three-route sweep.",
     file: "packages/engine/src/types.ts",
-    find: "(evolve clear, D575 hand mark).\n    handAttachMark: null,",
-    replace: "(evolve clear, D575 hand mark).",
+    find: "    handAttachMark: null,\n    installedRecoil: null,\n    // Sheds the whole list of per-attack bars, not just one.",
+    replace:
+      "    installedRecoil: null,\n    // Sheds the whole list of per-attack bars, not just one.",
     expectKilledBy: ["packages/engine/src/attackLock.test.ts"],
   },
   {
@@ -38831,8 +38810,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "🛑 THE `devolve` §10 CLEAR OF `handAttachMark` IS DELETED (`devolvedBodyOf`) — a spread literal; the devolved body keeps the bar. Killed by §4's devolve rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // 🆕🆕🆕 D575 — the hand-attach mark (devolve clear, D575 hand mark).\n    handAttachMark: null,\n",
-    replace: "",
+    find: "    handAttachMark: null,\n    installedRecoil: null,",
+    replace: "    installedRecoil: null,",
     expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
   },
   {
@@ -39080,9 +39059,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 37 WHILE THE ELEVENTH POSITION LANDS** — this deploy accepts a v37 record, whose sides lack `sideAttackBlock` and whose bodies lack `handAttachMark` (the side arm and `liveHandAttachMark` dereference `.turn` of `undefined` — D326's class), and a 0.458 rollback would drop a live C.O.D.E.: Protect window, grant a barred attach, keep a Daydream turn and read an `\"ancient\"` block as none (`mrvAttackSliceD575.test.ts` §8). Anchored on D575's own doc tail, one step. Killed by `match.test.ts`.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
-    replace:
-      "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -39245,8 +39223,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D576",
     what: "the played fossil goes to the discard pile like any Item instead of onto the Bench. Killed by §1's lands-on-the-Bench rung.",
     file: "packages/engine/src/cardplay.ts",
-    find: "    bench: [...side.bench, makeInPlay(action.uid, state.turn)],\n  });\n  // 🆕🆕🆕 D642",
-    replace: "    discard: [...side.discard, action.uid],\n  });\n  // 🆕🆕🆕 D642",
+    find: "bench: [...side.bench, makeInPlay(action.uid, state.turn)],\n  });",
+    replace: "    discard: [...side.discard, action.uid],\n  });",
     expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
   },
   {
@@ -39254,8 +39232,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D576",
     what: "🛑 §10 / R-FO6 — the fossil enters play stamped turn 0, so a Lileep evolves from it on the turn it was played. Killed by §6's EVOLVE_TOO_SOON rung and §1's `turnPlayed` assertion.",
     file: "packages/engine/src/cardplay.ts",
-    find: "    bench: [...side.bench, makeInPlay(action.uid, state.turn)],\n  });\n  // 🆕🆕🆕 D642",
-    replace: "    bench: [...side.bench, makeInPlay(action.uid, 0)],\n  });\n  // 🆕🆕🆕 D642",
+    find: "bench: [...side.bench, makeInPlay(action.uid, state.turn)],\n  });",
+    replace: "    bench: [...side.bench, makeInPlay(action.uid, 0)],\n  });",
     expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
   },
   {
@@ -39709,7 +39687,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D578",
     what: "the §9 drop is deleted from `inPlayCardOf`: a locked Scovillain ex stays {G} and {R}. Killed by §5's Iron Thorns rungs (types and the Weakness hit).",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return top; // §9: printed\n",
+    find: "if (uid !== undefined && disabledAbilityUids(state).has(uid)) return top;",
     replace: "",
     expectKilledBy: ["packages/engine/src/scovillainD578.test.ts"],
   },
@@ -39745,7 +39723,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D578",
     what: "the typed heal reads the PRINTED types. Killed by §4's typed-heal rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).\n      const card = inPlayCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
+    find: "const card = inPlayCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
     replace:
       "      const card = topCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
     expectKilledBy: ["packages/engine/src/scovillainD578.test.ts"],
@@ -39755,8 +39733,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D578",
     what: "an attach's typed target reads the PRINTED types. Killed by §4's attach rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), so `targetType` reads the types the body has.\n      const card = inPlayCardOf(state, pokemon);",
-    replace: "      const card = topCardOf(state, pokemon);",
+    find: "      // Read the in-play card so `targetType` sees the types the body has.\n      const card = inPlayCardOf(state, pokemon);",
+    replace:
+      "      // Read the in-play card so `targetType` sees the types the body has.\n      const card = topCardOf(state, pokemon);",
     expectKilledBy: ["packages/engine/src/scovillainD578.test.ts"],
   },
   {
@@ -39764,9 +39743,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D578",
     what: "`opponentActiveHasType` reads the PRINTED types. Killed by §4's opponent rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const spot = activeTop(state, otherSeat(seat));\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
+    find: "const spot = activeTop(state, otherSeat(seat));\n      // Reads in-play types (`inPlayCardOf`), so a retyped body counts.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
     replace:
-      "      const spot = activeTop(state, otherSeat(seat));\n      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.\n      return (\n        spot !== null &&\n        (spot.card.types ?? []).includes(cond.type)\n      );",
+      "      const spot = activeTop(state, otherSeat(seat));\n      return (\n        spot !== null &&\n        (spot.card.types ?? []).includes(cond.type)\n      );",
     expectKilledBy: ["packages/engine/src/scovillainD578.test.ts"],
   },
   {
@@ -39774,9 +39753,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D578",
     what: "`yourActiveHasType` reads the PRINTED types. Killed by §4's own-side rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`), the arm above's read.\n      return (\n        spot !== null &&\n        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );",
+    find: '        ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type)\n      );\n    }\n    case "opponentActiveHasResistance": {',
     replace:
-      "      return (\n        spot !== null &&\n        (spot.card.types ?? []).includes(cond.type)\n      );",
+      '        (spot.card.types ?? []).includes(cond.type)\n      );\n    }\n    case "opponentActiveHasResistance": {',
     expectKilledBy: ["packages/engine/src/scovillainD578.test.ts"],
   },
   {
@@ -41130,7 +41109,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D583",
     what: "Team Rocket's Energy `me02.5-217` loses its alias row: the printing is unbuilt (a {C} fallback with no owner rule) while the census counts it. Killed by specialEnergyTagD583 §4, the census suite's partition / D583 rungs and reprintAliasMeD582's exact-key rung.",
     file: "packages/engine/src/registry.ts",
-    find: '  "me02.5-217": TEAM_ROCKETS_ENERGY, // 🆕🆕🆕 D583 — Team Rocket\'s Energy — twin `sv10-182` (tcgdex tags this row "Normal"; cards.ts `isSpecialEnergy` reads its printed text since D583)\n',
+    find: '"me02.5-217": TEAM_ROCKETS_ENERGY,',
     replace: "",
     expectKilledBy: [
       "packages/engine/src/specialEnergyTagD583.test.ts",
@@ -41696,7 +41675,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D587",
     what: "`bottomFromOpponentHandNote` loses Energy Swatter's arm: the dialog says \"choose a card\" over an Energy-only offer. Killed by trainerParamsMeD587 §10's note.",
     file: "packages/engine/src/interpreter.ts",
-    find: '  // 🆕🆕🆕 D587 — Energy Swatter `me03-073`\'s printed form: Ortega\'s sentence with "an Energy card"\n  // for "a card" (one printed form per card, the Greavard branch\'s rule). Without it the dialog\n  // would say "a card" over an offer of Energy cards only.\n  if (op.filter?.kind === "anyEnergy") {\n    return "Your opponent reveals their hand, and you choose an Energy card you find there and put it on the bottom of their deck.";\n  }\n',
+    find: 'if (op.filter?.kind === "anyEnergy") {\n    return "Your opponent reveals their hand, and you choose an Energy card you find there and put it on the bottom of their deck.";\n  }',
     replace: "",
     expectKilledBy: ["packages/engine/src/trainerParamsMeD587.test.ts"],
   },
@@ -41763,9 +41742,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D588",
     what: "LILLIES_DETERMINATION's base draw is Lacey's 4 against the printed 6. Killed by trainerParamsMeD588 §2 and §4.",
     file: "packages/engine/src/registry.ts",
-    find: '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],\n      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 6 } }],\n    },\n  ],\n};\n\n/** Misty\'s Vitality',
+    find: 'then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],\n      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 6 } }],\n    },\n  ],\n};',
     replace:
-      '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],\n      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 4 } }],\n    },\n  ],\n};\n\n/** Misty\'s Vitality',
+      '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],\n      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 4 } }],\n    },\n  ],\n};\n',
     expectKilledBy: ["packages/engine/src/trainerParamsMeD588.test.ts"],
   },
   {
@@ -42406,9 +42385,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Haphazard Hammer discards from its controller's own Active. Killed by onEvolveMeD590 §1's program and §9's heads board.",
     file: "packages/engine/src/registry.ts",
-    find: '          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],',
+    find: '          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],\n        },\n      ],\n    },\n  ],\n};\n\n// Activated Abilities: the once-per-turn lock is `"sharedByName"` where the card prints "You can\'t',
     replace:
-      '          then: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],',
+      '          then: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],\n        },\n      ],\n    },\n  ],\n};\n\n// Activated Abilities: the once-per-turn lock is `"sharedByName"` where the card prints "You can\'t',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -42416,9 +42395,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Haphazard Hammer's heads discards every Energy, not one. Killed by onEvolveMeD590 §1's program and §9's heads board.",
     file: "packages/engine/src/registry.ts",
-    find: '          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],',
+    find: '          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],\n        },\n      ],\n    },\n  ],\n};\n\n// Activated Abilities: the once-per-turn lock is `"sharedByName"` where the card prints "You can\'t',
     replace:
-      '          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" }, count: "all" }],',
+      '          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" }, count: "all" }],\n        },\n      ],\n    },\n  ],\n};\n\n// Activated Abilities: the once-per-turn lock is `"sharedByName"` where the card prints "You can\'t',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -43665,8 +43644,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D596",
     what: "the trailing shuffle goes: the deck is not shuffled after the search. Killed by megaGardevoirD596 §1/§4.",
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "shuffleDeck" },\n      ];\n    }\n  }\n  // ⚠️⚠️ D237 — the discard pile',
-    replace: "      ];\n    }\n  }\n  // ⚠️⚠️ D237 — the discard pile",
+    find: '          each: true,\n        },\n        { op: "shuffleDeck" },\n',
+    replace: "          each: true,\n        },\n",
     expectKilledBy: ["packages/engine/src/megaGardevoirD596.test.ts"],
   },
   {
@@ -44933,9 +44912,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D602",
     what: "Call a Buddy drops the printed \"Then, shuffle your deck\". Killed by activatedMeD602 §1's program and §2's SHUFFLE event.",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },\n        { op: "shuffleDeck" },\n      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D602 — Erika',
+    find: '{ op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },\n        { op: "shuffleDeck" },\n      ],\n    },\n  ],\n};',
     replace:
-      '        { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },\n      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D602 — Erika',
+      '        { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },\n      ],\n    },\n  ],\n};\n',
     expectKilledBy: ["packages/engine/src/activatedMeD602.test.ts"],
   },
   {
@@ -44975,9 +44954,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D602",
     what: "Guiding Dance's shuffle sits after the gate (tails still shuffles), not inside the heads branch (Poké Ball's reading). Killed by activatedMeD602 §1's comparison and §4's tails board.",
     file: "packages/engine/src/registry.ts",
-    find: '              reveal: true,\n            },\n            { op: "shuffleDeck" },\n          ],\n        },\n      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D602 — Shuckle',
+    find: '              max: 1,\n              reveal: true,\n            },\n            { op: "shuffleDeck" },\n          ],\n        },\n      ],\n    },\n  ],',
     replace:
-      '              reveal: true,\n            },\n          ],\n        },\n        { op: "shuffleDeck" },\n      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D602 — Shuckle',
+      '              max: 1,\n              reveal: true,\n            },\n          ],\n        },\n        { op: "shuffleDeck" },\n      ],\n    },\n  ],',
     expectKilledBy: ["packages/engine/src/activatedMeD602.test.ts"],
   },
   {
@@ -45247,8 +45226,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D603",
     what: "Mega Signal drops the printed \"Then, shuffle your deck\". Killed by megaGatedMeD603 §1's program and §7's SHUFFLE event.",
     file: "packages/engine/src/registry.ts",
-    find: 'max: 1, reveal: true },\n    { op: "shuffleDeck" },\n  ],\n};\n\n/** 🆕🆕🆕 **D603 — Jett',
-    replace: "max: 1, reveal: true },\n  ],\n};\n\n/** 🆕🆕🆕 **D603 — Jett",
+    find: '    { op: "searchDeck", filter: { kind: "megaEvolutionEx" }, dest: "hand", max: 1, reveal: true },\n    { op: "shuffleDeck" },\n',
+    replace:
+      '    { op: "searchDeck", filter: { kind: "megaEvolutionEx" }, dest: "hand", max: 1, reveal: true },\n',
     expectKilledBy: ["packages/engine/src/megaGatedMeD603.test.ts"],
   },
   {
@@ -45582,9 +45562,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D604",
     what: "a watched attach trigger (Gnawing Curse) swallows the Bench search. Killed by §5's Gengar board.",
     file: "packages/engine/src/turn.ts",
-    find: "      // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).\n      if (benchSearch !== undefined)\n        return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);\n",
-    replace:
-      "      // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).\n",
+    find: "      if (benchSearch !== undefined)\n        return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/typedSpecialEnergyMeD604.test.ts"],
   },
   {
@@ -46256,9 +46235,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D607",
     what: '"Energy card" in the opponent\'s hand reads as Basic Energy only: the Special stops counting. Killed by scalingCountsMeD607 §2/§4.',
     file: "packages/engine/src/effects.ts",
-    find: '  // 🆕🆕🆕 D607 — Beautifly "Energy Straw"\'s noun: any Energy card, Basic or Special.\n  ["Energy card", { kind: "anyEnergy" }],\n',
-    replace:
-      '  // 🆕🆕🆕 D607 — Beautifly "Energy Straw"\'s noun: any Energy card, Basic or Special.\n  ["Energy card", { kind: "basicEnergy" }],\n',
+    find: '  ["Energy card", { kind: "anyEnergy" }],\n]);',
+    replace: '  ["Energy card", { kind: "basicEnergy" }],\n]);',
     expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
   },
   {
@@ -47631,7 +47609,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D614",
     what: "`damageSubject` places Gnawing Curse's counters on an Active Luminous Wing body. Killed by abilityShieldMeD614 §3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // 🆕🆕🆕 D614 — the §11 funnel on the subject body (Luminous Wing).\n    if (effectRefused(state, seat, ctx, events, active)) return state;\n",
+    find: "if (effectRefused(state, seat, ctx, events, active)) return state;",
     replace: "",
     expectKilledBy: ["packages/engine/src/abilityShieldMeD614.test.ts"],
   },
@@ -48781,8 +48759,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D618",
     what: "`moveCountersFromBench` stops asking the Cage: the move lands on the Benched body. Killed by stadiumsMeD618 §2 (R-BCG1).",
     file: "packages/engine/src/interpreter.ts",
-    find: 'before the HEALED row (R-BCG1).\n  if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;\n',
-    replace: "before the HEALED row (R-BCG1).\n",
+    find: '  if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;\n  events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });',
+    replace: '  events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });',
     expectKilledBy: ["packages/engine/src/stadiumsMeD618.test.ts"],
   },
   {
@@ -48790,8 +48768,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D618",
     what: "`moveCountersToOpponent` (Adrena-Brain) stops asking the Cage. Killed by stadiumsMeD618 §3 (R-BCG1).",
     file: "packages/engine/src/interpreter.ts",
-    find: 'refused whole (R-BCG1).\n  if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;\n',
-    replace: "refused whole (R-BCG1).\n",
+    find: '  // Battle Cage: a move onto a Benched body is refused whole.\n  if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;\n',
+    replace: "  // Battle Cage: a move onto a Benched body is refused whole.\n",
     expectKilledBy: ["packages/engine/src/stadiumsMeD618.test.ts"],
   },
   {
@@ -49712,8 +49690,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D622",
     what: "The resumed pick passes `wrOnly: false`: a parked Telekinesis lands through the block. Killed by bareTailD622 §2/§4.",
     file: "packages/engine/src/interpreter.ts",
-    find: "            // 🆕🆕🆕 D622 — the parked op's own `wrOnly`: a v43 park lacks it and keeps its old reading.\n            op.wrOnly === true,",
-    replace: "            false,",
+    find: "            op.wrOnly === true,\n          )\n        : state;",
+    replace: "            false,\n          )\n        : state;",
     expectKilledBy: ["packages/engine/src/bareTailD622.test.ts"],
   },
   {
@@ -50189,9 +50167,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D625",
     what: "the play gate admits 4 Prizes remaining. Killed by trainersMeD625 §2 (refused at 4).",
     file: "packages/engine/src/registry.ts",
-    find: '  trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n};\n\n/** 🆕🆕🆕 **D625 — Jumbo',
+    find: 'trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n};',
     replace:
-      '  trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3, 4] },\n};\n\n/** 🆕🆕🆕 **D625 — Jumbo',
+      '  trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3, 4] },\n};\n',
     expectKilledBy: ["packages/engine/src/trainersMeD625.test.ts"],
   },
   {
@@ -50209,9 +50187,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D625",
     what: "Jumbo Ice Cream's gate is 2 Energy. Killed by trainersMeD625 §3 (refused at 2).",
     file: "packages/engine/src/registry.ts",
-    find: '  trainerPlayableIf: { kind: "yourActiveEnergyAtLeast", count: 3 },\n};\n\n/** 🆕🆕🆕 **D625 — Dark Bell',
-    replace:
-      '  trainerPlayableIf: { kind: "yourActiveEnergyAtLeast", count: 2 },\n};\n\n/** 🆕🆕🆕 **D625 — Dark Bell',
+    find: 'trainerPlayableIf: { kind: "yourActiveEnergyAtLeast", count: 3 },\n};',
+    replace: '  trainerPlayableIf: { kind: "yourActiveEnergyAtLeast", count: 2 },\n};\n',
     expectKilledBy: ["packages/engine/src/trainersMeD625.test.ts"],
   },
   {
@@ -50229,9 +50206,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D625",
     what: "Dark Bell Confuses only the opponent's Active (the second gate aims at the defender). Killed by trainersMeD625 §4 (the controller's own Active is Confused).",
     file: "packages/engine/src/registry.ts",
-    find: '      otherwise: [{ op: "applyStatus", target: "self", status: "confused" }],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D625 — Wally',
+    find: 'otherwise: [{ op: "applyStatus", target: "self", status: "confused" }],\n    },\n  ],\n};',
     replace:
-      '      otherwise: [{ op: "applyStatus", target: "defender", status: "confused" }],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D625 — Wally',
+      '      otherwise: [{ op: "applyStatus", target: "defender", status: "confused" }],\n    },\n  ],\n};\n',
     expectKilledBy: ["packages/engine/src/trainersMeD625.test.ts"],
   },
   {
@@ -50487,9 +50464,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D626",
     what: "`koWasActiveSpot` answers for any occupied Active Spot. Killed by koTriggerRestMeD626 §3 (benched Flygon behind a live Active: no koTrigger).",
     file: "packages/engine/src/flow.ts",
-    find: '  return active !== null && topUid(active) === ref.uid;\n}\n\n/** 🆕🆕🆕 §8.1 (D598) — THE "KO\'d BY AN ex" CONDITION:',
-    replace:
-      '  return active !== null;\n}\n\n/** 🆕🆕🆕 §8.1 (D598) — THE "KO\'d BY AN ex" CONDITION:',
+    find: "return active !== null && topUid(active) === ref.uid;\n}",
+    replace: "  return active !== null;\n}\n",
     expectKilledBy: ["packages/engine/src/koTriggerRestMeD626.test.ts"],
   },
   {
@@ -51423,8 +51399,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D630",
     what: "the main hit asks the classed reduction with no attacker: Metal Block never reduces. Killed by persistedRecordsMeD630 §5.",
     file: "packages/engine/src/attack.ts",
-    find: "        installedReductionOf(next, defender, attacker, attackerBody) + // 🆕🆕🆕 D630 — Metal Block's class",
-    replace: "        installedReductionOf(next, defender) + // 🆕🆕🆕 D630 — Metal Block's class",
+    find: "installedReductionOf(next, defender, attacker, attackerBody) +",
+    replace: "        installedReductionOf(next, defender) +",
     expectKilledBy: ["packages/engine/src/persistedRecordsMeD630.test.ts"],
   },
   {
@@ -51847,7 +51823,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "`healChosen` (Potion) does not ask the heal lock. Killed by passiveRestMeD631 §6.",
     file: "packages/engine/src/interpreter.ts",
-    find: '  if (healLocked(state, pokemon)) return state; // 🆕🆕🆕 D631 — Life-Locked\n  const healed = amount === "all" ? pokemon.damage',
+    find: 'if (healLocked(state, pokemon)) return state;\n  const healed = amount === "all" ? pokemon.damage',
     replace: '  const healed = amount === "all" ? pokemon.damage',
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -51856,7 +51832,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "`healSelf` does not ask the heal lock: the attack's self-heal and Good Sleep heal under Yveltal. Killed by passiveRestMeD631 §6 / §7.",
     file: "packages/engine/src/interpreter.ts",
-    find: '  if (healLocked(state, active)) return state; // 🆕🆕🆕 D631 — Life-Locked\n  const healed = amount === "all" ? active.damage',
+    find: 'if (healLocked(state, active)) return state; // Life-Locked\n  const healed = amount === "all" ? active.damage',
     replace: '  const healed = amount === "all" ? active.damage',
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -51865,8 +51841,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "`healEach` (Garganacl) does not ask the heal lock. Killed by passiveRestMeD631 §6.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    if (healLocked(state, pokemon)) return pokemon; // 🆕🆕🆕 D631 — Life-Locked\n    // 🆕🆕🆕 D560",
-    replace: "    // 🆕🆕🆕 D560",
+    find: "    const uid = topUid(pokemon);\n    if (healLocked(state, pokemon)) return pokemon;",
+    replace: "    const uid = topUid(pokemon);\n",
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
   {
@@ -51957,7 +51933,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "`spreadDamage` drops Gloomy Garbage's term. Killed by passiveRestMeD631 §5.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        opposingAttackDebuff(state, attackerTop.active) +\n        // 🆕🆕🆕 D631 — Gloomy Garbage: no clause here ignores effects on a target, so every holder counts.\n        opposingToolAttackDebuff(state, attackerTop.active);",
+    find: "opposingAttackDebuff(state, attackerTop.active) +\n        // Gloomy Garbage: nothing here ignores effects on the target, so every holder counts.\n        opposingToolAttackDebuff(state, attackerTop.active);",
     replace: "        opposingAttackDebuff(state, attackerTop.active);",
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -51984,7 +51960,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "`snipeActive` drops Gloomy Garbage's term. Killed by passiveRestMeD631 §5b.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        (ignoreWR ? 0 : opposingAttackDebuff(state, attacker.active)) +\n        // 🆕🆕🆕 D631 — Gloomy Garbage: `ignoreWR` drops only the target's own term (R-GG1).\n        opposingToolAttackDebuff(state, attacker.active, ignoreWR ? target.active : undefined);",
+    find: "(ignoreWR ? 0 : opposingAttackDebuff(state, attacker.active)) +\n        // Gloomy Garbage: `ignoreWR` drops only the target's own term.\n        opposingToolAttackDebuff(state, attacker.active, ignoreWR ? target.active : undefined);",
     replace: "        (ignoreWR ? 0 : opposingAttackDebuff(state, attacker.active));",
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -52002,7 +51978,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "the scan ignores `exceptHolder`. Killed by passiveRestMeD631 §5b.",
     file: "packages/engine/src/continuous.ts",
-    find: "      if (exceptHolder !== undefined && topUid(exceptHolder) === holderUid) continue; // R-GG1\n",
+    find: "if (exceptHolder !== undefined && topUid(exceptHolder) === holderUid) continue;",
     replace: "",
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -52020,7 +51996,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "`healEachAll` (Picnic Basket) does not ask the heal lock. Killed by passiveRestMeD631 §6.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      if (healLocked(state, pokemon)) return pokemon; // 🆕🆕🆕 D631 — Life-Locked\n      const healed = Math.min(amount, pokemon.damage);",
+    find: "if (healLocked(state, pokemon)) return pokemon; // Life-Locked\n      const healed = Math.min(amount, pokemon.damage);",
     replace: "      const healed = Math.min(amount, pokemon.damage);",
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -52029,7 +52005,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: '`healSubject`\'s Active arm (Magearna "Auto Heal") does not ask the heal lock. Killed by passiveRestMeD631 §6.',
     file: "packages/engine/src/interpreter.ts",
-    find: "    if (healLocked(state, active)) return state; // 🆕🆕🆕 D631 — Life-Locked\n    const healed = Math.min(amount, active.damage);",
+    find: "if (healLocked(state, active)) return state; // Life-Locked\n    const healed = Math.min(amount, active.damage);",
     replace: "    const healed = Math.min(amount, active.damage);",
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
@@ -52846,7 +52822,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D636",
     what: "a retreat keeps Jet of Ink's stamp on the benched body. Killed by nextTurnLocksD636 §4.",
     file: "packages/engine/src/turn.ts",
-    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp\n",
+    find: "attackTwoFlipLockTurn: null,",
     replace: "",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
@@ -52920,9 +52896,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D636",
     what: "evolving clears `benchedTurn`: a Clauncher that retreated and evolved into Clawitzer on the Bench loses Fall Back to Reload (R-FBR1's stated reading reversed). Killed by nextTurnLocksD636 §7.",
     file: "packages/engine/src/types.ts",
-    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)",
+    find: "    // own next turn and attack.\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,",
     replace:
-      "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)\n    benchedTurn: null,",
+      "    // own next turn and attack.\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,\n    benchedTurn: null,",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
   {
@@ -53035,8 +53011,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D636",
     what: "a Switch keeps Jet of Ink's stamp on the switched-out body. Killed by nextTurnLocksD636 §4.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp (switch clear)\n",
-    replace: "",
+    find: "    attackTwoFlipLockTurn: null,\n    damageReduction: null,\n    noWeaknessTurn: null,\n    scheduledEffect: null,",
+    replace: "    damageReduction: null,\n    noWeaknessTurn: null,\n    scheduledEffect: null,",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
   {
@@ -53044,8 +53020,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D636",
     what: "evolving keeps Jet of Ink's stamp: the evolved card still flips. Killed by nextTurnLocksD636 §4.",
     file: "packages/engine/src/types.ts",
-    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)\n",
-    replace: "",
+    find: "    // own next turn and attack.\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,\n",
+    replace:
+      "    // own next turn and attack.\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
   {
@@ -53053,8 +53030,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D636",
     what: "devolving keeps Jet of Ink's stamp. Killed by nextTurnLocksD636 §4.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp (devolve clear)\n",
-    replace: "",
+    find: "    retreatBlocked: false,\n    retreatLockedTurn: null,\n    attackBlock: null,\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n    attackTwoFlipLockTurn: null,\n",
+    replace:
+      "    retreatBlocked: false,\n    retreatLockedTurn: null,\n    attackBlock: null,\n    attackLockedTurn: null,\n    attackFlipLockTurn: null,\n",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
   {
@@ -54258,7 +54236,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D642",
     what: "the hand evolve is not handed the kept conditions: Confused clears under Dizzying Valley. Killed by stadiumWatchedMeD642 §5.",
     file: "packages/engine/src/turn.ts",
-    find: "    stageChangeConditions(state, from.conditions), // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)\n",
+    find: "stageChangeConditions(state, from.conditions),",
     replace: "",
     expectKilledBy: ["packages/engine/src/stadiumWatchedMeD642.test.ts"],
   },
@@ -54267,7 +54245,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D642",
     what: "the deck evolve (Emergency Evolution) is not handed the kept conditions. Killed by stadiumWatchedMeD642 §5.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    stageChangeConditions(pulled, offer.body.conditions), // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)\n",
+    find: "stageChangeConditions(pulled, offer.body.conditions),",
     replace: "",
     expectKilledBy: ["packages/engine/src/stadiumWatchedMeD642.test.ts"],
   },
@@ -55092,9 +55070,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D645",
     what: "`conditionHolds` answers TRUE for the declaration member off attack.ts. Killed by lastOneOffsMeD645 §4.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      // `resolveDeclarationGates` answers it at declaration, so a run never reaches here with it. FALSE otherwise.\n      return false;",
-    replace:
-      "      // `resolveDeclarationGates` answers it at declaration, so a run never reaches here with it. FALSE otherwise.\n      return true;",
+    find: '      return false;\n    case "yourPokemonKoedOnOpponentsLastTurn":',
+    replace: '      return true;\n    case "yourPokemonKoedOnOpponentsLastTurn":',
     expectKilledBy: ["packages/engine/src/lastOneOffsMeD645.test.ts"],
   },
   {

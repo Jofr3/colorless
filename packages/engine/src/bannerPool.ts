@@ -1,14 +1,6 @@
-// 🆕🆕🆕 D568 — TEST-ONLY: not exported from the package index, like `testFixtures.ts`.
-//
-// A LOCAL MIRROR of the Standard-legal Pokémon ex pool (D275's rule: tests read real ids
-// out of a committed pool, never out of a network or a dev database). One row per legal
-// printing whose name ends in " ex": `[id, name, hp, attack names, ability names]`.
-// Measured 2026-09-30 from the tcgdex card JSON the 2026-09-25 coverage audit fetched
-// (the ingest's own upstream), `legal.standard === true`: 353 rows over the eleven
-// Standard sets. It exists for `banners.ts`' two table rungs (`teraBannerD568.test.ts`):
-// every Tera id is a row here, and printings that share name, HP, attack names and
-// ability names agree on Tera membership (REPRINT CONSISTENCY). A snapshot, not a
-// source of truth: a later set or a legality change re-measures it.
+// Test-only, not exported from the package index. A committed snapshot of Standard-legal Pokémon ex
+// printings, `[id, name, hp, attack names, ability names]`, so tests can check banner membership
+// against real ids.
 
 export type LegalExRow = readonly [
   id: string,

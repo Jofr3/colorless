@@ -1,13 +1,6 @@
-// SQL generation for the tcgdex→D1 ingest (P1 milestone 4, §3.4).
-//
-// The ingest CLI (apps/api/scripts/ingest.ts) applies generated SQL files via
-// `wrangler d1 execute --file`, so everything here must serialize to plain SQL
-// TEXT — there are no bound parameters. That makes the escaping helper the
-// load-bearing piece: values are emitted as SQLite literals with single-quote
-// doubling, NULL for null/undefined, integers for booleans, and JSON text
-// (via JSON.stringify) for the `*_json` columns. Statements are idempotent
-// upserts (`INSERT … ON CONFLICT(id) DO UPDATE`) — never delete+reinsert,
-// because `deck_cards.card_id` references cards with RESTRICT semantics.
+// Generated SQL is applied via `wrangler d1 execute --file`, so values are emitted as escaped
+// SQLite literals rather than bound parameters. Statements are upserts, never delete and reinsert,
+// because `deck_cards.card_id` references cards with RESTRICT.
 
 /** What a column spec declares about its values; enforced at runtime. */
 export type SqlColumnKind = "text" | "number" | "boolean" | "json";

@@ -21,12 +21,9 @@ import {
 } from "./cards";
 import {
   aceSpecPlayBarred,
-  // 🆕🆕🆕 D577 — the live per-seat Bench limit (Area Zero Underdepths, R-AZ1) and the
-  // trim check on the non-sweeping evolve path.
   benchLimitOf,
   benchTrimStages,
   effectiveRetreatCost,
-  // 🆕🆕🆕 D578 — Team Rocket's Energy's owner restriction, at the hand attach.
   energyMayBeAttachedTo,
   energyRulesApply,
   intoPlayOnlyViaOf,
@@ -36,9 +33,7 @@ import {
   pokemonPlayBarred,
   retreatLocked,
   sideRetreatLocked,
-  // 🆕🆕🆕 D618 — Forest of Vitality's same-turn evolution, at the §10 ban.
   stadiumLicensesSameTurnEvolve,
-  // 🆕🆕🆕 D642 — Dizzying Valley's kept Confusion, at the hand evolve.
   stageChangeConditions,
 } from "./continuous";
 import type { EffectOp } from "./effects";
@@ -52,7 +47,6 @@ import {
   turnTail,
 } from "./flow";
 import {
-  // 🆕🆕🆕 D642 — Risky Ruins' counters, at the hand play to the Bench.
   benchArrivalCounters,
   conditionHolds,
   conditionNote,
@@ -86,19 +80,13 @@ import {
   without,
 } from "./types";
 
-// The in-turn actions (rules §5). Turn start/end mechanics live in flow.ts:
-// ending a turn seeds the staged tail (TURN_ENDED → checkup → the opponent's
-// startTurn) and `advance` drains it — attack.ts feeds the same tail with
-// the KO stages in front, which is why the tail is a queue and not a call
-// [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
+// In-turn actions (§5). Ending a turn seeds a staged tail that `advance` drains; attacks feed the
+// same tail with KO stages in front, which is why it is a queue.
 
-/** Bench slots are array indices, and the arrays are dense. The `Number` check
-    guards the wire: TS says these are numbers, JSON does not, and a string
-    index misbehaves silently rather than loudly (see the call sites).
-    🆕🆕🆕 D577 — bounded by `BENCH_CEILING` (8), not `BENCH_MAX`: under Area Zero
-    Underdepths a Bench index 5 … 7 is a real slot. A ref past the LIVE Bench still misses
-    at its call site (every one re-reads `bench[index]`), so the ceiling is the shape check
-    and the board is the existence check, as before. */
+/**
+ * Bench slots are dense array indices. The `Number` check guards the wire, since JSON may send a
+ * string. Bounded by `BENCH_CEILING`, not `BENCH_MAX`; each call site still checks the live bench.
+ */
 export function isBenchIndex(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0 && (value as number) < BENCH_CEILING;
 }
@@ -118,12 +106,8 @@ export function turnGate(
   if (phase.seat !== action.seat) {
     return err("WRONG_SEAT", `it is ${phase.seat}'s turn`);
   }
-  // 🆕🆕🆕 §5.3/§8 (D570, R-FL1) — Festival Lead's attack-again window: between the two
-  // attacks the turn is NARROWED to the second declaration or its decline. The printed
-  // "may use an attack it has twice" grants a second ATTACK, not a second main phase, so
-  // every other in-turn action (attach, bench, evolve, Rare Candy, retreat, Trainer, Tool,
-  // Ability, Stadium ability) is refused here, once, for all nine handlers. The window is
-  // `allowances.attackAgainUid` (types.ts), opened only by flow.ts `finishAttack`.
+  // Festival Lead's attack-again window: between the two attacks only the second declaration or its
+  // decline is allowed, since the card grants a second attack, not a second main phase.
   if (
     state.allowances.attackAgainUid !== null &&
     action.type !== "attack" &&
@@ -137,12 +121,10 @@ export function turnGate(
   return null;
 }
 
-/** The attach target off the wire: a non-null object naming a legal `spot`.
-    Like every wire value (types are not validation) — a null or garbled
-    shape must reject, not throw on `.spot`. The bench index is checked at
-    the use site (isBenchIndex), same as every other wire index. Shared by the
-    attach/evolve/ability targets and the effect-choice Pokémon ref (🆕🆕🆕 D576: and
-    `discardFromPlay`'s target, R-FO3). */
+/**
+ * The attach target off the wire: a non-null object naming a legal `spot`. A garbled shape must
+ * reject, not throw. The bench index is checked at the use site.
+ */
 export function isPokemonTarget(value: unknown): value is PokemonTarget {
   if (typeof value !== "object" || value === null) return false;
   const spot = (value as { spot?: unknown }).spot;
@@ -168,44 +150,10 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   if (!isEnergyCard(card)) {
     return err("NOT_AN_ENERGY", `${card.name} is not an Energy card`);
   }
-  // §6.2/§7.4 (D292) — THE ENERGY SURFACE'S ONLY HAND-PLAY BAR, and the eighth
-  // read site of this family. Genesect `sv06.5-040` "ACE Nullifier" prints *"your
-  // opponent can't play any ACE SPEC cards from their hand"* — **any**, with no
-  // class word — and the catalog holds THREE ACE SPEC Special Energy printings
-  // (`sv05-162` Neo Upper, `sv08-191` Enriching, `sv06-167` Legacy). Attaching an
-  // Energy from hand IS playing that card, so this is the surface D291 measured
-  // itself missing and asserted as an absence in `aceSpecBar.test.ts` §5.
-  //
-  // 🛑 `aceSpecPlayBarred` AND NOT `handPlayBarred`, WHICH IS THE WHOLE DESIGN
-  // CALL OF THIS SLICE. `handPlayBarred` demands a `HandPlayClass`, and that union
-  // is exactly `Card.trainerType` (D287) — NULL on all three printings. Passing
-  // `"Item"` here would have WORKED (both class-keyed sources answer `false` for an
-  // Energy on every board) and would have been a LIE the compiler could never
-  // catch: the day a stamp or an Active bar names `"Item"`, this line would refuse
-  // a perfectly legal Energy attach and every ACE SPEC test in the repo would stay
-  // green. The rarity term is EXTRACTED instead, so this site asks the question it
-  // actually means and no class word is invented for it.
-  //
-  // 🛑 **AND "THE COMPILER COULD NEVER CATCH IT" IS A MEASUREMENT, NOT A WORRY.**
-  // The lie was PERFORMED — `handPlayBarred(state, action.seat, "Item", card)`
-  // substituted here, imported, run — and left **4,747 of 4,747 engine tests
-  // GREEN, 0 assertions moved**, then undone by inverse substitution. **NO BOARD
-  // THIS CATALOG CAN BUILD SEPARATES THE TWO READERS**, which is exactly why the
-  // choice had to be made on DESIGN grounds and why it is recorded HERE rather
-  // than as a mutant row: a row would have claimed the suite misses a line it
-  // cannot miss (D288's "a decision, not a behaviour"). The day the lie becomes
-  // observable is the day it silently breaks, and by then nothing else would have
-  // said it was a lie.
-  //
-  // ⚠️ ORDER — BELOW §6.2's once-per-turn allowance and below the three card
-  // facts, ABOVE the target checks. `playTrainer`'s rule for the first half (the
-  // allowance is the player's OWN limit and is entitled to name itself; a barred
-  // seat learns the bar only once its own play was otherwise legal) and
-  // `playStadium`'s stated INVERSION for the second (everything below is a fact
-  // about the TARGET rather than a rule the player broke, and a barred seat has no
-  // business being told "no benched Pokémon at index 3" about a play the rules
-  // never let it attempt). `energyAttached` is NOT spent by a refusal — the card
-  // never leaves hand, exactly as a barred evolve costs nothing.
+  // Genesect "ACE Nullifier" bars playing any ACE SPEC card, and attaching an ACE SPEC Energy from
+  // hand is playing it. Uses `aceSpecPlayBarred` rather than `handPlayBarred`, which needs a
+  // Trainer class an Energy does not have. Checked after the once-per-turn allowance and card
+  // checks, before the target checks; a refusal does not spend the allowance.
   if (aceSpecPlayBarred(state, action.seat, card)) {
     return err(
       "HAND_PLAY_BLOCKED",
@@ -215,13 +163,8 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   if (!isPokemonTarget(action.target)) {
     return err("BAD_TARGET", "attach target must name the Active spot or a bench index");
   }
-  // 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's live hand-attach mark (types.ts
-  // `HandAttachMark`), read off the TARGET as it stands before the attach. Glimmora
-  // "Corrosive Shards" — *"Energy cards can't be attached from your opponent's hand to that
-  // Pokémon"* — REFUSES the attach with its own code (the §6.2 allowance is not spent: the
-  // card never leaves hand, the ACE SPEC bar's rule above). Hypno "Daydream" — *"…if they
-  // attach an Energy card from their hand to the Defending Pokémon, their turn ends"* — is
-  // carried to the tail below (R-HY2). A bad bench index reads no mark and is refused below.
+  // The target's hand-attach mark, read before the attach. Glimmora "Corrosive Shards" refuses the
+  // attach without spending the allowance; Hypno "Daydream" ends the turn after the attach, below.
   const markedTarget =
     action.target.spot === "active"
       ? side.active
@@ -236,10 +179,8 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     );
   }
   const endsTurn = mark?.endsTurn === true;
-  // 🆕🆕🆕 §6.1 (D578) — Team Rocket's Energy's *"This card can only be attached to a Team
-  // Rocket's Pokémon."* — REFUSED, `BAD_TARGET` (a fact about the target), the allowance not
-  // spent (the card never leaves hand). Through `energyMayBeAttachedTo`, the predicate flow.ts's
-  // sweep discards by. A bad bench index reads no body and is refused below.
+  // Team Rocket's Energy can only be attached to a Team Rocket's Pokémon; refused without spending
+  // the allowance.
   if (markedTarget != null && !energyMayBeAttachedTo(state, card, markedTarget)) {
     return err(
       "BAD_TARGET",
@@ -281,28 +222,11 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     // emitted event must not alias it (see events.ts).
     { type: "ENERGY_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
   ];
-  // 🆕🛑 D357 — THE BOARD AT THE INSTANT OF THE ATTACH, CAPTURED BEFORE ANY §6.1
-  // RIDER RUNS. Every watched trigger fired at the bottom of this handler names
-  // THIS moment in its antecedent, and one of them — Magearna's *"As long as this
-  // Pokémon is in the Active Spot"* — is GATED on where a body stood when the
-  // Energy was attached. §6.1's Jet Energy switch is a rider on this same moment,
-  // not a later action, so reading the gate off the post-switch board answers a
-  // question nobody asked.
-  //
-  // ⚠️ IT MUST BE CAPTURED HERE AND NOT AT THE TOP: the Energy has already left
-  // the hand and landed on its target in `next`, which is exactly right — the
-  // moment the clause names is the moment the attach COMPLETED, and the rider is
-  // what happens next. One line earlier would be the board BEFORE the attach, a
-  // third board and the wrong one again.
+  // The board at the instant of the attach, captured before any §6.1 rider runs: watched triggers
+  // gated on the Active Spot read this, not the post-switch board.
   const atAttach = next;
-  // §6.1 — a Special Energy's on-attach effect. Jet Energy: attaching from hand
-  // to a BENCHED Pokémon switches it to the Active Spot (the energy just landed
-  // rides in with it). Nothing fires on an Active attach. Reuses the shared
-  // switch move (interpreter.ts), which clears the outgoing Active's conditions
-  // and emits POKEMON_SWITCHED — the bench index is still valid (attaching does
-  // not reorder the bench).
-  // 🆕🆕🆕 D604 — a typed Special Energy's rider fires only onto a holder of its printed type
-  // (`energyRulesApply`, read on the attach-moment board — `next`, still `atAttach` here; R-TE1).
+  // §6.1 on-attach effects. Jet Energy attached from hand to a Benched Pokémon switches it into the
+  // Active Spot. A typed Special Energy's rider fires only onto a holder of its printed type.
   const energyProgram = programFor(card.id)?.energy;
   const landedOn =
     action.target.spot === "active"
@@ -312,7 +236,7 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     landedOn != null && energyRulesApply(next, landedOn, energyProgram)
       ? energyProgram?.onAttach
       : undefined;
-  // 🆕🆕🆕 D604 — Telepathic Psychic Energy's Bench search (R-TP1): run LAST, below, because it parks.
+  // Telepathic Psychic Energy's Bench search runs last because it can park.
   const benchSearch: EffectOp[] | undefined =
     onAttach?.kind === "benchSearch"
       ? [
@@ -320,10 +244,9 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
           { op: "shuffleDeck" },
         ]
       : undefined;
-  // 🆕🆕🆕 D613 — `switched` records that the rider MOVED a body: `switchInto` runs the
-  // `onActiveMovedToBench` triggers (Team Rocket's Dugtrio "Holes" puts 2 damage counters on the
-  // body that moved), and this is the one `switchInto` route outside a program, so no
-  // `settleProgram` sweep follows it. The Knock Out check below runs whenever it is true.
+  // `switched` records that the rider moved a body; `switchInto` runs move triggers that can place
+  // counters, and no `settleProgram` sweep follows, so the Knock Out check below runs when it is
+  // set.
   let switched = false;
   if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {
     const moved = switchInto(
@@ -335,81 +258,22 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     switched = moved !== next;
     next = moved;
   }
-  // D261 — the §6.1 union's SECOND arm: Enriching Energy sv08-191, "When you
-  // attach this card from your hand to a Pokémon, draw 4 cards." A GUARD and not a
-  // FILTER, because the clause names ONE seat and ONE moment and there is no set
-  // to narrow.
-  //
-  // 🛑 NO `spot` CONJUNCT, WHICH IS THE ONE THING THIS ARM MUST NOT INHERIT FROM
-  // THE ONE ABOVE IT. Jet prints "to 1 of your Benched Pokémon" and is guarded
-  // accordingly; this sentence prints "to a Pokémon", so the guard is the arm tag
-  // and nothing else. Both spots are driven in `mistEnergy.test.ts`.
-  //
-  // ⚠️ THE COUNT COMES OFF THE REGISTRY ROW, and the six guards above the attach
-  // are all inherited unchanged: this is a RIDER on the §6.2 attach, so a rejected
-  // attach draws nothing without the arm having to say so (D169's early-return
-  // audit, re-read at this line and still clean — every one of those guards is a
-  // condition under which no Energy moves at all, which is exactly when there is
-  // nothing to have attached FROM HAND).
+  // Enriching Energy: "When you attach this card from your hand to a Pokémon, draw 4 cards." No
+  // spot condition, unlike Jet Energy.
   if (onAttach?.kind === "draw") {
     next = drawToHand(next, action.seat, onAttach.count, "effect", events);
   }
-  // §12 (D174) — the §6.2 attach is the ONE route by which an Energy reaches a body
-  // outside an effect program (flow.ts settleProgram covers every other), and it is
-  // the printed use of Therapeutic Energy sv02-193: attach it to your Paralyzed
-  // Active and it "recovers from being … Paralyzed" on the spot, in time to attack
-  // this turn. Placed at the very END, after the Jet switch: `switchInto` clears
-  // conditions on its own (§11/§12), so a card printing both clauses must not have
-  // this fire first and report a recovery the switch was going to perform anyway.
-  //
-  // ⚠️ THE EARLY-RETURN AUDIT (D169's lesson, FOURTH sighting). Six guards sit ahead
-  // of this line — `turnGate`, the §6.2 allowance, card-in-hand, unknown-card,
-  // not-an-energy and the target checks — and EVERY ONE belongs to the ATTACH term
-  // alone: they are the conditions under which no Energy moves at all, and no Energy
-  // moving is exactly when there is nothing to recover from. There is no guard here
-  // that belongs to one term and is being borrowed by the other, which is the shape
-  // D169 / D171 found and D172 first came up clean on.
+  // §12: the hand attach is the one route an Energy reaches a body outside an effect program, so
+  // status recovery (Therapeutic Energy) runs here. It runs last, after the Jet switch, which
+  // clears conditions itself.
   next = recoverStatuses(next, events);
-  // 🆕 D319 — Gengar ex sv05-104/-193 "Gnawing Curse": *"Whenever your opponent
-  // attaches an Energy card **from their hand** to 1 of their Pokémon, put 2
-  // damage counters on that Pokémon."* The source-zone clause is answered the
-  // same way the evolve half answers it — by WHERE the scan sits. This is the
-  // §6.2 hand attach and nothing else; `attachFromDeck`, `attachFromTop` and
-  // `moveEnergy` are ops in the interpreter and never reach this line.
-  // [🆕 Card revision B19: "the §6.2 hand attach and nothing else" was too narrow — an EFFECT's
-  // attach from the hand (Teal Dance, Lethargic Charge) is the same moment, and interpreter.ts
-  // `handAttachWatched` runs the same two sweeps for it. The deck / top / move ops still never do.]
-  //
-  // ⚠️ THE SUBJECT IS A UID AND NOT `action.target`, which is what makes it
-  // survive the Jet Energy switch above: that clause can move the body out of
-  // the bench index the action named, and "that Pokémon" still means the body
-  // the Energy landed on. `topUid` of the attach target, read AFTER the riders.
+  // Gengar ex "Gnawing Curse": counters on a Pokémon the opponent attaches an Energy to from hand.
+  // The subject is read by uid after the riders, so it survives a Jet Energy switch.
   const attachedTo = bodyHoldingEnergy(next, action.seat, action.uid);
   if (attachedTo !== undefined) {
-    // 🆕 D356 — Magearna sv09-107 "Auto Heal": *"As long as this Pokémon is in the
-    // Active Spot, whenever you attach an Energy card from your hand to 1 of your
-    // Pokémon, heal 90 damage from that Pokémon."* THE SAME MOMENT, the other
-    // direction — the bearer is on the ACTING seat's board, so it is the self
-    // sweep. It reads the same `attachedTo` for the same reason (the Jet switch).
-    //
-    // 🛑 THE SELF SWEEP RUNS FIRST, AND THE ORDER IS OBSERVABLE. A board with
-    // Magearna Active and the opponent's Gengar ex out fires BOTH on one attach,
-    // and the heal is CLAMPED to the damage present — so healing before the 2
-    // counters land is a different board from healing after. The turn player's
-    // own effects resolve first when two triggers answer one moment, and the
-    // attaching player is the turn player. Driven in `autoHeal.test.ts` §4.
-    //
-    // ⚠️ NO KO SWEEP OF ITS OWN. Every self-direction program printed today heals,
-    // and a heal cannot Knock Out; the opponent-direction sweep below owns the
-    // mid-turn KO because ITS consequent is damage counters.
-    //
-    // 🆕🛑 D357 — AND THE LAST ARGUMENT IS THE POINT OF THE REPAIR: the SUBJECT
-    // (`attachedTo`) is read off the POST-rider board and the `activeOnly` GATE is
-    // read off `atAttach`, the board at the moment. D356 passed only one board and
-    // the gate silently borrowed the subject's. **AN ANTECEDENT AND A PRONOUN DO
-    // NOT READ THE SAME BOARD** — the antecedent is fixed when the moment happens,
-    // the pronoun is resolved when the consequent runs. Both Jet-Energy orderings
-    // are driven in `autoHeal.test.ts` §5b.
+    // Magearna "Auto Heal": the same moment in the self direction. It runs first because the turn
+    // player's own effects resolve first and the heal is clamped. The subject comes from the
+    // post-rider board; the `activeOnly` gate reads `atAttach`.
     next = runSelfWatchedTriggers(
       next,
       action.seat,
@@ -426,21 +290,17 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       events,
       atAttach,
     );
-    // 🆕🆕🆕 D636 — Pachirisu "Electrified Incisors" (R-EIC1): the marked body that took the card takes its
-    // counters, AFTER the watched triggers (the opponent's Gnawing Curse first); the sweep below owns the KO.
+    // Pachirisu "Electrified Incisors": the marked body takes its counters after the watched
+    // triggers; the sweep below handles the Knock Out.
     const shocked = shockAttachedBody(watched, action.seat, attachedTo, events);
-    // 🆕🆕🆕 D613 — `|| switched`: a Jet Energy switch can make the moved body lethal (Holes, D610)
-    // with no watched trigger answering the attach, and D610 left that Knock Out unchecked.
+    // A Jet Energy switch can make the moved body lethal even with no watched trigger.
     if (shocked !== next || switched) {
       next = shocked;
-      // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).
+      // The search's settle runs the mid-turn sweep once it is done.
       if (benchSearch !== undefined)
         return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
-      // The counters can be lethal, and this is the acting seat's own board
-      // mid-turn — `placeEvolution`'s sweep, for `placeEvolution`'s reason.
-      // 🆕🆕🆕 D575 — Hypno's turn end rides BEHIND the sweep's prize / promotion stages in
-      // place of `resumeTurn` (R-HY2: after every rider and watched trigger, behind any parked
-      // prize pick).
+      // The counters can be lethal on the acting seat's own board mid-turn. With Hypno's mark, the
+      // turn end runs behind the sweep's prize and promotion stages instead of `resumeTurn`.
       return resolveMidTurnKnockOuts(
         next,
         action.seat,
@@ -450,17 +310,18 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       );
     }
   }
-  // 🆕🆕🆕 D575 — Hypno "Daydream": the attach onto the marked Defending Pokémon ENDS the turn,
-  // seeded here after the §6.1 riders, the §12 recovery and the watched triggers have all run
-  // (R-HY2 ⚠️ UNRULED) — the Koraidon "Dino Cry" fold, `settleProgram`'s `endsTurn`.
+  // Hypno "Daydream": the attach onto the marked Pokémon ends the turn, after the riders, the §12
+  // recovery and the watched triggers.
   if (benchSearch !== undefined)
     return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
   if (endsTurn) return advance({ ...next, pending: turnTail(action.seat) }, events);
   return ok(next, events);
 }
 
-/** 🆕🆕🆕 D636 — the body on `seat`'s board whose top is `uid` after ONE Energy card from hand landed on it,
-    through `shockHandAttach` (Electrified Incisors); `state` itself when nothing was placed. */
+/**
+ * Applies Electrified Incisors' counters to the body topped by `uid` after one Energy card from
+ * hand landed on it; returns `state` unchanged when nothing is placed.
+ */
 function shockAttachedBody(
   state: GameState,
   seat: Seat,
@@ -483,10 +344,11 @@ function shockAttachedBody(
   });
 }
 
-/** 🆕🆕🆕 D604 — Telepathic Psychic Energy `me03-088`'s *"search your deck for up to 2 Basic {P} Pokémon and
-    put them onto your Bench. Then, shuffle your deck."*, the hand attach's LAST step (R-TP1 ⚠️ UNRULED):
-    folded through `settleProgram`, which parks the pick and, once done, runs the mid-turn KO sweep or —
-    on a Hypno "Daydream" attach — ends the turn. */
+/**
+ * Telepathic Psychic Energy's Bench search, the hand attach's last step. Folded through
+ * `settleProgram`, which parks the pick and then runs the mid-turn KO sweep or, after a Hypno
+ * "Daydream" attach, ends the turn.
+ */
 function searchAfterAttach(
   state: GameState,
   seat: Seat,
@@ -502,17 +364,11 @@ function searchAfterAttach(
   );
 }
 
-/** 🆕 D319 — the top-card uid of the body on `seat`'s board that is CARRYING the
-    Energy card `energyUid`, or undefined.
-
-    🛑 KEYED ON THE ENERGY AND NOT ON `action.target`, and the difference is a
-    live board rather than a nicety: Jet Energy's on-attach rider SWITCHES the
-    benched body it landed on into the Active Spot, so by the time the watched
-    trigger runs, `{ spot: "bench", index }` names a DIFFERENT Pokémon — the one
-    that swapped out. The Energy, though, is on exactly one body, and that body is
-    the printed *"1 of their Pokémon"* the counters are owed to. Reading the
-    board for the card is therefore the only spelling that is right in both
-    orders. */
+/**
+ * The top-card uid of the body on `seat`'s board carrying `energyUid`. Keyed on the Energy rather
+ * than the action target because Jet Energy's switch can change which Pokémon the target index
+ * names.
+ */
 function bodyHoldingEnergy(state: GameState, seat: Seat, energyUid: string): string | undefined {
   const side = state.players[seat];
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -522,14 +378,12 @@ function bodyHoldingEnergy(state: GameState, seat: Seat, energyUid: string): str
   return undefined;
 }
 
-/** 🆕🆕🆕 §9 (D572) — is `uid` a NON-Basic in `seat`'s hand whose card carries an in-hand
-    bench Ability (`CardProgram.benchFromHand`, Klinklang "Emergency Rotation")? `null` when it is
-    not (the caller then runs the ordinary Basic guard); otherwise either the reject the Ability's
-    own printed limits owe — once per turn first (`useAbility`'s order: "you already used it"
-    tells the player something), then the board clause through the shared `conditionHolds` — or
-    the allowance key to spend and the Ability's name. A Basic carrying the key (none is printed)
-    would take the ordinary route. R-KR2 (⚠️ UNRULED): `disabledAbilityUids` is NOT asked — an
-    in-play lock does not reach a card in the hand. */
+/**
+ * Whether `uid` is a non-Basic in hand with an in-hand bench Ability (Klinklang "Emergency
+ * Rotation"). `null` when not; otherwise either the reject the Ability's limits owe (once per turn
+ * first, then its board condition) or the allowance key and Ability name. An in-play Ability lock
+ * does not reach a card in hand.
+ */
 function benchFromHandRotation(
   state: GameState,
   seat: Seat,
@@ -557,40 +411,26 @@ function benchFromHandRotation(
   return { usedKey, name: rotation.name };
 }
 
-/** §5.2 — Basics to the bench, any number per turn, cap 5 (🆕🆕🆕 D577: the live
-    `benchLimitOf` — 8 under Area Zero Underdepths with a Tera Pokémon in play). */
+/** §5.2: Basics to the Bench, any number per turn, up to the live `benchLimitOf`. */
 export function playBasicToBench(state: GameState, action: PlayBasicToBenchAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
   const side = state.players[action.seat];
-  // 🆕🆕🆕 D577 — the LIVE limit (Area Zero Underdepths + a Tera Pokémon in play: 8).
   const benchLimit = benchLimitOf(state, action.seat);
   if (side.bench.length >= benchLimit) {
     return err("BENCH_FULL", `the bench holds at most ${benchLimit} Pokémon`);
   }
-  // 🆕🆕🆕 §9 (D572) — THE IN-HAND ABILITY: Klinklang `sv07-101` "Emergency Rotation" puts a
-  // NON-Basic onto the Bench. Asked BEFORE `basicFromHandError`, which would refuse it as
-  // NOT_A_BASIC_POKEMON; a card without the key (every Basic, every other Evolution) falls through
-  // to that guard byte-identically. `pokemonPlayBarred` below still applies (R-KR1).
+  // Klinklang "Emergency Rotation" puts a non-Basic onto the Bench, so it is checked before
+  // `basicFromHandError`. `pokemonPlayBarred` still applies.
   const rotation = benchFromHandRotation(state, action.seat, action.uid);
   if (rotation !== null && "reject" in rotation) return rotation.reject;
   if (rotation === null) {
     const invalid = basicFromHandError(state, action.seat, action.uid);
     if (invalid !== null) return invalid;
   }
-  // §7.5 (D285) — THE FIRST READ SITE OF THE POKÉMON-SURFACE PLAY GATE, and the
-  // one only the CONTINUOUS source reaches: Team Rocket's Arbok `sv10-113`
-  // "Potent Glare" bars the PLAY, so it covers a bench placement, while Bronzong
-  // `sv05-069`'s stamp names *"to evolve"* and cannot ("bench" is not a
-  // `StampedPokemonPlayAct`). ⚠️ ONE PREDICATE FOR BOTH SOURCES —
-  // `pokemonPlayBarred` (continuous.ts) ORs them, so this gate cannot fall behind
-  // a third the way four hand-written ORs could.
-  //
-  // ⚠️ AFTER `basicFromHandError` AND AFTER `BENCH_FULL`, which is `playTrainer`'s
-  // ordering rule and not a coincidence: those two are the player's OWN limits
-  // (this card is not a Basic; your bench is full) and should name themselves,
-  // and a barred seat learns the bar only once its own play was otherwise legal.
-  // The card is resolved by that same guard, so the filtered noun is answerable.
+  // §7.5: a continuous play bar (Team Rocket's Arbok "Potent Glare") covers a bench placement.
+  // Checked after the not-a-Basic and bench-full errors so the player's own limits are reported
+  // first.
   if (pokemonPlayBarred(state, action.seat, "bench", cardOfUid(state, action.uid))) {
     return err(
       "HAND_PLAY_BLOCKED",
@@ -605,9 +445,8 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
     hand: without(side.hand, action.uid),
     bench: [...side.bench, makeInPlay(action.uid, state.turn)],
   });
-  // 🆕🆕🆕 D572 — the Ability's once-per-turn allowance is SPENT here (`abilityUsedKey`'s
-  // `${uid}:${name}`, the activated Abilities' own spelling), and `ABILITY_USED` precedes the bench
-  // row, the order `useAbility` files them in.
+  // Spends the Ability's once-per-turn allowance; `ABILITY_USED` precedes the bench event, matching
+  // `useAbility`.
   const next =
     rotation === null
       ? benched
@@ -631,7 +470,7 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
         ]),
     { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
   ];
-  // 🆕🆕🆕 D642 — Risky Ruins: the counters land with the body, before its own on-bench trigger (R-RR1).
+  // Risky Ruins: the counters land with the body, before its own on-bench trigger.
   const landed = benchArrivalCounters(next, action.seat, [action.uid], events);
   // §9 — a "when you play this Pokémon onto your Bench during your turn"
   // triggered Ability (Flamigo's Insta-Flock) fires now, on the freshly
@@ -646,12 +485,11 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   );
 }
 
-/** §10 — place an Evolution card from hand on top of one of your own in-play
-    Pokémon (Active or Bench) whose top card it evolves from (🆕🆕🆕 D563: or whose
-    Ability aliases the name — Eevee ex's `evolveAsNamed`; and never a card whose program
-    carries `intoPlayOnlyVia`, Palafin ex). No per-turn cap
-    (each Pokémon may evolve once — enforced by turnPlayed, below), and it
-    consumes NONE of the energy/retreat allowances. */
+/**
+ * §10: place an Evolution card from hand on one of your in-play Pokémon whose top card it evolves
+ * from, or whose Ability aliases the name (Eevee ex). Never a card with `intoPlayOnlyVia`. Each
+ * Pokémon may evolve once per turn; uses none of the energy or retreat allowances.
+ */
 export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   const placement = checkEvolution(state, action);
   if ("ok" in placement) return placement;
@@ -750,20 +588,13 @@ function checkEvolution(
   if (targetTopUid === undefined || targetTopCard === undefined) {
     return err("UNKNOWN_CARD", "the target Pokémon has no resolvable top card");
   }
-  // §10 — the evolution's `evolveFrom` must NAME the target's current top card.
-  // 🆕🆕🆕 D563 — …OR an Ability on the target must license the name (Eevee ex "Rainbow
-  // DNA": *"can evolve into any Pokémon ex that evolves from Eevee if you play it from
-  // your hand onto this Pokémon"*). WIDENED here, at the hand, and nowhere else (R-RD);
-  // through `passivesOf`, so a §9 lock hands the plain match back.
+  // §10: `evolveFrom` must name the target's top card, or an Ability on the target must license the
+  // name (Eevee ex "Rainbow DNA"). Read through `passivesOf`, so a §9 lock removes the licence.
   if (targetTopCard.name !== evolvesFrom && !evolveAliasLicensed(state, target, card)) {
     return err("EVOLVE_MISMATCH", `${card.name} does not evolve from ${targetTopCard.name}`);
   }
-  // 🆕🆕🆕 D563 — Palafin ex "Hero's Spirit": *"Put this Pokémon into play only with the
-  // effect of Palafin's Zero to Hero Ability."* Off the card's program and NOT through
-  // `passivesOf` — the card is in the HAND and a §9 lock must not lift it. (🆕🆕🆕 D565:
-  // ~~"Zero to Hero is unbuilt, so Palafin ex has no legal route in today"~~ — WITHDRAWN,
-  // D539: Zero to Hero is BUILT and its in-place swap is the one route in; a hand evolve
-  // is still not that Ability, so this refusal stands unchanged.)
+  // Palafin ex can only be put into play by Zero to Hero. Read off the card's program, not
+  // `passivesOf`, because the card is in hand and a §9 lock must not lift it.
   const onlyVia = intoPlayOnlyViaOf(card);
   if (onlyVia !== undefined) {
     return err(
@@ -771,63 +602,21 @@ function checkEvolution(
       `${card.name} can be put into play only with the effect of the ${onlyVia} Ability`,
     );
   }
-  // §4/§10 (D278; SEAT ADDED BY D279) — the TWO standing timing bans, and the ONE
-  // printed sentence that lifts both. `evolveEarlyLicensed` (interpreter.ts) is
-  // Eevee's "Boosted Evolution" (*"As long as this Pokémon is in the Active Spot,
-  // it can evolve during your first turn OR THE TURN YOU PLAY IT."*) and
-  // Karrablast/Shelmet's "Stimulated Evolution" (*"If you have Shelmet in play,
-  // …"*) — one predicate, because the licensed FACT is identical and only the
-  // antecedents differ. Asked ONCE, above both refusals, because one sentence
-  // licenses both — a build that consulted it at only the first would be green on
-  // every turn-1 board in this repo (a SETUP Pokémon carries turnPlayed 0, so ban
-  // 2 does not fire there) and wrong on the turn you play it, the quiet direction.
-  // [🆕🆕🆕 D594 (D539): the two-sentence enumeration above is WITHDRAWN as complete, kept as
-  // written — Luxio `me03-027` "Fighting Roar" (opponent's Active is a Pokémon ex) is a third.]
-  //
-  // ⚠️ `action.seat` IS THE RIGHT SEAT AND IT IS NOT THE BODY'S OWN: "you have
-  // Shelmet in play" addresses the EVOLVING player. The gate above already proved
-  // the target is one of theirs, so the two coincide — spelled with the action's
-  // seat rather than re-derived from the board because that is the pronoun's
-  // referent, and it stays right if a future card ever evolves across the table.
-  //
-  // ⚠️ THE §4 BAN MOVED DOWN HERE FROM ABOVE THE HAND CHECKS, AND HAD TO: the
-  // licence is a property of the TARGET BODY, so the ban cannot be answered
-  // before the target is resolved. The two refusals keep their own codes and
-  // their own messages — see `evolveEarlyLicensed`'s doc block on why one
-  // predicate must not collapse them.
+  // §4/§10: both timing bans are lifted by one licence (`evolveEarlyLicensed`, e.g. Eevee "Boosted
+  // Evolution"), asked once above both. It uses `action.seat`, the evolving player. The licence
+  // depends on the target, so the §4 ban is checked after the target is resolved.
   const licensed = evolveEarlyLicensed(state, action.seat, target);
-  // §4/§10 — neither player may evolve on their own first turn (every Pokémon
-  // in play then arrived this turn). The turn/firstPlayer arithmetic is
-  // `isFirstTurnOf` (types.ts) since D275: the gate already proved this is the
-  // acting seat's turn, so the ordinal names whether it is their first. (This is
-  // the check turnPlayed cannot make — setup Pokémon carry turnPlayed 0, not the
-  // turn number, by design.)
+  // §4/§10: neither player may evolve on their own first turn. `turnPlayed` cannot express this
+  // because setup Pokémon carry 0.
   if (!licensed && isFirstTurnOf(state, action.seat)) {
     return err("FIRST_TURN_EVOLVE", "cannot evolve on your first turn (§4/§10)");
   }
-  // §10 timing — a Pokémon cannot evolve the turn it came into play, nor twice
-  // in one turn (evolving stamps turnPlayed to the current turn, below), so a
-  // target already stamped this turn is too soon. Setup Pokémon carry 0 and
-  // clear this from turn 2 on; the first-turn ban above covers turns 1–2.
-  //
-  // ⚠️ THE LICENCE LIFTS THE "CAME INTO PLAY" HALF AND CANNOT BE OBSERVED
-  // LIFTING THE "TWICE IN ONE TURN" HALF THIS LINE ALSO ENCODES — evolving
-  // REPLACES the top card, so the very step that stamps `turnPlayed` also
-  // removes the Ability granting the licence. The conflation is therefore
-  // harmless here rather than resolved, and that is a fact about the print
-  // (no Standard body prints this licence on a card that stays on top).
-  // [🆕🆕🆕 D594 (D539): "CANNOT BE OBSERVED", "harmless" and "no Standard body prints this licence
-  // on a card that stays on top" are WITHDRAWN, kept as written — Luxio `me03-027` "Fighting Roar"
-  // is a Stage 1 that carries the licence, so evolving Shinx INTO it stamps `turnPlayed` and puts
-  // the licence holder ON top. With the opponent's Active a Pokémon ex, Shinx → Luxio → Luxray in
-  // one turn is ALLOWED here: the licence now observably lifts the "twice in one turn" half too.
-  // That is the reading taken, not an accident: for an evolution card "the turn you play it" is
-  // the turn it evolved (the Forest of Giant Plants Oddish → Gloom → Vileplume precedent), so the
-  // conflation stands and is pinned — `conditionRowsMeD594.test.ts` §7, mutant
-  // `D594-roar-chain-only-came-into-play`. Still true of Eevee, Karrablast and Shelmet (Basics).]
+  // §10: a Pokémon cannot evolve the turn it came into play or twice in one turn. Setup Pokémon
+  // carry 0. The licence lifts both halves, so a licence holder that is itself an evolution (Luxio
+  // "Fighting Roar") can chain evolutions in one turn.
   if (!licensed && target.turnPlayed >= state.turn) {
-    // 🆕🆕🆕 D618 — Forest of Vitality lifts THIS ban (not §4's, above): a {G} body into a {G} card,
-    // on either seat, a body that evolved this turn included (R-FOV1).
+    // Forest of Vitality lifts this ban (not the §4 one) for a {G} body evolving into a {G} card,
+    // including one that evolved this turn.
     if (!stadiumLicensesSameTurnEvolve(state, target, card)) {
       return err(
         "EVOLVE_TOO_SOON",
@@ -835,22 +624,9 @@ function checkEvolution(
       );
     }
   }
-  // §10 (D285) — THE SECOND READ SITE OF THE POKÉMON-SURFACE PLAY GATE, and the
-  // only one BOTH sources reach: Bronzong `sv05-069` "Evolution Jammer" stamps
-  // *"they can't play any Pokémon from their hand to evolve their Pokémon"* for
-  // exactly the next turn, and Team Rocket's Arbok `sv10-113` bars the play
-  // continuously while it is Active. ⚠️ ONE PREDICATE FOR BOTH — this line did
-  // not gain a term when the second source landed and cannot fall behind a third.
-  //
-  // 🛑 THE NARROWED NOUN IS THE EVOLUTION CARD (`card`), NOT THE BODY IT LANDS ON.
-  // Arbok's *"any Pokémon that has an Ability"* is printed about the card being
-  // PLAYED, so a plain Basic evolving into an Ability-bearing Stage 1 is barred
-  // and the reverse is not — the two directions are driven separately.
-  //
-  // ⚠️ BELOW §4/§10's TWO TIMING BANS AND THE LICENCE, for `playTrainer`'s stated
-  // ordering reason: those are rules about the player's own board and should name
-  // themselves, while this one is imposed by the opponent. It sits ABOVE the
-  // placement so a barred evolve costs nothing — the card never leaves hand.
+  // §10: the Pokémon play bar from either source (Bronzong "Evolution Jammer", Team Rocket's
+  // Arbok). The bar is checked against the evolution card being played, not the body it lands on.
+  // Checked after the timing bans and before the placement, so a barred evolve costs nothing.
   if (pokemonPlayBarred(state, action.seat, "evolve", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
@@ -861,36 +637,12 @@ function checkEvolution(
   return { side, target, benchIndex, targetTopUid };
 }
 
-/** §10/§7.1 — the shared evolution PLACEMENT, used by both `evolve` (adjacent
-    stage) and `rareCandy` (Basic→Stage 2 skip). The caller has ALREADY removed
-    the evolution card (and, for Rare Candy, the Rare Candy Item) from `state`'s
-    hand and validated the legality (name match / Basic-and-chain, timing); this
-    only does the placement + its consequences. `evolutionUid` becomes the new
-    stack top of `from` (the pre-evolution Pokémon at `target`, bench index
-    `benchIndex`, -1 for the Active). §10 carry-over: damage, Energy and Tools
-    STAY on the stack; Special Conditions and temporary markers are cleared;
-    turnPlayed resets so it cannot evolve again this turn. Then §8.1 — evolution
-    can LOWER effective max HP (a Bravery Charm's Basic-only +50 dropping off),
-    so a carried-damage Pokémon that now meets the new stage's HP is Knocked Out
-    the instant it evolves: a MID-TURN KO that resumes the actor's turn (flow.ts),
-    for a benched holder as much as an Active one. The KO check runs BEFORE the
-    trigger (a Pokémon KO'd on evolution left play, so its own "when you evolve"
-    Ability does not fire); otherwise the §9 on-evolve triggered Ability fires
-    (Arboliva's Enriching Oil), which may park on effect:choose. `events` is
-    seeded by the caller (empty for evolve; a TRAINER_PLAYED for Rare Candy)
-    and POKEMON_EVOLVED is appended here as the placement's own event.
-
-    🆕 **D307 — THE PLACEMENT ITSELF IS NOW `evolveOnto` BELOW, AND THIS FUNCTION
-    IS THAT PLUS ITS TWO TAILS.** The split exists because the tails are the only
-    part of this file an `EffectOp` cannot reach: `stepOp` (interpreter.ts) returns
-    a bare `GameState` or a prompt, and both tails return an `ApplyResult` that
-    SETS A PHASE. Every caller that plays an evolution card **from the hand**
-    (`evolve` here, `rareCandy` in cardplay.ts) still calls THIS function and is
-    byte-identical; the deck-sourced placement (`evolveFromDeck`, the D307 attack
-    op) calls `evolveOnto` directly. See that op's doc block in `effects.ts` for
-    why neither tail is owed on the deck route — the printed on-evolve trigger
-    says *"from your hand"* on every legal card that prints one, and §8.1
-    `finishAttack` already sweeps the attacker's own board. */
+/**
+ * §10/§7.1: the evolution placement shared by `evolve` and `rareCandy`, plus its tails. The caller
+ * has removed the card(s) from hand and validated legality. After placing, §8.1: evolving can lower
+ * max HP, so a KO check runs first; otherwise the on-evolve trigger fires and may park. The
+ * deck-sourced route calls `evolveOnto` directly and owes neither tail.
+ */
 export function placeEvolution(
   state: GameState,
   seat: Seat,
@@ -910,33 +662,14 @@ export function placeEvolution(
     fromUid,
     evolutionUid,
     events,
-    stageChangeConditions(state, from.conditions), // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)
+    stageChangeConditions(state, from.conditions),
   );
   if (isLethallyDamaged(next, evolved)) {
     return resolveMidTurnKnockOuts(next, seat, [seat], events);
   }
-  // 🆕 D319 — THE OPPONENT'S WATCH, and it sits HERE for the reason the whole
-  // "from their hand" clause costs no code: this function is reached ONLY by the
-  // two hand routes (`evolve` above, `rareCandy` in cardplay.ts), while every
-  // deck-sourced placement — `evolveFromDeck`, `evolveFromDeckChosen`,
-  // `evolveFromDeckEachBenched`, `evolveFromDeckEachChosen` — calls `evolveOnto`
-  // directly, one rung below. Team Rocket's Ampharos sv10-074 "Darkest Impulse"
-  // prints *"Whenever your opponent plays a Pokémon **from their hand** to evolve
-  // 1 of their Pokémon"*, so a deck-sourced evolve must NOT fire it, and the
-  // split that already existed is exactly that gate. Rare Candy inherits the
-  // trigger for free and correctly — it, too, is a Pokémon played from the hand.
-  //
-  // ⚠️ AFTER the §8.1 evolve-below-HP check above, BEFORE the controller's own
-  // on-evolve trigger below. A body Knocked Out by evolving has left play, so
-  // there is nothing left for the opponent's counters to land on; and running
-  // ahead of `runBoardTrigger` is what keeps the two composable at all, since
-  // that one returns an ApplyResult that may PARK and nothing can be threaded
-  // after it.
-  //
-  // 🆕 D357 — `next` IS the moment board at this site, MEASURED and not assumed:
-  // this is an evolve on `seat`'s board and the watcher is the other seat, whose
-  // Active nothing between the placement and this line touches. The §6.1 rider
-  // that made this parameter necessary rides the ATTACH, not the evolve.
+  // The opponent's watched evolve triggers (Team Rocket's Ampharos "Darkest Impulse", "from their
+  // hand"). Only hand routes reach this function, so deck-sourced evolves do not fire it. Runs
+  // after the §8.1 check and before the controller's own on-evolve trigger, which may park.
   const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events, next);
   const subject =
     target.spot === "active"
@@ -946,11 +679,8 @@ export function placeEvolution(
     return resolveMidTurnKnockOuts(watched, seat, [seat], events);
   }
   const triggered = runBoardTrigger(watched, seat, target, "onEvolve", events);
-  // 🆕🆕🆕 §7.3 (D577) — the mid-turn sweep's state check on the one evolve path that ran no
-  // sweep: an evolution that took `seat`'s LAST Tera Pokémon out of play (its top card is no
-  // longer Tera) under Area Zero Underdepths owes the trim now (R-AZ2). A trigger that ran
-  // already settled through the sweep (`settleProgram`), and a parked one will; so this asks
-  // only a board back at `turn:action` that is still over its limit.
+  // §7.3: an evolution that removed `seat`'s last Tera Pokémon under Area Zero Underdepths owes the
+  // Bench trim now, if no trigger sweep already handled it.
   if (
     !triggered.ok ||
     triggered.state.phase.kind !== "turn:action" ||
@@ -961,121 +691,37 @@ export function placeEvolution(
   return resolveMidTurnKnockOuts(triggered.state, seat, [seat], triggered.events);
 }
 
-/** Leaving the Active spot removes Special Conditions (§11/§12) and every other
-    effect of an attack still on the Pokémon — the §11 retreat block included
-    (unreachable down THIS path, which is a retreat the block would have already
-    refused, but the rule belongs with the concept, not with one caller) and,
-    since D142, the attack-installed damage block, which is reachable here: a
-    Pokémon that shielded itself and then RETREATS on its own following turn
-    walks away from a block whose window has in any case already closed, but the
-    forced half of the same move (`switchInto`) can do it INSIDE the window —
-    and, since D143, the attack-installed SELF-LOCK, for which THIS path is the
-    reachable one rather than the theoretical one: the lock's window is the
-    HOLDER's own turn, so a player can retreat their locked Pokémon on that very
-    turn, promote something that can attack, and — with a Switch — bring the now
-    un-locked body back and attack with it — and, since D147, the durated DAMAGE
-    REDUCTION, which shares the BLOCK's story rather than the lock's (same
-    window, same body, so the forced half is the reachable one). FOUR durated
-    effects, three different reachability stories, one clear.
-
-    D148 adds a FOURTH story to the same four fields without adding a field: an
-    OPPONENT-installed attack lock reaches this path exactly where D143's does (the
-    window is the locked player's own turn, so a retreat inside it is legal), but
-    the player taking the retreat is the one the effect was done TO. Same site,
-    same clear, opposite agency — which is worth writing down because it is the
-    first durated effect in the engine whose early endings are a COUNTERPLAY rather
-    than an escape, and because "who can reach this line" has been the question
-    every one of these four fields was priced on.
-    M4 adds dropping active-only markers here too. */
+/**
+ * Leaving the Active Spot removes Special Conditions (§11/§12) and every other effect of an attack
+ * still on the Pokémon, along with active-only markers.
+ */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return {
     ...pokemon,
     conditions: noConditions(),
     retreatBlocked: false,
-    // D412 — the SELF-installed retreat lock. ⚠️ ON THIS PATH IT IS THE ONE CLEAR
-    // IN THE SET THAT CANNOT FIRE, and saying so is better than pretending: the
-    // window is the holder's own next turn and this function runs on a RETREAT,
-    // which is the one action the lock forbids. It is written anyway because the
-    // three §10 literals are hand-kept and nothing makes them agree — a field
-    // present in two of three is the defect `attackLock.test.ts` names.
+    // Cannot fire on a retreat (it forbids retreating), but kept so the three §10 clears stay in
+    // agreement.
     retreatLockedTurn: null,
     attackBlock: null,
     attackLockedTurn: null,
-    // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock, the defender lock's story one line up:
-    // the victim retreats out of it on the very turn it is live (retreat clear, D547).
     attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp
-    // D147 — the durated damage reduction, whose story here is D142's block's:
-    // the RETREAT half of this path is unreachable inside the window (the window
-    // is the opponent's turn, and the holder's controller cannot retreat on it),
-    // while the FORCED half (`switchInto`) is exactly where it bites.
+    attackTwoFlipLockTurn: null,
     damageReduction: null,
-    // 🆕🆕 D432 — the NO-WEAKNESS bar, whose story here is the reduction's
-    // one line up verbatim: the window is the OPPONENT's turn, so the RETREAT half
-    // is unreachable inside it and the FORCED half (`switchInto`) is where it
-    // bites. EIGHT durated effects on one clear, FIVE reachability stories — which
-    // is why the clear-set is SWEPT and not listed.
     noWeaknessTurn: null,
-    // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE field on this
-    // literal whose RETREAT half is not merely reachable but is the printed
-    // counterplay. Every neighbour here has its window on the opponent's turn, so
-    // the paragraphs above all say "the retreat half is unreachable, the forced
-    // half is where it bites". This record fires at the end of the HOLDER's own
-    // next turn, so retreating the Defending Pokémon during that turn is exactly
-    // how a player answers the attack — §10 sheds the effects of attacks, and the
-    // schedule goes with the body. NINE durated effects on one clear, SIX
-    // reachability stories.
+    // Retreating the Defending Pokémon during its own turn is the printed counterplay to the
+    // scheduled effect.
     scheduledEffect: null,
-    // D149 — the attack-damage debuff, whose story here is the LOCK's: the window
-    // is the HOLDER's own next turn, so the RETREAT half is a played line and the
-    // victim's own counterplay (retreat the weakened body, attack with a fresh
-    // one). FIVE durated effects on one clear, and this is the fifth distinct
-    // reachability story — which is why the clear-set is SWEPT and not listed.
     attackDamageDebuff: null,
-    // 🆕🆕🆕 D547 — the NEXT-TURN VULNERABILITY, whose story here is the DEBUFF's
-    // one line up: its window is the INSTALLER's next turn, so the holder's own
-    // retreat on the turn in between is a PLAYED line that sheds the +50 (retreat
-    // clear, D547) — and so is the forced half (`switchInto`).
     damageVulnerability: null,
-    // 🆕🆕🆕 D552 — the WEAKNESS RETYPE, the vulnerability's story one line up: the holder's
-    // own retreat on the turn in between is a PLAYED line that restores its printed
-    // Weakness type (retreat clear, D552 R5), and so is the forced half (`switchInto`).
     weaknessRetype: null,
-    // 🆕🆕🆕 D549 — the COST TAX, the flip lock's story: its window is the holder's own
-    // turn, so the victim RETREATS out of it — paying the TAXED cost for this one
-    // retreat, the surcharge being live as the cost is read — and the benched body
-    // carries nothing (retreat clear, D549 tax).
+    // The retreat pays the taxed cost, since the surcharge is live as the cost is read.
     costTaxTurn: null,
-    // 🆕🆕🆕 D549 — the KNOCK OUT BOUNTY, the vulnerability's story one field up: the
-    // holder's retreat on the turn in between walks the marked body out from under
-    // the "2 more Prize cards" (retreat clear, D549 bounty).
     koBounty: null,
-    // 🆕🆕🆕 D575 — the HAND-ATTACH mark (Glimmora's bar, Hypno's turn end): the window is the
-    // holder's own turn, so a retreat on it is a PLAYED line that sheds the mark — the
-    // promoted body takes the Energy freely (retreat clear, D575 hand mark).
     handAttachMark: null,
-    // D152 — the armed recoil, whose story here is the REDUCTION's: the window is
-    // the opponent's turn, so the RETREAT half is unreachable inside it (the
-    // holder's controller cannot retreat on someone else's turn) and the FORCED
-    // half (`switchInto`) is exactly where it bites. SIX durated effects on one
-    // clear, FIVE distinct reachability stories — which is why the clear-set is
-    // SWEPT and not listed.
     installedRecoil: null,
-    // D154 — the per-attack lock, whose story here is the SELF-LOCK's four fields
-    // up (same window, same body): the RETREAT half is the reachable one and it is
-    // the holder's own line of play — retreat the barred Pokémon on the very turn
-    // the bar is live, promote something that can attack, and with a Switch bring
-    // the now-unbarred body back. SEVEN durated effects on one clear, FIVE
-    // reachability stories — which is why the clear-set is SWEPT and not listed.
-    // Since D165 it sheds a LIST, and the WHOLE list: a retreat that shed the
-    // holder's own bar and kept the one an opponent imposed would invert the
-    // agency §10 gives the retreating player.
+    // Sheds the whole list: keeping a bar imposed by the opponent would contradict §10.
     lockedAttacks: [],
-    // D155 — the per-attack BUFF, whose story here is the line above it verbatim
-    // (same window, same body): the RETREAT half is the reachable one and it is
-    // the holder's own line of play — with the sign flipped, since retreating the
-    // boosted Pokémon is how a player LOSES a bonus they spent a turn on. EIGHT
-    // durated effects on one clear, FIVE reachability stories.
     boostedAttack: null,
   };
 }
@@ -1105,21 +751,11 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot retreat (§11)`,
     );
   }
-  // §11 — an attack held it in place ("the Defending Pokémon can't retreat", or
-  // since D412 "During your next turn, this Pokémon can't retreat" from its own
-  // attack). Its own code, not STATUS_PREVENTS_RETREAT: nothing about it is a §12
-  // condition, and a client showing "Asleep/Paralyzed" here would be lying.
-  //
-  // ⚠️ THROUGH `retreatLocked` AND NOT OFF EITHER FIELD, because the fact now has
-  // two of them and this site does not care which one answered. The message stays
-  // one message for the same reason it stays one error code: the player is told it
-  // cannot retreat because of an attack, not whose attack (D112).
+  // §11: an attack effect holds it in place. Its own code, not STATUS_PREVENTS_RETREAT, since it is
+  // not a Special Condition.
   if (retreatLocked(state, active)) {
-    // 🆕🆕🆕 D576 — `retreatLocked` now also answers an Antique Fossil's printed "can't retreat"
-    // (R-FO4), which is a card rule and not an attack effect, so the message names it.
-    // 🆕 CARD REVISION B02 — and Roxie's Performance's SIDE lock (`sideRetreatLocked`) is a
-    // Supporter's effect, so it gets its own message too — unless an attack lock also holds the
-    // body, in which case the attack message stays true. Same error code either way.
+    // Antique Fossil's "can't retreat" and Roxie's Performance's side lock are not attack effects,
+    // so they get their own messages, unless an attack lock also holds the body. Same error code.
     const attackHeld = active.retreatBlocked || active.retreatLockedTurn === state.turn;
     return err(
       "RETREAT_PREVENTED",
@@ -1130,10 +766,8 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
           : "an attack effect prevents this Pokémon from retreating (§11)",
     );
   }
-  // §11 — an opposing CONTINUOUS Ability holding it in place (Snorlax "Block").
-  // Same error code as the attack rider above — the client is told it cannot
-  // retreat, not why (D112) — but its own message: the two differ only in
-  // provenance, and "an attack effect" would be a lie for an Ability aura.
+  // §11: an opposing continuous Ability (Snorlax "Block"). Same error code as the attack lock,
+  // different message.
   if (opposingRetreatBlocked(state, active)) {
     return err(
       "RETREAT_PREVENTED",
@@ -1181,9 +815,8 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     }
   }
 
-  // 🆕🆕🆕 §11 (D645) — Goodra "Slimy Sliding": a legal retreat flips ONE coin first, once every check above
-  // has passed (R-SLD1), under the holder's seat (`ABILITY_COIN_FLIP`'s contract). Tails: no Energy is
-  // discarded, nothing switches, and the retreat is still spent (R-SLD2). Heads: the retreat below, unchanged.
+  // Goodra "Slimy Sliding": after every check passes, flip one coin. Tails: nothing is discarded or
+  // switched, but the retreat is still spent.
   const slimy = retreatCoinFlipSource(state, action.seat);
   const flips: GameEvent[] = [];
   let rngState = state.rngState;
@@ -1212,7 +845,6 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // The cost payment is the shared "cards leave play for the discard" move
   // (types.ts) — the same primitive KO cleanup uses.
   const paid = discardFromStack(side, active, chosenSet);
-  // 🆕🆕🆕 D636 — and it remembers WHEN it went down (types.ts `benchedTurn`, Fall Back to Reload).
   const benched = { ...clearOnLeavingActive(paid.pokemon), benchedTurn: state.turn };
   // Swap into the promoted Pokémon's bench slot, preserving the other slots.
   const bench = [
@@ -1260,56 +892,13 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       reason: "benched",
     });
   }
-  // 🆕 D320 — §9 THE OPPONENT-ACTION TRIGGER ON THIS MOVE (Magcargo `sv05-029`
-  // "Lava Zone"). THE SECOND of the engine's two Active→Bench moves, and the
-  // one a "sole funnel" reading of `switchInto` would have missed: a retreat
-  // never calls that function, because it also spends the retreating body's
-  // Energy and emits `RETREATED` rather than `POKEMON_SWITCHED`. Shared with
-  // the other mover through triggers.ts `runActiveBenchedTriggers`, which owns
-  // the printed "during their turn" clause — trivially true here (a retreat is
-  // gated to the actor's own turn by `turnGate` at the top of this function)
-  // and falsifiable at the `gust` route, which is what makes it a gate.
+  // §9: the Active-to-Bench move trigger (Magcargo "Lava Zone"). Retreat never calls `switchInto`,
+  // so it calls the shared `runActiveBenchedTriggers` itself.
   const moved = runActiveBenchedTriggers(next, action.seat, activeTopUid, events);
-  // 🆕 §8.1 — THE FIFTH CALL SITE OF THE MID-TURN SWEEP, AND THE FIRST ONE WHOSE
-  // LETHALITY COMES FROM A **COST**. D325 gave `effectiveMaxHp` two ENERGY-COUNTED
-  // terms — `hpBonus.requiresEnergyType` (Okidogi `sv06-111`/`sv06.5-074`/
-  // `sv08.5-057` "Adrena-Power", +100 while any {D} is attached) and
-  // `hpBonusPer.attachedEnergy` (Conkeldurr `sv10.5b-049`/`sv10.5b-127`
-  // "Craftsmanship", +40 per attached {F}) — and recorded, in that slice's own
-  // suite, that these are **the first grants that shrink with nothing in the
-  // holder's stack moving at all**, leaving whether a sweep runs on that path an
-  // OPEN SEAM. This is the path: the retreat cost discards Energy from the very
-  // body the grant is measured on, so a Conkeldurr at 200 damage under a 260
-  // maximum is at 200 under 140 the moment it pays three {F} — Knocked Out by
-  // §8.1's `damage ≥ maximum` state check, on the Bench, with no attack anywhere
-  // near it. Every OTHER discard-from-play route is an interpreter op and already
-  // folds through `settleProgram`'s sweep; a retreat is the one that does not.
-  //
-  // ⚠️ `[action.seat]` AND NOT `SEATS`, which is turn.ts's other three sites'
-  // answer and is reached the same way: the cost is paid off the actor's own body,
-  // and nothing else on this path can damage anything. Neither term can reach the
-  // other board. The Stadium play (cardplay.ts) is the one site that must pass
-  // both, because its printed clause names both.
-  //
-  // 🆕 ⚠️ **AND IT IS BEHIND `runActiveBenchedTriggers`, THOUGH NOT FOR THE REASON
-  // D328 WROTE HERE.** That paragraph read *"the counters that trigger places are
-  // a second way this same move can turn lethal"* and named Magcargo `sv05-029`
-  // "Lava Zone" as putting them "on the body that MOVED". **LAVA ZONE PLACES NO
-  // COUNTERS**: its printed consequent is *"their **new Active Pokémon** is now
-  // Burned"* and its program is one `applyStatus` op, so it touches a different
-  // body from the one that moved, applies a §12 condition rather than damage, and
-  // cannot make anything lethal here at all (Burn is dealt at the Checkup). The
-  // trigger is the engine's ONLY `onActiveMovedToBench` row, so on today's pool
-  // this move has exactly ONE lethality source and it is the cost.
-  // [🆕🆕🆕 D610 (D539): WITHDRAWN — Palafin "Zero to Hero" (D565) is a second row, and Team
-  // Rocket's Dugtrio "Holes" (D610) places 2 counters on the body that MOVED, a second lethality
-  // source on this path; this sweep takes that Knock Out (`onMoveHpMeD610.test.ts` §6).]
-  //
-  // The ORDER is still owed, and it is owed for the ordinary reason: an Ability
-  // whose antecedent is this move fires as part of the move, and a sweep in front
-  // of it would Knock the retreater Out — and park the game on the opponent's
-  // Prize decision — with the Ability still unfired. `selfScalingHp.test.ts` §8
-  // drives that on a board where the cost is lethal and a Magcargo is watching.
+  // §8.1: the retreat cost can be lethal, since discarding Energy can shrink an Energy-counted HP
+  // bonus (Conkeldurr "Craftsmanship"); move triggers can also place counters. Only the actor's
+  // board can change. The sweep runs after the move triggers so an Ability answering the move fires
+  // before the Knock Out.
   return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], events);
 }
 
@@ -1320,11 +909,11 @@ export function endTurn(state: GameState, action: EndTurnAction): ApplyResult {
   return advance({ ...state, pending: turnTail(action.seat) }, []);
 }
 
-/** 🆕🆕🆕 D576 — the actor's own in-play spots whose TOP card may be discarded from play
-    right now (R-FO3): every body topped by an Antique Fossil, Active first, while it is
-    `seat`'s own MAIN phase (`turn:action`, outside Festival Lead's attack-again window).
-    Empty otherwise. The ONE offer funnel — `redactedDiscardableOf` (redact.ts) and GameHud's
-    buttons read it, and `discardFromPlay` below accepts exactly these spots. */
+/**
+ * The actor's in-play spots topped by an Antique Fossil, Active first, during the actor's main
+ * phase (outside Festival Lead's window); empty otherwise. The single source for the offer and for
+ * `discardFromPlay`.
+ */
 export function discardableTargets(state: GameState, seat: Seat): PokemonTarget[] {
   if (turnGate(state, { type: "discardFromPlay", seat }) !== null) return [];
   const side = state.players[seat];
@@ -1336,20 +925,12 @@ export function discardableTargets(state: GameState, seat: Seat): PokemonTarget[
   return out;
 }
 
-/** 🆕🆕🆕 §7.1 (D576) — an Antique Fossil's *"At any time during your turn, you may discard this
-    card from play."* (R-FO3, ⚠️ UNRULED → ruled at D576).
-
-    • WHEN: the actor's own main phase — `turnGate` (turn:action, the actor's seat, and not
-      Festival Lead's attack-again window). "At any time during your turn" is read as the
-      player's own action window: never mid-prompt (`effect:choose`), never inside a KO park.
-    • WHAT: a body whose TOP card is a fossil (an evolved fossil is a Lileep, not a fossil —
-      R-FO6). The WHOLE stack (the fossil and anything under it), its Energy and its Tools go
-      to the discard pile through `discardFromStack(…, "all")`, announced as the shipped
-      `POKEMON_RETURNED` with `dest: "discard"` — `discardDefender`'s recipe (interpreter.ts).
-    • NOT A KNOCK OUT: no Prize is taken, no KO stamp is written, no on-KO trigger fires.
-    • THE EMPTY SPOT: an Active discarded this way is owed a promotion, and an empty board is
-      the §14.2 loss — both through `resolveMidTurnKnockOuts`' shipped `orphanedPromotions` and
-      `advance`'s promote / win check, so the turn resumes (`resumeTurn`) once it is answered. */
+/**
+ * §7.1: Antique Fossil's "At any time during your turn, you may discard this card from play." Only
+ * in the actor's main phase. The whole stack, Energy and Tools go to the discard pile; it is not a
+ * Knock Out, so no Prize or on-KO trigger. A discarded Active is owed a promotion, and an empty
+ * board loses (§14.2).
+ */
 export function discardFromPlay(state: GameState, action: DiscardFromPlayAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;

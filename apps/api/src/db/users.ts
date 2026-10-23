@@ -1,12 +1,5 @@
-// User-data tables (read-write): accounts, auth and deck persistence.
-// Spec: docs/workstreams/backend-data.md §5.3 (schema) + §3.5 (auth model).
-//
-// Timestamps here are INTEGER epoch milliseconds (`mode: "timestamp_ms"`,
-// surfaced as Date by drizzle) — unlike the catalog, these are OUR clocks, so
-// nothing forces ISO text on us, and integers give unambiguous SQL comparison
-// (`expires_at < ?now` for session sweeps) with no string-format drift.
-// `created_at`-style columns default to `unixepoch() * 1000` in the DB so a
-// forgotten insert value can never produce a row without a timestamp.
+// User-data tables. Timestamps are integer epoch milliseconds, and `created_at` columns default in
+// the database so a row can never lack one.
 
 import { sql } from "drizzle-orm";
 import {
@@ -30,14 +23,11 @@ export const users = sqliteTable("users", {
   /** Null for OAuth-only accounts (§3.5: password and OAuth can coexist). */
   passwordHash: text("password_hash"),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
-  /** The account's chosen favourite deck (P5-7), or null. References `decks`
-      below via a thunk (forward reference) so file order stays users→decks; the
-      `AnySQLiteColumn` return type breaks the type cycle the mutual reference
-      would otherwise create (users↔decks). ON DELETE SET NULL means deleting the
-      deck clears the favourite instead of blocking the delete (a RESTRICT FK) or
-      dangling a stale id — and D1 enforces FKs here (the deck DELETE leans on
-      deck_cards' cascade). NB: drizzle-kit omits the referential action on an
-      ADD COLUMN, so migration 0005 restores `ON DELETE SET NULL` by hand. */
+  /**
+   * The account's favourite deck, or null. The thunk and `AnySQLiteColumn` type break the
+   * users/decks reference cycle. drizzle-kit omits the referential action on ADD COLUMN, so the
+   * migration restores `ON DELETE SET NULL` by hand.
+   */
   favouriteDeckId: text("favourite_deck_id").references((): AnySQLiteColumn => decks.id, {
     onDelete: "set null",
   }),

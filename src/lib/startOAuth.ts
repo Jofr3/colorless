@@ -1,12 +1,6 @@
-// Kicking off an OAuth flow means assigning window.location to the api's
-// /auth/oauth/:provider url (it 302s to the provider). But until the
-// provider's secrets are installed the api answers that url with a 503 JSON
-// body — and a plain navigation would dump the user on a raw JSON page. So
-// we PROBE first with `redirect: "manual"`: in a cross-origin fetch a
-// redirect comes back as an unreadable `opaqueredirect` (status 0), which
-// is exactly the "provider is configured" signal, while the 503 stays
-// readable (the api's CORS middleware covers /auth, credential echo and
-// all — verified against wrangler dev).
+// Starting OAuth means navigating to the api's /auth/oauth/:provider, which redirects to the
+// provider, but without provider secrets the api answers with a 503 JSON body. So probe first with
+// `redirect: "manual"`: a redirect comes back as an `opaqueredirect` (status 0).
 
 import { oauthStartUrl } from "./api";
 

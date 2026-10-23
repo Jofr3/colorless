@@ -1,71 +1,7 @@
 #!/usr/bin/env bun
 /**
- * THE BLOCKER-CENSUS GATE (D465) — `bun scripts/residue-census-gate.ts`.
- *
- * WHY THIS EXISTS. `scripts/residue-census.ts` is a COMMITTED MEASUREMENT and it
- * had nothing behind it. Its own doc block says so twice — *"this file is the
- * one with no test behind it"* — and the price was paid twice over: the three
- * figures it transcribes from `censusAtHead.test.ts` rotted by exactly one slice
- * on four separate occasions and nothing reddened, and D464 found a whole
- * MECHANICAL BLIND SPOT in its span probe that had been over-populating `OPAQUE`
- * by six rows since D459. Both are the same defect this repo keeps rediscovering
- * (D212's own header names it): **a claim with nothing behind it.** So the
- * claims become a COMMAND, on D212's precedent — a script, not a suite, because
- * `scripts/**` is outside vitest's include globs and outside `tsc -b`'s project
- * references, so a `*.test.ts` that imported the instrument would break the
- * typecheck rather than guard anything.
- *
- * IT IS NOT A STEP OF `bun run check`. It is a mutation KILLER
- * (`killedByCommand`), exactly as `scripts/lint-coverage.ts` is for D212's rows
- * and `scripts/mutation/recovery-gate.ts` is for D411's. Exit 0 = every claim
- * holds; exit 1 = a named claim failed, with the measured value beside it.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * WHAT IT ASSERTS — three sections, and each one is a claim the instrument's
- * doc block already MAKES in prose.
- *
- * § A — THE TRANSCRIPTION IS THE SAME OBJECT. `residue-census.ts`'s `raw`,
- *   residue sentences and residue printings must equal the three literals
- *   `censusAtHead.test.ts` pins in its `residueSentences` rung. ⚠️ THE LITERALS
- *   ARE PARSED OUT OF THE SUITE'S SOURCE, never copied here — a figure copied
- *   into a second file is the exact thing that rotted four times. So this
- *   section has no number of its own and cannot go stale; it can only ever say
- *   that the two computations disagree.
- *
- * § B — THE TAIL REPAIR, AS A PURE FUNCTION, ON LITERAL INPUTS. `spanProbe`
- *   tokenises on `" "` and rejoins on `" "`, so before D465 a deletion reaching
- *   the LAST token took the sentence-final period with it and the remainder
- *   could never build — no corpus sentence ends without its terminator. Each
- *   case below is one axis of `keptAfterDeletion`, and each is the killer of one
- *   mutation row. ⚠️ INCLUDING THE BLIND SPOT THAT REMAINS: a sentence whose
- *   last character is `)` has no terminator to re-attach and MUST NOT be given
- *   an invented one, so the refusal is pinned as tightly as the repair.
- *
- * § C — THE REPAIR IS CONFINED TO TAIL SPANS, TOTAL OVER THE RESIDUE. Every
- *   sentence, every span offset, every span length: a second candidate is
- *   offered if and only if the span reaches the last token and does not start at
- *   it. This is the one section that reads the corpus rather than a literal, and
- *   it is the section that catches a repair which fires EVERYWHERE — the
- *   mutation that would silently widen every other class in the table.
- *   🆕🆕🆕 D580 — THE RESIDUE IS EMPTY (Mr. Mime `sv05-063`, the last row, is built), so § C
- *   runs over 0 sentences and its dead-code check is vacuous-safe. § C′ runs the SAME loop over
- *   a FIXED literal list (Mr. Mime's sentence and § B ②'s comma-tail shape) that no slice can
- *   build away — D569/D579's pinned-witness lesson, applied to this gate.
- *
- * ⚠️ WHAT IT DOES NOT ASSERT, STATED (D419/D455). It says nothing about which
- * CLASS any row lands in — a class list is exactly the pinned figure this file
- * refuses to hold, because building a row is supposed to move it. It says
- * nothing about whether `builds()` is the right predicate; that is
- * `censusAtHead.test.ts`'s job and § A only checks the two agree. 🆕 D529 — § A
- * ALSO pins a RELATION inside the instrument: `builds()` and `arm()` are the same
- * predicate, sentence by sentence, and `builtSentences` + `rows` partition the
- * corpus in BOTH directions. That still says nothing about the predicate's
- * CORRECTNESS (the three literals do), but it is what makes a mutant that reverts
- * `builds()` ALONE killable: the residue rows come from `arm()`, so the three
- * literals do not move when only `builds()` regresses (driven RED by hand at D529
- * before its row was written — D465 "an instrument must be killable"). And it says
- * nothing about the SEGMENT or SUBSTITUTION probes, which are unchanged by D465
- * and remain, as they were, untested.
+ * Gate for `scripts/residue-census.ts`, which otherwise has no test behind it. Run with `bun
+ * scripts/residue-census-gate.ts`.
  */
 
 import { readFileSync } from "node:fs";
@@ -112,12 +48,9 @@ for (const [label, needle, mine] of PINS) {
       : `residue-census.ts says ${mine}, the suite pins ${theirs}`,
   );
 }
-// 🆕 D529 — `builds()` AND `arm()` ARE ONE PREDICATE, AND THEY PARTITION THE POPULATION.
-// The residue `rows` are produced by `arm()` and `builtSentences` by `builds()`; the two
-// functions carry the SAME four-arm predicate by transcription, and nothing above could
-// see them drift apart: revert `builds()` alone and the three literals still agree.
-// Compared in BOTH directions — the built set and the residue set must be disjoint AND
-// must cover the corpus — and per sentence, so a drift on one row is named.
+// `builds()` and `arm()` carry the same predicate by transcription, so check that they partition
+// the corpus: the built and residue sets must be disjoint and together cover every sentence,
+// compared per sentence so a drift names its row.
 const builtSet = new Set(builtSentences);
 const residueSet = new Set(rows.map((r) => r.text));
 check(
@@ -238,30 +171,16 @@ check(
   stray.length === 0,
   `${stray.length} stray offer(s) over ${spans} spans; first: ${stray[0] ?? "—"}`,
 );
-// 🆕🆕🆕 D580 — THE POPULATION CHECK BELOW IS VACUOUS-SAFE (`rows.length === 0 || …`), D579's
-// opaque-anatomy-gate.ts § E precedent. D580 builds the LAST residue sentence (Mr. Mime `sv05-063`
-// "Look-Alike Show", a registry row), so the residue is EMPTY at this head: a loop over 0 rows
-// offers nothing, and "dead code" would be red on a repo that improved. What this section
-// protected is carried, population-independently, by § C′ below (the same span loop over a
-// FIXED literal list). Measured at D580 with the residue emptied by hand (Mr. Mime added to
-// `REGISTRY_ATTACKS`, both pins at 0, then cmp-reverted): `D465-tail-repair-never-fires` and
-// `D465-tail-repair-fires-on-every-span` stay KILLED, each by § B ①/② AND § C′'s dead-code
-// check (both mutants offer NO repair anywhere — the second re-terminates only interior spans,
-// whose remainders already end on the period, so the repair never changes a string); § C is
-// vacuous at 0 rows and kills neither.
+// Vacuous-safe: the residue can be empty, and progress must not turn this check red. The same span
+// loop is covered independently by the fixed literal list below.
 check(
   "§C the repair never fired at all — it is dead code",
   rows.length === 0 || offered > 0,
   `0 repaired candidates over ${spans} spans in ${rows.length} residue sentences`,
 );
 
-// ─── § C′. THE SAME SPAN LOOP OVER A FIXED LITERAL LIST (D580) ───────────────
-// The residue is a population every slice is TRYING to empty, so a check that rides on it can
-// only be consumed by progress (D569's lesson, a04889a9). These sentences are pinned literals
-// no slice can build away: the first is Mr. Mime's own printed sentence (the last residue row,
-// built at D580), the second is § B ②'s comma-tail shape. The loop is § C's, byte for byte in
-// what it asks: every span offset and length, a second candidate if and only if the span
-// reaches the last token and does not start at it, and the plain candidate never moved.
+// The span loop again, over pinned literal sentences that no slice can build away, so this check
+// does not depend on the residue population.
 const C_PRIME_TEXTS: readonly string[] = [
   "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
   "Discard the top 3 cards of your deck, and this attack does 80 damage.",

@@ -1,71 +1,8 @@
 /**
- * 🆕🆕 D533 — THE BINDING GATE: A `replace` MAY ONLY NAME WHAT ITS FILE BINDS.
- *
- * WHY THIS EXISTS, AND IT IS A LIVE WITNESS RATHER THAN A WORRY. D532's
- * whole-corpus sweep came back one short: `D445-log-row-derives-the-actor`
- * had reported KILLED on every sweep from D445 to D531, and it was killed by a
- * MISSING NAME — `log.ts` did not import `otherSeat`, so the mutated line threw
- * a `ReferenceError` the first time the suite reached it. vitest transpiles
- * with esbuild and never type-checks, and the harness reads the exit code
- * (`run.ts` `green: code === 0`, `const killed = !mutated.green`), so **a row
- * that dies because its patch does not LINK reports exactly what a row that
- * dies on an assertion reports.** D416: a row that dies for the wrong reason is
- * worth less than one that survives, because it reports success.
- *
- * 🛑 **AND THE CLASS WAS SEVEN, NOT THE THREE THE FIRST SWEEP NAMED.** D532's
- * close-out swept the corpus with a regex over raw text and found three
- * (`programFor` in `interpreter.ts`, imported TYPE-ONLY there — D242, D252,
- * D278). Reading the code found four more, and each hides from raw text for
- * its own reason:
- *
- *   - D377 calls `isImmobilized`, which `interpreter.ts` mentions only in a
- *     COMMENT — a raw-text binding set counts the comment as a definition;
- *   - D226 reads `moved` and D237 deletes `const moved` while the function
- *     still reads it — `moved` is declared ELSEWHERE in the file, in other
- *     functions, so "declared anywhere in the file" masks both;
- *   - D232 deletes a top-level `const ATTACK_… =` prefix that another
- *     statement still reads — the DELETION direction, which no scan of what a
- *     `replace` INTRODUCES can see.
- *
- * ─── THE PREDICATE, IN TWO DIRECTIONS ────────────────────────────────────────
- * Per row, the TOP-LEVEL statement(s) the `find` overlaps are re-parsed with
- * the TypeScript compiler API before and after the patch.
- *
- *   INTRODUCTION — a value-position identifier in the MUTATED region that is
- *   bound by none of: the region's own declarations (params, var/let/const,
- *   destructured names, function/class names, catch vars), the file's OTHER
- *   top-level declarations, its VALUE imports (`import type` and `{ type X }`
- *   bind nothing at run time), or `globalThis`. Compared against the ORIGINAL
- *   region BY DIFFERENCE, so a name already unresolved there (`expect` in a
- *   suite with vitest globals) is never the row's fault.
- *
- *   DELETION — a name the original region declared at top level and the
- *   mutated one no longer does, still read by ANOTHER top-level statement and
- *   declared by none.
- *
- * Only `Identifier` nodes are visited, so comments, strings, templates and
- * regex text drop out BY CONSTRUCTION; member names after `.`/`?.`, object
- * keys, class members, enum members, binding property names, labels,
- * import/export specifiers, JSX attribute names and lowercase JSX tags are not
- * references; type nodes are skipped (a `heritage` `extends` expression is a
- * value and is kept). **There is NO hand-kept exemption list** — partition-gate's
- * rule, for partition-gate's reason.
- *
- * ─── WHAT IT DOES NOT COVER, STATED ──────────────────────────────────────────
- * ⚠️ **THE GATE IS A FLOOR, NOT A PROOF.** Scope is TOP-LEVEL-STATEMENT
- * granularity: a same-named binding in a SIBLING nested function inside the
- * same top-level statement masks a miss (a `replace` reading `x` where only a
- * neighbouring closure declares `x` passes here and throws at run time). Only
- * `tsc` over the mutated file settles that, and running `tsc` per row is the
- * ~3-hour sweep's cost again. What this gate buys is the class as it has
- * actually occurred — seven rows over 300 decisions — in seconds.
- *
- * ─── WHY A SCRIPT, AND WHY NOT INSIDE `precheck.ts` ──────────────────────────
- * D470's attribution reason, as for `splice-gate.ts` and `partition-gate.ts`:
- * `precheck.ts` exits 1 whenever any row's `find` moves, so a guard living
- * inside it would be over-determined for every mutant that touches a corpus
- * row. `precheck.ts` imports `bindingReport` so the command everyone runs
- * before a sweep still reports it, and the wiring rung asserts that it does.
+ * Binding gate: a mutant's `replace` may only name identifiers its file binds. Vitest does not
+ * type-check, so an unbound name throws a ReferenceError and reports a false kill. Checks
+ * introduced names and deleted top-level declarations at top-level-statement granularity, so it is
+ * a floor rather than a proof.
  *
  *   bun scripts/mutation/binding-gate.ts
  */
@@ -122,11 +59,7 @@ function bindingNames(name: ts.BindingName, out: string[]): void {
   for (const el of name.elements) if (ts.isBindingElement(el)) bindingNames(el.name, out);
 }
 
-/**
- * The VALUE names an import binds. ⚠️ `import type { X }` and `import { type X }`
- * bind NOTHING at run time — esbuild erases them — which is exactly how
- * `programFor` was "imported" into `interpreter.ts` for D242/D252/D278.
- */
+/** The value names an import binds; type-only imports bind nothing at run time. */
 function importNames(st: ts.ImportDeclaration, out: string[]): void {
   const c = st.importClause;
   if (c === undefined) return;
@@ -308,10 +241,8 @@ function originalRegion(fi: FileInfo, lo: number, hi: number): Original {
 export type RowVerdict = { flagged: string[]; introduces: boolean };
 
 /**
- * ⚠️ THE CORE, driven identically by the self-check's synthetic files and by
- * the live corpus. `null` when the `find` does not occur exactly once —
- * `precheck`'s loop owns that verdict, and a guard over it here would be
- * over-determined (D470).
+ * The core check, shared by the self-check and the live corpus. Null when `find` does not occur
+ * exactly once, which precheck reports.
  */
 export function judgeRow(fi: FileInfo, find: string, replace: string): RowVerdict | null {
   const at = fi.text.indexOf(find);
@@ -353,12 +284,8 @@ type Fixture = { name: string; text: string; find: string; replace: string; flag
 const FN = "export function f(a: number, b: number): number {\n  return a;\n}\n";
 
 /**
- * ⚠️ THE SELF-CHECK, AND IT IS WHY A MUTANT AGAINST THIS FILE IS A ROW RATHER
- * THAN A DECORATION (D481). The corpus is CLEAN at HEAD once D533's seven rows
- * are re-spelled, so every mutation that makes this gate VACUOUS stays green on
- * the live corpus — only a board built with a known answer can show it. Each
- * fixture is ONE difference from a correct row; each named mutation of the gate
- * fails the fixture built for it and says so by name.
+ * Self-check on synthetic fixtures, each one difference from a correct row, so a vacuous gate fails
+ * even when the corpus is clean.
  */
 const FIXTURES: Fixture[] = [
   // ── POSITIVES — the gate must flag exactly these names ────────────────────
@@ -458,9 +385,7 @@ const FIXTURES: Fixture[] = [
 ];
 
 export function selfCheck(): void {
-  // Every fixture is run and every failure named, not just the first: a mutation
-  // of this gate must be SEEN to fail the fixture built for it (D484's note — a
-  // rung that fires for a neighbour's reason proves nothing about its own).
+  // Run every fixture and name every failure, not just the first.
   const failed: string[] = [];
   for (const fx of FIXTURES) {
     const fi = fileInfoOf("fixture.ts", fx.text);
@@ -481,9 +406,7 @@ export function selfCheck(): void {
 }
 
 /**
- * ⚠️ THE WIRING RUNG — partition-gate's, for partition-gate's reason: a gate
- * nothing calls is indistinguishable from a gate that passes, and the command
- * that precedes every sweep is `bun scripts/mutation/precheck.ts`.
+ * Asserts precheck.ts calls this gate; an uncalled gate is indistinguishable from a passing one.
  */
 export function checkWiring(): void {
   const text = readFileSync(WIRING_SITE, "utf8");

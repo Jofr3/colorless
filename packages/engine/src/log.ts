@@ -1,27 +1,14 @@
-// GameEvent stream → game-log rows (`SeatLogEntry`, @colorless/schema). Entries
-// are recorded SEAT-keyed because the log outlives its viewer: on /play the
-// hot-seat device flips mid-game, and online the SAME array is broadcast to both
-// clients — a row minted as "you" would lie to whoever ends up reading it. The
-// seat→viewer relabel is the render layer's job (`viewLogEntries`,
-// src/features/game/viewLog.ts), which the redactor precedent (redact.ts builds
-// the wire shape, the web maps it to playmat) keeps out of the engine.
-//
-// PURE, and run in TWO places: /play builds rows client-side, and the lobby
-// Durable Object builds them server-side with the full state (P4 online.md). So
-// this is the log's SINGLE definition, shared by both — hence its move into the
-// engine package alongside `redactGame`.
-//
-// Hidden information stays hidden in the log too: draws and prize takes are
-// counts only, and face-down setup placements never name the card — the log
-// persists across viewer flips, so a named draw would leak one player's hand
-// to the other.
+// GameEvent stream to game-log rows. Entries are seat-keyed because the same log is shown to both
+// players and across hot-seat flips; the seat-to-viewer relabel happens in the render layer
+// (`viewLogEntries`). Pure, and run both client-side and in the lobby Durable Object. Hidden
+// information stays hidden: draws and prize takes are counts only, and face-down setup placements
+// never name the card.
 
 import type { LogSegment, SeatLogEntry } from "@colorless/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import type { AttackerClass } from "./effects";
 import type { GameEvent, StatusName } from "./events";
-// 🆕🆕🆕 D556 — the ONE noun reader, for `SIDE_ATTACKS_BOOSTED`'s printed defender noun.
-// interpreter.ts takes nothing from this file, so no cycle.
+// interpreter.ts imports nothing from this file, so there is no cycle.
 import { retrieveNoun } from "./interpreter";
 import {
   DEFAULT_CONFUSION_DAMAGE,
@@ -35,12 +22,10 @@ import {
 export interface LogContext {
   /** Display names per seat (deck names on /play). */
   names: Record<Seat, string>;
-  /** The state AFTER the events applied — resolves uids to card names.
-      Safe for every event below: nothing it names has left play when the
-      reduction settles (attach hosts stay put, KO'd names come off the
-      event's own uid, not the state). 🆕 Card revision B12: "attach hosts stay put" is false of
-      an attach whose host is Knocked Out in the same batch (Magneton "Overvolt Discharge"); that
-      row is named through the batch's KNOCKED_OUT (`knockedOutHosts`). */
+  /**
+   * The state after the events applied, used to resolve uids to card names. An attach whose host is
+   * Knocked Out in the same batch is named through `knockedOutHosts`.
+   */
   state: GameState;
   /** Wall-clock stamp for the action rows, e.g. "+02:14". */
   elapsed: string;
@@ -76,10 +61,10 @@ function cardName(state: GameState, uid: string): string {
   return cardOfUid(state, uid)?.name ?? "a card";
 }
 
-/** 🆕🆕🆕 D598 — the `KNOCKED_OUT.toHand` tail, counted by what MOVED: Energy cards (Huntail
-    "Diver's Catch", D572 — only Basic Energy reach it) as "N Basic Energy", every other card
-    (Gengar "Infinite Shadow" — the Pokémon's own stack) as "N Pokémon card(s)". An all-Energy
-    split is D572's string byte for byte. */
+/**
+ * The `KNOCKED_OUT.toHand` tail, counted by what moved: Energy as "N Basic Energy", other cards as
+ * "N Pokémon card(s)".
+ */
 function koToHandTail(state: GameState, uids: readonly string[]): string {
   const energy = uids.filter((uid) => cardOfUid(state, uid)?.category === "Energy").length;
   const pokemon = uids.length - energy;
@@ -90,35 +75,29 @@ function koToHandTail(state: GameState, uids: readonly string[]): string {
   return ` — ${parts.join(" and ")} put into the hand instead of the discard pile`;
 }
 
-/** §11 (D239) — the printed ATTACKER CLASS as a player-facing noun modifier:
-    "Basic", "Basic non-Colorless". The ONE renderer of `AttackerClass`, and it
-    exists rather than being an interpolation because the record's two keys are
-    two printed words in a fixed order — a caller assembling them ad hoc is the
-    drift `attackBlockOf`'s single-read contract exists to stop, one layer up.
-
-    ⚠️ IT SPELLS THE TYPE NAME, NEVER THE PRINTED BRACE CODE. D238's finding: a
-    dialog or a log row must not quote `{C}` at a player, so the deriver resolves
-    the code through `POKEMON_TYPE_BY_CODE` at parse time and this function only
-    ever sees a `PokemonType`. The printed card says "non-{C}"; the row says
-    "non-Colorless"; they are the same claim in two audiences' vocabularies. */
+/**
+ * The printed attacker class as a noun modifier ("Basic", "Basic non-Colorless"). It spells type
+ * names, never brace codes.
+ */
 function attackerClassPhrase(cls: AttackerClass): string {
   const stage = stageWord(cls.stage);
   return cls.excludingType === undefined ? stage : `${stage} non-${cls.excludingType}`;
 }
 
-/** 🆕🆕🆕 D575 — the WHOLE printed class noun ("Basic Pokémon", "Ancient Pokémon",
-    "Pokémon ex"), because the ex class prints its word AFTER "Pokémon" and the row can no
-    longer append " Pokémon" to the phrase. Every pre-D575 row renders byte-identically. */
+/**
+ * The whole printed class noun ("Basic Pokémon", "Pokémon ex"), since the ex class puts its word
+ * after "Pokémon".
+ */
 function attackerClassNoun(cls: AttackerClass): string {
-  // 🆕🆕🆕 D630 — "Pokémon that have an Ability" also prints its class AFTER "Pokémon": the printed
-  // words verbatim (Psy Protection `me04-033`).
+  // "Pokémon that have an Ability" also puts its class after "Pokémon".
   if (cls.stage === "hasAbility") return "Pokémon that have an Ability";
   return cls.stage === "ex" ? "Pokémon ex" : `${attackerClassPhrase(cls)} Pokémon`;
 }
 
-/** 🆕🆕🆕 D630 — "{class}'s attacks", except for the one class whose noun ends in a clause, which
-    takes the printed order instead ("attacks from Pokémon that have an Ability"). Every pre-D630
-    row renders byte-identically. */
+/**
+ * "{class}'s attacks", except a class whose noun ends in a clause takes "attacks from Pokémon that
+ * have an Ability".
+ */
 function attackerClassAttacks(cls: AttackerClass): string {
   const noun = attackerClassNoun(cls);
   return cls.stage === "hasAbility" ? `attacks from ${noun}` : `${noun}'s attacks`;
@@ -132,12 +111,11 @@ function stageWord(stage: AttackerClass["stage"]): string {
   switch (stage) {
     case "basic":
       return "Basic";
-    // 🆕🆕🆕 D575 — the banner word and the rule-box suffix, spelled by a human.
     case "ancient":
       return "Ancient";
     case "ex":
       return "ex";
-    // 🆕🆕🆕 D630 — Lava Wall, Flashing Barrier / Metal Block, Psy Protection.
+    // Lava Wall, Flashing Barrier / Metal Block, Psy Protection.
     case "burned":
       return "Burned";
     case "evolution":
@@ -174,17 +152,14 @@ function countedNames(cardNames: readonly string[]): string {
   return [...counts].map(([name, count]) => (count > 1 ? `${name} ×${count}` : name)).join(", ");
 }
 
-/** The Pokémon now carrying `energyUid`, resolved by uid rather than by the
-    attach target's slot — robust to an on-attach move (Jet Energy switches its
-    benched host to the Active Spot in the SAME batch, compacting the bench, so
-    the target index no longer names the host). Reads the post-state. */
-/** 🆕 Card revision B12 — the Energy each KNOCKED_OUT in this batch took out of play, mapped to the
-    KO'd body's top uid. `LogContext.state` is the state AFTER the batch, and an attach that resolves
-    in the same reduction as its host's Knock Out (Magneton "Overvolt Discharge": the last attach and
-    the printed self-KO) leaves the Energy on no body, so `energyHostName` could only say "a Pokémon".
-    The KO row names the body by its own uid (`cardIdByUid` outlives the KO), and this map lets the
-    attach row above it do the same. Read only when the board has no carrier, so every row whose
-    host is still in play is byte-identical. */
+/**
+ * The Pokémon carrying `energyUid`, resolved by uid rather than slot because an on-attach move (Jet
+ * Energy) can compact the bench. Reads the post-state.
+ *
+ * The Energy each KNOCKED_OUT in this batch took out of play, keyed by the KO'd body's top uid, so
+ * an attach whose host was Knocked Out in the same batch can still name it. Read only when no body
+ * carries the Energy.
+ */
 function knockedOutHosts(events: readonly GameEvent[]): ReadonlyMap<string, string> {
   const hosts = new Map<string, string>();
   for (const event of events) {
@@ -205,13 +180,11 @@ function energyHostName(
     const carriers = side.active === null ? side.bench : [side.active, ...side.bench];
     return carriers.find((pokemon) => pokemon.energy.includes(energyUid));
   };
-  // 🆕🆕🆕 D532 — the event's seat is the ACTOR; a cross-seat attach (Grafaiai's "to THEIR
-  // Pokémon") puts the Energy on the OTHER seat's body, so scan that board before falling
-  // back to the bare noun. The actor's board is read FIRST, so every pre-D532 row is
-  // byte-identical.
+  // The event's seat is the actor; a cross-seat attach puts the Energy on the other seat's body, so
+  // that board is scanned after the actor's.
   const host = carrierOf(seat) ?? carrierOf(otherSeat(seat));
   if (host !== undefined) return topCardOf(state, host)?.name ?? "a Pokémon";
-  // 🆕 Card revision B12 — no body carries it: the host left play in this same batch (above).
+  // No body carries it: the host left play in this same batch.
   const knockedOut = koHosts.get(energyUid);
   return knockedOut === undefined
     ? "a Pokémon"
@@ -249,7 +222,7 @@ const GAME_OVER_REASONS: Record<GameOverReason, string> = {
   noPokemon: "the opponent has no Pokémon left",
   deckOut: "the opponent could not draw",
   conceded: "the opponent forfeited",
-  // 🆕🆕🆕 D575 — a card's printed win (N's Sigilyph "Victory Symbol": "…you win this game.").
+  // A card's printed win (N's Sigilyph "Victory Symbol").
   cardEffect: "a card's effect won the game",
 };
 
@@ -314,12 +287,8 @@ function formatEvent(
         ),
       ]);
     case "POKEMON_BENCHED":
-      // D294 — `actor` present is the cross-seat put (Mandibuzz "Look for Prey"),
-      // filed under the ACTOR with the owner named OUTRIGHT, exactly as
-      // CARD_TO_BOTTOM_OF_DECK above: the `who` chip is viewer-relative while
-      // these segments are fixed text, so a possessive would print an identical
-      // row from both seats of a mirror match. Absent is the §5.2 own-hand play
-      // and keeps its row byte for byte.
+      // `actor` present is a cross-seat put (Mandibuzz "Look for Prey"): filed under the actor with
+      // the owner named outright, since a possessive would print identically from both seats.
       return event.actor === undefined
         ? row(event.seat, [plain("benched "), strong(cardName(state, event.uid))])
         : row(event.actor, [
@@ -336,28 +305,8 @@ function formatEvent(
         plain(" → "),
         strong(cardName(state, event.to)),
       ]);
-    // 🆕🆕 §10 (D433) — the row above INVERTED, and the differences from it are
-    // both about AGENCY rather than about the movement.
-    //
-    // 🛑 **FILED UNDER `event.actor`, WHICH IS CARRIED AND NOT DERIVED.** The
-    // evolution row files under `seat` because evolving is always the owner's own play;
-    // this one is always somebody else's attack, so it takes the ACTOR voice every
-    // cross-seat card move in this file takes (`POKEMON_RETURNED`,
-    // `CARD_TO_BOTTOM_OF_DECK`, `DECK_TOP_DISCARDED`). ⚠️ `otherSeat(event.seat)` would
-    // be true today and true only BY CONSTRUCTION OF ONE OP — D425's `DAMAGE_DEALT`
-    // defect verbatim — so the seat is read off the row rather than recomputed from it.
-    //
-    // `from` is still resolvable: it went into the owner's DECK — 🆕🆕🆕 **or, since
-    // D540, into the owner's HAND** — and `cardName` reads the catalog index by uid
-    // rather than the board, so either zone renders.
-    //
-    // 🆕🆕🆕 **D540 — THE ZONE IS NAMED WHEN IT IS THE HAND, AND ONLY THEN.** The row
-    // was authored destination-agnostic and the shipped producer always shuffled into
-    // the owner's DECK, with a `SHUFFLE` row beside it a reader could infer the zone
-    // from. `devolveChosen` files no `SHUFFLE`, so without this branch the hand move
-    // would be announced NOWHERE (see `events.ts` for the rider). An ABSENT `zone` is
-    // the deck and renders byte-identically to every row written before this slice —
-    // which is why the branch is on the RIDER and not on the op or the actor.
+    // Filed under `event.actor`, which is carried rather than derived from `seat`. An absent `zone`
+    // means the deck; the hand is named because no SHUFFLE row accompanies it.
     case "POKEMON_DEVOLVED":
       return row(event.actor, [
         plain("devolved "),
@@ -407,12 +356,11 @@ function formatEvent(
         strong(cardName(state, event.uid)),
         plain(" used "),
         strong(event.attack),
-        // 🆕🆕🆕 D573 — a copy-attack names what it became: "used Foul Play (as Cruel Slash)".
+        // A copy-attack names what it became: "used Foul Play (as Cruel Slash)".
         ...(event.as === undefined ? [] : [plain(" (as "), strong(event.as), plain(")")]),
       ]);
     case "ATTACK_COPY_RESOLVED":
-      // 🆕🆕🆕 D574 — the second half of Haughty Order / Seek Inspiration: "Persian ex's Haughty
-      // Order became Cruel Slash". The ATTACK_DECLARED row above it already said "used".
+      // Haughty Order / Seek Inspiration: the ATTACK_DECLARED row above already said "used".
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain("'s "),
@@ -442,14 +390,8 @@ function formatEvent(
       return row("system", [strong(event.attack), plain(wording)]);
     }
     case "DAMAGE_DEALT": {
-      // The event's seat owns the DAMAGED body; the line reads from the DEALER,
-      // which the event names in `by` (D425). It said `otherSeat(event.seat)` here
-      // until then — a hand-derived closed-world assumption, true of every board
-      // this engine could produce and true BY ACCIDENT (all four write sites aimed
-      // across the table, and `damageSelf` emits COUNTERS_PLACED rather than this
-      // row). D425's own-side bench spread is the first row whose dealer and
-      // damaged owner are the SAME seat, and under the old line the log credited
-      // the DEFENDER with damage the ATTACKER had just done to its own Bench.
+      // The event's seat owns the damaged body; the dealer is `by`, which can be the same seat (an
+      // own-side bench spread).
       const segments: LogSegment[] = [
         plain("dealt "),
         { text: String(event.dealt), tone: "damage" },
@@ -464,106 +406,26 @@ function formatEvent(
       // (Bouffalant "Bouffer" / a defending Tool) last.
       if (event.scaled !== undefined) segments.push(plain(` · scaled +${event.scaled}`));
       if (event.bonus !== undefined) segments.push(plain(` · boosted +${event.bonus}`));
-      // D149 — the attack-installed debuff on the ATTACKER, at the same pre-W/R
-      // step as the two breadcrumbs above and therefore printed with them, before
-      // Weakness. Its own crumb rather than a negative `boosted`: the two numbers
-      // are different rules and a reader reconstructing the pipeline needs both
-      // (events.ts `DAMAGE_DEALT.debuff`).
-      //
-      // D163 — the SAME crumb now also carries the attack's OWN printed penalty
-      // ("This attack does 20 less damage for each damage counter on this
-      // Pokémon."), and the wording was READ under both seats before it was kept.
-      //
-      // 🆕🆕 ⚠️ **D438 — THE WORD "self-scaling" WAS TRUE WHEN WRITTEN AND IS NOT
-      // ANY MORE, WHICH IS WHY IT IS CORRECTED HERE RATHER THAN LEFT (D430).**
-      // `deriveAttackDamagePenalty` gained a SECOND count source — *"This attack
-      // does {30|50} less damage for each {C} in your opponent's Active Pokémon's
-      // Retreat Cost."* — so a `debuff` reaching this crumb can now be priced off
-      // the DEFENDER's folded Retreat Cost rather than off the attacker's own
-      // damage counters. **THE CRUMB IS UNCHANGED AND THE ARGUMENT BELOW IS WHY**:
-      // it names the FACT (this attack's damage was reduced before Weakness) and
-      // not the RULE, so a fourth source arriving on the same field costs it
-      // nothing. The count of boards it is spoken from moves; the sentence does
-      // not.
-      // It survives because it names the FACT (this attack's damage was reduced
-      // before Weakness) and not the RULE, the standard D159's " · prevented"
-      // crumb was written to: this row is filed under the DEFENDER and rendered
-      // under the ATTACKER, so a crumb naming a source ("Growl") would be false on
-      // three of the four boards that now reach it, and one naming an owner would
-      // be spoken from the wrong chair. NO NEW ARM: a second crumb would have to
-      // be told apart by a member the event deliberately does not carry.
+      // The attack-installed debuff or the attack's own penalty, applied before Weakness, in its
+      // own crumb. It names the fact (damage reduced before Weakness), not the source, since the
+      // row is filed under the defender and rendered under the attacker.
       if (event.debuff !== undefined) segments.push(plain(` · weakened −${event.debuff}`));
       if (event.weakness !== null) segments.push(plain(modifierText("weakness", event.weakness)));
       if (event.resistance !== null) {
         segments.push(plain(modifierText("resistance", event.resistance)));
       }
       if (event.reduction !== undefined) segments.push(plain(` · reduced ${event.reduction}`));
-      // 🆕🆕🆕 D547 — the installed NEXT-TURN VULNERABILITY, at the SAME post-W/R step
-      // as the reduction and printed beside it, in its own crumb and with its own
-      // sign (events.ts `DAMAGE_DEALT.vulnerability`, D149's one-field-per-direction
-      // rule). It names the FACT ("exposed"), not the card, for D438's reason.
+      // The installed next-turn vulnerability, at the post-W/R step, in its own crumb and sign.
       if (event.vulnerability !== undefined) {
         segments.push(plain(` · exposed +${event.vulnerability}`));
       }
-      // D159 — THE FLAG HAS EXISTED SINCE 0.58.0 AND NOTHING HAS EVER RENDERED IT.
-      // A full prevention is the largest thing that can happen to a damage number
-      // and the row said only "dealt 0 damage to <name>", which reads to a player
-      // exactly like an attack that does nothing — the failure mode D142's
-      // ATTACK_EFFECT_PREVENTED row exists to avoid, one field away. Found by
-      // rendering the row rather than by reading the code: this slice takes the
-      // ways a hit can be nulled from two to five, and three of the five are
-      // invisible on the board (a benched shield's source is a different card; a
-      // Stadium's is no card at all).
-      //
-      // LAST, because prevention is the last step of §8.5 and SUPERSEDES the
-      // reduction above rather than replacing it — a row reading
-      // "· reduced 20 · prevented" reconstructs the pipeline exactly as the
-      // engine ran it (attack.ts computes both and lets the null win).
-      //
-      // ⚠️ IT NAMES THE FACT AND NOT THE RULE, WHICH IS THE VOICE ANSWER. This row
-      // renders under the DEALER's name (`event.by`, the line below) while
-      // `event.seat` owns the DAMAGED Pokémon — the one event in this family whose
-      // row is filed under a seat its own contract does not name. 🆕🆕 **D425 — AND
-      // THE TWO ARE NO LONGER ALWAYS OPPOSITE.** This paragraph said
-      // `otherSeat(event.seat)` and *"the opposite seat"* until then; an own-side
-      // bench spread files and voices the row under the SAME seat, which is exactly
-      // why the dealer became a field instead of a derivation. So a
-      // crumb naming an owner ("your Pokémon is protected"), a turn, or a source
-      // ("Safeguard") would be spoken from the wrong chair, and the last of those
-      // is unknowable here anyway: five rules set this flag and the event carries
-      // no member saying which (events.ts, deliberately). A bare past-tense
-      // statement about the damage is true under both seats, which is why the
-      // wording is one word. Rendered under both and read, not assumed.
+      // Full prevention is the last §8.5 step and supersedes the reduction, so "· reduced 20 ·
+      // prevented" reflects the pipeline. It names the fact, not the source, since several rules
+      // set the flag and the dealer and damaged owner may differ.
       if (event.prevented === true) segments.push(plain(" · prevented"));
-      // D219 — THE SAME DEFECT AS `prevented`, ONE FIELD DOWN AND ONE SLICE OLD.
-      // D208 added `survived` at all four DAMAGE_DEALT write sites and nothing
-      // read it, so a full-HP Pikachu ex hit for 300 rendered "dealt 300 damage to
-      // Pikachu ex", NO Knock Out row followed, and the board sat at 10 HP with
-      // nothing in the log saying why. That is strictly worse than the row D159
-      // fixed above: there the number itself (0) at least signalled something had
-      // happened; here every number in the row is the honest §8.5 output and the
-      // only visible trace of the rule is a Knock Out that DIDN'T occur.
-      //
-      // AFTER `prevented`, because the clamp is the last thing to touch the write
-      // — it runs on the pipeline's finished `dealt` — and the two are mutually
-      // exclusive anyway (a prevented hit deals 0 and can never be lethal).
-      //
-      // ⚠️ IT NAMES THE FACT AND NOT THE RULE, for D159's reasons exactly, which
-      // this event needs even harder: the row is filed under the DEFENDER's seat
-      // and rendered under the ATTACKER's, and the sentence has TWO printed
-      // Ability names (Pikachu ex "Resolute Heart", Crustle "Sturdy") that the
-      // event carries no member to tell apart. "survived the Knock Out" is a bare
-      // past-tense statement about the damage, true from either chair, and it
-      // borrows the printed sentence's own words ("it is not Knocked Out").
-      // [🆕🆕🆕 D598 (D539): "TWO printed Ability names" is WITHDRAWN as the whole set, kept as
-      // written — the coin-flip survival (Tenacious Body, Durable Body) sets the flag too, and its
-      // own `ABILITY_COIN_FLIP` row names the Ability; "survived the Knock Out" stays true of it.]
-      //
-      // NO HP NUMBER, deliberately. "its remaining HP becomes 10" is printed on
-      // all seven cards, but the remaining HP this row would have to quote is
-      // `effectiveMaxHp − 10` against a maximum the event does not carry — the
-      // Bravery Charm board is exactly where that goes wrong — and the board
-      // already shows it. A crumb that can be wrong is worse than one that is short.
+      // Rendered after `prevented`: the survival clamp runs on the finished amount, and the two are
+      // mutually exclusive. It names the fact ("survived the Knock Out"), not the Ability, and
+      // quotes no HP number since the event lacks the max HP.
       if (event.survived === true) segments.push(plain(" · survived the Knock Out"));
       return row(event.by, segments);
     }
@@ -584,26 +446,15 @@ function formatEvent(
       if (event.poisonDamage !== undefined && event.poisonDamage > DEFAULT_POISON_DAMAGE) {
         segments.push(plain(` (${event.poisonDamage} damage per Checkup)`));
       }
-      // 🆕🆕🆕 D501 — the CONFUSION twin, on the same rule: a RAISED amount is worth
-      // spelling out at the moment it is inflicted, because it is the only place a
-      // reader is told. The COUNTERS_PLACED row a turn later already renders the
-      // number ("Confusion: X hit itself for 80") — it reads `event.amount` and has
-      // since M3, so that row needed no change at all and is the reason this slice
-      // touches one log arm rather than four. What this row adds is the WARNING
-      // BEFORE the flip; without it a player meets the 80 only after paying for it.
+      // A raised Confusion amount is spelled out when inflicted, as a warning before the flip.
       if (event.confusionDamage !== undefined && event.confusionDamage > DEFAULT_CONFUSION_DAMAGE) {
         segments.push(plain(` (${event.confusionDamage} damage on a missed flip)`));
       }
       return row(event.seat, segments);
     }
     case "STATUS_PREVENTED":
-      // D172 — the printed sentence, spoken back. "Dachsbun can't be Burned" IS
-      // the card's own text with the subject resolved, which is the shortest row
-      // that tells a reader the difference between a rule and a bug. Filed under
-      // the seat that OWNS the refusing Pokémon (the event family's contract),
-      // which for an attack-borne status is the DEFENDER's chair — the opposite
-      // of `DAMAGE_DEALT`'s and the same as `STATUS_APPLIED`'s, because this row
-      // replaces that one rather than the damage row.
+      // The printed sentence with the subject resolved ("Dachsbun can't be Burned"). Filed under
+      // the seat that owns the refusing Pokémon.
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(" can't be "),
@@ -624,18 +475,9 @@ function formatEvent(
           return row(seat, [strong(name), plain("'s Paralysis wore off")]);
         case "benched":
         case "recovered":
-          // "benched" follows the RETREATED row; benching clears every condition
-          // at once (§11/§12), so the list can name several.
-          //
-          // "recovered" (D174) shares the arm because it shares the SENTENCE:
-          // Therapeutic Energy sv02-193 prints "The Pokémon this card is attached
-          // to RECOVERS FROM BEING Asleep, Confused, or Paralyzed", so "Pachirisu
-          // recovered from Asleep" is the card's own verb with the subject
-          // resolved — D172's voice rule, met by a row that already existed. A
-          // second arm rendering the same words would be a second reading (D131);
-          // what makes the two distinguishable to a consumer is the `reason`, and
-          // what makes the list honest is that this one carries only the
-          // conditions the effect NAMES.
+          // "benched" follows the RETREATED row; benching clears every condition at once (§11/§12).
+          // "recovered" (Therapeutic Energy) shares the sentence and lists only the conditions the
+          // effect names.
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
         case "evolved":
           // Follows the POKEMON_EVOLVED row; evolving clears every condition
@@ -647,14 +489,8 @@ function formatEvent(
             plain(" on evolving"),
           ]);
         case "devolved":
-          // 🆕🆕 D433 — follows the POKEMON_DEVOLVED row; §12 names devolving in the
-          // same clause as evolving, so it clears every condition at once too and
-          // `name` is likewise the NEW top card. A SEPARATE arm rather than a shared
-          // one with "evolved" above: the words differ ("on devolving"), and a player
-          // reading back a row that said "on evolving" about a card that just left the
-          // board would be told the opposite of what happened. Filed under `seat` — the
-          // OWNER — like every other clear in this switch; the AGENCY is on the
-          // POKEMON_DEVOLVED row directly above, which is where it belongs.
+          // Follows POKEMON_DEVOLVED; devolving clears every condition too (§12), and `name` is the
+          // new top card.
           return row(seat, [
             strong(name),
             plain(" shed "),
@@ -675,56 +511,17 @@ function formatEvent(
       ]);
     case "RETREAT_BLOCK_ENDED":
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can retreat again")]);
-    // §7.1/§7.2 (D283) — the imposed hand-play bar. VICTIM-SIDE `seat`, exactly
-    // like RETREAT_BLOCKED two lines up, and NO card name: the row's subject is
-    // the barred PLAYER, and this is the one attack rider in the file with no
-    // Pokémon to name (events.ts `HAND_PLAY_BLOCKED`). The class is `strong` for
-    // the reason D146 gave the filtered damage block its own phrasing — a reader
-    // told only "blocked" cannot work out which card in their hand just died.
-    // 🆕 D285 — the payload is a `StampedPlayLockKey`, so it is a CARD CLASS on
-    // three of the family's four sentences and an ACT on the fourth (Bronzong's
-    // `"evolve"`). Rendering it through one template would print "can't play
-    // evolve cards"; the noun is chosen HERE rather than carried on the event,
-    // because a second payload field would be display text riding a rule row.
+    // The imposed hand-play bar (§7.1/§7.2): victim-side seat, no card name. The payload is a card
+    // class on most printings and an act (`"evolve"`) on Bronzong's, so the noun is chosen here.
     case "HAND_PLAY_BLOCKED":
       return row(event.seat, [
         plain("can't play "),
         strong(event.bars === "evolve" ? "Pokémon to evolve" : `${event.bars} cards`),
         plain(" next turn"),
       ]);
-    // §11 — the attack-installed damage block. ACTIVE voice, unlike the §9
-    // counterattack row and unlike RETREAT_BLOCKED's victim-side seat: `seat`
-    // here owns the shielded Pokémon AND that Pokémon is the actor's own, so
-    // rendering it under the actor's name credits the right player. The two
-    // printed spellings get two phrasings because the difference is the whole
-    // reason the field exists — a reader who is told only "protected" cannot
-    // work out whether their Poison is about to land.
-    //
-    // D146 adds the THIRD phrasing, and it is the one the reader needs most: a
-    // class-filtered block lets every evolved attacker through at full damage, so
-    // "is protected from damage from attacks" would be an outright lie about the
-    // very next turn. The class is named rather than hinted at, and it is read off
-    // the ROW rather than off the board — `fromClass` is the printed class, so the
-    // wording cannot drift from what `attackBlockOf` will actually enforce.
-    //
-    // ⚠️ D239 RENDERS THE RECORD RATHER THAN INTERPOLATING IT, and that is D238's
-    // caption rule doing its job on the first row that could have broken it: the
-    // field carries a resolved `PokemonType`, never the printed `{C}`, so the row
-    // says "Basic non-Colorless Pokémon's attacks" and a brace code cannot reach a
-    // player's eyes. Interpolating the old string literal would have rendered
-    // "[object Object] Pokémon's attacks" on all seven printings.
-    //
-    // ⚠️ D240 APPENDS THE CAP AS A TRAILING CLAUSE RATHER THAN AS A FOURTH ARM OF
-    // THE CHAIN, AND THE TWO REASONS ARE DIFFERENT ONES. The first is
-    // correctness: `maxDamage` is INDEPENDENT of the other two — it narrows how
-    // BIG an attack may be, where `effects` widens what is refused and
-    // `fromClass` narrows whose attack it is — so folding it into the ternary
-    // would make one of three independent facts silently unprintable whenever
-    // another was present. The second is that every existing row stays
-    // BYTE-IDENTICAL: an uncapped block renders exactly the string it rendered
-    // before, which is what lets the three pinned wordings keep their assertions.
-    // The clause echoes the printed words ("if that damage is 40 or less") rather
-    // than paraphrasing them, so a player can match the row to the card face.
+    // The attack-installed damage block (§11), active voice. The class filter is named because
+    // evolved attackers get through. The damage cap is a trailing clause because it is independent
+    // of the other fields, echoing the printed "if that damage is 40 or less".
     case "ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -737,77 +534,12 @@ function formatEvent(
             (event.maxDamage === undefined ? "" : `, if that damage is ${event.maxDamage} or less`),
         ),
       ]);
-    // §8/§11 — the attack-installed lock. `seat` owns the LOCKED Pokémon (D136's
-    // finding 1), and the WORDING is the row's whole job: this is the only one of
-    // the three durated rows that reports a cost rather than a protection, and it
-    // is phrased from the holder's side ("can't attack next turn") so it reads as
-    // RETREAT_BLOCKED's sibling — which is exactly what it is.
-    //
-    // ⚠️ D148 ADDS THE OTHER DIRECTION AND CHANGES NOTHING HERE, WHICH IS THE
-    // POINT. At 0.92.0 this row was ACTIVE-voiced because `seat` happened to be
-    // the actor's own; the 4 opponent-side printings make it VICTIM-voiced, and
-    // RETREAT_BLOCKED one screen up is that same wording under the same seat rule.
-    // So the phrasing D143 chose against a hypothetical flip is the one the flip
-    // needed: "<name> can't attack next turn" is true under either seat, because
-    // "next turn" is the LOCKED player's next turn in both readings — the printed
-    // wordings differ ("your"/"your opponent's") only because they are spoken from
-    // the installer's chair, and a log row is not. A second phrasing keyed on the
-    // direction would have to say something the row cannot know (whose attack
-    // wrote it) to tell the reader something they already have (whose Pokémon it
-    // is). Contrast the THIRD phrasing D146 had to add above: that field changed
-    // what the rule DOES.
-    //
-    // ⚠️ D154 ADDS THE ONE BRANCH THIS ROW DOES NEED, AND THE CONTRAST WITH D148
-    // IS THE ARGUMENT. That slice flipped whose Pokémon the row names and needed
-    // no new wording, because "can't attack next turn" is true of a locked body
-    // under either seat. This slice changes WHAT IS TRUE: a Skarmory whose
-    // "Slashing Steel" is barred may still declare "Peck", so the bare wording
-    // would not read stilted — it would be FALSE, and false in the direction that
-    // makes a player pass a turn they could have attacked on. D153's test applied:
-    // the question is not "does the row NAME the attack?" but "does it ASSERT
-    // something this path makes untrue?". So the narrowing rides the event
-    // (`attack`, the printed name) and the branch is on its presence, ABSENT
-    // meaning the whole Pokémon (D135's absent-key rule).
-    //
-    // The narrow wording keeps the printed verb ("can't use {Name}") so a player
-    // with the card in front of them reads back the words on it —
-    // DAMAGE_REDUCTION_APPLIED's rule — and keeps "next turn" rather than the
-    // printed "During your next turn", for D148's reason: under this event
-    // family's seat rule "next turn" always means the NAMED player's own, which is
-    // what lets one phrasing serve every path. Rendered under BOTH seats and read
-    // before it was chosen (perAttackLock.test.ts), not assumed.
-    //
-    // 🆕🆕 D421 ADDS THE THIRD PHRASING, AND IT IS THE PARAGRAPH ABOVE APPLIED TO
-    // THE OTHER HALF OF THE SENTENCE. D154's branch narrows WHAT is barred; this
-    // one replaces WHEN. "This Pokémon can't use Blaze Blitz again until it leaves
-    // the Active Spot." (5 legal printings — Gouging Fire ex) has no clock at all,
-    // so the two-branch row would print "…can't use Blaze Blitz next turn" — not
-    // stilted but FALSE, and false in the direction that costs a player a turn:
-    // they wait, press the button, and are refused again, forever. Same test as
-    // D154's ("does it ASSERT something this path makes untrue?"), same answer.
-    //
-    // The narrowing rides the EVENT (`until`, the same key the op and the record
-    // carry) and the branch is on its presence — ABSENT still means the next-turn
-    // window, so the two riders are two independent presence checks over one fact
-    // rather than a shape somebody has to keep in sync.
-    //
-    // THE WORDING IS THE PRINTED ONE MINUS ITS SUBJECT, which is this family's
-    // standing rule (a player with the card in front of them reads back the words
-    // on it) and is also what keeps the SEAT rule intact: it names no player and
-    // says no "next turn", so unlike the two branches above it does not even have
-    // to be checked against whose turn is whose. Rendered under BOTH seats and
-    // read before it was chosen (`untilLeavesActiveBar.test.ts`), not assumed.
-    //
-    // 🆕🆕🆕 D547 — AND A FOURTH, `flip`, FOR THE LOCK THAT LEAVES THE DECLARATION
-    // LEGAL ("…if the Defending Pokémon tries to use an attack, your opponent flips a
-    // coin. If tails, that attack doesn't happen.", `censusAttackCorpus.ts:176`). The
-    // bare wording "can't attack next turn" would be FALSE of it (D421) — a player
-    // told that would not press a button that works on heads. Checked FIRST because
-    // the flip installer writes neither `attack` nor `until`. Same seat rule (`seat`
-    // owns the LOCKED body, whose own next turn it is), so "next turn" stays true
-    // under either seat; rendered under both (`attackFlipLock.test.ts`).
+    // The attack-installed lock (§8/§11), phrased from the locked Pokémon's side. "next turn" is
+    // that Pokémon's own next turn under either seat. Branches: a coin-flip lock (checked first,
+    // since it writes neither `attack` nor `until`), a named-attack lock ("can't use {Name}"), and
+    // an until-leaves-Active lock, each because the bare wording would be false.
     case "ATTACK_LOCKED":
-      // 🆕🆕🆕 D636 — Jet of Ink's two coins (R-JOI1): its own row, so neither seat is told "a coin".
+      // Jet of Ink's two coins get their own row.
       if (event.flip === true && event.coins === 2) {
         return row(event.seat, [
           strong(cardName(state, event.uid)),
@@ -832,111 +564,59 @@ function formatEvent(
               : ` can't use ${event.attack} next turn`,
         ),
       ]);
-    // §8.5/§11 — the attack-installed DAMAGE REDUCTION. ACTIVE voice for
-    // ATTACK_BLOCK_APPLIED's reason (`seat` owns the protected Pokémon AND that
-    // Pokémon is the actor's own), and the NUMBER is in the wording because the
-    // number is the rule: four amounts share one sentence, and this row sits
-    // directly above a DAMAGE_DEALT row on the next turn whose own `reduction`
-    // field carries the same figure. A reader who is told only "takes less
-    // damage" cannot check the arithmetic they are about to be shown.
-    //
-    // The phrasing is the PRINTED one minus its parenthetical — "takes {N} less
-    // damage from attacks" — rather than a paraphrase, so a player who has the
-    // card in front of them reads back the words on it.
+    // The attack-installed damage reduction (§8.5/§11), active voice; the number is in the wording
+    // because the next turn's DAMAGE_DEALT row reports the same figure.
     case "DAMAGE_REDUCTION_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
-        // 🆕🆕🆕 D630 — Metal Block's class; an unfiltered row renders byte-identically.
+        // Metal Block's class.
         plain(
           ` takes ${event.amount} less damage from attacks${event.fromClass === undefined ? "" : ` from ${attackerClassNoun(event.fromClass)}`} during your opponent's next turn`,
         ),
       ]);
-    // 🆕🆕 §8.5/§11 — the attack-installed NO-WEAKNESS bar (D432). ACTOR voice
-    // by construction (the op has no defender arm), so it keeps the row above's
-    // ending — "during your opponent's next turn" — which is honest only under the
-    // INSTALLER's name and is exactly why ATTACK_DEBUFF_APPLIED below could not
-    // reuse it.
-    //
-    // The phrasing is the PRINTED sentence with its subject replaced by the card's
-    // name, for DAMAGE_REDUCTION_APPLIED's reason: a player holding the card reads
-    // back the words on it. There is no number in the wording because there is no
-    // number in the rule — and the row it sets up on the next turn reports itself
-    // by the ABSENCE of a `×2` segment on that hit's DAMAGE_DEALT row, which is
-    // the honest signal for a step that was removed rather than a number moved.
+    // The attack-installed no-Weakness bar (§8.5/§11), actor voice, so the printed "during your
+    // opponent's next turn" is correct here.
     case "WEAKNESS_REMOVED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(" has no Weakness during your opponent's next turn"),
       ]);
-    // §8.5/§11 — the attack-installed ATTACK-DAMAGE DEBUFF (D149). VICTIM voice,
-    // and it is the first row in this family that is victim-side BY CONSTRUCTION:
-    // `seat` owns the debuffed Pokémon (D136's finding 1) and this op has no self
-    // arm, so the row ALWAYS renders under the actor's opponent's name.
-    //
-    // ⚠️ WHICH IS WHY THE WORDING IS NOT DAMAGE_REDUCTION_APPLIED's, AND THAT IS
-    // THE SLICE'S THIRD VOICE ANSWER. That row one screen up ends "…during your
-    // opponent's next turn" — the printed words — and they are honest there
-    // because the row renders under the INSTALLER's name, whose opponent's turn it
-    // really is. Copied here they would render under the VICTIM's name and name
-    // the wrong turn: a player would read that their own Pokémon is weakened
-    // during the OTHER player's turn, which is the one turn it is not. So the
-    // phrasing is D143/`ATTACK_LOCKED`'s instead — "next turn", which under this
-    // event family's seat rule always means the named player's own next turn, and
-    // which is exactly the reading D148 showed makes a row seat-independent. A log
-    // row is never spoken from the installer's chair; the difference from D148 is
-    // that here the sibling wording is installer-voiced and would have LIED.
-    //
-    // The verb keeps the printed shape ("…'s attacks do {N} less damage") minus
-    // the parenthetical, for DAMAGE_REDUCTION_APPLIED's reason: a player with the
-    // card in front of them reads back the words on it, and the number is in the
-    // wording because the number is the rule.
+    // The attack-installed damage debuff (§8.5/§11), always victim-voiced, so it says "next turn"
+    // (the victim's own) rather than the printed "your opponent's next turn".
     case "ATTACK_DEBUFF_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(`'s attacks do ${event.amount} less damage next turn`),
       ]);
-    // 🆕🆕🆕 §8.5/§11 — the attack-installed NEXT-TURN VULNERABILITY (D547). VICTIM
-    // voice by construction, ATTACK_DEBUFF_APPLIED's contract one case up (`seat`
-    // owns the exposed Pokémon). ⚠️ AND THEREFORE NOT "next turn": the printed
-    // window is the INSTALLER's next turn, which from the victim's chair is "your
-    // opponent's next turn" — the victim's own next turn is the one it is NOT live
-    // on, so "next turn" here would be false in the direction that costs a player
-    // the retreat that sheds it (D421; D434's victim-voiced "your" read the same
-    // way). The verb keeps the printed shape minus its parenthetical.
+    // The next-turn vulnerability (§8.5/§11), victim-voiced. The window is the installer's next
+    // turn, so it says "your opponent's next turn".
     case "DAMAGE_VULNERABILITY_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(` takes ${event.amount} more damage from attacks during your opponent's next turn`),
       ]);
-    // 🆕🆕🆕 §8.5/§11 — the attack-installed WEAKNESS RETYPE (D552). VICTIM voice (`seat`
-    // owns the marked body), and therefore "your opponent's next turn", for
-    // DAMAGE_VULNERABILITY_APPLIED's reason one case up: the window ends with the
-    // INSTALLER's next turn (D421). The type is spelled as a word, never a brace code (D239).
+    // The attack-installed Weakness retype (§8.5/§11), victim-voiced, so "your opponent's next
+    // turn". The type is spelled as a word.
     case "WEAKNESS_RETYPED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
           `'s Weakness is now ${event.weaknessType} until the end of your opponent's next turn (${
-            // 🆕🆕🆕 D640 — Overwriting Bolt's reminder, not D552's.
+            // Overwriting Bolt's reminder.
             event.asTimesTwo === true ? "apply Weakness as ×2" : "the amount doesn't change"
           })`,
         ),
       ]);
-    // 🆕🆕🆕 §8.2/§11 — the attack-installed COST TAX (D549). VICTIM voice (`seat` owns
-    // the taxed body), and "next turn" IS true here, unlike the vulnerability one case
-    // up: the tax's window is the HOLDER's own next turn (`state.turn + 1`). It names
-    // BOTH costs because the printed sentence does — a player told only about attacks
-    // would retreat into a surcharge they were not warned of.
+    // The attack-installed cost tax (§8.2/§11), victim-voiced; "next turn" is correct because the
+    // window is the holder's own next turn. It names both attack and retreat costs, as printed.
     case "COST_TAX_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
-        // D239's caption rule: no printed brace code reaches a player's eyes.
+        // No brace code reaches the player.
         plain("'s attacks and Retreat Cost each need 1 more Colorless Energy next turn"),
       ]);
-    // 🆕🆕🆕 §8.1/§11 — the attack-installed KNOCK OUT BOUNTY (D549). VICTIM voice and
-    // therefore NOT "next turn", for DAMAGE_VULNERABILITY_APPLIED's reason verbatim:
-    // the window is the INSTALLER's next turn, which from the victim's chair is "your
-    // opponent's next turn" (D421).
+    // The attack-installed Knock Out bounty (§8.1/§11), victim-voiced, so "your opponent's next
+    // turn".
     case "KO_BOUNTY_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -944,12 +624,9 @@ function formatEvent(
           ` — if it is Knocked Out during your opponent's next turn, your opponent takes ${event.amount} more Prize card${event.amount === 1 ? "" : "s"}`,
         ),
       ]);
-    // 🆕🆕🆕 §8/§11 — the attack-installed SIDE-WIDE lock (D549). HAND_PLAY_BLOCKED's
-    // shape: `seat` owns the LOCKED side, no body is named (the lock is on the side and
-    // outlives every body, R7), and "next turn" is that side's controller's own next
-    // turn on BOTH printings (`+ 2` on the installer's side, `+ 1` on the opponent's).
-    // The printed reminder is rendered because it is the part a player would get wrong:
-    // promoting or benching a fresh body does NOT escape it.
+    // The attack-installed side-wide lock (§8/§11): `seat` owns the locked side and no body is
+    // named. The reminder is rendered because promoting or benching a fresh body does not escape
+    // it.
     case "SIDE_ATTACKS_LOCKED":
       return row(event.seat, [
         plain(
@@ -959,15 +636,10 @@ function formatEvent(
         ),
         plain(" — including Pokémon that come into play"),
       ]);
-    // 🆕🆕🆕 §8.5 — the Trainer-installed THIS-TURN side-wide bonus (D556, Black Belt's
-    // Training). INSTALLER voice: `seat` owns the attacking side, so the row reads under
-    // the badge of the player whose attacks get it, with `SIDE_ATTACKS_LOCKED`'s subject
-    // ("Pokémon …", the side's). No body is named (the bonus is on the SIDE: a Pokémon
-    // promoted after the play gets it too), and "this turn" is literal — the
-    // bag is wiped at the next `startTurn`. The defender noun is the rule's own filter
-    // read through `retrieveNoun` (plural: "Pokémon ex"), never a second spelling, and
-    // the printed parenthetical is kept because it is the part that decides the number.
-    // 🆕🆕🆕 D621 — an attacker noun (Gladion's Final Battle, Premium Power Pro) names the attackers.
+    // The Trainer-installed this-turn side-wide bonus (§8.5, Black Belt's Training), installer
+    // voice. It applies to the side, including later-promoted Pokémon, and is wiped at the next
+    // `startTurn`. The defender noun comes from `retrieveNoun`; an attacker noun names the
+    // attackers.
     case "SIDE_ATTACKS_BOOSTED":
       return row(event.seat, [
         ...(event.attacker === undefined
@@ -980,13 +652,9 @@ function formatEvent(
         strong(retrieveNoun(event.target).plural),
         plain(" this turn (before Weakness and Resistance)"),
       ]);
-    // 🆕🆕🆕 §8.5 — the Supporter-installed NEXT-TURN side-wide reduction (D564, Jasmine's
-    // Gaze). INSTALLER voice, and the installer is the shielded side: "next turn" is the
-    // OPPONENT's, so the row says so rather than "your next turn". The printed reminder is
-    // rendered for `SIDE_ATTACKS_LOCKED`'s reason — a fresh body is covered too.
-    // 🆕🆕🆕 §11 — Miraidon "C.O.D.E.: Protect"'s side-wide block (D575). Filed under the
-    // INSTALLER (the shielded side), the class read off the ROW through the one renderer, and
-    // the printed terminator named so the opponent knows a gust ends it.
+    // The next-turn side-wide reduction (§8.5, Jasmine's Gaze), installer voice; "next turn" is the
+    // opponent's. Miraidon "C.O.D.E.: Protect"'s side-wide block (§11) is filed the same way and
+    // names the terminator so the opponent knows a gust ends it.
     case "SIDE_ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
         plain(
@@ -1000,15 +668,15 @@ function formatEvent(
         strong(cardName(state, event.uid)),
         plain(" left the Active Spot — its protection ended"),
       ]);
-    // 🆕🆕🆕 §6.2/§11 — the hand-attach mark (D575), filed under the MARKED Pokémon's owner,
-    // victim-voiced (`ATTACK_LOCK_APPLIED`'s rule): each printed consequent is named.
+    // The hand-attach mark (§6.2/§11), filed under the marked Pokémon's owner, victim-voiced; each
+    // printed consequence is named.
     case "HAND_ATTACH_MARKED": {
       const parts = [
         ...(event.barred ? ["can't have Energy cards attached from hand"] : []),
         ...(event.endsTurn
           ? ["ends its owner's turn if an Energy card is attached to it from hand"]
           : []),
-        // 🆕🆕🆕 D636 — Electrified Incisors.
+        // Electrified Incisors.
         ...(event.counters > 0
           ? [
               `takes ${event.counters} damage counters for each Energy card attached to it from hand`,
@@ -1020,14 +688,13 @@ function formatEvent(
         plain(` ${parts.join(" and ")} during its owner's next turn`),
       ]);
     }
-    // 🆕🆕🆕 (D575) — Blipbug "Searching Eyes". SLOT-ONLY (`PRIZE_LOOKED_AT`'s doc): the log is
-    // broadcast to both seats, so the card is never named here — the looker sees it in the
-    // dialog. Filed under the ACTOR with the row's owner named (the D567 Bother-Bot rule).
+    // Blipbug "Searching Eyes": slot only, because the log is broadcast to both seats. Filed under
+    // the actor with the owner named.
     case "PRIZE_LOOKED_AT":
       return row(event.actor, [
         plain(`looked at ${names[event.seat]}'s face-down Prize ${event.index + 1}`),
       ]);
-    // 🆕🆕🆕 §11 — Acerola's Mischief (D621): the chosen body named, the class read through the one renderer.
+    // Acerola's Mischief (§11).
     case "CHOSEN_ATTACK_SHIELD_INSTALLED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -1035,7 +702,7 @@ function formatEvent(
           ` is protected from damage and effects of attacks by ${attackerClassNoun(event.fromClass)} during the opponent's next turn`,
         ),
       ]);
-    // 🆕🆕🆕 §11 — Roxie's Performance (D621), filed under the LOCKED side, victim-voiced.
+    // Roxie's Performance (§11), filed under the locked side, victim-voiced.
     case "SIDE_RETREAT_LOCKED":
       return row(event.seat, [
         plain(
@@ -1045,54 +712,29 @@ function formatEvent(
     case "SIDE_DAMAGE_REDUCTION_INSTALLED":
       return row(event.seat, [
         plain(
-          // 🆕🆕🆕 D630 — Iron Defender's holder type leads the row; Jasmine's Gaze renders byte-identically.
+          // Iron Defender's holder type leads the row.
           `${event.pokemonType === undefined ? "" : `${event.pokemonType} `}Pokémon take ${event.amount} less damage from attacks during the opponent's next turn (after Weakness and Resistance), including Pokémon that come into play`,
         ),
       ]);
-    // 🆕🆕🆕 §5.3 — Amarys's scheduled end-of-turn discard (D564). The threshold is printed,
-    // so the row carries it; the discard itself files the shipped HAND_DISCARDED row.
+    // Amarys's scheduled end-of-turn discard (§5.3); the discard itself files a HAND_DISCARDED row.
     case "HAND_DISCARD_SCHEDULED":
       return row(event.seat, [
         plain(
           `will discard their hand at the end of this turn if it holds ${event.atLeast} or more cards`,
         ),
       ]);
-    // 🆕🆕🆕 §5.3/§8 — Festival Lead's attack-again window (D570). The Ability is named so the
-    // row explains why the turn did not end.
+    // Festival Lead's attack-again window (§5.3/§8); the Ability is named so the row explains why
+    // the turn did not end.
     case "ATTACK_AGAIN_OFFERED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(" may attack again (Festival Lead)"),
       ]);
-    // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
-    // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the
-    // scheduled body — ATTACK_DEBUFF_APPLIED's contract directly above verbatim, and
-    // for its reason: the row renders after the victim's name, so an active-voice
-    // verb would credit the victim with doing it to themselves (D136's finding 1).
-    //
-    // ⚠️ IT SAYS *"at the end of your next turn"* AND NOT *"your opponent's"*,
-    // because the row is filed under the VICTIM — the same seat-flip
-    // DAMAGE_REDUCTION_APPLIED makes one case up. The printed sentence is written
-    // from the attacker's side; this row is read from the other one.
-    //
-    // ⚠️ THE UNIT IS HP, NOT COUNTERS — RECOIL_ARMED's rule below, and for its
-    // reason: the COUNTERS_PLACED row this eventually produces says 90, so a reader
-    // told "9" and then shown "90" cannot check the arithmetic they are shown.
-    //
-    // 🛑 AND THE ROW ASSERTS ONLY WHAT THIS PATH KEEPS TRUE (D421's log rule). It
-    // says the counters are SCHEDULED, not that they will land: §10 sheds the
-    // schedule if the body retreats, is switched or evolves, so a row promising the
-    // damage would be false in the direction that costs a player a play. "will be
-    // put" would be that false row; "scheduled" is the fact.
-    //
-    // 🆕🆕 **D435 — THREE PAYLOADS, THREE PREDICATES, AND THE `switch` IS WHAT KEEPS
-    // THEM FROM COLLAPSING.** The discard and the Knock Out differ by a PRIZE CARD
-    // (§8.1: the prize is owed by the Knock Out and by nothing else), so the two rows
-    // must not read alike — a player told "will be discarded" and then charged a
-    // Prize, or told "will be Knocked Out" and then not paid one, has been lied to
-    // about the only thing that separates the two sentences. Spelled as a `switch`
-    // over `scheduled.kind` rather than as a ternary chain, so a fourth payload does
-    // not compile until somebody words it (D222).
+    // A scheduled counter placement on the defending Pokémon (§13), filed under the victim, so "at
+    // the end of your next turn". The unit is HP to match the eventual COUNTERS_PLACED row. It says
+    // "scheduled" because §10 sheds the schedule if the body retreats, is switched or evolves.
+    // Discard and Knock Out payloads must read differently since only a Knock Out yields a Prize
+    // (§8.1).
     case "EFFECT_SCHEDULED": {
       const scheduled = event.scheduled;
       switch (scheduled.kind) {
@@ -1116,33 +758,10 @@ function formatEvent(
       }
       break;
     }
-    // §9/§11 — the attack-armed REACTIVE RECOIL (D152). ACTIVE voice for
-    // DAMAGE_REDUCTION_APPLIED's reason verbatim: `seat` owns the armed Pokémon
-    // AND that Pokémon is the actor's own (the op has no defender arm), so the
-    // PRINTED "during your opponent's next turn" is honest here in a way it was
-    // not one case up — that row renders under the VICTIM's name and had to say
-    // "next turn" instead. Same family, same words, opposite answer, and the
-    // difference is which seat the row is filed under.
-    //
-    // ⚠️ THE UNIT IS THE ONE THE PLAYER WILL SEE, NOT THE ONE THE CARD PRINTS.
-    // The sentence says "10 damage counters" and this row says 100 damage,
-    // because the COUNTERS_PLACED row it sets up on the next turn says 100 too —
-    // a reader told "10" and then shown "100" cannot check the arithmetic they
-    // are being shown, which is the very reason DAMAGE_REDUCTION_APPLIED puts its
-    // number in the wording at all.
-    //
-    // The verb names the MECHANISM ("counterattack"), matching D141's
-    // COUNTERS_PLACED label, so the arming row and the row it eventually produces
-    // use the same word for the same thing.
-    //
-    // 🆕🆕 **D456 — THE SECOND ARM, AND IT EXISTS BECAUSE THE FIRST ONE WOULD LIE.**
-    // Corpus line 180 arms a trap whose amount is *"equal to the damage done to this
-    // Pokémon"*, so its record carries floor 0 and the wording above would render
-    // *"will counterattack for 0 damage"* — announcing that nothing will happen at the
-    // instant something will. The number is genuinely unknown at arming time, so the row
-    // names the RULE instead of a figure, which is what this whole family's rows do when
-    // the figure IS the rule. A FLOOR is mentioned only when there is one (two
-    // installations in one window, unreachable off any printing and constructed).
+    // The attack-armed reactive recoil (§9/§11), active voice, so the printed "during your
+    // opponent's next turn" is correct. The unit is damage, not counters, to match the
+    // COUNTERS_PLACED row it produces. When the amount equals damage taken, the row names the rule
+    // instead of a figure.
     case "RECOIL_ARMED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -1154,39 +773,9 @@ function formatEvent(
             : ` will counterattack for ${event.amount} damage during your opponent's next turn`,
         ),
       ]);
-    // §8.5/§11 — the attack-installed PER-ATTACK DAMAGE BUFF (D155). ACTIVE voice
-    // for RECOIL_ARMED's reason verbatim: `seat` owns the boosted Pokémon AND that
-    // Pokémon is the actor's own (the op has no defender arm).
-    //
-    // ⚠️ IT NAMES THE ATTACK BECAUSE THE BARE ROW WOULD BE FALSE, WHICH IS D154's
-    // FINDING INHERITED RATHER THAN RE-DERIVED — and here the field is REQUIRED
-    // where D154's is optional, because this op's single producer cannot print the
-    // sentence without a name (events.ts). "<name> does 100 more damage next turn"
-    // read off a card with two attacks would promise a bonus on both, and false in
-    // the direction that makes a player declare the wrong one.
-    //
-    // "next turn" rather than the printed "During your next turn", for D148's
-    // reason and ATTACK_LOCKED's: under this family's seat rule the phrase always
-    // means the NAMED player's own next turn, which is exactly what the `+ 2` stamp
-    // encodes. The verb keeps the printed shape ("does {N} more damage") minus the
-    // parenthetical, for DAMAGE_REDUCTION_APPLIED's reason — a player with the card
-    // in front of them reads back the words on it — and the number is in the
-    // wording because the number is the rule: the row it sets up on the next turn
-    // reports the same figure in `DAMAGE_DEALT.bonus`.
-    //
-    // 🆕🆕 D544 — THE BASE-SET MODE HAS ITS OWN WORDING, AND THE BRANCH IS A
-    // CORRECTNESS FIX RATHER THAN A PREFERENCE: `amount` carries the BASE number on
-    // that row ("…Hyper Fang attack's base damage is 240."), so the additive wording
-    // would read "does 240 more damage next turn" — false by the whole printed base
-    // (D421). The verb again keeps the printed shape: "'s base damage is N".
-    // 🆕🆕🆕 D546 — AND THE ALL-ATTACKS MODE NAMES NO ATTACK (`attack: null`): "During
-    // your next turn, attacks used by this Pokémon do N more damage to your opponent's
-    // Active Pokémon …" (`censusAttackCorpus.ts:148`/`:76`). The named wording would
-    // promise the bonus on ONE attack and the template would print "null" — both
-    // false (D421), and invisible to `tsc`. The verb keeps the printed plural.
-    // 🆕🆕🆕 D563 — AND A THIS-TURN INSTALL SAYS "this turn" (Feraligatr "Torrential
-    // Heart": *"during this turn, attacks used by this Pokémon do 120 more damage …"*);
-    // "next turn" would be false of it (D421). Its one printing names no attack.
+    // The attack-installed per-attack damage buff (§8.5/§11), active voice. It names the attack,
+    // since a bare row would promise the bonus on every attack. Base-set mode reads "'s base damage
+    // is N", the all-attacks mode names no attack, and a this-turn install says "this turn".
     case "ATTACK_BOOSTED":
       if (event.thisTurn === true) {
         return row(event.seat, [
@@ -1219,10 +808,7 @@ function formatEvent(
         strong(cardName(state, event.uid)),
         plain(" prevented the effect of the attack"),
       ]);
-    // D259 — the row one family over, and the noun is the whole difference: the
-    // player reads back WHICH KIND of card just did nothing to their Pokémon,
-    // because Rhyperior's sentence refuses Supporters and lets Items through and a
-    // row that said only "the effect" would leave that unreadable.
+    // The noun says which kind of card was blocked (Rhyperior refuses Supporters but not Items).
     case "TRAINER_EFFECT_PREVENTED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -1267,79 +853,29 @@ function formatEvent(
           // rather than as a system row; it echoes the printed sentence.
           return row(seat, [strong(name), plain(" did "), amount, plain(" damage to itself")]);
         case "moved":
-          // D138 — the destination half of a printed counter MOVE (Dedenne ex
-          // "Tail Swap"). A SYSTEM row, like the Ability placement above and for
-          // a sharper version of the same reason: `seat` owns the DAMAGED
-          // Pokémon, which here is the attacker's OPPONENT, and rows render
-          // after their seat's name — so an active-voice row under this seat
-          // would credit the victim with the move (D136's finding 1, verbatim).
-          // The actor is named by the ATTACK_DECLARED row above, and the HEALED
-          // row directly before this one carries the same amount coming OFF the
-          // attacker's Bench, which is what makes the pair read as one move.
+          // The destination half of a counter move (Dedenne ex "Tail Swap"). System voice because
+          // `seat` owns the damaged Pokémon, not the actor.
           return row("system", [plain("Moved: "), amount, plain(" damage onto "), strong(name)]);
         case "attack":
-          // D139 — an attack's own printed "Put {N} damage counters on your
-          // opponent's Active Pokémon." (Mimikyu "Ghost Eye", Polteageist "Pour
-          // Tea"). A SYSTEM row for the identical reason the two above are:
-          // `seat` owns the DAMAGED Pokémon, which for an attack is the
-          // attacker's OPPONENT, so an active-voice row under this seat would
-          // read as the victim doing it to itself. The ACTOR is named by the
-          // ATTACK_DECLARED row directly above — the same argument D136's finding
-          // 1 used to make the mill row passive rather than to give it an actor
-          // field. The verb is the PRINTED one, as "Moved:" is for the move.
-          //
-          // D140 gave this arm a SECOND producer and needed no new wording:
-          // Ting-Lu ex "Land Scoop" puts its counters on a CHOSEN BENCHED body
-          // rather than the Active, and every word here stays true — same printed
-          // verb ("Put"), same seat (the opponent's, who owns the damaged
-          // Pokémon), same reason for the system voice. `name` names WHICH
-          // Pokémon, which is the only thing that differed.
+          // An attack's printed "Put {N} damage counters on …"; system voice because `seat` owns
+          // the damaged Pokémon. The actor is named by the ATTACK_DECLARED row above.
           return row("system", [plain("Put: "), amount, plain(" damage onto "), strong(name)]);
         case "counterattack":
-          // D141 — the §9 reactive recoil (Counterattack Quills, Custom Trap,
-          // Rocky Helmet): counters put on the ATTACKING Pokémon because the body
-          // it just hit strikes back. A SYSTEM row like the three above, and for a
-          // reason of its own on top of theirs: `seat` here is the ATTACKER's (it
-          // owns the DAMAGED Pokémon, which is the attacker) while the CAUSER is
-          // the DEFENDER, so an active-voice row would credit the attacker with
-          // damaging itself — the mirror image of D136's finding 1.
-          //
-          // The label names the MECHANISM, not the provenance, because the amount
-          // is a SUM over the holder's passive and its Tools and can carry both at
-          // once (Stunfisk + Rocky Helmet = 70 in one row). "Ability:" was what
-          // this printed before 0.90.0, and it was simply false for a Tool. It is
-          // deliberately NOT worded as "Recoil", which this event already uses for
-          // `"self"` — an attacker damaging ITSELF with its own printed attack is
-          // the opposite direction, and the two must not read alike.
-          //
-          // Nothing else announces this: the recoil emits no ABILITY_TRIGGERED row
-          // (it is a passive, and for a Tool there is no Ability to trigger), so
-          // unlike the `"ability"` arm above there is no row overhead naming the
-          // source. This row is the entire explanation a reader gets.
+          // Reactive recoil (§9) on the attacking Pokémon, in system voice. The label names the
+          // mechanism because the amount can sum an Ability and Tools; it is not "Recoil", which
+          // means self-damage. No other row announces it.
           return row("system", [
             plain("Counterattack: "),
             amount,
             plain(" damage to "),
             strong(name),
           ]);
-        // 🆕🆕 D434 — counters an attack SCHEDULED a turn ago, placed by the §13
-        // Checkup. A SYSTEM row like "poison" and "burn" directly above it and for
-        // exactly their reason: it lands between turns with no actor taking an
-        // action, and `seat` owns the DAMAGED Pokémon, so an active-voice row under
-        // this seat would read as the victim doing it to itself (D136's finding 1,
-        // which the `default` arm below would have committed for free).
-        //
-        // The label matches the EFFECT_SCHEDULED row that armed it a turn earlier,
-        // so the pair reads as one mechanism — RECOIL_ARMED/"counterattack"'s rule.
+        // Counters an attack scheduled a turn ago, placed at Checkup (§13); system voice, labelled
+        // to match the EFFECT_SCHEDULED row.
         case "delayed":
           return row("system", [plain("Delayed: "), amount, plain(" damage to "), strong(name)]);
-        // 🆕🆕🆕 D557 — counters an ITEM placed (Team Rocket's Venture Bomb, either face).
-        // A SYSTEM row for the `"attack"` arm's reason: `seat` owns the DAMAGED body,
-        // which on heads is the player's OPPONENT, so an active-voice row under it would
-        // credit the victim — and on tails the recoil wording ("did N damage to
-        // itself") would credit the Active with a hit it never made. The TRAINER_PLAYED
-        // row directly above names the card; the label names the mechanism class, the
-        // way "Ability:" and "Put:" do, never "Ability:" or "…to itself".
+        // Counters placed by an Item (Team Rocket's Venture Bomb); system voice, since on heads
+        // `seat` is the opponent and on tails self-damage wording would be wrong.
         case "trainer":
           return row("system", [plain("Trainer: "), amount, plain(" damage to "), strong(name)]);
         default:
@@ -1361,10 +897,8 @@ function formatEvent(
         plain(" is Confused — flip: "),
         strong(event.result),
       ]);
-    // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's coin, CONFUSION_CHECK's shape: the
-    // declaring seat's voice (they flip), the face in bold, the CONSEQUENCE left to
-    // the ATTACK_FAILED row that follows a tails.
-    // 🆕🆕🆕 D636 — Seismitoad "Quaking Fist": the lock, then each coin at a Trainer play.
+    // The flip-to-attack lock's coin, in the declaring seat's voice; the consequence is left to the
+    // ATTACK_FAILED row after tails. Seismitoad "Quaking Fist" flips at each Trainer play.
     case "TRAINER_FLIP_LOCKED":
       return row(event.seat, [
         plain("must flip a coin to use each Trainer card from hand next turn"),
@@ -1377,7 +911,8 @@ function formatEvent(
         strong(event.result),
         plain(event.result === "tails" ? ": it is discarded instead of used" : ""),
       ]);
-    // 🆕🆕🆕 D646 — Backtrack Badge: the attack's coins ignored and flipped again (the new faces are their own rows).
+    // Backtrack Badge: the attack's coins are ignored and flipped again; the new faces get their
+    // own rows.
     case "COINS_REFLIPPED":
       return row(event.seat, [
         plain("used "),
@@ -1393,26 +928,10 @@ function formatEvent(
         strong(event.result),
       ]);
     case "ATTACK_FAILED":
-      // Four reasons: "confusion" is §12's tails (the self-damage follows as
-      // its own row — 🆕🆕 D501: this comment said "the 30 self-damage" until the
-      // amount became `SpecialConditions.confusionDamage`; the ROW below names no
-      // number and was correct throughout, so only the justification rotted), "requirement" is D125's printed "this attack does
-      // nothing" with its clause held — nothing follows that one, so the row
-      // must say so on its own or the attack reads as a silent no-op — and
-      // "coinFlip" is D126's printed "If tails, this attack does nothing." The
-      // last one is PRECEDED by its own ATTACK_EFFECT_COIN_FLIP row, which
-      // already named the face, so this line states the CONSEQUENCE and does not
-      // repeat "tails".
-      //
-      // 🆕🆕 **D429 — "preDamage" NEEDED ITS OWN ARM AND WOULD HAVE FALLEN INTO THE
-      // DEFAULT.** Adding the reason without touching this ternary would have printed
-      // *"its condition was not met"* for a row whose printed sentence is
-      // *"If you can't discard any, this attack does nothing."* — a sentence with no
-      // condition in it at all, on an attack that failed because its own act found
-      // nothing to take. That is D421's rule exactly: a log row is a claim with the
-      // same standing as a predicate, and the default arm's claim is FALSE here. The
-      // wording names the ACT rather than the sentence, because nothing else in the
-      // batch does: the silent-no-op rule means this path files no TOOLS_DISCARDED.
+      // "confusion" is §12's tails (self-damage follows as its own row). "requirement" is "this
+      // attack does nothing" with its clause held, and "coinFlip" follows its own coin row, so it
+      // states only the consequence. "preDamage" names the act because the attack failed for
+      // finding nothing to discard.
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
@@ -1422,10 +941,7 @@ function formatEvent(
               ? "'s attack did nothing — the coin flip missed"
               : event.reason === "preDamage"
                 ? "'s attack did nothing — it had no Pokémon Tool to discard"
-                : // 🆕🆕🆕 D547 — an EXPLICIT arm for "flipLock", D429's lesson: the
-                  // default below would claim a CONDITION that the printed sentence
-                  // does not have. The printed consequent is "that attack doesn't
-                  // happen", and it is PRECEDED by its own coin row.
+                : // "flipLock" needs an explicit arm: the default would claim a condition the printed sentence lacks.
                   event.reason === "flipLock"
                   ? "'s attack didn't happen — the flip lock's coin was tails"
                   : "'s attack did nothing — its condition was not met",
@@ -1437,51 +953,24 @@ function formatEvent(
         plain(` healed ${event.amount} damage`),
       ]);
     case "ATTACK_EFFECT_COIN_FLIP":
-      // A coinFlipGate flip — an attack's effect OR a Trainer's (Poké Ball /
-      // Pokémon Catcher, M5); `seat` is the seat that flipped: the actor, except
-      // that `opponentPerTails` files under the opponent (D550), so its rows read
-      // "P2 flipped tails for the effect" on P1's attack. ~~`seat` is the actor.~~
-      // (withdrawn at D550, D539). The event id keeps "ATTACK_"
-      // for back-compat, but the copy stays neutral so a Trainer flip reads right.
+      // A coinFlipGate flip, from an attack or a Trainer. `seat` is the seat that flipped: usually
+      // the actor, but `opponentPerTails` files under the opponent. The copy stays neutral despite
+      // the "ATTACK_" event id.
       return row(event.seat, [plain("flipped "), strong(event.result), plain(" for the effect")]);
     case "KNOCKED_OUT":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(" was "),
         { text: "Knocked Out", tone: "damage" },
-        // 🆕🆕🆕 D572 — Huntail "Diver's Catch": the Energy that went to the hand instead of the
-        // discard pile, COUNTED (the cards were face up in play; the count is what the row adds).
-        // [🆕🆕🆕 D598 (D539): *"the Energy that went to the hand"* is WITHDRAWN as the whole of
-        // `toHand`, kept as written — Gengar "Infinite Shadow" sends the Pokémon's own cards, so the
-        // tail now counts what MOVED (`koToHandTail`); an all-Energy split reads byte-identically.]
+        // Cards a Knock Out sent to the hand instead of the discard pile, counted by what moved
+        // (`koToHandTail`).
         ...(event.toHand === undefined ? [] : [plain(koToHandTail(state, event.toHand))]),
       ]);
     case "POKEMON_RETURNED": {
-      // 🆕 D299 — a benched body left play without being Knocked Out. Attributed
-      // to the ACTOR (CARD_TO_BOTTOM_OF_DECK's rule): on Illumise's printing the
-      // seat that loses the Pokémon is not the seat that did it, and a row filed
-      // under the owner would read as something they chose to do.
-      //
-      // NAMES THE POKÉMON AND COUNTS THE REST. Every card in `uids` was face up
-      // in play a moment ago, so naming them would leak nothing — but the row
-      // that matters is which BODY vanished, and a six-card list of Energy would
-      // bury it. The count is what tells a player how much went with it.
-      //
-      // 🆕 D313 — THREE ZONES AND ONE SPLIT. The verb is the zone's own printed
-      // verb ("shuffled" into a deck, "put" into a hand or a discard pile — the
-      // `returnBenchedNote` rule that the destination picks the verb because the
-      // printings do), and the noun spells "discard pile" rather than "discard",
-      // which is the zone's name in §2 and not a field value read out loud.
-      //
-      // 🛑 **THE SPLIT ROW COUNTS THE ATTACHMENTS AND NOT THE PILE.** On Team
-      // Rocket's Crobat ex the evolution stack goes to the HAND with the body and
-      // only `attachmentsTo.uids` is discarded, so `uids.length - 1` — every other
-      // card that left play — would over-count the discard by the whole Golbat and
-      // Zubat underneath. The two branches therefore count DIFFERENT things, which
-      // is why the split is a branch rather than an extra clause.
-      // 🆕🆕🆕 D565 — `"deckTop"` is a POSITION (Flustered Leap: "put this Pokémon on
-      // top of your deck"): the verb is "put" and the preposition is "on top of", so the
-      // row cannot read as a shuffle-in.
+      // A benched body left play without being Knocked Out, attributed to the actor. Names the
+      // Pokémon and counts the rest. The verb follows the zone ("shuffled" into a deck, "put" into
+      // a hand, discard pile, or on top of the deck). The split row counts only the discarded
+      // attachments, since the evolution stack may go to the hand.
       const zone = event.dest === "discard" ? "discard pile" : event.dest;
       const verb = event.dest === "deck" ? "shuffled " : "put ";
       const into = event.dest === "deckTop" ? " on top of " : " into ";
@@ -1505,9 +994,7 @@ function formatEvent(
       ]);
     }
     case "POKEMON_SWAPPED_FROM_DECK":
-      // 🆕🆕🆕 D565 — Zero to Hero's swap. Names both cards: the new one is face up in play
-      // and the old one was face up a moment ago; the SHUFFLE row that follows says the
-      // rest ("…put this card into your deck. Then, shuffle your deck.").
+      // Zero to Hero's swap: both cards are named, and the SHUFFLE row that follows says the rest.
       return row(event.seat, [
         plain("switched "),
         strong(cardName(state, event.fromUid)),
@@ -1516,8 +1003,7 @@ function formatEvent(
         plain(" from their deck"),
       ]);
     case "POKEMON_SWAPPED_FROM_DISCARD": {
-      // 🆕🆕🆕 D566 — Ogre's Mask's swap: both cards are public, and the old one went to the
-      // discard pile the new one came out of (the print names no other zone for it).
+      // Ogre's Mask's swap: both cards are public, and the old one goes to the discard pile.
       const incoming = cardName(state, event.toUid);
       return row(event.seat, [
         plain("switched "),
@@ -1539,12 +1025,8 @@ function formatEvent(
       ]);
     }
     case "PRIZE_TURNED_FACE_UP":
-      // 🆕🆕🆕 D548 — NAMES the card: a face-up prize is public (both seats and spectators
-      // see it on the wire), so withholding the name here would hide nothing. The count-only
-      // rule above is for a card entering a HAND, and it is kept for every take.
-      // 🆕🆕🆕 D567 — Bother-Bot turns the OPPONENT's prize: filed under the ACTOR with the
-      // row's owner named outright (the RANDOM_CARD_TAKEN rule), so a mirror match cannot
-      // print one row from both seats. Absent `actor` is the D548 row, byte for byte.
+      // A face-up prize is public, so it is named. A prize turned by the opponent (Bother-Bot) is
+      // filed under the actor with the owner named.
       if (event.actor !== undefined) {
         return row(event.actor, [
           plain(`turned ${names[event.seat]}'s `),
@@ -1558,7 +1040,7 @@ function formatEvent(
         plain(` face up (Prize ${event.index + 1})`),
       ]);
     case "PRIZES_CYCLED": {
-      // 🆕🆕🆕 D567 — Redeemable Ticket. COUNT-ONLY: every card on both rows is hidden.
+      // Redeemable Ticket: count only, every card is hidden.
       const n = event.count;
       return row(event.seat, [
         plain(
@@ -1567,8 +1049,8 @@ function formatEvent(
       ]);
     }
     case "PRIZE_SWITCHED_WITH_HAND":
-      // 🆕🆕🆕 D567 — Bother-Bot's switch. Both cards are public (a face-up prize and a card
-      // just revealed), so both are named; under the ACTOR, the owner named outright.
+      // Bother-Bot's switch: both cards are public, so both are named; filed under the actor, owner
+      // named.
       return row(event.actor, [
         plain(`had ${names[event.seat]} switch `),
         strong(cardName(state, event.handUid)),
@@ -1595,37 +1077,10 @@ function formatEvent(
         strong(targetName(state, event.seat, event.target)),
       ]);
     case "TOOLS_DISCARDED": {
-      // 🆕🆕 D428 — the pre-damage Tool strip. `ENERGY_DISCARDED`'s row one
-      // attachment kind over, and every one of its four wording decisions applies
-      // here for its own reason rather than by copying:
-      //   · filed under `event.actor` (whose card did it — its ATTACK_DECLARED row
-      //     sits just above), NOT under `event.seat`, who OWNS the stripped body;
-      //   · the host is named by `event.host`, never by re-reading the spot: the
-      //     same attack's damage can Knock that body Out in this very batch;
-      //   · the owner is named OUTRIGHT rather than by a possessive pronoun, since
-      //     the `who` chip is viewer-relative while these segments are fixed text;
-      //   · the cards are named — attached Tools and the discard pile are both
-      //     public — and carry the `energy` tone so the two names in the row do not
-      //     render identically, which is exactly `ENERGY_DISCARDED`'s cue problem.
-      // ⚠️ THE ROW SAYS "before doing damage" BECAUSE THAT IS WHAT THIS EVENT
-      // MEANS, and it is a claim this path makes true: the row is pushed in front
-      // of the §8.5 `DAMAGE_DEALT` it precedes, so a reader who sees the two in
-      // order is reading the order they happened in (D421 — a log row is a claim
-      // with the same standing as a predicate).
-      // 🆕🆕🆕 **D543 — THE TAIL SEGMENT IS NOW CONDITIONAL, AND THE PARAGRAPH
-      // ABOVE IS KEPT VERBATIM BECAUSE IT IS STILL EXACTLY RIGHT FOR THE ROW IT WAS
-      // WRITTEN ABOUT.** *"THE ROW SAYS 'before doing damage' BECAUSE THAT IS WHAT
-      // THIS EVENT MEANS"* was true when this event had ONE producer. It now has two,
-      // (🆕 D562, annotated in place per D539: ~~two~~ THREE — `"consumed"`, a
-      // consumable Tool discarding itself after its own effect paid, carries its own
-      // tail just below and never the pre-damage one)
-      // and `when` is the event's own answer to which one fired: `"preDamage"` keeps
-      // the segment and keeps the claim (the row really is pushed in front of the
-      // §8.5 `DAMAGE_DEALT`), while D543's program-tail `discardTools` fires AFTER the
-      // damage and must not say otherwise. A hard-coded tail on the new producer
-      // would be a log row that lies with the board identical — which no board
-      // assertion can catch, and which `D543-event-when-flipped` is the declared row
-      // for. D421: a log row is a claim with the same standing as a predicate.
+      // Tool discard: filed under `event.actor`; the host comes from `event.host` because the same
+      // attack can Knock it Out in this batch; the owner is named outright; the cards are named.
+      // The "before doing damage" tail appears only when `when` is "preDamage", and a consumed Tool
+      // gets its own tail.
       const cards = event.uids.map((uid) => cardName(state, uid));
       return row(event.actor, [
         plain("discarded "),
@@ -1633,33 +1088,29 @@ function formatEvent(
         plain(" from "),
         strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
         ...(event.when === "preDamage" ? [plain(" before doing damage")] : []),
-        // 🆕🆕🆕 D562 — the consumable's tail: the card discarded ITSELF after its own
-        // effect paid, so the row says so (it is filed under its owner, `actor === seat`).
+        // A consumable Tool discarded itself after its effect paid.
         ...(event.when === "consumed" ? [plain(" after it took effect")] : []),
-        // 🆕🆕🆕 D643 — Multi Adapter's trim: the owner discarded down to the cap.
+        // Multi Adapter's trim: the owner discarded down to the cap.
         ...(event.when === "trimmed" ? [plain(" — Multi Adapter no longer applies")] : []),
       ]);
     }
     case "STADIUM_DISCARDED":
-      // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is
-      // the OWNER whose discard pile gained the old card.
-      // 🆕🆕🆕 Card revision B22 — an EFFECT discard (Wreck, World Ender, …) left the zone
-      // empty; it follows the attack's own rows and claims no replacement.
+      // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is the owner. An effect
+      // discard leaves the zone empty and claims no replacement.
       return row("system", [
         strong(cardName(state, event.uid)),
         plain(event.cause === "replaced" ? " left play — replaced" : " was discarded"),
       ]);
     case "POKEMON_NAMED":
-      // 🆕🆕🆕 D577 — Tyme: the told name only (the card is face down — no HP here).
+      // Tyme: the told name only; the card is face down.
       return row(event.seat, [
         plain("named "),
         strong(event.name),
         plain(" — the opponent guesses its HP"),
       ]);
     case "SUPPORTER_EFFECT_USED":
-      // 🆕🆕🆕 D580 — Look-Alike Show, under the ATTACKER. The op's one producer is Mr. Mime
-      // `sv05-063` (registry.ts `MR_MIME_LOOK_ALIKE_SHOW`), so the attack is named as printed.
-      // 🆕🆕🆕 D638 — `milled`: Ninetales `me01-020` (`useMilledSupporterEffect`'s one producer).
+      // Look-Alike Show, filed under the attacker and named as printed; `milled` is Ninetales'
+      // variant.
       if (event.milled === true) {
         return row(event.seat, [
           plain("Ninetales's Supernatural Shapeshifter used the effect of "),
@@ -1671,7 +1122,7 @@ function formatEvent(
         strong(cardName(state, event.uid)),
       ]);
     case "HP_GUESSED":
-      // 🆕🆕🆕 D577 — Tyme's reveal, under the player who played it.
+      // Tyme's reveal, under the player who played it.
       return row(event.seat, [
         plain("revealed "),
         strong(cardName(state, event.uid)),
@@ -1679,8 +1130,8 @@ function formatEvent(
         strong(event.right ? "right" : "wrong"),
       ]);
     case "BENCH_TRIMMED": {
-      // 🆕🆕🆕 D577 — Area Zero Underdepths' trim, under the OWNER (they chose, R-AZ4). Names
-      // each body (face up in play a moment ago — nothing leaks) and counts the pile.
+      // Area Zero Underdepths' trim, under the owner (who chose). Each body is named and the pile
+      // counted.
       const segments: LogSegment[] = [plain("discarded ")];
       event.uids.forEach((uid, index) => {
         if (index > 0) segments.push(plain(index === event.uids.length - 1 ? " and " : ", "));
@@ -1722,19 +1173,9 @@ function formatEvent(
         plain(` for ${event.ability}`),
       ]);
     case "PRIZE_REDUCED":
-      // §8.1 — an on-KO Ability (Munkidori ex "Oh No You Don't") cut, rather than
-      // denied, the Prize for the Knocked Out Pokémon. SYSTEM-voiced, and the
-      // reason is NOT inherited from PRIZE_PREVENTED above even though the answer
-      // matches: this row's `seat` owns the DYING Pokémon while the party the
-      // sentence acts on is that seat's OPPONENT (they are the one taking fewer),
-      // so an active voice under `seat` describes the wrong player's loss and one
-      // under the opponent credits them with their own penalty. The ABILITY_TRIGGERED
-      // row immediately above already names the Ability and its owner, so nothing
-      // is lost by leaving the consequence unattributed.
-      //
-      // It states BOTH numbers because a decrement is only readable against the
-      // face value — "1 fewer" alone leaves a player who does not know the card is
-      // worth 2 unable to check the prize count they are about to see.
+      // An on-KO Ability (Munkidori ex) reduced the Prize (§8.1). System voice, since `seat` owns
+      // the dying Pokémon but the opponent takes fewer. Both numbers are stated so the change is
+      // readable.
       return row("system", [
         strong(cardName(state, event.uid)),
         plain(
@@ -1742,20 +1183,8 @@ function formatEvent(
         ),
       ]);
     case "PRIZE_BONUS":
-      // 🆕 §8.1 (D323) — a seat-wide Ability on the KILLING side (Togekiss "Wonder
-      // Kiss" heads, Hydreigon ex "Greedy Eater") added Prize cards for this Knock
-      // Out. SYSTEM-voiced for PRIZE_REDUCED's reason read from the other side:
-      // this row's `seat` owns the DYING Pokémon while the party the sentence acts
-      // for is that seat's OPPONENT, so an active voice under `seat` credits the
-      // wrong player. The ABILITY_TRIGGERED row above already named the Ability and
-      // its owner. (🆕🆕🆕 D549: WITHDRAWN as a claim about EVERY row — the attack-
-      // installed KNOCK OUT BOUNTY files this row with NO Ability row above it; its
-      // source was named at install by KO_BOUNTY_APPLIED. The wording below names no
-      // source, so it stays true of both; the system voice's reason is unchanged.)
-      //
-      // Both numbers, for PRIZE_REDUCED's reason exactly: an increment is only
-      // readable against the face value, and a player who does not know the dead
-      // card was worth 2 cannot check the 3 they are about to take.
+      // An effect on the killing side added Prize cards for this Knock Out (§8.1). System voice for
+      // the same reason as above; both numbers are stated.
       return row("system", [
         strong(cardName(state, event.uid)),
         plain(
@@ -1770,25 +1199,13 @@ function formatEvent(
         plain(" — no Prize card is taken for it"),
       ]);
     case "HAND_COST_PAID": {
-      // §7/§9 — the printed hand cost (Ultra Ball's "only if you discard 2 other
-      // cards", Tinkaton / Meowscarada ex's "you must discard … in order to use
-      // this Ability", Dendra's "put a card from your hand on the bottom of your
-      // deck"). Follows the TRAINER_PLAYED / ABILITY_USED row and PRECEDES
-      // whatever it bought, which is the printed sentence order.
-      //
-      // Count only, like every card leaving the hidden HAND (the HAND_DISCARDED
-      // rule) — cards paid to the discard do land in a public pile, but the log's
-      // convention is about the zone they came FROM, and a curious player can
-      // read the pile itself. Cards paid to the DECK BOTTOM are hidden at both
-      // ends, so the count is all there is to say; the verb is what tells the two
-      // apart, and it matters — a discard is readable afterwards and a card under
-      // the deck never is. (🆕🆕🆕 D561: THREE now — `"deckTop"`, Academy at Night, is
-      // hidden at both ends like the bottom, and speaks its own verb just below.)
+      // The printed hand cost (§7/§9), after the TRAINER_PLAYED / ABILITY_USED row and before
+      // whatever it bought. Count only, as cards leaving the hidden hand; the verb distinguishes
+      // discard from deck bottom or top.
       const n = event.uids.length;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
-      // 🆕🆕🆕 D561 — Academy at Night's *"on top of their deck"*: hidden → hidden like
-      // the deck bottom, so the count and the verb are all there is to say.
-      // 🆕🆕🆕 D611 — Evidence Gathering's swap: the old top card went into the hand.
+      // Academy at Night's "on top of their deck": hidden to hidden, count only. Evidence
+      // Gathering's swap sends the old top card to the hand.
       if (event.took !== undefined) {
         return row(event.seat, [
           plain(`switched ${cards} from their hand with the top card of their deck`),
@@ -1801,8 +1218,7 @@ function formatEvent(
         plain(
           event.to === "deckBottom"
             ? `put ${cards} from their hand on the bottom of their deck`
-            : // 🆕 Card revision B36 — an attack's discard (Steel Cutter, Double Eater, Stick 'n'
-              // Draw) is the attack's EFFECT, and no attack prints a cost.
+            : // An attack's discard is the attack's effect, not a cost.
               event.effect === true
               ? `discarded ${cards} from their hand`
               : `discarded ${cards} from their hand to pay a cost`,
@@ -1816,61 +1232,10 @@ function formatEvent(
       return row(event.seat, [plain(`discarded their hand (${n} card${n === 1 ? "" : "s"})`)]);
     }
     case "FORCED_HAND_DISCARD": {
-      // 🆕🆕 D426 — the opponent-chooses hand discard (*"Your opponent discards 2
-      // cards from their hand."*).
-      //
-      // 🛑 **FILED UNDER `event.seat`, AND THIS ROW IS THE COUNTEREXAMPLE TO A
-      // HABIT RATHER THAN AN INSTANCE OF ONE.** Every other cross-seat card move
-      // in this file (`CARD_TO_BOTTOM_OF_DECK`, `RANDOM_CARD_TAKEN`,
-      // `POKEMON_RETURNED`, `DECK_TOP_DISCARDED`) files under the ACTOR, because
-      // the actor is who chose and who moved. Here the actor chose NOTHING: the
-      // card named a number and the OWNER picked the cards. So the active voice
-      // belongs to the owner, and there is no possessive to disambiguate — this is
-      // `HAND_DISCARDED`'s sentence with a different cause, and the
-      // ATTACK_DECLARED row directly above is what names that cause.
-      //
-      // 🆕🆕🆕 **D485 — A SECOND PRODUCER, AND THE SENTENCE ABOUT WHO CHOSE IS THE
-      // ONLY CLAUSE IT FALSIFIES (corrected in place, D178/D442).**
-      // `discardFromOpponentHand` files this row for *"Discard all Item cards and
-      // Pokémon Tool cards you find there."*, where the card named a PREDICATE and
-      // NOBODY picked anything. The rendering is unchanged and correct for both: the
-      // row says a hidden hand got smaller and by how much, which is exactly as true
-      // of a sweep as of a pick. ⚠️ **THE COUNT IS NOW BOARD-DERIVED RATHER THAN
-      // PRINTED**, so `n` is the only honest source for it — a row that had rendered
-      // the op's printed number instead of `event.uids.length` would have had nothing
-      // to render here. `opponentHandSweep.test.ts` §5 drives this row on the
-      // load-bearing board (D478: describer obligations follow the CALL PATH).
-      // ⚠️ **NOTHING IS DERIVED HERE.** The event carries no `actor` and this row
-      // asks for none; `otherSeat(event.seat)` would have been true today and true
-      // BY CONSTRUCTION OF ONE OP, which is D425's `DAMAGE_DEALT` defect exactly.
-      //
-      // Count only — the `HAND_COST_PAID` convention, which is about the zone the
-      // cards came FROM and not the zone they land in. They do land face up in the
-      // §2 public pile, so a player who wants the identities reads the pile; the
-      // log's job here is to say that a hidden hand got smaller and by how much.
-      //
-      // 🆕🆕🆕 **D542 — A THIRD PRODUCER AND THE FIRST ONE THAT IS NOT A DISCARD.**
-      // `opponentDiscardsFromHand { to: "deck" }` files this row for *"Your opponent
-      // chooses 3 cards from their hand and shuffles those cards into their deck."*
-      // 🛑 **THE COUNT SURVIVES THE WIDENING AND THE VERB DOES NOT.** The
-      // `HAND_COST_PAID` convention above is about the zone the cards came FROM, so
-      // it holds on both arms — but the sentence *"they do land face up in the §2
-      // public pile"* is FALSE here and the row must not say *discarded*, because a
-      // player reading it would look for three cards in a pile that never received
-      // them. This is `HAND_COST_PAID`'s own two-arm shape at log.ts TWO cases up
-      // (`:1242`; `HAND_DISCARDED` at `:1266` sits between the two): one row, two
-      // verbs, `const cards` hoisted, the destination chosen by the event's `to`.
-      // ⚠️ The first published spelling of that pointer read ~~*"one case up"*~~ and
-      // is WITHDRAWN — the SUBSTANCE of the citation was measured and is exactly right,
-      // and only the count of cases between them was written from memory of the file
-      // rather than off its bytes, which is the class this slice's landing review
-      // convened to close (a line address is a figure, D466/D541).
-      // 🛑 **AND THE ROW DOES NOT SAY *shuffled*** — no shuffle is implied by
-      // `to: "deck"` (events.ts states the house rule outright), and the real
-      // `SHUFFLE` row lands immediately after this one. A row that said *shuffled*
-      // would be one word secretly meaning two events. `D542-log-row-says-discard`
-      // is the declared row, and BOTH spellings are driven (D539/D540's two-reasons
-      // rule) so a build that collapsed them in either direction reddens.
+      // An opponent-side hand discard, filed under `event.seat`: the owner picked the cards (or a
+      // sweep picked them), and the ATTACK_DECLARED row names the cause. The count comes from
+      // `event.uids.length`. When `to` is "deck", the row must not say "discarded" or "shuffled";
+      // the SHUFFLE row follows.
       const n = event.uids.length;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
       return row(event.seat, [
@@ -1882,11 +1247,8 @@ function formatEvent(
       ]);
     }
     case "HAND_SHUFFLED_INTO_DECK": {
-      // The hand-refresh Supporter family (Youngster / Judge / Brassius / Katy).
-      // Count only — the hand is hidden (module header), so this names no card
-      // even when the op reaches the OPPONENT's hand (Judge). A separate
-      // CARDS_DRAWN row (count only too) follows for the draw. 🆕🆕🆕 D640 — except
-      // Celebration's post-Prize `shuffleHandIntoDeck` stage, which draws nothing.
+      // The hand-refresh Supporter family; count only, even for the opponent's hand. A CARDS_DRAWN
+      // row follows, except Celebration's post-Prize stage, which draws nothing.
       const n = event.count;
       return row(event.seat, [
         plain(`shuffled their hand (${n} card${n === 1 ? "" : "s"}) into their deck`),
@@ -1908,19 +1270,8 @@ function formatEvent(
       ]);
     }
     case "HAND_REVEALED": {
-      // 🆕🆕🆕 D633 (D539): "The ONE hand row" below is WITHDRAWN — `HAND_CARDS_REVEALED` (Weaponized Swords)
-      // names its cards too, for the same reason.
-      // Ortega / Greavard "Underworld Stroll". The ONE hand row that is not
-      // count-only, and deliberately: a reveal is the moment those cards stop
-      // being hidden, so the module header's rule ("never name a card in a
-      // hidden zone") does not bite — the zone is not hidden any more. Naming
-      // them is also the only way the log stays useful, since the reveal is
-      // transient: the hand goes back to face-down for the rest of the game and
-      // this row is the only lasting record of what was in it.
-      //
-      // Filed under the REVEALING seat (whose hand it is), not the actor whose
-      // card caused it — the TRAINER_PLAYED / ATTACK_DECLARED row directly above
-      // names the cause, the HAND_COST_PAID precedent.
+      // Hand reveals name their cards: once revealed, the cards are no longer hidden, and this row
+      // is the only lasting record. Filed under the revealing seat.
       const n = event.uids.length;
       if (n === 0) return row(event.seat, [plain("revealed their hand — no cards")]);
       return row(event.seat, [
@@ -1929,65 +1280,38 @@ function formatEvent(
       ]);
     }
     case "HAND_CARDS_REVEALED":
-      // 🆕🆕🆕 D633 — Doublade "Weaponized Swords": the picked cards are public now (HAND_REVEALED's
-      // reason), so they are named; they stay in the hand. Never emitted for an empty pick.
+      // Doublade "Weaponized Swords": the picked cards are public, so named; they stay in the hand.
+      // Never emitted for an empty pick.
       return row(event.seat, [
         plain("revealed from their hand: "),
         strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
       ]);
     case "CARD_TO_BOTTOM_OF_DECK":
-      // The chosen card going under its owner's deck (Ortega / Greavard). Named,
-      // unlike HAND_COST_PAID's deckBottom row, because this move happened face
-      // up at both ends — the hand was just revealed and the pick was made in
-      // the open, so both players know what is sitting on the bottom until
-      // something shuffles. That is a real piece of public information and the
-      // log is where it lives.
-      //
-      // Filed under the ACTOR (whose card did it — the ENERGY_DISCARDED rule),
-      // and the owner is named OUTRIGHT rather than by a possessive: the `who`
-      // chip is viewer-relative while these segments are fixed text, so a
-      // mirror match would otherwise print an identical row from both seats.
+      // The chosen card going under its owner's deck: named, because the move happened face up.
+      // Filed under the actor, the owner named outright so mirror matches differ.
       return row(event.actor, [
         plain("put "),
         strong(cardName(state, event.uid)),
         plain(` on the bottom of ${names[event.seat]}'s deck`),
       ]);
     case "HAND_CARD_SHUFFLED_INTO_DECK":
-      // 🆕🆕🆕 D634 — Watchog "Snap Inspection": the arm above's move with a shuffle, so the card is
-      // named (it was picked face up) and filed under the ACTOR, the owner named outright.
+      // Watchog "Snap Inspection": the same move with a shuffle; named and filed under the actor.
       return row(event.actor, [
         plain("shuffled "),
         strong(cardName(state, event.uid)),
         plain(` into ${names[event.seat]}'s deck`),
       ]);
     case "CARD_DISCARDED_FROM_HAND":
-      // 🆕🆕 D445 — the CHOSEN pick out of the opponent's revealed hand, discarded.
-      // NAMED, for the arm above's reason and by both of its routes at once: the hand
-      // was revealed a moment ago and the pick was made in the open, AND the §2 discard
-      // pile is public the instant the card lands. The module header's rule is "never
-      // name a card that is STILL hidden"; this one is not hidden by either measure.
-      //
-      // ⚠️ **"chose" IS IN THE ROW ON PURPOSE**, and it is the sibling of the word
-      // "random" three rows down. `RANDOM_CARD_TAKEN`'s `discard` route puts a card from
-      // the same hand into the same pile and the two are materially different things to
-      // have happened to you — one of them you could have played around. The log is the
-      // only place a player can tell them apart after the fact, and a row that said
-      // merely "discarded" would collapse them.
-      //
-      // Filed under the ACTOR (the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK rule) with
-      // the owner named OUTRIGHT rather than by a possessive, so a mirror match cannot
-      // print an identical row from both seats. ⚠️ It derives NOTHING: `actor` is read,
-      // never computed as `otherSeat(event.seat)` — the derivation D426's block warned
-      // the first consumer of a cross-seat hand discard against, and D425's
-      // `DAMAGE_DEALT` defect in one line.
+      // The chosen pick from the opponent's revealed hand, discarded and named. "chose"
+      // distinguishes it from a random take. Filed under the actor (read, never derived), owner
+      // named outright.
       return row(event.actor, [
         plain("chose "),
         strong(cardName(state, event.uid)),
         plain(` from ${names[event.seat]}'s hand and discarded it`),
       ]);
     case "RANDOM_CARD_REVEALED":
-      // 🆕🆕🆕 D567 — Bother-Bot's random REVEAL: the card stayed in the hand. Named (it was
-      // printed as revealed), "random" in the row for RANDOM_CARD_TAKEN's reason below.
+      // Bother-Bot's random reveal: the card stays in the hand; named, with "random" in the row.
       return row(event.actor, [
         plain(
           `chose a random card from ${names[event.seat]}'s hand — ${names[event.seat]} revealed `,
@@ -1995,24 +1319,8 @@ function formatEvent(
         strong(cardName(state, event.uid)),
       ]);
     case "RANDOM_CARD_TAKEN":
-      // ⚠️⚠️ D232 — the random pick out of the opponent's hand. NAMED, and it is
-      // the second row in this file (after HAND_REVEALED) that names a card which
-      // was in a HIDDEN zone a moment ago — allowed for the same reason and by a
-      // different route: the module header's rule is "never name a card that is
-      // STILL hidden", and this one is not. The `discard` route puts it in the §2
-      // public pile; the `deck` route is printed as a reveal ("Your opponent
-      // reveals that card"), and the SHUFFLE row that follows is what takes its
-      // position back.
-      //
-      // ⚠️ THE WORD "random" IS IN THE ROW ON PURPOSE. Without it this reads
-      // exactly like a card the ACTOR chose, which is the other half of this
-      // family (CARD_TO_BOTTOM_OF_DECK above) and a materially different thing to
-      // have happened to you — the log is the only place a player can tell the
-      // two apart after the fact.
-      //
-      // Filed under the ACTOR (the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK
-      // rule) with the owner named OUTRIGHT rather than by a possessive, so a
-      // mirror match cannot print an identical row from both seats.
+      // The random pick from the opponent's hand, named because it is no longer hidden. "random"
+      // distinguishes it from a chosen card. Filed under the actor, owner named outright.
       return row(event.actor, [
         plain("took "),
         strong(cardName(state, event.uid)),
@@ -2023,31 +1331,14 @@ function formatEvent(
         ),
       ]);
     case "DECK_SEARCHED": {
-      // ⚠️ D225 — THE THREE ENDINGS ARE A DESTINATION AND A PRINTED CLAUSE, AND
-      // ONLY ONE OF THEM IS AN INFORMATION DECISION.
-      //   • bench — count only, and nothing is hidden by it: the card enters PLAY
-      //     face up and is in both players' snapshots a moment later. This is the
-      //     one destination D42's "public by construction" claim was true of, and
-      //     no printed bench search carries the word "reveal" anyway.
-      //   • hand + `reveal` — the printed "reveal it/them". NAMED, because in
-      //     paper the opponent sees the cards, and until D225 they saw a number.
-      //   • hand, no `reveal` — count only, DELIBERATELY. Cassiopeia, Amulet of
-      //     Hope, Greninja ex and the rest search for uncategorised "cards" and
-      //     print no reveal; naming those would leak a hand the print keeps
-      //     private. The flag is the SENTENCE, never the destination.
-      // 🆕 D342 — the FOURTH ending, and it joins the count-only side of the
-      // split above for the strongest version of its reason: `"deckTop"` puts
-      // the cards back into the DECK, so naming them would announce the very
-      // draws the sentence was played to arrange. No printing of it carries a
-      // reveal, and if one ever did the branch below would already be right.
+      // Endings: bench is count only (the card is public anyway); hand with printed `reveal` names
+      // the cards; hand without reveal is count only so the hand stays private; "deckTop" is count
+      // only so the arranged draws are not announced.
       const n = event.uids.length;
       if (event.dest === "bench") {
         return row(event.seat, [plain(`searched their deck — benched ${n} Pokémon`)]);
       }
-      // 🆕🆕🆕 D557 — the FIFTH ending (Brilliant Blender): the cards went to the
-      // searcher's own DISCARD PILE, which is public, so they are NAMED with or without a
-      // printed reveal — the pile shows them to everyone a moment later, and a count here
-      // would hide nothing but make the row say less than the board.
+      // Discard pile destination (Brilliant Blender): public, so the cards are named.
       if (event.dest === "discard") {
         return row(event.seat, [
           plain("searched their deck — discarded "),
@@ -2074,20 +1365,8 @@ function formatEvent(
       ]);
     }
     case "DISCARD_RETRIEVED": {
-      // The §7.1 recovery Items (Energy Retrieval / Pal Pad / Super Rod); only
-      // fires with ≥1 card (a "take none" moves nothing and emits no event). The
-      // discard pile is public, so a count would suffice, but it reads clearer
-      // as an action row like DECK_SEARCHED.
-      //
-      // ⚠️⚠️ D237 — A **THIRD** ARM, AND ITS ABSENCE WOULD HAVE BEEN A LIVE
-      // MIS-RENDER RATHER THAN A GAP. This row was a BINARY ternary on
-      // `dest === "hand"`, so the new Bench destination would have fallen into
-      // the `else` and announced a Pokémon entering play as *"shuffled 3 cards
-      // from their discard pile into their deck"* — a log row stating the
-      // opposite of what the board shows. A ternary whose false branch names one
-      // specific outcome is a total function only until the union widens.
-      // 🆕 CARD REVISION B02 — Caretaker's "shuffle this Caretaker into your deck instead of
-      // discarding it": the played card never belonged to the discard pile, so the row names it.
+      // The §7.1 recovery Items; fires only with at least one card. Each destination gets its own
+      // wording. Caretaker shuffles itself in instead of being discarded, so the row names it.
       if (event.played === true) {
         return row(event.seat, [
           plain("shuffled "),
@@ -2107,31 +1386,9 @@ function formatEvent(
       );
     }
     case "DECK_TOP_REVEALED": {
-      // Great Ball / Pokégear 3.0 / Tatsugiri (lookAtTopN); only fires with ≥1
-      // taken card (a "take none" moves nothing and emits no event). Honest about
-      // "looked at the top" rather than DECK_SEARCHED's "searched their deck"; a
-      // trailing SHUFFLE row follows either ending.
-      //
-      // ⚠️ D225 — THE OLD COMMENT HERE SAID "count only, EVEN THOUGH the taken
-      // cards are revealed … the row reads cleaner", which conceded the leak and
-      // called it typography. It was also arguing from a premise that does not
-      // hold: `lookAtTopN` is not a reveal op, it is a LOOK op, and Explorer's
-      // Guidance / Hassel / Drakloak all put looked-at cards into hand with no
-      // reveal printed. So the same rider decides it as on DECK_SEARCHED — named
-      // when the sentence prints "you may reveal a … you find there", a count
-      // when it does not.
-      //
-      // ⚠️⚠️ D241 — TWO THINGS CHANGED AND THE SECOND IS THE FIDELITY FIX.
-      //   • The DESTINATION now rides the event, so the row stops asserting
-      //     "in hand" about a look that BENCHED or DISCARDED. That is exactly
-      //     `DISCARD_RETRIEVED`'s D237 defect one op over: a binary render is a
-      //     live mis-statement the moment the op grows a third destination.
-      //   • The EMPTY row exists, and it is the whole reason this arm was on the
-      //     backlog. A look that took nothing used to emit no event at all, so
-      //     the opponent never learned that the top of a deck had been read. The
-      //     cards went back under a shuffle, but the KNOWLEDGE did not, and the
-      //     log is the only channel that can say so (the `chooseCards` prompt is
-      //     resolved to the answerer alone by construction — `redact.ts`).
+      // Top-of-deck looks; fires only with at least one taken card, except the empty row, which
+      // tells the opponent the deck top was read. Cards are named only when the sentence prints a
+      // reveal, and the destination comes from the event.
       const n = event.uids.length;
       const where =
         event.dest === "bench"
@@ -2139,18 +1396,13 @@ function formatEvent(
           : event.dest === "discard"
             ? "in the discard pile"
             : "in hand";
-      // 🆕🆕🆕 D557 — WHICH END (Dusk Ball looks at the BOTTOM 7): the row says the end
-      // the look actually took, because "looked at the top" over a bottom look is a
-      // false claim about which cards the looker now knows (D421).
+      // The row names which end was looked at (Dusk Ball looks at the bottom).
       const end = event.from === "bottom" ? "bottom" : "top";
-      // 🆕🆕🆕 D567 — Accompanying Flute: the ACTOR looked at `seat`'s deck and benched onto
-      // `seat`'s Bench. Filed under the actor, the owner named outright; the placed Basics are
-      // public on the Bench, so they are named whenever any landed.
-      // 🆕🆕🆕 D574 — Haughty Order: the cards were REVEALED and STAY in the deck (a SHUFFLE row
-      // follows). Public — both players saw them — so they are named.
+      // Accompanying Flute: the actor looked at `seat`'s deck and benched onto `seat`'s Bench;
+      // filed under the actor, placed Basics named. Haughty Order: revealed cards stay in the deck
+      // and are named.
       if (event.dest === "deck") {
-        // 🆕 Card revision B45 — Bug Out reveals its OWN deck (no `actor`): "their deck", as every
-        // own-deck row reads; Haughty Order's seat-crossing row still names the owner.
+        // Bug Out reveals its own deck (no `actor`), so it reads "their deck".
         const owner =
           event.actor === undefined || event.actor === event.seat
             ? "their"
@@ -2194,62 +1446,10 @@ function formatEvent(
       ]);
     }
     case "DECK_TOP_DISCARDED": {
-      // THREE push sites, FOUR paths, and the paths — not the sites — are what the
-      // wording has to survive (D113's rule: reuse the event, fix the message so it
-      // cannot lie). The old copy here said "THREE producers" and then listed two,
-      // which is the miscount that made a single wording look sufficient:
-      //   • Hydreigon "Tri Howl" (attachFromTop `restTo: "discard"`, 🆕 D352 — was
-      //     `discardRest`) — the looked-at
-      //     cards that were NOT attached, off the actor's OWN deck. actor === seat.
-      //   • 🆕 D334 — Explorer's Guidance (lookAtTopN `restTo: "discard"`) — the same
-      //     printed clause one op over: the looked-at cards a MANDATORY take did
-      //     not take, off the actor's OWN deck. actor === seat.
-      //   • the mill (discardDeckTop, D130 + D131) — "Discard the top N cards of
-      //     your [opponent's] deck", and its `whose` field is a FORK, not a
-      //     parameter: `"self"` (Gyarados "Wild Splash") is actor === seat, and
-      //     `"opponent"` (Chi-Yu ex, Skwovet, Wugtrio) is actor !== seat.
-      // So the four paths split 3–1 on agency, and NOT along the op boundary —
-      // which is why "one wording per op" would not have helped either. 🆕 AND
-      // D334's PATH ARRIVED WITHOUT TOUCHING A LINE OF THIS ARM, which is the
-      // strongest evidence the `actor === seat` key was the right one: a per-op
-      // flag would have owed a third case for a row whose voice was already decided.
-      //
-      // The old copy said "discarded N LOOKED-AT cards", which is true of the
-      // first and a flat lie about the rest: nobody looked at a milled card.
-      // The "looked-at" flavour is not lost — Tri Howl's own DECK_TOP_REVEALED and
-      // ENERGY_ATTACHED rows sit directly above this one and carry it, which is
-      // exactly why this row never needed to.
-      //
-      // Count only, like its DECK_TOP_REVEALED sibling: the pile is public, so a
-      // curious player can read the cards themselves, and what the LOG has to
-      // carry is that the cards LEFT THE DECK. `event.seat` is the deck's OWNER on
-      // every path, so the row belongs to the player who lost them — a mill
-      // reads as the opponent's row, which is what it is.
-      //
-      // ⚠️ AND THE VOICE IS THEN FORCED, PATH BY PATH (D153). Every row here renders
-      // after its seat's name, so the voice is an assertion about agency even though
-      // no segment names an actor: ACTIVE says this seat DID it, PASSIVE says it was
-      // done TO them. D136 found active lying about the opponent-mill ("P2 discarded
-      // 2 cards from the top of their deck" credits the milling to the victim) and
-      // made the one wording passive; `/code-review` then found the mirror, because
-      // passive lies about the two SELF paths — a player who looked at their own top
-      // three and discarded the leftovers, or who paid Wild Splash's own-deck cost,
-      // DID that, and "Ember had 5 cards discarded from the top of their deck" reads
-      // as though an opponent had done it to them. There is no third wording that is
-      // true of both: "the cards left the deck" is a fact both paths share, but the
-      // row is grammatically a predicate on a named player and English has no voice
-      // that declines to say whether that player acted.
-      //
-      // D136 priced ENERGY_DISCARDED's `actor` field and declined it because "this
-      // row never names the actor anyway". That was the wrong test — the question is
-      // not whether the row NAMES an actor but whether it ASSERTS one, and both
-      // voices do. So the field is taken after all, and the renderer picks by the ONE
-      // comparison the producers know and it does not: `formatEvent` sees a single
-      // event with `names`/`state`/`elapsed` and no notion of whose turn it is, so
-      // "compare against the acting seat" is not available here without the datum
-      // riding the event. The self-mill is what makes the comparison the honest key
-      // rather than a per-op flag: it is the same op as the mill and belongs on the
-      // other side of the line.
+      // Deck-top discards, count only; `event.seat` is the deck's owner. Voice depends on `actor
+      // === seat`: active when the owner did it (look-and-discard leftovers, a self-mill), passive
+      // for an opponent mill. The row does not say "looked-at" because milled cards were never
+      // looked at.
       const n = event.uids.length;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
       return row(event.seat, [
@@ -2261,56 +1461,24 @@ function formatEvent(
       ]);
     }
     case "DECK_BOTTOM_DISCARDED": {
-      // 🆕🆕🆕 D565 — Flustered Leap's own-deck cost, off the BOTTOM. Count only, like the
-      // top mill above; ACTIVE voice, because the one producer mills the actor's own deck.
+      // Flustered Leap's own-deck cost from the bottom: count only, active voice.
       const n = event.uids.length;
       return row(event.seat, [
         plain(`discarded ${n} card${n === 1 ? "" : "s"} from the bottom of their deck`),
       ]);
     }
     case "DECK_TOP_REORDERED": {
-      // 🆕 D341 — `reorderTop`'s only row (Iron Valiant "Calculation"; Dottler /
-      // Gothorita on the OPPONENT's deck).
-      //
-      // COUNT ONLY, and here — unlike its DECK_TOP_DISCARDED sibling directly above
-      // — that is a confidentiality rule and not a convenience. That row is count
-      // only because the discard pile is public and a curious player can read the
-      // cards themselves; these cards went back into a DECK, and on three of the
-      // four printings the player who must not see them is the deck's own owner.
-      // Naming them here would hand back, in the open, exactly the knowledge the
-      // card bought for one side.
-      //
-      // ⚠️ THE VOICE IS FORCED BY THE SAME `actor === seat` COMPARISON, inherited
-      // rather than re-decided: `event.seat` is the deck's OWNER, so the own-deck
-      // printing must read ACTIVE (that player did it) and the opponent-deck
-      // printings must read PASSIVE (it was done to them). D153's finding, and this
-      // op is the first one for which BOTH voices are reachable from the printed
-      // text rather than from a field — which is why the field is on the event.
-      //
-      // ⚠️ AND THE ROW SAYS "looked at", WHICH IS THE FACT IT IS FOR. The ordering
-      // itself is unobservable to everyone but the looker (the deck is face down
-      // before and after); what the other player is owed, and the whole reason this
-      // event fires on the paths that never park, is that their deck top was READ.
-      // D241's rule on DECK_TOP_REVEALED, applied to an op that moves nothing at all.
-      //
-      // 🆕 D343 — `end: "bottom"` (Kofu) RENDERS A DIFFERENT SENTENCE, NOT THE
-      // SAME ONE WITH A WORD SWAPPED, because on that fork BOTH halves of the top
-      // phrasing are false. There was no "looked at" — the ordering seat put those
-      // cards under their own deck out of their own hand one op earlier — and
-      // there was no "put them BACK", since they were never there. What is true,
-      // and is the whole of what the other player is owed, is that the ORDER of
-      // the cards that just went under was chosen rather than incidental. The
-      // top arms keep every word they had.
+      // `reorderTop`'s row: count only, because the cards went back into a deck the owner may not
+      // see. Voice follows `actor === seat`. It says "looked at" because that is what the other
+      // player is owed. `end: "bottom"` (Kofu) renders a different sentence: nothing was looked at,
+      // but the order was chosen.
       const n = event.count;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
       if (event.end === "bottom") {
         return row(event.seat, [plain(`chose the order of the bottom ${cards} of their deck`)]);
       }
-      // 🆕🆕 D534 — ONE CARD HAS NO "chosen order". A one-card look (Inkay
-      // `sv06.5-033`, and every 1-card deck under a D341 printing) is a look and
-      // nothing else, so the row drops the ordering clause rather than claim a
-      // decision one card cannot hold. Whether the card went back or the deck was
-      // shuffled is the NEXT row's to say (`SHUFFLE`, under the deck's owner).
+      // A one-card look has no chosen order, so the ordering clause is dropped; the next row says
+      // whether the deck was shuffled.
       if (n === 1) {
         return row(event.seat, [
           plain(
@@ -2329,25 +1497,9 @@ function formatEvent(
       ]);
     }
     case "DECK_TOP_TO_BOTTOM": {
-      // 🆕 D344 — `bottomDeckTop`'s only row (Deduction Kit `sv08-171`, the
-      // printed second arm of its `or`).
-      //
-      // COUNT ONLY, and for a THIRD reason after the two rows above: the discard
-      // row withholds nothing (the pile is public), the reorder row withholds the
-      // cards so the deck's owner cannot read their own top — and here the cards
-      // go hidden → hidden AND are shuffled, so the order is unknown to everyone
-      // including the player who just looked at them.
-      //
-      // ⚠️ ACTIVE VOICE WITH NO `actor` COMPARISON TO MAKE, unlike both rows
-      // above: the op reads the controller's own deck and has no side fork, so
-      // the only voice this row can be in is the one that is always true. The day
-      // a printing bottoms an OPPONENT's top, the field and the second voice are
-      // bought together (D135, and DECK_TOP_REVEALED's own precedent).
-      //
-      // ⚠️ AND IT SAYS "shuffled … to the bottom" RATHER THAN "shuffled their
-      // deck", which is the fact the other player actually needs: the deck's
-      // order below the window is untouched, so the draws that were coming are
-      // still coming. A `SHUFFLE` row here would say the opposite.
+      // Count only: the cards go from hidden to hidden and are shuffled, so nobody knows the order.
+      // It says "shuffled to the bottom" rather than "shuffled their deck" because the rest of the
+      // deck's order is untouched.
       const n = event.count;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
       return row(event.seat, [
@@ -2355,32 +1507,18 @@ function formatEvent(
       ]);
     }
     case "ENERGY_MOVED": {
-      // Energy Switch / Poppy (moveEnergy) — moved Energy between two of ONE
-      // player's Pokémon. `to` names a Pokémon that stayed put (no compaction),
-      // so targetName resolves it off the post-state. 🆕 D443 — that player is
-      // `event.seat` and is no longer necessarily the one who did it.
-      //
-      // ⚠️ THE SOURCE IS NAMED BY UID WHEN THE EVENT CARRIES ONE (D171). Exp. Share
-      // moves Energy off a body the same reduction then Knocks Out, so the SPOT is
-      // no longer a way to name it: on a board that auto-promotes, `{spot:"active"}`
-      // resolves to the Pokémon that replaced it and the row credits the wrong
-      // Pokémon. `cardName` reads `cardIdByUid`, which the KO does not touch — the
-      // same route KNOCKED_OUT uses to name a card that has left play. The spot is
-      // kept as the fallback for any producer that predates the uid.
+      // Energy Switch / Poppy (moveEnergy): Energy moved between two of one player's Pokémon,
+      // `event.seat`, who is not necessarily the actor. The source is named by uid when the event
+      // carries one, because a same-reduction Knock Out can make its spot resolve to the
+      // replacement Pokémon.
       const n = event.uids.length;
       const source =
         event.fromUid === undefined
           ? targetName(state, event.seat, event.from)
           : cardName(state, event.fromUid);
       const destination = targetName(state, event.seat, event.to);
-      // 🆕🆕 D443 — THE ROW READS FROM `actor` AND RESOLVES BOTH TARGETS AGAINST
-      // `seat`, WHERE IT USED TO DO BOTH OFF ONE FIELD. `targetName` looks a ref up
-      // on the seat it is handed, so the board half MUST be `event.seat`; the "who
-      // did it" half must be `event.actor`, and the two are the same value on every
-      // row this event has emitted since M4 — `ENERGY_DISCARDED`'s split, one op
-      // over. D425's rule read forwards: the consumer stops DERIVING a fact it can
-      // now READ, and it stops the moment a second producer exists rather than the
-      // moment somebody notices.
+      // The actor half reads `event.actor`; both targets resolve against `event.seat`, since
+      // `targetName` looks a ref up on the seat it is handed.
       if (event.actor === event.seat) {
         return row(event.seat, [
           plain(`moved ${n} energy from `),
@@ -2389,12 +1527,9 @@ function formatEvent(
           strong(destination),
         ]);
       }
-      // 🆕 D443 — THE CROSS-BOARD ROW NAMES THE OWNER OUTRIGHT, which is
-      // ENERGY_DISCARDED's rule verbatim and for its stated reason: the `who` chip
-      // is VIEWER-relative ("you"/"opponent") while these segments are fixed text,
-      // so in a mirror match a bare "from Pikachu to Pikachu" is true from neither
-      // seat. `DECK_TOP_DISCARDED`'s `actor === seat` fork is what keeps the arm
-      // above byte-identical — a per-op flag would have owed both arms a case.
+      // The cross-board row names the owner outright: the `who` chip is viewer-relative while these
+      // segments are fixed text, so in a mirror match a bare "from Pikachu to Pikachu" would be
+      // ambiguous.
       return row(event.actor, [
         plain(`moved ${n} energy on ${names[event.seat]}'s board, from `),
         strong(source),
@@ -2403,46 +1538,8 @@ function formatEvent(
       ]);
     }
     case "ENERGY_DISCARDED": {
-      // Crushing Hammer / Giacomo / Mawile (discardEnergy), and the self-discard
-      // attack cost (Houndoom "Fire Blast", Pawmot "Electro Paws"). `event.seat`
-      // owns the Pokémon that LOST the Energy; the line reads from `event.actor`,
-      // whose card caused it (its TRAINER_PLAYED / ABILITY_TRIGGERED /
-      // ATTACK_DECLARED row sits just above and names it). The two are the SAME
-      // seat for a self-discard — reading it as "the other seat", as this row did
-      // before that arm existed, would credit Houndoom's own cost to its
-      // opponent. Both the attached Energy and the discard pile are public, so
-      // the cards are named.
-      // The Energy carries the `energy` tone (ENERGY_ATTACHED's) and the HOST
-      // `strong`, so the row's two names don't render identically — otherwise
-      // "discarded X from Y" gives the reader no cue which is the card and
-      // which is the Pokémon it came off.
-      //
-      // The host is named by the event's `host` UID, never by re-reading the
-      // spot: an ATTACK can strip a defender its own damage Knocked Out (§8
-      // resolves before the §8.1 check), and the KO lands in this same batch, so
-      // `targetName(state, seat, from)` would find an EMPTY slot and print
-      // "Tide's the Active spot". A uid resolves through cardIdByUid forever —
-      // which is also why the Energy names above survive their own discard.
-      //
-      // "from" must say WHOSE Pokémon, and it names the OWNER outright. While the
-      // op only reached the opponent's board, a bare "from <name>" could only mean
-      // theirs; now that the same sentence serves a self-discard, a mirror match
-      // prints an identical row for "their Paldean Tauros" and "my Paldean Tauros"
-      // (unlike DAMAGE_DEALT's "dealt … to", which is directional on its own). A
-      // possessive pronoun cannot fix it: the `who` chip is VIEWER-relative
-      // ("you" / "opponent") while these segments are fixed text, so the only
-      // wording true from every seat is the player's own name — the coin-flip
-      // row's precedent.
-      //
-      // 🆕 **D295 — `to` CHANGES THE VERB AND THE TAIL, NOT THE NAMING RULE.**
-      // Absent = the pile (every row before this slice, byte-identical). `"hand"`
-      // is Chill Teaser Toy `sv08-166`, and the row still NAMES the Energy: it
-      // was attached and therefore public a moment before it moved, so the
-      // opponent watched it go — the same reasoning RANDOM_CARD_TAKEN uses to
-      // name a card that has stopped being hidden, applied to one that had not
-      // started. The OWNER is named outright in the tail for the possessive
-      // reason spelled out above; "into their hand" would be ambiguous in a
-      // mirror match exactly as "from their Pokémon" was.
+      // Crushing Hammer / discardEnergy and self-discard attack costs. `event.seat` owns the
+      // Pokémon that lost the Energy; the line reads from `event.actor`, whose card caused it.
       const cards = event.uids.map((uid) => cardName(state, uid));
       if (event.to === "hand") {
         return row(event.actor, [
@@ -2453,12 +1550,8 @@ function formatEvent(
           plain(` into ${names[event.seat]}'s hand`),
         ]);
       }
-      // 🆕 CARD REVISION B47 — `"deck"` (D383) gets its own verb as well. It fell through to the
-      // pile row, so Mega Skarmory ex "Sonic Ripper" (`me03-055`) and Wellspring Mask Ogerpon ex
-      // "Torrential Pump" (`sv06-064`) — both printing *"shuffle … Energy attached to this Pokémon
-      // into your deck"* — logged "discarded … from …" while the cards went to the deck. The
-      // owner is named in the tail for the hand arm's reason; the trailing `shuffleDeck` op still
-      // files its own SHUFFLE row.
+      // `"deck"` gets its own verb so shuffling attached Energy into the deck is not logged as a
+      // discard.
       if (event.to === "deck") {
         return row(event.actor, [
           plain("shuffled "),

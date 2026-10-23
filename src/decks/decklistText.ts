@@ -1,12 +1,6 @@
-// Import/export of the plain-text decklist format every Pokémon TCG tool speaks
-// (PTCG Live, Limitless, the official site): grouped "{qty} {Name} {SET} {num}"
-// lines under "Pokémon:/Trainer:/Energy:" headers. Parsing and formatting are
-// pure string functions; resolving parsed names to real cards is injected
-// (`resolveDecklist` takes a name → prints lookup — the builder wires it to
-// the catalog api in catalog.ts), so everything here unit-tests without a
-// network. Import stays tolerant (set/number optional, headers and totals
-// ignored, matched by normalized name; a trailing set code + number picks the
-// print among a name's reprints) and export canonical.
+// Import and export of the plain-text decklist format (PTCG Live, Limitless): "{qty} {Name} {SET}
+// {num}" lines under Pokémon/Trainer/Energy headers. Name resolution is injected, so this module
+// stays pure.
 
 import { type BuilderCard, isBasicEnergy, SUPERTYPES } from "./cards";
 import type { Deck, DeckEntry } from "./deckMath";
@@ -141,21 +135,11 @@ export function preferArt(prints: BuilderCard[], card: BuilderCard): BuilderCard
   return prints.find((print) => isBasicEnergy(print) && print.hasImage === true) ?? card;
 }
 
-/** Resolve parsed lines to cards through `findPrints` (every print of an
-    exact-by-normalized-name lookup — the catalog-backed one lives in
-    catalog.ts). Quantities for the same card are summed; unresolved lines are
-    returned so the UI can report them; a lookup that THROWS (network/api
-    failure) rejects the whole import rather than mislabeling cards as
-    unmatched.
-
-    Resolution tries the WHOLE remainder as a name first, and only strips a
-    trailing set+number if that misses — otherwise "4 Iron Hands ex" (no set)
-    would be misread as name "Iron" + set "Hands" + number "ex" and dropped.
-    The stripped set+number then chooses among the name's prints
-    (`choosePrint`), so "Dudunsparce PRE 80" is Prismatic Evolutions 80 and
-    not the first Dudunsparce the catalog lists. Lookups are memoized by
-    normalized name and warmed in parallel, so a 60-card list costs one round
-    trip per unique name, not per line. */
+/**
+ * Resolve parsed lines to cards through `findPrints`. Quantities for the same card are summed and
+ * unresolved lines are returned for the UI. A lookup that throws rejects the whole import rather
+ * than marking cards unmatched.
+ */
 export async function resolveDecklist(
   lines: DecklistLine[],
   findPrints: (name: string) => Promise<BuilderCard[]>,

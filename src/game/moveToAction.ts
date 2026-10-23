@@ -1,10 +1,6 @@
-// Drag → engine action translation for the local table. The simulator's
-// move command reports a CardMoveRequest; this pure router turns the ones that
-// mean something in the current phase into a GameAction and answers null for
-// everything else (the drag springs back, nothing is dispatched). It only
-// ROUTES — costs, allowances, card legality all stay the engine's problem
-// (D14: applyAction rejects, never throws), so a translated action may still
-// come back ok:false and surface as the table's error notice.
+// Translates a drag on the local table into an engine action, or null when the move means nothing
+// in the current phase (the drag springs back). It only routes; costs and legality are left to the
+// engine, which rejects invalid actions.
 
 import type { GameAction, Phase, Seat } from "@colorless/engine";
 import type { BoardState, CardMoveRequest } from "./board";
@@ -20,9 +16,10 @@ export interface MoveTranslationContext {
   isViewerTurn: boolean;
   /** The seat the projection was built for (its board's "you"). */
   viewerSeat: Seat;
-  /** The projected board the drag happened on — used to type the dragged
-      card. Its own-hand CardModel.ids ARE engine uids
-      (D17); hidden cards carry positional ids and are never draggable. */
+  /**
+   * The projected board the drag happened on, used to type the dragged card. Own-hand
+   * `CardModel.id`s are engine uids; hidden cards have positional ids and are never draggable.
+   */
   board: BoardState;
 }
 

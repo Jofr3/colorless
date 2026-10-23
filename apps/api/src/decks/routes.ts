@@ -1,19 +1,6 @@
-// /decks + /folders — the authenticated deck library (P1 milestone 7, §6).
-//
-// House style as everywhere: pure helpers in the sibling modules (map.ts /
-// validate.ts, unit-tested); this file owns request validation, the D1
-// queries, and response shaping — every payload boundary-parsed through the
-// @colorless/schema deck/folder schemas. NO KV cache on any of it: user data
-// must read fresh (§6). The GETs do carry an ETag with `private, no-cache`
-// (../httpCache.ts): the browser always asks, and an unchanged library comes
-// back as a bodiless 304.
-//
-// Per-route chain order is zValidator → requireUser → handler: body shape
-// checks are pure (testable with no DB at all), then the session gate, then
-// data. Every :id lookup is scoped `WHERE user_id = ?` — someone else's
-// resource answers the SAME 404 as a missing one (no existence leak), while
-// a folderId/parentId reference you don't own is a 400 (it's YOUR request
-// body that's wrong, and it never names a specific victim).
+// Authenticated deck and folder routes. User data is never KV-cached. Each :id lookup is scoped to
+// the user, so another user's resource returns the same 404 as a missing one, while a referenced
+// folder you do not own is a 400.
 
 import { zValidator } from "@hono/zod-validator";
 import {

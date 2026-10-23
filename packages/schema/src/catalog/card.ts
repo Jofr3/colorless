@@ -1,18 +1,6 @@
-// The canonical domain Card (D5 — docs/workstreams/backend-data.md §5.2).
-//
-// MODELING CHOICE — one flat object, not the tcgdex discriminated union: the
-// D1 rows (§5.3) already flatten the three categories into one table where
-// every category-specific column is NULL off-category, and the read API
-// serves that reality verbatim. Consumers still narrow on `category`; a flat
-// shape just spares them a union round-trip for fields that are `null`
-// either way. Nullability mirrors the DB exactly: TEXT/INTEGER nullable
-// columns → `.nullable()`, NOT NULL columns → required.
-//
-// ASSET CONVENTION — `image` is OUR asset base path, `/assets/cards/{id}`
-// (or null when the card has no scan). Clients append `/{quality}.{ext}`
-// with quality ∈ high|low and ext ∈ webp|png|jpg — the same suffix rule as
-// tcgdex origin URLs (§4.4) — and the Worker's GET /assets/cards/:id/:file
-// route mirrors + serves the bytes. tcgdex origin URLs never leave the API.
+// The canonical domain Card: one flat object mirroring the D1 row, where category-specific columns
+// are null off-category; consumers narrow on `category`. `image` is our asset base path
+// `/assets/cards/{id}` (null with no scan); clients append `/{high|low}.{webp|png|jpg}`.
 
 import { z } from "zod";
 import { legalSchema } from "./common";
@@ -122,12 +110,9 @@ export const cardSchema = z.object({
   rarity: z.string().nullable(),
   regulationMark: z.string().nullable(),
 
-  // Pokémon-only (null on Trainer/Energy) — 🆕 D581: EXCEPT `hp`, `abilities` and
-  // `attacks`, which a Trainer carries when it prints them (the ingest keeps them since
-  // D581: an Antique Fossil's 60 HP and Ability, Snorlax Doll's 120 HP, a Technical
-  // Machine's attack). A reader that means "this Pokémon's" must ask `category` (the
-  // engine's `hpOf` / `attacksOf` / `hasPrintedAbility` do). `stage`, `evolveFrom`,
-  // `types`, `retreat`, `weaknesses` and `resistances` stay null on every Trainer.
+  // Pokémon-only (null on Trainer/Energy), except `hp`, `abilities` and `attacks`, which a Trainer
+  // carries when it prints them (Antique Fossils, Technical Machines). Check `category` when you
+  // mean "this Pokémon's".
   hp: z.number().int().nullable(),
   stage: z.string().nullable(),
   evolveFrom: z.string().nullable(),

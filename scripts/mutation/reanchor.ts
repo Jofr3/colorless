@@ -1,17 +1,14 @@
-// Re-anchors mutant rows whose `find` no longer occurs exactly once after a
-// refactor that only moved code: reformatting, deleted comments, or a split
-// into another file of the same package.
+// Re-anchors mutant rows whose `find` no longer occurs exactly once after a refactor that only
+// moved code: reformatting, deleted comments, or a split into another file of the same package.
 //
 //   bun scripts/mutation/reanchor.ts          # report only
 //   bun scripts/mutation/reanchor.ts --write  # rewrite scripts/mutation/mutants.ts
 //   bun scripts/mutation/reanchor.ts --retire <file of ids, one per line>
 //
-// A broken row is matched against the source ignoring whitespace, comments and
-// trailing commas. When exactly one site matches (first in the row's own file,
-// then across the package), the row's `find` becomes the exact text at that
-// site, `file` points to where it was found, and comments are dropped from
-// `replace`. Rows that still do not match are listed for manual re-anchoring
-// or retirement; precheck.ts stays the strict gate.
+// A broken row is matched ignoring whitespace, comments and trailing commas. When exactly one site
+// matches (first in the row's own file, then across the package), `find` becomes the exact text
+// there, `file` points to it, and comments are dropped from `replace`. Unmatched rows are listed;
+// precheck.ts stays the strict gate.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";

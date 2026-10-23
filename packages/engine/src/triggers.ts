@@ -1,54 +1,24 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
-// 🆕🆕🆕 D565 — the ONE once-per-turn key funnel, for a TRIGGERED row's lock (Zero to Hero).
+// The single once-per-turn key for a triggered row's lock (Zero to Hero).
 import { abilityUsedKey } from "./cardplay";
 import { disabledAbilityUids, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
 import { runProgram } from "./interpreter";
-// 🆕 D320 — the "during their turn" clause. THE one exhaustive switch over
-// `Phase`, never turn parity: phaseView.ts's own header forbids that shortcut,
-// and it imports from here only as a TYPE, so this value import leaves no
-// runtime cycle.
+// The "during their turn" clause: switch on `Phase`, never turn parity. phaseView.ts imports from
+// here only as a type, so this value import creates no runtime cycle.
 import { phaseViewOf } from "./phaseView";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./registry";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
 import { otherSeat } from "./types";
 
-// Triggered Abilities (§9, M4 slice 6) — the Abilities that FIRE on a game
-// event rather than being player-activated. Three scan points are wired:
-//   • onPlayToBench — a Basic played from hand onto the Bench during the
-//     controller's turn (turn.ts playBasicToBench — NOT a setup placement,
-//     which is a different handler and not "during your turn");
-//   • onEvolve — the controller evolved one of their Pokémon (turn.ts evolve);
-//   • betweenTurns — the Pokémon Checkup (§13, flow.ts runCheckup);
-//   • onKnockOut — this Pokémon was Knocked Out (§8.1, flow.ts KO sweep). It
-//     fires during the OPPONENT's turn, mid-KO-sweep. Its detection lives here
-//     (onKnockOutTrigger, below) but the KO sweep in flow.ts drives it — a
-//     coin-flip Prize guard (Glimmora) resolves inline in the sweep, and a
-//     program that needs a decision runs as a koTrigger stage that folds
-//     through settleProgram with `resumeTail` (park → resume the KO tail).
-//
-// 🆕 D319 — AND ONE SCAN DIRECTION, which is the axis none of the above varies
-// on: every bullet there finds its Ability by reading the body the event
-// happened to, and `runWatchedTriggers` (below) instead sweeps the OTHER seat's
-// board when this seat evolves from hand or attaches an Energy from hand. The
-// TIMING still names the moment (onEvolve, onEnergyAttach); `opponentAction`
-// names whose action is watched.
-//
-// The board triggers (onPlayToBench/onEvolve) run during the controller's own
-// turn, so they fold their program's result through the SHARED settleProgram
-// (flow.ts) exactly like a Trainer/Ability: a decision PARKS on effect:choose
-// and RESUMES to turn:action via resolveEffect (cardplay.ts), and a completed
-// program that placed lethal damage (Hawlucha's "Flying Entry" snipe) resolves
-// its Knock Out as a MID-TURN KO that hands the turn back to the actor.
-// The betweenTurns triggers are NON-PARKING by construction (a heal-each / a
-// fixed counter placement), so they run synchronously inside the one Checkup
-// reduction — their KOs are swept by the Checkup's own collectKnockOuts (a
-// between-turns Ability that needed a decision would be new machinery, parking
-// mid-Checkup, deferred with on-KO).
+// Triggered Abilities (§9) fire on a game event rather than being activated. Board triggers
+// (onPlayToBench, onEvolve) run on the controller's own turn and settle through `settleProgram`, so
+// they may park on a decision. Between-turns triggers never park and run synchronously inside the
+// Checkup.
 
 /** The on-KO triggered Ability of the card `uid` names (§8.1), or undefined.
     Resolved through cardIdByUid → programFor, which stays valid AFTER the KO
@@ -62,22 +32,12 @@ export function onKnockOutTrigger(state: GameState, uid: string): TriggeredAbili
   return (programFor(cardId)?.triggered ?? []).find((t) => t.trigger === "onKnockOut");
 }
 
-/** The triggered Abilities on the top card of `pokemon` matching `timing`,
-    gated by each one's own `activeOnly` against whether the Pokémon is Active.
-
-    🆕 D319 — AND PARTITIONED BY SCAN DIRECTION, WHICH IS WHY `watch` IS A
-    PARAMETER AND NOT A FILTER APPLIED BY ONE CALLER. `"self"` yields the
-    abilities that fire on their OWN controller's action (every timing before
-    D319); `"opponent"` yields the ones that watch the other seat's
-    (`TriggeredAbility.opponentAction`). The two sets are DISJOINT and each
-    caller sees exactly one of them.
-
-    🛑 THE PARTITION IS LOAD-BEARING IN THE `"self"` DIRECTION, and that is the
-    live bug it prevents rather than a symmetry. Team Rocket's Ampharos is a
-    Stage 2 carrying an `onEvolve` row, so the self scan — which runs on the very
-    body that was just evolved — would find Ampharos's own trigger the moment its
-    controller played it onto Flaaffy and put 4 damage counters on the Ampharos.
-    Filtering in the opponent scan alone would leave that untouched. */
+/**
+ * The triggered Abilities on the top card of `pokemon` matching `timing`, gated by `activeOnly`.
+ * `watch` partitions by direction: "self" fires on the controller's own action, "opponent" on the
+ * other seat's. The self partition matters: Team Rocket's Ampharos carries an onEvolve row that
+ * must not fire when it is itself evolved.
+ */
 function triggersOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -130,9 +90,8 @@ export function runBoardTrigger(
   if (ability === undefined) return ok(state, events);
   const uid = topUid(pokemon);
   if (uid === undefined) return ok(state, events);
-  // 🆕🆕🆕 D628 — the printed lock on a BOARD trigger (Meowth ex "Last-Ditch Catch", `"sharedByName"`): a
-  // spent key fires nothing, and the key is written BEFORE the program runs — the inner confirm's "no"
-  // still spends it (R-LDC1 ⚠️ UNRULED), `sweepTriggers`' Zero to Hero order. Absent = byte-identical.
+  // A printed once-per-game lock on a board trigger: a spent key fires nothing, and the key is
+  // written before the program runs, so declining the inner confirm still spends it.
   let armed = state;
   if (ability.oncePerTurn !== undefined) {
     const usedKey = abilityUsedKey(uid, ability);
@@ -145,13 +104,8 @@ export function runBoardTrigger(
       },
     };
   }
-  // Optional triggers auto-fire (see TriggeredAbility.optional) — the "up to"
-  // search still lets the player take none, and the other representatives are
-  // pure upside. A yes/no confirm for a downside trigger is the follow-up.
-  // 🆕🆕🆕 D560 CORRECTION (D539): "the other representatives are pure upside" and "the
-  // follow-up" are WITHDRAWN — a downside trigger carries its confirm as an INNER
-  // `optional` op (Rapid Vernier, Snow Sink, D560's Wafting Heal and Time to Chow Down);
-  // see `TriggeredAbility.optional`.
+  // Optional triggers auto-fire; a trigger with a downside carries its own confirm as an inner
+  // `optional` op.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(
     runProgram(armed, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events),
@@ -160,35 +114,13 @@ export function runBoardTrigger(
   );
 }
 
-/** 🆕 D319 — THE OPPONENT-ACTION SCAN, AND IT IS A DIRECTION RATHER THAN A
-    TIMING. `actorSeat` has just performed a watched action (an evolve from hand,
-    an Energy attach from hand) on the body `subjectUid`; this sweeps the OTHER
-    seat's board — Active then Bench — for every triggered Ability that watches
-    it, and runs each one's program. Returns the new state; the caller owns the
-    Knock Out the placed counters may cause.
-
-    ⚠️ IT IS THE FIRST SCAN IN THIS FILE THAT DOES NOT READ THE BODY THE EVENT
-    HAPPENED TO. Every other detection here starts from the subject — `triggersOf`
-    from the evolved/benched Pokémon, `onKnockOutTrigger` from the dying one,
-    `damagedByAttackAbility` from the damaged Active. Here the subject is on one
-    seat's board and every candidate BEARER is on the other, which is the same
-    split `koToolTriggersOf` (D171) found between the sentence's subject and its
-    bearer — arriving this time across the TABLE rather than across a Tool.
-
-    🛑 NON-PARKING BY CONSTRUCTION, LIKE `runCheckupTriggers` AND FOR A SHARPER
-    REASON: both representative sentences are a FIXED counter placement with no
-    choice in them, and this fires in the MIDDLE of the other player's board
-    action — parking here would suspend a turn that is not the parking player's.
-    So it takes `.state` and, exactly as D176 requires of the one other inline
-    runner, restores the per-program §12 invariant with `recoverStatuses` rather
-    than routing through `settleProgram` (which owns parking, the KO tail and the
-    phase, none of which this may touch).
-
-    🛑 `doesNotStack` IS APPLIED HERE AND NOWHERE ELSE, because the clause is a
-    fact about the SWEEP: *"The effect of Darkest Impulse doesn't stack."* means
-    two Ampharos are one firing, so the ability NAME is remembered once it has
-    fired. Gnawing Curse does NOT print the clause and two Gengar ex therefore
-    place their counters twice — the same loop, told apart by the one flag. */
+/**
+ * `actorSeat` has just performed a watched action (an evolve or Energy attach from hand) on
+ * `subjectUid`; sweeps the other seat's board, Active then Bench, for Abilities that watch it and
+ * runs each program. Never parks, since it fires mid-way through the other player's action, so it
+ * restores the §12 invariant with `recoverStatuses` instead of `settleProgram`. The caller owns any
+ * Knock Out. `doesNotStack` abilities fire once per sweep by name.
+ */
 export function runWatchedTriggers(
   state: GameState,
   actorSeat: Seat,
@@ -208,35 +140,10 @@ export function runWatchedTriggers(
   );
 }
 
-/** 🆕 D356 — THE SELF DIRECTION OF THE SAME SWEEP, AND THE FIRST PRINTING TO
-    POPULATE IT. Magearna `sv09-107` "Auto Heal": *"As long as this Pokémon is in
-    the Active Spot, whenever **you** attach an Energy card from your hand to 1 of
-    **your** Pokémon, heal 90 damage from that Pokémon."*
-
-    `actorSeat` has just performed a watched action on the body `subjectUid`, and
-    the bearer of the Ability is on `actorSeat`'s OWN board. That is the whole
-    difference from `runWatchedTriggers` above, and it is why this is a second
-    named entry point rather than a flag on that one: the doc comment there opens
-    by claiming to be *"the first scan in this file that does not read the body
-    the event happened to"*, and that claim is FALSE of this direction — here the
-    subject and the bearer are on the same side of the table again. Two opposite
-    claims want two names over one sweep, which is exactly what
-    `runActiveBenchedTriggers` (D320) already does to `runWatchedTriggers`.
-
-    🛑 IT IS NOT A NEW TRIGGER POINT, AND THE SOURCE SAID SO BEFORE THIS SLICE
-    EXISTED. `onEnergyAttach` has been a `TriggerTiming` since D319, the moment is
-    already fired at turn.ts's §6.2 attach, and `triggersOf`'s `watch` parameter
-    has partitioned the two directions since D319 — whose own comment on the union
-    member reads *"the self direction is spelled and unpopulated, exactly like a
-    union member waiting for its first printing."* This is that printing. The
-    price the two prior slices refused was the price of machinery that was already
-    standing.
-
-    🛑 NON-PARKING BY CONSTRUCTION, for `runWatchedTriggers`' reason and one more
-    of its own: this fires MID-ACTION inside the actor's own turn, between the
-    attach and the return to `turn:action`, so a park here would suspend a phase
-    the caller is still holding. Today's one program is a clamped heal with no
-    choice in it. */
+/**
+ * The self direction of the watched sweep: the Ability's bearer is on `actorSeat`'s own board
+ * (Magearna "Auto Heal"). Never parks: it fires mid-action inside the actor's own turn.
+ */
 export function runSelfWatchedTriggers(
   state: GameState,
   actorSeat: Seat,
@@ -248,53 +155,12 @@ export function runSelfWatchedTriggers(
   return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events, atMoment);
 }
 
-/** The shared board sweep both watched directions run — `watcher` is the seat
-    whose board BEARS the Ability, and `watch` is the direction `triggersOf`
-    partitions on. Split out at D356 when the self direction got its first
-    printing; the body is D319's, unchanged.
-
-    🆕🛑 D357 — `atMoment` IS THE BOARD AS IT STOOD AT THE INSTANT THE WATCHED
-    ACTION HAPPENED, AND IT IS THE ONLY THING THE `activeOnly` GATE MAY READ.
-    D356 gated on `target.spot === "active"` against the CURRENT board, which is
-    the board AFTER §6.1's Jet Energy `switchIfBenched` rider has already moved a
-    body into the Active Spot. That is a different board from the one the print
-    names, and it was wrong in BOTH directions on real boards:
-
-      • attaching Jet Energy to a BENCHED damaged Magearna promoted it and THEN
-        fired Auto Heal — a heal off a bearer that was on the Bench at the moment
-        the Energy was attached;
-      • with Magearna ACTIVE, attaching Jet Energy to a damaged benched body
-        DEMOTED Magearna first and the printed 90 heal was SILENTLY LOST.
-
-    🛑 THE RULES QUESTION IS SETTLED FROM THE CATALOG, NOT FROM THE CODE, AND THE
-    CATALOG ANSWERS IT IN PRINT. Every `activeOnly` sentence pairs the Active-Spot
-    clause with the moment its consequent answers, and the one other TRIGGERED
-    family that shares a moment with a board change spells the answer out:
-    *"If this Pokémon **is in the Active Spot** and is damaged by an attack from
-    your opponent's Pokémon (**even if this Pokémon is Knocked Out**) …"* — the
-    parenthetical exists precisely to say that a board change ARRIVING WITH the
-    trigger does not unmake a gate that held at the moment. The Checkup family
-    (*"During Pokémon Checkup, if this Pokémon is in the Active Spot"*) names the
-    gate and the moment in one breath for the same reason.
-
-    🛑 AND `bodyHoldingEnergy` (turn.ts) ALREADY SAID SO ABOUT THIS EXACT RIDER,
-    one clause to the left: it is keyed on the ENERGY rather than on the target
-    spot so that it is *"right in both orders"*. Jet's switch and this trigger are
-    two effects answering ONE moment, and which resolves first is the turn
-    player's choice — so no reading that DEPENDS on that choice can be the
-    printed one. `target.spot === "active"` was right under exactly one ordering.
-
-    ⚠️ THE SUBJECT IS STILL READ OFF THE CURRENT BOARD AND MUST BE. *"that
-    Pokémon"* corefers with the body the Energy landed on, and the Energy rides
-    into the Active Spot with it — that is `bodyHoldingEnergy`'s whole design.
-    **THE GATE AND THE REFERENT READ DIFFERENT BOARDS ON PURPOSE**: the gate is
-    an antecedent (evaluated at the moment) and the referent is a pronoun
-    (resolved when the consequent runs). Conflating them is the defect this
-    parameter exists to prevent, in either direction.
-
-    ⚠️ AND IT IS A UID COMPARISON RATHER THAN A SPOT COMPARISON, because a spot
-    is a POSITION and the print names a BODY. Reading `atMoment`'s Active spot by
-    position would still be a second board's opinion about which body is there. */
+/**
+ * The shared board sweep for both watched directions; `watcher` is the seat whose board bears the
+ * Ability. `atMoment` is the board at the instant of the watched action and is the only thing the
+ * `activeOnly` gate may read, because a rider such as Jet Energy's switch may already have moved
+ * bodies. The subject is still read off the current board, by uid.
+ */
 function sweepTriggers(
   state: GameState,
   watcher: Seat,
@@ -303,9 +169,10 @@ function sweepTriggers(
   watch: "self" | "opponent",
   events: GameEvent[],
   atMoment: GameState,
-  /** 🆕🆕🆕 D565 — restrict the sweep to ONE body: the self direction of the Active→Bench
-      move (Zero to Hero's *"when THIS Pokémon moves…"*) is a property of the body that
-      moved, not of every body on the board. Absent = every body, byte for byte. */
+  /**
+   * Restricts the sweep to one body, for self-direction triggers about "this Pokémon" moving.
+   * Absent means every body.
+   */
   onlyUid?: string,
 ): GameState {
   // Active, then each bench slot. The walk re-reads the CURRENT board each step
@@ -331,10 +198,8 @@ function sweepTriggers(
     for (const ability of triggersOf(next, pokemon, timing, uid === activeUidAtMoment, watch)) {
       if (stacked.has(ability.name)) continue;
       if (ability.doesNotStack === true) stacked.add(ability.name);
-      // 🆕🆕🆕 D565 — the printed "Once during your turn" on a trigger (Zero to Hero),
-      // keyed through `abilityUsedKey` on the existing `abilitiesUsed`: a spent row is
-      // skipped, and the key is written BEFORE the program runs (a failed search still
-      // shuffles — R-ZH2 — so the use is spent either way).
+      // A printed "Once during your turn" on a trigger, keyed through `abilityUsedKey`. The key is
+      // written before the program runs, so the use is spent even if the search fails.
       if (ability.oncePerTurn === true) {
         const usedKey = abilityUsedKey(uid, ability);
         if (next.allowances.abilitiesUsed.includes(usedKey)) continue;
@@ -348,7 +213,6 @@ function sweepTriggers(
       }
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
       next = recoverStatuses(
-        // 🆕🆕🆕 D614 — `invokedBy: "ability"` on all three sweeps here (the §11 ability channel).
         runProgram(
           next,
           ability.program,
@@ -362,45 +226,12 @@ function sweepTriggers(
   return next;
 }
 
-/** 🆕 D320 — THE ACTIVE→BENCH MOVE, AND IT IS A SHARED CALL BECAUSE THE ENGINE
-    HAS EXACTLY TWO OF THEM. Magcargo `sv05-029` "Lava Zone": *"Whenever your
-    opponent's Active Pokémon moves to the Bench during their turn, their new
-    Active Pokémon is now Burned."* `seat`'s Active has just gone to the Bench
-    and `movedUid` is the body that went; the watcher is the other seat.
-
-    🛑 **TWO SITES, AND THE FIRST DRAFT HAD ONE — WHICH WOULD HAVE SHIPPED THE
-    SENTENCE'S MOST COMMON TRIGGER DEAD.** `switchInto` (interpreter.ts) looked
-    like the sole funnel and its own doc comment names "three provenances at
-    once", but the three it names are Switch/Escape Rope, Boss's Orders and Jet
-    Energy — **RETREAT IS NOT AMONG THEM.** `retreat` (turn.ts) builds its own
-    dense bench inline, because it also PAYS A COST out of the retreating body's
-    attachments, and it emits `RETREATED` rather than `POKEMON_SWITCHED`. The
-    two emit sites are the census: `grep 'type: "POKEMON_SWITCHED"' / 'type:
-    "RETREATED"'` returns one apiece and nothing else. **A DOC COMMENT THAT
-    ENUMERATES CALLERS IS A CLAIM ABOUT THE DAY IT WAS WRITTEN** — D313's rule,
-    arriving as a comment rather than as a file.
-
-    So the gate and the sweep live HERE, once, and both movers call it — D318's
-    "share the code rather than widen the anchors" on a call graph instead of on
-    a mutation anchor.
-
-    🛑 *"DURING THEIR TURN"* IS `phaseViewOf`, THE ONE EXHAUSTIVE SWITCH OVER
-    `Phase`, and never turn parity (phaseView.ts's header forbids exactly that
-    shortcut, and a `ko:*` park is where it goes wrong). It is what makes a
-    Boss's Orders played on YOUR turn — a `gust`, i.e. `switchInto` on the
-    OTHER seat's board — leave Lava Zone silent, and that negative is the only
-    thing separating this clause from no clause at all. At the retreat site the
-    read cannot be false, which is fine: one caller of a shared gate proving it
-    can go red is what makes it a gate rather than a decoration.
-
-    ⚠️ THE `subjectUid` IS THE BODY THAT MOVED, NOT THE ONE THE CONSEQUENT ACTS
-    ON. It names the body the watched action was performed on (D319); this
-    sentence's consequent says *"their **new** Active Pokémon"* and reaches it
-    through `applyStatus`'s `defender` arm, since `ctx.seat` in a watched
-    trigger is the WATCHER. Passing the antecedent's real subject is the honest
-    value even though no op in today's one program reads it. [🆕🆕🆕 D610 (D539):
-    WITHDRAWN — Team Rocket's Dugtrio "Holes" (`damageSubject` 20) reads it: its counters go on
-    the body that moved.] */
+/**
+ * An Active Pokémon moved to the Bench (Magcargo "Lava Zone"). Both movers call this: `switchInto`
+ * and `retreat`, which builds its own bench and emits `RETREATED`. "During their turn" is checked
+ * with `phaseViewOf`, not turn parity, so a Boss's Orders on the other player's turn fires nothing.
+ * `movedUid` is the body that moved, not the new Active.
+ */
 export function runActiveBenchedTriggers(
   state: GameState,
   seat: Seat,
@@ -408,25 +239,12 @@ export function runActiveBenchedTriggers(
   events: GameEvent[],
 ): GameState {
   if (phaseViewOf(state, seat).activeSeat !== seat) return state;
-  // 🆕 D357 — `state` IS the moment board here, and that is a MEASUREMENT rather
-  // than a shrug: every mover that reaches this line (`switchInto`, `retreat`)
-  // rearranges `seat`'s OWN board, and the watcher is `otherSeat(seat)`, whose
-  // Active is untouched between the move and this sweep. There is no rider on
-  // this moment the way §6.1's Jet switch rides the §6.2 attach.
+  // `state` is the moment board here: movers only rearrange `seat`'s own board, and the watcher is
+  // the other seat.
   const watched = runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events, state);
-  // 🆕🆕🆕 D565 — THE SELF DIRECTION, and its first printing: Palafin "Zero to Hero" (*"when
-  // THIS Pokémon moves from the Active Spot to the Bench"*). The same sweep with `watch:
-  // "self"`, RESTRICTED to the body that moved, behind the same "during your turn" gate
-  // above (a Boss's Orders on the opponent's turn moves it and fires nothing). Both movers
-  // already call this function, so retreat and every `switchInto` route reach it.
-  // NON-PARKING by construction (`sweepTriggers` keeps `.state`), which is why the one
-  // program is a forced swap (R-ZH1).
-  // 🆕🆕🆕 D610 — R-HL1 ⚠️ UNRULED: THE ORDER IS A READING. The opponent's watched triggers above run
-  // FIRST, then this self sweep, with no Knock Out check between them. Team Rocket's Dugtrio "Holes"
-  // can make the moved body's damage lethal and Zero to Hero then swaps Palafin ex in with it, so no
-  // Knock Out follows (`onMoveHpMeD610.test.ts` §6). Reversals: the Knock Out first, or the self
-  // sweep first (Holes would then miss — its subject uid has gone to the deck).
-  // [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
+  // The self direction (Palafin "Zero to Hero"), restricted to the body that moved, behind the same
+  // "during your turn" gate. The opponent's watched triggers run first, with no Knock Out check
+  // between the two sweeps.
   return sweepTriggers(
     watched,
     seat,
@@ -471,26 +289,9 @@ export function runCheckupTriggers(
         "self",
       )) {
         events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
-        // Non-parking by construction — a betweenTurns program returns done, so
-        // taking .state loses nothing (parking mid-Checkup is deferred).
-        //
-        // ⚠️ §12 (D176) — AND `recoverStatuses` IS EXACTLY WHAT TAKING `.state`
-        // *DID* LOSE. This is the ONE runProgram site in the engine that does not
-        // fold through flow.ts `settleProgram`, so D174's "every program lands
-        // there" was true of eight call sites and false of this one. The fix is the
-        // call rather than a route through settleProgram: that function returns an
-        // ApplyResult and owns parking, the KO tail and the phase, none of which a
-        // Checkup trigger may touch (the comment above is why). So the seam is
-        // restored by naming the same moment here — the completion of an effect
-        // program — and `recoverStatuses` is idempotent, so a Checkup with no
-        // Energy op pays one scan of two Active spots and changes nothing.
-        //
-        // INSIDE the loop rather than after it, which is the whole point: the
-        // invariant is per-PROGRAM, so a trigger that attaches an Energy cannot
-        // leave a stale condition for the NEXT trigger in the same Checkup to read.
-        // No betweenTurns program in the registry moves Energy today (Garganacl
-        // heals, Trevenant places a counter), so this is latent — but `program` is
-        // a plain EffectOp[] and nothing stops the next one from doing so.
+        // Between-turns programs never park, so taking `.state` loses nothing except the §12 status
+        // recovery, which is restored here. It runs inside the loop because the invariant is per
+        // program.
         next = recoverStatuses(
           runProgram(next, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events)
             .state,
@@ -502,23 +303,11 @@ export function runCheckupTriggers(
   return next;
 }
 
-/** The `onDamagedByAttack` reactive Ability of the Active `uid` on `seat`'s board
-    — the one a main-hit attack just DAMAGED (§9, Armarouge "Scorching Armor" Burns
-    the attacker; Klawf ex "Counterattacking Pincer" discards its Energy). The
-    §9 ability-lock is applied (through `triggersOf`, the single choke), and the
-    `uid` must STILL be the Active — the caller seeds the damagedTrigger stage at
-    damage time but it runs after the attack's own effect program, which could have
-    switched the defender out (then the "in the Active Spot" clause no longer holds
-    and this returns undefined). Representatives carry ONE such Ability, so the
-    first match is it — the flow.ts twin of `onKnockOutTrigger`. Unlike D99's
-    NON-PARKING inline runner, the program is now run by flow.ts `runDamagedTrigger`
-    through settleProgram, so a PARKING discard (Klawf) survives the opponent's
-    turn. It runs under the DAMAGED seat, so `discardEnergy from:"opponentActive"`
-    (or `applyStatus target:"defender"`) reaches the ATTACKER's Active (`otherSeat`),
-    matching "… from the Attacking Pokémon". 🆕 Card revision B21: ~~matching~~ — not when
-    the attack's own program switched the attacker to its Bench. The programs now read
-    `from` / `target: "attacker"`, the attacker's uid that flow.ts `runDamagedTrigger` takes
-    off the queued `attackEpilogue` (`EffectContext.attackerUid`). */
+/**
+ * The `onDamagedByAttack` Ability of the Active `uid` (§9). The uid must still be Active, since the
+ * attack's own effects may have switched it out before this runs. The program runs under the
+ * damaged seat and reaches the attacker through `EffectContext.attackerUid`.
+ */
 export function damagedByAttackAbility(
   state: GameState,
   seat: Seat,
@@ -529,67 +318,13 @@ export function damagedByAttackAbility(
   return triggersOf(state, active, "onDamagedByAttack", true, "self")[0];
 }
 
-/** D171 — THE TOOL-BORNE ON-KO SCAN. Every `onAllyActiveKnockOut` program a
-    POKÉMON TOOL on `seat`'s board carries, keyed on the KO of `koedUid` (that
-    seat's Active). Returns, in board order, the Tool's own `uid` (the card whose
-    sentence runs), the `holderUid` it is attached to, and the program.
-    🆕🆕🆕 D626 — no longer Tool-borne only: the dying Active's own `onSelfActiveKnockedOut` ABILITY
-    (Miraidon "Photon Cord") comes FIRST, with `toolUid` = `holderUid` = the body and `fromAbility: true`.
-
-    ⚠️ THIS IS A FOURTH DETECTION SITE, AND IT HAD TO BE — none of the three that
-    existed can see this card, each for its own structural reason:
-
-      • `onKnockOutTrigger` (above) reads `cardIdByUid[uid]` of the KO'd body's TOP
-        CARD. Exp. Share's holder is a body that SURVIVES; the dying one is only
-        the Energy's source. Wrong body, and it never looks at tools anyway.
-      • `triggersOf` (above) reads `topCardOf(pokemon)`. A Tool is not the top card
-        — it is not in the evolution stack at all — so this misses every Tool by
-        construction, for every timing.
-      • `passivesOf` (continuous.ts) IS the only existing site that walks
-        `pokemon.tools`, and that is exactly why Vengeful Punch was a data row and
-        this is not: it folds `programFor(id)?.passive` into NUMBERS, one seat-free
-        sum per field. It has no way to express a program, a park or a controller.
-        (🆕🆕🆕 D562 CORRECTION (D539): ~~"the only existing site that walks
-        `pokemon.tools`"~~ is WITHDRAWN — D558's retreat/cost scans, D562's consumable
-        scans and `damagedToolTriggersOf` below walk them too, and every EFFECT walk now
-        goes through continuous.ts `toolsInEffect`. The fold-into-numbers point stands.)
-
-    Two deliberate refusals, each a line of the printed sentence:
-
-      • THE KO'D BODY IS SKIPPED. "…move a Basic Energy from THAT Pokémon to THE
-        POKÉMON THIS CARD IS ATTACHED TO" names two Pokémon. An Exp. Share on the
-        dying Active names one, has no destination distinct from its source, and is
-        in the same discard-bound stack as the Energy — so it is not a holder here.
-        🆕🆕🆕 D566: STILL TRUE FOR `onAllyActiveKnockOut` AND NO LONGER THE WHOLE SCAN —
-        the KO'd body's OWN Tools are now read for the SELF timing
-        `onHolderActiveKnockedOut` (Heavy Baton `sv05-151`: *"If the Pokémon this card is
-        attached to has a Retreat Cost of exactly 4, is in the Active Spot, and is Knocked
-        Out…, move up to 3 Basic Energy cards from that Pokémon to your Benched Pokémon"*),
-        which names ONE Pokémon — the dying holder — and a Bench destination. The ally arm's
-        skip rule (`holderUid === koedUid`) is unchanged; the self arm reads ONLY the KO'd
-        body and ONLY that timing. The Retreat Cost clause is NOT asked here: this scan is
-        also attack.ts's presence seed, so the gate is flow.ts `runKoToolTrigger`'s, read at
-        run time before the discard (R-HB).
-      • NO §9 GATE. `triggersOf` suppresses a locked Pokémon's triggered Abilities;
-        this scan deliberately does not, because a TOOL IS NOT AN ABILITY —
-        `passivesOf` states the same rule for the same reason ("a locked Pokémon's
-        own printed passive is suppressed; its Tools are not Abilities and keep
-        contributing"). A Klefki aura over the holder leaves Exp. Share working,
-        and that negative is driven. 🆕🆕🆕 D562: still no §9 gate, but no longer
-        ungated — the Tools are read through `toolsInEffect`, so Jamming Tower (a
-        Stadium, not an Ability-lock) silences Exp. Share; driven in
-        `stadiumsD562.test.ts`.
-        🆕🆕🆕 D626 (D539): *"NO §9 GATE"* holds for the TOOL arms only — the scan now also
-        reads the dying Active's OWN Ability (`onSelfActiveKnockedOut`, Miraidon "Photon Cord"),
-        and that arm IS §9-gated (`disabledAbilityUids`), because it is an Ability.
-
-    Read by flow.ts (`runKoToolTrigger`, which fires the first match) and by
-    attack.ts (presence alone, to decide whether to seed the stage at all — so an
-    attack into a board with no such Tool keeps its exact pre-D171 pending queue).
-    🆕🆕🆕 D566 — the order is BOARD order with the Active first, so a Heavy Baton on the
-    dying Active precedes an Exp. Share on a Bench body, and the runner fires the FIRST match
-    ONLY: with both present (Exp. Share `sv01-174` is rotated, so no legal deck holds both)
-    the Baton fires and the Share does not. A stated limitation, pinned, not a ruling. */
+/**
+ * Every on-Active-KO program for the KO of `koedUid`: the dying Active's own
+ * `onSelfActiveKnockedOut` Ability first (§9-gated), then Tools in board order, Active first. A
+ * Tool on the dying body answers `onHolderActiveKnockedOut`; Tools on other bodies answer
+ * `onAllyActiveKnockOut`. Tools are not Abilities, so they are not §9-gated, but `toolsInEffect`
+ * lets Jamming Tower silence them. The runner fires only the first match.
+ */
 export function koToolTriggersOf(
   state: GameState,
   seat: Seat,
@@ -606,9 +341,8 @@ export function koToolTriggersOf(
   for (const body of bodies) {
     const holderUid = topUid(body);
     if (holderUid === undefined) continue;
-    // 🆕🆕🆕 D626 — THE ABILITY TWIN (Miraidon "Photon Cord", `onSelfActiveKnockedOut`): the dying body's OWN
-    // top card, FIRST (before its Tools), §9-gated because it is an Ability. `toolUid` then names the body
-    // itself and `fromAbility` tells the runner so (an `ABILITY_TRIGGERED` row, `invokedBy: "ability"`).
+    // The dying body's own Ability comes first and is §9-gated; `toolUid` then names the body and
+    // `fromAbility` marks it.
     if (holderUid === koedUid && !disabledAbilityUids(state).has(holderUid)) {
       const top = topCardOf(state, body);
       for (const ability of (top === undefined ? undefined : programFor(top.id)?.triggered) ?? []) {
@@ -616,8 +350,7 @@ export function koToolTriggersOf(
           out.push({ toolUid: holderUid, holderUid, ability, fromAbility: true });
       }
     }
-    // 🆕🆕🆕 D566 — THE KO'D BODY IS SKIPPED for the ally timing and READ for the self one:
-    // the timing this body answers is chosen by whether it IS the dying body.
+    // The KO'd body answers the self timing; every other body answers the ally timing.
     const timing: TriggerTiming =
       holderUid === koedUid ? "onHolderActiveKnockedOut" : "onAllyActiveKnockOut";
     for (const toolUid of toolsInEffect(state, body)) {
@@ -632,13 +365,10 @@ export function koToolTriggersOf(
   return out;
 }
 
-/** 🆕🆕🆕 §8.1 (D566) — THE TOOL-BORNE AFTER-THE-KNOCK-OUT SCAN: every `onHolderKnockedOut`
-    program a POKÉMON TOOL on `body` carries (Amulet of Hope `sv08-162`: *"If the Pokémon this
-    card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon,
-    search your deck for up to 3 cards and put them into your hand. Then, shuffle your
-    deck."*), as the Tools' uids in attachment order. Asked by flow.ts `collectKnockOutPass`
-    of the PRE-batch body (Active OR Bench), whose seat/cause gate is the caller's; through
-    `toolsInEffect`, so Jamming Tower silences it; NO §9 gate (a Tool is not an Ability). */
+/**
+ * Every `onHolderKnockedOut` program on a Tool attached to `body` (Amulet of Hope), in attachment
+ * order. The caller gates seat and cause. Not §9-gated; Jamming Tower silences it.
+ */
 export function koHolderToolTriggersOf(state: GameState, body: InPlayPokemon): string[] {
   return toolsInEffect(state, body).filter((toolUid) => {
     const id = state.cardIdByUid[toolUid];
@@ -649,10 +379,7 @@ export function koHolderToolTriggersOf(state: GameState, body: InPlayPokemon): s
   });
 }
 
-/** 🆕🆕🆕 D566 — the `timing` program printed on the POKÉMON TOOL `toolUid`, or undefined.
-    Resolved through `cardIdByUid` → `programFor`, which stays valid after the Tool left play
-    (Amulet of Hope's stage runs once the holder's stack, Tool included, is in the discard
-    pile — `onKnockOutTrigger`'s reason one screen up). The runners' ONE lookup. */
+/** The `timing` program printed on the Tool `toolUid`; still valid after the Tool has left play. */
 export function toolTriggerOf(
   state: GameState,
   toolUid: string,
@@ -663,12 +390,10 @@ export function toolTriggerOf(
   return (programFor(id)?.triggered ?? []).find((ability) => ability.trigger === timing);
 }
 
-/** 🆕🆕🆕 §5.3 (D566) — THE END-OF-TURN TOOL SCAN: every live Tool on `seat`'s ACTIVE carrying
-    an `atEndOfYourTurnInActive` program (Powerglass `sv06.5-063` / `-097`: *"At the end of
-    your turn (after your attack), if the Pokémon this card is attached to is in the Active
-    Spot, you may attach a Basic Energy card from your discard pile to it."*), with it. Asked by
-    flow.ts's `endTurn` stage (the seed) and by its runner (the re-check). The Active only —
-    the print's own clause. Through `toolsInEffect`; no §9 gate. */
+/**
+ * Every live Tool on `seat`'s Active carrying an `atEndOfYourTurnInActive` program (Powerglass).
+ * Not §9-gated.
+ */
 export function endTurnToolTriggersOf(
   state: GameState,
   seat: Seat,
@@ -686,22 +411,11 @@ export function endTurnToolTriggersOf(
   return out;
 }
 
-/** 🆕🆕🆕 §9 (D562) — THE TOOL-BORNE ON-DAMAGED SCAN. Every `onDamagedByAttack` program a
-    POKÉMON TOOL attached to `seat`'s ACTIVE carries, when that Active is `defenderUid`
-    (Lucky Helmet `sv06-158`: *"If the Pokémon this card is attached to is in the Active
-    Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is
-    Knocked Out), draw 2 cards."*; Handheld Fan `sv06-150`: *"… move an Energy from the
-    Attacking Pokémon to 1 of your opponent's Benched Pokémon."*). Returns each Tool's uid
-    and its program, in attachment order.
-
-    `damagedByAttackAbility`'s TOOL twin one screen up, and `koToolTriggersOf`'s on the
-    other axis: `triggersOf` reads the TOP card and cannot see a Tool, so the holder's
-    Tools are walked here. THE ACTIVE ONLY — both printings say "in the Active Spot", and
-    the two seeding sites (attack.ts's main hit, interpreter.ts `reactToAttackDamage`)
-    damage an Active by construction; the runner re-asks it (flow.ts
-    `runDamagedTrigger`), because the attack's own effect program may switch the holder
-    out before the stage runs. NO §9 GATE (a Tool is not an Ability, `koToolTriggersOf`'s
-    rule); through `toolsInEffect`, so Jamming Tower silences both. */
+/**
+ * Every `onDamagedByAttack` program on a Tool attached to `seat`'s Active when that Active is
+ * `defenderUid` (Lucky Helmet, Handheld Fan), in attachment order. Active only, as printed. Not
+ * §9-gated; Jamming Tower silences them.
+ */
 export function damagedToolTriggersOf(
   state: GameState,
   seat: Seat,

@@ -1,28 +1,8 @@
 #!/usr/bin/env node
-// PostToolUse hook — the context tripwire.
-//
-// Claude Code's own answer to a full context is auto-compaction, which keeps the
-// session alive but degrades it: the summary is lossy in ways nobody chose. This
-// project already has a better handoff (docs/progress.md), so the loop would
-// rather END the session early and start a clean one. This hook is what makes
-// that happen: it reads the real token usage off the transcript after every tool
-// call and, past a threshold, injects an instruction to land the session.
-//
-// Two tiers, each fired at most once per session:
-//   soft (default 60%) — stop starting new work, run the ritual, commit, stop.
-//   hard (default 78%) — stop now, honest progress entry, commit, stop.
-//
-// Silent and exit 0 in every other case: a hook that breaks the session it is
-// supposed to protect is worse than no hook.
-//
-// WHERE THE NUMBER COMES FROM. Not the transcript: in `-p` mode Claude Code
-// flushes the transcript at the END of a turn, and the whole loop iteration is
-// one turn — a PostToolUse hook reading it mid-flight sees the session's opening
-// bytes and nothing else (measured: 886 bytes and 0 usage records at tool time,
-// 8185 bytes at Stop). The `--output-format stream-json` stream, which the driver
-// tees to disk, carries `.message.usage` per assistant message in real time. So
-// the stream file is the source when the driver provides one, and the transcript
-// is the fallback for interactive use, where it is flushed per turn and correct.
+// PostToolUse hook: past a context-usage threshold, tells the session to wrap up instead of
+// auto-compacting. Soft (60%) and hard (78%) tiers fire once each. Usage is read from the
+// stream-json file when provided, since in `-p` mode the transcript is only flushed at turn end.
+// Always exits 0.
 
 import {
   closeSync,
@@ -107,10 +87,8 @@ function claimTier(sessionId, tier) {
 }
 
 const NOTICE = {
-  // The fragments are `.join("")`ed rather than `+`ed: identical bytes, but it
-  // keeps these prose blocks under the 100-col line width without tripping
-  // `lint/style/useTemplate`, whose fix would collapse each into one 400-col
-  // line. (These files were unlinted until D212 — see scripts/lint-coverage.ts.)
+  // `.join("")` rather than `+` so Biome's `useTemplate` fix does not collapse the wrapped prose
+  // onto one line.
   soft: (pct) =>
     [
       `[autoloop] SOFT LIMIT — context is at ${pct}% of the window.\n`,

@@ -1,94 +1,7 @@
 /**
- * 🆕🆕 D484 — THE PARTITION GATE: NO TWO ROWS MAY BE THE SAME EXPERIMENT.
- *
- * WHY THIS EXISTS, AND IT IS A LIVE WITNESS RATHER THAN A WORRY. D483 found two
- * mutant rows whose `find` strings both resolved to the SAME LINE of
- * `effects.ts`. D447 re-indexed a capture group and only one of the two rows
- * quoting that line was re-transcribed; the other landed on its neighbour's
- * line and stayed there. **Both reported KILLED on every sweep for 46
- * decisions, and the gated arm one of them names had no row at all.**
- *
- * 🛑 `precheck` WAS TRUE THE WHOLE TIME. It asserts *"every `find` occurs
- * exactly once in its target"* — and it does: each find occurred once, and both
- * pointed at the same line. **A per-row uniqueness check does not imply a
- * per-line partition, and until this file nothing asserted the second.**
- *
- * ─── WHY THE PREDICATE IS NOT "NO LINE CARRIES TWO ROWS" ──────────────────────
- * ⚠️ **BECAUSE THAT WAS MEASURED AND IT IS FALSE BY A FACTOR OF HUNDREDS.**
- * D484 grouped all 2,267 rows by the (file, resolved line) their `find` lands
- * on: **383 lines carry more than one row, over 943 rows — 41.6% of the
- * corpus.** (Those are the figures for the corpus AS MEASURED, before this
- * slice's own 13 rows; they are a dated finding, not an invariant, and nothing
- * below asserts them.) Sharing a line is not a defect here, it is the corpus's central
- * idiom: one anchor line, N different corruptions of it (`D407-board-zone-*` is
- * four rows on `attack.ts:416`; `D475-flip-count-*` is five). Two narrower
- * predicates were measured and rejected the same way:
- *
- *   - *no two rows share a `find`* — refuted: **292 groups, 724 rows.**
- *   - *no two rows share a `(file, find, replace)`* — refuted: **4 groups, 8
- *     rows**, and all four are deliberate and documented in their own `what`
- *     fields. `D316-yes-arm-loses-the-bonus` says it outright: re-pointed into
- *     the shared `boostedArms`, *"so this row and its D317 twin are now the SAME
- *     mutation with two different killers — which is the point rather than a
- *     duplicate: the arm is shared, so it owes a kill from each sentence."*
- *     `D280-allOf-folds-with-some` / `D365-allof-fold-turns-disjunctive` is the
- *     same shape across a registry/derived-sentence boundary.
- *
- * ─── SO THE PREDICATE IS EXPERIMENT IDENTITY ─────────────────────────────────
- * Two rows are a defect when they are **indistinguishable to the runner**: same
- * `file`, same `find`, same `replace`, same `nameFilter`, same killers
- * (`expectKilledBy` as a SET, or `killedByCommand`), same `survives`. Such a
- * pair is one experiment executed twice and reported as two, so **at least one
- * of them is not testing what its `what` names** — which is exactly D483's
- * defect and exactly what makes it invisible in the verdict column. `id`,
- * `decision` and `what` are deliberately NOT in the key: they are labels, and a
- * defect that renames itself is still a defect.
- *
- * 🛑 **AND THE PREDICATE WAS VALIDATED AGAINST HISTORY, NOT PROPOSED.** Run
- * against the corpus as it stood at six commits spanning the whole window:
- *
- *     D437  1,699 rows → 0 groups      (before the re-index)
- *     D447  1,820 rows → 1 group       ← the defect enters, at the commit that caused it
- *     D455  1,933 rows → 1 group
- *     D465  2,053 rows → 1 group
- *     D475  2,178 rows → 1 group
- *     D482  2,255 rows → 1 group       (the sweep before D483 found it by hand)
- *     HEAD  2,267 rows → 0 groups      (after D483's repair)
- *
- * The one group is `D437-reader-drops-the-narrowing` +
- * `D437-gated-caller-drops-the-widening`, every time, and nothing else ever.
- * **Zero false positives across 46 decisions and 568 rows added over the
- * window.** That is the whole argument for this exact key: it is a detector with
- * a measured miss rate of zero on the defect it was built for and a measured
- * false-positive rate of zero on the corpus that carried it.
- *
- * ─── AND THERE IS NO EXEMPTION LIST — ASSERTED, NOT MERELY ABSENT ────────────
- * The four legitimate shared-patch pairs are admitted BY THE KEY (they differ in
- * their killers), not by being named here. An exemption list is where a corpus
- * guard goes to die: the first entry is always justified and the tenth is never
- * re-read. If a future pair is genuinely two experiments, it will differ in
- * something the runner can see — and if it differs in nothing the runner can
- * see, it is not two experiments.
- *
- * ─── WHAT IT DOES NOT COVER, STATED ──────────────────────────────────────────
- * ⚠️ It cannot see a row that points at the WRONG line while remaining
- * distinguishable — D483's pair was caught because the mis-pointed row collided
- * with its neighbour's row, and a mis-pointing onto a line no row occupies
- * leaves no trace here. Nothing mechanical can settle that; only the
- * three-field read (`find`/`replace`/`what`) can, which is why that convention
- * stands beside this file rather than being replaced by it. **A mutation corpus
- * reports what its rows do, never what its rows say they do.**
- *
- * ─── WHY A SCRIPT, AND WHY NOT INSIDE `precheck.ts` ──────────────────────────
- * `scripts/**` is outside vitest's globs, so a guard over the harness is named
- * from a mutant row's `killedByCommand` (D212's precedent; D411's recovery gate
- * and D470's splice gate are the second and third). And it is its OWN file for
- * D470's attribution reason: `precheck.ts` exits 1 whenever any row's `find`
- * moves, so a guard living inside it would be over-determined for every mutant
- * that touches a corpus row. This file has no `find` check in it, so a red here
- * is attributable. `precheck.ts` imports `partitionReport()` so the command
- * everyone actually runs before a sweep still reports it — and the wiring rung
- * below asserts that it does.
+ * Partition gate: no two mutant rows may be the same experiment (same file, find, replace,
+ * nameFilter, killers and survives), since such a pair reports one run as two. Rows sharing a line
+ * are normal. There is no exemption list.
  *
  *   bun scripts/mutation/partition-gate.ts
  */
@@ -106,15 +19,8 @@ const WIRING_CALL = "partitionReport()";
 const MAX_NAMED = 20;
 
 /**
- * ⚠️ THE RUNNER-VISIBLE IDENTITY OF A ROW, AND EVERY FIELD IN IT IS HERE FOR A
- * REASON THE SELF-CHECK DRIVES.
- *
- * `expectKilledBy` is sorted because the runner passes it to `vitest` as a
- * positional filter and the order does not change which suites run — two rows
- * that name the same suites in different order are the same experiment, and a
- * key that missed that would be a hole an author could fall into by accident.
- * `id`, `decision` and `what` are absent: they are how a human refers to the
- * row, not what the machine does with it.
+ * The runner-visible identity of a row. `expectKilledBy` is sorted because order does not change
+ * which suites run; `id`, `decision` and `what` are labels and excluded.
  */
 export function experimentKey(m: Mutant): string {
   return JSON.stringify([
@@ -193,22 +99,8 @@ function row(over: Partial<Mutant>): Mutant {
 }
 
 /**
- * ⚠️ THE SELF-CHECK, AND IT IS THE REASON A MUTANT AGAINST THIS FILE IS A ROW
- * RATHER THAN A DECORATION (D481, applying D465 and D479).
- *
- * A corpus guard that asserts "the duplicate set is empty" has one failure mode
- * its own subject cannot reveal: going VACUOUS. Drop a field from the key,
- * widen `> 1` to `> 2`, return `[]`. All of those stay GREEN on this repo and on
- * a broken one, and **a mutation against a vacuous guard reports SURVIVED,
- * which this corpus treats as informative.** The danger of an unkillable rung is
- * not that it fails — it is that it PASSES.
- *
- * So the predicate is driven on synthetic pairs whose answer is known BY
- * CONSTRUCTION before the real corpus is consulted. Each pair differs in
- * exactly one field, so a key that stops reading that field reddens HERE, on a
- * board built for it, rather than depending on the accident of whether today's
- * corpus happens to contain such a pair. **This is the board on which this
- * guard's own absence is observable.**
+ * Self-check on synthetic pairs that differ in exactly one field, so a key that stops reading a
+ * field fails here.
  */
 export function selfCheck(): void {
   const bad = (why: string): never =>
@@ -239,14 +131,7 @@ export function selfCheck(): void {
     ["replace", [row({ id: "one" }), row({ id: "two", replace: "const x = 3;" })]],
     ["nameFilter", [row({ id: "one" }), row({ id: "two", nameFilter: "some test" })]],
     ["expectKilledBy", [row({ id: "one" }), row({ id: "two", expectKilledBy: ["b.test.ts"] })]],
-    // ⚠️ BOTH SIDES CARRY A COMMAND, AND THAT IS A REPAIR RATHER THAN A STYLE
-    //    CHOICE (D484's own probe). This rung was first written as "no command"
-    //    versus "a command", which also flips `expectKilledBy` from a suite to
-    //    `[]` — so it stayed green with `killedByCommand` REMOVED from the key,
-    //    and the row that names that mutation reported SURVIVED. **An
-    //    over-determined rung is a rung that cannot fire for its own reason**
-    //    (D416), and here it made the mutant unkillable-as-written (D479) while
-    //    looking guarded. One field apart, or the board proves nothing.
+    // Both sides carry a command so the pair differs only in `killedByCommand`.
     [
       "killedByCommand",
       [
@@ -297,16 +182,7 @@ export function selfCheck(): void {
 }
 
 /**
- * ⚠️ THE WIRING RUNG — D212's guard does not have one and the gap is real. A
- * gate nothing calls is indistinguishable from a gate that passes, and
- * `lint-coverage.ts` can still be switched off by deleting eight words from
- * `package.json` with nothing going red.
- *
- * This gate's home is `precheck.ts`, not `package.json`: `bun run check` is
- * green with a broken corpus by design, and the command that precedes every
- * sweep is `bun scripts/mutation/precheck.ts`. So the rung asserts the call is
- * in that file — one `includes` over one string, and the only thing standing
- * between this slice and the next tidy-up that quietly un-runs it.
+ * Asserts precheck.ts calls this gate; an uncalled gate is indistinguishable from a passing one.
  */
 export function checkWiring(): void {
   const text = readFileSync(WIRING_SITE, "utf8");

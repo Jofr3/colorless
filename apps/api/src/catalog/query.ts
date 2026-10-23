@@ -73,18 +73,17 @@ export const cardsQuerySchema = z.object({
   serie: param.optional(),
   /** Exact illustrator (vocabulary: GET /facets). */
   illustrator: param.optional(),
-  /** Case-insensitive substring over RULES TEXT: Pokémon ability/attack names
-      and effects, plus Trainer/Special-Energy `effect` prose (D197). 🆕 D581 —
-      also a Trainer's PRINTED Ability/attack (an Antique Fossil's Ability, a
-      Technical Machine's attack), which the ingest keeps since D581: it is text
-      printed on the card, so finding it is the filter's job and is intended. */
+  /**
+   * Case-insensitive substring over rules text: ability and attack names and effects, plus Trainer
+   * and Special Energy effect text.
+   */
   text: param.optional(),
   /** Exact regulation mark, e.g. "H". */
   regulationMark: param.optional(),
-  /** Inclusive HP bounds (Pokémon only). ~~non-Pokémon have NULL hp and never match~~
-      🆕 D581: WITHDRAWN as the reason — since D581 the ingest keeps the `hp` a Trainer
-      prints (the Antique Fossils' 60, Snorlax Doll's 120), so the bound now ASKS the
-      category (`pokemonHp` below) instead of leaning on the NULL. */
+  /**
+   * Inclusive HP bounds, Pokémon only; some Trainers store a printed HP, so the bound checks the
+   * category.
+   */
   hpMin: z.coerce.number().int().min(0).optional(),
   hpMax: z.coerce.number().int().min(0).optional(),
   /** Keep only cards currently legal in the given format. */
@@ -118,55 +117,11 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
 }
 
 /**
- * The Drizzle `where` for a validated /cards query; undefined = unfiltered.
- *
- * Tradeoffs, on purpose:
- * - `name` uses LIKE '%…%', which in SQLite is already case-insensitive for
- *   ASCII. `%`/`_` in the input are escaped (with an ESCAPE '\' clause) so a
- *   search like "50%" matches literally instead of acting as extra wildcards.
- * - `type` LIKEs for the quoted value inside the raw `types_json` text
- *   (e.g. '%"Water"%') instead of a json_each() join. Exact enough because
- *   no energy type is a substring of another *quoted* type; revisit if the
- *   vocabulary ever grows an overlapping name.
- * - repeated `type` / `rarity` values OR within their dimension (a card
- *   matches if it has ANY selected type / rarity); dimensions still AND.
- * - `text` LIKEs over the raw abilities/attacks JSON blobs (names and effect
- *   text live inside) AND the plain-text `effect` column. The JSON halves are
- *   imprecise on purpose — a term can brush a JSON KEY or a cost value rather
- *   than prose, and the catalog says how much: over the JSON PAIR ALONE,
- *   `?text=effect` matches 2,816 of 3,786 rows and `?text=damage` matches 3,175,
- *   almost entirely on the `{cost,name,effect,damage}` keys of attacks_json.
- *   Whole-filter totals today are 2,826 and 3,267 — the `effect` column adds 10
- *   and 92 rows respectively, and adds them for genuine PROSE matches (measured
- *   on production 2026-08-04; D203 re-attributed these figures, which were
- *   presented as the whole filter's after D197 widened it under them). Still
- *   plenty for catalog search at ~3.7k rows, and cheaper than a search index.
- *
- *   `effect` (D197) does NOT inherit that hazard — it is prose, not a
- *   serialized object, so there are no key names in it to brush. It was worth
- *   adding because the JSON pair reaches NONE of it: measured on production,
- *   every one of the 517 rows carrying `effect` (499 Trainer + 18 Energy) has
- *   BOTH abilities_json and attacks_json NULL, and all 3,233 Pokémon rows have
- *   `effect` NULL. The two sets are exactly disjoint, so before this the
- *   `text` filter could not return a Trainer or a Special Energy for ANY term
- *   — 275 of the unreachable rows are Standard-legal (264 Trainer, 11 Energy:
- *   8 Special + 3 Normal), i.e. the whole Trainer half of a legal deck.
- * - `id` binds the WHOLE list as one JSON array and expands it with
- *   `json_each` instead of an N-placeholder `IN (?, ?, …)`. One bind, not
- *   ≤100, so D1's 100-bound-parameter cap is out of the picture even with
- *   LIMIT/OFFSET and every other filter's binds on the same statement — which
- *   is what lets the hydration path stay a single ordered, paged SQL query
- *   instead of a chunked batch sorted in JS (D197; see `cardsOrder`).
- *   `IN (subquery)` is set membership, so a repeated id can't duplicate a row.
- * - sentinel normalisation (../sentinel.ts, D194) deliberately does NOT reach
- *   in here. The where clause matches STORED values; the normaliser runs on
- *   the way out. So a hand-crafted `?rarity=None` still matches the 34 `mfb`
- *   rows while their payloads report `rarity: null` — inconsistent, but
- *   unreachable from the UI (the value is gone from /facets, which is where
- *   every filter value in the rail comes from) and self-healing on the next
- *   `mfb` re-ingest. Teaching the where clause to rewrite user input would
- *   be the over-reach: it would make `?rarity=None` silently mean "rarity IS
- *   NULL", a filter the API otherwise does not offer for ANY column.
+ * The Drizzle `where` for a validated /cards query; undefined means unfiltered.
+ * `%` and `_` in `name` are escaped. `type` matches the quoted value inside `types_json`, which
+ * works because no type name is a substring of another. `text` matching over the JSON columns can
+ * also hit JSON keys. `id` binds the whole list as one JSON array to stay under D1's 100-parameter
+ * cap. Sentinel normalisation does not apply here: filters match stored values.
  */
 export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   const conditions: SQL[] = [];
@@ -260,13 +215,8 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
 }
 
 /**
- * A card's HP AS A POKÉMON: `hp` on a Pokémon row, NULL on every other row.
- * 🆕 D581 — the HP filter and the `hp-desc` sort read this rather than the bare
- * column, because the column stopped being Pokémon-only: since D581 the ingest
- * keeps the `hp` a Trainer prints (12 Trainer rows in the local D1 — the Antique
- * Fossils' 60, Snorlax Doll's 120), and an HP bound or an HP sort is a question
- * about Pokémon. The `'Pokemon'` literal is inline SQL (no bound parameter), so
- * D1's parameter budget is unchanged. Before D581 the NULL answered this alone.
+ * A card's HP as a Pokémon: `hp` on Pokémon rows, null otherwise, because some Trainers store a
+ * printed HP.
  */
 function pokemonHp(): SQL {
   return sql`(case when ${cards.category} = 'Pokemon' then ${cards.hp} end)`;
@@ -281,25 +231,8 @@ function pokemonHp(): SQL {
 const collectorOrder = [asc(cards.setId), asc(cards.localId)];
 
 /**
- * The ORDER BY for a validated /cards query — the ONE sort spec in the API.
- * Every sort ends on collector order so pages stay deterministic across equal
- * keys. `hp-desc` relies on SQLite treating NULL as smaller than every value —
- * `hp DESC` puts the hp-less Trainers/Energy last (verified against SQLite
- * directly). 🆕 D581 — it sorts `pokemonHp()`, not the bare column, so a Trainer
- * that prints an HP (a fossil, Snorlax Doll) still sorts with the hp-less rows.
- *
- * It used to have a JS TWIN (`compareCardRows`), because the id-hydration
- * path chunked its `IN` list across a db.batch and so had no single statement
- * to hang an ORDER BY on; it sorted the ≤ MAX_ID_VALUES matched rows in
- * memory instead. Two hand-maintained specs for one order — they agreed
- * (measured: the divergence classes are SQLite's BINARY collation vs JS
- * UTF-16 `<`, which differ only above the BMP, and the catalog's 13
- * non-ASCII names are all BMP — `é`, `♀`, `♂`), but nothing MADE them agree,
- * and the note that deferred this asked for the unification BEFORE any sort
- * option is added. D197 removed the twin instead of syncing it: the JSON-bound
- * id list (see `buildCardsWhere`) collapsed hydration back onto the ordinary
- * single-statement path, so a new sort key is now one edit here and there is
- * no second evaluator left to disagree with SQLite.
+ * The ORDER BY for a validated /cards query. Every sort ends on collector order so pages are
+ * deterministic. `hp-desc` relies on SQLite sorting NULL lowest, so non-Pokémon go last.
  */
 export function cardsOrder(sort: CardsQuery["sort"]): SQL[] {
   if (sort === "name") return [asc(cards.name), ...collectorOrder];

@@ -1,28 +1,6 @@
-// Catalog tables — ingested from tcgdex (§3.4), read-only to the app.
-// Spec: docs/workstreams/backend-data.md §5.3. Source shapes: the Zod models
-// in @colorless/schema (packages/schema/src/tcgdex/*), authored against live
-// payloads — every column here maps 1:1 onto a field of those schemas.
-//
-// Conventions:
-// - ids are tcgdex ids, stored as text PKs ("sv" / "sv01" / "sv01-001").
-// - `*_url` asset columns store the tcgdex ORIGIN base URLs, extensionless
-//   (§4.4) — NOT R2 URLs. Images are mirrored into R2 lazily by the
-//   `/assets/*` Worker routes (cache-aside), which use these bases on a miss.
-// - Catalog dates/timestamps stay ISO TEXT, verbatim from tcgdex ("YYYY-MM-DD"
-//   dates; `cards.updated` mixes `Z` and `+HH:MM` offsets). User-data tables
-//   use integer epoch ms instead — see ./users.ts.
-// - Structured sub-shapes persist as JSON text (`mode: "json"`), typed with
-//   the tcgdex types so ingest round-trips without hand mapping.
-//
-// Deliberately NOT stored (revisit when a feature needs them):
-// - `variants_detailed` — per-physical-print foil/stamp/per-print pricing;
-//   irrelevant to the app today (we keep the 5-flag `variants_json`).
-// - `pricing` — volatile market aggregates, not catalog data.
-// - `boosters` — documented upstream, never observed on live `en` payloads.
-// - dp/neo-era Pokémon extras (`level`, `item`, `description`, `dexId`) — no
-//   app feature reads them; the schema stays full-history *capable* (nothing
-//   breaks when old sets are ingested, these fields are simply not persisted).
-//   `suffix` used to sit in this list and left it in D197 — see the column.
+// Catalog tables, ingested from tcgdex and read-only to the app. Ids are tcgdex ids. `*_url`
+// columns store tcgdex origin base URLs without extension, not R2 URLs. Dates stay ISO text as
+// tcgdex sends them.
 
 import type { TcgdexAbility, TcgdexAttack, TcgdexVariants, TcgdexWeakRes } from "@colorless/schema";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -76,29 +54,15 @@ export const cards = sqliteTable(
     rarity: text("rarity"),
     regulationMark: text("regulation_mark"),
 
-    // Pokémon-only fields (null on Trainer/Energy) — 🆕 D581: EXCEPT `hp`,
-    // `abilities_json` and `attacks_json`, which a Trainer row carries when it
-    // prints them (../ingest/map.ts header: the Antique Fossils, Snorlax Doll, the
-    // Technical Machines). /cards' HP filter and sort ask the category for that
-    // reason (../catalog/query.ts `pokemonHp`).
+    // Pokémon-only fields, except `hp`, `abilities_json` and `attacks_json`, which a Trainer row
+    // keeps when it prints them.
     hp: integer("hp"),
     stage: text("stage"),
-    /** tcgdex's PRINT-KIND marker on a Pokémon's name line — "ex", "V",
-        "VMAX", "MEGA", … (absent on ordinary Pokémon). The web currently
-        re-derives this by reading the card NAME (src/features/builder/
-        cards.ts), which is why an EX/Mega selection cannot be a server param
-        and mixed selections page badly: the API pages a set the client then
-        thins, so a 60-card page can render nearly empty while `total` claims
-        hundreds. Added in D197 so the next ingest populates it. **STILL NULL ON
-        EVERY PRODUCTION ROW** (re-verified 2026-08-04) — and stronger than that:
-        migration `0006`, which ADDS the column, has never been applied to the
-        remote database, so production has no `suffix` column at all. D198 then
-        shipped `?suffix=` and the `/facets` `suffixes` vocabulary over it, which
-        is why the deploy ORDER now matters — `/facets` selects this column inside
-        its shared `db.batch`, so deploying ahead of the migration fails the whole
-        endpoint. Runbook: docs/workstreams/backend-data.md §3.7. (D197's "nothing
-        filters on it yet, on purpose" was true for exactly one slice; D198 made
-        it false and D203 corrected it.) */
+    /**
+     * tcgdex's print-kind marker on a Pokémon's name line, such as "ex", "V", "VMAX" or "MEGA";
+     * absent on ordinary Pokémon. /facets selects this column, so its migration must be applied
+     * before deploying.
+     */
     suffix: text("suffix"),
     evolveFrom: text("evolve_from"),
     /** Energy types, e.g. ["Grass"]. */

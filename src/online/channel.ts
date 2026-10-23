@@ -17,19 +17,9 @@ export interface LobbyChannel {
   close(): void;
 }
 
-// One WebSocket per lobby code, against GET /lobby/:code/ws on the api origin
-// (src/lib/apiOrigin.ts). The Durable Object behind it is the authority: it
-// runs the shared lobbyReducer and broadcasts `state` snapshots, so unlike the
-// BroadcastChannel days there is no host peer on the other end — just the
-// server. The channel stays a dumb pipe: it doesn't know the protocol beyond
-// two transport-level jobs:
-//   - RECONNECT: an unexpected close reconnects with capped exponential
-//     backoff; messages posted while down are queued and flushed on reopen
-//     (the client's own hello retries then re-establish the seat).
-//   - LIVENESS: it pings the server every PING_INTERVAL_MS (answered by the
-//     DO's auto-responder without waking it) and surfaces each pong to
-//     subscribers as a server `heartbeat` frame — the same signal the client's
-//     presence timers were built on when a host peer sent real heartbeats.
+// One WebSocket per lobby code, against GET /lobby/:code/ws. The Durable Object is the authority
+// and broadcasts `state` snapshots; this channel is a dumb pipe that knows only its transport-level
+// jobs.
 
 const PING_INTERVAL_MS = 1500;
 const RECONNECT_BASE_MS = 400;

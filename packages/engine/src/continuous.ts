@@ -2,18 +2,15 @@ import {
   ANY_ENERGY,
   attacksOf,
   cardOfUid,
-  // 🆕🆕🆕 D578 — Team Rocket's Energy's constrained unit, read at the provision predicate.
   constrainedEnergyTypes,
   costMet,
   energyProvidesOf,
-  // 🆕🆕🆕 D630 — Psy Protection's "Pokémon that have an Ability" (`AttackerClass.stage` "hasAbility").
   hasPrintedAbility,
   hasRuleBox,
   hpOf,
   isBasicPokemon,
   isEvolutionPokemon,
   isExOrV,
-  // 🆕🆕🆕 D576 — the Antique Fossils' two CARD RULES (R-FO4) read the fossil TOP card.
   isFossilTop,
   isSpecialEnergy,
   isTeraPokemon,
@@ -31,21 +28,16 @@ import type {
   AttackerClass,
   BoardCondition,
   CardFilter,
-  // 🆕🆕🆕 D580 — `supporterEffectOf`'s return shape (Look-Alike Show).
   EffectOp,
   HandPlayClass,
   PokemonPlayAct,
   PokemonType,
 } from "./effects";
-// 🆕🆕 D444 — the ONE value import this file takes from `effects.ts`: the second
-// producer behind `attackGateOf` below. No cycle — `effects.ts` takes nothing from
-// this file, and its only edge back to `registry.ts` is type-only.
-// [🆕🆕🆕 D638 (D539): *"the ONE value import"* is WITHDRAWN — `COPY_FAMILY_MARKER` (a regex constant) is the
-// second, for `attackMenuOf`'s Memory Helix section (R-MH2). The no-cycle argument is unchanged.]
+// No cycle: `effects.ts` imports nothing from this file, and its only edge back to `registry.ts` is
+// type-only.
 import { COPY_FAMILY_MARKER, timingGateFromAttackText } from "./effects";
 import type { GameEvent, StatusName } from "./events";
-// 🆕🆕🆕 D556 — the turn OWNER for `sideAttackBonusThisTurn`'s seat guard (THE one
-// exhaustive switch over `Phase`; phaseView.ts takes only types from here, so no cycle).
+// No cycle: phaseView.ts imports only types from here.
 import { phaseViewOf } from "./phaseView";
 import { flipCoin } from "./rng";
 import type {
@@ -78,27 +70,18 @@ import {
   takenPrizes,
 } from "./types";
 
-// The continuous-modifier pipeline (M4 slice 3): the one place the always-on
-// effects of the shared Stadium (§7.3) and of attached Tools / printed
-// passives (§7.4/§9) are aggregated and applied to a rule read. Cards.ts
-// stays a pure catalog-accessor module — everything here reads STATE (which
-// Stadium is out, which Tools are attached) on top of the catalog, so the
-// action handlers (turn.ts retreat, attack.ts costs/damage, flow.ts KO check)
-// and the web HUD all ask the same questions of the same module and cannot
-// drift. Every function is pure and total: a missing card or program simply
-// contributes nothing.
+// The continuous-modifier pipeline: the one place the always-on effects of the Stadium (§7.3) and
+// of attached Tools and printed passives (§7.4/§9) are aggregated and applied to a rule read, so
+// the engine and the web HUD ask the same questions. Every function is pure and total: a missing
+// card or program contributes nothing.
 
-/** The in-play Stadium's authored continuous effects, or undefined when no
-    Stadium is out (or the one out has no registry row — unreachable through
-    playTrainer, which refuses to play an unauthored Stadium). */
-/** §8.1 (D324) — the floor `effectiveMaxHp` clamps to. It exists so the "never
-    non-positive" property a DELETED branch in `koSurvivalClamp` rests on is
-    asserted by a line of code rather than by the historical accident that every
-    HP term used to be an addend. 10 rather than 1: HP is printed and dealt in
-    tens throughout the game, so a body clamped here would still be a legal
-    one-counter kill rather than an unreachable fraction. Unreachable in the legal
-    pool (min Stage-2 HP is 120 against a single -30 print) and DECLARED — D257's
-    precedent for a bound that must be right without being drivable. */
+/**
+ * The in-play Stadium's continuous effects, or undefined when no Stadium is out or it has no
+ * registry row.
+ *
+ * §8.1: the floor `effectiveMaxHp` clamps to, so HP is never non-positive. 10 rather than 1 because
+ * HP is dealt in tens.
+ */
 const MIN_EFFECTIVE_MAX_HP = 10;
 
 export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
@@ -107,9 +90,10 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
   return id === undefined ? undefined : programFor(id)?.stadium;
 }
 
-/** 🆕🆕🆕 §7.3 (D577) — the LIVE Bench limit, ONE rule over card ids so the web's
-    redacted board asks the same question (`benchLimitForIds`): the in-play Stadium's
-    `benchLimitWithTera` (Area Zero Underdepths: 8) when `teraInPlay`, else `BENCH_MAX` (R-AZ1). */
+/**
+ * §7.3: the live Bench limit over card ids, so the web's redacted board asks the same question: the
+ * Stadium's `benchLimitWithTera` when `teraInPlay`, else `BENCH_MAX`.
+ */
 function benchLimitFrom(stadiumCardId: string | undefined, teraInPlay: boolean): number {
   const widened =
     stadiumCardId === undefined
@@ -118,13 +102,11 @@ function benchLimitFrom(stadiumCardId: string | undefined, teraInPlay: boolean):
   return widened !== undefined && teraInPlay ? widened : BENCH_MAX;
 }
 
-/** 🆕🆕🆕 §7.3 (D577) — how many Benched Pokémon `seat` may have RIGHT NOW (R-AZ1): 8 iff
-    Area Zero Underdepths is the live Stadium AND `seat` has a Tera Pokémon in play (its
-    Active or a Benched TOP card, `isTeraPokemon` — the printed "in play"), otherwise
-    `BENCH_MAX`. PER SEAT — each player's Tera presence is their own. Every live Bench
-    cap reads this (turn.ts `playBasicToBench`, cardplay.ts `fossilPlayable` and the
-    Look-for-Prey bench test, interpreter.ts `benchSpace`); `BENCH_CEILING` bounds only
-    what a ref may address. */
+/**
+ * §7.3: how many Benched Pokémon `seat` may have right now: 8 if Area Zero Underdepths is the
+ * Stadium and `seat` has a Tera Pokémon in play, otherwise `BENCH_MAX`. Per seat. `BENCH_CEILING`
+ * bounds only what a ref may address.
+ */
 export function benchLimitOf(state: GameState, seat: Seat): number {
   const stadiumCardId = state.stadium === null ? undefined : state.cardIdByUid[state.stadium.uid];
   const side = state.players[seat];
@@ -135,9 +117,10 @@ export function benchLimitOf(state: GameState, seat: Seat): number {
   );
 }
 
-/** 🆕🆕🆕 §7.3 (D577) — `benchLimitOf` over CARD IDS, for a board that carries ids and no
-    `GameState` (the web's `projectionFromRedacted`): the Stadium's catalog id and the catalog
-    ids of one seat's in-play TOP cards. The Tera read is the banner table's (`bannerOf`). */
+/**
+ * `benchLimitOf` over card ids, for a board with no `GameState` (the web's
+ * `projectionFromRedacted`).
+ */
 export function benchLimitForIds(
   stadiumCardId: string | undefined,
   inPlayCardIds: readonly string[],
@@ -148,15 +131,11 @@ export function benchLimitForIds(
   );
 }
 
-/** 🆕🆕🆕 §7.3 (D577) — the Area Zero Underdepths STATE CHECK (R-AZ2, R-AZ3): one
-    `benchTrim` stage per seat whose Bench now holds MORE than `benchLimitOf` allows, `first`
-    then the other seat, skipping a seat `queued` already holds a trim for. The five
-    producers pass `first`: the Stadium's OWNER when it is the Stadium leaving (cardplay.ts
-    `playStadium`'s replacement, interpreter.ts `discardStadium` — R-AZ3's *"the player who
-    played this card discards first"*), the acting / ended seat at a sweep. Over-limit is
-    the whole test: after the Stadium leaves every seat's limit is 5, and with it in play a
-    seat over 5 has just lost its last Tera Pokémon — the card's two discard sentences are
-    one predicate. The stage carries no count; `runBenchTrim` re-reads the excess. */
+/**
+ * §7.3: the Area Zero Underdepths state check: one `benchTrim` stage per seat whose Bench exceeds
+ * `benchLimitOf`, `first` then the other seat, skipping seats already queued. When the Stadium
+ * leaves, its owner discards first. The stage carries no count; `runBenchTrim` re-reads the excess.
+ */
 export function benchTrimStages(
   state: GameState,
   first: Seat,
@@ -171,13 +150,11 @@ export function benchTrimStages(
     .map((seat): PendingStage => ({ kind: "benchTrim", seat }));
 }
 
-/** 🆕🆕🆕 §7.4 (D643) — how many Pokémon Tools `body` (on `seat`'s board) may have attached right now: 1, or a
-    live `PassiveEffects.toolCapForName`'s `cap` when the body's top card's name contains its `nameContains` —
-    Rotom ex "Multi Adapter" (R-MAD3: the holder counts itself; the name is the TOP card's). A holder is any of
-    `seat`'s OWN in-play Pokémon (Active or Bench, no zone clause) whose Ability `disabledAbilityUids` does not
-    silence; the first live one answers (R-MAD2: several holders do not stack). Read by both `attachTool` arms
-    (cardplay.ts), interpreter.ts's deck attach (`freeToolSlotsOfSource` / `searchAttachToSelf`) and
-    `toolTrimStages`. The lock scan runs only once a holder is found. */
+/**
+ * §7.4: how many Tools `body` may have attached: 1, or a live `toolCapForName` cap when the body's
+ * top card name contains its fragment (Rotom ex "Multi Adapter"; the holder counts itself). Holders
+ * are the seat's own in-play Pokémon with a live Ability; several holders do not stack.
+ */
 export function toolCapOf(state: GameState, seat: Seat, body: InPlayPokemon): number {
   const name = topCardOf(state, body)?.name ?? "";
   const side = state.players[seat];
@@ -193,8 +170,10 @@ export function toolCapOf(state: GameState, seat: Seat, body: InPlayPokemon): nu
   return 1;
 }
 
-/** 🆕🆕🆕 §7.4 (D643) — the name fragments a `toolCapForName` raise is printed for ("Rotom"), read off the whole
-    registry once: the trim's "those Pokémon" outlives the Ability that named them. */
+/**
+ * The name fragments a `toolCapForName` raise names, read off the whole registry: the trim's "those
+ * Pokémon" outlives the Ability that named them.
+ */
 let toolCapNamesMemo: readonly string[] | undefined;
 function toolCapNames(): readonly string[] {
   toolCapNamesMemo ??= [
@@ -208,10 +187,10 @@ function toolCapNames(): readonly string[] {
   return toolCapNamesMemo;
 }
 
-/** 🆕🆕🆕 §7.4 (D643) — does `body` (on `seat`'s board) owe Multi Adapter's trim: one of "those Pokémon" (its top
-    card's name contains a `toolCapNames` fragment, R-MAD3) carrying more Tools than `toolCapOf` now allows? A body
-    with one Tool or none answers at once. Read by `toolTrimStages`, flow.ts `runToolTrim` and interpreter.ts
-    `trimTools`. */
+/**
+ * Does `body` owe Multi Adapter's trim: named by a `toolCapNames` fragment and carrying more Tools
+ * than `toolCapOf` allows?
+ */
 export function owesToolTrim(state: GameState, seat: Seat, body: InPlayPokemon): boolean {
   if (body.tools.length <= 1) return false;
   const name = topCardOf(state, body)?.name ?? "";
@@ -221,13 +200,12 @@ export function owesToolTrim(state: GameState, seat: Seat, body: InPlayPokemon):
   );
 }
 
-/** 🆕🆕🆕 §7.4 (D643) — Multi Adapter's *"If this Ability goes away, discard Pokémon Tools from those Pokémon until
-    only 1 remains on each."*, as a STATE CHECK (R-MAD1): one `toolTrim` stage per seat with a body that
-    `owesToolTrim`, `first` then the other seat, skipping a seat `queued` already holds a trim for.
-    Over-cap is the whole test, so the holder leaving play, a §9 lock arriving on it and any other way the cap
-    drops are one predicate; a body not named by a raise is never trimmed. Queued at flow.ts `advance`'s entry (in front of the queue) and by index.ts
-    `applyAction` on a board back at `turn:action`; `runToolTrim` re-reads the excess. A board with no body
-    carrying two Tools pays one length read per body. */
+/**
+ * §7.4: Multi Adapter's "If this Ability goes away, discard Pokémon Tools from those Pokémon until
+ * only 1 remains on each" as a state check: one `toolTrim` stage per seat with a body that
+ * `owesToolTrim`, `first` then the other seat. Over-cap is the whole test, so any way the cap drops
+ * is covered; a body not named by a raise is never trimmed.
+ */
 export function toolTrimStages(
   state: GameState,
   first: Seat,
@@ -243,9 +221,10 @@ export function toolTrimStages(
     .map((seat): PendingStage => ({ kind: "toolTrim", seat }));
 }
 
-/** 🆕🆕🆕 §6.1 (D577) — does the Energy card `uid` print Boomerang Energy's *"attach this card
-    from your discard pile to that Pokémon after attacking"* (`EnergyProgram.returnAfterAttackDiscard`)?
-    The ONE read interpreter.ts `discardEnergyApply` asks of a card it discarded. */
+/**
+ * §6.1: does this Energy card print Boomerang Energy's "attach this card from your discard pile to
+ * that Pokémon after attacking"?
+ */
 export function returnsAfterAttackDiscard(
   state: GameState,
   uid: string,
@@ -253,15 +232,14 @@ export function returnsAfterAttackDiscard(
 ): boolean {
   const id = state.cardIdByUid[uid];
   const energy = id === undefined ? undefined : programFor(id)?.energy;
-  // 🆕🆕🆕 D604 — `"hand"` (Nitro Fire) is recorded the same way; its {R} is the holder gate (R-NF1).
+  // `"hand"` (Nitro Fire) is recorded the same way; its {R} is the holder gate.
   return energy?.returnAfterAttackDiscard !== undefined && energyRulesApply(state, holder, energy);
 }
 
-/** 🆕🆕🆕 D604 — do the attached Energy `energy`'s printed rules apply on `holder`? TRUE unless the
-    program names a `holderType` the holder's in-play types (`effectiveTypesOf`) lack: *"The {G}
-    Pokémon this card is attached to …"* (the Mega Evolution typed Special Energies, R-TE1 ⚠️
-    UNRULED). The ONE predicate behind the four read sites: `passivesOf`'s Energy source,
-    `energyFreesRetreat`, turn.ts `attachEnergy`'s `onAttach` and `returnsAfterAttackDiscard`. */
+/**
+ * Do the attached Energy's printed rules apply on `holder`? True unless the program names a
+ * `holderType` the holder's in-play types lack ("The {G} Pokémon this card is attached to…").
+ */
 export function energyRulesApply(
   state: GameState,
   holder: InPlayPokemon,
@@ -271,13 +249,12 @@ export function energyRulesApply(
   return type === undefined || effectiveTypesOf(state, holder).includes(type);
 }
 
-/** 🆕🆕🆕 D580 — a card's SUPPORTER EFFECT as Mr. Mime `sv05-063` "Look-Alike Show" uses it
-    (interpreter.ts's offer and `continuationOps` splice, which take no runtime edge to
-    registry.ts): the registry `trainer` ops and the PRINTED play condition `trainerPlayableIf`.
-    `undefined` for a card with no `trainer` key — never offered. An EMPTY program (Briar's `[]`)
-    is a program. ⚠️ The card-level keys `supporterKoPrizeBonus` (Briar) and
-    `trainerFirstTurnExempt` are deliberately NOT handed over (R-LA6): a copy is the EFFECT, and
-    both are read off a PLAYED card. */
+/**
+ * A card's Supporter effect as Mr. Mime "Look-Alike Show" uses it: the registry `trainer` ops and
+ * the printed play condition. `undefined` for a card with no `trainer` key; an empty program is
+ * still a program. `supporterKoPrizeBonus` and `trainerFirstTurnExempt` are deliberately excluded:
+ * a copy is the effect, and both are read off a played card.
+ */
 export function supporterEffectOf(
   cardId: string,
 ): { ops: readonly EffectOp[]; playableIf: BoardCondition | undefined } | undefined {
@@ -286,38 +263,29 @@ export function supporterEffectOf(
   return { ops: program.trainer, playableIf: program.trainerPlayableIf };
 }
 
-/** 🆕🆕🆕 §7.4 (D562) — THE TOOLS ON `pokemon` WHOSE PRINTED EFFECTS ARE LIVE: every
-    attached Tool uid, or NONE while the in-play Stadium prints `toolsHaveNoEffect`
-    (Jamming Tower `sv06-153`/`sv10-243`, *"Pokémon Tools attached to each Pokémon (both
-    yours and your opponent's) have no effect."*). No seat and no §9 gate — a Stadium is
-    neither side's and no Ability (R-ST2's reason).
-
-    🛑 **EVERY EFFECT WALK OVER `pokemon.tools` GOES THROUGH HERE, AND NO COUNT READ
-    DOES (R-JT).** The effect walks: `passivesOf`'s `sources`, `toolRetreatDiscount`,
-    `toolFreesRetreat`, `activeRetreatSurcharge`'s Gemstone term, `toolAttackCostDiscount`,
-    triggers.ts `koToolTriggersOf` and `damagedToolTriggersOf`, and the D562 consumable
-    scans below. The COUNT reads stay on the raw list, because "no effect" is about what a
-    Tool DOES and not about whether it is attached: `passivesOf`'s `hasTool`,
-    `countToolsInPlay`, the ACE SPEC Tool window, interpreter.ts's two Active-has-Tool
-    conditions and cardplay.ts's §7.4 one-Tool cap. A Tool under Jamming Tower is still a
-    card on the body — it still fills the slot, still counts, and still leaves with the
-    body. Reversal: a ruling that a Jamming-Tower Tool is not "attached" for a count. */
+/**
+ * §7.4: the Tools on `pokemon` whose effects are live: every attached Tool, or none while the
+ * Stadium prints `toolsHaveNoEffect` (Jamming Tower). Every effect walk over `pokemon.tools` goes
+ * through here; count reads use the raw list, since a Tool under Jamming Tower is still attached
+ * and still fills the slot.
+ */
 export function toolsInEffect(state: GameState, pokemon: InPlayPokemon): readonly string[] {
   return stadiumEffectsOf(state)?.toolsHaveNoEffect === true ? [] : pokemon.tools;
 }
 
-/** 🆕🆕🆕 §7.4 / §8 (D646) — the once-per-turn key Backtrack Badge `toolUid` spends on the shipped
-    `allowances.abilitiesUsed` (`abilityUsedKey`'s `${uid}:${name}` shape, on the TOOL's uid). */
+/**
+ * The once-per-turn key Backtrack Badge spends on `allowances.abilitiesUsed` (`abilityUsedKey`'s
+ * shape, on the Tool's uid).
+ */
 export function coinRedoKey(toolUid: string, name: string): string {
   return `${toolUid}:${name}`;
 }
 
-/** 🆕🆕🆕 §7.4 / §8 (D646) — the uid of a Backtrack Badge `me05-074` that may re-flip `body`'s attack coins NOW
-    (*"Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you
-    may ignore all results of those coin flips and begin flipping those coins again."*), or `null`: an in-effect Tool
-    (`toolsInEffect` — Jamming Tower silences it) carrying `PassiveEffects.reflipAttackCoins`, on a body whose IN-PLAY
-    types (`inPlayCardOf`) include the printed {C}, whose key is not yet in this turn's `allowances.abilitiesUsed`. The
-    callers pass the ATTACKING body and ask only after the attacker's own coins (R-BTB1, R-BTB2). */
+/**
+ * The uid of a Backtrack Badge that may re-flip `body`'s attack coins now, or `null`: an in-effect
+ * Tool with `reflipAttackCoins`, on a body whose in-play types include {C}, whose key is unused
+ * this turn. Callers pass the attacking body, only after its own coins.
+ */
 export function coinRedoToolOf(state: GameState, body: InPlayPokemon): string | null {
   const types = inPlayCardOf(state, body)?.types ?? [];
   for (const uid of toolsInEffect(state, body)) {
@@ -330,8 +298,10 @@ export function coinRedoToolOf(state: GameState, body: InPlayPokemon): string | 
   return null;
 }
 
-/** 🆕🆕🆕 §7.4 / §8 (D646) — a Backtrack Badge offer answered YES: `COINS_REFLIPPED` (the `count` coins ignored) and the
-    Badge's once-per-turn key on `allowances.abilitiesUsed`. A uid carrying no `reflipAttackCoins` spends nothing. */
+/**
+ * A Backtrack Badge offer answered yes: `COINS_REFLIPPED` and the Badge's once-per-turn key. A uid
+ * without `reflipAttackCoins` spends nothing.
+ */
 export function spendCoinRedo(
   state: GameState,
   seat: Seat,
@@ -352,13 +322,11 @@ export function spendCoinRedo(
   };
 }
 
-/** 🆕🆕🆕 D562 — the in-effect Tools on `holder` whose printed sentence is keyed to an
-    attack FROM YOUR OPPONENT'S Pokémon, each with its passive. The seat half of every
-    consumable's antecedent, asked in ONE place: `holder`'s seat is derived off the live
-    board (`seatOfPokemon`) and must differ from `attackerSeat`, so an own-side spread or
-    snipe (D425/D447) reaches none of them. An unplaceable holder answers none — the
-    conservative direction (a consumable pays LESS, never more). Through `toolsInEffect`,
-    so Jamming Tower silences every consumable. */
+/**
+ * The in-effect Tools on `holder` whose sentence is keyed to an attack from the opponent's Pokémon.
+ * The holder's seat must differ from `attackerSeat`, so an own-side spread reaches none; an
+ * unplaceable holder answers none (the conservative direction).
+ */
 function opposedToolPassives(
   state: GameState,
   holder: InPlayPokemon,
@@ -375,26 +343,22 @@ function opposedToolPassives(
   return out;
 }
 
-/** 🆕🆕🆕 D562 — the answer a consumable scan gives when it is not asked: nothing to add,
-    nothing to discard. What a §8.5 site holds in place of `berryReductionOf` on a hit
-    the Berry cannot reach (a suppressed target, a hit stopped at damage step 2). */
+/**
+ * The consumable answer when not asked: nothing to add, nothing to discard (a suppressed target, or
+ * a hit stopped before damage).
+ */
 export const NO_CONSUMABLE: { amount: number; toolUids: readonly string[] } = {
   amount: 0,
   toolUids: [],
 };
 
-/** 🆕🆕🆕 §8.5 (D562) — THE BERRY: the post-W/R reduction the six type Berries grant
-    `holder` against THIS `attacker` (*"If the Pokémon this card is attached to is damaged
-    by an attack from your opponent's {X} Pokémon, it takes 60 less damage (after applying
-    Weakness and Resistance), and discard this card."*), and the Tools that pay it. The
-    ATTACKER gate lives here: an opposing seat (`opposedToolPassives`) and the printed type
-    [🆕🆕🆕 D578 (D539): the IN-PLAY type — all four callers pass the attacker's `inPlayCardOf`
-    view, so an attacking Scovillain ex trips a Grass Berry and a Fire Berry alike]
-    among the attacking card's `types` (`preventsAttackerType`'s reading of §8.5's type
-    word). NOT folded by `passivesOf`, which sums into numbers and cannot say which Tool
-    paid. Read at the four §8.5 sites and summed into their `reduction`; the caller
-    discards `toolUids` when the hit is not prevented (R-BE). No Active clause, so it
-    pays on the Bench too. */
+/**
+ * §8.5: the type Berries' post-W/R reduction for `holder` against this attacker ("…takes 60 less
+ * damage… and discard this card"), and the Tools that pay it. The attacker must be on the opposing
+ * seat and its in-play types must include the Berry's type. Not folded by `passivesOf`, which
+ * cannot say which Tool paid; the caller discards `toolUids` when the hit is not prevented. No
+ * Active clause, so it applies on the Bench too.
+ */
 export function berryReductionOf(
   state: GameState,
   holder: InPlayPokemon,
@@ -412,13 +376,11 @@ export function berryReductionOf(
   return { amount, toolUids };
 }
 
-/** 🆕🆕🆕 §8.5 (D619) — the ATTACKER-GATED post-W/R reduction `holder` takes from THIS `attacker`
-    (*"… takes {N} less damage from attacks from your opponent's <class> Pokémon (after applying
-    Weakness and Resistance)."*): the sum of `reductions` (`passivesOf(…).damageReductionsFromAttacker`)
-    whose `attacker` filter the attacking card matches (`matchesFilter`, on the attacker's in-play view
-    as every caller passes it). The printed "your opponent's" is the seat test (`berryReductionOf`'s):
-    an own-side hit or an unresolvable attacker gets 0. Summed into the four §8.5 sites' `reduction`
-    on their on-target arm. */
+/**
+ * §8.5: the attacker-gated post-W/R reduction ("…takes N less damage from attacks from your
+ * opponent's <class> Pokémon"): the sum of entries whose `attacker` filter the attacker's in-play
+ * card matches. An own-side hit or unresolvable attacker gets 0.
+ */
 export function attackerGatedReductionOf(
   state: GameState,
   holder: InPlayPokemon,
@@ -435,14 +397,11 @@ export function attackerGatedReductionOf(
   return amount;
 }
 
-/** 🆕🆕🆕 §8.1 (D562) — THE SURVIVAL BRACE on `holder` that would answer an attack from
-    `attackerSeat` (*"If the Pokémon this card is attached to has full HP and would be
-    Knocked Out by damage from an attack from your opponent's Pokémon, it is not Knocked
-    Out, and its remaining HP becomes 10. Then, discard this card."*), or `undefined`.
-    Only the SOURCE half: the full-HP and lethality halves are `koSurvivalClamp`'s, which
-    calls this and names the uid in its result so the damage write can discard it. The
-    first in-effect Brace (§7.4 allows one Tool per body). [🆕🆕🆕 D643 (D539): ~~one Tool per body~~ — a Rotom under
-    Multi Adapter may carry 2; the first in-effect Brace still answers (R-MAD3).] */
+/**
+ * §8.1: the Survival Brace on `holder` that would answer an attack from `attackerSeat`, or
+ * `undefined`. Only the source half; the full-HP and lethality checks are `koSurvivalClamp`'s. The
+ * first in-effect Brace answers.
+ */
 export function survivalBraceOf(
   state: GameState,
   holder: InPlayPokemon,
@@ -453,14 +412,11 @@ export function survivalBraceOf(
   )?.uid;
 }
 
-/** 🆕🆕🆕 §9 (D562) — THE DELUXE BOMB recoil on `holder`: the HP of damage counters its
-    in-effect Bombs put on the Attacking Pokémon (*"If the Pokémon this card is attached
-    to is in the Active Spot and is damaged by an attack from your opponent's Pokémon
-    (even if this Pokémon is Knocked Out), put 12 damage counters on the Attacking
-    Pokémon. If you placed any damage counters in this way, discard this card."*), and the
-    Tools that pay it. Asked ONLY where the `damageAttacker` recoil is — attack.ts's main
-    hit and interpreter.ts `reactToAttackDamage` — and both damage an ACTIVE, so the
-    printed "in the Active Spot" is discharged by placement, not re-asked here (R-DB). */
+/**
+ * §9: the Deluxe Bomb recoil on `holder` (12 counters on the Attacking Pokémon, then discard), and
+ * the Tools that pay it. Asked only where the attacker recoil is, and both sites damage an Active,
+ * so "in the Active Spot" is satisfied by placement.
+ */
 export function deluxeBombOf(
   state: GameState,
   holder: InPlayPokemon,
@@ -480,9 +436,10 @@ export function deluxeBombOf(
   return { amount, toolUids };
 }
 
-/** 🆕🆕🆕 §9 (D620) — TREMENDOUS BOMB's three gates (`damageAttackerActiveThenDiscardIf`): the hit's
-    `dealt` reaches `minDamage` (R-TRB1: this one hit), the attacking Active's in-play card matches
-    `attacker`, and the holder's in-play card does NOT match `holderNot`. Its counters, or `undefined`. */
+/**
+ * §9: Tremendous Bomb's three gates: this hit's `dealt` reaches `minDamage`, the attacking Active
+ * matches `attacker`, and the holder does not match `holderNot`. Its counters, or `undefined`.
+ */
 function gatedBombOf(
   state: GameState,
   holder: InPlayPokemon,
@@ -501,26 +458,22 @@ function gatedBombOf(
     : gated.amount;
 }
 
-/** 🆕🆕🆕 §12 (D562) — does the in-play Stadium shield `pokemon` from every Special
-    Condition? Festival Grounds `sv06-149`/`sv08.5-108`: *"Each Pokémon that has any
-    Energy attached (both yours and your opponent's) recovers from all Special Conditions
-    and can't be affected by any Special Conditions."* "Any Energy" is a card count, so
-    `energy.length > 0` (Regirock "Rock Armor"'s reading, D559). Live-read, no seat, no §9
-    gate (a Stadium). Asked by interpreter.ts `applyStatus` (the refusal half) and flow.ts
-    `recoverStatuses` (the recovery half) — the same two-clause split Therapeutic Energy's
-    `statusImmunities`/`statusRecovery` pair makes (R-FG). */
+/**
+ * §12: does the Stadium shield `pokemon` from every Special Condition? Festival Grounds: "Each
+ * Pokémon that has any Energy attached… recovers from all Special Conditions and can't be affected
+ * by any Special Conditions." No seat and no §9 gate (a Stadium).
+ */
 export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): boolean {
   return (
     stadiumEffectsOf(state)?.statusShieldIfEnergyAttached === true && pokemon.energy.length > 0
   );
 }
 
-/** 🆕🆕🆕 §10 (D618) — does the in-play Stadium let `target` evolve into `evolution` although it came
-    into play (or evolved) this turn? Forest of Vitality: *"Each player's {G} Pokémon can evolve into {G}
-    Pokémon during the turn they play those Pokémon, except during their first turn."* The body's IN-PLAY
-    types (`effectiveTypesOf`) and the evolution card's PRINTED types must both include the Stadium's
-    `type`. Asked by turn.ts `evolve` at the §10 ban only; §4's first-turn ban is not lifted (R-FOV1).
-    No seat ("each player's") and no §9 gate (a Stadium). */
+/**
+ * §10: does the Stadium let `target` evolve into `evolution` although it came into play this turn?
+ * Forest of Vitality: the body's in-play types and the evolution's printed types must both include
+ * the Stadium's type. §4's first-turn ban is not lifted. No seat and no §9 gate.
+ */
 export function stadiumLicensesSameTurnEvolve(
   state: GameState,
   target: InPlayPokemon,
@@ -534,80 +487,18 @@ export function stadiumLicensesSameTurnEvolve(
   );
 }
 
-/** §9 — the top uids of every in-play Pokémon whose Abilities are currently
-    suppressed by a continuous Ability-lock AURA (Klefki "Mischievous Lock" /
-    Spiritomb "Fettered in Misfortune" / Ting-Lu ex "Cursed Land"). A single
-    UNGATED pass over both boards: each lock is read straight off its source's
-    printed passive (never through the gated ability-read sites, so a lock cannot
-    turn itself — or, deliberately, another lock — off), and its target predicate
-    is then evaluated against every in-play Pokémon. The four ability read sites
-    (useAbility, passivesOf, triggersOf, the HUD redactor) consult the returned
-    Set by top uid. Empty when no lock is in play, so every board without one is
-    byte-identically unaffected.
-
-    KNOWN LIMITATION (documented follow-up, not this slice) [🆕🆕🆕 D571 (D539): the
-    one-pass read is REPLACED by the stratified pass (the D571 paragraph at the end of this
-    block), but the EXAMPLE below is NOT paid — it is CONTRADICTED. A damaged Klefki opposite
-    an Active Ting-Lu ex is a MUTUAL cycle (Klefki reaches Ting-Lu ex, a Basic with no ex
-    exemption on Mischievous Lock; Cursed Land reaches the damaged non-ex Klefki), and R-LK2
-    keeps a source cycle BOTH ON — so "should switch Mischievous Lock off" is WITHDRAWN as a
-    ruling the engine follows (R-LK2 ⚠️ UNRULED rules the cycle both-on; pinned in
-    `abilityLock.test.ts`, the damaged-Klefki rung). What D571 flipped is the ONE-WAY board
-    (an UNDAMAGED Klefki)]: a lock does not
-    disable ANOTHER lock's source — the aura-disables-aura fixpoint (e.g. an Active
-    Ting-Lu ex opposite a damaged Klefki, which by the rules should switch
-    Mischievous Lock off) resolves as if both auras stay on. The three cards in
-    scope never mute a NON-lock ability of another lock's source, so this only
-    bites lock-vs-lock, which needs a fixpoint pass rather than one ungated read.
-
-    🆕🆕🆕 **D559 CORRECTION (D539) — FIVE CARDS ARE IN SCOPE, NOT THREE, AND THE
-    LIMITATION IS ARGUED UNREACHABLE AMONG THE LOCKS THIS REGISTRY BUILDS — NOT IN
-    STANDARD AT LARGE (D559 R-LK1).** Flutter Mane "Midnight Fluttering" and Gastrodon
-    "Sticky Bind" joined, and Klefki, Spiritomb and Ting-Lu ex have ROTATED. Among the two
-    legal locks the registry BUILDS [🆕🆕🆕 D571 (D539): THREE — see the D571 paragraph below] [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source] no lock can switch off another lock's source: Flutter
-    Mane reaches only the OPPOSING Active and exempts itself by name (a mirror Flutter
-    Mane keeps its lock); Gastrodon reaches only BENCHED Stage 2 bodies, an Active
-    Gastrodon's lock is already off (`sourceOnBench`), and neither built source is a
-    Stage 2. ⚠️ Standard prints two more locks this registry does NOT build: Iron Thorns
-    ex `sv06-077`/`-196`/`sv08.5-032` "Initialization" (Active-sourced, Rule Box bodies,
-    except Future Pokémon) and the Stadium Team Rocket's Watchtower `sv10-180` ({C}
-    bodies) (🆕🆕🆕 D566 CORRECTION (D539): the Watchtower is BUILT — `StadiumEffects.
-    disableAbilities`, collected below — and R-LK1 still holds with it: a Stadium cannot be
-    silenced, and neither legal Pokémon lock source is {C} — Flutter Mane {P}, Gastrodon
-    {F} — so it switches no lock off; Iron Thorns ex stays the one unbuilt legal lock [🆕🆕🆕 D571 (D539): no longer — it is BUILT]). The first re-opens the gap: an Active Flutter Mane silences an opposing
-    Active Iron Thorns ex, whose lock the rules then switch off and this ungated pass
-    would keep on. So R-LK1 holds only while Initialization is UNBUILT [🆕🆕🆕 D571 (D539): it is BUILT, and R-LK1 is SUPERSEDED by R-LK2 below], and the fixpoint
-    pass is OWED in the slice that builds it (a tripwire in `abilityBundleD559.test.ts`
-    (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: still TRUE — Initialization stays UNBUILT at D569 [🆕🆕🆕 D571 (D539): BUILT at D571]. What changed is that Iron Thorns ex is now a FUTURE Pokémon to the engine (`banners.ts`), so it RECEIVES Cobalt Command's +20, Peak Acceleration's attach and Reboot Pod's attach while its own lock is still unbuilt; none of that touches a lock source, so R-LK1 and the ungated pass stand)
-    §7 fails first). So the ungated pass stays; the rotated three still show the
-    fixpoint gap on fixtures (Klefki vs Flutter Mane: both locks stay on, pinned in
-    `abilityBundleD559.test.ts`).
-
-    🆕🆕🆕 **D571 — THE FIXPOINT LANDED WITH INITIALIZATION (R-LK2 ⚠️ UNRULED, decisions.md
-    D571), AND THE "TWO LEGAL LOCKS THE REGISTRY BUILDS" ARE THREE.** [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source; it is a holder-tagged Pokémon aura in the pass below, so an Active Flutter Mane switches an opposing Active Psyduck's Damp OFF, `dampD632.test.ts` §5.] Iron Thorns ex
-    "Initialization" is built (`ruleBox`, `exemptBanner "Future"`, Active-sourced). The
-    collection below stays ungated, but each Pokémon aura is now tagged with its HOLDER and
-    the auras are settled by a STRATIFIED pass before any target is marked: an aura is ON
-    once every aura reaching its holder is OFF (vacuously, when none does; a Stadium has no
-    holder and is always ON), OFF once an ON aura reaches its holder; what that leaves
-    undecided holds the mutual cycles AND the locks downstream of them, so only the SOURCE
-    cycles (no undecided lock outside them reaches them) are switched ON and the grounding
-    re-runs, until nothing is undecided — so the Klefki-vs-Flutter Mane both-on pin above STANDS, while
-    an Active Flutter Mane now switches an opposing Active Iron Thorns ex's lock OFF
-    (one-way: Flutter Mane has no Rule Box). Only ON auras mark targets. The pass runs only
-    for two or more auras, so every board with one lock or none is byte-identical, and the
-    call sites read the same Set. Rotated fallout, pinned: an undamaged Klefki switches an
-    opposing Ting-Lu ex's Cursed Land OFF (`abilityLock.test.ts`, its KNOWN LIMITATION
-    retitled and flipped); Initialization switches Ting-Lu ex OFF; and Ting-Lu ex vs a damaged
-    Flutter Mane is a source cycle (both ON) that switches a damaged benched Gastrodon OFF
-    (`ironThornsD571.test.ts` §2). Klefki also silences a Spiritomb, whose OFF verdict no board
-    can observe (Klefki's Basics contain every Basic V Spiritomb reaches) — named, not pinned. */
+/**
+ * §9: the top uids of every in-play Pokémon whose Abilities are suppressed by an Ability-lock aura.
+ * Auras are collected ungated off each source's printed passive, tagged with their holder, then
+ * settled by a stratified pass: an aura is on once every aura reaching its holder is off, off once
+ * an on aura reaches its holder, and mutual source cycles are kept both on. Only on auras mark
+ * targets. A Stadium lock has no holder and is always on.
+ */
 export function disabledAbilityUids(state: GameState): Set<string> {
   const disabled = new Set<string>();
-  // Collect the live auras first (ungated), each tagged with its source's seat.
-  // 🆕🆕🆕 D571 — and with its HOLDER (the source body, its top card and whether it is
-  // Active), so the stratified pass below can ask whether ANOTHER aura reaches it. A
-  // Stadium's aura has no holder (`null`): no Ability can silence a Stadium.
+  // Collect the live auras first (ungated), each tagged with its source's seat and its holder, so
+  // the pass below can ask whether another aura reaches it. A Stadium's aura has no holder: no
+  // Ability can silence a Stadium.
   const auras: {
     aura: NonNullable<PassiveEffects["disableAbilities"]>;
     sourceSeat: Seat;
@@ -622,8 +513,7 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       const aura = programFor(top.id)?.passive?.disableAbilities;
       if (aura === undefined) continue;
       if (aura.requiresActive === true && holder !== side.active) continue;
-      // 🆕🆕🆕 D559 — Gastrodon's *"As long as this Pokémon is on your Bench"*, the
-      // mirror of the line above and spelled with the same test.
+      // Gastrodon's "As long as this Pokémon is on your Bench".
       if (aura.sourceOnBench === true && holder === side.active) continue;
       auras.push({
         aura,
@@ -632,32 +522,18 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       });
     }
   }
-  // 🆕🆕🆕 D566 — THE STADIUM'S LOCK (Team Rocket's Watchtower `sv10-180`, *"{C} Pokémon in
-  // play (both yours and your opponent's) have no Abilities."*), collected BEFORE the no-aura
-  // return so a board whose only lock is the Stadium is not waved through. The same aura
-  // type and the same `auraSuppresses` as a Pokémon's; `sourceSeat` is the Stadium's OWNER,
-  // which no `side "both"` aura reads. Ungated like every aura here — and a Stadium is no
-  // Ability, so no lock can silence it (R-ST2's reason; R-LK1 restated in decisions.md D566).
+  // The Stadium's lock (Team Rocket's Watchtower: "{C} Pokémon in play… have no Abilities"),
+  // collected before the no-aura return so a board whose only lock is the Stadium is not skipped.
   const stadiumAura = stadiumEffectsOf(state)?.disableAbilities;
   if (stadiumAura !== undefined && state.stadium !== null) {
     auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner, holder: null });
   }
   if (auras.length === 0) return disabled;
-  // 🆕🆕🆕 D571 — R-LK2 ⚠️ UNRULED, THE STRATIFIED LOCK PASS (the fixpoint D559 owed to the
-  // slice that builds Initialization). `true` = ON, `false` = OFF, `undefined` = undecided.
-  // Settled by a GROUNDED fixpoint over "aura j reaches aura i's holder": an aura is ON once
-  // every aura reaching its holder is OFF (vacuously, when none does — and always for a
-  // Stadium, which has no holder), and OFF once an ON aura reaches its holder. When nothing
-  // changes, every aura still undecided has an undecided reacher, so the undecided auras hold
-  // at least one mutual cycle — but an aura DOWNSTREAM of a cycle is undecided too (the D571
-  // review's board: Ting-Lu ex vs a damaged Flutter Mane, with a damaged benched Gastrodon
-  // reached only by Ting-Lu). So only the SOURCE cycles are switched ON — the strongly
-  // connected groups of undecided auras that no undecided aura outside them reaches (Klefki
-  // vs Flutter Mane, D559 §7: both locks keep locking, as before) — and the grounding is run
-  // again, which then decides everything they reach. Repeat until nothing is undecided; each
-  // round decides at least one source cycle, so it ends. Run only for two or more auras: a
-  // lone aura is ON either way, so every board with one lock or none keeps D559's single
-  // ungated read byte for byte.
+  // The stratified lock pass. `true` = on, `false` = off, `undefined` = undecided. Ground
+  // repeatedly: an aura is on once every aura reaching its holder is off (vacuously for a Stadium),
+  // off once an on aura reaches its holder. When nothing changes, switch on only the source cycles
+  // (strongly connected undecided groups no outside undecided aura reaches) and ground again; each
+  // round decides at least one cycle, so it ends. Run only for two or more auras.
   const on: (boolean | undefined)[] = auras.map(() => true);
   if (auras.length >= 2) {
     // `reachedBy[i]` — the auras whose predicate reaches aura i's HOLDER. A Pokémon aura's
@@ -700,8 +576,8 @@ export function disabledAbilityUids(state: GameState): Set<string> {
         }
         return seen;
       });
-      // A SOURCE cycle member: on a cycle (it reaches itself), and every undecided aura that
-      // reaches it is one it reaches back — kept ON (D559 §7's Klefki-vs-Flutter Mane pin).
+      // A source cycle member: it reaches itself, and every undecided aura reaching it is one it
+      // reaches back. Kept on.
       const sources = upstream.flatMap((up, i) =>
         up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],
       );
@@ -709,9 +585,8 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       for (const i of sources) on[i] = true;
     }
   }
-  // Then evaluate each aura's target predicate against every in-play Pokémon. Only an aura
-  // the pass switched OFF stays silent (`!== false`): one left undecided — unreachable, since
-  // every round above decides a source cycle — reads ON, D559's ungated default.
+  // Evaluate each aura's targets. Only an aura switched off stays silent (`!== false`); an
+  // undecided one would read on.
   for (const targetSeat of SEATS) {
     const side = state.players[targetSeat];
     const targets = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -719,8 +594,7 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       const top = topCardOf(state, target);
       const uid = topUid(target);
       if (top === undefined || uid === undefined) continue;
-      // 🆕🆕🆕 D559 — the TARGET's zone, for `targetZone` (Flutter Mane's "Active
-      // Pokémon", Gastrodon's "Benched Stage 2 Pokémon").
+      // The target's zone, for `targetZone`.
       const isActive = target === side.active;
       if (
         auras.some(
@@ -744,7 +618,7 @@ function auraSuppresses(
   targetSeat: Seat,
   target: InPlayPokemon,
   top: Card,
-  /** 🆕🆕🆕 D559 — is `target` its side's ACTIVE Pokémon (else Benched)? */
+  /** Is `target` its side's Active Pokémon (else Benched)? */
   isActive: boolean,
 ): boolean {
   if (aura.side === "opponent" && targetSeat === sourceSeat) return false;
@@ -754,25 +628,18 @@ function auraSuppresses(
   if (aura.targetZone === "bench" && isActive) return false;
   if (aura.suffix !== undefined && pokemonSuffixOf(top) !== aura.suffix) return false;
   if (aura.requiresDamage === true && target.damage <= 0) return false;
-  // 🆕🆕🆕 D566 — Team Rocket's Watchtower's "{C} Pokémon": the target's PRINTED types (R-WT1 —
-  // ~~exact while no type-changing passive is built; pinned by a registry walk~~ 🆕🆕🆕 D578
-  // (D418/D539): WITHDRAWN as stated — a type-changing passive IS built (Scovillain ex "Double
-  // Type", `typesInPlay`), and this read STAYS PRINTED on purpose: the effective reader
-  // (`inPlayCardOf`) asks `disabledAbilityUids`, which is the function this line sits under, so
-  // reading it here would recurse. It stays EXACT because no `typesInPlay` value and no
-  // holder's printed types name {C} — a retype can neither add nor remove {C} — pinned by a
-  // registry walk in `scovillainD578.test.ts`, and the R-WT1 tripwire in
-  // `trainerBundleD566.test.ts` now names `typesInPlay`.)
+  // Watchtower's "{C} Pokémon" reads printed types on purpose: the in-play reader (`inPlayCardOf`)
+  // calls `disabledAbilityUids`, so reading it here would recurse. It stays exact because no retype
+  // adds or removes {C}.
   if (aura.targetType !== undefined && !(top.types ?? []).includes(aura.targetType)) return false;
-  // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization": *"Pokémon with a Rule Box in play … except
-  // for Future Pokémon"* — the Rule Box narrowing, then the banner exemption (by printing id).
+  // Iron Thorns ex "Initialization": "Pokémon with a Rule Box in play… except for Future Pokémon".
   if (aura.ruleBox === true && !hasRuleBox(top)) return false;
   if (
     aura.exemptBanner !== undefined &&
     matchesFilter(top, { kind: "bannerPokemon", banner: aura.exemptBanner })
   )
     return false;
-  // 🆕🆕🆕 D632 — Damp: only a body with an Ability that Knocks Out the Pokémon using it (R-DMP1).
+  // Damp: only a body with an Ability that Knocks Out the Pokémon using it.
   if (aura.selfKnockOutAbility === true && !hasSelfKnockOutAbility(top)) return false;
   if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
   if (
@@ -783,28 +650,21 @@ function auraSuppresses(
   return true;
 }
 
-/** 🆕🆕🆕 D632 — Damp's Ability class: does `top`'s REGISTRY program hold an activated Ability whose program
-    Knocks Out its own user (`knockOutSelf` at its top level)? Over both corpora: Cursed Blast (Dusclops,
-    Dusknoir) and Overvolt Discharge (Magneton). A registry walk in `dampD632.test.ts` pins that no
-    `knockOutSelf` sits deeper, or in a `triggered` program, and that each holder prints that one Ability. */
+/**
+ * Damp's Ability class: does `top`'s registry program hold an activated Ability that Knocks Out its
+ * own user (`knockOutSelf` at its top level)?
+ */
 export function hasSelfKnockOutAbility(top: Card): boolean {
   return (programFor(top.id)?.abilities ?? []).some((ability) =>
     ability.program.some((op) => op.op === "knockOutSelf"),
   );
 }
 
-/** §8.5 — does `seat` currently have a live "Your Pokémon in play have no
-    Weakness" aura (Florges "Blooming Garden")? A source is any of the seat's OWN
-    in-play Pokémon — Active or Bench, since the printed Ability carries no "in the
-    Active Spot" clause — whose TOP card's passive sets `removeWeakness`, provided
-    that source's own Ability is not itself suppressed by a §9 lock (a damaged
-    Florges opposite Ting-Lu ex "Cursed Land" loses the aura — Florges is a Stage 2,
-    not ex — so this joins the `disabledAbilityUids` checklist every non-lock
-    Ability surface must). The two Weakness read sites (attack.ts main hit,
-    interpreter.ts snipeActive) call this on the DEFENDER's seat to null its
-    Weakness before the pipeline; Resistance is untouched. Cheap on the common
-    path: the lock scan runs only once a `removeWeakness` source is found, so a
-    board with no Florges pays nothing. */
+/**
+ * §8.5: does `seat` have a live "Your Pokémon in play have no Weakness" aura (Florges "Blooming
+ * Garden")? A source is any of the seat's own in-play Pokémon, Active or Bench, whose Ability is
+ * not §9-suppressed. The lock scan runs only once a source is found.
+ */
 export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -818,22 +678,12 @@ export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
   return false;
 }
 
-/** 🆕🆕🆕 §8.5 (D559) — the type an OPPONENT-SIDE Weakness REWRITE makes
-    `defenderCard`'s Weakness right now, or `null` for none: Lillie's Clefairy ex "Fairy
-    Zone" — *"The Weakness of each of your opponent's {N} Pokémon in play is now {P}.
-    (Apply Weakness as ×2.)"*. `seatRemovesWeakness`'s scan one function up, turned to
-    face the other way: the SOURCES are the top cards on the defender's OPPONENT's board
-    (`otherSeat(defenderSeat)`), Active and Bench (no zone clause), each §9-gated through
-    `disabledAbilityUids`; the source matches when `defenderCard.types` includes its
-    `targetType`. Handed to cards.ts `weaknessOf` as its `rewrite` at BOTH Weakness sites
-    (attack.ts main hit, interpreter.ts `snipeActive`), AFTER the three null paths.
-    🆕🆕🆕 D640 (D539): ~~this is `weaknessOf`'s `rewrite` alone~~ — every site now passes
-    `installedWeaknessRewriteOf(…) ?? seatWeaknessRewrite(…)` (Overwriting Bolt's installed
-    rewrite first, R-OWB1 ⚠️ UNRULED), so this answers only when the body carries none.
-    `undefined` (an unreadable defender) is `null` — no rewrite, the conservative
-    direction. The first matching source answers: every legal source prints the same
-    `{P}`, so two Clefairy agree. Cheap on the common path: the lock scan runs only once a
-    source is found. */
+/**
+ * §8.5: the type an opponent-side Weakness rewrite makes `defenderCard`'s Weakness, or `null`
+ * (Lillie's Clefairy ex "Fairy Zone"). Sources are the top cards on the defender's opponent's
+ * board, Active and Bench, each §9-gated; the first matching source answers. Callers prefer an
+ * installed rewrite over this.
+ */
 export function seatWeaknessRewrite(
   state: GameState,
   defenderSeat: Seat,
@@ -854,12 +704,11 @@ export function seatWeaknessRewrite(
   return null;
 }
 
-/** 🆕🆕🆕 §8.5 (D644) — Illumise `30th-004` "Supereffective Pheromones": *"If you have Volbeat in play, apply
-    Weakness for both Active Pokémon as ×3."* The amount a multiplicative Weakness is applied as right now, or `null`
-    for the printed one. A holder sits on EITHER board (Active or Bench, no zone clause), its Ability live (§9), and
-    its OWN board has a body whose top card is named `rule.name` (R-SPH2 ⚠️ UNRULED: "you have" is the holder's
-    owner; a Volbeat on the other side does not count). The first live holder answers: every printing says ×3, so
-    two Illumise agree. */
+/**
+ * §8.5: Illumise "Supereffective Pheromones" ("If you have Volbeat in play, apply Weakness for both
+ * Active Pokémon as ×3"). The override amount, or `null`. A holder on either board with a live
+ * Ability, whose own board has a body named `rule.name`.
+ */
 export function weaknessAmountOverride(state: GameState): number | null {
   for (const seat of SEATS) {
     const side = state.players[seat];
@@ -877,9 +726,10 @@ export function weaknessAmountOverride(state: GameState): number | null {
   return null;
 }
 
-/** 🆕🆕🆕 §8.5 (D644) — `weaknessAmountOverride`'s amount laid over a Weakness that applies. R-SPH1 ⚠️ UNRULED: only a
-    MULTIPLICATIVE Weakness is rewritten (every Standard Weakness is ×2, a Fairy Zone / Overwriting Bolt rewrite
-    included); no Weakness stays none, and an old-era additive one is left as printed. */
+/**
+ * Lays `weaknessAmountOverride` over a Weakness that applies. Only a multiplicative Weakness is
+ * rewritten; an additive one is left as printed.
+ */
 export function withWeaknessAmount(
   weakness: DamageModifier | null,
   amount: number | null,
@@ -888,9 +738,10 @@ export function withWeaknessAmount(
   return { op: "multiply", amount };
 }
 
-/** 🆕🆕🆕 §9 (D644) — Ferrothorn "Startling Drop"'s retort, read off the card `uid` names wherever it lies (it has
-    just left the deck): its program's `opponentMillWhenMilled`, or `undefined`. interpreter.ts
-    `startlingDropRetort` is the one reader. */
+/**
+ * §9: Ferrothorn "Startling Drop"'s retort, read off the card wherever it lies (it has just left
+ * the deck), or `undefined`.
+ */
 export function opponentMillRetortOf(
   state: GameState,
   uid: string,
@@ -898,10 +749,10 @@ export function opponentMillRetortOf(
   return programFor(state.cardIdByUid[uid] ?? "")?.opponentMillWhenMilled;
 }
 
-/** 🆕🆕🆕 §9 (D644) — Patrat `me04-070` "Watchful Eye": *"Damage counters on each Pokémon (both yours and your
-    opponent's) can't be moved to other Pokémon."* True while a holder whose Ability is live (§9) is in play on
-    EITHER board, Active or Bench. Asked by interpreter.ts `stepOp` before every counter-move op and by cardplay.ts
-    `programPlayable` (R-WEY1 ⚠️ UNRULED). */
+/**
+ * §9: Patrat "Watchful Eye" ("Damage counters on each Pokémon… can't be moved to other Pokémon").
+ * True while a holder with a live Ability is in play on either board.
+ */
 export function countersMoveLocked(state: GameState): boolean {
   for (const seat of SEATS) {
     const side = state.players[seat];
@@ -916,15 +767,11 @@ export function countersMoveLocked(state: GameState): boolean {
   return false;
 }
 
-/** 🆕🆕🆕 §13.2 (D560) — the EXTRA Burn damage owed to `burnedSeat`'s Burned Active at
-    this Checkup: Magmortar "Magma Surge" — *"During Pokémon Checkup, put 3 more damage
-    counters on your opponent's Burned Pokémon."* `seatWeaknessRewrite`'s scan one
-    function up, SUMMED rather than first-match: the sources are the top cards on the
-    burned body's OPPONENT's board (`otherSeat(burnedSeat)`), Active and Bench (no zone
-    clause), each §9-gated through `disabledAbilityUids`; no *"doesn't stack"* is
-    printed, so two Magmortar pay twice (R-MG). Read ONCE, flow.ts `runCheckup`'s §13.2
-    block, before the cure flip. 0 on a board with no Magmortar — and the lock scan
-    runs only once a source is found. */
+/**
+ * §13.2: the extra Burn damage owed to `burnedSeat`'s Burned Active (Magmortar "Magma Surge").
+ * Sources are on the opponent's board, §9-gated, and summed: no "doesn't stack" is printed, so two
+ * Magmortar pay twice.
+ */
 export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): number {
   const side = state.players[otherSeat(burnedSeat)];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -941,16 +788,11 @@ export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): numbe
   return extra;
 }
 
-/** 🆕🆕🆕 §9 (D572) — may `ownerSeat`'s in-play cards (a Pokémon, or anything attached to one)
-    NOT be put into `ownerSeat`'s hand right now? Milotic `sv06-050` "Mentally Calm" — *"Your
-    opponent's Pokémon in play and all attached cards can't be put into your opponent's hand."*
-    `seatBurnExtraCounters`' scan one function up, first-match: the sources are the top cards on
-    `ownerSeat`'s OPPONENT's board, Active and Bench (no zone clause), each §9-gated through
-    `disabledAbilityUids` (a locked Milotic locks nothing). Keyed on the OWNER of the moving card
-    and never on who moves it, so the Milotic owner's own effects aimed at the opponent's board are
-    stopped too (R-MC1, ⚠️ UNRULED). Read at EVERY in-play → hand writer (the D572 trace,
-    decisions.md) and by `yourInPlayToHandAllowed`. False on a board with no Milotic, and the lock
-    scan runs only once a source is found. */
+/**
+ * §9: may `ownerSeat`'s in-play cards not be put into its hand right now? Milotic "Mentally Calm":
+ * sources on the opponent's board, §9-gated. Keyed on the owner of the moving card, never on who
+ * moves it.
+ */
 export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean {
   const side = state.players[otherSeat(ownerSeat)];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -965,26 +807,13 @@ export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean 
   return false;
 }
 
-/** 🆕🆕🆕 §8.1 (D572) — the uids Huntail `sv10-055` "Diver's Catch" puts into `seat`'s HAND
-    instead of the discard pile when `body` (on `seat`'s board) is Knocked Out, or `[]`. ASKED OF
-    THE PRE-BATCH BOARD by flow.ts `collectKnockOutPass`, and ONLY for a Knock Out by damage from
-    an attack from the opponent's Pokémon (the caller's `byAttackFor` and seat clauses — this
-    function does not know the cause). Three board conjuncts, each a printed clause:
-      • a LIVE, UNSUPPRESSED holder on `seat`'s board (Active or Bench) — the first top card
-        carrying `koBasicEnergyToHand` that `disabledAbilityUids` does not silence. R-DC2 (⚠️
-        UNRULED): the holder may be the dying body itself or die in the same batch — the board
-        is the pre-batch one, `koPrizeReduction`'s precedent;
-      • the dying body is a printed `{W}` Pokémon — `matchesFilter`'s `typedPokemon` on its TOP
-        card, the predicate every "your {X} Pokémon" reader shares (R-DC3a, ⚠️ UNRULED: the
-        PRINTED type; no SV-legal effect retypes a body) [🆕🆕🆕 D578 (D539): WITHDRAWN —
-        Scovillain ex "Double Type" is an SV-legal retype; the read is now the TOP card's IN-PLAY
-        view (`inPlayCardOf`), so R-DC3a reads the type the dying body IS while still in play
-        (moot for {W} today: Double Type is {G} and {R}, and a §9-locked holder is its printed card)];
-      • the move is not locked — `inPlayToHandBlocked(state, seat)` (R-DC3b, ⚠️ UNRULED:
-        Milotic "Mentally Calm" opposite sends the Energy to the discard as usual).
-    Then every attached Energy the `basicEnergy` filter of that type admits (a Special Energy and
-    a Basic Energy of another type stay in the discard path). The "you may" auto-fires (D27);
-    two holders do not stack (the first answers). */
+/**
+ * §8.1: the uids Huntail "Diver's Catch" puts into `seat`'s hand instead of the discard pile when
+ * `body` is Knocked Out, or `[]`. Asked of the pre-batch board, only for a KO by an opponent's
+ * attack (the caller's check). Needs a live holder on `seat`'s board (possibly the dying body
+ * itself), the dying body being {W} in play, and the move not blocked by `inPlayToHandBlocked`. The
+ * "you may" auto-fires; two holders do not stack.
+ */
 export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPokemon): string[] {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -999,7 +828,7 @@ export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPok
     break;
   }
   if (rescued === undefined) return [];
-  // 🆕🆕🆕 D578 — the KO'd body's IN-PLAY types (`inPlayCardOf`): it is still on the board here.
+  // The KO'd body's in-play types: it is still on the board here.
   if (!matchesFilter(inPlayCardOf(state, body), { kind: "typedPokemon", pokemonType: rescued }))
     return [];
   if (inPlayToHandBlocked(state, seat)) return [];
@@ -1009,18 +838,15 @@ export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPok
   );
 }
 
-/** 🆕🆕🆕 §8.1 (D598) — the uids Gengar `me03-050` "Infinite Shadow" puts into `seat`'s HAND
-    instead of the discard pile when `body` (on `seat`'s board) is Knocked Out, or `[]`. Asked of
-    the PRE-batch board by flow.ts `collectKnockOutPass` beside `koEnergyRescueUids`, and only for
-    a Knock Out by damage from an attack from the opponent's Pokémon (the caller's clauses). The
-    body's OWN top card must carry `koSelfToHand` and its Ability must be live
-    (`disabledAbilityUids`), and the move must not be locked (`inPlayToHandBlocked`, Milotic).
-    "It" is the Pokémon: every card of its `stack` (R-IS1, ⚠️ UNRULED — an evolved Gengar takes
-    its Gastly and Haunter with it); "(Discard all attached cards.)" is the Energy and Tools,
-    which stay on the discard path. */
-/** 🆕🆕🆕 §8.1 (D626) — the printed NAME of `body`'s Gengar ex "Fainting Spell" (`koAttackerOnCoinFlip`), or
-    null: the body's OWN top card carries it and its Ability is live (`disabledAbilityUids`). Asked by flow.ts
-    `faintingSpells` of a body still on the board, before the sweep — `koSelfToHandUids`' reading. */
+/**
+ * §8.1: the uids Gengar "Infinite Shadow" puts into `seat`'s hand when `body` is Knocked Out, or
+ * `[]`. Asked of the pre-batch board, only for a KO by an opponent's attack. The body's own top
+ * card must carry `koSelfToHand` with a live Ability, and the move must not be blocked. "It" is
+ * every card of the stack; attached Energy and Tools are discarded.
+ *
+ * The printed name of `body`'s Gengar ex "Fainting Spell", or null: its own top card carries it and
+ * its Ability is live.
+ */
 export function koAttackerOnCoinFlipOf(state: GameState, body: InPlayPokemon): string | null {
   const top = topCardOf(state, body);
   const ability = top === undefined ? undefined : programFor(top.id)?.passive?.koAttackerOnCoinFlip;
@@ -1039,14 +865,11 @@ export function koSelfToHandUids(state: GameState, seat: Seat, body: InPlayPokem
   return [...body.stack];
 }
 
-/** 🆕🆕🆕 §13.1 (D561) — the EXTRA Poison damage the in-play Stadium owes a Poisoned
-    body whose top card is `top`: Perilous Jungle `sv05-156` (*"…put 2 more damage
-    counters on each Poisoned non-{D} Pokémon (both yours and your opponent's)."*).
-    `seatBurnExtraCounters`' sibling one function up, with NO seat (the print says both
-    sides) and NO §9 gate (a Stadium is not an Ability). The exempt type reads the top
-    card's `types` array, so a dual-type body carrying {D} is exempt. 0 with no Stadium,
-    with a Stadium that prints no such clause, or on an exempt body. Read ONCE, flow.ts's
-    §13.1 loop, summed into that loop's one `COUNTERS_PLACED` row (R-PJ). */
+/**
+ * §13.1: the extra Poison damage the Stadium owes a Poisoned body (Perilous Jungle: "…2 more damage
+ * counters on each Poisoned non-{D} Pokémon"). No seat and no §9 gate. A dual-type body carrying
+ * {D} is exempt.
+ */
 export function stadiumPoisonExtraCounters(state: GameState, top: Card | undefined): number {
   const jungle = stadiumEffectsOf(state)?.poisonExtraCounters;
   if (jungle === undefined) return 0;
@@ -1056,40 +879,32 @@ export function stadiumPoisonExtraCounters(state: GameState, top: Card | undefin
   return jungle.amount;
 }
 
-/** 🆕🆕🆕 §10 (D563) — the Ability a card prints as its ONLY licence into play (Palafin ex
-    "Hero's Spirit": *"Put this Pokémon into play only with the effect of Palafin's Zero
-    to Hero Ability."* → `"Zero to Hero"`), or undefined. Off the CARD's own program, never
-    through `passivesOf`: the card is in a hidden zone when this is asked, and a §9
-    Ability-lock must not lift a restriction printed on the card being played. Here rather
-    than at the two read sites because interpreter.ts takes no runtime edge to
-    registry.ts; read by `evolve` (turn.ts) and `evolveFromDeckOffer` (interpreter.ts).
-    🆕🆕🆕 D565 — both reads are REFUSALS and stay so; the route the value names is Zero to
-    Hero's `switchWithDeckNamed` (interpreter.ts), which is BUILT and never asks this. */
+/**
+ * §10: the Ability a card prints as its only licence into play (Palafin ex "Hero's Spirit" → "Zero
+ * to Hero"), or undefined. Read off the card's own program, never `passivesOf`: the card is in a
+ * hidden zone, and a §9 lock must not lift a restriction printed on the card being played. Here
+ * because interpreter.ts takes no runtime edge to registry.ts.
+ */
 export function intoPlayOnlyViaOf(card: Card): string | undefined {
   return programFor(card.id)?.intoPlayOnlyVia;
 }
 
-/** 🆕 Card revision B06 — does this card print *"This card can't be put into your hand or deck
-    from the discard pile."* (`CardProgram.discardPileLocked`: Poké Vital A `sv06.5-062`,
-    Neutralization Zone `sv06.5-060`)? Off the CARD's own program, `intoPlayOnlyViaOf`'s reason
-    one function up (the card is in the discard pile, and interpreter.ts takes no runtime edge
-    to registry.ts). An unresolvable card is not locked. Read by interpreter.ts
-    `discardRetrievalCandidates`. */
+/**
+ * Does this card print "This card can't be put into your hand or deck from the discard pile"? Read
+ * off the card's own program. An unresolvable card is not locked.
+ */
 export function discardPileLockedOf(card: Card | undefined): boolean {
   return card !== undefined && programFor(card.id)?.discardPileLocked === true;
 }
 
-/** 🆕🆕🆕 §7.4 (D565) — does this Pokémon Tool card DO anything while attached? The ONE
-    predicate for "is this Tool simulated", EXTRACTED from `attachTool` (cardplay.ts), which
-    spelled it inline since D171 (a `passive`, or a `triggered` list that is non-empty), so
-    that Farfetch'd "Impromptu Carrier"'s `searchDeck { dest: "attachToSelf" }` offer
-    (interpreter.ts) asks exactly the question the hand attach asks and cannot come to offer
-    a Tool the hand refuses (R-IC1: an unsimulated Tool would occupy the one slot doing
-    nothing). Here rather than in cardplay.ts because interpreter.ts takes no runtime edge
-    to registry.ts (`intoPlayOnlyViaOf`'s reason, one function up). */
+/**
+ * §7.4: does this Tool do anything while attached? The one "is this Tool simulated" predicate,
+ * shared by the hand attach and Impromptu Carrier's deck offer so neither offers a Tool the other
+ * refuses. Here because interpreter.ts takes no runtime edge to registry.ts.
+ */
 export function toolCardSimulated(card: Card): boolean {
   const toolProgram = programFor(card.id);
-  // 🆕🆕🆕 D578 — …or it GRANTS attacks (Technical Machine: Fluorite, `toolAttacks`).
+  // …or it grants attacks (Technical Machine: Fluorite).
   return (
     toolProgram?.passive !== undefined ||
     (toolProgram?.triggered ?? []).length > 0 ||
@@ -1097,56 +912,30 @@ export function toolCardSimulated(card: Card): boolean {
   );
 }
 
-/** Every continuous modifier affecting one in-play Pokémon, aggregated from
-    its TOP card's printed passive (Bouffalant "Bouffer"), every attached
-    Tool (§7.4) and — since D174 — every attached ENERGY (§6.1, Therapeutic
-    Energy sv02-193) — summed, since each source is its own card effect. The
-    Basic-only hpBonus (Bravery Charm) counts only while the top card is a
-    Basic: evolving the holder ends it even though the Tool stays attached. A
-    Pokémon under an Ability-lock aura (§9 disableAbilities) contributes nothing
-    from its own printed passive — that passive IS an Ability — but its attached
-    Tools (not Abilities) and its attached Energy (not Abilities either) keep
-    working. 🆕🆕🆕 D562 — the Tools keep working under a §9 lock, and stop under
-    Jamming Tower: the Tool entries come through `toolsInEffect`, a non-§9 gate (a
-    Stadium, not an Ability-lock). */
-// 🆕🆕🆕 D578 — memoized per catalog card OBJECT (a suite's local pool hands a different
-// object for the same id), so every read of one retyped body sees ONE view.
+/**
+ * Every continuous modifier on one in-play Pokémon, summed from its top card's printed passive,
+ * every in-effect Tool (§7.4) and every attached Energy (§6.1). The Basic-only `hpBonus` counts
+ * only while the top card is Basic. Under a §9 lock the Pokémon's own passive (an Ability)
+ * contributes nothing, but its Tools and Energy keep working; Jamming Tower removes the Tools.
+ *
+ * Memoized per catalog card object, so every read of one retyped body sees one view.
+ */
 const retypedViews = new WeakMap<Card, Card>();
 
-/** 🆕🆕🆕 §9 (D578) — the TOP card of an IN-PLAY body as the in-play rules see it: the
-    catalog card itself, or — while the holder's own printed Ability retypes it (Scovillain ex
-    "Double Type", `PassiveEffects.typesInPlay`) and no §9 lock silences that Ability — a view
-    of that card whose `types` are the in-play types. Everything else on the view is the
-    card's own (id, attacks, Weakness, Resistance), so a caller that hands it to a `Card`
-    reader changes ONE answer: which types the body has.
-
-    🛑 **THE ONE WRITER OF "WHAT TYPE IS THIS POKÉMON IN PLAY"**, and every in-play type read
-    resolves its card through here (the allowlist in `scovillainD578.test.ts` classifies each
-    `.types` read and each in-play `matchesFilter` call). The card object itself is returned
-    on every body that has no retype, so every board without a Scovillain ex reads exactly
-    what it read before D578. Hand, deck and discard cards are NEVER passed through this
-    (*"As long as this Pokémon is in play"*).
-
-    ⚠️ The §9 check reads `disabledAbilityUids` only when the top card carries the key, and
-    that function must never call back here: its Watchtower arm (`auraSuppresses`,
-    `targetType`) reads PRINTED types for exactly that reason (R-WT1, annotated at D578).
-
-    🆕🆕🆕 D580 — AND THE RETYPE MAY BE CONDITIONAL. Iron Treads `sv05-118` "Dual Core"
-    (`PassiveEffects.typesInPlayWhileToolNamed`) is {F}{M} only while a Tool NAMED "Future Booster
-    Energy Capsule" is in the body's ATTACHED `tools` (R-DC1: attachment, so a Jamming Tower does
-    not lift it; R-DC3: by name). That check runs AFTER the §9 check and BEFORE the per-card
-    cache, so the same top card on a body without the Tool is handed the printed card. ⚠️ The
-    Capsule is not Standard-legal: in a legal deck this branch always returns the printed card. */
+/**
+ * §9: the top card of an in-play body as the in-play rules see it: the card itself, or, while its
+ * own live Ability retypes it (Scovillain ex "Double Type"), a view whose `types` are the in-play
+ * types. Every in-play type read goes through here; hand, deck and discard cards never do.
+ * `disabledAbilityUids` must never call back here. The retype may be conditional (Iron Treads "Dual
+ * Core": only while a Tool with the exact name is attached).
+ */
 export function inPlayCardOf(state: GameState, pokemon: InPlayPokemon): Card | undefined {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return undefined;
   const typesInPlay = programFor(top.id)?.passive?.typesInPlay;
   if (typesInPlay === undefined) return top;
   const uid = topUid(pokemon);
-  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return top; // §9: printed
-  // 🆕🆕🆕 D580 — Iron Treads "Dual Core": the retype holds only while an ATTACHED Tool (R-DC1:
-  // `pokemon.tools`, not `toolsInEffect`) prints this exact NAME (R-DC3). BEFORE the cache, which
-  // is keyed by the top card while this condition is per body.
+  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return top; // §9: printed Iron Treads "Dual Core": only while an attached Tool (`pokemon.tools`, not `toolsInEffect`) has this exact name. Checked before the cache, which is keyed by top card while this condition is per body.
   const whileTool = programFor(top.id)?.passive?.typesInPlayWhileToolNamed;
   if (
     whileTool !== undefined &&
@@ -1160,16 +949,15 @@ export function inPlayCardOf(state: GameState, pokemon: InPlayPokemon): Card | u
   return view;
 }
 
-/** 🆕🆕🆕 §9 (D578) — the in-play TYPES of `pokemon` (`inPlayCardOf`'s `types`, `[]` for an
-    unresolvable body). */
+/** The in-play types of `pokemon` (`[]` for an unresolvable body). */
 export function effectiveTypesOf(state: GameState, pokemon: InPlayPokemon): readonly string[] {
   return inPlayCardOf(state, pokemon)?.types ?? [];
 }
 
-/** 🆕🆕🆕 D576 — the Antique Fossils' printed CARD RULE as a `passivesOf` source: *"This card
-    can't be affected by any Special Conditions"* — all five, by name (R-FO4). Added to the
-    fold's `sources` UNGATED (never through the `disabled` drop), because a card rule is not
-    an Ability and no lock lifts it. */
+/**
+ * The Antique Fossils' card rule "This card can't be affected by any Special Conditions" as a
+ * `passivesOf` source. Ungated: a card rule is not an Ability and no lock lifts it.
+ */
 const FOSSIL_CARD_RULE: PassiveEffects = {
   statusImmunities: ["asleep", "burned", "confused", "paralyzed", "poisoned"],
 };
@@ -1178,15 +966,12 @@ export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
 ): {
-  /** §8.5 post-W/R reduction, summed over the holder's own printed passive and
-      every attached Tool — and, since D161, over the TYPE-GATED Tool printing
-      beside them (Rock Chestplate `sv01-192`, "The {F} Pokémon this card is
-      attached to takes 30 less damage…"). That gate names the HOLDER, which is
-      the body this fold already has, so it is resolved HERE against
-      `top.types` [🆕🆕🆕 D578 (D539): `holderCard.types`, the top card's IN-PLAY view
-      (`inPlayCardOf`) — Scovillain ex's {G} and {R}] — `basicHpBonus`'s placement — and the four read sites take a
-      ZERO diff. Contrast `preventDamageFromTypes` below, whose gate names the
-      ATTACKER and therefore cannot be resolved anywhere but a read site. */
+  /**
+   * §8.5 post-W/R reduction, summed over the holder's passive and every attached Tool, including
+   * type-gated Tools (Rock Chestplate). That gate names the holder, so it is resolved here against
+   * its in-play types; contrast `preventDamageFromTypes`, whose gate names the attacker and can
+   * only be resolved at a read site.
+   */
   damageReductionAfterWR: number;
   damageBonusBeforeWR: number;
   /** Pre-W/R bonuses gated on a board condition (Defiance Band), collected RAW
@@ -1201,87 +986,37 @@ export function passivesOf(
       seat and this aggregation has none, so the read sites fold them via
       `pokemonSuffixOf(defenderCard)` in `attackerPreWRBonus`. */
   targetConditionalDamageBonusBeforeWR: { amount: number; targetSuffix: PokemonSuffix }[];
-  /** §8/§9 (D242) — the always-on ATTACK GATES the holder's own printed Abilities
-      impose on it ("This Pokémon can't attack unless you have 4 or more Team
-      Rocket's Pokémon in play"), collected RAW and UNEVALUATED for
-      `conditionalDamageBonusBeforeWR`'s reason verbatim: the condition is
-      seat-relative and this aggregation has no seat, so the payability sites fold
-      them through `attackBarredByAbility` (interpreter.ts).
-
-      ⚠️ A LIST FOR A FIELD THAT IS A SCALAR ON `PassiveEffects`, which is this
-      fold's standing shape rule (registry.ts: *"a type must COLLECT, because two
-      sources can name one"*) and here is not hypothetical — the holder's printed
-      passive, four Tools and any attached Energy all reach `sources`, so two
-      gates on one body is expressible even though no legal printing carries a
-      second one today. */
+  /**
+   * §8/§9: attack gates the holder's own Abilities impose ("This Pokémon can't attack unless…"),
+   * collected raw because the condition is seat-relative and this fold has no seat. A list because
+   * two sources can name one.
+   */
   cantAttackUnless: BoardCondition[];
-  /** 🆕🆕🆕 §5.3/§8 (D570) — the holder's own printed ATTACK-AGAIN licences ("Festival
-      Lead", 7 printings), collected RAW and UNEVALUATED for `cantAttackUnless`' reason
-      verbatim: the condition is seat-relative and this fold has no seat, so
-      `attackAgainLicensed` (interpreter.ts) evaluates it. In the loop, so a §9-locked
-      holder contributes nothing and goes silent (R-FL2). A LIST for the registry's "two
-      sources can name one" rule; no legal printing carries two. */
+  /**
+   * §5.3/§8: the holder's attack-again licences ("Festival Lead"), collected raw for the same
+   * reason; `attackAgainLicensed` evaluates them. A §9-locked holder contributes nothing.
+   */
   attackTwiceIf: BoardCondition[];
-  /** §4 (D277) — the holder's own printed Ability LICENSES it to attack on the
-      going-first player's first turn ("Debut Performance"). A boolean OR and not
-      a list, unlike the gate above it: two sources naming it say the same thing
-      and there is no provenance a read site could use — the §4 ban is lifted or
-      it is not, and no message names the Ability. Evaluated HERE rather than at
-      the read sites because, unlike `cantAttackUnless`, it carries no
-      seat-relative condition to fold. */
+  /**
+   * §4: the holder's own Ability licenses it to attack on the going-first player's first turn
+   * ("Debut Performance"). A boolean: it carries no seat-relative condition.
+   */
   attackFirstTurnExempt: boolean;
-  /** §4/§10 (D278; SPLIT FROM ITS ZONE GATE and turned into a LIST by D279) —
-      the LIVE licences on this body to EVOLVE EARLY: on your first turn, AND on
-      the turn it came into play. Two printed sentences carry it:
-
-        • Eevee `sv08-143`/`sv08.5-074`/`svp-173` "Boosted Evolution" —
-          *"**As long as this Pokémon is in the Active Spot**, it can evolve
-          during your first turn or the turn you play it."*
-        • Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/`-093`
-          "Stimulated Evolution" — *"**If you have Shelmet in play**, this
-          Pokémon can evolve during your first turn or the turn you play it."*
-          (each names the OTHER body; 4 printings, 2 sentences).
-          [🆕🆕🆕 D594 (D539): *"Two printed sentences carry it"* is WITHDRAWN, kept as written —
-          a third does: Luxio `me03-027` "Fighting Roar" — *"If your opponent's Active Pokémon is a
-          Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it."*]
-
-      🛑 **THE TWO ANTECEDENTS ARE ANSWERED IN TWO DIFFERENT PLACES, AND THAT IS
-      THE WHOLE SHAPE OF THIS FIELD.** Eevee's clause is about THIS BODY'S ZONE,
-      which the fold can answer (it already computes `onBench`), so entries only
-      appear here once it holds. Karrablast's is about the SEAT'S BOARD, and
-      `passivesOf` HAS NO SEAT — so it is collected RAW and evaluated at the read
-      site, `cantAttackUnless`/`attackBarredByAbility` (interpreter.ts) verbatim.
-      [🆕🆕🆕 D594 (D539): *"THE TWO ANTECEDENTS"* is WITHDRAWN, kept as written — there are three;
-      the TWO PLACES stand. Luxio's (the opponent's Active is a Pokémon ex) is seat-relative too, so
-      the fold pushes its `ifCondition` raw and `evolveEarlyLicensed` answers it beside Karrablast's.]
-
-      🛑 **AND THE ZONE GATE MUST NOT BE APPLIED TO THE PARTNER-GATED FOUR.**
-      D278 welded `&& !onBench` into the fold line because its only printing said
-      "Active Spot"; Karrablast and Shelmet print NO such clause, and reusing that
-      line would give them a restriction the card does not print. **That failure
-      is SILENT IN THE OPPOSITE DIRECTION FROM D278's** — it REFUSES legal boards
-      rather than allowing illegal ones, so no "the licence works" assertion made
-      on an Active body can see it. A BENCHED Karrablast is the only board that
-      can, and there is one in `stimulatedEvolution.test.ts` and a mutant on it.
-      [🆕🆕🆕 D594 (D539): *"THE PARTNER-GATED FOUR"* as the whole unzoned set is WITHDRAWN, kept as
-      written — Luxio `me03-027` prints no zone clause either and carries no `activeOnly`; its
-      BENCHED board is in `conditionRowsMeD594.test.ts`.]
-
-      Entry values: `undefined` is *"nothing further to check"* (Eevee, whose one
-      clause the fold consumed); a `BoardCondition` is the seat-relative
-      remainder. A LIST rather than a boolean because two sources can name it
-      (registry.ts's rule) and the read is an OR — see `evolveEarlyLicensed`
-      (interpreter.ts), the ONE place that folds it. */
+  /**
+   * §4/§10: the live licences on this body to evolve on your first turn or the turn it came into
+   * play. A zone clause (Eevee "Boosted Evolution": "As long as this Pokémon is in the Active
+   * Spot") is resolved in the fold; seat-relative clauses (Karrablast/Shelmet "Stimulated
+   * Evolution", Luxio "Fighting Roar") are collected raw for `evolveEarlyLicensed`. The zone gate
+   * must not apply to the latter, which print no zone clause. `undefined` means nothing further to
+   * check; a `BoardCondition` is the remainder.
+   */
   evolveEarlyExempt: (BoardCondition | undefined)[];
-  /** 🆕🆕🆕 §8.2 (D563) — the COST CLAUSES the holder's own printed Ability puts on its
-      own named attacks (Noivern "Tuning Echo", Kyurem "Plasma Bane"), collected RAW and
-      UNEVALUATED for `cantAttackUnless`' reason verbatim: the condition is seat-relative
-      and this aggregation has no seat. Read by `attackCostAt` (attack.ts) and nothing
-      else. A LIST for the registry's "two sources can name one" rule. */
+  /**
+   * §8.2: cost clauses the holder's Ability puts on its own named attacks (Noivern "Tuning Echo",
+   * Kyurem "Plasma Bane"), collected raw because the condition is seat-relative.
+   */
   attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[];
-  /** 🆕🆕🆕 §10 (D563) — the EVOLVE ALIASES the holder's own printed Ability grants it
-      (Eevee ex "Rainbow DNA"), read by `evolveAliasLicensed` (interpreter.ts). A LIST for
-      the same rule; §9-suppressible because it rides this loop. */
+  /** §10: evolve aliases the holder's Ability grants (Eevee ex "Rainbow DNA"); §9-suppressible. */
   evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[];
   hpBonus: number;
   /** §9 reactive recoil placed on the ATTACKER when this Pokémon is damaged by
@@ -1296,11 +1031,11 @@ export function passivesOf(
       Read once per sweep by flow.ts `koRecoilOf`, which supplies the "is Knocked
       Out" half; this aggregation only answers "what would this body pay". */
   damageAttackerOnKo: number;
-  /** 🆕🆕🆕 §11 (D614) — the shares of the two recoils above that the holder's own printed ABILITY
-      contributes (the top card's passive, `sources[0]`), without the Tools'. An Attacking Pokémon
-      carrying `preventAbilityEffects` (Mega Clefable ex "Luminous Wing") takes the recoil less this
-      share: Rocky Helmet / Vengeful Punch are Item cards and still land. Read by attack.ts's main hit,
-      interpreter.ts `reactWithRecoilAndAbility` and flow.ts `koRecoilOf`. */
+  /**
+   * §11: the shares of the two recoils above contributed by the holder's own Ability, without the
+   * Tools'. An attacker with `preventAbilityEffects` (Mega Clefable ex "Luminous Wing") takes the
+   * recoil less this share.
+   */
   damageAttackerFromAbility: number;
   damageAttackerOnKoFromAbility: number;
   /** §8.5 full damage PREVENTION when the attacker is an ex/V (Mimikyu
@@ -1308,698 +1043,137 @@ export function passivesOf(
       so this aggregation just reports whether the holder carries the aura; the
       sites gate it on `isExOrV(attacker)`. */
   preventDamageFromExV: boolean;
-  /** §8.5 full damage PREVENTION when the ATTACKER is a Pokémon of one of these
-      printed types (Dachsbun sv01-099 "Well-Baked Body" `{R}`, Bellibolt
-      sv03-078/-201 "Insulator" `{L}`) — `preventDamageFromExV`'s twin one field
-      up, with the gate reading `Card.types` instead of the rule-box name parse.
-
-      A LIST rather than a scalar, and that is the one shape decision this field
-      makes. Every source in the fold above (the holder's own passive plus each
-      attached Tool) contributes independently, so a scalar could only be
-      last-wins — silently dropping a real prevention on a board with two sources.
-      No such board exists in the pool today (no Tool prints the sentence and no
-      card prints two), which is precisely why it has to be the aggregation's
-      shape rather than a fact anyone remembers: `conditionalDamageBonusBeforeWR`
-      three fields up is the same optional-scalar-collected-to-a-list idiom for
-      the same reason. Empty on every board with no such holder, so the read sites
-      pay one `.some` over nothing. */
+  /**
+   * §8.5: full damage prevention when the attacker is one of these types (Dachsbun "Well-Baked
+   * Body", Bellibolt "Insulator"). A list, not a scalar, because each source names a value and a
+   * scalar fold would be last-wins.
+   */
   preventDamageFromTypes: PokemonType[];
-  /** §8.5 (D251) full damage PREVENTION when the ATTACKER is a Pokémon that HAS an
-      Ability (Cornerstone Mask Ogerpon ex `sv06-112`/`-199`/`-215`,
-      `sv08.5-058`/`-160` "Cornerstone Stance" — 5 legal
-      printings on ONE sentence, "Prevent all damage from attacks done to this
-      Pokémon by your opponent's Pokémon that have an Ability."). The THIRD member
-      of the attacker-property prevent family and the second read off an INGESTED
-      column: the gate is `cards.ts hasPrintedAbility`, i.e. `Card.abilities` is
-      non-empty.
-
-      ⚠️ A BOOLEAN AND NOT A LIST, AND THE TWO NEIGHBOURS ABOVE ARE THE ARGUMENT
-      RATHER THAN A PRECEDENT TO PICK FROM. `preventDamageFromExV` is a boolean and
-      `preventDamageFromTypes` is a list, and they differ for one reason: the type
-      gate is PARAMETERISED — each source names a VALUE, so a scalar fold could only
-      be last-wins and would silently drop a real prevention. This gate carries NO
-      parameter, so an OR over N sources is LOSSLESS: two holders' worth of "prevent
-      damage from Ability-havers" is the same predicate as one. **The unit of
-      STORAGE is decided by the write sites (this repo's standing rule), and the
-      question a valueless predicate asks its writers is not "how many" but "can two
-      of you disagree" — these cannot.** The fold's source set (the holder's own
-      passive PLUS every Tool PLUS every Energy) is therefore not the deciding fact
-      here, though it is the deciding fact one field up.
-
-      ⚠️ AND THE SENTENCE'S 2-PRINTING NEIGHBOUR IS NOT A WRITER OF THIS FIELD.
-      `sv10.5b-023`/`-107` print "…by your opponent's Pokémon that have any Special
-      Energy attached" — the SAME axis with a different attribute — but their
-      sentence reads "prevent all damage FROM AND EFFECTS OF attacks", and the
-      effects half is a rule this pipeline does not have. Measured, not assumed: the
-      `%prevent all damage%` sweep over `abilities_json` with `legal_standard = 1`
-      (remote D1 `colorless`, 2026-08-07) returns 9 sentences and FIVE of them carry
-      "from and effects of". A field that took an attacker-predicate KIND would have
-      made that twin look one enum member away when it is a whole second rule away.
-
-      Like both neighbours it modifies only its HOLDER, so it rides `passivesOf` (and
-      is §9-suppressible — this printing IS an Ability — and nulled by `ignoreWR` at
-      the two snipe arms), and the ATTACKER is known only at the four read sites. No
-      "in the Active Spot" clause on the sentence, so it protects a benched holder. */
+  /**
+   * §8.5: full damage prevention when the attacker has an Ability (Cornerstone Mask Ogerpon ex
+   * "Cornerstone Stance"). A boolean: the gate carries no value, so an OR over sources is lossless.
+   * Damage only, not effects. No Active clause, so it protects a benched holder.
+   */
   preventDamageFromHasAbility: boolean;
-  /** §8.5/§11 (D252) — the FOURTH attacker-property prevent, and THE FIRST ONE THAT
-      CARRIES THE EFFECTS HALF. Carracosta "Mighty Shell" (`sv10.5b-023`/`-107`, 2
-      legal printings on ONE sentence): *"Prevent all damage from AND EFFECTS OF
-      attacks done to this Pokémon by your opponent's Pokémon that have any Special
-      Energy attached."*
-
-      ⚠️ **THE NAME SPELLS BOTH HALVES ON PURPOSE, AND THAT IS THE WHOLE
-      DISCRIMINATOR FROM ITS THREE SIBLINGS.** `preventDamageFromExV`,
-      `preventDamageFromTypes` and `preventDamageFromHasAbility` are the NARROW
-      printed spelling: they stop damage and nothing else, so a Poison, a forced
-      switch or a discard still lands on a body carrying one. This one is the WIDE
-      spelling, so it is read at FIVE sites rather than four — the same four damage
-      arms plus interpreter.ts `attackEffectRefused`, which is the one funnel every
-      attack-borne EFFECT already passes through (eight call sites, one gate). A
-      field that only spelled the damage half would have been indistinguishable from
-      `preventDamageFromHasAbility` and would have silently dropped the half the
-      printed sentence is longer for.
-
-      ⚠️ **THE ATTACKER PREDICATE IS A BOARD READ, NOT A CARD READ, AND THAT IS WHY
-      IT IS NOT IN `cards.ts`.** D251's `hasPrintedAbility` takes a `Card` and no
-      `GameState` deliberately — "have an Ability" is a fact about the printing.
-      "have any Special Energy attached" is a fact about the BOARD, so the predicate
-      is `attackerHasSpecialEnergy` in THIS file, beside `preventsAttackerType`, and
-      it takes the attacker's `InPlayPokemon` rather than its `Card`. All five read
-      sites already had that body in hand (attack.ts's `active`, the interpreter's
-      `attackerTop?.active` / `attacker?.active`), which is the measured reason the
-      widening costs no signature change anywhere.
-
-      A BOOLEAN, by the standing rule its two siblings settled: the gate names no
-      VALUE, so an OR over N sources is lossless and two writers cannot disagree.
-      Like all three it modifies only its HOLDER, rides `passivesOf` (so it is
-      §9-suppressible — this printing IS an Ability — and nulled by `ignoreWR` at the
-      two snipe arms). No "in the Active Spot" clause, so the DAMAGE half protects a
-      benched holder; the EFFECTS half is Active-scoped because
-      `attackEffectRefused` resolves `state.players[seat].active` and every op that
-      consults it aims at an Active. That asymmetry is the FUNNEL's shape, not this
-      field's. [🆕🆕🆕 D621 (D539): ~~"every op that consults it aims at an Active"~~ — WITHDRAWN
-      (already false for `counterEachAll` since D450): the funnel takes a target since D259, and
-      `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body since D621.] */
+  /**
+   * §8.5/§11: prevents damage and effects of attacks from Pokémon with any Special Energy attached
+   * (Carracosta "Mighty Shell"), so it is also read at `attackEffectRefused`. The attacker
+   * predicate is a board read (`attackerHasSpecialEnergy`), not a card read. A boolean, since the
+   * gate names no value.
+   */
   preventDamageAndEffectsFromSpecialEnergy: boolean;
-  /** §8.5 + §11 (D253) — the WIDE prevention again, this time with NO attacker
-      property at all and a HOLDER-ZONE gate instead. Poltchageist `sv06-020`/
-      `sv06-171` and Sinistcha `sv10-048`: *"As long as this Pokémon is on your
-      Bench, prevent all damage from and effects of attacks from your opponent's
-      Pokémon done to this Pokémon."*
-
-      ⚠️ **ALREADY GATED WHEN YOU READ IT — THE ZONE CLAUSE IS RESOLVED HERE, IN
-      THE FOLD, AND THAT WAS SETTLED BY READING THIS FUNCTION'S SIGNATURE RATHER
-      THAN BY ANALOGY.** The handoff predicted the gate could not live here
-      "because `passivesOf` takes a body and not a spot". It takes a body AND a
-      `GameState`, and locating a body needs exactly those two — which is not a
-      guess either: `benchShieldedFromDamage` at the bottom of this file has been
-      doing that scan by top uid since D159. So `isOnBench(state, pokemon)` folds
-      the clause at the same place `basicHpBonus` folds its STAGE clause and
-      `damageReductionAfterWRIfType` folds its TYPE clause, and the five read
-      sites get a BARE boolean with no predicate call beside it.
-
-      ⚠️ **THAT IS THE WHOLE DIFFERENCE FROM ITS FOUR SIBLINGS ABOVE, AND IT IS
-      D161's LINE VERBATIM: A GATE THAT NAMES THE *HOLDER* IS RESOLVED IN THE
-      FOLD; A GATE THAT NAMES THE *ATTACKER* CANNOT BE RESOLVED ANYWHERE BUT A
-      READ SITE.** `preventDamageFromTypes`, `preventDamageFromHasAbility` and
-      `preventDamageAndEffectsFromSpecialEnergy` all name the attacker and all
-      three pay a predicate call at every site. This one names only where its own
-      body is standing, so it pays none.
-
-      ⚠️ **THREE OF THE FIVE READ SITES ARE STRUCTURALLY DEAD FOR THIS FIELD, AND
-      THEY ARE READ ANYWAY — the arms are TOTAL, not case-covering.** `attack.ts`'s
-      main hit and `interpreter.ts snipeActive` both damage `…active` (§8: an
-      attack's named target is an Active), and `attackEffectRefused` resolves
-      `state.players[seat].active` too — so this field is FALSE at all three by
-      construction, and the two that can ever be true are the BENCH arms, spread
-      and `placeSnipe`. Written at all five because the deadness is a fact about
-      today's op set and not a rule: the day an op aims an effect at a benched
-      body, the guard is already where it must be. [🆕🆕🆕 D622 (D539): ~~"`attackEffectRefused`
-      resolves `state.players[seat].active` too — so this field is FALSE at all three"~~ — WITHDRAWN for
-      the effects funnel: it takes a target since D259 (a gust names a Benched body), and since D621
-      `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body, so the effects half is
-      live there. The two DAMAGE arms named dead stay dead.] The MUTANTS are authored only
-      at the two live arms, because a mutant at a dead one could not be killed.
-
-      A BOOLEAN, by the standing rule its four siblings settled: the gate names no
-      VALUE, so an OR over N sources is lossless and two writers cannot disagree.
-      A SEPARATE field from the line above rather than a rider on it — merging
-      them would hand Carracosta's two printings a protection that needs no
-      Special Energy, and hand these three one that needs one. §9-suppressible
-      like every flag in this loop (all three printings ARE Abilities) and nulled
-      by `ignoreWR` at the snipe arm with its siblings. */
+  /**
+   * §8.5/§11: prevents damage and effects of the opponent's attacks while this Pokémon is on the
+   * Bench (Poltchageist, Sinistcha). The zone clause names the holder, so it is resolved here and
+   * read sites get a bare boolean. Kept separate from the Special Energy prevention so neither card
+   * gains the other's condition.
+   */
   preventDamageAndEffectsWhileBenched: boolean;
-  /** 🆕🆕🆕 §8.5 (D576) — the line above with the EFFECTS half removed (Antique Plume Fossil
-      "Plume Protection"): the zone clause resolved here the same way, read at the four DAMAGE
-      sites only and never at `attackEffectRefused` (R-FO5). §9-suppressible — it is an
-      Ability, so it rides the `disabled` drop on `sources[0]`. The fold answers the ZONE clause
-      only; "from your opponent's Pokémon" is a SEAT question the two live read sites ask
-      (interpreter.ts's spread and `placeSnipe`: an own-Bench hit lands on it). */
+  /**
+   * §8.5: the line above without the effects half (Antique Plume Fossil "Plume Protection"): read
+   * at the damage sites only. The fold answers the zone clause; "from your opponent's Pokémon" is a
+   * seat check made at the read sites.
+   */
   preventDamageWhileBenched: boolean;
-  /** §11 (D259) — does this Pokémon refuse the effects of an Item or Supporter the
-      OPPONENT plays? Fraxure `sv06.5-045`/`-077` "Unnerve" and Cetitan ex
-      `sv10-065`/`-210` "Snow Camouflage", 4 legal printings on one sentence.
-
-      ⚠️ THE FIRST FLAG IN THIS FOLD WHOSE SOURCE IS NOT AN ATTACK, and therefore
-      the first with NOTHING in the §8.5 pipeline reading it: its one read site is
-      `interpreter.ts effectRefused`, on the TRAINER channel that slice widened the
-      funnel to carry. The printed sentence has no damage half, so a damage site
-      that consulted this flag would be inventing one.
-
-      ⚠️ AND IT IS THE FIRST FLAG IN THIS FOLD WHOSE READ SITE CAN SEE A BENCHED
-      BODY. `preventDamageAndEffectsWhileBenched` resolves its zone clause HERE
-      because that clause is about the holder; this sentence prints no zone clause
-      at all, so a benched Fraxure and an Active one answer identically and the
-      fold has nothing to resolve. What changed is the READER — a Trainer aims at
-      bodies an attack cannot. */
+  /**
+   * §11: does this Pokémon refuse the effects of an Item or Supporter the opponent plays (Fraxure
+   * "Unnerve", Cetitan ex "Snow Camouflage")? Read only at `effectRefused`'s Trainer channel; no
+   * damage half. No zone clause, so benched and Active holders answer the same.
+   */
   preventTrainerEffects: boolean;
-  /** 🆕🆕🆕 §11 (D637) — `preventTrainerEffects` narrowed to a SUPPORTER the opponent plays: Antique Sail Fossil
-      `me03-069` "Protective Sail". Its one read site is interpreter.ts `effectRefusedOn`'s Trainer channel. */
+  /**
+   * §11: `preventTrainerEffects` narrowed to a Supporter the opponent plays (Antique Sail Fossil
+   * "Protective Sail").
+   */
   preventSupporterEffects: boolean;
-  /** §11 (D260) — does this Pokémon refuse the EFFECTS of an opponent's attack,
-      with no damage half at all? Skeledirge `sv08-031` "Unaware", 1 legal
-      printing: *"Prevent all effects of attacks used by your opponent's Pokémon
-      done to this Pokémon. (Damage is not an effect.)"*
-
-      ⚠️ `preventTrainerEffects` ONE LINE UP WITH THE CHANNEL SWAPPED, and it is
-      a SECOND field rather than a rider for that field's own reason inverted:
-      merged, Skeledirge would refuse a Crushing Hammer it does not print, and
-      Fraxure would refuse an attack's Poison it does not print. Two disjoint
-      antecedents on two consequents are two fields (D252's rule).
-
-      ⚠️ AND NOTHING IN THE §8.5 PIPELINE MAY READ IT — the printed parenthetical
-      *"(Damage is not an effect.)"* is the sentence saying so, and it is the one
-      thing separating this flag from `preventDamageAndEffectsWhileBenched` two
-      lines up. Its ONE read site is `interpreter.ts effectRefused`'s attack
-      channel. NO zone clause is printed, so unlike D253's twin the fold has
-      nothing to resolve and a benched holder answers exactly as an Active one. */
+  /**
+   * §11: does this Pokémon refuse the effects of an opponent's attack, with no damage half
+   * (Skeledirge "Unaware": "Damage is not an effect")? Separate from `preventTrainerEffects` so
+   * neither refuses the other's channel. Nothing in the §8.5 pipeline may read it.
+   */
   preventAttackEffects: boolean;
-  /** 🆕🆕🆕 §11 (D614) — `preventAttackEffects` on the ABILITY channel (Mega Clefable ex "Luminous
-      Wing"). Its read site is interpreter.ts `effectRefusedOn` (`invokedBy === "ability"`), plus the
-      recoil shares above and flow.ts's Burn counters. */
+  /** §11: `preventAttackEffects` on the Ability channel (Mega Clefable ex "Luminous Wing"). */
   preventAbilityEffects: boolean;
-  /** §8.5 (D255) — the printed RULE-BOX CLASSES an attacker must belong to for this
-      Pokémon's prevention aura to stop its damage. The SIXTH member of the prevent
-      family, and the second whose gate is PARAMETERISED (`preventDamageFromTypes`,
-      D159, is the first). Two Standard-legal sentences, 5 printings:
-
-        { suffix: "ex" }                   Sylveon `sv08.5-040` "Safeguard",
-                                           Crustle `sv10-012`/`-186` "Mysterious
-                                           Rock Inn" — 3 printings;
-        { suffix: "ex", stage: "basic" }   Farigiraf ex `sv05-108`/`-194`
-                                           "Armor Tail" — 2 printings.
-
-      ⚠️ **A LIST AND NOT A BOOLEAN, AND THE THREE FIELDS ABOVE ARE THE ARGUMENT
-      RATHER THAN A PRECEDENT TO PICK FROM.** D251 settled the rule: the unit of
-      STORAGE is decided by the WRITE SITES, and the question a gate asks its writers
-      is not "how many" but "can two of you disagree". `preventDamageFromHasAbility`
-      and `preventDamageAndEffectsFromSpecialEnergy` name no VALUE, so an OR over N
-      sources is lossless and both are flags. THESE TWO SENTENCES DISAGREE — one
-      names Basic ex, the other any ex — so a scalar fold could only be last-wins and
-      would silently drop a real prevention the day two sources land on one body.
-
-      🛑 **AND NO BOARD THE CATALOG CAN BUILD OBSERVES THAT DIFFERENCE TODAY, WHICH
-      IS `preventDamageFromTypes`' HOLE VERBATIM AND WAS MIS-STATED HERE FIRST.** The
-      original draft argued the list from the POOL — "one Farigiraf ex and one
-      Sylveon on the same Bench is a legal deck" — which is true and irrelevant: this
-      function folds PER BODY, so two holders are two folds of one element each. Two
-      entries on ONE body needs two SOURCES on one body, and `sources` is the
-      holder's own passive plus its Tools plus its Energies, none of which writes
-      this field. **The mutation harness is what caught the substitution** (`D255-
-      fold-last-wins` survived and is now a declared `unreachable-population` row).
-      🆕 **A SHAPE CLAIM ABOUT A FOLD IS A CLAIM ABOUT ITS SOURCE SET, NEVER ABOUT
-      THE POOL'S PRINTINGS.** The field stays a LIST for D159's reason exactly: the
-      unit of storage is decided by the WRITE SITES, and a valued gate must collect
-      as the aggregation's SHAPE rather than because someone remembers that no Tool
-      prints the sentence yet.
-
-      ⚠️ **AND IT IS A LIST OF RECORDS, WHICH IS WHERE IT STOPS RESEMBLING
-      `preventDamageFromTypes`.** A `PokemonType` is one printed token; a rule-box
-      class is TWO printed axes (suffix and stage), and `cards.ts
-      PreventedAttackerClass` carries the cross-product argument `AttackerClass` made
-      at D239. NOT de-duplicated — the read is a `.some` over a predicate, which
-      cannot tell a repeated entry from a single one, and a `Set` of records would
-      not de-duplicate by VALUE anyway (D131's "one collection type per membership
-      question").
-
-      Like every member of the family it modifies only its HOLDER, so it rides this
-      fold (§9-suppressible — all five printings ARE Abilities — and nulled by
-      `ignoreWR` at the two snipe arms), and the ATTACKER is known only at the FOUR
-      damage read sites, which resolve it through `cards.ts preventsAttackerClass`.
-      FOUR and not five: the printed sentences say "prevent all damage", not "from
-      and effects of", so `attackEffectRefused` is deliberately not widened. Empty on
-      every board with no such holder, so the read sites pay one `.some` over
-      nothing. */
+  /**
+   * §8.5: the rule-box classes an attacker must belong to for this Pokémon's aura to prevent its
+   * damage (Sylveon "Safeguard" and Crustle: any ex; Farigiraf ex "Armor Tail": Basic ex). A list
+   * of records because sources can disagree; not de-duplicated, since the read is a `.some`. Damage
+   * only, so `attackEffectRefused` does not read it.
+   */
   preventDamageFromAttackerClasses: PreventedAttackerClass[];
-  /** 🆕🆕🆕 §8.5/§11 (D568) — the BANNERS whose attacks this holder refuses, damage AND
-      effects (Milotic ex "Sparkling Scales": `["Tera"]`). A LIST for
-      `preventDamageFromAttackerClasses`' reason (the field names a value); resolved at the
-      FIVE read sites — the four damage arms and `effectRefusedOn` — through `cards.ts
-      preventsAttackerBanner`. Empty on every board with no such holder. */
+  /**
+   * §8.5/§11: the banners whose attacks this holder refuses, damage and effects (Milotic ex
+   * "Sparkling Scales": `["Tera"]`).
+   */
   preventDamageAndEffectsFromBanners: Banner[];
-  /** 🆕🆕🆕 §8.5 (D619) — the ATTACKER-GATED post-W/R reductions (Sacred Charm, Thick Scale, Dewgong
-      "Thick Fat"), the holder gate (`holderType`) already resolved. A LIST for
-      `preventDamageFromTypes`' reason (the gate names the attacker): resolved at the four §8.5 sites
-      by `attackerGatedReductionOf`, which sums the amounts whose `attacker` filter the attacking
-      card matches. Empty on every board with no such holder. */
+  /**
+   * §8.5: attacker-gated post-W/R reductions (Sacred Charm, Thick Scale, Dewgong "Thick Fat"),
+   * holder gate already resolved. Summed at the read sites by `attackerGatedReductionOf`.
+   */
   damageReductionsFromAttacker: { amount: number; attacker: CardFilter }[];
-  /** §8.5 (D257) — full damage PREVENTION when the damage that would ACTUALLY be
-      placed is this number OR MORE. Drednaw `sv07-044` "Impervious Shell",
-      **1 legal printing on ONE sentence**:
-
-        "Prevent all damage done to this Pokémon by attacks from your opponent's
-         Pokémon if that damage is 200 or more."
-
-      ⚠️ **THE FIRST GATE IN THIS FAMILY WHOSE SUBJECT IS THE *NUMBER* RATHER THAN A
-      BODY.** Every one of the seven prevents above it is a fact about a CARD (a
-      suffix, a type, an Ability, a class) or about a BOARD (an attachment, a zone);
-      this one is a fact about the arithmetic of §8.5 itself. That is why it is the
-      only member that could not have been priced by asking "what does the read site
-      know about the attacker" — it needs the number the read site is about to
-      place, which is why D240's `wouldDeal` hoist is the whole reason this row is
-      cheap.
-
-      🛑 **A NUMBER, SO THE FOLD IS A `Math.min` AND NOT AN OR.** D159's standing
-      rule: a gate that names a VALUE cannot be collapsed to a boolean without
-      losing which value. Two sources on one body with thresholds 200 and 150 are
-      NOT the same as either alone — the LOWER threshold shields strictly more, so
-      the min is the aggregation that keeps both readings true. ⚠️ **UNREACHABLE ON
-      any board the catalog can build today** (one printing, and no Tool or Energy
-      writes this field), so the direction is argued from the WRITE SITES rather
-      than from an observable board, and the mutant that installs `Math.max` is
-      declared `unreachable-population` rather than faked — D255's rule, applied
-      deliberately rather than after the harness caught it.
-
-      `undefined` — not `Infinity` — is the "no such aura" value, so the read sites
-      spell an explicit presence check through `preventedByDamageThreshold` instead
-      of comparing against a sentinel that would silently shield a 0-damage hit if
-      the fold ever produced one.
-
-      ⚠️ THE THRESHOLD IS INCLUSIVE (`>=`): the print says *"200 **or more**"*, which
-      is the exact polarity `effects.ts PREVENT_DAMAGE_UP_TO_CAP` REFUSES on the
-      attack side (D240) — and this row is why that refusal was written. Read at the
-      FOUR damage sites and NOT at `attackEffectRefused`, for D240's reason verbatim:
-      an EFFECT has no damage for a threshold to be about. */
+  /**
+   * §8.5: full damage prevention when the damage about to be placed is this number or more (Drednaw
+   * "Impervious Shell": "…if that damage is 200 or more"). Inclusive. Folded with `Math.min`, since
+   * a lower threshold shields more. `undefined`, not `Infinity`, means no such aura. Damage only.
+   */
   preventDamageAtOrAbove: number | undefined;
-  /** §8.5 (D258) — the COIN-FLIP damage shields live on this body, each already
-      GATED and each carrying the Ability name its flip must be announced under.
-      Fezandipiti `sv06-096`/`sv06.5-073`/`sv08.5-045` "Adrena-Pheromone" and Kecleon
-      `sv08-150`/`sv08-213` "Expert Hider" — **5 legal printings on TWO sentences**,
-      backlog row 15-C.
-
-      🛑 **THE ONE FIELD THIS FOLD RETURNS WHOSE READ IS NOT A PURE FUNCTION OF THE
-      BOARD.** Every prevention above it answers yes or no from the state; this one
-      answers *"draw a coin and find out"*, which is why the read sites do not consume
-      it directly — they call `coinFlipShieldPrevents` below, the family's FIRST
-      FUNNEL, which owns the RNG step and the `ABILITY_COIN_FLIP` row together.
-
-      ⚠️ **ALREADY GATED WHEN YOU READ IT** — D253's line for the third slice running.
-      Fezandipiti's *"has any {D} Energy attached"* names the HOLDER's attachments, and
-      this function has the body AND the state, so `hasAttachedEnergy` resolves it HERE
-      (where `damageAttacker`'s `requiresTool` is resolved) and the entries that come
-      out are unconditional. An entry in this list means *"flip for this body now"*.
-
-      ⚠️ **A LIST, AND FOR A REASON THE FAMILY HAS NOT USED BEFORE.** Its siblings
-      collect when the gate names a VALUE (`preventDamageFromTypes`,
-      `preventDamageFromAttackerClasses`) and flag when it names none
-      (`preventDamageFromHasAbility`). This gate names none either — but two sources
-      print two separate *"flip a coin"* instructions, so an OR over N would silently
-      draw ONE coin where the printed rules draw two, and the number of RNG steps a
-      board consumes is observable in every subsequent shuffle. **The question a
-      valueless predicate asks its writers is "can two of you disagree"; these agree
-      about the ANSWER and disagree about the COST.** UNREACHABLE today (no Tool or
-      Energy writes the field, and no printing carries it twice), so the per-entry
-      flip is declared in the corpus rather than faked.
-
-      NOT de-duplicated, and `preventDamageFromAttackerClasses`' reason applies with
-      an extra edge: two identical entries are two Abilities and therefore two coins,
-      so collapsing them would be wrong even if the records matched byte for byte.
-      §9-suppressible with the rest of the family — all five printings are Abilities,
-      and a suppressed holder must draw NO coin, which the `sources[0]` drop gives
-      for free. */
+  /**
+   * §8.5: coin-flip damage shields on this body (Fezandipiti "Adrena-Pheromone", Kecleon "Expert
+   * Hider"), already gated and each carrying its Ability name. Read sites go through
+   * `coinFlipShieldPrevents`, which owns the RNG step. A list and not de-duplicated, because two
+   * sources mean two coin flips.
+   */
   preventDamageOnCoinFlip: { ability: string }[];
-  /** 🆕 §8.1 (D298) — every CAUSE-CONDITIONED PRIZE REDUCTION an ATTACHED card on
-      this body prints (Lillie's Pearl `sv09-151`, a Tool; Legacy Energy `sv06-167`,
-      a Special Energy). RAW and UNEVALUATED, exactly as `cantAttackUnless` and
-      `conditionalDamageBonusBeforeWR` are: every rider on the entry
-      (`requiresInPlay`, `requiresHolderOwner`, `oncePerGame`) is a question about a
-      SEAT or about the GAME, and this aggregation has neither — it has one body.
-      The read site is flow.ts `planPrizes`, which has both.
-
-      A LIST, and NOT summed into a scalar `by`, for the reason spelled on the
-      interface field: the two printings carry DIFFERENT riders, so one body wearing
-      both must offer the read site two separately-answerable entries. UNREACHABLE
-      as a pair on any legal board today (a Tool and an Energy are different slots,
-      so it is expressible), which is exactly why the corpus carries a row for it
-      rather than an argument.
-
-      ⚠️ §9 IS ANSWERED BY THE `sources` ORDER AND NOT BY THIS LINE. Both writers
-      are attached cards — a Tool and an Energy, neither an Ability — so both sit
-      past the `disabled` term and a Klefki aura cannot silence either. The holder's
-      OWN printed passive can reach this field too (nothing forbids it) and would be
-      dropped under a lock, which is the correct answer for an Ability and is why
-      the collection lives in this loop rather than at the read site. */
+  /**
+   * §8.1: cause-conditioned prize reductions an attached card prints (Lillie's Pearl, Legacy
+   * Energy), collected raw because their riders are about a seat or the game; flow.ts `planPrizes`
+   * evaluates them. A list because the printings carry different riders. Attached cards are not
+   * Abilities, so a §9 lock does not silence them.
+   */
   koPrizeReductions: KoPrizeReduction[];
-  /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
-      sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
-      Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
-      by those Special Conditions" — Asleep, Confused, Paralyzed). The ONE field
-      this aggregation returns that no damage site reads: its single consumer is
-      interpreter.ts `applyStatus`, which is the engine's only writer of a §12
-      condition.
-
-      A LIST for `preventDamageFromTypes`' reason one field up, and the reason is
-      the SOURCE SET rather than the printings: this fold runs over the holder's own
-      passive PLUS every attached Tool PLUS (D174) every attached Energy, so several
-      sources naming several conditions is a shape the aggregation must be able to
-      report. ⚠️ Since D174 the INTERFACE field is a list too — the Energy printing
-      names three — so this is a flat SPREAD rather than a push. NOT de-duplicated —
-      the read is `.includes`, which cannot tell a repeated entry from a single one,
-      and a `Set` here would be a second collection type for one membership question
-      (D131).
-
-      ⚠️ IT RIDES THIS FOLD PRECISELY SO THE §9 ANSWER IS NOT WRITTEN TWICE, AND
-      SINCE D174 THE ANSWER HAS TWO SIGNS. The two Pokémon printings are ABILITIES,
-      so a §9 lock over the holder must switch their immunity off and let the status
-      land; the Energy printing is NOT an Ability, so a lock must leave it alone.
-      Both happen HERE, in the one `disabled` drop the `sources` array makes on its
-      FIRST element only. A build that read the catalog row directly at `applyStatus`
-      would be one line shorter and would get BOTH signs wrong at once — this
-      family's sharpest available defect, and the mutation pass drives it.
-
-      🆕🆕🆕 D576 — A FOURTH WRITER, ON THE ENERGY'S SIGN: the Antique Fossils' printed CARD RULE
-      *"This card can't be affected by any Special Conditions"* — all five — rides `sources` as
-      its own ungated element (`FOSSIL_CARD_RULE`), because a card rule is not an Ability and no
-      lock lifts it (R-FO4; `antiqueFossilsD576.test.ts` §4 drives Watchtower and Klefki). */
+  /**
+   * §12: the Special Conditions this Pokémon cannot be given (Dachsbun, Pachirisu, Therapeutic
+   * Energy). Consumed only by `applyStatus`. Rides this fold so a §9 lock switches off the
+   * Ability-granted immunities while leaving the Energy's and the Antique Fossils' card rule
+   * standing.
+   */
   statusImmunities: StatusName[];
-  /** §12 RECOVERY (D174) — the Special Conditions a live effect CLEARS from this
-      body ("The Pokémon this card is attached to RECOVERS FROM BEING Asleep,
-      Confused, or Paralyzed…", Therapeutic Energy sv02-193). Its single consumer is
-      flow.ts `recoverStatuses`.
-
-      ⚠️ IT IS THE FIELD THAT MADE THIS FOLD'S ANSWER TIME-DEPENDENT, and it is a
-      separate list from `statusImmunities` above because the printings are separate
-      clauses: the two Pokémon in this family refuse a condition and never clear one.
-      Reported RAW (a list of tokens, not a decision) for the same reason
-      `conditionalDamageBonusBeforeWR` is: the aggregation has no events array and
-      must never write, so the site that owns the board does the clearing. */
+  /**
+   * §12: the Special Conditions a live effect clears from this body (Therapeutic Energy). Consumed
+   * by `recoverStatuses`, which does the clearing since this fold never writes.
+   */
   statusRecovery: StatusName[];
-  /** §8.5 (D192) — does damage from attacks used by THIS Pokémon ignore "any
-      effects on your opponent's Active Pokémon"? (Walking Wake ex "Azure Seas",
-      6 printings / 6 Standard-legal.)
-
-      ⚠️ THE ONLY FIELD THIS FOLD RETURNS THAT IS READ OFF THE **ATTACKER**. Every
-      other boolean here answers a question about the body being HIT; this one
-      answers a question about the body SWINGING, which is why attack.ts gained an
-      attacker-side `passivesOf` read (through `attackerSuppressesTargetEffects`
-      below) rather than another term on the `defenderPassives` it already had.
-      It rides this fold and not a dedicated board scan because it modifies its
-      HOLDER and nothing else — and because the §9 `disabled` drop above is
-      load-bearing rather than incidental: "Azure Seas" is an Ability, and an
-      Ability-lock must switch it off. */
+  /**
+   * §8.5: does damage from this Pokémon's attacks ignore effects on the opponent's Active (Walking
+   * Wake ex "Azure Seas")? Read off the attacker, not the body hit. An Ability, so a §9 lock
+   * switches it off.
+   */
   suppressTargetEffectsOnAttack: boolean;
-  /** §8.1 (D208) — does this Pokémon refuse a Knock Out that would land on it at
-      FULL HP, surviving on 10 HP instead? (Pikachu ex "Resolute Heart", Crustle
-      "Sturdy" — 7 printings / 7 Standard-legal.)
-
-      ⚠️ THE ONLY FIELD THIS FOLD RETURNS THAT IS NOT READ INSIDE THE §8.5 DAMAGE
-      PIPELINE — it is read at the WRITE that ends it. [🆕🆕🆕 D598 (D539): *"THE ONLY FIELD"* is
-      WITHDRAWN, kept as written — `survivesKoOnCoinFlip` below is read at the same four writes.] Every prevention and
-      reduction beside it bites BEFORE the number lands (they change `dealt`);
-      this one lets the full number be computed and then clamps the TOTAL the
-      board stores, because the printed sentence is about the resulting HP and not
-      about the damage. It rides this fold rather than a direct read off `top` for
-      `suppressTargetEffectsOnAttack`'s reason one field up, and the reason is
-      just as load-bearing: both printings are ABILITIES, so a §9 lock must switch
-      the survival off — which the `disabled` drop already does.
-
-      Consumed ONLY by `koSurvivalClamp` below, which is the single read site;
-      the four damage writers call that helper and never this flag, so "has full
-      HP", "would be Knocked Out" and "becomes 10" cannot drift apart across
-      them. */
+  /**
+   * §8.1: does this Pokémon survive a Knock Out at full HP on 10 HP (Pikachu ex "Resolute Heart",
+   * Crustle "Sturdy")? Clamps the stored total rather than changing `dealt`. Consumed only by
+   * `koSurvivalClamp`. An Ability, so a §9 lock switches it off.
+   */
   survivesKoAtFullHp: boolean;
-  /** 🆕🆕🆕 D598 — the printed NAME of this body's coin-flip survival Ability (Tenacious Body,
-      Durable Body), or null. Consumed only by `koSurvivalCoinFlip`. */
+  /** The name of this body's coin-flip survival Ability (Tenacious Body, Durable Body), or null. */
   survivesKoOnCoinFlip: string | null;
 } {
   const top = topCardOf(state, pokemon);
-  // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
-  // are not Abilities and keep contributing (🆕🆕🆕 D562: under a §9 LOCK — still true;
-  // Jamming Tower is a separate, non-§9 gate that empties the Tool sources through
-  // `toolsInEffect`, R-JT). The lock aura itself is read by
-  // disabledAbilityUids straight off the passive, never here, so this never
-  // recurses (disableAbilities carries no field this aggregation consumes).
+  // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools are not Abilities
+  // and keep contributing (Jamming Tower is a separate gate via `toolsInEffect`). The lock aura is
+  // read by `disabledAbilityUids` straight off the passive, so this never recurses.
   const holderUid = topUid(pokemon);
   const disabled = holderUid !== undefined && disabledAbilityUids(state).has(holderUid);
-  // ⚠️ THREE SOURCE CLASSES SINCE D174, AND THE THIRD IS THE ONE THAT IS NOT AN
-  // ABILITY *AND* NOT A TOOL. `sources` was [the top card's printed passive, ...the
-  // Tools'] from M4 until D174 added [...the attached ENERGY's]. Only the FIRST
-  // element takes the §9 `disabled` drop, so the exemption the Energy needs is the
-  // one the Tools have always had — and it is exempt because an Energy is not an
-  // Ability, which is the same reason with a different noun rather than a new rule.
-  // (🆕🆕🆕 D576 (D539): ~~"THREE SOURCE CLASSES"~~ — FOUR: the second element is now the
-  // Antique Fossils' CARD RULE (`FOSSIL_CARD_RULE`, all five `statusImmunities`), a source
-  // that is neither an Ability, a Tool nor an Energy. It is UNGATED for this paragraph's own
-  // reason — not an Ability, so the §9 drop on the FIRST element cannot reach it (R-FO4).)
-  //
-  // ⚠️ EVERY FIELD BELOW SILENTLY GAINED AN ATTACHED-ENERGY CONTRIBUTOR THE DAY
-  // THAT LINE LANDED, SO EVERY ONE WAS RE-READ. The audit, field by field over the
-  // TWELVE `PassiveEffects` fields this loop READS (D174; they fold to the ELEVEN
-  // keys the `return` below carries — `damageReductionAfterWRIfType` sums into
-  // `damageReductionAfterWR` and `basicHpBonus` into `hpBonus`, so the two counts
-  // are different questions and this one is "what can an Energy write". The TWELVE
-  // fields NOT folded here — `disableAbilities`, `seatDamageReductionAfterWR`,
-  // `seatDamageBonusBeforeWR` (D243, the newest and the one that makes this an
-  // ENUMERATION rather than a count: it is a pre-W/R BONUS sitting one line from
-  // three fields of that name that ARE folded, and the difference is the printed
-  // subject, not the step), `removeWeakness`, `preventBenchDamageWhileActive`,
-  // `noRetreatCostAura`, the six retreat/attack-cost aura fields — are read by
-  // their own board scans off
-  // `programFor(top.id)?.passive` and are UNREACHABLE from an Energy, which is what
-  // bounds this audit to twelve rather than the interface's full twenty-three):
-  //
-  //   damageReductionAfterWR       reachable ✔ correct — "the Pokémon this card is
-  //                                attached to takes N less damage" is a real Energy
-  //                                sentence shape; the §8.5 sites sum sources and an
-  //                                Energy is a source. No writer in this pool.
-  //   damageReductionAfterWRIfType reachable ✔ correct — the gate names the HOLDER's
-  //                                types, resolved below off `top.types`, which does
-  //                                not care which card carried the number.
-  //   damageBonusBeforeWR          reachable ✔ correct — same argument, other sign.
-  //   damageBonusBeforeWRIf        reachable ✔ correct — collected RAW and evaluated
-  //                                at the read sites; the source class is invisible
-  //                                to a BoardCondition.
-  //   damageBonusBeforeWRIfTarget  reachable ✔ correct — likewise, gated on the
-  //                                DEFENDER's suffix at the read sites.
-  //                                (🆕🆕🆕 D558 — AND NOW ON THE HOLDER TOO, in this
-  //                                fold: Brave Bangle's `holder` rider is matched
-  //                                against `top` before the entry is pushed. An
-  //                                Energy writer would gate on the body it is
-  //                                attached to, which is what the print means.)
-  //   basicHpBonus (→ hpBonus)     reachable ⚠️ AND THE ONE TO SAY OUT LOUD: it is
-  //                                gated on `isBasic`, a fact about the HOLDER, so an
-  //                                Energy-borne +HP would end on evolution exactly as
-  //                                Bravery Charm's does. That is the right reading of
-  //                                "the BASIC Pokémon this card is attached to" and
-  //                                the WRONG one for an Energy printing that said
-  //                                only "this Pokémon" — such a printing must use a
-  //                                stage-free field, not this one. No writer today.
-  //   damageAttacker               reachable ⚠️ its `requiresTool` rider reads
-  //                                `pokemon.tools.length`, which is a fact about the
-  //                                BOARD and not about the source, so an Energy
-  //                                writing it would ask "does this body hold a Tool"
-  //                                — coherent, but a printing meaning "…while this
-  //                                ENERGY is attached" would need its own rider. No
-  //                                writer today; named so it is not discovered later.
-  //   damageAttackerOnKo           reachable ✔ correct — summed, source-blind.
-  //   preventDamageFromExV         reachable ✔ correct — a boolean OR.
-  //   preventDamageFromTypes       reachable ✔ correct — a list, source-blind.
-  //   preventDamageFromHasAbility  reachable ✔ correct — a boolean OR (D251),
-  //                                source-blind, `preventDamageFromExV`'s shape.
-  //                                No Tool or Energy writer today; a Tool printing
-  //                                the sentence would correctly SURVIVE a §9 lock,
-  //                                and the five real printings are Abilities that
-  //                                must not.
-  //   preventDamageAndEffects…     reachable ✔ correct — a boolean OR (D252), the
-  //     …FromSpecialEnergy         line above's shape with the EFFECTS half added.
-  //                                Source-blind for the same reason, and its Tool /
-  //                                Energy reachability answers the same way: an
-  //                                attached source would correctly survive a §9
-  //                                lock, and the two real printings are Abilities
-  //                                that must not. ⚠️ AN ENERGY WRITER WOULD BE
-  //                                COHERENT BUT SELF-REFERENTIAL — the gate reads
-  //                                the ATTACKER's Special Energy, never the
-  //                                holder's, so a Special Energy printing this
-  //                                sentence would not fold into its own predicate.
-  //                                No writer today.
-  //   preventDamageFromAttacker…   reachable ✔ correct — a PUSH (D255), source-blind,
-  //     …Classes                   `preventDamageFromTypes`' shape and not the three
-  //                                flags': the gate names a VALUE and the pool prints
-  //                                two of them, so sources must COLLECT. Its §9 answer
-  //                                is the flags' answer verbatim — all five real
-  //                                printings are Abilities and a lock must silence
-  //                                them — and a Tool or Energy writer would correctly
-  //                                SURVIVE a lock. No such writer today.
-  //   preventDamageAtOrAbove       reachable ✔ correct — a `Math.min` (D257), and the
-  //                                FIRST NUMERIC fold in this family. Neither a flag
-  //                                nor a push: the gate names a VALUE, so a boolean
-  //                                loses it, and two thresholds on one body have a
-  //                                single correct answer (the LOWER one shields more)
-  //                                rather than a set, so a list would push the choice
-  //                                out to four read sites. §9-suppressible for the
-  //                                flags' reason — the one real printing IS an
-  //                                Ability — and a Tool or Energy writer would
-  //                                correctly SURVIVE a lock. No such writer today,
-  //                                which is exactly why the min is UNREACHABLE and is
-  //                                DECLARED rather than driven.
-  //   statusImmunities             reachable ✔ THE POINT — sv02-193 writes it.
-  //   statusRecovery               reachable ✔ THE POINT — sv02-193 writes it.
-  //
-  // ⚠️ THE AUDIT'S ONE REAL BEHAVIOUR CHANGE IS THAT THERE IS NONE, AND THAT IS A
-  // MEASUREMENT RATHER THAN A HOPE: `sv02-193` is the only card in the registry with
-  // an `energy.passive` at all, so every other body's fold is byte-identical. The
-  // claim is asserted over the whole registry in therapeuticEnergy.test.ts rather
-  // than left here, because a second Energy row added without a re-reading is
-  // exactly the drift this comment cannot catch.
-  //
-  // ⚠️ D192 ADDS A THIRTEENTH READ FIELD, AUDITED ON ARRIVAL rather than left for
-  // the next reader of this block (the counts above are D174's population and are
-  // left standing; this is the delta):
-  //
-  //   suppressTargetEffectsOnAttack reachable ✔ correct — a boolean OR,
-  //                                source-blind, `preventDamageFromExV`'s shape
-  //                                exactly. ⚠️ AND ITS §9 ANSWER MATTERS IN THE
-  //                                DIRECTION THE ENERGY EXEMPTION DOES NOT: the one
-  //                                real writer is an ABILITY (Walking Wake ex
-  //                                "Azure Seas"), so a lock over the holder MUST
-  //                                switch it off — which the `disabled` drop on
-  //                                `sources[0]` already does, and which is the
-  //                                whole reason this field rides the fold instead
-  //                                of being read straight off `top` at the attack.ts
-  //                                site. An Energy printing of the same sentence
-  //                                would correctly survive a lock. None today.
-  //
-  // ⚠️ D324 ADDS A FOURTEENTH READ FIELD, AUDITED ON ARRIVAL like D192's, and it
-  // is the ONE ENTRY IN THIS AUDIT THAT THE AUDIT ITSELF ORDERED:
-  //
-  //   hpBonus                      reachable ✔ correct — a stage-free summand, and
-  //                                the printing `basicHpBonus`'s own audit line
-  //                                above says out loud must exist ("a printing that
-  //                                said only 'this Pokémon' must use a stage-free
-  //                                field, not this one"). Hero's Cape sv05-152 is
-  //                                that printing and Cynthia's Power Weight
-  //                                sv10-162 is it with an owner clause. ⚠️ AN
-  //                                ENERGY WRITER WOULD BE COHERENT AND IS THE
-  //                                DIFFERENCE FROM THE LINE ABOVE: a Special Energy
-  //                                printing "+HP" would keep its bonus across an
-  //                                evolution, which is the RIGHT reading of a
-  //                                stage-free sentence and the reason the two
-  //                                fields are two. No Energy writer today; both
-  //                                writers are Tools, so a §9 lock leaves both
-  //                                standing — correctly, a Tool is not an Ability.
-  //                                ⚠️ AND ITS `beneficiary` FILTER READS `top`, the
-  //                                [🆕🆕🆕 D578 (D539): `holderCard`, the top card's in-play view]
-  //                                HOLDER's card, so it is `holderTypes`' axis with
-  //                                a CardFilter instead of a type — an unreadable
-  //                                top card fails it and gets LESS HP, never more.
-  //
-  // ⚠️ D325 ADDS A FIFTEENTH READ FIELD AND ONE NEW GATE ON THE FOURTEENTH,
-  // AUDITED ON ARRIVAL like D192's and D324's:
-  //
-  //   hpBonus.requiresEnergyType   reachable ✔ correct — and it is the FIRST gate
-  //                                in this loop that asks about the holder's
-  //                                ATTACHED CARDS rather than about its stack.
-  //                                `isBasic` is STAGE, `holderTypes` is TYPE,
-  //                                `onBench` is SPOT; this is ENERGY, a fourth
-  //                                axis. ⚠️ AN ENERGY-BORNE WRITER WOULD BE
-  //                                COHERENT AND SLIGHTLY UNCOMFORTABLE: a Special
-  //                                Energy printing "if this Pokémon has any {D}
-  //                                attached, +100 HP" could gate on ITSELF. It
-  //                                would still be right (it IS attached), but it
-  //                                is worth having said out loud before such a
-  //                                printing arrives. None today — the one writer
-  //                                is an Ability, Okidogi, so a §9 lock takes the
-  //                                +100 off through the `sources[0]` drop.
-  //                                [🆕🆕🆕 D610 (D539): "the one writer" is WITHDRAWN
-  //                                — Scale Up ×3 and Tyrannically Gutsy ×2 write it
-  //                                too (+ `requiresEnergyCount`, "special"); all
-  //                                three are Abilities, so the §9 drop still holds.]
-  //   hpBonusPer                   reachable ✔ correct — and the source class is
-  //                                MORE than invisible to it, it is the arithmetic
-  //                                itself: an Energy-borne `attachedEnergy` scale
-  //                                would count the very card that carried it,
-  //                                which is coherent (again, it IS attached) and
-  //                                is exactly the reading "for each {F} Energy
-  //                                attached to it" demands. Both writers are
-  //                                Abilities today, so both take the §9 drop.
-  //                                ⚠️ AND IT IS THE FIRST FOLDED FIELD WHOSE
-  //                                EVALUATION READS A **SEAT** — `seatOfPokemon`,
-  //                                for the opponent's taken Prizes. That is a new
-  //                                shape for this loop and not a new source class:
-  //                                the seat is derived from the body it was handed,
-  //                                never passed in, so the fold stays callable from
-  //                                every read site that has only an InPlayPokemon.
-  //
-  // 🛑 NOTE WHAT IS *NOT* HERE. D324's OTHER two HP fields — `seatHpBonus` (the
-  // Ludicolo aura) and `StadiumEffects.hpDelta` — are UNREACHABLE from this loop by
-  // construction: one is a fact about a DIFFERENT body and one is not on a card in
-  // play at all. They join the twelve unfolded fields listed at the top of this
-  // block and are read by their own scans, which is the same boundary
-  // `seatDamageReductionAfterWR` sits on and not a new one.
-  //
-  // 🆕🆕🆕 D558 — THREE MORE UNFOLDED `PassiveEffects` FIELDS, all TOOL fields read by
-  // their own scans straight off `pokemon.tools` (🆕🆕🆕 D562: off `toolsInEffect(state,
-  // pokemon)` now, so Jamming Tower empties them; still never off `sources`, so the §9 drop
-  // on `sources[0]` cannot reach them and an Energy writer could not either):
-  // `attackCostDiscount` (`toolAttackCostDiscount`, summed into
-  // `selfAttackCostDiscount`), `retreatCostDiscount` (`toolRetreatDiscount` and
-  // `toolFreesRetreat`) and `activeRetreatSurchargeBoth` (`activeRetreatSurcharge`,
-  // which also reads the OTHER Active's Tools). And three `StadiumEffects` fields
-  // beside `hpDelta` — `damageReductionAfterWR`, `damageBonusBeforeWR`, `retreat` —
-  // on no card in play at all. None of the six is a key this fold returns, so its
-  // `passivesOf` key set does not move.
-  //
-  // 🆕🆕🆕 D559 — ONE NEW FOLDED FIELD AND TWO NEW RIDERS ON FOLDED FIELDS, AUDITED ON
-  // ARRIVAL, plus one new UNFOLDED field:
-  //
-  //   damageReductionAfterWRIfEnergy reachable ✔ correct — summed into
-  //                                `damageReductionAfterWR` (Regirock "Rock Armor"),
-  //                                gated on `pokemon.energy.length > 0`, a fact about
-  //                                the HOLDER. An Energy writer would satisfy its own
-  //                                gate (it IS attached) — coherent. The one writer is
-  //                                an Ability, so the §9 drop on `sources[0]` applies.
-  //   damageAttacker.perAttachedEnergy reachable ✔ correct — a multiplier on the
-  //                                summed amount, counted by provision (Orthworm ex).
-  //                                An Energy writer would count itself — coherent.
-  //   damageAttackerOnKo.activeOnly reachable ✔ correct — gated on `onBench` (Maractus);
-  //                                the WITHDRAWN "one printing IS a Tool" is annotated
-  //                                at the fold line below.
-  //
-  // UNFOLDED: `opponentWeaknessRewrite` (Fairy Zone, `seatWeaknessRewrite`, the
-  // opponent's board) joins `removeWeakness` among the fields read by their own scans;
-  // `disableAbilities`' `stage "Stage2"` / `sourceOnBench` / `targetZone` and
-  // `seatDamageReductionAfterWR.beneficiaryHasEnergy` ride fields this loop never
-  // reads. No key this fold returns is new, so its `passivesOf` key set does not move.
-  //
-  // 🆕🆕🆕 D562 — THREE NEW UNFOLDED TOOL FIELDS AND ONE NEW GATE ON THE TOOL SOURCES.
-  // `damageReductionAfterWRFromTypeThenDiscard` (the six Berries),
-  // `survivesKoAtFullHpFromOpponentThenDiscard` (Survival Brace) and
-  // `damageAttackerActiveThenDiscard` (Deluxe Bomb) are CONSUMABLES: each discards the
-  // Tool that paid, and a fold that sums into numbers cannot say which Tool that was, so
-  // all three are read by their own per-Tool scans (`berryReductionOf`,
-  // `survivalBraceOf`, `deluxeBombOf`) and NONE is summed here — deliberately, so this
-  // fold's key set and every pin on it stay where they are. The Tool entries of
-  // `sources` now come through `toolsInEffect`, so Jamming Tower empties them (and the
-  // holder's printed passive and its Energy stay, since neither is a Tool).
+  // Sources: the top card's printed passive (the only element that takes the §9 `disabled` drop),
+  // the Antique Fossils' card rule, the in-effect Tools and the attached Energy. Only Abilities are
+  // silenced by a lock. Consumable Tool fields (Berries, Survival Brace, Deluxe Bomb) are read by
+  // their own per-Tool scans, not summed here.
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
-    // 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS' CARD RULE, *"This card can't be affected by any Special
-    // Conditions"* (R-FO4). A RULE printed on the card, NOT an Ability, so it is a source of
-    // its own and does NOT ride the `disabled`-gated element above: Klefki, Watchtower and
-    // every other §9 lock leave it standing. The top card only — an evolved fossil (R-FO6)
-    // has no such rule. Its one consumer is `applyStatus`'s immunity gate.
+    // The Antique Fossils' card rule ("This card can't be affected by any Special Conditions"): not
+    // an Ability, so §9 locks leave it standing. Top card only; an evolved fossil has no such rule.
     isFossilTop(state, pokemon) ? FOSSIL_CARD_RULE : undefined,
-    // 🆕🆕🆕 D562 — through `toolsInEffect`: under Jamming Tower no Tool reaches the fold.
+    // Under Jamming Tower no Tool reaches the fold.
     ...toolsInEffect(state, pokemon).map((uid) => {
       const id = state.cardIdByUid[uid];
       return id === undefined ? undefined : programFor(id)?.passive;
@@ -2007,27 +1181,18 @@ export function passivesOf(
     ...pokemon.energy.map((uid) => {
       const id = state.cardIdByUid[uid];
       const energy = id === undefined ? undefined : programFor(id)?.energy;
-      // 🆕🆕🆕 D604 — a typed Special Energy's passive only on a holder of its printed type (R-TE1).
+      // A typed Special Energy's passive applies only on a holder of its printed type.
       return energyRulesApply(state, pokemon, energy) ? energy?.passive : undefined;
     }),
   ];
   const isBasic = top !== undefined && isBasicPokemon(top);
-  // D161 — the HOLDER's printed types [🆕🆕🆕 D578 (D539): "printed" WITHDRAWN — the in-play
-  // types, see below], for Rock Chestplate's "{F} Pokémon this
-  // card is attached to" gate. Read from the TOP card, so an evolution that
-  // changes the line's type ends the reduction with the Tool still attached —
-  // `isBasic` one line up, on the other axis of the same printed idiom.
-  // 🆕🆕🆕 D578 — the holder's IN-PLAY card (`inPlayCardOf`: Scovillain ex "Double Type" reads
-  // {G} and {R} here), so Rock Chestplate, Brave Bangle's and Cynthia's Power Weight's holder
-  // filters below ask what type the body IS. A locked holder is its printed card.
+  // The holder's in-play types, for holder-type gates (Rock Chestplate, Brave Bangle, Cynthia's
+  // Power Weight). Read from the top card, so an evolution that changes type ends the effect with
+  // the Tool still attached. A locked holder is its printed card.
   const holderCard = disabled ? top : inPlayCardOf(state, pokemon);
   const holderTypes = holderCard?.types ?? [];
-  // D253 — the HOLDER's ZONE, for Poltchageist's "As long as this Pokémon is on
-  // your Bench" gate. Bound HERE with `isBasic` and `holderTypes`, the fold's two
-  // other holder-shaped gates, because it is the same kind of clause on a third
-  // axis: STAGE, TYPE, and now SPOT. Live-read like both of them — a promotion out
-  // of the Bench (a KO, a Switch, a retreat) ends the prevention on the spot,
-  // because nothing is stamped and every read site passes the CURRENT state.
+  // The holder's zone, for Poltchageist's "As long as this Pokémon is on your Bench". Live-read, so
+  // leaving the Bench ends the prevention.
   const onBench = isOnBench(state, pokemon);
   const hasTool = pokemon.tools.length > 0;
   let damageReductionAfterWR = 0;
@@ -2049,16 +1214,13 @@ export function passivesOf(
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   let survivesKoOnCoinFlip: string | null = null;
-  // D257 — the DAMAGE THRESHOLD, and the family's first NUMERIC accumulator.
-  // `undefined` is the "no such aura" value rather than `Infinity`, so the read
-  // sites cannot mistake "shields nothing" for "shields at an absurd number".
+  // `undefined` means no threshold aura, rather than `Infinity`.
   let preventDamageAtOrAbove: number | undefined;
   const preventDamageFromTypes: PokemonType[] = [];
   const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
   const preventDamageAndEffectsFromBanners: Banner[] = [];
   const damageReductionsFromAttacker: { amount: number; attacker: CardFilter }[] = [];
-  // D258 — the COIN-FLIP shields, collected with their Ability names because a fold
-  // destroys provenance and `ABILITY_COIN_FLIP` has to name one.
+  // Collected with their Ability names because `ABILITY_COIN_FLIP` has to name one.
   const preventDamageOnCoinFlip: { ability: string }[] = [];
   const koPrizeReductions: KoPrizeReduction[] = [];
   const statusImmunities: StatusName[] = [];
@@ -2076,25 +1238,21 @@ export function passivesOf(
   const evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[] = [];
   for (const [index, passive] of sources.entries()) {
     if (passive === undefined) continue;
-    // 🆕🆕🆕 D614 — `sources[0]` is the top card's own printed passive, i.e. its Ability.
+    // `sources[0]` is the top card's own printed passive, i.e. its Ability.
     const fromAbility = index === 0;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
-    // D161 — the same number, gated on the holder's own printed type [🆕🆕🆕 D578 (D539): its
-    // IN-PLAY type — `holderTypes` above]. SUMMED into
-    // the ungated total rather than reported separately: it is the identical
-    // sentence at the identical §8.5 step, so splitting it would give the read
-    // sites two channels for one reading (D131).
+    // The same reduction gated on the holder's in-play type, summed into the ungated total: it is
+    // the same sentence at the same §8.5 step.
     const typed = passive.damageReductionAfterWRIfType;
     if (typed !== undefined && holderTypes.includes(typed.type)) {
       damageReductionAfterWR += typed.amount;
     }
-    // 🆕🆕🆕 D559 — Regirock "Rock Armor": the same number gated on the holder having ANY
-    // Energy attached (a card count — "any Energy" names no type), summed here for the
-    // line above's reason (D131).
+    // Regirock "Rock Armor": the same reduction gated on the holder having any Energy attached (a
+    // card count).
     if (passive.damageReductionAfterWRIfEnergy !== undefined && pokemon.energy.length > 0)
       damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
-    // 🆕🆕🆕 D619 — the ATTACKER-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is
-    // answered here (Rock Chestplate's, two lines up); the attacker gate only at the read sites.
+    // The attacker-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is answered
+    // here, the attacker gate only at the read sites.
     const fromAttacker = passive.damageReductionAfterWRFromAttacker;
     if (
       fromAttacker !== undefined &&
@@ -2107,10 +1265,8 @@ export function passivesOf(
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
-    // 🆕🆕🆕 D558 — Brave Bangle's HOLDER clause (*"If the Pokémon this card is
-    // attached to doesn't have a Rule Box"*), resolved HERE against `top` [🆕🆕🆕 D578 (D539):
-    // `holderCard`, its in-play view] because
-    // the fold holds the holder and the read sites hold only the defender.
+    // Brave Bangle's holder clause ("If the Pokémon this card is attached to doesn't have a Rule
+    // Box"), resolved here because only the fold holds the holder.
     const targeted = passive.damageBonusBeforeWRIfTarget;
     if (
       targeted !== undefined &&
@@ -2118,49 +1274,35 @@ export function passivesOf(
     )
       targetConditionalDamageBonusBeforeWR.push(targeted);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
-    // D324 — the STAGE-FREE twin of the line above, summed into the SAME
-    // accumulator and gated separately. Hero's Cape prints "the Pokémon this card
-    // is attached to" with no stage clause, so it must NOT take `isBasic`;
-    // Cynthia's Power Weight prints an owner instead of a stage, so it takes
-    // `beneficiary` against the holder's top card. One number, two gates, because
-    // the read site asks one question ("what is this body's max HP") and D131 says
-    // it must not be handed two channels to add up itself.
-    // D325 — and the THIRD gate on the same one number: Okidogi's "If this Pokémon
-    // has any {D} Energy attached". `hasAttachedEnergy` and not
-    // `countAttachedEnergy`, because the printed word is "any" — see the field.
-    // This function holds the body AND the state, so the energy question resolves
-    // HERE exactly as `preventDamageOnCoinFlip.requiresEnergyType`'s does below,
-    // rather than being collected raw for a read site to ask later.
+    // Stage-free HP bonus, summed into the same accumulator: Hero's Cape has no stage clause so it
+    // must not take `isBasic`; Cynthia's Power Weight gates on `beneficiary`; Okidogi gates on
+    // having any {D} Energy attached (`hasAttachedEnergy`, since the printed word is "any").
     const stageFree = passive.hpBonus;
     if (
       stageFree !== undefined &&
       (stageFree.beneficiary === undefined || matchesFilter(holderCard, stageFree.beneficiary)) &&
       (stageFree.requiresEnergyType === undefined ||
         hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType)) &&
-      // 🆕🆕🆕 D610 — Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no
-      // threshold, byte for byte). Cards by provision, `countAttachedEnergy`'s D128 count.
+      // Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no threshold).
+      // Counts Energy cards by provision.
       (stageFree.requiresEnergyCount === undefined ||
         countAttachedEnergy(state, pokemon, stageFree.requiresEnergyType ?? null) >=
           stageFree.requiresEnergyCount)
     ) {
       hpBonus += stageFree.amount;
     }
-    // D325 — the SCALED twin, summed into the SAME accumulator as the two flat
-    // gates above for D131's reason (one question, one channel). `amount × count`,
-    // and the count is 0 on an empty board, so this can only ever ADD — the D324
-    // `Math.max` floor in `effectiveMaxHp` is not weakened by it and Gravity
-    // Mountain stays the engine's only subtrahend.
+    // Scaled max-HP bonus: `amount × count`, summed into the same accumulator as the flat bonuses.
+    // The count is never negative, so this only ever adds.
     const scaled = passive.hpBonusPer;
     if (scaled !== undefined)
       hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
-    // 🆕🆕🆕 D559 — Orthworm ex's *"for each {M} Energy attached to this Pokémon"*: the
-    // amount MULTIPLIED by the holder's count of that type (provision, D118), here, so
-    // both read sites take a zero diff. 0 {M} Energy pays 0.
+    // Orthworm ex: "for each {M} Energy attached to this Pokémon" multiplies the amount by the
+    // holder's count of that type.
     const recoil = passive.damageAttacker;
     if (
       recoil !== undefined &&
       (recoil.requiresTool !== true || hasTool) &&
-      // 🆕🆕🆕 D620 — Punk Helmet's "{D} Pokémon this card is attached to": the holder's in-play types.
+      // Punk Helmet: "{D} Pokémon this card is attached to" checks the holder's in-play types.
       (recoil.holderType === undefined || holderTypes.includes(recoil.holderType))
     ) {
       const amount =
@@ -2170,16 +1312,10 @@ export function passivesOf(
       damageAttacker += amount;
       if (fromAbility) damageAttackerFromAbility += amount;
     }
-    // No `requiresTool` twin: the one printing IS a Tool, and an unread gate is
-    // the D156 defect. It rides the SAME Ability-lock rule as its sibling by
-    // sitting in this loop — a §9 lock suppresses a holder's own printed passive
-    // and never an attached Tool's, so Vengeful Punch keeps working under Klefki.
-    // 🆕🆕🆕 D559 CORRECTION (D539): "the one printing IS a Tool" is WITHDRAWN — Maractus
-    // "Exploding Needles" is an ABILITY printing of this field (so the §9 drop on
-    // `sources[0]` silences it) and brings the one gate it does need, `activeOnly`
-    // (*"If this Pokémon is in the Active Spot and is Knocked Out"*), answered here off
-    // `onBench`. `koRecoilOf` reads this fold BEFORE `knockOut` unseats the body, so the
-    // zone is still the one it was Knocked Out in. Still no `requiresTool` arm.
+    // Being in this loop means a §9 lock silences an Ability printing (Maractus "Exploding
+    // Needles") but never an attached Tool. `activeOnly` is answered off `onBench`; `koRecoilOf`
+    // reads this fold before `knockOut` moves the body, so the zone is still the one it was Knocked
+    // Out in.
     const onKo = passive.damageAttackerOnKo;
     if (onKo !== undefined && (onKo.activeOnly !== true || !onBench)) {
       damageAttackerOnKo += onKo.amount;
@@ -2188,219 +1324,91 @@ export function passivesOf(
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
     if (passive.preventDamageFromType !== undefined)
       preventDamageFromTypes.push(passive.preventDamageFromType);
-    // D251 — the attacker-HAS-AN-ABILITY prevent, a boolean OR exactly like
-    // `preventDamageFromExV` two lines up and NOT a push like the line between
-    // them: the gate names no value, so an OR is lossless (the interface field
-    // argues it). In this loop for the §9 reason every flag in it is here for —
-    // all five printings ARE Abilities, so Klefki's lock must switch the
-    // prevention off, and reading `programFor(top.id)` straight off `top` at the
-    // four damage sites would be shorter and would get that wrong silently.
+    // Read in this loop so a §9 Ability-lock switches the prevention off; reading the program off
+    // `top` at the damage sites would miss that.
     if (passive.preventDamageFromHasAbility === true) preventDamageFromHasAbility = true;
-    // D252 — the WIDE spelling of the line above: same boolean OR, same §9 answer
-    // (both printings ARE Abilities, so Klefki's lock must switch the prevention
-    // off), and the only difference is that the flag is read at FIVE sites rather
-    // than four. It is NOT derived from the line above and the line above is not
-    // derived from it: an engine that treated "prevent all damage" as implying
-    // "and effects of" would give every one of D251's five printings a protection
-    // its text does not print, which is the sharpest observable claim this field
-    // makes.
+    // Separate from the damage-only flag: "prevent all damage" does not imply "and effects of".
     if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
       preventDamageAndEffectsFromSpecialEnergy = true;
-    // D253 — the same WIDE spelling with the attacker property dropped and a zone
-    // clause added, and the `&& onBench` is the entire edit the zone clause costs
-    // anywhere in the engine. `isBasic`'s shape one screen up, not
-    // `preventsAttackerType`'s: the antecedent is about THIS body, so it is
-    // answerable with what this fold already holds, and answering it here is what
-    // keeps the five read sites free of a predicate call.
+    // "As long as this Pokémon is on your Bench": the zone clause is answered here.
     if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
       preventDamageAndEffectsWhileBenched = true;
-    // 🆕🆕🆕 D576 — Plume Protection: the line above's zone gate, damage only.
+    // Plume Protection: the same Bench gate, damage only.
     if (passive.preventDamageWhileBenched === true && onBench) preventDamageWhileBenched = true;
-    // D259 — the TRAINER-borne shield, and a BARE OR with no antecedent to resolve,
-    // which is the whole difference from the line directly above. That sentence
-    // prints "As long as this Pokémon is on your Bench"; this one prints no zone
-    // clause, no attacker clause and no magnitude, so there is nothing for the fold
-    // to answer beyond "does some live source on this body grant it". In this loop
-    // rather than read off `top` at the read site for the §9 reason: all four
-    // printings ARE Abilities, so Klefki's lock must switch the refusal off and let
-    // the Crushing Hammer through.
+    // Trainer-borne shield with no conditions. In this loop so a §9 lock switches it off.
     if (passive.preventTrainerEffects === true) preventTrainerEffects = true;
-    // 🆕🆕🆕 D637 — Protective Sail: the same bare OR, Supporters only (read at the funnel).
+    // Protective Sail: the same shield, Supporters only (read at the funnel).
     if (passive.preventSupporterEffects === true) preventSupporterEffects = true;
-    // D260 — the ATTACK-borne twin of the line directly above, and a BARE OR for
-    // that line's reason verbatim: no zone clause, no attacker clause, no
-    // magnitude. In this loop rather than read off `top` at the read site because
-    // the printing IS an Ability and Klefki's lock must let the Poison land.
+    // Attack-effect shield with no conditions. In this loop so a §9 lock switches it off.
     if (passive.preventAttackEffects === true) preventAttackEffects = true;
     if (passive.preventAbilityEffects === true) preventAbilityEffects = true;
-    // D255 — the attacker's printed RULE-BOX CLASS, and the FIRST PUSH in this
-    // family since D159's type list. A push and not an OR because the gate names a
-    // VALUE and this pool prints TWO of them ("Pokémon ex" and "Basic Pokémon ex"),
-    // so two sources on one board can genuinely disagree and a scalar fold would be
-    // last-wins — `preventDamageFromType` three lines up, verbatim, and the reason
-    // the interface field is a list. In this loop for the §9 reason every entry in
-    // it is here for: all five printings ARE Abilities, so Klefki's lock must
-    // switch the prevention off, and reading `programFor(top.id)` straight off
-    // `top` at the four damage sites would be shorter and would get that wrong
-    // silently.
+    // Pushed rather than OR'd because sources can name different classes ("Pokémon ex", "Basic
+    // Pokémon ex"). In this loop so a §9 lock switches it off.
     if (passive.preventDamageFromAttackerClass !== undefined)
       preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
-    // 🆕🆕🆕 D568 — Sparkling Scales, in THIS loop for the §9 reason its siblings are.
+    // Sparkling Scales, in this loop so a §9 lock switches it off.
     if (passive.preventDamageAndEffectsFromBanner !== undefined)
       preventDamageAndEffectsFromBanners.push(passive.preventDamageAndEffectsFromBanner);
-    // D257 — the DAMAGE THRESHOLD, and the ONLY line in this loop that is neither an
-    // OR, a push nor a sum. `Math.min` because the field names a VALUE and the two
-    // readings a scalar could take are not equivalent: a lower threshold shields
-    // STRICTLY MORE damage, so keeping the minimum is the only fold under which
-    // "this body is shielded at 150" and "this body is shielded at 200" are both
-    // still true afterwards. A push would have been the D255 answer and is wrong
-    // here for a reason worth stating: two `PreventedAttackerClass` entries describe
-    // two DISJOINT attacker sets and both must be tested, where two thresholds
-    // describe two NESTED damage sets and only the wider one can ever matter.
-    // ⚠️ UNREACHABLE — no board this catalog can build gives one body two writers of
-    // this field, so `min` and `max` and last-wins all agree today. Declared in the
-    // corpus (`D257-threshold-fold-max`) rather than faked with a fixture no
-    // printing justifies, which is D130's standing precedent and D255's lesson.
-    // In THIS loop, not read off `top`, for `preventDamageFromExV`'s §9 reason: the
-    // one real printing IS a Pokémon Ability, so Klefki's lock must switch it off.
+    // `Math.min` because a lower threshold shields strictly more damage, so the minimum keeps every
+    // source's promise. In this loop so a §9 lock switches it off.
     if (passive.preventDamageAtOrAbove !== undefined)
       preventDamageAtOrAbove =
         preventDamageAtOrAbove === undefined
           ? passive.preventDamageAtOrAbove
           : Math.min(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
-    // D258 — the COIN-FLIP shield, and the ONE line in this loop that RESOLVES a
-    // printed conjunct instead of just copying a value. `requiresEnergyType` is
-    // Fezandipiti's "has any {D} Energy attached", a fact about the HOLDER, and this
-    // is where a holder gate folds (D253) — `damageAttacker`'s `requiresTool` two
-    // screens up is the same idiom on the same argument. ABSENT means Kecleon's
-    // antecedent-free sentence, so the `??` is not a default but the other printing.
-    //
-    // ⚠️ PUSHED, NOT OR'd: two sources are two printed "flip a coin" instructions and
-    // therefore two RNG steps. In THIS loop rather than read off `top` for
-    // `preventDamageFromExV`'s §9 reason, which bites harder here than anywhere else
-    // in the family — a locked holder must draw NO coin, or the lock changes every
-    // subsequent draw in the game rather than just this one prevention.
+    // `requiresEnergyType` (Fezandipiti's "has any {D} Energy attached") is a holder fact resolved
+    // here; absent means the unconditional printing. Pushed, not OR'd: each source is its own coin
+    // flip. In this loop so a locked holder draws no coin.
     if (
       passive.preventDamageOnCoinFlip !== undefined &&
       (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||
         hasAttachedEnergy(state, pokemon, passive.preventDamageOnCoinFlip.requiresEnergyType))
     )
       preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
-    // 🆕 D298 — the §8.1 attached PRIZE REDUCTION, pushed RAW. The line directly
-    // above resolves its own rider here (`requiresEnergyType` is a question about
-    // THIS body, which the fold holds); this one resolves NONE of its three,
-    // because every one of them is a question about the SEAT (`requiresInPlay`),
-    // about the HOLDER'S NAME (`requiresHolderOwner`, which the fold could answer
-    // but the read site must anyway pair with the attack-cause clause) or about
-    // the GAME (`oncePerGame`). `cantAttackUnless`' rule verbatim: what this
-    // aggregation cannot answer, it must not pretend to.
+    // §8.1 Prize reduction, pushed raw: its riders concern the seat, the attack cause or the game,
+    // which this fold cannot answer.
     if (passive.onKoPrizeReduction !== undefined)
       koPrizeReductions.push(passive.onKoPrizeReduction);
-    // D172 — the §12 immunity, collected exactly like the line above it and for
-    // the same reason. It is in THIS loop rather than beside `top` because that
-    // is what buys the §9 gate: `sources` has already dropped the holder's own
-    // passive if it is locked, and has already kept every Tool's — and, since
-    // D174, every attached Energy's. A SPREAD rather than a push since D174: the
-    // interface field became a list the day a printing named three conditions.
+    // §12 immunity, collected in this loop so a §9 lock drops the holder's own passive while Tools
+    // and Energy still apply.
     if (passive.statusImmunities !== undefined) statusImmunities.push(...passive.statusImmunities);
-    // D174 — the §12 RECOVERY, the immunity's printed twin on the one card that
-    // prints both. Same loop, same §9 answer, and deliberately NOT derived from the
-    // line above: two of this family's three sentences refuse without recovering.
+    // §12 recovery, deliberately not derived from the immunity: most immunity printings refuse
+    // without recovering.
     if (passive.statusRecovery !== undefined) statusRecovery.push(...passive.statusRecovery);
-    // D192 — the ATTACKER-side suppression, a boolean OR exactly like
-    // `preventDamageFromExV` eight lines up. In this loop rather than read off
-    // `top` for that field's reason AND for one of its own: the §9 drop is what
-    // makes an Ability-lock silence "Azure Seas", and a build that read the
-    // catalog row directly at the attack.ts site would be shorter and would get
-    // that wrong silently.
+    // Attacker-side suppression ("Azure Seas"), in this loop so a §9 lock silences it.
     if (passive.suppressTargetEffectsOnAttack === true) suppressTargetEffectsOnAttack = true;
-    // D208 — the §8.1 KO-survival flag, a boolean OR exactly like the line above
-    // it and `preventDamageFromExV` before that. In this loop for BOTH of that
-    // field's reasons: the §9 drop on `sources[0]` is what makes an Ability-lock
-    // silence "Resolute Heart" / "Sturdy" (both printings ARE Abilities), and a
-    // build that read the catalog row straight off `top` at the four damage-write
-    // sites would be shorter and would get that wrong silently.
-    //
-    // ⚠️ ITS TOOL AND ENERGY REACHABILITY IS THE AUDIT'S ANSWER, NOT AN ACCIDENT.
-    // An attached source correctly SURVIVES a lock (a Tool is not an Ability), and
-    // Survival Brace sv06-164 is a real printing of exactly this sentence on a
-    // TOOL — so the field is already shaped for the twin. What stops that card
-    // being authored today is its SECOND sentence ("Then, discard this card."),
-    // not this fold. No Tool or Energy writer in the registry today.
-    // 🆕🆕🆕 D562 CORRECTION (D539): ~~"What stops that card being authored today"~~ and
-    // ~~"No Tool or Energy writer in the registry today"~~ are WITHDRAWN — Survival Brace
-    // is BUILT, and NOT through this field: its "from your opponent's Pokémon" and its
-    // "Then, discard this card." need the paying Tool's uid, which this fold destroys, so
-    // it writes `survivesKoAtFullHpFromOpponentThenDiscard`, read by `survivalBraceOf`
-    // inside `koSurvivalClamp`. This field still has no Tool or Energy writer.
+    // §8.1 KO survival ("Resolute Heart", "Sturdy"), in this loop so a §9 lock silences it.
+    // Survival Brace uses `survivesKoAtFullHpFromOpponentThenDiscard` instead because it needs the
+    // Tool's uid.
     if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
-    // 🆕🆕🆕 D598 — Tenacious Body / Durable Body, in this loop for the same §9 reason (an Ability).
+    // Tenacious Body / Durable Body, in this loop so a §9 lock silences it.
     if (passive.survivesKoOnCoinFlip !== undefined)
       survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
-    // D242 — the §8 attack GATE, collected RAW exactly like the two conditional
-    // damage-bonus lists above it, and IN THIS LOOP for `survivesKoAtFullHp`'s
-    // reason: the §9 drop on `sources[0]` is what makes Klefki's Ability-lock
-    // silence "Power Saver" and hand the Mewtwo its attack back. Reading the
-    // catalog row off `top` at the payability sites would be shorter and would
-    // get that wrong silently.
+    // §8 attack gate, collected raw; in this loop so a §9 lock silences it ("Power Saver").
     if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);
-    // 🆕🆕🆕 D570 — the ATTACK-AGAIN licence (Festival Lead), pushed RAW one line under its
-    // polarity twin and in this loop for its §9 reason: a locked holder loses the window.
+    // Attack-again licence (Festival Lead), pushed raw; a locked holder loses the window.
     if (passive.attackTwiceIf !== undefined) attackTwiceIf.push(passive.attackTwiceIf);
-    // D277 — the §4 attack LICENCE, the mirror image of the gate one line up and
-    // in this loop for the same reason: the §9 drop on `sources[0]` is what makes
-    // Klefki's Ability-lock silence "Debut Performance" and hand the §4 ban back.
-    // A boolean OR rather than a push, like `survivesKoAtFullHp` above — the read
-    // sites want a yes/no and no message names the source.
+    // §4 first-turn attack licence ("Debut Performance"); in this loop so a §9 lock hands the ban
+    // back.
     if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;
-    // D278/D279 — the §4/§10 EVOLVE licence: `cantAttackUnless`'s COLLECT-RAW
-    // shape (four lines up) rather than `attackFirstTurnExempt`'s boolean OR,
-    // because the two printings that carry it gate on two DIFFERENT KINDS of
-    // antecedent and only one of them is answerable here.
-    // [🆕🆕🆕 D594 (D539): "the two printings" / "two DIFFERENT KINDS" is WITHDRAWN, kept as written —
-    // Luxio "Fighting Roar" is a third antecedent (`ifCondition`), seat-relative, pushed raw like `ifInPlay`.]
-    //
-    // `activeOnly` is Eevee's *"As long as this Pokémon is in the Active Spot"*,
-    // and it is `preventDamageAndEffectsWhileBenched`'s `&& onBench` (D253) with
-    // the sign flipped — the antecedent names THIS body, and the fold already
-    // computes `onBench` for D253, so answering it here costs one conjunct.
-    // 🛑 IT IS A PER-PRINTING FLAG AND NOT A PROPERTY OF THE FIELD: Karrablast
-    // and Shelmet print NO Active-Spot clause, and a build that kept D278's
-    // unconditional `&& !onBench` would REFUSE a benched Karrablast the card
-    // licenses — silent, because it fails by being too strict.
-    //
-    // `ifInPlay` is *"If you have Shelmet in play"* and is NOT answered here:
-    // `passivesOf` has no seat and that clause is seat-relative, so it is lifted
-    // into a `BoardCondition` and folded by `evolveEarlyLicensed` (interpreter.ts)
-    // where `conditionHolds` lives — `cantAttackUnless`'s split verbatim.
-    //
-    // ⚠️ `!onBench` IS "ACTIVE" ONLY FOR A BODY THAT IS IN PLAY, AND THAT IS THE
-    // ONE DIRECTION THIS LINE DIFFERS FROM D253's. `isOnBench` answers FALSE for
-    // a body with no resolvable top uid — the conservative direction there
-    // (protect LESS), the permissive one here (license MORE). It cannot
-    // over-grant regardless: the licence rides `sources[0]`, which is the TOP
-    // CARD's own program, so a body with no top card contributes no passive at
-    // all and the list is empty before the zone is ever consulted.
-    //
-    // In this loop for `attackFirstTurnExempt`'s §9 reason: the licence IS a
-    // printed Ability, so Klefki's Ability-lock must silence it and hand BOTH
-    // bans back.
+    // §4/§10 evolve licence, collected raw because its conditions differ in kind. `activeOnly`
+    // (Eevee) is answered here via `!onBench`; it is per printing, since Karrablast and Shelmet
+    // print no Active Spot clause. `ifInPlay` and `ifCondition` are seat-relative and resolved by
+    // `evolveEarlyLicensed` (interpreter.ts). In this loop so a §9 lock silences the licence.
     const licence = passive.evolveEarlyExempt;
     if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {
       evolveEarlyExempt.push(
         licence.ifInPlay === undefined
-          ? // 🆕🆕🆕 D594 — Luxio "Fighting Roar": a shipped condition pushed as printed.
+          ? // Luxio "Fighting Roar"
             licence.ifCondition
           : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
       );
     }
-    // 🆕🆕🆕 D563 — the Ability-printed COST CLAUSE (Noivern, Kyurem), pushed RAW like
-    // `cantAttackUnless`: the condition is seat-relative, so `attackCostAt` evaluates it.
-    // In THIS loop for that field's §9 reason — the clause IS an Ability, so a lock on the
-    // holder drops `sources[0]` and hands the printed cost back.
+    // Ability-printed cost clause (Noivern, Kyurem), pushed raw because the condition is
+    // seat-relative and `attackCostAt` evaluates it. In this loop so a §9 lock restores the printed
+    // cost.
     if (passive.attackCostClause !== undefined) attackCostClauses.push(passive.attackCostClause);
-    // 🆕🆕🆕 D563 — the EVOLVE ALIAS (Eevee ex "Rainbow DNA"), in this loop for the same §9
-    // reason: a locked Eevee ex is evolved by §10's name match alone.
+    // Evolve alias (Eevee ex "Rainbow DNA"); a locked Eevee ex evolves by §10 name match alone.
     if (passive.evolveAsNamed !== undefined) evolveAsNamed.push(passive.evolveAsNamed);
   }
   return {
@@ -2449,106 +1457,20 @@ export function passivesOf(
     reason): "its remaining HP becomes 10". */
 const KO_SURVIVAL_REMAINING_HP = 10;
 
-/** 🆕🆕🆕 §8.1 (D562) — what `koSurvivalClamp` returns when it fires: the new `damage`
-    total and, when a Survival Brace answered, the Brace's uid for the damage write to
-    discard (*"Then, discard this card."*). `toolUid` is `undefined` for an Ability-only
-    survival (Resolute Heart / Sturdy). */
+/**
+ * Result of `koSurvivalClamp`: the new `damage` total and, when Survival Brace answered, its uid so
+ * the damage write can discard it. `toolUid` is undefined for an Ability-only survival.
+ */
 export type KoSurvival = { damage: number; toolUid: string | undefined };
 
-/** §8.1 THE KO-SURVIVAL CLAMP — the new `damage` total for `pokemon` when it has
-    FULL HP, carries the survival passive, and `dealt` HP of ATTACK DAMAGE would
-    Knock it Out; `null` when the clamp does not fire and the caller must write its
-    ordinary `pokemon.damage + dealt`.
-
-    🆕🆕🆕 **D562 — THE RESULT IS NO LONGER ONLY A NUMBER, AND THE SOURCE IS NO LONGER ONLY
-    THE FOLD.** It returns a `KoSurvival` — the damage total above PLUS the uid of the
-    Survival Brace `sv06-164` that answered, if one did — because the Tool twin prints
-    *"Then, discard this card."* and the four damage writes that call this are the only
-    places the discard can happen. `attackerSeat` is the Brace's *"from your opponent's
-    Pokémon"* (`survivalBraceOf`): an own-side spread or snipe reaches Resolute Heart /
-    Sturdy (whose sentence says only "from an attack") and never a Brace. The second
-    refusal below now reads "no survival passive AND no Brace". ⚠️ R-BR (UNRULED): a body
-    carrying BOTH clamps ONCE (the damage total is the same number either way) and the
-    Brace IS discarded — the Brace's antecedent held, so its consequent runs whole.
-    Reversal: a ruling that the Ability's survival pre-empts the Tool (keep the Brace).
-    ⚠️ R-BF (UNRULED): NO CALLER GATES THIS ON `suppressTargetEffects` / `ignoreWR`, so
-    under Feint (*"this attack's damage isn't affected by … any effects on your opponent's
-    Active Pokémon"*) the Berry is dropped but the Brace still answers — the clamp does not
-    change the DAMAGE (`dealt` is written in full), it answers the KO that damage would
-    cause, which is how Resolute Heart / Sturdy have read under Feint since D208. Driven
-    at the main hit and both snipe arms (toolsD562 §4). Reversal: a ruling that Feint's
-    clause reaches a KO-survival effect — then each caller passes `null` under the flag.
-
-    "If this Pokémon has full HP and would be Knocked Out by damage from an attack,
-    it is not Knocked Out, and its remaining HP becomes 10." — Pikachu ex "Resolute
-    Heart", Crustle "Sturdy" (7 printings, 7 Standard-legal; registry.ts
-    `KO_SURVIVAL`).
-
-    ⚠️ IT IS A CLAMP AT THE DAMAGE WRITE AND NOT A FIFTH KO-DETECTION SITE, WHICH
-    IS THE WHOLE SLICE. The antecedent "has full HP" is a fact about the PRE-damage
-    board, and it is unanswerable anywhere downstream: flow.ts's ONE lethality test
-    `isLethallyDamaged` reads `pokemon.damage`, which by then ALREADY INCLUDES the
-    hit, and every one of its call sites — `lethalRefs`, `collectKnockOuts`,
-    `koRecoilOf`, turn.ts's post-evolution check — is post-damage, as are all four
-    of the engine's KO/post-KO detection sites (`onKnockOutTrigger`, `triggersOf`,
-    `passivesOf`'s sweep readers, `koToolTriggersOf`). D199's remainder row filed
-    this as a hook on that sweep; the sweep is precisely where the datum has been
-    destroyed. Read instead at the four §8.5 DAMAGE WRITES — attack.ts's main hit
-    and interpreter.ts's `spreadDamage`, `placeSnipe`'s `deals` arm and
-    `snipeActive` — where the pre-hit value is still in scope, this needs NO new
-    detection site. D171 bought the fourth at a high price; this slice buys none.
-
-    ⚠️ AND THAT PLACEMENT IS WHAT MAKES EVERY DOWNSTREAM COLLISION ANSWER ITSELF.
-    Once the clamped total is on the board, the survivor simply IS NOT lethally
-    damaged, so: `lethalRefs` does not list it, `collectKnockOuts` emits no
-    `KNOCKED_OUT` and stages no `takePrizes`, no `ko:` park is queued, and
-    `koRecoilOf`'s `doomed` set — taken from `lethalRefs` itself — excludes it, so a
-    Vengeful Punch on the survivor stays silent because NO KO OCCURRED. None of
-    those four sites is touched by this slice; they are correct by construction.
-    What deliberately still fires is `damageAttacker` (Rocky Helmet / Counterattack
-    Quills), gated on `dealt > 0` — the attack really did deal its damage — which is
-    why this helper clamps the STORED TOTAL and never `dealt` itself.
-
-    ⚠️ "DAMAGE FROM AN ATTACK" IS THE ENGINE'S STANDING BOUNDARY, INHERITED RATHER
-    THAN REDRAWN. A PLACED COUNTER IS NOT DAMAGE (D138/D139/D142; the catalog prints
-    the rule on Bronzong sv03-145), so no `COUNTERS_PLACED` writer calls this: not
-    the put-counter snipe, not `counterPut`, not the counter MOVE, not `damageSelf`,
-    and NOT the Checkup's poison and burn (flow.ts). A full-HP survivor finished by
-    poison at the Checkup dies for real, and the suite drives that rather than
-    assuming it.
-
-    THE THREE REFUSALS, in the order they are checked and each for its own reason:
-      • `pokemon.damage !== 0` — THE PRINTED ANTECEDENT. Full HP means no damage
-        counters at all; one counter and the body dies normally.
-      • no `survivesKoAtFullHp` — read through `passivesOf`, so a §9 Ability-lock
-        over the holder switches it off (both printings are Abilities). 🆕🆕🆕 D562:
-        AND no in-effect Survival Brace against `attackerSeat` (`survivalBraceOf`) —
-        a Tool, so a §9 lock leaves it and Jamming Tower silences it.
-      • `hp === null` — the catalog data gap, which `effectiveMaxHp` owns and which
-        NEVER KOs (flow.ts `isLethallyDamaged` says the same), so again there is no
-        KO to refuse.
-    The lethality test itself is `damage + dealt >= hp`, `isLethallyDamaged`'s
-    comparison verbatim — `>=` and not `>`, because an EXACTLY lethal hit is the
-    common case and the whole point of the card. The two predicates cannot be
-    shared as code (flow.ts imports this module, so the arrow cannot reverse), so
-    the suite asserts they agree instead.
-
-    `effectiveMaxHp` and NOT the printed `hpOf`: a Bravery Charm on the holder
-    raises both the bar it must clear AND the HP it is left holding, and reading the
-    raw printed number would get both wrong on the same board.
-
-    ⚠️ THERE IS DELIBERATELY NO `dealt <= 0` GUARD, AND ITS ABSENCE IS A MEASUREMENT
-    RATHER THAN AN OVERSIGHT. One was written, and mutation testing found it
-    UNKILLABLE — because it is provably dead: reaching the lethality test at all
-    requires `pokemon.damage === 0`, and `effectiveMaxHp` never returns a non-positive
-    number (a non-positive printed hp is the data gap and returns `null` one line
-    up), so `0 + dealt >= hp >= 1` can only hold for `dealt >= 1`. A prevented or
-    zero hit is therefore already refused by the comparison below, on exactly the
-    right ground — "this would not have Knocked anything Out" — rather than by a
-    second rule saying the same thing less precisely. Removed rather than tested
-    around, which is D205's precedent for an unreachable branch. The BEHAVIOUR is
-    still asserted (koSurvival.test.ts drives `dealt` of 0 and −10); what is gone is
-    a comparison no input could distinguish. */
+/**
+ * §8.1 KO-survival clamp ("If this Pokémon has full HP and would be Knocked Out by damage from an
+ * attack, it is not Knocked Out, and its remaining HP becomes 10."; also Survival Brace against
+ * `attackerSeat`). Returns the new damage total, or null when it does not fire. It runs at the
+ * damage writes, not KO detection, because "full HP" is only knowable before the hit lands; once
+ * clamped, the body is simply not lethally damaged downstream. Placed counters are not damage and
+ * never reach this. Uses `effectiveMaxHp` so HP bonuses count, and `>=` like `isLethallyDamaged`.
+ */
 export function koSurvivalClamp(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2568,19 +1490,13 @@ export function koSurvivalClamp(
   return { damage: Math.max(0, hp - KO_SURVIVAL_REMAINING_HP), toolUid };
 }
 
-/** 🆕🆕🆕 §8.1 (D598) — THE COIN-FLIP SURVIVAL: Mega Hawlucha ex "Tenacious Body" ×3 and
-    Annihilape "Durable Body" — *"If this Pokémon would be Knocked Out by damage from an attack,
-    flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10."*
-    `koSurvivalClamp`'s placement (the four §8.5 damage WRITES, so a placed counter never asks it)
-    and `coinFlipShieldPrevents`' event shape (one `ABILITY_COIN_FLIP` naming the Ability, under
-    the damaged body's `seat`). The callers ask it ONLY when the clamp returned null, so a Survival
-    Brace or a full-HP Sturdy answers without a coin.
-
-    Returns `[damage, rngState]`: `damage` is the total that leaves 10 HP on heads and null
-    otherwise (no flip, or tails). No coin unless all hold: a live, unsuppressed source
-    (`passivesOf` — a §9 lock drops it); a known max HP (`effectiveMaxHp`); the body NOT already
-    lethally damaged (`damage < hp` — "would be Knocked Out" by THIS hit); and the hit lethal
-    (`damage + dealt >= hp`, `isLethallyDamaged`'s comparison). No "full HP" antecedent. */
+/**
+ * §8.1 coin-flip survival (Tenacious Body, Durable Body): "If this Pokémon would be Knocked Out by
+ * damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining
+ * HP becomes 10." Callers ask only when `koSurvivalClamp` returned null. Returns `[damage,
+ * rngState]`; no coin unless a live source exists, max HP is known, the body is not already
+ * lethally damaged, and the hit is lethal.
+ */
 export function koSurvivalCoinFlip(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2600,31 +1516,10 @@ export function koSurvivalCoinFlip(
   return [face === "heads" ? Math.max(0, hp - KO_SURVIVAL_REMAINING_HP) : null, rngState];
 }
 
-/** §8.5 (D159) — does `attacker` belong to one of the printed TYPES a holder's
-    prevention aura names? The resolution half of `passivesOf`'s
-    `preventDamageFromTypes`, and `attackerMatchesClass`'s sibling two functions
-    down: the same "the gate is a fact about the ATTACKER, so it can only be
-    answered where the attacker is known" split D146 made for `AttackBlock`, and
-    D107's `isExOrV` made before that.
-
-    The read is `Card.types.includes`, the SAME reading Weakness and Resistance
-    make two lines later in the pipeline and the same one `opponentActiveHasType`
-    makes (interpreter.ts `conditionHolds`) — reused rather than restated, so
-    "your opponent's {R} Pokémon" cannot come to mean something different from
-    what the §8.5 modifiers mean by a Fire Pokémon. `types` is an ARRAY and dual
-    types are a real printing, so the two lists are intersected rather than
-    compared; every Pokémon row in the local pool carries exactly one.
-
-    NOT an exhaustive switch, unlike `attackerMatchesClass` — that predicate's
-    vocabulary is an ENGINE union whose members each need a hand-written reading,
-    where this one's is a CATALOG value that reads itself. There is nothing tsc
-    could demand of a new member.
-
-    `undefined` (no resolvable attacking card) is FALSE, the conservative direction
-    `attackBlockOf` chose for a filtered block: an unreadable attacker protects
-    LESS rather than more. It is structurally unreachable for a declared attack
-    (attacks come from the Active) and answered anyway, for the reason the Bench
-    arms of the damage sites are guarded — these reads must be TOTAL. */
+/**
+ * §8.5: does `attacker` have one of the types the prevention aura names? Types are intersected
+ * because dual types exist. An unresolvable attacker returns false (protects less).
+ */
 export function preventsAttackerType(
   types: readonly PokemonType[],
   attacker: Card | undefined,
@@ -2634,92 +1529,22 @@ export function preventsAttackerType(
   return types.some((type) => printed.includes(type));
 }
 
-/** §8.5 (D257) — is the damage about to be placed BIG ENOUGH to trip the holder's
-    printed threshold? The resolution half of `passivesOf`'s
-    `preventDamageAtOrAbove`, and `preventsAttackerType`'s sibling one function up
-    on a third axis: that one is answered against the ATTACKER, D252's against the
-    BOARD, and this one against the NUMBER.
-
-    Drednaw `sv07-044` "Impervious Shell", **1 Standard-legal ABILITY printing**:
-
-      "Prevent all damage done to this Pokémon by attacks from your opponent's
-       Pokémon if that damage is 200 or more."
-
-    ⚠️ **A FUNCTION AND NOT AN INLINE COMPARISON, EVEN THOUGH IT IS ONE OPERATOR.**
-    The four damage sites must agree on TWO things a `>=` written out four times
-    would let them drift on: that the threshold is INCLUSIVE, and that an ABSENT
-    threshold shields nothing. `preventsAttackerType`'s empty-list guard is the same
-    line of defence one axis over, and D240's whole argument for threading the
-    amount into `attackBlockOf` rather than answering it beside each call is this
-    argument for the installed channel. One reading of one printed clause (D131).
-
-    🛑 **WHICH NUMBER — SETTLED AT D240, RE-STATED HERE, NOT RE-DECIDED.** *"That
-    damage"* is the damage that would ACTUALLY be placed: post-Weakness,
-    post-Resistance, post-reduction, floored at 0. The sentence prints no
-    parenthetical, so the reading comes from §8.5's step list, where prevention and
-    reduction share ONE step. The evidence against is on record beside
-    `attackBlockOf` (two simultaneous final modifiers are player-ordered in the
-    paper game). Every call site passes D240's own `wouldDeal` binding, so the two
-    channels — the INSTALLED cap and this catalog AURA — read the identical number
-    by construction rather than by agreement, which is the point of hoisting it.
-    ⚠️ **AND THE COMPARATOR IS `>=`, NOT `>`** — the print says *"200 or more"*, so
-    an exactly-200 hit IS prevented. That boundary is a driven case and a mutant.
-
-    ⚠️ It takes the NUMBER and the THRESHOLD and nothing else — no `state`, no
-    `Card`, no `InPlayPokemon`. It is in this file rather than `cards.ts` for the
-    reason that classification rule actually says: `cards.ts` is where a pure CARD
-    read goes, and this is not a card read at all. It sits beside the fold that
-    produces its first argument. */
+/**
+ * §8.5: does `damage` meet the prevention threshold ("if that damage is 200 or more")? Inclusive;
+ * an absent threshold shields nothing. `damage` is the amount actually to be placed, after
+ * Weakness, Resistance and reductions.
+ */
 export function preventedByDamageThreshold(threshold: number | undefined, damage: number): boolean {
   return threshold !== undefined && damage >= threshold;
 }
 
-/** §8.5 (D258) — **THE COIN-FLIP SHIELD, AND THE FIRST FUNNEL THIS PREVENTION FAMILY
-    HAS EVER HAD.** Does a *"If … damaged by an attack, flip a coin. If heads, prevent
-    that damage."* aura on `pokemon` stop `damage`? Returns the answer AND the
-    advanced `rngState`, and pushes one `ABILITY_COIN_FLIP` row per coin drawn.
-
-    🛑 **IT IS A FUNNEL AND NOT FOUR DISJUNCTS, WHICH IS THE OPPOSITE OF WHAT D257 —
-    ONE SLICE EARLIER, IN THIS EXACT SPOT — COULD DO.** A pure gate can be a term in
-    an `||` chain at four sites and cost four lines; a gate that CONSUMES RNG cannot,
-    because the four sites would then have to agree, in four places, on when a coin is
-    drawn, how many are drawn, what the event says and where the advanced state goes.
-    Four readers of one rule is this repo's standing hazard (D131), and here it is not
-    a drift risk but a determinism bug: a replay that draws a different NUMBER of
-    coins diverges on every shuffle afterwards, not just on this prevention.
-
-    🛑 **`damage` IS THE PRINTED ANTECEDENT, NOT A PERFORMANCE GUARD.** *"If any damage
-    is done to this Pokémon by attacks"* / *"and is damaged by an attack"* — a body
-    whose damage is already 0 is not damaged, so NO coin is drawn. Callers pass 0 when
-    a sibling aura, a Stadium, a bench shield or `ignoreWR`/`suppressTargetEffects`
-    has already settled it, which collapses every "don't flip" reason into one number
-    and is why this takes an amount rather than three booleans. ⚠️ That also fixes the
-    ORDER: this is the LAST term of every site's prevention, because a coin drawn for
-    damage something else already stopped is a coin the printed rules never draw.
-
-    ⚠️ **ONE COIN PER ENTRY, IN ORDER, AND ALL OF THEM EVEN AFTER A HEADS.** Two
-    shields on one body are two printed *"flip a coin"* instructions with the same
-    antecedent, so both fire; the damage is prevented if ANY came up heads. Unreachable
-    today and declared in the corpus (`D258-flip-first-only`) rather than faked.
-
-    ⚠️ **`seat` IS PASSED, NOT DERIVED.** It is the seat that OWNS the damaged body —
-    `ABILITY_COIN_FLIP`'s contract — and all four sites already hold it (`defenderSeat`
-    at the main hit, `opponent` at the three interpreter arms), so deriving it here by
-    scanning both boards for the uid would be a second answer to a question the caller
-    cannot get wrong. A body with no top card cannot be damaged and draws nothing.
-
-    ⚠️ **NO NEW EVENT AND NO `MATCH_RECORD_VERSION` MOVE.** `ABILITY_COIN_FLIP` has
-    existed since Glimmora's on-KO flip (flow.ts) with exactly this shape — seat, uid,
-    ability, face — and `rngState` has been a persisted `GameState` field since M1. The
-    record's SHAPE is untouched, which is D146's no-bump case and not D239's retype;
-    `expertHider.test.ts` drives it as a REPLAY rather than asserting it in prose.
-
-    ⚠️ THIS IS THE ONLY FUNCTION IN THIS FILE THAT WRITES EVENTS [🆕🆕🆕 D598 (D539): WITHDRAWN, kept as
-    written — `koSurvivalCoinFlip` writes its `ABILITY_COIN_FLIP` the same way, for the same reason], and it is here
-    because it is where its own first argument comes from and because attack.ts and
-    interpreter.ts cannot import each other (attack.ts imports the interpreter). It is
-    NOT part of `passivesOf`, which must stay a pure aggregation — the split is the
-    same one `statusRecovery` describes: the fold reports, the caller acts. */
+/**
+ * §8.5 coin-flip shield ("flip a coin. If heads, prevent that damage."). A single funnel because it
+ * consumes RNG and every site must flip the same coins. Draws no coin when `damage` is 0, so
+ * callers pass 0 when something else already prevented it; it must be the last prevention term. One
+ * coin per source, all flipped even after heads. `seat` is the damaged body's owner. Kept out of
+ * `passivesOf`, which must stay pure.
+ */
 export function coinFlipShieldPrevents(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2742,34 +1567,10 @@ export function coinFlipShieldPrevents(
   return [prevented, rngState];
 }
 
-/** §8.5/§11 (D252) — does the ATTACKING body have any Special Energy attached? The
-    resolution half of `passivesOf`'s `preventDamageAndEffectsFromSpecialEnergy`,
-    and `preventsAttackerType`'s sibling one function up: same split (the gate is a
-    fact about the attacker, so it can only be answered where the attacker is
-    known), different SUBJECT.
-
-    ⚠️ **IT TAKES AN `InPlayPokemon` AND NOT A `Card`, WHICH IS THE ONE THING THAT
-    MAKES IT DIFFERENT FROM EVERY OTHER MEMBER OF THIS FAMILY.** `isExOrV` parses a
-    name, `preventsAttackerType` reads `Card.types`, `hasPrintedAbility` (D251)
-    reads `Card.abilities` — three CARD reads answerable off the catalog row alone.
-    "have any Special Energy attached" is answerable only off the BOARD, so this one
-    needs `state` and the body. That is also why it lives in this file and not in
-    `cards.ts` beside its three siblings: `cards.ts` deliberately knows nothing
-    about `GameState`.
-
-    The membership question is delegated to `hasAttachedEnergy(state, pokemon,
-    "special")` rather than restated, so "has any Special Energy attached" here is
-    the SAME predicate that answers D118's printed "If this Pokémon has any Special
-    Energy attached" clause and the same one `countEnergyInPlay` counts — one
-    reading of one printed noun, per D131. In particular an Energy the engine has
-    not authored a program for is still SPECIAL if its catalog row says so
-    (`isSpecialEnergy` is a card-class read, not a registry read), so the gate does
-    not quietly narrow to the Special Energy this build happens to implement.
-
-    `undefined` (no resolvable attacking body) is FALSE — `preventsAttackerType`'s
-    conservative direction verbatim: an unreadable attacker protects LESS rather
-    than more. Structurally unreachable for a declared attack and answered anyway,
-    because these reads must be TOTAL rather than case-covering. */
+/**
+ * §8.5/§11: does the attacking body have any Special Energy attached? Takes the board body, not a
+ * card, because attachment is board state. An unresolvable attacker returns false (protects less).
+ */
 export function attackerHasSpecialEnergy(
   state: GameState,
   attacker: InPlayPokemon | undefined,
@@ -2777,177 +1578,59 @@ export function attackerHasSpecialEnergy(
   return attacker !== undefined && hasAttachedEnergy(state, attacker, "special");
 }
 
-/** §2.2 (D253) — is `pokemon` standing on a BENCH right now? The HOLDER-ZONE
-    predicate behind Poltchageist `sv06-020`/`-171` and Sinistcha `sv10-048`'s
-    *"As long as this Pokémon is on your Bench, …"*, and the engine's first read of
-    a body's SPOT that is not already holding the spot.
-
-    ⚠️ **SEAT-BLIND ON PURPOSE, AND THE PRINTED WORD "YOUR" IS WHY IT COSTS
-    NOTHING.** The clause says "your Bench" from the holder's own point of view, so
-    the only bench a body can be on is its OWN side's — a Pokémon is never on the
-    opponent's bench. Scanning BOTH sides is therefore not a widening, it is how
-    the seat gets DERIVED without any caller passing one, which is
-    `benchShieldedFromDamage`'s answer verbatim (D159) and the single reason
-    `passivesOf` needed no signature change to fold the gate.
-
-    Identity is TOP UID, the same key every member of the aura-scan family uses:
-    `InPlayPokemon` is rebuilt by value on every damage step, so `===` would answer
-    FALSE for the very body the caller just handed us one line after it took a hit.
-    A body with no top uid is not on a bench for our purposes — the conservative
-    direction, protecting LESS rather than more, exactly like
-    `attackerHasSpecialEnergy`'s `undefined`.
-
-    ⚠️ NOT a §9 gate and deliberately so: this answers WHERE a body is, which no
-    Ability-lock can change. The §9 answer for the printings that consult it is
-    made once, upstream, by `passivesOf`'s `disabled` drop on `sources[0]` — so a
-    locked Poltchageist is still ON the bench and simply contributes no passive. */
+/**
+ * §2.2: is `pokemon` on a Bench? Scans both sides because a body can only be on its own Bench.
+ * Identity is the top uid, since bodies are rebuilt by value. A body without a top uid is not on a
+ * Bench.
+ */
 export function isOnBench(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
   return SEATS.some((seat) => state.players[seat].bench.some((benched) => topUid(benched) === uid));
 }
 
-/** §11/§15.B — the LIVE attack-installed block on `pokemon`, or null. The ONE
-    read of `InPlayPokemon.attackBlock`, and the whole of what "during your
-    opponent's next turn" means at a read site: the field holds a turn STAMP, so
-    the block is live iff that stamp is the turn now being played, and a block
-    whose window has passed simply stops answering without anyone having cleared
-    it (D124's rule; types.ts `AttackBlock` says why the D112 paralysis clock is
-    the wrong clock for this direction).
-
-    It lives HERE, in the aura-scan family, for the reason the module header
-    gives: `attack.ts`'s §8.5 main hit, three interpreter damage sites and every
-    defender-relative effect op must ask the same question of the same code or
-    they drift — and `passivesOf`'s `preventDamageFromExV` (Mimikyu "Safeguard"),
-    the UNDURATED aura this is the durated twin of, is read at exactly those
-    sites. The difference between the two is worth stating: Safeguard is a printed
-    ABILITY on the holder's card, so it is read out of the CATALOG and is gated on
-    the ATTACKER's rule box; this is an INSTALLATION written onto the board, so it
-    is read out of STATE and is gated on the TURN.
-
-    ⚠️ IT DOES NOT ANSWER "is this effect an ATTACK's?" — that fact belongs to the
-    INVOCATION, not to the target, and it rides `EffectContext.invokedBy`
-    (interpreter.ts). Every call site pairs the two, because a block that stopped
-    an Ability or a Trainer would refuse Crushing Hammer and Boss's Orders on a
-    board where the printed sentence says nothing at all. The turn stamp already
-    kills the largest class of false positives on its own — a block is live only
-    during the holder's OPPONENT's turn, so nothing the HOLDER does can ever be
-    refused by it — but a Trainer the opponent plays on that same turn lands
-    squarely inside the window, which is why the provenance check is real work
-    rather than a belt to the stamp's braces.
-
-    ⚠️ `attacker` IS REQUIRED RATHER THAN OPTIONAL, AND THAT IS THE WHOLE OF
-    D146's STRUCTURAL CONTRIBUTION. `AttackBlock.fromClass` narrows a block to
-    attacks "from Basic Pokémon", and the class is a fact about the ATTACKER, so
-    the filter can only be resolved where the attacker is known — i.e. at the read
-    sites, exactly as `passivesOf`'s `preventDamageFromExV` is resolved at the
-    same four sites by `isExOrV(attacker)`. Folding it INTO this function rather
-    than beside it is what keeps "the ONE read of `InPlayPokemon.attackBlock`"
-    true: a read site cannot honour the turn stamp and forget the filter, because
-    there is no way to ask the first question without answering the second. A
-    parameter that is REQUIRED but nullable is the enforcement — a new site must
-    produce an attacker or say `undefined` on purpose.
-
-    `undefined` (no resolvable attacking card — structurally impossible for a
-    declared attack, since attacks come from the Active) FAILS a filtered block
-    and passes an unfiltered one. That is the conservative direction on both: an
-    unfiltered block is the pre-D146 behaviour byte for byte, and a filtered block
-    whose class cannot be checked protects LESS rather than more, which is the
-    polarity `effects` was chosen under (types.ts `AttackBlock`).
-
-    ⚠️ `damage` IS THE FOURTH PARAMETER AND IT IS D240's WHOLE STRUCTURAL CHOICE,
-    TAKEN THE SAME WAY D146 TOOK THE THIRD. `AttackBlock.maxDamage` narrows a block
-    to attacks "if that damage is 40 or less", and the amount is a fact about the
-    ATTACK rather than about the block, so — exactly like the class — it can only
-    be resolved at the read sites. It is folded INTO this function rather than
-    answered beside it for D146's reason word for word: that is what keeps "the ONE
-    read of `InPlayPokemon.attackBlock`" true, because a site cannot ask about the
-    turn stamp without also answering the class AND the cap. The alternative
-    considered and rejected was a second exported predicate over the returned
-    record; it would have let a fifth site honour the stamp and forget the cap,
-    which is the drift the single-read contract exists to stop. REQUIRED but
-    nullable, again as the enforcement — a new site must produce a number or say
-    `undefined` on purpose.
-
-    🛑 WHICH NUMBER, AND THE ANSWER IS "THE ONE THAT WOULD ACTUALLY BE PLACED".
-    The printed sentence carries NO parenthetical — unlike `damageReduction`'s
-    "(after applying Weakness and Resistance)", which is why D147 never had to
-    argue this — so the reading comes from §8.5's own step list
-    (`docs/reference/ptcg-rules.md`): base (+pre-W/R modifiers) → ×Weakness →
-    −Resistance → **± final modifiers, and that ONE step is where damage reduction,
-    "prevent all damage" and every other final modifier all live together**. A cap
-    is a condition on the damage the attack is doing, and at the moment the
-    prevention is applied the damage being done is the post-W/R total minus every
-    reduction, floored at 0. So the callers pass `Math.max(0, afterWR - reduction)`
-    — the number one line later becomes `dealt` — and NOT the base and NOT the
-    bare post-W/R figure.
-    ⚠️ THIS IS AN EXPLICITLY FLAGGED READING, NOT A CITED RULING. The evidence FOR:
-    the rules doc puts prevention and reduction in one step, the three §8.5 sites
-    already SUM `damageReductionOf` with `passivesOf` before this question is
-    asked, and "that damage" most naturally names the damage about to be placed.
-    The evidence AGAINST: real-world ordering between two simultaneous final
-    modifiers is chosen by the affected player, so a board with a 60-damage attack,
-    a −30 reduction and a 40-cap is observably different under the other order
-    (0 here, 30 there) and no printed text settles it. It is pinned by a named test
-    so that a future ruling moves ONE line and fails ONE assertion.
-
-    `undefined` (no readable amount — the `attackEffectRefused` path, where the
-    question is an EFFECT and there is no damage for the cap to be about) FAILS a
-    capped block and passes an uncapped one. Conservative on both, and the same
-    polarity as the class arm: a block whose cap cannot be checked protects LESS
-    rather than more. ⚠️ Note the direction is the opposite one from the DERIVER's,
-    where an unreadable cap must refuse to derive at all — a DROPPED cap key would
-    install a strictly WIDER block than the card prints. Same field, two failure
-    directions, because a missing key and a missing number are different facts. */
+/**
+ * §11: the live attack-installed block on `pokemon`, or null. The block is live only while its turn
+ * stamp equals the current turn. Callers must also check that the effect comes from an attack
+ * (`EffectContext.invokedBy`). `attacker` and `damage` are required but nullable so every site
+ * resolves the class filter and the damage cap; an unknown attacker or amount fails a filtered or
+ * capped block. `damage` is the amount that would actually be placed, after Weakness, Resistance
+ * and reductions (a flagged reading, not a ruling).
+ */
 export function attackBlockOf(
   state: GameState,
   pokemon: InPlayPokemon,
   attacker: Card | undefined,
   damage: number | undefined,
-  // 🆕🆕🆕 D630 — the ATTACKING BODY, for the one class read off the board rather than the card
-  // (`"burned"`, Lava Wall). Absent (the effects funnel) answers that class false: protects LESS.
+  // The attacking body, for classes read off the board ("burned"). When absent, those classes
+  // answer false.
   attackerBody?: InPlayPokemon,
 ): AttackBlock | null {
-  // No defensive `=== undefined` arm: the field is REQUIRED, and a record
-  // written before it existed is retired by MATCH_RECORD_VERSION rather than
-  // read benignly here — which is the whole reason that constant was bumped
-  // (D124's rule, and its argument against exactly this kind of soft landing).
-  // 🆕🆕🆕 D621 — Acerola's Mischief's chosen-body shield (types.ts `ChosenAttackShield`) is asked
-  // FIRST: it refuses damage AND effects with no cap, so for an attacker of its class no other block
-  // refuses more, and returning it first keeps the `?.effects` callers right.
+  // The chosen-body shield is checked first: it refuses damage and effects with no cap, so no other
+  // block refuses more.
   const chosen = chosenAttackShieldOf(state, pokemon, attacker, attackerBody);
   if (chosen !== null) return chosen;
   const block = pokemon.attackBlock;
-  // 🆕🆕🆕 D575 — the SIDE-WIDE block (Miraidon "C.O.D.E.: Protect") is the second answer, asked
-  // whenever the body's own block does not apply: two independent installations, either of
-  // which refuses the attack, so this function returns the body's when it applies and the
-  // side's otherwise. The three callers are unchanged.
+  // The side-wide block (Miraidon "C.O.D.E.: Protect") applies whenever the body's own block does
+  // not.
   if (block === null || block.turn !== state.turn)
     return sideAttackBlockOf(state, pokemon, attacker, attackerBody);
-  // D240 — the CAP, checked before the class for no reason but reading order:
-  // the two narrowings are independent conjuncts and no printing carries both.
-  // `<=` is the printed "or less", inclusive: a 40-cap refuses a 40 and lets a 41
-  // through. An ABSENT key is no cap at all, which is what every record persisted
-  // before this field existed already meant.
+  // `<=` matches the printed "or less". An absent cap means no cap.
   if (block.maxDamage !== undefined && !(damage !== undefined && damage <= block.maxDamage)) {
     return sideAttackBlockOf(state, pokemon, attacker, attackerBody);
   }
-  // The unfiltered reading — every printing D142 mapped, and the ABSENT key that
-  // makes an older persisted block read back as exactly what it used to mean.
+  // Unfiltered block.
   if (block.fromClass === undefined) return block;
   return attacker !== undefined && attackerMatchesClass(attacker, block.fromClass, attackerBody)
     ? block
     : sideAttackBlockOf(state, pokemon, attacker, attackerBody);
 }
 
-/** 🆕🆕🆕 §11 (D575) — the side arm of `attackBlockOf`: the damaged body's SIDE carries a live
-    `sideAttackBlock` (Miraidon "C.O.D.E.: Protect"), the body's top card prints the block's
-    BANNER (read LIVE, R-MI2 ⚠️ UNRULED), the block's SOURCE is still that side's Active (the
-    printed terminator's read-time half — `switchInto` clears the record, R-MI1 ⚠️ UNRULED),
-    and the attacker belongs to the printed CLASS (`attackerMatchesClass`, the body arm's own
-    predicate). The answer is a synthesized `AttackBlock` (`effects: false` — the print says
-    "damage", not "damage and effects"; no cap), so every caller reads one shape. An
-    unreadable attacker protects LESS, the body arm's polarity. */
+/**
+ * §11 side arm of `attackBlockOf` (Miraidon "C.O.D.E.: Protect"): the side's live block applies
+ * when the body prints the banner, the source is still that side's Active, and the attacker matches
+ * the class. Synthesizes a damage-only block with no cap.
+ */
 function sideAttackBlockOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2971,25 +1654,11 @@ function sideAttackBlockOf(
   return null;
 }
 
-/** 🆕🆕🆕 §11 (D621) — the chosen-body arm of `attackBlockOf`: a side whose live `chosenAttackShield`
-    names this body's BASE uid (`stack[0]` — R-AM1: it follows the body through switching, evolving
-    and devolving) and an attacker of the printed class (`attackerMatchesClass`). The answer is a
-    synthesized `{ effects: true }` block (the print's "damage from and effects of"), no cap. An
-    unreadable attacker protects LESS, the body arm's polarity. A body that left play is a new
-    Pokémon: flow.ts `clearDepartedChosenShields` clears its record on the action that removed it.
-
-    ⚠️ R-AM2 (UNRULED) — this arm is reached through `attackDamageBlocked`, which `placeSnipe` and
-    `snipeActive` ask INSIDE their `ignoreWR` guard with every on-target prevent. So an `ignoreWR`
-    snipe or spread from a Pokémon ex is not stopped. Right for the Feint form (Iron Crown ex "Twin
-    Shotels", *"…or by any effects on those Pokémon"*); for the BARE tail it follows D400/D492's
-    reading that `ignoreWR` also nulls effects on the target, so Arboliva ex "Oil Salvo", Flygon ex
-    "Sonic Peridot" and Vaporeon ex "Severe Squall" land through the shield. The main hit keeps the
-    two forms apart (`damageSuppression.targetEffects`), so a bare-tail main hit (Medicham ex "Yoga
-    Kick") is stopped. Pinned by `sideStateMeD621.test.ts` §5.
-    [🆕🆕🆕 D622 (D539): R-AM2 RETIRED — the bare tail now carries `wrOnly`, and `placeSnipe` reads
-    `ignoreWR && !wrOnly` as its guard, so Oil Salvo, Sonic Peridot, Severe Squall (and Sigilyph
-    "Telekinesis") are stopped by this shield and by every on-target prevent; only the Feint form
-    passes. `bareTailD622.test.ts`.] */
+/**
+ * §11 chosen-body arm of `attackBlockOf`: the side's live `chosenAttackShield` names this body's
+ * base uid (`stack[0]`, so it follows the body through switching and evolving) and the attacker
+ * matches the class. Synthesizes a damage-and-effects block with no cap.
+ */
 function chosenAttackShieldOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -3008,45 +1677,16 @@ function chosenAttackShieldOf(
   return null;
 }
 
-/** Does `attacker` belong to the printed CLASS a filtered block names? The whole
-    of D146's predicate, widened at D239 to the printed *"non-{X}"* exclusion —
-    and still ONE spelling of each printed conjunct, which is the reason
-    `AttackerClass` is a record (effects.ts carries the argument).
-
-    (🆕🆕🆕 D575 (D539): ~~"a one-member union"~~ — three members since D575, `"ancient"` and `"ex"` read by
-    the arms of `attackerMatchesStage`; the switch is still the whole body.)
-    THE STAGE WORD STAYS AN EXHAUSTIVE `switch` over a one-member union rather
-    than an `if`: `AttackerClass["stage"]` is the closed vocabulary D120 requires
-    of a token that varies, and this switch is what makes "closed" a compiler fact
-    instead of a comment — widen it and tsc demands the arm that reads the new
-    member. `basic` is `isBasicPokemon` VERBATIM (cards.ts), the same reuse D107's
-    `isExOrV` is under at the sites beside this one: the printed phrase "attacks
-    from Basic Pokémon" is the same claim the setup placement and the bench play
-    make about a card in hand, and a second reading of "Basic" would be a second
-    chance to disagree with §3.6/§5.2 about what one is. Note it is read off the
-    ATTACKER's TOP card (its current identity, §1.2) — a Basic that has evolved is
-    a Stage 1 and its attacks are no longer refused, which is what the printed
-    word means and is why the call sites pass a resolved top card rather than a
-    stack.
-
-    ⚠️ THE EXCLUSION IS `types.includes(…)` AND NOT `types[0] === …`, which is
-    `matchesFilter`'s `typedPokemon` read one file over and the same reason: the
-    catalog column is an ARRAY. No dual-type Pokémon is Standard-legal today
-    (measured: zero rows with `json_array_length(types_json) > 1`), so the
-    difference is unobservable off any printing and is driven by a declared
-    SYNTHETIC probe instead — the `fix-attacker` "Fury" precedent. An equality
-    read would drop a dual-typed body silently the day one is ingested.
-
-    ⚠️ AND IT IS A NEGATION, SO ITS FAILURE DIRECTION IS THE DANGEROUS ONE: an
-    exclusion that stopped answering makes the block WIDER than the card prints
-    (Terapagos ex would start refusing the Colorless Basics its own sentence lets
-    through), where every other conservative default in this family protects LESS.
-    That is why an unresolvable code refuses to derive at all rather than dropping
-    the key (effects.ts arm 19c). */
+/**
+ * Does `attacker` belong to the class a filtered block names? Stage words use an exhaustive switch
+ * so new members are compile errors. Read off the attacker's top card, so an evolved Basic no
+ * longer matches "Basic". Type exclusions use `types.includes` because types is an array; since an
+ * exclusion widens the block when it fails, an unresolvable type refuses to derive.
+ */
 function attackerMatchesClass(
   attacker: Card,
   cls: NonNullable<AttackBlock["fromClass"]>,
-  attackerBody?: InPlayPokemon, // 🆕🆕🆕 D630 — read by `"burned"` alone
+  attackerBody?: InPlayPokemon, // Only used by `"burned"`.
 ): boolean {
   if (!attackerMatchesStage(attacker, cls.stage, attackerBody)) return false;
   return cls.excludingType === undefined || !(attacker.types ?? []).includes(cls.excludingType);
@@ -3065,34 +1705,31 @@ function attackerMatchesStage(
   switch (stage) {
     case "basic":
       return isBasicPokemon(attacker);
-    // 🆕🆕🆕 D575 — the printed BANNER (Iron Moth "…from Ancient Pokémon"), read off the
-    // attacker's TOP card by printing id at damage time (R-IM1, ⚠️ UNRULED).
+    // Ancient banner (Iron Moth "…from Ancient Pokémon"), read off the attacker's top card at
+    // damage time.
     case "ancient":
       return bannerOf(attacker) === "Ancient";
-    // 🆕🆕🆕 D575 — EXACTLY "Pokémon ex" (Miraidon "…from Pokémon ex"): the name-derived
-    // suffix, never `isExOrV` (a V is not an ex) nor `hasRuleBox` (the judge's (d)).
+    // Exactly "Pokémon ex": not `isExOrV` (a V is not an ex) nor `hasRuleBox`.
     case "ex":
       return pokemonSuffixOf(attacker) === "ex";
-    // 🆕🆕🆕 D630 — "attacks from Burned Pokémon" (Lava Wall): the attacking BODY's Special Condition at
-    // damage time (R-LVW1 ⚠️ UNRULED). No body in hand (the effects funnel) → false: protects LESS.
+    // "Attacks from Burned Pokémon" (Lava Wall): the attacking body's condition at damage time. No
+    // body means false.
     case "burned":
       return attackerBody?.conditions.burned === true;
-    // 🆕🆕🆕 D630 — "attacks from Evolution Pokémon" (Flashing Barrier, Metal Block): the in-play card.
+    // "Attacks from Evolution Pokémon": the in-play card.
     case "evolution":
       return isEvolutionPokemon(attacker);
-    // 🆕🆕🆕 D630 — "attacks from Pokémon that have an Ability" (Psy Protection): the printed Ability on
-    // the in-play card; an Ability under a §9 lock is still had (R-PSY1 ⚠️ UNRULED).
+    // "Attacks from Pokémon that have an Ability": the printed Ability on the in-play card; a
+    // §9-locked Ability still counts.
     case "hasAbility":
       return hasPrintedAbility(attacker);
   }
 }
 
-/** 🆕🆕🆕 §6.2/§11 (D575) — `pokemon`'s LIVE hand-attach mark (types.ts `HandAttachMark`:
-    Glimmora's bar, Hypno's turn end), or `null`. `attackBlockOf`'s contract: the field holds
-    a turn STAMP, so the mark is live iff that stamp is the turn now being played, and an
-    expired one stops answering without anyone having cleared it. The ONE read of the field
-    (turn.ts `attachEnergy`, interpreter.ts `attachEnergyTargets` / `attachEnergyFrom`; 🆕🆕🆕 D636: and
-    interpreter.ts `shockHandAttach`, Electrified Incisors' counters). */
+/**
+ * §6.2/§11: `pokemon`'s live hand-attach mark (`HandAttachMark`), or null. Live only while its turn
+ * stamp equals the current turn.
+ */
 export function liveHandAttachMark(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -3101,60 +1738,20 @@ export function liveHandAttachMark(
   return mark !== null && mark.turn === state.turn ? mark : null;
 }
 
-/** §8.5/§11 (D147) — the HP an attack-installed DAMAGE REDUCTION takes off any
-    attack damage aimed at `pokemon` right now, or 0. The ONE read of
-    `InPlayPokemon.damageReduction`, and `attackBlockOf`'s sibling in the one
-    respect that matters: the field holds a turn STAMP, so the reduction is live
-    iff that stamp is the turn now being played, and a reduction whose window has
-    passed simply stops answering without anyone having cleared it.
-
-    ⚠️ IT RETURNS A NUMBER TO BE SUMMED, NOT A RECORD TO BE INSPECTED, and that
-    is the whole shape of the slice. The printed sentence —
-
-      "During your opponent's next turn, this Pokémon takes {N} less damage from
-       attacks (after applying Weakness and Resistance)."
-
-    — is byte-identical to a sentence FOUR printings already print as an always-on
-    Ability, minus the four-word duration prefix: Bouffalant sv03-174 "Bouffer"
-    (20), Stonjourner sv01-121 "Exoskeleton" (20) and Copperajah ex sv02-150/-245
-    "Bronze Body" (30), all simulated since 0.x as
-    `PassiveEffects.damageReductionAfterWR` and aggregated by `passivesOf` one
-    function up. So the four damage sites ADD this to that number rather than
-    consulting a second channel: same step of §8.5, same clamp, same
-    `ignoreWR` bypass. One reading, one implementation (D131), read across the
-    catalog/state boundary rather than within one side of it.
-
-    ⚠️ IT IS NOT FOLDED INTO `passivesOf`, and the two reasons are structural.
-    That function is the CATALOG scan — a printed passive plus attached Tools —
-    which is exactly the aura/installation distinction `attackBlockOf`'s doc block
-    draws one function down; and it SUPPRESSES a holder's own printed passive
-    under a §9 Ability-lock aura, which an attack-installed effect must be immune
-    to, because an installation is not an Ability. Summing at the sites keeps that
-    immunity a property of where the number comes from rather than of where the
-    suppression happens to be written.
-
-    IT NEEDS NO PROVENANCE CHANNEL, for D143's generalisation rather than by
-    accident: a durated effect owes an `EffectContext.invokedBy` only when it
-    gates an OP that a Trainer or an Ability could also reach. This one is summed
-    into a number that the ALWAYS-ON printings already contribute to at the same
-    four sites with no such check — so adding one here would make the SAME printed
-    words mean two different things depending on whether they carry a duration.
-    (Checked rather than assumed: all three interpreter damage sites are
-    attack-only in this pool. `spreadDamage`, `snipeActive` and `placeSnipe`'s
-    `deals` arm have no Ability producer — every registry `damageChosen` is
-    `opponentBench` without `deals`, and `damageActive` places flat counters that
-    no reduction touches at all.) */
+/**
+ * §8.5/§11: the attack-installed damage reduction on `pokemon` right now, or 0. Live only while its
+ * turn stamp equals the current turn. Callers add it to the `passivesOf` reduction at the same
+ * step; it is kept out of `passivesOf` because an installation is not an Ability and must survive a
+ * §9 lock.
+ */
 export function installedReductionOf(
   state: GameState,
   pokemon: InPlayPokemon,
-  // 🆕🆕🆕 D630 — the attacking card and body, for a CLASS-filtered reduction (Metal Block's
-  // `fromClass`, `attackBlockOf`'s predicate). An unreadable attacker gets no filtered reduction.
+  // The attacking card and body, for a class-filtered reduction. An unreadable attacker gets no
+  // filtered reduction.
   attacker?: Card,
   attackerBody?: InPlayPokemon,
 ): number {
-  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
-  // field is REQUIRED and a record written before it existed is retired by
-  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const installed = pokemon.damageReduction;
   if (installed === null || installed.turn !== state.turn) return 0;
   if (installed.fromClass === undefined) return installed.amount;
@@ -3163,60 +1760,32 @@ export function installedReductionOf(
     : 0;
 }
 
-/** 🆕🆕🆕 §8.5/§11 (D547) — the attack-installed NEXT-TURN VULNERABILITY live on
-    `pokemon` right now, or 0: "During your next turn, the Defending Pokémon takes
-    50 more damage from attacks (after applying Weakness and Resistance)."
-    (`censusAttackCorpus.ts:150`, 2 legal printings). `installedReductionOf`'s twin
-    one function up, with the sign flipped by the CALLER: the four damage sites
-    that subtract that number ADD this one at the same post-W/R step (`attack.ts`'s
-    main hit, `spreadDamage`, `placeSnipe`, `snipeActive`) and report it as
-    `DAMAGE_DEALT.vulnerability` — never as a negative `reduction` (D149's rule:
-    one field per step AND direction).
-
-    ⚠️ ON-TARGET, SO SUPPRESSIBLE: it is an effect ON the damaged Pokémon, so the
-    two suppression paths that drop the installed reduction drop this too (the main
-    hit's `suppressTargetEffects`, the snipe arms' `ignoreWR` "not affected by any
-    effects on that Pokémon") — docs/decisions.md D547, with its reversal condition.
-    Kept out of `passivesOf` for `installedReductionOf`'s two reasons (an
-    installation is not an Ability, and is immune to §9). */
+/**
+ * §8.5/§11: the attack-installed next-turn vulnerability on `pokemon` ("takes 50 more damage from
+ * attacks (after applying Weakness and Resistance)"), or 0. Callers add it after Weakness and
+ * Resistance and report it as `vulnerability`. It is an effect on the target, so target-effect
+ * suppression drops it.
+ */
 export function installedVulnerabilityOf(state: GameState, pokemon: InPlayPokemon): number {
-  // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v30
-  // record is retired by MATCH_RECORD_VERSION 31 rather than read benignly here.
   const installed = pokemon.damageVulnerability;
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
-/** 🆕🆕🆕 §8.5/§11 (D552) — the type an attack-installed WEAKNESS RETYPE makes
-    `pokemon`'s printed Weakness name right now, or `null`: "Until the end of your next
-    turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't
-    change.)" (`censusAttackCorpus.ts:629`, 1 legal printing). The ONE read of
-    `InPlayPokemon.weaknessRetype`, `installedVulnerabilityOf`'s shape one function up.
-
-    Handed to cards.ts `weaknessOf` at BOTH Weakness sites (`attack.ts`'s main hit,
-    interpreter.ts `snipeActive`) AFTER their three null paths (D192's suppression, the
-    Blooming Garden aura, D432's installed bar), so a nulled Weakness stays null whatever
-    this says (docs/decisions.md D552 R3).
-    🆕🆕🆕 D640 (D539): ~~"The ONE read of `InPlayPokemon.weaknessRetype`"~~ — D640's
-    `installedWeaknessRewriteOf` below is a SECOND reader of the field (the `asTimesTwo`
-    record), so this is the ONE retype read, not the field's only one. ⚠️ ON-TARGET, SO SUPPRESSIBLE: the main hit's
-    `suppressTargetEffects` ("not affected by any effects on your opponent's Active
-    Pokémon") drops it and the PRINTED type applies (R4); the snipe's `ignoreWR` nulls
-    Weakness outright. Kept out of `passivesOf` for `installedReductionOf`'s reasons. */
+/**
+ * §8.5/§11: the type an attack-installed Weakness retype gives `pokemon` ("the Defending Pokémon's
+ * Weakness is now {C}"), or null. Applied after the null-Weakness paths, so a removed Weakness
+ * stays removed. It is an effect on the target, so `suppressTargetEffects` drops it.
+ */
 export function installedWeaknessRetypeOf(state: GameState, pokemon: InPlayPokemon): string | null {
-  // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v33 record
-  // is retired by MATCH_RECORD_VERSION 34 rather than read benignly here.
   const installed = pokemon.weaknessRetype;
   return installed === null || installed.turn !== state.turn ? null : installed.type;
 }
 
-/** 🆕🆕🆕 §8.5/§11 (D640) — the type an attack-installed Weakness REWRITE makes `pokemon`'s Weakness right now, or
-    `null`: Pikachu `30th-040` "Overwriting Bolt", *"The Defending Pokémon's Weakness is now {L} until the end of your
-    next turn. (Apply Weakness as ×2.)"* — the same record as the retype above (`InPlayPokemon.weaknessRetype`, with
-    `asTimesTwo`), on the same window. Handed to cards.ts `weaknessOf` as its `rewrite` at the three Weakness sites
-    (attack.ts's main hit, interpreter.ts `snipeActive` and `yourActiveWeakToOpponentActiveType`), AHEAD of the
-    opponent-side `seatWeaknessRewrite` (R-OWB1 ⚠️ UNRULED: the body's installed rewrite wins over a seat's Fairy
-    Zone). The retype above answers the same type for this record and re-points whichever rewrite applies (R-FZ1),
-    so the `??` order is not observable at HEAD: R-OWB1's answer is {L}×2 either way. */
+/**
+ * §8.5/§11: the Weakness rewrite (Pikachu "Overwriting Bolt": "Weakness is now {L} … (Apply
+ * Weakness as ×2.)") on `pokemon`, or null. Passed to `weaknessOf` as its `rewrite`, ahead of the
+ * seat-wide rewrite.
+ */
 export function installedWeaknessRewriteOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -3227,186 +1796,52 @@ export function installedWeaknessRewriteOf(
     : installed.type;
 }
 
-/** 🆕🆕 §8.5/§11 (D432) — does `pokemon` currently carry an attack-installed
-    *"During your opponent's next turn, this Pokémon has no Weakness."* bar? The
-    ONE read of `InPlayPokemon.noWeaknessTurn`, and `installedReductionOf`'s
-    sibling in the one respect that matters: the field holds a turn STAMP, so the
-    bar is live iff that stamp is the turn now being played, and a bar whose window
-    has passed simply stops answering without anyone having cleared it (D124's
-    rule).
-
-    ⚠️ **IT IS THE THIRD WEAKNESS-NULLING SHAPE AND IT SHARES NEITHER STORE WITH
-    THE OTHER TWO.** The two Weakness read sites (attack.ts's main hit,
-    interpreter.ts's `snipeActive`) already carried two null paths before this one:
-
-    | | store | scope | clock |
-    |---|---|---|---|
-    | `AttackDamageSuppression.weakness` (D192) | a PARSE of the declared attack | the attacker's own sentence | one declaration |
-    | `seatRemovesWeakness` (D161) | a CATALOG fold over a seat's bodies | seat-wide, either zone | none — an aura |
-    | this (D432) | a STAMP on one `InPlayPokemon` | that one body | one turn |
-
-    This repo's standing rule is *the read site is shared, the storage is not*, and
-    here the third store is forced twice over rather than chosen. Widening D192's
-    boolean is impossible: it is derived from the sentence the ATTACKER declared
-    this instant and is discarded when the attack ends, so it has nowhere to keep a
-    turn and no body to keep it on. Widening the AURA is worse than impossible — it
-    is a §9 category error: `seatRemovesWeakness` folds printed Abilities and is
-    switched OFF by an Ability-lock (Ting-Lu ex "Cursed Land"), while an
-    attack-INSTALLED effect must be immune to that suppression, which is D147's own
-    structural reason for keeping `installedReductionOf` out of `passivesOf`.
-
-    Cheap on the common path: one field read and one integer compare, no scan. */
+/**
+ * §8.5/§11: does `pokemon` carry an attack-installed "During your opponent's next turn, this
+ * Pokémon has no Weakness."? Live only while its turn stamp equals the current turn. Separate from
+ * the Ability aura so a §9 lock cannot remove it.
+ */
 export function installedNoWeakness(state: GameState, pokemon: InPlayPokemon): boolean {
-  // No defensive `=== undefined` arm, for `installedReductionOf`'s reason above:
-  // the field is REQUIRED and a record written before it existed is retired by
-  // MATCH_RECORD_VERSION (26 -> 27 at D432) rather than read benignly here.
   return pokemon.noWeaknessTurn === state.turn;
 }
 
-/** §8.5/§11 (D149) — the HP an attack-installed ATTACK-DAMAGE DEBUFF takes off
-    every damage `pokemon`'s own attack does right now, or 0. The ONE read of
-    `InPlayPokemon.attackDamageDebuff`, and `installedReductionOf`'s MIRROR ON
-    BOTH AXES AT ONCE — which is the whole shape of the slice:
-
-    | | `installedReductionOf` (D147) | this (D149) |
-    |---|---|---|
-    | Installed on | the ATTACKER's own Active | the DEFENDER's Active |
-    | Asked about  | the body TAKING damage    | the body DEALING it   |
-    | Where in §8.5| AFTER Weakness/Resistance | BEFORE them           |
-    | Printed word | "(after applying …)"      | "(before applying …)" |
-
-    Everything else is identical, deliberately: the field holds a turn STAMP, so
-    the debuff is live iff that stamp is the turn now being played, and one whose
-    window has passed simply stops answering without anyone having cleared it
-    (D124's rule).
-
-    ⚠️ IT IS SUBTRACTED BESIDE `attackerPreWRBonus`, NOT FOLDED INTO IT, and the
-    reasons are the ones types.ts `AttackDamageDebuff` sets out: the bonus is a
-    REPORTED positive field, that function is `passivesOf`'s §9-suppressible
-    CATALOG fold, and only the debuff can drive the pre-W/R subtotal negative. So
-    the read sites spell `preWR = max(0, base + bonus − debuff)` and report the
-    two numbers in two fields of the same `DAMAGE_DEALT` row.
-
-    ⚠️ IT IS KEPT OUT OF `passivesOf` FOR `installedReductionOf`'s TWO REASONS
-    VERBATIM: that function is the CATALOG scan (printed passives + attached
-    Tools), which is the aura/installation distinction `attackBlockOf`'s doc block
-    draws; and it SUPPRESSES a holder's own printed passive under a §9
-    Ability-lock aura, which an attack INSTALLATION must be immune to. Reading it
-    here keeps that immunity a property of where the number comes from.
-
-    IT LEAVES ROOM FOR THE ALWAYS-ON MEMBER RATHER THAN CLOSING OVER IT. The pool
-    prints one Ability on this exact mechanism — Entei sv03-030 "Pressure": "As
-    long as this Pokémon is in the Active Spot, attacks used by your opponent's
-    Active Pokémon do 20 less damage (before applying Weakness and Resistance)."
-    — and it is deliberately NOT this slice, because it is a CROSS-BOARD aura with
-    an Active clause on BOTH ends (`opposingRetreatBlocked`'s shape, one screen
-    up), not a stamp. When it lands it becomes a sibling scan summed beside this
-    call at the same four sites, exactly as `passivesOf`'s catalog half is summed
-    beside `installedReductionOf`. Nothing here has to move for that.
-
-    IT NEEDS NO PROVENANCE CHANNEL, for `installedReductionOf`'s reason: the
-    number is subtracted at damage sites that are attack-only in this pool (D147
-    checked all three interpreter ones and the finding is unchanged), and the
-    always-on printing of the same sentence would contribute at the same sites
-    with no such check. */
+/**
+ * §8.5/§11: the attack-installed debuff on damage `pokemon`'s own attacks do, or 0. Applied before
+ * Weakness and Resistance, subtracted beside `attackerPreWRBonus` rather than folded into it, and
+ * kept out of `passivesOf` so a §9 lock cannot remove it. Live only while its turn stamp equals the
+ * current turn.
+ */
 export function installedAttackDebuffOf(state: GameState, pokemon: InPlayPokemon): number {
-  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
-  // field is REQUIRED and a record written before it existed is retired by
-  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const installed = pokemon.attackDamageDebuff;
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
-/** §9/§11 (D152) — the HP an attack-installed REACTIVE RECOIL puts on whatever
-    damages `pokemon` right now, or 0. The ONE read of
-    `InPlayPokemon.installedRecoil`, and `installedReductionOf`'s SIBLING on every
-    axis but the read SITE:
-
-    | | `installedReductionOf` (D147) | this (D152) |
-    |---|---|---|
-    | Installed on | the installer's own Active | the installer's own Active |
-    | Window       | `state.turn + 1`           | `state.turn + 1`            |
-    | Read at      | §8.5 step 5, SUBTRACTED    | §9 recoil, ADDED            |
-    | Catalog twin | `damageReductionAfterWR`   | `damageAttacker`            |
-
-    Everything else is identical, deliberately: the field holds a turn STAMP, so
-    the recoil is armed iff that stamp is the turn now being played, and one whose
-    window has passed simply stops answering without anyone having cleared it
-    (D124's rule).
-
-    🆕🆕 **D456 — IT TAKES `damageTaken`, THE HIT THAT IS TRIGGERING IT.** Corpus line
-    180 (*"…put damage counters on the Attacking Pokémon equal to the damage done to
-    this Pokémon."*, **2 legal printings**) declines to print its amount, so the
-    number is the §8.5 figure of the hit currently landing on `pokemon`. Both call
-    sites already have it as a local named `dealt` — `attack.ts`'s §9 block gates on
-    `dealt > 0` two lines above the call, and `interpreter.ts`'s `reactToAttackDamage`
-    is only reached from a `dealt > 0` arm — so **NOTHING IS RECORDED AND NOTHING IS
-    CARRIED**. D451 refused this sentence on the ground that its quantity *"is a
-    HISTORY of what happened during the opponent's turn — it needs a durated watcher
-    and a recorded figure, neither of which this op has"*. That refusal was exact
-    about `counterUntilRemainingHp` and does not survive at THIS address: the durated
-    watcher is `InstalledRecoil` and has existed since D152, and the figure never
-    becomes a history because the read happens in the same expression that computes
-    it. **The parameter is REQUIRED rather than optional for D425's reason** — an
-    optional one would let a third call site forget it and silently retaliate for the
-    floor.
-
-    ⚠️ IT RETURNS A NUMBER TO BE SUMMED, NOT A RECORD TO BE INSPECTED, and the
-    number it is summed into is one FOUR always-on printings already feed. Cacnea
-    sv01-005 / Cacturne sv01-006 "Counterattack Quills" (3 counters), Stunfisk
-    sv03-112 "Custom Trap" (5, `requiresTool`) and Rocky Helmet sv01-193 (2, a
-    TOOL) print this mechanism with the four-word duration prefix removed and the
-    "if this Pokémon is damaged" clause spelled as an Active-Spot condition; all
-    four are `PassiveEffects.damageAttacker`, folded by `passivesOf`. So attack.ts
-    ADDS this to that fold rather than consulting a second channel: same site, same
-    `dealt > 0` gate, same `"counterattack"` label, ONE event.
-
-    ⚠️ IT IS NOT FOLDED INTO `passivesOf`, for `installedReductionOf`'s TWO
-    STRUCTURAL REASONS VERBATIM. That function is the CATALOG scan — a printed
-    passive plus attached Tools — which is the aura/installation distinction
-    `attackBlockOf`'s doc block draws; and it SUPPRESSES a holder's own printed
-    passive under a §9 Ability-lock aura, which an attack-installed effect must be
-    immune to, because an installation is not an Ability. Summing at the site keeps
-    that immunity a property of where the number comes from. ⚠️ AND HERE THAT
-    IMMUNITY IS SHARPER THAN ANYWHERE ELSE IN THE FAMILY, because the fold it is
-    summed with is the ONE `passivesOf` member a lock can zero while leaving a Tool
-    behind: a locked Lycanroc ex wearing Rocky Helmet still retaliates for the
-    installed 100 plus the Tool's 20, and only a printed Ability's share is lost.
-
-    IT NEEDS NO PROVENANCE CHANNEL, for `installedReductionOf`'s reason: the number
-    is summed at a site the ALWAYS-ON printings already contribute to with no such
-    check, so adding one would make the SAME printed words mean two different
-    things depending on whether they carry a duration. (Checked rather than
-    assumed: the §9 recoil site is in `attack.ts` and is reached only by an attack
-    — no Ability or Trainer path damages an Active through it.) */
+/**
+ * §9: the attack-installed recoil on whatever damages `pokemon`, or 0. Live only while its turn
+ * stamp equals the current turn. A floor of 0 means "equal to the damage done to this Pokémon", so
+ * `damageTaken` is required. Callers add it to the `passivesOf` recoil; kept out of `passivesOf` so
+ * a §9 lock cannot remove it.
+ */
 export function installedRecoilOf(
   state: GameState,
   pokemon: InPlayPokemon,
   damageTaken: number,
 ): number {
-  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
-  // field is REQUIRED and a record written before it existed is retired by
-  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const installed = pokemon.installedRecoil;
   if (installed === null || installed.turn !== state.turn) return 0;
-  // 🆕🆕 D456 — the UNPRINTED amount, resolved here and nowhere else. `Math.max` and
-  // not a bare `damageTaken`: `amount` is the record's FLOOR, so a body carrying both
-  // printings in one window never retaliates for less than the flat one promised —
-  // which is `installRecoil`'s own `Math.max` merge rule stated at the read end. A
-  // record installed by line 180 alone carries floor 0, so the max is the hit.
+  // `amount` is a floor, so a body with both the flat and the damage-equal recoil never pays less
+  // than the flat amount.
   return installed.ofDamageTaken === true
     ? Math.max(installed.amount, damageTaken)
     : installed.amount;
 }
 
-/** 🆕🆕🆕 §9 (D642) — THE WATCHED-ACTIVE RECOIL (`PassiveEffects.damageAttackerWatched`): the HP every live holder
-    on `seat`'s board pays the Attacking Pokémon because `damaged`, that seat's Active, was just damaged by an
-    attack (Spiritomb "Spiteful Swirl", Wishiwashi "Counterattack Grouping"). Asked at the two recoil sites only
-    (attack.ts's main hit, interpreter.ts `reactWithRecoilAndAbility`), under their `dealt > 0` gate, and summed
-    into their ONE `"counterattack"` row. The holder is any body, Active or Bench (the damaged body itself
-    included); each pays its own amount (R-SSW1, R-CAG1). §9 per holder (`disabledAbilityUids`). The watched
-    clause is answered off the damaged body's IN-PLAY card: `activeType` among its types, `activeNames` holding
-    its name. All of it is an Ability's, so the sites add it to the share Luminous Wing refuses. */
+/**
+ * §9 watched-Active recoil (Spiritomb "Spiteful Swirl", Wishiwashi "Counterattack Grouping"): the
+ * HP each live holder on `seat` makes the Attacking Pokémon pay because `damaged`, that seat's
+ * Active, was damaged by an attack. Holders may be Active or Benched, each pays its own amount, and
+ * §9 applies per holder. It is all Ability damage, so Luminous Wing refuses it.
+ */
 export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPokemon): number {
   const side = state.players[seat];
   const watched = inPlayCardOf(state, damaged);
@@ -3428,10 +1863,10 @@ export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPok
   return total;
 }
 
-/** 🆕🆕🆕 §9 (D642) — `passives` (the damaged body's own fold) with `watchedRecoilOf` added to BOTH recoil
-    numbers: `damageAttacker` (what is placed) and `damageAttackerFromAbility` (the share Luminous Wing refuses).
-    The two recoil sites wrap their fold in it, so their placement, refusal and one `"counterattack"` row take a
-    zero diff. The same object when nothing watches (every board without a holder). */
+/**
+ * `passives` with `watchedRecoilOf` added to both `damageAttacker` and `damageAttackerFromAbility`.
+ * Returns the same object when nothing watches.
+ */
 export function withWatchedRecoil<
   P extends { damageAttacker: number; damageAttackerFromAbility: number },
 >(state: GameState, seat: Seat, damaged: InPlayPokemon, passives: P): P {
@@ -3444,10 +1879,11 @@ export function withWatchedRecoil<
   };
 }
 
-/** 🆕🆕🆕 §12 (D642) — the Special Conditions a body keeps when its top card changes by an evolution or a
-    devolution: none (§12), except Confused — with its `confusionDamage` — while Dizzying Valley is the Stadium in
-    play (`StadiumEffects.confusionSurvivesStageChange`, R-DV1). The ONE answer `evolveOnto` (types.ts) and
-    `devolvedBodyOf`'s callers (interpreter.ts) are handed. Not §9-gated (a Stadium is no Ability). */
+/**
+ * §12: the Special Conditions a body keeps when it evolves or devolves. None, except Confused (with
+ * its `confusionDamage`) while Dizzying Valley is in play. Not §9-gated, since a Stadium is not an
+ * Ability.
+ */
 export function stageChangeConditions(
   state: GameState,
   conditions: SpecialConditions,
@@ -3461,67 +1897,14 @@ export function stageChangeConditions(
   return { ...noConditions(), rotation: "confused", confusionDamage: conditions.confusionDamage };
 }
 
-/** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now
-    ("During your next turn, this Pokémon can't attack.")? The ONE read of
-    `InPlayPokemon.attackLockedTurn`, and `attackBlockOf`'s sibling in every
-    respect that matters: the field holds a turn STAMP, so the lock is live iff
-    that stamp is the turn now being played, and a lock whose window has passed
-    stops answering without anyone having cleared it.
-
-    ⚠️ IT IS THE OTHER HALF OF THE PAIR, NOT A COPY. `attackBlockOf` answers a
-    question about what may be done TO the holder during the OPPONENT's turn
-    (stamp N + 1); this answers what the holder may do ITSELF during its OWN next
-    turn (stamp N + 2). The two stamps are different numbers written by different
-    ops on the same body, which is exactly why they are two fields (types.ts).
-
-    IT NEEDS NO PROVENANCE CHANNEL, which is the sharpest structural difference
-    from D142. That block had to ask `EffectContext.invokedBy` because "effects of
-    ATTACKS" is a claim about what INVOKED the effect and the target cannot answer
-    it. This one is read from `attack.ts`'s §8 gate and from the HUD's payability
-    projection — both of which are, by construction, about declaring an ATTACK —
-    so there is exactly one kind of thing it can refuse and nothing to disambiguate.
-    (🆕🆕🆕 D549: STILL one kind of THING — a declaration — but no longer one SOURCE of
-    the refusal: a SIDE-WIDE lock on `PlayerSide.sideAttackLock` now answers the same
-    question for every body on a side, below. It still needs no provenance channel,
-    because both sources are ATTACK installations read at a declaration.)
-
-    Returns a plain boolean rather than the stamp: there is one fact here and no
-    `effects`-shaped rider to carry, so a record would be a field-of-one (D104's
-    minimal shape).
-
-    ⚠️ AND THE SECOND READING LANDED WITHOUT MOVING THIS FUNCTION AT ALL (D148).
-    (🆕🆕🆕 D549: the THIRD reading — the side-wide lock — DID move this function's BODY,
-    by one early-return line; its SIGNATURE and every caller did not move.)
-    D143 forecast it here: "a second reading — the pool prints an opponent-side
-    'the Defending Pokémon can't attack' on 4 printings — would earn the OP a
-    `target` field, not this reader a return type". That is exactly what happened.
-    The field went on `preventAttack`, the stamp is derived from it at the install
-    site, and every read of the fact — this function, `attack.ts`'s §8 gate,
-    `redactedAttacksOf` and GameHud — is byte-identical to what it was at 0.92.0,
-    because the QUESTION ("may this body attack on this turn?") never depended on
-    who wrote the answer. A reader that had carried the direction would have had to
-    ask a second one here, on both sides of the table, forever.
-
-    🆕🆕🆕 **D549 — A SECOND SOURCE, THE SIDE-WIDE LOCK, AND IT BELONGS HERE.** *"During
-    your next turn, your Pokémon can't attack. (This includes new Pokémon that come into
-    play.)"* (`censusAttackCorpus.ts:169`) and *"During your opponent's next turn, Pokémon
-    that have 2 or less Energy attached can't attack. (This includes new Pokémon that come
-    into play.)"* (`:170`) answer exactly this function's question — "may this body
-    DECLARE?" — so they are read HERE, and the three askers (`attack.ts`'s §8 gate,
-    `redactedAttacksOf`, GameHud) take ZERO bytes: the SIGNATURE `(state, pokemon)` is
-    kept on purpose, and the seat is DERIVED (`seatOfPokemon`, whose `undefined` answers
-    "not locked"). D547's warning one function down (*"MUST NOT BE FOLDED INTO
-    `attackLocked`"*) is about the FLIP lock, whose declaration stays LEGAL, and it stays
-    true; this lock makes the declaration ILLEGAL, which is this function's meaning.
-    (🆕🆕🆕 D549: *"the ONE read of `InPlayPokemon.attackLockedTurn`"* above stays TRUE —
-    the side lock is a different field — and *"every read of the fact … byte-identical"*
-    stays true of the three askers; what is WITHDRAWN is only the implication that this
-    body reads one field.) The side lock is read FIRST as an early return so the line
-    below stays byte-identical to its D143 form. */
+/**
+ * §8/§11: is `pokemon` barred from attacking right now ("During your next turn, this Pokémon can't
+ * attack." or a side-wide lock)? Live only while the stamp equals the current turn. The side lock
+ * is checked first.
+ */
 export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean {
-  // 🆕🆕🆕 D549 — the SIDE-WIDE lock, asked of whichever body is asked about at the
-  // moment it is asked: a body benched, promoted or evolved after the install is
-  // covered by construction (the printed reminder), and `:170`'s Energy count is LIVE.
+  // The side-wide lock is checked against the body at the moment it is asked, so bodies that arrive
+  // later are covered and the Energy count is live.
   if (sideAttackLockHolds(state, seatOfPokemon(state, pokemon), pokemon)) return true;
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason one function
   // up: the field is REQUIRED and an older record is retired by
@@ -3529,22 +1912,11 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
   return pokemon.attackLockedTurn === state.turn;
 }
 
-/** 🆕🆕🆕 §8/§11 (D549) — does `seat`'s live SIDE-WIDE ATTACK LOCK (`PlayerSide.
-    sideAttackLock`) hold `pokemon` right now? `attackLocked`'s second source, one
-    function up, and asked ONLY from there.
-
-    LIVE iff the record's `turn` is the turn now being played (a stamp, like every
-    installed window in this file: no clear, no reset). A `maxEnergy` of `null` locks
-    every body (`:169`); a number locks only a body with AT MOST that many Energy
-    CARDS attached (`:170`, "2 or less") — counted by `countAttachedEnergy(…, null)`,
-    §6.3's CARD count, and NOT by provided units (docs/decisions.md D549 R4): a
-    Special Energy providing two units is one Energy here. READ LIVE, at each ask, so
-    attaching a third Energy on the locked turn unlocks the body on that same turn.
-
-    `seat === undefined` (an unreadable stack, a body already gone) answers FALSE —
-    `seatOfPokemon`'s missing answer, never a guess at a side. No defensive `===
-    undefined` arm on the record (D124): the field is REQUIRED and a v32 record is
-    retired by MATCH_RECORD_VERSION 33 rather than read benignly here. */
+/**
+ * §8/§11: does `seat`'s live side-wide attack lock hold `pokemon`? `maxEnergy` null locks every
+ * body; otherwise only bodies with at most that many Energy cards attached (cards, not units),
+ * counted live. An undefined seat answers false.
+ */
 function sideAttackLockHolds(
   state: GameState,
   seat: Seat | undefined,
@@ -3556,54 +1928,28 @@ function sideAttackLockHolds(
   return lock.maxEnergy === null || countAttachedEnergy(state, pokemon, null) <= lock.maxEnergy;
 }
 
-/** 🆕🆕🆕 §8.2/§11 (D549) — the attack-installed COST TAX live on `pokemon` right now,
-    in {C} symbols, or 0: "During your opponent's next turn, attacks used by the
-    Defending Pokémon cost {C} more, and its Retreat Cost is {C} more."
-    (`censusAttackCorpus.ts:171`). The ONE read of `InPlayPokemon.costTaxTurn`, folded
-    at BOTH cost seams — `effectiveAttackCost`'s `added` and `effectiveRetreatCost`'s
-    sum — so the two halves of the sentence cannot come apart.
-
-    The number is the constant 1 because the pool prints only "{C} more" (types.ts
-    says why the field is a bare stamp). Every reader of the two cost functions
-    inherits it with no byte of its own: the §8.2 payability gate and both HUDs through
-    `attackCostAt`, the retreat gate and `redactedRetreatOf`, and the two
-    retreat-COUNTING reads (`attack.ts`'s `opponentActiveRetreatCost`,
-    `interpreter.ts`'s retreat-cost condition) — docs/decisions.md D549 R3. No
-    defensive arm (D124): a v32 body's absent key reads `undefined === turn` → 0, the
-    soft landing the SIXTH position at match.ts names. */
+/**
+ * §8.2/§11: the attack-installed cost tax on `pokemon` in {C}, or 0 ("attacks used by the Defending
+ * Pokémon cost {C} more, and its Retreat Cost is {C} more"). Applied in both `effectiveAttackCost`
+ * and `effectiveRetreatCost` so the two halves cannot diverge.
+ */
 export function installedCostTaxOf(state: GameState, pokemon: InPlayPokemon): number {
   return pokemon.costTaxTurn === state.turn ? 1 : 0;
 }
 
-/** 🆕🆕🆕 §8/§11 (D547) — is `pokemon` under an attack-installed FLIP-TO-ATTACK
-    LOCK right now ("During your opponent's next turn, if the Defending Pokémon
-    tries to use an attack, your opponent flips a coin. If tails, that attack
-    doesn't happen.", `censusAttackCorpus.ts:176`, 2 legal printings)? The ONE read
-    of `InPlayPokemon.attackFlipLockTurn`, `attackLocked`'s shape one function up.
-
-    🛑 A SEPARATE READER, AND IT MUST NOT BE FOLDED INTO `attackLocked`. That
-    function answers "may this body DECLARE?", and three sites ask it: `attack.ts`'s
-    §8 gate (a REJECTION), `redactedAttacksOf` (redact.ts — every row's `playable`)
-    and GameHud (the greyed buttons). This lock answers a different question —
-    "must the declared attack survive a coin?" — and the answer to the first stays
-    YES under it: the attack is declared, the locked player flips at `attack.ts`'s
-    §8 step-3 seam, and only a tails stops it (and ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]). An `||` into
-    `attackLocked` would grey a button the player is entitled to press and turn a
-    coin into a certainty. So this has ONE caller, `attack.ts` [🆕🆕🆕 D636 (D539): its one caller is
-    `attackFlipLockCoins` below, whose one caller is `attack.ts`], and redact.ts,
-    `packages/schema` and GameHud take no byte (`attackFlipLock.test.ts` pins
-    `playable` true while only this lock is live). Immune to §9 like its sibling: it
-    reads an attack INSTALLATION, not `passivesOf`. */
+/**
+ * §8/§11: is `pokemon` under a flip-to-attack lock ("if the Defending Pokémon tries to use an
+ * attack, your opponent flips a coin. If tails, that attack doesn't happen.")? Must not be folded
+ * into `attackLocked`: the attack stays declarable and only a tails stops it.
+ */
 export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): boolean {
-  // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v30
-  // record is retired by MATCH_RECORD_VERSION 31 rather than read benignly here.
   return pokemon.attackFlipLockTurn === state.turn;
 }
 
-/** 🆕🆕🆕 §8/§11 (D636) — how many coins `pokemon`'s declared attack must survive right now: 1 for a live D547
-    lock (`attackFlipLocked`), 2 for a live Jet of Ink lock (`attackTwoFlipLockTurn`), SUMMED when both are live
-    (two printed effects — R-JOI1 ⚠️ UNRULED: every coin is flipped and any tails stops the attack). 0 = no
-    lock, so `attack.ts` draws no rng. ONE caller, `attack.ts`'s §8 step-3 seam. */
+/**
+ * §8/§11: how many coins `pokemon`'s declared attack must survive: 1 for a flip lock, 2 for a Jet
+ * of Ink lock, summed when both are live. 0 means no lock and no RNG draw.
+ */
 export function attackFlipLockCoins(state: GameState, pokemon: InPlayPokemon): number {
   return (
     (attackFlipLocked(state, pokemon) ? 1 : 0) +
@@ -3611,55 +1957,26 @@ export function attackFlipLockCoins(state: GameState, pokemon: InPlayPokemon): n
   );
 }
 
-/** §11 (D412) — is `pokemon` held in place right now by an ATTACK EFFECT, from
-    either direction? `attackLocked`'s twin one function up, and the ONE reader of
-    a fact that lives in two fields.
-
-    🛑 TWO FIELDS AND ONE QUESTION, WHICH IS EXACTLY WHY THIS FUNCTION EXISTS. The
-    imposed lock (`retreatBlocked`, opponent-side, D112's paralysis clock) and the
-    self-installed one (`retreatLockedTurn`, D412's stamp) answer the same question
-    — *may this body retreat?* — and NOTHING about a call site distinguishes them:
-    the §11 gate in turn.ts and `redactedRetreatOf` in redact.ts each want the
-    disjunction and neither wants to know which half said yes. Spelled inline at
-    both sites they would be two hand-written disjunctions over the same pair, and
-    the day a THIRD source of the fact arrives one of them silently keeps answering
-    [🆕🆕🆕 D576 (D539): ~~"two fields and one question"~~ — the THIRD source ARRIVED and this
-    function took it, as written: an Antique Fossil's printed "can't retreat" (`isFossilTop`,
-    R-FO4), so turn.ts's gate, `redactedRetreatOf` and GameHud's `canRetreat` read it with no
-    edit; the fact now has two fields and one card rule] [🆕🆕🆕 D621: and a FOURTH, Roxie's Performance's
-    side record (`sideRetreatLocked`), taken here the same way]
-    the old question — D222's defect verbatim, whose recorded remedy is *route them
-    through the one helper instead*.
-
-    ⚠️ THE TWO HALVES ARE NOT REDUNDANT AND ONE CANNOT SUBSUME THE OTHER: they
-    carry DIFFERENT CLOCKS on purpose. `retreatBlocked` is cleared at the Checkup
-    that ends the blocked player's turn, which is the right lifetime for a window
-    on somebody ELSE's turn and the wrong one for a window on your own; the stamp
-    expires by arithmetic, which is the only shape that survives an attack ending
-    the installer's own turn. Both can be live on one body at once — the opponent
-    locked you last turn and your own attack locked you for next turn — and the
-    disjunction is what makes that board answer correctly.
-
-    NOT folded into `effectiveRetreatCost`: a block is not a cost, which is
-    `opposingRetreatBlocked`'s rule one file over and is why the retreat gate asks
-    three separate questions rather than adding to one number. */
+/**
+ * §11: is `pokemon` unable to retreat right now? Combines the opponent-imposed lock, the
+ * self-installed stamp, an Antique Fossil's card rule and the side-wide lock so every caller asks
+ * one function. The two lock fields use different clocks on purpose. Not a cost, so it is not
+ * folded into `effectiveRetreatCost`.
+ */
 export function retreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
-  // 🆕🆕🆕 D576 — and the THIRD source of the fact: an Antique Fossil's printed card rule
-  // *"…and can't retreat."* (R-FO4). Read HERE so the three readers (turn.ts's §11 gate,
-  // redact.ts's `redactedRetreatOf`, GameHud's `canRetreat`) take it with no edit — this
-  // function's own reason for existing. A card RULE, so no lock lifts it; the TOP card only
-  // (an evolved fossil retreats normally, R-FO6). Switch effects never ask it (R-FO4).
+  // Antique Fossil's card rule "…and can't retreat." applies to the top card only, and no lock
+  // lifts it.
   if (isFossilTop(state, pokemon)) return true;
-  // 🆕🆕🆕 D621 — and the FOURTH: Roxie's Performance's SIDE record (types.ts `SideRetreatLock`), read
-  // against the body's LIVE conditions (R-RP1: a body Poisoned after the play is locked too).
+  // Roxie's Performance side lock, checked against the body's current conditions.
   if (sideRetreatLocked(state, pokemon)) return true;
   return pokemon.retreatBlocked || pokemon.retreatLockedTurn === state.turn;
 }
 
-/** 🆕🆕🆕 §11 (D621) — is `pokemon` locked by its SIDE's live `sideRetreatLock` (Roxie's Performance)?
-    The side is the one holding the body (by top uid); the record's stamp must be the current turn and
-    the body must have the printed Special Condition NOW (`poisonDamage > 0` is Poisoned, types.ts).
-    🆕 Card revision B02: exported so turn.ts's §11 gate can say WHY (a Trainer effect, not an attack). */
+/**
+ * §11: is `pokemon` locked by its side's live `sideRetreatLock` (Roxie's Performance)? The stamp
+ * must be the current turn and the body must have the printed Special Condition now (`poisonDamage
+ * > 0` means Poisoned).
+ */
 export function sideRetreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined || pokemon.conditions.poisonDamage <= 0) return false;
@@ -3675,30 +1992,11 @@ export function sideRetreatLocked(state: GameState, pokemon: InPlayPokemon): boo
   return false;
 }
 
-/** §4 (D277) — is `pokemon` FORBIDDEN from attacking right now by the first-turn
-    ban? True on turn 1 unless the body's own printed Ability licenses it ("Debut
-    Performance", Meloetta ex `sv10.5b-044`/`-159`/`-167`).
-
-    🛑 **THE WHOLE POINT IS THAT THE EXPRESSION IS SPELLED ONCE.** `state.turn === 1`
-    had THREE readers before this slice — `attack`'s §8 gate, `redactedAttacksOf`'s
-    `banned` and GameHud's `firstTurnBan` — each a literal comparison, and a
-    licence that reached two of them would have been a live bug in the third with
-    no type error to announce it. This is `attackLocked`'s rule applied one line
-    over: one question, one function, three call sites that cannot drift.
-
-    ⚠️ **`state.turn === 1` AND NOT `isFirstTurnOf(state, seat)`, WHICH IS NOT THE
-    SAME PREDICATE AND MUST NOT BE UNIFIED WITH IT.** §4 bans the going-FIRST
-    player from attacking on their first turn ONLY; the going-second seat's first
-    turn is turn 2 and is unrestricted. `isFirstTurnOf` is true on turn 2 for that
-    seat, so calling it here would invent a ban the rules do not print. The
-    §4 EVOLVE ban is the other way round (it binds both seats) and correctly uses
-    `isFirstTurnOf` — two rules, two readers, and the fact that they share a
-    section number is not a reason to share a predicate (D131 read forwards).
-
-    ⚠️ TAKES NO SEAT. The ban is a fact about the TURN NUMBER and the licence a
-    fact about the BODY, and `attack`'s turn gate has already proved the actor
-    owns the turn — so there is nothing seat-relative left to ask, unlike
-    `attackBarredByAbility` one file over whose condition needs one. */
+/**
+ * §4: is `pokemon` barred from attacking by the first-turn ban? True on turn 1 unless the body's
+ * Ability licenses it (Meloetta ex "Debut Performance"). Uses `state.turn === 1`, not
+ * `isFirstTurnOf`: only the player going first is banned.
+ */
 export function firstTurnAttackBanned(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -3710,144 +2008,49 @@ export function firstTurnAttackBanned(
   // ban back. Reading the catalog row here would be shorter and would get that
   // wrong silently — `cantAttackUnless`'s rule, mirrored.
   if (passivesOf(state, pokemon).attackFirstTurnExempt) return false;
-  // …and, since D281, the PER-INDEX licence the same §4 ban can carry ("If you go
-  // first, you can use THIS ATTACK during your first turn." — Volbeat `sv06-009`,
-  // Exeggcute `sv08-001`/`-192`).
-  //
-  // 🛑 **THE INDEX WIDENED THIS PREDICATE RATHER THAN GROWING A SECOND ONE BESIDE
-  // IT, AND THE THREE PAYABILITY PROJECTIONS ARE THE WHOLE REASON.** This
-  // function's own doc block above exists because `state.turn === 1` was a literal
-  // at three sites and a licence reaching two of them would be a live bug in the
-  // third. A per-index licence answered by a NEW reader would have re-created
-  // exactly that: `attack.ts` would consult both, and the two projections would
-  // each have to remember to. One question, one function — now with the address
-  // the question is asked about.
-  //
-  // ⚠️ **AND IT IS READ OFF THE TOP CARD, NOT THROUGH `passivesOf`, WHICH IS THE
-  // INVERSE OF THE LINE ABOVE.** [🆕🆕🆕 D578 (D539): *"OFF THE TOP CARD"* is WITHDRAWN —
-  // `attackGateOf` reads the gate off the ATTACK MENU row's SOURCE card (the top card for a
-  // printed attack, a lower stage for a Memory Dive row, the Tool for a Technical Machine
-  // row); still NOT through `passivesOf`, so the §9 argument here stands.] §9 locks ABILITIES. The Meloetta ex licence one
-  // line up is printed as an Ability and a Klefki must take it away; Volbeat's is
-  // printed as ATTACK TEXT and no §9 lock in the game touches it. Two licences for
-  // one ban, suppressible on different terms — driven under a live lock rather
-  // than argued.
+  // The per-attack licence ("If you go first, you can use this attack during your first turn.") is
+  // read from the attack gate, not `passivesOf`, because attack text is not affected by §9 locks.
   return attackGateOf(state, pokemon, index)?.kind !== "firstTurnExempt";
 }
 
-/** §4/§8 (D281) — the printed TIMING clause `pokemon`'s stack-top card puts on
-    the attack at `index`, or undefined when it prints none. [🆕🆕🆕 D578 (D539): *"`pokemon`'s
-    stack-top card"* and *"the attack at `index`"* are WITHDRAWN — `index` is the flat ATTACK
-    MENU index (`attackMenuOf`), and the clause is the one the menu row's SOURCE card prints on
-    the attack at the row's `sourceIndex`: the stack-top card at its printed index for a
-    printed attack (printed attacks come FIRST, so the two readings agree byte for byte on
-    every pre-D578 board), the card UNDER the top for a Relicanth "Memory Dive" row (R-MD5),
-    the attached Tool for a Technical Machine row.] The ONE read of
-    `CardProgram.attackGate`, shared by `firstTurnAttackBanned` one function up
-    (the `firstTurnExempt` arm) and `attackTimingBlocked` in interpreter.ts (the
-    two condition arms) — `cantAttackUnless`'s split verbatim, and for its reason:
-    the condition arms are SEAT-RELATIVE and this file has no seat.
-
-    🛑 **OFF `topCardOf` AND DELIBERATELY NOT THROUGH `passivesOf`.** [🆕🆕🆕 D578 (D539):
-    *"OFF `topCardOf`"* is WITHDRAWN — off the menu row's SOURCE card (above); the
-    *"NOT THROUGH `passivesOf`"* half and its §9 argument are unchanged.] Every clause
-    in this field is printed as ATTACK TEXT, and §9 Ability-locks silence
-    ABILITIES — so a Klefki `sv01-096` must NOT hand Terapagos ex its barred
-    "Unified Beatdown" back, and must NOT take Volbeat's licence away. That is the
-    exact opposite of the rule `attackFirstTurnExempt` follows one field over in
-    `PassiveEffects`, which is why it is stated here rather than inferred: the two
-    fields answer the same §4 question and are suppressible on opposite terms.
-
-    ⚠️ TOTAL AND INDEX-BLIND. A body with no registry row, no `attackGate`, or a
-    gate at a different index gets `undefined` — the index is a plain record
-    lookup, so a non-integer or out-of-range address simply prints no clause
-    rather than throwing, and the §8 gate's own `BAD_ATTACK_INDEX` check still
-    owns the complaint about a bogus address.
-
-    🆕🆕 **D444 — `registry ?? derived`, AND THE ORDER IS `attack.ts`'s VERBATIM.**
-    The registry row wins and the derivation is never asked (D8's precedence, spelled
-    `authored ?? derived` at the `CardProgram.attack` seam); a body with no row falls
-    through to `timingGateFromAttackText` over the printed effect text of the attack AT
-    THIS INDEX. **Before this slice the second half was missing and the failure was
-    SILENT**: a body printing Terapagos ex's clause byte for byte with no registry row
-    could declare the attack on exactly the turn the card forbids it, because
-    `attackGateOf` had only one producer and it was keyed by card id. Every other
-    unread sentence in this engine fails LOUD; this one deleted a printed rule.
-
-    🛑 **THE ADDRESS IS THE PRINTED TEXT AT `index`, WHICH IS WHY THE INDEX KEY IS
-    STILL MEANINGFUL WITH NO ROW TO KEY OFF.** A derived gate has no registry entry,
-    so the question "what is it keyed by" has to be answered from somewhere — and the
-    answer is that `attacksOf(top)[index]` IS the key [🆕🆕🆕 D578 (D539): *"`attacksOf(top)[index]`"*
-    is WITHDRAWN as the spelling — the key is the menu row's own attack (`entry.attack`, printed on
-    `entry.card` at `entry.sourceIndex`), which IS `attacksOf(top)[index]` for a printed row; the
-    argument — the clause is read off the very attack it governs — is unchanged and now covers a
-    borrowed or Tool row too]: the clause is read off the very
-    attack it governs. That makes the leak this design invites unconstructible rather
-    than merely untested. **Volbeat `sv06-009` is the board**: its idx 0 "Quick Sign"
-    prints the licence and its idx 1 "Coordinated Strike" prints no effect text at all,
-    so the derivation answers `undefined` at idx 1 by construction — a per-BODY read
-    (`Object.values(...)[0]`, or a flag) is the defect D281 named and the derivation
-    cannot express it. `derivedAttackGate.test.ts` §4 drives both indices on an
-    UNREGISTERED twin of that card, where the registry cannot be masking the answer.
-
-    ⚠️ **AND IT IS STILL READ OFF `topCardOf` AND NOT THROUGH `passivesOf`** [🆕🆕🆕 D578 (D539):
-    *"READ OFF `topCardOf`"* is WITHDRAWN — off the menu row's SOURCE card; *"NOT THROUGH
-    `passivesOf`"* stands] — the
-    §9 argument above is unchanged by the new producer, and is in fact stronger for
-    it: the derivation reads printed ATTACK text, which no Ability-lock touches.
-
-    🆕🆕🆕 **D545 — *"the printed TIMING clause"* AND *"shared by"* TWO READERS ARE
-    WITHDRAWN AS COUNTS.** The field now also carries two printed COST clauses
-    (`alternateCostIf`, `costWaivedIf`), and this is read by a THIRD caller,
-    `attackCostAt` in attack.ts, which is the only reader of those two members.
-    (🆕🆕🆕 D563 (D539): still the only reader of those two members OF THIS FIELD — but
-    `attackCostAt` no longer reads ONLY this seam: it also folds
-    `passivesOf(...).attackCostClauses`, the same two shapes printed by an ABILITY (Noivern
-    "Tuning Echo", Kyurem "Plasma Bane"), which rides the §9 drop and is NOT §9-blind. This
-    function, its one read of `CardProgram.attackGate` and the §9 argument here are unchanged.)
-    `attackTimingBlocked` returns `undefined` for them BEFORE asking the condition,
-    and `firstTurnAttackBanned` compares only against `firstTurnExempt`, so neither
-    older reader's answer moved. Still the ONE read of `CardProgram.attackGate`, and
-    the §9 argument above applies to the cost clauses for the same reason: they are
-    printed ATTACK text. (D178: annotated, not overwritten.) */
+/**
+ * §4/§8: the printed attack gate on the attack at menu `index`, or undefined. Read from the menu
+ * row's source card, not through `passivesOf`, because it is attack text and §9 locks only
+ * Abilities. Registry rows take precedence; otherwise the gate is derived from that attack's own
+ * text. Out-of-range indexes return undefined.
+ */
 export function attackGateOf(
   state: GameState,
   pokemon: InPlayPokemon,
   index: number,
 ): AttackTimingGate | undefined {
-  // 🆕🆕🆕 D578 — RESOLVED THROUGH THE MENU (`attackMenuOf`): `index` is the flat menu index
-  // `AttackAction.index` carries, and the gate is looked up on the card the attack is PRINTED
-  // on, at its own index there — the top card for a printed attack (the pre-D578 read, byte for
-  // byte: printed attacks come FIRST, so their flat index IS their printed index), a lower
-  // stage for a Memory Dive attack (R-MD5: Exeggcute's "Precocious Evolution" keeps its
-  // licence), the Tool for a granted one. The single funnel for `firstTurnAttackBanned`,
-  // `attackTimingBlocked` and `attackCostAt`. A body that is not in play (a copy's phantom) has
-  // no seat, so its menu is its printed attacks.
+  // `index` is the flat menu index; the gate is looked up on the card the attack is printed on, at
+  // its own index there. A body not in play has no seat, so its menu is its printed attacks.
   const entry = attackMenuOf(state, seatOfPokemon(state, pokemon), pokemon)[index];
   if (entry === undefined) return undefined;
   const authored = programFor(entry.card.id)?.attackGate?.[entry.sourceIndex];
   return authored ?? timingGateFromAttackText(entry.attack.effect);
 }
 
-/** 🆕🆕🆕 §8 (D578) — one row of a body's ATTACK MENU: the attack, the card it is printed on,
-    its index ON THAT CARD, and which section offered it. */
+/**
+ * One row of a body's attack menu: the attack, the card it is printed on, its index on that card,
+ * and which section offered it.
+ */
 export interface AttackMenuEntry {
   attack: Attack;
   /** The card the attack is printed on: the top card (`"printed"`), a card UNDER it
       (`"memoryDive"`), or an attached Tool (`"tool"`). Its program (`attack`, `attackGate`)
       is keyed by `sourceIndex`. */
   card: Card;
-  /** The attack's index on `card` — its printed index, or its index in the Tool's
-      printed `attacks` (🆕 D581: the Tool card's own catalog row, granted by `toolAttacks`). Never persisted: only a `"printed"` row's index is ever stamped on a
-      lock or a boost (R-MD4) [🆕🆕🆕 D578 landing (R-MD4, RULED: fixed): a borrowed row's own
-      self-lock is stamped by its NAME instead (`LockedAttack.attackName`, `attackIndex: -1`)]. */
+  /** The attack's index on `card`. Never persisted; borrowed rows are locked by name instead. */
   sourceIndex: number;
   origin: "printed" | "memoryDive" | "tool" | "memoryHelix";
 }
 
-/** 🆕🆕🆕 §9 (D578) — is Relicanth "Memory Dive" live for `seat`: any in-play body of that seat
-    whose TOP card carries `PassiveEffects.memoryDive` and whose Ability no §9 lock silences.
-    A boolean: several Relicanth say the same thing and do not stack. */
+/**
+ * §9: is Relicanth "Memory Dive" live for `seat` (a body whose top card has it and is not
+ * Ability-locked)? Multiple Relicanth do not stack.
+ */
 export function memoryDiveLive(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -3859,26 +2062,12 @@ export function memoryDiveLive(state: GameState, seat: Seat): boolean {
   });
 }
 
-/** 🆕🆕🆕 §8 (D578) — THE ATTACK MENU of `pokemon`: every attack it can declare, in ONE flat
-    order whose index IS `AttackAction.index` (and the wire's `RedactedAttack.index`):
-
-      1. its PRINTED attacks (the top card's), FIRST — so every printed index is its flat
-         index, and every persisted printed index (a `lockedAttacks` entry, a `boostedAttack`
-         record) keeps naming the same attack whatever the sections below hold;
-      2. 🆕 the MEMORY DIVE section — while `memoryDiveLive(seat)` and the body is EVOLVED
-         (stack length > 1): the attacks of each card UNDER the top, bottom to top (the cards
-         in the stack only, so a stage Rare Candy skipped contributes nothing);
-      3. 🆕 the TOOL section — the printed `attacks` of every in-effect attached Tool whose
-         program grants them (`toolAttacks`; `toolsInEffect`: none under Jamming Tower),
-         Technical Machine: Fluorite's. 🆕 D581 — read off the Tool CARD (the catalog row keeps
-         a Trainer's printed attacks since D581), not `attacksOf`, which is a Pokémon's own list
-         and asks the category.
-
-    `seat` is the body's controller (`undefined` for a body that is not in play — a copy's
-    phantom — which gets no Memory Dive section). The flat index is NEVER persisted: a section
-    can grow or empty between two reads (Relicanth leaves play, the TM is discarded), which is
-    why only a `"printed"` row's index is ever stamped (R-MD4) [🆕🆕🆕 D578 landing (R-MD4, RULED:
-    fixed): a borrowed row's own self-lock is keyed by its printed NAME — `lockedAttackNames`]. */
+/**
+ * §8: `pokemon`'s attack menu in one flat order whose index is `AttackAction.index`. Printed
+ * attacks come first so their indexes are stable; then Memory Dive attacks from cards under the top
+ * (evolved bodies only); then attacks granted by in-effect Tools. Only printed indexes are
+ * persisted, since later sections can change.
+ */
 export function attackMenuOf(
   state: GameState,
   seat: Seat | undefined,
@@ -3908,16 +2097,15 @@ export function attackMenuOf(
         ? undefined
         : (tool.attacks ?? undefined);
     if (tool === undefined || granted === undefined) continue;
-    // 🆕🆕🆕 D620 — Core Memory's "The Mega Zygarde ex this card is attached to": the holder's TOP card.
+    // Core Memory: "The Mega Zygarde ex this card is attached to" checks the holder's top card.
     const holderGate = programFor(tool.id)?.toolAttacksHolder;
     if (holderGate !== undefined && !matchesFilter(top, holderGate)) continue;
     granted.forEach((attack, sourceIndex) => {
       menu.push({ attack, card: tool, sourceIndex, origin: "tool" });
     });
   }
-  // 🆕🆕🆕 D638 — Mew ex "Memory Helix": THIS body's own licence (its top card's `memoryHelix`, no §9 lock on it) —
-  // each of the seat's OTHER Benched Pokémon's printed attacks, Bench order, copy-family attacks excluded (R-MH1 /
-  // R-MH2). A phantom (no seat) gets none.
+  // Mew ex "Memory Helix": the printed attacks of the seat's other Benched Pokémon, in Bench order,
+  // excluding copy attacks. A body not in play gets none.
   const helixUid = topUid(pokemon);
   if (
     seat !== undefined &&
@@ -3938,183 +2126,51 @@ export function attackMenuOf(
   return menu;
 }
 
-/** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred
-    right now ("During your next turn, this Pokémon can't use {AttackName}." and
-    its opponent-side twin), as indices into the stack-top card's `attacks`, in
-    install order, EMPTY when none is. The ONE read of
-    `InPlayPokemon.lockedAttacks`, and `attackLocked`'s sibling one function up in
-    every respect except its return type: each entry holds a turn STAMP beside the
-    address, so a bar is live iff that stamp is the turn now being played, and a
-    bar whose window has passed stops answering without anyone having cleared it.
-
-    🆕🆕 **D421 — …UNLESS THE ENTRY CARRIES `until: "leavesActive"`, IN WHICH CASE
-    THERE IS NO WINDOW AND THE READER SAYS SO.** *"This Pokémon can't use Blaze
-    Blitz again until it leaves the Active Spot."* (5 legal printings) is the first
-    entry in this list whose duration is a BOARD EVENT rather than a number, and
-    the whole of that reading lives in the two clauses of the filter below: the
-    rider answers unconditionally, and everything without one keeps the turn
-    comparison it has had since D154. **The bar is ended by the §10 clears and by
-    nothing else** — which is why it costs no new clear site: all three literals
-    already shed this list whole.
-
-    ⚠️ IT RETURNS THE INDICES RATHER THAN A PREDICATE, AND THAT IS THE ONE PLACE
-    THIS FAMILY'S READER SHAPE HAD TO MOVE. `attackLocked` returns a boolean
-    because there is ONE fact and nothing to carry (D104's minimal shape); here the
-    fact IS a set of addresses, and every caller has a candidate index in hand and
-    wants to know whether it is among them. A `(state, pokemon, index) => boolean`
-    signature would have been the other shape and is refused for one observable
-    reason: `redactedAttacksOf` and GameHud both build their rows by mapping over
-    the whole `attacks` array, so a per-index predicate would be called once per
-    attack and re-read the same field N times, while the §8 gate would call it
-    once — three sites, two access patterns, one field. One read of the set
-    answers both.
-
-    ⚠️ THE PLURAL IS D165's, AND IT IS THE ENUMERATING CALLER §D152/§D154/§D157
-    FORECAST — ARRIVING FROM THE DIRECTION NONE OF THEM WATCHED. D152 retired the
-    count trigger for the `attackBlock` union and replaced it with *a member the
-    read site must DISPATCH on rather than SUM*, naming this record; D154 and D157
-    each declined on the ground that no site ENUMERATES, every reader knowing
-    which rider it wanted before it looked. That was true of the rider KINDS and
-    is still true — nothing here dispatches, because every entry in this list
-    means exactly one thing. What was NOT true, from D157's commit onward, is that
-    one body could carry only one of them: the field has TWO writers whose stamps
-    collide from adjacent turns (types.ts `InPlayPokemon.lockedAttacks`), so both
-    payability projections must now mark EVERY barred row and neither knows in
-    advance which. **A collection is earned by a MULTIPLICITY the read site must
-    enumerate just as much as by a UNION it must dispatch on — and only the second
-    of those was ever being watched for.** The `attackBlock` union stays declined.
-
-    NO PROVENANCE CHANNEL, for `attackLocked`'s reason verbatim: it is read from
-    `attack.ts`'s §8 gate and from the two payability projections, all of which are
-    by construction about declaring an ATTACK, so there is exactly one kind of
-    thing it can refuse and nothing to disambiguate. Which OP wrote an entry is
-    likewise absent and stays absent — D157's answer at the address, unchanged by
-    the list: the reader refuses the index whoever wrote it. */
+/**
+ * §8/§11: the indexes of `pokemon`'s attacks that are barred right now ("During your next turn,
+ * this Pokémon can't use {AttackName}."). Entries are live while their turn stamp equals the
+ * current turn, except `until: "leavesActive"` entries, which last until §10 clears the list.
+ * Returns indexes because callers map over all attacks.
+ */
 export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): number[] {
-  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason two functions
-  // up: the field is REQUIRED and a record written before it existed is retired
-  // by MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
-  // 🆕🆕 D421 — …and the entry that has NO window answers on every turn. *"This
-  // Pokémon can't use Blaze Blitz again until it leaves the Active Spot."* (5
-  // legal printings, Gouging Fire ex) installs `until: "leavesActive"`, whose
-  // whole content is that the turn comparison beside it must not be asked: the
-  // bar ends when §10 sheds the LIST, and the three clears that do it are the
-  // same three every field on this body is already on. The `turn` such an entry
-  // carries is the INSTALL turn and is provenance only (types.ts `LockedAttack`),
-  // so a build that dropped this clause would compare a number naming a turn its
-  // holder has already spent — a bar that never bites once, rather than one that
-  // bites for the wrong length.
-  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — a NAME-keyed entry (`attackName`, written
-  // with `attackIndex: -1` for a borrowed menu row) is `lockedAttackNames`' below, not this
-  // reader's: skipped here, so its -1 never meets an index comparison.
+  // An `until: "leavesActive"` entry has no window; its `turn` is only the install turn. Name-keyed
+  // entries (`attackIndex: -1`) are handled by `lockedAttackNames`.
   return liveLockedAttacks(state, pokemon)
     .filter((locked) => locked.attackName === undefined)
     .map((locked) => locked.attackIndex);
 }
 
-/** The live entries of `pokemon.lockedAttacks` — `lockedAttackIndexes`' turn rule (D154 / D421),
-    shared by both readers so the window lives in one place. */
+/** The live entries of `pokemon.lockedAttacks`, so both readers share the window rule. */
 function liveLockedAttacks(state: GameState, pokemon: InPlayPokemon): LockedAttack[] {
   return pokemon.lockedAttacks.filter(
     (locked) => locked.until === "leavesActive" || locked.turn === state.turn,
   );
 }
 
-/** 🆕🆕🆕 §8/§11 (D578, R-MD4 — RULED: fixed at the landing) — the PRINTED NAMES of the attacks
-    `pokemon` is barred from right now by a NAME-keyed entry: *"During your next turn, this
-    Pokémon can't use Slashing Strike."* used as a Memory Dive (or Technical Machine) row, which
-    the holder does not print (types.ts `LockedAttack.attackName`). `lockedAttackIndexes`' twin,
-    on the same live window; the §8 gate, `redactedAttacksOf` and GameHud each bar a menu row
-    whose own `attack.name` is in this list (the row's printed spelling is what was stored). */
+/**
+ * §8/§11: names of attacks `pokemon` is barred from by name-keyed entries (a lock from a Memory
+ * Dive or Technical Machine row the holder does not print). Callers bar any menu row whose
+ * `attack.name` is listed.
+ */
 export function lockedAttackNames(state: GameState, pokemon: InPlayPokemon): string[] {
   return liveLockedAttacks(state, pokemon).flatMap((locked) =>
     locked.attackName === undefined ? [] : [locked.attackName],
   );
 }
 
-/** §8.5/§11 (D155) — the HP an attack-installed PER-ATTACK BUFF adds to the
-    damage `pokemon`'s attack at `index` does right now, or 0. ~~The ONE read of
-    `InPlayPokemon.boostedAttack`~~ — 🆕🆕 D544: the one read of the record's
-    ADDITIVE `amount`; its BASE-SET key is read by `boostedAttackBase` directly
-    below, the field's second reader — and `lockedAttackIndex`'s twin one function
-    up on every axis but the RETURN and the arity:
-
-    | | `lockedAttackIndex` (D154) | this (D155) |
-    |---|---|---|
-    | Record   | `{ turn, attackIndex }`   | `{ turn, attackIndex, amount, base? }` |
-    | Window   | `state.turn + 2`          | `state.turn + 2`               |
-    | Asks     | WHICH attack is barred    | HOW MUCH this attack gains     |
-    | Read by  | the §8 gate + 2 projections | the §8.5 main hit, once      |
-
-    (🆕🆕🆕 D546: and a NULL-index — all-attacks — record is read a second time, at
-    `snipeActive`, through `everyAttackBoostOf` below; this reader now pays a null
-    index on EVERY index.)
-
-    ⚠️ IT TAKES THE INDEX AND RETURNS THE NUMBER, WHICH IS D154's SHAPE ARGUMENT
-    RUN AND ANSWERED THE OTHER WAY — and that inversion is the reason the two
-    readers are two functions rather than one generic. That one returns an INDEX
-    because two of its three callers build rows by mapping over the whole `attacks`
-    array, so a per-index predicate would re-read one field N times. This one has
-    exactly ONE caller (and so, since D544, does its base-set sibling below — the
-    SAME caller's `parseAttackDamage` line), which already holds the declared index and wants a number
-    to add; returning `{ index, amount } | null` would make that caller compare an
-    index the reader could have compared itself. Same field shape, opposite access
-    pattern, opposite signature — decided by the call sites both times.
-
-    ⚠️ ONE READ SITE (per key: `attack.ts`'s main hit reads `amount` here and, since
-    D544, `base` through `boostedAttackBase` at its `parseAttackDamage` line; 🆕🆕🆕 D546:
-    plus `snipeActive`'s read of a NULL-index `amount` through `everyAttackBoostOf`), AND
-    THE BOUNDARY IS THE ADDRESS RATHER THAN A CHOICE. D149's
-    debuff reaches all FOUR pre-W/R sites because it is a fact about a BODY; this
-    is a fact about a DECLARATION, and only `attack.ts`'s main hit knows which
-    attack was declared — `EffectContext` carries `seat`, `sourceUid` and
-    `invokedBy` and no index, so the interpreter's three damage sites (`snipeActive`,
-    `spreadDamage`, `placeSnipe`'s `deals` arm) structurally cannot ask (🆕🆕🆕 D546: for
-    a NAMED index; the all-attacks record needs none, and `snipeActive` asks for it). ~~Unreachable
-    today rather than merely unbuilt: the one printing's boosted attack does its
-    whole damage through the printed `damage` field and derives no damage-dealing
-    op at all.~~ 🆕🆕 D544 — ~~FOUR legal sentences write this record, 8 printings~~
-    (🆕🆕🆕 D546: SIX sentences / 10 printings — FIVE ADDITIVE, the two new ones
-    ALL-ATTACKS, `:76` and `:148`, 1 each, whose real attacks are UNMEASURED — plus
-    the one BASE-SET; the list below is D544's)
-    (measured by deriving `legalAttackCorpus()`): THREE NAMED ADDITIVE — Echoed Voice
-    "80 more" (`censusAttackCorpus.ts:165`, 3: Meloetta ex `sv10.5b-044`/`-159`/
-    `-167`, D277's registry rows), Meteor Mash (`:167`, 2), Tornado Rush (`:168`,
-    1) — and ONE BASE-SET, Hyper Fang (`:166`, 2). (D155's Seismitoad `sv03-052`
-    prints "100 more" and is a local-D1 printing, not a legal-corpus row.) The
-    argument is MEASURED for the three Meloetta ex printings — Echoed Voice is the
-    card's only attack, printed 30, and its one sentence derives `boostAttack` and
-    no damage-dealing op — and is UNMEASURED for the other five (Meteor Mash ×2,
-    Tornado Rush ×1, Hyper Fang ×2), whose names no registry, `catalogManifest`
-    or `testFixtures` id carries. Both readers are asked only at `attack.ts`'s main
-    hit, so an op-borne part of any of those attacks' damage, if there is one,
-    would see neither the buff nor the override. A printing that boosts an attack
-    whose damage comes from an OP would
-    earn `EffectContext` an attack index — written down here so the next reader
-    does not have to re-derive why the count differs from D149's.
-
-    ⚠️ IT IS SUMMED INTO `attackerPreWRBonus`'s NUMBER AT THE SITE AND NOT FOLDED
-    INTO THAT FUNCTION, which is D149's reason (2) read from the other side of the
-    table: that function folds `passivesOf`, the CATALOG scan, which a §9
-    Ability-lock aura SUPPRESSES — and an attack INSTALLATION must be immune to
-    that suppression. D149's other two grounds are silent here (a buff is
-    positive, so the REPORTED field does not drop it, and it can never drive the
-    subtotal negative), so the immunity is the whole of the argument and the row
-    reports the two sources in ONE field (events.ts `DAMAGE_DEALT.bonus`). */
+/**
+ * §8.5/§11: the attack-installed buff to the attack at `index`, or 0. A null-index record buffs
+ * every attack. Read only at the main hit, which knows the declared index. Summed at the site
+ * rather than folded into `attackerPreWRBonus` so a §9 lock cannot remove it.
+ */
 export function boostedAttackDamage(
   state: GameState,
   pokemon: InPlayPokemon,
   index: number,
 ): number {
-  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
-  // field is REQUIRED and a record written before it existed is retired by
-  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const boost = pokemon.boostedAttack;
-  // 🆕🆕🆕 D546 — a `null` index is the ALL-ATTACKS buff ("attacks used by this
-  // Pokémon", `censusAttackCorpus.ts:148`/`:76`) and pays on EVERY index. ⚠️ `tsc`
-  // CANNOT SEE THIS LINE: the D155 spelling `boost.attackIndex !== index` still
-  // compiles against `number | null` and silently pays 0 on every all-attacks
-  // record — only a board kills it (`D546-reader-pays-null-nowhere`).
+  // A null index is the all-attacks buff and pays on every index. The compiler cannot catch
+  // dropping this check.
   return boost === null ||
     boost.turn !== state.turn ||
     (boost.attackIndex !== null && boost.attackIndex !== index)
@@ -4122,27 +2178,11 @@ export function boostedAttackDamage(
     : boost.amount;
 }
 
-/** 🆕🆕🆕 §8.5 (D546) — the ALL-ATTACKS buff live on `pokemon` right now, or 0 —
-    the amount of a `boostedAttack` record whose `attackIndex` is `null` ("During
-    your next turn, attacks used by this Pokémon do 120 more damage to your
-    opponent's Active Pokémon (before applying Weakness and Resistance).",
-    `censusAttackCorpus.ts:148` and `:76`, 2 legal printings). A NAMED record answers
-    0 here, whatever its index.
-
-    WHY A SECOND READER AND NOT `boostedAttackDamage` WITH A SENTINEL INDEX: its one
-    caller is `interpreter.ts`'s `snipeActive`, whose `EffectContext` carries NO
-    attack index — so it cannot ask "this attack's buff", only "the buff every attack
-    carries". The printed scope "to your opponent's Active Pokémon" is exactly
-    Vitality Band's, which that site already honours, so an all-attacks record is
-    folded there beside `attackerPreWRBonus`; the NAMED boost still is not (no index
-    in ctx — pre-existing, D155), and `spreadDamage` / `placeSnipe` omit every pre-W/R
-    BONUS by design (D149), so they do not read this. Immune to §9 like its siblings:
-    it reads an attack INSTALLATION, not `passivesOf`. docs/decisions.md D546 records
-    the fold and its reversal condition. (🆕🆕🆕 D563: the record can now also be an
-    ABILITY's this-turn install — Feraligatr "Torrential Heart", *"during this turn,
-    attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon"* —
-    which this reader pays unchanged, and which it keeps paying under a LATER lock for the
-    same reason: it reads the installation.) */
+/**
+ * §8.5: the all-attacks buff on `pokemon` ("attacks used by this Pokémon do 120 more damage to your
+ * opponent's Active Pokémon"), or 0. Separate reader because `snipeActive` has no attack index. A
+ * named record answers 0. Immune to §9 because it reads an installation.
+ */
 export function everyAttackBoostOf(state: GameState, pokemon: InPlayPokemon): number {
   const boost = pokemon.boostedAttack;
   return boost === null || boost.turn !== state.turn || boost.attackIndex !== null
@@ -4150,43 +2190,19 @@ export function everyAttackBoostOf(state: GameState, pokemon: InPlayPokemon): nu
     : boost.amount;
 }
 
-/** 🆕🆕🆕 §8.5 (D556) — the THIS-TURN SIDE-WIDE pre-W/R bonus `seat`'s attack gets
-    against `defenderCard`, or 0: the sum of every `TurnAllowances.sideAttackBonuses`
-    entry whose `target` matches the DEFENDING card (Black Belt's Training: *"During
-    this turn, attacks used by your Pokémon do 40 more damage to your opponent's Active
-    Pokémon ex (before applying Weakness and Resistance)."*, 9 legal printings).
-
-    ONE HELPER, TWO CALLERS — attack.ts's main hit (beside `boostedAttackDamage`) and
-    interpreter.ts `snipeActive` (beside `everyAttackBoostOf`) — so the two pre-W/R
-    sites cannot disagree; both report it inside `DAMAGE_DEALT.bonus`. `spreadDamage`
-    and `placeSnipe` omit every pre-W/R BONUS by design (D149) and aim at the Bench,
-    which the printed *"Active Pokémon"* excludes.
-
-    🛑 **NOT A `passivesOf` FOLD, AND THAT IS THE §9 RULE, NOT A SHORTCUT.** A Trainer's
-    installation is not an Ability: a §9 Ability-lock aura (`disabledAbilityUids`)
-    must not reach it — attack.ts's D149/D155 paragraph, the reason
-    `boostedAttackDamage` is summed at the site. Read straight off the state.
-
-    🛑 **THE SEAT GUARD IS THE FIRST LINE (types.ts `sideAttackBonuses`).** The bag
-    describes the TURN'S OWNER only; a hit whose attacking `seat` does not own the turn
-    (a program run for the other seat mid-turn, or any read between turns) is paid 0
-    rather than the turn owner's bonus. The owner comes from `phaseViewOf`, never from
-    turn parity — `youPlayedSupporterThisTurn`'s guard, verbatim.
-
-    THE TARGET IS MATCHED ON THE DEFENDER (D245's `target` rider on
-    `seatPreWRDamageBonus`, one file over): `undefined` fails every filter
-    (`matchesFilter`'s conservative direction). Sources are SUMMED — no `noStack` is
-    printed on this sentence. Immune to `ignoreWR` / `suppressTargetEffects` for
-    `attackerPreWRBonus`'s stated reason: the bonus lands on the ATTACKER's number, an
-    effect on the attacking side and not on "that Pokémon" (docs/decisions.md D556). */
+/**
+ * §8.5: this turn's side-wide pre-Weakness bonus for `seat`'s attack against `defenderCard`, or 0
+ * (Black Belt's Training). Read straight off state because a Trainer's installation is not affected
+ * by §9 locks. Pays 0 unless `seat` owns the turn. Matching sources are summed.
+ */
 export function sideAttackBonusThisTurn(
   state: GameState,
   seat: Seat,
   defenderCard: Card | undefined,
-  /** 🆕🆕🆕 D621 — the ATTACKING body, for an entry's printed `attacker` noun (Gladion's Final
-      Battle, Premium Power Pro), matched on its IN-PLAY card (`inPlayCardOf`: a retyped body's
-      in-play types). `null` fails every attacker filter (`matchesFilter`'s conservative
-      direction) and passes an entry with none. */
+  /**
+   * The attacking body, matched on its in-play card for an entry's `attacker` filter. Null fails
+   * every attacker filter and passes an entry without one.
+   */
   attackerBody: InPlayPokemon | null,
 ): number {
   if (phaseViewOf(state, seat).activeSeat !== seat) return 0;
@@ -4199,29 +2215,11 @@ export function sideAttackBonusThisTurn(
   return total;
 }
 
-/** 🆕🆕 §8.5 (D544) — the printed BASE damage an attack-installed BASE-SET
-    override gives `pokemon`'s attack at `index` right now, or `null` when none is
-    live ("During your next turn, this Pokémon's Hyper Fang attack's base damage is
-    240.", `censusAttackCorpus.ts:166`, 2 legal printings). The SECOND reader of
-    `InPlayPokemon.boostedAttack`, and `boostedAttackDamage`'s sibling on every
-    axis but the key and the RETURN: the same turn test and the same index test,
-    written out again rather than shared so a mutant that drops either is killed
-    at THIS reader on its own (the window and the address are the rule).
-
-    `null` AND NOT 0 FOR "NO OVERRIDE", because 0 is a base a printing could in
-    principle name and the caller spells the fallback as `?? printedBase` — so
-    "absent" and "zero" must not be one value. A record without `base` (every
-    additive install, and every record a v30 deploy wrote) answers `null`.
-    🆕🆕🆕 D546 — so does an ALL-ATTACKS record (`attackIndex: null`), on every
-    index, through the UNCHANGED `attackIndex !== index` compare below — and that is
-    right, not an oversight, because such a record never carries `base`: the
-    installer refuses `{ attack: null, base: true }` whole.
-
-    ONE CALLER, `attack.ts`'s `parseAttackDamage` line — the ONLY caller of that
-    parser — so the override reaches `scaledBase`, every reading-borne program's
-    base and `DAMAGE_DEALT.base` at once, and Weakness/Resistance apply AFTER it
-    (§8.5). Like the additive reader it is immune to §9: it reads an attack
-    INSTALLATION, not `passivesOf`. */
+/**
+ * §8.5: the base damage an attack-installed override gives the attack at `index` ("this Pokémon's
+ * Hyper Fang attack's base damage is 240"), or null when none. Null rather than 0 because 0 could
+ * be a printed base. Applied before Weakness and Resistance; immune to §9.
+ */
 export function boostedAttackBase(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -4232,68 +2230,21 @@ export function boostedAttackBase(
   return boost.base ?? null;
 }
 
-/** §8.5 (D192) — does `pokemon` ATTACK through "any effects on your opponent's
-    Active Pokémon"? Walking Wake ex "Azure Seas" ("Damage from attacks used by
-    this Pokémon isn't affected by any effects on your opponent's Active
-    Pokémon."), 6 printings / 6 Standard-legal, the whole ability half of the
-    main-hit suppression family.
-
-    A ONE-LINE DELEGATION TO `passivesOf`, and it exists as a named function for
-    `boostedAttackDamage`'s reason one block up: attack.ts's §8.5 block reads
-    `passivesOf(next, defender)` and nothing else off the fold, so an inline
-    `passivesOf(next, active).suppressTargetEffectsOnAttack` at the read site would
-    put two differently-addressed folds one screen apart under names that differ by
-    one argument. `boostedAttackDamage` and `installedAttackDebuffOf` are the two
-    existing attacker-side reads this joins, and it is the FIRST of the three that
-    is a CATALOG fact rather than a stamp on the attacker's record — which is
-    exactly why it is the one that a §9 Ability-lock can switch off.
-
-    ⚠️ IT ANSWERS ONLY THE ABILITY HALF. The printed ATTACK sentence of the same
-    rule (15 legal printings) is parsed per declaration by
-    `deriveAttackDamageSuppression` and never reaches this function; the two meet
-    at ONE `||` in attack.ts. Sharing the read site and not the storage is the
-    standing rule, and here it is load-bearing rather than tidy: this half is
-    §9-suppressible and the attack half is not (an Ability-lock silences Abilities
-    and has nothing to say about attack text). */
+/**
+ * §8.5: does `pokemon`'s attack damage ignore effects on the opponent's Active (Walking Wake ex
+ * "Azure Seas")? Covers only the Ability; the attack-text version is parsed separately and combined
+ * in attack.ts. This half is §9-suppressible.
+ */
 export function attackerSuppressesTargetEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   return passivesOf(state, pokemon).suppressTargetEffectsOnAttack;
 }
 
-/** §8.1 (D324) — the total max HP `pokemon`'s OWN SIDE grants it through a
-    SEAT-WIDE aura Ability: Ludicolo `sv09-037` *"All of your Pokémon in play get
-    +40 HP. The effect of Vibrant Dance doesn't stack."* One legal printing, and
-    the SIXTH and LAST of the `doesNotStack` Abilities — the family the registry's
-    own doc-block has tracked since D243 is CLOSED by this function.
-
-    THE TWELFTH MEMBER OF THE AURA-SCAN FAMILY (`disabledAbilityUids` /
-    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
-    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
-    `benchShieldedFromDamage` / `seatDamageReduction` / `seatKoPrizeBonuses` /
-    `alliedRetreatDiscount` / this), and structurally it is `seatDamageReduction`
-    with `scope: "all"` fixed and every rider dropped: the printed sentence carries
-    no beneficiary, no source zone and no other-named clause, so the ONLY clauses
-    are membership, §9 and the cap.
-
-    🛑 THE SOURCE IS INSIDE THE SET IT PAYS, AND THAT IS PRINTED RATHER THAN
-    CHOSEN. *"All of your Pokémon in play"* includes the Ludicolo saying it, so a
-    lone Ludicolo is at printed HP + 40 — there is no `othersOnly` scope here and a
-    build that copied Feint Attack's exclusion would silently under-pay the one
-    board this card is actually played on.
-
-    🛑 THE CAP IS A `Math.max` LEDGER KEYED ON THE PRINTED ABILITY NAME, which is
-    `seatDamageReduction`'s ledger and deliberately NOT `seatKoPrizeBonuses`' entry
-    Set: an HP bonus is arithmetic, so "the largest single contribution wins" is
-    the whole meaning of *"doesn't stack"*, where a coin flip is not an amount and
-    had to cap the ENTRY instead. Two Ludicolo therefore give +40 and not +80,
-    while a Ludicolo beside a differently-named non-stacking HP aura would give
-    both — two DIFFERENT non-stacking effects still stack with each other.
-
-    §9 through `disabledAbilityUids`: Vibrant Dance IS an Ability, so a Klefki
-    lock over the Ludicolo takes the +40 off every body on its side at once —
-    including bodies that Klefki's own stage clause could never reach. That is the
-    sharpest observable difference between this function and `stadiumHpDelta`
-    directly below, which sums into the same number and answers a lock the other
-    way. */
+/**
+ * §8.1: the max HP `pokemon`'s side grants via a seat-wide aura (Ludicolo "Vibrant Dance": "All of
+ * your Pokémon in play get +40 HP. The effect of Vibrant Dance doesn't stack."). Includes the
+ * source itself. Non-stacking is a per-Ability-name `Math.max`, so two Ludicolo give +40. A §9 lock
+ * removes it.
+ */
 export function seatMaxHpBonus(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -4323,62 +2274,28 @@ export function seatMaxHpBonus(state: GameState, pokemon: InPlayPokemon): number
   return 0;
 }
 
-/** §7.3/§8.1 (D324) — the in-play Stadium's ± to `top`'s max HP: Lively Stadium
-    `sv08-180` *"Each Basic Pokémon in play (both yours and your opponent's) gets
-    +30 HP"* and Gravity Mountain `sv08-177`/`sv08-250` *"Each Stage 2 Pokémon in
-    play (both yours and your opponent's) gets -30 HP"*.
-
-    `stadiumRetreatDelta`'s shape one seam over, with its ONE structural difference
-    stated rather than inherited: that function early-returns on a non-Basic
-    because BOTH its prints are Basic-only, and this one cannot, because its two
-    prints name DIFFERENT stages. So the stage lives on the ROW (D260's test — a
-    second printing of this mechanism needs a different value, therefore the value
-    is catalog data) and the arm selects the predicate, which is exactly the move
-    `preventDamageAtOrAbove`'s neighbour at line 2275 already makes for the same
-    pair of stage nouns.
-
-    NO SEAT, NO §9 — `stadiumPreventsDamage`'s two reasons verbatim: *"both yours
-    and your opponent's"* leaves no side to derive, and a Stadium is not an Ability,
-    so an Ability-lock that silences `seatMaxHpBonus` one function up leaves this
-    running. A Klefki, a Ludicolo and a Gravity Mountain on one board is the
-    three-way witness. */
+/**
+ * §7.3/§8.1: the Stadium's change to `top`'s max HP (Lively Stadium +30 to Basics, Gravity Mountain
+ * −30 to Stage 2). Applies to both sides and ignores §9 locks.
+ */
 function stadiumHpDelta(state: GameState, top: Card): number {
   const delta = stadiumEffectsOf(state)?.hpDelta;
   if (delta === undefined) return 0;
-  // 🆕🆕🆕 D642 — Ange Floette's "Each Mega Floette ex": the NAME rider (absent on Lively Stadium / Gravity Mountain).
+  // Ange Floette's "Each Mega Floette ex": the name filter.
   if (delta.name !== undefined && top.name !== delta.name) return 0;
   const matches = delta.stage === "basic" ? isBasicPokemon : isStage2Pokemon;
   return matches(top) ? delta.amount : 0;
 }
 
-/** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus
-    every continuous ± in force — the body's OWN sources (Bravery Charm's
-    Basic-only `basicHpBonus`, Hero's Cape's stage-free `hpBonus`, folded by
-    `passivesOf`), its SIDE's aura Abilities (Ludicolo's Vibrant Dance) and the
-    shared Stadium (Lively Stadium, Gravity Mountain). A null printed hp is the
-    catalog data gap (cards.ts hpOf) and STAYS null — a bonus on top of unknown HP
-    is still unknown, and a data gap never KOs.
-
-    🛑 **THE `Math.max` IS THE D205 INVARIANT MADE EXPLICIT, AND D324 IS THE SLICE
-    THAT MADE IT NECESSARY.** This function's return has been documented as never
-    non-positive since D205, and a branch was DELETED on the strength of it:
-    `koSurvivalClamp` carries no `dealt <= 0` guard because reaching its lethality
-    test needs `pokemon.damage === 0` and `0 + dealt >= hp >= 1` then forces
-    `dealt >= 1`. Until now that held for free — every term was an ADDEND. Gravity
-    Mountain is the first subtrahend in the engine, so the invariant is now
-    maintained by an explicit floor instead of by the absence of a minus sign.
-    ⚠️ **THE FLOOR IS UNREACHABLE IN THE LEGAL POOL AND IS DECLARED RATHER THAN
-    DRIVEN** (D257's precedent for exactly this): the MINIMUM printed HP over all
-    **169** Standard-legal Stage 2 Pokémon is **120**, and only a Stage 2 can be
-    subtracted from, so the one negative sentence bottoms out at 90. It is written
-    anyway because the alternative is a deleted branch elsewhere resting on a
-    property no line of code asserts. */
+/**
+ * §8.1 max HP for KO checks and the HUD: printed HP plus the body's own bonuses, its side's auras
+ * and the Stadium. A null printed HP stays null, and a data gap never KOs. Floored so the result is
+ * never non-positive, which `koSurvivalClamp` relies on.
+ */
 export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number | null {
   const top = topCardOf(state, pokemon);
-  // Two early returns where D205 had one ternary, and the split is a TYPE fact
-  // rather than a behaviour change: `stadiumHpDelta` needs the CARD, and TS
-  // cannot back-narrow `top` from a null test on a value derived from it. The
-  // answers are unchanged — an unreadable body and a data-gap HP both return null.
+  // Two early returns because `stadiumHpDelta` needs the card and TypeScript cannot narrow `top`
+  // from the derived null check.
   if (top === undefined) return null;
   const hp = hpOf(top);
   if (hp === null) return null;
@@ -4389,56 +2306,19 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
   );
 }
 
-/** The one "damage ≥ max HP" Knock Out test (§8.1/§13), reading the CONTINUOUS
-    max HP directly above (printed + Tool bonuses — Bravery Charm) and owning the
-    null-hp rule: a missing/non-positive printed hp is a catalog data gap, and a data
-    gap never KOs (cards.ts hpOf via `effectiveMaxHp`).
-
-    🆕🆕 **D433 MOVED IT HERE FROM `flow.ts`, AND THE MOVE IS A PLACEMENT FIX
-    RATHER THAN A REFACTOR.** It is `effectiveMaxHp`'s comparator and reads nothing
-    else — no stage, no event, no seat — so its home was never the turn-tail module.
-    The move is forced by a real caller: `devolveEach` (interpreter.ts) must ask
-    whether a body was ALREADY lethal before it shortens the stack, and interpreter.ts
-    cannot import flow.ts (flow.ts takes `runProgram` from it). The alternative was to
-    re-spell `damage >= effectiveMaxHp` at the op, which is the two-readings-of-one-
-    question defect this repo keeps paying for (D131/D222) — and it would be exactly
-    the reading that must NOT drift, because the marker it decides is read by
-    `lethalRefs`' own sweep two stages later.
-
-    ⚠️ `flow.ts` RE-EXPORTS IT so every existing import path still resolves; there is
-    still exactly ONE definition. */
+/**
+ * The single "damage ≥ max HP" Knock Out test (§8.1/§13), using continuous max HP. A missing HP
+ * never KOs. Lives here so interpreter.ts can use it; flow.ts re-exports it.
+ */
 export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boolean {
   const hp = effectiveMaxHp(state, pokemon);
   return hp !== null && pokemon.damage >= hp;
 }
 
-/** 🆕 **D349 — THE PRINTED *"N HP or less **remaining**"* AS ONE PREDICATE, FOR
-    ALL THREE OF ITS SUBJECTS.** *Remaining HP* is `effectiveMaxHp − damage`, and
-    the catalog prints the threshold about three different bodies: the ability's
-    own HOST (`AbilityProgram.remainingHpAtMost`, D310 — Pidove `sv05-133`), a
-    GUST candidate (`gust.remainingHpAtMost` — Ledian `svp-133`/`sv07-003`/
-    `sv07-144` "Glittering Star Pattern") and a HEAL candidate
-    (`healChosen.remainingHpAtMost` — Bianca's Devotion `sv05-142`/`-197`/`-209`).
-    **The SUBJECT is named by the op the field sits on; the PREDICATE is this
-    function, once.** Hand-spelling it a second time is the shape D222 paid for
-    and D310's own doc refused across its three readers.
-
-    🛑 **THE MAXIMUM IS `effectiveMaxHp` AND NOT THE PRINTED `hpOf`** — D310's
-    call, kept verbatim because it is a fact about the phrase and not about the
-    subject: a Bravery Charm (+50) lifts a body out of the window it would
-    otherwise sit in, and Gravity Mountain lowers one into it.
-
-    ⚠️ **A `null` MAXIMUM FAILS RATHER THAN PASSES.** `effectiveMaxHp` owns the
-    catalog data gap, and an unknown maximum cannot be SHOWN to satisfy a printed
-    threshold. Refusing is the safe direction at every one of the three subjects:
-    on the host gate it declines a click the resolution would have to honour, and
-    on the two candidate scans it keeps a body the card cannot read out of a
-    prompt the card is supposed to be narrowing.
-
-    ⚠️ **UNDAMAGED IS NOT EXCLUDED.** A body printed at 30 HP with no damage has
-    30 remaining and IS inside a `30`-window — the printed clause says nothing
-    about damage, and `healChosen`'s own doc (D135) already refuses to invent a
-    damaged restriction the sentence does not carry. */
+/**
+ * The printed "N HP or less remaining" predicate, shared by abilities, gust and heal filters.
+ * Remaining HP is `effectiveMaxHp − damage`. A null max fails. Undamaged bodies are not excluded.
+ */
 export function remainingHpWithin(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -4449,21 +2329,12 @@ export function remainingHpWithin(
   return max - pokemon.damage <= atMost;
 }
 
-/** §6.3/§6.4 — the flat list of energy UNITS a Pokémon's attached energies
-    provide toward attack costs, evaluated per energy under its rules text:
-    - a basic energy provides its one type (cards.ts energyProvidesOf);
-    - an AUTHORED special energy provides its EnergyProgram's units (a concrete
-      type, or ANY_ENERGY for a wildcard, and multi-unit is allowed — Double
-      Turbo-likes), with Luminous's "{C} instead if another Special Energy is
-      attached" evaluated against the holder's OTHER energies;
-    - an UNAUTHORED special energy falls back to one Colorless (energyProvidesOf),
-      so it stays playable rather than rejecting.
-    The one provision read site: attack.ts's §8.2 cost check and the HUD's
-    payability preview both call it, so they cannot drift (the D18 duplication
-    is gone). costMet (attack.ts) consumes this flat list. (🆕🆕🆕 D568 (D539): `costMet`
-    now LIVES in cards.ts — moved byte for byte, re-exported from attack.ts — and "the one
-    provision read site" has a THIRD caller: `effectiveAttackCost` reads this list for
-    Sparkling Crystal's any-type removal, `anyTypeCostRemoval`.) */
+/**
+ * §6.3/§6.4: the energy units a Pokémon's attached energies provide toward attack costs. Basic
+ * energy provides its type; an authored Special provides its program's units (with Luminous's "{C}
+ * instead if another Special Energy is attached" checked against the other energies); an unauthored
+ * Special provides one Colorless. Shared by the cost check and the HUD so they cannot drift.
+ */
 export function providedEnergy(state: GameState, pokemon: InPlayPokemon): string[] {
   // Which attached energies are Special — for Luminous's "any OTHER Special
   // Energy attached" condition. Resolved once against the live board, then
@@ -4484,16 +2355,11 @@ export function unitsProvidedBy(state: GameState, pokemon: InPlayPokemon, uid: s
   return unitsOf(state, pokemon, uid, specialEnergyUids(state, pokemon));
 }
 
-/** 🆕🆕🆕 §6.1 (D578) — may the Energy `card` sit on `holder`? FALSE only for a card whose
-    `EnergyProgram.attachOnlyToOwner` names an owner the holder's TOP card does not carry (Team
-    Rocket's Energy `sv10-182` off a Team Rocket's Pokémon), read through `matchesFilter`'s
-    `ownerPokemon` arm. The ONE predicate behind the three places the card's restriction
-    reaches: turn.ts `attachEnergy`'s refusal, flow.ts `discardMisplacedEnergy`'s sweep, and
-    `unitsOf` below (a misplaced card provides NOTHING while it waits for the sweep — R-TRE1)
-    [🆕🆕🆕 D578 landing (R-TRE1, RULED: fixed): the sweep now runs after every program step, on a
-    parked op's answer and on every accepted action too (flow.ts `discardMisplacedEnergy`), so the
-    wait is never longer than the step that misplaced it — `unitsOf`'s arm still answers a board
-    built by surgery or a 0.461-era record before its first drain]. */
+/**
+ * §6.1: may Energy `card` sit on `holder`? False only when `EnergyProgram.attachOnlyToOwner` names
+ * an owner the holder's top card lacks (Team Rocket's Energy). Shared by the attach refusal, the
+ * misplaced-energy sweep and `unitsOf`, where a misplaced card provides nothing.
+ */
 export function energyMayBeAttachedTo(
   state: GameState,
   card: Card | undefined,
@@ -4521,9 +2387,8 @@ export function providesEnergyType(
   energyType: string,
 ): boolean {
   const units = unitsProvidedBy(state, pokemon, uid);
-  // 🆕🆕🆕 D578 — …or a CONSTRAINED unit whose set holds it (Team Rocket's Energy is a {P} Energy
-  // and a {D} Energy, as it can pay either). R-TRE2: a count of "{P} Energy attached" asks this
-  // per CARD, so the two units count the card ONCE.
+  // Or a constrained unit whose set includes the type (Team Rocket's Energy counts as {P} and {D}).
+  // Asked per card, so the two units count the card once.
   return (
     units.includes(energyType) ||
     units.includes(ANY_ENERGY) ||
@@ -4531,84 +2396,42 @@ export function providesEnergyType(
   );
 }
 
-/** Does `pokemon` have ANY attached Energy of `energy` (§6.3)? The predicate
-    behind the printed "If this Pokémon has any {R} / Special Energy attached"
-    clause (D118's `yourActiveHasEnergyAttached`), and it lives HERE, beside the
-    provision code, for the reason `unitsProvidedBy` gives one docblock up: the
-    reading must not drift from what pays a cost.
-
-    A TYPE is read through `providesEnergyType`, i.e. by PROVISION rather than by
-    the printed name — so a wildcard Luminous Energy is a {R} Energy for as long
-    as it provides every type, and stops being one the moment a second Special
-    demotes it to {C}. That is the same answer §8.2's cost check gives, which is
-    the point: an Energy that can pay a {R} cost is exactly an Energy a "has any
-    {R} Energy attached" clause counts.
-
-    `"special"` is the CARD CLASS, not a type, so it reads `isSpecialEnergy`
-    directly — the same list Luminous's own "any other Special Energy attached"
-    condition is evaluated against, one function down. */
+/**
+ * §6.3: does `pokemon` have any attached Energy of `energy`? Types are read by provision, matching
+ * the cost check. `"special"` is the card class.
+ */
 export function hasAttachedEnergy(
   state: GameState,
   pokemon: InPlayPokemon,
   energy: BasicEnergyType | "special" | "basic" | "any",
 ): boolean {
-  // 🆕🆕🆕 D611 — the UNTYPED clause (Dragonair "Evolutionary Guidance": *"if this Pokémon has any
-  // Energy attached"*): any attached Energy card, whatever it provides.
+  // Untyped clause ("if this Pokémon has any Energy attached"): any attached Energy card.
   if (energy === "any") return pokemon.energy.length > 0;
-  // 🆕🆕 D500 — the OTHER card class, inserted ABOVE its complement so a reader meets
-  // the pair together. No printing spells *"has any Basic Energy attached"*; the value
-  // arrives because the clause resolves through the shared token map (D118).
   if (energy === "basic") return basicEnergyUids(state, pokemon).length > 0;
   if (energy === "special") return specialEnergyUids(state, pokemon).length > 0;
   return pokemon.energy.some((uid) => providesEnergyType(state, pokemon, uid, energy));
 }
 
-/** How many Energy CARDS are attached to `pokemon` (§6.3), optionally narrowed to
-    one type? `hasAttachedEnergy` counted rather than tested — the predicate behind
-    D128's "Flip a coin for each [{X}] Energy attached to this Pokémon."
-
-    It is not written as `hasAttachedEnergy`'s implementation (that one keeps its
-    `.some`, which short-circuits on the first hit) but it must give the same answer
-    on the same board, which is why the two sit together: a FILTERED count reads by
-    PROVISION through `providesEnergyType`, the D118 rule, so an Energy that can pay
-    a `{R}` cost is exactly an Energy a `{R}` sentence counts.
-
-    `energy: null` — the UNFILTERED reading, and a genuinely different tally rather
-    than a filter that matches everything. "Each Energy attached to this Pokémon"
-    counts attached Energy CARDS, so a Special Energy demoted to providing only {C}
-    is still one Energy here, and a wildcard providing every type is still exactly
-    one. CARDS not units, for the same reason `countEnergyInPlay` gives below: one
-    Energy card is one Energy however many units it provides. */
+/**
+ * §6.3: how many Energy cards are attached to `pokemon`, optionally filtered by type. Typed counts
+ * read by provision, like `hasAttachedEnergy`. `energy: null` counts cards, not units.
+ */
 export function countAttachedEnergy(
   state: GameState,
   pokemon: InPlayPokemon,
   energy: BasicEnergyType | "special" | "basic" | null,
 ): number {
   if (energy === null) return pokemon.energy.length;
-  // 🆕🆕 D500 — the printed CATEGORY `Basic`, and it sits between the unfiltered arm
-  // and its complement because those are the two readings it is most easily confused
-  // with: `null` counts a Special too, `"special"` counts ONLY the Special, and this
-  // one counts everything neither of them does. A board holding both tells all three
-  // apart, which is `basicEnergyScaling.test.ts` §2's whole job.
+  // Basic Energy cards: `null` also counts Specials, and `"special"` counts only Specials.
   if (energy === "basic") return basicEnergyUids(state, pokemon).length;
   if (energy === "special") return specialEnergyUids(state, pokemon).length;
   return pokemon.energy.filter((uid) => providesEnergyType(state, pokemon, uid, energy)).length;
 }
 
-/** §8.1 (D325) — WHICH SEAT has `pokemon` in play, or undefined when nothing on
-    either board carries its uid (an unreadable stack, or a body already gone).
-
-    It exists because `passivesOf` is handed a body and no seat, and
-    `MaxHpScale.opponentPrizesTaken` is the fold's FIRST question whose answer is
-    about a SIDE rather than about the body. Every other holder gate in that loop
-    — `isBasic`, `holderTypes`, `onBench`, `requiresEnergyType` — is answerable
-    from the stack alone.
-
-    ⚠️ IT IS `isOnBench`'s SCAN WITH THE ANSWER KEPT INSTEAD OF THROWN AWAY, and
-    the two are deliberately not merged: that one asks about a SPOT and this asks
-    about a SIDE, and a body in the Active Spot must answer `false` to the first
-    and a real seat to this one. `undefined` (never `"a"`) is the missing answer,
-    so a caller cannot silently read the wrong side's Prizes. */
+/**
+ * §8.1: which seat has `pokemon` in play, or undefined when no board has its uid. Undefined rather
+ * than a default so callers cannot read the wrong side.
+ */
 function seatOfPokemon(state: GameState, pokemon: InPlayPokemon): Seat | undefined {
   const uid = topUid(pokemon);
   if (uid === undefined) return undefined;
@@ -4619,16 +2442,10 @@ function seatOfPokemon(state: GameState, pokemon: InPlayPokemon): Seat | undefin
   });
 }
 
-/** §8.1 (D325) — the multiplicand of a `PassiveEffects.hpBonusPer`: how many of
-    the counted thing the live board holds for `pokemon`. Never negative, so the
-    grant it scales is always an ADDEND (registry.ts `MaxHpScale` argues it).
-
-    Both arms DELEGATE rather than count: `countAttachedEnergy` is §6.3's reading
-    of "Energy attached to it" and `takenPrizes` is §8.1's reading of "Prize card
-    your opponent has taken", so a max-HP sentence and a damage sentence quoting
-    the same printed noun cannot come apart. An unresolvable seat answers 0 —
-    `matchesFilter`'s conservative direction throughout this file, and here it
-    means an unplaceable body gets LESS HP, never more. */
+/**
+ * §8.1: the multiplier for `PassiveEffects.hpBonusPer`, never negative. An unresolvable seat
+ * answers 0.
+ */
 function maxHpScaleCount(state: GameState, pokemon: InPlayPokemon, scale: MaxHpScale): number {
   switch (scale.kind) {
     case "attachedEnergy":
@@ -4640,63 +2457,12 @@ function maxHpScaleCount(state: GameState, pokemon: InPlayPokemon, scale: MaxHpS
   }
 }
 
-/** How many Energy CARDS of `energy` are in play on `seat`'s side (§6.3)? The
-    board-wide sibling of `hasAttachedEnergy` above, and the predicate behind
-    Absol sv06.5-030 "Darkfall" ("If you have at least 3 {D} Energy in play, …").
-    It lives here, next to its sibling, so the two readings of the SAME printed
-    noun cannot drift: "a {D} Energy" means the same card whether the sentence
-    scopes it to one Pokémon or to the whole board.
-
-    Two things this deliberately is, both forced by the printed text:
-
-    - **CARDS, not units of provision.** The sentence counts Energy, and one
-      Energy card is one Energy however many units it provides — a Special that
-      pays for two {D} is still a single card here. `.filter(…).length` per
-      holder, never a sum of `unitsProvidedBy`.
-    - **PROVISION, not the printed name**, exactly as `hasAttachedEnergy` reads
-      it (D118): a wildcard Luminous attached to one of your Pokémon counts
-      toward `{D}` for as long as it provides every type, and stops the moment a
-      second Special demotes it to {C}. Provision is computed on the HOST, so
-      this must ask per holder rather than once per uid.
-
-    "In play" is Active + Bench and nothing else — the discard pile, the hand and
-    the deck are not in play, and the pool's own usage of the phrase is
-    consistently field-scoped (cards that mean otherwise print "in your discard
-    pile" / "in your hand"). An empty board counts 0.
-
-    ⚠️ `energy: null` IS THE UNFILTERED READING (D193) — every attached card on the
-    side, whatever it provides — and it is the SAME widening `countAttachedEnergy`
-    above already carries, arriving here for the same reason: the pool prints the
-    board-scoped noun both ways ("…for each Energy attached to all of your
-    opponent's Pokémon." alongside "…for each {R} Energy attached to all of your
-    opponent's Pokémon."), so the per-body counter and the board-wide one must
-    admit the same three answers or the two readings of one printed noun drift
-    apart. It is a WIDENING and not a shape change: every existing caller passes a
-    concrete type or `"special"` and none can observe the new arm.
-
-    🆕🆕 **D470 — AND THE HOLDER LIST IS OPTIONALLY NARROWED BY A `CardFilter`, WHICH
-    IS THE SAME KIND OF WIDENING ONE PARAGRAPH UP AND ARRIVES FOR THE SAME REASON.**
-    The column prints the board-scoped noun with a SUBGROUP in it — *"…for each {L}
-    Energy attached to all of your Iono's Pokémon."* (`censusAttackCorpus.ts` file line
-    558, 1 legal printing) — so the zone and the SET OF BODIES IN IT are two questions,
-    and answering the second in the caller would mean a second walk of Active + Bench
-    living beside this one. `undefined` is EVERY body, so this function's THREE shipped
-    callers — `attack.ts`'s `energyOnOpponent` and `energyOnSelf` board arms and
-    `interpreter.ts`'s `yourEnergyInPlayAtLeast` — pass three arguments, are
-    byte-identical, and cannot observe the new parameter.
-
-    🛑 **THE READ IS THE TOP CARD (§1.2), NOT THE BOTTOM OF THE STACK**, which is
-    `benchBodies`' own reading in attack.ts and is a real line of play rather than
-    symmetry: an owner-prefixed Basic that has been evolved into a body WITHOUT the
-    prefix has stopped being one of *"your Iono's Pokémon"*, and the §10 evolve is what
-    makes that observable. `matchesFilter` takes `Card | undefined` and answers false
-    for a missing card, so an unresolvable uid is counted OUT rather than throwing.
-
-    ⚠️ **THE FILTER IS ASKED PER HOLDER AND BEFORE THE PROVISION QUESTION, NEVER PER
-    UID.** It names BODIES, not Energy cards — the `basicEnergy`/`toolCard` members of
-    the same union name cards, and handing one of those in here would ask whether the
-    Pokémon is a Basic Energy card and count 0 forever. Stated because the two
-    vocabularies share a type. */
+/**
+ * §6.3: how many Energy cards of `energy` are in play on `seat`'s side (Active and Bench). Counts
+ * cards, not units, and reads type by provision on each holder. `energy: null` counts every card.
+ * The optional `filter` selects holder bodies by their top card; it filters Pokémon, not Energy
+ * cards.
+ */
 export function countEnergyInPlay(
   state: GameState,
   seat: Seat,
@@ -4707,27 +2473,14 @@ export function countEnergyInPlay(
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
   let total = 0;
   for (const holder of holders) {
-    // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed filter reads the types the body has.
+    // The in-play card, so a type filter reads the body's current types.
     if (filter !== undefined && !matchesFilter(inPlayCardOf(state, holder), filter)) continue;
     if (energy === null) {
       total += holder.energy.length;
       continue;
     }
-    // 🆕🆕 D500 — the printed CATEGORY, delegating to the same `basicEnergyUids` the
-    // per-body counter above calls, so the board-wide and per-body readings of one
-    // printed noun cannot drift (this function's own standing reason).
-    //
-    // 🛑 **IT IS ITS OWN `continue` RATHER THAN A THIRD LIMB OF THE TERNARY BELOW**,
-    // which is deliberate on D470's two counts one parameter up: the ternary stays
-    // byte-identical, so the corpus rows anchored on it keep their `find` and every
-    // declared survivor in this file is preserved by D469's pure-addition argument.
-    //
-    // ⚠️ **AND THE `filter` ABOVE IS A DIFFERENT VOCABULARY POINTED AT DIFFERENT
-    // OBJECTS.** That one names BODIES and is asked per HOLDER; this names CARDS and
-    // is asked per UID. Handing `{kind: "basicEnergy"}` to the `filter` parameter
-    // would ask whether the POKÉMON is a Basic Energy card and count 0 forever — the
-    // hazard this function's own doc block names — which is why the card category
-    // rides the `energy` value and not the body filter.
+    // Basic Energy category, using the same `basicEnergyUids` as the per-body counter. This is a
+    // card category on `energy`, not the body `filter`.
     if (energy === "basic") {
       total += basicEnergyUids(state, holder).length;
       continue;
@@ -4740,26 +2493,10 @@ export function countEnergyInPlay(
   return total;
 }
 
-/** 🆕 **D406 — HOW MANY POKÉMON TOOLS ARE ATTACHED TO EVERYTHING `seat` HAS IN
-    PLAY**, the TOOL sibling of `countEnergyInPlay` directly above and placed
-    beside it for that function's own stated reason: the two read the SAME printed
-    noun — *"attached to all of your Pokémon"* / *"attached to all of your
-    opponent's Pokémon"* — and two spellings of one scope are exactly what drifts.
-    "In play" is Active + Bench and nothing else; an empty board counts 0.
-
-    CARDS, and there is nothing else it could be. The Energy counter has to say so
-    out loud because one Energy card can provide two units; a Tool provides
-    nothing, so `tools.length` per holder is the whole arithmetic and no provision
-    question exists. Every uid in that array reached it through `attachTool`
-    (cardplay.ts), which has already refused anything whose `trainerType` is not
-    "Tool" — the same argument `yourActiveHasToolAttached` makes for its length
-    test one abstraction down.
-
-    ⚠️ **NOT BOUNDED AT ONE PER BODY.** §7.4's one-Tool-per-Pokémon cap is an
-    ATTACH-GATE rule and Revavroom ex `sv03-156`'s "Tune-Up" raises it to 4, so
-    this sums the arrays rather than counting the bodies that have one — which is
-    the difference between this and a `tools.length > 0` tally, and the difference
-    is observable on any board where one Pokémon wears two. */
+/**
+ * How many Pokémon Tools are attached across `seat`'s Active and Bench. Sums the arrays, since a
+ * body can hold more than one Tool (Revavroom ex "Tune-Up").
+ */
 export function countToolsInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -4768,12 +2505,11 @@ export function countToolsInPlay(state: GameState, seat: Seat): number {
   return total;
 }
 
-/** 🆕🆕🆕 D607 — WP28a: how many DIFFERENT Basic Energy types are attached across everything
-    `seat` has in play (Sylveon ex "Colorful Harmony", *"…for each type of Basic Energy attached to
-    all of your Pokémon."*). Each attached card is read by `energyProvidesOf`, which names a type
-    ONLY for a Basic Energy card (`isBasicEnergy`) whose name parses and answers "Colorless" for
-    everything else — so a Special Energy that provides a basic type, and an unparsed Basic, add
-    no type. */
+/**
+ * How many different Basic Energy types are attached across `seat`'s Pokémon (Sylveon ex "Colorful
+ * Harmony"). `energyProvidesOf` names a type only for a parsed Basic Energy card, so Specials and
+ * unparsed Basics add none.
+ */
 export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -4788,27 +2524,10 @@ export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): numbe
   return types.size;
 }
 
-/** 🆕🆕 **D469 — HOW MANY DAMAGE COUNTERS ARE ON EVERYTHING `seat` HAS IN PLAY**
-    (§6.3 + §12), the third sibling of `countEnergyInPlay` / `countToolsInPlay` and
-    placed beside them for their own stated reason: *"all of your opponent's
-    Pokémon"* is the SAME printed scope those two already read at the other end of
-    the table, and D159 says one question gets one answer. "In play" is Active +
-    Bench and nothing else — the discard pile, the hand and the deck hold no
-    counters at all — and an empty board counts 0.
-
-    🛑 **FLOORED PER BODY AND SUMMED AFTER THE FLOOR, NOT SUMMED AND THEN FLOORED**,
-    which is `damageCountersOnYourBench`'s arithmetic in attack.ts and is a genuinely
-    different number: two bodies carrying 15 damage each are 1 + 1 = **2** counters
-    here and would be `floor(30/10)` = **3** the other way round. One counter is 10 HP
-    (§12) and `InPlayPokemon.damage` is HP-of-damage-taken, so the per-body floor is
-    what keeps a stray non-multiple — a mid-effect state, a test board — from rounding
-    its way into a neighbour's slot. `opponentBoardCounterScaling.test.ts` §3 drives
-    exactly that board rather than asserting the shape.
-
-    ⚠️ **SEAT-AGNOSTIC, and the CALLER picks the end of the swing.** The one shipped
-    caller passes `defenderSeat` because its printed word is *"your OPPONENT's"*; the
-    function itself names no side, exactly as its two neighbours do not, so the day a
-    *"…on all of your Pokémon"* counter sentence prints there is nothing to widen. */
+/**
+ * How many damage counters are on `seat`'s Active and Bench. Floored per body before summing, so 15
+ * + 15 damage is 2 counters, not 3.
+ */
 export function countDamageCountersInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -4826,38 +2545,11 @@ function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
   });
 }
 
-/** 🆕🆕 **D500 — WHICH ATTACHED UIDS ARE *BASIC* ENERGY CARDS (§6.1), the EXACT
-    COMPLEMENT of `specialEnergyUids` directly above and placed beside it for that
-    function's own reason: the two answer one printed distinction and must not drift.**
-    The printed noun is *"Basic Energy"* — Blissey `censusAttackCorpus.ts` file line
-    580, *"This attack does 40 damage for each Basic Energy attached to this
-    Pokémon."*, 1 legal printing.
-
-    🛑 **IT DELEGATES TO `matchesFilter`'s `basicEnergy` ARM RATHER THAN RE-SPELLING
-    THE PREDICATE, AND THAT IS D159 AT A NOUN THAT ALREADY HAD AN ANSWER.** The same
-    printed words are read on a DIFFERENT count source — *"for each Basic Energy card
-    in your opponent's discard pile."* resolves to
-    `{kind: "cardsInDiscardPile", filter: {kind: "basicEnergy"}}` — so the question
-    *"is this card a Basic Energy card"* was already answered in `cards.ts`, and a
-    second `card.energyType === "Normal"` [🆕🆕🆕 D583 (D539): the answer is cards.ts `isBasicEnergy` —
-    "Normal" AND no printed rules text — since D583] here would be two readers of one noun, free
-    to disagree. What the two count sources do NOT share is the VOCABULARY that
-    reaches them: a discard-pile count is narrowed by a `CardFilter` over cards, while
-    an attached count is narrowed by the energy-token value this function serves. One
-    predicate, two spellings of the route to it.
-
-    ⚠️ **CARDS, AND NOT "PROVIDES A BASIC TYPE" — THE TWO ARE DIFFERENT NUMBERS ON A
-    BOARD THIS REPO ALREADY FIELDS.** `fix-blend` is a Special Energy whose
-    `EnergyProgram` provides `["Fire", "Water"]`, so `providesEnergyType(…, "Water")`
-    is TRUE of it while it is not a Basic Energy card at all; and `fix-energy` is a
-    Basic Energy whose name does not parse, so it provides only Colorless and no typed
-    reading counts it. A build that spelled this arm as *"provides some member of
-    `BASIC_ENERGY_TYPES`"* is wrong in BOTH directions at once, and
-    `basicEnergyScaling.test.ts` §2 drives exactly that board.
-
-    ⚠️ **`matchesFilter` TAKES `Card | undefined` AND ANSWERS FALSE FOR A MISSING
-    CARD**, so an unresolvable uid is counted OUT rather than throwing — the sibling's
-    conservative direction, and this file's throughout. */
+/**
+ * Which attached uids are Basic Energy cards (§6.1), the complement of `specialEnergyUids`.
+ * Delegates to `matchesFilter`'s `basicEnergy` arm. This is about the card class, not about
+ * providing a basic type. Missing cards are not counted.
+ */
 function basicEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
   return pokemon.energy.filter((uid) => matchesFilter(cardOfUid(state, uid), BASIC_ENERGY_CARD));
 }
@@ -4867,91 +2559,11 @@ function basicEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
     noun has exactly one spelling in this file. */
 const BASIC_ENERGY_CARD: CardFilter = { kind: "basicEnergy" };
 
-/** The units ONE attached energy provides ON `pokemon` — the whole of §6.3/§6.4's
-    per-card reading, and the single funnel `providedEnergy` and `unitsProvidedBy`
-    both go through.
-
-    ⚠️ D262 WIDENED THIS TO TAKE THE **HOLDER**, and that is the row's only real
-    cost. Until Neo Upper Energy every provision rule was answerable from the CARD
-    plus a list of sibling Special uids; a conditional keyed to the holder's
-    printed STAGE is not. Both call sites already held an `InPlayPokemon`
-    (`providedEnergy(state, pokemon)` and `unitsProvidedBy(state, pokemon, uid)`),
-    so this is a signature widening and not a plumbing job — grepped before the row
-    was promised, because that is the difference between a two-file row and a
-    four-file one.
-
-    ⚠️ THE TWO CONDITIONAL ARMS ARE READ IN FIELD ORDER AND THAT ORDER IS
-    UNOBSERVABLE. `demoteWithOtherSpecial` (Luminous `sv02-191`) and
-    `promoteOnHolderStage` (Neo Upper `sv05-162`, 🆕 Prism `sv10.5b-086`) are the
-    only two, and NO printing in this pool carries both — the whole Special Energy
-    column was censused at D261, re-derived at D262 and re-queried at D300. If one
-    ever does, the printed sentence will say which wins and this comment becomes a
-    decision instead of an observation.
-
-    🆕 ⚠️ D300 — THE STAGE ARM NOW DISPATCHES ON A **VALUE**, WHICH IS WHY THE
-    PREDICATE IS PICKED HERE RATHER THAN BRANCHED AROUND. Two printings carry the
-    field with opposite stage words (Stage 2 promotes to TWO wildcards, Basic to
-    ONE), so the arm selects `isBasicPokemon` or `isStage2Pokemon` and runs ONE
-    return. A third stage word costs a case in that ternary and nothing else. 🛑
-    THE FAILURE THIS SHAPE EXISTS TO MAKE IMPOSSIBLE is a Basic-gated provision
-    firing on a Stage 2 holder (or the reverse): the two predicates are DISJOINT on
-    every card in the pool, so the wrong one is not a near-miss, it is silence on
-    one board and a wildcard on the other. Both directions are driven in
-    `prismEnergy.test.ts` and both are in the mutation corpus.
-
-    🛑 EVERY ARM IS LIVE-READ, NOT STAMPED. The holder's top card is resolved on
-    each call, so evolving a Stage 1 into a Stage 2 with a Neo Upper already
-    attached upgrades its provision in the same breath — exactly as attaching a
-    second Special demotes a Luminous already sitting there. 🆕 Prism runs that
-    claim in the OTHER direction: evolving a Basic into a Stage 1 with a Prism
-    attached DEMOTES it, mid-game, and `prismEnergy.test.ts` drives the evolve.
-
-    🆕 🛑 D302 — THE STAGE ARM IS NOW A **CONJUNCTION**, AND THE TWO EXTRA TERMS
-    ARE READ HERE RATHER THAN THROUGH `conditionHolds` BECAUSE THEY STRUCTURALLY
-    CANNOT BE. Reversal Energy `sv04-266` gates the same promotion on THREE terms
-    — the holder is an Evolution, the holder has no Rule Box, and YOU have more
-    Prize cards remaining than your opponent. The third is verbatim
-    `BoardCondition.morePrizesThanOpponent`, whose clause table already maps this
-    card's printed words, and it is STILL not reused: `conditionHolds` lives in
-    interpreter.ts, which imports THIS file, so a `BoardCondition` read from a
-    continuous scan closes an import cycle. That is `noRetreatCostSelf`'s recorded
-    reason (registry.ts) applied a second time, and it is why the field carries
-    bespoke optional flags instead of a condition.
-
-    ⚠️ THE SEAT IS **DERIVED, NOT PASSED**, WHICH KEEPS ALL THREE EXPORTED
-    SIGNATURES UNTOUCHED. `providedEnergy` / `unitsProvidedBy` / `providesEnergyType`
-    hand us an `InPlayPokemon` and no seat, and their callers (attack.ts's §8.2
-    cost check, the HUD preview, interpreter.ts's `providesEnergy` filter) would
-    all have had to grow one. `hasFreeRetreatAura` in this same file already
-    derives a seat by matching the holder's TOP uid against each side's own
-    `active`/`bench`, and this reuses that trick verbatim — a prize comparison is
-    seat-relative, so getting the seat wrong inverts the answer rather than
-    softening it.
-
-    🛑 THE POLARITY IS THE ONE THING THAT CAN GO SILENTLY WRONG. "More Prize cards
-    REMAINING" means you have TAKEN FEWER — you are BEHIND — so the comparison is
-    `>` on `prizes.length`, matching `conditionHolds`'s arm byte for byte. A build
-    that read it as "ahead" is green on every board where the prize counts are
-    equal (the promotion is off either way) and wrong on every board that matters;
-    `reversalEnergy.test.ts` drives BOTH sides of the comparison and the mutation
-    corpus carries the flip. */
-/** 🆕 D302 — §14/§3.8: does the side that CONTROLS `pokemon` have strictly more
-    Prize cards REMAINING than its opponent? Reversal Energy `sv04-266`'s first
-    printed term, read here rather than through
-    `BoardCondition.morePrizesThanOpponent` because `conditionHolds` lives in
-    interpreter.ts and interpreter.ts imports this file (see `unitsOf`).
-
-    🛑 THE COMPARISON IS BYTE-FOR-BYTE `conditionHolds`'s ARM — `prizes.length >`
-    the other seat's — so the two readings of one printed clause cannot drift, and
-    "more REMAINING" is BEHIND on Prizes taken. `takenPrizes` is the complement and
-    would invert the operator, which is exactly the silent bug the sibling test
-    drives both sides of.
-
-    ⚠️ THE SEAT IS DERIVED BY TOP UID, `hasFreeRetreatAura`'s trick in this same
-    file: the caller always hands us one of a side's own `active`/`bench` entries,
-    so the side holding it is the controller. An empty stack (no top uid) cannot be
-    matched to a seat and answers FALSE — the conservative reading, since an
-    unresolvable holder must not promote. */
+/**
+ * Does the side that controls `pokemon` have strictly more Prize cards remaining than its opponent
+ * (i.e. it is behind)? Read here rather than through `conditionHolds` because interpreter.ts
+ * imports this file. A holder with no top card matches no seat and answers false.
+ */
 function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
@@ -4964,13 +2576,10 @@ function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokem
   return false;
 }
 
-/** 🆕🆕🆕 §6.3 (D645) — the Basic Energy type a live `PassiveEffects.basicEnergyProvidesTwice` doubles on `pokemon`'s
-    board, or `undefined`: Meganium "Wild Growth" (*"Each Basic {G} Energy attached to all of your Pokémon provides
-    {G}{G} Energy. The effect of Wild Growth doesn't stack."*). The holder is any of the SAME side's in-play Pokémon
-    (Active or Bench, itself included) whose Ability `disabledAbilityUids` does not silence; the first live one
-    answers, so two Meganium double once (the printed "doesn't stack"). Read by `unitsOf` for a Basic Energy card,
-    so every provision reader moves together; a card COUNT does not (R-WGR1). The lock scan runs only once a holder
-    is found. */
+/**
+ * The Basic Energy type a live Meganium "Wild Growth" doubles on `pokemon`'s side, or `undefined`.
+ * The first unlocked holder answers, so several holders double only once ("doesn't stack").
+ */
 function doubledBasicEnergyType(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -4990,13 +2599,11 @@ function doubledBasicEnergyType(
   return undefined;
 }
 
-/** 🆕🆕🆕 §11 (D645) — the live Slimy Sliding that answers `seat`'s retreat, or `undefined`: Goodra "Slimy Sliding"
-    (*"When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat
-    Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack."*). The holder
-    is any of the OTHER side's in-play Pokémon (Active or Bench) carrying `PassiveEffects.retreatFailsOnTails` whose
-    Ability `disabledAbilityUids` does not silence; the first live one answers (one coin however many, the printed
-    "doesn't stack"). `uid` names the holder and `ability` the printed name, for the `ABILITY_COIN_FLIP` row. Asked
-    by ONE caller, turn.ts `retreat`, after every retreat check has passed (R-SLD1). */
+/**
+ * The live Goodra "Slimy Sliding" on the opposing side that flips for `seat`'s retreat, or
+ * `undefined`. The first unlocked holder answers, so only one coin is flipped ("doesn't stack").
+ * Asked only after every other retreat check has passed.
+ */
 export function retreatCoinFlipSource(
   state: GameState,
   seat: Seat,
@@ -5026,14 +2633,11 @@ function unitsOf(
   // Basic energy → its type; an unauthored special energy → Colorless.
   if (program === undefined) {
     const provided = energyProvidesOf(card);
-    // 🆕🆕🆕 D645 — Meganium "Wild Growth": a Basic Energy of the doubled type provides two units (R-WGR1).
     return provided !== "Colorless" && doubledBasicEnergyType(state, pokemon) === provided
       ? [provided, provided]
       : [provided];
   }
-  // 🆕🆕🆕 D578 — R-TRE1: a restricted card on a body it may not sit on provides NOTHING (it is
-  // discarded at the next drain point, flow.ts `discardMisplacedEnergy`) [🆕🆕🆕 D578 landing
-  // (R-TRE1, RULED: fixed): ~~the next drain point~~ the step that put it there].
+  // A restricted Energy on a Pokémon it may not be attached to provides nothing.
   if (!energyMayBeAttachedTo(state, card, pokemon)) return [];
   const demote = program.demoteWithOtherSpecial;
   if (demote !== undefined && specialUids.some((other) => other !== uid)) return [...demote];
@@ -5051,8 +2655,7 @@ function unitsOf(
     if (
       top !== undefined &&
       matches(top) &&
-      // D302 — the riders NARROW the stage gate; absent means ungated, so Neo
-      // Upper and Prism reach the same `return` they always did.
+      // Absent riders leave the stage gate ungated.
       (promote.noRuleBox !== true || !hasRuleBox(top)) &&
       (promote.whileMorePrizesRemaining !== true ||
         holderSideLeadsOnPrizesRemaining(state, pokemon))
@@ -5062,36 +2665,11 @@ function unitsOf(
   return [...program.provides];
 }
 
-/** §11 — is `pokemon`'s Retreat Cost currently zeroed by an own-board "no
-    Retreat Cost" aura (Clefable ex "Lunar Zone")? The per-TARGET cousin of
-    `seatRemovesWeakness`: the aura reaches other Pokémon, so it is read through a
-    dedicated scan rather than `passivesOf`, but its printed clause ("…that have
-    {P} Energy attached") is evaluated against each target rather than once per
-    seat, so this takes the Pokémon.
-
-    The seat is derived rather than passed: the aura is OWN-BOARD, so we find the
-    side holding `pokemon` (by top uid — the caller always hands us one of that
-    side's own `active`/`bench` entries) and look for a source only there, which
-    keeps `effectiveRetreatCost`'s signature — and its three call sites (turn.ts
-    retreat, redact.ts, the web HUD) — untouched. A source is any of that side's
-    in-play Pokémon (Active or Bench, no "in the Active Spot" clause) whose TOP
-    card's passive sets `noRetreatCostAura`, provided that source is not itself
-    §9-locked (the `disabledAbilityUids` checklist every non-lock Ability surface
-    must consult). The energy clause is a PROVISION read (`providesEnergyType`),
-    so a wildcard Luminous Energy satisfies {P} exactly as it would pay a {P}
-    cost. Self-inclusive: the source's own Retreat Cost is freed too, iff it
-    satisfies the clause.
-
-    🆕 D267 — THE STAGE CLAUSE IS THE SECOND PER-TARGET PREDICATE, AND IT IS
-    ABOUT THE TARGET AND NOT THE HOLDER. Latias ex "Skyliner" prints "Your Basic
-    Pokémon in play have no Retreat Cost", so the narrowing sits beside
-    `requiresEnergyType` — read off `targetTop`, the TOP card of the body being
-    asked about, never off `top` (the holder's card, which is in scope right
-    there and is the mistake this loop invites). It is hoisted out of the holder
-    loop because it does not vary with the holder. An ABSENT `stage` means
-    UNGATED, so Lunar Zone still frees an EVOLUTION carrying {P}; the read is
-    `isBasicPokemon` on the top card, which is why an evolve takes the freedom
-    away in the same breath. */
+/**
+ * §11: is `pokemon`'s Retreat Cost zeroed by an own-side aura (Clefable ex "Lunar Zone", Latias ex
+ * "Skyliner")? Any unlocked Pokémon on the same side can be the source, itself included. The energy
+ * and stage clauses are read against the target's top card, not the holder's.
+ */
 export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
@@ -5121,39 +2699,14 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
   return false;
 }
 
-/** §11 — the {C} ADDED to `pokemon`'s Retreat Cost by the OPPOSING side's
-    continuous auras (Spidops ex "Trap Territory": "Your opponent's Active
-    Pokémon's Retreat Cost is {C} more"). The cross-board, delta-returning mirror
-    of `hasFreeRetreatAura`, and it shares that scan's derived-seat trick: the
-    caller hands us one of a side's own `active`/`bench` entries, so we find that
-    side by top uid and then read the OTHER one — which is what keeps
-    `effectiveRetreatCost`'s signature, and all four of its call sites, untouched.
-
-    The two Active clauses are NOT symmetric, and the printed text is the whole
-    reason: "your opponent's ACTIVE Pokémon's Retreat Cost" scopes the TARGET, so
-    a benched target is never surcharged — but nothing scopes the SOURCE, so a
-    Spidops ex imposes it from the Bench as readily as from the Active Spot
-    (contrast `damageAttacker`, whose Active clause is on the holder). Sources
-    are SUMMED: two Spidops ex in play are {C}{C} more, and each is gated through
-    `disabledAbilityUids` (§9) like every non-lock Ability surface.
-
-    🆕 D322 — THE TARGET NARROWING. Ariados sv06-005 "Big Net" prints "Your
-    opponent's Active EVOLUTION Pokémon's Retreat Cost is {C} more", so a source
-    may carry a `target` CardFilter and then contributes nothing against a BASIC
-    Active. It is matched against `targetTop` — the TOP card of the body being
-    asked about, hoisted out of the source loop because it does not vary with the
-    source — and never against the source's own card, which is in scope inside
-    that loop and is the mistake this shape invites: Ariados is a Stage 1, so a
-    source-side read is green on every board where the surcharge is imposed at
-    all. This is `seatDamageBonusBeforeWR`'s D245 `target` rider verbatim, down to
-    the `matchesFilter` call and the `evolutionPokemon` member — the same printed
-    noun phrase on the damage seam. An ABSENT rider is UNGATED, which is Trap
-    Territory's bare sentence, and the two can be live at once: a Spidops ex and
-    an Ariados facing a Basic Active sum to {C}, facing an Evolution to {C}{C}. */
+/**
+ * §11: the {C} added to `pokemon`'s Retreat Cost by opposing auras (Spidops ex "Trap Territory",
+ * Ariados "Big Net"). Only an Active target is surcharged, but sources may be on the Bench; sources
+ * are summed, and an optional `target` filter is matched against the target's top card.
+ */
 export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
-  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), so a typed `target` reads the types it has.
   const targetTop = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
@@ -5178,30 +2731,11 @@ export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemo
   return 0;
 }
 
-/** §11 — the {C} SUBTRACTED from `pokemon`'s Retreat Cost by its OWN side's
-    continuous auras (Toedscruel sv09-089 "Secret Forest Path": "As long as this
-    Pokémon is on your Bench, your Active Pokémon's Retreat Cost is {C}{C} less").
-    The TWELFTH member of the aura-scan family and the SIGN-FLIPPED, OWN-SIDE
-    mirror of `opposingRetreatSurcharge` directly above: same derived-seat trick
-    (the caller hands us one of a side's own `active`/`bench` entries, so we find
-    that side by top uid), same Active TARGET clause, same §9 gate, same SUM over
-    sources — and then it reads the side it found rather than the other one, which
-    is the entire difference and is why the two are separate scans rather than one
-    signed fold.
-
-    THE RETURN IS A NON-NEGATIVE DISCOUNT, not a signed delta, and
-    `effectiveRetreatCost` SUBTRACTS it — `stadiumRetreatDelta`'s `added -
-    discount` idiom one level up. It is deliberately NOT a set-to-zero: two
-    printed tiers meet on this seam and only `noRetreatCostAura`/`noRetreatCostSelf`
-    zero the cost outright, so a lone Toedscruel leaves a {C}{C}{C} Active at {C}
-    and a second one takes it to nothing THROUGH THE SUM's single floor.
-
-    `sourceOnBench` is the printed "As long as this Pokémon is on your Bench",
-    answered by `isOnBench` (D253, seat-blind, so the scan needs no seat it does
-    not already have). It gates the SOURCE while the sentence's object scopes the
-    TARGET, and on this printing the two zones are DISJOINT — promoting the
-    Toedscruel ends the discount for the body it displaces, and the Toedscruel can
-    never be its own beneficiary. */
+/**
+ * §11: the {C} subtracted from `pokemon`'s Retreat Cost by its own side's auras (Toedscruel "Secret
+ * Forest Path"). Returns a non-negative discount that `effectiveRetreatCost` subtracts inside its
+ * floored sum; sources are summed.
+ */
 export function alliedRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -5227,27 +2761,10 @@ export function alliedRetreatDiscount(state: GameState, pokemon: InPlayPokemon):
   return 0;
 }
 
-/** §11 — is `pokemon` currently held in place by an OPPOSING continuous Ability
-    (Snorlax "Block": "As long as this Pokémon is in the Active Spot, your
-    opponent's Active Pokémon can't retreat")? The fifth member of the aura-scan
-    family (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
-    `opposingRetreatSurcharge`) and the BOOLEAN cross-board twin of the last of
-    those: same derived-seat trick — the caller hands us one of a side's own
-    `active`/`bench` entries, so we find that side by top uid and read the OTHER
-    one — and the same §9 gate through `disabledAbilityUids`.
-
-    Where the twins part is the Active clauses, and the printed text is the whole
-    reason. "Your opponent's Active Pokémon's Retreat Cost is {C} more" scopes only
-    the TARGET, so a benched Spidops ex still surcharges; this print OPENS with "As
-    long as this Pokémon is in the Active Spot", which scopes the SOURCE as well.
-    Both ends are Active here, so the source list is the opponent's Active ALONE
-    (a benched Snorlax blocks nothing) and a benched target reads false — which it
-    would anyway, a benched Pokémon having no retreat to refuse.
-
-    Read at the RETREAT GATE (turn.ts, mirrored by redact.ts and the web HUD), NOT
-    folded into `effectiveRetreatCost`: a block is not a cost. The cost of a
-    blocked Active is exactly its printed/modified cost — there is simply no legal
-    retreat to spend it on. */
+/**
+ * §11: is `pokemon` prevented from retreating by the opposing Active's Ability (Snorlax "Block")?
+ * Both source and target must be Active. Read at the retreat gate rather than folded into the cost.
+ */
 export function opposingRetreatBlocked(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
@@ -5270,51 +2787,11 @@ export function opposingRetreatBlocked(state: GameState, pokemon: InPlayPokemon)
   return false;
 }
 
-/** §8.5 (D151) — the HP an OPPOSING continuous Ability takes off every damage
-    `pokemon`'s own attack does right now, before Weakness and Resistance (Entei
-    sv03-030 "Pressure": "As long as this Pokémon is in the Active Spot, attacks
-    used by your opponent's Active Pokémon do 20 less damage (before applying
-    Weakness and Resistance)"). The ALWAYS-ON half of D149's attacker-side debuff,
-    SUMMED beside `installedAttackDebuffOf` at the same four sites — same printed
-    sentence, same step, two sources, one number, which is exactly how
-    `passivesOf().damageReductionAfterWR` and `installedReductionOf` already split
-    D147's sentence one screen up.
-
-    ⚠️ IT IS `opposingRetreatBlocked`'s SHAPE AND NOT `passivesOf`'s, and that was
-    the whole reason D149 scoped it out. `passivesOf` reads the HOLDER's own
-    catalog row; this fact belongs to the holder's OPPONENT, so no field on that
-    fold could ever have answered it. So it is the SEVENTH member of the aura-scan
-    family (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
-    `opposingRetreatSurcharge` / `opposingRetreatBlocked` / `hasFreeRetreatSelf`)
-    and it inherits that family's three answers verbatim rather than inventing new
-    ones:
-      • the DERIVED SEAT — the caller hands us one of a side's own `active`/`bench`
-        entries, so we find that side by top uid and read the OTHER one, which is
-        what keeps all four read sites' signatures untouched;
-      • BOTH ACTIVE CLAUSES ENFORCED BY THE SCAN, no `activeOnly` field. "As long
-        as this Pokémon is in the Active Spot" scopes the SOURCE (a benched Entei
-        does nothing — contrast `opposingRetreatSurcharge`, whose print scopes only
-        the target) and "your opponent's ACTIVE Pokémon" scopes the TARGET (a
-        benched attacker reads 0, which it would anyway, a benched Pokémon having
-        no attack to weaken). Both ends are therefore live-read: a Boss's Orders, a
-        retreat, or a KO-and-promotion that moves EITHER body out of the Active
-        Spot ends the aura on the spot, because every read site passes the CURRENT
-        state and nothing is stamped anywhere;
-      • the §9 GATE through `disabledAbilityUids`, like every non-lock Ability
-        surface. This is the sharpest line between the two halves of the number:
-        the aura is an ABILITY and a live Ability-lock silences it, where D149's
-        `attackDamageDebuff` is an attack INSTALLATION written onto a record and no
-        lock can reach it. That asymmetry is DRIVEN on one board in
-        pressureAura.test.ts (a damaged Entei under Ting-Lu ex "Cursed Land" stops
-        reducing while the stamp on the same attacker keeps doing so), and it is
-        the reason this could never have been a `PassiveEffects` field read through
-        the D149 stamp's own reader.
-
-    Returns a NUMBER rather than a boolean, unlike `opposingRetreatBlocked`: the
-    print carries an amount. It does NOT sum over a source list, unlike
-    `opposingRetreatSurcharge` — the source clause is the opponent's Active ALONE,
-    so there is exactly one candidate and a loop would describe a board that cannot
-    exist. */
+/**
+ * §8.5: damage taken off `pokemon`'s attacks before Weakness and Resistance by the opposing
+ * Active's Ability (Entei "Pressure"). Both source and target must be Active, and an Ability lock
+ * silences it.
+ */
 export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -5337,17 +2814,11 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
   return 0;
 }
 
-/** 🆕🆕🆕 §8.5 (D631) — Garbodor `me04-057` "Gloomy Garbage": the HP taken off `pokemon`'s own attack by
-    the opposing side's `opponentActiveToolAttackDebuff` holders, when `pokemon` is its side's Active and has
-    a Pokémon Tool attached (`tools.length > 0`, D369's read). The holders may stand anywhere in play (the
-    print has no spot clause); one term per holder, §9 per source. 0 otherwise.
-
-    A SEPARATE term at the four §8.5 sites, not summed into `opposingAttackDebuff`: D151's guards null the
-    Pressure half because its source (the opponent's Active) is the attack's target on those arms. Here the
-    holder may be anywhere, so `exceptHolder` is the HOLDER-VS-TARGET scope (D161's / D254's "othersOnly"
-    pattern, R-GG1 ⚠️ UNRULED): a site whose attack is "not affected by any effects on" its target passes
-    that target, and only the term the target itself grants is dropped. A benched Garbodor still weakens a
-    Feint snipe aimed elsewhere; a Garbodor that IS the pick does not. */
+/**
+ * §8.5: damage taken off `pokemon`'s attacks by opposing Garbodor "Gloomy Garbage" holders while
+ * `pokemon` has a Tool attached. Holders may be anywhere in play; `exceptHolder` drops the term
+ * granted by an attack's target when the attack ignores effects on it.
+ */
 export function opposingToolAttackDebuff(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -5372,7 +2843,7 @@ export function opposingToolAttackDebuff(
         disabledAbilityUids(state).has(holderUid)
       )
         continue; // §9
-      if (exceptHolder !== undefined && topUid(exceptHolder) === holderUid) continue; // R-GG1
+      if (exceptHolder !== undefined && topUid(exceptHolder) === holderUid) continue;
       amount += term;
     }
     return amount;
@@ -5380,108 +2851,11 @@ export function opposingToolAttackDebuff(
   return 0;
 }
 
-/** §8.5 (D159, widened D254 and D256) — is `pokemon` a BENCHED body shielded from
-    all attack damage by one of its OWN side's Pokémon? THREE printed sentences
-    now, and the pair that arrived first is the whole reason this function has a
-    `scope`:
-
-      • Thundurus sv03-070 "Adverse Weather" — "As long as this Pokémon is in the
-        Active Spot, prevent all damage done to your Benched Pokémon by attacks
-        from your opponent's Pokémon" (`preventBenchDamageWhileActive`, 1 legal
-        printing);
-      • Rabsca sv05-024 "Spherical Shield" — "Prevent all damage from and effects
-        of attacks from your opponent's Pokémon done to your Benched Pokémon."
-        (`preventBenchDamageAndEffects`, 1 legal printing);
-      • Shaymin sv10-010/-185 "Flower Curtain" — "Prevent all damage done to your
-        Benched Pokémon that don't have a Rule Box by attacks from your opponent's
-        Pokémon." (`preventBenchDamageNoRuleBox`, 2 legal printings, D256).
-
-    ⚠️ **D256 IS A THIRD FIELD AND NOT A RIDER ON EITHER OF THE FIRST TWO**, and
-    the reason is that its three clauses take one answer from EACH of them and add
-    one nobody had printed. It has Rabsca's SOURCE clause (absent), Thundurus's
-    HALF (damage only — no effects), and a TARGET clause NEITHER prints ("…that
-    don't have a Rule Box"). Two disjoint antecedents on one consequent are two
-    fields (D252/D253's rule); three clause-vectors that pairwise disagree are
-    three. Merging it into `preventBenchDamageAndEffects` would hand Shaymin a
-    status immunity it does not print AND strip the Rule-Box conjunct from the one
-    printing that has it.
-
-    ⚠️ **THE TARGET CONJUNCT IS EVALUATED ONCE, OUTSIDE THE SOURCE LOOP, BECAUSE IT
-    IS A PROPERTY OF THE DAMAGED BODY AND OF NO SOURCE.** `hasRuleBox` NEGATED, the
-    same `cards.ts` predicate `stadiumPreventsDamage` reads on the same seam — and
-    that Stadium (Neutralization Zone sv06.5-060, D159) is the only other place in
-    the engine where a rule box decides whether attack damage LANDS. The printed
-    parenthetical "(Pokémon ex, Pokémon V, etc. have Rule Boxes.)" is REMINDER TEXT
-    describing that predicate and encodes no rule of its own; nothing reads it.
-
-    The EIGHTH member of the aura-scan family, and the FIRST that is SAME-SEAT
-    CROSS-BODY: `passivesOf` folds the holder's own row, `opposingAttackDebuff` and
-    `opposingRetreatBlocked` reach across the table — this one reaches from a side's
-    own bodies to that same side's Bench, which is a body `passivesOf` could never
-    have been asked about.
-
-    ⚠️ **D254 WIDENED THIS SCAN RATHER THAN ADDING A SECOND ONE, AND THAT WAS THE
-    WHOLE SAVING.** The handoff priced Rabsca at four new read-site disjuncts plus a
-    new scan. This function was ALREADY the sole funnel at all four damage arms, so
-    the second sentence costs the read sites ONE ARGUMENT and no new disjunct —
-    the standing "look for an existing sole FUNNEL before adding N parallel gates"
-    rule, paying at a site where the funnel had been in place for ninety-five
-    slices.
-
-    ⚠️ **WHAT THE TWO SENTENCES SHARE IS THE *TARGET* CLAUSE AND NOTHING ELSE.**
-    Both say "your Benched Pokémon". Thundurus scopes its SOURCE to the Active
-    Spot; Rabsca scopes its source not at all, so a benched Rabsca shields itself
-    and this scan's source set CONTAINS its target set for the first time. That is
-    `seatDamageReduction`'s condition, and it is why `scope` is here: a sniped
-    Rabsca loses its own shield under Feint Attack, a sniped teammate keeps it.
-    ⚠️ **D256 ARRIVES AT THE SAME CONDITION BY A DIFFERENT ROUTE AND NEEDS NO NEW
-    ARGUMENT FOR IT.** Shaymin prints no source clause either, so a benched Shaymin
-    is inside its own target set **iff it has no Rule Box** — and Shaymin sv10-010
-    is a plain Pokémon, so it is. `scope` was already required and `benchShieldGranted`
-    already applies it per SOURCE for every field uniformly, so the third field
-    inherits the right answer instead of a defaulted one. That uniformity was
-    written at D254 explicitly so a third field could not get it wrong by omission,
-    and D256 is the slice that collected on it.
-    Answered per BOARD rather than per SITE — the two earlier answers in this
-    family (D151/D159) were constant per site only because no source could be its
-    own target.
-
-    It inherits the family's three answers verbatim rather than inventing new ones:
-      • the DERIVED SEAT — the caller hands us one of a side's own `active`/`bench`
-        entries, so we find that side by top uid and read only THAT side (not the
-        other one, which is the single line that makes this member same-seat). That
-        is what keeps all four damage sites' signatures untouched but for `scope`;
-      • EVERY CLAUSE ENFORCED BY THE SCAN, no `activeOnly` field on either row.
-        Both ends are live-read: a Boss's Orders, a retreat or a KO-and-promotion
-        that moves either body ends the shield on the spot, because nothing is
-        stamped and every site passes the CURRENT state;
-      • the §9 GATE through `disabledAbilityUids`, like every non-lock Ability
-        surface — and D254 moves it PER SOURCE rather than per scan, because the
-        second sentence can have several sources at once and a lock on one must
-        not silence the rest. Thundurus and Rabsca are both reachable (a BASIC and
-        a STAGE 1), so an Active Klefki "Mischievous Lock" really does silence
-        either and the Bench is exposed again (D113's rule: the reachability
-        follows the SOURCE's stage).
-
-    ⚠️ NEITHER SENTENCE FILTERS AN ATTACKER, WHICH IS WHY THIS IS A SCAN AND NOT A
-    `preventDamageFrom…` REFINEMENT. §D146's census grouped Thundurus's sentence
-    with Dachsbun's and Bellibolt's on the shared string "by attacks from"; its
-    object is "your opponent's Pokémon" — every attacker there is, and Rabsca's
-    object is the same. (🆕🆕🆕 D576 (D539): ~~"every attacker there is"~~ is
-    WITHDRAWN — FALSE since D425: the `"yourBench"` spread (D425) and the own-Bench
-    snipe (D447) are attacks by the protected body's OWN side, so "your opponent's
-    Pokémon" IS a narrowing — by attacker SEAT, not by attacker identity. This scan
-    takes no attacker seat, so by READING, not driven, it looks to shield a Bench
-    from its own side's attacks too; a pre-existing gap, carried as decisions.md
-    D576 (g) ⑵, not fixed here. The sentence below stands for attacker IDENTITY.) The narrowing is entirely on the PROTECTED side, so this
-    takes no `attacker` argument at all, and a signature that took one would be
-    documenting a filter neither card prints.
-
-    ⚠️ **SOURCES ARE FIRST-MATCH, NOT SUMMED**, unlike `seatDamageReduction` and
-    `seatPreWRDamageBonus`: the answer is a BOOLEAN, so a second source cannot add
-    anything a first has not already said. That is `preventDamageAndEffects…`'s
-    standing rule — a gate that names no VALUE is lossless under OR — and it is why
-    two Rabsca in play need no `noStack` reasoning. */
+/**
+ * §8.5: does one of its own side's Pokémon shield the benched `pokemon` from attacks (Thundurus
+ * "Adverse Weather", Rabsca "Spherical Shield", Shaymin "Flower Curtain")? Sources are first-match
+ * and each is checked against Ability locks individually.
+ */
 function benchShieldGranted(
   state: GameState,
   source: InPlayPokemon,
@@ -5493,12 +2867,8 @@ function benchShieldGranted(
   scope: BenchShieldScope,
 ): boolean {
   const sourceUid = topUid(source);
-  // Feint Attack, per SOURCE rather than per site — the D254 line. A source that
-  // IS the damaged body is granting an effect "on that Pokémon"; a teammate is
-  // not. Vacuous for `preventBenchDamageWhileActive` (its source is an Active and
-  // its target a benched body, so the uids can never match) and load-bearing for
-  // the two fields below it. Read uniformly so a third field cannot inherit the
-  // wrong answer by omission — which is exactly what D256's field then did.
+  // Feint Attack: a source that is the damaged body itself is an effect on that Pokémon and is
+  // ignored under `othersOnly`.
   if (scope === "othersOnly" && sourceUid === targetUid) return false;
   const top = topCardOf(state, source);
   if (top === undefined || programFor(top.id)?.passive?.[field] !== true) return false;
@@ -5506,11 +2876,10 @@ function benchShieldGranted(
   return true;
 }
 
-/** Whether the damaged body's OWN contribution to a bench shield counts, which is
-    D151's Feint Attack reading ("this attack's damage isn't affected by … any
-    other effects on that Pokémon"). `seatDamageReduction`'s parameter, verbatim
-    and for its reason: REQUIRED rather than defaulted, so a new read site must say
-    which it means instead of inheriting whichever answer was cheaper to write. */
+/**
+ * Whether the damaged body's own contribution to a bench shield counts (Feint Attack ignores
+ * effects on the target).
+ */
 type BenchShieldScope = "all" | "othersOnly";
 
 function benchShieldScan(
@@ -5521,11 +2890,8 @@ function benchShieldScan(
 ): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
-  // D256 — Shaymin's EXTRA target conjunct, evaluated ONCE on the damaged body
-  // because it is a property of that body alone and of no source. `undefined` (an
-  // unresolvable top card) counts as HAVING a Rule Box, i.e. NOT shielded, which
-  // is `stadiumPreventsDamage`'s conservative direction (`top !== undefined &&
-  // !hasRuleBox(top)`) written the other way round.
+  // Shaymin's no-Rule-Box conjunct is a property of the damaged body; an unresolvable card counts
+  // as having a Rule Box.
   const targetTop = topCardOf(state, pokemon);
   const targetHasRuleBox = targetTop === undefined || hasRuleBox(targetTop);
   for (const seat of SEATS) {
@@ -5533,19 +2899,8 @@ function benchShieldScan(
     // The TARGET clause, and it is the ONE thing all three printings share: "your
     // BENCHED Pokémon". An Active holder of this uid is out either way.
     if (!side.bench.some((benched) => topUid(benched) === uid)) continue;
-    // 🆕🆕🆕 D568 — THE PRINTED TERA RULE: *"As long as this Pokémon is on your Bench,
-    // prevent all damage done to this Pokémon by attacks (both yours and your
-    // opponent's)."* One conjunct, on the target alone, ahead of every source:
-    //   • a printed RULE, not an Ability — no `disabledAbilityUids`, no `passivesOf`, so
-    //     neither a Klefki lock nor Team Rocket's Watchtower switches it off;
-    //   • DAMAGE only — damage counters are not damage (§8.5), and the rule prints no
-    //     effects half, so the `"effects"` scan never reaches it;
-    //   • BOTH sides' attacks — no attacker is read (this scan takes none);
-    //   • 🛑 R-TB1 (⚠️ UNRULED): `scope` is NOT consulted. Feint Attack's "any effects on
-    //     that Pokémon" nulls an effect the damaged body GRANTS; this is a rule printed on
-    //     the card, not an effect on it, so a sniped benched Tera Pokémon under Feint
-    //     Attack is still shielded. Reverses if a ruling says the rule is such an effect.
-    // Read off the TOP card (§1.2): a Tera Pokémon that evolves into a non-Tera loses it.
+    // Tera rule: a benched Tera Pokémon takes no attack damage from either side. It is a printed
+    // rule, not an Ability, so locks and Feint Attack's scope do not affect it.
     if (half === "damage" && isTeraPokemon(targetTop)) return true;
     // Thundurus's SOURCE clause: this side's OWN Active Spot and nowhere else —
     // and the DAMAGE half only, because its sentence prints no effects half at
@@ -5596,13 +2951,11 @@ export function benchShieldedFromDamage(
   return benchShieldScan(state, pokemon, "damage", scope);
 }
 
-/** 🆕🆕🆕 §8.5 (D631) — Bastiodon "Ancient Bulwark" (`preventSeatDamageWhileBenchedFromEnergyAtMost`): is
-    `pokemon` shielded from this attack's damage by a BENCHED holder on its own side, because the attacking
-    body has at most the printed number of Energy cards attached (`countAttachedEnergy(…, null)`, counted at
-    damage time — R-AB1 ⚠️ UNRULED)? "your opponent's Pokémon" is the seat test (`attackerSeat` must be the
-    other side). The holder shields itself too ("each of your Pokémon"), except under `"othersOnly"` (a
-    Feint snipe on the holder, D254's scope). An unresolvable attacker is not shielded against. §9 per
-    source. */
+/**
+ * §8.5: Bastiodon "Ancient Bulwark": is `pokemon` shielded by a benched holder on its side because
+ * the opposing attacker has at most the printed number of Energy cards attached? The holder shields
+ * itself except under `othersOnly`.
+ */
 export function seatShieldedFromLowEnergyAttacker(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -5630,12 +2983,10 @@ export function seatShieldedFromLowEnergyAttacker(
   return false;
 }
 
-/** 🆕🆕🆕 §8 (D631) — Yveltal "Life-Locked" (`opponentActiveCantBeHealed`): is `pokemon` its side's Active
-    while the OTHER side has such a holder in play (any spot), not §9-locked? Asked by every heal site in
-    interpreter.ts before it heals; a locked heal heals 0 and files no `HEALED`. Moving damage counters is not
-    a heal (R-LL1 ⚠️ UNRULED): the two counter movers do not ask. [🆕 Card revision B10 (D539): nor do the two
-    own-board movers (`moveOneOwnCounter`, Rocket Brain; `moveCountersToOpponent`, Adrena-Brain), which reached
-    this lock through `healChosen` and so placed counters they never removed.] */
+/**
+ * §8: Yveltal "Life-Locked": is `pokemon` its side's Active while the other side has an unlocked
+ * holder in play? Every heal site asks this; moving damage counters is not a heal.
+ */
 export function healLocked(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
@@ -5658,54 +3009,15 @@ export function healLocked(state: GameState, pokemon: InPlayPokemon): boolean {
   return false;
 }
 
-/** §11 (D254) — is `pokemon` a BENCHED body whose own side refuses attack EFFECTS
-    done to it? The other half of Rabsca's one sentence, and the half
-    `preventBenchDamageWhileActive` has no share in.
-
-    NO `scope`, and that is a printed distinction rather than an omission: Feint
-    Attack scopes "this attack's DAMAGE", so it has nothing to say about a Poison,
-    a discard or a forced switch. The one site that calls this passes no opinion
-    because there is none to pass.
-
-    🛑 **STRUCTURALLY DEAD AT ITS ONLY READ SITE TODAY, AND WRITTEN ANYWAY.**
-    `attackEffectRefused` resolves `state.players[seat].active`, and every op that
-    consults that funnel aims at an Active — so the TARGET clause this scan shares
-    with its damage twin is false there on every board this engine can reach.
-    Guarded for TOTALITY, not for coverage, and carrying NO mutant: an unkillable
-    mutant is a corpus defect rather than coverage (D253's rule, second
-    application). The day an op aims an effect at a benched body, the refusal is
-    already where it belongs. [🆕🆕🆕 D621 (D539): ~~"STRUCTURALLY DEAD AT ITS ONLY READ SITE"~~ —
-    WITHDRAWN (already false for `counterEachAll` since D450): `placeSnipe`'s put-counter Bench arm
-    asks the funnel of the PICKED Benched body since D621, so a Rabsca-shielded Bench refuses
-    Phantom Dive's / Land Scoop's placed counters.] */
+/** §11: is the benched `pokemon` shielded from attack effects by its own side (Rabsca)? */
 export function benchShieldedFromEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   return benchShieldScan(state, pokemon, "effects", "all");
 }
 
-/** §11 (D259) — does `seat` have a live "Wide Wall" up, i.e. does EVERY one of that
-    seat's Pokémon refuse the effects of a SUPPORTER the opponent plays? Rhyperior
-    `sv07-076` "Wide Wall", 1 legal printing:
-
-      "As long as this Pokémon is in the Active Spot, whenever your opponent plays
-       a Supporter card from their hand, prevent all effects of that card done to
-       all of your Pokémon."
-
-    ⚠️ **IT TAKES A SEAT AND NOT A POKÉMON, WHICH IS THE WHOLE REASON IT IS NOT
-    `benchShieldedFromEffects`.** That scan's target clause names a ZONE ("your
-    Benched Pokémon"), so it has to be asked per body and has to locate the body's
-    side first. This one's target clause names the SIDE and nothing else — "all of
-    your Pokémon", Active and Bench alike, INCLUDING Rhyperior itself — so the
-    answer is a property of the seat and no `scope` argument is expressible: there
-    is no reading under which the source's own body is excluded from its own aura.
-
-    ⚠️ **AND THE SOURCE CLAUSE COLLAPSES THE LOOP TO ONE READ.** "As long as this
-    Pokémon is in the Active Spot" means only `side.active` can grant it, so unlike
-    `hasFreeRetreatAura` (whose source is any body in play) there is no holder loop
-    at all — one Active, one flag, one §9 check. A benched Rhyperior grants nothing,
-    which is the observable direction the fixture drives.
-
-    §9-suppressible per SOURCE (`disabledAbilityUids`) like every printed Ability in
-    this family: Klefki's lock takes the wall down and the Boss's Orders lands. */
+/**
+ * §11: does `seat`'s Active Rhyperior "Wide Wall" prevent the effects of the opponent's Supporters
+ * on all of `seat`'s Pokémon?
+ */
 export function seatShieldedFromSupporterEffects(state: GameState, seat: Seat): boolean {
   const active = state.players[seat].active;
   if (active === null) return false;
@@ -5716,27 +3028,10 @@ export function seatShieldedFromSupporterEffects(state: GameState, seat: Seat): 
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
 }
 
-/** §7.1/§7.4 (D284) — is `seat` barred from playing `klass` cards from hand by
-    the OPPONENT'S Active Pokémon right now? Tyranitar `sv09-095` "Daunting Gaze"
-    (Item) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse" (Item +
-    Tool), 4 legal printings.
-
-    🛑 **THE PERSPECTIVE FLIP IS THE ONLY ARITHMETIC HERE, AND IT IS WHY THIS
-    TAKES A SEAT RATHER THAN A BODY.** The sentence is printed on the BARRING
-    body and reads *"**your opponent** can't play…"*, so the seat that cannot
-    play is `otherSeat` of the seat whose Active holds the passive. Asked from
-    the barred seat's side — the side every read site is already standing on —
-    the flip happens once, here, instead of at each of the four call sites.
-
-    ⚠️ **`seatShieldedFromSupporterEffects`'s SHAPE VERBATIM, INCLUDING WHY IT IS
-    A SCAN AND NOT A `passivesOf` FOLD**: that fold takes an `InPlayPokemon` and
-    no seat, and this rule's object is the OTHER seat's hand, which no per-body
-    fold can name. The source clause *"As long as this Pokémon is in the Active
-    Spot"* collapses the holder loop to ONE read — a benched Jellicent bars
-    nothing, which is the observable direction the fixtures drive.
-
-    §9-suppressible per SOURCE: both printings are printed Pokémon Abilities, so
-    Klefki's lock takes the bar down and the Item lands. */
+/**
+ * §7.1/§7.4: is `seat` barred from playing `klass` cards from hand by the opponent's Active
+ * (Tyranitar "Daunting Gaze", Jellicent ex "Oceanic Curse")?
+ */
 function handPlayBarredByOpponentActive(
   state: GameState,
   seat: Seat,
@@ -5752,54 +3047,16 @@ function handPlayBarredByOpponentActive(
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
 }
 
-/** Is this card an ACE SPEC? (D291) — the engine-side ACE SPEC classifier, the
-    mechanism D284 named as missing and Genesect `sv06.5-040` waited seven slices
-    for.
-
-    🛑 **A DERIVED READ OVER `Card.rarity`, NOT A NEW `Card` FIELD AND NOT A
-    PERSISTED FLAG.** The catalog already carries the label and the engine already
-    carries the catalog's `Card`, so the rule needs a PREDICATE, not a byte.
-
-    ⚠️ **THE SUBSTRING TEST IS COPIED, NOT INVENTED**, and copying it is the
-    point: `src/features/builder/cards.ts`'s `isAceSpec` has enforced the deck
-    validator's one-per-deck ACE SPEC rule off this exact expression since P2. Two
-    readings of one label in one repo would be a disagreement no board could show
-    you — the engine would let you PLAY a card the builder would not let you DECK.
-    ⚠️ **AND IT IS NOT `=== "ACE SPEC Rare"` EVEN THOUGH THE CATALOG IS
-    SINGLE-VALUED TODAY.** Remote D1 `colorless`, 2026-08-08: `rarity LIKE '%ACE
-    SPEC%'` returns **33 rows under exactly one distinct string**, so the equality
-    test would be correct and the substring test is correct for a longer time —
-    older fixture spellings and any future "ACE SPEC …" variant read the same.
-
-    `undefined`/`null` rarity is FALSE, which is `handPlayBarred`'s conservative
-    direction and what every engine fixture card carries. */
+/** Matches the deck builder's ACE SPEC test so the engine and builder agree. */
 export function isAceSpec(card: Card | undefined): boolean {
   return (card?.rarity ?? "").includes("ACE SPEC");
 }
 
-/** §7.1/§7.4 (D291) — is `seat` barred from playing ACE SPEC cards from hand by
-    an OPPONENT'S body with a Pokémon Tool attached? Genesect `sv06.5-040` "ACE
-    Nullifier", **1 legal printing**.
-
-    🛑 **THE HOLDER LOOP DOES NOT COLLAPSE HERE, AND THAT IS THE WHOLE REASON
-    THIS IS NOT `handPlayBarredByOpponentActive` WITH ONE MORE TERM.** Every other
-    member of this family prints *"As long as this Pokémon is in the Active
-    Spot"*, which means only `side.active` can grant it and the scan is one read.
-    This sentence prints *"If this Pokémon has a Pokémon Tool attached"* — a
-    HOLDER-STATE clause with NO zone in it — so a BENCHED Genesect wearing a Tool
-    bars exactly as hard as an Active one, and the loop must walk Active AND
-    Bench. **A WINDOW IS NOT A PREDICATE YOU CAN WIDEN** (D283), read from the
-    other side: this window is WIDER than the family's and the difference is a
-    whole loop.
-
-    ⚠️ **`tools.length > 0` AND NOT `=== 1`**, D122's finding reused: §7.4 caps a
-    Pokémon at one Tool, but the cap is enforced at `attachTool`'s GATE and
-    Revavroom ex `sv03-156`'s "Tune-Up" raises it to 4. **A RULE ENFORCED AT A
-    GATE IS NOT AN INVARIANT OF THE STATE THE GATE WRITES INTO.**
-
-    §9-suppressible per SOURCE, and per source is load-bearing rather than
-    decorative here: with a holder LOOP, Klefki silencing the Active Genesect must
-    not silence a second one on the Bench. */
+/**
+ * §7.1/§7.4: is `seat` barred from playing ACE SPEC cards by an opposing Genesect "ACE Nullifier"
+ * with a Tool attached? The holder may be Active or Benched, and each source is checked against
+ * Ability locks individually.
+ */
 function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean {
   // (the classifier is asked by `aceSpecPlayBarred` below, never here — this
   // half answers about the BOARD alone, so the two terms can be read apart.)
@@ -5817,86 +3074,19 @@ function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean 
   return false;
 }
 
-/** §6.2/§7.1/§7.4 (D292) — is `seat` barred from playing THIS card out of hand
-    **because of its RARITY**, with no class word in the question at all?
-    Genesect `sv06.5-040` "ACE Nullifier", 1 legal printing, and the reader the
-    ENERGY surface asks.
-
-    🛑 **EXTRACTED OUT OF `handPlayBarred`, NOT PARALLELED BESIDE IT.** This is
-    literally the third arm of that disjunction, lifted so a caller that has NO
-    `HandPlayClass` to offer can still ask it. `handPlayBarred` now CALLS this —
-    there is exactly ONE copy of the rarity term in the engine, so a fourth
-    rarity-keyed source later is one line HERE and zero at either funnel.
-
-    🛑 **AND THIS IS WHY THE ENERGY SURFACE IS NOT `klass: HandPlayClass | null`.**
-    Widening the class parameter would have made `null` a legal argument at all
-    SEVEN existing call sites — every one of which has a real class — and a caller
-    that passed `null` by accident would silently lose the stamped AND the
-    class-continuous terms while still type-checking. That is `handPlayBarred`'s
-    own `card?:` argument (D291) with the sign flipped. **AN EXTRACTION CANNOT
-    LOSE A TERM; A WIDENED PARAMETER CAN.** The D285 precedent points the same
-    way for a different reason (arities differ), but the arities here do NOT
-    differ — only the vocabulary does, and that is what makes this an extraction
-    rather than a twin.
-
-    ⚠️ **`undefined` IS FALSE**, `isAceSpec`'s conservative direction: an
-    unresolvable card is not barred here, and every caller rejects it on its own
-    line first. */
+/**
+ * Is `seat` barred from playing this card because it is an ACE SPEC? Usable by callers with no
+ * `HandPlayClass`, such as Energy attachment.
+ */
 export function aceSpecPlayBarred(state: GameState, seat: Seat, card: Card | undefined): boolean {
   return isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat);
 }
 
-/** §7.1/§7.2/§7.4 (D283 + D284 + D291) — may `seat` play a `klass` card out of
-    hand at all right now? **THE ONE READER EVERY SITE ASKS**, and the whole point
-    of it being one: an imposed hand-play bar has THREE sources with nothing in common
-    but their consequence — a turn-scoped STAMP written by a resolved attack
-    (`GameState.handPlayLockedTurn`, D283), a CONTINUOUS passive read off the
-    opponent's Active (`PassiveEffects.preventOpponentHandPlay`, D284) and, since
-    D291, a CONTINUOUS passive read off ANY of the opponent's bodies that asks
-    about the card's RARITY rather than its class
-    (`preventOpponentAceSpecPlayWhileToolAttached`) — and the read sites care
-    about none of them.
-
-    🛑 **WIDENED RATHER THAN PARALLELED, WHICH IS D223's FINDING SPENT INSTEAD OF
-    RE-LEARNED.** D283 wired three sites to one predicate; a second predicate
-    OR'd beside it at each of them would be five ORs (D287 added a site) that
-    the compiler cannot audit — a site that forgot one term still type-checks and
-    still looks right, and the failure is the silent one where a card is offered
-    and then refused, or greyed and legal. **D291 IS THE PAYOFF AND ALSO THE
-    TEST**: a THIRD source landed as ONE line here, and the only reason it cost
-    anything at all elsewhere is the `card` argument below.
-
-    🛑 **`card` IS REQUIRED AND NOT OPTIONAL, AND THAT IS THE ENTIRE SAFETY
-    ARGUMENT FOR THE D291 ARM.** The rarity source needs the card being played;
-    the two class sources do not. A `card?:` parameter would let every existing
-    call site keep compiling while silently losing the ACE SPEC term — the exact
-    "site that forgot one term still type-checks" failure this doc block was
-    written about, arriving through the fix for it. Making it required turned
-    `tsc -b` into the audit: every caller had to be visited, and `undefined` is a
-    legal VALUE that a caller must type out (`rareCandyOptions` does, because Rare
-    Candy is an Item and no Rare Candy printing is an ACE SPEC).
-
-    ⚠️ **THERE ARE SEVEN CALLERS — COUNTED, NOT ESTIMATED**: `cardplay.ts`'s
-    `playTrainer` (Item/Supporter), `playStadium` (Stadium), `attachTool` (Tool),
-    the `rareCandy` ACTION gate (Item) and `rareCandyOptions` (Item, the option
-    enumerator behind BOTH mirrors' `rareCandyPlayable`), plus `redact.ts`'s
-    `redactedTrainersOf` and `GameHud.tsx`'s `playableTrainers`. ⚠️ The Rare Candy
-    pair is TWO sites and not one: the gate refuses the play, the enumerator stops
-    OFFERING targets, and D286 measured that greying the row alone would not have
-    done the second. ⚠️ The two MIRRORS list no Tool row at all (Tools attach
-    by drag), so they ask only the Trainer classes they show — that is a property
-    of what those lists SHOW, not a term they are missing. **AND THE ACE SPEC ARM
-    REACHES THEM FOR FREE**: both compute `barred` from the card they already
-    hold, so an ACE SPEC Item greys itself on both transports with no new field on
-    the wire — `RedactedCard` carries no `rarity` and does not need to, because
-    `redactedTrainersOf` runs SERVER-side over the full `Card`.
-
-    ⚠️ **HOMED HERE AND NOT IN `types.ts` FOR AN IMPORT-GRAPH REASON, NOT A
-    TASTE ONE**: the passive half needs `programFor` (registry.ts) and
-    `disabledAbilityUids`, and `registry.ts` already imports `types.ts`, so the
-    reader cannot live beside the field it reads. The stamp's arithmetic stayed
-    behind (`stampedBarFor`), so neither half moved out of the module that owns
-    it. */
+/**
+ * §7: may `seat` play a `klass` card from hand right now? Combines the attack-installed stamp, the
+ * opposing Active's passive, and the ACE SPEC bar. `card` is required so no caller can silently
+ * skip the ACE SPEC check.
+ */
 export function handPlayBarred(
   state: GameState,
   seat: Seat,
@@ -5906,9 +3096,6 @@ export function handPlayBarred(
   return (
     stampedBarFor(state, seat, klass) ||
     handPlayBarredByOpponentActive(state, seat, klass) ||
-    // 🆕 D292 — the rarity arm is now `aceSpecPlayBarred` (above) rather than
-    // spelled inline: the ENERGY surface asks that half WITHOUT a class word, and
-    // two copies of one disjunct is exactly the drift this funnel exists to stop.
     aceSpecPlayBarred(state, seat, card)
   );
 }
@@ -5921,15 +3108,10 @@ const HAND_PLAY_NOUN: Record<HandPlayClass, string> = {
   Stadium: "Stadium",
 };
 
-/** 🆕🆕🆕 CARD REVISION B14 — the `HAND_PLAY_BLOCKED` REASON for a play `handPlayBarred`
-    refused, so the message names the rule that actually refused it. Genesect `sv06.5-040`
-    "ACE Nullifier" bars by RARITY (*"can't play any ACE SPEC cards"*), and the Trainer
-    gates used to answer with the CLASS word — "Item cards", "Pokémon Tool cards", "Stadium
-    cards" — while the same seat's plain Item / Tool / Stadium played on that board. The
-    class word stands whenever a CLASS source (the stamp or the Active's passive) bars the
-    play, because it is then the wider truth; "ACE SPEC" is named only when the rarity term
-    is the sole cause — the wording `attachEnergy` (turn.ts, D292) already used. Asked ONLY
-    inside a branch where `handPlayBarred(state, seat, klass, card)` answered `true`. */
+/**
+ * The refusal reason for a play `handPlayBarred` refused: the class word when a class source bars
+ * it, "ACE SPEC" only when the rarity bar is the sole cause.
+ */
 export function handPlayBarredReason(
   state: GameState,
   seat: Seat,
@@ -5943,17 +3125,10 @@ export function handPlayBarredReason(
   return `your opponent prevents you from playing ${noun} cards from your hand`;
 }
 
-/** §7.5/§10 (D285) — the CONTINUOUS half of the POKÉMON-surface bar, and
-    `handPlayBarredByOpponentActive`'s shape one surface over with ONE addition:
-    the noun this sentence bars is NARROWED, so the predicate needs the CARD.
-
-    ⚠️ **THE TWO FILTERS ARE READ IN THE PRINTED ORDER AND THE SECOND ONE IS A
-    SUBTRACTION.** *"any Pokémon that has an Ability … except for Team Rocket's
-    Pokémon"* — `only` must HOLD and `except` must NOT, so a Team Rocket's body
-    with an Ability escapes a bar it satisfies the first clause of. An `&&` of
-    both would bar it; the fixtures drive that exact body. Both riders are ABSENT
-    by default (D135's absent-key rule), so a future printing of the bare noun
-    costs no field. */
+/**
+ * §7.5/§10: does the opposing Active bar playing this Pokémon card? The `only` filter must hold and
+ * the `except` filter must not.
+ */
 function pokemonPlayBarredByOpponentActive(
   state: GameState,
   seat: Seat,
@@ -5972,29 +3147,10 @@ function pokemonPlayBarredByOpponentActive(
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
 }
 
-/** §7.5/§10 (D285) — may `seat` play `card` out of hand by `act` right now?
-    **THE ONE READER BOTH POKÉMON-SURFACE GATES ASK**, and `handPlayBarred`'s twin
-    rather than its widening — the two questions have different ARITIES, because
-    a Trainer bar names a whole class and this one narrows the noun card by card.
-
-    🛑 **A SECOND FUNNEL AND NOT A SECOND PREDICATE AT EACH SITE**, which is
-    D223's finding spent rather than re-learned for the third slice running: both
-    sources are OR'd here, so `turn.ts`'s two gates did not have to know there are
-    two, and a THIRD source later is one line in this file and zero anywhere else.
-
-    ⚠️ **THE `card` IS THE ONE BEING PLAYED, NOT THE ONE BEING PLAYED ONTO.** On
-    the evolve act that distinction is the whole rule: Arbok bars the EVOLUTION
-    card leaving hand, so a plain Bulbasaur evolving into an Ability-bearing
-    Ivysaur is barred and an Ability-bearing Basic evolving into a plain Stage 1
-    is not. `undefined` (an unresolvable card) is FALSE — `handPlayBarred`'s
-    conservative direction, and the callers reject an unknown card on their own
-    lines anyway.
-
-    ⚠️ **THE STAMPED SOURCE IGNORES `card` AND THAT IS PRINTED, NOT ELIDED.**
-    Bronzong's sentence bars *"any Pokémon"* with no narrowing at all, so
-    `stampedActBarFor` takes no card; a stamp that had to be filtered would mean
-    the record carried a noun phrase, which is what `only`/`except` exist to keep
-    out of it. */
+/**
+ * §7.5/§10: may `seat` play `card` from hand by `act` right now? `card` is the card being played
+ * (for evolve, the Evolution card), not the one played onto.
+ */
 export function pokemonPlayBarred(
   state: GameState,
   seat: Seat,
@@ -6006,50 +3162,14 @@ export function pokemonPlayBarred(
   );
 }
 
-/** §11 (D260) — is `pokemon` a member of a printed SUBGROUP that its own side is
-    shielding from the effects of attacks? Team Rocket's Articuno `sv10-051`
-    "Repelling Veil", 1 legal printing:
-
-      "Prevent all effects of attacks used by your opponent's Pokémon done to your
-       Basic Team Rocket's Pokémon. (Existing effects are not removed. Damage is
-       not an effect.)"
-
-    ⚠️ **IT IS THE THIRD SHAPE IN THIS FAMILY AND NOT A CASE OF EITHER EXISTING
-    ONE, WHICH IS THE ONE PLACEMENT QUESTION THE ROW HAD TO SETTLE BY READING
-    SIGNATURES.** `passivesOf` folds PER BODY and takes no seat, so a rule about
-    bodies the holder is not cannot ride it (that is `preventAttackEffects`, the
-    sibling sentence, one field over). `benchShieldedFromEffects` is the right
-    ARITY but the wrong TARGET CLAUSE: its loop requires the shielded body to be
-    on the BENCH (`side.bench.some(…)`), and this noun phrase carries no zone word
-    at all, so an ACTIVE Team Rocket's Meowth is shielded too. And
-    `seatShieldedFromSupporterEffects` takes a SEAT, which cannot express a
-    narrowing that is answered per BODY. Hence a fourth member of the aura-scan
-    family with the DERIVED SEAT and the per-SOURCE §9 gate inherited verbatim,
-    and a `CardFilter` where its neighbours have a hardcoded conjunct.
-
-    ⚠️ **THE FILTER IS DATA AND `matchesFilter` ANSWERS IT — ZERO NEW PREDICATES.**
-    The printed *"Basic Team Rocket's"* is a STAGE word conjoined with an OWNER
-    PREFIX, which is `matchesFilter`'s `ownerPokemon` arm exactly
-    (`{ owner, stage }`, D200's prefix and D245's stage word). An unresolvable top
-    card is NOT shielded — `matchesFilter(undefined, …)` is false by its own first
-    line, which is `benchShieldScan`'s conservative direction with nothing extra
-    written to get it.
-
-    ⚠️ **NO `scope`, AND IT IS UNEXPRESSIBLE RATHER THAN OMITTED.** D254's argument
-    scopes a source OUT of its own aura for Feint Attack's sake; that reading is
-    about DAMAGE, and this sentence has no damage half. The holder is moreover a
-    printed member of its own group (`sv10-051` is a `stage = "Basic"` card named
-    `Team Rocket's Articuno`), so a self-excluding reading would contradict the
-    print.
-
-    SOURCES ARE FIRST-MATCH: the answer is a BOOLEAN, so a second source cannot add
-    what a first has already said (`benchShieldScan`'s standing rule). §9-
-    suppressible PER SOURCE, so a lock on one Articuno leaves a second one's aura
-    standing. */
+/**
+ * §11: is `pokemon` in a subgroup its own side shields from attack effects (Team Rocket's Articuno
+ * "Repelling Veil")? The target may be Active or Benched, sources are first-match, and each is
+ * checked against Ability locks.
+ */
 export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
-  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), so a typed group filter reads the types it has.
   const targetTop = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
@@ -6072,90 +3192,12 @@ export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlay
   return false;
 }
 
-/** §8.5 (D161) — the HP an OWN-SIDE seat-wide continuous Ability takes off any
-    attack damage aimed at `pokemon` right now, AFTER Weakness and Resistance
-    (Hariyama sv02-113 "Arm Thrust Practice": "All of your Pokémon take 10 less
-    damage from attacks from your opponent's Pokémon (after applying Weakness and
-    Resistance)"). SUMMED at the four damage sites beside
-    `passivesOf().damageReductionAfterWR` and `installedReductionOf` — one printed
-    sentence, one §8.5 step, now THREE sources and still one number, which is the
-    split D147 made across the catalog/state boundary widened by one more source
-    rather than a fourth channel.
-
-    ⚠️ IT IS `hasFreeRetreatAura`'s SHAPE AND NOT `benchShieldedFromDamage`'s, AND
-    THE PRINTED CLAUSES ARE THE WHOLE REASON. Thundurus scopes its SOURCE ("As long
-    as this Pokémon is in the Active Spot") and its TARGET ("your BENCHED
-    Pokémon"). This sentence scopes NEITHER: a benched Hariyama grants the aura and
-    an Active one does, and every one of the seat's Pokémon receives it INCLUDING
-    Hariyama itself. Drop the Bench clause from `benchShieldedFromDamage` and you
-    still have an Active-only source; what is left once BOTH clauses go is
-    `hasFreeRetreatAura` — the per-target own-board scan whose printing ("All of
-    your Pokémon that have {P} Energy attached…") opens with the same three words.
-    The NINTH member of the aura-scan family (`disabledAbilityUids` /
-    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
-    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
-    `benchShieldedFromDamage` / this), inheriting its three answers verbatim: the
-    DERIVED SEAT (find the side holding this top uid and look for sources only
-    there, which keeps all four read sites' signatures untouched), BOTH clauses
-    ENFORCED BY THE SCAN rather than by an `activeOnly` field, and the §9 gate
-    through `disabledAbilityUids` — this is a printed Pokémon Ability, so only a
-    TOP card grants it and a lock silences it.
-
-    SOURCES ARE SUMMED, `opposingRetreatSurcharge`'s answer and not
-    `opposingAttackDebuff`'s: two Hariyama in play are two printed effects on a
-    board this pool can actually reach (a deck may run four), where D151's source
-    clause named the opponent's Active ALONE and a loop would have described a
-    board that cannot exist. A first-match scan would silently drop the second.
-
-    ⚠️ `scope` IS REQUIRED, AND IT IS THE ONE THING IN THIS FAMILY THAT ANSWERS PER
-    BOARD RATHER THAN PER SITE. Feint Attack's "not affected … by any effects on
-    that Pokémon" nulls an aura whose SOURCE is the damaged body and leaves one
-    whose source is another body (D151's reading, D159's re-run). Every earlier
-    member answered the same way at every site because its source could never BE
-    its target — Entei sits in the opponent's Active Spot, Thundurus shields only
-    the Bench it is not on. This aura is SELF-INCLUSIVE, so its source set CONTAINS
-    its target set, and one printed attack can hit either: a sniped Hariyama has
-    the effect on itself and is nulled ("othersOnly"), a sniped TEAMMATE does not
-    and the 10 stands ("all"). The parameter is required rather than defaulted for
-    D146's reason — a new read site must say which it means instead of inheriting
-    whichever answer happened to be cheaper to write.
-
-    🆕 **D321 — FOUR RIDERS ARRIVED WITH THE FIELD'S SECOND AND THIRD SENTENCES
-    AND NOT ONE OF THEM REACHED A READ SITE.** Steven's Carbink `sv10-086` "Stone
-    Palace" (1 legal printing) and Bouffalant `sv07-119`/`svp-136` "Curly Wall"
-    (2) narrow Hariyama's bare sentence in three different places and cap it in a
-    fourth, and all four answers are already in this function's hands:
-
-      • BENEFICIARY — "all of your **Steven's** Pokémon" / "all of your **Basic
-        {C}** Pokémon" is matched against the body being DAMAGED, which is the
-        argument this function opens with. ⚠️ It narrows the TARGET, where
-        `seatPreWRDamageBonus`'s identically-named rider narrows the ATTACKER; the
-        two fields sit on opposite ends of the damage step and the printed subject
-        of "take less" is what the word means here.
-      • SOURCE ZONE — "As long as this Pokémon is on your **Bench**" is
-        `isOnBench(state, holder)`, D253's predicate, defined in this file for
-        Poltchageist's holder-zone gate and seat-blind by construction, so it needs
-        no seat this loop does not have. It gates the SOURCE and never the target.
-      • "1 OTHER <name> IN PLAY" — the only rider in the family that EXCLUDES the
-        source. `BoardCondition.yourNamedPokemonInPlay` would be satisfied by the
-        Bouffalant printing the sentence, so a lone Bouffalant would pay 60 where
-        the print says 0; `conditionHolds` takes a seat and no uid, and this loop
-        is the one place that has the uid.
-      • `noStack` — `seatPreWRDamageBonus`'s `capped` ledger, keyed by printed
-        Ability name for its reason (two different non-stacking auras still stack
-        with each other).
-
-    🛑 **AND THE TWO BOUFFALANT RIDERS ARE EACH OTHER'S CONTROL ON THE ONLY BOARD
-    THE CARD IS PLAYED ON.** A second Bouffalant makes the antecedent true for
-    BOTH bodies at once, so summing pays 120 and the cap pays 60 — neither rider
-    is observable without the other, and one Bouffalant pays nothing at all.
-
-    🆕🆕🆕 **D558 — `attackerSeat` IS REQUIRED, `scope`'s reason (D146): a new read site
-    must SAY whose attack this is.** Its one reader is the Stadium term (R-ST3): Full
-    Metal Lab / Granite Cave print *"take 30 less damage from attacks from the
-    opponent's Pokémon"*, and an own-side hit (`spreadDamage`'s `"yourBench"`,
-    `placeSnipe`'s own bench) is no such attack. Every caller passes the ATTACKING
-    seat (`action.seat` / `ctx.seat`). */
+/**
+ * §8.5: damage taken off attacks against `pokemon` after Weakness and Resistance by its own side's
+ * auras (Hariyama, Steven's Carbink, Bouffalant, and the like) plus the Stadium and side
+ * reductions. Sources are summed unless capped by `noStack`. `scope` handles Feint Attack ignoring
+ * effects granted by the target itself; `attackerSeat` excludes own-side hits.
+ */
 export function seatDamageReduction(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -6164,13 +3206,8 @@ export function seatDamageReduction(
 ): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
-  // D321 — the DAMAGED body's own card, read once. It is what the `beneficiary`
-  // clause is matched against and it is the only card in this function that is
-  // NOT a source: "all of your Steven's Pokémon TAKE 30 less" narrows who is
-  // being hit, where the identically-named rider on the pre-W/R sibling field
-  // narrows who is attacking. `undefined` fails every filter, `matchesFilter`'s
-  // own conservative direction — an unreadable body is shielded LESS, not more.
-  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed beneficiary reads the types it has.
+  // The damaged body's card, matched against `beneficiary`; an unresolvable card fails every
+  // filter.
   const damagedCard = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
@@ -6178,20 +3215,11 @@ export function seatDamageReduction(
     // The TARGET clause: "ALL of your Pokémon" — every body on this side, Active
     // and Bench alike, so membership is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
-    // 🆕 Card revision B19 — AN OWN-SIDE HIT IS PAID NOTHING, BY EVERY TERM BELOW. Every
-    // `seatDamageReductionAfterWR` row prints *"take N less damage from attacks from your opponent's
-    // Pokémon"* (Arm Thrust Practice / Protective Bell, Stone Palace, Curly Wall, Gear Coating,
-    // Protective Armor, Tundra Wall — pinned by id in `revisionB19.test.ts` §3), the Stadium term's
-    // print says the same (R-ST3) and so does Jasmine's Gaze (R-JG2). D558's named debt (the Ability
-    // auras paid on the holder's own spread / snipe, e.g. Centiskorch's Billowing Heat Wave onto a
-    // {W} body beside Aurorus) is paid here. A future aura with no source clause would need its own
-    // flag before it could join this field.
+    // Every reduction here prints "from attacks from your opponent's Pokémon", so an own-side hit
+    // is reduced by nothing.
     if (seat === attackerSeat) return 0;
     let taken = 0;
-    // D321 — the `noStack` ledger, `seatPreWRDamageBonus`'s `capped` Map verbatim:
-    // printed Ability name → the largest single contribution seen for it, summed
-    // in at the end so a capped key and an uncapped one coexist without either
-    // reading the other's rule.
+    // Printed Ability name to the largest single contribution, so `noStack` auras count once each.
     const capped = new Map<string, number>();
     for (const holder of holders) {
       const sourceUid = topUid(holder);
@@ -6208,8 +3236,7 @@ export function seatDamageReduction(
       // build that asked this of `top` instead would be green on every board this
       // pool can build and would still encode the wrong sentence.
       if (aura.beneficiary !== undefined && !matchesFilter(damagedCard, aura.beneficiary)) continue;
-      // 🆕🆕🆕 D559 — Klinklang "Gear Coating"'s *"that have any {M} Energy attached"*, a
-      // second BENEFICIARY clause on the DAMAGED body (its attachments, by provision).
+      // Klinklang "Gear Coating": the damaged body must have the printed Energy type attached.
       if (
         aura.beneficiaryHasEnergy !== undefined &&
         !hasAttachedEnergy(state, pokemon, aura.beneficiaryHasEnergy)
@@ -6220,8 +3247,7 @@ export function seatDamageReduction(
       // target, so a benched Carbink shields the Active and stops shielding
       // anything the moment it is promoted.
       if (aura.sourceOnBench === true && !isOnBench(state, holder)) continue;
-      // 🆕🆕🆕 D637 — Antique Armor Fossil's "As long as this Pokémon is in the Active Spot": the same SOURCE-ZONE
-      // gate on the other zone (this side's Active Spot), never the damaged body.
+      // Antique Armor Fossil: the source must be this side's Active.
       if (aura.sourceActive === true && holder !== side.active) continue;
       // The "1 OTHER <name> in play" clause — Bouffalant's, and the one rider that
       // excludes the source itself. Compared by TOP UID because `InPlayPokemon` is
@@ -6245,37 +3271,18 @@ export function seatDamageReduction(
       capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));
     }
     for (const amount of capped.values()) taken += amount;
-    // 🆕🆕🆕 D558 — the in-play STADIUM's reduction (Full Metal Lab, Granite Cave),
-    // added ONCE here, and under BOTH scopes: a Stadium is no effect on the damaged
-    // Pokémon, so Feint Attack's `"othersOnly"` keeps it (R-ST, inherited from
-    // `stadiumPreventsDamage`). No §9.
-    // 🛑 R-ST3 — *"from attacks from THE OPPONENT'S Pokémon"*: the Stadium pays only
-    // when the attacker sits across the table from the damaged body. An own-side hit
-    // (D425's `spreadDamage` `"yourBench"` arm, D447's `placeSnipe` own-bench arm)
-    // reaches this function with `seat === attackerSeat`, and the print gives it
-    // nothing. [🆕 Card revision B19: the Ability auras summed above are now gated too, by the
-    // own-side return at the top of this block — D558's named debt is paid; the line that stood
-    // here returned the aura total for an own-side hit.]
-    // 🆕🆕🆕 D564 — Jasmine's Gaze, the damaged side's OWN next-turn record (types.ts
-    // `SideDamageReduction`), added ONCE here and AFTER the own-side return above: the print
-    // is *"from attacks from your opponent's Pokémon"*, so an own-side hit is never paid
-    // (R-JG2). A record on the SIDE, so a body that came into play after the install is
-    // covered with no per-body write and no §10 shed (R-JG3). ⚠️ UNDER `"all"` ONLY — the
-    // Stadium's inverse (R-JG1): a Supporter's *"all of your Pokémon take 30 less"* IS an
-    // effect on the damaged Pokémon, so Feint Attack's `"othersOnly"` drops it with the
-    // catalog half, where the Stadium is no effect on a Pokémon and stays.
+    // Jasmine's Gaze applies only under `all`, since Feint Attack ignores it as an effect on the
+    // Pokémon; the Stadium reduction is not an effect on the Pokémon and applies under both scopes.
     if (scope === "all") taken += sideDamageReductionOf(state, side, damagedCard);
     return taken + stadiumDamageReduction(state, damagedCard); // this is the Pokémon's own side — no other side can shield it
   }
   return 0;
 }
 
-/** 🆕🆕🆕 §8.5 (D564) — `side`'s live next-turn reduction (Jasmine's Gaze): the record's
-    `amount` when its stamp IS the current turn, else 0. Expires by arithmetic — the stamp
-    is the installer's opponent's next turn, `state.turn + 1` at install.
-    🆕🆕🆕 D630 — a SUMMED list (Iron Defender's two plays stack; D539: *"the record's `amount`"* is
-    WITHDRAWN): every live entry whose printed holder type (`pokemonType`, absent = every Pokémon)
-    the damaged body's in-play card has. */
+/**
+ * §8.5: `side`'s live next-turn reductions (Jasmine's Gaze), summed over entries stamped for the
+ * current turn whose type filter the damaged card matches.
+ */
 function sideDamageReductionOf(
   state: GameState,
   side: PlayerSide,
@@ -6294,12 +3301,10 @@ function sideDamageReductionOf(
   return amount;
 }
 
-/** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's post-W/R `damageReductionAfterWR` for a
-    hit on `damagedCard`: its `amount` when the card matches `beneficiary` (Full Metal
-    Lab's `typedPokemon Metal`, Granite Cave's `ownerPokemon "Steven"`), else 0. Both
-    sides ("both yours and your opponent's"), so no beneficiary seat — the attacker-seat
-    gate (R-ST3) is the caller's, `seatDamageReduction`'s; `undefined` fails every
-    filter (`matchesFilter`'s conservative direction). */
+/**
+ * §8.5: the in-play Stadium's post-Weakness/Resistance reduction for a hit on `damagedCard`, if it
+ * matches the beneficiary filter.
+ */
 function stadiumDamageReduction(state: GameState, damagedCard: Card | undefined): number {
   const reduction = stadiumEffectsOf(state)?.damageReductionAfterWR;
   return reduction !== undefined && matchesFilter(damagedCard, reduction.beneficiary)
@@ -6307,63 +3312,18 @@ function stadiumDamageReduction(state: GameState, damagedCard: Card | undefined)
     : 0;
 }
 
-/** §8.5 (D243) — the total pre-W/R damage bonus `seat`'s own SEAT-WIDE aura
-    Abilities grant to an attack used by `attackerCard`: "Attacks used by your
-    [Cynthia's|Hop's] Pokémon do {N} more damage to your opponent's Active Pokémon
-    (before applying Weakness and Resistance)". Seven legal printings on three
-    sentences (Serperior ex "Regal Cheer" ×3 bare, Cynthia's Roserade "Cheer On to
-    Glory" ×2, Hop's Snorlax "Extra Helpings" ×2).
-
-    THE TENTH MEMBER OF THE AURA-SCAN FAMILY (`disabledAbilityUids` /
-    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
-    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
-    `benchShieldedFromDamage` / `seatDamageReduction` / this), and Hariyama's mirror
-    image: same source set (any of the seat's own in-play bodies, Active and Bench
-    alike, self-inclusive), same §9 gate, one step earlier in §8.5 and on the other
-    sign. It inherits two of that scan's three answers verbatim and DEPARTS on the
-    third, each for a printed reason:
-
-      • SOURCES ARE SUMMED — `opposingRetreatSurcharge`'s and `seatDamageReduction`'s
-        answer. Four Serperior ex is a legal deck and two in play are two printed
-        Abilities; a first-match scan would silently drop the second.
-        ⚠️ EXCEPT WHERE THE PRINT SAYS OTHERWISE, which is `noStack` and is the one
-        thing in this family no earlier member has needed. "The effect of Extra
-        Helpings doesn't stack." caps a KEY (the printed Ability name) at its
-        largest single contribution, so two Hop's Snorlax are 30 and a Snorlax
-        beside a Roserade is 60. Keyed by NAME and not by a boolean: two different
-        non-stacking auras on one board are two different printed effects and each
-        stacks with the other.
-      • THE SEAT IS PASSED, NOT DERIVED. Every scan above finds the side holding a
-        top uid because its callers only have an `InPlayPokemon`; both callers here
-        reach it through `attackerPreWRBonus`, which already TAKES the attacking
-        seat (a `BoardCondition` is relative to it). `seatRemovesWeakness` is the
-        precedent — a seat-taking member of the same family — and deriving one that
-        is already in scope would be a second way to answer a settled question.
-      • NO `scope` PARAMETER, AND FEINT ATTACK IS THE REASON RATHER THAN AN
-        OVERSIGHT. D151's reading nulls "any effects on THAT Pokémon", the body
-        being DAMAGED. This aura is an effect on the ATTACKING side and lands on
-        the attacker's number — which is precisely why `snipeActive` already KEEPS
-        `attackerPreWRBonus` under `ignoreWR` and subtracts only the debuff. The
-        `scope` argument `seatDamageReduction` requires exists because its source
-        set contains its TARGET set; this one's source set contains its
-        BENEFICIARY set, and a beneficiary is not a target.
-
-    `beneficiary` is the printed narrowing on WHOSE ATTACKS get the bonus and is
-    matched against `attackerCard` ONLY — never against the source. On all four
-    owner-prefixed printings the source is itself a member of the subgroup, so a
-    scan that filtered both would be green on every board this pool can build and
-    would still encode the wrong sentence. `undefined` (no resolvable attacking
-    card) fails every filter, `stadiumPreventsDamage`'s conservative direction. */
+/**
+ * §8.5: total pre-Weakness/Resistance damage bonus from `seat`'s own auras for an attack by
+ * `attackerCard`. Sources are summed except that `noStack` caps each Ability name at its largest
+ * contribution; `beneficiary` is matched against the attacker only.
+ */
 export function seatPreWRDamageBonus(
   state: GameState,
   seat: Seat,
   attackerCard: Card | undefined,
-  /** D245 — the DEFENDER's card, for the `target` rider (Carracosta "Primal
-      Knowledge": *"…do 30 more damage to your opponent's Active **Evolution**
-      Pokémon"*). OPTIONAL, and the default is what makes every pre-D245 caller
-      byte-identical: an aura with no `target` never reads it, and an aura WITH
-      one fails on `undefined` — `beneficiary`'s conservative direction, one line
-      down, applied to the other end of the attack. */
+  /**
+   * The defender's card, for the `target` rider; an aura with a `target` fails when it is absent.
+   */
   defenderCard?: Card,
 ): number {
   const side = state.players[seat];
@@ -6382,14 +3342,9 @@ export function seatPreWRDamageBonus(
     if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
     // The BENEFICIARY clause, on the attacker and on nothing else.
     if (aura.beneficiary !== undefined && !matchesFilter(attackerCard, aura.beneficiary)) continue;
-    // 🆕🆕🆕 D569 — the printed EXCLUSION, on the attacker too ("your Future Pokémon, except
-    // any Iron Crown ex" — Cobalt Command): an attacker of that NAME gets nothing. An
-    // unresolvable attacker already failed the beneficiary filter above.
+    // An attacker with the excluded name gets nothing ("except any Iron Crown ex").
     if (aura.exceptName !== undefined && attackerCard?.name === aura.exceptName) continue;
-    // D245 — the TARGET clause, on the defender and on nothing else. The two
-    // riders are independent by construction: no printing carries both, and a
-    // build that read one against the other's card would be green on all four
-    // owner-prefixed boards (where the attacker is the subgroup) and wrong.
+    // The `target` rider is matched on the defender, never on the attacker.
     if (aura.target !== undefined && !matchesFilter(defenderCard, aura.target)) continue;
     if (aura.noStack === undefined) {
       total += aura.amount;
@@ -6398,67 +3353,25 @@ export function seatPreWRDamageBonus(
     capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));
   }
   for (const amount of capped.values()) total += amount;
-  // 🆕🆕🆕 D558 — the in-play STADIUM's pre-W/R bonus (Postwick), matched on the
-  // ATTACKER's card for whichever seat attacks. Outside the `capped` ledger: Extra
-  // Helpings' `noStack` keys a printed Ability name, and a Stadium is no Ability.
+  // The Stadium bonus is outside the `noStack` ledger, which keys on Ability names.
   return total + stadiumPreWRBonus(state, attackerCard);
 }
 
-/** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's `damageBonusBeforeWR` for an attack used
-    by `attackerCard`: Postwick's *"Attacks used by Hop's Pokémon (both yours and your
-    opponent's) do 30 more damage to the opponent's Active Pokémon"*. Matched on the
-    ATTACKER and never the defender; no seat, no §9 gate (R-ST2). */
+/**
+ * §8.5: the in-play Stadium's pre-Weakness/Resistance bonus (Postwick), matched on the attacker for
+ * either side.
+ */
 function stadiumPreWRBonus(state: GameState, attackerCard: Card | undefined): number {
   const bonus = stadiumEffectsOf(state)?.damageBonusBeforeWR;
   return bonus !== undefined && matchesFilter(attackerCard, bonus.attacker) ? bonus.amount : 0;
 }
 
-/** 🆕 §8.1 (D323) — the SEAT-WIDE **PRIZE BONUS** auras on `seat` that fire for
-    the Knock Out of `koCard` (Togekiss `sv08-072` "Wonder Kiss", Hydreigon ex
-    `sv10.5w-067`/`-161`/`-169` "Greedy Eater"). `seat` is the PRIZE-TAKING side —
-    `otherSeat(ref.seat)` at the one call site — because both sentences are printed
-    in the second person about the OPPONENT's dying Pokémon.
-
-    **THE ELEVENTH MEMBER OF THE AURA-SCAN FAMILY** (`disabledAbilityUids` /
-    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
-    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
-    `benchShieldedFromDamage` / `seatDamageReduction` / `seatPreWRDamageBonus` /
-    this), and the FIRST one that is not on the damage pipeline at all.
-
-    🛑 **IT RETURNS THE MATCHING AURAS RATHER THAN A NUMBER, AND THE COIN FLIP IS
-    THE REASON.** Every sibling above answers with an `amount` because its whole
-    contribution is arithmetic. Wonder Kiss's contribution is *conditional on rng*
-    and owes the log an `ABILITY_TRIGGERED` / `ABILITY_COIN_FLIP` pair naming the
-    body that flipped — so this scan resolves the BOARD questions (which is all it
-    can answer without a state thread) and hands `planPrizes` the survivors, which
-    is the only function in the engine allowed to advance the rng on this seam.
-    A scan that flipped here would have to return a state, and `continuous.ts` is
-    the pure-read half of the engine by construction.
-
-    The clauses, each refused separately and each driven:
-
-      • **`koSpot: "active"`** — Wonder Kiss's *"your opponent's **Active**
-        Pokémon"*. Compared against the KO'd seat's Active uid on the PRE-KO state,
-        which is what `planPrizes` runs on. ⚠️ Not vacuous: the Checkup and
-        mid-turn sweeps pass full boards, so a benched body reaches this scan.
-      • **`koTarget`** — Greedy Eater's *"Basic Pokémon"*, matched against the
-        DYING card. `undefined` fails every filter (`matchesFilter`'s conservative
-        direction, as everywhere in this file) — an unreadable corpse pays no bonus.
-      • **`byThisPokemonsAttack`** — Greedy Eater's *"an attack used by **this**
-        Pokémon"*. The HOLDER's top uid must equal `attackerUid`, which is
-        `undefined` on the Checkup and mid-turn paths and refuses the clause there.
-      • **§9** — a `disableAbilities` lock silences the aura like every other
-        Ability surface. ⚠️ **AND IT IS OBSERVABLE HERE, WHICH D322 LEARNED THE
-        HARD WAY**: the excuse *"no lock in the pool reaches this source"* is a
-        claim about the LOCK POPULATION, and Ting-Lu ex `sv02-127` "Cursed Land"
-        carries no stage clause at all.
-      • **`noStack`** — the printed *"The effect of Wonder Kiss doesn't stack."*
-        Keyed on `ability` (the printed name, which this field carries because the
-        log needs it), so two Togekiss yield ONE entry and two DIFFERENT capped
-        auras would still yield two. ⚠️ **IT CAPS THE ENTRY, NOT THE AMOUNT** —
-        which is a stronger statement than the two damage auras' ledger and is
-        what the sentence means here: the second Togekiss must not FLIP either, or
-        every later coin in the game is drawn from a different rng position. */
+/**
+ * §8.1: the prize-bonus auras on the prize-taking `seat` that fire for the Knock Out of `koCard`
+ * (Togekiss "Wonder Kiss", Hydreigon ex "Greedy Eater"). Returns the matching auras rather than a
+ * number because Wonder Kiss needs a coin flip, which `planPrizes` performs. `noStack` caps
+ * entries, so a second Togekiss does not flip.
+ */
 export function seatKoPrizeBonuses(
   state: GameState,
   seat: Seat,
@@ -6496,12 +3409,10 @@ export function seatKoPrizeBonuses(
   return entries;
 }
 
-/** 🆕🆕🆕 §8.1 (D598) — the seat-wide Prize REDUCTION on the KO'd side: Mega Gengar ex "Shadowy
-    Concealment". `seatKoPrizeBonuses`' scan one function up, on the DYING body's own `seat`
-    (Active then Bench, pre-KO board, the dying body itself included), FIRST-MATCH: the first live,
-    unsuppressed holder whose `koTarget` admits `koCard` answers and no second copy is looked for —
-    the printed "doesn't stack". The CAUSE (by damage from an attack from the opponent's Pokémon
-    ex) is the caller's (flow.ts `seatPrizeReduction`). Null on a board with no holder. */
+/**
+ * §8.1: the Prize reduction on the KO'd side (Mega Gengar ex "Shadowy Concealment"). First-match,
+ * so copies do not stack; the cause is checked by the caller.
+ */
 export function seatKoPrizeReductionOf(
   state: GameState,
   seat: Seat,
@@ -6522,54 +3433,11 @@ export function seatKoPrizeReductionOf(
   return null;
 }
 
-/** §7.3/§8.5 (D159) — does the in-play STADIUM prevent all attack damage from
-    `attacker` to `pokemon` (Neutralization Zone sv06.5-060: "Prevent all damage
-    done to Pokémon that don't have a Rule Box (both yours and your opponent's) by
-    attacks from the opponent's Pokémon ex and Pokémon V")? The first Stadium read
-    on the damage pipeline — `stadiumRetreatDelta` and `effectiveAttackCost` are
-    its only siblings and both sit on a COST seam.
-
-    ⚠️ IT IS THE ONE MEMBER OF THIS SLICE THAT IS NOT AN ABILITY, AND THREE THINGS
-    FOLLOW FROM THAT ALONE:
-      • NO SEAT IS DERIVED. Every aura scan above finds the side holding a uid so
-        "your opponent" can be resolved; this print says "both yours and your
-        opponent's", so there is no side to find. It is the only prevention in the
-        engine that can fire for the player who played the card AND against them
-        on the same board;
-      • NO §9 GATE. `disabledAbilityUids` suppresses ABILITIES, and a Stadium is
-        not one. A Klefki that silences Thundurus one function up leaves this
-        untouched, which is the sharpest observable difference between the two;
-      • NOT NULLED BY `ignoreWR`. Feint Attack's clause scopes "any effects on that
-        Pokémon" — a Stadium is an effect on the shared zone and on no Pokémon at
-        all, so it survives where the holder-side preventions do not.
-
-    THE TWO FILTERS ARE THE ENGINE'S EXISTING PREDICATES, on opposite ends of the
-    attack: `hasRuleBox` NEGATED on the body being hit (the suffix families ∪ the
-    "Radiant " prefix — Artazon's `noRuleBox` search filter, and what the card's own
-    reminder text describes) and `isExOrV` on the body hitting it (D107's, narrower
-    than `hasRuleBox`: no VMAX/VSTAR/GX). The asymmetry is PRINTED, not chosen — the
-    protected side is filtered by rule box, the attacking side by the ex/V pair —
-    and a VMAX attacker under this Stadium is the single board that separates the
-    two predicates.
-
-    "THE OPPONENT'S Pokémon ex and Pokémon V" needs no seat check: all four callers
-    are attack-damage sites aimed at the DEFENDING side, so the attacker is always
-    the protected Pokémon's opponent by construction. A `damageSelf` recoil, the one
-    way a Pokémon damages its own side, routes through none of them.
-    🆕🛑 **D558 CORRECTION (D539) — BOTH SENTENCES ABOVE ARE FALSE, AND ARE KEPT AS
-    WRITTEN BECAUSE THEY WERE TRUE WHEN WRITTEN.** Since D425 `spreadDamage`'s
-    `"yourBench"` arm, and since D447 `placeSnipe`'s own-bench arm, call this with the
-    ATTACKER's own benched body, so an own-side hit is not aimed at the defending side
-    and `damageSelf` is no longer the only way a Pokémon damages its own side. The
-    defect is UNREACHABLE on a legal board today — no Standard-legal Pokémon ex or V
-    prints an attack that damages its own Bench (the coverage audit's card JSON,
-    checked at D558) — so no seat gate is added here; it is a NAMED DEBT (docs/
-    decisions.md D558), and D558's own Stadium reduction, which IS reachable (Sandslash
-    `sv06-098` spreading onto a benched {M} Pokémon under Full Metal Lab), is gated on
-    `attackerSeat` in `seatDamageReduction` instead of leaning on this argument.
-
-    `undefined` (no resolvable attacking card) is FALSE, `preventsAttackerType`'s
-    conservative direction verbatim. */
+/**
+ * §7.3/§8.5: does the Stadium (Neutralization Zone) prevent all damage from an ex or V `attacker`
+ * to a `pokemon` without a Rule Box? Not an Ability, so no lock or Feint Attack removes it. No
+ * attacker seat is checked.
+ */
 export function stadiumPreventsDamage(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -6581,52 +3449,17 @@ export function stadiumPreventsDamage(
   return top !== undefined && !hasRuleBox(top);
 }
 
-/** §11 — is `pokemon`'s Retreat Cost zeroed by its OWN printed passive (Wimpod
-    swsh10.5-025 "Punk Out": "If your opponent has any Pokémon V in play, this
-    Pokémon has no Retreat Cost")? The SIXTH member of the aura-scan family
-    (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
-    `opposingRetreatSurcharge` / `opposingRetreatBlocked`) and the first that is
-    SELF-ONLY: it reads the HOLDER's own passive and merely LOOKS across the table
-    to evaluate the condition, so unlike `hasFreeRetreatAura` beside it it never
-    touches another Pokémon's cost. The seat is DERIVED exactly as its five
-    siblings derive theirs — find the side holding this top uid — purely so "your
-    opponent" can be resolved, which is what keeps `effectiveRetreatCost`'s
-    signature and ALL FOUR of its readers (turn.ts retreat, redact.ts, attack.ts's
-    cost reader, the web HUD) untouched.
-
-    "IN PLAY" MEANS ACTIVE + BENCH. There is no Active clause anywhere in the
-    sentence — neither on the holder nor on the opposing V — so a BENCHED opposing
-    Pokémon V satisfies it just as an Active one does, and reading it as
-    Active-only would be silent. The suffix match is `pokemonSuffixOf`, which
-    tests " VMAX"/" VSTAR" before the bare " V", so "Pokémon V" excludes VMAX and
-    VSTAR by construction — precisely what the print means.
-
-    The §9 gate is a POSITIVE here: Wimpod is a BASIC, so an Active Klefki
-    sv01-096 "Mischievous Lock" really does silence Punk Out and the printed cost
-    snaps back (the family's second assertable §9 positive after D113's Snorlax,
-    and per D113's rule the reachability follows the SOURCE's stage — here the
-    source and the beneficiary are the same card). Deliberately reads only the TOP
-    CARD's passive and not attached Tools, unlike `passivesOf`: no Tool in the
-    ingested pool grants free retreat, and a future one (Air Balloon) would fold
-    the tool list in HERE — un-§9-gated, a Tool being no Ability.
-    (🆕🆕🆕 D558 — WITHDRAWN (D539), both halves: a Tool DOES grant free retreat now
-    (Rescue Board's *"If that Pokémon's remaining HP is 30 or less, it has no Retreat
-    Cost"*), and it does NOT fold in here — this function returns early when the top
-    card prints no passive and is §9-gated, and neither fact is about a Tool. It is
-    `toolFreesRetreat`, its own top-level predicate beside this one in
-    `effectiveRetreatCost`'s free tier. Air Balloon is a DISCOUNT ({C}{C} less), not a
-    free retreat: `toolRetreatDiscount`, a term in the floored sum.) */
+/**
+ * §11: is `pokemon`'s Retreat Cost zeroed by its own passive (Wimpod "Punk Out", Melt Away)? "In
+ * play" includes the Bench, and an Ability lock silences it.
+ */
 export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): boolean {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return false;
   const self = programFor(top.id)?.passive?.noRetreatCostSelf;
   if (self === undefined) return false;
-  if (disabledAbilityUids(state).has(uid)) return false; // §9
-  // 🆕 D322 — Melt Away's HOLDER-side antecedent ("If this Pokémon has no Energy
-  // attached"). Read live off the body this scan already holds, and counting
-  // ATTACHED CARDS rather than provided units: one Luminous Energy is one
-  // attached Energy however many types it pays for.
+  if (disabledAbilityUids(state).has(uid)) return false; // Counts attached Energy cards, not provided units.
   if (self.requiresNoEnergyAttached === true && pokemon.energy.length > 0) return false;
   const required = self.requiresOpponentSuffixInPlay;
   if (required === undefined) return true;
@@ -6644,47 +3477,15 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
   return false;
 }
 
-/** §11 retreat cost under the continuous effects in play. A "no Retreat Cost"
-    effect sets it to zero outright, which is why that tier is read FIRST — a
-    set-to-zero beats every ± delta, and it is stage-agnostic where the Stadium
-    ones are Basic-only. That tier now has TWO members, an own-board AURA (Lunar
-    Zone, which frees every teammate satisfying its clause) and a SELF-only
-    conditional (Punk Out, which frees nobody but its holder); either one alone
-    zeroes the cost.
-    (🆕🆕🆕 D558 — WITHDRAWN (D539): "the Stadium ones are Basic-only" and "That tier
-    now has TWO members". N's Castle's `retreat.free` is a stage-agnostic STADIUM
-    member of the tier (a Stage 1/2 N's Pokémon is freed, R-NC) and Rescue Board's
-    `freeAtRemainingHpAtMost` is a TOOL member — FOUR members now. Beach Court and
-    Calamitous Wasteland stay Basic-only, as per-term gates in `stadiumRetreatDelta`;
-    Paradise Resort's filtered discount is stage-agnostic beside them. And the floored
-    sum gains three D558 terms: the Tools' discount (`toolRetreatDiscount`), Gravity
-    Gemstone's both-Actives surcharge (`activeRetreatSurcharge`) and the Stadium's
-    filtered discount inside `stadiumRetreatDelta`. None of them is §9-gated.)
-    Otherwise the printed cost is summed with every delta and
-    floored ONCE at a free retreat: the in-play Stadium's ±
-    Basic deltas (Beach Court's discount subtracts, Calamitous Wasteland's
-    surcharge adds, skipping the type its print exempts) plus the opposing side's
-    `opponentActiveRetreatSurcharge` auras. Only one Stadium is ever in play
-    (§7.3) so its two deltas never actually meet — they are summed anyway so the
-    fold stays honest if that changes — but a Stadium and an aura DO meet, which
-    is exactly why the floor is applied to the sum rather than per term.
-
-    🆕 D322 — THE FOURTH TERM, and the first NEGATIVE one that is not a Stadium.
-    `alliedRetreatDiscount` is Toedscruel's own-side "{C}{C} less", subtracted
-    inside the same `Math.max(0, …)` — which is the whole reason it is a term and
-    not a tier: a lone Toedscruel facing a Spidops ex leaves a {C}{C}{C} Active at
-    {C}{C}, and only the SUM knows that. ⚠️ **AND THE FLOOR IS STILL APPLIED
-    ONCE**: three sources on a {C} Active clamp at zero rather than going negative
-    and paying an opposing surcharge back out of it. */
+/**
+ * §11: Retreat Cost under continuous effects. Any free-retreat effect zeroes it outright; otherwise
+ * the printed cost and every surcharge and discount are summed and floored once at zero.
+ */
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
-  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): the Stadium's typed exemption and N's
-  // Castle's filter read the types the body has (the printed Retreat Cost is the card's own).
   const top = inPlayCardOf(state, pokemon);
   if (top === undefined) return 0;
   if (hasFreeRetreatAura(state, pokemon) || hasFreeRetreatSelf(state, pokemon)) return 0;
-  // 🆕🆕🆕 D558 — the free tier's TOOL and STADIUM members, each its own top-level
-  // predicate: Rescue Board at 30 remaining HP or less (R-RB, live-read), N's Castle
-  // over its filter at any stage (R-NC). Neither is an Ability, so neither is gated.
+  // Tool, Energy, and Stadium free-retreat effects are not Abilities, so locks do not affect them.
   if (
     toolFreesRetreat(state, pokemon) ||
     energyFreesRetreat(state, pokemon) ||
@@ -6692,10 +3493,8 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   )
     return 0;
   const printed = retreatCostOf(top);
-  // 🆕🆕🆕 D549 — the attack-installed COST TAX is a FIFTH term in the ONE floored sum
-  // (R3): below the free-retreat tier above, which still zeroes the cost outright, and
-  // summed rather than added after the floor, so a discount that overshoots is not
-  // charged the tax back out of a negative (D322's rule for the opposing surcharge).
+  // The attack-installed cost tax is part of the floored sum, so an overshooting discount does not
+  // offset it.
   return Math.max(
     0,
     printed +
@@ -6708,10 +3507,10 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   );
 }
 
-/** 🆕🆕🆕 §11 (D558) — the {C} SUBTRACTED from `pokemon`'s Retreat Cost by its ATTACHED
-    TOOLS' `retreatCostDiscount.amount` (Air Balloon {C}{C}, Rescue Board {C}), summed
-    per Tool and subtracted inside `effectiveRetreatCost`'s ONE floored sum, so it can
-    offset a surcharge and never goes negative on its own. NOT §9-gated (R-T1). */
+/**
+ * §11: the {C} discount from attached Tools (Air Balloon, Rescue Board), summed per Tool. Not
+ * affected by Ability locks.
+ */
 export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {
   let discount = 0;
   for (const toolUid of toolsInEffect(state, pokemon)) {
@@ -6722,12 +3521,10 @@ export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): n
   return discount;
 }
 
-/** 🆕🆕🆕 §11 (D558) — does an ATTACHED TOOL zero `pokemon`'s Retreat Cost outright?
-    Rescue Board's *"If that Pokémon's remaining HP is 30 or less, it has no Retreat
-    Cost."* — `remainingHpWithin` (D349's one predicate, effective max HP − damage),
-    live-read, so a heal out of the window restores the cost (R-RB). A free-tier
-    member beside `hasFreeRetreatAura`/`hasFreeRetreatSelf`, and deliberately NOT the
-    latter: that one returns early on a top card with no passive and is §9-gated. */
+/**
+ * §11: does an attached Tool zero the Retreat Cost (Rescue Board at 30 or less remaining HP)? Read
+ * live, so healing restores the cost.
+ */
 export function toolFreesRetreat(state: GameState, pokemon: InPlayPokemon): boolean {
   return toolsInEffect(state, pokemon).some((toolUid) => {
     const id = state.cardIdByUid[toolUid];
@@ -6739,11 +3536,10 @@ export function toolFreesRetreat(state: GameState, pokemon: InPlayPokemon): bool
   });
 }
 
-/** 🆕🆕🆕 §11 (D604) — Magnetic Metal Energy `me04-085`: *"The {M} Pokémon this card is attached to
-    has no Retreat Cost."* An attached Energy whose `passive.noRetreatCostSelf` is set and whose
-    rules apply on the holder (`energyRulesApply`, the {M} gate) frees the retreat: a member of
-    `effectiveRetreatCost`'s free tier beside `toolFreesRetreat`. NOT §9-gated (an Energy is no
-    Ability); the field's two riders are Ability conditions and are not read here. */
+/**
+ * §11: Magnetic Metal Energy: an attached Energy whose rules apply on the holder frees the retreat.
+ * Not affected by Ability locks.
+ */
 export function energyFreesRetreat(state: GameState, pokemon: InPlayPokemon): boolean {
   return pokemon.energy.some((uid) => {
     const id = state.cardIdByUid[uid];
@@ -6754,12 +3550,10 @@ export function energyFreesRetreat(state: GameState, pokemon: InPlayPokemon): bo
   });
 }
 
-/** 🆕🆕🆕 §11 (D558) — Gravity Gemstone's *"As long as the Pokémon this card is attached
-    to is in the Active Spot, the Retreat Cost of both Active Pokémon is {C} more."*
-    The TARGET must be an Active of EITHER seat (a Benched body is never taxed); the
-    SOURCES are the Gemstones attached to EITHER Active, the target's own included
-    (*"both"*), so a Benched holder taxes nothing. Summed per Gemstone (R-GG). NOT
-    §9-gated (a Tool). */
+/**
+ * §11: Gravity Gemstone: {C} more Retreat Cost for both Active Pokémon per Gemstone attached to
+ * either Active. Benched holders and benched targets are unaffected.
+ */
 export function activeRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -6779,26 +3573,19 @@ export function activeRetreatSurcharge(state: GameState, pokemon: InPlayPokemon)
   return added;
 }
 
-/** 🆕🆕🆕 §11 (D558) — does the in-play Stadium zero `top`'s Retreat Cost? N's Castle's
-    *"N's Pokémon in play (both yours and your opponent's) have no Retreat Cost."* —
-    `retreat.free` over `retreat.filter`, matched on the body's TOP card at ANY stage
-    (R-NC). No seat and no §9 gate: a Stadium is neither side's and no Ability. */
+/**
+ * §11: does the Stadium (N's Castle) zero the Retreat Cost of a matching Pokémon at any stage, on
+ * either side?
+ */
 function stadiumFreesRetreat(state: GameState, top: Card): boolean {
   const retreat = stadiumEffectsOf(state)?.retreat;
   return retreat?.free === true && matchesFilter(top, retreat.filter);
 }
 
-/** The in-play Stadium's ± contribution to one Pokémon's Retreat Cost. Both
-    prints on this seam are Basic-only, so a non-Basic (and a board with no
-    Stadium) contributes nothing — note that this is a zero TERM, not the early
-    return it used to be: the cross-board auras are stage-agnostic and must still
-    reach a Stage 1/2 Active.
-    (🆕🆕🆕 D558 — "Both prints on this seam are Basic-only" is WITHDRAWN (D539):
-    Paradise Resort's `retreat.discount` is a THIRD print and names Psyduck at any
-    stage, so the non-Basic early return is now a PER-TERM gate — Beach Court's
-    discount and Calamitous Wasteland's surcharge keep `isBasicPokemon`, the filtered
-    discount takes `matchesFilter` instead. N's Castle's `retreat.free` is not a delta
-    and lives in the free tier, `stadiumFreesRetreat`.) */
+/**
+ * The in-play Stadium's surcharge minus discount for one Pokémon's Retreat Cost. Beach Court and
+ * Calamitous Wasteland apply only to Basics; the filtered discount applies at any stage.
+ */
 function stadiumRetreatDelta(state: GameState, top: Card): number {
   const stadium = stadiumEffectsOf(state);
   const basic = isBasicPokemon(top);
@@ -6807,50 +3594,16 @@ function stadiumRetreatDelta(state: GameState, top: Card): number {
   const exempt =
     surcharge?.excludesType !== undefined && (top.types ?? []).includes(surcharge.excludesType);
   const added = surcharge === undefined || exempt ? 0 : surcharge.amount;
-  // 🆕🆕🆕 D558 — the FILTERED discount (Paradise Resort), stage-agnostic.
   const retreat = stadium?.retreat;
   const filtered =
     retreat !== undefined && matchesFilter(top, retreat.filter) ? (retreat.discount ?? 0) : 0;
   return added - discount - filtered;
 }
 
-/** §8.2 — the {C} ADDED to every attack `pokemon` uses by an OPPOSING continuous
-    Ability (Seismitoad sv03-052 "Quaking Zone": "As long as this Pokémon is in the
-    Active Spot, attacks used by your opponent's Active Pokémon cost {C} more").
-    The TENTH member of the aura-scan family and `opposingAttackDebuff`'s twin four
-    functions up — the printed sentences differ in exactly one predicate ("do 20
-    less damage" / "cost {C} more"), so this is that scan with one field name
-    changed, and every one of its three answers is inherited rather than reinvented:
-      • the DERIVED SEAT — `effectiveAttackCost` takes no seat, so we find the side
-        holding this top uid and read the OTHER one. That is what keeps that
-        function's signature, and all THREE of its readers (attack.ts's §8.2
-        payability gate, redact.ts's `playable` projection, the web HUD's
-        `costMet`), untouched;
-      • BOTH ACTIVE CLAUSES ENFORCED BY THE SCAN, no `activeOnly` field. "As long as
-        this Pokémon is in the Active Spot" scopes the SOURCE (a benched Seismitoad
-        surcharges nothing — contrast `opposingRetreatSurcharge`, whose print scopes
-        only the target) and "your opponent's ACTIVE Pokémon" scopes the TARGET.
-        Both ends are live-read: a Boss's Orders, a retreat or a KO-and-promotion
-        that moves EITHER body out of the Active Spot ends the surcharge on the
-        spot, because every read site passes the CURRENT state and nothing is
-        stamped;
-      • the §9 GATE through `disabledAbilityUids`. Seismitoad is a STAGE 2, so the
-        family's usual Klefki witness cannot reach it (D113's rule — the
-        reachability follows the SOURCE's stage) and the assertable lock is Ting-Lu
-        ex "Cursed Land" against a DAMAGED Seismitoad.
-
-    Does NOT sum over a source list, for `opposingAttackDebuff`'s reason verbatim:
-    the source clause is the opponent's Active ALONE, so there is exactly one
-    candidate and a loop would describe a board that cannot exist.
-
-    ⚠️ STAGE-AGNOSTIC ON BOTH ENDS (🆕🆕🆕 D576 (D539): for QUAKING ZONE — Antique Root Fossil
-    "Primal Root" prints *"your opponent's BASIC Pokémon"*, read by the
-    `opponentActiveAttackCostSurchargeBasicOnly` rider against the ATTACKER's top card; the
-    source end stays stage-agnostic), and that is the one line this scan does NOT
-    share with the Stadium sitting on the same seam. League HQ prints "each BASIC
-    Pokémon in play"; this prints no stage at all — and its own holder is a Stage 2,
-    so a fold that kept the Basic test as an early return would have switched this
-    aura off for every non-Basic Active it is aimed at. See `effectiveAttackCost`. */
+/**
+ * §8.2: the {C} added to `pokemon`'s attacks by the opposing Active's Ability (Seismitoad "Quaking
+ * Zone", Antique Root Fossil "Primal Root"). Both source and target must be Active.
+ */
 export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -6866,9 +3619,7 @@ export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPok
     const passive = top === undefined ? undefined : programFor(top.id)?.passive;
     const amount = passive?.opponentActiveAttackCostSurcharge;
     if (amount === undefined) return 0;
-    // 🆕🆕🆕 D576 — Primal Root's *"your opponent's BASIC Pokémon"*: the ATTACKER's top card
-    // (`pokemon`, the surcharged Active) must be a Basic Pokémon (R-FO5). Quaking Zone prints
-    // no stage, carries no rider, and is byte-identical through this line.
+    // Primal Root applies only to a Basic attacker.
     if (passive?.opponentActiveAttackCostSurchargeBasicOnly === true) {
       const attacker = topCardOf(state, pokemon);
       if (attacker === undefined || !isBasicPokemon(attacker)) return 0;
@@ -6880,39 +3631,11 @@ export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPok
   return 0;
 }
 
-/** §8.2 — the {C} SUBTRACTED from every attack `pokemon` uses by its OWN printed
-    passive (Radiant Charizard swsh10.5-011 "Excited Heart": "This Pokémon's attacks
-    cost Colorless less for each Prize card your opponent has taken"). The
-    ELEVENTH member of the aura-scan family, and the SECOND that is SELF-ONLY: like
-    `hasFreeRetreatSelf` it reads the HOLDER's own passive and merely LOOKS across
-    the table to evaluate its count, so unlike the surcharge above it never touches
-    another Pokémon's cost. The seat is DERIVED exactly as its ten siblings derive
-    theirs — find the side holding this top uid — purely so "your opponent" can be
-    resolved, which is what keeps `effectiveAttackCost`'s signature and all THREE of
-    its readers untouched.
-
-    THE COUNT IS `takenPrizes` ON THE HOLDER'S OPPONENT, the function attack.ts
-    already calls for the identical printed phrase ("for each Prize card your
-    opponent has taken" — the `opponentPrizesTaken` damage-bonus count kind). Six
-    minus their remaining pile, read live: it grows the moment they take a Prize and
-    it is never stamped anywhere.
-
-    THERE IS NO ACTIVE CLAUSE IN THE SENTENCE, on either end, so the scan enforces
-    none — a benched Radiant Charizard's attacks would cost less too, if a benched
-    Pokémon could attack. (Contrast the two Active clauses one function up, both of
-    which are printed.)
-
-    The §9 gate is a POSITIVE here: Radiant Charizard is a BASIC, so an Active
-    Klefki sv01-096 "Mischievous Lock" really does silence Excited Heart and the
-    printed {R}{C}{C}{C}{C} snaps back — the family's third assertable §9 positive
-    after D113's Snorlax and D114's Wimpod. Reads only the TOP CARD's passive and
-    not attached Tools, `hasFreeRetreatSelf`'s reading: no Tool in the pool discounts
-    an attack cost, and a future one would fold in HERE, un-§9-gated.
-    (🆕🆕🆕 D558 — "no Tool in the pool discounts an attack cost" is WITHDRAWN (D539):
-    Counter Gain and Hop's Choice Band do, and they fold in HERE exactly as this block
-    predicted — `toolAttackCostDiscount`, summed AHEAD of both early returns, so only
-    the top card's own three terms take the §9 gate and a lock over the holder leaves
-    the Tool's {C} standing, R-T1.) */
+/**
+ * §8.2: the {C} subtracted from `pokemon`'s attacks by its own passive (Radiant Charizard "Excited
+ * Heart" and similar) plus its attached Tools. An Ability lock removes only the top card's terms,
+ * not the Tools'.
+ */
 export function selfAttackCostDiscount(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -6921,19 +3644,14 @@ export function selfAttackCostDiscount(
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
-  // 🆕🆕🆕 D558 — the attached Tools' term, computed FIRST: both returns below that
-  // used to answer 0 (no printed term; a §9 lock) now answer the Tools' sum, because
-  // a Tool is not an Ability and neither of those facts is about it.
+  // Tools are not Abilities, so their discount survives a missing passive or an Ability lock.
   const tools = toolAttackCostDiscount(state, pokemon);
   const passive = programFor(top.id)?.passive;
   const perPrize = passive?.attackCostDiscountPerOpponentPrize;
   const perNamed = passive?.attackCostDiscountPerNamedInDiscard;
   const perBenched = passive?.attackCostDiscountPerOpponentBenched;
   if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;
-  if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only
-  // 🆕🆕🆕 B17 — a printed ATTACK-NAME scope on the top card's terms (Bloodmoon Ursaluna ex "Seasoned
-  // Skill": *"**Blood Moon** used by this Pokémon costs {C} less…"*). Any other attack on the menu —
-  // a Technical Machine's since D578 — and a caller that names no attack get the Tools' sum only.
+  if (disabledAbilityUids(state).has(uid)) return tools; // A discount scoped to one attack name (Bloodmoon Ursaluna ex "Seasoned Skill") does not apply to other attacks.
   const scope = passive?.attackCostDiscountAttack;
   if (scope !== undefined && scope !== attackName) return tools;
   for (const seat of SEATS) {
@@ -6951,10 +3669,10 @@ export function selfAttackCostDiscount(
   return tools;
 }
 
-/** 🆕🆕🆕 §8.5 (D631) — Kingambit "Supreme Overlord" (`damageBonusBeforeWRPerOpponentPrize`): the
-    pre-W/R bonus `pokemon`'s top card prints, times the Prizes its owner's opponent has taken
-    (`takenPrizes`, `selfAttackCostDiscount`'s count). The seat is derived from the body; §9-suppressible.
-    Summed by interpreter.ts `attackerPreWRBonus`. */
+/**
+ * §8.5: Kingambit "Supreme Overlord": the printed pre-Weakness/Resistance bonus times the Prizes
+ * the opponent has taken.
+ */
 export function selfPreWRBonusPerOpponentPrize(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
@@ -6965,10 +3683,10 @@ export function selfPreWRBonusPerOpponentPrize(state: GameState, pokemon: InPlay
   return seat === undefined ? 0 : rate * takenPrizes(state, otherSeat(seat));
 }
 
-/** 🆕🆕🆕 §8.2 (D631) — Decidueye ex "Sniper's Eye" (`ignoreColorlessCostIfOpponentHandExactly`): does
-    `pokemon`'s top card ignore every {C} in its attack costs right now — its owner's opponent holding
-    exactly the printed number of cards? The seat is derived from the body; §9-suppressible. Read by
-    `effectiveAttackCost`. */
+/**
+ * §8.2: Decidueye ex "Sniper's Eye": does `pokemon` ignore every {C} in its attack costs because
+ * the opponent holds exactly the printed number of cards?
+ */
 export function selfIgnoresColorlessCost(state: GameState, pokemon: InPlayPokemon): boolean {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
@@ -6979,22 +3697,11 @@ export function selfIgnoresColorlessCost(state: GameState, pokemon: InPlayPokemo
   return seat !== undefined && state.players[otherSeat(seat)].hand.length === exactly;
 }
 
-/** 🆕🆕🆕 §8.2 (D558) — the {C} SUBTRACTED from `pokemon`'s attacks by its ATTACHED
-    TOOLS' `attackCostDiscount` (Counter Gain `sv08-169`/`-249`, the cost half of
-    Hop's Choice Band `sv09-148`). Summed over `pokemon.tools` (🆕🆕🆕 D562: over
-    `toolsInEffect`, so none under Jamming Tower, R-JT), one term per Tool, and
-    NEVER §9-gated: a Tool is not an Ability (R-T1). Top-level, so a mutant row may
-    name it (the binding gate).
-      • `holder` is matched on the HOLDER's TOP card (R-T3) — the Tool's own printed
-        noun, live-read, so an evolution out of "Hop's Pokémon" ends the discount.
-      • `ifMorePrizesRemaining` asks the HOLDER's controller (R-T2) through
-        `holderSideLeadsOnPrizesRemaining` — the ONE existing reader of this printed
-        clause in this file (Reversal Energy's promotion), `conditionHolds`'
-        `morePrizesThanOpponent` arm byte for byte on a seat DERIVED from the body —
-        reused rather than re-spelled (D131/D222), so `effectiveAttackCost`'s three
-        readers keep a zero signature diff. */
+/**
+ * §8.2: the {C} discount from attached Tools (Counter Gain, Hop's Choice Band). Not affected by
+ * Ability locks; the `holder` filter is matched on the holder's in-play card.
+ */
 export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
-  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed `holder` noun.
   const top = inPlayCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
@@ -7003,8 +3710,7 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
     const id = state.cardIdByUid[toolUid];
     const term = id === undefined ? undefined : programFor(id)?.passive?.attackCostDiscount;
     if (term === undefined) continue;
-    // 🆕🆕🆕 D568 — an ANY-TYPE term (Sparkling Crystal) is not a {C} discount; it is summed
-    // by `toolAnyTypeCostDiscount` below and applied last by `effectiveAttackCost`.
+    // Any-type discounts (Sparkling Crystal) are summed by `toolAnyTypeCostDiscount` instead.
     if (term.anyType === true) continue;
     if (term.holder !== undefined && !matchesFilter(top, term.holder)) continue;
     if (term.ifMorePrizesRemaining === true && !holderSideLeadsOnPrizesRemaining(state, pokemon))
@@ -7014,15 +3720,11 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   return discount;
 }
 
-/** 🆕🆕🆕 §8.2 (D568) — how many Energy of ANY type `pokemon`'s attached Tools take off its
-    attacks: Sparkling Crystal `sv07-142`/`sv08.5-129`, *"When the Tera Pokémon this card is
-    attached to uses an attack, that attack costs 1 Energy less. (The Energy can be of any
-    type.)"* — the `anyType` terms `toolAttackCostDiscount` skips, gated exactly as it gates
-    (the `holder` noun on the holder's TOP card — `bannerPokemon` Tera, so a Crystal on a
-    non-Tera body does nothing; `toolsInEffect`, so none under Jamming Tower; never §9-gated,
-    R-T1). Top-level, so a mutant row may name it. */
+/**
+ * §8.2: Energy of any type taken off the attack cost by attached Tools (Sparkling Crystal on a Tera
+ * Pokémon).
+ */
 export function toolAnyTypeCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
-  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed `holder` noun.
   const holderTop = inPlayCardOf(state, pokemon);
   if (holderTop === undefined) return 0;
   let total = 0;
@@ -7039,19 +3741,12 @@ export function toolAnyTypeCostDiscount(state: GameState, pokemon: InPlayPokemon
   return total;
 }
 
-/** 🆕🆕🆕 §8.2 (D568) — remove `count` symbols of ANY type from `cost`, one at a time, each
-    chosen against the Energy the body can pay with (`provided`, continuous.ts
-    `providedEnergy`'s units). "1 Energy less (any type)" is the PLAYER's choice of symbol,
-    and this makes the choice that can never lose:
-      • if the cost is ALREADY payable, a Colorless goes (the printed typed symbols stay
-        visible; payability cannot change) — or the last symbol if there is no Colorless;
-      • otherwise a TYPED symbol whose removal makes the cost payable, if there is one;
-      • otherwise a typed symbol the attached Energy falls SHORT on (removing a typed
-        symbol is never worse than removing a Colorless one: a Colorless slot is payable by
-        anything a typed slot is), and only on an all-Colorless cost a Colorless.
-    So {R}{R}{C} with {R}{C} attached is charged {R}{C} — the Colorless-only loop above
-    would charge {R}{R} and refuse an attack the card allows. Removes from the END, so
-    the symbols still owed read left to right as printed. Pure; top-level for the gate. */
+/**
+ * Removes `count` symbols of any type from `cost`, choosing the symbol that never loses: a
+ * Colorless if the cost is already payable, otherwise a typed symbol whose removal makes it payable
+ * or that the attached Energy falls short on. Removes from the end so the remaining symbols keep
+ * printed order.
+ */
 export function anyTypeCostRemoval(
   cost: readonly string[],
   provided: readonly string[],
@@ -7074,8 +3769,7 @@ export function anyTypeCostRemoval(
       const symbol = current[i];
       if (symbol === undefined || symbol === "Colorless") continue;
       const owed = current.filter((s) => s === symbol).length;
-      // 🆕🆕🆕 D578 — a CONSTRAINED unit whose set holds `symbol` can pay it too (Team Rocket's
-      // Energy for a {P} or a {D}), so it counts toward what the holder can cover.
+      // A constrained unit whose set includes `symbol` can also pay it.
       const payers = provided.filter(
         (unit) => unit === symbol || constrainedEnergyTypes(unit)?.includes(symbol) === true,
       ).length;
@@ -7086,19 +3780,7 @@ export function anyTypeCostRemoval(
   return next;
 }
 
-/** 🆕 **D327** — how many cards named `name` sit in `seat`'s discard pile, for
-    `selfAttackCostDiscount`'s Food Prep summand (*"for each Kofu card in your
-    discard pile"*).
-
-    ⚠️ **BY PRINTED NAME, NOT BY ID.** Kofu has TWO Standard-legal printings
-    (`sv07-138`/`sv07-165`), and the sentence says "each Kofu card" — so a discard
-    holding one of each counts TWO, and an id test would count one. This is the
-    same reading `CardFilter`'s `names` member already takes of a printed card
-    name everywhere else in the engine.
-
-    ⚠️ **`discard` IS A uid LIST, SO EVERY ENTRY IS RESOLVED THROUGH THE POOL** and
-    an unresolvable uid contributes nothing rather than throwing — the totality
-    rule every function in this module keeps. */
+/** Counts by printed name, not id, so different printings of the same card all count. */
 function namedInDiscard(state: GameState, seat: Seat, name: string): number {
   let count = 0;
   for (const uid of state.players[seat].discard) {
@@ -7107,66 +3789,11 @@ function namedInDiscard(state: GameState, seat: Seat, name: string): number {
   return count;
 }
 
-/** §8.2 attack cost under every continuous cost effect in play. THREE sources,
-    TWO SIGNS, one array:
-      • the in-play STADIUM's `basicAttackCostSurcharge` (Pokémon League
-        Headquarters), which adds {C} per surcharge point to every BASIC's attacks;
-      • the OPPOSING side's `opposingAttackCostSurcharge` aura (Seismitoad "Quaking
-        Zone"), which adds {C} to the attacks of the Active it faces, at any stage;
-      • the holder's OWN `selfAttackCostDiscount` (Radiant Charizard "Excited
-        Heart"), which SUBTRACTS {C} per Prize its opponent has taken.
-        (🆕🆕🆕 D558 — and its ATTACHED TOOLS' {C}, Counter Gain / Hop's Choice Band,
-        summed inside that function ahead of its §9 gate; still one subtrahend.)
-    Every symbol moved is a COLORLESS slot — any energy pays it, §6.4 — which is
-    what lets one array carry both signs: `costMet` (attack.ts) buckets the literal
-    string "Colorless" separately from every typed symbol, so appending one adds a
-    generic slot and removing one takes a generic slot away. A discount never
-    touches a typed symbol; the print says "cost Colorless less" and means it.
-
-    🆕🆕🆕 **D568 (D539) — "THREE sources, TWO SIGNS", "Every symbol moved is a COLORLESS
-    slot" and "A discount never touches a typed symbol" ARE WITHDRAWN AS THE WHOLE READ
-    (annotated, not rewritten; they stay true of every {C} term above, which is still netted
-    Colorless-only by `colorlessNetCost`).** A further source, applied LAST on the
-    {C}-adjusted array: a Tera holder's attached Sparkling Crystal (`toolAnyTypeCostDiscount`)
-    removes 1 Energy of ANY type — the print says *"The Energy can be of any type"* — so it
-    CAN take a TYPED symbol: `anyTypeCostRemoval` picks the symbol the holder's attached
-    Energy falls short on (`providedEnergy` — this function now reads the holder's attached
-    Energy — and `costMet`, which now lives in cards.ts, not attack.ts). Removing a typed
-    symbol is never worse than removing a Colorless one, so a typed symbol goes whenever
-    that makes the cost payable; an already-payable cost loses a Colorless.
-
-    ⚠️ THE TWO DIRECTIONS ARE SUMMED INTO ONE NET DELTA AND ARE NEVER ONE FIELD.
-    `stadiumRetreatDelta`'s `added - discount` idiom, one seam over, and the reason
-    is the same trap D163 hit: a `<= 0` early return on a field that must also carry
-    a discount reads a real discount as "nothing applies". The netting is EXACT
-    rather than convenient — appending N Colorless and then removing M of them
-    leaves `max(0, printedColorless + N - M)` generic slots, which is what applying
-    the net delta directly produces — so no board separates the two orders.
-
-    ⚠️ NO FLOOR IS OWED, and this is the sharpest structural difference from
-    `effectiveRetreatCost`, which needs its `Math.max(0, …)`. That seam's cost is a
-    NUMBER and can be driven negative; this seam's cost is an ARRAY OF SYMBOLS, and
-    a removal loop can only remove symbols that are present. A 6-Prize discount
-    against a printed {W}{W} leaves {W}{W} — the structure floors itself.
-
-    ⚠️ THE BASIC TEST IS A PER-TERM GATE, NOT THIS FUNCTION'S EARLY RETURN, and that
-    is a behaviour change to the Stadium's own neighbourhood rather than a
-    refactor. Only League HQ's sentence prints "each Basic Pokémon in play"; the two
-    Ability sources print no stage at all, and Seismitoad is itself a Stage 2 — a
-    surviving `!isBasicPokemon(top)` early return would have silently switched the
-    surcharge off for every Stage 1/2 Active it is aimed at. `stadiumRetreatDelta`
-    made exactly this move when the first stage-agnostic aura reached the retreat
-    seam ("a zero TERM, not the early return it used to be").
-
-    Returns the printed cost array ITSELF when the net delta is zero, a fresh copy
-    when it is not — `redactedAttacksOf` and the HUDs rely on the cheap identity on
-    the overwhelmingly common board with no cost modifier in play. (🆕🆕🆕 D568 (D539):
-    "ITSELF when the net delta is zero" is now conditional — with a Crystal on a Tera
-    holder the any-type removal returns a MODIFIED array even when the {C} net delta is
-    zero. The identity still holds on every board without one, which is the common board
-    the sentence is about.) (🆕🆕🆕 D631 (D539): "on every board without one" is narrowed too — a live
-    Sniper's Eye returns `cost.filter`'s FRESH array at any net, 0 included; the identity holds on a
-    board with neither.) */
+/**
+ * §8.2: attack cost under continuous effects. Stadium, opposing aura, and cost-tax surcharges are
+ * netted against the self discount as Colorless symbols; any-type discounts are applied last
+ * against the attached Energy. Returns the printed array itself when nothing changes it.
+ */
 export function effectiveAttackCost(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -7175,25 +3802,16 @@ export function effectiveAttackCost(
 ): readonly string[] {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return cost;
-  // 🆕🆕🆕 D606 — plus Nighttime Mine's FILTERED twin of League HQ's term (each Tera Pokémon in
-  // play, both sides), matched on the same TOP card; the two sum into the one Stadium term.
+  // Nighttime Mine's filtered surcharge adds to League HQ's Basic surcharge.
   const stadium =
     (isBasicPokemon(top) ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0) : 0) +
     stadiumFilteredCostSurcharge(state, top);
-  // 🆕🆕🆕 D549 — …and the attack-installed COST TAX on the Defending Pokémon's own
-  // attacks ("attacks used by the Defending Pokémon cost {C} more"), a third ADDED
-  // source netted against the discount like the other two.
   const added =
     stadium + opposingAttackCostSurcharge(state, pokemon) + installedCostTaxOf(state, pokemon);
-  // 🆕🆕🆕 B17 — `attackName` (the menu row's printed name, `attackCostAt`) reaches the discount's
-  // attack-name scope; an unscoped discount ignores it.
   const net = added - selfAttackCostDiscount(state, pokemon, attackName);
-  // 🆕🆕🆕 D568 — Sparkling Crystal's ANY-TYPE Energy, applied LAST, on the {C}-adjusted
-  // array, against the holder's attached Energy (`anyTypeCostRemoval`). Zero on every
-  // board without a Crystal on a Tera body, which then returns `colorlessNetCost`'s own
-  // answer — the printed array ITSELF when `net` is 0, as before (🆕🆕🆕 D631: unless Sniper's Eye is live).
+  // Sparkling Crystal's any-type discount is applied last, on the Colorless-adjusted cost.
   const anyType = toolAnyTypeCostDiscount(state, pokemon);
-  // 🆕🆕🆕 D631 — Sniper's Eye: every {C} goes, a surcharge's included (R-SNE1 ⚠️ UNRULED).
+  // Sniper's Eye removes every {C}, including surcharges.
   const colorlessAdjusted = selfIgnoresColorlessCost(state, pokemon)
     ? cost.filter((symbol) => symbol !== "Colorless")
     : colorlessNetCost(cost, net);
@@ -7202,17 +3820,16 @@ export function effectiveAttackCost(
     : anyTypeCostRemoval(colorlessAdjusted, providedEnergy(state, pokemon), anyType);
 }
 
-/** 🆕🆕🆕 D606 — the in-play Stadium's `attackCostSurcharge` (Nighttime Mine `me02.5-197`: each
-    Tera Pokémon in play, both sides) for an attacker whose TOP card is `top`: its `amount` when
-    the filter matches, else 0. */
+/**
+ * The Stadium's filtered attack-cost surcharge (Nighttime Mine) for an attacker whose top card is
+ * `top`.
+ */
 function stadiumFilteredCostSurcharge(state: GameState, top: Card): number {
   const surcharge = stadiumEffectsOf(state)?.attackCostSurcharge;
   return surcharge !== undefined && matchesFilter(top, surcharge.attacker) ? surcharge.amount : 0;
 }
 
-/** The {C}-only half of `effectiveAttackCost`, split out at D568 unchanged: `net` Colorless
-    appended (a surcharge) or removed from the end (a discount), the printed array itself
-    when `net` is 0. */
+/** Appends `net` Colorless for a surcharge or removes them from the end for a discount. */
 function colorlessNetCost(cost: readonly string[], net: number): readonly string[] {
   if (net === 0) return cost;
   if (net > 0) return [...cost, ...Array.from({ length: net }, () => "Colorless")];

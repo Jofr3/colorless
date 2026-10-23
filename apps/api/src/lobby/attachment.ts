@@ -1,22 +1,6 @@
-// What a lobby socket remembers about itself across Durable Object
-// hibernation. The runtime serializes the attachment with the socket, so when
-// the DO is evicted and later woken by a frame, `attachedPlayer` still knows
-// which player the socket belongs to — no in-memory socket→player map to lose.
-//
-// Two facts ride here. `playerId` is the lobby-scoped id the socket's first
-// valid `hello` announced — a socket has none until then, so frames from an
-// unattached socket can't act on anyone's seat. `userId` is the ACCOUNT the
-// session cookie authenticated at the /ws upgrade (P4 increment 3), or null for
-// an anonymous socket; it is set BEFORE the hello (no playerId yet), so the two
-// are written independently and each preserves the other. userId never leaves
-// the DO — it authorizes the owner-scoped deck read at the match handoff and is
-// never put on the broadcast snapshot.
-//
-// `spectating` is the third (P4 3c-vii-b): a socket that asked for a seat, was
-// refused because both are taken, and is watching the running match instead. It
-// is deliberately NOT a seat — a spectator has no `playerId`, no `PlayerState`
-// and no presence in the snapshot at all, so nothing about the lobby's rules
-// depends on how many are watching.
+// What a lobby socket remembers across hibernation. `playerId` is set by the first valid hello.
+// `userId` is the account from the session cookie at upgrade, set independently and never
+// broadcast. `spectating` marks a refused socket watching the match; spectators have no seat.
 
 /** The slice of the WebSocket API the codec touches — lets tests use a plain
     fake instead of a runtime socket. */

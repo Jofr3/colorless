@@ -1,19 +1,6 @@
-// Phase-derived VIEW of a game: given a `GameState` and a viewer, who owns the
-// turn, who must act right now, what interrupt (if any) is parked, and how the
-// game ended. This is the ONE exhaustive switch over the `Phase` union, kept
-// pure and engine-only so BOTH consumers share it:
-//   - the web app's per-viewer playmat projection (local hot-seat play —
-//     src/features/game/projection.ts), and
-//   - the authoritative match redactor `redactGame` (online play — redact.ts),
-//     which the lobby Durable Object runs server-side.
-// It was originally authored inside the web projection; it moved here in P4 so
-// the server-side redactor derives the same seats/decision from the same code
-// rather than a second, drift-prone copy.
-//
-// Exhaustive on purpose: an M1 defensive turn-parity fallback guessed the TURN
-// OWNER, which is the wrong seat to wait on exactly when ko:promote parks (the
-// KO'd seat decides mid-attack). With the union complete in-tree, a future
-// `Phase` kind is a compile error here instead of a wrong guess.
+// Phase-derived view of a game for a viewer: who owns the turn, who must act now, what interrupt is
+// parked, and how the game ended. This is the one exhaustive switch over `Phase`, shared by the web
+// playmat projection and the server redactor.
 
 import type { EffectPrompt } from "./interpreter";
 import { cardOfUid, isBasicPokemon } from "./cards";
@@ -101,35 +88,9 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
         pendingDecision: { kind: "promote" },
         outcome: null,
       };
-    // effect:choose — a Trainer/Ability parked on a decision. Normally the
-    // controller (phase.seat) both owns the turn and owes the decision, so
-    // activeSeat and waitingSeat are the same. `resumeTail` marks the two
-    // mid-tail parks, which read the turn owner off the pending queue instead
-    // (koParkActiveSeat): an on-KO trigger (§9) parks MID-KO-SWEEP during the
-    // OPPONENT's turn, so phase.seat is the KO'd player and the turn owner is
-    // whoever the sweep sits inside (or null, between turns from a Checkup KO);
-    // an ATTACK's effect program (§8 step 4) parks with the attackEpilogue stage
-    // queued, where the decider IS the turn owner — koParkActiveSeat returns the
-    // same seat, so the two agree without a special case here.
-    //
-    // `answerer` is the THIRD way the two seats come apart, and the only one
-    // where they differ while the turn runs normally: Ortega's printed "your
-    // opponent may draw a card" parks a decision on the NON-controller
-    // mid-play. It moves waitingSeat alone — the turn is still the
-    // controller's, so activeSeat keeps reading phase.seat. An `answerer`
-    // park's prompt goes ONLY to the seat that may answer it (the decision is
-    // withheld from the other viewer).
-    //
-    // 🆕🆕 **D426 IS THE FIRST PARK TO SET `answerer` AND `resumeTail` AT ONCE, AND
-    // THE TWO TERMS BELOW HANDLE IT WITHOUT A FOURTH CASE.** Ortega and D227's
-    // `opponentSwitchOut` are both played from `turn:action`, so every prior
-    // `answerer` park had `resumeTail` absent; *"Your opponent discards 2 cards from
-    // their hand."* is an ATTACK effect, so it parks with the attackEpilogue queued.
-    // `activeSeat` therefore comes off `koParkActiveSeat` rather than `phase.seat` —
-    // which returns the SAME seat here, because the sweep sits inside the attacker's
-    // turn. That agreement is DRIVEN rather than assumed (`opponentHandDiscard.test.ts`
-    // §3 reads both fields from both chairs): a board that handed the answering seat
-    // the turn glow would be lying about whose turn it is.
+    // effect:choose: normally the controller both owns the turn and owes the decision. `resumeTail`
+    // marks the mid-tail parks, which read the turn owner off the pending queue instead
+    // (`koParkActiveSeat`).
     case "effect:choose": {
       const answerer = phase.answerer ?? phase.seat;
       const withheld = phase.answerer !== undefined && phase.answerer !== viewerSeat;
@@ -164,22 +125,7 @@ export function inSetup(state: GameState): boolean {
   }
 }
 
-/** The turn a parked ko:* interrupt sits INSIDE — or null when it sits BETWEEN
-    turns. Attack-origin KOs park with the turn tail still queued behind the ko
-    stages (pending: [ko…, endTurn, checkup, startTurn]) [🆕🆕🆕 D570 (D539):
-    except a FIRST attack under Festival Lead with Festival Grounds in play —
-    `finishAttack`'s window exit parks [ko…, resumeTurn] instead (the
-    attack-again window), which the `resumeTurn` arm below already counts as
-    in-turn, so the function is unchanged], so the parity owner
-    still owns the turn. A MID-TURN KO (evolve-below-HP, a snipe ability) parks
-    with a resumeTurn stage queued behind it (pending: [ko…, resumeTurn]) — still
-    inside the actor's turn, so it counts too. So does an ATTACK whose effect
-    program parked (pending: [attackEpilogue]): the turn tail has not even been
-    seeded yet, and the attacker — who owns the turn by parity — is the one owing
-    the decision.
-    Checkup-origin KOs park AFTER endTurn and checkup have already drained
-    (pending: [ko…, startTurn]) with the turn counter not yet bumped — parity
-    would misreport the JUST-ENDED seat as active — so those parks own no turn. */
+/** The turn a parked ko:* interrupt sits inside, or null when it sits between turns. */
 function koParkActiveSeat(state: GameState): Seat | null {
   const inTurn = state.pending.some(
     (stage) =>
@@ -191,19 +137,10 @@ function koParkActiveSeat(state: GameState): Seat | null {
   return inTurn ? turnOwnerOf(state) : null;
 }
 
-/** The turn-ownership invariant: odd turns belong to firstPlayer. Only
-    meaningful while a turn is actually in progress — koParkActiveSeat guards
-    the between-turns case, where this parity names the wrong seat.
-
-    🛑 STILL PRIVATE AT D320, AND THE ATTEMPT TO HOIST IT IS WHY THE LINE IS
-    HERE. That slice needed *"…moves to the Bench **during their turn**"* in the
-    engine core and started by exporting this function; `interpreter.ts` already
-    imports `phaseViewOf` for exactly that question (`conditionHolds`'s
-    `youPlayedSupporterThisTurn` arm, with the reason written out at the call),
-    and this module's own header forbids the parity shortcut by name. **The
-    reader already existed** — so the export was reverted and the new scan asks
-    `phaseViewOf(state, seat).activeSeat`, like every other core reader of the
-    same question. */
+/**
+ * Odd turns belong to firstPlayer. Only meaningful while a turn is in progress; `koParkActiveSeat`
+ * guards the between-turns case.
+ */
 function turnOwnerOf(state: GameState): Seat | null {
   if (state.turn < 1 || state.firstPlayer === null) return null;
   return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);

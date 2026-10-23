@@ -31,64 +31,38 @@ export const DECK_SIZE = 60;
 export const HAND_SIZE = 7;
 export const PRIZE_COUNT = 6;
 export const BENCH_MAX = 5;
-/** 🆕🆕🆕 §7.3 (D577) — the LARGEST Bench any printing can grant: Area Zero Underdepths
-    `sv07-131`/`sv07-174`/`sv08.5-094`, *"Each player who has any Tera Pokémon in play can have
-    up to 8 Pokémon on their Bench."* `BENCH_MAX` stays 5 and is still the RULE (setup, every
-    board without that Stadium); the LIVE per-seat limit is continuous.ts `benchLimitOf`. This
-    constant bounds what a ref may ADDRESS (turn.ts `isBenchIndex`), what an "any number" may
-    MEAN (Inviting Wink, Lillie's Comfey) and the KO sweep's pass bound (flow.ts
-    `MAX_KO_PASSES`) — never what a seat may currently hold. */
+/**
+ * §7.3: the largest Bench any card can grant (Area Zero Underdepths: 8). `BENCH_MAX` stays the
+ * rule; the live per-seat limit is `benchLimitOf`. This bounds what a ref may address, never what a
+ * seat may hold.
+ */
 export const BENCH_CEILING = 8;
 
 /** §12/§13.1 — the HP a Poisoned Pokémon takes at each Checkup unless the
     inflicting effect raised it ("put N damage counters … instead of 1"). */
 export const DEFAULT_POISON_DAMAGE = 10;
 
-/** 🆕🆕 §8 step 3 (D501) — the HP a Confused Pokémon places on ITSELF when the
-    attack flip comes up tails, unless the inflicting effect raised it
-    ("Put N damage counters instead of 3 on that Pokémon for this Special
-    Condition."). `DEFAULT_POISON_DAMAGE`'s twin, and the printed default is a
-    RULE constant rather than a per-card fact: the rulebook's 3 counters, ×10
-    (§12: one counter = 10 HP). Both printed "instead of" sentences in the legal
-    column state the engine's own default back to it — Poison's `instead of 1`
-    against `DEFAULT_POISON_DAMAGE`, Confusion's `instead of 3` against this one
-    — which is why both anchors spell the default LITERALLY rather than capturing
-    it (a printed `instead of 5` would be a card misstating the rule, and
-    refusing it keeps the sentence on the loud ATTACK_EFFECT_SKIPPED path). */
+/**
+ * §8 step 3: HP a Confused Pokémon places on itself when the attack flip is tails, unless the
+ * inflicting effect raised it (3 counters).
+ */
 export const DEFAULT_CONFUSION_DAMAGE = 30;
 
-/** §12 condition shape: {Asleep, Paralyzed, Confused} are mutually exclusive
-    (one card rotation — applying one REPLACES the others), Poisoned/Burned
-    coexist with each other and with the rotation. Set by M3's attack effects
-    (effects.ts), ticked by the Pokémon Checkup (flow.ts runCheckup). Poison
-    carries its counter amount rather than a bool because §12/§13.1 let
-    effects raise it ("Poisoned; put 2 damage counters instead of 1").
-
-    🆕🆕 **D501 — `confusionDamage` IS THE SECOND RAISED-AMOUNT FIELD HERE, AND IT
-    IS NOT `poisonDamage`'s SHAPE.** `poisonDamage` doubles as Poison's own FLAG
-    (`presentStatuses` reads `> 0`, so 0 means "not Poisoned"); Confusion's flag is
-    `rotation === "confused"`, a different field, so this one is a PURE AMOUNT with
-    a printed default and **0 is not a sentinel here**. It is read at exactly one
-    site — attack.ts's §8 step-3 flip — and only when the rotation is `confused`,
-    so a value left standing on a cured body is never consulted; `applyStatus`
-    rewrites it on every confusion, which is what keeps a raised amount from
-    surviving a cure into the next application (driven in
-    `confusionDamage.test.ts` §4 rather than asserted).
-
-    🛑 **REQUIRED, AND THE BUMP IS OWED — 29 → 30.** See
-    `MATCH_RECORD_VERSION`'s own block for the argument; the short form is that
-    this address is inside `MatchRecord.state` and the two shipped `satisfies
-    SpecialConditions` guards (redact.ts `copyConditions`, projection.ts
-    `battleStateOf`) exist so that an added engine field is a COMPILE ERROR rather
-    than a silent drop — and an OPTIONAL key defeats both of them silently. */
+/**
+ * §12: Asleep, Paralyzed and Confused are mutually exclusive (applying one replaces the others);
+ * Poisoned and Burned coexist with each other and with them. Poison stores its counter amount,
+ * which effects can raise; 0 means not Poisoned. `confusionDamage` is a pure amount, meaningful
+ * only while Confused, and rewritten on every application.
+ */
 export interface SpecialConditions {
   rotation: "none" | "asleep" | "paralyzed" | "confused";
   /** Damage placed on it at each Checkup while Poisoned; 0 = not Poisoned. */
   poisonDamage: number;
   burned: boolean;
-  /** 🆕🆕 D501 — HP this Pokémon places on itself when the §8 step-3 Confusion
-      flip misses; `DEFAULT_CONFUSION_DAMAGE` unless the inflicting effect raised
-      it. Meaningful only while `rotation === "confused"`. */
+  /**
+   * HP this Pokémon places on itself when the Confusion flip misses; meaningful only while
+   * `rotation === "confused"`.
+   */
   confusionDamage: number;
 }
 
@@ -97,10 +71,7 @@ export function noConditions(): SpecialConditions {
     rotation: "none",
     poisonDamage: 0,
     burned: false,
-    // 🆕🆕 D501 — the DEFAULT, not a zero. This function is the whole CLEAR
-    // (retreat, evolve, benching, the "recovers from all Special Conditions"
-    // op), so a cured body must go back to the rulebook's 3 counters rather than
-    // to a value no printing means.
+    // Reset to the default, not zero, since a cured body must go back to the rulebook's 3 counters.
     confusionDamage: DEFAULT_CONFUSION_DAMAGE,
   };
 }
@@ -124,255 +95,69 @@ export function presentStatuses(conditions: SpecialConditions): StatusName[] {
   return statuses;
 }
 
-/** §11/§15.B — an attack-installed BLOCK on one Pokémon, with the printed
-    DURATION baked in as a turn STAMP. The printed sentences are
-
-      "Flip a coin. If heads, during your opponent's next turn, prevent all
-       damage FROM AND EFFECTS OF attacks done to this Pokémon."   (11 printings)
-      "Flip a coin. If heads, during your opponent's next turn, prevent all
-       damage done to this Pokémon by attacks."                    ( 2 printings)
-      "During your opponent's next turn, prevent all damage done to this
-       Pokémon by attacks from Basic Pokémon."                     ( 3 printings)
-
-    and the differences between them are exactly the two optional fields below:
-    `effects` widens WHAT is refused, `fromClass` narrows WHOSE attacks are
-    refused at all. BOTH of the first two refuse damage; only the first refuses
-    the rest of what an attack does to the body; only the third asks anything
-    about the attacker.
-
-    ⚠️ A TURN STAMP, NOT A FLAG — D124's decision, taken again for a reason of its
-    own. `turn` is the ONE turn number on which the block is live: the installing
-    attack runs during turn N and ends it (§5.3) [🆕🆕🆕 D570 (D539): a FIRST attack under Festival Lead opens the attack-again window instead, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays true on every printing], so the opponent's next turn is
-    turn N + 1 and that is what gets stamped. The block then expires BY ARITHMETIC
-    (`turn === state.turn` stops holding) with no turn-boundary clear anywhere —
-    which matters more here than it did at D124, because the §13.4 paralysis clock
-    D112 reused for `retreatBlocked` is the WRONG clock for this shape. That clear
-    fires for the seat whose turn just ENDED, and this block sits on the
-    INSTALLER's own Pokémon rather than on the defender's: the very first Checkup
-    after the attack has `endedSeat === the holder's seat`, so a paralysis-clock
-    clear would lift the block one whole turn early, before its window ever opens.
-    A stamp has no such mirror to get backwards.
-
-    NOT a §12 Special Condition, for `retreatBlocked`'s reasons verbatim: no
-    Checkup tick, no status chip, no `StatusName`, and it never crosses the wire
-    (`RedactedConditions`/`BattleConditions` pin that shape field by field). What
-    it DOES share with `retreatBlocked` is the early ending: it is an effect of an
-    ATTACK, so it ends the moment the Pokémon leaves the Active Spot or evolves
-    (§10) — see `clearOnLeavingActive` (turn.ts), `switchInto` (interpreter.ts)
-    and `placeEvolution` (turn.ts). A Knocked Out holder takes it out of play with
-    the rest of the stack.
-
-    ONE INSTALLATION PER RECORD, and the window is part of the installation:
-    a durated effect whose window is a DIFFERENT turn (Ninetales
-    sv03-029/-199 "Nine-Tailed Dance" — "During YOUR next turn, this Pokémon can't
-    attack", i.e. turn N + 2) cannot share this `turn` and gets its own stamped
-    field. What it DOES inherit is everything else: the stamp convention, the
-    three early-clear sites, and the read-through-continuous.ts shape. That field
-    landed at D143 (`InPlayPokemon.attackLockedTurn` below) and the forecast held
-    exactly: nothing here changed, and the two windows coexist on ONE body. */
+/**
+ * §11: an attack-installed block on one Pokémon. `effects` widens what is refused; `fromClass`
+ * narrows whose attacks are refused. `turn` is the one turn the block is live on, so it expires by
+ * arithmetic with no clear. Not a Special Condition; it ends when the Pokémon leaves the Active
+ * Spot or evolves (§10).
+ */
 export interface AttackBlock {
   /** The single turn number this block is live on (the installing turn + 1). */
   turn: number;
-  /** Whether it also refuses the EFFECTS of attacks and not only their damage —
-      the printed words "from and effects of". The catalog prints the parenthetical
-      that settles the reading on Bronzong sv03-145: **"(Damage is not an effect.)"**
-      So the two halves are disjoint, and a placed damage COUNTER — which this
-      engine has ruled is not attack damage since `damageActive` (D138/D139) — falls
-      entirely on the effects side. */
+  /**
+   * Also refuses the effects of attacks, not only their damage ("from and effects of"). Damage is
+   * not an effect, and placed damage counters count as effects.
+   */
   effects: boolean;
-  /** §11 (D146) — the printed ATTACKER-CLASS filter: present exactly when the
-      sentence narrows the block to attacks "from {class} Pokémon", ABSENT when
-      the block refuses every attacker (D135's absent-key rule, and the same
-      polarity `effects` is under — the printed words are what ADD the key, and a
-      producer that forgets one blocks differently rather than wrongly).
-
-      ⚠️ IT IS EVALUATED AT THE READ SITES, NOT HERE, and that is the same split
-      `PassiveEffects.preventDamageFromExV` is already under (continuous.ts): the
-      ATTACKER is not knowable at install time — the block is written on the
-      installer's own body during the installer's own turn, and the Pokémon it
-      will refuse has not declared anything yet — so the record stores the printed
-      TOKEN and `attackBlockOf` resolves it against the attacker each read.
-
-      ⚠️ A CLOSED VOCABULARY, AND EVERY MEMBER IS ONE THE POOL PRINTS A READABLE
-      DATUM FOR. The pool prints FOUR class phrases on this sentence, and the
-      split is between a datum and a BANNER rather than between easy and hard:
-      *"Basic"* (1 legal — Dipplin sv07-013) and *"Basic non-{C}"* (7 legal —
-      Terapagos ex "Crown Opal") are BOTH answerable, because `stage` and `types`
-      are catalog columns; *"Ancient"* (1, Iron Moth sv06.5-009) is not, because
-      the Ancient/Future banner is printed on the card FACE and appears in NO
-      field of the persisted catalog and NONE of tcgdex's own card model (checked
-      upstream against Roaring Moon ex sv04-124, the canonical Ancient print — it
-      serves `suffix: "ex"` for a rule box and nothing at all for the banner). So
-      the Ancient sentence has no reader because it has no DATUM, and it stays
-      LOUD rather than being answered by a hand-authored species list — the
-      (🆕🆕🆕 D569 (D539): "no DATUM" is WITHDRAWN — `banners.ts` (an engine table keyed by printing id, never a species list — the SAME-species argument above stands) has supplied the Ancient/Future banner since D569. Iron Moth's sentence STILL has no reader, for a different reason: `fromClass` is PERSISTED, and widening `AttackerClass.stage` to optional would make 0.452's exhaustive `attackerMatchesClass` switch fall through on rollback — deferred, docs/decisions.md D569)
-      species is not even the right key, since the SAME species is printed both
-      with the banner (sv04+) and without it (Great Tusk ex sv01-123). The fourth,
-      Miraidon sv08-069's *"each of your Future Pokémon … from Pokémon ex"*, is
-      refused by its TARGET rather than by its class (effects.ts
-      `PREVENT_DAMAGE_FROM_CLASS`).
-      (🆕🆕🆕 D575 (D539): both are BUILT at D575 — Iron Moth on the NEW `"ancient"` member and Miraidon on
-      `"ex"` plus the side-wide `PlayerSide.sideAttackBlock`; the "LOUD" readings above are WITHDRAWN.)
-
-      ⚠️ IT IS AN `AttackerClass` RECORD RATHER THAN A STRING, AND THAT IS D239's
-      whole edit here. (🆕🆕🆕 D575 (D539): ~~"one-member"~~ — three members since D575.) `stage` stays a one-member closed vocabulary so
-      `attackerMatchesClass` (continuous.ts) keeps its EXHAUSTIVE switch — a
-      second stage word cannot be added without the compiler demanding the
-      predicate that reads it — while the printed *"non-{X}"* exclusion rides an
-      OPTIONAL key on the same record instead of multiplying the vocabulary by
-      the eleven-code type wheel. effects.ts `AttackerClass` carries the two
-      arguments for that shape.
-
-      🛑 THE SHAPE CHANGE IS WHY `MATCH_RECORD_VERSION` WENT 12 → 13. D146's
-      records persist `fromClass: "Basic"`, a string the new type does not
-      describe at all; unlike D146's own *addition* of an optional key (which left
-      every older record a valid inhabitant — see apps/api match.ts), this is a
-      TYPE the old value fails, so the old record is retired rather than read
-      benignly. D124's rule, third application. */
+  /**
+   * The printed attacker-class filter ("from {class} Pokémon"); absent when every attacker is
+   * refused. Resolved against the attacker at read time, since the attacker is unknown at install.
+   */
   fromClass?: AttackerClass;
-  /** §8.5/§11 (D240) — the printed DAMAGE CAP: present exactly when the sentence
-      narrows the block to attacks whose damage is *"{N} or less"*, ABSENT when the
-      block refuses an attack of any size (D135's absent-key rule, and the same
-      polarity `effects` and `fromClass` are under — the printed words are what ADD
-      the key).
-
-      "During your opponent's next turn, prevent all damage done to this Pokémon
-       by attacks if that damage is 40 or less."        (2 legal — sv10.5w-046/-127)
-      "…if that damage is 60 or less."                  (1 legal — sv09-002)
-
-      ⚠️ IT IS THE THIRD FIELD ON THIS RECORD AND THE FIRST ONE THAT IS A NUMBER,
-      and it narrows on an axis neither of the other two touches: `effects` widens
-      WHAT is refused, `fromClass` narrows WHOSE attack is refused, `maxDamage`
-      narrows HOW BIG an attack may be and still be refused. All three are read at
-      the read sites rather than at install time, for `fromClass`'s reason exactly
-      — none of the three facts is knowable when the block is written onto the
-      installer's own body.
-
-      ⚠️ IT IS AN UPPER BOUND, AND THE NAME SAYS THE DIRECTION ON PURPOSE. The pool
-      prints the OPPOSITE polarity too — Drednaw `sv07-044`, *"…if that damage is
-      200 **or more**"* — but it prints it as an always-on ABILITY, so it is a
-      `passivesOf` catalog aura and not an installation at all, and it could not
-      ride this record even if the comparator were stored. effects.ts
-      `PREVENT_DAMAGE_UP_TO_CAP` captures the comparator token anyway and REFUSES
-      anything but *"or less"*, so the direction is a checked fact rather than a
-      silent assumption.
-
-      ⚠️ THE NUMBER IT IS COMPARED AGAINST IS THE ONE THAT WOULD ACTUALLY BE
-      PLACED — post-Weakness, post-Resistance, post-reduction, floored at 0 —
-      which is D240's rules reading and is written out in full at
-      continuous.ts `attackBlockOf`, the one place that comparison happens.
-
-      ⚠️ NO `MATCH_RECORD_VERSION` BUMP. This is a key ADDED, so every record the
-      previous deploy persisted is still an inhabitant of the new type with the
-      key absent, and absent means exactly what those records already meant (no
-      cap). That is D146's own no-bump case verbatim — and the contrast with D239,
-      which RETYPED `fromClass` and did owe a bump, is the whole test: not "did a
-      field change" but "can the previous deploy's RECORD hold the new TYPE". */
+  /**
+   * The printed damage cap ("if that damage is N or less"); absent when any size is refused.
+   * Compared against the damage that would actually be placed, after Weakness, Resistance and
+   * reductions.
+   */
   maxDamage?: number;
 }
 
-/** §8.5/§11 (D147) — an attack-installed DAMAGE REDUCTION on one Pokémon, with
-    the printed DURATION baked in as a turn STAMP exactly as `AttackBlock` above
-    bakes its own. The printed sentences are
-
-      "During your opponent's next turn, this Pokémon takes {20|30|50} less
-       damage from attacks (after applying Weakness and Resistance)."  (12)
-      "Discard all Energy from this Pokémon. During your opponent's next turn,
-       this Pokémon takes 100 less damage from attacks (after applying Weakness
-       and Resistance)."                                               ( 2)
-
-    ⚠️ IT IS A THIRD PARALLEL STAMPED FIELD RATHER THAN A GENERALISED RECORD, AND
-    THE VERDICT WAS RE-DERIVED RATHER THAN INHERITED (D143 deferred the call to
-    this slice; D147's entry in decisions.md carries the whole argument). The
-    short form: D143 predicted this reading would be the first to genuinely SHARE
-    a read path with `attackBlock`, which is what a union pays for. It does share
-    the four damage SITES — but sharing a SITE is not sharing a QUESTION. Each
-    site still asks two independent things at two different steps of §8.5 ("by
-    how much is this reduced?" is subtracted; "is it prevented outright?"
-    supersedes), so a discriminated union would not shorten one read; it would
-    replace a field access the compiler checks with a list search it cannot.
-
-    ⚠️ AND THE DECIDING FACT IS THAT THIS IS NOT A NEW READING AT ALL. The pool
-    prints this exact sentence MINUS its four-word duration prefix as an
-    always-on Ability on FOUR printings — Bouffalant sv03-174 "Bouffer" (20),
-    Stonjourner sv01-121 "Exoskeleton" (20), Copperajah ex sv02-150/-245 "Bronze
-    Body" (30) — and all four have been simulated since 0.x as
-    `PassiveEffects.damageReductionAfterWR`, read at the same four damage sites.
-    So this field is a SOURCE feeding a number the engine already computes, not a
-    second channel: the four read sites SUM it into `passivesOf`'s aggregate and
-    nothing else about the pipeline moves. One reading, one implementation
-    (D131), across the catalog/state boundary.
-
-    It is kept OUT of `passivesOf` itself for two reasons, both structural rather
-    than stylistic: that function is documented as the CATALOG scan (printed
-    passives + attached Tools), which is the distinction `attackBlockOf`'s doc
-    block draws between an aura and an installation; and it SUPPRESSES a holder's
-    own printed passive under a §9 Ability-lock aura, which an attack-installed
-    effect must be immune to — an installation is not an Ability. Summing at the
-    sites keeps that immunity structural instead of positional.
-
-    THE WINDOW IS `state.turn + 1` — the same number `AttackBlock.turn` carries
-    (both print "During your OPPONENT's next turn"), and the reason this is still
-    a separate record rather than a field inside `AttackBlock`: that record's
-    whole meaning at five read sites is "damage is PREVENTED", and its filter
-    (`fromClass`) is folded into `attackBlockOf` so a non-matching attacker makes
-    the read return null. A reduction living inside it would either prevent
-    everything or vanish for the attackers the filter refuses. Same window, two
-    different answers.
-
-    Everything else is INHERITED from `AttackBlock` unchanged: the stamp
-    convention, the read-through-continuous.ts shape (`installedReductionOf`),
-    the three §10 early clears, and D124's no-defensive-`undefined` rule at the
-    reader. */
+/**
+ * §8.5: an attack-installed damage reduction on one Pokémon for the opponent's next turn ("takes N
+ * less damage … after applying Weakness and Resistance"). Summed at the damage sites with the
+ * `passivesOf` reduction, but kept out of `passivesOf` because an installation must be immune to §9
+ * Ability locks.
+ */
 export interface DamageReduction {
   /** The single turn number this reduction is live on (the installing turn + 1). */
   turn: number;
-  /** HP subtracted from attack damage AFTER Weakness and Resistance — the
-      printed parenthetical, and the whole of why the number is stored rather
-      than applied. §8.5's order makes the two placements observably different:
-      Weakness is MULTIPLICATIVE, so a 90 Metal hit into a ×2 Metal body carrying
-      100 of this is `90 × 2 − 100 = 80`, while the same numbers subtracted first
-      clamp to `max(0, 90 − 100) × 2 = 0` — the difference between taking 80 and
-      being immune. (Resistance and this number are both additive and commute, so
-      the parenthetical only ever bites on WEAKNESS; the suite drives that.)
-
-      Four amounts are printed — 20, 30, 50 and 100 — and they are ONE capture in
-      the anchor rather than four rows, because the varying token is a NUMBER and
-      a number is closed by its type (D120's precondition met, unlike the open
-      consequent vocabularies that get one anchor each). */
+  /** HP subtracted from attack damage after Weakness and Resistance. */
   amount: number;
-  /** 🆕🆕🆕 §8.5 (D630) — the printed ATTACKER CLASS: present exactly when the sentence narrows
-      the reduction to attacks *"from {class} Pokémon"* (Bronzong `me05-064` "Metal Block", *"…takes
-      100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance)"*),
-      ABSENT when it reduces every attack (`AttackBlock.fromClass`'s absent-key rule). Resolved at the
-      read site by continuous.ts `installedReductionOf` through `attackBlockOf`'s own class predicate;
-      an unreadable attacker gets no reduction (protects LESS). A key ADDED, so a v43 record is an
-      inhabitant with it absent — but a 0.512 ROLLBACK ignores it and reduces EVERY attacker, which
-      is one reason the persisted shape moved (`MATCH_RECORD_VERSION` 43 → 44, apps/api match.ts). */
+  /**
+   * The printed attacker class ("from Evolution Pokémon"); absent when every attack is reduced. An
+   * unreadable attacker gets no reduction.
+   */
   fromClass?: AttackerClass;
 }
 
-/** 🆕🆕🆕 §8.5 (D630) — what attacks did to one Pokémon on ONE turn: the turn and the damage
-    they dealt it (the `dealt` of every `DAMAGE_DEALT` row on the body that turn, summed). Read
-    by Mega Heracross ex `me02-004` / `-108` "Juggernaut Horn" and Lycanroc `30th-085` / `-138`
-    "Counter" (*"If this Pokémon was damaged by an attack during your opponent's last turn, this
-    attack does that much more damage."*) as `turn === state.turn - 1` (`lastKoTurn`'s
-    arithmetic). Written at the four §8.5 damage sites (attack.ts's main hit, interpreter.ts
-    `spreadDamage`, `placeSnipe`'s `deals` arm, `snipeActive`) by `withAttackDamageTaken`. */
+/**
+ * The damage attacks dealt one Pokémon on one turn, for "if this Pokémon was damaged by an attack
+ * during your opponent's last turn" effects.
+ */
 export interface AttackDamageTaken {
   /** The turn the damage was dealt on. */
   turn: number;
-  /** The damage attacks dealt this Pokémon on that turn: post-W/R, post-reduction, the `DAMAGE_DEALT`
-      row's `dealt` — NOT lowered when a survival clamp or coin leaves fewer counters on the body
-      (R-JH1: the attack did that much damage). */
+  /**
+   * The `dealt` of the damage events, not lowered when a survival effect leaves fewer counters on
+   * the body.
+   */
   amount: number;
 }
 
-/** 🆕🆕🆕 §8.1 (D630) — the Prize cards one seat TOOK on one turn: Okidogi `me02.5-122` "Settle the
-    Score" (*"This attack does 60 more damage for each Prize card your opponent took during their
-    last turn."*). Written by flow.ts `resolveTakePrizes` (the one funnel every take passes
-    through) for a take on the TAKER's own turn only, read as `turn === state.turn - 1` by
-    `prizesTakenOnLastTurn`. */
+/**
+ * The Prize cards one seat took on its own turn, for Okidogi "Settle the Score". Written by
+ * `resolveTakePrizes`.
+ */
 export interface PrizesTakenOnTurn {
   /** The turn the Prizes were taken on. */
   turn: number;
@@ -380,247 +165,44 @@ export interface PrizesTakenOnTurn {
   count: number;
 }
 
-/** 🆕🆕 §13 (D434, GENERALISED AT D435) — a DELAYED EFFECT scheduled onto one
-    Pokémon by an attack, with the printed clock baked in as a turn STAMP exactly as
-    `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` bake theirs. The family
-    is THREE printed sentences / SIX legal printings, ONE clock and THREE payloads,
-    and D435 closes it:
-
-      "At the end of your opponent's next turn, put 9 damage counters on the
-       Defending Pokémon."                                       (3)   D434 counters
-      "At the end of your opponent's next turn, discard the Defending Pokémon and
-       all attached cards."                                      (1)   D435 discard
-      "Discard all Energy from this Pokémon. At the end of your opponent's next
-       turn, the Defending Pokémon will be Knocked Out."          (2)   D435 knockOut
-
-    🛑 **THE DISCARD AND THE KNOCK OUT ARE NOT THE SAME PAYLOAD, AND THE DIFFERENCE
-    IS A PRIZE CARD.** §8.1 (`docs/reference/ptcg-rules.md`) defines a Knock Out as
-    *"damage ≥ its current HP"* and says *"the player **who KO'd** the Pokémon takes
-    prize card(s)"* — the prize is owed BY the Knock Out and by nothing else. Row 53
-    prints *discard*, which removes the body to its owner's discard pile with no
-    Knock Out anywhere in the sentence, so **no Prize is taken**; row 113 prints
-    *"will be Knocked Out"*, so one is. Both remove the body, both empty the Active
-    Spot, both owe a promotion — and the only board difference is the prize row.
-    They would collapse into one "remove the body" payload in any implementation that
-    reasoned from the board instead of from the sentence, which is why they are two
-    members here rather than one with a flag. `delayedCounters.test.ts` §12 drives the
-    two on ONE axis: same board, same clock, one Prize taken and one not.
-
-    ⚠️ **THE ENGINE ALREADY HELD BOTH HALVES OF THE DISTINCTION AND THEY AGREE WITH
-    THE RULE.** `returnSelf` with `dest: "discard"` (D313, Revavroom ex `sv06.5-015`/
-    `-081` — *"Discard this Pokémon and all attached cards."*) removes a body to the
-    discard pile, emits `POKEMON_RETURNED` and stages **no** `takePrizes`; `knockOut`
-    (flow.ts) stages one. The two payloads below reach exactly those two shipped
-    seams, so neither invents a prize rule.
-
-    🛑 **IT IS THE FIRST FACT IN THIS ENGINE THAT SCHEDULES WORK RATHER THAN
-    GATING IT, AND THAT IS THE WHOLE OF WHY IT IS A NEW SHAPE.** Every other
-    durated record on `InPlayPokemon` is READ by code that was going to run anyway
-    — §8.5 asks `installedReductionOf` while it is already computing a hit, §11
-    asks `retreatLocked` while it is already validating a retreat. Nothing reads
-    this one. A stamp alone is INERT: the §13 Checkup has to go looking for it,
-    which is why the mechanism is a stamp PLUS a firing site (flow.ts `runCheckup`)
-    and why either half alone is a build that resolves and does nothing.
-
-    ⚠️ A RECORD AND NOT A BARE STAMP, WHICH IS `damageReduction`'s SHAPE RATHER
-    THAN `noWeaknessTurn`'s — and the deciding question is D432's, asked again
-    rather than inherited: does the printed sentence carry anything besides a
-    clock? It carries an AMOUNT (9 counters), and the amount is a `(\d+)` capture
-    in the anchor rather than a literal, so the record has to hold it. That is the
-    one axis on which this field differs from the bar D432 built.
-
-    🛑 **AND THE RECORD HAVING A SECOND KEY DOES *NOT* BUY D421's OPTIONAL ROAD —
-    THIS IS THE FINDING, AND IT SHARPENS D432's RULE RATHER THAN APPLYING IT.**
-    D421's mitigation is *choose the REST of the record so that losing the key is
-    detectable*, and the rest it means is the rest that ALREADY EXISTS in the
-    records a previous deploy wrote. Both keys here arrive in the SAME deploy, so
-    they cannot witness each other's loss: a v27 record has no `scheduledCounters`
-    at all, not a `scheduledCounters` missing one key. **A "rest" must be OLD, not
-    merely PLURAL.** (The field was called `scheduledCounters` at D434 and is
-    `scheduledEffect` from D435; the historical names are kept in this paragraph
-    because a provenance note that renames itself stops being one.)
-
-    🛑 **AND A RECORD-VALUED FIELD FAILS DIFFERENTLY FROM D432's BARE STAMP, WHICH
-    WAS MEASURED RATHER THAN ASSUMED — THIS PARAGRAPH FIRST CLAIMED THE BENIGN SOFT
-    LANDING AND WAS WRONG (D425: correct it in place and say so).** A missing
-    `noWeaknessTurn` reads as `undefined === state.turn`, i.e. FALSE, and the bar
-    silently stops existing. A missing `scheduledCounters` reads as
-    `undefined !== null`, and `scheduledCountersDue`'s very next comparison
-    dereferences `.turn` — so a v27 record does not lose a rule on this deploy, **it
-    dies at the next turn boundary**, because every Checkup calls that reader on the
-    ended seat's Active. The reader carries no defensive `=== undefined` arm on
-    purpose: `attackBlockOf` and `installedReductionOf` (continuous.ts) are the two
-    shipped record-valued fields and both say in their own comments that the
-    absent-key arm is `MATCH_RECORD_VERSION`'s job, not theirs. So the field is
-    REQUIRED and the constant goes 27 → 28 — for a SHARPER reason than D432's rather
-    than the same one. An OPTIONAL key would have forced the tolerant reader, and
-    THAT is where the loss becomes D124's benign soft landing: both roads driven side
-    by side in `delayedCounters.test.ts` §8.
-
-    🛑🆕🆕 **D435 — AND THIS TIME D421's PRECONDITION IS GENUINELY MET, THE OPTIONAL
-    ROAD IS GENUINELY AVAILABLE, AND IT IS STILL REFUSED. THE RULE IS NOT "REQUIRED
-    ALWAYS"; IT IS "MEASURE WHAT THE LOSS DEGRADES INTO".** D435 turns this record
-    into a DISCRIMINATED UNION, which is a new REQUIRED key (`kind`) plus a RENAME of
-    the type, the field (`scheduledCounters` → `scheduledEffect`) and the reader
-    (`scheduledCountersDue` → `scheduledEffectDue`). Either half alone moves
-    `MATCH_RECORD_VERSION` (D359: *"a WIDENING is free and a RENAME is not"*; D386: a
-    new required key on a persisted structure), so **28 → 29**, and the two reasons
-    are independent rather than one argument counted twice.
-
-    The optional road was priced properly rather than dismissed, because the two
-    refusals this run already recorded do NOT reach it:
-
-      · D432's rule — *a record with no rest must be required* — does not apply.
-        This record HAS a rest.
-      · D434's sharpening — *a rest must be OLD, not merely PLURAL* — is, for the
-        first time, SATISFIED. `{turn, amount}` were both written by the v28 deploy,
-        so a v28 record IS a `scheduledEffect` missing exactly one key, which is
-        precisely the shape D421's mitigation is written for. **A `kind?: "counters"`
-        defaulting to counters would have kept every v28 byte string meaning what it
-        meant, and would have cost no bump.**
-
-    🛑 **IT IS REFUSED ON D421's OWN CRITERION, APPLIED RATHER THAN COPIED (D425).**
-    The criterion is *choose the rest of the record so that LOSING the key is
-    DETECTABLE*. Measure what losing it actually does here: a v29-authored
-    `{turn, kind: "discard"}` that drops its `kind` reads as the counters member with
-    `amount === undefined`, the Checkup computes `damage + undefined` → **`NaN`**, and
-    `isLethallyDamaged` answers `NaN >= hp` → **false**. The body is not discarded, is
-    not Knocked Out, cannot ever be Knocked Out again, and the board looks entirely
-    normal. That is neither D124's benign soft landing nor a loud failure — it is
-    silent CORRUPTION, which is strictly the worst of the three, and it is driven in
-    `delayedCounters.test.ts` §8 rather than argued.
-
-    So the sequence now has three entries and they are three different reasons:
-    D432 *no rest*, D434 *rest not old*, **D435 *rest old, optional available, and the
-    degradation is NaN rather than a soft landing***. */
+/**
+ * §13: a delayed effect scheduled onto one Pokémon by an attack, fired by the Checkup at the end of
+ * the opponent's next turn. Discard and Knock Out are separate payloads because only a Knock Out
+ * awards a Prize (§8.1). Required rather than optional: a missing `kind` would read as counters
+ * with an undefined amount and silently make the body un-KO-able.
+ */
 export type ScheduledEffect =
-  /** The COUNTER placement (D434, corpus row 54). `amount` is HP, i.e. the printed
-      COUNTER COUNT × 10 (§12's one-counter-is-10 conversion, `DEFENDER_POISON_N`'s
-      `poisonDamage` convention verbatim). Stored in HP rather than in counters so
-      the Checkup's placement is `damage + amount` with no second unit conversion —
-      the same reason `DamageReduction.amount` and `SpecialConditions.poisonDamage`
-      are both HP. */
+  /** Damage counters to place, in HP (counters × 10). */
   | { turn: number; kind: "counters"; amount: number }
-  /** 🆕🆕 The DISCARD (D435, corpus row 53) — the body and everything attached to
-      it leave play for their OWNER's discard pile, and **no Prize is taken**. No
-      payload beyond the clock: the printed sentence names no amount, no filter and
-      no narrowing. */
+  /** Discards the body and its attachments to its owner's discard pile; no Prize is taken. */
   | { turn: number; kind: "discard" }
-  /** 🆕🆕 The KNOCK OUT (D435, corpus row 113's tail) — §8.1 in full, **including
-      the Prize**. Payload-free for the same reason the discard is. */
+  /** Knocks the body out (§8.1), including the Prize. */
   | { turn: number; kind: "knockOut" };
 
-/** §8.5/§11 (D149) — an attack-installed ATTACK-DAMAGE DEBUFF on one Pokémon,
-    with the printed DURATION baked in as a turn STAMP exactly as `AttackBlock`
-    and `DamageReduction` above bake theirs. The printed sentences are
-
-      "During your opponent's next turn, the Defending Pokémon's attacks do
-       {20|30} less damage (before applying Weakness and Resistance)."   (3)
-      "During your opponent's next turn, attacks used by the Defending Pokémon
-       do 100 less damage (before applying Weakness and Resistance)."    (2)
-
-    ⚠️ IT IS `DamageReduction`'s MIRROR ON BOTH AXES AT ONCE, AND THAT IS THE
-    WHOLE SLICE. That record is installed on the ATTACKER's own body and read at
-    the DEFENDER's step (subtracted AFTER Weakness and Resistance, from what the
-    holder TAKES). This one is installed on the DEFENDER's body and read at the
-    ATTACKER's step (subtracted BEFORE Weakness and Resistance, from what the
-    holder DEALS). Same `{ turn, amount }` shape, same window, same three §10
-    clears, opposite body and opposite step — and the printed sentences are told
-    apart by ONE WORD inside the parenthetical.
-
-    ⚠️ SO THE PARENTHETICAL IS NOT DECORATION, IT IS THE TAXONOMY. The pool prints
-    "N less damage" 31 times across two mechanisms (D147's census, re-run for this
-    slice): twenty printings say "(after applying Weakness and Resistance)" and
-    are D147's/`passivesOf`'s incoming reduction, five say "(before …)" and are
-    this. A reader keying on the verb phrase would have shipped five attacks
-    backwards, which is why both anchors carry the parenthetical inside `^…$`.
-
-    ⚠️ IT IS A FOURTH PARALLEL STAMPED FIELD, AND THAT IS D147's ANSWER RE-RUN
-    RATHER THAN INHERITED. §D147 declined the `attackBlock` generalisation and
-    named three triggers for re-opening it: a printing that REMOVES the effects of
-    attacks (the pool has none — re-censused here), a projection that must SHOW
-    the durated riders as a LIST (none crosses the wire; this field does not
-    either), and a FIFTH stamped field. This is the fourth, which §D147 explicitly
-    said is NOT the trigger. And the deciding fact holds here in the same form it
-    held there: the number this field feeds is one the read sites already compute
-    — `attackerPreWRBonus`'s total (interpreter.ts) has been a pre-W/R adjustment
-    to an attacker's output since Vitality Band — so there is no read path to
-    unify, only a term to subtract.
-
-    ⚠️ AND IT IS A SECOND TERM RATHER THAN A SIGNED BONUS. Folding the debuff into
-    `attackerPreWRBonus`'s return would have been one line and zero call-site diff,
-    and it is REFUSED on three grounds that are all observable rather than
-    stylistic: (1) `DAMAGE_DEALT.bonus` is a REPORTED field documented as "flat HP
-    the attacker's continuous effects ADDED", emitted only when positive, so a
-    signed number would silently drop a −100 from the row and from the log a player
-    reads; (2) that function is `passivesOf`'s fold — the CATALOG scan, suppressed
-    under a §9 Ability-lock aura — and an attack INSTALLATION must be immune to
-    that suppression, which is D147's own structural reason for keeping
-    `installedReductionOf` out of `passivesOf`, read on the other side of the
-    table; and (3) the debuff is the only one of the two that can drive the
-    subtotal NEGATIVE, so it owns a clamp the bonus has never needed. Three
-    reasons, and any one of them alone would decide it.
-
-    Everything else is INHERITED from `DamageReduction` unchanged: the stamp
-    convention, the read-through-continuous.ts shape
-    (`installedAttackDebuffOf`), the `Math.max` merge, the three §10 early clears,
-    and D124's no-defensive-`undefined` rule at the reader. */
+/**
+ * §8.5: an attack-installed debuff on the Defending Pokémon's attacks ("do N less damage before
+ * applying Weakness and Resistance"). Kept separate from `attackerPreWRBonus` because the bonus is
+ * reported only when positive, is suppressed by Ability locks, and never needs a clamp at zero.
+ */
 export interface AttackDamageDebuff {
-  /** The single turn number this debuff is live on (the installing turn + 1 —
-      the VICTIM's own next turn, since declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]). */
+  /**
+   * The single turn this debuff is live on: the installing turn + 1, the victim's own next turn.
+   */
   turn: number;
-  /** HP subtracted from every damage this Pokémon's attacks do, BEFORE Weakness
-      and Resistance — the printed parenthetical, and the whole of why the number
-      is stored rather than applied.
-
-      §8.5's order makes the two placements observably different, and in the
-      OPPOSITE direction from `DamageReduction.amount`: Weakness is
-      MULTIPLICATIVE, so a printed 120 Water hit into a ×2 Water body from an
-      attacker carrying 100 of this is `max(0, 120 − 100) × 2 = 40`, while the
-      same numbers subtracted after the modifiers give `120 × 2 − 100 = 140` —
-      the difference between a chip and a near-lethal. (Resistance and this number
-      are both additive and commute, so the parenthetical only ever bites on
-      WEAKNESS; the suite drives both.)
-
-      ⚠️ NO ACTIVE-SPOT SCOPE, AND THE CENSUS IS THE ARGUMENT. Every pre-W/R
-      printing in the pool that ADDS damage names its target — Vitality Band,
-      Defiance Band, Choice Belt, Practice Studio, Binding Mochi, Kingambit,
-      Galvantula, Okidogi, Moltres/Articuno/Zapdos all say "to your opponent's
-      Active Pokémon" — and NEITHER of the two sentences that SUBTRACT says
-      anything of the kind. [🆕🆕🆕 D631 (D539): ~~"neither"~~ of TWO is withdrawn as a count — Garbodor `me04-057` "Gloomy Garbage" is a further subtracting sentence, and it too names no target, so the argument stands] So this number comes off every damage the holder's
-      attack does, the Bench included, where `damageBonusBeforeWR` correctly does
-      not reach. Four read sites, the same four `installedReductionOf` is read at.
-
-      Two amounts are printed — 20 and 30 on one anchor, 100 on the other — and
-      each anchor carries ONE capture rather than a row per amount, the varying
-      token being a NUMBER and therefore closed by its type (D120's precondition,
-      met exactly as D147 met it). */
+  /**
+   * HP subtracted from this Pokémon's attack damage before Weakness and Resistance. Applies to
+   * every target, the Bench included, since the printed sentences name none.
+   */
   amount: number;
 }
 
-/** 🆕🆕🆕 §8.5/§11 (D547) — an attack-installed NEXT-TURN VULNERABILITY on one
-    Pokémon, `AttackDamageDebuff`'s sibling record: "During your next turn, the
-    Defending Pokémon takes 50 more damage from attacks (after applying Weakness
-    and Resistance)." (`censusAttackCorpus.ts:150`, 2 legal printings; no card id
-    on this checkout, measured — `damageVulnerability.test.ts` rides declared
-    `d547-*` demonstrators). Written onto the OPPONENT's Active by
-    `exposeDefender`; read through `installedVulnerabilityOf` (continuous.ts).
-
-    ⚠️ `DamageReduction`'s NUMBER WITH THE SIGN FLIPPED, AT THE SAME §8.5 STEP —
-    added AFTER Weakness and Resistance, at every site that subtracts the
-    installed reduction (`attack.ts`'s main hit, `spreadDamage`, `placeSnipe`,
-    `snipeActive`) — but on the other body and in the other window: the stamp is
-    the INSTALLER's own next turn (`state.turn + 2`), so the holder's controller
-    plays the whole turn in between and may retreat, switch or evolve the body out
-    from under it (§10: all three are the VICTIM's counterplay and are PLAYED
-    lines, `attackDamageDebuff`'s story and not the reduction's).
-
-    `{ turn, amount }` like both siblings: one window, one number, merged by
-    `Math.max` on a same-window re-install (the interpreter says why). */
+/**
+ * §8.5: an attack-installed next-turn vulnerability ("takes 50 more damage … after applying
+ * Weakness and Resistance"), added where installed reductions are subtracted. Stamped for the
+ * installer's next turn, so the holder can retreat or switch out of it.
+ */
 export interface DamageVulnerability {
-  /** The single turn number this vulnerability is live on — the installing turn
-      + 2, the INSTALLER's own next turn (declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3,
-      so the turn in between is the holder's). */
+  /** The single turn this is live on: the installing turn + 2, the installer's own next turn. */
   turn: number;
   /** HP ADDED to every attack's damage to this Pokémon AFTER Weakness and
       Resistance — the printed parenthetical. On a ×2 Weakness body the two
@@ -629,50 +211,28 @@ export interface DamageVulnerability {
   amount: number;
 }
 
-/** 🆕🆕🆕 §8.5/§11 (D552) — an attack-installed WEAKNESS RETYPE on one Pokémon:
-    "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The
-    amount of Weakness doesn't change.)" (`censusAttackCorpus.ts:629`, 1 legal printing;
-    no real card id on this checkout, measured — `weaknessRetype.test.ts` rides declared
-    `d552-*` demonstrators). Written onto the OPPONENT's Active by
-    `retypeDefenderWeakness`; read through `installedWeaknessRetypeOf` (continuous.ts)
-    and handed to cards.ts `weaknessOf`, which keeps the printed AMOUNT and swaps only
-    the TYPE it matches the attacker against.
-
-    `DamageVulnerability`'s holder and stamp (`state.turn + 2`, the installer's next
-    turn) with a TYPE where that one has a number. The printed window begins NOW
-    ("Until the end of"), but the rest of the installing turn and the holder's own turn
-    carry no Weakness step that could reach the body (docs/decisions.md D552 R1), so the
-    stamp is the only turn the reader answers on. */
+/**
+ * §8.5: an attack-installed Weakness retype ("the Defending Pokémon's Weakness is now {C}"); the
+ * printed amount is kept. Stamped for the installer's next turn, the only turn a Weakness step can
+ * reach the body.
+ */
 export interface WeaknessRetype {
   /** The single turn number the retype is live on — the installing turn + 2. */
   turn: number;
-  /** The Pokémon type the body's printed Weakness now names — the printed `{C}` is
-      `"Colorless"`, the only value any printing writes. 🆕🆕🆕 D640 (D539): ~~"the only value any
-      printing writes"~~ — Overwriting Bolt writes `"Lightning"` (with `asTimesTwo`). */
+  /** The type the body's Weakness now names. */
   type: string;
-  /** 🆕🆕🆕 §8.5 (D640) — Pikachu `30th-040` "Overwriting Bolt": *"The Defending Pokémon's Weakness is
-      now {L} until the end of your next turn. (Apply Weakness as ×2.)"* — the printed entries are
-      REPLACED by one `{ type, "×2" }` (cards.ts `weaknessOf`'s `rewrite`, read through continuous.ts
-      `installedWeaknessRewriteOf`), so a body that prints no Weakness GAINS one. Absent on every D552
-      record (the amount is kept), which is what a v46 writer meant. 🛑 A 0.522 ROLLBACK reads the key
-      as absent — the ×2 and the gained Weakness silently gone — so it rides `MATCH_RECORD_VERSION` 46 →
-      47 (apps/api match.ts "46 → 47 AT D640"). */
+  /**
+   * Pikachu "Overwriting Bolt": the printed Weakness entries are replaced by one ×2 entry, so a
+   * body with no Weakness gains one. Absent keeps the printed amount.
+   */
   asTimesTwo?: true;
 }
 
-/** 🆕🆕🆕 §8.1/§11 (D549) — an attack-installed KNOCK OUT BOUNTY on one Pokémon:
-    "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
-    cards." (`censusAttackCorpus.ts:149`, 1 legal printing; no card id on this checkout,
-    measured — `koBounty.test.ts` rides declared `d549-*` demonstrators). Written onto the
-    OPPONENT's Active by `bountyDefender`; read in ONE place, flow.ts `koPrizeBonus`.
-
-    `DamageVulnerability`'s SHAPE AND WINDOW, on the §8.1 prize step instead of the §8.5
-    damage step: the stamp is the INSTALLER's own next turn (`state.turn + 2`), so the
-    holder's controller plays the whole turn in between and may retreat, switch or evolve
-    the marked body out from under it (§10 — docs/decisions.md D549 R2).
-
-    `{ turn, amount }`: one window, one number, merged by `Math.max` on a same-window
-    re-install (the interpreter says why). */
+/**
+ * §8.1: an attack-installed Knock Out bounty ("if the Defending Pokémon is Knocked Out, take 2 more
+ * Prize cards"), read only by `koPrizeBonus`. Stamped for the installer's next turn, so the holder
+ * can retreat or switch out of it.
+ */
 export interface KoBounty {
   /** The single turn this bounty is live on — the installing turn + 2, the INSTALLER's
       own next turn. A Knock Out of the holder at ANY point of that turn pays it (R1:
@@ -683,24 +243,10 @@ export interface KoBounty {
   amount: number;
 }
 
-/** 🆕🆕🆕 §8/§11 (D549) — an attack-installed SIDE-WIDE ATTACK LOCK on one player's
-    whole side, for one turn. TWO printings write it (`censusAttackCorpus.ts:169` and
-    `:170`, 1 legal printing each; no card id on this checkout, measured):
-      · "During your next turn, your Pokémon can't attack. (This includes new Pokémon
-        that come into play.)" — the INSTALLER's side, `turn: state.turn + 2`,
-        `maxEnergy: null` (every body);
-      · "During your opponent's next turn, Pokémon that have 2 or less Energy attached
-        can't attack. (This includes new Pokémon that come into play.)" — the OPPONENT's
-        side, `turn: state.turn + 1`, `maxEnergy: 2`.
-    Read through `attackLocked` (continuous.ts), which answers "may this body DECLARE?"
-    — so the §8 gate, `redactedAttacksOf`'s `playable` and GameHud's greyed buttons all
-    see it with ZERO bytes at those three sites.
-
-    ⚠️ A RECORD ON THE SIDE, NOT A STAMP ON A BODY, AND THE PRINTED REMINDER IS WHY:
-    "(This includes new Pokémon that come into play.)" — a body benched, promoted or
-    evolved AFTER the install is locked too, which a per-body stamp written at install
-    time cannot express. A side record covers it BY CONSTRUCTION: the reader asks about
-    whichever body is asked about, at the moment it is asked. */
+/**
+ * §8: an attack-installed attack lock on a player's whole side for one turn. On the side rather
+ * than a body because the printed reminder covers Pokémon that come into play later.
+ */
 export interface SideAttackLock {
   /** The single turn this lock is live on — `+ 2` for the self form (the installer's
       own next turn), `+ 1` for the opponent form (the opponent's next turn). */
@@ -712,56 +258,28 @@ export interface SideAttackLock {
   maxEnergy: number | null;
 }
 
-/** 🆕🆕🆕 §8.5/§11 (D564) — a SIDE-WIDE post-W/R damage reduction on one seat's Pokémon,
-    installed by a Supporter for the OPPONENT's next turn: Jasmine's Gaze
-    `sv08-178`/`-233`/`-245` (*"During your opponent's next turn, all of your Pokémon take 30
-    less damage from attacks from your opponent's Pokémon (after applying Weakness and
-    Resistance). (This includes new Pokémon that come into play.)"*, 3 legal printings).
-    Written by the `installSideDamageReductionNextTurn` op onto the ACTING seat's side with
-    `turn: state.turn + 1` — `SideAttackLock`'s OPPONENT form's stamp (*"+ 1 for the
-    opponent's next turn"*), because the Supporter is played on its owner's own turn and the
-    very next turn is the opponent's. Read through continuous.ts `seatDamageReduction`, paid
-    only while `turn === state.turn`, so it expires by arithmetic (no clear to forget).
-
-    ⚠️ A RECORD ON THE SIDE, NOT A STAMP ON A BODY — `SideAttackLock`'s reason verbatim:
-    the printed *"(This includes new Pokémon that come into play.)"* covers a body benched
-    or promoted after the install, which a per-body stamp written at install time cannot
-    express (R-JG3). Not shed by §10 on switching: it is no effect on a Pokémon.
-
-    ⚠️ OVERWRITE, NOT SUM: a second install replaces the first. Only one Supporter may be
-    played per turn (§7.2) and each install's window is the single turn after its owner's
-    turn, so two live windows on one side can never overlap on a legal board — the
-    overwrite is named rather than hedged with an array. [🆕🆕🆕 D630 (D539): WITHDRAWN — the record is a summed LIST since D630: Iron Defender is an Item, so two plays in one turn overlap; a second install APPENDS and the live entries SUM (`PlayerSide.sideDamageReduction`).] */
+/**
+ * §8.5: a side-wide post-Weakness damage reduction for the opponent's next turn (Jasmine's Gaze,
+ * Iron Defender). On the side so it covers Pokémon that come into play later; not shed by
+ * switching. Entries are summed.
+ */
 export interface SideDamageReduction {
   /** The single turn this reduction is live on — the installer's opponent's next turn. */
   turn: number;
   /** HP subtracted after Weakness and Resistance (the printed 30). */
   amount: number;
-  /** 🆕🆕🆕 D630 — the printed holder TYPE (Iron Defender `me01-118` / `me05-110`, *"all of your
-      {M} Pokémon"*), matched on the damaged body's in-play card (`typedPokemon`, Full Metal Lab's
-      reading). ABSENT = every Pokémon of the side (Jasmine's Gaze). */
+  /**
+   * The printed holder type ("all of your {M} Pokémon"); absent means every Pokémon on the side.
+   */
   pokemonType?: PokemonType;
 }
 
-/** 🆕🆕🆕 §11 (D575) — a SIDE-WIDE, class-filtered next-turn damage block: Miraidon `sv08-069`
-    "C.O.D.E.: Protect" (*"…prevent all damage done to each of your Future Pokémon by attacks
-    from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends."*).
-    Written by `installSideAttackBlock` (interpreter.ts) on the INSTALLER's side, read by ONE
-    side arm in continuous.ts `attackBlockOf` for the damaged body's side.
-
-    `banner` is the printed DEFENDER set ("Future"), read LIVE off the damaged body's top card
-    at damage time — never a snapshot of which bodies were Future at install (R-MI2 ⚠️
-    UNRULED: a Future body benched after the install is covered). `fromClass` is the printed
-    ATTACKER class (`{ stage: "ex" }`), resolved by `attackBlockOf`'s own class predicate.
-    `sourceUid` is the installer's top-card uid: the terminator *"If this Pokémon is no longer
-    your Active Pokémon, this effect ends"* is CLEARED where the source leaves the Active
-    (`switchInto` — the reachable route inside the window, a gust) and re-checked at read
-    time (the source must still be its side's Active) for every other route (a Knock Out, a
-    bounce) — R-MI1 ⚠️ UNRULED: a read-time check ALONE would revive the effect after a gust
-    and a re-promotion, so the clear is the primary half.
-
-    OVERWRITE on a second install (one attack per turn; a second Miraidon's install replaces
-    the first — the later source owns the terminator). */
+/**
+ * §11: a side-wide, class-filtered next-turn damage block (Miraidon "C.O.D.E.: Protect"). `banner`
+ * is read live off the damaged body. The effect ends if the source leaves the Active Spot: cleared
+ * on `switchInto` and re-checked at read time, since a read-time check alone would revive it after
+ * a gust and re-promotion. A second install overwrites.
+ */
 export interface SideAttackBlock {
   /** The single turn this block is live on — the installer's opponent's next turn. */
   turn: number;
@@ -773,20 +291,11 @@ export interface SideAttackBlock {
   fromClass: AttackerClass;
 }
 
-/** 🆕🆕🆕 §11 (D621) — a SUPPORTER-installed next-turn shield on ONE chosen body: Acerola's
-    Mischief `me01-113` / `-165` / `-183`, `me02.5-180` (*"Choose 1 of your Pokémon in play. During
-    your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by
-    your opponent's Pokémon ex."*). Written by `installChosenAttackShield` (interpreter.ts) on the
-    INSTALLER's side, `turn: state.turn + 1`; read by continuous.ts `attackBlockOf` (FIRST, as a
-    synthesized `{ effects: true }` block: no other block refuses more for the attacker it names).
-
-    ⚠️ ON THE SIDE AND KEYED BY THE BODY's BASE uid (`stack[0]`), NOT A STAMP ON THE BODY: it is a
-    Trainer's effect, not an attack's, so §10's shed (switching, evolving) does not end it — R-AM1
-    ⚠️ UNRULED: the shield follows the chosen Pokémon to the Bench, through evolution and devolution,
-    and ends when it leaves play — flow.ts `clearDepartedChosenShields` clears a record whose uid is no
-    longer a base card in play on its seat, on every accepted action (the uid alone cannot tell a
-    replayed card from the old Pokémon). OVERWRITE on a second install (one Supporter per turn, one
-    window). */
+/**
+ * §11: a Supporter-installed next-turn shield on one chosen body (Acerola's Mischief), keyed by its
+ * base uid. It is not an attack effect, so it follows the Pokémon through switching and evolution
+ * and ends only when it leaves play. A second install overwrites.
+ */
 export interface ChosenAttackShield {
   /** The single turn this shield is live on — the installer's opponent's next turn. */
   turn: number;
@@ -796,15 +305,11 @@ export interface ChosenAttackShield {
   fromClass: AttackerClass;
 }
 
-/** 🆕🆕🆕 §11 (D621) — a SUPPORTER-installed next-turn RETREAT lock on the OPPONENT's whole side,
-    filtered by a Special Condition: Roxie's Performance `me04-081` / `-112` / `-121` (*"During your
-    opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned
-    Pokémon.)"*). Written by `lockSideRetreat` (interpreter.ts) on the VICTIM's side, `turn:
-    state.turn + 1`; read by continuous.ts `retreatLocked` — so the §11 gate, the wire's retreat
-    offer and the HUD see it with no edit — against the body's LIVE conditions at each ask (R-RP1
-    ⚠️ UNRULED: a body Poisoned after the play is locked; a cured one may retreat). Retreat only:
-    switch effects never ask `retreatLocked`. A record on the SIDE for `SideAttackLock`'s reason (the
-    printed reminder covers bodies that become Poisoned later). OVERWRITE on a second install. */
+/**
+ * §11: a Supporter-installed next-turn retreat lock on the opponent's Poisoned Pokémon (Roxie's
+ * Performance), checked against live conditions. Retreat only; switch effects ignore it. A second
+ * install overwrites.
+ */
 export interface SideRetreatLock {
   /** The single turn this lock is live on — the installer's opponent's next turn. */
   turn: number;
@@ -812,516 +317,111 @@ export interface SideRetreatLock {
   status: "poisoned";
 }
 
-/** 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's next-turn HAND-ATTACH mark, written by
-    the `markHandAttach` op on the opponent's Active, stamped `state.turn + 1` (the victim's
-    own turn). Two printed consequents on one window [🆕🆕🆕 D636 (D539): three — `counters`, Electrified
-    Incisors, see the field below]:
-      `barred` — Glimmora `sv08-115` "Corrosive Shards": Energy cards can't be attached from
-        the victim's hand to this body (turn.ts `attachEnergy` → `ENERGY_ATTACH_BARRED`; the
-        effect attaches from hand drop the body from their targets — R-GL1 ⚠️ UNRULED);
-      `endsTurn` — Hypno `sv06.5-017` "Daydream": an Energy card attached from the victim's
-        hand to this body ENDS their turn (R-HY1 ⚠️ UNRULED — the attach action AND an
-        effect's hand attach), AFTER the on-attach riders and watched triggers and behind any
-        parked prize pick (R-HY2 ⚠️ UNRULED);
-      `tripped` — the EFFECT path's carrier (R-HY1): an effect's hand attach onto a live
-        `endsTurn` body sets it, and flow.ts `settleProgram` ends the controller's turn when
-        the program settles (the Koraidon precedent). Always `false` when written.
-    A second install inside one window MERGES by OR. Shed by §10 with every other effect of an
-    attack (`clearOnLeavingActive`, `switchInto`, `evolveOnto`, `devolvedBodyOf`; `makeInPlay`
-    writes `null`). */
+/**
+ * §6.2: the Defending Pokémon's next-turn hand-attach mark, live on the victim's own turn. `barred`
+ * refuses Energy attached from hand (Glimmora); `endsTurn` ends the turn after such an attach
+ * (Hypno); `tripped` carries that through an effect's hand attach to `settleProgram`. A second
+ * install merges; shed by §10 like other attack effects.
+ */
 export interface HandAttachMark {
   /** The single turn this mark is live on — the installer's opponent's next turn. */
   turn: number;
   barred: boolean;
   endsTurn: boolean;
   tripped: boolean;
-  /** 🆕🆕🆕 (D636) — Pachirisu `me01-051` "Electrified Incisors": *"…whenever they attach an Energy card
-      from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon."* The counters
-      placed per Energy card attached from the victim's hand (the attach action and an effect's hand
-      attach, R-HY1's reach — R-EIC1 ⚠️ UNRULED), `0` when the mark prints none. A second install in
-      the window SUMS (two printed effects). REQUIRED: a v44 mark is migrated with `counters: 0`. */
+  /**
+   * Damage counters placed per Energy card attached from the victim's hand (Pachirisu "Electrified
+   * Incisors"); 0 when the mark prints none. A second install sums.
+   */
   counters: number;
 }
 
-/** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
-    Pokémon, with the printed DURATION baked in as a turn STAMP exactly as
-    `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` above bake theirs.
-    THREE printed sentences, **8 legal printings**, measured off
-    `legalAttackCorpus()`:
-
-      "During your opponent's next turn, if this Pokémon is damaged by an attack
-       (even if it is Knocked Out), put 8 damage counters on the Attacking
-       Pokémon."                                            (corpus line 178, 5)
-      "…(even if this Pokémon is Knocked Out), put 6 damage
-       counters…"                                           (corpus line 179, 1)
-      "…(even if this Pokémon is Knocked Out), put damage counters on the
-       Attacking Pokémon equal to the damage done to this
-       Pokémon."                                            (corpus line 180, 2)
-
-    🛑 **THE HEADER HERE USED TO SAY "One printed sentence, two printings … put 10
-    damage counters … Lycanroc ex sv02-117 / sv02-241 'Scary Fangs'".** That is the
-    phantom sentence D454 found; D455 corrected the copy in `interpreter.ts` and
-    reported *"corrected in place"*, and this was one of six live copies it did not
-    reach. The card ids are stated as UNRESOLVED rather than repaired (D425 — this
-    checkout has no D1), because ids quoted against a sentence that does not exist
-    cannot be trusted to name the printings of the one that does.
-
-    ⚠️ IT IS `DamageReduction`'s SIBLING ON EVERY AXIS BUT THE READ SITE, and that
-    is the whole shape of the slice. Same holder ("this Pokémon" — the installer's
-    own Active), same `state.turn + 1` window (the sentence prints "During your
-    opponent's next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3), same
-    `{ turn, amount }` record, same three §10 clears, same `Math.max` merge. What
-    differs is WHICH number it feeds: that one is subtracted at §8.5 step 5, this
-    one is ADDED at the §9 reactive recoil (attack.ts), the site that already sums
-    `passivesOf().damageAttacker`.
-
-    ⚠️ AND THAT MAKES IT THE THIRD FIELD IN THE FAMILY WHOSE READ IS A SUM ACROSS
-    THE CATALOG/STATE BOUNDARY, which is the fact the generalisation argument turns
-    on (decisions.md D152). The pool prints this exact mechanism MINUS its duration
-    on four always-on printings — Cacnea sv01-005 / Cacturne sv01-006
-    "Counterattack Quills" (3 counters), Stunfisk sv03-112 "Custom Trap" (5,
-    `requiresTool`) and Rocky Helmet sv01-193 (2, a Pokémon TOOL) — all simulated
-    since 0.x as `PassiveEffects.damageAttacker` and folded by `passivesOf`. So
-    this field is a SOURCE feeding a number the engine already computes, not a
-    second channel: the ONE read site sums it into that fold and nothing else about
-    §9 moves. One reading, one implementation (D131).
-
-    It is kept OUT of `passivesOf` for `installedReductionOf`'s TWO REASONS
-    VERBATIM: that function is the CATALOG scan (printed passives + attached
-    Tools), which is the aura/installation distinction `attackBlockOf`'s doc block
-    draws; and it SUPPRESSES a holder's own printed passive under a §9
-    Ability-lock aura, which an attack INSTALLATION must be immune to — an
-    installation is not an Ability. Summing at the site keeps that immunity a
-    property of where the number comes from.
-
-    ⚠️ AND THE SUM IS OBSERVABLE ON A BOARD THE CARDS THEMSELVES BUILD: a Lycanroc
-    ex carrying this 100 and wearing Rocky Helmet retaliates for 120 in ONE
-    `COUNTERS_PLACED` row labelled `"counterattack"` — D141's judgement re-run with
-    a THIRD provenance (an attack) in the sum it said no label could name. No new
-    `COUNTERS_PLACED` member, which is the test of whether D141's axis was right. */
+/**
+ * §9: an attack-installed reactive recoil for the opponent's next turn ("if this Pokémon is damaged
+ * by an attack, put N damage counters on the Attacking Pokémon"). Added to
+ * `passivesOf().damageAttacker` at the recoil site, but kept out of `passivesOf` so Ability locks
+ * do not suppress it.
+ */
 export interface InstalledRecoil {
   /** The single turn number this recoil is live on (the installing turn + 1). */
   turn: number;
-  /** The GUARANTEED FLOOR in HP put on the Attacking Pokémon when the holder is
-      damaged — the printed COUNTERS × 10, converted once at the deriver
-      (effects.ts) so every reader downstream speaks the engine's one damage unit.
-
-      ⚠️ THE PRINTED CLAUSE "(even if {it|this Pokémon} is Knocked Out)" NEEDS NO
-      FIELD, and saying so is the point: the §9 site already runs BEFORE
-      finishAttack's §8.1 both-board sweep, so a lethal retaliation from a body that
-      was itself KO'd is the behaviour the always-on printings have had since 0.x.
-      The duration is the only thing this sentence adds to the four already read.
-
-      🆕🆕 **D456 — IT IS A FLOOR RATHER THAN "THE AMOUNT" SINCE THE UNPRINTED
-      MEMBER LANDED**, and for the flat printings the two readings are the same
-      number. See `ofDamageTaken` below. */
+  /**
+   * The minimum HP placed on the Attacking Pokémon, in HP. "Even if this Pokémon is Knocked Out"
+   * needs no field because the recoil runs before the KO sweep.
+   */
   amount: number;
-  /** 🆕🆕 D456 — present and `true` iff this record was installed by corpus line 180,
-      *"…put damage counters on the Attacking Pokémon equal to the damage done to
-      this Pokémon."* (**2 legal printings**). The recoil then answers
-      `Math.max(amount, <the damage this hit just did to the holder>)` instead of
-      `amount`, resolved at the ONE read site (`installedRecoilOf`, continuous.ts)
-      from that site's own `dealt` local.
-
-      🛑 **OPTIONAL, AND `MATCH_RECORD_VERSION` STAYS 29 — BUT NOT ON THE
-      REACHABILITY ARGUMENT THE LAST THREE SLICES USED.** That argument (*"an
-      `EffectOp` reaches storage only through a park"*) does not apply here at all:
-      `InPlayPokemon.installedRecoil` is a `GameState` field and is persisted
-      DIRECTLY. The argument that does apply is `match.ts`'s own discriminator —
-      *"does the OLD byte string still mean what it meant"* — and it does: a v29
-      record's `{turn, amount}` carries no `ofDamageTaken`, absence reads as the flat
-      family, and the flat family is what a v29 writer meant by those bytes. A
-      WIDENING is free; a RENAME and a new REQUIRED key are not.
-
-      🛑 **AND THE OPTIONAL ROAD IS TAKEN ON D421's CRITERION APPLIED RATHER THAN
-      COPIED (D425).** The criterion is *choose the REST of the record so that LOSING
-      the key is DETECTABLE*. Losing it here leaves `{turn, amount: 0}` — and a flat
-      install can never author that, because the deriver's `counters >= 1` guard is
-      the only producer of a flat `installRecoil` in the engine. So the loss does not
-      degrade into a plausible neighbouring record the way D435's dropped `kind` did
-      (`damage + undefined` → `NaN` → a body that can never be Knocked Out again); it
-      degrades into a shape that is unauthorable by the surviving path, visible in the
-      bytes, and inert on the board. Driven in `installedRecoil.test.ts` §7 over the
-      serialized bytes in three directions, LOSS included, rather than argued.
-
-      ⚠️ **`true` RATHER THAN `boolean`, so `false` is not a second spelling of
-      absent** — the field has exactly two inhabitants and `undefined` is one of them.
-
-      ⚠️ **THE RECORD DOES NOT TAKE THE OP's STRING.** `EffectOp`'s
-      `installRecoil.amount` is `number | "damageTaken"` (effects.ts, `heal`'s D427
-      widening at a second address); this record keeps `amount: number` and carries
-      the channel as a separate flag. A persisted `amount: "damageTaken"` would be a
-      STRING in the numeric field that `attack.ts` SUMS with `passivesOf().
-      damageAttacker`, so a deploy that did not know the inhabitant would compute
-      `20 + "damageTaken"` → `"20damageTaken"` → `> 0` false, and would silently drop
-      the ALWAYS-ON Rocky Helmet share as well as the installed one. Two surfaces, two
-      spellings, and the reason is written here so a successor does not "unify" them. */
+  /**
+   * Set when the recoil equals the damage done to this Pokémon: it is then `Math.max(amount, damage
+   * dealt)`. Kept as a separate flag rather than a string in `amount`, since `amount` is summed
+   * numerically.
+   */
   ofDamageTaken?: true;
 }
 
-/** §8/§11 (D154) — an attack-installed PER-ATTACK lock on one Pokémon, with the
-    printed DURATION baked in as a turn STAMP exactly as the four records above
-    bake theirs. One printed sentence, six printings in the local D1:
-
-      "During your next turn, this Pokémon can't use {AttackName}."      (6)
-
-    — Munkidori ex sv06.5-037/-083/-091 "Dirty Headbutt" (INDEX 0), Lucario
-    sv01-114 "Accelerating Stab" (INDEX 1), Skarmory sv03-142 "Slashing Steel"
-    (INDEX 1) and Greedent ex sv03-179 "Slip 'n' Roll" (INDEX 1). ONE MORE
-    printing is fielded but uncatalogued — Radiant Blastoise swsh10.5-018
-    "Torrential Cannon" (INDEX 0) is in `FIXTURE_POOL` and the local D1 holds no
-    swsh10.5 SET AT ALL (see the census in effects.ts), so it is read by this
-    anchor and cannot be verified by query.
-
-    ⚠️ IT IS THE FIRST DURATED RECORD IN THE FAMILY THAT IS NOT A BARE NUMBER,
-    AND THAT IS THE WHOLE SLICE. `AttackBlock` carries flags, the other three
-    carry an AMOUNT — a quantity every read site folds into arithmetic it was
-    already doing. This one carries an ADDRESS: "which attack" is not a number
-    that can be summed with anything, and its three read sites COMPARE it rather
-    than adding it.
-
-    ⚠️ AND SINCE D165 THE BODY HOLDS A **LIST** OF THEM RATHER THAN ONE, BECAUSE
-    THE FIELD HAS TWO WRITERS AND A SLOT HAS ONE SEAT. That is the whole of D165
-    and it is written up at `InPlayPokemon.lockedAttacks` below; the RECORD in this
-    block did not move a byte. What moved is the multiplicity, and the reason is
-    that `preventAttackUse` (D154, `state.turn + 2`) and `lockDefenderAttack`
-    (D157, `state.turn + 1`) can stamp the SAME turn from ADJACENT turns onto the
-    SAME body, and a single slot silently kept the later write.
-
-    ⚠️ IT CANNOT SHARE `attackLockedTurn`, WHICH IS THE SAME WINDOW ON THE SAME
-    BODY WRITTEN BY THE SAME KIND OF SENTENCE — and saying so is the point of this
-    block, because that is the widening a reader will reach for first. Both stamp
-    the HOLDER's own next turn (`state.turn + 2`, D143's number), both are shed by
-    the same three §10 clears, and one `{ turn, attackIndex? }` record with the key
-    ABSENT meaning "the whole Pokémon" is exactly D135's absent-key shape. It is
-    refused because the two are REACHABLE TOGETHER and mean different things: a
-    Skarmory that self-locks "Slashing Steel" on turn 3 (stamp 5) and is then
-    locked WHOLE by an opponent's Eiscue ex on turn 4 (stamp 5, D148's defender
-    arm) carries both facts on turn 5, and one record could hold only the later
-    write. A merge rule ("absent wins, it is strictly stronger") would be a rule
-    about which of two printed sentences was declared last — the exact thing D147
-    refused when it kept `damageReduction` out of `AttackBlock.turn`.
-
-    ⚠️ AND D165 IS THAT PARAGRAPH COMING TRUE ONE FIELD TO THE LEFT. The argument
-    above — "REACHABLE TOGETHER … one record could hold only the later write" —
-    was written to refuse a merge ACROSS two fields and was never asked of the
-    field it was written on. `lockedAttack` acquired a SECOND writer at D157 and
-    the identical collision was live from that commit: two per-attack bars, on one
-    body, on one turn, in one slot. The repo had already written down the argument
-    that condemned it, which is the most transferable thing about the defect —
-    **the test is not "do these two records mean the same thing" but "how many
-    writers does this slot have, and can any two of them stamp the same turn".**
-
-    THE WINDOW IS `state.turn + 2`, D143's number and not D142's: the sentence
-    prints "During YOUR next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3),
-    so the turn after the installing one is the opponent's and the one after THAT
-    is the holder's own. A `+ 1` stamp would be live only on a turn the holder
-    could not have acted on anyway, which is the failure mode D143 wrote down —
-    it deletes the drawback the card is balanced around and nothing looks wrong.
-
-    Everything else is INHERITED from `AttackBlock` unchanged: the stamp
-    convention, the read-through-continuous.ts shape (`lockedAttackIndexes`), the
-    three §10 early clears, and D124's no-defensive-`undefined` rule at the
-    reader. */
+/**
+ * §8: an attack-installed lock on one specific attack ("During your next turn, this Pokémon can't
+ * use {AttackName}"). The body holds a list because two writers can stamp the same turn. Kept
+ * separate from `attackLockedTurn` because both can hold on one body at once.
+ */
 export interface LockedAttack {
-  /** The single turn number this lock is live on — the installing turn + 2 when
-      `preventAttackUse` wrote it (the HOLDER's own next turn, since declaring an
-      attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]) and + 1 when `lockDefenderAttack` did (the VICTIM's
-      next turn, which is the turn immediately after). Two writers, two offsets,
-      one number — which is exactly how two entries come to share it (D165).
-
-      🆕🆕 **D421 — AND WHEN `until` IS SET THIS NUMBER IS PROVENANCE AND NOTHING
-      ELSE: it is the INSTALLING turn, and no reader compares it.** The rider
-      short-circuits every read of this field — `lockedAttackIndexes` answers the
-      entry whatever the turn is, and `addLockedAttack`'s prune and its idempotence
-      key both branch away from it — so there is no window for a number to name.
-      It stays REQUIRED rather than becoming optional for `healedTurn`'s reason at
-      the other address (match.ts): a key the writer never wrote is not a key with
-      a default, and an optional `turn` would make every existing reader ask
-      "absent, or genuinely unknown?" about a fact the model always has.
-
-      ⚠️ **THE INSTALL TURN AND NOT `+ 2`, DELIBERATELY, AND THE GROUND IS THAT A
-      WRONG DEGRADATION IS WORSE THAN A LOUD ONE.** Stamping `state.turn + 2` would
-      make a build that DROPPED the rider degrade silently into D154's next-turn
-      lock — a real bar, on a real turn, that simply stops one turn later than the
-      card says. Stamping the install turn makes the same build produce a bar
-      stamped for a turn its holder has already spent (declaring ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves],
-      §5.3), so it never bites at all and a board says so on the very next turn.
-      The rider is the fact; the stamp is the audit trail. */
+  /**
+   * The single turn this lock is live on. When `until` is set it is the installing turn and no
+   * reader compares it.
+   */
   turn: number;
-  /** WHICH attack is barred, as an index into the stack-top card's `attacks`.
-
-      ⚠️ AN INDEX RATHER THAN THE PRINTED NAME, AND THE TWO READ SITES DECIDE IT.
-      The printed sentence names a PROPER NOUN and the op carries that noun
-      verbatim (effects.ts) — but every consumer of this record asks the question
-      per INDEX: `attack.ts`'s §8 gate compares it against `action.index`, and
-      both payability projections (`redactedAttacksOf`, GameHud) build their rows
-      by `attacks.map((attack, index) => …)` [🆕🆕🆕 D578 (D539): both halves WITHDRAWN as
-      spelled — the §8 gate compares this against the declared ATTACK MENU row's PRINTED index
-      (`attack.ts` `printedIndex`: the row's `sourceIndex` when `origin === "printed"`, else -1,
-      so a Memory Dive or Technical Machine row is never barred by it, R-MD4), and both
-      projections now map over `attackMenuOf` and compare `sourceIndex` for PRINTED rows only.
-      The address is still the printed index; only the read sites moved. 🆕🆕🆕 D578 (R-MD4,
-      RULED: fixed at the landing): ~~"so a Memory Dive or Technical Machine row is never barred by
-      it, R-MD4"~~ still true of THIS index — a borrowed row's bar is the `attackName` entry below,
-      written with `attackIndex: -1`]. Resolving the name ONCE, at the
-      install, is the same call D152's deriver made for its unit conversion: the
-      translation happens at the site that reads the printed token, so no consumer
-      downstream has to know the sentence named anything.
-
-      ⚠️ THE INDEX IS NOT CONSTANT ACROSS THE FAMILY — 0 on the three Munkidori ex
-      printings (whose card has ONE attack) and 1 on Lucario, Skarmory and Greedent
-      ex — which is why the resolution is a lookup and not a literal. A build that
-      assumed either number would bar the wrong attack on four of the six
-      printings, and on Munkidori ex it would be right for the wrong reason. */
+  /**
+   * Which printed attack is barred, as an index into the top card's `attacks`, resolved from the
+   * printed name at install. Borrowed attack rows are barred by `attackName` instead.
+   */
   attackIndex: number;
-  /** 🆕🆕 **D421 — the DURATION, when the printed one is not a clock.** Present
-      only for *"This Pokémon can't use Blaze Blitz again until it leaves the
-      Active Spot."* (Gouging Fire ex sv05-038/-188/-204/-214, svp-144 — **5 legal
-      printings, one card in five rarities**), where the bar has no expiry at all
-      and is lifted by §10 instead. ABSENT means D154/D157's next-turn window,
-      which is what every entry written before this slice means (D135's absent-key
-      rule) — so this is a WIDENING and `MATCH_RECORD_VERSION` does not move.
-
-      🛑 **AND IT IS AN OPTIONAL KEY RATHER THAN A NEW `InPlayPokemon` FIELD,
-      WHICH IS D408's CRITERION EVALUATED RATHER THAN QUOTED.** That slice's rule
-      is that a fact needing MORE THAN THREE off-Active clear sites has outgrown a
-      sentence and wants a state slice of its own. This one needs exactly THREE —
-      `clearOnLeavingActive` (turn.ts), `switchInto` (interpreter.ts) and
-      `evolveOnto` (types.ts) — and it needs them BY ALREADY BEING ON THEM: all
-      three shed `lockedAttacks: []` unconditionally, so the whole of *"until it
-      leaves the Active Spot"* is machinery this field already owns. A new field
-      would have had to be added to the same three literals to say the same thing.
-
-      ⚠️ **AND `markers` IS THE ROUTE THAT LOOKS RIGHT AND IS WRONG** (D414's
-      precedent, checked rather than copied): that bag is cleared at `evolveOnto`
-      ONLY, so a bar carried there would survive a RETREAT — the counterplay the
-      printed sentence is entirely about. Wrong-with-no-failure, which is the
-      outcome this family refuses.
-
-      A `"leavesActive"` STRING rather than `true`, for the op's reason verbatim
-      (effects.ts): the axis is a DURATION and a second one is a printing away,
-      while a boolean would have to be renamed to admit it. */
+  /**
+   * How long the bar lasts when it is not a next-turn window: `"leavesActive"` means it holds until
+   * the Pokémon leaves the Active Spot (Gouging Fire ex "Blaze Blitz"). Absent means the next-turn
+   * window.
+   */
   until?: "leavesActive";
-  /** 🆕🆕🆕 **D578 (R-MD4, RULED: fixed at the landing) — the bar keyed by the attack's PRINTED
-      NAME, for an attack the holder does not print.** Present only when `preventAttackUse` ran
-      for a declared Memory Dive or Technical Machine menu row (`EffectContext.borrowedAttack`):
-      Scizor ex `sv05-111`/`-195` using Scyther's "Slashing Strike", Incineroar ex
-      `sv05-034`/`-187` using Torracat's "Flare Strike". Such an entry is written with
-      `attackIndex: -1` — no printed index — and is read by `lockedAttackNames` (continuous.ts),
-      which the §8 gate, `redactedAttacksOf` and GameHud compare against each menu row's own
-      name; `lockedAttackIndexes` skips it, so the -1 never reaches an index comparison. A NAME
-      and not a flat menu index, because the menu can grow or empty between two reads (a
-      Relicanth leaves play, the Technical Machine is discarded) and a flat index is NEVER
-      persisted.
-
-      OPTIONAL, a widening (D421's `until` precedent): every entry written before D578 lacks it
-      and reads as before, so `MATCH_RECORD_VERSION` STAYS 40. A 0.461 rollback reading a v40
-      record that holds such an entry answers `-1` from its `lockedAttackIndexes`, which no
-      `action.index` and no projection row ever equals: inert (the bar lapses, the player's
-      favour — the pre-landing reading). */
+  /**
+   * The barred attack's printed name, set only for a borrowed attack (Memory Dive or Technical
+   * Machine) that the holder does not print. Such entries have `attackIndex: -1` and are matched by
+   * name via `lockedAttackNames`, because the attack menu can change between reads.
+   */
   attackName?: string;
 }
 
-/** §8.5/§11 (D155) — an attack-installed PER-ATTACK DAMAGE BUFF on one Pokémon,
-    with the printed DURATION baked in as a turn STAMP exactly as the five records
-    above bake theirs. ~~One printed sentence, ONE printing in the local D1~~ —
-    🆕🆕 D544: ~~FOUR legal sentences on one record, 8 printings~~ — 🆕🆕🆕 D546: SIX
-    sentences / 10 printings (measured by deriving `legalAttackCorpus()`,
-    `attackBaseOverride.test.ts` §1) — FIVE ADDITIVE (three NAMED through the template
-    below, two ALL-ATTACKS) and ONE BASE-SET:
-
-      "During your next turn, this Pokémon's {AttackName} attack does 100 more
-       damage (before applying Weakness and Resistance)."                 (1)
-         legal: Echoed Voice 80 (`censusAttackCorpus.ts:165`, 3), Meteor Mash
-         60 (`:167`, 2), Tornado Rush 100 (`:168`, 1) — 3 sentences / 6 printings
-      "During your next turn, this Pokémon's Hyper Fang attack's base damage
-       is 240."                 (2 legal — `censusAttackCorpus.ts:166`, D544)
-      "[Both Active Pokémon are now Asleep. ]During your next turn, attacks used by
-       this Pokémon do 120 more damage to your opponent's Active Pokémon (before
-       applying Weakness and Resistance)."   (🆕🆕🆕 D546 — `:148` at 120 and `:76` at
-       100 behind the Sleep prefix, 1 legal printing each; `attackIndex: null`)
-
-    The `(1)` is D155's local-D1 census and is left as written — Seismitoad
-    `sv03-052`, below, which prints "100 more" and is NOT a legal-corpus row; the
-    rest is the LEGAL column's. Of its eight printings, the three Echoed Voice
-    ones are Meloetta ex `sv10.5b-044`/`-159`/`-167` (D277's registry rows), and no
-    registry, `catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado
-    Rush or Hyper Fang (measured, `git grep -c`, zero).
-    The base-set sentence is the `base` key below, and the whole of why it is a key
-    on THIS record rather than a field of its own is the WRITER: one installer
-    (`interpreter.ts` `boostAttack`) stays the only writer of `boostedAttack`, where
-    D165 found two writers of `lockedAttack` deleting each other.
-
-    — Seismitoad sv03-052 "Echoed Voice" ({W}{W}, printed 120, attack INDEX 0,
-    its card's ONLY attack). The census is in effects.ts on the anchor; the
-    populations are named there because D154 found that the local D1 holds five
-    sets and `FIXTURE_POOL` fields cards from a sixth.
-
-    ⚠️ IT IS `LockedAttack`'s RECORD WITH AN AMOUNT BESIDE THE ADDRESS, AND THAT
-    IS EXACTLY WHY IT IS A SECOND FIELD RATHER THAN A KEY ON THE FIRST. D154 built
-    `{ turn, attackIndex }` on the same body with the same `state.turn + 2` stamp
-    and the same three §10 clears; this is `{ turn, attackIndex, amount }` (plus, since
-    D544, an optional `base` that only a base-set install writes — the argument below is
-    about `amount` and does not move). D131's
-    widen-don't-add test asks whether stripping the new key yields the previous
-    record BYTE FOR BYTE, and here it does — which is why the refusal cannot rest
-    on the SHAPE and has to rest on what the readers do with it:
-
-      • `lockedAttackIndex` is read by `attack.ts`'s §8 gate, which REFUSES the
-        declaration whose index it returns. A shared field would hand that gate an
-        index the holder is being paid to use, so a Seismitoad that bought +100 on
-        "Echoed Voice" could no longer declare it. The two records mean OPPOSITE
-        things at the same address, and the gate cannot tell them apart without a
-        discriminator — which is a union whose read sites would then DISPATCH, the
-        one thing §D152/§D154 declined to buy;
-      • driven rather than argued: the suite installs both records on one board and
-        asserts the barred attack is refused while the boosted one resolves at
-        +100, and a build that merged them fails on the refusal.
-
-    They CANNOT be live together off any printing — the pool prints the bar on four
-    cards and the buff on ~~one~~ (D155's local-D1 count; measured at D544 the LEGAL
-    column puts FOUR sentences on this record — three ADDITIVE, Echoed Voice,
-    Meteor Mash and Tornado Rush, and one BASE-SET, Hyper Fang — each printed as a
-    self install on the holder's own named attack (🆕🆕🆕 D546: SIX now — the two
-    ALL-ATTACKS sentences are self installs too, but on NO named attack: they pay
-    every index); whether any of their cards also
-    prints a bar is measured only for the three Meloetta ex printings, whose Echoed
-    Voice is the card's only attack, and is UNMEASURED for the other five), and a
-    body installs at most
-    one per turn — so D154's
-    own reachability ground (two facts, one record, one write) is NOT available
-    here. 🆕🆕🆕 D546 RE-READ: "cannot be live together" is true of the SELF-installed
-    bar only. D157's OPPONENT-chosen bar (`preventChosenAttack`, stamped `turn + 1` on
-    the opponent's turn) lands in the holder's `turn + 2` window beside any buff — a
-    named one before this slice, and now an ALL-ATTACKS one, where the barred index is
-    necessarily a buffed index. The READ ground below decides it unchanged: the §8
-    gate refuses the barred attack and the buff pays the others (driven,
-    `everyAttackBoost.test.ts` §7). The ground is the READ, not the write, which is the axis this family had
-    not yet been separated on.
-
-    THE WINDOW IS `state.turn + 2`, `LockedAttack`'s number and D143's: the
-    sentence prints "During YOUR next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
-    (§5.3), so the turn after the installing one is the opponent's and the one
-    after THAT is the holder's own.
-
-    Everything else is INHERITED unchanged: the stamp convention, the
-    read-through-continuous.ts shape (`boostedAttackDamage`, and since D544
-    `boostedAttackBase` for the base-set key), the three §10 early clears, and
-    D124's no-defensive-`undefined` rule at the reader. */
+/**
+ * An attack-installed damage buff on one Pokémon for its owner's next turn (§8.5): either extra
+ * damage before Weakness and Resistance, or a replacement base damage (`base`). Kept separate from
+ * `LockedAttack` because the §8 gate refuses a locked index while a boosted one must stay usable.
+ */
 export interface BoostedAttack {
-  /** The single turn number this buff is live on (the installing turn + 2 — the
-      HOLDER's own next turn, since declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]). 🆕🆕🆕 D563 (D539):
-      ~~"the installing turn + 2"~~ is no longer the only stamp — an ABILITY printing
-      *"during this turn"* (Feraligatr "Torrential Heart", `boostAttack.thisTurn`) stamps
-      the installing turn itself; the readers compare `turn === state.turn` either way. */
+  /**
+   * The single turn this buff is live on: the installing turn + 2 for an attack (the holder's next
+   * turn), or the installing turn itself for a "during this turn" Ability.
+   */
   turn: number;
-  /** WHICH attack is boosted, as an index into the stack-top card's `attacks` —
-      `LockedAttack.attackIndex`'s twin, resolved from the printed proper noun at
-      the install by the SAME helper (interpreter.ts `printedAttackIndex`), so the
-      apostrophe fold D137 requires is written once for both ops.
-
-      🆕🆕🆕 D546 — OR `null`, meaning EVERY attack index: the all-attacks buff
-      ("During your next turn, attacks used by this Pokémon do 120 more damage to
-      your opponent's Active Pokémon (before applying Weakness and Resistance).",
-      `censusAttackCorpus.ts:148` and `:76`, 2 legal printings), installed by
-      `boostAttack { attack: null }`. The KEY stays REQUIRED; only the VALUE widens.
-      `boostedAttackDamage` pays a `null` record on every index, and
-      `boostedAttackBase` — whose `attackIndex !== index` compare is left
-      byte-identical — answers `null` for it on every index, which is right because
-      the installer REFUSES an all-attacks base (no such record is written).
-      `null` is written by NO v30 writer, so it is detectable in the bytes; a
-      rollback deploy computes `null !== index` and pays 0 — inert on the board.
-      `MATCH_RECORD_VERSION` STAYS 30 (apps/api `match.ts`, the D546 paragraph,
-      states the argument and its reversal condition). */
+  /**
+   * Which attack is boosted, as an index into the stack-top card's `attacks`, or `null` for every
+   * attack.
+   */
   attackIndex: number | null;
-  /** HP added to that attack's damage BEFORE Weakness and Resistance — the
-      printed parenthetical, and the whole of why the number is stored rather than
-      applied.
-
-      §8.5's order makes the two placements observably different, and in
-      `AttackDamageDebuff.amount`'s direction rather than `DamageReduction`'s:
-      Weakness is MULTIPLICATIVE, so a printed 120 Water hit carrying 100 of this
-      into a ×2 Water body is `(120 + 100) × 2 = 440`, while the same numbers
-      added after the modifiers give `120 × 2 + 100 = 340`. (Resistance and this
-      number are both additive and commute, so the parenthetical only ever bites on
-      WEAKNESS; the suite drives both.)
-
-      ⚠️ NO CLAMP, WHICH IS THE ONE ARITHMETIC DIFFERENCE FROM D149's MIRROR. That
-      number is the only pre-W/R term that can drive the subtotal NEGATIVE and it
-      owns a `Math.max(0, …)` for it; this one only ever adds, so it needs none —
-      and it is REPORTED in the row's existing `bonus` field for that reason among
-      others (events.ts).
-
-      ONE amount is printed and it is still a capture rather than a literal, the
-      varying token being a NUMBER and therefore closed by its type (D120's
-      precondition, met exactly as D147/D149/D152 met it).
-
-      🆕🆕 D544 — ON A BASE-SET RECORD THE INSTALLER WRITES `0` HERE, so the
-      UNEDITED additive reader (`boostedAttackDamage`) pays `+0` by construction and
-      the base-set mode needs no branch in it. */
+  /**
+   * Damage added before Weakness and Resistance, so it is multiplied by Weakness (§8.5). Never
+   * negative, so it needs no clamp. A base-set record stores 0 here.
+   */
   amount: number;
-  /** 🆕🆕 D544 — the printed BASE damage that REPLACES the named attack's printed
-      base for the window ("…this Pokémon's Hyper Fang attack's base damage is
-      240."), read through `boostedAttackBase` (continuous.ts) at `attack.ts`'s one
-      `parseAttackDamage` site — so it reaches `scaledBase`, every reading-borne
-      program's base and `DAMAGE_DEALT.base`, and Weakness/Resistance still apply
-      AFTER it (§8.5).
-
-      OPTIONAL, and written ONLY on a base-set record — never `base: undefined`,
-      which a `toStrictEqual` pin would see. ABSENT means "no override", which is
-      exactly what every record a v30 deploy wrote means, so
-      `MATCH_RECORD_VERSION` STAYS 30 (apps/api `match.ts`, the D544 paragraph,
-      states the argument and the condition that would reverse it — D441/D434/D456).
-
-      A SECOND INSTALL ON THE SAME ADDRESS MERGES FIELDWISE BY MAX (`amount` and
-      `base` each keep the larger of what is present), which is the installer's
-      stated rule — a second installation may never leave the holder with less than
-      one of them printed. Unreachable off any printing; constructed and pinned. */
+  /**
+   * The printed base damage that replaces the attack's base for the window ("…attack's base damage
+   * is 240"); Weakness and Resistance still apply after it. Present only on a base-set record. A
+   * second install on the same attack keeps the larger `amount` and `base`.
+   */
   base?: number;
 }
 
-/** 🆕🆕 §8 (D394) — WHICH attack this Pokémon last USED, and on WHICH turn. Two
-    printed sentences, ONE legal printing each, and they differ only in the attack
-    they name:
-
-      "If this Pokémon used Form Ranks during your last turn, this attack does
-       90 more damage."                                                      (1)
-      "If this Pokémon used Pervasive Gas during your last turn, this attack does
-       120 more damage."                                                     (1)
-
-    — Falinks `sv07-088` "All-Out Attack" ({C}{C}, `30+`, index 1 of TWO, naming
-    its own index 0) and Weezing `sv09-092` "Crazy Blast" ({D}{C}, `50+`, index 1
-    of TWO, naming its own index 0).
-
-    🛑 **A NAME AND NOT AN INDEX, WHICH IS `LockedAttack`'s ANSWER INVERTED AND FOR
-    `LockedAttack`'s OWN REASON.** D154 stored an INDEX because every consumer of
-    that record asks per index (the §8 gate compares `action.index`, both payability
-    projections build rows by `attacks.map` [🆕🆕🆕 D578 (D539): WITHDRAWN as spelled — the gate
-    compares the declared ATTACK MENU row's PRINTED index, -1 for a Memory Dive or Technical
-    Machine row, and both projections map over `attackMenuOf`, comparing `sourceIndex` for
-    printed rows only; still per printed INDEX, so the argument stands]), and the printed proper noun was
-    resolved ONCE at the install. This record's only consumer is
-    `conditionHolds`, which compares against a printed clause key that is a NAME —
-    so the same rule ("translate at the site that reads the printed token") lands on
-    the other side. **An index would also be the WRONG FACT here**: the record
-    outlives the turn it was written on, and a body that evolves between the two
-    turns renumbers its own attacks.
-
-    ⚠️ **ONE SLOT IS ENOUGH, AND THAT IS AN ARGUMENT ABOUT THE WRITERS AND NOT A
-    SIMPLIFICATION** (D165's test: *how many writers does this slot have, and can
-    any two of them stamp the same turn*). This slot has exactly ONE writer —
-    `finishAttack` (flow.ts) — and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so a
-    body can write it at most once per turn and never twice for one turn. The
-    printed window is *"your last turn"*, and the attack a body used on its last
-    turn is by construction the most recent one it used at the moment the question
-    is asked, so nothing an older entry could answer is ever asked.
-
-    THE TURN IS THE TURN THE ATTACK WAS DECLARED ON — `state.turn` as read inside
-    `finishAttack`, which runs BEFORE `turnTail` and therefore still inside the
-    attacking turn. Measured across a Knock Out PARK (both the attack-epilogue one
-    and the Checkup one), where the counter holds at the ending turn's value for the
-    whole prize/promotion sequence. */
+/**
+ * The attack this Pokémon last used and the turn it used it, for "If this Pokémon used X during
+ * your last turn" (§8). Stored by name rather than index because the body may evolve and renumber
+ * its attacks before the record is read.
+ */
 export interface UsedAttack {
   /** The PRINTED attack name, byte for byte off the catalog — the token the
       clause key carries. */
@@ -1343,59 +443,17 @@ export interface InPlayPokemon {
   /** HP of damage taken (counters × 10). Placed by attacks from M2 on. */
   damage: number;
   conditions: SpecialConditions;
-  /** §11 — an attack effect is holding this Pokémon in place ("During your
-      opponent's next turn, the Defending Pokémon can't retreat."). NOT a §12
-      Special Condition, which is why it does not live in `conditions`: it has
-      no Checkup tick, renders no status chip, does not block ATTACKING, and
-      never crosses the wire (`RedactedConditions`/`BattleConditions` pin that
-      shape field-by-field — redact.ts `copyConditions`). It shares only the
-      §13.4 paralysis LIFETIME: set by the attacker, cleared at the Checkup that
-      ends the blocked player's own next turn (flow.ts), and dropped early
-      wherever an effect of an attack ends — leaving the Active Spot or evolving.
-
-      🛑 D412 — THIS FIELD IS NOW THE OPPONENT-SIDE HALF AND ONLY THAT, AND THE
-      NARROWING IS LOAD-BEARING RATHER THAN COSMETIC. `preventRetreat`'s `"self"`
-      arm writes `retreatLockedTurn` below instead, because the paralysis clock
-      this field rides CANNOT express a self-installed window: flow.ts clears it
-      for `endedSeat`, an attack ENDS the installer's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the very
-      first Checkup after a self-lock would lift it before its window opened.
-      That is not a hypothetical — flow.ts's own clear comment says a block
-      applied by the ended seat's own attack "would lift a turn early", and
-      guarded the claim with "which no print in the pool can do (the deriver's
-      only two shapes both target the DEFENDER)". D412 built a third shape, and
-      kept that parenthesis TRUE by construction rather than by luck: no arm
-      writes this field for the installer's own seat. ⚠️ **READ THE FACT THROUGH
-      `retreatLocked` (continuous.ts), NEVER THIS FIELD DIRECTLY** — there are two
-      fields and one question, and a read site that names only one of them is the
-      D222 defect (a hand-spelled test over members a helper already unifies). */
+  /**
+   * §11: an attack effect stops this Pokémon retreating during the opponent's next turn. Not a
+   * Special Condition. Only the opponent-installed lock lives here; the self-installed one is
+   * `retreatLockedTurn`, so always read through `retreatLocked`.
+   */
   retreatBlocked: boolean;
-  /** §11 (D412) — the SELF-installed retreat lock ("During your next turn, this
-      Pokémon can't retreat." — 3 legal printings, all of them the tail of a
-      `"Heal {N} damage from this Pokémon."` compound), or `null` when none is
-      installed. The turn number on which the lock is LIVE, exactly
-      `attackLockedTurn`'s shape one field family over.
-
-      ⚠️ A STAMP AND NOT A SECOND BOOLEAN, WHICH IS THE WHOLE REASON THIS FIELD
-      EXISTS RATHER THAN A `target` ON THE OP. `state.turn + 2` — the installer's
-      OWN next turn, one full round away, which is `attackLockedTurn`'s self-arm
-      number and no other field's; the four sibling records that stamp `+ 1` are
-      all windows on the OPPONENT's turn. It expires BY ARITHMETIC (`=== state.turn`
-      stops holding) with no turn-boundary clear anywhere, so unlike
-      `retreatBlocked` it has no `endedSeat` mirror to get backwards.
-
-      ⚠️ NO `…_ENDED` EVENT, and that is this engine's stated convention for a
-      stamp rather than an omission: `attackLockedTurn`, `attackBlock`,
-      `damageReduction` and `installedRecoil` all say it in the same words — a
-      turn stamp expires by arithmetic, so there is no boundary walk to announce
-      it from and nothing to announce. `retreatBlocked` is the ONE §11 rider that
-      does emit one, because it is the one implemented as boolean-plus-clear.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE the rest of this family takes
-      (`clearOnLeavingActive` in turn.ts, `switchInto` in interpreter.ts,
-      `evolveOnto` below), with the SELF-side reachability story: the window is
-      the holder's own next turn, so retreating, being Switched out and evolving
-      are all lines of play the holder can take INSIDE it — its own escape from a
-      drawback it chose to pay, which is D148's agency argument on the self side. */
+  /**
+   * §11: the turn on which a self-installed "During your next turn, this Pokémon can't retreat"
+   * lock is live (installing turn + 2), or `null`. Expires by turn comparison, so nothing clears it
+   * at a turn boundary.
+   */
   retreatLockedTurn: number | null;
   /** §11 — the attack-installed damage/effect block on this Pokémon (see
       `AttackBlock` above), or `null` when none has been installed. Only LIVE
@@ -1403,539 +461,86 @@ export interface InPlayPokemon {
       (continuous.ts) rather than by touching this field, so no read site can
       forget the turn comparison. */
   attackBlock: AttackBlock | null;
-  /** §8/§11 — the turn number on which this Pokémon MAY NOT ATTACK, or `null`
-      when no such lock has been installed. The printed sentences are
-
-        "During your next turn, this Pokémon can't attack."          (20 printings)
-        "Put {N} damage counters on 1 of your opponent's Pokémon.
-         During your next turn, this Pokémon can't attack."          ( 2 printings)
-        "Discard an Energy from this Pokémon. During your opponent's
-         next turn, the Defending Pokémon can't attack."             ( 3 printings)
-        "If the Defending Pokémon is a Basic Pokémon, it can't attack
-         during your opponent's next turn."                          ( 1 printing )
-
-      and this field is the whole of all four riders. Read through `attackLocked`
-      (continuous.ts) rather than by touching it, so no read site can forget the
-      turn comparison — the same contract `attackBlock` above is under.
-
-      ⚠️ ONE FIELD FOR BOTH DIRECTIONS, AND THAT IS D148's FINDING RATHER THAN AN
-      ECONOMY. The two OPPONENT-side printings install this on the DEFENDER's body,
-      and they cost the STATE nothing at all: "on which turn may this Pokémon not
-      attack" is one question about one body, and which player's attack wrote the
-      answer is a fact about the OP (`preventAttack.target`), not about the record.
-      So the op grew a field and `InPlayPokemon` did not — which is also why
-      `MATCH_RECORD_VERSION` did not move for the first durated slice in four.
-
-      ⚠️ `state.turn + 2` ON THE SELF ARM AND `+ 1` ON THE DEFENDER ARM, AND THAT
-      IS ONE RULE RATHER THAN TWO. The window is always *the locked Pokémon's
-      controller's NEXT turn*; declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the
-      turn after the installing one is the opponent's and the one after that is the
-      installer's own. The printed wordings differ ("during YOUR next turn" /
-      "during your OPPONENT's next turn") for exactly that reason. The stamp is
-      therefore DERIVED from the op's `target` at the one install site and is never
-      carried beside it.
-
-      ⚠️ IT STILL CANNOT SHARE `attackBlock.turn`. Same body, same install site,
-      same three early clears, two DIFFERENT NUMBERS on the self arm — so one
-      `turn` field could hold at most one of them, and a `{ turn, effects,
-      cantAttack }` record would be a single window pretending to describe two. The
-      two are stamped and read independently, and a suite case installs both on one
-      Pokémon and drives the pair of windows apart turn by turn
-      (attackLock.test.ts). The DEFENDER arm shares D142's number, which is what
-      makes this field's coexistence with `attackBlock` a fact about the QUESTION
-      rather than about the arithmetic (D147's "sharing a site is not sharing a
-      question", read on the other axis).
-
-      ⚠️ TWO INSTALLS ON ONE BODY ARE NOW REACHABLE, AND THE STAMPS ARE MONOTONE.
-      Before D148 a re-install was always at least two turns later by construction;
-      now a Pokémon can lock itself with its own attack AND be locked by the
-      opponent's. Every install writes its holder's next turn measured from the
-      install, and installs are ordered in time, so a later install never writes an
-      EARLIER turn than the one it replaces — which is why the later stamp simply
-      wins and there is nothing to `Math.max`. The sharp case is that a self-lock
-      stamped N + 2 and a defender-lock installed on turn N + 1 are the SAME
-      number, so the second install is silent (D142's idempotence answer).
-
-      NOT a §12 Special Condition, for `retreatBlocked`'s and `attackBlock`'s
-      reasons verbatim: no Checkup tick, no status chip, no `StatusName`, and it
-      never crosses the wire as a field (`redactedAttacksOf` folds it into the
-      `playable` boolean each attack already carries — redact.ts, exactly as D112
-      folded the retreat block into `can`).
-
-      ⚠️ ITS LIFETIME TABLE IS D142's WITH THE REACHABILITY INVERTED, because this
-      lock gates the HOLDER's own action during the HOLDER's own turn — and that
-      stays true on the DEFENDER arm, which is the whole point: the window there is
-      the victim's own next turn too:
-        • leaving the Active Spot (§10) ends it, and here BOTH halves are
-          reachable on the holder's own turn — retreat it, or let the opponent's
-          Boss's Orders drag it out — where D142's evolve clear was unreachable by
-          construction;
-        • EVOLVING (§10) ends it, and that is the famous playable line rather than
-          a written-anyway rule: a locked Pokémon that evolves may attack the same
-          turn, because §10 sheds the effects of ATTACKS;
-        • a Knocked Out holder takes it out of play with the rest of the stack,
-          and the promoted body is a different Pokémon carrying no lock — which on
-          the defender arm is a LIVE line rather than a corner, since Eiscue ex's
-          printed 160 lands on the very body it locks;
-        • installed twice, the later stamp wins — there is nothing to accumulate,
-          the stamps are monotone (above), and a stale stamp answers nothing rather
-          than being cleared.
-
-      ⚠️ AND WHO ENDS IT EARLY IS NOW THE THING THAT DIFFERS BETWEEN THE ARMS.
-      On the self arm all three routes are the holder's OWN escape from a drawback
-      it chose to pay. On the defender arm they are the VICTIM's counterplay
-      against an effect imposed on them — same three sites, same three clears,
-      opposite agency: "the Defending Pokémon" is the body that was Active when the
-      attack resolved (§8 step 5), so retreating it, switching it or evolving it
-      all leave the window with nothing to bite. That is the printed reading and
-      not a leniency: §10 sheds the effects of ATTACKS, and this is one. */
+  /**
+   * §8/§11: the turn on which this Pokémon may not attack, or `null`. Stamped `state.turn + 2` for
+   * a self-lock and `+ 1` for a lock on the Defending Pokémon, so the window is always its
+   * controller's next turn. Read through `attackLocked`. §10 clears it when the Pokémon leaves the
+   * Active Spot or evolves.
+   */
   attackLockedTurn: number | null;
-  /** 🆕🆕🆕 §8/§11 (D547) — the turn on which an attack-installed FLIP-TO-ATTACK
-      LOCK is live on this Pokémon (the installing turn + 1 — the Defending
-      Pokémon's controller's own next turn), or `null` when none has been
-      installed: "During your opponent's next turn, if the Defending Pokémon tries
-      to use an attack, your opponent flips a coin. If tails, that attack doesn't
-      happen." (`censusAttackCorpus.ts:176`, 2 legal printings). Read through
-      `attackFlipLocked` (continuous.ts), never by touching this field.
-
-      ⚠️ A SEPARATE FIELD FROM `attackLockedTurn` ONE LINE UP, THOUGH IT IS THE SAME
-      NUMBER ON THE SAME BODY, BECAUSE IT ANSWERS A DIFFERENT QUESTION AT A
-      DIFFERENT SITE. `attackLockedTurn` makes the declaration ILLEGAL and is read
-      by the §8 gate AND by two payability projections (`redactedAttacksOf`,
-      GameHud) — a greyed button. This lock leaves the declaration LEGAL: the
-      attack is declared, the locked player flips at `attack.ts`'s §8 step-3 seam,
-      and on tails "that attack doesn't happen" and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]. Folded into
-      `attackLocked`, it would grey a button the player is entitled to press; so
-      NO projection reads this field and `redact.ts`/`packages/schema`/GameHud take
-      no byte (pinned: `attackFlipLock.test.ts`).
-
-      🛑 REQUIRED, NOT OPTIONAL, AND IT BUMPS `MATCH_RECORD_VERSION` 30 → 31 —
-      D432's case: a bare stamp has no REST, so a dropped `attackFlipLockTurn?`
-      degrades into the pre-D547 board, where the gate silently never flips. See
-      `MATCH_RECORD_VERSION` (apps/api/src/lobby/match.ts) for the bump and for the
-      optional route refused on D456's test.
-
-      THE §10 CLEARS ARE THE DEFENDER-LOCK's (D148): the window is the locked
-      body's controller's own turn, so RETREAT, a Switch and EVOLVING inside it are
-      all PLAYED lines — the victim's counterplay — and a forced switch or
-      devolution sheds it too. All five literals write it (makeInPlay, `evolveOnto`,
-      `clearOnLeavingActive`, `switchInto`'s benched body, `devolvedBodyOf`); only
-      `makeInPlay` is compiler-forced, and the other four are held by mutants. */
+  /**
+   * §8/§11: the turn on which a flip-to-attack lock is live ("if tails, that attack doesn't
+   * happen"), or `null`. Separate from `attackLockedTurn` because the attack stays legal to declare
+   * and the coin is flipped at declaration. Read through `attackFlipLocked`.
+   */
   attackFlipLockTurn: number | null;
-  /** 🆕🆕🆕 §8/§11 (D636) — the TWO-COIN flip-to-attack lock: Octillery `me04-017` "Jet of Ink",
-      *"During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent
-      flips 2 coins. If either of them is tails, that attack doesn't happen."* `attackFlipLockTurn`'s
-      sibling stamp (`state.turn + 1` on the opponent's Active, written by `flipLockAttack` with
-      `coins: 2`), read by `attackFlipLockCoins` (continuous.ts) at the same `attack.ts` seam. A
-      separate stamp, not a count beside the old one: two live locks are two printed effects, so the
-      coins ADD (1 + 2 = 3, any tails stops the attack — R-JOI1 ⚠️ UNRULED). The same five literals
-      write it `null` (`makeInPlay`, `evolveOnto`, `clearOnLeavingActive`, `switchInto`'s benched body,
-      `devolvedBodyOf`). REQUIRED (not `?`): `MATCH_RECORD_VERSION` 44 → 45, migrated as `null`. */
+  /**
+   * §8/§11: the two-coin flip-to-attack lock (Octillery "Jet of Ink"), stamped `state.turn + 1`.
+   * Kept separate from `attackFlipLockTurn` so that two live locks add their coins.
+   */
   attackTwoFlipLockTurn: number | null;
-  /** §8.5/§11 (D147) — the attack-installed DAMAGE REDUCTION on this Pokémon
-      (see `DamageReduction` above), or `null` when none has been installed. Read
-      through `installedReductionOf` (continuous.ts) rather than by touching this
-      field, so no read site can forget the turn comparison — the same contract
-      `attackBlock` and `attackLockedTurn` above are under.
-
-      ⚠️ `state.turn + 1`, THE SAME NUMBER `attackBlock` STAMPS — which is what
-      makes it the opposite case to `attackLockedTurn`. That field is a separate
-      one because its window is a DIFFERENT turn (`+ 2`) and one `turn` could
-      hold at most one of them; this one is separate despite sharing the window,
-      because it answers a different question at the same four sites (subtract a
-      number vs supersede the result) and `attackBlockOf` already resolves an
-      attacker-class filter that has no meaning here.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with D142's reachability
-      story rather than D143's: leaving the Active Spot is REACHABLE inside the
-      window (a Boss's Orders played by the opponent on the very turn the
-      reduction is live drags the body off the spot and the protection goes with
-      it), while EVOLVING is unreachable by construction (installing ends the
-      turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the opponent's, and nobody evolves on someone else's
-      turn) and is written anyway, pinned by a surgery. A Knocked Out holder takes
-      it out of play with the rest of the stack. */
+  /**
+   * §8.5/§11: the attack-installed damage reduction on this Pokémon, or `null`. Read through
+   * `installedReductionOf`.
+   */
   damageReduction: DamageReduction | null;
-  /** 🆕🆕 §8.5/§11 (D432) — the turn on which an attack-installed *"During your
-      opponent's next turn, this Pokémon has no Weakness."* bar is live on this
-      Pokémon (the installing turn + 1), or `null` when none has been installed.
-      Read through `installedNoWeakness` (continuous.ts) rather than by touching
-      this field, so no read site can forget the turn comparison — the same
-      contract the four fields above are under.
-
-      ⚠️ A BARE STAMP AND NOT A RECORD, WHICH IS `attackLockedTurn`'s AND
-      `retreatLockedTurn`'s SHAPE RATHER THAN `damageReduction`'s. The printed
-      sentence carries no amount, no attacker filter and no type narrowing — it
-      removes a STEP rather than moving a number — so the only fact to store is
-      *when*. A `{ turn }` record would be a one-key object whose absence and
-      whose staleness are two spellings of the same answer.
-
-      🛑 **AND THAT IS ALSO WHY IT IS REQUIRED RATHER THAN OPTIONAL, AND WHY THIS
-      SLICE BUMPS `MATCH_RECORD_VERSION` 26 → 27.** D421's rule for an optional
-      key is *choose the rest of the record so that LOSING the key is
-      detectable* — and here there IS no rest of the record. A dropped
-      `noWeaknessTurn?: number` degrades into exactly the pre-D432 board: the bar
-      silently never bites, which is the benign soft landing D124 refused for
-      `promotedTurn`, D142 for `attackBlock`, D143 for `attackLockedTurn`, D147
-      for `damageReduction` and D412 for `retreatLockedTurn`. A required key makes
-      every body in a v26 record the wrong TYPE, which is the whole trigger. See
-      `MATCH_RECORD_VERSION` (apps/api/src/lobby/match.ts) for the retirement.
-
-      ⚠️ `state.turn + 1`, `damageReduction`'s AND `installedRecoil`'s PAIR OF
-      ANSWERS: the sentence prints "During your OPPONENT's next turn" and "this
-      Pokémon", so the window is the opponent's (declaring an attack ends the
-      turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3) and the holder is the installer's own Active.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `damageReduction`'s
-      reachability story verbatim: leaving the Active Spot is REACHABLE inside the
-      window (a Boss's Orders played by the opponent on the very turn the bar is
-      live drags the body off the spot and the bar goes with it), while EVOLVING
-      is unreachable by construction (installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the
-      opponent's, and nobody evolves on someone else's turn) and is written anyway
-      — §10 sheds the effects of ATTACKS and this is one. A Knocked Out holder
-      takes it out of play with the rest of the stack. All three literals are
-      pinned STRUCTURALLY (`noWeaknessBar.test.ts`), off the field rather than off
-      a number, because the number is unobservable after the body has left the
-      Active Spot: §8.5 applies Weakness only to the Active. */
+  /**
+   * §8.5/§11: the turn on which "During your opponent's next turn, this Pokémon has no Weakness" is
+   * live (installing turn + 1), or `null`. Read through `installedNoWeakness`.
+   */
   noWeaknessTurn: number | null;
-  /** 🆕🆕 §13 (D434, RENAMED AND GENERALISED AT D435) — the DELAYED EFFECT an
-      attack scheduled onto this Pokémon (see `ScheduledEffect` above), or `null`
-      when none has been scheduled. ONE clock, THREE payloads: counters (D434),
-      a discard with NO Prize and a Knock Out WITH one (both D435). Read through
-      `scheduledEffectDue` below rather than by touching this field, so no read site
-      can forget the turn comparison — the same contract every durated field above
-      is under.
-
-      ⚠️ **ONE APPOINTMENT PER BODY, WHICH IS A MODEL LIMITATION AND IS STATED AS
-      ONE.** The field holds a single record, so two schedules landing on one body
-      for one turn cannot both be kept. Two counter schedules merge by `Math.max`
-      (D434's answer, unchanged); a schedule of a DIFFERENT kind REPLACES whatever
-      stood there. Both are unreachable off any printing — it takes two attacks in
-      one turn, and no card prints two of these — so both are constructed and pinned
-      rather than trusted (`delayedCounters.test.ts` §10).
-
-      🛑 **THE ONE FIELD IN THIS SET WHOSE §10 CLEARS ARE THE *NORMAL* CASE RATHER
-      THAN THE THEORETICAL ONE, AND IT INVERTS THE REACHABILITY STORY EVERY
-      NEIGHBOUR ABOVE TELLS.** `damageReduction`, `noWeaknessTurn` and
-      `installedRecoil` all have their window on the OPPONENT's turn, so their
-      holder's controller cannot retreat or evolve inside it and their clears are
-      written for the rule rather than for a board. This record is installed on the
-      OPPONENT's Active and fires at the end of the OPPONENT's own next turn — so
-      for the whole of its window the body's own controller is the player taking
-      actions. **RETREAT, a Switch (`switchInto`) and EVOLVING are all live lines of
-      play inside the window, and all three are the victim's counterplay**: §10
-      sheds the effects of attacks, so walking the Defending Pokémon off the Active
-      Spot — or evolving it — is how a player answers this attack. That is the
-      printed ruling for the family (the Knock-Out twin of this sentence is refused
-      the same way) and it is DRIVEN on all four literals rather than argued.
-
-      ⚠️ THE FOURTH LITERAL, `devolveEach` (D433), IS THE ONE UNREACHABLE CLEAR AND
-      IS WRITTEN ANYWAY. Devolution arrives only as an opponent's attack effect, and
-      inside this record's window the opponent is the seat that installed it —
-      whose turn it is not. So no legal sequence devolves a scheduled body before it
-      fires. It joins the eleven bars that literal already sheds because §10 sheds
-      the effects of ATTACKS and this is one, and because D433's own rule says the
-      four literals AGREE about the durated set and disagree only about `markers`.
-
-      ⚠️ NO POST-FIRE CLEAR, AND THAT IS DELIBERATE. The stamp expires by
-      arithmetic (`ScheduledEffect.turn`), which is `attackLockedTurn`'s and
-      `koByEffect`'s rule: a spent schedule sits on the body reading as "no
-      schedule" for the rest of the game, and there is no boundary write anybody can
-      forget, run twice, or run on the wrong side of the Checkup. The §11 retreat
-      flag one field family over is the engine's ONE boundary-walked rider and it is
-      a boolean; this one is a number, so it does not need to be.
-
-      PUBLIC, AND NO PROJECTION READS IT TODAY — both halves stated, because only
-      the second is a measurement. 🆕🆕 **RE-MEASURED AT D435 AFTER THE RENAME, WHICH
-      IS THE ONE EDIT THAT COULD HAVE INVALIDATED IT** (a rename cannot break a reader
-      that does not exist, but the measurement was of the OLD name and would have read
-      as a stale claim otherwise): `grep -rn "scheduledEffect\|ScheduledEffect" src/
-      apps/ packages/ scripts/` (D412's procedure) returns **zero hits in `src/` and
-      zero in `packages/schema`**, and outside `packages/engine/src` only the
-      `MATCH_RECORD_VERSION` doc block and its test in `apps/api/src/lobby/` plus the
-      mutant corpus — all of them PROSE or anchors, none of them readers (D430: grep
-      the structural spelling, not the substring). `redact.ts` and `packages/schema`
-      build their own per-body shapes and carry no durated field at all, so nothing
-      about this record reaches a client. Were one ever added, it
-      would leak nothing: the attack that scheduled it resolved in front of both
-      players and both can count turns (`handPlayLockedTurn`'s note, one interface
-      over). */
+  /**
+   * §13: the delayed effect an attack scheduled onto this Pokémon, or `null`. Read through
+   * `scheduledEffectDue`. Holds one record: two counter schedules merge by max, and a schedule of a
+   * different kind replaces the old one. §10 clears it when the body leaves the Active Spot or
+   * evolves.
+   */
   scheduledEffect: ScheduledEffect | null;
-  /** §8.5/§11 (D149) — the attack-installed ATTACK-DAMAGE DEBUFF on this Pokémon
-      (see `AttackDamageDebuff` above), or `null` when none has been installed.
-      Read through `installedAttackDebuffOf` (continuous.ts) rather than by
-      touching this field, so no read site can forget the turn comparison — the
-      same contract the three fields above are under.
-
-      ⚠️ `state.turn + 1`, LIKE `attackBlock` AND `damageReduction` — AND IT IS
-      WRITTEN ONTO THE OPPONENT'S BODY, WHICH IS WHAT MAKES IT THE ONLY ONE OF THE
-      FOUR THE INSTALLER NEVER HOLDS. The printed sentence says "During your
-      opponent's next turn", declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn
-      after the installing one is the victim's — and the victim is the holder. So
-      the number is D142's and the HOLDER is D148's `target: "defender"` arm's:
-      this field is the first in the family whose stamp and whose body come from
-      two different precedents.
-
-      ⚠️ IT CANNOT SHARE `damageReduction`, WHICH IS THE SAME `{ turn, amount }`
-      SHAPE ON THE SAME BODY — and saying so is the point of this block, because
-      the two records are structurally identical and semantically opposite. That
-      one is subtracted from what this Pokémon TAKES, after Weakness and
-      Resistance; this one from what it DEALS, before them. The printed sentences
-      differ in exactly one word inside the parenthetical ("after"/"before"), and
-      a single field would be a number whose meaning depended on who wrote it. A
-      body can carry BOTH at once — its own "takes 30 less" and the opponent's
-      "your attacks do 20 less" are two different turns' installs that can be live
-      together — and the suite drives that exchange.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, and the reachability story is
-      D148's rather than D147's: the window is the HOLDER's own next turn, so
-      retreating, being Switched out and evolving are all lines of play the holder
-      can take INSIDE it. That makes them COUNTERPLAY against an imposed effect
-      (the agency D148 inverted), and it is the FIFTH distinct reachability story
-      on what are now five §10-cleared fields — which is why the clear-set is
-      swept rather than listed. A Knocked Out holder takes it out of play with the
-      rest of the stack, and the promoted body carries nothing. */
+  /**
+   * §8.5/§11: the attack-installed debuff on the damage this Pokémon's attacks deal, or `null`.
+   * Read through `installedAttackDebuffOf`. Unlike `damageReduction`, it applies before Weakness
+   * and Resistance.
+   */
   attackDamageDebuff: AttackDamageDebuff | null;
-  /** 🆕🆕🆕 §8.5/§11 (D547) — the attack-installed NEXT-TURN VULNERABILITY on this
-      Pokémon (see `DamageVulnerability` above), or `null` when none has been
-      installed. Read through `installedVulnerabilityOf` (continuous.ts) rather than
-      by touching this field, so no read site can forget the turn comparison.
-
-      🛑 REQUIRED, NOT OPTIONAL — and `MATCH_RECORD_VERSION` 30 → 31 is shared with
-      `attackFlipLockTurn` above. D434's case: the record's two keys arrive
-      TOGETHER, so neither can witness the other's loss, and a dropped
-      `damageVulnerability?` degrades into a board where the printed +50 silently
-      never lands. The optional route is refused on D456's test at
-      `MATCH_RECORD_VERSION` (apps/api/src/lobby/match.ts).
-
-      ⚠️ `state.turn + 2`, THE INSTALLER's OWN NEXT TURN, written onto the
-      OPPONENT's body — so the body's controller plays the WHOLE turn in between,
-      and RETREAT, a Switch and EVOLVING inside it are all PLAYED lines, the
-      victim's counterplay (D148's agency); a forced switch or devolution sheds it
-      too. All five literals write it; only `makeInPlay` is compiler-forced. */
+  /**
+   * §8.5/§11: the attack-installed next-turn vulnerability on this Pokémon, or `null`. Read through
+   * `installedVulnerabilityOf`.
+   */
   damageVulnerability: DamageVulnerability | null;
-  /** 🆕🆕🆕 §8.5/§11 (D552) — the attack-installed WEAKNESS RETYPE on this Pokémon (see
-      `WeaknessRetype` above), or `null` when none has been installed. Read through
-      `installedWeaknessRetypeOf` (continuous.ts), never by touching this field.
-      🆕🆕🆕 D640 (D539): ~~"Read through `installedWeaknessRetypeOf` … never by touching this
-      field"~~ — and through D640's `installedWeaknessRewriteOf` (continuous.ts), the second
-      reader, for the `asTimesTwo` record; both carry the same turn comparison.
-
-      🛑 REQUIRED, NOT OPTIONAL, AND IT RIDES `MATCH_RECORD_VERSION` 33 → 34 with
-      `:569`'s parked `attachFromHand.recordAs` (THE SEVENTH POSITION at
-      apps/api/src/lobby/match.ts). An optional `weaknessRetype?` passes D441 (absent
-      reads as "no retype", which a v33 writer meant) and is detectable in the bytes, and
-      fails D456's second clause: a ROLLBACK reading a v34 record drops a live effect —
-      the Defending Pokémon is hit at its PRINTED Weakness type, so a Colorless attacker
-      the printed card makes super-effective deals half. D434's case: `{turn, type}`
-      arrive together and neither can witness the other's loss. 🆕🆕🆕 D640 (D539):
-      ~~"`{turn, type}`"~~ — the record may now carry a third key, the optional
-      `asTimesTwo` (Overwriting Bolt), which rides `MATCH_RECORD_VERSION` 46 → 47.
-
-      The same five literals as `damageVulnerability` write it, with that field's §10
-      story (docs/decisions.md D552 R5); only `makeInPlay` is compiler-forced. */
+  /**
+   * §8.5/§11: the attack-installed Weakness retype on this Pokémon, or `null`. Read through
+   * `installedWeaknessRetypeOf` and `installedWeaknessRewriteOf`.
+   */
   weaknessRetype: WeaknessRetype | null;
-  /** 🆕🆕🆕 §8.2/§11 (D549) — the turn on which an attack-installed COST TAX is live on
-      this Pokémon (the installing turn + 1 — the Defending Pokémon's controller's own
-      next turn), or `null` when none has been installed: "During your opponent's next
-      turn, attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost is
-      {C} more." (`censusAttackCorpus.ts:171`, 1 legal printing). Read through
-      `installedCostTaxOf` (continuous.ts), never by touching this field — ONE reader,
-      folded at BOTH cost seams: `effectiveAttackCost`'s `added` and
-      `effectiveRetreatCost`'s sum (after the free-retreat tier, R3).
-
-      A BARE STAMP AND NOT `{ turn, amount }`: both halves of the sentence print the
-      same single {C}, and the pool prints no other amount (measured over all 640
-      corpus rows), so the number is the reader's constant 1. A second amount would
-      widen this to a record — a `MATCH_RECORD_VERSION` question at that time.
-
-      🛑 REQUIRED, NOT OPTIONAL, AND IT BUMPS `MATCH_RECORD_VERSION` 32 → 33 (with
-      `koBounty` below and `PlayerSide.sideAttackLock`) — D432's case: a bare stamp has
-      no REST, so a dropped `costTaxTurn?` degrades into the pre-D549 board where the
-      printed surcharge silently never lands (the SIXTH position at match.ts).
-
-      THE §10 CLEARS ARE THE FLIP LOCK's (D547): the window is the holder's controller's
-      own turn, so RETREAT (paying the TAXED cost), a Switch and EVOLVING inside it are
-      PLAYED lines, and a forced switch or devolution sheds it too (R2). All five
-      literals write it; only `makeInPlay` is compiler-forced. */
+  /**
+   * §8.2/§11: the turn on which an attack-installed cost tax is live (attacks and Retreat cost {C}
+   * more), or `null`. Read through `installedCostTaxOf` for both attack and retreat costs.
+   */
   costTaxTurn: number | null;
-  /** 🆕🆕🆕 §8.1/§11 (D549) — the attack-installed KNOCK OUT BOUNTY on this Pokémon (see
-      `KoBounty` above), or `null` when none has been installed. Read in ONE place,
-      flow.ts `koPrizeBonus`, on the PRE-KO board, only when this body was the Active
-      and the batch is not a Checkup.
-
-      🛑 REQUIRED, NOT OPTIONAL — `MATCH_RECORD_VERSION` 32 → 33 is shared with
-      `costTaxTurn` above. D434's case: the record's two keys arrive TOGETHER and cannot
-      witness each other's loss, and a dropped `koBounty?` degrades into a board where
-      the printed "take 2 more Prize cards" silently never pays.
-
-      ⚠️ `state.turn + 2`, THE INSTALLER's OWN NEXT TURN, written onto the OPPONENT's
-      body — `damageVulnerability`'s window and holder exactly, so its §10 story is that
-      field's (R2): the victim's retreat, Switch or evolution on the turn in between are
-      PLAYED lines that shed it, and a gust or devolution sheds it too. All five
-      literals write it; only `makeInPlay` is compiler-forced. */
+  /**
+   * §8.1/§11: the attack-installed Knock Out bounty on this Pokémon, or `null`. Read only by
+   * flow.ts `koPrizeBonus` on the pre-KO board, when this body was the Active and the KO is not
+   * from the Checkup.
+   */
   koBounty: KoBounty | null;
-  /** 🆕🆕🆕 §6.2/§11 (D575) — the next-turn HAND-ATTACH mark on this Pokémon (see
-      `HandAttachMark` above: Glimmora's bar, Hypno's turn end), or `null`. `state.turn + 1`
-      on the OPPONENT's Active, so the window is the VICTIM's own turn and the victim's
-      retreat, Switch or evolution on it are PLAYED lines that shed it (§10): all five
-      literals write `null` (`makeInPlay`, `evolveOnto`, `clearOnLeavingActive`,
-      `devolvedBodyOf`, `switchInto`); only `makeInPlay` is compiler-forced, the four spread
-      literals are held by mutants and by `attackLock.test.ts`'s sweep.
-
-      PUBLIC (an attack both players watched) and on NO wire field: the HUD draws no mark (a
-      carried display debt, decisions.md D575) — a barred attach comes back as an error toast.
-
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 37 → 38 (the ELEVENTH position). */
+  /** §6.2/§11: the next-turn hand-attach mark on this Pokémon, or `null`. */
   handAttachMark: HandAttachMark | null;
-  /** §9/§11 (D152) — the attack-installed REACTIVE RECOIL on this Pokémon (see
-      `InstalledRecoil` above), or `null` when none has been installed. Read
-      through `installedRecoilOf` (continuous.ts) rather than by touching this
-      field, so no read site can forget the turn comparison — the same contract
-      the four fields above are under.
-
-      ⚠️ `state.turn + 1` ON THE INSTALLER'S OWN BODY, which is `damageReduction`'s
-      pair of answers exactly and NOT `attackDamageDebuff`'s: the sentence prints
-      "During your opponent's next turn" and "this Pokémon", so the window is the
-      opponent's and the holder is the actor. It is the FIFTH stamped field, and
-      §D147's count trigger for the `attackBlock` union therefore FIRES — the
-      re-derivation is in decisions.md D152 and the verdict is still DECLINE, on a
-      ground that retires counting as a trigger: this field's only read is a
-      SUM into a number the catalog already contributes to, so there is no read
-      path to unify. What earns the union is a member the read site must DISPATCH
-      on (the per-attack lock's `{ turn, attackIndex }`), not a fifth number.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `damageReduction`'s
-      reachability story rather than `attackDamageDebuff`'s: leaving the Active
-      Spot is REACHABLE inside the window (a Boss's Orders played by the opponent
-      on the very turn the recoil is armed drags the body off the spot and the
-      trap goes with it), while EVOLVING is unreachable by construction
-      (installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the opponent's, and nobody evolves
-      on someone else's turn) and is written anyway, pinned by a surgery. A
-      Knocked Out holder takes it out of play with the rest of the stack — and
-      that is NOT the printed "(even if it is Knocked Out)", which is about the
-      hit that is being resolved right now and is answered by §9's ordering. */
+  /**
+   * §9/§11: the attack-installed reactive recoil on this Pokémon, or `null`. Read through
+   * `installedRecoilOf`.
+   */
   installedRecoil: InstalledRecoil | null;
-  /** §8/§11 (D154, MULTIPLICITY at D165) — EVERY attack-installed PER-ATTACK lock
-      on this Pokémon (see `LockedAttack` above), newest last, `[]` when none has
-      been installed. Read through `lockedAttackIndexes` (continuous.ts) rather
-      than by touching this field, so no read site can forget the turn comparison
-      — the same contract the five fields above are under.
-
-      ⚠️ IT IS A LIST BECAUSE IT HAS **TWO WRITERS**, AND THAT IS THE WHOLE OF
-      D165. `preventAttackUse` (D154, self-side, `state.turn + 2`) and
-      `lockDefenderAttack` (D157, opponent-side, `state.turn + 1`) both write this
-      field, and stamping from ADJACENT turns lands them on the SAME number: a
-      Skarmory sv03-142 that bars its own "Slashing Steel" on turn 3 stamps 5, and
-      an Oranguru sv02-094 that bars its "Peck" on turn 4 stamps 5 too. As ONE
-      slot the second write DELETED the first, and the §8 gate then let the holder
-      use the very attack its own card bars — with the `ATTACK_LOCKED` row for it
-      still standing in the log. `/code-review` found it over D154–D164; the board
-      is `lockedAttackMerge.test.ts`'s first case.
-
-      ⚠️ A SECOND FIELD WAS PRICED AND REFUSED, AND THE GROUND IS THAT ITS BOUND
-      IS NOT PROVABLE. "One slot for the self-side bar, one for the imposed one"
-      fixes today's collision and pushes the same defect out by exactly one
-      writer: nothing in the type, the ops or the registry says a per-attack bar
-      may have at most two sources, and the census that looks like a bound (8 rows
-      / 6 names self-side, 2 opponent-side — §D154/§D157, both CLOSED) is a fact
-      about the 2026-08-03 catalog rather than about this shape. D150's rule is
-      that this repo does not accept an assumed bound. A list has no bound to
-      assume, and both fields would have cost the same `MATCH_RECORD_VERSION` bump
-      and the same enumeration at the read sites anyway.
-
-      ⚠️ AND IT IS THE ENUMERATING CALLER §D147/§D152/§D154/§D157 EACH FORECAST,
-      ARRIVING FROM THE DIRECTION NONE OF THEM WATCHED. Those four declined a
-      collection over the durated riders because *every read site knew which rider
-      it wanted before it looked* — which was true, and is still true of the
-      RIDER KINDS. What changed is the MULTIPLICITY of one kind: with two bars
-      live, `redactedAttacksOf` and `GameHud` must grey EVERY barred row and
-      neither knows in advance which, so both now ask MEMBERSHIP of a set they
-      receive whole. That is an enumeration, and it is why this field earns a list
-      while the `attackBlock` union does NOT re-open: nothing here DISPATCHES on a
-      member's kind, because every member of this list means one thing.
-
-      ⚠️ D155's REFUSAL IS UNTOUCHED AND IS SHARPENED BY THE LIST. `boostedAttack`
-      stays its own field because its consumer PAYS the index this one's REFUSES;
-      the list makes that a property of the CONTAINER rather than of a record —
-      every entry here is an address the §8 gate refuses, so an entry that had to
-      be paid would be exactly the defect D155 declined to build.
-
-      ⚠️ `state.turn + 2`, WHICH IS `attackLockedTurn`'s SELF-ARM NUMBER AND NO
-      OTHER FIELD'S. Four of the five records above stamp `+ 1` (the window is the
-      opponent's); this sentence prints "During YOUR next turn", so the window is
-      the holder's own and the number is D143's. That the two lock fields agree on
-      the number is exactly why they cannot share a record — see `LockedAttack`.
-
-      ⚠️ AND IT IS THE FIRST DURATED FIELD IN THE FAMILY THAT GATES AN ACTION AND
-      REACHES A WIRE PROJECTION, which is a premise §D147's trigger (b) had never
-      met (D149 and D152 both recorded "crosses no wire, changes no projection,
-      gates no ACTION"). What crosses is still not a RECORD: `redactedAttacksOf`
-      folds this fact into the per-attack `playable` boolean the wire already
-      carries, exactly as D143 folded the whole-Pokémon lock into `banned` and
-      D112 folded the retreat block into `can`. So the premise fires and the
-      trigger does not — the argument is in decisions.md D154.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `attackLockedTurn`'s
-      reachability story rather than `damageReduction`'s, because the window is the
-      HOLDER's own next turn: retreating, being Switched out and evolving are all
-      lines of play the holder can take INSIDE it, and all three are its own escape
-      from a drawback it chose to pay (D148's agency, on the self side). A Knocked
-      Out holder takes it out of play with the rest of the stack, and the promoted
-      body carries nothing.
-
-      ⚠️ THE §10 CLEARS SHED THE WHOLE LIST (`[]`) AND NOT ONE ENTRY, because §10
-      sheds *the effects of attacks* — all of them — when a body evolves or leaves
-      the Active Spot. PER-ENTRY expiry is the other axis and it lives at the
-      READER: an entry whose `turn` has passed stops answering without anyone
-      clearing it, and a WRITE prunes entries strictly in the past so the list
-      cannot grow across a long match. Two rules, two places, and they are
-      independent — a body that never leaves the Active Spot still ends every turn
-      with at most the bars stamped for turns it has not reached.
-
-      EMPTY-ARRAY-MEANS-NONE, WHICH IS `markers`'s CONVENTION AND NOT THE SIX
-      SIBLINGS' `=== null` ONE. The sibling convention exists so a reader cannot
-      forget the `undefined` case (D124); an array required to be present answers
-      the same requirement, and `[] | null` would have been two spellings of
-      "none" for one fact. */
+  /**
+   * §8/§11: every attack-installed per-attack lock on this Pokémon, newest last. A list because
+   * both the self-side and the opponent-side bars can stamp the same turn. Read through
+   * `lockedAttackIndexes`. §10 clears the whole list; expired entries stop answering at the reader
+   * and are pruned on write.
+   */
   lockedAttacks: LockedAttack[];
-  /** §8.5/§11 (D155) — the attack-installed PER-ATTACK DAMAGE BUFF on this
-      Pokémon (see `BoostedAttack` above), or `null` when none has been installed.
-      Read through `boostedAttackDamage` — and, since D544, `boostedAttackBase` for
-      the base-set key — (continuous.ts) rather than by touching this field, so no read site can forget the turn comparison — the same
-      contract the six fields above are under.
-
-      ⚠️ `state.turn + 2` AND AN ATTACK INDEX, WHICH IS `lockedAttack`'s PAIR OF
-      ANSWERS EXACTLY — same window, same body, same address, same three clears.
-      (🆕🆕🆕 D563 (D539): an Ability can now write it too — Feraligatr "Torrential
-      Heart" stamps `state.turn` (*"during this turn"*) on the SOURCE body, Benched or
-      Active, with `attackIndex: null`; the same three clears shed it (R-TH).)
-      It is the SEVENTH stamped field and the first whose separation from an
-      existing one rests on what the READERS do rather than on the record's shape
-      or on two facts colliding: `lockedAttackIndex`'s consumer refuses the index
-      it returns and this one's pays a bonus for it, so one field would make the §8
-      gate bar the very attack the card bought (see `BoostedAttack`).
-
-      IT GATES NO ACTION AND REACHES NO WIRE PROJECTION, and that is checked
-      rather than assumed: `redactedAttacksOf` and `GameHud` publish the attack's
-      PRINTED `damage` string straight off the catalog, which no pre-W/R
-      adjustment has ever moved (Vitality Band, Choice Belt, Defiance Band,
-      Practice Studio and Binding Mochi are all invisible there too). Showing this
-      one alone would report a single source of a number the panel does not claim
-      to compute. So unlike `lockedAttack` it owes neither projection.
-      🆕🆕 D544 — AND THE BASE-SET KEY IS THE SAME CASE, CHECKED RATHER THAN
-      INHERITED: the panel keeps printing the attack's catalog `damage` while the
-      window's hit deals the override, exactly as it keeps printing Echoed Voice's
-      120 under a +100 buff. The panel claims the PRINTED number, and a base-set
-      override is one more source it does not claim to compute; no projection byte
-      moves.
-
-      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `lockedAttack`'s
-      reachability story verbatim because it is the same window on the same body:
-      retreating, being Switched out and evolving are all lines of play the holder
-      can take INSIDE it, and all three throw away a bonus it chose to buy rather
-      than escaping a drawback (D148's agency, inverted once more). A Knocked Out
-      holder takes it out of play with the rest of the stack, and the promoted body
-      carries nothing. */
+  /**
+   * §8.5/§11: the per-attack damage buff on this Pokémon, or `null`. Read through
+   * `boostedAttackDamage` and `boostedAttackBase`.
+   */
   boostedAttack: BoostedAttack | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
@@ -1943,170 +548,44 @@ export interface InPlayPokemon {
       turn it came into play", §10) reads this — the separate "no evolving on
       your own first turn" rule is a turn/firstPlayer check, not this field. */
   turnPlayed: number;
-  /** The turn this Pokémon last moved from the BENCH into the Active Spot, or
-      `null` if it never has (it was placed Active at setup, or has only ever
-      been Benched). Distinct from `turnPlayed`, which records when the CARD
-      entered play, not when the Pokémon changed zone.
-
-      It is a turn STAMP, not a flag, and that is the whole design: "moved to
-      the Active Spot **this turn**" is `promotedTurn === state.turn`, so the
-      fact expires by arithmetic and there is no turn-boundary clear to forget.
-      It also needs no seat/ownership proof (contrast `allowances`, which is a
-      single bag owned by whoever's turn it is — D123): the stamp is on the
-      Pokémon, which already knows whose it is, and the turn counter is global,
-      so a KO-promotion made during the OPPONENT's turn reads FALSE on the
-      controller's next turn without anyone asking who moved it.
-
-      Written by every bench→Active route: `retreat` and `switchInto`
-      (Switch/Escape Rope, Boss's Orders, Jet Energy) in turn.ts/interpreter.ts,
-      and `resolvePromotion` after a Knock Out in flow.ts. Survives evolution —
-      `placeEvolution` spreads it through, because evolving does not un-move a
-      Pokémon (§10 sheds the effects of ATTACKS, and this is neither). */
+  /**
+   * The turn this Pokémon last moved from the Bench into the Active Spot, or `null` if it never
+   * has. A turn stamp, so "moved this turn" is `promotedTurn === state.turn` and needs no clear.
+   * Survives evolution.
+   */
   promotedTurn: number | null;
-  /** 🆕🆕🆕 (D636) — the turn this Pokémon last moved from the ACTIVE SPOT to the BENCH, or `null` if
-      it never has: `promotedTurn`'s mirror, for Clawitzer `me01-038` / `-141` "Fall Back to Reload"
-      (*"Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use
-      this Ability."*), read by `AbilityProgram.benchedThisTurn` in cardplay.ts `abilityBodyGateMet` — the printed moment as a
-      use-time gate (R-MR1's reading; R-FBR1 ⚠️ UNRULED). Written by the engine's TWO Active→Bench
-      moves, `retreat` (turn.ts) and `switchInto` (interpreter.ts), on the body that went down. A turn
-      STAMP for D124's three reasons: no boundary clear, no seat guard (a gust on the opponent's turn
-      stamps THEIR turn number), and it survives evolution and every zone move by spread.
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 44 → 45, migrated as `null`. */
+  /**
+   * The turn this Pokémon last moved from the Active Spot to the Bench, or `null` if it never has;
+   * the mirror of `promotedTurn`.
+   */
   benchedTurn: number | null;
-  /** 🆕🆕 **D386 — the turn this Pokémon was last HEALED, or `null` if it never
-      has been.** Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`):
-      *"If this Pokémon was healed during this turn, this attack does 100 more
-      damage."* — the last 2-printing clause in the bonus residue, deferred seven
-      times on exactly the cost this field is.
-
-      🛑 **A TURN STAMP AT `promotedTurn`'s ADDRESS, AND FOR D124's THREE REASONS
-      UNCHANGED.** (1) NO TURN-BOUNDARY CLEAR: *"during this turn"* is
-      `healedTurn === state.turn`, so the fact expires by arithmetic and no
-      `startTurn` walk can forget it. (2) NO SEAT GUARD: the stamp is on the
-      Pokémon, which already knows whose it is, and `state.turn` is global — so a
-      heal made during the OPPONENT's turn (Picnic Basket heals both boards) reads
-      FALSE once the controller's own turn begins, which is what the printed
-      sentence means. (3) It SURVIVES EVOLUTION and every zone move for the same
-      reason `promotedTurn` does: `placeEvolution`, `retreat` and `switchInto` all
-      spread the whole body, and §10 sheds the effects of ATTACKS — having been
-      healed is a fact about the turn, not an effect on the card.
-
-      ⚠️ **THE PRINTED SUBJECT IS "this Pokémon", WHICH IS WHY IT IS NOT A
-      PER-SEAT FLAG.** A `PlayerSide.healedThisTurn` boolean answers *"did this
-      SEAT heal anything this turn"*, and the two come apart on an ordinary board:
-      heal a BENCHED body with a Potion, then attack with an untouched Active. It
-      is also not a `GameState` uid SET — that spelling is correct about the
-      subject and wrong about the clock, because a set carries no turn number and
-      so needs the very boundary clear this shape does without. ⚠️ **AND THE
-      COMPILER DID NOT SEPARATE THE THREE**: all three cost exactly 1 file / 1 site
-      under `tsc -b --force` (measured, D386) — D385's `prizes` measurement
-      separates a WIDENING from a SHAPE CHANGE, not three widenings from each
-      other, so this one is settled by the printed subject and by the clock.
-
-      🛑 **WRITTEN AT EVERY SITE THAT FILES A `HEALED` EVENT, THROUGH THE ONE
-      HELPER `healedBody` (interpreter.ts), SO THE EVENT AND THE STAMP CANNOT
-      DISAGREE** (D222's rule: two readers of one fact become one helper). That
-      includes `moveCountersFromBench`, whose source body the engine has filed as
-      HEALED since D138 — the alternative reading (a counter MOVE is not a heal)
-      would have to move the EVENT too, and changing one without the other is what
-      this helper exists to prevent. */
+  /**
+   * The turn this Pokémon was last healed, or `null`, for "If this Pokémon was healed during this
+   * turn". Written through `healedBody` wherever a `HEALED` event is filed, so the two cannot
+   * disagree.
+   */
   healedTurn: number | null;
-  /** 🆕🆕 **D393 — the turn this Pokémon last EVOLVED, or `null` if it never has.**
-      Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`): *"If this Pokémon evolved
-      from Gimmighoul during this turn, this attack does 90 more damage."* and Misty's
-      Starmie `sv10-047` "Abrupt Flash" ({W}, `60+`): *"If this Pokémon evolved from
-      Misty's Staryu during this turn, this attack does 80 more damage."* — the bonus
-      residue's only PAIR on one mechanism, and the two printings that make this field
-      worth a `MATCH_RECORD_VERSION` bump between them rather than one at a time.
-
-      🛑 **A TURN STAMP AT `healedTurn`'s ADDRESS, AND FOR D124's THREE REASONS A
-      THIRD TIME.** (1) NO TURN-BOUNDARY CLEAR: *"during this turn"* is
-      `evolvedTurn === state.turn`, so the fact expires by arithmetic. (2) NO SEAT
-      GUARD: the stamp is on the Pokémon and `state.turn` is global, so an evolution
-      made on somebody else's turn reads FALSE once the asker's own turn begins.
-      (3) It SURVIVES every zone move, because `retreat` and `switchInto` spread the
-      whole body — and unlike the two stamps above it does not have to survive
-      EVOLUTION, since §10 forbids a second evolution on the turn of the first.
-
-      🛑 **AND THE NAME IS NOT STORED BESIDE IT, WHICH IS THE HALF THAT MAKES THIS
-      ONE FIELD RATHER THAN TWO.** The printed clause names the PRE-EVOLUTION card,
-      and `evolveOnto` appends rather than replaces (`stack: [...from.stack,
-      evolutionUid]`), so the card evolved FROM is always the entry one below the
-      stack TOP. Storing the name would be a second spelling of a fact the stack
-      already holds, and the two could disagree; `conditionHolds` reads the stack.
-
-      ⚠️ **THE PRINTED SUBJECT IS "this Pokémon", WHICH IS WHY IT IS NOT A `GameState`
-      RECORD.** A per-seat `Record<Seat, …>` answers *"did this SEAT evolve something
-      from Gimmighoul this turn"*, and the two come apart on an ordinary board: evolve
-      a BENCHED body and attack with an untouched Active. ⚠️ **AND THE COMPILER DID
-      NOT SEPARATE THEM** — measured at this head under `tsc -b --force`, a REQUIRED
-      field here costs 1 file / 1 site (`makeInPlay`) and a REQUIRED `GameState` field
-      costs 1 file / 1 site (`setup.ts`), the same tie D386 measured. The printed
-      subject decides it, not the arithmetic. */
+  /**
+   * The turn this Pokémon last evolved, or `null`, for "If this Pokémon evolved from X during this
+   * turn". The pre-evolution is read from the stack, so its name is not stored.
+   */
   evolvedTurn: number | null;
-  /** 🆕🆕 **D394 — the attack this Pokémon last USED and the turn it used it, or
-      `null` if it has never attacked** (see `UsedAttack` above). Falinks
-      `sv07-088` "All-Out Attack" ({C}{C}, `30+`): *"If this Pokémon used Form
-      Ranks during your last turn, this attack does 90 more damage."* and Weezing
-      `sv09-092` "Crazy Blast" ({D}{C}, `50+`): *"If this Pokémon used Pervasive
-      Gas during your last turn, this attack does 120 more damage."* — the bonus
-      residue's last PAIR on one mechanism, and the two printings that make this
-      field worth a `MATCH_RECORD_VERSION` bump between them rather than one at a
-      time.
-
-      🛑 **A TURN STAMP AT `evolvedTurn`'s ADDRESS AND FOR D124's THREE REASONS A
-      FOURTH TIME**, but on a DIFFERENT window, which is the whole of what is new
-      here. (1) NO TURN-BOUNDARY CLEAR: *"during your last turn"* is
-      `turn === state.turn - 2`, so the fact expires by arithmetic. (2) NO SEAT
-      GUARD: the stamp is on the Pokémon and `state.turn` is global. (3) It
-      SURVIVES every zone move, because `retreat` and `switchInto` spread the whole
-      body — and it MUST, since the printing this field exists for is asked on a
-      LATER turn than the one it was written on, so a body that retreated and came
-      back is exactly the board the clause is about.
-
-      🛑 **THE WINDOW IS `state.turn - 2`, D143's NUMBER REFLECTED, AND IT WAS
-      MEASURED RATHER THAN ASSUMED.** `preventAttackUse` and `BoostedAttack` both
-      stamp *"during your next turn"* as `state.turn + 2` because declaring an
-      attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] and the turn after the declaring one is the opponent's;
-      *"during your last turn"* is that same claim read backwards. The measurement
-      that settles it is a KO PARK: `turnTail` queues exactly ONE `startTurn` and
-      the KO's prize/promotion stages are spliced in FRONT of it, so a Knock Out —
-      from the attack epilogue OR from the Checkup — holds `state.turn` at the
-      ending turn's value for the whole interrupt and the counter still advances by
-      exactly 2 between a seat's consecutive turns. **A `- 1` would be the
-      opponent's clock and would read a stamp no body of this seat can carry.**
-
-      ⚠️ **AND THE PARITY DOES THE SEAT CHECK FOR FREE.** `state.turn - 2` has the
-      same parity as `state.turn`, and a body is only ever stamped on a turn its own
-      controller held (the §8 gate refuses an attack from the seat that does not
-      hold `turn:action`). So evaluated OFF-TURN for the non-turn seat the
-      comparison is FALSE by construction — an honest FALSE rather than a borrowed
-      TRUE, `yourFirstTurn`'s property arrived at by arithmetic instead of by
-      operand choice.
-
-      ⚠️ **THE PRINTED SUBJECT IS "this Pokémon", WHICH IS WHY IT IS NOT A
-      `GameState` RECORD** — and this row is the one place where a per-seat record
-      had real precedent, since `lastKoTurn` answers the other closed-window
-      question that way. It fails on an ordinary board: use Pervasive Gas with the
-      Active, retreat it, and attack with a SECOND Weezing off the Bench. A seat
-      record answers *"did this SEAT use Pervasive Gas last turn"* → TRUE and pays
-      the +120 to a body that has never attacked. ⚠️ **AND THE COMPILER DID NOT
-      SEPARATE THEM, FOR THE THIRD CONSECUTIVE SLICE AT THIS ADDRESS** — measured
-      at this head under `tsc -b --force`, a REQUIRED field here costs 1 file / 1
-      site (`makeInPlay`) and a REQUIRED `GameState` record costs 1 file / 1 site
-      (`setup.ts`). The printed subject decides it, not the arithmetic. */
+  /**
+   * The attack this Pokémon last used and when, or `null`. "During your last turn" is `turn ===
+   * state.turn - 2`.
+   */
   usedAttack: UsedAttack | null;
-  /** 🆕🆕🆕 §8.5 (D630) — the damage attacks dealt this Pokémon on the most recent turn they dealt
-      any (see `AttackDamageTaken` above), or `null`. A FACT ABOUT THE BODY, NOT AN EFFECT OF AN
-      ATTACK, so no §10 site clears it: it survives switching, evolving and devolving and dies with
-      the body (R-JH1 ⚠️ UNRULED). REQUIRED: `MATCH_RECORD_VERSION` 43 → 44, a v43 body MIGRATED
-      with `null`. Only `makeInPlay` is compiler-forced; every other literal spreads a body. */
+  /**
+   * §8.5: the damage attacks dealt this Pokémon on the most recent turn they dealt any, or `null`.
+   * A fact about the body, not an attack effect, so §10 does not clear it.
+   */
   attackDamageTaken: AttackDamageTaken | null;
 }
 
-/** 🆕🆕🆕 §8.5 (D630) — `pokemon` with `dealt` attack damage recorded for `turn`: summed onto a
-    record of the same turn, replacing an older one. `dealt <= 0` records nothing (a prevented or
-    fully reduced hit is not "damaged"). PURE. */
+/**
+ * §8.5: `pokemon` with `dealt` attack damage recorded for `turn`, added to a record for the same
+ * turn or replacing an older one. `dealt <= 0` records nothing.
+ */
 export function withAttackDamageTaken(
   pokemon: InPlayPokemon,
   turn: number,
@@ -2118,43 +597,22 @@ export function withAttackDamageTaken(
   return { ...pokemon, attackDamageTaken: { turn, amount } };
 }
 
-/** 🆕🆕🆕 §8.5 (D630) — the damage attacks dealt `pokemon` during the turn before this one (its
-    controller's OPPONENT's last turn, `koedDuringOpponentsLastTurn`'s arithmetic), or 0. */
+/** §8.5: the damage attacks dealt `pokemon` during the previous turn, or 0. */
 export function attackDamageTakenLastTurn(state: GameState, pokemon: InPlayPokemon): number {
   const record = pokemon.attackDamageTaken;
   return record !== null && record.turn === state.turn - 1 ? record.amount : 0;
 }
 
-/** 🆕🆕🆕 §8.1 (D630) — the Prize cards `seat` took during the turn before this one, or 0. Asked
-    for the attacker's OPPONENT, whose last turn the turn before this one is. */
+/** §8.1: the Prize cards `seat` took during the previous turn, or 0. */
 export function prizesTakenOnLastTurn(state: GameState, seat: Seat): number {
   const record = state.players[seat].prizesTakenOnTurn;
   return record !== null && record.turn === state.turn - 1 ? record.count : 0;
 }
 
-/** 🆕🆕 §13 (D434, GENERALISED AT D435) — the delayed effect a body owes RIGHT NOW,
-    or `null` when it owes nothing. The ONE reader of
-    `InPlayPokemon.scheduledEffect`, and the whole of that field's arithmetic:
-    the writer records the turn at whose END the effect fires, so the printed
-    question is one `===` and the Checkup does not have to know who installed it or
-    when.
-
-    🛑 **IT RETURNS THE RECORD AND NOT A NUMBER, WHICH IS THE ONE SHAPE CHANGE D435
-    MAKES TO D434's READER — AND IT RETIRES D434's `null`-RATHER-THAN-`0` ARGUMENT
-    RATHER THAN KEEPING IT AS PROSE.** D434 returned `number | null` and spent a
-    paragraph on why `null` is not `0` (a scheduled placement of zero would be
-    indistinguishable from nothing due). With three payloads the caller has to
-    branch on `kind` anyway, so the reader hands back the whole appointment and the
-    ambiguity it was avoiding cannot be expressed: a `ScheduledEffect` is never
-    falsy, and the `discard` and `knockOut` members carry no number at all. The
-    deriver's `>= 1` guard still forbids a printed 0 at the ARM, which is where D434
-    put it and where it belongs.
-
-    FALSE-EQUIVALENT on every turn but the stamped one, BY CONSTRUCTION and with no
-    clear site anywhere: a stamp for a turn already gone by can never equal
-    `state.turn` again (turns only increase), so a spent schedule is inert without
-    anybody sweeping it up. `null` is never a turn number, so an unscheduled body
-    answers `null` too. */
+/**
+ * §13: the delayed effect `pokemon` owes on this turn, or `null`. Its stamp is the turn at whose
+ * end it fires, so a spent schedule never matches again.
+ */
 export function scheduledEffectDue(pokemon: InPlayPokemon, turn: number): ScheduledEffect | null {
   const scheduled = pokemon.scheduledEffect;
   return scheduled !== null && scheduled.turn === turn ? scheduled : null;
@@ -2171,85 +629,31 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // Nothing has attacked with it yet — a card entering play carries no
     // effect of an attack (§10's carry-over rule read from the other end).
     attackBlock: null,
-    // …and no attack of its own has locked it either (D143). Same reading of
-    // §10's carry-over rule from the other end as the line above.
     attackLockedTurn: null,
-    // 🆕🆕🆕 …nor armed a FLIP-TO-ATTACK lock on it (D547). The ONE site the
-    // compiler forces for that required field; the other four are held by mutants.
     attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636
-    // …nor has one locked its RETREAT for its own next turn (D412). This is the
-    // ONE site the compiler forces for a new required field — the other three
-    // constructors spread an existing body, so a missing §10 clear there is
-    // silent. See `retreatLocked` (continuous.ts) for why the fact has two
-    // fields and one reader.
+    attackTwoFlipLockTurn: null,
     retreatLockedTurn: null,
-    // …and no attack has installed a durated damage reduction on it either
-    // (D147). Same reading of §10's carry-over rule from the other end as the
-    // two lines above.
     damageReduction: null,
-    // 🆕🆕 …and no attack has removed its Weakness for the opponent's
-    // next turn either (D432). Same reading of §10's carry-over rule from the
-    // other end as the three lines above, and this is the SECOND site the compiler
-    // forces for a new required field — `retreatLockedTurn`'s note above says the
-    // other three constructors spread an existing body, so a missing §10 clear
-    // there is silent. `noWeaknessBar.test.ts` drives all three structurally.
     noWeaknessTurn: null,
-    // 🆕🆕 …and no attack has SCHEDULED damage counters onto it for the end of a
-    // turn either (D434). §10's carry-over rule read from the other end for the
-    // seventh time, and this is the THIRD site the compiler forces for a new
-    // required field — `retreatLockedTurn`'s note above still holds for the four
-    // that spread an existing body. `delayedCounters.test.ts` drives all four
-    // literals plus this one structurally.
     scheduledEffect: null,
-    // …and no attack has WEAKENED its own attacks either (D149) — the mirror of
-    // the line above, on the other side of the §8.5 pipeline. Same reading of
-    // §10's carry-over rule from the other end as the three lines above.
     attackDamageDebuff: null,
-    // 🆕🆕🆕 …and no attack has made it VULNERABLE for a next turn either (D547).
-    // The compiler forces this line; the four spread literals are held by mutants.
     damageVulnerability: null,
-    // 🆕🆕🆕 …and no attack has RETYPED its Weakness either (D552). The compiler forces
-    // this line; the four spread literals are held by mutants.
     weaknessRetype: null,
-    // 🆕🆕🆕 …nor TAXED its costs, nor put a KNOCK OUT BOUNTY on it (D549). The
-    // compiler forces these two lines; the four spread literals are held by mutants.
     costTaxTurn: null,
     koBounty: null,
-    // 🆕🆕🆕 …nor MARKED its hand attaches (D575). The compiler forces this line; the four
-    // spread literals are held by mutants.
     handAttachMark: null,
-    // …and no attack has armed a durated recoil on it either (D152) — the
-    // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
-    // carry-over rule from the other end as the four lines above.
     installedRecoil: null,
-    // …and NO attack of anybody's has barred one of its attacks either (D154, a
-    // LIST since D165 because the field has two writers). Same reading of §10's
-    // carry-over rule from the other end as the five lines above, in the one
-    // spelling on this list that is `[]` rather than `null`.
     lockedAttacks: [],
-    // …and no attack of its own has BOUGHT one of its attacks a bonus either
-    // (D155) — the per-attack bar's opposite verb at the same address. Same
-    // reading of §10's carry-over rule from the other end as the six lines above.
     boostedAttack: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck
     // search), never from the Bench. The three bench→Active routes stamp it.
     promotedTurn: null,
-    // 🆕🆕🆕 …nor gone down from the Active Spot (D636, `benchedTurn`).
     benchedTurn: null,
-    // …and nothing has healed it either: a card entering play carries no damage,
-    // so there is nothing to remove. The seven `HEALED` sites stamp it (D386).
     healedTurn: null,
-    // …and it has not evolved either: a card entering play arrives as itself, from
-    // the hand or a deck search, and the ONE placement that is an evolution
-    // (`evolveOnto`, below) builds its body by SPREAD and never through here (D393).
     evolvedTurn: null,
-    // …and it has not attacked either: a card entering play has never been the
-    // Attacking Pokémon, and `finishAttack` (flow.ts) is the one writer (D394).
     usedAttack: null,
-    // 🆕🆕🆕 …and no attack has damaged it either (D630). The compiler forces this line.
     attackDamageTaken: null,
   };
 }
@@ -2260,137 +664,44 @@ export interface PlayerSide {
   hand: string[];
   /** Order preserved (§2 — the discard pile is ordered and public). */
   discard: string[];
-  /** Face-down prize uids, 6 at setup (§3.8). Taken on KOs from M2 on.
-      (🆕🆕🆕 D548: *"face-down"* is now PARTLY false — the row may hold prizes a card
-      turned FACE UP, listed in `faceUpPrizes` below. They are still prizes, in this
-      array, at their own index.) */
+  /** Prize uids, 6 at setup (§3.8). Some may be face up; see `faceUpPrizes`. */
   prizes: string[];
-  /** 🆕🆕🆕 **D548 — the prizes this seat has turned FACE UP**, as UIDS, ordered by WHEN
-      each one was turned (oldest first). Cresselia `sv06.5-021` "Crescent Purge"
-      (`censusAttackCorpus.ts:664`): *"You may turn 1 of your face-down Prize cards face up.
-      If you do, this attack does 80 more damage. (That Prize card remains face up for the
-      rest of the game.)"* — the only writer is the `turnPrizeFaceUp` op (interpreter.ts).
-
-      🛑 **UIDS, NOT INDICES, BECAUSE THE ROW COMPACTS.** `resolveTakePrizes` (flow.ts)
-      rebuilds `prizes` by FILTERING out the picked indices, so every slot behind a taken
-      one shifts down: an index recorded before a take names a DIFFERENT card after it. A
-      uid is stable across every compaction; the index a client needs is derived from it
-      at projection time (redact.ts), never stored.
-
-      🛑 **INVARIANT: always a SUBSET of `prizes`.** The take prunes a taken uid out of this
-      list in the same `withSide` that removes it from `prizes` (flow.ts), so a face-up
-      prize that leaves the row leaves this list too.
-
-      🛑 **A FACE-UP PRIZE IS STILL A PRIZE.** §14's prizes-taken condition,
-      `prizesRemaining`, every prizes-remaining `BoardCondition` and the ko:takePrizes
-      picker count `prizes.length` — the WHOLE row, face-up slots included — and none of
-      them reads this list. Only the face-down/face-up distinction reads it: the
-      `yourFaceDownPrizeRemains` gate, the `choosePrize` offer, and the wire.
-
-      REQUIRED (not `?`), which is why `MATCH_RECORD_VERSION` went 31 → 32 (the D548 block
-      at `apps/api/src/lobby/match.ts`). */
+  /**
+   * Uids of this seat's prizes turned face up, oldest first. Stored as uids because taking prizes
+   * compacts `prizes`. Always a subset of `prizes`, and face-up prizes still count as prizes.
+   */
   faceUpPrizes: string[];
-  /** 🆕🆕🆕 §8/§11 (D549) — the SIDE-WIDE ATTACK LOCK on this seat's Pokémon (see
-      `SideAttackLock` above), or `null` when none has been installed. Read through
-      `attackLocked` (continuous.ts); written by `lockSideAttacks` (interpreter.ts).
-
-      🛑 **PLACEMENT: HERE, ON `PlayerSide`, AND NOT ON `GameState` BESIDE
-      `handPlayLockedTurn` — MEASURED, NOT PREFERRED.** Both homes were built and
-      type-checked at this slice's head: each forces EXACTLY ONE non-test literal under
-      `tsc -b` (`setup.ts`'s `emptySide` here, `createGame`'s `GameState` literal there)
-      and ZERO test literals; but `GameState`'s key set is pinned at RUNTIME by **16**
-      test files (`Object.keys(state).sort()` rungs and key lists naming
-      `"handPlayLockedTurn"`/`"oncePerGameSpent"`) and `PlayerSide`'s by **ZERO**. The
-      fact is about ONE side's Pokémon ("your Pokémon" / the opponent's), and the side is
-      the record every read site already holds.
-
-      ⚠️ **`handPlayLockedTurn` IS NOT WIDENED, AND D285's ARGUMENT DOES NOT TRANSFER.**
-      D285 refused a second record because it *"would duplicate the window, the writer,
-      the arithmetic and this §10 non-clear invariant so that a reader could tell apart
-      two things no reader asks about"* — true there, because Evolution Jammer's bar is a
-      BARE STAMP of the same shape answering a question of the same kind (may this card be
-      PLAYED from hand?). Here the VALUE SHAPE DIFFERS (`{ turn, maxEnergy }` cannot live
-      in a `number | null` slot — `:170` carries its "2 or less"), the QUESTION DIFFERS
-      (may this BODY DECLARE an attack?, read by `attackLocked`, not by
-      `handPlayBarred`/`pokemonPlayBarred`), and the self form's window is `+ 2`, which
-      no `handPlayLockedTurn` writer has ever stamped. Widening it would put a record into
-      a stamp map and an attack question behind a hand-play name.
-
-      NOT cleared by §10 (`handPlayLockedTurn`'s invariant): it is not an effect on a
-      Pokémon, so no body leaving the Active Spot — and not the INSTALLER leaving play
-      (R7) — sheds it. It expires by arithmetic like every stamp on this engine.
-
-      PUBLIC — installed by an attack both players watched — but it rides NO wire field:
-      the only thing a client needs is each attack row's `playable`, which `redact.ts`
-      already computes through `attackLocked` (zero bytes there).
-
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 32 → 33 (the SIXTH position at match.ts). */
+  /**
+   * §8/§11: the side-wide attack lock on this seat's Pokémon, or `null`. Read through
+   * `attackLocked`. Not cleared by §10; expires by turn comparison.
+   */
   sideAttackLock: SideAttackLock | null;
-  /** 🆕🆕🆕 §8.5 (D564) — the SIDE-WIDE next-turn damage reduction on this seat's Pokémon
-      (see `SideDamageReduction` above), or `null` when none has been installed. Written by
-      `installSideDamageReductionNextTurn` (interpreter.ts), read by `seatDamageReduction`
-      (continuous.ts) for the DAMAGED body's side. Placed beside `sideAttackLock` for that
-      field's measured reason (a `PlayerSide` key forces ONE non-test literal, `emptySide`).
-
-      PUBLIC — a Supporter both players watched — but it rides NO wire field: the HUD does
-      not show it (a carried display debt, `sideAttackLock`'s precedent, decisions.md D564).
-
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 35 → 36 (the NINTH position at match.ts) —
-      a v35 rollback would silently drop a played Jasmine's Gaze window.
-
-      🆕🆕🆕 **D630 — A SUMMED LIST, NOT ONE RECORD** (D539: *"or `null` when none has been
-      installed"* is WITHDRAWN — an empty list). Iron Defender is an Item, so two plays in one
-      turn STACK; the D564 record was OVERWRITTEN by a second install. Every live entry is summed
-      (`seatDamageReduction`); `installSideDamageReductionNextTurn` appends and prunes the expired.
-      A v43 record is MIGRATED (`null` → `[]`, a record → `[record]`; `MATCH_RECORD_VERSION` 43 →
-      44). */
+  /**
+   * §8.5: the side-wide next-turn damage reductions on this seat's Pokémon. Several installs in one
+   * turn stack, and every live entry is summed by `seatDamageReduction`.
+   */
   sideDamageReduction: readonly SideDamageReduction[];
-  /** 🆕🆕🆕 §8.1 (D630) — the Prize cards this seat took on the most recent OF ITS OWN turns it took
-      any (see `PrizesTakenOnTurn` above), or `null` while it has taken none. A take on the
-      opponent's turn (a Cursed Blast self-Knock Out) is not recorded and leaves the record alone. Written by flow.ts
-      `resolveTakePrizes`, read by `prizesTakenOnLastTurn`. PUBLIC (both players watched the take).
-      REQUIRED: `MATCH_RECORD_VERSION` 43 → 44, a v43 record MIGRATED with `null` (no v43 writer
-      recorded a take, and `null` reads as "none last turn", which an old record cannot disprove). */
+  /**
+   * §8.1: the Prize cards this seat took on the most recent of its own turns on which it took any,
+   * or `null`. A take on the opponent's turn is not recorded.
+   */
   prizesTakenOnTurn: PrizesTakenOnTurn | null;
-  /** 🆕🆕🆕 §11 (D575) — the SIDE-WIDE, class-filtered next-turn damage block on this seat's
-      Future Pokémon (Miraidon "C.O.D.E.: Protect", see `SideAttackBlock` above), or `null`.
-      Written by `installSideAttackBlock`, read by continuous.ts `attackBlockOf`'s side arm,
-      cleared by `switchInto` when the source leaves the Active (R-MI1). Placed beside
-      `sideDamageReduction` for that field's measured reason (ONE non-test literal,
-      `emptySide`).
-
-      PUBLIC — installed by an attack both players watched — but it rides NO wire field: the
-      HUD does not show it (a carried display debt, the D564/D570 precedent, decisions.md D575).
-
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 37 → 38 (the ELEVENTH position at match.ts) —
-      a 0.458 rollback would silently drop a live C.O.D.E.: Protect window. */
+  /**
+   * §11: the side-wide damage block on this seat's Future Pokémon (Miraidon "C.O.D.E.: Protect"),
+   * or `null`. Cleared when the source leaves the Active Spot.
+   */
   sideAttackBlock: SideAttackBlock | null;
-  /** 🆕🆕🆕 §11 (D621) — Acerola's Mischief's shield on one chosen body of this seat (see
-      `ChosenAttackShield` above), or `null`. Written by `installChosenAttackShield`, read by
-      continuous.ts `attackBlockOf`. No wire field (the D564/D575 display debt).
-
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 42 → 43 (the SIXTEENTH position at match.ts) —
-      a v42 record is MIGRATED by writing `null` here (`migrateMatchRecord`). */
+  /** §11: Acerola's Mischief's shield on one chosen Pokémon of this seat, or `null`. */
   chosenAttackShield: ChosenAttackShield | null;
-  /** 🆕🆕🆕 §11 (D621) — Roxie's Performance's retreat lock on this seat's Poisoned Pokémon (see
-      `SideRetreatLock` above), or `null`. Written by `lockSideRetreat` onto the VICTIM's side, read
-      by continuous.ts `retreatLocked`. No wire field: the retreat offer already reads the lock.
-
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 42 → 43, migrated as `chosenAttackShield` is. */
+  /** §11: Roxie's Performance's retreat lock on this seat's Poisoned Pokémon, or `null`. */
   sideRetreatLock: SideRetreatLock | null;
-  /** 🆕🆕🆕 §7 (D636) — Seismitoad `30th-084` "Quaking Fist": *"During your opponent's next turn, whenever
-      they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards
-      that Trainer card instead of using it."* The single turn this seat's Trainer plays are flip-locked
-      (`state.turn + 1`, written by `flipLockTrainerPlay` onto the VICTIM's side), or `null`. Read by
-      cardplay.ts `trainerFlipFails` at every Trainer play from hand (Item, Supporter, Stadium, Tool,
-      Rare Candy, an Antique Fossil), after the play is otherwise legal (R-QF1 ⚠️ UNRULED).
-      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 44 → 45, migrated as `null`. */
+  /**
+   * §7: the turn on which this seat's Trainer plays from hand are flip-locked (Seismitoad "Quaking
+   * Fist": on tails the card is discarded instead), or `null`.
+   */
   trainerFlipLockTurn: number | null;
   active: InPlayPokemon | null;
-  /** Dense (no empty slots), capped at BENCH_MAX. (🆕🆕🆕 D577 (D539): *"capped at BENCH_MAX"*
-      is WITHDRAWN as the whole rule, kept as written — the cap is continuous.ts
-      `benchLimitOf(state, seat)`: 8 while Area Zero Underdepths is in play and this seat has a
-      Tera Pokémon in play, otherwise `BENCH_MAX` (5); never above `BENCH_CEILING`.) */
+  /** Dense (no empty slots). The size cap is `benchLimitOf`, not always `BENCH_MAX`. */
   bench: InPlayPokemon[];
   /** Setup mulligan count — drives the opponent's compensation draw. */
   mulligans: number;
@@ -2408,20 +719,11 @@ export interface StadiumInPlay {
   owner: Seat;
 }
 
-/** The §14 conditions in their precedence order: prizes taken (§14.1), the
-    opponent out of Pokémon (§14.2), deck-out at the draw (§14.3). */
-/** Why a game ended. The first three are the §14 RULES conditions, evaluated by
-    `evaluateWin`. `conceded` is the fourth and only non-rules one: a player gave
-    the game up. It is deliberately ONE reason for both ways that happens — the
-    player pressed concede, or an online player vanished and their abandonment
-    timer ran out (P4 3c-ii) — because to the opponent they are the same event,
-    a forfeit, and the engine has no business knowing about sockets.
-    (🆕🆕🆕 D575 (D539): *"conceded is the fourth and only non-rules one"* is WITHDRAWN as a
-    count, kept as written — there are FIVE members: `cardEffect` is the fifth, a card's
-    printed win (N's Sigilyph `sv09-064` "Victory Symbol": *"…you win this game."*), written
-    only by the `winGame` op through `finishGame`, never by `evaluateWin`. A WIDENING (match.ts
-    103-107) that rides the ELEVENTH position's bump; the schema `z.enum` widens with it, so
-    the CLIENT deploys FIRST — an old client's enum rejects the new reason.) */
+/**
+ * Why a game ended. The first three are the §14 rules conditions in precedence order, evaluated by
+ * `evaluateWin`. `conceded` covers both a concession and an online player's abandonment timer
+ * running out. `cardEffect` is a card's printed win, written only by the `winGame` op.
+ */
 export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut" | "conceded" | "cardEffect";
 
 /** §14 — how a finished game ended. A win names the condition met; a TIE is
@@ -2451,130 +753,43 @@ export interface TurnAllowances {
       allowances reset every turn (freshAllowances), it re-arms for the
       opponent's turn, which is precisely what "each player's turn" means. */
   stadiumAbilityUsed: boolean;
-  /** §9/§15.J — once-per-turn Ability uses. A list, not a bool: several Pokémon
-      may each use a once-per-turn Ability in the same turn. Reset each turn, so a
-      plain array clears cleanly.
-
-      The key is built by `abilityUsedKey` (cardplay.ts) and by NOTHING ELSE —
-      never spell it here or in a HUD. Its DEFAULT form is `${uid}:${ability}`,
-      per BODY; an Ability whose printed second sentence widens the scope to the
-      NAME ("You can't use more than 1 Flip the Script Ability each turn",
-      Fezandipiti ex) keys as `*:${ability}` instead, so every copy in play
-      collides into one entry. Both live in this one array because the two scopes
-      are the same RULE at different widths, and a uid can never be `*`.
-
-      No seat dimension, for the same reason `stadiumAbilityUsed` needs none:
-      only the turn's own player may use an Ability, and `freshAllowances()`
-      re-arms the bag at every `startTurn`. */
+  /**
+   * §9: once-per-turn Ability uses this turn. Keys are built only by `abilityUsedKey`:
+   * `${uid}:${ability}` per body, or `*:${ability}` when the card limits the Ability by name across
+   * all copies.
+   */
   abilitiesUsed: string[];
-  /** 🆕🆕🆕 §8.5 (D556) — the THIS-TURN SIDE-WIDE pre-W/R bonuses the turn's own player
-      has installed: Black Belt's Training (*"During this turn, attacks used by your
-      Pokémon do 40 more damage to your opponent's Active Pokémon ex (before applying
-      Weakness and Resistance)."*, 9 legal printings), written by the
-      `boostSideAttacksThisTurn` op and read by continuous.ts
-      `sideAttackBonusThisTurn` at BOTH pre-W/R sites (attack.ts's main hit and
-      `snipeActive`).
-
-      🛑 **HERE, AND NOT A TURN-STAMPED `PlayerSide` RECORD (`sideAttackLock`'s shape,
-      D549) — docs/decisions.md D556 (2).** *"During this turn"* IS this bag's own
-      lifetime: `freshAllowances()` wipes it at every `startTurn`, so there is no
-      stamp to compare and no clear to forget (`supporterPlayed`'s argument, D123).
-      A stamp on a side answers a question this sentence never asks — WHICH seat's
-      future turn — because the bonus is spent on the very turn it is played; D549
-      needed a stamp because its window is a LATER turn and outlives this bag.
-
-      🛑 **AN ARRAY, BECAUSE SOURCES ARE SUMMED** (`seatPreWRDamageBonus`'s rule): two
-      installs are two printed effects. ⚠️ Today one Supporter per turn (§7.2) means
-      Black Belt's Training can write at most ONE entry, so the sum has one term on
-      every legal board — the array is for the NEXT producer (an Item or a second
-      printing), not for this one; the summing is still driven with two entries.
-      🆕🆕🆕 D621 — that producer arrived: Premium Power Pro (an Item, two plays = two summed
-      entries) and Gladion's Final Battle, both with the printed `attacker` noun.
-
-      ⚠️ **THE SEAT HAZARD, NAMED (`abilitiesUsed`'s paragraph above, and effects.ts
-      `youPlayedSupporterThisTurn`)**: this bag describes the TURN'S OWNER only, so
-      the reader pays an entry only when the attacking seat IS the turn's seat
-      (`phaseViewOf(...).activeSeat === seat`) — pinned in
-      `sideAttackBonusThisTurn.test.ts`. REQUIRED, and a v34 record lacks it:
-      `MATCH_RECORD_VERSION` 34 → 35, THE EIGHTH POSITION (apps/api match.ts). */
+  /**
+   * §8.5: this-turn side-wide pre-Weakness/Resistance bonuses the turn's player installed (e.g.
+   * Black Belt's Training). Entries are summed. This bag describes only the turn's owner, so the
+   * reader pays an entry only when the attacking seat is the turn's seat.
+   */
   sideAttackBonuses: SideAttackBonus[];
-  /** 🆕🆕🆕 §7.2 (D564) — the uid of the Supporter the turn's own player played from
-      their hand THIS TURN, or `null` when none has been. Written ONLY by `playTrainer`
-      (cardplay.ts), in the same object literal that sets `supporterPlayed: true`, so the
-      two cannot disagree; cleared by `freshAllowances()` at every `startTurn`.
-
-      Read by `BoardCondition.youPlayedSupporterNamedThisTurn` (interpreter.ts), which
-      resolves the NAME through `cardOfUid` — a uid resolves in ANY zone, so a Caretaker
-      shuffled back into the deck still counts as played (R-FC, decisions.md D564). Two
-      printed readers: Team Rocket's Factory `sv10-173` (*"if they played a Supporter card
-      that has "Team Rocket" in its name from their hand this turn"*) and Crobat
-      `sv06.5-029` "Shadowy Envoy" (*"if you played Janine's Secret Art from your hand this
-      turn"*). [🆕🆕🆕 D619 (D539): ~~"Two printed readers"~~ — more since: Malamar "Colluding
-      Tentacles" (D574) and D619's Heliolisk ×2 "Frilled Generator", Wicked Impact, Buddy Attack
-      and Twister Spewing.] Every Supporter play is from the hand (`playTrainer` is the one path).
-
-      ⚠️ THE SEAT HAZARD, `supporterPlayed`'s: this bag describes the TURN'S OWNER only, so
-      the reader copies `youPlayedSupporterThisTurn`'s `phaseViewOf(...).activeSeat` guard.
-
-      REQUIRED: `MATCH_RECORD_VERSION` 35 → 36, THE NINTH POSITION (apps/api match.ts) — a
-      v35 rollback resuming a save taken after the Supporter would drop a Factory or
-      Crobat licence the player already paid a Supporter for. */
+  /**
+   * §7.2: the uid of the Supporter the turn's player played from hand this turn, or `null`. Set
+   * together with `supporterPlayed`. Describes only the turn's owner.
+   */
   supporterPlayedUid: string | null;
-  /** 🆕🆕🆕 §7.2/§5.3 (D564) — Amarys's scheduled end-of-turn hand discard: the printed
-      THRESHOLD (5), or `null` when none is pending. Amarys `sv08.5-093`/`-132`/`-170`
-      (*"Draw 4 cards. At the end of this turn, if you have 5 or more cards in your hand,
-      discard your hand."*) writes it through `scheduleEndOfTurnHandDiscard`; flow.ts's
-      `endTurn` stage reads it for the stage's own seat (the turn owner) BEFORE checkup and
-      before `startTurn`'s `freshAllowances()` wipes it, and discards the whole hand when it
-      holds `>=` the threshold. "At the end of this turn" IS this bag's lifetime.
-
-      ⚠️ A NUMBER, NOT A BOOLEAN: the printed threshold is data, and a flag would bake the
-      5 into flow.ts. REQUIRED: `MATCH_RECORD_VERSION` 35 → 36 — a v35 rollback would drop
-      a pending discard the player accepted when they drew the 4. */
+  /**
+   * §7.2/§5.3: Amarys's end-of-turn hand discard threshold, or `null` when none is pending. Checked
+   * at end of turn before the Checkup; the hand is discarded if it holds at least this many cards.
+   */
   endOfTurnHandDiscard: number | null;
-  /** 🆕🆕🆕 §5.3/§8 (D570) — the ATTACK-AGAIN WINDOW: the uid of the turn owner's Active that
-      may declare a SECOND attack this turn, or `null` when no window is open. "Festival
-      Lead" (Dipplin, Goldeen, Swirlix, Seaking — 7 printings): *"If Festival Grounds is in
-      play, this Pokémon may use an attack it has twice. If the first attack Knocks Out your
-      opponent's Active Pokémon, you may attack again after your opponent chooses a new
-      Active Pokémon."*
-
-      Written ONLY by flow.ts `finishAttack`, when the FIRST attack finishes with this key
-      still `null`, the attacker still the Active, and `attackAgainLicensed` true; the
-      turn's tail is then a `resumeTurn` instead of `turnTail` (R-FL4: the window survives
-      the first attack's prize, koTrigger and promotion stages; no Checkup runs between the
-      attacks). Read by turn.ts `turnGate` (R-FL1: only `attack` and `endTurn` while it is
-      non-null), by `attackAgainBarred` (interpreter.ts — R-FL2's second read: same uid,
-      still Active, still licensed) and by `finishAttack` itself (non-null on the second
-      finish, so there is no third attack) [🆕 D570 landing (D539): and read DIRECTLY by three
-      more — flow.ts `resumeTurn` (the `ATTACK_AGAIN_OFFERED` row's uid and its guard),
-      redact.ts `mainPhase` (withheld while non-null) and GameHud.tsx `attackAgainWindow`
-      (the HUD's mirror)]. Cleared by `freshAllowances()` at every
-      `startTurn`, so "this turn" IS this bag's lifetime — no stamp, `supporterPlayed`'s
-      argument (D123).
-
-      ⚠️ THE SEAT HAZARD, `supporterPlayed`'s: this bag describes the TURN'S OWNER only;
-      every reader asks for that seat.
-
-      REQUIRED: `MATCH_RECORD_VERSION` 36 → 37, THE TENTH POSITION (apps/api match.ts) — a
-      0.453 rollback resuming a save taken INSIDE the window ignores the key and would grant
-      Trainer / attach / retreat / Ability plays between the two attacks, and a v36 bag
-      lacks the key. */
+  /**
+   * §5.3/§8: the uid of the turn owner's Active that may declare a second attack this turn
+   * (Festival Lead), or `null`. While set, only `attack` and `endTurn` are allowed.
+   */
   attackAgainUid: string | null;
 }
 
-/** 🆕🆕🆕 §8.5 (D556) — one installed this-turn side-wide bonus: `amount` HP added
-    before Weakness and Resistance to an attack by ANY of the turn player's Pokémon
-    whose DEFENDER matches `target` (the printed *"your opponent's Active Pokémon
-    ex"* — matched on the defending card, the only place that knows it, D245). */
+/**
+ * §8.5: one this-turn side-wide bonus: `amount` added before Weakness and Resistance to an attack
+ * by any of the turn player's Pokémon whose defender matches `target`.
+ */
 export interface SideAttackBonus {
   amount: number;
   target: CardFilter;
-  /** 🆕🆕🆕 §8.5 (D621) — the printed ATTACKER noun, matched on the attacking body's in-play card
-      (`inPlayCardOf`): Gladion's Final Battle's *"your Pokémon that don't have a Rule Box"*,
-      Premium Power Pro's *"your {F} Pokémon"*. ABSENT = every attacker (Black Belt's Training,
-      and every v42 entry). PERSISTED in the bag: a 0.503 reader would ignore it and pay every
-      attacker, so it rides `MATCH_RECORD_VERSION` 42 → 43. */
+  /** §8.5: the attacker filter, matched on the attacking card. Absent means every attacker. */
   attacker?: CardFilter;
 }
 
@@ -2593,224 +808,91 @@ export function freshAllowances(): TurnAllowances {
   };
 }
 
-/** The staged turn tail. endTurn — and attack, which ends the turn through
-    the same tail (§5.3) — seed this queue; `advance` (flow.ts) drains it
-    stage by stage, PARKING on an interrupt phase whenever a stage needs a
-    player decision (which prize, which promotion) and resuming from the head
-    once the deciding action lands. This un-fuses M1's TURN_ENDED → checkup →
-    startTurn single reduction: every stage boundary is a legal place for the
-    game to wait.
-    🆕🆕🆕 D570 CORRECTION (D539) — "attack, which ends the turn through the same tail" is
-    true except under Festival Lead: a FIRST attack that opens the attack-again window
-    (`TurnAllowances.attackAgainUid`) seeds `resumeTurn` instead of this tail (flow.ts
-    `finishAttack`), and the SECOND attack (or an `endTurn` declining it) seeds the tail. */
+/**
+ * The staged turn tail. `endTurn` and `attack` seed this queue; `advance` (flow.ts) drains it stage
+ * by stage, parking whenever a stage needs a player decision and resuming once the action lands. A
+ * first attack that opens the Festival Lead attack-again window queues `resumeTurn` instead.
+ */
 export type PendingStage =
-  /** §8.1 — the KOing seat picks `count` face-down prizes (clamped to what
-      is left when processed; forced picks auto-resolve). 🆕🆕🆕 D548: the row may
-      hold FACE-UP prizes (`PlayerSide.faceUpPrizes`), which are picked like any
-      other — the clamp and the forced rule count the WHOLE row. */
+  /**
+   * §8.1: the KOing seat picks `count` prizes (clamped to what is left; forced picks auto-resolve).
+   * Face-up prizes are picked like any other.
+   */
   | { kind: "takePrizes"; seat: Seat; count: number }
-  /** 🆕🆕🆕 §8.1 (D640) — shuffle `seat`'s whole hand into their deck: Gholdengo `30th-108` / `-142`
-      "Celebration"'s *"If you do, shuffle your hand into your deck."*, queued by interpreter.ts
-      `queueTakePrize` DIRECTLY BEHIND its `takePrizes` stage, so the Prizes just taken go with the hand
-      (R-CEL1 ⚠️ UNRULED). Never parks; one `HAND_SHUFFLED_INTO_DECK`. A NEW union member and a persisted one
-      (a parked Prize pick leaves it in `pending`): a 0.522 `advance` has no arm for it, so it rides
-      `MATCH_RECORD_VERSION` 46 → 47 (apps/api match.ts "46 → 47 AT D640"). */
+  /**
+   * §8.1: shuffle `seat`'s whole hand into their deck (Gholdengo "Celebration"). Queued directly
+   * behind its `takePrizes` stage so the Prizes just taken go with the hand. Never parks.
+   */
   | { kind: "shuffleHandIntoDeck"; seat: Seat }
   /** §8.1 — the KO'd seat promotes from the bench; an empty bench at this
       point is the §14.2 loss. */
   | { kind: "promote"; seat: Seat }
-  /** 🆕🆕🆕 D566 — `toolsDone` is ENGINE-WRITTEN by this stage itself: the `endTurn` case
-      (flow.ts) seeds one `endTurnToolTrigger` per live Powerglass on the turn owner's Active
-      AHEAD of a copy of itself carrying `toolsDone: true`, so the re-queued copy ends the
-      turn instead of seeding again. Absent on every stage any other writer queues, which is
-      byte-identical — an optional key on a persisted stage (D125), `MATCH_RECORD_VERSION`
-      holds. */
+  /**
+   * `toolsDone` is set only by this stage: it queues one `endTurnToolTrigger` per Powerglass ahead
+   * of a copy of itself with `toolsDone: true`, so the copy ends the turn instead of seeding again.
+   */
   | { kind: "endTurn"; seat: Seat; toolsDone?: true }
-  /** 🆕🆕🆕 §5.3 (D566) — run the `atEndOfYourTurnInActive` program of the POKÉMON TOOL
-      `toolUid` on `seat`'s Active (Powerglass `sv06.5-063` / `-097`: *"At the end of your turn
-      (after your attack), if the Pokémon this card is attached to is in the Active Spot, you
-      may attach a Basic Energy card from your discard pile to it."*). THE FIRST END-OF-TURN
-      STAGE THAT CAN PARK: seeded by the `endTurn` case ahead of `TURN_ENDED` (and ahead of
-      Amarys's discard, which it cannot change — Powerglass moves no hand card), it runs
-      under `seat` (the turn owner) and folds through settleProgram with `resumeTail`, so a
-      park resumes the re-queued `endTurn` behind it. The runner re-asks the print (the Tool
-      still live on the Active) and runs the program with the HOLDER's top uid as
-      `sourceUid` — `attachEnergyFrom.toSelf` resolves "it" through `sourceRef`, which a Tool
-      uid would not satisfy. A new union member (D125). */
+  /**
+   * §5.3: run the end-of-turn program of the Pokémon Tool `toolUid` on `seat`'s Active
+   * (Powerglass). Can park; the program runs with the holder's top uid as `sourceUid`, because "it"
+   * must resolve to the Pokémon, not the Tool.
+   */
   | { kind: "endTurnToolTrigger"; seat: Seat; toolUid: string }
   /** The Pokémon Checkup (§13) — `seat` is the player whose turn just ended,
       which the §13.4 paralysis recovery keys on. Its KOs park on the same
       ko:* interrupts the attack KOs use. */
   | { kind: "checkup"; seat: Seat }
-  /** Hand the turn BACK to `seat` after a mid-turn Knock Out (M4) — an evolve
-      that drops a charmed Basic below its new stage's HP, or a future
-      spread/snipe ability. Unlike an attack KO (which ends the turn) or a
-      Checkup KO (between turns), the actor keeps playing once the KO's
-      prize/promotion decisions settle: this stage restores their turn:action
-      phase. Always the tail of a mid-turn KO's stages, so nothing follows it.
-      🆕🆕🆕 D570 CORRECTION (D539) — "an attack KO (which ends the turn)" is true except
-      under Festival Lead: a FIRST attack that opens the attack-again window queues THIS
-      stage behind its KO's prize/koTrigger/promotion stages (flow.ts `finishAttack`), so
-      the attacker gets turn:action back for the second attack (R-FL4). "Nothing follows
-      it" still holds: `finishAttack`'s queue behind it is the (always empty) incoming
-      `pending`. No new `PendingStage` member. */
+  /**
+   * Hand the turn back to `seat` after a mid-turn Knock Out, once its prize and promotion decisions
+   * settle. Also queued after the first attack of a Festival Lead attack-again window. Always the
+   * last of its stages.
+   */
   | { kind: "resumeTurn"; seat: Seat }
-  /** §9 (M4) — run the on-KO triggered Ability of the just-Knocked-Out `uid`
-      (owned by `seat`). Fires DURING the opponent's turn, mid-KO-sweep: its
-      program runs through the shared interpreter and may PARK on a decision
-      (effect:choose with `resumeTail`), after which the KO sweep RESUMES
-      draining the remaining prize/promotion stages behind it. Queued by
-      collectKnockOuts (flow.ts) after the prize stages, before the promotions.
-      `uid`'s card left play, but cardIdByUid → programFor still resolves it. */
-  /** 🆕🆕🆕 D566 — `toolUid` names a POKÉMON TOOL that was attached to the KO'd `uid`
-      (Amulet of Hope `sv08-162`, `onHolderKnockedOut`): the stage runs THAT Tool's program
-      instead of the body's own on-KO Ability, one stage per Tool, queued behind the body's
-      own (flow.ts `collectKnockOutPass`) and inside the koTrigger group, so PRIZES →
-      koTriggers → PROMOTIONS is inherited. Optional and engine-written; absent on every
-      stage an older writer queued, which is byte-identical (D125). The 0.449 ROLLBACK
-      reading, named: a 0.449 reader ignores the key and runs the KO'd BODY's own on-KO
-      lookup — a whiff on every body with no on-KO Ability, and a SECOND run of that Ability
-      on one that has one (apps/api `match.ts`). */
+  /**
+   * §9: run the on-KO triggered Ability of the Knocked Out `uid` (owned by `seat`), or, when
+   * `toolUid` is set, the on-KO program of that Tool attached to it. Runs during the opponent's
+   * turn and may park; queued after the prize stages and before the promotions.
+   */
   | { kind: "koTrigger"; seat: Seat; uid: string; toolUid?: string }
-  /** §9 — run the `onDamagedByAttack` reactive Ability of the Active `uid` that a
-      main-hit attack just DAMAGED (Armarouge "Scorching Armor" Burns the attacker;
-      Klawf ex "Counterattacking Pincer" discards an Energy from the attacker).
-      Fires DURING the OPPONENT's turn, so — like koTrigger — its program runs under
-      `seat` (the DAMAGED player, NOT the turn owner) and may PARK on a decision
-      (effect:choose with `resumeTail`), after which draining RESUMES the
-      attackEpilogue queued behind it. Seeded by attack.ts only when the damaged
-      Active carries such an Ability, AFTER the attack's own effect program and
-      BEFORE finishAttack's §8.1 sweep, so "even if this Pokémon is Knocked Out" is
-      free. `uid`'s card is re-looked-up (it is still the Active unless the effect
-      program moved it), so the "in the Active Spot" clause holds at run time.
-
-      🆕🆕🆕 **D562 CORRECTION (D539): ~~"Seeded by attack.ts only when the damaged Active
-      carries such an Ability"~~ is WITHDRAWN as the whole story — `uid` may now name a
-      POKÉMON TOOL attached to that Active (Lucky Helmet, Handheld Fan), one stage per
-      Tool, queued behind the Ability's (R-LH); flow.ts `runDamagedTrigger` dispatches on
-      it. The SHAPE is unchanged (`seat` + `uid`), so `MATCH_RECORD_VERSION` stays 35 and a
-      0.445 reader drains a Tool-uid stage as a silent whiff. */
+  /**
+   * §9: run the `onDamagedByAttack` reaction of the damaged Active `uid` (an Ability, or an
+   * attached Tool's uid). Runs under `seat`, the damaged player, and may park. Queued after the
+   * attack's effect program and before the §8.1 KO sweep.
+   */
   | { kind: "damagedTrigger"; seat: Seat; uid: string }
-  /** §8.1 (D171) — run the `onAllyActiveKnockOut` program of a POKÉMON TOOL
-      attached to one of `seat`'s SURVIVING Pokémon, because `seat`'s Active is
-      about to be Knocked Out by the opponent's attack (Exp. Share sv01-174
-      rescues a Basic Energy off the dying body onto the Tool's own holder).
-      🆕🆕🆕 D566 — or the `onHolderActiveKnockedOut` program of a Tool on the DYING Active
-      itself (Heavy Baton `sv05-151`, Retreat exactly 4: up to 3 Basic Energy to the Bench);
-      the shape is unchanged (the seat alone), so no persisted byte moves.
-      🆕🆕🆕 D626 — or the dying Active's OWN `onSelfActiveKnockedOut` Ability (Miraidon "Photon Cord"),
-      found first by the same scan; the shape is unchanged again (a 0.508 reader's scan finds no Tool and
-      drains the stage as a whiff).
-
-      ⚠️ NO `uid`, AND THAT ABSENCE IS THE DESIGN — the one stage in this union
-      that names NEITHER the body that acts NOR the body it is about. Both are
-      RE-READ at run time off `seat`'s live board (flow.ts `runKoToolTrigger`):
-      the subject is whatever is in the Active Spot then, because the printed
-      sentence is present-tense about the spot ("when your ACTIVE Pokémon is
-      Knocked Out") rather than about a Pokémon someone pointed at earlier; and
-      the bearer is found by scanning every attached Tool (triggers.ts
-      `koToolTriggersOf`). Remembering either would be a second opinion that can
-      disagree with the sweep two stages later — `koRecoilOf`'s rule, one stage
-      out. It is also why the seat is the whole payload: `attackEpilogue` carries
-      exactly one seat for the same reason (it re-reads both boards).
-
-      Seeded by attack.ts BETWEEN the damagedTrigger and the attackEpilogue —
-      which is the only window that exists: `koRecoilOf` is earlier but cannot
-      PARK, and every `koTrigger` is later than `knockOut`, which has already
-      discarded the Energy this sentence moves. Like the two triggers above it
-      runs under `seat` (the DAMAGED, non-turn player, who is the one choosing)
-      and folds through settleProgram with `resumeTail`, so a park resumes the
-      attackEpilogue queued behind it. Seeded on TOOL PRESENCE at damage time but
-      conditioned on LETHALITY, which is knowable only after the attack's own
-      effect program — so the run-time re-check is the `damagedByAttackAbility`
-      idiom ("re-derive the printed clause where it is answerable"), and it is the
-      difference between this stage and a `koTrigger`. */
+  /**
+   * §8.1: run the program that reacts to `seat`'s Active about to be Knocked Out by an attack (a
+   * Tool on a surviving or dying Pokémon, or the Active's own Ability). Carries no uid on purpose:
+   * the Active and the bearer are re-read from the live board when the stage runs.
+   */
   | { kind: "koToolTrigger"; seat: Seat }
-  /** §8.1 + §5.3 — the attack's EPILOGUE: sweep BOTH boards for Knock Outs
-      (finishAttack owns the [defender, attacker] order + the §14 tie), then end
-      `seat`'s (the attacker's) turn through the staged tail. Seeded BEFORE the
-      attack's effect program runs and drained by `advance` (flow.ts
-      finishAttack), which is what lets that program PARK: a parked attack effect
-      leaves this stage sitting in `pending`, and settleProgram's `resumeTail`
-      fold resumes draining it once the decision lands. An attack with no effect
-      program never queues it (finishAttack runs inline), so the stage exists only
-      while an effect is mid-resolution. No `koedSeat`: the sweep reads both boards
-      off the post-effect state, so the KO'd seats need not be predeclared.
-
-      ⚠️ `uid` IS REQUIRED, AND IT IS THE ONE THING IN THIS UNION THAT MUST **NOT**
-      BE RE-READ OFF THE LIVE BOARD (D189) — the exact inverse of `koToolTrigger`
-      two members up, whose seat-only payload is deliberate for the opposite
-      reason. It names the ATTACKING POKÉMON, the body that declared this attack,
-      captured at declaration in `attack.ts` and carried here unchanged. Until
-      D189 `finishAttack` re-derived it as `players[seat].active`, which was sound
-      only while nothing between the §8.5 hit and this stage could swap that
-      seat's Active — an accident of the registry (`switchActive` lived in one
-      `trainer:` program no attack could invoke) rather than a rule, and swept as
-      such by `vengefulPunch.test.ts`. The moment an attack derives a self-switch
-      ("Switch this Pokémon with 1 of your Benched Pokémon."), the spot holds the
-      body that was just PROMOTED and the §8.1 KO-conditioned recoil (Vengeful
-      Punch sv03-197) would put its counters there. "The Attacking Pokémon" is a
-      fact about WHICH BODY ATTACKED, not about which body is standing in the
-      spot when the epilogue runs — so it is REMEMBERED, and `koRecoilOf`'s
-      "never hold a second opinion" rule is not violated because there is no
-      other opinion to hold: nothing else in the engine can answer it after the
-      program ran.
-
-      REQUIRED rather than optional, deliberately: an optional field would read
-      back on an old record as "fall back to the Active", i.e. exactly the bug,
-      and would leave the defect one absent key away forever. That is D124's
-      refusal of the soft landing, and it is what makes this stage cost
-      `MATCH_RECORD_VERSION` 11 → 12.
-
-      🆕🆕 **`attack` IS REQUIRED FOR THE SAME REASON AND IS THE SAME KIND OF FACT
-      (D394)** — the PRINTED NAME of the attack that was declared, captured beside
-      `uid` at the one site that knows it and carried across a park unchanged.
-      `finishAttack` stamps `InPlayPokemon.usedAttack` with it, and this stage is
-      the ONE of the five routes into that function on which the name cannot be
-      re-derived: the top card's `attacks[index]` [🆕🆕🆕 D578 (D539): the ATTACK MENU row at
-      `index`, `attackMenuOf(...)[index]` — a printed, Memory Dive or Technical Machine row; the
-      argument is unchanged, and stronger: the menu also depends on a Relicanth and a Tool that
-      may have left] is gone from scope, and the body
-      may by then have self-switched or been shuffled away entirely. It is D189's
-      argument about `uid` with the subject changed from "which body" to "which
-      attack", and it costs `MATCH_RECORD_VERSION` 24 → 25 alongside
-      `InPlayPokemon.usedAttack` itself. */
+  /**
+   * §8.1 + §5.3: the attack's epilogue: sweep both boards for Knock Outs, then end `seat`'s turn
+   * through the staged tail. Queued before the attack's effect program so the program can park.
+   * `uid` and `attack` are the attacking body and the declared attack's printed name, captured at
+   * declaration because the Active may have changed by the time this runs.
+   */
   | {
       kind: "attackEpilogue";
       seat: Seat;
       uid: string;
       attack: string;
-      /** 🆕🆕🆕 §6.1 (D577) — Boomerang Energy `sv06-166`: *"If this card is discarded by an
-          effect of an attack used by the Pokémon this card is attached to, attach this card
-          from your discard pile to that Pokémon after attacking."* The Boomerang uids THIS
-          attack's own program discarded off the attacker (`uid`), appended by interpreter.ts
-          `discardEnergyApply` (R-BE1) and re-attached by flow.ts `returnBoomerangs` when this
-          stage drains, before `finishAttack` (R-BE2). OPTIONAL (absent = none, every
-          pre-D577 stage byte for byte); a 0.460 reader would drop it silently, which is one
-          of the addresses `MATCH_RECORD_VERSION` 39 → 40 pays. */
+      /**
+       * §6.1: Boomerang Energy uids this attack's own program discarded off the attacker;
+       * re-attached when the stage drains, before `finishAttack`.
+       */
       boomerang?: string[];
     }
-  /** 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths' TRIM: `seat` holds more Benched Pokémon
-      than `benchLimitOf` now allows (its last Tera Pokémon left play, or the Stadium left),
-      so it discards Benched Pokémon — whole stacks, no Knock Out, no Prize (R-AZ5) — until it
-      has 5. Queued by continuous.ts `benchTrimStages` at the five settle-point producers,
-      which are FOUR functions (flow.ts `resolveMidTurnKnockOuts`, `finishAttack`, `runCheckup`,
-      and interpreter.ts `queueStadiumLeaveTrims` around `discardStadium` at the FRONT of
-      `pending`, R-AZ7) — the fifth, cardplay.ts `playStadium`'s replacement, runs THROUGH
-      producer 1 (`resolveMidTurnKnockOuts` with the old owner as `trimFirst`) — behind the sweep's prize / promotion stages (R-AZ6). The excess is
-      RE-READ when the stage drains (a promotion in front of it shrinks the Bench), and the
-      pick parks on the SHIPPED `choosePokemonMulti` with the BENCH OWNER as controller and
-      answerer (R-AZ4; flow.ts `runBenchTrim`, the `koTrigger` routing). A new union member
-      (D125) — `MATCH_RECORD_VERSION` 39 → 40. */
+  /**
+   * §7.3: Area Zero Underdepths trim: `seat` has more Benched Pokémon than `benchLimitOf` allows,
+   * so it discards Benched Pokémon (no Knock Out, no Prize) until it has 5. The excess is re-read
+   * when the stage drains, and the bench owner chooses.
+   */
   | { kind: "benchTrim"; seat: Seat }
-  /** 🆕🆕🆕 §7.4 (D643) — Rotom ex "Multi Adapter"'s *"If this Ability goes away, discard Pokémon Tools from those
-      Pokémon until only 1 remains on each."*: `seat` has a body carrying more Tools than continuous.ts `toolCapOf`
-      now allows. Queued by continuous.ts `toolTrimStages` at flow.ts `advance`'s entry (in FRONT of the queue) and
-      by index.ts `applyAction` (a board back at `turn:action`, ahead of a `resumeTurn`) — R-MAD1. The excess is
-      RE-READ when the stage drains (flow.ts `runToolTrim`), one `trimTools` op per over-cap body, the OWNER
-      choosing which Tools go (the shipped `discardTools` prompt at an exact `total`). A new union member (D125) —
-      `MATCH_RECORD_VERSION` 47 → 48. */
+  /**
+   * §7.4: Rotom ex "Multi Adapter" went away, so `seat` must discard Tools until each Pokémon is
+   * within `toolCapOf`. The excess is re-read when the stage drains, and the owner chooses.
+   */
   | { kind: "toolTrim"; seat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
@@ -2841,50 +923,29 @@ export type Phase =
   // Per-turn allowances live on GameState.allowances (NOT here) so the ko:*
   // interrupts below can replace the phase mid-turn without destroying them.
   | { kind: "turn:action"; seat: Seat }
-  /** KO resolution interrupt (§8.1): the KOing player picks `count` of their
-      own face-down prizes. Forced picks (count = prizes left) never park.
-      🆕🆕🆕 D548: *"face-down"* is PARTLY false — the pick is over the WHOLE row, and a slot
-      in `PlayerSide.faceUpPrizes` is pickable like any other (the PendingStage above). */
+  /**
+   * KO resolution interrupt (§8.1): the KOing player picks `count` of their own prizes, face-up
+   * ones included. Forced picks never park.
+   */
   | { kind: "ko:takePrizes"; seat: Seat; count: number }
   /** KO resolution interrupt (§8.1): the KO'd player promotes a benched
       Pokémon. A lone benched Pokémon auto-promotes; an empty bench is the
       §14.2 loss (resolved before this phase is ever entered). */
   | { kind: "ko:promote"; seat: Seat }
-  /** Mid-effect decision interrupt (§15.E/G): a Trainer or Ability the acting
-      `seat` played parked on a choice (which card to search up, which Pokémon
-      to gust/switch/heal). `prompt` is the legal options; `cont` is the JSON
-      continuation the resolveEffect action replays. Effects in scope normally
-      run during the controller's own turn, so resolving returns to their
-      turn:action — no tail interaction (interpreter.ts).
-
-      `resumeTail` marks the two parks that are instead mid-TAIL, where finishing
-      the program must keep draining `pending` rather than fold back to a turn
-      (flow.ts settleProgram):
-        • an on-KO triggered Ability (§9, M4 slice 9), which parks MID-KO-SWEEP
-          during the OPPONENT's turn — `seat` is then the KO'd player, NOT the
-          turn owner, so the projection reads the turn owner separately
-          (koParkActiveSeat);
-        • a reactive `onDamagedByAttack` Ability (§9 — Klawf ex "Counterattacking
-          Pincer", the damagedTrigger stage), which likewise parks during the
-          OPPONENT's turn with `seat` the DAMAGED player and the attackEpilogue
-          queued behind it — the SAME shape as the on-KO trigger, read the same way;
-        • an ATTACK's effect program (§8 step 4), which parks with the
-          attackEpilogue stage queued behind it — here `seat` IS the turn owner
-          (the attacker), and draining the tail runs the KO sweep + turn end
-          [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
-      Both are read the same way by resolveEffect; only the projection needs to
-      tell them apart. */
+  /**
+   * Mid-effect decision interrupt (§15.E/G): a program parked on a choice. `prompt` is the legal
+   * options; `cont` is the continuation the resolveEffect action replays. `resumeTail` marks parks
+   * inside the turn tail (on-KO and on-damaged triggers, which run on the opponent's turn, and
+   * attack effect programs), where finishing must keep draining `pending`.
+   */
   | {
       kind: "effect:choose";
       seat: Seat;
-      /** The seat that must ANSWER this prompt, when it is not `seat` — the
-          opponent's printed "may" (opponentMayDraw, Ortega). Absent for every
-          controller-answered park (i.e. all of them before D52), so old phases
-          serialize byte-identically. `seat` keeps meaning the program's
-          CONTROLLER throughout: the turn is still theirs, the fold returns to
-          their turn:action, and the projection's activeSeat reads it — only
-          resolveEffect's who-may-answer check and the projection's waitingSeat
-          read this instead. */
+      /**
+       * The seat that must answer this prompt when it is not `seat` (an opponent's printed "may").
+       * `seat` stays the program's controller; only the who-may-answer check and the projection's
+       * waiting seat read this.
+       */
       answerer?: Seat;
       prompt: EffectPrompt;
       cont: EffectContinuation;
@@ -2906,7 +967,7 @@ export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
     Every class present with `null`; see `GameState.handPlayLockedTurn`. */
 export function freshHandPlayLocks(): Record<Seat, Record<StampedPlayLockKey, number | null>> {
   return {
-    p1: { Item: null, Supporter: null, Stadium: null, evolve: null }, // 🆕🆕🆕 D636 — `Stadium` (Scorching Earth)
+    p1: { Item: null, Supporter: null, Stadium: null, evolve: null },
     p2: { Item: null, Supporter: null, Stadium: null, evolve: null },
   };
 }
@@ -2928,236 +989,35 @@ export interface GameState {
       (continuous.ts) apply to BOTH players while it sits here. */
   stadium: StadiumInPlay | null;
   players: Record<Seat, PlayerSide>;
-  /** The TURN NUMBER during which this seat most recently had one of its own
-      Pokémon Knocked Out — `null` while none ever has been. `GameState`'s ONLY
-      piece of turn HISTORY: every other datum on this structure is the board as
-      it stands, and this one exists because a printed sentence asks about a window
-      that has already closed (*"if any of your Pokémon were Knocked Out during
-      your opponent's last turn"* — Unfair Stamp sv06-165, Hassel sv06-151/-205).
-
-      ⚠️ **IT IS NO LONGER THE ENGINE'S ONLY ONE, AND THIS LINE USED TO SAY IT WAS
-      (D394).** `InPlayPokemon.usedAttack` is a second closed-window record, on the
-      BODY rather than on the board, read as `turn === state.turn - 2` where this
-      one is read as `turn === state.turn - 1`. The two windows are one counter
-      step apart for a reason worth keeping: this field's question is about the
-      OPPONENT's last turn and that one's is about YOUR OWN, and turns strictly
-      alternate. **A CLAIM OF UNIQUENESS IS A CLAIM ABOUT THE WHOLE ENGINE AND
-      ROTS SILENTLY** — nothing mechanical checks a doc block.
-
-      🛑 **A STAMP, NOT A TALLY, AND THAT IS WHY NOTHING CLEARS IT.** The obvious
-      shape is a per-turn counter plus a snapshot of the previous turn, which
-      needs TWO fields and a write at the turn boundary that can be forgotten,
-      run twice, or run on the wrong side of the Checkup. Recording the turn
-      NUMBER instead makes the rolling window fall out of arithmetic: turns
-      strictly alternate (`turnTail` queues `startTurn(otherSeat(seat))` and
-      `startTurn` does `turn + 1`), so turn `n − 1` belongs to the opponent of
-      whoever owns turn `n` BY CONSTRUCTION, and the printed question is exactly
-      `lastKoTurn[you] === state.turn - 1`. There is no clear, no reset, no
-      double-count, and a stale value can never be mistaken for a fresh one.
-      `null` rather than `0` because turn 1 would otherwise read `0 === 0` and
-      answer TRUE on a board where nothing has ever been Knocked Out.
-
-      ⚠️ WRITTEN AT EXACTLY ONE SITE — `knockOut` (flow.ts), which is the sole
-      funnel every Knock Out passes through (both `KNOCKED_OUT` emit sites are
-      inside it) and is therefore the only place that cannot be bypassed by the
-      attack epilogue, the Checkup or the mid-turn KO path. It is deliberately
-      NOT written where a turn ENDS: a Checkup KO happens while `state.turn` is
-      still the ending turn, which is what the printed sentence means by "during"
-      that turn, and reading the counter at the KO gets that right for free.
-
-      PUBLIC — both players watched the Knock Out happen and both can count
-      turns, so a `BoardCondition` reading it keeps that union's public-state
-      invariant. It is per-SEAT and names the side that LOST the Pokémon (the
-      sentence's "your Pokémon"), not the side that scored the KO.
-
-      🆕 CARD REVISION B26 — **ONLY A KNOCK OUT ON THE LOSING SEAT's OPPONENT's
-      TURN IS STAMPED.** The window is always the opponent's turn, so a seat's own
-      Pokémon Knocked Out on its OWN turn (Dusclops / Dusknoir "Cursed Blast",
-      Overvolt Discharge, a Checkup at the end of its own turn) is never in it —
-      and stamping it REPLACED the opponent's-turn stamp a turn earlier, which is
-      how Avenging Edge / Retaliate / Unfair Stamp / Flip the Script lost their
-      Knock Out after a Cursed Blast. Ownership is the turn number's parity, the
-      same reading `prizesTakenOnTurn` (D630) takes for the same Cursed Blast
-      reason. An older record stamped on its own turn reads exactly as it did
-      before, so no `MATCH_RECORD_VERSION` change. */
+  /**
+   * The turn on which this seat most recently had one of its Pokémon Knocked Out during the
+   * opponent's turn, or `null`. Read as `=== state.turn - 1` for "during your opponent's last
+   * turn". Written only in `knockOut` (flow.ts); a KO on the seat's own turn is not stamped, since
+   * it would overwrite the opponent's-turn stamp. `null`, not 0, so turn 1 does not match.
+   */
   lastKoTurn: Record<Seat, number | null>;
-  /** 🆕 §8.1 (D326) — WHICH Pokémon this seat lost on the turn `lastKoTurn`
-      stamps, and HOW. `lastKoTurn` answers *when* a seat last lost a Pokémon and
-      D271 recorded that it deliberately never answers *which*; two printed
-      sentences narrow the KO SET itself and cannot be read off the turn number:
-
-        · *"any of your **Team Rocket's** Pokémon were Knocked Out during your
-          opponent's last turn"* — Team Rocket's Archer `sv10-170`/`-223`, an
-          OWNER prefix on the set;
-        · *"any of your Pokémon were Knocked Out **by damage from an attack**
-          during your opponent's last turn"* — Iron Leaves `sv06-019`, Revavroom
-          `sv06-125`, Alolan Marowak `sv09-057`, Terrakion `sv10.5w-054`/`-135`,
-          a CAUSE narrowing; and Ethan's Pinsir `sv10-001` prints BOTH at once,
-          which is what proves `owner` is an open parameter and not a Team
-          Rocket special case.
-
-      🛑 **A CO-STAMPED LIST, NOT A SECOND CLOCK — THE WINDOW IS STILL
-      `lastKoTurn`'s ARITHMETIC.** This list carries no turn of its own. It is
-      restarted when a Knock Out lands on a turn later than the one already
-      stamped and appended to otherwise, so the "which turn do these belong to"
-      question has exactly one answer and it is the neighbouring field's. That
-      keeps D271's best property: **there is still no boundary write**, nothing
-      clears this at end of turn, and a stale list cannot be mistaken for a fresh
-      one because the reader (`koedMarksOnOpponentsLastTurn`) refuses to look at
-      it at all unless `lastKoTurn` already says the window is open.
-
-      ⚠️ **AND THE APPEND IS KEYED ON `uid` SO IT STAYS IDEMPOTENT.** D271 could
-      be careless here because writing the same turn number twice is the same
-      value; a LIST is not so lucky, and `collectKnockOuts` calls `knockOut`
-      SPECULATIVELY on a throwaway state for the §14 tie probe and then again for
-      real. Appending only a uid not already present makes the second write a
-      no-op exactly as the stamp's is.
-
-      PUBLIC, for `lastKoTurn`'s reason twice over: both players watched the
-      Knock Out and both saw which body it was. Per-SEAT and naming the side that
-      LOST the Pokémon. */
+  /**
+   * §8.1: which Pokémon this seat lost on the turn `lastKoTurn` stamps, and how. Has no turn of its
+   * own: restarted when a KO lands on a later turn, appended otherwise, and keyed on uid because
+   * `collectKnockOuts` also calls `knockOut` speculatively.
+   */
   lastKoMarks: Record<Seat, readonly KnockOutMark[]>;
-  /** 🆕🆕🆕 **D579 — WHICH BODIES OF THIS SEAT USED AN ATTACK, ON THIS TURN AND ON THE SEAT'S
-      PREVIOUS TURN — A SEAT-LEVEL RECORD THAT OUTLIVES THE BODY.** Koraidon `sv08-116`
-      "Unrelenting Onslaught" ({C}{C}, `30+`, attack index 0, 1 legal): *"If 1 of your other
-      Ancient Pokémon used an attack during your last turn, this attack does 150 more damage."*
-
-      🛑 **R-1, RULED BY THE USER 2026-10-05: READING B — THE RECORD OUTLIVES THE BODY.** An
-      Ancient Pokémon that attacked last turn and was then Knocked Out (or shuffled away, or
-      sent to the hand) STILL counts: the printed clause asks whether it USED an attack, not
-      whether it is still in play. `InPlayPokemon.usedAttack` (D394) cannot answer that — it is
-      written on the in-play BODY and "the record dies with the body" (flow.ts
-      `stampAttackUse`). So this is a SECOND, seat-level record, keyed by the attacking body's
-      TOP uid (the form `stampAttackUse` receives), and the banner is read back from the card by
-      uid (`cardOfUid` → `cardIdByUid`, which is fixed for the whole game and so outlives every
-      zone change).
-
-      ⚠️ **A LIST OF `{ turn, uid }` AND NOT ONE `{ turn, uids }` SNAPSHOT — the one deviation from
-      the D579 brief, argued (decisions.md D579 (b)).** A single snapshot REPLACED when the turn
-      differs would hold only THIS turn's attackers after a seat's first attack, so a second
-      attack in the same turn (Festival Lead's attack-again, D570) would read an empty "last
-      turn". The writer (flow.ts `stampSeatAttacker`, beside `stampAttackUse`) appends
-      `{ turn: state.turn, uid }` uid-and-turn-idempotently and PRUNES every entry older than
-      `state.turn - 2`, so the list holds at most two turns of one seat and never grows.
-
-      The reader is interpreter.ts's `yourOtherBannerPokemonAttackedLastTurn` arm: some entry with
-      `turn === state.turn - 2` (the seat's previous turn — the parity argument of
-      `usedAttackOnYourLastTurn`) whose card prints the banner and whose uid is not one of the
-      attacking Active's stack cards ("other"). ⚠️ **R-1c (⚠️ UNRULED, named by the D579 review,
-      not fixed blind)**: the test is by CARD UID, so the SAME Koraidon card that attacked last turn,
-      went to the hand and was replayed (a NEW Pokémon in rules terms) is still "itself" here and its
-      old attack gives no +150 — under reading B it arguably counts.
-
-      ⚠️ **ANGELITE IS NOT RE-POINTED (R-1b, ⚠️ UNRULED).** Sylveon ex "Angelite"'s bar
-      (`yourPokemonUsedAttackLastTurn`, D396) still reads the per-body stamp, so a Sylveon ex that
-      used Angelite and then LEFT PLAY no longer bars it — the opposite of reading B. Moving it
-      onto this record is a behaviour change and waits for the user's ruling.
-
-      REQUIRED (D326/D271: a new required `GameState` key always bumps) — `MATCH_RECORD_VERSION`
-      40 → 41 (apps/api match.ts "D579"). PUBLIC: every attack was declared in front of both
-      players and `ATTACK_DECLARED` named it. Per-SEAT, naming the side that ATTACKED. */
+  /**
+   * Which of this seat's Pokémon used an attack this turn and on its previous turn, for Koraidon
+   * "Unrelenting Onslaught". Kept on the seat so it outlives the body: a Pokémon that attacked and
+   * then left play still counts. Pruned to the last two of the seat's turns.
+   */
   recentAttackers: Record<Seat, readonly RecentAttacker[]>;
-  /** §7.1/§7.2 (D283) — the TURN NUMBER during which this seat may not play
-      cards of the named class from its hand, imposed by an OPPONENT'S ATTACK
-      ("Your opponent can't play any Supporter cards from their hand during their
-      next turn." — Scream Tail ex sv06-094/-197; "During your opponent's next
-      turn, they can't play any Item cards from their hand." — Galvantula ex
-      sv07-051/-159/-168, Budew sv08.5-004, Frillish sv10.5w-044/-126).
-      `null` while no lock is live for that class on that seat.
-
-      🛑 **A `GameState` FIELD AND NOT A DERIVED READ, AND THE TEST IS D275's.**
-      `isFirstTurnOf` refused a field because both its operands were already on
-      the state and could not drift. This one has NO operands: the lock is
-      installed by an attack that has ALREADY RESOLVED, and §5.3 ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
-      immediately after — so by the time the barred seat reaches for a Supporter,
-      nothing on the board says the attack ever happened. The attacking body is
-      not evidence either (it prints two attacks and the state records neither
-      which was used nor that it hit), and `TurnAllowances` cannot hold it
-      because `freshAllowances()` wipes the bag at every `startTurn`, which is
-      exactly the boundary this window has to cross. **The arithmetic does not
-      exist, so the field is the cheapest honest shape.**
-
-      🛑 **A STAMP, NOT A FLAG, WHICH IS `lastKoTurn`'s SHAPE FOR THE OPPOSITE
-      REASON.** That field records a turn that has PASSED; this one records a
-      turn that is COMING. Both make the window fall out of arithmetic rather
-      than out of a clear: the writer stamps `state.turn + 1` (turns strictly
-      alternate, so the turn after the attacker's IS the printed "their next
-      turn"), the reader asks `=== state.turn`, and a stamp for a turn that has
-      gone by can never be mistaken for a live one. There is no clear, no reset
-      and no double-count — a boolean would need one at the turn boundary and
-      could be forgotten, run twice, or run on the wrong side of the Checkup.
-
-      ⚠️ PER-SEAT AND PER-CLASS, both because the printed sentences vary on both
-      axes: two of the eight printings bar Supporters and six bar Items, and a
-      single "locked" stamp would let a Budew bar the Supporter the sentence does
-      not mention. The class key is `Card.trainerType`'s own vocabulary
-      (`StampedHandPlayClass`), so no read site has to translate.
-
-      🆕 🛑 **KEYED BY `StampedPlayLockKey` SINCE D285, AND THE THIRD KEY IS AN
-      ACT RATHER THAN A CARD CLASS.** Bronzong `sv05-069` "Evolution Jammer"
-      prints the same window (*"During your opponent's next turn"*) on the same
-      writer with the same `state.turn + 1` arithmetic, and bars *"any Pokémon
-      from their hand **to evolve** their Pokémon"* — an ACT, not a
-      `Card.trainerType`. **THE FIELD IS WIDENED AND THE QUESTIONS ARE NOT**: a
-      second `pokemonPlayLockedTurn` record would duplicate the window, the
-      writer, the arithmetic and this §10 non-clear invariant so that a reader
-      could tell apart two things no reader asks about, and it would be a SECOND
-      required `GameState` field where widening this one adds a key. The two
-      surfaces still ask two questions — `handPlayBarred` takes a class,
-      `pokemonPlayBarred` takes an act AND a card (Arbok narrows the noun) — and
-      those live in `continuous.ts`, not here.
-
-      🛑 **KEYED BY `StampedHandPlayClass`, NOT BY `HandPlayClass` — AND THAT
-      IS THE WHOLE REASON D284 MOVED NO VERSION.** D284 widened the QUESTION's
-      vocabulary with `"Tool"` (Jellicent ex's *"Item cards or Pokémon Tool
-      cards"*), and the reflex would have been to widen this record with it. It
-      is deliberately NOT widened: no printed ATTACK stamps a Tool bar, so the
-      third key would be dead state on every persisted board, and adding it would
-      have turned a zero-byte slice into a `MATCH_RECORD_VERSION` question for a
-      key nothing could ever set. **A SOURCE THAT PERSISTS AND A SOURCE THAT DOES
-      NOT ARE TWO VOCABULARIES; ONLY THE PERSISTING ONE IS A RECORD KEY.** D285's
-      `"bench"` act is turned away at the same door and for the same measured
-      reason: only the CONTINUOUS source (Arbok) reaches a bench placement.
-
-      ⚠️ EVERY CLASS IS PRESENT WITH `null`, not `Partial<Record<…>>`: an absent
-      key and a null stamp would be two spellings of "no lock", and the total
-      record is what makes `handPlayBarred`'s single comparison exhaustive.
-
-      PUBLIC — the attack that installed it resolved in front of both players and
-      both can count turns, so a wire projection reading it leaks nothing. */
+  /**
+   * §7.1/§7.2: per seat and per class, the turn on which that seat may not play that kind of card
+   * from hand (or evolve) because of an opponent's attack, or `null`. A stamp of `state.turn + 1`,
+   * so it expires by turn comparison.
+   */
   handPlayLockedTurn: Record<Seat, Record<StampedPlayLockKey, number | null>>;
-  /** 🆕 §8.1 (D298) — the printed ONCE-PER-GAME effects this seat has already
-      spent, keyed by the EFFECT's name rather than by a card id or a uid
-      (`KoPrizeReduction.oncePerGame`). Empty on a fresh board and it only ever
-      grows: *"can't be applied more than once **per game**"* names a window with
-      no closing edge, so unlike every other stamp on this interface there is
-      nothing to clear and no arithmetic to get right.
-
-      🛑 **A LATCH, NOT A STAMP — WHICH IS THE FIRST TIME THIS INTERFACE HAS
-      NEEDED ONE, AND IT IS WHY THE SHAPE IS A LIST OF STRINGS.** `lastKoTurn` and
-      `handPlayLockedTurn` both record a TURN NUMBER so a rolling window falls out
-      of arithmetic; a per-GAME cap has no window, so a turn number would be a
-      number nobody compares. The honest datum is set membership, and the members
-      are printed EFFECTS: `sv06-167` and its `fix-legacy-energy` demonstrator are
-      two printings of ONE effect and must share one latch, which a card-id key
-      would get wrong on the day a reprint lands.
-
-      🛑 **AND IT IS A `GameState` FIELD RATHER THAN A DERIVED READ, WHICH IS
-      D275's QUESTION ASKED AND ANSWERED RATHER THAN SKIPPED.** `isFirstTurnOf`
-      refused a field because both its operands were already on the board and
-      could not drift. This one has NO operands whatsoever: when the reduction
-      applies, the Legacy Energy leaves play with its holder into the discard pile,
-      and a card sitting in the discard pile is byte-identical whether it was
-      spent, discarded by a Giacomo, or never attached at all. `TurnAllowances`
-      cannot hold it either — `freshAllowances()` wipes that bag at every
-      `startTurn`, and this window crosses every turn boundary in the game. **The
-      arithmetic does not exist, so the field is the cheapest honest shape.**
-
-      ⚠️ PER-SEAT, because the sentence says *"your* Legacy Energy": both players
-      may spend their own copy, and a shared latch would let one player's Knock Out
-      consume the other's cap. PUBLIC — the reduction happens in front of both
-      players and `PRIZE_REDUCED` names it in the log — so a wire projection
-      reading it leaks nothing. */
+  /**
+   * §8.1: the once-per-game effects this seat has already used, keyed by effect name so reprints
+   * share one entry. Only ever grows.
+   */
   oncePerGameSpent: Record<Seat, string[]>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
@@ -3187,35 +1047,19 @@ export function takenPrizes(state: GameState, seat: Seat): number {
   return PRIZE_COUNT - state.players[seat].prizes.length;
 }
 
-/** §8.1 — did `seat` have any of its own Pokémon Knocked Out during the turn
-    immediately before this one, i.e. during their OPPONENT'S last turn? The one
-    reader of `GameState.lastKoTurn`, and the whole of the arithmetic that field's
-    stamp-not-a-tally shape buys: turns strictly alternate, so "the turn before
-    mine" IS "my opponent's last turn" and no seat comparison is needed.
-
-    FALSE on turn 0/1 by construction (`null` never equals a turn number, and
-    `turn - 1` is 0 or −1, which no `startTurn` ever produced), so the first
-    player's first turn cannot bootstrap a gate off an empty history. */
+/**
+ * §8.1: did `seat` have any of its own Pokémon Knocked Out during the previous turn, i.e. its
+ * opponent's last turn? False on turns 0 and 1.
+ */
 export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boolean {
   const stamped = state.lastKoTurn[seat];
   return stamped !== null && stamped === state.turn - 1;
 }
 
-/** 🆕🆕 §8 (D394) — did `pokemon` use the attack printed as `attack` during the
-    turn BEFORE the one before this, i.e. during its controller's LAST turn?
-
-    A NAMED HELPER for `koedDuringOpponentsLastTurn`'s reason exactly: the `- 2` is
-    a claim about the TURN MACHINERY (turns strictly alternate, so the turn two
-    steps back is the same seat's) rather than about the `BoardCondition`
-    vocabulary, and D131 says one reading gets one implementation. It is the
-    mirror of the `state.turn + 2` that `preventAttackUse` and `BoostedAttack`
-    already stamp for *"during your next turn"*, arrived at from the other end.
-
-    FALSE on turns 1 and 2 by construction (`null` never equals a turn number, and
-    `turn - 2` is 0 or −1, which no `startTurn` ever produced), so no attacker can
-    bootstrap the bonus out of an empty history. FALSE for the non-turn seat too,
-    by PARITY rather than by a guard: `state.turn - 2` shares the current turn's
-    parity and a body is only stamped on turns its own controller held. */
+/**
+ * §8: did `pokemon` use the attack named `attack` during its controller's last turn (`state.turn -
+ * 2`)? False for the non-turn seat by parity.
+ */
 export function usedAttackOnYourLastTurn(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -3225,81 +1069,32 @@ export function usedAttackOnYourLastTurn(
   return used !== null && used.name === attack && used.turn === state.turn - 2;
 }
 
-/** 🆕 D326 — ONE Pokémon this seat lost, co-stamped with `GameState.lastKoTurn`.
-
-    `name` is the PRINTED CARD NAME of the body that left play, which is exactly
-    and only what an owner prefix is a test on: `CardFilter.ownerPokemon` is
-    `card.name.startsWith(`${owner}'s `)` and nothing else, so storing the name
-    keeps ONE spelling of "a Team Rocket's Pokémon" across the two files instead
-    of resolving the subgroup at the write site and freezing the answer.
-
-    `byAttack` is the CAUSE, and it is not a new discrimination: it is the
-    `attackerSeat` that `collectKnockOuts` has taken since D164, which is passed
-    by `finishAttack` alone and deliberately omitted by the Checkup and the
-    mid-turn sweep. ⚠️ **THAT MAKES IT "KNOCKED OUT WHILE THE ATTACK RESOLVED",
-    WHICH IS THE READING D164 ALREADY MADE FOR MUNKIDORI ex's *"by an attack from
-    your opponent's Pokémon"*** — damage counters placed by the attack's own
-    effect are inside it, Checkup poison and a mid-turn Ability KO are outside.
-    Inheriting that judgement rather than re-making it is the point: the two
-    printed phrases are one family, and a second reading of "by an attack" would
-    be free to drift from the first. */
+/**
+ * One Pokémon this seat lost, recorded with `GameState.lastKoTurn`. `name` is the printed card
+ * name, which owner-prefix filters test. `byAttack` means it was Knocked Out while an attack
+ * resolved, including by counters the attack placed.
+ */
 export type KnockOutMark = { uid: string; name: string; byAttack: boolean };
 
-/** 🆕🆕🆕 D579 — one entry of `GameState.recentAttackers`: the attacking body's TOP uid at the
-    attack's end, and the turn it attacked on. */
+/**
+ * One entry of `GameState.recentAttackers`: the attacking body's top uid and the turn it attacked
+ * on.
+ */
 export type RecentAttacker = { turn: number; uid: string };
 
-/** 🆕🆕 D414 — the marker a NON-DAMAGE Knock Out stamps on the body it dooms, and
-    the reason it carries the turn.
-
-    🛑 **UNTIL D414 THE DEFENDER'S BOARD COULD ONLY GO LETHAL BY DAMAGE, AND TWO
-    SHIPPED MECHANISMS ARE BUILT ON THAT.** `collectKnockOuts`'s `byAttack` mark is
-    read by four built sentences / six printings of *"Knocked Out **by damage** from
-    an attack"*, and `koRecoilOf` below discharges Vengeful Punch's printed *"by
-    damage"* **by placement rather than by a flag** — its own comment says so:
-    *"a body can only be lethal on the defender's board here because this attack
-    put it there"*. `knockOutDefender` makes that sentence false, so it says so in
-    the state rather than leaving two correct-by-accident premises to rot.
-
-    ⚠️ **A `markers` STRING RATHER THAN A FIELD, AND THAT IS WHAT KEEPS
-    `MATCH_RECORD_VERSION` AT 26.** `InPlayPokemon.markers` is already `string[]`,
-    already initialised at every constructor and already persisted; adding a VALUE
-    is a widening (D125), where a new required field is a bump (D394, D412).
-
-    ⚠️ **IT CARRIES THE TURN, AND THE BOARD THAT WOULD JUSTIFY THAT DOES NOT
-    CURRENTLY EXIST — WHICH IS SAID HERE RATHER THAN LEFT AS A FALSE REASON.** This
-    doc block first claimed the stamp was needed because Glimmora's "Shattering
-    Crystal" denies a Knock Out and would leave a live, lethally-damaged body
-    carrying a stale marker. **THAT CLAIM WAS MEASURED AND IS WRONG TWICE OVER**:
-    Shattering Crystal denies the *Prize* and the Knock Out happens for real
-    (`planPrizes`' own comment says so), and §11 is asked BEFORE the stamp is
-    written, so a refused effect leaves no marker at all (driven, not argued).
-
-    So the turn is **defensive**, against a position nothing in this catalog can
-    currently build, and it is kept for two honest reasons rather than the invented
-    one: it costs one template literal, and it makes the marker expire BY ARITHMETIC
-    — no clear site anywhere, and therefore no second place to forget one, which is
-    `attackLockedTurn`'s rule applied to a string. The expiry is driven at BOTH
-    readers in both directions on surgically-placed markers, so the arithmetic is
-    guarded even though the board that needs it is not printed. **A mechanism kept
-    for a stated cheap reason is fine; a mechanism kept for a reason that turns out
-    to be false is how this repo loses track of what is load-bearing.** */
+/**
+ * The marker a non-damage Knock Out stamps on the body it dooms, so readers of "Knocked Out by
+ * damage" can tell it apart. Carries the turn so the marker expires by turn comparison without a
+ * clear.
+ */
 export function koByEffectMarker(turn: number): string {
   return `koByEffect:${turn}`;
 }
 
-/** 🆕 §8.1 (D326) — the Pokémon `seat` lost during their OPPONENT'S last turn,
-    or an EMPTY list when that window is not open. The one reader of
-    `GameState.lastKoMarks`, and it reads `lastKoTurn` FIRST: the list carries no
-    turn of its own, so the window question is answered by the neighbouring
-    field's arithmetic and this function cannot disagree with
-    `koedDuringOpponentsLastTurn` about whether anything happened.
-
-    🛑 **EMPTY AND NOT `null` ON A CLOSED WINDOW**, so every caller narrows by
-    `.some(...)` over a list that is already correct for the window rather than
-    remembering to ask the turn question again — the "which" narrowings are then
-    a filter on this and can never be TRUE on a turn where the bare gate is
-    FALSE. */
+/**
+ * §8.1: the Pokémon `seat` lost during its opponent's last turn, or an empty list when that window
+ * is not open. Checks `lastKoTurn` first, so it cannot disagree with `koedDuringOpponentsLastTurn`.
+ */
 export function koedMarksOnOpponentsLastTurn(
   state: GameState,
   seat: Seat,
@@ -3307,102 +1102,36 @@ export function koedMarksOnOpponentsLastTurn(
   return koedDuringOpponentsLastTurn(state, seat) ? state.lastKoMarks[seat] : [];
 }
 
-/** §7.1/§7.2 (D283) — the STAMPED half of `handPlayBarred`: is `seat` barred
-    from playing `klass` cards from hand during the turn now in progress by an
-    opponent's ATTACK? The ONE reader of `GameState.handPlayLockedTurn`, and the
-    whole of the arithmetic that field's stamp-not-a-flag shape buys: the writer
-    records the turn the bar APPLIES to, so the printed question is one `===` and
-    no seat comparison is needed.
-
-    FALSE on every turn but the stamped one, by construction — a stamp for a turn
-    that has already gone by reads as "no lock" without anyone clearing it, so
-    the field cannot leak a bar into a later turn and there is no reset to forget.
-    FALSE on a `null` too, since `null` is never a turn number and `startTurn`
-    never produced 0.
-
-    🆕 ⚠️ **NOT EXPORTED, AND NOT THE QUESTION ANY READ SITE ASKS (D284).** Until
-    D284 this WAS the whole question and it was called at three sites; the
-    continuous ABILITY source (Tyranitar `sv09-095`, Jellicent ex
-    `sv10.5w-045`/`-160`/`-168`) is a SECOND source of the identical bar, so the
-    exported reader moved to `continuous.ts` — where `programFor` and
-    `disabledAbilityUids` are reachable and this module's `types.ts` position in
-    the import graph is not — and ORs the two. **WIDENED, NOT PARALLELED**: a
-    second predicate OR'd at each of the read sites is D223's finding waiting to
-    happen again, and the compiler cannot notice a site that forgot one of two.
-    This half stays here beside the field it reads, private, so the stamp's
-    arithmetic still has exactly one home. */
+/**
+ * §7.1/§7.2: the attack-stamped half of `handPlayBarred`: is `seat` barred from `key` during the
+ * current turn? `continuous.ts` combines it with the Ability-based source.
+ */
 function stampedPlayLockBarred(state: GameState, seat: Seat, key: StampedPlayLockKey): boolean {
   return state.handPlayLockedTurn[seat][key] === state.turn;
 }
 
-/** The stamped half, read for a class the STAMP may not be able to name — the
-    one place `HandPlayClass`'s NON-PERSISTING members have to be turned away, and
-    they are turned away by the TYPE rather than by a string compare a reader
-    could get wrong. `"Tool"` (D284) and `"Stadium"` (D287) are both absent from
-    `handPlayLockedTurn` by construction (see the field's note), so the honest
-    answer for either is "no stamp", not `undefined`.
-
-    🆕 🛑 **THIS SEAM IS WHY D287 COST ZERO PERSISTED BYTES, AND THE COMPILER IS
-    WHAT SAID SO — FIRST, BEFORE A TEST RAN.** Adding `"Stadium"` to
-    `HandPlayClass` made THIS LINE the only thing `tsc -b` complained about:
-    *`'"Stadium"' is not assignable to 'StampedPlayLockKey'`*. ⚠️ **ONE LINE, NOT
-    THREE CALL SITES** — the error is printed three times because three projects
-    build this file, and a count read off the console rather than off the code
-    would have priced the seam at 3x. **A NEW QUESTION-CLASS CANNOT REACH THE
-    PERSISTED RECORD BY ACCIDENT: it has to be turned away HERE, on purpose, or
-    the build does not compile.** A type split that makes the compiler ask the
-    `MATCH_RECORD_VERSION` question for you.
-
-    ⚠️ EXPORTED FOR `continuous.ts` ONLY. `handPlayBarred` there is the reader
-    every SITE calls; this is the seam between the two modules. */
+/**
+ * The stamped half read for a hand-play class. Classes that no attack can stamp are rejected by the
+ * type and answer no stamp. Exported for `continuous.ts` only.
+ */
 export function stampedBarFor(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
-  // 🆕🆕🆕 D636 — `"Stadium"` is a STAMPED class now (Chi-Yu "Scorching Earth", `handPlayLockedTurn`'s
-  // NEW key, MRV 44 → 45); `"Tool"` is still turned away by the type (D539: the doc's "`"Stadium"` (D287)
-  // … absent from `handPlayLockedTurn` by construction" is WITHDRAWN as of D636, kept as written).
+  // No attack stamps a Tool bar.
   return klass === "Tool" ? false : stampedPlayLockBarred(state, seat, klass);
 }
 
-/** §10 (D285) — the stamped half read for a POKÉMON-SURFACE act, and
-    `stampedBarFor`'s exact twin one surface over: `"bench"` is the act no printed
-    ATTACK can stamp (only Arbok's continuous passive reaches it), so it is turned
-    away by the TYPE rather than by a string compare a reader could get wrong, and
-    the honest answer for it is "no stamp" rather than `undefined`.
-
-    ⚠️ EXPORTED FOR `continuous.ts` ONLY, exactly like `stampedBarFor`.
-    `pokemonPlayBarred` there is the reader every SITE calls; this is the seam. */
+/**
+ * §10: the stamped half read for a Pokémon-play act. `"bench"` cannot be stamped by an attack, so
+ * it answers no stamp. Exported for `continuous.ts` only.
+ */
 export function stampedActBarFor(state: GameState, seat: Seat, act: PokemonPlayAct): boolean {
   return act === "bench" ? false : stampedPlayLockBarred(state, seat, act);
 }
 
-/** §4 — is the turn now in progress `seat`'s OWN FIRST turn? The per-seat turn
-    ORDINAL, and the whole of it: `turn` is 1-based and turns strictly alternate
-    with the odd ones belonging to `firstPlayer` (`phaseViewOf`, the one
-    exhaustive reading of turn ownership), so the going-first seat's first turn
-    is turn **1** and the other seat's is turn **2**. There is no third case.
-
-    🛑 **A DERIVED READ, NOT A `GameState` FIELD, AND THAT IS THE WHOLE PRICE OF
-    THE "first turn" VOCABULARY.** D271 added `lastKoTurn` because the turn a
-    seat lost a Pokémon is HISTORY the board does not otherwise keep — no
-    arithmetic over the live state can recover it. This question is the opposite:
-    both operands are already on `GameState` and neither can drift, so the field
-    would be a cached copy of a subtraction, needing a write site, an
-    initialiser, a `MATCH_RECORD_VERSION` question and a way to be wrong.
-    **Price the field against the arithmetic before adding the field.**
-
-    ⚠️ WRITTEN ONCE AND CALLED FOUR TIMES, WHICH IS WHY IT IS HERE AT ALL. The
-    expression was copied verbatim at THREE sites before this function existed
-    (`turn.ts evolve`, `cardplay.ts rareCandy` and `rareCandyOptions` — §4's
-    evolve ban, twice over, plus its affordance mirror), and D275's printed gate
-    (`BoardCondition.yourFirstTurn`, Fan Rotom's "Once during your FIRST turn")
-    would have been a fourth. Four copies of one rule is four chances for the §4
-    ban and the printed Ability gate to disagree about what "first turn" means;
-    this repo's answer to that is one reading, one implementation (D131).
-
-    ⚠️ NO `firstPlayer !== null` GUARD, AND THE ABSENCE IS DELIBERATE. `null`
-    only occurs during `setup:chooseFirst`, where `turn` is still **0**; a null
-    takes the `? 2` branch and `0 === 2` is FALSE, which is the answer the
-    sentence wants ("your first turn" has not begun). A spelled-out guard would
-    be a conjunct no board can make false — a line that cannot go red. */
+/**
+ * §4: is the current turn `seat`'s own first turn? Odd turns belong to `firstPlayer`, so that is
+ * turn 1 for the first player and turn 2 for the other. With `firstPlayer` null the turn is 0, so
+ * the answer is false without a guard.
+ */
 export function isFirstTurnOf(state: GameState, seat: Seat): boolean {
   return state.turn === (seat === state.firstPlayer ? 1 : 2);
 }
@@ -3412,28 +1141,10 @@ export function without(zone: readonly string[], uid: string): string[] {
   return zone.filter((entry) => entry !== uid);
 }
 
-/** EVERY card uid this in-play Pokémon is made of, in §2's pile order:
-    evolution stack bottom→top, then attached Energy, then attached Tools.
-
-    🆕 **D299 — EXTRACTED FROM `discardFromStack`'s `"all"` ARM, WHICH IS THE
-    HONEST SHAPE AND NOT THE ONE THE HANDOFF PREDICTED.** D298 re-typed Illumise
-    `sv06-010`'s four-slice refusal as *"a missing COMPOSITION — the teardown it
-    needs is `discardFromStack(…, "all")`"*, and flagged that very claim as its
-    most-likely-wrong one. It is wrong, and its own stated doubt is why: that
-    function APPENDS TO `side.discard` inside itself, so a shuffle-into-deck
-    caller cannot reuse it without either an arity change or a destination
-    parameter — on a helper whose NAME says discard, for a caller that discards
-    nothing. **The reusable part was never the move; it was this one line**, the
-    definition of "and all attached cards".
-
-    ⚠️ **AND THE GREP THAT SETTLED IT CUT THE OTHER WAY TOO.** D298 measured
-    *"8 references across 4 files"* and priced a defaulted parameter against
-    that. The 8 are: THREE overload signatures of the one function, TWO mentions
-    inside doc comments (flow.ts, index.ts) and **THREE real call sites** — two
-    KO branches and the retreat cost. **Not one of them wants a destination other
-    than the discard pile**, which is an argument AGAINST the parameter rather
-    than for it: a field with one user and a name that contradicts it. A grep
-    COUNT is not a call-site count, and the difference here is 8 against 3. */
+/**
+ * Every card uid this in-play Pokémon is made of, in §2's pile order: evolution stack bottom to
+ * top, then attached Energy, then attached Tools.
+ */
 export function stackUids(pokemon: InPlayPokemon): string[] {
   return [...pokemon.stack, ...pokemon.energy, ...pokemon.tools];
 }
@@ -3478,19 +1189,11 @@ export function discardFromStack(
   };
 }
 
-/** 🆕 **D307 — the §10 evolution placement WITHOUT its two consequences**: the stack top is
-    replaced, §10's carry-over and clears are applied, and `POKEMON_EVOLVED` (plus
-    a `STATUS_CLEARED` when there was something to clear) is appended. Returns the
-    new state AND the body it produced, because the caller that owns the KO tail
-    needs the very object it just built and re-reading the board for it would be a
-    second way to answer one question.
-
-    🛑 **THE SPLIT IS A RETURN-TYPE FACT, NOT A TIDY-UP.** `placeEvolution` (turn.ts)
-    is this function plus `resolveMidTurnKnockOuts` / `runBoardTrigger`, and those
-    two are exactly what made "an `EffectOp` cannot evolve" true for five slices.
-    Nothing about §10 lives on either side of the line that the other side needs:
-    the carry-over rules are all HERE, so the deck route cannot drift away from
-    the hand route by forgetting one. */
+/**
+ * §10 evolution placement without the Knock Out and board-trigger follow-up: replaces the stack
+ * top, applies §10's carry-over and clears, and appends `POKEMON_EVOLVED`. Returns the new state
+ * and the new body.
+ */
 export function evolveOnto(
   state: GameState,
   seat: Seat,
@@ -3500,144 +1203,46 @@ export function evolveOnto(
   fromUid: string,
   evolutionUid: string,
   events: GameEvent[],
-  // 🆕🆕🆕 §12 (D642) — the conditions the new top KEEPS (continuous.ts `stageChangeConditions`: Confused under
-  // Dizzying Valley, R-DV1). Every engine caller passes it; absent = none kept, the §12 clear byte for byte.
+  // Special Conditions the new top keeps (e.g. Confused under Dizzying Valley); by default all are
+  // cleared (§12).
   kept: SpecialConditions = noConditions(),
 ): { state: GameState; evolved: InPlayPokemon } {
   const evolved: InPlayPokemon = {
     ...from,
     stack: [...from.stack, evolutionUid],
     conditions: kept,
-    // §10 — evolving sheds the effects of attacks too, not just conditions. That
-    // covers the retreat block and, since D142, the attack-installed damage
-    // block. The second one is UNREACHABLE and deliberately written anyway: the
-    // block is installed by an attack, an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), and its
-    // window is the opponent's next turn — during which the holder's controller
-    // cannot evolve anything — so no legal sequence puts an evolution between the
-    // install and the expiry. The rule belongs with the concept rather than with
-    // the sequences that can currently reach it (the same call the retreat block
-    // made one line up), and a state surgery pins it.
+    // §10: evolving sheds the effects of attacks too, not just conditions, including the
+    // attack-installed damage block even though no legal sequence can evolve inside its window.
     retreatBlocked: false,
     attackBlock: null,
-    // …and, since D143, the attack-installed LOCK — the one §10 clear on this line
-    // that is not only reachable but is a PLAYED LINE: the lock's window is the
-    // holder's own next turn, so evolving the locked Pokémon on that turn frees it
-    // to attack immediately. That is the inverse of the block above, whose window
-    // belongs to the opponent and which therefore no evolution can ever meet.
-    //
-    // D148 — and since the lock can now be written by the OPPONENT's attack ("…the
-    // Defending Pokémon can't attack."), this line is also the VICTIM's chief
-    // counterplay rather than only the holder's escape from its own drawback. The
-    // reachability is identical (the window is the locked player's own next turn
-    // either way); the AGENCY is not, and evolving out of an imposed lock is the
-    // sharpest of the three routes because it costs no Energy and no allowance.
-    // Driven end to end on a printed line (Alomomola → fix-mola-stage1).
+    // Evolving also sheds an attack-installed attack lock, so a locked Pokémon can evolve on its
+    // own next turn and attack.
     attackLockedTurn: null,
-    // 🆕🆕🆕 …and, since D547, the FLIP-TO-ATTACK lock — D148's defender-lock story
-    // verbatim (the window is the locked body's controller's own turn), so evolving
-    // out of it is the victim's played line: the evolved card declares with no coin
-    // (evolve clear, D547).
     attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)
-    // …and D412's self-installed RETREAT lock, whose story here is the lock's
-    // rather than the block's, for the same reason and by the same arithmetic:
-    // the window is the HOLDER's own next turn, so evolving out of it is a line
-    // the holder can actually take, and it is the holder's own escape from a
-    // drawback its own attack chose to pay.
+    attackTwoFlipLockTurn: null,
     retreatLockedTurn: null,
-    // …and, since D147, the attack-installed DAMAGE REDUCTION — the same
-    // reachability story as the block two lines up rather than the lock's, and
-    // for the same arithmetic: its window is the OPPONENT's next turn, during
-    // which the holder's controller cannot evolve anything, so no legal sequence
-    // puts an evolution between the install and the expiry. Written anyway (§10
-    // sheds the effects of ATTACKS and this is one) and pinned by a surgery.
     damageReduction: null,
-    // 🆕🆕 …and, since D432, the attack-installed NO-WEAKNESS bar — the
-    // reduction's story one line up verbatim, and for the same arithmetic: its
-    // window is the OPPONENT's next turn, during which the holder's controller
-    // cannot evolve anything, so no legal sequence puts an evolution between the
-    // install and the expiry. Written anyway (§10 sheds the effects of ATTACKS and
-    // this is one) and pinned STRUCTURALLY rather than by a number.
     noWeaknessTurn: null,
-    // 🆕🆕 …and, since D434 (all three payloads since D435), the SCHEDULED DELAYED
-    // EFFECT — and this literal is
-    // the one place in the set where that field's story is the OPPOSITE of the bar
-    // directly above it. The bar's window is the opponent's turn, so nobody can
-    // evolve inside it and the clear is written for the rule. The schedule's window
-    // IS the holder's own turn, so evolving the Defending Pokémon before the end of
-    // it is a legal, cheap and printed-ruling-correct answer to the attack — the
-    // FIRST field on this literal whose evolve clear is a played line rather than a
-    // theoretical one. Driven end to end in `delayedCounters.test.ts` — and D435
-    // drives it for the DISCARD and the KNOCK OUT payloads too, on the same literal:
-    // evolving the Defending Pokémon is how a player answers a scheduled Knock Out,
-    // which is the same printed counterplay at a much higher stake.
+    // Evolving the Defending Pokémon cancels a scheduled delayed effect (counters, discard or Knock
+    // Out) before it resolves.
     scheduledEffect: null,
-    // …and, since D149, the attack-installed ATTACK-DAMAGE DEBUFF — whose story
-    // here is the LOCK's rather than the reduction's, and that is the whole
-    // difference between the two mirrors: the debuff's window is the HOLDER's own
-    // next turn, so evolving the debuffed Pokémon on that turn frees its attacks
-    // to hit full. A PLAYED LINE, driven end to end, and the victim's cheapest
-    // counterplay against an effect they did not choose (D148's agency, on the
-    // number instead of the lock).
     attackDamageDebuff: null,
-    // 🆕🆕🆕 …and, since D547, the NEXT-TURN VULNERABILITY — the debuff's story one
-    // line up and for its arithmetic: the window is the INSTALLER's next turn, so
-    // the holder's controller plays the whole turn in between, and evolving the
-    // exposed body on it is a PLAYED line that sheds the +50 (evolve clear, D547).
     damageVulnerability: null,
-    // 🆕🆕🆕 …and, since D552, the WEAKNESS RETYPE — the vulnerability's story one line up
-    // (the window runs to the INSTALLER's next turn, so evolving the marked body on the
-    // turn in between is the victim's PLAYED line and the evolved card keeps its printed
-    // Weakness type — evolve clear, D552 R5).
     weaknessRetype: null,
-    // 🆕🆕🆕 …and, since D549, the COST TAX — the flip lock's story (the window is the
-    // taxed body's controller's own turn), so evolving is the victim's played line and
-    // the evolved card attacks and retreats at its printed cost (evolve clear, D549 tax).
     costTaxTurn: null,
-    // 🆕🆕🆕 …and the KNOCK OUT BOUNTY — the vulnerability's story two lines up: the
-    // window is the INSTALLER's next turn, so evolving on the turn in between sheds the
-    // "2 more Prize cards" (evolve clear, D549 bounty).
     koBounty: null,
-    // 🆕🆕🆕 …and, since D575, the HAND-ATTACH mark — the cost tax's story: the window is the
-    // marked body's controller's own turn, so evolving it is the victim's played line and
-    // the evolved body takes Energy from hand freely (evolve clear, D575 hand mark).
     handAttachMark: null,
-    // …and, since D152, the attack-armed RECOIL — the reduction's story two lines
-    // up rather than the debuff's, and for the same arithmetic: its window is the
-    // OPPONENT's next turn, during which the holder's controller cannot evolve
-    // anything, so no legal sequence puts an evolution between the arming and the
-    // expiry. Written anyway (§10 sheds the effects of ATTACKS and this is one)
-    // and pinned by a surgery.
     installedRecoil: null,
-    // …and, since D154, the attack-installed PER-ATTACK lock — whose story here is
-    // the LOCK's two lines up and not the reduction's, for the same reason it
-    // shares that lock's number: the window is the HOLDER's own next turn, so
-    // evolving the barred Pokémon on that turn frees the barred attack
-    // immediately. A PLAYED LINE, driven end to end (Skarmory → fix-skarm-stage1),
-    // and the sharpest of the three routes because it costs no Energy and no
-    // allowance. Since D165 it sheds a LIST, and the WHOLE list — §10 sheds the
-    // effects of attacks, all of them, and an evolution that freed one bar while
-    // keeping another would be the defect this slice fixed wearing a clear.
+    // Sheds the whole list of per-attack bars, not just one.
     lockedAttacks: [],
-    // …and, since D155, the attack-installed PER-ATTACK BUFF — the same window on
-    // the same body as the line above, so the same PLAYED LINE, and the only entry
-    // on this list a player must be careful NOT to take: evolving the boosted
-    // Pokémon inside the window throws the bonus away. §10 sheds the effects of
-    // ATTACKS whether or not the holder wanted this one shed.
+    // Evolving also throws away a beneficial per-attack buff; §10 sheds attack effects whether or
+    // not the holder wanted it.
     boostedAttack: null,
     markers: [],
     turnPlayed: state.turn,
-    // 🆕🆕 D393 — the evolution stamp, and this is the ENGINE'S ONLY WRITE SITE:
-    // every route that places an evolution — `evolve` and `rareCandy` through
-    // `placeEvolution` (turn.ts), and all four `evolveFromDeck*` ops through this
-    // function directly — comes here, so the hand route and the deck route cannot
-    // disagree about it any more than they can about the §10 clears above.
-    //
-    // ⚠️ IT IS THE ONE FIELD ON THIS LITERAL THAT IS NOT A CLEAR. Everything above
-    // is §10 shedding an effect; this RECORDS that the shedding happened, which is
-    // the fact the printed clause asks about. `turnPlayed` one line up cannot answer
-    // it: the two are equal here and differ on every body that was PLAYED this turn
-    // without evolving, which is the ordinary board Gholdengo's +90 must miss.
+    // Records that this Pokémon evolved this turn. This is the only write site, shared by every
+    // evolution route; `turnPlayed` cannot answer this because it also matches Pokémon played this
+    // turn without evolving.
     evolvedTurn: state.turn,
   };
   const side = state.players[seat];
@@ -3653,9 +1258,8 @@ export function evolveOnto(
     // Copied: the action object belongs to the caller (events.ts).
     target: { ...target },
   });
-  // §10/§12 — evolving removed the Pokémon's Special Conditions. Announced only
-  // when there was something to remove; `uid` is the NEW top (see events.ts).
-  // 🆕🆕🆕 D642 — less what the new top keeps (Dizzying Valley's Confused, R-DV1).
+  // §10/§12: evolving removed the Pokémon's Special Conditions, less any the new top keeps.
+  // Announced only when something was removed; `uid` is the new top.
   const cleared = presentStatuses(from.conditions).filter(
     (status) => !presentStatuses(kept).includes(status),
   );
@@ -3671,26 +1275,11 @@ export function evolveOnto(
   return { state: withSide(state, seat, updated), evolved };
 }
 
-/** Move up to `count` cards deck-top → hand and record a CARDS_DRAWN event.
-    Callers that care about deck-out (the turn draw, §14.3) check emptiness
-    themselves — this helper just draws what is there.
-
-    🆕🆕 **D487 — `from` NAMES THE END, AND IT IS ONE HELPER RATHER THAN TWO.**
-    *"Draw 3 cards from the bottom of your deck."* is the only printed draw in the
-    attack column that names a source (`EffectOp.drawCards.from`), and the obvious
-    alternative — a second `drawFromBottom` beside this one — is refused for D222's
-    reason: the short-draw arithmetic, the empty-deck early return, the event and the
-    `withSide` write are ONE fact about drawing, and two copies of it can disagree
-    the day one of them is fixed. The parameter is OPTIONAL and defaults to `"top"`,
-    so all nine existing call sites are byte-unchanged.
-
-    ⚠️ **THE SHORT DRAW IS THE SAME ARITHMETIC AT BOTH ENDS, AND THAT IS THE
-    INTERESTING PROPERTY RATHER THAN A CONVENIENCE.** `Math.max(0, deck.length −
-    count)` is the cut in both directions; on a deck of `count` or fewer it is 0, the
-    slice is the WHOLE deck, and the two ends take **the same cards in the same
-    order**. So a shallow deck cannot tell a bottom draw from a top one — an
-    extensional identity, not a board this file happens not to write — and any suite
-    that means to separate them must deal a deck STRICTLY DEEPER than the count. */
+/**
+ * Moves up to `count` cards from the top (or, with `from`, the bottom) of the deck to hand and
+ * records CARDS_DRAWN. Callers that care about deck-out check emptiness themselves. On a deck no
+ * deeper than `count`, top and bottom draws take the same cards in the same order.
+ */
 export function drawToHand(
   state: GameState,
   seat: Seat,

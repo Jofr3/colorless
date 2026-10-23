@@ -1,21 +1,5 @@
-// 🆕🆕🆕 D569 — TEST-ONLY: not exported from the package index, like `bannerPool.ts` and
-// `testFixtures.ts`.
-//
-// The PARADOX twin of `bannerPool.ts`' `LEGAL_EX_POOL` (D275's rule: tests read real ids out of a
-// committed pool, never out of a network or a dev database). `LEGAL_EX_POOL` already mirrors every
-// legal Pokémon ex; a Paradox banner is ALSO printed on non-ex Pokémon and on Trainers, so this
-// file mirrors the rest: one row per Standard-legal printing that is either a NON-ex Pokémon of one
-// of the 22 Paradox species (the 11 Ancient — Great Tusk, Scream Tail, Brute Bonnet, Flutter Mane,
-// Slither Wing, Sandy Shocks, Roaring Moon, Koraidon, Walking Wake, Gouging Fire, Raging Bolt — and
-// the 11 Future — Iron Treads, Iron Bundle, Iron Hands, Iron Jugulis, Iron Moth, Iron Thorns, Iron
-// Valiant, Miraidon, Iron Leaves, Iron Boulder, Iron Crown), banner or not, or a Trainer whose name
-// pokemon-tcg-data tags Ancient/Future anywhere: `[id, name, category, hp, attack names, ability
-// names]`. Measured 2026-10-02 from the tcgdex card JSON the 2026-09-25 coverage audit fetched (the
-// ingest's own upstream), `legal.standard === true`: 47 rows (39 Pokémon, 8 Trainers). It exists for
-// `banners.ts`' Paradox rungs (`paradoxBannerD569.test.ts`): every Ancient/Future id is a row here or
-// in `LEGAL_EX_POOL`, same-text reprints agree on the banner, and the three SAME-SPECIES printings
-// with NO banner (`sv07-090` Koraidon, `svp-148` Miraidon here; `svp-197` Koraidon ex in
-// `LEGAL_EX_POOL`) are rows the table does not key. A snapshot, not a source of truth.
+// Test-only, not exported from the package index: a committed pool of real Paradox ids, the
+// counterpart of `bannerPool.ts`' `LEGAL_EX_POOL`.
 
 export type ParadoxPoolRow = readonly [
   id: string,

@@ -35,14 +35,11 @@ export const SUPERTYPES: Supertype[] = ["Pokémon", "Trainer", "Energy"];
 // card's `subtype` and `rarity` stay plain strings and the rail's chips
 // reflect what is actually ingested.
 
-/** A single browsable card — the builder's view of a catalog card (adapted
-    from the api shapes in catalog.ts). `cardId` is the tcgdex id ("sv06.5-001"),
-    also the key of the api's art mirror. Optional fields are absent for
-    categories they don't apply to (a Trainer has no `types`/`hp`, an Energy
-    no `hp`, etc.). [🆕 D581 (D539): WITHDRAWN for `hp` — since D581 the ingest
-    keeps the HP a Trainer prints, and `toBuilderCard` (catalog.ts) passes it
-    through, so an Antique Fossil carries `hp: 60` and Snorlax Doll `hp: 120`;
-    the 12 HP-printing Trainers are the only Trainers with one.] */
+/**
+ * A single browsable card, the builder's view of a catalog card. `cardId` is the tcgdex id
+ * ("sv06.5-001") and the key of the api's art mirror. Optional fields are absent for categories
+ * they don't apply to.
+ */
 export interface BuilderCard {
   cardId: string;
   name: string;
@@ -63,15 +60,11 @@ export interface BuilderCard {
   /** Whether the catalog has a scan for this card — when false, tiles render
       the neutral fallback instead of requesting art that would 404. */
   hasImage?: boolean;
-  /** The catalog's structured format-legality verdict — the app's ONE legality
-      mechanism (D191). REQUIRED, and that is the point: the wire schema's
-      `legal` is non-optional and `toBuilderCard` passes it straight through, so
-      no api-sourced card can lack it, and hand-built fixtures now derive theirs
-      from the printed mark in one place (`builderCard`, src/test/fixtures.ts).
-      While this was optional a second, independently-maintained regulation-mark
-      allow-list lived inside {@link isLegalInFormat} to cover the gap — two
-      mechanisms a rotation had to be applied to twice, with nothing to fail if
-      only one was. */
+  /**
+   * The catalog's structured format-legality verdict, the app's only legality mechanism. Required:
+   * the wire schema always sends it, and hand-built fixtures derive it from the printed mark in
+   * `builderCard`.
+   */
   legal: { standard: boolean; expanded: boolean };
 }
 
@@ -81,10 +74,11 @@ export function isBasicPokemon(card: BuilderCard): boolean {
   return card.supertype === "Pokémon" && card.subtype === "Basic";
 }
 
-/** True for a basic Energy — the lone exception to the 4-copies-per-name rule. [🆕 D628 (finding 0b): the
-    subtype it reads is the ENGINE's Basic / Special answer (catalog.ts `energySubtypeOf` → `@colorless/engine`
-    `isBasicEnergy` / `isSpecialEnergy`), no longer the raw tcgdex tag, so the 14 "Normal"-tagged Special
-    Energies count toward the 4-copy limit.] */
+/**
+ * True for a basic Energy, the one exception to the 4-copies-per-name rule. The subtype is the
+ * engine's Basic/Special classification, not the raw tcgdex tag, so Special Energies tagged
+ * "Normal" still count toward the limit.
+ */
 export function isBasicEnergy(card: BuilderCard): boolean {
   return card.supertype === "Energy" && card.subtype === "Basic Energy";
 }
@@ -123,42 +117,18 @@ export function isPrismStar(card: BuilderCard): boolean {
   return card.name.includes("◇") || card.name.endsWith(" Prism Star");
 }
 
-/** Whether a card is legal in a format: the catalog's structured verdict
-    (`card.legal`), keyed by the format's {@link Format.legalFlag}. That is the
-    whole rule — there is no printed-mark fallback any more (D191), so the
-    rail's legal-only filter (same flag, applied server-side) and this
-    validator read the same bit and cannot disagree, and the next rotation
-    reaches the app as DATA (tcgdex → the catalog's legal_standard /
-    legal_expanded columns) with no allow-list here to bump. A format without a
-    flag is unrestricted (none modelled today). */
+/**
+ * Whether a card is legal in a format: the catalog's verdict keyed by `Format.legalFlag`. There is
+ * no printed-mark fallback, so this validator and the rail's server-side legal filter read the same
+ * bit.
+ */
 export function isLegalInFormat(card: BuilderCard, format: Format): boolean {
   if (format.legalFlag === undefined) return true;
   return card.legal[format.legalFlag];
 }
 
-// --- Card kinds --------------------------------------------------------------
-// The rail's contextual filter offers card "kinds" once a supertype is chosen:
-// stages / trainer subtypes / energy subtypes, all from the catalog's facets,
-// all filtered SERVER-side (catalog.filtersToCardsQuery maps them to the
-// stage/trainerType/energyType params). The rule-box markers (ex / V / VMAX /
-// MEGA / …) are a SECOND, independent dimension — facets.suffixes → the
-// `?suffix=` param — not extra chips in this one.
-//
-// NOTE (D198): there used to be a third category here, DERIVED_KINDS — "EX"
-// and "Mega" chips matched by NAME REGEX on the client, because tcgdex's
-// `suffix` was parsed and then dropped at ingest so no column existed to
-// query. They are gone, and their removal is a bug fix twice over, measured
-// against the live catalog (3,786 rows):
-//   - "EX" (/\bex\b/i) matched 627 rows, and matched them CLIENT-side over a
-//     server-paged list, so the whole dimension had to come off the wire and
-//     be re-applied per page: a 50-card page of the 3,233 Pokémon rendered
-//     ~10 tiles while the total said 3,233. That is the recorded symptom, and
-//     no client-side filter over a server-paged list can avoid it.
-//   - "Mega" (/\bmega\b/i) matched ZERO of the 3,786 rows. It was already the
-//     thing this codebase refuses to ship: a chip that returns an empty grid
-//     with no signal why.
-// Both are now answered by the server or not offered at all — the vocabulary
-// decides, and an empty vocabulary renders no chip.
+// Card kinds (stages, trainer subtypes, energy subtypes) come from the catalog's facets and are
+// filtered server-side. Rule-box markers (ex, V, VMAX, …) are a separate dimension.
 
 // --- Formats ---------------------------------------------------------------
 
@@ -180,16 +150,6 @@ export interface Format {
   description: string;
 }
 
-// NOTE (D191): Standard used to carry a `legalRegulationMarks: ["H","I","J"]`
-// allow-list as well, consulted by isLegalInFormat for cards with no `legal`
-// block. Nothing in the app could reach it — `legal` is required on the wire
-// and BuilderCard now requires it too — so it survived only as a fixture
-// convenience while being a second thing a rotation had to touch. The
-// mark→verdict derivation moved to the fixture factory (src/test/fixtures.ts),
-// its one reader; formats know only their `legalFlag`.
-// Named (not FORMATS[0]) so DEFAULT_FORMAT is statically known to exist — under
-// noUncheckedIndexedAccess an index access would widen to `Format | undefined`
-// and ripple through everything that reads the default.
 const STANDARD_FORMAT: Format = {
   id: "standard",
   name: "Standard",

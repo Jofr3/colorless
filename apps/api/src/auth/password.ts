@@ -1,18 +1,6 @@
-// Password hashing (§3.5): PBKDF2-SHA256 via WebCrypto — zero dependencies,
-// Workers-native. Stored encoding is self-describing:
-//
-//   pbkdf2$<iterations>$<salt-b64url>$<hash-b64url>
-//
-// verify() reads the iteration count from the STORED string, so raising
-// DEFAULT_ITERATIONS never invalidates old hashes; login checks
-// passwordNeedsRehash() after a successful verify and re-hashes in place
-// (the upgrade path). Comparison is constant-time.
-//
-// NOTE — free-plan Workers CPU limits: 100k PBKDF2-SHA256 iterations burn
-// tens of ms of raw CPU per call, near the free plan's 10ms-average budget.
-// If /auth/login or /auth/register start dying with CPU-limit 500s in
-// production, either lower DEFAULT_ITERATIONS (old hashes keep verifying,
-// new ones pick up the change) or swap in a WASM Argon2 — revisit §3.5.
+// PBKDF2-SHA256 via WebCrypto, stored as `pbkdf2$<iterations>$<salt>$<hash>`. Verification reads
+// the iteration count from the stored string, so changing DEFAULT_ITERATIONS never invalidates old
+// hashes. 100k iterations is close to the free-plan Workers CPU budget.
 
 import { constantTimeEqual, fromBase64Url, randomBytes, toBase64Url } from "./encoding";
 

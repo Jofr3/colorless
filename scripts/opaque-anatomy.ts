@@ -1,126 +1,9 @@
 #!/usr/bin/env bun
 /**
- * THE `OPAQUE` ANATOMY (D471) — `bun scripts/opaque-anatomy.ts`, no arguments.
- *
- * WHY THIS FILE EXISTS. `scripts/residue-census.ts` classes a residue sentence
- * `OPAQUE` when **no deletion and no substitution it can make reaches a built
- * string**. That class is now **78 sentences / 112 printings — 70% of the
- * residue — and it has not moved in FOUR slices** while every reachable class
- * around it drained (D467 → D470). Nobody had asked why, or whether it is one
- * thing or many. The conventions already say what the class is NOT: D463's
- * *"`OPAQUE` means UNCLASSIFIED, never EXPENSIVE"* — a statement about the
- * INSTRUMENT'S REACH, not about the work. This file asks what it IS.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * THE ANSWER, IN ONE SENTENCE. `OPAQUE` is two populations, and the larger one
- * is an artefact of a single implementation choice: **all three of
- * `residue-census.ts`'s probes are SINGLE-REGION.** One segment removed, one
- * span deleted, one contiguous substitution. A sentence that differs from a
- * built one at TWO SEPARATED POINTS is unreachable by every one of them, however
- * small each difference is — and that is 33 of the 78 rows.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * THE TWO AXES, IN THE ORDER A ROW IS TESTED AGAINST THEM.
- *
- * ① THE k-REGION PROBE (mechanical, derived, no vocabulary of its own).
- *    Align the sentence against every BUILT corpus sentence with a token-level
- *    Levenshtein backtrace and count the MAXIMAL DISJOINT EDIT REGIONS. A region
- *    is a run of substitute/delete/insert operations bounded by matches. Keep
- *    only alignments in which EVERY region is at most `SUBMAX` tokens on each
- *    side — the same bound `residue-census.ts`'s `substProbe` uses — and report
- *    the smallest region COUNT over all built sentences. `MULTI-k` is that k.
- *
- *    🛑 **`k = 1` IS EXACTLY WHAT `substProbe` ALREADY REPORTS, so over the
- *    `OPAQUE` class it MUST BE EMPTY.** That is not a design choice, it is the
- *    cross-check: a single contiguous edit region within `SUBMAX` is bounded by
- *    the maximal common prefix and suffix, which is precisely the alignment
- *    `substProbe` computes, and a single PURE-DELETION region is what `spanProbe`
- *    computes. If a `k = 1` row ever appears here, this instrument and the census
- *    disagree and one of them is wrong. `scripts/opaque-anatomy-gate.ts` §A
- *    asserts it, and holds no number of its own to do so.
- *
- * ② THE MARKER PROBE, WITH A BUILT-SIDE CONTROL (semantic, and the control is
- *    the whole of what makes it honest). A marker is a regex over the printed
- *    sentence. For each one this file reports its population **on both sides of
- *    the build line**, over the whole 640-sentence legal column:
- *      · `BLOCKER`   — zero BUILT sentences carry it. The engine has never
- *                      claimed any sentence with this marker, anywhere.
- *      · `CO-MARKER` — some BUILT sentence carries it. The phrase is served, so
- *                      it is NOT why these rows are opaque, and a brief that
- *                      names it as the reason is wrong.
- *    **Only a `BLOCKER` may label a row.** A `CO-MARKER` is reported and never
- *    used, which is the point: SIX of the ten markers below were written as
- *    blockers by the author of this file and REFUTED by their own control —
- *    continuing effects, Prize-zone reads, both-sides board scope, card-name
- *    counting and opponent-hand choice all appear in sentences this engine
- *    builds today, and 🆕🆕🆕 **D508 made `NAMED-ATTACK` the sixth by BUILDING one
- *    of its rows** rather than by re-reading the column. FIVE of the six were
- *    refuted the day this file was written; the sixth was refuted by a slice, which
- *    is the § C failure mode the gate was installed to force. 🆕🆕🆕 **D525 made
- *    `VARIABLE-MAX` the SEVENTH, the same way** — by building corpus FILE LINE 219
- *    (the heads-count ceiling) — and the gate fired exactly as at D508.
- *
- * ⚠️ **AND THE BIGGEST REFUTATION IS THE ONE THAT LOOKED MOST OBVIOUS.** The
- * single most plausible story about `OPAQUE` — *"it is the continuing-effect
- * seam, and `continuous.ts` cannot express these"* — is FALSE by a wide margin:
- * `CONTINUOUS` carries **49 built sentences / 217 printings**. That is D464's
- * fold defect at family scale — *one row refused by N anchors is N claims, and
- * only one of them may be true* — with the quantifier on the family instead of
- * the row. **Run the marker over the BUILT side before you write the sentence.**
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * ⚠️ WHAT THIS INSTRUMENT CANNOT SEE — read this before quoting a number.
- * (D419's rule, and D467's session log is the model: say it out loud.)
- *
- * · 🛑 **`MULTI-k` IS A LOWER BOUND ON THE WORK AND A BAD ESTIMATE OF IT** —
- *   D459's standing rule for `PHRASE-n`, inherited unchanged and, if anything,
- *   sharper here. Two SMALL regions can be two WHOLE MECHANISMS: *"Discard a
- *   card from your hand. If you do, draw 2 cards."* is `MULTI-3` onto *"Discard
- *   your hand and draw 6 cards."* and the three regions hold a cost, a
- *   conditional and a count. The probe measures the DISTANCE from a built
- *   string, never the price of closing it.
- * · 🛑 **THE NEAREST BUILT SENTENCE IS CHOSEN BY REGION COUNT, NOT BY MEANING.**
- *   Ties are broken by corpus order, and a semantically unrelated neighbour can
- *   win on bytes. The `→` line is evidence for the CLASS, not a work order.
- * · 🛑 **A MARKER IS A REGEX OVER PRINTED TEXT, AND A `BLOCKER` VERDICT IS ONLY
- *   AS WIDE AS ITS ALTERNATION.** `VARIABLE-MAX` is a blocker as spelled; add the
- *   one alternative `any number of` and its built side goes to 5 sentences / 12
- *   printings and it is refuted. That is not a flaw to be hidden — it is why
- *   `ANY-NUMBER-OF` ships beside it as a declared `CO-MARKER`, so the sensitivity
- *   is visible in the output rather than in this paragraph. (🆕🆕🆕 D574 — the "5 sentences / 12
- *   printings" is VARIABLE-MAX's built side under that one alternation AS MEASURED THEN; D574 built
- *   two more `any number of` sentences — Sableye "Damage Collection" and Alakazam "Strange
- *   Hacking" — so the figure is a dated measurement, not a live one; `ANY-NUMBER-OF`'s own row is
- *   re-measured on every run.) 🆕🆕🆕 **D525 — AND
- *   `VARIABLE-MAX` IS NOW A CO-MARKER AS SPELLED**, refuted by a BUILD (corpus FILE
- *   LINE 219, `retrievalUpToHeads`): its built side is 1 sentence / 2 printings and
- *   §C of the gate said so on the first run after the arm — the paragraph above
- *   is kept as the record of what the marker was when it was a blocker.
- * · 🛑 **`UNEXPLAINED` IS THE HONEST RESIDUAL AND IT IS THE BIGGEST CLASS OF THE
- *   FAR HALF.** 31 sentences / 41 printings carry no marker this instrument
- *   holds. That number is meant to stay visible; the alternative — inventing a
- *   marker per row until the table reads 100% — would produce a partition that
- *   explains nothing and cannot be refuted.
- * · **IT INHERITS EVERY LIMIT OF `residue-census.ts`**: the population is
- *   `legal_standard = 1` only (printings are a FLOOR, D445); the reader surface
- *   is keyed on the `deriveAttack` name prefix; the registry arm reads a test
- *   file; `splitAttackTrailingClause` counts as BUILT. It adds no population and
- *   no build predicate of its own — `builds()` is imported, never re-derived.
- * · **IT SAYS NOTHING ABOUT CORRECTNESS** (D469): every figure here is about
- *   which strings the readers CLAIM.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * WHAT IT KILLS, AND WHAT KILLS IT (D465 — an instrument that measures the repo
- * must be killable by the corpus). `scripts/**` sits outside vitest's include
- * globs and outside `tsc -b`'s project references, so a `*.test.ts` importing
- * this file would break the typecheck rather than guard anything. The killer is
- * `scripts/opaque-anatomy-gate.ts`, a `killedByCommand` gate on D212's
- * precedent, and the corpus carries six rows that die through it.
- *
- * Env overrides, none required: `SUBMAX` (default 4) — the largest edit region,
- * in tokens on either side, that still counts as one axis. It is deliberately
- * the same default as `residue-census.ts`'s, because § A's cross-check between
- * the two probes is only meaningful when both use one bound.
+ * Breaks down the residue census's `OPAQUE` class (sentences no single deletion or substitution
+ * brings to a built string). Its main finding: every census probe is single-region, so a sentence
+ * that differs from a built one at two separate points is unreachable by all of them. Run with `bun
+ * scripts/opaque-anatomy.ts`.
  */
 
 import { legalAttackCorpus } from "../packages/engine/src/censusAttackCorpus";
@@ -149,16 +32,9 @@ export const OPAQUE = rows.filter((r) => r.cls === "OPAQUE");
 export type EditRegion = { alen: number; blen: number };
 
 /**
- * Token-level Levenshtein with a backtrace, reduced to its MAXIMAL DISJOINT EDIT
- * REGIONS. Two equal token sequences produce zero regions; a sentence differing
- * in one contiguous place produces one; the case this whole file exists for —
- * two separated differences — produces two.
- *
- * ⚠️ ADJACENT EDITS MERGE. A substitution immediately followed by a deletion is
- * ONE region, not two, because nothing matches between them. That is the
- * definition a single-region probe is blind to the complement of, so getting it
- * wrong in the merging direction would silently move rows from `MULTI-2` into a
- * `MULTI-1` that must not exist — which is exactly what § A of the gate watches.
+ * Token-level Levenshtein with a backtrace, reduced to its maximal disjoint edit regions: equal
+ * sequences give zero regions, one contiguous difference gives one, two separated differences give
+ * two.
  */
 export function editRegions(a: readonly string[], b: readonly string[]): EditRegion[] {
   const m = a.length;
@@ -218,14 +94,11 @@ export function editRegions(a: readonly string[], b: readonly string[]): EditReg
 
 export type RegionHit = { k: number; onto: string; regions: EditRegion[] };
 
-/** The smallest number of BOUNDED edit regions between `text` and any built
-    sentence, or `null` when no alignment keeps every region within `SUBMAX`.
-    ⚠️ The bound is applied to the alignment BEFORE the count is compared, which
-    is what stops the probe from degenerating: without it every sentence is one
-    region away from every other and the table reads `MULTI-1` for all 78.
-    `targets` defaults to the live BUILT side and exists for ONE caller: the
-    gate's § E pinned witness (D569), which needs the search run over a FIXED
-    pair rather than over a population a slice can shrink out from under it. */
+/**
+ * The smallest number of bounded edit regions between `text` and any built sentence, or `null` when
+ * no alignment keeps every region within `SUBMAX`. The bound is applied before counts are compared;
+ * without it every sentence is one region away from every other.
+ */
 export function minRegionHit(
   text: string,
   submax: number = SUBMAX,
@@ -242,9 +115,10 @@ export function minRegionHit(
   return best;
 }
 
-/** Totals over the whole (OPAQUE × BUILT) grid — a population, so a silent
-    narrowing of the probe shows up as a COUNT rather than as an absence
-    (D465's third property). */
+/**
+ * Totals over the whole OPAQUE x BUILT grid, so a silent narrowing of the probe shows up as a
+ * changed count.
+ */
 export function gridTotals(submax: number = SUBMAX): {
   pairs: number;
   rejected: number;
@@ -281,137 +155,29 @@ export const MARKERS: readonly Marker[] = [
   {
     name: "COPY-ATTACK",
     rx: /use it as this attack/,
-    // 🛑🛑🛑 D573 — **RE-DECLARED `blocker` → `co-marker`, BY THIS FILE'S OWN CONTROL AND NOT BY AN
-    //    OPINION — THE REFUTATION IS THE FINDING (D178/D508).** D573 built four of the six
-    //    sentences carrying the phrase (corpus FILE LINES 77, 78, 80, 245 — Night Joker ×4, Foul
-    //    Play ×2, Metronome, Gemstone Mimicry, Try to Imitate: `deriveAttackCopy` plus attack.ts's
-    //    declaration-time substitution), so the built side went 0 / 0 → 4 / 9 and
-    //    `opaque-anatomy-gate.ts` §C went RED naming it — exactly the falsification its doc
-    //    block forecast. The regex is KEPT WHOLE: narrowing it to the two unbuilt members would
-    //    restore the `blocker` verdict by deleting the evidence against it. The two left (Haughty
-    //    Order ×3, Seek Inspiration ×1) fall to UNEXPLAINED, which is intended.
-    // 🆕🆕🆕 D574 — AND THE TWO LEFT ARE BUILT: the marker's built side 4 / 9 → 6 / 13 (the WHOLE
-    //    family; `deriveAttackCopy`'s two resolve-time anchors and attack.ts's mid-attack park), its
-    //    residue side 2 / 4 → 0 / 0, so it stays a co-marker and labels nothing. ~~"fall to
-    //    UNEXPLAINED"~~ is history: they left the OPAQUE class altogether.
     verdict: "co-marker",
     needs:
-      // 🆕🆕🆕 D573 (D539): ~~"attack() §8.5 as a callable function taking an attacker, a defender
-      //    and a `declared` — the standing refusal's own executable falsifier, plus a bound on
-      //    `runProgram`'s unbounded queue"~~ — MET: `attack()` takes a `declared` override and the
-      //    copy family is excluded as a candidate (the bound). 🆕🆕🆕 D573 REVIEW: *"MET"* needed a
-      //    THIRD leg the first build lacked — a copied attack's printed timing clause was split off
-      //    and enforced against no one (laundered through the gate seam); attack.ts `usableCopies`
-      //    now asks it for the copier's seat and drops every candidate it bars (R-CP4).
-      // 🆕🆕🆕 D574 (D539): ~~"the remaining two … need a park in the MIDDLE of an attack"~~ — BUILT:
-      //    `useFoundAttackAs`, attack.ts's mid-attack park on D573's re-entry seam (R-HO1/R-HO2/R-SI1).
       "nothing — all six sentences are built (four at declaration, D573; the two that REVEAL or MILL first in the MIDDLE of the attack, D574)",
   },
   {
     name: "SCHEMA-BANNER",
-    // 🛑🛑🛑 D568 — **`Tera` LEFT THIS ALTERNATION AND BECAME ITS OWN CO-MARKER BELOW, BY THIS
-    //    FILE'S OWN CONTROL.** D568 built three sentences carrying the word (Ho-Oh `sv08-019`,
-    //    Regigigas `sv08.5-086`, Terapagos `sv08-161`), so the marker's built side went 0 → 3 / 3
-    //    and `opaque-anatomy-gate.ts` §C went RED naming it. The refutation is about TERA only:
-    //    `banners.ts` supplies that banner and nothing supplies Ancient/Future yet, so the
-    //    marker is SPLIT rather than re-declared whole — the Tera evidence is KEPT (as the
-    //    `TERA-BANNER` co-marker, never deleted — D508's rule) and the Ancient/Future half keeps
-    //    the verdict its built side still earns (0 / 0).
-    // 🛑🛑🛑 D569 — **AND THE ANCIENT/FUTURE HALF IS RE-DECLARED A CO-MARKER, BY THE SAME CONTROL.**
-    //    Slice 2 part a widened `banners.ts` to both banners (86 ids) and built EIGHT sentences
-    //    carrying the words — four through readers (Koraidon "Primordial Beatdown", Roaring Moon
-    //    "Vengeance Fletching", Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher") and four
-    //    as hand-written registry attacks (Peak Acceleration, Land Collapse, Supportive Singing,
-    //    Perplexing Transfer) — so the built side went 0 / 0 → 8 / 12 and `opaque-anatomy-gate.ts`
-    //    §C went RED naming it. The marker keeps its NAME (its history reads from it) and the
-    //    verdict changes; the "an ingest COLUMN" `needs` below is struck, not deleted.
     rx: /\b(?:Ancient|Future)\b/,
     verdict: "co-marker",
     needs:
-      // 🆕🆕🆕 D568 (D539): "an ingest COLUMN" is WITHDRAWN AS THE ONLY FIX — an ENGINE table keyed
-      //    by printing id (`banners.ts`, built for Tera) is one; Slice 2 widens it to these two.
-      // 🆕🆕🆕 D569 (D539): and Slice 2 part a DID — the former `needs` was ~~"an ingest COLUMN.
-      //    `cardSchema` has 21 keys and none classifies the banner (D468), so a filter over it
-      //    counts 0 on every board forever"~~ ("none classifies" stays TRUE of `cardSchema`).
-      // 🆕🆕🆕 D571 (D539): "a reveal-top-N op" is WITHDRAWN from the list — D571 built it
-      //    (`revealTopDiscardMatching`, Iron Thorns "Destructo-Press" on the registry route).
-      // 🆕🆕🆕 D575 (D539): of the three "OTHER mechanisms" in the string below, ~~"a persisted attacker
-      //    class"~~ and ~~"a set-target block"~~ are BUILT (Iron Moth "Anachronism Repulsor", Miraidon
-      //    "C.O.D.E.: Protect" — the ELEVENTH `MATCH_RECORD_VERSION` position); only "a seat-level attack
-      //    record" (Koraidon `sv08-116`, unruled R-1) remains. The string is kept as written (D178).
-      // 🆕🆕🆕 D579 (D539): ~~"only 'a seat-level attack record' … remains"~~ — BUILT too (`GameState.
-      //    recentAttackers`, Koraidon `sv08-116`, R-1 reading B RULED by the user 2026-10-05); all three
-      //    "OTHER mechanisms" are built and the OPAQUE class is EMPTY. The string is still kept (D178).
       "nothing new — `banners.ts` (D568/D569) classifies all three banners by printing id; what is left of the Ancient/Future residue is blocked by OTHER mechanisms (a persisted attacker class, a seat-level attack record, a set-target block)",
   },
   {
     name: "TERA-BANNER",
-    // 🆕🆕🆕 D568 — split out of `SCHEMA-BANNER` above when the Tera banner got its writer
-    //    (`banners.ts`); a CO-MARKER from birth, with a built side of 3 / 3.
     rx: /\bTera\b/,
     verdict: "co-marker",
     needs:
-      // 🆕🆕🆕 D573 (D539): ~~"what is left of the Tera residue is blocked by OTHER markers
-      //    (copy-attack; the Bench size)"~~ — WITHDRAWN: D573 built the Tera copy-attack (Gemstone
-      //    Mimicry), and the marker's ATTACK residue is now EMPTY (measured).
       "nothing new — `banners.ts` (D568) classifies the banner by printing id; its attack residue is EMPTY at D573 (Gemstone Mimicry, the last Tera attack sentence, is built)",
   },
   {
     name: "NAMED-ATTACK",
     rx: /used (?:Angelite|Rollout)|Hyper Fang|United Wings/,
-    // 🛑🛑 D508 — **RE-DECLARED `blocker` → `co-marker`, BY THIS FILE'S OWN CONTROL AND
-    //    NOT BY AN OPINION.** D508 built corpus line 542 (*"…for each Pokémon in your
-    //    discard pile that has the United Wings attack."*), so this marker's BUILT side
-    //    went 0 / 0 → 1 / 1 and `opaque-anatomy-gate.ts` § C went RED naming it —
-    //    exactly the falsification that section's doc block forecasts for
-    //    `COPY-ATTACK` (*"the day a slice builds an attack-copy sentence, its built
-    //    side goes positive and this gate goes RED and names it"*). ⚠️ The marker is
-    //    KEPT with the verdict corrected rather than narrowed to dodge the refutation
-    //    (D178: the refutation IS the finding), and narrowing the alternation to drop
-    //    `United Wings` would have been the dishonest repair — it would restore the
-    //    `blocker` verdict by deleting the evidence against it.
-    //    🛑 AND THE CONSEQUENCE IS INTENDED, NOT COLLATERAL: a co-marker never LABELS a
-    //    row, so the three rows this marker used to carry fall to `UNEXPLAINED`. That is
-    //    the correct place for them — D479 had already measured that those three are
-    //    blocked for three DIFFERENT reasons, none of them a named-attack fact
-    //    (D463: a refusal grouping N rows under ONE reason is N refusals until each is
-    //    priced), so the label was doing no work it could justify.
     verdict: "co-marker",
     needs:
-      // 🛑🛑 D479 — THE FIRST CLAUSE OF THIS `needs` WAS FALSE AND IS CORRECTED IN
-      //    PLACE (D442/D466); the original is kept below the corrected text as the
-      //    record (D178). `InPlayPokemon.usedAttack` (D394) IS a state field carrying
-      //    exactly "which attack this body used", `BoardCondition` spells it TWICE
-      //    (`yourActiveUsedAttackLastTurn { attack }` D394 and
-      //    `yourPokemonUsedAttackLastTurn { attack }` D396), and
-      //    `ATTACK_GATE_CLAUSE_GATES` in `effects.ts` already holds a SHIPPED row for
-      //    this marker's own corpus line 630 —
-      //    `{ kind: "onlyIf", condition: { kind: "yourActiveUsedAttackLastTurn",
-      //    attack: "Rollout" } }`. That row is ENFORCED at the §8 declaration seam
-      //    today; it WAS in the residue until D529 widened `builds()` (it refused a gate
-      //    split whose `body` is `""` — D395's clause-only case — which was a fact about
-      //    the CENSUS and not about expressibility; corrected in place, D178/D442: the
-      //    row is now BUILT, so this marker's OPAQUE/RESIDUE/BUILT columns moved one row
-      //    toward BUILT at D529 with zero engine bytes).
-      //    ⚠️ D479 wrote *"the verdict stays `blocker` because the OTHER three rows
-      //    still are"* and listed four rows under three different reasons: line 82 on
-      //    its "Choose 2 … Shuffle those … into your opponent's deck" HEAD, line 166 on
-      //    a named-attack BASE-DAMAGE override, line 542 on a `CardFilter` over a
-      //    card's printed attack list. 🛑🛑 **THAT THIRD CLAUSE WAS ALREADY FALSE WHEN
-      //    D479 WROTE IT AND IS CORRECTED HERE (D178/D442/D466 — the second correction
-      //    this `needs` has taken).** `CardFilter.attackNamePokemon` shipped at D446,
-      //    THIRTY-THREE decisions before D479, and `matchesFilter`'s arm for it reads
-      //    `attacksOf(card)` — so line 542's stated blocker had an expiry date that had
-      //    already passed. What actually blocked it was an ANCHOR (`^…$` cannot see a
-      //    sentence whose noun is split around the zone phrase), and D508 wrote that
-      //    anchor. ⚠️ **THE LESSON IS THE ONE D413 NAMES**: a refusal that names its own
-      //    falsifier must be RE-READ against today's tree, not inherited.
-      //    🛑🛑 D544 — THE THIRD CORRECTION, AND IT EMPTIES THE LIST: line 166's
-      //    named-attack BASE-DAMAGE override is BUILT (a `base: true` rider on
-      //    `boostAttack`, read by `boostedAttackBase`), and line 82's head was already
-      //    BUILT at D541. The old text is STRUCK below rather than overwritten (D178).
-      //    The marker stays a `co-marker` with a POSITIVE built side (4 / 7 at D544),
-      //    so § C of the gate stays green; its RESIDUE and OPAQUE columns are 0 / 0.
       "no row left in the residue: line 82's head is BUILT (D541) and line 166's " +
       "named-attack base-damage override is BUILT (D544, a `base` rider on `boostAttack`) " +
       "— while line 630's named-attack " +
@@ -428,30 +194,10 @@ export const MARKERS: readonly Marker[] = [
   {
     name: "VARIABLE-MAX",
     rx: /up to the number of|number of cards up to/,
-    // 🆕🆕🆕 D525 — REFUTED BY A BUILD, THE SEVENTH CO-MARKER, and the second refuted the
-    //    way `NAMED-ATTACK` was (by a slice, not by the column on the day). Corpus FILE
-    //    LINE 219, *"Flip 3 coins. Put a number of cards up to the number of heads from
-    //    your discard pile into your hand."* (2 printings), is BUILT on `deriveAttackCoinFlip`
-    //    as `AttackCoinFlip.retrievalUpToHeads`: `attack.ts` writes the heads count into
-    //    the shipped `discardPileRetrieval`'s `max` at the fold, so the maximum IS computed
-    //    at resolve time from a flip count — exactly what `needs` said no shipped op could
-    //    take. The gate's §C fired on the first run after the arm was written (a blocker
-    //    with a non-empty built side), which is the failure mode it was installed to force.
-    //    Kept in position with the verdict corrected (D178): what is left under this marker
-    //    is the ATTACH twin (FILE LINE 215, `attachEnergyFrom`, 1 printing) — refused as a
-    //    DIFFERENT op with one printing (D442/D448), not as a variable maximum.
     verdict: "co-marker",
     needs:
       "nothing this marker can name since D525 — the heads-count ceiling ships as `retrievalUpToHeads` (one `discardPileRetrieval` with `max: heads` written at the fold). [D525 corrected. WAS: \u201ca choice whose MAXIMUM is computed at resolve time from the board or from a flip count, where every shipped `up to N` op takes a printed integer\u201d]",
   },
-  // ── THE FIVE THAT WERE WRITTEN AS BLOCKERS AND REFUTED BY THEIR OWN CONTROL
-  //    ON THE DAY THIS FILE WAS WRITTEN. (`NAMED-ATTACK` above is the sixth
-  //    co-marker and is kept in its original position, because it was refuted
-  //    LATER — by D508 building one of its rows — and moving it would erase which
-  //    kind of refutation it was.)
-  //    Kept, with the verdict corrected rather than the marker deleted, because
-  //    the refutation is the finding (D178 — annotate provenance, never
-  //    overwrite it). Each of these reads like a reason and is not one.
   {
     name: "CONTINUOUS",
     rx: /During your next turn|During your opponent's next turn|Until the end of/,
@@ -469,14 +215,6 @@ export const MARKERS: readonly Marker[] = [
     name: "BOTH-SIDES-BOARD",
     rx: /both yours and your opponent's/,
     verdict: "co-marker",
-    // 🆕🆕🆕 **D512 EXTENDED THIS `needs` RATHER THAN ITS `rx`, AND THE VERDICT DID NOT
-    // FLIP**: the built side was already live and grew by one, so the marker is a
-    // co-marker before and after. What changed is that *"the both-seats board scope"*
-    // now covers a COUNT as well as a walk — `DamageCountSource.bothSidesPokemonInPlay`
-    // joins `bothSidesBenchCount` and `bothActivesEnergyCount`, and all three are
-    // MEMBERS with no seat field because `attack.ts` resolves `CountSeat` with a binary
-    // ternary. ⚠️ **THE `rx` IS UNTOUCHED** (D508): narrowing it would restore the old
-    // verdict by deleting the evidence.
     needs:
       "nothing this marker can name — the both-seats board scope ships, as a WALK (`counterEachAll.side`, `handRefresh.who`, `spreadDamage` composed twice) and, since D512, as a COUNT (`bothSidesPokemonInPlay`, beside `bothSidesBenchCount` and `bothActivesEnergyCount`)",
   },
@@ -484,19 +222,6 @@ export const MARKERS: readonly Marker[] = [
     name: "CARD-NAME-COUNT",
     rx: /has "[^"]+" in its name|your Drifloon and Drifblim|number of Fennel cards/,
     verdict: "co-marker",
-    // 🆕🆕🆕 **D510 CONFIRMED THIS `needs` STRING BY BUILDING ONE OF ITS ROWS**, and the
-    // verdict did NOT flip: the built side was already live (1/1) and is now 2/3, so the
-    // marker was a co-marker before and after. ⚠️ **IT IS ALSO THE STRING THAT WAS RIGHT
-    // WHERE TWO ENGINE DOC BLOCKS WERE WRONG.** `CardFilter.attackNamePokemon` and
-    // `matchesFilter`'s arm for it both asserted *"no `CardFilter` member does substring
-    // matching at any width"*; this line has said since D471 that `ownerPokemon` reads
-    // `Card.name`, and it does — a PREFIX, at `card.name.startsWith(...)`. Both engine
-    // sentences were corrected at D510. **D508's rule, paid in the direction it was
-    // written for**: sweep a claim across `packages/**` AND `scripts/**`, because the
-    // copy nobody is editing is the one that stays false.
-    // 🆕🆕🆕 **D512 BUILT THE SECOND OF THIS MARKER'S THREE ROWS AND THE VERDICT STILL
-    // DID NOT FLIP** — the built side was 2/3 and is now 3/3, so it was a co-marker
-    // before and after, for the third slice running. The `rx` is UNTOUCHED.
     needs:
       "nothing this marker can name — `CardFilter.ownerPokemon` reads `Card.name` (a PREFIX) and has since D200, D510's `supporterNameContaining` reads it UNANCHORED under a Supporter head, and D512's `pokemonNameContaining` reads it UNANCHORED under a Pokémon head",
   },
@@ -510,11 +235,6 @@ export const MARKERS: readonly Marker[] = [
     name: "ANY-NUMBER-OF",
     rx: /any number of/,
     verdict: "co-marker",
-    // 🆕🆕🆕 D574 — its one far OPAQUE row (Sableye `sv05-107` "Damage Collection") and its Alakazam
-    //    `sv06-082` compound are BUILT (`moveCountersOpponentAnyWay`, the looping round), so its
-    //    residue side shrinks and its built side grows — a co-marker before and after. It was one
-    //    of the five live witnesses of `D471-co-marker-may-label`; `opaque-anatomy-gate.ts`'s
-    //    CO_PIN literal (D571) is what keeps that row KILLED without it.
     needs:
       "nothing this marker can name — and it ships PRECISELY to show how narrow a `blocker` verdict is: this is one alternation away from `VARIABLE-MAX`, and it is refuted where that one is not",
   },
@@ -564,18 +284,11 @@ export type Anatomy = {
   marker: Marker | null;
 };
 
-/** ⚠️ AXIS ① IS TESTED FIRST, AND THE ORDER IS AN ARGUMENT RATHER THAN A HABIT.
-    D463's rule says `OPAQUE` is a statement about the INSTRUMENT'S REACH before
-    it is a statement about the work, so the mechanical axis — the one that says
-    the class is an ARTEFACT — gets the first question. The marker table below
-    reports every marker's hits over ALL of `OPAQUE`, not only over the far half,
-    so nothing a `MULTI-k` label covers is hidden by the ordering. */
-/** 🆕🆕🆕 D571 — AXIS ②'s LABEL for one FAR row, lifted out of `ANATOMY`'s map byte for
-    byte (the `MARKERS.find` line, and so `D471-co-marker-may-label`'s `find`, is unchanged).
-    Exported for ONE extra caller: `opaque-anatomy-gate.ts` §C's PINNED co-marker witness,
-    which asks this question of a LITERAL far sentence rather than of the live residue
-    (the D569 close-out's gate-witness rule — D571 builds Destructo-Press, one of the five
-    live co-marker witnesses, and the three Ancient/Future ones are the next to go). */
+/**
+ * The mechanical axis is tested first, because `OPAQUE` describes the instrument's reach before it
+ * describes the work. The marker table counts hits over all of `OPAQUE`, so the ordering hides
+ * nothing.
+ */
 export function blockerMarkerOf(r: { readonly text: string }): Marker | null {
   const marker = MARKERS.find((m) => m.verdict === "blocker" && m.rx.test(r.text)) ?? null;
   return marker;

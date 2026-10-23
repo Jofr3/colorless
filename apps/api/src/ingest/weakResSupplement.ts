@@ -1,24 +1,8 @@
-// Weakness / Resistance for Pokémon whose tcgdex (English) payload carries neither.
-//
-// tcgdex ships NO `weaknesses` / `resistances` for every Pokémon in White Flare
-// (sv10.5w) and Black Bolt (sv10.5b) and for 30 SVP promos (svp-166 … svp-207), so
-// the catalog stored NULL and the engine applied no Weakness to 342 Standard-legal
-// printings (card revision B39). Gathered 2026-10-20 from three independent sources:
-//
-//   P  pokemontcg.io v2 (`/cards?q=set.id:rsv10pt5|zsv10pt5|svp`; matched by number + name)
-//   T  TCGplayer product data via tcgcsv.com (groups 24326, 24325, 22872; "Rx2" / "F-30")
-//   J  tcgdex Japanese (SV11W / SV11B; matched by Pokédex number, the numbering differs)
-//   M  the same Pokémon's printings in me02.5 / me05 (already in the catalog)
-//   X  the printed Metal-type pattern (Fire ×2, Grass −30)
-//   S  one source only, equal to the same card's regular-art printing in this table
-//
-// 323 entries have two or three sources agreeing. The five that do not are resolved
-// AGAINST TCGplayer: Vullaby / Mandibuzz sv10.5w-063 / -064 / -144 / -145 (T: Grass ×2;
-// P, J and M: Lightning ×2, Fighting −30) and Dialga ex svp-180 (T: Fighting −30; P and X:
-// Grass −30). My First Battle (mfb) and the three 30th-c cards are absent from all three
-// sources and stay NULL; none is Standard-legal.
-//
-// Applied by `mapCard` ONLY when tcgdex sends neither field, so an upstream fix wins.
+// Weakness and Resistance for Pokémon whose tcgdex payload carries neither, gathered from other
+// sources. Source letters: P pokemontcg.io, T TCGplayer, J tcgdex Japanese, M the same Pokémon's
+// other printings, X the printed Metal-type pattern, S one source matching the regular-art
+// printing. Disagreements are resolved in favour of TCGplayer. Applied only when tcgdex sends
+// neither field.
 
 import type { TcgdexWeakRes } from "@colorless/schema";
 

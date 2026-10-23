@@ -197,9 +197,6 @@ export function validateDeck(deck: Deck, format: Format): DeckValidation {
     });
   }
 
-  // Format legality: the catalog's structured `card.legal` verdict, via the
-  // format's legalFlag — the only mechanism, with no printed-mark path behind
-  // it (D191). See isLegalInFormat.
   const illegal = new Set<string>();
   for (const { card } of deck) {
     if (!isLegalInFormat(card, format)) illegal.add(card.name);

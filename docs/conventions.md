@@ -36,7 +36,13 @@ Rule of thumb: if answering would mean reading many files, delegate it and keep
 only the conclusion.
 
 ## Code & quality
-- TypeScript strict; match the surrounding code's style and comment density.
+- TypeScript strict; match the surrounding code's style.
+- **Comments are minimal (2026-10-23).** Comment only what the code cannot say:
+  a game rule or card wording it implements, a non-obvious invariant or ordering
+  constraint, or why something is done an unexpected way. No decision ids, emoji
+  markers, history ("was", "now", "corrected"), census counts, dates or line
+  numbers in code or tests — that record belongs in `docs/decisions.md` and git.
+  Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`**
   (tsc + lint coverage + biome lint + **biome format** + the headless Lua tests +
   the mutant `precheck` + vitest) before calling work done. Run `bun run format`

@@ -110,23 +110,20 @@ export interface RetreatAction {
 export interface AttackAction {
   type: "attack";
   seat: Seat;
-  /** ~~Index into the Active's printed attacks (the top card defines them,
-      §1.2).~~ 🆕🆕🆕 D578 (D539): WITHDRAWN as the whole address — an index into the Active's
-      ATTACK MENU (engine `attackMenuOf`): its printed attacks FIRST (the top card defines them,
-      §1.2 — so every printed attack's index is unchanged), then Relicanth's Memory Dive rows,
-      then an attached Technical Machine's. No shape change. Runtime-checked — integer, in
-      range — like every wire value. */
+  /**
+   * Index into the Active's attack menu (`attackMenuOf`): its printed attacks first, then Memory
+   * Dive rows, then an attached Technical Machine's. Runtime-checked as an in-range integer.
+   */
   index: number;
 }
 
 export interface TakePrizesAction {
   type: "takePrizes";
   seat: Seat;
-  /** Exactly `count` (from the ko:takePrizes phase) distinct indices into
-      the actor's own face-down prize row — the KOing player picks which of
-      THEIR prizes to reveal into hand (§8.1). 🆕🆕🆕 D548: the row is no longer
-      all face-down — an index may name a slot `faceUpPrizes` holds, and it is as
-      legal a pick as any other (a face-up prize is still a prize). */
+  /**
+   * Exactly `count` distinct indices into the actor's own prize row, choosing which prizes to take
+   * into hand (§8.1). A face-up prize is as legal a pick as any other.
+   */
   prizeIndices: number[];
 }
 
@@ -150,8 +147,7 @@ export interface AttachToolAction {
   seat: Seat;
   /** A Pokémon Tool uid from the actor's hand (§7.4). */
   uid: string;
-  /** Which of the actor's own in-play Pokémon wears it (one Tool each). [🆕🆕🆕 D643 (D539): ~~one Tool each~~ — up to
-      continuous.ts `toolCapOf`, 2 on a Rotom under Multi Adapter.] */
+  /** Which of the actor's own in-play Pokémon wears it, up to `toolCapOf`. */
   target: PokemonTarget;
 }
 
@@ -182,12 +178,12 @@ export interface EndTurnAction {
   seat: Seat;
 }
 
-/** 🆕🆕🆕 D576 — the Antique Fossils' printed *"At any time during your turn, you may discard
-    this card from play."* (R-FO3). `target` is one of the actor's OWN in-play spots whose TOP
-    card is a fossil. Legal in the actor's own main phase only (`turnGate` — not mid-prompt, not
-    inside Festival Lead's attack-again window). The whole stack leaves for the discard pile; it
-    is not a Knock Out and gives no Prize; an emptied Active Spot is owed a promotion, and an
-    emptied board is the §14.2 loss. */
+/**
+ * An Antique Fossil's "At any time during your turn, you may discard this card from play." `target`
+ * is one of the actor's own spots whose top card is a fossil. Legal only in the actor's own main
+ * phase. The whole stack goes to the discard pile; it is not a Knock Out and gives no Prize, an
+ * emptied Active Spot is owed a promotion, and an emptied board is the §14.2 loss.
+ */
 export interface DiscardFromPlayAction {
   type: "discardFromPlay";
   seat: Seat;
@@ -232,13 +228,15 @@ export type ErrorCode =
   /** §10 — the played card is a Basic / non-Pokémon (no `evolveFrom`), so it
       cannot be placed on top of an in-play Pokémon as an evolution. */
   | "NOT_AN_EVOLUTION"
-  /** §10 — the evolution's `evolveFrom` does not name the target's current
-      top card, so it does not evolve from it. (🆕🆕🆕 D563: …and no Ability ALIAS on the
-      target licenses the name — Eevee ex "Rainbow DNA", `evolveAsNamed`.) */
+  /**
+   * §10: the evolution's `evolveFrom` does not name the target's top card, and no Ability alias on
+   * the target (Eevee ex "Rainbow DNA") licenses the name.
+   */
   | "EVOLVE_MISMATCH"
-  /** 🆕🆕🆕 §10 (D563) — the evolution card prints that it may be put into play ONLY by
-      a named Ability's effect (Palafin ex "Hero's Spirit"), so a hand evolve is refused
-      whatever the target; the message names the Ability. */
+  /**
+   * §10: the evolution card may be put into play only by a named Ability's effect (Palafin ex
+   * "Hero's Spirit"), so a hand evolve is refused whatever the target.
+   */
   | "EVOLVE_ONLY_VIA_ABILITY"
   /** §10 — the target came into play (or was itself evolved) this turn; a
       Pokémon evolves at most once per turn and never the turn it arrived. */
@@ -292,19 +290,17 @@ export type ErrorCode =
   | "SUPPORTER_ALREADY_PLAYED"
   /** §4 — the going-first player may not play a Supporter on turn 1. */
   | "FIRST_TURN_SUPPORTER"
-  /** §7.1/§7.2 (D283) — an OPPONENT'S attack barred this class of card from this
-      seat's hand for exactly this turn (Scream Tail ex's Supporter bar,
-      Galvantula ex / Budew / Frillish's Item bar). Distinct from the two codes
-      above: those are the player's own §4/§7.2 limits, this one was imposed, and
-      a player who cannot tell them apart cannot tell which of their cards is
-      dead for the turn (types.ts `handPlayLockedTurn`). */
+  /**
+   * §7.1/§7.2: an opponent's attack barred this class of card from this seat's hand for this turn
+   * (`handPlayLockedTurn`). Distinct from the player's own play limits so a client can tell which
+   * cards are dead for the turn.
+   */
   | "HAND_PLAY_BLOCKED"
-  /** 🆕🆕🆕 §6.2/§11 (D575) — an OPPONENT'S attack barred Energy attaches from this seat's
-      hand to THIS Pokémon for exactly this turn (Glimmora `sv08-115` "Corrosive Shards":
-      *"…Energy cards can't be attached from your opponent's hand to that Pokémon."*). A code
-      of its own rather than `HAND_PLAY_BLOCKED`: that bar is on a CLASS of card from the
-      whole hand, this one is on a TARGET — every other body still takes the Energy, so a
-      client must not grey the card. Not spending the §6.2 allowance. */
+  /**
+   * §6.2/§11: an opponent's attack barred Energy attaches from hand to this Pokémon for this turn
+   * (Glimmora "Corrosive Shards"). Separate from `HAND_PLAY_BLOCKED` because it bars a target, not
+   * a card class, so the client must not grey the card. Does not spend the §6.2 allowance.
+   */
   | "ENERGY_ATTACH_BARRED"
   /** The play has no legal target (gust with no opponent Bench, Switch with no
       Bench) — a card that would do nothing cannot be played. */
@@ -319,37 +315,23 @@ export type ErrorCode =
   | "NO_SUCH_ABILITY"
   /** §9 — the Ability may only be used from the Active Spot. */
   | "ABILITY_ACTIVE_ONLY"
-  /** 🆕🆕🆕 §9 (D565) — the Ability may only be used from the Bench (Misty's Psyduck
-      "Flustered Leap": "if this Pokémon is on your Bench"). `ABILITY_ACTIVE_ONLY`'s
-      mirror and a code of its OWN rather than a reuse: the two are opposite printed
-      spots, and a client rendering "can only be used from the Active Spot" for a
-      benched-only row would say the wrong spot in its own words. */
+  /**
+   * §9: the Ability may only be used from the Bench (Misty's Psyduck "Flustered Leap"); the mirror
+   * of `ABILITY_ACTIVE_ONLY`.
+   */
   | "ABILITY_BENCH_ONLY"
-  /** §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕
-      D559: and Flutter Mane "Midnight Fluttering" / Gastrodon "Sticky Bind", the two
-      legal locks the registry builds; Iron Thorns ex "Initialization" and Team Rocket's
-      Watchtower are legal and unbuilt; the list of three is withdrawn, D539 — 🆕🆕🆕 D566
-      (D539): the Watchtower is BUILT, a STADIUM-sourced lock over {C} bodies; Iron Thorns ex
-      stays the one unbuilt legal lock — 🆕🆕🆕 D571 (D539): no longer; Iron Thorns ex
-      "Initialization" is BUILT, the third legal Pokémon lock — 🆕🆕🆕 D632 (D539): and Damp
-      (Psyduck / Golduck) is BUILT, over self-Knock-Out bodies only) has turned
-      this Pokémon's
-      Abilities off. */
+  /** §9: a continuous Ability-lock effect has turned this Pokémon's Abilities off. */
   | "ABILITY_DISABLED"
   /** §9/§15.J — this Pokémon already used a once-per-turn Ability this turn. */
   | "ABILITY_ALREADY_USED"
   /** §9 — the Ability's activation cost cannot be paid (Meowscarada's "Bouquet
       Magic" needs a Basic {G} Energy in hand to discard). */
   | "ABILITY_COST_UNMET"
-  /** §9 — the Ability's PRINTED board gate is not met (Fezandipiti ex's "Once
-      during your turn, IF ANY OF YOUR POKÉMON WERE KNOCKED OUT DURING YOUR
-      OPPONENT'S LAST TURN, you may draw 3 cards"). The Ability-surface sibling of
-      `PLAY_CONDITION_NOT_MET`, which is the same rule printed on a TRAINER — one
-      `BoardCondition` and one `conditionHolds`, two codes, because the two
-      surfaces reject through different actions and a client that greys an Ability
-      row must not have to guess which of them it is looking at. Distinct from
-      NO_LEGAL_TARGET for the same reason the Trainer code is: this is a rule
-      printed on the card, not the engine's would-only-whiff judgement. */
+  /**
+   * §9: the Ability's printed board condition is not met (Fezandipiti ex). The Ability counterpart
+   * of `PLAY_CONDITION_NOT_MET`; distinct from `NO_LEGAL_TARGET` because this is a printed rule,
+   * not a would-whiff judgement.
+   */
   | "ABILITY_CONDITION_NOT_MET"
   /** §7.3 — useStadiumAbility with no Stadium in play, or a Stadium that has no
       activated ability (Beach Court / League HQ are continuous-only). */
@@ -359,8 +341,10 @@ export type ErrorCode =
   | "STADIUM_ABILITY_ALREADY_USED"
   /** resolveEffect's choice does not match the parked prompt (bad uid/ref/count). */
   | "BAD_EFFECT_CHOICE"
-  /** 🆕🆕🆕 D576 — `discardFromPlay` aimed at a body whose TOP card prints no "you may discard
-      this card from play" (only an Antique Fossil does — R-FO3). */
+  /**
+   * `discardFromPlay` aimed at a body whose top card does not print "you may discard this card from
+   * play" (only Antique Fossils do).
+   */
   | "NOT_DISCARDABLE"
   /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not
       block declaring — it flips at resolution, attack.ts.) */

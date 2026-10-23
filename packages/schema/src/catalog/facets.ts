@@ -19,14 +19,10 @@ export const catalogFacetsSchema = z.object({
   energyTypes: facetSchema,
   illustrators: facetSchema,
   regulationMarks: facetSchema,
-  /** Printed rule-box markers — tcgdex's Pokémon `suffix` ("ex", "V",
-      "VMAX", "VSTAR", "MEGA", …), the vocabulary behind `?suffix=`.
-      EMPTY UNTIL AN INGEST FILLS `cards.suffix` (D197 added the column; no
-      run has populated it), and that is the designed degradation rather than
-      an oversight: a facet list renders one chip per value, so an empty list
-      renders no chip and the filter is simply unreachable. It is the reason
-      the filter could land at all — the alternative was a chip that returned
-      an empty page for every value with no signal why. */
+  /**
+   * Printed rule-box suffixes ("ex", "V", "VMAX", …) behind `?suffix=`. Empty until an ingest fills
+   * `cards.suffix`, which simply renders no filter chips.
+   */
   suffixes: facetSchema,
 });
 export type CatalogFacets = z.infer<typeof catalogFacetsSchema>;

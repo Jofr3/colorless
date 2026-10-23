@@ -1,19 +1,5 @@
-// The builder's debounced, serialized save scheduler (M9 — replaces the
-// localStorage `builder.deck.<id>` write with PATCH /decks/:id). Pure
-// plumbing, kept out of the builder adapter so the timing/ordering rules are
-// unit-testable without a DOM:
-//
-//   - DEBOUNCED: a burst of edits coalesces into one save `delay` ms after
-//     the last (the old localStorage rhythm, network-shaped).
-//   - SERIALIZED, LATEST WINS: at most one request in flight; edits made
-//     meanwhile queue up and fire as ONE follow-up save of the latest
-//     snapshot once the flight lands. Requests never interleave.
-//   - NO-OP AWARE: a snapshot that serializes identically to what the server
-//     already holds is skipped entirely (so loading never fires an empty
-//     "save", and an edit reverted inside the debounce window cancels it) —
-//     which also guarantees an empty PATCH is never sent.
-//   - NO AUTO-RETRY after a failure: the dirty snapshot is kept and the next
-//     schedule()/flush() tries again, so a persistent 400 can't hot-loop.
+// The builder's debounced, serialized save scheduler for PATCH /decks/:id. Kept separate from the
+// builder adapter so the timing and ordering rules can be unit-tested without a DOM.
 
 export type SaveStatus = "saving" | "saved" | "failed";
 

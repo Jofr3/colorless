@@ -1,16 +1,5 @@
-// P5 — the lobby shows a player's REAL name (polish.md "Lobby identity"). Until
-// now the name in a lobby was whatever the client announced in its `hello`: a
-// "Player 4271" generated in localStorage, editable by anyone, and belonging to
-// nobody. The account has had a `displayName` since P1; this resolves it.
-//
-// It is the SECOND thing the lobby's one authenticated fact (the socket's
-// `userId`, from the /ws session cookie) is used for — the first being the
-// owner-scoped deck read at the match handoff (deckLoad.ts). Resolving the name
-// server-side rather than trusting the frame also means a player cannot announce
-// themselves as someone else, which matters the moment names stop being random.
-//
-// The pure `lobbyDisplayName` is unit-tested; `loadDisplayName` is the query half
-// (D1, so untested here — the `loadPlayerDeck` / `loadCardPool` pattern).
+// Resolves a lobby seat's name from the account rather than trusting the hello frame, so a player
+// cannot present as someone else.
 
 import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";

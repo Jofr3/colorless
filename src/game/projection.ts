@@ -1,35 +1,5 @@
-// Engine → playmat projection (P3, alongside M1). The engine's GameState is
-// deliberately not the playmat's BoardState — zones hold card uids resolved
-// through cardIdByUid → cardPool — so this pure adapter builds the CardModel
-// view the playmat renders. It is PER-VIEWER: the same hidden-information
-// rule P4's server-side filter will apply. What each viewer sees:
-//
-//   - their own hand face-up; the opponent's hand as anonymous face-down
-//     backs (count only — no card identity anywhere, not even in ids);
-//   - BOTH prize sets as counts only (prizes are face-down in the real game),
-//     except a prize Crescent Purge turned face up (D548/D551): that one is
-//     public, and both projections carry it as `PlayerBoard.faceUpPrizes` —
-//     this one from the engine row, `projectionFromRedacted` from the wire's
-//     `RedactedSide.faceUpPrizes`. See the `prizesRemaining` site below.
-//   - decks as counts; discard piles fully public (§2 — ordered and public);
-//   - in-play Pokémon (active/bench) public once setup is over, with their
-//     attached cards and their battle state (`CardModel.battle` — damage/max
-//     HP and the §12 special conditions all sit face-up on the table).
-//     DURING the setup:* phases (§3 — placements stay face-down until both
-//     players ready; the engine emits SETUP_REVEALED only then) the
-//     OPPONENT's active/bench project as anonymous positional backs with no
-//     `battle` (a battle row would leak the printed HP); the viewer's OWN
-//     placements stay face-up.
-//
-// Public cards keep the engine uid as CardModel.id — the table keys its
-// views off that id, so a card animates as ONE object as it moves between
-// zones across successive projections (hand → bench, hand → attached, …).
-//
-// Built on the M1 zone surface plus M2's phases. Everything phase-derived
-// (activePlayer / waitingOn / pendingDecision / outcome) comes out of ONE
-// exhaustive switch over the Phase union, so a future engine phase is a
-// compile error here rather than a silently wrong guess — M1's defensive
-// turn-parity fallback named the wrong seat exactly when ko:promote parked.
+// Engine to playmat projection. Zones hold card uids resolved through `cardIdByUid` and `cardPool`,
+// so this pure adapter builds the CardModel view per viewer, applying the hidden-information rules.
 
 import type {
   DiscardScope,
@@ -101,29 +71,16 @@ export type ProjectedOutcome =
   | { result: "win"; winner: PlayerId; reason: GameOverReason }
   | { result: "tie"; reasons: Record<PlayerId, GameOverReason> };
 
-/** Why the game ended, as the one-line explanation both game-over surfaces show
-    under the result — the local table and the online match. Shared rather than restated per surface (the D60/D62/D63 rule is about
-    MARKUP, which the two genuinely differ in; this is a shape-neutral string map,
-    the `EnergyDots` case) so the two screens can't disagree about what just
-    happened. A total `Record`, replacing ternary chains whose final `else` would
-    have rendered a NEW reason as "the deck ran out" — an unhandled reason is now
-    a compile error. The engine's `GAME_OVER_REASONS` (log.ts) is the same
-    information in the log's clause-shaped voice; kept separate because these are
-    full sentences and because the playmat imports no engine strings.
-
-    Phrased with NO possessive — "no Pokémon left", not "THE OPPONENT has no
-    Pokémon left" — because the same line is shown to BOTH players. The earlier
-    winner-centric wording read as a lie to the loser (a browser run caught the
-    conceding player being told "The opponent forfeited."), and it was already
-    ambiguous on the local hot-seat overlay, which belongs to neither player. Each
-    overlay's TITLE already names who won, so the detail only has to say what
-    happened. */
+/**
+ * Why the game ended, as the one-line text both game-over surfaces show. A total `Record`, so an
+ * unhandled reason is a compile error rather than a wrong message.
+ */
 export const GAME_OVER_DETAIL: Record<GameOverReason, string> = {
   prizesTaken: "All prize cards taken.",
   noPokemon: "No Pokémon left in play.",
   deckOut: "No cards left to draw.",
   conceded: "The match was forfeited.",
-  // 🆕🆕🆕 D575 — a card's printed win (N's Sigilyph "Victory Symbol"); no possessive, above.
+  // A card's printed win condition (N's Sigilyph "Victory Symbol").
   cardEffect: "A card's effect won the game.",
 };
 
@@ -237,25 +194,23 @@ function playerBoardOf(state: GameState, seat: Seat, visibility: SideVisibility)
           (pokemon, index) => inPlayModelOf(state, pokemon) ?? emptyStackModel(seat, index),
         )
       : side.bench.map((_, index) => hiddenInPlayModel(`opponent-bench-${index}-hidden`)),
-    // Count only — FACE-DOWN prizes are hidden from BOTH players (§3.8), so no uid or
-    // catalog id of one may appear anywhere in the projection. A prize Crescent Purge
-    // turned face up is public (D548/D551) and rides `faceUpPrizes` below.
+    // Face-down prizes are hidden from both players (§3.8), so only the count is projected; face-up
+    // prizes go in `faceUpPrizes`.
     prizesRemaining: side.prizes.length,
-    // 🆕🆕🆕 D551 — the SAME shape `redact.ts`'s `redactedSideOf` builds for the wire: `index` is
-    // the slot's position in the LIVE row (it compacts on every take), row order, and ONLY
-    // the face-up slots — a face-down prize contributes nothing but the count above, so no
-    // uid or catalog id of one appears anywhere in this projection. Public to BOTH viewers.
+    // Same shape as the wire's `redactedSideOf`: only face-up slots, in row order, with `index` in
+    // the live row (which compacts on every take).
     faceUpPrizes: side.prizes.flatMap((uid, index) =>
       side.faceUpPrizes.includes(uid) ? [{ index, card: cardModelOf(state, uid) }] : [],
     ),
-    // 🆕🆕🆕 D577 — the engine's LIVE Bench limit (Area Zero Underdepths + a Tera Pokémon in
-    // play: 8), absent when it is the rule's 5 so every pre-D577 board projects byte for byte.
+    // Absent when the limit is the default 5.
     ...benchLimitField(benchLimitOf(state, seat)),
   };
 }
 
-/** 🆕🆕🆕 D577 — `PlayerBoard.benchLimit`, written only when it is not `BENCH_MAX` (the
-    absent-when-default rule): the playmat falls back to 5 on its own. */
+/**
+ * `PlayerBoard.benchLimit`, written only when it differs from `BENCH_MAX`; the playmat falls back
+ * to 5 on its own.
+ */
 function benchLimitField(limit: number): { benchLimit?: number } {
   return limit === BENCH_MAX ? {} : { benchLimit: limit };
 }
@@ -328,11 +283,6 @@ function battleStateOf(state: GameState, pokemon: InPlayPokemon): BattleState {
     rotation,
     poisonDamage,
     burned,
-    // 🆕🆕 D501 — and the pin did its job: adding the engine field made THIS
-    // literal a compile error in both directions at once, which is exactly what
-    // the paragraph above promised and the reason the field is REQUIRED rather
-    // than optional on `SpecialConditions` (an optional key satisfies both halves
-    // while silently never reaching the playmat).
     confusionDamage,
   } satisfies SpecialConditions;
   return {
@@ -433,17 +383,9 @@ function outcomeFor(outcome: GameOutcome, viewerSeat: Seat): ProjectedOutcome {
   };
 }
 
-// --- The wire adapter: RedactedGame → GameProjection (P4 online) -------------
-//
-// A REDACTED game already crossed the wire from the authoritative server, which
-// applied every hidden-information rule via `redactGame` (packages/engine). So
-// this is a pure, mechanical map into the SAME GameProjection shape the local
-// projectGameState produces — the only work left is the client-side rendering
-// concerns the engine deliberately left off the wire: the asset URL (built from
-// `cardId` here, keeping the scheme client-side) and the playmat's CardType
-// vocabulary (derived from category + trainerType). No redaction decisions live
-// here; the board arrives already redacted, and it is viewer-relative
-// ("you"/"opponent"), so it renders with perspective "you" like the local one.
+// The wire adapter: RedactedGame to GameProjection. The server already applied every
+// hidden-information rule, so this is a mechanical map into the same shape `projectGameState`
+// produces.
 
 /** Adapt a server-redacted match snapshot into the playmat's GameProjection.
     Pure; the online table (src/lua/onlineTable.ts) feeds the result to the
@@ -479,8 +421,8 @@ function playerBoardFromRedacted(
   side: RedactedSide,
   stadiumCardId: string | undefined,
 ): PlayerBoard {
-  // 🆕🆕🆕 D577 — the same per-seat limit off the wire's public card ids (the Stadium and this
-  // side's in-play top cards), through the engine's `benchLimitForIds`.
+  // The per-seat Bench limit from the wire's public card ids (the Stadium and this side's in-play
+  // top cards).
   const inPlay = [...(side.active === null ? [] : [side.active]), ...side.bench].map(
     (card) => card.cardId,
   );
@@ -489,8 +431,7 @@ function playerBoardFromRedacted(
     active: side.active === null ? null : cardModelFromRedacted(side.active),
     bench: side.bench.map(cardModelFromRedacted),
     prizesRemaining: side.prizesRemaining,
-    // 🆕🆕🆕 D551 — the wire already carries the face-up slots (D548); rebuilt card by card so
-    // the round trip equals the local projection's `faceUpPrizes` exactly.
+    // Rebuilt card by card so the round trip equals the local projection's `faceUpPrizes`.
     faceUpPrizes: side.faceUpPrizes.map((p) => ({
       index: p.index,
       card: cardModelFromRedacted(p.card),
@@ -539,15 +480,10 @@ function cardModelFromRedacted(card: RedactedInPlay): CardModel {
   return model;
 }
 
-/** The parked KO/effect interrupt, derived from the redacted phase. The ko
-    parks carry only counts and map through faithfully. The mid-effect prompt
-    now crosses the wire redacted and answerer-only (2b-iii): reconstructed here
-    into the SAME `PendingDecision.effectChoose` the local `phaseViewOf`
-    produces, so a wire round-trip reproduces it exactly — but only for a prompt
-    kind whose online dialog has landed (mayDraw + the public-ref family); a
-    withheld or not-yet-redacted prompt (the non-answerer, or chooseCards/
-    attachCards) is null on the wire and maps to null here, exactly as
-    `phaseViewOf` withholds it. Every non-parked phase is null. */
+/**
+ * The parked KO or effect interrupt, derived from the redacted phase. The mid-effect prompt is
+ * rebuilt into the same `PendingDecision.effectChoose` the local `phaseViewOf` produces.
+ */
 function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null {
   switch (phase.kind) {
     case "ko:takePrizes":
@@ -564,28 +500,11 @@ function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null
   }
 }
 
-/** Rebuild the engine `PendingDecision.effectChoose` from a redacted wire
-    prompt (2b-iii). Exhaustive on the redacted union (every arm now), so a new
-    wire arm is a "not all paths return" compile error here rather than a silently
-    dropped decision. The public-ref arms carry the engine's own `PokemonRef`s
-    (absolute seats) + uids verbatim; the hidden-candidate arms (chooseCards /
-    attachCards) carry a `RedactedCard` per candidate whose `id` IS the engine uid
-    the engine prompt held — so `candidates.map((c) => c.id)` recovers the exact
-    `string[]` and this rebuilds the full `EffectPrompt` field-for-field, keeping
-    the answerer's-view round-trip equal to the local projection.
-
-    ⚠️ **D543 — *“field-for-field”* WAS A CLAIM ABOUT THE ARM COUNT AND IT DID NOT
-    REACH INSIDE A FIELD'S OWN UNION.** Re-pointed here rather than deleted
-    (D178/D418): the KIND-level exhaustiveness above is true and always was — every
-    prompt kind has an arm and a missing one is a compile error. What it did NOT
-    cover is a field whose own type is a union: `discardEnergy.scope` was rebuilt
-    by a two-arm ternary over a THREE-member `DiscardScope`, so a D359 `upTo` park
-    round-tripped as `{ kind: "each" }` and the reconstructed decision was NOT the
-    local one — silently, because a ternary's `else` branch is type-correct for
-    the member it forgot. **The exhaustiveness a switch buys is only as deep as the
-    discriminant it switches on.** Every such field now goes through its own named
-    rebuilder with its own `never` floor (`scopeFromWire` below); the rest of this
-    block still holds exactly as written. */
+/**
+ * Rebuild the engine `PendingDecision.effectChoose` from a redacted wire prompt. Exhaustive, so a
+ * new wire arm is a compile error here. Hidden-candidate arms carry a `RedactedCard` whose `id` is
+ * the engine uid.
+ */
 function effectDecisionFromPrompt(
   prompt: NonNullable<Extract<RedactedGame["phase"], { kind: "effect:choose" }>["prompt"]>,
 ): PendingDecision {
@@ -596,18 +515,15 @@ function effectDecisionFromPrompt(
         prompt: { kind: "mayDraw", count: prompt.count, note: prompt.note },
       };
     case "guessHp":
-      // 🆕🆕🆕 D577 — Tyme's guess: the name and the note are the whole prompt (R-TY3).
+      // Tyme's guess: the name and the note are the whole prompt.
       return {
         kind: "effectChoose",
         prompt: { kind: "guessHp", name: prompt.name, note: prompt.note },
       };
     case "confirm":
-      // The printed "you may" — the whole prompt is its sentence, so the
-      // round-trip is the identity and the engine prompt rebuilds field for
-      // field, like every arm here.
-      // 🆕🆕🆕 D557 — including Kieran's `labels`, by a CONDITIONAL SPREAD like every
-      // optional field in this file: dropped here, the rebuilt local decision would
-      // render Yes / No over a printed "Choose 1:".
+      // The printed "you may": the prompt is its sentence, so it rebuilds field for field. Optional
+      // `labels` are spread conditionally; without them the dialog would show Yes / No instead of
+      // the printed choices.
       return {
         kind: "effectChoose",
         prompt: {
@@ -633,18 +549,11 @@ function effectDecisionFromPrompt(
         prompt: {
           kind: "choosePokemon",
           candidates: prompt.candidates.map(refFromWire),
-          // 🆕 D358/D359 — carried, and by a CONDITIONAL SPREAD like every optional
-          // field in this file. Dropping it here would rebuild a park with a
-          // printed ceiling as a MANDATORY one, and the dialog on the far side of
-          // this projection would silently stop offering both the decline and
-          // every middle quantity — the round-trip is the identity or it is a
-          // lie, which is what every other arm here is asserting by rebuilding
-          // field for field. **THIS IS THE SITE D358's OWN PRICE DID NOT NAME**:
-          // it counted the engine and the wire and forgot the way back.
+          // Spread conditionally: dropping it would rebuild a park with a printed ceiling as
+          // mandatory, removing the decline and the middle quantities.
           ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
           note: prompt.note,
-          // 🆕🆕🆕 D572 — the quantity picker's verb, the same conditional spread (and the same
-          // forgotten-way-back hazard D358 named above).
+          // The quantity picker's verb, spread conditionally like the other optional fields.
           ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),
         },
       };
@@ -671,22 +580,13 @@ function effectDecisionFromPrompt(
           })),
           destinations: prompt.destinations.map(refFromWire),
           max: prompt.max,
-          // 🆕 D441 — the floor rides the rebuild for the rider's reason, verbatim:
-          // this promise is EXACT reproduction, so a `min` dropped here silently
-          // re-grants a decline the print refuses. Spread, so a prompt without a
-          // floor rebuilds to the byte-identical object it always did.
+          // Dropping `min` would re-allow a decline the card refuses.
           ...(prompt.min === undefined ? {} : { min: prompt.min }),
-          // D226 — the THIRD moveEnergy read site, and the one the work order did
-          // not name: this rebuild promises to reproduce `phaseViewOf`'s decision
-          // EXACTLY, so a rider dropped here silently re-imposes the single-source
-          // coupling on the round-tripped prompt. Spread, so a prompt without the
-          // rider rebuilds to the byte-identical object it always did.
+          // Dropping this rider would re-impose the single-source restriction on the rebuilt
+          // prompt.
           ...(prompt.anySource === undefined ? {} : { anySource: prompt.anySource }),
-          // 🆕 D442 — the FOURTH moveEnergy read site takes the destination-side
-          // rider on the same promise: this rebuild reproduces `phaseViewOf`'s
-          // decision EXACTLY, so a rider dropped here silently re-imposes the
-          // single-destination coupling on the round-tripped prompt. Spread, so a
-          // prompt without it rebuilds to the byte-identical object it always did.
+          // Dropping this rider would re-impose the single-destination restriction on the rebuilt
+          // prompt.
           ...(prompt.anyDest === undefined ? {} : { anyDest: prompt.anyDest }),
           note: prompt.note,
         },
@@ -705,9 +605,7 @@ function effectDecisionFromPrompt(
         },
       };
     case "discardTools":
-      // 🆕 D543 — the public-ref family's rebuild one attached-card array over:
-      // uid + host ref verbatim, the scope through the shared `scopeFromWire`, so
-      // the answerer's round-trip stays equal to the local projection.
+      // Uid and host ref verbatim, scope through `scopeFromWire`.
       return {
         kind: "effectChoose",
         prompt: {
@@ -733,7 +631,7 @@ function effectDecisionFromPrompt(
           // Absent stays absent (the engine arm omits it when one flat cap is the
           // whole story) — `maxPerTarget`'s spelling one prompt down.
           ...(prompt.caps !== undefined ? { caps: prompt.caps } : {}),
-          // 🆕🆕🆕 D566 — the disjunctive caps (Brock's Scouting), absent-stays-absent.
+          // The disjunctive caps (Brock's Scouting); absent stays absent.
           ...(prompt.capsAnyOf !== undefined ? { capsAnyOf: prompt.capsAnyOf } : {}),
           note: prompt.note,
         },
@@ -749,22 +647,14 @@ function effectDecisionFromPrompt(
           // Absent stays absent (the engine arm omits it for "no per-target cap");
           // spreading avoids writing an explicit `maxPerTarget: undefined` key.
           ...(prompt.maxPerTarget !== undefined ? { maxPerTarget: prompt.maxPerTarget } : {}),
-          // 🆕 D457 — `maxPerTarget`'s dual, spread for the identical reason: the
-          // engine omits it unless the card prints "1 of your Pokémon".
+          // The engine omits this unless the card prints "1 of your Pokémon".
           ...(prompt.oneTarget !== undefined ? { oneTarget: prompt.oneTarget } : {}),
           note: prompt.note,
         },
       };
-    // 🆕 D341 — put the looked-at cards back IN ANY ORDER. A HIDDEN-CANDIDATE arm
-    // like the two above it, so it recovers the engine uids from the revealed
-    // `RedactedCard`s (`id === uid`) rather than rebuilding a public shape.
-    //
-    // 🛑 THE `map` IS ORDER-PRESERVING AND THAT IS THE ONLY THING THIS ARM HAS TO
-    // GET RIGHT. `candidates` arrives in the deck order the prompt was built in
-    // (index 0 = the top) and that order is the state the player is reordering
-    // FROM — a projection that sorted, grouped or de-duplicated would silently
-    // change the question. It is also why there is no `min`/`max` to carry: the
-    // answer is a permutation of the whole array, so the array IS the bounds.
+    // Put the looked-at cards back in any order. Recovers engine uids from the revealed
+    // `RedactedCard`s (`id === uid`); the `map` must preserve the deck order the candidates arrive
+    // in.
     case "orderCards":
       return {
         kind: "effectChoose",
@@ -774,10 +664,8 @@ function effectDecisionFromPrompt(
           note: prompt.note,
         },
       };
-    // D157 — the opponent-side per-attack lock's pick. The wire arm is the engine
-    // arm field-for-field (an index and a server-resolved label, both public), so
-    // the round trip is a rebuild rather than a recovery: nothing here has to
-    // recover a uid from a `RedactedCard` the way the two hidden-candidate arms do.
+    // The opponent-side per-attack lock's pick. The wire arm matches the engine arm field for
+    // field, so it is a plain rebuild.
     case "chooseAttack":
       return {
         kind: "effectChoose",
@@ -787,8 +675,7 @@ function effectDecisionFromPrompt(
           note: prompt.note,
         },
       };
-    // 🆕🆕🆕 D548 — Crescent Purge's pick. Indices only on BOTH sides (every offered slot
-    // is face down), so the round trip is a fresh copy, `chooseAttack`'s shape.
+    // Crescent Purge's pick: indices only, since every offered slot is face down.
     case "choosePrize":
       return {
         kind: "effectChoose",
@@ -808,20 +695,11 @@ function refFromWire(ref: RedactedPokemonRef): PokemonRef {
   };
 }
 
-/** A wire `RedactedDiscardScope` → the engine `DiscardScope` it mirrors, for the
-    two discard prompts (`discardEnergy` and 🆕 D543's `discardTools`).
-
-    🛑 **D543 — THIS WAS A TWO-ARM TERNARY INLINE IN THE `discardEnergy` ARM, AND
-    IT IS THE HALF OF THE `upTo` WIRE HOLE NO COMPILER NAMES.** `redact.ts`'s
-    `redactedScopeOf` collapsed `upTo` → `each` on the way OUT; this expression
-    collapsed everything that was not `total` → `each` on the way BACK IN. The two
-    defects are independent and the second is the INVISIBLE one: fix only the
-    redactor and an `upTo` prompt still rebuilds here as a mandatory one-per-body
-    pick, with `tsc` silent both before and after, because an `else` branch of a
-    ternary is always type-correct for a union member it forgot. Extracted to a
-    named function with a `switch` and a `never` floor so a FOURTH member is a
-    compile error at this site too, and so the mutant
-    `D543-projection-rebuild-collapses-upto` has an address to sit at. */
+/**
+ * A wire `RedactedDiscardScope` to the engine `DiscardScope`, for `discardEnergy` and
+ * `discardTools`. Must map `upTo` back to `upTo`; collapsing it to `each` is a hole no compiler
+ * catches.
+ */
 function scopeFromWire(scope: RedactedDiscardScope): DiscardScope {
   switch (scope.kind) {
     case "total":

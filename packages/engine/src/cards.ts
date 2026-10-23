@@ -14,22 +14,10 @@ import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 import type { CardFilter } from "./effects";
 import type { GameState, InPlayPokemon, Seat } from "./types";
 
-// The engine reads catalog data only through these accessors, so the exact
-// Card surface it depends on (category, stage, retreat, hp, attacks,
-// weakness/resistance, the energy name) stays one small, auditable module.
-//
-// 🆕🆕🆕 D576 — AND THE ONE ACCESSOR IS NOW ZONE-AWARE FOR FOUR PRINTINGS. An Antique Fossil
-// (`fossils.ts`) is an Item card everywhere but in play, where it is "a 60-HP Basic {C}
-// Pokémon" (R-FO2). So a fossil uid that is a card of an IN-PLAY STACK reads as its
-// synthesized Pokémon face, and the catalog Item everywhere else. The fossil-id test runs
-// FIRST, so every other lookup pays one `Set.has` (this is the engine's hottest read).
-//
-// 🆕🆕🆕 D612 — AND IT READS EVERY FACE THROUGH THE MARKUP NORMALISER (cardText.ts). tcgdex prints
-// HTML (`<em>`, `<span class="energy-symbol …">`), "[R]" and type words ("Basic Fire Energy",
-// "ColorlessColorless") in 95 texts on 87 rows (`mep`, `30th`, `30th-c`, `swsh10.5`; LOCAL D1
-// 2026-10-09); the ingest now writes them in the `sv`
-// spelling, and a persisted `GameState.cardPool` that still holds a raw face is read the same way
-// here. Memoised per face object, and the SAME object when nothing changes (every `sv` face).
+// The engine reads catalog data only through these accessors. An Antique Fossil uid in an in-play
+// stack reads as its synthesized 60-HP Basic {C} Pokémon face, and as the catalog Item elsewhere;
+// the fossil-id test runs first so other lookups pay one `Set.has`. Every face is read through the
+// markup normaliser, so a persisted raw face reads the same as a re-ingested one.
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
   const id = state.cardIdByUid[uid];
   if (id === undefined) return undefined;
@@ -39,9 +27,10 @@ export function cardOfUid(state: GameState, uid: string): Card | undefined {
   return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;
 }
 
-/** 🆕🆕🆕 D576 — is `uid` one of the cards of an in-play stack (either seat, Active or
-    Bench)? Asked only for a fossil id (`cardOfUid`). An attached Energy or Tool is not a
-    stack card. */
+/**
+ * Is `uid` one of the cards of an in-play stack (either seat)? Attached Energy and Tools are not
+ * stack cards.
+ */
 function uidInPlayStack(state: GameState, uid: string): boolean {
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players[seat];
@@ -51,10 +40,10 @@ function uidInPlayStack(state: GameState, uid: string): boolean {
   return false;
 }
 
-/** 🆕🆕🆕 D576 — is `pokemon`'s TOP card an Antique Fossil? The read behind the fossil's two
-    CARD RULES (R-FO4: no Special Conditions, can't retreat — continuous.ts) and its
-    "discard this card from play" (R-FO3, turn.ts). The TOP card only: an evolved fossil
-    (Lileep on Antique Root Fossil, R-FO6) is not a fossil any more. */
+/**
+ * Is `pokemon`'s top card an Antique Fossil? Top card only: an evolved fossil is no longer a
+ * fossil.
+ */
 export function isFossilTop(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = pokemon.stack[pokemon.stack.length - 1];
   const id = uid === undefined ? undefined : state.cardIdByUid[uid];
@@ -66,56 +55,18 @@ export function isBasicPokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
 }
 
-/** 🆕 D387 — is `card` a **Stage 1** Pokémon (§10)? The predicate behind Paldean
-    Tauros `sv08-018` "Spirited Tackle"'s antecedent: *"If your opponent's Active
-    Pokémon is a **Stage 1** Pokémon, this attack does 90 more damage."*
-
-    🛑 IT IS THE ROW BELOW WITH ONE PRINTED WORD CHANGED, AND THE ARGUMENT FOR
-    WRITING IT AT ALL IS D262's OWN, ONE STAGE DOWN. `isEvolutionPokemon` two rows
-    below is `evolveFromOf(card) !== null` — "any Evolution" — which a Stage 2, a
-    VSTAR and a VMAX satisfy exactly as a Stage 1 does, so it cannot be NARROWED
-    into this by a rider and reaching for it would score Paldean Tauros's +90
-    against every evolved defender in the game. The printed adjective names ONE
-    word, and one word is what this reads.
-
-    ⚠️ IT READS THE PRINTED `stage` STRING FOR `isStage2Pokemon`'s REASON, and the
-    same VSTAR case decides it: the catalog's `stage` vocabulary is
-    `Basic | Stage1 | Stage2 | VSTAR | VMAX`, so a body that a CHAIN COUNT would
-    call "one evolution deep" is not necessarily a Stage 1 and the printed word is
-    the only datum that answers the sentence.
-
-    ⚠️ AND IT IS A **CARD** READ, WHICH IS WHY IT LIVES HERE beside its sibling.
-    The board read (whose Active, which seat) stays in `interpreter.ts`, which
-    resolves the TOP card (§1.2 — a Basic that has evolved IS a Stage 1 now) and
-    hands it here. */
+/**
+ * Is `card` a Stage 1 Pokémon (§10)? Reads the printed stage word, since a VSTAR or VMAX is an
+ * Evolution but not a Stage 1.
+ */
 export function isStage1Pokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Stage1";
 }
 
-/** D262 — is `card` a **Stage 2** Pokémon (§10)? The predicate behind Neo Upper
-    Energy `sv05-162`'s antecedent: *"If this card is attached to a Stage 2
-    Pokémon, this card provides every type of Energy but provides only 2 Energy at
-    a time."*
-
-    🛑 IT IS A NEW PREDICATE AND NOT A REUSE, WHICH WAS CHECKED BEFORE IT WAS
-    WRITTEN. `matchesFilter` (effects.ts / interpreter.ts) carries a `stage`
-    vocabulary (D245), but that vocabulary is `"basic"` and its else-arm is
-    `evolveFromOf(card) !== null` — i.e. "any Evolution". It cannot express Stage 2
-    and never could: a Stage 1 satisfies it exactly as a Stage 2 does. A build that
-    reached for it would promote Neo Upper on a Stage 1 holder, which is the one
-    mistake this sentence invites.
-
-    ⚠️ IT READS THE PRINTED `stage` STRING RATHER THAN COUNTING THE EVOLUTION
-    CHAIN, which is `isBasicPokemon`'s reading one row up, and it matters here: the
-    catalog's `stage` vocabulary is `Basic | Stage1 | Stage2 | VSTAR | VMAX`
-    (queried, remote D1 `colorless`, 2026-08-07), so a **VSTAR** — which sits two
-    evolutions deep and would pass a chain count — is NOT a Stage 2 and correctly
-    does not promote. The printed word is the datum the sentence names.
-
-    ⚠️ AND IT IS A **CARD** READ, WHICH IS WHY IT LIVES HERE. Provision is computed
-    on the HOLDER (continuous.ts `unitsOf`), but the question this answers is about
-    one card's printed stage word, not about the board — so the board read stays in
-    `continuous.ts`, which resolves the holder's TOP card and hands it here. */
+/**
+ * Is `card` a Stage 2 Pokémon (§10)? Reads the printed stage word rather than counting the chain,
+ * so a VSTAR is not a Stage 2.
+ */
 export function isStage2Pokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Stage2";
 }
@@ -130,31 +81,10 @@ export function evolveFromOf(card: Card): string | null {
   return card.category === "Pokemon" ? (card.evolveFrom ?? null) : null;
 }
 
-/** 🆕 D302 — is `card` an **Evolution** Pokémon (§10)? The third predicate behind
-    `EnergyProgram.promoteOnHolderStage`'s stage value, and Reversal Energy
-    `sv04-266`'s antecedent: *"if this card is attached to an Evolution Pokémon
-    that doesn't have a Rule Box…"*.
-
-    🛑 IT IS `evolveFromOf` NEGATED-NULL AND DELIBERATELY **NOT** `!isBasicPokemon`,
-    which is the one way this predicate can be written wrong. `isBasicPokemon`
-    returns false for every TRAINER, ENERGY and unresolved row as well as for
-    Evolutions, so its negation calls a Basic Energy card an Evolution Pokémon.
-    That never bites at `unitsOf`'s call site (the holder is always a Pokémon), and
-    it would bite the first time anything else asked — so the predicate is written
-    to be true only of what it names, matching the doc block one row up which has
-    called a non-null `evolveFrom` "the discriminant for 'is this an Evolution
-    card'" since M4.
-
-    ⚠️ AND IT IS THE **CHAIN** DATUM RATHER THAN THE PRINTED `stage` WORD, which is
-    the opposite choice from `isStage2Pokemon` directly below and is right for the
-    opposite reason. That predicate names ONE printed word, so it must read the
-    printed word (a VSTAR sits two evolutions deep and is not a Stage 2). This one
-    names the whole class ABOVE Basic, and the catalog's `stage` vocabulary is
-    `Basic | Stage1 | Stage2 | VSTAR | VMAX` — so a `stage`-keyed reading would
-    need four values kept in sync with the ingest, while `evolveFrom` is one datum
-    that is non-null on exactly the four. A VMAX therefore IS an Evolution here,
-    which is the printed reading; Reversal excludes it through `noRuleBox` (a
-    SEPARATE term), never through this one. */
+/**
+ * Is `card` an Evolution Pokémon (§10)? Uses `evolveFrom` rather than `!isBasicPokemon`, which
+ * would also be true of Trainers and Energy. A VMAX counts as an Evolution.
+ */
 export function isEvolutionPokemon(card: Card): boolean {
   return evolveFromOf(card) !== null;
 }
@@ -164,83 +94,61 @@ export function isEnergyCard(card: Card): boolean {
   return card.category === "Energy";
 }
 
-/** A Special Energy (§6.1) — ~~the catalog tags them `energyType: "Special"`
-    (basic energies are "Normal")~~ 🆕🆕🆕 D583 (D539): WITHDRAWN as the whole test — tcgdex tags
-    14 legal Special Energies "Normal" (every `me` one, and `sv` Reversal / Prism / Ignition). A
-    Special Energy is one tagged "Special" OR one that PRINTS RULES TEXT: a Basic Energy card
-    prints none (the schema's `Card.effect`: "null on basic energies"), and on the LOCAL D1
-    (2026-10-07) the text separates the 81 Energy rows exactly — 52 without, all Basic; 29 with,
-    all Special (`specialEnergyTagD583.test.ts`). Read here, at the predicate, so a persisted
-    `GameState.cardPool` that holds the old tag answers right too. Special energies carry rules
-    text (provision, on-attach effects, holder conditions), authored in the registry
-    (registry.ts EnergyProgram); an unauthored one degrades to a plain
-    Colorless provider (continuous.ts providedEnergy) rather than a loud reject,
-    since an energy always provides SOMETHING. */
+/**
+ * A Special Energy (§6.1): tagged "Special", or printing rules text. tcgdex tags some Special
+ * Energies "Normal", and Basic Energy prints no rules text. An unauthored Special Energy degrades
+ * to a plain Colorless provider.
+ */
 export function isSpecialEnergy(card: EnergyFace): boolean {
   return card.category === "Energy" && (card.energyType === "Special" || printsRulesText(card));
 }
 
-/** 🆕🆕🆕 D628 — the three face fields the Basic / Special Energy test reads, so a reader holding less than a
-    whole `Card` asks the ONE predicate: the deck builder's `toBuilderCard` (src/features/builder/catalog.ts) and
-    the catalog API's brief mapper (apps/api catalog/map.ts) — finding 0b, the 4-copy rule that exempted the 14
-    "Normal"-tagged Special Energies. `effect` absent reads as no rules text (a brief without it keeps the tag). */
+/**
+ * The face fields the Basic/Special Energy test reads, so callers without a whole `Card` can use
+ * it. A missing `effect` reads as no rules text.
+ */
 export type EnergyFace = Pick<Card, "category" | "energyType"> & {
   effect?: Card["effect"] | undefined;
 };
 
-/** 🆕🆕🆕 D583 — A BASIC Energy card (§6.1): tagged "Normal" and printing no rules text — the
-    exact complement of `isSpecialEnergy` among "Normal"-tagged Energy. The ONE reader of the
-    noun: `matchesFilter`'s `basicEnergy` / `pokemonOrBasicEnergy` arms, `energyProvidesOf` and
-    the interpreter's attach and identity reads all ask it. */
+/** A Basic Energy card (§6.1): tagged "Normal" and printing no rules text. */
 export function isBasicEnergy(card: EnergyFace): boolean {
   return card.category === "Energy" && card.energyType === "Normal" && !isSpecialEnergy(card);
 }
 
-/** 🆕🆕🆕 D583 — does this card print rules text (a non-blank `effect`)? */
 function printsRulesText(card: EnergyFace): boolean {
   return (card.effect ?? "").trim() !== "";
 }
 
-/** The provided-unit token for "any one type of Energy" (§6.4) — a WILDCARD
-    that can pay any single typed OR Colorless cost symbol (Luminous Energy's
-    "provides every type of Energy but only 1 at a time"). Distinct from
-    "Colorless" as a PROVIDED unit, which pays only Colorless slots. No basic
-    energy type is named this, so it is a safe sentinel in a provided list
-    (costMet in attack.ts is the only reader — 🆕🆕🆕 D568: `costMet` now lives in
-    this file, below; still the only reader). */
+/**
+ * The provided unit for "any one type of Energy" (§6.4): a wildcard that pays any single typed or
+ * Colorless symbol. Distinct from a provided "Colorless", which pays only Colorless slots.
+ */
 export const ANY_ENERGY = "Any";
 
-/** 🆕🆕🆕 §6.4 (D578) — the prefix of a CONSTRAINED provided unit: ONE unit that can pay a
-    symbol of any ONE of a fixed set of types (and any Colorless slot), never another type.
-    Team Rocket's Energy `sv10-182`: *"provides 2 in any combination of {P} Energy and {D}
-    Energy"* is TWO such units over {P, D}. Spelled ONLY by `constrainedEnergyUnit` and read
-    ONLY by `constrainedEnergyTypes` — no caller writes the string. No basic type and no
-    `ANY_ENERGY` starts with it, so it is a safe sentinel in a provided list. */
+/**
+ * Prefix of a constrained provided unit (§6.4): one unit that pays any one of a fixed set of types,
+ * or a Colorless slot (Team Rocket's Energy: "provides 2 in any combination of {P} Energy and {D}
+ * Energy"). Built and parsed only by the two functions below.
+ */
 const CONSTRAINED_PREFIX = "OneOf:";
 
-/** 🆕🆕🆕 §6.4 (D578) — the provided unit "one of `types`" (the members sorted, so two spellings
-    of one set are one unit). */
+/** The provided unit "one of `types`"; members are sorted so one set has one spelling. */
 export function constrainedEnergyUnit(types: readonly string[]): string {
   return `${CONSTRAINED_PREFIX}${[...types].sort().join(",")}`;
 }
 
-/** 🆕🆕🆕 §6.4 (D578) — the member types of a constrained unit, or `null` for any other unit (a
-    concrete type, "Colorless", `ANY_ENERGY`). */
+/** The member types of a constrained unit, or `null` for any other unit. */
 export function constrainedEnergyTypes(unit: string): readonly string[] | null {
   return unit.startsWith(CONSTRAINED_PREFIX)
     ? unit.slice(CONSTRAINED_PREFIX.length).split(",")
     : null;
 }
 
-/** 🆕🆕🆕 D568 — MOVED here from attack.ts unchanged (see the note there).
-    §6.4 cost matching. Typed symbols need exactly that type; Colorless slots
-    take whatever is left over. `provided` is the flat list of UNITS the
-    attached energies give (continuous.ts providedEnergy) — a basic energy one
-    unit of its type, a special energy its authored units, possibly several
-    (Double Turbo-likes) and possibly a WILDCARD (`ANY_ENERGY` — Luminous, "any
-    1 type"). A wildcard fills a typed shortfall or a Colorless slot; concrete
-    types are counted per type, wildcards allocated to the (pickier) typed needs
-    first, then everything left pays the Colorless slots. */
+/**
+ * §6.4 cost matching. Typed symbols need that type; Colorless slots take whatever is left.
+ * Wildcards are allocated to typed shortfalls first, then everything left pays Colorless.
+ */
 export function costMet(cost: readonly string[], provided: readonly string[]): boolean {
   const needed = new Map<string, number>();
   let colorless = 0;
@@ -249,7 +157,6 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     else needed.set(symbol, (needed.get(symbol) ?? 0) + 1);
   }
   const counts = new Map<string, number>();
-  // 🆕🆕🆕 D578 — the CONSTRAINED units (`constrainedEnergyUnit`), counted per distinct set.
   const constrained = new Map<string, number>();
   let wild = 0;
   for (const unit of provided) {
@@ -258,17 +165,9 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
       constrained.set(unit, (constrained.get(unit) ?? 0) + 1);
     else counts.set(unit, (counts.get(unit) ?? 0) + 1);
   }
-  // 🆕🆕🆕 D578 — THREE PASSES, NARROWEST UNIT FIRST: concrete units pay their own type; then
-  // each constrained set pays the summed shortfall of its member types (as much as it can);
-  // then wildcards pay whatever typed shortfall is left. ⚠️ GREEDY IS EXACT HERE BECAUSE THE
-  // SETS ARE LAMINAR: every constrained set is a subset of ANY, a concrete unit is a singleton,
-  // and the registry builds exactly ONE constrained set ({P, D}, Team Rocket's Energy — pinned
-  // registry-wide in `teamRocketsEnergyD578.test.ts`), so a unit that can pay a shortfall is
-  // never better spent elsewhere: a constrained unit not spent on its members can only pay
-  // Colorless, which a wildcard pays equally. Sets are processed smallest first, so a second,
-  // NESTED set would still be exact; two OVERLAPPING non-nested sets would not — that test
-  // reddens before one can be built. A constrained unit inside its set's shortfall is ONE unit
-  // for ONE symbol, so `typedNeeds` below is unchanged.
+  // Three passes, narrowest unit first: concrete units, then each constrained set against its
+  // members' shortfall, then wildcards. Greedy is exact because the sets are laminar (nested or
+  // disjoint), processed smallest first; two overlapping non-nested sets would break it.
   const shortfalls = new Map<string, number>();
   let typedNeeds = 0;
   for (const [type, count] of needed) {
@@ -305,83 +204,48 @@ export function retreatCostOf(card: Card): number {
   return card.retreat ?? 0;
 }
 
-/** Printed max HP. Null is a DATA GAP (non-Pokémon / a bad row), not "0 HP":
-    the KO check skips rather than insta-KOs — like retreatCostOf's null, the
-    real fix belongs at ingest. A non-positive printed value is the same gap
-    (schema/ingest let 0 through), so it reads as null too: any hp the KO
-    check sees is > 0.
-    🆕 D581 — THE NON-POKÉMON NULL IS NOW ASKED, NOT READ: since D581 the ingest
-    keeps the `hp` a Trainer prints (`apps/api/src/ingest/map.ts` — an Antique
-    Fossil's 60, Snorlax Doll's 120), so a non-Pokémon's catalog `hp` is no longer
-    null and the category conjunct below is what keeps "null for a non-Pokémon"
-    true — the same move as `attacksOf` and `hasPrintedAbility`. A fossil's in-play
-    face is category `"Pokemon"` with `hp: 60` (fossils.ts), so it still reads 60. */
+/**
+ * Printed max HP, or null for a non-Pokémon or a non-positive value (a data gap, not 0 HP); the KO
+ * check skips null. The category check matters because Trainer rows can carry a printed `hp`
+ * (Antique Fossil).
+ */
 export function hpOf(card: Card): number | null {
   return card.category === "Pokemon" && card.hp !== null && card.hp > 0 ? card.hp : null;
 }
 
-/** Printed attacks; [] for Trainers/Energy and attackless Pokémon.
-    🆕 D581 — THE CATEGORY IS ASKED, because the catalog stopped answering it: since D581
-    the ingest keeps a Trainer's printed Pokémon face (`apps/api/src/ingest/map.ts`), so a
-    Technical Machine's or Core Memory's catalog row carries `attacks`. Those are the
-    TOOL's attacks, granted to a holder (continuous.ts `attackMenuOf`'s Tool section reads
-    them off the Tool card directly); they were never the card's own as a Pokémon. A
-    fossil's in-play face is category `"Pokemon"` (fossils.ts) with `attacks: []`. */
+/**
+ * Printed attacks; [] for non-Pokémon and attackless Pokémon. The category check matters because
+ * Trainer rows can carry attacks (Technical Machines grant them to a holder).
+ */
 export function attacksOf(card: Card): readonly Attack[] {
   return card.category === "Pokemon" ? (card.attacks ?? []) : [];
 }
 
-/** Prizes the KOing player takes for this Pokémon (§8.1): 3 for a VMAX, 2 for
-    any other rule box (ex / V / VSTAR / GX), 1 for a plain Pokémon. The class is
-    read off `pokemonSuffixOf` — the printed rule-box marker the NAME still
-    carries after ingest drops tcgdex's `suffix` field — so no schema/ingest/DB
-    change was needed to make an ex worth its two Prizes. The feared blast radius
-    (the win condition + "almost every KO test") never landed: every existing KO
-    test knocks out a plain body, so the whole suite stayed green; the new
-    behaviour is pinned by prizeValue.test.ts (the KO→count wiring) and the unit
-    cases in cards.test.ts. Both prize read sites clamp `count` to the Prizes that
-    remain (flow.ts's takePrizes handler + the §14 tie-guard slice), so a 2-Prize
-    KO with one Prize left takes the last one and wins rather than over-drawing.
-    🆕🆕🆕 D582 — AND 3 FOR A MEGA EVOLUTION POKÉMON ex. The printed rule box (every `me` Mega ex,
-    e.g. Mega Venusaur ex `me01-003`): *"Mega Evolution ex rule — When your Mega Evolution Pokémon
-    ex is Knocked Out, your opponent takes 3 Prize cards."* It REPLACES the Pokémon ex rule's 2 — a
-    Mega ex prints this box and not the ex one — so it is the BASE count every existing Prize
-    modifier already composes over (flow.ts `planPrizes`: the "1 fewer" reductions subtract from
-    it, the "1 more" bonuses add to it, the clamp caps it at the Prizes left). */
+/**
+ * Prizes the knocking-out player takes (§8.1): 3 for a VMAX or a Mega Evolution Pokémon ex, 2 for
+ * any other rule box, 1 otherwise. Read from the name suffix. This is the base count that prize
+ * modifiers adjust and callers clamp to the Prizes left.
+ */
 export function prizeValueOf(card: Card): number {
   const suffix = pokemonSuffixOf(card);
   if (suffix === null) return 1;
   return suffix === "VMAX" || isMegaEvolutionPokemonEx(card) ? 3 : 2;
 }
 
-/** 🆕🆕🆕 D582 — Is this a MEGA EVOLUTION POKÉMON ex? Read off the NAME, exactly as
-    `pokemonSuffixOf` reads the rule box: every one is printed "Mega <Species> ex" (Mega
-    Charizard X ex, Mega Venusaur ex). The catalog's `suffix` column cannot answer it: tcgdex tags
-    the 133 legal `me` "Mega … ex" printings `ex` (94), `EX` (27) or nothing (12), never "MEGA"
-    (LOCAL D1, 2026-10-07). The "Mega " prefix with its space is load-bearing — Meganium is not a
-    Mega — and so is the ` ex` suffix (the Trainer Mega Signal is no Pokémon at all).
-    🛑 NOTHING ELSE CHANGES FOR ONE: a modern Mega ex EVOLVES like any Pokémon, from its printed
-    `evolveFrom` stage (Mega Venusaur ex is a Stage 2 from Ivysaur; a Basic Mega ex is played to
-    the Bench), and its turn does NOT end when it evolves — that was the 2014 "M Pokémon-EX" rule,
-    which no `me` printing carries. It is still a Pokémon ex (`pokemonSuffixOf` is `"ex"`), so
-    every "Pokémon ex" sentence reaches it. */
+/**
+ * Is this a Mega Evolution Pokémon ex? Read from the name ("Mega <Species> ex") because the catalog
+ * suffix tag is unreliable. Both the "Mega " prefix with its space (not Meganium) and the ` ex`
+ * suffix are needed. It otherwise behaves as a normal Pokémon ex; evolving does not end the turn.
+ */
 export function isMegaEvolutionPokemonEx(card: Card): boolean {
   return pokemonSuffixOf(card) === "ex" && card.name.startsWith("Mega ");
 }
 
-/** The printed rule-box SUFFIX of a Pokémon — the "V" / "VMAX" / "VSTAR" /
-    "ex" / "GX" marker following the species name — or null for a plain Pokémon
-    or a non-Pokémon. tcgdex drops its dedicated `suffix` field at ingest, but
-    the marker is ALSO part of the card NAME (a Pokémon V is literally printed
-    "<Species> V"), and the name IS persisted — so the datum survives, encoded
-    in `name` rather than a lost column. Read LITERALLY: "V" does not match
-    "VMAX"/"VSTAR" (each is its own suffix, none a space-then-"V"), which is
-    exactly the distinction Choice Belt draws — "…Active Pokémon V" boosts a V,
-    never a VMAX or VSTAR. The live catalog's Pokémon GO set (swsh10.5) IS an
-    ingested prior-era set — it holds 13 Pokémon V, 2 VMAX and 5 VSTAR — so Choice
-    Belt's gate is LIVE against those V, and Mewtwo VSTAR "Psy Purge" (swsh10.5-031)
-    is the first authored VSTAR (D97). The SV-era sets alone hold none, which is
-    why the gate lay dormant until swsh10.5 was ingested. */
+/**
+ * The rule-box suffix of a Pokémon ("V", "VMAX", "VSTAR", "ex", "GX"), or null. Read from the card
+ * name because ingest drops tcgdex's `suffix` field. Matched literally, so "V" does not match
+ * "VMAX" or "VSTAR".
+ */
 export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX";
 export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   if (card.category !== "Pokemon") return null;
@@ -404,39 +268,12 @@ export function isExOrV(card: Card): boolean {
   return suffix === "ex" || suffix === "V";
 }
 
-/** §8.5 (D255) — the printed RULE-BOX CLASS an always-on prevention aura names of
-    its ATTACKER, as a RECORD over the two axes the printed sentences actually
-    vary. Two Standard-legal sentences inhabit it today (5 printings, measured over
-    `abilities_json` with `legal_standard = 1` against the remote D1 `colorless`,
-    2026-08-07, GROUPED BY SENTENCE):
-
-      "…by attacks from your opponent's Pokémon ex."
-        — Sylveon `sv08.5-040` "Safeguard", Crustle `sv10-012`/`-186`
-          "Mysterious Rock Inn"  →  { suffix: "ex" }
-      "…by attacks from your opponent's Basic Pokémon ex."
-        — Farigiraf ex `sv05-108`/`-194` "Armor Tail"  →  { suffix: "ex",
-          stage: "basic" }
-
-    🛑 **A RECORD AND NOT A FLAT UNION, WHICH IS `AttackerClass`'s D239 ARGUMENT
-    ARRIVING ON A SECOND FIELD** — and it is re-derived here rather than inherited,
-    because the two vocabularies do not overlap (that one is `stage` + a printed
-    *"non-{X}"* type exclusion; this one is `stage` + a printed rule-box SUFFIX).
-    A flat `"ex" | "basicEx"` is the CROSS PRODUCT of the two printed axes: the day
-    a *"Basic Pokémon V"* or a *"Stage 2 Pokémon ex"* sentence is ingested the union
-    multiplies where the record merely gains a value, and each cross-product member
-    would have to re-spell BOTH conjuncts in its own arm — two spellings of "Basic"
-    that can disagree with §3.6/§5.2, which is exactly what `AttackerClass` refused.
-
-    ⚠️ **`stage` IS ABSENT AND NOT `null` WHEN THE SENTENCE PRINTS NO STAGE WORD**
-    (D135's absent-key rule), so `{ suffix: "ex" }` reads back as "an ex at ANY
-    stage" — which is what Sylveon prints, and the direction that matters: a missing
-    conjunct must WIDEN the class the sentence names, never narrow it.
-
-    ⚠️ **AND `suffix` IS REQUIRED WHERE `stage` IS OPTIONAL, WHICH IS NOT
-    SYMMETRY-FOR-ITS-OWN-SAKE.** A record with neither key would mean "prevent all
-    damage from any attack at all", a rule no printing in this family states and one
-    that must not be spellable by omission. Every sentence in the family names a
-    rule-box class; only some of them name a stage. */
+/**
+ * §8.5: the rule-box class of attacker a prevention aura names ("…from your opponent's Pokémon ex",
+ * "…Basic Pokémon ex"). A record rather than a union so each axis can grow independently. An absent
+ * `stage` means any stage; `suffix` is required so "prevent all damage from any attack" cannot be
+ * expressed by omission.
+ */
 export interface PreventedAttackerClass {
   /** The printed rule-box SUFFIX ("…your opponent's Pokémon **ex**"), read through
       `pokemonSuffixOf`. Required — see above. */
@@ -448,44 +285,11 @@ export interface PreventedAttackerClass {
   readonly stage?: "basic";
 }
 
-/** §8.5 (D255) — does `attacker` belong to one of the printed rule-box CLASSES a
-    holder's prevention aura names? The resolution half of `passivesOf`'s
-    `preventDamageFromAttackerClasses`, and `preventsAttackerType`'s twin one column
-    over (continuous.ts): the same "the gate is a fact about the ATTACKER, so it can
-    only be answered where the attacker is known" split D107's `isExOrV` made first.
-
-    ⚠️ **IT LIVES HERE AND ITS TWIN LIVES IN `continuous.ts`, AND THE SPLIT IS BY
-    KIND RATHER THAN BY FAMILY.** `preventsAttackerType` reads `Card.types` against a
-    `PokemonType` vocabulary effects.ts owns, and it sits beside the BOARD-reading
-    `attackerHasSpecialEnergy` it was written with. This predicate reads NOTHING but
-    the catalog row, through two functions that already live in this file
-    (`pokemonSuffixOf` for the suffix, `isBasicPokemon` for the stage), and its
-    vocabulary is owned here too — so placing it beside them costs zero imports and
-    keeps the name parse and its one consumer in the same file. `hasPrintedAbility`
-    (D251) is the direct precedent: a pure CARD read, in `cards.ts`.
-
-    ⚠️ **THE STAGE CONJUNCT IS `isBasicPokemon` VERBATIM AND NOT A SECOND READING OF
-    "Basic"** — `attackerMatchesStage`'s reason inherited: the printed phrase "Basic
-    Pokémon ex" makes the same claim about a card that setup placement and the bench
-    play make, and a second reading would be a second chance to disagree with
-    §3.6/§5.2. Read off the attacker's TOP card (its current identity, §1.2), which
-    is what the call sites already hold: a Basic ex that has evolved is a Stage 1 and
-    Farigiraf's aura stops protecting against it, which is what the printed word
-    means.
-
-    ⚠️ **THE SUFFIX IS AN EQUALITY ON `pokemonSuffixOf` AND DELIBERATELY NOT
-    `isExOrV`.** Mimikyu's sentence names ex AND V; these five name ex ALONE, so
-    reusing `isExOrV` would silently widen all five printings to protect against
-    every Pokémon V in the pool. The two are one character apart in the source and a
-    whole printed clause apart in meaning, which is why this reads the SUFFIX rather
-    than any existing rule-box predicate.
-
-    `undefined` (no resolvable attacking card) is FALSE — `preventsAttackerType`'s
-    conservative direction verbatim: an unreadable attacker protects LESS rather than
-    more. Structurally unreachable for a declared attack (attacks come from the
-    Active) and answered anyway, because these reads must be TOTAL. An EMPTY list is
-    the common case (no such holder on the board) and short-circuits before any card
-    read. */
+/**
+ * §8.5: is `attacker` in one of the rule-box classes a prevention aura names? Stage uses
+ * `isBasicPokemon` on the top card, so an evolved Basic ex is no longer covered. The suffix is an
+ * exact match, not `isExOrV`, since these cards name ex only. `undefined` is false (protects less).
+ */
 export function preventsAttackerClass(
   classes: readonly PreventedAttackerClass[],
   attacker: Card | undefined,
@@ -515,41 +319,25 @@ function matchesStage(
   }
 }
 
-/** Does this Pokémon have a Rule Box (§ the reminder text Artazon prints:
-    "Pokémon ex, Pokémon V, etc. have Rule Boxes.")? — the negated predicate of
-    Artazon "Basic Pokémon that doesn't have a Rule Box". A Rule Box is the grey
-    banner behind the rules text of the special-mechanic Pokémon: the suffix
-    families (ex / V / VMAX / VSTAR / GX, off `pokemonSuffixOf`) PLUS Radiant
-    Pokémon, whose marker is a NAME PREFIX ("Radiant Greninja") rather than a
-    trailing suffix — the same name-encoded datum, read the other end. LIMITATION
-    like `pokemonSuffixOf`: this is name-derived because tcgdex's structured
-    markers are dropped at ingest, so any future Rule-Box family that is neither
-    a known suffix nor the Radiant prefix would read as no-Rule-Box until named
-    here (ACE SPEC is a Trainer subtype, so it never reaches this Pokémon-only
-    check). Non-Pokémon are always false. */
+/**
+ * Does this Pokémon have a Rule Box? The suffix families plus Radiant Pokémon (a name prefix).
+ * Name-derived, so a new Rule Box family would need adding here. Non-Pokémon are false.
+ */
 export function hasRuleBox(card: Card): boolean {
   if (card.category !== "Pokemon") return false;
   return pokemonSuffixOf(card) !== null || card.name.startsWith("Radiant ");
 }
 
-/** 🆕🆕🆕 D568 — is `card` a **Tera** Pokémon? The printed banner under the name,
-    read through `banners.ts`' id-keyed table (`bannerOf`) — `hasRuleBox`'s sibling,
-    and like it a CARD read taking no board. The `category` conjunct is belt and
-    braces: every table id is a Pokémon ex (pinned in `teraBannerD568.test.ts`).
-    `undefined` (no resolvable card) is FALSE. A `fix-*` test card is never Tera —
-    the table does not know it (D275: suites use real ids in local pools). */
+/** Is `card` a Tera Pokémon? Read from the id-keyed banner table. `undefined` is false. */
 export function isTeraPokemon(card: Card | undefined): boolean {
   return card !== undefined && card.category === "Pokemon" && bannerOf(card) === "Tera";
 }
 
-/** 🆕🆕🆕 D568 — does `attacker` carry one of the banners a holder's prevention names?
-    Milotic ex `sv08-042`/`-217`/`-237` "Sparkling Scales": *"Prevent all damage from
-    and effects of attacks from your opponent's Tera Pokémon done to this Pokémon."*
-    `preventsAttackerClass`' twin one axis over — a SIBLING rather than a widening of
-    `PreventedAttackerClass`, whose `suffix` stays REQUIRED so "prevent all damage from
-    any attack" still cannot be spelled by omission (that record's own argument). Read
-    off the attacker's TOP card (§1.2); `undefined` is FALSE (protects LESS, the
-    family's conservative direction); an empty list short-circuits. */
+/**
+ * Does `attacker` carry one of the banners a prevention names (Milotic ex "Sparkling Scales":
+ * "…from your opponent's Tera Pokémon")? Read off the attacker's top card; `undefined` is false; an
+ * empty list short-circuits.
+ */
 export function preventsAttackerBanner(
   banners: readonly Banner[],
   attacker: Card | undefined,
@@ -559,49 +347,20 @@ export function preventsAttackerBanner(
   return banner !== undefined && banners.includes(banner);
 }
 
-/** Does this Pokémon HAVE an Ability — the gate the 5-printing attacker-property
-    prevent names ("…by your opponent's Pokémon **that have an Ability**" —
-    Cornerstone Mask Ogerpon ex "Cornerstone Stance", sv06-112/-199/-215 and
-    sv08.5-058/-160)? `isExOrV`'s sibling one predicate over,
-    and the contrast with it is the whole reason this is its own function rather
-    than an inline `.length > 0` at four read sites: the rule-box classes are a NAME
-    PARSE of a datum tcgdex drops at ingest, while "has an Ability" is an INGESTED
-    COLUMN (`Card.abilities`, nullable array) — so this predicate cannot rot the way
-    `pokemonSuffixOf` documents itself as able to.
-
-    ⚠️ IT READS THE PRINTED CARD AND DELIBERATELY NOT THE BOARD, which is the one
-    judgement it makes. A §9 Ability-lock (Klefki sv01-096 "Mischievous Lock")
-    SUPPRESSES an Ability's effect; it does not remove the Ability from the card, and
-    a Pokémon whose Ability has been turned off still *has* one. So this takes a
-    `Card` and no `GameState`: there is nothing on the board it could correctly
-    consult. Contrast `passivesOf`'s own §9 drop, which is about the HOLDER of the
-    prevention (that one IS an Ability and a lock must silence it) — the two §9
-    answers on this gate point opposite ways and that is not a contradiction.
-
-    `undefined` (no resolvable attacking card) is FALSE — continuous.ts
-    `preventsAttackerType`'s conservative direction verbatim, and the reason this
-    takes an optional where `isExOrV` beside it does not: two of the four read sites
-    hold the attacker as `Card | undefined`, so the narrowing would otherwise be
-    spelled twice. ~~NON-Pokémon are false through the same `abilities` read — a
-    Trainer's catalog row carries `null` there.~~ 🆕 D581 (D539): WITHDRAWN — since D581
-    the ingest keeps a Trainer's printed Pokémon face, so an Antique Fossil's catalog row
-    carries its Ability while it sits in the hand or the deck as an ITEM. The category is
-    asked instead: an in-play fossil's face is category `"Pokemon"` (fossils.ts) and HAS
-    its Ability; the Item in the hand, the deck or the discard pile does not. */
+/**
+ * Does this Pokémon have an Ability ("…your opponent's Pokémon that have an Ability")? Reads the
+ * printed card, not the board: an Ability turned off by a lock is still had. `undefined` is false.
+ * The category check matters because a fossil Item's catalog row carries its Ability.
+ */
 export function hasPrintedAbility(card: Card | undefined): boolean {
   return card?.category === "Pokemon" && (card.abilities ?? []).length > 0;
 }
 
-/** What one attached Energy card provides toward a cost (§6.3). Catalog
-    basic energies carry no `types` — the NAME is the datum, and real prints
-    spell it both ways: "Fire Energy" and "Basic Darkness Energy"
-    (sv06.5-098). The vocabulary is the shared BASIC_ENERGY_TYPES (§6.1,
-    @colorless/schema) — INGEST DEBT: provision should become Card data at
-    ingest; until then the name parse lives here. Anything unparseable
-    (a special energy's fancy name) conservatively provides 1 Colorless: it can
-    pay colorless slots, never typed ones (§6.4). This is the FALLBACK for an
-    UNAUTHORED special energy — an authored one provides through its registry
-    EnergyProgram instead (continuous.ts providedEnergy). */
+/**
+ * What one attached Energy card provides toward a cost (§6.3). Basic Energy carries no `types`, so
+ * the type is parsed from the name ("Fire Energy", "Basic Darkness Energy"). Anything unparseable
+ * provides 1 Colorless; authored Special Energy provides through its registry program instead.
+ */
 export function energyProvidesOf(card: Card): string {
   const named = /^(?:Basic )?(.+) Energy$/.exec(card.name)?.[1];
   if (
@@ -618,24 +377,9 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
   if (card === undefined) return false;
   switch (filter.kind) {
     case "basicPokemon": {
-      // `noRuleBox` (Artazon) drops the ex/V/…/Radiant Rule-Box Pokémon; a plain
-      // `basicPokemon` (Nest Ball) takes any Basic.
-      // D265 — `maxHp` is the printed HP THRESHOLD ("a Basic Pokémon with 70 HP
-      // or less": Buddy-Buddy Poffin, Alomomola "Gentle Fin"). It reads the
-      // PRINTED hp off the card, which is what makes it expressible here at all;
-      // the "HP or less REMAINING" printings (Bianca's Devotion, Ledian) are a
-      // board read of current HP and are unreachable from this function by
-      // construction — `matchesFilter` is never handed an `InPlayPokemon`.
-      //
-      // ⚠️ THE NULL IS DECIDED HERE RATHER THAN BY THE COMPARISON. `hpOf` returns
-      // null for a non-Pokémon (🆕 D581: by asking the category — the catalog row of a
-      // fossil Item carries `hp: 60` since D581) and for a non-positive printed value (a data gap),
-      // and `null <= 70` is TRUE in JavaScript — so `hpOf(card)! <= max` would
-      // silently widen the noun to everything with no HP. An unknown HP does not
-      // satisfy "70 HP or less", so a null is REFUSED. `isBasicPokemon` already
-      // excludes the Trainers, which makes this a belt-and-braces guard on the
-      // data gap alone rather than on the category — stated, because a reader who
-      // assumes the category guard covers it will delete this one.
+      // `noRuleBox` (Artazon) excludes Rule Box Pokémon. `maxHp` is a printed HP threshold
+      // (Buddy-Buddy Poffin). A null HP is refused explicitly because `null <= 70` is true in
+      // JavaScript.
       const hp = hpOf(card);
       return (
         isBasicPokemon(card) &&
@@ -644,12 +388,7 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       );
     }
     case "anyPokemon":
-      // D264 — `noRuleBox` (Lana's Aid) drops the ex/V/…/Radiant Rule-Box
-      // Pokémon at ANY stage; a plain `anyPokemon` (Super Rod / Sacred Ash) takes
-      // any Pokémon. The conjunct is `basicPokemon`'s BYTE FOR BYTE, minus that
-      // member's stage question, which is the entire printed difference between
-      // "a Basic Pokémon that doesn't have a Rule Box" and "Pokémon that don't
-      // have a Rule Box".
+      // `noRuleBox` (Lana's Aid) excludes Rule Box Pokémon at any stage.
       return card.category === "Pokemon" && (filter.noRuleBox !== true || !hasRuleBox(card));
     case "evolutionPokemon":
       // An Evolution Pokémon (Jacq) — one that evolves from another Pokémon.
@@ -657,49 +396,13 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // non-null result is the exact complement of `basicPokemon`.
       return evolveFromOf(card) !== null;
     case "stagePokemon":
-      // 🆕🆕 D466 — the printed STAGE ORDINAL ("your Stage 1 Pokémon in play",
-      // "each Stage 2 Pokémon on your Bench"). DELEGATED to `isStage1Pokemon` /
-      // `isStage2Pokemon` rather than spelled as `card.stage === filter.stage`,
-      // which is D159's rule and those two functions' own: one reading of "Stage 1",
-      // one implementation, so this arm and `opponentActiveIsStage1`
-      // (interpreter.ts, D387) cannot drift about a card. Both helpers carry the
-      // `category === "Pokemon"` conjunct, so a Trainer named "Stage 2" is false
-      // through the same read rather than through a guard beside it.
-      //
-      // 🛑 IT IS DELIBERATELY **NOT** THE ARM ONE LINE UP NARROWED. A VSTAR and a
-      // VMAX satisfy `evolveFromOf(card) !== null` and are NEITHER ordinal, which is
-      // the whole reason this member exists; the printed word is the datum.
-      //
-      // A TERNARY rather than a nested `switch`: `stage` is closed at two values by
-      // the union, so an `else` cannot be reached by a third and the exhaustiveness
-      // question is answered one level up.
+      // A printed stage ordinal ("your Stage 1 Pokémon"). Not the Evolution arm narrowed: a VSTAR
+      // or VMAX evolves but is neither ordinal.
       return filter.stage === "Stage1" ? isStage1Pokemon(card) : isStage2Pokemon(card);
     case "typedPokemon": {
-      // D238 — a Pokémon of a printed TYPE ("up to 3 {D} Pokémon", "a Basic {G}
-      // Pokémon"). THREE conjuncts, and the middle one is the whole member:
-      //   • `category === "Pokemon"` — the catalog gives a Trainer `types: null`
-      //     today, but the `?? []` below is what makes that a fact about this
-      //     predicate rather than about the ingest;
-      //   • `types.includes(…)` and NOT `types[0] === …`: the column is an ARRAY
-      //     and dual-type Pokémon are printed, so "{R} Pokémon" must admit a
-      //     ["Fire","Grass"] body. An equality read would drop them silently;
-      //   • the printed stage word when there is one — `isBasicPokemon`, the same
-      //     discriminant the `basicPokemon` member carries, re-read here because
-      //     "a Basic {G} Pokémon" is ONE noun phrase and not two.
-      // ⚠️ D245 — the stage arm is now `ownerPokemon`'s BYTE FOR BYTE, and it was
-      // the one that was wrong: D238 read `stage !== undefined` as "Basic",
-      // because `"basic"` was the only value the type admitted. The printed
-      // "Evolution {R} Pokémon" / "Evolution {M} Pokémon" (2 sentences, 4 legal
-      // printings, measured at HEAD) is what the union was missing, and a
-      // widening of the TYPE alone would have left this line silently answering
-      // "is it Basic?" to a filter that says "evolution".
-      // ⚠️ D275 — the FOURTH conjunct is D265's HP threshold ("up to 3 {C}
-      // Pokémon with 100 HP or less": Fan Rotom "Fan Call"), and it is
-      // `basicPokemon`'s line BYTE FOR BYTE twelve lines up — the same `hpOf`
-      // call and the same NULL REFUSAL, because `null <= 100` is TRUE in
-      // JavaScript and an unknown HP does not satisfy "100 HP or less". Reused
-      // rather than re-derived so the two nouns can never disagree about a card
-      // the catalog prints with a missing HP.
+      // A Pokémon of a printed type ("a Basic {G} Pokémon"). Uses `includes` so dual-type Pokémon
+      // match. Optional stage (Basic or Evolution) and HP threshold, with null HP refused as for
+      // `basicPokemon`.
       const typedHp = hpOf(card);
       return (
         card.category === "Pokemon" &&
@@ -710,119 +413,44 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       );
     }
     case "anyOf":
-      // D245 — the union's first COMBINATOR ("your {G} Pokémon and {R} Pokémon").
-      // `.some`, not `.every`: the printed "and" names a SET whose membership each
-      // attacker is asked about one at a time, so a `{G}`-only body is in it. An
-      // intersection reading would restrict the aura to dual-type Grass/Fire
-      // bodies, of which the Standard pool holds none — a sentence that pays
-      // nobody. An EMPTY list is therefore false, which is the right unit: it
-      // names the empty set, exactly as `.some` says.
+      // "Your {G} Pokémon and {R} Pokémon" names a union, so `.some`; an empty list is false.
       return filter.filters.some((inner) => matchesFilter(card, inner));
     case "abilityPokemon":
-      // D285 — a Pokémon that HAS an Ability (Team Rocket's Arbok "Potent
-      // Glare"). ONE conjunct and no category test of its own: `hasPrintedAbility`
-      // reads `Card.abilities`, ~~which the catalog leaves null on every Trainer and
-      // every Energy, so a non-Pokémon is false through the same read rather than
-      // through a guard that could drift away from it~~ 🆕 D581 (D539): WITHDRAWN as
-      // spelled — a fossil Trainer's catalog row carries its Ability since D581, so
-      // `hasPrintedAbility` itself now asks the category. The PRINTED-card reading
-      // (a §9 Ability lock silences an Ability; it does not remove it) is that
-      // function's own documented judgement, inherited here rather than re-made.
+      // A Pokémon that has an Ability (Team Rocket's Arbok "Potent Glare"). A §9 Ability lock
+      // silences an Ability but does not remove it, so this reads the printed card.
       return hasPrintedAbility(card);
     case "attackNamePokemon":
-      // 🆕🆕 D446 — a Pokémon that HAS a printed attack of that NAME ("your Pokémon
-      // in play that has the Round attack"). ONE conjunct and no category test of
-      // its own, which is `abilityPokemon`'s arm directly above BYTE FOR BYTE one
-      // card field over: `attacksOf` reads `Card.attacks`, ~~which the catalog leaves
-      // null on every Trainer and every Energy, so a non-Pokémon is false through
-      // the same read rather than through a guard that could drift away from it~~
-      // 🆕 D581 (D539): WITHDRAWN as spelled — a Technical Machine's catalog row
-      // carries its attack since D581, so `attacksOf` itself now asks the category.
-      //
-      // ⚠️ `.some` AND AN EXACT `===`, AND BOTH ARE DELIBERATE. A card may print
-      // two attacks and the sentence names ONE, so the question is membership and
-      // not `attacks[0]`; and the comparison is `byName`'s exact equality because
-      // THE PRINTED NOUN DOES NOT ASK FOR ANYTHING ELSE. A misspelled name matches
-      // the empty set — a loud zero on every board, never a wrong card.
-      // 🆕🆕🆕 **D510 — THE SECOND HALF OF THAT SENTENCE USED TO BE A CLAIM ABOUT THE
-      // WHOLE UNION AND IT WAS NEVER TRUE.** It read *"because no member of this union
-      // does substring matching at any width"*; `ownerPokemon` five arms down has
-      // matched a proper PREFIX of `Card.name` since D200, and D510's
-      // `supporterNameContaining` now matches an UNANCHORED one. The exactness here is
-      // the PRINT's, not the union's, which is the form that cannot rot.
+      // A Pokémon that has a printed attack of that name ("your Pokémon in play that has the Round
+      // attack"). Membership, not `attacks[0]`, because a card may print two attacks; exact
+      // equality because the printed name asks for nothing else.
       return attacksOf(card).some((attack) => attack.name === filter.attack);
     case "pokemonNameContaining":
-      // 🆕🆕🆕 D512 — the printed *"Pokémon in play that has "Koffing" or "Weezing" in
-      // its name"* (`censusAttackCorpus.ts` FILE LINE 583, 2 legal printings), ONE
-      // fragment per member and the printed *"or"* spelled as the `anyOf` above.
-      // TWO conjuncts, and they are load-bearing for OPPOSITE reasons:
-      //   • the HEAD NOUN, delegated to the `anyPokemon` arm through THIS function
-      //     rather than re-spelled as `card.category === "Pokemon"` — D159's rule and
-      //     `supporterNameContaining`'s idiom eight arms down. *"Is this a Pokémon"* is
-      //     one question with one implementation. 🛑 **IT IS INERT ON EVERY BOARD THE
-      //     ONE PRODUCER CAN REACH**, and that is stated rather than left to be
-      //     discovered: the only producer feeds a `countPokemonInPlay` walk, and a body
-      //     in play is already a Pokémon. It is pinned HERE instead, on a Trainer
-      //     carrying the fragment (`fix-weezingcanister`), because `matchesFilter` is
-      //     exported and answers about a CARD;
-      //   • `.includes` — UNANCHORED, case-sensitive, un-normalised, which is
-      //     `supporterNameContaining`'s and `BoardCondition.yourBenchHasNameContaining`'s
-      //     reading verbatim, and the catalog `name` IS the printed name.
-      //
-      // 🛑 **DELIBERATELY NOT `startsWith`, AND THE WRONG BUILD IS A NEIGHBOUR RATHER
-      // THAN A STRAW** (D190b): `ownerPokemon` three arms down reads
-      // `card.name.startsWith(...)`, so a prefix read is what an author writing this arm
-      // by imitation reaches for. The printed words are *"has X **in** its name"* — a
-      // containment — and the real catalog puts the fragment at a non-zero offset on
-      // this very family (an owner possessive does it), which is why the fixture that
-      // separates the two readings is a body and not a construction.
-      // 🆕🆕🆕 D566 — and the optional rule-box conjunct (Ogre's Mask's *"a Pokémon ex …
-      // that has "Ogerpon" in its name"*), `suffixPokemon`'s EQUALITY one arm down, asked
-      // first so the D512 line below stays the two conjuncts it always was.
+      // "Pokémon in play that has "Koffing" or "Weezing" in its name": unanchored, case-sensitive
+      // containment, deliberately not `startsWith`, since the fragment can sit at a non-zero offset
+      // (an owner possessive). The optional rule-box conjunct (Ogre's Mask's "a Pokémon ex that has
+      // "Ogerpon" in its name") is checked first.
       if (filter.suffix !== undefined && pokemonSuffixOf(card) !== filter.suffix) return false;
       return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);
     case "bannerPokemon":
-      // 🆕🆕🆕 D568 — a Pokémon printing the named BANNER ("a Tera Pokémon": Tera Orb
-      // `sv08-189`, Terapagos `sv08-161` "Prism Charge"'s attach target). By printing
-      // ID through `banners.ts` (D135), never by name: two Pikachu ex disagree.
+      // A Pokémon printing the named banner ("a Tera Pokémon"), by printing id through
+      // `banners.ts`, never by name: two Pikachu ex disagree.
       return card.category === "Pokemon" && bannerOf(card) === filter.banner;
     case "bannerCard":
-      // 🆕🆕🆕 D569 — a CARD of ANY category printing the named BANNER ("each Ancient card
-      // in your discard pile": Roaring Moon "Vengeance Fletching"). `bannerPokemon`'s
-      // sibling WITHOUT the category conjunct, and that is the whole member: a Paradox
-      // banner is printed on Trainers too (Explorer's Guidance, Awakening Drum, Reboot
-      // Pod, Ciphermaniac's Codebreaking), so reusing `bannerPokemon` here would silently
-      // undercount "Ancient card". By printing ID through `banners.ts` (D135).
+      // A card of any category printing the named banner ("each Ancient card in your discard
+      // pile"). Paradox banners are printed on Trainers too, so `bannerPokemon` would undercount.
       return bannerOf(card) === filter.banner;
     case "suffixPokemon":
-      // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon
-      // ex in play"). An EQUALITY on `pokemonSuffixOf` and deliberately NOT
-      // `isExOrV`, which is D255's own call at the prevention aura re-read here:
-      // `isExOrV` is the ex-OR-V disjunction, so reusing it for the bare "Pokémon
-      // ex" noun would silently widen that sentence to count Pokémon V as well.
-      // The pool prints the PAIR too, and the pair is spelled where it is printed —
-      // as an `anyOf` of two suffixes (effects.ts `IN_PLAY_BODY_NOUNS`), which is
-      // the combinator's stated purpose and keeps this arm a single equality.
-      // `pokemonSuffixOf` returns null for a non-Pokémon, so the category question
-      // is answered inside the read, exactly as it is one arm up.
+      // A Pokémon of a printed rule-box class ("your opponent's Pokémon ex in play"). Deliberately
+      // not `isExOrV`, which would widen "Pokémon ex" to count Pokémon V; `pokemonSuffixOf` returns
+      // null for a non-Pokémon.
       return pokemonSuffixOf(card) === filter.suffix;
     case "megaEvolutionEx":
-      // 🆕🆕🆕 D603 — "a Mega Evolution Pokémon ex" (Mega Signal, Jett): D582's predicate, whole.
+      // "A Mega Evolution Pokémon ex" (Mega Signal, Jett).
       return isMegaEvolutionPokemonEx(card);
     case "ownerPokemon":
-      // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
-      // THREE conjuncts, and each one is load-bearing:
-      //   • `category === "Pokemon"` — `Team Rocket's Energy` (sv10-182) carries
-      //     the prefix and is not one, and the sentence that names the subgroup is
-      //     printed on that very card;
-      //   • the NAME PREFIX with its trailing space, matched exact-case (the
-      //     `hasRuleBox` "Radiant " read, one field over);
-      //   • the printed stage word when there is one — re-read here rather than
-      //     delegated to the `basicPokemon` / `evolutionPokemon` members, which
-      //     answer a different question about a different noun phrase.
-      // `evolveFromOf(card) !== null` is `evolutionPokemon`'s own discriminant,
-      // so "Evolution X's Pokémon" and "an Evolution Pokémon" agree by
-      // construction on every card in the catalog.
+      // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call"). The category check
+      // matters because Team Rocket's Energy carries the prefix; the prefix includes its trailing
+      // space and is exact-case; the stage word, when printed, is re-read here.
       return (
         card.category === "Pokemon" &&
         card.name.startsWith(`${filter.owner}'s `) &&
@@ -842,135 +470,72 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
     case "supporter":
       return card.category === "Trainer" && card.trainerType === "Supporter";
     case "toolNameContaining":
-      // 🆕🆕🆕 D557 — TM Machine's *"Pokémon Tool cards that have "Technical Machine" in
-      // their name"*: `supporterNameContaining`'s two conjuncts (below) with the HEAD
-      // NOUN delegated to the `toolCard` arm through THIS function (D159), and the same
-      // UNANCHORED, case-sensitive `.includes` on the printed name.
+      // TM Machine's "Pokémon Tool cards that have "Technical Machine" in their name": unanchored,
+      // case-sensitive containment.
       return matchesFilter(card, { kind: "toolCard" }) && card.name.includes(filter.fragment);
     case "itemNameContaining":
-      // 🆕🆕🆕 D635 — Fossil Quarry's *"Item cards that have "Antique" in their name"*: the arm above
-      // with the head noun delegated to `item` (D159).
+      // Fossil Quarry's "Item cards that have "Antique" in their name".
       return matchesFilter(card, { kind: "item" }) && card.name.includes(filter.fragment);
     case "supporterNameContaining":
-      // 🆕🆕🆕 D510 — the printed *"Supporter card that has "Team Rocket" in its
-      // name"* (`censusAttackCorpus.ts` FILE LINE 543, 2 legal printings). TWO
-      // conjuncts, and each one is load-bearing on the board this filter is printed
-      // for:
-      //   • the HEAD NOUN, delegated to the `supporter` arm one line up through
-      //     THIS function rather than re-spelled as `category`/`trainerType` —
-      //     D159's rule and `anyOf`'s own idiom. *"Is this a Supporter"* is one
-      //     question with one implementation, so a fifth printed Trainer subtype or
-      //     a re-ingested `trainerType` moves both arms at once. The conjunct is
-      //     NOT decoration: the real pool prints Team Rocket ITEMS and TOOLS, so a
-      //     build that dropped it counts cards the sentence excludes.
-      //   • `.includes` — UNANCHORED, case-sensitive, un-normalised, which is
-      //     `BoardCondition.yourBenchHasNameContaining`'s reading verbatim
-      //     (interpreter.ts, D392) and the catalog `name` IS the printed name.
-      //
-      // 🛑 **IT IS DELIBERATELY NOT `startsWith`, AND THE WRONG BUILD IS A NEIGHBOUR
-      // RATHER THAN A STRAW**: `ownerPokemon` five arms down reads
-      // `card.name.startsWith(...)`, so a prefix read is what an author writing this
-      // arm by imitation reaches for. The printed words are *"has X IN its name"* —
-      // a containment, not a prefix — and D392 refuted the prefix reading on a real
-      // board one vocabulary over, for the same reason (an owner possessive puts the
-      // fragment at a NON-ZERO offset).
-      //
-      // ⚠️ **THE NAME IS READ INLINE AND NOT THROUGH A HELPER**, which is this
-      // function's own idiom rather than an omission: `byName` and `ownerPokemon`
-      // both read `card.name` here, and D392's block records that `cards.ts` carries
-      // no name-matching predicate at all. The BENCH clause's read is a different
-      // QUESTION (which body on a board, through `topCardOf`) and shares only an
-      // operator, so unifying them would buy nothing D159 asks for and would
-      // re-transcribe four shipped mutant rows for zero behaviour (D359).
+      // "Supporter card that has "Team Rocket" in its name". The Supporter check matters because
+      // Team Rocket Items and Tools exist. Containment, deliberately not `startsWith`: an owner
+      // possessive can put the fragment at a non-zero offset.
       return matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment);
     case "item":
-      // D231 — an Item Trainer, `supporter`'s arm one value over. ⚠️ A Pokémon
-      // Tool is NOT one: since SM they are separate printed subtypes, and the
-      // ingested column agrees (116 `Item` rows, 60 `Tool`, no row both).
+      // An Item Trainer. A Pokémon Tool is not one: they are separate printed subtypes.
       return card.category === "Trainer" && card.trainerType === "Item";
     case "stadium":
-      // D231 — a Stadium Trainer (41 catalog rows); with `item` above, all four
-      // printed Trainer subtypes are now spellable.
       return card.category === "Trainer" && card.trainerType === "Stadium";
     case "trainerCard":
-      // D237 — the printed "a Trainer card" (Wailord sv08-087). ONE conjunct, and
-      // the ABSENCE of a `trainerType` read is the whole point: this is the
-      // category, not a disjunction of the four subtypes above, so a fifth
-      // printed subtype is admitted the day it is ingested rather than silently
-      // excluded. Strictly wider than each of `supporter` / `item` / `stadium` /
-      // `toolCard`, and driven as such.
+      // The printed "a Trainer card": the category, not a disjunction of the subtypes, so a new
+      // subtype is admitted automatically.
       return card.category === "Trainer";
     case "anyCard":
-      // D231 — the printed uncategorised "a card" / "cards". TRUE for every real
-      // card: the `card === undefined` guard at the top of this function is what
-      // keeps a dangling uid out, so this arm means "any card" and not "any uid".
+      // The printed uncategorised "a card". True for every real card; the guard at the top keeps a
+      // dangling uid out.
       return true;
     case "pokemonOrBasicEnergy":
-      // A basic Energy is `energyType: "Normal"` (Special is excluded, matching
-      // Super Rod's "Basic Energy"); a Pokémon is any category "Pokemon".
-      // 🆕🆕🆕 D583 — `isBasicEnergy`: "Normal" AND no rules text.
+      // A basic Energy is "Normal" with no rules text (Special is excluded, matching Super Rod's
+      // "Basic Energy").
       return card.category === "Pokemon" || isBasicEnergy(card);
     case "anyEnergy":
       // Any Energy card — Basic OR Special (Poppy moves "up to 2 Energy").
       return isEnergyCard(card);
     case "pokemonWithResistance":
-      // 🆕🆕🆕 D624 — Fletchling "Chirp"'s *"Pokémon with {F} Resistance"*: the printed entry's `type`
-      // alone (D371's read, `opponentActiveHasResistance`), on a Pokémon. `resistances` is null on
-      // Trainers and Energy, hence the `?? []`; the category conjunct is kept for a fossil row.
+      // "Pokémon with {F} Resistance": the printed resistance entry's type. `resistances` is null
+      // on Trainers and Energy.
       return (
         card.category === "Pokemon" &&
         (card.resistances ?? []).some((entry) => entry.type === filter.type)
       );
     case "specialEnergy":
-      // A SPECIAL Energy only (Giacomo / Mawile) — the exact complement of
-      // `basicEnergy` inside `anyEnergy`, ~~off the catalog's own tag~~
-      // (D583 (D539): WITHDRAWN — `isSpecialEnergy` is the "Special" tag OR
-      // printed rules text).
+      // A Special Energy only (Giacomo / Mawile), the complement of `basicEnergy` inside
+      // `anyEnergy`.
       return isSpecialEnergy(card);
     case "providesEnergy":
-      // FALSE, always — and deliberately, not as a gap. This function scans
-      // cards in a DECK, HAND or DISCARD PILE (searchDeck / lookAtTopN /
-      // discardPileRetrieval), and provision is a while-ATTACHED property ("As
-      // long as this card is attached to a Pokémon, it provides…"): a card in a
-      // pile is attached to nothing and provides nothing. The in-play scanner
-      // `matchesAttached` is where this filter is answered, with the host it
-      // needs. So authoring `providesEnergy` into a pile-scanning op yields an
-      // empty candidate set — a loud no-op, never a wrong card — where guessing
-      // "a Basic Energy of that type" would silently take the wrong print
-      // (Decidueye's "Basic {G} Energy card from your hand" is the row that
-      // really wants `basicEnergy`, and it says CARD for exactly this reason).
+      // Always false, deliberately: this function scans cards in a deck, hand or discard pile, and
+      // provision is a while-attached property. `matchesAttached` answers this filter for in-play
+      // cards.
       return false;
   }
 }
 
-/** 🆕🆕🆕 D613 — DOES THE PRINTED NOUN NAME ITS CARD? A `byName` noun ("a Shedinja", "up to 3
-    Charjabug"), a name fragment ("Pokémon that have \"Koffing\" in their name") or an `anyOf` of
-    only such nouns ("a Silcoon or a Cascoon", "Maushold and Maushold ex"). This is the printed
-    permission `benchMatches` reads: a card that names the Pokémon it puts onto the Bench may put
-    an Evolution card there. Every other noun is a class ("{W} Pokémon", "Pokémon"). An empty
-    `anyOf` names nothing. R-BN1 ⚠️ UNRULED: the name FRAGMENT is read as naming its card too; moot on
-    today's pool (every card with "Koffing" or "Rotom" in its name is a Basic). Reversal: drop the
-    `pokemonNameContaining` arm. */
+/**
+ * Does the printed noun name its card? A `byName` noun, a name fragment, or an `anyOf` of only such
+ * nouns. A card that names the Pokémon it puts onto the Bench may put an Evolution card there.
+ * Reading a name fragment as naming its card is unruled.
+ */
 export function namesItsCard(filter: CardFilter): boolean {
   if (filter.kind === "byName" || filter.kind === "pokemonNameContaining") return true;
   return filter.kind === "anyOf" && filter.filters.length > 0 && filter.filters.every(namesItsCard);
 }
 
-/** 🆕🆕🆕 D613 — `matchesFilter` for a card an effect puts ONTO THE BENCH (§7: only Basic Pokémon
-    can be put onto the Bench unless the card says otherwise). A Pokémon card that is not Basic is
-    refused unless the noun names its card (`namesItsCard`: Ninjask's "a Shedinja", Charjabug's
-    "up to 3 Charjabug"). A non-Pokémon card that matches is the filter's business, as before [🆕🆕🆕 D635
-    (D539): a TRAINER only with an in-play face — below]
-    (`BENCHABLE_RETRIEVAL_KINDS`, effects.ts). Read off the FILTER and not off a new op field, so
-    a program persisted in a v42 `MatchRecord` (a parked Cast-Off Shell confirm holds its
-    `searchDeck` op) reads the same permission after the deploy. Retires R-BC1 and D238's
-    any-stage reading.
-
-    🆕🆕🆕 D635 — A TRAINER GOES ONTO THE BENCH ONLY WITH AN IN-PLAY POKÉMON FACE (`FOSSIL_IDS`): Fossil
-    Quarry's Antique Items. An unbuilt Antique Item (Antique Armor / Jaw / Sail / Skull Fossil, `me`) is
-    not offered — R-IC1's reading (Impromptu Carrier offers simulated Tools only), carried.
-    [🆕🆕🆕 D637 (D539): the four named `me` fossils are BUILT at D637 (`FOSSIL_IDS`) and offered; the gate stands for
-    any Trainer with no in-play face.] */
+/**
+ * `matchesFilter` for a card an effect puts onto the Bench (§7: only Basic Pokémon unless the card
+ * says otherwise). A non-Basic Pokémon is refused unless the noun names its card; a Trainer is
+ * allowed only with an in-play Pokémon face (`FOSSIL_IDS`). Read off the filter rather than a new
+ * op field so persisted programs keep the same permission.
+ */
 export function benchMatches(card: Card | undefined, filter: CardFilter): boolean {
   if (card === undefined || !matchesFilter(card, filter)) return false;
   if (card.category === "Trainer") return FOSSIL_IDS.has(card.id);
@@ -1031,25 +596,12 @@ function weakResModifier(
   return null;
 }
 
-/** §8.5 Weakness: how the Defender's printed weakness modifies the damage
-    when it names any of the attacker's types. Null = not weak.
-
-    🆕🆕🆕 D552 — `retype`, the type an attack-installed WEAKNESS RETYPE makes the
-    printed Weakness name (continuous.ts `installedWeaknessRetypeOf`; `null`/absent = the
-    printed card, which every caller before D552 means). "(The amount of Weakness
-    doesn't change.)": the FIRST printed entry keeps its VALUE and only its TYPE is
-    replaced, so a ×2 {R} Weakness becomes ×2 {C}. A defender that prints NO Weakness has
-    no amount to keep and stays not-weak (docs/decisions.md D552 R2, UNRULED).
-
-    🆕🆕🆕 D559 — `rewrite`, the type an opponent-side Weakness REWRITE makes the
-    defender's Weakness (continuous.ts `seatWeaknessRewrite`, Lillie's Clefairy ex "Fairy
-    Zone": *"…is now {P}. (Apply Weakness as ×2.)"*; `null`/absent = none). Applied FIRST:
-    the printed entries are REPLACED by ONE `{ type: rewrite, value: "×2" }` — so a
-    defender that prints NO Weakness GAINS one (R-FZ4) — and the retype is applied on top
-    of THAT entry (R-FZ1 ⚠️ UNRULED: a Fairy-Zoned Dragon under the retype is {C}×2).
-    🆕🆕🆕 D640 (D539): ~~`rewrite` is the seat rewrite (`seatWeaknessRewrite`)~~ — every caller
-    now passes `installedWeaknessRewriteOf(…) ?? seatWeaknessRewrite(…)` (continuous.ts):
-    Overwriting Bolt's installed {L}×2 rewrite first, the seat's Fairy Zone otherwise (R-OWB1). */
+/**
+ * §8.5 Weakness: how the defender's Weakness modifies the damage when it names any of the
+ * attacker's types. Null = not weak. `rewrite` is applied first and replaces the printed entries
+ * with one ×2 entry of that type (so a defender with no Weakness gains one); `retype` then replaces
+ * only the type of the first entry, keeping its amount.
+ */
 export function weaknessOf(
   attacker: Card,
   defender: Card,
@@ -1111,11 +663,10 @@ export function activeTop(
   return { active, uid, card };
 }
 
-/** The "a Basic Pokémon out of your own hand" check shared by the two setup
-    placements and the in-turn bench play (§3.6–§3.7, §5.2). Returns the
-    rejection, or null when the play is legal. (🆕🆕🆕 D644: `setupPlaceActive` asks setup.ts
-    `explosivenessPlacement` first — Cinderace "Explosiveness" may be the Active though not Basic.) M2's evolution play adds its
-    own timing rules on top of the same hand/uid resolution. */
+/**
+ * The "a Basic Pokémon out of your own hand" check shared by the two setup placements and the
+ * in-turn bench play (§3.6–§3.7, §5.2). Returns the rejection, or null when the play is legal.
+ */
 export function basicFromHandError(state: GameState, seat: Seat, uid: string): ApplyResult | null {
   if (!state.players[seat].hand.includes(uid)) {
     return err("CARD_NOT_IN_HAND", `${uid} is not in ${seat}'s hand`);

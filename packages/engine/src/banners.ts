@@ -1,96 +1,14 @@
 import type { Card } from "@colorless/schema";
 
-// 🆕🆕🆕 D568 — THE BANNER DATUM: which printings carry the TERA banner.
-// (🆕🆕🆕 D569: and the two PARADOX banners, ANCIENT and FUTURE — the D569 block below.)
-//
-// A Tera Pokémon prints the word "Tera" under its name and, beside it, the rule
-// "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon
-// by attacks (both yours and your opponent's)." TWENTY-FOUR Standard-legal printings
-// name the class ("your Tera Pokémon", "a Tera Pokémon") — measured over the legal card
-// JSON, every text surface: 13 Trainers (Briar ×4, Area Zero Underdepths ×3, Glass
-// Trumpet ×2, Sparkling Crystal ×2, Tera Orb, and Technical Machine: Fluorite `sv08-188`,
-// whose Tera sentence is on the ATTACK the TM grants), 7 Abilities (Milotic ex ×3,
-// Noctowl ×3, Azumarill) and 4 Pokémon attacks (Ho-Oh `sv08-019`, Terapagos `sv08-161`,
-// Regigigas `sv08.5-086`, Team Rocket's Mimikyu `sv10-087`). D568 builds 19; the 5 left
-// are Underdepths ×3 (Bench size), Mimikyu (copy-attack) and TM Fluorite (a Tool that
-// grants an attack — no Technical Machine attack is built [🆕🆕🆕 D578 (D539): WITHDRAWN — one is,
-// `technicalMachines.ts` + `CardProgram.toolAttacks` [🆕 D581: `technicalMachines.ts` is deleted — the attack is the
-// Tool card's catalog row, `toolAttacks` a flag]]). (🆕🆕🆕 D573 (D539): Mimikyu is
-// WITHDRAWN from that list — Gemstone Mimicry is BUILT, the copy-attack substitution reading
-// `isTeraPokemon` off this table; 4 are left. 🆕🆕🆕 D577 (D539): *"4 are left"* is WITHDRAWN —
-// Area Zero Underdepths ×3 is BUILT, `benchLimitOf` reading `isTeraPokemon` off this table; ONE is
-// left, TM Fluorite. 🆕🆕🆕 D578 (D539): *"ONE is left, TM Fluorite"* is WITHDRAWN — Technical
-// Machine: Fluorite is BUILT (`TM_FLUORITE`, its granted attack's `healEach` `banner: "Tera"` reading
-// `matchesFilter`'s `bannerPokemon` off this table); NONE is left — all 24 are built.) Before this table the
-// engine could not read one of them: NO INGESTED COLUMN CLASSIFIES
-// THE BANNER (still true, and not changed here — `cardSchema` carries no subtype
-// list, and D1 has no column for it). The fix is not an ingest change: the banner is
-// a fixed fact about a PRINTING, so an engine table keyed by printing id is its
-// writer, exactly as the registry is the writer of every program (`programFor`).
-// Keyed by ID and never by species or name (D135): Pikachu ex `sv08-057` is Tera and
-// Pikachu ex `sv08.5-028` is not.
-//
-// ⚠️ THE TABLE IS DATA, NOT LOGIC. No schema, D1, ingest, wire or `Card` change; it
-// is never fetched at runtime. It sits OUTSIDE the mutation whitelist (D538) — a
-// mutant that deletes a row is a data edit, pinned by `teraBannerD568.test.ts`'s
-// census rungs rather than by the corpus.
-//
-// HOW THE 98 WERE MEASURED (2026-09-30), TWO SOURCES PLUS THE PRINTED FACE:
-//   1. pokemon-tcg-data's `subtypes` ("Tera") over the eleven Standard sets, joined to
-//      the tcgdex ids the catalog uses and filtered to `legal.standard` — 94 ids.
-//   2. limitlesstcg.com's card page ("Tera" in the type line) over EVERY Standard-legal
-//      Pokémon ex in the pool — all 353, not only the 94 — which agreed everywhere but:
-//        • `sv08.5-028` Pikachu ex (190 HP, Tail Whap / Thunder) — source 1 says Tera,
-//          limitless says not. REMOVED: the tcgdex card image
-//          (assets.tcgdex.net/en/sv/sv08.5/028) prints no Tera banner.
-//        • `sv08.5-092` Terapagos ex (230 HP, Unified Beatdown / Crown Opal) — source 1
-//          says not, limitless says Tera. ADDED: the image prints the banner and the
-//          Tera rule, and its six same-text reprints are all Tera (the REPRINT
-//          CONSISTENCY rung in the suite catches exactly this row).
-//        • `svp-166`, `svp-174`, `svp-175`, `svp-176` — absent from source 1's promo
-//          set (it stops at `svp-165`); limitless shows Tera. ADDED (the images of
-//          `-166` and `-174` print the banner; `-175`/`-176` have no tcgdex image and
-//          are the same texts as the Tera Espeon ex / Umbreon ex of `sv08.5`).
-//        • `svp-215` Toxtricity ex — limitless has no page; the image prints no banner.
-//      `svp-177` … `svp-218` otherwise checked: none is Tera.
-//   So 94 − 1 + 1 + 4 = 98. ~~Ancient and Future printings are NOT here (Slice 2 widens
-//   `Banner`; its table is single-source so far and owes the same close).~~
-//   (🆕🆕🆕 D569 (D539): WITHDRAWN — Slice 2 part a (D569) widened `Banner` and added the 86
-//   Ancient/Future ids below, closed on TWO sources plus the printed face; see the next block.)
-//
-// 🆕🆕🆕 D569 — THE PARADOX BANNERS: "Ancient" (44 ids) and "Future" (42 ids), 86 in all —
-// Ancient Pokémon 40 + Ancient Trainers 4 (Awakening Drum `sv05-141`, Explorer's Guidance
-// `sv05-147`/`-200`/`sv08.5-107`), Future Pokémon 38 + Future Trainers 4 (Reboot Pod
-// `sv05-158`, Ciphermaniac's Codebreaking `sv05-145`/`-198`/`sv08.5-104`). UNLIKE TERA, A
-// PARADOX BANNER IS PRINTED ON TRAINERS TOO ("an Ancient card" counts them — `bannerCard`),
-// and on non-ex Pokémon. HOW THE 86 WERE MEASURED (2026-10-02), TWO SOURCES PLUS THE FACE:
-//   1. pokemon-tcg-data's `subtypes` ("Ancient" / "Future") over the eleven Standard sets —
-//      107 tagged printings — joined to the tcgdex ids and filtered to `legal.standard`: 86.
-//   2. (limitlesstcg does not print the Paradox tag, so the D568 second source is not
-//      available.) A NAME cross-check over EVERY legal printing in the pool: every printing
-//      whose name (minus " ex") is one of the 11 Ancient species (Great Tusk, Scream Tail,
-//      Brute Bonnet, Flutter Mane, Slither Wing, Sandy Shocks, Roaring Moon, Koraidon, Walking
-//      Wake, Gouging Fire, Raging Bolt), the 11 Future species (Iron Treads, Iron Bundle, Iron
-//      Hands, Iron Jugulis, Iron Moth, Iron Thorns, Iron Valiant, Miraidon, Iron Leaves, Iron
-//      Boulder, Iron Crown) or a source-1-tagged Trainer name. It agreed on all 86 and
-//      disagreed on exactly three legal printings, each settled against the tcgdex image:
-//        • `sv07-090` Koraidon (130 HP, Resolute Fang) — the image prints NO banner. OUT.
-//        • `svp-148` Miraidon (120 HP, Electric Claws / Mach Bolt) — NO banner. OUT.
-//        • `svp-197` Koraidon ex (230 HP, Claw Slash / Revenge Buster) — NO banner. OUT.
-//      `svp-166` … `svp-225` (past source 1's promo cut at `svp-165`) were walked by name:
-//      `svp-197` is the only Paradox species there. So the NAME IS NOT THE BANNER (three
-//      same-species printings without it) — the runtime stays id-keyed (D135); the name was
-//      a measurement aid only.
+// Which printings carry the Tera, Ancient or Future banner. No ingested column classifies the
+// banner, so it is an engine table keyed by printing id, never by name: reprints of one species can
+// differ (Pikachu ex `sv08-057` is Tera, `sv08.5-028` is not). Paradox banners also appear on
+// Trainers and non-ex Pokémon.
 
-/** A printed banner class. ~~One member today; Slice 2 (Paradox) widens it with
-    "Ancient" and "Future".~~ (🆕🆕🆕 D569 (D539): WITHDRAWN — three members now; Slice 2
-    part a widened it.) */
+/** A printed banner class. */
 export type Banner = "Tera" | "Ancient" | "Future";
 
-/** Printing id → banner. A literal, keyed by the catalog's tcgdex id. Every TERA id is a
-    Standard-legal Pokémon ex (pinned by `teraBannerD568.test.ts`); every ANCIENT/FUTURE id
-    is a Standard-legal Pokémon (ex or not) or Trainer (🆕🆕🆕 D569, pinned by
-    `paradoxBannerD569.test.ts`). */
+/** Printing id → banner, keyed by the catalog's tcgdex id. */
 export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "sv05-060": "Tera", // Wugtrio ex
   "sv05-108": "Tera", // Farigiraf ex
@@ -190,19 +108,11 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "svp-174": "Tera", // Eevee ex
   "svp-175": "Tera", // Espeon ex
   "svp-176": "Tera", // Umbreon ex
-  // ── 🆕🆕🆕 D582 — the Mega Evolution serie's TERA REPRINTS, 5 ids: every legal `me` Pokémon whose
-  // whole face (name, HP, `attacks_json`, `abilities_json`) is a Tera printing's, measured on the
-  // LOCAL D1 (2026-10-07), and each printed face checked (assets.tcgdex.net/en/me/me02.5/<n>):
-  // all five print the banner and the Tera rule. `me` Tera printings with NEW text (Koraidon ex
-  // `me02.5-121` prints the banner; Miraidon ex `me02.5-073`, the `mep` / `30th` ex …) are NOT
-  // measured here — a named gap, `reprintAliasMeD582.test.ts`.
   "me02.5-038": "Tera", // Cinderace ex (= sv07-157)
-  "me02.5-057": "Tera", // Pikachu ex (= sv08-057; a D582 registry alias)
+  "me02.5-057": "Tera", // Pikachu ex, reprint of sv08-057
   "me02.5-160": "Tera", // Dragapult ex (= sv06-130)
-  "me02.5-179": "Tera", // Terapagos ex (= sv07-128; a D582 registry alias)
-  "me02.5-277": "Tera", // Pikachu ex (= sv08-057; a D582 registry alias)
-  // ── 🆕🆕🆕 D569 — the Paradox banners (Slice 2 part a), 86 ids. ──
-  // Ancient — 44 (40 Pokémon, 4 Trainers)
+  "me02.5-179": "Tera", // Terapagos ex, reprint of sv07-128
+  "me02.5-277": "Tera", // Pikachu ex, reprint of sv08-057
   "sv05-038": "Ancient", // Gouging Fire ex
   "sv05-050": "Ancient", // Walking Wake ex
   "sv05-077": "Ancient", // Scream Tail
@@ -292,8 +202,10 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "svp-147": "Future", // Iron Boulder ex
 };
 
-/** The banner `card` prints, or `undefined` — read by printing ID (D135), so a `fix-*`
-    test card or an unknown id is bannerless. `undefined` in, `undefined` out. */
+/**
+ * The banner `card` prints, or `undefined`. Read by printing id, so test cards and unknown ids have
+ * no banner.
+ */
 export function bannerOf(card: Card | undefined): Banner | undefined {
   return card === undefined ? undefined : BANNER_BY_ID[card.id];
 }

@@ -36,15 +36,10 @@ export type PlayerState = {
       the id itself: the point is that the same person looks the same to you
       across lobbies, not that anyone can join this token to another surface. */
   avatarSeed: string | null;
-  /** Epoch ms at which this seat FORFEITS the running match unless its player
-      comes back — armed by the lobby server when a disconnect grace expires
-      while in-game (P4 3c-ii's `ABANDON_GRACE_MS`), null whenever there is
-      nothing to forfeit. It rides the snapshot rather than the DO's own storage
-      so the opponent can be SHOWN the countdown (3c-v) — before it, a player
-      whose opponent crashed watched a silent board for 90 seconds — and so a
-      reconnecting client gets it with the state it already receives.
-      INVARIANT: `connected` ⇒ `forfeitAt === null`; every path that marks a seat
-      present clears it, which is what stops a returning player being forfeited. */
+  /**
+   * Epoch ms at which this seat forfeits the running match unless its player returns; null when
+   * nothing is pending. Invariant: `connected` implies `forfeitAt === null`.
+   */
   forfeitAt: number | null;
 };
 

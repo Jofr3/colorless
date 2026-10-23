@@ -1,13 +1,5 @@
-// Pure helpers for the /assets proxy routes (D9 lazy R2 mirror): filename
-// allowlists, R2 key construction, origin-URL construction and content types.
-// Kept free of Worker types so they unit-test as plain functions; the
-// fetch/R2/D1 plumbing lives in ./routes.ts.
-//
-// tcgdex origin URL shapes (docs/workstreams/backend-data.md §4.4):
-// - card image: `{base}/{quality}.{ext}` — the file name IS the suffix path;
-// - set logo/symbol: `{base}.{ext}` — ONLY the extension is appended (there
-//   is no quality segment), so the DB stores the extensionless base and the
-//   file name here is split into asset kind + extension.
+// Pure helpers for the /assets proxy routes. Card images append `{quality}.{ext}` to the origin
+// base; set logos and symbols append only `.{ext}`.
 
 export const CARD_ASSET_FILES = [
   "high.webp",

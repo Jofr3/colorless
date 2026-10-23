@@ -1,17 +1,5 @@
-// The builder's filter state. EVERY dimension (name / category / energy type /
-// kind / rule box / rarity / set / serie / illustrator / regulation mark / HP /
-// rules text / legality / sort) is filtered server-side by GET /cards —
-// catalog.ts translates Filters into that query and the Lua builder
-// adapter (src/lua/builder.ts) pages it in.
-// This module is now just the Filters model the rail edits.
-//
-// It used to carry one client-side remainder, `filterVisibleCards`, for kind
-// selections containing a DERIVED kind (EX/Mega, matched by name regex).
-// D198 deleted it: `?suffix=` answers those server-side, so nothing thins a
-// page after the server has counted it — which is what made a mixed selection
-// render a nearly-empty page under a total in the hundreds. The one honest
-// invariant is back: what the grid shows and what `total` counts are the same
-// query.
+// The builder's filter model. Every dimension is filtered server-side by GET /cards; catalog.ts
+// translates Filters into that query.
 
 import type { EnergyType, Supertype } from "./cards";
 

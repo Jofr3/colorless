@@ -1,24 +1,7 @@
-// The lobby WIRE protocol (P1 milestone 8 — backend-data.md §3.6): Zod schemas
-// for the frames that cross the WebSocket between the web client and the lobby
-// Durable Object, hand-written to mirror types.ts. types.ts stays the single
-// source of truth for the SHAPES — these schemas only add runtime validation at
-// the server boundary — and the exported `…MatchesType` proofs below make any
-// drift between a schema and its type a compile error: each one only
-// typechecks while the schema's inferred type is EXACTLY the shared type.
-//
-// Direction matters. The full `LobbyMessage` union is the transport-channel
-// vocabulary the client code was written against; over the socket only a
-// subset travels each way:
-//   - client → server: `LobbyClientMessage` — hello / intent / kick / bye /
-//     rematch.
-//     The kick IS the `reject … "kicked"` frame the BroadcastChannel host used
-//     to post at its guest, narrowed so a client can never fabricate a "full".
-//   - server → client: `LobbyServerMessage` — state broadcasts + rejections.
-// Both envelopes are strict subsets of `LobbyMessage`, so the existing
-// channel interface (`post(message: LobbyMessage)`) carries them unchanged.
-//
-// The zod-free protocol constants (countdown length, keepalive strings) live
-// in protocol.ts so the web client can import them without bundling zod.
+// Zod schemas for the lobby WebSocket frames, mirroring types.ts; the `…MatchesType` proofs make
+// any drift a compile error. Clients send `LobbyClientMessage`, the server sends
+// `LobbyServerMessage`, both subsets of `LobbyMessage`. Zod-free constants live in protocol.ts so
+// the client need not bundle zod.
 
 import { z } from "zod";
 import { redactedGameSchema, seatLogEntrySchema, wireActionSchema } from "../match";

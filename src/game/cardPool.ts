@@ -1,13 +1,5 @@
-// Deck card ids → the engine's `cardPool` (Record<id, Card>): full canonical
-// Cards fetched one by one through GET /cards/:id — the client's only
-// full-Card route (GET /cards deliberately serves blob-free briefs). Pure
-// orchestration; sandbox setup awaits this before createGame.
-//
-// Per-id results are cached module-wide, so "Play again" (and any deck
-// sharing ids with a previous match) costs zero requests for ids already
-// seen. Catalog Cards are immutable for a session — the cached Card object
-// itself is shared across matches, which is safe because every consumer
-// (the engine included) treats pool cards as read-only.
+// Deck card ids to the engine's `cardPool`: full Cards fetched one by one through GET /cards/:id,
+// the only full-Card route (GET /cards serves briefs). Results are cached module-wide.
 
 import type { Card } from "@colorless/schema";
 import { ApiError, getCard } from "../lib/api";

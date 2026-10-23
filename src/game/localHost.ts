@@ -1,8 +1,6 @@
-// The local match's host state: a pure reducer that wraps the engine's
-// applyAction (D14 — total, never throws, never mutates). Everything the
-// reducer produces (game, log, error) lives in its returned state, and the
-// only impurity (the wall clock for log timestamps) rides IN on the host
-// event, stamped once per user gesture by the caller (src/lua/tableSource.ts).
+// The local match's host state: a pure reducer around the engine's `applyAction`. The only
+// impurity, the wall clock for log timestamps, comes in on the host event, stamped once per user
+// gesture by the caller.
 
 import type { ErrorCode, GameAction, GameEvent, GameState, Seat } from "@colorless/engine";
 import { applyAction, formatElapsed, logFromEvents, phaseViewOf } from "@colorless/engine";
@@ -124,12 +122,11 @@ export function stepTarget(
   return steps.length - 1;
 }
 
-/** The seat the hot-seat screen should hand the device to: the projection's
-    own phase→seat mapping (phaseViewOf — THE one exhaustive switch over the
-    Phase union, which already prefers `current` when either seat could act),
-    made sticky — phases where nobody is waited on (gameOver) keep `current`.
-    Rule one of the wire-up (D17): NEVER derive this from turn ownership —
-    during ko:promote the actor is the KO'd NON-turn player. */
+/**
+ * The seat the hot-seat screen hands the device to, from `phaseViewOf`, made sticky when nobody is
+ * waited on (gameOver). Never derive it from turn ownership: during ko:promote the actor is the
+ * non-turn player.
+ */
 export function waitingSeatOf(state: GameState, current: Seat): Seat {
   return phaseViewOf(state, current).waitingSeat ?? current;
 }

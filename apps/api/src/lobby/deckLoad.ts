@@ -1,13 +1,6 @@
-// P4 increment 3 — resolve a lobby player's CHOSEN deck into the flat 60-card id
-// list the engine wants, at the match handoff. This is where the otherwise
-// account-less lobby's one authenticated fact (the socket's `userId`, from the
-// /ws session cookie) becomes load-bearing: the read is OWNER-SCOPED, so a
-// crafted `select-deck` naming another user's deck id resolves to nothing.
-//
-// The pure `deckIdsFromRows` fold is unit-tested; `loadPlayerDeck` is the query
-// half (D1, so untested here — the `loadCardPool` pattern). Contents come from
-// D1, never the client: the client sends only an opaque `deckId`, so it can't
-// forge the card list.
+// Resolves a lobby player's chosen deck into the flat card id list at match start. The read is
+// owner-scoped and contents come from D1, so a client can neither use another user's deck nor forge
+// the card list.
 
 import { and, asc, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";

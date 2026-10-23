@@ -133,14 +133,12 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     // …and nothing to say about WHICH body, for the same reason. Empty and not
     // null: the reader returns a list, and a closed window is an empty one.
     lastKoMarks: { p1: [], p2: [] },
-    // 🆕🆕🆕 D579 — no attack has been used on a board that has not been dealt yet. Empty and
-    // not null, `lastKoMarks`' reason: the reader asks a list.
+    // Empty rather than null: readers expect a list.
     recentAttackers: { p1: [], p2: [] },
     // No attack has resolved on a board that has not been dealt yet, so no seat
     // is barred from playing anything — see the field's own note in types.ts.
     handPlayLockedTurn: freshHandPlayLocks(),
-    // 🆕 D298 — no printed once-per-game effect has been applied on a board that
-    // has not been dealt yet. It only ever grows; see the field's note in types.ts.
+    // Only ever grows.
     oncePerGameSpent: { p1: [], p2: [] },
     cardIdByUid,
     cardPool: pool,
@@ -155,18 +153,12 @@ function emptySide(deck: string[]): PlayerSide {
     discard: [],
     prizes: [],
     faceUpPrizes: [],
-    // 🆕🆕🆕 D549 — no attack has locked a side that has not been dealt yet.
     sideAttackLock: null,
-    // 🆕🆕🆕 D564 — no Supporter has shielded a side that has not been dealt yet.
     sideDamageReduction: [],
-    // 🆕🆕🆕 D630 — a side not yet dealt has taken no Prize card.
     prizesTakenOnTurn: null,
-    // 🆕🆕🆕 D575 — no attack has blocked damage to a side that has not been dealt yet.
     sideAttackBlock: null,
-    // 🆕🆕🆕 D621 — no Supporter has shielded a body or locked a retreat on a side not yet dealt.
     chosenAttackShield: null,
     sideRetreatLock: null,
-    // 🆕🆕🆕 D636 — no attack has flip-locked the Trainer plays of a side not yet dealt.
     trainerFlipLockTurn: null,
     active: null,
     bench: [],
@@ -292,11 +284,11 @@ export function setupDrawExtra(state: GameState, action: SetupDrawExtraAction): 
   return ok(next, events);
 }
 
-/** 🆕🆕🆕 §3.6 (D644) — Cinderace `me01-028` "Explosiveness": *"If this Pokémon is in your hand when you are setting up
-    to play, you may put it face down in the Active Spot."* A hand card whose program carries `setupActiveFromHand` may
-    be the face-down Active although it is not a Basic Pokémon — but only while the hand also holds a Basic, because
-    the mulligan is unchanged (R-EXP1 ⚠️ UNRULED: a hand with no Basic Pokémon still owes its mulligan). No in-play
-    Ability lock reaches the hand (R-EXP2 ⚠️ UNRULED). The Bench placement is untouched (Basics only). */
+/**
+ * Cinderace "Explosiveness": a hand card whose program carries `setupActiveFromHand` may be the
+ * face-down Active although it is not a Basic, but only while the hand also holds a Basic, since
+ * the mulligan is unchanged. Bench placement stays Basics only.
+ */
 function explosivenessPlacement(state: GameState, seat: Seat, uid: string): boolean {
   if (!state.players[seat].hand.includes(uid)) return false;
   const card = cardOfUid(state, uid);

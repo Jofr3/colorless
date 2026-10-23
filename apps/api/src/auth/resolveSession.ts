@@ -1,14 +1,5 @@
-// resolveSession — the READ-ONLY "who is this socket" resolver for the lobby WS
-// (P4 increment 3). Unlike `requireUser` (which gates HTTP routes: it 401s,
-// clears a dead cookie, and lazily deletes an expired session row), this only
-// answers "which user id, if any, does this Cookie header authenticate?" — null
-// for anonymous, an absent/expired session, or a cookie that doesn't resolve.
-//
-// Read-only on purpose: connecting a lobby socket must not mutate auth state,
-// and the lobby stays usable anonymously (a null userId just means the socket
-// can't start a match with a saved deck). The DO calls this at the /ws upgrade
-// so it can later owner-scope that player's deck read at the match handoff — the
-// only authenticated identity the otherwise account-less lobby has.
+// Read-only session resolver for the lobby WebSocket: unlike `requireUser` it never 401s, clears
+// cookies or deletes expired rows, so connecting a socket cannot mutate auth state.
 
 import { eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";

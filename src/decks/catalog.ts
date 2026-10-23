@@ -75,11 +75,11 @@ function subtypeOf(card: CardBrief | Card): string {
   return subtypeLabelOf(raw);
 }
 
-/** 🆕 D628 (finding 0b) — an Energy's subtype as the ENGINE classes it (cards.ts `isBasicEnergy` /
-    `isSpecialEnergy`, D583), not the raw tcgdex tag: tcgdex tags 14 legal Special Energies "Normal", and
-    reading the tag let them through the 4-copy rule as Basic Energy ({@link isBasicEnergy} in cards.ts keys on
-    this subtype). A full `Card` carries the rules text the test reads; a brief carries the API's answer to the
-    same test (apps/api catalog/map.ts `briefEnergyType`), so both reach one predicate. */
+/**
+ * An Energy's subtype as the engine classifies it, not the raw tcgdex tag, which labels some
+ * Special Energies "Normal". A full `Card` is classified from its rules text; a brief carries the
+ * API's answer to the same test.
+ */
 function energySubtypeOf(card: CardBrief | Card): string | null {
   const face = {
     category: card.category,
@@ -111,14 +111,10 @@ export function toBuilderCard(card: CardBrief | Card): BuilderCard {
   };
 }
 
-/** The card-kind chip labels offered for a supertype: the matching facet
-    vocabulary, builder-labelled. No facets (still loading, or the fetch
-    failed) means no chips — the rail hides an empty section.
-
-    Every label here filters SERVER-side. It used to append the derived
-    name-regex kinds (EX/Mega) for Pokémon; those moved to their own
-    dimension, {@link suffixOptions}, when the server learned `?suffix=`
-    (D198 — see the note in cards.ts for what they were costing). */
+/**
+ * The card-kind chip labels for a supertype, from the matching facet vocabulary. With no facets
+ * (still loading or failed) there are no chips. Every label filters server-side.
+ */
 export function kindOptions(supertype: "all" | Supertype, facets: CatalogFacets | null): string[] {
   if (supertype === "Pokémon") return (facets?.stages ?? []).map(subtypeLabelOf);
   if (supertype === "Trainer") return (facets?.trainerTypes ?? []).map(subtypeLabelOf);
@@ -126,23 +122,10 @@ export function kindOptions(supertype: "all" | Supertype, facets: CatalogFacets 
   return [];
 }
 
-/** The rule-box chip labels offered for a supertype: the catalog's `suffixes`
-    vocabulary VERBATIM (no renaming — "ex" and "VMAX" are printed exactly as
-    stored, and the wire value must equal the chip for `?suffix=` to agree
-    with the list it came from).
-
-    EMPTY TODAY, and that is the design: `cards.suffix` is NULL on every
-    production row until an ingest fills it, so /facets serves `suffixes: []`,
-    this returns `[]`, and the builder offers no options. No chip means the
-    filter cannot be reached from the UI, which is what makes shipping it
-    against an unpopulated column safe rather than a trap.
-
-    Offered only where a suffix can EXIST: the ingest writes the column from
-    the tcgdex Pokémon payload alone and NULL for Trainer/Energy rows
-    (apps/api/src/ingest/map.ts), so under those supertypes every value would
-    match nothing — an empty grid with no explanation, the exact failure the
-    derived "Mega" chip used to produce. Under "all" the chips are honest:
-    they narrow to Pokémon, which is what the data says they mean. */
+/**
+ * The rule-box chip labels for a supertype: the catalog's `suffixes` vocabulary verbatim, because
+ * the wire value must equal the chip for `?suffix=` to match.
+ */
 export function suffixOptions(
   supertype: "all" | Supertype,
   facets: CatalogFacets | null,
@@ -158,12 +141,10 @@ function hpBound(value: string): number | undefined {
   return Number.isInteger(n) && n >= 0 ? n : undefined;
 }
 
-/** Translate the rail's Filters into a GET /cards query (page-less — the
-    builder adapter adds pagination). EVERY dimension goes on the wire: `subtypes`
-    (card kinds) map to the supertype's own subtype param (stage /
-    trainerType / energyType, P2 task 9) and `suffixes` to `?suffix=` (D198).
-    Nothing is left for the client to re-apply per page, so the grid and the
-    reported total always answer the same query. */
+/**
+ * Translate the rail's Filters into a page-less GET /cards query. Every dimension goes on the wire,
+ * so the grid and the reported total always answer the same query.
+ */
 export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuery {
   const name = filters.query.trim();
   const text = filters.text.trim();
@@ -198,20 +179,10 @@ export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuer
   };
 }
 
-/** Resolve a decklist name against the catalog, in layers — each a server
-    query, stopping at the first hit (first in collector order, mirroring the
-    old "first pool card with that name" rule):
-    1. `nameExact` on the normalized key (nameKey strips a leading "Basic "
-       and collapses whitespace — the exporters' usual noise);
-    2. `nameExact` on the raw name (trimmed, whitespace-collapsed) when that
-       still differs from the key — a print STORED with the "Basic " prefix
-       can't equal the stripped key (case alone never warrants this retry:
-       nameExact ignores it either way);
-    3. the old substring search, for stored names neither equality can reach
-       (only nameKey-level normalization bridges e.g. a doubled space in the
-       stored name).
-    Every layer keeps only a normalized-key match, so a substring over-match
-    can't smuggle in the wrong card. */
+/**
+ * Resolve a decklist name against the catalog in layers, each a server query, stopping at the first
+ * hit (first in collector order).
+ */
 export async function findCardsByName(name: string): Promise<BuilderCard[]> {
   const key = nameKey(name);
   if (key === "") return [];

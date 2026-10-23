@@ -1,31 +1,7 @@
-// The REDACTED game snapshot the authoritative match server (the lobby Durable
-// Object, P4) broadcasts to each connected client. The engine produces one
-// full-information `GameState`; redaction is explicitly P4's job (engine
-// events.ts / setup.ts). `redactGame(state, seat)` (packages/engine) builds one
-// of these PER VIEWER, applying the same hidden-information rules the web app's
-// client-side playmat projection already applies for hot-seat play
-// (src/features/game/projection.ts):
-//
-//   - the viewer's own hand face-up; the opponent's hand as a COUNT of
-//     anonymous backs (no uid, no card id — a positional id only);
-//   - BOTH prize sets as counts (§3.8 — face-down for both players); 🆕🆕🆕 D548: plus
-//     the FACE-UP ones (Crescent Purge) as `{index, card}` — public for every viewer;
-//   - decks as counts; discard piles fully public (§2 — ordered and public);
-//   - in-play Pokémon public once setup is over, with their battle row (damage /
-//     max HP / §12 conditions) and attached energy/tools; DURING setup the
-//     OPPONENT's placements are anonymous backs with no battle row (a battle row
-//     would leak the printed HP).
-//
-// The type is VIEWER-RELATIVE ("you" / "opponent"), so a payload only ever
-// carries the recipient's own full side plus the opponent's redacted side — no
-// absolute-seat map that could be populated with both sides' hidden zones. The
-// recipient's own `seat` (which they always know) rides along for the action
-// binding P4 increment 2 needs.
-//
-// This module is the SINGLE SOURCE OF TRUTH for the shape: the Zod schema below
-// defines it and the exported types are inferred from it (the catalog `Card`
-// pattern), so the wire schema and the TS type cannot drift. The engine imports
-// these types and builds objects matching them; the web client renders them.
+// The per-viewer redacted snapshot built by `redactGame`. The opponent's hand is a count of backs,
+// face-down prizes and decks are counts, and opponent setup placements are anonymous; discard and
+// face-up prizes are public. It is viewer-relative so a payload never carries both sides' hidden
+// zones. Types are inferred from the Zod schema.
 
 import { z } from "zod";
 import { cardCategorySchema } from "../catalog/card";
@@ -40,14 +16,11 @@ export type Viewer = z.infer<typeof viewerSchema>;
 export const matchSeatSchema = z.enum(["p1", "p2"]);
 export type MatchSeat = z.infer<typeof matchSeatSchema>;
 
-/** §14 end conditions — mirrors the engine's `GameOverReason`. */
-/** Mirrors the engine `GameOverReason`. `conceded` covers BOTH ways a player
-    can forfeit — pressing concede, or an online player abandoning the match
-    until their timer runs out (P4 3c-ii) — because to the opponent they are the
-    same event.
-    🆕🆕🆕 D575 — `cardEffect`, a card's printed win (N's Sigilyph "Victory Symbol"). A
-    WIDENING of a validated enum: an OLD client's schema rejects the new reason, so the
-    CLIENT deploys FIRST (apps/api match.ts, the ELEVENTH position; decisions.md D575). */
+/**
+ * Mirrors the engine `GameOverReason`. `conceded` covers both conceding and an online abandon
+ * timeout; `cardEffect` is a card's printed win. Adding a value requires deploying the client
+ * first.
+ */
 export const redactedGameOverReasonSchema = z.enum([
   "prizesTaken",
   "noPokemon",
@@ -72,16 +45,10 @@ export const redactedConditionsSchema = z.object({
   /** HP placed each Checkup while Poisoned; 0 = not Poisoned. */
   poisonDamage: z.number(),
   burned: z.boolean(),
-  /** 🆕🆕 D501 — HP a Confused Pokémon places on ITSELF when the §8 step-3 attack
-      flip misses; 30 unless the inflicting effect raised it. Meaningful only
-      while `rotation === "confused"`.
-
-      ⚠️ IT CROSSES THE WIRE BECAUSE A HUD RENDERS IT. `GameHud.tsx` prints the
-      Confusion warning under the attack list off `rotation` alone, and that line
-      said "tails: 30 damage to itself" until D501 — a claim the raised printing
-      makes FALSE at the one moment a player is deciding whether to attack. A field
-      the board knows and the wire drops is D412's defect exactly (an engine gate
-      and a local panel disagreeing), so the fact rides every surface. */
+  /**
+   * Damage a Confused Pokémon places on itself when the attack flip misses; 30 unless the
+   * inflicting effect raised it. Meaningful only while `rotation === "confused"`.
+   */
   confusionDamage: z.number(),
 });
 export type RedactedConditions = z.infer<typeof redactedConditionsSchema>;
@@ -95,15 +62,11 @@ export const redactedBattleSchema = z.object({
 });
 export type RedactedBattle = z.infer<typeof redactedBattleSchema>;
 
-/** A card as it crosses the wire. A PUBLIC card carries its full identity keyed
-    by the engine uid (`id`), so the animation layer tracks it as one object
-    across zones. A HIDDEN card carries a POSITIONAL id (never the uid — leaking
-    it would let a client track a hidden card across zones) and the `hidden`
-    sentinel cardId; an empty in-play slot the `empty` sentinel. `hasImage` says
-    whether the card has scan art — the client builds the asset URL from
-    `cardId`, keeping the asset scheme on the client. Leaf cards only (hand,
-    discard, attachments, stadium, hidden/empty placeholders): battle rows and
-    attachments live on `RedactedInPlay`. */
+/**
+ * A card as it crosses the wire. A public card is keyed by its engine uid; a hidden card carries a
+ * positional id (never the uid) and the `hidden` sentinel, an empty slot the `empty` sentinel.
+ * `hasImage` says whether scan art exists.
+ */
 export const redactedCardSchema = z.object({
   id: z.string(),
   cardId: z.string(),
@@ -133,26 +96,26 @@ export const redactedInPlaySchema = redactedCardSchema.extend({
 });
 export type RedactedInPlay = z.infer<typeof redactedInPlaySchema>;
 
-/** 🆕🆕🆕 D548 — a prize turned FACE UP (Cresselia `sv06.5-021` "Crescent Purge"): its slot
-    in the live prize row and the card, which is public from the moment it was turned. */
+/** A face-up prize: its slot in the prize row and the card, which is public. */
 export const redactedFaceUpPrizeSchema = z.object({
   index: z.number(),
   card: redactedCardSchema,
 });
 export type RedactedFaceUpPrize = z.infer<typeof redactedFaceUpPrizeSchema>;
 
-/** One player's redacted side. Own side: hand face-up. Opponent: hand a count
-    of backs, in-play redacted during setup. Prizes/deck are counts for both;
-    discard is public for both. 🆕🆕🆕 D548: plus the face-up prizes, for both. */
+/**
+ * One player's redacted side. Own hand face up, opponent's as a count of backs; prizes and deck are
+ * counts; discard and face-up prizes are public.
+ */
 export const redactedSideSchema = z.object({
   hand: z.array(redactedCardSchema),
   active: redactedInPlaySchema.nullable(),
   bench: z.array(redactedInPlaySchema),
   prizesRemaining: z.number(),
-  /** 🆕🆕🆕 D548 — REQUIRED, not optional (D159: the same fact on every surface). The
-      FACE-UP slots of this side's prize row, index-stable, in row order; `[]` on every
-      board without a Crescent Purge. Every other slot is face down and crosses as the
-      count above only — no uid and no card id of a face-down prize is on the wire. */
+  /**
+   * Face-up slots of this side's prize row, in row order; `[]` when none. Face-down prizes cross
+   * only as the count.
+   */
   faceUpPrizes: z.array(redactedFaceUpPrizeSchema),
   deckCount: z.number(),
   /** Public bonus card count; cleared when this player draws the cards. */
@@ -169,83 +132,36 @@ export const redactedBoardSchema = z.object({
 });
 export type RedactedBoard = z.infer<typeof redactedBoardSchema>;
 
-/** One of the viewer's Active's printed attacks [🆕🆕🆕 D578 (D539): one row of its ATTACK
-    MENU — the printed attacks, then Relicanth's Memory Dive rows, then an attached Technical
-    Machine's; `cost` is the cost printed on the row's OWN card], with server-computed
-    payability — the online turn HUD (increment 2b) renders a button per entry
-    without ever reading the full state the local HUD does (attacksOf / costMet /
-    providedEnergy over the raw board). `playable` folds §8.2 payability (under
-    the Stadium's continuous cost effects), the §4 first-turn attack ban and the
-    §12 immobilize gate exactly as the local TurnPanel's `disabled` — so the
-    client needs no engine logic to know what it may attack with. `cost` is the
-    PRINTED cost, `effectiveCost` the cost the §8.2 gate actually charges when the
-    two DIFFER (see below); `damage` the printed display string (a number or a
-    "60+"/"20×" modifier), null when the attack prints no damage.
-    Only the viewer's OWN Active's attacks ever appear (their own public table
-    facts), and only while it is their `turn:action`. */
+/**
+ * One row of the viewer's Active's attack menu (printed attacks, then Memory Dive rows, then an
+ * attached Technical Machine's) with server-computed `playable`. `cost` is the cost printed on the
+ * row's own card; `damage` is the printed display string or null. Only the viewer's own Active,
+ * during their `turn:action`.
+ */
 export const redactedAttackSchema = z.object({
-  /** ~~Index into the Active's printed attacks~~ 🆕🆕🆕 D578 (D539): WITHDRAWN as the whole
-      address — an index into the Active's ATTACK MENU (engine `attackMenuOf`: the printed
-      attacks FIRST, each at its printed index, then Relicanth's Memory Dive rows, then an
-      attached Technical Machine's) — the `attack` action's discriminant. No shape change. */
+  /**
+   * Index into the Active's attack menu (`attackMenuOf`); printed attacks come first at their
+   * printed index. The `attack` action's discriminant.
+   */
   index: z.number(),
   name: z.string(),
   /** The PRINTED cost — the symbols on the card face, unchanged since increment 2b
       and deliberately still meaning exactly that. See `effectiveCost` below. */
   cost: z.array(z.string()),
-  /** The cost the §8.2 gate ACTUALLY charges under every continuous cost effect in
-      play (engine `effectiveAttackCost` — 🆕🆕🆕 since D545 `attackCostAt`, which also
-      folds a printed COST CLAUSE on the attack: `["Fighting"]` for corpus `:316`'s
-      alternate, `[]` for `:324`'s waive), present ONLY when it differs from the
-      printed `cost` above. Render this in preference to `cost` wherever the player
-      sees energy dots: `effectiveCost ?? cost`.
-
-      ⚠️ IT EXISTS BECAUSE `playable` AND `cost` WERE COMPUTED FROM DIFFERENT
-      NUMBERS. `playable` has folded the EFFECTIVE cost since the seam was built,
-      while the dots have always drawn the PRINTED one — a divergence that shipped
-      unnoticed for as long as the only cost modifier in the pool was a SURCHARGE
-      (Pokémon League Headquarters), where the failure is merely invisible: the
-      button greys out and the dots do not say why. The first DISCOUNT (Radiant
-      Charizard swsh10.5-011 "Excited Heart") inverts that into the worse direction
-      — the button goes LIVE while the dots still show a cost the player has not
-      paid — so the wire owes the effective number.
-
-      ⚠️ A SIBLING FIELD RATHER THAN A WIDENED `cost`, WHICH IS THE DECISION AND NOT
-      AN IMPLEMENTATION DETAIL. `cost`'s meaning as PRINTED is documented here,
-      depended on by both HUDs and is the only thing on the wire that still says
-      what the CARD says; silently changing what an existing field means is the kind
-      of reversal this project requires a trail for. A sibling is additive,
-      reversible, and strictly more informative — a client can render "was 5, now 3"
-      from the pair, which no single field can express. (Contrast
-      `RedactedRetreat.cost` below, which publishes the CONTINUOUS number under the
-      plain name: there the printed retreat cost is not on the wire at all, so
-      there was no second reading to preserve.)
-
-      OPTIONAL, and emitted only on a board where a cost modifier is actually in
-      play — which mirrors `effectiveAttackCost`'s own contract (it returns the
-      printed array itself when nothing applies) and keeps the frame byte-identical
-      on every board without one. Its presence therefore MEANS "this cost is
-      modified", which is a fact a renderer may want and could not otherwise derive.
-      No `MATCH_RECORD_VERSION` consequence: this is a wire projection rebuilt from
-      `GameState` on every frame and is persisted nowhere. */
+  /**
+   * The cost the §8.2 gate actually charges, present only when it differs from the printed `cost`;
+   * render `effectiveCost ?? cost`. A sibling field so `cost` keeps meaning the printed cost.
+   */
   effectiveCost: z.array(z.string()).optional(),
   damage: z.string().nullable(),
   playable: z.boolean(),
 });
 export type RedactedAttack = z.infer<typeof redactedAttackSchema>;
 
-/** The viewer's OWN retreat option, server-computed for the online turn HUD
-    (increment 2b-ii) — like `RedactedAttack`, the client renders the control
-    without reading the full state the local TurnPanel does (`effectiveRetreatCost`
-    + the §11/§12 gates over the raw board). `cost` is the CONTINUOUS retreat cost
-    (§7.3 discounts — the number of attached energies the retreat must discard);
-    `can` folds the §12 immobilize gate, the once-per-turn retreated allowance, a
-    non-empty Bench (something to promote to) and enough attached energy into ONE
-    boolean, EXACTLY the local TurnPanel's `canRetreat` — so the client needs no
-    engine logic. The energies to discard and the Bench to promote to are already
-    on the public board (the viewer's own attachments + Bench). Only the viewer's
-    OWN `turn:action` carries it — null for the non-acting viewer, who never
-    retreats. */
+/**
+ * The viewer's own retreat option. `cost` is the continuous retreat cost; `can` folds every retreat
+ * gate into one boolean. Null for the non-acting viewer.
+ */
 export const redactedRetreatSchema = z.object({
   cost: z.number(),
   can: z.boolean(),
@@ -264,23 +180,11 @@ export const redactedPokemonTargetSchema = z.discriminatedUnion("spot", [
 ]);
 export type RedactedPokemonTarget = z.infer<typeof redactedPokemonTargetSchema>;
 
-/** An activated Ability on one of the acting viewer's OWN in-play Pokémon, with
-    server-computed playability — the online turn HUD (increment 3b) renders a
-    button per entry without ever reading the full state the local HUD's
-    `usableAbilities` does (§9 Active-only + the §9/§15.J once-per-turn flag + the
-    §7.5 hand cost + the would-only-whiff `programPlayable` gate — over raw
-    allowances, the own hand, both boards, and the Stadium's OWNER, none of which
-    the wire carries whole). `disabled` folds ALL of those gates into ONE boolean
-    EXACTLY as the local Ability row's `disabled` — so the client needs no engine
-    logic. `reason` is the printed clause a GREYED row shows as its tooltip (a §7.5
-    hand cost or "No legal target"), null when the row is enabled or the disable is
-    self-evident (Active-only / already-used). `target` is the seatless
-    `PokemonTarget` the `useAbility` action dispatches back verbatim; `abilityName`
-    the printed name (a card may carry more than one); `label` the display string
-    ("Name · Card (Active)"), which disambiguates two copies of the same card. Only
-    the acting viewer's OWN abilities appear (their own public board + own hand
-    cost — nothing hidden), and only while it is their `turn:action` — [] for the
-    non-acting viewer, who cannot use an Ability. */
+/**
+ * An activated Ability on the acting viewer's own Pokémon. `disabled` folds every gate; `reason` is
+ * the tooltip for a greyed row (null when enabled or self-evident); `target` is dispatched back
+ * verbatim; `label` disambiguates copies. [] for the non-acting viewer.
+ */
 export const redactedAbilitySchema = z.object({
   target: redactedPokemonTargetSchema,
   abilityName: z.string(),
@@ -290,33 +194,12 @@ export const redactedAbilitySchema = z.object({
 });
 export type RedactedAbility = z.infer<typeof redactedAbilitySchema>;
 
-/** A Trainer playable from the acting viewer's OWN hand — an Item, a Supporter,
-    Rare Candy or 🆕 (D288) a STADIUM — with server-computed playability; the
-    online turn HUD (increment 3b)
-    renders a button per DISTINCT card without reading the full state the local
-    HUD's `playableTrainers` does. `disabled` folds the §4 first-turn Supporter ban
-    + §7.2 one-Supporter-per-turn, the printed `trainerPlayableIf` board gate
-    (`conditionHolds` — reads prize counts + the Stadium OWNER the wire withholds),
-    the §7.5 hand cost (`handCostUnmet`), and the would-only-whiff `programPlayable`
-    gate into ONE boolean EXACTLY as the local Trainer row's `disabled`. `reason`
-    is the printed/engine clause a GREYED row shows ("Only if …" / "No legal
-    target"), null when enabled or self-evident (the §4/§7.2 timing, and — D288 —
-    §7.3's once-per-turn allowance and same-name rule, which the board states).
-    `uid` is the hand uid the `playTrainer` action dispatches back (already on the
-    viewer's own face-up hand); `name` the display name.
-    🆕 **STADIUMS ARE HERE FROM D288** — a Stadium row dispatches the SAME
-    `playTrainer` action (which routes to `playStadium`), so the row cost no new
-    field and no new action; its `disabled` folds the imposed hand-play bar
-    (Copperajah `sv06.5-042`, D287) plus §7.3's own two mechanics. They remain
-    DRAGGABLE onto the shared slot as well (the 2a `moveToAction` path) — the
-    local HUD has offered both gestures all along, and this row is what brings the
-    wire into line with it rather than a second affordance. RARE CANDY
-    IS here (increment 3b-ii), flagged by `rareCandy`: it is the one row whose
-    click OPENS A DIALOG (pick a Basic, then a Stage 2) instead of dispatching
-    `playTrainer`, because it evolves rather than running a program — its pairings
-    ride the phase's `rareCandy` list and its answer is the `rareCandy` action.
-    Only the acting viewer's OWN hand appears, and only during their `turn:action`
-    — [] for the non-acting viewer. */
+/**
+ * A Trainer playable from the acting viewer's hand (Item, Supporter, Stadium or Rare Candy).
+ * `disabled` folds every gate; `reason` is the tooltip for a greyed row. A Rare Candy row
+ * (`rareCandy`) opens a pairing dialog instead of dispatching `playTrainer`. [] for the non-acting
+ * viewer.
+ */
 export const redactedTrainerSchema = z.object({
   uid: z.string(),
   name: z.string(),
@@ -330,25 +213,11 @@ export const redactedTrainerSchema = z.object({
 });
 export type RedactedTrainer = z.infer<typeof redactedTrainerSchema>;
 
-/** One legal Rare Candy play (§7.1) the acting viewer's dialog may offer — the
-    wire mirror of the engine's `RareCandyOption` (increment 3b-ii). Rare Candy
-    evolves a Basic in play straight to a Stage 2 in hand, skipping the Stage 1,
-    so the decision is a PAIR (which Basic, which Stage 2) the engine cannot
-    express as an `effect:choose` prompt — it is its own two-step dialog, and this
-    is what feeds it. The options come from the engine's own `rareCandyOptions`
-    (the authority: it folds the §4 first-turn ban, the Basic-in-play and
-    came-into-play-this-turn checks, and the Basic→Stage 1→Stage 2 chain bridge),
-    so a listed pairing always resolves to a legal `rareCandy` action — which the
-    handler still re-validates field by field.
-
-    `target` is the seatless `PokemonTarget` the action dispatches back verbatim
-    (the Basic is always on the actor's own board, so no seat is carried; the DO
-    rebinds the acting seat). `basicUid`/`basicName` and each `stage2` entry name
-    cards that are ALREADY face-up to this viewer (their own in-play stack top and
-    their own hand), carried here as display strings for the same reason
-    `RedactedTrainer` carries `name` — the panel family is wire-driven and looks
-    nothing up. Only the acting viewer's OWN options appear, and only during their
-    `turn:action` — [] for the non-acting viewer, who never plays a Trainer. */
+/**
+ * One legal Rare Candy pairing (a Basic in play, a Stage 2 in hand) from the engine's
+ * `rareCandyOptions`; the handler still re-validates. Names are display strings for cards already
+ * face up to this viewer.
+ */
 export const redactedRareCandyOptionSchema = z.object({
   target: redactedPokemonTargetSchema,
   basicUid: z.string(),
@@ -360,33 +229,11 @@ export const redactedRareCandyOptionSchema = z.object({
 });
 export type RedactedRareCandyOption = z.infer<typeof redactedRareCandyOptionSchema>;
 
-/** §7.3 — the SHARED Stadium's "once during each player's turn" ACTIVATED
-    ability, server-folded for the acting viewer's turn HUD (D210), which
-    dispatches `{type:"useStadiumAbility", seat}` — the action carries NOTHING
-    else, because there is exactly one Stadium and it takes no target.
-
-    THE ONE OFFER ON `turn:action` THAT IS NEITHER A LIST NOR ON THE VIEWER'S OWN
-    BOARD, hence a nullable single value rather than an array: `abilities` walks
-    the actor's Active + Bench, and a Stadium is neither a Pokémon nor a target,
-    so it can never appear there. `null` means "no row" — the non-acting viewer
-    (and a spectator), no Stadium in play, or a CONTINUOUS-only Stadium (Beach
-    Court, League HQ: real Stadiums with no activated ability at all).
-
-    `disabled` folds the engine's own `useStadiumAbility` gate (cardplay.ts) —
-    the per-turn `allowances.stadiumAbilityUsed` flag and the would-only-whiff
-    `programPlayable` check, neither of which the client can see — into ONE
-    boolean, EXACTLY as `RedactedAbility.disabled` does for a Pokémon's Ability.
-    `reason` is the printed clause a GREYED row shows ("No legal target"), null
-    when the row is enabled or the disable is self-evident (already used this
-    turn). `label` is the Stadium's own name (`StadiumAbility.label` — "Levincia",
-    "Spikemuth Gym"), the same string the STADIUM_ABILITY_ACTIVATED log row
-    carries.
-
-    The Stadium card itself is already PUBLIC on `board.stadium` for both viewers,
-    so this adds no card identity to the wire — only the actor's affordance, which
-    is withheld from the opponent for the reason every other `turn:action` offer
-    is: it is derived from state (and, for a future gated program, private zones)
-    that viewer has no business reading. */
+/**
+ * §7.3: the shared Stadium's once-per-turn activated ability. Null for the non-acting viewer, with
+ * no Stadium in play, or for a continuous-only Stadium. `disabled` folds the engine's gate; `label`
+ * is the Stadium's name.
+ */
 export const redactedStadiumAbilitySchema = z.object({
   label: z.string(),
   disabled: z.boolean(),
@@ -394,29 +241,20 @@ export const redactedStadiumAbilitySchema = z.object({
 });
 export type RedactedStadiumAbility = z.infer<typeof redactedStadiumAbilitySchema>;
 
-/** 🆕🆕🆕 D576 — one of the acting viewer's OWN in-play bodies whose top card may be discarded
-    from play right now: an Antique Fossil's printed *"At any time during your turn, you may
-    discard this card from play."* (R-FO3). `target` is the seatless spot the
-    `discardFromPlay` action dispatches back VERBATIM; `label` the display string ("Name
-    (Active)" / "Name (Bench 2)"). Server-computed by the engine's one offer funnel
-    (`discardableTargets`), so the client needs no engine logic. Only the acting viewer's own
-    main phase carries entries — [] for the non-acting viewer, a spectator, and inside Festival
-    Lead's attack-again window. */
+/**
+ * An own in-play body whose top card may be discarded from play now (an Antique Fossil). `target`
+ * is dispatched back verbatim to `discardFromPlay`. [] outside the acting viewer's main phase.
+ */
 export const redactedDiscardableSchema = z.object({
   target: redactedPokemonTargetSchema,
   label: z.string(),
 });
 export type RedactedDiscardable = z.infer<typeof redactedDiscardableSchema>;
 
-/** A specific in-play Pokémon a prompt refers to — the wire mirror of the
-    engine's `PokemonRef`. Its `seat` is ABSOLUTE (p1/p2), NOT viewer-relative
-    like the rest of RedactedGame, and deliberately: these refs must round-trip
-    to the engine's own `PokemonRef` (so the reconstructed local decision equals
-    the wire one) AND ride the dispatched `resolveEffect` choice back to the DO
-    VERBATIM (the DO rebinds the ACTING seat, never a choice's target refs). Not
-    a leak — every in-play Pokémon is public once setup is over, and the viewer
-    already knows which absolute seat it is (`RedactedGame.seat`); the client
-    resolves a ref to a board Pokémon by comparing `ref.seat` to that own seat. */
+/**
+ * Wire mirror of `PokemonRef`. `seat` is absolute, not viewer-relative, so refs round-trip to the
+ * engine and back verbatim; not a leak, since in-play Pokémon are public.
+ */
 export const redactedPokemonRefSchema = z.object({
   seat: matchSeatSchema,
   spot: z.discriminatedUnion("spot", [
@@ -426,34 +264,11 @@ export const redactedPokemonRefSchema = z.object({
 });
 export type RedactedPokemonRef = z.infer<typeof redactedPokemonRefSchema>;
 
-/** How many cards a discard prompt asks for — the wire mirror of the engine's
-    `DiscardScope`: `total` = exactly `count` uids across the whole offer,
-    `each` = exactly one uid from every distinct host Pokémon offered, and
-    `upTo` = ANY count from 0 to `max`, the one DECLINABLE scope.
-
-    🆕🆕🆕 **D543 — `upTo` WAS MISSING HERE AND THE DOC BLOCK ABOVE USED TO SAY
-    SO IN ITS OWN VOICE**: it read *"the wire mirror of the engine's
-    `DiscardScope`"* and then enumerated TWO of that union's THREE members.
-    ⚠️ **THAT ENUMERATION IS A WITHDRAWN CLAIM AND NOT A TYPO**, because
-    `redact.ts`'s `redactedScopeOf` was written to match it — a two-arm ternary
-    that collapsed every `upTo` into `{ kind: "each" }` and then `satisfies`-d the
-    RESULT against the ENGINE type, which pins neither the input's exhaustiveness
-    nor the wire's shape. So an online Chien-Pao ex "Hail Blade" park crossed the
-    wire as a MANDATORY one-per-Pokémon pick: the remote dialog demanded an exact
-    answer to a declinable question and the server refused whatever it sent.
-    The engine member has existed since D359; nothing on the wire ever spelled it.
-
-    🛑 **`max` AND NOT `count`, DELIBERATELY** — the two mandatory scopes name an
-    EXACT quantity and this one names a CEILING, so a shared spelling would let a
-    client read "discard exactly `count`" off a prompt that means "0 up to `max`".
-    That is the same word the engine's own member uses (`interpreter.ts`'s
-    `{ kind: "upTo"; max: number }`), and the redactor copies it across unchanged.
-
-    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED FOR THIS MEMBER.** `RedactedBoard`
-    and every schema under it are the WIRE projection, rebuilt from `GameState` on
-    every send; `MatchRecord` persists the engine state and the RENDERED log, never
-    a redacted prompt. A new wire member is therefore new BYTES ON THE WIRE only,
-    which is D141's already-settled case. */
+/**
+ * How many cards a discard prompt asks for: `total` is exactly `count` uids, `each` is one per
+ * offered host, `upTo` is 0 to `max` (declinable). `max` rather than `count` because it is a
+ * ceiling.
+ */
 export const redactedDiscardScopeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("total"), count: z.number() }),
   z.object({ kind: z.literal("each") }),
@@ -471,71 +286,25 @@ export const redactedEnergyOfferSchema = z.object({
 });
 export type RedactedEnergyOffer = z.infer<typeof redactedEnergyOfferSchema>;
 
-/** The redacted mid-effect prompt (§15.E/G) the answering client renders a
-    dialog for — the engine's full `EffectPrompt` mapped to the neutral wire
-    shape, exactly as `RedactedGame` does for the board (P4 increment 2b-iii).
-    It rides `effect:choose` (below) NULLABLE and is populated ONLY for the seat
-    that must answer it (`phase.answerer ?? phase.seat`) — every other viewer
-    gets null. That answerer gate is the whole point: a prompt's candidates CAN
-    be built from the ANSWERER's private zones (a deck search's uids, a "look at
-    the top N", 🆕 D426's opponent-chosen HAND discard), so the raw prompt must
-    never reach the other side of the wire. ⚠️ **"ANSWERER", NOT "CONTROLLER" —
-    D426 CORRECTED THAT WORD HERE AND AT THREE OTHER SITES.** The two were the
-    same seat for every hidden-candidate producer until this op parked one on the
-    non-controller; the field's own `phase.answerer ?? phase.seat` spelling one
-    line up was right the whole time. `redactedPromptOf` (redact.ts) is STRICTER than `phaseViewOf`'s
-    hot-seat `withheld` — the wire delivers a payload to one client, so a
-    controller-answered prompt goes to the CONTROLLER ALONE, where the local
-    projection may keep it in both viewers' (never-rendered) `pendingDecision`.
-    The two coincide exactly when `answerer` is set (ALWAYS for `mayDraw`); for
-    a CONTROLLER-answered kind the wire is strictly stricter, so a park of one of
-    those round-trips to the local projection for the ANSWERER's view only (see
-    redact.ts for the full reasoning).
-
-    A DISCRIMINATED UNION on `kind`, mirroring `EffectPrompt`'s arms — but only
-    the arms whose online dialog exists so far. **2b-iii-a landed `mayDraw`**
-    (Ortega's "your opponent may draw a card") — a pure yes/no with no card
-    references, the arm that made the answerer gate load-bearing (its answerer is
-    the non-controller). **2b-iii-b adds the PUBLIC-REF family**
-    (choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy): their
-    candidates are all in-play `PokemonRef`s and attached-Energy uids, ALREADY on
-    the public redacted board, so the wire carries the refs/uids and the client
-    resolves display identity against the board — no hidden-card resolution.
-    These are controller-answered. **2b-iii-c adds the HIDDEN-CANDIDATE family**
-    (chooseCards / attachCards): their candidates are the CONTROLLER's own deck /
-    looked-at-top / hand / discard cards — the deck ones HIDDEN even from the
-    controller until the effect REVEALS them — so the wire carries a server-
-    resolved **`RedactedCard` per candidate** (its identity, keyed by the engine
-    uid the answer dispatches back), and it goes to the CONTROLLER ALONE via the
-    same answerer gate. This is where that gate stops being a convenience and
-    becomes the HIDDEN-INFO barrier: a deck uid must never appear in the
-    opponent's snapshot (it doesn't — the opponent's prompt is null and their
-    view of both decks is a count). With every arm now dialoged, `resolveEffect`
-    goes ONTO the DO allowlist (the invariant). */
+/**
+ * The redacted mid-effect prompt, sent only to the seat that answers it (`phase.answerer ??
+ * phase.seat`), because candidates can come from the answerer's private zones. Public-ref arms
+ * carry board refs; hidden-candidate arms carry a resolved `RedactedCard` per candidate.
+ */
 export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   /** A yes/no owed by the ANSWERER (the non-controller): draw `count`, or
       decline. `note` addresses that answerer ("You may draw a card."). No card
       identity crosses — the whole decision is the `count`. */
   z.object({ kind: z.literal("mayDraw"), count: z.number(), note: z.string() }),
-  /** 🆕🆕🆕 D577 — Tyme's guess, owed by the ANSWERER (the controller's opponent): the HP of the
-      Pokémon whose NAME the controller told them. The name and the note only — the face-down
-      card's identity and HP never cross before the reveal (R-TY3). Answered with
-      `{ kind: "hpGuess", hp }`, an integer ≥ 0. A widening: the CLIENT deploys first. */
+  /**
+   * Tyme: the answerer guesses the HP of the Pokémon the controller named. Only the name crosses
+   * before the reveal. Answered with `{ kind: "hpGuess", hp }`.
+   */
   z.object({ kind: z.literal("guessHp"), name: z.string(), note: z.string() }),
-  /** The printed "**You may** …" (the engine's `optional` op), answered by the
-      CONTROLLER — a bare yes/no whose "yes" splices the op's branch into the
-      running program and whose "no" runs nothing. The smallest arm in this union
-      and the only one carrying NO number and NO references at all: the `note` is
-      the printed sentence and the answer is the whole content, so there is
-      nothing for the server to resolve and nothing that could leak. A sibling of
-      `mayDraw` rather than a widening of it — that arm's `count` is a printed
-      number its dialog renders, and this prompt has none.
-
-      🆕🆕🆕 D557 — `labels`, the two BUTTON captions of a printed *"Choose 1:"*
-      (Kieran): `yes` names the spliced branch, `no` the `otherwise`. OPTIONAL, and it
-      MUST be declared here: `z.object` STRIPS unknown keys, so an undeclared field
-      would be dropped at the parse and the online dialog would silently fall back to
-      Yes / No over a two-bullet card. Absent on every unlabeled park. */
+  /**
+   * A printed "You may …", answered yes/no by the controller. Optional `labels` caption the two
+   * buttons of a printed "Choose 1:"; it must be declared because `z.object` strips unknown keys.
+   */
   z.object({
     kind: z.literal("confirm"),
     note: z.string(),
@@ -543,83 +312,22 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     cards: z.object({ yes: redactedCardSchema, no: redactedCardSchema.optional() }).optional(),
     targets: z.array(redactedPokemonRefSchema).optional(),
   }),
-  /** 🆕 D341 — PUT THE LOOKED-AT CARDS BACK IN ANY ORDER (Iron Valiant `sv05-080`
-      "Calculation"; Team Rocket's Dottler `sv10-088` and Gothorita `sv10.5w-042`/
-      `-125` "Fortunate Eye", which order the OPPONENT's deck). The ninth prompt
-      kind, and the first whose answer is a SEQUENCE rather than a selection.
-
-      **HIDDEN-ZONE FAMILY, and the strongest member of it.** `candidates` carry
-      full identity (`RedactedCard`) for `chooseCards`'s reason — they are deck
-      cards the effect turns face-up to one player — and on three of the four
-      printings that player is not the deck's owner, so the answerer gate is doing
-      real work rather than being a convenience. The deck's owner receives a
-      count-only log row and no identities at all.
-
-      **NO `min` AND NO `max`, unlike every other card-carrying arm here**: the
-      answer is a permutation of the whole `candidates` array or it is invalid, so
-      a floor and a ceiling could only ever be `candidates.length` twice over. The
-      array ORDER is the answer's content — index 0 is the new top of the deck —
-      and the order `candidates` arrives in is the deck order it is starting from,
-      which is why a client must not sort it for display.
-
-      🆕 **D344 — `alt` IS THE PRINTED SECOND ARM's CAPTION** (Deduction Kit
-      `sv08-171`: *"…, or shuffle them and put them on the bottom of your
-      deck"*), and its PRESENCE is what makes an EMPTY answer legal — the client
-      renders it as a second button that dispatches `{kind:"orderCards", uids:
-      []}`. OPTIONAL, so this is a widening (D125): every producer before D344
-      omits it and parses identically, and no persisted record can hold one. */
+  /**
+   * Put the looked-at cards back in any order. Candidates arrive in current deck order and the
+   * answer is a permutation with index 0 as the new top, so clients must not sort them. `alt`
+   * captions a printed second option and makes an empty answer legal.
+   */
   z.object({
     kind: z.literal("orderCards"),
     candidates: z.array(redactedCardSchema),
     note: z.string(),
     alt: z.string().optional(),
   }),
-  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — and,
-      where `upTo` carries a printed ceiling, say how many of the moved thing the
-      pick takes, down to NONE. The candidates are public in-play refs.
-
-      (🆕🆕🆕 D574 (D539): ~~"`upTo` IS THE PRINTED"~~ is WITHDRAWN for one producer — Sableye /
-      Alakazam's loop prints no number, so its `upTo` is the LIVE engine-written budget (R-AK1):
-      the counters on the source zone when the op first stepped, less what earlier rounds moved.
-      It also counts counters on §11-shielded bodies that can never move, so it can exceed what is
-      movable; the engine clamps the taken amount silently. The wire shape and its meaning as a
-      ceiling are unchanged.)
-      🆕🆕 **D359 — `upTo` IS THE PRINTED *"attach up to N"* AND IT REPLACES
-      D358's `declinable`**, which was the same right at width one. Six sentences
-      and 13 Standard-legal printings spell a ceiling above one (Ethan's Ho-Oh ex
-      ×4, Bloodmoon Ursaluna ×2, Lycanroc ×2, Oricorio ×2, Regirock ex ×2,
-      Kilowattrel ex ×1), and Archaludon ex ×3 / Magneton ×3 spell it at one. It
-      has to CROSS: the dialog decides which quantities to offer at all, and
-      `validateChoice` decides whether a ref-less or short answer is a printed
-      right or a crafted frame refusing a mandatory effect. Neither of them can
-      see the engine op, which is the same argument `moveEnergy`'s `anySource`
-      makes three arms down.
-
-      **OPTIONAL, and absent means MANDATORY EXACTLY-ONE** — the reading every
-      park in this arm carried before the field existed — unlike
-      `choosePokemonMulti`'s required boolean below. That is not a style
-      difference: this prompt rides the persisted `effect:choose` phase, so a
-      snapshot written by an earlier deploy must parse.
-
-      🛑 **BUT PARSING IS NOT READING, AND THIS IS WHY `MATCH_RECORD_VERSION`
-      MOVES 21 → 22 WHERE D358's WIDENING LEFT IT ALONE.** A v21 snapshot carries
-      `declinable: true`, which this schema no longer names; it parses (the key is
-      simply dropped) and then reads as `upTo === undefined`, i.e. MANDATORY — so
-      a resumed match would refuse a decline the player was promised. A widening
-      is safe because the old bytes still mean what they meant; a RENAME is not.
-      D352 made exactly this call for `attachFromTop.discardRest` → `restTo`.
-
-      🆕🆕🆕 **D572 — `takeVerb` IS THE QUANTITY ROW'S VERB, OPTIONAL, AND ABSENT READS "attach".**
-      Munkidori "Adrena-Brain" moves up to 3 DAMAGE COUNTERS, so its rows read "move N". A
-      WIDENING in D441's sense — every older snapshot carries no key and meant "attach" — so
-      `MATCH_RECORD_VERSION` does not move; an older deploy's schema strips the key (zod drops
-      undeclared keys), and the dialog there captions the same number "attach".
-
-      🆕🆕🆕 **D579 — AND A SECOND VALUE, `"put"`** (Walking Wake "Undulating Slice" puts up to 9
-      damage counters on itself, so its rows read "put N"). 🛑 **THIS ONE IS NOT STRIPPED BY AN
-      OLDER SCHEMA**: zod drops an undeclared KEY, but a declared key holding an undeclared VALUE
-      fails `z.literal("move")` and the whole frame is REFUSED. So the CLIENT DEPLOYS FIRST (apps/api
-      match.ts "D579"); old snapshots carry "move" or nothing and still parse here. */
+  /**
+   * Pick one in-play Pokémon. Optional `upTo` is a ceiling on how much the pick takes, down to
+   * none; absent means mandatory exactly one. `takeVerb` captions the quantity rows; absent reads
+   * "attach".
+   */
   z.object({
     kind: z.literal("choosePokemon"),
     candidates: z.array(redactedPokemonRefSchema),
@@ -647,34 +355,10 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     declinable: z.boolean(),
     note: z.string(),
   }),
-  /** Move up to `max` Energy from ONE source Pokémon to ONE destination (Energy
-      Switch / Poppy). `movable` pairs each takeable Energy uid with its host;
-      `destinations` are the eligible destinations. Declinable (move none).
-
-      `anySource` (D226) is the printed plural — N's Plan's "Move up to 2 Energy
-      from your Benched **Pokémon** to your Active Pokémon" — and lifts the ONE-
-      source rule: the answer may take Energy off several of the offered hosts.
-      OPTIONAL, and absent means the coupling every other printing carries, so a
-      prompt written by a build that predates the rider round-trips unchanged.
-      The dialog reads it to skip its source-picking STAGE, and `validateChoice`
-      reads it to allow the answer; neither can see the engine op, which is why
-      it crosses at all.
-
-      🆕🆕 **D441 — `min` IS THE PRINTED FLOOR**, and it is what makes Castform's
-      *"Move **all** Energy from this Pokémon to 1 of your Benched Pokémon."*
-      answerable rather than merely offerable: `min === max` means the quantity is
-      not a decision and only the destination is. Same split `chooseCards` has
-      carried since M4 (0 = the printed "up to"; `min === max` = a mandatory exact),
-      and the online dialog reads it to withhold "Move none" exactly as
-      `validateChoice` reads it to refuse the empty answer.
-
-      **OPTIONAL, AND — UNLIKE D359's `upTo` DIRECTLY ABOVE — THAT COSTS NO
-      `MATCH_RECORD_VERSION` BUMP.** This prompt rides the persisted
-      `effect:choose` phase, so a v29 snapshot can hold one; it carries no `min`,
-      and no `min` meant DECLINABLE both before this field and after it. D359 bumped
-      because absent came to mean MANDATORY where the old bytes meant declinable —
-      the same shape pointing the other way. *"Does the old byte string still mean
-      what it meant"* is the discriminator, and here it does. */
+  /**
+   * Move up to `max` Energy from one source to one destination; declinable. `anySource` lets the
+   * answer take from several hosts. `min` is the printed floor; `min === max` fixes the quantity.
+   */
   z.object({
     kind: z.literal("moveEnergy"),
     movable: z.array(redactedEnergyOfferSchema),
@@ -695,59 +379,30 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     scope: redactedDiscardScopeSchema,
     note: z.string(),
   }),
-  /** 🆕🆕🆕 **D543 — the ELEVENTH member: discard Pokémon Tools off the
-      OPPONENT's board** (an attack's printed *"Discard up to 2 Pokémon Tools from
-      your opponent's Pokémon."*). `discardable` pairs each takeable TOOL uid with
-      the in-play Pokémon it is attached to; `scope` is always `upTo`, so the
-      answer may be EMPTY — this is the family's first declinable discard on the
-      wire, and the member Part 0 of that slice had to add to
-      `redactedDiscardScopeSchema` before this one could exist.
-
-      ⚠️ **THE OFFER SCHEMA IS REUSED AND THE NAME IS NOT A MISTAKE.**
-      `redactedEnergyOfferSchema` is *"uid + the Pokémon it sits on"* and nothing
-      more — the same wire shape a Tool offer needs — so a second identical schema
-      would be two spellings of one figure. The prompt KIND is what says which
-      attached array the uids came out of, which is also what keeps a Tool uid from
-      being answered into the Energy apply. Every candidate is face up on the
-      table. */
+  /**
+   * Discard up to N Pokémon Tools from the opponent's board. Reuses the Energy offer schema (uid
+   * plus host); scope is always `upTo`, so the answer may be empty.
+   */
   z.object({
     kind: z.literal("discardTools"),
     discardable: z.array(redactedEnergyOfferSchema),
     scope: redactedDiscardScopeSchema,
     note: z.string(),
   }),
-  /** Pick `min`..`max` cards (a deck search / discard retrieval / look-at-top /
-      a §7.5 hand cost). `candidates` carry FULL identity (`RedactedCard`) because
-      a deck-search candidate is HIDDEN until this effect reveals it — the server
-      resolves each so the controller's dialog can name them without the full
-      state; the answer dispatches back the `id` (engine uid) of each pick. `min`
-      is the DECLINABLE split (0 = the printed "up to", `min === max === count` =
-      a mandatory exact cost); `dest` is where the picks go (the ENGINE's word —
-      "deck" is shuffled-in, "deckBottom" is under-the-deck, and D307's "evolve" is
-      *onto the Pokémon that is asking* — the first member that names a BODY
-      rather than a zone, and the reason it is a member rather than a reuse of
-      "bench": the destination is the ENGINE's to state, and a client told "bench"
-      about "put it onto this Pokémon to evolve it" would name the wrong place in
-      its own words), and 🆕 D342's "deckTop" is *back on top of the deck they came
-      out of* — the THIRD way into a deck beside "deck" (shuffled in) and
-      "deckBottom" (underneath), split apart for that same reason: a client told
-      "deck" about Ciphermaniac's Codebreaking would render "Shuffle" over a
-      heading that says on top of your deck. Controller-only. */
+  /**
+   * Pick `min`..`max` cards. Candidates carry full identity because deck cards are hidden until
+   * revealed. `min` 0 means "up to". `dest` is the engine's word for where picks go ("evolve" means
+   * onto the asking Pokémon, "deckTop" back on top of the deck). Controller-only.
+   */
   z.object({
     kind: z.literal("chooseCards"),
     candidates: z.array(redactedCardSchema),
     min: z.number(),
     max: z.number(),
-    // 🆕🆕🆕 D565 — "attach" (Impromptu Carrier: a deck-searched Tool attached to the
-    // Pokémon whose Ability searched). A widening; no older member moves.
-    // 🆕🆕🆕 D566 — "swap" (Ogre's Mask: a discard-pile card switched in for an in-play body's
-    // top card). A widening; no older member moves.
-    // 🆕🆕🆕 D577 — "name" (Tyme: a card in hand NAMED, which moves nowhere). A widening.
-    // 🆕🆕🆕 D580 — "use" (Mr. Mime "Look-Alike Show": the EFFECT of a Supporter in the
-    // opponent's revealed hand is used; the card moves nowhere). A widening — a 0.463 client
-    // refuses it, so DEPLOY THE CLIENT FIRST.
-    // 🆕🆕🆕 D633 — "reveal" (Doublade "Weaponized Swords": cards in the controller's own hand are
-    // REVEALED and stay there). A widening — a 0.515 client refuses it, so DEPLOY THE CLIENT FIRST.
+    // "attach": a searched Tool attached to the searching Pokémon. "swap": a discard-pile card
+    // switched in for an in-play top card. "name": a card named, which moves nowhere. "use": a
+    // Supporter's effect used from the opponent's revealed hand. "reveal": cards revealed and kept
+    // in hand. Each new value requires deploying the client first.
     dest: z.enum([
       "bench",
       "hand",
@@ -762,39 +417,23 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       "use",
       "reveal",
     ]),
-    /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
-        Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
-        each entry caps how many picks may come out of ITS `uids`, which are the
-        same `RedactedCard.id` keys the answer dispatches on. Absent on every
-        other producer, where one filter and one cap are the whole story — so
-        absent is not "uncapped", it is "the total IS the only cap".
-        ⚠️ IT LEAKS NOTHING THE PROMPT DID NOT ALREADY GIVE: the ids are a
-        PARTITION of `candidates`, which the controller has already been shown in
-        full, and this arm goes to the controller alone. */
+    /**
+     * Per-kind caps ("a Pokémon and a Trainer card"): each entry caps picks from its `uids`, while
+     * `max` stays the total. Absent means the total is the only cap.
+     */
     caps: z.array(z.object({ uids: z.array(z.string()), max: z.number() })).optional(),
-    /** 🆕🆕🆕 D566 — the DISJUNCTIVE caps, `caps`' dual (Brock's Scouting: *"up to 2 Basic
-        Pokémon OR 1 Evolution Pokémon"*): an answer must lie WHOLLY in ONE entry's `uids`
-        and within THAT entry's `max`. Optional — absent on every other producer — and it
-        leaks nothing for `caps`' reason: the ids are drawn from `candidates`, which the
-        controller has already been shown. ⚠️ Without this key zod STRIPS it, and the
-        client would afford a mixed answer the engine then refuses. */
+    /**
+     * Disjunctive caps ("up to 2 Basic Pokémon or 1 Evolution Pokémon"): an answer must lie wholly
+     * in one entry's `uids` within that entry's `max`.
+     */
     capsAnyOf: z.array(z.object({ uids: z.array(z.string()), max: z.number() })).optional(),
     note: z.string(),
   }),
-  /** Attach cards out of the controller's DECK (top or search) onto their own
-      Pokémon, "in any way you like" (Electric Generator / Charizard ex / Janine).
-      `candidates` carry FULL identity (`RedactedCard`, same reason as chooseCards
-      — they are hidden deck cards the effect reveals); `targets` are the eligible
-      own in-play refs (public board); `max` is how many may attach; `maxPerTarget`
-      caps per-target ("for each of those Pokémon"), absent = no per-target limit.
-      🆕 `oneTarget` is that key's DUAL (D457) — the printed "attach them to
-      **1 of** your Pokémon", where every card in the answer must name the SAME
-      target; absent = "in any way you like", any split. A LITERAL `true` rather
-      than a boolean, so absence is the only way to spell "no constraint": a
-      `false` on the wire would be a second encoding of the same state, which is
-      the optional-key rule this file keeps everywhere.
-      DECLINABLE (attach none). The answer pairs each picked `id` with a target
-      ref. Controller-only. */
+  /**
+   * Attach deck cards onto the controller's own Pokémon. `maxPerTarget` caps per target;
+   * `oneTarget` (literal true) requires every card to go to the same target. Declinable;
+   * controller-only.
+   */
   z.object({
     kind: z.literal("attachCards"),
     candidates: z.array(redactedCardSchema),
@@ -804,50 +443,20 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     oneTarget: z.literal(true).optional(),
     note: z.string(),
   }),
-  /** Pick exactly ONE of another Pokémon's printed ATTACKS, to bar it for that
-      Pokémon's next turn (D157 — Medicham sv01-111 "Acu-Punch-Ture", Oranguru
-      sv02-094 "Plotter's Command"). The eighth prompt kind, and the one that does
-      not sit cleanly on either side of the split above.
-
-      It belongs to the **PUBLIC-REF** family by its hidden-information reading:
-      the candidates are the printed attacks of a FACE-UP opposing Active, which
-      both players can read off the table, so the answerer gate is a convenience
-      here (only one seat answers) and not the barrier it is for a deck search.
-      Nothing is resolved out of a private zone.
-
-      But unlike every other public-ref arm it carries a resolved **`name`**, and
-      the reason is a gap in the wire rather than a reveal: a `PokemonRef` or an
-      attached-Energy uid resolves against the redacted board the client already
-      holds, and an attack INDEX resolves against nothing — `RedactedCard` carries
-      no attack rows, and `RedactedAttack[]` is published for the viewer's OWN
-      Active only. Without the label the dialog would render numbered buttons. So
-      the two questions this union is organised by — *is the answerer gate
-      load-bearing?* and *must the server resolve a label?* — are independent, and
-      this is the first arm that answers NO to the first and YES to the second.
-
-      `index` is the answer's whole content and is the engine's own addressing
-      (the `attack` action's discriminant, the registry's `attack` key,
-      `InPlayPokemon.lockedAttack.attackIndex`) [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.]; the answer dispatches it back
-      verbatim and `validateChoice` checks it against this offer. MANDATORY — the
-      printed sentence is "Choose 1", with no "you may", so there is no decline
-      and no bounds pair to carry. Never empty and never a singleton: the engine
-      resolves both degenerate boards inline rather than parking. */
+  /**
+   * Pick one of another Pokémon's printed attacks to bar it next turn. Carries a resolved `name`
+   * because an attack index cannot be resolved against the redacted board. Mandatory; never empty
+   * or a singleton.
+   */
   z.object({
     kind: z.literal("chooseAttack"),
     candidates: z.array(z.object({ index: z.number(), name: z.string() })),
     note: z.string(),
   }),
-  /** 🆕🆕🆕 D548 — pick exactly ONE of your own FACE-DOWN prize slots to turn face up
-      (Cresselia `sv06.5-021` "Crescent Purge"). PUBLIC-REF by construction: `indices`
-      address the answerer's own prize row, whose shape both players already hold
-      (`prizesRemaining` + `faceUpPrizes`), and they are the ONLY content — no uid and no
-      card id, because every offered slot is face down. Mandatory (the decline was the
-      confirm in front of it); never empty and never a singleton. The answer is
-      `{kind: "prize", index}`, checked against this offer by `validateChoice`.
-      🆕🆕🆕 D567 NOTE (D539): *"your own"* / *"the answerer's own prize row"* are WITHDRAWN as the
-      kind's whole scope — Team Rocket's Bother-Bot `sv10-172` parks it over the OPPONENT's row,
-      answered by the controller; the shape is unchanged and every other sentence here holds on
-      that row too (both players hold its shape; every offered slot is face down). */
+  /**
+   * Pick one face-down prize slot to turn face up. `indices` address a prize row whose shape is
+   * public. Mandatory; never empty or a singleton.
+   */
   z.object({
     kind: z.literal("choosePrize"),
     indices: z.array(z.number()),
@@ -856,18 +465,10 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
 ]);
 export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
 
-/** The redacted engine `Phase` — the discriminant the client routes ACTIONS
-    on (P4 increment 2). Carries the kind plus only the non-sensitive fields the
-    acting client needs: setup:drawExtra the RECIPIENT's own owed compensation
-    count, setup:place the viewer-relative ready flags, turn:action the viewer's
-    OWN attack options (empty for the non-acting viewer) and retreat option (null
-    for it), the ko interrupts their counts. The mid-effect `effect:choose`
-    carries the redacted `prompt` (above) NULLABLE — non-null only for the seat
-    that must answer it, so the controller's private candidates never reach the
-    other viewer (null for the non-answerer). Every prompt kind is now dialoged
-    (2b-iii-a/b/c), so the only reason it is null is the answerer gate.
-    `activePlayer`/`waitingOn` (server-computed via phaseViewOf, which reads the
-    pending queue) still say WHO acts; this says WHAT kind. */
+/**
+ * The redacted engine `Phase` the client routes actions on, carrying only non-sensitive fields. The
+ * `effect:choose` prompt is non-null only for the answering seat.
+ */
 export const redactedPhaseSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("setup:chooseFirst") }),
   z.object({ kind: z.literal("setup:drawExtra"), owed: z.number() }),
@@ -882,11 +483,10 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
     kind: z.literal("turn:action"),
     attacks: z.array(redactedAttackSchema),
     retreat: redactedRetreatSchema.nullable(),
-    /** The acting viewer's own activated Abilities + hand Trainers (Items,
-        Supporters, Rare Candy and — D288 — Stadiums), each with server-folded
-        playability (increment 3b); [] for the non-acting
-        viewer. Like `attacks`, they never enter the playmat projection, so the
-        `projectionFromRedacted ≡ projectGameState` round-trip is untouched. */
+    /**
+     * The acting viewer's activated Abilities and hand Trainers with server-folded playability; []
+     * for the non-acting viewer.
+     */
     abilities: z.array(redactedAbilitySchema),
     trainers: z.array(redactedTrainerSchema),
     /** The legal Rare Candy pairings behind the `rareCandy`-flagged Trainer row
@@ -896,17 +496,15 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
         Candy is played — the row supplies the `uid`, this supplies the rest —
         matching the local HUD, where the dialog calls `rareCandyOptions` itself. */
     rareCandy: z.array(redactedRareCandyOptionSchema),
-    /** §7.3 — the shared Stadium's activated ability (D210); null for the
-        non-acting viewer, when no Stadium is in play, and when the Stadium in
-        play is continuous-only. A NULLABLE SINGLE rather than a list because
-        there is exactly one shared Stadium and the action takes no target —
-        which is also why it could not ride `abilities`, whose every entry names
-        a Pokémon on the actor's own board. */
+    /**
+     * §7.3: the shared Stadium's activated ability; null for the non-acting viewer, with no
+     * Stadium, or for a continuous-only Stadium.
+     */
     stadiumAbility: redactedStadiumAbilitySchema.nullable(),
-    /** 🆕🆕🆕 D576 — the actor's own bodies whose top card may be discarded from play (an
-        Antique Fossil, R-FO3) — `redactedDiscardableSchema`. REQUIRED: a new client reading an
-        old server's frame would refuse it, while an old client's `z.object` STRIPS the unknown
-        key — so **DEPLOY THE SERVER FIRST**. [] for the non-acting viewer. */
+    /**
+     * The actor's own bodies whose top card may be discarded from play; [] for the non-acting
+     * viewer. Required, so deploy the server first.
+     */
     discardable: z.array(redactedDiscardableSchema),
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
@@ -933,15 +531,11 @@ export const redactedOutcomeSchema = z.discriminatedUnion("result", [
 ]);
 export type RedactedOutcome = z.infer<typeof redactedOutcomeSchema>;
 
-/** A game action as it crosses the wire FROM a client (P4 increment 2). The
-    engine's `GameAction` is a large discriminated union it keeps as the single
-    source of truth; a full Zod mirror here would duplicate it, so the wire
-    schema is deliberately LOOSE — an object with a string `type`, all other
-    fields preserved (`z.looseObject`) — because the DO does NOT trust it: it
-    OVERWRITES `seat` with the socket's own bound seat and hands the action to
-    `applyAction`, whose never-throw totality (D14 — the wire's bogus type/seat
-    must not throw) is the real validator. A strict object would instead be a
-    bug (it would strip the action's uid/target), hence the loose object. */
+/**
+ * A client action, deliberately loose (`z.looseObject`): the DO overwrites `seat`, and
+ * `applyAction`, which never throws, is the real validator. A strict object would strip the
+ * action's fields.
+ */
 export const wireActionSchema = z.looseObject({ type: z.string() });
 export type WireAction = z.infer<typeof wireActionSchema>;
 

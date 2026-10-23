@@ -1,14 +1,6 @@
-// The typed client for the api Worker (backend-data.md §6) — the ONE module
-// features go through to talk to the backend over http. Every URL derives
-// from apiOrigin.ts, every request sends the session cookie (`credentials:
-// "include"` — the cookie is SameSite=None and the api is cross-origin), and
-// every non-2xx becomes a typed ApiError so features can branch on `.status`.
-//
-// TYPES-ONLY by design: this module imports nothing but types from
-// @colorless/schema — no zod, no runtime schema values — so the web bundle
-// stays zod-free (the same constraint that split zod off the online chunk in
-// M8). The api already boundary-parses everything it serves; the client
-// trusts the wire and casts to the shared types.
+// The typed client for the api Worker, the one module features use to talk to the backend. Every
+// request sends the session cookie (`credentials: "include"`, since the cookie is SameSite=None and
+// the api is cross-origin), and every non-2xx becomes a typed ApiError.
 
 import type {
   Card,
@@ -50,15 +42,8 @@ export class ApiError extends Error {
   }
 }
 
-// ---- Session recovery (the ONE owner of 401 → re-probe → retry-once) --------
-// A mid-session 401 usually means the cookie expired, but it can also be a
-// one-off (a session rotated in another tab, a hiccup). Instead of every
-// adapter hand-rolling "on 401, re-probe the account", the client owns it: an
-// unexpected 401 asks the installed handler to re-probe the session, and if
-// the session turns out to still be alive the failed request is retried once.
-// When the probe lands on signed-out, the handler's own state change (the Lua
-// account bridge, src/lua/bridge.ts) flips the UI; the 401 then propagates to
-// the caller as before.
+// Session recovery: an unexpected 401 asks the installed handler to re-probe the session, and if it
+// is still alive the failed request is retried once.
 
 /** Re-probe the session; resolve true when it's still alive (retry the
     request), false when the user is really signed out. */
@@ -195,12 +180,11 @@ export type CardsQuery = {
   serie?: string;
   /** Exact illustrator, case-sensitive — values come verbatim from GET /facets. */
   illustrator?: string;
-  /** Case-insensitive substring over RULES TEXT: ability/attack names and
-      effects, plus Trainer/Special-Energy `effect` prose. (Known imprecision:
-      the ability/attack halves match inside the stored JSON blobs, so a term
-      can brush a key name; the `effect` half is prose and does not. The
-      Trainer/Energy half landed in D197 — before it, no term could return a
-      Trainer at all.) */
+  /**
+   * Case-insensitive substring search over rules text: ability and attack names and effects, plus
+   * Trainer and Special Energy effect prose. The ability and attack halves match inside stored
+   * JSON, so a term can hit a key name.
+   */
   text?: string;
   regulationMark?: string;
   /** Inclusive hp bounds. */

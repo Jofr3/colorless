@@ -1,97 +1,10 @@
 #!/usr/bin/env bun
 /**
- * THE OP-COVERAGE INSTRUMENT (D455) — `bun scripts/mutation/opcoverage.ts`.
- *
- * WHY THIS FILE EXISTS. D453 published `758 producer / 358 implementation /
- * 24 thin / 0 implementation-only / 11 unpinned` and shipped **no script**.
- * D454 could not re-run any of it, so it rebuilt the measurement from scratch —
- * and the rebuild reproduced D453's totals to ~2% while **falsifying its
- * structural conclusion** ("zero kinds are implementation-only"; there are 13).
- * A number nobody can re-run is not a measurement, it is a memory. D455's
- * standing rule: **the instrument that produces a coverage figure is committed
- * beside the corpus it measures, and when it disagrees with `docs/`, it wins.**
- *
- * WHAT IT ANSWERS, with no arguments:
- *   1. For each `EffectOp` kind, how many corpus rows quote its PRODUCER region
- *      and how many quote its IMPLEMENTATION region — and which kinds have rows
- *      on one seat and none on the other.
- *   2. The stopping rule: SEAT-LINE COVERAGE — the fraction of code lines in an
- *      op's implementation region that RESOLVE A SEAT and are quoted by at
- *      least one row's `find` span. (D455 head: 203/470 = 0.432, up from D454's 190/470 = 0.404.)
- *   3. The weaker ratio kept for continuity: rows per DECISION POINT.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * THE PREDICATE, STATED (D419 — a survey is as narrow as the shape it greps for)
- *
- * KINDS. Every `op: "<name>"` discriminator inside `effects.ts`'s
- * `export type EffectOp =` union, de-duplicated. Two kinds are declared TWICE
- * (`damageDefender`, `discardEnergy`), so the MEMBER count and the KIND count
- * are different numbers — this reports KINDS.
- *
- * IMPLEMENTATION REGION of kind K, in `interpreter.ts` only:
- *   · every `case "K":` arm of a `switch (op.op)` block (arms sharing one body
- *     through fallthrough labels each get the whole body), PLUS
- *   · the body of every top-level function in that file transitively reachable
- *     from such an arm whose FAN-IN over the kinds is ≤ `FANIN` (default 4).
- *     The cap is what admits `scheduleDelayed` (shared by three arms) while
- *     keeping `withActive` / `topUid` — called from everywhere — out. Without
- *     the transitive step, three ops with six rows between them report ZERO
- *     (D454 measured exactly that).
- *
- * PRODUCER REGION of kind K: the brace-block `LEV` levels (default 2) out from
- * each `op: "K"` literal in `effects.ts` and `registry.ts` — the deriver arm or
- * the registry program that emits the op.
- *
- * A ROW HITS a region when the character span of its `find` inside its own file
- * intersects the region. Rows whose `find` does not occur are skipped silently
- * here; `precheck.ts` is what makes that loud.
- *
- * A SEAT LINE is a non-comment, non-blank line inside an implementation region
- * matching `otherSeat(` | `ctx.seat` | `state.players[`. A DECISION POINT is a
- * non-comment, non-blank line matching `if (` | a ternary | `??` |
- * `Math.max/min(` | `case "` | `return state;` | `events.push(` | `otherSeat(`.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * ⚠️ WHAT THIS INSTRUMENT CANNOT SEE — read this before quoting a number.
- *
- * · **Implementations outside `interpreter.ts`.** `flow.ts`, `continuous.ts`,
- *   `attack.ts`, `turn.ts` and `cardplay.ts` hold real op behaviour (D434's
- *   Checkup half is in `flow.ts` and IS pinned); every row on those files is
- *   invisible to the implementation column and counts toward NOTHING here.
- * · **The three gates spliced by `runProgram`.** `coinFlipGate`,
- *   `conditionGate` and `recordGate` have dead one-line `case` arms because
- *   their work is the queue loop, whose fan-in is 74 and so is excluded by the
- *   cap. They report producer-ONLY and that is a **predicate artefact, not a
- *   gap** — the honest producer-ONLY figure subtracts these three.
- * · **Anything reachable only from the RESUME side.** `continuationOps` — the
- *   function that turns a park's answer into spliced ops, and so the real
- *   implementation of `optional`, `reorderTop`'s alternative and
- *   `moveCountersChosen`'s second half — is called from `resumeProgram`, not
- *   from any `case` arm, so **none of its six rows counts toward any op here.**
- * · **Any op whose real work sits behind a helper with fan-in > FANIN.**
- * · **Producers outside `effects.ts` / `registry.ts`** (a program assembled in a
- *   test fixture, or an op constructed inline elsewhere).
- * · **Whether a row is any GOOD.** This counts row·kind incidences and quoted
- *   lines. It says nothing about whether a mutant expresses a real defect,
- *   whether it is killed, or whether its `expectKilledBy` names a suite that
- *   loads the line. `bun run mutants` answers that; this does not.
- * · **Line attribution is by CHARACTER SPAN**, so one long `find` spanning a
- *   whole function scores every line it crosses. That is exactly why the seat
- *   rule is reported per-LINE (it cannot be inflated by widening a `find`
- *   across uninteresting lines) and the decision-point ratio is reported as the
- *   weaker of the two.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * WHERE IT SITS. `scripts/**` is outside `tsc -b`'s project references (see
- * `tsconfig.node.json`, which includes `vite.config.ts` and nothing else) and
- * outside vitest's include globs — deliberately, and for the same reason
- * `mutants.ts` and `run.ts` are: a harness that measures the suite has no
- * business inside the suite, and a dev tool has no business in the app's build
- * graph. Bun runs the TypeScript directly. Biome DOES lint it
- * (`files.include` carries `scripts/**` since D212) and `bun run lint:coverage`
- * requires it to be countable, so it is held to the repo's lint rules.
- *
- * Env overrides, none required: `FANIN` (default 4), `LEV` (default 2).
+ * Op-coverage instrument (`bun scripts/mutation/opcoverage.ts`): for each `EffectOp` kind, counts
+ * corpus rows quoting its producer region (effects.ts, registry.ts) and its implementation region
+ * (interpreter.ts case arms plus helpers with fan-in ≤ FANIN), and reports seat-line coverage. It
+ * cannot see implementations outside interpreter.ts, resume-side code such as `continuationOps`, or
+ * whether a row is any good. Env: `FANIN` (default 4), `LEV` (default 2).
  */
 
 import { readFileSync } from "node:fs";
@@ -135,12 +48,7 @@ function effectOpKinds(): { kinds: string[]; declarations: number } {
       break;
     }
   }
-  // ⚠️ COMMENTS MUST GO FIRST. The union's own doc blocks DISCUSS ops that do
-  // not exist — `{ op: "knockOut"; target: … }` at effects.ts 6248 and
-  // `{ op: "takePrizes"; count: number }` at 6379 are both prose about shapes
-  // that were considered and refused. A scan over raw lines reports 76 kinds and
-  // two phantoms with rows on neither seat, which reads exactly like a coverage
-  // gap. Stripping block and line comments returns the 74 that are declared.
+  // Strip comments first: the union's doc blocks mention op shapes that do not exist.
   const body = lines
     .slice(head + 1, end)
     .join("\n")
@@ -429,20 +337,9 @@ for (const k of KINDS) {
   if (p === 0 && i === 0) neither.push(k);
 }
 /**
- * The three gates `runProgram`'s queue loop splices before `stepOp` is ever
- * reached: producer-only BY PREDICATE, not by absence. Their `case` arms in
- * `stepOp` are marked *"never reach here"* and return the state unchanged, so a
- * row written there would be unreachable — D205 says REMOVE such a line, not
- * test around it. Their real implementations are `runProgram` lines ~990/1051/1060,
- * whose fan-in is 74 and which this predicate therefore cannot see.
- *
- * ⚠️ **`optional` IS NOT ONE OF THEM, AND D454's RESUME POINT LISTED IT AS THE
- * FOURTH.** Its `stepOp` arm is a REAL park (`{ kind: "confirm" }`), its apply
- * arm is a real (empty) case, and its yes/no splice is `continuationOps` on the
- * RESUME side — which is invisible here for a different reason: that function is
- * reachable from no `case` arm at all. Measured at D455: `continuationOps`
- * carries six rows including `D316-decline-buys-nothing`, which is `optional`'s
- * splice. So it read as "producer-only" while being pinned where it matters.
+ * The three gates `runProgram`'s queue loop splices before `stepOp`; producer-only by predicate,
+ * since their real work is in the loop. `optional` is not one of them; its splice is in
+ * `continuationOps`.
  */
 const SPLICED = ["coinFlipGate", "conditionGate", "recordGate"];
 const prodOnlyReal = prodOnly.filter((k) => !SPLICED.includes(k));

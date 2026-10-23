@@ -13,34 +13,16 @@ export type CoverCandidate = {
   count: number;
   /** "Pokemon" | "Trainer" | "Energy" — only Pokémon can be a cover. */
   category: string;
-  /** Printed HP; null on Energy and on most Trainers (🆕 D581: a Trainer that prints
-      an HP — an Antique Fossil, Snorlax Doll — carries it since D581; harmless here,
-      because the category check runs before HP is compared). */
+  /** Printed HP; null on Energy and most Trainers. */
   hp: number | null;
   /** Whether the catalog has a scan for it (`cards.image_url`). */
   hasImage: boolean;
 };
 
-/** A deck's cover card, or null when nothing in it qualifies (an empty deck, or
-    one with no Pokémon scan yet) — the caller falls back to the card back, which
-    is also exactly right for a deck you have only just created.
-
-    **The rule: the Pokémon with the highest printed HP.** HP is the best proxy
-    the catalog offers for "the card this deck is built around", and it is a
-    single number rather than a taxonomy to interpret: an ex/V/VMAX or a Stage 2
-    outranks the Basics that fetch it, WITHOUT needing to rank the `stage` values
-    against each other — which is what makes it beat the obvious alternatives.
-    Ranking by STAGE alone gets a Basic-ex deck wrong (a 330 HP Basic ex is the
-    deck's payoff, and would lose to any Stage 2 tech line); ranking by COUNT
-    alone gets almost every evolution deck wrong (the 4-of Basic beats the 3-of
-    Stage 2 it evolves into). Count still breaks HP ties, so between two equal
-    bodies the one the deck actually runs more of wins, and the card id breaks
-    the rest so the same deck always shows the same face.
-
-    It is a HEURISTIC and will occasionally pick a wall over the attacker beside
-    it. That is acceptable for a DEFAULT — since P5-6 the owner can pin their own
-    (see `effectiveCoverCardId`), and this is what a deck wears until they do.
-    Cards with no scan are skipped rather than picked and rendered blank. */
+/**
+ * A deck's cover card, or null when no Pokémon with a scan qualifies. Picks the Pokémon with the
+ * highest printed HP, breaking ties by copy count and then card id so the choice is stable.
+ */
 export function pickCoverCardId(candidates: readonly CoverCandidate[]): string | null {
   let best: CoverCandidate | null = null;
   for (const candidate of candidates) {
@@ -50,18 +32,10 @@ export function pickCoverCardId(candidates: readonly CoverCandidate[]): string |
   return best === null ? null : best.cardId;
 }
 
-/** The card a deck's grid tile actually draws: **the owner's pick wins**, and
-    everything else falls back to the derived default.
-
-    P5-6 — the follow-up P5-3 left room for. The pin is honoured only while it
-    names a card that is still IN the deck and still has a scan, which is why
-    this is a resolution rather than a plain `??`. PATCH keeps the first half
-    true (a pinned card removed from the deck drops the pin with it), so the
-    membership check here is a belt-and-braces on a row edited by some other
-    path — but the SCAN half is live: the catalog is re-ingested, and a deck must
-    never front a blank rectangle because a picture moved. Both checks run
-    against the candidate list the default is derived from anyway, so honouring
-    a choice costs no query at all. */
+/**
+ * The card a deck tile draws: the owner's pick when it is still in the deck and has a scan,
+ * otherwise the derived default.
+ */
 export function effectiveCoverCardId(
   chosen: string | null,
   candidates: readonly CoverCandidate[],

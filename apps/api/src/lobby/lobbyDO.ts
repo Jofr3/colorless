@@ -1,36 +1,9 @@
-// LobbyDO — one Durable Object per lobby code (§3.6), the server-side
-// replacement for the BroadcastChannel model's authoritative "host peer". It
-// owns the one true LobbySnapshot in DO storage, applies every validated
-// client intent through the SHARED, unchanged lobbyReducer, and broadcasts
-// the resulting snapshot to every connected socket.
-//
-// Hibernation: sockets are accepted with `state.acceptWebSocket`, so an idle
-// lobby is evicted from memory without dropping connections and burns no
-// duration. Everything needed to wake up mid-conversation survives eviction:
-// the snapshot in storage, each socket's player id in its attachment
-// (attachment.ts), and the keepalive is answered by `setWebSocketAutoResponse`
-// without waking the instance at all.
-//
-// One alarm, five duties (earliest deadline wins; alarm() re-derives all). The
-// labels below are the ones `alarm()` carries in its own body, so a reader can
-// jump between the two — 2 and 2b are numbered as a pair because the forfeit
-// check lives inside the same in-game branch as the countdown:
-//   0) liveness — every LIVENESS_SWEEP_MS while sockets are connected, a socket
-//      that stopped answering keepalives is closed (3c-viii); the auto-response
-//      below is precisely why nothing else could notice;
-//   1) disconnect graces — a dropped socket only marks its seat disconnected
-//      after DISCONNECT_GRACE_MS without a reconnect (logic.ts);
-//   2) the countdown — countdown → in-game after COUNTDOWN_MS, unless a seat's
-//      player vanished, who is demoted instead (the old host did the same);
-//   2b) match forfeits — a seat's ABANDON_GRACE_MS deadline (3c-ii/3c-v, on the
-//      snapshot) ends the running match for a player who never came back;
-//   3) empty-lobby expiry — EMPTY_LOBBY_TTL_MS after the last socket goes,
-//      storage is wiped, freeing the code.
-//
-// This class deliberately does NOT extend cloudflare:workers' DurableObject:
-// it's addressed purely over fetch (no RPC), and staying a plain class keeps
-// the module importable outside the workers runtime (vitest imports the app
-// via index.ts, which must export this class for wrangler).
+// One Durable Object per lobby code. It owns the snapshot, applies intents through the shared
+// reducer and broadcasts the result. Sockets use hibernation; the keepalive is answered by the
+// auto-response without waking the instance.
+// One alarm covers all deadlines: liveness sweeps, disconnect graces, countdown, match forfeits,
+// and empty-lobby expiry.
+// Not a `DurableObject` subclass, so the module imports outside the workers runtime.
 
 import {
   applyIntent,
@@ -244,14 +217,9 @@ export class LobbyDO {
         if (boundUserId === null && userId !== null) {
           await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
         }
-        // The seat's NAME is the account's, not the one the frame announced (P5).
-        // Resolved here rather than trusted, so a player cannot present themselves
-        // as someone else — which starts to matter the moment names stop being
-        // random. An anonymous socket (or an account with a blank name) keeps its
-        // announced handle; a signed-out player can sit in a lobby, they just
-        // can't start a match with a saved deck. The read is deliberately AFTER
-        // the refusal branches above, so a socket that gets no seat costs no D1
-        // query however often it retries.
+        // The seat's name comes from the account, not the frame. Anonymous sockets keep their
+        // announced name. The read happens after the refusal branches so a refused socket costs no
+        // D1 query.
         const name = (await loadDisplayName(drizzle(this.env.DB), userId)) ?? frame.name;
         // …and the face, from the same account (P5-2). Derived, not stored and
         // not read: it costs nothing beyond the userId the socket already holds.
@@ -464,14 +432,9 @@ export class LobbyDO {
         }
       }
 
-      // 2b) A player who never came back forfeits the running match (P4 3c-ii).
-      //     Judged on the FINAL `next` — after the flip, so a match that started
-      //     on this same alarm is never judged by a deadline armed for the
-      //     previous one — and CONSUMED in it, so clearing the deadline rides the
-      //     commit below instead of needing a second one. Consumed whether or not
-      //     the forfeit lands, so a stale deadline can't re-fire every alarm.
-      //     The concede itself waits until after the commit, so the board it
-      //     broadcasts is the snapshot the players have.
+      // A player who never came back forfeits. Judged on the final `next` so a match started on
+      // this alarm is not judged by a previous deadline. The deadline is consumed whether or not
+      // the forfeit lands, and the concede runs after the commit.
       const forfeiting: Seat[] = [];
       for (const { slot, deadline } of forfeitDeadlines(next)) {
         if (deadline > now) continue;
@@ -540,26 +503,11 @@ export class LobbyDO {
     await this.scheduleMaintenance(remaining);
   }
 
-  /** Close sockets that have stopped answering keepalives (P4 3c-viii) — the
-      half-open connection: a network that dies without a TCP close, leaving a
-      socket that looks perfectly live to the DO forever. Before this, such a
-      player was never marked disconnected, never started a forfeit clock, and
-      their opponent waited indefinitely; every ORDINARY exit (tab close, browser
-      kill, navigation, reload, crash) produces a close event, which is why it took
-      a deliberate `set offline` in a browser run to surface it.
-
-      The signal is the runtime's own: `setWebSocketAutoResponse` answers the
-      client's 1.5s ping WITHOUT waking the DO — which is exactly why the DO can
-      never notice pings that stop — but it records WHEN it last answered, and
-      `getWebSocketAutoResponseTimestamp` hands that back for free. So liveness
-      costs one alarm every `LIVENESS_SWEEP_MS` instead of the hibernation-killing
-      alternative of answering keepalives in `webSocketMessage`.
-
-      Closing is all this does. Everything after — the 5s grace, the seat going
-      disconnected, the 90s forfeit — is the machinery a real close already drives,
-      reached here through the same `socketGone`. The server's own `close()` does
-      not deliver a `webSocketClose` event to us, so that call is explicit rather
-      than incidental. */
+  /**
+   * Close sockets that stopped answering keepalives, which catches half-open connections that never
+   * send a close. The auto-response timestamp is used because pings never wake the DO. Our own
+   * `close()` does not fire `webSocketClose`, so `socketGone` is called explicitly.
+   */
   private async sweepSilentSockets(now: number): Promise<void> {
     const silent = this.liveSockets().filter((ws) =>
       socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), now),
@@ -733,15 +681,10 @@ export class LobbyDO {
     return (await this.state.storage.get<PendingDisconnect[]>(PENDING_KEY)) ?? [];
   }
 
-  /** A player is back: cancel the 5s "show them disconnected" grace. Called from
-      every hello branch, which is exactly the set of moments a player returns.
-
-      Their 90s match FORFEIT is cancelled by the same branch's reseat —
-      `seatGuest` / `reseatHost` / `createSnapshot` each mark the seat present and
-      clear `forfeitAt` in one write, PlayerState's invariant (3c-v). That is why
-      this only has one timer left to clear: the deadline moved onto the seat it
-      belongs to, so "mark them present" and "don't forfeit them" became a single
-      indivisible act rather than two calls a future branch could do one of. */
+  /**
+   * Cancel the disconnect grace when a player returns. The forfeit deadline is cleared by the
+   * reseat itself.
+   */
   private async clearDisconnectGrace(playerId: string): Promise<void> {
     const pending = await this.pendingDisconnects();
     const next = withoutPendingDisconnect(pending, playerId);
@@ -778,15 +721,10 @@ export class LobbyDO {
     }
   }
 
-  /** Send each targeted socket its OWN redacted view of the match (P4). Unlike
-      `broadcast`, the BOARD differs PER SOCKET — the one authoritative GameState
-      redacted for that socket's seat (host→p1, guest→p2) — so no full state ever
-      crosses the wire. The game LOG rides along too (2b-iii-d-ii): seat-keyed and
-      leak-safe, so the same array goes to both sockets (each relabels it for its
-      own seat), and a reconnecting socket gets the whole backlog. `only` targets
-      one socket (a reconnect); omitted, it fans out to every live socket (the
-      in-game flip). A socket with no seat (a refused/observer connection) is
-      skipped. */
+  /**
+   * Send each socket its own redacted view of the match, plus the shared seat-keyed log. `only`
+   * targets one socket; otherwise all live sockets. Unseated non-spectators are skipped.
+   */
   private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const playerId = attachedPlayer(ws);
@@ -822,26 +760,11 @@ export class LobbyDO {
     else if (load.kind === "stale") await this.retireStaleMatch();
   }
 
-  /** No seat for this socket — both are held, or the one it named belongs to a
-      different account (3a-sec). It always learns that (`reject: full`, the frame
-      the client has always keyed its "Lobby is full" screen on), and IF a match is
-      running it also becomes a SPECTATOR and is handed the seatless board
-      (P4 3c-vii-b).
-
-      Reusing the refusal as the entry point is the whole design: no new client
-      frame, no second URL, no invite flow — **the lobby link IS the spectate
-      link**, and the rule falls out as "you can watch a MATCH, you cannot watch a
-      lobby". Outside in-game this stays exactly the dead end it has always been,
-      which matters because a pre-match lobby has nothing to show a third party
-      and a seat may yet free up for them.
-
-      A spectator is NOT seated: no playerId, no `PlayerState`, nothing in the
-      snapshot. Every handler that can change the game gates on `attachedPlayer`,
-      which stays null for them, so watching grants no power over the match — and
-      by `redactGame(..., true)` (3c-vii-a) it grants no hidden information either.
-      Deliberate consequence, worth naming: anyone who has (or guesses) the lobby
-      code can watch a game in progress. What they see is a public table — both
-      boards, no hands, no deck order, no prizes. */
+  /**
+   * No seat for this socket. It is always rejected as full, and if a match is running it becomes a
+   * spectator with the seatless board. Spectators have no playerId, so they cannot act, and anyone
+   * with the lobby code can watch.
+   */
   private async refuseSeat(ws: WebSocket, to: string): Promise<void> {
     this.send(ws, { kind: "reject", to, reason: "full" });
     const snapshot = await this.loadSnapshot();
@@ -858,24 +781,11 @@ export class LobbyDO {
     this.broadcastMatch(load.record, snapshot, ws);
   }
 
-  /** Concede the running match FOR `seat` and fan the finished game out — the
-      one path by which the SERVER ends a match on a player's behalf, shared by
-      its two triggers: the 90s abandonment forfeit (3c-ii, fired from the alarm)
-      and a graceful leave mid-match (3c-iv). Both exist to close the same hole —
-      a lobby that could never resolve, because the empty-lobby TTL only fires
-      when NOBODY is connected and the player left staring at the board IS.
-
-      It applies the engine's own `concede` rather than inventing a server-side
-      "abandoned" state, and does so through the same `applyMatchAction` → persist
-      → `broadcastMatch` sequence a player's own `concede` action takes, so a
-      server-ended match is indistinguishable from a pressed one: same
-      `GameOutcome`, same log row, same overlay, and the lobby stays in-game with a
-      finished game exactly as it does after a normal win.
-
-      It does NOTHING when there is nothing to concede — no readable record, or a
-      game the engine says is already over (a forfeit racing a real win, or the
-      second of the two `bye` frames a leave sends). Neither caller needs to know
-      which: in every case the answer is to carry on, never to retry. */
+  /**
+   * Concede the running match for `seat`, used by the abandonment forfeit and by leaving mid-match.
+   * It goes through the same path as a player's own concede, so the result is identical. Does
+   * nothing if there is no readable record or the game is already over.
+   */
   private async concedeSeat(snapshot: LobbySnapshot, seat: Seat, now: number): Promise<void> {
     const load = await this.peekMatch();
     if (load.kind !== "ok") return;
@@ -885,27 +795,14 @@ export class LobbyDO {
     this.broadcastMatch(outcome.record, snapshot);
   }
 
-  /** Read the persisted match WITHOUT side effects: absent, usable, or written by
-      a deploy this build can't trust (`readMatchRecord`, match.ts). Every read of
-      `MATCH_KEY` goes through here so no call site ever touches a record whose
-      `log`/`names`/`state` it can't rely on.
-      🆕🆕🆕 D583 — ONE side effect, once per match: a v41 record (`MIGRATABLE_MATCH_RECORD_VERSION`)
-      is MIGRATED rather than retired — its pool's Trainer faces re-read from D1 and the v42 record
-      PERSISTED before any caller acts on it (match.ts "41 → 42 AT D583").
-      🆕🆕🆕 D621 — and a v42 record is migrated too, with no D1 read (two `null` side keys; match.ts
-      "42 → 43 AT D621"); a v41 record takes both steps.
-      🆕🆕🆕 D630 — and a v43 record too, with no D1 read (M1's record keys; match.ts "43 → 44 AT D630"); a
-      v42 record takes D621's step and D630's, a v41 record all three.
-      🆕🆕🆕 D636 — and a v44 record too, with no D1 read (L1's lock keys; match.ts "44 → 45 AT D636"); a v43
-      record takes D630's step and D636's, a v42 three, a v41 all four.
-      🆕🆕🆕 D637 — and a v45 record too, by a re-stamp alone (the four `me` fossils; match.ts "45 → 46 AT D637").
-      🆕🆕🆕 D640 — and a v46 record too, by a re-stamp alone (Overwriting Bolt, Celebration; match.ts "46 → 47 AT D640").
-      🆕🆕🆕 D643 — and a v47 record too, by a re-stamp alone (Multi Adapter; match.ts "47 → 48 AT D643").
-      🆕🆕🆕 D646 — and a v48 record too, by a re-stamp alone (Backtrack Badge; match.ts "48 → 49 AT D646"). */
+  /**
+   * Read the persisted match: absent, usable, or unreadable by this build. Every `MATCH_KEY` read
+   * goes through here. Older migratable records are migrated and persisted before any caller uses
+   * them.
+   */
   private async peekMatch(): Promise<MatchLoad> {
-    // 🆕🆕🆕 D583 — the read, the migration's D1 load, the re-read and the write are match.ts
-    // `loadMatchRecord` (driven with a fake slot in poolMigrationD583.test.ts); the D1 read is
-    // external I/O, so the DO's input gate opens while it runs — hence the re-read there.
+    // The D1 read opens the DO's input gate, which is why `loadMatchRecord` re-reads before
+    // writing.
     return loadMatchRecord(
       {
         get: () => this.state.storage.get(MATCH_KEY),
@@ -915,22 +812,11 @@ export class LobbyDO {
     );
   }
 
-  /** Retire a match this deploy can't read (the no-storage-migration gap,
-      online.md): drop it, take the lobby OUT of in-game the way a failed start
-      does — un-readying both seats, so the countdown can't immediately re-fire —
-      and tell both players why. Without this the lobby would wedge in-game around
-      an unreadable record: reconnects would sit on the placeholder forever and
-      every action would be silently dropped.
-
-      Reuses 3a's `match-error` surface rather than inventing a second recovery
-      path: to a player the two are the same event — the match can't
-      start/continue, re-pick and ready up. The phase change goes through
-      `endMatch`, NOT `resetAfterFailedStart`: that one is for a lobby still in
-      `countdown` and would leave an already-in-game lobby exactly where it is
-      (`recomputePhase` never leaves in-game on its own) — i.e. wedged in-game
-      around the record we just deleted, which is the very failure this closes.
-      `commit` drops MATCH_KEY on that transition too; the explicit delete first
-      keeps this correct even if the lobby is somehow no longer in-game. */
+  /**
+   * Retire a match this deploy can't read: delete it, end the match so the lobby leaves in-game
+   * with both seats un-readied, and tell both players. Uses `endMatch`, not
+   * `resetAfterFailedStart`, because the latter leaves an in-game lobby in-game.
+   */
   private async retireStaleMatch(): Promise<void> {
     await this.state.storage.delete(MATCH_KEY);
     const snapshot = await this.loadSnapshot();

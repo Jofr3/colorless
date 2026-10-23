@@ -21,16 +21,10 @@ import {
     never flickers the opponent to "disconnected". */
 export const DISCONNECT_GRACE_MS = 5000;
 
-/** How long a player may be gone from a RUNNING match before they forfeit it
-    (P4 3c-ii). Deliberately far longer than `DISCONNECT_GRACE_MS`, which is a
-    5-second "did the socket blip?" window whose only consequence is a greyed-out
-    connection dot: losing a game to a 5-second blip would be indefensible, while
-    a lobby that can never resolve is the actual bug this closes — before it, one
-    player closing their tab left the other staring at a board forever (the
-    empty-lobby TTL can't help: it only fires when NOBODY is connected, and the
-    waiting player is). 90s is long enough to survive a tab reload, a phone
-    changing networks, or a brief ISP drop, and short enough that the abandoned
-    player isn't held hostage. */
+/**
+ * How long a player may be gone from a running match before forfeiting. Much longer than
+ * `DISCONNECT_GRACE_MS` so a brief reload or network change does not lose the game.
+ */
 export const ABANDON_GRACE_MS = 90_000;
 
 /** How long a socket may go without answering a keepalive before the lobby gives
@@ -49,16 +43,10 @@ export const SOCKET_SILENCE_MS = 15_000;
     if we answered keepalives in the handler and gave up hibernation entirely. */
 export const LIVENESS_SWEEP_MS = 30_000;
 
-/** Whether a socket has gone silent — its last auto-answered keepalive is older
-    than `SOCKET_SILENCE_MS` (P4 3c-viii). Pure; the DO reads the timestamp from
-    the runtime (`getWebSocketAutoResponseTimestamp`) and closes what this rejects.
-
-    A `null` timestamp counts as ALIVE, deliberately: it means the runtime has
-    never auto-answered this socket, which is the state of every connection for
-    its first ping — and, since we cannot tell "just connected" from "connected
-    long ago and never pinged", the only safe reading is to leave it alone. The
-    cost of being wrong that way is a socket we never sweep; the cost of the other
-    way is closing a healthy connection a second after it opened. */
+/**
+ * Whether a socket's last auto-answered keepalive is older than `SOCKET_SILENCE_MS`. A null
+ * timestamp counts as alive, because a newly connected socket has not been answered yet.
+ */
 export function socketIsSilent(lastAutoResponse: Date | null, now: number): boolean {
   return lastAutoResponse !== null && now - lastAutoResponse.getTime() > SOCKET_SILENCE_MS;
 }
@@ -110,32 +98,20 @@ export function helloDecision(snapshot: LobbySnapshot | null, from: string): Hel
   return "seat-guest";
 }
 
-/** Whether a socket presenting `userId` (null = anonymous) may (re)claim the
-    seat whose playerId is bound to `boundUserId` (null = never yet claimed by an
-    account). A playerId becomes account-BOUND the first time an authenticated
-    socket claims it; from then on ONLY that account may re-adopt it — so a socket
-    that replays the seat's PUBLIC playerId (broadcast in every `state` frame)
-    WITHOUT its session (a different account, or anonymous) is refused, and so can
-    never be handed that seat's redacted in-game HAND (P4 3a-sec, closing the D60
-    L2 bearer-only-seat leak). An unbound seat stays bearer-only, which is safe:
-    an anonymous seat can't load a real deck (`loadPlayerDeck` refuses a null
-    userId), so it never reaches an in-game match with a hand to protect. Pure. */
+/**
+ * Whether a socket with `userId` may claim a seat bound to `boundUserId`. Once an account claims a
+ * seat, only that account can reclaim it, since the playerId is public. An unbound seat stays
+ * bearer-only, which is safe because an anonymous seat cannot load a deck.
+ */
 export function seatClaimAllowed(boundUserId: string | null, userId: string | null): boolean {
   return boundUserId === null || boundUserId === userId;
 }
 
-/** Update a seat's connectivity — `setGuestConnected` plus the host twin the
-    reducer never needed when the host was the authority. Disconnecting drops
-    the seat's ready (a countdown can't proceed with an absent player), and the
-    phase is re-derived either way.
-
-    `forfeitAt` rides along because the two ALWAYS move together (P4 3c-v): this
-    is the only place that arms a forfeit deadline, and it defaults to null, so
-    marking a seat present clears it in the same call — you cannot write one
-    without deciding the other. Pass a deadline only when disconnecting a seat
-    whose match is running; `connected: true` must always leave it null
-    (PlayerState's invariant, and the thing that stops a returning player losing
-    a game they came back to). */
+/**
+ * Update a seat's connectivity. Disconnecting drops the seat's ready, and the phase is re-derived.
+ * `forfeitAt` defaults to null, so marking a seat present always clears its forfeit deadline; pass
+ * one only when disconnecting from a running match.
+ */
 export function setSeatConnected(
   snapshot: LobbySnapshot,
   slot: LobbySlot,
@@ -198,14 +174,11 @@ export function reseatHost(
   };
 }
 
-/** Read a snapshot back out of DO storage, filling in fields added since it was
-    written. Unlike `MATCH_KEY`, `SNAPSHOT_KEY` has no version gate and MUST not
-    have one: a lobby snapshot is a handful of scalars with no engine state
-    embedded, so a missing field has exactly one sensible value, and the cost of
-    being wrong is cosmetic — whereas retiring the snapshot (the `MatchRecord`
-    answer, D72) would evict live lobbies on every deploy that adds a field. Note
-    the DO is the only writer, so this runs once per wake, and every later commit
-    persists the completed shape. */
+/**
+ * Read a snapshot from storage, filling in fields added since it was written. Unlike matches there
+ * is no version gate: a missing field has one sensible default, and retiring snapshots would evict
+ * live lobbies on every such deploy.
+ */
 export function readSnapshot(raw: unknown): LobbySnapshot | null {
   if (typeof raw !== "object" || raw === null) return null;
   const snapshot = raw as LobbySnapshot;
@@ -245,20 +218,11 @@ export function resetAfterFailedStart(snapshot: LobbySnapshot): LobbySnapshot {
   });
 }
 
-/** End a match that is ALREADY RUNNING and hand the lobby back for a rematch:
-    both seats un-readied, phase re-derived from there (`selecting` with a guest,
-    `waiting` without).
-
-    This exists because `resetAfterFailedStart` CANNOT do it: `recomputePhase`
-    returns an `in-game` snapshot untouched (it never leaves in-game on its own —
-    the invariant that stops a mid-match ready-toggle from tearing the game down),
-    so un-readying an in-game lobby leaves the phase exactly where it was. Clearing
-    the phase FIRST is what lets the recompute run, and it must be done explicitly
-    — which is the point: leaving in-game is a decision a caller makes, never a
-    side effect. Its callers are the ways a match can stop before the engine says
-    `gameOver`: a record this deploy can't read (retired), and — when they land —
-    concede / rematch / a timed-out player. `abandonsMatch` reports true for the
-    transition, so `commit` drops the persisted match with it. */
+/**
+ * End a running match and return the lobby for a rematch, with both seats un-readied.
+ * `recomputePhase` never leaves in-game on its own, so the phase is cleared explicitly first.
+ * `abandonsMatch` is true for this transition, so `commit` drops the match record.
+ */
 export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
   return recomputePhase({
     ...snapshot,
@@ -269,46 +233,19 @@ export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
   });
 }
 
-/** A player asked to play again (P4 3c-vi): end the finished match and READY the
-    asker, in one commit.
-
-    Auto-readying is what makes this a whole feature rather than half of one. The
-    alternative shapes were a mutual offer/accept handshake (a second piece of
-    lobby state to persist, expire and reconcile — and a "waiting for them to
-    accept" screen that can wedge) or a plain `endMatch` that drops both players
-    on the versus screen to re-ready (correct, but it makes the asker press twice
-    and says nothing about who asked). This shape reuses the ready-up flow VERBATIM
-    as the agreement mechanism: the countdown still starts only when BOTH seats are
-    ready, so pressing Rematch is an offer the opponent accepts by readying — and
-    the asker can withdraw it by un-readying, which the versus screen already does.
-
-    `applyIntent(set-ready)` rather than writing `ready: true` directly, so the
-    "you can't be ready without a deck" rule stays in ONE place: a player whose
-    saved deck vanished between games lands back on the versus screen un-readied,
-    exactly as if they'd pressed Ready themselves. */
+/**
+ * End the finished match and ready the asker. The opponent accepts by readying. Goes through
+ * `applyIntent` so the rule that you can't be ready without a deck is enforced in one place.
+ */
 export function rematch(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot {
   return applyIntent(endMatch(snapshot), slot, { type: "set-ready", ready: true });
 }
 
-/** The lobby change a seated player's graceful `bye` makes. Three cases, kept
-    together because the difference between them is the whole point:
-
-    - **in-game (either seat) — the seat only goes AWAY** (P4 3c-iv). The lobby
-      stays in-game around the match, so the player who is still there keeps their
-      board and, above all, the RESULT: the DO concedes for the leaver first
-      (`concedeSeat`), and freeing the seat here would immediately take the lobby
-      out of in-game, drop the match record (`abandonsMatch` → `commit`) and blank
-      the winner's screen a frame after they were told they won — the "a leave
-      VOIDS the match" bug this closes. It covers a FINISHED game too (leaving
-      after a win/loss), for the same reason and because a leave is often two
-      `bye` frames (an explicit `leave()` plus the unmount's): the second must not
-      undo what the first just decided. Leaving in-game deliberately has no path
-      left except the ones a player asks for — the host's kick today, rematch next.
-    - **the host, otherwise** — the host id is pinned for the lobby's lifetime, so
-      their seat can only be marked gone; the empty-lobby TTL reclaims the code if
-      they never come back.
-    - **the guest, otherwise** — the seat is freed at once (the pre-P4 semantics),
-      so the host drops back to the waiting screen and can take another opponent. */
+/**
+ * The lobby change a graceful `bye` makes. In-game, the seat is only marked away so the remaining
+ * player keeps the board and result; a leave may send two byes. Otherwise the host's seat is marked
+ * gone because the host id is fixed, and the guest's seat is freed.
+ */
 export function applyBye(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot {
   return snapshot.phase === "in-game" || slot === "host"
     ? setSeatConnected(snapshot, slot, false)

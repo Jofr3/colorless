@@ -51,10 +51,10 @@ export interface CardModel {
   battle?: BattleState;
 }
 
-/** 🆕🆕🆕 D551 — a prize turned FACE UP (Crescent Purge, D548): public to every viewer.
-    `index` is the slot's position in the LIVE prize row (the one `takePrizes` addresses,
-    which compacts on every take — the same field the wire's `RedactedFaceUpPrize` carries,
-    `redact.ts`'s `redactedSideOf`). The grid slot it paints is `prizeSlotFaces`' business. */
+/**
+ * A prize turned face up, public to every viewer. `index` is the slot's position in the live prize
+ * row, which compacts on every take.
+ */
 export interface FaceUpPrize {
   index: number;
   card: CardModel;
@@ -65,15 +65,15 @@ export interface PlayerBoard {
   active: CardModel | null;
   bench: CardModel[];
   prizesRemaining: number;
-  /** 🆕🆕🆕 D551 — REQUIRED, not optional (D159: the same fact on every surface, as the
-      wire's `RedactedSide.faceUpPrizes`). The face-up slots of this side's prize row, in
-      row order; `[]` on every board without a Crescent Purge. Every other prize is face
-      down and is the count above only. */
+  /**
+   * The face-up slots of this side's prize row, in row order; usually `[]`. Every other prize is
+   * face down and appears only in the count.
+   */
   faceUpPrizes: FaceUpPrize[];
-  /** 🆕🆕🆕 D577 — this side's LIVE Bench limit as the engine reads it (`benchLimitOf`: 8
-      under Area Zero Underdepths with a Tera Pokémon in play, else 5), written by both game
-      projections. Optional: a board without it falls back to the
-      board-wide stadium rule in `benchLimitFor`. */
+  /**
+   * This side's live Bench limit as the engine reads it (8 under Area Zero Underdepths with a Tera
+   * Pokémon in play, else 5). Optional: without it, the board falls back to `benchLimitFor`.
+   */
   benchLimit?: number;
 }
 
@@ -97,12 +97,11 @@ export interface BattleConditions {
   /** HP placed at each Pokémon Checkup while Poisoned; 0 = not Poisoned. */
   poisonDamage: number;
   burned: boolean;
-  /** 🆕🆕 D501 — HP a Confused Pokémon places on itself when the §8 step-3 attack
-      flip misses; 30 unless the inflicting effect raised it. Meaningful only
-      while `rotation === "confused"`. Added here because `projection.ts`'s
-      `battleStateOf` pins this interface MUTUALLY ASSIGNABLE with the engine's
-      `SpecialConditions`, so an engine field that did not arrive here would be a
-      compile error there rather than a silent drop. */
+  /**
+   * Damage a Confused Pokémon puts on itself when the attack flip misses; 30 unless the inflicting
+   * effect raised it. Meaningful only while `rotation === "confused"`. This interface must stay
+   * mutually assignable with the engine's `SpecialConditions`.
+   */
   confusionDamage: number;
 }
 
@@ -139,14 +138,9 @@ export type LogEntry =
       turn: number;
     };
 
-// Bench capacity is normally 5, but a bench-expanding stadium (e.g. Lumiose
-// City) raises it to 8 for both players while it is in play. `benchLimitFor`
-// is the single source of truth for the board-wide rule.
-// D577 — PER SEAT: Area Zero Underdepths (`sv07-131`/`sv07-174`/`sv08.5-094`)
-// raises it to 8 only for a player with a Tera Pokémon in play. That read is the
-// ENGINE's (`benchLimitOf` / `benchLimitForIds`), so both game projections write
-// it onto `PlayerBoard.benchLimit`; a board without it reads the board-wide
-// stadium rule below, Lumiose City's `me3-111` kept as it was.
+// Bench capacity is normally 5; a bench-expanding stadium (e.g. Lumiose City) raises it to 8 for
+// both players. Area Zero Underdepths raises it to 8 only for a player with a Tera Pokémon in play,
+// which the engine computes per seat.
 const DEFAULT_BENCH_LIMIT = 5;
 const EXPANDED_BENCH_LIMIT = 8;
 const BENCH_EXPANDING_STADIUM_CARD_IDS: ReadonlySet<string> = new Set(["me3-111"]);

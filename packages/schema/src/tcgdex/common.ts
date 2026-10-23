@@ -1,15 +1,6 @@
-// Shared building blocks for the tcgdex.dev REST models (v2, English).
-//
-// Everything here is authored against LIVE responses from
-// https://api.tcgdex.net/v2/en/... (committed verbatim in ./__fixtures__) and
-// verified by scripts/validate-live.ts. Objects use Zod's default mode (strip
-// unknown keys) so additive upstream changes never break us; fields are
-// optional/nullable exactly where live payloads omit or null them.
-//
-// All three "brief" shapes live here (rather than next to their full models)
-// to keep card.ts / set.ts / serie.ts free of circular imports: a full Card
-// embeds a SetBrief, a full Set embeds a SerieBrief and CardBriefs, and a full
-// Serie embeds SetBriefs.
+// Shared tcgdex building blocks, authored against live responses. Objects strip unknown keys so
+// additive upstream changes don't break parsing. Brief shapes live here to avoid circular imports
+// between card, set and serie.
 
 import { z } from "zod";
 

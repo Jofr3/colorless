@@ -60,11 +60,6 @@ catalogRoutes.get(
   zValidator("query", cardsQuerySchema, (result, c) =>
     result.success ? undefined : invalidQuery(c, result.error),
   ),
-  // ONE path for every query, id-hydration (`?id=…&id=…`) included: the id
-  // set is a single JSON bind inside the where (../catalog/query.ts), so it
-  // pages and orders in SQL like any other filter. It used to fork into a
-  // chunked db.batch sorted by a JS twin of `cardsOrder` — see that function
-  // for why the twin is gone (D197).
   async (c) => {
     const query = c.req.valid("query");
     const db = drizzle(c.env.DB);
@@ -165,22 +160,8 @@ catalogRoutes.get("/series", catalogCache, async (c) => {
 const facetValues = (rows: { value: string | null }[]): string[] =>
   facetVocabulary(rows.map((row) => row.value));
 
-// GET /facets — the filter vocabularies actually present in the catalog (P2
-// task 10), feeding the web's selects instead of hardcoded constants. Eight
-// DISTINCTs in one D1 round trip; `types` holds ARRAYS per row, so its
-// distinct rows flatten + dedupe + sort in memory (the vocabulary is tiny).
-//
-// This is the endpoint where the sentinel was USER-VISIBLE: a facet list is
-// rendered one chip per value in the builder's FilterRail, so the 34 rarity
-// rows and 2 regulation-mark rows spelling absence as "None" put two dead
-// chips in the rail (D194).
-//
-// It is ALSO the mechanism that lets `?suffix=` exist before any row carries
-// a suffix (D198). `cards.suffix` is NULL catalog-wide until an ingest fills
-// it, so this DISTINCT returns nothing, `suffixes` serves `[]`, and the rail
-// renders no chip — the filter is unreachable rather than broken. That is the
-// whole degradation story; there is no second guard anywhere, which is why
-// this list must keep coming from the DATA and never from a constant.
+// GET /facets: the filter vocabularies present in the catalog. This list must come from the data,
+// never from a constant: the suffix filter stays unreachable until rows carry a suffix.
 catalogRoutes.get("/facets", catalogCache, async (c) => {
   const db = drizzle(c.env.DB);
   const [
@@ -232,26 +213,14 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
   ]);
   const payload: CatalogFacets = {
     rarities: facetValues(rarityRows),
-    // `types` is the one ARRAY-valued facet, so it flattens before it can go
-    // through the same guard — sorted here rather than by SQL. Routed through
-    // it anyway (the sweep measured zero sentinel elements and zero empty
-    // arrays) so the invariant "no facet list can contain a sentinel" holds
-    // for ALL EIGHT vocabularies, not seven of them. (Seven when this was
-    // written; D198's `suffixes` made it eight and the count was not updated —
-    // D203.)
+    // `types` is array-valued, so it is flattened and sorted here, then passed through the same
+    // sentinel guard as the other facets.
     types: facetVocabulary(typeRows.flatMap((row) => row.value ?? [])).sort(),
     stages: facetValues(stageRows),
     trainerTypes: facetValues(trainerRows),
     energyTypes: facetValues(energyRows),
     illustrators: facetValues(illustratorRows),
     regulationMarks: facetValues(markRows),
-    // Through the same sentinel guard as the rest, deliberately and in
-    // advance: nothing has been ingested into this column yet, so unlike the
-    // other seven there is no sweep behind it — a "None" suffix cannot be
-    // ruled out until the first run, and this is the one place where letting
-    // one through would put a dead chip in the rail (the ingest mapper
-    // normalises the same value on the way IN, D197; neither guard is
-    // redundant — see ./map.ts).
     suffixes: facetValues(suffixRows),
   };
   return c.json(catalogFacetsSchema.parse(payload));

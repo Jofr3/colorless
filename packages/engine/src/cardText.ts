@@ -1,29 +1,10 @@
 import type { Ability, Attack, Card } from "@colorless/schema";
 
-// 🆕🆕🆕 D612 — WP06: THE tcgdex MARKUP NORMALISER. ONE pure text function, applied in two places:
-// at INGEST (apps/api/src/ingest/map.ts writes every card text through it) and at READ time
-// (cards.ts `cardOfUid`, the engine's one card accessor, reads a face through `normalizedFace`).
-// The read-time half is the D581 / D583 lesson: `GameState.cardPool` persists whole Card faces in a
-// MatchRecord, so a match created before the re-ingest holds the RAW text, and the engine must read
-// it the same as a re-ingested row.
-//
-// What tcgdex prints, and the `sv` spelling it is normalised to (LOCAL D1, 2026-10-09; the `sv` rows
-// carry none of it, so every `sv` text is a fixed point — measured over every attack, Ability and
-// rules text in the LOCAL D1 on 2026-10-09; `cardTextD612.test.ts` PINS it over the two committed
-// attack corpora only, not over the `sv` Ability / Trainer / Energy texts):
-//   • `<span class="energy-symbol Lightning" title="Lightning">Lightning</span>` → `{L}`
-//     (17 `30th` / `30th-c` texts; an unknown type word keeps the span unchanged);
-//   • `<em>` / `</em>` → removed (the reminder parentheticals and "Pokémon <em>ex</em>"); a run of
-//     spaces or tabs right after an `<em>` that follows a space is dropped with it (`30th-c`);
-//   • `[R]` → `{R}` (Mega Charizard X ex `mep-023` / `-029` "Inferno X", R-IX1);
-//   • a type WORD before "Energy" or "Pokémon", alone or in a list joined by ", " / " or " /
-//     " and " → its symbol ("Basic Fire Energy card" → "Basic {R} Energy card", "6 or more Grass
-//     Energy" → "6 or more {G} Energy"; the non-legal `swsh10.5` prints the same word forms);
-//   • a run of two or more GLUED type words → one symbol each ("ColorlessColorless" → "{C}{C}",
-//     Zoroark `30th-096`; "FireFire" `swsh10.5-010`), and one type word before "less" / "more" (a
-//     cost: "cost Colorless less" `swsh10.5-011`).
-// A type word anywhere else (an attack NAME such as "Dragon Strike") is left alone. Idempotent:
-// no output spelling matches any rule.
+// Normalises tcgdex card-text markup to the `sv` spelling. Applied at ingest and again at read
+// time, because a persisted `GameState.cardPool` may still hold raw faces. Rules: energy-symbol
+// spans, `[R]`, type words before "Energy"/"Pokémon" (alone or in a list) and glued type words
+// ("ColorlessColorless") become `{X}` symbols; `<em>` tags are removed. A type word elsewhere, such
+// as an attack name, is left alone. Idempotent.
 
 /** The type word → its energy-symbol letter (tcgdex's `{X}` spelling in the `sv` rows). */
 const SYMBOL_OF: Readonly<Record<string, string>> = {
@@ -63,8 +44,10 @@ function symbolsOf(words: string): string {
   return words.replace(ONE_TYPE_WORD, (word) => `{${SYMBOL_OF[word]}}`);
 }
 
-/** 🆕🆕🆕 D612 — one card text (an attack's or Ability's `effect`, or a Trainer's / Energy's) in the
-    `sv` spelling. Pure and idempotent; a text with no markup comes back as the same string. */
+/**
+ * One card text in the `sv` spelling. Pure and idempotent; text with no markup is returned
+ * unchanged.
+ */
 export function normalizeCardText(text: string): string {
   if (!MAY_CARRY_MARKUP.test(text)) return text;
   return text
@@ -96,8 +79,10 @@ function normalizedBlocks<T extends Ability | Attack>(blocks: T[]): T[] {
     and the engine reads the same object many times per action. */
 const FACES = new WeakMap<Card, Card>();
 
-/** 🆕🆕🆕 D612 — `card` with every printed text through `normalizeCardText`: the SAME object when
-    nothing changes (every `sv` face, every re-ingested row), else a shallow copy with new text. */
+/**
+ * `card` with every printed text normalised: the same object when nothing changes, otherwise a
+ * shallow copy.
+ */
 export function normalizedFace(card: Card): Card {
   const hit = FACES.get(card);
   if (hit !== undefined) return hit;

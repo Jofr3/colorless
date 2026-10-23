@@ -1,15 +1,6 @@
 #!/usr/bin/env node
-// Stop hook — the handoff gate.
-//
-// The loop's single point of failure is a session that does work and then ends
-// without updating docs/progress.md: the next session boots from a stale resume
-// point and either redoes the slice or wanders off. This hook catches exactly
-// that case and sends the session back to finish the ritual.
-//
-// It blocks at most AUTOLOOP_MAX_GATE_BLOCKS times (default 1) per session — a
-// Stop hook that keeps blocking is an infinite loop with a billing account.
-// It is inert outside the loop (AUTOLOOP_BASE_SHA unset), so interactive
-// sessions in this repo are untouched.
+// Stop hook: sends a loop session back when it ends without updating docs/progress.md, at most
+// AUTOLOOP_MAX_GATE_BLOCKS times. Inert when AUTOLOOP_BASE_SHA is unset.
 
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -80,10 +71,8 @@ function main() {
   if (gate.n >= MAX_BLOCKS) return; // said our piece; let the session end
   gate.bump();
 
-  // Every prose block below is `.join("")`ed rather than `+`ed. Same bytes, but
-  // `lint/style/useTemplate` fires on `+` the moment one operand interpolates,
-  // and its fix collapses the whole paragraph onto one 400-col line. These files
-  // were linted by nothing until D212 — see scripts/lint-coverage.ts.
+  // `.join("")` rather than `+` so Biome's `useTemplate` fix does not collapse the wrapped prose
+  // onto one line.
   const problems = [];
   if (!`${committed}\n${dirty}`.includes(PROGRESS)) {
     problems.push(

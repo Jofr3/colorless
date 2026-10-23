@@ -1,16 +1,6 @@
-// Server sessions (§3.5): the pure half — token minting, token→row-id
-// hashing, and cookie (de)serialization. routes.ts owns the D1 queries.
-//
-// The browser holds a 256-bit random TOKEN; the sessions row id is
-// sha256(token), so a leaked DB dump contains nothing that authenticates —
-// defense in depth. Lookup is hash-then-select; there is no way back from
-// row id to cookie value.
-//
-// Cookie: `session`, HttpOnly + Secure + SameSite=None + Path=/, 30-day
-// Max-Age. SameSite=None (not Lax) because the web app lives on a DIFFERENT
-// origin (§3.5) and sends `credentials: "include"` fetches — None is the only
-// mode that rides along cross-site, and it requires Secure. CORS on the app
-// (src/index.ts) is the matching half of that handshake.
+// The browser holds a random token and the sessions row id is sha256(token), so a leaked database
+// contains nothing that authenticates. The cookie is SameSite=None (which requires Secure) because
+// the web app is on a different origin and sends credentialed fetches.
 
 import { randomBytes, toBase64Url } from "./encoding";
 
