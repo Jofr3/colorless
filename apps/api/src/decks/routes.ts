@@ -20,19 +20,19 @@ import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
+import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { type CoverCandidate, effectiveCoverCardId } from "./cover";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
-import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownIds } from "./validate";
+import { createsCycle, unknownIds } from "./validate";
 
 export const deckRoutes = new Hono<{ Bindings: Env }>();
 export const folderRoutes = new Hono<{ Bindings: Env }>();
 
 type Db = DrizzleD1Database;
-type Batch = [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]];
 
 // Response schemas — the domain shapes each route parses itself against.
 const deckSummariesResponseSchema = z.array(deckSummarySchema);
@@ -70,10 +70,10 @@ async function guardUnknownCards(
     return null;
   }
   const ids = entries.map((entry) => entry.cardId);
-  const queries: BatchItem<"sqlite">[] = chunk(ids, D1_MAX_BOUND_PARAMS).map((group) =>
+  const queries = chunk(ids, D1_MAX_BOUND_PARAMS).map((group) =>
     db.select({ id: cards.id }).from(cards).where(inArray(cards.id, group)),
   );
-  const results = (await db.batch(queries as Batch)) as { id: string }[][];
+  const results = await db.batch(nonEmpty(queries));
   const unknown = unknownIds(
     ids,
     results.flat().map((row) => row.id),
@@ -113,13 +113,13 @@ async function reorderRows(
   positions: ReorderRequest["positions"],
 ): Promise<Response> {
   const ids = positions.map((entry) => entry.id);
-  const queries: BatchItem<"sqlite">[] = chunk(ids, D1_MAX_BOUND_PARAMS - 1).map((group) =>
+  const queries = chunk(ids, D1_MAX_BOUND_PARAMS - 1).map((group) =>
     db
       .select({ id: table.id })
       .from(table)
       .where(and(eq(table.userId, userId), inArray(table.id, group))),
   );
-  const owned = (await db.batch(queries as Batch)) as { id: string }[][];
+  const owned = await db.batch(nonEmpty(queries));
   const unknown = unknownIds(
     ids,
     owned.flat().map((row) => row.id),
@@ -127,10 +127,10 @@ async function reorderRows(
   if (unknown.length > 0) {
     return c.json({ error: `unknown ${noun} id(s)`, ids: unknown }, 400);
   }
-  const updates: BatchItem<"sqlite">[] = positions.map(({ id, position }) =>
+  const updates = positions.map(({ id, position }) =>
     db.update(table).set({ position }).where(eq(table.id, id)),
   );
-  await db.batch(updates as Batch);
+  await db.batch(nonEmpty(updates));
   return c.body(null, 204);
 }
 
@@ -252,10 +252,7 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
     position: await nextPrependPosition(db, decks, user.id),
     updated: new Date(),
   };
-  await db.batch([
-    db.insert(decks).values(row),
-    ...deckCardInserts(db, row.id, body.cards),
-  ] as Batch);
+  await db.batch([db.insert(decks).values(row), ...deckCardInserts(db, row.id, body.cards)]);
   return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);
 });
 
@@ -330,7 +327,7 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
     statements.push(db.delete(deckCards).where(eq(deckCards.deckId, deckId)));
     statements.push(...deckCardInserts(db, deckId, body.cards));
   }
-  await db.batch(statements as Batch);
+  await db.batch(nonEmpty(statements));
   const cardsAfter = body.cards ?? (await selectDeckCards(db, deckId).all());
   return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
 });
