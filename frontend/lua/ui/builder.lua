@@ -12,7 +12,7 @@ local Alert=require('ui.card_alert')
 local Energy=require('ui.energy')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local Input=require('ui.text_input')
 local g=love.graphics
 local PANEL_Y,PANEL_HEIGHT=95,554
@@ -38,8 +38,7 @@ function Builder.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionLabel='',optionPage=1,optionPages=1},Builder)
 end
 function Builder:command(...)
-  local args={...};for i,v in ipairs(args) do args[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(args,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Builder:open(reduced,id)
   if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
@@ -167,7 +166,7 @@ function Builder:makeCards(entering)
 end
 function Builder:sync(raw)
   if not raw or raw==self.raw then return end;self.raw=raw
-  local lines={};for line in raw:gmatch('[^\n]+')do lines[#lines+1]=Codec.fields(line)end
+  local lines=Codec.rows(raw)
   local f=lines[1];if not f or #f<17 then return end
   self.phase,self.name,self.format,self.saveStatus,self.message=f[2],f[3],f[4],f[5],f[6]
   self.busy=f[7]=='1';self.page,self.pages,self.total,self.count=tonumber(f[8]),tonumber(f[9]),tonumber(f[10]),tonumber(f[11])
@@ -594,7 +593,7 @@ function Builder:drawControlFaces(controls,active)
         end
         base=base+#paragraph+1
       end
-      local first=#Codec.prefix(value,self.first or 0);local last=#Codec.prefix(value,self.last or 0)
+      local first=#Codec.utf16Prefix(value,self.first or 0);local last=#Codec.utf16Prefix(value,self.last or 0)
       local caretLine=1
       for i,line in ipairs(lines)do if last>=line.first then caretLine=i end end
       local visible=math.floor((b.h-20)/25)

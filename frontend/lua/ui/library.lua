@@ -7,7 +7,7 @@ local Alert=require('ui.card_alert')
 local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local Input=require('ui.text_input')
 local g=love.graphics
 local Library={}
@@ -46,9 +46,7 @@ function Library:offset()
   return self.motion and self.motion.VT.y*60 or 0
 end
 function Library:command(...)
-  local args={...}
-  for i,v in ipairs(args) do args[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(args,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Library:release()
   for _,card in ipairs(self.cards) do
@@ -91,7 +89,7 @@ end
 function Library:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
-  local lines={}; for line in raw:gmatch('[^\n]+') do lines[#lines+1]=Codec.fields(line) end
+  local lines=Codec.rows(raw)
   local f=lines[1]; if not f or #f<14 then return end
   self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
   self.query,self.sort=f[6],f[8]

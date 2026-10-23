@@ -9,7 +9,7 @@ local T=require('ui.theme')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
 local Fx=require('ui.sim_fx')
@@ -69,8 +69,7 @@ function Online.new(callbacks)
   return self
 end
 function Online:command(...)
-  local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(fields,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Online:offset() return self.motion.VT.y*60 end
 function Online:open(reduced,code)
@@ -300,7 +299,7 @@ end
 function Online:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
-  local rows={};for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
+  local rows=Codec.rows(raw)
   local f=rows[1];if not f or #f<14 then return end
   local was={step=self.step,seats=self.seats,status=self.status,message=self.message,notice=self.notice,
     countdown=self.countdown,deckPhase=self.deckPhase}
@@ -535,13 +534,13 @@ function Online:drawCode(item,hovered)
     T.text(item.placeholder,40,item.x,top,item.w,T.profile)
   else
     if editing then
-      local first,last=font:getWidth(Codec.prefix(value,self.first or 0)),font:getWidth(Codec.prefix(value,self.last or 0))
+      local first,last=font:getWidth(Codec.utf16Prefix(value,self.first or 0)),font:getWidth(Codec.utf16Prefix(value,self.last or 0))
       if last>first then g.setColor(T.blue);g.rectangle('fill',left+first,top,last-first,font:getHeight()) end
     end
     T.text(value,40,left,top,font:getWidth(value)+8,T.white,'left')
   end
   if editing and math.floor(self.time*2)%2==0 then
-    g.setColor(T.white);g.rectangle('fill',left+font:getWidth(Codec.prefix(value,self.last or #value)),top+4,3,font:getHeight()-8)
+    g.setColor(T.white);g.rectangle('fill',left+font:getWidth(Codec.utf16Prefix(value,self.last or #value)),top+4,3,font:getHeight()-8)
   end
 end
 -- Settings' create_option_cycle with five pips.

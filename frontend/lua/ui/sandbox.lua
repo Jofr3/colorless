@@ -5,7 +5,7 @@ local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
@@ -31,8 +31,7 @@ function Sandbox.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',busy=false,message='',items={},selected={'',''},tab=1,controls={},cards={},query='',editing=false,page=1,pages=1,focus=0,hover=0,time=0,pageText=PageText.new()},Sandbox)
 end
 function Sandbox:command(...)
-  local fields={...}; for i,v in ipairs(fields) do fields[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(fields,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Sandbox:open(reduced)
   self.motion=Modal.motion(reduced); self.focus=0; self.hover=0; self.pressed=nil
@@ -109,7 +108,7 @@ end
 function Sandbox:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
-  local rows={};for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
+  local rows=Codec.rows(raw)
   local f=rows[1];if not f or #f<6 then return end
   self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
   if self.phase~='ready' and self.editing then self:command('finish-input');self.editing=false end

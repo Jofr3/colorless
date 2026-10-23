@@ -3,6 +3,7 @@ love={graphics={},keyboard={isDown=function() return false end}}
 local Settings=require('ui.settings')
 local Preferences=require('ui.preferences')
 local Account=require('ui.account')
+local Codec=require('ui.codec')
 local account=Account.new(); account.status='anonymous'
 local commands={}
 local popup=Settings.new(Preferences.new(),{
@@ -13,7 +14,7 @@ popup:layout(1280,800); popup:openAuth('login')
 assert(popup.h==560 and popup.auth.mode=='login')
 popup:activate(3); assert(commands[#commands]=='edit\temail')
 local function input(fields)
-  local result={}; for _,v in ipairs(fields) do result[#result+1]=Account.encode(v) end
+  local result={}; for _,v in ipairs(fields) do result[#result+1]=Codec.encode(v) end
   popup:authInput(table.concat(result,'\t'))
 end
 input({1,'','ash@example.com','','',15,15,'enter','email'})

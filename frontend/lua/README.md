@@ -77,6 +77,7 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/screen.lua`: original CRT uniforms, screen compositing, and perspective/lens mapping for pointer input.
 - `ui/settings.lua`: responsive settings overlay, tab/slider/toggle rendering, modal pointer and keyboard input.
 - `ui/account.lua`: account snapshot, draft, text-input state and transient save confirmation.
+- `ui/codec.lua`: the mailbox wire codec (percent-encoded TAB fields, newline rows), command encoding, comma lists and UTF-16 prefix slicing.
 - `ui/auth.lua`: authentication form display state; `ui/text_input.lua` shares field, selection and caret rendering.
 - `src/lua/`: browser adapters over the shared API client, including session, profile, sign-in, registration and Google authentication errors. `bridge.ts` wires them to the host's events; Vite bundles it with the configured `VITE_API_ORIGIN`.
 - `ui/preferences.lua`: defaults, bounds validation, reduced-motion policy, and persistence serialization.
@@ -470,7 +471,7 @@ locally; "{name} is back" pops when they return. Coin flips, the Energy and
 Retreat allowances and effect titles are not carried by the wire yet.
 
 Protocol: Lua prints `COLORLESS:online:<cmd>` (fields encoded with
-`ui/account.lua`'s codec, TAB-separated); host.js queues commands until the
+`ui/codec.lua`, TAB-separated); host.js queues commands until the
 account adapter is ready and dispatches `colorless:online-command`. Commands:
 `open [code]`, `close`, `create`, `join code`, `leave [home]`, `decks`,
 `select deckId`, `ready 1|0`, `kick`, `copy code|link`; `input` and

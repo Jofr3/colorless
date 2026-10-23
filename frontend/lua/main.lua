@@ -6,6 +6,7 @@ local ScreenWipe = require('ui.screen_wipe')
 local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
 local Account = require('ui.account')
+local Codec = require('ui.codec')
 local Library = require('ui.library')
 local Builder = require('ui.builder')
 local Sandbox = require('ui.sandbox')
@@ -174,7 +175,7 @@ local function browserState()
     local pageRaw=love.filesystem.read('__page.txt')
     if pageRaw~=state.pageRaw then
       state.pageRaw=pageRaw
-      local fields=Account.fields(pageRaw)
+      local fields=Codec.fields(pageRaw)
       local page=fields[2]
       requestPage(page,fields[3])
     end

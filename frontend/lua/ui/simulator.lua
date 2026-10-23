@@ -13,7 +13,7 @@ local Motion=require('ui.motion')
 local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
 local Library=require('ui.library')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
@@ -30,11 +30,6 @@ local PURPLE={136/255,103/255,165/255,1}
 local CHANCE={75/255,194/255,146/255,1}
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
 local function prefix(owner) return owner=='opponent' and 'opp_' or owner=='global' and '' or 'you_' end
-local function fieldsOf(raw)
-  local rows={}
-  for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
-  return rows
-end
 function Simulator.new(callbacks)
   local self=setmetatable({callbacks=callbacks,phase='empty',items={},sides={},info={},actions={},cardActions={},cards={},byUid={},ghosts={},piles={},art={},controls={},time=0,focus=0,hover=0,
     message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={},
@@ -44,8 +39,7 @@ function Simulator.new(callbacks)
   return self
 end
 function Simulator:command(...)
-  local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(tostring(v)) end
-  self.callbacks.command(table.concat(fields,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 -- `mode` 'online' binds the lobby's live match for `code`; an internal reopen
 -- (skipCommand, a new matchId) keeps the table's mode.
@@ -185,7 +179,7 @@ end
 function Simulator:beginKoPrizes()
   local p=self.koPresentation
   p.prizes={};p.prizeStart=self.time
-  local rows=fieldsOf(p.raw)
+  local rows=Codec.rows(p.raw)
   local flipped=rows[1][14]~=self.viewerSeat
   -- The destination snapshot may already face the next player. Map its
   -- public pile counts back onto the table that is still being presented.
@@ -289,7 +283,7 @@ function Simulator:sync(raw,finishKo)
   if self.wipeRaw then self.wipeRaw=raw;return end
   local pending=self.koPresentation
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
-  local rows=fieldsOf(raw)
+  local rows=Codec.rows(raw)
   local f=rows[1];if not f then return end
   -- A same-deck restart is a fresh table, even though card UIDs are reused.
   if f[21] and f[21]~='' then
@@ -378,7 +372,7 @@ function Simulator:sync(raw,finishKo)
       -- Lifecycle: mode, spectating, away name and forfeit ms, flags, allow.
       if (r[2] or '')~='' then self.mode=r[2] end
       away={name=r[4] or '',ms=r[5] or ''}
-      self.flags={};for _,flag in ipairs(Energy.split(r[6])) do self.flags[flag]=true end
+      self.flags={};for _,flag in ipairs(Codec.list(r[6])) do self.flags[flag]=true end
       self.allow.partial=r[7]=='partial'
     elseif r[1]=='I' then
       self.info[r[2]]={category=r[3] or '',trainerType=r[4] or '',stage=r[5] or '',hp=r[6] or '',types=r[7] or '',retreat=r[8] or '',weakness=r[9] or '',resistance=r[10] or '',effect=r[11] or '',abilities=r[12] or '',attacks=r[13] or '',energyType=r[14] or '',name=r[15] or ''}
@@ -639,7 +633,7 @@ function Simulator:placeCards(resize,previous)
       c.fan=item.zone=='hand' and (item.displayIndex-(n-1)/2)/n or nil
       c.lift=0;c.dragging=false
       local statusRotation=0
-      for _,s in ipairs(Energy.split(item.status)) do statusRotation=STATUS_ROTATION[s] or statusRotation end
+      for _,s in ipairs(Codec.list(item.status)) do statusRotation=STATUS_ROTATION[s] or statusRotation end
       c.statusRotation=statusRotation
       c.motion.T.r=rotation+statusRotation
       c.zoneKey=item.owner..'_'..item.zone
@@ -1653,7 +1647,7 @@ function Simulator:drawBadges(c,rw)
   local ch=D.H*c.baseScale*c.motion.VT.scale
   if item.status~='' then
     local names={}
-    for _,s in ipairs(Energy.split(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
+    for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
     local label=table.concat(names,' ')
     local tw=Dyna.measure(label,0.26)+12
     Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,PURPLE,1)

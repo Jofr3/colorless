@@ -1,6 +1,6 @@
 -- The browser stages one image from its persistent disk pool. The current
 -- session's working cache and bundled art remain fallbacks while it loads.
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local Art={}
 local bundled={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}
 local shown,last={},nil

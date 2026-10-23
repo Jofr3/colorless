@@ -1,4 +1,4 @@
-local Account=require('ui.account')
+local Codec=require('ui.codec')
 local Auth={}
 Auth.__index=Auth
 function Auth.new(mode)
@@ -7,7 +7,7 @@ end
 function Auth:input(raw)
   if not raw or raw==self.raw then return false end
   self.raw=raw
-  local f=Account.fields(raw)
+  local f=Codec.fields(raw)
   if #f<9 then return false end
   self.editing=f[2]
   self.email,self.password,self.name=f[3],f[4],f[5]

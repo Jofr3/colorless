@@ -2,7 +2,7 @@ package.path='frontend/lua/?.lua;'..package.path
 love={math={random=function()return 0.5 end},graphics={newFont=function(_,size)return {getWidth=function(_,value)return #value*size*0.5 end,setFilter=function()end}end},keyboard={isDown=function()return false end}}
 local Card=require('ui.card');Card.rebuild=function(self)self.texture={release=function()end}end
 local Builder=require('ui.builder')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local commands={};local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
 local function snapshot(rev,n)
  local lines={table.concat({rev,'ready','Test Deck','standard','','','0','1','2','16','8','','','', '', '0','0'},'\t')}

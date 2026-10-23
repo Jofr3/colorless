@@ -4,7 +4,7 @@ love={math={random=function()return 0.5 end},filesystem={getInfo=function()retur
  keyboard={isDown=function()return false end}}
 local Card=require('ui.card')
 Card.rebuild=function(self)self.texture={release=function(t)t.released=true end}end
-local Builder=require('ui.builder');local Codec=require('ui.account')
+local Builder=require('ui.builder');local Codec=require('ui.codec')
 for _,view in ipairs({'list','cards'})do
  for _,remove in ipairs({false,true})do
   for _,reduced in ipairs({false,true})do

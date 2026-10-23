@@ -2,6 +2,7 @@
 -- 0.07 emboss, a darkened BLACK body, a white description box with TEXT_DARK
 -- copy, and coloured badges with floating white DynaText.
 local T=require('ui.theme')
+local Codec=require('ui.codec')
 local Button=require('ui.button')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
@@ -133,7 +134,7 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
   local attacks=Popup.parseAttacks(info.attacks)
   if item and item.status and item.status~='' then
     local parts={}
-    for _,s in ipairs(Energy.split(item.status)) do parts[#parts+1]=s:sub(1,1):upper()..s:sub(2) end
+    for _,s in ipairs(Codec.list(item.status)) do parts[#parts+1]=s:sub(1,1):upper()..s:sub(2) end
     text(table.concat(parts,' · '),scale.small,T.red)
   end
   for _,a in ipairs(abilities) do

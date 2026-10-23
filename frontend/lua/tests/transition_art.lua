@@ -2,7 +2,7 @@ package.path='frontend/lua/?.lua;'..package.path
 local files={}
 love={math={random=math.random},filesystem={getInfo=function(path)return files[path]~=nil end,read=function(path)return files[path]end}}
 local Art=require('ui.transition_art')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local function publish(ids)
   local rows={'1'}
   for _,id in ipairs(ids)do

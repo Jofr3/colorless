@@ -3,7 +3,7 @@ local mailbox={}
 love={math={random=function()return 0.5 end},filesystem={getInfo=function(p)return mailbox[p]~=nil end,read=function(p)return mailbox[p]end},
  graphics={newFont=function(_,size)return {getWidth=function(_,s)return #s*size/2 end,setFilter=function()end}end},keyboard={isDown=function()return false end}}
 local Card=require('ui.card');Card.rebuild=function(self)self.texture={release=function()end}end
-local Builder=require('ui.builder');local Codec=require('ui.account')
+local Builder=require('ui.builder');local Codec=require('ui.codec')
 local commands={};local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
 local function encode(fields)local out={};for i,v in ipairs(fields)do out[i]=Codec.encode(tostring(v))end;return table.concat(out,'\t')end
 local rev=0
