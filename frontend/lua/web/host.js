@@ -983,7 +983,7 @@ function pumpArt() {
 }
 // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
 // them at the 96 kept here); touch them lowest first so eviction spares the head.
-document.addEventListener("colorless:builder-images", (e) => {
+document.addEventListener("colorless:art-wanted", (e) => {
   wantedArt = e.detail;
   for (const c of [...wantedArt].reverse()) {
     if (artCache.has(c.id)) {
