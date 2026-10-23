@@ -42,21 +42,20 @@ import {
 } from "./oauth";
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordNeedsRehash, verifyPassword } from "./password";
 import { checkRateLimit, type RateLimitScope, rateLimitKey } from "./rateLimit";
-import { requireUser } from "./requireUser";
+import { requireUser, type UserRow } from "./requireUser";
 import {
   clearedSessionCookie,
   generateSessionToken,
   hashSessionToken,
   readCookie,
-  SESSION_COOKIE,
   SESSION_TTL_MS,
   sessionCookie,
+  sessionIdFromCookie,
 } from "./session";
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
 
 type Db = DrizzleD1Database;
-type UserRow = typeof users.$inferSelect;
 type AuthContext = Context<{ Bindings: Env }>;
 
 /** Row → public User (schema-parsed at each route's boundary). */
@@ -111,6 +110,13 @@ async function newSession(userId: string) {
   };
 }
 
+/** A fresh users row: a new id, no favourite deck, created now. */
+function newUserRow(
+  fields: Pick<UserRow, "email" | "displayName" | "passwordHash" | "emailVerified">,
+): UserRow {
+  return { id: crypto.randomUUID(), ...fields, favouriteDeckId: null, createdAt: new Date() };
+}
+
 /** D1 surfaces SQLite constraint failures as message text — good enough to
     turn a register/link race into a 409 instead of a 500. */
 function isUniqueViolation(error: unknown): boolean {
@@ -134,16 +140,13 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
   if (existing !== undefined) {
     return c.json({ error: "email already registered" }, 409);
   }
-  const row: UserRow = {
-    id: crypto.randomUUID(),
+  const row = newUserRow({
     email: body.email,
     // Default display name: the email's local part (user can rename later).
     displayName: body.displayName ?? body.email.split("@")[0] ?? body.email,
     passwordHash: await hashPassword(body.password),
     emailVerified: false,
-    favouriteDeckId: null,
-    createdAt: new Date(),
-  };
+  });
   const session = await newSession(row.id);
   try {
     await db.batch([db.insert(users).values(row), db.insert(sessions).values(session.row)]);
@@ -251,11 +254,9 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
 });
 
 authRoutes.post("/logout", async (c) => {
-  const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
-  if (token !== null) {
-    await drizzle(c.env.DB)
-      .delete(sessions)
-      .where(eq(sessions.id, await hashSessionToken(token)));
+  const sessionId = await sessionIdFromCookie(c.req.header("Cookie"));
+  if (sessionId !== null) {
+    await drizzle(c.env.DB).delete(sessions).where(eq(sessions.id, sessionId));
   }
   c.header("Set-Cookie", clearedSessionCookie());
   return c.body(null, 204);
@@ -416,15 +417,12 @@ async function linkOrCreateOAuthUser(
     ]);
     return { ...existing, emailVerified: true };
   }
-  const row: UserRow = {
-    id: crypto.randomUUID(),
+  const row = newUserRow({
     email: profile.email,
     displayName: profile.displayName,
     passwordHash: null,
     emailVerified: profile.emailVerified,
-    favouriteDeckId: null,
-    createdAt: new Date(),
-  };
+  });
   await db.batch([
     db.insert(users).values(row),
     db.insert(oauthIdentities).values({ ...identity, userId: row.id }),

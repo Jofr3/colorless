@@ -13,7 +13,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { createMiddleware } from "hono/factory";
 import { sessions, users } from "../db/schema";
 import type { Env } from "../env";
-import { clearedSessionCookie, hashSessionToken, readCookie, SESSION_COOKIE } from "./session";
+import { clearedSessionCookie, sessionExpired, sessionIdFromCookie } from "./session";
 
 export type UserRow = typeof users.$inferSelect;
 
@@ -21,11 +21,10 @@ export type UserRow = typeof users.$inferSelect;
 export type AuthedEnv = { Bindings: Env; Variables: { user: UserRow } };
 
 export const requireUser = createMiddleware<AuthedEnv>(async (c, next) => {
-  const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
-  if (token === null) {
+  const sessionId = await sessionIdFromCookie(c.req.header("Cookie"));
+  if (sessionId === null) {
     return c.json({ error: "unauthorized" }, 401);
   }
-  const sessionId = await hashSessionToken(token);
   const db = drizzle(c.env.DB);
   const row = await db
     .select({ user: users, expiresAt: sessions.expiresAt })
@@ -37,9 +36,8 @@ export const requireUser = createMiddleware<AuthedEnv>(async (c, next) => {
     c.header("Set-Cookie", clearedSessionCookie());
     return c.json({ error: "unauthorized" }, 401);
   }
-  // Expiry enforced on read; the dead row is deleted lazily right here —
-  // no background sweeper needed at this scale.
-  if (row.expiresAt.getTime() <= Date.now()) {
+  // The dead row is deleted lazily here; there is no background sweeper.
+  if (sessionExpired(row.expiresAt)) {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
     c.header("Set-Cookie", clearedSessionCookie());
     return c.json({ error: "unauthorized" }, 401);
