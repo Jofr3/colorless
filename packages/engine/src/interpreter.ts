@@ -548,22 +548,10 @@ export function runProgram(
       // `coins` is the printed count, default one. Every flip is taken and announced before any
       // branch is consulted, so `rngState` advances identically on every outcome and the log shows
       // each coin.
-      let faces: readonly CoinFace[] = [];
-      let rngState = next.rngState;
-      // Backtrack Badge "keep": reuse the declined faces in `op.faces`; no new flip and no row.
-      const kept = op.faces;
-      for (let flip = 0; kept === undefined && flip < (op.coins ?? 1); flip += 1) {
-        const [drawn, advanced] = flipCoin(rngState);
-        faces = [...faces, drawn];
-        rngState = advanced;
-      }
-      next = { ...next, rngState };
-      for (const drawn of faces) {
-        events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: drawn });
-      }
-      if (kept !== undefined) faces = kept;
+      const flipped = flipOrKeep(next, op.faces, op.coins ?? 1, ctx, events);
+      next = flipped.state;
+      const { faces, redo } = flipped;
       // A live Backtrack Badge parks its re-flip offer before the branch is chosen.
-      const redo = kept === undefined ? coinRedoOffer(next, ctx, faces) : null;
       if (redo !== null) {
         queue.unshift({ op: "reflipCoins", toolUid: redo, faces: [...faces], retry: op });
         continue;
@@ -630,13 +618,13 @@ export function runProgram(
  * `recordAs` slot already attached, or a later queued one still can; otherwise its pick stays
  * mandatory, so the empty answer is unreachable.
  */
-function atLeastOneDecline(
+function atLeastOneDecline<T extends EffectOp>(
   state: GameState,
-  op: EffectOp,
+  op: T,
   queue: readonly EffectOp[],
   ctx: EffectContext,
   record: EffectRecord,
-): EffectOp {
+): T {
   if (op.op !== "attachEnergyFrom" || op.atLeastOne !== true || op.declinable === true) return op;
   const slot = op.recordAs;
   if (slot === undefined) return op;
@@ -1404,9 +1392,12 @@ export function isCounterMoveOp(op: EffectOp): boolean {
   );
 }
 
+/** The three gates are spliced by runProgram's queue loop, so they never reach `stepOp`. */
+type SteppedOp = Exclude<EffectOp, OpOf<"coinFlipGate" | "conditionGate" | "recordGate">>;
+
 function stepOp(
   state: GameState,
-  op: EffectOp,
+  op: SteppedOp,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
@@ -1949,12 +1940,12 @@ function stepOp(
         // Nullifying Zero: one coin per candidate, all coins before any damage; heads targets take
         // the hit together.
         if (op.flipEach === true) {
-          const [flipped, faces] =
-            op.faces === undefined
-              ? flipCoinsFor(state, candidates.length, ctx, events)
-              : [state, op.faces];
           // A live Backtrack Badge offers after the coins, before any damage.
-          const redo = op.faces === undefined ? coinRedoOffer(flipped, ctx, faces) : null;
+          const {
+            state: flipped,
+            faces,
+            redo,
+          } = flipOrKeep(state, op.faces, candidates.length, ctx, events);
           if (redo !== null)
             return {
               done: flipped,
@@ -3529,11 +3520,6 @@ function stepOp(
         upTo,
       );
     }
-    // All three gates are spliced by runProgram's queue loop (never reach here).
-    case "coinFlipGate":
-    case "conditionGate":
-    case "recordGate":
-      return { done: state };
   }
 }
 
@@ -6895,6 +6881,22 @@ function flipCoinsFor(
 }
 
 /**
+ * Flips `count` coins and asks whether a live Backtrack Badge offers a redo, or reuses the faces a
+ * declined redo kept, with no new flip, no row and no second offer.
+ */
+function flipOrKeep(
+  state: GameState,
+  kept: CoinFace[] | undefined,
+  count: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; faces: CoinFace[]; redo: string | null } {
+  if (kept !== undefined) return { state, faces: kept, redo: null };
+  const [flipped, faces] = flipCoinsFor(state, count, ctx, events);
+  return { state: flipped, faces, redo: coinRedoOffer(flipped, ctx, faces) };
+}
+
+/**
  * Target Together: one coin per own body in play matching `filter`, then `amount × heads` to the
  * chosen `refs`.
  */
@@ -6909,11 +6911,11 @@ function perHeadsHit(
 ): { done: GameState; schedule?: EffectOp[] } {
   // Reuses declined faces (`op.faces`) instead of new coins; otherwise flips, then offers Backtrack
   // Badge with a retry that keeps the same targets.
-  const [flipped, faces] =
-    op.faces === undefined
-      ? flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events)
-      : [state, op.faces];
-  const redo = op.faces === undefined ? coinRedoOffer(flipped, ctx, faces) : null;
+  const {
+    state: flipped,
+    faces,
+    redo,
+  } = flipOrKeep(state, op.faces, countPokemonInPlay(state, ctx.seat, filter), ctx, events);
   if (redo !== null) {
     return {
       done: flipped,
