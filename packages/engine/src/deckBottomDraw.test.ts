@@ -314,6 +314,7 @@ describe("D487 §5 — no composition of shipped ops spells a bottom draw", () =
         { op: "drawCards", count: 3 },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     const hand = idsIn(rotated.state, "p1", "hand").slice(-3);
@@ -323,17 +324,17 @@ describe("D487 §5 — no composition of shipped ops spells a bottom draw", () =
     expect(idsIn(rotated.state, "p1", "deck")).not.toEqual([...TOP_THREE, "d487-c4", "d487-c5"]);
     // …while the shipped arm leaves the survivors in their printed order.
     const straight: GameEvent[] = [];
-    const drawn = runProgram(state, PROGRAM, { seat: "p1" }, straight);
+    const drawn = runProgram(state, PROGRAM, { seat: "p1" }, {}, straight);
     expect(idsIn(drawn.state, "p1", "deck")).toEqual([...TOP_THREE, "d487-c4", "d487-c5"]);
   });
 
   it("the RNG is the separating fact, and it is measured on `rngState` rather than argued", () => {
     const state = table();
     const a: GameEvent[] = [];
-    const rotated = runProgram(state, [{ op: "bottomDeckTop", n: 5 }], { seat: "p1" }, a);
+    const rotated = runProgram(state, [{ op: "bottomDeckTop", n: 5 }], { seat: "p1" }, {}, a);
     expect(rotated.state.rngState).not.toBe(state.rngState);
     const b: GameEvent[] = [];
-    const drawn = runProgram(state, PROGRAM, { seat: "p1" }, b);
+    const drawn = runProgram(state, PROGRAM, { seat: "p1" }, {}, b);
     expect(drawn.state.rngState).toBe(state.rngState);
   });
 });
@@ -363,8 +364,8 @@ describe("D487 §6 — the printed sentence on a real board", () => {
       table(),
       [{ op: "drawCards", count: 3, from: "bottom", recordAs: "moved" }],
       { seat: "p1" },
-      [],
       record,
+      [],
     );
     expect(run.kind).toBe("done");
     expect((record.moved ?? []).map((uid) => idOf(uid, run.state))).toEqual([...BOTTOM_THREE]);
@@ -374,8 +375,8 @@ describe("D487 §6 — the printed sentence on a real board", () => {
       table(),
       [{ op: "drawCards", count: 3, recordAs: "moved" }],
       { seat: "p1" },
-      [],
       topRecord,
+      [],
     );
     expect((topRecord.moved ?? []).map((uid) => idOf(uid, topRun.state))).toEqual([...TOP_THREE]);
   });
@@ -478,6 +479,7 @@ describe("D487 §8 — the version question, asked at the hard address", () => {
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 3, from: "bottom" }] },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     expect(run.kind).toBe("parked");
@@ -489,7 +491,7 @@ describe("D487 §8 — the version question, asked at the hard address", () => {
   it("a v29 byte string — the SAME op with the key ABSENT — still means the TOP draw", () => {
     const state = table();
     const events: GameEvent[] = [];
-    const run = runProgram(state, V29_PROGRAM, { seat: "p1" }, events);
+    const run = runProgram(state, V29_PROGRAM, { seat: "p1" }, {}, events);
     expect(idsIn(run.state, "p1", "deck")).toEqual(["d487-c4", "d487-c5", ...BOTTOM_THREE]);
     expect(idsIn(run.state, "p1", "hand").slice(-3)).toEqual([...TOP_THREE]);
   });
@@ -505,6 +507,7 @@ describe("D487 §8 — the version question, asked at the hard address", () => {
           { op: "recordGate", slot: "paid", then: [draw] },
         ],
         { seat: "p1" },
+        {},
         [],
       );
       if (run.kind !== "parked") throw new Error("expected a park");

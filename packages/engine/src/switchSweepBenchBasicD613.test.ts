@@ -205,7 +205,7 @@ function withDiscard(pile: Record<string, number>): GameState {
 }
 function offered(state: GameState, program: readonly EffectOp[], seat: Seat = "p1"): string[] {
   const events: GameEvent[] = [];
-  const result = runProgram(state, program, { seat }, events);
+  const result = runProgram(state, program, { seat }, {}, events);
   if (result.kind !== "parked") return [];
   const prompt = result.prompt as { kind: string; candidates?: readonly string[] };
   if (prompt.kind !== "chooseCards" || prompt.candidates === undefined)
@@ -288,6 +288,7 @@ describe("D613 §5 — a deck search onto the Bench: Basic only, unless the noun
         },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     expect(result.kind).toBe("parked");

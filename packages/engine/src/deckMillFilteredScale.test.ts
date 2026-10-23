@@ -712,7 +712,7 @@ describe("D488 §8 — the STALE SLOT: an op that ran and moved nothing must ove
 
     const events: GameEvent[] = [];
     const record = { discarded: [...stale] };
-    const run = runProgram(state, ENERGY_PROGRAM, { seat: "p1" }, events, record);
+    const run = runProgram(state, ENERGY_PROGRAM, { seat: "p1" }, record, events);
     expect(run.kind).toBe("done");
     // The mill moved nothing, so the slot is EMPTY and the damage is zero — not the
     // 3 × 80 = 240 the stale uids would have bought.
@@ -725,7 +725,7 @@ describe("D488 §8 — the STALE SLOT: an op that ran and moved nothing must ove
     const stale = state.players.p1.discard.slice(0, 3);
     const events: GameEvent[] = [];
     const record = { discarded: [...stale] };
-    runProgram(state, ENERGY_PROGRAM, { seat: "p1" }, events, record);
+    runProgram(state, ENERGY_PROGRAM, { seat: "p1" }, record, events);
     expect(record.discarded).toHaveLength(3);
     for (const uid of stale) expect(record.discarded).not.toContain(uid);
     // 80, not 320: the three stale Energy uids are NOT added to the one milled Energy.
@@ -740,17 +740,17 @@ describe("D488 §8 — the STALE SLOT: an op that ran and moved nothing must ove
     const state = table([], ENERGY_PILE);
     const events: GameEvent[] = [];
     const record = { discarded: ["not-a-uid", "also-not-a-uid"] };
-    runProgram(state, [ENERGY_PROGRAM[1] as EffectOp], { seat: "p1" }, events, record);
+    runProgram(state, [ENERGY_PROGRAM[1] as EffectOp], { seat: "p1" }, record, events);
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(0);
     const both: GameEvent[] = [];
     runProgram(
       state,
       [{ op: "damageDefender", per: 80, count: "discarded" }],
       { seat: "p1" },
-      both,
       {
         discarded: ["not-a-uid", "also-not-a-uid"],
       },
+      both,
     );
     expect(both.find((e) => e.type === "DAMAGE_DEALT")).toMatchObject({ dealt: 160 });
   });
@@ -763,7 +763,7 @@ describe("D488 §9 — `MATCH_RECORD_VERSION` stays 29, driven at the address th
     // ① The v29 mill: no `recordAs`. It moves the same three cards and files NOTHING.
     const millEvents: GameEvent[] = [];
     const v29Record: { discarded?: string[] } = {};
-    const milled = runProgram(state, V29_MILL, { seat: "p1" }, millEvents, v29Record);
+    const milled = runProgram(state, V29_MILL, { seat: "p1" }, v29Record, millEvents);
     expect(milled.kind).toBe("done");
     expect(v29Record.discarded).toBeUndefined();
     expect(millEvents.filter((e) => e.type === "DECK_TOP_DISCARDED")).toHaveLength(1);
@@ -775,9 +775,15 @@ describe("D488 §9 — `MATCH_RECORD_VERSION` stays 29, driven at the address th
     ]);
 
     const scaleEvents: GameEvent[] = [];
-    runProgram(state, V29_SCALE, { seat: "p1" }, scaleEvents, {
-      discarded: [...state.players.p1.deck.slice(0, 3)],
-    });
+    runProgram(
+      state,
+      V29_SCALE,
+      { seat: "p1" },
+      {
+        discarded: [...state.players.p1.deck.slice(0, 3)],
+      },
+      scaleEvents,
+    );
     expect(scaleEvents.find((e) => e.type === "DAMAGE_DEALT")).toMatchObject({ dealt: 240 });
   });
 
@@ -792,11 +798,17 @@ describe("D488 §9 — `MATCH_RECORD_VERSION` stays 29, driven at the address th
 describe("D488 §10 — the DESCRIBER obligation, resolved by following the CALL PATH", () => {
   it("neither op PARKS, so there is no caption this slice could have left incomplete", () => {
     const events: GameEvent[] = [];
-    const run = runProgram(table(ENERGY_DECK, ENERGY_PILE), ENERGY_PROGRAM, { seat: "p1" }, events);
+    const run = runProgram(
+      table(ENERGY_DECK, ENERGY_PILE),
+      ENERGY_PROGRAM,
+      { seat: "p1" },
+      {},
+      events,
+    );
     expect(run.kind).toBe("done");
     const misty: GameEvent[] = [];
     expect(
-      runProgram(table(MISTY_DECK, MISTY_PILE), MISTY_PROGRAM, { seat: "p1" }, misty).kind,
+      runProgram(table(MISTY_DECK, MISTY_PILE), MISTY_PROGRAM, { seat: "p1" }, {}, misty).kind,
     ).toBe("done");
     // …and on the real board the state is never left pending either.
     const { state: done } = swing(table(MISTY_DECK, MISTY_PILE), MISTY_SWING);

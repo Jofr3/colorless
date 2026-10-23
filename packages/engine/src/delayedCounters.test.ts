@@ -870,6 +870,7 @@ describe("§10 — a second schedule in the same turn merges by MAX, not by sum"
         { op: "scheduleCounters", amount: 120 },
       ],
       { seat: "p1" },
+      {},
       up,
     );
     expect(body(raised.state.players.p2.active).scheduledEffect).toEqual({
@@ -891,6 +892,7 @@ describe("§10 — a second schedule in the same turn merges by MAX, not by sum"
         { op: "scheduleCounters", amount: 90 },
       ],
       { seat: "p1" },
+      {},
       down,
     );
     expect(body(lowered.state.players.p2.active).scheduledEffect).toEqual({
@@ -912,7 +914,7 @@ describe("§10 — a second schedule in the same turn merges by MAX, not by sum"
     ];
     for (const [first, second] of pairs) {
       const events: GameEvent[] = [];
-      const ran = runProgram(base, [first, second], { seat: "p1" }, events);
+      const ran = runProgram(base, [first, second], { seat: "p1" }, {}, events);
       const expected =
         second.op === "scheduleCounters"
           ? { turn: 3, kind: "counters", amount: 90 }

@@ -761,7 +761,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
     // mandatory — `min === max` — because that is what those bytes meant.
     const state = table();
     const events: GameEvent[] = [];
-    const run = runProgram(state, V29_PAYMENT, ctx, events);
+    const run = runProgram(state, V29_PAYMENT, ctx, {}, events);
     if (run.kind !== "parked") throw new Error("expected a park");
     if (run.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect([run.prompt.min, run.prompt.max]).toEqual([2, 2]);
@@ -771,7 +771,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
   it("a v29 SNIPE (no `perRecorded`) still deals its printed amount, unscaled", () => {
     const state = table();
     const events: GameEvent[] = [];
-    const run = runProgram(state, V29_SNIPE, ctx, events, { discarded: ["x", "y"] });
+    const run = runProgram(state, V29_SNIPE, ctx, { discarded: ["x", "y"] }, events);
     if (run.kind !== "parked") throw new Error("expected a park");
     if (run.prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect(run.prompt.note).toContain("60");
@@ -790,7 +790,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
   it("and the NEW bytes on the SAME board answer differently — the control for both", () => {
     const state = table();
     const events: GameEvent[] = [];
-    const run = runProgram(state, [PROGRAM[1] as EffectOp], ctx, events, { discarded: ["x", "y"] });
+    const run = runProgram(state, [PROGRAM[1] as EffectOp], ctx, { discarded: ["x", "y"] }, events);
     if (run.kind !== "parked") throw new Error("expected a park");
     if (run.prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect(run.prompt.note).toContain("120");
@@ -809,7 +809,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
   it("an EMPTY record makes the new rider deal nothing and ask nothing", () => {
     const state = table();
     const events: GameEvent[] = [];
-    const run = runProgram(state, [PROGRAM[1] as EffectOp], ctx, events, {});
+    const run = runProgram(state, [PROGRAM[1] as EffectOp], ctx, {}, events);
     expect(run.kind).toBe("done");
     if (run.kind !== "done") throw new Error("expected done");
     expect(run.state.players.p2.bench[0]?.damage).toBe(0);

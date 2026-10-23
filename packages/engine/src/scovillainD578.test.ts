@@ -331,6 +331,7 @@ describe("D578 Scovillain §4 — the type-keyed reads see {G} and {R}", () => {
       state,
       [{ op: "healEach", amount: 30, pokemonType: "Grass" }],
       { seat: "p1" },
+      {},
       [],
     );
     expect(result.state.players.p1.bench[0]?.damage).toBe(10);

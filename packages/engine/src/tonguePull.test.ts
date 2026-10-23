@@ -104,7 +104,7 @@ function board(
 function runOps(state: GameState, ops: readonly EffectOp[], seat: Seat) {
   const events: GameEvent[] = [];
   const ctx: EffectContext = { seat, sourceUid: state.players[seat].active?.stack[0] ?? "" };
-  const out = runProgram(state, ops, ctx, events);
+  const out = runProgram(state, ops, ctx, {}, events);
   return { out, events, state: out.state, parked: out.kind === "parked" };
 }
 

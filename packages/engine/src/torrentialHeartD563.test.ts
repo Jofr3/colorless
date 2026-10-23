@@ -478,6 +478,7 @@ describe('§6 — the riders: `on`/`holder: "source"` find the body by uid; abse
       state,
       program,
       { seat: "p1", ...(sourceUid === undefined ? {} : { sourceUid }) },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);

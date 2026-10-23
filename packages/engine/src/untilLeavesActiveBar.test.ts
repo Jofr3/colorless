@@ -288,7 +288,13 @@ describe("§3 — the install writes an entry with NO window", () => {
     const program = deriveAttackEffect(BLAZE_BLITZ_BAR);
     expect(program).not.toBeNull();
     const events: GameEvent[] = [];
-    const result = runProgram(before, program ?? [], { seat: "p2", invokedBy: "attack" }, events);
+    const result = runProgram(
+      before,
+      program ?? [],
+      { seat: "p2", invokedBy: "attack" },
+      {},
+      events,
+    );
     if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
     // P2's Active is fix-titan, which prints no attacks at all.
     expect(result.state.players.p2.active?.lockedAttacks ?? []).toEqual([]);
@@ -506,6 +512,7 @@ describe("§6 — `addLockedAttack` keeps an unbounded bar, and adds it only onc
       state,
       [{ op: "preventAttackUse", attack: "Blaze Blitz", until: "leavesActive" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
@@ -520,6 +527,7 @@ describe("§6 — `addLockedAttack` keeps an unbounded bar, and adds it only onc
       state,
       [{ op: "preventAttackUse", attack: "Heat Blast", until: "leavesActive" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       second,
     );
     if (added.kind !== "done") throw new Error(`expected done, got ${added.kind}`);
@@ -544,6 +552,7 @@ describe("§6 — `addLockedAttack` keeps an unbounded bar, and adds it only onc
       mixed,
       [{ op: "preventAttackUse", attack: "Heat Blast" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);

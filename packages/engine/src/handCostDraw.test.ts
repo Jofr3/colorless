@@ -322,7 +322,7 @@ function zones(state: GameState): [hand: number, discard: number, deck: number] 
 
 function settle(state: GameState, ops: EffectOp[]): GameState {
   const events: GameEvent[] = [];
-  let result = runProgram(state, ops, { seat: "p1" }, events);
+  let result = runProgram(state, ops, { seat: "p1" }, {}, events);
   while (result.kind === "parked") {
     const prompt = result.prompt;
     if (prompt.kind !== "chooseCards") throw new Error(`unexpected park: ${prompt.kind}`);

@@ -554,7 +554,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
     // vacuous on an empty bench.
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, {}, events);
     expect(run.kind).toBe("done");
     // …and the whole attack resolves without an `effect:choose` phase either.
     expect(swing(state, AT.scaled).state.phase.kind).not.toBe("effect:choose");
@@ -565,7 +565,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
     // body and the rung cannot pass by accident.
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, [V30_SPREAD], ctx, events);
+    const run = runProgram(state, [V30_SPREAD], ctx, {}, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 10, 10, 10]);
   });
@@ -573,7 +573,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
   it("…and the NEW bytes on the SAME board answer differently — both directions or neither (D441)", () => {
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, {}, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 30, 30, 30]);
   });

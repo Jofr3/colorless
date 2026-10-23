@@ -169,7 +169,7 @@ export function handRefresh(
     // Returns the state as well as the count because Lucian's coin flip spends `rngState` (one flip
     // per seat, controller first).
     const dealt = handRefreshDrawCount(next, seat, ctx.seat, op.draw, handCount, events);
-    next = drawToHand(dealt.state, seat, dealt.count, "effect", events);
+    next = drawToHand(dealt.state, seat, dealt.count, "effect", "top", events);
   }
   return next;
 }
@@ -806,8 +806,8 @@ export function bottomFromOpponentHandApply(
   state: GameState,
   uids: readonly string[],
   ctx: EffectContext,
+  dest: "bench" | "discard" | "deck" | undefined,
   events: GameEvent[],
-  dest?: "bench" | "discard" | "deck",
 ): { state: GameState; moved: string[] } {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
@@ -904,8 +904,8 @@ export function randomFromOpponentHand(
   state: GameState,
   op: OpOf<"randomFromOpponentHand">,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
@@ -941,8 +941,8 @@ export function randomDiscardDownTo(
   op: OpOf<"randomFromOpponentHand">,
   size: number,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   const single: OpOf<"randomFromOpponentHand"> = {
     op: "randomFromOpponentHand",
@@ -951,7 +951,7 @@ export function randomDiscardDownTo(
   const take = Math.max(0, state.players[otherSeat(ctx.seat)].hand.length - size);
   let next = state;
   for (let n = 0; n < take; n += 1)
-    next = randomFromOpponentHand(next, single, ctx, events, record);
+    next = randomFromOpponentHand(next, single, ctx, record, events);
   return next;
 }
 
@@ -976,7 +976,7 @@ export function hpGuessApply(
   const right = hp !== null && guess === hp;
   const drawer = relativeSeat(ctx.seat, right);
   events.push({ type: "HP_GUESSED", seat: ctx.seat, uid, guess, hp, right, drawer });
-  return drawToHand(state, drawer, op.draw, "effect", events);
+  return drawToHand(state, drawer, op.draw, "effect", "top", events);
 }
 
 /**

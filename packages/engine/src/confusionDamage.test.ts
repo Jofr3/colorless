@@ -351,6 +351,7 @@ describe("§4 — `SpecialConditions.confusionDamage` on a real board", () => {
       raised.state,
       [{ op: "applyStatus", target: "defender", status: "confused" }],
       { seat: "p1" },
+      {},
       events,
     );
     expect(again.kind).toBe("done");

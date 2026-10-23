@@ -507,7 +507,7 @@ describe("D618 §4 — what Battle Cage does not stop: a Trainer, a source with 
     },
   ];
   const run = (state: GameState, ctx: Parameters<typeof runProgram>[2]) => {
-    const result = runProgram(state, FOLD, ctx, []);
+    const result = runProgram(state, FOLD, ctx, {}, []);
     if (result.kind !== "done") throw new Error("expected done");
     return damages(result.state, "p2");
   };
@@ -522,7 +522,7 @@ describe("D618 §4 — what Battle Cage does not stop: a Trainer, a source with 
 
   it("\"from the opponent's Pokémon\": a program run by the Bench's OWN seat still places", () => {
     const board = caged(table([FILLER], [FILLER, FILLER]));
-    const result = runProgram(board, FOLD, { seat: "p2", invokedBy: "attack" }, []);
+    const result = runProgram(board, FOLD, { seat: "p2", invokedBy: "attack" }, {}, []);
     if (result.kind !== "done") throw new Error("expected done");
     expect(damages(result.state, "p1")).toEqual([20]);
     const own = runProgram(
@@ -537,6 +537,7 @@ describe("D618 §4 — what Battle Cage does not stop: a Trainer, a source with 
         },
       ],
       { seat: "p2", invokedBy: "attack" },
+      {},
       [],
     );
     if (own.kind !== "done") throw new Error("expected done");
@@ -641,7 +642,7 @@ describe("D618 §5b — the new `per` member off a board", () => {
     ];
     const noteOf = (program: EffectOp[]): string => {
       const state = setHand(table([PSY]), "p1", [ITEM, P_ENERGY]);
-      const result = runProgram(state, program, { seat: "p1" }, []);
+      const result = runProgram(state, program, { seat: "p1" }, {}, []);
       if (result.kind !== "parked") throw new Error("expected a park");
       return result.prompt.note;
     };

@@ -626,7 +626,7 @@ describe("D617 §8 — the new pieces off a board", () => {
     const noteOf = (program: EffectOp[]): string => {
       let state = board(PLAIN, []);
       state = handFromDeck(handFromDeck(state, "p1", ITEM, 1), "p1", "fix-fire-energy", 1);
-      const result = runProgram(state, program, { seat: "p1" }, []);
+      const result = runProgram(state, program, { seat: "p1" }, {}, []);
       if (result.kind !== "parked") throw new Error("expected a park");
       return result.prompt.note;
     };
@@ -645,6 +645,7 @@ describe("D617 §8 — the new pieces off a board", () => {
       state,
       [{ op: "healChosen", amount: 80, targetRecorded: "moved" }],
       { seat: "p1" },
+      {},
       [],
     );
     if (result.kind !== "done") throw new Error("expected done");

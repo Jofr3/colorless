@@ -597,6 +597,7 @@ describe("payFromHand — the apply's wire guards and purity", () => {
       { op: "payFromHand", count: 1, to: "discard" },
       { kind: "cards", uids: [deckCard] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(events).toHaveLength(0);
@@ -616,6 +617,7 @@ describe("payFromHand — the apply's wire guards and purity", () => {
       { op: "payFromHand", count: 2, to: "discard" },
       { kind: "cards", uids: [uid, uid] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([uid]);

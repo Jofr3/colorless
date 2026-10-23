@@ -377,6 +377,7 @@ describe("D578 Team Rocket's Energy §6 — R-TRE1 (RULED: fixed at the landing)
       state,
       [{ op: "attachFromDiscard", filter: { kind: "anyEnergy" }, max: 1, each: true }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error("expected done");

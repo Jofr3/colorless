@@ -1425,8 +1425,8 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       sourceUid === undefined
         ? { seat: "p2", invokedBy: "attack" }
         : { seat: "p2", invokedBy: "attack", sourceUid },
-      events,
       { discarded: ["one-card"] },
+      events,
     );
     const damage = findAll(events, "DAMAGE_DEALT");
     return {
@@ -1499,6 +1499,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       bare,
       [{ op: "preventRetreat" }],
       { seat: "p2", invokedBy: "attack" },
+      {},
       events,
     );
     expect(types(events)).toContain("RETREAT_BLOCKED");

@@ -217,7 +217,7 @@ function run(
   ops: readonly EffectOp[],
 ): { state: GameState; events: GameEvent[] } {
   const events: GameEvent[] = [];
-  const result = runProgram(state, ops, ctx, events);
+  const result = runProgram(state, ops, ctx, {}, events);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return { state: result.state, events };
 }
@@ -700,7 +700,7 @@ describe("D520 §9 — no new op kind, the producer counts moved as stated, and 
     // bodies), so `phase.cont.pendingOp` and `rest` are never written.
     const state = table("d520-wall", CANONICAL);
     const events: GameEvent[] = [];
-    expect(runProgram(state, PROGRAM, ctx, events).kind).toBe("done");
+    expect(runProgram(state, PROGRAM, ctx, {}, events).kind).toBe("done");
     expect(swing(state).state.phase.kind).not.toBe("effect:choose");
   });
 

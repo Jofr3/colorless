@@ -515,8 +515,8 @@ describe("D490 §5 — the three boards, driven end to end", () => {
       state,
       discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
       { seat: "p2" },
-      events,
       {},
+      events,
     );
     const rows = all(events, "DECK_TOP_DISCARDED");
     expect(rows.map((r) => [r.seat, r.actor])).toEqual([
@@ -528,8 +528,8 @@ describe("D490 §5 — the three boards, driven end to end", () => {
       state,
       discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
       { seat: "p1" },
-      mirror,
       {},
+      mirror,
     );
     expect(all(mirror, "DECK_TOP_DISCARDED").map((r) => [r.seat, r.actor])).toEqual([
       ["p1", "p1"],
@@ -619,8 +619,8 @@ describe("D490 §6 — an EMPTY deck on either side, and on both", () => {
       state,
       discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
       { seat: "p1" },
-      midEvents,
       {},
+      midEvents,
     );
     expect(mid.kind).toBe("done");
     if (mid.kind !== "done") throw new Error("expected done");
@@ -643,8 +643,8 @@ describe("D490 §6 — an EMPTY deck on either side, and on both", () => {
       state,
       discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
       { seat: "p1" },
-      events,
       record,
+      events,
     );
     expect(run.kind).toBe("done");
     expect(record.discarded).toEqual([]);
@@ -669,7 +669,7 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
     ];
     const record: EffectRecord = {};
     const events: GameEvent[] = [];
-    runProgram(state, sequential, { seat: "p1" }, events, record);
+    runProgram(state, sequential, { seat: "p1" }, record, events);
     // BOTH decks were milled — the zones are right and only the RECORD is wrong, which is
     // exactly why no board-shaped assertion could have found this.
     expect(record.discarded).toHaveLength(1);
@@ -682,8 +682,8 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
       state,
       discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
       { seat: "p1" },
-      oneOpEvents,
       oneOp,
+      oneOpEvents,
     );
     expect(oneOp.discarded).toHaveLength(2);
     expect(findEvent(oneOpEvents, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + 2 * PER });
@@ -704,7 +704,7 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
     ];
     const record: EffectRecord = {};
     const events: GameEvent[] = [];
-    runProgram(state, twoSlots, { seat: "p1" }, events, record);
+    runProgram(state, twoSlots, { seat: "p1" }, record, events);
     expect(record.paid).toHaveLength(1);
     expect(record.discarded).toHaveLength(1);
     // 190, not 330 — half the sentence, silently.
@@ -718,8 +718,8 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
       state,
       discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
       { seat: "p1" },
-      events,
       {},
+      events,
     );
     if (run.kind !== "done") throw new Error("expected done");
     const done = run.state;
@@ -775,7 +775,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     expect(program.map((op) => op.op)).toEqual(["discardDeckTop", "damageDefender"]);
     for (const state of [table(C_SELF_DECK, C_FOE_DECK), table([], [])]) {
       const events: GameEvent[] = [];
-      const run = runProgram(state, program, { seat: "p1" }, events, {});
+      const run = runProgram(state, program, { seat: "p1" }, {}, events);
       expect(run.kind).toBe("done");
       const { state: done } = swing(state, TWIN_MILL);
       expect(done.phase.kind).not.toBe("effect:choose");
@@ -817,7 +817,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     ];
     const record: EffectRecord = {};
     const events: GameEvent[] = [];
-    runProgram(state, v29, { seat: "p1" }, events, record);
+    runProgram(state, v29, { seat: "p1" }, record, events);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(1);
     expect(record.discarded).toHaveLength(1);
     expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
@@ -836,8 +836,8 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
         state,
         discardScaledBoostProgram({ kind: "eachDeckMill", per: PER }, PRINTED_BASE),
         { seat: "p1" },
-        events,
         {},
+        events,
       );
       expect(run.kind).toBe("done");
     }

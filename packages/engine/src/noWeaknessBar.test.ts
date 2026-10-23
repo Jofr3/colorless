@@ -246,6 +246,7 @@ describe("§3 — what the install writes, and what it announces", () => {
       state,
       [{ op: "installNoWeakness" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(count(events, "WEAKNESS_REMOVED")).toBe(1);
@@ -255,6 +256,7 @@ describe("§3 — what the install writes, and what it announces", () => {
       once.state,
       [{ op: "installNoWeakness" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       again,
     );
     expect(count(again, "WEAKNESS_REMOVED")).toBe(0);
@@ -372,6 +374,7 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
       before,
       [{ op: "installNoWeakness" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(must0(ran.state.players.p1.active).noWeaknessTurn).toBe(3);

@@ -506,7 +506,7 @@ describe("§2 — Redeemable Ticket: the prizes go under the deck and the top N 
       },
     };
     const events: GameEvent[] = [];
-    const result = runProgram(empty, [{ op: "cycleOwnPrizes" }], { seat: "p1" }, events);
+    const result = runProgram(empty, [{ op: "cycleOwnPrizes" }], { seat: "p1" }, {}, events);
     expect(result.kind).toBe("done");
     expect(result.state).toEqual(empty);
     expect(events).toEqual([]);
@@ -691,6 +691,7 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
       board,
       [{ op: "lookAtTopN", n: 5, filter: { kind: "basicPokemon" }, max: "any", dest: "bench" }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error("expected a park");
@@ -895,7 +896,7 @@ describe("§4 — Team Rocket's Bother-Bot: flip, reveal, and the recorded switc
   it("the D548 own-side flip is byte-identical: no `actor`, the owner's wording", () => {
     const board = table();
     const events: GameEvent[] = [];
-    const result = runProgram(board, [{ op: "turnPrizeFaceUp" }], { seat: "p1" }, events);
+    const result = runProgram(board, [{ op: "turnPrizeFaceUp" }], { seat: "p1" }, {}, events);
     if (result.kind !== "parked") throw new Error("expected a park");
     expect(result.prompt).toEqual({
       kind: "choosePrize",
@@ -1002,7 +1003,7 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
     if (prompt.kind !== "chooseCards") throw new Error("expected the forced body's card park");
     expect(prompt.candidates.every((u) => parked.cardIdByUid[u] === SAPLING)).toBe(true);
     const events: GameEvent[] = [];
-    const plain = runProgram(board, [{ op: "evolveFromDeckChosen" }], { seat: "p1" }, events);
+    const plain = runProgram(board, [{ op: "evolveFromDeckChosen" }], { seat: "p1" }, {}, events);
     if (plain.kind !== "parked") throw new Error("expected the body park");
     expect(plain.prompt.kind).toBe("choosePokemon");
     expect(plain.prompt.kind === "choosePokemon" && plain.prompt.candidates).toHaveLength(2);
@@ -1036,7 +1037,7 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
   it("D307/R-SV1 RE-AFFIRMED: the plain op still offers a first-turn, entered-this-turn body (the gate is Grand Tree's alone)", () => {
     const board = withBody(treeBoard(false), "p1", 0, (p) => ({ ...p, turnPlayed: 2 }));
     const events: GameEvent[] = [];
-    const plain = runProgram(board, [{ op: "evolveFromDeckChosen" }], { seat: "p1" }, events);
+    const plain = runProgram(board, [{ op: "evolveFromDeckChosen" }], { seat: "p1" }, {}, events);
     expect(plain.kind).toBe("parked");
   });
 
@@ -1110,6 +1111,7 @@ describe("§5 — Grand Tree: the Stadium evolve, Basic bodies only, with a prin
       board,
       [{ op: "evolveFromDeck", onto: { spot: "bench", index: 0 }, thenEvolveAgain: true }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error("expected a park");

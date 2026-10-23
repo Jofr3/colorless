@@ -644,6 +644,7 @@ describe("the tails-gated self-costs — the whiff, and purity", () => {
       stripped,
       bare,
       { seat: "p1", sourceUid: activeUid(stripped, "p1") },
+      {},
       events,
     );
     expect("state" in out).toBe(true);
@@ -652,7 +653,13 @@ describe("the tails-gated self-costs — the whiff, and purity", () => {
     // which is the combination a reader has to see once.
     const gatedEvents: GameEvent[] = [];
     const gated = mustDerive(deriveAttackEffect, DISCARD_TEXT);
-    runProgram(stripped, gated, { seat: "p1", sourceUid: activeUid(stripped, "p1") }, gatedEvents);
+    runProgram(
+      stripped,
+      gated,
+      { seat: "p1", sourceUid: activeUid(stripped, "p1") },
+      {},
+      gatedEvents,
+    );
     expect(types(gatedEvents)).toEqual(["ATTACK_EFFECT_COIN_FLIP"]);
   });
 

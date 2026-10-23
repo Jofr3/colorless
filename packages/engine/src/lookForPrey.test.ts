@@ -150,7 +150,7 @@ function runOps(
 ): { state: GameState; events: GameEvent[]; parked: boolean } {
   const events: GameEvent[] = [];
   const ctx: EffectContext = { seat, sourceUid: state.players[seat].active?.stack[0] ?? "" };
-  const out = runProgram(state, ops, ctx, events);
+  const out = runProgram(state, ops, ctx, {}, events);
   return { state: out.state, events, parked: out.kind === "parked" };
 }
 

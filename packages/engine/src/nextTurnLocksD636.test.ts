@@ -520,6 +520,7 @@ describe("D636 §3 — Electrified Incisors: 8 damage counters per Energy card f
         { op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true },
       ],
       { seat: "p2", sourceUid: topOf(defender) },
+      {},
       events,
     );
     expect(run.kind).toBe("done");
@@ -540,6 +541,7 @@ describe("D636 §3 — Electrified Incisors: 8 damage counters per Energy card f
       held,
       [{ op: "attachFromHand", filter: { kind: "basicEnergy" } }],
       { seat: "p2" },
+      {},
       events,
     );
     if (parked.kind !== "parked") throw new Error("expected the attachCards park");
@@ -569,8 +571,8 @@ describe("D636 §3 — Electrified Incisors: 8 damage counters per Energy card f
     const start = board(PACHIRISU);
     const events: GameEvent[] = [];
     const op = { op: "markHandAttach", counters: 8 } as const;
-    const once = runProgram(start, [op], { seat: "p1" }, events);
-    const twice = runProgram(once.state, [op], { seat: "p1" }, events);
+    const once = runProgram(start, [op], { seat: "p1" }, {}, events);
+    const twice = runProgram(once.state, [op], { seat: "p1" }, {}, events);
     expect(body(twice.state.players.p2.active).handAttachMark?.counters).toBe(16);
     expect(all(events, "HAND_ATTACH_MARKED").map((e) => e.counters)).toEqual([8, 16]);
   });
@@ -706,6 +708,7 @@ describe("D636 §4 — Jet of Ink: two coins at the declaration, any tails stops
       inkedShoot,
       [{ op: "devolveEach" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       [],
     );
     if (run.kind !== "done") throw new Error("expected done");

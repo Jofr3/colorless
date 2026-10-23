@@ -372,7 +372,7 @@ describe("the read sites, priced by driving them", () => {
       },
     };
     const events: GameEvent[] = [];
-    const result = runProgram(empty, TROPICAL_FRENZY_PROGRAM, { seat: "p1" }, events);
+    const result = runProgram(empty, TROPICAL_FRENZY_PROGRAM, { seat: "p1" }, {}, events);
     expect(result.kind).toBe("done");
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
     // …and the cards are still in the hand: a dead end moves nothing.
@@ -381,7 +381,9 @@ describe("the read sites, priced by driving them", () => {
     // park, so the assertion above is the target set doing the work rather than
     // the program being unreachable.
     const live: GameEvent[] = [];
-    expect(runProgram(state, TROPICAL_FRENZY_PROGRAM, { seat: "p1" }, live).kind).toBe("parked");
+    expect(runProgram(state, TROPICAL_FRENZY_PROGRAM, { seat: "p1" }, {}, live).kind).toBe(
+      "parked",
+    );
   });
 
   it("the op is not a recorder, so no §9.2 slot is written or read", () => {

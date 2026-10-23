@@ -361,7 +361,7 @@ describe("D599 §7 — `describeBranch` is silent on the new member (a gate bran
   const noteOf = (program: EffectOp[]): string => {
     let state = board(PLAIN, []);
     state = handFromDeck(handFromDeck(state, "p1", ITEM, 1), "p1", "fix-fire-energy", 1);
-    const result = runProgram(state, program, { seat: "p1" }, []);
+    const result = runProgram(state, program, { seat: "p1" }, {}, []);
     if (result.kind !== "parked") throw new Error("expected a park");
     return result.prompt.note;
   };

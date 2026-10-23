@@ -363,11 +363,11 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
     const benchUid = bodyAt(state, "p2", 0).stack.at(-1) as string;
     const events: GameEvent[] = [];
     const ops: EffectOp[] = [{ op: "discardTools", count: 1, bodyUid: benchUid }];
-    const out = runProgram(state, ops, ctx, events);
+    const out = runProgram(state, ops, ctx, {}, events);
     if (out.kind !== "done") throw new Error("expected done");
     expect(bodyAt(out.state, "p2", 0).tools).toEqual([]);
     expect(bodyAt(out.state, "p2", "active").tools).toHaveLength(1);
-    const wide = runProgram(state, [{ op: "discardTools", count: 1 }], ctx, []);
+    const wide = runProgram(state, [{ op: "discardTools", count: 1 }], ctx, {}, []);
     expect(wide.kind).toBe("parked");
   });
 
@@ -389,6 +389,7 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
         },
       ],
       ctx,
+      {},
       events,
     );
     if (out.kind !== "done") throw new Error("expected done");

@@ -593,8 +593,8 @@ function stripPreDamage(
   state: GameState,
   seat: Seat,
   ctx: EffectContext,
-  events: GameEvent[],
   what: { specialEnergy: boolean; cancelIfNone: boolean },
+  events: GameEvent[],
 ): AttackPreDamageResult {
   const actor = ctx.seat;
   const side = state.players[seat];
@@ -605,7 +605,7 @@ function stripPreDamage(
   if (host === undefined) return nothing;
   // §11: a strip is an effect of an attack, so a "prevent all effects of attacks" shield refuses
   // it. Checked before any read or push, so a refused strip files only `ATTACK_EFFECT_PREVENTED`.
-  if (effectRefused(state, seat, ctx, events)) return nothing;
+  if (effectRefused(state, seat, ctx, undefined, events)) return nothing;
   const tools = victim.tools;
   // "Special" is the CARD CLASS and not an energy TYPE (`isSpecialEnergy`, cards.ts),
   // so a Basic Energy on the same body is untouched by row 71 — the one distinction
@@ -669,20 +669,32 @@ function applyAttackPreDamage(
   const ctx: EffectContext = { seat: actor, sourceUid: actorUid, invokedBy: "attack", dealt: 0 };
   switch (pre.kind) {
     case "discardOpponentActiveTools":
-      return stripPreDamage(state, otherSeat(actor), ctx, events, {
-        specialEnergy: false,
-        cancelIfNone: false,
-      });
+      return stripPreDamage(
+        state,
+        otherSeat(actor),
+        ctx,
+        {
+          specialEnergy: false,
+          cancelIfNone: false,
+        },
+        events,
+      );
     case "discardOpponentActiveToolsAndSpecialEnergy":
       // Row 71. The SECOND ZONE and nothing else changes — same victim, same seat
       // convention, same silent no-op. `specialEnergy` is a CARD CLASS
       // (`isSpecialEnergy`), not an energy type, so a Basic on the same body stays
       // attached; that is the one thing an "all Energy" mis-build would get wrong
       // and it is driven as a control rather than described.
-      return stripPreDamage(state, otherSeat(actor), ctx, events, {
-        specialEnergy: true,
-        cancelIfNone: false,
-      });
+      return stripPreDamage(
+        state,
+        otherSeat(actor),
+        ctx,
+        {
+          specialEnergy: true,
+          cancelIfNone: false,
+        },
+        events,
+      );
     case "discardOwnToolsElseCancel":
       // Row 72. The victim is the ATTACKER's own body — `actor` on both sides of the
       // event, which is exactly the self-discard case `TOOLS_DISCARDED`'s own doc
@@ -690,18 +702,30 @@ function applyAttackPreDamage(
       // self-discard"). The printed *"If you can't discard any, this attack does
       // nothing."* is reported through the RESULT and executed by the caller, which
       // is the only place that can return.
-      return stripPreDamage(state, actor, ctx, events, {
-        specialEnergy: false,
-        cancelIfNone: true,
-      });
+      return stripPreDamage(
+        state,
+        actor,
+        ctx,
+        {
+          specialEnergy: false,
+          cancelIfNone: true,
+        },
+        events,
+      );
     case "discardOpponentActiveToolsThenParalyze": {
       // Row 74. The act is row 73's, byte for byte; the consequent is conditioned on
       // its RESULT — *"If you discarded a Pokémon Tool in this way"* — which is the
       // whole reason `stripPreDamage` reports what it moved instead of only a board.
-      const stripped = stripPreDamage(state, otherSeat(actor), ctx, events, {
-        specialEnergy: false,
-        cancelIfNone: false,
-      });
+      const stripped = stripPreDamage(
+        state,
+        otherSeat(actor),
+        ctx,
+        {
+          specialEnergy: false,
+          cancelIfNone: false,
+        },
+        events,
+      );
       if (stripped.tools === 0) return stripped;
       // Through the interpreter's own `applyStatus`, which owns the §11 refusal and §12 status
       // immunities. A shielded body already refused the strip above, so only one
@@ -802,12 +826,12 @@ export function attack(
 
   const opening = flipOpeningCoins(state, action, active, attackerUid, reentry, events);
   let next = opening.state;
-  if (!opening.resolves) return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  if (!opening.resolves) return finishAttack(next, action.seat, attackerUid, declared.name, events);
   // The copy resolves only from here, so `ATTACK_DECLARED.as` is written only now; every earlier
   // return resolved nothing. `events[0]` is `declaredEvent`. A resolve-time copy also takes its
   // source here, after every coin.
   if (copy !== null && isResolvedAttackCopy(copy)) {
-    return copyAtResolution(next, events, action, copy, attackerUid, declared.name);
+    return copyAtResolution(next, action, copy, attackerUid, declared.name, events);
   }
   // A resumed half names what the attack became in its own row; its `ATTACK_DECLARED` went out with
   // the first half.
@@ -882,7 +906,7 @@ export function attack(
       uid: attackerUid,
       reason: "requirement",
     });
-    return finishAttack(next, events, action.seat, attackerUid, declared.name);
+    return finishAttack(next, action.seat, attackerUid, declared.name, events);
   }
 
   // Reassigned only by the printed coin flips, which append to it.
@@ -923,7 +947,7 @@ export function attack(
         uid: attackerUid,
         reason: "preDamage",
       });
-      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+      return finishAttack(next, action.seat, attackerUid, declared.name, events);
     }
   }
 
@@ -991,11 +1015,12 @@ export function attack(
             ? {}
             : { borrowedAttack: declared.name }),
         },
+        {},
         events,
       ),
       action.seat,
-      events,
       { resumeTail: true },
+      events,
     );
   }
 
@@ -1007,7 +1032,7 @@ export function attack(
 
   // §8.1 Knock Out sweep on both boards, then the §5.3 turn end (or the Festival Lead attack-again
   // window).
-  return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  return finishAttack(next, action.seat, attackerUid, declared.name, events);
 }
 
 /** A declaration that passed every §4/§8/§9/§11 gate and the §8.2 cost check. */
@@ -1491,13 +1516,20 @@ function flipPrintedCoins(
       : null;
   if (redoTool !== null) {
     return {
-      done: parkCoinRedo(next, events, action.seat, attackerUid, attackName, {
-        op: "reflipAttackCoins",
-        toolUid: redoTool,
-        index: action.index,
-        faces: [...faces],
-        ...(copied === undefined ? {} : { copied }),
-      }),
+      done: parkCoinRedo(
+        next,
+        action.seat,
+        attackerUid,
+        attackName,
+        {
+          op: "reflipAttackCoins",
+          toolUid: redoTool,
+          index: action.index,
+          faces: [...faces],
+          ...(copied === undefined ? {} : { copied }),
+        },
+        events,
+      ),
     };
   }
   if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
@@ -1510,7 +1542,7 @@ function flipPrintedCoins(
         uid: attackerUid,
         reason: "coinFlip",
       });
-      return { done: finishAttack(next, events, action.seat, attackerUid, attackName) };
+      return { done: finishAttack(next, action.seat, attackerUid, attackName, events) };
     }
     // Heads branch of the same flip. Appended to `program`, never assigned, so a registry program
     // is not dropped.
@@ -1975,6 +2007,7 @@ function parkCopy(
       cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid } },
     },
     seat,
+    {},
     [],
   );
 }
@@ -2192,6 +2225,7 @@ function declareInPlayAttackCopy(
       },
     },
     action.seat,
+    {},
     [],
   );
 }
@@ -2279,12 +2313,12 @@ function chooseFoundAttack(pairs: readonly FoundPair[], copierName: string): Eff
     nothing. The first half's events ride the park's result. */
 function parkFoundCopy(
   state: GameState,
-  events: GameEvent[],
   seat: Seat,
   attackerUid: string,
   copierName: string,
   op: OpOf<"useFoundAttackAs">,
   prompt: EffectPrompt,
+  events: GameEvent[],
 ): ApplyResult {
   const epilogue: PendingStage = {
     kind: "attackEpilogue",
@@ -2304,8 +2338,8 @@ function parkFoundCopy(
       },
     },
     seat,
-    events,
     { resumeTail: true },
+    events,
   );
 }
 
@@ -2316,11 +2350,11 @@ function parkFoundCopy(
  */
 function copyAtResolution(
   state: GameState,
-  events: GameEvent[],
   action: AttackAction,
   copy: ResolvedAttackCopy,
   attackerUid: string,
   copierName: string,
+  events: GameEvent[],
 ): ApplyResult {
   const seat = action.seat;
   if (copy.from === "opponentDeckTop") {
@@ -2339,10 +2373,9 @@ function copyAtResolution(
     const [deck, rngState] = shuffle(side.deck, state.rngState);
     events.push({ type: "SHUFFLE", seat: owner });
     const shuffled: GameState = { ...withSide(state, owner, { ...side, deck }), rngState };
-    if (pairs.length === 0) return finishAttack(shuffled, events, seat, attackerUid, copierName);
+    if (pairs.length === 0) return finishAttack(shuffled, seat, attackerUid, copierName, events);
     return parkFoundCopy(
       shuffled,
-      events,
       seat,
       attackerUid,
       copierName,
@@ -2352,11 +2385,12 @@ function copyAtResolution(
         note: `Use an attack from a Pokémon revealed from your opponent's deck as ${copierName}?`,
         labels: { yes: "Choose an attack", no: "Don't" },
       },
+      events,
     );
   }
   const side = state.players[seat];
   const top = side.deck[0];
-  if (top === undefined) return finishAttack(state, events, seat, attackerUid, copierName);
+  if (top === undefined) return finishAttack(state, seat, attackerUid, copierName, events);
   events.push({ type: "DECK_TOP_DISCARDED", seat, actor: seat, uids: [top] });
   const milled = withSide(state, seat, {
     ...side,
@@ -2365,19 +2399,19 @@ function copyAtResolution(
   });
   const pairs = foundPairs(milled, seat, [top], true);
   const only = pairs.length === 1 ? pairs[0] : undefined;
-  if (pairs.length === 0) return finishAttack(milled, events, seat, attackerUid, copierName);
+  if (pairs.length === 0) return finishAttack(milled, seat, attackerUid, copierName, events);
   if (only !== undefined) {
     const resumed = reenterFound(milled, action, only);
     return resumed.ok ? ok(resumed.state, [...events, ...resumed.events]) : resumed;
   }
   return parkFoundCopy(
     milled,
-    events,
     seat,
     attackerUid,
     copierName,
     { op: "useFoundAttackAs", from: copy.from, index: action.index, candidates: pairs },
     chooseFoundAttack(pairs, copierName),
+    events,
   );
 }
 
@@ -2424,8 +2458,8 @@ export function resolveFoundAttack(
           cont: { ...phase.cont, pendingOp: { ...op, accepted: true } },
         },
         seat,
-        [],
         { resumeTail: true },
+        [],
       );
     }
     pair = op.candidates[0];
@@ -2468,11 +2502,11 @@ type CoinRedo = { kind: "keep"; faces: CoinFace[] } | { kind: "again" };
 /** Park Backtrack Badge's offer after the printed coin flip. */
 function parkCoinRedo(
   state: GameState,
-  events: GameEvent[],
   seat: Seat,
   attackerUid: string,
   attackName: string,
   op: OpOf<"reflipAttackCoins">,
+  events: GameEvent[],
 ): ApplyResult {
   const epilogue: PendingStage = {
     kind: "attackEpilogue",
@@ -2492,8 +2526,8 @@ function parkCoinRedo(
       },
     },
     seat,
-    events,
     { resumeTail: true },
+    events,
   );
 }
 

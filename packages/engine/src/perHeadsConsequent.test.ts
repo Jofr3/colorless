@@ -389,14 +389,14 @@ describe("§3 — no new persisted byte, in three directions", () => {
       JSON.stringify(mill, (k, v) => (k === "count" ? undefined : v)),
     ) as EffectOp;
     expect(Object.keys(noCount)).not.toContain("count");
-    const milled = runProgram(board, [noCount], { seat: "p1", invokedBy: "attack" }, events);
+    const milled = runProgram(board, [noCount], { seat: "p1", invokedBy: "attack" }, {}, events);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(0);
     expect(milled.state.players.p2.deck).toEqual(board.players.p2.deck);
     const noTo = JSON.parse(
       JSON.stringify(pick, (k, v) => (k === "to" ? undefined : v)),
     ) as EffectOp;
     const events2: GameEvent[] = [];
-    const picked = runProgram(board, [noTo], { seat: "p1", invokedBy: "attack" }, events2);
+    const picked = runProgram(board, [noTo], { seat: "p1", invokedBy: "attack" }, {}, events2);
     expect(all(events2, "RANDOM_CARD_TAKEN")).toHaveLength(1);
     expect(all(events2, "SHUFFLE")).toHaveLength(1);
     expect(picked.state.players.p2.discard).toEqual(board.players.p2.discard);
@@ -713,7 +713,7 @@ describe("§9 — the last refused row, BUILT at D476, and its axis measured", (
     let armedBoard = attachFromDeck(board, "p2", "fix-energy", 1);
     armedBoard = attachFromDeck(armedBoard, "p2", "fix-water-energy", 1);
     const events: GameEvent[] = [];
-    const run = runProgram(armedBoard, [one, one], { seat: "p1", invokedBy: "attack" }, events);
+    const run = runProgram(armedBoard, [one, one], { seat: "p1", invokedBy: "attack" }, {}, events);
     expect(run.kind).toBe("parked");
     if (run.kind !== "parked") throw new Error("expected a park");
     expect(run.cont.rest).toHaveLength(1);

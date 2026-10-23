@@ -606,7 +606,7 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
   it("NEITHER op parks — `runProgram` answers `done` over the WHOLE length-two program", () => {
     const state = table(true);
     const events: GameEvent[] = [];
-    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED_DAMAGED), ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED_DAMAGED), ctx, {}, events);
     expect(run.kind).toBe("done");
     expect(swing(state, AT.damaged).state.phase.kind).not.toBe("effect:choose");
   });
@@ -614,7 +614,7 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
   it("a v30 program WITHOUT the rider splashes the UNDAMAGED bodies too — the LOSS direction", () => {
     const state = table(true);
     const events: GameEvent[] = [];
-    const run = runProgram(state, V30_PROGRAM, ctx, events);
+    const run = runProgram(state, V30_PROGRAM, ctx, {}, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 50, 40, 40]);
     expect(damageVector(run.state, "p1")).toEqual([0, 40, 60]);
@@ -623,7 +623,7 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
   it("…and the NEW bytes on the SAME board answer differently — both directions or neither (D441)", () => {
     const state = table(true);
     const events: GameEvent[] = [];
-    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED_DAMAGED), ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED_DAMAGED), ctx, {}, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 50, 0, 0]);
     expect(damageVector(run.state, "p1")).toEqual([0, 0, 60]);

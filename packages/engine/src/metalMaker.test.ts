@@ -284,6 +284,7 @@ describe("D352 §4 — the RENAME did not move the discard arm: Tri Howl is unch
       { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", restTo: "discard" },
       { kind: "attachCards", assignments: [{ uid: m1, to: ACTIVE_REF }] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(after.players.p1.active?.energy).toEqual([m1]);
@@ -388,6 +389,7 @@ describe("D352 §7 — the v20 MISREAD, DRIVEN: why `MATCH_RECORD_VERSION` had t
       legacyOp,
       { kind: "attachCards", assignments: [{ uid: m1, to: ACTIVE_REF }] },
       { seat: "p1" },
+      {},
       events,
     );
     // The attach still happens — which is exactly what makes it silent.
@@ -409,6 +411,7 @@ describe("D352 §7 — the v20 MISREAD, DRIVEN: why `MATCH_RECORD_VERSION` had t
       fixed,
       { kind: "attachCards", assignments: [{ uid: m1, to: ACTIVE_REF }] },
       { seat: "p1" },
+      {},
       [],
     );
     expect(good.players.p1.discard.slice(-2)).toEqual([fire, junk]);

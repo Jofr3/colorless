@@ -677,8 +677,8 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
         },
       ],
       { seat: "p1" },
-      events,
       record,
+      events,
     );
     expect(result.kind).toBe("done");
     expect(record.discarded).toEqual([]);
@@ -702,8 +702,8 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
         },
       ],
       { seat: "p1" },
-      [],
       record,
+      [],
     );
     expect(result.kind).toBe("done");
     expect(record.discarded).toEqual([state.players.p1.deck[1]]);
@@ -779,8 +779,8 @@ describe("D571 §4b — Destructo-Press names every revealed card to both player
         },
       ],
       { seat: "p1" },
-      events,
       {},
+      events,
     );
     expect(result.kind).toBe("done");
     expect(events).toEqual([

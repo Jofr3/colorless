@@ -383,6 +383,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
       same,
       [{ op: "preventChosenAttack" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     if (again.kind !== "parked") throw new Error("expected a park");
@@ -418,6 +419,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
       board,
       [{ op: "preventChosenAttack" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       parkEvents,
     );
     if (result.kind !== "parked") throw new Error("expected a park");

@@ -472,7 +472,7 @@ describe("§4 — the census step this slice is", () => {
 
     const v30 = continuation(attack(canonical(), UP_TO_TWO));
     expect((v30.pendingOp as { max?: unknown }).max).toBe(2);
-    const resumed = runProgram(parked, [v30.pendingOp as EffectOp], v30.ctx, []);
+    const resumed = runProgram(parked, [v30.pendingOp as EffectOp], v30.ctx, {}, []);
     if (resumed.kind !== "parked" || resumed.prompt.kind !== "chooseCards") {
       throw new Error("expected the v30 op to park a chooseCards");
     }
@@ -492,7 +492,7 @@ describe("§4 — the census step this slice is", () => {
       also: [{ filter: { kind: "item" }, max: 1 }],
     };
     const cont = continuation(attack(state, ANY_NUMBER));
-    const out = runProgram(state, [op], cont.ctx, []);
+    const out = runProgram(state, [op], cont.ctx, {}, []);
     if (out.kind !== "parked" || out.prompt.kind !== "chooseCards") {
       throw new Error("expected a chooseCards park");
     }

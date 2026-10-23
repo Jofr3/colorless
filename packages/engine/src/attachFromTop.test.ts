@@ -534,6 +534,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
         ],
       },
       { seat: "p1" },
+      {},
       events,
     );
     expect(after.players.p1.active?.energy).toEqual([energy]);

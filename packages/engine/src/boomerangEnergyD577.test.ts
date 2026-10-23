@@ -361,13 +361,14 @@ describe("D577 Boomerang §4 — only an ATTACK's program records it (R-BE1, the
     const epilogue: PendingStage = { kind: "attackEpilogue", seat: "p1", uid, attack: "Fling" };
     const state = { ...board, pending: [epilogue] };
     const op = { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } } as const;
-    const asAbility = runProgram(state, [op], { seat: "p1", sourceUid: uid }, []);
+    const asAbility = runProgram(state, [op], { seat: "p1", sourceUid: uid }, {}, []);
     expect(asAbility.state.pending).toEqual([epilogue]);
     expect(asAbility.state.players.p1.discard).toContain(energy[0]);
     const asAttack = runProgram(
       state,
       [op],
       { seat: "p1", sourceUid: uid, invokedBy: "attack" },
+      {},
       [],
     );
     expect(asAttack.state.pending).toEqual([{ ...epilogue, boomerang: energy }]);
@@ -388,7 +389,13 @@ describe("D577 Boomerang §4 — only an ATTACK's program records it (R-BE1, the
       filter: { kind: "anyEnergy" },
       count: "all",
     } as const;
-    const ran = runProgram(state, [sweep], { seat: "p1", sourceUid: uid, invokedBy: "attack" }, []);
+    const ran = runProgram(
+      state,
+      [sweep],
+      { seat: "p1", sourceUid: uid, invokedBy: "attack" },
+      {},
+      [],
+    );
     expect(ran.kind).toBe("done");
     expect(ran.state.players.p1.discard).toContain(pulled.uid);
     expect(ran.state.pending).toEqual([epilogue]);

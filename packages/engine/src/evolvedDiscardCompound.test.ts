@@ -234,7 +234,7 @@ function drive(
   seat: Seat = "p1",
 ): { state: GameState; parks: number; events: GameEvent[] } {
   const events: GameEvent[] = [];
-  let result = runProgram(deepFreeze(state), program, { seat }, events);
+  let result = runProgram(deepFreeze(state), program, { seat }, {}, events);
   let parks = 0;
   while (result.kind === "parked") {
     parks += 1;
@@ -545,7 +545,7 @@ describe("§5 — five candidate readings, and the sibling that no card count ca
   it("on a FIVE-card hand the shipped program asks TWICE, in the printed voices", () => {
     const state = ready({ from: "d486-salandit", to: "d486-salazzle" });
     const notes: string[] = [];
-    let result = runProgram(deepFreeze(state), PROGRAM, { seat: "p1" }, []);
+    let result = runProgram(deepFreeze(state), PROGRAM, { seat: "p1" }, {}, []);
     while (result.kind === "parked") {
       const prompt = result.prompt;
       if (prompt.kind !== "chooseCards") throw new Error("expected a chooseCards prompt");

@@ -819,7 +819,7 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
     state = run(attach(state, "p1", "active", COLORLESS), attack("p1", 0)).state;
     expect(liveHandAttachMark(state, bodyAt(state, "p2", "active"))?.barred).toBe(true);
     const events: GameEvent[] = [];
-    const devolved = runProgram(state, [{ op: "devolveEach" }], { seat: "p1" }, events);
+    const devolved = runProgram(state, [{ op: "devolveEach" }], { seat: "p1" }, {}, events);
     if (devolved.kind !== "done") throw new Error("devolveEach parked");
     const body = bodyAt(devolved.state, "p2", "active");
     expect(devolved.state.cardIdByUid[top(body)]).toBe(DROWZEE);

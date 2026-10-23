@@ -553,6 +553,7 @@ describe("§12 — validateChoice refuses out-of-range, face-up and multi-index 
       state,
       [{ op: "turnPrizeFaceUp" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(result.kind).toBe("done");

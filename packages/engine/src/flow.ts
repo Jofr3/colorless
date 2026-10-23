@@ -106,7 +106,7 @@ export function startTurn(state: GameState, seat: Seat, events: GameEvent[]): Ap
   if (next.players[seat].deck.length === 0) {
     return finishGame(next, { result: "win", winner: otherSeat(seat), reason: "deckOut" }, events);
   }
-  next = drawToHand(next, seat, 1, "turnStart", events);
+  next = drawToHand(next, seat, 1, "turnStart", "top", events);
   return ok(next, events);
 }
 
@@ -342,8 +342,8 @@ function faintingSpells(
         next,
         attackerSeat,
         { seat, sourceUid: uid, invokedBy: "ability" },
-        events,
         attacker,
+        events,
       )
     )
       continue;
@@ -923,7 +923,7 @@ function planPrizes(
     // every on-KO path, in printed order. `denied` is not `count === 0`: Glimmora's "can't take
     // any" is a prohibition a bonus cannot overturn, while a reduction clamped to 0 can still
     // receive a bonus.
-    const push = (count: number, guardEvents: GameEvent[], denied = false): void => {
+    const push = (count: number, guardEvents: readonly GameEvent[], denied = false): void => {
       const attached = seatPrizeReduction(
         attachedPrizeReductions(next, ref, attackerSeat, count),
         ref,
@@ -1012,17 +1012,17 @@ export function resolveMidTurnKnockOuts(
   state: GameState,
   actorSeat: Seat,
   seats: readonly Seat[],
-  events: GameEvent[],
   /**
    * What follows the sweep's stages instead of `resumeTurn`: the turn tail when the action ends the
    * turn (Daydream). Absent means `resumeTurn`.
    */
-  tail?: PendingStage[],
+  tail: PendingStage[] | undefined,
   /**
    * Who trims first when both seats are over their Bench limit: the replaced Stadium's owner.
    * Absent means `actorSeat`.
    */
-  trimFirst?: Seat,
+  trimFirst: Seat | undefined,
+  events: GameEvent[],
 ): ApplyResult {
   // A mid-turn Knock Out is during a turn, so the bounty pays.
   const batch = collectKnockOuts(state, seats, { checkup: false }, events);
@@ -1066,10 +1066,10 @@ export function resolveMidTurnKnockOuts(
  */
 export function finishAttack(
   state: GameState,
-  events: GameEvent[],
   attackerSeat: Seat,
   attackerUid: string,
   attackName: string,
+  events: GameEvent[],
 ): ApplyResult {
   // KO-conditioned recoil (Vengeful Punch) is placed before the sweep so the holder's and
   // attacker's Knock Outs form one simultaneous batch (§8.1) and the tie guard can see both. Only
@@ -1186,8 +1186,8 @@ export function finishAttack(
 export function settleProgram(
   result: RunResult,
   controller: Seat,
+  opts: { resumeTail?: boolean; endsTurn?: boolean },
   events: GameEvent[],
-  opts: { resumeTail?: boolean; endsTurn?: boolean } = {},
 ): ApplyResult {
   // §12: restore the recovery invariant on every program completion, before anything else reads the
   // board, so Energy attached or moved by a program clears conditions it should. Runs before the
@@ -1249,7 +1249,7 @@ export function settleProgram(
       events,
     );
   }
-  return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
+  return resolveMidTurnKnockOuts(resumed, controller, SEATS, undefined, undefined, events);
 }
 
 /** Does any of `seat`'s bodies carry a live, tripped Daydream hand-attach mark? */
@@ -1271,21 +1271,21 @@ function runKoTrigger(
   state: GameState,
   koedSeat: Seat,
   uid: string,
-  events: GameEvent[],
   /**
    * Amulet of Hope: run the Tool's `onHolderKnockedOut` program instead of the body's Ability, with
    * the Tool as `sourceUid` and no ABILITY_TRIGGERED row.
    */
-  toolUid?: string,
+  toolUid: string | undefined,
+  events: GameEvent[],
 ): ApplyResult {
   if (toolUid !== undefined) {
     const amulet = toolTriggerOf(state, toolUid, "onHolderKnockedOut");
     if (amulet === undefined) return advance(state, events);
     return settleProgram(
-      runProgram(state, amulet.program, { seat: koedSeat, sourceUid: toolUid }, events),
+      runProgram(state, amulet.program, { seat: koedSeat, sourceUid: toolUid }, {}, events),
       koedSeat,
-      events,
       { resumeTail: true },
+      events,
     );
   }
   const ability = onKnockOutTrigger(state, uid);
@@ -1299,11 +1299,12 @@ function runKoTrigger(
       state,
       ability.program,
       { seat: koedSeat, sourceUid: uid, invokedBy: "ability" },
+      {},
       events,
     ),
     koedSeat,
-    events,
     { resumeTail: true },
+    events,
   );
 }
 
@@ -1339,11 +1340,12 @@ function runDamagedTrigger(
         state,
         tool.ability.program,
         { seat: damagedSeat, sourceUid: uid, ...attackerCtx },
+        {},
         events,
       ),
       damagedSeat,
-      events,
       { resumeTail: true },
+      events,
     );
   }
   const ability = damagedByAttackAbility(state, damagedSeat, uid);
@@ -1354,11 +1356,12 @@ function runDamagedTrigger(
       state,
       ability.program,
       { seat: damagedSeat, sourceUid: uid, invokedBy: "ability", ...attackerCtx },
+      {},
       events,
     ),
     damagedSeat,
-    events,
     { resumeTail: true },
+    events,
   );
 }
 
@@ -1394,18 +1397,25 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
         state,
         entry.ability.program,
         { seat: koedSeat, sourceUid: uid, invokedBy: "ability" },
+        {},
         events,
       ),
       koedSeat,
-      events,
       { resumeTail: true },
+      events,
     );
   }
   return settleProgram(
-    runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: entry.toolUid }, events),
+    runProgram(
+      state,
+      entry.ability.program,
+      { seat: koedSeat, sourceUid: entry.toolUid },
+      {},
+      events,
+    ),
     koedSeat,
-    events,
     { resumeTail: true },
+    events,
   );
 }
 
@@ -1425,10 +1435,10 @@ function runEndTurnToolTrigger(
   const entry = endTurnToolTriggersOf(state, seat).find((live) => live.toolUid === toolUid);
   if (holderUid === undefined || entry === undefined) return advance(state, events);
   return settleProgram(
-    runProgram(state, entry.ability.program, { seat, sourceUid: holderUid }, events),
+    runProgram(state, entry.ability.program, { seat, sourceUid: holderUid }, {}, events),
     seat,
-    events,
     { resumeTail: true },
+    events,
   );
 }
 
@@ -1652,9 +1662,14 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
 function runBenchTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyResult {
   // No guard here: the op re-reads the excess itself and finishes at once (no park) when the
   // seat is back at its limit, and the `resumeTail` fold then just keeps draining.
-  return settleProgram(runProgram(state, [{ op: "trimBench" }], { seat }, events), seat, events, {
-    resumeTail: true,
-  });
+  return settleProgram(
+    runProgram(state, [{ op: "trimBench" }], { seat }, {}, events),
+    seat,
+    {
+      resumeTail: true,
+    },
+    events,
+  );
 }
 
 /**
@@ -1666,9 +1681,14 @@ function runToolTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyRe
   const bodies = inPlayOf(side);
   const over = bodies.filter((body) => owesToolTrim(state, seat, body)).length;
   const program = Array.from({ length: over }, (): EffectOp => ({ op: "trimTools" }));
-  return settleProgram(runProgram(state, program, { seat }, events), seat, events, {
-    resumeTail: true,
-  });
+  return settleProgram(
+    runProgram(state, program, { seat }, {}, events),
+    seat,
+    {
+      resumeTail: true,
+    },
+    events,
+  );
 }
 
 /**
@@ -2094,7 +2114,7 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
     case "koTrigger":
       // §9 The Knocked Out Pokémon's on-KO Ability, or an attached Amulet of Hope. Pop first so the
       // stages behind resume if the program parks.
-      return runKoTrigger(popStage(state), stage.seat, stage.uid, events, stage.toolUid);
+      return runKoTrigger(popStage(state), stage.seat, stage.uid, stage.toolUid, events);
     case "endTurnToolTrigger":
       // Powerglass. Pop first so the re-queued `endTurn` drains after it.
       return runEndTurnToolTrigger(popStage(state), stage.seat, stage.toolUid, events);
@@ -2112,10 +2132,10 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
       // may have moved it. Boomerang Energy returns before the sweep.
       return finishAttack(
         returnBoomerangs(popStage(state), stage, events),
-        events,
         stage.seat,
         stage.uid,
         stage.attack,
+        events,
       );
     case "benchTrim":
       return runBenchTrim(popStage(state), stage.seat, events);

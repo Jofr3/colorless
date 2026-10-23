@@ -455,7 +455,7 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
 describe("D515 §4 — what the column now holds, measured rather than claimed", () => {
   /** Run `ops` for p1 and settle every park by paying the FIRST candidates offered. */
   function settle(state: GameState, ops: EffectOp[]): GameState {
-    let result = runProgram(state, ops, { seat: "p1" }, []);
+    let result = runProgram(state, ops, { seat: "p1" }, {}, []);
     while (result.kind === "parked") {
       const prompt = result.prompt;
       if (prompt.kind !== "chooseCards") throw new Error(`unexpected park: ${prompt.kind}`);
@@ -520,7 +520,7 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
   it("an UNDESCRIBED gate branch degrades the caption to the BARE COST, byte for byte", () => {
     const board = handOfIds(handOfIds(fielded(16), "p1", THREE), "p2", THREE);
     const noteOf = (ops: EffectOp[]): string => {
-      const result = runProgram(board, ops, { seat: "p1" }, []);
+      const result = runProgram(board, ops, { seat: "p1" }, {}, []);
       if (result.kind !== "parked") throw new Error("expected a park");
       if (result.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
       return result.prompt.note;
@@ -538,7 +538,7 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
 
   it("the PLURAL branch is unreachable from any printing and is DRIVEN anyway", () => {
     const board = handOfIds(handOfIds(fielded(17), "p1", THREE), "p2", THREE);
-    const result = runProgram(board, program(2), { seat: "p1" }, []);
+    const result = runProgram(board, program(2), { seat: "p1" }, {}, []);
     if (result.kind !== "parked") throw new Error("expected a park");
     if (result.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(result.prompt.note).toBe(

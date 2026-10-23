@@ -327,7 +327,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
     // promotion. Without the skip, the empty-spot sweep would queue another.
     const board = setDamage(benched(), "p1", 200); // FILLER is a 200 HP body
     const events: GameEvent[] = [];
-    const result = resolveMidTurnKnockOuts(board, "p1", ["p1", "p2"], events);
+    const result = resolveMidTurnKnockOuts(board, "p1", ["p1", "p2"], undefined, undefined, events);
     if (!result.ok) throw new Error(`sweep failed: ${result.error.code}`);
     const promotes = [
       ...result.state.pending.filter((stage) => stage.kind === "promote"),

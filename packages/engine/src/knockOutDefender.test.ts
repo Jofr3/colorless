@@ -543,6 +543,7 @@ describe("§5 the marker — a turn STAMP, so a denied Knock Out cannot lie to t
       board,
       [{ op: "knockOutDefender" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     const doomed = result.state.players.p2.active;
@@ -555,6 +556,7 @@ describe("§5 the marker — a turn STAMP, so a denied Knock Out cannot lie to t
       result.state,
       [{ op: "knockOutDefender" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       twice,
     );
     expect(again.state.players.p2.active?.markers).toEqual([koByEffectMarker(board.turn)]);

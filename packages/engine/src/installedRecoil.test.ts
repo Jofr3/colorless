@@ -302,6 +302,7 @@ describe("arming it — the stamp, the window and the row", () => {
         { op: "installRecoil", amount: 60 },
       ],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(result.state.players.p1.active?.installedRecoil).toEqual({
@@ -561,6 +562,7 @@ function armScaled(state: GameState): { state: GameState; events: GameEvent[] } 
     state,
     [{ op: "installRecoil", amount: "damageTaken" }],
     { seat: "p1", invokedBy: "attack" },
+    {},
     events,
   );
   return { state: result.state, events };
@@ -670,6 +672,7 @@ describe("D456 §2 — the record, the row and the merge", () => {
         { op: "installRecoil", amount: 20 },
       ],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(result.state.players.p1.active?.installedRecoil).toEqual({
@@ -707,6 +710,7 @@ describe("D456 §2 — the record, the row and the merge", () => {
       state,
       [{ op: "installRecoil", amount: 60 }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(again.state.players.p1.active?.installedRecoil).toEqual({
@@ -724,6 +728,7 @@ describe("D456 §2 — the record, the row and the merge", () => {
           { op: "installRecoil", amount: 60 },
         ],
         { seat: "p1", invokedBy: "attack" },
+        {},
         [],
       ).state.players.p1.active?.installedRecoil,
     ).toEqual({ turn: ready().turn + 1, amount: 60, ofDamageTaken: true });

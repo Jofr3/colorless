@@ -571,6 +571,7 @@ describe("§8b — the gate caption names the DECK, driven from a hand-built pro
         { op: "recordGate", slot: "paid", then: [...inner] },
       ],
       { seat: "p1" },
+      {},
       [],
     );
     if (result.kind !== "parked") throw new Error("expected a park");

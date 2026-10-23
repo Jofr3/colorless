@@ -258,7 +258,7 @@ describe("the record itself", () => {
     };
     const program = programFor("sv02-179")?.trainer as EffectOp[];
     const events: GameEvent[] = [];
-    const result = runProgram(empty, program, { seat: "p1" }, events);
+    const result = runProgram(empty, program, { seat: "p1" }, {}, events);
     expect(result.kind).toBe("done");
     expect(types(events)).toEqual([]);
     if (result.kind !== "done") throw new Error("expected done");
@@ -279,7 +279,7 @@ describe("the record itself", () => {
       },
     ];
     const events: GameEvent[] = [];
-    const result = runProgram(state, program, { seat: "p1" }, events);
+    const result = runProgram(state, program, { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error("expected done");
     expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
   });
@@ -304,7 +304,7 @@ describe("the record itself", () => {
       },
     ];
     const events: GameEvent[] = [];
-    const result = runProgram(state, program, { seat: "p1" }, events);
+    const result = runProgram(state, program, { seat: "p1" }, {}, events);
     expect(result.kind).toBe("done");
     expect(types(events)).toEqual(["HAND_COST_PAID", "CARDS_DRAWN"]);
     expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
@@ -398,7 +398,7 @@ describe("the record ACROSS a park — the claim the shipped cards never exercis
 
   it("a slot recorded BEFORE a park is still readable by a gate AFTER it", () => {
     const events: GameEvent[] = [];
-    const r0 = runProgram(carryBoard(), carryProgram(), { seat: "p1" }, events);
+    const r0 = runProgram(carryBoard(), carryProgram(), { seat: "p1" }, {}, events);
     if (r0.kind !== "parked") throw new Error("expected the cost to park");
     expect(r0.cont.record).toBeUndefined();
 
@@ -432,7 +432,7 @@ describe("the record ACROSS a park — the claim the shipped cards never exercis
       },
     ];
     const events: GameEvent[] = [];
-    const r0 = runProgram(state, program, { seat: "p1" }, events);
+    const r0 = runProgram(state, program, { seat: "p1" }, {}, events);
     if (r0.kind !== "parked") throw new Error("expected the cost to park");
     const payUid = chooseCardsPromptOf(r0.prompt).candidates[0] as string;
     const r1 = resumeProgram(r0.state, r0.cont, { kind: "cards", uids: [payUid] }, events);
@@ -724,7 +724,7 @@ describe("the prompt states what the ANSWER buys", () => {
       },
     ];
     const noteOf = (program: EffectOp[]): string => {
-      const result = runProgram(state, program, { seat: "p1" }, []);
+      const result = runProgram(state, program, { seat: "p1" }, {}, []);
       if (result.kind !== "parked") throw new Error("expected a park");
       return result.prompt.note;
     };
@@ -764,7 +764,7 @@ describe("a whiff overwrites the slot it would have written", () => {
       },
     ];
     const events: GameEvent[] = [];
-    const first = runProgram(state, program, { seat: "p1" }, events);
+    const first = runProgram(state, program, { seat: "p1" }, {}, events);
     if (first.kind !== "parked") throw new Error("expected the first retrieval to park");
     if (first.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     const done = resumeProgram(

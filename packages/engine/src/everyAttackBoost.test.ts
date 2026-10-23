@@ -181,7 +181,7 @@ function installed(opts: Parameters<typeof ready>[0] = {}) {
 const inWindow = (state: GameState): GameState => pass(state, "p2");
 
 function runOne(state: GameState, program: readonly EffectOp[], events: GameEvent[]): GameState {
-  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, events);
+  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, {}, events);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return result.state;
 }
@@ -595,6 +595,7 @@ describe("§6 — retreat, a forced switch, evolution and devolution each clear 
       state,
       [{ op: "devolveEach" }],
       { seat: "p2", invokedBy: "attack" },
+      {},
       [],
     );
     if (result.kind !== "done") throw new Error("devolveEach parked");

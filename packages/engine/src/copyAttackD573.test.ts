@@ -1255,11 +1255,11 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
     const rolled = settleProgram(
       resumeProgram(parked, phase.cont, choice, events),
       phase.seat,
-      events,
       {
         resumeTail: phase.resumeTail === true,
         endsTurn: phase.endsTurn === true,
       },
+      events,
     );
     if (!rolled.ok) throw new Error("the rollback reading failed");
     expect(rolled.state.phase).toEqual({ kind: "turn:action", seat: "p1" });

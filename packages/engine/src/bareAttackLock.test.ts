@@ -194,7 +194,7 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
     const bogus = ops("During your next turn, this Pokémon can't use Attacks.");
     expect(bogus).toEqual([{ op: "preventAttackUse", attack: "Attacks" }]);
     const events: GameEvent[] = [];
-    const result = runProgram(before, bogus, { seat: "p1", invokedBy: "attack" }, events);
+    const result = runProgram(before, bogus, { seat: "p1", invokedBy: "attack" }, {}, events);
     if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
     expect(events).toEqual([]);
     expect(result.state.players.p1.active?.attackLockedTurn ?? null).toBeNull();
@@ -205,6 +205,7 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
       before,
       ops(SELF_PLURAL),
       { seat: "p1", invokedBy: "attack" },
+      {},
       events2,
     );
     if (fixed.kind !== "done") throw new Error(`expected done, got ${fixed.kind}`);

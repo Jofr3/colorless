@@ -486,7 +486,7 @@ describe("§4 — the census step this slice is", () => {
     const { distinctEnergyTypes: _dropped, ...v30Op } = cont.pendingOp as EffectOp & {
       distinctEnergyTypes?: true;
     };
-    const resumed = runProgram(parked, [v30Op as EffectOp], cont.ctx, []);
+    const resumed = runProgram(parked, [v30Op as EffectOp], cont.ctx, {}, []);
     if (resumed.kind !== "parked" || resumed.prompt.kind !== "chooseCards") {
       throw new Error("expected the v30 op to park a chooseCards");
     }

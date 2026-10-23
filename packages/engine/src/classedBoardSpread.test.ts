@@ -658,7 +658,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
   it("a v29 `count: 1` over the SAME board still asks for ONE and PARKS", () => {
     const state = spreadTable("d492-wall-ex", MIXED_BENCH);
     const events: GameEvent[] = [];
-    const run = runProgram(state, [V29_SNIPE], ctx, events);
+    const run = runProgram(state, [V29_SNIPE], ctx, {}, events);
     if (run.kind !== "parked") throw new Error("expected a park");
     if (run.prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect([run.prompt.min, run.prompt.max]).toEqual([1, 1]);
@@ -668,7 +668,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
   it("and the NEW byte on the SAME board answers differently — the control for both", () => {
     const state = spreadTable("d492-wall-ex", MIXED_BENCH);
     const events: GameEvent[] = [];
-    const run = runProgram(state, mustDerive(deriveAttackEffect, EX_V_100), ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, EX_V_100), ctx, {}, events);
     expect(run.kind).toBe("done");
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([100, 100, 100, 0, 100]);

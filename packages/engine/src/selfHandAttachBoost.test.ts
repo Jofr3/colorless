@@ -559,7 +559,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     const program = discardScaledBoostProgram(MEMBER, 60);
     const events: GameEvent[] = [];
     const record = { moved: ["stale-a", "stale-b"] };
-    const run = runProgram(start, program, { seat: "p1" }, events, record);
+    const run = runProgram(start, program, { seat: "p1" }, record, events);
     expect(run.kind).toBe("done");
     expect(record.moved).toEqual([]);
     expect(rowsOf(events, "DAMAGE_DEALT").map((e) => e.dealt)).toEqual([60]);
@@ -582,6 +582,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
       start,
       program,
       { seat: "p1", sourceUid: tide.stack[tide.stack.length - 1] },
+      {},
       [],
     );
     if (run.kind !== "parked") throw new Error("expected a park");

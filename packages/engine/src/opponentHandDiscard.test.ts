@@ -600,6 +600,7 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
         deepFreeze(state),
         [{ op: "opponentDiscardsFromHand", count }],
         { seat: "p1" },
+        {},
         events,
       );
       if (result.kind !== "done") throw new Error("an empty hand must not park");

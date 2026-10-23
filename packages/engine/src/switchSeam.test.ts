@@ -757,7 +757,7 @@ describe("D561 BUILT — Scramble Switch sv08-186 (1 legal), the seam's third Tr
     const energy = scramble.players.p1.active?.energy ?? [];
     expect(energy).toHaveLength(2);
     const events: GameEvent[] = [];
-    const first = runProgram(scramble, program ?? [], { seat: "p1" }, events);
+    const first = runProgram(scramble, program ?? [], { seat: "p1" }, {}, events);
     if (first.kind !== "parked") throw new Error("expected the switch to park");
     const second = resumeProgram(
       first.state,

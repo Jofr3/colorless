@@ -277,7 +277,7 @@ describe("D232 — 'Your opponent reveals their hand.' (7 legal)", () => {
   it("takes NO rng — a reveal is not a draw", () => {
     const state = ready();
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "revealOpponentHand" }], { seat: "p1" }, events);
+    const result = runProgram(state, [{ op: "revealOpponentHand" }], { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error("a reveal must not park");
     expect(result.state.rngState).toBe(state.rngState);
     expect(types(events)).toEqual(["HAND_REVEALED"]);
@@ -393,6 +393,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
       state,
       [{ op: "randomFromOpponentHand", to: "discard" }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error("this op never parks");
@@ -454,6 +455,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
       state,
       [{ op: "randomFromOpponentHand", to: "deck" }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error("this op never parks");
@@ -480,6 +482,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
       state,
       [{ op: "randomFromOpponentHand", to: "discard" }],
       { seat: "p1" },
+      {},
       discard,
     );
     const deck: GameEvent[] = [];
@@ -487,6 +490,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
       state,
       [{ op: "randomFromOpponentHand", to: "deck" }],
       { seat: "p1" },
+      {},
       deck,
     );
     if (one.kind !== "done" || two.kind !== "done") throw new Error("neither route parks");
@@ -504,6 +508,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
       state,
       [{ op: "randomFromOpponentHand", to: "deck" }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error("this op never parks");
@@ -598,7 +603,7 @@ describe("D232 — the read sites, measured rather than assumed", () => {
       { op: "randomFromOpponentHand", to: "discard" },
       { op: "randomFromOpponentHand", to: "deck" },
     ] as const) {
-      expect(runProgram(ready(), [op], { seat: "p1" }, events).kind).toBe("done");
+      expect(runProgram(ready(), [op], { seat: "p1" }, {}, events).kind).toBe("done");
     }
   });
 

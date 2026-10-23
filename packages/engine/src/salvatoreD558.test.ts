@@ -210,6 +210,7 @@ describe("D558 Salvatore §2 — the OFFER keeps only the Ability-free cards (R-
       board,
       [{ op: "evolveFromDeckChosen" }],
       { seat: "p1", invokedBy: "supporter" },
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error(`expected parked, got ${result.kind}`);
@@ -260,6 +261,7 @@ describe("D558 Salvatore §3 — the BODY narrowing asks the same noun (evolvabl
       board,
       [{ op: "evolveFromDeckChosen" }],
       { seat: "p1", invokedBy: "supporter" },
+      {},
       [],
     );
     if (result.kind !== "parked") throw new Error(`expected parked, got ${result.kind}`);

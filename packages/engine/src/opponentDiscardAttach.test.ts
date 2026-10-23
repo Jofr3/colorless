@@ -512,8 +512,8 @@ describe("D532 §3 — a new optional key on a PERSISTED op, and the record vers
   it("a v30 FLAGLESS parked op reads back OWN-seat candidates under the OWN caption and its answer drains the OWN pile; the fresh op parks the OPPONENT's refs and drains THEIRS — the LOSS direction ON THE BOARD (`D532-arm-drops-whose` / `-resolver-ignores-whose`)", () => {
     const board = table();
     const ctx = attackCtx(board);
-    const v30 = runProgram(board, [V30_OP], ctx, []);
-    const fresh = runProgram(board, [ONE_OP], ctx, []);
+    const v30 = runProgram(board, [V30_OP], ctx, {}, []);
+    const fresh = runProgram(board, [ONE_OP], ctx, {}, []);
     if (v30.kind !== "parked" || v30.prompt.kind !== "choosePokemon")
       throw new Error("the v30 op did not park");
     if (fresh.kind !== "parked" || fresh.prompt.kind !== "choosePokemon")
@@ -765,6 +765,7 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
       before,
       [{ op: "attachEnergyFrom", source: "discard", declinable: true, whose: "opponent" }],
       attackCtx(before),
+      {},
       [],
     );
     expect(basicOnly.kind).toBe("done");

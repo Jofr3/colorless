@@ -659,6 +659,7 @@ describe("D630 §5 — Metal Block: 100 less from Evolution attackers, after Wea
       board(BRONZONG),
       [{ op: "reduceDamage", amount: 100 }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       [],
     );
     if (result.kind !== "done") throw new Error("expected done");
@@ -675,6 +676,7 @@ describe("D630 §5 — Metal Block: 100 less from Evolution attackers, after Wea
         { op: "reduceDamage", amount: 30, fromClass: { stage: "basic" } },
       ],
       { seat: "p1", invokedBy: "attack" },
+      {},
       [],
     );
     if (once.kind !== "done") throw new Error("expected done");
@@ -855,6 +857,7 @@ describe("D630 §8 — Plunging Headbutt: this Pokémon takes 100 more during th
       exposed,
       [{ op: "exposeSelf", amount: 100 }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       [],
     );
     if (result.kind !== "done") throw new Error("expected done");
@@ -874,6 +877,7 @@ describe("D630 §8 — Plunging Headbutt: this Pokémon takes 100 more during th
       stale,
       [{ op: "exposeSelf", amount: 100 }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       [],
     );
     if (fresh.kind !== "done") throw new Error("expected done");
