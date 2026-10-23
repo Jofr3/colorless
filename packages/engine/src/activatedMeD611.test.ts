@@ -8,6 +8,7 @@ import { redactGame } from "./redact";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
+  effectPromptOf,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -393,11 +394,6 @@ function refusal(result: ReturnType<typeof applyAction>): { code: string; messag
 }
 const resolve = (state: GameState, choice: unknown) =>
   ok(applyAction(state, { type: "resolveEffect", seat: "p1", choice } as GameAction));
-function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt as unknown as Record<string, unknown>;
-}
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const shuffled = (events: readonly GameEvent[]) =>
   events.filter((e) => e.type === "SHUFFLE").map((e) => (e as { seat: Seat }).seat);
@@ -415,10 +411,9 @@ describe("D611 §2 — Nighttime Maneuvers: Active only; any card from the deck 
     const state = table({ active: CROBAT[0] });
     const parked = ok(use(state, "Nighttime Maneuvers", ACTIVE));
     expect(shuffled(parked.events)).toEqual(["p1"]);
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("chooseCards");
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer).toMatchObject({ min: 1, max: 1 });
-    const candidates = offer.candidates as string[];
+    const candidates = offer.candidates;
     const offered = new Set(ids(parked.state, candidates));
     for (const id of [ITEM, G, SPECIAL, TREVENANT, FILLER]) expect(offered.has(id), id).toBe(true);
     const pick = candidates.find((u) => parked.state.cardIdByUid[u] === ITEM) as string;
@@ -442,18 +437,17 @@ describe("D611 §3 — Sinister Surge: a Basic {D} to a Benched {D} body, then 2
   it("offers only Basic {D} Energy and only Benched {D} bodies; the chosen body takes the Energy and 20 damage; the deck is shuffled", () => {
     const state = table({ active: TOXTRICITY[0], bench: [FILLER, DARK, DARK] });
     const parked = ok(use(state, "Sinister Surge", ACTIVE));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("attachCards");
+    const offer = effectPromptOf(parked.state, "attachCards");
     expect(offer.max).toBe(1);
     // §9.2: the answer decides which body takes the counters, so the prompt says they follow.
     expect(offer.note).toMatch(/ If you do, place 2 damage counters on that Pokémon\.$/);
-    expect(new Set(ids(parked.state, offer.candidates as string[]))).toEqual(new Set([D]));
+    expect(new Set(ids(parked.state, offer.candidates))).toEqual(new Set([D]));
     // The Active Toxtricity ({D}, but not Benched) and the Benched {C} filler are not targets.
     expect(offer.targets).toEqual([
       { seat: "p1", spot: { spot: "bench", index: 1 } },
       { seat: "p1", spot: { spot: "bench", index: 2 } },
     ]);
-    const uid = (offer.candidates as string[])[0] as string;
+    const uid = offer.candidates[0] as string;
     const done = resolve(parked.state, {
       kind: "attachCards",
       assignments: [{ uid, to: { seat: "p1", spot: { spot: "bench", index: 2 } } }],
@@ -493,7 +487,7 @@ describe("D611 §3 — Sinister Surge: a Basic {D} to a Benched {D} body, then 2
   it("the counters can Knock Out the body they land on (a mid-turn Knock Out, the opponent's Prize)", () => {
     const state = setBenchDamage(table({ active: TOXTRICITY[0], bench: [DARK] }), "p1", 0, 40);
     const parked = ok(use(state, "Sinister Surge", ACTIVE));
-    const uid = (prompt(parked.state).candidates as string[])[0] as string;
+    const uid = effectPromptOf(parked.state, "attachCards").candidates[0] as string;
     const done = resolve(parked.state, {
       kind: "attachCards",
       assignments: [{ uid, to: { seat: "p1", spot: { spot: "bench", index: 0 } } }],
@@ -546,7 +540,7 @@ describe("D611 §6 — Evidence Gathering: switch a card from your hand with the
     const state = table({ bench: [GUMSHOOS[0]], hand: [ITEM, G] });
     const top = state.players.p1.deck[0] as string;
     const parked = ok(use(state, "Evidence Gathering", bench(0)));
-    const offer = prompt(parked.state);
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer).toMatchObject({ kind: "chooseCards", min: 1, max: 1, dest: "deckTop" });
     expect(offer.note).toBe("Switch a card from your hand with the top card of your deck.");
     const item = state.players.p1.hand[0] as string;
@@ -669,12 +663,12 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
   it("two different evolutions in hand park a MANDATORY pick of one (from the Active too)", () => {
     const state = table({ active: PHANTUMP, hand: [TREVENANT, TREVENANT_SV, ITEM] });
     const parked = ok(use(state, "Spiteful Evolution", ACTIVE));
-    const offer = prompt(parked.state);
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer).toMatchObject({ kind: "chooseCards", min: 1, max: 1, dest: "evolve" });
     expect(offer.note).toBe(
       "Choose a card in your hand that evolves from Phantump and put it onto Phantump to evolve it. If you do, place 2 damage counters on that Pokémon.",
     );
-    expect(new Set(ids(parked.state, offer.candidates as string[]))).toEqual(
+    expect(new Set(ids(parked.state, offer.candidates))).toEqual(
       new Set([TREVENANT, TREVENANT_SV]),
     );
     const pick = state.players.p1.hand[1] as string;
@@ -732,15 +726,13 @@ describe("D611 §10 — Evolutionary Guidance: any Energy attached; an Evolution
     expect(refused.message).toContain("this Pokémon has any Energy attached");
     const state = attachFromDeck(bare, "p1", SPECIAL, 1);
     const parked = ok(use(state, "Evolutionary Guidance", ACTIVE));
-    const offer = prompt(parked.state);
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer).toMatchObject({ kind: "chooseCards", max: 1 });
-    const offered = new Set(ids(parked.state, offer.candidates as string[]));
+    const offered = new Set(ids(parked.state, offer.candidates));
     expect(offered.has(TREVENANT)).toBe(true);
     expect(offered.has(CROBAT[0])).toBe(true);
     for (const id of [PHANTUMP, FILLER, DARK, ITEM, G]) expect(offered.has(id), id).toBe(false);
-    const pick = (offer.candidates as string[]).find(
-      (u) => parked.state.cardIdByUid[u] === TREVENANT,
-    ) as string;
+    const pick = offer.candidates.find((u) => parked.state.cardIdByUid[u] === TREVENANT) as string;
     const done = resolve(parked.state, { kind: "cards", uids: [pick] });
     expect(done.state.players.p1.hand).toEqual([pick]);
     expect(shuffled(done.events)).toContain("p1");

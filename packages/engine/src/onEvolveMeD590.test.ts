@@ -8,6 +8,8 @@ import { applyAction } from "./index";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
+  effectPrompt,
+  effectPromptOf,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -451,11 +453,6 @@ function evolve(
 }
 const resolve = (state: GameState, choice: unknown, seat: Seat = "p1") =>
   mustApply(state, { type: "resolveEffect", seat, choice } as GameAction);
-function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt as unknown as Record<string, unknown>;
-}
 
 /** An rng cursor whose first flip lands on `face`. */
 function cursorFor(face: "heads" | "tails"): number {
@@ -467,7 +464,7 @@ describe("D590 §3 — Psychic Draw: a real confirm, then the draw", () => {
   it("Kadabra onto Abra: the confirm carries the whole print; yes draws 2", () => {
     const parked = evolve(table({ bench: [ABRA], hand: [KADABRA] }), KADABRA);
     expect(of(parked.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Psychic Draw"]);
-    expect(prompt(parked.state)).toStrictEqual({ kind: "confirm", note: PSYCHIC_DRAW_2 });
+    expect(effectPrompt(parked.state)).toStrictEqual({ kind: "confirm", note: PSYCHIC_DRAW_2 });
     const deck = parked.state.players.p1.deck.length;
     const done = resolve(parked.state, { kind: "confirm", yes: true }).state;
     expect(done.phase.kind).toBe("turn:action");
@@ -484,7 +481,7 @@ describe("D590 §3 — Psychic Draw: a real confirm, then the draw", () => {
 
   it("Alakazam onto Kadabra: yes draws 3", () => {
     const parked = evolve(table({ bench: [KADABRA], hand: [ALAKAZAM[0]] }), ALAKAZAM[0]);
-    expect(prompt(parked.state)).toStrictEqual({ kind: "confirm", note: PSYCHIC_DRAW_3 });
+    expect(effectPrompt(parked.state)).toStrictEqual({ kind: "confirm", note: PSYCHIC_DRAW_3 });
     expect(
       resolve(parked.state, { kind: "confirm", yes: true }).state.players.p1.hand,
     ).toHaveLength(3);
@@ -501,7 +498,7 @@ describe("D590 §3 — Psychic Draw: a real confirm, then the draw", () => {
     });
     expect(top(parked.state, parked.state.players.p1.bench[0])).toBe(ALAKAZAM[0]);
     expect(of(parked.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Psychic Draw"]);
-    expect(prompt(parked.state)).toStrictEqual({ kind: "confirm", note: PSYCHIC_DRAW_3 });
+    expect(effectPrompt(parked.state)).toStrictEqual({ kind: "confirm", note: PSYCHIC_DRAW_3 });
     expect(
       resolve(parked.state, { kind: "confirm", yes: true }).state.players.p1.hand,
     ).toHaveLength(3);
@@ -538,7 +535,7 @@ describe("D590 §4 — Prison Panic: a real confirm, then the opponent's Active 
   it("the confirm carries the whole print; yes Confuses the Defending Pokémon", () => {
     const parked = board("none");
     expect(of(parked.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual(["Prison Panic"]);
-    expect(prompt(parked.state)).toStrictEqual({ kind: "confirm", note: PRISON_PANIC });
+    expect(effectPrompt(parked.state)).toStrictEqual({ kind: "confirm", note: PRISON_PANIC });
     const done = resolve(parked.state, { kind: "confirm", yes: true }).state;
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p2.active?.conditions.rotation).toBe("confused");
@@ -567,9 +564,8 @@ describe("D590 §5 — Energized Steps: the top 4, any number of Basic Energy, t
     const energy = window.filter((u) => [P, W].includes(state.cardIdByUid[u] as string));
     expect(energy).toHaveLength(2);
     const parked = evolve(state, GRUMPIG);
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("attachCards");
-    expect([...(offer.candidates as string[])].sort()).toEqual([...energy].sort());
+    const offer = effectPromptOf(parked.state, "attachCards");
+    expect([...offer.candidates].sort()).toEqual([...energy].sort());
     const done = resolve(parked.state, {
       kind: "attachCards",
       assignments: [
@@ -617,9 +613,8 @@ describe("D590 §6 — Heave-Ho Catcher: switch in 1 of the opponent's Benched P
 describe("D590 §7 — the two Bench searches: Cast-Off Shell and Multiplying Cocoon", () => {
   it("Ninjask: only a Shedinja is offered; it lands on the Bench as a new Pokémon and the deck is shuffled", () => {
     const parked = evolve(table({ bench: [NINCADA], hand: [NINJASK[0]] }), NINJASK[0]);
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("chooseCards");
-    const candidates = offer.candidates as string[];
+    const offer = effectPromptOf(parked.state, "chooseCards");
+    const candidates = offer.candidates;
     expect(candidates.map((u) => parked.state.cardIdByUid[u])).toEqual([SHEDINJA, SHEDINJA]);
     expect(offer.max).toBe(1);
     const done = resolve(parked.state, { kind: "cards", uids: [candidates[0]] });
@@ -633,8 +628,8 @@ describe("D590 §7 — the two Bench searches: Cast-Off Shell and Multiplying Co
 
   it("Silcoon: a Silcoon or a Cascoon, one card, onto the Bench", () => {
     const parked = evolve(table({ bench: [WURMPLE], hand: [SILCOON] }), SILCOON);
-    const offer = prompt(parked.state);
-    const candidates = offer.candidates as string[];
+    const offer = effectPromptOf(parked.state, "chooseCards");
+    const candidates = offer.candidates;
     expect(candidates.map((u) => parked.state.cardIdByUid[u]).sort()).toEqual(
       [CASCOON, SILCOON].sort(),
     );

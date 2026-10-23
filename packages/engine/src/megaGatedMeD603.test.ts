@@ -7,6 +7,8 @@ import { applyAction } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
+  effectPrompt,
+  effectPromptOf,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -308,11 +310,6 @@ function refusal(result: ReturnType<typeof applyAction>): { code: string; messag
 }
 const resolve = (state: GameState, choice: unknown) =>
   ok(applyAction(state, { type: "resolveEffect", seat: "p1", choice } as GameAction));
-function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt as unknown as Record<string, unknown>;
-}
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const top = (state: GameState, seat: Seat, at: "active" | number) => {
   const body = at === "active" ? state.players[seat].active : state.players[seat].bench[at];
@@ -384,8 +381,7 @@ describe("D603 §3 — Excited Turbo: a Basic {R} from hand to a Benched {R}, as
       hand: ["fix-fire-energy", "fix-fire-energy", "fix-grass-energy"],
     });
     const parked = ok(use(state, "Excited Turbo", bench(0))).state;
-    const offer = prompt(parked);
-    expect(offer.kind).toBe("choosePokemon");
+    const offer = effectPromptOf(parked, "choosePokemon");
     expect(offer.candidates).toEqual([benchRef(0), benchRef(2)]);
     state = resolve(parked, { kind: "pokemon", ref: benchRef(2) }).state;
     expect(ids(state, state.players.p1.bench[2]?.energy ?? [])).toEqual(["fix-fire-energy"]);
@@ -439,7 +435,7 @@ describe("D603 §4 — Excited Heal: with a {G} Mega ex in play, heal 60 from 1 
     let state = table({ active: MEGA_G, bench: [LUDICOLO[0]] });
     state = setBenchDamage(setDamage(state, "p1", 100), "p1", 0, 30);
     const parked = ok(use(state, "Excited Heal", bench(0))).state;
-    expect(prompt(parked).kind).toBe("choosePokemon");
+    expect(effectPrompt(parked).kind).toBe("choosePokemon");
     const done = resolve(parked, {
       kind: "pokemon",
       ref: { seat: "p1", spot: { spot: "active" } },
@@ -524,10 +520,9 @@ describe("D603 §7 — Mega Signal: a Mega Evolution Pokémon ex from the deck",
   it("offers the Mega ex only (not a plain ex, not Meganium); one goes to the hand, the deck is shuffled", () => {
     const state = table({ hand: [MEGA_SIGNAL[0]] });
     const parked = ok(playTrainer(state, MEGA_SIGNAL[0]));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("chooseCards");
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer.max).toBe(1);
-    const candidates = offer.candidates as string[];
+    const candidates = offer.candidates;
     expect(new Set(ids(parked.state, candidates))).toEqual(new Set([MEGA_R, MEGA_G, MEGA_D]));
     const pick = candidates.find((u) => parked.state.cardIdByUid[u] === MEGA_D) as string;
     const done = resolve(parked.state, { kind: "cards", uids: [pick] });

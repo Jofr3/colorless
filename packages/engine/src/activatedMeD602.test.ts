@@ -5,6 +5,8 @@ import { applyAction } from "./index";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
+  effectPrompt,
+  effectPromptOf,
   FIXTURE_POOL,
   attachFromDeck,
   itemTrainer,
@@ -292,11 +294,6 @@ function refusal(result: ReturnType<typeof applyAction>): string {
 }
 const resolve = (state: GameState, choice: unknown, seat: Seat = "p1") =>
   ok(applyAction(state, { type: "resolveEffect", seat, choice } as GameAction));
-function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt as unknown as Record<string, unknown>;
-}
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const shuffled = (events: readonly GameEvent[]) =>
   events.filter((e) => e.type === "SHUFFLE").map((e) => (e as { seat: Seat }).seat);
@@ -311,10 +308,9 @@ describe("D602 §2 — Call a Buddy: no cards in hand, a Supporter from the deck
   it("with an empty hand: only the Supporters are offered (not an Item), one goes to the hand, the deck is shuffled", () => {
     const state = table({ bench: [SILVALLY[0]], hand: [] });
     const parked = ok(use(state, "Call a Buddy", bench(0)));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("chooseCards");
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer.max).toBe(1);
-    const candidates = offer.candidates as string[];
+    const candidates = offer.candidates;
     expect(new Set(ids(parked.state, candidates))).toEqual(new Set([SUPPORTER, ERIKAS_TRAINER]));
     const pick = candidates.find((u) => parked.state.cardIdByUid[u] === SUPPORTER) as string;
     const done = resolve(parked.state, { kind: "cards", uids: [pick] });
@@ -338,7 +334,7 @@ describe("D602 §2 — Call a Buddy: no cards in hand, a Supporter from the deck
     expect(state.players.p1.hand).toEqual([]);
     expect(refusal(use(state, "Call a Buddy", bench(0)))).toBe("ABILITY_ALREADY_USED");
     parked = ok(use(state, "Call a Buddy", ACTIVE));
-    expect(prompt(parked.state).kind).toBe("chooseCards");
+    expect(effectPrompt(parked.state).kind).toBe("chooseCards");
   });
 });
 
@@ -346,10 +342,9 @@ describe("D602 §3 — Gathering of Blossoms: an Erika's Pokémon from the deck"
   it("offers exactly the Erika's Pokémon (not an Oddish, not an \"Erika's\" Trainer)", () => {
     const state = table({ bench: [TANGELA[0]], hand: [R] });
     const parked = ok(use(state, "Gathering of Blossoms", bench(0)));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("chooseCards");
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer.max).toBe(1);
-    const candidates = offer.candidates as string[];
+    const candidates = offer.candidates;
     // Erika's Vileplume ex is in the deck too: an Erika's Pokémon of another stage.
     expect(new Set(ids(parked.state, candidates))).toEqual(new Set([ERIKAS_ODDISH, VILEPLUME]));
     const pick = candidates.find((u) => parked.state.cardIdByUid[u] === ERIKAS_ODDISH) as string;
@@ -372,10 +367,9 @@ describe("D602 §4 — Guiding Dance: a coin; heads, a Pokémon from the deck", 
   it("heads: a Pokémon search (Pokémon only), then the shuffle", () => {
     const state = { ...table({ bench: [VIVILLON], hand: [] }), rngState: cursorFor("heads") };
     const parked = ok(use(state, "Guiding Dance", bench(0)));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("chooseCards");
+    const offer = effectPromptOf(parked.state, "chooseCards");
     expect(offer.max).toBe(1);
-    const candidates = offer.candidates as string[];
+    const candidates = offer.candidates;
     for (const id of ids(parked.state, candidates))
       expect(POOL[id as string]?.category, id).toBe("Pokemon");
     expect(ids(parked.state, candidates)).toContain(ODDISH);
@@ -401,7 +395,7 @@ describe("D602 §5 — Fermented Juice: any {G} Energy on this Pokémon; heal 30
     state = attachFromDeck(state, "p1", G, 1);
     state = setBenchDamage(setDamage(state, "p1", 50), "p1", 0, 40);
     const parked = ok(use(state, "Fermented Juice", ACTIVE));
-    expect(prompt(parked.state).kind).toBe("choosePokemon");
+    expect(effectPrompt(parked.state).kind).toBe("choosePokemon");
     const done = resolve(parked.state, {
       kind: "pokemon",
       ref: { seat: "p1", spot: { spot: "bench", index: 0 } },
@@ -459,10 +453,9 @@ describe("D602 §7 — Sunrise: on the Bench, up to 2 Basic {M} Energy from the 
   it("offers only Basic {M} Energy; two land on Solgaleo, the deck is shuffled", () => {
     const state = table({ bench: [FILLER, SOLGALEO], hand: [] });
     const parked = ok(use(state, "Sunrise", bench(1)));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("attachCards");
+    const offer = effectPromptOf(parked.state, "attachCards");
     expect(offer.max).toBe(2);
-    const candidates = offer.candidates as string[];
+    const candidates = offer.candidates;
     expect(new Set(ids(parked.state, candidates))).toEqual(new Set([M]));
     const to = { seat: "p1", spot: { spot: "bench", index: 1 } };
     const done = resolve(parked.state, {

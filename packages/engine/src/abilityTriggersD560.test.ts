@@ -4,6 +4,8 @@ import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
+  effectPrompt,
+  effectPromptOf,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -292,11 +294,6 @@ function benchDamage(state: GameState, seat: Seat, index: number, damage: number
   return { ...state, players: { ...state.players, [seat]: { ...side, bench } } };
 }
 
-function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt as unknown as Record<string, unknown>;
-}
 const confirm = (state: GameState, yes: boolean, seat: Seat = "p1") =>
   mustApply(state, { type: "resolveEffect", seat, choice: { kind: "confirm", yes } });
 
@@ -420,9 +417,9 @@ describe('D560 §2 — Drilbur "Dig Dig Dig": up to 3 Basic {F} Energy to the di
 
   it("3 in the deck: a chooseCards of 3, up to 3, to the DISCARD; all 3 land there", () => {
     const { state } = bench(3);
-    const p = prompt(state);
+    const p = effectPromptOf(state, "chooseCards");
     expect(p).toMatchObject({ kind: "chooseCards", min: 0, max: 3, dest: "discard" });
-    const picks = p.candidates as string[];
+    const picks = p.candidates;
     expect(picks).toHaveLength(3);
     const done = mustApply(state, {
       type: "resolveEffect",
@@ -435,8 +432,8 @@ describe('D560 §2 — Drilbur "Dig Dig Dig": up to 3 Basic {F} Energy to the di
 
   it("4 in the deck: 4 offered, still at most 3 taken; declining (0) is legal", () => {
     const { state } = bench(4);
-    const p = prompt(state);
-    expect((p.candidates as string[]).length).toBe(4);
+    const p = effectPromptOf(state, "chooseCards");
+    expect(p.candidates.length).toBe(4);
     expect(p.max).toBe(3);
     const none = mustApply(state, {
       type: "resolveEffect",
@@ -475,11 +472,11 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
     if (state.phase.kind !== "effect:choose") return;
     expect(state.phase.seat).toBe("p2");
     expect(state.phase.resumeTail).toBe(true);
-    const p = prompt(state);
+    const p = effectPromptOf(state, "chooseCards");
     expect(p).toMatchObject({ kind: "chooseCards", max: 2, dest: "bench" });
     // Both Koffing-named cards the deck holds, and nothing else.
-    expect([...(p.candidates as string[])].sort()).toEqual([...koffingsIn(state, "p2")].sort());
-    const picks = (p.candidates as string[]).slice(0, 2);
+    expect([...p.candidates].sort()).toEqual([...koffingsIn(state, "p2")].sort());
+    const picks = p.candidates.slice(0, 2);
     const done = mustApply(state, {
       type: "resolveEffect",
       seat: "p2",
@@ -494,7 +491,7 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
   it("Knocked Out by the hit: the search still runs FIRST, then the KO, then p2 PROMOTES a new Koffing", () => {
     let { state } = mustApply(koffingBoard(), { type: "attack", seat: "p1", index: 1 });
     expect(state.phase.kind).toBe("effect:choose");
-    const pick = (prompt(state).candidates as string[])[0] as string;
+    const pick = effectPromptOf(state, "chooseCards").candidates[0] as string;
     state = mustApply(state, {
       type: "resolveEffect",
       seat: "p2",
@@ -551,7 +548,7 @@ describe('D560 §4 — Whimsicott "Wafting Heal": gates, then a real confirm (R-
   it("a damaged {G} Active: the confirm is offered, carrying the whole print", () => {
     for (const id of WHIMSICOTT) {
       const { state } = evolve(GRASS, 70, id);
-      expect(prompt(state)).toStrictEqual({ kind: "confirm", note: WAFTING_HEAL_TEXT });
+      expect(effectPrompt(state)).toStrictEqual({ kind: "confirm", note: WAFTING_HEAL_TEXT });
     }
   });
 
@@ -624,8 +621,8 @@ describe('D560 §5 — Dachsbun ex "Time to Chow Down": every Evolution Pokémon
   }
 
   it("the confirm is UNGATED and carries the whole print", () => {
-    expect(prompt(evolve().state)).toStrictEqual({ kind: "confirm", note: CHOW_DOWN_TEXT });
-    expect(prompt(evolve({ benchDamage: 0 }).state).kind).toBe("confirm");
+    expect(effectPrompt(evolve().state)).toStrictEqual({ kind: "confirm", note: CHOW_DOWN_TEXT });
+    expect(effectPrompt(evolve({ benchDamage: 0 }).state).kind).toBe("confirm");
   });
 
   it("decline: nothing heals and nothing is discarded", () => {
@@ -714,7 +711,7 @@ describe('D560 §6 — Indeedee "Obliging Heal": heal 30, then recover from ONE 
 
   it("2 conditions: one labelled confirm between them; each answer clears exactly one", () => {
     const parked = play({ poisonDamage: 10, burned: true }).state;
-    expect(prompt(parked).labels).toEqual({ yes: "Poisoned", no: "Burned" });
+    expect(effectPromptOf(parked, "confirm").labels).toEqual({ yes: "Poisoned", no: "Burned" });
     expect(body(parked, "p1").damage).toBe(20); // the heal already landed
     const yes = body(confirm(parked, true).state, "p1").conditions;
     expect([yes.poisonDamage, yes.burned]).toEqual([0, true]);
@@ -724,11 +721,14 @@ describe('D560 §6 — Indeedee "Obliging Heal": heal 30, then recover from ONE 
 
   it("3 conditions: a CHAIN of two binary confirms; every one of the three is reachable", () => {
     const parked = play({ rotation: "asleep", poisonDamage: 10, burned: true }).state;
-    expect(prompt(parked).labels).toEqual({ yes: "Asleep", no: "Poisoned or Burned" });
+    expect(effectPromptOf(parked, "confirm").labels).toEqual({
+      yes: "Asleep",
+      no: "Poisoned or Burned",
+    });
     const asleep = body(confirm(parked, true).state, "p1").conditions;
     expect([asleep.rotation, asleep.poisonDamage, asleep.burned]).toEqual(["none", 10, true]);
     const second = confirm(parked, false).state;
-    expect(prompt(second).labels).toEqual({ yes: "Poisoned", no: "Burned" });
+    expect(effectPromptOf(second, "confirm").labels).toEqual({ yes: "Poisoned", no: "Burned" });
     const poisoned = body(confirm(second, true).state, "p1").conditions;
     expect([poisoned.rotation, poisoned.poisonDamage, poisoned.burned]).toEqual([
       "asleep",
