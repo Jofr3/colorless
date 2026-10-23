@@ -168,6 +168,7 @@ import {
   noConditions,
   otherSeat,
   presentStatuses,
+  relativeSeat,
   stackUids,
   takenPrizes,
   usedAttackOnYourLastTurn,
@@ -2396,7 +2397,10 @@ function stepOp(
       // Look at the top n cards (index 0 = top); candidates are the matches in deck order.
       // Declinable, so parks whenever there is a candidate. `also` is a second filter/cap over the
       // same window, which is why it cannot be two ops.
-      const top = lookWindow(state.players[lookOwner(op, ctx)].deck, op);
+      const top = lookWindow(
+        state.players[relativeSeat(ctx.seat, op.whose === "opponent")].deck,
+        op,
+      );
       // A Bench destination uses `benchMatches` (Basic only unless the noun names the card).
       const matches = (uid: string, filter: CardFilter) =>
         op.dest === "bench"
@@ -2415,7 +2419,9 @@ function stepOp(
       // A Bench destination is clamped to bench space at the offer, so a full Bench takes the whiff
       // path. `exact` still reads `totalMax`; no printing pairs it with a Bench destination.
       const offerMax =
-        op.dest === "bench" ? Math.min(totalMax, benchSpace(state, lookOwner(op, ctx))) : totalMax;
+        op.dest === "bench"
+          ? Math.min(totalMax, benchSpace(state, relativeSeat(ctx.seat, op.whose === "opponent")))
+          : totalMax;
       if (candidates.length === 0 || offerMax <= 0) {
         // The whiff still announces the look, through the same apply so leftovers (`restTo`) are
         // handled. Skipped only when nothing was looked at.
@@ -2458,7 +2464,7 @@ function stepOp(
     case "reorderTop": {
       // "…and put them back in any order." The deck is `op.side`'s, not necessarily `ctx.seat`'s;
       // the park and apply share the owner helper.
-      const owner = reorderTopOwner(ctx.seat, op);
+      const owner = relativeSeat(ctx.seat, op.side === "opponent");
       // Absent `from` is the top; `"bottom"` takes the last `n`, with index 0 still the card
       // closest to the top. Park and apply share `reorderWindow`.
       const top = reorderWindow(state.players[owner].deck, op);
@@ -4868,7 +4874,7 @@ export function applyChoice(
       // top cards are replaced in the answer's order. No event here: `DECK_TOP_REORDERED` was filed
       // when the op parked, since it reports the look.
       if (choice.kind !== "orderCards") return state;
-      const owner = reorderTopOwner(ctx.seat, op);
+      const owner = relativeSeat(ctx.seat, op.side === "opponent");
       const deck = state.players[owner].deck;
       // Re-sliced off the live deck: a short deck may have offered fewer than `op.n` cards. The
       // bottom fork replaces the last `uids.length` cards instead.
@@ -4914,7 +4920,12 @@ export function applyChoice(
       // Xerosic's Machinations' `untilHandSize` arm and Hand Trimmer's `whose: "self"` arm always
       // take the discard branch (`to` is unrepresentable there).
       if (op.whose === "self") {
-        return discardChosenFromHand(state, discardHandOwner(op, ctx.seat), choice.uids, events);
+        return discardChosenFromHand(
+          state,
+          relativeSeat(ctx.seat, op.whose !== "self"),
+          choice.uids,
+          events,
+        );
       }
       return op.to === "deck"
         ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
@@ -5389,7 +5400,7 @@ export function applyStatus(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const seat = op.target === "self" ? ctx.seat : otherSeat(ctx.seat);
+  const seat = relativeSeat(ctx.seat, op.target !== "self");
   const active = state.players[seat].active;
   if (active === null) return state;
   const uid = topUid(active);
@@ -5505,7 +5516,7 @@ function preventRetreat(
   events: GameEvent[],
 ): GameState {
   // A bare target means the opponent here, unlike `preventAttack` where bare means self.
-  const seat = op.target === "self" ? ctx.seat : otherSeat(ctx.seat);
+  const seat = relativeSeat(ctx.seat, op.target !== "self");
   const active = state.players[seat].active;
   if (active === null) return state;
   const uid = topUid(active);
@@ -5627,7 +5638,7 @@ function preventAttack(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const seat = op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat;
+  const seat = relativeSeat(ctx.seat, op.target === "defender");
   const active = state.players[seat].active;
   if (active === null) return state;
   const uid = topUid(active);
@@ -5696,7 +5707,7 @@ function lockSideAttacks(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const lockedSeat = op.whose === "self" ? ctx.seat : otherSeat(ctx.seat);
+  const lockedSeat = relativeSeat(ctx.seat, op.whose !== "self");
   const lockTurn = state.turn + (op.whose === "self" ? 2 : 1);
   const side = state.players[lockedSeat];
   const standing = side.sideAttackLock;
@@ -8859,7 +8870,7 @@ function shuffleDeck(
   op: OpOf<"shuffleDeck">,
   events: GameEvent[],
 ): GameState {
-  const seat = op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
+  const seat = relativeSeat(ctx.seat, op.whose === "opponent");
   const side = state.players[seat];
   const [deck, rngState] = shuffle(side.deck, state.rngState);
   events.push({ type: "SHUFFLE", seat });
@@ -9331,7 +9342,7 @@ function pushDeckTopLook(
   ctx: EffectContext,
   events: GameEvent[],
 ): void {
-  const owner = lookOwner(op, ctx);
+  const owner = relativeSeat(ctx.seat, op.whose === "opponent");
   const event: Extract<GameEvent, { type: "DECK_TOP_REVEALED" }> = {
     type: "DECK_TOP_REVEALED",
     seat: owner,
@@ -9344,14 +9355,6 @@ function pushDeckTopLook(
     ...(owner === ctx.seat ? {} : { actor: ctx.seat }),
   };
   events.push(event);
-}
-
-/**
- * Whose deck `lookAtTopN` reads: the controller's by default, or the opponent's (Accompanying
- * Flute).
- */
-function lookOwner(op: OpOf<"lookAtTopN">, ctx: EffectContext): Seat {
-  return op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
 }
 
 /**
@@ -9379,7 +9382,7 @@ function revealFromTop(
   events: GameEvent[],
 ): GameState {
   // The deck, Bench clamp and landing side belong to `lookOwner` (Accompanying Flute).
-  const owner = lookOwner(op, ctx);
+  const owner = relativeSeat(ctx.seat, op.whose === "opponent");
   const side = state.players[owner];
   const inDeck = uids.filter((uid) => side.deck.includes(uid));
   const moved = op.dest === "bench" ? inDeck.slice(0, benchSpace(state, owner)) : inDeck;
@@ -9764,7 +9767,7 @@ function returnBenched(
 ): GameState {
   // The Active is reachable only under `includeActive`. The spot is left empty; promotion or loss
   // is handled by the mid-turn sweep. On the opponent side the Active is the opponent's.
-  const activeOwner = op.whose === "self" ? ctx.seat : otherSeat(ctx.seat);
+  const activeOwner = relativeSeat(ctx.seat, op.whose !== "self");
   if (ref.spot.spot === "active" && op.includeActive === true && ref.seat === activeOwner) {
     return returnOwnActive(state, ref.seat, op, ctx, events);
   }
@@ -9899,7 +9902,7 @@ function hpGuessApply(
 ): GameState {
   const hp = cardOfUid(state, uid)?.hp ?? null;
   const right = hp !== null && guess === hp;
-  const drawer = right ? otherSeat(ctx.seat) : ctx.seat;
+  const drawer = relativeSeat(ctx.seat, right);
   events.push({ type: "HP_GUESSED", seat: ctx.seat, uid, guess, hp, right, drawer });
   return drawToHand(state, drawer, op.draw, "effect", events);
 }
@@ -10654,7 +10657,7 @@ function turnPrizeFaceUp(
   events: GameEvent[],
   record: EffectRecord,
 ): { done: GameState } | { park: EffectPrompt } {
-  const owner = prizeRowOwner(op, ctx);
+  const owner = relativeSeat(ctx.seat, op.side === "opponent");
   const indices = faceDownPrizeIndices(state, owner);
   if (indices.length === 0) return { done: state };
   if (indices.length === 1)
@@ -10670,11 +10673,6 @@ function turnPrizeFaceUp(
           : "Choose 1 of your opponent's face-down Prize cards to turn face up.",
     },
   };
-}
-
-/** Whose prize row `turnPrizeFaceUp` turns, shared by the park, forced pick and answer. */
-function prizeRowOwner(op: OpOf<"turnPrizeFaceUp">, ctx: EffectContext): Seat {
-  return op.side === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
 }
 
 /** The face-down slots of `seat`'s prize row, in row order. */
@@ -10699,7 +10697,7 @@ function turnPrizeFaceUpAt(
   events: GameEvent[],
   record: EffectRecord,
 ): GameState {
-  const owner = prizeRowOwner(op, ctx);
+  const owner = relativeSeat(ctx.seat, op.side === "opponent");
   const side = state.players[owner];
   const uid = side.prizes[index];
   if (uid === undefined || side.faceUpPrizes.includes(uid)) return state;
@@ -10856,17 +10854,6 @@ function mayDrawNote(op: OpOf<"opponentMayDraw">): string {
 }
 
 /**
- * Caption for the opponent-chooses hand discard, in the answerer's voice rather than the printed
- * sentence, since the reader is the opponent. The printed count is safe because the op only parks
- * when the hand exceeds it.
- * Whose hand `opponentDiscardsFromHand` targets: the controller's under Hand Trimmer's `whose:
- * "self"`, otherwise the opponent's.
- */
-function discardHandOwner(op: OpOf<"opponentDiscardsFromHand">, seat: Seat): Seat {
-  return op.whose === "self" ? seat : otherSeat(seat);
-}
-
-/**
  * Hand Trimmer's controller arm: `seat` discards down to `untilHandSize`, choosing which, with no
  * separate decider.
  */
@@ -10892,6 +10879,11 @@ function selfDiscardDownTo(
   };
 }
 
+/**
+ * Caption for the opponent-chooses hand discard, in the answerer's voice rather than the printed
+ * sentence, since the reader is the opponent. The printed count is safe because the op only parks
+ * when the hand exceeds it.
+ */
 function opponentDiscardNote(op: OpOf<"opponentDiscardsFromHand">): string {
   // Xerosic's Machinations, phrased for the player holding the hand.
   if (op.untilHandSize !== undefined) {
@@ -11652,7 +11644,7 @@ export function attachEnergyTargets(
  * the actor's own seat.
  */
 export function attachSeat(op: { readonly whose?: "opponent" }, seat: Seat): Seat {
-  return op.whose === "opponent" ? otherSeat(seat) : seat;
+  return relativeSeat(seat, op.whose === "opponent");
 }
 
 /**
@@ -12867,7 +12859,7 @@ function moveFloor(op: OpOf<"moveEnergy">, cap: number): number {
 function moveBoardSeat(op: OpOf<"moveEnergy">, seat: Seat): Seat {
   // Spelled off the absent key on purpose: a record with no `side` means the controller's own
   // board.
-  return op.side === undefined ? seat : otherSeat(seat);
+  return relativeSeat(seat, op.side !== undefined);
 }
 
 /**
@@ -13286,17 +13278,6 @@ function retrieveNote(
 }
 
 /**
- * The chooseCards note for a lookAtTopN (Great Ball, Pokégear 3.0): "Look at the top N cards … and
- * put a {noun} into your hand." `also` joins with the printed "and" rather than `anyOf`'s "or",
- * each half keeping its own number. `exact` drops "up to" and nothing else.
- *
- * Whose deck a `reorderTop` is ordering, shared so the park and the apply cannot disagree.
- */
-function reorderTopOwner(seat: Seat, op: OpOf<"reorderTop">): Seat {
-  return op.side === "opponent" ? otherSeat(seat) : seat;
-}
-
-/**
  * Which cards a `reorderTop` is ordering, shared by the park and the apply. Both arms return the
  * window in deck order, so index 0 is nearest the top and one prompt serves both ends. The bottom
  * arm's `Math.max(0, …)` is for symmetry only; `slice` already clamps a negative start.
@@ -13329,6 +13310,11 @@ function reorderNote(op: OpOf<"reorderTop">): string {
     : "Put these cards back on top of your deck in any order.";
 }
 
+/**
+ * The chooseCards note for a lookAtTopN (Great Ball, Pokégear 3.0): "Look at the top N cards … and
+ * put a {noun} into your hand." `also` joins with the printed "and" rather than `anyOf`'s "or",
+ * each half keeping its own number. `exact` drops "up to" and nothing else.
+ */
 function lookNote(
   filter: CardFilter,
   n: number,

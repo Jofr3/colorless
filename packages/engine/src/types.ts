@@ -30,6 +30,11 @@ export function otherSeat(seat: Seat): Seat {
   return seat === "p1" ? "p2" : "p1";
 }
 
+/** `seat` itself, or its opponent when the op's seat field names the other side. */
+export function relativeSeat(seat: Seat, opponent: boolean): Seat {
+  return opponent ? otherSeat(seat) : seat;
+}
+
 // Rule constants (docs/reference/ptcg-rules.md §2–§3).
 /**
  * The seat whose turn number `state.turn` is: odd turns belong to firstPlayer. Null before the
