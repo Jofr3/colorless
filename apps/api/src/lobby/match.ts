@@ -38,6 +38,11 @@ export function matchSeatOf(snapshot: LobbySnapshot, playerId: string): Seat | n
   return slot === null ? null : SEAT_OF_SLOT[slot];
 }
 
+/** The lobby player holding engine `seat`, or null when that seat is empty. */
+export function playerIdOfSeat(snapshot: LobbySnapshot, seat: Seat): string | null {
+  return seat === SEAT_OF_SLOT.host ? snapshot.host.id : (snapshot.guest?.id ?? null);
+}
+
 export interface StartMatchOptions {
   /** The authoritative RNG seed the DO owns for this match (shuffle + coin flip). */
   seed: number;
