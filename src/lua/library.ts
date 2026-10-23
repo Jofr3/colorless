@@ -2,6 +2,7 @@ import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
+import { reportError } from "../lib/reportError";
 
 const sorts: [string, ...string[]] = ["name-asc", "name-desc", "cards-desc"];
 const stored = (key: string, allowed: [string, ...string[]]) => {
@@ -151,8 +152,8 @@ export class LuaLibrary {
       if (!current()) return;
       this.legality = legality;
       this.emit();
-    } catch {
-      /* Left unmarked; see above. */
+    } catch (error) {
+      reportError("judge deck legality", error);
     }
   }
 

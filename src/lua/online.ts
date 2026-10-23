@@ -23,6 +23,7 @@ import {
 import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import { type CardPool, LuaOnlineMatch } from "./onlineTable";
+import { reportError } from "../lib/reportError";
 
 export type OnlineStep =
   | "menu"
@@ -254,7 +255,8 @@ export class LuaOnline {
       let code = "";
       try {
         code = await createLobbyCode();
-      } catch {
+      } catch (error) {
+        reportError("create lobby code", error);
         if (op === this.op)
           this.message = "Couldn't reach the lobby server. Try again in a moment.";
       }

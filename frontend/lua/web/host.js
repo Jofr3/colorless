@@ -908,7 +908,7 @@ async function prepareTransitionArt() {
       [token, selected.id, path].map(encodeURIComponent).join("\t"),
     );
   })()
-    .catch(() => {})
+    .catch((error) => console.error("[colorless] prepare transition art", error))
     .finally(() => {
       transitionPreparing = null;
     });

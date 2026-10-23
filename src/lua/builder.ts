@@ -21,6 +21,7 @@ import { createDeckSaver, type DeckSaver } from "../decks/deckSaver";
 import { toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
 import { LUA_ART_SLOTS } from "./artworkCache";
+import { reportError } from "../lib/reportError";
 
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
 type CatalogPage = { items: BuilderCard[]; total: number };
@@ -390,7 +391,8 @@ export class LuaBuilder {
       this.phase = "ready";
       this.emit();
       await Promise.all([this.hydrate(epoch), this.search(), this.loadOptions(epoch)]);
-    } catch {
+    } catch (error) {
+      reportError("open deck", error);
       if (epoch === this.epoch) {
         this.phase = "error";
         this.message = "Could not open this deck. Try again.";
@@ -410,7 +412,8 @@ export class LuaBuilder {
         }
       }
       this.emit();
-    } catch {
+    } catch (error) {
+      reportError("hydrate deck cards", error);
       if (epoch === this.epoch) {
         this.message = "Some cards could not load. Retry loading before adding cards.";
         this.emit();
@@ -429,7 +432,8 @@ export class LuaBuilder {
       this.sets = sets;
       this.series = series;
       this.emit();
-    } catch {
+    } catch (error) {
+      reportError("load filter options", error);
       if (epoch === this.epoch) {
         this.message = "Filter options could not load. Retry loading to reconnect.";
         this.emit();
@@ -450,7 +454,8 @@ export class LuaBuilder {
       if (epoch !== this.epoch || request !== this.searchEpoch) return;
       this.results = data.items;
       this.total = data.total;
-    } catch {
+    } catch (error) {
+      reportError("search cards", error);
       if (epoch === this.epoch && request === this.searchEpoch)
         this.message = "Card search failed. Try again.";
     }
@@ -514,7 +519,7 @@ export class LuaBuilder {
           .then(() => {
             if (epoch === this.epoch && catalog.key === this.pageKey) this.publishImages();
           })
-          .catch(() => {});
+          .catch((error) => reportError("prefetch card page", error));
       }
   }
   private changed() {
@@ -777,7 +782,8 @@ export class LuaBuilder {
           ]
             .filter(Boolean)
             .join("\n\n") || "No additional rules text.";
-      } catch {
+      } catch (error) {
+        reportError("load card details", error);
         if (epoch !== this.epoch || this.selected !== a) return;
         this.details = "Details could not load. Close and reopen to retry.";
       }
@@ -827,7 +833,8 @@ export class LuaBuilder {
           this.changed();
           this.message = "Deck imported.";
         }
-      } catch {
+      } catch (error) {
+        reportError("import decklist", error);
         if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
         this.message = "Import failed. Your deck is unchanged. Try again.";
       }
