@@ -165,10 +165,6 @@ const MEWTWO_VSTAR: CardProgram = {
   },
 };
 
-/** Bouffalant — "Bouffer": "This Pokémon takes 20 less damage from attacks
-    (after applying Weakness and Resistance)." (passive) */
-const BOUFFALANT: CardProgram = { passive: { damageReductionAfterWR: 20 } };
-
 /** Cacnea / Cacturne — "Counterattack Quills": "If this Pokémon is in the Active
     Spot and is damaged by an attack from your opponent's Pokémon (even if this
     Pokémon is Knocked Out), put 3 damage counters on the Attacking Pokémon."
@@ -464,13 +460,6 @@ const PRESSURE: CardProgram = { passive: { opponentActiveAttackDebuff: 20 } };
 
 /** Walking Wake ex "Azure Seas": its attack damage ignores effects on the opponent's Active. */
 const AZURE_SEAS: CardProgram = { passive: { suppressTargetEffectsOnAttack: true } };
-
-/**
- * Fixture only: a -30 post-W/R reduction on synthetic defenders that also have a Weakness or
- * Resistance. Kept separate from `COPPERAJAH_EX` so edits to that card do not change these
- * fixtures.
- */
-const FIX_SUPPRESS_WALL: CardProgram = { passive: { damageReductionAfterWR: 30 } };
 
 /**
  * Dachsbun "Well-Baked Body": can't be Burned, and prevent attack damage from the opponent's {R}
@@ -1437,14 +1426,17 @@ const POKEMON_CATCHER: CardProgram = {
 /** Nemona — "Draw 3 cards." (Supporter) */
 const NEMONA: CardProgram = { trainer: [{ op: "drawCards", count: 3 }] };
 
-/** Copperajah ex — "Bronze Body": "This Pokémon takes 30 less damage from
-    attacks (after applying Weakness and Resistance)." (passive — the Bouffalant
-    "Bouffer" shape, a bigger flat reduction). */
-const COPPERAJAH_EX: CardProgram = { passive: { damageReductionAfterWR: 30 } };
+/**
+ * "This Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)." Printed
+ * under several Ability names (Bronze Body, Bouffer, Thicket Body, Soft Wool, ...).
+ */
+const REDUCE_30_AFTER_WR: CardProgram = { passive: { damageReductionAfterWR: 30 } };
 
-/** Stonjourner — "Exoskeleton": "This Pokémon takes 20 less damage from attacks
-    (after applying Weakness and Resistance)." (passive) */
-const STONJOURNER: CardProgram = { passive: { damageReductionAfterWR: 20 } };
+/**
+ * "This Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance)." Printed
+ * under several Ability names (Exoskeleton, Bouffer, Solid Shell, Fur Coat, ...).
+ */
+const REDUCE_20_AFTER_WR: CardProgram = { passive: { damageReductionAfterWR: 20 } };
 
 /** Rock Chestplate. The {F} gate is resolved in `passivesOf` against the holder's types. */
 const ROCK_CHESTPLATE: CardProgram = {
@@ -8084,7 +8076,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "swsh10.5-079": MEWTWO_VSTAR,
   "swsh10.5-086": MEWTWO_VSTAR,
   // Bouffalant — Bouffer (passive)
-  "sv03-174": BOUFFALANT,
+  "sv03-174": REDUCE_20_AFTER_WR,
   // — M4 slice 3: Stadiums + Tools (verified vs local D1 2026-07-18). —
   // Beach Court (Stadium)
   "sv01-167": BEACH_COURT,
@@ -8171,9 +8163,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
-  "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
-  "sv02-245": COPPERAJAH_EX,
-  "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
+  "sv02-150": REDUCE_30_AFTER_WR, // Copperajah ex — Bronze Body (−30 after W/R)
+  "sv02-245": REDUCE_30_AFTER_WR,
+  "sv01-121": REDUCE_20_AFTER_WR, // Stonjourner — Exoskeleton (−20 after W/R)
   // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
   "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
@@ -8218,9 +8210,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-130": KO_SURVIVAL, // (reprint)
   "fix-sturdy": KO_SURVIVAL, // FIXTURE — 120 HP Basic, the demonstrator that DRIVES the row
   "fix-sturdytiny": KO_SURVIVAL, // FIXTURE — 20 HP Basic: the CHECKUP-boundary witness
-  "fix-suppresswall": FIX_SUPPRESS_WALL, // Fixture: ×2 Fire and −30 after W/R, which orders Weakness before reduction
-  "fix-carapace-tough": FIX_SUPPRESS_WALL,
-  "fix-resistwall": FIX_SUPPRESS_WALL, // Fixture: −30 Fire Resistance and −30 after W/R
+  "fix-suppresswall": REDUCE_30_AFTER_WR, // Fixture: ×2 Fire and −30 after W/R, which orders Weakness before reduction
+  "fix-carapace-tough": REDUCE_30_AFTER_WR,
+  "fix-resistwall": REDUCE_30_AFTER_WR, // Fixture: −30 Fire Resistance and −30 after W/R
   "sv01-099": WELL_BAKED_BODY, // Dachsbun — Well-Baked Body (Burn immunity and {R} prevention)
   "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
   "sv03-201": INSULATOR, // (reprint — Illustration rare)
@@ -8786,15 +8778,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-287": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — twin `sv10-136`
   "me02.5-288": FLIP_THE_SCRIPT, // Fezandipiti ex — twin `sv06.5-038`
   "me02.5-289": X_BOOT, // Steven's Metagross ex — twin `sv10-145`
-  "me04-002": STONJOURNER, // Kakuna — twin `sv01-121` (Stonjourner, same text)
+  "me04-002": REDUCE_20_AFTER_WR, // Kakuna — twin `sv01-121` (Stonjourner, same text)
   "me04-052": POISON_POINT, // Qwilfish — twin `sv05-008` (Roselia, same text)
   // — Pokémon, same Ability text under another name, a nameless passive (11) —
   "me02-011": MELT_AWAY, // Charmander — twin `sv10-036` (Ethan's Magcargo, same text)
-  "me02-041": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02-041": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me02-070": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
   "me02-114": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
-  "me02.5-267": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
-  "me02.5-282": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02.5-267": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02.5-282": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me05-038": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "me05-099": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "me05-115": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
@@ -9133,19 +9125,17 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-031": LUMINOUS_WING, // Mega Clefable ex
   "me03-103": LUMINOUS_WING, // Mega Clefable ex
   "me03-119": LUMINOUS_WING, // Mega Clefable ex
-  "sv06-002": COPPERAJAH_EX, // Tangrowth — "Thicket Body" (mark H)
-  "sv07-125": COPPERAJAH_EX, // Dubwool — "Soft Wool" (mark H)
-  "sv08-054": COPPERAJAH_EX, // Cetitan — "Solid Body" (mark H)
-  "sv08-201": COPPERAJAH_EX, // Cetitan (reprint)
-  "sv10-108": COPPERAJAH_EX, // Mudsdale — "Mud Coat" (mark I)
-  "sv10.5w-077": COPPERAJAH_EX, // Bouffalant ex — "Bouffer" (mark I)
-  "sv10.5w-162": COPPERAJAH_EX, // Bouffalant ex (reprint)
-  "sv10.5w-170": COPPERAJAH_EX, // Bouffalant ex (reprint)
-  // — "This Pokémon takes 20 less damage …" — 2 legal printings (2 in the
-  //   catalog). Both `sv01-121` Stonjourner and `sv03-174` Bouffalant already
-  //   carry this text; STONJOURNER is the anchor named by the census. —
-  "sv05-010": STONJOURNER, // Turtwig — "Solid Shell" (mark H)
-  "sv08.5-088": STONJOURNER, // Furfrou — "Fur Coat" (mark H)
+  "sv06-002": REDUCE_30_AFTER_WR, // Tangrowth — "Thicket Body" (mark H)
+  "sv07-125": REDUCE_30_AFTER_WR, // Dubwool — "Soft Wool" (mark H)
+  "sv08-054": REDUCE_30_AFTER_WR, // Cetitan — "Solid Body" (mark H)
+  "sv08-201": REDUCE_30_AFTER_WR, // Cetitan (reprint)
+  "sv10-108": REDUCE_30_AFTER_WR, // Mudsdale — "Mud Coat" (mark I)
+  "sv10.5w-077": REDUCE_30_AFTER_WR, // Bouffalant ex — "Bouffer" (mark I)
+  "sv10.5w-162": REDUCE_30_AFTER_WR, // Bouffalant ex (reprint)
+  "sv10.5w-170": REDUCE_30_AFTER_WR, // Bouffalant ex (reprint)
+  // "This Pokémon takes 20 less damage …", as on Stonjourner `sv01-121` and Bouffalant `sv03-174`.
+  "sv05-010": REDUCE_20_AFTER_WR, // Turtwig — "Solid Shell" (mark H)
+  "sv08.5-088": REDUCE_20_AFTER_WR, // Furfrou — "Fur Coat" (mark H)
   // — "If this Pokémon is in the Active Spot and is damaged by an attack from
   //   your opponent's Pokémon (even if this Pokémon is Knocked Out), put 3 damage
   //   counters on the Attacking Pokémon." — 3 legal printings (4 in the catalog). —

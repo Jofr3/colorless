@@ -3362,14 +3362,14 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
 ];
 
 const ABILITY_SHARED_OBJECTS: readonly (readonly [string, readonly string[]])[] = [
-  ["COPPERAJAH_EX", ["Bouffalant ex", "Cetitan", "Dubwool", "Mudsdale", "Tangrowth"]],
+  ["REDUCE_30_AFTER_WR", ["Bouffalant ex", "Cetitan", "Dubwool", "Mudsdale", "Tangrowth"]],
   ["COUNTERATTACK_QUILLS", ["Bruxish", "Iron Jugulis"]],
   ["FOOD_PREP", ["Crabominable", "Veluza"]],
   ["CURIOUS_TEA_PARTY", ["Misty's Magikarp", "Poltchageist"]],
   ["KO_SURVIVAL", ["Crustle", "Pikachu ex"]],
   ["POISON_POINT", ["Roselia", "Roserade", "Scolipede"]],
   ["PREVENT_FROM_EX", ["Crustle", "Sylveon"]],
-  ["STONJOURNER", ["Furfrou", "Turtwig"]],
+  ["REDUCE_20_AFTER_WR", ["Furfrou", "Turtwig"]],
   ["UNNERVE", ["Cetitan ex", "Fraxure"]],
   ["FESTIVAL_LEAD", ["Dipplin", "Goldeen", "Seaking", "Swirlix"]],
 ];
