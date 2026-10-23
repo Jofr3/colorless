@@ -2,6 +2,14 @@ import { spawn, execFileSync, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import { isRecord, parseJson } from "./lib/cli";
+
+/** Preferred local ports; the first free port at or above each is used. */
+const WEB_PORT = 5175;
+const API_PORT = 8787;
+const INSPECTOR_PORT = 9229;
+/** Preferred Tailnet HTTPS port for the frontend; the API takes the next free one. */
+const WEB_HTTPS_PORT = 8446;
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const children: ChildProcess[] = [];
@@ -60,10 +68,39 @@ type ServeConfig = {
   Foreground?: Record<string, ServeConfig>;
 };
 
+function isServeConfig(v: unknown): v is ServeConfig {
+  return (
+    isRecord(v) &&
+    (v.TCP === undefined || isRecord(v.TCP)) &&
+    (v.Foreground === undefined ||
+      (isRecord(v.Foreground) && Object.values(v.Foreground).every(isServeConfig)))
+  );
+}
+
+type TailscaleStatus = {
+  BackendState?: string;
+  Self?: { DNSName?: string };
+  TailscaleIPs?: string[];
+};
+
+function isTailscaleStatus(v: unknown): v is TailscaleStatus {
+  return (
+    isRecord(v) &&
+    (v.BackendState === undefined || typeof v.BackendState === "string") &&
+    (v.Self === undefined ||
+      (isRecord(v.Self) && (v.Self.DNSName === undefined || typeof v.Self.DNSName === "string"))) &&
+    (v.TailscaleIPs === undefined ||
+      (Array.isArray(v.TailscaleIPs) && v.TailscaleIPs.every((ip) => typeof ip === "string")))
+  );
+}
+
+function tailscaleJson<T>(args: string[], guard: (v: unknown) => v is T): T {
+  const text = execFileSync("tailscale", args, { encoding: "utf8" });
+  return parseJson(text, `tailscale ${args.join(" ")}`, guard);
+}
+
 function servePorts(): Set<number> {
-  const config = JSON.parse(
-    execFileSync("tailscale", ["serve", "status", "--json"], { encoding: "utf8" }),
-  ) as ServeConfig;
+  const config = tailscaleJson(["serve", "status", "--json"], isServeConfig);
   const ports = new Set<number>();
   const collect = (entry: ServeConfig) => {
     for (const port of Object.keys(entry.TCP ?? {})) ports.add(Number(port));
@@ -99,13 +136,7 @@ async function freePort(host: string, preferred: number, override?: string): Pro
 }
 
 async function main() {
-  const status = JSON.parse(
-    execFileSync("tailscale", ["status", "--json"], { encoding: "utf8" }),
-  ) as {
-    BackendState?: string;
-    Self?: { DNSName?: string };
-    TailscaleIPs?: string[];
-  };
+  const status = tailscaleJson(["status", "--json"], isTailscaleStatus);
   const hostname = status.Self?.DNSName?.replace(/\.$/, "");
   const ip = status.TailscaleIPs?.find((address) => !address.includes(":"));
   if (status.BackendState !== "Running" || !hostname || !ip) {
@@ -115,10 +146,10 @@ async function main() {
   // Skip configured Serve ports, including foreground sessions from other apps.
   for (const port of servePorts()) selected.add(port);
 
-  const webPort = await freePort("127.0.0.1", 5175);
-  const apiPort = await freePort("127.0.0.1", 8787);
-  const inspectorPort = await freePort("127.0.0.1", 9229);
-  const webHttpsPort = await freePort(ip, 8446, process.env.TAILNET_WEB_PORT);
+  const webPort = await freePort("127.0.0.1", WEB_PORT);
+  const apiPort = await freePort("127.0.0.1", API_PORT);
+  const inspectorPort = await freePort("127.0.0.1", INSPECTOR_PORT);
+  const webHttpsPort = await freePort(ip, WEB_HTTPS_PORT, process.env.TAILNET_WEB_PORT);
   const apiHttpsPort = await freePort(ip, webHttpsPort + 1, process.env.TAILNET_API_PORT);
   const webOrigin = `https://${hostname}:${webHttpsPort}`;
   const apiOrigin = `https://${hostname}:${apiHttpsPort}`;
