@@ -1,6 +1,6 @@
 # Colorless Lua frontend
 
-Colorless's web frontend: a LÖVE 11.4 application packaged with love.js for WebAssembly and served at `/`. Pages are chosen by query string (`/?page=sandbox`, `/?lobby=CODE`, `/?account`, …). All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, and exposes native accessible links.
+Colorless's web frontend: a LÖVE 11.4 application packaged with love.js for WebAssembly and served at `/`. Pages are chosen by path (`/sandbox`, `/decks`, `/online/CODE`, …); `?account` and `?settings` open the settings popup over any page. All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, and exposes native accessible links.
 
 ## Run
 
@@ -33,7 +33,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 ## This milestone
 
-- Three equally sized menu buttons: Sandbox (blue) → `/?page=sandbox`, Online (red) → the lobby modal at `/?page=online`, Decks (pale green) → the deck library at `/?page=decks`.
+- Three equally sized menu buttons: Sandbox (blue) → `/sandbox`, Online (red) → the lobby modal at `/online`, Decks (pale green) → the deck library at `/decks`.
 - Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
 - Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend.
 - Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
@@ -47,7 +47,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 Click a button to open its page; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The sandbox chooser opens the full gameplay page at `/?page=simulator`. Online play runs in Lua too: the lobby modal at `/?page=online` and the live table at `/?page=match&lobby=<code>` (see Online below). The account adapter uses the shared API client and cookie session; passwords and session cookies never cross into Lua or local storage.
+The sandbox chooser opens the full gameplay page at `/sandbox/play`. Online play runs in Lua too: the lobby modal at `/online` and the live table at `/online/<code>/play` (see Online below). The account adapter uses the shared API client and cookie session; passwords and session cookies never cross into Lua or local storage.
 
 Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links (`/?settings`, `/?account`) reload the page with that popup requested.
 
@@ -185,7 +185,7 @@ The screen check executes the original `love.resize` and CRT uniform block from 
 
 The shader mouse position and tile size are transformed into actual framebuffer coordinates. Hover uses Balatro's 0.02 scale/0.012 rotation impulse and +0.05 scale, with +0.1 drag zoom. Desktop dragging suspends hover and uses the ambient tilt, just as the original controller does (touch can combine both states). There is no added hover lift or whole-card idle rotation: idle motion comes from Balatro's synthetic cursor orbit. Shader `time` is the per-card seed, while the edition's second input is elapsed time, as in the source. Shadows are un-tilted and grow farther from the card when dragged.
 
-The Decks menu opens the Lua library as a modal over Home (`/?page=decks`),
+The Decks menu opens the Lua library as a modal over Home (`/decks`),
 using Settings’ entrance animation and full-screen backdrop. Back or Escape
 closes it, and background controls remain inactive while it is open. It shares the
 existing account/session and decks API. Search includes all decks, including those
@@ -200,7 +200,7 @@ constructor position and the shared Moveable physics. The paginator uses the
 original DynaText character pop-in (rate 8) and ongoing bump motion; it stays
 silent and respects Reduced Motion.
 
-Click a deck to open its Lua builder (`/?page=builder&deck=<id>`). Compact deck rows show the name above each pile and a right-aligned count
+Click a deck to open its Lua builder (`/decks/<id>`). Compact deck rows show the name above each pile and a right-aligned count
 (e.g. 60/60) beneath it. Dragging a top card returns it to its pile without changing the sort order. Failed writes reconcile with the server.
 New decks are created without a folder.
 
@@ -276,7 +276,7 @@ return animation and texture cleanup, and decklist editing/confirmation.
 
 ## Sandbox deck selection
 
-Sandbox resumes a saved Lua game when available; otherwise it opens `/?page=sandbox`. Player 1 / Player 2 tabs select the active
+Sandbox resumes a saved Lua game when available; otherwise it opens `/sandbox`. Player 1 / Player 2 tabs select the active
 seat. The search field and deck grid use the library's input, embossed collection
 tray, generic back piles, title/count styling and animated red paginator. Desktop
 pages hold ten decks in two rows of five; portrait pages hold four. Clicking a
@@ -301,7 +301,7 @@ The shared pile's original CardArea comparison lives in `tests/deck_pile.lua`.
 
 ## Sandbox gameplay
 
-`/?page=simulator` is a full page built like Balatro's run screen. The
+`/sandbox/play` is a full page built like Balatro's run screen. The
 original `background.fs` runs with `ease_background_colour` palettes (the Small
 Blind green on your turn, the grey-blue won palette on the opponent's, the boss
 red or chips blue when the game ends). The left column ports
@@ -426,18 +426,18 @@ layouts, with the draw paths rendered against a stub LÖVE.
 
 ## Online
 
-Online (home) opens `/?page=online`, a page drawn as a modal over Home with
+Online (home) opens `/online`, a page drawn as a modal over Home with
 Settings' backdrop, entrance and generic-options frame. Page ids keep browser
-history, reload and sign-in returns working: `/?lobby=CODE` is the short
-invite link (it boots `online`), `/?page=online&lobby=CODE` resumes or joins
-that lobby, and `/?page=match&lobby=CODE` is the live table. Create and the
+history, reload and sign-in returns working: `/online/CODE` is the invite
+link and resumes or joins that lobby, and `/online/CODE/play` is the live table.
+Old `/?lobby=CODE`, `/match/CODE` and `/?page=…` links still resolve and are rewritten. Create and the
 online/match hand-offs use `history.replaceState`, so Back from either page goes
 Home, which leaves the lobby (a live match is forfeited).
 
 Steps: **menu** (Create / Join tabs; the code field is a native proxy that
 upper-cases and drops look-alike characters; Join stays disabled until four
 characters), **joining**, **waiting** (code pill, Copy code, Copy link =
-`<origin>/?lobby=CODE`, the label flashes Copied), **versus** (your seat
+`<origin>/online/CODE`, the label flashes Copied), **versus** (your seat
 and the opponent's, presence pip, Waiting / Choosing deck / Ready / Away pills,
 Choose deck, Ready / Cancel ready; the Lua host has no Kick), the deck **picker**
 (search, 5×2 or 2×2 pile grid, pages and a regulation cycle: All decks, Standard

@@ -15,9 +15,9 @@ engine and the API are TypeScript.
 
 ## Architecture
 
-The canvas renders every page; the page is picked by query string (`/`,
-`/?page=sandbox|simulator|online|match|decks|builder`, `/?lobby=CODE`,
-`/?account`, `/?settings`). `frontend/lua/web/host.js` boots love.js and moves
+The canvas renders every page; the page is picked by path (`/`, `/decks`,
+`/decks/<id>`, `/sandbox`, `/sandbox/play`, `/online`, `/online/<code>`,
+`/online/<code>/play`), and `?account` / `?settings` open the settings popup over it. `frontend/lua/web/host.js` boots love.js and moves
 messages between Lua and the browser through a file mailbox. The TypeScript
 adapters in `src/lua/` answer those messages: they call the API
 (`src/lib/api.ts`), run local games with the engine (`src/game/`), build decks

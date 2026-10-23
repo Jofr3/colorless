@@ -9,8 +9,8 @@
   "assets": {
     // dist/.assetsignore (copied from public/) keeps the hidden source maps out.
     "directory": "./dist",
-    // Unknown paths (old React URLs such as /decks or /lobby/CODE) get the
-    // host page, which opens home.
+    // Every page path (/decks, /online/CODE, …) gets the host page, which
+    // routes on the path; unknown paths open home.
     "not_found_handling": "single-page-application"
   }
 }

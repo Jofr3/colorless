@@ -429,7 +429,7 @@ describe("Lua online adapter", () => {
     vi.advanceTimersByTime(NOTICE_MS);
     expect(header()[8]).toBe("");
     await online.command("copy\tlink");
-    expect(writeText).toHaveBeenLastCalledWith(`https://colorless.test/?lobby=${CODE}`);
+    expect(writeText).toHaveBeenLastCalledWith(`https://colorless.test/online/${CODE}`);
     writeText.mockRejectedValueOnce(new Error("denied"));
     await online.command("copy\tcode");
     expect(header()[8]).toBe("Copy failed");

@@ -293,7 +293,7 @@ export class LuaOnline {
       if (this.client?.role === "host" && this.client.opponent) this.client.kick();
     } else if (action === "copy" && this.code) {
       const text =
-        a === "link" ? `${globalThis.location?.origin ?? ""}/?lobby=${this.code}` : this.code;
+        a === "link" ? `${globalThis.location?.origin ?? ""}/online/${this.code}` : this.code;
       let ok = true;
       try {
         await navigator.clipboard.writeText(text);

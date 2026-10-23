@@ -47,10 +47,10 @@ describe("startOAuth", () => {
     );
     const navigate = vi.fn();
 
-    expect(await startOAuth("google", navigate, "/?page=decks#cards")).toBe("redirected");
+    expect(await startOAuth("google", navigate, "/decks#cards")).toBe("redirected");
     const target = new URL(navigate.mock.calls[0]?.[0] as string);
     expect(target.pathname).toBe("/auth/oauth/google");
-    expect(target.searchParams.get("redirect")).toBe("/?page=decks#cards");
+    expect(target.searchParams.get("redirect")).toBe("/decks#cards");
     expect(target.hash).toBe("");
   });
 

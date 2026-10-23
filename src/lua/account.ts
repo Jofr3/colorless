@@ -180,13 +180,8 @@ export class LuaAccount {
     const result = await startOAuth(
       "google",
       undefined,
-      typeof location !== "undefined" &&
-        ["decks", "builder", "sandbox", "simulator", "online", "match"].includes(
-          new URLSearchParams(location.search).get("page") ??
-            (new URLSearchParams(location.search).has("lobby") ? "online" : ""),
-        )
-        ? `/${location.search}${location.search ? "&" : "?"}account`
-        : "/?account",
+      // Return to the current page (its path) with the account tab open.
+      `${typeof location !== "undefined" ? location.pathname : "/"}?account`,
     );
     if (op !== this.operation || result === "redirected") return;
     this.busy = false;

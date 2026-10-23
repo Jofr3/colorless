@@ -516,14 +516,43 @@ addEventListener(
 );
 
 // Library transport: Lua owns the page; the browser supplies text input and API I/O.
-// The page id rides in a page-specific query parameter (a deck or lobby code).
+// Pages live in the path: /decks, /decks/<id> (builder), /sandbox, /sandbox/play
+// (simulator), /online, /online/<code> and /online/<code>/play (match). Old
+// query URLs (/?page=decks, /?lobby=CODE), /simulator, /match/<code> and
+// React's /lobby/<code> still resolve and are rewritten.
+const pages = ["decks","builder","sandbox","simulator","online","match"];
 const pageIds = { builder: "deck", online: "lobby", match: "lobby" };
-function pageFromSearch(params) {
-  return params.get("page") || (params.has("lobby") ? "online" : "home");
+function routeFromLocation() {
+  const params = new URLSearchParams(location.search);
+  const legacy = params.get("page") || (params.has("lobby") ? "online" : "");
+  if (legacy) return { page: legacy, id: params.get(pageIds[legacy] || "deck") || "" };
+  const [first = "", second = "", third = ""] = location.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+  if (first === "decks" && second) return { page: "builder", id: second };
+  if (first === "sandbox" && second === "play") return { page: "simulator", id: "" };
+  if (first === "online" && second && third === "play") return { page: "match", id: second };
+  if (first === "lobby") return { page: "online", id: second };
+  return { page: pages.includes(first) && first !== "builder" ? first : "home", id: second };
 }
-let currentPage = pageFromSearch(new URLSearchParams(location.search));
-let pageId = new URLSearchParams(location.search).get(pageIds[currentPage] || "deck") || "";
-let libraryPage = ["decks","builder","sandbox","simulator","online","match"].includes(currentPage);
+function routePath(page, id) {
+  if (page === "home") return "/";
+  if (page === "builder") return `/decks/${encodeURIComponent(id)}`;
+  if (page === "simulator") return "/sandbox/play";
+  if (page === "match") return `/online/${encodeURIComponent(id)}/play`;
+  return id ? `/${page}/${encodeURIComponent(id)}` : `/${page}`;
+}
+function routeUrl(page, id) {
+  const url = new URL(location.href);
+  url.pathname = routePath(page, id);
+  // Only rewrite the query when a legacy parameter is present, so ?settings keeps its form.
+  const legacy = ["page", ...Object.values(pageIds)].filter(param => url.searchParams.has(param));
+  for (const param of legacy) url.searchParams.delete(param);
+  return url;
+}
+let { page: currentPage, id: pageId } = routeFromLocation();
+if (!pages.includes(currentPage)) currentPage = "home";
+if (!pageIds[currentPage]) pageId = "";
+let libraryPage = currentPage !== "home";
+history.replaceState(null, "", routeUrl(currentPage, pageId));
 let pageRevision = 0;
 let transitionOpen = false;
 function syncModalAccessibility() {
@@ -554,28 +583,22 @@ function syncPage() {
 function setPage(page, push = true, id = "", saved = false) {
   if(currentPage === "builder" && !saved && (page !== currentPage || id !== pageId)) {
     finishBuilderInput();
-    const previous=new URL(location.href);previous.searchParams.set("page","builder");previous.searchParams.set("deck",pageId);
-    history.replaceState(null,"",previous);
+    history.replaceState(null,"",routeUrl("builder",pageId));
     document.dispatchEvent(new CustomEvent("colorless:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
   }
   finishLibraryInput(); finishBuilderInput();
-  currentPage = ["decks","builder","sandbox","simulator","online","match"].includes(page) ? page : "home";
+  currentPage = pages.includes(page) ? page : "home";
   pageId = pageIds[currentPage] ? id : "";
   libraryPage = currentPage !== "home";
-  const url = new URL(location.href);
-  if (libraryPage) url.searchParams.set("page", currentPage);
-  else url.searchParams.delete("page");
-  for (const param of Object.values(pageIds)) url.searchParams.delete(param);
-  if (pageId) url.searchParams.set(pageIds[currentPage], pageId);
+  const url = routeUrl(currentPage, pageId);
   url.searchParams.delete("account");
   url.searchParams.delete("settings");
   if (push) history.pushState(null, "", url); else history.replaceState(null, "", url);
   syncPage();
 }
 addEventListener("popstate", () => {
-  const params = new URLSearchParams(location.search);
-  const page = pageFromSearch(params);
-  setPage(page, false, params.get(pageIds[page] || "deck") || "");
+  const { page, id } = routeFromLocation();
+  setPage(page, false, id);
 });
 document.getElementById("decks-link").addEventListener("click", event => {
   if (!ready) return;
@@ -640,8 +663,8 @@ const lobbyAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const normalizeCode = value => [...value.toUpperCase()].filter(c => lobbyAlphabet.includes(c)).join("").slice(0, 4);
 libraryInput.addEventListener("input", () => {
   if (libraryInputOwner === "online" && libraryField === "code") {
-    // A pasted invite link (/?lobby=CODE) yields its code.
-    const link = /[?&]lobby=([^&#\s]+)/i.exec(libraryInput.value);
+    // A pasted invite link (/online/CODE, or an old /?lobby=CODE) yields its code.
+    const link = /(?:[?&]lobby=|\/(?:online|lobby|match)\/)([^&#?/\s]+)/i.exec(libraryInput.value);
     const value = normalizeCode(link ? link[1] : libraryInput.value);
     const caret = link ? value.length : normalizeCode(libraryInput.value.slice(0, libraryInput.selectionStart || 0)).length;
     libraryInput.value = value;
