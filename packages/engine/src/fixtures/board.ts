@@ -7,7 +7,7 @@ export function patchSide(state: GameState, seat: Seat, patch: Partial<PlayerSid
 }
 
 /** The first `count` copies of `cardId` in `seat`'s deck, and the deck without them. */
-export function takeFromDeck(
+function takeFromDeck(
   state: GameState,
   seat: Seat,
   cardId: string,

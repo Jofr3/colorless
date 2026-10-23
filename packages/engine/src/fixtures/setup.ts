@@ -5,7 +5,7 @@ import { MIXED_DECK } from "./decks";
 import { firstBasicInHand, handUid, must, mustApply } from "./game";
 import { FIXTURE_POOL } from "./pool";
 
-export type Decks = { p1: string[]; p2: string[] };
+type Decks = { p1: string[]; p2: string[] };
 
 export interface SetupOptions {
   /** The card pool the game is created with; defaults to `FIXTURE_POOL`. */
