@@ -11,6 +11,7 @@ import type { GameEvent, StatusName } from "./events";
 // interpreter.ts imports nothing from this file, so there is no cycle.
 import { retrieveNoun } from "./interpreter";
 import {
+  inPlayOf,
   DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
   type GameOverReason,
@@ -177,7 +178,7 @@ function energyHostName(
 ): string {
   const carrierOf = (owner: Seat) => {
     const side = state.players[owner];
-    const carriers = side.active === null ? side.bench : [side.active, ...side.bench];
+    const carriers = inPlayOf(side);
     return carriers.find((pokemon) => pokemon.energy.includes(energyUid));
   };
   // The event's seat is the actor; a cross-seat attach puts the Energy on the other seat's body, so

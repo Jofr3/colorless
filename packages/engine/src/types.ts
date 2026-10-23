@@ -1038,6 +1038,11 @@ export function withActive(state: GameState, seat: Seat, active: InPlayPokemon):
   return withSide(state, seat, { ...state.players[seat], active });
 }
 
+/** The side's Pokémon in play, Active first. */
+export function inPlayOf(side: PlayerSide): InPlayPokemon[] {
+  return side.active === null ? side.bench : [side.active, ...side.bench];
+}
+
 /** Prizes a seat has TAKEN — `PRIZE_COUNT − what remains in their pile`. Each
     player draws from their OWN Prizes on a KO (§8.1), so a shrinking pile IS the
     taken count. The count-scaling attack readers scale by the OPPONENT's taken

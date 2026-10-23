@@ -66,6 +66,7 @@ import {
 } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
+  inPlayOf,
   BENCH_CEILING,
   discardFromStack,
   drawToHand,
@@ -371,7 +372,7 @@ function searchAfterAttach(
  */
 function bodyHoldingEnergy(state: GameState, seat: Seat, energyUid: string): string | undefined {
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   for (const body of bodies) {
     if (body.energy.includes(energyUid)) return topUid(body);
   }

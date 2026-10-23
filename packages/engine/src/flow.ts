@@ -66,6 +66,7 @@ import type {
   UsedAttack,
 } from "./types";
 import {
+  inPlayOf,
   BENCH_CEILING,
   SEATS,
   discardFromStack,
@@ -283,7 +284,7 @@ function koRecoilOf(
   if (doomed.size === 0) return 0;
   const side = state.players[seat];
   let total = 0;
-  for (const body of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const body of inPlayOf(side)) {
     const uid = topUid(body);
     if (uid !== undefined && doomed.has(uid) && !lethalByEffect(body, state.turn)) {
       const passives = passivesOf(state, body);
@@ -313,7 +314,7 @@ function faintingSpells(
   if (doomed.size === 0) return state;
   const side = state.players[seat];
   let next = state;
-  for (const body of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const body of inPlayOf(side)) {
     const uid = topUid(body);
     if (uid === undefined || !doomed.has(uid) || lethalByEffect(body, state.turn)) continue;
     const ability = koAttackerOnCoinFlipOf(state, body);
@@ -434,7 +435,7 @@ function koPrizeReduction(
   // A `knockOutDefender` knock out is not "by damage" and is refused too.
   if (!koByOpponentAttack(state, ref, attackerSeat)) return null;
   const side = state.players[ref.seat];
-  const inPlay = side.active === null ? side.bench : [side.active, ...side.bench];
+  const inPlay = inPlayOf(side);
   // `undefined` means there is no board clause to check, not a failing one.
   const name = reduction.requiresInPlay;
   if (name !== undefined && !inPlay.some((body) => topCardOf(state, body)?.name === name))
@@ -528,16 +529,14 @@ function attachedPrizeReductions(
   const unchanged = { state, count: baseCount, events: [] };
   if (attackerSeat === undefined || attackerSeat === ref.seat) return unchanged;
   const side = state.players[ref.seat];
-  const body = (side.active === null ? side.bench : [side.active, ...side.bench]).find(
-    (pokemon) => topUid(pokemon) === ref.uid,
-  );
+  const body = inPlayOf(side).find((pokemon) => topUid(pokemon) === ref.uid);
   if (body === undefined) return unchanged;
   // A `knockOutDefender` knock out is not "by damage": it reduces nothing and spends no latch.
   if (lethalByEffect(body, state.turn)) return unchanged;
   const entries = passivesOf(state, body).koPrizeReductions;
   if (entries.length === 0) return unchanged;
   const holderName = topCardOf(state, body)?.name;
-  const inPlay = side.active === null ? side.bench : [side.active, ...side.bench];
+  const inPlay = inPlayOf(side);
   let next = state;
   let count = baseCount;
   const events: GameEvent[] = [];
@@ -773,7 +772,7 @@ function preBatchBody(
   ref: { seat: Seat; uid: string },
 ): InPlayPokemon | undefined {
   const side = state.players[ref.seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   return bodies.find((body) => topUid(body) === ref.uid);
 }
 
@@ -1252,7 +1251,7 @@ export function settleProgram(
 /** Does any of `seat`'s bodies carry a live, tripped Daydream hand-attach mark? */
 function handAttachTripped(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   // `?.` because hand-built test bodies may omit the field.
   return bodies.some(
     (body) => body.handAttachMark?.turn === state.turn && body.handAttachMark.tripped,
@@ -1660,7 +1659,7 @@ function runBenchTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyR
  */
 function runToolTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyResult {
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   const over = bodies.filter((body) => owesToolTrim(state, seat, body)).length;
   const program = Array.from({ length: over }, (): EffectOp => ({ op: "trimTools" }));
   return settleProgram(runProgram(state, program, { seat }, events), seat, events, {
@@ -2013,7 +2012,7 @@ export function clearDepartedChosenShields(state: GameState): GameState {
     // `undefined` is an unmigrated side: skip it rather than writing `null`, so the reader still
     // fails loudly.
     if (record === null || record === undefined) continue;
-    const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+    const bodies = inPlayOf(side);
     if (bodies.some((body) => body.stack[0] === record.uid)) continue;
     next = withSide(next, seat, { ...side, chosenAttackShield: null });
   }

@@ -61,6 +61,7 @@ import type {
   SpecialConditions,
 } from "./types";
 import {
+  inPlayOf,
   BENCH_MAX,
   SEATS,
   noConditions,
@@ -110,7 +111,7 @@ function benchLimitFrom(stadiumCardId: string | undefined, teraInPlay: boolean):
 export function benchLimitOf(state: GameState, seat: Seat): number {
   const stadiumCardId = state.stadium === null ? undefined : state.cardIdByUid[state.stadium.uid];
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   return benchLimitFrom(
     stadiumCardId,
     bodies.some((body) => isTeraPokemon(topCardOf(state, body))),
@@ -158,7 +159,7 @@ export function benchTrimStages(
 export function toolCapOf(state: GameState, seat: Seat, body: InPlayPokemon): number {
   const name = topCardOf(state, body)?.name ?? "";
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     const raise = top === undefined ? undefined : programFor(top.id)?.passive?.toolCapForName;
@@ -215,7 +216,7 @@ export function toolTrimStages(
     .filter((seat) => {
       if (queued.some((stage) => stage.kind === "toolTrim" && stage.seat === seat)) return false;
       const side = state.players[seat];
-      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      const bodies = inPlayOf(side);
       return bodies.some((body) => owesToolTrim(state, seat, body));
     })
     .map((seat): PendingStage => ({ kind: "toolTrim", seat }));
@@ -506,7 +507,7 @@ export function disabledAbilityUids(state: GameState): Set<string> {
   }[] = [];
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     for (const holder of holders) {
       const top = topCardOf(state, holder);
       if (top === undefined) continue;
@@ -589,7 +590,7 @@ export function disabledAbilityUids(state: GameState): Set<string> {
   // undecided one would read on.
   for (const targetSeat of SEATS) {
     const side = state.players[targetSeat];
-    const targets = side.active === null ? side.bench : [side.active, ...side.bench];
+    const targets = inPlayOf(side);
     for (const target of targets) {
       const top = topCardOf(state, target);
       const uid = topUid(target);
@@ -667,7 +668,7 @@ export function hasSelfKnockOutAbility(top: Card): boolean {
  */
 export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     if (top === undefined || programFor(top.id)?.passive?.removeWeakness !== true) continue;
@@ -691,7 +692,7 @@ export function seatWeaknessRewrite(
 ): PokemonType | null {
   if (defenderCard === undefined) return null;
   const side = state.players[otherSeat(defenderSeat)];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     const rewrite =
@@ -712,7 +713,7 @@ export function seatWeaknessRewrite(
 export function weaknessAmountOverride(state: GameState): number | null {
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     for (const holder of holders) {
       const top = topCardOf(state, holder);
       const rule =
@@ -756,7 +757,7 @@ export function opponentMillRetortOf(
 export function countersMoveLocked(state: GameState): boolean {
   for (const seat of SEATS) {
     const side = state.players[seat];
-    for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    for (const holder of inPlayOf(side)) {
       const top = topCardOf(state, holder);
       if (top === undefined || programFor(top.id)?.passive?.countersCantMove !== true) continue;
       const uid = topUid(holder);
@@ -774,7 +775,7 @@ export function countersMoveLocked(state: GameState): boolean {
  */
 export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): number {
   const side = state.players[otherSeat(burnedSeat)];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let extra = 0;
   for (const holder of holders) {
     const top = topCardOf(state, holder);
@@ -795,7 +796,7 @@ export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): numbe
  */
 export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean {
   const side = state.players[otherSeat(ownerSeat)];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     if (top === undefined || programFor(top.id)?.passive?.opponentInPlayToHandBlocked !== true)
@@ -816,7 +817,7 @@ export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean 
  */
 export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPokemon): string[] {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let rescued: BasicEnergyType | undefined;
   for (const holder of holders) {
     const top = topCardOf(state, holder);
@@ -1848,7 +1849,7 @@ export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPok
   if (watched === undefined) return 0;
   const disabled = disabledAbilityUids(state);
   let total = 0;
-  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const holder of inPlayOf(side)) {
     const uid = topUid(holder);
     if (uid === undefined || disabled.has(uid)) continue;
     const top = topCardOf(state, holder);
@@ -2053,7 +2054,7 @@ export interface AttackMenuEntry {
  */
 export function memoryDiveLive(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   return bodies.some((body) => {
     const top = topCardOf(state, body);
     if (top === undefined || programFor(top.id)?.passive?.memoryDive !== true) return false;
@@ -2250,7 +2251,7 @@ export function seatMaxHpBonus(state: GameState, pokemon: InPlayPokemon): number
   if (uid === undefined) return 0;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     // The TARGET clause: "ALL of your Pokémon in play" — Active and Bench alike,
     // so membership on this side is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
@@ -2437,7 +2438,7 @@ function seatOfPokemon(state: GameState, pokemon: InPlayPokemon): Seat | undefin
   if (uid === undefined) return undefined;
   return SEATS.find((seat) => {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     return holders.some((holder) => topUid(holder) === uid);
   });
 }
@@ -2470,7 +2471,7 @@ export function countEnergyInPlay(
   filter?: CardFilter,
 ): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   for (const holder of holders) {
     // The in-play card, so a type filter reads the body's current types.
@@ -2499,7 +2500,7 @@ export function countEnergyInPlay(
  */
 export function countToolsInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   for (const holder of holders) total += holder.tools.length;
   return total;
@@ -2512,7 +2513,7 @@ export function countToolsInPlay(state: GameState, seat: Seat): number {
  */
 export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   const types = new Set<string>();
   for (const holder of holders) {
     for (const uid of holder.energy) {
@@ -2530,7 +2531,7 @@ export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): numbe
  */
 export function countDamageCountersInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   for (const holder of holders) total += Math.floor(holder.damage / 10);
   return total;
@@ -2569,7 +2570,7 @@ function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokem
   if (uid === undefined) return false;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     return side.prizes.length > state.players[otherSeat(seat)].prizes.length;
   }
@@ -2587,7 +2588,7 @@ function doubledBasicEnergyType(
   const seat = seatOfPokemon(state, pokemon);
   if (seat === undefined) return undefined;
   const side = state.players[seat];
-  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const holder of inPlayOf(side)) {
     const top = topCardOf(state, holder);
     const doubled =
       top === undefined ? undefined : programFor(top.id)?.passive?.basicEnergyProvidesTwice;
@@ -2609,7 +2610,7 @@ export function retreatCoinFlipSource(
   seat: Seat,
 ): { uid: string; ability: string } | undefined {
   const side = state.players[otherSeat(seat)];
-  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const holder of inPlayOf(side)) {
     const top = topCardOf(state, holder);
     const ability =
       top === undefined ? undefined : programFor(top.id)?.passive?.retreatFailsOnTails;
@@ -2676,7 +2677,7 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
   const targetTop = topCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     for (const holder of holders) {
       const top = topCardOf(state, holder);
@@ -2714,7 +2715,7 @@ export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemo
     // holder of this uid is out even though it belongs to this side.
     if (side.active === null || topUid(side.active) !== uid) continue;
     const foes = state.players[otherSeat(seat)];
-    const sources = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+    const sources = inPlayOf(foes);
     let added = 0;
     for (const source of sources) {
       const top = topCardOf(state, source);
@@ -2830,7 +2831,7 @@ export function opposingToolAttackDebuff(
     const side = state.players[seat];
     if (side.active === null || topUid(side.active) !== uid) continue;
     const other = state.players[otherSeat(seat)];
-    const holders = other.active === null ? other.bench : [other.active, ...other.bench];
+    const holders = inPlayOf(other);
     let amount = 0;
     for (const holder of holders) {
       const top = topCardOf(state, holder);
@@ -2919,7 +2920,7 @@ function benchShieldScan(
     // reason to bail out of the scan (it was, while the only source was an
     // Active; that early `return false` was a correct reading of ONE sentence and
     // a bug waiting for the second).
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     for (const holder of holders) {
       if (benchShieldGranted(state, holder, "preventBenchDamageAndEffects", uid, scope))
         return true;
@@ -2994,7 +2995,7 @@ export function healLocked(state: GameState, pokemon: InPlayPokemon): boolean {
     const active = state.players[seat].active;
     if (active === null || topUid(active) !== uid) continue;
     const other = state.players[otherSeat(seat)];
-    const holders = other.active === null ? other.bench : [other.active, ...other.bench];
+    const holders = inPlayOf(other);
     return holders.some((holder) => {
       const top = topCardOf(state, holder);
       const holderUid = topUid(holder);
@@ -3061,7 +3062,7 @@ function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean 
   // (the classifier is asked by `aceSpecPlayBarred` below, never here — this
   // half answers about the BOARD alone, so the two terms can be read apart.)
   const foes = state.players[otherSeat(seat)];
-  const holders = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+  const holders = inPlayOf(foes);
   const silenced = disabledAbilityUids(state);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
@@ -3176,7 +3177,7 @@ export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlay
     // The DERIVED SEAT, `benchShieldScan`'s answer: the caller hands us one of a
     // side's own entries, so find that side and read ONLY it. The target clause
     // says "YOUR … Pokémon", so no other side's aura can reach this body.
-    const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+    const bodies = inPlayOf(side);
     if (!bodies.some((body) => topUid(body) === uid)) continue;
     for (const holder of bodies) {
       const top = topCardOf(state, holder);
@@ -3211,7 +3212,7 @@ export function seatDamageReduction(
   const damagedCard = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     // The TARGET clause: "ALL of your Pokémon" — every body on this side, Active
     // and Bench alike, so membership is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
@@ -3327,7 +3328,7 @@ export function seatPreWRDamageBonus(
   defenderCard?: Card,
 ): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   // The `noStack` ledger: printed Ability name → the largest single contribution
   // seen for it. Summed in at the end so a capped key and an uncapped one can
@@ -3383,7 +3384,7 @@ export function seatKoPrizeBonuses(
   attackerUid: string | undefined,
 ): { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];
   // The `noStack` ledger. It records the ABILITY NAMES already admitted, and the
   // FIRST holder to satisfy every clause is the one that keeps the entry — a
@@ -3420,7 +3421,7 @@ export function seatKoPrizeReductionOf(
   koCard: Card | undefined,
 ): { uid: string; rule: NonNullable<PassiveEffects["seatKoPrizeReduction"]> } | null {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     const rule = top === undefined ? undefined : programFor(top.id)?.passive?.seatKoPrizeReduction;
@@ -3465,10 +3466,10 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
   if (required === undefined) return true;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     const foe = state.players[otherSeat(seat)];
-    const foeHolders = foe.active === null ? foe.bench : [foe.active, ...foe.bench];
+    const foeHolders = inPlayOf(foe);
     return foeHolders.some((holder) => {
       const card = topCardOf(state, holder);
       return card !== undefined && pokemonSuffixOf(card) === required;
@@ -3656,7 +3657,7 @@ export function selfAttackCostDiscount(
   if (scope !== undefined && scope !== attackName) return tools;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     let discount = tools;
     if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));

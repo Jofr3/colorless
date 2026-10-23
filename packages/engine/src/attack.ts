@@ -157,6 +157,7 @@ import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from 
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {
+  inPlayOf,
   attackDamageTakenLastTurn,
   isImmobilized,
   makeInPlay,
@@ -1925,7 +1926,7 @@ export function resolveCopiedAttack(
 /** The (top uid, printed index, label) pairs Skill Thief may copy for `seat`, Active first. */
 function inPlayCopyPairs(state: GameState, seat: Seat): FoundPair[] {
   const side = state.players[otherSeat(seat)];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   const seen = new Set<string>();
   return bodies.flatMap((body) => {
     const uid = topUid(body);
@@ -1944,7 +1945,7 @@ function inPlayCopyPairs(state: GameState, seat: Seat): FoundPair[] {
     one of the opponent's in-play bodies and its attack is still eligible. */
 function reenterInPlay(state: GameState, action: AttackAction, pair: FoundPair): ApplyResult {
   const side = state.players[otherSeat(action.seat)];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   const body = bodies.find((b) => topUid(b) === pair.uid);
   const card = body === undefined ? undefined : topCardOf(state, body);
   const picked =

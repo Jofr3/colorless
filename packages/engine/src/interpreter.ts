@@ -145,6 +145,7 @@ import type {
   SpecialConditions,
 } from "./types";
 import {
+  inPlayOf,
   BENCH_CEILING,
   BENCH_MAX,
   DEFAULT_CONFUSION_DAMAGE,
@@ -4090,7 +4091,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
     case "opponentHasExOrVInPlay": {
       // Slaking ex: any Pokémon ex or V among the opponent's Active and Bench top cards.
       const side = state.players[otherSeat(seat)];
-      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      const bodies = inPlayOf(side);
       return bodies.some((pokemon) => {
         const card = topCardOf(state, pokemon);
         return card !== undefined && isExOrV(card);
@@ -4169,7 +4170,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // "You have any Tera Pokémon in play": the seat's Active and Bench, each body's top card
       // (§1.2).
       const side = state.players[seat];
-      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      const bodies = inPlayOf(side);
       return bodies.some((body) =>
         matchesFilter(topCardOf(state, body), { kind: "bannerPokemon", banner: cond.banner }),
       );
@@ -4189,7 +4190,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // "Your opponent has any Future Pokémon in play": the other seat's Active and Bench, top
       // cards only.
       const theirs = state.players[otherSeat(seat)];
-      const theirBodies = theirs.active === null ? theirs.bench : [theirs.active, ...theirs.bench];
+      const theirBodies = inPlayOf(theirs);
       return theirBodies.some((body) =>
         matchesFilter(topCardOf(state, body), { kind: "bannerPokemon", banner: cond.banner }),
       );
@@ -4225,7 +4226,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // "Your opponent has any Stage 2 Pokémon in play": the other seat's Active and Bench, top
       // cards only.
       const foes = state.players[otherSeat(seat)];
-      const foeBodies = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+      const foeBodies = inPlayOf(foes);
       return foeBodies.some((body) => {
         const top = topCardOf(state, body);
         return top !== undefined && isStage2Pokemon(top);
@@ -11769,7 +11770,7 @@ function attachedBasicEnergyTypedFilter(state: GameState, ctx: EffectContext): C
  */
 function opponentInPlayNameFilter(state: GameState, ctx: EffectContext): CardFilter {
   const side = state.players[otherSeat(ctx.seat)];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   const names: string[] = [];
   for (const body of bodies) {
     const name = topCardOf(state, body)?.name;

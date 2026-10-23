@@ -13,7 +13,7 @@ import { phaseViewOf } from "./phaseView";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./registry";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
-import { otherSeat } from "./types";
+import { inPlayOf, otherSeat } from "./types";
 
 // Triggered Abilities (§9) fire on a game event rather than being activated. Board triggers
 // (onPlayToBench, onEvolve) run on the controller's own turn and settle through `settleProgram`, so
@@ -337,7 +337,7 @@ export function koToolTriggersOf(
     ability: TriggeredAbility;
     fromAbility?: true;
   }[] = [];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   for (const body of bodies) {
     const holderUid = topUid(body);
     if (holderUid === undefined) continue;
