@@ -43,14 +43,25 @@ only the conclusion.
   markers, history ("was", "now", "corrected"), census counts, dates or line
   numbers in code or tests — that record belongs in `docs/decisions.md` and git.
   Tests must not read source or doc text, and must not pin `engineVersion`.
-- **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`**
-  (tsc + lint coverage + biome lint + **biome format** + the headless Lua tests +
-  the mutant `precheck` + vitest) before calling work done. Run `bun run format`
-  before committing.
+- **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
+  calling work done. It is `check:static` (coverage guards, `tsc -b`, `biome ci`,
+  Lua constants, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  requiring Balatro's source) and `check:test` (vitest). CI runs the same three
+  names, except that Lua tests needing Balatro's source are skipped there. Run
+  `bun run format` before committing. `bun run release` runs check, the remote D1
+  migrations, the API deploy and then the web deploy, in that order.
+- Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
+  isolation, so engine suites must not use mocks, stubs, fake timers or other
+  module-level state that leaks between files; `app` covers everything else.
 - After any refactor that moves, reformats or un-comments mutated code, run
   `bun scripts/mutation/reanchor.ts --write`: it re-points rows whose `find` moved
   (whitespace, comments and file splits are ignored when matching) and lists the
-  rest for manual re-anchoring or retirement (`--retire <file of ids>`).
+  rest for manual re-anchoring or retirement (`--retire <file of ids>`). Each row
+  records the `symbol` (top-level declaration, plus the key inside an object such
+  as REGISTRY) its `find` sits in; a row only re-anchors inside that symbol, and
+  precheck fails when a row's text sits in another symbol: after a rename, pass
+  `--write --accept-symbols`; if the row landed on a twin, re-point it. `--write`
+  fills in a missing symbol. Re-run every re-anchored row.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn` (`types.ts`); `OpOf<K>` for one `EffectOp`
@@ -63,7 +74,7 @@ only the conclusion.
   helpers live in `fixtures/` behind the `testFixtures.ts` barrel (`driveSetup`,
   `patchSide`, `roundTrip`, `mustDerive`, `seedForFlips`). The fixture pool's
   `fix-*` card programs live in `fixtures/registry.ts`, not in `registry.ts`:
-  the vitest setup file (`fixtures/vitestSetup.ts`, wired in `vite.config.ts`)
+  the vitest setup file (`fixtures/vitestSetup.ts`, wired in `vitest.config.ts`)
   installs them with `registerTestPrograms`, which nothing else calls and the
   package index does not export, so the production registry holds no `fix-*` id.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted

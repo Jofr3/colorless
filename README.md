@@ -57,12 +57,15 @@ bun run typecheck
 bun run lint        # biome
 bun run format      # biome --write
 bun run test:run    # vitest (src, apps, packages)
-bun run check       # coverage guards, tsc, biome, vitest (the full gate)
+bun run check       # check:static + check:lua + check:test (the full gate, as in CI)
+bun run release     # check, remote D1 migrations, API deploy, then web deploy
 ```
 
 `build:lua` needs the sibling `../balatro-source` checkout (or
 `BALATRO_SOURCE`) with its installed `love.js` package. The Lua unit checks run
 with plain Lua from the repository root: `lua frontend/lua/tests/<name>.lua`.
+Checks that compare against Balatro's source skip themselves when it is missing
+(as in CI); `bun run check` requires it.
 
 ## Deployment
 

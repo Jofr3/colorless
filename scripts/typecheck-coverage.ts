@@ -149,8 +149,8 @@ export function selfCheck(): string[] {
 }
 
 /**
- * Checks that this guard is still wired into `check`, since a guard removed from `check` looks the
- * same as one that passes.
+ * Checks that this guard is still wired into `check` (directly or through the `bun run` scripts it
+ * calls), since a guard removed from `check` looks the same as one that passes.
  */
 function checkRunsThisGuard(): string[] {
   const pkg = parseJson(
@@ -159,8 +159,16 @@ function checkRunsThisGuard(): string[] {
     (v): v is { scripts?: Record<string, unknown> } =>
       isRecord(v) && (v.scripts === undefined || isRecord(v.scripts)),
   );
-  const script = pkg.scripts?.check;
-  const check = typeof script === "string" ? script : "";
+  const scripts = pkg.scripts ?? {};
+  const expand = (name: string, seen: Set<string>): string => {
+    const script = scripts[name];
+    if (typeof script !== "string" || seen.has(name)) return "";
+    seen.add(name);
+    return script.replace(/bun run ([\w:-]+)/g, (call, inner: string) =>
+      inner in scripts ? expand(inner, seen) : call,
+    );
+  };
+  const check = expand("check", new Set());
   if (!check.includes(SELF_PATH)) {
     return [
       [

@@ -7,6 +7,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "incremental": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

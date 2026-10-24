@@ -1,4 +1,3 @@
-/// <reference types="vitest/config" />
 import { existsSync, readFileSync } from "node:fs";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
@@ -39,14 +38,15 @@ function cspPlugin(csp: string): Plugin {
 // hash to index.html's /love/ references (host.js versions the rest itself).
 // Production serves /love/* as immutable (public/_headers), so the build
 // refuses a reference it can't version; dev only warns, since a missing file
-// there just means `build:lua` hasn't run.
+// there just means `build:lua` hasn't run. CI bundles without the Lua build
+// (it needs Balatro's source), so LOVE_VERSIONS_OPTIONAL=1 makes the build warn too.
 function loveVersionsPlugin(): Plugin {
   const manifest = "public/love/versions.json";
-  let building = false;
+  let strict = false;
   return {
     name: "love-versions",
     configResolved(config) {
-      building = config.command === "build";
+      strict = config.command === "build" && process.env.LOVE_VERSIONS_OPTIONAL !== "1";
     },
     transformIndexHtml(html) {
       const versions: Record<string, string> = existsSync(manifest)
@@ -56,7 +56,7 @@ function loveVersionsPlugin(): Plugin {
         const version = versions[name];
         if (version) return `${attribute}="/love/${name}?v=${version}"`;
         const problem = `no content hash for /love/${name} in ${manifest}; run \`bun run build:lua\``;
-        if (building) throw new Error(problem);
+        if (strict) throw new Error(problem);
         console.warn(problem);
         return match;
       });
@@ -73,19 +73,6 @@ export default defineConfig(({ mode }) => {
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   return {
     plugins: [loveVersionsPlugin(), cspPlugin(buildCsp(apiOrigin))],
-    test: {
-      // Every suite is pure logic (adapters, reducers, parsing), so the fast
-      // Node environment covers them all.
-      environment: "node",
-      // The fixture pool's `fix-*` programs live outside the production registry.
-      setupFiles: ["packages/engine/src/fixtures/vitestSetup.ts"],
-      include: [
-        "src/**/*.{test,spec}.ts",
-        "apps/*/src/**/*.{test,spec}.ts",
-        "packages/*/src/**/*.{test,spec}.ts",
-        "scripts/**/*.{test,spec}.ts",
-      ],
-    },
     build: {
       // Match the TypeScript target so output isn't down-levelled further than needed.
       target: "es2022",

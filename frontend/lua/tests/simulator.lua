@@ -773,9 +773,10 @@ for _,size in ipairs({{1280,800},{480,900}}) do
 end
 -- All three first-player controls use UIElement:click's gain, jiggle and
 -- 0.1s debounce, including keyboard activation and reduced-motion behavior.
-do
+local balatroSource=require('tests.support.balatro_source').optional()
+if balatroSource then
   Moveable={extend=function() return {} end}
-  dofile((os.getenv('BALATRO_SOURCE') or '../balatro-source')..'/engine/ui.lua')
+  dofile(balatroSource..'/engine/ui.lua')
   local sourceSounds={}
   G={TIMERS={REAL=10},ROOM={jiggle=0},FUNCS={choose=function() end}}
   play_sound=function(...) sourceSounds[#sourceSounds+1]={...} end

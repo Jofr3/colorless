@@ -11,6 +11,7 @@ import { bindingReport } from "./binding-gate";
 import { MUTANTS } from "./mutants";
 import { partitionReport } from "./partition-gate";
 import { spliceReport } from "./splice-gate";
+import { currentSymbol } from "./symbol";
 
 const sourceOf = sourceCache();
 
@@ -32,6 +33,10 @@ for (const mutant of MUTANTS) {
   }
   const n = occurrences(sourceOf(mutant.file), mutant.find);
   if (n !== 1) broken.push(`${mutant.id}: find occurs ${String(n)}× in ${mutant.file}`);
+  else if (currentSymbol(mutant, sourceOf(mutant.file)) !== mutant.symbol)
+    broken.push(
+      `${mutant.id}: find no longer sits in symbol ${JSON.stringify(mutant.symbol)}; re-point it if it landed on a twin, or run \`bun scripts/mutation/reanchor.ts --write --accept-symbols\` after a rename`,
+    );
 }
 
 // Splice check, delegated to `splice-gate.ts`: a string replacement would interpret `$` sequences

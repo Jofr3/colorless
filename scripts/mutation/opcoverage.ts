@@ -8,8 +8,9 @@
  * (default 2).
  */
 
+import { readdirSync } from "node:fs";
 import { envInt } from "../lib/cli";
-import { sourceCache } from "../lib/repo";
+import { repoPath, sourceCache } from "../lib/repo";
 import { type Mutant, MUTANTS } from "./mutants";
 
 const FANIN = envInt("FANIN", 4);
@@ -20,18 +21,18 @@ const EFFECTS = "packages/engine/src/effects.ts";
 const REGISTRY = "packages/engine/src/registry.ts";
 const FIXTURE_REGISTRY = "packages/engine/src/fixtures/registry.ts";
 const INTERP = "packages/engine/src/interpreter.ts";
-/** interpreter.ts and the modules split out of it, read as one text. */
+const OPS_DIR = "packages/engine/src/ops";
+/** interpreter.ts, the modules split out of it, and every stepOp arm module, read as one text. */
 const IMPL_FILES = [
   INTERP,
   "packages/engine/src/effectTargets.ts",
   "packages/engine/src/boardCondition.ts",
   "packages/engine/src/effectPrompt.ts",
   "packages/engine/src/promptText.ts",
-  "packages/engine/src/ops/board.ts",
-  "packages/engine/src/ops/cards.ts",
-  "packages/engine/src/ops/damage.ts",
-  "packages/engine/src/ops/energy.ts",
-  "packages/engine/src/ops/locks.ts",
+  ...readdirSync(repoPath(OPS_DIR))
+    .filter((f) => f.endsWith(".ts") && !f.includes(".test."))
+    .sort()
+    .map((f) => `${OPS_DIR}/${f}`),
 ];
 
 const source = sourceCache();

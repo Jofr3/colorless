@@ -17,7 +17,6 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "biome lint .",
-    "lint:ci": "biome lint . --error-on-warnings",
     "lint:coverage": "bun scripts/lint-coverage.ts",
     "typecheck:coverage": "bun scripts/typecheck-coverage.ts",
     "format": "biome format . --write",
@@ -27,12 +26,16 @@
     "test:lua": "bun scripts/test-lua.ts",
     "lua-constants:check": "bun scripts/lua-constants.ts --check",
     "mutants:precheck": "bun scripts/mutation/precheck.ts",
-    "check": "bun scripts/typecheck-coverage.ts && tsc -b && bun scripts/lint-coverage.ts && biome lint . --error-on-warnings && biome format . && bun scripts/lua-constants.ts --check && bun scripts/test-lua.ts && bun scripts/mutation/precheck.ts && vitest run",
+    "check": "bun run check:static && bun run check:lua && bun run check:test",
+    "check:static": "bun scripts/typecheck-coverage.ts && tsc -b && bun scripts/lint-coverage.ts && biome ci . --error-on-warnings && bun scripts/lua-constants.ts --check && bun scripts/mutation/precheck.ts",
+    "check:lua": "bun scripts/test-lua.ts --require-source",
+    "check:test": "vitest run",
     "mutants": "bun scripts/mutation/run.ts",
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy",
     "build:lua": "node frontend/lua/build.mjs",
-    "deploy": "bun run build && wrangler deploy"
+    "deploy": "bun run build && wrangler deploy",
+    "release": "bun run check && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run deploy"
   },
   "dependencies": {
     "@colorless/engine": "workspace:*",
