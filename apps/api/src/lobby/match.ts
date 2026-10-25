@@ -1,6 +1,6 @@
-// P4 — the lobby → engine handoff (online.md). When a lobby's countdown ends with
-// both players ready, the DO starts a real match: it instantiates the P3 engine
-// server-side and owns the RNG seed + hidden info. This module is the seam.
+// The lobby → engine handoff (online.md). When a lobby's countdown ends with both
+// players ready, the DO starts a real match: it instantiates the engine server-side
+// and owns the RNG seed + hidden info. This module is the seam.
 //
 // The lobby has no p1/p2 concept — seats are "host"/"guest" — so the mapping to the
 // engine's Seat is minted HERE, at match start: the host is p1, the guest is p2.
@@ -14,12 +14,14 @@ import {
   type GameAction,
   type GameEvent,
   type GameState,
-  type InPlayPokemon,
   type Seat,
   applyAction,
   createGame,
   formatElapsed,
+  GAME_STATE_VERSION,
   logFromEvents,
+  migrateGameState,
+  poolIdsNeededFor,
   redactGame,
 } from "@colorless/engine";
 import type {
@@ -166,17 +168,16 @@ function matchStartReason(code: CreateErrorCode): string {
 
 /** What the DO persists when a lobby becomes a match: the authoritative
     full-information `GameState` plus the seed it was created from (audit/replay).
-    Seats map by `SEAT_OF_SLOT`. Stored under the DO's match key and, from
-    increment 1c, redacted per seat before it crosses the wire. */
+    Seats map by `SEAT_OF_SLOT`. Stored under the DO's match key and redacted per
+    seat before it crosses the wire. */
 export interface MatchRecord {
-  /** The persisted shape's version (`MATCH_RECORD_VERSION` at write time). Read
-      back through `readMatchRecord`, which retires anything that doesn't match —
-      the DO has no storage migrations (online.md), so versioning IS the migration
-      story: a record the running code can't trust is dropped, not guessed at. */
+  /** The persisted shape's version (`MATCH_RECORD_VERSION` at write time). Read back
+      through `loadMatchRecord`: a current record is used as stored, an older one the
+      engine can migrate is migrated and written back, and anything else is retired. */
   version: number;
   /** The RNG seed the DO minted for this match. */
   seed: number;
-  /** Epoch ms the match started — the log's "+MM:SS" elapsed origin (2b-iii-d-ii). */
+  /** Epoch ms the match started — the log's "+MM:SS" elapsed origin. */
   startedAt: number;
   /** Display names per seat (the lobby player names: host → p1, guest → p2) — the
       log's system rows read them ("Ana wins the toss"). Fixed for the match. */
@@ -193,191 +194,30 @@ export interface MatchRecord {
 }
 
 /**
- * The version stamped into every `MatchRecord` this deploy writes. Bump it whenever a record
- * written by the previous deploy could be misread by this one: a change to the record's shape, a
- * new required field on persisted engine state, or a new required field on an op that can park in
- * `phase.cont`. Widenings (new union members, optional fields) do not bump it. A mismatched record
- * is retired and the players are told to re-ready, because the Durable Object has no migrations.
- * `recordShape.test.ts` pins a skeleton of the persisted shape to this number.
+ * The version stamped into every `MatchRecord` this deploy writes: the engine's persisted-state
+ * version, so the record and its state share one number on the wire. A mismatched record is
+ * migrated when the engine can carry its state forward, and retired otherwise.
  */
-export const MATCH_RECORD_VERSION = 50;
-
-/** The oldest record version this deploy migrates; its pool is refreshed from D1. */
-export const MIGRATABLE_MATCH_RECORD_VERSION = 41;
-
-export const SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 42;
-
-export const RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 43;
-
-export const LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 44;
-
-export const FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION = 45;
-
-export const PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46;
-
-export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 47;
-
-export const COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION = 48;
-
-export const GATE_OPS_MIGRATABLE_MATCH_RECORD_VERSION = 49;
+export const MATCH_RECORD_VERSION = GAME_STATE_VERSION;
 
 /**
- * The catalog ids a migratable record's pool holds (what `loadMatchRecord` re-reads from D1): the
- * pool for a v41 record, `[]` for a newer migratable one, or `null` for anything that is not a
- * well-formed migratable record.
+ * The catalog ids a migratable record's state needs re-read from D1 (`poolIdsNeededFor`), or
+ * `null` for anything that is not a well-formed migratable record.
  */
 export function migratablePoolIdsOf(raw: unknown): string[] | null {
   const record = readMigratableRecord(raw);
-  if (record === null) return null;
-  return record.version === MIGRATABLE_MATCH_RECORD_VERSION
-    ? Object.keys(record.state.cardPool)
-    : [];
+  return record === null ? null : poolIdsNeededFor(record.state, record.version);
 }
 
 /**
  * Migrate an older record to this deploy's version, or `null` if it is not a well-formed migratable
- * record. A record runs its own version's step and every later one, so each version takes only the
- * key-adding steps it lacks; an earlier step would clobber live values it already holds.
+ * record. The envelope is kept; the engine migrates the state.
  */
 export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
-  let state = record.state;
-  for (const [version, step] of MIGRATION_STEPS) {
-    if (version >= record.version) state = step(state, fresh);
-  }
-  return { ...record, version: MATCH_RECORD_VERSION, state };
-}
-
-type MigrationStep = (state: GameState, fresh: Record<string, Card>) => GameState;
-
-const unchanged: MigrationStep = (state) => state;
-
-/** Each migratable version, ascending, with the step that brings its records up to the next. */
-const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
-  [MIGRATABLE_MATCH_RECORD_VERSION, withFreshTrainerFaces],
-  [SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION, withD621SideKeys],
-  [RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION, withD630RecordKeys],
-  [LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION, withD636LockKeys],
-  [FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
-  [PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
-  [TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
-  [COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION, unchanged],
-  [GATE_OPS_MIGRATABLE_MATCH_RECORD_VERSION, withGateOpsKey],
-]);
-
-const GATE_OPS: ReadonlySet<unknown> = new Set([
-  "coinFlipGate",
-  "conditionGate",
-  "recordGate",
-  "optional",
-]);
-
-/**
- * Renames `then` to `ops` on every gate op anywhere in a v49 state (programs, parked continuations,
- * scheduled ops), keeping the key's position. Only the objects on a path to a renamed key are
- * copied; everything else is returned as it was.
- */
-function withGateOpsKey(state: GameState): GameState {
-  return renamedGateKeys(state) as GameState;
-}
-
-function renamedGateKeys(value: unknown): unknown {
-  if (typeof value !== "object" || value === null) return value;
-  if (Array.isArray(value)) {
-    let copy: unknown[] | null = null;
-    for (const [i, item] of value.entries()) {
-      const next = renamedGateKeys(item);
-      if (next === item) continue;
-      copy ??= [...value];
-      copy[i] = next;
-    }
-    return copy ?? value;
-  }
-  const object = value as Record<string, unknown>;
-  const gate = GATE_OPS.has(object.op) && Object.hasOwn(object, "then");
-  let changed = gate;
-  const entries = Object.entries(object).map(([key, item]): [string, unknown] => {
-    const next = renamedGateKeys(item);
-    if (next !== item) changed = true;
-    return [gate && key === "then" ? "ops" : key, next];
-  });
-  return changed ? Object.fromEntries(entries) : value;
-}
-
-/** Replaces every persisted Trainer face of a v41 record with its `fresh` catalog row. */
-function withFreshTrainerFaces(state: GameState, fresh: Record<string, Card>): GameState {
-  const cardPool: Record<string, Card> = { ...state.cardPool };
-  for (const [id, card] of Object.entries(cardPool)) {
-    const row = fresh[id];
-    if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;
-  }
-  return { ...state, cardPool };
-}
-
-/**
- * Adds the lock keys a v44 record lacks: `trainerFlipLockTurn` and a Stadium hand-play stamp per
- * seat, and `attackTwoFlipLockTurn`, `benchedTurn` and hand-attach `counters` per in-play body.
- */
-function withD636LockKeys(state: GameState): GameState {
-  const players = { ...state.players };
-  const handPlayLockedTurn = { ...state.handPlayLockedTurn };
-  for (const seat of ["p1", "p2"] as const) {
-    const side = players[seat];
-    const body = (pokemon: InPlayPokemon): InPlayPokemon => ({
-      ...pokemon,
-      attackTwoFlipLockTurn: null,
-      benchedTurn: null,
-      handAttachMark:
-        pokemon.handAttachMark === null ? null : { ...pokemon.handAttachMark, counters: 0 },
-    });
-    players[seat] = {
-      ...side,
-      trainerFlipLockTurn: null,
-      active: side.active === null ? null : body(side.active),
-      bench: side.bench.map(body),
-    };
-    handPlayLockedTurn[seat] = { ...handPlayLockedTurn[seat], Stadium: null };
-  }
-  return { ...state, players, handPlayLockedTurn };
-}
-
-/**
- * Adds the record keys a v43 record lacks: `prizesTakenOnTurn: null` and `sideDamageReduction` as a
- * list per seat, and `attackDamageTaken: null` per in-play body.
- */
-function withD630RecordKeys(state: GameState): GameState {
-  const players = { ...state.players };
-  for (const seat of ["p1", "p2"] as const) {
-    const side = players[seat];
-    const old = (side as { sideDamageReduction?: unknown }).sideDamageReduction;
-    const sideDamageReduction = Array.isArray(old)
-      ? (old as GameState["players"][Seat]["sideDamageReduction"])
-      : old === null || old === undefined
-        ? []
-        : [old as GameState["players"][Seat]["sideDamageReduction"][number]];
-    const body = <T extends object>(pokemon: T): T => ({ ...pokemon, attackDamageTaken: null });
-    players[seat] = {
-      ...side,
-      prizesTakenOnTurn: null,
-      sideDamageReduction,
-      active: side.active === null ? null : body(side.active),
-      bench: side.bench.map(body),
-    };
-  }
-  return { ...state, players };
-}
-
-/**
- * Writes `chosenAttackShield` and `sideRetreatLock` as `null` on each seat; a v42 side has neither
- * key.
- */
-function withD621SideKeys(state: GameState): GameState {
-  const players = { ...state.players };
-  for (const seat of ["p1", "p2"] as const) {
-    players[seat] = { ...players[seat], chosenAttackShield: null, sideRetreatLock: null };
-  }
-  return { ...state, players };
+  const state = migrateGameState(record.state, record.version, fresh);
+  return state === null ? null : { ...record, version: MATCH_RECORD_VERSION, state };
 }
 
 /**
@@ -405,7 +245,7 @@ export async function loadMatchRecord(
   if (record !== null) return { kind: "ok", record };
   const ids = migratablePoolIdsOf(raw);
   if (ids === null) return { kind: "stale" };
-  // Only a v41 record has a pool to re-read; newer migratable records skip D1.
+  // Most migratable versions need no catalog rows, and skip D1.
   const fresh = ids.length === 0 ? {} : await loadPool(ids);
   const again = await slot.get();
   if (again === undefined) return { kind: "none" };
@@ -418,9 +258,8 @@ export async function loadMatchRecord(
 }
 
 /**
- * A migratable record, or `null`. It needs the envelope `readMatchRecord` checks, at one of the
- * versions in `MIGRATION_STEPS`, and the pool its steps rewrite. The result keeps its own version,
- * which `migrateMatchRecord` branches on.
+ * A record with the envelope `readMatchRecord` checks at any version, or `null`. It keeps its own
+ * version, which the engine's migration branches on.
  */
 function readMigratableRecord(raw: unknown): MatchRecord | null {
   const parsed = migratableRecordSchema.safeParse(raw);
@@ -463,10 +302,7 @@ function matchRecordSchema(version: z.ZodType<number>, state: z.ZodType<GameStat
 
 const currentRecordSchema = matchRecordSchema(z.literal(MATCH_RECORD_VERSION), storedStateSchema);
 
-const migratableRecordSchema = matchRecordSchema(
-  z.number().refine((version) => MIGRATION_STEPS.has(version)),
-  storedStateSchema.refine((state) => isObject(state.cardPool)),
-);
+const migratableRecordSchema = matchRecordSchema(z.number(), storedStateSchema);
 
 /**
  * Every engine `GameAction` type and whether the online client may send it.

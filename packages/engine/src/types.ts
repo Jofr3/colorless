@@ -695,6 +695,27 @@ export function clearedAttackEffects(): Pick<InPlayPokemon, AttackEffectField> {
   };
 }
 
+/** Side-wide effects an attack, ability or Trainer installs on a seat. */
+type SideInstallField =
+  | "sideAttackLock"
+  | "sideDamageReduction"
+  | "sideAttackBlock"
+  | "chosenAttackShield"
+  | "sideRetreatLock"
+  | "trainerFlipLockTurn";
+
+/** The empty value of every side-wide install: what a seat starts the game with. */
+export function clearedSideInstalls(): Pick<PlayerSide, SideInstallField> {
+  return {
+    sideAttackLock: null,
+    sideDamageReduction: [],
+    sideAttackBlock: null,
+    chosenAttackShield: null,
+    sideRetreatLock: null,
+    trainerFlipLockTurn: null,
+  };
+}
+
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
   return {
     stack: [uid],
