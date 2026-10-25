@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { EffectOp } from "./effects";
-import { runSyncProgram, UNANSWERED_OPS } from "./interpreter";
+import { runSyncProgram } from "./interpreter";
+import { OP_TRAITS } from "./ops/traits";
 import type { TriggeredAbility } from "./programTypes";
 import { programFor, registryCardIds } from "./registry";
 import { driveSetup, walkProgram } from "./testFixtures";
@@ -9,12 +10,10 @@ import { runsSynchronously } from "./triggers";
 // A program on a sync-routed timing runs through `runSyncProgram`, which throws on a park. This
 // audit keeps every authored row on such a timing free of any op that could park.
 
-const TRAITS: Partial<Record<EffectOp["op"], "neverParks" | "mayPark">> = UNANSWERED_OPS;
-
 /** Every op in `program`, gates and riders included, that can leave the run parked. */
 function parkingOps(program: readonly EffectOp[]): string[] {
   return walkProgram(program)
-    .filter((op) => TRAITS[op.op] !== "neverParks")
+    .filter((op) => OP_TRAITS[op.op].parks !== false)
     .map((op) => op.op);
 }
 
