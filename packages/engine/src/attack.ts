@@ -14,32 +14,25 @@ import {
   attacksOf,
   cardOfUid,
   costMet,
-  hasPrintedAbility,
   hasRuleBox,
-  isExOrV,
   isSpecialEnergy,
   isTeraPokemon,
   matchesFilter,
   parseAttackDamage,
-  preventsAttackerBanner,
-  preventsAttackerClass,
   resistanceOf,
   topCardOf,
   topUid,
   weaknessOf,
 } from "./cards";
 import {
-  attackBlockOf,
   // The flip-to-attack lock is checked at the §8 step-3 seam, not in `attackLocked`, because the
   // declaration stays legal.
   attackFlipLockCoins,
   attackGateOf,
   attackLocked,
   attackMenuOf,
-  attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
   coinRedoToolOf,
-  benchShieldedFromDamage,
   inPlayCardOf,
   boostedAttackBase,
   boostedAttackDamage,
@@ -56,32 +49,22 @@ import {
   installedAttackDebuffOf,
   installedNoWeakness,
   installedRecoilOf,
-  installedReductionOf,
-  installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   installedWeaknessRewriteOf,
   lockedAttackIndexes,
   lockedAttackNames,
-  NO_CONSUMABLE,
-  berryReductionOf,
-  attackerGatedReductionOf,
   opposingAttackDebuff,
   opposingToolAttackDebuff,
-  seatShieldedFromLowEnergyAttacker,
   passivesOf,
-  preventedByDamageThreshold,
-  preventsAttackerType,
   providedEnergy,
-  seatDamageReduction,
   seatRemovesWeakness,
   seatWeaknessRewrite,
   weaknessAmountOverride,
   withWeaknessAmount,
   sideAttackBonusThisTurn,
-  stadiumPreventsDamage,
   withWatchedRecoil,
 } from "./continuous";
-import { coinFlipShieldPrevents, koSurvivalClamp, koSurvivalCoinFlip } from "./damageCalc";
+import { landAttackHit } from "./damageCalc";
 import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
 import {
   bonusConsequentProgram,
@@ -147,14 +130,7 @@ import {
   countCardsInHand,
   countPokemonInPlay,
 } from "./boardCondition";
-import {
-  coinRedoPrompt,
-  consumeTools,
-  consumedTools,
-  detonateDeluxeBomb,
-  discardToPile,
-  spendCoinRedo,
-} from "./ops/damage";
+import { coinRedoPrompt, detonateDeluxeBomb, discardToPile, spendCoinRedo } from "./ops/damage";
 import { effectRefused } from "./effectTargets";
 import { runProgram } from "./interpreter";
 import type { EffectChoice, EffectContext, EffectPrompt } from "./effectPrompt";
@@ -178,7 +154,6 @@ import {
   prizesTakenOnLastTurn,
   takenPrizes,
   withActive,
-  withAttackDamageTaken,
   withSide,
 } from "./types";
 
@@ -1749,132 +1724,43 @@ function dealAttackDamage(
     defender,
     passivesOf(next, defender),
   );
-  // "Takes N less damage from attacks (after applying Weakness and Resistance)", summed from
-  // catalog Abilities and Tools, installed reductions, own-side seat-wide auras, and Berries.
-  // Under `suppressTargetEffects` the on-target terms drop and the seat-wide aura only counts
-  // when granted by another Pokémon. A Berry is asked only when `preWR > 0`, and a dropped or
-  // unasked Berry is not spent.
-  const berry =
-    suppressTargetEffects || preWR === 0
-      ? NO_CONSUMABLE
-      : berryReductionOf(next, defender, attacker, seat);
-  const reduction = suppressTargetEffects
-    ? seatDamageReduction(next, defender, "othersOnly", seat)
-    : berry.amount +
-      defenderPassives.damageReductionAfterWR +
-      // Attacker-gated reductions (Sacred Charm, Thick Scale, Thick Fat), on-target.
-      attackerGatedReductionOf(
-        next,
-        defender,
-        defenderPassives.damageReductionsFromAttacker,
-        attacker,
-        seat,
-      ) +
-      installedReductionOf(next, defender, attacker, attackerBody) + // Metal Block.
-      seatDamageReduction(next, defender, "all", seat);
-  // Full prevention, which supersedes any reduction: catalog auras on the holder and installed
-  // blocks are on-target and dropped by `suppressTargetEffects`; the shielding Active and the
-  // Stadium are off-target and stay. The off-target reads are always false for the defending
-  // Active but are kept so the check is total. A block's `maxDamage` is compared against
-  // `wouldDeal`. An installed vulnerability adds after W/R, only when `preWR > 0` (the rulebook
-  // stops when base damage is 0), and is on-target.
-  const vulnerability =
-    suppressTargetEffects || preWR === 0 ? 0 : installedVulnerabilityOf(next, defender);
-  const wouldDeal = Math.max(0, afterWR + vulnerability - reduction);
-  // The coin-flip shield is asked after the pure preventions, so no coin is flipped for damage
-  // already stopped.
-  const preventedBeforeFlip =
-    (!suppressTargetEffects &&
-      ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
-        preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
-        // Inside the suppression guard because it is a catalog aura on the damaged Pokémon.
-        (defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker)) ||
-        // Inside the suppression guard because it is a catalog aura on the damaged Pokémon. Reads
-        // `attacker` because it gates on the attacking card's printed name and stage.
-        preventsAttackerClass(defenderPassives.preventDamageFromAttackerClasses, attacker) ||
-        // Sparkling Scales, inside the suppression guard.
-        preventsAttackerBanner(defenderPassives.preventDamageAndEffectsFromBanners, attacker) ||
-        // Reads `attackerBody`, the post-discard binding, because it gates on the attacker's
-        // attachments. Inside the suppression guard.
-        (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
-          attackerHasSpecialEnergy(next, attackerBody)) ||
-        // Plume Protection, the damage-only twin.
-        defenderPassives.preventDamageWhileBenched ||
-        // Always false here, since this is the defending Active and the flag only applies on the
-        // Bench; read anyway so the check is total.
-        defenderPassives.preventDamageAndEffectsWhileBenched ||
-        // Prevents damage by amount rather than by attacker ("or more"), in the Active Spot and
-        // on the Bench alike. ORed with `attackBlockOf`'s cap, not merged, because they are
-        // different channels with opposite polarity.
-        preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||
-        attackBlockOf(next, defender, attacker, wouldDeal, attackerBody) !== null)) ||
-    // Always false here: both sentences target benched Pokémon and `defender` is the Active.
-    benchShieldedFromDamage(next, defender, "all") ||
-    // Ancient Bulwark: the holder is benched, so it is never the defender here.
-    seatShieldedFromLowEnergyAttacker(next, defender, attackerBody, seat, "all") ||
-    stadiumPreventsDamage(next, defender, attacker);
-  // The coin-flip shield must be a statement, last, because it draws rng and emits a row. It
-  // flips only if damage would still land after prevention, suppression and reduction. Its row
-  // precedes `DAMAGE_DEALT`, and `next` takes the advanced `rngState` immediately.
-  const [flipPrevented, rngState] = coinFlipShieldPrevents(
+  const landed = landAttackHit(
     next,
-    defender,
-    defenderSeat,
-    preventedBeforeFlip || suppressTargetEffects ? 0 : wouldDeal,
+    {
+      body: defender,
+      seat: defenderSeat,
+      uid: defenderUid,
+      passives: defenderPassives,
+      attacker,
+      attackerBody,
+      // The main hit's dealer is always the declaring seat.
+      attackerSeat: seat,
+      ignoreTargetEffects: suppressTargetEffects,
+      invokedByAttack: true,
+      preWR,
+      afterWR,
+      row: {
+        base: scaledBase,
+        // Present only when the attack's own extra (scaling or heads bonus) added damage.
+        scaled: scaledTotal > 0 ? scaledTotal : undefined,
+        // Present only when a continuous effect actually moved the total.
+        bonus: bonus > 0 ? bonus : undefined,
+        // The pre-W/R subtraction, in its own field rather than a negative `bonus`.
+        debuff: debuff > 0 ? debuff : undefined,
+        weakness,
+        resistance,
+      },
+    },
     events,
   );
-  next = { ...next, rngState };
-  const prevented = preventedBeforeFlip || flipPrevented;
-  const dealt = prevented ? 0 : wouldDeal;
-  // §8.1 KO-survival clamp, read here because "has full HP" is a pre-damage fact and `defender`
-  // is the last binding holding it. `dealt` is not clamped, so the `dealt > 0` reactions still
-  // see the damage. The result names the Survival Brace that answered, if any.
-  const clamped = koSurvivalClamp(next, defender, dealt, seat);
-  // Tenacious Body / Durable Body coin-flip survival, asked only when the clamp did not answer.
-  const [coinSaved, survivalRng] =
-    clamped === null
-      ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events)
-      : [null, next.rngState];
-  next = { ...next, rngState: survivalRng };
-  // Record the damage dealt on the body (Juggernaut Horn).
-  let defended = withAttackDamageTaken(
-    { ...defender, damage: clamped?.damage ?? coinSaved ?? defender.damage + dealt },
-    next.turn,
-    dealt,
-  );
-  next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
-  events.push({
-    type: "DAMAGE_DEALT",
-    seat: defenderSeat,
-    // The main hit's dealer is always the declaring seat.
-    by: seat,
-    uid: defenderUid,
-    base: scaledBase,
-    // Present only when the attack's own extra (scaling or heads bonus) added damage.
-    scaled: scaledTotal > 0 ? scaledTotal : undefined,
-    // Present only when a continuous effect actually moved the total.
-    bonus: bonus > 0 ? bonus : undefined,
-    // The pre-W/R subtraction, in its own field rather than a negative `bonus`.
-    debuff: debuff > 0 ? debuff : undefined,
-    weakness,
-    resistance,
-    reduction: reduction > 0 ? reduction : undefined,
-    // The post-W/R addition, in its own field.
-    vulnerability: vulnerability > 0 ? vulnerability : undefined,
-    prevented: prevented ? true : undefined,
-    survived: clamped === null && coinSaved === null ? undefined : true,
-    dealt,
-    damage: defended.damage,
-  });
-  // Tools this hit consumed (Berries that reduced an unprevented hit, the Survival Brace that
-  // answered) leave after the row showing their effect. `defended` is rebound so the Deluxe Bomb
-  // scan sees the body without them.
-  const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-  defended = consumeTools(defended, spent, defenderSeat, events);
+  const { dealt, body: defended } = landed;
   next = discardToPile(
-    withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended }),
+    withSide({ ...next, rngState: landed.rngState }, defenderSeat, {
+      ...next.players[defenderSeat],
+      active: defended,
+    }),
     defenderSeat,
-    spent,
+    landed.spent,
   );
 
   // §9 reactive recoil: when the defender is damaged, even if Knocked Out, it puts counters on
