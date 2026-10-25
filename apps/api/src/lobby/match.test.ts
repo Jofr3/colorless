@@ -1,15 +1,17 @@
-import { formatElapsed, logFromEvents, otherSeat, type Seat } from "@colorless/engine";
+import { formatElapsed, logFromEvents, otherSeat, redactGame, type Seat } from "@colorless/engine";
 import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { ALL_BASIC_DECK, driveSetup } from "../../../../packages/engine/src/testFixtures";
 import {
   applyMatchAction,
+  beginMatch,
   loadMatchRecord,
   MATCH_RECORD_VERSION,
   MATCH_ACTION_DISPOSITION,
   type MatchRecord,
   type MatchSlot,
   MIGRATABLE_MATCH_RECORD_VERSION,
+  matchFrameFor,
   matchSeatOf,
   migrateMatchRecord,
   playerIdOfSeat,
@@ -579,5 +581,129 @@ describe("applyMatchAction — concede (the forfeit seam)", () => {
     if (!over.ok) throw new Error("expected accept");
     const late = applyMatchAction(over.record, otherSeat(winner), { type: "concede" }, STARTED_AT);
     expect(late.ok).toBe(false);
+  });
+});
+
+describe("beginMatch — the record a countdown's end persists", () => {
+  const begin = (overrides: Partial<Parameters<typeof beginMatch>[0]> = {}) =>
+    beginMatch({
+      seed: 3,
+      hostDeck: DECK,
+      guestDeck: DECK,
+      cardPool: POOL,
+      names: { host: "Ana", guest: "Bo" },
+      chooser: null,
+      now: 5_000,
+      ...overrides,
+    });
+
+  function created(seed: number) {
+    const result = startMatch({ seed, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    if (!result.ok) throw new Error(result.error.message);
+    return result;
+  }
+
+  it("assembles a current-version record with host names on p1 and guest names on p2", () => {
+    const begun = begin();
+    if (!begun.ok) throw new Error(begun.reason);
+    expect(begun.record.version).toBe(MATCH_RECORD_VERSION);
+    expect(begun.record.seed).toBe(3);
+    expect(begun.record.startedAt).toBe(5_000);
+    expect(begun.record.names).toEqual({ p1: "Ana", p2: "Bo" });
+    expect(readMatchRecord(structuredClone(begun.record))).toEqual(begun.record);
+  });
+
+  it("without a chooser, the coin winner goes first and the log keeps the coin row", () => {
+    const result = created(3);
+    const opening = settleFirstPlayer(result.state, result.events, null);
+    const begun = begin();
+    if (!begun.ok) throw new Error(begun.reason);
+    expect(begun.record.state).toEqual(opening.state);
+    expect(begun.record.state.phase.kind).not.toBe("setup:chooseFirst");
+    expect(begun.record.log).toEqual(
+      logFromEvents(opening.events, {
+        names: { p1: "Ana", p2: "Bo" },
+        state: opening.state,
+        elapsed: formatElapsed(0),
+      }),
+    );
+  });
+
+  it("with a chooser, the game waits on that seat and the log has no coin row", () => {
+    for (const chooser of ["p1", "p2"] as const) {
+      const result = created(3);
+      const begun = begin({ chooser });
+      if (!begun.ok) throw new Error(begun.reason);
+      expect(begun.record.state.phase).toEqual({ kind: "setup:chooseFirst", coinWinner: chooser });
+      const logOf = (events: typeof result.events) =>
+        logFromEvents(events, {
+          names: { p1: "Ana", p2: "Bo" },
+          state: begun.record.state,
+          elapsed: formatElapsed(0),
+        });
+      const withoutCoin = result.events.filter((e) => e.type !== "COIN_FLIP");
+      expect(withoutCoin.length).toBeLessThan(result.events.length);
+      expect(begun.record.log).toEqual(logOf(withoutCoin));
+      expect(begun.record.log).not.toEqual(logOf(result.events));
+    }
+  });
+
+  it("turns each engine deck rejection into a player-facing reason", () => {
+    const stage1: Card = { ...basicCard("evo"), stage: "Stage1", evolveFrom: "basic" };
+    expect(begin({ hostDeck: ["basic"] })).toEqual({
+      ok: false,
+      reason: "A deck must have exactly 60 cards.",
+    });
+    expect(
+      begin({
+        guestDeck: Array.from({ length: 60 }, () => "evo"),
+        cardPool: { ...POOL, evo: stage1 },
+      }),
+    ).toEqual({ ok: false, reason: "A deck must include at least one Basic Pokémon." });
+    expect(begin({ cardPool: {} })).toEqual({
+      ok: false,
+      reason: "A deck references a card that's no longer in the catalog.",
+    });
+  });
+});
+
+describe("matchFrameFor — the per-viewer match frame", () => {
+  /** A match past the first-player choice, so both hands are dealt. */
+  function dealtRecord(): MatchRecord {
+    const begun = beginMatch({
+      seed: 1,
+      hostDeck: DECK,
+      guestDeck: DECK,
+      cardPool: POOL,
+      names: { host: "Ana", guest: "Bo" },
+      chooser: null,
+      now: STARTED_AT,
+    });
+    if (!begun.ok) throw new Error(begun.reason);
+    return begun.record;
+  }
+
+  it("gives each seat its own redaction and every viewer the same log", () => {
+    const record = dealtRecord();
+    for (const seat of ["p1", "p2"] as const) {
+      expect(matchFrameFor(record, seat)).toEqual({
+        kind: "match",
+        game: redactGame(record.state, seat),
+        log: record.log,
+      });
+    }
+    expect(matchFrameFor(record, "p1").game).not.toEqual(matchFrameFor(record, "p2").game);
+  });
+
+  it("gives a spectator the seatless redaction from the host's side, with no hand face-up", () => {
+    const record = dealtRecord();
+    const frame = matchFrameFor(record, "spectator");
+    expect(frame).toEqual({
+      kind: "match",
+      game: redactGame(record.state, SEAT_OF_SLOT.host, true),
+      log: record.log,
+    });
+    expect(frame.game.seat).toBe("p1");
+    expect(frame.game).not.toEqual(matchFrameFor(record, "p1").game);
   });
 });

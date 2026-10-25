@@ -362,10 +362,10 @@ function Simulator:sync(raw,finishKo)
       local toolCards={}
       for _,part in ipairs(Energy.split(r[15])) do
         local uid,cardId=part:match('^([^|]*)|?(.*)$')
-        if uid and uid~='' and not tonumber(uid) then toolCards[#toolCards+1]={id=uid,cardId=cardId} end
+        if uid and uid~='' then toolCards[#toolCards+1]={id=uid,cardId=cardId} end
       end
       self.items[#self.items+1]={id=r[2],cardId=r[3],name=r[4],owner=r[5],zone=r[6],index=tonumber(r[7]) or 0,hidden=r[8]=='true',category=r[9] or '',trainerType=r[10] or '',stage=r[11] or '',
-        hp=tonumber(r[12]),damage=tonumber(r[13]) or 0,energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[16] or '',types=r[17] or '',draggable=r[18]=='true',displayIndex=tonumber(r[19]) or tonumber(r[7]) or 0}
+        hp=tonumber(r[12]),damage=tonumber(r[13]) or 0,energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[16] or '',types=r[17] or '',draggable=r[18]=='true',displayIndex=tonumber(r[19]) or 0}
     elseif r[1]=='R' then self.rareCandy=r[2]
     elseif r[1]=='L' then
       -- Lifecycle: mode, spectating, away name and forfeit ms, flags, allow.

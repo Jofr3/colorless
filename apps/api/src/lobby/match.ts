@@ -5,10 +5,11 @@
 // The lobby has no p1/p2 concept — seats are "host"/"guest" — so the mapping to the
 // engine's Seat is minted HERE, at match start: the host is p1, the guest is p2.
 // Kept pure (no DO/storage/D1) so it unit-tests without a Worker: the DO loads the
-// card pool from D1 (`loadCardPool`) and calls `startMatch`, then persists + redacts
-// the result.
+// decks and card pool from D1, calls `beginMatch`, persists the record and sends each
+// socket its `matchFrameFor` view. It is the only lobby module that imports the engine.
 
 import {
+  type CreateErrorCode,
   type CreateGameResult,
   type GameAction,
   type GameEvent,
@@ -19,10 +20,19 @@ import {
   createGame,
   formatElapsed,
   logFromEvents,
+  redactGame,
 } from "@colorless/engine";
-import type { Card, LobbySnapshot, SeatLogEntry, WireAction } from "@colorless/schema";
+import type {
+  Card,
+  LobbyServerMessage,
+  LobbySnapshot,
+  SeatLogEntry,
+  WireAction,
+} from "@colorless/schema";
 import { z } from "zod";
 import { slotOf } from "./logic";
+
+export type { Seat };
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
 export const SEAT_OF_SLOT = { host: "p1", guest: "p2" } as const satisfies Record<
@@ -98,6 +108,62 @@ export function rematchChooser(state: GameState): Seat | null {
   return phase.outcome.winner === "p1" ? "p2" : "p1";
 }
 
+export interface BeginMatchOptions extends StartMatchOptions {
+  /** The lobby players' display names, which the log's system rows read. */
+  names: { host: string; guest: string };
+  /** The seat that chooses the play order (`settleFirstPlayer`), or null for the coin. */
+  chooser: Seat | null;
+  /** Epoch ms the match starts, the log's elapsed origin. */
+  now: number;
+}
+
+export type BeginMatchResult = { ok: true; record: MatchRecord } | { ok: false; reason: string };
+
+/**
+ * Mint the record a lobby persists when its countdown ends: create the game, settle who sets the
+ * play order, and seed the log from the settled opening at elapsed +00:00. The log is seeded after
+ * the settle so a chooser's game carries no coin row. A deck the engine refuses comes back as a
+ * player-facing `reason`.
+ */
+export function beginMatch(opts: BeginMatchOptions): BeginMatchResult {
+  const result = startMatch(opts);
+  if (!result.ok) return { ok: false, reason: matchStartReason(result.error.code) };
+  const opening = settleFirstPlayer(result.state, result.events, opts.chooser);
+  const names: Record<Seat, string> = {
+    [SEAT_OF_SLOT.host]: opts.names.host,
+    [SEAT_OF_SLOT.guest]: opts.names.guest,
+  };
+  const log = logFromEvents(opening.events, {
+    names,
+    state: opening.state,
+    elapsed: formatElapsed(0),
+  });
+  return {
+    ok: true,
+    record: {
+      version: MATCH_RECORD_VERSION,
+      seed: opts.seed,
+      startedAt: opts.now,
+      names,
+      state: opening.state,
+      log,
+    },
+  };
+}
+
+/** A player-facing reason for a `createGame` reject. Deck contents come from D1, never the client,
+    so this only fires on a malformed saved deck. */
+function matchStartReason(code: CreateErrorCode): string {
+  switch (code) {
+    case "BAD_DECK_SIZE":
+      return "A deck must have exactly 60 cards.";
+    case "NO_BASIC_POKEMON":
+      return "A deck must include at least one Basic Pokémon.";
+    case "UNKNOWN_CARD_ID":
+      return "A deck references a card that's no longer in the catalog.";
+  }
+}
+
 /** What the DO persists when a lobby becomes a match: the authoritative
     full-information `GameState` plus the seed it was created from (audit/replay).
     Seats map by `SEAT_OF_SLOT`. Stored under the DO's match key and, from
@@ -132,6 +198,7 @@ export interface MatchRecord {
  * new required field on persisted engine state, or a new required field on an op that can park in
  * `phase.cont`. Widenings (new union members, optional fields) do not bump it. A mismatched record
  * is retired and the players are told to re-ready, because the Durable Object has no migrations.
+ * `recordShape.test.ts` pins a skeleton of the persisted shape to this number.
  */
 export const MATCH_RECORD_VERSION = 50;
 
@@ -480,4 +547,26 @@ export function applyMatchAction(
     ok: true,
     record: { ...record, state: result.state, log: [...record.log, ...entries] },
   };
+}
+
+/** Who a match frame is for: a seated player, or a seatless spectator. */
+export type MatchViewer = Seat | "spectator";
+
+/** The side a spectator's board renders from. Every spectator sees the host's orientation; the
+    seatless redaction withholds both hands either way. */
+const SPECTATOR_SIDE = SEAT_OF_SLOT.host;
+
+/**
+ * The `match` frame `viewer` receives: the board redacted for their seat, or the seatless
+ * redaction for a spectator, plus the shared seat-keyed log, which is leak-safe for every viewer.
+ */
+export function matchFrameFor(
+  record: MatchRecord,
+  viewer: MatchViewer,
+): Extract<LobbyServerMessage, { kind: "match" }> {
+  const game =
+    viewer === "spectator"
+      ? redactGame(record.state, SPECTATOR_SIDE, true)
+      : redactGame(record.state, viewer);
+  return { kind: "match", game, log: record.log };
 }

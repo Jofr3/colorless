@@ -57,6 +57,24 @@
   },
   "overrides": [
     {
+      "include": ["apps/api/src/lobby/**"],
+      "ignore": ["apps/api/src/lobby/match.ts", "apps/api/src/lobby/**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@colorless/engine": "Only lobby/match.ts imports the engine; add the seam there."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "include": ["frontend/lua/**"],
       "linter": {
         "rules": {

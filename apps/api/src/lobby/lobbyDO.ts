@@ -8,6 +8,7 @@
 import {
   applyIntent,
   bothReady,
+  type Card,
   createSnapshot,
   isValidLobbyCode,
   LOBBY_WS_PING,
@@ -19,14 +20,7 @@ import {
   removeGuest,
   seatGuest,
 } from "@colorless/schema";
-import {
-  type CreateErrorCode,
-  formatElapsed,
-  logFromEvents,
-  redactGame,
-  type Seat,
-} from "@colorless/engine";
-import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
+import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
@@ -40,7 +34,7 @@ import {
   isSpectating,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
-import { loadPlayerDeck } from "./deckLoad";
+import { type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
 import { loadDisplayName } from "./displayName";
 import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
@@ -79,16 +73,17 @@ import {
 } from "./logic";
 import {
   applyMatchAction,
+  beginMatch,
   loadMatchRecord,
-  MATCH_RECORD_VERSION,
   type MatchLoad,
   type MatchRecord,
+  type MatchViewer,
+  matchFrameFor,
   matchSeatOf,
   playerIdOfSeat,
   SEAT_OF_SLOT,
+  type Seat,
   rematchChooser,
-  settleFirstPlayer,
-  startMatch,
 } from "./match";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
@@ -112,12 +107,6 @@ const CHOOSER_KEY = "nextChooser";
 // never broadcast. Cleared with the rest of storage when the lobby empties.
 const SEAT_USERS_KEY = "seatUsers";
 
-/** Which side of the table a SPECTATOR's board renders from (P4 3c-vii-b). The
-    host, so every spectator of a given match sees the same orientation and reads
-    the lobby's own host/guest order. It carries no privilege: the seatless
-    redaction withholds both sides' hands either way. */
-const SPECTATOR_SIDE = "p1" as const;
-
 /** One validated client frame of the given kind. */
 type ClientFrame<Kind extends LobbyClientMessage["kind"]> = Extract<
   LobbyClientMessage,
@@ -136,34 +125,43 @@ type HandoffResult = { ok: true } | { ok: false; reason: string };
 const STALE_MATCH_REASON =
   "This match ended because the server was updated. Pick your decks and ready up to play again.";
 
-/** A player-facing reason for an engine `createGame` reject — the contents came
-    from D1 (never the client), so this only fires on a genuinely malformed saved
-    deck. Exhaustive over `CreateErrorCode`. */
-function matchStartReason(code: CreateErrorCode): string {
-  switch (code) {
-    case "BAD_DECK_SIZE":
-      return "A deck must have exactly 60 cards.";
-    case "NO_BASIC_POKEMON":
-      return "A deck must include at least one Basic Pokémon.";
-    case "UNKNOWN_CARD_ID":
-      return "A deck references a card that's no longer in the catalog.";
-  }
+/** Everything the lobby reads from outside its own storage and sockets: the clock, the match
+    seed, and the D1 lookups. */
+export interface LobbyDeps {
+  now(): number;
+  randomSeed(): number;
+  /** The account a forwarded `Cookie` header's session belongs to, or null. */
+  resolveUser(cookie: string | null): Promise<string | null>;
+  /** The account's lobby display name, or null to keep the announced one. */
+  displayName(userId: string | null): Promise<string | null>;
+  /** A player's chosen deck as flat card ids, owner-scoped to `userId`. */
+  loadDeck(deckId: string | null, userId: string | null): Promise<LoadDeckResult>;
+  /** The catalog cards for `ids`, keyed by id; missing ids are absent. */
+  loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
+}
+
+/** The production wiring: the system clock, a CSPRNG seed and the Worker's D1 binding. */
+export function lobbyDepsFromEnv(env: Env): LobbyDeps {
+  const db = () => drizzle(env.DB);
+  return {
+    now: () => Date.now(),
+    randomSeed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0,
+    resolveUser: (cookie) => resolveUserIdFromCookie(db(), cookie),
+    displayName: (userId) => loadDisplayName(db(), userId),
+    loadDeck: (deckId, userId) => loadPlayerDeck(db(), deckId, userId),
+    loadPool: (ids) => loadCardPool(db(), ids),
+  };
 }
 
 export class LobbyDO {
   private readonly state: DurableObjectState;
-  /** Worker bindings — needed for D1 (the match card pool) at handoff (P4). */
-  private readonly env: Env;
+  private readonly deps: LobbyDeps;
   /** In-memory mirror of SNAPSHOT_KEY; undefined = not read since last wake. */
   private snapshot: LobbySnapshot | null | undefined;
 
-  private get db(): DrizzleD1Database {
-    return drizzle(this.env.DB);
-  }
-
-  constructor(state: DurableObjectState, env: Env) {
+  constructor(state: DurableObjectState, env: Env, deps: LobbyDeps = lobbyDepsFromEnv(env)) {
     this.state = state;
-    this.env = env;
+    this.deps = deps;
     // Keepalive pings are answered in the proxy layer — a hibernated lobby
     // stays hibernated while clients ping to check their link.
     state.setWebSocketAutoResponse(new WebSocketRequestResponsePair(LOBBY_WS_PING, LOBBY_WS_PONG));
@@ -183,7 +181,7 @@ export class LobbyDO {
       if ((await this.state.storage.get(CREATED_KEY)) !== undefined) {
         return Response.json({ error: "code in use" }, { status: 409 });
       }
-      await this.state.storage.put({ [CREATED_KEY]: Date.now(), [CODE_KEY]: code });
+      await this.state.storage.put({ [CREATED_KEY]: this.deps.now(), [CODE_KEY]: code });
       // Arm the expiry now, so a minted-but-never-entered lobby still evaporates.
       await this.scheduleMaintenance();
       return Response.json({ code }, { status: 201 });
@@ -203,7 +201,7 @@ export class LobbyDO {
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
       // start a match with a saved deck. Only the DO ever reads it.
-      const userId = await resolveUserIdFromCookie(this.db, request.headers.get("Cookie"));
+      const userId = await this.deps.resolveUser(request.headers.get("Cookie"));
       if (userId !== null) attachUserId(pair[1], userId);
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
@@ -257,7 +255,7 @@ export class LobbyDO {
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
     // announced name. The read happens after the refusal branches so a refused socket costs no
     // D1 query.
-    const name = (await loadDisplayName(this.db, userId)) ?? frame.name;
+    const name = (await this.deps.displayName(userId)) ?? frame.name;
     // …and the face, from the same account (P5-2). Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);
@@ -332,8 +330,8 @@ export class LobbyDO {
     // the actor's socket gets a transient `reject-action` pill with the
     // engine's own reason (2b-iii-d). On accept, persist BEFORE broadcasting
     // (crash-safe, mirroring the handoff) and fan each socket its redacted view.
-    // Date.now() stamps the appended log rows' elapsed time (2b-iii-d-ii).
-    const outcome = applyMatchAction(record, seat, frame.action, Date.now());
+    // The clock stamps the appended log rows' elapsed time.
+    const outcome = applyMatchAction(record, seat, frame.action, this.deps.now());
     if (!outcome.ok) {
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
@@ -372,7 +370,7 @@ export class LobbyDO {
     // is over (the engine refuses a concede then), which is what makes a
     // double `bye` — an explicit leave() plus the unmount's — harmless.
     const seat = snapshot.phase === "in-game" ? matchSeatOf(snapshot, frame.from) : null;
-    if (seat !== null) await this.concedeSeat(snapshot, seat, Date.now());
+    if (seat !== null) await this.concedeSeat(snapshot, seat, this.deps.now());
     // …and only THEN the lobby change, which in-game keeps the seat (so the
     // result the concede just broadcast stays on the winner's screen) and
     // otherwise frees a guest's / parks the host's (applyBye).
@@ -420,7 +418,7 @@ export class LobbyDO {
   }
 
   async alarm(): Promise<void> {
-    const now = Date.now();
+    const now = this.deps.now();
     // 0) Sockets that stopped answering keepalives (P4 3c-viii). FIRST, so a
     //    connection dropped here is judged by everything below on this same pass
     //    rather than waiting another sweep.
@@ -546,7 +544,7 @@ export class LobbyDO {
         const pending = await this.pendingDisconnects();
         await this.state.storage.put(
           PENDING_KEY,
-          withPendingDisconnect(pending, playerId, Date.now() + DISCONNECT_GRACE_MS),
+          withPendingDisconnect(pending, playerId, this.deps.now() + DISCONNECT_GRACE_MS),
         );
       }
     }
@@ -584,60 +582,35 @@ export class LobbyDO {
     // reset: the players are about to be in-game either way).
     if ((await this.loadOrMigrateMatch()).kind === "ok") return { ok: true };
     if (snapshot.guest === null) return { ok: false, reason: "The lobby needs two players." };
-    const db = this.db;
-    // Resolve each player's CHOSEN deck (P4 increment 3), owner-scoped by the
-    // account the socket authenticated at /ws — a crafted `select-deck` naming
-    // someone else's deck id resolves to nothing. host → p1, guest → p2.
-    const hostDeck = await loadPlayerDeck(
-      db,
+    // Each player's chosen deck, owner-scoped by the account their socket authenticated at /ws,
+    // so a crafted `select-deck` naming someone else's deck resolves to nothing.
+    const hostDeck = await this.deps.loadDeck(
       snapshot.host.deckId,
       this.userIdOf(snapshot.host.id),
     );
     if (!hostDeck.ok) return { ok: false, reason: `${snapshot.host.name}: ${hostDeck.reason}.` };
-    const guestDeck = await loadPlayerDeck(
-      db,
+    const guestDeck = await this.deps.loadDeck(
       snapshot.guest.deckId,
       this.userIdOf(snapshot.guest.id),
     );
     if (!guestDeck.ok) return { ok: false, reason: `${snapshot.guest.name}: ${guestDeck.reason}.` };
-    // Contents come from D1, never the client, so a legal card list is the only
-    // thing the engine ever sees — but the persistence layer doesn't enforce
-    // 60 + a Basic, so `startMatch` (createGame) is the authoritative validator.
-    const cardPool = await loadCardPool(db, [...hostDeck.ids, ...guestDeck.ids]);
-    const seedBytes = new Uint32Array(1);
-    crypto.getRandomValues(seedBytes);
-    const seed = seedBytes[0] ?? 0;
-    const result = startMatch({
+    // Storage does not enforce 60 cards and a Basic, so `beginMatch` is the validator.
+    const cardPool = await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids]);
+    const seed = this.deps.randomSeed();
+    // A player no longer seated (a new guest since the rematch) falls back to the coin.
+    const chooserId = await this.read(CHOOSER_KEY, storedChooserSchema);
+    const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
+    const begun = beginMatch({
       seed,
       hostDeck: hostDeck.ids,
       guestDeck: guestDeck.ids,
       cardPool,
+      names: { host: snapshot.host.name, guest: snapshot.guest.name },
+      chooser,
+      now: this.deps.now(),
     });
-    if (!result.ok) return { ok: false, reason: matchStartReason(result.error.code) };
-    // A player no longer seated (a new guest since the rematch) falls back to the coin.
-    const chooserId = await this.read(CHOOSER_KEY, storedChooserSchema);
-    const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
-    const opening = settleFirstPlayer(result.state, result.events, chooser);
-    // Seat display names for the game log's system rows (host → p1, guest → p2,
-    // the SEAT_OF_SLOT mapping startMatch itself uses).
-    const names: Record<Seat, string> = { p1: snapshot.host.name, p2: snapshot.guest.name };
-    const startedAt = Date.now();
-    // Seed the log from createGame's own events (shuffles + the coin flip), at
-    // elapsed +00:00 — the same origin the local /play page uses (useLocalGame).
-    const log = logFromEvents(opening.events, {
-      names,
-      state: opening.state,
-      elapsed: formatElapsed(0),
-    });
-    const record: MatchRecord = {
-      version: MATCH_RECORD_VERSION,
-      seed,
-      startedAt,
-      names,
-      state: opening.state,
-      log,
-    };
-    await this.state.storage.put(MATCH_KEY, record);
+    if (!begun.ok) return begun;
+    await this.state.storage.put(MATCH_KEY, begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
     return { ok: true };
   }
@@ -659,7 +632,7 @@ export class LobbyDO {
   /** Persist → broadcast → re-arm the alarm: the ONE path every snapshot
       change takes, so nothing is ever announced that didn't hit storage. */
   private async commit(next: LobbySnapshot): Promise<void> {
-    const stamped = stampCountdown(next, Date.now());
+    const stamped = stampCountdown(next, this.deps.now());
     // A persisted match outlives EXACTLY the match it describes: when this commit
     // takes the lobby out of in-game (the host's kick, or `endMatch` retiring an
     // unreadable record — a mid-match `bye` no longer does, 3c-iv), drop the stale
@@ -697,12 +670,12 @@ export class LobbyDO {
     // that can notice a socket whose keepalives stopped (3c-viii), because the
     // auto-response deliberately never wakes us. With nobody connected there is
     // nothing to check — the empty-lobby expiry below owns that case.
-    if (sockets.length > 0) deadlines.push(Date.now() + LIVENESS_SWEEP_MS);
+    if (sockets.length > 0) deadlines.push(this.deps.now() + LIVENESS_SWEEP_MS);
 
     if (sockets.length === 0) {
       let cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
       if (cleanupAt === undefined) {
-        cleanupAt = Date.now() + EMPTY_LOBBY_TTL_MS;
+        cleanupAt = this.deps.now() + EMPTY_LOBBY_TTL_MS;
         await this.state.storage.put(CLEANUP_AT_KEY, cleanupAt);
       }
       deadlines.push(cleanupAt);
@@ -781,25 +754,16 @@ export class LobbyDO {
    */
   private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
-      const playerId = attachedPlayer(ws);
-      // A SPECTATOR (3c-vii-b) has no seat: they get the seatless redaction, which
-      // withholds BOTH hands and every actor affordance (3c-vii-a). `SPECTATOR_SIDE`
-      // only decides which side renders at the bottom of their board.
-      if (playerId === null) {
-        if (!isSpectating(ws)) continue;
-        this.send(ws, {
-          kind: "match",
-          game: redactGame(record.state, SPECTATOR_SIDE, true),
-          log: record.log,
-        });
-        continue;
-      }
-      const seat = matchSeatOf(snapshot, playerId);
-      if (seat === null) continue;
-      // The board is redacted PER seat; the log is seat-keyed + leak-safe, so the
-      // SAME array goes to both sockets (the client relabels it for its own seat).
-      this.send(ws, { kind: "match", game: redactGame(record.state, seat), log: record.log });
+      const viewer = this.viewerOf(ws, snapshot);
+      if (viewer !== null) this.send(ws, matchFrameFor(record, viewer));
     }
+  }
+
+  /** Whose view a socket gets: its seat, a spectator's, or null for an unseated non-spectator. */
+  private viewerOf(ws: WebSocket, snapshot: LobbySnapshot): MatchViewer | null {
+    const playerId = attachedPlayer(ws);
+    if (playerId === null) return isSpectating(ws) ? "spectator" : null;
+    return matchSeatOf(snapshot, playerId);
   }
 
   /** A (re)connecting socket that lands in an already-in-game lobby gets the
@@ -863,7 +827,7 @@ export class LobbyDO {
         get: () => this.state.storage.get(MATCH_KEY),
         put: (record) => this.state.storage.put(MATCH_KEY, record),
       },
-      (ids) => loadCardPool(this.db, ids),
+      (ids) => this.deps.loadPool(ids),
     );
   }
 

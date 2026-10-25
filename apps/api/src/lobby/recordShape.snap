@@ -1,0 +1,284 @@
+{
+  "version": 50,
+  "shape": {
+    "allowances": {
+      "abilitiesUsed": [],
+      "attackAgainUid": "null",
+      "endOfTurnHandDiscard": "null",
+      "energyAttached": "boolean",
+      "retreated": "boolean",
+      "sideAttackBonuses": [],
+      "stadiumAbilityUsed": "boolean",
+      "stadiumPlayed": "boolean",
+      "supporterPlayed": "boolean",
+      "supporterPlayedUid": "null"
+    },
+    "game": {
+      "allowances": {
+        "abilitiesUsed": [],
+        "attackAgainUid": "null",
+        "endOfTurnHandDiscard": "null",
+        "energyAttached": "boolean",
+        "retreated": "boolean",
+        "sideAttackBonuses": [],
+        "stadiumAbilityUsed": "boolean",
+        "stadiumPlayed": "boolean",
+        "supporterPlayed": "boolean",
+        "supporterPlayedUid": "null"
+      },
+      "cardIdByUid": {
+        "<id>": [
+          "string"
+        ]
+      },
+      "cardPool": {
+        "<id>": [
+          {
+            "abilities": "null",
+            "attacks": "null",
+            "category": "string",
+            "effect": "null",
+            "energyType": "null",
+            "evolveFrom": "null",
+            "hp": "number",
+            "id": "string",
+            "illustrator": "null",
+            "image": "null",
+            "legal": {
+              "expanded": "boolean",
+              "standard": "boolean"
+            },
+            "localId": "string",
+            "name": "string",
+            "rarity": "null",
+            "regulationMark": "null",
+            "resistances": "null",
+            "retreat": "number",
+            "setId": "string",
+            "stage": "string",
+            "trainerType": "null",
+            "types": [
+              "string"
+            ],
+            "variants": "null",
+            "weaknesses": "null"
+          }
+        ]
+      },
+      "firstPlayer": "null",
+      "handPlayLockedTurn": {
+        "p1": {
+          "Item": "null",
+          "Stadium": "null",
+          "Supporter": "null",
+          "evolve": "null"
+        },
+        "p2": {
+          "Item": "null",
+          "Stadium": "null",
+          "Supporter": "null",
+          "evolve": "null"
+        }
+      },
+      "lastKoMarks": {
+        "p1": [],
+        "p2": []
+      },
+      "lastKoTurn": {
+        "p1": "null",
+        "p2": "null"
+      },
+      "oncePerGameSpent": {
+        "p1": [],
+        "p2": []
+      },
+      "pending": [],
+      "phase": {
+        "coinWinner": "string",
+        "kind": "string"
+      },
+      "players": {
+        "p1": {
+          "active": "null",
+          "bench": [],
+          "chosenAttackShield": "null",
+          "deck": [
+            "string"
+          ],
+          "discard": [],
+          "faceUpPrizes": [],
+          "hand": [],
+          "mulligans": "number",
+          "prizes": [],
+          "prizesTakenOnTurn": "null",
+          "sideAttackBlock": "null",
+          "sideAttackLock": "null",
+          "sideDamageReduction": [],
+          "sideRetreatLock": "null",
+          "trainerFlipLockTurn": "null"
+        },
+        "p2": {
+          "active": "null",
+          "bench": [],
+          "chosenAttackShield": "null",
+          "deck": [
+            "string"
+          ],
+          "discard": [],
+          "faceUpPrizes": [],
+          "hand": [],
+          "mulligans": "number",
+          "prizes": [],
+          "prizesTakenOnTurn": "null",
+          "sideAttackBlock": "null",
+          "sideAttackLock": "null",
+          "sideDamageReduction": [],
+          "sideRetreatLock": "null",
+          "trainerFlipLockTurn": "null"
+        }
+      },
+      "recentAttackers": {
+        "p1": [],
+        "p2": []
+      },
+      "rngState": "number",
+      "stadium": "null",
+      "turn": "number"
+    },
+    "inPlay": {
+      "attackBlock": "null",
+      "attackDamageDebuff": "null",
+      "attackDamageTaken": "null",
+      "attackFlipLockTurn": "null",
+      "attackLockedTurn": "null",
+      "attackTwoFlipLockTurn": "null",
+      "benchedTurn": "null",
+      "boostedAttack": "null",
+      "conditions": {
+        "burned": "boolean",
+        "confusionDamage": "number",
+        "poisonDamage": "number",
+        "rotation": "string"
+      },
+      "costTaxTurn": "null",
+      "damage": "number",
+      "damageReduction": "null",
+      "damageVulnerability": "null",
+      "energy": [],
+      "evolvedTurn": "null",
+      "handAttachMark": "null",
+      "healedTurn": "null",
+      "installedRecoil": "null",
+      "koBounty": "null",
+      "lockedAttacks": [],
+      "markers": [],
+      "noWeaknessTurn": "null",
+      "promotedTurn": "null",
+      "retreatBlocked": "boolean",
+      "retreatLockedTurn": "null",
+      "scheduledEffect": "null",
+      "stack": [
+        "string"
+      ],
+      "tools": [],
+      "turnPlayed": "number",
+      "usedAttack": "null",
+      "weaknessRetype": "null"
+    },
+    "parked": {
+      "cont": {
+        "ctx": {
+          "seat": "string"
+        },
+        "pendingOp": {
+          "note": "string",
+          "op": "string",
+          "ops": [
+            {
+              "count": "number",
+              "op": "string"
+            }
+          ]
+        },
+        "record": {
+          "moved": [
+            "string"
+          ]
+        },
+        "rest": [
+          {
+            "op": "string"
+          }
+        ]
+      },
+      "kind": "string",
+      "prompt": {
+        "kind": "string",
+        "note": "string"
+      },
+      "seat": "string"
+    },
+    "side": {
+      "active": {
+        "attackBlock": "null",
+        "attackDamageDebuff": "null",
+        "attackDamageTaken": "null",
+        "attackFlipLockTurn": "null",
+        "attackLockedTurn": "null",
+        "attackTwoFlipLockTurn": "null",
+        "benchedTurn": "null",
+        "boostedAttack": "null",
+        "conditions": {
+          "burned": "boolean",
+          "confusionDamage": "number",
+          "poisonDamage": "number",
+          "rotation": "string"
+        },
+        "costTaxTurn": "null",
+        "damage": "number",
+        "damageReduction": "null",
+        "damageVulnerability": "null",
+        "energy": [],
+        "evolvedTurn": "null",
+        "handAttachMark": "null",
+        "healedTurn": "null",
+        "installedRecoil": "null",
+        "koBounty": "null",
+        "lockedAttacks": [],
+        "markers": [],
+        "noWeaknessTurn": "null",
+        "promotedTurn": "null",
+        "retreatBlocked": "boolean",
+        "retreatLockedTurn": "null",
+        "scheduledEffect": "null",
+        "stack": [
+          "string"
+        ],
+        "tools": [],
+        "turnPlayed": "number",
+        "usedAttack": "null",
+        "weaknessRetype": "null"
+      },
+      "bench": [],
+      "chosenAttackShield": "null",
+      "deck": [
+        "string"
+      ],
+      "discard": [],
+      "faceUpPrizes": [],
+      "hand": [
+        "string"
+      ],
+      "mulligans": "number",
+      "prizes": [
+        "string"
+      ],
+      "prizesTakenOnTurn": "null",
+      "sideAttackBlock": "null",
+      "sideAttackLock": "null",
+      "sideDamageReduction": [],
+      "sideRetreatLock": "null",
+      "trainerFlipLockTurn": "null"
+    }
+  }
+}

@@ -62,6 +62,17 @@ only the conclusion.
   precheck fails when a row's text sits in another symbol: after a rename, pass
   `--write --accept-symbols`; if the row landed on a twin, re-point it. `--write`
   fills in a missing symbol. Re-run every re-anchored row.
+- CI's `mutants` job runs `bun run mutants:sample --base <ref>`: every row whose
+  `file` or killer the diff touches (at most 60), plus 30 rows drawn with the
+  commit sha as seed. A SURVIVED, stale or errored row fails the job; reproduce
+  it locally with `bun run mutants --only <id>`.
+- Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
+  seeded play-forward sweeps; `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
+  for LobbyDO; `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
+  A change to the stored game shape fails `recordShape.test.ts` until
+  `MATCH_RECORD_VERSION` is bumped and the snapshot rewritten with `-u`. A change to the
+  Lua wire fails `src/lua/wireFixtures.test.ts`; regenerate its fixtures with `-u` and
+  update `frontend/lua/tests/wire_fixtures.lua` to match.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn` (`types.ts`); `OpOf<K>` for one `EffectOp`

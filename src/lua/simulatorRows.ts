@@ -318,10 +318,11 @@ export function boardRows(
       "",
       0,
       "",
-      0,
+      "",
       "",
       "",
       false,
+      0,
     );
     f.noteArt(c);
   }

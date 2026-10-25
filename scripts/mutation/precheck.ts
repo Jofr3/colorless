@@ -25,6 +25,17 @@ function occurrences(haystack: string, needle: string): number {
   return count;
 }
 
+const CORPUS = "scripts/mutation/mutants.ts";
+
+/** A row on the corpus file whose only match is its own `find` or `replace` literal mutates a
+    string nothing reads, so it can never be killed. */
+function matchesItself(file: string, text: string, find: string): boolean {
+  if (file !== CORPUS) return false;
+  const at = text.indexOf(find);
+  const line = text.slice(text.lastIndexOf("\n", at) + 1, at);
+  return /^\s*(find|replace): ['"`]$/.test(line);
+}
+
 const broken: string[] = [];
 for (const mutant of MUTANTS) {
   if (!existsSync(repoPath(mutant.file))) {
@@ -33,6 +44,8 @@ for (const mutant of MUTANTS) {
   }
   const n = occurrences(sourceOf(mutant.file), mutant.find);
   if (n !== 1) broken.push(`${mutant.id}: find occurs ${String(n)}× in ${mutant.file}`);
+  else if (matchesItself(mutant.file, sourceOf(mutant.file), mutant.find))
+    broken.push(`${mutant.id}: find matches only the row's own literal; its target is gone`);
   else if (currentSymbol(mutant, sourceOf(mutant.file)) !== mutant.symbol)
     broken.push(
       `${mutant.id}: find no longer sits in symbol ${JSON.stringify(mutant.symbol)}; re-point it if it landed on a twin, or run \`bun scripts/mutation/reanchor.ts --write --accept-symbols\` after a rename`,

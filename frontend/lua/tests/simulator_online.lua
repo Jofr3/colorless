@@ -27,9 +27,9 @@ local function enc(s) return (tostring(s):gsub('[^%w%-_%.~]',function(c) return 
 local function row(...) local f={...};for i,v in ipairs(f) do f[i]=enc(v) end;return table.concat(f,'\t') end
 local base={
   row('S','you',46,6,2,0,0),row('S','opponent',47,6,7,1,0),
-  row('C','card1','sv01-036','Fuecoco','you','hand',0,'false','Pokemon','','Basic','',0,'',0,'','Fire','true'),
-  row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire,Fire',0,'','Fire','true'),
-  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'',0,'','Water','false'),
+  row('C','card1','sv01-036','Fuecoco','you','hand',0,'false','Pokemon','','Basic','',0,'','','','Fire','true',0),
+  row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire,Fire','','','Fire','true',0),
+  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'','','','Water','false',0),
 }
 local revision=0
 -- opts: phase, outcome, seat, match, supporter, L (a row) or noL, actions.

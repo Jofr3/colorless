@@ -632,6 +632,43 @@ export interface AttachTargetRiders {
 /** The EffectOp variant with the given `op` tag. */
 export type OpOf<K extends EffectOp["op"]> = Extract<EffectOp, { op: K }>;
 
+type FieldOf<T> = T extends unknown ? keyof T : never;
+
+/**
+ * The fields marked engine-written below: the engine stores an answer on the parked op it
+ * reschedules, so an authored or derived program never carries one.
+ */
+export const ENGINE_WRITTEN_FIELDS = {
+  attachEnergyFrom: ["pickOnto"],
+  coinFlipGate: ["faces"],
+  damageChosen: ["faces", "hitRefs"],
+  devolveChosen: ["bodyUid", "shed"],
+  discardEnergy: ["bodyUid"],
+  discardTools: ["bodyUid"],
+  evolveFromDeck: ["onto"],
+  lookAtPrize: ["index"],
+  moveCounterOwnChosen: ["from"],
+  moveCountersChosen: ["fromBench"],
+  moveCountersOpponentAnyWay: ["budget", "source", "take"],
+  moveCountersToOpponentChosen: ["from"],
+  opponentGuessesHp: ["uid"],
+  switchWithDiscardNamed: ["bodyUid"],
+} as const satisfies { readonly [K in EffectOp["op"]]?: readonly FieldOf<OpOf<K>>[] };
+
+/**
+ * The ops only the engine builds: the copy-attack and coin-redo offers it parks, and the trims
+ * flow.ts runs.
+ */
+export const ENGINE_ONLY_OPS = [
+  "reflipAttackCoins",
+  "reflipCoins",
+  "trimBench",
+  "trimTools",
+  "useAttackAs",
+  "useFoundAttackAs",
+  "useInPlayAttackAs",
+] as const satisfies readonly EffectOp["op"][];
+
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
     = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
@@ -1414,6 +1451,7 @@ export type EffectOp =
    */
   | {
       op: "evolveFromDeck";
+      /** The body to evolve; absent means this Pokémon. Engine-written only. */
       onto?: PokemonTarget;
       names?: readonly string[];
       /**
@@ -1561,7 +1599,8 @@ export type EffectOp =
   | { op: "trimTools" }
   /**
    * Tyme: the controller names a Pokémon in hand, the opponent guesses its HP, and whoever is right
-   * draws 4. With `uid` absent the controller picks the card; then the opponent answers.
+   * draws 4. With `uid` absent the controller picks the card; then the opponent answers. `uid` is
+   * engine-written only.
    */
   | { op: "opponentGuessesHp"; draw: number; uid?: string }
   /** Shuffle this Pokémon and all attached cards into its controller's deck. */
@@ -1573,7 +1612,8 @@ export type EffectOp =
   | { op: "switchWithDeckNamed"; name: string }
   /**
    * Ogre's Mask: swap an Ogerpon ex in play in place with an Ogerpon ex from the discard pile;
-   * everything attached stays on the new Pokémon.
+   * everything attached stays on the new Pokémon. `bodyUid`, the answered body, is engine-written
+   * only.
    */
   | { op: "switchWithDiscardNamed"; filter: CardFilter; bodyUid?: string }
   /**
@@ -1644,7 +1684,9 @@ export type EffectOp =
       whose?: "self";
       pokemonType?: PokemonType;
       depth?: "any";
+      /** The answered own body. Engine-written only. */
       bodyUid?: string;
+      /** How many cards that body sheds. Engine-written only. */
       shed?: number;
     }
   /** "Discard a Stadium in play." (§7.3) */
@@ -2046,7 +2088,10 @@ export type EffectOp =
       to?: never;
       recordAs?: never;
     }
-  /** Discard up to `count` Pokémon Tools from the opponent's Pokémon. */
+  /**
+   * Discard up to `count` Pokémon Tools from the opponent's Pokémon. `bodyUid`, one picked body, is
+   * engine-written only.
+   */
   | { op: "discardTools"; count: number | "all"; sides?: "both"; bodyUid?: string }
   /**
    * Ruffian: one pick of an opponent body, then a Tool and a Special Energy are discarded from that

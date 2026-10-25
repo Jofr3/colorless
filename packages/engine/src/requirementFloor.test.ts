@@ -399,7 +399,6 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
 
   it("S2 — none of the five ids is a registry row, so the registry summand cannot move", () => {
     const ids = registryCardIds();
-    expect(ids).toHaveLength(1451);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

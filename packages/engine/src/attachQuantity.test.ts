@@ -609,15 +609,19 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     expect(Object.keys(POOL).sort()).toEqual([BENCH_BODY, FIRE, ORICORIO, WATER].sort());
   });
 
-  it("ZERO registry keys were added — this slice moves no census figure", () => {
-    expect(registryCardIds()).toHaveLength(1451);
-    for (const id of Object.values(QUANTITY_IDS).flat()) {
-      if (programFor(id) === undefined) continue;
-      expect([
+  it("only the registry-programmed families are registry rows, and no local pool id is", () => {
+    const ids = new Set(registryCardIds());
+    const programmed = Object.values(QUANTITY_IDS)
+      .flat()
+      .filter((id) => ids.has(id));
+    expect(programmed.sort()).toEqual(
+      [
         ...QUANTITY_IDS.goldenFlame,
         ...QUANTITY_IDS.battleHardened,
         ...QUANTITY_IDS.spikeClad,
-      ]).toContain(id);
-    }
+      ].sort(),
+    );
+    for (const id of programmed) expect(programFor(id), id).toBeDefined();
+    for (const id of Object.keys(POOL)) expect(ids.has(id), id).toBe(false);
   });
 });

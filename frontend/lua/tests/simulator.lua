@@ -25,13 +25,13 @@ local function header(rev,extra)
 end
 local base={
   row('S','you',46,6,2,0,0),row('S','opponent',47,6,7,1,0),
-  row('C','card1','sv01-036','Fuecoco','you','hand',0,'false','Pokemon','','Basic','',0,'',0,'','Fire','true'),
-  row('C','energy1','sv03-230','Fire Energy','you','hand',1,'false','Energy','','','',0,'',0,'','Fire','true'),
-  row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire,Fire',0,'','Fire','true'),
-  row('C','bench1','sv01-030','Growlithe','you','bench',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
-  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'',0,'asleep','Water','false'),
-  row('C','h1','hidden','Face-down card','opponent','hand',0,'true','','','','',0,'',0,'','','false'),
-  row('C','h2','hidden','Face-down card','opponent','hand',1,'true','','','','',0,'',0,'','','false'),
+  row('C','card1','sv01-036','Fuecoco','you','hand',0,'false','Pokemon','','Basic','',0,'','','','Fire','true',0),
+  row('C','energy1','sv03-230','Fire Energy','you','hand',1,'false','Energy','','','',0,'','','','Fire','true',1),
+  row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire,Fire','','','Fire','true',0),
+  row('C','bench1','sv01-030','Growlithe','you','bench',0,'false','Pokemon','','Basic',70,0,'','','','Fire','true',0),
+  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'','','asleep','Water','false',0),
+  row('C','h1','hidden','Face-down card','opponent','hand',0,'true','','','','',0,'','','','','false',0),
+  row('C','h2','hidden','Face-down card','opponent','hand',1,'true','','','','',0,'','','','','false',1),
   row('I','sv01-033','Pokemon','','Basic',70,'Fire',1,'Water:×2','','', '','Bite'..US..'Colorless'..US..'10'..US..''..RS..'Flare'..US..'Fire,Colorless'..US..'30'..US..'','','Houndour'),
   row('I','sv03-230','Energy','','','','Fire','','','','','','','Normal','Fire Energy'),
   row('K','1','energy1','Attach to Houndour','blue','false','active1','attach',''),
@@ -220,7 +220,7 @@ for _=1,30 do sim:update(1/60,_/60,0,0,false) end
 local basic=cardOf('active1');local bx,by=basic.x,basic.y
 local evolved={}
 for _,r in ipairs(base) do if not r:match('^C\tactive1\t') then evolved[#evolved+1]=r end end
-evolved[#evolved+1]=row('C','stage1','sv01-034','Houndoom','you','active',0,'false','Pokemon','','Stage1',130,20,'Fire,Fire',0,'','Fire','true')
+evolved[#evolved+1]=row('C','stage1','sv01-034','Houndoom','you','active',0,'false','Pokemon','','Stage1',130,20,'Fire,Fire','','','Fire','true',0)
 sim:sync(table.concat({header(31)},'\n')..'\n'..table.concat(evolved,'\n'))
 assert(#sim.ghosts==0,'Evolving leaves no ghost, got '..#sim.ghosts)
 local stage=cardOf('stage1')
@@ -232,7 +232,7 @@ sim:sync(snapshot(32))
 for _=1,30 do sim:update(1/60,2+_/60,0,0,false) end
 local fromHand={}
 for _,r in ipairs(base) do if not r:match('^C\tactive1\t') and not r:match('^C\tcard1\t') then fromHand[#fromHand+1]=r end end
-fromHand[#fromHand+1]=row('C','card1','sv01-036','Fuecoco','you','active',0,'false','Pokemon','','Basic',80,0,'',0,'','Fire','true')
+fromHand[#fromHand+1]=row('C','card1','sv01-036','Fuecoco','you','active',0,'false','Pokemon','','Basic',80,0,'','','','Fire','true',0)
 sim:sync(table.concat({header(33)},'\n')..'\n'..table.concat(fromHand,'\n'))
 assert(#sim.ghosts==0,'Evolving from hand leaves no ghost, got '..#sim.ghosts)
 assert(cardOf('card1') and cardOf('card1').item.zone=='active' and cardOf('card1').item.evolvedFrom,'Hand card now sits on the Active spot as the evolution')
@@ -251,14 +251,14 @@ for _=1,30 do sim:update(1/60,sim.time+1/60,0,0,false) end
 local carrier=cardOf('active1');local cx0,cy0=carrier.x,carrier.y
 local paid={}
 for _,r in ipairs(base) do if not r:match('^C\tactive1\t') then paid[#paid+1]=r end end
-paid[#paid+1]=row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire|en1|sv03-230',0,'','Fire','true')
+paid[#paid+1]=row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire|en1|sv03-230','','','Fire','true',0)
 sim:sync(table.concat({header(36)},'\n')..'\n'..table.concat(paid,'\n'))
 for _=1,30 do sim:update(1/60,sim.time+1/60,0,0,false) end
 local afterPay={}
 for _,r in ipairs(base) do if not r:match('^C\tactive1\t') and not r:match('^C\tbench1\t') then afterPay[#afterPay+1]=r end end
-afterPay[#afterPay+1]=row('C','bench1','sv01-030','Growlithe','you','active',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true')
-afterPay[#afterPay+1]=row('C','active1','sv01-033','Houndour','you','bench',0,'false','Pokemon','','Basic',70,20,'',0,'','Fire','true')
-afterPay[#afterPay+1]=row('C','en1','sv03-230','Fire Energy','you','discard',0,'false','Energy','','','',0,'',0,'','Fire','false')
+afterPay[#afterPay+1]=row('C','bench1','sv01-030','Growlithe','you','active',0,'false','Pokemon','','Basic',70,0,'','','','Fire','true',0)
+afterPay[#afterPay+1]=row('C','active1','sv01-033','Houndour','you','bench',0,'false','Pokemon','','Basic',70,20,'','','','Fire','true',0)
+afterPay[#afterPay+1]=row('C','en1','sv03-230','Fire Energy','you','discard',0,'false','Energy','','','',0,'','','','Fire','false',0)
 sim:sync(table.concat({header(37)},'\n')..'\n'..table.concat(afterPay,'\n'))
 local slide
 for _,g in ipairs(sim.ghosts) do if g.item.id=='en1' then slide=g end end
@@ -285,7 +285,7 @@ for _,layer in ipairs(pileOf('you').layers) do assert(math.abs(layer.motion.T.r)
 
 -- Discard piles paint their top card; a scan arriving later (a reload) repaints them.
 sim:layout(1280,800);sim:open(false)
-sim:sync(snapshot(40,{row('C','d1','sv01-033','Houndour','you','discard',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','false')}))
+sim:sync(snapshot(40,{row('C','d1','sv01-033','Houndour','you','discard',0,'false','Pokemon','','Basic',70,0,'','','','Fire','false',0)}))
 local discardPile
 for _,pl in ipairs(sim.piles) do if pl.item.kind=='discard' then discardPile=pl end end
 assert(discardPile,'Discard pile built from the top discard card')
@@ -295,7 +295,7 @@ assert(#sim.ghosts==0,'No ghosts on a fresh load, got '..#sim.ghosts)
 local loadedActive=cardOf('active1')
 assert(math.abs(loadedActive.x-loadedActive.homeX)<1 and math.abs(loadedActive.y-loadedActive.homeY)<1,'In-play cards appear in place on load')
 -- A later snapshot that discards a hand card does slide it in.
-sim:sync(snapshot(41,{row('C','card1','sv01-036','Fuecoco','you','discard',0,'false','Pokemon','','Basic','',0,'',0,'','Fire','false')}))
+sim:sync(snapshot(41,{row('C','card1','sv01-036','Fuecoco','you','discard',0,'false','Pokemon','','Basic','',0,'','','','Fire','false',0)}))
 assert(#sim.ghosts==1 and sim.ghosts[1].item.id=='card1','Hand card slides into the discard pile, got '..#sim.ghosts)
 local rebuilt=0
 local baseRebuild=Card.rebuild
@@ -319,11 +319,11 @@ for _,size in ipairs({{1280,800},{390,844}}) do
     return table.concat({
       row(rev,'ready','Player 1','Player 2',flipped and 2 or 1,'turn:action','','Your turn','',0,1,'you','you',flipped and 'p2' or 'p1',0,0,0,'',''),
       row('S',owner,40,6,mode=='hand' and 4 or 0,mode=='hand' and 1 or flipped and 5 or 3,0),row('S',other,40,6,0,0,0),
-      row('C','old','sv01-194','Switch',owner,'discard',0,'false','Trainer','Item','','',0,'',0,'','','false'),
-      row('C','used1','sv01-196','Ultra Ball',owner,zone,mode=='ended' and 1 or 0,'false','Trainer','Item','','',0,'',0,'','','false'),
-      row('C','cost1','sv03-230','Fire Energy',owner,costZone,2,'false','Energy','','','',0,'',0,'','','false'),
-      row('C','used2','sv01-181','Nest Ball',owner,zone,mode=='ended' and 3 or 1,'false','Trainer','Item','','',0,'',0,'','','false'),
-      row('C','cost2','sv01-188','Potion',owner,costZone,mode=='hand' and 3 or 4,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','old','sv01-194','Switch',owner,'discard',0,'false','Trainer','Item','','',0,'','','','','false',0),
+      row('C','used1','sv01-196','Ultra Ball',owner,zone,mode=='ended' and 1 or 0,'false','Trainer','Item','','',0,'','','','','false',mode=='ended' and 1 or 0),
+      row('C','cost1','sv03-230','Fire Energy',owner,costZone,2,'false','Energy','','','',0,'','','','','false',2),
+      row('C','used2','sv01-181','Nest Ball',owner,zone,mode=='ended' and 3 or 1,'false','Trainer','Item','','',0,'','','','','false',mode=='ended' and 3 or 1),
+      row('C','cost2','sv01-188','Potion',owner,costZone,mode=='hand' and 3 or 4,'false','Trainer','Item','','',0,'','','','','false',mode=='hand' and 3 or 4),
     },'\n')
   end
   local function settle() for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end end
@@ -370,9 +370,9 @@ for _,size in ipairs({{1280,800},{390,844}}) do
     local rows={
       row(rev,'ready','Player 1','Player 2',after and 7 or 6,after and 'turn:action' or 'ko:promote','','','',0,1,'you','you','p1',0,0,0,'',''),
       row('S','you',after and 39 or 40,6,after and 1 or 0,0,0),row('S','opponent',40,6,0,0,0),
-      row('C','replacement','sv01-030','Growlithe','you',after and 'active' or 'bench',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
+      row('C','replacement','sv01-030','Growlithe','you',after and 'active' or 'bench',0,'false','Pokemon','','Basic',70,0,'','','','Fire','true',0),
     }
-    if after then rows[#rows+1]=row('C','turn-draw','sv03-230','Fire Energy','you','hand',0,'false','Energy','','','',0,'',0,'','Fire','true') end
+    if after then rows[#rows+1]=row('C','turn-draw','sv03-230','Fire Energy','you','hand',0,'false','Energy','','','',0,'','','','Fire','true',0) end
     return table.concat(rows,'\n')
   end
   local function tick(n,reduced) for _=1,n do sim:update(1/60,sim.time+1/60,-100,-100,reduced or false) end end
@@ -403,7 +403,7 @@ for _,size in ipairs({{1280,800},{390,844}}) do
     for _,fraction in ipairs({0.05,0.5,0.95}) do
       sim:layout(size[1],size[2]);sim:open(false)
       sim:sync(snapshot(95,{
-        row('C','item','sv01-191','Rare Candy','you','hand',2,'false','Trainer','Item','','',0,'',0,'','','true'),
+        row('C','item','sv01-191','Rare Candy','you','hand',2,'false','Trainer','Item','','',0,'','','','','true',2),
       }))
       for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
       local c=cardOf('item')
@@ -423,8 +423,8 @@ for _,size in ipairs({{1280,800},{390,844}}) do
     sim:layout(size[1],size[2]);sim:open(false)
     sim:sync(snapshot(100,{
       row('R','candy'),
-      row('C','candy','sv01-191','Rare Candy','you','played',0,'false','Trainer','Item','','',0,'',0,'','','false'),
-      row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'',0,'','Fire','true'),
+      row('C','candy','sv01-191','Rare Candy','you','played',0,'false','Trainer','Item','','',0,'','','','','false',0),
+      row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'','','','Fire','true',2),
     }))
     assert(sim.rareCandy=='candy' and sim.byUid['you:candy'].item.zone=='played','Pending Candy is on the table')
     for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
@@ -448,7 +448,7 @@ for _,size in ipairs({{1280,800},{390,844}}) do
   sim:layout(size[1],size[2]);sim:open(false)
   sim:sync(snapshot(110,{
     row('R','candy'),
-    row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'',0,'','Fire','true'),
+    row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'','','','Fire','true',2),
     row('K','c1','stage2','Evolve Houndour','green','false','active1','evolve',''),
     row('K','c2','otherStage2','Evolve Growlithe','green','false','bench1','evolve',''),
     row('K','c3','stage2','Evolve Growlithe','green','true','bench1','evolve',''),
@@ -483,12 +483,12 @@ local function koScene(rev,removed,flipped,ko)
   for i,id in ipairs({'victim','benched'}) do
     local energies=removed and '' or i==1 and 'Fire|attached|sv03-230,Fire|attached2|sv03-230' or 'Fire|bench-energy|sv03-230'
     local tool=not removed and i==1 and 'tool|sv01-191' or ''
-    out[#out+1]=row('C',id,'sv01-033','Houndour',owner,removed and 'discard' or (i==1 and 'active' or 'bench'),removed and i-1 or 0,'false','Pokemon','','Basic',70,removed and 0 or 20,energies,tool,'','Fire','false')
+    out[#out+1]=row('C',id,'sv01-033','Houndour',owner,removed and 'discard' or (i==1 and 'active' or 'bench'),removed and i-1 or 0,'false','Pokemon','','Basic',70,removed and 0 or 20,energies,tool,'','Fire','false',removed and i-1 or 0)
     if removed and ko then out[#out+1]=row('D',id) end
   end
   if removed then
     for i,id in ipairs({'attached','attached2','bench-energy','tool'}) do
-      out[#out+1]=row('C',id,id=='tool' and 'sv01-191' or 'sv03-230','Attachment',owner,'discard',i+1,'false',id=='tool' and 'Trainer' or 'Energy',id=='tool' and 'Tool' or '','','',0,'',0,'','','false')
+      out[#out+1]=row('C',id,id=='tool' and 'sv01-191' or 'sv03-230','Attachment',owner,'discard',i+1,'false',id=='tool' and 'Trainer' or 'Energy',id=='tool' and 'Tool' or '','','',0,'','','','','false',i+1)
     end
   end
   return table.concat(out,'\n')
@@ -564,7 +564,7 @@ local function prizeScene(rev,removed,flipped)
     raw=raw:gsub('S\tyou\t40\t6\t0',flipped and 'S\tyou\t40\t5\t1' or 'S\tyou\t40\t4\t2')
     raw=raw:gsub('S\topponent\t40\t6\t0',flipped and 'S\topponent\t40\t4\t2' or 'S\topponent\t40\t5\t1')
     for i=1,flipped and 1 or 2 do
-      raw=raw..'\n'..row('C','prize'..i,'sv03-230','Fire Energy','you','hand',i-1,'false','Energy','','','',0,'',0,'','Fire','true')
+      raw=raw..'\n'..row('C','prize'..i,'sv03-230','Fire Energy','you','hand',i-1,'false','Energy','','','',0,'','','','Fire','true',i-1)
     end
   end
   return raw
@@ -619,9 +619,9 @@ assert(not sim.koPresentation and sim.viewerSeat=='p2','Reduced motion flushes a
 for _,size in ipairs({{1280,800},{390,844}}) do
   sim:layout(size[1],size[2]);sim:open(false)
   sim:sync(snapshot(150,{
-    row('C','trainer','sv01-189','Supporter','you','hand',2,'false','Trainer','Supporter','','',0,'',0,'','','false'),
-    row('C','bench2','sv01-030','Growlithe','you','bench',1,'false','Pokemon','','Basic',70,0,'Fire|attached|sv03-230',0,'','Fire','true'),
-    row('C','bench3','sv01-030','Growlithe','you','bench',2,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
+    row('C','trainer','sv01-189','Supporter','you','hand',2,'false','Trainer','Supporter','','',0,'','','','','false',2),
+    row('C','bench2','sv01-030','Growlithe','you','bench',1,'false','Pokemon','','Basic',70,0,'Fire|attached|sv03-230','','','Fire','true',1),
+    row('C','bench3','sv01-030','Growlithe','you','bench',2,'false','Pokemon','','Basic',70,0,'','','','Fire','true',2),
   }))
   local function settle() for _=1,60 do sim:update(1/60,sim.time+1/60,-100,-100,false) end end
   local function press(c) sim.hoverCard=nil;sim:mousepressed(c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy) end
@@ -680,8 +680,8 @@ for _,size in ipairs({{1280,800},{390,844}}) do
   local function stadiumScene(rev,played)
     return table.concat({header(rev),
       row('S','you',40,6,played and 0 or 1,0,0),row('S','opponent',40,6,0,played and 1 or 0,0),
-      row('C','new-stadium','sv01-167','Beach Court',played and 'global' or 'you',played and 'stadium' or 'hand',0,'false','Trainer','Stadium','','',0,'',0,'','','true'),
-      row('C','old-stadium','sv02-171','Artazon',played and 'opponent' or 'global',played and 'discard' or 'stadium',0,'false','Trainer','Stadium','','',0,'',0,'','','false'),
+      row('C','new-stadium','sv01-167','Beach Court',played and 'global' or 'you',played and 'stadium' or 'hand',0,'false','Trainer','Stadium','','',0,'','','','','true',0),
+      row('C','old-stadium','sv02-171','Artazon',played and 'opponent' or 'global',played and 'discard' or 'stadium',0,'false','Trainer','Stadium','','',0,'','','','','false',0),
     },'\n')
   end
   sim:sync(stadiumScene(301,false))
@@ -752,8 +752,8 @@ for _,size in ipairs({{1280,800},{480,900}}) do
   for _,r in ipairs(base) do
     if not r:match('^C\tactive1\t') and not r:match('^C\topp1\t') then resolved[#resolved+1]=r end
   end
-  resolved[#resolved+1]=row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,0,'Fire,Fire',0,'','Fire','true')
-  resolved[#resolved+1]=row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,20,'',0,'asleep','Water','false')
+  resolved[#resolved+1]=row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,0,'Fire,Fire','','','Fire','true',0)
+  resolved[#resolved+1]=row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,20,'','','asleep','Water','false',0)
   sim:sync(table.concat(resolved,'\n'))
   sim:update(1/60,sim.time+1/60,-100,-100,false)
   assert(not sim.counterMotion and source.lift==0 and target.lift==0,'Resolution clears both selections')
