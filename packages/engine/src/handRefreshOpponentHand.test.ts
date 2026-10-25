@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   HAND_DRAW_DECK,
@@ -29,6 +29,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  programmedCardIds,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -451,7 +452,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
       if (v === null || typeof v !== "object") return;
       for (const [k, el] of Object.entries(v as Record<string, unknown>)) walk(el, `${where}.${k}`);
     };
-    for (const id of registryCardIds()) walk(programFor(id), id);
+    for (const id of programmedCardIds()) walk(programFor(id), id);
     let derived = 0;
     for (const [, text] of legalAttackCorpus()) {
       const program = deriveAttackEffect(text);
@@ -461,9 +462,9 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     }
     expect(offenders).toEqual([]);
     expect(derived).toBeGreaterThan(100);
-    expect(registryCardIds().length).toBeGreaterThan(100);
-    const producers = registryCardIds().filter((id) => holdsRefresh(programFor(id)));
-    expect(producers).toHaveLength(45);
+    expect(programmedCardIds().length).toBeGreaterThan(100);
+    const producers = programmedCardIds().filter((id) => holdsRefresh(programFor(id)));
+    expect(producers).toHaveLength(50);
     expect(opLists).toBeGreaterThan(800);
     expect(multiOpLists).toBeGreaterThan(300);
   });

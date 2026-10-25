@@ -5,8 +5,16 @@ import type { GameState, Seat } from "./index";
 import { topUid } from "./cards";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { redactGame } from "./redact";
-import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, typedEnergy, findEvent, driveSetup } from "./testFixtures";
+import { programFor } from "./registry";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  typedEnergy,
+  findEvent,
+  driveSetup,
+  programmedCardIds,
+} from "./testFixtures";
 import { makeInPlay } from "./types";
 
 const YANMEGA = "sv10-003";
@@ -238,7 +246,7 @@ describe("D347 §1 — the printed sentence, and the row it closes", () => {
   });
 
   it("the three ids are CONTIGUOUS in registry insertion order — the rung's real claim", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     const at = raw.indexOf(YANMEGA);
     expect(at).toBeGreaterThanOrEqual(0);
     expect(raw.slice(at, at + 3)).toEqual([YANMEGA, YANMEGA_IR, YANMEGA_SIR]);

@@ -5,7 +5,7 @@ import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
 import { applyChoice } from "./interpreter";
 import { redactGame } from "./redact";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   attachFromDeck,
   battler,
@@ -16,6 +16,7 @@ import {
   setActiveFromDeck,
   typedEnergy,
   must,
+  programmedCardIds,
 } from "./testFixtures";
 
 const ORICORIO = "sv08-026";
@@ -186,7 +187,7 @@ function registryAttachOps(): Map<string, Extract<EffectOp, { op: "attachEnergyF
     }
     for (const value of Object.values(rec)) walk(value, into);
   };
-  for (const id of registryCardIds()) {
+  for (const id of programmedCardIds()) {
     const ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[] = [];
     walk(programFor(id), ops);
     if (ops.length > 0) found.set(id, ops);
@@ -610,7 +611,7 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
   });
 
   it("only the registry-programmed families are registry rows, and no local pool id is", () => {
-    const ids = new Set(registryCardIds());
+    const ids = new Set(programmedCardIds());
     const programmed = Object.values(QUANTITY_IDS)
       .flat()
       .filter((id) => ids.has(id));

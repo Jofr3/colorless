@@ -20,7 +20,7 @@ import {
 } from "./effects";
 import { applyAction, conditionHolds, conditionNote } from "./index";
 import type { BoardCondition, EffectOp, GameEvent, GameOverReason, GameState } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   DEFENDER_STATUS_TRIPLE_DECK,
   attachFromDeck,
@@ -30,6 +30,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setPrizes,
+  programmedCardIds,
 } from "./testFixtures";
 
 const PRINTED =
@@ -559,7 +560,7 @@ describe("D517 §7 — the price, and both version constants", () => {
       if (v === null || typeof v !== "object") return;
       for (const [k, el] of Object.entries(v as Record<string, unknown>)) walk(el, `${where}.${k}`);
     };
-    for (const id of registryCardIds()) walk(programFor(id), id);
+    for (const id of programmedCardIds()) walk(programFor(id), id);
     let derived = 0;
     for (const [, text] of legalAttackCorpus()) {
       const program = deriveAttackEffect(text);
@@ -591,7 +592,7 @@ describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT bu
       if (typeof rec.op === "string") names.add(rec.op);
       for (const el of Object.values(rec)) collect(el);
     };
-    for (const id of registryCardIds()) collect(programFor(id));
+    for (const id of programmedCardIds()) collect(programFor(id));
     for (const [, text] of legalAttackCorpus()) collect(deriveAttackEffect(text));
     expect(names.size).toBeGreaterThan(50);
     const ENDERS = [...names].filter((n) => /win|victor|gameEnd|endGame|concede|forfeit/i.test(n));

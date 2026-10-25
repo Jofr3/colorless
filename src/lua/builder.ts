@@ -1,3 +1,4 @@
+import { simulationGaps, type SimulationGap } from "@colorless/engine";
 import * as api from "../lib/api";
 import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
@@ -43,6 +44,8 @@ export class LuaBuilder {
   saveStatus = "";
   entries = new Map<string, number>();
   cards = new Map<string, BuilderCard>();
+  /** What each card whose details loaded prints that the simulator cannot play. */
+  gaps = new Map<string, readonly SimulationGap[]>();
   cover: string | null = null;
   filters: Filters = { ...DEFAULT_FILTERS };
   results: BuilderCard[] = [];
@@ -219,6 +222,7 @@ export class LuaBuilder {
       c.hasImage === false ? 0 : 1,
       copyLimit(c),
       +illegal.has(c.name),
+      (this.gaps.get(c.cardId) ?? []).join(","),
     ];
     for (const c of this.results) rows.push(row("C", c));
     for (const [id, quantity] of this.entries) {
@@ -798,6 +802,7 @@ export class LuaBuilder {
       const c = await api.getCard(id);
       if (epoch !== this.epoch || this.selected !== id) return;
       this.cards.set(c.id, toBuilderCard(c));
+      this.gaps.set(c.id, simulationGaps(c));
       this.details =
         [
           c.effect,

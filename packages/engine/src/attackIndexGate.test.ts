@@ -2,7 +2,6 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackGateOf, attackTimingBlocked, firstTurnAttackBanned } from "./index";
 import { applyAction, programFor, redactGame } from "./index";
-import { registryCardIds } from "./registry";
 import type { BoardCondition, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -18,6 +17,7 @@ import {
   must,
   activeOf,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const BAN_TEXT =
@@ -517,7 +517,7 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     let gatesFound = 0;
     let opsInGates = 0;
     let programsWalked = 0;
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const program = programFor(id);
       if (program === undefined) continue;
       programsWalked += 1;

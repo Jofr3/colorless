@@ -20,7 +20,9 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import { namesItsCard } from "./cards";
-import { programFor, registryCardIds } from "./registry";
+import { canonicalPrinting, withReprints } from "./printGroups";
+import { programFor } from "./registry";
+import { programmedCardIds } from "./testFixtures";
 
 const POPULATION = {
   legalRows: 2021,
@@ -581,7 +583,7 @@ const REGISTRY_ATTACKS: readonly (readonly [string, string])[] = [
 ];
 
 function attackRegistryIds(): string[] {
-  return registryCardIds().filter(
+  return programmedCardIds().filter(
     (id) => !id.startsWith("fix-") && Object.keys(programFor(id)?.attack ?? {}).length > 0,
   );
 }
@@ -783,11 +785,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     ].filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id));
     const legalKeys = [...new Set(REGISTRY_ATTACKS.map(([id]) => id))];
     expect(attackRegistryIds().sort()).toEqual(
-      [...legalKeys, ...rotated, ...trainerGranted, ...meAlias].sort(),
+      [...withReprints([...legalKeys, ...rotated, ...trainerGranted, ...meAlias])].sort(),
     );
     expect(legalKeys).toHaveLength(27);
     expect(REGISTRY_ATTACKS).toHaveLength(28);
-    const pool = registryCardIds().filter((id) => !id.startsWith("fix-"));
+    const pool = programmedCardIds().filter((id) => !id.startsWith("fix-"));
     const cover = new Set([...attackRegistryIds(), ...nonAttackRegistryIds()]);
     expect([...cover].sort()).toEqual([...pool].sort());
     const both = attackRegistryIds().filter((id) => nonAttackRegistryIds().includes(id));
@@ -1585,7 +1587,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
 });
 
 function nonAttackRegistryIds(): string[] {
-  return registryCardIds().filter(
+  return programmedCardIds().filter(
     (id) =>
       !id.startsWith("fix-") && Object.keys(programFor(id) ?? {}).some((key) => key !== "attack"),
   );
@@ -2462,10 +2464,10 @@ const CENSUS_NOT_LEGAL: readonly string[] = [
 
 describe("D273 — the non-attack BUILT columns, derived from the LIVE registry", () => {
   it("the live non-attack pool is 415 ids and the scan reached the last raw key ( D572: 814 live — the title's 415 is D271's figure; D576: 818 live; D577: 824 live; D578: 830 live)", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     expect(raw).toContain("sv09-107");
-    expect(raw.length).toBe(1451);
-    expect(nonAttackRegistryIds().length).toBe(1286);
+    expect(raw.length).toBe(1523);
+    expect(nonAttackRegistryIds().length).toBe(1358);
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -2530,7 +2532,10 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     expect(new Set(recorded).size).toBe(recorded.length);
     const inPool = new Set(pool);
     const inRecorded = new Set(recorded);
-    const unclassified = pool.filter((id) => !inRecorded.has(id));
+    // A reprint plays its canonical printing's program, so it is classified with it.
+    const unclassified = pool.filter(
+      (id) => !inRecorded.has(id) && !inRecorded.has(canonicalPrinting(id)),
+    );
     const phantom = recorded.filter((id) => !inPool.has(id));
     expect(unclassified).toEqual([]);
     expect(phantom).toEqual([]);
@@ -3670,7 +3675,7 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
 
   it("~~no `me` printing is a registry key — every `me` non-attack text is UNBUILT, and no `me` attack is registry-built~~ ( D582 (D539): WITHDRAWN — the `me` registry keys are EXACTLY the D582 alias tier, Prism Charge `me02.5-178` among them)", () => {
     expect(
-      registryCardIds()
+      programmedCardIds()
         .filter((id) => ME_ID.test(id))
         .sort(),
     ).toEqual(
@@ -6545,7 +6550,7 @@ describe("D613 — the bench nouns: Basic only unless the noun names its card, m
 
   it("~~no registry program benches through a CLASS noun~~ ( D617 (D539): WITHDRAWN — Grimsley's Move ×2 benches a {D} Pokémon, Basic only); the named ones are Maushold, Ninjask ×2, Silcoon and Team Rocket's Koffing", () => {
     const byNoun: Record<BenchNoun, string[]> = { basic: [], named: [], class: [] };
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const found: { op: string; filter: { kind: string } }[] = [];
       benchOps(programFor(id), found);
       for (const op of found) byNoun[benchNounOf(op.filter)].push(id);

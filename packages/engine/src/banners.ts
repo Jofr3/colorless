@@ -1,4 +1,5 @@
 import type { Card } from "@colorless/schema";
+import { canonicalPrinting } from "./printGroups";
 
 // Which printings carry the Tera, Ancient or Future banner. No ingested column classifies the
 // banner, so it is an engine table keyed by printing id, never by name: reprints of one species can
@@ -210,6 +211,13 @@ export function bannerOf(card: Card | undefined): Banner | undefined {
   return card === undefined ? undefined : bannerOfId(card.id);
 }
 
+/** A listed printing's banner, read by every printing of its print_key group. */
+const BANNER_BY_GROUP: ReadonlyMap<string, Banner> = new Map(
+  Object.entries(BANNER_BY_ID).map(([id, banner]) => [canonicalPrinting(id), banner]),
+);
+
 export function bannerOfId(id: string): Banner | undefined {
-  return Object.hasOwn(BANNER_BY_ID, id) ? BANNER_BY_ID[id] : undefined;
+  return Object.hasOwn(BANNER_BY_ID, id)
+    ? BANNER_BY_ID[id]
+    : BANNER_BY_GROUP.get(canonicalPrinting(id));
 }

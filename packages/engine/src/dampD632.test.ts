@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { disabledAbilityUids, hasSelfKnockOutAbility } from "./continuous";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -13,6 +13,7 @@ import {
   setActiveFromDeck,
   typedEnergy,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const DAMP_ITSELF_TEXT =
@@ -253,14 +254,14 @@ describe("D632 §1 — the five registry rows on two objects", () => {
 describe("D632 §2 — the class, measured over the registry", () => {
   it("`hasSelfKnockOutAbility` holds for EXACTLY the 9 Cursed Blast / Overvolt Discharge keys", () => {
     expect(
-      registryCardIds()
+      programmedCardIds()
         .filter((id) => hasSelfKnockOutAbility(asCard(id)))
         .sort(),
     ).toEqual([...SELF_KO_IDS].sort());
   });
 
   it("no `knockOutSelf` sits deeper, or in a `triggered` or `passive` program, anywhere in the registry", () => {
-    const anywhere = registryCardIds().filter((id) => {
+    const anywhere = programmedCardIds().filter((id) => {
       const program = programFor(id);
       return JSON.stringify([program?.abilities, program?.triggered, program?.passive]).includes(
         '"op":"knockOutSelf"',

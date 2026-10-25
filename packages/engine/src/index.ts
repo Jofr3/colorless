@@ -189,6 +189,8 @@ export type {
   TriggerTiming,
 } from "./programTypes";
 export { programFor } from "./registry";
+export { simulationGaps } from "./simulationGaps";
+export type { SimulationGap } from "./simulationGaps";
 export type { DrawReason, GameEvent, StatusName } from "./events";
 export { inSetup, phaseViewOf } from "./phaseView";
 export type { PendingDecision, PhaseView } from "./phaseView";

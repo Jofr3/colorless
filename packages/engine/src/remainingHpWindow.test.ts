@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -12,6 +12,7 @@ import {
   trainerCard,
   must,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const LEDIAN = "svp-133";
@@ -432,14 +433,14 @@ describe("D349 §6 — the pool and the registry, asserted by id", () => {
   });
 
   it("the SIX ids are CONTIGUOUS registry keys, in order — the permanent half", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     const at = raw.indexOf(LEDIAN_IDS[0]);
     expect(at).toBeGreaterThanOrEqual(0);
     expect(raw.slice(at, at + 6)).toEqual([...LEDIAN_IDS, ...BIANCA_IDS]);
   });
 
   it("all SIX real ids are registry keys, and none of the four demonstrators is", () => {
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of [...LEDIAN_IDS, ...BIANCA_IDS]) expect(keys.has(id), id).toBe(true);
     for (const id of [LEDYBA, AT_90, AT_130, AT_30]) expect(keys.has(id), id).toBe(false);
   });

@@ -2,7 +2,6 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor, topCardOf } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
-import { registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -14,6 +13,7 @@ import {
   setActiveFromDeck,
   driveSetup,
   roundTrip,
+  programmedCardIds,
 } from "./testFixtures";
 
 const SUBJUGATING_CHAINS_TEXT =
@@ -190,7 +190,7 @@ describe("Pecharunt ex — the five printings as registry data", () => {
   it("no OTHER registry program carries either new rider — the widening is opt-in", () => {
     const typed: string[] = [];
     const excluded: string[] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const program = programFor(id);
       const ops = [
         ...(program?.abilities ?? []).flatMap((a) => a.program),
@@ -389,7 +389,7 @@ describe("the blast radius", () => {
 
   it("every other registry `switchActive` is rider-free — measured over the live pool", () => {
     const riderless: string[] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const program = programFor(id);
       const ops = [
         ...(program?.abilities ?? []).flatMap((a) => a.program),

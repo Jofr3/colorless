@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, disabledAbilityUids, programFor } from "./index";
-import { registryCardIds } from "./registry";
 import type { GameState } from "./index";
 import { redactGame } from "./redact";
 import {
@@ -19,6 +18,7 @@ import {
   setDamage,
   types,
   findEvent,
+  programmedCardIds,
 } from "./testFixtures";
 
 const attack0 = { type: "attack", seat: "p1", index: 0 } as const;
@@ -59,7 +59,7 @@ describe("disableAbilities — the registry row", () => {
     // Ability at all and must NOT carry the lock.
     expect(programFor("sv01-129")?.passive?.disableAbilities).toBeUndefined();
     expect(
-      registryCardIds()
+      programmedCardIds()
         .filter((id) => programFor(id)?.passive?.disableAbilities !== undefined)
         .sort(),
     ).toEqual(
@@ -82,6 +82,9 @@ describe("disableAbilities — the registry row", () => {
         "me02.5-226",
         "mep-007",
         "mep-008",
+        "sv04.5-158",
+        "sv04.5-159",
+        "sv04.5-244",
       ].sort(),
     );
   });

@@ -3,7 +3,7 @@
 // columns. A Trainer keeps the `hp`, abilities and attacks it prints. All printed text goes through
 // `normalizeCardText`.
 
-import { normalizeCardText } from "@colorless/engine";
+import { isSpecialEnergy, normalizeCardText } from "@colorless/engine";
 import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@colorless/schema";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
@@ -205,13 +205,15 @@ function textBlocks<T extends { effect?: string }>(blocks: T[] | undefined): T[]
 }
 
 /**
- * tcgdex tags some Special Energies "Normal", so a "Normal" Energy that prints rules text is stored
- * as "Special".
+ * tcgdex tags some Special Energies "Normal", so a "Normal" Energy the engine reads as Special is
+ * stored as "Special".
  */
 export function energyTypeOf(
   energyType: string | undefined,
   effect: string | undefined,
 ): string | null {
   const tag = normalizeSentinel(energyType);
-  return tag === "Normal" && (effect ?? "").trim() !== "" ? "Special" : tag;
+  return tag === "Normal" && isSpecialEnergy({ category: "Energy", energyType: tag, effect })
+    ? "Special"
+    : tag;
 }

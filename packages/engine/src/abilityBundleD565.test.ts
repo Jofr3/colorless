@@ -8,7 +8,7 @@ import type { GameAction, GameState, Seat } from "./index";
 import { type EffectContext, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -23,6 +23,7 @@ import {
   effectPrompt,
   driveSetup,
   roundTrip,
+  programmedCardIds,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -505,7 +506,7 @@ describe("§1 — the prints and the registry rows", () => {
 
   it('`benchOnly` is carried by exactly Flustered Leap\'s two ids, and NO row pairs it with `activeOnly` ( D602 (D539): "exactly Flustered Leap\'s two ids" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` "Sunrise"; D603: plus Linoone `me02-082` "Excited Dash")', () => {
     const benchOnly: string[] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
         if (ability.benchOnly === true) benchOnly.push(id);
         expect(ability.activeOnly && ability.benchOnly === true, id).toBe(false);
@@ -517,11 +518,11 @@ describe("§1 — the prints and the registry rows", () => {
   });
 
   it('the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone ( D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 "Last-Ditch Catch" carries the widened `"sharedByName"`)', () => {
-    const locked = registryCardIds().filter((id) =>
+    const locked = programmedCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === true),
     );
     expect(locked).toEqual([PALAFIN]);
-    const shared = registryCardIds().filter((id) =>
+    const shared = programmedCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === "sharedByName"),
     );
     expect(shared.sort()).toEqual(["me03-062", "me03-107", "me03-121"]);

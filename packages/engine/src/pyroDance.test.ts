@@ -4,8 +4,16 @@ import { programPlayable } from "./cardplay";
 import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
-import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, typedEnergy, must, driveSetup } from "./testFixtures";
+import { programFor } from "./registry";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  typedEnergy,
+  must,
+  driveSetup,
+  programmedCardIds,
+} from "./testFixtures";
 
 const INFERNAPE = "sv06-033";
 const INFERNAPE_IDS = ["svp-116", "sv06-033", "sv06-173"] as const;
@@ -407,12 +415,12 @@ describe("D351 §7 — the pool and the registry, asserted by id", () => {
   });
 
   it("every printing is a registry key", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     for (const id of INFERNAPE_IDS) expect(raw).toContain(id);
   });
 
   it("all THREE real ids are registry keys, and the synthetic bodies are not", () => {
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of INFERNAPE_IDS) expect(keys.has(id), id).toBe(true);
     for (const id of [BUDDY, FIRE, FIGHTING, WATER]) expect(keys.has(id), id).toBe(false);
   });

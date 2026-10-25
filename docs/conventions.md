@@ -45,7 +45,7 @@ only the conclusion.
   Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (coverage guards, the import graph,
-  `tsc -b`, `biome ci`, Lua constants, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
@@ -122,6 +122,26 @@ only the conclusion.
   the vitest setup file (`fixtures/vitestSetup.ts`, wired in `vitest.config.ts`)
   installs them with `registerTestPrograms`, which nothing else calls and the
   package index does not export, so the production registry holds no `fix-*` id.
+- **Reprints are not typed by hand.** `programFor(id)` reads `REGISTRY[id]`, then
+  the row of `id`'s print_key group through `PROGRAM_ALIAS`
+  (`registryAliases.generated.ts`, from the local D1's `print_key` column), then the
+  test programs; `bannerOf` and `FOSSIL_IDS` fall back through the same table. Author a
+  card on ONE printing; its same-name, same-text reprints follow. After an ingest
+  that adds printings, or after authoring a group's first row on a printing that is
+  not its canonical one, run `bun scripts/registry-aliases.ts` (`--check` in
+  `check:static` compares, and skips with a message where no local sqlite exists,
+  as in CI and fresh worktrees; `COLORLESS_D1_SQLITE=<path>` reads another file).
+  `registryAliases.test.ts` fails when a reprint carries its own REGISTRY row or a
+  group reaches two programs. A twin under ANOTHER name or with different text has
+  its own print_key and still needs an explicit row (`reprintAliasLegal.test.ts`,
+  `reprintAliasMeD58*.test.ts`). `registryCardIds()` lists REGISTRY keys only; a
+  sweep that means every programmed printing uses `programmedCardIds()`
+  (`fixtures/printings.ts`).
+- **Before an API deploy, check the generated table against the remote catalog.**
+  It is built from the LOCAL D1, which CI cannot see. From `apps/api`, run
+  `bunx wrangler d1 execute colorless --json --command "select id, print_key from cards
+  order by id"` once with `--local` and once with `--remote` and diff the two; if they
+  differ, re-ingest locally, re-run `bun scripts/registry-aliases.ts`, and commit.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
   (2026-10-23) after measuring zero residue; sections below that describe them
   are history.
@@ -290,7 +310,7 @@ the trend improved.
   **only because an un-narrowed attach target set always contains the host**.
 - **An arm transfers across sets; a registry row does not.** A deriver arm is a
   text parser and serves every reprint of its sentence; a row is keyed by card id
-  and legality is a hard filter on it — D180's four *correct* alias rows serve
+  (and its print_key group, through `PROGRAM_ALIAS`) and legality is a hard filter on it — D180's four *correct* alias rows serve
   **zero** Standard-legal printings (D187, D180 follow-up).
 - **Exact map or flag.** A registry row has no deriver behind it to refuse what
   it cannot parse, so whatever is authored is what the card does forever: a

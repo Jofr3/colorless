@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import { BENCH_MAX } from "./types";
 import {
   FIXTURE_POOL,
@@ -14,6 +14,7 @@ import {
   handFromDeck,
   must,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const RIBOMBEE = "sv09-067";
@@ -442,12 +443,12 @@ describe("D350 §7 — the pool and the registry, asserted by id", () => {
   });
 
   it("every printing is a registry key", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     for (const id of RIBOMBEE_IDS) expect(raw).toContain(id);
   });
 
   it("all THREE real ids are registry keys, and none of the four demonstrators is", () => {
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of RIBOMBEE_IDS) expect(keys.has(id), id).toBe(true);
     for (const id of [CUTIEFLY, BASIC_A, BASIC_B, STAGE1]) expect(keys.has(id), id).toBe(false);
   });

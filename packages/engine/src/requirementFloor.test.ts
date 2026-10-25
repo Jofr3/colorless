@@ -7,7 +7,7 @@ import {
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   REQUIREMENT_FLOOR_DECK,
   attachFromDeck,
@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   setPrizes,
   types,
+  programmedCardIds,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -398,7 +399,7 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
   });
 
   it("S2 — none of the five ids is a registry row, so the registry summand cannot move", () => {
-    const ids = registryCardIds();
+    const ids = programmedCardIds();
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();
@@ -408,7 +409,7 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
 
 describe("§6 — `allOf` gains its first DERIVED producer, and nothing downstream moves", () => {
   it("every `allOf` before this slice was authored in registry.ts — 5 sites, ~~14~~ ids ( D582 (D539): *14* WITHDRAWN — 15 since the `me` alias Terapagos ex `me02.5-179`; D591: 8 sites / 24 ids with the Flapping trio; D599: 9 sites / 26 ids with Anthea & Concordia; D628: 10 sites / 27 ids with Latios)", () => {
-    const withAllOf = registryCardIds().filter((id) =>
+    const withAllOf = programmedCardIds().filter((id) =>
       JSON.stringify(programFor(id) ?? {}).includes('"allOf"'),
     );
     expect(withAllOf).toHaveLength(27);
