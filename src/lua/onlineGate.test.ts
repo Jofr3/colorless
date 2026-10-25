@@ -13,7 +13,7 @@ import {
   mustCreate,
   inAttackAgainWindow,
   walkGame,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import { onlineGate } from "./onlineTable";
 
 const DECKS: [string, string[], number][] = [

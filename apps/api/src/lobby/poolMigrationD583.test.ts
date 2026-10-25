@@ -8,8 +8,8 @@ import {
 } from "@colorless/engine";
 import { type Card, tcgdexCardSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
-import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
+import cardTrainerFossil from "@colorless/schema/tcgdex-fixtures/card-trainer-fossil-sv07-129.json";
+import cardTrainerTm from "@colorless/schema/tcgdex-fixtures/card-trainer-tm-sv08-188.json";
 import { type CardRow, mapCardRow } from "../catalog/map";
 import { mapCard } from "../ingest/map";
 import {

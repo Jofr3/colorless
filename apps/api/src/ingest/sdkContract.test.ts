@@ -15,13 +15,13 @@ import TCGdex, {
   SetModel,
 } from "@tcgdex/sdk";
 import { describe, expect, it } from "vitest";
-import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
-import cardPokemonHeldItem from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-helditem-dp5-4.json";
-import cardPokemonPromo from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-promo-svp-001.json";
-import cardPokemonAttacks from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-swsh3-136.json";
-import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-sv01-181.json";
-import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
-import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
+import cardEnergyBasic from "@colorless/schema/tcgdex-fixtures/card-energy-basic-sve-002.json";
+import cardPokemonHeldItem from "@colorless/schema/tcgdex-fixtures/card-pokemon-helditem-dp5-4.json";
+import cardPokemonPromo from "@colorless/schema/tcgdex-fixtures/card-pokemon-promo-svp-001.json";
+import cardPokemonAttacks from "@colorless/schema/tcgdex-fixtures/card-pokemon-swsh3-136.json";
+import cardTrainer from "@colorless/schema/tcgdex-fixtures/card-trainer-sv01-181.json";
+import serieFull from "@colorless/schema/tcgdex-fixtures/serie-full-sv.json";
+import setFull from "@colorless/schema/tcgdex-fixtures/set-full-sv01.json";
 import { mapCard } from "./map";
 import { createSdkSource, type TcgdexRawClient } from "./source";
 

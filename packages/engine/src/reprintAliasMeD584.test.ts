@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { coinFlipShieldPrevents } from "./continuous";
+import { coinFlipShieldPrevents } from "./damageCalc";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";

@@ -15,7 +15,7 @@ import {
   setDamage,
   STADIUM_TOOL_DECK,
   trainerCard,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import { toBuilderCard } from "../decks/catalog";
 import type { Deck } from "../decks/data";
 import { LuaBuilder } from "./builder";

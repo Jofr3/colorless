@@ -21,7 +21,7 @@ import {
   typedEnergy,
   ONE_BASIC_DECK,
   finishOpeningSetup,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import { LuaSimulator } from "./simulator";
 import { effectMenu } from "./simulatorChoices";
 import { SimulatorOrder } from "./simulatorOrder";

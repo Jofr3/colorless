@@ -14,14 +14,12 @@ import {
   topUid,
   weaknessOf,
 } from "../cards";
-import type { KoSurvival } from "../continuous";
 import {
   attackBlockOf,
   attackerGatedReductionOf,
   attackerHasSpecialEnergy,
   benchShieldedFromDamage,
   berryReductionOf,
-  coinFlipShieldPrevents,
   coinRedoToolOf,
   countAttachedEnergy,
   deluxeBombOf,
@@ -36,8 +34,6 @@ import {
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   installedWeaknessRewriteOf,
-  koSurvivalClamp,
-  koSurvivalCoinFlip,
   NO_CONSUMABLE,
   opposingAttackDebuff,
   opposingToolAttackDebuff,
@@ -55,6 +51,8 @@ import {
   withWatchedRecoil,
   withWeaknessAmount,
 } from "../continuous";
+import type { KoSurvival } from "../damageCalc";
+import { coinFlipShieldPrevents, koSurvivalClamp, koSurvivalCoinFlip } from "../damageCalc";
 import type { EffectContext, EffectPrompt, EffectRecord, PokemonRef } from "../effectPrompt";
 import type { CardFilter, EffectOp, EffectSlot, OpOf } from "../effectTypes";
 import {
@@ -80,11 +78,12 @@ import {
 import type { GameEvent } from "../events";
 import type { CoinFace } from "../rng";
 import { flipCoin } from "../rng";
-// Import cycle with triggers.ts; safe because both ends are hoisted function declarations called
-// only at run time.
-import { damagedByAttackAbility, damagedToolTriggersOf } from "../triggers";
+import { programFor } from "../registry";
+import { damagedByAttackAbility, damagedToolTriggersOf } from "../triggerLookup";
 import type { GameState, InPlayPokemon, PendingStage, PokemonTarget, Seat } from "../types";
 import {
+  coinRedoKey,
+  spendAbilityUse,
   bodyAt,
   damageCountersOn,
   HP_PER_COUNTER,
@@ -366,6 +365,24 @@ function coinRedoOffer(
   const [ref] = sourceRef(state, ctx);
   const body = ref === undefined ? undefined : refPokemon(state, ref);
   return body === undefined ? null : coinRedoToolOf(state, body);
+}
+
+/**
+ * A Backtrack Badge offer answered yes: `COINS_REFLIPPED` and the Badge's once-per-turn key. A uid
+ * without `reflipAttackCoins` spends nothing.
+ */
+export function spendCoinRedo(
+  state: GameState,
+  seat: Seat,
+  toolUid: string,
+  count: number,
+  events: GameEvent[],
+): GameState {
+  const id = state.cardIdByUid[toolUid];
+  const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
+  if (redo === undefined) return state;
+  events.push({ type: "COINS_REFLIPPED", seat, uid: toolUid, count });
+  return spendAbilityUse(state, coinRedoKey(toolUid, redo.name));
 }
 
 /**

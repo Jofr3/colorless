@@ -33,11 +33,11 @@ import type {
   PokemonPlayAct,
   PokemonType,
 } from "./effectTypes";
-import { COPY_FAMILY_MARKER, timingGateFromAttackText } from "./effects";
-import type { GameEvent, StatusName } from "./events";
+import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
+import { timingGateFromAttackText } from "./effects";
+import type { StatusName } from "./events";
 // No cycle: phaseView.ts imports only types from here.
 import { phaseViewOf } from "./phaseView";
-import { flipCoin } from "./rng";
 import type {
   AttackTimingGate,
   EnergyProgram,
@@ -53,12 +53,13 @@ import type {
   HandAttachMark,
   InPlayPokemon,
   LockedAttack,
-  PendingStage,
   PlayerSide,
   Seat,
   SpecialConditions,
 } from "./types";
 import {
+  abilityUsedThisTurn,
+  coinRedoKey,
   damageCountersOn,
   inPlayOf,
   BENCH_MAX,
@@ -132,25 +133,6 @@ export function benchLimitForIds(
 }
 
 /**
- * §7.3: the Area Zero Underdepths state check: one `benchTrim` stage per seat whose Bench exceeds
- * `benchLimitOf`, `first` then the other seat, skipping seats already queued. When the Stadium
- * leaves, its owner discards first. The stage carries no count; `runBenchTrim` re-reads the excess.
- */
-export function benchTrimStages(
-  state: GameState,
-  first: Seat,
-  queued: readonly PendingStage[] = [],
-): PendingStage[] {
-  return [first, otherSeat(first)]
-    .filter(
-      (seat) =>
-        state.players[seat].bench.length > benchLimitOf(state, seat) &&
-        !queued.some((stage) => stage.kind === "benchTrim" && stage.seat === seat),
-    )
-    .map((seat): PendingStage => ({ kind: "benchTrim", seat }));
-}
-
-/**
  * §7.4: how many Tools `body` may have attached: 1, or a live `toolCapForName` cap when the body's
  * top card name contains its fragment (Rotom ex "Multi Adapter"; the holder counts itself). Holders
  * are the seat's own in-play Pokémon with a live Ability; several holders do not stack.
@@ -198,27 +180,6 @@ export function owesToolTrim(state: GameState, seat: Seat, body: InPlayPokemon):
     toolCapNames().some((part) => name.includes(part)) &&
     body.tools.length > toolCapOf(state, seat, body)
   );
-}
-
-/**
- * §7.4: Multi Adapter's "If this Ability goes away, discard Pokémon Tools from those Pokémon until
- * only 1 remains on each" as a state check: one `toolTrim` stage per seat with a body that
- * `owesToolTrim`, `first` then the other seat. Over-cap is the whole test, so any way the cap drops
- * is covered; a body not named by a raise is never trimmed.
- */
-export function toolTrimStages(
-  state: GameState,
-  first: Seat,
-  queued: readonly PendingStage[] = [],
-): PendingStage[] {
-  return [first, otherSeat(first)]
-    .filter((seat) => {
-      if (queued.some((stage) => stage.kind === "toolTrim" && stage.seat === seat)) return false;
-      const side = state.players[seat];
-      const bodies = inPlayOf(side);
-      return bodies.some((body) => owesToolTrim(state, seat, body));
-    })
-    .map((seat): PendingStage => ({ kind: "toolTrim", seat }));
 }
 
 /**
@@ -274,14 +235,6 @@ export function toolsInEffect(state: GameState, pokemon: InPlayPokemon): readonl
 }
 
 /**
- * The once-per-turn key Backtrack Badge spends on `allowances.abilitiesUsed` (`abilityUsedKey`'s
- * shape, on the Tool's uid).
- */
-export function coinRedoKey(toolUid: string, name: string): string {
-  return `${toolUid}:${name}`;
-}
-
-/**
  * The uid of a Backtrack Badge that may re-flip `body`'s attack coins now, or `null`: an in-effect
  * Tool with `reflipAttackCoins`, on a body whose in-play types include {C}, whose key is unused
  * this turn. Callers pass the attacking body, only after its own coins.
@@ -292,34 +245,10 @@ export function coinRedoToolOf(state: GameState, body: InPlayPokemon): string | 
     const id = state.cardIdByUid[uid];
     const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
     if (redo === undefined || !types.includes(redo.holderType)) continue;
-    if (state.allowances.abilitiesUsed.includes(coinRedoKey(uid, redo.name))) continue;
+    if (abilityUsedThisTurn(state, coinRedoKey(uid, redo.name))) continue;
     return uid;
   }
   return null;
-}
-
-/**
- * A Backtrack Badge offer answered yes: `COINS_REFLIPPED` and the Badge's once-per-turn key. A uid
- * without `reflipAttackCoins` spends nothing.
- */
-export function spendCoinRedo(
-  state: GameState,
-  seat: Seat,
-  toolUid: string,
-  count: number,
-  events: GameEvent[],
-): GameState {
-  const id = state.cardIdByUid[toolUid];
-  const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
-  if (redo === undefined) return state;
-  events.push({ type: "COINS_REFLIPPED", seat, uid: toolUid, count });
-  return {
-    ...state,
-    allowances: {
-      ...state.allowances,
-      abilitiesUsed: [...state.allowances.abilitiesUsed, coinRedoKey(toolUid, redo.name)],
-    },
-  };
 }
 
 /**
@@ -1497,71 +1426,6 @@ function foldLicences(out: PokemonPassives, passive: PassiveEffects, holder: Pas
   if (passive.evolveAsNamed !== undefined) out.evolveAsNamed.push(passive.evolveAsNamed);
 }
 
-/** §8.1 KO SURVIVAL — the HP `remaining` a clamped body is left with. The printed
-    number, converted once, here, where the family's other printed constants are
-    (`damageAttackerOnKo`'s counters are converted at the registry row for the same
-    reason): "its remaining HP becomes 10". */
-const KO_SURVIVAL_REMAINING_HP = 10;
-
-/**
- * Result of `koSurvivalClamp`: the new `damage` total and, when Survival Brace answered, its uid so
- * the damage write can discard it. `toolUid` is undefined for an Ability-only survival.
- */
-export type KoSurvival = { damage: number; toolUid: string | undefined };
-
-/**
- * §8.1 KO-survival clamp ("If this Pokémon has full HP and would be Knocked Out by damage from an
- * attack, it is not Knocked Out, and its remaining HP becomes 10."; also Survival Brace against
- * `attackerSeat`). Returns the new damage total, or null when it does not fire. It runs at the
- * damage writes, not KO detection, because "full HP" is only knowable before the hit lands; once
- * clamped, the body is simply not lethally damaged downstream. Placed counters are not damage and
- * never reach this. Uses `effectiveMaxHp` so HP bonuses count, and `>=` like `isLethallyDamaged`.
- */
-export function koSurvivalClamp(
-  state: GameState,
-  pokemon: InPlayPokemon,
-  dealt: number,
-  attackerSeat: Seat,
-): KoSurvival | null {
-  if (pokemon.damage !== 0) return null;
-  const toolUid = survivalBraceOf(state, pokemon, attackerSeat);
-  if (toolUid === undefined && !passivesOf(state, pokemon).survivesKoAtFullHp) return null;
-  const hp = effectiveMaxHp(state, pokemon);
-  if (hp === null) return null;
-  if (pokemon.damage + dealt < hp) return null;
-  // "its remaining HP becomes 10" — the damage total that leaves exactly that much
-  // standing. Floored, so a printing with 10 HP or less lands at 0 rather than
-  // negative damage; no such body exists in the pool and the floor is not load-
-  // bearing, it is `Math.max(0, …)` for the reason every other write site has one.
-  return { damage: Math.max(0, hp - KO_SURVIVAL_REMAINING_HP), toolUid };
-}
-
-/**
- * §8.1 coin-flip survival (Tenacious Body, Durable Body): "If this Pokémon would be Knocked Out by
- * damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining
- * HP becomes 10." Callers ask only when `koSurvivalClamp` returned null. Returns `[damage,
- * rngState]`; no coin unless a live source exists, max HP is known, the body is not already
- * lethally damaged, and the hit is lethal.
- */
-export function koSurvivalCoinFlip(
-  state: GameState,
-  pokemon: InPlayPokemon,
-  seat: Seat,
-  dealt: number,
-  events: GameEvent[],
-): [damage: number | null, rngState: number] {
-  const ability = passivesOf(state, pokemon).survivesKoOnCoinFlip;
-  if (ability === null) return [null, state.rngState];
-  const hp = effectiveMaxHp(state, pokemon);
-  if (hp === null || pokemon.damage >= hp || pokemon.damage + dealt < hp)
-    return [null, state.rngState];
-  const uid = topUid(pokemon);
-  if (uid === undefined) return [null, state.rngState];
-  const [face, rngState] = flipCoin(state.rngState);
-  events.push({ type: "ABILITY_COIN_FLIP", seat, uid, ability, result: face });
-  return [face === "heads" ? Math.max(0, hp - KO_SURVIVAL_REMAINING_HP) : null, rngState];
-}
-
 /**
  * §8.5: does `attacker` have one of the types the prevention aura names? Types are intersected
  * because dual types exist. An unresolvable attacker returns false (protects less).
@@ -1582,35 +1446,6 @@ export function preventsAttackerType(
  */
 export function preventedByDamageThreshold(threshold: number | undefined, damage: number): boolean {
   return threshold !== undefined && damage >= threshold;
-}
-
-/**
- * §8.5 coin-flip shield ("flip a coin. If heads, prevent that damage."). A single funnel because it
- * consumes RNG and every site must flip the same coins. Draws no coin when `damage` is 0, so
- * callers pass 0 when something else already prevented it; it must be the last prevention term. One
- * coin per source, all flipped even after heads. `seat` is the damaged body's owner. Kept out of
- * `passivesOf`, which must stay pure.
- */
-export function coinFlipShieldPrevents(
-  state: GameState,
-  pokemon: InPlayPokemon,
-  seat: Seat,
-  damage: number,
-  events: GameEvent[],
-): [prevented: boolean, rngState: number] {
-  if (damage <= 0) return [false, state.rngState];
-  const uid = topUid(pokemon);
-  if (uid === undefined) return [false, state.rngState];
-  const shields = passivesOf(state, pokemon).preventDamageOnCoinFlip;
-  let rngState = state.rngState;
-  let prevented = false;
-  for (const shield of shields) {
-    const [face, next] = flipCoin(rngState);
-    rngState = next;
-    events.push({ type: "ABILITY_COIN_FLIP", seat, uid, ability: shield.ability, result: face });
-    if (face === "heads") prevented = true;
-  }
-  return [prevented, rngState];
 }
 
 /**

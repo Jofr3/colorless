@@ -1,6 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { benchLimitForIds, benchLimitOf, benchTrimStages } from "./continuous";
+import { benchLimitForIds, benchLimitOf } from "./continuous";
+import { benchTrimStages } from "./stateChecks";
 import type { GameEvent } from "./events";
 import { applyAction, phaseViewOf } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";

@@ -82,6 +82,9 @@ import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
+  abilityUsedKey,
+  abilityUsedThisTurn,
+  spendAbilityUse,
   SEATS,
   answererOf,
   isFirstTurnOf,
@@ -658,27 +661,6 @@ export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[
   return options;
 }
 
-/** The `${uid}:${ability.name}` sentinel a `"sharedByName"` Ability keys on
-    INSTEAD of its own uid, so every copy of the card on a board collides into one
-    entry. Safe as a sentinel because a uid is `` `${seat}#${index}` `` (setup.ts)
-    and can never be `*` — the two key spaces are disjoint by construction. */
-const SHARED_ABILITY_UID = "*";
-
-/**
- * The key for the §9 once-per-turn Ability limit, shared by every reader and writer of
- * `allowances.abilitiesUsed`. `"sharedByName"` (Fezandipiti ex's "Flip the Script") drops the uid;
- * every other Ability keeps it.
- */
-export function abilityUsedKey(
-  uid: string,
-  // Takes only the two fields it reads, so triggered abilities with `oncePerTurn` can key through
-  // it too.
-  ability: Pick<AbilityProgram, "name"> & { oncePerTurn?: AbilityProgram["oncePerTurn"] },
-): string {
-  const keyUid = ability.oncePerTurn === "sharedByName" ? SHARED_ABILITY_UID : uid;
-  return `${keyUid}:${ability.name}`;
-}
-
 /**
  * Per-body Ability gates (`remainingHpAtMost`, `requiresEnergyType`, `benchedThisTurn`); `true`
  * when the Ability prints none. Remaining HP is measured against `effectiveMaxHp`, and an unknown
@@ -753,7 +735,7 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     return err("ABILITY_BENCH_ONLY", `${ability.name} can only be used from the Bench (§9)`);
   }
   const usedKey = abilityUsedKey(uid, ability);
-  if (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(usedKey)) {
+  if (ability.oncePerTurn && abilityUsedThisTurn(state, usedKey)) {
     return err("ABILITY_ALREADY_USED", `${ability.name} was already used this turn (§9)`);
   }
   // The Ability's printed board condition (Fezandipiti ex). Checked after the once-per-turn lock so
@@ -796,16 +778,7 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   const events: GameEvent[] = [
     { type: "ABILITY_USED", seat: action.seat, uid, ability: ability.name },
   ];
-  let next = state;
-  if (ability.oncePerTurn) {
-    next = {
-      ...next,
-      allowances: {
-        ...next.allowances,
-        abilitiesUsed: [...next.allowances.abilitiesUsed, usedKey],
-      },
-    };
-  }
+  const next = ability.oncePerTurn ? spendAbilityUse(state, usedKey) : state;
   return settleProgram(
     runProgram(
       next,

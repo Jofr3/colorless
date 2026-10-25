@@ -39,12 +39,10 @@ import {
   attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
   coinRedoToolOf,
-  spendCoinRedo,
   benchShieldedFromDamage,
   inPlayCardOf,
   boostedAttackBase,
   boostedAttackDamage,
-  coinFlipShieldPrevents,
   countAttachedEnergy,
   countDamageCountersInPlay,
   countBasicEnergyTypesInPlay,
@@ -62,8 +60,6 @@ import {
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   installedWeaknessRewriteOf,
-  koSurvivalClamp,
-  koSurvivalCoinFlip,
   lockedAttackIndexes,
   lockedAttackNames,
   NO_CONSUMABLE,
@@ -85,9 +81,10 @@ import {
   stadiumPreventsDamage,
   withWatchedRecoil,
 } from "./continuous";
+import { coinFlipShieldPrevents, koSurvivalClamp, koSurvivalCoinFlip } from "./damageCalc";
+import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
 import {
   bonusConsequentProgram,
-  COPY_FAMILY_MARKER,
   deriveAttackBonusConsequent,
   deriveAttackCopy,
   deriveAttackCoinFlip,
@@ -156,6 +153,7 @@ import {
   consumedTools,
   detonateDeluxeBomb,
   discardToPile,
+  spendCoinRedo,
 } from "./ops/damage";
 import { effectRefused } from "./effectTargets";
 import { runProgram } from "./interpreter";
@@ -165,7 +163,8 @@ import type { ParsedDamage } from "./cards";
 import type { AttackMenuEntry } from "./continuous";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS, shuffle } from "./rng";
 import type { CoinFace } from "./rng";
-import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from "./triggers";
+import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggerLookup";
+import { koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { koSurvivalClamp, passivesOf } from "./continuous";
+import { passivesOf } from "./continuous";
+import { koSurvivalClamp } from "./damageCalc";
 import { isLethallyDamaged } from "./flow";
 import { logFromEvents, programFor } from "./index";
 import type { GameEvent, GameState, LogContext, PokemonRef } from "./index";

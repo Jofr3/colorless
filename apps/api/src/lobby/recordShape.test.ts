@@ -1,10 +1,13 @@
 import type { GameEvent, GameState } from "@colorless/engine";
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { settleProgram } from "../../../../packages/engine/src/flow";
-import { runProgram } from "../../../../packages/engine/src/interpreter";
-import { completeSetup } from "../../../../packages/engine/src/testFixtures";
-import { freshAllowances, makeInPlay } from "../../../../packages/engine/src/types";
+import {
+  completeSetup,
+  freshAllowances,
+  makeInPlay,
+  runProgram,
+  settleProgram,
+} from "@colorless/engine/testing";
 import { MATCH_RECORD_VERSION, startMatch } from "./match";
 
 // A persisted record is read back only when its version matches, so any change to the shape the DO
