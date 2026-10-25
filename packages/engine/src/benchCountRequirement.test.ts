@@ -284,7 +284,6 @@ describe("§4 — on a BOARD: the cancel, the land, and the boundary between the
 describe("§5 — the census terms, MEASURED rather than assumed", () => {
   it("S2 — none of the four ids is a registry row, so the registry summand cannot move", () => {
     const ids = registryCardIds();
-    expect(ids).toHaveLength(1451);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

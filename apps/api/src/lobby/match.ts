@@ -132,6 +132,7 @@ export interface MatchRecord {
  * new required field on persisted engine state, or a new required field on an op that can park in
  * `phase.cont`. Widenings (new union members, optional fields) do not bump it. A mismatched record
  * is retired and the players are told to re-ready, because the Durable Object has no migrations.
+ * `recordShape.test.ts` pins a skeleton of the persisted shape to this number.
  */
 export const MATCH_RECORD_VERSION = 50;
 
