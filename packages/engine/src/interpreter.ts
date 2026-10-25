@@ -238,6 +238,7 @@ import {
   taxDefender,
   weakenDefenderAttacks,
 } from "./ops/locks";
+import { type ParkingOpName, traitsOf } from "./ops/traits";
 import {
   attachEachFromDiscardNote,
   attachFromDeckNote,
@@ -554,31 +555,11 @@ function scoredSlot(
 
 /** The slot a parking op will file its answer under, if any. */
 function recordSlotOf(op: EffectOp): EffectSlot | undefined {
-  return op.op === "payFromHand" ||
-    op.op === "discardPileRetrieval" ||
-    op.op === "attachFromDeck" ||
-    op.op === "bottomFromOpponentHand" ||
-    op.op === "discardEnergy" ||
-    // Recording ops whose park note must state what the answer buys. Omitting one is silent:
-    // `withConsequence` would drop the clause.
-    op.op === "switchActive" ||
-    op.op === "gust" ||
-    op.op === "searchDeck" ||
-    op.op === "attachFromHand" ||
-    op.op === "revealFromHand"
-    ? op.recordAs
-    : // Always files the fixed `placed` slot.
-      op.op === "putCountersOnSelfChosen"
-      ? "placed"
-      : undefined;
+  const slot = traitsOf(op)?.recordSlot;
+  if (slot === undefined) return undefined;
+  if (slot !== "recordAs") return slot.fixed;
+  return "recordAs" in op ? op.recordAs : undefined;
 }
-
-// `discardTools` is not listed: it has no `recordAs`, since no card pairs a Tool discard with an
-// "If you do," consequent.
-
-// `turnPrizeFaceUp` and `randomFromOpponentHand` record but are not listed: their gates wrap a
-// second gate and an `optional` that `describeBranch` cannot phrase, and the switch is asked by its
-// own confirm.
 
 /**
  * Does the record satisfy this gate? A whiffed op files an empty array, so the length is checked,
@@ -1231,18 +1212,9 @@ export function startlingDropRetort(
   return next;
 }
 
-/**
- * Ops that move damage counters between Pokémon, which Patrat "Watchful Eye" blocks. An in-place
- * swap that keeps counters on the body moves none.
- */
+/** Does the op move damage counters between Pokémon, which Patrat "Watchful Eye" blocks? */
 export function isCounterMoveOp(op: EffectOp): boolean {
-  return (
-    op.op === "moveCountersToDefender" ||
-    op.op === "moveCountersChosen" ||
-    op.op === "moveCounterOwnChosen" ||
-    op.op === "moveCountersToOpponentChosen" ||
-    op.op === "moveCountersOpponentAnyWay"
-  );
+  return traitsOf(op)?.movesCounters === true;
 }
 
 /** The three gates are spliced by runProgram's queue loop, so they never reach `stepOp`. */
@@ -3430,100 +3402,8 @@ function parkOrForce(
   };
 }
 
-/**
- * The ops `applyChoice` never answers, each with whether a program running it can still park. The
- * gates splice their branches, and a coin flip parks a Backtrack Badge offer before its branch.
- * Some ops schedule ops that park. The copy-attack and attack-coin offers are parked and answered
- * by attack.ts.
- */
-export const UNANSWERED_OPS = {
-  applyStatus: "neverParks",
-  boostAttack: "neverParks",
-  boostSideAttacksThisTurn: "neverParks",
-  bottomDeckTop: "neverParks",
-  bountyDefender: "neverParks",
-  bountyThisAttack: "neverParks",
-  chooseOneOffered: "mayPark",
-  clearStatus: "neverParks",
-  coinFlipGate: "mayPark",
-  conditionGate: "neverParks",
-  counterEachAll: "neverParks",
-  countersOnRecordedBody: "neverParks",
-  counterUntilRemainingHp: "neverParks",
-  cycleOwnPrizes: "neverParks",
-  damageActive: "neverParks",
-  damageDefender: "neverParks",
-  damageNewActive: "neverParks",
-  damageSelf: "neverParks",
-  damageSubject: "neverParks",
-  devolveEach: "neverParks",
-  discardDeckBottom: "neverParks",
-  discardDeckTop: "neverParks",
-  discardDefender: "neverParks",
-  discardFromOpponentHand: "neverParks",
-  discardHand: "neverParks",
-  discardStadium: "neverParks",
-  drawCards: "neverParks",
-  drawUntilHandSize: "neverParks",
-  eachPlayerTakesPrize: "neverParks",
-  evolveFromDeckEachBenched: "mayPark",
-  exposeDefender: "neverParks",
-  exposeSelf: "neverParks",
-  flipLockAttack: "neverParks",
-  flipLockTrainerPlay: "neverParks",
-  handRefresh: "neverParks",
-  heal: "neverParks",
-  healEach: "neverParks",
-  healEachAll: "neverParks",
-  healSubject: "neverParks",
-  installNoWeakness: "neverParks",
-  installRecoil: "neverParks",
-  installSideAttackBlock: "neverParks",
-  installSideDamageReductionNextTurn: "neverParks",
-  knockOutDefender: "neverParks",
-  knockOutEach: "neverParks",
-  knockOutSelf: "neverParks",
-  lockSideAttacks: "neverParks",
-  lockSideRetreat: "neverParks",
-  markHandAttach: "neverParks",
-  preventAttack: "neverParks",
-  preventAttackUse: "neverParks",
-  preventDamage: "neverParks",
-  preventHandPlay: "neverParks",
-  preventRetreat: "neverParks",
-  randomFromOpponentHand: "neverParks",
-  recordGate: "neverParks",
-  recoverOneStatus: "mayPark",
-  reduceDamage: "neverParks",
-  reflipAttackCoins: "mayPark",
-  returnSelf: "neverParks",
-  retypeDefenderWeakness: "neverParks",
-  revealDeckBottomCount: "neverParks",
-  revealOpponentHand: "neverParks",
-  revealTopDiscardMatching: "neverParks",
-  scheduleCounters: "neverParks",
-  scheduleDiscard: "neverParks",
-  scheduleEndOfTurnHandDiscard: "neverParks",
-  scheduleKnockOut: "neverParks",
-  shuffleDeck: "neverParks",
-  shufflePlayedCardIntoDeck: "neverParks",
-  spreadDamage: "neverParks",
-  swapTurnedPrizeWithRevealed: "neverParks",
-  switchWithDeckNamed: "neverParks",
-  takePrize: "neverParks",
-  taxDefender: "neverParks",
-  useAttackAs: "mayPark",
-  useFoundAttackAs: "mayPark",
-  useInPlayAttackAs: "mayPark",
-  useMilledSupporterEffect: "mayPark",
-  weakenDefenderAttacks: "neverParks",
-  winGame: "neverParks",
-} as const satisfies { readonly [K in EffectOp["op"]]?: "neverParks" | "mayPark" };
-
-type UnansweredOp = OpOf<keyof typeof UNANSWERED_OPS>;
-
-function isUnanswered(op: EffectOp): op is UnansweredOp {
-  return Object.hasOwn(UNANSWERED_OPS, op.op);
+function answersChoice(op: EffectOp): op is OpOf<ParkingOpName> {
+  return traitsOf(op)?.parks === true;
 }
 
 /** Apply a parked op given its validated choice. The auto-resolve path calls
@@ -3539,7 +3419,7 @@ export function applyChoice(
   record: EffectRecord,
   events: GameEvent[],
 ): GameState {
-  if (isUnanswered(op)) return state;
+  if (!answersChoice(op)) return state;
   switch (op.op) {
     // Backtrack Badge: "yes" spends the once-per-turn key and files `COINS_REFLIPPED`; "no" moves
     // nothing.

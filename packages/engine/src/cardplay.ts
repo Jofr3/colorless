@@ -77,6 +77,7 @@ import {
 } from "./ops/board";
 import { handCostAction } from "./promptText";
 import type { AbilityProgram, StadiumAbility } from "./programTypes";
+import { type PlayableOpName, traitsOf } from "./ops/traits";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
@@ -1002,6 +1003,119 @@ function sweepAlternativesAllWhiff(
   return sweeps > 0 && !anyActs;
 }
 
+type WhiffCheck<K extends PlayableOpName> = (
+  state: GameState,
+  op: OpOf<K>,
+  seat: Seat,
+  sourceUid: string | undefined,
+) => boolean;
+
+/**
+ * Per op, whether the board leaves it only able to whiff, which refuses the card. `attachEnergyFrom`
+ * is checked as alternatives in `attachAlternativesAllWhiff`, not per op. The other checks stay per
+ * op because some are costs. `attachFromTop` and `attachFromDeck` are not checked: every card with
+ * them also shuffles, which is an effect. `payFromHand` is checked by the callers via
+ * `handCostUnmet`.
+ */
+const ONLY_WHIFFS: { readonly [K in PlayableOpName]: WhiffCheck<K> } = {
+  // Uses the op's own candidate funnel, not the Bench length, because riders can narrow it
+  // (Lisia's Appeal: Basics only).
+  gust: (state, op, seat) => gustTargets(state, seat, op).length === 0,
+  // Spiteful Evolution: "Choose a card in your hand that evolves from this Pokémon". The hand is
+  // checked; the deck form stays ungated.
+  evolveFromDeck: (state, op, seat, sourceUid) =>
+    op.fromHand === true && !evolveFromHandAvailable(state, seat, sourceUid),
+  // Repel: an empty opponent Bench refuses the Item (Bench size is public).
+  opponentSwitchOut: (state, _op, seat) => state.players[otherSeat(seat)].bench.length === 0,
+  // Uses `snipeTargets` because `opponentAny` can target the Active. `count: "all"` is exempt: it
+  // resolves inline and an empty set is a silent no-op, not an empty prompt.
+  damageChosen: (state, op, seat) =>
+    op.count !== "all" && snipeTargets(state, seat, op).length === 0,
+  // Only a rider (`remainingHpAtMost`, Bianca's Devotion) can empty this set; asked
+  // unconditionally so this line need not know which riders can.
+  healChosen: (state, op, seat) => healChosenTargets(state, seat, op).length === 0,
+  // Blowtorch's "Choose 1": no branch with a target means the Item can only whiff.
+  chooseOneOffered: (state, op, seat) => offeredBranches(state, seat, op).length === 0,
+  // Strange Timepiece: no own evolved body of the type, or Milotic stopping the cards reaching
+  // the hand, means the Item can only whiff.
+  devolveChosen: (state, op, seat) =>
+    op.whose === "self" && !ownDevolveAvailable(state, seat, op.pokemonType),
+  bottomFromOpponentHand: (state, op, seat) =>
+    // A full opponent Bench is public, so it refuses the Bench arm even when the hand has a match.
+    (op.dest === "bench" &&
+      state.players[otherSeat(seat)].bench.length >= benchLimitOf(state, otherSeat(seat))) ||
+    // An empty opponent hand is PUBLIC knowledge (the count shows), so "this can only whiff" is a
+    // fact the board states — the Catcher/Hammer class, not Poké Ball's. Reads hand LENGTH and
+    // never the op's filter: whether a non-empty hidden hand holds a match is exactly what the
+    // game state does NOT establish (ruling/284's line), so a filtered op into a matchless hand
+    // stays playable and reveals — which is also the played card working as printed (the reveal
+    // happens; the pick whiffs).
+    state.players[otherSeat(seat)].hand.length === 0,
+  // Tyme names "a Pokémon in your hand": with none, the card can only whiff.
+  opponentGuessesHp: (state, _op, seat) => handPokemonUids(state, seat).length === 0,
+  // Uses the op's own candidate function, which handles subgroup filters (Team Rocket's Giovanni)
+  // and `fromSource` (Meowscarada's "if this Pokémon is on your Bench"). A gated consequent is
+  // not scanned, so Giovanni with an empty opponent Bench still switches.
+  switchActive: (state, op, seat, sourceUid) =>
+    switchActiveTargets(state, seat, op, sourceUid).length === 0,
+  // Glass Trumpet: no Basic Energy in the discard pile or no Benched {C} body means the Item can
+  // only whiff.
+  attachFromDiscard: (state, op, seat) => {
+    const offer = attachFromDiscardOffer(state, seat, op);
+    return offer.candidates.length === 0 || offer.targets.length === 0;
+  },
+  // Lethargic Charge: no Energy card in hand, or no matching Active, means the attach can only
+  // whiff. Only the singular `one` form is gated.
+  attachFromHand: (state, op, seat, sourceUid) =>
+    op.one === true && !attachFromHandPlayable(state, seat, op, sourceUid),
+  // No movable Energy, or fewer than two Pokémon in play, means the move can only whiff (Energy
+  // Switch, Poppy). The source uid is passed for the uid-resolved routes.
+  moveEnergy: (state, op, seat, sourceUid) => !moveEnergyPlayable(state, seat, op, sourceUid),
+  // A chosen Tool discard with nothing to choose can only whiff (Tool Scrapper). `"all"` is
+  // handled by the sweep alternatives.
+  discardTools: (state, op, seat) =>
+    op.count !== "all" && discardableTools(state, seat, op.sides).length === 0,
+  // Ruffian with no opponent body carrying a Tool or Special Energy can only whiff.
+  discardToolAndSpecialEnergyChosen: (state, _op, seat) => ruffianBodies(state, seat).length === 0,
+  // Ogre's Mask with no qualifying body in play or no qualifying card in the discard pile can
+  // only whiff.
+  switchWithDiscardNamed: (state, op, seat) =>
+    swapBodies(state, seat, op.filter).length === 0 ||
+    swapDiscardCards(state, seat, op.filter).length === 0,
+  // Adrena-Brain with no damaged own body or no opponent body can only whiff.
+  moveCountersToOpponentChosen: (state, _op, seat) =>
+    counterToOpponentSources(state, seat).length === 0 ||
+    (state.players[otherSeat(seat)].active === null &&
+      state.players[otherSeat(seat)].bench.length === 0),
+  // A hand return the Milotic lock wholly blocks can only whiff (Scoop Up Cyclone with every own
+  // body locked). Own board only.
+  returnBenched: (state, op, seat) =>
+    op.dest === "hand" && op.whose === "self" && inPlayToHandBlocked(state, seat),
+  // Rocket Brain with no damaged own Team Rocket's body, or no other own body to move a counter
+  // onto, can only whiff.
+  moveCounterOwnChosen: (state, op, seat) =>
+    !counterOwnSources(state, seat, op.ownerPokemon).some(
+      (ref) => counterOwnDestinations(state, seat, ref.spot).length > 0,
+    ),
+  // Nothing matching means the discard can only whiff (Giacomo with no Special Energy in play).
+  // For `from: "self"` this is a cost gate (Kilowattrel), answered on `sourceUid`. It also
+  // applies to Crushing Hammer through the coin-gate descent. `count: "all"` sweeps are handled
+  // by `sweepAlternativesAllWhiff`.
+  discardEnergy: (state, op, seat, sourceUid) =>
+    op.count !== "all" && !discardEnergyPlayable(state, seat, op, sourceUid),
+};
+
+function opOnlyWhiffs(
+  state: GameState,
+  op: EffectOp,
+  seat: Seat,
+  sourceUid: string | undefined,
+): boolean {
+  if (traitsOf(op)?.playable !== true) return false;
+  const check = ONLY_WHIFFS[op.op as PlayableOpName] as WhiffCheck<PlayableOpName>;
+  return check(state, op as OpOf<PlayableOpName>, seat, sourceUid);
+}
+
 export function programPlayable(
   state: GameState,
   program: readonly EffectOp[],
@@ -1029,162 +1143,10 @@ export function programPlayable(
       }
       continue;
     }
-    // Uses the op's own candidate funnel, not the Bench length, because riders can narrow it
-    // (Lisia's Appeal: Basics only).
-    if (op.op === "gust" && gustTargets(state, seat, op).length === 0) return false;
-    // Spiteful Evolution: "Choose a card in your hand that evolves from this Pokémon". The hand is
-    // checked; the deck form stays ungated.
-    if (
-      op.op === "evolveFromDeck" &&
-      op.fromHand === true &&
-      !evolveFromHandAvailable(state, seat, sourceUid)
-    ) {
-      return false;
-    }
-    // Repel: an empty opponent Bench refuses the Item (Bench size is public).
-    if (op.op === "opponentSwitchOut" && state.players[otherSeat(seat)].bench.length === 0) {
-      return false;
-    }
-    // Uses `snipeTargets` because `opponentAny` can target the Active. `count: "all"` is exempt: it
-    // resolves inline and an empty set is a silent no-op, not an empty prompt.
-    if (
-      op.op === "damageChosen" &&
-      op.count !== "all" &&
-      snipeTargets(state, seat, op).length === 0
-    ) {
-      return false;
-    }
-    // Only a rider (`remainingHpAtMost`, Bianca's Devotion) can empty this set; asked
-    // unconditionally so this line need not know which riders can.
-    if (op.op === "healChosen" && healChosenTargets(state, seat, op).length === 0) return false;
-    // Blowtorch's "Choose 1": no branch with a target means the Item can only whiff.
-    if (op.op === "chooseOneOffered" && offeredBranches(state, seat, op).length === 0) return false;
-    // Strange Timepiece: no own evolved body of the type, or Milotic stopping the cards reaching
-    // the hand, means the Item can only whiff.
-    if (
-      op.op === "devolveChosen" &&
-      op.whose === "self" &&
-      !ownDevolveAvailable(state, seat, op.pokemonType)
-    ) {
-      return false;
-    }
-    // A full opponent Bench is public, so it refuses the Bench arm; checked before the hand test
-    // because it refuses even when the hand has a match.
-    if (
-      op.op === "bottomFromOpponentHand" &&
-      op.dest === "bench" &&
-      state.players[otherSeat(seat)].bench.length >= benchLimitOf(state, otherSeat(seat))
-    ) {
-      return false;
-    }
-    // Tyme names "a Pokémon in your hand": with none, the card can only whiff.
-    if (op.op === "opponentGuessesHp" && handPokemonUids(state, seat).length === 0) return false;
-    if (op.op === "bottomFromOpponentHand" && state.players[otherSeat(seat)].hand.length === 0) {
-      // An empty opponent hand is PUBLIC knowledge (the count shows), so
-      // "this can only whiff" is a fact the board states — the Catcher/Hammer
-      // class, not Poké Ball's. Reads hand LENGTH and never the op's filter:
-      // whether a non-empty hidden hand holds a match is exactly what the game
-      // state does NOT establish (ruling/284's line), so a filtered op into a
-      // matchless hand stays playable and reveals — which is also the played
-      // card working as printed (the reveal happens; the pick whiffs).
-      return false;
-    }
-    // Uses the op's own candidate function, which handles subgroup filters (Team Rocket's Giovanni)
-    // and `fromSource` (Meowscarada's "if this Pokémon is on your Bench"). A gated consequent is
-    // not scanned, so Giovanni with an empty opponent Bench still switches.
-    if (op.op === "switchActive" && switchActiveTargets(state, seat, op, sourceUid).length === 0) {
-      return false;
-    }
-    // `attachEnergyFrom` is checked as alternatives in `attachAlternativesAllWhiff`, not per op.
-    // The other gates here stay per op because some are costs. `attachFromTop` and `attachFromDeck`
-    // are not gated: every card with them also shuffles, which is an effect. `payFromHand` is
-    // checked by the callers via `handCostUnmet`.
-    //
-    // Glass Trumpet: no Basic Energy in the discard pile or no Benched {C} body means the Item can
-    // only whiff.
-    if (op.op === "attachFromDiscard") {
-      const offer = attachFromDiscardOffer(state, seat, op);
-      if (offer.candidates.length === 0 || offer.targets.length === 0) return false;
-    }
-    // Lethargic Charge: no Energy card in hand, or no matching Active, means the attach can only
-    // whiff. Only the singular `one` form is gated.
-    if (
-      op.op === "attachFromHand" &&
-      op.one === true &&
-      !attachFromHandPlayable(state, seat, op, sourceUid)
-    ) {
-      return false;
-    }
-    if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {
-      // No movable Energy, or fewer than two Pokémon in play, means the move can only whiff (Energy
-      // Switch, Poppy). The source uid is passed for the uid-resolved routes.
-      return false;
-    }
-    // A chosen Tool discard with nothing to choose can only whiff (Tool Scrapper). `"all"` is
-    // handled by the sweep alternatives.
-    if (
-      op.op === "discardTools" &&
-      op.count !== "all" &&
-      discardableTools(state, seat, op.sides).length === 0
-    ) {
-      return false;
-    }
-    // Ruffian with no opponent body carrying a Tool or Special Energy can only whiff.
-    if (op.op === "discardToolAndSpecialEnergyChosen" && ruffianBodies(state, seat).length === 0) {
-      return false;
-    }
+    if (opOnlyWhiffs(state, op, seat, sourceUid)) return false;
     // Patrat "Watchful Eye": counter moves are locked while a holder is in play, so such a card is
     // refused.
     if (isCounterMoveOp(op) && countersMoveLocked(state)) return false;
-    // Ogre's Mask with no qualifying body in play or no qualifying card in the discard pile can
-    // only whiff.
-    if (
-      op.op === "switchWithDiscardNamed" &&
-      (swapBodies(state, seat, op.filter).length === 0 ||
-        swapDiscardCards(state, seat, op.filter).length === 0)
-    ) {
-      return false;
-    }
-    // Adrena-Brain with no damaged own body or no opponent body can only whiff.
-    if (
-      op.op === "moveCountersToOpponentChosen" &&
-      (counterToOpponentSources(state, seat).length === 0 ||
-        (state.players[otherSeat(seat)].active === null &&
-          state.players[otherSeat(seat)].bench.length === 0))
-    ) {
-      return false;
-    }
-    // A hand return the Milotic lock wholly blocks can only whiff (Scoop Up Cyclone with every own
-    // body locked). Own board only.
-    if (
-      op.op === "returnBenched" &&
-      op.dest === "hand" &&
-      op.whose === "self" &&
-      inPlayToHandBlocked(state, seat)
-    ) {
-      return false;
-    }
-    // Rocket Brain with no damaged own Team Rocket's body, or no other own body to move a counter
-    // onto, can only whiff.
-    if (
-      op.op === "moveCounterOwnChosen" &&
-      !counterOwnSources(state, seat, op.ownerPokemon).some(
-        (ref) => counterOwnDestinations(state, seat, ref.spot).length > 0,
-      )
-    ) {
-      return false;
-    }
-    // `count: "all"` sweeps are handled by `sweepAlternativesAllWhiff`.
-    if (
-      op.op === "discardEnergy" &&
-      op.count !== "all" &&
-      !discardEnergyPlayable(state, seat, op, sourceUid)
-    ) {
-      // Nothing matching means the discard can only whiff (Giacomo with no Special Energy in play).
-      // For `from: "self"` this is a cost gate (Kilowattrel), answered on `sourceUid`. It also
-      // applies to Crushing Hammer through the coin-gate descent.
-      return false;
-    }
   }
   return true;
 }

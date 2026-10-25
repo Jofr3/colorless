@@ -100,7 +100,11 @@ only the conclusion.
   `continuous.ts` stays a read model that pushes no events and draws no RNG. The op contract lives in `effectTypes.ts`, program
   types in `programTypes.ts`, and stepOp's arm bodies in `ops/*.ts`,
   `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
-  `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Test
+  `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Every op
+  declares its traits in `OP_TRAITS` (`ops/traits.ts`, type-only imports):
+  whether it parks, its record slot, whether it moves counters, and whether
+  `programPlayable` asks its whiff check (`ONLY_WHIFFS` in `cardplay.ts`). The
+  op-generic sites read that table instead of keeping their own op lists. Test
   helpers live in `fixtures/` behind the `testFixtures.ts` barrel (`driveSetup`,
   `patchSide`, `roundTrip`, `mustDerive`, `seedForFlips`). The fixture pool's
   `fix-*` card programs live in `fixtures/registry.ts`, not in `registry.ts`:
