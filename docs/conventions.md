@@ -62,6 +62,10 @@ only the conclusion.
   precheck fails when a row's text sits in another symbol: after a rename, pass
   `--write --accept-symbols`; if the row landed on a twin, re-point it. `--write`
   fills in a missing symbol. Re-run every re-anchored row.
+- CI's `mutants` job runs `bun run mutants:sample --base <ref>`: every row whose
+  `file` or killer the diff touches (at most 60), plus 30 rows drawn with the
+  commit sha as seed. A SURVIVED, stale or errored row fails the job; reproduce
+  it locally with `bun run mutants --only <id>`.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn` (`types.ts`); `OpOf<K>` for one `EffectOp`
