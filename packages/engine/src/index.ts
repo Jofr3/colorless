@@ -197,6 +197,7 @@ export { formatElapsed, logFromEvents } from "./log";
 export type { LogContext } from "./log";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
+export { GAME_STATE_VERSION, migrateGameState, poolIdsNeededFor } from "./persist";
 export { pendingMulligansOf } from "./mulligans";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
 export {

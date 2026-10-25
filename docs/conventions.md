@@ -77,10 +77,21 @@ only the conclusion.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
   seeded play-forward sweeps; `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
   for LobbyDO; `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
-  A change to the stored game shape fails `recordShape.test.ts` until
-  `MATCH_RECORD_VERSION` is bumped and the snapshot rewritten with `-u`. A change to the
-  Lua wire fails `src/lua/wireFixtures.test.ts`; regenerate its fixtures with `-u` and
-  update `frontend/lua/tests/wire_fixtures.lua` to match.
+  A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
+  until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
+  rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
+  regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` to match.
+- **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
+  `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
+  keeps only the record envelope and `loadMatchRecord`, and calls `poolIdsNeededFor` and
+  `migrateGameState` for the state. To bump: raise `GAME_STATE_VERSION`, rewrite the shape
+  snapshot, and give the previous version a `MIGRATION_STEPS` entry if its states can be
+  carried forward: `unchanged` when the old bytes already read correctly, `withDefaultKeys`
+  when the change only adds side installs (`clearedSideInstalls`) or attack-effect fields
+  (`clearedAttackEffects`), or a hand-written step otherwise. A version with no entry is
+  retired. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
+  `storedAt`/`migrateStored`/`mustMigrate` fixtures; the DO's read is tested in
+  `apps/api/src/lobby/matchLoad.test.ts`.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag
@@ -2052,8 +2063,8 @@ neither.
 
 ⚠️ **The exact precedents are usually already written down.** D333 measured no bump
 for a **widened `max` union** and D334 none for an **added optional `exact`**, both
-on the SAME op (`lookAtTopN`), and both are quoted verbatim inside
-`MATCH_RECORD_VERSION`'s own doc block. Read that block for your shape before
+on the SAME op (`lookAtTopN`); `GAME_STATE_VERSION`'s doc block (`persist.ts`) states the
+rule they follow, and `docs/decisions.md` holds the rulings. Read both for your shape before
 reasoning from the type's name.
 
 ## An op's arity doctrine can have a hole nothing has ever reached (D441)
