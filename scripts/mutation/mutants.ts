@@ -24423,8 +24423,9 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 **D480's LIVE WITNESS, RE-RUN AS A ROW — the defect that motivated this whole slice, at the exact byte where it happened.** A declared survivor's reason is keyed `why` where the runner reads `reason`. At D480 this shipped GREEN through `bun run check` and surfaced only when a probe printed `undefined`, because `scripts/` was outside every tsconfig `include`; the mutation corpus is annotated `MUTANTS: Mutant[]`, so the excess-property check was always there and nothing was running it. ⚠️ **THE KILLER IS `bun run typecheck` AND IT COULD NOT HAVE BEEN, ONE COMMIT AGO** — that is the whole content of the row. `tsc -b` now answers TS2353 at `mutants.ts:25868` in 37 seconds, where the only instrument that could previously see it was a ~2.7-hour whole-corpus sweep.",
     file: "scripts/mutation/mutants.ts",
     symbol: "MUTANTS",
-    find: '      reason: "Every printed card id in this catalog',
-    replace: '      why: "Every printed card id in this catalog',
+    find: '      kind: "equivalent",\n      reason:\n        "D196 recorded this as EQUIVALENT rather than dropping it.',
+    replace:
+      '      kind: "equivalent",\n      why:\n        "D196 recorded this as EQUIVALENT rather than dropping it.',
     expectKilledBy: [],
     killedByCommand: ["bun", "run", "typecheck"],
   },
