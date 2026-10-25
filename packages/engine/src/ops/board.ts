@@ -1,6 +1,5 @@
 import { cardOfUid, matchesFilter, topUid } from "../cards";
 import {
-  benchTrimStages,
   effectiveMaxHp,
   inPlayCardOf,
   inPlayToHandBlocked,
@@ -31,9 +30,8 @@ import {
   withBodyAt,
 } from "../effectTargets";
 import type { GameEvent, StatusName } from "../events";
-// Import cycle with flow.ts; safe because both ends are hoisted function declarations called only
-// at run time.
-import { finishGame } from "../flow";
+import { finishGame } from "../outcome";
+import { benchTrimStages } from "../stateChecks";
 import { shuffle } from "../rng";
 // Import cycle with triggers.ts; safe because both ends are hoisted function declarations called
 // only at run time.

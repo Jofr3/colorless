@@ -1,7 +1,7 @@
 import { formatElapsed, logFromEvents, otherSeat, redactGame, type Seat } from "@colorless/engine";
 import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { ALL_BASIC_DECK, driveSetup } from "../../../../packages/engine/src/testFixtures";
+import { ALL_BASIC_DECK, driveSetup } from "@colorless/engine/testing";
 import {
   applyMatchAction,
   beginMatch,

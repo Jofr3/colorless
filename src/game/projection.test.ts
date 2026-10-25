@@ -39,7 +39,7 @@ import {
   setConditions,
   setDamage,
   setPrizes,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import { cardImageUrl } from "../lib/api";
 import { projectGameState, projectionFromRedacted } from "./projection";
 

@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { abilityUsedKey } from "./cardplay";
+import { abilityUsedKey } from "./types";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";

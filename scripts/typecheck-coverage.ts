@@ -5,10 +5,10 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { fail, isRecord, linesWithOverflow, parseJson } from "./lib/cli";
-import { localBin, REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
+import { expandedCheckScript, fail, isRecord, linesWithOverflow, parseJson } from "./lib/cli";
+import { localBin, REPO_ROOT, repoSourceFiles } from "./lib/repo";
 
 /** Extensions `tsc` typechecks that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
@@ -153,22 +153,7 @@ export function selfCheck(): string[] {
  * calls), since a guard removed from `check` looks the same as one that passes.
  */
 function checkRunsThisGuard(): string[] {
-  const pkg = parseJson(
-    readFileSync(repoPath("package.json"), "utf8"),
-    "package.json",
-    (v): v is { scripts?: Record<string, unknown> } =>
-      isRecord(v) && (v.scripts === undefined || isRecord(v.scripts)),
-  );
-  const scripts = pkg.scripts ?? {};
-  const expand = (name: string, seen: Set<string>): string => {
-    const script = scripts[name];
-    if (typeof script !== "string" || seen.has(name)) return "";
-    seen.add(name);
-    return script.replace(/bun run ([\w:-]+)/g, (call, inner: string) =>
-      inner in scripts ? expand(inner, seen) : call,
-    );
-  };
-  const check = expand("check", new Set());
+  const check = expandedCheckScript();
   if (!check.includes(SELF_PATH)) {
     return [
       [

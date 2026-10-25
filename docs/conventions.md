@@ -44,12 +44,20 @@ only the conclusion.
   numbers in code or tests — that record belongs in `docs/decisions.md` and git.
   Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
-  calling work done. It is `check:static` (coverage guards, `tsc -b`, `biome ci`,
-  Lua constants, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  calling work done. It is `check:static` (coverage guards, the import graph,
+  `tsc -b`, `biome ci`, Lua constants, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
   migrations, the API deploy and then the web deploy, in that order.
+- `scripts/import-graph.ts --check` fails on any runtime import cycle other than
+  the recorded `RECORDED_CYCLE` (flow, interpreter, ops/board, ops/energy,
+  triggers: a program step can knock out, which runs triggers and the turn
+  flow, which run programs), and on a relative import that crosses a workspace
+  root (each package, each app, `src`, `scripts`). Import another root through
+  its package entry: `@colorless/engine/testing` is the fixture barrel and
+  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads. A pure helper that
+  would close a new cycle belongs in a lower module.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
   module-level state that leaks between files; `app` covers everything else.
@@ -75,10 +83,21 @@ only the conclusion.
   update `frontend/lua/tests/wire_fixtures.lua` to match.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
-  `HP_PER_COUNTER`/`damageCountersOn` (`types.ts`); `OpOf<K>` for one `EffectOp`
+  `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag
+  `abilityUsedKey`/`coinRedoKey`/`abilityUsedThisTurn`/`spendAbilityUse`
+  (`types.ts`); `OpOf<K>` for one `EffectOp`
   variant (`effectTypes.ts`); `positiveInt`, `printedFlipCount` and the gate
-  builders in `effects.ts`; `searchThenShuffle`/`activated`/`berry`
-  (`registryBuilders.ts`). The op contract lives in `effectTypes.ts`, program
+  builders in `effects.ts`; the printed-text vocabulary (`STATUS_WORD_OF`, the
+  type-code maps, `foldApostrophes`, `COPY_FAMILY_MARKER`) in
+  `deriver/vocabulary.ts`, which runtime modules import instead of `effects.ts`;
+  `searchThenShuffle`/`searchTopOrderProgram`/`activated`/`berry`
+  (`registryBuilders.ts`). State checks (`discardMisplacedEnergy`, the trim
+  stages, `postStepChecks`, which `advance` and `applyAction` both call) live in
+  `stateChecks.ts`; `finishGame` in `outcome.ts`; the pure trigger lookups
+  `triggersOf`/`damagedByAttackAbility`/`damagedToolTriggersOf` in
+  `triggerLookup.ts`; the KO-survival clamp and the RNG-consuming damage coins
+  (`koSurvivalCoinFlip`, `coinFlipShieldPrevents`) in `damageCalc.ts`, so
+  `continuous.ts` stays a read model that pushes no events and draws no RNG. The op contract lives in `effectTypes.ts`, program
   types in `programTypes.ts`, and stepOp's arm bodies in `ops/*.ts`,
   `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
   `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Test

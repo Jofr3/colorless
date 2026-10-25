@@ -12,7 +12,7 @@ import {
   must,
   mustApply,
   mustCreate,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import type { CardMoveRequest, CardPlacement } from "./board";
 import { moveToAction, type MoveTranslationContext } from "./moveToAction";
 import { projectGameState } from "./projection";

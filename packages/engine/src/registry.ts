@@ -1,7 +1,6 @@
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
-import { searchTopOrderProgram } from "./effects";
 import type { CardProgram } from "./programTypes";
-import { activated, berry, searchThenShuffle } from "./registryBuilders";
+import { activated, berry, searchThenShuffle, searchTopOrderProgram } from "./registryBuilders";
 import { BENCH_CEILING } from "./types";
 
 export type {

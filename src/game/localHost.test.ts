@@ -10,7 +10,7 @@ import {
   handUid,
   mustApply,
   mustCreate,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import { hostReducer, initHost, stepTarget, waitingSeatOf, type LocalGameSetup } from "./localHost";
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };

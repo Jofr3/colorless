@@ -16,3 +16,6 @@ export * from "./fixtures/rng";
 export * from "./fixtures/setup";
 export * from "./fixtures/values";
 export * from "./fixtures/walk";
+export { settleProgram } from "./flow";
+export { runProgram } from "./interpreter";
+export { freshAllowances, makeInPlay } from "./types";

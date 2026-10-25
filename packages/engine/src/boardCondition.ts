@@ -33,7 +33,7 @@ import {
   selfPreWRBonusPerOpponentPrize,
 } from "./continuous";
 import type { AttackTimingGate, BoardCondition, CardFilter } from "./effectTypes";
-import { foldApostrophes } from "./effects";
+import { foldApostrophes } from "./deriver/vocabulary";
 import { hasAnyDamageCounters, opponentKnockedOutByDamage } from "./effectTargets";
 // `conditionHolds` reads the turn owner from the one exhaustive switch over `Phase` rather than
 // re-deriving it by turn parity.

@@ -10,7 +10,7 @@
 import { Database } from "bun:sqlite";
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { FIXTURE_POOL } from "../packages/engine/src/testFixtures";
+import { FIXTURE_POOL } from "@colorless/engine/testing";
 import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 
 const D1_DIR = "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject";

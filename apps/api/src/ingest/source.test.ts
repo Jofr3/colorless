@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import cardPokemonAttacks from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-swsh3-136.json";
+import cardPokemonAttacks from "@colorless/schema/tcgdex-fixtures/card-pokemon-swsh3-136.json";
 import {
   type CatalogSource,
   createFetchSource,

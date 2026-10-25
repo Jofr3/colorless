@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   berryReductionOf,
   deluxeBombOf,
-  koSurvivalClamp,
   passivesOf,
   survivalBraceOf,
   toolsInEffect,
 } from "./continuous";
+import { koSurvivalClamp } from "./damageCalc";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
@@ -30,7 +30,7 @@ import {
   driveSetup,
   roundTrip,
 } from "./testFixtures";
-import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggers";
+import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggerLookup";
 import type { InPlayPokemon } from "./types";
 
 const HABAN = "sv08.5-111";

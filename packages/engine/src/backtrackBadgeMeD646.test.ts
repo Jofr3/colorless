@@ -1,6 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { coinRedoKey, coinRedoToolOf, spendCoinRedo, toolCardSimulated } from "./continuous";
+import { coinRedoToolOf, toolCardSimulated } from "./continuous";
+import { spendCoinRedo } from "./ops/damage";
+import { coinRedoKey } from "./types";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction } from "./index";

@@ -1,14 +1,14 @@
 import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
-import cardEnergySpecial from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-sv02-191.json";
-import cardEnergyNormalTag from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-normal-tag-sv10.5b-086.json";
-import cardPokemonAbility from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-ability-sv01-081.json";
-import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
-import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-sv01-181.json";
-import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
-import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
-import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
+import cardEnergyBasic from "@colorless/schema/tcgdex-fixtures/card-energy-basic-sve-002.json";
+import cardEnergySpecial from "@colorless/schema/tcgdex-fixtures/card-energy-special-sv02-191.json";
+import cardEnergyNormalTag from "@colorless/schema/tcgdex-fixtures/card-energy-special-normal-tag-sv10.5b-086.json";
+import cardPokemonAbility from "@colorless/schema/tcgdex-fixtures/card-pokemon-ability-sv01-081.json";
+import cardTrainerFossil from "@colorless/schema/tcgdex-fixtures/card-trainer-fossil-sv07-129.json";
+import cardTrainer from "@colorless/schema/tcgdex-fixtures/card-trainer-sv01-181.json";
+import cardTrainerTm from "@colorless/schema/tcgdex-fixtures/card-trainer-tm-sv08-188.json";
+import serieFull from "@colorless/schema/tcgdex-fixtures/serie-full-sv.json";
+import setFull from "@colorless/schema/tcgdex-fixtures/set-full-sv01.json";
 import { energyTypeOf, mapCard, mapSerie, mapSet, printKey, weaklessLegalPokemon } from "./map";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 

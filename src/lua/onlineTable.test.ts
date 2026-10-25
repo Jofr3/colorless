@@ -8,7 +8,7 @@ import {
   type SeatLogEntry,
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { driveSetup } from "../../packages/engine/src/testFixtures";
+import { driveSetup } from "@colorless/engine/testing";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import { LobbyClient } from "../online/lobbyClient";
 import { LuaOnline } from "./online";

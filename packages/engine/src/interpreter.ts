@@ -13,7 +13,6 @@ import {
   countersMoveLocked,
   discardPileLockedOf,
   opponentMillRetortOf,
-  spendCoinRedo,
   supporterEffectOf,
   toolCapOf,
 } from "./continuous";
@@ -28,7 +27,7 @@ import type {
   RunResult,
 } from "./effectPrompt";
 import type { CardFilter, EffectOp, EffectSlot, OpOf, PokemonType } from "./effectTypes";
-import { STATUS_WORD_OF } from "./effects";
+import { STATUS_WORD_OF } from "./deriver/vocabulary";
 import {
   benchSpace,
   cardIdentity,
@@ -61,9 +60,7 @@ import {
   unshieldedRefs,
 } from "./effectTargets";
 import type { GameEvent, StatusName } from "./events";
-// Import cycle with flow.ts; safe because both ends are hoisted function declarations called only
-// at run time.
-import { discardMisplacedEnergy } from "./flow";
+import { discardMisplacedEnergy } from "./stateChecks";
 import {
   chooseOneChain,
   cycleOwnPrizes,
@@ -178,6 +175,7 @@ import {
   snipeActive,
   snipeAmount,
   snipeEachByCounters,
+  spendCoinRedo,
   spreadDamage,
 } from "./ops/damage";
 import {

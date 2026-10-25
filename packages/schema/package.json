@@ -5,7 +5,8 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tcgdex-fixtures/*": "./src/tcgdex/__fixtures__/*"
   },
   "dependencies": {
     "zod": "^4.0.0"

@@ -23,3 +23,26 @@ export function activated(
 export function berry(type: PokemonType): CardProgram {
   return { passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type } } };
 }
+
+/**
+ * Shared program for the attack and Supporter printings of this sentence. `shuffleDeck` leads
+ * despite the printed order because the search answer is a set of cards, so shuffling before or
+ * after removing them is equivalent. `reorderTop` is a separate op because the order is a second
+ * decision.
+ */
+export function searchTopOrderProgram(n: number): EffectOp[] {
+  return [
+    { op: "shuffleDeck" },
+    {
+      op: "searchDeck",
+      // The printed noun is plain "cards", so any card is a legal find.
+      filter: { kind: "anyCard" },
+      max: n,
+      // Without `exact`, a short pick would let the next op reorder cards that were never searched.
+      exact: true,
+      dest: "deckTop",
+    },
+    // The reorder window is exactly what the search placed.
+    { op: "reorderTop", n },
+  ];
+}
