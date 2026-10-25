@@ -140,7 +140,8 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
       // opponent's view carries none.
       const actor = spectating ? null : phase.seat;
       // Inside Festival Lead's attack-again window only `attack` and `endTurn` are legal, so every
-      // other affordance is withheld.
+      // other affordance is withheld, and `attackAgain` tells a client to refuse the actions no flag
+      // covers (attaching, benching, evolving).
       const mainPhase = state.allowances.attackAgainUid === null ? actor : null;
       return {
         kind: "turn:action",
@@ -151,6 +152,7 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
         rareCandy: redactedRareCandyOf(state, viewerSeat, mainPhase),
         stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, mainPhase),
         discardable: redactedDiscardableOf(state, viewerSeat, mainPhase),
+        ...(state.allowances.attackAgainUid === null ? {} : { attackAgain: true as const }),
       };
     }
     case "ko:takePrizes":

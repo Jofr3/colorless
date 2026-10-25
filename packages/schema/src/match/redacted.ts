@@ -506,6 +506,11 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
      * viewer. Required, so deploy the server first.
      */
     discardable: z.array(redactedDiscardableSchema),
+    /**
+     * Set inside an attack-again window (Festival Lead), where only `attack` and `endTurn` are
+     * legal; absent otherwise. Optional, so either side may deploy first.
+     */
+    attackAgain: z.literal(true).optional(),
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),

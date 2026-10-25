@@ -15,3 +15,4 @@ export * from "./fixtures/program";
 export * from "./fixtures/rng";
 export * from "./fixtures/setup";
 export * from "./fixtures/values";
+export * from "./fixtures/walk";

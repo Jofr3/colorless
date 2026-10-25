@@ -74,7 +74,9 @@ export function onlineGate(action: GameAction, v: RedactedGame): boolean {
         !p.ready.you &&
         basic(hand(action.uid)) &&
         (p.stage !== "bonus" || (p.bonusCards ?? []).includes(action.uid)) &&
-        (action.type === "setupPlaceActive" || roomOnBench(v))
+        (action.type === "setupPlaceActive"
+          ? v.board.you.active === null
+          : v.board.you.active !== null && roomOnBench(v))
       );
     case "setupReady":
       return p.kind === "setup:place" && !p.ready.you && v.board.you.active !== null;
@@ -84,8 +86,14 @@ export function onlineGate(action: GameAction, v: RedactedGame): boolean {
       return p.kind === "ko:promote" && acting;
     case "resolveEffect":
       return p.kind === "effect:choose" && p.prompt !== null && promptGate(p.prompt, action.choice);
+    case "reorderBench":
+      return p.kind === "setup:place"
+        ? !p.ready.you
+        : p.kind === "turn:action" && v.activePlayer === "you";
   }
   if (p.kind !== "turn:action" || v.activePlayer !== "you") return false;
+  // The attack-again window grants a second attack, not a second main phase.
+  if (p.attackAgain && action.type !== "attack" && action.type !== "endTurn") return false;
   switch (action.type) {
     case "attack":
       return p.attacks.some((a) => a.index === action.index && a.playable);
