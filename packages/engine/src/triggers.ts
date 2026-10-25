@@ -1,8 +1,6 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
-// The single once-per-turn key for a triggered row's lock (Zero to Hero).
-import { abilityUsedKey } from "./cardplay";
 import { disabledAbilityUids, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
@@ -10,10 +8,18 @@ import { runProgram, runSyncProgram } from "./interpreter";
 // The "during their turn" clause: switch on `Phase`, never turn parity. phaseView.ts imports from
 // here only as a type, so this value import creates no runtime cycle.
 import { phaseViewOf } from "./phaseView";
+import { triggersOf } from "./triggerLookup";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./programTypes";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
-import { inPlayOf, otherSeat, pokemonAt } from "./types";
+import {
+  abilityUsedKey,
+  abilityUsedThisTurn,
+  inPlayOf,
+  otherSeat,
+  pokemonAt,
+  spendAbilityUse,
+} from "./types";
 
 // Triggered Abilities (§9) fire on a game event rather than being activated. Board triggers
 // (onPlayToBench, onEvolve) run on the controller's own turn and settle through `settleProgram`, so
@@ -52,35 +58,6 @@ export function onKnockOutTrigger(state: GameState, uid: string): TriggeredAbili
   return (programFor(cardId)?.triggered ?? []).find((t) => t.trigger === "onKnockOut");
 }
 
-/**
- * The triggered Abilities on the top card of `pokemon` matching `timing`, gated by `activeOnly`.
- * `watch` partitions by direction: "self" fires on the controller's own action, "opponent" on the
- * other seat's. The self partition matters: Team Rocket's Ampharos carries an onEvolve row that
- * must not fire when it is itself evolved.
- */
-function triggersOf(
-  state: GameState,
-  pokemon: InPlayPokemon,
-  timing: TriggerTiming,
-  isActive: boolean,
-  watch: "self" | "opponent",
-): TriggeredAbility[] {
-  const card = topCardOf(state, pokemon);
-  if (card === undefined) return [];
-  // §9 — a continuous Ability-lock aura suppresses this Pokémon's triggered
-  // Abilities too (this is the single choke for onPlayToBench / onEvolve /
-  // betweenTurns / onDamagedByAttack). The on-KO trigger (onKnockOutTrigger,
-  // above) is deliberately NOT gated: it fires as the Pokémon leaves play.
-  const uid = topUid(pokemon);
-  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return [];
-  return (programFor(card.id)?.triggered ?? []).filter(
-    (t) =>
-      t.trigger === timing &&
-      (t.activeOnly !== true || isActive) &&
-      (t.opponentAction === true) === (watch === "opponent"),
-  );
-}
-
 /** The Pokémon at `target` on `seat`'s board, or undefined when the spot is
     empty / the bench index is out of range (wire indices are checked upstream,
     but stay total). */
@@ -109,14 +86,8 @@ export function runBoardTrigger(
   let armed = state;
   if (ability.oncePerTurn !== undefined) {
     const usedKey = abilityUsedKey(uid, ability);
-    if (state.allowances.abilitiesUsed.includes(usedKey)) return ok(state, events);
-    armed = {
-      ...state,
-      allowances: {
-        ...state.allowances,
-        abilitiesUsed: [...state.allowances.abilitiesUsed, usedKey],
-      },
-    };
+    if (abilityUsedThisTurn(state, usedKey)) return ok(state, events);
+    armed = spendAbilityUse(state, usedKey);
   }
   // Triggers auto-fire; a printed "you may" with a downside carries its own confirm as an inner
   // `optional` op.
@@ -218,14 +189,8 @@ function sweepTriggers(
       // written before the program runs, so the use is spent even if the search fails.
       if (ability.oncePerTurn === true) {
         const usedKey = abilityUsedKey(uid, ability);
-        if (next.allowances.abilitiesUsed.includes(usedKey)) continue;
-        next = {
-          ...next,
-          allowances: {
-            ...next.allowances,
-            abilitiesUsed: [...next.allowances.abilitiesUsed, usedKey],
-          },
-        };
+        if (abilityUsedThisTurn(next, usedKey)) continue;
+        next = spendAbilityUse(next, usedKey);
       }
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
       next = recoverStatuses(
@@ -323,21 +288,6 @@ export function runCheckupTriggers(
 }
 
 /**
- * The `onDamagedByAttack` Ability of the Active `uid` (§9). The uid must still be Active, since the
- * attack's own effects may have switched it out before this runs. The program runs under the
- * damaged seat and reaches the attacker through `EffectContext.attackerUid`.
- */
-export function damagedByAttackAbility(
-  state: GameState,
-  seat: Seat,
-  uid: string,
-): TriggeredAbility | undefined {
-  const active = state.players[seat].active;
-  if (active === null || topUid(active) !== uid) return undefined;
-  return triggersOf(state, active, "onDamagedByAttack", true, "self")[0];
-}
-
-/**
  * Every on-Active-KO program for the KO of `koedUid`: the dying Active's own
  * `onSelfActiveKnockedOut` Ability first (§9-gated), then Tools in board order, Active first. A
  * Tool on the dying body answers `onHolderActiveKnockedOut`; Tools on other bodies answer
@@ -425,29 +375,6 @@ export function endTurnToolTriggersOf(
     if (id === undefined) continue;
     for (const ability of programFor(id)?.triggered ?? []) {
       if (ability.trigger === "atEndOfYourTurnInActive") out.push({ toolUid, ability });
-    }
-  }
-  return out;
-}
-
-/**
- * Every `onDamagedByAttack` program on a Tool attached to `seat`'s Active when that Active is
- * `defenderUid` (Lucky Helmet, Handheld Fan), in attachment order. Active only, as printed. Not
- * §9-gated; Jamming Tower silences them.
- */
-export function damagedToolTriggersOf(
-  state: GameState,
-  seat: Seat,
-  defenderUid: string,
-): { toolUid: string; ability: TriggeredAbility }[] {
-  const active = state.players[seat].active;
-  if (active === null || topUid(active) !== defenderUid) return [];
-  const out: { toolUid: string; ability: TriggeredAbility }[] = [];
-  for (const toolUid of toolsInEffect(state, active)) {
-    const id = state.cardIdByUid[toolUid];
-    if (id === undefined) continue;
-    for (const ability of programFor(id)?.triggered ?? []) {
-      if (ability.trigger === "onDamagedByAttack") out.push({ toolUid, ability });
     }
   }
   return out;

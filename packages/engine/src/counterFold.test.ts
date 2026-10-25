@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect, logFromEvents } from "./index";
 import type { EffectOp, GameEvent, GameState, LogContext } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   COUNTER_FOLD_DECK,
   attachFromDeck,
@@ -17,6 +17,7 @@ import {
   findEvent,
   roundTrip,
   mustDerive,
+  programmedCardIds,
 } from "./testFixtures";
 
 function placements(
@@ -319,7 +320,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
     );
 
     const authored: EffectOp[][] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const card = programFor(id);
       if (card === undefined) continue;
       for (const ops of Object.values(card.attack ?? {})) authored.push(ops);

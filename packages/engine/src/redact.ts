@@ -31,7 +31,6 @@ import { pendingMulligansOf } from "./mulligans";
 import {
   abilityBodyGateClause,
   abilityBodyGateMet,
-  abilityUsedKey,
   fossilPlayable,
   programPlayable,
   rareCandyOptions,
@@ -76,7 +75,14 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { answererOf, bodyAt, isImmobilized, otherSeat } from "./types";
+import {
+  abilityUsedKey,
+  abilityUsedThisTurn,
+  answererOf,
+  bodyAt,
+  isImmobilized,
+  otherSeat,
+} from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state.
@@ -516,8 +522,7 @@ function redactedAbilitiesOf(
         // "sharedByName" Ability (Fezandipiti ex) keys on its name alone, and a
         // mirror that kept building `${uid}:` would leave the second copy's row
         // lit after the first copy spent the turn's one use.
-        (ability.oncePerTurn &&
-          state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
+        (ability.oncePerTurn && abilityUsedThisTurn(state, abilityUsedKey(uid, ability))) ||
         gateUnmet ||
         costUnmet !== null ||
         noTarget;

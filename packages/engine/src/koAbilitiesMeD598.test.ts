@@ -1,6 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { disabledAbilityUids, koSurvivalCoinFlip, passivesOf } from "./continuous";
+import { disabledAbilityUids, passivesOf } from "./continuous";
+import { koSurvivalCoinFlip } from "./damageCalc";
 import { deriveAttackEffect } from "./effects";
 import { koByOpponentAttack, koByOpponentPokemonEx } from "./flow";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";

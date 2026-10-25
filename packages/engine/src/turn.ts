@@ -10,7 +10,6 @@ import type {
   Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
-import { abilityUsedKey } from "./cardplay";
 import {
   basicFromHandError,
   cardOfUid,
@@ -23,7 +22,6 @@ import {
 import {
   aceSpecPlayBarred,
   benchLimitOf,
-  benchTrimStages,
   effectiveRetreatCost,
   energyMayBeAttachedTo,
   energyRulesApply,
@@ -58,6 +56,7 @@ import { runProgram } from "./interpreter";
 import { shockHandAttach } from "./ops/energy";
 import { switchInto } from "./ops/board";
 import { programFor } from "./registry";
+import { benchTrimStages } from "./stateChecks";
 import { flipCoin } from "./rng";
 import {
   runActiveBenchedTriggers,
@@ -74,6 +73,9 @@ import type {
   Seat,
 } from "./types";
 import {
+  abilityUsedKey,
+  abilityUsedThisTurn,
+  spendAbilityUse,
   bodyAt,
   inPlayOf,
   BENCH_CEILING,
@@ -407,7 +409,7 @@ function benchFromHandRotation(
     card === undefined || isBasicPokemon(card) ? undefined : programFor(card.id)?.benchFromHand;
   if (rotation === undefined) return null;
   const usedKey = abilityUsedKey(uid, rotation);
-  if (state.allowances.abilitiesUsed.includes(usedKey)) {
+  if (abilityUsedThisTurn(state, usedKey)) {
     return {
       reject: err("ABILITY_ALREADY_USED", `${rotation.name} was already used this turn (§9)`),
     };
@@ -459,16 +461,7 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   });
   // Spends the Ability's once-per-turn allowance; `ABILITY_USED` precedes the bench event, matching
   // `useAbility`.
-  const next =
-    rotation === null
-      ? benched
-      : {
-          ...benched,
-          allowances: {
-            ...benched.allowances,
-            abilitiesUsed: [...benched.allowances.abilitiesUsed, rotation.usedKey],
-          },
-        };
+  const next = rotation === null ? benched : spendAbilityUse(benched, rotation.usedKey);
   const events: GameEvent[] = [
     ...(rotation === null
       ? []

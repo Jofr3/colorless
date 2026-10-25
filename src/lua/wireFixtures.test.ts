@@ -15,7 +15,7 @@ import {
   setDamage,
   STADIUM_TOOL_DECK,
   trainerCard,
-} from "../../packages/engine/src/testFixtures";
+} from "@colorless/engine/testing";
 import { toBuilderCard } from "../decks/catalog";
 import type { Deck } from "../decks/data";
 import { LuaBuilder } from "./builder";
@@ -169,6 +169,7 @@ describe("Lua wire fixtures", () => {
       [pikachu.cardId, 4],
       [ball.cardId, 2],
     ]);
+    builder.gaps = new Map([[pikachu.cardId, ["ability", "attack"]]]);
     builder.selected = pikachu.cardId;
     builder.emit();
     await pin("builder_snapshot.txt", published.at(-1) ?? "");

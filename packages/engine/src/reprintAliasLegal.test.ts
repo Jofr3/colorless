@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG_MANIFEST as M } from "./catalogManifest";
 import type { GameState } from "./index";
+import { canonicalPrinting } from "./printGroups";
 import { programFor } from "./registry";
 import {
   ALWAYS_ON_REDUCTION_DECK,
@@ -207,15 +208,16 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
 });
 
 describe("the SKIPPED candidates — correct aliases with ZERO Standard-legal payoff", () => {
-  it("leaves all four unregistered, and says what each would have bought", () => {
+  it("plays each one that shares a print_key through its group's program, and no other", () => {
     for (const { ids, sentence } of SKIPPED_ZERO_LEGAL) {
       for (const id of ids) {
-        expect(
-          programFor(id),
-          `${id} (${sentence}) was landed with 0 legal printings`,
-        ).toBeUndefined();
+        const canonical = canonicalPrinting(id);
+        if (canonical === id) expect(programFor(id), `${id} (${sentence})`).toBeUndefined();
+        else expect(programFor(id), `${id} (${sentence})`).toBe(programFor(canonical));
       }
     }
+    expect(programFor("sv04.5-087")).toBe(programFor("sv01-189"));
+    expect(programFor("sv04.5-037")).toBe(programFor("sv02-097"));
   });
 });
 
@@ -334,15 +336,19 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     }
   });
 
-  it("leaves every one of the ~~81~~ ~~78~~ ~~74~~ 73 UNAUTHORED — the standing refusal, complete rather than sampled (B01: Judge's 3 landed; B04: 4 more; B05: 1 more)", () => {
-    for (const { card, unauthored } of PRINTING_ALIAS_CENSUS) {
+  it("plays every print_key twin in it through its authored twin's program, and leaves the one printing whose fields differ unauthored", () => {
+    const notTwins: string[] = [];
+    for (const { card, authored, unauthored } of PRINTING_ALIAS_CENSUS) {
       for (const id of unauthored) {
-        expect(
-          programFor(id),
-          `${id} (${card}) was landed with 0 Standard-legal printings — D190's rule`,
-        ).toBeUndefined();
+        if (canonicalPrinting(id) !== canonicalPrinting(authored)) {
+          notTwins.push(id);
+          expect(programFor(id), `${id} (${card})`).toBeUndefined();
+        } else {
+          expect(programFor(id), `${id} (${card})`).toBe(programFor(authored));
+        }
       }
     }
+    expect(notTwins).toEqual(["svp-196"]);
   });
 
   it("every row's AUTHORED anchor really carries a non-attack registry program — the attribution control", () => {

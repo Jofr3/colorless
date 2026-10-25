@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { coinFlipShieldPrevents, passivesOf } from "./continuous";
+import { passivesOf } from "./continuous";
+import { coinFlipShieldPrevents } from "./damageCalc";
 import { programFor } from "./index";
 import type { GameEvent, GameState, PokemonRef } from "./index";
 import { type LogContext, logFromEvents } from "./log";

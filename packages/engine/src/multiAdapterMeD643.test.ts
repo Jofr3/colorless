@@ -1,6 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { owesToolTrim, toolCapOf, toolTrimStages } from "./continuous";
+import { owesToolTrim, toolCapOf } from "./continuous";
+import { toolTrimStages } from "./stateChecks";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";

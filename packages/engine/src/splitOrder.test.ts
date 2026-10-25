@@ -11,7 +11,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameState } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   SAWK_SPLIT_DECK,
   attachFromDeck,
@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  programmedCardIds,
 } from "./testFixtures";
 
 /** Sawk `sv10.5w-049`/`-130` "Rising Chop" ({F}, 90 — the cost is ONE Fighting;
@@ -128,8 +129,8 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
   });
 
   it("S2 — ~~17 of 968~~ registry ids carry an `attackGate`, in three kinds ( D582 (D539): the figures are WITHDRAWN — 18 of 1,087 at D582)", () => {
-    const ids = registryCardIds();
-    expect(ids.length).toBe(1451);
+    const ids = programmedCardIds();
+    expect(ids.length).toBe(1523);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(18);
     const kinds = gated.flatMap((id) =>

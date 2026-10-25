@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -16,6 +16,7 @@ import {
   typedEnergy,
   findEvent,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const MAGNETON = "svp-153";
@@ -205,9 +206,9 @@ describe("D346 §1 — the registry row, read off the LIVE registry", () => {
   });
 
   it("all THREE ids are in the live registry and no fourth rode along", () => {
-    const ids = new Set(registryCardIds());
+    const ids = new Set(programmedCardIds());
     for (const id of MAGNETON_IDS) expect(ids.has(id), id).toBe(true);
-    const named = registryCardIds().filter((id) =>
+    const named = programmedCardIds().filter((id) =>
       programFor(id)?.abilities?.some((a) => a.name === ABILITY),
     );
     expect(named.sort()).toEqual([...MAGNETON_IDS].sort());
@@ -215,7 +216,7 @@ describe("D346 §1 — the registry row, read off the LIVE registry", () => {
 
   it("`knockOutSelf` now has exactly THREE producers in the whole registry", () => {
     const objects = new Set(
-      registryCardIds()
+      programmedCardIds()
         .map((id) => programFor(id))
         .filter((program) =>
           [...(program?.abilities ?? []), ...(program?.triggered ?? [])].some((ability) =>

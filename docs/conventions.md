@@ -44,12 +44,20 @@ only the conclusion.
   numbers in code or tests — that record belongs in `docs/decisions.md` and git.
   Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
-  calling work done. It is `check:static` (coverage guards, `tsc -b`, `biome ci`,
-  Lua constants, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  calling work done. It is `check:static` (coverage guards, the import graph,
+  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
   migrations, the API deploy and then the web deploy, in that order.
+- `scripts/import-graph.ts --check` fails on any runtime import cycle other than
+  the recorded `RECORDED_CYCLE` (flow, interpreter, ops/board, ops/energy,
+  triggers: a program step can knock out, which runs triggers and the turn
+  flow, which run programs), and on a relative import that crosses a workspace
+  root (each package, each app, `src`, `scripts`). Import another root through
+  its package entry: `@colorless/engine/testing` is the fixture barrel and
+  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads. A pure helper that
+  would close a new cycle belongs in a lower module.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
   module-level state that leaks between files; `app` covers everything else.
@@ -69,25 +77,80 @@ only the conclusion.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
   seeded play-forward sweeps; `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
   for LobbyDO; `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
-  A change to the stored game shape fails `recordShape.test.ts` until
-  `MATCH_RECORD_VERSION` is bumped and the snapshot rewritten with `-u`. A change to the
-  Lua wire fails `src/lua/wireFixtures.test.ts`; regenerate its fixtures with `-u` and
-  update `frontend/lua/tests/wire_fixtures.lua` to match.
+  A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
+  until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
+  rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
+  regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` to match.
+- **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
+  `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
+  keeps only the record envelope and `loadMatchRecord`, and calls `poolIdsNeededFor` and
+  `migrateGameState` for the state. To bump: raise `GAME_STATE_VERSION`, rewrite the shape
+  snapshot, and give the previous version a `MIGRATION_STEPS` entry if its states can be
+  carried forward: `unchanged` when the old bytes already read correctly, `withDefaultKeys`
+  when the change only adds side installs (`clearedSideInstalls`) or attack-effect fields
+  (`clearedAttackEffects`), or a hand-written step otherwise. A version with no entry is
+  retired. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
+  `storedAt`/`migrateStored`/`mustMigrate` fixtures; the DO's read is tested in
+  `apps/api/src/lobby/matchLoad.test.ts`.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
-  `HP_PER_COUNTER`/`damageCountersOn` (`types.ts`); `OpOf<K>` for one `EffectOp`
+  `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag
+  `abilityUsedKey`/`coinRedoKey`/`abilityUsedThisTurn`/`spendAbilityUse`
+  (`types.ts`); `landAttackHit` (`damageCalc.ts`) for the §8.5 tail after Weakness and
+  Resistance (reduction, prevention, the shield and survival coins, the KO-survival clamp,
+  `DAMAGE_DEALT` and the consumed Tools) on every attack-damage route, each route keeping its
+  own bonus, debuff and W/R steps; `OpOf<K>` for one `EffectOp`
   variant (`effectTypes.ts`); `positiveInt`, `printedFlipCount` and the gate
-  builders in `effects.ts`; `searchThenShuffle`/`activated`/`berry`
-  (`registryBuilders.ts`). The op contract lives in `effectTypes.ts`, program
+  builders in `effects.ts`; the printed-text vocabulary (`STATUS_WORD_OF`, the
+  type-code maps, `foldApostrophes`, `COPY_FAMILY_MARKER`) in
+  `deriver/vocabulary.ts`, which runtime modules import instead of `effects.ts`;
+  `searchThenShuffle`/`searchTopOrderProgram`/`activated`/`berry`
+  (`registryBuilders.ts`). State checks (`discardMisplacedEnergy`, the trim
+  stages, `postStepChecks`, which `advance` and `applyAction` both call) live in
+  `stateChecks.ts`; `finishGame` in `outcome.ts`; the pure trigger lookups
+  `triggersOf`/`damagedByAttackAbility`/`damagedToolTriggersOf` in
+  `triggerLookup.ts`; the KO-survival clamp and the RNG-consuming damage coins
+  (`koSurvivalCoinFlip`, `coinFlipShieldPrevents`) in `damageCalc.ts`, so
+  `continuous.ts` stays a read model that pushes no events and draws no RNG. The op contract lives in `effectTypes.ts`, program
   types in `programTypes.ts`, and stepOp's arm bodies in `ops/*.ts`,
   `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
-  `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Test
+  `interpreter.ts` keeps runProgram, stepOp, answerOp and resumeProgram. A parked
+  op's answer goes through `answerOp`, one arm per `parks: true` op (a missing arm
+  fails to compile), which returns the board and the ops the answer buys, the
+  shape stepOp returns. resumeProgram is answerOp, then `discardMisplacedEnergy`,
+  then runProgram over the bought ops and the rest. A multi-question op whose
+  first question is forced (`healChosen` with riders, the `moveCounters*` ops)
+  answers it through answerOp too, so the forced and parked endings agree. Every op
+  declares its traits in `OP_TRAITS` (`ops/traits.ts`, type-only imports):
+  whether it parks, its record slot, whether it moves counters, and whether
+  `programPlayable` asks its whiff check (`ONLY_WHIFFS` in `cardplay.ts`). The
+  op-generic sites read that table instead of keeping their own op lists. Test
   helpers live in `fixtures/` behind the `testFixtures.ts` barrel (`driveSetup`,
   `patchSide`, `roundTrip`, `mustDerive`, `seedForFlips`). The fixture pool's
   `fix-*` card programs live in `fixtures/registry.ts`, not in `registry.ts`:
   the vitest setup file (`fixtures/vitestSetup.ts`, wired in `vitest.config.ts`)
   installs them with `registerTestPrograms`, which nothing else calls and the
   package index does not export, so the production registry holds no `fix-*` id.
+- **Reprints are not typed by hand.** `programFor(id)` reads `REGISTRY[id]`, then
+  the row of `id`'s print_key group through `PROGRAM_ALIAS`
+  (`registryAliases.generated.ts`, from the local D1's `print_key` column), then the
+  test programs; `bannerOf` and `FOSSIL_IDS` fall back through the same table. Author a
+  card on ONE printing; its same-name, same-text reprints follow. After an ingest
+  that adds printings, or after authoring a group's first row on a printing that is
+  not its canonical one, run `bun scripts/registry-aliases.ts` (`--check` in
+  `check:static` compares, and skips with a message where no local sqlite exists,
+  as in CI and fresh worktrees; `COLORLESS_D1_SQLITE=<path>` reads another file).
+  `registryAliases.test.ts` fails when a reprint carries its own REGISTRY row or a
+  group reaches two programs. A twin under ANOTHER name or with different text has
+  its own print_key and still needs an explicit row (`reprintAliasLegal.test.ts`,
+  `reprintAliasMeD58*.test.ts`). `registryCardIds()` lists REGISTRY keys only; a
+  sweep that means every programmed printing uses `programmedCardIds()`
+  (`fixtures/printings.ts`).
+- **Before an API deploy, check the generated table against the remote catalog.**
+  It is built from the LOCAL D1, which CI cannot see. From `apps/api`, run
+  `bunx wrangler d1 execute colorless --json --command "select id, print_key from cards
+  order by id"` once with `--local` and once with `--remote` and diff the two; if they
+  differ, re-ingest locally, re-run `bun scripts/registry-aliases.ts`, and commit.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
   (2026-10-23) after measuring zero residue; sections below that describe them
   are history.
@@ -256,7 +319,7 @@ the trend improved.
   **only because an un-narrowed attach target set always contains the host**.
 - **An arm transfers across sets; a registry row does not.** A deriver arm is a
   text parser and serves every reprint of its sentence; a row is keyed by card id
-  and legality is a hard filter on it — D180's four *correct* alias rows serve
+  (and its print_key group, through `PROGRAM_ALIAS`) and legality is a hard filter on it — D180's four *correct* alias rows serve
   **zero** Standard-legal printings (D187, D180 follow-up).
 - **Exact map or flag.** A registry row has no deriver behind it to refuse what
   it cannot parse, so whatever is authored is what the card does forever: a
@@ -2029,8 +2092,8 @@ neither.
 
 ⚠️ **The exact precedents are usually already written down.** D333 measured no bump
 for a **widened `max` union** and D334 none for an **added optional `exact`**, both
-on the SAME op (`lookAtTopN`), and both are quoted verbatim inside
-`MATCH_RECORD_VERSION`'s own doc block. Read that block for your shape before
+on the SAME op (`lookAtTopN`); `GAME_STATE_VERSION`'s doc block (`persist.ts`) states the
+rule they follow, and `docs/decisions.md` holds the rulings. Read both for your shape before
 reasoning from the type's name.
 
 ## An op's arity doctrine can have a hole nothing has ever reached (D441)

@@ -3,7 +3,7 @@ import { attacksOf, topCardOf, topUid } from "../cards";
 import { isLethallyDamaged, passivesOf, stadiumShieldsStatus } from "../continuous";
 import type { EffectContext, EffectPrompt, PokemonRef } from "../effectPrompt";
 import type { AttackerClass, OpOf, StampedPlayLockKey } from "../effectTypes";
-import { foldApostrophes } from "../effects";
+import { foldApostrophes } from "../deriver/vocabulary";
 import { effectRefused, refPokemon, sourceRef, unrefusedActive } from "../effectTargets";
 import type { GameEvent, StatusName } from "../events";
 import type {

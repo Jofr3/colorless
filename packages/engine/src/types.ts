@@ -10,6 +10,7 @@ import type {
 } from "./effectTypes";
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
+import type { AbilityProgram } from "./programTypes";
 
 // The whole GameState is a plain JSON-safe value — no classes, no Date, no
 // functions — so snapshots serialize, replay and structurally share. Nothing
@@ -695,6 +696,27 @@ export function clearedAttackEffects(): Pick<InPlayPokemon, AttackEffectField> {
   };
 }
 
+/** Side-wide effects an attack, ability or Trainer installs on a seat. */
+type SideInstallField =
+  | "sideAttackLock"
+  | "sideDamageReduction"
+  | "sideAttackBlock"
+  | "chosenAttackShield"
+  | "sideRetreatLock"
+  | "trainerFlipLockTurn";
+
+/** The empty value of every side-wide install: what a seat starts the game with. */
+export function clearedSideInstalls(): Pick<PlayerSide, SideInstallField> {
+  return {
+    sideAttackLock: null,
+    sideDamageReduction: [],
+    sideAttackBlock: null,
+    chosenAttackShield: null,
+    sideRetreatLock: null,
+    trainerFlipLockTurn: null,
+  };
+}
+
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
   return {
     stack: [uid],
@@ -864,6 +886,51 @@ export function freshAllowances(): TurnAllowances {
     supporterPlayedUid: null,
     endOfTurnHandDiscard: null,
     attackAgainUid: null,
+  };
+}
+
+/** The `${uid}:${ability.name}` sentinel a `"sharedByName"` Ability keys on
+    INSTEAD of its own uid, so every copy of the card on a board collides into one
+    entry. Safe as a sentinel because a uid is `` `${seat}#${index}` `` (setup.ts)
+    and can never be `*` — the two key spaces are disjoint by construction. */
+const SHARED_ABILITY_UID = "*";
+
+/**
+ * The key for the §9 once-per-turn Ability limit, shared by every reader and writer of
+ * `allowances.abilitiesUsed`. `"sharedByName"` (Fezandipiti ex's "Flip the Script") drops the uid;
+ * every other Ability keeps it.
+ */
+export function abilityUsedKey(
+  uid: string,
+  // Takes only the two fields it reads, so triggered abilities with `oncePerTurn` can key through
+  // it too.
+  ability: Pick<AbilityProgram, "name"> & { oncePerTurn?: AbilityProgram["oncePerTurn"] },
+): string {
+  const keyUid = ability.oncePerTurn === "sharedByName" ? SHARED_ABILITY_UID : uid;
+  return `${keyUid}:${ability.name}`;
+}
+
+/**
+ * The once-per-turn key Backtrack Badge spends on `allowances.abilitiesUsed` (`abilityUsedKey`'s
+ * shape, on the Tool's uid).
+ */
+export function coinRedoKey(toolUid: string, name: string): string {
+  return `${toolUid}:${name}`;
+}
+
+/** Has the once-per-turn `key` been spent this turn? */
+export function abilityUsedThisTurn(state: GameState, key: string): boolean {
+  return state.allowances.abilitiesUsed.includes(key);
+}
+
+/** Spends the once-per-turn `key` for the rest of the turn. */
+export function spendAbilityUse(state: GameState, key: string): GameState {
+  return {
+    ...state,
+    allowances: {
+      ...state.allowances,
+      abilitiesUsed: [...state.allowances.abilitiesUsed, key],
+    },
   };
 }
 

@@ -1,17 +1,17 @@
-import type { GameEvent, GameState } from "@colorless/engine";
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { settleProgram } from "../../../../packages/engine/src/flow";
-import { runProgram } from "../../../../packages/engine/src/interpreter";
-import { completeSetup } from "../../../../packages/engine/src/testFixtures";
-import { freshAllowances, makeInPlay } from "../../../../packages/engine/src/types";
-import { MATCH_RECORD_VERSION, startMatch } from "./match";
+import { settleProgram } from "./flow";
+import { type GameEvent, type GameState, createGame } from "./index";
+import { runProgram } from "./interpreter";
+import { GAME_STATE_VERSION } from "./persist";
+import { completeSetup } from "./testFixtures";
+import { freshAllowances, makeInPlay } from "./types";
 
-// A persisted record is read back only when its version matches, so any change to the shape the DO
-// stores must come with a version bump. This pins a key-and-type skeleton of that shape, together
-// with the version it was taken at, in `recordShape.snap`.
+// A persisted state is read back as-is only when its version matches, so any change to its shape
+// must come with a version bump. This pins a key-and-type skeleton of that shape, together with the
+// version it was taken at, in `persistShape.snap`.
 
-const STALE = `the persisted record shape or MATCH_RECORD_VERSION no longer matches recordShape.snap. A shape change needs a version bump in match.ts (with a migration step if old records can be carried forward); then rewrite the snapshot with "bunx vitest run apps/api/src/lobby/recordShape.test.ts -u"`;
+const STALE = `the persisted state shape or GAME_STATE_VERSION no longer matches persistShape.snap. A shape change needs a version bump in persist.ts (with a migration step if old states can be carried forward); then rewrite the snapshot with "bunx vitest run packages/engine/src/persistShape.test.ts -u"`;
 
 /** Maps keyed by uid or card id: their keys vary with the decks, only their values have a shape. */
 const KEYED_BY_ID = new Set(["cardIdByUid", "cardPool"]);
@@ -67,10 +67,9 @@ function basicCard(id: string): Card {
 
 function freshGame(): GameState {
   const deck = Array.from({ length: 60 }, () => "basic");
-  const started = startMatch({
+  const started = createGame({
     seed: 3,
-    hostDeck: deck,
-    guestDeck: deck,
+    decks: { p1: [...deck], p2: [...deck] },
     cardPool: { basic: basicCard("basic") },
   });
   if (!started.ok) throw new Error(started.error.message);
@@ -110,14 +109,14 @@ function persistedShape(): unknown {
   });
 }
 
-describe("the persisted shape is pinned to MATCH_RECORD_VERSION", () => {
+describe("the persisted shape is pinned to GAME_STATE_VERSION", () => {
   it("matches the snapshot taken at this version", async () => {
     const pinned = JSON.stringify(
-      { version: MATCH_RECORD_VERSION, shape: persistedShape() },
+      { version: GAME_STATE_VERSION, shape: persistedShape() },
       null,
       2,
     );
-    await expect(`${pinned}\n`, STALE).toMatchFileSnapshot("./recordShape.snap");
+    await expect(`${pinned}\n`, STALE).toMatchFileSnapshot("./persistShape.snap");
   });
 
   it("the skeleton sees a renamed key, a changed leaf type and a new array element shape", () => {

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { BoardCondition } from "./effects";
 import { cardOfUid } from "./cards";
 import { applyAction, programFor } from "./index";
-import { registryCardIds } from "./registry";
 import type { GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { redactGame } from "./redact";
@@ -15,6 +14,7 @@ import {
   handUid,
   mustApply,
   walkProgram,
+  programmedCardIds,
 } from "./testFixtures";
 
 const CALL_BELL_ID = "sv08-165";
@@ -330,7 +330,7 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
   it("NO `conditionGate` in the whole registry carries an `allOf` — the persisted-op reachability sweep", () => {
     const gateConds: BoardCondition[] = [];
     let programsWalked = 0;
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const program = programFor(id);
       if (program === undefined) continue;
       programsWalked++;
@@ -345,13 +345,13 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     expect(gateConds.length).toBeGreaterThan(0);
     expect(gateConds.filter((c) => c.kind === "allOf")).toEqual([]);
     // …and the same for the ABILITY play gate, the other stored-adjacent seat.
-    const abilityGates = registryCardIds()
+    const abilityGates = programmedCardIds()
       .flatMap((id) => programFor(id)?.abilities ?? [])
       .map((a) => a.playableIf)
       .filter((c): c is BoardCondition => c !== undefined);
     expect(abilityGates.length).toBeGreaterThan(0);
     expect(
-      registryCardIds()
+      programmedCardIds()
         .filter((id) => programFor(id)?.abilities?.some((a) => a.playableIf?.kind === "allOf"))
         .sort(),
     ).toEqual(

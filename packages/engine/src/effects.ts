@@ -2,10 +2,9 @@
 // transition. Registry-authored programs are hand-written op arrays that take precedence over the
 // deriver. The op contract itself lives in effectTypes.ts and is re-exported here.
 
-import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
+import type { BasicEnergyType } from "@colorless/schema";
 
 import type { StatusName } from "./events";
-import { TYPE_SYMBOL } from "./cardText";
 
 import { BENCH_MAX, HP_PER_COUNTER, type SpecialConditions } from "./types";
 
@@ -59,6 +58,27 @@ export type {
 
 export { POKEMON_TYPES } from "./effectTypes";
 
+import {
+  CURLY_APOSTROPHE,
+  ENERGY_TYPE_BY_CODE,
+  ENERGY_TYPE_BY_NAME,
+  foldApostrophes,
+  POKEMON_TYPE_BY_CODE,
+  STATUS_OF_WORD,
+  STATUS_WORD_OF,
+  STRAIGHT_APOSTROPHE,
+  type StatusWord,
+} from "./deriver/vocabulary";
+import { searchTopOrderProgram } from "./registryBuilders";
+
+export {
+  COPY_FAMILY_MARKER,
+  ENERGY_TYPE_BY_CODE,
+  foldApostrophes,
+  POKEMON_TYPE_BY_CODE,
+  STATUS_WORD_OF,
+} from "./deriver/vocabulary";
+
 /**
  * A printed count, or null when it is below 1 (or not a number). A printed 0 would build an op that
  * does nothing, or spend a flip to add nothing, so the sentence refuses instead.
@@ -101,31 +121,6 @@ function optionalStep(note: string, ops: EffectOp[], otherwise?: EffectOp[]): Op
 function recordGate(slot: EffectSlot, ops: EffectOp[]): OpOf<"recordGate"> {
   return { op: "recordGate", slot, ops };
 }
-
-type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
-
-/** A Special Condition as the CARDS print it — capitalized, the form the deriver
-    reads out of attack text and the form a prompt has to put back ("it is now
-    Poisoned", Janine's Secret Art). The inverse of `STATUS_OF_WORD` below (the
-    deriver's own `STATUS_WORDS` is a different thing — a regex alternation); both
-    tables are exhaustive `Record`s over their key type, so a new condition is a
-    compile error in two places rather than a silent gap in one, and a test pins
-    them mutually inverse (the one drift the types cannot catch). */
-export const STATUS_WORD_OF: Record<StatusName, StatusWord> = {
-  asleep: "Asleep",
-  burned: "Burned",
-  confused: "Confused",
-  paralyzed: "Paralyzed",
-  poisoned: "Poisoned",
-};
-
-const STATUS_OF_WORD: Record<StatusWord, StatusName> = {
-  Asleep: "asleep",
-  Burned: "burned",
-  Confused: "confused",
-  Paralyzed: "paralyzed",
-  Poisoned: "poisoned",
-};
 
 // The recognized sentence shapes, anchored end to end and compiled once
 // (no /g flag — exec is stateless, so module scope is safe). Catalog rows use
@@ -432,29 +427,6 @@ const RIPTIDE_PILE_FILTER: CardFilter = { kind: "basicEnergy", energyType: "Wate
 const CONDITIONAL_BONUS_SUPPRESSED =
   /^If (.+), this attack does (\d+) more damage\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
 
-// Both printed energy notations: brace codes ({L}) and spelled-out names (Fire). {C} and {N} are
-// absent (§6.1): Colorless is the provision fallback for unauthored Special Energy, so a {C} filter
-// would match cards nobody meant.
-export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
-  BASIC_ENERGY_TYPES.map((type) => [TYPE_SYMBOL[type], type]),
-);
-
-/** The spelled-out notation, keyed straight off BASIC_ENERGY_TYPES rather than
-    re-listed — so the two notations cannot resolve to different vocabularies, and
-    a type added to the schema is admitted here by construction. */
-const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
-  BASIC_ENERGY_TYPES.map((type) => [type, type]),
-);
-
-/**
- * Brace code read as a Pokémon type rather than a payable Energy. Extends `ENERGY_TYPE_BY_CODE`
- * with `N` (Dragon, which has no Basic Energy) and `C` (Colorless, excluded from the energy map
- * because `{C}` there is the Special Energy fallback).
- */
-export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = Object.fromEntries(
-  POKEMON_TYPES.map((type) => [TYPE_SYMBOL[type], type]),
-);
-
 const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, EnergyClass> = new Map<string, EnergyClass>([
   ...Object.entries(ENERGY_TYPE_BY_CODE).map(([code, type]): [string, EnergyClass] => [
     `{${code}}`,
@@ -474,24 +446,6 @@ const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map<string, P
     type,
   ]),
 ]);
-
-/**
- * Every exact lookup on printed text goes through this fold so curly and straight apostrophes match
- * the same key.
- */
-const CURLY_APOSTROPHE = "’";
-
-const STRAIGHT_APOSTROPHE = "'";
-
-/**
- * The same apostrophe fold applied to a captured value rather than a table key; exported for use in
- * another file.
- */
-export function foldApostrophes(text: string): string {
-  return text.includes(CURLY_APOSTROPHE)
-    ? text.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE)
-    : text;
-}
 
 function literalClauseRow<T>(table: ReadonlyMap<string, T>, clause: string): T | undefined {
   const exact = table.get(clause);
@@ -1874,29 +1828,6 @@ function attachFromZoneProgram(
 const RETRIEVAL_SINGULAR_ALT = `${HAND_SEARCH_NOUNS.map(([one]) => one).join("|")}|${TYPED_NOUN_SINGULAR}`;
 
 const RETRIEVAL_PLURAL_ALT = `${HAND_SEARCH_NOUNS.map(([, many]) => many).join("|")}|${TYPED_NOUN_PLURAL}`;
-
-/**
- * Shared program for the attack and Supporter printings of this sentence. `shuffleDeck` leads
- * despite the printed order because the search answer is a set of cards, so shuffling before or
- * after removing them is equivalent. `reorderTop` is a separate op because the order is a second
- * decision.
- */
-export function searchTopOrderProgram(n: number): EffectOp[] {
-  return [
-    { op: "shuffleDeck" },
-    {
-      op: "searchDeck",
-      // The printed noun is plain "cards", so any card is a legal find.
-      filter: { kind: "anyCard" },
-      max: n,
-      // Without `exact`, a short pick would let the next op reorder cards that were never searched.
-      exact: true,
-      dest: "deckTop",
-    },
-    // The reorder window is exactly what the search placed.
-    { op: "reorderTop", n },
-  ];
-}
 
 /**
  * Rewrites Mega Evolution wording variants to the equivalent Scarlet & Violet wording so the
@@ -8672,13 +8603,6 @@ export function deriveAttackPreDamage(text: string): AttackPreDamage | null {
   }
   return null;
 }
-
-/**
- * The phrase every copy-family sentence prints. attack.ts drops any candidate attack carrying it,
- * so a copy can never copy a copy. Deliberately the bare phrase rather than the anchors, so every
- * family member is excluded.
- */
-export const COPY_FAMILY_MARKER = /use it as this attack/;
 
 export function isInPlayAttackCopy(
   copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy,

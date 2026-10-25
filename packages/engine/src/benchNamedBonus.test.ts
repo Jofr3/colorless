@@ -19,7 +19,7 @@ import {
 } from "./effects";
 import type { BoardCondition, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   BENCH_NAMED_DECK,
   attachFromDeck,
@@ -29,6 +29,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  programmedCardIds,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -375,7 +376,7 @@ describe("§5 — 'N or fewer' as an enumerated set, complete over the domain", 
     // …and the spelling is the one the repo ALREADY uses: `registry.ts` authors
     // the same shape for a printed "3 or fewer", the 0 included. Two producers,
     // one convention.
-    const authored = registryCardIds().filter((id) =>
+    const authored = programmedCardIds().filter((id) =>
       JSON.stringify(programFor(id) ?? {}).includes('"opponentPrizesRemaining"'),
     );
     expect(authored.length).toBeGreaterThanOrEqual(2);
@@ -788,8 +789,8 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
   });
 
   it("NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {
-    const ids = new Set(registryCardIds());
-    expect(ids.size).toBe(1451);
+    const ids = new Set(programmedCardIds());
+    expect(ids.size).toBe(1523);
     const present = TAKEN_IDS.filter((id) => ids.has(id));
     expect(present).toEqual(["sv06-009"]);
     expect(Object.keys(programFor("sv06-009") ?? {})).toEqual(["attackGate"]);

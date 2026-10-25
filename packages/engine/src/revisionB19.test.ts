@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { seatDamageReduction } from "./continuous";
 import type { GameAction, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   battler,
   completeSetup,
@@ -11,6 +11,7 @@ import {
   typedEnergy,
   mustApply as must,
   roundTrip,
+  programmedCardIds,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -267,7 +268,7 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
         },
       ]);
     }
-    const watchers = registryCardIds().filter((id) =>
+    const watchers = programmedCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.trigger === "onEnergyAttach"),
     );
     expect(watchers.filter((id) => !id.startsWith("fix-")).sort()).toEqual(
@@ -496,7 +497,7 @@ describe("B19 §3 — Tundra Wall shields only from the OPPONENT's attacks", () 
   ];
 
   it('every `seatDamageReductionAfterWR` row is one of the ids whose print says "from attacks from your opponent\'s Pokémon"', () => {
-    const rows = registryCardIds().filter(
+    const rows = programmedCardIds().filter(
       (id) =>
         !id.startsWith("fix-") && programFor(id)?.passive?.seatDamageReductionAfterWR !== undefined,
     );

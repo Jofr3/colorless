@@ -1,7 +1,7 @@
 import { formatElapsed, logFromEvents, otherSeat, redactGame, type Seat } from "@colorless/engine";
 import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { ALL_BASIC_DECK, driveSetup } from "../../../../packages/engine/src/testFixtures";
+import { ALL_BASIC_DECK, driveSetup } from "@colorless/engine/testing";
 import {
   applyMatchAction,
   beginMatch,
@@ -10,7 +10,6 @@ import {
   MATCH_ACTION_DISPOSITION,
   type MatchRecord,
   type MatchSlot,
-  MIGRATABLE_MATCH_RECORD_VERSION,
   matchFrameFor,
   matchSeatOf,
   migrateMatchRecord,
@@ -168,6 +167,7 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ana", p2: "Bo" };
+const OLDEST_MIGRATABLE = 41;
 const STARTED_AT = 1_000;
 
 /** A freshly created match persisted the way `handoffToMatch` writes it — the
@@ -513,21 +513,19 @@ describe("readMatchRecord — the persisted-shape gate", () => {
 
   it("accepts what every writer produces: a migration from each migratable version", () => {
     const { record } = freshRecord();
-    for (let version = MIGRATABLE_MATCH_RECORD_VERSION; version < MATCH_RECORD_VERSION; version++) {
+    for (let version = OLDEST_MIGRATABLE; version < MATCH_RECORD_VERSION; version++) {
       const stored = JSON.parse(JSON.stringify({ ...record, version }));
       expect(readMatchRecord(stored)).toBeNull();
       const migrated = migrateMatchRecord(stored, {});
       expect(migrated?.version).toBe(MATCH_RECORD_VERSION);
       expect(readMatchRecord(JSON.parse(JSON.stringify(migrated)))).not.toBeNull();
     }
-    expect(
-      migrateMatchRecord({ ...record, version: MIGRATABLE_MATCH_RECORD_VERSION - 1 }, {}),
-    ).toBeNull();
+    expect(migrateMatchRecord({ ...record, version: OLDEST_MIGRATABLE - 1 }, {})).toBeNull();
     expect(
       migrateMatchRecord(
         {
           ...record,
-          version: MIGRATABLE_MATCH_RECORD_VERSION,
+          version: OLDEST_MIGRATABLE,
           state: { ...record.state, cardPool: null },
         },
         {},

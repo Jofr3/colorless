@@ -24,7 +24,7 @@ import {
   applyAction,
 } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -37,6 +37,7 @@ import {
   must,
   findEvent,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const POLIWRATH_TEXT =
@@ -652,7 +653,7 @@ describe("D316 §7 — THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSERTED"
     const authored: string[] = [];
     let optionalsSeen = 0;
     let programsWalked = 0;
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const program = programFor(id);
       if (program === undefined) continue;
       programsWalked += 1;

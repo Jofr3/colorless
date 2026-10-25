@@ -1,7 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { abilityUsedKey, programPlayable } from "./cardplay";
+import { programPlayable } from "./cardplay";
+import { abilityUsedKey } from "./types";
 import { disabledAbilityUids, inPlayToHandBlocked, koEnergyRescueUids } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";

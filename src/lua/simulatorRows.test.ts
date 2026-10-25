@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  driveSetup,
-  KNOCKOUT_DECK,
-  MIXED_DECK,
-  RARE_CANDY_DECK,
-} from "../../packages/engine/src/testFixtures";
+import { driveSetup, KNOCKOUT_DECK, MIXED_DECK, RARE_CANDY_DECK } from "@colorless/engine/testing";
 import { LuaSimulator } from "./simulator";
 import {
   boardRows,

@@ -10,9 +10,15 @@ export {
 } from "./fixtures/cards";
 export * from "./fixtures/decks";
 export * from "./fixtures/game";
+export * from "./fixtures/persist";
 export * from "./fixtures/pool";
+export * from "./fixtures/printings";
 export * from "./fixtures/program";
 export * from "./fixtures/rng";
 export * from "./fixtures/setup";
 export * from "./fixtures/values";
 export * from "./fixtures/walk";
+export { settleProgram } from "./flow";
+export { runProgram } from "./interpreter";
+export { registryCardIds } from "./registry";
+export { freshAllowances, makeInPlay } from "./types";

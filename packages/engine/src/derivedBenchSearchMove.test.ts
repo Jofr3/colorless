@@ -9,7 +9,7 @@ import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
 import { redactGame } from "./redact";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -24,6 +24,7 @@ import {
   setActiveFromDeck,
   driveSetup,
   roundTrip,
+  programmedCardIds,
 } from "./testFixtures";
 
 const SENTENCE =
@@ -678,7 +679,7 @@ describe("§6 — the describer and the log rows, RENDERED", () => {
     };
     const all: Record<string, unknown>[] = [];
     for (const [, text] of legalAttackCorpus()) all.push(...walk(deriveAttackEffect(text) ?? []));
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       const program = programFor(id);
       if (program === undefined) continue;
       for (const value of Object.values(program as Record<string, unknown>)) {
@@ -692,7 +693,7 @@ describe("§6 — the describer and the log rows, RENDERED", () => {
     }
     const searches = all.filter((o) => o.op === "searchDeck");
     const recording = searches.filter((o) => o.recordAs !== undefined);
-    expect(searches.length).toBe(148);
+    expect(searches.length).toBe(151);
     const gatedOrBench = recording.filter((o) => o.dest === "bench");
     expect(gatedOrBench).toHaveLength(1);
     expect(gatedOrBench[0]?.dest).toBe("bench");

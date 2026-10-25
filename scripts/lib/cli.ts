@@ -81,3 +81,26 @@ export function wiringProblems(gate: string, site: string, call: string): string
     "Re-add the call (NOT by deleting this rung).",
   ];
 }
+
+/**
+ * The `check` script with every `bun run <name>` it calls expanded in place, so a guard can see
+ * whether `check` still runs it.
+ */
+export function expandedCheckScript(): string {
+  const pkg = parseJson(
+    readFileSync(repoPath("package.json"), "utf8"),
+    "package.json",
+    (v): v is { scripts?: Record<string, unknown> } =>
+      isRecord(v) && (v.scripts === undefined || isRecord(v.scripts)),
+  );
+  const scripts = pkg.scripts ?? {};
+  const expand = (name: string, seen: Set<string>): string => {
+    const script = scripts[name];
+    if (typeof script !== "string" || seen.has(name)) return "";
+    seen.add(name);
+    return script.replace(/bun run ([\w:-]+)/g, (call, inner: string) =>
+      inner in scripts ? expand(inner, seen) : call,
+    );
+  };
+  return expand("check", new Set());
+}

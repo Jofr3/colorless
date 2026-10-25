@@ -5,8 +5,16 @@ import { isTeraPokemon } from "./cards";
 import { CATALOG_MANIFEST as M } from "./catalogManifest";
 import type { GameState } from "./index";
 import { applyAction } from "./index";
-import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, must, driveSetup } from "./testFixtures";
+import { programFor } from "./registry";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  must,
+  driveSetup,
+  programmedCardIds,
+} from "./testFixtures";
 
 /** [me id, twin id, tier, printed name] — the twin is the WARRANT. */
 const ALIASES: readonly (readonly [string, string, "face" | "pokemon" | "text", string])[] = [
@@ -520,7 +528,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
   });
 
   it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it ( D583: plus Team Rocket's Energy `me02.5-217`; D584: plus the 18 tier-2 keys; D585: plus the 19 WP19 keys; D586: plus Carbink ×2; D587: plus the 19 WP04 Trainer keys; D588: plus the 17 WP22 Trainer keys; D589: plus Mega Greninja ex ×5; D590: plus the 13 WP05 on-evolve keys; D591: plus the 19 WP20a activated Ability keys; D593: plus the 5 WP07 Fade Out keys; D594: plus the 2 WP33a Ability keys; D597: plus the 2 WP29 Inferno X keys; D598: plus the 13 WP32 Ability keys; D599: plus the 4 WP24a Supporter keys; D602: plus the 9 WP20b activated Ability keys; D603: plus the 11 WP11 Mega-gated keys; D604: plus the 8 WP18 typed Special Energy keys; D606: plus the 9 WP25a Stadium keys; D608: plus the 5 WP30 `30th` attack keys; D610: plus the 16 WP37a keys; D611: plus the 17 WP21 keys; D612: minus the 4 retired attack keys; D614: plus the 4 WP37b keys; D617: plus the 11 WP24b Supporter keys; D618: plus the 8 WP25b Stadium keys; D619: plus the 7 WP12 / WP15 keys; D620: plus the 7 WP26 Tool keys; D621: plus the 16 WP24c + WP23 Trainer keys; D625: plus the 13 T1 Trainer keys; D626: plus the 8 K1 keys; D627: plus the 4 H1 keys; D628: plus the 2 new A1 keys; D630: plus the 2 M1 Trainer keys; D631: plus the 9 P1 keys; D632: plus the 5 D1 Damp keys; D635: plus the F1 Fossil Quarry key; D636: plus the 2 Clawitzer keys; D637: plus the 4 `me` Antique Fossil keys; D638: plus the 3 X1 Memory Helix keys; D641: plus the 3 Y1b Lt. Surge's Bargain keys; D642: plus the 6 Z1 + K2 keys; D643: plus the 3 Y1a Rotom ex keys; D644: plus the 5 Y1e keys)", () => {
-    const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
+    const me = programmedCardIds().filter((id) => /^(me|30th)/.test(id));
     expect(KEYED_AT_D584).toHaveLength(18);
     expect(KEYED_AT_D585).toHaveLength(19);
     expect(KEYED_AT_D586).toHaveLength(2);

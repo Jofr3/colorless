@@ -5,8 +5,8 @@ import { applyAction } from "./index";
 import { redactGame } from "./redact";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
-import { programFor, registryCardIds } from "./registry";
-import { battler, deckOf, typedEnergy, must, driveSetup } from "./testFixtures";
+import { programFor } from "./registry";
+import { battler, deckOf, typedEnergy, must, driveSetup, programmedCardIds } from "./testFixtures";
 
 const ARCHALUDON = "sv08-130";
 const ARCHALUDON_IDS = ["sv08-130", "sv08-224", "sv08-241"] as const;
@@ -246,7 +246,7 @@ function attachOpsByCardId(): Map<string, Extract<EffectOp, { op: "attachEnergyF
       for (const value of Object.values(rec)) walk(value, into);
     }
   };
-  for (const id of registryCardIds()) {
+  for (const id of programmedCardIds()) {
     const ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[] = [];
     walk(programFor(id), ops);
     if (ops.length > 0) found.set(id, ops);
@@ -268,6 +268,8 @@ describe("D358 §1 — which printings carry the decline, walked off the registr
         ...POWERGLASS_IDS,
         "me01-038",
         "me01-141",
+        "sv04.5-245",
+        "svp-029",
       ].sort(),
     );
     // The two halves of the set, kept apart on purpose: the printed-legal six this
@@ -379,7 +381,7 @@ describe("D358 §2 — Archaludon ex's printed {0, 1, 2}, all three reachable", 
     expect(energyIdsOn(done.state, ACTIVE)).toEqual([ENERGY_M]);
     expect(energyIdsOn(done.state, benchRef(0))).toEqual([]);
     // The declined card is STILL IN THE PILE — a decline moves nothing, which is
-    // the claim `applyChoice`'s arm makes and the one a "discard it instead"
+    // the claim `answerOp`'s arm makes and the one a "discard it instead"
     // implementation would fail.
     expect(
       done.state.players.p1.discard.filter((u) => idOf(done.state, u) === ENERGY_M),
@@ -560,7 +562,7 @@ describe("D358 §4 — the validator, the redaction, and the refuted map-prompt 
       }
     };
     const seen: string[] = [];
-    for (const id of registryCardIds()) walk(programFor(id), seen);
+    for (const id of programmedCardIds()) walk(programFor(id), seen);
     expect(seen.length).toBeGreaterThan(0);
     expect(seen.filter((s) => s.includes("discard"))).toEqual([]);
     for (const id of [...ARCHALUDON_IDS, ...MAGNETON_IDS]) {
@@ -629,7 +631,7 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
     // The flag is a FIELD on two existing program objects, so `raw.length`,
     // `nonAttackRegistryIds()` and every `BUILT.*` line stand still. The claim is
     // asserted from the side that can go red: both families were already keyed.
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of [...ARCHALUDON_IDS, ...MAGNETON_IDS]) expect(keys.has(id), id).toBe(true);
   });
 
@@ -645,7 +647,7 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
 
 describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N", () => {
   /** Every op the DERIVER emits for a Standard-legal attack sentence, with the
-      sentence that produced it — the surface `registryCardIds()` cannot see. */
+      sentence that produced it — the surface `programmedCardIds()` cannot see. */
   function derivedSpreads(): {
     text: string;
     ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[];

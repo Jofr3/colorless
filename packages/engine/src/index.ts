@@ -16,8 +16,8 @@ import {
   useAbility,
   useStadiumAbility,
 } from "./cardplay";
-import { advance, clearDepartedChosenShields, concede, discardMisplacedEnergy } from "./flow";
-import { toolTrimStages } from "./continuous";
+import { advance, concede } from "./flow";
+import { postStepChecks } from "./stateChecks";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -166,7 +166,8 @@ export { handCostUnmet } from "./ops/cards";
 export { programPlayable, trainerProgramPlayable } from "./cardplay";
 export { fossilPlayable } from "./cardplay";
 export { stadiumPlayOverUnmet, stadiumSpentPlayLifted } from "./cardplay";
-export { abilityBodyGateMet, abilityUsedKey } from "./cardplay";
+export { abilityBodyGateMet } from "./cardplay";
+export { abilityUsedKey } from "./types";
 export type { BlockingAttackGate } from "./boardCondition";
 export type {
   DiscardScope,
@@ -188,6 +189,8 @@ export type {
   TriggerTiming,
 } from "./programTypes";
 export { programFor } from "./registry";
+export { simulationGaps } from "./simulationGaps";
+export type { SimulationGap } from "./simulationGaps";
 export type { DrawReason, GameEvent, StatusName } from "./events";
 export { inSetup, phaseViewOf } from "./phaseView";
 export type { PendingDecision, PhaseView } from "./phaseView";
@@ -196,6 +199,7 @@ export { formatElapsed, logFromEvents } from "./log";
 export type { LogContext } from "./log";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
+export { GAME_STATE_VERSION, migrateGameState, poolIdsNeededFor } from "./persist";
 export { pendingMulligansOf } from "./mulligans";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
 export {
@@ -238,22 +242,11 @@ export { attackCostAt } from "./attack";
 export function applyAction(state: GameState, action: GameAction): ApplyResult {
   const result = dispatchAction(state, action);
   if (!result.ok) return result;
-  // State checks that run after every accepted action: Energy attached where it
-  // may not stay is discarded, shields whose Pokémon left play are cleared, and
-  // Tool limits are enforced once the turn is back at the action step.
-  const swept = discardMisplacedEnergy(result.state, result.events);
-  const cleared = clearDepartedChosenShields(swept);
-  if (cleared.phase.kind === "turn:action") {
-    const trims = toolTrimStages(cleared, cleared.phase.seat);
-    if (trims.length > 0) {
-      const resume = { kind: "resumeTurn" as const, seat: cleared.phase.seat };
-      return advance(
-        { ...cleared, pending: [...trims, resume, ...cleared.pending] },
-        result.events,
-      );
-    }
+  const checked = postStepChecks(result.state, "action", result.events);
+  if (checked.pending.length !== result.state.pending.length) {
+    return advance(checked, result.events);
   }
-  return cleared === result.state ? result : ok(cleared, result.events);
+  return checked === result.state ? result : ok(checked, result.events);
 }
 
 function dispatchAction(state: GameState, action: GameAction): ApplyResult {

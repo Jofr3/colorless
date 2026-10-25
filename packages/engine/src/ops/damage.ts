@@ -1,27 +1,16 @@
-import type { BasicEnergyType, Card } from "@colorless/schema";
+import type { BasicEnergyType } from "@colorless/schema";
 import { attackerPreWRBonus, countCardsInDiscardPile, countPokemonInPlay } from "../boardCondition";
 import {
   activeTop,
   applyDamageModifier,
   cardOfUid,
-  hasPrintedAbility,
-  isExOrV,
   matchesFilter,
-  preventsAttackerBanner,
-  preventsAttackerClass,
   resistanceOf,
   topCardOf,
   topUid,
   weaknessOf,
 } from "../cards";
-import type { KoSurvival } from "../continuous";
 import {
-  attackBlockOf,
-  attackerGatedReductionOf,
-  attackerHasSpecialEnergy,
-  benchShieldedFromDamage,
-  berryReductionOf,
-  coinFlipShieldPrevents,
   coinRedoToolOf,
   countAttachedEnergy,
   deluxeBombOf,
@@ -32,29 +21,20 @@ import {
   installedAttackDebuffOf,
   installedNoWeakness,
   installedRecoilOf,
-  installedReductionOf,
-  installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   installedWeaknessRewriteOf,
-  koSurvivalClamp,
-  koSurvivalCoinFlip,
-  NO_CONSUMABLE,
   opposingAttackDebuff,
   opposingToolAttackDebuff,
   passivesOf,
-  preventedByDamageThreshold,
-  preventsAttackerType,
   remainingHpWithin,
-  seatDamageReduction,
   seatRemovesWeakness,
-  seatShieldedFromLowEnergyAttacker,
   seatWeaknessRewrite,
   sideAttackBonusThisTurn,
-  stadiumPreventsDamage,
   weaknessAmountOverride,
   withWatchedRecoil,
   withWeaknessAmount,
 } from "../continuous";
+import { consumeTools, landAttackHit } from "../damageCalc";
 import type { EffectContext, EffectPrompt, EffectRecord, PokemonRef } from "../effectPrompt";
 import type { CardFilter, EffectOp, EffectSlot, OpOf } from "../effectTypes";
 import {
@@ -80,11 +60,12 @@ import {
 import type { GameEvent } from "../events";
 import type { CoinFace } from "../rng";
 import { flipCoin } from "../rng";
-// Import cycle with triggers.ts; safe because both ends are hoisted function declarations called
-// only at run time.
-import { damagedByAttackAbility, damagedToolTriggersOf } from "../triggers";
+import { programFor } from "../registry";
+import { damagedByAttackAbility, damagedToolTriggersOf } from "../triggerLookup";
 import type { GameState, InPlayPokemon, PendingStage, PokemonTarget, Seat } from "../types";
 import {
+  coinRedoKey,
+  spendAbilityUse,
   bodyAt,
   damageCountersOn,
   HP_PER_COUNTER,
@@ -93,33 +74,11 @@ import {
   stackUids,
   takenPrizes,
   withActive,
-  withAttackDamageTaken,
   withSide,
 } from "../types";
 
 // Op implementations that damage, heal or move damage counters, with the snipe placement and
 // the coin flips their riders read.
-
-/**
- * Is attack damage aimed at `pokemon` refused by a live §11 block? Both printed spellings block
- * damage, so `effects` is not read, and nothing is announced since `DAMAGE_DEALT` carries
- * `prevented: true`. Takes the attacker and the damage amount because a block may be narrowed by
- * attacker class or capped by damage.
- */
-function attackDamageBlocked(
-  state: GameState,
-  pokemon: InPlayPokemon,
-  attacker: Card | undefined,
-  damage: number,
-  ctx: EffectContext,
-  // The attacking body, whose conditions Lava Wall's `"burned"` class reads.
-  attackerBody: InPlayPokemon | undefined,
-): boolean {
-  return (
-    ctx.invokedBy === "attack" &&
-    attackBlockOf(state, pokemon, attacker, damage, attackerBody) !== null
-  );
-}
 
 /**
  * Spread damage: `amount` to each Benched Pokémon of the named side, flat since §8.5 W/R never
@@ -180,106 +139,34 @@ export function spreadDamage(
       bench.push(pokemon);
       continue;
     }
-    const passives = passivesOf(state, pokemon);
-    // The reduction is computed before `prevented` because a damage-capped block is read against
-    // the amount that would actually be placed. A splash the debuff took to 0 never reaches the
-    // after-W/R step, so no Berry applies or is spent.
-    const berry =
-      spread === 0 ? NO_CONSUMABLE : berryReductionOf(state, pokemon, attackerCard, ctx.seat);
-    const reduction =
-      berry.amount +
-      passives.damageReductionAfterWR +
-      attackerGatedReductionOf(
-        state,
-        pokemon,
-        passives.damageReductionsFromAttacker,
-        attackerCard,
-        ctx.seat,
-      ) +
-      installedReductionOf(state, pokemon, attackerCard, attackerTop?.active) +
-      seatDamageReduction(state, pokemon, "all", ctx.seat);
-    // Next-turn vulnerability is added at the post-W/R step, but not to a splash the debuff took to
-    // 0.
-    const vulnerability = spread === 0 ? 0 : installedVulnerabilityOf(state, pokemon);
-    const wouldDeal = Math.max(0, spread + vulnerability - reduction);
-    // The pure preventions settle first; the coin-flip shield is asked afterwards on what is left.
-    const preventedBeforeFlip =
-      (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
-      preventsAttackerType(passives.preventDamageFromTypes, attackerCard) ||
-      // Cornerstone Stance has no Active Spot clause, so a benched holder is protected from a
-      // spread.
-      (passives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
-      // `preventsAttackerClass` answers false for an unresolvable attacker, so no `!== undefined`
-      // check is needed.
-      preventsAttackerClass(passives.preventDamageFromAttackerClasses, attackerCard) ||
-      preventsAttackerBanner(passives.preventDamageAndEffectsFromBanners, attackerCard) ||
-      // Mighty Shell has no Active Spot clause, so a benched holder is protected from a spread.
-      (passives.preventDamageAndEffectsFromSpecialEnergy &&
-        attackerHasSpecialEnergy(state, attackerTop?.active)) ||
-      // Plume Protection prints "attacks from your opponent's Pokémon", so an own-Bench spread
-      // still lands.
-      (passives.preventDamageWhileBenched && victim !== ctx.seat) ||
-      // `passivesOf` already resolved the "on your Bench" clause.
-      passives.preventDamageAndEffectsWhileBenched ||
-      // The threshold is compared against this body's per-body amount, not the attack's printed
-      // damage.
-      preventedByDamageThreshold(passives.preventDamageAtOrAbove, wouldDeal) ||
-      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx, attackerTop?.active) ||
-      // "all": a spread never ignores effects on the damaged body.
-      benchShieldedFromDamage(state, pokemon, "all") ||
-      // Ancient Bulwark: seat-gated, so an own-Bench spread lands.
-      seatShieldedFromLowEnergyAttacker(state, pokemon, attackerTop?.active, ctx.seat, "all") ||
-      stadiumPreventsDamage(state, pokemon, attackerCard);
-    // Each coin is drawn from the loop's advanced rng, so every benched holder flips independently.
-    const [flipPrevented, nextRng] = coinFlipShieldPrevents(
+    const landed = landAttackHit(
       { ...state, rngState: rng },
-      pokemon,
-      victim,
-      preventedBeforeFlip ? 0 : wouldDeal,
+      {
+        body: pokemon,
+        seat: victim,
+        uid,
+        passives: passivesOf(state, pokemon),
+        attacker: attackerCard,
+        attackerBody: attackerTop?.active,
+        // On the `"yourBench"` arm the dealer and the damaged body's owner are the same seat.
+        attackerSeat: ctx.seat,
+        // A spread never ignores effects on the damaged body.
+        ignoreTargetEffects: false,
+        invokedByAttack: ctx.invokedBy === "attack",
+        preWR: spread,
+        afterWR: spread,
+        row: {
+          base: amount,
+          debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
+          weakness: null,
+          resistance: null,
+        },
+      },
       events,
     );
-    rng = nextRng;
-    const prevented = preventedBeforeFlip || flipPrevented;
-    const dealt = prevented ? 0 : wouldDeal;
-    // A spread is attack damage and reaches the Bench, so the KO-survival clamp applies. Passing
-    // the attacker's seat means a Survival Brace only answers an opponent's attack.
-    const clamped = koSurvivalClamp(state, pokemon, dealt, ctx.seat);
-    // Tenacious Body's coin-flip survival, after the clamp, on the loop's rng.
-    const [coinSaved, survivalRng] =
-      clamped === null
-        ? koSurvivalCoinFlip({ ...state, rngState: rng }, pokemon, victim, dealt, events)
-        : [null, rng];
-    rng = survivalRng;
-    const damage = clamped?.damage ?? coinSaved ?? pokemon.damage + dealt;
-    events.push({
-      type: "DAMAGE_DEALT",
-      seat: victim,
-      vulnerability: vulnerability > 0 ? vulnerability : undefined,
-      // On the `"yourBench"` arm the dealer and the damaged body's owner are the same seat.
-      by: ctx.seat,
-      uid,
-      base: amount,
-      debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
-      weakness: null,
-      resistance: null,
-      reduction: reduction > 0 ? reduction : undefined,
-      prevented: prevented ? true : undefined,
-      survived: clamped === null && coinSaved === null ? undefined : true,
-      dealt,
-      damage,
-    });
-    // Consumed Tools leave after the row that shows what they did: a Berry is spent on any
-    // unprevented hit it reduced, a Brace only when the clamp used it.
-    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-    consumed.push(...spent);
-    // Splash damage is attack damage, so it is recorded on the body (Juggernaut Horn).
-    bench.push(
-      withAttackDamageTaken(
-        { ...consumeTools(pokemon, spent, victim, events), damage },
-        state.turn,
-        dealt,
-      ),
-    );
+    rng = landed.rngState;
+    consumed.push(...landed.spent);
+    bench.push(landed.body);
   }
   return withSide({ ...state, rngState: rng }, victim, {
     ...side,
@@ -366,6 +253,24 @@ function coinRedoOffer(
   const [ref] = sourceRef(state, ctx);
   const body = ref === undefined ? undefined : refPokemon(state, ref);
   return body === undefined ? null : coinRedoToolOf(state, body);
+}
+
+/**
+ * A Backtrack Badge offer answered yes: `COINS_REFLIPPED` and the Badge's once-per-turn key. A uid
+ * without `reflipAttackCoins` spends nothing.
+ */
+export function spendCoinRedo(
+  state: GameState,
+  seat: Seat,
+  toolUid: string,
+  count: number,
+  events: GameEvent[],
+): GameState {
+  const id = state.cardIdByUid[toolUid];
+  const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
+  if (redo === undefined) return state;
+  events.push({ type: "COINS_REFLIPPED", seat, uid: toolUid, count });
+  return spendAbilityUse(state, coinRedoKey(toolUid, redo.name));
 }
 
 /**
@@ -506,128 +411,40 @@ export function placeSnipe(
     // rather than "counters placed". Umbreon "Feint Attack" (`ignoreWR`) skips even
     // that reduction — its "not affected by any effects on that Pokémon" reaches a
     // Benched pick too.
-    const targetPassives = passivesOf(next, pokemon);
     // Plus Gloomy Garbage; under `ignoreWR` a pick that is itself a holder drops its own term.
     const attackerDebuff =
       sharedDebuff +
       (attackerTop === null
         ? 0
         : opposingToolAttackDebuff(next, attackerTop.active, ignoreWR ? pokemon : undefined));
-    // `ignoreWR` (Feint Attack, "not affected by any effects on that Pokémon") nulls the on-target
-    // preventions and reductions, catalog and installed, including a Berry (a nulled Berry is not
-    // spent). Off-target preventions (an aura sourced from another body, a Stadium) survive it; a
-    // seat-wide aura is nulled only for the part the damaged body grants itself.
-    const berry =
-      ignoreWR || amount - attackerDebuff <= 0
-        ? NO_CONSUMABLE
-        : berryReductionOf(next, pokemon, attackerCard, ctx.seat);
-    const reduction = ignoreWR
-      ? seatDamageReduction(next, pokemon, "othersOnly", ctx.seat)
-      : berry.amount +
-        targetPassives.damageReductionAfterWR +
-        // The attacker-gated reduction, on-target (`ignoreWR` nulls it).
-        attackerGatedReductionOf(
-          next,
-          pokemon,
-          targetPassives.damageReductionsFromAttacker,
-          attackerCard,
-          ctx.seat,
-        ) +
-        installedReductionOf(next, pokemon, attackerCard, attackerTop?.active) +
-        seatDamageReduction(next, pokemon, "all", ctx.seat);
-    // The debuff is not nulled by `ignoreWR`: it is an effect on the attacker, not on the target.
-    // The damage cap reads this number, so it is computed below. The installed next-turn
-    // vulnerability is added at the reduction step and nulled by `ignoreWR` with it; a pick the
-    // debuff took to 0 is not a hit, so it does not land.
-    const exposedBy =
-      ignoreWR || amount - attackerDebuff <= 0 ? 0 : installedVulnerabilityOf(next, pokemon);
-    const wouldDeal = Math.max(0, Math.max(0, amount - attackerDebuff) + exposedBy - reduction);
-    const preventedBeforeFlip =
-      (!ignoreWR &&
-        ((targetPassives.preventDamageFromExV &&
-          attackerCard !== undefined &&
-          isExOrV(attackerCard)) ||
-          preventsAttackerType(targetPassives.preventDamageFromTypes, attackerCard) ||
-          // Catalog aura on the damaged Pokémon, so Feint Attack nulls it.
-          (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
-          // Catalog aura on the damaged Pokémon, so Feint Attack nulls it.
-          preventsAttackerClass(targetPassives.preventDamageFromAttackerClasses, attackerCard) ||
-          // Sparkling Scales, inside the `ignoreWR` guard.
-          preventsAttackerBanner(targetPassives.preventDamageAndEffectsFromBanners, attackerCard) ||
-          // Catalog aura on the damaged Pokémon, so Feint Attack nulls it.
-          (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
-            attackerHasSpecialEnergy(next, attackerTop?.active)) ||
-          // Plume Protection. Seat-gated: an own-Bench pick is not damaged by "attacks from your
-          // opponent's Pokémon".
-          (targetPassives.preventDamageWhileBenched && benchVictim !== ctx.seat) ||
-          // Catalog aura on the damaged Pokémon, so Feint Attack nulls it.
-          targetPassives.preventDamageAndEffectsWhileBenched ||
-          // Feint Attack nulls this prevention, and its threshold is read against damage computed
-          // without W/R or reduction.
-          preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
-          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx, attackerTop?.active))) ||
-      // Outside the `ignoreWR` guard because the shield usually comes from a different body;
-      // `scope` nulls it only when the damaged body is the one granting it.
-      benchShieldedFromDamage(next, pokemon, ignoreWR ? "othersOnly" : "all") ||
-      // Ancient Bulwark; a Feint Attack snipe on the holder drops its own shield.
-      seatShieldedFromLowEnergyAttacker(
-        next,
-        pokemon,
-        attackerTop?.active,
-        ctx.seat,
-        ignoreWR ? "othersOnly" : "all",
-      ) ||
-      stadiumPreventsDamage(next, pokemon, attackerCard);
-    // `ignoreWR` is folded into the argument so a nulled coin-flip shield draws no coin at all;
-    // drawing and ignoring one would advance `rngState` and desync replays.
-    const [flipPrevented, nextRng] = coinFlipShieldPrevents(
+    const preWR = Math.max(0, amount - attackerDebuff);
+    const landed = landAttackHit(
       { ...next, rngState: rng },
-      pokemon,
-      // The shielded body's seat, which is the sniped side and not necessarily the opponent's.
-      benchVictim,
-      preventedBeforeFlip || ignoreWR ? 0 : wouldDeal,
+      {
+        body: pokemon,
+        // The sniped side, not necessarily the opponent's.
+        seat: benchVictim,
+        uid,
+        passives: passivesOf(next, pokemon),
+        attacker: attackerCard,
+        attackerBody: attackerTop?.active,
+        attackerSeat: ctx.seat,
+        ignoreTargetEffects: ignoreWR,
+        invokedByAttack: ctx.invokedBy === "attack",
+        preWR,
+        afterWR: preWR,
+        row: {
+          base: amount,
+          debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
+          weakness: null,
+          resistance: null,
+        },
+      },
       events,
     );
-    rng = nextRng;
-    const prevented = preventedBeforeFlip || flipPrevented;
-    const dealt = prevented ? 0 : wouldDeal;
-    // §8.1 KO-survival clamp, on the `deals` arm only: placed counters are not damage from an
-    // attack.
-    const clamped = koSurvivalClamp(next, pokemon, dealt, ctx.seat);
-    // Coin-flip survival, on the sniped body's seat.
-    const [coinSaved, survivalRng] =
-      clamped === null
-        ? koSurvivalCoinFlip({ ...next, rngState: rng }, pokemon, benchVictim, dealt, events)
-        : [null, rng];
-    rng = survivalRng;
-    const damage = clamped?.damage ?? coinSaved ?? pokemon.damage + dealt;
-    // `by` is always the attacker; `seat` is the damaged body's, which equals the attacker's on a
-    // `yourBench` snipe.
-    events.push({
-      type: "DAMAGE_DEALT",
-      seat: benchVictim,
-      vulnerability: exposedBy > 0 ? exposedBy : undefined,
-      by: ctx.seat, // The attacker, which is also `seat` on the own-side arm.
-      uid,
-      base: amount,
-      debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
-      weakness: null,
-      resistance: null,
-      reduction: reduction > 0 ? reduction : undefined,
-      prevented: prevented ? true : undefined,
-      survived: clamped === null && coinSaved === null ? undefined : true,
-      dealt,
-      damage,
-    });
-    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-    consumed.push(...spent);
-    bench.push(
-      withAttackDamageTaken(
-        { ...consumeTools(pokemon, spent, benchVictim, events), damage },
-        next.turn,
-        dealt,
-      ),
-    );
+    rng = landed.rngState;
+    consumed.push(...landed.spent);
+    bench.push(landed.body);
   }
   return withSide({ ...next, rngState: rng }, benchVictim, {
     ...side,
@@ -742,120 +559,41 @@ export function snipeActive(
     ignoreWR || wrOnly || attacker === null ? null : resistanceOf(attacker.card, target.card);
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
   // do negative damage, and the printed parenthetical puts the subtraction here.
+  const preWR = Math.max(0, amount + bonus - debuff);
   const afterWR = Math.max(
     0,
-    applyDamageModifier(
-      applyDamageModifier(Math.max(0, amount + bonus - debuff), weakness),
-      resistance,
-    ),
+    applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
   );
-  const targetPassives = passivesOf(state, target.active);
-  // Mimikyu "Safeguard" and other on-target preventions (catalog, installed, Berry) are bypassed by
-  // `ignoreWR`; a nulled Berry is not spent. Off-target preventions such as Neutralization Zone sit
-  // outside the guard.
-  const berry =
-    ignoreWR || amount + bonus <= debuff
-      ? NO_CONSUMABLE
-      : berryReductionOf(state, target.active, attacker?.card, ctx.seat);
-  const reduction = ignoreWR
-    ? seatDamageReduction(state, target.active, "othersOnly", ctx.seat)
-    : berry.amount +
-      targetPassives.damageReductionAfterWR +
-      // The attacker-gated reduction, on-target (`ignoreWR` nulls it).
-      attackerGatedReductionOf(
-        state,
-        target.active,
-        targetPassives.damageReductionsFromAttacker,
-        attacker?.card,
-        ctx.seat,
-      ) +
-      installedReductionOf(state, target.active, attacker?.card, attacker?.active) +
-      seatDamageReduction(state, target.active, "all", ctx.seat);
-  // The damage cap reads the number that would actually be placed, so `prevented` is computed after
-  // the reduction. The installed next-turn vulnerability is added after Weakness and nulled by
-  // `ignoreWR`, and does not apply when the pre-W/R sum is 0 or less (damage step 2 stops).
-  const activeExposure =
-    ignoreWR || amount + bonus - debuff <= 0 ? 0 : installedVulnerabilityOf(state, target.active);
-  const wouldDeal = Math.max(0, afterWR + activeExposure - reduction);
-  const preventedBeforeFlip =
-    (!ignoreWR &&
-      ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
-        preventsAttackerType(targetPassives.preventDamageFromTypes, attacker?.card) ||
-        // `attacker?.card`: an unresolvable attacker answers false (protects less).
-        (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker?.card)) ||
-        // `attacker?.card`: an unresolvable attacker protects less rather than more.
-        preventsAttackerClass(targetPassives.preventDamageFromAttackerClasses, attacker?.card) ||
-        // Sparkling Scales, inside the `ignoreWR` guard.
-        preventsAttackerBanner(targetPassives.preventDamageAndEffectsFromBanners, attacker?.card) ||
-        // `attacker?.active`: an unresolvable attacker answers false.
-        (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
-          attackerHasSpecialEnergy(state, attacker?.active)) ||
-        // Plume Protection, the damage-only twin.
-        targetPassives.preventDamageWhileBenched ||
-        // Always false here (the target is the Active); kept for totality.
-        targetPassives.preventDamageAndEffectsWhileBenched ||
-        preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
-        attackDamageBlocked(
-          state,
-          target.active,
-          attacker?.card,
-          wouldDeal,
-          ctx,
-          attacker?.active,
-        ))) ||
-    // Always false here: the target clause reads "your Benched Pokémon"; kept for totality.
-    benchShieldedFromDamage(state, target.active, "all") ||
-    // Ancient Bulwark: the holder is benched, so it is never the target here.
-    seatShieldedFromLowEnergyAttacker(state, target.active, attacker?.active, ctx.seat, "all") ||
-    stadiumPreventsDamage(state, target.active, attacker?.card);
-  // `ignoreWR` folds into the argument so a nulled shield draws no coin.
-  const [flipPrevented, rngState] = coinFlipShieldPrevents(
+  const landed = landAttackHit(
     state,
-    target.active,
-    opponent,
-    preventedBeforeFlip || ignoreWR ? 0 : wouldDeal,
+    {
+      body: target.active,
+      seat: opponent,
+      uid: target.uid,
+      passives: passivesOf(state, target.active),
+      attacker: attacker?.card,
+      attackerBody: attacker?.active,
+      attackerSeat: ctx.seat,
+      ignoreTargetEffects: ignoreWR,
+      invokedByAttack: ctx.invokedBy === "attack",
+      preWR,
+      afterWR,
+      row: {
+        base: amount,
+        bonus: bonus > 0 ? bonus : undefined,
+        debuff: debuff > 0 ? debuff : undefined,
+        weakness,
+        resistance,
+      },
+    },
     events,
   );
-  const prevented = preventedBeforeFlip || flipPrevented;
-  const dealt = prevented ? 0 : wouldDeal;
-  // §8.1 KO-survival clamp; this arm is damage from an attack.
-  const clamped = koSurvivalClamp(state, target.active, dealt, ctx.seat);
-  // Coin-flip survival, on the shield's advanced rng.
-  const [coinSaved, survivalRng] =
-    clamped === null
-      ? koSurvivalCoinFlip({ ...state, rngState }, target.active, opponent, dealt, events)
-      : [null, rngState];
-  const damage = clamped?.damage ?? coinSaved ?? target.active.damage + dealt;
-  events.push({
-    type: "DAMAGE_DEALT",
-    seat: opponent,
-    by: ctx.seat,
-    uid: target.uid,
-    base: amount,
-    bonus: bonus > 0 ? bonus : undefined,
-    debuff: debuff > 0 ? debuff : undefined,
-    weakness,
-    resistance,
-    reduction: reduction > 0 ? reduction : undefined,
-    vulnerability: activeExposure > 0 ? activeExposure : undefined,
-    prevented: prevented ? true : undefined,
-    survived: clamped === null && coinSaved === null ? undefined : true,
-    dealt,
-    damage,
-  });
-  // The consumed Tools leave the sniped Active for its owner's discard pile, after the row.
-  const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-  // Recorded on the sniped Active (Juggernaut Horn).
-  const struck = withActive(
-    { ...state, rngState: survivalRng },
+  const { dealt } = landed;
+  const hit = discardToPile(
+    withActive({ ...state, rngState: landed.rngState }, opponent, landed.body),
     opponent,
-    withAttackDamageTaken(
-      { ...consumeTools(target.active, spent, opponent, events), damage },
-      state.turn,
-      dealt,
-    ),
+    landed.spent,
   );
-  const hit = discardToPile(struck, opponent, spent);
   // §9: the recoil and "is damaged by an attack" reactions are seeded here because some attacks
   // re-home their main hit into a `damageDefender` op, bypassing attack.ts's own seeding. Only this
   // Active funnel seeds them, not `placeSnipe`; a benched Orthworm ex therefore does not retaliate
@@ -1032,37 +770,6 @@ export function detonateDeluxeBomb(
     damagedSeat,
     bomb.toolUids,
   );
-}
-
-/**
- * The Tools one §8.5 hit consumed: the Berries that reduced it (empty for a prevented hit) and the
- * Survival Brace the clamp used, if any.
- */
-export function consumedTools(berryUids: readonly string[], clamped: KoSurvival | null): string[] {
-  return clamped?.toolUid === undefined ? [...berryUids] : [...berryUids, clamped.toolUid];
-}
-
-/**
- * Strip the `spent` Tools off `pokemon` and file one `TOOLS_DISCARDED { when: "consumed" }` row
- * under the holder's owner. The caller appends the uids to that owner's discard pile. Nothing spent
- * returns the body unchanged.
- */
-export function consumeTools(
-  pokemon: InPlayPokemon,
-  spent: readonly string[],
-  seat: Seat,
-  events: GameEvent[],
-): InPlayPokemon {
-  if (spent.length === 0) return pokemon;
-  events.push({
-    type: "TOOLS_DISCARDED",
-    seat,
-    actor: seat,
-    uids: [...spent],
-    host: topUid(pokemon) ?? "",
-    when: "consumed",
-  });
-  return { ...pokemon, tools: pokemon.tools.filter((uid) => !spent.includes(uid)) };
 }
 
 /** Append `uids` to `seat`'s discard pile (§7.4: a discarded Tool goes to its owner's pile). */

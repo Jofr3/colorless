@@ -11,11 +11,8 @@ import {
   topUid,
 } from "./cards";
 import {
-  benchTrimStages,
   owesToolTrim,
-  toolTrimStages,
   effectiveRetreatCost,
-  energyMayBeAttachedTo,
   inPlayCardOf,
   isLethallyDamaged,
   koAttackerOnCoinFlipOf,
@@ -37,12 +34,12 @@ import { discardHand } from "./ops/cards";
 import { doomBodyAt } from "./ops/board";
 import { effectRefused } from "./effectTargets";
 import { runProgram } from "./interpreter";
+import { finishGame } from "./outcome";
 import type { KoPrizeReduction } from "./programTypes";
 import { programFor } from "./registry";
 import { flipCoin, shuffle } from "./rng";
+import { benchTrimStages, postStepChecks } from "./stateChecks";
 import {
-  damagedByAttackAbility,
-  damagedToolTriggersOf,
   endTurnToolTriggersOf,
   koHolderToolTriggersOf,
   koToolTriggersOf,
@@ -50,6 +47,7 @@ import {
   runCheckupTriggers,
   toolTriggerOf,
 } from "./triggers";
+import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggerLookup";
 import type {
   GameOutcome,
   GameOverReason,
@@ -1792,25 +1790,6 @@ export function concede(state: GameState, action: ConcedeAction): ApplyResult {
   );
 }
 
-/** The one GAME_OVER emitter: parks the phase, clears whatever tail was
-    still pending (a finished game resumes nothing) and hands consumers
-    their own copy of the outcome — an event must never alias the state's
-    objects (events.ts). */
-export function finishGame(
-  state: GameState,
-  outcome: GameOutcome,
-  events: GameEvent[],
-): ApplyResult {
-  events.push({ type: "GAME_OVER", outcome: copyOutcome(outcome) });
-  return ok({ ...state, pending: [], phase: { kind: "gameOver", outcome } }, events);
-}
-
-function copyOutcome(outcome: GameOutcome): GameOutcome {
-  return outcome.result === "win"
-    ? { ...outcome }
-    : { result: "tie", reasons: { ...outcome.reasons } };
-}
-
 /**
  * The end-of-turn tail every way of ending `seat`'s turn seeds (§5.3): TURN_ENDED, the checkup
  * (keyed on the ended seat), the opponent's turn start. A first attack under Festival Lead with
@@ -1982,68 +1961,6 @@ function discardEndOfTurnEnergy(state: GameState, seat: Seat, events: GameEvent[
 }
 
 /**
- * §6.1 Team Rocket's Energy: "If this card is attached to anything other than a Team Rocket's
- * Pokémon, discard this card." A state check over both seats: every attached Energy that
- * `energyMayBeAttachedTo` refuses on its holder is discarded. Run at the top of `advance`, after
- * every synchronous program op, after a parked op resumes, and on every accepted action, so the
- * card never stays on an invalid body. Returns `state` itself when nothing moves.
- */
-export function discardMisplacedEnergy(state: GameState, events: GameEvent[]): GameState {
-  let next = state;
-  for (const seat of SEATS) {
-    const side = next.players[seat];
-    const discarded: string[] = [];
-    const strip = (pokemon: InPlayPokemon, from: PokemonTarget): InPlayPokemon => {
-      const taken = pokemon.energy.filter(
-        (uid) => !energyMayBeAttachedTo(state, cardOfUid(state, uid), pokemon),
-      );
-      if (taken.length === 0) return pokemon;
-      discarded.push(...taken);
-      events.push({
-        type: "ENERGY_DISCARDED",
-        seat,
-        actor: seat,
-        uids: taken,
-        from,
-        host: topUid(pokemon) ?? "",
-      });
-      return { ...pokemon, energy: pokemon.energy.filter((uid) => !taken.includes(uid)) };
-    };
-    const active = side.active === null ? null : strip(side.active, { spot: "active" });
-    const bench = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
-    if (discarded.length === 0) continue;
-    next = withSide(next, seat, {
-      ...side,
-      active,
-      bench,
-      discard: [...side.discard, ...discarded],
-    });
-  }
-  return next;
-}
-
-/**
- * §11 Acerola's Mischief's shield ends when its body leaves play. A replayed card keeps its uid, so
- * this clears a `chosenAttackShield` whose uid is no longer the base card of an in-play body. A
- * body that leaves and returns within one action keeps it. Returns `state` itself when nothing
- * changes.
- */
-export function clearDepartedChosenShields(state: GameState): GameState {
-  let next = state;
-  for (const seat of SEATS) {
-    const side = next.players[seat];
-    const record = side.chosenAttackShield;
-    // `undefined` is an unmigrated side: skip it rather than writing `null`, so the reader still
-    // fails loudly.
-    if (record === null || record === undefined) continue;
-    const bodies = inPlayOf(side);
-    if (bodies.some((body) => body.stack[0] === record.uid)) continue;
-    next = withSide(next, seat, { ...side, chosenAttackShield: null });
-  }
-  return next;
-}
-
-/**
  * §7.4 Technical Machine: discard every attached Tool with `toolDiscardAtEndOfYourTurn` on the turn
  * owner's Pokémon. Reads the tool list directly rather than `toolsInEffect`, since Jamming Tower
  * silences effects, not this rule. Returns `state` itself when nothing moves.
@@ -2086,14 +2003,8 @@ function discardEndOfTurnTools(state: GameState, seat: Seat, events: GameEvent[]
     (the M1 doctrine: a choice with no choice in it is not a choice). The
     recursion is bounded by the queue length (a handful of stages). */
 export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
-  // Team Rocket's Energy state check.
-  const state = discardMisplacedEnergy(stateIn, events);
-  // §7.4 Multi Adapter state check: a seat with a body over `toolCapOf` trims first, ahead of the
-  // queue. Only a non-empty queue is checked here; `applyAction` covers the empty case.
-  const head = state.pending[0];
-  const toolTrims = head === undefined ? [] : toolTrimStages(state, head.seat, state.pending);
-  if (toolTrims.length > 0)
-    return advance({ ...state, pending: [...toolTrims, ...state.pending] }, events);
+  const state = postStepChecks(stateIn, "stage", events);
+  if (state.pending.length !== stateIn.pending.length) return advance(state, events);
   const stage = state.pending[0];
   if (stage === undefined) return ok(state, events);
   switch (stage.kind) {

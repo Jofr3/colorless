@@ -7,9 +7,8 @@
 //   bun scripts/lua-constants.ts --check    # exit 1 if either would change
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { DECK_SIZE } from "../packages/engine/src/types";
-import { DISPLAY_NAME_MAX } from "../packages/schema/src/auth/requests";
-import { DECK_NAME_MAX } from "../packages/schema/src/decks/requests";
+import { DECK_SIZE } from "@colorless/engine";
+import { DECK_NAME_MAX, DISPLAY_NAME_MAX } from "@colorless/schema";
 import { DEFAULT_FORMAT, FORMATS } from "../src/decks/cards";
 import { repoPath } from "./lib/repo";
 

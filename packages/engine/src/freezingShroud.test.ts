@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -12,6 +12,7 @@ import {
   setActiveFromDeck,
   typedEnergy,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const FROSLASS = "sv06-053";
@@ -216,7 +217,7 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
 
   it("the three ids are the WHOLE registry cohort for this program — both directions", () => {
     const target = programFor(FROSLASS);
-    const live = registryCardIds()
+    const live = programmedCardIds()
       .filter((id) => programFor(id) === target)
       .sort();
     expect(live).toEqual([...FROSLASS_IDS].sort());

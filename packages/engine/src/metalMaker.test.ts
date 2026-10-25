@@ -2,8 +2,8 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { applyChoice } from "./interpreter";
-import { programFor, registryCardIds } from "./registry";
+import { answerOp } from "./interpreter";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -11,6 +11,7 @@ import {
   itemTrainer,
   typedEnergy,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const METANG_IDS = ["svp-090", "sv05-114"] as const;
@@ -279,14 +280,14 @@ describe("D352 §4 — the RENAME did not move the discard arm: Tri Howl is unch
     const state = board(METANG, [METAL, FIRE, JUNK]);
     const [m1, fire, junk] = state.players.p1.deck as [string, string, string];
     const events: GameEvent[] = [];
-    const after = applyChoice(
+    const after = answerOp(
       state,
       { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", restTo: "discard" },
       { kind: "attachCards", assignments: [{ uid: m1, to: ACTIVE_REF }] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(after.players.p1.active?.energy).toEqual([m1]);
     expect(after.players.p1.discard.slice(-2)).toEqual([fire, junk]);
     const rows = events.filter((e) => e.type === "DECK_TOP_DISCARDED");
@@ -384,14 +385,14 @@ describe("D352 §7 — the v20 MISREAD, DRIVEN: why `MATCH_RECORD_VERSION` had t
       discardRest: true,
     } as unknown as EffectOp;
     const events: GameEvent[] = [];
-    const after = applyChoice(
+    const after = answerOp(
       state,
       legacyOp,
       { kind: "attachCards", assignments: [{ uid: m1, to: ACTIVE_REF }] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     // The attach still happens — which is exactly what makes it silent.
     expect(after.players.p1.active?.energy).toEqual([m1]);
     // …and the two cards the record said to DISCARD are still sitting on top.
@@ -406,14 +407,14 @@ describe("D352 §7 — the v20 MISREAD, DRIVEN: why `MATCH_RECORD_VERSION` had t
       max: "any",
       restTo: "discard",
     };
-    const good = applyChoice(
+    const good = answerOp(
       state,
       fixed,
       { kind: "attachCards", assignments: [{ uid: m1, to: ACTIVE_REF }] },
       { seat: "p1" },
       {},
       [],
-    );
+    ).done;
     expect(good.players.p1.discard.slice(-2)).toEqual([fire, junk]);
   });
 });
@@ -426,14 +427,14 @@ describe("D352 §8 — the census rungs this row is answerable to", () => {
   });
 
   it("the THREE ids are CONTIGUOUS in registry order — the permanent rung", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     const first = raw.indexOf(METANG_IDS[0]);
     expect(first).toBeGreaterThanOrEqual(0);
     expect(raw.slice(first, first + 3)).toEqual([...METANG_IDS, MORPEKO]);
   });
 
   it("all THREE real ids are registry keys, and the synthetic bodies are not", () => {
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of [...METANG_IDS, MORPEKO]) expect(keys.has(id), id).toBe(true);
     for (const id of [BUDDY, METAL, FIRE, JUNK]) expect(keys.has(id), id).toBe(false);
   });
