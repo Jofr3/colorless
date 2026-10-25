@@ -85,7 +85,10 @@ only the conclusion.
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag
   `abilityUsedKey`/`coinRedoKey`/`abilityUsedThisTurn`/`spendAbilityUse`
-  (`types.ts`); `OpOf<K>` for one `EffectOp`
+  (`types.ts`); `landAttackHit` (`damageCalc.ts`) for the §8.5 tail after Weakness and
+  Resistance (reduction, prevention, the shield and survival coins, the KO-survival clamp,
+  `DAMAGE_DEALT` and the consumed Tools) on every attack-damage route, each route keeping its
+  own bonus, debuff and W/R steps; `OpOf<K>` for one `EffectOp`
   variant (`effectTypes.ts`); `positiveInt`, `printedFlipCount` and the gate
   builders in `effects.ts`; the printed-text vocabulary (`STATUS_WORD_OF`, the
   type-code maps, `foldApostrophes`, `COPY_FAMILY_MARKER`) in

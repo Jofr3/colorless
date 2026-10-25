@@ -347,8 +347,6 @@ export {
 } from "./ops/cards";
 export {
   coinRedoPrompt,
-  consumeTools,
-  consumedTools,
   counterOwnDestinations,
   counterOwnSources,
   counterToOpponentSources,
