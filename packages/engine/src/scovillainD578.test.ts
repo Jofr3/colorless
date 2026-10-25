@@ -6,7 +6,7 @@ import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds, runProgram } from "./interpreter";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -15,6 +15,7 @@ import {
   mustApply as run,
   patchSide,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -373,7 +374,7 @@ describe("D578 Scovillain §6 — R-WT1: the Watchtower's {C} read stays PRINTED
   };
 
   it("every `typesInPlay` value, and every holder's printed types, exclude {C} — a retype can neither add nor remove {C}", () => {
-    const holders = registryCardIds().filter(
+    const holders = programmedCardIds().filter(
       (id) => programFor(id)?.passive?.typesInPlay !== undefined,
     );
     expect(holders.sort()).toEqual(Object.keys(HOLDER_PRINTED_TYPES).sort());

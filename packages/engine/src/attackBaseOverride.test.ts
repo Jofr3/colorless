@@ -9,7 +9,6 @@ import { applyAction, programFor } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { registryCardIds } from "./registry";
 import { flipCoin } from "./rng";
 import {
   FIXTURE_POOL,
@@ -30,6 +29,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 import type { BoostedAttack } from "./types";
 
@@ -735,7 +735,7 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
     expect(additive).toEqual([100, 120, 80, 60, 100]);
     expect(additive.every((n) => n >= 1)).toBe(true);
     const authored: [string, number][] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       for (const op of boostOps(programFor(id))) authored.push([id, op.amount]);
     }
     expect(authored).toEqual([

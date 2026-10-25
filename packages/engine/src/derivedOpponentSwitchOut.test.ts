@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState } from "./index";
 import { applyAction, phaseViewOf, programFor } from "./index";
-import { registryCardIds } from "./registry";
 import { programPlayable } from "./cardplay";
 import {
   FIXTURE_POOL,
@@ -17,6 +16,7 @@ import {
   setActiveFromDeck,
   types,
   walkProgram,
+  programmedCardIds,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -579,7 +579,7 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
     // predicate above is about.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_AWAY });
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
-    const authored = registryCardIds().filter((id) => {
+    const authored = programmedCardIds().filter((id) => {
       const card = programFor(id);
       const programs: EffectOp[][] = [
         ...(card?.trainer === undefined ? [] : [card.trainer]),

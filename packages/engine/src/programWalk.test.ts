@@ -14,8 +14,12 @@ import {
 } from "./effects";
 import type { EffectOp } from "./effects";
 import { programFor } from "./index";
-import { registryCardIds } from "./registry";
-import { FIXTURE_POOL, programBranchCarriers, walkProgram } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  programBranchCarriers,
+  walkProgram,
+  programmedCardIds,
+} from "./testFixtures";
 
 function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
   const out: { where: string; ops: readonly EffectOp[] }[] = [];
@@ -67,7 +71,7 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
       }
     }
   }
-  for (const id of registryCardIds()) {
+  for (const id of programmedCardIds()) {
     const authored = programFor(id);
     for (const [index, ops] of Object.entries(authored?.attack ?? {})) {
       out.push({ where: `${id} authored attack ${index}`, ops });

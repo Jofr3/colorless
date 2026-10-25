@@ -101,6 +101,7 @@ check(#builder.items==2 and pikachu.name=='Pikachu' and ball.name=='Nest Ball','
 check(pikachu.quantity==4 and pikachu.remaining==0 and pikachu.hp=='60' and pikachu.mark=='G' and pikachu.number=='12' and pikachu.copyLimit==4,'Catalog card fields parsed')
 check(ball.kind=='Trainer' and ball.subtype=='Item' and ball.quantity==2 and ball.remaining==2 and ball.hp=='','Trainer result parsed')
 check(#builder.deck==2 and builder.selectedItem.name=='Pikachu','Deck list and selection parsed')
+check(builder.selectedItem.gaps=='ability,attack' and pikachu.gaps=='ability,attack' and ball.gaps=='','Simulation gaps parsed')
 check(builder.validation:find('more cards') and builder.groups[1]=='4' and builder.groups[2]=='2' and builder.groups[3]=='0','Validation parsed')
 local legal=find(builder.options,function(o) return o.key=='legalOnly' end)
 check(legal.label=='Legal cards only' and legal.value=='On' and legal.count==2,'Filter option parsed')

@@ -4,7 +4,7 @@ import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { programPlayable } from "./cardplay";
 import { firstAttachableEnergy } from "./interpreter";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   battler,
   deckOf,
@@ -13,6 +13,7 @@ import {
   typedEnergy,
   must,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const LYCANROC_IDS = ["sv09-085", "sv09-166"] as const;
@@ -503,12 +504,12 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
 
 describe("D353 §8 — the pool and the registry keys", () => {
   it("every printing is a registry key", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     for (const id of LYCANROC_IDS) expect(raw).toContain(id);
   });
 
   it("the +2 on `raw.length` is EXACTLY the two Lycanroc ids — the Energy ids were already keys", () => {
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of LYCANROC_IDS) expect(keys.has(id), id).toBe(true);
     for (const id of [SPIKY, SPIKY_ALT, MIST]) expect(keys.has(id), id).toBe(true);
     // …and the synthetic bodies are keys of nothing, which is what keeps the step at 2.

@@ -525,7 +525,9 @@ cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Ener
         -- the reprint rule: print_key = the card's functional identity (ingest
         -- map.ts printKey); *_effective = legality OR'd across prints sharing
         -- it (ingest post-pass reprintLegalitySql). Readers coalesce onto the
-        -- per-print flags.
+        -- per-print flags. The engine's PROGRAM_ALIAS table
+        -- (scripts/registry-aliases.ts) is generated from print_key, so one
+        -- registry row programs every print in the group.
       variants_json, image_url, updated)
 
 -- User data (read-write)

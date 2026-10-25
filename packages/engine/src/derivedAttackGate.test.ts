@@ -6,7 +6,6 @@ import { splitAttackGateClause, timingGateFromAttackText } from "./effects";
 import type { AttackTimingGate, GameState, Seat } from "./index";
 import { applyAction, attackGateOf, programFor } from "./index";
 import { attackTimingBlocked, firstTurnAttackBanned, redactGame } from "./index";
-import { registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -21,6 +20,7 @@ import {
   activeOf,
   driveSetup,
   roundTrip,
+  programmedCardIds,
 } from "./testFixtures";
 
 const BAN_TEXT =
@@ -241,7 +241,7 @@ describe("D444 §2 — the population, and the honest zero", () => {
   });
 
   it("~~17~~ registry ids carry `attackGate` ( D582 (D539): *17* WITHDRAWN — 18 since the `me` alias Terapagos ex `me02.5-179`; 17 is the `sv` figure), and the 5 DISTINCT values are the 4 leading-clause derivations plus the trailing gate ( D541 — which DERIVES too now, so the old either/or in this title is withdrawn)", () => {
-    const gatedIds = registryCardIds().filter((id) => programFor(id)?.attackGate !== undefined);
+    const gatedIds = programmedCardIds().filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gatedIds.length).toBe(18);
 
     const derivable = [BAN_TEXT, LICENCE_TEXT, GATE_TEXT, ROLLOUT_TEXT].map((t) =>

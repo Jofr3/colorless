@@ -2,7 +2,6 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { abilityUsedKey, applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -14,6 +13,7 @@ import {
   mustApply,
   setActiveFromDeck,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 function abilityBody(id: string, name: string, effect: string, cardName: string): Card {
@@ -420,7 +420,7 @@ describe("the blast radius — what this slice did NOT change", () => {
 
   it("every OTHER registry Ability keeps the per-body scope — the widening is opt-in", () => {
     const shared: string[] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
         if (ability.oncePerTurn === "sharedByName") shared.push(id);
       }
@@ -452,7 +452,7 @@ describe("the blast radius — what this slice did NOT change", () => {
 
   it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else ( D591: ELEVEN is the `sv` count; 27 live with the `me` keys; D602: 29 live; D603: 35 live; D610: 37 live; D611: 38 live; D619: 40 live; D628: 41 live)", () => {
     const gated: string[] = [];
-    for (const id of registryCardIds()) {
+    for (const id of programmedCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
         if (ability.playableIf !== undefined) gated.push(id);
       }

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { applyChoice } from "./interpreter";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -11,6 +11,7 @@ import {
   itemTrainer,
   typedEnergy,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const METANG_IDS = ["svp-090", "sv05-114"] as const;
@@ -426,14 +427,14 @@ describe("D352 §8 — the census rungs this row is answerable to", () => {
   });
 
   it("the THREE ids are CONTIGUOUS in registry order — the permanent rung", () => {
-    const raw = registryCardIds();
+    const raw = programmedCardIds();
     const first = raw.indexOf(METANG_IDS[0]);
     expect(first).toBeGreaterThanOrEqual(0);
     expect(raw.slice(first, first + 3)).toEqual([...METANG_IDS, MORPEKO]);
   });
 
   it("all THREE real ids are registry keys, and the synthetic bodies are not", () => {
-    const keys = new Set(registryCardIds());
+    const keys = new Set(programmedCardIds());
     for (const id of [...METANG_IDS, MORPEKO]) expect(keys.has(id), id).toBe(true);
     for (const id of [BUDDY, METAL, FIRE, JUNK]) expect(keys.has(id), id).toBe(false);
   });

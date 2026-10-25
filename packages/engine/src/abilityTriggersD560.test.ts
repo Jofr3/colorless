@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   effectPrompt,
   effectPromptOf,
@@ -20,6 +20,7 @@ import {
   must,
   driveSetup,
   roundTrip,
+  programmedCardIds,
 } from "./testFixtures";
 
 const DRILBUR = "sv05-085";
@@ -352,7 +353,7 @@ describe("D560 §1 — the eleven registry rows: 17 printings, 11 objects, NO `a
   });
 
   it("every id is keyed", () => {
-    const keys = registryCardIds();
+    const keys = programmedCardIds();
     for (const row of ROWS) for (const id of row.ids) expect(keys).toContain(id);
   });
 

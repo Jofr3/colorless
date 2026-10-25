@@ -11,6 +11,7 @@ export {
 export * from "./fixtures/decks";
 export * from "./fixtures/game";
 export * from "./fixtures/pool";
+export * from "./fixtures/printings";
 export * from "./fixtures/program";
 export * from "./fixtures/rng";
 export * from "./fixtures/setup";

@@ -23,6 +23,12 @@ local PANEL_Y,PANEL_HEIGHT=95,554
 local DECK_X,DECK_WIDTH=808,424
 local deckTypes={{key='all',label='All'},{key='Pokémon',label='Pokemon'},{key='Trainer',label='Trainer'},{key='Energy',label='Energy'}}
 local Builder={}; Builder.__index=Builder
+-- The printed parts the simulator cannot play yet, by the engine's gap names.
+local GAP_LABELS={trainer='card effect',ability='Ability',specialEnergy='Energy effect',attack='attack effect'}
+local function gapLine(gaps)
+  local parts={};for gap in (gaps or ''):gmatch('[^,]+') do parts[#parts+1]=GAP_LABELS[gap] or gap end
+  return #parts>0 and 'Not simulated yet: '..table.concat(parts,', ') or nil
+end
 local function caption(text,size,x,y,w,colour,align)
   text=(text or ''):gsub('%c',' ')
   size=Fit.shrink(text,size,14,w)
@@ -183,7 +189,7 @@ function Builder:sync(raw)
   local signature={tostring(self.page)}
   for i=2,#lines do local r=lines[i]
     if r[1]=='C' or r[1]=='D' or r[1]=='S' then
-      local item={id=r[2],name=r[3],kind=r[4],subtype=r[5],quantity=tonumber(r[6]) or 0,remaining=tonumber(r[7]) or 0,hp=r[8] or '',mark=r[9] or '',number=r[10] or '',copyLimit=tonumber(r[12]) or 4,illegal=r[13]=='1'}
+      local item={id=r[2],name=r[3],kind=r[4],subtype=r[5],quantity=tonumber(r[6]) or 0,remaining=tonumber(r[7]) or 0,hp=r[8] or '',mark=r[9] or '',number=r[10] or '',copyLimit=tonumber(r[12]) or 4,illegal=r[13]=='1',gaps=r[14] or ''}
       if r[1]=='C' then self.items[#self.items+1]=item;signature[#signature+1]=item.id
       elseif r[1]=='D' then self.deck[#self.deck+1]=item
       else self.selectedItem=item end
@@ -703,9 +709,11 @@ function Builder:drawModal(shaders)
     caption(item and (item.kind..'  '..item.subtype..(item.hp~='' and '  '..item.hp..' HP' or '')) or '',22,dx,dy,dw,T.paper)
     caption(item and (item.quantity..' in deck  |  '..item.id) or '',20,dx,dy+32,dw,T.paper)
     Button.panel(dx,dy+70,dw,(p and 166 or 330),T.panel)
-    local _,lines=T.font(22):getWrap(self.details,dw-24);local max=p and 5 or 12
+    local warning=item and gapLine(item.gaps);local top=warning and 25 or 0
+    if warning then caption(warning,20,dx+12,dy+80,dw-24,T.red,'left')end
+    local _,lines=T.font(22):getWrap(self.details,dw-24);local max=(p and 5 or 12)-(warning and 1 or 0)
     local start=math.max(1,math.min(math.max(1,#lines-max+1),math.floor((m.scroll or 0)/25)+1))
-    for i=start,math.min(#lines,start+max-1)do T.text(lines[i],22,dx+12,dy+80+(i-start)*25,dw-24,T.paper,'left')end
+    for i=start,math.min(#lines,start+max-1)do T.text(lines[i],22,dx+12,dy+80+top+(i-start)*25,dw-24,T.paper,'left')end
   elseif m.mode=='filters'then
     if self.filterPage==3 then
       local fw=math.min(360,bw);local fx=m.x+(m.w-fw)/2

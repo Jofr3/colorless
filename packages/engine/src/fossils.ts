@@ -1,4 +1,5 @@
 import type { Card } from "@colorless/schema";
+import { withReprints } from "./printGroups";
 
 // Antique Fossils' in-play Pokémon face, keyed by printing id. They print "Play this card as if it
 // were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't
@@ -10,10 +11,10 @@ import type { Card } from "@colorless/schema";
 export const FOSSIL_HP = 60;
 
 /**
- * Every Antique Fossil printing; `cardOfUid` checks this first so a non-fossil lookup costs one
- * `Set.has`.
+ * Every Antique Fossil printing, reprints included; `cardOfUid` checks this first so a non-fossil
+ * lookup costs one `Set.has`.
  */
-export const FOSSIL_IDS: ReadonlySet<string> = new Set([
+export const FOSSIL_IDS: ReadonlySet<string> = withReprints([
   "sv07-129", // Antique Cover Fossil (Stellar Crown)
   "sv10.5b-080", // Antique Cover Fossil (Black Bolt)
   "sv07-130", // Antique Root Fossil (Stellar Crown)

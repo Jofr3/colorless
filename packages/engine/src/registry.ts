@@ -1,5 +1,6 @@
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
 import { searchTopOrderProgram } from "./effects";
+import { canonicalPrinting } from "./printGroups";
 import type { CardProgram } from "./programTypes";
 import { activated, berry, searchThenShuffle } from "./registryBuilders";
 import { BENCH_CEILING } from "./types";
@@ -7878,35 +7879,21 @@ const LUMINOUS_WING: CardProgram = {
   passive: { preventAbilityEffects: true },
 };
 
-const REGISTRY: Record<string, CardProgram> = {
+const REGISTRY: Readonly<Record<string, CardProgram>> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
-  "sv01-190": PROFESSORS_RESEARCH,
-  "sv01-240": PROFESSORS_RESEARCH,
-  "sv01-241": PROFESSORS_RESEARCH,
-  // The swsh10.5 prints have the same text but are not Standard-legal.
-  "swsh10.5-078": PROFESSORS_RESEARCH,
-  "swsh10.5-084": PROFESSORS_RESEARCH,
   // Nest Ball
   "sv01-181": NEST_BALL,
-  "sv01-255": NEST_BALL,
   // Boss's Orders
   "sv02-172": BOSSS_ORDERS,
-  "sv02-248": BOSSS_ORDERS,
-  "sv02-265": BOSSS_ORDERS,
   // Counter Catcher (Paradox Rift, regular and gold printings)
   "sv04-160": COUNTER_CATCHER,
-  "sv04-264": COUNTER_CATCHER,
   // Switch — not Standard-legal.
   "sv01-194": SWITCH,
   "sv08-187": SURFER,
-  "sv08-235": SURFER,
   "sv10-174": TEAM_ROCKETS_GIOVANNI,
-  "sv10-225": TEAM_ROCKETS_GIOVANNI,
-  "sv10-238": TEAM_ROCKETS_GIOVANNI,
   // …and the seam's MIRROR — the same two ops, the other way round.
   "sv05-157": PRIME_CATCHER,
-  "sv08.5-119": PRIME_CATCHER,
   // Potion
   "sv01-188": POTION,
   // Picnic Basket
@@ -7915,13 +7902,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-172": ENERGY_SEARCH,
   // Chien-Pao ex — Shivery Chill (activated ability)
   "sv02-061": CHIEN_PAO,
-  "sv02-236": CHIEN_PAO,
-  "sv02-261": CHIEN_PAO,
-  "sv02-274": CHIEN_PAO,
   // Mewtwo VSTAR — Psy Purge (attack index 0).
   "swsh10.5-031": MEWTWO_VSTAR,
-  "swsh10.5-079": MEWTWO_VSTAR,
-  "swsh10.5-086": MEWTWO_VSTAR,
   // Bouffalant — Bouffer (passive)
   "sv03-174": REDUCE_20_AFTER_WR,
   // — M4 slice 3: Stadiums + Tools (verified vs local D1 2026-07-18). —
@@ -7934,9 +7916,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-060": NEUTRALIZATION_ZONE, // Neutralization Zone
   "sv08-180": LIVELY_STADIUM, // Lively Stadium — each BASIC in play gets +30 HP
   "sv08-177": GRAVITY_MOUNTAIN, // Gravity Mountain — each STAGE 2 in play gets -30 HP
-  "sv08-250": GRAVITY_MOUNTAIN,
   "sv02-171": ARTAZON, // Artazon — search a no-Rule-Box Basic → Bench
-  "sv03-229": ARTAZON, // Artazon (reprint)
   "sv01-178": MESAGOZA, // Mesagoza — coin-gated search a Pokémon → hand
   "sv03-196": TOWN_STORE, // Town Store — search a Pokémon Tool → hand
   // Vitality Band (Tool)
@@ -7962,7 +7942,6 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M4 slice 6: triggered Abilities (verified vs local D1 2026-07-18). —
   // Flamigo — Insta-Flock (on-play-to-Bench: search up to 3 Flamigo)
   "sv02-170": FLAMIGO,
-  "sv02-227": FLAMIGO,
   // Arboliva — Enriching Oil (on-evolve: heal all from 1 of your Pokémon)
   "sv01-023": ARBOLIVA,
   // Garganacl — Blessed Salt (between-turns: heal 20 from each of your Pokémon)
@@ -7972,42 +7951,25 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M4 slice 7: Rare Candy (verified vs local D1 2026-07-18). —
   // Rare Candy — Basic→Stage 2 evolve-skip Item
   "sv01-191": RARE_CANDY,
-  "sv01-256": RARE_CANDY,
-  // Same text as the sv print, but not Standard-legal.
-  "swsh10.5-069": RARE_CANDY,
   // — M4 slice 8: the mid-turn-damage snipe (verified vs the live api 2026-07-19). —
   // Hawlucha — Flying Entry (onPlayToBench: choose 2 opp Benched, 1 counter each)
   "sv01-118": HAWLUCHA,
   // Meowscarada ex — Bouquet Magic (activated, {G}-discard cost: 3 counters on 1 opp Benched)
   "sv02-015": MEOWSCARADA,
-  "sv02-231": MEOWSCARADA, // (reprint — same Bouquet Magic, byte-identical in the catalog)
-  "sv02-256": MEOWSCARADA,
-  "sv02-271": MEOWSCARADA, // (reprint)
   // — M4 slice 9: on-KO triggered Abilities (verified vs the live catalog 2026-07-19). —
   // Glimmora — Shattering Crystal (on-KO: flip; heads → opponent takes no prize for it)
   "sv02-126": GLIMMORA,
   // Munkidori ex — Oh No You Don't: 1 fewer Prize on a KO while a Pecharunt ex is in play.
   "sv06.5-037": MUNKIDORI_EX,
-  "sv06.5-083": MUNKIDORI_EX,
-  "sv06.5-091": MUNKIDORI_EX,
   "sv06.5-038": FLIP_THE_SCRIPT, // Fezandipiti ex — Flip the Script
-  "sv06.5-084": FLIP_THE_SCRIPT, // (reprint)
-  "sv06.5-092": FLIP_THE_SCRIPT,
   "sv06.5-039": SUBJUGATING_CHAINS,
-  "sv06.5-085": SUBJUGATING_CHAINS, // (reprint)
-  "sv06.5-093": SUBJUGATING_CHAINS, // (reprint)
-  "sv06.5-095": SUBJUGATING_CHAINS, // (reprint)
-  "sv08.5-163": SUBJUGATING_CHAINS,
   "sv07-118": FAN_CALL,
-  "sv08.5-085": FAN_CALL,
   "sv10.5w-064": LOOK_FOR_PREY,
-  "sv10.5w-145": LOOK_FOR_PREY,
   // — M5 coverage pass #1: existing-op cards (verified vs the local catalog 2026-07-19). —
   "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
   "sv02-150": REDUCE_30_AFTER_WR, // Copperajah ex — Bronze Body (−30 after W/R)
-  "sv02-245": REDUCE_30_AFTER_WR,
   "sv01-121": REDUCE_20_AFTER_WR, // Stonjourner — Exoskeleton (−20 after W/R)
   // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
@@ -8019,9 +7981,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-096": MISCHIEVOUS_LOCK, // Klefki — Mischievous Lock (Basic, both sides, Active-only, except itself)
   "sv02-089": FETTERED_IN_MISFORTUNE, // Spiritomb — Fettered in Misfortune (Basic V, both sides)
   "sv02-127": CURSED_LAND, // Ting-Lu ex — Cursed Land (opponent's damaged non-ex, Active-only)
-  "sv02-243": CURSED_LAND, // (reprint)
-  "sv02-263": CURSED_LAND, // (reprint)
-  "sv02-275": CURSED_LAND, // (reprint)
   // — M5 op-slice: removeWeakness continuous own-board aura (verified vs the live D1 2026-07-28). —
   "sv01-093": BLOOMING_GARDEN, // Florges — Blooming Garden ("Your Pokémon in play have no Weakness")
   // — M5 long-tail: preventDamageFromExV holder passive (verified vs the live D1 2026-07-28). —
@@ -8030,32 +7989,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-082": LUNAR_ZONE, // Clefable ex — Lunar Zone ("All of your Pokémon that have {P} Energy attached have no Retreat Cost")
   // — M5 long-tail: opponentActiveRetreatSurcharge, the last retreat-cost modifier (verified vs the live D1 2026-07-31). —
   "sv01-019": TRAP_TERRITORY, // Spidops ex — Trap Territory ("Your opponent's Active Pokémon's Retreat Cost is {C} more")
-  "sv01-223": TRAP_TERRITORY, // (reprint)
-  "sv01-243": TRAP_TERRITORY, // (reprint)
   // — M5 long-tail: preventOpponentActiveRetreat, the L3 shape of the retreat-lock seam (verified vs the local D1 2026-08-01). —
   "swsh10.5-055": BLOCK, // Snorlax — Block ("As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat")
   // — M5 long-tail: noRetreatCostSelf, the LAST print on the retreat-cost seam, closing it at 10/10 (verified vs the local D1 2026-08-01). —
   "swsh10.5-025": PUNK_OUT, // Wimpod — Punk Out
   "sv03-030": PRESSURE, // Entei — Pressure
   "sv05-050": AZURE_SEAS, // Walking Wake ex — Azure Seas
-  "sv05-189": AZURE_SEAS, // (reprint)
-  "sv05-205": AZURE_SEAS, // (reprint)
-  "sv05-215": AZURE_SEAS, // (reprint)
-  "sv08.5-178": AZURE_SEAS, // (reprint)
-  "svp-127": AZURE_SEAS, // (reprint — promo)
   "sv08-057": KO_SURVIVAL, // Pikachu ex — Resolute Heart
-  "sv08-219": KO_SURVIVAL, // (reprint)
-  "sv08-238": KO_SURVIVAL, // (reprint)
-  "sv08-247": KO_SURVIVAL, // (reprint)
-  "sv08.5-179": KO_SURVIVAL, // (reprint)
   "sv10.5b-052": KO_SURVIVAL, // Crustle — Sturdy (a DIFFERENT Ability name, the SAME sentence)
-  "sv10.5b-130": KO_SURVIVAL, // (reprint)
   "sv01-099": WELL_BAKED_BODY, // Dachsbun — Well-Baked Body (Burn immunity and {R} prevention)
   "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
-  "sv03-201": INSULATOR, // (reprint — Illustration rare)
   "sv03-070": ADVERSE_WEATHER, // Thundurus — Adverse Weather (the Active shields the Bench)
   "sv01-068": ELECTRICITY_POUCHES, // Pachirisu — Electricity Pouches ("This Pokémon can't be Paralyzed")
-  "sv01-208": ELECTRICITY_POUCHES,
   "sv01-145": BLISSEY, // Blissey — Busybody Nurse ("Your Active Pokémon recovers from all Special Conditions")
   // — M5 long-tail: the ATTACK-COST ± family, both signs in one slice. Censused as
   //   its own question against the local D1 (978 cards / 6 sets, 2026-08-03, all
@@ -8067,75 +8012,51 @@ const REGISTRY: Record<string, CardProgram> = {
   "swsh10.5-011": EXCITED_HEART, // Radiant Charizard — Excited Heart ("This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
-  "sv01-236": JACQ, // (reprint)
-  "sv01-250": JACQ, // (reprint)
   // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)
-  "sv02-210": BAXCALIBUR, // Baxcalibur (reprint)
   // — attachEnergyFrom riders: Gardevoir ex (targetType + bonusCounters + notIfKO). —
   "sv01-086": GARDEVOIR_EX, // Gardevoir ex — Psychic Embrace
-  "sv01-228": GARDEVOIR_EX, // (reprint)
-  "sv01-245": GARDEVOIR_EX, // (reprint)
   // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry" (the sv01 prints
   //   carry the ability; sv03-124 is a different Koraidon ex without it). —
   "sv01-125": KORAIDON_EX,
-  "sv01-231": KORAIDON_EX,
-  "sv01-247": KORAIDON_EX,
-  "sv01-254": KORAIDON_EX,
   // — M5 op-slice: discardPileRetrieval (verified vs the local catalog 2026-07-20). —
   "sv01-171": ENERGY_RETRIEVAL, // Energy Retrieval — 2 Basic Energy from discard → hand
   "sv01-182": PAL_PAD, // Pal Pad — 2 Supporters from discard → deck (shuffle)
   "sv02-188": SUPER_ROD, // Super Rod — 3 Pokémon/Basic Energy from discard → deck (shuffle)
-  "sv02-276": SUPER_ROD, // Super Rod (reprint)
   // — M5 op-slice: §9.2 op→op data flow — a clause that reads what an earlier
   //   clause of the same card DID (verified vs the local catalog 2026-07-22).
   //   Both are also discardPileRetrieval rows: this is the op the mechanism was
   //   missing at both ends, recording for Miriam and reading for SER. —
   "sv01-179": MIRIAM, // Miriam — up to 5 Pokémon discard → deck, shuffle, "in this way" → draw 3
-  "sv01-238": MIRIAM, // Miriam (reprint)
-  "sv01-251": MIRIAM, // Miriam (reprint)
   "sv03-190": ORTEGA, // Ortega — reveal opponent's hand, bottom a chosen card, "in this way" → they may draw
-  "sv03-219": ORTEGA, // Ortega (reprint)
   "sv02-189": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval — pay 2, then up to 4 Basic Energy back, minus the 2 just paid
-  "sv02-277": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval (reprint)
   // — M5 op-slice: lookAtTopN (verified vs the local catalog 2026-07-20). —
   "sv02-183": GREAT_BALL, // Great Ball — look at top 7, reveal a Pokémon → hand (shuffle)
   "sv01-186": POKEGEAR, // Pokégear 3.0 — look at top 7, reveal a Supporter → hand (shuffle)
   // — M5 op-slice: moveEnergy (verified vs the local catalog 2026-07-20). —
   "sv01-173": ENERGY_SWITCH, // Energy Switch — move a Basic Energy, own → own
   "sv03-193": POPPY, // Poppy — move up to 2 any Energy, own → own (Supporter)
-  "sv03-220": POPPY, // Poppy (reprint)
-  "sv03-227": POPPY, // Poppy (reprint)
   // — M5 op-slice: handRefresh (the hand-refresh Supporter family; verified vs
   //   the local catalog 2026-07-20). —
   "sv01-198": YOUNGSTER, // Youngster — shuffle hand into deck, draw 5
   "sv01-176": JUDGE, // Judge — each player shuffles hand into deck, draws 4
   "sv03-187": BRASSIUS, // Brassius — shuffle hand into deck, draw (hand size + 1)
   "sv01-177": KATY, // Katy — shuffle hand into deck, draw 8, your turn ends
-  "sv01-237": KATY, // Katy (reprint)
   "sv02-185": IONO, // Iono — each player's hand to the BOTTOM, draw their Prize count
-  "sv02-254": IONO, // Iono (reprint)
-  "sv02-269": IONO, // Iono (reprint)
   // — M5 op-slice: board conditions (verified vs the local catalog 2026-07-21). —
   "sv02-181": FIGHTING_AU_LAIT, // Fighting Au Lait — play gate: more Prizes left; heal 60
   "sv02-180": FALKNER, // Falkner — draw 2, +2 more if YOUR Stadium is in play
-  "sv02-251": FALKNER, // Falkner (reprint)
   "sv02-184": GRUSHA, // Grusha — draw until 5 in hand, until 7 if no Energy on your board
-  "sv02-253": GRUSHA, // Grusha (reprint)
-  "sv02-268": GRUSHA, // Grusha (reprint)
   // — M5 op-slice: discardEnergy (verified vs the local catalog 2026-07-21). —
   "sv01-168": CRUSHING_HAMMER, // Crushing Hammer — coin-gated: an Energy off 1 opp Pokémon
   "sv02-182": GIACOMO, // Giacomo — a Special Energy off EACH of the opponent's Pokémon
-  "sv02-252": GIACOMO, // Giacomo (reprint)
-  "sv02-267": GIACOMO, // Giacomo (reprint)
   "sv03-143": MAWILE, // Mawile — Special Eater (on-bench: a Special Energy off their Active)
   // — M5 op-slice: the providesEnergy filter (verified vs the local catalog
   //   2026-07-21). The typed self-discard family it also lands is DERIVED from
   //   printed text (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard), so it
   //   adds no rows here — these two are the filter's SECOND consumer. —
   "sv01-041": ARMAROUGE, // Armarouge — Fire Off ({R} benched→Active, as often as you like)
-  "sv01-203": ARMAROUGE, // Armarouge (reprint)
   // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
   "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
   "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)
@@ -8147,23 +8068,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand
   "sv06.5-096": EARTHEN_VESSEL, // Earthen Vessel — discard another card, search 2 Basic Energy
   "sv08.5-115": LARRYS_SKILL, // Larry's Skill — discard hand, search a Pokémon + a Supporter + a Basic Energy → hand
-  "sv08.5-139": LARRYS_SKILL, // Larry's Skill (reprint)
   "sv06-163": SECRET_BOX, // Secret Box — discard 3 other cards, search an Item + a Tool + a Supporter + a Stadium → hand
   // Explicitly support these rotated cards in existing decks as well as Standard cards.
   "sv01-166": ARVEN,
-  "sv01-235": ARVEN,
-  "sv01-249": ARVEN,
-  "sv03-186": ARVEN,
-  "sv04.5-235": ARVEN,
   "sv01-081": TANDEM_UNIT,
-  "sv01-227": TANDEM_UNIT,
-  "sv01-244": TANDEM_UNIT,
-  "sv01-253": TANDEM_UNIT,
-  "sv04.5-243": TANDEM_UNIT,
-  "svp-028": TANDEM_UNIT,
   "sv10-165": ETHANS_ADVENTURE, // Ethan's Adventure — search up to 3 in any combination of Ethan's Pokémon + Basic {R} Energy → hand
-  "sv10-221": ETHANS_ADVENTURE, // Ethan's Adventure (reprint)
-  "sv10-236": ETHANS_ADVENTURE, // Ethan's Adventure (reprint)
   "sv01-142": REVAVROOM, // Revavroom — Rumbling Engine (discard an Energy card, draw to 6)
   "sv02-105": TINKATON, // Tinkaton — Gather Materials (discard a card, draw 3)
   "swsh10.5-018": RADIANT_BLASTOISE, // Radiant Blastoise — Pump Shot (discard a {W}, 2 counters)
@@ -8172,135 +8081,74 @@ const REGISTRY: Record<string, CardProgram> = {
   //   one field wider; Skwovet reaches the same destination with the WHOLE hand
   //   and needed no new op at all (Iono's handRefresh riders). —
   "sv02-179": DENDRA, // Dendra — a card from hand → deck bottom, then draw to 5
-  "sv02-250": DENDRA, // Dendra (reprint)
-  "sv02-266": DENDRA, // Dendra (reprint)
   "sv01-151": SKWOVET, // Skwovet — Nest Stash (hand → deck bottom, draw 1 if any moved)
-  "sv01-222": SKWOVET, // Skwovet (reprint)
   // — M5 op-slice: attachFromDeck (verified vs the local catalog 2026-07-22).
   //   Search the deck for Energy and attach it; the two printed target rules are
   //   "in any way you like" (Charizard) and "for each of those" (Janine). —
   "sv03-125": CHARIZARD_EX, // Charizard ex — Infernal Reign (onEvolve: up to 3 Basic {R} → your Pokémon)
-  "sv03-215": CHARIZARD_EX, // Charizard ex (reprint)
-  "sv03-223": CHARIZARD_EX, // Charizard ex (reprint)
-  "sv03-228": CHARIZARD_EX, // Charizard ex (reprint)
   "sv06.5-059": JANINES_SECRET_ART, // Janine's Secret Art — up to 2 Basic {D}, one per {D} Pokémon, Active → Poisoned
-  "sv06.5-088": JANINES_SECRET_ART, // Janine's Secret Art (reprint)
   // — M5 op-slice: EffectContext.sourceUid (verified vs the local catalog 2026-07-22). —
   "sv01-076": PAWMOT, // Pawmot — Electrogenesis (search a Basic {L} → THIS Pokémon)
-  "sv01-209": PAWMOT, // Pawmot (reprint)
   // — M5 op-slice: healChosen "up to N" (verified vs the local catalog 2026-07-22). —
   "sv02-187": SAGUARO, // Saguaro — heal 50 from up to 2 of your Pokémon
-  "sv02-255": SAGUARO, // Saguaro (reprint)
-  "sv02-270": SAGUARO,
   "sv01-192": ROCK_CHESTPLATE, // Rock Chestplate (Tool) — 30 less, gated on the HOLDER's {F}
   "sv02-113": HARIYAMA, // Hariyama — Arm Thrust Practice (10 less, SEAT-WIDE)
   "sv10-086": STONE_PALACE, // Steven's Carbink — Stone Palace (30 less, Steven's only, BENCH SOURCE, DOESN'T STACK)
   "sv07-119": CURLY_WALL, // Bouffalant — Curly Wall (60 less, Basic {C} only, 1 OTHER Bouffalant, DOESN'T STACK)
-  "svp-136": CURLY_WALL,
   "sv10.5b-003": REGAL_CHEER, // Serperior ex — Regal Cheer (20 more, SEAT-WIDE, bare)
-  "sv10.5b-156": REGAL_CHEER, // Serperior ex (reprint)
-  "sv10.5b-164": REGAL_CHEER, // Serperior ex (reprint)
   "sv10-008": CHEER_ON_TO_GLORY, // Cynthia's Roserade — Cheer On to Glory (30, Cynthia's only)
-  "sv10-184": CHEER_ON_TO_GLORY, // Cynthia's Roserade (reprint)
   "svp-184": EXTRA_HELPINGS, // Hop's Snorlax — Extra Helpings (30, Hop's only, DOESN'T STACK)
-  "sv09-117": EXTRA_HELPINGS,
   "sv08-072": WONDER_KISS, // Togekiss — Wonder Kiss (+1 Prize on an Active KO, coin flip, doesn't stack)
   "sv09-037": VIBRANT_DANCE, // Ludicolo — Vibrant Dance (+40 HP side-wide, doesn't stack)
   "sv06-111": OKIDOGI_ADRENA_POWER, // Okidogi — Adrena-Power (+100 HP *and* +100 damage, gated on ANY {D})
-  "sv06.5-074": OKIDOGI_ADRENA_POWER, // Okidogi (reprint)
-  "sv08.5-057": OKIDOGI_ADRENA_POWER, // Okidogi (reprint)
   "sv10.5b-049": CONKELDURR_CRAFTSMANSHIP, // Conkeldurr — Craftsmanship (+40 HP per attached {F})
-  "sv10.5b-127": CONKELDURR_CRAFTSMANSHIP, // Conkeldurr (reprint)
   "sv05-021": BRAMBLEGHAST_RESILIENT_SOUL, // Brambleghast — Resilient Soul (+50 HP per Prize the OPPONENT has taken)
   "sv10.5w-067": GREEDY_EATER, // Hydreigon ex — Greedy Eater (+1 Prize, BASIC KO, by THIS Pokémon's attack)
-  "sv10.5w-161": GREEDY_EATER, // Hydreigon ex (reprint)
-  "sv10.5w-169": GREEDY_EATER,
   "sv09-007": SUNNY_DAY, // Lilligant — Sunny Day (20, {G} OR {R} — the anyOf)
   "sv08-021": VICTORY_CHEER, // Victini — Victory Cheer (10, Evolution {R})
   "sv07-038": PRIMAL_KNOWLEDGE, // Carracosta — Primal Knowledge (30, target Evolution)
   "sv10.5b-067": METALLIC_SIGNAL, // Genesect ex — Metallic Signal (deck → hand, 2 Evolution {M})
-  "sv10.5b-161": METALLIC_SIGNAL, // Genesect ex (reprint)
-  "sv10.5b-169": METALLIC_SIGNAL, // Rows from here on are inserted mid-map so code reading the map's last key is unaffected.
   "sv10-030": HURRIED_GAIT, // Rapidash — Hurried Gait (draw a card)
-  "sv10-189": HURRIED_GAIT, // Rapidash (reprint)
   "sv06-038": ALLURING_LIGHT, // Chandelure — Alluring Light (each player draws a card)
   "sv06-134": HAPPY_SWITCH, // Blissey ex — Happy Switch (move a Basic Energy, own → own)
-  "sv06-201": HAPPY_SWITCH, // Blissey ex (reprint)
   "sv10.5w-002": HEALING_LEAVES, // Swadloon — Healing Leaves (heal 20 from your Active)
-  "sv10.5w-088": HEALING_LEAVES, // Swadloon (reprint)
   "sv09-079": MAMMOTH_HAULER, // Mamoswine ex — Mammoth Hauler (deck → hand, a Pokémon)
-  "sv09-174": MAMMOTH_HAULER, // Mamoswine ex (reprint)
   "sv05-017": CHANGING_SEASONS, // Sawsbuck — Changing Seasons (deck → hand, a Stadium card)
-  "sv05-166": CHANGING_SEASONS, // Sawsbuck (reprint)
   "sv10-033": BONDED_BY_THE_JOURNEY, // Ethan's Quilava — Bonded by the Journey
   "sv10.5w-084": HILDA, // Hilda — an Evolution Pokémon and an Energy card → hand
-  "sv10.5w-164": HILDA, // Hilda (reprint)
-  "sv10.5w-171": HILDA, // Hilda (reprint)
   "sv06.5-057": COLRESSS_TENACITY, // Colress's Tenacity — a Stadium card and an Energy card → hand
-  "sv06.5-087": COLRESSS_TENACITY, // Colress's Tenacity (reprint)
   "sv08-170": CYRANO, // Cyrano — up to 3 Pokémon ex → hand
-  "sv08-230": CYRANO, // Cyrano (reprint)
   "sv06-152": HYPER_AROMA, // Hyper Aroma (ACE SPEC) — up to 3 Stage 1 Pokémon → hand
   "sv10-178": TEAM_ROCKETS_TRANSCEIVER, // Team Rocket's Transceiver — a "Team Rocket" Supporter → hand
   "sv08-176": ENERGY_SEARCH_PRO, // Energy Search Pro (ACE SPEC) — Basic Energy of different types → hand
   "sv08-185": PRECIOUS_TROLLEY, // Precious Trolley (ACE SPEC) — any number of Basic Pokémon → Bench
   "sv05-143": BOXED_ORDER, // Boxed Order — up to 2 Item cards → hand, your turn ends
   "sv06.5-056": CASSIOPEIA, // Cassiopeia — only as the last card in hand; up to 2 cards → hand
-  "sv06.5-086": CASSIOPEIA, // Cassiopeia (reprint)
-  "sv06.5-094": CASSIOPEIA,
   "sv06-147": COOK, // Cook — heal 70 from your Active
   "sv06.5-062": POKE_VITAL_A, // Poké Vital A — heal 150 from 1 of your Pokémon
   "sv09-149": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit — discard another card, draw to 6
-  "sv09-180": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit (reprint)
   "sv05-146": ERI, // Eri — reveal the opponent's hand, discard up to 2 Item cards
-  "sv05-199": ERI, // Eri (reprint)
-  "sv05-210": ERI, // Eri (reprint)
-  "sv08.5-136": ERI, // Eri (reprint)
   "sv08-181": MEDDLING_MEMO, // Meddling Memo — the opponent's hand under their deck, draw that many
   "sv10.5b-016": TORRID_SCALES, // Volcarona — Torrid Scales (discard a Basic {R}: Burn)
-  "sv10.5b-100": TORRID_SCALES, // Volcarona (reprint)
   "sv10.5w-051": ANCIENT_WING, // Archeops — Ancient Wing (Active only: devolve 1 to hand)
-  "sv10.5w-132": ANCIENT_WING, // Archeops (reprint)
   "sv08-085": BECKONING_TAIL, // Meowstic — Beckoning Tail (discard a Chill Teaser Toy: gust)
   "sv10.5w-023": TORRENTIAL_WHIRLPOOL, // Samurott — Torrential Whirlpool (switch; if you do, switch out)
-  "sv10.5w-107": TORRENTIAL_WHIRLPOOL, // Samurott (reprint)
   "sv10-096": SAND_STREAM, // Team Rocket's Tyranitar — Sand Stream (Checkup, Active: 2 counters on each opposing Basic)
   "sv08-056": SNOW_SINK, // Chien-Pao — Snow Sink (bench from hand: may discard a Stadium)
-  "svp-152": SNOW_SINK, // Chien-Pao (reprint)
   "sv06-138": WICKED_TAIL, // Ambipom — Wicked Tail
   "sv08.5-096": BLACK_BELTS_TRAINING, // Black Belt's Training — +40 to the opponent's Active Pokémon ex this turn
-  "sv08.5-097": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "sv08.5-098": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "sv08.5-099": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "sv09-143": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "sv09-144": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "sv09-145": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "svp-219": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
-  "svp-220": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
   "sv10-171": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana — draw to 5, or to 8 if all your Pokémon are Team Rocket's
-  "sv10-224": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana (reprint)
-  "sv10-237": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana (reprint)
   "sv09-142": BILLY_AND_ONARE, // Billy & O'Nare — draw 2; then at 10+ cards in hand, draw 2 more
   "sv08-172": DRAGON_ELIXIR, // Dragon Elixir — heal 60 from your Active {N} Pokémon
   "sv10-175": TEAM_ROCKETS_GREAT_BALL, // Team Rocket's Great Ball — coin: Evolution / Basic Team Rocket's Pokémon → hand
   "sv06-144": CARETAKER, // Caretaker — draw 2; if you drew any and Community Center is in play, shuffle it into the deck
-  "sv06-203": CARETAKER, // Caretaker (reprint)
   "svp-129": TOXIC_SUBJUGATION, // Pecharunt — Toxic Subjugation (Checkup, Active: +50 on the opponent's Poisoned Active)
-  "svp-149": TOXIC_SUBJUGATION,
   "sv06-154": KIERAN, // Kieran — Choose 1: switch your Active, or +30 to ex / V this turn
-  "sv06-206": KIERAN, // Kieran (reprint)
-  "sv06-218": KIERAN, // Kieran (reprint)
-  "sv08.5-113": KIERAN, // Kieran (reprint)
-  "sv08.5-174": KIERAN, // Kieran (reprint)
   "sv10-179": TEAM_ROCKETS_VENTURE_BOMB, // Team Rocket's Venture Bomb — coin: 2 counters on 1 of theirs / on your Active
   "sv05-155": MORTYS_CONVICTION, // Morty's Conviction — discard 1: draw per opponent's Benched Pokémon
-  "sv05-201": MORTYS_CONVICTION, // Morty's Conviction (reprint)
-  "sv05-211": MORTYS_CONVICTION, // Morty's Conviction (reprint)
   "sv06.5-064": XEROSICS_MACHINATIONS, // Xerosic's Machinations — opponent discards down to 3
-  "sv06.5-089": XEROSICS_MACHINATIONS, // Xerosic's Machinations (reprint)
   "sv06.5-034": MALAMAR_COLLUDING_TENTACLES, // Malamar — Colluding Tentacles: gust + 120, only after Xerosic's Machinations
   "sv06-157": LUCIAN, // Lucian — both hands under the decks; each player flips: 6 or 3
-  "sv06-208": LUCIAN, // Lucian (reprint)
   "sv10-161": ARVENS_SANDWICH, // Arven's Sandwich — heal 30, or 100 on an Arven's Active
   "sv08-182": MEGATON_BLOWER, // Megaton Blower — all opponent Tools + Special Energy, and a Stadium
   "sv08-164": BRILLIANT_BLENDER, // Brilliant Blender — up to 5 deck cards to the discard pile
@@ -8308,67 +8156,41 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-175": DUSK_BALL, // Dusk Ball — a Pokémon from the bottom 7
   "sv10.5w-085": TOOL_SCRAPPER, // Tool Scrapper — up to 2 Tools off either side
   "sv08-169": COUNTER_GAIN, // Counter Gain — {C} less while you have more Prizes remaining
-  "sv08-249": COUNTER_GAIN, // Counter Gain (reprint)
   "sv09-148": HOPS_CHOICE_BAND, // Hop's Choice Band — Hop's Pokémon: {C} less and +30
   "sv10.5w-080": BRAVE_BANGLE, // Brave Bangle — no Rule Box holder: +30 to an ex
   "sv10.5b-079": AIR_BALLOON, // Air Balloon — Retreat Cost {C}{C} less
   "sv05-159": RESCUE_BOARD, // Rescue Board — {C} less; free at 30 HP or less remaining
-  "sv06-225": RESCUE_BOARD, // Rescue Board (reprint)
-  "sv08.5-126": RESCUE_BOARD, // Rescue Board (reprint)
   "sv07-137": GRAVITY_GEMSTONE, // Gravity Gemstone — both Actives' Retreat Cost {C} more
   "sv05-148": FULL_METAL_LAB, // Full Metal Lab — {M} Pokémon take 30 less (after W/R)
   "sv10-166": GRANITE_CAVE, // Granite Cave — Steven's Pokémon take 30 less (after W/R)
   "sv09-154": POSTWICK, // Postwick — Hop's Pokémon do 30 more (before W/R)
   "sv09-152": NS_CASTLE, // N's Castle — N's Pokémon have no Retreat Cost
   "svp-150": PARADISE_RESORT, // Paradise Resort — each Psyduck's Retreat Cost {C} less
-  "svp-224": PARADISE_RESORT, // Paradise Resort (reprint)
   "sv05-160": SALVATORE, // Salvatore — evolve 1 of your Pokémon from the deck, no Abilities
-  "sv05-202": SALVATORE, // Salvatore (reprint)
-  "sv05-212": SALVATORE,
   "sv09-056": FAIRY_ZONE, // Lillie's Clefairy ex — Fairy Zone: the opponent's {N} Pokémon are {P}-weak
-  "sv09-173": FAIRY_ZONE, // Lillie's Clefairy ex (reprint)
-  "sv09-184": FAIRY_ZONE, // Lillie's Clefairy ex (reprint)
-  "svp-195": FAIRY_ZONE, // Lillie's Clefairy ex (reprint)
   "sv05-078": MIDNIGHT_FLUTTERING, // Flutter Mane — Midnight Fluttering: the opposing Active has no Abilities
-  "sv08.5-043": MIDNIGHT_FLUTTERING, // Flutter Mane (reprint)
-  "svp-097": MIDNIGHT_FLUTTERING, // Flutter Mane (reprint)
   "sv08-107": STICKY_BIND, // Gastrodon — Sticky Bind: from the Bench, Benched Stage 2 have no Abilities
   "sv07-110": PUMMELING_PAYBACK, // Orthworm ex — Pummeling Payback: 2 counters per {M} Energy
-  "sv07-162": PUMMELING_PAYBACK, // Orthworm ex (reprint)
   "sv09-008": EXPLODING_NEEDLES, // Maractus — Exploding Needles: 6 counters when KO'd in the Active Spot
-  "sv09-160": EXPLODING_NEEDLES, // Maractus (reprint)
   "sv10.5b-063": GEAR_COATING, // Klinklang — Gear Coating: {M}-Energy bodies take 20 less
-  "sv10.5b-141": GEAR_COATING, // Klinklang (reprint)
   "sv09-082": ROCK_ARMOR, // Regirock — Rock Armor: 30 less with any Energy attached
   "sv05-085": DIG_DIG_DIG, // Drilbur — Dig Dig Dig: up to 3 Basic {F} Energy to the discard
   "sv10-125": SMOG_SIGNALS, // Team Rocket's Koffing — Smog Signals: 2 "Koffing" to the Bench when hit
   "sv06-015": BOOM_BOOM_GROOVE, // Thwackey — Boom Boom Groove: a card, if the Active has Festival Lead
-  "svp-115": BOOM_BOOM_GROOVE, // Thwackey (reprint)
   "sv08-147": BORN_TO_SLACK, // Slaking ex — Born to Slack: can't attack with no ex / V opposite
-  "sv08-227": BORN_TO_SLACK, // Slaking ex (reprint)
   "sv10-092": LOSE_COOL, // Annihilape — Lose Cool: +120 with 2 or more damage counters
   "sv06.5-002": COMPOUND_EYES, // Galvantula — Compound Eyes: +50 into an Active with an Ability
   "sv09-021": MAGMA_SURGE, // Magmortar — Magma Surge: 3 more counters on the opposing Burn
   "sv05-015": WAFTING_HEAL, // Whimsicott — Wafting Heal: heal the Active {G}, discard its Energy
-  "sv08.5-008": WAFTING_HEAL, // Whimsicott (reprint)
   "sv07-067": TIME_TO_CHOW_DOWN, // Dachsbun ex — Time to Chow Down: heal every Evolution Pokémon
-  "sv07-160": TIME_TO_CHOW_DOWN, // Dachsbun ex (reprint)
-  "sv07-169": TIME_TO_CHOW_DOWN, // Dachsbun ex (reprint)
   "sv08-093": OBLIGING_HEAL, // Indeedee — Obliging Heal: heal 30 and recover from a condition
-  "svp-154": OBLIGING_HEAL, // Indeedee (reprint)
   "sv07-006": SELECTIVE_SLIME, // Cradily — Selective Slime
   "sv06-160": PERRIN, // Perrin — return up to 2 Pokémon, search that many
-  "sv06-209": PERRIN, // Perrin (reprint)
-  "sv06-220": PERRIN, // Perrin (reprint)
   "sv07-133": CRISPIN, // Crispin — 2 Basic Energy of different types: 1 to hand, 1 attached
-  "sv07-164": CRISPIN, // Crispin (reprint)
-  "sv08.5-105": CRISPIN, // Crispin (reprint)
-  "sv08.5-171": CRISPIN, // Crispin (reprint)
   "sv09-158": SUPER_POTION, // Super Potion — heal 60; if healed, discard an Energy from it
   "sv06-156": LOVE_BALL, // Love Ball — a Pokémon named like one of the opponent's in play
   "sv05-150": HAND_TRIMMER, // Hand Trimmer — each player discards down to 5, opponent first
   "sv06-162": SCOOP_UP_CYCLONE, // Scoop Up Cyclone — 1 of your Pokémon and its cards to hand
-  "sv08.5-128": SCOOP_UP_CYCLONE, // Scoop Up Cyclone (reprint)
   "sv08-186": SCRAMBLE_SWITCH, // Scramble Switch — switch, then move any Energy to the new Active
   "sv06.5-054": ACADEMY_AT_NIGHT, // Academy at Night — a hand card on top of the deck, once a turn
   "sv05-156": PERILOUS_JUNGLE, // Perilous Jungle — 2 more Poison counters on each non-{D}
@@ -8383,102 +8205,59 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-158": LUCKY_HELMET, // Lucky Helmet — damaged in the Active Spot: draw 2
   "sv06-150": HANDHELD_FAN, // Handheld Fan — damaged in the Active Spot: attacker's Energy to its Bench
   "sv06-153": JAMMING_TOWER, // Jamming Tower — Tools have no effect
-  "sv10-243": JAMMING_TOWER, // Jamming Tower (reprint)
   "sv06-149": FESTIVAL_GROUNDS, // Festival Grounds — Energy-carrying Pokémon: no Special Conditions
-  "sv08.5-108": FESTIVAL_GROUNDS,
   "svp-174": RAINBOW_DNA, // Eevee ex — evolves into any Pokémon ex that evolves from Eevee (hand)
-  "sv08.5-075": RAINBOW_DNA, // Eevee ex (reprint)
-  "sv08.5-167": RAINBOW_DNA, // Eevee ex (reprint)
   "sv09-128": TUNING_ECHO, // Noivern — equal hands: Frightening Howl costs nothing
   "sv06.5-047": PLASMA_BANE, // Kyurem — a "Colress" in the opponent's discard: Trifrost for {C}
   "svp-089": TORRENTIAL_HEART, // Feraligatr — 5 counters on itself: +120 this turn
-  "sv05-041": TORRENTIAL_HEART, // Feraligatr (reprint)
   "svp-126": HEROS_SPIRIT, // Palafin ex — into play only via Zero to Hero
-  "sv06-061": HEROS_SPIRIT, // Palafin ex (reprint)
-  "sv06-193": HEROS_SPIRIT, // Palafin ex (reprint)
-  "sv08.5-151": HEROS_SPIRIT,
   "sv08-178": JASMINES_GAZE, // Jasmine's Gaze — opponent's next turn: all your Pokémon take 30 less (after W/R)
-  "sv08-233": JASMINES_GAZE, // Jasmine's Gaze (reprint)
-  "sv08-245": JASMINES_GAZE, // Jasmine's Gaze (reprint)
   "sv08.5-093": AMARYS, // Amarys — draw 4; end of turn, 5+ cards in hand: discard your hand
-  "sv08.5-132": AMARYS, // Amarys (reprint)
-  "sv08.5-170": AMARYS, // Amarys (reprint)
   "sv10-173": TEAM_ROCKETS_FACTORY, // Team Rocket's Factory — played a "Team Rocket" Supporter this turn: draw 2
   "sv06-146": COMMUNITY_CENTER, // Community Center — played a Supporter this turn: heal 10 from each of your Pokémon
   "sv06.5-029": SHADOWY_ENVOY, // Crobat — played Janine's Secret Art this turn: draw until 8 in hand
   "sv10-045": FLUSTERED_LEAP, // Misty's Psyduck — on the Bench: mill the bottom card; if you did, self to deck top, attachments discarded
-  "sv10-193": FLUSTERED_LEAP, // Misty's Psyduck (reprint)
   "sv10-089": ROCKET_BRAIN, // Team Rocket's Orbeetle — as often as you like: 1 counter from a Team Rocket's Pokémon to another of yours
-  "sv10-198": ROCKET_BRAIN, // Team Rocket's Orbeetle (reprint)
   "sv09-157": RUFFIAN, // Ruffian — a Tool and a Special Energy off 1 opponent's Pokémon
-  "sv09-181": RUFFIAN, // Ruffian (reprint)
   "sv06-132": IMPROMPTU_CARRIER, // Farfetch'd — played to the Bench: search a Tool and attach it to itself
   "sv06-060": ZERO_TO_HERO, // Palafin — Active to Bench, once per turn: switch in a Palafin ex from the deck
   "sv09-146": BROCKS_SCOUTING, // Brock's Scouting — up to 2 Basic Pokémon OR 1 Evolution Pokémon
-  "sv09-179": BROCKS_SCOUTING, // Brock's Scouting (reprint)
   "sv06-159": OGRES_MASK, // Ogre's Mask — switch an Ogerpon ex in play with one from the discard pile
-  "sv08.5-118": OGRES_MASK, // Ogre's Mask (reprint)
   "sv05-151": HEAVY_BATON, // Heavy Baton — Retreat 4 Active KO'd by attack: up to 3 Basic Energy to the Bench
   "sv08-162": AMULET_OF_HOPE, // Amulet of Hope — KO'd by attack: search up to 3 cards
   "sv06.5-063": POWERGLASS, // Powerglass — end of turn in the Active: attach a Basic Energy from the discard
-  "sv06.5-097": POWERGLASS, // Powerglass (reprint)
   "sv10-180": TEAM_ROCKETS_WATCHTOWER, // Team Rocket's Watchtower — {C} Pokémon have no Abilities
   "sv09-156": REDEEMABLE_TICKET, // Redeemable Ticket — prizes under the deck, the top N become new prizes
   "sv06-142": ACCOMPANYING_FLUTE, // Accompanying Flute — Basics from the opponent's top 5 onto their Bench
   "sv10-172": TEAM_ROCKETS_BOTHER_BOT, // Team Rocket's Bother-Bot — flip an opponent prize, reveal, may switch
   "sv07-136": GRAND_TREE, // Grand Tree — Stadium: evolve a Basic from the deck, then optionally to Stage 2
   "sv07-142": SPARKLING_CRYSTAL, // Sparkling Crystal — Tool: the Tera holder's attacks cost 1 Energy (any type) less
-  "sv08.5-129": SPARKLING_CRYSTAL, // Sparkling Crystal (reprint)
   "sv08-189": TERA_ORB, // Tera Orb — search a Tera Pokémon
   "sv07-135": GLASS_TRUMPET, // Glass Trumpet — Tera in play: up to 2 Benched {C} get a Basic Energy from the discard
-  "sv08.5-110": GLASS_TRUMPET, // Glass Trumpet (reprint)
   "sv07-132": BRIAR, // Briar — opponent at exactly 2 Prizes: a Tera attacker's Active KO takes 1 more
-  "sv07-163": BRIAR, // Briar (reprint)
-  "sv07-171": BRIAR, // Briar (reprint)
-  "sv08.5-100": BRIAR, // Briar (reprint)
   "sv08-042": SPARKLING_SCALES, // Milotic ex — prevent damage and effects of the opponent's Tera Pokémon's attacks
-  "sv08-217": SPARKLING_SCALES, // Milotic ex (reprint)
-  "sv08-237": SPARKLING_SCALES, // Milotic ex (reprint)
   "sv07-115": JEWEL_SEEKER, // Noctowl — evolved from hand with a Tera in play: search up to 2 Trainers
-  "sv08.5-078": JEWEL_SEEKER, // Noctowl (reprint)
-  "svp-141": JEWEL_SEEKER, // Noctowl (reprint)
   "sv08-074": GLISTENING_BUBBLES, // Azumarill — Tera in play: Double-Edge for {P}
   "sv08-161": PRISM_CHARGE, // Terapagos — Prism Charge: up to 3 Basic Energy of different types onto your Tera Pokémon
   "sv05-121": PEAK_ACCELERATION, // Miraidon — Peak Acceleration: up to 2 Basic Energy onto your Future Pokémon
-  "svp-092": PEAK_ACCELERATION, // Miraidon (reprint)
   "sv05-097": LAND_COLLAPSE, // Great Tusk — Land Collapse: mill 1, +3 after an Ancient Supporter
-  "sv08.5-055": LAND_COLLAPSE, // Great Tusk (reprint)
   "sv05-077": SUPPORTIVE_SINGING, // Scream Tail — heal 100 from 1 of your Benched Ancient Pokémon
   "sv08-096": PERPLEXING_TRANSFER, // Flutter Mane — move a Benched Ancient's counters to the Defender
   "sv05-081": COBALT_COMMAND, // Iron Crown ex — your Future Pokémon (not Iron Crown ex) +20 to the Active
-  "sv05-191": COBALT_COMMAND, // Iron Crown ex (reprint)
-  "sv05-206": COBALT_COMMAND, // Iron Crown ex (reprint)
-  "sv05-216": COBALT_COMMAND, // Iron Crown ex (reprint)
-  "sv08.5-158": COBALT_COMMAND, // Iron Crown ex (reprint)
-  "svp-146": COBALT_COMMAND, // Iron Crown ex (reprint)
   "sv05-141": AWAKENING_DRUM, // Awakening Drum — draw a card per Ancient Pokémon in play
   "sv05-158": REBOOT_POD, // Reboot Pod — a Basic Energy from the discard onto each Future Pokémon
   "sv06-018": FESTIVAL_LEAD, // Dipplin — Festival Lead: attack twice while Festival Grounds is in play
-  "sv06-170": FESTIVAL_LEAD, // Dipplin (reprint)
-  "sv08.5-010": FESTIVAL_LEAD, // Dipplin (reprint)
   "sv06-044": FESTIVAL_LEAD, // Goldeen — Festival Lead
-  "sv08.5-020": FESTIVAL_LEAD, // Goldeen (reprint)
   "sv06-089": FESTIVAL_LEAD, // Swirlix — Festival Lead
   "sv08.5-021": FESTIVAL_LEAD, // Seaking — Festival Lead
   "sv06-077": INITIALIZATION, // Iron Thorns ex — Initialization: Active, Rule Box Pokémon have no Abilities, except Future
-  "sv06-196": INITIALIZATION, // Iron Thorns ex (reprint)
-  "sv08.5-032": INITIALIZATION, // Iron Thorns ex (reprint)
   "sv05-062": DESTRUCTO_PRESS, // Iron Thorns — Destructo-Press: 70× per Future card in the top 5, discard them
-  "svp-098": DESTRUCTO_PRESS, // Iron Thorns (reprint)
   "sv10.5w-086": IGNITION_ENERGY, // Ignition Energy — {C}, {C}{C}{C} on an Evolution, discarded at the end of your turn
   "sv06-095": ADRENA_BRAIN, // Munkidori — Adrena-Brain: with any {D} attached, move up to 3 counters own → opponent
-  "sv06.5-072": ADRENA_BRAIN, // Munkidori (reprint)
-  "sv08.5-044": ADRENA_BRAIN, // Munkidori (reprint)
   "sv06-050": MENTALLY_CALM, // Milotic — Mentally Calm: the opponent's in-play cards can't go to their hand
   "sv10-055": DIVERS_CATCH, // Huntail — Diver's Catch: a {W} body KO'd by an attack keeps its Basic {W} Energy in hand
   "sv07-101": EMERGENCY_ROTATION, // Klinklang — Emergency Rotation: from the hand to the Bench vs a Stage 2
   "sv07-129": PROTECTIVE_COVER, // Antique Cover Fossil — an Item played as a 60-HP Basic {C}; Protective Cover
-  "sv10.5b-080": PROTECTIVE_COVER, // Antique Cover Fossil (reprint)
   "sv07-130": PRIMAL_ROOT, // Antique Root Fossil — Primal Root: Active, the opponent's Basic attackers cost {C} more
   "sv10.5w-079": PLUME_PROTECTION, // Antique Plume Fossil — Plume Protection: Benched, no damage from the opponent's attacks
   "me03-068": INTIMIDATING_JAW, // Antique Jaw Fossil — Intimidating Jaw: Active, the opponent's Active does 30 less
@@ -8486,307 +8265,131 @@ const REGISTRY: Record<string, CardProgram> = {
   "me05-072": PROTECTIVE_ARMOR, // Antique Armor Fossil — Protective Armor: Active, all of yours take 10 less (after W/R)
   "me05-073": SPINY_SKULL, // Antique Skull Fossil — Spiny Skull: Active and damaged, 3 counters on the attacker
   "sv07-131": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths — a Tera Pokémon in play: up to 8 on that Bench
-  "sv07-174": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths (reprint)
-  "sv08.5-094": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths (reprint)
   "sv06-166": BOOMERANG_ENERGY, // Boomerang Energy — {C}; discarded by its holder's attack: re-attached after attacking
   "sv08-190": TYME, // Tyme — name a Pokémon in hand; the opponent guesses its HP: right, they draw 4; wrong, you do
-  "sv08.5-143": TYME, // Tyme (reprint)
   "sv08-037": DOUBLE_TYPE, // Scovillain ex — Double Type: in play, it is {G} and {R}
-  "sv08-216": DOUBLE_TYPE, // Scovillain ex (reprint)
   "sv08-188": TM_FLUORITE, // Technical Machine: Fluorite — a Tool granting "Fluorite"; discarded at its owner's turn end
   "sv05-084": MEMORY_DIVE, // Relicanth — Memory Dive: your evolved Pokémon use their previous Evolutions' attacks
-  "sv05-173": MEMORY_DIVE, // Relicanth (reprint)
   "sv10-182": TEAM_ROCKETS_ENERGY, // Team Rocket's Energy — 2 units of {P}/{D}; Team Rocket's Pokémon only
   "sv06-063": UNDULATING_SLICE, // Walking Wake — Undulating Slice: put up to 9 counters on itself, 20× per counter put
   "sv05-118": DUAL_CORE, // Iron Treads — Dual Core: {F} and {M} while a Future Booster Energy Capsule is attached
   "sv05-063": MR_MIME_LOOK_ALIKE_SHOW, // Mr. Mime — Look-Alike Show: reveal the opponent's hand, use 1 Supporter's effect
-  "me01-114": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
-  "me01-115": ENERGY_SWITCH, // Energy Switch — twin `sv01-173`
-  "me01-125": RARE_CANDY, // Rare Candy — twin `sv01-191`
-  "me01-130": SWITCH, // Switch — twin `sv01-194`
-  "me01-131": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
-  "me01-166": AIR_BALLOON, // Air Balloon — twin `sv10.5b-079`
-  "me01-167": BUDDY_BUDDY_POFFIN, // Buddy-Buddy Poffin — twin `sv05-144`
-  "me01-173": NIGHT_STRETCHER, // Night Stretcher — twin `sv06.5-061`
-  "me01-175": RARE_CANDY, // Rare Candy — twin `sv01-191`
-  "mep-092": PARADISE_RESORT, // Paradise Resort — twin `svp-150`
-  "me02-123": SWITCH, // Switch — twin `sv01-194`
-  "me02-124": IGNITION_ENERGY, // Ignition Energy — twin `sv10.5w-086`
-  "me02.5-181": AIR_BALLOON, // Air Balloon — twin `sv10.5b-079`
-  "me02.5-183": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
-  "me02.5-184": BUDDY_BUDDY_POFFIN, // Buddy-Buddy Poffin — twin `sv05-144`
-  "me02.5-186": COUNTER_GAIN, // Counter Gain — twin `sv08-169`
-  "me02.5-189": GLASS_TRUMPET, // Glass Trumpet — twin `sv07-135`
-  "me02.5-190": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit — twin `sv09-149`
-  "me02.5-195": NS_PP_UP, // N's PP Up — twin `sv09-153`
-  "me02.5-196": NIGHT_STRETCHER, // Night Stretcher — twin `sv06.5-061`
-  "me02.5-200": SURFER, // Surfer — twin `sv08-187`
-  "me02.5-201": TEAM_ROCKETS_ARCHER, // Team Rocket's Archer — twin `sv10-170`
-  "me02.5-202": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana — twin `sv10-171`
-  "me02.5-203": TEAM_ROCKETS_FACTORY, // Team Rocket's Factory — twin `sv10-173`
-  "me02.5-204": TEAM_ROCKETS_GIOVANNI, // Team Rocket's Giovanni — twin `sv10-174`
-  "me02.5-205": TEAM_ROCKETS_GREAT_BALL, // Team Rocket's Great Ball — twin `sv10-175`
-  "me02.5-207": TRAINER_SEARCH, // Team Rocket's Petrel — twin `sv10-176`
-  "me02.5-208": TEAM_ROCKETS_PROTON, // Team Rocket's Proton — twin `sv10-177`
-  "me02.5-209": TEAM_ROCKETS_TRANSCEIVER, // Team Rocket's Transceiver — twin `sv10-178`
-  "me02.5-210": TEAM_ROCKETS_WATCHTOWER, // Team Rocket's Watchtower — twin `sv10-180`
-  "me02.5-212": TOOL_SCRAPPER, // Tool Scrapper — twin `sv10.5w-085`
   "me02.5-214": NEMONA, // Urbain — twin `sv01-180` (Nemona, same text)
-  "me02.5-216": PRISM_ENERGY, // Prism Energy — twin `sv10.5b-086`
-  "me02.5-217": TEAM_ROCKETS_ENERGY, // Team Rocket's Energy — twin `sv10-182`
-  "me02.5-255": BLACK_BELTS_TRAINING, // Black Belt's Training — twin `sv08.5-096`
-  "me02.5-256": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
   "me02.5-258": NEMONA, // Cheren — twin `sv01-180` (Nemona, same text)
-  "me02.5-259": COUNTER_GAIN, // Counter Gain — twin `sv08-169`
-  "me02.5-260": GLASS_TRUMPET, // Glass Trumpet — twin `sv07-135`
-  "me02.5-261": JAMMING_TOWER, // Jamming Tower — twin `sv06-153`
-  "me02.5-262": NS_PP_UP, // N's PP Up — twin `sv09-153`
-  "me02.5-263": TEAM_ROCKETS_TRANSCEIVER, // Team Rocket's Transceiver — twin `sv10-178`
-  "me02.5-292": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit — twin `sv09-149`
-  "me02.5-293": SURFER, // Surfer — twin `sv08-187`
-  "me03-071": CRUSHING_HAMMER, // Crushing Hammer — twin `sv01-168`
-  "me03-072": ENERGY_SEARCH, // Energy Search — twin `sv01-172`
-  "me03-076": JUDGE, // Judge — twin `sv01-176`
-  "sv04.5-228": JUDGE, // Judge — twin `sv01-176`
-  "sv10-167": JUDGE, // Judge — twin `sv01-176`
-  "sv10-222": JUDGE, // Judge — twin `sv01-176`
-  "sv04.5-089": RARE_CANDY, // Rare Candy — twin `sv01-191`
-  "sv03.5-206": SWITCH, // Switch — twin `sv01-194`
-  "mfb-34": SWITCH, // Switch — twin `sv01-194`
-  // Card revision B05: `mfb-34`'s neighbour, the same defect — print_key `1a6334c9d86eec4e` with
-  // `sv01-188` / `me03-083`, `legal_standard_effective = 1`, no regulation mark.
-  "mfb-33": POTION, // Potion — twin `sv01-188`
-  // Card revision B09: the same defect on a Stadium — print_key `f6d5263097478251` with `svp-150` /
-  // `svp-224` / `mep-092`, `legal_standard_effective = 1`, mark G.
-  "svp-045": PARADISE_RESORT, // Paradise Resort — twin `svp-150`
-  "sv04.5-091": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
-  // …and the three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
-  // prints no text, so their print_key matches no twin and no census reached them). Keyed by NAME on the
-  // shipped object: each is the reprint of that card. The missing face text is catalog debt (card-revision.md B04).
+  // The three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
+  // prints no text, so their print_key matches no twin). Keyed by NAME on the shipped object: each is
+  // the reprint of that card. The missing face text is catalog debt (card-revision.md B04).
   "30th-126": POKE_PAD, // Poké Pad — twin `me02.5-198`
   "30th-127": SWITCH, // Switch — twin `sv01-194`
   "30th-128": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
-  "me03-080": POKE_BALL, // Poké Ball — twin `sv01-185`
-  "me03-082": POKEMON_CATCHER, // Pokémon Catcher — twin `sv01-187`
-  "me03-083": POTION, // Potion — twin `sv01-188`
-  "me03-108": ENERGY_RECYCLER, // Energy Recycler — twin `sv10-164`
-  "me03-115": SACRED_ASH, // Sacred Ash — twin `sv10-168`
-  "me04-108": ENERGY_RETRIEVAL, // Energy Retrieval — twin `sv01-171`
-  "me04-115": TOOL_SCRAPPER, // Tool Scrapper — twin `sv10.5w-085`
-  "me05-104": BRAVE_BANGLE, // Brave Bangle — twin `sv10.5w-080`
-  "me05-105": CRUSHING_HAMMER, // Crushing Hammer — twin `sv01-168`
-  "me05-107": ENERGY_SWITCH, // Energy Switch — twin `sv01-173`
-  // — Pokémon, same Abilities (32) —
-  "me02.5-019": CHARGING_UP, // Team Rocket's Spidops — twin `sv10-020`
-  "me02.5-024": MELT_AWAY, // Ethan's Magcargo — twin `sv10-036`
-  "me02.5-026": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex — twin `sv10-039`
-  "me02.5-057": KO_SURVIVAL, // Pikachu ex — twin `sv08-057`
-  "me02.5-060": DYNAMOTOR, // Eelektrik — twin `sv10.5b-031`
-  "me02.5-070": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — twin `sv09-053`
-  "me02.5-072": FLASHING_DRAW, // Iono's Kilowattrel — twin `svp-182`
-  "me02.5-076": FAIRY_ZONE, // Lillie's Clefairy ex — twin `sv09-056`
+  // — Pokémon, same Abilities —
   "me02.5-079": POWER_SAVER, // Team Rocket's Mewtwo ex — twin `svp-205`
-  "me02.5-082": WONDER_KISS, // Togekiss — twin `sv08-072`
-  "me02.5-099": ADRENA_BRAIN, // Munkidori — twin `sv06-095`
-  "me02.5-110": CHAMPIONS_CALL, // Cynthia's Gabite — twin `sv10-103`
-  "me02.5-137": NS_ZOROARK_EX, // N's Zoroark ex — twin `sv09-098`
-  "me02.5-142": FLIP_THE_SCRIPT, // Fezandipiti ex — twin `sv06.5-038`
-  "me02.5-159": DRAKLOAK, // Drakloak — twin `sv06-129`
-  "me02.5-171": FAN_CALL, // Fan Rotom — twin `sv07-118`
-  "me02.5-178": PRISM_CHARGE, // Terapagos — twin `sv08-161`
-  "me02.5-179": TERAPAGOS_EX_UNIFIED_BEATDOWN, // Terapagos ex — twin `sv07-128`
-  "me02.5-222": MELT_AWAY, // Ethan's Magcargo — twin `sv10-036`
-  "me02.5-235": WONDER_KISS, // Togekiss — twin `sv08-072`
-  "me02.5-248": DRAKLOAK, // Drakloak — twin `sv06-129`
-  "me02.5-250": FAN_CALL, // Fan Rotom — twin `sv07-118`
-  "me02.5-277": KO_SURVIVAL, // Pikachu ex — twin `sv08-057`
-  "me02.5-279": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — twin `sv09-053`
-  "me02.5-280": FAIRY_ZONE, // Lillie's Clefairy ex — twin `sv09-056`
-  "me02.5-281": POWER_SAVER, // Team Rocket's Mewtwo ex — twin `svp-205`
-  "me02.5-286": NS_ZOROARK_EX, // N's Zoroark ex — twin `sv09-098`
-  "me02.5-287": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — twin `sv10-136`
-  "me02.5-288": FLIP_THE_SCRIPT, // Fezandipiti ex — twin `sv06.5-038`
-  "me02.5-289": X_BOOT, // Steven's Metagross ex — twin `sv10-145`
   "me04-002": REDUCE_20_AFTER_WR, // Kakuna — twin `sv01-121` (Stonjourner, same text)
   "me04-052": POISON_POINT, // Qwilfish — twin `sv05-008` (Roselia, same text)
   // — Pokémon, same Ability text under another name, a nameless passive (11) —
   "me02-011": MELT_AWAY, // Charmander — twin `sv10-036` (Ethan's Magcargo, same text)
   "me02-041": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me02-070": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
-  "me02-114": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
   "me02.5-267": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
-  "me02.5-282": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me05-038": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
-  "me05-099": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
-  "me05-115": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "30th-028": PRESSURE, // Pikachu — twin `sv03-030` (Entei, same text)
   "30th-033": CURIOUS_TEA_PARTY, // Pikachu — twin `sv06-020` (Poltchageist, same text)
-  "me02.5-213": ULTRA_BALL, // Ultra Ball — twin `sv01-196` (one newline fewer)
-  "me02.5-264": ULTRA_BALL, // Ultra Ball — twin `sv01-196` (one newline fewer)
   "30th-096": SECRET_FOREST_PATH, // Zoroark "Nighttime Byway" — twin `sv09-089` (Toedscruel; tcgdex prints {C}{C} as "ColorlessColorless")
   "me02.5-068": COUNTERATTACK_QUILLS, // Hop's Pincurchin ex "Counterattack Quills" — twin `sv01-005` (Cacnea; "place" for "put")
   "me04-073": SMOOTH_COAT, // Cinccino ex "Smooth Coat" — twin `sv08-150` (Kecleon "Expert Hider")
-  "me04-105": SMOOTH_COAT, // Cinccino ex
-  "me04-119": SMOOTH_COAT, // Cinccino ex
   "me03-017": SHELL_SPIKES, // Turtonator "Shell Spikes" — twin `sv03-120` (Klawf ex "Counterattacking Pincer")
   "me02.5-027": INCANDESCENT_BODY, // Numel "Incandescent Body" — twin `sv03-044` (Armarouge "Scorching Armor"), with Heatran `sv06-123`
-  "me02.5-223": INCANDESCENT_BODY, // Numel
   "me05-068": AERIAL_DRAW, // Toucannon "Aerial Draw" — twin `sv10-030` (Rapidash "Hurried Gait")
-  "me05-094": AERIAL_DRAW, // Toucannon
   "mep-101": SHARE_HAPPINESS, // Nidorina "Share Happiness" — twin `sv09-075` (Alcremie ex "Confectionary Gift")
   "30th-088": SHARE_HAPPINESS, // Nidorina
   "me01-024": INTIMIDATING_FANG, // Pyroar "Intimidating Fang" — twin `sv03-030` (Entei "Pressure"), 30 for 20
   "mep-086": DOPEY_FACE, // Slowpoke "Dopey Face" — twin `sv01-068` (Pachirisu "Electricity Pouches"), Confused for Paralyzed
   "30th-073": FLOAT_UP, // Drifloon "Float Up" (attack 0) — twin `sv08-131` (Gholdengo "Surf Back", attack 1)
-  "30th-136": FLOAT_UP, // Drifloon
   "me03-024": TUNDRA_WALL, // Aurorus "Tundra Wall" — twin `sv10.5b-063` (Klinklang "Gear Coating"), {W} / 50 / no stack
-  "me03-092": TUNDRA_WALL, // Aurorus
   "me03-019": WASH_OUT, // Dewgong "Wash Out" — twin `sv01-041` (Armarouge "Fire Off"), {W} for {R}
   "me01-084": POWERFUL_A_SALT, // Garganacl "Powerful a-Salt" — twin `sv08-021` (Victini "Victory Cheer"), {F} / 30
-  "me01-147": POWERFUL_A_SALT, // Garganacl
   "me02.5-135": COUNTERATTACKING_CREST, // Mega Scrafty ex "Counterattacking Crest" — twin `sv01-005` (Cacnea), 5 counters for 3
-  "me02.5-270": COUNTERATTACKING_CREST, // Mega Scrafty ex
-  "me02.5-285": COUNTERATTACKING_CREST, // Mega Scrafty ex
   "mep-065": STONE_ARMS, // Barbaracle "Stone Arms" — twin `sv01-054` (Quaquaval "Energy Carnival"), {F} card to an {F} target
   "me03-043": STONE_ARMS, // Barbaracle
   "me03-036": SCENT_COLLECTION, // Aromatisse "Scent Collection" — twin `sv02-061` (Chien-Pao ex "Shivery Chill"), {P}, any spot
   "me02.5-152": SKY_TRANSPORT, // Mega Dragonite ex "Sky Transport" — twin `sv10.5w-023` (Samurott, first sentence)
-  "me02.5-271": SKY_TRANSPORT, // Mega Dragonite ex
-  "me02.5-290": SKY_TRANSPORT, // Mega Dragonite ex
-  "me02.5-295": SKY_TRANSPORT, // Mega Dragonite ex
-  "mep-091": SKY_TRANSPORT, // Mega Dragonite ex
   "me04-029": SYNCHRO_PULSE, // Ampharos "Synchro Pulse" — Okidogi's field at 80 on Noivern `sv09-128`'s `handSizesEqual`
-  "me04-090": SYNCHRO_PULSE, // Ampharos
   "mep-075": SYNCHRO_PULSE, // Ampharos
   "me02.5-117": DOUBLE_TYPE_FP, // Carbink "Double Type" — twin `sv08-037` (Scovillain ex), {F}{P} for {G}{R}
-  "me02.5-242": DOUBLE_TYPE_FP, // Carbink
   "me02-094": WONDROUS_PATCH, // Wondrous Patch — twin `sv09-153` (N's PP Up), {P} card to a Benched {P} body
-  "me03-117": WONDROUS_PATCH, // Wondrous Patch
   "me04-079": PHILIPPE, // Philippe — up to 2 Basic {M} from the discard to 1 {M} body (`count: 2`)
-  "me04-110": PHILIPPE, // Philippe
   "me03-075": JACINTHE, // Jacinthe — twin `sv06.5-062` (Poké Vital A), 150 to a {P} body
-  "me03-110": JACINTHE, // Jacinthe
-  "me03-122": JACINTHE, // Jacinthe
   "me02-089": FIREBREATHER, // Firebreather — twin `sv02-061` (Chien-Pao ex "Shivery Chill"), 7 Basic {R}
-  "me02-119": FIREBREATHER, // Firebreather
   "me01-116": FIGHTING_GONG, // Fighting Gong — twin `sv10-165` (Ethan's Adventure), Basic {F} Energy or Basic {F} Pokémon
-  "me01-168": FIGHTING_GONG, // Fighting Gong
-  "me02.5-187": FIGHTING_GONG, // Fighting Gong
   "me03-085": TARRAGON, // Tarragon — twin `sv08.5-116` (Max Rod), 4, {F} Pokémon and Basic {F} Energy
-  "me03-116": TARRAGON, // Tarragon
   "me02.5-198": POKE_PAD, // Poké Pad — twin `sv05-153` (Master Ball), no Rule Box
-  "me03-081": POKE_PAD, // Poké Pad
-  "me03-113": POKE_PAD, // Poké Pad
   "me03-073": ENERGY_SWATTER, // Energy Swatter — twin `sv03-190` (Ortega), an Energy card, no draw
   "me01-126": REPEL, // Repel — the derived attack sentence's `opponentSwitchOut`
   "me02.5-185": CANARI, // Canari — twin `sv06.5-096` (Earthen Vessel), up to 4 {L} Pokémon
-  "me02.5-257": CANARI, // Canari
-  "me02.5-291": CANARI, // Canari
   "me01-119": LILLIES_DETERMINATION, // Lillie's Determination — twin `sv07-139` (Lacey), exactly 6 Prizes: 8 else 6
-  "me01-169": LILLIES_DETERMINATION, // Lillie's Determination
-  "me01-184": LILLIES_DETERMINATION, // Lillie's Determination
-  "me02.5-192": LILLIES_DETERMINATION, // Lillie's Determination
   "me05-080": MISTYS_VITALITY, // Misty's Vitality — up to 4 Basic {W} to 1 body (`oneTarget`), turn ends
-  "me05-111": MISTYS_VITALITY, // Misty's Vitality
   "me03-084": ROSAS_ENCOURAGEMENT, // Rosa's Encouragement — behind on Prizes; up to 2 Basic to 1 Stage 2 (`stage2Only`)
-  "me03-114": ROSAS_ENCOURAGEMENT, // Rosa's Encouragement
-  "me03-123": ROSAS_ENCOURAGEMENT, // Rosa's Encouragement
   "me05-081": RUST_SYNDICATE_GRUNT, // Rust Syndicate Grunt — last-turn KO gate; an Energy off 1 opponent body
-  "me05-112": RUST_SYNDICATE_GRUNT, // Rust Syndicate Grunt
   "me02.5-215": WAITRESS, // Waitress — twin `sv01-170` (Electric Generator), top 6, 1 Basic Energy
   "me03-074": HOLE_DIGGING_SHOVEL, // Hole-Digging Shovel — the derived "Discard the top 2 cards of your deck."
   "me03-078": LUMIOSE_GALETTE, // Lumiose Galette — Obliging Heal's program at 20
   "me02.5-182": ANTHEA_AND_CONCORDIA, // Anthea & Concordia — Briar's shape at 3 on N's Pokémon, six-name gate
-  "me02.5-254": ANTHEA_AND_CONCORDIA, // Anthea & Concordia
   "me04-077": EMMA, // Emma — reveal, then a card per Pokémon in the opponent's hand (`per` cardsInOpponentHand)
-  "me04-107": EMMA, // Emma
   "me01-123": POKEMON_CENTER_LADY, // Pokémon Center Lady — heal 60, a picked Active recovers (`recoverHealed`)
   "me04-076": AZS_TRANQUILITY, // AZ's Tranquility — switch; heal 80 from the demoted body if it is an ex
-  "me04-106": AZS_TRANQUILITY, // AZ's Tranquility
-  "me04-120": AZS_TRANQUILITY, // AZ's Tranquility
   "me02-090": GRIMSLEYS_MOVE, // Grimsley's Move — top 7, a {D} Pokémon to the Bench, rest under; not turn one
-  "me02-120": GRIMSLEYS_MOVE, // Grimsley's Move
   "me05-078": GWYNN, // Gwynn — discard up to 2 non-Rule-Box Pokémon, draw 3 each (`per` recorded)
-  "me05-109": GWYNN, // Gwynn
-  "me05-119": GWYNN, // Gwynn
   "me03-079": NAVEEN, // Naveen — discard any number, draw to 5; a non-empty deck to play
-  "me03-112": NAVEEN, // Naveen
   "mep-081": MORTAL_SHURIKEN, // Mega Greninja ex — Meowscarada ex `sv02-015`'s shape at {W}, 60, `opponentAny`, Active only
   "me04-022": MORTAL_SHURIKEN, // Mega Greninja ex
-  "me04-100": MORTAL_SHURIKEN, // Mega Greninja ex
-  "me04-116": MORTAL_SHURIKEN, // Mega Greninja ex
-  "me04-122": MORTAL_SHURIKEN, // Mega Greninja ex
   "me01-056": PSYCHIC_DRAW_3, // Alakazam — draw 3 (confirm)
   "mep-003": PSYCHIC_DRAW_3, // Alakazam
-  "mep-009": PSYCHIC_DRAW_3, // Alakazam
   "me01-055": PSYCHIC_DRAW_2, // Kadabra — draw 2 (confirm)
   "me02-047": PRISON_PANIC, // Brambleghast — Confused (confirm)
   "me01-063": ENERGIZED_STEPS, // Grumpig — top 4, any Basic Energy
   "me01-073": HEAVE_HO_CATCHER, // Hariyama — Defiant Horn's gust
   "me01-017": CAST_OFF_SHELL, // Ninjask — a Shedinja onto the Bench
-  "me01-137": CAST_OFF_SHELL, // Ninjask
   "me05-020": ENRICHING_MELODY, // Primarina — Enriching Oil's heal
-  "me05-088": ENRICHING_MELODY, // Primarina
   "me02.5-012": MULTIPLYING_COCOON, // Silcoon — a Silcoon or a Cascoon onto the Bench
   "me01-097": HAPHAZARD_HAMMER, // Tinkatuff — coin, then an Energy off the opponent's Active
   "me01-104": RUN_ERRAND, // Mega Kangaskhan ex — draw 2, Active only, one Run Errand per turn
-  "me01-164": RUN_ERRAND, // Mega Kangaskhan ex
-  "me01-182": RUN_ERRAND, // Mega Kangaskhan ex
   "mep-025": RUN_ERRAND, // Mega Kangaskhan ex
   "me02.5-053": ALLURING_WINGS, // Frosmoth — each player draws a card, Active only
   "mep-096": FIERY_FLAPPING, // Moltres — Articuno and Zapdos in play; a Basic {R} from hand to itself
   "30th-011": FIERY_FLAPPING, // Moltres ("Basic Fire Energy card")
-  "30th-130": FIERY_FLAPPING, // Moltres
   "mep-098": FLASH_POP_FLAPPING, // Zapdos — Moltres and Articuno in play; a Basic {L}
   "30th-055": FLASH_POP_FLAPPING, // Zapdos ("Basic Lightning Energy card")
-  "30th-133": FLASH_POP_FLAPPING, // Zapdos
   "mep-097": FROSTY_FLAPPING, // Articuno — Moltres and Zapdos in play; a Basic {W}
   "30th-018": FROSTY_FLAPPING, // Articuno ("Basic Water Energy card")
-  "30th-132": FROSTY_FLAPPING, // Articuno
   "me01-074": LUNAR_CYCLE, // Lunatone — Solrock in play; discard a Basic {F}, draw 3; one Lunar Cycle per turn
   "mep-004": LUNAR_CYCLE, // Lunatone
-  "me02.5-105": LUNAR_CYCLE, // Lunatone
   "me04-013": FLARING_MAGIC, // Delphox — discard a Basic {R}, draw until 7
   "mep-074": FLARING_MAGIC, // Delphox ("Basic Fire Energy card")
   "mep-006": BALLOON_RETURN, // Drifblim "Balloon Return" (attack 1) — twin `sv09-068` (Lillie's Comfey "Fade Out", attack 1)
   "me03-062": TUCK_TAIL, // Meowth ex — "Tuck Tail" (attack 0) and the Ability "Last-Ditch Catch"
-  "me03-107": TUCK_TAIL, // Meowth ex
-  "me03-121": TUCK_TAIL, // Meowth ex
   "me04-030": SKY_RETURN, // Emolga "Sky Return" (attack 1)
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack
   "me02.5-125": SHADOWY_CONCEALMENT, // Mega Gengar ex
-  "me02.5-269": SHADOWY_CONCEALMENT, // Mega Gengar ex
-  "me02.5-284": SHADOWY_CONCEALMENT, // Mega Gengar ex
   "mep-073": SHADOWY_CONCEALMENT, // Mega Gengar ex
   "me02.5-116": TENACIOUS_BODY, // Mega Hawlucha ex — coin-flip survival on 10 HP
-  "me02.5-268": TENACIOUS_BODY, // Mega Hawlucha ex
-  "me02.5-283": TENACIOUS_BODY, // Mega Hawlucha ex
   "me05-041": DURABLE_BODY, // Annihilape — Tenacious Body's sentence
   "me01-061": FRAGILE_HUSK, // Shedinja — no Prize for a KO by an ex's attack
-  "me01-144": FRAGILE_HUSK, // Shedinja
   "me03-050": INFINITE_SHADOW, // Gengar — KO'd by an attack, the Pokémon goes to the hand
   "me02.5-143": FINAL_CHAIN, // Pecharunt — KO'd by an attack, search the deck for a card
   "me05-070": CALL_A_BUDDY, // Silvally — no cards in hand; a Supporter from the deck
-  "me05-095": CALL_A_BUDDY, // Silvally
   "me02.5-007": GATHERING_OF_BLOSSOMS, // Erika's Tangela — an Erika's Pokémon from the deck
-  "me02.5-218": GATHERING_OF_BLOSSOMS, // Erika's Tangela
   "30th-008": GUIDING_DANCE, // Vivillon — coin; heads, a Pokémon from the deck
   "me01-011": FERMENTED_JUICE, // Shuckle — any {G} Energy on itself; heal 30 from 1 of your Pokémon
-  "me01-136": FERMENTED_JUICE, // Shuckle
   "me02.5-003": LOVELY_FRAGRANCE, // Erika's Vileplume ex — heal 30 from each of your Pokémon
   "30th-105": SUNRISE, // Solgaleo — on the Bench; up to 2 Basic {M} from the deck to itself
   "mep-024": EXCITED_TURBO, // Oricorio ex — any {R} Mega ex in play; a Basic {R} from hand to a Benched {R}
   "me02-018": EXCITED_TURBO, // Oricorio ex
-  "me02-110": EXCITED_TURBO, // Oricorio ex
   "me02-007": EXCITED_HEAL, // Ludicolo — any {G} Mega ex in play; heal 60 from 1 of your Pokémon
-  "me02-095": EXCITED_HEAL, // Ludicolo
   "me02-082": EXCITED_DASH, // Linoone — on the Bench, any Mega ex in play; switch with the Active
   "me02-062": EXCITED_POWER, // Seviper — any {D} Mega ex in play; its attacks +120 before W/R
   "me01-121": MEGA_SIGNAL, // Mega Signal — a Mega Evolution Pokémon ex from the deck
-  "me01-171": MEGA_SIGNAL, // Mega Signal
-  "me02.5-193": MEGA_SIGNAL, // Mega Signal
   "me05-079": JETT, // Jett — a card per opponent's Mega Evolution Pokémon ex in play
   "me03-086": GROWING_GRASS_ENERGY, // Growing Grass Energy — {G}; the {G} holder +20 HP
   "me03-087": ROCKY_FIGHTING_ENERGY, // Rocky Fighting Energy — {F}; the {F} holder's attack-effects shield
@@ -8797,72 +8400,39 @@ const REGISTRY: Record<string, CardProgram> = {
   "me05-083": SHADOWY_DARKNESS_ENERGY, // Shadowy Darkness Energy — {D}; the Benched {D} holder takes no attack damage
   "me05-084": VOLTAIC_LIGHTNING_ENERGY, // Voltaic Lightning Energy — {L}; the {L} holder's attacks +20 before W/R
   "me04-080": PRISM_TOWER, // Prism Tower — discard 2 from hand, draw 1
-  "me04-111": PRISM_TOWER, // Prism Tower
   "me01-129": SURFING_BEACH, // Surfing Beach — Active {W} switches with a Benched {W}
-  "me04-114": SURFING_BEACH, // Surfing Beach
   "me02.5-197": NIGHTTIME_MINE, // Nighttime Mine — each Tera Pokémon's attacks cost {C} more
   "me03-077": LUMIOSE_CITY, // Lumiose City — a Basic from the deck to the Bench; the turn ends
-  "me03-111": LUMIOSE_CITY, // Lumiose City
   "mep-028": CELEBRATORY_FANFARE, // Celebratory Fanfare — heal 10 from each; healed any: the turn ends
-  "mep-120": CELEBRATORY_FANFARE, // Celebratory Fanfare
   "me02-085": BATTLE_CAGE, // Battle Cage — no counters onto a Benched body from the opponent's attacks / Abilities
-  "me02-116": BATTLE_CAGE, // Battle Cage
   "me01-122": MYSTERY_GARDEN, // Mystery Garden — discard an Energy card, draw until hand = your {P} in play
-  "me01-172": MYSTERY_GARDEN, // Mystery Garden
-  "me02.5-194": MYSTERY_GARDEN, // Mystery Garden
   "me01-117": FOREST_OF_VITALITY, // Forest of Vitality — {G} into {G} the turn it is played, not turn one
-  "me02.5-188": FOREST_OF_VITALITY, // Forest of Vitality
-  "me03-109": FOREST_OF_VITALITY, // Forest of Vitality
   "me02-093": SACRED_CHARM, // Sacred Charm — 30 less from an opposing Pokémon that has an Ability
-  "me02-122": SACRED_CHARM, // Sacred Charm
   "me02.5-211": THICK_SCALE, // Thick Scale — a {N} holder takes 50 less from an opposing {G}/{R}/{W}/{L}
   "me02-022": THICK_FAT, // Dewgong "Thick Fat" — 30 less from an opposing {R} or {W}
-  "me02-097": THICK_FAT, // Dewgong
   "me02.5-064": FRILLED_GENERATOR, // Heliolisk — played Canari this turn: up to 2 Basic {L} from the deck to itself
-  "me02.5-229": FRILLED_GENERATOR, // Heliolisk
   "me02.5-191": LIGHT_BALL, // Light Ball — a Pikachu ex holder does 50 more to an opposing Active ex
   "me02-092": PUNK_HELMET, // Punk Helmet — a {D} Active holder damaged: 4 counters on the attacker
-  "me02-121": PUNK_HELMET, // Punk Helmet
   "me02.5-206": TEAM_ROCKETS_HYPNOTIZER, // Team Rocket's Hypnotizer — a Team Rocket's Active holder damaged: the attacker Asleep
   "me03-070": CORE_MEMORY, // Core Memory — a Mega Zygarde ex holder can use "Geobuster"
   "me05-082": TREMENDOUS_BOMB, // Tremendous Bomb — 240+ from an opposing Mega ex: 12 counters, then discard
-  "me05-113": TREMENDOUS_BOMB, // Tremendous Bomb
   "me05-077": GLADIONS_FINAL_BATTLE, // Gladion's Final Battle — last card in hand: no-Rule-Box attackers +80 this turn
-  "me05-108": GLADIONS_FINAL_BATTLE, // Gladion's Final Battle
-  "me05-118": GLADIONS_FINAL_BATTLE, // Gladion's Final Battle
   "me01-124": PREMIUM_POWER_PRO, // Premium Power Pro — {F} attackers +30 this turn
-  "me01-174": PREMIUM_POWER_PRO, // Premium Power Pro
-  "me02.5-199": PREMIUM_POWER_PRO, // Premium Power Pro
   "me01-113": ACEROLAS_MISCHIEF, // Acerola's Mischief — one chosen body: no damage or effects from opposing ex next turn
-  "me01-165": ACEROLAS_MISCHIEF, // Acerola's Mischief
-  "me01-183": ACEROLAS_MISCHIEF, // Acerola's Mischief
-  "me02.5-180": ACEROLAS_MISCHIEF, // Acerola's Mischief
   "me04-081": ROXIES_PERFORMANCE, // Roxie's Performance — the opponent's Poisoned Pokémon can't retreat next turn
-  "me04-112": ROXIES_PERFORMANCE, // Roxie's Performance
-  "me04-121": ROXIES_PERFORMANCE, // Roxie's Performance
   "me02-087": DAWN, // Dawn — search a Basic, a Stage 1 and a Stage 2 Pokémon
-  "me02-118": DAWN, // Dawn
-  "me02-129": DAWN, // Dawn
   "me04-082": SPECIAL_RED_CARD, // Special Red Card — opponent at 3 or fewer Prizes: their hand under, they draw 3
-  "me04-113": SPECIAL_RED_CARD, // Special Red Card
   "me02-091": JUMBO_ICE_CREAM, // Jumbo Ice Cream — heal 80 from your Active with 3 or more Energy
-  "me04-109": JUMBO_ICE_CREAM, // Jumbo Ice Cream
   "me05-075": DARK_BELL, // Dark Bell — both Active non-{D} Pokémon are now Confused
-  "me05-106": DARK_BELL, // Dark Bell
   "me01-132": WALLYS_COMPASSION, // Wally's Compassion — heal all from a Mega ex; if healed, its Energy to hand
-  "me01-176": WALLYS_COMPASSION, // Wally's Compassion
-  "me01-186": WALLYS_COMPASSION, // Wally's Compassion
   "me02-086": BLOWTORCH, // Blowtorch — discard a Basic {R}; then a Tool, a Special Energy or a Stadium
-  "me02-117": BLOWTORCH, // Blowtorch
   "me04-078": GREAT_HAUL_NET, // Great Haul Net — up to 3 {W} Pokémon and up to 3 Basic {W} Energy back, shuffle
   "me01-128": STRANGE_TIMEPIECE, // Strange Timepiece — devolve your evolved {P} Pokémon; it can't evolve this turn
   "mep-016": SANDY_FLAPPING, // Flygon — on evolve, or KO'd in the Active Spot by an attack: may mill the opponent 2
   "me02-053": SANDY_FLAPPING, // Flygon
-  "me02-101": SANDY_FLAPPING, // Flygon
   "mep-082": PHOTON_CORD, // Miraidon — KO'd in the Active Spot by an attack: up to 2 Basic {L} to 1 Benched Pokémon
   "me05-028": PHOTON_CORD, // Miraidon
   "30th-090": FAINTING_SPELL, // Gengar ex — KO'd by an attack: flip, heads Knocks Out the Attacking Pokémon
-  "30th-154": FAINTING_SPELL, // Gengar ex
   "me04-074": ADVERSITY_POLICY, // Adversity Policy — a Weak Active holder damaged by an attack: draw 3
   "me05-005": HIDE_N_SNEAK, // Poltchageist — prevent the opponent's attack and Ability effects on it
   "me05-006": HIDE_N_SNEAK, // Sinistcha
@@ -8871,39 +8441,27 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-101": LUSTROUS_ASSIST, // Latios — after your Mega Latias ex moved up this turn: Bench Energy to the Active
   "me02.5-175": LETHARGIC_CHARGE, // Larry's Komala — from the Bench: an Energy card from hand to your Active Larry's Pokémon
   "me01-118": IRON_DEFENDER, // Iron Defender — opponent's next turn: your {M} Pokémon take 30 less (after W/R); stacks
-  "me05-110": IRON_DEFENDER, // Iron Defender
   "mep-085": ANCIENT_BULWARK, // Bastiodon — on your Bench: no damage to your Pokémon from attackers with 2 or less Energy
   "me05-062": ANCIENT_BULWARK, // Bastiodon
-  "me05-093": ANCIENT_BULWARK, // Bastiodon
   "me03-012": SNIPERS_EYE, // Decidueye ex — opponent's hand exactly 4: ignore all {C} in this Pokémon's attack costs
-  "me03-100": SNIPERS_EYE, // Decidueye ex
   "me02.5-148": SUPREME_OVERLORD, // Kingambit — +30 before W/R per Prize the opponent has taken
   "me04-057": GLOOMY_GARBAGE, // Garbodor — the opponent's Tool-carrying Active's attacks do 20 less before W/R
   "30th-100": LIFE_LOCKED, // Yveltal — the opponent's Active can't be healed
   "30th-119": GOOD_SLEEP, // Snorlax — Checkup, still Asleep: heal all damage from it
   "me02.5-039": DAMP_KNOCK_OUT_ITSELF, // Psyduck — both sides lose any Ability that Knocks Out its own user
   "me02.5-040": DAMP_KNOCK_OUT_ITSELF, // Golduck
-  "me02.5-226": DAMP_KNOCK_OUT_ITSELF, // Psyduck
   "mep-007": DAMP_REQUIRE_KNOCKED_OUT, // Psyduck — the "require those Pokémon to be Knocked Out" wording
   "mep-008": DAMP_REQUIRE_KNOCKED_OUT, // Golduck
   "me05-076": FOSSIL_QUARRY, // Fossil Quarry — up to 2 Antique Items from the deck onto the Bench, then shuffle
   "me01-038": FALL_BACK_TO_RELOAD, // Clawitzer — moved Active→Bench this turn: up to 2 Basic {W} from hand to it
-  "me01-141": FALL_BACK_TO_RELOAD, // Clawitzer
   "30th-066": MEMORY_HELIX, // Mew ex — Memory Helix: it can use the attacks of your Benched Pokémon
-  "30th-152": MEMORY_HELIX, // Mew ex
-  "30th-158": MEMORY_HELIX, // Mew ex
   "me01-120": LT_SURGES_BARGAIN, // Lt. Surge's Bargain — the opponent answers: each player takes a Prize, or you draw 4
-  "me01-170": LT_SURGES_BARGAIN, // Lt. Surge's Bargain
-  "me01-185": LT_SURGES_BARGAIN, // Lt. Surge's Bargain
   "me01-087": SPITEFUL_SWIRL, // Spiritomb — your Active {D} damaged by an attack: 1 counter on the Attacking Pokémon
-  "me01-148": SPITEFUL_SWIRL, // Spiritomb
   "30th-022": COUNTERATTACK_GROUPING, // Wishiwashi — your Active Wishiwashi damaged by an attack: 3 counters on it
   "me01-127": RISKY_RUINS, // Risky Ruins — a Basic non-{D} put onto its owner's Bench on their turn: 2 counters
   "me02-088": DIZZYING_VALLEY, // Dizzying Valley — Confused Pokémon stay Confused when they evolve or devolve
   "me04-075": ANGE_FLOETTE, // Ange Floette — only over a Prism Tower; each Mega Floette ex in play +150 HP
   "me02-029": MULTI_ADAPTER, // Rotom ex — each of your Rotom Pokémon may have up to 2 Pokémon Tools attached
-  "me02-111": MULTI_ADAPTER, // Rotom ex
-  "me02-126": MULTI_ADAPTER, // Rotom ex
   "me01-028": EXPLOSIVENESS, // Cinderace — may be put face down into the Active Spot at setup
   "me04-070": WATCHFUL_EYE, // Patrat — damage counters can't be moved
   "30th-004": SUPEREFFECTIVE_PHEROMONES, // Illumise — with Volbeat in play, Weakness for both Actives is ×3
@@ -8912,56 +8470,36 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-010": WILD_GROWTH, // Meganium — each Basic {G} Energy on your Pokémon provides {G}{G}
   "mep-001": WILD_GROWTH, // Meganium
   "me04-068": SLIMY_SLIDING, // Goodra — the opponent's retreat flips a coin; tails, it doesn't happen
-  "mep-077": SLIMY_SLIDING, // Goodra
   "me05-074": BACKTRACK_BADGE, // Backtrack Badge — once a turn, the {C} holder's attack coins may be flipped again
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex
-  "30th-151": PHOTON_BULLETS, // Mewtwo ex
-  "30th-157": PHOTON_BULLETS, // Mewtwo ex
   "me01-003": SOLAR_TRANSFER, // Mega Venusaur ex — as often as you like: a Basic {G} between your Pokémon
-  "me01-155": SOLAR_TRANSFER, // Mega Venusaur ex
-  "me01-177": SOLAR_TRANSFER, // Mega Venusaur ex
   "mep-013": SOLAR_TRANSFER, // Mega Venusaur ex
   "me02.5-084": BUBBLE_GATHERING, // Azumarill ex — as often as you like: an Energy from another of yours to itself
   "me04-064": METAL_ROAD, // Cobalion ex — moved up this turn: any {M} from your other Pokémon to itself
-  "me04-103": METAL_ROAD, // Cobalion ex
   "me02-036": SWIRLING_PROSE, // Mismagius ex — Active: the opponent's new Active (after a bench move) is Confused
-  "me02-112": SWIRLING_PROSE, // Mismagius ex
   "me02.5-101": HOLES, // Team Rocket's Dugtrio — 2 counters on the opponent's Active that moved to the Bench
-  "me02.5-239": HOLES, // Team Rocket's Dugtrio
   "mep-094": SCALE_UP, // Alolan Exeggutor — 6 or more {G} Energy attached: +250 HP
   "30th-002": SCALE_UP, // Alolan Exeggutor ("Grass Energy")
-  "30th-129": SCALE_UP, // Alolan Exeggutor
   "mep-066": TYRANNICALLY_GUTSY, // Tyrantrum — any Special Energy attached: +150 HP
   "me03-045": TYRANNICALLY_GUTSY, // Tyrantrum
   "me04-051": NIGHTTIME_MANEUVERS, // Crobat — Active: a card from the deck onto its top
-  "me04-093": NIGHTTIME_MANEUVERS, // Crobat
   "mep-076": NIGHTTIME_MANEUVERS, // Crobat
   "me02-068": SINISTER_SURGE, // Toxtricity — a Basic {D} to a Benched {D} body, 2 counters on it
-  "me02-103": SINISTER_SURGE, // Toxtricity
   "mep-017": SINISTER_SURGE, // Toxtricity
   "me02.5-015": BOISTEROUS_WIND, // Dustox — heads: an Energy off the opponent's Active into their hand
-  "me02.5-220": BOISTEROUS_WIND, // Dustox
   "me05-045": DESTRUCTIVE_HEADBUTTING, // Rampardos ex — Active, heads: discard an Energy off the opponent's Active
-  "me05-100": DESTRUCTIVE_HEADBUTTING, // Rampardos ex
   "me01-110": EVIDENCE_GATHERING, // Gumshoos — switch a hand card with the deck's top card
-  "me01-153": EVIDENCE_GATHERING, // Gumshoos
   "me03-014": SKY_HUNT, // Talonflame — heads: discard a random card from the opponent's hand
-  "me03-091": SKY_HUNT, // Talonflame
   "me03-009": GRAND_WING, // Vivillon — the opponent's hand under their deck; any moved: they draw 4
   "me04-038": SPITEFUL_EVOLUTION, // Phantump — evolve from hand, 2 counters on the evolved body
   "me02.5-151": EVOLUTIONARY_GUIDANCE, // Dragonair — any Energy attached: an Evolution Pokémon from the deck
   "mep-072": LUMINOUS_WING, // Mega Clefable ex — prevent the opponent's Abilities' effects done to it
   "me03-031": LUMINOUS_WING, // Mega Clefable ex
-  "me03-103": LUMINOUS_WING, // Mega Clefable ex
-  "me03-119": LUMINOUS_WING, // Mega Clefable ex
   "sv06-002": REDUCE_30_AFTER_WR, // Tangrowth — "Thicket Body" (mark H)
   "sv07-125": REDUCE_30_AFTER_WR, // Dubwool — "Soft Wool" (mark H)
   "sv08-054": REDUCE_30_AFTER_WR, // Cetitan — "Solid Body" (mark H)
-  "sv08-201": REDUCE_30_AFTER_WR, // Cetitan (reprint)
   "sv10-108": REDUCE_30_AFTER_WR, // Mudsdale — "Mud Coat" (mark I)
   "sv10.5w-077": REDUCE_30_AFTER_WR, // Bouffalant ex — "Bouffer" (mark I)
-  "sv10.5w-162": REDUCE_30_AFTER_WR, // Bouffalant ex (reprint)
-  "sv10.5w-170": REDUCE_30_AFTER_WR, // Bouffalant ex (reprint)
   // "This Pokémon takes 20 less damage …", as on Stonjourner `sv01-121` and Bouffalant `sv03-174`.
   "sv05-010": REDUCE_20_AFTER_WR, // Turtwig — "Solid Shell" (mark H)
   "sv08.5-088": REDUCE_20_AFTER_WR, // Furfrou — "Fur Coat" (mark H)
@@ -8970,7 +8508,6 @@ const REGISTRY: Record<string, CardProgram> = {
   //   counters on the Attacking Pokémon." — 3 legal printings (4 in the catalog). —
   "sv05-139": COUNTERATTACK_QUILLS, // Iron Jugulis — "Automated Combat" (mark H)
   "sv08-049": COUNTERATTACK_QUILLS, // Bruxish — "Counterattack" (mark H)
-  "sv08-200": COUNTERATTACK_QUILLS, // Bruxish (reprint)
   // — the same antecedent with a BURN consequent — 1 legal printing (1 in the
   //   catalog); the trigger, not the passive. —
   "sv06-123": INCANDESCENT_BODY, // Heatran — "Incandescent Body"
@@ -8979,80 +8516,38 @@ const REGISTRY: Record<string, CardProgram> = {
   //   card NAMES that are neither of them Nemona: the sentence is the key, not
   //   the name. —
   "sv08.5-109": NEMONA, // Friends in Paldea (Supporter, mark H)
-  "sv08.5-137": NEMONA, // Friends in Paldea (reprint)
-  "sv10.5w-081": NEMONA, // Cheren (Supporter, mark I)
-  // — Janine's Secret Art — 2 legal printings beyond the two already authored. —
-  "sv08.5-112": JANINES_SECRET_ART, // Janine's Secret Art (mark H)
-  "sv08.5-173": JANINES_SECRET_ART, // Janine's Secret Art (reprint)
-  // — Energy Retrieval — 1 legal printing. —
-  "sv10.5w-082": ENERGY_RETRIEVAL, // Energy Retrieval (Item, mark I)
-  // — Pokégear 3.0 — 1 legal printing. —
-  "sv10.5b-084": POKEGEAR, // Pokégear 3.0 (Item)
   "sv05-008": POISON_POINT, // Roselia — "Poison Point" (mark H)
   "sv05-009": POISON_POINT, // Roserade — "Poison Point" (mark H)
   "sv10.5b-056": POISON_POINT, // Scolipede — "Poison Point" (mark I)
-  "sv10.5b-134": POISON_POINT, // Scolipede (reprint)
   "sv09-098": NS_ZOROARK_EX, // N's Zoroark ex — "Trade" (mark H)
-  "sv09-175": NS_ZOROARK_EX, // N's Zoroark ex (reprint)
-  "sv09-185": NS_ZOROARK_EX, // N's Zoroark ex (reprint)
-  "sv09-189": NS_ZOROARK_EX, // N's Zoroark ex (reprint)
   "sv07-107": METAL_BRIDGE, // Archaludon — "Metal Bridge" (mark H)
-  "sv07-155": METAL_BRIDGE, // Archaludon (reprint)
-  "sv08.5-070": METAL_BRIDGE, // Archaludon (mark H)
   "sv10-122": TEAM_ROCKETS_CROBAT_EX, // T.R.'s Crobat ex — "Biting Spree" and "Assassin's Return"
-  "sv10-217": TEAM_ROCKETS_CROBAT_EX, // (reprint)
-  "sv10-234": TEAM_ROCKETS_CROBAT_EX, // (reprint)
-  "sv10-242": TEAM_ROCKETS_CROBAT_EX, // (reprint)
   // — 3 printings each. —
   "svp-118": ATTRACT_CUSTOMERS, // Tatsugiri — "Attract Customers" (promo, mark H)
-  "sv06-131": ATTRACT_CUSTOMERS, // (reprint)
-  "sv06-186": ATTRACT_CUSTOMERS, // (reprint)
   "sv09-031": SCALDING_STEAM, // Volcanion ex — "Scalding Steam" (mark I)
-  "sv09-171": SCALDING_STEAM, // (reprint)
-  "sv09-182": SCALDING_STEAM, // (reprint)
   "sv08-004": SUDDEN_SHEARING, // Durant ex — "Sudden Shearing" (mark H)
-  "sv08-215": SUDDEN_SHEARING, // (reprint)
-  "sv08-236": SUDDEN_SHEARING, // (reprint)
   // — 2 printings each. —
   "sv08-009": CALMING_LIGHT, // Shiinotic — "Calming Light" (mark H)
-  "sv08-194": CALMING_LIGHT, // (reprint)
   "sv10.5w-013": INFERNO_FANDANGO, // Emboar — "Inferno Fandango" (mark I)
-  "sv10.5w-098": INFERNO_FANDANGO, // (reprint)
   "sv06-148": ENHANCED_HAMMER, // Enhanced Hammer (Item, mark H)
-  "sv06-224": ENHANCED_HAMMER, // (reprint)
   "sv10.5b-082": FENNEL, // Fennel (Supporter, mark I)
-  "sv10.5b-162": FENNEL, // (reprint)
   "sv08-167": CLEMONTS_QUICK_WIT, // Clemont's Quick Wit (Supporter, mark I)
-  "sv08-229": CLEMONTS_QUICK_WIT, // (reprint)
-  "sv08-243": CLEMONTS_QUICK_WIT, // (reprint)
   "sv08-076": SKYLINER, // Latias ex — "Skyliner" (Ability)
-  "sv08-220": SKYLINER, // Latias ex (special illustration rare) — same sentence
-  "sv08-239": SKYLINER, // Latias ex (hyper rare) — same sentence
   "svp-211": DISTORTED_FUTURE, // Gothitelle — "Distorted Future" (Ability, promo)
   "sv10.5w-043": DISTORTED_FUTURE, // Gothitelle (set printing) — same sentence
   "svp-114": PICNICKER, // Picnicker (Supporter, mark H) — flip: draw 4, else draw 2
   "sv08-173": DRASNA, // Drasna (Supporter, mark I) — shuffle-and-draw 8, else 3
-  "sv08-231": DRASNA, // Drasna (alternate art) — same sentence
   "sv10.5w-083": HARLEQUIN, // Harlequin (Supporter, mark I) — 5/3 on heads, 3/5 on tails
-  "sv10.5w-163": HARLEQUIN, // Harlequin (alternate art) — same sentence
   "sv06-165": UNFAIR_STAMP, // Unfair Stamp (Item, mark H) — gate + 5/2 perSeat refresh
   "sv06-151": HASSEL, // Hassel (Supporter, mark H) — gate + lookAtTopN 8/3
-  "sv06-205": HASSEL, // Hassel (full art) — same sentence
   "sv10-170": TEAM_ROCKETS_ARCHER, // Team Rocket's Archer (Supporter, mark I) — owner-gated 5/3
-  "sv10-223": TEAM_ROCKETS_ARCHER, // (alternate art) — byte-identical effect
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
-  "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv08-171": DEDUCTION_KIT, // Deduction Kit (Item, mark H) — 1 legal printing of 1
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
-  "sv07-165": KOFU, // (reprint)
   "sv05-154": MAXIMUM_BELT, // Maximum Belt (Tool, mark H)
-  "sv08.5-117": MAXIMUM_BELT, // (reprint)
   "sv06.5-055": BINDING_MOCHI, // Binding Mochi (Tool, mark H)
-  "sv08.5-095": BINDING_MOCHI, // (reprint)
   "sv09-150": LEVINCIA, // Levincia (Stadium, mark I)
-  "sv10-244": LEVINCIA, // (reprint)
   "sv09-159": SPIKY_ENERGY, // Spiky Energy (Special Energy, mark I)
-  "sv09-190": SPIKY_ENERGY, // (reprint)
   "sv05-161": MIST_ENERGY, // Mist Energy — the effects-only shield, borne by an ENERGY
   "sv08-191": ENRICHING_ENERGY, // Enriching Energy — draw 4 on attach from hand
   "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
@@ -9060,7 +8555,6 @@ const REGISTRY: Record<string, CardProgram> = {
   // Reversal Energy: the same shape behind a three-term antecedent (Evolution, no Rule Box, more
   // Prizes remaining).
   "sv04-266": REVERSAL_ENERGY,
-  "sv02-192": REVERSAL_ENERGY,
   "sv06-167": LEGACY_ENERGY, // Legacy Energy (ACE SPEC Special Energy, mark H)
   "sv09-151": LILLIES_PEARL, // Lillie's Pearl (Pokémon Tool, mark I)
   // — 1 printing each. Cheap because each is a re-parameterisation of a program
@@ -9070,12 +8564,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-136": DEFIANT_HORN, // Hop's Dubwool — "Defiant Horn" (mark I)
   "sv09-024": SEETHING_SPIRIT, // Blaziken ex — "Seething Spirit"
   "sv10-020": CHARGING_UP, // Team Rocket's Spidops — "Charging Up" (mark I)
-  "sv10-187": CHARGING_UP, // (reprint)
   "sv10.5b-031": DYNAMOTOR, // Eelektrik — "Dynamotor" (mark I)
-  "sv10.5b-114": DYNAMOTOR, // (reprint)
   "sv08-130": ASSEMBLE_ALLOY, // Archaludon ex — "Assemble Alloy" (mark H)
-  "sv08-224": ASSEMBLE_ALLOY, // (reprint)
-  "sv08-241": ASSEMBLE_ALLOY, // (reprint)
   "sv09-075": CONFECTIONARY_GIFT, // Alcremie ex — "Confectionary Gift" (mark H)
   "sv08.5-077": INSOMNIA, // Hoothoot — "Insomnia" (mark H)
   "sv10-155": RECONSTITUTE, // Team Rocket's Porygon-Z — "Reconstitute" (mark I)
@@ -9088,165 +8578,71 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-131": TREASURE_TRACKER, // Treasure Tracker (Item, mark H)
   "sv06.5-058": DANGEROUS_LASER, // Dangerous Laser (Item)
   "sv06-155": LANAS_AID, // Lana's Aid (Supporter, mark H)
-  "sv06-207": LANAS_AID, // (reprint)
-  "sv06-219": LANAS_AID, // (reprint)
   "sv10-159": GREEDY_ORDER, // Arven's Greedent — "Greedy Order" (mark I)
-  "sv10-205": GREEDY_ORDER, // (reprint)
   "sv05-144": BUDDY_BUDDY_POFFIN, // Buddy-Buddy Poffin (Item, mark G→H reprint chain)
-  "sv06-223": BUDDY_BUDDY_POFFIN, // (reprint)
-  "sv08.5-101": BUDDY_BUDDY_POFFIN, // (reprint)
   "sv10.5b-024": GENTLE_FIN, // Alomomola — "Gentle Fin" (mark I)
-  "sv10.5b-108": GENTLE_FIN, // (reprint)
 
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)
   "sv10-050": SWIM_TOGETHER, // Misty's Lapras — "Swim Together" (attack 0, mark I)
-  "sv10-194": SWIM_TOGETHER, // Misty's Lapras (illustration rare) — same sentence
   "sv09-147": HOPS_BAG, // Hop's Bag (Item, mark I)
   "sv10-083": SUMMONING_SIGN, // Steven's Baltoy — "Summoning Sign" (attack 0, mark I)
   "sv09-068": LILLIES_COMFEY, // Lillie's Comfey — "Inviting Flowers" (attack 0) and "Fade Out" (attack 1)
   "sv10-169": SPIKEMUTH_GYM, // Spikemuth Gym (Stadium, mark I) — nothing new
   "sv09-053": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — "Electric Streamer"
-  "sv09-172": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
-  "sv09-183": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
-  "sv09-188": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
-  "svp-194": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (promo)
   "sv09-153": NS_PP_UP, // N's PP Up (Item, mark I)
   "sv10-136": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — "Punk Up"
   // Team Rocket's Wobbuffet's counter move needs no registry entry: the `COUNTER_MOVE_TO_DEFENDER`
   // reader in effects.ts derives it.
   "sv10-039": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex — "Golden Flame"
-  "sv10-209": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
-  "sv10-230": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
-  "sv10-239": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
   "sv07-139": LACEY, // Lacey — shuffle hand into deck, draw 4 (8 instead if opp ≤ 3 Prizes)
-  "sv07-166": LACEY, // Lacey (reprint)
-  "sv07-172": LACEY, // Lacey (reprint)
-  "sv08.5-114": LACEY, // Lacey (reprint)
-  "sv08.5-175": LACEY, // Lacey (reprint)
   "sv10-163": EMCEES_HYPE, // Emcee's Hype — draw 2, +2 more if opp has ≤ 3 Prizes left
-  "sv10-220": EMCEES_HYPE, // Emcee's Hype (reprint)
   "svp-166": TEAL_DANCE, // Teal Mask Ogerpon ex — "Teal Dance" (promo, mark H)
-  "sv06-025": TEAL_DANCE, // Teal Mask Ogerpon ex (mark H)
-  "sv06-190": TEAL_DANCE, // (reprint)
-  "sv06-211": TEAL_DANCE, // (reprint)
-  "sv06-221": TEAL_DANCE, // (reprint)
-  "sv08.5-012": TEAL_DANCE, // Teal Mask Ogerpon ex (mark H)
-  "sv08.5-145": TEAL_DANCE, // (reprint)
-  "sv08.5-177": TEAL_DANCE, // (reprint)
   "sv07-014": RIPENING_CHARGE, // Hydrapple ex — "Ripening Charge" (mark H)
-  "sv07-156": RIPENING_CHARGE, // (reprint)
-  "sv07-167": RIPENING_CHARGE, // (reprint)
-  "sv08.5-011": RIPENING_CHARGE, // (reprint)
   "sv06.5-025": BATTLE_HARDENED, // Bloodmoon Ursaluna — "Battle-Hardened" (mark H)
-  "sv08.5-054": BATTLE_HARDENED, // (reprint, byte-identical)
   "svp-182": FLASHING_DRAW, // Iono's Kilowattrel — "Flashing Draw" (promo, mark I)
-  "sv09-055": FLASHING_DRAW, // Iono's Kilowattrel (mark I)
-  "sv09-163": FLASHING_DRAW, // (reprint)
   "sv08-165": CALL_BELL,
   "sv08-166": CHILL_TEASER_TOY,
   "sv07-128": TERAPAGOS_EX_UNIFIED_BEATDOWN,
-  "sv07-170": TERAPAGOS_EX_UNIFIED_BEATDOWN,
-  "sv07-173": TERAPAGOS_EX_UNIFIED_BEATDOWN,
-  "sv08.5-092": TERAPAGOS_EX_UNIFIED_BEATDOWN,
-  "sv08.5-169": TERAPAGOS_EX_UNIFIED_BEATDOWN,
-  "sv08.5-180": TERAPAGOS_EX_UNIFIED_BEATDOWN,
-  "svp-165": TERAPAGOS_EX_UNIFIED_BEATDOWN,
   "sv06-010": ILLUMISE_SLOWING_PERFUME,
   "sv06-094": SCREAM_TAIL_EX_SCREAM,
-  "sv06-197": SCREAM_TAIL_EX_SCREAM,
   "sv06-009": VOLBEAT_QUICK_SIGN,
   "sv08-001": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
-  "sv08-192": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
   "sv08.5-081": MILTANK_MOOMOO_ROLLING,
   "sv08-086": SYLVEON_EX_ANGELITE,
-  "sv08.5-041": SYLVEON_EX_ANGELITE,
-  "sv08.5-156": SYLVEON_EX_ANGELITE,
   "sv06-145": CARMINE,
-  "sv06-204": CARMINE,
-  "sv06-217": CARMINE,
-  "sv08.5-103": CARMINE,
   "sv10-177": TEAM_ROCKETS_PROTON,
-  "sv10-227": TEAM_ROCKETS_PROTON,
   "sv10.5b-083": NS_PLAN,
-  "sv10.5b-163": NS_PLAN,
-  "sv10.5b-170": NS_PLAN,
   "svp-205": POWER_SAVER, // Team Rocket's Mewtwo ex — "Power Saver" (promo)
-  "svp-216": POWER_SAVER,
-  "sv10-081": POWER_SAVER,
-  "sv10-213": POWER_SAVER,
-  "sv10-231": POWER_SAVER,
-  "sv10-240": POWER_SAVER,
   "svp-177": SEASONED_SKILL, // Bloodmoon Ursaluna ex — "Seasoned Skill" (promo)
-  "sv06-141": SEASONED_SKILL,
-  "sv06-202": SEASONED_SKILL,
-  "sv06-216": SEASONED_SKILL,
-  "sv06-222": SEASONED_SKILL,
   "sv10.5b-044": DEBUT_PERFORMANCE, // Meloetta ex — "Debut Performance"
-  "sv10.5b-159": DEBUT_PERFORMANCE,
-  "sv10.5b-167": DEBUT_PERFORMANCE,
   "sv08-143": BOOSTED_EVOLUTION, // Eevee — "Boosted Evolution"
-  "sv08.5-074": BOOSTED_EVOLUTION,
-  "svp-173": BOOSTED_EVOLUTION,
   "sv10.5b-009": STIMULATED_EVOLUTION_KARRABLAST, // Karrablast — "Stimulated Evolution"
-  "sv10.5b-094": STIMULATED_EVOLUTION_KARRABLAST,
   "sv10.5w-008": STIMULATED_EVOLUTION_SHELMET, // Shelmet — "Stimulated Evolution"
-  "sv10.5w-093": STIMULATED_EVOLUTION_SHELMET,
-  "sv08.5-168": SEASONED_SKILL,
   // Four printings and two card names share `FOOD_PREP` because the printed sentence is the same.
   "svp-134": FOOD_PREP, // Crabominable — "Food Prep" (promo)
-  "sv07-042": FOOD_PREP,
   "sv07-045": FOOD_PREP, // Veluza — the SAME sentence on a different card
-  "sv07-149": FOOD_PREP,
   "sv05-034": HUSTLE_PLAY, // Incineroar ex — "Hustle Play"
-  "sv05-187": HUSTLE_PLAY, // (reprint)
   "sv06-088": CAPTIVATING_INVITATION, // Florges — the coin-gated gust + Confusion
   "sv10-176": TRAINER_SEARCH, // Team Rocket's Petrel — `trainerCard`'s first consumer
-  "sv10-226": TRAINER_SEARCH, // (reprint)
   "sv08-179": LISIAS_APPEAL, // Lisia's Appeal — `gust.basicOnly`'s only consumer
-  "sv08-234": LISIAS_APPEAL, // (reprint)
-  "sv08-246": LISIAS_APPEAL, // (reprint)
   "sv08-174": DRAYTON, // Drayton — `lookAtTopN.also`'s only consumer
-  "sv08-232": DRAYTON, // (reprint)
-  "sv08-244": DRAYTON, // (reprint)
-  "sv08.5-172": DRAYTON, // (reprint)
   "sv08.5-127": ROTO_STICK, // Roto-Stick — `lookAtTopN.max: "any"`'s only registry consumer
   "sv06-143": BUG_CATCHING_SET, // Bug Catching Set — `anyOf`'s SECOND live prompt consumer
-  "sv08.5-102": BUG_CATCHING_SET, // (reprint)
   "sv05-147": EXPLORERS_GUIDANCE, // Explorer's Guidance — `exact` and `lookAtTopN.restTo: "discard"`'s only consumer
-  "sv05-200": EXPLORERS_GUIDANCE, // (reprint)
-  "sv08.5-107": EXPLORERS_GUIDANCE, // (reprint)
   "sv06-129": DRAKLOAK, // Drakloak "Recon Directive" — `lookAtTopN.restTo: "bottom"`'s only consumer
-  "sv08.5-072": DRAKLOAK, // (reprint)
   "sv04-172": RIKA, // Rika — `lookAtTopN.restTo: "shuffledBottom"`'s only consumer (OUT OF STANDARD)
-  "sv04-241": RIKA, // (reprint)
-  "sv04-258": RIKA, // (reprint)
   "svp-128": RAPID_VERNIER, // Iron Leaves ex — "Rapid Vernier" (promo)
-  "sv05-025": RAPID_VERNIER,
-  "sv05-186": RAPID_VERNIER,
-  "sv05-203": RAPID_VERNIER,
-  "sv05-213": RAPID_VERNIER,
-  "sv08.5-176": RAPID_VERNIER,
   "sv09-018": SHOWTIME, // Meowscarada — "Showtime"
   "sv06-112": CORNERSTONE_STANCE, // Cornerstone Mask Ogerpon ex — "Cornerstone Stance"
-  "sv06-199": CORNERSTONE_STANCE, // (reprint)
-  "sv06-215": CORNERSTONE_STANCE, // (reprint)
-  "sv08.5-058": CORNERSTONE_STANCE, // (reprint)
-  "sv08.5-160": CORNERSTONE_STANCE, // (reprint)
   "sv10.5b-023": MIGHTY_SHELL, // Carracosta — "Mighty Shell"
-  "sv10.5b-107": MIGHTY_SHELL, // (reprint)
   "sv06-020": CURIOUS_TEA_PARTY, // Poltchageist — "Storehouse Hideaway"
-  "sv06-171": CURIOUS_TEA_PARTY, // (reprint)
   "sv10-048": CURIOUS_TEA_PARTY, // Misty's Magikarp — "So Submerged", the same sentence
   "sv05-024": SPHERICAL_SHIELD, // Rabsca — "Spherical Shield"
   "sv06.5-045": UNNERVE, // Fraxure — "Unnerve"
-  "sv06.5-077": UNNERVE, // (reprint)
   "sv10-065": UNNERVE, // Cetitan ex — "Snow Camouflage", the SAME printed sentence
-  "sv10-210": UNNERVE, // (reprint)
   "sv07-076": WIDE_WALL, // Rhyperior — "Wide Wall", the Supporter-only seat rule
   "sv09-095": DAUNTING_GAZE, // Tyranitar — "Daunting Gaze", Items only
   "sv10.5w-045": OCEANIC_CURSE, // Jellicent ex — "Oceanic Curse", Items AND Tools
-  "sv10.5w-160": OCEANIC_CURSE, // (reprint)
-  "sv10.5w-168": OCEANIC_CURSE, // (reprint)
   "sv10-113": POTENT_GLARE, // Team Rocket's Arbok — "Potent Glare"
   "sv06.5-042": MASSIVE_BODY, // Copperajah — "Massive Body", Stadiums only
   "sv06.5-040": ACE_NULLIFIER, // Genesect — "ACE Nullifier", every ACE SPEC at once
@@ -9254,105 +8650,87 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-051": REPELLING_VEIL, // Team Rocket's Articuno — "Repelling Veil", the GROUP rule
   "sv08.5-040": PREVENT_FROM_EX, // Sylveon — "Safeguard" (NOT Mimikyu's ex-and-V one)
   "sv10-012": PREVENT_FROM_EX, // Crustle — "Mysterious Rock Inn", same sentence
-  "sv10-186": PREVENT_FROM_EX, // (reprint)
   "sv05-108": PREVENT_FROM_BASIC_EX, // Farigiraf ex — "Armor Tail"
-  "sv05-194": PREVENT_FROM_BASIC_EX, // (reprint)
   "sv10-010": FLOWER_CURTAIN, // Shaymin — "Flower Curtain"
-  "sv10-185": FLOWER_CURTAIN, // (reprint)
   "sv07-044": IMPERVIOUS_SHELL, // Drednaw — "Impervious Shell"
   // Two objects because these are two printed sentences by two cards; a shared one would log the
   // wrong Ability name for half of them.
   "sv06-096": ADRENA_PHEROMONE, // Fezandipiti — "Adrena-Pheromone" ({D}-gated)
-  "sv06.5-073": ADRENA_PHEROMONE, // (reprint)
-  "sv08.5-045": ADRENA_PHEROMONE, // (reprint)
   "sv08-150": EXPERT_HIDER, // Kecleon — "Expert Hider" (the antecedent dropped)
-  "sv08-213": EXPERT_HIDER, // (reprint)
   "sv05-133": EMERGENCY_EVOLUTION,
   "sv05-129": RUN_AWAY_DRAW,
-  "sv08.5-080": RUN_AWAY_DRAW, // (reprint)
   "sv06-080": TELEPORTER,
   "sv08-131": SURF_BACK,
   "sv06.5-015": SHATTERING_SPEED,
-  "sv06.5-081": SHATTERING_SPEED, // (reprint)
   "sv07-011": BREEZY_GIFT,
   "sv10-074": DARKEST_IMPULSE, // Team Rocket's Ampharos — the EVOLVE verb
   "sv05-104": GNAWING_CURSE, // Gengar ex — the ATTACH verb
-  "sv05-193": GNAWING_CURSE, // (reprint)
   "sv05-029": LAVA_ZONE, // Magcargo — the bench-move verb
   "sv06-005": BIG_NET, // Ariados — the TARGET-NARROWED cross-board surcharge
   "sv09-089": SECRET_FOREST_PATH, // Toedscruel — the OWN-SIDE discount, bench-gated
   "sv10-036": MELT_AWAY, // Ethan's Magcargo — the self-only zero under a HOLDER gate
 
   "sv10.5w-019": LICKING_CATCH, // Heatmor — "Licking Catch" (attack 0, mark I)
-  "sv10.5w-104": LICKING_CATCH, // Heatmor (reprint) — same sentence, same object
 
   "sv08-158": FAMILIAL_MARCH, // Maushold — "Familial March" (attack 0)
 
   "sv06-053": FREEZING_SHROUD, // Froslass — "Freezing Shroud" (Stage 1, {W})
-  "sv06-174": FREEZING_SHROUD, // Froslass (reprint) — same sentence, same object
-  "svp-117": FREEZING_SHROUD, // Froslass (promo reprint) — same sentence, same object
   "sv05-145": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (Supporter, mark H)
-  "sv05-198": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (reprint)
-  "sv08.5-104": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (reprint)
   "sv06.5-019": CURSED_BLAST_5, // Dusclops — "Cursed Blast" (Stage 1, {P}, 5 counters)
-  "sv06.5-069": CURSED_BLAST_5, // Dusclops (reprint) — same sentence, same object
-  "sv08.5-036": CURSED_BLAST_5, // Dusclops (Prismatic Evolutions reprint) — same object
   "sv06.5-020": CURSED_BLAST_13, // Dusknoir — "Cursed Blast" (Stage 2, {P}, 13 counters)
-  "sv06.5-070": CURSED_BLAST_13, // Dusknoir (reprint) — same sentence, same object
-  "sv08.5-037": CURSED_BLAST_13, // Dusknoir (Prismatic Evolutions reprint) — same object
   "svp-153": OVERVOLT_DISCHARGE, // Magneton — "Overvolt Discharge" (Stage 1, {L})
-  "svp-159": OVERVOLT_DISCHARGE, // Magneton (promo reprint) — same sentence, same object
-  "sv08-059": OVERVOLT_DISCHARGE, // Magneton (Surging Sparks) — same object
   "sv10-003": BUZZING_BOOST, // Yanmega ex — "Buzzing Boost" (Stage 1 out of Yanma, {G})
-  "sv10-206": BUZZING_BOOST, // Yanmega ex (illustration rare) — same sentence, same object
-  "sv10-228": BUZZING_BOOST, // Yanmega ex (special illustration rare) — same object
   "svp-133": GLITTERING_STAR_PATTERN, // Ledian (promo) — "Glittering Star Pattern"
-  "sv07-003": GLITTERING_STAR_PATTERN, // Ledian (Stellar Crown) — same sentence, same object
-  "sv07-144": GLITTERING_STAR_PATTERN, // Ledian (illustration rare) — same object
   "sv05-142": BIANCAS_DEVOTION, // Bianca's Devotion — Supporter
-  "sv05-197": BIANCAS_DEVOTION, // (reprint)
-  "sv05-209": BIANCAS_DEVOTION, // (reprint)
   "sv09-067": INVITING_WINK, // Lillie's Ribombee — "Inviting Wink" (Stage 1 out of Lillie's Cutiefly)
-  "sv09-164": INVITING_WINK, // Lillie's Ribombee (illustration rare) — same sentence, same object
-  "svp-183": INVITING_WINK, // Lillie's Ribombee (promo) — same object
   "svp-116": PYRO_DANCE, // Infernape (promo) — "Pyro Dance"
-  "sv06-033": PYRO_DANCE, // Infernape — same sentence, same object
-  "sv06-173": PYRO_DANCE, // Infernape (illustration rare) — same object
   "svp-090": METAL_MAKER, // Metang (promo) — "Metal Maker"
-  "sv05-114": METAL_MAKER, // Metang — same sentence, same object
   "sv06-072": SNACK_SEEK, // Morpeko — "Snack Seek"
   "sv09-085": SPIKE_CLAD, // Lycanroc — "Spike-Clad"
-  "sv09-166": SPIKE_CLAD, // Lycanroc (illustration rare) — same sentence, same object
   "sv10-145": X_BOOT, // Steven's Metagross ex — "X-Boot"
   "sv10.5b-081": ENERGY_COIN, // Energy Coin — two-coin gate, then search a Basic Energy and attach it
   "sv09-107": AUTO_HEAL, // Magearna — "Auto Heal", the self direction's first printing
 };
 
+Object.freeze(REGISTRY);
+
 /** The fixture pool's programs; empty outside the test suite. */
-let testPrograms: Readonly<Record<string, CardProgram>> = {};
+let testPrograms: Readonly<Record<string, CardProgram>> = Object.freeze({});
+let installedTestPrograms: Readonly<Record<string, CardProgram>> | undefined;
 
 /** The authored program for a catalog card id, or undefined when the card has
     none (an unsimulated Trainer/Ability, or a Pokémon whose attacks are wholly
-    text-derived). */
+    text-derived). A reprint shares its print_key group's row. */
 export function programFor(cardId: string): CardProgram | undefined {
   if (Object.hasOwn(REGISTRY, cardId)) return REGISTRY[cardId];
+  const canonical = canonicalPrinting(cardId);
+  if (canonical !== cardId && Object.hasOwn(REGISTRY, canonical)) return REGISTRY[canonical];
   return Object.hasOwn(testPrograms, cardId) ? testPrograms[cardId] : undefined;
 }
 
 /**
- * Every id this registry programs, the registered test programs included. Not re-exported from the
- * package index; it exists so in-suite audits can iterate the authored pool.
+ * Every id this registry programs, the registered test programs included; reprints served through
+ * the print_key table are not listed. Not re-exported from the package index; it exists so
+ * in-suite audits can iterate the authored pool.
  */
 export function registryCardIds(): string[] {
   return [...Object.keys(REGISTRY), ...Object.keys(testPrograms)];
 }
 
 /**
- * Installs the fixture pool's programs (`fixtures/registry.ts`). Only the vitest setup file calls
- * it, and it is not re-exported from the package index.
+ * Installs the fixture pool's programs (`fixtures/registry.ts`) once; the setup file re-runs per
+ * suite with the same record. Only the vitest setup file calls it, and it is not re-exported from
+ * the package index.
  */
 export function registerTestPrograms(programs: Readonly<Record<string, CardProgram>>): void {
-  const clash = Object.keys(programs).find((id) => Object.hasOwn(REGISTRY, id));
+  if (installedTestPrograms === programs) return;
+  if (installedTestPrograms !== undefined) {
+    throw new Error("registerTestPrograms: a different set of test programs is already installed");
+  }
+  const clash = Object.keys(programs).find(
+    (id) => Object.hasOwn(REGISTRY, id) || canonicalPrinting(id) !== id,
+  );
   if (clash !== undefined) throw new Error(`registerTestPrograms: ${clash} is a registry id`);
-  testPrograms = programs;
+  installedTestPrograms = programs;
+  testPrograms = Object.freeze({ ...programs });
 }

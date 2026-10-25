@@ -5,7 +5,6 @@ import type { GameEvent } from "./events";
 import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
   LOOK_AT_TOP_DECK,
@@ -21,6 +20,7 @@ import {
   toDeckTop,
   types,
   findEvent,
+  programmedCardIds,
 } from "./testFixtures";
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
@@ -497,7 +497,7 @@ describe("D225 — which registry rows carry the rider", () => {
   });
 
   it("SWEEPS THE REGISTRY for search ops nobody classified — a DISCOVERED census", () => {
-    const population = [...new Set([...registryCardIds(), ...Object.keys(FIXTURE_POOL)])];
+    const population = [...new Set([...programmedCardIds(), ...Object.keys(FIXTURE_POOL)])];
     const classified = new Set([...REVEALING, ...NOT_REVEALING].map(([id]) => programFor(id)));
     const unclassified = new Set<string>();
     const swept = new Set<string>();
@@ -509,6 +509,6 @@ describe("D225 — which registry rows carry the rider", () => {
     }
     expect([...unclassified].sort(), "a deck search nobody decided the reveal for").toEqual([]);
     expect(classified.size).toBe(94);
-    expect(swept.size).toBe(219);
+    expect(swept.size).toBe(226);
   });
 });

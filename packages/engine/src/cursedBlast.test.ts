@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
-import { programFor, registryCardIds } from "./registry";
+import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
   battler,
@@ -14,6 +14,7 @@ import {
   typedEnergy,
   findEvent,
   driveSetup,
+  programmedCardIds,
 } from "./testFixtures";
 
 const DUSCLOPS = "sv06.5-019";
@@ -263,11 +264,11 @@ describe("D345 §1 — the two registry rows, read off the LIVE registry", () =>
   });
 
   it("all SIX ids are in the live registry and no seventh rode along", () => {
-    const ids = new Set(registryCardIds());
+    const ids = new Set(programmedCardIds());
     for (const id of [...DUSCLOPS_IDS, ...DUSKNOIR_IDS]) expect(ids.has(id), id).toBe(true);
     // The pool of ids carrying THIS ability name is exactly the six — a seventh
     // would mean Magneton was quietly authored on the strength of the shared op.
-    const named = registryCardIds().filter((id) =>
+    const named = programmedCardIds().filter((id) =>
       programFor(id)?.abilities?.some((a) => a.name === "Cursed Blast"),
     );
     expect(named.sort()).toEqual([...DUSCLOPS_IDS, ...DUSKNOIR_IDS].sort());
@@ -284,7 +285,7 @@ describe("D346 — §2's REFUSAL IS SPENT: the clause's THIRD sentence is BUILT"
 
   it("`knockOutSelf` has exactly THREE producers in the whole registry", () => {
     const objects = new Set(
-      registryCardIds()
+      programmedCardIds()
         .map((id) => programFor(id))
         .filter((program) =>
           [...(program?.abilities ?? []), ...(program?.triggered ?? [])].some((ability) =>
