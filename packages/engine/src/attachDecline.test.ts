@@ -379,7 +379,7 @@ describe("D358 §2 — Archaludon ex's printed {0, 1, 2}, all three reachable", 
     expect(energyIdsOn(done.state, ACTIVE)).toEqual([ENERGY_M]);
     expect(energyIdsOn(done.state, benchRef(0))).toEqual([]);
     // The declined card is STILL IN THE PILE — a decline moves nothing, which is
-    // the claim `applyChoice`'s arm makes and the one a "discard it instead"
+    // the claim `answerOp`'s arm makes and the one a "discard it instead"
     // implementation would fail.
     expect(
       done.state.players.p1.discard.filter((u) => idOf(done.state, u) === ENERGY_M),

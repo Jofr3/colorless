@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { applyChoice } from "./interpreter";
+import { answerOp } from "./interpreter";
 import {
   HAND_COST_DECK,
   benchFromDeck,
@@ -592,14 +592,14 @@ describe("payFromHand — the apply's wire guards and purity", () => {
     const before = census(state, "p1");
     const deckCard = state.players.p1.deck[0] as string;
     const events: GameEvent[] = [];
-    const next = applyChoice(
+    const next = answerOp(
       state,
       { op: "payFromHand", count: 1, to: "discard" },
       { kind: "cards", uids: [deckCard] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(events).toHaveLength(0);
     expect(next).toBe(state); // nothing actually paid → the same state object
     expect(census(next, "p1")).toEqual(before);
@@ -612,14 +612,14 @@ describe("payFromHand — the apply's wire guards and purity", () => {
     const before = census(state, "p1");
     const uid = handUid(state, "p1", "fix-item");
     const events: GameEvent[] = [];
-    const next = applyChoice(
+    const next = answerOp(
       state,
       { op: "payFromHand", count: 2, to: "discard" },
       { kind: "cards", uids: [uid, uid] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
     expect(next.players.p1.discard.filter((u) => u === uid)).toHaveLength(1);
     expect(census(next, "p1")).toEqual(before);

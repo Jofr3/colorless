@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
-import { applyChoice } from "./interpreter";
+import { answerOp } from "./interpreter";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   ATTACH_FROM_TOP_DECK,
@@ -520,7 +520,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     const { state: parked } = mustApply(state, triHowl);
     const before = census(parked, "p1");
     const events: GameEvent[] = [];
-    const after = applyChoice(
+    const after = answerOp(
       parked,
       { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", restTo: "discard" },
       {
@@ -536,7 +536,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(after.players.p1.active?.energy).toEqual([energy]);
     expect(events.filter((e) => e.type === "ENERGY_ATTACHED")).toHaveLength(1);
     // Every skipped card is still accounted for — two of them as leftovers in the

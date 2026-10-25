@@ -4,7 +4,7 @@
  * corpus rows quoting its producer region (effects.ts, registry.ts, fixtures/registry.ts) and its
  * implementation region (stepOp's case arms plus helpers with fan-in ≤ FANIN, across interpreter.ts
  * and the modules split out of it), and reports seat-line coverage. It cannot see resume-side code
- * such as `continuationOps`, or whether a row is any good. Env: `FANIN` (default 4), `LEV`
+ * such as `answerOp`, or whether a row is any good. Env: `FANIN` (default 4), `LEV`
  * (default 2).
  */
 
@@ -360,7 +360,7 @@ for (const k of KINDS) {
 /**
  * The three gates `runProgram`'s queue loop splices before `stepOp`; producer-only by predicate,
  * since their real work is in the loop. `optional` is not one of them; its splice is in
- * `continuationOps`.
+ * `answerOp`.
  */
 const SPLICED = ["coinFlipGate", "conditionGate", "recordGate"];
 const prodOnlyReal = prodOnly.filter((k) => !SPLICED.includes(k));

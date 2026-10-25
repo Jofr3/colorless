@@ -688,7 +688,7 @@ describe("§8 — the structural answers", () => {
       expect(attack(frozen, HAND_PURGE).state).not.toBe(frozen);
       expect(JSON.stringify(frozen), hand.length.toString()).toBe(snapshot);
     }
-    // …and the RESUMED half, which writes through `applyChoice` rather than
+    // …and the RESUMED half, which writes through `answerOp` rather than
     // `stepOp` and is the path a frozen-state mutation would actually reach.
     const state = ready();
     const { state: parked } = attack(state, HAND_PURGE);
