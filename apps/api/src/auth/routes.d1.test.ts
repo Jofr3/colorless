@@ -294,11 +294,21 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
 
   // Linking keeps an unverified account's password and sessions, so whoever registered the
   // address first keeps access to the account its real owner then signs into.
-  it.fails("revokes a squatter's password and sessions when a verified email links", async () => {
+  it("revokes a squatter's password and sessions when a verified email links", async () => {
     const squatter = await register("victim@example.com", "squatter-pass");
     const squatterCookie = sessionCookieOf(squatter);
     await oauthCallback({ sub: "g-6", email: "victim@example.com", email_verified: true });
     expect((await login("victim@example.com", "squatter-pass")).status).toBe(401);
     expect((await me(squatterCookie)).status).toBe(401);
+  });
+
+  it("keeps the password of an account whose email was already verified", async () => {
+    await insertUser({
+      email: "brock@example.com",
+      emailVerified: true,
+      passwordHash: await hashPassword("onix-789", 1000),
+    });
+    await oauthCallback({ sub: "g-7", email: "brock@example.com", email_verified: true });
+    expect((await login("brock@example.com", "onix-789")).status).toBe(200);
   });
 });

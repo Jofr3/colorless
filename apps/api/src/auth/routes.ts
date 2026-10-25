@@ -411,12 +411,23 @@ async function linkOrCreateOAuthUser(
     if (!profile.emailVerified) {
       return "email-in-use";
     }
-    // Link, and promote emailVerified — the provider just attested it.
+    // Link, and promote emailVerified — the provider just attested it. An
+    // unverified account's password and sessions could belong to whoever
+    // registered the address first, so they go: the owner signs in through
+    // the provider from now on.
+    if (existing.emailVerified) {
+      await db.insert(oauthIdentities).values({ ...identity, userId: existing.id });
+      return existing;
+    }
     await db.batch([
       db.insert(oauthIdentities).values({ ...identity, userId: existing.id }),
-      db.update(users).set({ emailVerified: true }).where(eq(users.id, existing.id)),
+      db
+        .update(users)
+        .set({ emailVerified: true, passwordHash: null })
+        .where(eq(users.id, existing.id)),
+      db.delete(sessions).where(eq(sessions.userId, existing.id)),
     ]);
-    return { ...existing, emailVerified: true };
+    return { ...existing, emailVerified: true, passwordHash: null };
   }
   const row = newUserRow({
     email: profile.email,
