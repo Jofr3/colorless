@@ -32,7 +32,7 @@ g.draw=function(texture,...)
     w=w*sx*transform.sx,h=h*sy*transform.sy,shade=colour[1],alpha=colour[4]}
 end
 local Pile=require('ui.deck_pile')
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 for _,file in ipairs({'engine/object.lua','engine/node.lua','engine/moveable.lua','engine/sprite.lua','card.lua','cardarea.lua','functions/misc_functions.lua'}) do
   dofile(source..'/'..file)
 end

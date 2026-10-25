@@ -1,6 +1,6 @@
 -- Compare the adapted deck row with Balatro's actual poker-hand definition.
 package.path='frontend/lua/?.lua;'..package.path
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end
 local noop=function()end
 love={graphics={setColor=noop,push=noop,pop=noop,translate=noop,scale=noop,setLineWidth=noop,

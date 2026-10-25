@@ -7,7 +7,7 @@ local Button=require('ui.button')
 local panels={}
 Button.panel=function(x,y,w,h,colour)panels[#panels+1]={x=x,y=y,w=w,h=h,colour=colour}end
 local function same(a,b)for i=1,4 do if math.abs(a[i]-b[i])>1e-8 then return false end end;return true end
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end
 local globals=read('/globals.lua')
 local hoverHex=assert(globals:match("HOVER%s*=%s*HEX%('(%x+)'"))

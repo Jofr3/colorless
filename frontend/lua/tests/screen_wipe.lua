@@ -1,6 +1,6 @@
 -- Run the actual source particle/event code as the behavioral reference.
 package.path='frontend/lua/?.lua;'..package.path
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local noop=function()end
 local image={setFilter=noop,getDimensions=function()return 1850,800 end,getWidth=function()return 245 end,getHeight=function()return 337 end,release=noop}
 love={filesystem={getInfo=function()return nil end},math={random=math.random},graphics=setmetatable({

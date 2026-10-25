@@ -3,18 +3,24 @@
 //
 //   bun scripts/mutation/reanchor.ts          # report only
 //   bun scripts/mutation/reanchor.ts --write  # rewrite scripts/mutation/mutants.ts
+//   bun scripts/mutation/reanchor.ts --write --accept-symbols  # also take reviewed symbol renames
 //   bun scripts/mutation/reanchor.ts --retire <file of ids, one per line>
 //
 // A broken row is matched ignoring whitespace, comments and trailing commas. When exactly one site
 // matches (first in the row's own file, then across the package), `find` becomes the exact text
-// there, `file` points to it, and comments are dropped from `replace`. Unmatched rows are listed;
-// precheck.ts stays the strict gate.
+// there, `file` points to it, and comments are dropped from `replace`. A row that records a
+// `symbol` only moves to a site inside that same declaration, so it cannot latch onto an identical
+// fragment elsewhere. Unmatched rows are listed; precheck.ts stays the strict gate. `--write` also
+// fills in a missing `symbol`. An intact row whose text now sits in another declaration is listed,
+// since that is either a rename or a twin left behind after the original was rewritten; check
+// which, then re-point the row or pass `--accept-symbols`.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import ts from "typescript";
 import { REPO_ROOT, repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS, type Mutant } from "./mutants";
+import { currentSymbol, enclosingSymbol } from "./symbol";
 
 const CORPUS = "scripts/mutation/mutants.ts";
 
@@ -130,26 +136,36 @@ function siblingsOf(file: string): string[] {
 
 type Fix = { mutant: Mutant; file: string; find: string; replace: string };
 
+/** A rewrite of one row: new anchor fields (absent to keep) and its symbol
+    (undefined to drop the property). */
+type RowPatch = { file?: string; find?: string; replace?: string; symbol: string | undefined };
+
 function reanchor(mutant: Mutant): Fix | null {
   const code = stripComments(mutant.find);
   const matcher = looseMatcher(code);
   if (matcher === null) return null;
   const replace = stripComments(mutant.replace);
+  const fits = (file: string, site: { start: number; end: number }) =>
+    mutant.symbol === undefined ||
+    enclosingSymbol(file, sourceOf(file), site.start, site.end) === mutant.symbol;
   let own: { start: number; end: number }[] = [];
   try {
     own = looseSites(sourceOf(mutant.file), matcher);
   } catch {
     // The file itself was removed; look for the code elsewhere.
   }
-  if (own.length > 1) return null;
-  const candidates = own.length === 1 ? [{ file: mutant.file, site: own[0] }] : [];
+  if (own.length > 1 && mutant.symbol === undefined) return null;
+  const candidates = own
+    .filter((site) => fits(mutant.file, site))
+    .map((site) => ({ file: mutant.file, site }));
   if (candidates.length === 0) {
     for (const file of siblingsOf(mutant.file)) {
-      const sites = looseSites(sourceOf(file), matcher);
+      const sites = looseSites(sourceOf(file), matcher).filter((site) => fits(file, site));
       for (const site of sites) candidates.push({ file, site });
       if (candidates.length > 1) return null;
     }
   }
+  if (candidates.length !== 1) return null;
   const hit = candidates[0];
   if (hit === undefined || hit.site === undefined) return null;
   const text = sourceOf(hit.file);
@@ -158,37 +174,65 @@ function reanchor(mutant: Mutant): Fix | null {
   return { mutant, file: hit.file, find, replace };
 }
 
-/** Rewrites the `file`, `find` and `replace` initializers of each fixed row. */
-function rewriteCorpus(fixes: Fix[]): void {
+/** Rewrites the anchor fields and `symbol` of each patched row. A new `symbol`
+    goes right after `file`. */
+function rewriteCorpus(patches: Map<string, RowPatch>): void {
   const text = readFileSync(repoPath(CORPUS), "utf8");
   const sf = ts.createSourceFile(CORPUS, text, ts.ScriptTarget.Latest, true);
-  const byId = new Map(fixes.map((f) => [f.mutant.id, f]));
+  const pending = new Map(patches);
   const edits: { start: number; end: number; text: string }[] = [];
+  const afterComma = (at: number) => (text[at] === "," ? at + 1 : at);
   const visit = (node: ts.Node) => {
     if (ts.isObjectLiteralExpression(node)) {
       const props = new Map<string, ts.PropertyAssignment>();
       for (const p of node.properties) {
         if (ts.isPropertyAssignment(p) && ts.isIdentifier(p.name)) props.set(p.name.text, p);
       }
-      const id = props.get("id")?.initializer;
-      const fix = id !== undefined && ts.isStringLiteral(id) ? byId.get(id.text) : undefined;
-      if (fix !== undefined) {
-        for (const [key, value] of [
-          ["file", fix.file],
-          ["find", fix.find],
-          ["replace", fix.replace],
-        ] as const) {
+      const idInit = props.get("id")?.initializer;
+      const id = idInit !== undefined && ts.isStringLiteral(idInit) ? idInit.text : undefined;
+      const patch = id === undefined ? undefined : pending.get(id);
+      if (id !== undefined && patch !== undefined) {
+        for (const key of ["file", "find", "replace"] as const) {
+          const value = patch[key];
+          if (value === undefined) continue;
           const init = props.get(key)?.initializer;
-          if (init === undefined) throw new Error(`${fix.mutant.id}: no ${key} property`);
+          if (init === undefined) throw new Error(`${id}: no ${key} property`);
           edits.push({ start: init.getStart(sf), end: init.getEnd(), text: JSON.stringify(value) });
         }
-        byId.delete(fix.mutant.id);
+        const existing = props.get("symbol");
+        if (existing !== undefined && patch.symbol === undefined) {
+          edits.push({
+            start: existing.getFullStart(),
+            end: afterComma(existing.getEnd()),
+            text: "",
+          });
+        } else if (existing !== undefined && patch.symbol !== undefined) {
+          const init = existing.initializer;
+          edits.push({
+            start: init.getStart(sf),
+            end: init.getEnd(),
+            text: JSON.stringify(patch.symbol),
+          });
+        } else if (patch.symbol !== undefined) {
+          const file = props.get("file");
+          if (file === undefined) throw new Error(`${id}: no file property`);
+          const lineStart = text.lastIndexOf("\n", file.getStart(sf)) + 1;
+          const indent = text.slice(lineStart, file.getStart(sf));
+          const at = afterComma(file.getEnd());
+          edits.push({
+            start: at,
+            end: at,
+            text: `\n${indent}symbol: ${JSON.stringify(patch.symbol)},`,
+          });
+        }
+        pending.delete(id);
       }
     }
     ts.forEachChild(node, visit);
   };
   visit(sf);
-  if (byId.size > 0) throw new Error(`rows not found in ${CORPUS}: ${[...byId.keys()].join(", ")}`);
+  if (pending.size > 0)
+    throw new Error(`rows not found in ${CORPUS}: ${[...pending.keys()].join(", ")}`);
   edits.sort((a, b) => b.start - a.start);
   let out = text;
   for (const e of edits) out = out.slice(0, e.start) + e.text + out.slice(e.end);
@@ -263,8 +307,42 @@ if (import.meta.main && process.argv.includes("--retire")) {
       console.log(`  moved ${f.mutant.id}: ${f.mutant.file} -> ${f.file}`);
   }
   for (const m of unresolved) console.log(`  UNRESOLVED ${m.id} (${m.file})`);
-  if (process.argv.includes("--write") && fixes.length > 0) {
-    rewriteCorpus(fixes);
-    console.log(`rewrote ${fixes.length} row(s) in ${CORPUS}`);
+  const patches = new Map<string, RowPatch>();
+  for (const f of fixes) {
+    const text = sourceOf(f.file);
+    patches.set(f.mutant.id, {
+      file: f.file,
+      find: f.find,
+      replace: f.replace,
+      symbol: currentSymbol({ file: f.file, find: f.find }, text),
+    });
+  }
+  const brokenIds = new Set(broken.map((m) => m.id));
+  const acceptSymbols = process.argv.includes("--accept-symbols");
+  let backfilled = 0;
+  let renamed = 0;
+  for (const m of MUTANTS) {
+    if (brokenIds.has(m.id)) continue;
+    const symbol = currentSymbol(m, sourceOf(m.file));
+    if (symbol === m.symbol) continue;
+    if (m.symbol === undefined) {
+      patches.set(m.id, { symbol });
+      backfilled++;
+      continue;
+    }
+    // The text now sits in another declaration: a rename, or a twin left behind
+    // after the original was rewritten. Only a reviewed rename is accepted.
+    console.log(`  SYMBOL ${m.id}: ${m.symbol} -> ${symbol ?? "(none)"}`);
+    if (acceptSymbols) {
+      patches.set(m.id, { symbol });
+      renamed++;
+    }
+  }
+  if (backfilled > 0) console.log(`${backfilled} row(s) without a symbol`);
+  if (process.argv.includes("--write") && patches.size > 0) {
+    rewriteCorpus(patches);
+    console.log(
+      `rewrote ${fixes.length} re-anchored, ${backfilled} backfilled and ${renamed} renamed row(s) in ${CORPUS}`,
+    );
   }
 }

@@ -3,7 +3,7 @@
 package.path='frontend/lua/?.lua;'..package.path
 love={graphics={setShader=function() end}}
 local Screen=require('ui.screen')
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local file=assert(io.open(source..'/game.lua'))
 local game=file:read('*a'); file:close()
 local block=assert(game:match('(G%.SETTINGS%.GRAPHICS%.crt = G%.SETTINGS%.GRAPHICS%.crt%*0%.3.-G%.SETTINGS%.GRAPHICS%.crt = G%.SETTINGS%.GRAPHICS%.crt/0%.3)'))

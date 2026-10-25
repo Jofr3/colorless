@@ -12,7 +12,7 @@ local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={} end
 local Pile=require('ui.deck_pile')
 Moveable={extend=function() return {} end}
-dofile((os.getenv('BALATRO_SOURCE') or '../balatro-source')..'/cardarea.lua')
+dofile(require('tests.support.balatro_source').required()..'/cardarea.lua')
 local function near(a,b) assert(math.abs(a-b)<1e-9,tostring(a)..' != '..tostring(b)) end
 for _,count in ipairs({1,9,18,52,60}) do
   for _,x in ipairs({220,640,1060}) do
@@ -65,7 +65,7 @@ for frame=151,330 do p:update(1/60,frame/60,false,false,1280) end
 near(p.x,p.motion.T.x*p.unit); near(p.y,p.motion.T.y*p.unit)
 print('PASS: original CardArea stack positions at 15 count/position combinations, unshaded backs, rank shading, independent hover/drag and return motion')
 -- Read the actual collection callback to capture its Card constructor origins.
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local f=assert(io.open(source..'/functions/button_callbacks.lua')); local callbacks=f:read('*a'); f:close()
 local first=assert(callbacks:find('G.FUNCS.your_collection_joker_page = function(args)',1,true))
 local last=assert(callbacks:find('--Changing the current page being viewed for the tarot',first,true))

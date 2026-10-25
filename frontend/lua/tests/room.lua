@@ -2,7 +2,7 @@
 -- cursor easing, reduced motion, and inverse coordinates for moving hit targets.
 package.path='frontend/lua/?.lua;'..package.path
 local Room=require('ui.room')
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 dofile(source..'/functions/common_events.lua')
 local checks=0
 local function near(a,b)

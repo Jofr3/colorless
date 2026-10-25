@@ -1,7 +1,7 @@
 -- Execute Balatro's real Options definition and sizing passes, then compare
 -- the frame, ordinary buttons and Back in physical viewport pixels.
 package.path='frontend/lua/?.lua;'..package.path
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local file=assert(io.open(source..'/functions/UI_definitions.lua'))
 local definitions=file:read('*a');file:close()
 local function loadDefinition(name)

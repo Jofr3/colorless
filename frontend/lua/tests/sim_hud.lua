@@ -1,7 +1,7 @@
 -- Compare the bottom HUD's proportions with Balatro's actual definition and
 -- UIBox sizing algorithm, including column emboss in each counter row.
 package.path='frontend/lua/?.lua;'..package.path
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local function read(path)
   local f=assert(io.open(source..path));local text=f:read('*a');f:close();return text
 end

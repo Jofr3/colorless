@@ -3,7 +3,7 @@ package.path='frontend/lua/?.lua;'..package.path
 love={graphics={}}
 local Text=require('ui.page_text')
 Moveable={extend=function() return {} end}
-dofile((os.getenv('BALATRO_SOURCE') or '../balatro-source')..'/engine/text.lua')
+dofile(require('tests.support.balatro_source').required()..'/engine/text.lua')
 local checks=0
 local function near(a,b) assert(math.abs(a-b)<1e-9,tostring(a)..' != '..tostring(b)); checks=checks+1 end
 for _,fps in ipairs({30,60,144}) do

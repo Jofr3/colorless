@@ -2,7 +2,7 @@
 -- align 'tri' and offset (-0.1, 0.1), inside the card's top-right corner.
 package.path='frontend/lua/?.lua;'..package.path
 local D=require('ui.card_dimensions')
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end
 local noop=function()end
 local fills,draws,transform={},{},{}

@@ -7,7 +7,7 @@ love={graphics={newFont=function() return font end,setFont=function() end,setCol
   push=function() end,pop=function() end,translate=function() end,rotate=function() end,scale=function() end,
   polygon=function() end,print=function(s) prints[#prints+1]=s end}}
 local Labels=require('ui.deck_labels')
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 Moveable={extend=function() return {} end}
 dofile(source..'/engine/ui.lua')
 UIElement.__index=UIElement

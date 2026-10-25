@@ -2,7 +2,7 @@
 -- transcription of the formulas. Run from the repository root with LuaJIT.
 package.path='frontend/lua/?.lua;'..package.path
 local Motion=require('ui.motion')
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 Node={extend=function() return {} end}
 dofile(source..'/engine/moveable.lua')
 local sourceMoveable=Moveable

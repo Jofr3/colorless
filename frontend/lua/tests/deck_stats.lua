@@ -3,7 +3,7 @@ package.path='frontend/lua/?.lua;'..package.path
 local polygon
 love={graphics={setColor=function()end,push=function()end,pop=function()end,translate=function()end,
  polygon=function(_,vertices)polygon=vertices end}}
-local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
+local source=require('tests.support.balatro_source').required()
 local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end
 local function near(a,b)assert(math.abs(a-b)<1e-8,tostring(a)..' != '..tostring(b))end
 function HEX(value)return {tonumber(value:sub(1,2),16)/255,tonumber(value:sub(3,4),16)/255,tonumber(value:sub(5,6),16)/255,1}end
