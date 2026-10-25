@@ -464,6 +464,24 @@ export function runProgram(
 }
 
 /**
+ * `runProgram` from the top for a caller with nowhere to park: a trigger fired mid-way through
+ * another action, or inside the Checkup. A park there would drop its prompt and carry on as if it
+ * had been answered, so it throws instead, before the caller can commit the state.
+ */
+export function runSyncProgram(
+  state: GameState,
+  program: readonly EffectOp[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const run = runProgram(state, program, ctx, {}, events);
+  if (run.kind === "parked") {
+    throw new Error(`a synchronous program parked on ${run.cont.pendingOp.op}`);
+  }
+  return run.state;
+}
+
+/**
  * `attachEnergyFrom.atLeastOne` (Infernape "Pyro Dance": "a Basic {R} Energy card, a Basic {F}
  * Energy card, or 1 of each"). The op becomes declinable when an earlier op with the same
  * `recordAs` slot already attached, or a later queued one still can; otherwise its pick stays
@@ -3414,6 +3432,102 @@ function parkOrForce(
   };
 }
 
+/**
+ * The ops `applyChoice` never answers, each with whether a program running it can still park. The
+ * gates splice their branches, and a coin flip parks a Backtrack Badge offer before its branch.
+ * Some ops schedule ops that park. The copy-attack and attack-coin offers are parked and answered
+ * by attack.ts.
+ */
+export const UNANSWERED_OPS = {
+  applyStatus: "neverParks",
+  boostAttack: "neverParks",
+  boostSideAttacksThisTurn: "neverParks",
+  bottomDeckTop: "neverParks",
+  bountyDefender: "neverParks",
+  bountyThisAttack: "neverParks",
+  chooseOneOffered: "mayPark",
+  clearStatus: "neverParks",
+  coinFlipGate: "mayPark",
+  conditionGate: "neverParks",
+  counterEachAll: "neverParks",
+  countersOnRecordedBody: "neverParks",
+  counterUntilRemainingHp: "neverParks",
+  cycleOwnPrizes: "neverParks",
+  damageActive: "neverParks",
+  damageDefender: "neverParks",
+  damageNewActive: "neverParks",
+  damageSelf: "neverParks",
+  damageSubject: "neverParks",
+  devolveEach: "neverParks",
+  discardDeckBottom: "neverParks",
+  discardDeckTop: "neverParks",
+  discardDefender: "neverParks",
+  discardFromOpponentHand: "neverParks",
+  discardHand: "neverParks",
+  discardStadium: "neverParks",
+  drawCards: "neverParks",
+  drawUntilHandSize: "neverParks",
+  eachPlayerTakesPrize: "neverParks",
+  evolveFromDeckEachBenched: "mayPark",
+  exposeDefender: "neverParks",
+  exposeSelf: "neverParks",
+  flipLockAttack: "neverParks",
+  flipLockTrainerPlay: "neverParks",
+  handRefresh: "neverParks",
+  heal: "neverParks",
+  healEach: "neverParks",
+  healEachAll: "neverParks",
+  healSubject: "neverParks",
+  installNoWeakness: "neverParks",
+  installRecoil: "neverParks",
+  installSideAttackBlock: "neverParks",
+  installSideDamageReductionNextTurn: "neverParks",
+  knockOutDefender: "neverParks",
+  knockOutEach: "neverParks",
+  knockOutSelf: "neverParks",
+  lockSideAttacks: "neverParks",
+  lockSideRetreat: "neverParks",
+  markHandAttach: "neverParks",
+  preventAttack: "neverParks",
+  preventAttackUse: "neverParks",
+  preventDamage: "neverParks",
+  preventHandPlay: "neverParks",
+  preventRetreat: "neverParks",
+  randomFromOpponentHand: "neverParks",
+  recordGate: "neverParks",
+  recoverOneStatus: "mayPark",
+  reduceDamage: "neverParks",
+  reflipAttackCoins: "mayPark",
+  returnSelf: "neverParks",
+  retypeDefenderWeakness: "neverParks",
+  revealDeckBottomCount: "neverParks",
+  revealOpponentHand: "neverParks",
+  revealTopDiscardMatching: "neverParks",
+  scheduleCounters: "neverParks",
+  scheduleDiscard: "neverParks",
+  scheduleEndOfTurnHandDiscard: "neverParks",
+  scheduleKnockOut: "neverParks",
+  shuffleDeck: "neverParks",
+  shufflePlayedCardIntoDeck: "neverParks",
+  spreadDamage: "neverParks",
+  swapTurnedPrizeWithRevealed: "neverParks",
+  switchWithDeckNamed: "neverParks",
+  takePrize: "neverParks",
+  taxDefender: "neverParks",
+  useAttackAs: "mayPark",
+  useFoundAttackAs: "mayPark",
+  useInPlayAttackAs: "mayPark",
+  useMilledSupporterEffect: "mayPark",
+  weakenDefenderAttacks: "neverParks",
+  winGame: "neverParks",
+} as const satisfies { readonly [K in EffectOp["op"]]?: "neverParks" | "mayPark" };
+
+type UnansweredOp = OpOf<keyof typeof UNANSWERED_OPS>;
+
+function isUnanswered(op: EffectOp): op is UnansweredOp {
+  return Object.hasOwn(UNANSWERED_OPS, op.op);
+}
+
 /** Apply a parked op given its validated choice. The auto-resolve path calls
     the per-op helpers directly (single forced ref); this is the resolveEffect
     entry, matching the choice shape to the op. */
@@ -3427,6 +3541,7 @@ export function applyChoice(
   record: EffectRecord,
   events: GameEvent[],
 ): GameState {
+  if (isUnanswered(op)) return state;
   switch (op.op) {
     // Backtrack Badge: "yes" spends the once-per-turn key and files `COINS_REFLIPPED`; "no" moves
     // nothing.
@@ -3902,89 +4017,6 @@ export function applyChoice(
       // Both answers move nothing: the slot answer buys the look through `continuationOps`, and the
       // one-card `orderCards` answer leaves the card where it was. Spelled out so the parking op is
       // named here.
-      return state;
-    // Synchronous ops never park, so never reach the choice path.
-    case "applyStatus":
-    case "boostAttack":
-    case "boostSideAttacksThisTurn":
-    case "bottomDeckTop":
-    case "bountyDefender":
-    case "bountyThisAttack":
-    case "chooseOneOffered":
-    case "clearStatus":
-    case "coinFlipGate":
-    case "conditionGate":
-    case "counterEachAll":
-    case "countersOnRecordedBody":
-    case "counterUntilRemainingHp":
-    case "cycleOwnPrizes":
-    case "damageActive":
-    case "damageDefender":
-    case "damageNewActive":
-    case "damageSelf":
-    case "damageSubject":
-    case "devolveEach":
-    case "discardDeckBottom":
-    case "discardDeckTop":
-    case "discardDefender":
-    case "discardFromOpponentHand":
-    case "discardHand":
-    case "discardStadium":
-    case "drawCards":
-    case "drawUntilHandSize":
-    case "eachPlayerTakesPrize":
-    case "evolveFromDeckEachBenched":
-    case "exposeDefender":
-    case "exposeSelf":
-    case "flipLockAttack":
-    case "flipLockTrainerPlay":
-    case "handRefresh":
-    case "heal":
-    case "healEach":
-    case "healEachAll":
-    case "healSubject":
-    case "installNoWeakness":
-    case "installRecoil":
-    case "installSideAttackBlock":
-    case "installSideDamageReductionNextTurn":
-    case "knockOutDefender":
-    case "knockOutEach":
-    case "knockOutSelf":
-    case "lockSideAttacks":
-    case "lockSideRetreat":
-    case "markHandAttach":
-    case "preventAttack":
-    case "preventAttackUse":
-    case "preventDamage":
-    case "preventHandPlay":
-    case "preventRetreat":
-    case "randomFromOpponentHand":
-    case "recordGate":
-    case "recoverOneStatus":
-    case "reduceDamage":
-    case "reflipAttackCoins":
-    case "returnSelf":
-    case "retypeDefenderWeakness":
-    case "revealDeckBottomCount":
-    case "revealOpponentHand":
-    case "revealTopDiscardMatching":
-    case "scheduleCounters":
-    case "scheduleDiscard":
-    case "scheduleEndOfTurnHandDiscard":
-    case "scheduleKnockOut":
-    case "shuffleDeck":
-    case "shufflePlayedCardIntoDeck":
-    case "spreadDamage":
-    case "swapTurnedPrizeWithRevealed":
-    case "switchWithDeckNamed":
-    case "takePrize":
-    case "taxDefender":
-    case "useAttackAs":
-    case "useFoundAttackAs":
-    case "useInPlayAttackAs":
-    case "useMilledSupporterEffect":
-    case "weakenDefenderAttacks":
-    case "winGame":
       return state;
     default:
       // Records written by another engine version can carry op names this build

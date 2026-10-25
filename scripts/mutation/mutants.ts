@@ -52156,9 +52156,8 @@ export const MUTANTS: Mutant[] = [
     what: "a Checkup trigger carries no `invokedBy`: Freezing Shroud places a counter on Luminous Wing. Killed by abilityShieldMeD614 §4.",
     file: "packages/engine/src/triggers.ts",
     symbol: "runCheckupTriggers",
-    find: '            { seat, sourceUid: uid, invokedBy: "ability" },\n            {},\n            events,\n          ).state,',
-    replace:
-      "            { seat, sourceUid: uid },\n            {},\n            events,\n          ).state,",
+    find: '            { seat, sourceUid: uid, invokedBy: "ability" },\n            events,\n          ),',
+    replace: "            { seat, sourceUid: uid },\n            events,\n          ),",
     expectKilledBy: ["packages/engine/src/abilityShieldMeD614.test.ts"],
   },
   {

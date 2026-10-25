@@ -479,7 +479,7 @@ function takeFlips(
   attacker: InPlayPokemon,
   count: AttackFlipCount,
 ): [faces: CoinFace[], nextState: number] {
-  // The engine's only throw: a flip-until-tails truncated at `MAX_UNTIL_TAILS_FLIPS` has no honest
+  // An invariant throw: a flip-until-tails truncated at `MAX_UNTIL_TAILS_FLIPS` has no honest
   // heads count, and scoring it would corrupt the match. Unreachable with the current RNG (its
   // longest heads run is 31); it fires only if the RNG is replaced with something degenerate.
   if (count.kind === "untilTails") {

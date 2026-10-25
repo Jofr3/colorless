@@ -6,7 +6,7 @@ import { abilityUsedKey } from "./cardplay";
 import { disabledAbilityUids, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
-import { runProgram } from "./interpreter";
+import { runProgram, runSyncProgram } from "./interpreter";
 // The "during their turn" clause: switch on `Phase`, never turn parity. phaseView.ts imports from
 // here only as a type, so this value import creates no runtime cycle.
 import { phaseViewOf } from "./phaseView";
@@ -17,8 +17,28 @@ import { inPlayOf, otherSeat, pokemonAt } from "./types";
 
 // Triggered Abilities (§9) fire on a game event rather than being activated. Board triggers
 // (onPlayToBench, onEvolve) run on the controller's own turn and settle through `settleProgram`, so
-// they may park on a decision. Between-turns triggers never park and run synchronously inside the
-// Checkup.
+// they may park on a decision. Between-turns triggers and the watched sweeps run synchronously
+// through `runSyncProgram`, which throws on a park.
+
+/** The timings whose every row runs synchronously, in the Checkup or a watched sweep. */
+export const SYNC_TRIGGER_TIMINGS = [
+  "betweenTurns",
+  "onEnergyAttach",
+  "onActiveMovedToBench",
+] as const satisfies readonly TriggerTiming[];
+
+export type SyncTriggerTiming = (typeof SYNC_TRIGGER_TIMINGS)[number];
+
+/**
+ * Whether `ability` fires through a synchronous run that cannot park: a sync timing, or any row
+ * watching the opponent's actions, which only the watched sweep fires.
+ */
+export function runsSynchronously(ability: TriggeredAbility): boolean {
+  return (
+    ability.opponentAction === true ||
+    (SYNC_TRIGGER_TIMINGS as readonly TriggerTiming[]).includes(ability.trigger)
+  );
+}
 
 /** The on-KO triggered Ability of the card `uid` names (§8.1), or undefined.
     Resolved through cardIdByUid → programFor, which stays valid AFTER the KO
@@ -144,7 +164,7 @@ export function runSelfWatchedTriggers(
   state: GameState,
   actorSeat: Seat,
   subjectUid: string,
-  timing: TriggerTiming,
+  timing: SyncTriggerTiming,
   atMoment: GameState,
   events: GameEvent[],
 ): GameState {
@@ -209,13 +229,12 @@ function sweepTriggers(
       }
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
       next = recoverStatuses(
-        runProgram(
+        runSyncProgram(
           next,
           ability.program,
           { seat: watcher, sourceUid: uid, subjectUid, invokedBy: "ability" },
-          {},
           events,
-        ).state,
+        ),
         events,
       );
     }
@@ -286,17 +305,15 @@ export function runCheckupTriggers(
         "self",
       )) {
         events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
-        // Between-turns programs never park, so taking `.state` loses nothing except the §12 status
-        // recovery, which is restored here. It runs inside the loop because the invariant is per
-        // program.
+        // The synchronous run skips `settleProgram`, so the §12 status recovery is restored here,
+        // inside the loop because the invariant is per program.
         next = recoverStatuses(
-          runProgram(
+          runSyncProgram(
             next,
             ability.program,
             { seat, sourceUid: uid, invokedBy: "ability" },
-            {},
             events,
-          ).state,
+          ),
           events,
         );
       }
