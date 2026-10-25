@@ -8,8 +8,8 @@ type RecordSlot<K extends OpName> =
 
 type OpTraits<K extends OpName> = {
   /**
-   * `true`: the op can park, and `applyChoice` answers it. `false`: running it never parks.
-   * `"indirectly"`: `applyChoice` never answers it, but a program running it can still park. The
+   * `true`: the op can park, and `answerOp` answers it. `false`: running it never parks.
+   * `"indirectly"`: `answerOp` never answers it, but a program running it can still park. The
    * gates splice their branches, a coin flip parks a Backtrack Badge offer before its branch, some
    * ops schedule ops that park, and the copy-attack and attack-coin offers are parked and answered
    * by attack.ts.
@@ -172,7 +172,7 @@ export const OP_TRAITS = {
 
 type Traits = typeof OP_TRAITS;
 
-/** The ops `applyChoice` answers. */
+/** The ops `answerOp` answers. */
 export type ParkingOpName = {
   [K in OpName]: Traits[K]["parks"] extends true ? K : never;
 }[OpName];

@@ -111,7 +111,13 @@ only the conclusion.
   `continuous.ts` stays a read model that pushes no events and draws no RNG. The op contract lives in `effectTypes.ts`, program
   types in `programTypes.ts`, and stepOp's arm bodies in `ops/*.ts`,
   `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
-  `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Every op
+  `interpreter.ts` keeps runProgram, stepOp, answerOp and resumeProgram. A parked
+  op's answer goes through `answerOp`, one arm per `parks: true` op (a missing arm
+  fails to compile), which returns the board and the ops the answer buys, the
+  shape stepOp returns. resumeProgram is answerOp, then `discardMisplacedEnergy`,
+  then runProgram over the bought ops and the rest. A multi-question op whose
+  first question is forced (`healChosen` with riders, the `moveCounters*` ops)
+  answers it through answerOp too, so the forced and parked endings agree. Every op
   declares its traits in `OP_TRAITS` (`ops/traits.ts`, type-only imports):
   whether it parks, its record slot, whether it moves counters, and whether
   `programPlayable` asks its whiff check (`ONLY_WHIFFS` in `cardplay.ts`). The

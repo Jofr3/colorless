@@ -476,7 +476,7 @@ describe("§4 — two candidates PARK, and the answer really moves the board", (
   });
 
   it("THE TWO ANSWERS PRODUCE DIFFERENT BOARDS — the answer is not discarded", () => {
-    // The rung that dies the moment `applyChoice`'s arm is deleted: with the answer
+    // The rung that dies the moment `answerOp`'s arm is deleted: with the answer
     // dropped BOTH boards come back with two full stacks and these are equal.
     const before = armed(22, { stages: 1, benchStages: 1 });
     const { state: waiting } = strike(before, "p1", PICK);

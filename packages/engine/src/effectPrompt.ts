@@ -311,7 +311,7 @@ export type EffectRecord = { [K in EffectSlot]?: string[] };
 
 /** The JSON continuation stored in the effect:choose phase: the op awaiting a
     choice, the ops after it, the context, and what earlier ops recorded.
-    Replaying `applyChoice(pendingOp) → runProgram(rest)` resumes exactly where
+    Replaying `answerOp(pendingOp) → runProgram(rest)` resumes exactly where
     it parked. `record` is absent when nothing has been recorded, so every
     program in the vocabulary that predates §9.2 stores a byte-identical phase. */
 export interface EffectContinuation {

@@ -155,7 +155,7 @@ function underBench(state: GameState, seat: Seat, index: number, cardId: string)
 }
 
 /** TEST SURGERY — drop the benched body at `index` off the board entirely, leaving its
-    cards nowhere. Used ONCE, in §8, to build the board `applyChoice`'s trust level is
+    cards nowhere. Used ONCE, in §8, to build the board `answerOp`'s trust level is
     about: a wire answer whose body has since left play. */
 function dropBench(state: GameState, seat: Seat, index: number): GameState {
   const side = state.players[seat];

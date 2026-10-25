@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
-import { applyChoice } from "./interpreter";
+import { answerOp } from "./interpreter";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
 import {
@@ -435,14 +435,14 @@ describe("D359 §3 — the validator is the only place the printed ceiling is en
     const parked = attackWith(ready(11, { pile: 4 })).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     const events: GameEvent[] = [];
-    const after = applyChoice(
+    const after = answerOp(
       parked,
       parked.phase.cont.pendingOp,
       { kind: "pokemon", ref: benchRef(0), take: 4 },
       parked.phase.cont.ctx,
       {},
       events,
-    );
+    ).done;
     expect(energyOn(after, benchRef(0))).toEqual([WATER, WATER]);
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(2);
   });

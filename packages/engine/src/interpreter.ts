@@ -839,13 +839,13 @@ function evolveBodyAnswered(
  */
 function chainedEvolveAnswered(
   before: GameState,
-  cont: EffectContinuation,
+  ctx: EffectContext,
   op: OpOf<"evolveFromDeck">,
   choice: EffectChoice,
 ): EffectOp[] {
   if (choice.kind !== "cards" || op.onto === undefined) return [];
   const [picked] = choice.uids;
-  const offer = evolveFromDeckOffer(before, cont.ctx, {
+  const offer = evolveFromDeckOffer(before, ctx, {
     onto: op.onto,
     names: op.names,
     noAbilities: op.noAbilities,
@@ -1025,127 +1025,6 @@ function evolvableOwnRefs(
   });
 }
 
-/**
- * Ops a resolved park schedules ahead of the program's remaining ops. `applyChoice` returns only
- * state, so an answer that buys ops is spliced here in `resumeProgram`.
- */
-function continuationOps(
-  cont: EffectContinuation,
-  choice: EffectChoice,
-  /**
-   * The board before the answer was applied (Super Potion reads the picked body's damage before the
-   * heal).
-   */
-  before: GameState,
-): EffectOp[] {
-  const op = cont.pendingOp;
-  // Backtrack Badge: yes re-runs the coin op (flipping again); no re-runs it with the faces already
-  // flipped.
-  if (op.op === "reflipCoins") {
-    return [choice.kind === "confirm" && choice.yes ? op.retry : withKeptFaces(op.retry, op.faces)];
-  }
-  // An attach target whose cards are not interchangeable buys the card question: the op again with
-  // target and take pinned. Asked of `before`, the board `applyChoice` saw.
-  if (op.op === "attachEnergyFrom" && op.pickOnto === undefined && pickedPokemon(choice)) {
-    const take = attachTake(op, choice.take);
-    return energyPickOffer(before, op, cont.ctx.seat, take) === undefined
-      ? []
-      : [
-          {
-            ...op,
-            pickOnto: { ref: { seat: choice.ref.seat, spot: { ...choice.ref.spot } }, take },
-          },
-        ];
-  }
-  // Target Together's resumed pick: the op again with the targets, so `stepOp` flips its coins.
-  if (op.op === "damageChosen" && op.perHeadsInPlay !== undefined && op.hitRefs === undefined) {
-    return choice.kind === "pokemonMulti" ? [{ ...op, hitRefs: [...choice.refs] }] : [];
-  }
-  // A parked heal pick buys its healed-body riders.
-  if (op.op === "healChosen" && hasHealedRider(op)) {
-    return pickedPokemon(choice) ? healedRiderOps(before, choice.ref, op) : [];
-  }
-  // Strange Timepiece's own-side pick buys the devolve (or the depth question).
-  if (op.op === "devolveChosen" && op.whose === "self" && op.bodyUid === undefined) {
-    return pickedPokemon(choice) ? ownDevolveAnswered(before, choice.ref, op) : [];
-  }
-  // A decline runs `otherwise` (empty when absent), e.g. "You may do 120 more damage" prints its
-  // base damage on the decline.
-  if (op.op === "optional") {
-    if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined)
-      return [];
-    return choice.kind === "confirm" && choice.yes ? [...op.ops] : [...(op.otherwise ?? [])];
-  }
-  // Deduction Kit: an empty ordering is the printed alternative (shuffle them onto the bottom).
-  // `validateChoice` only admits it when the prompt carries `alt`.
-  if (op.op === "reorderTop") {
-    return choice.kind === "orderCards" && choice.uids.length === 0
-      ? [...(op.otherwise ?? [])]
-      : [];
-  }
-  if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
-    return pickedPokemon(choice) ? counterSourceAnswered(op, choice.ref) : [];
-  }
-  // Rocket Brain's source answer buys the destination question.
-  if (op.op === "moveCounterOwnChosen" && op.from === undefined) {
-    return pickedPokemon(choice) ? counterOwnSourceAnswered(op, choice.ref) : [];
-  }
-  // Adrena-Brain's source answer buys the destination question.
-  if (op.op === "moveCountersToOpponentChosen" && op.from === undefined) {
-    return pickedPokemon(choice) ? [{ ...op, from: choice.ref.spot }] : [];
-  }
-  // Sableye / Alakazam loop: the source answer buys the destination-and-count question; that answer
-  // buys the next round with the budget spent. A ref-less answer declines and ends the loop.
-  if (op.op === "moveCountersOpponentAnyWay") {
-    if (!pickedPokemon(choice)) return [];
-    return op.source === undefined
-      ? [anyWaySourceAnswered(before, op, choice.ref, choice.take)]
-      : [nextAnyWayRound(op)];
-  }
-  // Blipbug's blind slot answer buys the look. Look-Alike Show's pick buys the picked Supporter's
-  // program, run in this attack's context; an empty answer declines.
-  if (op.op === "useOpponentSupporterEffect") {
-    const [picked] = choice.kind === "cards" ? choice.uids : [];
-    const id = picked === undefined ? undefined : before.cardIdByUid[picked];
-    return id === undefined ? [] : [...(supporterEffectOf(id)?.ops ?? [])];
-  }
-  // Tyme's naming answer buys the guess question.
-  if (op.op === "opponentGuessesHp" && op.uid === undefined) {
-    const [named] = choice.kind === "cards" ? choice.uids : [];
-    return named === undefined ? [] : [{ ...op, uid: named }];
-  }
-  if (op.op === "lookAtPrize" && op.index === undefined) {
-    return choice.kind === "prize" ? [{ ...op, index: choice.index }] : [];
-  }
-  if (op.op === "discardToolAndSpecialEnergyChosen") {
-    return pickedPokemon(choice) ? ruffianBodyAnswered(before, choice.ref) : [];
-  }
-  // Ogre's Mask's body answer buys the discard pick.
-  if (op.op === "switchWithDiscardNamed" && op.bodyUid === undefined) {
-    return pickedPokemon(choice) ? swapBodyAnswered(before, op, choice.ref) : [];
-  }
-  // `evolveFromDeckChosen` exists only to ask, so reaching here means it was answered; it buys an
-  // `evolveFromDeck` onto the picked body.
-  if (op.op === "evolveFromDeckChosen") {
-    return pickedPokemon(choice)
-      ? evolveBodyAnswered(choice.ref, op.noAbilities, op.thenEvolveAgain)
-      : [];
-  }
-  // Grand Tree's Stage 1 answer buys the optional Stage 2 question, only when the Stage 1 placement
-  // happened.
-  if (op.op === "evolveFromDeck" && op.thenEvolveAgain === true) {
-    return chainedEvolveAnswered(before, cont, op, choice);
-  }
-  // "Choose up to 2 … For each of those Pokémon": one `evolveFromDeck` per picked body, in pick
-  // order. An empty pick buys nothing.
-  if (op.op === "evolveFromDeckEachChosen") {
-    return choice.kind === "pokemonMulti"
-      ? choice.refs.flatMap((ref) => evolveBodyAnswered(ref))
-      : [];
-  }
-  return [];
-}
-
 /** Resume a parked effect: apply the awaited op with the (already validated)
     choice, then run the rest of the program. */
 export function resumeProgram(
@@ -1160,15 +1039,11 @@ export function resumeProgram(
   // park: Superior Energy Retrieval's cost and Miriam's retrieval both PARK, so
   // every recording this engine can do happens on exactly this path.
   const record: EffectRecord = { ...cont.record };
+  const answered = answerOp(state, cont.pendingOp, choice, cont.ctx, record, events);
   // The answer may attach or move Team Rocket's Energy, so the state check runs before the rest of
   // the program.
-  const applied = discardMisplacedEnergy(
-    applyChoice(state, cont.pendingOp, choice, cont.ctx, record, events),
-    events,
-  );
-  // The answer's continuation ops are spliced ahead of the rest here, the only place holding both
-  // the applied state and the remaining ops.
-  const rest = [...continuationOps(cont, choice, state), ...cont.rest];
+  const applied = discardMisplacedEnergy(answered.done, events);
+  const rest = [...(answered.schedule ?? []), ...cont.rest];
   return runProgram(applied, rest, cont.ctx, record, events);
 }
 
@@ -1443,9 +1318,9 @@ function stepOp(
         if (sources.length === 0) return { done: state };
         const forced = sources.length === 1 ? sources[0] : undefined;
         // Not `parkOrForce`: its forced arm applies directly and cannot ask a second question. A
-        // single candidate is answered through the same helper as the parked ending.
+        // single candidate is answered as the parked answer is.
         if (forced !== undefined)
-          return { done: state, schedule: counterSourceAnswered(op, forced) };
+          return answerOp(state, op, { kind: "pokemon", ref: forced }, ctx, record, events);
         return {
           park: {
             kind: "choosePokemon",
@@ -1486,11 +1361,11 @@ function stepOp(
         // QUESTION 1 — the SOURCE: a damaged own body in the printed subgroup.
         const sources = counterOwnSources(state, ctx.seat, op.ownerPokemon);
         if (sources.length === 0) return { done: state };
-        // `parkOrForce`'s ordering (nothing / one / many), with the one ANSWERED and handed
-        // on through the helper the parked ending uses (`moveCountersChosen`'s `then`).
+        // `parkOrForce`'s ordering (nothing / one / many), with the one answered as the parked
+        // answer is.
         const onlySource = sources.length === 1 ? sources[0] : undefined;
         if (onlySource !== undefined)
-          return { done: state, schedule: counterOwnSourceAnswered(op, onlySource) };
+          return answerOp(state, op, { kind: "pokemon", ref: onlySource }, ctx, record, events);
         return {
           park: {
             kind: "choosePokemon",
@@ -1517,7 +1392,7 @@ function stepOp(
     // Never queued: only ever a pending op answered through `resolveFoundAttack`.
     case "useFoundAttackAs":
       return { done: state };
-    // Backtrack Badge's offer always parks ("you may"); `continuationOps` splices the retry.
+    // Backtrack Badge's offer always parks ("you may"); its answer buys the retry.
     case "reflipCoins":
       return { park: coinRedoPrompt(state, op.toolUid, op.faces) };
     // Never queued: only ever a pending op answered through `resolveCoinRedo`.
@@ -1563,12 +1438,8 @@ function stepOp(
       const dests = anyWayDestinations(state, ctx, op.from, from);
       const lone = dests.length === 1 ? dests[0] : undefined;
       if (dests.length === 0) return { done: state };
-      if (lone !== undefined) {
-        return {
-          done: moveCountersBetweenOpponents(state, from, lone, take, ctx, events),
-          schedule: [nextAnyWayRound(op)],
-        };
-      }
+      if (lone !== undefined)
+        return answerOp(state, op, { kind: "pokemon", ref: lone }, ctx, record, events);
       return {
         park: {
           kind: "choosePokemon",
@@ -1583,11 +1454,12 @@ function stepOp(
       const source = op.from;
       if (source === undefined) {
         // QUESTION 1 — the SOURCE: any own damaged body (Munkidori included). One is FORCED and
-        // handed on through the SAME splice the parked answer takes (`continuationOps`).
+        // answered as the parked answer is.
         const damagedOwn = counterToOpponentSources(state, ctx.seat);
         if (damagedOwn.length === 0) return { done: state };
         const lone = damagedOwn.length === 1 ? damagedOwn[0] : undefined;
-        if (lone !== undefined) return { done: state, schedule: [{ ...op, from: lone.spot }] };
+        if (lone !== undefined)
+          return answerOp(state, op, { kind: "pokemon", ref: lone }, ctx, record, events);
         return {
           park: {
             kind: "choosePokemon",
@@ -2584,7 +2456,7 @@ function stepOp(
       // set), so it ALWAYS parks. Every candidate stays DISTINCT (no
       // interchangeable collapse): the COUNT is what the damage reads, so three
       // identical {W} must offer three pickable rows, not one. The record is
-      // filed when the pick resolves (applyChoice), so a decline files nothing.
+      // filed when the pick resolves (answerOp), so a decline files nothing.
       if (op.count === "any") {
         // "up to N" (Mewtwo VSTAR "Psy Purge") bounds the ceiling below the whole
         // offer; absent a cap it is every offered Energy (Hail Blade "any amount").
@@ -2857,7 +2729,7 @@ function stepOp(
       const take = Math.min(wanted, hand.length);
       if (take === 0) return { done: state };
       if (hand.length <= take) {
-        // The forced short-hand path never reaches `applyChoice`, so it must branch on the
+        // The forced short-hand path never reaches `answerOp`, so it must branch on the
         // destination too.
         return {
           done:
@@ -3024,7 +2896,7 @@ function stepOp(
         returnBenchedNote(op),
       );
     case "returnBenchedRest": {
-      // The answer names the bodies that stay; the effect lands on the complement in `applyChoice`.
+      // The answer names the bodies that stay; the effect lands on the complement in `answerOp`.
       // Not §11-filtered here: the shield is asked after the complement is taken, so kept bodies
       // don't produce false refusal rows.
       const candidates = oppBenchRefs(state, ctx.seat);
@@ -3221,14 +3093,10 @@ function stepOp(
           },
         };
       }
-      // A forced pick is answered here and its riders are scheduled through `continuationOps`, the
-      // same path as the parked ending.
+      // A forced pick with riders is answered as the parked pick is, so it buys the same riders.
       if (hasHealedRider(op) && candidates.length === 1) {
         const forced = candidates[0] as PokemonRef;
-        return {
-          done: healChosen(state, forced, op.amount, ctx, events),
-          schedule: healedRiderOps(state, forced, op),
-        };
+        return answerOp(state, op, { kind: "pokemon", ref: forced }, ctx, record, events);
       }
       return parkOrForce(
         state,
@@ -3406,110 +3274,143 @@ function answersChoice(op: EffectOp): op is OpOf<ParkingOpName> {
   return traitsOf(op)?.parks === true;
 }
 
-/** Apply a parked op given its validated choice. The auto-resolve path calls
-    the per-op helpers directly (single forced ref); this is the resolveEffect
-    entry, matching the choice shape to the op. */
-export function applyChoice(
+/**
+ * Apply a parked op's validated answer: the board it leaves, and the ops it buys, which
+ * `resumeProgram` splices ahead of the rest of the program. Ops that buy a second question read
+ * the board before the answer. A multi-question op's forced first answer in `stepOp` comes through
+ * here too, so the forced and parked endings resolve identically.
+ */
+export function answerOp(
   state: GameState,
   op: EffectOp,
   choice: EffectChoice,
   ctx: EffectContext,
-  /** The running §9.2 record — the two recording ops both PARK, so this path is
-      where nearly every recording is actually made (see resumeProgram). */
+  /** The running §9.2 record. The recording ops park, so nearly every recording is made here. */
   record: EffectRecord,
   events: GameEvent[],
-): GameState {
-  if (!answersChoice(op)) return state;
+): { done: GameState; schedule?: EffectOp[] } {
+  if (!answersChoice(op)) return { done: state };
   switch (op.op) {
-    // Backtrack Badge: "yes" spends the once-per-turn key and files `COINS_REFLIPPED`; "no" moves
-    // nothing.
+    // Backtrack Badge: "yes" spends the once-per-turn key, files `COINS_REFLIPPED` and re-runs the
+    // coin op, flipping again; "no" re-runs it with the faces already flipped.
     case "reflipCoins":
       return choice.kind === "confirm" && choice.yes
-        ? spendCoinRedo(state, ctx.seat, op.toolUid, op.faces.length, events)
-        : state;
+        ? {
+            done: spendCoinRedo(state, ctx.seat, op.toolUid, op.faces.length, events),
+            schedule: [op.retry],
+          }
+        : { done: state, schedule: [withKeptFaces(op.retry, op.faces)] };
     case "searchDeck": {
       // Filed from what `searchMove` actually moved, not from `choice.uids`: a stale uid never
       // moved, and a Bench-bound answer is clamped to bench space (§9.2).
       if (choice.kind !== "cards") {
         recordMoved(record, op.recordAs, []);
-        return state;
+        return { done: state };
       }
       // Impromptu Carrier: the pick is attached to the program's own body.
       if (op.dest === "attachToSelf") {
         const attached = searchAttachToSelf(state, choice.uids, ctx, events);
         recordMoved(record, op.recordAs, attached.moved);
-        return attached.state;
+        return { done: attached.state };
       }
       const searched = searchMove(state, choice.uids, op.dest, op.reveal, ctx, events);
       recordMoved(record, op.recordAs, searched.moved);
       // Risky Ruins on what landed on the Bench (a no-op for every other `dest`).
-      return benchArrivalCounters(searched.state, ctx.seat, searched.moved, events);
+      return { done: benchArrivalCounters(searched.state, ctx.seat, searched.moved, events) };
     }
-    case "evolveFromDeck":
+    case "evolveFromDeck": {
+      // Grand Tree's Stage 1 answer buys the optional Stage 2 question.
+      const schedule =
+        op.thenEvolveAgain === true ? chainedEvolveAnswered(state, ctx, op, choice) : [];
       // The hand route (Spiteful Evolution) files the placement for its "If you do".
       if (op.fromHand === true) {
         const placed =
           choice.kind === "cards" ? evolveFromHandMove(state, choice.uids, ctx, events) : undefined;
         recordMoved(record, op.recordAs, placed?.moved ?? []);
-        return placed?.state ?? state;
+        return { done: placed?.state ?? state, schedule };
       }
-      return choice.kind === "cards"
-        ? evolveFromDeckMove(
-            state,
-            choice.uids,
-            ctx,
-            { onto: op.onto, names: op.names, noAbilities: op.noAbilities },
-            events,
-          )
-        : state;
+      return {
+        done:
+          choice.kind === "cards"
+            ? evolveFromDeckMove(
+                state,
+                choice.uids,
+                ctx,
+                { onto: op.onto, names: op.names, noAbilities: op.noAbilities },
+                events,
+              )
+            : state,
+        schedule,
+      };
+    }
     case "evolveFromDeckChosen":
-      // The body answer moves nothing; `continuationOps` schedules the op that asks for the card.
-      return state;
+      // The op exists only to ask; the body answer buys an `evolveFromDeck` onto the picked body.
+      return {
+        done: state,
+        schedule: pickedPokemon(choice)
+          ? evolveBodyAnswered(choice.ref, op.noAbilities, op.thenEvolveAgain)
+          : [],
+      };
     case "evolveFromDeckEachChosen":
-      // The multi answer moves nothing; `continuationOps` schedules the resulting ops.
-      return state;
+      // "Choose up to 2 … For each of those Pokémon": one `evolveFromDeck` per picked body, in pick
+      // order. An empty pick buys nothing.
+      return {
+        done: state,
+        schedule:
+          choice.kind === "pokemonMulti"
+            ? choice.refs.flatMap((ref) => evolveBodyAnswered(ref))
+            : [],
+      };
     case "discardPileRetrieval": {
-      if (choice.kind !== "cards") return state;
+      if (choice.kind !== "cards") return { done: state };
       const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
       // What was RETRIEVED, not what was offered or picked: a wire-dropped uid
       // (one no longer in the discard) never moved, so Miriam's "if you
       // shuffled any cards into your deck in this way" must not count it.
       recordMoved(record, op.recordAs, retrieved.moved);
       // Risky Ruins on what landed on the Bench (a no-op for every other `dest`).
-      return benchArrivalCounters(retrieved.state, ctx.seat, retrieved.moved, events);
+      return { done: benchArrivalCounters(retrieved.state, ctx.seat, retrieved.moved, events) };
     }
     case "lookAtTopN":
       // Risky Ruins on the picked cards that landed on the controller's own Bench.
-      return choice.kind === "cards"
-        ? benchArrivalCounters(
-            revealFromTop(state, choice.uids, op, ctx, events),
-            ctx.seat,
-            choice.uids,
-            events,
-          )
-        : state;
+      return {
+        done:
+          choice.kind === "cards"
+            ? benchArrivalCounters(
+                revealFromTop(state, choice.uids, op, ctx, events),
+                ctx.seat,
+                choice.uids,
+                events,
+              )
+            : state,
+      };
     case "reorderTop": {
       // `validateChoice` has checked that the answer is a permutation of the offered window, so the
       // top cards are replaced in the answer's order. No event here: `DECK_TOP_REORDERED` was filed
       // when the op parked, since it reports the look.
-      if (choice.kind !== "orderCards") return state;
+      if (choice.kind !== "orderCards") return { done: state };
       const owner = relativeSeat(ctx.seat, op.side === "opponent");
       const deck = state.players[owner].deck;
       // Re-sliced off the live deck: a short deck may have offered fewer than `op.n` cards. The
       // bottom fork replaces the last `uids.length` cards instead.
       const kept = deck.slice(0, Math.max(0, deck.length - choice.uids.length));
       return {
-        ...state,
-        players: {
-          ...state.players,
-          [owner]: {
-            ...state.players[owner],
-            deck:
-              op.from === "bottom"
-                ? [...kept, ...choice.uids]
-                : [...choice.uids, ...deck.slice(choice.uids.length)],
+        done: {
+          ...state,
+          players: {
+            ...state.players,
+            [owner]: {
+              ...state.players[owner],
+              deck:
+                op.from === "bottom"
+                  ? [...kept, ...choice.uids]
+                  : [...choice.uids, ...deck.slice(choice.uids.length)],
+            },
           },
         },
+        // Deduction Kit: an empty ordering is the printed alternative (shuffle them onto the
+        // bottom). `validateChoice` only admits it when the prompt carries `alt`.
+        schedule: choice.uids.length === 0 ? [...(op.otherwise ?? [])] : [],
       };
     }
     case "revealFromHand": {
@@ -3523,34 +3424,39 @@ export function applyChoice(
       if (revealed.length > 0)
         events.push({ type: "HAND_CARDS_REVEALED", seat: ctx.seat, uids: revealed });
       recordMoved(record, op.recordAs, revealed);
-      return state;
+      return { done: state };
     }
     case "payFromHand": {
-      if (choice.kind !== "cards") return state;
+      if (choice.kind !== "cards") return { done: state };
       const paid = payFromHandApply(state, choice.uids, op, ctx, events);
       recordMoved(record, op.recordAs, paid.paid);
-      return paid.state;
+      return { done: paid.state };
     }
     case "opponentDiscardsFromHand":
       // The answer comes from the opponent and moves cards on their side; `ctx.seat` is still the
       // controller, so the owner is re-derived as the park derived it. The deck-destination branch
       // is not checked by the compiler: without it the picked cards would land in the discard pile.
-      if (choice.kind !== "cards") return state;
+      if (choice.kind !== "cards") return { done: state };
       // Xerosic's Machinations' `untilHandSize` arm and Hand Trimmer's `whose: "self"` arm always
       // take the discard branch (`to` is unrepresentable there).
       if (op.whose === "self") {
-        return discardChosenFromHand(
-          state,
-          relativeSeat(ctx.seat, op.whose !== "self"),
-          choice.uids,
-          events,
-        );
+        return {
+          done: discardChosenFromHand(
+            state,
+            relativeSeat(ctx.seat, op.whose !== "self"),
+            choice.uids,
+            events,
+          ),
+        };
       }
-      return op.to === "deck"
-        ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
-        : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);
+      return {
+        done:
+          op.to === "deck"
+            ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
+            : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events),
+      };
     case "bottomFromOpponentHand": {
-      if (choice.kind !== "cards") return state;
+      if (choice.kind !== "cards") return { done: state };
       const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, op.dest, events);
       // What actually MOVED, not what was picked — the retrieval/payment rule
       // (§9.2): a wire-dropped uid never left the hand, and Ortega's "if you
@@ -3558,72 +3464,101 @@ export function applyChoice(
       // count it. The reveal is NOT re-emitted here — it already rode the
       // action that parked.
       recordMoved(record, op.recordAs, moved.moved);
-      return moved.state;
+      return { done: moved.state };
     }
     case "useOpponentSupporterEffect": {
       // Look-Alike Show: the pick moves nothing (the card stays in the opponent's hand); it is
-      // announced here and `continuationOps` splices the Supporter's program. A decline says
-      // nothing.
+      // announced and buys the picked Supporter's program, run in this attack's context. A decline
+      // says nothing.
       const [picked] = choice.kind === "cards" ? choice.uids : [];
-      if (picked === undefined) return state;
+      if (picked === undefined) return { done: state };
       events.push({ type: "SUPPORTER_EFFECT_USED", seat: ctx.seat, uid: picked });
-      return state;
+      const id = state.cardIdByUid[picked];
+      return {
+        done: state,
+        schedule: id === undefined ? [] : [...(supporterEffectOf(id)?.ops ?? [])],
+      };
     }
     case "opponentGuessesHp":
-      // Tyme: the naming answer moves nothing (`continuationOps` asks the second question); the
-      // guess answer is the reveal and the draw.
-      return op.uid !== undefined && choice.kind === "hpGuess"
-        ? hpGuessApply(state, op, op.uid, choice.hp, ctx, events)
-        : state;
+      // Tyme: the naming answer buys the guess question; the guess answer is the reveal and the
+      // draw.
+      if (op.uid === undefined) {
+        const [named] = choice.kind === "cards" ? choice.uids : [];
+        return { done: state, schedule: named === undefined ? [] : [{ ...op, uid: named }] };
+      }
+      return {
+        done:
+          choice.kind === "hpGuess"
+            ? hpGuessApply(state, op, op.uid, choice.hp, ctx, events)
+            : state,
+      };
     case "opponentMayDraw":
       // The drawer is the answerer — the controller's OPPONENT (the op's whole
       // point); a decline moves nothing and says nothing.
-      return choice.kind === "mayDraw" && choice.draw
-        ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", "top", events)
-        : state;
+      return {
+        done:
+          choice.kind === "mayDraw" && choice.draw
+            ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", "top", events)
+            : state,
+      };
     case "optional":
       if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined) {
         const attach = (choice.yes ? op.ops : op.otherwise)?.[0];
         const uid = choice.yes ? op.cards.yes : op.cards.no;
         if (attach?.op === "attachEnergyFrom" && uid !== undefined) {
-          return attachEnergyFrom(
-            state,
-            attach,
-            choice.target,
-            ctx,
-            record,
-            undefined,
-            [uid],
-            events,
-          );
+          return {
+            done: attachEnergyFrom(
+              state,
+              attach,
+              choice.target,
+              ctx,
+              record,
+              undefined,
+              [uid],
+              events,
+            ),
+          };
         }
+        return { done: state };
       }
-      // Other optional prompts splice their branch through continuationOps.
-      return state;
+      // A decline runs `otherwise` (empty when absent), e.g. "You may do 120 more damage" prints
+      // its base damage on the decline.
+      return {
+        done: state,
+        schedule: choice.kind === "confirm" && choice.yes ? [...op.ops] : [...(op.otherwise ?? [])],
+      };
     case "switchActive":
       // Records what moved, not what was picked: an answer that `switchInto` then refused must not
       // file a switch.
-      return pickedPokemon(choice)
-        ? switchRecording(op, (into) => switchOwn(state, choice.ref, ctx, into), record, events)
-        : state;
+      return {
+        done: pickedPokemon(choice)
+          ? switchRecording(op, (into) => switchOwn(state, choice.ref, ctx, into), record, events)
+          : state,
+      };
     case "gust":
-      return pickedPokemon(choice)
-        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), record, events)
-        : state;
+      return {
+        done: pickedPokemon(choice)
+          ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), record, events)
+          : state,
+      };
     case "knockOutChosen":
       // The same call the forced half makes, so both produce identical boards; `doomBodyAt` no-ops
       // if the body has left play. No §11 check here: shielded bodies were filtered from the
       // candidates.
-      return pickedPokemon(choice)
-        ? doomBodyAt(state, choice.ref, koByEffectMarker(state.turn))
-        : state;
+      return {
+        done: pickedPokemon(choice)
+          ? doomBodyAt(state, choice.ref, koByEffectMarker(state.turn))
+          : state,
+      };
     case "returnBenched":
       // No `recordAs`: this op is on neither side of any printed "If you do". `returnBenched`
       // no-ops if the body has since left play.
-      return pickedPokemon(choice) ? returnBenched(state, choice.ref, op, ctx, events) : state;
+      return {
+        done: pickedPokemon(choice) ? returnBenched(state, choice.ref, op, ctx, events) : state,
+      };
     case "returnBenchedRest": {
       // The answer names the bodies that stay, so the writer receives the complement.
-      if (choice.kind !== "pokemonMulti") return state;
+      if (choice.kind !== "pokemonMulti") return { done: state };
       const kept = choice.refs;
       // The live Bench is re-read; a body that has since left play simply matches nothing.
       // `refKeyOf` is used because `refEquals` is private to cardplay.ts.
@@ -3633,40 +3568,45 @@ export function applyChoice(
       );
       // The §11 shield is asked here, after narrowing, so only bodies the effect will actually
       // reach are checked.
-      return shuffleBenchedRefsIntoDeck(
-        state,
-        unshieldedRefs(state, complement, ctx, events),
-        ctx,
-        events,
-      );
+      return {
+        done: shuffleBenchedRefsIntoDeck(
+          state,
+          unshieldedRefs(state, complement, ctx, events),
+          ctx,
+          events,
+        ),
+      };
     }
     case "trimBench":
       // Area Zero Underdepths' trim (§7.3): the answer names the owner's benched bodies that go.
-      // Omitting this arm would typecheck and silently drop the answer.
-      return choice.kind === "pokemonMulti"
-        ? discardBenchedRefs(state, choice.refs, ctx, events)
-        : state;
+      return {
+        done:
+          choice.kind === "pokemonMulti"
+            ? discardBenchedRefs(state, choice.refs, ctx, events)
+            : state,
+      };
     case "trimTools":
       // Multi Adapter's trim (§7.4): the answer names the Tools that go from the owner's over-cap
       // body.
-      return choice.kind === "discardTools"
-        ? trimToolsApply(state, choice.uids, ctx, events)
-        : state;
+      return {
+        done:
+          choice.kind === "discardTools" ? trimToolsApply(state, choice.uids, ctx, events) : state,
+      };
     case "returnBenchedChosen": {
-      // The resumed half. The compiler cannot catch a missing arm here: `default` returns the state
-      // unchanged, so the answer would be silently dropped.
-      if (choice.kind !== "pokemonMulti") return state;
+      if (choice.kind !== "pokemonMulti") return { done: state };
       // The answer itself, not the complement. No shield check: shielded bodies were filtered from
       // the candidates. No `recordAs`. The funnel re-reads the live Bench.
-      return shuffleBenchedRefsIntoDeck(state, choice.refs, ctx, events);
+      return { done: shuffleBenchedRefsIntoDeck(state, choice.refs, ctx, events) };
     }
     case "opponentSwitchOut":
       // `ctx.seat` is still the controller, so `gust`'s `otherSeat` lands on the seat that
       // answered. The recording is needed on this arm too: with two or more benched bodies the op
       // always parks.
-      return pickedPokemon(choice)
-        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), record, events)
-        : state;
+      return {
+        done: pickedPokemon(choice)
+          ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), record, events)
+          : state,
+      };
     case "healChosen":
       // The "up to N" arm answers with a SET (each ref healed `amount`,
       // clamped per Pokémon; the empty set is the legal "none" of §9.1's
@@ -3674,48 +3614,84 @@ export function applyChoice(
       // reaches its own prompt — validateChoice matches the choice against
       // the PARKED prompt — so the cross arms are the wire belt.
       if (choice.kind === "pokemonMulti") {
-        return choice.refs.reduce(
-          (healed, ref) => healChosen(healed, ref, op.amount, ctx, events),
-          state,
-        );
+        return {
+          done: choice.refs.reduce(
+            (healed, ref) => healChosen(healed, ref, op.amount, ctx, events),
+            state,
+          ),
+        };
       }
-      return pickedPokemon(choice) ? healChosen(state, choice.ref, op.amount, ctx, events) : state;
+      if (!pickedPokemon(choice)) return { done: state };
+      // A single pick buys its healed-body riders, read off the board before the heal.
+      return {
+        done: healChosen(state, choice.ref, op.amount, ctx, events),
+        schedule: hasHealedRider(op) ? healedRiderOps(state, choice.ref, op) : [],
+      };
     // Acerola's Mischief's parked pick.
     case "installChosenAttackShield":
-      return pickedPokemon(choice)
-        ? installChosenAttackShield(state, choice.ref, op, ctx, events)
-        : state;
+      return {
+        done: pickedPokemon(choice)
+          ? installChosenAttackShield(state, choice.ref, op, ctx, events)
+          : state,
+      };
     case "moveCountersToDefender":
-      // The parked half of the counter move.
-      return pickedPokemon(choice) ? moveCountersToDefender(state, choice.ref, ctx, events) : state;
-    // The resumed half; the compiler cannot catch a missing arm here, since `default` returns the
-    // state unchanged. Same call as the forced half; `devolveBodyToHand` no-ops if the body has
-    // left play. No §11 check: shielded bodies were filtered from the candidates.
+      return {
+        done: pickedPokemon(choice)
+          ? moveCountersToDefender(state, choice.ref, ctx, events)
+          : state,
+      };
     case "devolveChosen":
-      // An own-side pick moves nothing here; `continuationOps` schedules the shed.
-      if (op.whose === "self") return state;
-      return pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state;
+      // Strange Timepiece's own-side pick moves nothing; it buys the devolve (or the depth
+      // question). `devolveBodyToHand` no-ops if the body has left play. No §11 check: shielded
+      // bodies were filtered from the candidates.
+      if (op.whose === "self") {
+        return {
+          done: state,
+          schedule:
+            op.bodyUid === undefined && pickedPokemon(choice)
+              ? ownDevolveAnswered(state, choice.ref, op)
+              : [],
+        };
+      }
+      return {
+        done: pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state,
+      };
     case "moveCountersChosen": {
-      // The two parks of one sentence. The source answer moves nothing (`continuationOps` asks
-      // question two); the destination answer is the whole move.
+      // The two parks of one sentence, told apart by `op.fromBench`. The source answer buys the
+      // destination question; the destination answer is the whole move.
+      if (!pickedPokemon(choice)) return { done: state };
       const chosen = op.fromBench;
-      if (!pickedPokemon(choice) || chosen === undefined) return state;
-      return moveCountersFromBench(state, chosen, choice.ref, ctx, events);
+      if (chosen === undefined)
+        return { done: state, schedule: counterSourceAnswered(op, choice.ref) };
+      return { done: moveCountersFromBench(state, chosen, choice.ref, ctx, events) };
     }
     case "moveCounterOwnChosen": {
-      // Rocket Brain's two parks, told apart by `op.from`. The source answer moves nothing; the
-      // destination answer is the whole move.
+      // Rocket Brain's two parks, told apart by `op.from`. The source answer buys the destination
+      // question; the destination answer is the whole move.
+      if (!pickedPokemon(choice)) return { done: state };
       const from = op.from;
-      if (!pickedPokemon(choice) || from === undefined) return state;
-      return moveOneOwnCounter(state, from, choice.ref, ctx, events);
+      if (from === undefined)
+        return { done: state, schedule: counterOwnSourceAnswered(op, choice.ref) };
+      return { done: moveOneOwnCounter(state, from, choice.ref, ctx, events) };
     }
     case "moveCountersToOpponentChosen": {
-      // Adrena-Brain's two parks, told apart by `op.from`. The source answer moves nothing. The
-      // destination answer's `take` is the count (absent means `upTo`), and a ref-less answer
-      // declines: nothing moves, no event.
+      // Adrena-Brain's two parks, told apart by `op.from`. The source answer buys the destination
+      // question. The destination answer's `take` is the count (absent means `upTo`), and a
+      // ref-less answer declines: nothing moves, no event.
+      if (!pickedPokemon(choice)) return { done: state };
       const source = op.from;
-      if (!pickedPokemon(choice) || source === undefined) return state;
-      return moveCountersToOpponent(state, source, choice.ref, choice.take ?? op.upTo, ctx, events);
+      if (source === undefined)
+        return { done: state, schedule: [{ ...op, from: choice.ref.spot }] };
+      return {
+        done: moveCountersToOpponent(
+          state,
+          source,
+          choice.ref,
+          choice.take ?? op.upTo,
+          ctx,
+          events,
+        ),
+      };
     }
     case "putCountersOnSelfChosen": {
       // `take` is the count (absent means `upTo`); a ref-less answer declines and files `[]`. One
@@ -3723,107 +3699,152 @@ export function applyChoice(
       // "placed" }` reads.
       if (!pickedPokemon(choice)) {
         recordMoved(record, "placed", []);
-        return state;
+        return { done: state };
       }
       const placed = placeCountersOnSelf(state, choice.take ?? op.upTo, ctx, events);
       recordMoved(record, "placed", placed.placed);
-      return placed.state;
+      return { done: placed.state };
     }
     case "moveCountersOpponentAnyWay": {
-      // The loop's two parks, told apart by `op.source`. The first (source and count) moves
-      // nothing; the second's answer is the round's whole move.
+      // Sableye / Alakazam: the loop's two parks, told apart by `op.source`. The source answer buys
+      // the destination-and-count question; the destination answer is the round's whole move and
+      // buys the next round with the budget spent. A ref-less answer declines and ends the loop.
+      if (!pickedPokemon(choice)) return { done: state };
       const source = op.source;
-      if (!pickedPokemon(choice) || source === undefined) return state;
+      if (source === undefined) {
+        return {
+          done: state,
+          schedule: [anyWaySourceAnswered(state, op, choice.ref, choice.take)],
+        };
+      }
       const from: PokemonRef = { seat: otherSeat(ctx.seat), spot: source };
-      return moveCountersBetweenOpponents(state, from, choice.ref, op.take ?? 0, ctx, events);
+      return {
+        done: moveCountersBetweenOpponents(state, from, choice.ref, op.take ?? 0, ctx, events),
+        schedule: [nextAnyWayRound(op)],
+      };
     }
     case "discardToolAndSpecialEnergyChosen":
-      // Ruffian's pick moves nothing here; `continuationOps` splices the two discards.
-      return state;
+      // Ruffian's pick moves nothing; it buys the two discards.
+      return {
+        done: state,
+        schedule: pickedPokemon(choice) ? ruffianBodyAnswered(state, choice.ref) : [],
+      };
     case "switchWithDiscardNamed": {
-      // Ogre's Mask: the body answer moves nothing (`continuationOps` asks question two); the card
-      // answer is the whole swap.
+      // Ogre's Mask: the body answer buys the discard pick; the card answer is the whole swap.
       const bodyUid = op.bodyUid;
+      if (bodyUid === undefined) {
+        return {
+          done: state,
+          schedule: pickedPokemon(choice) ? swapBodyAnswered(state, op, choice.ref) : [],
+        };
+      }
       const [picked] = choice.kind === "cards" ? choice.uids : [];
-      if (bodyUid === undefined || picked === undefined) return state;
-      return switchWithDiscard(state, bodyUid, picked, ctx, events);
+      if (picked === undefined) return { done: state };
+      return { done: switchWithDiscard(state, bodyUid, picked, ctx, events) };
     }
     case "switchWithDeckChosen": {
       // Ditto: the picked deck card is switched in (or none), then the deck is shuffled.
       const [picked] = choice.kind === "cards" ? choice.uids : [];
-      return switchWithDeckCard(state, picked, ctx, events);
+      return { done: switchWithDeckCard(state, picked, ctx, events) };
     }
     case "damageChosen":
       // Per-target fold: the multiplier is the chosen body's own counters, so the pick is walked
       // ref by ref with `snipeAmount`, as `stepOp`'s forced branch does.
       if (choice.kind === "pokemonMulti" && op.perDamageCounterOnTarget === true) {
-        return snipeEachByCounters(state, choice.refs, op, ctx, record, events);
+        return { done: snipeEachByCounters(state, choice.refs, op, ctx, record, events) };
       }
-      // Target Together: the pick moves nothing; `continuationOps` reschedules the op with
-      // `hitRefs` and `stepOp` flips, so a Backtrack Badge offer can park.
-      if (choice.kind === "pokemonMulti" && op.perHeadsInPlay !== undefined) return state;
+      // Target Together: the pick moves nothing; it buys the op again with `hitRefs`, so `stepOp`
+      // flips the coins where a Backtrack Badge offer can park.
+      if (choice.kind === "pokemonMulti" && op.perHeadsInPlay !== undefined) {
+        return {
+          done: state,
+          schedule: op.hitRefs === undefined ? [{ ...op, hitRefs: [...choice.refs] }] : [],
+        };
+      }
       // Recompute the (possibly Prize-scaled) amount from state: no KO has
       // happened between parking and this pick, so the count is unchanged — the
       // same value snipeNote quoted in the prompt.
-      return choice.kind === "pokemonMulti"
-        ? // The riders, provenance included, ride the parked op, so a resumed pick emits the same
-          // row an inline one would.
-          placeSnipe(state, choice.refs, snipeAmount(op, state, ctx, record), op, ctx, events)
-        : state;
-    case "attachEnergyFrom":
+      return {
+        done:
+          choice.kind === "pokemonMulti"
+            ? // The riders, provenance included, ride the parked op, so a resumed pick emits the
+              // same row an inline one would.
+              placeSnipe(state, choice.refs, snipeAmount(op, state, ctx, record), op, ctx, events)
+            : state,
+      };
+    case "attachEnergyFrom": {
       // An absent ref is the decline: the board is returned untouched with no event. `choice.take`
       // carries a partial count (absent means the whole batch). The card answer (`pickOnto`) lands
-      // exactly the picked uids on the pinned target; a target answer with cards still undecided
-      // moves nothing, as `continuationOps` asks the card question. The short-pile spread
-      // (`toEach`) puts one card onto each chosen body in the order named.
+      // exactly the picked uids on the pinned target. The short-pile spread (`toEach`) puts one
+      // card onto each chosen body in the order named.
       if (op.toEach === true && choice.kind === "pokemonMulti") {
-        return choice.refs.reduce(
-          (board, ref) =>
-            attachEnergyFrom(board, op, ref, ctx, record, undefined, undefined, events),
-          state,
-        );
+        return {
+          done: choice.refs.reduce(
+            (board, ref) =>
+              attachEnergyFrom(board, op, ref, ctx, record, undefined, undefined, events),
+            state,
+          ),
+        };
       }
       if (op.pickOnto !== undefined) {
-        return choice.kind === "cards"
-          ? attachEnergyFrom(
-              state,
-              op,
-              op.pickOnto.ref,
-              ctx,
-              record,
-              op.pickOnto.take,
-              choice.uids,
-              events,
-            )
-          : state;
+        return {
+          done:
+            choice.kind === "cards"
+              ? attachEnergyFrom(
+                  state,
+                  op,
+                  op.pickOnto.ref,
+                  ctx,
+                  record,
+                  op.pickOnto.take,
+                  choice.uids,
+                  events,
+                )
+              : state,
+        };
       }
-      if (
-        pickedPokemon(choice) &&
-        energyPickOffer(state, op, ctx.seat, attachTake(op, choice.take)) !== undefined
-      ) {
-        return state;
+      if (!pickedPokemon(choice)) return { done: state };
+      // A target whose cards are not interchangeable buys the card question: the op again with
+      // target and take pinned.
+      const take = attachTake(op, choice.take);
+      if (energyPickOffer(state, op, ctx.seat, take) !== undefined) {
+        return {
+          done: state,
+          schedule: [
+            {
+              ...op,
+              pickOnto: { ref: { seat: choice.ref.seat, spot: { ...choice.ref.spot } }, take },
+            },
+          ],
+        };
       }
-      return pickedPokemon(choice)
-        ? attachEnergyFrom(state, op, choice.ref, ctx, record, choice.take, undefined, events)
-        : state;
+      return {
+        done: attachEnergyFrom(state, op, choice.ref, ctx, record, choice.take, undefined, events),
+      };
+    }
     case "attachFromTop":
-      return choice.kind === "attachCards"
-        ? attachFromTopApply(state, choice.assignments, op, ctx, events)
-        : state;
+      return {
+        done:
+          choice.kind === "attachCards"
+            ? attachFromTopApply(state, choice.assignments, op, ctx, events)
+            : state,
+      };
     case "attachFromHand": {
-      // Files what was attached (§9.2), never what was offered; a decline files `[]`. The compiler
-      // cannot catch its absence, and the later hit would then count an empty slot.
-      if (choice.kind !== "attachCards") return state;
+      // Files what was attached (§9.2), never what was offered; a decline files `[]`, which the
+      // later hit counts.
+      if (choice.kind !== "attachCards") return { done: state };
       // Pleasing Present's first half: applied out of the opponent's hand onto their board, under
       // their seat.
       if (op.whose === "opponent") {
-        return attachFromZoneApply(
-          state,
-          choice.assignments,
-          "hand",
-          { ...ctx, seat: otherSeat(ctx.seat) },
-          events,
-        ).state;
+        return {
+          done: attachFromZoneApply(
+            state,
+            choice.assignments,
+            "hand",
+            { ...ctx, seat: otherSeat(ctx.seat) },
+            events,
+          ).state,
+        };
       }
       // The printed singular is mandatory (Lethargic Charge): an empty answer is topped up with the
       // first offered card onto the first offered target, both re-read off the live offer.
@@ -3837,70 +3858,80 @@ export function applyChoice(
         events,
       );
       recordMoved(record, op.recordAs, attached.attached);
-      return attached.state;
+      return { done: attached.state };
     }
     case "attachFromDiscard":
       // Glass Trumpet's answer, applied out of the discard pile. `validateChoice` enforced the
       // couplings; the apply re-checks zone and seat.
-      if (choice.kind !== "attachCards") return state;
+      if (choice.kind !== "attachCards") return { done: state };
       // Reboot Pod: the answer as given, then the mandatory top-up.
-      return op.each === true
-        ? eachAttachTopUp(state, op, choice.assignments, ctx, events)
-        : attachFromZoneApply(state, choice.assignments, "discard", ctx, events).state;
+      return {
+        done:
+          op.each === true
+            ? eachAttachTopUp(state, op, choice.assignments, ctx, events)
+            : attachFromZoneApply(state, choice.assignments, "discard", ctx, events).state,
+      };
     case "attachFromDeck": {
-      if (choice.kind !== "attachCards") return state;
+      if (choice.kind !== "attachCards") return { done: state };
       const attached = attachFromZoneApply(state, choice.assignments, "deck", ctx, events);
       // What was ATTACHED, not what was offered or picked — the retrieval/payment
       // rule (§9.2): a uid the wire dropped, repeated, or aimed at a Pokémon that
       // is not there never moved, so Janine's "if you attached Energy to your
       // Active Pokémon in this way" must not count it.
       recordMoved(record, op.recordAs, attached.attached);
-      return attached.state;
+      return { done: attached.state };
     }
     case "moveEnergy":
       // The op is threaded so the board side comes from the card, not from the wire-supplied refs.
-      return choice.kind === "moveEnergy"
-        ? moveEnergyApply(state, choice.picks, op, ctx, events)
-        : state;
+      return {
+        done:
+          choice.kind === "moveEnergy"
+            ? moveEnergyApply(state, choice.picks, op, ctx, events)
+            : state,
+      };
     case "turnPrizeFaceUp":
-      // The parked half of Crescent Purge's cost; a missing arm would silently drop the answer.
-      // `side` picks the row (Bother-Bot's is the opponent's) and `recordAs` files the uid actually
-      // turned.
-      return choice.kind === "prize"
-        ? turnPrizeFaceUpAt(state, choice.index, op, ctx, record, events)
-        : state;
+      // The parked half of Crescent Purge's cost. `side` picks the row (Bother-Bot's is the
+      // opponent's) and `recordAs` files the uid actually turned.
+      return {
+        done:
+          choice.kind === "prize"
+            ? turnPrizeFaceUpAt(state, choice.index, op, ctx, record, events)
+            : state,
+      };
     case "preventChosenAttack":
       // The parked half of the opponent-side per-attack lock.
-      return choice.kind === "attack"
-        ? lockDefenderAttack(state, choice.index, ctx, events)
-        : state;
+      return {
+        done:
+          choice.kind === "attack" ? lockDefenderAttack(state, choice.index, ctx, events) : state,
+      };
     case "discardEnergy": {
-      if (choice.kind !== "discardEnergy") return state;
+      if (choice.kind !== "discardEnergy") return { done: state };
       const done = discardEnergyApply(state, choice.uids, op, ctx, events);
       // File what actually came off under the §9.2 slot — Hail Blade's
       // damageDefender reads its length. A decline (empty pick) files [], so the
       // damage counts 0. No-op for every other discard (recordAs absent).
       recordMoved(record, op.recordAs, done.discarded);
-      return done.state;
+      return { done: done.state };
     }
     case "discardTools": {
-      // Required even though no exhaustiveness check catches its absence: `default` returns the
-      // state unchanged, so a missing arm would silently drop the player's answer.
-      if (choice.kind !== "discardTools") return state;
+      if (choice.kind !== "discardTools") return { done: state };
       // No `recordMoved`: this op is not enrolled in `recordSlotOf` and carries no
       // `recordAs` — no printing pairs the sentence with a §9.2 "If you do,".
-      return toolDiscardApply(state, choice.uids, ctx, events).state;
+      return { done: toolDiscardApply(state, choice.uids, ctx, events).state };
     }
     case "lookAtPrize":
-      // Both answers move nothing: the slot answer buys the look through `continuationOps`, and the
-      // one-card `orderCards` answer leaves the card where it was. Spelled out so the parking op is
-      // named here.
-      return state;
+      // The slot answer moves nothing and buys the look; the one-card `orderCards` answer leaves
+      // the card where it was.
+      return {
+        done: state,
+        schedule:
+          op.index === undefined && choice.kind === "prize" ? [{ ...op, index: choice.index }] : [],
+      };
     default:
       // Records written by another engine version can carry op names this build
       // does not know; they are ignored at runtime but must not typecheck.
       assertNoOpLeft(op);
-      return state;
+      return { done: state };
   }
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { applyChoice } from "./interpreter";
+import { answerOp } from "./interpreter";
 import { programFor } from "./registry";
 import {
   DECK_BOTTOM_DECK,
@@ -325,14 +325,14 @@ describe("the deckBottom apply's wire guards", () => {
     const before = census(state, "p1");
     const deckCard = state.players.p1.deck[0] as string;
     const events: GameEvent[] = [];
-    const next = applyChoice(
+    const next = answerOp(
       state,
       { op: "payFromHand", count: 1, to: "deckBottom" },
       { kind: "cards", uids: [deckCard] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(events).toHaveLength(0);
     expect(next).toBe(state); // nothing paid → the same state object
     expect(census(next, "p1")).toEqual(before);
@@ -345,14 +345,14 @@ describe("the deckBottom apply's wire guards", () => {
     const before = census(state, "p1");
     const uid = handUid(state, "p1", "fix-item");
     const events: GameEvent[] = [];
-    const next = applyChoice(
+    const next = answerOp(
       state,
       { op: "payFromHand", count: 2, to: "deckBottom" },
       { kind: "cards", uids: [uid, uid] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
     expect(next.players.p1.deck.filter((u) => u === uid)).toHaveLength(1);
     expect(next.players.p1.deck.at(-1)).toBe(uid);
@@ -364,14 +364,14 @@ describe("the deckBottom apply's wire guards", () => {
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, ["fix-item", "fix-grass-energy"]);
     const events: GameEvent[] = [];
-    const next = applyChoice(
+    const next = answerOp(
       state,
       { op: "payFromHand", count: 1, to: "deckBottom" },
       { kind: "pokemonMulti", refs: [] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(next).toBe(state);
     expect(events).toHaveLength(0);
   });
@@ -385,14 +385,14 @@ describe("the deckBottom apply's wire guards", () => {
     const first = handUid(state, "p1", "fix-water-energy");
     const second = handUid(state, "p1", "fix-item");
     const events: GameEvent[] = [];
-    const next = applyChoice(
+    const next = answerOp(
       state,
       { op: "payFromHand", count: 2, to: "deckBottom" },
       { kind: "cards", uids: [first, second] },
       { seat: "p1" },
       {},
       events,
-    );
+    ).done;
     expect(next.players.p1.deck.slice(-2)).toEqual([first, second]);
     expect(next.players.p1.hand).toEqual([handUid(state, "p1", "fix-grass-energy")]);
   });
