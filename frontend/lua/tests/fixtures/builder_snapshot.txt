@@ -1,0 +1,22 @@
+1	ready	Electric%20Dreams	standard			0	1	1	2	6	sv01-050				0	0
+C	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	1	4	0
+C	sv01-181	Nest%20Ball	Trainer	Item	2	2		G	12	1	4	0
+D	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	1	4	0
+D	sv01-181	Nest%20Ball	Trainer	Item	2	2		G	12	1	4	0
+S	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	1	4	0
+V	54%20more%20cards%20to%20reach%2060.	4	2	0
+O	supertype	Category	All	4	1	1
+O	types	Energy%20type	All	11	1	1
+O	subtypes	Card%20kind	All	1	1	1
+O	suffixes	Rule%20box	All	1	1	1
+O	rarities	Rarity	All	1	1	1
+O	legalOnly	Legal%20cards%20only	On	2	1	1
+O	setId	Set	All	1	1	1
+O	serieId	Series	All	1	1	1
+O	illustrator	Illustrator	All	1	1	1
+O	regulationMark	Regulation%20mark	All	1	1	1
+F	query	
+F	text	
+F	hpMin	
+F	hpMax	
+F	sort	name

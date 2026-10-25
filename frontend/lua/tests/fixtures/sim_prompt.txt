@@ -1,0 +1,54 @@
+2	ready	Ash	Misty	1	effect%3Achoose		Choose%20your%20next%20move	Search%20your%20deck%20for%20a%20Basic%20Pok%C3%A9mon%20onto%20your%20Bench.	0	1	you	you	p1	0	0	0				100
+L	local	false			undo%2Cnewgame%2Cchoosedecks%2Cconcede%2Cleave	full
+S	you	42	6	7	1	0
+C	p1%2331	sv01-167	Beach%20Court	you	hand	0	false	Trainer	Stadium			0					false	0
+C	p1%2311	fix-attacker	fix-attacker	you	hand	1	false	Pokemon		Basic		0				Fire	false	1
+C	p1%234	fix-attacker	fix-attacker	you	hand	2	false	Pokemon		Basic		0				Fire	false	2
+C	p1%2332	sv01-167	Beach%20Court	you	hand	3	false	Trainer	Stadium			0					false	3
+C	p1%2338	sv01-197	sv01-197	you	hand	4	false	Trainer	Tool			0					false	4
+C	p1%2330	sv01-167	Beach%20Court	you	hand	5	false	Trainer	Stadium			0					false	5
+C	p1%2314	fix-basic-1	fix-basic-1	you	hand	6	false	Pokemon		Basic		0				Colorless	false	6
+C	p1%236	fix-attacker	fix-attacker	you	active	0	false	Pokemon		Basic	120	0	Colorless%7Cp1%2350%7Cfix-energy%2CColorless%7Cp1%2358%7Cfix-energy	p1%2343%7Cfix-tool		Fire	false	0
+C	p1%2315	fix-basic-1	fix-basic-1	you	bench	0	false	Pokemon		Basic	60	0				Colorless	false	0
+C	nest-ball	sv01-181	Nest%20Ball	you	discard	0	false	Trainer	Item			0					false	0
+S	opponent	46	6	6	0	0
+C	opponent-hand-0	hidden	Face-down%20card	opponent	hand	0	true	Trainer				0					false	0
+C	opponent-hand-1	hidden	Face-down%20card	opponent	hand	1	true	Trainer				0					false	1
+C	opponent-hand-2	hidden	Face-down%20card	opponent	hand	2	true	Trainer				0					false	2
+C	opponent-hand-3	hidden	Face-down%20card	opponent	hand	3	true	Trainer				0					false	3
+C	opponent-hand-4	hidden	Face-down%20card	opponent	hand	4	true	Trainer				0					false	4
+C	opponent-hand-5	hidden	Face-down%20card	opponent	hand	5	true	Trainer				0					false	5
+C	p2%237	fix-attacker	fix-attacker	opponent	active	0	false	Pokemon		Basic	120	40				Fire	false	0
+C	p2%2332	sv01-167	Beach%20Court	global	stadium	0	false	Trainer	Stadium			0					false	0
+M	cards			true	2	false		false
+O	1	fix-basic-1	blue	false	false	fix-basic-1	p1%2313	false
+O	2	fix-attacker	blue	false	false	fix-attacker	p1%231	false
+O	3	fix-attacker	blue	false	false	fix-attacker	p1%238	false
+O	4	fix-weak	blue	false	false	fix-weak	p1%2327	false
+O	5	fix-weak	blue	false	false	fix-weak	p1%2326	false
+O	6	fix-basic-1	blue	false	false	fix-basic-1	p1%2319	false
+O	7	fix-attacker	blue	false	false	fix-attacker	p1%232	false
+O	8	fix-basic-1	blue	false	false	fix-basic-1	p1%2318	false
+O	9	fix-attacker	blue	false	false	fix-attacker	p1%2310	false
+O	10	fix-attacker	blue	false	false	fix-attacker	p1%235	false
+O	11	fix-basic-1	blue	false	false	fix-basic-1	p1%2316	false
+O	12	fix-attacker	blue	false	false	fix-attacker	p1%239	false
+O	13	fix-victim	blue	false	false	fix-victim	p1%2324	false
+O	14	fix-attacker	blue	false	false	fix-attacker	p1%237	false
+O	15	fix-wall	blue	false	false	fix-wall	p1%2328	false
+O	16	fix-basic-1	blue	false	false	fix-basic-1	p1%2312	false
+O	17	fix-victim	blue	false	false	fix-victim	p1%2325	false
+O	18	fix-wall	blue	false	false	fix-wall	p1%2329	false
+O	19	fix-attacker	blue	false	false	fix-attacker	p1%233	false
+O	20	fix-attacker	blue	false	false	fix-attacker	p1%230	false
+F	21	0%2F1	blue	false	false			false
+I	sv01-167	Trainer	Stadium							The%20Retreat%20Cost%20of%20each%20Basic%20Pok%C3%A9mon%20in%20play%20(both%20yours%20and%20your%20opponent's)%20is%20%7BC%7D%20less.				Beach%20Court
+I	fix-attacker	Pokemon		Basic	120	Fire	1					Bite%1FColorless%1F30%1F%1EFlame%1FFire%2CColorless%1F60%1F%1EYawn%1F%1F%1FYour%20opponent's%20Active%20Pok%C3%A9mon%20is%20now%20Asleep.%1ERage%1FColorless%1F10%2B%1FThis%20attack%20does%2010%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EFury%1FColorless%1F%1FThis%20attack%20does%2020%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EBounty%1FColorless%1F40%2B%1FThis%20attack%20does%2050%20more%20damage%20for%20each%20Prize%20card%20your%20opponent%20has%20taken.		fix-attacker
+I	sv01-197	Trainer	Tool							The%20attacks%20of%20the%20Pok%C3%A9mon%20this%20card%20is%20attached%20to%20do%2010%20more%20damage...				sv01-197
+I	fix-basic-1	Pokemon		Basic	60	Colorless	1							fix-basic-1
+I	fix-energy	Energy				Colorless							Normal	fix-energy
+I	fix-tool	Trainer	Tool							A%20test%20Tool.				fix-tool
+I	sv01-181	Trainer	Item							Search%20your%20deck%20for%20a%20Basic%20Pok%C3%A9mon%20and%20put%20it%20onto%20your%20Bench.%20Then%2C%20shuffle%20your%20deck.				Nest%20Ball
+I	fix-weak	Pokemon		Basic	60	Colorless	1	Fire%3A%C3%972						fix-weak
+I	fix-victim	Pokemon		Basic	30	Colorless	1							fix-victim
+I	fix-wall	Pokemon		Basic	120	Colorless	1							fix-wall

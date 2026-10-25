@@ -1,0 +1,56 @@
+1	ready	Ash	Misty	1	turn%3Aaction		Your%20turn	Attach%20Energy%2C%20play%20Trainers%20and%20Pok%C3%A9mon%2C%20then%20attack%20or%20end%20your%20turn.	0	1	you	you	p1	0	0	0				100
+L	local	false			undo%2Cnewgame%2Cchoosedecks%2Cconcede%2Cleave	full
+S	you	42	6	8	0	0
+C	p1%2331	sv01-167	Beach%20Court	you	hand	0	false	Trainer	Stadium			0					true	0
+C	p1%2311	fix-attacker	fix-attacker	you	hand	1	false	Pokemon		Basic		0				Fire	true	1
+C	p1%234	fix-attacker	fix-attacker	you	hand	2	false	Pokemon		Basic		0				Fire	true	2
+C	p1%2332	sv01-167	Beach%20Court	you	hand	3	false	Trainer	Stadium			0					true	3
+C	p1%2338	sv01-197	sv01-197	you	hand	4	false	Trainer	Tool			0					true	4
+C	p1%2330	sv01-167	Beach%20Court	you	hand	5	false	Trainer	Stadium			0					true	5
+C	p1%2314	fix-basic-1	fix-basic-1	you	hand	6	false	Pokemon		Basic		0				Colorless	true	6
+C	nest-ball	sv01-181	Nest%20Ball	you	hand	7	false	Trainer	Item			0					true	7
+C	p1%236	fix-attacker	fix-attacker	you	active	0	false	Pokemon		Basic	120	0	Colorless%7Cp1%2350%7Cfix-energy%2CColorless%7Cp1%2358%7Cfix-energy	p1%2343%7Cfix-tool		Fire	true	0
+C	p1%2315	fix-basic-1	fix-basic-1	you	bench	0	false	Pokemon		Basic	60	0				Colorless	true	0
+S	opponent	46	6	6	0	0
+C	opponent-hand-0	hidden	Face-down%20card	opponent	hand	0	true	Trainer				0					false	0
+C	opponent-hand-1	hidden	Face-down%20card	opponent	hand	1	true	Trainer				0					false	1
+C	opponent-hand-2	hidden	Face-down%20card	opponent	hand	2	true	Trainer				0					false	2
+C	opponent-hand-3	hidden	Face-down%20card	opponent	hand	3	true	Trainer				0					false	3
+C	opponent-hand-4	hidden	Face-down%20card	opponent	hand	4	true	Trainer				0					false	4
+C	opponent-hand-5	hidden	Face-down%20card	opponent	hand	5	true	Trainer				0					false	5
+C	p2%237	fix-attacker	fix-attacker	opponent	active	0	false	Pokemon		Basic	120	40				Fire	false	0
+C	p2%2332	sv01-167	Beach%20Court	global	stadium	0	false	Trainer	Stadium			0					false	0
+K	1	p1%2331	Play	blue	true					false
+K	2	p1%2311	Bench	blue	false					false
+K	3	p1%2311	Evolve%20fix-attacker	green	true	p1%236	evolve			false
+K	4	p1%2311	Evolve%20fix-basic-1	green	true	p1%2315	evolve			false
+K	5	p1%234	Bench	blue	false					false
+K	6	p1%234	Evolve%20fix-attacker	green	true	p1%236	evolve			false
+K	7	p1%234	Evolve%20fix-basic-1	green	true	p1%2315	evolve			false
+K	8	p1%2332	Play	blue	true					false
+K	9	p1%2338	Attach%20to%20fix-attacker	blue	true	p1%236	tool			false
+K	10	p1%2338	Attach%20to%20fix-basic-1	blue	false	p1%2315	tool			false
+K	11	p1%2330	Play	blue	true					false
+K	12	p1%2314	Bench	blue	false					false
+K	13	p1%2314	Evolve%20fix-attacker	green	true	p1%236	evolve			false
+K	14	p1%2314	Evolve%20fix-basic-1	green	true	p1%2315	evolve			false
+K	15	nest-ball	Play	blue	false					false
+K	16	p1%236	Bite	red	true			Colorless	30	true
+K	17	p1%236	Flame	red	true			Fire%2CColorless	60	true
+K	18	p1%236	Yawn	red	true					true
+K	19	p1%236	Rage	red	true			Colorless	10%2B	true
+K	20	p1%236	Fury	red	true			Colorless		true
+K	21	p1%236	Bounty	red	true			Colorless	40%2B	true
+A	22	End%20turn	red	false	primary
+A	23	Undo%20turn	red	true	minor
+A	24	Undo%20action	red	true	minor
+A	25	New%20game	red	false	minor
+A	26	Redo%20action	red	true	minor
+A	27	Redo%20turn	red	true	minor
+I	sv01-167	Trainer	Stadium							The%20Retreat%20Cost%20of%20each%20Basic%20Pok%C3%A9mon%20in%20play%20(both%20yours%20and%20your%20opponent's)%20is%20%7BC%7D%20less.				Beach%20Court
+I	fix-attacker	Pokemon		Basic	120	Fire	1					Bite%1FColorless%1F30%1F%1EFlame%1FFire%2CColorless%1F60%1F%1EYawn%1F%1F%1FYour%20opponent's%20Active%20Pok%C3%A9mon%20is%20now%20Asleep.%1ERage%1FColorless%1F10%2B%1FThis%20attack%20does%2010%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EFury%1FColorless%1F%1FThis%20attack%20does%2020%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EBounty%1FColorless%1F40%2B%1FThis%20attack%20does%2050%20more%20damage%20for%20each%20Prize%20card%20your%20opponent%20has%20taken.		fix-attacker
+I	sv01-197	Trainer	Tool							The%20attacks%20of%20the%20Pok%C3%A9mon%20this%20card%20is%20attached%20to%20do%2010%20more%20damage...				sv01-197
+I	fix-basic-1	Pokemon		Basic	60	Colorless	1							fix-basic-1
+I	sv01-181	Trainer	Item							Search%20your%20deck%20for%20a%20Basic%20Pok%C3%A9mon%20and%20put%20it%20onto%20your%20Bench.%20Then%2C%20shuffle%20your%20deck.				Nest%20Ball
+I	fix-energy	Energy				Colorless							Normal	fix-energy
+I	fix-tool	Trainer	Tool							A%20test%20Tool.				fix-tool
