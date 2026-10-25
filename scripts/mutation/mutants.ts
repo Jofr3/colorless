@@ -10552,9 +10552,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: "the printed `{R}` is dropped from the Energy member, so the card finds a Basic Energy OF ANY TYPE. This is Earthen Vessel's and Larry's Skill's filter - the untyped `basicEnergy` is by far the commoner spelling in the registry, so the mutant is the DEFAULT an author reaches for. The Pokemon member still bites, the total is still 3, and the card is strictly better than its print forever",
     file: "packages/engine/src/registry.ts",
-    symbol: "LICKING_CATCH.attack",
-    find: '          { kind: "basicEnergy", energyType: "Fire" },\n        ],',
-    replace: '          { kind: "basicEnergy" },\n        ],',
+    symbol: "ETHANS_ADVENTURE.trainer",
+    find: 'owner: "Ethan" },\n        { kind: "basicEnergy", energyType: "Fire" },',
+    replace: 'owner: "Ethan" },\n        { kind: "basicEnergy" },',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10562,9 +10562,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: '`anyEnergy` in place of `basicEnergy`, deleting the printed word "Basic" - the other half of the Energy member\'s narrowing, and it fails on a DIFFERENT card from the mutant above: this one admits a SPECIAL Energy where that one admits a Basic of the wrong type. Both refusals are needed because one member could lose its category and keep its type, or the reverse, and a single witness cannot tell those builds apart',
     file: "packages/engine/src/registry.ts",
-    symbol: "LICKING_CATCH.attack",
-    find: '          { kind: "basicEnergy", energyType: "Fire" },\n        ],\n      },',
-    replace: '          { kind: "anyEnergy" },\n        ],\n      },',
+    symbol: "ETHANS_ADVENTURE.trainer",
+    find: 'owner: "Ethan" },\n        { kind: "basicEnergy", energyType: "Fire" },',
+    replace: 'owner: "Ethan" },\n        { kind: "anyEnergy" },',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10582,9 +10582,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: 'the flat cap is authored 2 over a sentence printing "up to 3" - Bug Catching Set\'s number, and Bug Catching Set is the row this program\'s FILTER was modelled on, so it is the copy an author actually makes. Every refusal still holds, the caption re-derives itself to "up to 2" and agrees with the validator, and the card is quietly weaker than its print with nothing disagreeing anywhere',
     file: "packages/engine/src/registry.ts",
-    symbol: "LICKING_CATCH.attack",
-    find: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,',
-    replace: '      },\n      dest: "hand",\n      max: 2,\n      reveal: true,',
+    symbol: "ETHANS_ADVENTURE.trainer",
+    find: 'owner: "Ethan" },\n        { kind: "basicEnergy", energyType: "Fire" },\n      ],\n    },\n    dest: "hand",\n    max: 3,',
+    replace:
+      'owner: "Ethan" },\n        { kind: "basicEnergy", energyType: "Fire" },\n      ],\n    },\n    dest: "hand",\n    max: 2,',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10615,9 +10616,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: '`dest: "bench"` over a sentence printing "put them into your hand". The caption follows the field, so it reads "onto your Bench" and agrees with itself; what breaks is the destination the cards actually reach, plus the `benchSpace` clamp silently becoming live on a row that should never see it. A registry row has no deriver behind it to refuse a destination it cannot parse',
     file: "packages/engine/src/registry.ts",
-    symbol: "LICKING_CATCH.attack",
-    find: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,',
-    replace: '      },\n      dest: "bench",\n      max: 3,\n      reveal: true,',
+    symbol: "ETHANS_ADVENTURE.trainer",
+    find: 'owner: "Ethan" },\n        { kind: "basicEnergy", energyType: "Fire" },\n      ],\n    },\n    dest: "hand",\n    max: 3,',
+    replace:
+      'owner: "Ethan" },\n        { kind: "basicEnergy", energyType: "Fire" },\n      ],\n    },\n    dest: "bench",\n    max: 3,',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
