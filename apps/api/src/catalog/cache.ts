@@ -3,6 +3,7 @@
 // KV is best effort: a failed read is a miss, and the write runs after the response with its
 // failure dropped, so a KV outage or a spent write quota costs the cache and never the request.
 
+import { UNCACHED_CATALOG_PARAMS } from "@colorless/schema";
 import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";
 import type { Env } from "../env";
@@ -49,15 +50,9 @@ export function catalogCacheKey(url: URL, epoch: string | null = null): string {
     erroring the GET. URL paths and queries are percent-encoded (ASCII), so length == bytes. */
 const KV_MAX_KEY_BYTES = 512;
 
-/**
- * Query params whose values are typed by a person or derived from one deck: id hydration and the
- * free-text searches. Such keys almost never recur, so caching one spends a KV write that is
- * never read back.
- */
-const UNCACHED_PARAMS = ["id", "name", "nameExact", "text"];
-
+/** Caching a query that almost never recurs spends a KV write that is never read back. */
 export function bypassesCatalogCache(url: URL): boolean {
-  return UNCACHED_PARAMS.some((param) => url.searchParams.has(param));
+  return UNCACHED_CATALOG_PARAMS.some((param) => url.searchParams.has(param));
 }
 
 type EpochRead = { epoch: string | null; readAt: number } | { failedAt: number };

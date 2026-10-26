@@ -76,6 +76,12 @@ export const cardsQuerySchema = z.object({
   total: z.coerce.number<number>().int().min(0).optional(),
 });
 export type CardsQuery = z.infer<typeof cardsQuerySchema>;
+/**
+ * Catalog query params whose values are typed by a person or drawn from one deck: id hydration and
+ * the free-text searches. Such queries almost never recur, so the API does not cache them, and a
+ * paging client sends a known `total` only with one of them.
+ */
+export const UNCACHED_CATALOG_PARAMS = ["id", "name", "nameExact", "text"] as const;
 /** What a caller may send: every field optional, a repeatable one as a string or string[]. */
 export type CardsQueryParams = z.input<typeof cardsQuerySchema>;
 

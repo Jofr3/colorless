@@ -337,8 +337,9 @@ describe("Lua deck builder", () => {
     await tick();
     const pages = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.page);
     expect(pages()).toEqual([1, 2, 3]);
-    // Only the page the search asked for is counted; prefetches pass its total back.
-    expect(vi.mocked(api.getCards).mock.calls.map(([q]) => q?.total)).toEqual([undefined, 40, 40]);
+    const totals = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.total);
+    // A cached query keeps one cache key per page, so its prefetches send no total.
+    expect(totals()).toEqual([undefined, undefined, undefined]);
     expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual([
       "p1a",
       "p1b",
@@ -358,10 +359,38 @@ describe("Lua deck builder", () => {
     expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
     await tick();
     expect(pages()).toEqual([1, 2, 3, 4]);
-    // A new query starts its own cache.
+    // A new query starts its own cache; a name search's prefetches pass its total back.
     await b.command(encodeFields(["filter", "query", "Abra"]));
     await tick();
     expect(pages().slice(4)).toEqual([1, 2, 3]);
+    expect(totals().slice(4)).toEqual([undefined, 40, 40]);
+  });
+  it("does not pass an earlier query's total to the prefetches of a search that failed", async () => {
+    vi.mocked(api.getCards).mockImplementation(async (query) => {
+      const page = query?.page ?? 1;
+      const total = query?.name === "Abra" ? 40 : 16;
+      if (query?.name === "Bulb" && page === 1) throw new Error("offline");
+      return { items: [card(`p${page}a`), card(`p${page}b`)], total, page, pageSize: 8 };
+    });
+    const { b } = await setup();
+    await b.command(encodeFields(["filter", "query", "Abra"]));
+    await tick();
+    const calls = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q);
+    const seen = calls().length;
+    await b.command(encodeFields(["filter", "query", "Bulb"]));
+    await tick();
+    expect(
+      calls()
+        .slice(seen)
+        .map((q) => [q?.page, q?.total]),
+    ).toEqual([
+      [1, undefined],
+      [2, undefined],
+      [3, undefined],
+    ]);
+    await b.command("page\t1");
+    expect(b.results.map((c) => c.cardId)).toEqual(["p2a", "p2b"]);
+    expect(b.total).toBe(16);
   });
   it("does not apply an import after its dialog is cancelled", async () => {
     const { b } = await setup();
