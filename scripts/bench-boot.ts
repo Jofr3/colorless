@@ -2,8 +2,8 @@
 /**
  * Cold-boot timing of the production page under a throttled network: headless Chromium loads a
  * built site with an empty profile and reports when the runtime started, when its data arrived and
- * when Lua printed ready (host.js's `colorless:*` performance marks), plus when love.wasm and
- * game.data downloaded. Opt-in; not part of `check`.
+ * when Lua printed ready (host.js's `colorless:*` performance marks), plus when love.wasm,
+ * game.data and the menu music started and finished downloading. Opt-in; not part of `check`.
  *
  *   bun scripts/bench-boot.ts [--dist <dir>] [--mbps 20,5] [--runs 3] [--latency 40]
  *
@@ -96,7 +96,10 @@ interface Sample {
   files: Record<string, { start: number; end: number }>;
 }
 
-async function cdp(debugPort: number): Promise<{
+async function cdp(
+  debugPort: number,
+  onEvent: (method: string, params: Record<string, unknown>) => void,
+): Promise<{
   send: (method: string, params?: object) => Promise<Record<string, unknown>>;
   close: () => void;
 }> {
@@ -119,9 +122,12 @@ async function cdp(debugPort: number): Promise<{
       socket.addEventListener("message", (event) => {
         const message = JSON.parse(String(event.data)) as {
           id?: number;
+          method?: string;
+          params?: Record<string, unknown>;
           result?: Record<string, unknown>;
           error?: Record<string, unknown>;
         };
+        if (message.method) onEvent(message.method, message.params ?? {});
         if (message.id === undefined) return;
         pending.get(message.id)?.(message.result ?? message.error ?? {});
         pending.delete(message.id);
@@ -157,8 +163,34 @@ async function boot(mbps: number): Promise<Sample> {
     ],
     { stdio: "ignore" },
   );
+  // Resource timing lists a file only once it has arrived, so the network events time the
+  // downloads, including one still in flight when the page turns ready.
+  const requests = new Map<string, { name: string; wall: number; sent: number; done?: number }>();
+  const files = (timeOrigin: number) => {
+    const named: Sample["files"] = {};
+    for (const r of requests.values()) {
+      const start = r.wall * 1000 - timeOrigin;
+      const name = r.name in named ? `${r.name} (again)` : r.name;
+      named[name] = {
+        start,
+        end: r.done === undefined ? Number.NaN : start + (r.done - r.sent) * 1000,
+      };
+    }
+    return named;
+  };
   try {
-    const { send, close } = await cdp(debugPort);
+    const { send, close } = await cdp(debugPort, (method, params) => {
+      const id = String(params.requestId);
+      if (method === "Network.requestWillBeSent") {
+        const url = String((params.request as { url?: string } | undefined)?.url);
+        const name = /\/love\/(love\.wasm|game\.data|music1\.ogg)/.exec(url)?.[1];
+        if (name)
+          requests.set(id, { name, wall: Number(params.wallTime), sent: Number(params.timestamp) });
+      } else if (method === "Network.loadingFinished") {
+        const request = requests.get(id);
+        if (request) request.done = Number(params.timestamp);
+      }
+    });
     await send("Network.enable");
     await send("Network.setCacheDisabled", { cacheDisabled: true });
     await send("Network.emulateNetworkConditions", {
@@ -172,30 +204,23 @@ async function boot(mbps: number): Promise<Sample> {
     await send("Page.navigate", { url: `http://127.0.0.1:${sitePort}/` });
     const expression = `JSON.stringify({
       ready: window.__bootReady ?? null,
+      timeOrigin: performance.timeOrigin,
       marks: Object.fromEntries(performance.getEntriesByType("mark")
         .filter((m) => m.name.startsWith("colorless:")).map((m) => [m.name, m.startTime])),
-      files: Object.fromEntries(performance.getEntriesByType("resource")
-        .filter((e) => /\\/love\\/(love\\.wasm|game\\.data|music1\\.ogg)/.test(e.name))
-        .map((e, i, all) => {
-          const name = e.name.replace(/^.*\\/|\\?.*$/g, "");
-          const copy = all.slice(0, i).filter((o) => o.name === e.name).length;
-          return [copy ? name + " (again)" : name, { start: e.startTime, end: e.responseEnd }];
-        })),
     })`;
     for (let poll = 0; poll < 600; poll++) {
       await new Promise((done) => setTimeout(done, 100));
       const result = (await send("Runtime.evaluate", { expression, returnByValue: true })) as {
         result?: { value?: string };
       };
-      const sample = result.result?.value ? (JSON.parse(result.result.value) as Sample) : null;
-      if (sample && sample.ready !== null) {
-        // Let the post-ready music fetch show up in the resource list.
+      const page = result.result?.value
+        ? (JSON.parse(result.result.value) as Omit<Sample, "files"> & { timeOrigin: number })
+        : null;
+      if (page && page.ready !== null) {
+        // Give the music request, which starts after ready, time to go out.
         await new Promise((done) => setTimeout(done, 200));
-        const settled = (await send("Runtime.evaluate", { expression, returnByValue: true })) as {
-          result?: { value?: string };
-        };
         close();
-        return settled.result?.value ? (JSON.parse(settled.result.value) as Sample) : sample;
+        return { ready: page.ready, marks: page.marks, files: files(page.timeOrigin) };
       }
     }
     const state = (await send("Runtime.evaluate", {
@@ -224,7 +249,11 @@ try {
       const sample = await boot(mbps);
       samples.push(sample);
       const files = Object.entries(sample.files)
-        .map(([name, at]) => `${name} ${ms(at.start)}-${ms(at.end)}`)
+        .map(([name, at]) =>
+          Number.isNaN(at.end)
+            ? `${name} ${ms(at.start)}-(in flight)`
+            : `${name} ${ms(at.start)}-${ms(at.end)}`,
+        )
         .join(", ");
       const marks = Object.entries(sample.marks)
         .map(([name, at]) => `${name.replace("colorless:", "")} ${ms(at)}`)
