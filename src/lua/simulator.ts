@@ -10,6 +10,8 @@ import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
+import type { CoinFlips } from "./tableEvents";
+
 import { LuaOnlineMatch, onlineGate } from "./onlineTable";
 import {
   boardRows,
@@ -230,28 +232,7 @@ export class LuaSimulator {
       this.menu = null;
       this.persist();
       this.prompt(events.counterSource);
-      const flips = events.coin;
-      if (flips) {
-        this.menuId++;
-        this.menu = {
-          kind: "coin",
-          title: flips.title,
-          note: flips.flips
-            .map((f) => `${f.player}: ${f.result === "heads" ? "Heads" : "Tails"}`)
-            .join("\n"),
-          mandatory: true,
-          options: [
-            {
-              label: "Continue",
-              run: () => {
-                this.menu = null;
-                this.prompt();
-                this.emit();
-              },
-            },
-          ],
-        };
-      }
+      this.showCoin(events.coin);
     }
     // A turn draw always joins the end, even if this UID has an old cosmetic
     // position from an earlier hand (for example after being shuffled back).
@@ -318,6 +299,7 @@ export class LuaSimulator {
           this.menu = null;
           this.prompt(events.counterSource);
         }
+        this.showCoin(events.coin);
       }
       const error = online.rejection();
       if (error !== this.rejected) {
@@ -329,6 +311,29 @@ export class LuaSimulator {
       }
     }
     this.emit();
+  }
+  /** The flips play out over the table; Continue returns to whatever is asked next. */
+  private showCoin(coin: CoinFlips | null) {
+    if (!coin) return;
+    this.menuId++;
+    this.menu = {
+      kind: "coin",
+      title: coin.title,
+      note: coin.flips
+        .map((f) => `${f.player}: ${f.result === "heads" ? "Heads" : "Tails"}`)
+        .join("\n"),
+      mandatory: true,
+      options: [
+        {
+          label: "Continue",
+          run: () => {
+            this.menu = null;
+            this.prompt();
+            this.emit();
+          },
+        },
+      ],
+    };
   }
   private key(v: RedactedGame | null) {
     return JSON.stringify(v ? [v.phase, v.waitingOn] : null);

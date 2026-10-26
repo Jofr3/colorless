@@ -7,25 +7,21 @@ import {
   redactGame,
   type GameAction,
   type GameState,
-  type PokemonRef,
   type Seat,
 } from "@colorless/engine";
 import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@colorless/schema";
 import { initHost, hostReducer, stepTarget, type LocalGameSetup } from "../game/localHost";
 import { projectGameState } from "../game/projection";
-import type { CoinFlipBatch } from "../game/coinFlips";
 import type { BoardState } from "../game/board";
 import { saveSimulator, loadSimulatorSave } from "../game/simulatorSave";
+import {
+  autoStepFor,
+  counterSourcePicked,
+  eventsFromLog,
+  NO_EVENTS,
+  type TableEvents,
+} from "./tableEvents";
 
-/** Diffs of the last `send`, read once by the simulator right after it. */
-export interface TableEvents {
-  knockedOut: readonly string[];
-  /** Seats whose deck or hand was shuffled. */
-  shuffled: readonly Seat[];
-  coin: CoinFlipBatch | null;
-  /** The Adrena-Brain source just picked, so its destination menu keeps it raised. */
-  counterSource?: PokemonRef;
-}
 export type LifecycleFlag =
   | "undo"
   | "newgame"
@@ -75,25 +71,6 @@ export type HistoryStep =
   | "redoAction"
   | "undoTurn"
   | "redoTurn";
-const NO_EVENTS: TableEvents = { knockedOut: [], shuffled: [], coin: null };
-
-/** The damage-counter source a player just picked, so its destination menu keeps it raised. */
-export function counterSourcePicked(
-  view: RedactedGame | null,
-  action: GameAction,
-): PokemonRef | undefined {
-  const p = view?.phase;
-  const transfer =
-    p?.kind === "effect:choose" && p.prompt?.kind === "choosePokemon"
-      ? p.prompt.counterTransfer
-      : undefined;
-  return transfer &&
-    !transfer.from &&
-    action.type === "resolveEffect" &&
-    action.choice.kind === "pokemon"
-    ? action.choice.ref
-    : undefined;
-}
 
 /** The hot-seat game: today's local host, with save, undo and auto-steps. */
 export class LocalTableSource implements TableSource {
@@ -133,14 +110,10 @@ export class LocalTableSource implements TableSource {
     const before = this.host.log.length;
     this.before = beforeGame;
     this.host = hostReducer(this.host, { action, at: Date.now() });
-    const knockedOut = this.host.knockedOut;
-    const seats = new Set<Seat>();
-    for (const e of this.host.log.slice(before)) {
-      if (e.kind !== "action" || e.who === "system") continue;
-      const text = e.segments.map((s) => s.text).join("");
-      if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
-        seats.add(e.who);
-    }
+    const { knockedOut, shuffled } = eventsFromLog(
+      this.host.log.slice(before),
+      (seat) => this.host.names[seat],
+    );
     const coin = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
     // The Lua coin overlay presents the flips, so settle them immediately.
     if (this.host.coinFlipPresentation && this.host.coinFlipBatch) {
@@ -149,12 +122,7 @@ export class LocalTableSource implements TableSource {
         id: this.host.coinFlipBatch.id,
       });
     }
-    this.events = {
-      knockedOut,
-      shuffled: [...seats],
-      coin,
-      counterSource,
-    };
+    this.events = { knockedOut, shuffled, coin, counterSource };
   }
   allowances() {
     const a = this.host.game.allowances;
@@ -250,60 +218,26 @@ export class LocalTableSource implements TableSource {
   /** Mulligan draws and Prize picks the hot seat takes for the player. True when
    * anything stepped (the caller saves). */
   autoSteps() {
-    const drawn = this.drawMulligans();
-    const taken = this.takePrizes();
+    const drawn = this.stepWhile("setup:drawExtra");
+    const taken = this.stepWhile("ko:takePrizes");
     return drawn || taken;
   }
-  private takePrizes() {
-    let taken = false;
-    while (this.host.game.phase.kind === "ko:takePrizes") {
-      const h = this.host;
-      const phase = h.game.phase;
-      if (phase.kind !== "ko:takePrizes") break;
-      const next = hostReducer(h, {
-        action: {
-          type: "takePrizes",
-          seat: phase.seat,
-          prizeIndices: Array.from(
-            { length: phase.count },
-            (_, i) => h.game.players[phase.seat].prizes.length - 1 - i,
-          ),
-        },
-        at: Date.now(),
-      });
-      if (next.lastError || next.game === h.game) break;
+  private stepWhile(kind: "setup:drawExtra" | "ko:takePrizes") {
+    let stepped = false;
+    while (this.host.game.phase.kind === kind) {
+      const action = autoStepFor(this.view());
+      if (!action) break;
+      const next = hostReducer(this.host, { action, at: Date.now() });
+      if (next.lastError || next.game === this.host.game) break;
       this.host = next;
-      taken = true;
+      stepped = true;
     }
-    if (taken) {
-      // Prize-taking belongs to the KO that caused it. Undo/redo must not
-      // land on a pending automatic pick and immediately perform it again.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "ko:takePrizes");
+    if (stepped) {
+      // An automatic step belongs to the decision that caused it. History must not
+      // land on a pending one, which would perform it again and drop the redo branch.
+      const steps = this.host.steps.filter((step) => step.game.phase.kind !== kind);
       this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
     }
-    return taken;
-  }
-  private drawMulligans() {
-    let drawn = false;
-    while (this.host.game.phase.kind === "setup:drawExtra") {
-      const h = this.host;
-      const phase = h.game.phase;
-      if (phase.kind !== "setup:drawExtra") break;
-      const seat = h.viewerSeat;
-      const next = hostReducer(h, {
-        action: { type: "setupDrawExtra", seat, count: phase.owed[seat] },
-        at: Date.now(),
-      });
-      if (next.lastError || next.game === h.game) break;
-      this.host = next;
-      drawn = true;
-    }
-    if (drawn) {
-      // Treat the automatic draws as part of completing setup. History must
-      // not land on a pending draw and discard its recorded redo branch.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "setup:drawExtra");
-      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
-    }
-    return drawn;
+    return stepped;
   }
 }

@@ -24,6 +24,25 @@ export type LogSegment = z.infer<typeof logSegmentSchema>;
 export const seatLogSourceSchema = z.enum(["p1", "p2", "system"]);
 export type SeatLogSource = z.infer<typeof seatLogSourceSchema>;
 
+/**
+ * A table animation cue riding the log row of the event that caused it. Every field is already
+ * public on that row, so a cue tells neither player anything the row does not.
+ */
+export const logCueSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("shuffle"),
+    seat: z.enum(["p1", "p2"]),
+    zone: z.enum(["deck", "hand"]),
+  }),
+  z.object({ kind: z.literal("knockOut"), seat: z.enum(["p1", "p2"]), uid: z.string() }),
+  z.object({
+    kind: z.literal("coin"),
+    seat: z.enum(["p1", "p2"]),
+    face: z.enum(["heads", "tails"]),
+  }),
+]);
+export type LogCue = z.infer<typeof logCueSchema>;
+
 /** One accumulated game-log row, seat-keyed. An `action` row is a formatted
     line (its segments + the actor + the "+MM:SS" elapsed stamp); a `turn` row is
     the between-turns divider. Mirrors the engine's own emit shape field-for-
@@ -37,6 +56,8 @@ export const seatLogEntrySchema = z.discriminatedUnion("kind", [
     segments: z.array(logSegmentSchema),
     /** Public identity of a Trainer played/attached on this row. Older logs omit it. */
     playedTrainer: z.object({ id: z.string(), cardId: z.string(), name: z.string() }).optional(),
+    /** Table cues for this row's event; absent when it has none, and on older logs. */
+    cues: z.array(logCueSchema).optional(),
   }),
   z.object({ kind: z.literal("turn"), turn: z.number() }),
 ]);

@@ -1,4 +1,4 @@
-import type { EffectChoice, GameAction, PokemonRef, Seat } from "@colorless/engine";
+import type { EffectChoice, GameAction, PokemonRef } from "@colorless/engine";
 import type {
   Card,
   RedactedCard,
@@ -10,13 +10,8 @@ import { fetchCardPool } from "../game/cardPool";
 import { projectionFromRedacted } from "../game/projection";
 import type { ActionError, LobbyClient } from "../online/lobbyClient";
 import { benchLimitFor } from "../game/board";
-import {
-  counterSourcePicked,
-  type LifecycleFlag,
-  type TableEvents,
-  type TableLifecycle,
-  type TableSource,
-} from "./tableSource";
+import type { LifecycleFlag, TableLifecycle, TableSource } from "./tableSource";
+import { autoStepFor, counterSourcePicked, eventsFromLog, NO_EVENTS } from "./tableEvents";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const roomOnBench = (v: RedactedGame) =>
@@ -137,7 +132,6 @@ export function onlineGate(action: GameAction, v: RedactedGame): boolean {
   }
 }
 
-const NO_EVENTS: TableEvents = { knockedOut: [], shuffled: [], coin: null };
 export type CardPool = (ids: string[]) => Promise<{ pool: Record<string, Card> }>;
 
 /** The live lobby match as a table: RedactedGame frames in, GameActions out
@@ -305,7 +299,7 @@ export class LuaOnlineMatch implements TableSource {
     this.notify();
   }
 
-  /** Diff a new frame against the last: KOs, shuffles, bench keys, auto-steps. */
+  /** Take a new frame: the cues of the log rows it brought, bench keys, auto-steps. */
   private frame(next: RedactedGame | null) {
     let prev = this.seen;
     this.seen = next;
@@ -323,25 +317,20 @@ export class LuaOnlineMatch implements TableSource {
       [g.board.you, g.board.opponent].flatMap((s) =>
         [s.active, ...s.bench].flatMap((c) => (c ? [c.id] : [])),
       );
-    const discarded = new Set(
-      [...next.board.you.discard, ...next.board.opponent.discard].map((c) => c.id),
+    const names = this.names();
+    const fresh = eventsFromLog(log.slice(this.logLength), (seat) =>
+      seat === next.seat ? names.you : names.opponent,
     );
-    const seats = new Set<Seat>(this.events.shuffled);
-    for (const e of log.slice(this.logLength)) {
-      if (e.kind !== "action" || e.who === "system") continue;
-      const text = e.segments.map((s) => s.text).join("");
-      if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
-        seats.add(e.who);
-    }
     this.logLength = log.length;
+    const held = this.events;
     this.events = {
-      knockedOut: [
-        ...this.events.knockedOut,
-        ...(prev ? tops(prev).filter((uid) => discarded.has(uid)) : []),
-      ],
-      shuffled: [...seats],
-      coin: null,
-      counterSource: this.counter ?? this.events.counterSource,
+      knockedOut: [...held.knockedOut, ...fresh.knockedOut],
+      shuffled: [...new Set([...held.shuffled, ...fresh.shuffled])],
+      coin:
+        held.coin && fresh.coin
+          ? { title: fresh.coin.title, flips: [...held.coin.flips, ...fresh.coin.flips] }
+          : (fresh.coin ?? held.coin),
+      counterSource: this.counter ?? held.counterSource,
     };
     this.counter = undefined;
     // Only the top uid travels: an evolution at the same bench slot inherits
@@ -359,21 +348,9 @@ export class LuaOnlineMatch implements TableSource {
 
   /** AutoMulliganDraw and AutoTakePrizes: once per decision, refusals muted. */
   private autoSteps(v: RedactedGame) {
-    if (v.waitingOn !== "you" || v.outcome) return;
-    const p = v.phase;
-    if (p.kind === "setup:drawExtra")
-      this.once("draw", { type: "setupDrawExtra", seat: v.seat, count: p.owed });
-    else if (p.kind === "ko:takePrizes") {
-      const left = v.board.you.prizesRemaining;
-      this.once(`prizes:${left}:${p.count}`, {
-        type: "takePrizes",
-        seat: v.seat,
-        prizeIndices: Array.from({ length: p.count }, (_, i) => left - p.count + i),
-      });
-    }
-  }
-
-  private once(key: string, action: GameAction) {
+    const action = autoStepFor(v);
+    if (!action) return;
+    const key = JSON.stringify(action);
     if (this.autoSent.has(key)) return;
     this.autoSent.add(key);
     this.send(action, { auto: true });

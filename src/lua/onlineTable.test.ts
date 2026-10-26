@@ -223,7 +223,7 @@ describe("LuaOnlineMatch", () => {
     t.push(structuredClone(prizes));
     expect(t.actions()).toEqual([
       { type: "setupDrawExtra", seat: "p1", count: 2 },
-      { type: "takePrizes", seat: "p1", prizeIndices: [4, 5] },
+      { type: "takePrizes", seat: "p1", prizeIndices: [5, 4] },
     ]);
     // An automatic step's refusal is not the player's error.
     t.fake().push({ kind: "reject-action", reason: "Already taken" });
@@ -339,7 +339,7 @@ describe("LuaOnlineMatch", () => {
     expect(t.route).not.toHaveBeenCalled();
   });
 
-  it("derives knock-outs and shuffles from consecutive frames", async () => {
+  it("plays Knock Outs, shuffles and coins from the new rows' cues", async () => {
     const t = await table();
     const before = frame(t.state);
     t.push(before);
@@ -348,7 +348,39 @@ describe("LuaOnlineMatch", () => {
     const after = structuredClone(before);
     after.board.opponent.active = null;
     after.board.opponent.discard.push(ko);
+    const row = (
+      cues: NonNullable<Extract<SeatLogEntry, { kind: "action" }>["cues"]>,
+    ): SeatLogEntry => ({ kind: "action", who: "p2", elapsed: "0:01", segments: [], cues });
     t.push(after, [
+      row([{ kind: "coin", seat: "p2", face: "tails" }]),
+      row([{ kind: "knockOut", seat: "p2", uid: ko.id }]),
+      row([{ kind: "shuffle", seat: "p2", zone: "deck" }]),
+    ]);
+    expect(t.tagged("D")).toEqual([["D", ko.id]]);
+    expect(t.rows()[0]?.[19]).toBe("opponent");
+    const coin = t.tagged("M")[0];
+    expect(coin?.slice(1, 4)).toEqual(["coin", "Coin flip", "Brock: Tails"]);
+  });
+
+  it("treats a card leaving play for the discard pile without a Knock Out cue as no Knock Out", async () => {
+    const t = await table();
+    const before = frame(t.state);
+    t.push(before);
+    const gone = before.board.opponent.active;
+    if (!gone) throw new Error("Expected an opposing Active");
+    const after = structuredClone(before);
+    after.board.opponent.active = null;
+    after.board.opponent.discard.push(gone);
+    t.push(after, [
+      { kind: "action", who: "p2", elapsed: "0:01", segments: [{ text: "discarded" }], cues: [] },
+    ]);
+    expect(t.tagged("D")).toEqual([]);
+  });
+
+  it("still riffles a deck from a log written before cues", async () => {
+    const t = await table();
+    t.push(frame(t.state));
+    t.push(frame(t.state), [
       {
         kind: "action",
         who: "p2",
@@ -356,7 +388,6 @@ describe("LuaOnlineMatch", () => {
         segments: [{ text: "Brock shuffled their deck" }],
       },
     ]);
-    expect(t.tagged("D")).toEqual([["D", ko.id]]);
     expect(t.rows()[0]?.[19]).toBe("opponent");
   });
 

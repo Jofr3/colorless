@@ -55,8 +55,6 @@ export interface GameError {
 }
 
 interface HostState {
-  /** Public KO identities from the last action, for transient table effects. */
-  knockedOut: readonly string[];
   /** Transient presentation only — never persisted or replayed on refresh. */
   coinFlipBatch: CoinFlipBatch | null;
   /** Hold the visible board, log and viewer until the dice finish. Saves use `game`. */
@@ -149,7 +147,6 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     return {
       ...prev,
       game: step.game,
-      knockedOut: [],
       log: step.log,
       viewerSeat: step.viewerSeat,
       turnIndex: Math.max(0, Math.min(step.turnIndex, prev.turns.length - 1)),
@@ -169,7 +166,6 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     return {
       ...prev,
       ...turn,
-      knockedOut: [],
       turnIndex,
       steps,
       stepIndex: Math.max(0, stepIndex),
@@ -180,7 +176,6 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
   if (!result.ok) {
     return {
       ...prev,
-      knockedOut: [],
       lastError: {
         code: result.error.code,
         message: result.error.message,
@@ -234,7 +229,6 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
           }
         : prev.coinFlipBatch,
     game: result.state,
-    knockedOut: result.events.flatMap((e) => (e.type === "KNOCKED_OUT" ? [e.uid] : [])),
     log,
     // An accepted action makes any earlier rejection stale — and since the
     // viewer flip below also rides on accepted actions, clearing here is
@@ -275,7 +269,6 @@ export function initHost(setup: LocalGameSetup): HostState {
   );
   return {
     coinFlipBatch: null,
-    knockedOut: [],
     coinFlipPresentation: null,
     game: setup.state,
     names: setup.names,
