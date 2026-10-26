@@ -86,8 +86,8 @@ only the conclusion.
 - **The Lua mailbox rows are declared once** (`src/lua/wireFields.ts` `WIRE_ROWS`): each row kind's
   tag(s) and field order, `as const`. Emitters build a record and encode it with `wireRow`, so a
   missing or extra field fails to compile. `bun scripts/lua-constants.ts` turns the table into
-  `frontend/lua/ui/wire_fields.lua` (field → 1-based column) and `frontend/lua/web/wire_fields.json`
-  (0-based, inlined into host.js by `build:lua`); `--check` runs in `check:static`. Readers index
+  `frontend/lua/ui/wire_fields.lua` (field → 1-based column); `--check` runs in `check:static`. Lua
+  is the only reader of these rows (the builder's title comes from `LuaBuilder.name`). Readers index
   by name (`f[W.header.matchId]`, `r[W.card.zone]`) and tests by `wireColumn`, never by number. To
   add, drop or reorder a field, edit `WIRE_ROWS`, rerun the generator and the fixtures; the web
   deploy is atomic and content-hashed, so no slot is kept for an older client. The command and
@@ -182,8 +182,27 @@ only the conclusion.
 - An engine function that appends to an `events: GameEvent[]` out-parameter takes it as its last
   positional parameter, after any options record; optional parameters before it are passed
   explicitly (`undefined`, or `{}` for a fresh `EffectRecord`).
-- Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
-  opt into jsdom per-file (`// @vitest-environment jsdom`).
+- Pure logic gets unit tests (see the many `*.test.ts` in the repo). There is no DOM test
+  environment: DOM-facing code takes its elements and event targets as parameters (as
+  `src/host/textProxy.ts` and `src/host/router.ts` do), and its tests pass fakes built on
+  Node's `EventTarget`.
+- **The page around the Lua canvas.** `frontend/lua/web/host.js` is a classic script, checked
+  with `// @ts-check` (`frontend/lua/web/tsconfig.json`), that must load before `game.js`, which
+  reads love.js's `Module` while it parses. It keeps only boot (`Module`, the loading and
+  failure overlay), mailbox writes (held until `preRun` when the runtime does not exist yet),
+  the viewport mailbox and card art, and defines `window.colorlessHost`
+  (`src/host/bridgeProtocol.d.ts`). The boot invariant: `Love()` starts on window load, after
+  the deferred bridge module has run and called `colorlessHost.connect`; when it has not, the
+  host shows the failure overlay instead of starting. Everything else is TypeScript in
+  `src/host/` (`router.ts` owns routes and history, `shell.ts` takes Lua's
+  `COLORLESS:<channel>:` prints, `textProxy.ts` drives the native inputs with the shared
+  `[revision, field, value, selectionStart, selectionEnd, action]` record), wired by
+  `src/lua/bridge.ts`, which registers the screen adapters in one table. The host script has
+  no imports, so it receives data (mailbox names, the artwork cache) through `connect`. Lua
+  reads mailboxes by name through `ui/host_constants.lua`, which `scripts/lua-constants.ts`
+  generates from `src/host/mailboxes.ts`: add a mailbox there, not as a string in Lua. Lua owns
+  the preferences record; the page stores it as Lua writes it. Adapters guard async replies
+  with `epochGuard()` (`src/lua/epochGuard.ts`).
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
   234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;

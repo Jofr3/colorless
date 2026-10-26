@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Fails when a TypeScript file in the repo is not covered by any `tsc -b` project. Run with `bun
- * run typecheck:coverage`; it is also a step of `bun run check`.
+ * Fails when a TypeScript file in the repo, or a checked JavaScript file (CHECKED_JS), is not
+ * covered by any `tsc -b` project. Run with `bun run typecheck:coverage`; it is also a step of
+ * `bun run check`.
  */
 
 import { spawnSync } from "node:child_process";
@@ -12,6 +13,14 @@ import { localBin, REPO_ROOT, repoSourceFiles } from "./lib/repo";
 
 /** Extensions `tsc` typechecks that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
+
+/** JavaScript that ships or builds the app, checked with `// @ts-check` and `checkJs`: a directory
+ * (trailing slash) or one file. Other JavaScript (tests and one-off tools) stays unchecked. */
+const CHECKED_JS = ["frontend/lua/web/", "frontend/lua/build.mjs"];
+const JS_EXTENSIONS = ["js", "mjs", "cjs"];
+
+const isCheckedJs = (file: string) =>
+  CHECKED_JS.some((root) => (root.endsWith("/") ? file.startsWith(root) : file === root));
 
 /** The solution root — the file `bun run typecheck` (`tsc -b`) is pointed at. */
 const ROOT_TSCONFIG = "tsconfig.json";
@@ -171,7 +180,10 @@ function main(): void {
   const problems = [...selfCheck(), ...checkRunsThisGuard()];
   if (problems.length > 0) fail(problems.join("\n"));
 
-  const files = repoSourceFiles(EXTENSIONS);
+  const files = [
+    ...repoSourceFiles(EXTENSIONS),
+    ...repoSourceFiles(JS_EXTENSIONS).filter(isCheckedJs),
+  ];
   if (files.length === 0) {
     fail("typecheck-coverage: found no TypeScript files at all — that cannot be right.");
   }
@@ -197,7 +209,7 @@ function main(): void {
     const projects = [...sets.keys()].sort().join(", ");
     console.log(
       [
-        `typecheck-coverage: OK — all ${files.length} TypeScript files are in ${sets.size} `,
+        `typecheck-coverage: OK — all ${files.length} TypeScript and checked JavaScript files are in ${sets.size} `,
         `project(s) of ${ROOT_TSCONFIG} (${projects}).`,
       ].join(""),
     );
@@ -213,7 +225,7 @@ function main(): void {
 
   fail(
     [
-      `typecheck-coverage: FAIL — ${uncovered.length} of ${files.length} TypeScript file(s) `,
+      `typecheck-coverage: FAIL — ${uncovered.length} of ${files.length} TypeScript or checked JavaScript file(s) `,
       `are in no project reachable from ${ROOT_TSCONFIG}.\n`,
       "They are typechecked by NOTHING; `tsc -b` exits 0 without ever reading them.\n\n",
       `Files no project can see:\n${named}\n\n`,

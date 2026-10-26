@@ -24288,6 +24288,16 @@ export const MUTANTS: Mutant[] = [
     killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
   },
   {
+    id: "F2-host-script-project-leaves-the-solution",
+    decision: "F2",
+    what: "The checked-JavaScript project for the host script leaves the solution's references: `tsc -b` stays green while host.js and love.d.ts are typechecked by nothing. Killed by typecheck-coverage, which also requires the checked JavaScript to sit in a project.",
+    file: "tsconfig.json",
+    find: '    { "path": "./tsconfig.scripts.json" },\n    { "path": "./frontend/lua/web" },',
+    replace: '    { "path": "./tsconfig.scripts.json" },',
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
     id: "D481-scripts-project-drops-the-scripts-dir",
     decision: "D481",
     what: 'The project stays listed, stays valid and still compiles — only `"scripts"` leaves its `include`, so `apps/api/scripts`, `packages/schema/scripts` and `drizzle.config.ts` are still checked and `tsc -b` is still green. ⚠️ **THIS IS THE ROW THAT MAKES THE GUARD\'S ARITHMETIC LOAD-BEARING RATHER THAN ITS EXISTENCE** (D212\'s second row, one directory over): the row above deletes the project and this one merely narrows it, and a guard that only asked *"is there a scripts project?"* would be green here. Measured ALONE: 14 of 714 named, all under `scripts/`.',

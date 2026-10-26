@@ -6,6 +6,7 @@ import { prepareSandbox, SandboxSetupError } from "../game/prepareSandbox";
 import { validSandboxDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import type { AccountStatus } from "./account";
+import { epochGuard, sessionUser } from "./epochGuard";
 
 /** Read-only deck selection; Lua owns all layout, controls and animation. */
 export class LuaSandbox {
@@ -16,7 +17,7 @@ export class LuaSandbox {
   message = "";
   active = false;
   private user = "";
-  private epoch = 0;
+  private readonly epoch = epochGuard();
   private revision = 0;
 
   constructor(
@@ -25,9 +26,10 @@ export class LuaSandbox {
   ) {}
 
   session(status: AccountStatus, id: string) {
-    if (status === "loading" || (status === "authenticated" && id === this.user)) return;
-    this.epoch++;
-    this.user = status === "authenticated" ? id : "";
+    const user = sessionUser(status, id, this.user);
+    if (user === undefined) return;
+    this.epoch.invalidate();
+    this.user = user;
     this.decks = [];
     this.selected = ["", ""];
     this.busy = false;
@@ -51,16 +53,16 @@ export class LuaSandbox {
       this.emit();
       return;
     }
-    const epoch = ++this.epoch;
+    const live = this.epoch.next();
     this.busy = true;
     this.phase = "loading";
     this.message = "";
     this.emit();
     try {
       const summaries = await api.listDecks();
-      if (epoch !== this.epoch) return;
-      const decks = await validSandboxDecks(summaries, () => epoch === this.epoch);
-      if (epoch !== this.epoch) return;
+      if (!live()) return;
+      const decks = await validSandboxDecks(summaries, live);
+      if (!live()) return;
       // Include decks in existing folders, without bringing folder management here.
       this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
       this.selected = this.selected.map((id) =>
@@ -68,7 +70,7 @@ export class LuaSandbox {
       ) as [string, string];
       this.phase = "ready";
     } catch (error) {
-      if (epoch !== this.epoch) return;
+      if (!live()) return;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
       this.decks = [];
       this.selected = ["", ""];
@@ -77,7 +79,7 @@ export class LuaSandbox {
           ? "Sign in to choose your decks."
           : "Could not load your decks. Try again.";
     } finally {
-      if (epoch === this.epoch) {
+      if (live()) {
         this.busy = false;
         this.emit();
       }
@@ -90,7 +92,7 @@ export class LuaSandbox {
     const [action, a, b] = fields;
     if (action === "close") {
       this.active = false;
-      this.epoch++;
+      this.epoch.invalidate();
       this.busy = false;
       return;
     }
@@ -112,22 +114,22 @@ export class LuaSandbox {
       action === "start" &&
       this.selected.every((id) => this.decks.some((d) => d.id === id && d.cardCount === DECK_SIZE))
     ) {
-      const epoch = ++this.epoch;
+      const live = this.epoch.next();
       this.busy = true;
       this.message = "";
       this.emit();
       try {
         // Fetch fresh contents and rerun the deck validation.
         const setup = await prepareSandbox([...this.selected]);
-        if (epoch === this.epoch && this.active) this.launch(setup);
+        if (live() && this.active) this.launch(setup);
       } catch (error) {
-        if (epoch !== this.epoch) return;
+        if (!live()) return;
         this.message =
           error instanceof SandboxSetupError
             ? error.message
             : "Could not prepare the game. Try again.";
       } finally {
-        if (epoch === this.epoch) {
+        if (live()) {
           this.busy = false;
           this.emit();
         }

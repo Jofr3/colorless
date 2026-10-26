@@ -6,7 +6,12 @@ local ranges={reducedMotion={-1,1},bloom={0,1},muted={0,1}}
 function Preferences.new(raw)
   local self=setmetatable({},Preferences)
   for key,value in pairs(Preferences.defaults) do self[key]=value end
-  if raw then
+  -- A JSON record ({"screenshake":50,...}) reads field by field.
+  if raw and raw:match('^%s*{') then
+    for _,key in ipairs(Preferences.keys) do
+      self:set(key,tonumber(raw:match('"'..key..'"%s*:%s*(-?[%d.]+)')))
+    end
+  elseif raw then
     local values={}
     for value in raw:gmatch('%S+') do values[#values+1]=tonumber(value) or false end
     if #values==#Preferences.keys then

@@ -230,8 +230,8 @@ function Library:update(dt,time,mx,my,reduced)
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   my=my-self:offset()
   self.time,self.mx,self.my,self.reduced=time,mx,my,reduced
-  self:sync(Mailbox.read('__library.txt'))
-  self:input(Mailbox.read('__library_input.txt'))
+  self:sync(Mailbox.read('library'))
+  self:input(Mailbox.read('libraryInput'))
   if self.pendingSearch and not self.busy then
     self.searchDelay=self.searchDelay-dt
     if self.searchDelay<=0 then self:command('search',self.pendingSearch); self.pendingSearch=nil end
