@@ -27,7 +27,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { isRecord, parseJson } from "../lib/cli.ts";
 import { REPO_ROOT } from "../lib/repo.ts";
 import { applyMutant } from "./apply.ts";
@@ -300,14 +300,84 @@ function spawnRecording(bin: string, args: string[], verbose: boolean): Promise<
     is deliberately clustered by decision, so this roughly halves wall time. */
 const baselineCache = new Map<string, SuiteResult>();
 
+function baselineKey(
+  files: string[],
+  nameFilter: string | undefined,
+  command: string[] | undefined,
+): string {
+  return command === undefined
+    ? `${files.join("|")}::${nameFilter ?? ""}`
+    : `!${command.join(" ")}`;
+}
+
+function isJsonReport(v: unknown): v is { testResults: { name: string }[] } {
+  return (
+    isRecord(v) &&
+    Array.isArray(v.testResults) &&
+    v.testResults.every((r) => isRecord(r) && typeof r.name === "string")
+  );
+}
+
+/**
+ * Runs the baselines of every selected suite row in one vitest process and records the keys it
+ * vouches for, so only the rest get a run of their own. It vouches only when the whole run exits 0,
+ * since an error outside any test fails a run without failing a file, and only for a key whose
+ * filters matched a file, matching them as `vitest run` does (a case-insensitive substring of the
+ * repo-relative path). Name-filtered keys keep their own run.
+ */
+async function batchBaselines(selected: readonly Mutant[], verbose: boolean): Promise<void> {
+  const keyed = new Map<string, string[]>();
+  for (const m of selected) {
+    if (m.killedByCommand !== undefined || m.nameFilter !== undefined) continue;
+    keyed.set(baselineKey(m.expectKilledBy, undefined, undefined), m.expectKilledBy);
+  }
+  if (keyed.size < 2) return;
+  const filters = [...new Set([...keyed.values()].flat())];
+  process.stdout.write(`  baselines: ${keyed.size} suite set(s) in one run … `);
+  const report = join(REPO_ROOT, "tmp", `mutation-baseline-${process.pid}.json`);
+  mkdirSync(dirname(report), { recursive: true });
+  let ran: string[] = [];
+  let run: SuiteResult;
+  try {
+    run = await spawnRecording(
+      "bunx",
+      [
+        "vitest",
+        "run",
+        "--reporter=dot",
+        "--reporter=json",
+        `--outputFile.json=${report}`,
+        ...filters,
+      ],
+      verbose,
+    );
+    if (run.green) {
+      ran = parseJson(readFileSync(report, "utf8"), report, isJsonReport).testResults.map((r) =>
+        relative(REPO_ROOT, r.name).toLowerCase(),
+      );
+    }
+  } finally {
+    rmSync(report, { force: true });
+  }
+  let vouched = 0;
+  for (const [key, files] of keyed) {
+    const lowered = files.map((f) => f.toLowerCase());
+    if (!ran.some((file) => lowered.some((f) => file.includes(f)))) continue;
+    baselineCache.set(key, { green: true, ms: 0, tail: "" });
+    vouched++;
+  }
+  console.log(
+    `${run.green ? "green" : "RED, so every suite set runs its own"} · ${vouched} vouched · ${(run.ms / 1000).toFixed(1)}s`,
+  );
+}
+
 async function baselineFor(
   files: string[],
   nameFilter: string | undefined,
   command: string[] | undefined,
   verbose: boolean,
 ) {
-  const key =
-    command === undefined ? `${files.join("|")}::${nameFilter ?? ""}` : `!${command.join(" ")}`;
+  const key = baselineKey(files, nameFilter, command);
   const hit = baselineCache.get(key);
   if (hit !== undefined) return hit;
   const result =
@@ -572,6 +642,7 @@ async function main(): Promise<void> {
 
   const rows: Row[] = [];
   const started = Date.now();
+  if (!full) await batchBaselines(selected, options.verbose);
   for (const mutant of selected) {
     process.stdout.write(`  ${mutant.id.padEnd(26)} … `);
     const row = await runMutant(mutant, options);
