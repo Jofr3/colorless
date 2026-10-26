@@ -1,20 +1,14 @@
-// Authenticated deck and folder routes. User data is never KV-cached. Each :id lookup is scoped to
-// the user, so another user's resource returns the same 404 as a missing one, while a referenced
-// folder you do not own is a 400.
+// Authenticated deck routes. User data is never KV-cached. Each :id lookup is scoped to the user,
+// so another user's deck returns the same 404 as a missing one.
 
 import {
   createDeckRequestSchema,
-  createFolderRequestSchema,
   type DeckCard,
   deckSchema,
   deckSummarySchema,
-  folderSchema,
   patchDeckRequestSchema,
-  patchFolderRequestSchema,
-  type ReorderRequest,
-  reorderRequestSchema,
 } from "@colorless/schema";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
@@ -22,42 +16,20 @@ import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
 import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
 import { ownedBy } from "../db/owned";
-import { cards, deckCards, decks, folders } from "../db/schema";
+import { cards, deckCards, decks } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { type CoverCandidate, effectiveCoverCardId } from "./cover";
-import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
-import { createsCycle, unknownIds } from "./validate";
+import { type DeckRow, mapDeckRow, mapDeckSummaryRow } from "./map";
+import { unknownIds } from "./validate";
 
 export const deckRoutes = new Hono<{ Bindings: Env }>();
-export const folderRoutes = new Hono<{ Bindings: Env }>();
 
 type Db = DrizzleD1Database;
 
 // Response schemas — the domain shapes each route parses itself against.
 const deckSummariesResponseSchema = z.array(deckSummarySchema);
-const foldersResponseSchema = z.array(folderSchema);
-
-/** 400 when `folderId` names a folder the CALLER doesn't own — a folder that
-    doesn't exist at all gets the same answer, so nothing about other users'
-    trees leaks. Null (the library root) always passes. */
-async function guardFolderRef(
-  c: Context,
-  db: Db,
-  userId: string,
-  folderId: string | null | undefined,
-): Promise<Response | null> {
-  if (folderId === null || folderId === undefined) {
-    return null;
-  }
-  const row = await db
-    .select({ id: folders.id })
-    .from(folders)
-    .where(ownedBy(folders, folderId, userId))
-    .get();
-  return row === undefined ? c.json({ error: "unknown folder" }, 400) : null;
-}
 
 /** 400 naming the card ids absent from the catalog, or null when all exist.
     One logical IN query — chunked to D1's bound-parameter cap and run in a
@@ -84,55 +56,16 @@ async function guardUnknownCards(
     : c.json({ error: "unknown card id(s)", cardIds: unknown }, 400);
 }
 
-/** The `position` a created deck/folder takes: one below the user's current
-    minimum, so new rows land FIRST in the position-ordered lists (the web
-    grid prepends creates). Two racing creates can tie — harmless, the id
+/** The `position` a created deck takes: one below the user's current minimum, so new decks land
+    first in the position-ordered list. Two racing creates can tie, which is harmless: the id
     tiebreak keeps the order stable. */
-async function nextPrependPosition(
-  db: Db,
-  table: typeof decks | typeof folders,
-  userId: string,
-): Promise<number> {
+async function nextPrependPosition(db: Db, userId: string): Promise<number> {
   const row = await db
-    .select({ min: sql<number | null>`min(${table.position})` })
-    .from(table)
-    .where(eq(table.userId, userId))
+    .select({ min: sql<number | null>`min(${decks.position})` })
+    .from(decks)
+    .where(eq(decks.userId, userId))
     .get();
   return (row?.min ?? 1) - 1;
-}
-
-/** Both reorder routes: absolute position assignments, applied atomically in
-    one batch. Any id that isn't the CALLER's answers a 400 naming it (the
-    ids came from the request body, and a foreign id reads the same as a
-    missing one — no existence leak). */
-async function reorderRows(
-  c: Context,
-  db: Db,
-  table: typeof decks | typeof folders,
-  noun: "deck" | "folder",
-  userId: string,
-  positions: ReorderRequest["positions"],
-): Promise<Response> {
-  const ids = positions.map((entry) => entry.id);
-  const queries = chunk(ids, D1_MAX_BOUND_PARAMS - 1).map((group) =>
-    db
-      .select({ id: table.id })
-      .from(table)
-      .where(and(eq(table.userId, userId), inArray(table.id, group))),
-  );
-  const owned = await db.batch(nonEmpty(queries));
-  const unknown = unknownIds(
-    ids,
-    owned.flat().map((row) => row.id),
-  );
-  if (unknown.length > 0) {
-    return c.json({ error: `unknown ${noun} id(s)`, ids: unknown }, 400);
-  }
-  const updates = positions.map(({ id, position }) =>
-    db.update(table).set({ position }).where(eq(table.id, id)),
-  );
-  await db.batch(nonEmpty(updates));
-  return c.body(null, 204);
 }
 
 /** Chunked `deck_cards` inserts for one deck (3 bound params per row). */
@@ -232,10 +165,6 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
-  const badFolder = await guardFolderRef(c, db, user.id, body.folderId);
-  if (badFolder !== null) {
-    return badFolder;
-  }
   const badCards = await guardUnknownCards(c, db, body.cards);
   if (badCards !== null) {
     return badCards;
@@ -250,7 +179,7 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
     // A brand-new deck wears the derived default; picking a cover is an edit
     // you make later, in the editor, once there is something to pick.
     coverCardId: null,
-    position: await nextPrependPosition(db, decks, user.id),
+    position: await nextPrependPosition(db, user.id),
     updated: new Date(),
   };
   await db.batch([db.insert(decks).values(row), ...deckCardInserts(db, row.id, body.cards)]);
@@ -269,10 +198,6 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
     .get();
   if (existing === undefined) {
     return c.json({ error: "deck not found" }, 404);
-  }
-  const badFolder = await guardFolderRef(c, db, user.id, body.folderId);
-  if (badFolder !== null) {
-    return badFolder;
   }
   const badCards = await guardUnknownCards(c, db, body.cards ?? []);
   if (badCards !== null) {
@@ -333,17 +258,6 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
   return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
 });
 
-deckRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser, async (c) => {
-  return reorderRows(
-    c,
-    drizzle(c.env.DB),
-    decks,
-    "deck",
-    c.get("user").id,
-    c.req.valid("json").positions,
-  );
-});
-
 deckRoutes.delete("/:id", requireUser, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(decks)
@@ -353,94 +267,5 @@ deckRoutes.delete("/:id", requireUser, async (c) => {
     return c.json({ error: "deck not found" }, 404);
   }
   // deck_cards rows cascade away with the deck (§5.3 FKs).
-  return c.body(null, 204);
-});
-
-// --- folders -----------------------------------------------------------------
-
-folderRoutes.get("/", privateRevalidate, requireUser, async (c) => {
-  const rows = await drizzle(c.env.DB)
-    .select()
-    .from(folders)
-    .where(eq(folders.userId, c.get("user").id))
-    .orderBy(asc(folders.position), asc(folders.id))
-    .all();
-  return c.json(foldersResponseSchema.parse(rows.map(mapFolderRow)));
-});
-
-folderRoutes.post("/", validate("json", createFolderRequestSchema), requireUser, async (c) => {
-  const body = c.req.valid("json");
-  const user = c.get("user");
-  const db = drizzle(c.env.DB);
-  const badParent = await guardFolderRef(c, db, user.id, body.parentId);
-  if (badParent !== null) {
-    return badParent;
-  }
-  const row: FolderRow = {
-    id: crypto.randomUUID(),
-    userId: user.id,
-    parentId: body.parentId ?? null,
-    name: body.name,
-    position: await nextPrependPosition(db, folders, user.id),
-  };
-  await db.insert(folders).values(row);
-  return c.json(folderSchema.parse(mapFolderRow(row)), 201);
-});
-
-folderRoutes.patch("/:id", validate("json", patchFolderRequestSchema), requireUser, async (c) => {
-  const body = c.req.valid("json");
-  const user = c.get("user");
-  const folderId = c.req.param("id");
-  const db = drizzle(c.env.DB);
-  // One user's folder list is small; fetch it whole — the ownership check,
-  // the parent-reference check and the cycle walk all read the same rows.
-  const rows = await db.select().from(folders).where(eq(folders.userId, user.id)).all();
-  const target = rows.find((row) => row.id === folderId);
-  if (target === undefined) {
-    return c.json({ error: "folder not found" }, 404);
-  }
-  if (body.parentId !== undefined && body.parentId !== null) {
-    if (!rows.some((row) => row.id === body.parentId)) {
-      return c.json({ error: "unknown folder" }, 400);
-    }
-    const parents = new Map(rows.map((row) => [row.id, row.parentId]));
-    if (createsCycle(parents, folderId, body.parentId)) {
-      return c.json({ error: "cannot move a folder into itself or its own subtree" }, 400);
-    }
-  }
-  const next: FolderRow = {
-    ...target,
-    name: body.name ?? target.name,
-    parentId: body.parentId === undefined ? target.parentId : body.parentId,
-  };
-  await db
-    .update(folders)
-    .set({ name: next.name, parentId: next.parentId })
-    .where(eq(folders.id, folderId));
-  return c.json(folderSchema.parse(mapFolderRow(next)));
-});
-
-folderRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser, async (c) => {
-  return reorderRows(
-    c,
-    drizzle(c.env.DB),
-    folders,
-    "folder",
-    c.get("user").id,
-    c.req.valid("json").positions,
-  );
-});
-
-folderRoutes.delete("/:id", requireUser, async (c) => {
-  const deleted = await drizzle(c.env.DB)
-    .delete(folders)
-    .where(ownedBy(folders, c.req.param("id"), c.get("user").id))
-    .returning({ id: folders.id });
-  if (deleted.length === 0) {
-    return c.json({ error: "folder not found" }, 404);
-  }
-  // §5.3 FK semantics do the rest: subfolders cascade-delete with the parent,
-  // and decks inside any deleted folder fall back to the library root
-  // (folder_id SET NULL) — decks are never destroyed by folder deletion.
   return c.body(null, 204);
 });

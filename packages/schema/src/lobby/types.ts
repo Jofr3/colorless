@@ -1,15 +1,7 @@
-// The shared vocabulary for the online lobby: the authoritative state the host
-// owns, and the messages the two peers exchange over the transport channel.
+// The shared vocabulary for the online lobby: the snapshot the lobby server owns, and the messages
+// it exchanges with both players. Players only send intents and render the snapshot they are sent.
 
 import type { RedactedGame, SeatLogEntry, WireAction } from "../match";
-//
-// The model is deliberately client-server even though there's no server: the
-// HOST is authoritative. It holds the one true `LobbySnapshot`, applies every
-// change (its own and the guest's), and broadcasts the result; the guest only
-// sends intents and renders whatever snapshot it's handed. Swapping the
-// BroadcastChannel transport (net/channel.ts) for a real WebSocket — and moving
-// this reducer server-side — turns this into true online play with no changes
-// to the UI.
 
 /** The two seats in a lobby. The creator is always the host. */
 export type LobbySlot = "host" | "guest";
@@ -62,8 +54,7 @@ export type LobbySnapshot = {
   countdownStartedAt: number | null;
 };
 
-/** A change a player asks to make to their own seat. The host validates and
-    applies it (see net/lobbyReducer.ts); the guest sends it over the wire. */
+/** A change a player asks to make to their own seat. The lobby server validates and applies it. */
 export type LobbyIntent =
   | { type: "select-deck"; deckId: string; deckName: string }
   | { type: "set-ready"; ready: boolean }
@@ -72,8 +63,9 @@ export type LobbyIntent =
 /** Everything that can travel over a lobby channel. `from` is the sender's
     player id so the host can bind messages to the right seat. */
 export type LobbyMessage =
-  /** guest → host: request to join, or re-announce after a reconnect. */
-  | { kind: "hello"; from: string; name: string }
+  /** guest → host: request to join, or re-announce after a reconnect. `logDeltas` says the client
+      takes `match` frames that carry only the log's new entries. */
+  | { kind: "hello"; from: string; name: string; logDeltas?: boolean }
   /** host → all: the authoritative snapshot after any change. */
   | { kind: "state"; snapshot: LobbySnapshot }
   /** server → one client: that client's REDACTED view of the in-game match
@@ -82,8 +74,10 @@ export type LobbyMessage =
       and on reconnect. `log` is the accumulated game log (seat-keyed, leak-safe,
       so IDENTICAL for both viewers — the client relabels `who` for its own seat);
       it rides here because the log outlives any single snapshot and can't be
-      rebuilt from `game`'s current state alone. */
-  | { kind: "match"; game: RedactedGame; log: SeatLogEntry[] }
+      rebuilt from `game`'s current state alone. With `logFrom`, `log` holds only the entries from
+      that index on; only a socket whose hello set `logDeltas` gets one. Without it, `log` is the
+      whole log. */
+  | { kind: "match"; game: RedactedGame; log: SeatLogEntry[]; logFrom?: number }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
   /** client → server: a game action for the running match (P4). The DO binds it

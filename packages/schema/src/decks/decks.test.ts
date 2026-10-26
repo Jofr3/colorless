@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   createDeckRequestSchema,
-  createFolderRequestSchema,
   deckSchema,
   deckSummarySchema,
-  folderSchema,
   MAX_DECK_CARD_ENTRIES,
-  MAX_REORDER_POSITIONS,
   patchDeckRequestSchema,
-  patchFolderRequestSchema,
-  reorderRequestSchema,
 } from "./index";
 
 const card = (cardId: string, count = 1) => ({ cardId, count });
@@ -70,16 +65,6 @@ describe("deckSchema / deckSummarySchema", () => {
   });
 });
 
-describe("folderSchema", () => {
-  it("parses root and nested folders", () => {
-    const root = { id: "f1", name: "Standard", parentId: null, position: 0 };
-    expect(folderSchema.parse(root).parentId).toBeNull();
-    expect(
-      folderSchema.parse({ id: "f2", name: "Rogue", parentId: "f1", position: -1 }).parentId,
-    ).toBe("f1");
-  });
-});
-
 describe("createDeckRequestSchema", () => {
   it("defaults cards to [] and trims the name", () => {
     const parsed = createDeckRequestSchema.parse({ name: "  Lost Box ", tint: 268 });
@@ -103,6 +88,15 @@ describe("createDeckRequestSchema", () => {
     expect(createDeckRequestSchema.safeParse({ name: "Big", tint: 0, cards }).success).toBe(false);
   });
 
+  it("files a new deck only at the library root", () => {
+    expect(createDeckRequestSchema.parse({ name: "Root", tint: 0, folderId: null }).folderId).toBe(
+      null,
+    );
+    expect(
+      createDeckRequestSchema.safeParse({ name: "Filed", tint: 0, folderId: "f1" }).success,
+    ).toBe(false);
+  });
+
   it.each([
     ["blank name", { name: "   ", tint: 0 }],
     ["missing tint", { name: "No tint" }],
@@ -122,6 +116,10 @@ describe("patchDeckRequestSchema", () => {
   it("accepts a lone explicit null (clear folder / format)", () => {
     expect(patchDeckRequestSchema.parse({ folderId: null }).folderId).toBeNull();
     expect(patchDeckRequestSchema.parse({ format: null }).format).toBeNull();
+  });
+
+  it("rejects moving a deck into a folder", () => {
+    expect(patchDeckRequestSchema.safeParse({ folderId: "f1" }).success).toBe(false);
   });
 
   it("takes a cover pick, and a lone null to go back to automatic (P5-6)", () => {
@@ -144,48 +142,5 @@ describe("patchDeckRequestSchema", () => {
       cards: [card("sv01-001"), card("sv01-001")],
     });
     expect(result.success).toBe(false);
-  });
-});
-
-describe("folder request schemas", () => {
-  it("create accepts an optional parentId", () => {
-    expect(createFolderRequestSchema.parse({ name: "Standard" }).parentId).toBeUndefined();
-    expect(createFolderRequestSchema.parse({ name: "Rogue", parentId: "f1" }).parentId).toBe("f1");
-  });
-
-  it("patch rejects an empty body but accepts a lone move-to-root", () => {
-    expect(patchFolderRequestSchema.safeParse({}).success).toBe(false);
-    expect(patchFolderRequestSchema.parse({ parentId: null }).parentId).toBeNull();
-  });
-});
-
-describe("reorderRequestSchema", () => {
-  const entry = (id: string, position = 0) => ({ id, position });
-
-  it("parses absolute assignments, negatives included", () => {
-    const parsed = reorderRequestSchema.parse({
-      positions: [entry("d1", -4), entry("d2", 0), entry("d3", 7)],
-    });
-    expect(parsed.positions).toHaveLength(3);
-  });
-
-  it("rejects duplicate ids, naming the offenders", () => {
-    const result = reorderRequestSchema.safeParse({
-      positions: [entry("d1"), entry("d2"), entry("d1", 5)],
-    });
-    expect(result.success).toBe(false);
-    expect(result.error?.issues.some((i) => i.message.includes("d1"))).toBe(true);
-  });
-
-  it.each([
-    ["an empty list", { positions: [] }],
-    ["a fractional position", { positions: [{ id: "d1", position: 0.5 }] }],
-    ["a blank id", { positions: [{ id: "", position: 0 }] }],
-    [
-      `more than ${MAX_REORDER_POSITIONS} rows`,
-      { positions: Array.from({ length: MAX_REORDER_POSITIONS + 1 }, (_, i) => entry(`d${i}`)) },
-    ],
-  ])("rejects %s", (_label, body) => {
-    expect(reorderRequestSchema.safeParse(body).success).toBe(false);
   });
 });

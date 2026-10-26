@@ -771,12 +771,14 @@ GET    /auth/oauth/:provider/callback  # state-checked code exchange → session
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
 
-# Decks & folders — implemented (P1 m7, apps/api/src/decks/). ALL routes need a
+# Decks — implemented (P1 m7, apps/api/src/decks/). ALL routes need a
 # valid session cookie (requireUser, §3.5) → else 401; every :id lookup is
 # scoped WHERE user_id = ? so someone else's (or a missing) resource is the
-# SAME 404 — no existence leak; a folderId/parentId you don't own → 400. NO KV
-# cache: user data reads fresh. Responses boundary-parsed through the
-# @colorless/schema deck/folder schemas. Card lists: {cardId, count 1–99},
+# SAME 404 — no existence leak. NO KV cache: user data reads fresh. Responses
+# boundary-parsed through the @colorless/schema deck schemas. The folder and
+# reorder routes are retired (they had no caller): `folderId` is accepted only
+# as null (a non-null value → 400), lists still order by `position`, and the
+# `folders` table and `decks.folder_id` column stay. Card lists: {cardId, count 1–99},
 # ≤200 distinct entries, duplicate cardIds → 400, ids absent from the catalog
 # → 400 `{"error":"unknown card id(s)","cardIds":[…]}` (checked with a chunked
 # IN query against `cards`, never the FK error text).
@@ -784,20 +786,13 @@ GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
                          #   updated, cardCount} — cardCount = summed copy counts
 GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
                          #   cards: [{cardId, count}]
-POST   /decks            # {name, tint 0–360, format?, folderId?, cards?}
+POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}
                          #   → 201 Deck (server-minted UUID id)
-PATCH  /decks/:id        # any of {name, tint, format?, folderId?} (null clears
+PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null clears
                          #   the nullable ones) AND/OR wholesale `cards`
                          #   replacement (delete+reinsert in one db.batch);
                          #   refreshes `updated`; empty patch → 400
 DELETE /decks/:id        # 204 (deck_cards cascade away)
-GET    /folders          # Folder[]: {id, name, parentId} — FLAT list, the
-                         #   client builds the tree
-POST   /folders          # {name, parentId?} → 201 Folder
-PATCH  /folders/:id      # rename and/or move; cycle guard walks the target
-                         #   parent's ancestor chain — self/descendant → 400
-DELETE /folders/:id      # 204 — subfolders cascade-delete with it; contained
-                         #   decks fall to the library root (folder_id SET NULL)
 
 # Lobby (Durable Object) — implemented (P1 m8, apps/api/src/lobby/; §3.6
 # as-built). Account-less: neither route reads the session cookie.

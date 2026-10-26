@@ -1,6 +1,6 @@
-import { deckSchema, deckSummarySchema, folderSchema } from "@colorless/schema";
+import { deckSchema, deckSummarySchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
+import { type DeckRow, mapDeckRow, mapDeckSummaryRow } from "./map";
 
 const deckRow: DeckRow = {
   id: "d1",
@@ -56,20 +56,5 @@ describe("mapDeckSummaryRow", () => {
     expect(summary.coverCardId).toBe("sv01-001");
     expect(summary).not.toHaveProperty("cards");
     expect(deckSummarySchema.parse(summary)).toEqual(summary);
-  });
-});
-
-describe("mapFolderRow", () => {
-  it("maps root and nested folders, dropping user_id", () => {
-    const row: FolderRow = {
-      id: "f1",
-      userId: "u1",
-      parentId: null,
-      name: "Standard",
-      position: 2,
-    };
-    expect(mapFolderRow(row)).toEqual({ id: "f1", name: "Standard", parentId: null, position: 2 });
-    expect(mapFolderRow({ ...row, id: "f2", parentId: "f1" }).parentId).toBe("f1");
-    expect(folderSchema.parse(mapFolderRow(row))).toEqual(mapFolderRow(row));
   });
 });

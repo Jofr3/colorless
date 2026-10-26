@@ -5,12 +5,13 @@
 import type {
   Card,
   CardBrief,
-  CardCategory,
+  CardsQueryParams,
   CatalogFacets,
   CreateDeckRequest,
   Deck,
   DeckSummary,
   LoginRequest,
+  OAuthProvider,
   Paginated,
   PatchDeckRequest,
   RegisterRequest,
@@ -145,62 +146,8 @@ function queryString(params: Record<string, string | number | string[] | undefin
 
 // ---- Catalog (public, KV-cached server-side) --------------------------------
 
-/** GET /cards filters (backend-data.md §6). Declared here — the schema
-    package types the response envelope but not the query params. All
-    optional; empties are omitted from the query string. */
-export type CardsQuery = {
-  /** Exact card id(s), e.g. "sv06.5-001" — batched deck hydration. Repeatable;
-      the server caps the list at 100 values (400 above), dedupes duplicates
-      and silently omits unknown ids. Composes with every other filter. */
-  id?: string[];
-  /** Substring match, case-insensitive. */
-  name?: string;
-  /** Case-insensitive WHOLE-name equality (no wildcards) — the import flow's
-      "find this exact card" lookup, distinct from the substring `name`. */
-  nameExact?: string;
-  category?: CardCategory;
-  /** Energy type(s), e.g. "Grass" — an array ORs within the dimension. */
-  type?: string | string[];
-  /** Exact rarity string(s), e.g. "Double rare" — an array ORs within the dimension. */
-  rarity?: string | string[];
-  /** Pokémon stage(s), wire vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
-  stage?: string | string[];
-  /** Printed rule-box marker(s) — exact values from GET /facets `suffixes`
-      ("ex" | "V" | "VMAX" | "MEGA" | …), an array ORs within the dimension.
-      Pokémon-only in the data; NULL on every row until an ingest fills the
-      column, so the vocabulary (and the rail section it feeds) is empty. */
-  suffix?: string | string[];
-  /** Trainer subtype(s) ("Item" | "Supporter" | "Stadium" | "Tool" | …). */
-  trainerType?: string | string[];
-  /** Energy subtype(s): "Normal" | "Special". */
-  energyType?: string | string[];
-  /** A set id, e.g. "sv06". */
-  set?: string;
-  /** A serie id, e.g. "sv" — cards whose set belongs to the serie. */
-  serie?: string;
-  /** Exact illustrator, case-sensitive — values come verbatim from GET /facets. */
-  illustrator?: string;
-  /**
-   * Case-insensitive substring search over rules text: ability and attack names and effects, plus
-   * Trainer and Special Energy effect prose. The ability and attack halves match inside stored
-   * JSON, so a term can hit a key name.
-   */
-  text?: string;
-  regulationMark?: string;
-  /** Inclusive hp bounds. */
-  hpMin?: number;
-  hpMax?: number;
-  legal?: "standard" | "expanded";
-  /** Result order; the server defaults to "set" (collector order). */
-  sort?: "name" | "hp-desc" | "set";
-  /** 1-based; defaults server-side to 1. */
-  page?: number;
-  /** Defaults server-side to 50, max 100. */
-  pageSize?: number;
-};
-
 /** Search the card catalog — a page of briefs plus the total match count. */
-export function getCards(params: CardsQuery = {}): Promise<Paginated<CardBrief>> {
+export function getCards(params: CardsQueryParams = {}): Promise<Paginated<CardBrief>> {
   return request(`/cards${queryString(params)}`);
 }
 
@@ -272,7 +219,7 @@ export function updateProfile(body: UpdateProfileRequest): Promise<User> {
 /** The url that STARTS an OAuth flow — assign it to window.location (it
     302s to the provider), don't fetch it. The api answers 503 until the
     provider's secrets are installed. */
-export function oauthStartUrl(provider: "google", redirect = "/"): string {
+export function oauthStartUrl(provider: OAuthProvider, redirect = "/"): string {
   return apiUrl(`/auth/oauth/${provider}?${new URLSearchParams({ redirect })}`);
 }
 

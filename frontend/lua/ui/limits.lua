@@ -2,7 +2,7 @@
 local Limits={
   -- A game deck (engine DECK_SIZE).
   deckSize=60,
-  -- A built deck's target by format id (src/decks/cards.ts FORMATS).
+  -- A built deck's target by format id (engine deckRules.ts FORMATS).
   formatDeckSize={expanded=60,standard=60},
   defaultFormat='standard',
 }

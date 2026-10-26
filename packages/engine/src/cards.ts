@@ -48,7 +48,7 @@ export function isFossilTop(state: GameState, pokemon: InPlayPokemon): boolean {
 }
 
 /** `stage` uses the tcgdex vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
-export function isBasicPokemon(card: Card): boolean {
+export function isBasicPokemon(card: Pick<Card, "category" | "stage">): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
 }
 

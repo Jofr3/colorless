@@ -41,6 +41,7 @@ import {
 import { cardOfUid, topCardOf, topUid } from "./cards";
 import {
   attackLocked,
+  benchLimitOf,
   attackMenuOf,
   disabledAbilityUids,
   effectiveMaxHp,
@@ -53,7 +54,7 @@ import {
   providedEnergy,
   retreatLocked,
 } from "./continuous";
-import type { DiscardScope, EffectPrompt, PokemonRef } from "./effectPrompt";
+import type { DiscardScope, EffectContext, EffectPrompt, PokemonRef } from "./effectPrompt";
 import {
   attackAgainBarred,
   attackBarredByAbility,
@@ -79,6 +80,7 @@ import {
   abilityUsedKey,
   abilityUsedThisTurn,
   answererOf,
+  BENCH_MAX,
   bodyAt,
   isImmobilized,
   otherSeat,
@@ -165,16 +167,32 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
       return { kind: "ko:takePrizes", count: phase.count };
     case "ko:promote":
       return { kind: "ko:promote" };
-    case "effect:choose":
+    case "effect:choose": {
       // A prompt's candidates can be the answerer's own deck cards; nobody who
       // cannot ANSWER it may see it, and a spectator never can.
-      return {
-        kind: "effect:choose",
-        prompt: spectating ? null : redactedPromptOf(state, phase, viewerSeat),
-      };
+      const prompt = spectating ? null : redactedPromptOf(state, phase, viewerSeat);
+      return prompt === null
+        ? { kind: "effect:choose", prompt }
+        : { kind: "effect:choose", prompt, ...effectSourceOf(state, phase.cont.ctx) };
+    }
     case "gameOver":
       return { kind: "gameOver" };
   }
+}
+
+/**
+ * What invoked the parked effect, and the Ability's name when its Pokémon has exactly one, for the
+ * answerer's prompt caption.
+ */
+function effectSourceOf(
+  state: GameState,
+  ctx: EffectContext,
+): { invokedBy?: EffectContext["invokedBy"]; abilityName?: string } {
+  if (ctx.invokedBy === undefined) return {};
+  if (ctx.invokedBy !== "ability") return { invokedBy: ctx.invokedBy };
+  const abilities = ctx.sourceUid === undefined ? null : cardOfUid(state, ctx.sourceUid)?.abilities;
+  const only = abilities?.length === 1 ? abilities[0] : undefined;
+  return { invokedBy: "ability", ...(only === undefined ? {} : { abilityName: only.name }) };
 }
 
 /**
@@ -189,25 +207,7 @@ function redactedPromptOf(
 ): RedactedEffectPrompt | null {
   const answerer = answererOf(phase);
   if (answerer !== viewerSeat) return null;
-  const prompt = redactPrompt(state, phase.prompt);
-  const op = phase.cont.pendingOp;
-  // Public presentation metadata lets online clients target Adrena-Brain on the
-  // board and recover the chosen source after reconnecting mid-ability.
-  if (prompt.kind === "choosePokemon" && op.op === "moveCountersToOpponentChosen") {
-    return {
-      ...prompt,
-      counterTransfer: {
-        upTo: op.upTo,
-        abilitySourceUid: phase.cont.ctx.sourceUid,
-        ...(op.from === undefined
-          ? {}
-          : {
-              from: redactedRefOf({ seat: phase.seat, spot: op.from }),
-            }),
-      },
-    };
-  }
-  return prompt;
+  return redactPrompt(state, phase.prompt);
 }
 
 /**
@@ -260,6 +260,9 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
         note: prompt.note,
         ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),
+        ...(prompt.counterTransfer === undefined
+          ? {}
+          : { counterTransfer: redactedTransferOf(prompt.counterTransfer) }),
       };
     case "choosePokemonMulti":
       return {
@@ -268,6 +271,7 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         min: prompt.min,
         max: prompt.max,
         declinable: prompt.declinable,
+        ...(prompt.unit === undefined ? {} : { unit: prompt.unit }),
         note: prompt.note,
       };
     case "moveEnergy":
@@ -365,6 +369,20 @@ function redactedRefOf(ref: PokemonRef): RedactedPokemonRef {
     seat: ref.seat,
     spot:
       ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index },
+  };
+}
+
+type CounterTransfer = NonNullable<
+  Extract<EffectPrompt, { kind: "choosePokemon" }>["counterTransfer"]
+>;
+
+function redactedTransferOf(transfer: CounterTransfer) {
+  return {
+    upTo: transfer.upTo,
+    ...(transfer.abilitySourceUid === undefined
+      ? {}
+      : { abilitySourceUid: transfer.abilitySourceUid }),
+    ...(transfer.from === undefined ? {} : { from: redactedRefOf(transfer.from) }),
   };
 }
 
@@ -782,7 +800,13 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
     mulliganCount: pendingMulligansOf(state, seat),
     // §2 — the discard pile is ordered and public.
     discard: side.discard.map((uid) => redactedCardOf(state, uid)),
+    // The limit reads the in-play cards, so it crosses only once they are face up.
+    ...(visibility.faceUpInPlay ? benchLimitField(benchLimitOf(state, seat)) : {}),
   };
+}
+
+function benchLimitField(limit: number): { benchLimit?: number } {
+  return limit === BENCH_MAX ? {} : { benchLimit: limit };
 }
 
 /**

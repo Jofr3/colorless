@@ -59,6 +59,12 @@ function basicCard(id: string): Card {
 const DECK = Array.from({ length: 60 }, () => "basic");
 const POOL = { basic: basicCard("basic") };
 
+/** Fifteen Basics at four copies each: a Standard-legal deck that still deals all-Basic hands. */
+const LEGAL_POOL: Record<string, Card> = Object.fromEntries(
+  Array.from({ length: 15 }, (_, i) => [`basic-${i}`, basicCard(`basic-${i}`)]),
+);
+const LEGAL_DECK = Object.keys(LEGAL_POOL).flatMap((id) => [id, id, id, id]);
+
 describe("startMatch — the lobby → engine handoff", () => {
   it("maps host→p1 / guest→p2 into a game paused at the first-player choice", () => {
     const result = startMatch({ seed: 1, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
@@ -586,17 +592,23 @@ describe("beginMatch — the record a countdown's end persists", () => {
   const begin = (overrides: Partial<Parameters<typeof beginMatch>[0]> = {}) =>
     beginMatch({
       seed: 3,
-      hostDeck: DECK,
-      guestDeck: DECK,
-      cardPool: POOL,
+      hostDeck: LEGAL_DECK,
+      guestDeck: LEGAL_DECK,
+      cardPool: LEGAL_POOL,
       names: { host: "Ana", guest: "Bo" },
+      formats: { host: "standard", guest: null },
       chooser: null,
       now: 5_000,
       ...overrides,
     });
 
   function created(seed: number) {
-    const result = startMatch({ seed, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    const result = startMatch({
+      seed,
+      hostDeck: LEGAL_DECK,
+      guestDeck: LEGAL_DECK,
+      cardPool: LEGAL_POOL,
+    });
     if (!result.ok) throw new Error(result.error.message);
     return result;
   }
@@ -646,21 +658,59 @@ describe("beginMatch — the record a countdown's end persists", () => {
     }
   });
 
-  it("turns each engine deck rejection into a player-facing reason", () => {
+  it("refuses a deck the engine could not start, naming its player", () => {
     const stage1: Card = { ...basicCard("evo"), stage: "Stage1", evolveFrom: "basic" };
-    expect(begin({ hostDeck: ["basic"] })).toEqual({
+    const evolutions = Object.fromEntries(
+      Array.from({ length: 15 }, (_, i) => [
+        `evo-${i}`,
+        { ...stage1, id: `evo-${i}`, name: `Evo ${i}` },
+      ]),
+    );
+    expect(begin({ hostDeck: LEGAL_DECK.slice(1) })).toEqual({
       ok: false,
-      reason: "A deck must have exactly 60 cards.",
+      reason:
+        "Ana's deck can't be played online, as it isn't Standard legal: The deck has 59 cards — it needs exactly 60.",
     });
     expect(
       begin({
-        guestDeck: Array.from({ length: 60 }, () => "evo"),
-        cardPool: { ...POOL, evo: stage1 },
+        guestDeck: Object.keys(evolutions).flatMap((id) => [id, id, id, id]),
+        cardPool: { ...LEGAL_POOL, ...evolutions },
       }),
-    ).toEqual({ ok: false, reason: "A deck must include at least one Basic Pokémon." });
+    ).toEqual({
+      ok: false,
+      reason:
+        "Bo's deck can't be played online, as it isn't Standard legal: Add at least 1 Basic Pokémon.",
+    });
     expect(begin({ cardPool: {} })).toEqual({
       ok: false,
-      reason: "A deck references a card that's no longer in the catalog.",
+      reason:
+        "Ana's deck can't be played online, as it isn't Standard legal: The deck has a card that's no longer in the catalog.",
+    });
+  });
+
+  it("refuses a deck the engine would run but its format forbids", () => {
+    expect(begin({ hostDeck: DECK, cardPool: { ...LEGAL_POOL, ...POOL } })).toEqual({
+      ok: false,
+      reason:
+        "Ana's deck can't be played online, as it isn't Standard legal: 60 copies of basic — max 4.",
+    });
+    const rotated = {
+      ...LEGAL_POOL["basic-0"],
+      legal: { standard: false, expanded: true },
+    } as Card;
+    const pool = { ...LEGAL_POOL, "basic-0": rotated };
+    expect(begin({ cardPool: pool })).toEqual({
+      ok: false,
+      reason:
+        "Ana's deck can't be played online, as it isn't Standard legal: basic-0 is not legal in Standard.",
+    });
+    expect(begin({ cardPool: pool, formats: { host: "expanded", guest: "expanded" } }).ok).toBe(
+      true,
+    );
+    expect(begin({ cardPool: pool, formats: { host: "expanded", guest: null } })).toEqual({
+      ok: false,
+      reason:
+        "Bo's deck can't be played online, as it isn't Standard legal: basic-0 is not legal in Standard.",
     });
   });
 });
@@ -670,10 +720,11 @@ describe("matchFrameFor — the per-viewer match frame", () => {
   function dealtRecord(): MatchRecord {
     const begun = beginMatch({
       seed: 1,
-      hostDeck: DECK,
-      guestDeck: DECK,
-      cardPool: POOL,
+      hostDeck: LEGAL_DECK,
+      guestDeck: LEGAL_DECK,
+      cardPool: LEGAL_POOL,
       names: { host: "Ana", guest: "Bo" },
+      formats: { host: null, guest: null },
       chooser: null,
       now: STARTED_AT,
     });
@@ -703,5 +754,19 @@ describe("matchFrameFor — the per-viewer match frame", () => {
     });
     expect(frame.game.seat).toBe("p1");
     expect(frame.game).not.toEqual(matchFrameFor(record, "p1").game);
+  });
+
+  it("carries only the entries from `logFrom` on, and says where they start", () => {
+    const record = dealtRecord();
+    expect(record.log.length).toBeGreaterThan(2);
+    const frame = matchFrameFor(record, "p2", 2);
+    expect(frame).toStrictEqual({
+      kind: "match",
+      game: redactGame(record.state, "p2"),
+      log: record.log.slice(2),
+      logFrom: 2,
+    });
+    expect(matchFrameFor(record, "spectator", record.log.length).log).toEqual([]);
+    expect(Object.keys(matchFrameFor(record, "p2"))).not.toContain("logFrom");
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { builderCard } from "../test/fixtures";
-import { type BuilderCard, type Format, FORMATS, formatById } from "./cards";
+import { type Format, FORMATS, formatById } from "@colorless/engine";
+import type { BuilderCard } from "./cards";
 import {
   basicPokemonCount,
   copiesByName,

@@ -1,8 +1,7 @@
-// GET /cards (and /sets) query vocabulary: zod schemas for the query strings
-// (validated in routes.ts via @hono/zod-validator) and the Drizzle `where`
-// builder. Pure — no Worker types — so filters unit-test as plain functions.
+// The Drizzle `where` and `order by` for a validated GET /cards query (the schema lives in
+// @colorless/schema). Pure, with no Worker types, so filters unit-test as plain functions.
 
-import { cardCategorySchema } from "@colorless/schema";
+import type { CardsQuery } from "@colorless/schema";
 import {
   and,
   type AnyColumn,
@@ -16,92 +15,7 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { z } from "zod";
 import { cards, sets } from "../db/schema";
-
-/** A query-string field that must be non-empty when present. */
-const param = z.string().min(1);
-
-/** A field that may repeat (`?type=Fire&type=Water`), OR-ed within its
-    dimension. hono's query validator hands a repeated key to zod as an
-    array and a single occurrence as a string; both normalize to a
-    non-empty string[] here. */
-const multiParam = z
-  .union([param, z.array(param).min(1)])
-  .transform((value) => (Array.isArray(value) ? value : [value]));
-
-/** Cap on repeatable `id` values. A deck holds ≤60 unique cards, so 100 is
-    generous headroom for the hydration use case; excess 400s. The cap is no
-    longer about D1's 100-bound-parameter limit — the id set rides in as ONE
-    JSON parameter (see `buildCardsWhere`) — it just bounds the query string
-    and the id scan. */
-export const MAX_ID_VALUES = 100;
-
-/**
- * GET /cards query params. Numbers arrive as strings, hence `z.coerce`;
- * unknown params are ignored (zod objects strip); empty values 400.
- */
-export const cardsQuerySchema = z.object({
-  /** Exact card id(s) for batched deck hydration, e.g. "sv06.5-001"
-      (repeatable, ≤ MAX_ID_VALUES). Composes with every other filter. */
-  id: multiParam.pipe(z.array(param).max(MAX_ID_VALUES)).optional(),
-  /** Case-insensitive substring of the card name. */
-  name: param.optional(),
-  /** Case-insensitive WHOLE-name equality — the import flow's "find this
-      exact card" lookup, distinct from the substring `name`. */
-  nameExact: param.optional(),
-  category: cardCategorySchema.optional(),
-  /** Energy type(s) the card must have one of, e.g. "Water" (repeatable). */
-  type: multiParam.optional(),
-  /** Exact rarity string(s), e.g. "Double rare" (repeatable). */
-  rarity: multiParam.optional(),
-  /** Pokémon stage(s), e.g. "Basic" (repeatable, vocabulary: GET /facets). */
-  stage: multiParam.optional(),
-  /** Printed rule-box marker(s), e.g. "ex" / "VMAX" (repeatable, vocabulary:
-      GET /facets `suffixes`). Pokémon-only by construction — the ingest
-      writes NULL for Trainer and Energy rows (../ingest/map.ts) — so it never
-      needs a category guard: `?suffix=ex&category=Trainer` is empty because
-      no such row exists, not because the filter refused. */
-  suffix: multiParam.optional(),
-  /** Trainer subtype(s), e.g. "Item" (repeatable, vocabulary: GET /facets). */
-  trainerType: multiParam.optional(),
-  /** Energy subtype(s): "Normal" / "Special" (repeatable). */
-  energyType: multiParam.optional(),
-  /** Set id, e.g. "sv06.5". */
-  set: param.optional(),
-  /** Serie id, e.g. "sv" — cards whose set belongs to the serie. */
-  serie: param.optional(),
-  /** Exact illustrator (vocabulary: GET /facets). */
-  illustrator: param.optional(),
-  /**
-   * Case-insensitive substring over rules text: ability and attack names and effects, plus Trainer
-   * and Special Energy effect text.
-   */
-  text: param.optional(),
-  /** Exact regulation mark, e.g. "H". */
-  regulationMark: param.optional(),
-  /**
-   * Inclusive HP bounds, Pokémon only; some Trainers store a printed HP, so the bound checks the
-   * category.
-   */
-  hpMin: z.coerce.number().int().min(0).optional(),
-  hpMax: z.coerce.number().int().min(0).optional(),
-  /** Keep only cards currently legal in the given format. */
-  legal: z.enum(["standard", "expanded"]).optional(),
-  /** Result order; "set" is collector order, the historical default. */
-  sort: z.enum(["name", "hp-desc", "set"]).default("set"),
-  /** 1-based page. */
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(50),
-});
-export type CardsQuery = z.infer<typeof cardsQuerySchema>;
-
-/** GET /sets query params. */
-export const setsQuerySchema = z.object({
-  /** Serie id, e.g. "sv". */
-  serie: param.optional(),
-});
-export type SetsQuery = z.infer<typeof setsQuerySchema>;
 
 /** A user-supplied term made safe inside a LIKE pattern: `\`, `%` and `_`
     escaped so they match literally. Pair with {@link likeEscaped}, whose

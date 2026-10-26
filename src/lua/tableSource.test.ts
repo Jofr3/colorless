@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { redactGame } from "@colorless/engine";
-import { ALL_BASIC_DECK, driveSetup, mustCreate } from "@colorless/engine/testing";
+import {
+  ALL_BASIC_DECK,
+  attachFromDeck,
+  deckOf,
+  driveSetup,
+  handFromDeck,
+  handUid,
+  mustCreate,
+} from "@colorless/engine/testing";
 import { LuaSimulator } from "./simulator";
 import { LocalTableSource, type TableSource } from "./tableSource";
 
@@ -50,6 +58,46 @@ describe("LocalTableSource", () => {
   });
 });
 
+describe("LocalTableSource coin flips", () => {
+  const coinTrainer = () => {
+    const deck = deckOf({ "fix-basic-1": 30, "sv01-168": 20, "fix-fire-energy": 10 });
+    const state = attachFromDeck(
+      handFromDeck(driveSetup(7, { p1: deck, p2: deck }, { first: "p1" }), "p1", "sv01-168", 1),
+      "p2",
+      "fix-fire-energy",
+      1,
+    );
+    return { state, uid: handUid(state, "p1", "sv01-168") };
+  };
+
+  it("hands the flips over once, titled by the Trainer, and leaves the table free", () => {
+    const { state, uid } = coinTrainer();
+    const src = new LocalTableSource({ state, events: [], names, startedAt: 100 });
+    src.send({ type: "playTrainer", seat: "p1", uid });
+    const coin = src.takeEvents().coin;
+    expect(coin?.title).toBe(state.cardPool["sv01-168"]?.name);
+    expect(coin?.flips.length).toBeGreaterThan(0);
+    expect(coin?.flips.every((f) => f.player === "One" && f.seat === "p1")).toBe(true);
+    expect(src.takeEvents().coin).toBeNull();
+    expect(src.allowed({ type: "endTurn", seat: "p1" })).toBe(true);
+  });
+
+  it("opens the coin overlay in the simulator, and Continue returns to the table", () => {
+    const { state, uid } = coinTrainer();
+    let last = "";
+    const sim = new LuaSimulator((raw) => {
+      last = raw;
+    }, vi.fn());
+    sim.open({ state, events: [], names, startedAt: 100 });
+    sim.dispatch({ type: "playTrainer", seat: "p1", uid });
+    const menu = rows(last).find((r) => r[0] === "M");
+    expect(menu?.[1]).toBe("coin");
+    expect(menu?.[3]).toMatch(/^One: (Heads|Tails)/);
+    sim.menu?.options[0]?.run();
+    expect(sim.menu?.kind).not.toBe("coin");
+  });
+});
+
 describe("LuaSimulator over a TableSource", () => {
   it("emits the same table through any source, not only the local host", () => {
     let last = "";
@@ -79,8 +127,6 @@ describe("LuaSimulator over a TableSource", () => {
       send: (a) => local.send(a),
       allowances: () => local.allowances(),
       benchKey: (owner, i) => local.benchKey(owner, i),
-      board: () => local.board(),
-      effectContext: () => local.effectContext(),
       takeEvents: () => local.takeEvents(),
       lifecycle: () => local.lifecycle(),
       subscribe: () => () => {},

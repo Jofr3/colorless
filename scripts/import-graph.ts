@@ -27,11 +27,9 @@ export const RECORDED_CYCLE: readonly string[] = [
 
 /**
  * Relative imports allowed to cross a root, as `from -> specifier`. The web app under `src` is not a
- * package, so a script reading its format table has no package entry to go through.
+ * package, so a script reading from it has no package entry to go through.
  */
-export const ALLOWED_CROSSINGS: readonly string[] = [
-  "scripts/lua-constants.ts -> ../src/decks/cards",
-];
+export const ALLOWED_CROSSINGS: readonly string[] = [];
 
 const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
 const RESOLVE_SUFFIXES = ["", ".ts", ".tsx", ".mts", ".cts", "/index.ts", "/index.tsx"];

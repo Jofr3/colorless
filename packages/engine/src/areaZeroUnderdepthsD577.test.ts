@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { benchLimitForIds, benchLimitOf } from "./continuous";
 import { benchTrimStages } from "./stateChecks";
 import type { GameEvent } from "./events";
-import { applyAction, phaseViewOf } from "./index";
+import { applyAction, phaseViewOf, redactGame } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -366,6 +366,15 @@ describe("D577 §2 — benchLimitOf is PER SEAT (R-AZ1)", () => {
     expect(benchLimitForIds(UNDERDEPTHS, [FILLER])).toBe(5);
     expect(benchLimitForIds(undefined, [TERA])).toBe(5);
     expect(benchLimitForIds(JAMMING_TOWER, [TERA])).toBe(5);
+  });
+
+  it("the redacted side carries a widened limit to both viewers, and nothing at 5", () => {
+    const state = table({ p1Active: TERA, stadium: { id: UNDERDEPTHS, owner: "p2" } });
+    expect(redactGame(state, "p1").board.you.benchLimit).toBe(8);
+    expect(redactGame(state, "p2").board.opponent.benchLimit).toBe(8);
+    expect("benchLimit" in redactGame(state, "p1").board.opponent).toBe(false);
+    const plain = table({ p1Active: TERA, stadium: null });
+    expect("benchLimit" in redactGame(plain, "p1").board.you).toBe(false);
   });
 });
 

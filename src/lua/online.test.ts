@@ -39,6 +39,7 @@ const summaries = [
   { id: "x", name: "Zap", cardCount: 60, folderId: null },
   { id: "y", name: "Archive", cardCount: 60, folderId: "f" },
   { id: "short", name: "Short", cardCount: 40, folderId: null },
+  { id: "z", name: "Relic", cardCount: 60, folderId: null },
 ];
 const saved = (id: string, cardId: string, format: string) => ({
   id,
@@ -53,6 +54,7 @@ const deckReads = {
   "GET /decks": () => json(summaries),
   "GET /decks/x": () => json(saved("x", card.id, "standard")),
   "GET /decks/y": () => json(saved("y", "old", "expanded")),
+  "GET /decks/z": () => json(saved("z", "old", "standard")),
   [`GET /cards/${card.id}`]: () => json(card),
   "GET /cards/old": () => json(old),
   "GET /cards/energy": () => json(energy),
@@ -136,7 +138,12 @@ describe("Lua online adapter", () => {
     expect(header().slice(1, 7)).toEqual(["waiting", "0", "", CODE, "host", "connected"]);
     expect(route).toHaveBeenCalledWith("online", CODE, true);
     expect(identity()).toMatchObject({ role: "host", name: "Ash" });
-    expect(last().posts[0]).toEqual({ kind: "hello", from: identity().playerId, name: "Ash" });
+    expect(last().posts[0]).toEqual({
+      kind: "hello",
+      from: identity().playerId,
+      name: "Ash",
+      logDeltas: true,
+    });
     await online.command("create");
     expect(route).toHaveBeenCalledOnce();
   });
@@ -218,7 +225,7 @@ describe("Lua online adapter", () => {
     expect(header()[1]).toBe("waiting");
   });
 
-  it("lists playable decks with their regulation flags, or reports anonymous", async () => {
+  it("lists playable decks with their regulation flags and online verdict, or reports anonymous", async () => {
     stubFetch(deckReads);
     const { online, header, rows } = setup();
     online.session("anonymous", "");
@@ -229,8 +236,9 @@ describe("Lua online adapter", () => {
     await vi.waitFor(() => expect(header()[9]).toBe("ready"));
     expect(header()[11]).toBe("authenticated");
     expect(rows().slice(1)).toEqual([
-      ["D", "y", "Archive", "60", "0", "1"],
-      ["D", "x", "Zap", "60", "1", "1"],
+      ["D", "y", "Archive", "60", "0", "1", "1", "Expanded"],
+      ["D", "z", "Relic", "60", "0", "1", "0", "Standard"],
+      ["D", "x", "Zap", "60", "1", "1", "1", "Standard"],
     ]);
   });
 
@@ -251,6 +259,9 @@ describe("Lua online adapter", () => {
     expect(c.kinds()).toEqual(["hello"]);
     c.push({ kind: "state", snapshot: seated("g") });
     expect(header()[12]).toBe("1");
+    const before = c.posts.length;
+    await online.command("select\tz");
+    expect(c.posts).toHaveLength(before);
     await online.command("select\tx");
     expect(c.posts.at(-1)).toEqual({
       kind: "intent",

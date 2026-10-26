@@ -1,10 +1,12 @@
 // Card model + metadata for the deck builder. The card *data* comes from the
 // live catalog api (fetched by src/lua/builder.ts, adapted in catalog.ts); this
-// module holds the types, the format definitions, and small pure helpers
-// shared across the builder. Kept side-effect-free so the pure logic
-// (deckMath, decklistText) and their tests can import it freely.
+// module holds the types and small pure helpers shared across the builder; the
+// formats and construction rules are the engine's (deckRules.ts). Kept
+// side-effect-free so the pure logic (deckMath, decklistText) and their tests
+// can import it freely.
 
-import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
+import type { DeckRuleCard } from "@colorless/engine";
+import { BASIC_ENERGY_TYPES, type BasicEnergyType, type CardCategory } from "@colorless/schema";
 
 /** The energy types the builder filters and paints, in the canonical wheel
     order. Derived from the shared basic-energy vocabulary (@colorless/schema)
@@ -28,6 +30,13 @@ export const ENERGY_TYPES: readonly EnergyType[] = [
 export type Supertype = "Pokémon" | "Trainer" | "Energy";
 
 export const SUPERTYPES: Supertype[] = ["Pokémon", "Trainer", "Energy"];
+
+/** The catalog's category for each supertype: the same three values, unaccented. */
+export const CATEGORY_BY_SUPERTYPE: Record<Supertype, CardCategory> = {
+  Pokémon: "Pokemon",
+  Trainer: "Trainer",
+  Energy: "Energy",
+};
 
 // NOTE (P2 task 10): the printed-subtype and rarity vocabularies used to be
 // hardcoded tuples here (POKEMON_STAGES, TRAINER_SUBTYPES, RARITIES, …). They
@@ -83,98 +92,20 @@ export function isBasicEnergy(card: BuilderCard): boolean {
   return card.supertype === "Energy" && card.subtype === "Basic Energy";
 }
 
-/** The most copies of any one ACE SPEC card — and of all ACE SPECs combined —
-    a deck may hold. */
-export const ACE_SPEC_LIMIT = 1;
-
-/** True for an ACE SPEC card. A deck may contain only one ACE SPEC in total
-    (across every name), enforced in {@link validateDeck}. Identified by rarity,
-    which is how the printed cards mark themselves — the catalog's exact string
-    is "ACE SPEC Rare" (verified against the live facets vocabulary); the
-    substring match keeps older fixture spellings working too. */
-export function isAceSpec(card: BuilderCard): boolean {
-  return (card.rarity ?? "").includes("ACE SPEC");
-}
-
-// Radiant and Prism Star are NAME-defined card classes — the game names every
-// member "Radiant X" / "X ◇" and hangs the deck rule off that name — so a name
-// check IS the structured detection, not a stand-in for missing data.
-
-/** The most Radiant Pokémon — across every name — a deck may hold. */
-export const RADIANT_LIMIT = 1;
-
-/** True for a Radiant Pokémon ("Radiant Greninja", …) — like ACE SPEC, a deck
-    may contain only one Radiant Pokémon in total, across every name
-    ({@link validateDeck}). */
-export function isRadiantPokemon(card: BuilderCard): boolean {
-  return card.supertype === "Pokémon" && card.name.startsWith("Radiant ");
-}
-
-/** True for a Prism Star card — tcgdex prints the "◇" suffix in the name
-    ("Diancie ◇"); the spelled-out form covers other decklist sources. Limited
-    to one copy of a given name per deck ({@link validateDeck}). */
-export function isPrismStar(card: BuilderCard): boolean {
-  return card.name.includes("◇") || card.name.endsWith(" Prism Star");
-}
-
 /**
- * Whether a card is legal in a format: the catalog's verdict keyed by `Format.legalFlag`. There is
- * no printed-mark fallback, so this validator and the rail's server-side legal filter read the same
- * bit.
+ * The fields the engine's deck rules read, from the builder's view. The rules single out only Basic
+ * Pokémon and Basic Energy, so those are the stage and energy subtype carried across.
  */
-export function isLegalInFormat(card: BuilderCard, format: Format): boolean {
-  if (format.legalFlag === undefined) return true;
-  return card.legal[format.legalFlag];
+export function deckRuleCardOf(card: BuilderCard): DeckRuleCard {
+  return {
+    name: card.name,
+    category: CATEGORY_BY_SUPERTYPE[card.supertype],
+    stage: isBasicPokemon(card) ? "Basic" : null,
+    energyType: card.supertype !== "Energy" ? null : isBasicEnergy(card) ? "Normal" : "Special",
+    rarity: card.rarity ?? null,
+    legal: card.legal,
+  };
 }
 
 // Card kinds (stages, trainer subtypes, energy subtypes) come from the catalog's facets and are
 // filtered server-side. Rule-box markers (ex, V, VMAX, …) are a separate dimension.
-
-// --- Formats ---------------------------------------------------------------
-
-export interface Format {
-  id: string;
-  name: string;
-  /** Required deck size (constructed Pokémon TCG is 60). */
-  deckSize: number;
-  /** Max copies of any one card by name (basic Energy is always exempt). */
-  maxCopiesByName: number;
-  /** Minimum Basic Pokémon a legal deck must contain. */
-  minBasicPokemon: number;
-  /** The card-legality flag this format reads — the key into the catalog's
-      structured `card.legal` verdict, and the value of GET /cards' `legal`
-      param. Undefined = an unrestricted format (none modelled today). One
-      field feeds both the validator and the rail's legal-only filter, so the
-      two can't disagree (the P2 task 13 unification). */
-  legalFlag?: "standard" | "expanded";
-  description: string;
-}
-
-const STANDARD_FORMAT: Format = {
-  id: "standard",
-  name: "Standard",
-  deckSize: 60,
-  maxCopiesByName: 4,
-  minBasicPokemon: 1,
-  legalFlag: "standard",
-  description: "Most recent sets — the default tournament format.",
-};
-
-export const FORMATS: Format[] = [
-  STANDARD_FORMAT,
-  {
-    id: "expanded",
-    name: "Expanded",
-    deckSize: 60,
-    maxCopiesByName: 4,
-    minBasicPokemon: 1,
-    legalFlag: "expanded",
-    description: "Black & White onward — a far wider card pool.",
-  },
-];
-
-export const DEFAULT_FORMAT = STANDARD_FORMAT;
-
-export function formatById(id: string): Format {
-  return FORMATS.find((f) => f.id === id) ?? DEFAULT_FORMAT;
-}

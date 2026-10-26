@@ -6,6 +6,7 @@
 
 import type { LogSegment, SeatLogEntry } from "@colorless/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
+import { cuesFromEvents } from "./cues";
 import type { AttackerClass } from "./effectTypes";
 import type { GameEvent, StatusName } from "./events";
 // promptText.ts imports nothing from this file, so there is no cycle.
@@ -54,6 +55,9 @@ export function logFromEvents(events: readonly GameEvent[], ctx: LogContext): Se
         first.playedTrainer = { id: event.uid, cardId: card.id, name: card.name };
       }
     }
+    const cues = cuesFromEvents([event]);
+    const host = formatted.find((entry) => entry.kind === "action");
+    if (cues.length > 0 && host?.kind === "action") host.cues = cues;
     entries.push(...formatted);
   }
   return entries;

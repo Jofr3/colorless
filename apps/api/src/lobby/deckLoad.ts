@@ -21,15 +21,18 @@ export function deckIdsFromRows(rows: readonly { cardId: string; count: number }
   return ids;
 }
 
-export type LoadDeckResult = { ok: true; ids: string[] } | { ok: false; reason: string };
+/** A resolved deck: its flat card ids and the format it was built for (null when none was picked). */
+export type LoadDeckResult =
+  | { ok: true; ids: string[]; format: string | null }
+  | { ok: false; reason: string };
 
 /** Read a player's chosen deck as a flat id list, OWNER-SCOPED. Fails (never
     throws) when the player isn't signed in (`userId` null — an anonymous socket
     can own no deck), picked no deck, or named a deck that isn't theirs — the
     ownership check is a single `WHERE id = ? AND user_id = ?`, so someone else's
     deck reads the same as a missing one (no existence leak, the deck-routes
-    precedent). Card COUNTS (60 + a Basic) are the engine's to enforce at
-    `startMatch`; this only proves the deck exists and is the player's. */
+    precedent). Legality is `beginMatch`'s to enforce; this only proves the
+    deck exists and is the player's. */
 export async function loadPlayerDeck(
   db: Db,
   deckId: string | null,
@@ -38,7 +41,7 @@ export async function loadPlayerDeck(
   if (userId === null) return { ok: false, reason: "you must be signed in to play a saved deck" };
   if (deckId === null) return { ok: false, reason: "no deck selected" };
   const owned = await db
-    .select({ id: decks.id })
+    .select({ id: decks.id, format: decks.format })
     .from(decks)
     .where(ownedBy(decks, deckId, userId))
     .get();
@@ -49,5 +52,5 @@ export async function loadPlayerDeck(
     .where(eq(deckCards.deckId, deckId))
     .orderBy(asc(deckCards.cardId))
     .all();
-  return { ok: true, ids: deckIdsFromRows(rows) };
+  return { ok: true, ids: deckIdsFromRows(rows), format: owned.format };
 }

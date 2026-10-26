@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { json } from "../test/fetchStub";
 import { cardBrief as brief, cardsPage, FACETS } from "../test/fixtures";
 import type { Card } from "@colorless/schema";
-import { DEFAULT_FORMAT, formatById, isBasicEnergy } from "./cards";
+import { DEFAULT_FORMAT, formatById } from "@colorless/engine";
+import { isBasicEnergy } from "./cards";
 import { validateDeck } from "./deckMath";
 import {
   filtersToCardsQuery,

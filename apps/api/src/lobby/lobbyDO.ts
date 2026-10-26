@@ -1,13 +1,11 @@
-// One Durable Object per lobby code. It owns the snapshot, applies intents through the shared
-// reducer and broadcasts the result. Sockets use hibernation; the keepalive is answered by the
+// One Durable Object per lobby code. It owns the snapshot, applies intents through the snapshot
+// transitions and broadcasts the result. Sockets use hibernation; the keepalive is answered by the
 // auto-response without waking the instance.
 // One alarm covers all deadlines: liveness sweeps, disconnect graces, countdown, match forfeits,
 // and empty-lobby expiry.
 // Not a `DurableObject` subclass, so the module imports outside the workers runtime.
 
 import {
-  applyIntent,
-  bothReady,
   type Card,
   createSnapshot,
   isValidLobbyCode,
@@ -17,8 +15,6 @@ import {
   type LobbyServerMessage,
   type LobbySnapshot,
   makePlayer,
-  removeGuest,
-  seatGuest,
 } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
@@ -28,10 +24,12 @@ import { resolveUserIdFromCookie } from "../auth/resolveSession";
 import {
   attachedPlayer,
   attachedUserId,
+  attachLogDeltas,
   attachPlayer,
   attachSpectator,
   attachUserId,
   isSpectating,
+  takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
@@ -85,6 +83,7 @@ import {
   type Seat,
   rematchChooser,
 } from "./match";
+import { applyIntent, bothReady, removeGuest, seatGuest } from "./snapshot";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
 // upgrade for a code that was never created (or has expired) is refused, so
@@ -238,6 +237,7 @@ export class LobbyDO {
     frame: ClientFrame<"hello">,
     snapshot: LobbySnapshot | null,
   ): Promise<void> {
+    attachLogDeltas(ws, frame.logDeltas === true);
     const decision = helloDecision(snapshot, frame.from);
     if (decision === "reject-full") return await this.refuseSeat(ws, frame.from);
     // Seat authentication (3a-sec): once a playerId is claimed by an account,
@@ -337,7 +337,7 @@ export class LobbyDO {
       return;
     }
     await this.state.storage.put(MATCH_KEY, outcome.record);
-    this.broadcastMatch(outcome.record, snapshot);
+    this.broadcastMatch(outcome.record, snapshot, { logFrom: record.log.length });
   }
 
   private async onReject(
@@ -594,7 +594,7 @@ export class LobbyDO {
       this.userIdOf(snapshot.guest.id),
     );
     if (!guestDeck.ok) return { ok: false, reason: `${snapshot.guest.name}: ${guestDeck.reason}.` };
-    // Storage does not enforce 60 cards and a Basic, so `beginMatch` is the validator.
+    // Storage enforces no construction rules, so `beginMatch` is the validator.
     const cardPool = await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids]);
     const seed = this.deps.randomSeed();
     // A player no longer seated (a new guest since the rematch) falls back to the coin.
@@ -606,6 +606,7 @@ export class LobbyDO {
       guestDeck: guestDeck.ids,
       cardPool,
       names: { host: snapshot.host.name, guest: snapshot.guest.name },
+      formats: { host: hostDeck.format, guest: guestDeck.format },
       chooser,
       now: this.deps.now(),
     });
@@ -751,11 +752,18 @@ export class LobbyDO {
   /**
    * Send each socket its own redacted view of the match, plus the shared seat-keyed log. `only`
    * targets one socket; otherwise all live sockets. Unseated non-spectators are skipped.
+   * `logFrom` is the log length every socket already holds: a socket that takes log deltas gets
+   * only the entries after it, and every other socket the whole log.
    */
-  private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
+  private broadcastMatch(
+    record: MatchRecord,
+    snapshot: LobbySnapshot,
+    { only, logFrom }: { only?: WebSocket; logFrom?: number } = {},
+  ): void {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = this.viewerOf(ws, snapshot);
-      if (viewer !== null) this.send(ws, matchFrameFor(record, viewer));
+      if (viewer === null) continue;
+      this.send(ws, matchFrameFor(record, viewer, takesLogDeltas(ws) ? logFrom : undefined));
     }
   }
 
@@ -775,7 +783,7 @@ export class LobbyDO {
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
     const load = await this.loadOrMigrateMatch();
-    if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, ws);
+    if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, { only: ws });
     else if (load.kind === "stale") await this.retireStaleMatch();
   }
 
@@ -797,7 +805,7 @@ export class LobbyDO {
     // (a browser run caught exactly this: their board read "Host vs Guest"). It
     // carries nothing private; it is the same frame both players already hold.
     this.send(ws, { kind: "state", snapshot });
-    this.broadcastMatch(load.record, snapshot, ws);
+    this.broadcastMatch(load.record, snapshot, { only: ws });
   }
 
   /**
@@ -811,7 +819,7 @@ export class LobbyDO {
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
     await this.state.storage.put(MATCH_KEY, outcome.record);
-    this.broadcastMatch(outcome.record, snapshot);
+    this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
   }
 
   /**

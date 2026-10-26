@@ -2,9 +2,8 @@
 // provider, but without provider secrets the api answers with a 503 JSON body. So probe first with
 // `redirect: "manual"`: a redirect comes back as an `opaqueredirect` (status 0).
 
+import type { OAuthProvider } from "@colorless/schema";
 import { oauthStartUrl } from "./api";
-
-export type OAuthProvider = "google";
 
 export type OAuthStartOutcome =
   /** Provider configured — window.location has been pointed at the flow. */

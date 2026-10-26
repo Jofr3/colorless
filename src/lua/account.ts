@@ -1,10 +1,9 @@
-import { DISPLAY_NAME_MAX, type User } from "@colorless/schema";
+import { DISPLAY_NAME_MAX, OAUTH_FAILURES, type OAuthFailure, type User } from "@colorless/schema";
 import { ApiError, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
 
-/** Messages for the OAuth callback's `?authError=` codes (apps/api auth routes). */
-const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   state: "Google sign-in expired. Try again.",
   exchange: "Google sign-in failed. Try again.",
   profile: "Google sign-in failed. Try again.",
@@ -69,9 +68,9 @@ export class LuaAccount {
   }
 
   noteAuthError(code: string) {
-    this.authNotice = Object.hasOwn(OAUTH_ERROR_MESSAGES, code)
-      ? (OAUTH_ERROR_MESSAGES[code] ?? "")
-      : "Google sign-in failed. Try again.";
+    const failure = OAUTH_FAILURES.find((known) => known === code);
+    this.authNotice =
+      failure === undefined ? "Google sign-in failed. Try again." : OAUTH_ERROR_MESSAGES[failure];
   }
 
   async save(name: string) {

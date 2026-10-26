@@ -1,21 +1,13 @@
-import { cardImageUrl } from "../lib/api";
-import type { CardModel, LogEntry } from "./board";
+import type { SeatLogEntry } from "@colorless/schema";
 
-/** Read the selected turn's public plays, including cards recovered or still attached. */
-export function usedTrainersForTurn(entries: readonly LogEntry[], turn: number): CardModel[] {
+/** The uids of the Trainers played during `turn`, wherever those cards are now. */
+export function usedTrainersForTurn(entries: readonly SeatLogEntry[], turn: number): string[] {
   if (turn < 1) return [];
   let currentTurn = 0;
-  const cards: CardModel[] = [];
+  const uids: string[] = [];
   for (const entry of entries) {
-    if (entry.kind === "turn") {
-      currentTurn = entry.turn;
-    } else if (currentTurn === turn && entry.playedTrainer) {
-      cards.push({
-        ...entry.playedTrainer,
-        type: "trainer",
-        imageUrl: cardImageUrl(entry.playedTrainer.cardId, "high"),
-      });
-    }
+    if (entry.kind === "turn") currentTurn = entry.turn;
+    else if (currentTurn === turn && entry.playedTrainer) uids.push(entry.playedTrainer.id);
   }
-  return cards;
+  return uids;
 }

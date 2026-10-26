@@ -11,12 +11,14 @@ import {
   type CardBrief,
   cardBriefSchema,
   cardSchema,
+  cardsQuerySchema,
   type CatalogFacets,
   catalogFacetsSchema,
   type Paginated,
   paginatedSchema,
   serieSchema,
   setBriefSchema,
+  setsQuerySchema,
   setWithCardsSchema,
 } from "@colorless/schema";
 import { asc, count, eq, isNotNull } from "drizzle-orm";
@@ -37,7 +39,7 @@ import {
   mapSetBriefRow,
   mapSetRow,
 } from "./map";
-import { buildCardsWhere, cardsOrder, cardsQuerySchema, setsQuerySchema } from "./query";
+import { buildCardsWhere, cardsOrder } from "./query";
 
 export const catalogRoutes = new Hono<{ Bindings: Env }>();
 

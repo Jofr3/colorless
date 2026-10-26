@@ -1,32 +1,28 @@
-import { DECK_SIZE } from "@colorless/engine";
+import { DECK_SIZE, formatById, isBasicPokemon, savedDeckReasons } from "@colorless/engine";
 import type { Card, Deck as SavedDeck } from "@colorless/schema";
 import { ApiError, getDeck } from "../lib/api";
-import { formatById } from "../decks/cards";
-import { toBuilderCard } from "../decks/catalog";
-import { validateDeck, type DeckEntry } from "../decks/deckMath";
 import type { Deck } from "../decks/data";
 import { fetchCardPool } from "./cardPool";
 
-/** The deck as builder entries, or null when a card is missing or a count is bad. */
-function deckEntries(deck: SavedDeck, pool: Record<string, Card>): DeckEntry[] | null {
-  const entries: DeckEntry[] = [];
-  for (const entry of deck.cards) {
-    const card = pool[entry.cardId];
-    if (!card || !Number.isInteger(entry.count) || entry.count <= 0) return null;
-    entries.push({ card: toBuilderCard(card), quantity: entry.count });
+/** What `createGame` needs to run a deck: exactly DECK_SIZE cards, every one in the pool, and a
+ * Basic Pokémon to start with. Format and construction rules are not asked. */
+function isPlayableDeck(deck: SavedDeck, pool: Record<string, Card>): boolean {
+  let total = 0;
+  let basic = false;
+  for (const { cardId, count } of deck.cards) {
+    const card = pool[cardId];
+    if (card === undefined || !Number.isInteger(count) || count <= 0) return false;
+    total += count;
+    basic ||= isBasicPokemon(card);
   }
-  return entries;
+  return total === DECK_SIZE && basic;
 }
 
-const legalIn = (entries: DeckEntry[] | null, format: string) =>
-  entries !== null && validateDeck(entries, formatById(format)).legal;
+/** The online verdict: legal in its own format, which is what a lobby checks at match start. */
+const legalIn = (deck: SavedDeck, pool: Record<string, Card>, format: string | null) =>
+  savedDeckReasons(deck.cards, format, pool).length === 0;
 
-/** Use the builder's full legality verdict, including format and copy limits. */
-export function isValidSandboxDeck(deck: SavedDeck, pool: Record<string, Card>): boolean {
-  return legalIn(deckEntries(deck, pool), deck.format ?? "standard");
-}
-
-type Verdict = { deck: SavedDeck; valid: boolean; entries: DeckEntry[] | null };
+type Verdict = { deck: SavedDeck; playable: boolean; legal: boolean; pool: Record<string, Card> };
 
 /** Fetch the complete candidates' contents and their card pool with bounded
  * requests, then judge each. Network failures remain retryable errors, rather
@@ -60,13 +56,17 @@ async function judgeSandboxDecks(
   );
   if (!current()) return verdicts;
   for (const [id, deck] of saved) {
-    const entries = deckEntries(deck, pool);
-    verdicts.set(id, { deck, valid: legalIn(entries, deck.format ?? "standard"), entries });
+    verdicts.set(id, {
+      deck,
+      playable: isPlayableDeck(deck, pool),
+      legal: legalIn(deck, pool, deck.format),
+      pool,
+    });
   }
   return verdicts;
 }
 
-/** The complete, legal decks among `summaries`, carrying their fresh names. */
+/** The decks among `summaries` a local game can run, carrying their fresh names. */
 export async function validSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
@@ -74,14 +74,21 @@ export async function validSandboxDecks(
   const verdicts = await judgeSandboxDecks(summaries, current);
   return summaries.flatMap((summary) => {
     const verdict = verdicts.get(summary.id);
-    return verdict?.valid ? [{ ...summary, name: verdict.deck.name }] : [];
+    return verdict?.playable ? [{ ...summary, name: verdict.deck.name }] : [];
   });
 }
 
-export type PlayableDeck = Deck & { standard: boolean; expanded: boolean };
+export type PlayableDeck = Deck & {
+  /** Legal in its own format, so a lobby will start a match with it. */
+  online: boolean;
+  /** The deck's format, by name. */
+  formatName: string;
+  standard: boolean;
+  expanded: boolean;
+};
 
-/** {@link validSandboxDecks} plus each deck's Standard and Expanded verdicts,
- * for the online picker's regulation filter (a view filter only). */
+/** {@link validSandboxDecks} plus each deck's online verdict, and its Standard and Expanded
+ * verdicts for the online picker's regulation filter. */
 export async function playableDecks(
   summaries: Deck[],
   current: () => boolean,
@@ -89,22 +96,24 @@ export async function playableDecks(
   const verdicts = await judgeSandboxDecks(summaries, current);
   return summaries.flatMap((summary) => {
     const v = verdicts.get(summary.id);
-    if (!v?.valid) return [];
+    if (!v?.playable) return [];
     return [
       {
         ...summary,
         name: v.deck.name,
-        standard: legalIn(v.entries, "standard"),
-        expanded: legalIn(v.entries, "expanded"),
+        online: v.legal,
+        formatName: formatById(v.deck.format).name,
+        standard: legalIn(v.deck, v.pool, "standard"),
+        expanded: legalIn(v.deck, v.pool, "expanded"),
       },
     ];
   });
 }
 
-/** Per-deck legality for a library listing, for the illegal-deck alert: an
- * incomplete deck is illegal without a request; a complete one gets the
- * builder's verdict on its fetched contents. A deck missing from the result
- * could not be judged (deleted meanwhile, or the check was superseded). */
+/** Per-deck legality in each deck's own format, for the library's illegal-deck
+ * alert: an incomplete deck is illegal without a request; a complete one gets
+ * the verdict on its fetched contents. A deck missing from the result could not
+ * be judged (deleted meanwhile, or the check was superseded). */
 export async function deckLegality(
   summaries: Deck[],
   current: () => boolean,
@@ -112,6 +121,6 @@ export async function deckLegality(
   const legality = new Map<string, boolean>();
   for (const deck of summaries) if (deck.cardCount !== DECK_SIZE) legality.set(deck.id, false);
   const verdicts = await judgeSandboxDecks(summaries, current);
-  for (const [id, verdict] of verdicts) legality.set(id, verdict.valid);
+  for (const [id, verdict] of verdicts) legality.set(id, verdict.legal);
   return legality;
 }

@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { isAceSpec } from "./continuous";
+import { isAceSpec } from "./deckRules";
 import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
 import type { GameAction, GameState } from "./index";

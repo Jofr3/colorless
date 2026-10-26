@@ -704,13 +704,23 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
       candidates: [{ seat: "p2", spot: { spot: "active" } }],
       upTo: 3,
       takeVerb: "move",
+      counterTransfer: {
+        upTo: 3,
+        abilitySourceUid: bodyAt(state, "p1", "active").stack.at(-1),
+        from: { seat: "p1", spot: { spot: "active" } },
+      },
       note: "Move up to 3 damage counters onto which of your opponent's Pokémon?",
     });
     const wire = redactGame(state, "p1").phase;
     if (wire.kind !== "effect:choose" || !("prompt" in wire))
       throw new Error("expected the answerer's prompt");
     expect(wire.prompt).toMatchObject({ kind: "choosePokemon", upTo: 3, takeVerb: "move" });
-    expect(redactedEffectPromptSchema.parse(wire.prompt)).toMatchObject({ takeVerb: "move" });
+    expect(redactedEffectPromptSchema.parse(wire.prompt)).toMatchObject({
+      takeVerb: "move",
+      counterTransfer: { upTo: 3, from: { seat: "p1", spot: { spot: "active" } } },
+    });
+    expect(wire).toMatchObject({ invokedBy: "ability", abilityName: "Adrena-Brain" });
+    expect(redactGame(state, "p2").phase).toEqual({ kind: "effect:choose", prompt: null });
   });
 
   it("an answer's `take` is the count: 2 of 3 moves 20", () => {

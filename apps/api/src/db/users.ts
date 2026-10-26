@@ -73,8 +73,7 @@ export const folders = sqliteTable(
     /** Owning folder; null at the library root. Folders nest indefinitely. */
     parentId: text("parent_id"),
     name: text("name").notNull(),
-    /** Manual sort slot, global per user (see @colorless/schema Folder.position).
-        Lists order by it ascending; creates take min-1 so new rows prepend. */
+    /** Manual sort slot, global per user. No route writes this table. */
     position: integer("position").notNull().default(0),
   },
   (t) => [

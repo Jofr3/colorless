@@ -1,6 +1,5 @@
-// requireUser — the shared "who is calling" gate (§3.5), extracted in P1
-// milestone 7 so /auth/me and the /decks + /folders routes resolve sessions
-// through ONE code path: read the `session` cookie, hash the token to the
+// requireUser: the shared "who is calling" gate (§3.5), so /auth/me and the /decks routes resolve
+// sessions through one code path: read the `session` cookie, hash the token to the
 // sessions row id, join the user, enforce expiry on read (deleting the dead
 // row lazily), and either stash the user row on the context or answer 401.
 //

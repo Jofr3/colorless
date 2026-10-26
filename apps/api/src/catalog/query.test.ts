@@ -1,23 +1,11 @@
-// Query parsing + where building. The SQL assertions render real queries via
+// Where and order building. The SQL assertions render real queries via
 // Drizzle's toSQL() — no database is touched, so the D1 client is a dummy.
 
 import { drizzle } from "drizzle-orm/d1";
 import { describe, expect, it } from "vitest";
 import { cards } from "../db/schema";
-import {
-  buildCardsWhere,
-  type CardsQuery,
-  cardsOrder,
-  cardsQuerySchema,
-  MAX_ID_VALUES,
-  setsQuerySchema,
-} from "./query";
-
-/** Parse params the way zValidator hands them to the schema: a single
-    occurrence arrives as a string, a repeated key as a string[]. */
-function parseCards(params: Record<string, string | string[]>) {
-  return cardsQuerySchema.safeParse(params);
-}
+import { type CardsQuery, MAX_ID_VALUES } from "@colorless/schema";
+import { buildCardsWhere, cardsOrder } from "./query";
 
 function defaults(overrides: Partial<CardsQuery> = {}): CardsQuery {
   return { page: 1, pageSize: 50, sort: "set", ...overrides };
@@ -38,131 +26,6 @@ function renderOrder(sort: CardsQuery["sort"]) {
     .orderBy(...cardsOrder(sort))
     .toSQL().sql;
 }
-
-describe("cardsQuerySchema", () => {
-  it("defaults page/pageSize/sort and keeps every filter optional", () => {
-    const result = parseCards({});
-    expect(result.success && result.data).toEqual({ page: 1, pageSize: 50, sort: "set" });
-  });
-
-  it("coerces the numeric params from query strings", () => {
-    const result = parseCards({ page: "3", pageSize: "10", hpMin: "60", hpMax: "120" });
-    expect(result.success && result.data).toEqual({
-      page: 3,
-      pageSize: 10,
-      hpMin: 60,
-      hpMax: 120,
-      sort: "set",
-    });
-  });
-
-  it("normalizes type/rarity to arrays — single and repeated forms alike", () => {
-    const single = parseCards({ type: "Fire", rarity: "Common" });
-    expect(single.success && single.data.type).toEqual(["Fire"]);
-    expect(single.success && single.data.rarity).toEqual(["Common"]);
-
-    const repeated = parseCards({ type: ["Fire", "Water"], rarity: ["Common", "Double rare"] });
-    expect(repeated.success && repeated.data.type).toEqual(["Fire", "Water"]);
-    expect(repeated.success && repeated.data.rarity).toEqual(["Common", "Double rare"]);
-  });
-
-  it("normalizes the P2 kind params to arrays like type/rarity", () => {
-    const result = parseCards({
-      stage: "Basic",
-      trainerType: ["Item", "Supporter"],
-      energyType: "Special",
-    });
-    expect(result.success && result.data.stage).toEqual(["Basic"]);
-    expect(result.success && result.data.trainerType).toEqual(["Item", "Supporter"]);
-    expect(result.success && result.data.energyType).toEqual(["Special"]);
-  });
-
-  it("normalizes suffix to an array too — repeatable like the kind params", () => {
-    expect(parseCards({ suffix: "ex" }).success && parseCards({ suffix: "ex" }).data).toMatchObject(
-      { suffix: ["ex"] },
-    );
-    const repeated = parseCards({ suffix: ["ex", "VMAX"] });
-    expect(repeated.success && repeated.data.suffix).toEqual(["ex", "VMAX"]);
-    // Empty is a 400, like every other vocabulary param.
-    expect(parseCards({ suffix: "" }).success).toBe(false);
-  });
-
-  it("accepts the P2 scalar params (nameExact/serie/illustrator/text)", () => {
-    const result = parseCards({
-      nameExact: "Fezandipiti ex",
-      serie: "sv",
-      illustrator: "Naoyo Kimura",
-      text: "draw 3 cards",
-    });
-    expect(result.success && result.data).toMatchObject({
-      nameExact: "Fezandipiti ex",
-      serie: "sv",
-      illustrator: "Naoyo Kimura",
-      text: "draw 3 cards",
-    });
-  });
-
-  it("normalizes id to an array and caps it at MAX_ID_VALUES", () => {
-    const single = parseCards({ id: "sv06.5-001" });
-    expect(single.success && single.data.id).toEqual(["sv06.5-001"]);
-
-    const atCap = parseCards({ id: Array.from({ length: MAX_ID_VALUES }, (_, i) => `sv01-${i}`) });
-    expect(atCap.success).toBe(true);
-
-    const overCap = parseCards({
-      id: Array.from({ length: MAX_ID_VALUES + 1 }, (_, i) => `sv01-${i}`),
-    });
-    expect(overCap.success).toBe(false);
-  });
-
-  it("accepts each sort value", () => {
-    for (const sort of ["name", "hp-desc", "set"] as const) {
-      const result = parseCards({ sort });
-      expect(result.success && result.data.sort).toBe(sort);
-    }
-  });
-
-  it("rejects out-of-range and malformed values", () => {
-    const rejected: Record<string, string | string[]>[] = [
-      { pageSize: "101" },
-      { pageSize: "0" },
-      { page: "0" },
-      { page: "two" },
-      { hpMin: "-1" },
-      { hpMin: "60.5" },
-      { category: "Pokémon" }, // DB vocabulary is unaccented
-      { legal: "unlimited" },
-      { name: "" },
-      { sort: "hp" },
-      { type: ["Fire", ""] }, // every repeated value must be non-empty
-      { id: ["sv01-001", ""] },
-      { nameExact: "" },
-      { stage: "" },
-      { trainerType: "" },
-      { energyType: "" },
-      { serie: "" },
-      { illustrator: "" },
-      { text: "" },
-    ];
-    for (const params of rejected) {
-      expect(parseCards(params).success).toBe(false);
-    }
-  });
-
-  it("ignores unknown params", () => {
-    const result = parseCards({ order: "name" });
-    expect(result.success).toBe(true);
-    expect(result.success && "order" in result.data).toBe(false);
-  });
-});
-
-describe("setsQuerySchema", () => {
-  it("accepts an optional non-empty serie", () => {
-    expect(setsQuerySchema.safeParse({}).success).toBe(true);
-    expect(setsQuerySchema.safeParse({ serie: "sv" }).success).toBe(true);
-    expect(setsQuerySchema.safeParse({ serie: "" }).success).toBe(false);
-  });
-});
 
 describe("buildCardsWhere", () => {
   it("returns undefined for an unfiltered query", () => {

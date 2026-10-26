@@ -3,7 +3,6 @@ import type { DeckCard } from "@colorless/schema";
 import { getDeck } from "../lib/api";
 import { fetchCardPool } from "./cardPool";
 import type { LocalGameSetup } from "./localHost";
-import { isValidSandboxDeck } from "./sandboxDecks";
 
 export class SandboxSetupError extends Error {}
 
@@ -17,11 +16,8 @@ function expandDeck(cards: readonly DeckCard[]): string[] {
   return ids;
 }
 
-/** Validate two saved decks and create the sandbox match between them. */
-export async function prepareSandbox(
-  ids: readonly [string, string],
-  legalDecksOnly = false,
-): Promise<LocalGameSetup> {
+/** Check two saved decks can run, whatever their format, and create the sandbox match between them. */
+export async function prepareSandbox(ids: readonly [string, string]): Promise<LocalGameSetup> {
   const saved = await Promise.all([getDeck(ids[0]), getDeck(ids[1])]);
   for (const [index, deck] of saved.entries()) {
     const count = deck.cards.reduce((sum, card) => sum + card.count, 0);
@@ -46,15 +42,6 @@ export async function prepareSandbox(
       throw new SandboxSetupError(
         `Player ${index + 1} has no Basic Pokémon, so it can't start a game.`,
       );
-    }
-  }
-  if (legalDecksOnly) {
-    for (const [index, deck] of saved.entries()) {
-      if (!isValidSandboxDeck(deck, pool)) {
-        throw new SandboxSetupError(
-          `Player ${index + 1}'s deck is no longer valid. Choose another deck.`,
-        );
-      }
     }
   }
   const startedAt = Date.now();

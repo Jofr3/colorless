@@ -1,81 +1,47 @@
-// Translates a drag on the local table into an engine action, or null when the move means nothing
-// in the current phase (the drag springs back). It only routes; costs and legality are left to the
-// engine, which rejects invalid actions.
+// Translates a drag on the table into an engine action, or null when the move means nothing in the
+// current phase (the drag springs back). It only routes; costs and legality are left to the engine,
+// which rejects invalid actions.
 
-import type { GameAction, Phase, Seat } from "@colorless/engine";
-import type { BoardState, CardMoveRequest } from "./board";
+import type { GameAction } from "@colorless/engine";
+import type { RedactedGame } from "@colorless/schema";
 
-export interface MoveTranslationContext {
-  /** The engine phase KIND the drag landed in. Kept transport-agnostic (a kind,
-      not the full `Phase`) so BOTH local play — which has the real Phase — and
-      online play — which has only a redacted phase kind — drive this one router. */
-  phaseKind: Phase["kind"];
-  /** True only when it is the viewer's OWN `turn:action` — the turn gate the
-      old `phase.seat === viewerSeat` check enforced, hoisted to the caller
-      (online has no absolute seat on the phase, only "is it my turn"). */
-  isViewerTurn: boolean;
-  /** The seat the projection was built for (its board's "you"). */
-  viewerSeat: Seat;
-  /**
-   * The projected board the drag happened on, used to type the dragged card. Own-hand
-   * `CardModel.id`s are engine uids; hidden cards have positional ids and are never draggable.
-   */
-  board: BoardState;
+type PlayerId = "you" | "opponent";
+
+/** A table slot. `index` is absent on a whole-zone drop (the bench frame), which appends. */
+export type CardPlacement =
+  | { owner: PlayerId; zone: "hand" | "bench"; index?: number }
+  | { owner: PlayerId; zone: "active" }
+  /** Drop-only surface: Trainers resolve through the engine, never live here. */
+  | { owner: PlayerId; zone: "playmat" }
+  /** The one Stadium slot both players share. */
+  | { owner: "global"; zone: "stadium" };
+
+export interface CardMoveRequest {
+  /** The dragged card's uid; own-hand and in-play ids on the redacted board are engine uids. */
+  cardId: string;
+  from: CardPlacement;
+  to: CardPlacement;
 }
 
-export function moveToAction(
-  request: CardMoveRequest,
-  ctx: MoveTranslationContext,
-): GameAction | null {
+export function moveToAction(request: CardMoveRequest, view: RedactedGame): GameAction | null {
   const { from, to, cardId } = request;
+  const phase = view.phase.kind;
+  const seat = view.seat;
+  const isViewerTurn = phase === "turn:action" && view.activePlayer === "you";
+  const you = view.board.you;
   if (from.owner === "you" && from.zone === "bench" && to.owner === "you" && to.zone === "bench") {
-    if (ctx.phaseKind !== "setup:place" && !(ctx.phaseKind === "turn:action" && ctx.isViewerTurn))
-      return null;
-    const fromIndex = ctx.board.you.bench.findIndex((card) => card.id === cardId);
-    const index = to.index ?? ctx.board.you.bench.length - 1;
+    if (phase !== "setup:place" && !isViewerTurn) return null;
+    const fromIndex = you.bench.findIndex((card) => card.id === cardId);
+    const index = to.index ?? you.bench.length - 1;
     if (
       fromIndex < 0 ||
       from.index !== fromIndex ||
       !Number.isInteger(index) ||
       index < 0 ||
-      index >= ctx.board.you.bench.length
+      index >= you.bench.length
     )
       return null;
-    return { type: "reorderBench", seat: ctx.viewerSeat, uid: cardId, index };
-  }
-  if (ctx.phaseKind === "effect:choose" && ctx.board.energyChoice !== undefined) {
-    const choice = ctx.board.energyChoice;
-    if (from.owner !== "you" || from.zone !== "choice" || to.owner !== "you") return null;
-    const index = choice.cards.findIndex((card) => card.id === cardId);
-    if (index === 0 && choice.cards.length === 1 && to.zone === "hand") {
-      return {
-        type: "resolveEffect",
-        seat: ctx.viewerSeat,
-        choice: { kind: "confirm", yes: false },
-      };
-    }
-    if (
-      index < 0 ||
-      !choice.targets.some(
-        (target) =>
-          target.owner === to.owner &&
-          target.zone === to.zone &&
-          (target.zone !== "bench" || (to.zone === "bench" && target.index === to.index)),
-      )
-    )
-      return null;
-    const spot =
-      to.zone === "active"
-        ? { spot: "active" as const }
-        : to.zone === "bench" && to.index !== undefined
-          ? { spot: "bench" as const, index: to.index }
-          : null;
-    if (spot === null) return null;
-    return {
-      type: "resolveEffect",
-      seat: ctx.viewerSeat,
-      choice: { kind: "confirm", yes: index === 0, target: { seat: ctx.viewerSeat, spot } },
-    };
+    return { type: "reorderBench", seat, uid: cardId, index };
   }
   // The remaining translatable moves start in the viewer's own hand: setup places,
   // attachments, bench plays and Trainer plays all come from hand. Bench-to-Active swaps
@@ -86,13 +52,11 @@ export function moveToAction(
   // §7.3, one zone for both players). Everything else must land on the
   // viewer's own board.
   if (to.owner !== "you" && !(to.zone === "stadium" && to.owner === "global")) return null;
-  // Own-hand ids are engine uids by the projection contract; a card the
-  // board does not know is a stale drag — never dispatch a guessed uid.
-  const model = ctx.board.you.hand.find((card) => card.id === cardId);
-  if (model === undefined) return null;
+  // A card the hand does not hold is a stale drag — never dispatch a guessed uid.
+  const card = you.hand.find((c) => c.id === cardId);
+  if (card === undefined) return null;
 
-  const seat = ctx.viewerSeat;
-  switch (ctx.phaseKind) {
+  switch (phase) {
     case "setup:place": {
       // Any hand card may be AIMED at a Pokémon slot; the engine answers
       // NOT_A_BASIC_POKEMON (etc.) for the illegal ones.
@@ -103,75 +67,63 @@ export function moveToAction(
     case "turn:action": {
       // Not this seat's turn (a parked interrupt belongs elsewhere anyway —
       // those phase kinds fall through to null below).
-      if (!ctx.isViewerTurn) return null;
-      if (model.type === "trainer") {
-        if (to.zone === "playmat") return { type: "playTrainer", seat, uid: cardId };
-        return null;
-      }
-      if (model.type === "energy") {
-        if (to.zone === "active") {
-          return { type: "attachEnergy", seat, uid: cardId, target: { spot: "active" } };
+      if (!isViewerTurn) return null;
+      if (card.category === "Trainer") {
+        if (card.trainerType === "Stadium") {
+          // A Stadium dropped on the shared slot is a play (§7.3) — the one
+          // gesture that lands OUTSIDE the viewer's own board. Same-name /
+          // once-per-turn legality stays the engine's (the pill).
+          return to.zone === "stadium" ? { type: "playTrainer", seat, uid: cardId } : null;
         }
-        // The drop layer only fires energy→bench on an occupied indexed slot
-        // (gamePlacementPredicate needs a host), so a missing index is a
-        // non-drop.
-        if (to.zone === "bench" && to.index !== undefined) {
+        if (card.trainerType === "Tool") {
+          // A Tool attaches like an energy: onto the Active, or onto an occupied
+          // indexed bench slot (§7.4). One-Tool-per-Pokémon stays the engine's.
+          if (to.zone === "active")
+            return { type: "attachTool", seat, uid: cardId, target: { spot: "active" } };
+          if (to.zone === "bench" && to.index !== undefined && you.bench[to.index] !== undefined)
+            return {
+              type: "attachTool",
+              seat,
+              uid: cardId,
+              target: { spot: "bench", index: to.index },
+            };
+          return null;
+        }
+        return to.zone === "playmat" ? { type: "playTrainer", seat, uid: cardId } : null;
+      }
+      if (card.category === "Energy") {
+        if (to.zone === "active")
+          return { type: "attachEnergy", seat, uid: cardId, target: { spot: "active" } };
+        // An empty bench slot or the whole bench frame has no Pokémon to attach to.
+        if (to.zone === "bench" && to.index !== undefined && you.bench[to.index] !== undefined)
           return {
             type: "attachEnergy",
             seat,
             uid: cardId,
             target: { spot: "bench", index: to.index },
           };
-        }
         return null;
       }
-      if (model.type === "pokemon") {
+      if (card.category === "Pokemon") {
         // Basics open a new Bench slot even over an existing occupant.
         // Other Pokémon aimed at an occupied slot attempt evolution; the
         // engine checks the evolution match and timing. The Active always
         // aims at its occupant. New Bench plays append, so their index is cosmetic.
-        if (to.zone === "active") {
+        if (to.zone === "active")
           return { type: "evolve", seat, uid: cardId, target: { spot: "active" } };
-        }
         if (to.zone === "bench") {
           if (
-            model.stage !== "Basic" &&
+            card.stage !== "Basic" &&
             to.index !== undefined &&
-            ctx.board.you.bench[to.index]?.type === "pokemon"
-          ) {
+            you.bench[to.index]?.category === "Pokemon"
+          )
             return {
               type: "evolve",
               seat,
               uid: cardId,
               target: { spot: "bench", index: to.index },
             };
-          }
           return { type: "playBasicToBench", seat, uid: cardId };
-        }
-        return null;
-      }
-      if (model.type === "tool") {
-        // A Tool attaches like an energy: onto the Active, or onto an occupied
-        // indexed bench slot (§7.4). One-Tool-per-Pokémon stays the engine's.
-        if (to.zone === "active") {
-          return { type: "attachTool", seat, uid: cardId, target: { spot: "active" } };
-        }
-        if (to.zone === "bench" && to.index !== undefined) {
-          return {
-            type: "attachTool",
-            seat,
-            uid: cardId,
-            target: { spot: "bench", index: to.index },
-          };
-        }
-        return null;
-      }
-      if (model.type === "stadium") {
-        // A Stadium dropped on the shared slot is a play (§7.3) — the one
-        // gesture that lands OUTSIDE the viewer's own board. Same-name /
-        // once-per-turn legality stays the engine's (the pill).
-        if (to.zone === "stadium" && to.owner === "global") {
-          return { type: "playTrainer", seat, uid: cardId };
         }
         return null;
       }

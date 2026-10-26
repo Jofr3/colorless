@@ -3,7 +3,8 @@ import * as api from "../lib/api";
 import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
-import { formatById, ENERGY_TYPES, type BuilderCard } from "../decks/cards";
+import { formatById } from "@colorless/engine";
+import { ENERGY_TYPES, type BuilderCard } from "../decks/cards";
 import {
   filtersToCardsQuery,
   toBuilderCard,

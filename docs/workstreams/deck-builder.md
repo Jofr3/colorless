@@ -53,12 +53,14 @@ R2 image URLs. See `workstreams/backend-data.md`.
   deck's real cards).
 
 ### Deck math — `deckMath.ts`
-`validateDeck` enforces: over-size (error), under-size (warning), >`maxCopiesByName`
-(error; exempts basic Energy & ACE SPEC), `minBasicPokemon` (error), ACE SPEC
-limit (error), out-of-format regulation mark (error). `legal = complete && no
-errors`. **Gaps:** ACE SPEC/EX/Mega from rarity/name strings not structured data;
-no Radiant/Prism-Star single-copy rules; uses printed mark, not tcgdex
-`legal.standard/expanded`; no ban list.
+The construction rules are the engine's (`packages/engine/src/deckRules.ts`:
+`FORMATS`, `formatById`, `validateDeck`, `savedDeckReasons`), shared with the
+lobby's match-start check. `deckMath.ts` wraps them for the builder: its
+`validateDeck` reports over-size as an error and under-size as a warning, and
+turns the engine's other reasons (per-name copies, `minBasicPokemon`, the ACE SPEC,
+Radiant and Prism Star limits, the card's `legal.standard/expanded` verdict) into
+errors. `legal = complete && no errors`. **Gaps:** ACE SPEC from the rarity string,
+Radiant/Prism Star from the name; no ban list.
 
 ### Import/export — `decklistText.ts` + `ImportExportDialog.tsx`
 `parseDecklist` is a tolerant PTCG-Live/Limitless parser matching **by name only**

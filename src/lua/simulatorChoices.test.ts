@@ -17,11 +17,13 @@ const view = {
   },
 };
 
-function open(prompt: RedactedEffectPrompt) {
+function open(
+  prompt: RedactedEffectPrompt,
+  source: { invokedBy?: string; abilityName?: string } = {},
+) {
   const sim = {
     menu: null as SimMenu | null,
-    view: () => view,
-    source: { effectContext: () => ({ placingCounters: false }) },
+    view: () => ({ ...view, phase: { kind: "effect:choose", prompt, ...source } }),
     action: (label: string, action: unknown, colour: string) => ({
       label,
       colour,
@@ -63,6 +65,35 @@ describe("effect menus", () => {
     sim.menu?.footer?.[0]?.run();
     expect(sim.menu?.footer?.[0]?.label).toBe("Amount: 1");
     expect(choiceOf(sim.menu?.options[0])).toEqual({ kind: "pokemon", ref: you(0), take: 1 });
+  });
+
+  it("places damage counters with one click per target only when the prompt says counters", () => {
+    const snipe: RedactedEffectPrompt = {
+      kind: "choosePokemonMulti",
+      candidates: [you(0)],
+      min: 1,
+      max: 1,
+      declinable: false,
+      note: "",
+    };
+    const counters = open({ ...snipe, unit: "counters" });
+    expect(counters.menu?.title).toBe("Place damage counters");
+    expect(counters.menu?.hideTargetOutline).toBe(true);
+    expect(choiceOf(counters.menu?.options[0])).toEqual({ kind: "pokemonMulti", refs: [you(0)] });
+    const damage = open(snipe);
+    expect(damage.menu?.title).toBe("Choose Pokémon (0/1)");
+    expect(damage.menu?.hideTargetOutline).toBe(false);
+  });
+
+  it("asks about an Ability by the name the effect phase carries", () => {
+    const prompt = { kind: "confirm", note: "Draw?" } as const;
+    expect(open(prompt, { invokedBy: "ability", abilityName: "Drive Off" }).menu?.title).toBe(
+      "Do you want to use Drive Off?",
+    );
+    expect(open(prompt, { invokedBy: "ability" }).menu?.title).toBe(
+      "Do you want to use this Ability?",
+    );
+    expect(open(prompt, { invokedBy: "item" }).menu?.title).toBe("Draw?");
   });
 
   it("confirms with the selected target", () => {

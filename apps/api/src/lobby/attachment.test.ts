@@ -3,10 +3,12 @@ import {
   type AttachmentCarrier,
   attachedPlayer,
   attachedUserId,
+  attachLogDeltas,
   attachPlayer,
   attachSpectator,
   attachUserId,
   isSpectating,
+  takesLogDeltas,
 } from "./attachment";
 
 /** The runtime contract in miniature: whatever was serialized comes back. */
@@ -64,6 +66,31 @@ describe("attachment codec", () => {
     expect(attachedUserId(fakeSocket())).toBeNull();
     expect(attachedUserId(fakeSocket({ playerId: "p1" }))).toBeNull(); // userId absent
     expect(attachedUserId(fakeSocket({ userId: 42 }))).toBeNull();
+  });
+});
+
+describe("the log-delta flag", () => {
+  it("reads false until a hello announces it, and survives every other write", () => {
+    const ws = fakeSocket();
+    expect(takesLogDeltas(ws)).toBe(false);
+    attachUserId(ws, "user-9");
+    attachLogDeltas(ws, true);
+    attachSpectator(ws);
+    expect(takesLogDeltas(ws)).toBe(true);
+    attachPlayer(ws, "player-1");
+    attachUserId(ws, "user-10");
+    expect(takesLogDeltas(ws)).toBe(true);
+    expect(attachedPlayer(ws)).toBe("player-1");
+    attachLogDeltas(ws, false);
+    expect(takesLogDeltas(ws)).toBe(false);
+    expect(attachedUserId(ws)).toBe("user-10");
+  });
+
+  it("reads false for an attachment written without it", () => {
+    expect(takesLogDeltas(fakeSocket({ playerId: "p", userId: null, spectating: false }))).toBe(
+      false,
+    );
+    expect(takesLogDeltas(fakeSocket({ logDeltas: "yes" }))).toBe(false);
   });
 });
 
