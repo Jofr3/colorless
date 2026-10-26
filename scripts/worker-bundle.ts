@@ -18,42 +18,47 @@ const BUDGET_KIB = 1024;
 
 const LOCALE = /\/zod\/(?:.*\/)?locales\/([^/]+)\.js$/;
 
-mkdirSync(repoPath("tmp"), { recursive: true });
-const out = mkdtempSync(join(repoPath("tmp"), "worker-bundle-"));
-try {
-  const run = spawnSync(
-    localBin("wrangler"),
-    ["deploy", "--dry-run", "--minify", "--outdir", out],
-    {
-      cwd: repoPath("apps/api"),
-      encoding: "utf8",
-      env: { ...process.env, WRANGLER_SEND_METRICS: "false" },
-    },
-  );
-  if (run.status !== 0) fail(`wrangler deploy --dry-run failed:\n${run.stdout}\n${run.stderr}`);
-  const bytes = statSync(join(out, "index.js")).size;
-  const map = parseJson(
-    readFileSync(join(out, "index.js.map"), "utf8"),
-    "index.js.map",
-    (v): v is { sources: string[] } => isRecord(v) && Array.isArray(v.sources),
-  );
-  const locales = map.sources.flatMap((s) => {
-    const name = LOCALE.exec(s)?.[1];
-    return name === undefined || name === "index" ? [] : [name];
-  });
-  const kib = bytes / 1024;
-  console.log(
-    `worker bundle: ${kib.toFixed(1)} KiB minified (budget ${BUDGET_KIB} KiB); zod locales: ${locales.join(", ") || "none"}.`,
-  );
-  if (process.argv.includes("--check")) {
-    const problems = [
-      ...(kib > BUDGET_KIB ? [`the bundle is ${kib.toFixed(1)} KiB, over ${BUDGET_KIB} KiB`] : []),
-      ...(locales.some((l) => l !== "en")
-        ? [`it carries ${locales.length} zod locales; import zod as \`import * as z from "zod"\``]
-        : []),
-    ];
-    if (problems.length > 0) fail(`worker-bundle: FAIL — ${problems.join("; ")}.`);
+/** Builds the Worker into a temporary directory and reads its size and its zod locales. */
+function measure(): { kib: number; locales: string[] } {
+  mkdirSync(repoPath("tmp"), { recursive: true });
+  const out = mkdtempSync(join(repoPath("tmp"), "worker-bundle-"));
+  try {
+    const run = spawnSync(
+      localBin("wrangler"),
+      ["deploy", "--dry-run", "--minify", "--outdir", out],
+      {
+        cwd: repoPath("apps/api"),
+        encoding: "utf8",
+        env: { ...process.env, WRANGLER_SEND_METRICS: "false" },
+      },
+    );
+    if (run.status !== 0)
+      throw new Error(`wrangler deploy --dry-run failed:\n${run.stdout}\n${run.stderr}`);
+    const map = parseJson(
+      readFileSync(join(out, "index.js.map"), "utf8"),
+      "index.js.map",
+      (v): v is { sources: string[] } => isRecord(v) && Array.isArray(v.sources),
+    );
+    const locales = map.sources.flatMap((s) => {
+      const name = LOCALE.exec(s)?.[1];
+      return name === undefined || name === "index" ? [] : [name];
+    });
+    return { kib: statSync(join(out, "index.js")).size / 1024, locales };
+  } finally {
+    rmSync(out, { recursive: true, force: true });
   }
-} finally {
-  rmSync(out, { recursive: true, force: true });
+}
+
+const { kib, locales } = measure();
+console.log(
+  `worker bundle: ${kib.toFixed(1)} KiB minified (budget ${BUDGET_KIB} KiB); zod locales: ${locales.join(", ") || "none"}.`,
+);
+if (process.argv.includes("--check")) {
+  const problems = [
+    ...(kib > BUDGET_KIB ? [`the bundle is ${kib.toFixed(1)} KiB, over ${BUDGET_KIB} KiB`] : []),
+    ...(locales.some((l) => l !== "en")
+      ? [`it carries ${locales.length} zod locales; import zod as \`import * as z from "zod"\``]
+      : []),
+  ];
+  if (problems.length > 0) fail(`worker-bundle: FAIL — ${problems.join("; ")}.`);
 }
