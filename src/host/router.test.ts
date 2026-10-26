@@ -199,6 +199,25 @@ describe("Router", () => {
     expect(page.path()).toBe("/decks/abc");
   });
 
+  it("lands on the new page when the held page lets go at once", () => {
+    for (const leave of ["navigate", "back"] as const) {
+      const page = fakeWindow("/decks");
+      const router = new Router(page.win, {
+        changed: () => {},
+        holdLeave: (from, proceed) => {
+          if (from.page !== "builder") return false;
+          proceed();
+          return true;
+        },
+      });
+      router.navigate("builder", "abc");
+      if (leave === "navigate") router.navigate("decks");
+      else page.back();
+      expect(router.current).toEqual({ page: "decks", id: "" });
+      expect(page.path()).toBe("/decks");
+    }
+  });
+
   it("does not ask to leave when the route stays put", () => {
     const page = fakeWindow("/decks/abc");
     const holdLeave = vi.fn(() => true);

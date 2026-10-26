@@ -156,10 +156,11 @@ export class Router {
   private go(next: Route, push: boolean, held = false) {
     const from = this.current;
     const moving = next.page !== from.page || next.id !== from.id;
-    if (!held && moving && this.options.holdLeave?.(from, () => this.go(next, push, true))) {
-      // Back/forward already moved the URL; keep it on the held page until it lets go.
+    if (!held && moving && this.options.holdLeave) {
+      // Back/forward already moved the URL; keep it on the held page until it lets go, which may
+      // happen before holdLeave returns.
       this.win.history.replaceState(null, "", routeUrl(this.url(), from));
-      return;
+      if (this.options.holdLeave(from, () => this.go(next, push, true))) return;
     }
     this.current = next;
     const url = routeUrl(this.url(), next);
