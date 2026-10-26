@@ -23,6 +23,7 @@ import {
   finishOpeningSetup,
 } from "@colorless/engine/testing";
 import { LuaSimulator } from "./simulator";
+import { LocalTableSource } from "./tableSource";
 import { effectMenu } from "./simulatorChoices";
 import { SimulatorOrder } from "./simulatorOrder";
 import { loadSimulatorSave } from "../game/simulatorSave";
@@ -53,6 +54,11 @@ function rows(publish: ReturnType<typeof vi.fn>) {
   return (publish.mock.lastCall?.[0] ?? "")
     .split("\n")
     .map((s: string) => s.split("\t").map(decodeURIComponent));
+}
+/** The hot-seat save a game reached through the sandbox already has. */
+function save(sim: LuaSimulator) {
+  if (!(sim.source instanceof LocalTableSource)) throw Error("Missing local table");
+  sim.source.persist();
 }
 function knockoutState(id: string, hp: number, seed = 1) {
   let state = driveSetup(seed, { p1: PRIZE_DECK, p2: PRIZE_DECK }, { first: "p2" });
@@ -337,7 +343,7 @@ describe("Lua simulator", () => {
   });
   it("saves cosmetic hand and Bench order without changing engine targets or history", () => {
     const { sim, state, publish, candy, stage2, cardRow } = rareCandySetup();
-    sim.persist();
+    save(sim);
     const steps = sim.host?.steps;
     const benchUid = state.players.p1.bench[1]?.stack.at(-1) ?? "";
     sim.command(`reorder\thand\t${stage2}\t0`);
@@ -442,7 +448,7 @@ describe("Lua simulator", () => {
   );
   it("cancels a staged Rare Candy and restores it on reload without spending it", () => {
     const { sim, state, candy, cardRow } = rareCandySetup();
-    sim.persist();
+    save(sim);
     sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
     sim.command("cancelRareCandy");
     expect(sim.host?.game).toBe(state);

@@ -1,6 +1,14 @@
-import type { EffectChoice, PokemonRef } from "@colorless/engine";
-import type { RedactedEffectPrompt, RedactedCard } from "@colorless/schema";
-import type { LuaSimulator, SimMenu, SimOption, ThemeColour } from "./simulator";
+import type { EffectChoice, GameAction, PokemonRef } from "@colorless/engine";
+import type { RedactedEffectPrompt, RedactedCard, RedactedGame } from "@colorless/schema";
+import type { SimMenu, SimOption, ThemeColour } from "./simulatorTypes";
+
+/** What an effect menu reads and rewrites as its picks change. */
+export interface MenuHost {
+  view(): RedactedGame | null;
+  action(label: string, action: GameAction, colour?: ThemeColour): SimOption;
+  menu: SimMenu | null;
+  emit(): void;
+}
 
 type PromptKind = RedactedEffectPrompt["kind"];
 type PromptOf<K extends PromptKind> = Extract<RedactedEffectPrompt, { kind: K }>;
@@ -287,7 +295,7 @@ const BUILDERS: { [K in PromptKind]: MenuBuilder<PromptOf<K>> } = {
  * rows (the pack picker), board targets or prize slots. Board/prize menus name
  * the top-card uid / prize slot so the table itself becomes the picker. */
 export function effectMenu(
-  sim: LuaSimulator,
+  sim: MenuHost,
   prompt: RedactedEffectPrompt,
   selectedCounterSource?: PokemonRef,
 ): SimMenu {
