@@ -16,8 +16,9 @@ planning sessions didn't — the actual code, real data, what just broke. Use it
   the current code before relying on them.
 
 ## Context hygiene (the point of this whole system)
-- Load **`progress.md` + the one relevant `workstreams/*.md`** (+ its
-  `reference/`). Don't read unrelated workstreams or sweep the repo.
+- Load **`status.md` + the one relevant `workstreams/*.md`** (+ its
+  `reference/`). Don't read unrelated workstreams or sweep the repo. Find
+  decisions through `decision-index.md`; never read `archive/` whole.
 - Prefer facts already written in these docs over re-deriving them.
 
 ## Sub-agent / workflow policy
@@ -8869,8 +8870,9 @@ tell a case-insensitive negative from a case-sensitive one.
   beside other agents" above. It is the rule this branch pays for most often.
 
 ## End-of-session ritual (do not skip)
-1. Update `progress.md`: status table + session-log entry + **new resume point**.
-2. Record any decision in `decisions.md`.
+1. Update `status.md`'s current state and next step.
+2. Record any decision as a dated entry at the end of `decisions.md`, then run
+   `bun run docs:index`.
 3. Write anything learned into the right workstream/reference doc so the next
    session doesn't rediscover it.
 

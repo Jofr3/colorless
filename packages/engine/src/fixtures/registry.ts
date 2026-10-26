@@ -195,7 +195,7 @@ export const FIXTURE_REGISTRY: Readonly<Record<string, CardProgram>> = {
   "fix-metalbridge": printed("sv07-107"), // METAL_BRIDGE
   // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds
   // no `sv05`/`sv08` Energy row, and the manifest generator cannot run (§ the
-  // top-of-file note in progress.md), so a REAL-id fixture may not be added.
+  // top-of-file note in docs/archive/progress.md), so a REAL-id fixture may not be added.
   "fix-mist-energy": printed("sv05-161"), // MIST_ENERGY
   "fix-enriching-energy": printed("sv08-191"), // ENRICHING_ENERGY
   "fix-neo-upper-energy": printed("sv05-162"), // NEO_UPPER_ENERGY

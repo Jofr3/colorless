@@ -1,7 +1,7 @@
 # Roadmap
 
 Five phases. Each has a detailed workstream doc; this is the map + dependencies.
-Live status lives in `progress.md`, not here.
+Live status lives in `status.md`, not here.
 
 ## Phase 1 — Backend & Data Foundation → `workstreams/backend-data.md`
 Stand up the Bun + Hono API on Cloudflare. Ingest real tcgdex card data into D1,
