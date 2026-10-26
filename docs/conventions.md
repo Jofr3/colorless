@@ -59,7 +59,7 @@ only the conclusion.
   its package entry: `@colorless/engine/testing` is the fixture barrel,
   `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads and `@colorless/schema/constants` the
   zod-free constants; engine runtime code imports only that subpath's values, so it never builds
-  a zod schema. Schemas that only tests parse (`redactedGameSchema`, `lobbyServerMessageSchema`)
+  a zod schema (`--check` fails on a value import from zod or the schema root). Schemas that only tests parse (`redactedGameSchema`, `lobbyServerMessageSchema`)
   sit in modules nothing on the Worker's runtime path imports, so the bundle drops them. A pure helper that
   would close a new cycle belongs in a lower module.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
