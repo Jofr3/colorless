@@ -219,7 +219,7 @@ export function tableRows(f: EmitFrame, s: EmitState) {
       awayName: away?.name ?? "",
       awayMs: !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - s.now),
       flags: life.flags.join(","),
-      allow: s.online ? "partial" : "full",
+      allow: s.online && !s.view?.allowances ? "partial" : "full",
     });
   }
   if (s.pendingRareCandy) f.row(W.rareCandy, { uid: s.pendingRareCandy });

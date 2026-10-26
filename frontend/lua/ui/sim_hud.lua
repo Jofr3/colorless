@@ -359,7 +359,7 @@ function Hud:draw(sim,L,time,reduced,hovered)
     self.turnCount:draw(0,0,rw,nil,countX)
     g.pop()
     gy=gy+1.2*u+b.gap
-    -- The online wire only carries the Supporter allowance; drop Energy.
+    -- A frame without allowances only lets the Supporter one be derived; drop Energy.
     if self.allow.partial then
       cell(gx+(gw-b.cellW)/2,gy,b,'Supporter',self.allow.supporter and 'used' or 'open',rw,self.allow.supporter)
     else

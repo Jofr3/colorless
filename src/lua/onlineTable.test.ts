@@ -121,7 +121,7 @@ describe("LuaOnlineMatch", () => {
     expect(header[2]).toBe("Ash");
     expect(header[3]).toBe("Brock");
     expect(header[20]).toBe(`${CODE}:1`);
-    expect(t.tagged("L")).toEqual([["L", "online", "false", "", "", "concede,leave", "partial"]]);
+    expect(t.tagged("L")).toEqual([["L", "online", "false", "", "", "concede,leave", "full"]]);
     // Catalogue faces arrive after the frame and add I rows; asked once each.
     await vi.waitFor(() => expect(t.tagged("I").length).toBeGreaterThan(0));
     t.push(frame(t.state));
@@ -163,6 +163,29 @@ describe("LuaOnlineMatch", () => {
       ["Spark", "true"],
       ["Tackle", "false"],
     ]);
+  });
+
+  it("reads the turn's allowances from the frame and refuses a second Energy attach", async () => {
+    const state = driveSetup(7, undefined, { first: "p1" });
+    const fresh = frame(state);
+    const seat = fresh.seat;
+    const attach = {
+      type: "attachEnergy",
+      seat,
+      uid: "any",
+      target: { spot: "active" },
+    } as const;
+    expect(onlineGate(attach, fresh)).toBe(true);
+    const spent = frame(state, (v) => {
+      v.allowances = { energy: true, supporter: false, retreated: false };
+    });
+    expect(onlineGate(attach, spent)).toBe(false);
+    const t = await table(state);
+    t.push(spent);
+    expect(t.tagged("L")[0]?.at(-1)).toBe("full");
+    const { allowances: _, ...withoutAllowances } = frame(state);
+    t.push(withoutAllowances);
+    expect(t.tagged("L")[0]?.at(-1)).toBe("partial");
   });
 
   it("the table answers the simulator's gate from the frame it holds", async () => {

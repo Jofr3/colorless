@@ -139,6 +139,8 @@ export function onlineGate(action: GameAction, v: RedactedGame): boolean {
       );
     case "discardFromPlay":
       return (p.discardable ?? []).some((d) => same(d.target, action.target));
+    case "attachEnergy":
+      return !v.allowances?.energy;
     default:
       return true;
   }
@@ -212,10 +214,11 @@ export class LuaOnlineMatch implements TableSource {
     if (!opts.auto) this.pending = true;
     this.client.sendAction(action);
   }
-  /** Energy and Retreat are not on the wire (the `L` row says partial). */
   allowances() {
     const v = this.seen;
     if (!v) return null;
+    if (v.allowances) return v.allowances;
+    // A server that sends no allowances: the Supporter one is recovered from the log.
     const discard = v.board.you.discard;
     let turn = 0;
     let supporter = false;
