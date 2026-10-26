@@ -126,6 +126,7 @@ describe("Lua wire fixtures", () => {
       tint,
       coverCardId: null,
       position: 0,
+      updated: "2026-10-01T00:00:00.000Z",
     });
     library.decks = [
       deck("d1", "Fire Rush", 60, 20),

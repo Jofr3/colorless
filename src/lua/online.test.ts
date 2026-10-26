@@ -10,6 +10,7 @@ import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
+import { clearSavedDeckCache } from "../game/sandboxDecks";
 import { LobbyClient, type LobbyClientOptions } from "../online/lobbyClient";
 import { LuaOnline, NOTICE_MS } from "./online";
 
@@ -119,6 +120,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearCardPoolCache();
+  clearSavedDeckCache();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
