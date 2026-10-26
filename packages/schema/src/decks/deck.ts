@@ -1,9 +1,7 @@
-// The deck-library Deck (P1 milestone 7 — backend-data.md §5.2/§6): the web
-// app's existing `Deck` vocabulary (src/features/decks/data.ts) extended with
-// the persisted card list. Two projections:
+// The deck-library Deck, in two projections:
 //   - `Deck` — the full resource (GET /decks/:id): carries `cards`.
 //   - `DeckSummary` — the list row (GET /decks): `cards` replaced by
-//     `cardCount`, the summed counts, which is exactly the web shape's field.
+//     `cardCount`, the summed counts.
 
 import { z } from "zod";
 
@@ -26,12 +24,11 @@ const deckBaseSchema = z.object({
   format: z.string().nullable(),
   /** Base hue (0–360) for the deck's cover gradient (web `Deck.tint`). */
   tint: z.number().int().min(0).max(360),
-  /** Owning folder, or null when the deck lives at the library root. */
+  /** The folder a deck is filed in, or null at the library root. No route creates folders or
+      files a deck in one. */
   folderId: z.string().nullable(),
-  /** Manual sort slot within the library — lists come back ordered by it
-      ascending. Global per user (not per folder): a nest move keeps the
-      deck's slot, exactly like the web grid's flat array. New decks take
-      min-1 (they prepend), so negatives are normal. */
+  /** Manual sort slot within the library; lists come back ordered by it ascending. Global per
+      user. New decks take min-1 (they prepend), so negatives are normal. */
   position: z.number().int(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   updated: z.iso.datetime(),

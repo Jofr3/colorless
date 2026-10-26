@@ -197,7 +197,7 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
 // --- session ----------------------------------------------------------------
 
 // Session resolution (cookie → user, expiry-on-read, lazy dead-row delete)
-// lives in requireUser — shared with /decks and /folders (milestone 7); /me
+// lives in requireUser, shared with /decks; /me
 // is just "echo the resolved caller".
 // ETagged `private, no-cache` (../httpCache.ts): the boot probe revalidates
 // to a 304 while the profile is unchanged.

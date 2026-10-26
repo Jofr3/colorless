@@ -4,15 +4,10 @@
 // `user_id` never crosses the boundary — ownership is a WHERE clause, not a
 // response field — and the epoch-ms `updated` column serializes to ISO here.
 
-import type { Deck, DeckCard, DeckSummary, Folder } from "@colorless/schema";
-import type { decks, folders } from "../db/schema";
+import type { Deck, DeckCard, DeckSummary } from "@colorless/schema";
+import type { decks } from "../db/schema";
 
-export type FolderRow = typeof folders.$inferSelect;
 export type DeckRow = typeof decks.$inferSelect;
-
-export function mapFolderRow(row: FolderRow): Folder {
-  return { id: row.id, name: row.name, parentId: row.parentId, position: row.position };
-}
 
 /** The shared (cards-free) projection of a deck row. */
 function mapDeckBase(row: DeckRow) {

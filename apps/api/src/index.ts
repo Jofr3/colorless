@@ -8,7 +8,7 @@ import { HTTPException } from "hono/http-exception";
 import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
 import { catalogRoutes } from "./catalog/routes";
-import { deckRoutes, folderRoutes } from "./decks/routes";
+import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
@@ -43,9 +43,8 @@ app.route("/auth", authRoutes);
 // Lazy R2 mirror for tcgdex images (D9): /assets/cards/…, /assets/sets/….
 app.route("/assets", assetsRoutes);
 
-// The authenticated deck library (§6): decks + folders CRUD, session-gated.
+// The authenticated deck library (§6): deck CRUD, session-gated.
 app.route("/decks", deckRoutes);
-app.route("/folders", folderRoutes);
 
 // Lobby creation (§3.6/§6): POST /lobby mints a code naming a LobbyDO. The
 // matching WebSocket route is mounted above, ahead of CORS.

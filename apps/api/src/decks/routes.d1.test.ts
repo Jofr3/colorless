@@ -180,3 +180,29 @@ describe("GET /decks cover aggregation", () => {
     });
   });
 });
+
+describe("folderId on the deck routes", () => {
+  it("creates at the library root, and null moves a filed deck back to it", async () => {
+    const res = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "Root", tint: 22, folderId: null }, ash.cookie),
+      d1().env(),
+    );
+    expect(res.status).toBe(201);
+    expect(((await res.json()) as Deck).folderId).toBeNull();
+
+    const filed = await createDeck("Filed", []);
+    await d1()
+      .db.prepare("INSERT INTO folders (id, user_id, name) VALUES ('f1', ?, 'Standard')")
+      .bind(ash.userId)
+      .run();
+    await d1().db.prepare("UPDATE decks SET folder_id = 'f1' WHERE id = ?").bind(filed.id).run();
+    expect((await getDeck(filed.id)).folderId).toBe("f1");
+
+    const renamed = await patchDeck(filed.id, { name: "Still filed" });
+    expect(((await renamed.json()) as Deck).folderId).toBe("f1");
+    const moved = await patchDeck(filed.id, { folderId: null });
+    expect(moved.status).toBe(200);
+    expect((await getDeck(filed.id)).folderId).toBeNull();
+  });
+});

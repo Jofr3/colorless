@@ -27,12 +27,6 @@ describe("401 gating without a session cookie (before any D1 access)", () => {
     ["/decks", jsonInit("POST", VALID_DECK)],
     ["/decks/d1", jsonInit("PATCH", { name: "Renamed" })],
     ["/decks/d1", { method: "DELETE" }],
-    ["/decks/reorder", jsonInit("POST", { positions: [{ id: "d1", position: 0 }] })],
-    ["/folders", {}],
-    ["/folders", jsonInit("POST", { name: "Standard" })],
-    ["/folders/f1", jsonInit("PATCH", { name: "Renamed" })],
-    ["/folders/f1", { method: "DELETE" }],
-    ["/folders/reorder", jsonInit("POST", { positions: [{ id: "f1", position: 0 }] })],
   ];
 
   it.each(requests)("%s %o → 401", async (path, init) => {
@@ -63,21 +57,8 @@ describe("body validation runs before auth and D1", () => {
     ],
     ["/decks", "POST", { ...VALID_DECK, cards: [{ cardId: "sv01-001", count: 100 }] }],
     ["/decks/d1", "PATCH", {}],
-    ["/folders", "POST", {}],
-    ["/folders/f1", "PATCH", {}],
-    ["/decks/reorder", "POST", { positions: [] }],
-    ["/decks/reorder", "POST", { positions: [{ id: "d1", position: 0.5 }] }],
-    [
-      "/decks/reorder",
-      "POST",
-      {
-        positions: [
-          { id: "d1", position: 0 },
-          { id: "d1", position: 1 },
-        ],
-      },
-    ],
-    ["/folders/reorder", "POST", { positions: [] }],
+    ["/decks", "POST", { ...VALID_DECK, folderId: "f1" }],
+    ["/decks/d1", "PATCH", { folderId: "f1" }],
   ];
 
   it.each(invalid)("%s %s %o → 400 invalid body", async (path, method, body) => {
@@ -99,5 +80,21 @@ describe("body validation runs before auth and D1", () => {
     const res = await app.request("/decks", jsonInit("POST", body), bareEnv());
     const payload = (await res.json()) as { issues: string[] };
     expect(payload.issues.join("\n")).toContain("sv01-001");
+  });
+});
+
+describe("folder and reorder routes", () => {
+  const retired: [string, RequestInit][] = [
+    ["/folders", {}],
+    ["/folders", jsonInit("POST", { name: "Standard" })],
+    ["/folders/f1", jsonInit("PATCH", { name: "Renamed" })],
+    ["/folders/f1", { method: "DELETE" }],
+    ["/folders/reorder", jsonInit("POST", { positions: [{ id: "f1", position: 0 }] })],
+    ["/decks/reorder", jsonInit("POST", { positions: [{ id: "d1", position: 0 }] })],
+  ];
+
+  it.each(retired)("%s %o → 404", async (path, init) => {
+    const res = await app.request(path, init, bareEnv());
+    expect(res.status).toBe(404);
   });
 });
