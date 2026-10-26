@@ -1,10 +1,12 @@
 -- Files the browser host writes into LÖVE's save directory for Lua to poll.
 local Codec=require('ui.codec')
+local files=require('ui.host_constants').mailboxes
 local Mailbox={}
-Mailbox.ART='__art.txt'
--- The file's text, or nil until the host has written it.
+-- The text of the mailbox `name` (a key of host_constants.mailboxes), or nil until the page has
+-- written it.
 function Mailbox.read(name)
-  if love.filesystem.getInfo(name) then return (love.filesystem.read(name)) end
+  local file=files[name] or error('unknown mailbox '..tostring(name))
+  if love.filesystem.getInfo(file) then return (love.filesystem.read(file)) end
 end
 -- The art mailbox's {id,path} rows in order; its first row is a revision.
 function Mailbox.artRows(raw)

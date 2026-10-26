@@ -195,9 +195,3 @@ export class ArtworkCache {
     (await this.database)?.close();
   }
 }
-
-declare global {
-  interface Window {
-    colorlessArtworkCache?: ArtworkCache;
-  }
-}
