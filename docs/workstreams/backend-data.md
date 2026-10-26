@@ -742,6 +742,8 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   sort=name|hp-desc|set (default set); page (1-based,
                          #   default 1), pageSize (default 50, max 100)
 GET    /cards/:id        # full canonical Card; 404 JSON if absent
+GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown
+                         #   ids are omitted; id batches never enter KV (card-pool load)
 GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate
 GET    /sets/:id         # full Set + cards: CardBrief[] (ordered by local_id)
 GET    /series           # Serie[] = SerieBrief + nested SetBrief[]
