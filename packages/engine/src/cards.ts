@@ -15,7 +15,8 @@ export type { PokemonSuffix };
 // stack reads as its synthesized 60-HP Basic {C} Pokémon face, and as the catalog Item elsewhere.
 // Every face is read through the markup normaliser, so a persisted raw face reads the same as a
 // re-ingested one. A game keeps its `cardIdByUid` and `cardPool` objects from state to state, so
-// every other uid's face is remembered against them; a fossil's depends on its zone and is not.
+// every other uid's face is remembered against them, and nothing may write into either once the
+// engine has read it; a fossil's face depends on its zone and is not remembered.
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
   const faces = facesOf(state);
   const known = faces.get(uid);

@@ -65,6 +65,14 @@ only the conclusion.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
   module-level state that leaks between files; `app` covers everything else.
+- **The engine remembers derived facts by object identity**: `disabledAbilityUids` per
+  `GameState` (`DISABLED_ABILITY_UIDS`, `continuous.ts`), `cardOfUid`'s faces per `cardIdByUid`
+  and `cardPool` (`FACES_BY_UID`, `cards.ts`) and `poolHasOwnerBoundEnergy` per `cardPool`
+  (`OWNER_BOUND_POOLS`, `continuous.ts`). Once the engine has read a state, never write into it,
+  its `cardIdByUid` or its `cardPool` in place, tests included: build a new object
+  (`{ ...state, ... }`, `patchSide`, `{ ...state.cardPool, [id]: card }`), or the next read returns
+  the answer remembered for the old contents. The `engine` project shares these memos across
+  files in a worker, so such a stale read can pass or fail depending on which files run together.
 - After any refactor that moves, reformats or un-comments mutated code, run
   `bun scripts/mutation/reanchor.ts --write`: it re-points rows whose `find` moved
   (whitespace, comments and file splits are ignored when matching) and lists the

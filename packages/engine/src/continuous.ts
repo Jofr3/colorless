@@ -420,8 +420,8 @@ export function stadiumLicensesSameTurnEvolve(
  * Auras are collected ungated off each source's printed passive, tagged with their holder, then
  * settled by a stratified pass: an aura is on once every aura reaching its holder is off, off once
  * an on aura reaches its holder, and mutual source cycles are kept both on. Only on auras mark
- * targets. A Stadium lock has no holder and is always on. Remembered per state, which the engine
- * never changes in place.
+ * targets. A Stadium lock has no holder and is always on. Remembered per state, so a state the
+ * engine has read is never changed in place, by the engine or by a test.
  */
 export function disabledAbilityUids(state: GameState): ReadonlySet<string> {
   let disabled = DISABLED_ABILITY_UIDS.get(state);
@@ -2267,7 +2267,7 @@ export function energyMayBeAttachedTo(
 
 /**
  * Does `pool` hold an Energy that `energyMayBeAttachedTo` can refuse? Without one no attached
- * Energy is ever misplaced. Remembered per pool object, which a game keeps from state to state.
+ * Energy is ever misplaced. Remembered per pool object, which a game keeps from state to state and nothing writes into.
  */
 export function poolHasOwnerBoundEnergy(pool: GameState["cardPool"]): boolean {
   let known = OWNER_BOUND_POOLS.get(pool);
