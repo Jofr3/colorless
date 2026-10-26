@@ -10,8 +10,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# The same named steps as `bun run check`, split into parallel jobs: static, lua
+# (with the bundle) and test. Lua tests needing Balatro's source (not in this
+# repository) are skipped, and the bundle is built without the Lua package for
+# the same reason.
 jobs:
-  verify:
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,32 +37,36 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # The same named steps as `bun run check`, except that Lua tests needing
-      # Balatro's source (not in this repository) are skipped, and the bundle is
-      # built without the Lua package for the same reason.
+      # The previous run's build info and engine and schema declarations, so
+      # `tsc -b` re-checks only what changed. Each run saves under its own sha.
+      - name: Cache TypeScript build
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/*.tsbuildinfo
+            packages/*/dist
+            !**/node_modules/**
+          key: ${{ runner.os }}-tsc-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-tsc-${{ hashFiles('bun.lock') }}-
+            ${{ runner.os }}-tsc-
+
+      # `tsc -b` skips a project whose build info is newer than its sources.
+      # Backdating the restored files makes every project compare its sources
+      # by content hash, so a change the cache predates is never missed.
+      - name: Backdate the TypeScript build
+        run: >-
+          find . -name node_modules -prune -o
+          \( -name '*.tsbuildinfo' -o -path './packages/*/dist/*' \)
+          -exec touch -d 2000-01-01 {} +
+
       - name: Static checks
         run: bun run check:static
 
-      - name: Lua tests
-        run: |
-          sudo apt-get install -y lua5.2
-          LUA=lua5.2 bun run test:lua
-
-      - name: Test
-        run: bun run check:test
-
-      - name: Bundle
-        run: LOVE_VERSIONS_OPTIONAL=1 bunx vite build
-
-  # Precheck proves mutant anchors are unique; this proves a slice of the killers
-  # still kill: rows on the files this push or PR changed, plus a random draw
-  # seeded by the commit.
-  mutants:
+  lua:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -72,6 +80,89 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Lua tests
+        run: |
+          sudo apt-get install -y lua5.2
+          LUA=lua5.2 bun run test:lua
+
+      - name: Bundle
+        run: LOVE_VERSIONS_OPTIONAL=1 bunx vite build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Vitest's module cache never prunes itself, so its key rotates weekly.
+      - name: Week
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      # Transformed modules (keyed by content hash) and vitest's results,
+      # which order the next run's files longest first.
+      - name: Cache vitest
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.experimental-vitest-cache
+            node_modules/.vite/vitest
+          key: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-
+
+      - name: Test
+        run: bun run check:test
+
+  # Precheck proves mutant anchors are unique; this proves a slice of the killers
+  # still kill: rows on the files this push or PR changed, plus a random draw
+  # seeded by the commit.
+  mutants:
+    runs-on: ubuntu-latest
+    steps:
+      # The sample diffs names against the base, which needs history but no
+      # old file contents.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Week
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      # The harness's own vitest module cache (it drops what each mutant adds).
+      - name: Cache the harness's vitest modules
+        uses: actions/cache@v4
+        with:
+          path: tmp/mutation-vitest-cache
+          key: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-
 
       - name: Mutant sample
         run: bun scripts/mutation/sample.ts --base "$BASE"
