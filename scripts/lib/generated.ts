@@ -34,7 +34,7 @@ export function committedText(out: string): string {
   }
 }
 
-/** Drops the provenance stamps (local file name, mtime, run date), which differ per machine. */
+/** Drops the provenance stamps (local file name, mtime, size, run date), which differ per machine. */
 export function withoutStamps(text: string): string {
-  return text.replace(/(path|mtime|generated): "[^"]*"/g, "");
+  return text.replace(/(path|mtime|generated): "[^"]*"|bytes: \d+/g, "");
 }
