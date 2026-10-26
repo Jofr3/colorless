@@ -5,7 +5,6 @@
 import type { ErrorCode, GameAction, GameEvent, GameState, Seat } from "@colorless/engine";
 import { applyAction, formatElapsed, logFromEvents, phaseViewOf } from "@colorless/engine";
 import type { SeatLogEntry } from "@colorless/schema";
-import { coinFlipsFromEvents, coinFlipTitle, type CoinFlipBatch } from "./coinFlips";
 
 /** Everything a fresh match starts from — the createGame result plus the
     display names. Produced by the pregame flow. */
@@ -55,10 +54,6 @@ export interface GameError {
 }
 
 interface HostState {
-  /** Transient presentation only — never persisted or replayed on refresh. */
-  coinFlipBatch: CoinFlipBatch | null;
-  /** Hold the visible board, log and viewer until the dice finish. Saves use `game`. */
-  coinFlipPresentation: LocalTurnSnapshot | null;
   game: GameState;
   names: Record<Seat, string>;
   startedAt: number;
@@ -83,8 +78,7 @@ interface HostActionEvent {
 type HostEvent =
   | HostActionEvent
   | { type: "previousTurn" | "nextTurn" }
-  | { type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn" }
-  | { type: "finishCoinFlip"; id: number };
+  | { type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn" };
 
 /** Where an undo/redo lands in `steps`, or null when there is nowhere to go.
     Actions step one at a time; turns jump to the nearest checkpoint (the
@@ -134,12 +128,6 @@ export function waitingSeatOf(state: GameState, current: Seat): Seat {
     → keep the game, surface the error (nonce-bumped so repeats
     re-announce). */
 export function hostReducer(prev: HostState, event: HostEvent): HostState {
-  if ("type" in event && event.type === "finishCoinFlip") {
-    return prev.coinFlipPresentation !== null && prev.coinFlipBatch?.id === event.id
-      ? { ...prev, coinFlipPresentation: null }
-      : prev;
-  }
-  if (prev.coinFlipPresentation !== null) return prev;
   if ("type" in event && event.type !== "previousTurn" && event.type !== "nextTurn") {
     const index = stepTarget(prev, event.type);
     const step = index === null ? undefined : prev.steps[index];
@@ -188,7 +176,7 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     state: result.state,
     elapsed: formatElapsed(event.at - prev.startedAt),
   });
-  const flips = coinFlipsFromEvents(result.events, prev.names);
+
   const log = [...prev.log, ...entries];
   const viewerSeat = waitingSeatOf(result.state, prev.viewerSeat);
   const turn = { game: result.state, log, viewerSeat };
@@ -218,16 +206,7 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
   ].slice(-MAX_STEPS);
   return {
     ...prev,
-    coinFlipPresentation:
-      flips.length > 0 ? { game: prev.game, log: prev.log, viewerSeat: prev.viewerSeat } : null,
-    coinFlipBatch:
-      flips.length > 0
-        ? {
-            id: (prev.coinFlipBatch?.id ?? 0) + 1,
-            title: coinFlipTitle(prev.game, event.action),
-            flips,
-          }
-        : prev.coinFlipBatch,
+
     game: result.state,
     log,
     // An accepted action makes any earlier rejection stale — and since the
@@ -268,8 +247,6 @@ export function initHost(setup: LocalGameSetup): HostState {
     Math.min(setup.resume?.stepIndex ?? steps.length - 1, steps.length - 1),
   );
   return {
-    coinFlipBatch: null,
-    coinFlipPresentation: null,
     game: setup.state,
     names: setup.names,
     startedAt: setup.startedAt,

@@ -113,19 +113,18 @@ export class LocalTableSource implements TableSource {
     const before = this.host.log.length;
     this.before = beforeGame;
     this.host = hostReducer(this.host, { action, at: Date.now() });
-    const { knockedOut, shuffled } = eventsFromLog(
+    const { knockedOut, shuffled, coin } = eventsFromLog(
       this.host.log.slice(before),
       (seat) => this.host.names[seat],
     );
-    const coin = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
-    // The Lua coin overlay presents the flips, so settle them immediately.
-    if (this.host.coinFlipPresentation && this.host.coinFlipBatch) {
-      this.host = hostReducer(this.host, {
-        type: "finishCoinFlip",
-        id: this.host.coinFlipBatch.id,
-      });
-    }
-    this.events = { knockedOut, shuffled, coin, counterSource };
+    // A Trainer flip-locked to tails is discarded unplayed, so only the action still names it.
+    const trainer = action.type === "playTrainer" ? cardOfUid(beforeGame, action.uid) : undefined;
+    this.events = {
+      knockedOut,
+      shuffled,
+      coin: coin && trainer ? { ...coin, title: trainer.name } : coin,
+      counterSource,
+    };
   }
   allowances() {
     const a = this.host.game.allowances;

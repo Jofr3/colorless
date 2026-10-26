@@ -57617,12 +57617,12 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D636-trainer-coin-not-shown",
     decision: "D636",
-    what: "the tabletop coin display skips Quaking Fist's coin. Killed by coinFlips.test.",
-    file: "src/game/coinFlips.ts",
-    symbol: "coinFlipsFromEvents",
+    what: "the tabletop coin cue skips Quaking Fist's coin. Killed by cues.test.",
+    file: "packages/engine/src/cues.ts",
+    symbol: "cuesFromEvents",
     find: '      case "TRAINER_FLIP_LOCK_CHECK":\n',
     replace: "",
-    expectKilledBy: ["src/game/coinFlips.test.ts"],
+    expectKilledBy: ["packages/engine/src/cues.test.ts"],
   },
   {
     id: "D636-migration-v44-refused",
