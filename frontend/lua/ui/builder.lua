@@ -426,19 +426,19 @@ function Builder:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   if self.motion then self.motion:update(dt,time,false,false,reduced)end
   my=my-self:offset();self.mx,self.my=mx,my
-  for _,file in ipairs({'__builder.txt','__builder_input.txt',Mailbox.ART,'__builder_clipboard.txt'})do
+  for _,file in ipairs({'builder','builderInput','art','builderClipboard'})do
     local raw=Mailbox.read(file)
     if raw then
-      if file=='__builder.txt' then self:sync(raw)
-      elseif file=='__builder_input.txt' and raw~=self.inputRaw then
+      if file=='builder' then self:sync(raw)
+      elseif file=='builderInput' and raw~=self.inputRaw then
         self.inputRaw=raw;local f=Codec.fields(raw);self.editing=f[6]=='input' and f[2] or '';self.values[f[2]]=f[3];self.first,self.last=tonumber(f[4]),tonumber(f[5]);if f[2]=='transfer'then self.transfer=f[3];self.clipboard=nil end
-      elseif file==Mailbox.ART and raw~=self.artRaw then
+      elseif file=='art' and raw~=self.artRaw then
         self.artRaw=raw;local old=self.art;self.art=Mailbox.artMap(raw)
         for _,c in ipairs(self.cards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
         for _,c in ipairs(self.deckCards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
         if self.dragCard and self.art[self.dragCard.item.id]~=old[self.dragCard.item.id]then self.dragCard:rebuild()end
         if self.detailCard and self.art[self.detailCard.item.id]~=old[self.detailCard.item.id]then self.detailCard:rebuild()end
-      elseif file=='__builder_clipboard.txt' and raw~=self.clipboardRaw then self.clipboardRaw=raw;self.clipboard=Codec.fields(raw)[2] or raw end
+      elseif file=='builderClipboard' and raw~=self.clipboardRaw then self.clipboardRaw=raw;self.clipboard=Codec.fields(raw)[2] or raw end
     end
   end
   self:refreshTransferControls()

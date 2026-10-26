@@ -24,9 +24,6 @@ local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLo
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
 -- Pages drawn on the game table; moving to or from one runs the screen wipe.
 local function isTable(page) return page=='simulator' or page=='match' end
-local function title(page)
-  return 'Colorless - '..(page=='simulator' and 'Simulator' or page=='match' and 'Online match' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or page=='online' and 'Online' or 'Home')
-end
 local preferences=Preferences.new()
 local account=Account.new()
 local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions
@@ -86,7 +83,6 @@ local function layout(w,h)
   if online then online:layout(virtualWidth,virtualHeight) end
   if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale) end
   if wipe then wipe:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale,w/layoutScale,h/layoutScale) end
-  love.window.setTitle(title(state.page))
 end
 local function pointer(x,y)
   x,y=screen:unproject(x,y)
@@ -120,7 +116,6 @@ applyPage=function(page,deckId)
   state.deckId=deckId
   if popup then closeSettings() end
   state.page=page;state.pressed=nil;state.focused=0
-  love.window.setTitle(title(page))
   if page=='simulator' then
     library:command('close');simulator:open(state.reduced)
   elseif page=='match' then
@@ -161,19 +156,19 @@ requestPage=function(page,deckId)
 end
 local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
-  local raw=Mailbox.read('__viewport.txt')
+  local raw=Mailbox.read('viewport')
   if not raw then return end
-  local w,h,reduced,_,request,tab=raw:match('^(%d+) (%d+) (%d) (%d)%s*(%d*)%s*(%d*)')
+  local w,h,reduced,_,request,tab=raw:match('^(%d+) (%d+) (%d) (%d)%s*(%d*)%s*(%a*)')
   w,h=tonumber(w),tonumber(h)
   if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
   state.systemReduced=reduced=='1'
-  local preferencesRaw=not state.preferencesLoaded and Mailbox.read('__preferences.txt')
+  local preferencesRaw=not state.preferencesLoaded and Mailbox.read('preferences')
   if preferencesRaw then
     preferences=Preferences.new(preferencesRaw)
     state.preferencesLoaded=true
   end
   applyPreferences()
-  local pageRaw=Mailbox.read('__page.txt')
+  local pageRaw=Mailbox.read('page')
   if pageRaw then
     if pageRaw~=state.pageRaw then
       state.pageRaw=pageRaw
@@ -183,7 +178,7 @@ local function browserState()
     end
   end
   request=tonumber(request) or 0
-  if request>(state.settingsRequest or 0) then state.settingsRequest=request; openSettings(true,tonumber(tab)) end
+  if request>(state.settingsRequest or 0) then state.settingsRequest=request; openSettings(true,tab~='' and tab or nil) end
 end
 applyPreferences=function()
   state.reduced=preferences:reduced(state.systemReduced)
@@ -219,12 +214,12 @@ openSettings=function(keyboard,tab)
     account=function(command) print('COLORLESS:account:'..command) end,
     auth=function(command) print('COLORLESS:auth:'..command) end,
   },state.reduced,keyboard,account)
-  popup.tab=tab or 1
+  popup.tab=Settings.tabs[tab or 'game'] or Settings.tabs.game
   if keyboard then popup.focus=popup.tab end
   popup:layout(virtualWidth,virtualHeight)
   print('COLORLESS:account:refresh')
   print('COLORLESS:settings:open')
-  announce('Settings. '..(popup.tab==4 and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
+  announce('Settings. '..(popup.tab==Settings.tabs.account and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
 end
 local function activate(index)
   if index==0 then return end
@@ -236,7 +231,7 @@ local function activate(index)
   elseif item.action=='decks' then print('COLORLESS:page:decks')
   elseif item.action=='online' then print('COLORLESS:page:online')
   elseif item.action=='settings' then openSettings()
-  elseif item.action=='account' then openSettings(false,4) end
+  elseif item.action=='account' then openSettings(false,'account') end
 end
 function love.load()
   g.setDefaultFilter('nearest','nearest')
@@ -255,13 +250,13 @@ function love.load()
     refresh=function() print('COLORLESS:account:refresh') end,
     home=function() print('COLORLESS:page:home') end,
     settings=function() openSettings() end,
-    signin=function() openSettings(false,4); popup:openAuth('login') end,
+    signin=function() openSettings(false,'account'); popup:openAuth('login') end,
   })
   builder=Builder.new({
     command=function(command) print('COLORLESS:builder:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
-    signin=function() openSettings(false,4); popup:openAuth('login') end,
+    signin=function() openSettings(false,'account'); popup:openAuth('login') end,
   })
   sandbox=Sandbox.new({
     command=function(command) print('COLORLESS:sandbox:'..command) end,
@@ -270,14 +265,14 @@ function love.load()
     refresh=function() print('COLORLESS:account:refresh') end,
     home=function() print('COLORLESS:page:home') end,
     decks=function() print('COLORLESS:page:decks') end,
-    signin=function() openSettings(false,4); popup:openAuth('login') end,
+    signin=function() openSettings(false,'account'); popup:openAuth('login') end,
   })
   online=Online.new({
     command=function(command) print('COLORLESS:online:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     home=function() print('COLORLESS:page:home') end,
-    signin=function() openSettings(false,4); if popup then popup:openAuth('login') end end,
+    signin=function() openSettings(false,'account'); if popup then popup:openAuth('login') end end,
     jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end,
   })
   simulator=Simulator.new({transition=function(callback) return startWipe(callback) end,command=function(command) print('COLORLESS:simulator:'..command) end,
@@ -324,16 +319,16 @@ function love.update(dt)
   if state.page=='online' then online:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if wipe then love.mouse.setCursor(state.arrowCursor);return end
   if popup then
-    local accountRaw=Mailbox.read('__account.txt')
+    local accountRaw=Mailbox.read('account')
     if accountRaw then
       local previousMessage=account.message
       if account:sync(accountRaw) then
         popup:accountChanged()
-        if popup.tab==4 and account.message~='' and account.message~=previousMessage then announce(account.message) end
+        if popup.tab==Settings.tabs.account and account.message~='' and account.message~=previousMessage then announce(account.message) end
       end
     end
-    account:input(Mailbox.read('__account_input.txt'))
-    popup:authInput(Mailbox.read('__auth_input.txt'))
+    account:input(Mailbox.read('accountInput'))
+    popup:authInput(Mailbox.read('authInput'))
     popup:update(dt,state.time,mx,my,state.reduced)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return

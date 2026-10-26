@@ -39,7 +39,7 @@ for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
 let runtime;
 let ready = false;
 let settingsRequest = 0;
-let settingsTab = 1;
+let settingsTab = "game";
 /** @type {ColorlessBridge | undefined} */
 let bridge;
 // Mailboxes written before the runtime exists keep their latest text until preRun.
@@ -216,7 +216,7 @@ addEventListener("load", () => {
       const params = new URLSearchParams(location.search);
       if (params.has("account") || params.has("settings")) {
         settingsRequest++;
-        settingsTab = params.has("account") ? 4 : 1;
+        settingsTab = params.has("account") ? "account" : "game";
       }
       syncViewport();
     })
@@ -250,7 +250,7 @@ element("settings-link").addEventListener("click", (event) => {
   if (!ready || !runtime) return;
   event.preventDefault();
   settingsRequest++;
-  settingsTab = 1;
+  settingsTab = "game";
   syncViewport();
   canvas.focus({ preventScroll: true });
 });
@@ -258,7 +258,7 @@ element("account-link").addEventListener("click", (event) => {
   if (!ready || !runtime) return;
   event.preventDefault();
   settingsRequest++;
-  settingsTab = 4;
+  settingsTab = "account";
   syncViewport();
   canvas.focus({ preventScroll: true });
 });
