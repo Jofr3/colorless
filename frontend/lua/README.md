@@ -90,7 +90,9 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/motion.lua`: tile-space target/visible transforms and original movement equations.
 - `ui/theme.lua`: palette, font cache, text and stepped pixel panels.
 - `ui/online.lua`: the online lobby modal (create/join, code pill, versus seats, deck picker with the regulation filter, countdown, info steps).
-- `ui/simulator.lua`, `ui/sim_overlay.lua`, `ui/sim_hud.lua`: the game table; online mode adds the `L` row, the away banner, flag-driven Options/game-over buttons and the press-again Leave.
+- `ui/simulator.lua`, `ui/sim_overlay.lua`, `ui/sim_hud.lua`: the game table; online mode adds the `L` row, the away banner, flag-driven Options/game-over buttons and the press-again Leave. Hud and Overlay keep a reference to the simulator; the comments above `Hud.new` and `Overlay.new` list the fields they read and write. `Simulator:cancelInteractions()` drops a press or drag in progress (window blur).
+- `ui/sim_model.lua`: `Model.parse(raw)` turns one simulator mailbox snapshot into plain tables (header fields, sides, items, info, actions, card actions, menu, Knock Outs, lifecycle). It never calls LÖVE; `Simulator:sync` applies the result and the KO presentation reads the destination's Prize counts from it.
+- `ui/sim_ko.lua`: the Knock Out presentation (burns in engine order with attachments, Prize flights, the half-second handoff pause) behind `Ko.begin`, `update` (true when the held snapshot should apply) and `cancel`; `Simulator.koPresentation` holds the running one.
 - `src/online/lobbyClient.ts`: the framework-free lobby WebSocket client used by the Lua adapters; `createLobby.ts` mints a code.
 - `src/lua/online.ts` (`LuaOnline`), `onlineTable.ts` (`LuaOnlineMatch`) and `tableSource.ts` (`TableSource`, `LocalTableSource`): the online modal adapter, the online table source and the seam that lets one `LuaSimulator` drive local and online games.
 - `web/`: browser bootstrap (`host.js`, `host.css`; the page itself is the root `index.html`), accessible fallback, viewport/reduced-motion bridge.
@@ -423,8 +425,11 @@ the original room equations and inverse input coordinates across frame rates,
 viewport scales, both impulses and reduced-motion settings.
 
 Checks: `bun run test:run src/lua/simulator.test.ts`,
-`lua frontend/lua/tests/simulator.lua` and
-`lua frontend/lua/tests/simulator_draw.lua`. They exercise real setup and
+`lua frontend/lua/tests/simulator.lua`,
+`lua frontend/lua/tests/simulator_draw.lua`,
+`lua frontend/lua/tests/sim_model.lua` (the parse against the wire fixtures,
+without LÖVE) and `lua frontend/lua/tests/sim_ko.lua` (the KO presentation on
+its own). They exercise real setup and
 hot-seat flips, redaction, stale actions, attachment drops, card-row prompts,
 attacks from attached rows, retreat picks, persistence, hand drags and drops,
 targeting, every menu kind, the hot-seat flip, the game-over screen and both

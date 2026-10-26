@@ -31,6 +31,12 @@ local function lines(text)
   while #out>0 and out[#out]=='' do out[#out]=nil end
   return out
 end
+-- The overlay keeps its simulator. It reads time, reduced, mx, my, boardW,
+-- boardH, portrait, viewportUnit, L.zones, mode, phase, outcome, flags, info
+-- and pressedOverlay; it writes only peek (Peek) and pressedOverlay (cleared on
+-- a page change). It calls callbacks.{feedback,announce,jiggle,settings} and
+-- the methods command, invoke, newCard, closeOverlay, runCardAction, rematch
+-- and rematchPending.
 function Overlay.new(sim,kind,data)
   local self=setmetatable({sim=sim,kind=kind,data=data or {},controls={},cards={},page=1,pages=1,focus=0,hover=0,
     motion=Modal.motion(sim.reduced),pageText=PageText.new(),created=sim.time,leaveJuice=Motion.new(0,0)},Overlay)

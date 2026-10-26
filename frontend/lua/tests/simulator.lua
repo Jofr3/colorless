@@ -66,6 +66,15 @@ sim:mousereleased(-100,-100)
 assert(not card.dragging and sim.drag==nil,'Invalid drop releases the card')
 for i=1,180 do sim:update(1/60,3.02+i/60,-100,-100,true) end
 assert(math.abs(card.x-card.homeX)<0.01 and math.abs(card.y-card.homeY)<0.01,'Rejected drop returns to hand')
+-- Losing focus mid-drag drops the card and forgets the press.
+sim:mousepressed(card.x,card.y);sim:update(1/60,6,card.x+50,card.y-50,false)
+assert(card.dragging and sim.drag and sim.clicked==card,'Drag in progress')
+local issued=#commands
+sim:cancelInteractions()
+assert(not card.dragging and not sim.drag and not sim.clicked and not sim.pressed and not sim.pressedOverlay and not sim.clickedPrize,'Cancel clears every press')
+sim:mousereleased(card.x+50,card.y-50)
+assert(#commands==issued,'A release after the cancel plays nothing')
+for i=1,120 do sim:update(1/60,6+i/60,-100,-100,true) end
 local aw=sim.L.zones.you_active.well
 sim:mousepressed(card.x,card.y);sim:update(1/60,7,aw.x+aw.w/2,aw.y+aw.h/2,false);sim:mousereleased(aw.x+aw.w/2,aw.y+aw.h/2)
 assert(commands[#commands]=='move\tcard1\thand\t0\tactive\t0','Drop uses the engine zone and UID, got '..tostring(commands[#commands]))
