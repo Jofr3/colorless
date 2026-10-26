@@ -4,7 +4,6 @@
 // before the split sits whole under the head key and reads back as it is; the next write splits
 // it. While the instance is awake the store mirrors what storage holds, so a read costs nothing.
 
-import type { GameState } from "@colorless/engine";
 import type { SeatLogEntry } from "@colorless/schema";
 import type { MatchRecord, MatchSlot } from "./match";
 
@@ -21,6 +20,8 @@ export const MATCH_LAYOUT = 2;
 
 /** The most keys one storage call accepts. */
 const STORAGE_BATCH = 128;
+
+type GameState = MatchRecord["state"];
 
 type FixedTables = Pick<GameState, "cardPool" | "cardIdByUid">;
 
