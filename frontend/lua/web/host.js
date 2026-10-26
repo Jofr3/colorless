@@ -1,4 +1,5 @@
-/* The host only boots WASM, bridges navigation/preferences, and exposes accessible links. */
+/* Boots love.js, writes Lua's mailbox files and loads card art. Everything else on the page is
+   the bridge module's (src/lua/bridge.ts), which connects through window.colorlessHost. */
 const canvas = document.getElementById("canvas");
 const statusElement = document.getElementById("status");
 const loadingProgress = document.getElementById("loading-progress");
@@ -25,22 +26,7 @@ let runtime;
 let ready = false;
 let settingsRequest = 0;
 let settingsTab = 1;
-let settingsOpen = false;
 let bridge;
-// `COLORLESS:<channel>:<rest>` prints whose rest is handed on unchanged.
-const relays = {
-  page: (page) => bridge.navigate(page),
-  builder: builderCommand,
-  simulator: (command) => bridge.command("simulator", command),
-  online: onlineCommand,
-  sandbox: sandboxCommand,
-  library: (command) => libraryCommand(command),
-  auth: authCommand,
-};
-function relayChannel(message) {
-  const channel = message.match(/^COLORLESS:([a-z]+):/)?.[1];
-  return channel && Object.hasOwn(relays, channel) ? channel : undefined;
-}
 // Mailboxes written before the runtime exists keep their latest text until preRun.
 const unwrittenMailboxes = new Map();
 const mailboxFiles = new Set();
@@ -53,41 +39,11 @@ function writeMailbox(name, text) {
   runtime.FS_createDataFile("/", name, text, true, true);
   mailboxFiles.add(name);
 }
-function accountCommand(command) {
-  bridge.command("account", command);
-}
 window.colorlessHost = {
   connect(connected) {
     bridge = connected;
   },
-  publish(screen, snapshot) {
-    writeMailbox(`__${screen}.txt`, snapshot);
-    if (screen === "account") {
-      if (snapshot.split("\t")[1] === "authenticated") clearAuthInputs();
-      else finishName(true);
-    }
-  },
-  showPage(next) {
-    const moved = next.page !== view.page || next.id !== view.id;
-    if (moved) {
-      finishLibraryInput();
-      finishBuilderInput();
-    }
-    view = next;
-    libraryPage = view.page !== "home";
-    syncModalAccessibility();
-    if (moved || !pageRevision)
-      writeMailbox(
-        "__page.txt",
-        [++pageRevision, view.page, view.id].map(encodeURIComponent).join("\t"),
-      );
-    document.title = view.title;
-    if (!settingsOpen) canvas.setAttribute("aria-label", view.label);
-  },
-  finishInputs() {
-    finishLibraryInput();
-    finishBuilderInput();
-  },
+  writeMailbox,
   // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
   // them at the 96 kept here); touch them lowest first so eviction spares the head.
   wantArt(cards) {
@@ -102,210 +58,6 @@ window.colorlessHost = {
     pumpArt();
   },
 };
-// build:lua replaces the empty object with web/limits.json, generated from the
-// TypeScript name limits by scripts/lua-constants.ts.
-const limits = /* lua-limits */ {};
-// A native text-input proxy gives the Lua field IME, paste, selection and a
-// mobile keyboard. The visible field and caret are drawn in the Lua canvas.
-const nameInput = document.createElement("input");
-nameInput.className = "sr-only";
-nameInput.setAttribute("aria-label", "Display name");
-nameInput.autocomplete = "nickname";
-nameInput.maxLength = limits.displayNameMax;
-nameInput.style.fontSize = "16px";
-nameInput.hidden = true;
-document.querySelector("main").append(nameInput);
-let editingName = false;
-let originalName = "";
-let inputRevision = 0;
-function publishName(action = "input") {
-  writeMailbox(
-    "__account_input.txt",
-    [
-      ++inputRevision,
-      action,
-      nameInput.value,
-      nameInput.selectionStart ?? 0,
-      nameInput.selectionEnd ?? 0,
-    ]
-      .map((v) => encodeURIComponent(v))
-      .join("\t"),
-  );
-}
-function finishName(cancel = false) {
-  if (!editingName) return;
-  if (cancel) nameInput.value = originalName;
-  publishName("done");
-  editingName = false;
-  nameInput.hidden = true;
-  canvas.focus({ preventScroll: true });
-}
-nameInput.addEventListener("input", () => publishName());
-nameInput.addEventListener("select", () => {
-  if (editingName) publishName();
-});
-nameInput.addEventListener("blur", () => finishName());
-// Keep SDL from also handling keys typed into the native input proxy.
-for (const type of ["keydown", "keyup", "keypress"]) {
-  window.addEventListener(
-    type,
-    (event) => {
-      if (event.target !== nameInput) return;
-      event.stopImmediatePropagation();
-      if (type === "keyup") publishName();
-      if (
-        type === "keydown" &&
-        !event.isComposing &&
-        ["Enter", "Escape", "Tab"].includes(event.key)
-      ) {
-        event.preventDefault();
-        finishName(event.key === "Escape");
-      }
-    },
-    true,
-  );
-}
-const authInputs = {};
-let authMode = "login";
-let authEditing = "";
-let authOriginal = "";
-let authRevision = 0;
-for (const [key, label, type, maxLength] of [
-  ["email", "Email", "text", 254],
-  ["password", "Password", "password", 256],
-  ["name", "Display name (optional)", "text", limits.displayNameMax],
-]) {
-  const input = document.createElement("input");
-  input.className = "sr-only";
-  input.type = type;
-  input.setAttribute("aria-label", label);
-  input.maxLength = maxLength;
-  input.style.fontSize = "16px";
-  input.autocomplete =
-    key === "email" ? "username" : key === "password" ? "current-password" : "nickname";
-  input.autocapitalize = key === "name" ? "words" : "none";
-  input.spellcheck = false;
-  if (key === "email") input.inputMode = "email";
-  input.hidden = true;
-  document.querySelector("main").append(input);
-  authInputs[key] = input;
-  input.addEventListener("input", () => publishAuth());
-  input.addEventListener("select", () => {
-    if (authEditing === key) publishAuth();
-  });
-  input.addEventListener("blur", () => {
-    if (authEditing === key) finishAuthInput();
-  });
-}
-function publishAuth(action = "input", field = authEditing) {
-  const input = authInputs[field];
-  writeMailbox(
-    "__auth_input.txt",
-    [
-      ++authRevision,
-      authEditing,
-      authInputs.email.value,
-      "*".repeat(authInputs.password.value.length),
-      authInputs.name.value,
-      input?.selectionStart ?? 0,
-      input?.selectionEnd ?? 0,
-      action,
-      field,
-    ]
-      .map((v) => encodeURIComponent(v))
-      .join("\t"),
-  );
-}
-function finishAuthInput(action = "done", cancel = false) {
-  if (!authEditing) return;
-  const field = authEditing;
-  const input = authInputs[field];
-  if (cancel) input.value = authOriginal;
-  authEditing = "";
-  input.hidden = true;
-  publishAuth(action, field);
-  canvas.focus({ preventScroll: true });
-}
-function clearAuthInputs() {
-  authEditing = "";
-  authOriginal = "";
-  for (const input of Object.values(authInputs)) {
-    input.value = "";
-    input.hidden = true;
-  }
-  publishAuth("reset");
-}
-function authCommand(command) {
-  const [action, value] = command.split("\t");
-  if (action === "open") {
-    finishName();
-    finishAuthInput();
-    authMode = value === "register" ? "register" : "login";
-    authInputs.password.value = "";
-    authInputs.password.autocomplete =
-      authMode === "register" ? "new-password" : "current-password";
-    publishAuth("reset");
-    accountCommand("clear-message");
-    canvas.setAttribute(
-      "aria-label",
-      `${authMode === "register" ? "Create account" : "Sign in"}. Tab between controls. Enter edits or activates. Escape returns to Settings.`,
-    );
-  } else if (action === "edit" && Object.hasOwn(authInputs, value)) {
-    finishAuthInput();
-    authEditing = value;
-    const input = authInputs[value];
-    authOriginal = input.value;
-    input.hidden = false;
-    input.focus({ preventScroll: true });
-    input.select();
-    publishAuth();
-  } else if (action === "submit") {
-    finishAuthInput();
-    bridge.authenticate({
-      mode: authMode,
-      email: authInputs.email.value,
-      password: authInputs.password.value,
-      name: authInputs.name.value,
-    });
-  } else if (action === "google") {
-    finishAuthInput();
-    accountCommand("google");
-  } else if (action === "close") {
-    clearAuthInputs();
-    canvas.focus({ preventScroll: true });
-    canvas.setAttribute(
-      "aria-label",
-      "Settings. Tab between controls. Arrow keys adjust values. Escape closes.",
-    );
-  }
-}
-for (const type of ["keydown", "keyup", "keypress"]) {
-  window.addEventListener(
-    type,
-    (event) => {
-      if (!Object.values(authInputs).includes(event.target)) return;
-      event.stopImmediatePropagation();
-      if (type === "keyup" && authEditing) publishAuth();
-      if (
-        type === "keydown" &&
-        !event.isComposing &&
-        ["Enter", "Escape", "Tab"].includes(event.key)
-      ) {
-        event.preventDefault();
-        const action =
-          event.key === "Enter"
-            ? "enter"
-            : event.key === "Tab"
-              ? event.shiftKey
-                ? "previous"
-                : "next"
-              : "done";
-        finishAuthInput(action, event.key === "Escape");
-      }
-    },
-    true,
-  );
-}
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const preferenceDefaults = {
   screenshake: 50,
@@ -342,12 +94,16 @@ function fail(message) {
   statusElement.textContent = message;
 }
 function syncViewport() {
+  if (!bridge) return;
   // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
   // must use that same size; a capped scene leaves the rest of it black.
   // Keep CSS-pixel dimensions (no devicePixelRatio multiplier).
   const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"} ${preferences.muted} ${settingsRequest} ${settingsTab}`;
-  writeMailbox("__viewport.txt", text);
-  writeMailbox("__preferences.txt", preferenceKeys.map((key) => preferences[key]).join(" "));
+  writeMailbox(bridge.mailboxes.viewport, text);
+  writeMailbox(
+    bridge.mailboxes.preferences,
+    preferenceKeys.map((key) => preferences[key]).join(" "),
+  );
 }
 // build:lua replaces the empty object with each /love/ file's content hash;
 // the `?v=` it adds changes the URL whenever the bytes do, which is what lets
@@ -368,38 +124,21 @@ globalThis.Module = {
     },
   ],
   print: (message) => {
+    if (!message.startsWith("COLORLESS:")) {
+      console.log(message);
+      if (/^Error:|stack traceback:/.test(message))
+        fail("The menu could not start. Reload to try again, or use the menu links.");
+      return;
+    }
     if (message === "COLORLESS:ready") {
       updateLoadingProgress(100);
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = view.title;
-      canvas.focus({ preventScroll: true });
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
       if (token) void consumeTransitionArt(Number(token), action === "invalid");
-    } else if (message.startsWith("COLORLESS:transition:")) {
-      transitionOpen = message.endsWith(":open");
-      syncModalAccessibility();
-    } else if (relayChannel(message)) {
-      const channel = relayChannel(message);
-      relays[channel](message.slice(`COLORLESS:${channel}:`.length));
-    } else if (message.startsWith("COLORLESS:account:")) {
-      const command = message.slice("COLORLESS:account:".length);
-      if (command.startsWith("edit\t")) {
-        originalName = decodeURIComponent(command.slice(5));
-        nameInput.value = originalName;
-        nameInput.hidden = false;
-        editingName = true;
-        nameInput.focus({ preventScroll: true });
-        nameInput.select();
-        publishName();
-      } else if (command === "finish-edit") finishName();
-      else accountCommand(command);
-    } else if (message.startsWith("COLORLESS:announce:")) {
-      document.getElementById("announcement").textContent = message.slice(
-        "COLORLESS:announce:".length,
-      );
+      return;
     } else if (message.startsWith("COLORLESS:preferences:")) {
       const values = message.slice("COLORLESS:preferences:".length).split(" ").map(Number);
       if (values.length !== preferenceKeys.length || !values.every(Number.isFinite)) return;
@@ -413,32 +152,9 @@ globalThis.Module = {
         );
         localStorage.setItem("colorless.lua.muted", String(preferences.muted));
       } catch (_) {}
-    } else if (message === "COLORLESS:settings:open" || message === "COLORLESS:settings:closed") {
-      settingsOpen = message.endsWith(":open");
-      if (!settingsOpen) {
-        finishName();
-        clearAuthInputs();
-      }
-      document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
-      document.getElementById("settings-link").setAttribute("aria-expanded", String(settingsOpen));
-      if (settingsOpen) {
-        finishLibraryInput();
-        canvas.setAttribute("role", "dialog");
-        canvas.setAttribute("aria-modal", "true");
-        canvas.setAttribute(
-          "aria-label",
-          "Settings. Tab between controls. Arrow keys adjust values. Escape closes.",
-        );
-      } else {
-        syncModalAccessibility();
-        canvas.setAttribute("aria-label", view.label);
-      }
-      canvas.focus({ preventScroll: true });
-    } else {
-      console.log(message);
-      if (/^Error:|stack traceback:/.test(message))
-        fail("The menu could not start. Reload to try again, or use the menu links.");
+      return;
     }
+    bridge.onPrint(message);
   },
   printErr: (message) => {
     console.error(message);
@@ -504,15 +220,6 @@ canvas.addEventListener("webglcontextlost", (event) => {
   event.preventDefault();
   fail("Graphics connection lost. Reload to continue.");
 });
-// Tab remains available to native accessible links; arrows navigate inside the canvas.
-canvas.addEventListener("keydown", (event) => {
-  if (
-    ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code) ||
-    ((settingsOpen || libraryPage) &&
-      ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code))
-  )
-    event.preventDefault();
-});
 document.getElementById("settings-link").addEventListener("click", (event) => {
   if (!ready || !runtime) return;
   event.preventDefault();
@@ -540,243 +247,6 @@ addEventListener(
   true,
 );
 
-// The bridge's router owns the page; the host mirrors it for accessibility and Lua.
-let view = {
-  page: "home",
-  id: "",
-  title: document.title,
-  label: canvas.getAttribute("aria-label"),
-};
-let libraryPage = false;
-let pageRevision = 0;
-let transitionOpen = false;
-function syncModalAccessibility() {
-  document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage || transitionOpen;
-  canvas.setAttribute("aria-busy", String(transitionOpen));
-  if (settingsOpen || (libraryPage && view.page !== "simulator" && view.page !== "match")) {
-    canvas.setAttribute("role", "dialog");
-    canvas.setAttribute("aria-modal", "true");
-  } else {
-    canvas.removeAttribute("role");
-    canvas.removeAttribute("aria-modal");
-  }
-}
-document.getElementById("decks-link").addEventListener("click", (event) => {
-  if (!ready) return;
-  event.preventDefault();
-  bridge.navigate("decks");
-  canvas.focus({ preventScroll: true });
-});
-document.getElementById("online-link").addEventListener("click", (event) => {
-  if (!ready) return;
-  event.preventDefault();
-  bridge.navigate("online");
-  canvas.focus({ preventScroll: true });
-});
-function libraryCommand(command, owner = "library") {
-  const [action, field, value] = command.split("\t").map(decodeURIComponent);
-  if (action === "input") {
-    finishLibraryInput();
-    libraryInputOwner = owner;
-    libraryField = field;
-    const code = owner === "online" && field === "code";
-    // The code field caps itself in normalizeCode, so a pasted link or "AB-CD" survives.
-    libraryInput.maxLength = limits.deckNameMax;
-    libraryInput.inputMode = "text";
-    if (code) {
-      libraryInput.autocapitalize = "characters";
-      libraryInput.spellcheck = false;
-    } else {
-      libraryInput.removeAttribute("autocapitalize");
-      libraryInput.removeAttribute("spellcheck");
-    }
-    libraryInput.value = value || "";
-    libraryOriginal = libraryInput.value;
-    libraryInput.setAttribute(
-      "aria-label",
-      code ? "Lobby code" : field === "search" ? "Search decks" : "Deck name",
-    );
-    libraryInput.hidden = false;
-    libraryInput.focus({ preventScroll: true });
-    // A code typed before the field opened keeps its caret at the end.
-    if (code) libraryInput.setSelectionRange(libraryInput.value.length, libraryInput.value.length);
-    else libraryInput.select();
-    publishLibraryInput();
-  } else if (action === "finish-input") finishLibraryInput();
-  else bridge.command(owner, command);
-}
-const libraryInput = document.createElement("input");
-libraryInput.className = "sr-only";
-libraryInput.maxLength = limits.deckNameMax;
-libraryInput.autocomplete = "off";
-libraryInput.style.fontSize = "16px";
-libraryInput.hidden = true;
-document.querySelector("main").append(libraryInput);
-let libraryInputOwner = "library";
-let libraryField = "";
-let libraryOriginal = "";
-let libraryInputRevision = 0;
-function publishLibraryInput(action = "input", field = libraryField) {
-  writeMailbox(
-    `__${libraryInputOwner}_input.txt`,
-    [
-      ++libraryInputRevision,
-      field,
-      libraryInput.value,
-      libraryInput.selectionStart || 0,
-      libraryInput.selectionEnd || 0,
-      action,
-    ]
-      .map(encodeURIComponent)
-      .join("\t"),
-  );
-}
-function finishLibraryInput(action = "done", cancel = false) {
-  if (!libraryField) return;
-  const field = libraryField;
-  if (cancel) libraryInput.value = libraryOriginal;
-  libraryField = "";
-  libraryInput.hidden = true;
-  publishLibraryInput(action, field);
-  canvas.focus({ preventScroll: true });
-}
-// Lobby codes use normalizeLobbyCode's alphabet: upper-case, no look-alikes.
-const lobbyAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-const normalizeCode = (value) =>
-  [...value.toUpperCase()]
-    .filter((c) => lobbyAlphabet.includes(c))
-    .join("")
-    .slice(0, 4);
-libraryInput.addEventListener("input", () => {
-  if (libraryInputOwner === "online" && libraryField === "code") {
-    // A pasted invite link (/online/CODE, or an old /?lobby=CODE) yields its code.
-    const link = /(?:[?&]lobby=|\/(?:online|lobby|match)\/)([^&#?/\s]+)/i.exec(libraryInput.value);
-    const value = normalizeCode(link ? link[1] : libraryInput.value);
-    const caret = link
-      ? value.length
-      : normalizeCode(libraryInput.value.slice(0, libraryInput.selectionStart || 0)).length;
-    libraryInput.value = value;
-    libraryInput.setSelectionRange(caret, caret);
-  }
-  publishLibraryInput();
-});
-libraryInput.addEventListener("select", () => {
-  if (libraryField) publishLibraryInput();
-});
-libraryInput.addEventListener("blur", () => finishLibraryInput());
-for (const type of ["keydown", "keyup", "keypress"])
-  window.addEventListener(
-    type,
-    (event) => {
-      if (event.target !== libraryInput) return;
-      event.stopImmediatePropagation();
-      if (type === "keyup" && libraryField) publishLibraryInput();
-      if (
-        type === "keydown" &&
-        !event.isComposing &&
-        ["Enter", "Escape", "Tab"].includes(event.key)
-      ) {
-        event.preventDefault();
-        finishLibraryInput(event.key === "Enter" ? "enter" : "done", event.key === "Escape");
-      }
-    },
-    true,
-  );
-
-// Deck builder: browser-native text/clipboard and artwork transport only.
-const builderInput = document.createElement("textarea");
-builderInput.className = "sr-only";
-builderInput.hidden = true;
-builderInput.style.fontSize = "16px";
-document.querySelector("main").append(builderInput);
-let builderField = "",
-  builderOriginal = "",
-  builderInputRevision = 0;
-function publishBuilderInput(action = "input", field = builderField) {
-  writeMailbox(
-    "__builder_input.txt",
-    [
-      ++builderInputRevision,
-      field,
-      builderInput.value,
-      builderInput.selectionStart,
-      builderInput.selectionEnd,
-      action,
-    ]
-      .map(encodeURIComponent)
-      .join("\t"),
-  );
-  if (field !== "transfer") builderInput.value = builderInput.value.replace(/[\r\n]/g, " ");
-  if (field === "name") dispatchBuilder("name", builderInput.value);
-  else if (field === "optionQuery") dispatchBuilder("option-query", builderInput.value);
-  else if (field !== "transfer") dispatchBuilder("filter", field, builderInput.value);
-}
-function dispatchBuilder(...args) {
-  bridge.command("builder", args.map(encodeURIComponent).join("\t"));
-}
-function finishBuilderInput(cancel = false) {
-  if (!builderField) return;
-  const field = builderField;
-  builderField = "";
-  if (cancel) builderInput.value = builderOriginal;
-  publishBuilderInput("done", field);
-  builderInput.hidden = true;
-  canvas.focus({ preventScroll: true });
-}
-function builderCommand(command) {
-  const [action, field, value] = command.split("\t").map(decodeURIComponent);
-  if (action === "input") {
-    finishBuilderInput();
-    builderField = field;
-    builderInput.value = value || "";
-    builderOriginal = builderInput.value;
-    builderInput.maxLength =
-      field === "transfer" ? 30000 : field === "name" ? limits.deckNameMax : 300;
-    builderInput.setAttribute(
-      "aria-label",
-      field === "transfer" ? "Decklist. Paste your list here." : field,
-    );
-    builderInput.hidden = false;
-    builderInput.focus({ preventScroll: true });
-    builderInput.select();
-    publishBuilderInput();
-  } else if (action === "finish-input") finishBuilderInput();
-  else if (action === "copy") {
-    navigator.clipboard.writeText(field).then(
-      () => writeMailbox("__builder_clipboard.txt", `${Date.now()}\tCopied decklist.`),
-      () =>
-        writeMailbox(
-          "__builder_clipboard.txt",
-          `${Date.now()}\tCopy failed. Select the decklist and use your copy shortcut.`,
-        ),
-    );
-  } else bridge.command("builder", command);
-}
-builderInput.addEventListener("input", () => publishBuilderInput());
-builderInput.addEventListener("select", () => {
-  if (builderField) publishBuilderInput();
-});
-builderInput.addEventListener("blur", () => finishBuilderInput());
-for (const type of ["keydown", "keyup", "keypress"])
-  window.addEventListener(
-    type,
-    (event) => {
-      if (event.target !== builderInput) return;
-      event.stopImmediatePropagation();
-      if (type === "keyup" && builderField) publishBuilderInput();
-      if (
-        type === "keydown" &&
-        !event.isComposing &&
-        (event.key === "Escape" ||
-          event.key === "Tab" ||
-          (event.key === "Enter" && builderField !== "transfer"))
-      ) {
-        event.preventDefault();
-        finishBuilderInput(event.key === "Escape");
-      }
-    },
-    true,
-  );
 const artCache = new Map(),
   artPending = new Set(),
   artFailed = new Map();
@@ -786,7 +256,7 @@ let artRevision = 0,
   wantedArt = [];
 function publishArt() {
   writeMailbox(
-    "__art.txt",
+    bridge.mailboxes.art,
     [
       ++artRevision,
       ...[...artCache].map(([id, path]) => [id, path].map(encodeURIComponent).join("\t")),
@@ -812,7 +282,7 @@ async function prepareTransitionArt() {
     runtime.FS_createDataFile("/", path, bytes, true, true);
     transitionArt = { token, id: selected.id, path };
     writeMailbox(
-      "__transition_art.txt",
+      bridge.mailboxes.transitionArt,
       [token, selected.id, path].map(encodeURIComponent).join("\t"),
     );
   })()
@@ -827,7 +297,7 @@ async function consumeTransitionArt(token, invalid) {
   transitionConsuming = true;
   const selected = transitionArt;
   transitionArt = null;
-  writeMailbox("__transition_art.txt", "");
+  writeMailbox(bridge.mailboxes.transitionArt, "");
   try {
     runtime.FS_unlink(`/${selected.path}`);
   } catch {}
@@ -888,32 +358,4 @@ function pumpArt() {
     )
       void loadArt(card);
   }
-}
-
-// Sandbox API transport. The chooser and its controls are rendered in Lua.
-function sandboxCommand(command) {
-  const action = command.split("\t")[0];
-  if (action === "input" || action === "finish-input") {
-    libraryCommand(command, "sandbox");
-    return;
-  }
-  bridge.command("sandbox", command);
-}
-document.getElementById("sandbox-link").addEventListener("click", (event) => {
-  if (!ready) return;
-  event.preventDefault();
-  bridge.command("simulator", "resume");
-  canvas.focus({ preventScroll: true });
-});
-
-// Full Lua game page; it shares the existing image cache and local engine host.
-
-// Online lobby transport. The modal is Lua; LuaOnline (online.ts) owns the socket.
-function onlineCommand(command) {
-  const action = command.split("\t")[0];
-  if (action === "input" || action === "finish-input") {
-    libraryCommand(command, "online");
-    return;
-  }
-  bridge.command("online", command);
 }

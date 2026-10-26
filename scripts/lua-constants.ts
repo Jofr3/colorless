@@ -1,18 +1,15 @@
 #!/usr/bin/env bun
-// Generates the Lua frontend's copies of the TypeScript deck-size and name-length limits:
-// `frontend/lua/ui/limits.lua` for the Lua UI and `frontend/lua/web/limits.json`, which
-// `frontend/lua/build.mjs` inlines into host.js.
+// Generates the Lua frontend's copies of TypeScript constants: the deck-size limits in
+// `frontend/lua/ui/limits.lua`.
 //
-//   bun scripts/lua-constants.ts            # rewrite both files
-//   bun scripts/lua-constants.ts --check    # exit 1 if either would change
+//   bun scripts/lua-constants.ts            # rewrite the generated files
+//   bun scripts/lua-constants.ts --check    # exit 1 if any would change
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { DECK_SIZE, DEFAULT_FORMAT, FORMATS } from "@colorless/engine";
-import { DECK_NAME_MAX, DISPLAY_NAME_MAX } from "@colorless/schema";
 import { repoPath } from "./lib/repo";
 
 const LUA_OUT = "frontend/lua/ui/limits.lua";
-const JSON_OUT = "frontend/lua/web/limits.json";
 
 const formatSizes = [...FORMATS]
   .sort((a, b) => a.id.localeCompare(b.id))
@@ -34,12 +31,7 @@ end
 return Limits
 `;
 
-const json = `${JSON.stringify({ displayNameMax: DISPLAY_NAME_MAX, deckNameMax: DECK_NAME_MAX }, null, 2)}\n`;
-
-const outputs: [string, string][] = [
-  [LUA_OUT, lua],
-  [JSON_OUT, json],
-];
+const outputs: [string, string][] = [[LUA_OUT, lua]];
 
 function current(path: string): string {
   try {
