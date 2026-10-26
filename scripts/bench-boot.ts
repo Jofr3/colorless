@@ -176,7 +176,11 @@ async function boot(mbps: number): Promise<Sample> {
         .filter((m) => m.name.startsWith("colorless:")).map((m) => [m.name, m.startTime])),
       files: Object.fromEntries(performance.getEntriesByType("resource")
         .filter((e) => /\\/love\\/(love\\.wasm|game\\.data|music1\\.ogg)/.test(e.name))
-        .map((e) => [e.name.replace(/^.*\\/|\\?.*$/g, ""), { start: e.startTime, end: e.responseEnd }])),
+        .map((e, i, all) => {
+          const name = e.name.replace(/^.*\\/|\\?.*$/g, "");
+          const copy = all.slice(0, i).filter((o) => o.name === e.name).length;
+          return [copy ? name + " (again)" : name, { start: e.startTime, end: e.responseEnd }];
+        })),
     })`;
     for (let poll = 0; poll < 600; poll++) {
       await new Promise((done) => setTimeout(done, 100));
