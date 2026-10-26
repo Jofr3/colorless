@@ -369,10 +369,7 @@ export class LuaBuilder {
         ...new Map(
           art
             .filter((c) => c.hasImage !== false)
-            .map((c) => [
-              c.cardId,
-              { id: c.cardId, url: api.cardImageUrl(c.cardId, "high", "png") },
-            ]),
+            .map((c) => [c.cardId, { id: c.cardId, url: api.cardImageUrl(c.cardId, "high") }]),
         ).values(),
       ].slice(0, LUA_ART_SLOTS),
     );
