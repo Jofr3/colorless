@@ -5,7 +5,7 @@
  * `bun run check`.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { expandedCheckScript, fail, isRecord, linesWithOverflow, parseJson } from "./lib/cli";
@@ -67,8 +67,20 @@ function isShownConfig(v: unknown): v is ShownConfig {
  * The compiler's own answer for one project: `include`/`files` fully expanded.
  * Nothing is compiled, so this is ~0.1s and safe to run on every `check`.
  */
-function showConfig(project: string): ShownConfig {
-  const r = spawnSync(TSC, ["-p", project, "--showConfig"], { cwd: REPO, encoding: "utf8" });
+async function showConfig(project: string): Promise<ShownConfig> {
+  const r = await new Promise<{ status: number | null; stdout: string; stderr: string }>((done) => {
+    const child = spawn(TSC, ["-p", project, "--showConfig"], { cwd: REPO });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d: Buffer) => {
+      stdout += d.toString();
+    });
+    child.stderr.on("data", (d: Buffer) => {
+      stderr += d.toString();
+    });
+    child.on("error", (e) => done({ status: null, stdout, stderr: String(e) }));
+    child.on("close", (status) => done({ status, stdout, stderr }));
+  });
   if (r.status !== 0 || !r.stdout.trim()) {
     fail(
       [
@@ -84,11 +96,20 @@ function showConfig(project: string): ShownConfig {
   }
 }
 
-/** Walk the solution depth-first, collecting each project's root file set. */
-function projectFileSets(): Map<string, Set<string>> {
+/**
+ * Walk the solution breadth-first, collecting each project's root file set. A project's config is
+ * requested as soon as it is queued, so the `tsc` calls overlap.
+ */
+async function projectFileSets(): Promise<Map<string, Set<string>>> {
   const out = new Map<string, Set<string>>();
   const queue = [resolveProject(ROOT_TSCONFIG)];
   const visited = new Set<string>();
+  const requested = new Map<string, Promise<ShownConfig>>();
+  const request = (project: string): Promise<ShownConfig> => {
+    const pending = requested.get(project) ?? showConfig(project);
+    requested.set(project, pending);
+    return pending;
+  };
   while (queue.length > 0) {
     const project = queue.shift();
     if (project === undefined || visited.has(project)) continue;
@@ -101,12 +122,16 @@ function projectFileSets(): Map<string, Set<string>> {
         ].join(""),
       );
     }
-    const cfg = showConfig(project);
+    const cfg = await request(project);
     const base = dirname(project);
     const files = new Set((cfg.files ?? []).map((f) => relative(REPO, resolve(base, f))));
     // The solution root itself is `files: []` by design; only leaves count.
     if (files.size > 0) out.set(relative(REPO, project), files);
-    for (const ref of cfg.references ?? []) queue.push(resolveProject(join(base, ref.path)));
+    for (const ref of cfg.references ?? []) {
+      const next = resolveProject(join(base, ref.path));
+      if (existsSync(next)) void request(next);
+      queue.push(next);
+    }
   }
   return out;
 }
@@ -176,7 +201,7 @@ function checkRunsThisGuard(): string[] {
   return [];
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const problems = [...selfCheck(), ...checkRunsThisGuard()];
   if (problems.length > 0) fail(problems.join("\n"));
 
@@ -188,7 +213,7 @@ function main(): void {
     fail("typecheck-coverage: found no TypeScript files at all — that cannot be right.");
   }
 
-  const sets = projectFileSets();
+  const sets = await projectFileSets();
   if (sets.size === 0) {
     fail(
       [
@@ -236,4 +261,4 @@ function main(): void {
   );
 }
 
-if (import.meta.main) main();
+if (import.meta.main) await main();
