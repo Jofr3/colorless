@@ -76,7 +76,11 @@ export function setCardsStatement(db: DrizzleD1Database, setId: string) {
 catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), async (c) => {
   const query = c.req.valid("query");
   const db = drizzle(c.env.DB);
-  const [rows, totals] = await db.batch(cardsPageStatements(db, query));
+  const [page, matches] = cardsPageStatements(db, query);
+  const [rows, totals] =
+    query.total === undefined
+      ? await db.batch([page, matches])
+      : [await page, [{ total: query.total }]];
   const payload: Paginated<CardBrief> = {
     items: rows.map(mapCardBriefRow),
     page: query.page,

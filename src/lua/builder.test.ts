@@ -337,6 +337,8 @@ describe("Lua deck builder", () => {
     await tick();
     const pages = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.page);
     expect(pages()).toEqual([1, 2, 3]);
+    // Only the page the search asked for is counted; prefetches pass its total back.
+    expect(vi.mocked(api.getCards).mock.calls.map(([q]) => q?.total)).toEqual([undefined, 40, 40]);
     expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual([
       "p1a",
       "p1b",

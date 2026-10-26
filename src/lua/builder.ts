@@ -524,11 +524,13 @@ export class LuaBuilder {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
   }
-  /** One request per page and query; `fresh` refetches a cached page. */
+  /** One request per page and query; `fresh` refetches a cached page. A `total` already known for
+      this query spares the server a recount. */
   private fetchPage(
     { query, size, key }: Catalog,
     page: number,
     fresh = false,
+    total?: number,
   ): Promise<CatalogPage> {
     if (key !== this.pageKey) {
       this.pageKey = key;
@@ -540,7 +542,7 @@ export class LuaBuilder {
     const pending = this.pageRequests.get(page);
     if (pending) return pending;
     const request = api
-      .getCards({ ...query, page, pageSize: size })
+      .getCards({ ...query, page, pageSize: size, total })
       .then((data) => {
         const result = { items: data.items.map(toBuilderCard), total: data.total };
         if (key === this.pageKey) {
@@ -570,7 +572,7 @@ export class LuaBuilder {
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
-        this.fetchPage(catalog, page)
+        this.fetchPage(catalog, page, false, this.total)
           .then(() => {
             if (live() && catalog.key === this.pageKey) this.publishImages();
           })

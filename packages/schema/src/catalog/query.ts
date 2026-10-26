@@ -71,6 +71,9 @@ export const cardsQuerySchema = z.object({
   /** 1-based page. */
   page: z.coerce.number<number>().int().min(1).default(1),
   pageSize: z.coerce.number<number>().int().min(1).max(100).default(50),
+  /** The match count an earlier page of the same query reported. When present it is returned as
+      `total` instead of counting the matches again. */
+  total: z.coerce.number<number>().int().min(0).optional(),
 });
 export type CardsQuery = z.infer<typeof cardsQuerySchema>;
 /** What a caller may send: every field optional, a repeatable one as a string or string[]. */
