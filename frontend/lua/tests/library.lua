@@ -104,3 +104,26 @@ assert(library.cards==firstCards,'A verdict must not rebuild the piles')
 assert(not library.items[1].illegal and library.items[2].illegal and library.items[3].illegal)
 assert(library.cards[2].item.illegal,'Piles read the flag through their shared item')
 print('PASS: deck legality verdicts flip pile alerts in place')
+-- Size: layout only measures; opening sends the page size before the deck
+-- request, and a resize across the portrait line sends it again, once.
+do
+  love.filesystem=love.filesystem or {getInfo=function() return nil end}
+  local sent={}
+  local l=Library.new({command=function(raw) sent[#sent+1]=Codec.fields(raw) end,announce=function() end,feedback=function() end})
+  l:layout(1280,800);l:layout(1280,800);assert(#sent==0,'Layout sends no command')
+  l:open(true);assert(#sent==2 and sent[1][1]=='size' and sent[1][2]=='12' and sent[2][1]=='open','Open sends the size first')
+  l:update(1/60,1,-1,-1,true);assert(#sent==2,'An unchanged size is not resent')
+  l:layout(480,850);assert(#sent==2)
+  l:update(1/60,2,-1,-1,true);l:update(1/60,3,-1,-1,true)
+  assert(#sent==3 and sent[3][1]=='size' and sent[3][2]=='4','A portrait resize sends the new size once')
+  l:layout(1280,800);l:update(1/60,4,-1,-1,true);assert(sent[4][2]=='12')
+end
+-- A page change mid-drag drops the held pile.
+do
+  library:layout(1280,800);library:sync(snapshot(3000,12));library:layout(1280,800)
+  local held=library.cards[1]
+  library:mousepressed(held.x,held.y);library.drag.active=true;held.dragging=true
+  library:cancelInteractions()
+  assert(not library.drag and not library.pressed and not held.dragging,'Cancelling drops the drag')
+end
+print('PASS: library page size follows open and portrait changes; cancelled drags')

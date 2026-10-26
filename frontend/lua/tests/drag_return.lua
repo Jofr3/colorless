@@ -40,4 +40,21 @@ for _,view in ipairs({'list','cards'})do
   end
  end
 end
-print('PASS: list/grid drag return, cancelled/accepted drops, refresh survival, reduced motion and texture cleanup')
+-- A page change mid-drag drops the held card without touching the deck.
+do
+ local commands={}
+ local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
+ b.reduced=true;b:layout(1280,800);b.phase='ready';b.deckView='list'
+ b.deck={{id='test',name='Test card',kind='Pokemon',quantity=3,remaining=1}};b:build()
+ for frame=1,60 do b:update(1/60,frame/60-1,0,0,true)end
+ local control
+ for _,c in ipairs(b.controls)do if c.action=='detail' then control=c;break end end
+ b:mousepressed(control.x+control.w/2,control.y+control.h/2)
+ for frame=1,30 do b:update(1/60,frame/60,1100,530,true)end
+ local c=assert(b.dragCard);local texture=c.texture;local before=#commands
+ b:cancelInteractions()
+ assert(not b.dragCard and not b.drag and not b.pressed and texture.released,'Cancelling drops and frees the dragged card')
+ for _,card in ipairs(b.cards)do assert(not card.dragging)end
+ b:mousereleased(1100,530);assert(#commands==before,'A cancelled drag sends nothing on release')
+end
+print('PASS: list/grid drag return, cancelled/accepted drops, refresh survival, reduced motion, cancelled drags and texture cleanup')

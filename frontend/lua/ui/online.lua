@@ -468,6 +468,7 @@ function Online:activate(i,dir)
     self:finish();self.picker=false;self.focus=0;self:build();self.callbacks.announce('Versus')
   elseif a=='home' then self:leave() end
 end
+function Online:cancelInteractions() self.pressed=nil;self.pressedPart=nil end
 function Online:mousepressed(x,y)
   self.pressed,self.pressedPart=self:hit(x,y);self.focus=0
 end

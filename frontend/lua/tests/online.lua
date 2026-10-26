@@ -140,6 +140,8 @@ o:keypressed('left');assert(o.filter==5 and said[#said]:find('Not Expanded legal
 local item=o.items[cycle]
 o:mousepressed(item.x+5,item.y+10);o:mousereleased(item.x+item.w-5,item.y+10);assert(o.filter==5,'Releasing on the other arrow cancels')
 o:mousepressed(item.x+item.w-5,item.y+10);o:mousereleased(item.x+item.w-5,item.y+10);assert(o.filter==1)
+o:mousepressed(item.x+item.w-5,item.y+10);o:cancelInteractions();o:mousereleased(item.x+item.w-5,item.y+10)
+assert(o.filter==1 and not o.pressed,'A cancelled press does not activate on release')
 o:input('5\tsearch\tdeck 11\t7\t7\tdone')
 local illegal,illegalItem=find(function(it) return it.kind=='card' end)
 assert(illegalItem.blocked and not illegalItem.disabled)

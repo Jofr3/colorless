@@ -32,7 +32,13 @@ end
 function Library:open(reduced)
   self.motion=Modal.motion(reduced)
   self.focus=0; self.hover=0; self.pressed=nil; self.drag=nil
+  self:sendSize()
   self:command('open')
+end
+-- The TS side pages by this: four decks in portrait, twelve otherwise.
+function Library:sendSize()
+  local size=self.portrait and 4 or 12
+  if size~=self.sentSize then self.sentSize=size;self:command('size',size) end
 end
 function Library:offset()
   return self.motion and self.motion.VT.y*60 or 0
@@ -49,7 +55,6 @@ end
 function Library:layout(w,h)
   self.drag=nil; self.pressed=nil
   self.width,self.height=w,h; self.portrait=w<600
-  self:command('size',self.portrait and 4 or 12)
   self:makeCards(false)
   self:build()
 end
@@ -221,6 +226,7 @@ function Library:update(dt,time,mx,my,reduced)
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   my=my-self:offset()
   self.time,self.mx,self.my,self.reduced=time,mx,my,reduced
+  self:sendSize()
   self:sync(Mailbox.read('library'))
   self:input(Mailbox.read('libraryInput'))
   if self.pendingSearch and not self.busy then
@@ -241,6 +247,10 @@ function Library:update(dt,time,mx,my,reduced)
     if hovered and not card.hovered then card:juiceUp(time,0.05,0.03,reduced); self.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     card:update(dt,time,hovered,reduced,self.width)
   end
+end
+function Library:cancelInteractions()
+  self.drag=nil;self.pressed=nil
+  for _,card in ipairs(self.cards) do card.dragging=false end
 end
 function Library:mousepressed(x,y)
   self.focus=0; self.pressed=self:hit(x,y)

@@ -21,7 +21,10 @@ local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,read
 local shaders, sounds, controls = {}, {}, {}
 local soundVoices={}
 local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLogo
+local screens={}
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
+-- Pages drawn as the collection panel over the dimmed home.
+local function isCollection(page) return page=='decks' or page=='builder' or page=='sandbox' end
 -- Pages drawn on the game table; moving to or from one runs the screen wipe.
 local function isTable(page) return page=='simulator' or page=='match' end
 local preferences=Preferences.new()
@@ -225,6 +228,18 @@ openSettings=function(keyboard,tab)
   print('COLORLESS:settings:open')
   announce('Settings. '..(popup.tab==Settings.tabs.account and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
 end
+-- What every screen gets: its command channel, sound, announcements and the
+-- sign-in popup (a no-op while a wipe blocks Settings). `extra` adds or overrides.
+local function callbacksFor(channel,extra)
+  local callbacks={
+    command=function(command) print('COLORLESS:'..channel..':'..command) end,
+    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
+    announce=announce,
+    signin=function() openSettings(false,'account'); if popup then popup:openAuth('login') end end,
+  }
+  for key,value in pairs(extra or {}) do callbacks[key]=value end
+  return callbacks
+end
 local function activate(index)
   if index==0 then return end
   sound('button',1)
@@ -247,43 +262,17 @@ function love.load()
     if love.filesystem.getInfo('assets/sounds/'..name..'.ogg') then sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
   end
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
-  library=Library.new({
-    command=function(command) print('COLORLESS:library:'..command) end,
-    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
-    announce=announce,
-    refresh=function() print('COLORLESS:account:refresh') end,
-    home=function() print('COLORLESS:page:home') end,
-    settings=function() openSettings() end,
-    signin=function() openSettings(false,'account'); popup:openAuth('login') end,
-  })
-  builder=Builder.new({
-    command=function(command) print('COLORLESS:builder:'..command) end,
-    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
-    announce=announce,
-    signin=function() openSettings(false,'account'); popup:openAuth('login') end,
-  })
-  sandbox=Sandbox.new({
-    command=function(command) print('COLORLESS:sandbox:'..command) end,
-    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
-    announce=announce,
-    refresh=function() print('COLORLESS:account:refresh') end,
-    home=function() print('COLORLESS:page:home') end,
-    decks=function() print('COLORLESS:page:decks') end,
-    signin=function() openSettings(false,'account'); popup:openAuth('login') end,
-  })
-  online=Online.new({
-    command=function(command) print('COLORLESS:online:'..command) end,
-    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
-    announce=announce,
-    home=function() print('COLORLESS:page:home') end,
-    signin=function() openSettings(false,'account'); if popup then popup:openAuth('login') end end,
-    jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end,
-  })
-  simulator=Simulator.new({transition=function(callback) return startWipe(callback) end,command=function(command) print('COLORLESS:simulator:'..command) end,
-    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
-    sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,
-    announce=announce,settings=function() openSettings() end,
-    jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
+  local function refresh() print('COLORLESS:account:refresh') end
+  local function home() print('COLORLESS:page:home') end
+  local function settings() openSettings() end
+  local function jiggle(amount) room.jiggle=room.jiggle+(amount or 1) end
+  library=Library.new(callbacksFor('library',{refresh=refresh,home=home,settings=settings}))
+  builder=Builder.new(callbacksFor('builder'))
+  sandbox=Sandbox.new(callbacksFor('sandbox',{refresh=refresh,home=home,decks=function() print('COLORLESS:page:decks') end}))
+  online=Online.new(callbacksFor('online',{home=home,jiggle=jiggle}))
+  simulator=Simulator.new(callbacksFor('simulator',{transition=function(callback) return startWipe(callback) end,
+    sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,settings=settings,jiggle=jiggle}))
+  screens={library,builder,sandbox,online,simulator}
   layout(g.getDimensions())
   browserState()
   followPage()
@@ -317,7 +306,7 @@ function love.update(dt)
   local mx,my=pointer(love.mouse.getPosition())
   if wipe then mx,my=-1000,-1000 end
   if isTable(state.page) then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
-  if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
+  if isCollection(state.page) then
     local lx,ly=libraryPoint(mx,my)
     collection():update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
   end
@@ -339,7 +328,7 @@ function love.update(dt)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return
   end
-  if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
+  if isCollection(state.page) then
     love.mouse.setCursor(collection().hover>0 and state.handCursor or state.arrowCursor)
     return
   end
@@ -395,7 +384,7 @@ function love.draw()
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   end
   g.pop()
-  if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
+  if isCollection(state.page) then
     Modal.backdrop(width,height)
     g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
     libraryTransform(); collection():draw(shaders)
@@ -437,7 +426,7 @@ function love.mousepressed(x,y,button)
   if popup then popup:mousepressed(x,y); return end
   if isTable(state.page) then simulator:mousepressed(x,y);return end
   if state.page=='online' then online:mousepressed(x,y);return end
-  if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():mousepressed(libraryPoint(x,y)); return end
+  if isCollection(state.page) then collection():mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
 function love.mousereleased(x,y,button)
@@ -446,7 +435,7 @@ function love.mousereleased(x,y,button)
   if popup then popup:mousereleased(x,y); return end
   if isTable(state.page) then simulator:mousereleased(x,y);return end
   if state.page=='online' then online:mousereleased(x,y);return end
-  if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():mousereleased(libraryPoint(x,y)); return end
+  if isCollection(state.page) then collection():mousereleased(libraryPoint(x,y)); return end
   if state.pressed and state.pressed==hit(x,y) then activate(state.pressed) end
   state.pressed=nil
 end
@@ -456,7 +445,7 @@ function love.keypressed(key)
   if popup then popup:keypressed(key); return end
   if isTable(state.page) then simulator:keypressed(key);return end
   if state.page=='online' then online:keypressed(key);return end
-  if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():keypressed(key); return end
+  if isCollection(state.page) then collection():keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     local backward=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
     local count=#menu+#controls
@@ -474,23 +463,9 @@ function love.keypressed(key)
   end
 end
 cancelInteractions=function()
-    state.pressed=nil
-    if popup then popup.drag=nil; popup.pressed=nil end
-    if builder then
-      builder.drag=nil;builder.hpDrag=nil;builder.pressed=nil
-      if builder.dragCard then builder.dragCard.texture:release();builder.dragCard=nil end
-      for _,card in ipairs(builder.cards) do card.dragging=false end
-    end
-    if simulator then
-      if simulator.drag then simulator.drag.card.dragging=false end
-      simulator.drag=nil;simulator.clicked=nil;simulator.pressed=nil;simulator.pressedOverlay=nil;simulator.clickedPrize=nil
-    end
-    if sandbox then sandbox.pressed=nil end
-    if online then online.pressed=nil end
-    if library then
-      library.drag=nil; library.pressed=nil
-      for _,card in ipairs(library.cards) do card.dragging=false end
-    end
+  state.pressed=nil
+  if popup then popup:cancelInteractions() end
+  for _,screen in ipairs(screens) do screen:cancelInteractions() end
 end
 function love.focus(focused)
   state.windowFocused=focused
@@ -506,5 +481,5 @@ function love.wheelmoved(x,y)
   if wipe then return end
   if isTable(state.page) and not popup then simulator:wheelmoved(y);return end
   if state.page=='online' and not popup then online:wheelmoved(y);return end
-  if (state.page=='decks' or state.page=='builder' or state.page=='sandbox') and not popup then collection():wheelmoved(y) end
+  if isCollection(state.page) and not popup then collection():wheelmoved(y) end
 end

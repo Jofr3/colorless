@@ -71,7 +71,7 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 
 ## Files
 
-- `main.lua`: home scene, page intents, responsive layout, input/audio lifecycle.
+- `main.lua`: home scene, page intents, responsive layout, input/audio lifecycle. Each screen gets its callbacks from `callbacksFor(channel, extra)` (command channel, sound, announcements, sign-in) and owns a `cancelInteractions()` that main calls when a wipe starts or the window loses focus.
 - `ui/button.lua`: shared main-menu and utility button rendering, press states and hit bounds; `modalFrameRaised` is the `create_UIBox_generic_options` frame (emboss, JOKER_GREY border, dark interior) every modal and page panel uses.
 - `ui/room.lua`: original screen-motion equations and inverse transform for pointer input.
 - `ui/screen.lua`: original CRT uniforms, screen compositing, and perspective/lens mapping for pointer input.

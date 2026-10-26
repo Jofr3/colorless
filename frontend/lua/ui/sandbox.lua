@@ -157,6 +157,7 @@ function Sandbox:activate(i)
   elseif a=='refresh' then self.callbacks.refresh();self:command('refresh')
   elseif a=='start' then self:command('start');self.busy=true;self:build() end
 end
+function Sandbox:cancelInteractions() self.pressed=nil end
 function Sandbox:mousepressed(x,y) self.focus=0;self.pressed=self:hit(x,y) end
 function Sandbox:mousereleased(x,y)
   if self.pressed and self.pressed==self:hit(x,y) then self:activate(self.pressed) end

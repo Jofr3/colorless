@@ -498,6 +498,12 @@ end
 function Builder:slideHP(control,x)
   self:setHP(control.arg,400*(x-control.x)/control.w)
 end
+-- Drops any press, card drag or HP drag in progress.
+function Builder:cancelInteractions()
+  self.drag=nil;self.hpDrag=nil;self.pressed=nil
+  if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
+  for _,card in ipairs(self.cards) do card.dragging=false end
+end
 function Builder:mousepressed(x,y)
   self.focus=0;self.pressed=self:hit(x,y);local b=self.controls[self.pressed]
   if b and b.action=='hp-slider' then

@@ -61,4 +61,12 @@ clock=clock+0.2;chooser:wheelmoved(1);assert(chooser.page==1,'Wheel pages again 
 chooser:keypressed('pagedown');chooser:keypressed('pagedown');assert(chooser.page==3,'Page keys are not delayed')
 love.timer=nil
 print('PASS: wheel paging turns one page per delay; page keys stay immediate')
+do
+  chooser.busy=false;chooser.phase='ready';chooser.page=1;chooser:build()
+  local next
+  for _,b in ipairs(chooser.controls) do if b.action=='next' then next=b end end
+  chooser:mousepressed(next.x+2,next.y+2);assert(chooser.pressed)
+  chooser:cancelInteractions();chooser:mousereleased(next.x+2,next.y+2)
+  assert(chooser.page==1 and not chooser.pressed,'A cancelled press does not activate on release')
+end
 print('PASS: searchable five-column deck grid, independent selection, pagination, responsive bounds, validation, busy controls and modal motion')

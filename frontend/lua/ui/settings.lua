@@ -224,6 +224,7 @@ function Settings:activate(index)
     self.callbacks.announce(self:describe(item))
   elseif item.kind=='back' then self.callbacks.close() end
 end
+function Settings:cancelInteractions() self.drag=nil;self.pressed=nil;self.pressedPart=nil end
 function Settings:mousepressed(x,y)
   self.pressed,self.pressedPart=self:hit(x,y)
   self.focus=0

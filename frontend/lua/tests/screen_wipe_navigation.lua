@@ -26,6 +26,8 @@ for _,name in ipairs({'library','builder','sandbox','simulator','settings','onli
   function s:retarget(id)self.target=id end
   function s:command(c)self.last=c end
   function s:close()self.closes=(self.closes or 0)+1 end
+  function s:cancelInteractions()self.cancels=(self.cancels or 0)+1 end
+  function s:openAuth(mode)self.auth=mode end
   for _,method in ipairs({'layout','closeModal','update','draw','authInput','accountChanged'})do s[method]=noop end
   scenes[name]=s;return s
  end}
@@ -38,8 +40,16 @@ dofile('frontend/lua/main.lua');love.load()
 local function frames(n)for _=1,n do love.update(1/60)end end
 local function route(rev,page)files['__page.txt']=rev..'\t'..page..'\t';frames(3)end
 local function count(message)local n=0;for _,m in ipairs(messages)do if m==message then n=n+1 end end;return n end
+local pages={'library','builder','sandbox','online','simulator'}
+for _,name in ipairs(pages)do
+ scenes[name].callbacks.command('probe')
+ assert(messages[#messages]=='COLORLESS:'..name..':probe','Each screen prints on its own channel')
+end
 route(2,'simulator')
 assert(scenes.simulator.opens==0 and count('COLORLESS:transition:open')==1)
+for _,name in ipairs(pages)do assert(scenes[name].cancels==1,name..' drops held interactions when the wipe starts')end
+for _,name in ipairs(pages)do scenes[name].callbacks.signin()end
+assert(not scenes.settings,'Sign-in waits out the wipe on every page')
 love.mousepressed(200,200,1);love.mousereleased(200,200,1);love.keypressed('escape');love.wheelmoved(0,1)
 assert(scenes.simulator.inputs==0,'All input paths must be locked during the wipe')
 frames(36);assert(scenes.simulator.opens==0,'Destination cannot open before coverage')
@@ -80,5 +90,12 @@ assert(scenes.library.opens==2,'A route change applies on the next frame')
 files['__settings.txt']='1\taccount';love.update(1/60)
 assert(scenes.settings.tab==4 and count('COLORLESS:settings:open')==1,'Settings opens on the Account tab')
 frames(3);assert(count('COLORLESS:settings:open')==1,'A request is answered once')
+for _,name in ipairs(pages)do
+ scenes.settings.auth=nil;scenes[name].callbacks.signin()
+ assert(scenes.settings.auth=='login',name..' signs in through the open Settings')
+end
+local before=scenes.library.cancels
+love.focus(false)
+assert(scenes.settings.cancels==1 and scenes.library.cancels==before+1,'Losing focus drops held interactions, Settings included')
 print=output
 print('PASS: covered scene changes, input lock/unlock, resize, coalesced navigation, reduced-motion, online and match routing')
