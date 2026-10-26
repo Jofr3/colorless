@@ -23,17 +23,15 @@ for (const type of ["keydown", "keyup", "keypress"]) {
 }
 let runtime;
 let ready = false;
-let mailboxCreated = false;
-let preferencesMailboxCreated = false;
 let settingsRequest = 0;
 let settingsTab = 1;
 let settingsOpen = false;
-let bridgeReady = false;
+let bridge;
 // `COLORLESS:<channel>:<rest>` prints whose rest is handed on unchanged.
 const relays = {
   page: (page) => setPage(page),
   builder: builderCommand,
-  simulator: simulatorCommand,
+  simulator: (command) => bridge.command("simulator", command),
   online: onlineCommand,
   sandbox: sandboxCommand,
   library: (command) => libraryCommand(command),
@@ -43,26 +41,57 @@ function relayChannel(message) {
   const channel = message.match(/^COLORLESS:([a-z]+):/)?.[1];
   return channel && Object.hasOwn(relays, channel) ? channel : undefined;
 }
-let accountSnapshot = "";
+// Mailboxes written before the runtime exists keep their latest text until preRun.
+const unwrittenMailboxes = new Map();
 const mailboxFiles = new Set();
 function writeMailbox(name, text) {
-  if (!runtime) return;
+  if (!runtime) {
+    unwrittenMailboxes.set(name, text);
+    return;
+  }
   if (mailboxFiles.has(name)) runtime.FS_unlink(`/${name}`);
   runtime.FS_createDataFile("/", name, text, true, true);
   mailboxFiles.add(name);
 }
-document.addEventListener("colorless:account-state", (event) => {
-  accountSnapshot = event.detail;
-  writeMailbox("__account.txt", accountSnapshot);
-  if (accountSnapshot.split("\t")[1] !== "authenticated") finishName(true);
-  if (accountSnapshot.split("\t")[1] === "authenticated") clearAuthInputs();
-});
-document.addEventListener("colorless:bridge-ready", () => {
-  bridgeReady = true;
-});
 function accountCommand(command) {
-  document.dispatchEvent(new CustomEvent("colorless:account-command", { detail: command }));
+  bridge.command("account", command);
 }
+window.colorlessHost = {
+  connect(connected) {
+    bridge = connected;
+  },
+  publish(screen, snapshot) {
+    writeMailbox(`__${screen}.txt`, snapshot);
+    if (screen === "account") {
+      if (snapshot.split("\t")[1] === "authenticated") clearAuthInputs();
+      else finishName(true);
+    }
+    if (screen === "builder" && currentPage === "builder") {
+      const f = snapshot.split("\n")[0].split("\t").map(decodeURIComponent);
+      document.title = `Colorless — ${f[2] || "Deck builder"}`;
+      canvas.setAttribute(
+        "aria-label",
+        `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`,
+      );
+    }
+  },
+  route(page, id = "", replace = false) {
+    setPage(page, !replace, id);
+  },
+  // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
+  // them at the 96 kept here); touch them lowest first so eviction spares the head.
+  wantArt(cards) {
+    wantedArt = cards;
+    for (const c of [...wantedArt].reverse()) {
+      if (artCache.has(c.id)) {
+        const path = artCache.get(c.id);
+        artCache.delete(c.id);
+        artCache.set(c.id, path);
+      }
+    }
+    pumpArt();
+  },
+};
 // build:lua replaces the empty object with web/limits.json, generated from the
 // TypeScript name limits by scripts/lua-constants.ts.
 const limits = /* lua-limits */ {};
@@ -222,16 +251,12 @@ function authCommand(command) {
     publishAuth();
   } else if (action === "submit") {
     finishAuthInput();
-    document.dispatchEvent(
-      new CustomEvent("colorless:authenticate", {
-        detail: {
-          mode: authMode,
-          email: authInputs.email.value,
-          password: authInputs.password.value,
-          name: authInputs.name.value,
-        },
-      }),
-    );
+    bridge.authenticate({
+      mode: authMode,
+      email: authInputs.email.value,
+      password: authInputs.password.value,
+      name: authInputs.name.value,
+    });
   } else if (action === "google") {
     finishAuthInput();
     accountCommand("google");
@@ -306,24 +331,13 @@ function fail(message) {
   document.getElementById("loading").style.display = "flex";
   statusElement.textContent = message;
 }
-function syncViewport(module) {
-  if (!module || !module.FS_createDataFile) return;
+function syncViewport() {
   // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
   // must use that same size; a capped scene leaves the rest of it black.
   // Keep CSS-pixel dimensions (no devicePixelRatio multiplier).
   const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"} ${preferences.muted} ${settingsRequest} ${settingsTab}`;
-  if (mailboxCreated) module.FS_unlink("/__viewport.txt");
-  module.FS_createDataFile("/", "__viewport.txt", text, true, true);
-  mailboxCreated = true;
-  if (preferencesMailboxCreated) module.FS_unlink("/__preferences.txt");
-  module.FS_createDataFile(
-    "/",
-    "__preferences.txt",
-    preferenceKeys.map((key) => preferences[key]).join(" "),
-    true,
-    true,
-  );
-  preferencesMailboxCreated = true;
+  writeMailbox("__viewport.txt", text);
+  writeMailbox("__preferences.txt", preferenceKeys.map((key) => preferences[key]).join(" "));
 }
 // build:lua replaces the empty object with each /love/ file's content hash;
 // the `?v=` it adds changes the URL whenever the bytes do, which is what lets
@@ -337,7 +351,10 @@ globalThis.Module = {
   canvas: canvas,
   preRun: [
     (module) => {
-      syncViewport(module);
+      runtime = module;
+      for (const [name, text] of unwrittenMailboxes) writeMailbox(name, text);
+      unwrittenMailboxes.clear();
+      syncViewport();
     },
   ],
   print: (message) => {
@@ -432,28 +449,26 @@ globalThis.Module = {
 };
 // Boot invariant: Love() starts on window load, after every classic script
 // (game package, runtime) and the deferred bridge module have run, so Lua's
-// first print finds the bridge listening. A bridge that failed to run would
+// first print finds the bridge connected. A bridge that failed to run would
 // leave every screen dead, so show the failure overlay instead of starting.
 addEventListener("load", () => {
   if (typeof Love !== "function") return;
-  if (!bridgeReady) {
+  if (!bridge) {
     fail("Could not load the menu. Reload to try again.");
     return;
   }
   Love(Module)
-    .then((module) => {
-      runtime = module;
+    .then(() => {
       updateLoadingProgress(95);
       void prepareTransitionArt();
       syncPage();
-      if (accountSnapshot) writeMailbox("__account.txt", accountSnapshot);
       // ?account and ?settings open the settings popup on the matching tab.
       const params = new URLSearchParams(location.search);
       if (params.has("account") || params.has("settings")) {
         settingsRequest++;
         settingsTab = params.has("account") ? 4 : 1;
       }
-      syncViewport(runtime);
+      syncViewport();
     })
     .catch((error) => {
       console.error(error);
@@ -464,11 +479,11 @@ let resizeTimer;
 addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    syncViewport(runtime);
+    syncViewport();
   }, 100);
 });
 motion.addEventListener("change", () => {
-  syncViewport(runtime);
+  syncViewport();
 });
 canvas.addEventListener("pointerdown", () => {
   canvas.focus({ preventScroll: true });
@@ -494,7 +509,7 @@ document.getElementById("settings-link").addEventListener("click", (event) => {
   event.preventDefault();
   settingsRequest++;
   settingsTab = 1;
-  syncViewport(runtime);
+  syncViewport();
   canvas.focus({ preventScroll: true });
 });
 document.getElementById("account-link").addEventListener("click", (event) => {
@@ -502,7 +517,7 @@ document.getElementById("account-link").addEventListener("click", (event) => {
   event.preventDefault();
   settingsRequest++;
   settingsTab = 4;
-  syncViewport(runtime);
+  syncViewport();
   canvas.focus({ preventScroll: true });
 });
 
@@ -599,9 +614,7 @@ function setPage(page, push = true, id = "", saved = false) {
   if (currentPage === "builder" && !saved && (page !== currentPage || id !== pageId)) {
     finishBuilderInput();
     history.replaceState(null, "", routeUrl("builder", pageId));
-    document.dispatchEvent(
-      new CustomEvent("colorless:builder-leave", { detail: () => setPage(page, push, id, true) }),
-    );
+    bridge.leaveBuilder(() => setPage(page, push, id, true));
     return;
   }
   finishLibraryInput();
@@ -632,9 +645,6 @@ document.getElementById("online-link").addEventListener("click", (event) => {
   setPage("online");
   canvas.focus({ preventScroll: true });
 });
-document.addEventListener("colorless:library-state", (event) =>
-  writeMailbox("__library.txt", event.detail),
-);
 function libraryCommand(command, owner = "library") {
   const [action, field, value] = command.split("\t").map(decodeURIComponent);
   if (action === "input") {
@@ -665,7 +675,7 @@ function libraryCommand(command, owner = "library") {
     else libraryInput.select();
     publishLibraryInput();
   } else if (action === "finish-input") finishLibraryInput();
-  else document.dispatchEvent(new CustomEvent("colorless:library-command", { detail: command }));
+  else bridge.command(owner, command);
 }
 const libraryInput = document.createElement("input");
 libraryInput.className = "sr-only";
@@ -746,20 +756,6 @@ for (const type of ["keydown", "keyup", "keypress"])
   );
 
 // Deck builder: browser-native text/clipboard and artwork transport only.
-document.addEventListener("colorless:route", (e) =>
-  setPage(e.detail.page, !e.detail.replace, e.detail.id || ""),
-);
-document.addEventListener("colorless:builder-state", (e) => {
-  writeMailbox("__builder.txt", e.detail);
-  if (currentPage === "builder") {
-    const f = e.detail.split("\n")[0].split("\t").map(decodeURIComponent);
-    document.title = `Colorless — ${f[2] || "Deck builder"}`;
-    canvas.setAttribute(
-      "aria-label",
-      `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`,
-    );
-  }
-});
 const builderInput = document.createElement("textarea");
 builderInput.className = "sr-only";
 builderInput.hidden = true;
@@ -788,11 +784,7 @@ function publishBuilderInput(action = "input", field = builderField) {
   else if (field !== "transfer") dispatchBuilder("filter", field, builderInput.value);
 }
 function dispatchBuilder(...args) {
-  document.dispatchEvent(
-    new CustomEvent("colorless:builder-command", {
-      detail: args.map(encodeURIComponent).join("\t"),
-    }),
-  );
+  bridge.command("builder", args.map(encodeURIComponent).join("\t"));
 }
 function finishBuilderInput(cancel = false) {
   if (!builderField) return;
@@ -830,7 +822,7 @@ function builderCommand(command) {
           `${Date.now()}\tCopy failed. Select the decklist and use your copy shortcut.`,
         ),
     );
-  } else document.dispatchEvent(new CustomEvent("colorless:builder-command", { detail: command }));
+  } else bridge.command("builder", command);
 }
 builderInput.addEventListener("input", () => publishBuilderInput());
 builderInput.addEventListener("select", () => {
@@ -880,7 +872,7 @@ let transitionArt = null,
   transitionPreparing = null,
   transitionConsuming = false;
 async function prepareTransitionArt() {
-  const cache = window.colorlessArtworkCache;
+  const cache = bridge.artwork;
   if (!runtime || !cache || transitionArt || transitionConsuming) return;
   if (transitionPreparing) return transitionPreparing;
   transitionPreparing = (async () => {
@@ -911,7 +903,7 @@ async function consumeTransitionArt(token, invalid) {
   try {
     runtime.FS_unlink(`/${selected.path}`);
   } catch {}
-  const cache = window.colorlessArtworkCache;
+  const cache = bridge.artwork;
   try {
     if (invalid) await cache?.remove(selected.id);
     else await cache?.markShown(selected.id);
@@ -924,7 +916,7 @@ async function loadArt(card) {
   artActive++;
   artPending.add(card.id);
   try {
-    const cache = window.colorlessArtworkCache;
+    const cache = bridge.artwork;
     let blob = await cache?.get(card.id);
     if (!blob) {
       const response = await fetch(card.url);
@@ -969,56 +961,31 @@ function pumpArt() {
       void loadArt(card);
   }
 }
-// Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
-// them at the 96 kept here); touch them lowest first so eviction spares the head.
-document.addEventListener("colorless:art-wanted", (e) => {
-  wantedArt = e.detail;
-  for (const c of [...wantedArt].reverse()) {
-    if (artCache.has(c.id)) {
-      const path = artCache.get(c.id);
-      artCache.delete(c.id);
-      artCache.set(c.id, path);
-    }
-  }
-  pumpArt();
-});
 
 // Sandbox API transport. The chooser and its controls are rendered in Lua.
-document.addEventListener("colorless:sandbox-state", (event) =>
-  writeMailbox("__sandbox.txt", event.detail),
-);
 function sandboxCommand(command) {
   const action = command.split("\t")[0];
   if (action === "input" || action === "finish-input") {
     libraryCommand(command, "sandbox");
     return;
   }
-  document.dispatchEvent(new CustomEvent("colorless:sandbox-command", { detail: command }));
+  bridge.command("sandbox", command);
 }
 document.getElementById("sandbox-link").addEventListener("click", (event) => {
   if (!ready) return;
   event.preventDefault();
-  simulatorCommand("resume");
+  bridge.command("simulator", "resume");
   canvas.focus({ preventScroll: true });
 });
 
 // Full Lua game page; it shares the existing image cache and local engine host.
-document.addEventListener("colorless:simulator-state", (event) =>
-  writeMailbox("__simulator.txt", event.detail),
-);
-function simulatorCommand(command) {
-  document.dispatchEvent(new CustomEvent("colorless:simulator-command", { detail: command }));
-}
 
 // Online lobby transport. The modal is Lua; LuaOnline (online.ts) owns the socket.
-document.addEventListener("colorless:online-state", (event) =>
-  writeMailbox("__online.txt", event.detail),
-);
 function onlineCommand(command) {
   const action = command.split("\t")[0];
   if (action === "input" || action === "finish-input") {
     libraryCommand(command, "online");
     return;
   }
-  document.dispatchEvent(new CustomEvent("colorless:online-command", { detail: command }));
+  bridge.command("online", command);
 }
