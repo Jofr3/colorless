@@ -171,6 +171,26 @@ const loveModule = {
   },
 };
 globalThis.Module = loveModule;
+// Download and compile the runtime while the page's scripts load. love.js would start only once
+// Love() runs on window load, and a <link rel=preload> would hold that load event back and give
+// up the streaming compile.
+const runtimeUrl = loveModule.locateFile("love.wasm");
+const compiledRuntime = WebAssembly.compileStreaming(fetch(runtimeUrl)).catch(() =>
+  fetch(runtimeUrl)
+    .then((response) => response.arrayBuffer())
+    .then((bytes) => WebAssembly.compile(bytes)),
+);
+loveModule.instantiateWasm = (imports, receive) => {
+  compiledRuntime
+    .then((module) =>
+      WebAssembly.instantiate(module, imports).then((instance) => receive(instance, module)),
+    )
+    .catch((error) => {
+      console.error(error);
+      fail("Could not download the menu. Reload to try again.");
+    });
+  return {};
+};
 // Boot invariant: Love() starts on window load, after every classic script
 // (game package, runtime) and the deferred bridge module have run, so Lua's
 // first print finds the bridge connected. A bridge that failed to run would

@@ -24,6 +24,11 @@ declare global {
     printErr(message: string): void;
     setStatus(message: string): void;
     onAbort(): void;
+    /** Emscripten's hook for instantiating the runtime itself; returns `{}` when asynchronous. */
+    instantiateWasm?(
+      imports: WebAssembly.Imports,
+      receive: (instance: WebAssembly.Instance, module: WebAssembly.Module) => void,
+    ): object;
   }
 
   /** game.js reads this global while it parses, so it must exist before that script runs. */
