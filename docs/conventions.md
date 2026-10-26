@@ -59,9 +59,15 @@ only the conclusion.
   its package entry: `@colorless/engine/testing` is the fixture barrel and
   `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads. A pure helper that
   would close a new cycle belongs in a lower module.
-- Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
+- Vitest has three projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
-  module-level state that leaks between files; `app` covers everything else.
+  module-level state that leaks between files. The app suites are split by the
+  config itself: a file that calls `vi.mock`, `vi.stubGlobal`, `vi.stubEnv`,
+  `vi.useFakeTimers`, `vi.setSystemTime`, `vi.spyOn`, `vi.unstubAll*` or
+  `vi.resetModules`, or names `globalThis`, runs in `app-isolated`; every other
+  app file runs in `app`, without isolation, so it must not leave other
+  module-level state behind either. Vitest caches transformed modules in
+  `node_modules/.experimental-vitest-cache` (`bunx vitest --clearCache` empties it).
 - After any refactor that moves, reformats or un-comments mutated code, run
   `bun scripts/mutation/reanchor.ts --write`: it re-points rows whose `find` moved
   (whitespace, comments and file splits are ignored when matching) and lists the
