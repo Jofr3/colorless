@@ -1,6 +1,6 @@
 // Full set model of the tcgdex REST API (`/sets/{id}`).
 
-import { z } from "zod";
+import * as z from "zod";
 import {
   tcgdexBoosterSchema,
   tcgdexCardBriefSchema,

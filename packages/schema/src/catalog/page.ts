@@ -1,6 +1,6 @@
 // The list envelope every paginated catalog endpoint serves.
 
-import { z } from "zod";
+import * as z from "zod";
 
 /**
  * Builds the `{ items, page, pageSize, total }` envelope schema for an item

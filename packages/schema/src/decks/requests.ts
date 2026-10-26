@@ -4,7 +4,7 @@
 // explicit `null` means "clear it" (move a deck to the library root, unset its format). Empty
 // patches are rejected so a buggy no-op call fails loudly instead of silently bumping `updated`.
 
-import { z } from "zod";
+import * as z from "zod";
 import { deckCardSchema } from "./deck";
 
 /** Hard cap on DISTINCT card entries per deck — a 60-card deck uses ~20;

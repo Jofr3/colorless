@@ -8,7 +8,7 @@
 // order of magnitude, it isn't an accounting system. If precise limiting
 // ever matters, move to a Durable Object.
 
-import { z } from "zod";
+import * as z from "zod";
 
 export const RATE_LIMIT_MAX_ATTEMPTS = 10;
 export const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;

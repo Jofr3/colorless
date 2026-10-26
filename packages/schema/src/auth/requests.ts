@@ -1,7 +1,7 @@
 // Auth request bodies (backend-data.md §3.5/§6) — parsed by the api's
 // zValidator at the boundary and reusable by the web app's forms.
 
-import { z } from "zod";
+import * as z from "zod";
 
 export const DISPLAY_NAME_MAX = 64;
 

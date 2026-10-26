@@ -3,7 +3,7 @@
 // face-up prizes are public. It is viewer-relative so a payload never carries both sides' hidden
 // zones. Types are inferred from the Zod schema.
 
-import { z } from "zod";
+import * as z from "zod";
 import { cardCategorySchema } from "../catalog/card";
 
 /** Viewer-relative player id. Structurally the web playmat's `PlayerId`, kept

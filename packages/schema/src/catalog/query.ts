@@ -1,7 +1,7 @@
 // GET /cards and GET /sets query strings. The api validates against these schemas; the client
 // types its parameters from their input side.
 
-import { z } from "zod";
+import * as z from "zod";
 import { cardCategorySchema } from "./card";
 
 /** A query-string field that must be non-empty when present. */

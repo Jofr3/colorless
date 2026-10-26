@@ -46,7 +46,7 @@ only the conclusion.
   Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (coverage guards, the import graph,
-  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the Worker bundle budget, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
@@ -204,6 +204,9 @@ only the conclusion.
   generates from `src/host/mailboxes.ts`: add a mailbox there, not as a string in Lua. Lua owns
   the preferences record; the page stores it as Lua writes it. Adapters guard async replies
   with `epochGuard()` (`src/lua/epochGuard.ts`).
+- Import zod as `import * as z from "zod"`, never `import { z }`: the named import keeps every zod
+  locale in the Worker bundle. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
+  Worker with a wrangler dry run and fails on a non-English locale or a bundle over its budget.
 - **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
   real-card pool `scripts/bench/pool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
   applyAction per action and per action type, two redactions, logFromEvents, legality probes and a

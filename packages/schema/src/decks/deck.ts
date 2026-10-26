@@ -3,7 +3,7 @@
 //   - `DeckSummary` — the list row (GET /decks): `cards` replaced by
 //     `cardCount`, the summed counts.
 
-import { z } from "zod";
+import * as z from "zod";
 
 /** One deck entry: a catalog card id ("sv01-001") and how many copies.
     Counts are 1–99 — 0 means "remove the entry", and 99 is a sanity cap

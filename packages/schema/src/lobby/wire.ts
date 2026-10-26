@@ -3,7 +3,7 @@
 // `LobbyServerMessage`, both subsets of `LobbyMessage`. Zod-free constants live in protocol.ts so
 // the client need not bundle zod.
 
-import { z } from "zod";
+import * as z from "zod";
 import { redactedGameSchema, seatLogEntrySchema, wireActionSchema } from "../match";
 import type {
   LobbyIntent,

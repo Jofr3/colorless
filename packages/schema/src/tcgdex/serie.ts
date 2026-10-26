@@ -1,6 +1,6 @@
 // Full serie model of the tcgdex REST API (`/series/{id}`).
 
-import { z } from "zod";
+import * as z from "zod";
 import { tcgdexSetBriefSchema } from "./common";
 
 /**

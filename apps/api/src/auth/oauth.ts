@@ -8,7 +8,7 @@
 // answer 503 "provider not configured" — the code path is live either way.
 
 import { OAUTH_PROVIDERS, type OAuthProvider } from "@colorless/schema";
-import { z } from "zod";
+import * as z from "zod";
 import type { Env } from "../env";
 import { fromBase64Url, randomBytes, toBase64Url } from "./encoding";
 

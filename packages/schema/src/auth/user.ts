@@ -3,7 +3,7 @@
 // password or hash field: the DB row's `password_hash` is an apps/api
 // implementation detail that must not enter the shared vocabulary.
 
-import { z } from "zod";
+import * as z from "zod";
 
 export const userSchema = z.object({
   id: z.string(),

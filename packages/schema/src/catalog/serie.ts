@@ -2,7 +2,7 @@
 // `series.logo_url`, but there is no /assets/series/* mirror route yet, so a
 // domain path would 404 — add both together when a feature needs serie logos.
 
-import { z } from "zod";
+import * as z from "zod";
 import { setBriefSchema } from "./set";
 
 export const serieBriefSchema = z.object({

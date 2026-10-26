@@ -2,7 +2,7 @@
 // are null off-category; consumers narrow on `category`. `image` is our asset base path
 // `/assets/cards/{id}` (null with no scan); clients append `/{high|low}.{webp|png|jpg}`.
 
-import { z } from "zod";
+import * as z from "zod";
 import { legalSchema } from "./common";
 
 export const cardCategorySchema = z.enum(["Pokemon", "Trainer", "Energy"]);

@@ -2,7 +2,7 @@
 // additive upstream changes don't break parsing. Brief shapes live here to avoid circular imports
 // between card, set and serie.
 
-import { z } from "zod";
+import * as z from "zod";
 
 /**
  * tcgdex `updated` timestamps mix UTC (`2026-06-08T12:42:35Z`, with or
