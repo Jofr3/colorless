@@ -1,4 +1,4 @@
-import { simulationGaps, type SimulationGap } from "@colorless/engine";
+import type { SimulationGap } from "@colorless/engine";
 import * as api from "../lib/api";
 import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
@@ -6,7 +6,7 @@ import { WIRE_ROWS, type WireValue, wireRow } from "./wireFields";
 
 const W = WIRE_ROWS.builder;
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
-import { formatById } from "@colorless/engine";
+import { formatById } from "@colorless/engine/rules";
 import { ENERGY_TYPES, type BuilderCard } from "../decks/cards";
 import {
   filtersToCardsQuery,
@@ -844,7 +844,11 @@ export class LuaBuilder {
     this.details = "Loading card details...";
     this.emit();
     try {
-      const c = await api.getCard(id);
+      // The rules engine loads with the first card shown, not with the page.
+      const [c, { simulationGaps }] = await Promise.all([
+        api.getCard(id),
+        import("@colorless/engine"),
+      ]);
       if (!live() || this.selected !== id) return;
       this.cards.set(c.id, toBuilderCard(c));
       this.gaps.set(c.id, simulationGaps(c));

@@ -15,7 +15,6 @@ import {
   cardOfUid,
   costMet,
   hasRuleBox,
-  isSpecialEnergy,
   isTeraPokemon,
   matchesFilter,
   parseAttackDamage,
@@ -24,6 +23,7 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
+import { isSpecialEnergy } from "./cardClasses";
 import {
   // The flip-to-attack lock is checked at the §8 step-3 seam, not in `attackLocked`, because the
   // declaration stays legal.

@@ -8,11 +8,9 @@ import {
   hasPrintedAbility,
   hasRuleBox,
   hpOf,
-  isBasicPokemon,
   isEvolutionPokemon,
   isExOrV,
   isFossilTop,
-  isSpecialEnergy,
   isTeraPokemon,
   isStage2Pokemon,
   matchesFilter,
@@ -21,6 +19,7 @@ import {
   topCardOf,
   topUid,
 } from "./cards";
+import { isBasicPokemon, isSpecialEnergy } from "./cardClasses";
 import type { DamageModifier, PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { type Banner, bannerOf, bannerOfId } from "./banners";
 import { isAceSpec } from "./deckRules";

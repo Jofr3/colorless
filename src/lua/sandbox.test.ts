@@ -151,6 +151,7 @@ describe("Lua sandbox setup", () => {
     await sandbox.command("select\t2\tb");
     const pending = sandbox.command("start");
     await sandbox.command("start");
+    await vi.waitFor(() => expect(calls).toContain("GET /decks/a"));
     await sandbox.command("close");
     finish(json(full("a")));
     await pending;

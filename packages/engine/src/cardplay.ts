@@ -16,7 +16,8 @@ import {
   resolveFoundAttack,
   resolveInPlayCopiedAttack,
 } from "./attack";
-import { cardOfUid, isBasicPokemon, topUid } from "./cards";
+import { cardOfUid, topUid } from "./cards";
+import { isBasicPokemon } from "./cardClasses";
 import {
   benchLimitOf,
   disabledAbilityUids,

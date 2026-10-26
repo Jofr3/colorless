@@ -15,7 +15,7 @@ import {
   isRadiantPokemon,
   PRISM_STAR_LIMIT,
   RADIANT_LIMIT,
-} from "@colorless/engine";
+} from "@colorless/engine/rules";
 import {
   type BuilderCard,
   deckRuleCardOf,

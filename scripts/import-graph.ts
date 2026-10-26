@@ -2,8 +2,10 @@
 /**
  * The repo's module import graph. `--check` fails when a runtime (non-test) import cycle other than
  * the recorded one exists, or when a relative import crosses a workspace root (each package, each
- * app, `src`, `scripts`); cross-root imports go through the package's `exports` instead. Without
- * `--check` it prints every runtime cycle and every crossing import. A step of `bun run check`.
+ * app, `src`, `scripts`); cross-root imports go through the package's `exports` instead. It also
+ * fails when the web page's eager bundle (everything `EAGER_ENTRY` imports without `import()`)
+ * reaches a module in `LAZY_ONLY`. Without `--check` it prints every runtime cycle and every
+ * crossing import. A step of `bun run check`.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -34,6 +36,15 @@ export const ALLOWED_CROSSINGS: readonly string[] = [
   "scripts/lua-constants.ts -> ../src/lua/wireFields",
 ];
 
+/** The web page's one module script. */
+export const EAGER_ENTRY = "src/lua/bridge.ts";
+
+/**
+ * Modules the page loads only through `import()`: the full engine entry pulls in the rules
+ * interpreter, which only the game table, sandbox setup and the builder's simulation gaps need.
+ */
+export const LAZY_ONLY: readonly string[] = ["packages/engine/src/index.ts"];
+
 const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
 const RESOLVE_SUFFIXES = ["", ".ts", ".tsx", ".mts", ".cts", "/index.ts", "/index.tsx"];
 const WORKSPACE_GROUPS = ["packages", "apps"];
@@ -50,7 +61,7 @@ export function workspaceRootOf(file: string): string {
   return ".";
 }
 
-type Import = { specifier: string; runtime: boolean };
+type Import = { specifier: string; runtime: boolean; dynamic?: boolean };
 
 const STATEMENT_START = /^(?:import\b|export(?:\s+type)?\s*[{*])/;
 const FROM = /\bfrom\s*["']([^"']+)["']/;
@@ -87,7 +98,8 @@ export function importsOf(source: string): Import[] {
     const specifier = (FROM.exec(statement) ?? SIDE_EFFECT.exec(statement))?.[1];
     if (specifier !== undefined) out.push({ specifier, runtime: !isTypeOnly(statement) });
   }
-  for (const m of source.matchAll(DYNAMIC)) out.push({ specifier: m[1] ?? "", runtime: true });
+  for (const m of source.matchAll(DYNAMIC))
+    out.push({ specifier: m[1] ?? "", runtime: true, dynamic: true });
   return out;
 }
 
@@ -144,6 +156,8 @@ function resolvePackage(specifier: string, entries: ReadonlyMap<string, string>)
 
 export type Graph = {
   runtimeEdges: Map<string, Set<string>>;
+  /** Runtime edges other than `import()`: what a bundler puts in the importer's chunk. */
+  staticEdges: Map<string, Set<string>>;
   crossings: { from: string; specifier: string; to: string }[];
 };
 
@@ -151,9 +165,11 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
   const known = new Set(files);
   const entries = packageEntries();
   const runtimeEdges = new Map<string, Set<string>>();
+  const staticEdges = new Map<string, Set<string>>();
   const crossings: Graph["crossings"] = [];
   for (const file of files) {
     const edges = new Set<string>();
+    const eager = new Set<string>();
     for (const imp of importsOf(read(file))) {
       const relativeSpec = imp.specifier.startsWith(".");
       if (relativeSpec) {
@@ -166,11 +182,17 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
         ? resolveRelative(file, imp.specifier, known)
         : resolvePackage(imp.specifier, entries);
       if (target === null) continue;
-      if (imp.runtime && !isTestFile(file) && !isTestFile(target)) edges.add(target);
+      if (imp.runtime && !isTestFile(file) && !isTestFile(target)) {
+        edges.add(target);
+        if (!imp.dynamic) eager.add(target);
+      }
     }
-    if (!isTestFile(file)) runtimeEdges.set(file, edges);
+    if (!isTestFile(file)) {
+      runtimeEdges.set(file, edges);
+      staticEdges.set(file, eager);
+    }
   }
-  return { runtimeEdges, crossings };
+  return { runtimeEdges, staticEdges, crossings };
 }
 
 /** Tarjan's strongly connected components with more than one member (or a self-import). */
@@ -211,6 +233,29 @@ export function cyclesOf(edges: ReadonlyMap<string, ReadonlySet<string>>): strin
   return out.sort((a, b) => (a[0] ?? "").localeCompare(b[0] ?? ""));
 }
 
+/** The import chain from `entry` to the first `targets` module its static imports reach, if any. */
+export function eagerPathTo(
+  edges: ReadonlyMap<string, ReadonlySet<string>>,
+  entry: string,
+  targets: readonly string[],
+): string[] | null {
+  const parent = new Map<string, string>([[entry, entry]]);
+  const queue = [entry];
+  for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+    if (targets.includes(next)) {
+      const path = [next];
+      while (path[0] !== entry) path.unshift(parent.get(path[0] ?? "") ?? entry);
+      return path;
+    }
+    for (const to of edges.get(next) ?? []) {
+      if (parent.has(to)) continue;
+      parent.set(to, next);
+      queue.push(to);
+    }
+  }
+  return null;
+}
+
 const sameSet = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && a.every((x) => b.includes(x));
 
@@ -244,6 +289,13 @@ export function problemsOf(graph: Graph): string[] {
       `import-graph: FAIL — ${c.from} imports "${c.specifier}" across a workspace root (${c.to}); use the package's exports.`,
     );
   }
+  const eager = eagerPathTo(graph.staticEdges, EAGER_ENTRY, LAZY_ONLY);
+  if (eager) {
+    problems.push(
+      "import-graph: FAIL — the page's eager bundle reaches a lazy-only module; import engine values from `@colorless/engine/rules`, or load the code with `import()`:",
+      ...eager.map((f) => `  ${f}`),
+    );
+  }
   return problems;
 }
 
@@ -253,7 +305,9 @@ export function selfCheck(): string[] {
   const files: Record<string, string> = {
     "src/a.ts": 'import {\n  b,\n} from "./b";\nimport { type T, type U } from "./c";',
     "src/b.ts": 'export { a } from "./a";',
-    "src/c.ts": 'import { a } from "./a";\nimport { x } from "../scripts/x";',
+    "src/c.ts":
+      'import { a } from "./a";\nimport { x } from "../scripts/x";\nconst d = () => import("./d");',
+    "src/d.ts": "export const d = 1;",
     "scripts/x.ts": "export const x = 1;",
   };
   const graph = buildGraph(Object.keys(files), (f) => files[f] ?? "");
@@ -261,6 +315,14 @@ export function selfCheck(): string[] {
   if (cycles.length !== 1 || !sameSet(cycles[0] ?? [], ["src/a.ts", "src/b.ts"])) {
     problems.push(
       `import-graph: SELF-CHECK FAILED — expected the cycle [src/a.ts, src/b.ts] and no other (a type-only import is not an edge), got ${JSON.stringify(cycles)}.`,
+    );
+  }
+  if (
+    eagerPathTo(graph.staticEdges, "src/c.ts", ["src/d.ts"]) !== null ||
+    eagerPathTo(graph.runtimeEdges, "src/c.ts", ["src/d.ts"])?.join(" ") !== "src/c.ts src/d.ts"
+  ) {
+    problems.push(
+      "import-graph: SELF-CHECK FAILED — expected src/d.ts reachable from src/c.ts only through import().",
     );
   }
   if (graph.crossings.length !== 1 || graph.crossings[0]?.to !== "scripts/x") {

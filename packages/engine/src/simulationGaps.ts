@@ -1,5 +1,5 @@
 import type { Card } from "@colorless/schema";
-import { isSpecialEnergy } from "./cards";
+import { isSpecialEnergy } from "./cardClasses";
 import { toolCardSimulated } from "./continuous";
 import {
   deriveAttackBonusConsequent,

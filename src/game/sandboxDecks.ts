@@ -1,4 +1,4 @@
-import { DECK_SIZE, formatById, isBasicPokemon, savedDeckReasons } from "@colorless/engine";
+import { DECK_SIZE, formatById, isBasicPokemon, savedDeckReasons } from "@colorless/engine/rules";
 import type { Card, Deck as SavedDeck } from "@colorless/schema";
 import { ApiError, getDeck } from "../lib/api";
 import type { Deck } from "../decks/data";

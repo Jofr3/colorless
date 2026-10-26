@@ -1,11 +1,11 @@
-import { type AccountStatus, LuaAccount } from "./account";
+import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
 import { LuaOnline } from "./online";
-import { LuaSimulator } from "./simulator";
 import { LuaSandbox } from "./sandbox";
-import { launchSandbox } from "./sandboxLaunch";
+import { LazyScreen, type Screen } from "./lazyScreen";
 import { setSessionRecoveryHandler } from "../lib/api";
+import { reportError } from "../lib/reportError";
 import { ArtworkCache } from "./artworkCache";
 import type { ArtRequest } from "../host/bridgeProtocol";
 import { MAILBOXES } from "../host/mailboxes";
@@ -58,13 +58,21 @@ window.addEventListener("beforeunload", (event) => {
   }
 });
 const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
-const sandbox = new LuaSandbox(publishTo("sandbox"), (setup) =>
-  launchSandbox(setup, () => route("simulator")),
-);
+const sandbox = new LuaSandbox(publishTo("sandbox"), async (setup) => {
+  const { launchSandbox } = await import("./sandboxLaunch");
+  launchSandbox(setup, () => route("simulator"));
+});
 const online = new LuaOnline(publishTo("online"), route, { user: () => account.user });
-const simulator = new LuaSimulator(publishTo("simulator"), route, wantArt, (code) =>
-  online.matchSource(code),
-);
+// The game table and the rules engine behind it load when Lua first opens or asks about a table.
+const simulator = new LazyScreen(async () => {
+  const [{ LuaSimulator }, { LuaOnlineMatch }] = await Promise.all([
+    import("./simulator"),
+    import("./onlineTable"),
+  ]);
+  return new LuaSimulator(publishTo("simulator"), route, wantArt, (code) =>
+    online.matchSource(code, LuaOnlineMatch),
+  );
+}, screenLoadFailed);
 const account = new LuaAccount((snapshot) => {
   shell.accountChanged(snapshot);
   const status = account.status;
@@ -72,11 +80,6 @@ const account = new LuaAccount((snapshot) => {
   for (const screen of Object.values(screens)) screen.session?.(status, userId);
 });
 
-interface Screen {
-  command(raw: string): unknown;
-  /** Follows the signed-in user. */
-  session?(status: AccountStatus, userId: string): void;
-}
 /** Lua's `COLORLESS:<screen>:` commands and the account's session go to these adapters. */
 const screens: Record<BridgeScreen, Screen> = {
   library,
@@ -100,6 +103,20 @@ setSessionRecoveryHandler(async () => {
   await account.refresh();
   return account.status === "authenticated";
 });
+
+/** A screen chunk that will not load most likely went away with a deploy under this tab: reload
+ * onto the new build, at most once a minute so a broken build cannot loop. */
+function screenLoadFailed(error: unknown) {
+  reportError("load a screen", error);
+  const key = "colorless:screen-reload";
+  try {
+    if (Date.now() - Number(sessionStorage.getItem(key)) < 60_000) return;
+    sessionStorage.setItem(key, String(Date.now()));
+  } catch {
+    return;
+  }
+  location.reload();
+}
 
 function showPage(route: Route) {
   const deck =

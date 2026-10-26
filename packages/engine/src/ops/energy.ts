@@ -1,14 +1,13 @@
 import {
   cardOfUid,
   energyProvidesOf,
-  isBasicEnergy,
-  isBasicPokemon,
   isEnergyCard,
   isStage2Pokemon,
   matchesFilter,
   topCardOf,
   topUid,
 } from "../cards";
+import { isBasicEnergy, isBasicPokemon } from "../cardClasses";
 import {
   countEnergyInPlay,
   effectiveMaxHp,

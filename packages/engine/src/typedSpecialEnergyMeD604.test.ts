@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { isSpecialEnergy } from "./cards";
+import { isSpecialEnergy } from "./cardClasses";
 import {
   effectiveMaxHp,
   effectiveRetreatCost,

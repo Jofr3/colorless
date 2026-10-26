@@ -81,9 +81,8 @@ export default defineConfig(({ mode }) => {
       // a //# sourceMappingURL that exposes source in end-users' devtools.
       // public/.assetsignore keeps the maps out of the deployed assets.
       sourcemap: "hidden",
-      // The page has one module script, the bridge, and it bundles the whole
-      // rules engine for local play (~780 kB, ~195 kB gzipped). There is no
-      // other entry to split it against, so the default 500 kB warning is noise.
+      // The rules engine loads as one lazy chunk with the game table (~620 kB,
+      // ~150 kB gzipped); it splits no further, so the default 500 kB warning is noise.
       chunkSizeWarningLimit: 1000,
     },
   };

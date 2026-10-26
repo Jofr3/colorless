@@ -1,6 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { energyProvidesOf, isBasicEnergy, isSpecialEnergy, matchesFilter } from "./cards";
+import { energyProvidesOf, matchesFilter } from "./cards";
+import { isBasicEnergy, isSpecialEnergy } from "./cardClasses";
 import type { GameState } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";

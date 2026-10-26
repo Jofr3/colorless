@@ -1,4 +1,4 @@
-import { DECK_SIZE } from "@colorless/engine";
+import { DECK_SIZE } from "@colorless/engine/rules";
 import { DECK_NAME_MAX } from "@colorless/schema";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
