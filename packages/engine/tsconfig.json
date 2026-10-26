@@ -1,9 +1,16 @@
 {
+  // Composite, so the projects that import the engine read its declarations (built under
+  // dist/) instead of typechecking its source again.
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
     "resolveJsonModule": true,
-    "types": []
+    "types": [],
+    "composite": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["src", "package.json"],
+  "references": [{ "path": "../schema" }]
 }

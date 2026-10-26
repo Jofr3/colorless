@@ -54,6 +54,12 @@ only the conclusion.
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
   migrations, the API deploy and then the web deploy, in that order.
+- `tsc -b` checks the engine and the schema once: both are composite projects
+  that emit declarations into their ignored `dist/`, and the app, the api and
+  the scripts read them through project references, so an error in engine source
+  is reported by the engine project alone. CI caches the build info and those
+  declarations and backdates them on restore, so every project still compares
+  its sources by content.
 - `scripts/import-graph.ts --check` fails on any runtime import cycle other than
   the recorded `RECORDED_CYCLE` (flow, interpreter, ops/board, ops/energy,
   triggers: a program step can knock out, which runs triggers and the turn
