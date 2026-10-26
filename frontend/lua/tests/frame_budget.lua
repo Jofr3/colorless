@@ -78,17 +78,31 @@ check(idle['g.newCanvas']==0 and idle['g.newImage']==0,'An idle frame creates no
 -- An action that leaves both discard piles alone.
 Stub.reset()
 sim:sync((Snapshots.snapshot({revision=2})))
-atMost('action off the piles: new canvases',Stub.get('g.newCanvas'),4)
-atMost('action off the piles: decoded files',Stub.get('decode'),2)
+atMost('action off the piles: new canvases',Stub.get('g.newCanvas'),0)
+atMost('action off the piles: decoded files',Stub.get('decode'),0)
 frames(60)
 balanced('after an action')
 
 -- A new discard top repaints only that pile.
 Stub.reset()
 sim:sync((Snapshots.snapshot({revision=3,discard=1})))
-atMost('new discard top: new canvases',Stub.get('g.newCanvas'),4)
+atMost('new discard top: new canvases',Stub.get('g.newCanvas'),2)
 frames(60)
 balanced('after a discard')
+
+-- A card sliding to the discard holds the new pile back until it lands; a
+-- second snapshot during the slide keeps that waiting pile.
+sim:sync((Snapshots.snapshot({revision=31,discard=1,discarded=1})))
+check(sim.pendingPiles.you~=nil,'The discard pile waits for the sliding card')
+local waiting=sim.pendingPiles.you
+balanced('while a card slides to the discard')
+Stub.reset()
+sim:sync((Snapshots.snapshot({revision=32,discard=1,discarded=1})))
+check(sim.pendingPiles.you==waiting,'An unchanged waiting pile is kept')
+atMost('snapshot during a slide: new canvases',Stub.get('g.newCanvas'),0)
+frames(60)
+check(sim.pendingPiles.you==nil,'The waiting pile replaces the shown one when the card lands')
+balanced('after the slide')
 
 -- A resize empties every Canvas in love.js, so every face must be repainted.
 local before=Stub.generation

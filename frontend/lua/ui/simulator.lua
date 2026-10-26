@@ -541,12 +541,23 @@ function Simulator:placeCards(resize,previous)
       landing[(c.item.owner=='global' and 'you' or c.item.owner)]=true
     end
   end
+  -- A pile whose face would paint the same pixels keeps its canvas and only
+  -- takes the new count. A resize has emptied every canvas, so it rebuilds.
+  local function pile(old,item,zone,top)
+    local key=self:pileFace(item.kind,item.owner,top)
+    local p=old
+    if p and p.faceKey==key and not resize then p.item=item
+    else p=Pile.new(item,1);p.faceKey=key end
+    p:place(zone.x,zone.y,zone.scale,false,self.boardW);p.owner=item.owner;p.topItem=top
+    return p,p==old
+  end
   for _,owner in ipairs({'opponent','you'}) do
     local side=self.sides[owner]
     local zone=L.zones[prefix(owner)..'deck']
     if side and zone then
       local item={id=owner..'deck',owner=owner,kind='deck',count=side.deck,name='Deck',drawFace=function(w,h) self:drawBack(owner,w,h) end}
-      local p=Pile.new(item,1);p:place(zone.x,zone.y,zone.scale,false,self.boardW);p.owner=owner
+      local p,kept=pile(oldPiles[owner..':deck'],item,zone)
+      if kept then oldPiles[owner..':deck']=nil end
       self.piles[#self.piles+1]=p
     end
     local dzone=L.zones[prefix(owner)..'discard']
@@ -554,13 +565,16 @@ function Simulator:placeCards(resize,previous)
     for _,it in ipairs(self.items) do if it.owner==owner and it.zone=='discard' then top=it end end
     if side and dzone and top then
       local item={id=owner..'discard',owner=owner,kind='discard',count=math.max(1,side.discard),name='Discard',drawFace=function(w,h) self:face(top,w,h) end}
-      local p=Pile.new(item,1);p:place(dzone.x,dzone.y,dzone.scale,false,self.boardW);p.owner=owner;p.topItem=top
       if landing[owner] and not resize then
-        if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release() end
+        local pending=self.pendingPiles[owner]
+        local p,kept=pile(pending,item,dzone,top)
+        if pending and not kept then pending.texture:release() end
         self.pendingPiles[owner]=p
         local keep=oldPiles[owner..':discard']
         if keep then self.piles[#self.piles+1]=keep;oldPiles[owner..':discard']=nil end
       else
+        local p,kept=pile(oldPiles[owner..':discard'],item,dzone,top)
+        if kept then oldPiles[owner..':discard']=nil end
         self.piles[#self.piles+1]=p
         if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release();self.pendingPiles[owner]=nil end
       end
@@ -570,6 +584,16 @@ function Simulator:placeCards(resize,previous)
   end
   for _,p in pairs(oldPiles) do p.texture:release() end
   self:sortRows()
+end
+-- What a pile's canvas shows: the owner's card back, or the discard's top
+-- card with its scan.
+function Simulator:pileFace(kind,owner,top)
+  if kind=='deck' then
+    local seat=self.viewerSeat
+    if owner=='opponent' then seat=seat=='p1' and 'p2' or 'p1' end
+    return 'deck:'..seat
+  end
+  return 'discard:'..top.cardId..':'..tostring(top.hidden)..':'..tostring(self.art[top.cardId])
 end
 function Simulator:sortRows()
   table.sort(self.cards,function(a,b)
@@ -1129,7 +1153,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     local old=self.art;self.art=art
     for _,c in ipairs(self.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
     -- Discard piles paint their top card's scan, which can arrive after a reload.
-    for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild() end end
+    for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild();p.faceKey=self:pileFace(p.item.kind,p.owner,p.topItem) end end
     for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
     if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
   end

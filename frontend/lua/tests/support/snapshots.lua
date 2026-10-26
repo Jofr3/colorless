@@ -23,6 +23,7 @@ local row=Late.row
 Late.ART_IDS={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}
 
 -- `options.revision`, `options.matchId`, `options.discard` (top card offset),
+-- `options.discarded` (how many of your hand cards are now in the discard),
 -- `options.extra` (rows appended at the end).
 function Late.snapshot(options)
   options=options or {}
@@ -41,8 +42,9 @@ function Late.snapshot(options)
     out[#out+1]=row('S',W.side,{owner=owner,deck=20,prizes=4,hand=mine and 7 or 6,discard=25,mulligans=0})
     for i=0,mine and 6 or 5 do
       if mine then
-        out[#out+1]=row('C',W.card,{uid='you-h'..i,cardId=id(i),name='Hand Card '..i,owner=owner,zone='hand',index=i,hidden='false',
-          category='Trainer',trainerType='Item',draggable='true',displayIndex=i})
+        local gone=i<(options.discarded or 0)
+        out[#out+1]=row('C',W.card,{uid='you-h'..i,cardId=id(i),name='Hand Card '..i,owner=owner,zone=gone and 'discard' or 'hand',
+          index=gone and 25+i or i,hidden='false',category='Trainer',trainerType='Item',draggable='true',displayIndex=i})
       else
         out[#out+1]=row('C',W.card,{uid='opponent-hand-'..i,cardId='hidden',name='Face-down card',owner=owner,zone='hand',index=i,hidden='true',draggable='false',displayIndex=i})
       end
