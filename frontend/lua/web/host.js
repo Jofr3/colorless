@@ -1,17 +1,30 @@
+// @ts-check
 /* Boots love.js, writes Lua's mailbox files and loads card art. Everything else on the page is
    the bridge module's (src/lua/bridge.ts), which connects through window.colorlessHost. */
-const canvas = document.getElementById("canvas");
-const statusElement = document.getElementById("status");
-const loadingProgress = document.getElementById("loading-progress");
-const loadingFill = document.getElementById("loading-fill");
+
+/** @typedef {import("../../../src/host/bridgeProtocol").ColorlessBridge} ColorlessBridge */
+/** @typedef {import("../../../src/host/bridgeProtocol").ArtRequest} ArtRequest */
+
+/** @param {string} id */
+function element(id) {
+  const found = document.getElementById(id);
+  if (!found) throw new Error(`The host page has no #${id}.`);
+  return found;
+}
+const canvas = /** @type {HTMLCanvasElement} */ (element("canvas"));
+const loading = element("loading");
+const statusElement = element("status");
+const loadingProgress = element("loading-progress");
+const loadingFill = element("loading-fill");
 let loadingValue = 0;
+/** @param {number} value */
 function updateLoadingProgress(value) {
   loadingValue = Math.max(loadingValue, Math.min(100, value));
   loadingFill.style.width = `${loadingValue}%`;
   loadingProgress.setAttribute("aria-valuenow", String(Math.round(loadingValue)));
 }
 // Preserve browser reload shortcuts before SDL can consume their key events.
-for (const type of ["keydown", "keyup", "keypress"]) {
+for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
   window.addEventListener(
     type,
     (event) => {
@@ -22,14 +35,19 @@ for (const type of ["keydown", "keyup", "keypress"]) {
     true,
   );
 }
+/** @type {LoveRuntime | undefined} */
 let runtime;
 let ready = false;
 let settingsRequest = 0;
 let settingsTab = 1;
+/** @type {ColorlessBridge | undefined} */
 let bridge;
 // Mailboxes written before the runtime exists keep their latest text until preRun.
+/** @type {Map<string, string>} */
 const unwrittenMailboxes = new Map();
+/** @type {Set<string>} */
 const mailboxFiles = new Set();
+/** @param {string} name @param {string} text */
 function writeMailbox(name, text) {
   if (!runtime) {
     unwrittenMailboxes.set(name, text);
@@ -49,8 +67,8 @@ window.colorlessHost = {
   wantArt(cards) {
     wantedArt = cards;
     for (const c of [...wantedArt].reverse()) {
-      if (artCache.has(c.id)) {
-        const path = artCache.get(c.id);
+      const path = artCache.get(c.id);
+      if (path !== undefined) {
         artCache.delete(c.id);
         artCache.set(c.id, path);
       }
@@ -69,9 +87,12 @@ const preferenceDefaults = {
   effectsVolume: 100,
   muted: 0,
 };
-const preferenceKeys = Object.keys(preferenceDefaults);
+/** @typedef {keyof typeof preferenceDefaults} PreferenceKey */
+const preferenceKeys = /** @type {PreferenceKey[]} */ (Object.keys(preferenceDefaults));
+/** @type {Partial<Record<PreferenceKey, [number, number]>>} */
 const preferenceRanges = { reducedMotion: [-1, 1], bloom: [0, 1], muted: [0, 1] };
 let preferences = { ...preferenceDefaults };
+/** @param {Partial<Record<PreferenceKey, unknown>> | null | undefined} value */
 function validatedPreferences(value) {
   const result = { ...preferenceDefaults };
   for (const key of preferenceKeys) {
@@ -88,9 +109,10 @@ try {
   else preferences.muted = localStorage.getItem("colorless.lua.muted") === "1" ? 1 : 0;
 } catch (_) {}
 
+/** @param {string} message */
 function fail(message) {
   document.body.classList.add("failed");
-  document.getElementById("loading").style.display = "flex";
+  loading.style.display = "flex";
   statusElement.textContent = message;
 }
 function syncViewport() {
@@ -108,8 +130,10 @@ function syncViewport() {
 // build:lua replaces the empty object with each /love/ file's content hash;
 // the `?v=` it adds changes the URL whenever the bytes do, which is what lets
 // the deployed /love/ files be cached as immutable (public/_headers).
+/** @type {Record<string, string>} */
 const loveVersions = /* love-versions */ {};
-globalThis.Module = {
+/** @type {LoveModuleConfig} */
+const loveModule = {
   arguments: ["./"],
   // build:lua emits the runtime and game package under /love/ (public/love/).
   locateFile: (path) => `/love/${path}${loveVersions[path] ? `?v=${loveVersions[path]}` : ""}`,
@@ -133,7 +157,7 @@ globalThis.Module = {
     if (message === "COLORLESS:ready") {
       updateLoadingProgress(100);
       ready = true;
-      document.getElementById("loading").style.display = "none";
+      loading.style.display = "none";
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
@@ -154,7 +178,7 @@ globalThis.Module = {
       } catch (_) {}
       return;
     }
-    bridge.onPrint(message);
+    bridge?.onPrint(message);
   },
   printErr: (message) => {
     console.error(message);
@@ -173,6 +197,7 @@ globalThis.Module = {
     fail("The menu could not start. Reload to try again, or use the menu links.");
   },
 };
+globalThis.Module = loveModule;
 // Boot invariant: Love() starts on window load, after every classic script
 // (game package, runtime) and the deferred bridge module have run, so Lua's
 // first print finds the bridge connected. A bridge that failed to run would
@@ -183,7 +208,7 @@ addEventListener("load", () => {
     fail("Could not load the menu. Reload to try again.");
     return;
   }
-  Love(Module)
+  Love(loveModule)
     .then(() => {
       updateLoadingProgress(95);
       void prepareTransitionArt();
@@ -200,6 +225,7 @@ addEventListener("load", () => {
       fail("Could not load the menu. Reload to try again.");
     });
 });
+/** @type {ReturnType<typeof setTimeout> | undefined} */
 let resizeTimer;
 addEventListener("resize", () => {
   clearTimeout(resizeTimer);
@@ -220,7 +246,7 @@ canvas.addEventListener("webglcontextlost", (event) => {
   event.preventDefault();
   fail("Graphics connection lost. Reload to continue.");
 });
-document.getElementById("settings-link").addEventListener("click", (event) => {
+element("settings-link").addEventListener("click", (event) => {
   if (!ready || !runtime) return;
   event.preventDefault();
   settingsRequest++;
@@ -228,7 +254,7 @@ document.getElementById("settings-link").addEventListener("click", (event) => {
   syncViewport();
   canvas.focus({ preventScroll: true });
 });
-document.getElementById("account-link").addEventListener("click", (event) => {
+element("account-link").addEventListener("click", (event) => {
   if (!ready || !runtime) return;
   event.preventDefault();
   settingsRequest++;
@@ -247,14 +273,19 @@ addEventListener(
   true,
 );
 
-const artCache = new Map(),
-  artPending = new Set(),
-  artFailed = new Map();
+/** @type {Map<string, string>} */
+const artCache = new Map();
+/** @type {Set<string>} */
+const artPending = new Set();
+/** @type {Map<string, number>} */
+const artFailed = new Map();
 let artRevision = 0,
   artSerial = 0,
-  artActive = 0,
-  wantedArt = [];
+  artActive = 0;
+/** @type {readonly ArtRequest[]} */
+let wantedArt = [];
 function publishArt() {
+  if (!bridge) return;
   writeMailbox(
     bridge.mailboxes.art,
     [
@@ -265,13 +296,18 @@ function publishArt() {
 }
 // The full pool stays in IndexedDB. Stage one PNG for the next transition;
 // Lua acknowledges it only after retaining the image and border on the GPU.
-let transitionArt = null,
-  transitionArtSerial = 0,
-  transitionPreparing = null,
-  transitionConsuming = false;
+/** @type {{ token: number, id: string, path: string } | null} */
+let transitionArt = null;
+let transitionArtSerial = 0;
+/** @type {Promise<void> | null} */
+let transitionPreparing = null;
+let transitionConsuming = false;
+/** @returns {Promise<void>} */
 async function prepareTransitionArt() {
-  const cache = bridge.artwork;
-  if (!runtime || !cache || transitionArt || transitionConsuming) return;
+  const running = runtime;
+  const mailboxes = bridge?.mailboxes;
+  const cache = bridge?.artwork;
+  if (!running || !mailboxes || !cache || transitionArt || transitionConsuming) return;
   if (transitionPreparing) return transitionPreparing;
   transitionPreparing = (async () => {
     const selected = await cache.pick();
@@ -279,10 +315,10 @@ async function prepareTransitionArt() {
     const bytes = new Uint8Array(await selected.blob.arrayBuffer());
     const token = ++transitionArtSerial,
       path = `__transition_art_${token}.png`;
-    runtime.FS_createDataFile("/", path, bytes, true, true);
+    running.FS_createDataFile("/", path, bytes, true, true);
     transitionArt = { token, id: selected.id, path };
     writeMailbox(
-      bridge.mailboxes.transitionArt,
+      mailboxes.transitionArt,
       [token, selected.id, path].map(encodeURIComponent).join("\t"),
     );
   })()
@@ -292,29 +328,31 @@ async function prepareTransitionArt() {
     });
   return transitionPreparing;
 }
+/** @param {number} token @param {boolean} invalid */
 async function consumeTransitionArt(token, invalid) {
-  if (!transitionArt || transitionArt.token !== token) return;
+  if (!transitionArt || transitionArt.token !== token || !bridge) return;
   transitionConsuming = true;
   const selected = transitionArt;
   transitionArt = null;
   writeMailbox(bridge.mailboxes.transitionArt, "");
   try {
-    runtime.FS_unlink(`/${selected.path}`);
+    runtime?.FS_unlink(`/${selected.path}`);
   } catch {}
   const cache = bridge.artwork;
   try {
-    if (invalid) await cache?.remove(selected.id);
-    else await cache?.markShown(selected.id);
+    if (invalid) await cache.remove(selected.id);
+    else await cache.markShown(selected.id);
   } finally {
     transitionConsuming = false;
   }
   await prepareTransitionArt();
 }
+/** @param {ArtRequest} card */
 async function loadArt(card) {
   artActive++;
   artPending.add(card.id);
   try {
-    const cache = bridge.artwork;
+    const cache = bridge?.artwork;
     let blob = await cache?.get(card.id);
     if (!blob) {
       const response = await fetch(card.url);
@@ -325,18 +363,19 @@ async function loadArt(card) {
       const c = document.createElement("canvas");
       c.width = 272;
       c.height = 374;
-      c.getContext("2d").drawImage(bitmap, 0, 0, c.width, c.height);
+      c.getContext("2d")?.drawImage(bitmap, 0, 0, c.width, c.height);
       bitmap.close();
       blob = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
       if (blob && cache) void cache.put(card.id, blob).then(() => prepareTransitionArt());
     }
-    if (!runtime || !blob) throw Error("art");
+    const running = runtime;
+    if (!running || !blob) throw Error("art");
     const path = `__card_art_${++artSerial}.png`;
-    runtime.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
+    running.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
     artCache.set(card.id, path);
-    while (artCache.size > 96) {
-      const [id, old] = artCache.entries().next().value;
-      runtime.FS_unlink(`/${old}`);
+    for (const [id, old] of artCache) {
+      if (artCache.size <= 96) break;
+      running.FS_unlink(`/${old}`);
       artCache.delete(id);
     }
     publishArt();

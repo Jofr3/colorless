@@ -1,3 +1,4 @@
+// @ts-check
 import {
   cpSync,
   copyFileSync,
@@ -66,6 +67,7 @@ const assets = [
 try {
   for (const name of ["conf.lua", "main.lua", "ui", "assets"])
     cpSync(join(here, name), join(stage, name), { recursive: true });
+  /** @type {Record<string, string>} */
   const manifest = {};
   for (const name of [
     "colorless.png",
@@ -116,8 +118,10 @@ try {
   // its locateFile for love.wasm and game.js for game.data), then
   // versions.json lists every file for the Vite plugin that versions
   // index.html's own /love/ references (vite.config.ts).
+  /** @param {string} path */
   const shortHash = (path) =>
     createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 12);
+  /** @type {Record<string, string>} */
   const versions = {};
   for (const name of readdirSync(output).sort()) {
     if (!["host.js", "host.css", "versions.json"].includes(name))

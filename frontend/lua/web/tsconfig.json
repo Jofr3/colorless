@@ -1,0 +1,11 @@
+{
+  // The love.js host page script: a classic script, checked as JavaScript.
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["*.js", "*.d.ts", "../../../src/host/bridgeProtocol.d.ts"]
+}
