@@ -3,7 +3,9 @@
 // recorded actions through applyAction, redactGame (both seats), logFromEvents and the legality
 // probes a client makes, and times a cold import of the engine. Prints medians and a SHA-1 over
 // every state, event list, redaction and log row, so two builds can be checked for identical play.
-// Not part of `check`: timings depend on the machine and are never gated.
+// Not part of `check`: timings depend on the machine and are never gated. Every replay reuses the
+// recorded games' state objects, so the engine's per-game caches are warm, as in the browser
+// simulator; the lobby loads a fresh state for each action and gains less from them.
 //
 //   bun run bench [--games N] [--runs N] [--node] [--cpu-prof] [--json <file>]
 //

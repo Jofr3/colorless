@@ -47,11 +47,14 @@ interface Row {
   image_url: string | null;
 }
 
+// A copy of `normalizeSentinel` (apps/api/src/sentinel.ts) and `mapCardRow`
+// (apps/api/src/catalog/map.ts) over raw sqlite columns, since the API has no package entry: keep
+// them in step, or a regenerated pool differs from what the API serves.
 const sentinel = (v: string | null) =>
   v === null || v.trim().toLowerCase() === "none" || v.trim() === "" ? null : v;
 const json = (v: string | null) => (v === null ? null : JSON.parse(v));
 
-/** The face the API serves for a row (`mapCardRow`). */
+/** The face the API serves for a row. */
 function cardOf(r: Row): Card {
   return {
     id: r.id,

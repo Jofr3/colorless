@@ -224,7 +224,9 @@ only the conclusion.
   cold engine import, as medians. `--node` runs it under V8, `--cpu-prof` writes a profile to
   `tmp/bench/`. Its `fingerprint` hashes every state, event list, redaction and log row: a pure
   performance change must leave it identical, and any rules change moves it. It is not part of
-  `check` and nothing gates on its timings.
+  `check` and nothing gates on its timings. Its replays reuse the recorded games' state objects, so
+  `FACES_BY_UID` and `OWNER_BOUND_POOLS` are warm, as in the browser simulator; the lobby loads a fresh state
+  per action and gains less from them.
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
   234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;
