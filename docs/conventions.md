@@ -81,7 +81,8 @@ only the conclusion.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
-  regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` to match.
+  regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` and
+  `frontend/lua/tests/sim_model.lua` to match.
 - **The Lua mailbox rows are declared once** (`src/lua/wireFields.ts` `WIRE_ROWS`): each row kind's
   tag(s) and field order, `as const`. Emitters build a record and encode it with `wireRow`, so a
   missing or extra field fails to compile. `bun scripts/lua-constants.ts` turns the table into

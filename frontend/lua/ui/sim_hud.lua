@@ -45,6 +45,10 @@ function Hud:bottomLayout(L)
     gridX=x+1.9*unit,gridY=y+(height-statsH)*unit/2,
     gridW=3.03*unit,cellW=1.45*unit,cellH=cellH*unit,gap=0.13*unit}
 end
+-- sync, draw and seatColour take the simulator and only read it: phase,
+-- gamePhase, outcome, turn, you, opponent, viewerSeat, activePlayer, waiting,
+-- mode, title, hint, sides, items, actions, allow, targeting, luaTargeting,
+-- reduced and L.
 function Hud.new(callbacks)
   local self=setmetatable({},Hud)
   self.callbacks=callbacks or {}

@@ -166,6 +166,8 @@ function Layout.benchPositions(zone,items)
   end
   return positions
 end
+-- Zone names carry the owner: 'you_bench', 'opp_bench', the shared 'stadium'.
+function Layout.prefix(owner) return owner=='opponent' and 'opp_' or owner=='global' and '' or 'you_' end
 function Layout.inside(rect,x,y)
   return rect and x>=rect.x and x<=rect.x+rect.w and y>=rect.y and y<=rect.y+rect.h
 end
