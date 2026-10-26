@@ -63,8 +63,9 @@ export type LobbyIntent =
 /** Everything that can travel over a lobby channel. `from` is the sender's
     player id so the host can bind messages to the right seat. */
 export type LobbyMessage =
-  /** guest → host: request to join, or re-announce after a reconnect. */
-  | { kind: "hello"; from: string; name: string }
+  /** guest → host: request to join, or re-announce after a reconnect. `logDeltas` says the client
+      takes `match` frames that carry only the log's new entries. */
+  | { kind: "hello"; from: string; name: string; logDeltas?: boolean }
   /** host → all: the authoritative snapshot after any change. */
   | { kind: "state"; snapshot: LobbySnapshot }
   /** server → one client: that client's REDACTED view of the in-game match
@@ -73,8 +74,10 @@ export type LobbyMessage =
       and on reconnect. `log` is the accumulated game log (seat-keyed, leak-safe,
       so IDENTICAL for both viewers — the client relabels `who` for its own seat);
       it rides here because the log outlives any single snapshot and can't be
-      rebuilt from `game`'s current state alone. */
-  | { kind: "match"; game: RedactedGame; log: SeatLogEntry[] }
+      rebuilt from `game`'s current state alone. With `logFrom`, `log` holds only the entries from
+      that index on; only a socket whose hello set `logDeltas` gets one. Without it, `log` is the
+      whole log. */
+  | { kind: "match"; game: RedactedGame; log: SeatLogEntry[]; logFrom?: number }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
   /** client → server: a game action for the running match (P4). The DO binds it

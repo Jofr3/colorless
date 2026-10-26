@@ -24,10 +24,12 @@ import { resolveUserIdFromCookie } from "../auth/resolveSession";
 import {
   attachedPlayer,
   attachedUserId,
+  attachLogDeltas,
   attachPlayer,
   attachSpectator,
   attachUserId,
   isSpectating,
+  takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
@@ -235,6 +237,7 @@ export class LobbyDO {
     frame: ClientFrame<"hello">,
     snapshot: LobbySnapshot | null,
   ): Promise<void> {
+    attachLogDeltas(ws, frame.logDeltas === true);
     const decision = helloDecision(snapshot, frame.from);
     if (decision === "reject-full") return await this.refuseSeat(ws, frame.from);
     // Seat authentication (3a-sec): once a playerId is claimed by an account,
@@ -334,7 +337,7 @@ export class LobbyDO {
       return;
     }
     await this.state.storage.put(MATCH_KEY, outcome.record);
-    this.broadcastMatch(outcome.record, snapshot);
+    this.broadcastMatch(outcome.record, snapshot, { logFrom: record.log.length });
   }
 
   private async onReject(
@@ -748,11 +751,18 @@ export class LobbyDO {
   /**
    * Send each socket its own redacted view of the match, plus the shared seat-keyed log. `only`
    * targets one socket; otherwise all live sockets. Unseated non-spectators are skipped.
+   * `logFrom` is the log length every socket already holds: a socket that takes log deltas gets
+   * only the entries after it, and every other socket the whole log.
    */
-  private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
+  private broadcastMatch(
+    record: MatchRecord,
+    snapshot: LobbySnapshot,
+    { only, logFrom }: { only?: WebSocket; logFrom?: number } = {},
+  ): void {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = this.viewerOf(ws, snapshot);
-      if (viewer !== null) this.send(ws, matchFrameFor(record, viewer));
+      if (viewer === null) continue;
+      this.send(ws, matchFrameFor(record, viewer, takesLogDeltas(ws) ? logFrom : undefined));
     }
   }
 
@@ -772,7 +782,7 @@ export class LobbyDO {
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
     const load = await this.loadOrMigrateMatch();
-    if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, ws);
+    if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, { only: ws });
     else if (load.kind === "stale") await this.retireStaleMatch();
   }
 
@@ -794,7 +804,7 @@ export class LobbyDO {
     // (a browser run caught exactly this: their board read "Host vs Guest"). It
     // carries nothing private; it is the same frame both players already hold.
     this.send(ws, { kind: "state", snapshot });
-    this.broadcastMatch(load.record, snapshot, ws);
+    this.broadcastMatch(load.record, snapshot, { only: ws });
   }
 
   /**
@@ -808,7 +818,7 @@ export class LobbyDO {
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
     await this.state.storage.put(MATCH_KEY, outcome.record);
-    this.broadcastMatch(outcome.record, snapshot);
+    this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
   }
 
   /**

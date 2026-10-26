@@ -4,6 +4,7 @@ import {
   LOBBY_WS_PONG,
   type LobbyClientMessage,
   type LobbyIntent,
+  type LobbyServerMessage,
   type LobbySnapshot,
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -250,6 +251,114 @@ describe("LobbyDO — match actions", () => {
 
     await h.send(watcher, { kind: "action", action: { type: "concede" } });
     expect(storedMatch()).toEqual(record);
+  });
+});
+
+describe("LobbyDO — log deltas", () => {
+  const deltaHello = (from: string): LobbyClientMessage => ({
+    kind: "hello",
+    from,
+    name: `anon-${from}`,
+    logDeltas: true,
+  });
+
+  /** A started match whose host announced log deltas and whose guest is an older client. */
+  async function mixedMatch() {
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, deltaHello("h"));
+    const guest = await h.connect("bo");
+    await h.send(guest, hello("g"));
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    return { host, guest };
+  }
+
+  /** The log a client holds after applying `frames` in order, as the web client does. */
+  function heldLog(frames: readonly LobbyServerMessage[]): MatchRecord["log"] {
+    let log: MatchRecord["log"] = [];
+    for (const frame of frames) {
+      if (frame.kind !== "match") continue;
+      if (frame.logFrom !== undefined && frame.logFrom !== log.length) throw new Error("gap");
+      log = frame.logFrom === undefined ? frame.log : [...log, ...frame.log];
+    }
+    return log;
+  }
+
+  it("sends the full log at the handoff, then only new entries to a socket that asked", async () => {
+    const { host, guest } = await mixedMatch();
+    const start = storedMatch();
+    expect(host.last("match")).toEqual(matchFrameFor(start, "p1"));
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    const after = storedMatch();
+    expect(after.log.length).toBeGreaterThan(start.log.length);
+    expect(host.last("match")).toEqual(matchFrameFor(after, "p1", start.log.length));
+    expect(host.last("match")?.logFrom).toBe(start.log.length);
+    expect(heldLog(host.sent)).toEqual(after.log);
+  });
+
+  it("keeps sending the whole log to a socket that did not ask", async () => {
+    const { guest } = await mixedMatch();
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    const frame = guest.last("match");
+    expect(frame).toEqual(matchFrameFor(storedMatch(), "p2"));
+    expect(frame).not.toHaveProperty("logFrom");
+  });
+
+  it("sends a forfeit as a delta too", async () => {
+    const { host, guest } = await mixedMatch();
+    const start = storedMatch();
+    await h.send(guest, { kind: "bye", from: "g", slot: "guest" });
+    expect(storedMatch().state.phase.kind).toBe("gameOver");
+    expect(host.last("match")?.logFrom).toBe(start.log.length);
+    expect(heldLog(host.sent)).toEqual(storedMatch().log);
+  });
+
+  it("sends the full log to a socket that reconnects mid-match", async () => {
+    const { host, guest } = await mixedMatch();
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    await h.drop(host);
+    const back = await h.connect("ana");
+    await h.send(back, deltaHello("h"));
+    expect(back.framesOf("match")).toEqual([matchFrameFor(storedMatch(), "p1")]);
+  });
+
+  it("answers a repeated hello on the same socket with the full log", async () => {
+    const { host } = await mixedMatch();
+    await h.send(host, deltaHello("h"));
+    expect(host.last("match")).toEqual(matchFrameFor(storedMatch(), "p1"));
+  });
+
+  it("gives a spectator the full log on arrival and deltas after", async () => {
+    const { guest } = await mixedMatch();
+    const watcher = await h.connect("eve");
+    await h.send(watcher, deltaHello("w"));
+    const start = storedMatch();
+    expect(watcher.last("match")).toEqual(matchFrameFor(start, "spectator"));
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    expect(watcher.last("match")).toEqual(
+      matchFrameFor(storedMatch(), "spectator", start.log.length),
+    );
+  });
+
+  it("starts a rematch with the full log", async () => {
+    const { host, guest } = await mixedMatch();
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    await h.send(guest, { kind: "rematch", from: "g" });
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    expect(host.last("match")).toEqual(matchFrameFor(storedMatch(), "p1"));
+  });
+
+  it("remembers which socket asked across hibernation", async () => {
+    const { host, guest } = await mixedMatch();
+    const start = storedMatch();
+    h.hibernate();
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    expect(host.last("match")?.logFrom).toBe(start.log.length);
+    expect(guest.last("match")).toEqual(matchFrameFor(storedMatch(), "p2"));
   });
 });
 

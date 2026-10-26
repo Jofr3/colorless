@@ -185,8 +185,9 @@ export interface MatchRecord {
   /** The engine's full game state — never sent whole to a client (online.md). */
   state: GameState;
   /** The accumulated game log, seat-keyed + leak-safe (@colorless/engine
-      `logFromEvents`). Grows as actions apply; the DO broadcasts it WHOLE on every
-      match frame (a reconnect gets the full backlog), and each client relabels it
+      `logFromEvents`). Grows as actions apply; a socket that announced log deltas
+      gets only the new entries after an action, every other frame carries it whole
+      (a reconnect gets the full backlog), and each client relabels it
       for its own seat (`viewLogEntries`). It can't be rebuilt from `state` — it is
       the running record of every event since createGame — so it is persisted here
       beside the state it describes. */
@@ -395,14 +396,17 @@ const SPECTATOR_SIDE = SEAT_OF_SLOT.host;
 /**
  * The `match` frame `viewer` receives: the board redacted for their seat, or the seatless
  * redaction for a spectator, plus the shared seat-keyed log, which is leak-safe for every viewer.
+ * With `logFrom`, the frame carries only the log entries from that index on.
  */
 export function matchFrameFor(
   record: MatchRecord,
   viewer: MatchViewer,
+  logFrom?: number,
 ): Extract<LobbyServerMessage, { kind: "match" }> {
   const game =
     viewer === "spectator"
       ? redactGame(record.state, SPECTATOR_SIDE, true)
       : redactGame(record.state, viewer);
-  return { kind: "match", game, log: record.log };
+  if (logFrom === undefined) return { kind: "match", game, log: record.log };
+  return { kind: "match", game, log: record.log.slice(logFrom), logFrom };
 }

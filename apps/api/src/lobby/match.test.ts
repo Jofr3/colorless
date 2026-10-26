@@ -704,4 +704,18 @@ describe("matchFrameFor — the per-viewer match frame", () => {
     expect(frame.game.seat).toBe("p1");
     expect(frame.game).not.toEqual(matchFrameFor(record, "p1").game);
   });
+
+  it("carries only the entries from `logFrom` on, and says where they start", () => {
+    const record = dealtRecord();
+    expect(record.log.length).toBeGreaterThan(2);
+    const frame = matchFrameFor(record, "p2", 2);
+    expect(frame).toStrictEqual({
+      kind: "match",
+      game: redactGame(record.state, "p2"),
+      log: record.log.slice(2),
+      logFrom: 2,
+    });
+    expect(matchFrameFor(record, "spectator", record.log.length).log).toEqual([]);
+    expect(Object.keys(matchFrameFor(record, "p2"))).not.toContain("logFrom");
+  });
 });

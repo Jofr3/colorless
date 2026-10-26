@@ -70,6 +70,7 @@ const helloMessageSchema = z.object({
   kind: z.literal("hello"),
   from: z.string(),
   name: z.string(),
+  logDeltas: z.boolean().optional(),
 });
 const stateMessageSchema = z.object({
   kind: z.literal("state"),
@@ -79,6 +80,7 @@ const matchMessageSchema = z.object({
   kind: z.literal("match"),
   game: redactedGameSchema,
   log: z.array(seatLogEntrySchema),
+  logFrom: z.number().int().nonnegative().optional(),
 });
 const intentMessageSchema = z.object({
   kind: z.literal("intent"),

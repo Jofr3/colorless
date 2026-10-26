@@ -51,7 +51,7 @@ describe("LobbyClient", () => {
     expect(client.state.snapshot?.host.id).toBe("h");
     expect(client.self?.id).toBe("h");
     expect(client.opponent).toBeNull();
-    expect(posts).toEqual([{ kind: "hello", from: "h", name: "Host" }]);
+    expect(posts).toEqual([{ kind: "hello", from: "h", name: "Host", logDeltas: true }]);
   });
 
   it("a guest adopts only a state that seats it", () => {
@@ -151,6 +151,52 @@ describe("LobbyClient", () => {
     expect(client.state.matchLog).toEqual([a, b]);
     push({ kind: "state", snapshot: snap() });
     expect(client.state).toMatchObject({ match: null, matchLog: [] });
+  });
+
+  it("appends a log delta that continues the held log", () => {
+    const { client, push, kinds } = make("host");
+    push({ kind: "state", snapshot: snap({ phase: "in-game" }) });
+    const a = { kind: "turn", turn: 1 } as const;
+    const b = { kind: "turn", turn: 2 } as const;
+    const c = { kind: "turn", turn: 3 } as const;
+    push({ kind: "match", game, log: [a] });
+    const next = { ...game, turn: 2 } as RedactedGame;
+    push({ kind: "match", game: next, log: [b, c], logFrom: 1 });
+    expect(client.state.matchLog).toEqual([a, b, c]);
+    expect(client.state.match).toBe(next);
+    push({ kind: "match", game, log: [], logFrom: 3 });
+    expect(client.state.matchLog).toEqual([a, b, c]);
+    push({ kind: "match", game, log: [a], logFrom: 0 });
+    expect(client.state.matchLog).toEqual([a, b, c]);
+    expect(kinds().filter((k) => k === "hello")).toHaveLength(2);
+  });
+
+  it("drops a delta past the held log and says hello for a full frame", () => {
+    const { client, push, posts } = make("host");
+    push({ kind: "state", snapshot: snap({ phase: "in-game" }) });
+    const a = { kind: "turn", turn: 1 } as const;
+    const c = { kind: "turn", turn: 3 } as const;
+    push({ kind: "match", game, log: [a] });
+    const sent = posts.length;
+    const skipped = { ...game, turn: 3 } as RedactedGame;
+    push({ kind: "match", game: skipped, log: [c], logFrom: 2 });
+    expect(client.state.matchLog).toEqual([a]);
+    expect(client.state.match).toBe(game);
+    expect(posts.slice(sent)).toEqual([
+      { kind: "hello", from: "h", name: "Host", logDeltas: true },
+    ]);
+    push({ kind: "match", game: skipped, log: [a, a, c] });
+    expect(client.state.matchLog).toEqual([a, a, c]);
+  });
+
+  it("a spectator resyncs a gap the same way", () => {
+    const { client, push, kinds } = make("guest", "z");
+    push({ kind: "reject", to: "z", reason: "full" });
+    push({ kind: "match", game, log: [] });
+    const sent = kinds().length;
+    push({ kind: "match", game, log: [{ kind: "turn", turn: 2 }], logFrom: 1 });
+    expect(client.state.matchLog).toEqual([]);
+    expect(kinds().slice(sent)).toEqual(["hello"]);
   });
 
   it("publishes an immutable state per change", () => {

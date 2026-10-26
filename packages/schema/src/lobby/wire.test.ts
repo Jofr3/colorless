@@ -224,6 +224,11 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     });
     expect(parsed).toEqual({ kind: "hello", from: "g1", name: "Bo" });
   });
+
+  it("keeps a hello's log-delta announcement", () => {
+    const hello = { kind: "hello", from: "g1", name: "Bo", logDeltas: true };
+    expect(lobbyClientMessageSchema.parse(hello)).toEqual(hello);
+  });
 });
 
 describe("lobbyServerMessageSchema (what clients receive)", () => {
@@ -254,6 +259,14 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
     expect(
       lobbyServerMessageSchema.parse({ kind: "match", game: MATCH_GAME, log: MATCH_LOG }),
     ).toEqual({ kind: "match", game: MATCH_GAME, log: MATCH_LOG });
+  });
+
+  it("carries a log delta's start index, which must be a whole count", () => {
+    const delta = { kind: "match", game: MATCH_GAME, log: MATCH_LOG, logFrom: 4 };
+    expect(lobbyServerMessageSchema.parse(delta)).toEqual(delta);
+    for (const logFrom of [-1, 1.5]) {
+      expect(lobbyServerMessageSchema.safeParse({ ...delta, logFrom }).success).toBe(false);
+    }
   });
 
   it("refuses a match frame with no log (the field is required)", () => {
