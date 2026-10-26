@@ -81,7 +81,7 @@ function freshSetup(): LocalGameSetup {
 }
 
 describe("initHost / hostReducer", () => {
-  it("holds the pre-toss snapshot, blocks actions, and only releases the matching dice batch", () => {
+  it("applies a coin-flipping play at once, its coins riding the new rows' cues", () => {
     const deck = deckOf({ "fix-basic-1": 30, "sv01-168": 20, "fix-fire-energy": 10 });
     const state = attachFromDeck(
       handFromDeck(driveSetup(7, { p1: deck, p2: deck }, { first: "p1" }), "p1", "sv01-168", 1),
@@ -94,25 +94,14 @@ describe("initHost / hostReducer", () => {
       action: { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", "sv01-168") },
       at: 1000,
     });
-    expect(tossing.coinFlipBatch).not.toBeNull();
-    expect(tossing.coinFlipPresentation).toEqual({
-      game: initial.game,
-      log: initial.log,
-      viewerSeat: initial.viewerSeat,
-    });
     expect(tossing.game).not.toBe(initial.game);
-    expect(hostReducer(tossing, { type: "previousTurn" })).toBe(tossing);
-    expect(hostReducer(tossing, { action: { type: "endTurn", seat: "p1" }, at: 2000 })).toBe(
-      tossing,
-    );
-    expect(hostReducer(tossing, { type: "finishCoinFlip", id: -1 })).toBe(tossing);
-    const id = tossing.coinFlipBatch?.id;
-    if (id === undefined) throw new Error("missing dice batch");
-    const complete = hostReducer(tossing, { type: "finishCoinFlip", id });
-    expect(complete.coinFlipPresentation).toBeNull();
-    expect(complete.game).toBe(tossing.game);
-    expect(complete.log).toBe(tossing.log);
-    expect(hostReducer(complete, { type: "finishCoinFlip", id })).toBe(complete);
+    const cues = tossing.log
+      .slice(initial.log.length)
+      .flatMap((e) => (e.kind === "action" ? (e.cues ?? []) : []));
+    expect(cues.filter((c) => c.kind === "coin")).not.toEqual([]);
+    const next = hostReducer(tossing, { action: { type: "endTurn", seat: "p1" }, at: 2000 });
+    expect(next.lastError).toBeNull();
+    expect(next.game.turn).toBe(tossing.game.turn + 1);
   });
 
   it("rewinds to a turn's start and returns to the complete latest position", () => {

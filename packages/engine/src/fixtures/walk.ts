@@ -1,5 +1,5 @@
 import type { EffectChoice, EffectPrompt, PokemonRef } from "../effectPrompt";
-import type { GameAction, GameState, PokemonTarget, Seat } from "../index";
+import type { GameAction, GameEvent, GameState, PokemonTarget, Seat } from "../index";
 import { SEATS, applyAction, cardOfUid, programFor, topUid } from "../index";
 import { randomIndex, shuffle } from "../rng";
 
@@ -241,6 +241,8 @@ export interface WalkOptions {
   maxSteps?: number;
   /** Accepted actions within one turn before the walk ends it whenever it can. */
   turnBudget?: number;
+  /** Called on every accepted action with the state it applied to and what it produced. */
+  onStep?: (before: GameState, action: GameAction, events: GameEvent[], after: GameState) => void;
 }
 
 /**
@@ -281,10 +283,12 @@ export function walkGame(
     for (const action of order) {
       const result = applyAction(state, action);
       if (result.ok) {
+        opts.onStep?.(state, action, result.events, result.state);
         next = result.state;
         break;
       }
     }
+
     if (next === undefined) return state;
     state = next;
     inTurn += 1;

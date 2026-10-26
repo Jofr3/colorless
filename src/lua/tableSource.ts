@@ -2,30 +2,25 @@ import {
   applyAction,
   cardOfUid,
   createGame,
-  DECK_SIZE,
+  deckCardIdsOf,
   otherSeat,
   redactGame,
   type GameAction,
   type GameState,
-  type PokemonRef,
   type Seat,
 } from "@colorless/engine";
 import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@colorless/schema";
 import { initHost, hostReducer, stepTarget, type LocalGameSetup } from "../game/localHost";
-import { projectGameState } from "../game/projection";
-import type { CoinFlipBatch } from "../game/coinFlips";
-import type { BoardState } from "../game/board";
-import { saveSimulator, loadSimulatorSave } from "../game/simulatorSave";
 
-/** Diffs of the last `send`, read once by the simulator right after it. */
-export interface TableEvents {
-  knockedOut: readonly string[];
-  /** Seats whose deck or hand was shuffled. */
-  shuffled: readonly Seat[];
-  coin: CoinFlipBatch | null;
-  /** The Adrena-Brain source just picked, so its destination menu keeps it raised. */
-  counterSource?: PokemonRef;
-}
+import { saveSimulator, loadSimulatorSave } from "../game/simulatorSave";
+import {
+  autoStepFor,
+  counterSourcePicked,
+  eventsFromLog,
+  NO_EVENTS,
+  type TableEvents,
+} from "./tableEvents";
+
 export type LifecycleFlag =
   | "undo"
   | "newgame"
@@ -59,9 +54,7 @@ export interface TableSource {
   allowances(): { energy: boolean; supporter: boolean; retreated: boolean } | null;
   /** Cosmetic bench order key: the bottom of the stack, so evolving keeps its place. */
   benchKey(owner: "you" | "opponent", index: number): string;
-  /** The board drags are translated against (moveToAction). */
-  board(): BoardState;
-  effectContext(): { placingCounters: boolean; invokedBy?: string; abilityName?: string };
+
   takeEvents(): TableEvents;
   lifecycle(): TableLifecycle;
   subscribe(onChange: () => void): () => void;
@@ -76,7 +69,6 @@ export type HistoryStep =
   | "redoAction"
   | "undoTurn"
   | "redoTurn";
-const NO_EVENTS: TableEvents = { knockedOut: [], shuffled: [], coin: null };
 
 /** The hot-seat game: today's local host, with save, undo and auto-steps. */
 export class LocalTableSource implements TableSource {
@@ -88,9 +80,14 @@ export class LocalTableSource implements TableSource {
   constructor(setup: LocalGameSetup) {
     this.host = initHost(setup);
   }
+  private seen: { game: GameState; seat: Seat; view: RedactedGame } | null = null;
   view() {
-    return redactGame(this.host.game, this.host.viewerSeat);
+    const { game, viewerSeat } = this.host;
+    if (this.seen?.game !== game || this.seen.seat !== viewerSeat)
+      this.seen = { game, seat: viewerSeat, view: redactGame(game, viewerSeat) };
+    return this.seen.view;
   }
+
   names() {
     const h = this.host;
     return { you: h.names[h.viewerSeat], opponent: h.names[otherSeat(h.viewerSeat)] };
@@ -111,38 +108,22 @@ export class LocalTableSource implements TableSource {
     return applyAction(this.host.game, action).ok;
   }
   send(action: GameAction) {
+    const counterSource = counterSourcePicked(this.view(), action);
     const beforeGame = this.host.game;
     const before = this.host.log.length;
     this.before = beforeGame;
     this.host = hostReducer(this.host, { action, at: Date.now() });
-    const knockedOut = this.host.knockedOut;
-    const seats = new Set<Seat>();
-    for (const e of this.host.log.slice(before)) {
-      if (e.kind !== "action" || e.who === "system") continue;
-      const text = e.segments.map((s) => s.text).join("");
-      if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
-        seats.add(e.who);
-    }
-    const coin = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
-    // The Lua coin overlay presents the flips, so settle them immediately.
-    if (this.host.coinFlipPresentation && this.host.coinFlipBatch) {
-      this.host = hostReducer(this.host, {
-        type: "finishCoinFlip",
-        id: this.host.coinFlipBatch.id,
-      });
-    }
+    const { knockedOut, shuffled, coin } = eventsFromLog(
+      this.host.log.slice(before),
+      (seat) => this.host.names[seat],
+    );
+    // A Trainer flip-locked to tails is discarded unplayed, so only the action still names it.
+    const trainer = action.type === "playTrainer" ? cardOfUid(beforeGame, action.uid) : undefined;
     this.events = {
       knockedOut,
-      shuffled: [...seats],
-      coin,
-      counterSource:
-        beforeGame.phase.kind === "effect:choose" &&
-        beforeGame.phase.cont.pendingOp.op === "moveCountersToOpponentChosen" &&
-        beforeGame.phase.cont.pendingOp.from === undefined &&
-        action.type === "resolveEffect" &&
-        action.choice.kind === "pokemon"
-          ? action.choice.ref
-          : undefined,
+      shuffled,
+      coin: coin && trainer ? { ...coin, title: trainer.name } : coin,
+      counterSource,
     };
   }
   allowances() {
@@ -154,20 +135,7 @@ export class LocalTableSource implements TableSource {
     const seat = owner === "you" ? h.viewerSeat : otherSeat(h.viewerSeat);
     return h.game.players[seat].bench[index]?.stack[0] ?? "";
   }
-  board() {
-    return projectGameState(this.host.game, this.host.viewerSeat).board;
-  }
-  effectContext() {
-    const game = this.host.game;
-    if (game.phase.kind !== "effect:choose") return { placingCounters: false };
-    const { pendingOp, ctx } = game.phase.cont;
-    const abilities = ctx?.sourceUid ? cardOfUid(game, ctx.sourceUid)?.abilities : null;
-    return {
-      placingCounters: pendingOp?.op === "damageChosen" && pendingOp.deals !== true,
-      invokedBy: ctx?.invokedBy,
-      abilityName: abilities?.length === 1 ? abilities[0]?.name : undefined,
-    };
-  }
+
   takeEvents() {
     const events = this.events;
     this.events = NO_EVENTS;
@@ -229,16 +197,10 @@ export class LocalTableSource implements TableSource {
   /** The same decks reshuffled into a fresh game. */
   nextGame(): { ok: true; setup: LocalGameSetup } | { ok: false; message: string } {
     const h = this.host;
-    // createGame assigns p1#0..59 / p2#0..59 once. This immutable mapping
-    // retains the full original decks, including cards moved out of play.
-    const deck = (seat: Seat) =>
-      Array.from({ length: DECK_SIZE }, (_, i) => h.game.cardIdByUid[`${seat}#${i}`]).filter(
-        (id): id is string => id !== undefined,
-      );
     const startedAt = Math.max(Date.now(), h.startedAt + 1);
     const created = createGame({
       seed: startedAt,
-      decks: { p1: deck("p1"), p2: deck("p2") },
+      decks: { p1: deckCardIdsOf(h.game, "p1"), p2: deckCardIdsOf(h.game, "p2") },
       cardPool: h.game.cardPool,
     });
     if (!created.ok) return { ok: false, message: created.error.message };
@@ -250,60 +212,26 @@ export class LocalTableSource implements TableSource {
   /** Mulligan draws and Prize picks the hot seat takes for the player. True when
    * anything stepped (the caller saves). */
   autoSteps() {
-    const drawn = this.drawMulligans();
-    const taken = this.takePrizes();
+    const drawn = this.stepWhile("setup:drawExtra");
+    const taken = this.stepWhile("ko:takePrizes");
     return drawn || taken;
   }
-  private takePrizes() {
-    let taken = false;
-    while (this.host.game.phase.kind === "ko:takePrizes") {
-      const h = this.host;
-      const phase = h.game.phase;
-      if (phase.kind !== "ko:takePrizes") break;
-      const next = hostReducer(h, {
-        action: {
-          type: "takePrizes",
-          seat: phase.seat,
-          prizeIndices: Array.from(
-            { length: phase.count },
-            (_, i) => h.game.players[phase.seat].prizes.length - 1 - i,
-          ),
-        },
-        at: Date.now(),
-      });
-      if (next.lastError || next.game === h.game) break;
+  private stepWhile(kind: "setup:drawExtra" | "ko:takePrizes") {
+    let stepped = false;
+    while (this.host.game.phase.kind === kind) {
+      const action = autoStepFor(this.view());
+      if (!action) break;
+      const next = hostReducer(this.host, { action, at: Date.now() });
+      if (next.lastError || next.game === this.host.game) break;
       this.host = next;
-      taken = true;
+      stepped = true;
     }
-    if (taken) {
-      // Prize-taking belongs to the KO that caused it. Undo/redo must not
-      // land on a pending automatic pick and immediately perform it again.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "ko:takePrizes");
+    if (stepped) {
+      // An automatic step belongs to the decision that caused it. History must not
+      // land on a pending one, which would perform it again and drop the redo branch.
+      const steps = this.host.steps.filter((step) => step.game.phase.kind !== kind);
       this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
     }
-    return taken;
-  }
-  private drawMulligans() {
-    let drawn = false;
-    while (this.host.game.phase.kind === "setup:drawExtra") {
-      const h = this.host;
-      const phase = h.game.phase;
-      if (phase.kind !== "setup:drawExtra") break;
-      const seat = h.viewerSeat;
-      const next = hostReducer(h, {
-        action: { type: "setupDrawExtra", seat, count: phase.owed[seat] },
-        at: Date.now(),
-      });
-      if (next.lastError || next.game === h.game) break;
-      this.host = next;
-      drawn = true;
-    }
-    if (drawn) {
-      // Treat the automatic draws as part of completing setup. History must
-      // not land on a pending draw and discard its recorded redo branch.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "setup:drawExtra");
-      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
-    }
-    return drawn;
+    return stepped;
   }
 }

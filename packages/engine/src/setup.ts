@@ -58,6 +58,18 @@ function createErr(code: CreateErrorCode, message: string): CreateGameResult {
   return { ok: false, error: { code, message } };
 }
 
+const deckUid = (seat: Seat, index: number) => `${seat}#${index}`;
+
+/** The card ids `seat`'s deck list was created from, in list order, wherever the cards are now. */
+export function deckCardIdsOf(state: GameState, seat: Seat): string[] {
+  const ids: string[] = [];
+  for (let i = 0; ; i++) {
+    const id = state.cardIdByUid[deckUid(seat, i)];
+    if (id === undefined) return ids;
+    ids.push(id);
+  }
+}
+
 /** §3.1–§3.3: validate decks, mint uids, shuffle, flip the coin. The state
     comes back waiting on the winner's chooseFirstPlayer. */
 export function createGame(options: CreateGameOptions): CreateGameResult {
@@ -95,7 +107,8 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
   for (const seat of SEATS) {
     let i = 0;
     for (const id of options.decks[seat]) {
-      const uid = `${seat}#${i}`;
+      const uid = deckUid(seat, i);
+
       cardIdByUid[uid] = id;
       decks[seat].push(uid);
       i++;

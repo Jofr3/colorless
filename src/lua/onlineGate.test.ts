@@ -90,6 +90,26 @@ describe("the online gate", () => {
     ]);
   });
 
+  it("reads the Bench limit off the wire, and falls back to the cards when it is absent", () => {
+    const state = driveSetup(7, undefined, { first: "p1" });
+    const bench: GameAction = {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: firstBasicInHand(state, "p1"),
+    };
+    const view = redactGame(state, "p1");
+    const body = view.board.you.active;
+    if (body === null) throw new Error("Expected an Active");
+    const full = (benchLimit?: number) => {
+      const v = structuredClone(view);
+      v.board.you.bench = Array.from({ length: 5 }, () => structuredClone(body));
+      if (benchLimit !== undefined) v.board.you.benchLimit = benchLimit;
+      return v;
+    };
+    expect(onlineGate(bench, full())).toBe(false);
+    expect(onlineGate(bench, full(8))).toBe(true);
+  });
+
   it("offers only the second attack and ending the turn inside the attack-again window", () => {
     const state = driveSetup(7, undefined, { first: "p1" });
     const window = inAttackAgainWindow(state);

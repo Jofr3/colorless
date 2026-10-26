@@ -287,9 +287,6 @@ describe("D226 — the wire, and the park that predates the rider", () => {
     const theirs = redactGame(parked, "p2");
     if (theirs.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(theirs.phase.prompt).toBeNull();
-    // The way HOME — `projectionFromRedacted` rebuilding this prompt for the
-    // client — is the third read site, and it is pinned in `projection.test.ts`
-    // (there, because this package must not import from `src/`).
   });
 
   it("A PARK WITHOUT THE KEY IS BYTE-IDENTICAL — so MATCH_RECORD_VERSION stays 12", () => {

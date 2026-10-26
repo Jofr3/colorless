@@ -292,10 +292,10 @@ export function effectMenu(
   selectedCounterSource?: PokemonRef,
 ): SimMenu {
   const view = sim.view();
-  const source = sim.source;
-  if (!view || !source) return { kind: "list", title: "No game", options: [] };
+  if (!view) return { kind: "list", title: "No game", options: [] };
   const seat = view.seat;
-  const { placingCounters, invokedBy, abilityName } = source.effectContext();
+  const phase = view.phase.kind === "effect:choose" ? view.phase : undefined;
+  const placingCounters = prompt.kind === "choosePokemonMulti" && prompt.unit === "counters";
   // The redacted board names each in-play top card and its attachments by uid.
   const body = (ref: PokemonRef) => {
     const side = ref.seat === seat ? view.board.you : view.board.opponent;
@@ -363,8 +363,8 @@ export function effectMenu(
   const ctx: MenuContext = {
     state,
     placingCounters,
-    invokedBy,
-    abilityName,
+    invokedBy: phase?.invokedBy,
+    abilityName: phase?.abilityName,
     transfer,
     refName,
     refUid,

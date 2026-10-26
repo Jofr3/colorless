@@ -75,7 +75,7 @@ only the conclusion.
   commit sha as seed. A SURVIVED, stale or errored row fails the job; reproduce
   it locally with `bun run mutants --only <id>`.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
-  seeded play-forward sweeps; `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
+  seeded play-forward sweeps (`onStep` sees each accepted action's events); `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
   for LobbyDO; `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
@@ -90,6 +90,11 @@ only the conclusion.
   reason. The builder (`src/decks/deckMath.ts`) and the online picker (`sandboxDecks.ts`
   `playableDecks`, its `online` verdict) call the same functions. Local play asks only what
   `createGame` asks: 60 cards, all in the catalog, and a Basic Pokémon.
+- The client's one view of a game is `redactGame`'s `RedactedGame` plus the seat log. Both table
+  sources read prompts and the effect phase (`unit`, `counterTransfer`, `invokedBy`,
+  `abilityName`) and the log rows' `cues` (`cuesFromEvents`), never `pendingOp` or the rendered
+  log text. Grow that wire with optional fields: the API deploys before the web client, so a new
+  enum literal needs the client deployed first.
 - **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
   `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
   keeps only the record envelope and `loadMatchRecord`, and calls `poolIdsNeededFor` and

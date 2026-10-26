@@ -1450,6 +1450,10 @@ function stepOp(
       // Munkidori "Adrena-Brain": up to `upTo` counters from own body to opponent's; `op.from`
       // tells the two questions apart.
       const source = op.from;
+      const transfer = {
+        upTo: op.upTo,
+        ...(ctx.sourceUid === undefined ? {} : { abilitySourceUid: ctx.sourceUid }),
+      };
       if (source === undefined) {
         // QUESTION 1 — the SOURCE: any own damaged body (Munkidori included). One is FORCED and
         // answered as the parked answer is.
@@ -1462,6 +1466,7 @@ function stepOp(
           park: {
             kind: "choosePokemon",
             candidates: damagedOwn,
+            counterTransfer: transfer,
             note: `Move up to ${op.upTo} damage counters off which of your Pokémon? You will then choose where they go.`,
           },
         };
@@ -1479,6 +1484,7 @@ function stepOp(
           candidates: opposing,
           upTo: op.upTo,
           takeVerb: "move",
+          counterTransfer: { ...transfer, from: { seat: ctx.seat, spot: source } },
           note: `Move up to ${op.upTo} damage counters onto which of your opponent's Pokémon?`,
         },
       };
@@ -1662,6 +1668,7 @@ function stepOp(
           min: take,
           max: take,
           declinable,
+          ...(op.deals === true ? {} : { unit: "counters" as const }),
           note: snipeNote(amount, take, declinable, op),
         },
       };

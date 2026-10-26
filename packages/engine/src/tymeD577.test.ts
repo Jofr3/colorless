@@ -282,6 +282,7 @@ describe("D577 Tyme §4 — the wire: the name only, to the opponent only (R-TY3
         name: "D577 Pika",
         note: "Guess the HP of your opponent's D577 Pika.",
       },
+      invokedBy: "supporter",
     });
     expect(JSON.stringify(forP2)).not.toContain(pika);
     expect(redactGame(parkedState, "p1").phase).toEqual({ kind: "effect:choose", prompt: null });
