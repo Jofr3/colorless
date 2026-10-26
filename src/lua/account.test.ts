@@ -139,6 +139,12 @@ describe("Lua authentication", () => {
     expect(account.message).toContain("email");
     await account.authenticate("register", USER.email, "short", "");
     expect(account.message).toContain("8 characters");
+    await account.authenticate("login", USER.email, "", "");
+    expect(account.message).toBe("Enter your password.");
+    await account.authenticate("login", USER.email, "x".repeat(257), "");
+    expect(account.message).toBe("Password is too long.");
+    await account.authenticate("register", USER.email, "test-password", "x".repeat(65));
+    expect(account.message).toContain("characters for your name");
     expect(impl).not.toHaveBeenCalled();
   });
   it.each([
