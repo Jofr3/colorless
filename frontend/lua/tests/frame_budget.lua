@@ -71,8 +71,8 @@ local function perFrame(label,n,mx,my)
 end
 local idle=perFrame('idle',20)
 atMost('idle table frame: g.rectangle',idle['g.rectangle'],230)
-atMost('idle table frame: shader:send',idle['shader.send'],400)
-atMost('idle table frame: hasUniform',idle['shader.hasUniform'],400)
+atMost('idle table frame: shader:send',idle['shader.send'],250)
+atMost('idle table frame: hasUniform',idle['shader.hasUniform'],0)
 check(idle['g.newCanvas']==0 and idle['g.newImage']==0,'An idle frame creates no textures')
 
 -- An action that leaves both discard piles alone.

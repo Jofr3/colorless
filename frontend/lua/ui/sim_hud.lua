@@ -27,7 +27,8 @@ local BOTTOM_TILES=1.5+2*0.2+2*1.45+0.13
 local SETUP_PAUSE=0.5
 local function emboss(x,y,w,h,colour,r,hovered,extrusion)
   local depth=hovered and 0.5 or 0.7
-  Button.panel(x,y+(extrusion or 3),w,h,{colour[1]*depth,colour[2]*depth,colour[3]*depth,colour[4] or 1},r or 1.2)
+  local shade=Button.shade(colour,depth);shade[4]=colour[4] or 1
+  Button.panel(x,y+(extrusion or 3),w,h,shade,r or 1.2)
   Button.panel(x,y,w,h,colour,r or 1.2)
 end
 function Hud:bottomLayout(L)

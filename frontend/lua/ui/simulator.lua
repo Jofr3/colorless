@@ -1479,14 +1479,19 @@ function Simulator:backgroundColours() return self.fx:colours() end
 local function well(x,y,w,h)
   Button.panel(x,y,w,h,{0,0,0,0.1},1.2)
 end
+-- Badge text by status field, e.g. 'burned,asleep' -> 'Burned Asleep'.
+local statusLabels={}
 function Simulator:drawBadges(c,rw)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
   local ch=D.H*c.baseScale*c.motion.VT.scale
   if item.status~='' then
-    local names={}
-    for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
-    local label=table.concat(names,' ')
+    local label=statusLabels[item.status]
+    if not label then
+      local names={}
+      for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
+      label=table.concat(names,' ');statusLabels[item.status]=label
+    end
     local tw=Dyna.measure(label,0.26)+12
     Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,T.purple,1)
     Dyna.static(label,0.26,c.x-tw/2,c.y-ch/2-20,tw,16,T.white,{roomWidth=rw})
@@ -1495,6 +1500,24 @@ end
 -- Attached cards tuck behind the Pokémon sideways: Energy peeks out of the
 -- right edge aligned to the bottom, Tools out of the left edge aligned to the
 -- top, each further card a little less exposed, like a fanned stack.
+local function attachedStack(self,list,side,c,cw,ch,s,aw,ah,peek,visit)
+  local n=#list
+  local step=math.min(18,(ch-aw-6)/math.max(n-1,1))
+  -- The first card sits at the edge; each later one lands on top of it.
+  for i=1,n do
+    local tex=self.attached[list[i].id]
+    if tex and tex.texture then
+      local out=peek
+      -- Rotated 90°: horizontal extent ah, vertical aw. Inset 3px from the
+      -- Pokémon's edge so neither the card nor its shadow shows past it.
+      local x=c.x+side*(cw/2+out-ah/2)
+      local y=side>0 and c.y+ch/2-aw/2-3-(i-1)*step or c.y-ch/2+aw/2+3+(i-1)*step
+      -- The card's top (name banner) faces outward, as on a real table.
+      local angle=side>0 and math.pi/2 or -math.pi/2
+      visit(tex,x,y,s,angle,side)
+    end
+  end
+end
 function Simulator:eachAttached(c,visit)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
@@ -1506,36 +1529,19 @@ function Simulator:eachAttached(c,visit)
   -- Stacks climb the edge: each further Energy sits 18px higher (Tools 18px
   -- lower), all peeking out by the same amount, like cards slid under a
   -- Pokémon one after another.
-  local function stack(list,side)
-    local n=#list
-    local step=math.min(18,(ch-aw-6)/math.max(n-1,1))
-    -- The first card sits at the edge; each later one lands on top of it.
-    for i=1,n do
-      local tex=self.attached[list[i].id]
-      if tex and tex.texture then
-        local out=peek
-        -- Rotated 90°: horizontal extent ah, vertical aw. Inset 3px from the
-        -- Pokémon's edge so neither the card nor its shadow shows past it.
-        local x=c.x+side*(cw/2+out-ah/2)
-        local y=side>0 and c.y+ch/2-aw/2-3-(i-1)*step or c.y-ch/2+aw/2+3+(i-1)*step
-        -- The card's top (name banner) faces outward, as on a real table.
-        local angle=side>0 and math.pi/2 or -math.pi/2
-        visit(tex,x,y,s,angle,side)
-      end
-    end
-  end
-  stack(item.energyCards or {},1)
-  stack(item.toolCards or {},-1)
+  if item.energyCards then attachedStack(self,item.energyCards,1,c,cw,ch,s,aw,ah,peek,visit) end
+  if item.toolCards then attachedStack(self,item.toolCards,-1,c,cw,ch,s,aw,ah,peek,visit) end
+end
+local function drawAttachedCard(tex,x,y,scale,angle,side)
+  local res=tex.item.resolution or 1
+  local sx=scale/res
+  g.setColor(0,0,0,0.3)
+  g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,D.W*res/2,D.H*res/2)
+  g.setColor(1,1,1,1)
+  g.draw(tex.texture,x,y,angle,sx,sx,D.W*res/2,D.H*res/2)
 end
 function Simulator:drawAttached(c)
-  self:eachAttached(c,function(tex,x,y,scale,angle,side)
-    local res=tex.item.resolution or 1
-    local sx=scale/res
-    g.setColor(0,0,0,0.3)
-    g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,D.W*res/2,D.H*res/2)
-    g.setColor(1,1,1,1)
-    g.draw(tex.texture,x,y,angle,sx,sx,D.W*res/2,D.H*res/2)
-  end)
+  self:eachAttached(c,drawAttachedCard)
 end
 function Simulator:drawCard(c,shaders,rw)
   if c.koHidden or c.koAnimating or c.drawAfterPromotion then return end

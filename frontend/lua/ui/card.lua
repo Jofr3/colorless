@@ -6,6 +6,7 @@ Card.__index = Card
 local g = love.graphics
 local W,H = D.W,D.H
 local CARD_W,CARD_H = D.TILE_W,D.TILE_H
+local NO_BURN,WHITE = {1,1,1,0},{1,1,1,1}
 
 local function emblem(kind,colour)
   g.setColor(colour)
@@ -149,20 +150,44 @@ function Card:shaderValues(time,mx,my,reduced)
   local resolution=self.item.resolution or 1
   local shaderW,shaderH=W*resolution,H*resolution
   if self.disintegration then shaderW,shaderH=71,95 end
-  return {
-    dissolve=self.dissolve or 0, time=(123.33412*(self.index/1.14212))%3000,
-    texture_details={0,0,shaderW,shaderH},image_details={shaderW,shaderH},shadow=false,
-    burn_colour_1=self.burn1 or {1,1,1,0},burn_colour_2=self.burn2 or {1,1,1,0},
-    mouse_screen_pos={px,py},hovering=reduced and 0 or 1,
-    screen_scale=math.sqrt((ux-ox)^2+(uy-oy)^2),
-  },{phase,time}
+  -- One values table per card, refilled each frame.
+  local v=self.shaderState
+  if not v then
+    v={texture_details={0,0,0,0},image_details={0,0},mouse_screen_pos={0,0}}
+    self.shaderState,self.editionState=v,{0,0}
+  end
+  v.dissolve=self.dissolve or 0
+  v.time=(123.33412*(self.index/1.14212))%3000
+  local details=v.texture_details;details[1],details[2],details[3],details[4]=0,0,shaderW,shaderH
+  local image=v.image_details;image[1],image[2]=shaderW,shaderH
+  v.shadow=false
+  v.burn_colour_1=self.burn1 or NO_BURN
+  v.burn_colour_2=self.burn2 or NO_BURN
+  local mouse=v.mouse_screen_pos;mouse[1],mouse[2]=px,py
+  v.hovering=reduced and 0 or 1
+  v.screen_scale=math.sqrt((ux-ox)^2+(uy-oy)^2)
+  local edition=self.editionState;edition[1],edition[2]=phase,time
+  return v,edition
 end
 
+-- hasUniform answers, per shader, keyed by uniform name.
+local uniforms=setmetatable({},{__mode='k'})
+local function has(shader,key)
+  local known=uniforms[shader]
+  if not known then known={};uniforms[shader]=known end
+  local found=known[key]
+  if found==nil then found=shader:hasUniform(key);known[key]=found end
+  return found
+end
 local function send(shader,values)
   for key,value in pairs(values) do
-    if shader:hasUniform(key) then shader:send(key,value) end
+    if has(shader,key) then shader:send(key,value) end
   end
 end
+local function sendOne(shader,key,value)
+  if has(shader,key) then shader:send(key,value) end
+end
+Card.send=send
 
 function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   local values,edition=self:shaderValues(time,mx,my,reduced)
@@ -175,7 +200,8 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   if self.greyed then
     values.played=edition
     send(shaders.played,values)
-    g.setShader(shaders.played);g.setColor(self.tint or {1,1,1,1})
+    values.played=nil
+    g.setShader(shaders.played);g.setColor(self.tint or WHITE)
     g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
     g.setShader()
     return
@@ -192,9 +218,10 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
     self.y+1.5*shadowHeight*self.unit,self.angle,
     sx*(1-0.2*shadowHeight),sy*(1-0.2*shadowHeight),W*resolution/2,H*resolution/2)
 
+  -- The face pass differs from the shadow pass only in these two uniforms.
   values.shadow=false; values.hovering=reduced and 0 or 1
-  send(dissolve,values)
-  g.setShader(dissolve); g.setColor(self.tint or {1,1,1,1})
+  sendOne(dissolve,'shadow',false);sendOne(dissolve,'hovering',values.hovering)
+  g.setColor(self.tint or WHITE)
   g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   -- Balatro draws every edition ON TOP of the ordinary card, with identical
   -- geometry; foil's partially transparent pass must never have its own tilt.
@@ -202,6 +229,7 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
     local shader=shaders[self.item.edition]
     values[self.item.edition]=edition
     send(shader,values); g.setShader(shader)
+    values[self.item.edition]=nil
     g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   end
   g.setShader()
