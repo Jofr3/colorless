@@ -80,7 +80,7 @@ export function moveToAction(request: CardMoveRequest, view: RedactedGame): Game
           // indexed bench slot (§7.4). One-Tool-per-Pokémon stays the engine's.
           if (to.zone === "active")
             return { type: "attachTool", seat, uid: cardId, target: { spot: "active" } };
-          if (to.zone === "bench" && to.index !== undefined)
+          if (to.zone === "bench" && to.index !== undefined && you.bench[to.index] !== undefined)
             return {
               type: "attachTool",
               seat,
@@ -94,10 +94,8 @@ export function moveToAction(request: CardMoveRequest, view: RedactedGame): Game
       if (card.category === "Energy") {
         if (to.zone === "active")
           return { type: "attachEnergy", seat, uid: cardId, target: { spot: "active" } };
-        // The drop layer only fires energy→bench on an occupied indexed slot
-        // (gamePlacementPredicate needs a host), so a missing index is a
-        // non-drop.
-        if (to.zone === "bench" && to.index !== undefined)
+        // An empty bench slot or the whole bench frame has no Pokémon to attach to.
+        if (to.zone === "bench" && to.index !== undefined && you.bench[to.index] !== undefined)
           return {
             type: "attachEnergy",
             seat,

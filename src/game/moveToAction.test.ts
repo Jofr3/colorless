@@ -138,6 +138,16 @@ describe("moveToAction — turn:action", () => {
     expect(action).toBeNull();
   });
 
+  it("does not attach energy to an empty bench slot", () => {
+    const state = turnState();
+    const uid = handUid(state, "p1", "fix-energy");
+    const action = moveToAction(
+      request(uid, fromHand(0), { owner: "you", zone: "bench", index: 1 }),
+      contextOf(state, "p1"),
+    );
+    expect(action).toBeNull();
+  });
+
   it("routes hand Pokémon → a FREE bench slot to playBasicToBench", () => {
     const state = turnState();
     const uid = handUid(state, "p1", "fix-basic-1");
