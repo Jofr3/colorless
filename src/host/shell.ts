@@ -65,6 +65,12 @@ export function normalizeCodeField(element: { value: string; selectionStart: num
   return { value, caret };
 }
 
+/** The live region's next text: a repeat of the current message gains a trailing no-break space,
+    so screen readers still hear it. */
+export function nextAnnouncement(current: string, message: string): string {
+  return current === message ? `${message}\u00a0` : message;
+}
+
 export class HostShell {
   private view: PageView;
   private ready = false;
@@ -243,7 +249,7 @@ export class HostShell {
         break;
       case "announce": {
         const region = this.doc.getElementById("announcement");
-        if (region) region.textContent = rest;
+        if (region) region.textContent = nextAnnouncement(region.textContent ?? "", rest);
         break;
       }
       case "preferences":
