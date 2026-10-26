@@ -20,20 +20,21 @@ import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
-import { resolveUserIdFromCookie } from "../auth/resolveSession";
+import { resolveAccountFromCookie, type SessionAccount } from "../auth/resolveSession";
 import {
+  attachAccount,
+  attachedDisplayName,
   attachedPlayer,
   attachedUserId,
   attachLogDeltas,
   attachPlayer,
   attachSpectator,
-  attachUserId,
   isSpectating,
   takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
-import { loadDisplayName } from "./displayName";
+import { lobbyDisplayName } from "./displayName";
 import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
   ABANDON_GRACE_MS,
@@ -131,9 +132,7 @@ export interface LobbyDeps {
   now(): number;
   randomSeed(): number;
   /** The account a forwarded `Cookie` header's session belongs to, or null. */
-  resolveUser(cookie: string | null): Promise<string | null>;
-  /** The account's lobby display name, or null to keep the announced one. */
-  displayName(userId: string | null): Promise<string | null>;
+  resolveAccount(cookie: string | null): Promise<SessionAccount | null>;
   /** A player's chosen deck as flat card ids, owner-scoped to `userId`. */
   loadDeck(deckId: string | null, userId: string | null): Promise<LoadDeckResult>;
   /** The catalog cards for `ids`, keyed by id; missing ids are absent. */
@@ -146,8 +145,7 @@ export function lobbyDepsFromEnv(env: Env): LobbyDeps {
   return {
     now: () => Date.now(),
     randomSeed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0,
-    resolveUser: (cookie) => resolveUserIdFromCookie(db(), cookie),
-    displayName: (userId) => loadDisplayName(db(), userId),
+    resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
     loadDeck: (deckId, userId) => loadPlayerDeck(db(), deckId, userId),
     loadPool: (ids) => loadCardPool(db(), ids),
   };
@@ -200,9 +198,12 @@ export class LobbyDO {
       // increment 3): the resolved account rides on the socket so the match
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
-      // start a match with a saved deck. Only the DO ever reads it.
-      const userId = await this.deps.resolveUser(request.headers.get("Cookie"));
-      if (userId !== null) attachUserId(pair[1], userId);
+      // start a match with a saved deck. Only the DO ever reads it. The account's name is read in
+      // the same query, so a rename shows from the next connection on.
+      const account = await this.deps.resolveAccount(request.headers.get("Cookie"));
+      if (account !== null) {
+        attachAccount(pair[1], account.userId, lobbyDisplayName(account.displayName));
+      }
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
       return new Response(null, { status: 101, webSocket: pair[0] });
@@ -254,9 +255,8 @@ export class LobbyDO {
       await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
     }
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
-    // announced name. The read happens after the refusal branches so a refused socket costs no
-    // D1 query.
-    const name = (await this.deps.displayName(userId)) ?? frame.name;
+    // announced name.
+    const name = attachedDisplayName(ws) ?? frame.name;
     // …and the face, from the same account (P5-2). Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);
@@ -591,16 +591,13 @@ export class LobbyDO {
     if ((await this.loadOrMigrateMatch()).kind === "ok") return { ok: true };
     if (snapshot.guest === null) return { ok: false, reason: "The lobby needs two players." };
     // Each player's chosen deck, owner-scoped by the account their socket authenticated at /ws,
-    // so a crafted `select-deck` naming someone else's deck resolves to nothing.
-    const hostDeck = await this.deps.loadDeck(
-      snapshot.host.deckId,
-      this.userIdOf(snapshot.host.id),
-    );
+    // so a crafted `select-deck` naming someone else's deck resolves to nothing. Both are read at
+    // once; the host's failure is reported first either way.
+    const [hostDeck, guestDeck] = await Promise.all([
+      this.deps.loadDeck(snapshot.host.deckId, this.userIdOf(snapshot.host.id)),
+      this.deps.loadDeck(snapshot.guest.deckId, this.userIdOf(snapshot.guest.id)),
+    ]);
     if (!hostDeck.ok) return { ok: false, reason: `${snapshot.host.name}: ${hostDeck.reason}.` };
-    const guestDeck = await this.deps.loadDeck(
-      snapshot.guest.deckId,
-      this.userIdOf(snapshot.guest.id),
-    );
     if (!guestDeck.ok) return { ok: false, reason: `${snapshot.guest.name}: ${guestDeck.reason}.` };
     // Storage enforces no construction rules, so `beginMatch` is the validator.
     const cardPool = await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids]);

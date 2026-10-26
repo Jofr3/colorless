@@ -48,6 +48,17 @@ describe("loadPlayerDeck — a saved deck as the lobby plays it", () => {
     }
   });
 
+  it("reads the owner's deck with no cards as empty, not as missing", async () => {
+    const ash = await signedInUser(d1().db, "ash@example.com");
+    const deck = await createDeck(ash.cookie, "standard");
+    await d1().db.prepare("DELETE FROM deck_cards").run();
+    expect(await loadPlayerDeck(drizzle(d1().db), deck.id, ash.userId)).toEqual({
+      ok: true,
+      ids: [],
+      format: "standard",
+    });
+  });
+
   it("reads another account's deck as not found", async () => {
     const ash = await signedInUser(d1().db, "ash@example.com");
     const bo = await signedInUser(d1().db, "bo@example.com");

@@ -29,8 +29,8 @@ export type LoadDeckResult =
 /** Read a player's chosen deck as a flat id list, OWNER-SCOPED. Fails (never
     throws) when the player isn't signed in (`userId` null — an anonymous socket
     can own no deck), picked no deck, or named a deck that isn't theirs — the
-    ownership check is a single `WHERE id = ? AND user_id = ?`, so someone else's
-    deck reads the same as a missing one (no existence leak, the deck-routes
+    ownership check is a single `WHERE id = ? AND user_id = ?` on the one joined
+    query, so someone else's deck reads the same as a missing one (no existence leak, the deck-routes
     precedent). Legality is `beginMatch`'s to enforce; this only proves the
     deck exists and is the player's. */
 export async function loadPlayerDeck(
@@ -40,17 +40,18 @@ export async function loadPlayerDeck(
 ): Promise<LoadDeckResult> {
   if (userId === null) return { ok: false, reason: "you must be signed in to play a saved deck" };
   if (deckId === null) return { ok: false, reason: "no deck selected" };
-  const owned = await db
-    .select({ id: decks.id, format: decks.format })
-    .from(decks)
-    .where(ownedBy(decks, deckId, userId))
-    .get();
-  if (owned === undefined) return { ok: false, reason: "deck not found" };
+  // One row per card line, or one row with null card columns for a deck with no cards.
   const rows = await db
-    .select({ cardId: deckCards.cardId, count: deckCards.count })
-    .from(deckCards)
-    .where(eq(deckCards.deckId, deckId))
+    .select({ format: decks.format, cardId: deckCards.cardId, count: deckCards.count })
+    .from(decks)
+    .leftJoin(deckCards, eq(deckCards.deckId, decks.id))
+    .where(ownedBy(decks, deckId, userId))
     .orderBy(asc(deckCards.cardId))
     .all();
-  return { ok: true, ids: deckIdsFromRows(rows), format: owned.format };
+  const [owned] = rows;
+  if (owned === undefined) return { ok: false, reason: "deck not found" };
+  const lines = rows.flatMap(({ cardId, count }) =>
+    cardId === null || count === null ? [] : [{ cardId, count }],
+  );
+  return { ok: true, ids: deckIdsFromRows(lines), format: owned.format };
 }

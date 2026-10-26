@@ -186,9 +186,12 @@ export function worldDeps(world: LobbyWorld): LobbyDeps {
   return {
     now: () => world.now,
     randomSeed: () => world.seed,
-    resolveUser: async (cookie) => cookie?.match(/^session=(.+)$/)?.[1] ?? null,
-    displayName: async (userId) =>
-      userId === null ? null : (world.displayNames.get(userId) ?? null),
+    resolveAccount: async (cookie) => {
+      const userId = cookie?.match(/^session=(.+)$/)?.[1];
+      return userId === undefined
+        ? null
+        : { userId, displayName: world.displayNames.get(userId) ?? null };
+    },
     loadDeck: async (deckId, userId): Promise<LoadDeckResult> => {
       if (userId === null)
         return { ok: false, reason: "you must be signed in to play a saved deck" };

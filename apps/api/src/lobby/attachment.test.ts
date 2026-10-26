@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   type AttachmentCarrier,
+  attachedDisplayName,
   attachedPlayer,
   attachedUserId,
   attachLogDeltas,
   attachPlayer,
   attachSpectator,
-  attachUserId,
+  attachAccount,
   isSpectating,
   takesLogDeltas,
 } from "./attachment";
@@ -49,7 +50,7 @@ describe("attachment codec", () => {
   it("carries the userId independently, set before the playerId (the /ws → hello order)", () => {
     const ws = fakeSocket();
     // /ws upgrade authenticates the account first — no playerId yet.
-    attachUserId(ws, "user-9");
+    attachAccount(ws, "user-9", null);
     expect(attachedUserId(ws)).toBe("user-9");
     expect(attachedPlayer(ws)).toBeNull();
     // The later hello binds the playerId WITHOUT dropping the userId…
@@ -57,9 +58,24 @@ describe("attachment codec", () => {
     expect(attachedPlayer(ws)).toBe("player-1");
     expect(attachedUserId(ws)).toBe("user-9");
     // …and setting the userId again preserves the playerId.
-    attachUserId(ws, "user-10");
+    attachAccount(ws, "user-10", null);
     expect(attachedUserId(ws)).toBe("user-10");
     expect(attachedPlayer(ws)).toBe("player-1");
+  });
+
+  it("carries the account's lobby name beside its id, clipped, through every other write", () => {
+    const ws = fakeSocket();
+    expect(attachedDisplayName(ws)).toBeNull();
+    attachAccount(ws, "user-9", "Ana");
+    attachPlayer(ws, "player-1");
+    attachLogDeltas(ws, true);
+    attachSpectator(ws);
+    expect(attachedDisplayName(ws)).toBe("Ana");
+    attachAccount(ws, "user-9", null);
+    expect(attachedDisplayName(ws)).toBeNull();
+    attachAccount(ws, "user-9", "x".repeat(5000));
+    expect(attachedDisplayName(ws)).toBe("x".repeat(256));
+    expect(attachedDisplayName(fakeSocket({ displayName: 7 }))).toBeNull();
   });
 
   it("reads userId as null for an anonymous or foreign attachment", () => {
@@ -73,12 +89,12 @@ describe("the log-delta flag", () => {
   it("reads false until a hello announces it, and survives every other write", () => {
     const ws = fakeSocket();
     expect(takesLogDeltas(ws)).toBe(false);
-    attachUserId(ws, "user-9");
+    attachAccount(ws, "user-9", null);
     attachLogDeltas(ws, true);
     attachSpectator(ws);
     expect(takesLogDeltas(ws)).toBe(true);
     attachPlayer(ws, "player-1");
-    attachUserId(ws, "user-10");
+    attachAccount(ws, "user-10", null);
     expect(takesLogDeltas(ws)).toBe(true);
     expect(attachedPlayer(ws)).toBe("player-1");
     attachLogDeltas(ws, false);
@@ -106,7 +122,7 @@ describe("the spectator marker (3c-vii-b)", () => {
 
   it("keeps the authenticated account (a watcher may still be signed in)", () => {
     const ws = fakeSocket();
-    attachUserId(ws, "user-9");
+    attachAccount(ws, "user-9", null);
     attachSpectator(ws);
     expect(attachedUserId(ws)).toBe("user-9");
     // …and the account survives while watching, so a later seat claim still

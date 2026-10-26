@@ -233,7 +233,10 @@ describe("sameSnapshot", () => {
   it("compares values, not key order or identity", () => {
     const snapshot = countdownLobby();
     const reordered = JSON.parse(
-      JSON.stringify({ ...snapshot, host: { forfeitAt: null, ...snapshot.host } }),
+      JSON.stringify({
+        ...snapshot,
+        host: Object.fromEntries(Object.entries(snapshot.host).reverse()),
+      }),
     ) as LobbySnapshot;
     expect(sameSnapshot(snapshot, reordered)).toBe(true);
     expect(sameSnapshot(snapshot, reseatHost(snapshot, "Ana"))).toBe(true);
