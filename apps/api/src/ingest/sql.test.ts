@@ -92,7 +92,7 @@ const DEMO_COLUMNS: readonly SqlColumnSpec<DemoRow>[] = [
 ];
 
 describe("buildUpsertSql", () => {
-  it("builds a multi-row upsert that updates every non-id column", () => {
+  it("builds a multi-row upsert that updates every non-id column of a changed row", () => {
     const sql = buildUpsertSql("demo", DEMO_COLUMNS, [
       { id: "a-1", name: "Ann's", count: 3, active: true, tags: ["x"] },
       { id: "b-2", name: "Bob", count: null, active: false, tags: null },
@@ -105,8 +105,26 @@ ON CONFLICT("id") DO UPDATE SET
   "name" = excluded."name",
   "count" = excluded."count",
   "active" = excluded."active",
-  "tags" = excluded."tags";`,
+  "tags" = excluded."tags"
+WHERE "demo"."name" IS NOT excluded."name"
+  OR "demo"."count" IS NOT excluded."count"
+  OR "demo"."active" IS NOT excluded."active"
+  OR "demo"."tags" IS NOT excluded."tags";`,
     );
+  });
+
+  it("writes a derived column without comparing it", () => {
+    const columns: readonly SqlColumnSpec<DemoRow>[] = [
+      { name: "id", key: "id", kind: "text" },
+      { name: "name", key: "name", kind: "text" },
+      { name: "active", key: "active", kind: "boolean", derived: true },
+    ];
+    const sql = buildUpsertSql("demo", columns, [
+      { id: "a-1", name: "Ann", count: null, active: true, tags: null },
+    ]);
+    expect(sql).toContain('"active" = excluded."active"');
+    expect(sql).toContain('WHERE "demo"."name" IS NOT excluded."name";');
+    expect(sql).not.toContain('"demo"."active" IS NOT');
   });
 
   it("refuses to build a zero-row statement", () => {

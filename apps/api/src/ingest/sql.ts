@@ -5,11 +5,14 @@
 /** What a column spec declares about its values; enforced at runtime. */
 export type SqlColumnKind = "text" | "number" | "boolean" | "json";
 
-/** One column of a generated upsert: SQL name, row property, value kind. */
+/** One column of a generated upsert: SQL name, row property, value kind. A `derived` column is
+    rewritten by a later pass, so it is written but not compared when deciding whether a row
+    changed. */
 export interface SqlColumnSpec<Row> {
   name: string;
   key: keyof Row;
   kind: SqlColumnKind;
+  derived?: true;
 }
 
 /**
@@ -65,7 +68,8 @@ export function sqlLiteral(value: unknown, kind: SqlColumnKind): string {
  * Build one multi-row upsert. Every column is listed for every row (mapping
  * emits explicit nulls), and `ON CONFLICT(id) DO UPDATE` overwrites all
  * non-id columns from `excluded` so reruns converge on the latest upstream
- * state. Callers chunk rows (see `chunk`) before building.
+ * state, but only for a row whose non-derived columns changed: an unchanged
+ * row is not rewritten. Callers chunk rows (see `chunk`) before building.
  */
 export function buildUpsertSql<Row>(
   table: string,
@@ -87,15 +91,20 @@ export function buildUpsertSql<Row>(
     });
     return `(${values.join(", ")})`;
   });
-  const updates = columns
-    .filter((column) => column.name !== "id")
+  const updated = columns.filter((column) => column.name !== "id");
+  const updates = updated
     .map((column) => `"${column.name}" = excluded."${column.name}"`)
     .join(",\n  ");
+  const changed = updated
+    .filter((column) => column.derived === undefined)
+    .map((column) => `"${table}"."${column.name}" IS NOT excluded."${column.name}"`)
+    .join("\n  OR ");
   return [
     `INSERT INTO "${table}" (${columnList}) VALUES`,
     tuples.join(",\n"),
     `ON CONFLICT("id") DO UPDATE SET`,
-    `  ${updates};`,
+    `  ${updates}`,
+    `WHERE ${changed};`,
   ].join("\n");
 }
 
