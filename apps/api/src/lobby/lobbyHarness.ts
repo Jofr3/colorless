@@ -57,9 +57,13 @@ export class FakeStorage {
   readonly data = new Map<string, unknown>();
   alarm: number | null = null;
 
-  async get(key: string): Promise<unknown> {
-    const value = this.data.get(key);
-    return value === undefined ? undefined : structuredClone(value);
+  async get(key: string): Promise<unknown>;
+  async get(keys: string[]): Promise<Map<string, unknown>>;
+  async get(keys: string | string[]): Promise<unknown> {
+    if (typeof keys === "string") return this.read(keys);
+    const found = new Map<string, unknown>();
+    for (const key of keys) if (this.data.has(key)) found.set(key, this.read(key));
+    return found;
   }
 
   async put(keyOrEntries: string | Record<string, unknown>, value?: unknown): Promise<void> {
@@ -68,8 +72,22 @@ export class FakeStorage {
     for (const [key, item] of Object.entries(entries)) this.data.set(key, structuredClone(item));
   }
 
-  async delete(key: string): Promise<boolean> {
-    return this.data.delete(key);
+  async delete(key: string): Promise<boolean>;
+  async delete(keys: string[]): Promise<number>;
+  async delete(keys: string | string[]): Promise<boolean | number> {
+    if (typeof keys === "string") return this.data.delete(keys);
+    return keys.filter((key) => this.data.delete(key)).length;
+  }
+
+  /** Every entry under `prefix`, in key order, as the runtime lists them. */
+  async list({ prefix = "" }: { prefix?: string } = {}): Promise<Map<string, unknown>> {
+    const keys = [...this.data.keys()].filter((key) => key.startsWith(prefix)).sort();
+    return new Map(keys.map((key) => [key, this.read(key)]));
+  }
+
+  private read(key: string): unknown {
+    const value = this.data.get(key);
+    return value === undefined ? undefined : structuredClone(value);
   }
 
   /** Leaves the alarm in place, as the runtime does. */

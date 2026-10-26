@@ -85,6 +85,7 @@ import {
   type Seat,
   rematchChooser,
 } from "./match";
+import { MatchStore } from "./matchStore";
 import { applyIntent, bothReady, removeGuest, seatGuest } from "./snapshot";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
@@ -95,9 +96,6 @@ const CODE_KEY = "code";
 const SNAPSHOT_KEY = "snapshot";
 const CLEANUP_AT_KEY = "cleanupAt";
 const PENDING_KEY = "pendingDisconnects";
-// The authoritative match (P4) — the engine GameState + seed, written once when
-// the countdown flips the lobby to in-game (online.md increment 1b).
-const MATCH_KEY = "match";
 // The playerId who lost the last game in this lobby: they choose the rematch's
 // play order (`settleFirstPlayer`). Consumed by the next successful handoff.
 const CHOOSER_KEY = "nextChooser";
@@ -156,10 +154,14 @@ export class LobbyDO {
   private readonly deps: LobbyDeps;
   /** In-memory mirror of SNAPSHOT_KEY; undefined = not read since last wake. */
   private snapshot: LobbySnapshot | null | undefined;
+  /** The authoritative match: the engine GameState, seed and log, written when the countdown
+      flips the lobby to in-game and on every accepted action. */
+  private readonly match: MatchStore;
 
   constructor(state: DurableObjectState, env: Env, deps: LobbyDeps = lobbyDepsFromEnv(env)) {
     this.state = state;
     this.deps = deps;
+    this.match = new MatchStore(state.storage);
     // Keepalive pings are answered in the proxy layer — a hibernated lobby
     // stays hibernated while clients ping to check their link.
     state.setWebSocketAutoResponse(new WebSocketRequestResponsePair(LOBBY_WS_PING, LOBBY_WS_PONG));
@@ -344,7 +346,7 @@ export class LobbyDO {
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
     }
-    await this.state.storage.put(MATCH_KEY, outcome.record);
+    await this.match.put(outcome.record);
     this.broadcastMatch(outcome.record, snapshot, { logFrom: record.log.length });
   }
 
@@ -412,7 +414,7 @@ export class LobbyDO {
     if (loserId === null) await this.state.storage.delete(CHOOSER_KEY);
     else await this.state.storage.put(CHOOSER_KEY, loserId);
     // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
-    // MATCH_KEY with it — which is precisely what makes the next handoff mint
+    // the match with it — which is precisely what makes the next handoff mint
     // a FRESH game rather than hitting its idempotency guard on this one.
     await this.commit(rematch(snapshot, slot));
   }
@@ -518,7 +520,7 @@ export class LobbyDO {
       if (snapshot.phase !== "in-game" && next.phase === "in-game") {
         // `handoffToMatch` just wrote this record with the CURRENT version, so
         // the stale arm is unreachable here — read through the same guard anyway
-        // (one door onto MATCH_KEY), and skip rather than retire: retiring inside
+        // (one door onto the match), and skip rather than retire: retiring inside
         // the alarm would commit a second snapshot mid-flip.
         const load = await this.loadOrMigrateMatch();
         if (load.kind === "ok") this.broadcastMatch(load.record, next);
@@ -532,6 +534,7 @@ export class LobbyDO {
     const cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
     if (sockets.length === 0 && cleanupAt !== undefined && now >= cleanupAt) {
       this.snapshot = null;
+      this.match.forget();
       await this.state.storage.deleteAll();
       await this.state.storage.deleteAlarm(); // deleteAll leaves alarms in place
       return;
@@ -616,7 +619,7 @@ export class LobbyDO {
       now: this.deps.now(),
     });
     if (!begun.ok) return begun;
-    await this.state.storage.put(MATCH_KEY, begun.record);
+    await this.match.put(begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
     return { ok: true };
   }
@@ -647,7 +650,7 @@ export class LobbyDO {
     const abandoned = abandonsMatch(this.snapshot ?? null, stamped);
     this.snapshot = stamped;
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
-    if (abandoned) await this.state.storage.delete(MATCH_KEY);
+    if (abandoned) await this.match.delete();
     this.broadcast({ kind: "state", snapshot: stamped });
     await this.scheduleMaintenance();
   }
@@ -825,25 +828,19 @@ export class LobbyDO {
     if (load.kind !== "ok") return;
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
-    await this.state.storage.put(MATCH_KEY, outcome.record);
+    await this.match.put(outcome.record);
     this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
   }
 
   /**
-   * Read the persisted match: absent, usable, or unreadable by this build. Every `MATCH_KEY` read
+   * Read the persisted match: absent, usable, or unreadable by this build. Every match read
    * goes through here. An older migratable record is migrated and WRITTEN BACK before it is
    * returned, so this is not a pure read.
    */
   private async loadOrMigrateMatch(): Promise<MatchLoad> {
     // The D1 read opens the DO's input gate, which is why `loadMatchRecord` re-reads before
-    // writing.
-    return loadMatchRecord(
-      {
-        get: () => this.state.storage.get(MATCH_KEY),
-        put: (record) => this.state.storage.put(MATCH_KEY, record),
-      },
-      (ids) => this.deps.loadPool(ids),
-    );
+    // writing; the store's mirror makes that re-read see any write made meanwhile.
+    return loadMatchRecord(this.match, (ids) => this.deps.loadPool(ids));
   }
 
   /**
@@ -852,7 +849,7 @@ export class LobbyDO {
    * `resetAfterFailedStart`, because the latter leaves an in-game lobby in-game.
    */
   private async retireStaleMatch(): Promise<void> {
-    await this.state.storage.delete(MATCH_KEY);
+    await this.match.delete();
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
     await this.commit(endMatch(snapshot));
