@@ -114,7 +114,7 @@ function Builder:layout(w,h)
   self.deckPage=math.max(1,math.min(self.deckPage,math.ceil(#self:visibleDeck()/self:deckPageSize())))
   if self.detailCard then self.detailCard.texture:release();self.detailCard=nil end
   self:command('size',self.portrait and 4 or 8)
-  self:makeCards(false);self:build()
+  CardFrame.open();self:makeCards(false);self:build();CardFrame.close()
 end
 function Builder:face(item,w,h)
   CardFrame.draw(w,h,function(aw,ah) self:artwork(item,aw,ah) end,
@@ -423,6 +423,7 @@ function Builder:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   if self.motion then self.motion:update(dt,time,false,false,reduced)end
   my=my-self:offset();self.mx,self.my=mx,my
+  CardFrame.open()
   for _,file in ipairs({'builder','builderInput','art','builderClipboard'})do
     local raw=Mailbox.read(file)
     if raw then
@@ -438,6 +439,7 @@ function Builder:update(dt,time,mx,my,reduced)
       elseif file=='builderClipboard' and raw~=self.clipboardRaw then self.clipboardRaw=raw;self.clipboard=Codec.fields(raw)[2] or raw end
     end
   end
+  CardFrame.close()
   self:refreshTransferControls()
   if self.modal then self.modal.motion:update(dt,time,false,false,reduced)end
   self.hover=self:hit(mx,my,true,true)

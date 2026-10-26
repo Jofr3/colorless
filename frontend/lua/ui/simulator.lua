@@ -78,12 +78,14 @@ function Simulator:layout(w,h,viewportUnit)
   self.drag=nil;self.highlight=nil;self.hoverCard=nil
   -- A browser resize goes through love.window.setMode, which empties every
   -- Canvas in love.js; card faces are canvases, so repaint them.
+  CardFrame.open()
   for _,c in ipairs(self.cards) do c:rebuild() end
   for _,c in ipairs(self.ghosts) do c:rebuild() end
   for _,c in pairs(self.attached or {}) do c:rebuild() end
   self:placeCards(true)
   if self.koPresentation then self.koPresentation:layout() end
   if self.overlay then self.overlay:layout() end
+  CardFrame.close()
   self:build()
 end
 function Simulator:point(x,y) return (x-self.ox)/self.zoom,(y-self.oy)/self.zoom end
@@ -1146,6 +1148,7 @@ end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
+  CardFrame.open()
   self:sync(Mailbox.read('simulator'))
   local raw=Mailbox.read('art')
   if raw and raw~=self.artRaw then
@@ -1157,6 +1160,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
     if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
   end
+  CardFrame.close()
   mx,my=self:point(mx,my);self.mx,self.my=mx,my
   -- Table juice waits behind an open coin flip, like Balatro's event queue.
   self.fx:update(dt,time,reduced,self.overlay and self.overlay.kind=='coin')

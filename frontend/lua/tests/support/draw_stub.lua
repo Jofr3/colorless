@@ -78,14 +78,17 @@ function Stub.shader()
 end
 
 -- Installs the stub as the global `love`; paths starting with __card_art exist
--- and count towards live.art while decoded.
+-- and count towards live.art while decoded, and Stub.files holds readable text
+-- files (the mailboxes) by name.
+Stub.files={}
 function Stub.install()
   love={math={random=function() return 0.5 end},graphics=g,keyboard={isDown=function() return false end},
     image={newImageData=function(path)
       count('image.newImageData');if type(path)=='string' then count('decode') end
       return setmetatable({w=272,h=374,art=type(path)=='string' and path:match('^__card_art')~=nil},imageData)
     end},
-    filesystem={getInfo=function(p) return tostring(p):match('^__card_art') and {type='file'} or nil end,read=function() return nil end},
+    filesystem={getInfo=function(p) return (Stub.files[p] or tostring(p):match('^__card_art')) and {type='file'} or nil end,
+      read=function(p) return Stub.files[p] end},
     mouse={getPosition=function() return 0,0 end},
     data={},timer={getTime=function() return 0 end}}
   local T=require('ui.theme')

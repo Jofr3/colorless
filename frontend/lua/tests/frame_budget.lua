@@ -6,7 +6,6 @@ local Stub=require('support.draw_stub').install()
 local Snapshots=require('support.snapshots')
 local Simulator=require('ui.simulator')
 local Builder=require('ui.builder')
-local Mailbox=require('ui.mailbox')
 
 local function check(ok,message) if not ok then error(message,2) end end
 local report={}
@@ -51,11 +50,14 @@ local raw,order=Snapshots.snapshot({revision=1})
 local rows={'1'}
 for i,cardId in ipairs(order) do rows[#rows+1]=cardId..'\t__card_art_'..i..'.png' end
 local artRaw=table.concat(rows,'\n')
-sim.art=Mailbox.artMap(artRaw);sim.artRaw=artRaw
+local files=require('ui.host_constants').mailboxes
+Stub.files[files.art]=artRaw
+Stub.files[files.simulator]=raw
 Stub.reset()
-sim:sync(raw)
-local opened={decode=Stub.get('decode'),canvas=Stub.get('g.newCanvas')}
-atMost('table open: decoded files',opened.decode,73)
+frames(1)
+Stub.files[files.simulator]=nil
+atMost('table open: decoded files',Stub.get('decode'),24)
+atMost('table open: edge pixel reads',Stub.get('imageData.getPixel'),51000)
 balanced('table open')
 
 frames(120)
