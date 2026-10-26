@@ -2265,6 +2265,23 @@ export function energyMayBeAttachedTo(
   );
 }
 
+/**
+ * Does `pool` hold an Energy that `energyMayBeAttachedTo` can refuse? Without one no attached
+ * Energy is ever misplaced. Remembered per pool object, which a game keeps from state to state.
+ */
+export function poolHasOwnerBoundEnergy(pool: GameState["cardPool"]): boolean {
+  let known = OWNER_BOUND_POOLS.get(pool);
+  if (known === undefined) {
+    known = Object.values(pool).some(
+      (card) => programFor(card.id)?.energy?.attachOnlyToOwner !== undefined,
+    );
+    OWNER_BOUND_POOLS.set(pool, known);
+  }
+  return known;
+}
+
+const OWNER_BOUND_POOLS = new WeakMap<GameState["cardPool"], boolean>();
+
 /** Does `uid`, attached to `pokemon`, provide `energyType` (§6.3)? The
     `providesEnergy` filter's predicate.
 
