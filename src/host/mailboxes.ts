@@ -3,6 +3,7 @@ export const MAILBOXES = {
   viewport: "__viewport.txt",
   preferences: "__preferences.txt",
   page: "__page.txt",
+  settings: "__settings.txt",
   account: "__account.txt",
   accountInput: "__account_input.txt",
   authInput: "__auth_input.txt",

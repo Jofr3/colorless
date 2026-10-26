@@ -158,7 +158,7 @@ local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
   local raw=Mailbox.read('viewport')
   if not raw then return end
-  local w,h,reduced,request,tab=raw:match('^(%d+) (%d+) (%d)%s*(%d*)%s*(%a*)')
+  local w,h,reduced=raw:match('^(%d+) (%d+) (%d)')
   w,h=tonumber(w),tonumber(h)
   if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
   state.systemReduced=reduced=='1'
@@ -168,17 +168,21 @@ local function browserState()
     state.preferencesLoaded=true
   end
   applyPreferences()
+end
+-- The page owns the route and asks for Settings; both are read every frame so a click lands on the
+-- next one.
+local function followPage()
   local pageRaw=Mailbox.read('page')
-  if pageRaw then
-    if pageRaw~=state.pageRaw then
-      state.pageRaw=pageRaw
-      local fields=Codec.fields(pageRaw)
-      local page=fields[2]
-      requestPage(page,fields[3])
-    end
+  if pageRaw and pageRaw~=state.pageRaw then
+    state.pageRaw=pageRaw
+    local fields=Codec.fields(pageRaw)
+    requestPage(fields[2],fields[3])
   end
-  request=tonumber(request) or 0
-  if request>(state.settingsRequest or 0) then state.settingsRequest=request; openSettings(true,tab~='' and tab or nil) end
+  local settingsRaw=Mailbox.read('settings')
+  if settingsRaw and settingsRaw~=state.settingsRaw then
+    state.settingsRaw=settingsRaw
+    openSettings(true,Codec.fields(settingsRaw)[2])
+  end
 end
 applyPreferences=function()
   state.reduced=preferences:reduced(state.systemReduced)
@@ -282,6 +286,7 @@ function love.load()
     jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
   layout(g.getDimensions())
   browserState()
+  followPage()
   state.ready=true
   print('COLORLESS:ready')
 end
@@ -297,6 +302,7 @@ function love.update(dt)
   dt=state.smoothedDt
   state.poll=state.poll+dt
   if state.poll>0.25 then browserState(); state.poll=0 end
+  followPage()
   local rawX,rawY=love.mouse.getPosition()
   room:update(dt,state.time,(rawX-offsetX)/layoutScale,(rawY-offsetY)/layoutScale,state.reduced,preferences.screenshake)
   -- Game:update applies canvas juice before advancing REAL/REAL_SHADER.

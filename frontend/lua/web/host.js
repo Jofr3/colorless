@@ -38,8 +38,6 @@ for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
 /** @type {LoveRuntime | undefined} */
 let runtime;
 let ready = false;
-let settingsRequest = 0;
-let settingsTab = "game";
 /** @type {ColorlessBridge | undefined} */
 let bridge;
 // Mailboxes written before the runtime exists keep their latest text until preRun.
@@ -89,7 +87,7 @@ function syncViewport() {
   // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
   // must use that same size; a capped scene leaves the rest of it black.
   // Keep CSS-pixel dimensions (no devicePixelRatio multiplier).
-  const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"} ${settingsRequest} ${settingsTab}`;
+  const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"}`;
   writeMailbox(bridge.mailboxes.viewport, text);
 }
 // build:lua replaces the empty object with each /love/ file's content hash;
@@ -163,13 +161,6 @@ addEventListener("load", () => {
     .then(() => {
       updateLoadingProgress(95);
       void prepareTransitionArt();
-      // ?account and ?settings open the settings popup on the matching tab.
-      const params = new URLSearchParams(location.search);
-      if (params.has("account") || params.has("settings")) {
-        settingsRequest++;
-        settingsTab = params.has("account") ? "account" : "game";
-      }
-      syncViewport();
     })
     .catch((error) => {
       console.error(error);
@@ -196,22 +187,6 @@ canvas.addEventListener("contextmenu", (event) => {
 canvas.addEventListener("webglcontextlost", (event) => {
   event.preventDefault();
   fail("Graphics connection lost. Reload to continue.");
-});
-element("settings-link").addEventListener("click", (event) => {
-  if (!ready || !runtime) return;
-  event.preventDefault();
-  settingsRequest++;
-  settingsTab = "game";
-  syncViewport();
-  canvas.focus({ preventScroll: true });
-});
-element("account-link").addEventListener("click", (event) => {
-  if (!ready || !runtime) return;
-  event.preventDefault();
-  settingsRequest++;
-  settingsTab = "account";
-  syncViewport();
-  canvas.focus({ preventScroll: true });
 });
 
 // Resource load errors don't bubble; listen in the capture phase.

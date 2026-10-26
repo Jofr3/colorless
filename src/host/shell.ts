@@ -71,6 +71,7 @@ export class HostShell {
   private settingsOpen = false;
   private transitionOpen = false;
   private pageRevision = 0;
+  private settingsRevision = 0;
   private lineOwner: LineOwner = "library";
   private readonly canvas: HTMLCanvasElement;
   private readonly name: TextProxy;
@@ -166,6 +167,12 @@ export class HostShell {
     this.link("decks-link", () => ports.navigate("decks"));
     this.link("online-link", () => ports.navigate("online"));
     this.link("sandbox-link", () => ports.command("simulator", "resume"));
+    this.link("settings-link", () => this.requestSettings("game"));
+    this.link("account-link", () => this.requestSettings("account"));
+    // ?account and ?settings open Settings over the page on the matching tab.
+    const params = new URLSearchParams(doc.location.search);
+    if (params.has("account") || params.has("settings"))
+      this.requestSettings(params.has("account") ? "account" : "game");
     // Tab stays with the native links; arrows navigate inside the canvas.
     canvas.addEventListener("keydown", (event) => {
       if (
@@ -278,6 +285,10 @@ export class HostShell {
       this.canvas.removeAttribute("role");
       this.canvas.removeAttribute("aria-modal");
     }
+  }
+
+  private requestSettings(tab: "game" | "account") {
+    this.host.writeMailbox(MAILBOXES.settings, encodeFields([++this.settingsRevision, tab]));
   }
 
   private settingsChanged(open: boolean) {
