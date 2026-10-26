@@ -21,13 +21,16 @@ export function readPersisted<T>(
   }
 }
 
-/** Persist a string value, swallowing storage failures (private mode, quota). */
-export function writePersisted(key: string, value: string): void {
+/** Persist a string value, swallowing storage failures (private mode, quota).
+    False when the value was not stored. */
+export function writePersisted(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
+    return true;
   } catch {
     // Best-effort — the value still applies for this session, it just won't
     // survive a refresh.
+    return false;
   }
 }
 

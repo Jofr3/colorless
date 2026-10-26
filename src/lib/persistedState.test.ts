@@ -64,13 +64,13 @@ describe("writePersisted", () => {
   it("stores the value", () => {
     const storage = fakeStorage();
     vi.stubGlobal("localStorage", storage);
-    writePersisted("k", "v");
+    expect(writePersisted("k", "v")).toBe(true);
     expect(storage.getItem("k")).toBe("v");
   });
 
-  it("swallows a throwing setItem", () => {
+  it("swallows a throwing setItem and reports it", () => {
     vi.stubGlobal("localStorage", throwingStorage());
-    expect(() => writePersisted("k", "v")).not.toThrow();
+    expect(writePersisted("k", "v")).toBe(false);
   });
 });
 

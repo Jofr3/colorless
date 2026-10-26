@@ -6,8 +6,9 @@ const SIMULATOR_SAVE_KEY = "colorless:simulator:game";
 const SAVE_VERSION = 1;
 
 /** Full engine state includes the card pool, shuffled piles, RNG and effect
-    continuations. Restoring never refetches decks or re-deals their cards. */
-export function saveSimulator(snapshot: LocalGameSetup): void {
+    continuations. Restoring never refetches decks or re-deals their cards.
+    False when the save was not stored. */
+export function saveSimulator(snapshot: LocalGameSetup): boolean {
   // Every turn uses the same catalog and UID mapping. Store those once in the
   // current state to avoid duplicating them throughout the saved history.
   const compactTurn = (turn: LocalTurnSnapshot) => ({
@@ -27,7 +28,7 @@ export function saveSimulator(snapshot: LocalGameSetup): void {
         },
       }
     : snapshot;
-  writePersisted(
+  return writePersisted(
     SIMULATOR_SAVE_KEY,
     JSON.stringify({ version: SAVE_VERSION, engineVersion, snapshot: savedSnapshot }),
   );

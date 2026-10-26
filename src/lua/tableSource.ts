@@ -12,7 +12,7 @@ import {
 import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@colorless/schema";
 import { initHost, hostReducer, stepTarget, type LocalGameSetup } from "../game/localHost";
 
-import { saveSimulator, loadSimulatorSave } from "../game/simulatorSave";
+import { saveSimulator } from "../game/simulatorSave";
 import {
   autoStepFor,
   counterSourcePicked,
@@ -237,7 +237,7 @@ export class LocalTableSource implements TableSource {
   /** Writes the save; false when it did not stick (storage full). */
   persist() {
     const h = this.host;
-    saveSimulator({
+    this.saved = saveSimulator({
       state: h.game,
       events: [],
       names: h.names,
@@ -252,7 +252,6 @@ export class LocalTableSource implements TableSource {
         stepIndex: h.stepIndex,
       },
     });
-    this.saved = loadSimulatorSave()?.startedAt === h.startedAt;
     return this.saved;
   }
 
