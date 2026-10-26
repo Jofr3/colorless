@@ -180,6 +180,8 @@ const compiledRuntime = WebAssembly.compileStreaming(fetch(runtimeUrl)).catch(()
     .then((response) => response.arrayBuffer())
     .then((bytes) => WebAssembly.compile(bytes)),
 );
+// instantiateWasm reports a failure; until love.js asks for the runtime nothing else listens.
+compiledRuntime.catch(() => {});
 loveModule.instantiateWasm = (imports, receive) => {
   compiledRuntime
     .then((module) =>
