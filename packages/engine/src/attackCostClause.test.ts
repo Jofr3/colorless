@@ -12,7 +12,7 @@ import {
 import type { GameEvent } from "./events";
 import { applyAction, attackCostAt, attackTimingBlocked, costMet, redactGame } from "./index";
 import type { GameState } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { providedEnergy } from "./continuous";
 import {
   FIXTURE_POOL,

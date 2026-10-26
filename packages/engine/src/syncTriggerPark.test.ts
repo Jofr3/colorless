@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { runSyncProgram } from "./interpreter";
 import { OP_TRAITS } from "./ops/traits";
 import type { TriggeredAbility } from "./programTypes";

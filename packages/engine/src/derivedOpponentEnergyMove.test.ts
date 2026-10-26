@@ -3,7 +3,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, redactGame } from "./index";
-import { moveEnergyPlayable } from "./interpreter";
+import { moveEnergyPlayable } from "./effectTargets";
 import { type LogContext, logFromEvents } from "./log";
 import {
   OPPONENT_ENERGY_MOVE_DECK,

@@ -7,7 +7,7 @@ import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
-import { conditionHolds } from "./interpreter";
+import { conditionHolds } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

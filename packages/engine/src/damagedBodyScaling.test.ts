@@ -20,10 +20,10 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { CardFilter, DamageCountSource } from "./effects";
+import type { CardFilter, DamageCountSource } from "./effectTypes";
 import { applyAction } from "./index";
 import type { EffectOp, GameState, Seat } from "./index";
-import { countPokemonInPlay } from "./interpreter";
+import { countPokemonInPlay } from "./boardCondition";
 import { programFor, registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,

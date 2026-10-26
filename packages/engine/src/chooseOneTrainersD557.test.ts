@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { CardFilter, EffectOp } from "./effects";
+import type { CardFilter, EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { redactGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";

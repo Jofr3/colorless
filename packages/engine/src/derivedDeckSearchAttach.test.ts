@@ -4,9 +4,11 @@ import { engineVersion } from "./index";
 import { programPlayable } from "./cardplay";
 import { programFor, registryCardIds } from "./registry";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { POKEMON_TYPE_BY_CODE, POKEMON_TYPES, deriveAttackEffect } from "./effects";
+import { deriveAttackEffect } from "./effects";
+import { POKEMON_TYPE_BY_CODE } from "./deriver/vocabulary";
+import { POKEMON_TYPES } from "./effectTypes";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
-import type { EffectPrompt } from "./interpreter";
+import type { EffectPrompt } from "./effectPrompt";
 import {
   DECK_SEARCH_ATTACH_DECK,
   FIXTURE_POOL,

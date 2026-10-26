@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
-import { ENERGY_TYPE_BY_CODE, deriveAttackEffect } from "./effects";
+import { deriveAttackEffect } from "./effects";
+import { ENERGY_TYPE_BY_CODE } from "./deriver/vocabulary";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
-import { type EffectPrompt, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import type { EffectPrompt } from "./effectPrompt";
 import {
   ANY_NUMBER_ATTACH_DECK,
   FIXTURE_POOL,

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { ENERGY_TYPE_BY_CODE, deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import { deriveAttackEffect } from "./effects";
+import { ENERGY_TYPE_BY_CODE } from "./deriver/vocabulary";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {

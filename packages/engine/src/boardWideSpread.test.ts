@@ -16,7 +16,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {

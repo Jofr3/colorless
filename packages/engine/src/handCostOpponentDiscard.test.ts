@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,

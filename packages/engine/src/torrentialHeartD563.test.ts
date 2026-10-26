@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { boostedAttackDamage, everyAttackBoostOf } from "./continuous";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";

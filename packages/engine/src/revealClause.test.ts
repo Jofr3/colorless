@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cardOfUid } from "./cards";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";

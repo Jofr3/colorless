@@ -2,7 +2,8 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, formatElapsed, logFromEvents } from "./index";
-import { conditionNote, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

@@ -12,7 +12,7 @@ import {
   optionalBoostProgram,
   optionalCostBoostProgram,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { programFor } from "./index";
 import {
   FIXTURE_POOL,

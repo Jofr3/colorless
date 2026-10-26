@@ -5,7 +5,7 @@ import { CATALOG_MANIFEST } from "./catalogManifest";
 import { effectiveMaxHp } from "./continuous";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, redactGame } from "./index";
-import { benchArrivalCounters } from "./interpreter";
+import { benchArrivalCounters } from "./ops/cards";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

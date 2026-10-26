@@ -25,7 +25,7 @@ import {
 } from "./effects";
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { countPokemonInPlay } from "./interpreter";
+import { countPokemonInPlay } from "./boardCondition";
 import { flipCoin } from "./rng";
 import type { CoinFace } from "./rng";
 import {

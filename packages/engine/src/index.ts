@@ -142,7 +142,6 @@ export {
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
 export type {
-  AttachTargetRiders,
   AttackCoinFlip,
   AttackDamageBonus,
   AttackGateClause,
@@ -150,13 +149,16 @@ export type {
   AttackFlipCount,
   AttackFlipThreshold,
   AttackOptionalBoost,
+} from "./effects";
+export type {
+  AttachTargetRiders,
   BoardCondition,
   CardFilter,
   DamageCountSource,
   EffectOp,
   EffectSlot,
   OpponentEnergyZone,
-} from "./effects";
+} from "./effectTypes";
 export { conditionHolds, conditionNote } from "./boardCondition";
 export { attackBarredByAbility } from "./boardCondition";
 export { attackAgainBarred } from "./boardCondition";

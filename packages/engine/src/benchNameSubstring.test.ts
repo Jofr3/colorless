@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   BENCH_NAME_SUBSTRING_DECK,
   FIXTURE_POOL,

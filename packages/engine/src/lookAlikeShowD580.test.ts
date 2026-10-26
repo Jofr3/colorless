@@ -4,13 +4,14 @@ import { describe, expect, it } from "vitest";
 import { resolvedByAnyReader } from "./censusAttackCorpus";
 import { supporterEffectOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
 import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState } from "./index";
-import { opponentSupporterOffer, resumeProgram } from "./interpreter";
-import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
+import { resumeProgram } from "./interpreter";
+import { opponentSupporterOffer } from "./ops/cards";
+import type { EffectChoice, EffectPrompt, PokemonRef } from "./effectPrompt";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {

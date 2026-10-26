@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { hasRuleBox, pokemonSuffixOf, prizeValueOf } from "./cards";
 import { lockedAttackIndexes } from "./continuous";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";

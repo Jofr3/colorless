@@ -10,7 +10,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { CardFilter, EffectOp } from "./effects";
+import type { CardFilter, EffectOp } from "./effectTypes";
 import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";

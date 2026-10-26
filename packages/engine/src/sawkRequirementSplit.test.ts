@@ -23,7 +23,7 @@ import {
   splitAttackRequirementClause,
 } from "./effects";
 import type { GameState } from "./index";
-import { conditionNote } from "./interpreter";
+import { conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   SAWK_SPLIT_DECK,

@@ -1,6 +1,6 @@
 // The conservative text-to-ops deriver. This module is pure data; interpreter.ts owns every state
 // transition. Registry-authored programs are hand-written op arrays that take precedence over the
-// deriver. The op contract itself lives in effectTypes.ts and is re-exported here.
+// deriver. The op contract itself lives in effectTypes.ts.
 
 import type { BasicEnergyType } from "@colorless/schema";
 
@@ -31,33 +31,6 @@ import type {
 
 import { POKEMON_TYPES } from "./effectTypes";
 
-export type {
-  AttachTargetRiders,
-  AttackCopy,
-  AttackerClass,
-  BoardCondition,
-  CardFilter,
-  CountSeat,
-  DamageCountSource,
-  DiscardPileSeat,
-  EffectOp,
-  EffectSlot,
-  EnergyClass,
-  HandPlayClass,
-  HandRefreshDraw,
-  InPlayAttackCopy,
-  OpOf,
-  OpponentEnergyZone,
-  PokemonPlayAct,
-  PokemonType,
-  ResolvedAttackCopy,
-  StampedHandPlayClass,
-  StampedPlayLockKey,
-  StampedPokemonPlayAct,
-} from "./effectTypes";
-
-export { POKEMON_TYPES } from "./effectTypes";
-
 import {
   CURLY_APOSTROPHE,
   ENERGY_TYPE_BY_CODE,
@@ -70,14 +43,6 @@ import {
   type StatusWord,
 } from "./deriver/vocabulary";
 import { searchTopOrderProgram } from "./registryBuilders";
-
-export {
-  COPY_FAMILY_MARKER,
-  ENERGY_TYPE_BY_CODE,
-  foldApostrophes,
-  POKEMON_TYPE_BY_CODE,
-  STATUS_WORD_OF,
-} from "./deriver/vocabulary";
 
 /**
  * A printed count, or null when it is below 1 (or not a number). A printed 0 would build an op that

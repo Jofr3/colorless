@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { passivesOf, seatPreWRDamageBonus } from "./continuous";
 import type { GameState } from "./index";
 import { applyAction, programFor, redactGame } from "./index";
-import { attackerPreWRBonus } from "./interpreter";
+import { attackerPreWRBonus } from "./boardCondition";
 import {
   FIXTURE_POOL,
   SEAT_AURA_DECK,

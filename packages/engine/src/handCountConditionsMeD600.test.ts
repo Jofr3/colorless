@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
-import type { BoardCondition } from "./effects";
+import type { BoardCondition } from "./effectTypes";
 import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -10,7 +10,7 @@ import {
 } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   attachFromDeck,

@@ -5,7 +5,8 @@ import { effectiveTypesOf, inPlayCardOf, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
-import { attachEnergyTargets, conditionHolds } from "./interpreter";
+import { attachEnergyTargets } from "./ops/energy";
+import { conditionHolds } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

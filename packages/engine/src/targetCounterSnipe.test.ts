@@ -23,10 +23,10 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import type { PokemonRef } from "./interpreter";
+import type { PokemonRef } from "./effectPrompt";
 import {
   FIXTURE_POOL,
   activeUid,

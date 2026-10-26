@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import type { EffectPrompt } from "./interpreter";
+import type { EffectPrompt } from "./effectPrompt";
 import { resumeProgram, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {

@@ -12,7 +12,8 @@ import {
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
-import { conditionHolds, conditionNote, retrieveNoun } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
+import { retrieveNoun } from "./promptText";
 import { PARADOX_POOL } from "./paradoxPool";
 import { programFor } from "./registry";
 import {

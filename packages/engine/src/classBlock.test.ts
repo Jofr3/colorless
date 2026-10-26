@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { POKEMON_TYPES, deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import { deriveAttackEffect } from "./effects";
+import { POKEMON_TYPES } from "./effectTypes";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
 import {

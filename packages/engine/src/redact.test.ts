@@ -6,7 +6,7 @@ import {
   type RedactedGame,
 } from "@colorless/schema";
 import { rareCandyOptions } from "./cardplay";
-import type { EffectContinuation, EffectPrompt } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 import { redactGame } from "./redact";
 import {
   ABILITY_DECK,

@@ -2,19 +2,15 @@ import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  COPY_FAMILY_MARKER,
-  deriveAttackCopy,
-  deriveAttackEffect,
-  isResolvedAttackCopy,
-} from "./effects";
-import type { EffectOp } from "./effects";
+import { deriveAttackCopy, deriveAttackEffect, isResolvedAttackCopy } from "./effects";
+import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
 import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { resumeProgram } from "./interpreter";
-import type { EffectChoice } from "./interpreter";
+import type { EffectChoice } from "./effectPrompt";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";

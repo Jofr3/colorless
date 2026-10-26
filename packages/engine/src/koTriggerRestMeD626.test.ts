@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds } from "./interpreter";
+import { conditionHolds } from "./boardCondition";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {

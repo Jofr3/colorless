@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
   optionalCostBoostProgram,
 } from "./effects";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import type { BoardCondition, EffectOp, GameState, Seat } from "./index";
 import {
   PURGING_STRIKE_DECK,

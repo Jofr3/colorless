@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "@colorless/schema";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";

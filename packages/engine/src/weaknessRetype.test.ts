@@ -5,7 +5,7 @@ import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./c
 import { installedWeaknessRetypeOf } from "./continuous";
 import * as effects from "./effects";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";

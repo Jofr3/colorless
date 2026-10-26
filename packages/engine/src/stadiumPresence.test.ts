@@ -21,7 +21,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   STADIUM_PRESENCE_DECK,
   attachFromDeck,

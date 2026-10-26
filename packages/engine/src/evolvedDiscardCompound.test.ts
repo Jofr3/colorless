@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import type { BoardCondition, EffectOp } from "./effects";
+import type { BoardCondition, EffectOp } from "./effectTypes";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -24,7 +24,8 @@ import {
 import type { GameEvent } from "./events";
 import { applyAction, engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
-import { conditionHolds, conditionNote, resumeProgram, runProgram } from "./interpreter";
+import { resumeProgram, runProgram } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   attachFromDeck,

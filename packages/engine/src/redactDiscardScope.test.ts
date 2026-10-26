@@ -1,6 +1,6 @@
 import { redactedDiscardScopeSchema, redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { DiscardScope, EffectContinuation, EffectPrompt } from "./interpreter";
+import type { DiscardScope, EffectContinuation, EffectPrompt } from "./effectPrompt";
 import type { GameState, Seat } from "./index";
 import { redactGame } from "./redact";
 import { MIXED_DECK, driveSetup } from "./testFixtures";

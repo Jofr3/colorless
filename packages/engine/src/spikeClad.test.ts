@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { programPlayable } from "./cardplay";
-import { firstAttachableEnergy } from "./interpreter";
+import { firstAttachableEnergy } from "./ops/energy";
 import { programFor } from "./registry";
 import {
   battler,

@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
 import type { GameState, Seat } from "./index";

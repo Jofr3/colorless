@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { benchMatches, cardOfUid, hpOf, matchesFilter } from "./cards";
 import { CATALOG_MANIFEST } from "./catalogManifest";
 import { deriveAttackDamageBonus } from "./effects";
-import type { CardFilter } from "./effects";
+import type { CardFilter } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 import { applyAction } from "./index";

@@ -5,7 +5,8 @@ import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote, doomBodyAt } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
+import { doomBodyAt } from "./ops/board";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

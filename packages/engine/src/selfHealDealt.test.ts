@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {

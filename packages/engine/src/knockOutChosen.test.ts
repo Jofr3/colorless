@@ -1,10 +1,12 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, knockOutChosenTargets, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { conditionHolds } from "./boardCondition";
+import { knockOutChosenTargets } from "./ops/board";
 import {
   FIXTURE_POOL,
   activeUid,

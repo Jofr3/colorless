@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CATALOG_MANIFEST } from "./catalogManifest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { attackMenuOf, firstTurnAttackBanned, memoryDiveLive } from "./continuous";
-import { COPY_FAMILY_MARKER } from "./effects";
+import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
 import type { GameEvent } from "./events";
 import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";

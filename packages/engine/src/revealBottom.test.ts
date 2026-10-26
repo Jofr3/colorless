@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent, GameState, Seat } from "./index";
-import type { EffectChoice } from "./interpreter";
+import type { EffectChoice } from "./effectPrompt";
 import { programPlayable } from "./cardplay";
 import { runProgram, resumeProgram } from "./interpreter";
 import { programFor } from "./registry";

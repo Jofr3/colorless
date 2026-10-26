@@ -4,7 +4,7 @@ import { resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackDamageBonus } from "./effects";
 import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   battler,
