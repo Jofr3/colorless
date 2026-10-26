@@ -18,7 +18,15 @@
  */
 
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { isRecord, parseJson } from "../lib/cli.ts";
 import { REPO_ROOT } from "../lib/repo.ts";
@@ -52,6 +60,22 @@ const EXIT = {
  */
 const JOURNAL =
   process.env.MUTATION_JOURNAL_PATH ?? join(REPO_ROOT, "tmp", "mutation-journal.json");
+
+/**
+ * Vitest's on-disk module cache for this harness, kept apart from the default one. A mutant run
+ * caches its mutated module like any other, so the entries a mutant run adds are deleted after it.
+ */
+const MODULE_CACHE = join(REPO_ROOT, "tmp", "mutation-vitest-cache");
+
+function moduleCacheEntries(): Set<string> {
+  return new Set(existsSync(MODULE_CACHE) ? readdirSync(MODULE_CACHE) : []);
+}
+
+function dropModuleCacheEntriesBesides(kept: ReadonlySet<string>): void {
+  for (const name of moduleCacheEntries()) {
+    if (!kept.has(name)) rmSync(join(MODULE_CACHE, name), { recursive: true, force: true });
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Restoration
@@ -251,7 +275,7 @@ function spawnRecording(bin: string, args: string[], verbose: boolean): Promise<
     const proc = spawn(bin, args, {
       cwd: REPO_ROOT,
       stdio: verbose ? "inherit" : ["ignore", "pipe", "pipe"],
-      env: { ...process.env, CI: "1", FORCE_COLOR: "0" },
+      env: { ...process.env, CI: "1", FORCE_COLOR: "0", VITEST_MODULE_CACHE_PATH: MODULE_CACHE },
     });
     child = proc;
     let out = "";
@@ -404,6 +428,7 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
   }
 
   const mutatedText = applyMutant(text, mutant.find, mutant.replace);
+  const cachedModules = moduleCacheEntries();
   let mutated: SuiteResult;
   let clobberedTo: string | null = null;
   try {
@@ -432,6 +457,7 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
     inFlight.delete(absolute);
     if (inFlight.size === 0) clearJournal();
     else writeJournal();
+    dropModuleCacheEntriesBesides(cachedModules);
   }
 
   // A clobber overrides the mutant's verdict and fails the run, since the file under test changed
