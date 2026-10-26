@@ -2203,6 +2203,8 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
  * never KOs. Lives here so interpreter.ts can use it; flow.ts re-exports it.
  */
 export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boolean {
+  // Max HP is never below the floor, so less damage than that is never lethal.
+  if (pokemon.damage < MIN_EFFECTIVE_MAX_HP) return false;
   const hp = effectiveMaxHp(state, pokemon);
   return hp !== null && pokemon.damage >= hp;
 }
