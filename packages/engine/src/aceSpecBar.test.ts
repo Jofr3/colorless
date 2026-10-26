@@ -2,7 +2,8 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
-import { aceSpecPlayBarred, isAceSpec } from "./continuous";
+import { aceSpecPlayBarred } from "./continuous";
+import { isAceSpec } from "./deckRules";
 import {
   FIXTURE_POOL,
   attachToolFromDeck,

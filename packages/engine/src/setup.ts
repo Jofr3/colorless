@@ -61,9 +61,10 @@ function createErr(code: CreateErrorCode, message: string): CreateGameResult {
 /** §3.1–§3.3: validate decks, mint uids, shuffle, flip the coin. The state
     comes back waiting on the winner's chooseFirstPlayer. */
 export function createGame(options: CreateGameOptions): CreateGameResult {
-  // Deck legality (§3.1): exactly 60 known ids with at least one Basic
-  // Pokémon. The 4-copy limit is a deck-build constraint, not a runtime one;
-  // ≥1 Basic is what guarantees the mulligan loop terminates.
+  // What a game needs to run (§3.1): exactly 60 known ids with at least one
+  // Basic Pokémon, which is what guarantees the mulligan loop terminates.
+  // Copy limits and formats are deckRules.ts's, asked where a deck is
+  // brought online; local play runs any deck that passes here.
   const pool: Record<string, Card> = {};
   for (const seat of SEATS) {
     const deck = options.decks[seat];

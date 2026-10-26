@@ -187,7 +187,7 @@ describe("Lua sandbox setup", () => {
     expect(sandbox.phase).toBe("ready");
     expect(sandbox.selected).toEqual(["", ""]);
   });
-  it("filters complete decks with no Basics, excess copies, missing cards or illegal formats", async () => {
+  it("offers any deck a game can run, whatever its copies or format, but not one with no Basic or a missing card", async () => {
     const names = ["valid", "no-basic", "copies", "missing", "standard", "expanded", "deleted"];
     const summaries = names.map((id) => ({ ...decks[0], id, name: id }));
     const custom = (
@@ -237,9 +237,18 @@ describe("Lua sandbox setup", () => {
       "GET /cards/old": () =>
         json({ ...card, id: "old", legal: { standard: false, expanded: true } }),
     });
-    const { sandbox } = await setup();
-    expect(sandbox.decks.map((deck) => deck.id)).toEqual(["expanded", "valid"]);
-    expect(sandbox.selected).toEqual(["expanded", "expanded"]);
+    const { sandbox, launch } = await setup();
+    expect(sandbox.decks.map((deck) => deck.id)).toEqual([
+      "copies",
+      "expanded",
+      "standard",
+      "valid",
+    ]);
+    expect(sandbox.selected).toEqual(["copies", "copies"]);
+    await sandbox.command("select\t2\tstandard");
+    await sandbox.command("start");
+    expect(sandbox.message).toBe("");
+    expect(launch).toHaveBeenCalledOnce();
   });
   it("keeps catalog failures retryable and shows an empty chooser when every deck is invalid", async () => {
     stubFetch({ ...reads, "GET /cards/energy": () => json({ error: "down" }, 503) });

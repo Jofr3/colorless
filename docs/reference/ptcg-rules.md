@@ -76,7 +76,10 @@ Notes:
 ## 3. Game setup (deterministic sequence)
 
 1. **Deck legality**: exactly **60 cards**. (Standard also enforces a 4-copy limit
-   per card name except Basic Energy — a deck-build constraint, not a runtime one.)
+   per card name except Basic Energy — a deck-build constraint, not a runtime one.
+   `createGame` asks only for 60 known cards and a Basic Pokémon; the construction
+   rules live in `packages/engine/src/deckRules.ts` and are enforced at online match
+   start.)
 2. Each player shuffles their deck.
 3. **Determine turn order**: flip a coin (or rock-paper-scissors in some rules); the
    **winner decides who takes the first turn**. Engine: single random bit + a choice.

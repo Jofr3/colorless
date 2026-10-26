@@ -5,26 +5,18 @@
 // builder keeps speaking its own dialect (accented "Pokémon", "Stage 1",
 // "Pokémon Tool", …) unchanged.
 
-import { isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
+import { type Format, isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
 import type { Card, CardBrief, CardCategory, CatalogFacets } from "@colorless/schema";
 import { type CardsQuery, getCards, getSets } from "../lib/api";
 import {
   type BuilderCard,
+  CATEGORY_BY_SUPERTYPE,
   ENERGY_TYPES,
   type EnergyType,
-  type Format,
   type Supertype,
 } from "./cards";
 import { type ImportResult, nameKey, parseDecklist, resolveDecklist } from "./decklistText";
 import type { Filters } from "./poolFilter";
-
-// Builder supertype ↔ api category: the same three values, but the builder
-// uses the accented spelling the game prints and the DB stores ASCII.
-const CATEGORY_BY_SUPERTYPE: Record<Supertype, CardCategory> = {
-  Pokémon: "Pokemon",
-  Trainer: "Trainer",
-  Energy: "Energy",
-};
 
 const SUPERTYPE_BY_CATEGORY: Record<CardCategory, Supertype> = {
   Pokemon: "Pokémon",
