@@ -1,4 +1,4 @@
-1	ready	Electric%20Dreams	standard			0	1	1	2	6	sv01-050				0	0
+1	ready	Electric%20Dreams	standard			0	1	1	2	6	sv01-050				0	0	0
 C	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	4	0	ability%2Cattack
 C	sv01-181	Nest%20Ball	Trainer	Item	2	2		G	12	4	0	
 D	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	4	0	ability%2Cattack

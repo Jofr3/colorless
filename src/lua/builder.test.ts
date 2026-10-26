@@ -264,6 +264,27 @@ describe("Lua deck builder", () => {
     expect([...b.entries]).toEqual([["b", 2]]);
     expect(b.transfer).toBe("2 Abra");
   });
+  it("offers Retry only after a load failed", async () => {
+    const { b, publish } = await setup();
+    const retry = () =>
+      String(publish.mock.lastCall?.[0]).split("\n")[0]?.split("\t")[
+        wireColumn(WIRE_ROWS.builder.header, "retry")
+      ];
+    vi.mocked(api.getCards).mockResolvedValueOnce({
+      items: [card("b", "Abra")],
+      total: 1,
+      page: 1,
+      pageSize: 100,
+    });
+    await b.command(encodeFields(["import", "2 Abra"]));
+    expect(b.message).toBe("Deck imported.");
+    expect(retry()).toBe("0");
+    vi.mocked(api.getCards).mockRejectedValueOnce(new Error("offline"));
+    await b.command("retry");
+    expect(b.message).toBe("Card search failed. Try again.");
+    expect(retry()).toBe("1");
+  });
+
   it("prefills the decklist from current cards and leaves an empty deck blank", async () => {
     const { b } = await setup();
     b.message = "An old message";

@@ -5,7 +5,7 @@ local Builder=require('ui.builder')
 local Codec=require('ui.codec')
 local commands={};local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
 local function snapshot(rev,n)
- local lines={table.concat({rev,'ready','Test Deck','standard','','','0','1','2','16','8','','','', '', '0','0'},'\t')}
+ local lines={table.concat({rev,'ready','Test Deck','standard','','','0','1','2','16','8','','','', '', '0','0','0'},'\t')}
  for i=1,n do lines[#lines+1]='C\tc'..i..'\tCard '..i..'\tPokemon\tBasic\t1\t3\t60\tH\t1' end
  for i=1,12 do lines[#lines+1]='D\td'..i..'\tDeck card '..i..'\tPokemon\tBasic\t1\t3' end
  for i=1,10 do lines[#lines+1]='O\tf'..i..'\tFilter '..i..'\tAll' end

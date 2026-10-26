@@ -7,9 +7,9 @@ local Builder=require('ui.builder');local Codec=require('ui.codec')
 local commands={};local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
 local function encode(fields)local out={};for i,v in ipairs(fields)do out[i]=Codec.encode(tostring(v))end;return table.concat(out,'\t')end
 local rev=0
-local function sync(text,importing)
+local function sync(text,importing,message,retry)
  rev=rev+1
- b:sync(encode({rev,'ready','Test','standard','','',0,1,1,0,2,'','',text,'',importing and 1 or 0,0}))
+ b:sync(encode({rev,'ready','Test','standard','',message or '',0,1,1,0,2,'','',text,'',importing and 1 or 0,0,retry and 1 or 0}))
 end
 local function control(action)
  for i,c in ipairs(b.controls)do if c.action==action then return c,i end end
@@ -45,3 +45,10 @@ for _,size in ipairs({{1280,800},{480,850}})do
  assert(b.transfer=='' and control('import').disabled and control('copy').disabled,'Empty decks have a blank field')
 end
 print('PASS: single decklist modal, fresh prefill, draft preservation, changed/nonempty confirmation, clipboard contents and responsive bounds')
+
+local function has(action) for _,c in ipairs(b.controls)do if c.action==action then return true end end return false end
+if b.modal then activate('close') end
+sync('',false,'Deck imported.',false)
+assert(not has('retry'),'a success message offers no Retry')
+sync('',false,'Card search failed. Try again.',true)
+assert(has('retry'),'a failed load offers Retry')

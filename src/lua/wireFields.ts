@@ -167,6 +167,7 @@ export const WIRE_ROWS = {
         "cover",
         "importing",
         "dirty",
+        "retry",
       ],
     },
     /** `C` a catalog result, `D` a deck entry, `S` the selected card. */

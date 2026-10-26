@@ -19,7 +19,7 @@ return {
     deck={id=2,name=3,count=4,tint=5,illegal=6},
   },
   builder={
-    header={revision=1,phase=2,name=3,format=4,saveStatus=5,message=6,busy=7,page=8,pages=9,total=10,count=11,selected=12,details=13,transfer=14,cover=15,importing=16,dirty=17},
+    header={revision=1,phase=2,name=3,format=4,saveStatus=5,message=6,busy=7,page=8,pages=9,total=10,count=11,selected=12,details=13,transfer=14,cover=15,importing=16,dirty=17,retry=18},
     card={cardId=2,name=3,supertype=4,subtype=5,quantity=6,remaining=7,hp=8,mark=9,number=10,copyLimit=11,illegal=12,gaps=13},
     validation={message=2,pokemon=3,trainer=4,energy=5},
     option={key=2,label=3,value=4,count=5,index=6,selected=7},

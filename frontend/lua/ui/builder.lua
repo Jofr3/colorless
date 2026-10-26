@@ -170,14 +170,14 @@ function Builder:sync(raw)
   if not raw or raw==self.raw then return end;self.raw=raw
   local lines=Codec.rows(raw)
   local H=W.header
-  local f=lines[1];if not f or #f<H.dirty then return end
+  local f=lines[1];if not f or #f<H.retry then return end
   self.phase,self.name,self.format,self.saveStatus,self.message=f[H.phase],f[H.name],f[H.format],f[H.saveStatus],f[H.message]
   self.busy=f[H.busy]=='1';self.page,self.pages,self.total,self.count=tonumber(f[H.page]),tonumber(f[H.pages]),tonumber(f[H.total]),tonumber(f[H.count])
   self.selected,self.details=f[H.selected],f[H.details]
   if f[H.transfer]~=self.exportRaw then
     self.exportRaw=f[H.transfer];self.transfer=f[H.transfer];self.transferBaseline=f[H.transfer]
   end
-  self.cover=f[H.cover];self.importing=f[H.importing]=='1';self.dirty=f[H.dirty]=='1'
+  self.cover=f[H.cover];self.importing=f[H.importing]=='1';self.dirty=f[H.dirty]=='1';self.retry=f[H.retry]=='1'
   self.options={};self.choices={};self.deck={};self.items={};self.selectedItem=nil
   local signature={tostring(self.page)}
   for i=2,#lines do local r=lines[i]
@@ -368,7 +368,7 @@ function Builder:build()
     end
   end
   if self.saveStatus=='failed' then self:add(p and 'Retry save' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-86,p and 432 or 110,p and 36 or 20,'retry-save',T.red).fontSize=p and 24 or 18
-  elseif self.message~='' then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-86,p and 432 or 110,p and 36 or 20,'retry',T.profile).fontSize=p and 24 or 18 end
+  elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-86,p and 432 or 110,p and 36 or 20,'retry',T.profile).fontSize=p and 24 or 18 end
 end
 function Builder:openModal(mode,item)
   self:command('finish-input');self.editing='';self.focus=0;self.pressed=nil

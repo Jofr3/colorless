@@ -40,6 +40,15 @@ const SEARCH_DEBOUNCE_MS = 250;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
 /** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
+/** Messages for a failed load, the ones the Retry button answers. */
+const LOAD_FAILED = {
+  deck: "Could not open this deck. Try again.",
+  cards: "Some cards could not load. Retry loading before adding cards.",
+  options: "Filter options could not load. Retry loading to reconnect.",
+  search: "Card search failed. Try again.",
+} as const;
+const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
+
 export class LuaBuilder {
   id = "";
   name = "";
@@ -212,6 +221,7 @@ export class LuaBuilder {
         cover: this.cover ?? "",
         importing: +this.importing,
         dirty: +this.dirty,
+        retry: +LOAD_FAILURES.has(this.message),
       }),
     ];
     const row = (tag: "C" | "D" | "S", c: BuilderCard) =>
@@ -440,7 +450,7 @@ export class LuaBuilder {
       reportError("open deck", error);
       if (live()) {
         this.phase = "error";
-        this.message = "Could not open this deck. Try again.";
+        this.message = LOAD_FAILED.deck;
         this.emit();
       }
     }
@@ -460,7 +470,7 @@ export class LuaBuilder {
     } catch (error) {
       reportError("hydrate deck cards", error);
       if (live()) {
-        this.message = "Some cards could not load. Retry loading before adding cards.";
+        this.message = LOAD_FAILED.cards;
         this.emit();
       }
     }
@@ -480,7 +490,7 @@ export class LuaBuilder {
     } catch (error) {
       reportError("load filter options", error);
       if (live()) {
-        this.message = "Filter options could not load. Retry loading to reconnect.";
+        this.message = LOAD_FAILED.options;
         this.emit();
       }
     }
@@ -502,7 +512,7 @@ export class LuaBuilder {
       this.total = data.total;
     } catch (error) {
       reportError("search cards", error);
-      if (current()) this.message = "Card search failed. Try again.";
+      if (current()) this.message = LOAD_FAILED.search;
     }
     if (current()) {
       this.busy = false;
