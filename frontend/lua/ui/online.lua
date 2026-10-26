@@ -174,7 +174,8 @@ function Online:build()
     if ready then
       for i,card in ipairs(self.cards) do
         local b=card.bounds
-        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,disabled=not card.item.online})
+        -- A deck that can't be played online stays focusable so its reason is read out.
+        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,blocked=not card.item.online})
       end
       add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36})
       add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36})
@@ -368,7 +369,7 @@ end
 function Online:hit(x,y,hoverOnly)
   y=y-self:offset()
   for i,item in ipairs(self.items) do
-    if not item.disabled and Button.hit(item,x,y) then
+    if not item.disabled and not item.blocked and Button.hit(item,x,y) then
       if item.kind=='cycle' then
         if x<=item.x+28.8 then return i,'left' end
         if x>=item.x+item.w-28.8 then return i,'right' end
@@ -429,6 +430,11 @@ end
 function Online:activate(i,dir)
   local item=self.items[i]
   if not item or item.disabled then return end
+  if item.blocked then
+    local d=self.cards[item.card].item
+    self.callbacks.announce(d.name.." can't be played online. It isn't legal in "..d.formatName..'.')
+    return
+  end
   local a=item.action
   self.callbacks.feedback('button');self.callbacks.jiggle(0.5)
   if item.kind=='tab' then

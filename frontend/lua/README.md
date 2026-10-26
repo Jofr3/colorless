@@ -501,7 +501,9 @@ left/right switch the menu tabs and turn the regulation cycle; Enter/Space
 activate; typing on the Join tab starts the code field and Enter joins; Escape
 closes the picker, is ignored during the countdown and otherwise
 acts as the Back slot. Page Up/Down and the wheel turn picker pages. Steps, joins, ready changes, copies and countdown ticks
-are announced through `#announcement`.
+are announced through `#announcement`. A deck that can't be played online (not legal in its own format) carries the alert
+badge and ignores the pointer, but keyboard focus still reaches it and reads the reason; Enter on it says why it can't be
+chosen instead of choosing it.
 
 Online checks: `bunx vitest run src/online src/lua`,
 `lua frontend/lua/tests/online.lua`, `lua frontend/lua/tests/simulator_online.lua`,
