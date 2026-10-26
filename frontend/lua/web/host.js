@@ -77,37 +77,6 @@ window.colorlessHost = {
   },
 };
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
-const preferenceDefaults = {
-  screenshake: 50,
-  reducedMotion: -1,
-  crt: 70,
-  bloom: 0,
-  volume: 50,
-  musicVolume: 100,
-  effectsVolume: 100,
-  muted: 0,
-};
-/** @typedef {keyof typeof preferenceDefaults} PreferenceKey */
-const preferenceKeys = /** @type {PreferenceKey[]} */ (Object.keys(preferenceDefaults));
-/** @type {Partial<Record<PreferenceKey, [number, number]>>} */
-const preferenceRanges = { reducedMotion: [-1, 1], bloom: [0, 1], muted: [0, 1] };
-let preferences = { ...preferenceDefaults };
-/** @param {Partial<Record<PreferenceKey, unknown>> | null | undefined} value */
-function validatedPreferences(value) {
-  const result = { ...preferenceDefaults };
-  for (const key of preferenceKeys) {
-    const number = value?.[key];
-    if (typeof number !== "number" || !Number.isFinite(number)) continue;
-    const [min, max] = preferenceRanges[key] || [0, 100];
-    result[key] = Math.max(min, Math.min(max, Math.round(number)));
-  }
-  return result;
-}
-try {
-  const stored = JSON.parse(localStorage.getItem("colorless.lua.preferences") || "null");
-  if (stored?.version === 1) preferences = validatedPreferences(stored);
-  else preferences.muted = localStorage.getItem("colorless.lua.muted") === "1" ? 1 : 0;
-} catch (_) {}
 
 /** @param {string} message */
 function fail(message) {
@@ -120,12 +89,8 @@ function syncViewport() {
   // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
   // must use that same size; a capped scene leaves the rest of it black.
   // Keep CSS-pixel dimensions (no devicePixelRatio multiplier).
-  const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"} ${preferences.muted} ${settingsRequest} ${settingsTab}`;
+  const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"} ${settingsRequest} ${settingsTab}`;
   writeMailbox(bridge.mailboxes.viewport, text);
-  writeMailbox(
-    bridge.mailboxes.preferences,
-    preferenceKeys.map((key) => preferences[key]).join(" "),
-  );
 }
 // build:lua replaces the empty object with each /love/ file's content hash;
 // the `?v=` it adds changes the URL whenever the bytes do, which is what lets
@@ -162,20 +127,6 @@ const loveModule = {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
       if (token) void consumeTransitionArt(Number(token), action === "invalid");
-      return;
-    } else if (message.startsWith("COLORLESS:preferences:")) {
-      const values = message.slice("COLORLESS:preferences:".length).split(" ").map(Number);
-      if (values.length !== preferenceKeys.length || !values.every(Number.isFinite)) return;
-      preferences = validatedPreferences(
-        Object.fromEntries(preferenceKeys.map((key, i) => [key, values[i]])),
-      );
-      try {
-        localStorage.setItem(
-          "colorless.lua.preferences",
-          JSON.stringify({ version: 1, ...preferences }),
-        );
-        localStorage.setItem("colorless.lua.muted", String(preferences.muted));
-      } catch (_) {}
       return;
     }
     bridge?.onPrint(message);

@@ -158,7 +158,7 @@ local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
   local raw=Mailbox.read('viewport')
   if not raw then return end
-  local w,h,reduced,_,request,tab=raw:match('^(%d+) (%d+) (%d) (%d)%s*(%d*)%s*(%a*)')
+  local w,h,reduced,request,tab=raw:match('^(%d+) (%d+) (%d)%s*(%d*)%s*(%a*)')
   w,h=tonumber(w),tonumber(h)
   if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
   state.systemReduced=reduced=='1'

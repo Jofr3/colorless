@@ -1,7 +1,7 @@
 -- Exercise the real main.lua routing/input lifecycle with isolated mailboxes.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function()end
-local files={['__viewport.txt']='1280 800 0 0 0 0',['__page.txt']='1\thome\t'}
+local files={['__viewport.txt']='1280 800 0 0',['__page.txt']='1\thome\t'}
 local image={release=noop,setFilter=noop,getDimensions=function()return 1850,800 end,getWidth=function()return 245 end,getHeight=function()return 337 end}
 local shader={send=noop,release=noop,hasUniform=function()return true end}
 -- Logo loading is exercised separately; this test owns routing.
@@ -51,12 +51,12 @@ route(3,'home');route(4,'decks');frames(140)
 assert(scenes.library.opens==1 and scenes.simulator.opens==1)
 assert(count('COLORLESS:transition:open')==2 and count('COLORLESS:transition:closed')==2)
 -- Reduced motion switches immediately once the mailbox is processed.
-files['__viewport.txt']='1280 800 1 0 0 0'
+files['__viewport.txt']='1280 800 1 0'
 route(5,'simulator');frames(5)
 assert(scenes.simulator.opens==2)
 assert(count('COLORLESS:transition:open')==3 and count('COLORLESS:transition:closed')==3)
 -- The lobby modal opens over home without a wipe; its code retargets in place.
-files['__viewport.txt']='1280 800 0 0 0 0'
+files['__viewport.txt']='1280 800 0 0'
 route(6,'home');frames(140);route(7,'online');frames(5)
 assert(scenes.online.opens==1 and count('COLORLESS:transition:open')==4,'Home to online must not wipe')
 route(8,'online\tABCD');frames(5)

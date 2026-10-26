@@ -2,6 +2,7 @@
  * and the canvas's dialog semantics. */
 
 import { DECK_NAME_MAX, DISPLAY_NAME_MAX, normalizeLobbyCode } from "@colorless/schema";
+import { readPersisted, writePersisted } from "../lib/persistedState";
 import { decodeFields, encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
@@ -37,6 +38,9 @@ export interface ShellPorts {
   navigate(page: string): void;
   authenticate(request: AuthRequest): void;
 }
+
+/** Lua's preferences record, kept as Lua serializes it; Lua owns its fields. */
+const PREFERENCES_KEY = "colorless.lua.preferences";
 
 const SETTINGS_LABEL = "Settings. Tab between controls. Arrow keys adjust values. Escape closes.";
 
@@ -90,6 +94,10 @@ export class HostShell {
       label: canvas.getAttribute("aria-label") ?? "",
     };
     const release = () => this.focusCanvas();
+    host.writeMailbox(
+      MAILBOXES.preferences,
+      readPersisted(PREFERENCES_KEY, (raw) => raw, ""),
+    );
 
     const nameInput = proxyElement(doc, "input");
     nameInput.setAttribute("aria-label", "Display name");
@@ -231,6 +239,9 @@ export class HostShell {
         if (region) region.textContent = rest;
         break;
       }
+      case "preferences":
+        writePersisted(PREFERENCES_KEY, rest);
+        break;
       case "settings":
         if (rest === "open" || rest === "closed") this.settingsChanged(rest === "open");
         break;
