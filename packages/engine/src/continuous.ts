@@ -420,9 +420,21 @@ export function stadiumLicensesSameTurnEvolve(
  * Auras are collected ungated off each source's printed passive, tagged with their holder, then
  * settled by a stratified pass: an aura is on once every aura reaching its holder is off, off once
  * an on aura reaches its holder, and mutual source cycles are kept both on. Only on auras mark
- * targets. A Stadium lock has no holder and is always on.
+ * targets. A Stadium lock has no holder and is always on. Remembered per state, which the engine
+ * never changes in place.
  */
-export function disabledAbilityUids(state: GameState): Set<string> {
+export function disabledAbilityUids(state: GameState): ReadonlySet<string> {
+  let disabled = DISABLED_ABILITY_UIDS.get(state);
+  if (disabled === undefined) {
+    disabled = abilityLockedUids(state);
+    DISABLED_ABILITY_UIDS.set(state, disabled);
+  }
+  return disabled;
+}
+
+const DISABLED_ABILITY_UIDS = new WeakMap<GameState, ReadonlySet<string>>();
+
+function abilityLockedUids(state: GameState): ReadonlySet<string> {
   const disabled = new Set<string>();
   // Collect the live auras first (ungated), each tagged with its source's seat and its holder, so
   // the pass below can ask whether another aura reaches it. A Stadium's aura has no holder: no
