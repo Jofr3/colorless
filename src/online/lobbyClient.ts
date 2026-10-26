@@ -58,7 +58,7 @@ export type LobbyClientState = {
   /** This client's REDACTED view of the running match, or null until the server
       broadcasts one; cleared whenever the lobby leaves in-game. */
   match: RedactedGame | null;
-  /** The match's whole seat-keyed log, replaced (never appended) per frame. */
+  /** The match's whole seat-keyed log, rebuilt from each frame (`receivedLog`). */
   matchLog: SeatLogEntry[];
   /** The last refused game action; cleared by the next accepted one. */
   actionError: ActionError | null;
@@ -91,6 +91,19 @@ function initialLobbyState(
     actionError: null,
     matchError: null,
   };
+}
+
+/**
+ * The whole log after a `match` frame: the frame's log when it is full, the held log plus the
+ * frame's entries when it continues the held log, or null when it does not.
+ */
+export function receivedLog(
+  held: SeatLogEntry[],
+  frame: Extract<LobbyMessage, { kind: "match" }>,
+): SeatLogEntry[] | null {
+  if (frame.logFrom === undefined) return frame.log;
+  if (frame.logFrom !== held.length) return null;
+  return [...held, ...frame.log];
 }
 
 /** Whole seconds left on the start countdown (3, 2, 1, then 0 = "Go!"). */
@@ -214,7 +227,7 @@ export class LobbyClient {
   }
 
   private hello() {
-    this.channel.post({ kind: "hello", from: this.playerId, name: this.name });
+    this.channel.post({ kind: "hello", from: this.playerId, name: this.name, logDeltas: true });
   }
 
   private intent(intent: LobbyIntent) {
@@ -252,10 +265,16 @@ export class LobbyClient {
       case "match": {
         if (this.refusal === "kicked") break;
         this.lastServerSeen = this.now();
+        const matchLog = receivedLog(this.current.matchLog, message);
+        // A delta that does not continue the held log: the hello path answers with a full frame.
+        if (matchLog === null) {
+          this.hello();
+          break;
+        }
         this.set({
           ...(this.refusal === "full" && { status: "spectating" as const }),
           match: message.game,
-          matchLog: message.log,
+          matchLog,
           actionError: null,
         });
         break;

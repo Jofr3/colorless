@@ -239,6 +239,7 @@ export function basicCard(id: string): Card {
 }
 
 export interface LobbyHarness {
+  /** The current instance; `hibernate` replaces it. */
   readonly lobby: LobbyDO;
   readonly state: FakeState;
   readonly storage: FakeStorage;
@@ -253,6 +254,9 @@ export interface LobbyHarness {
   drop(ws: FakeSocket): Promise<void>;
   /** Move the clock to the pending alarm and run it, as the runtime does. */
   fireAlarm(): Promise<void>;
+  /** Evict the instance and wake a fresh one on the same storage and sockets, as hibernation
+      does: only what storage and the socket attachments hold survives. */
+  hibernate(): void;
   /** Restore the globals `createLobbyHarness` replaced. */
   dispose(): void;
 }
@@ -269,15 +273,15 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
     ...world,
   };
   const state = new FakeState();
-  const lobby = new LobbyDO(
-    state as unknown as DurableObjectState,
-    {} as Env,
-    worldDeps(fullWorld),
-  );
+  const wake = () =>
+    new LobbyDO(state as unknown as DurableObjectState, {} as Env, worldDeps(fullWorld));
+  let lobby = wake();
   const socket = (ws: FakeSocket) => ws as unknown as WebSocket;
 
   return {
-    lobby,
+    get lobby() {
+      return lobby;
+    },
     state,
     storage: state.storage,
     world: fullWorld,
@@ -311,6 +315,9 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
       state.storage.alarm = null;
       fullWorld.now = Math.max(fullWorld.now, at);
       await lobby.alarm();
+    },
+    hibernate() {
+      lobby = wake();
     },
     dispose: restore,
   };

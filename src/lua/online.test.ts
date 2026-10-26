@@ -136,7 +136,12 @@ describe("Lua online adapter", () => {
     expect(header().slice(1, 7)).toEqual(["waiting", "0", "", CODE, "host", "connected"]);
     expect(route).toHaveBeenCalledWith("online", CODE, true);
     expect(identity()).toMatchObject({ role: "host", name: "Ash" });
-    expect(last().posts[0]).toEqual({ kind: "hello", from: identity().playerId, name: "Ash" });
+    expect(last().posts[0]).toEqual({
+      kind: "hello",
+      from: identity().playerId,
+      name: "Ash",
+      logDeltas: true,
+    });
     await online.command("create");
     expect(route).toHaveBeenCalledOnce();
   });
