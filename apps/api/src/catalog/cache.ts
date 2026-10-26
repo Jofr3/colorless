@@ -57,6 +57,8 @@ export function bypassesCatalogCache(url: URL): boolean {
 
 type EpochRead = { epoch: string | null; readAt: number } | { failedAt: number };
 
+// Keyed by the binding, which workerd hands every request of an isolate as one object; a test
+// that swaps namespaces starts a fresh memo.
 const epochReads = new WeakMap<KVNamespace, EpochRead>();
 
 /** The stamped catalog epoch, reread at most once a minute per isolate; undefined when KV
