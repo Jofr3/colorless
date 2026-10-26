@@ -47,7 +47,10 @@ only the conclusion.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (coverage guards, the import graph,
   `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the mutant `precheck`), `check:lua` (the headless Lua tests,
-  requiring Balatro's source) and `check:test` (vitest). CI runs the same three
+  requiring Balatro's source) and `check:test` (vitest). `scripts/check.ts` runs
+  the three, and the steps of `check:static`, concurrently, printing each step's
+  output when it finishes and then a timing table; a step is one quoted argument,
+  so adding one to `package.json` is all it takes. CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
   migrations, the API deploy and then the web deploy, in that order.

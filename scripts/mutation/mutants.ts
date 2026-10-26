@@ -24312,8 +24312,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D481",
     what: "🛑 **THE GUARD IS UN-RUN RATHER THAN BROKEN — the failure mode D212's `lint-coverage.ts` has been exposed to for 269 decisions.** Eight words leave `package.json`'s `check` and a perfect check stops being a step; every other step is untouched and green, and *a guard removed from the build is indistinguishable from a guard that passes*. It dies on this script's own wiring rung, which reads `scripts.check` out of `package.json` and requires its own path in it. ⚠️ **Nothing else in the repo asserts this** — the row exists because the rung does, and the rung exists because writing it cost one `includes`.",
     file: "package.json",
-    find: '"check:static": "bun scripts/typecheck-coverage.ts && bun scripts/import-graph.ts --check && tsc -b',
-    replace: '"check:static": "bun scripts/import-graph.ts --check && tsc -b',
+    find: "\"check:static\": \"bun scripts/check.ts 'bun scripts/typecheck-coverage.ts' 'bun scripts/import-graph.ts --check' 'tsc -b'",
+    replace:
+      "\"check:static\": \"bun scripts/check.ts 'bun scripts/import-graph.ts --check' 'tsc -b'",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
   },
