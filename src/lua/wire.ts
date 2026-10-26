@@ -1,9 +1,10 @@
 /** The Lua mailbox wire: fields are percent-encoded and TAB-joined, rows are
  * newline-joined. */
-export const encodeFields = (fields: (string | number)[]) =>
+export const encodeFields = (fields: (string | number | boolean)[]) =>
   fields.map((v) => encodeURIComponent(String(v))).join("\t");
 
-export const encodeRows = (rows: (string | number)[][]) => rows.map(encodeFields).join("\n");
+export const encodeRows = (rows: (string | number | boolean)[][]) =>
+  rows.map(encodeFields).join("\n");
 
 /** null when a field holds a malformed %-sequence. */
 export function decodeFields(raw: string): string[] | null {

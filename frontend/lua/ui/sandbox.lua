@@ -13,7 +13,7 @@ local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
 local Input=require('ui.text_input')
-local Library=require('ui.library')
+local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
 local g=love.graphics
 local Sandbox={}
@@ -48,26 +48,11 @@ function Sandbox:layout(w,h)
 end
 function Sandbox:makeCards(entering)
   if not self.area then return end
-  for _,card in ipairs(self.cards) do card.texture:release() end
-  self.cards={}
+  DeckGrid.release(self)
   local matches={}
   local q=self.query:lower():match('^%s*(.-)%s*$')
   for _,item in ipairs(self.items) do if q=='' or item.name:lower():find(q,1,true) then matches[#matches+1]=item end end
-  self.pages=math.max(1,math.ceil(#matches/self.size));self.page=math.max(1,math.min(self.pages,self.page))
-  self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
-  local cols=self.portrait and 2 or 5
-  local a=self.area
-  local scale=math.min(0.82,(a.h/2-84)/D.H)
-  for i=(self.page-1)*self.size+1,math.min(#matches,self.page*self.size) do
-    local item=matches[i]
-    item.drawFace=function(w,h) Library.face(self,item,w,h) end
-    local card=Pile.new(item,i)
-    local index=#self.cards
-    card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
-    card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
-    card:collect(cols,index%cols,self.width/2,entering,self.time,self.reduced,self.width)
-    self.cards[#self.cards+1]=card
-  end
+  DeckGrid.fill(self,matches,self.size,self.portrait and 2 or 5,math.min(0.82,(self.area.h/2-84)/D.H),entering)
 end
 function Sandbox:add(label,x,y,w,h,action,colour,disabled)
   local b={label=label,x=x,y=y,w=w,h=h,action=action,colour=disabled and T.panel or colour,fontSize=26,disabled=disabled}
@@ -131,8 +116,8 @@ function Sandbox:hit(x,y)
 end
 function Sandbox:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  self:sync(Mailbox.read('__sandbox.txt'))
-  self:input(Mailbox.read('__sandbox_input.txt'))
+  self:sync(Mailbox.read('sandbox'))
+  self:input(Mailbox.read('sandboxInput'))
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   self.mx,self.my=mx,my-self:offset();self.hover=self:hit(mx,my)
   for i,card in ipairs(self.cards) do
@@ -172,6 +157,7 @@ function Sandbox:activate(i)
   elseif a=='refresh' then self.callbacks.refresh();self:command('refresh')
   elseif a=='start' then self:command('start');self.busy=true;self:build() end
 end
+function Sandbox:cancelInteractions() self.pressed=nil end
 function Sandbox:mousepressed(x,y) self.focus=0;self.pressed=self:hit(x,y) end
 function Sandbox:mousereleased(x,y)
   if self.pressed and self.pressed==self:hit(x,y) then self:activate(self.pressed) end
@@ -189,9 +175,7 @@ end
 function Sandbox:wheelmoved(y) if y~=0 and not self.editing and WheelPager.ready(self) then self:changePage(y>0 and -1 or 1) end end
 function Sandbox:draw()
   local x,y,w,h=self.x,self.y,self.w,self.h
-  Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.modalFrame(x,y,w,h)
-  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
+  Button.modalFrameRaised(x,y,w,h)
   if self.phase=='ready' then
     local a=self.area
     Button.panel(a.x,a.y+3,a.w,a.h,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})

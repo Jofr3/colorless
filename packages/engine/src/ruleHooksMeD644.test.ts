@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { countersMoveLocked, weaknessAmountOverride, withWeaknessAmount } from "./continuous";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame, redactGame } from "./index";
-import type { EffectContext } from "./interpreter";
+import type { EffectContext } from "./effectPrompt";
 import { isCounterMoveOp, startlingDropRetort } from "./interpreter";
 import { programFor } from "./registry";
 import {

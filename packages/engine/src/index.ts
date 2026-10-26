@@ -1,7 +1,7 @@
 // @colorless/engine: a deterministic Pokémon TCG rules engine. Everything is
 // (state, action) -> result with seeded randomness, so the same seed and actions
 // replay identically. Shared by the web app (local play) and the API Worker
-// (authoritative online matches). Spec: docs/workstreams/simulator.md; rules:
+// (authoritative online matches). Design: docs/workstreams/simulator.md; rules:
 // docs/reference/ptcg-rules.md.
 
 import type { ApplyResult, GameAction } from "./actions";
@@ -142,7 +142,6 @@ export {
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
 export type {
-  AttachTargetRiders,
   AttackCoinFlip,
   AttackDamageBonus,
   AttackGateClause,
@@ -150,13 +149,16 @@ export type {
   AttackFlipCount,
   AttackFlipThreshold,
   AttackOptionalBoost,
+} from "./effects";
+export type {
+  AttachTargetRiders,
   BoardCondition,
   CardFilter,
   DamageCountSource,
   EffectOp,
   EffectSlot,
   OpponentEnergyZone,
-} from "./effects";
+} from "./effectTypes";
 export { conditionHolds, conditionNote } from "./boardCondition";
 export { attackBarredByAbility } from "./boardCondition";
 export { attackAgainBarred } from "./boardCondition";

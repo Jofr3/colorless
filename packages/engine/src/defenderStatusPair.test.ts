@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat, StatusName } from "./index";

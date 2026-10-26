@@ -21,7 +21,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { GameState } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   EX_ONLY_DECK,
   clearBench,

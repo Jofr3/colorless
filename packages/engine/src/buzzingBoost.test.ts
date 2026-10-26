@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { topUid } from "./cards";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
 import {

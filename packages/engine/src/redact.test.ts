@@ -6,7 +6,7 @@ import {
   type RedactedGame,
 } from "@colorless/schema";
 import { rareCandyOptions } from "./cardplay";
-import type { EffectContinuation, EffectPrompt } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 import { redactGame } from "./redact";
 import {
   ABILITY_DECK,
@@ -176,6 +176,32 @@ describe("redactGame — the opponent's side is redacted", () => {
     expect(oppActive.cardId).not.toBe(HIDDEN_CARD_ID);
     expect(oppActive.id).toBe(state.players.p2.active?.stack.at(-1));
     expect(oppActive.battle).not.toBeUndefined();
+  });
+});
+
+describe("redactGame — the turn's allowances", () => {
+  it("shows both viewers the turn owner's allowances once an Energy is attached", () => {
+    const before = turnOneState();
+    for (const seat of ["p1", "p2"] as const) {
+      expect(redactGame(before, seat).allowances).toEqual({
+        energy: false,
+        supporter: false,
+        retreated: false,
+      });
+    }
+    const after = mustApply(before, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: handUid(before, "p1", "fix-energy"),
+      target: { spot: "active" },
+    }).state;
+    for (const seat of ["p1", "p2"] as const) {
+      expect(redactGame(after, seat).allowances?.energy).toBe(true);
+    }
+  });
+
+  it("sends no allowances during setup", () => {
+    expect(redactGame(placedNotRevealed(), "p2").allowances).toBeUndefined();
   });
 });
 

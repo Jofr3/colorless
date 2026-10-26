@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { rareCandyOptions } from "./cardplay";
 import { passivesOf } from "./continuous";
-import { evolveEarlyLicensed } from "./interpreter";
+import { evolveEarlyLicensed } from "./boardCondition";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction, programFor } from "./index";
 import {

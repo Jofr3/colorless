@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { POKEMON_TYPE_BY_CODE, deriveAttackEffect } from "./effects";
-import type { EffectOp, PokemonType } from "./effects";
+import { deriveAttackEffect } from "./effects";
+import { POKEMON_TYPE_BY_CODE } from "./deriver/vocabulary";
+import type { EffectOp, PokemonType } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameState } from "./index";
 import { type LogContext, logFromEvents } from "./log";

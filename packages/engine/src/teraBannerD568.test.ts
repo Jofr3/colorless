@@ -18,7 +18,7 @@ import type { GameEvent } from "./events";
 import { briarPrizeBonus } from "./flow";
 import { applyAction } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

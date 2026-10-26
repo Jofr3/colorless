@@ -22,10 +22,10 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState } from "./index";
-import type { EffectContinuation, EffectPrompt } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 import { resumeProgram, runProgram } from "./interpreter";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";

@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import { logFromEvents } from "./log";

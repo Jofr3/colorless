@@ -34,7 +34,7 @@ end
 function Art.fallback() return draw(fallbackPool()) end
 
 function Art.pick()
-  local transition=Mailbox.read('__transition_art.txt')
+  local transition=Mailbox.read('transitionArt')
   if transition then
     local fields=Codec.fields(transition)
     local token,id,path=tonumber(fields[1]),fields[2],fields[3]
@@ -43,7 +43,7 @@ function Art.pick()
     end
   end
   local pool,ids={},{}
-  for _,row in ipairs(Mailbox.artRows(Mailbox.read(Mailbox.ART))) do
+  for _,row in ipairs(Mailbox.artRows(Mailbox.read('art'))) do
     -- Ignore stale or duplicate entries rather than selecting artwork
     -- already evicted from WASM.
     if row.id~='' and not ids[row.id] and love.filesystem.getInfo(row.path) then

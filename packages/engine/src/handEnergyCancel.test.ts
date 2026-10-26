@@ -11,9 +11,9 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { BoardCondition, EffectOp } from "./effects";
+import type { BoardCondition, EffectOp } from "./effectTypes";
 import type { GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   attachFromDeck,

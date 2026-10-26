@@ -12,7 +12,7 @@ Context does not have to be *managed* — it has to be **abandoned on purpose**.
 Each iteration is a brand-new `claude -p` session that boots from `docs/`, does
 **one slice**, writes the handoff, commits, and exits. The driver starts the
 next one. Nothing is carried in memory between iterations, because
-`docs/progress.md` already carries it — that is what this project's docs system
+`docs/status.md` already carries it — that is what this project's docs system
 was built for.
 
 Auto-compaction is the thing being avoided: it keeps a session alive by summarising
@@ -47,7 +47,7 @@ most once: **soft** (60%) *stop starting new work, run the ritual, commit*;
 > session's, and this project delegates heavily.
 
 **`session-gate.mjs`** (Stop) — the loop's one unrecoverable failure is a session
-that changes the repo and ends without updating `progress.md`: the next session
+that changes the repo and ends without updating `status.md`: the next session
 then boots from a resume point that no longer describes reality. The gate catches
 exactly that, plus a dirty tree, and sends the session back **once**. Never more
 than once — a Stop hook that keeps blocking is an infinite loop with a billing

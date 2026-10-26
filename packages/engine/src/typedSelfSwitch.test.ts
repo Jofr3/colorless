@@ -4,14 +4,14 @@ import { cardSchema } from "@colorless/schema";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { matchesFilter } from "./cards";
 import {
-  POKEMON_TYPES,
-  POKEMON_TYPE_BY_CODE,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackEffect,
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
+import { POKEMON_TYPES } from "./effectTypes";
+import { POKEMON_TYPE_BY_CODE } from "./deriver/vocabulary";
 import { applyAction, programFor, topCardOf } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import {

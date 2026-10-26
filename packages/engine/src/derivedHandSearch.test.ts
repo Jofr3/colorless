@@ -3,7 +3,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { programPlayable } from "./cardplay";
 import { matchesFilter } from "./cards";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
-import type { CardFilter, EffectOp } from "./effects";
+import type { CardFilter, EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import type { GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";

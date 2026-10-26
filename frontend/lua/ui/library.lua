@@ -4,12 +4,14 @@ local T=require('ui.theme')
 local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
+local CardBack=require('ui.card_back')
 local Alert=require('ui.card_alert')
 local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
+local W=require('ui.wire_fields').library
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
@@ -30,7 +32,13 @@ end
 function Library:open(reduced)
   self.motion=Modal.motion(reduced)
   self.focus=0; self.hover=0; self.pressed=nil; self.drag=nil
+  self:sendSize()
   self:command('open')
+end
+-- The TS side pages by this: four decks in portrait, twelve otherwise.
+function Library:sendSize()
+  local size=self.portrait and 4 or 12
+  if size~=self.sentSize then self.sentSize=size;self:command('size',size) end
 end
 function Library:offset()
   return self.motion and self.motion.VT.y*60 or 0
@@ -47,19 +55,8 @@ end
 function Library:layout(w,h)
   self.drag=nil; self.pressed=nil
   self.width,self.height=w,h; self.portrait=w<600
-  self:command('size',self.portrait and 4 or 12)
   self:makeCards(false)
   self:build()
-end
-function Library:face(item,w,h)
-  if not self.backs then
-    self.backs=g.newImage('assets/textures/2x/Enhancers.png')
-    self.backs:setFilter('nearest','nearest')
-    self.backQuad=g.newQuad(0,0,142,190,self.backs:getDimensions())
-    self.blueBackQuad=g.newQuad(0,380,142,190,self.backs:getDimensions())
-  end
-  local quad=item.backColour=='blue' and self.blueBackQuad or self.backQuad
-  g.setColor(1,1,1); g.draw(self.backs,quad,0,0,0,w/142,h/190)
 end
 function Library:makeCards(entering)
   if not self.width then return end
@@ -69,7 +66,7 @@ function Library:makeCards(entering)
   local left=(self.width-span)/2
   for i,item in ipairs(self.items) do
     item.colour=T.blue; item.edition='dissolve'
-    item.drawFace=function(w,h) self:face(item,w,h) end
+    item.drawFace=function(w,h) CardBack.draw(item.backColour,w,h) end
     local card=Pile.new(item,i)
     card:place(left+span/cols*((i-1)%cols+0.5),(self.portrait and 280 or 240)+math.floor((i-1)/cols)*(self.portrait and 220 or 250),self.portrait and 0.68 or 0.82,false,self.width)
     card:collect(cols,(i-1)%cols,self.width/2,entering,self.time,self.reduced,self.width)
@@ -80,19 +77,21 @@ function Library:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
   local lines=Codec.rows(raw)
-  local f=lines[1]; if not f or #f<14 then return end
-  self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
-  self.query,self.sort=f[6],f[8]
-  self.page,self.pages,self.total=tonumber(f[9]),tonumber(f[10]),tonumber(f[11])
+  local H=W.header
+  local f=lines[1]; if not f or #f<H.result then return end
+  self.phase,self.busy,self.message=f[H.phase],f[H.busy]=='1',f[H.message]
+  self.query,self.sort=f[H.query],f[H.sort]
+  self.page,self.pages,self.total=tonumber(f[H.page]),tonumber(f[H.pages]),tonumber(f[H.total])
   self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
   if self.editing~='search' then self.search=self.query end
   local items={}; local signature={self.query,tostring(self.page)}
   for i=2,#lines do
     local row=lines[i]
     if row[1]=='D' then
-      -- Field 8 is the legality verdict: '' while it is still being checked.
-      items[#items+1]={kind='deck',id=row[2],name=row[3],parent=row[4],count=tonumber(row[5]) or 0,tint=tonumber(row[6]) or 0,cover=row[7] or '',illegal=row[8]=='1'}
-      signature[#signature+1]=table.concat(row,'\t',1,7)
+      local d=W.deck
+      -- The legality verdict is '' while it is still being checked.
+      items[#items+1]={kind='deck',id=row[d.id],name=row[d.name],count=tonumber(row[d.count]) or 0,tint=tonumber(row[d.tint]) or 0,illegal=row[d.illegal]=='1'}
+      signature[#signature+1]=table.concat({row[d.id],row[d.name],row[d.count],row[d.tint]},'\t')
     end
   end
   signature=table.concat(signature,'\n')
@@ -103,7 +102,7 @@ function Library:sync(raw)
     -- A verdict arriving later only flips the alert; the piles stay put.
     for i,item in ipairs(items) do if self.items[i] then self.items[i].illegal=item.illegal end end
   end
-  if self.modal and self.modal.pending and f[14]=='ok' then self:closeModal() end
+  if self.modal and self.modal.pending and f[H.result]=='ok' then self:closeModal() end
   if self.phase~='ready' and not self.busy then self:closeModal() end
   self:build()
 end
@@ -227,8 +226,9 @@ function Library:update(dt,time,mx,my,reduced)
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   my=my-self:offset()
   self.time,self.mx,self.my,self.reduced=time,mx,my,reduced
-  self:sync(Mailbox.read('__library.txt'))
-  self:input(Mailbox.read('__library_input.txt'))
+  self:sendSize()
+  self:sync(Mailbox.read('library'))
+  self:input(Mailbox.read('libraryInput'))
   if self.pendingSearch and not self.busy then
     self.searchDelay=self.searchDelay-dt
     if self.searchDelay<=0 then self:command('search',self.pendingSearch); self.pendingSearch=nil end
@@ -247,6 +247,10 @@ function Library:update(dt,time,mx,my,reduced)
     if hovered and not card.hovered then card:juiceUp(time,0.05,0.03,reduced); self.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     card:update(dt,time,hovered,reduced,self.width)
   end
+end
+function Library:cancelInteractions()
+  self.drag=nil;self.pressed=nil
+  for _,card in ipairs(self.cards) do card.dragging=false end
 end
 function Library:mousepressed(x,y)
   self.focus=0; self.pressed=self:hit(x,y)
@@ -284,9 +288,7 @@ function Library:draw(shaders)
   local w,h,p=self.width,self.height,self.portrait
   local frameW=p and w-32 or 1032
   local frameX=(w-frameW)/2
-  Button.panel(frameX,26,frameW,h-34,{0.525,0.546,0.585,1},2.4)
-  Button.modalFrame(frameX,20,frameW,h-34)
-  Button.panel(frameX+4,24,frameW-8,h-42,T.tray,2.4)
+  Button.modalFrameRaised(frameX,20,frameW,h-34)
   if self.phase=='ready' then
     -- Joker collection row: G.C.BLACK, r=0.1, emboss=0.05; no drop shadow.
     local trayWidth=p and 380 or 1000
@@ -340,9 +342,7 @@ function Library:drawModal()
   if self.modal then
     local m=self.modal
     g.push(); g.translate(0,m.motion.VT.y*60)
-    Button.panel(m.x,m.y+6,m.w,m.h,{0.525,0.546,0.585,1},2.4)
-    Button.modalFrame(m.x,m.y,m.w,m.h)
-    Button.panel(m.x+4,m.y+4,m.w-8,m.h-8,T.tray,2.4)
+    Button.modalFrameRaised(m.x,m.y,m.w,m.h)
     caption(m.mode=='manage' and m.item.name or (m.mode=='create' and 'New ' or m.mode=='delete' and 'Delete ' or 'Rename ')..m.item.kind,36,m.x+20,m.y+20,m.w-40)
     if m.mode=='delete' then
       caption(m.item.name,26,m.x+24,m.y+84,m.w-48,T.paper)

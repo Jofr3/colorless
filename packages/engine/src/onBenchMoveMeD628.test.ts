@@ -2,7 +2,8 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { attachEnergyTargets, conditionHolds, conditionNote } from "./interpreter";
+import { attachEnergyTargets } from "./ops/energy";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   effectPrompt,

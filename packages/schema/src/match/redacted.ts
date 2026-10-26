@@ -571,5 +571,12 @@ export const redactedGameSchema = z.object({
   /** Who must act right now; null once the game is over. */
   waitingOn: viewerSchema.nullable(),
   outcome: redactedOutcomeSchema.nullable(),
+  /**
+   * The turn owner's per-turn allowances, public to both viewers; absent in setup. Optional, so
+   * either side may deploy first.
+   */
+  allowances: z
+    .object({ energy: z.boolean(), supporter: z.boolean(), retreated: z.boolean() })
+    .optional(),
 });
 export type RedactedGame = z.infer<typeof redactedGameSchema>;

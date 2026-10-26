@@ -1,6 +1,6 @@
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";

@@ -118,6 +118,15 @@ export function redactGame(state: GameState, viewerSeat: Seat, spectating = fals
     activePlayer: asViewer(view.activeSeat, viewerSeat),
     waitingOn: asViewer(view.waitingSeat, viewerSeat),
     outcome: view.outcome === null ? null : redactOutcome(view.outcome, viewerSeat),
+    ...(setup
+      ? {}
+      : {
+          allowances: {
+            energy: state.allowances.energyAttached,
+            supporter: state.allowances.supporterPlayed,
+            retreated: state.allowances.retreated,
+          },
+        }),
   };
 }
 

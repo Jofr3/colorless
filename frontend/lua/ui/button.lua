@@ -29,6 +29,14 @@ end
 
 Button.panel=panel
 function Button.modalFrame(x,y,w,h) Button.panel(x,y,w,h,T.jokerGrey,2.4) end
+-- create_UIBox_generic_options: the dark emboss below, the JOKER_GREY border
+-- and the L_BLACK interior.
+local EMBOSS={0.525,0.546,0.585,1}
+function Button.modalFrameRaised(x,y,w,h)
+  Button.panel(x,y+6,w,h,EMBOSS,2.4)
+  Button.modalFrame(x,y,w,h)
+  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
+end
 function Button.outline(x,y,w,h,colour,r)
   panel(x,y,w,h,colour,r,nil,'line')
 end

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { deriveAttackDamageBonus } from "./effects";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   attachFromDeck,

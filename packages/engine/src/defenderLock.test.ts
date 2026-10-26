@@ -2,10 +2,10 @@ import type { Card, SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { prizeValueOf } from "./cards";
 import { deriveAttackEffect } from "./effects";
-import type { BoardCondition } from "./effects";
+import type { BoardCondition } from "./effectTypes";
 import { applyAction, attackLocked, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { type LogContext, logFromEvents } from "./log";
 import {
   DEFENDER_LOCK_DECK,

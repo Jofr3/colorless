@@ -15,17 +15,18 @@ local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
-local Fx=require('ui.sim_fx')
+local Fx=require('ui.fx')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
 local Alert=require('ui.card_alert')
-local Library=require('ui.library')
+local CardBack=require('ui.card_back')
+local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
+local LobbyCode=require('ui.host_constants').lobbyCode
 local g=love.graphics
 local Online={}
 Online.__index=Online
-local ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 local heights={menu=540,joining=420,waiting=540,starting=420}
 local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
@@ -41,12 +42,12 @@ local filters={{'All decks'},{'Standard legal','standard',true},{'Not Standard l
 local function darken(c,t) return {c[1]*(1-t),c[2]*(1-t),c[3]*(1-t),c[4] or 1} end
 local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[3]-a[3])*t,1} end
 local function spell(code) return (code:gsub('.','%0 '):gsub('%s+$','')) end
--- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at four.
+-- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at the code's length.
 function Online.normalize(raw)
   local out=''
   for c in tostring(raw or ''):upper():gmatch('.') do
-    if ALPHABET:find(c,1,true) then out=out..c end
-    if #out==4 then break end
+    if LobbyCode.alphabet:find(c,1,true) then out=out..c end
+    if #out==LobbyCode.length then break end
   end
   return out
 end
@@ -131,27 +132,10 @@ function Online:deckBox(p)
   return {cx=p.x+p.w/2,cy=p.y+144+D.HALF_H*scale,scale=scale}
 end
 function Online:makeCards(entering)
-  for _,card in ipairs(self.cards) do card.texture:release() end
-  self.cards={}
+  DeckGrid.release(self)
   if not self.width or not self.picker then return end
   self:frame()
-  local matches=self:matches()
-  local size=self.portrait and 4 or 10
-  self.pages=math.max(1,math.ceil(#matches/size));self.page=math.max(1,math.min(self.pages,self.page))
-  self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
-  local cols=self.portrait and 2 or 5
-  local a=self.area
-  local scale=self:pickerScale()
-  for i=(self.page-1)*size+1,math.min(#matches,self.page*size) do
-    local item=matches[i]
-    item.drawFace=function(w,h) Library.face(self,item,w,h) end
-    local card=Pile.new(item,i)
-    local index=#self.cards
-    card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
-    card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
-    card:collect(cols,index%cols,self.width/2,entering,self.time,self.reduced,self.width)
-    self.cards[#self.cards+1]=card
-  end
+  DeckGrid.fill(self,self:matches(),self.portrait and 4 or 10,self.portrait and 2 or 5,self:pickerScale(),entering)
 end
 -- Your chosen deck's pile, drawn as in the picker.
 function Online:makePiles()
@@ -166,7 +150,7 @@ function Online:makePiles()
   if you and you.deckId~='' then
     local deck=self:deck(you.deckId)
     local item={count=deck and deck.count or Limits.deckSize,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
-    item.drawFace=function(w,h) Library.face(self,item,w,h) end
+    item.drawFace=function(w,h) CardBack.draw(nil,w,h) end
     local box=self:deckBox(self.panels.you)
     local pile=Pile.new(item,1);pile:place(box.cx,box.cy,box.scale,false,self.width)
     self.piles.you=pile
@@ -190,7 +174,8 @@ function Online:build()
     if ready then
       for i,card in ipairs(self.cards) do
         local b=card.bounds
-        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,disabled=not card.item.online})
+        -- A deck that can't be played online stays focusable so its reason is read out.
+        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,blocked=not card.item.online})
       end
       add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36})
       add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36})
@@ -213,7 +198,7 @@ function Online:build()
       add({kind='button',action='create',label=self.busy and 'Please wait...' or 'Create lobby',x=x+(w-bw)/2,y=y+214,w=bw,h=56,fontSize=40,colour=T.blue,disabled=self.busy})
     else
       add({kind='field',field='code',label='Lobby code',placeholder='CODE',x=x+(w-260)/2,y=y+162,w=260,h=56})
-      add({kind='button',action='join',label='Join',x=x+(w-260)/2,y=y+238,w=260,h=48,fontSize=30,disabled=self.busy or #self.joinCode<4})
+      add({kind='button',action='join',label='Join',x=x+(w-260)/2,y=y+238,w=260,h=48,fontSize=30,disabled=self.busy or #self.joinCode<LobbyCode.length})
     end
     if self.account=='anonymous' and not waiting then add({kind='button',action='signin',label='Sign in',x=x+(w-160)/2,y=y+h-116,w=160,h=36,fontSize=22,colour=T.blue}) end
   elseif step=='versus' or step=='countdown' then
@@ -374,7 +359,7 @@ function Online:input(raw)
     self.editing=action=='input' and 'code' or nil
     self.joinCode=Online.normalize(f[3])
     self:build()
-    if action=='enter' and #self.joinCode==4 and self.step=='menu' and not self.busy then self:join() end
+    if action=='enter' and #self.joinCode==LobbyCode.length and self.step=='menu' and not self.busy then self:join() end
   elseif field=='search' then
     self.editing=action=='input' and 'search' or nil
     if self.query~=f[3] then self.query=f[3];self.page=1;self:makeCards(true);self.focus=0;self.pressed=nil end
@@ -384,7 +369,7 @@ end
 function Online:hit(x,y,hoverOnly)
   y=y-self:offset()
   for i,item in ipairs(self.items) do
-    if not item.disabled and Button.hit(item,x,y) then
+    if not item.disabled and not item.blocked and Button.hit(item,x,y) then
       if item.kind=='cycle' then
         if x<=item.x+28.8 then return i,'left' end
         if x>=item.x+item.w-28.8 then return i,'right' end
@@ -397,8 +382,8 @@ end
 function Online:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   self.markerTime=reduced and 12 or time
-  self:sync(Mailbox.read('__online.txt'))
-  self:input(Mailbox.read('__online_input.txt'))
+  self:sync(Mailbox.read('online'))
+  self:input(Mailbox.read('onlineInput'))
   self.motion:update(dt,time,false,false,reduced)
   self.mx,self.my=mx,my-self:offset()
   self.hover,self.hoverPart=self:hit(mx,my,true)
@@ -430,7 +415,7 @@ function Online:describe(item)
   return (item.displayLabel or item.label)..'. Button.'
 end
 function Online:join()
-  if self.busy or #self.joinCode<4 then return end
+  if self.busy or #self.joinCode<LobbyCode.length then return end
   self:finish();self.busy=true;self:command('join',self.joinCode);self:build()
 end
 function Online:openPicker()
@@ -445,6 +430,11 @@ end
 function Online:activate(i,dir)
   local item=self.items[i]
   if not item or item.disabled then return end
+  if item.blocked then
+    local d=self.cards[item.card].item
+    self.callbacks.announce(d.name.." can't be played online. It isn't legal in "..d.formatName..'.')
+    return
+  end
   local a=item.action
   self.callbacks.feedback('button');self.callbacks.jiggle(0.5)
   if item.kind=='tab' then
@@ -478,6 +468,7 @@ function Online:activate(i,dir)
     self:finish();self.picker=false;self.focus=0;self:build();self.callbacks.announce('Versus')
   elseif a=='home' then self:leave() end
 end
+function Online:cancelInteractions() self.pressed=nil;self.pressedPart=nil end
 function Online:mousepressed(x,y)
   self.pressed,self.pressedPart=self:hit(x,y);self.focus=0
 end
@@ -627,9 +618,7 @@ function Online:draw()
   local x,y,w,h=self.x,self.y,self.w,self.h
   if not x then return end
   g.push();g.translate(0,self:offset())
-  Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.modalFrame(x,y,w,h)
-  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
+  Button.modalFrameRaised(x,y,w,h)
   local step,d=self.step,self.dyna
   if self.link=='connecting' and (step=='waiting' or step=='versus' or step=='countdown') then
     T.text('Reconnecting...',18,x+16,y+8,w-32,T.gold,'right')

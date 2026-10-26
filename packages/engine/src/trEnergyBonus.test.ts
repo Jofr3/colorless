@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   TR_ENERGY_DECK,

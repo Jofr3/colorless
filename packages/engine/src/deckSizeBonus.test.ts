@@ -18,7 +18,7 @@ import {
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
 import { redactGame } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   DECK_SIZE_BONUS_DECK,
   attachFromDeck,

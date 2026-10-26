@@ -24,7 +24,7 @@ export type {
 // unauthored ones can't be played.
 
 // ── The programs, authored from the printed text (verified vs the live
-//    catalog, 2026-07-17) — see docs/workstreams/simulator.md "M4 slice 2". ──
+//    catalog, 2026-07-17) — see docs/archive/simulator-history.md "M4 slice 2". ──
 
 /** "Discard your hand and draw 7 cards." (Supporter) */
 const PROFESSORS_RESEARCH: CardProgram = {

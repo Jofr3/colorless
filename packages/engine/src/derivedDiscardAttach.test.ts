@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
-import {
-  POKEMON_TYPE_BY_CODE,
-  POKEMON_TYPES,
-  deriveAttackCoinFlip,
-  deriveAttackEffect,
-} from "./effects";
+import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
+import { POKEMON_TYPE_BY_CODE } from "./deriver/vocabulary";
+import { POKEMON_TYPES } from "./effectTypes";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { runProgram } from "./interpreter";
 import {

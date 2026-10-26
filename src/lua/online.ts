@@ -25,6 +25,7 @@ import { decodeFields, encodeFields } from "./wire";
 import { type CardPool, LuaOnlineMatch } from "./onlineTable";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
+import { epochGuard } from "./epochGuard";
 
 export type OnlineStep =
   | "menu"
@@ -66,7 +67,7 @@ export class LuaOnline {
   private account = "loading";
   private userId = "";
   private decksWanted = false;
-  private deckEpoch = 0;
+  private readonly deckEpoch = epochGuard();
   private revision = 0;
   private op = 0;
   private seconds = -1;
@@ -447,7 +448,7 @@ export class LuaOnline {
   }
 
   private async loadDecks() {
-    const epoch = ++this.deckEpoch;
+    const live = this.deckEpoch.next();
     this.decks = [];
     if (!this.userId) {
       this.deckPhase = this.account === "loading" ? "loading" : "anonymous";
@@ -458,13 +459,13 @@ export class LuaOnline {
     this.emit();
     try {
       const summaries = await api.listDecks();
-      if (epoch !== this.deckEpoch) return;
-      const decks = await playableDecks(summaries, () => epoch === this.deckEpoch);
-      if (epoch !== this.deckEpoch) return;
+      if (!live()) return;
+      const decks = await playableDecks(summaries, live);
+      if (!live()) return;
       this.decks = decks.sort((x, y) => x.name.localeCompare(y.name));
       this.deckPhase = "ready";
     } catch (error) {
-      if (epoch !== this.deckEpoch) return;
+      if (!live()) return;
       this.deckPhase =
         error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
     }

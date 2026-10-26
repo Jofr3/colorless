@@ -9,7 +9,7 @@ import {
 } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction, createGame } from "./index";
-import type { PokemonRef } from "./interpreter";
+import type { PokemonRef } from "./effectPrompt";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

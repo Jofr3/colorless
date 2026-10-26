@@ -18,7 +18,7 @@ import {
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
 import { isImmobilized } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   CROSS_BOARD_STATUS_DECK,
   attachFromDeck,

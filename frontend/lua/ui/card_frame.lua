@@ -52,6 +52,19 @@ function Frame.border(path,fallback)
   return border
 end
 
+-- Draws the cached scan at path stretched to w×h. False when there is none,
+-- so the caller can draw its placeholder face instead.
+function Frame.scan(path,w,h)
+  if not path or not love.filesystem.getInfo(path) then return false end
+  local ok,img=pcall(g.newImage,path)
+  if not ok then return false end
+  img:setFilter('linear','linear')
+  g.setColor(1,1,1)
+  g.draw(img,0,0,0,w/img:getWidth(),h/img:getHeight())
+  img:release()
+  return true
+end
+
 local function strip(colour,x,y,w,h)
   g.setColor(colour[1],colour[2],colour[3],1)
   g.rectangle('fill',x,y,w,h)

@@ -22,10 +22,11 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { AttackCoinFlip, EffectOp } from "./effects";
+import type { AttackCoinFlip } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import type { PokemonRef } from "./interpreter";
+import type { PokemonRef } from "./effectPrompt";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { flipCoin } from "./rng";

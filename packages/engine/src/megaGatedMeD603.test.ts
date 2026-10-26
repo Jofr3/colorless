@@ -1,10 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { isMegaEvolutionPokemonEx, matchesFilter } from "./cards";
-import type { BoardCondition } from "./effects";
+import type { BoardCondition } from "./effectTypes";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   effectPrompt,

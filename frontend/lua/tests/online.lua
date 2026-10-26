@@ -12,6 +12,7 @@ Card.rebuild=function(self) self.texture={release=function() end} end
 local T=require('ui.theme')
 T.font=function() return font end
 local Online=require('ui.online')
+assert(not package.loaded['ui.library'] and not package.loaded['ui.simulator'] and not package.loaded['ui.sim_fx'],'The modal needs no other page')
 local Codec=require('ui.codec')
 local commands,said,sounds,home,signin={},{},{},0,0
 local o=Online.new({command=function(raw) commands[#commands+1]=Codec.fields(raw) end,
@@ -139,10 +140,21 @@ o:keypressed('left');assert(o.filter==5 and said[#said]:find('Not Expanded legal
 local item=o.items[cycle]
 o:mousepressed(item.x+5,item.y+10);o:mousereleased(item.x+item.w-5,item.y+10);assert(o.filter==5,'Releasing on the other arrow cancels')
 o:mousepressed(item.x+item.w-5,item.y+10);o:mousereleased(item.x+item.w-5,item.y+10);assert(o.filter==1)
+o:mousepressed(item.x+item.w-5,item.y+10);o:cancelInteractions();o:mousereleased(item.x+item.w-5,item.y+10)
+assert(o.filter==1 and not o.pressed,'A cancelled press does not activate on release')
 o:input('5\tsearch\tdeck 11\t7\t7\tdone')
 local illegal,illegalItem=find(function(it) return it.kind=='card' end)
-assert(illegalItem.disabled and o:describe(illegalItem):find("Not legal in Standard, so it can't be played online"))
-before=#commands;o:activate(illegal);assert(#commands==before and o.picker,'A deck not legal online is not chosen')
+assert(illegalItem.blocked and not illegalItem.disabled)
+-- Keyboard focus reaches it and reads the reason; the pointer passes over it.
+o.focus=cycle;o:keypressed('tab')
+assert(o.focus==illegal and said[#said]=="Deck 11. 60 cards. Not legal in Standard, so it can't be played online.",
+  'A deck not legal online is focusable and says why')
+assert(o:hit(illegalItem.x+illegalItem.w/2,illegalItem.y+illegalItem.h/2)==0,'The pointer cannot pick it')
+before=#commands;o:keypressed('return')
+assert(#commands==before and o.picker,'A deck not legal online is not chosen')
+assert(said[#said]=="Deck 11 can't be played online. It isn't legal in Standard.",'Choosing it says why not')
+o:mousepressed(illegalItem.x+5,illegalItem.y+5);o:mousereleased(illegalItem.x+5,illegalItem.y+5)
+assert(#commands==before and o.picker)
 o:input('6\tsearch\tdeck 1\t6\t6\tinput');assert(#o.cards==4 and o.editing=='search')
 o:input('7\tsearch\tdeck 12\t7\t7\tdone')
 local card=find(function(it) return it.kind=='card' end)

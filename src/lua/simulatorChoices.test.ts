@@ -1,8 +1,8 @@
 import type { PokemonRef } from "@colorless/engine";
 import type { RedactedEffectPrompt } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { LuaSimulator, SimMenu } from "./simulator";
-import { effectMenu } from "./simulatorChoices";
+import { effectMenu, type MenuHost } from "./simulatorChoices";
+import type { SimMenu } from "./simulatorTypes";
 
 const you = (spot: "active" | number) =>
   ({
@@ -32,7 +32,7 @@ function open(
     }),
     emit: () => {},
   };
-  sim.menu = effectMenu(sim as unknown as LuaSimulator, prompt);
+  sim.menu = effectMenu(sim as unknown as MenuHost, prompt);
   return sim;
 }
 const choiceOf = (option: unknown) => (option as { action: { choice: unknown } }).action.choice;

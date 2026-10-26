@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, CardFilter, GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   BASIC_ENERGY_DISCARD_DECK,
   attachFromDeck,

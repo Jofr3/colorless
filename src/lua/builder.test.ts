@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LuaBuilder } from "./builder";
 import { encodeFields } from "./wire";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
 import type { CardBrief, Deck } from "@colorless/schema";
 vi.mock("../lib/api", () => ({
@@ -197,7 +198,7 @@ describe("Lua deck builder", () => {
           .split("\n")
           .filter((line) => line.startsWith("D\t"))
           .map((line) => line.split("\t"))
-          .map((fields) => [fields[1], fields[12]]),
+          .map((fields) => [fields[1], fields[wireColumn(WIRE_ROWS.builder.card, "illegal")]]),
       );
     expect(rows()).toEqual({ a: "0", x: "1" });
     await b.command("format");
@@ -263,6 +264,27 @@ describe("Lua deck builder", () => {
     expect([...b.entries]).toEqual([["b", 2]]);
     expect(b.transfer).toBe("2 Abra");
   });
+  it("offers Retry only after a load failed", async () => {
+    const { b, publish } = await setup();
+    const retry = () =>
+      String(publish.mock.lastCall?.[0]).split("\n")[0]?.split("\t")[
+        wireColumn(WIRE_ROWS.builder.header, "retry")
+      ];
+    vi.mocked(api.getCards).mockResolvedValueOnce({
+      items: [card("b", "Abra")],
+      total: 1,
+      page: 1,
+      pageSize: 100,
+    });
+    await b.command(encodeFields(["import", "2 Abra"]));
+    expect(b.message).toBe("Deck imported.");
+    expect(retry()).toBe("0");
+    vi.mocked(api.getCards).mockRejectedValueOnce(new Error("offline"));
+    await b.command("retry");
+    expect(b.message).toBe("Card search failed. Try again.");
+    expect(retry()).toBe("1");
+  });
+
   it("prefills the decklist from current cards and leaves an empty deck blank", async () => {
     const { b } = await setup();
     b.message = "An old message";

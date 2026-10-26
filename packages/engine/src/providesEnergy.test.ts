@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASIC_ENERGY_TYPES } from "@colorless/schema";
-import { ENERGY_TYPE_BY_CODE, deriveAttackEffect } from "./effects";
+import { deriveAttackEffect } from "./effects";
+import { ENERGY_TYPE_BY_CODE } from "./deriver/vocabulary";
 import { applyAction } from "./index";
 import type { GameState, PokemonRef } from "./index";
 import {

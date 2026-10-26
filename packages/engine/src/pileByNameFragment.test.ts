@@ -20,10 +20,10 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { CardFilter, CountSeat } from "./effects";
+import type { CardFilter, CountSeat } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
-import { countCardsInDiscardPile, countPokemonInPlay } from "./interpreter";
+import { countCardsInDiscardPile, countPokemonInPlay } from "./boardCondition";
 import {
   FIXTURE_POOL,
   PILE_NAME_FRAGMENT_DECK,

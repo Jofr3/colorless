@@ -2,6 +2,9 @@ import { simulationGaps, type SimulationGap } from "@colorless/engine";
 import * as api from "../lib/api";
 import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
+import { WIRE_ROWS, type WireValue, wireRow } from "./wireFields";
+
+const W = WIRE_ROWS.builder;
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
 import { formatById } from "@colorless/engine";
 import { ENERGY_TYPES, type BuilderCard } from "../decks/cards";
@@ -25,6 +28,7 @@ import { formatDecklist } from "../decks/decklistText";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
+import { epochGuard, sessionUser } from "./epochGuard";
 
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
 type CatalogPage = { items: BuilderCard[]; total: number };
@@ -36,6 +40,15 @@ const SEARCH_DEBOUNCE_MS = 250;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
 /** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
+/** Messages for a failed load, the ones the Retry button answers. */
+const LOAD_FAILED = {
+  deck: "Could not open this deck. Try again.",
+  cards: "Some cards could not load. Retry loading before adding cards.",
+  options: "Filter options could not load. Retry loading to reconnect.",
+  search: "Card search failed. Try again.",
+} as const;
+const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
+
 export class LuaBuilder {
   id = "";
   name = "";
@@ -65,8 +78,8 @@ export class LuaBuilder {
   transfer = "";
   private user = "";
   private active = false;
-  private epoch = 0;
-  private searchEpoch = 0;
+  private readonly epoch = epochGuard();
+  private readonly searches = epochGuard();
   private revision = 0;
   private saver?: DeckSaver<DeckSnapshot>;
   private savedTimer?: ReturnType<typeof setTimeout>;
@@ -90,9 +103,10 @@ export class LuaBuilder {
     private images: (cards: { id: string; url: string }[]) => void = () => {},
   ) {}
   session(status: AccountStatus, user: string) {
-    if (status === "loading" || (status === "authenticated" && user === this.user)) return;
-    this.epoch++;
-    this.searchEpoch++;
+    const next = sessionUser(status, user, this.user);
+    if (next === undefined) return;
+    this.epoch.invalidate();
+    this.searches.invalidate();
     clearTimeout(this.searchTimer);
     clearTimeout(this.savedTimer);
     this.pendingExit = undefined;
@@ -100,7 +114,7 @@ export class LuaBuilder {
     this.importing = false;
     this.saver?.dispose();
     this.saver = undefined;
-    this.user = status === "authenticated" ? user : "";
+    this.user = next;
     this.entries.clear();
     this.cards.clear();
     this.previewIds = [];
@@ -188,80 +202,109 @@ export class LuaBuilder {
     const illegal = illegalCardNames(deck, formatById(this.format));
     const missing = [...this.entries.keys()].filter((id) => !this.cards.has(id)).length;
     const groups = countsBySupertype(deck);
-    const rows: (string | number)[][] = [
-      [
-        ++this.revision,
-        this.phase,
-        this.name,
-        this.format,
-        this.saveStatus,
-        this.message,
-        +this.busy,
-        this.page,
-        Math.max(1, Math.ceil(this.total / this.size)),
-        this.total,
+    const rows: WireValue[][] = [
+      wireRow(W.header, {
+        revision: ++this.revision,
+        phase: this.phase,
+        name: this.name,
+        format: this.format,
+        saveStatus: this.saveStatus,
+        message: this.message,
+        busy: +this.busy,
+        page: this.page,
+        pages: Math.max(1, Math.ceil(this.total / this.size)),
+        total: this.total,
         count,
-        this.selected,
-        this.details,
-        this.transfer,
-        this.cover ?? "",
-        +this.importing,
-        +this.dirty,
-      ],
+        selected: this.selected,
+        details: this.details,
+        transfer: this.transfer,
+        cover: this.cover ?? "",
+        importing: +this.importing,
+        dirty: +this.dirty,
+        retry: +LOAD_FAILURES.has(this.message),
+      }),
     ];
-    const row = (tag: string, c: BuilderCard) => [
-      tag,
-      c.cardId,
-      c.name,
-      c.supertype,
-      c.subtype,
-      this.entries.get(c.cardId) ?? 0,
-      remaining(c),
-      c.hp ?? "",
-      c.regulationMark ?? "",
-      c.number ?? "",
-      c.hasImage === false ? 0 : 1,
-      copyLimit(c),
-      +illegal.has(c.name),
-      (this.gaps.get(c.cardId) ?? []).join(","),
-    ];
+    const row = (tag: "C" | "D" | "S", c: BuilderCard) =>
+      wireRow(
+        W.card,
+        {
+          cardId: c.cardId,
+          name: c.name,
+          supertype: c.supertype,
+          subtype: c.subtype,
+          quantity: this.entries.get(c.cardId) ?? 0,
+          remaining: remaining(c),
+          hp: c.hp ?? "",
+          mark: c.regulationMark ?? "",
+          number: c.number ?? "",
+          copyLimit: copyLimit(c),
+          illegal: +illegal.has(c.name),
+          gaps: (this.gaps.get(c.cardId) ?? []).join(","),
+        },
+        tag,
+      );
     for (const c of this.results) rows.push(row("C", c));
     for (const [id, quantity] of this.entries) {
       const c = this.cards.get(id);
-      rows.push(c ? row("D", c) : ["D", id, "Unavailable card", "", "", quantity, 0]);
+      rows.push(
+        c
+          ? row("D", c)
+          : wireRow(
+              W.card,
+              {
+                cardId: id,
+                name: "Unavailable card",
+                supertype: "",
+                subtype: "",
+                quantity,
+                remaining: 0,
+                hp: "",
+                mark: "",
+                number: "",
+                copyLimit: "",
+                illegal: "",
+                gaps: "",
+              },
+              "D",
+            ),
+      );
     }
     const selectedCard = this.cards.get(this.selected);
     if (selectedCard) rows.push(row("S", selectedCard));
-    rows.push([
-      "V",
-      missing
-        ? `${missing} card(s) unavailable. Remove them or retry loading.`
-        : validation.legal
-          ? "Ready to play"
-          : validation.issues.map((i) => i.message).join("\n"),
-      groups.Pokémon,
-      groups.Trainer,
-      groups.Energy,
-    ]);
+    rows.push(
+      wireRow(W.validation, {
+        message: missing
+          ? `${missing} card(s) unavailable. Remove them or retry loading.`
+          : validation.legal
+            ? "Ready to play"
+            : validation.issues.map((i) => i.message).join("\n"),
+        pokemon: groups.Pokémon,
+        trainer: groups.Trainer,
+        energy: groups.Energy,
+      }),
+    );
     for (const o of this.options()) {
       const value = this.value(o.key);
       const i = o.values.indexOf(value);
       const selected = this.filters[o.key as keyof Filters];
-      rows.push([
-        "O",
-        o.key,
-        o.label,
-        Array.isArray(selected) && selected.length > 1
-          ? `${selected.length} selected`
-          : (o.labels?.[i] ?? (value || "All")),
-        o.values.length,
-        i + 1,
-        Array.isArray(selected) && selected.length > 0
-          ? o.values
-              .flatMap((v, index) => (selected.includes(v as never) ? [index + 1] : []))
-              .join(",")
-          : String(i + 1),
-      ]);
+      rows.push(
+        wireRow(W.option, {
+          key: o.key,
+          label: o.label,
+          value:
+            Array.isArray(selected) && selected.length > 1
+              ? `${selected.length} selected`
+              : (o.labels?.[i] ?? (value || "All")),
+          count: o.values.length,
+          index: i + 1,
+          selected:
+            Array.isArray(selected) && selected.length > 0
+              ? o.values
+                  .flatMap((v, index) => (selected.includes(v as never) ? [index + 1] : []))
+                  .join(",")
+              : String(i + 1),
+        }),
+      );
     }
     const option = this.options().find((o) => o.key === this.optionKey);
     if (option) {
@@ -272,29 +315,32 @@ export class LuaBuilder {
         1,
         Math.min(Math.max(1, Math.ceil(choices.length / 7)), this.optionPage),
       );
-      rows.push([
-        "P",
-        this.optionKey,
-        option.label,
-        this.optionPage,
-        Math.max(1, Math.ceil(choices.length / 7)),
-        this.optionQuery,
-      ]);
+      rows.push(
+        wireRow(W.picker, {
+          key: this.optionKey,
+          label: option.label,
+          page: this.optionPage,
+          pages: Math.max(1, Math.ceil(choices.length / 7)),
+          query: this.optionQuery,
+        }),
+      );
       const selected = this.filters[this.optionKey as keyof Filters];
       for (const c of choices.slice((this.optionPage - 1) * 7, this.optionPage * 7)) {
-        rows.push([
-          "Q",
-          c.value,
-          c.label,
-          +(Array.isArray(selected)
-            ? c.value === ""
-              ? selected.length === 0
-              : selected.includes(c.value as never)
-            : this.value(this.optionKey) === c.value),
-        ]);
+        rows.push(
+          wireRow(W.choice, {
+            value: c.value,
+            label: c.label,
+            selected: +(Array.isArray(selected)
+              ? c.value === ""
+                ? selected.length === 0
+                : selected.includes(c.value as never)
+              : this.value(this.optionKey) === c.value),
+          }),
+        );
       }
     }
-    for (const k of ["query", "text", "hpMin", "hpMax", "sort"]) rows.push(["F", k, this.value(k)]);
+    for (const k of ["query", "text", "hpMin", "hpMax", "sort"])
+      rows.push(wireRow(W.field, { key: k, value: this.value(k) }));
     this.publish(encodeRows(rows));
     this.publishImages();
   }
@@ -342,18 +388,18 @@ export class LuaBuilder {
     }
     clearTimeout(this.savedTimer);
     clearTimeout(this.searchTimer);
-    this.searchEpoch++;
+    this.searches.invalidate();
     this.busy = false;
     this.previewIds = [];
     this.results = [];
-    const epoch = ++this.epoch;
+    const live = this.epoch.next();
     const id = this.id;
     this.phase = "loading";
     this.message = "";
     this.emit();
     try {
       const data = await api.getDeck(id);
-      if (epoch !== this.epoch) return;
+      if (!live()) return;
       this.name = data.name;
       this.format = data.format ?? "standard";
       this.cover = data.chosenCoverCardId;
@@ -368,13 +414,13 @@ export class LuaBuilder {
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
-          if (epoch !== this.epoch || !this.user) throw new Error("Session changed");
+          if (!live() || !this.user) throw new Error("Session changed");
           const result = await api.patchDeck(id, { ...snapshot, name: snapshot.name || undefined });
-          if (epoch === this.epoch) this.acknowledged = JSON.stringify(snapshot);
+          if (live()) this.acknowledged = JSON.stringify(snapshot);
           return result;
         },
         onStatus: (status) => {
-          if (epoch !== this.epoch) return;
+          if (!live()) return;
           this.saveStatus = status;
           clearTimeout(this.savedTimer);
           if (status === "saved") {
@@ -399,22 +445,22 @@ export class LuaBuilder {
       });
       this.phase = "ready";
       this.emit();
-      await Promise.all([this.hydrate(epoch), this.search(), this.loadOptions(epoch)]);
+      await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
     } catch (error) {
       reportError("open deck", error);
-      if (epoch === this.epoch) {
+      if (live()) {
         this.phase = "error";
-        this.message = "Could not open this deck. Try again.";
+        this.message = LOAD_FAILED.deck;
         this.emit();
       }
     }
   }
-  private async hydrate(epoch: number) {
+  private async hydrate(live: () => boolean) {
     try {
       const ids = [...this.entries.keys()].filter((id) => !this.cards.has(id));
       for (let start = 0; start < ids.length; start += 100) {
         const data = await api.getCards({ id: ids.slice(start, start + 100), pageSize: 100 });
-        if (epoch !== this.epoch) return;
+        if (!live()) return;
         for (const item of data.items) {
           const c = toBuilderCard(item);
           this.cards.set(c.cardId, c);
@@ -423,28 +469,28 @@ export class LuaBuilder {
       this.emit();
     } catch (error) {
       reportError("hydrate deck cards", error);
-      if (epoch === this.epoch) {
-        this.message = "Some cards could not load. Retry loading before adding cards.";
+      if (live()) {
+        this.message = LOAD_FAILED.cards;
         this.emit();
       }
     }
   }
-  private async loadOptions(epoch: number) {
+  private async loadOptions(live: () => boolean) {
     try {
       const [facets, sets, series] = await Promise.all([
         api.getFacets(),
         api.getSets(),
         api.getSeries(),
       ]);
-      if (epoch !== this.epoch) return;
+      if (!live()) return;
       this.facets = facets;
       this.sets = sets;
       this.series = series;
       this.emit();
     } catch (error) {
       reportError("load filter options", error);
-      if (epoch === this.epoch) {
-        this.message = "Filter options could not load. Retry loading to reconnect.";
+      if (live()) {
+        this.message = LOAD_FAILED.options;
         this.emit();
       }
     }
@@ -452,23 +498,23 @@ export class LuaBuilder {
   async search() {
     clearTimeout(this.searchTimer);
     if (this.phase !== "ready") return;
-    const epoch = this.epoch;
-    const request = ++this.searchEpoch;
+    const live = this.epoch.current();
+    const latest = this.searches.next();
+    const current = () => live() && latest();
     this.busy = true;
     this.results = [];
     this.emit();
     const catalog = this.catalog();
     try {
       const data = await this.fetchPage(catalog, this.page, true);
-      if (epoch !== this.epoch || request !== this.searchEpoch) return;
+      if (!current()) return;
       this.results = data.items;
       this.total = data.total;
     } catch (error) {
       reportError("search cards", error);
-      if (epoch === this.epoch && request === this.searchEpoch)
-        this.message = "Card search failed. Try again.";
+      if (current()) this.message = LOAD_FAILED.search;
     }
-    if (epoch === this.epoch && request === this.searchEpoch) {
+    if (current()) {
       this.busy = false;
       this.emit();
       this.prefetch(catalog);
@@ -519,14 +565,14 @@ export class LuaBuilder {
   /** Warm the neighbouring pages and queue their artwork behind this page's. */
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     const last = Math.max(1, Math.ceil(this.total / this.size));
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
         this.fetchPage(catalog, page)
           .then(() => {
-            if (epoch === this.epoch && catalog.key === this.pageKey) this.publishImages();
+            if (live() && catalog.key === this.pageKey) this.publishImages();
           })
           .catch((error) => reportError("prefetch card page", error));
       }
@@ -641,7 +687,8 @@ export class LuaBuilder {
     this.emit();
   }
   private async onRetry() {
-    await Promise.all([this.hydrate(this.epoch), this.search(), this.loadOptions(this.epoch)]);
+    const live = this.epoch.current();
+    await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
   }
   private onName(name: string) {
     this.name = name.slice(0, DECK_NAME_MAX);
@@ -705,7 +752,7 @@ export class LuaBuilder {
       return;
     }
     clearTimeout(this.searchTimer);
-    this.searchEpoch++;
+    this.searches.invalidate();
     this.busy = false;
     this.results = cached.items;
     this.total = cached.total;
@@ -783,7 +830,7 @@ export class LuaBuilder {
           : value,
     );
     this.page = 1;
-    this.searchEpoch++;
+    this.searches.invalidate();
     clearTimeout(this.searchTimer);
     if (action === "filter")
       this.searchTimer = setTimeout(() => void this.search(), SEARCH_DEBOUNCE_MS);
@@ -795,13 +842,13 @@ export class LuaBuilder {
     if (key === "supertype") this.filters = { ...this.filters, subtypes: [], suffixes: [] };
   }
   private async onDetail(id: string) {
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     this.selected = id;
     this.details = "Loading card details...";
     this.emit();
     try {
       const c = await api.getCard(id);
-      if (epoch !== this.epoch || this.selected !== id) return;
+      if (!live() || this.selected !== id) return;
       this.cards.set(c.id, toBuilderCard(c));
       this.gaps.set(c.id, simulationGaps(c));
       this.details =
@@ -816,7 +863,7 @@ export class LuaBuilder {
           .join("\n\n") || "No additional rules text.";
     } catch (error) {
       reportError("load card details", error);
-      if (epoch !== this.epoch || this.selected !== id) return;
+      if (!live() || this.selected !== id) return;
       this.details = "Details could not load. Close and reopen to retry.";
     }
     this.emit();
@@ -838,13 +885,13 @@ export class LuaBuilder {
   private async onImport(text: string) {
     if (this.importing) return;
     const generation = ++this.importGeneration;
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     this.importing = true;
     this.message = "Resolving decklist...";
     this.emit();
     try {
       const result = await importDecklist(text);
-      if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
+      if (!live() || generation !== this.importGeneration || !this.active) return;
       if (
         result.unmatched.length ||
         result.entries.length === 0 ||
@@ -864,10 +911,10 @@ export class LuaBuilder {
       }
     } catch (error) {
       reportError("import decklist", error);
-      if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
+      if (!live() || generation !== this.importGeneration || !this.active) return;
       this.message = "Import failed. Your deck is unchanged. Try again.";
     }
-    if (epoch === this.epoch) {
+    if (live()) {
       this.importing = false;
       this.emit();
     }

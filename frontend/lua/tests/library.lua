@@ -8,8 +8,8 @@ local Codec=require('ui.codec')
 local commands={}
 local library=Library.new({command=function(raw) commands[#commands+1]=Codec.fields(raw) end,announce=function() end,feedback=function() end})
 local function snapshot(revision,count,result,page)
-  local lines={table.concat({revision,'ready','0','','','','decks','name-asc',page or '1','2',count,'','0',result or ''},'\t')}
-  for i=1,count do lines[#lines+1]='D\tdeck'..i..'\tDeck '..i..'\t\t60\t0\t' end
+  local lines={table.concat({revision,'ready','0','','','name-asc',page or '1','2',count,result or ''},'\t')}
+  for i=1,count do lines[#lines+1]='D\tdeck'..i..'\tDeck '..i..'\t60\t0\t' end
   return table.concat(lines,'\n')
 end
 local function activate(action)
@@ -94,13 +94,36 @@ for _,card in ipairs(library.cards) do
 end
 print('PASS: page replacement triggers collection entrance; reduced motion skips it')
 
--- Legality verdicts arrive later in field 8 and must not restart the entrance.
+-- Legality verdicts arrive later and must not restart the entrance.
 library:layout(1280,800); library:sync(snapshot(5000,3)); library:layout(1280,800)
 local firstCards=library.cards
-local judged={table.concat({5001,'ready','0','','','','decks','name-asc','1','2','3','','0',''},'\t'),
- 'D\tdeck1\tDeck 1\t\t60\t0\t\t0','D\tdeck2\tDeck 2\t\t60\t0\t\t1','D\tdeck3\tDeck 3\t\t60\t0\t\t1'}
+local judged={table.concat({5001,'ready','0','','','name-asc','1','2','3',''},'\t'),
+ 'D\tdeck1\tDeck 1\t60\t0\t0','D\tdeck2\tDeck 2\t60\t0\t1','D\tdeck3\tDeck 3\t60\t0\t1'}
 library:sync(table.concat(judged,'\n'))
 assert(library.cards==firstCards,'A verdict must not rebuild the piles')
 assert(not library.items[1].illegal and library.items[2].illegal and library.items[3].illegal)
 assert(library.cards[2].item.illegal,'Piles read the flag through their shared item')
 print('PASS: deck legality verdicts flip pile alerts in place')
+-- Size: layout only measures; opening sends the page size before the deck
+-- request, and a resize across the portrait line sends it again, once.
+do
+  love.filesystem=love.filesystem or {getInfo=function() return nil end}
+  local sent={}
+  local l=Library.new({command=function(raw) sent[#sent+1]=Codec.fields(raw) end,announce=function() end,feedback=function() end})
+  l:layout(1280,800);l:layout(1280,800);assert(#sent==0,'Layout sends no command')
+  l:open(true);assert(#sent==2 and sent[1][1]=='size' and sent[1][2]=='12' and sent[2][1]=='open','Open sends the size first')
+  l:update(1/60,1,-1,-1,true);assert(#sent==2,'An unchanged size is not resent')
+  l:layout(480,850);assert(#sent==2)
+  l:update(1/60,2,-1,-1,true);l:update(1/60,3,-1,-1,true)
+  assert(#sent==3 and sent[3][1]=='size' and sent[3][2]=='4','A portrait resize sends the new size once')
+  l:layout(1280,800);l:update(1/60,4,-1,-1,true);assert(sent[4][2]=='12')
+end
+-- A page change mid-drag drops the held pile.
+do
+  library:layout(1280,800);library:sync(snapshot(3000,12));library:layout(1280,800)
+  local held=library.cards[1]
+  library:mousepressed(held.x,held.y);library.drag.active=true;held.dragging=true
+  library:cancelInteractions()
+  assert(not library.drag and not library.pressed and not held.dragging,'Cancelling drops the drag')
+end
+print('PASS: library page size follows open and portrait changes; cancelled drags')

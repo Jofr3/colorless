@@ -6,7 +6,7 @@ import {
   splitAttackRequirementClause,
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   REQUIREMENT_FLOOR_DECK,

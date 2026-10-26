@@ -4,7 +4,7 @@ import { disabledAbilityUids, seatBurnExtraCounters } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
-import { attackerPreWRBonus, conditionHolds, conditionNote } from "./interpreter";
+import { attackerPreWRBonus, conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {

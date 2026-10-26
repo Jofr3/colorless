@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";

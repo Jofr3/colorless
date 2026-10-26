@@ -18,19 +18,18 @@ local CollectionMotion=require('ui.collection_motion')
 local Motion=require('ui.motion')
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
-local GREY_DARK={0.525,0.546,0.585,1}
-local function frame(x,y,w,h)
-  Button.panel(x,y+6,w,h,GREY_DARK,2.4)
-  Button.panel(x,y,w,h,T.jokerGrey,2.4)
-  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
-end
-Overlay.frame=frame
 local function lines(text)
   local out={}
   for line in (tostring(text or '')..'\n'):gmatch('(.-)\n') do out[#out+1]=line end
   while #out>0 and out[#out]=='' do out[#out]=nil end
   return out
 end
+-- The overlay keeps its simulator. It reads time, reduced, mx, my, boardW,
+-- boardH, portrait, viewportUnit, L.zones, mode, phase, outcome, flags, info
+-- and pressedOverlay; it writes only peek (Peek) and pressedOverlay (cleared on
+-- a page change). It calls callbacks.{feedback,announce,jiggle,settings} and
+-- the methods command, invoke, newCard, closeOverlay, runCardAction, rematch
+-- and rematchPending.
 function Overlay.new(sim,kind,data)
   local self=setmetatable({sim=sim,kind=kind,data=data or {},controls={},cards={},page=1,pages=1,focus=0,hover=0,
     motion=Modal.motion(sim.reduced),pageText=PageText.new(),created=sim.time,leaveJuice=Motion.new(0,0)},Overlay)
@@ -464,7 +463,7 @@ function Overlay:draw(shaders)
   local x,y,w,h=self.x,self.y,self.w,self.h
   local d=self.data
   g.push();g.translate(0,self:offset())
-  frame(x,y,w,h)
+  Button.modalFrameRaised(x,y,w,h)
   local kind=self.kind
   if kind~='inspect' and kind~='gameover' and kind~='options' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
   if kind=='list' or kind=='confirm' then

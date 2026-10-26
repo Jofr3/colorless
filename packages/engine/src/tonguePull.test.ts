@@ -2,11 +2,11 @@ import manifest from "../package.json" with { type: "json" };
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { engineVersion, programFor } from "./index";
 import type { GameState, Seat } from "./index";
-import type { EffectContext } from "./interpreter";
+import type { EffectContext } from "./effectPrompt";
 import { runProgram } from "./interpreter";
 import {
   FIXTURE_POOL,

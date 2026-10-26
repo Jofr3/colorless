@@ -21,11 +21,11 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { CardFilter } from "./effects";
+import type { CardFilter } from "./effectTypes";
 import { engineVersion, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, countCardsInDiscardPile, countCardsInHand } from "./interpreter";
+import { conditionHolds, countCardsInDiscardPile, countCardsInHand } from "./boardCondition";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import {
   DISCARD_ATTACH_DECK,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import * as effects from "./effects";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import { applyAction } from "./index";

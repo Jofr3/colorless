@@ -11,9 +11,8 @@ local Button=require('ui.button')
 local Card=require('ui.card')
 local CardFrame=require('ui.card_frame')
 local Motion=require('ui.motion')
-local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
-local Library=require('ui.library')
+local CardBack=require('ui.card_back')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
 local Modal=require('ui.modal')
@@ -24,11 +23,13 @@ local Screen=require('ui.screen')
 local Hud=require('ui.sim_hud')
 local Overlay=require('ui.sim_overlay')
 local Fx=require('ui.sim_fx')
+local Model=require('ui.sim_model')
+local Ko=require('ui.sim_ko')
 local Popup=require('ui.popup')
 local Simulator={};Simulator.__index=Simulator
 local g=love.graphics
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
-local function prefix(owner) return owner=='opponent' and 'opp_' or owner=='global' and '' or 'you_' end
+local prefix=Layout.prefix
 function Simulator.new(callbacks)
   local self=setmetatable({callbacks=callbacks,phase='empty',items={},sides={},info={},actions={},cardActions={},cards={},byUid={},ghosts={},piles={},art={},controls={},time=0,focus=0,hover=0,
     message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={},
@@ -80,10 +81,7 @@ function Simulator:layout(w,h,viewportUnit)
   for _,c in ipairs(self.cards) do c:rebuild() end
   for _,c in ipairs(self.ghosts) do c:rebuild() end
   self:placeCards(true)
-  if self.koPresentation and self.koPresentation.prizes then
-    self:createKoPrizeCards(true)
-    self:updateKoPrizes(self.time)
-  end
+  if self.koPresentation then self.koPresentation:layout() end
   if self.overlay then self.overlay:layout() end
   self:build()
 end
@@ -93,7 +91,7 @@ function Simulator:point(x,y) return (x-self.ox)/self.zoom,(y-self.oy)/self.zoom
 function Simulator:drawBack(owner,w,h)
   local seat=self.viewerSeat
   if owner=='opponent' then seat=seat=='p1' and 'p2' or 'p1' end
-  Library.face(self,{backColour=seat=='p1' and 'blue' or 'red'},w,h)
+  CardBack.draw(seat=='p1' and 'blue' or 'red',w,h)
 end
 function Simulator:face(item,w,h)
   if item.hidden or item.cardId=='' or item.cardId=='hidden' then self:drawBack(item.owner,w,h);return end
@@ -101,11 +99,7 @@ function Simulator:face(item,w,h)
     CardFrame.border(self.art[item.cardId],T.ink))
 end
 function Simulator:artwork(item,w,h)
-  local path=self.art[item.cardId]
-  if path and love.filesystem.getInfo(path) then
-    local ok,img=pcall(g.newImage,path)
-    if ok then img:setFilter('linear','linear');g.setColor(1,1,1);g.draw(img,0,0,0,w/img:getWidth(),h/img:getHeight());img:release();return end
-  end
+  if CardFrame.scan(self.art[item.cardId],w,h) then return end
   local info=self.info[item.cardId] or {}
   local types=Energy.split(info.types)
   local colour=info.category=='Trainer' and (Popup.badgeColours[info.trainerType or ''] or T.blue) or Energy.colour(types[1] or 'Colorless')
@@ -139,154 +133,36 @@ end
 -- ---------------------------------------------------------------- snapshot
 function Simulator:cancelKoPresentation()
   if not self.koPresentation then return end
-  for _,c in ipairs(self.koPresentation.prizeCards or {}) do c.texture:release() end
-  for _,c in ipairs(self.koPresentation.cards) do
-    for _,a in ipairs(c.koAttachments or {}) do
-      a.dissolve=nil;a.burn1=nil;a.burn2=nil;a.disintegration=nil;a.motion.juice=nil
-    end
-    c.koAttachments=nil
-    c.koAnimating=nil;c.koHidden=nil;c.dissolve=nil;c.burn1=nil;c.burn2=nil;c.disintegration=nil;c.motion.juice=nil
-  end
+  self.koPresentation:cancel()
   self.koPresentation=nil
   self.fx:clear()
 end
-function Simulator:nextKo()
-  local p=self.koPresentation
-  p.index=p.index+1
-  local c=p.cards[p.index]
-  if not c then
-    p.waitUntil=self.time+0.5
-    self:beginKoPrizes()
-    return
-  end
-  c.koAnimating=true;c.hovered=false;c.held=nil;c.lift=0;c.tint=nil
-  c.homeX,c.homeY=c.x,c.y;c.motion.T.r=c.angle
-  c.motion.velocity.x,c.motion.velocity.y=0,0
-  c.koAttachments={}
-  self:eachAttached(c,function(a,x,y,scale,angle)
-    a:place(x,y,scale,false)
-    a.motion.T.r,a.motion.VT.r,a.angle=angle,angle,angle
-    a.ambientTilt=0
-    a.disintegration=Dissolve.new(a,self.time)
-    c.koAttachments[#c.koAttachments+1]=a
-  end)
-  c.disintegration=Dissolve.new(c,self.time)
-  self.callbacks.feedback('whoosh2',0.9+love.math.random()*0.2,0.5)
-  self.callbacks.feedback('crumple'..(math.floor(love.math.random()*5)+1),0.9+love.math.random()*0.2,0.5)
-  self.fx:attention({text='KNOCKED OUT',scale=0.75,colour=T.white,backdrop=T.red,x=c.x,y=c.y-0.6*D.H*c.baseScale,hold=0.4,jiggle=1.5})
-end
-function Simulator:beginKoPrizes()
-  local p=self.koPresentation
-  p.prizes={};p.prizeStart=self.time
-  local rows=Codec.rows(p.raw)
-  local flipped=rows[1][14]~=self.viewerSeat
-  -- The destination snapshot may already face the next player. Map its
-  -- public pile counts back onto the table that is still being presented.
-  for _,r in ipairs(rows) do
-    if r[1]=='S' then
-      local owner=flipped and (r[2]=='you' and 'opponent' or 'you') or r[2]
-      local side=self.sides[owner]
-      local taken=side and side.prizes-(tonumber(r[4]) or 0) or 0
-      if taken>0 then
-        p.prizes[owner]={count=taken,prizesBefore=side.prizes,handCount=side.hand+taken,handBefore=side.hand}
-      end
-    end
-  end
-  self:createKoPrizeCards()
-end
 function Simulator:koPrizeTaken(owner,index)
-  local prizes=self.koPresentation and self.koPresentation.prizes
-  local award=prizes and prizes[owner]
-  return award and index>=award.prizesBefore-award.count and index<award.prizesBefore
-end
-function Simulator:createKoPrizeCards(silent)
-  local p=self.koPresentation
-  for _,c in ipairs(p.prizeCards or {}) do c.texture:release() end
-  p.prizeCards={}
-  for _,owner in ipairs({'opponent','you'}) do
-    local award=p.prizes[owner]
-    if award then
-      local source=self.L.zones[prefix(owner)..'prizes']
-      local hand=self.L.zones[prefix(owner)..'hand']
-      for i=0,award.count-1 do
-        local sx,sy=Layout.prize(source,award.prizesBefore-1-i)
-        local c=self:newCard({id='ko-prize-'..owner..i,cardId='',hidden=true,owner=owner},i,sx,sy,hand.scale)
-        c.homeX,c.homeY,c.motion.T.r=Layout.hand(hand,award.handCount,award.handBefore+i)
-        if owner=='opponent' then c.motion.T.r=-c.motion.T.r;c.homeY=hand.y-(c.homeY-hand.y) end
-        c.angle=0;c.ambientTilt=0
-        c.motion.VT.scale=source.scale/hand.scale
-        c.prizeIndex=i;c.flightElapsed=0;c.flightSound=silent
-        c.flightDelay=award.count>1 and 0.06*i/(award.count-1) or 0
-        p.prizeCards[#p.prizeCards+1]=c
-      end
-    end
-  end
-end
-function Simulator:updateKoPrizes(time)
-  local p=self.koPresentation
-  for _,c in ipairs(p.prizeCards or {}) do
-    local elapsed=math.max(0,math.min(0.5,time-p.prizeStart-c.flightDelay))
-    if elapsed>0 and not c.flightSound then
-      -- use_card's Standard Pack branch: emplace the card, then these sounds.
-      self.callbacks.feedback('card1',0.8,0.6)
-      self.callbacks.feedback('generic1',1)
-      c.flightSound=true
-    end
-    -- CardArea:emplace changes the target. The shared Balatro Moveable handles
-    -- translation, velocity-driven banking and scale; there is no custom arc.
-    while c.flightElapsed<elapsed do
-      local dt=math.min(1/60,elapsed-c.flightElapsed)
-      c.flightElapsed=c.flightElapsed+dt
-      c:update(dt,p.prizeStart+c.flightDelay+c.flightElapsed,false,false)
-    end
-  end
+  return self.koPresentation and self.koPresentation:prizeTaken(owner,index)
 end
 function Simulator:koPrizePosition(owner,index)
-  for _,c in ipairs(self.koPresentation.prizeCards or {}) do
-    if c.item.owner==owner and c.prizeIndex==index then
-      return c.x,c.y,c.baseScale*c.motion.VT.scale,c.angle
-    end
-  end
+  return self.koPresentation:prizePosition(owner,index)
 end
 function Simulator:updateKoPresentation(dt,time,reduced)
-  local p=self.koPresentation
-  if not p then return end
-  local c=p.cards[p.index]
-  if c and not reduced then
-    for _,a in ipairs(c.koAttachments) do
-      a.disintegration:update(a,dt,time)
-      a:update(dt,time,false,false)
-    end
-  end
-  if c and not reduced and c.disintegration:update(c,dt,time) then
-    c.koAnimating=nil;c.koHidden=true
-    self:nextKo()
-  end
-  if p.prizes and not reduced then self:updateKoPrizes(time) end
-  if reduced or (p.waitUntil and time>=p.waitUntil) then
-    local completed={}
-    for _,card in ipairs(p.cards) do
-      completed[card.item.id]=true
-      for _,a in ipairs(card.koAttachments or {}) do completed[a.item.id]=true end
-    end
-    self:cancelKoPresentation()
-    self.completedKOs=completed
-    self.completedPrizes=p.prizes
-    self:sync(p.raw,true)
-    self.completedKOs=nil
-    self.completedPrizes=nil
-  end
+  local ko=self.koPresentation
+  if not ko or not ko:update(dt,time,reduced) then return end
+  local completed=ko:completed()
+  self:cancelKoPresentation()
+  self.completedKOs=completed
+  self.completedPrizes=ko.prizes
+  self:sync(ko.raw,true)
+  self.completedKOs=nil
+  self.completedPrizes=nil
 end
 function Simulator:sync(raw,finishKo)
   if not raw then return end
   if self.wipeRaw then self.wipeRaw=raw;return end
   local pending=self.koPresentation
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
-  local rows=Codec.rows(raw)
-  local f=rows[1];if not f then return end
+  local m=Model.parse(raw);if not m then return end
   -- A same-deck restart is a fresh table, even though card UIDs are reused.
-  if f[21] and f[21]~='' then
-    if self.matchId and self.matchId~=f[21] then
+  if m.matchId and m.matchId~='' then
+    if self.matchId and self.matchId~=m.matchId then
       if self.callbacks.transition then
         local accepted=self.callbacks.transition(function()
           local latest=self.wipeRaw
@@ -298,16 +174,10 @@ function Simulator:sync(raw,finishKo)
       end
       self:open(self.reduced,true)
     end
-    self.matchId=f[21]
+    self.matchId=m.matchId
   end
   if self.koPresentation then
-    local returned=false
-    for _,r in ipairs(rows) do
-      if r[1]=='C' and (r[6]=='active' or r[6]=='bench') then
-        for _,c in ipairs(self.koPresentation.cards) do if r[2]==c.item.id then returned=true end end
-      end
-    end
-    if not returned then self.koPresentation.raw=raw;return end
+    if not self.koPresentation:returned(m) then self.koPresentation:retarget(raw,m);return end
     -- Undo or reload restores the old table and cancels every queued burn.
     self:cancelKoPresentation();self.raw=nil
   end
@@ -317,75 +187,20 @@ function Simulator:sync(raw,finishKo)
   -- love.filesystem.read also returns the byte count; only our explicit
   -- boolean completion flag may bypass the presentation queue.
   if finishKo~=true and not self.reduced and self.phase=='ready' then
-    local cards,seen={},{}
-    for _,r in ipairs(rows) do
-      if r[1]=='D' and not seen[r[2]] then
-        seen[r[2]]=true
-        for _,c in ipairs(self.cards) do
-          if c.item.id==r[2] and (c.item.zone=='active' or c.item.zone=='bench') then cards[#cards+1]=c end
-        end
-      end
-    end
+    local cards=Ko.victims(m,self.cards)
     if #cards>0 then
       if self.drag then self.drag.card.dragging=false;self.drag=nil end
       if self.overlay then self.overlay:release();self.overlay=nil end
       self.highlight=nil;self.hoverCard=nil;self.focusCard=nil;self.popup=nil;self.targeting=nil;self.luaTargeting=nil
       self.fx:clear()
-      self.koPresentation={raw=raw,cards=cards,index=0}
-      self:nextKo()
+      self.koPresentation=Ko.begin(self,raw,m,cards)
       return
     end
   end
   self.raw=raw
   local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,gamePhase=self.gamePhase,rareCandy=self.rareCandy}
-  self.revision=tonumber(f[1]) or 0
-  self.phase,self.you,self.opponent=f[2],f[3],f[4]
-  self.turn=tonumber(f[5]) or 0;self.gamePhase=f[6] or '';self.message=f[7] or '';self.title=f[8] or '';self.hint=f[9] or ''
-  self.turnIndex=tonumber(f[10]) or 0;self.turnCount=tonumber(f[11]) or 0
-  self.waiting,self.activePlayer,self.viewerSeat=f[12] or '',f[13] or '',f[14] or ''
-  self.allow={energy=f[15]=='1',supporter=f[16]=='1',retreated=f[17]=='1'}
-  self.outcome,self.outcomeDetail=f[18] or '',f[19] or ''
-  self.shuffled=f[20] or ''
-  self.items={};self.sides={};self.actions={};self.cardActions={};self.info=self.info or {};self.rareCandy=nil
-  local menu,away
-  for i=2,#rows do
-    local r=rows[i]
-    if r[1]=='S' then self.sides[r[2]]={deck=tonumber(r[3]) or 0,prizes=tonumber(r[4]) or 0,hand=tonumber(r[5]) or 0,discard=tonumber(r[6]) or 0,mulligan=tonumber(r[7]) or 0}
-    elseif r[1]=='C' then
-      -- Attached cards: "type|uid|cardId" per Energy, "uid|cardId" per Tool.
-      local energies,energyCards={},{}
-      for _,part in ipairs(Energy.split(r[14])) do
-        local kind,uid,cardId=part:match('^([^|]*)|?([^|]*)|?(.*)$')
-        energies[#energies+1]=kind
-        if uid and uid~='' then energyCards[#energyCards+1]={id=uid,cardId=cardId,kind=kind} end
-      end
-      local toolCards={}
-      for _,part in ipairs(Energy.split(r[15])) do
-        local uid,cardId=part:match('^([^|]*)|?(.*)$')
-        if uid and uid~='' then toolCards[#toolCards+1]={id=uid,cardId=cardId} end
-      end
-      self.items[#self.items+1]={id=r[2],cardId=r[3],name=r[4],owner=r[5],zone=r[6],index=tonumber(r[7]) or 0,hidden=r[8]=='true',category=r[9] or '',trainerType=r[10] or '',stage=r[11] or '',
-        hp=tonumber(r[12]),damage=tonumber(r[13]) or 0,energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[16] or '',types=r[17] or '',draggable=r[18]=='true',displayIndex=tonumber(r[19]) or 0}
-    elseif r[1]=='R' then self.rareCandy=r[2]
-    elseif r[1]=='L' then
-      -- Lifecycle: mode, spectating, away name and forfeit ms, flags, allow.
-      if (r[2] or '')~='' then self.mode=r[2] end
-      away={name=r[4] or '',ms=r[5] or ''}
-      self.flags={};for _,flag in ipairs(Codec.list(r[6])) do self.flags[flag]=true end
-      self.allow.partial=r[7]=='partial'
-    elseif r[1]=='I' then
-      self.info[r[2]]={category=r[3] or '',trainerType=r[4] or '',stage=r[5] or '',hp=r[6] or '',types=r[7] or '',retreat=r[8] or '',weakness=r[9] or '',resistance=r[10] or '',effect=r[11] or '',abilities=r[12] or '',attacks=r[13] or '',energyType=r[14] or '',name=r[15] or ''}
-    elseif r[1]=='A' then self.actions[#self.actions+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',slot=r[6] or 'minor'}
-    elseif r[1]=='K' then
-      local list=self.cardActions[r[3]] or {};self.cardActions[r[3]]=list
-      list[#list+1]={token=r[2],uid=r[3],label=r[4],colour=T[r[5]] or T.blue,disabled=r[6]=='true',targetUid=r[7] or '',group=r[8] or '',cost=Energy.split(r[9]),damage=r[10] or '',hasCost=r[11]=='true'}
-    elseif r[1]=='M' then menu={kind=r[2],title=r[3],note=r[4],mandatory=r[5]=='true',id=r[6] or r[3],hideTargetOutline=r[7]=='true',counterSourceUid=r[8] or '',counterTransfer=r[9]=='true',options={},footer={}}
-    elseif (r[1]=='O' or r[1]=='F') and menu then
-      local list=r[1]=='O' and menu.options or menu.footer
-      list[#list+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',selected=r[6]=='true',cardId=r[7] or '',uid=r[8] or '',dimmed=r[9]=='true'}
-    end
-  end
-  self.menu=menu
+  self:apply(m)
+  local menu=self.menu
   if previous.rareCandy and not self.rareCandy then self.luaTargeting=nil end
   self.menuId=menu and menu.id or nil
   if self.drag then self.drag.card.dragging=false;self.drag=nil end
@@ -411,7 +226,25 @@ function Simulator:sync(raw,finishKo)
   self:build()
   if self.overlay and self.overlay.kind=='gameover' and self.mode=='online' then self.overlay:build() end
   self.callbacks.announce(self.message~='' and self.message or (menu and menu.title) or self.title)
-  self:syncAway(away or {name='',ms=''})
+  self:syncAway(m.away or {name='',ms=''})
+end
+-- Copy a parsed snapshot onto the table. Card text accumulates across
+-- snapshots; mode and flags keep their values unless the snapshot has an L row.
+function Simulator:apply(m)
+  self.revision=m.revision
+  self.phase,self.you,self.opponent=m.phase,m.you,m.opponent
+  self.turn,self.gamePhase,self.message,self.title,self.hint=m.turn,m.gamePhase,m.message,m.title,m.hint
+  self.turnIndex,self.turnCount=m.turnIndex,m.turnCount
+  self.waiting,self.activePlayer,self.viewerSeat=m.waiting,m.activePlayer,m.viewerSeat
+  self.allow=m.allow
+  self.outcome,self.outcomeDetail=m.outcome,m.outcomeDetail
+  self.shuffled=m.shuffled
+  self.items,self.sides,self.actions,self.cardActions=m.items,m.sides,m.actions,m.cardActions
+  self.rareCandy,self.menu=m.rareCandy,m.menu
+  self.info=self.info or {}
+  for cardId,info in pairs(m.info) do self.info[cardId]=info end
+  if m.mode then self.mode=m.mode end
+  if m.flags then self.flags=m.flags end
 end
 -- boss_warning_text: two floating DynaTexts over the table while the opponent
 -- is disconnected. The forfeit clock counts down from receipt, so presence
@@ -1288,8 +1121,8 @@ end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  self:sync(Mailbox.read('__simulator.txt'))
-  local raw=Mailbox.read(Mailbox.ART)
+  self:sync(Mailbox.read('simulator'))
+  local raw=Mailbox.read('art')
   if raw and raw~=self.artRaw then
     self.artRaw=raw;local art=Mailbox.artMap(raw)
     local old=self.art;self.art=art
@@ -1335,7 +1168,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     c.held=(self.drag~=nil and self.drag.card==c) or nil
     local breathe=reduced and 0 or 1
     if c.fan then
-      local award=self.koPresentation and self.koPresentation.prizes and self.koPresentation.prizes[c.item.owner]
+      local award=self.koPresentation and self.koPresentation:award(c.item.owner)
       if award then
         local zone=self.L.zones[prefix(c.item.owner)..'hand']
         c.homeX,c.baseY,c.baseRotation=Layout.hand(zone,award.handCount,c.item.displayIndex)
@@ -1522,6 +1355,11 @@ function Simulator:openInspect(card)
   if self.callbacks.jiggle then self.callbacks.jiggle(0.5) end
   self:build()
 end
+-- Forget any press or drag in progress, as when the window loses focus.
+function Simulator:cancelInteractions()
+  if self.drag then self.drag.card.dragging=false end
+  self.drag=nil;self.clicked=nil;self.pressed=nil;self.pressedOverlay=nil;self.clickedPrize=nil
+end
 function Simulator:mousepressed(x,y)
   if self.koPresentation or self.counterMotion then return end
   x,y=self:point(x,y);self.focus=0;self.focusCard=nil
@@ -1688,14 +1526,7 @@ function Simulator:eachAttached(c,visit)
   stack(item.energyCards or {},1)
   stack(item.toolCards or {},-1)
 end
-function Simulator:drawAttached(c,shaders,rw)
-  if c.koAttachments and shaders then
-    for _,a in ipairs(c.koAttachments) do
-      a:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw)
-      a.disintegration:draw(a)
-    end
-    return
-  end
+function Simulator:drawAttached(c)
   self:eachAttached(c,function(tex,x,y,scale,angle,side)
     local res=tex.item.resolution or 1
     local sx=scale/res
@@ -1742,12 +1573,6 @@ function Simulator:drawPrizes(owner,rw)
     end
   end
 end
-function Simulator:drawKoPrizes(shaders,rw)
-  local p=self.koPresentation
-  for _,c in ipairs(p and p.prizeCards or {}) do
-    c:draw(shaders,self.time,0,0,self.reduced,rw)
-  end
-end
 function Simulator:draw(shaders)
   g.push();g.translate(self.ox,self.oy);g.scale(self.zoom)
   local L=self.L;local Z=L.zones;local rw=self.boardW
@@ -1781,13 +1606,7 @@ function Simulator:draw(shaders)
   end
   if self.highlight and self.highlight~=self.hoverCard and not self.highlight.dragging and not (hideHand and self.highlight.item.zone=='hand') then self:drawCard(self.highlight,shaders,rw) end
   if self.hoverCard and not self.hoverCard.dragging and not (hideHand and self.hoverCard.item.zone=='hand') then self:drawCard(self.hoverCard,shaders,rw) end
-  local burning=self.koPresentation and self.koPresentation.cards[self.koPresentation.index]
-  if burning then
-    self:drawAttached(burning,shaders,rw)
-    burning:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw)
-    burning.disintegration:draw(burning)
-  end
-  self:drawKoPrizes(shaders,rw)
+  if self.koPresentation then self.koPresentation:draw(shaders,rw) end
   if self.drag and self.drag.moved then
     -- Attached cards ride along under the dragged Pokémon.
     self:drawAttached(self.drag.card)

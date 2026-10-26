@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { intoPlayOnlyViaOf, passivesOf, providedEnergy } from "./continuous";
 import { applyAction, attackCostAt, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote, evolveAliasLicensed } from "./interpreter";
+import { conditionHolds, conditionNote, evolveAliasLicensed } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

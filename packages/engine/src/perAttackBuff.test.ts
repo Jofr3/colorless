@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyDamageModifier } from "./cards";
 import { boostedAttackDamage } from "./continuous";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon } from "./index";
 import { runProgram } from "./interpreter";

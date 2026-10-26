@@ -1,6 +1,6 @@
 import { BASIC_ENERGY_TYPES } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { POKEMON_TYPES } from "./effects";
+import { POKEMON_TYPES } from "./effectTypes";
 import {
   conditionHolds,
   conditionNote,

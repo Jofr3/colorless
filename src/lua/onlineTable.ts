@@ -139,6 +139,8 @@ export function onlineGate(action: GameAction, v: RedactedGame): boolean {
       );
     case "discardFromPlay":
       return (p.discardable ?? []).some((d) => same(d.target, action.target));
+    case "attachEnergy":
+      return !v.allowances?.energy;
     default:
       return true;
   }
@@ -203,8 +205,8 @@ export class LuaOnlineMatch implements TableSource {
   face(card: Pick<RedactedCard, "cardId">) {
     return this.pool[card.cardId];
   }
-  allowed() {
-    return null;
+  allowed(action: GameAction) {
+    return !!this.seen && onlineGate(action, this.seen);
   }
   send(action: GameAction, opts: { auto?: boolean } = {}) {
     this.counter = counterSourcePicked(this.seen, action) ?? this.counter;
@@ -212,10 +214,11 @@ export class LuaOnlineMatch implements TableSource {
     if (!opts.auto) this.pending = true;
     this.client.sendAction(action);
   }
-  /** Energy and Retreat are not on the wire (the `L` row says partial). */
   allowances() {
     const v = this.seen;
     if (!v) return null;
+    if (v.allowances) return v.allowances;
+    // A server that sends no allowances: the Supporter one is recovered from the log.
     const discard = v.board.you.discard;
     let turn = 0;
     let supporter = false;
@@ -240,10 +243,6 @@ export class LuaOnlineMatch implements TableSource {
     this.events = NO_EVENTS;
     return events;
   }
-  /** The refusal to show: none for an automatic step. */
-  rejection(): ActionError | null {
-    return this.error !== this.muted ? this.error : null;
-  }
   lifecycle(): TableLifecycle {
     const over = !!this.seen?.outcome;
     const opponent = this.client.opponent;
@@ -259,7 +258,8 @@ export class LuaOnlineMatch implements TableSource {
         opponent && !opponent.connected && !over
           ? { name: opponent.name, forfeitAt: opponent.forfeitAt }
           : null,
-      error: this.rejection()?.reason ?? null,
+      // An automatic step's refusal is muted.
+      error: this.error !== this.muted ? this.error : null,
     };
   }
   rematch() {

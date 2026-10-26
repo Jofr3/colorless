@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, deriveAttackEffect } from "./index";
 import type { EffectChoice, GameEvent, GameState } from "./index";
-import type { EffectOp } from "./effects";
-import type { EffectContext } from "./interpreter";
+import type { EffectOp } from "./effectTypes";
+import type { EffectContext } from "./effectPrompt";
 import { resumeProgram, runProgram } from "./interpreter";
 import { programPlayable } from "./cardplay";
 import { settleProgram } from "./flow";

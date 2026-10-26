@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Stop hook: sends a loop session back when it ends without updating docs/progress.md, at most
+// Stop hook: sends a loop session back when it ends without updating docs/status.md, at most
 // AUTOLOOP_MAX_GATE_BLOCKS times. Inert when AUTOLOOP_BASE_SHA is unset.
 
 import { execFileSync } from "node:child_process";
@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 
 const STATE_DIR = process.env.AUTOLOOP_STATE_DIR || join(tmpdir(), "claude-autoloop");
 const MAX_BLOCKS = Number(process.env.AUTOLOOP_MAX_GATE_BLOCKS ?? 1);
-const PROGRESS = "docs/progress.md";
+const PROGRESS = "docs/status.md";
 
 const git = (cwd, args) =>
   execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();

@@ -6,7 +6,7 @@ import type { GameState, PokemonRef, Seat } from "./index";
 // `attachEnergyTargets` is not re-exported from index.ts (it is an engine-internal
 // read site cardplay.ts imports directly); the attach test files reach it the same
 // way, which is what lets this suite drive THE GATE rather than only its effects.
-import { attachEnergyTargets } from "./interpreter";
+import { attachEnergyTargets } from "./ops/energy";
 import {
   FIXTURE_POOL,
   battler,

@@ -1,11 +1,11 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
-import type { EffectContinuation } from "./interpreter";
+import type { EffectContinuation } from "./effectPrompt";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
 import { redactGame } from "./redact";

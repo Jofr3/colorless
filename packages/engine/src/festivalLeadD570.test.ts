@@ -4,7 +4,7 @@ import { passivesOf } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
-import { attackAgainBarred, attackAgainLicensed } from "./interpreter";
+import { attackAgainBarred, attackAgainLicensed } from "./boardCondition";
 import type { LogContext } from "./log";
 import { formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";

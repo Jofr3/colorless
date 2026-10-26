@@ -10,7 +10,7 @@ import {
   deriveAttackOptionalCostBoost,
   deriveAttackPreDamage,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import {
   applyAction,
   deriveAttackCoinFlip,

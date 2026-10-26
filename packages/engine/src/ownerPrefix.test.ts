@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { resolvedByAnyReader } from "./censusAttackCorpus";
-import type { CardFilter } from "./effects";
+import type { CardFilter } from "./effectTypes";
 import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {

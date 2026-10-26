@@ -1,10 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { BoardCondition } from "./effects";
+import type { BoardCondition } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";

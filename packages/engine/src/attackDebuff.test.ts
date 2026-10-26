@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { applyDamageModifier } from "./cards";

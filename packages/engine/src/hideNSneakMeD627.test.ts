@@ -6,7 +6,7 @@ import { passivesOf } from "./continuous";
 import { deriveAttackDamageBonus, deriveAttackEffect, normaliseMeWording } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

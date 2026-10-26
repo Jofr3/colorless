@@ -13,7 +13,7 @@ import {
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
-import { conditionHolds } from "./interpreter";
+import { conditionHolds } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

@@ -8,7 +8,7 @@ import { applyAction, providedEnergy } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import type { EffectRecord } from "./interpreter";
+import type { EffectRecord } from "./effectPrompt";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

@@ -3,7 +3,7 @@
 #
 # The context problem is solved by NOT solving it: instead of keeping one session
 # alive across a compaction, each iteration is a brand-new session that boots from
-# docs/progress.md. The context-guard hook lands a session before it hits the
+# docs/status.md. The context-guard hook lands a session before it hits the
 # compaction cliff; this driver then starts the next one. docs/ is the handoff.
 #
 #   ./scripts/autoloop/loop.sh                # run with defaults
