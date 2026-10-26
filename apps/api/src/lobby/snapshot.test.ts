@@ -1,14 +1,6 @@
+import { createSnapshot, type LobbySnapshot, makePlayer } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import {
-  applyIntent,
-  bothReady,
-  createSnapshot,
-  makePlayer,
-  removeGuest,
-  seatGuest,
-  setGuestConnected,
-} from "./lobbyReducer";
-import type { LobbySnapshot } from "./types";
+import { applyIntent, bothReady, removeGuest, seatGuest, setGuestConnected } from "./snapshot";
 
 const hostReady = (s: LobbySnapshot) =>
   applyIntent(
@@ -96,7 +88,7 @@ describe("readiness transitions", () => {
 
   it("falls back to selecting and clears the countdown stamp when someone unreadies", () => {
     let s = guestReady(hostReady(seatGuest(freshLobby(), "guest-1", "Guest")));
-    // Simulate the host having stamped the countdown start.
+    // As if stampCountdown had run.
     s = { ...s, countdownStartedAt: 123 };
     s = applyIntent(s, "guest", { type: "set-ready", ready: false });
     expect(s.phase).toBe("selecting");

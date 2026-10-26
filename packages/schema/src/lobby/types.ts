@@ -1,15 +1,7 @@
-// The shared vocabulary for the online lobby: the authoritative state the host
-// owns, and the messages the two peers exchange over the transport channel.
+// The shared vocabulary for the online lobby: the snapshot the lobby server owns, and the messages
+// it exchanges with both players. Players only send intents and render the snapshot they are sent.
 
 import type { RedactedGame, SeatLogEntry, WireAction } from "../match";
-//
-// The model is deliberately client-server even though there's no server: the
-// HOST is authoritative. It holds the one true `LobbySnapshot`, applies every
-// change (its own and the guest's), and broadcasts the result; the guest only
-// sends intents and renders whatever snapshot it's handed. Swapping the
-// BroadcastChannel transport (net/channel.ts) for a real WebSocket — and moving
-// this reducer server-side — turns this into true online play with no changes
-// to the UI.
 
 /** The two seats in a lobby. The creator is always the host. */
 export type LobbySlot = "host" | "guest";
@@ -62,8 +54,7 @@ export type LobbySnapshot = {
   countdownStartedAt: number | null;
 };
 
-/** A change a player asks to make to their own seat. The host validates and
-    applies it (see net/lobbyReducer.ts); the guest sends it over the wire. */
+/** A change a player asks to make to their own seat. The lobby server validates and applies it. */
 export type LobbyIntent =
   | { type: "select-deck"; deckId: string; deckName: string }
   | { type: "set-ready"; ready: boolean }

@@ -1,10 +1,8 @@
-// The lobby Durable Object's decision logic (§3.6), kept pure — no storage,
-// no sockets, no clock reads — so the policies transplanted from the
-// BroadcastChannel-era host (net/useLobby.ts) stay unit-testable exactly like
-// the reducer they drive. The DO (lobbyDO.ts) is a thin shell around these.
+// The lobby Durable Object's decision logic (§3.6), kept pure (no storage, no sockets, no clock
+// reads) so its policies unit-test like the snapshot transitions they drive. The DO (lobbyDO.ts)
+// is a thin shell around these.
 
 import {
-  applyIntent,
   COUNTDOWN_MS,
   type LobbyClientMessage,
   lobbyClientMessageSchema,
@@ -12,11 +10,9 @@ import {
   type LobbySnapshot,
   lobbySnapshotSchema,
   playerStateSchema,
-  recomputePhase,
-  removeGuest,
-  setGuestConnected,
 } from "@colorless/schema";
 import { z } from "zod";
+import { applyIntent, recomputePhase, removeGuest, setGuestConnected } from "./snapshot";
 
 /** The old model's reconnect grace (its PRESENCE_TIMEOUT_MS): a lost socket
     only shows as a disconnected seat if the player hasn't come back within
@@ -249,9 +245,8 @@ export function applyBye(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapsho
     : removeGuest(snapshot);
 }
 
-/** Stamp the countdown's start the moment the reducer enters the phase — the
-    reducer leaves `countdownStartedAt` for its driver to fill (the old host
-    hook stamped it the same way), so every client counts from one instant. */
+/** Stamp the countdown's start the moment `recomputePhase` enters the phase, which leaves
+    `countdownStartedAt` null for this to fill, so every client counts from one instant. */
 export function stampCountdown(snapshot: LobbySnapshot, now: number): LobbySnapshot {
   return snapshot.phase === "countdown" && snapshot.countdownStartedAt === null
     ? { ...snapshot, countdownStartedAt: now }

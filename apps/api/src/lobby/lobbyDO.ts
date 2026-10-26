@@ -1,13 +1,11 @@
-// One Durable Object per lobby code. It owns the snapshot, applies intents through the shared
-// reducer and broadcasts the result. Sockets use hibernation; the keepalive is answered by the
+// One Durable Object per lobby code. It owns the snapshot, applies intents through the snapshot
+// transitions and broadcasts the result. Sockets use hibernation; the keepalive is answered by the
 // auto-response without waking the instance.
 // One alarm covers all deadlines: liveness sweeps, disconnect graces, countdown, match forfeits,
 // and empty-lobby expiry.
 // Not a `DurableObject` subclass, so the module imports outside the workers runtime.
 
 import {
-  applyIntent,
-  bothReady,
   type Card,
   createSnapshot,
   isValidLobbyCode,
@@ -17,8 +15,6 @@ import {
   type LobbyServerMessage,
   type LobbySnapshot,
   makePlayer,
-  removeGuest,
-  seatGuest,
 } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
@@ -85,6 +81,7 @@ import {
   type Seat,
   rematchChooser,
 } from "./match";
+import { applyIntent, bothReady, removeGuest, seatGuest } from "./snapshot";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
 // upgrade for a code that was never created (or has expired) is refused, so

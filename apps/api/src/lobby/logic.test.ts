@@ -1,12 +1,4 @@
-import {
-  applyIntent,
-  COUNTDOWN_MS,
-  createSnapshot,
-  type LobbySnapshot,
-  makePlayer,
-  removeGuest,
-  seatGuest,
-} from "@colorless/schema";
+import { COUNTDOWN_MS, createSnapshot, type LobbySnapshot, makePlayer } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   ABANDON_GRACE_MS,
@@ -40,6 +32,7 @@ import {
   withoutPendingDisconnect,
   withPendingDisconnect,
 } from "./logic";
+import { applyIntent, removeGuest, seatGuest } from "./snapshot";
 
 function lobbyWithGuest(): LobbySnapshot {
   return seatGuest(createSnapshot("ABCD", makePlayer("h1", "Ana")), "g1", "Bo");
@@ -132,7 +125,7 @@ describe("setSeatConnected", () => {
     expect(back.phase).toBe("selecting");
   });
 
-  it("delegates the guest seat to the reducer's setGuestConnected", () => {
+  it("delegates the guest seat to setGuestConnected", () => {
     const next = setSeatConnected(countdownLobby(), "guest", false);
     expect(next.guest?.connected).toBe(false);
     expect(next.guest?.ready).toBe(false);
