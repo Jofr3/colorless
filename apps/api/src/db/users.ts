@@ -16,23 +16,28 @@ import { cards } from "./catalog";
 /** DB-side default for epoch-ms timestamp columns. */
 const nowMs = sql`(unixepoch() * 1000)`;
 
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  /** Null for OAuth-only accounts (§3.5: password and OAuth can coexist). */
-  passwordHash: text("password_hash"),
-  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
-  /**
-   * The account's favourite deck, or null. The thunk and `AnySQLiteColumn` type break the
-   * users/decks reference cycle. drizzle-kit omits the referential action on ADD COLUMN, so the
-   * migration restores `ON DELETE SET NULL` by hand.
-   */
-  favouriteDeckId: text("favourite_deck_id").references((): AnySQLiteColumn => decks.id, {
-    onDelete: "set null",
-  }),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(nowMs),
-});
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull().unique(),
+    displayName: text("display_name").notNull(),
+    /** Null for OAuth-only accounts (§3.5: password and OAuth can coexist). */
+    passwordHash: text("password_hash"),
+    emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+    /**
+     * The account's favourite deck, or null. The thunk and `AnySQLiteColumn` type break the
+     * users/decks reference cycle. drizzle-kit omits the referential action on ADD COLUMN, so the
+     * migration restores `ON DELETE SET NULL` by hand.
+     */
+    favouriteDeckId: text("favourite_deck_id").references((): AnySQLiteColumn => decks.id, {
+      onDelete: "set null",
+    }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(nowMs),
+  },
+  // Deleting a deck sets its favourite references to null, which scans users without this index.
+  (t) => [index("users_favourite_deck_id_idx").on(t.favouriteDeckId)],
+);
 
 export const oauthIdentities = sqliteTable(
   "oauth_identities",

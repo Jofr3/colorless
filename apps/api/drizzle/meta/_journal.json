@@ -64,6 +64,13 @@
       "when": 1792138347581,
       "tag": "0008_careful_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793050142217,
+      "tag": "0009_users_favourite_deck_idx",
+      "breakpoints": true
     }
   ]
 }
