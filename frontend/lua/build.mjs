@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { resolve, join, dirname } from "node:path";
+import { resolve, join, dirname, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -43,7 +43,6 @@ const assets = [
     "cardFan2",
     "highlight1",
     "paper1",
-    "music1",
     "chips1",
     "multhit1",
     "multhit2",
@@ -64,9 +63,20 @@ const assets = [
     "gold_seal",
   ].map((n) => `sounds/${n}.ogg`),
 ];
+// The menu music downloads after Lua is ready (web/host.js), outside game.data, which must arrive
+// in full before Lua starts.
+const music = "sounds/music1.ogg";
+// Kept in the repo for tools/logo_bake.lua and attribution; Lua never reads them.
+const unpackaged = new Set(["assets/branding/colorless.png", "assets/branding/colorless-menu.png"]);
 try {
   for (const name of ["conf.lua", "main.lua", "ui", "assets"])
-    cpSync(join(here, name), join(stage, name), { recursive: true });
+    cpSync(join(here, name), join(stage, name), {
+      recursive: true,
+      filter: (from) => {
+        const path = relative(here, from).split(sep).join("/");
+        return !unpackaged.has(path) && !path.endsWith(".md");
+      },
+    });
   /** @type {Record<string, string>} */
   const manifest = {};
   for (const name of [
@@ -92,6 +102,9 @@ try {
     copyFileSync(from, to);
     manifest[asset] = createHash("sha256").update(readFileSync(from)).digest("hex");
   }
+  manifest[music] = createHash("sha256")
+    .update(readFileSync(join(source, "resources", music)))
+    .digest("hex");
   mkdirSync(output, { recursive: true });
   execFileSync(
     process.execPath,
@@ -110,6 +123,7 @@ try {
     await new Promise((done) => setTimeout(done, 500));
     writeFileSync(path, bytes);
   }
+  copyFileSync(join(source, "resources", music), join(output, "music1.ogg"));
   // The root index.html is the host page; drop the compiler's own page and theme.
   rmSync(join(output, "index.html"), { force: true });
   rmSync(join(output, "theme"), { recursive: true, force: true });

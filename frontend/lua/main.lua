@@ -37,10 +37,27 @@ local menu = {
   {label='Online', action='online', colour=T.red},
   {label='Decks', action='decks', colour=T.paleGreen},
 }
+local effects={'button','cardSlide1','highlight1','paper1','card1','cardSlide2','cardFan2','chips1','multhit1','multhit2','cancel','coin1','coin3','tarot2','whoosh','whoosh2','crumple1','crumple2','crumple3','crumple4','crumple5','generic1','win','glass2','gold_seal'}
+local unloadedEffects={}
+-- The host writes the menu music after the first frame; the menu starts without it.
+local MUSIC='assets/sounds/music1.ogg'
 local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
+-- Effects decode after startup, one per frame, or on first use.
+local function loadEffect(name)
+  unloadedEffects[name]=nil
+  local path='assets/sounds/'..name..'.ogg'
+  if love.filesystem.getInfo(path) then sounds[name]=love.audio.newSource(path,'static') end
+  return sounds[name]
+end
+local function loadMusic()
+  if sounds.music1 or not love.filesystem.getInfo(MUSIC) then return end
+  sounds.music1=love.audio.newSource(MUSIC,'stream')
+  sounds.music1:setLooping(true)
+  applyPreferences()
+end
 local function sound(name,pitch,volume,sourceVolume)
   if state.muted then return end
-  local s=sounds[name]
+  local s=sounds[name] or unloadedEffects[name] and loadEffect(name)
   if not s then return end
   -- Source-matched cues use PLAY_SOUND's absolute gain and can overlap an
   -- already playing copy. Other callers retain their existing mix.
@@ -165,6 +182,7 @@ local function browserState()
   w,h=tonumber(w),tonumber(h)
   if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
   state.systemReduced=reduced=='1'
+  loadMusic()
   local preferencesRaw=not state.preferencesLoaded and Mailbox.read('preferences')
   if preferencesRaw then
     preferences=Preferences.new(preferencesRaw)
@@ -258,10 +276,7 @@ function love.load()
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
   for _,name in ipairs({'splash','background','CRT','dissolve','played'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
-  for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1','card1','cardSlide2','cardFan2','chips1','multhit1','multhit2','cancel','coin1','coin3','tarot2','whoosh','whoosh2','crumple1','crumple2','crumple3','crumple4','crumple5','generic1','win','glass2','gold_seal'}) do
-    if love.filesystem.getInfo('assets/sounds/'..name..'.ogg') then sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
-  end
-  sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
+  for _,name in ipairs(effects) do unloadedEffects[name]=true end
   local function refresh() print('COLORLESS:account:refresh') end
   local function home() print('COLORLESS:page:home') end
   local function settings() openSettings() end
@@ -281,6 +296,8 @@ function love.load()
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
+  local effect=next(unloadedEffects)
+  if effect then loadEffect(effect) end
   for i=#soundVoices,1,-1 do
     local s=soundVoices[i]
     if state.muted then s:stop() end
@@ -417,7 +434,7 @@ function love.draw()
 end
 local function unlockAudio()
   state.audioUnlocked=true
-  if not state.muted and not sounds.music1:isPlaying() then sounds.music1:play() end
+  applyPreferences()
 end
 function love.mousepressed(x,y,button)
   if button~=1 or wipe then return end
@@ -470,11 +487,9 @@ end
 function love.focus(focused)
   state.windowFocused=focused
   if not focused then
-    sounds.music1:pause()
     cancelInteractions()
-  elseif state.audioUnlocked and not state.muted then
-    sounds.music1:play()
   end
+  applyPreferences()
 end
 
 function love.wheelmoved(x,y)

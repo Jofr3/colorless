@@ -132,6 +132,7 @@ const loveModule = {
       updateLoadingProgress(100);
       ready = true;
       loading.style.display = "none";
+      void loadMusic();
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
@@ -213,6 +214,18 @@ addEventListener(
   },
   true,
 );
+
+// Lua starts the menu music once this file appears (main.lua's MUSIC).
+async function loadMusic() {
+  try {
+    const response = await fetch(loveModule.locateFile("music1.ogg"));
+    if (!response.ok) throw new Error(`music ${response.status}`);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    runtime?.FS_createDataFile("/assets/sounds", "music1.ogg", bytes, true, false);
+  } catch (error) {
+    console.error("[colorless] load music", error);
+  }
+}
 
 /** @type {Map<string, string>} */
 const artCache = new Map();
