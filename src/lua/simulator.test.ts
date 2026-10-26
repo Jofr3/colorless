@@ -118,7 +118,8 @@ describe("Lua simulator", () => {
       const energy = own.hand.shift();
       if (!active || !bench || !opponent || !uid || !energy)
         throw Error("Expected a complete board");
-      state.cardIdByUid[uid] = "sv06-095";
+      state.cardIdByUid = { ...state.cardIdByUid, [uid]: "sv06-095", [energy]: "adrena-dark" };
+      state.cardPool = { ...state.cardPool };
       state.cardPool["sv06-095"] = battler("sv06-095", {
         name: "Munkidori",
         hp: 110,
@@ -131,7 +132,6 @@ describe("Lua simulator", () => {
           },
         ],
       });
-      state.cardIdByUid[energy] = "adrena-dark";
       state.cardPool["adrena-dark"] = typedEnergy("adrena-dark", "Darkness");
       active.energy.push(energy);
       active.damage = damaged === "bench" ? 0 : 30;

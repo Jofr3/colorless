@@ -12,16 +12,37 @@ import { SEATS } from "./types";
 export type { PokemonSuffix };
 
 // The engine reads catalog data only through these accessors. An Antique Fossil uid in an in-play
-// stack reads as its synthesized 60-HP Basic {C} Pokémon face, and as the catalog Item elsewhere;
-// the fossil-id test runs first so other lookups pay one `Set.has`. Every face is read through the
-// markup normaliser, so a persisted raw face reads the same as a re-ingested one.
+// stack reads as its synthesized 60-HP Basic {C} Pokémon face, and as the catalog Item elsewhere.
+// Every face is read through the markup normaliser, so a persisted raw face reads the same as a
+// re-ingested one. A game keeps its `cardIdByUid` and `cardPool` objects from state to state, so
+// every other uid's face is remembered against them; a fossil's depends on its zone and is not.
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
+  const faces = facesOf(state);
+  const known = faces.get(uid);
+  if (known !== undefined) return known;
   const id = Object.hasOwn(state.cardIdByUid, uid) ? state.cardIdByUid[uid] : undefined;
   if (id === undefined) return undefined;
   const pooled = Object.hasOwn(state.cardPool, id) ? state.cardPool[id] : undefined;
   const card = pooled === undefined ? undefined : normalizedFace(pooled);
-  if (card === undefined || !FOSSIL_IDS.has(id)) return card;
+  if (card === undefined) return undefined;
+  if (!FOSSIL_IDS.has(id)) {
+    faces.set(uid, card);
+    return card;
+  }
   return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;
+}
+
+const FACES_BY_UID = new WeakMap<
+  GameState["cardIdByUid"],
+  { pool: GameState["cardPool"]; faces: Map<string, Card> }
+>();
+
+function facesOf(state: GameState): Map<string, Card> {
+  const known = FACES_BY_UID.get(state.cardIdByUid);
+  if (known !== undefined && known.pool === state.cardPool) return known.faces;
+  const faces = new Map<string, Card>();
+  FACES_BY_UID.set(state.cardIdByUid, { pool: state.cardPool, faces });
+  return faces;
 }
 
 /**
