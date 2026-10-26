@@ -1,10 +1,11 @@
 // Zod schemas for the lobby WebSocket frames, mirroring types.ts; the `…MatchesType` proofs make
 // any drift a compile error. Clients send `LobbyClientMessage`, the server sends
 // `LobbyServerMessage`, both subsets of `LobbyMessage`. Zod-free constants live in protocol.ts so
-// the client need not bundle zod.
+// the client need not bundle zod. This file holds what the server parses; the frames only the
+// server sends are in serverWire.ts, so the Worker never builds the redacted-game schema.
 
 import * as z from "zod";
-import { redactedGameSchema, seatLogEntrySchema, wireActionSchema } from "../match";
+import { wireActionSchema } from "../match/action";
 import type {
   LobbyIntent,
   LobbyMessage,
@@ -65,78 +66,31 @@ export const lobbyIntentSchemaMatchesType: Equals<
   LobbyIntent
 > = true;
 
-// The individual message shapes, composed into the three unions below.
-const helloMessageSchema = z.object({
+// The message shapes a client sends, composed here and, with the server's, in serverWire.ts.
+export const helloMessageSchema = z.object({
   kind: z.literal("hello"),
   from: z.string(),
   name: z.string(),
   logDeltas: z.boolean().optional(),
 });
-const stateMessageSchema = z.object({
-  kind: z.literal("state"),
-  snapshot: lobbySnapshotSchema,
-});
-const matchMessageSchema = z.object({
-  kind: z.literal("match"),
-  game: redactedGameSchema,
-  log: z.array(seatLogEntrySchema),
-  logFrom: z.number().int().nonnegative().optional(),
-});
-const intentMessageSchema = z.object({
+export const intentMessageSchema = z.object({
   kind: z.literal("intent"),
   from: z.string(),
   intent: lobbyIntentSchema,
 });
-const actionMessageSchema = z.object({
+export const actionMessageSchema = z.object({
   kind: z.literal("action"),
   action: wireActionSchema,
 });
-const rejectMessageSchema = z.object({
-  kind: z.literal("reject"),
-  to: z.string(),
-  reason: z.enum(["full", "kicked"]),
-});
-const rejectActionMessageSchema = z.object({
-  kind: z.literal("reject-action"),
-  reason: z.string(),
-});
-const matchErrorMessageSchema = z.object({
-  kind: z.literal("match-error"),
-  reason: z.string(),
-});
-const heartbeatMessageSchema = z.object({
-  kind: z.literal("heartbeat"),
-  from: z.string(),
-  slot: lobbySlotSchema,
-});
-const byeMessageSchema = z.object({
+export const byeMessageSchema = z.object({
   kind: z.literal("bye"),
   from: z.string(),
   slot: lobbySlotSchema,
 });
-const rematchMessageSchema = z.object({
+export const rematchMessageSchema = z.object({
   kind: z.literal("rematch"),
   from: z.string(),
 });
-
-/** Everything that can travel over a lobby channel — the full types.ts union. */
-export const lobbyMessageSchema = z.discriminatedUnion("kind", [
-  helloMessageSchema,
-  stateMessageSchema,
-  matchMessageSchema,
-  intentMessageSchema,
-  actionMessageSchema,
-  rejectMessageSchema,
-  rejectActionMessageSchema,
-  matchErrorMessageSchema,
-  heartbeatMessageSchema,
-  byeMessageSchema,
-  rematchMessageSchema,
-]);
-export const lobbyMessageSchemaMatchesType: Equals<
-  z.infer<typeof lobbyMessageSchema>,
-  LobbyMessage
-> = true;
 
 /** What a client may send the lobby server. The DO validates EVERY inbound
     frame against this and silently drops anything else (§3.6). */
@@ -159,25 +113,3 @@ export const lobbyClientMessageSchemaMatchesType: Equals<
 export const lobbyClientMessagesAreLobbyMessages: LobbyClientMessage extends LobbyMessage
   ? true
   : false = true;
-
-/** What the lobby server sends a client: authoritative snapshots after every
-    change, rejections ("full" to a refused hello, "kicked" to a removed guest),
-    each socket's redacted in-game match view (P4), a transient `reject-action`
-    to the actor when a game action is refused, and a `match-error` to both when
-    a match couldn't start (a deck wouldn't resolve, increment 3). Keepalive pongs
-    are raw strings, not frames — see LOBBY_WS_PONG. */
-export const lobbyServerMessageSchema = z.discriminatedUnion("kind", [
-  stateMessageSchema,
-  matchMessageSchema,
-  rejectMessageSchema,
-  rejectActionMessageSchema,
-  matchErrorMessageSchema,
-]);
-export type LobbyServerMessage = Extract<
-  LobbyMessage,
-  { kind: "state" | "match" | "reject" | "reject-action" | "match-error" }
->;
-export const lobbyServerMessageSchemaMatchesType: Equals<
-  z.infer<typeof lobbyServerMessageSchema>,
-  LobbyServerMessage
-> = true;

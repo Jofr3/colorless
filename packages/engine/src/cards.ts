@@ -1,4 +1,4 @@
-import { BASIC_ENERGY_TYPES } from "@colorless/schema";
+import { BASIC_ENERGY_TYPES } from "@colorless/schema/constants";
 import type { Attack, Card } from "@colorless/schema";
 import type { Rejection } from "./actions";
 import { err } from "./actions";

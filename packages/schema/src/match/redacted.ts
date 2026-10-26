@@ -30,14 +30,6 @@ export const redactedGameOverReasonSchema = z.enum([
 ]);
 export type RedactedGameOverReason = z.infer<typeof redactedGameOverReasonSchema>;
 
-/** The cardId a hidden (face-down) card carries instead of a catalog id, and
-    the id for an (engine-impossible) empty in-play slot. Shared by the engine
-    redactor and the web adapter so the sentinels can't drift. */
-export const HIDDEN_CARD_ID = "hidden";
-export const HIDDEN_CARD_NAME = "Face-down card";
-export const EMPTY_CARD_ID = "empty";
-export const EMPTY_CARD_NAME = "Empty slot";
-
 /** §12 Special Conditions — mirrors the engine's `SpecialConditions`. */
 export const redactedConditionsSchema = z.object({
   /** Asleep/Paralyzed/Confused are mutually exclusive; "none" = upright. */
@@ -546,14 +538,6 @@ export const redactedOutcomeSchema = z.discriminatedUnion("result", [
   }),
 ]);
 export type RedactedOutcome = z.infer<typeof redactedOutcomeSchema>;
-
-/**
- * A client action, deliberately loose (`z.looseObject`): the DO overwrites `seat`, and
- * `applyAction`, which never throws, is the real validator. A strict object would strip the
- * action's fields.
- */
-export const wireActionSchema = z.looseObject({ type: z.string() });
-export type WireAction = z.infer<typeof wireActionSchema>;
 
 /** A whole redacted game as one viewer sees it — the `{kind:"match"}` payload. */
 export const redactedGameSchema = z.object({

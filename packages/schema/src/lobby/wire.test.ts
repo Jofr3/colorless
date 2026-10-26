@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { RedactedGame, SeatLogEntry } from "../match";
+import {
+  lobbyMessageSchema,
+  lobbyMessageSchemaMatchesType,
+  lobbyServerMessageSchema,
+  lobbyServerMessageSchemaMatchesType,
+} from "./serverWire";
 import type { LobbySnapshot } from "./types";
 import {
   lobbyClientMessageSchema,
@@ -7,10 +13,6 @@ import {
   lobbyClientMessagesAreLobbyMessages,
   lobbyIntentSchema,
   lobbyIntentSchemaMatchesType,
-  lobbyMessageSchema,
-  lobbyMessageSchemaMatchesType,
-  lobbyServerMessageSchema,
-  lobbyServerMessageSchemaMatchesType,
   lobbySnapshotSchema,
 } from "./wire";
 

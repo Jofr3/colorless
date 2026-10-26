@@ -56,8 +56,11 @@ only the conclusion.
   triggers: a program step can knock out, which runs triggers and the turn
   flow, which run programs), and on a relative import that crosses a workspace
   root (each package, each app, `src`, `scripts`). Import another root through
-  its package entry: `@colorless/engine/testing` is the fixture barrel and
-  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads. A pure helper that
+  its package entry: `@colorless/engine/testing` is the fixture barrel,
+  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads and `@colorless/schema/constants` the
+  zod-free constants; engine runtime code imports only that subpath's values, so it never builds
+  a zod schema. Schemas that only tests parse (`redactedGameSchema`, `lobbyServerMessageSchema`)
+  sit in modules nothing on the Worker's runtime path imports, so the bundle drops them. A pure helper that
   would close a new cycle belongs in a lower module.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
