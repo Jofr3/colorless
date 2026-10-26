@@ -186,14 +186,35 @@ local historyPixels={
     '.....#####.....',
   },
 }
-local function historyIcon(icon)
-  if icon=='fast_forward' or icon=='redo' then g.scale(-1,1) end
-  local pixels=historyPixels[icon=='restart' and 'restart' or ((icon=='rewind' or icon=='fast_forward') and 'rewind' or 'undo')]
-  for y,row in ipairs(pixels) do
-    for x=1,#row do
-      if row:sub(x,x)=='#' then g.rectangle('fill',x-8.5,y-#pixels/2-1,1,1) end
+-- Each glyph colour's horizontal runs of cells, as {x,y,w} rectangles, built
+-- on first use: one rectangle per run instead of one per pixel. A run covers
+-- exactly the cells it replaces, so the rasterised pixels do not change.
+local runs={}
+local function pixelRuns(key,rows,char,ox,oy)
+  if runs[key] then return runs[key] end
+  local list={}
+  for y,row in ipairs(rows) do
+    local x=1
+    while x<=#row do
+      if row:sub(x,x)==char then
+        local last=x
+        while row:sub(last+1,last+1)==char do last=last+1 end
+        list[#list+1]={x-1+ox,y-1+oy,last-x+1}
+        x=last+1
+      else x=x+1 end
     end
   end
+  runs[key]=list
+  return list
+end
+local function fillRuns(list,dy)
+  for _,r in ipairs(list) do g.rectangle('fill',r[1],r[2]+dy,r[3],1) end
+end
+local function historyIcon(icon)
+  if icon=='fast_forward' or icon=='redo' then g.scale(-1,1) end
+  local name=icon=='restart' and 'restart' or ((icon=='rewind' or icon=='fast_forward') and 'rewind' or 'undo')
+  local pixels=historyPixels[name]
+  fillRuns(pixelRuns(name,pixels,'#',-7.5,-#pixels/2),0)
 end
 
 function Button.draw(b,active,pressed,focused,roomWidth)
@@ -221,17 +242,10 @@ function Button.draw(b,active,pressed,focused,roomWidth)
     g.push();g.translate(b.w/2,b.h/2);g.scale(pressed and 0.985 or 1)
     g.scale(size/17);g.translate(-8.5,-8.5)
     -- Custom top-down sprite with stepped corners and five square pips.
-    for _,shadow in ipairs({true,false}) do
-      for y,row in ipairs(dicePixels) do
-        for x=1,#row do
-          local colour=dicePalette[row:sub(x,x)]
-          if colour then
-            if shadow then g.setColor(0,0,0,0.3) else g.setColor(colour) end
-            g.rectangle('fill',x-1,y-1+(shadow and 1 or 0),1,1)
-          end
-        end
-      end
-    end
+    local white,pips=pixelRuns('diceW',dicePixels,'W',0,0),pixelRuns('diceP',dicePixels,'P',0,0)
+    g.setColor(0,0,0,0.3);fillRuns(white,1);fillRuns(pips,1)
+    g.setColor(dicePalette.W);fillRuns(white,0)
+    g.setColor(dicePalette.P);fillRuns(pips,0)
     g.pop();g.pop()
     return
   end

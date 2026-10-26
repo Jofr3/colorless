@@ -70,7 +70,7 @@ local function perFrame(label,n,mx,my)
   return result
 end
 local idle=perFrame('idle',20)
-atMost('idle table frame: g.rectangle',idle['g.rectangle'],830)
+atMost('idle table frame: g.rectangle',idle['g.rectangle'],230)
 atMost('idle table frame: shader:send',idle['shader.send'],400)
 atMost('idle table frame: hasUniform',idle['shader.hasUniform'],400)
 check(idle['g.newCanvas']==0 and idle['g.newImage']==0,'An idle frame creates no textures')
@@ -96,7 +96,7 @@ sim:layout(480,850)
 for _,t in ipairs(reachable()) do check(t.generation>before,'A resize repaints every texture the table draws') end
 balanced('after a resize')
 local portrait=perFrame('portrait',20)
-atMost('portrait table frame: g.rectangle',portrait['g.rectangle'],830)
+atMost('portrait table frame: g.rectangle',portrait['g.rectangle'],230)
 sim:layout(1280,800)
 balanced('after a second resize')
 
@@ -109,7 +109,7 @@ balanced('after a prompt')
 -- The setup screen's dice button.
 sim:sync(Snapshots.setup(5,'late'));frames(90)
 local setup=perFrame('setup',10)
-atMost('setup frame: g.rectangle',setup['g.rectangle'],600)
+atMost('setup frame: g.rectangle',setup['g.rectangle'],100)
 balanced('after setup')
 
 -- Reopening the table forgets every face.
