@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DECK_SIZE, HAND_SIZE, PRIZE_COUNT, applyAction, createGame } from "./index";
+import { DECK_SIZE, HAND_SIZE, PRIZE_COUNT, applyAction, createGame, deckCardIdsOf } from "./index";
 import { phaseViewOf } from "./phaseView";
 import { redactGame } from "./redact";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -73,6 +73,14 @@ describe("createGame", () => {
     const uids = [...state.players.p1.deck].sort();
     expect(uids).toEqual(Array.from({ length: DECK_SIZE }, (_, i) => `p1#${i}`).sort());
     expect(Object.keys(state.cardIdByUid)).toHaveLength(DECK_SIZE * 2);
+  });
+
+  it("recovers each seat's deck list, in list order, after the cards have moved", () => {
+    const { state } = mustCreate(SEED_STAGE1, { p1: MIXED_DECK, p2: ALL_BASIC_DECK });
+    const dealt = finishOpeningSetup(chooseFirst(state, "p1").state).state;
+    expect(dealt.players.p1.hand.length).toBeGreaterThan(0);
+    expect(deckCardIdsOf(dealt, "p1")).toEqual(MIXED_DECK);
+    expect(deckCardIdsOf(dealt, "p2")).toEqual(ALL_BASIC_DECK);
   });
 
   it("keeps only the ids the decks use in the state's card pool", () => {

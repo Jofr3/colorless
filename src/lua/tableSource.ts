@@ -2,7 +2,7 @@ import {
   applyAction,
   cardOfUid,
   createGame,
-  DECK_SIZE,
+  deckCardIdsOf,
   otherSeat,
   redactGame,
   type GameAction,
@@ -197,16 +197,10 @@ export class LocalTableSource implements TableSource {
   /** The same decks reshuffled into a fresh game. */
   nextGame(): { ok: true; setup: LocalGameSetup } | { ok: false; message: string } {
     const h = this.host;
-    // createGame assigns p1#0..59 / p2#0..59 once. This immutable mapping
-    // retains the full original decks, including cards moved out of play.
-    const deck = (seat: Seat) =>
-      Array.from({ length: DECK_SIZE }, (_, i) => h.game.cardIdByUid[`${seat}#${i}`]).filter(
-        (id): id is string => id !== undefined,
-      );
     const startedAt = Math.max(Date.now(), h.startedAt + 1);
     const created = createGame({
       seed: startedAt,
-      decks: { p1: deck("p1"), p2: deck("p2") },
+      decks: { p1: deckCardIdsOf(h.game, "p1"), p2: deckCardIdsOf(h.game, "p2") },
       cardPool: h.game.cardPool,
     });
     if (!created.ok) return { ok: false, message: created.error.message };
