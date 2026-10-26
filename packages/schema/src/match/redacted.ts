@@ -121,6 +121,8 @@ export const redactedSideSchema = z.object({
   /** Public bonus card count; cleared when this player draws the cards. */
   mulliganCount: z.number().int().nonnegative().optional(),
   discard: z.array(redactedCardSchema),
+  /** This side's Bench limit when a card widens it; absent at the usual 5. */
+  benchLimit: z.number().int().positive().optional(),
 });
 export type RedactedSide = z.infer<typeof redactedSideSchema>;
 

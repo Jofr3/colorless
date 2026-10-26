@@ -5,7 +5,6 @@ import type { LocalGameSetup } from "../game/localHost";
 import { moveToAction } from "../game/moveToAction";
 import { loadSimulatorSave, clearSimulatorSave } from "../game/simulatorSave";
 import { effectMenu } from "./simulatorChoices";
-import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
 import { LUA_ART_SLOTS } from "./artworkCache";
@@ -176,11 +175,7 @@ export class LuaSimulator {
    * order or making those cards unavailable to recovery effects. */
   private tablePiles(view: RedactedGame): TablePiles {
     const src = this.source;
-    const used = new Set(
-      src
-        ? usedTrainersForTurn(viewLogEntries(src.log(), view.seat), view.turn).map((c) => c.id)
-        : [],
-    );
+    const used = new Set(src ? usedTrainersForTurn(src.log(), view.turn) : []);
     const split = (owner: "you" | "opponent") => {
       const discard = view.board[owner].discard;
       const played = discard.filter(
@@ -1011,7 +1006,6 @@ export class LuaSimulator {
       !["active", "bench", "playmat", "stadium"].includes(zone ?? "")
     )
       return;
-    const src = this.source;
     const v = this.view();
     if (!v) return;
     const phase = v.phase;
@@ -1059,12 +1053,7 @@ export class LuaSimulator {
               ? { owner: "you", zone }
               : { owner: "you", zone: "bench", index: Number(index) },
       },
-      {
-        board: src.board(),
-        viewerSeat: v.seat,
-        phaseKind: phase.kind,
-        isViewerTurn: phase.kind === "turn:action" && v.activePlayer === "you",
-      },
+      v,
     );
     if (action) this.dispatch(action);
     else if (fromZone === "hand") {

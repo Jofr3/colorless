@@ -1,11 +1,26 @@
 import { energyProvidesOf, otherSeat } from "@colorless/engine";
-import type { Card, RedactedCard, RedactedGame, RedactedInPlay } from "@colorless/schema";
-import { GAME_OVER_DETAIL } from "../game/projection";
+import type {
+  Card,
+  RedactedCard,
+  RedactedGame,
+  RedactedGameOverReason,
+  RedactedInPlay,
+} from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
 import type { SimCardAction, SimMenu, SimOption } from "./simulator";
 import type { SimulatorOrder } from "./simulatorOrder";
 import type { TableSource } from "./tableSource";
 import { encodeFields, pixelText } from "./wire";
+
+/** Why the game ended, as one line. A total `Record`, so a new reason is a compile error here. */
+const GAME_OVER_DETAIL: Record<RedactedGameOverReason, string> = {
+  prizesTaken: "All prize cards taken.",
+  noPokemon: "No Pokémon left in play.",
+  deckOut: "No cards left to draw.",
+  conceded: "The match was forfeited.",
+  // A card's printed win condition (N's Sigilyph "Victory Symbol").
+  cardEffect: "A card's effect won the game.",
+};
 
 const RS = "\x1e";
 const US = "\x1f";

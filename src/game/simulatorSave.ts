@@ -1,6 +1,5 @@
-import { engineVersion, type GameState } from "@colorless/engine";
+import { engineVersion, redactGame, type GameState } from "@colorless/engine";
 import { readPersisted, removePersisted, writePersisted } from "../lib/persistedState";
-import { projectGameState } from "./projection";
 import type { LocalGameSetup, LocalTurnSnapshot } from "./localHost";
 
 const SIMULATOR_SAVE_KEY = "colorless:simulator:game";
@@ -141,7 +140,7 @@ function validState(state: GameState): boolean {
       return false;
     // These are the same reads the board will make after restore. Malformed
     // snapshots throw here and readPersisted falls back to the deck picker.
-    projectGameState(state, seat);
+    redactGame(state, seat);
   }
   return true;
 }

@@ -1,10 +1,10 @@
-// Pure-logic suite (node env): the drag → GameAction router, exercised over
-// REAL engine states (the engine's own test fixtures + the projection), so a
-// contract drift between the three surfaces breaks here, not on the page.
+// The drag → GameAction router, exercised over the redacted views of real engine states, so a
+// contract drift between the wire and the router breaks here, not on the page.
 
 import { describe, expect, it } from "vitest";
-import type { GameState, Phase, Seat } from "@colorless/engine";
-import { applyAction } from "@colorless/engine";
+import type { GameState, Seat } from "@colorless/engine";
+import { applyAction, redactGame } from "@colorless/engine";
+import type { RedactedGame } from "@colorless/schema";
 import {
   MIXED_DECK,
   driveSetup,
@@ -13,12 +13,9 @@ import {
   mustApply,
   mustCreate,
 } from "@colorless/engine/testing";
-import type { CardMoveRequest, CardPlacement } from "./board";
-import { moveToAction, type MoveTranslationContext } from "./moveToAction";
-import { projectGameState } from "./projection";
+import { type CardMoveRequest, type CardPlacement, moveToAction } from "./moveToAction";
 
-// Seed 170: MIXED vs MIXED runs mulligan-free (see projection.test.ts), so
-// chooseFirstPlayer lands straight on setup:place.
+// Seed 170: MIXED vs MIXED runs mulligan-free, so chooseFirstPlayer lands straight on setup:place.
 const SEED = 170;
 const DECKS = { p1: MIXED_DECK, p2: MIXED_DECK };
 
@@ -42,14 +39,9 @@ function turnState(): GameState {
   });
 }
 
-function contextOf(state: GameState, viewerSeat: Seat, phase?: Phase): MoveTranslationContext {
-  const effective = phase ?? state.phase;
-  return {
-    phaseKind: effective.kind,
-    isViewerTurn: effective.kind === "turn:action" && effective.seat === viewerSeat,
-    viewerSeat,
-    board: projectGameState(state, viewerSeat).board,
-  };
+function contextOf(state: GameState, viewerSeat: Seat, phase?: RedactedGame["phase"]) {
+  const view = redactGame(state, viewerSeat);
+  return phase === undefined ? view : { ...view, phase };
 }
 
 const fromHand = (index: number): CardPlacement => ({ owner: "you", zone: "hand", index });
@@ -182,10 +174,32 @@ describe("moveToAction — turn:action", () => {
     const result = mustApply(state, action);
     expect(result.state.players.p1.bench[0]).toEqual(occupant);
     expect(result.state.players.p1.bench).toHaveLength(2);
-    expect(projectGameState(result.state, "p1").board.you.bench[1]?.id).toBe(uid);
-    expect(
-      projectGameState(result.state, "p1").board.you.hand.map((card) => card.id),
-    ).not.toContain(uid);
+    expect(redactGame(result.state, "p1").board.you.bench[1]?.id).toBe(uid);
+    expect(redactGame(result.state, "p1").board.you.hand.map((card) => card.id)).not.toContain(uid);
+  });
+
+  it("plays a Trainer only onto the playmat", () => {
+    const state = turnState();
+    const uid = handUid(state, "p1", "fix-item");
+    const to = (zone: "playmat" | "active") =>
+      moveToAction(request(uid, fromHand(0), { owner: "you", zone }), contextOf(state, "p1"));
+    expect(to("playmat")).toEqual({ type: "playTrainer", seat: "p1", uid });
+    expect(to("active")).toBeNull();
+  });
+
+  it("evolves an occupied Bench slot with a non-Basic", () => {
+    const state = turnState();
+    const uid = handUid(state, "p1", "fix-stage1");
+    const action = moveToAction(
+      request(uid, fromHand(0), { owner: "you", zone: "bench", index: 0 }),
+      contextOf(state, "p1"),
+    );
+    expect(action).toEqual({
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index: 0 },
+    });
   });
 
   it("returns null when the phase belongs to the other seat", () => {
@@ -246,7 +260,7 @@ describe("moveToAction — everything else springs back", () => {
     const uid = handUid(state, "p1", "fix-basic-1");
     const action = moveToAction(
       request(uid, fromHand(0), { owner: "you", zone: "bench", index: 0 }),
-      contextOf(state, "p1", { kind: "ko:promote", seat: "p1" }),
+      contextOf(state, "p1", { kind: "ko:promote" }),
     );
     expect(action).toBeNull();
   });
@@ -256,11 +270,7 @@ describe("moveToAction — everything else springs back", () => {
     const uid = handUid(state, "p1", "fix-basic-1");
     const action = moveToAction(
       request(uid, fromHand(0), { owner: "you", zone: "active" }),
-      contextOf(state, "p1", {
-        kind: "setup:drawExtra",
-        owed: { p1: 1, p2: 0 },
-        decided: { p1: false, p2: true },
-      }),
+      contextOf(state, "p1", { kind: "setup:drawExtra", owed: 1 }),
     );
     expect(action).toBeNull();
   });

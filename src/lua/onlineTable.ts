@@ -1,4 +1,10 @@
-import type { EffectChoice, GameAction, PokemonRef } from "@colorless/engine";
+import {
+  benchLimitForIds,
+  type EffectChoice,
+  type GameAction,
+  type PokemonRef,
+} from "@colorless/engine";
+
 import type {
   Card,
   RedactedCard,
@@ -7,15 +13,21 @@ import type {
   SeatLogEntry,
 } from "@colorless/schema";
 import { fetchCardPool } from "../game/cardPool";
-import { projectionFromRedacted } from "../game/projection";
+
 import type { ActionError, LobbyClient } from "../online/lobbyClient";
-import { benchLimitFor } from "../game/board";
+
 import type { LifecycleFlag, TableLifecycle, TableSource } from "./tableSource";
 import { autoStepFor, counterSourcePicked, eventsFromLog, NO_EVENTS } from "./tableEvents";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-const roomOnBench = (v: RedactedGame) =>
-  v.board.you.bench.length < benchLimitFor(projectionFromRedacted(v).board, "you");
+/** A server that predates `benchLimit` leaves the limit to this client's own card data. */
+const benchLimitOf = (v: RedactedGame) =>
+  v.board.you.benchLimit ??
+  benchLimitForIds(
+    v.board.stadium?.cardId,
+    [v.board.you.active, ...v.board.you.bench].flatMap((c) => (c ? [c.cardId] : [])),
+  );
+const roomOnBench = (v: RedactedGame) => v.board.you.bench.length < benchLimitOf(v);
 
 /** An effect answer the prompt can accept; anything
  * finer (caps, legal targets) is the server's to refuse. */
@@ -222,10 +234,7 @@ export class LuaOnlineMatch implements TableSource {
     const c = this.seen?.board[owner].bench[index];
     return c ? (this.keys.get(c.id) ?? c.id) : "";
   }
-  board() {
-    if (!this.seen) throw new Error("No match frame");
-    return projectionFromRedacted(this.seen).board;
-  }
+
   takeEvents() {
     const events = this.events;
     this.events = NO_EVENTS;

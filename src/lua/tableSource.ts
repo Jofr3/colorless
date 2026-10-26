@@ -11,8 +11,7 @@ import {
 } from "@colorless/engine";
 import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@colorless/schema";
 import { initHost, hostReducer, stepTarget, type LocalGameSetup } from "../game/localHost";
-import { projectGameState } from "../game/projection";
-import type { BoardState } from "../game/board";
+
 import { saveSimulator, loadSimulatorSave } from "../game/simulatorSave";
 import {
   autoStepFor,
@@ -55,8 +54,7 @@ export interface TableSource {
   allowances(): { energy: boolean; supporter: boolean; retreated: boolean } | null;
   /** Cosmetic bench order key: the bottom of the stack, so evolving keeps its place. */
   benchKey(owner: "you" | "opponent", index: number): string;
-  /** The board drags are translated against (moveToAction). */
-  board(): BoardState;
+
   takeEvents(): TableEvents;
   lifecycle(): TableLifecycle;
   subscribe(onChange: () => void): () => void;
@@ -82,9 +80,14 @@ export class LocalTableSource implements TableSource {
   constructor(setup: LocalGameSetup) {
     this.host = initHost(setup);
   }
+  private seen: { game: GameState; seat: Seat; view: RedactedGame } | null = null;
   view() {
-    return redactGame(this.host.game, this.host.viewerSeat);
+    const { game, viewerSeat } = this.host;
+    if (this.seen?.game !== game || this.seen.seat !== viewerSeat)
+      this.seen = { game, seat: viewerSeat, view: redactGame(game, viewerSeat) };
+    return this.seen.view;
   }
+
   names() {
     const h = this.host;
     return { you: h.names[h.viewerSeat], opponent: h.names[otherSeat(h.viewerSeat)] };
@@ -133,9 +136,7 @@ export class LocalTableSource implements TableSource {
     const seat = owner === "you" ? h.viewerSeat : otherSeat(h.viewerSeat);
     return h.game.players[seat].bench[index]?.stack[0] ?? "";
   }
-  board() {
-    return projectGameState(this.host.game, this.host.viewerSeat).board;
-  }
+
   takeEvents() {
     const events = this.events;
     this.events = NO_EVENTS;

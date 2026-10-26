@@ -41,6 +41,7 @@ import {
 import { cardOfUid, topCardOf, topUid } from "./cards";
 import {
   attackLocked,
+  benchLimitOf,
   attackMenuOf,
   disabledAbilityUids,
   effectiveMaxHp,
@@ -79,6 +80,7 @@ import {
   abilityUsedKey,
   abilityUsedThisTurn,
   answererOf,
+  BENCH_MAX,
   bodyAt,
   isImmobilized,
   otherSeat,
@@ -798,7 +800,13 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
     mulliganCount: pendingMulligansOf(state, seat),
     // §2 — the discard pile is ordered and public.
     discard: side.discard.map((uid) => redactedCardOf(state, uid)),
+    // The limit reads the in-play cards, so it crosses only once they are face up.
+    ...(visibility.faceUpInPlay ? benchLimitField(benchLimitOf(state, seat)) : {}),
   };
+}
+
+function benchLimitField(limit: number): { benchLimit?: number } {
+  return limit === BENCH_MAX ? {} : { benchLimit: limit };
 }
 
 /**

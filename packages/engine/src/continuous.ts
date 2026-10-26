@@ -118,10 +118,8 @@ export function benchLimitOf(state: GameState, seat: Seat): number {
   );
 }
 
-/**
- * `benchLimitOf` over card ids, for a board with no `GameState` (the web's
- * `projectionFromRedacted`).
- */
+/** `benchLimitOf` over card ids, for a client holding only a redacted board. */
+
 export function benchLimitForIds(
   stadiumCardId: string | undefined,
   inPlayCardIds: readonly string[],
