@@ -204,6 +204,13 @@ only the conclusion.
   generates from `src/host/mailboxes.ts`: add a mailbox there, not as a string in Lua. Lua owns
   the preferences record; the page stores it as Lua writes it. Adapters guard async replies
   with `epochGuard()` (`src/lua/epochGuard.ts`).
+- **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
+  real-card pool `scripts/bench/pool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
+  applyAction per action and per action type, two redactions, logFromEvents, legality probes and a
+  cold engine import, as medians. `--node` runs it under V8, `--cpu-prof` writes a profile to
+  `tmp/bench/`. Its `fingerprint` hashes every state, event list, redaction and log row: a pure
+  performance change must leave it identical, and any rules change moves it. It is not part of
+  `check` and nothing gates on its timings.
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
   234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;
