@@ -19,6 +19,7 @@ local Fx=require('ui.sim_fx')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
+local Alert=require('ui.card_alert')
 local Library=require('ui.library')
 local Limits=require('ui.limits')
 local g=love.graphics
@@ -34,7 +35,7 @@ local info={
 }
 local backs={menu={'Back','home'},joining={'Cancel','leave'},waiting={'Leave','home'},versus={'Leave','leave'},
   countdown={'Leave','leave'},starting={'Leave','home'}}
--- Regulation view filter; the decks themselves are already playable.
+-- Regulation view filter. A deck not legal in its own format is listed but can't be chosen.
 local filters={{'All decks'},{'Standard legal','standard',true},{'Not Standard legal','standard',false},
   {'Expanded legal','expanded',true},{'Not Expanded legal','expanded',false}}
 local function darken(c,t) return {c[1]*(1-t),c[2]*(1-t),c[3]*(1-t),c[4] or 1} end
@@ -189,7 +190,7 @@ function Online:build()
     if ready then
       for i,card in ipairs(self.cards) do
         local b=card.bounds
-        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h})
+        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,disabled=not card.item.online})
       end
       add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36})
       add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36})
@@ -302,7 +303,8 @@ function Online:sync(raw)
     if r[1]=='P' and #r>=8 then
       seats[r[2]]={present=r[3]=='1',name=r[4],connected=r[5]=='1',ready=r[6]=='1',deckId=r[7],deckName=r[8]}
     elseif r[1]=='D' and #r>=4 then
-      decks[#decks+1]={id=r[2],name=r[3],count=tonumber(r[4]) or 0,standard=r[5]=='1',expanded=r[6]=='1'}
+      decks[#decks+1]={id=r[2],name=r[3],count=tonumber(r[4]) or 0,standard=r[5]=='1',expanded=r[6]=='1',
+        online=r[7]=='1',formatName=r[8] or ''}
       signature[#signature+1]=table.concat(r,'\t')
     end
   end
@@ -423,6 +425,7 @@ function Online:describe(item)
   if item.kind=='card' then
     local d=self.cards[item.card].item
     return d.name..'. '..d.count..' cards.'..(d.id==(self.seats.you or {}).deckId and ' Selected.' or '')
+      ..(d.online and '' or ' Not legal in '..d.formatName..', so it can\'t be played online.')
   end
   return (item.displayLabel or item.label)..'. Button.'
 end
@@ -607,7 +610,10 @@ function Online:drawPicker()
   Button.panel(a.x,a.y,a.w,a.h,T.panel)
   if self.deckPhase=='ready' then
     local chosen=(self.seats.you or {}).deckId
-    for _,card in ipairs(self.cards) do self:drawDeck(card,card.item.id==chosen) end
+    for _,card in ipairs(self.cards) do
+      self:drawDeck(card,card.item.id==chosen)
+      if not card.item.online then Alert.drawOnCard(card,self.time,self.reduced,self.width,Alert.pile) end
+    end
     if #self.cards==0 then T.text(#self.decks==0 and 'No decks yet. Build one in Decks.' or 'No matches',28,a.x+16,a.y+80,a.w-32) end
     local px,py=self.width/2-119,y+h-158
     Button.cycleFace(px,py,238,36,Button.hit({x=px,y=py,w=238,h=36},self.mx or -1,self.my or -1))

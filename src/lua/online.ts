@@ -163,7 +163,16 @@ export class LuaOnline {
         ...(seated ? [seat("you", self, true), seat("opponent", opponent, false)] : []),
         ...(this.deckPhase === "ready"
           ? this.decks.map((d) =>
-              encodeFields(["D", d.id, d.name, d.cardCount, +d.standard, +d.expanded]),
+              encodeFields([
+                "D",
+                d.id,
+                d.name,
+                d.cardCount,
+                +d.standard,
+                +d.expanded,
+                +d.online,
+                d.formatName,
+              ]),
             )
           : []),
       ].join("\n"),
@@ -289,7 +298,12 @@ export class LuaOnline {
       await this.loadDecks();
     } else if (action === "select") {
       const deck = this.decks.find((d) => d.id === a);
-      if (this.deckPhase === "ready" && deck && this.client?.self && !this.client.self.ready)
+      if (
+        this.deckPhase === "ready" &&
+        deck?.online &&
+        this.client?.self &&
+        !this.client.self.ready
+      )
         this.client.selectDeck({ id: deck.id, name: deck.name });
     } else if (action === "ready") {
       const self = this.client?.self;

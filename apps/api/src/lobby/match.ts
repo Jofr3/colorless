@@ -17,12 +17,14 @@ import {
   type Seat,
   applyAction,
   createGame,
+  formatById,
   formatElapsed,
   GAME_STATE_VERSION,
   logFromEvents,
   migrateGameState,
   poolIdsNeededFor,
   redactGame,
+  savedDeckReasons,
 } from "@colorless/engine";
 import type {
   Card,
@@ -113,6 +115,8 @@ export function rematchChooser(state: GameState): Seat | null {
 export interface BeginMatchOptions extends StartMatchOptions {
   /** The lobby players' display names, which the log's system rows read. */
   names: { host: string; guest: string };
+  /** The format each deck was built for, which it must be legal in; null plays Standard. */
+  formats: { host: string | null; guest: string | null };
   /** The seat that chooses the play order (`settleFirstPlayer`), or null for the coin. */
   chooser: Seat | null;
   /** Epoch ms the match starts, the log's elapsed origin. */
@@ -122,12 +126,14 @@ export interface BeginMatchOptions extends StartMatchOptions {
 export type BeginMatchResult = { ok: true; record: MatchRecord } | { ok: false; reason: string };
 
 /**
- * Mint the record a lobby persists when its countdown ends: create the game, settle who sets the
- * play order, and seed the log from the settled opening at elapsed +00:00. The log is seeded after
- * the settle so a chooser's game carries no coin row. A deck the engine refuses comes back as a
- * player-facing `reason`.
+ * Mint the record a lobby persists when its countdown ends: check each deck is legal in its own
+ * format, create the game, settle who sets the play order, and seed the log from the settled
+ * opening at elapsed +00:00. The log is seeded after the settle so a chooser's game carries no coin
+ * row. An illegal deck, or one the engine refuses, comes back as a player-facing `reason`.
  */
 export function beginMatch(opts: BeginMatchOptions): BeginMatchResult {
+  const illegal = illegalDeckReason(opts);
+  if (illegal !== null) return { ok: false, reason: illegal };
   const result = startMatch(opts);
   if (!result.ok) return { ok: false, reason: matchStartReason(result.error.code) };
   const opening = settleFirstPlayer(result.state, result.events, opts.chooser);
@@ -153,8 +159,24 @@ export function beginMatch(opts: BeginMatchOptions): BeginMatchResult {
   };
 }
 
-/** A player-facing reason for a `createGame` reject. Deck contents come from D1, never the client,
-    so this only fires on a malformed saved deck. */
+/** Why the first illegal deck, host's then guest's, can't be played, naming its player. */
+function illegalDeckReason(opts: BeginMatchOptions): string | null {
+  for (const slot of ["host", "guest"] as const) {
+    const ids = slot === "host" ? opts.hostDeck : opts.guestDeck;
+    const counts = new Map<string, number>();
+    for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const cards = [...counts].map(([cardId, count]) => ({ cardId, count }));
+    const [first] = savedDeckReasons(cards, opts.formats[slot], opts.cardPool);
+    if (first !== undefined) {
+      const format = formatById(opts.formats[slot]).name;
+      return `${opts.names[slot]}'s deck can't be played online, as it isn't ${format} legal: ${first}`;
+    }
+  }
+  return null;
+}
+
+/** A player-facing reason for a `createGame` reject. Every deck that reaches `startMatch` has
+    passed the legality check, which asks more, so this is a backstop. */
 function matchStartReason(code: CreateErrorCode): string {
   switch (code) {
     case "BAD_DECK_SIZE":

@@ -1,6 +1,6 @@
 -- Headless checks for the online modal: mailbox parsing into steps, layout at
 -- both room sizes, the code field, busy guards, no host kick, countdown
--- lock, Escape order, the deck picker and its regulation filter.
+-- lock, Escape order, the deck picker, its regulation filter and its online verdict.
 package.path='frontend/lua/?.lua;'..package.path
 local font={getWidth=function(_,s) return #tostring(s)*8 end,getHeight=function() return 20 end,
   getWrap=function(_,s) return #s*8,{s} end}
@@ -49,7 +49,7 @@ local function seats(ready,deck,oppReady,oppConnected)
 end
 local function decks()
   local rows=seats(false,true)
-  for i=1,12 do rows[#rows+1]={'D','deck'..i,'Deck '..i,60,i%2,i%3==0 and 1 or 0} end
+  for i=1,12 do rows[#rows+1]={'D','deck'..i,'Deck '..i,60,i%2,i%3==0 and 1 or 0,i==11 and 0 or 1,'Standard'} end
   return rows
 end
 
@@ -139,6 +139,10 @@ o:keypressed('left');assert(o.filter==5 and said[#said]:find('Not Expanded legal
 local item=o.items[cycle]
 o:mousepressed(item.x+5,item.y+10);o:mousereleased(item.x+item.w-5,item.y+10);assert(o.filter==5,'Releasing on the other arrow cancels')
 o:mousepressed(item.x+item.w-5,item.y+10);o:mousereleased(item.x+item.w-5,item.y+10);assert(o.filter==1)
+o:input('5\tsearch\tdeck 11\t7\t7\tdone')
+local illegal,illegalItem=find(function(it) return it.kind=='card' end)
+assert(illegalItem.disabled and o:describe(illegalItem):find("Not legal in Standard, so it can't be played online"))
+before=#commands;o:activate(illegal);assert(#commands==before and o.picker,'A deck not legal online is not chosen')
 o:input('6\tsearch\tdeck 1\t6\t6\tinput');assert(#o.cards==4 and o.editing=='search')
 o:input('7\tsearch\tdeck 12\t7\t7\tdone')
 local card=find(function(it) return it.kind=='card' end)
@@ -209,4 +213,4 @@ for _,view in ipairs({{1280,800},{480,850}}) do
     end
   end
 end
-print('PASS: online modal steps, code entry, busy guards, no kick, countdown lock, Escape order, deck picker and regulation filter')
+print('PASS: online modal steps, code entry, busy guards, no kick, countdown lock, Escape order, deck picker, regulation filter and online verdict')

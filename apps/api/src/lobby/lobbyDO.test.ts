@@ -8,7 +8,13 @@ import {
   type LobbySnapshot,
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createLobbyHarness, type FakeSocket, type LobbyHarness } from "./lobbyHarness";
+import {
+  basicCard,
+  createLobbyHarness,
+  type FakeSocket,
+  LEGAL_DECK,
+  type LobbyHarness,
+} from "./lobbyHarness";
 import {
   ABANDON_GRACE_MS,
   DISCONNECT_GRACE_MS,
@@ -18,7 +24,7 @@ import {
 } from "./logic";
 import { MATCH_RECORD_VERSION, type MatchRecord, matchFrameFor, readMatchRecord } from "./match";
 
-const DECK = Array.from({ length: 60 }, () => "basic");
+const DECK = [...LEGAL_DECK];
 const STALE_REASON =
   "This match ended because the server was updated. Pick your decks and ready up to play again.";
 
@@ -185,6 +191,40 @@ describe("LobbyDO — countdown and handoff", () => {
     expect(host.last("match-error")).toEqual(error);
     expect(guest.last("match-error")).toEqual(error);
     expect(host.framesOf("match")).toEqual([]);
+  });
+
+  it("refuses a deck its own format forbids, and starts once a legal one is picked", async () => {
+    const rotated = { ...basicCard("old"), legal: { standard: false, expanded: true } };
+    h.world.pool.old = rotated;
+    const archive = [...DECK.slice(4), "old", "old", "old", "old"];
+    h.world.decks.set("deck-bo-copies", { owner: "bo", ids: Array(60).fill("basic") });
+    h.world.decks.set("deck-bo-archive", { owner: "bo", ids: archive, format: "standard" });
+    h.world.decks.set("deck-bo-expanded", { owner: "bo", ids: archive, format: "expanded" });
+    const { host, guest } = await seatBoth();
+    for (const [deckId, rule] of [
+      ["deck-bo-copies", "60 copies of basic — max 4."],
+      ["deck-bo-archive", "old is not legal in Standard."],
+    ] as const) {
+      await readyUp(host, "h", "deck-ana");
+      await readyUp(guest, "g", deckId);
+      await h.fireAlarm();
+      const snapshot = snapshotOf(host);
+      expect(snapshot.phase).toBe("selecting");
+      expect(snapshot.host.ready).toBe(false);
+      expect(snapshot.guest?.ready).toBe(false);
+      expect(h.storage.data.has("match")).toBe(false);
+      const error = {
+        kind: "match-error",
+        reason: `Bo's deck can't be played online, as it isn't Standard legal: ${rule}`,
+      };
+      expect(host.last("match-error")).toEqual(error);
+      expect(guest.last("match-error")).toEqual(error);
+    }
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo-expanded");
+    await h.fireAlarm();
+    expect(snapshotOf(host).phase).toBe("in-game");
+    expect(guest.last("match")).toEqual(matchFrameFor(storedMatch(), "p2"));
   });
 
   it("lets a rematch's loser choose the play order", async () => {

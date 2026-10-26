@@ -23,6 +23,7 @@ import {
 } from "./cards";
 import type { DamageModifier, PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { type Banner, bannerOf, bannerOfId } from "./banners";
+import { isAceSpec } from "./deckRules";
 import type { Attack, BasicEnergyType, Card } from "@colorless/schema";
 import type {
   AttackerClass,
@@ -2926,11 +2927,6 @@ function handPlayBarredByOpponentActive(
   if (classes === undefined || !classes.includes(klass)) return false;
   const sourceUid = topUid(barrier);
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
-}
-
-/** Matches the deck builder's ACE SPEC test so the engine and builder agree. */
-export function isAceSpec(card: Card | undefined): boolean {
-  return (card?.rarity ?? "").includes("ACE SPEC");
 }
 
 /**

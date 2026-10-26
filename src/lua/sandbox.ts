@@ -118,7 +118,7 @@ export class LuaSandbox {
       this.emit();
       try {
         // Fetch fresh contents and rerun the deck validation.
-        const setup = await prepareSandbox([...this.selected], true);
+        const setup = await prepareSandbox([...this.selected]);
         if (epoch === this.epoch && this.active) this.launch(setup);
       } catch (error) {
         if (epoch !== this.epoch) return;

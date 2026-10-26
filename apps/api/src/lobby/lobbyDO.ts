@@ -594,7 +594,7 @@ export class LobbyDO {
       this.userIdOf(snapshot.guest.id),
     );
     if (!guestDeck.ok) return { ok: false, reason: `${snapshot.guest.name}: ${guestDeck.reason}.` };
-    // Storage does not enforce 60 cards and a Basic, so `beginMatch` is the validator.
+    // Storage enforces no construction rules, so `beginMatch` is the validator.
     const cardPool = await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids]);
     const seed = this.deps.randomSeed();
     // A player no longer seated (a new guest since the rematch) falls back to the coin.
@@ -606,6 +606,7 @@ export class LobbyDO {
       guestDeck: guestDeck.ids,
       cardPool,
       names: { host: snapshot.host.name, guest: snapshot.guest.name },
+      formats: { host: hostDeck.format, guest: guestDeck.format },
       chooser,
       now: this.deps.now(),
     });

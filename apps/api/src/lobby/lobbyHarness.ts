@@ -174,8 +174,8 @@ export interface LobbyWorld {
   seed: number;
   /** userId → account display name. */
   displayNames: Map<string, string>;
-  /** deckId → its owner and flat card ids. */
-  decks: Map<string, { owner: string; ids: string[] }>;
+  /** deckId → its owner, flat card ids and format (absent reads as none picked). */
+  decks: Map<string, { owner: string; ids: string[]; format?: string | null }>;
   /** Every card the fake catalog holds. */
   pool: Record<string, Card>;
 }
@@ -196,7 +196,7 @@ export function worldDeps(world: LobbyWorld): LobbyDeps {
       const deck = world.decks.get(deckId);
       if (deck === undefined || deck.owner !== userId)
         return { ok: false, reason: "deck not found" };
-      return { ok: true, ids: [...deck.ids] };
+      return { ok: true, ids: [...deck.ids], format: deck.format ?? null };
     },
     loadPool: async (ids) => {
       const pool: Record<string, Card> = {};
@@ -209,7 +209,7 @@ export function worldDeps(world: LobbyWorld): LobbyDeps {
   };
 }
 
-/** A minimal Basic Pokémon, so a deck of 60 copies passes `createGame`'s checks. */
+/** A minimal Basic Pokémon. */
 export function basicCard(id: string): Card {
   return {
     id,
@@ -237,6 +237,19 @@ export function basicCard(id: string): Card {
     variants: null,
   };
 }
+
+/** Fifteen Basics, the default catalog. */
+const LEGAL_POOL: Record<string, Card> = Object.fromEntries(
+  Array.from({ length: 15 }, (_, i) => [`basic-${i}`, basicCard(`basic-${i}`)]),
+);
+
+/** Four copies of each default Basic: a Standard-legal deck. */
+export const LEGAL_DECK: readonly string[] = Object.keys(LEGAL_POOL).flatMap((id) => [
+  id,
+  id,
+  id,
+  id,
+]);
 
 export interface LobbyHarness {
   /** The current instance; `hibernate` replaces it. */
@@ -269,7 +282,7 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
     seed: 1,
     displayNames: new Map(),
     decks: new Map(),
-    pool: { basic: basicCard("basic") },
+    pool: { ...LEGAL_POOL, basic: basicCard("basic") },
     ...world,
   };
   const state = new FakeState();

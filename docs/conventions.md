@@ -81,6 +81,15 @@ only the conclusion.
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
   regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` to match.
+- **Deck construction rules live once, in the engine** (`deckRules.ts`): `FORMATS`/`formatById`
+  (a null or unknown format plays Standard), the `isAceSpec`/`isRadiantPokemon`/`isPrismStar`
+  classes, `isLegalInFormat` (the card's `legal` flags, no printed-mark fallback), and
+  `validateDeck(entries, format)`/`savedDeckReasons(cards, format, pool)`, which return the
+  reasons a deck is illegal. The server enforces them: `beginMatch` refuses a deck that is not
+  legal in its own stored format, and the lobby drops both players back to selecting with the
+  reason. The builder (`src/decks/deckMath.ts`) and the online picker (`sandboxDecks.ts`
+  `playableDecks`, its `online` verdict) call the same functions. Local play asks only what
+  `createGame` asks: 60 cards, all in the catalog, and a Basic Pokémon.
 - **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
   `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
   keeps only the record envelope and `loadMatchRecord`, and calls `poolIdsNeededFor` and

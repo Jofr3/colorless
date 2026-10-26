@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FORMAT, isLegalInFormat } from "../decks/cards";
+import { DEFAULT_FORMAT, isLegalInFormat } from "@colorless/engine";
 import { builderCard, legalFromMark, STANDARD_LEGAL_MARKS } from "./fixtures";
 
 interface MarkCensus {
