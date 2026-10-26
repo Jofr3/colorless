@@ -1297,8 +1297,8 @@ end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  self:sync(Mailbox.read('__simulator.txt'))
-  local raw=Mailbox.read(Mailbox.ART)
+  self:sync(Mailbox.read('simulator'))
+  local raw=Mailbox.read('art')
   if raw and raw~=self.artRaw then
     self.artRaw=raw;local art=Mailbox.artMap(raw)
     local old=self.art;self.art=art

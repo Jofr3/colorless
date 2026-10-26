@@ -11,6 +11,9 @@ local g=love.graphics
 local Settings={}
 Settings.__index=Settings
 local tabs={'Game','Graphics','Audio','Account'}
+-- Each tab's index in the tab bar, by name.
+Settings.tabs={game=1,graphics=2,audio=3,account=4}
+local TAB=Settings.tabs
 local rows={
   {{kind='slider',key='screenshake',label='Screenshake'},
    {kind='toggle',key='reducedMotion',label='Reduced Motion'}},
@@ -46,7 +49,7 @@ end
 function Settings:closeAuth()
   self.auth=nil
   self.callbacks.auth('close')
-  self.tab=4; self.focus=4; self.pressed=nil; self.hover=0
+  self.tab=TAB.account; self.focus=TAB.account; self.pressed=nil; self.hover=0
   self:layout(self.width,self.height)
   self.callbacks.announce(self.account.status=='authenticated' and 'Signed in. Account settings.' or 'Account settings')
 end
@@ -112,10 +115,10 @@ function Settings:build()
   for i,row in ipairs(rows[self.tab] or {}) do
     local item={}
     for k,v in pairs(row) do item[k]=v end
-    item.w=(narrow or self.tab~=3) and 240 or 300
+    item.w=(narrow or self.tab~=TAB.audio) and 240 or 300
     if item.kind=='toggle' then item.w=180 end
     item.x=self.x+(self.w-item.w-56)/2
-    item.y=self.y+(self.tab==3 and 134+(i-1)*91 or 180+(i-1)*112)
+    item.y=self.y+(self.tab==TAB.audio and 134+(i-1)*91 or 180+(i-1)*112)
     item.h=40
     if item.kind=='cycle' then
       -- create_option_cycle: w=4, scale=0.8, at 60 pixels per tile.
@@ -124,7 +127,7 @@ function Settings:build()
     end
     self.items[#self.items+1]=item
   end
-  if self.tab==4 then
+  if self.tab==TAB.account then
     local a=self.account
     local w=math.min(360,self.w-64)
     local x=self.x+(self.w-w)/2
@@ -274,7 +277,7 @@ function Settings:draw()
   Button.modalFrameRaised(self.x,self.y,self.w,self.h)
   if self.auth then
     if self.account.message~='' then T.text(self.account.message,19,self.x+30,self.y+self.authMessageY,self.w-60,T.paper) end
-  elseif self.tab==4 then
+  elseif self.tab==TAB.account then
     local a=self.account
     if a.status~='authenticated' then
       local text=a.busy and 'Checking your session...' or a.status=='error' and 'Account unavailable' or 'Sign in to personalise your profile'

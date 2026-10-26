@@ -8,6 +8,7 @@ import { WIRE_ROWS, wireRow } from "./wireFields";
 import { reportError } from "../lib/reportError";
 import { readPersisted, writePersisted } from "../lib/persistedState";
 import type { AccountStatus } from "./account";
+import { epochGuard, sessionUser } from "./epochGuard";
 
 const sorts = ["name-asc", "name-desc", "cards-desc"];
 const SORT_KEY = "decks.sortKey";
@@ -27,7 +28,7 @@ export class LuaLibrary {
   result = "";
   active = false;
   private user = "";
-  private epoch = 0;
+  private readonly epoch = epochGuard();
   private revision = 0;
   constructor(
     private publish: (snapshot: string) => void,
@@ -35,10 +36,10 @@ export class LuaLibrary {
   ) {}
 
   session(status: AccountStatus, id: string) {
-    if (id === this.user && status === "authenticated") return;
-    if (status === "loading") return;
-    this.epoch++;
-    this.user = status === "authenticated" ? id : "";
+    const user = sessionUser(status, id, this.user);
+    if (user === undefined) return;
+    this.epoch.invalidate();
+    this.user = user;
     this.decks = [];
     this.legality = new Map();
     this.busy = false;
@@ -99,27 +100,28 @@ export class LuaLibrary {
     );
   }
 
-  async load() {
+  /** Reloads the decks; the returned check stays true until something newer starts. */
+  async load(): Promise<(() => boolean) | undefined> {
     if (!this.user || this.busy) {
       this.emit();
       return;
     }
-    const epoch = ++this.epoch;
+    const live = this.epoch.next();
     this.busy = true;
     this.message = "";
     this.emit();
     try {
       const decks = await api.listDecks();
-      if (epoch !== this.epoch) return;
+      if (!live()) return live;
       this.decks = decks;
       // Incomplete decks are illegal on sight; complete ones are judged below.
       this.legality = new Map(
         decks.filter((d) => d.cardCount !== DECK_SIZE).map((d) => [d.id, false] as const),
       );
       this.phase = "ready";
-      void this.judge(epoch);
+      void this.judge(live);
     } catch (error) {
-      if (epoch !== this.epoch) return;
+      if (!live()) return live;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
       if (this.phase === "anonymous") {
         this.decks = [];
@@ -129,21 +131,21 @@ export class LuaLibrary {
           ? "Your session expired. Sign in again."
           : "Could not load your library. Try again.";
     } finally {
-      if (epoch === this.epoch) {
+      if (live()) {
         this.busy = false;
         this.emit();
       }
     }
+    return live;
   }
 
   /** Judge the loaded decks in the background and republish the alerts. A
       failed check leaves the piles unmarked rather than surfacing an error:
       the library itself loaded, and the next load retries. */
-  private async judge(epoch: number) {
-    const current = () => epoch === this.epoch;
+  private async judge(live: () => boolean) {
     try {
-      const legality = await deckLegality(this.decks, current);
-      if (!current()) return;
+      const legality = await deckLegality(this.decks, live);
+      if (!live()) return;
       this.legality = legality;
       this.emit();
     } catch (error) {
@@ -152,7 +154,7 @@ export class LuaLibrary {
   }
 
   private async mutate(work: () => Promise<unknown>) {
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     this.busy = true;
     this.message = "";
     this.result = "";
@@ -168,11 +170,11 @@ export class LuaLibrary {
           ? "Your session expired. Sign in again."
           : "Could not save the change. Please try again.";
     }
-    if (epoch !== this.epoch) return;
+    if (!live()) return;
     this.busy = false;
     // Reconcile with the server even when the write fails.
-    await this.load();
-    if (epoch + 1 !== this.epoch) return;
+    const loaded = await this.load();
+    if (!loaded?.()) return;
     this.result = succeeded ? "ok" : "error";
     if (failure) this.message = failure;
     this.emit();

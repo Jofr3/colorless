@@ -116,8 +116,8 @@ function Sandbox:hit(x,y)
 end
 function Sandbox:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  self:sync(Mailbox.read('__sandbox.txt'))
-  self:input(Mailbox.read('__sandbox_input.txt'))
+  self:sync(Mailbox.read('sandbox'))
+  self:input(Mailbox.read('sandboxInput'))
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   self.mx,self.my=mx,my-self:offset();self.hover=self:hit(mx,my)
   for i,card in ipairs(self.cards) do

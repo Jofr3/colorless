@@ -1,4 +1,4 @@
-import { LuaAccount } from "./account";
+import { type AccountStatus, LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
 import { LuaOnline } from "./online";
@@ -7,29 +7,45 @@ import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
 import { setSessionRecoveryHandler } from "../lib/api";
 import { ArtworkCache } from "./artworkCache";
+import type { ArtRequest } from "../host/bridgeProtocol";
+import { MAILBOXES } from "../host/mailboxes";
+import { type Route, Router, pageLabel, pageTitle } from "../host/router";
+import { type BridgeScreen, HostShell } from "../host/shell";
 
-window.colorlessArtworkCache = new ArtworkCache();
+const host = window.colorlessHost;
 
-const dispatch = (name: string, detail: unknown) =>
-  document.dispatchEvent(new CustomEvent(`colorless:${name}`, { detail }));
-/** The publish callback for a screen: its snapshot goes out as `colorless:<screen>-state`. */
-const publishTo = (screen: string) => (snapshot: string) => dispatch(`${screen}-state`, snapshot);
-/** Routes `colorless:<screen>-command` string details to the screen's adapter. */
-function onCommand(screen: string, run: (raw: string) => unknown) {
-  document.addEventListener(`colorless:${screen}-command`, (event) => {
-    if (event instanceof CustomEvent && typeof event.detail === "string") void run(event.detail);
-  });
-}
-const route = (page: string, id?: string, replace?: boolean) =>
-  dispatch("route", { page, id, replace });
-const wantArt = (cards: unknown) => dispatch("art-wanted", cards);
-
-const builder = new LuaBuilder(publishTo("builder"), () => route("decks"), wantArt);
-document.addEventListener("colorless:builder-leave", (event) => {
-  if (event instanceof CustomEvent && typeof event.detail === "function")
-    builder.navigate(event.detail);
+const shell = new HostShell(document, host, {
+  command: (screen, raw) => void screens[screen].command(raw),
+  navigate: (page) => router.navigate(page),
+  // Credentials stay in the native browser inputs and the API client. Lua receives only the
+  // email, the name and a masked password.
+  authenticate: ({ mode, email, password, name }) =>
+    void account.authenticate(mode, email, password, name),
 });
-onCommand("builder", (raw) => builder.command(raw));
+const router = new Router(window, {
+  changed: showPage,
+  holdLeave: (from, proceed) => {
+    if (from.page !== "builder") return false;
+    shell.finishInputs();
+    builder.navigate(proceed);
+    return true;
+  },
+});
+
+const route = (page: string, id?: string, replace?: boolean) => router.navigate(page, id, replace);
+const wantArt = (cards: readonly ArtRequest[]) => host.wantArt(cards);
+/** A screen's snapshots go to the mailbox named after it. */
+const publishTo = (screen: BridgeScreen) => (snapshot: string) =>
+  host.writeMailbox(MAILBOXES[screen], snapshot);
+
+const builder = new LuaBuilder(
+  (snapshot) => {
+    publishTo("builder")(snapshot);
+    if (router.current.page === "builder") showPage(router.current);
+  },
+  () => route("decks"),
+  wantArt,
+);
 window.addEventListener("beforeunload", (event) => {
   if (
     builder.id &&
@@ -42,27 +58,35 @@ window.addEventListener("beforeunload", (event) => {
   }
 });
 const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
-onCommand("library", (raw) => library.command(raw));
-
 const sandbox = new LuaSandbox(publishTo("sandbox"), (setup) =>
   launchSandbox(setup, () => route("simulator")),
 );
-onCommand("sandbox", (raw) => sandbox.command(raw));
-
 const online = new LuaOnline(publishTo("online"), route, { user: () => account.user });
-onCommand("online", (raw) => online.command(raw));
-
 const simulator = new LuaSimulator(publishTo("simulator"), route, wantArt, (code) =>
   online.matchSource(code),
 );
-onCommand("simulator", (raw) => simulator.command(raw));
-
 const account = new LuaAccount((snapshot) => {
-  dispatch("account-state", snapshot);
+  shell.accountChanged(snapshot);
   const status = account.status;
   const userId = account.user?.id ?? "";
-  for (const screen of [library, builder, sandbox, online]) screen.session(status, userId);
+  for (const screen of Object.values(screens)) screen.session?.(status, userId);
 });
+
+interface Screen {
+  command(raw: string): unknown;
+  /** Follows the signed-in user. */
+  session?(status: AccountStatus, userId: string): void;
+}
+/** Lua's `COLORLESS:<screen>:` commands and the account's session go to these adapters. */
+const screens: Record<BridgeScreen, Screen> = {
+  library,
+  builder,
+  sandbox,
+  online,
+  simulator,
+  account,
+};
+
 {
   const url = new URL(location.href);
   const authError = url.searchParams.get("authError");
@@ -76,19 +100,22 @@ setSessionRecoveryHandler(async () => {
   await account.refresh();
   return account.status === "authenticated";
 });
-onCommand("account", (raw) => account.command(raw));
-// Credentials stay in the native browser inputs/API client. Lua receives only
-// the email/name and a masked password, never the password itself.
-document.addEventListener("colorless:authenticate", (event) => {
-  if (!(event instanceof CustomEvent)) return;
-  const { mode, email, password, name } = event.detail ?? {};
-  if (
-    (mode !== "login" && mode !== "register") ||
-    typeof email !== "string" ||
-    typeof password !== "string" ||
-    typeof name !== "string"
-  )
-    return;
-  void account.authenticate(mode, email, password, name);
+
+function showPage(route: Route) {
+  const deck =
+    route.page === "builder" && builder.id === route.id && builder.name
+      ? { name: builder.name, cards: [...builder.entries.values()].reduce((a, b) => a + b, 0) }
+      : undefined;
+  shell.showPage({
+    ...route,
+    title: pageTitle(route.page, deck?.name),
+    label: pageLabel(route.page, deck),
+  });
+}
+showPage(router.current);
+
+host.connect({
+  onPrint: (message) => shell.onPrint(message),
+  artwork: new ArtworkCache(),
+  mailboxes: MAILBOXES,
 });
-document.dispatchEvent(new Event("colorless:account-ready"));

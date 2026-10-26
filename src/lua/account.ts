@@ -1,4 +1,11 @@
-import { DISPLAY_NAME_MAX, OAUTH_FAILURES, type OAuthFailure, type User } from "@colorless/schema";
+import {
+  DISPLAY_NAME_MAX,
+  OAUTH_FAILURES,
+  type OAuthFailure,
+  type User,
+  loginRequestSchema,
+  registerRequestSchema,
+} from "@colorless/schema";
 import { ApiError, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
@@ -10,6 +17,20 @@ const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   "no-email": "Google did not share an email address.",
   "email-in-use": "That email already has an account. Sign in with your password.",
 };
+
+interface FormIssue {
+  path: readonly PropertyKey[];
+  code: string;
+}
+
+/** What to tell someone whose sign-in form the request schema refused, by its first issue. */
+function formProblem(issue: FormIssue | undefined, mode: "login" | "register") {
+  const field = issue?.path[0];
+  if (field === "email") return "Enter a valid email address.";
+  if (field === "displayName") return `Use up to ${DISPLAY_NAME_MAX} characters for your name.`;
+  if (issue?.code === "too_big") return "Password is too long.";
+  return mode === "register" ? "Passwords need at least 8 characters." : "Enter your password.";
+}
 
 /** The Lua scene owns the UI; this adapter shares the typed API client
  * and cookie session. No credentials or profile data go into localStorage. */
@@ -138,32 +159,31 @@ export class LuaAccount {
 
   async authenticate(mode: "login" | "register", email: string, password: string, name: string) {
     if (this.busy) return;
-    const trimmedEmail = email.trim();
-    this.message = "";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail) || trimmedEmail.length > 254)
-      this.message = "Enter a valid email address.";
-    else if (!password) this.message = "Enter your password.";
-    else if (mode === "register" && password.length < 8)
-      this.message = "Passwords need at least 8 characters.";
-    else if (password.length > 256) this.message = "Password is too long.";
-    else if (mode === "register" && name.trim().length > DISPLAY_NAME_MAX)
-      this.message = `Use up to ${DISPLAY_NAME_MAX} characters for your name.`;
-    if (this.message) {
-      this.emit();
-      return;
+    const displayName = name.trim();
+    const form = { email: email.trim(), password, ...(displayName ? { displayName } : {}) };
+    if (mode === "login") {
+      const request = loginRequestSchema.safeParse(form);
+      if (request.success) await this.signIn(() => login(request.data));
+      else this.refuse(formProblem(request.error.issues[0], mode));
+    } else {
+      const request = registerRequestSchema.safeParse(form);
+      if (request.success) await this.signIn(() => register(request.data));
+      else this.refuse(formProblem(request.error.issues[0], mode));
     }
+  }
+
+  private refuse(message: string) {
+    this.message = message;
+    this.emit();
+  }
+
+  private async signIn(send: () => Promise<User>) {
     const op = ++this.operation;
     this.busy = true;
+    this.message = "";
     this.emit();
     try {
-      const user =
-        mode === "login"
-          ? await login({ email: trimmedEmail, password })
-          : await register({
-              email: trimmedEmail,
-              password,
-              ...(name.trim() ? { displayName: name.trim() } : {}),
-            });
+      const user = await send();
       if (op !== this.operation) return;
       this.user = user;
       this.status = "authenticated";

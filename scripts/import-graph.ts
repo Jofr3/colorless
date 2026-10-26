@@ -30,6 +30,7 @@ export const RECORDED_CYCLE: readonly string[] = [
  * package, so a script reading from it has no package entry to go through.
  */
 export const ALLOWED_CROSSINGS: readonly string[] = [
+  "scripts/lua-constants.ts -> ../src/host/mailboxes",
   "scripts/lua-constants.ts -> ../src/lua/wireFields",
 ];
 

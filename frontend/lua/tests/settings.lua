@@ -12,6 +12,9 @@ p:set('volume',-1); assert(p.volume==0)
 local restored=Preferences.new(p:serialize())
 assert(restored:serialize()==p:serialize())
 assert(Preferences.new('broken'):serialize()==Preferences.new():serialize())
+local stored=Preferences.new('{"version":1,"screenshake":20,"reducedMotion":1,"crt":0,"bloom":1,"volume":35,"musicVolume":80,"effectsVolume":60,"muted":1}')
+assert(stored:serialize()=='20 1 0 1 35 80 60 1','A JSON record reads field by field')
+assert(Preferences.new('{"crt":250}').crt==100 and Preferences.new('{"crt":250}').volume==50)
 local changes,closed,announcements=0,0,{}
 local popup=Settings.new(p,{
   changed=function() changes=changes+1 end,

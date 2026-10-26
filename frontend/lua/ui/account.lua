@@ -22,8 +22,8 @@ function Account:input(raw)
   if not raw or raw==self.inputRaw then return false end
   self.inputRaw=raw
   local f=Codec.fields(raw)
-  if #f<5 or self.status~='authenticated' then return false end
-  self.draftName=f[3]; self.editing=f[2]~='done'
+  if #f<6 or self.status~='authenticated' then return false end
+  self.draftName=f[3]; self.editing=f[6]=='input'
   self.selectionStart=tonumber(f[4]) or 0; self.selectionEnd=tonumber(f[5]) or 0
   self.message=''
   return true

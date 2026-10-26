@@ -23,10 +23,10 @@ local Alert=require('ui.card_alert')
 local CardBack=require('ui.card_back')
 local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
+local LobbyCode=require('ui.host_constants').lobbyCode
 local g=love.graphics
 local Online={}
 Online.__index=Online
-local ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 local heights={menu=540,joining=420,waiting=540,starting=420}
 local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
@@ -42,12 +42,12 @@ local filters={{'All decks'},{'Standard legal','standard',true},{'Not Standard l
 local function darken(c,t) return {c[1]*(1-t),c[2]*(1-t),c[3]*(1-t),c[4] or 1} end
 local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[3]-a[3])*t,1} end
 local function spell(code) return (code:gsub('.','%0 '):gsub('%s+$','')) end
--- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at four.
+-- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at the code's length.
 function Online.normalize(raw)
   local out=''
   for c in tostring(raw or ''):upper():gmatch('.') do
-    if ALPHABET:find(c,1,true) then out=out..c end
-    if #out==4 then break end
+    if LobbyCode.alphabet:find(c,1,true) then out=out..c end
+    if #out==LobbyCode.length then break end
   end
   return out
 end
@@ -198,7 +198,7 @@ function Online:build()
       add({kind='button',action='create',label=self.busy and 'Please wait...' or 'Create lobby',x=x+(w-bw)/2,y=y+214,w=bw,h=56,fontSize=40,colour=T.blue,disabled=self.busy})
     else
       add({kind='field',field='code',label='Lobby code',placeholder='CODE',x=x+(w-260)/2,y=y+162,w=260,h=56})
-      add({kind='button',action='join',label='Join',x=x+(w-260)/2,y=y+238,w=260,h=48,fontSize=30,disabled=self.busy or #self.joinCode<4})
+      add({kind='button',action='join',label='Join',x=x+(w-260)/2,y=y+238,w=260,h=48,fontSize=30,disabled=self.busy or #self.joinCode<LobbyCode.length})
     end
     if self.account=='anonymous' and not waiting then add({kind='button',action='signin',label='Sign in',x=x+(w-160)/2,y=y+h-116,w=160,h=36,fontSize=22,colour=T.blue}) end
   elseif step=='versus' or step=='countdown' then
@@ -359,7 +359,7 @@ function Online:input(raw)
     self.editing=action=='input' and 'code' or nil
     self.joinCode=Online.normalize(f[3])
     self:build()
-    if action=='enter' and #self.joinCode==4 and self.step=='menu' and not self.busy then self:join() end
+    if action=='enter' and #self.joinCode==LobbyCode.length and self.step=='menu' and not self.busy then self:join() end
   elseif field=='search' then
     self.editing=action=='input' and 'search' or nil
     if self.query~=f[3] then self.query=f[3];self.page=1;self:makeCards(true);self.focus=0;self.pressed=nil end
@@ -382,8 +382,8 @@ end
 function Online:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   self.markerTime=reduced and 12 or time
-  self:sync(Mailbox.read('__online.txt'))
-  self:input(Mailbox.read('__online_input.txt'))
+  self:sync(Mailbox.read('online'))
+  self:input(Mailbox.read('onlineInput'))
   self.motion:update(dt,time,false,false,reduced)
   self.mx,self.my=mx,my-self:offset()
   self.hover,self.hoverPart=self:hit(mx,my,true)
@@ -415,7 +415,7 @@ function Online:describe(item)
   return (item.displayLabel or item.label)..'. Button.'
 end
 function Online:join()
-  if self.busy or #self.joinCode<4 then return end
+  if self.busy or #self.joinCode<LobbyCode.length then return end
   self:finish();self.busy=true;self:command('join',self.joinCode);self:build()
 end
 function Online:openPicker()
