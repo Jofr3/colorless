@@ -437,7 +437,7 @@ describe("Lua simulator", () => {
       expect(cardRow(candy)?.[5]).toBe("played");
       expect(rows(publish).some((r: string[]) => r[0] === "R")).toBe(false);
       expect(sim.host?.steps).toHaveLength(2);
-      expect(loadSimulatorSave()?.state).toEqual(after);
+      expect(loadSimulatorSave()?.game).toEqual(after);
       sim.history("undoAction");
       expect(sim.host?.game).toEqual(state);
       expect(cardRow(candy)?.[5]).toBe("hand");
@@ -499,7 +499,7 @@ describe("Lua simulator", () => {
       expect(sim.host?.viewerSeat).toBe("p2");
       expect(rows(publish).some((r: string[]) => r[0] === "M" && r[1] === "prizes")).toBe(false);
       expect(sim.host?.steps.some((s) => s.game.phase.kind === "ko:takePrizes")).toBe(false);
-      expect(loadSimulatorSave()?.state).toEqual(after);
+      expect(loadSimulatorSave()?.game).toEqual(after);
       sim.command("close");
       sim.command("open");
       expect(sim.host?.game).toEqual(after);
@@ -521,7 +521,7 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.players.p1.prizes).toHaveLength(4);
     expect(sim.host?.game.phase.kind).toBe("ko:promote");
     expect(sim.menu?.hideTargetOutline).toBe(true);
-    expect(loadSimulatorSave()?.state).toEqual(sim.host?.game);
+    expect(loadSimulatorSave()?.game).toEqual(sim.host?.game);
   });
   it("finishes a last-prize KO without an extra prize prompt", () => {
     const state = setPrizes(knockoutState("fix-pokemon-v", 210), "p1", 1);
@@ -583,7 +583,7 @@ describe("Lua simulator", () => {
     }
     expect(sim.host?.game.phase.kind).toBe("turn:action");
     expect(sim.host?.game.turn).toBe(1);
-    expect(loadSimulatorSave()?.state).toEqual(sim.host?.game);
+    expect(loadSimulatorSave()?.game).toEqual(sim.host?.game);
   });
   it.each(["fresh", "resume", "partial"] as const)(
     "draws both full mulligan bonuses automatically (%s) without replaying them",
@@ -649,7 +649,7 @@ describe("Lua simulator", () => {
       expect(sim.sidebar().some((o) => /^(Draw |Skip draw)/.test(o.label))).toBe(false);
       expect(sim.host?.steps.every((s) => s.game.phase.kind !== "setup:drawExtra")).toBe(true);
       expect(sim.host?.turns.every((s) => s.game.phase.kind !== "setup:drawExtra")).toBe(true);
-      expect(loadSimulatorSave()?.state).toEqual(settled);
+      expect(loadSimulatorSave()?.game).toEqual(settled);
       const history = sim.host?.steps;
       for (const [undo, redo] of [
         ["undoAction", "redoAction"],
@@ -980,12 +980,12 @@ describe("Lua simulator", () => {
     requestRestart();
     expect(sim.menu?.title).toBe("Start a new game?");
     expect(sim.host?.game).toEqual(previous.game);
-    expect(loadSimulatorSave()?.state).toEqual(previous.game);
+    expect(loadSimulatorSave()?.game).toEqual(previous.game);
     expect(rows(publish).filter((r: string[]) => r[0] === "A")).toHaveLength(6);
     sim.command("dismiss");
     expect(sim.menu).toBeNull();
     expect(sim.host?.game).toEqual(previous.game);
-    expect(loadSimulatorSave()?.state).toEqual(previous.game);
+    expect(loadSimulatorSave()?.game).toEqual(previous.game);
     requestRestart();
     const confirm = rows(publish).find((r: string[]) => r[0] === "O" && r[2] === "New game");
     if (!confirm) throw Error("Missing restart confirmation");
@@ -1010,7 +1010,7 @@ describe("Lua simulator", () => {
     expect(fresh.turns).toHaveLength(1);
     expect(sim.menu).toBeNull();
     expect(route).not.toHaveBeenCalled();
-    expect(loadSimulatorSave()?.state).toEqual(fresh.game);
+    expect(loadSimulatorSave()?.game).toEqual(fresh.game);
     sim.command("close");
     sim.command("open");
     expect(sim.host?.game).toEqual(fresh.game);

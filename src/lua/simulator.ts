@@ -1,7 +1,7 @@
 import { otherSeat, type GameAction, type PokemonRef } from "@colorless/engine";
 import type { RedactedGame } from "@colorless/schema";
 import { decodeFields } from "./wire";
-import type { LocalGameSetup } from "../game/localHost";
+import type { HostState, LocalGameSetup } from "../game/localHost";
 import { moveToAction } from "../game/moveToAction";
 import { loadSimulatorSave, clearSimulatorSave } from "../game/simulatorSave";
 import { effectMenu } from "./simulatorChoices";
@@ -127,7 +127,7 @@ export class LuaSimulator {
     change();
     if (this.revision === revision) this.emit();
   }
-  open(setup: LocalGameSetup | null = loadSimulatorSave()) {
+  open(setup: LocalGameSetup | HostState | null = loadSimulatorSave()) {
     this.bind(setup ? new LocalTableSource(setup) : null);
   }
   private bind(source: TableSource | null) {

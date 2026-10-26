@@ -16,35 +16,46 @@ export interface LocalGameSetup {
   names: Record<Seat, string>;
   /** Wall-clock start, the log's elapsed-time origin. */
   startedAt: number;
-  /** A saved match resumes its accumulated log and the current hot-seat viewer. */
-  resume?: {
-    log: SeatLogEntry[];
-    viewerSeat: Seat;
-    turns?: LocalTurnSnapshot[];
-    turnIndex?: number;
-    latestTurn?: LocalTurnSnapshot;
-    steps?: LocalStep[];
-    stepIndex?: number;
-  };
+  /** A table opened mid-game starts from this log and hot-seat viewer. */
+  resume?: { log: SeatLogEntry[]; viewerSeat: Seat };
 }
 
-export interface LocalTurnSnapshot {
+/** A place in the current line of play: the board after its first `actions`
+    accepted actions, how much of the log was written by then, and who held
+    the device. */
+export interface LocalSnapshot {
   game: GameState;
-  log: SeatLogEntry[];
+  logLength: number;
   viewerSeat: Seat;
+  actions: number;
 }
 
 /** One accepted action's outcome, for action-level undo/redo. `checkpoint`
     marks the steps that also began a turn (or a setup handoff) — the
     "undo turn" / "redo turn" stops — and `turnIndex` the turn-history index
     that was current after it. */
-export interface LocalStep extends LocalTurnSnapshot {
+export interface LocalStep extends LocalSnapshot {
   checkpoint: boolean;
   turnIndex: number;
 }
 
-/** How many accepted actions stay undoable (and get saved). */
-const MAX_STEPS = 40;
+/** The phases whose decision the hot seat takes for the player. */
+export type AutoPhase = "setup:drawExtra" | "ko:takePrizes";
+
+/** An accepted action; `auto` names the phase in which the table took it for the player. */
+export interface LocalAction {
+  action: GameAction;
+  /** Date.now() at dispatch — stamped by the wrapper, not the reducer. */
+  at: number;
+  auto?: AutoPhase;
+}
+
+/** Where a host stands in its line of play. */
+export interface HostPosition {
+  cursor: number;
+  stepIndex: number;
+  turnIndex: number;
+}
 
 export interface GameError {
   code: ErrorCode;
@@ -53,7 +64,7 @@ export interface GameError {
   nonce: number;
 }
 
-interface HostState {
+export interface HostState {
   game: GameState;
   names: Record<Seat, string>;
   startedAt: number;
@@ -61,22 +72,25 @@ interface HostState {
   lastError: GameError | null;
   /** The hot-seat viewer — follows whoever must act (see waitingSeatOf). */
   viewerSeat: Seat;
-  turns: LocalTurnSnapshot[];
+  /** Where the match began; every snapshot is it plus a prefix of `actions`. */
+  origin: { game: GameState; log: SeatLogEntry[]; viewerSeat: Seat };
+  /** The current line of play, oldest first. Undo keeps its tail for redo; a
+      new action replaces the tail. */
+  actions: LocalAction[];
+  /** How many of `actions` lead to `game`. */
+  cursor: number;
+  /** The log at the end of `actions`; every snapshot's log is a prefix of it. */
+  lineLog: SeatLogEntry[];
+  turns: LocalSnapshot[];
   turnIndex: number;
-  latestTurn: LocalTurnSnapshot;
+  latestTurn: LocalSnapshot;
   /** Every accepted action's outcome (newest last), the current one at `stepIndex`. */
   steps: LocalStep[];
   stepIndex: number;
 }
 
-interface HostActionEvent {
-  action: GameAction;
-  /** Date.now() at dispatch — stamped by the wrapper, not the reducer. */
-  at: number;
-}
-
 type HostEvent =
-  | HostActionEvent
+  | LocalAction
   | { type: "previousTurn" | "nextTurn" }
   | { type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn" };
 
@@ -85,7 +99,7 @@ type HostEvent =
     start of the current turn when mid-turn, else the previous turn), and
     "redo turn" to the next checkpoint or the newest step. */
 export function stepTarget(
-  host: HostState,
+  host: Pick<HostState, "steps" | "stepIndex">,
   type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
 ): number | null {
   const { steps, stepIndex } = host;
@@ -123,6 +137,17 @@ export function waitingSeatOf(state: GameState, current: Seat): Seat {
   return phaseViewOf(state, current).waitingSeat ?? current;
 }
 
+function land(prev: HostState, at: LocalSnapshot): HostState {
+  return {
+    ...prev,
+    game: at.game,
+    log: at.logLength === prev.lineLog.length ? prev.lineLog : prev.lineLog.slice(0, at.logLength),
+    viewerSeat: at.viewerSeat,
+    cursor: at.actions,
+    lastError: null,
+  };
+}
+
 /** Pure host reducer (exported for tests). ok → replace game, append the
     formatted log, clear any stale rejection, re-derive the viewer; rejected
     → keep the game, surface the error (nonce-bumped so repeats
@@ -131,89 +156,72 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
   if ("type" in event && event.type !== "previousTurn" && event.type !== "nextTurn") {
     const index = stepTarget(prev, event.type);
     const step = index === null ? undefined : prev.steps[index];
-    if (!step) return prev;
+    if (index === null || !step) return prev;
     return {
-      ...prev,
-      game: step.game,
-      log: step.log,
-      viewerSeat: step.viewerSeat,
+      ...land(prev, step),
       turnIndex: Math.max(0, Math.min(step.turnIndex, prev.turns.length - 1)),
-      stepIndex: index as number,
-      lastError: null,
+      stepIndex: index,
     };
   }
   if ("type" in event) {
     const turnIndex = prev.turnIndex + (event.type === "previousTurn" ? -1 : 1);
-    const turn = turnIndex === prev.turns.length - 1 ? prev.latestTurn : prev.turns[turnIndex];
+    const latest = turnIndex === prev.turns.length - 1;
+    const turn = latest ? prev.latestTurn : prev.turns[turnIndex];
     if (!turn) return prev;
-    // Land on the step that began this turn; without one (an older save),
-    // the action history restarts here.
-    let stepIndex = prev.steps.findIndex((s) => s.checkpoint && s.turnIndex === turnIndex);
-    if (turnIndex === prev.turns.length - 1) stepIndex = prev.steps.length - 1;
-    const steps = stepIndex >= 0 ? prev.steps : [{ ...turn, checkpoint: true, turnIndex }];
-    return {
-      ...prev,
-      ...turn,
-      turnIndex,
-      steps,
-      stepIndex: Math.max(0, stepIndex),
-      lastError: null,
-    };
+    // Land on the step that began this turn. A turn whose step was dropped
+    // (it waited on an automatic decision) gets one back in its place.
+    let steps = prev.steps;
+    let stepIndex = latest ? steps.length - 1 : steps.findIndex((s) => s.actions === turn.actions);
+    if (stepIndex < 0) {
+      const after = steps.findIndex((s) => s.actions > turn.actions);
+      stepIndex = after < 0 ? steps.length : after;
+      steps = [
+        ...steps.slice(0, stepIndex),
+        { ...turn, checkpoint: true, turnIndex },
+        ...steps.slice(stepIndex),
+      ];
+    }
+    return { ...land(prev, turn), turnIndex, steps, stepIndex };
   }
-  const result = applyAction(prev.game, event.action);
-  if (!result.ok) {
+  const next = accept(prev, prev.turns[prev.turnIndex], event);
+  if (!next.ok) {
     return {
       ...prev,
       lastError: {
-        code: result.error.code,
-        message: result.error.message,
+        code: next.error.code,
+        message: next.error.message,
         nonce: (prev.lastError?.nonce ?? 0) + 1,
       },
     };
   }
-  const entries = logFromEvents(result.events, {
-    names: prev.names,
-    state: result.state,
-    elapsed: formatElapsed(event.at - prev.startedAt),
-  });
-
-  const log = [...prev.log, ...entries];
-  const viewerSeat = waitingSeatOf(result.state, prev.viewerSeat);
-  const turn = { game: result.state, log, viewerSeat };
-  // Preserve setup decisions and player handoffs as well as turn starts.
-  // Automatic bonus draws resolve between checkpoints, so navigating history
-  // never re-dispatches a draw and replaces the recorded future.
+  const log = [...prev.log, ...next.entries];
+  const actions = [...prev.actions.slice(0, prev.cursor), event];
+  const turn: LocalSnapshot = {
+    game: next.state,
+    logLength: log.length,
+    viewerSeat: next.viewerSeat,
+    actions: actions.length,
+  };
   const turns = prev.turns.slice(0, prev.turnIndex + 1);
-  const setupHandoff =
-    prev.game.turn === 0 &&
-    (prev.game.phase.kind !== result.state.phase.kind ||
-      prev.viewerSeat !== viewerSeat ||
-      (prev.game.phase.kind === "setup:place" &&
-        result.state.phase.kind === "setup:place" &&
-        prev.game.phase.stage !== result.state.phase.stage));
-  let checkpoint = false;
-  if (
-    result.state.phase.kind !== "setup:drawExtra" &&
-    (result.state.turn !== prev.game.turn || setupHandoff)
-  ) {
-    if (turns[prev.turnIndex]?.game.phase.kind === "setup:drawExtra") turns[prev.turnIndex] = turn;
-    else turns.push(turn);
-    checkpoint = true;
-  }
+  if (next.replacesTurn) turns[prev.turnIndex] = turn;
+  else if (next.checkpoint) turns.push(turn);
   const steps = [
     ...prev.steps.slice(0, prev.stepIndex + 1),
-    { ...turn, checkpoint, turnIndex: turns.length - 1 },
-  ].slice(-MAX_STEPS);
+    { ...turn, checkpoint: next.checkpoint, turnIndex: turns.length - 1 },
+  ];
   return {
     ...prev,
 
-    game: result.state,
+    game: next.state,
     log,
     // An accepted action makes any earlier rejection stale — and since the
     // viewer flip below also rides on accepted actions, clearing here is
     // what keeps a pill from leaking across the hot-seat handoff.
     lastError: null,
-    viewerSeat,
+    viewerSeat: next.viewerSeat,
+    actions,
+    cursor: actions.length,
+    lineLog: log,
     turns,
     turnIndex: turns.length - 1,
     latestTurn: turn,
@@ -221,6 +229,56 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     stepIndex: steps.length - 1,
   };
 }
+
+/** The engine's answer to `event` at `prev`, with its log rows, the next
+    viewer, and whether it begins a turn (replacing `turn`, the current turn
+    snapshot, when that one still waits on bonus draws). */
+function accept(
+  prev: Pick<HostState, "game" | "names" | "startedAt" | "viewerSeat">,
+  turn: LocalSnapshot | undefined,
+  event: LocalAction,
+) {
+  const result = applyAction(prev.game, event.action);
+  if (!result.ok) return result;
+  const entries = logFromEvents(result.events, {
+    names: prev.names,
+    state: result.state,
+    elapsed: formatElapsed(event.at - prev.startedAt),
+  });
+  const viewerSeat = waitingSeatOf(result.state, prev.viewerSeat);
+  // Preserve setup decisions and player handoffs as well as turn starts.
+  // Automatic bonus draws resolve between checkpoints, so navigating history
+  // never re-dispatches a draw and replaces the recorded future.
+  const setupHandoff =
+    prev.game.turn === 0 &&
+    (prev.game.phase.kind !== result.state.phase.kind ||
+      prev.viewerSeat !== viewerSeat ||
+      (prev.game.phase.kind === "setup:place" &&
+        result.state.phase.kind === "setup:place" &&
+        prev.game.phase.stage !== result.state.phase.stage));
+  const checkpoint =
+    result.state.phase.kind !== "setup:drawExtra" &&
+    (result.state.turn !== prev.game.turn || setupHandoff);
+  return {
+    ok: true as const,
+    state: result.state,
+    entries,
+    viewerSeat,
+    checkpoint,
+    replacesTurn: checkpoint && turn?.game.phase.kind === "setup:drawExtra",
+  };
+}
+
+/** Drops the steps still waiting on an automatic decision. An automatic step
+    belongs to the decision that caused it: history must not land on a pending
+    one, which would take it again and drop the redo branch. */
+export function dropAutoSteps(host: HostState, phase: AutoPhase): HostState {
+  const steps = withoutPending(host.steps, phase);
+  return { ...host, steps, stepIndex: steps.length - 1 };
+}
+
+const withoutPending = (steps: LocalStep[], phase: AutoPhase) =>
+  steps.filter((step) => step.game.phase.kind !== phase);
 
 /** Initial host state from a fresh createGame (exported for tests). */
 export function initHost(setup: LocalGameSetup): HostState {
@@ -232,20 +290,7 @@ export function initHost(setup: LocalGameSetup): HostState {
       elapsed: formatElapsed(0),
     });
   const viewerSeat = waitingSeatOf(setup.state, setup.resume?.viewerSeat ?? "p1");
-  const turns = setup.resume?.turns?.length
-    ? setup.resume.turns
-    : [{ game: setup.state, log, viewerSeat }];
-  const turnIndex = Math.max(
-    0,
-    Math.min(setup.resume?.turnIndex ?? turns.length - 1, turns.length - 1),
-  );
-  const current = { game: setup.state, log, viewerSeat };
-  const savedSteps = setup.resume?.steps;
-  const steps = savedSteps?.length ? savedSteps : [{ ...current, checkpoint: true, turnIndex }];
-  const stepIndex = Math.max(
-    0,
-    Math.min(setup.resume?.stepIndex ?? steps.length - 1, steps.length - 1),
-  );
+  const start: LocalSnapshot = { game: setup.state, logLength: log.length, viewerSeat, actions: 0 };
   return {
     game: setup.state,
     names: setup.names,
@@ -253,10 +298,80 @@ export function initHost(setup: LocalGameSetup): HostState {
     log,
     lastError: null,
     viewerSeat,
-    turns,
-    turnIndex,
-    latestTurn: setup.resume?.latestTurn ?? current,
-    steps,
-    stepIndex,
+    origin: { game: setup.state, log, viewerSeat },
+    actions: [],
+    cursor: 0,
+    lineLog: log,
+    turns: [start],
+    turnIndex: 0,
+    latestTurn: start,
+    steps: [{ ...start, checkpoint: true, turnIndex: 0 }],
+    stepIndex: 0,
   };
+}
+
+/** Rebuilds a match from its setup by playing its line through to the end,
+    as `hostReducer` would one action at a time, dropping the automatic steps
+    where the table dropped them. Null when the engine refuses an action. */
+export function replayHost(
+  setup: LocalGameSetup,
+  actions: readonly LocalAction[],
+): HostState | null {
+  const start = initHost(setup);
+  // The line only grows here, so it is built in place rather than copied per action.
+  const log = [...start.log];
+  const line: LocalAction[] = [];
+  const turns = [...start.turns];
+  let steps = [...start.steps];
+  let at = start;
+  for (const [i, entry] of actions.entries()) {
+    const next = accept(at, turns.at(-1), entry);
+    if (!next.ok) return null;
+    log.push(...next.entries);
+    line.push(entry);
+    const turn: LocalSnapshot = {
+      game: next.state,
+      logLength: log.length,
+      viewerSeat: next.viewerSeat,
+      actions: line.length,
+    };
+    if (next.replacesTurn) turns[turns.length - 1] = turn;
+    else if (next.checkpoint) turns.push(turn);
+    steps.push({ ...turn, checkpoint: next.checkpoint, turnIndex: turns.length - 1 });
+    if (entry.auto && actions[i + 1]?.auto !== entry.auto)
+      steps = withoutPending(steps, entry.auto);
+    at = { ...at, game: next.state, viewerSeat: next.viewerSeat, latestTurn: turn };
+  }
+  return {
+    ...at,
+    log,
+    actions: line,
+    cursor: line.length,
+    lineLog: log,
+    turns,
+    turnIndex: turns.length - 1,
+    steps,
+    stepIndex: steps.length - 1,
+  };
+}
+
+export function positionOf(host: HostState): HostPosition {
+  return { cursor: host.cursor, stepIndex: host.stepIndex, turnIndex: host.turnIndex };
+}
+
+/** Moves a host at the end of its line back to `at`; null when no snapshot
+    there is `at.cursor` actions in. */
+export function restorePosition(host: HostState, at: HostPosition): HostState | null {
+  if (
+    at.cursor === host.cursor &&
+    at.stepIndex === host.stepIndex &&
+    at.turnIndex === host.turnIndex
+  )
+    return host;
+  const step = host.steps[at.stepIndex];
+  const turn = at.turnIndex === host.turns.length - 1 ? host.latestTurn : host.turns[at.turnIndex];
+  if (!step || !turn) return null;
+  const snapshot = [step, turn].find((s) => s.actions === at.cursor);
+  if (!snapshot) return null;
+  return { ...land(host, snapshot), stepIndex: at.stepIndex, turnIndex: at.turnIndex };
 }

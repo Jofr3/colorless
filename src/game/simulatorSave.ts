@@ -1,124 +1,119 @@
-import { engineVersion, redactGame, type GameState } from "@colorless/engine";
+import { engineVersion, redactGame, type GameState, type Seat } from "@colorless/engine";
 import { readPersisted, removePersisted, writePersisted } from "../lib/persistedState";
-import type { LocalGameSetup, LocalTurnSnapshot } from "./localHost";
+import {
+  positionOf,
+  replayHost,
+  restorePosition,
+  type HostPosition,
+  type HostState,
+  type LocalAction,
+} from "./localHost";
 
 const SIMULATOR_SAVE_KEY = "colorless:simulator:game";
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
-/** Full engine state includes the card pool, shuffled piles, RNG and effect
-    continuations. Restoring never refetches decks or re-deals their cards.
-    False when the save was not stored. */
-export function saveSimulator(snapshot: LocalGameSetup): boolean {
-  // Every turn uses the same catalog and UID mapping. Store those once in the
-  // current state to avoid duplicating them throughout the saved history.
-  const compactTurn = (turn: LocalTurnSnapshot) => ({
-    ...turn,
-    game: { ...turn.game, cardPool: undefined, cardIdByUid: undefined },
-  });
-  const savedSnapshot = snapshot.resume
-    ? {
-        ...snapshot,
-        resume: {
-          ...snapshot.resume,
-          turns: snapshot.resume.turns?.map(compactTurn),
-          latestTurn: snapshot.resume.latestTurn
-            ? compactTurn(snapshot.resume.latestTurn)
-            : undefined,
-          steps: snapshot.resume.steps?.map((step) => ({ ...step, ...compactTurn(step) })),
-        },
-      }
-    : snapshot;
-  return writePersisted(
-    SIMULATOR_SAVE_KEY,
-    JSON.stringify({ version: SAVE_VERSION, engineVersion, snapshot: savedSnapshot }),
-  );
+/** The save is where the match began plus the accepted actions of its current
+    line of play; loading replays them. The starting state carries the card
+    pool, so restoring never refetches decks or re-deals their cards. */
+interface SaveRecord {
+  version: number;
+  engineVersion: string;
+  names: Record<Seat, string>;
+  startedAt: number;
+  origin: HostState["origin"];
+  actions: LocalAction[];
+  position: HostPosition;
+  /** Of the board at the end of `actions`: a replay that ends anywhere else is refused. */
+  fingerprint: string;
+}
+
+// The start of a save never changes during a match, so it is encoded once.
+const heads = new WeakMap<HostState["origin"], string>();
+const fingerprints = new WeakMap<GameState, string>();
+
+/** Writes the save; false when it was not stored. */
+export function saveSimulator(host: HostState): boolean {
+  let head = heads.get(host.origin);
+  if (head === undefined) {
+    const start: Omit<SaveRecord, "actions" | "position" | "fingerprint"> = {
+      version: SAVE_VERSION,
+      engineVersion,
+      names: host.names,
+      startedAt: host.startedAt,
+      origin: host.origin,
+    };
+    head = JSON.stringify(start).slice(0, -1);
+    heads.set(host.origin, head);
+  }
+  const rest: Pick<SaveRecord, "actions" | "position" | "fingerprint"> = {
+    actions: host.actions,
+    position: positionOf(host),
+    fingerprint: fingerprintOf(host.latestTurn.game),
+  };
+  lastLoad = null;
+  return writePersisted(SIMULATOR_SAVE_KEY, `${head},${JSON.stringify(rest).slice(1)}`);
 }
 
 export function clearSimulatorSave(): void {
+  lastLoad = null;
   removePersisted(SIMULATOR_SAVE_KEY);
 }
 
-export function loadSimulatorSave(): LocalGameSetup | null {
-  return readPersisted(SIMULATOR_SAVE_KEY, parseSave, null);
+// Resuming checks for a save and then opens it; the open reuses that replay.
+let lastLoad: { raw: string; host: HostState | undefined } | null = null;
+
+/** The saved match, replayed to where it was left; null when there is none
+    or it cannot be trusted. */
+export function loadSimulatorSave(): HostState | null {
+  return readPersisted(
+    SIMULATOR_SAVE_KEY,
+    (raw) => {
+      if (lastLoad?.raw !== raw) lastLoad = { raw, host: parseSave(raw) };
+      return lastLoad.host;
+    },
+    null,
+  );
 }
 
-function parseSave(raw: string): LocalGameSetup | undefined {
-  const record = JSON.parse(raw) as {
-    version?: number;
-    engineVersion?: string;
-    snapshot?: LocalGameSetup;
-  } | null;
-  // Engine changes can alter parked operations as well as board fields. Never
-  // feed an older engine's continuation into a newer rules implementation.
+function parseSave(raw: string): HostState | undefined {
+  const record = JSON.parse(raw) as Partial<SaveRecord> | null;
+  // Engine changes can alter what an action does as well as board fields.
+  // Never replay a line recorded by another rules implementation.
   if (record?.version !== SAVE_VERSION || record.engineVersion !== engineVersion) return;
-  const snapshot = record.snapshot;
-  if (!snapshot || !Number.isFinite(snapshot.startedAt)) return;
-  if (typeof snapshot.names?.p1 !== "string" || typeof snapshot.names?.p2 !== "string") return;
-  if (!Array.isArray(snapshot.events) || !Array.isArray(snapshot.resume?.log)) return;
-  const viewer = snapshot.resume?.viewerSeat;
-  if (viewer !== "p1" && viewer !== "p2") return;
-  const state = snapshot.state;
-  if (!validState(state)) return;
-  const resume = snapshot.resume;
-  if (resume?.turns !== undefined) {
-    if (
-      !Array.isArray(resume.turns) ||
-      resume.turns.length === 0 ||
-      !Number.isInteger(resume.turnIndex) ||
-      resume.turnIndex === undefined ||
-      resume.turnIndex < 0 ||
-      resume.turnIndex >= resume.turns.length ||
-      !resume.latestTurn
-    )
-      return;
-    const restoreTurn = (turn: LocalTurnSnapshot): LocalTurnSnapshot => {
-      if (
-        !turn ||
-        !Array.isArray(turn.log) ||
-        (turn.viewerSeat !== "p1" && turn.viewerSeat !== "p2")
-      ) {
-        throw new Error("Invalid saved turn");
-      }
-      const game = { ...turn.game, cardPool: state.cardPool, cardIdByUid: state.cardIdByUid };
-      if (!validState(game)) throw new Error("Invalid saved turn state");
-      return { ...turn, game };
-    };
-    resume.turns = resume.turns.map(restoreTurn);
-    resume.latestTurn = restoreTurn(resume.latestTurn);
-    // Action history is optional; a malformed one is dropped, not fatal.
-    if (
-      Array.isArray(resume.steps) &&
-      resume.steps.length > 0 &&
-      Number.isInteger(resume.stepIndex) &&
-      (resume.stepIndex ?? -1) >= 0 &&
-      (resume.stepIndex ?? 0) < resume.steps.length &&
-      resume.steps.every(
-        (step) => typeof step?.checkpoint === "boolean" && Number.isInteger(step.turnIndex),
-      )
-    ) {
-      try {
-        resume.steps = resume.steps.map((step) => ({ ...step, ...restoreTurn(step) }));
-      } catch {
-        resume.steps = undefined;
-        resume.stepIndex = undefined;
-      }
-    } else {
-      resume.steps = undefined;
-      resume.stepIndex = undefined;
-    }
-    if (
-      resume.turns[resume.turnIndex]?.game.turn !== state.turn ||
-      resume.turns.at(-1)?.game.turn !== resume.latestTurn.game.turn ||
-      resume.turns.some(
-        (turn, index) =>
-          index > 0 &&
-          (turn.game.turn < (resume.turns?.[index - 1]?.game.turn ?? 0) ||
-            (turn.game.turn > 0 && turn.game.turn === resume.turns?.[index - 1]?.game.turn)),
-      )
-    )
-      return;
-  }
-  return snapshot;
+  const { names, startedAt, origin, actions, position } = record;
+  if (typeof startedAt !== "number" || !Number.isFinite(startedAt)) return;
+  if (typeof names?.p1 !== "string" || typeof names?.p2 !== "string") return;
+  if (!origin || !Array.isArray(origin.log) || !isSeat(origin.viewerSeat)) return;
+  if (!validState(origin.game)) return;
+  if (!Array.isArray(actions) || !actions.every(validAction)) return;
+  if (!position || ![position.cursor, position.stepIndex, position.turnIndex].every(isIndex))
+    return;
+  const line = replayHost(
+    {
+      state: origin.game,
+      events: [],
+      names,
+      startedAt,
+      resume: { log: origin.log, viewerSeat: origin.viewerSeat },
+    },
+    actions,
+  );
+  if (!line || fingerprintOf(line.latestTurn.game) !== record.fingerprint) return;
+  const host = restorePosition(line, position);
+  if (!host || !validState(host.game)) return;
+  return host;
+}
+
+const isSeat = (seat: unknown): seat is Seat => seat === "p1" || seat === "p2";
+const isIndex = (n: unknown) => Number.isInteger(n) && (n as number) >= 0;
+
+function validAction(entry: LocalAction): boolean {
+  return (
+    typeof entry?.action?.type === "string" &&
+    typeof entry.at === "number" &&
+    Number.isFinite(entry.at) &&
+    (entry.auto === undefined || entry.auto === "setup:drawExtra" || entry.auto === "ko:takePrizes")
+  );
 }
 
 function validState(state: GameState): boolean {
@@ -144,4 +139,40 @@ function validState(state: GameState): boolean {
     redactGame(state, seat);
   }
   return true;
+}
+
+/** A hash of the board without its card pool. Keys are sorted: a state read
+    back from JSON can order them differently from the live one. */
+function fingerprintOf(game: GameState): string {
+  let hash = fingerprints.get(game);
+  if (hash === undefined) {
+    hash = hashText(canonical({ ...game, cardPool: undefined, cardIdByUid: undefined }));
+    fingerprints.set(game, hash);
+  }
+  return hash;
+}
+
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map((v) => canonical(v ?? null)).join(",")}]`;
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .filter((key) => record[key] !== undefined)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`)
+    .join(",")}}`;
+}
+
+/** cyrb53: a fast 53-bit string hash. */
+function hashText(text: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
