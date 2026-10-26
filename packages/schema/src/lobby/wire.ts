@@ -6,6 +6,7 @@
 
 import * as z from "zod";
 import { wireActionSchema } from "../match/action";
+import type { Equals } from "./equals";
 import type {
   LobbyIntent,
   LobbyMessage,
@@ -14,11 +15,6 @@ import type {
   LobbySnapshot,
   PlayerState,
 } from "./types";
-
-/** Compile-time exact-equality check: mutual assignability, not just extends. */
-type Equals<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-  ? true
-  : false;
 
 export const lobbySlotSchema = z.enum(["host", "guest"]);
 export const lobbySlotSchemaMatchesType: Equals<z.infer<typeof lobbySlotSchema>, LobbySlot> = true;
