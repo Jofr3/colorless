@@ -76,6 +76,16 @@ window.colorlessHost = {
 };
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 
+// Boot timings for devtools and scripts/bench-boot.ts.
+/** @type {Set<string>} */
+const bootMarks = new Set();
+/** @param {"love-start" | "data-loaded" | "ready"} name */
+function markBoot(name) {
+  if (bootMarks.has(name)) return;
+  bootMarks.add(name);
+  performance.mark(`colorless:${name}`);
+  if (name === "ready") performance.measure("colorless:boot", undefined, "colorless:ready");
+}
 /** @param {string} message */
 function fail(message) {
   document.body.classList.add("failed");
@@ -118,6 +128,7 @@ const loveModule = {
       return;
     }
     if (message === "COLORLESS:ready") {
+      markBoot("ready");
       updateLoadingProgress(100);
       ready = true;
       loading.style.display = "none";
@@ -140,6 +151,7 @@ const loveModule = {
     const download = message?.match(/\(([\d.]+)\/(\d+)\)/);
     if (download && Number(download[2]) > 0) {
       updateLoadingProgress(90 * Math.min(1, Number(download[1]) / Number(download[2])));
+      if (Number(download[1]) >= Number(download[2])) markBoot("data-loaded");
     }
   },
   onAbort: () => {
@@ -157,8 +169,11 @@ addEventListener("load", () => {
     fail("Could not load the menu. Reload to try again.");
     return;
   }
+  markBoot("love-start");
   Love(loveModule)
     .then(() => {
+      // A package served from the loader's IndexedDB cache reports no download progress.
+      markBoot("data-loaded");
       updateLoadingProgress(95);
       void prepareTransitionArt();
     })

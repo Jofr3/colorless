@@ -15,6 +15,7 @@
     "dev:tailnet": "bun scripts/dev-tailnet.ts",
     "build": "tsc -b && bun run build:lua && vite build",
     "preview": "vite preview",
+    "bench:boot": "bun scripts/bench-boot.ts",
     "typecheck": "tsc -b",
     "lint": "biome lint .",
     "lint:coverage": "bun scripts/lint-coverage.ts",
