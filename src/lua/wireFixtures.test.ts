@@ -21,6 +21,11 @@ import type { Deck } from "../decks/data";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
 import { LuaSimulator } from "./simulator";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
+
+const SIM = WIRE_ROWS.sim;
+const GAME_PHASE = wireColumn(SIM.header, "gamePhase");
+const ZONE = wireColumn(SIM.card, "zone");
 
 const pin = (name: string, raw: string) =>
   expect(`${raw}\n`).toMatchFileSnapshot(
@@ -91,15 +96,19 @@ describe("Lua wire fixtures", () => {
     });
     const board = published.at(-1) ?? "";
     const rows = parse(board);
-    expect(rows[0]?.[5]).toBe("turn:action");
-    const stadium = rows.find((r) => r[0] === "C" && r[5] === "stadium");
-    expect(stadium?.length).toBe(rows.find((r) => r[0] === "C" && r[5] === "active")?.length);
+    expect(rows[0]?.[GAME_PHASE]).toBe("turn:action");
+    const stadium = rows.find((r) => r[0] === "C" && r[ZONE] === "stadium");
+    expect(stadium?.length).toBe(rows.find((r) => r[0] === "C" && r[ZONE] === "active")?.length);
     await pin("sim_snapshot.txt", board);
 
-    const play = rows.find((r) => r[0] === "K" && r[2] === NEST_BALL && r[3] === "Play");
-    sim.command(`invoke\t${sim.revision}\t${play?.[1]}`);
+    const action = (field: (typeof SIM.cardAction.fields)[number]) =>
+      wireColumn(SIM.cardAction, field);
+    const play = rows.find(
+      (r) => r[0] === "K" && r[action("uid")] === NEST_BALL && r[action("label")] === "Play",
+    );
+    sim.command(`invoke\t${sim.revision}\t${play?.[action("token")]}`);
     const prompt = published.at(-1) ?? "";
-    expect(parse(prompt)[0]?.[5]).toBe("effect:choose");
+    expect(parse(prompt)[0]?.[GAME_PHASE]).toBe("effect:choose");
     await pin("sim_prompt.txt", prompt);
   });
 

@@ -4,6 +4,7 @@ import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
+import { WIRE_ROWS, wireRow } from "./wireFields";
 import { reportError } from "../lib/reportError";
 import { readPersisted, writePersisted } from "../lib/persistedState";
 import type { AccountStatus } from "./account";
@@ -66,37 +67,33 @@ export class LuaLibrary {
     const { decks } = this.visible();
     const pages = Math.max(1, Math.ceil(decks.length / this.size));
     this.page = Math.max(1, Math.min(pages, this.page));
-    // Retain reserved mailbox slots so a rebuilt host can boot an older WASM cache.
     this.publish(
       [
-        encodeFields([
-          ++this.revision,
-          this.phase,
-          +this.busy,
-          this.message,
-          "",
-          this.query,
-          "decks",
-          this.sort,
-          this.page,
-          pages,
-          decks.length,
-          "",
-          0,
-          this.result,
-        ]),
+        encodeFields(
+          wireRow(WIRE_ROWS.library.header, {
+            revision: ++this.revision,
+            phase: this.phase,
+            busy: +this.busy,
+            message: this.message,
+            query: this.query,
+            sort: this.sort,
+            page: this.page,
+            pages,
+            total: decks.length,
+            result: this.result,
+          }),
+        ),
         ...decks.slice((this.page - 1) * this.size, this.page * this.size).map((d) => {
           const legal = this.legality.get(d.id);
-          return encodeFields([
-            "D",
-            d.id,
-            d.name,
-            "",
-            d.cardCount,
-            d.tint,
-            "",
-            legal === undefined ? "" : +!legal,
-          ]);
+          return encodeFields(
+            wireRow(WIRE_ROWS.library.deck, {
+              id: d.id,
+              name: d.name,
+              count: d.cardCount,
+              tint: d.tint,
+              illegal: legal === undefined ? "" : +!legal,
+            }),
+          );
         }),
       ].join("\n"),
     );

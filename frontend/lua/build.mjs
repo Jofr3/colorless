@@ -123,11 +123,12 @@ try {
     if (!["host.js", "host.css", "versions.json"].includes(name))
       versions[name] = shortHash(join(output, name));
   }
-  const limits = JSON.parse(readFileSync(join(here, "web/limits.json"), "utf8"));
+  const generated = (name) => JSON.parse(readFileSync(join(here, "web", name), "utf8"));
   let host = readFileSync(join(here, "web/host.js"), "utf8");
   for (const [marker, value] of [
     ["/* love-versions */ {}", versions],
-    ["/* lua-limits */ {}", limits],
+    ["/* lua-limits */ {}", generated("limits.json")],
+    ["/* lua-wire-fields */ {}", generated("wire_fields.json")],
   ]) {
     if (!host.includes(marker)) throw new Error(`web/host.js lost its ${marker} placeholder`);
     host = host.replace(marker, JSON.stringify(value));

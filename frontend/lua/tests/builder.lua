@@ -6,10 +6,10 @@ local Codec=require('ui.codec')
 local commands={};local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
 local function snapshot(rev,n)
  local lines={table.concat({rev,'ready','Test Deck','standard','','','0','1','2','16','8','','','', '', '0','0'},'\t')}
- for i=1,n do lines[#lines+1]='C\tc'..i..'\tCard '..i..'\tPokemon\tBasic\t1\t3\t60\tH\t1\t1' end
+ for i=1,n do lines[#lines+1]='C\tc'..i..'\tCard '..i..'\tPokemon\tBasic\t1\t3\t60\tH\t1' end
  for i=1,12 do lines[#lines+1]='D\td'..i..'\tDeck card '..i..'\tPokemon\tBasic\t1\t3' end
  for i=1,10 do lines[#lines+1]='O\tf'..i..'\tFilter '..i..'\tAll' end
- lines[#lines+1]='S\tc1\tCard 1\tPokemon\tBasic\t1\t3\t60\tH\t1\t1'
+ lines[#lines+1]='S\tc1\tCard 1\tPokemon\tBasic\t1\t3\t60\tH\t1'
  return table.concat(lines,'\n')
 end
 local function bounds()
@@ -158,10 +158,10 @@ end
 assert(#commands==beforeFilterClick,'Filter values must not send picker or format commands')
 print('PASS: filter centers are inert; arrow controls remain available')
 
-local flagged=snapshot(5000,8)..'\nD\tx1\tOld card\tPokemon\tBasic\t2\t2\t60\tE\t1\t1\t4\t1\nD\tx2\tNew card\tPokemon\tBasic\t2\t2\t60\tH\t1\t1\t4\t0'
+local flagged=snapshot(5000,8)..'\nD\tx1\tOld card\tPokemon\tBasic\t2\t2\t60\tE\t1\t4\t1\nD\tx2\tNew card\tPokemon\tBasic\t2\t2\t60\tH\t1\t4\t0'
 tabs.deckType='all';tabs.deckView='list';tabs.deckPage=1;tabs:sync(flagged);tabs:closeModal()
 local byId={};for _,item in ipairs(tabs.deck)do byId[item.id]=item end
-assert(byId.x1.illegal==true and byId.x2.illegal==false and byId.d1.illegal==false,'Row legality follows the thirteenth field')
+assert(byId.x1.illegal==true and byId.x2.illegal==false and byId.d1.illegal==false,'Row legality follows the illegal field')
 local alerts=0;for _,c in ipairs(tabs.controls)do if c.deckRow and c.arg.illegal then alerts=alerts+1 end end
 assert(alerts==0,'The flagged rows are on a later page')
 tabs.deckPage=2;tabs:build();alerts=0

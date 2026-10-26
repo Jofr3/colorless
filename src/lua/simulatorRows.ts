@@ -11,6 +11,16 @@ import type { SimCardAction, SimMenu, SimOption } from "./simulator";
 import type { SimulatorOrder } from "./simulatorOrder";
 import type { TableSource } from "./tableSource";
 import { encodeFields, pixelText } from "./wire";
+import {
+  type RowKind,
+  type TagArg,
+  WIRE_ROWS,
+  type WireRecord,
+  type WireValue,
+  wireRow,
+} from "./wireFields";
+
+const W = WIRE_ROWS.sim;
 
 /** Why the game ended, as one line. A total `Record`, so a new reason is a compile error here. */
 const GAME_OVER_DETAIL: Record<RedactedGameOverReason, string> = {
@@ -21,6 +31,8 @@ const GAME_OVER_DETAIL: Record<RedactedGameOverReason, string> = {
   // A card's printed win condition (N's Sigilyph "Victory Symbol").
   cardEffect: "A card's effect won the game.",
 };
+
+const encodeRow = (columns: WireValue[]) => encodeFields(columns.map((f) => pixelText(String(f))));
 
 const RS = "\x1e";
 const US = "\x1f";
@@ -71,8 +83,8 @@ export class EmitFrame {
   readonly menuArt: ([string, string] | null)[] = [];
   readonly infoIds = new Set<string>();
   private token = 0;
-  row(...fields: (string | number | boolean)[]) {
-    this.rows.push(encodeFields(fields.map((f) => pixelText(String(f)))));
+  row<K extends RowKind>(kind: K, record: WireRecord<K>, ...tag: TagArg<K>) {
+    this.rows.push(encodeRow(wireRow(kind, record, ...tag)));
   }
   register(o: { run: () => void; disabled?: boolean }) {
     const id = String(++this.token);
@@ -86,15 +98,18 @@ export class EmitFrame {
   }
   option(kind: "O" | "F", o: SimOption) {
     this.row(
+      W.option,
+      {
+        token: this.register(o),
+        label: o.label,
+        colour: o.colour ?? "blue",
+        disabled: !!o.disabled,
+        selected: !!o.selected,
+        cardId: o.card?.cardId ?? "",
+        uid: o.uid ?? "",
+        dimmed: !!o.dimmed,
+      },
       kind,
-      this.register(o),
-      o.label,
-      o.colour ?? "blue",
-      !!o.disabled,
-      !!o.selected,
-      o.card?.cardId ?? "",
-      o.uid ?? "",
-      !!o.dimmed,
     );
     if (kind === "O") {
       const c = o.card;
@@ -160,33 +175,34 @@ export function headerRow(f: EmitFrame, s: EmitState, revision: number, events: 
   const { src, view: v, names } = s;
   const { outcome, title, hint } = headerText(v, names, s.online, !!s.pendingRareCandy);
   const allow = src?.allowances();
-  f.row(
+  f.row(W.header, {
     revision,
-    src ? "ready" : "empty",
-    names?.you ?? "",
-    names ? names.opponent : "",
-    v?.turn ?? 0,
-    v?.phase.kind ?? "",
-    s.message,
+    phase: src ? "ready" : "empty",
+    you: names?.you ?? "",
+    opponent: names ? names.opponent : "",
+    turn: v?.turn ?? 0,
+    gamePhase: v?.phase.kind ?? "",
+    message: s.message,
     title,
     hint,
-    s.turns?.index ?? 0,
-    s.turns?.count ?? 0,
-    v?.waitingOn ?? "",
-    v?.activePlayer ?? "",
-    v?.seat ?? "",
-    allow?.energy ? 1 : 0,
-    allow?.supporter ? 1 : 0,
-    allow?.retreated ? 1 : 0,
+    turnIndex: s.turns?.index ?? 0,
+    turnCount: s.turns?.count ?? 0,
+    waitingOn: v?.waitingOn ?? "",
+    activePlayer: v?.activePlayer ?? "",
+    seat: v?.seat ?? "",
+    energyAttached: allow?.energy ? 1 : 0,
+    supporterPlayed: allow?.supporter ? 1 : 0,
+    retreated: allow?.retreated ? 1 : 0,
     outcome,
-    v?.outcome?.result === "win"
-      ? GAME_OVER_DETAIL[v.outcome.reason]
-      : outcome === "tie"
-        ? "Both players ran out of options."
-        : "",
-    events.shuffled,
-    src?.matchId() ?? "",
-  );
+    outcomeDetail:
+      v?.outcome?.result === "win"
+        ? GAME_OVER_DETAIL[v.outcome.reason]
+        : outcome === "tie"
+          ? "Both players ran out of options."
+          : "",
+    shuffled: events.shuffled,
+    matchId: src?.matchId() ?? "",
+  });
 }
 
 /** `L`: the table's mode and presence; `R`: a pending Rare Candy; `D`: knock-outs. */
@@ -197,18 +213,17 @@ export function tableRows(f: EmitFrame, s: EmitState) {
     const away = life.opponentAway;
     // awayMs: the forfeit clock at emit time (Lua counts down from receipt),
     // -1 away with no clock, '' present.
-    f.row(
-      "L",
-      src.mode,
-      src.spectating,
-      away?.name ?? "",
-      !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - s.now),
-      life.flags.join(","),
-      s.online ? "partial" : "full",
-    );
+    f.row(W.lifecycle, {
+      mode: src.mode,
+      spectating: src.spectating,
+      awayName: away?.name ?? "",
+      awayMs: !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - s.now),
+      flags: life.flags.join(","),
+      allow: s.online ? "partial" : "full",
+    });
   }
-  if (s.pendingRareCandy) f.row("R", s.pendingRareCandy);
-  for (const uid of s.knockedOut) f.row("D", uid);
+  if (s.pendingRareCandy) f.row(W.rareCandy, { uid: s.pendingRareCandy });
+  for (const uid of s.knockedOut) f.row(W.knockedOut, { uid });
 }
 
 /** `S` per side, then `C` for every visible card and the Stadium. */
@@ -238,15 +253,14 @@ export function boardRows(
       hand.map((c) => c.id),
     );
     const benchOrder = s.cardOrder.sorted(seat, "bench", benchKeys);
-    f.row(
-      "S",
+    f.row(W.side, {
       owner,
-      side.deckCount,
-      side.prizesRemaining,
-      hand.length,
-      piles[owner].discard.length,
-      side.mulliganCount ?? 0,
-    );
+      deck: side.deckCount,
+      prizes: side.prizesRemaining,
+      hand: hand.length,
+      discard: piles[owner].discard.length,
+      mulligans: side.mulliganCount ?? 0,
+    });
     const cardRow = (c: RedactedCard, zone: string, index: number) => {
       const b = (c as RedactedInPlay).battle;
       const a = (c as RedactedInPlay).attached;
@@ -278,31 +292,31 @@ export function boardRows(
         ((zone === "hand" && canDragHand) ||
           (zone === "bench" && (v.phase.kind === "setup:place" || isViewerTurn)) ||
           (zone === "active" && isViewerTurn));
-      f.row(
-        "C",
-        c.id,
-        c.cardId,
-        c.name,
+      f.row(W.card, {
+        uid: c.id,
+        cardId: c.cardId,
+        name: c.name,
         owner,
         zone,
         index,
-        c.cardId === "hidden",
-        c.category,
-        c.trainerType ?? "",
-        c.stage ?? full?.stage ?? "",
-        b?.hp ?? "",
-        b?.damage ?? 0,
-        energies.join(","),
-        tools.join(","),
-        status.join(","),
-        (full?.types ?? []).join(","),
+        hidden: c.cardId === "hidden",
+        category: c.category,
+        trainerType: c.trainerType ?? "",
+        stage: c.stage ?? full?.stage ?? "",
+        hp: b?.hp ?? "",
+        damage: b?.damage ?? 0,
+        energies: energies.join(","),
+        tools: tools.join(","),
+        status: status.join(","),
+        types: (full?.types ?? []).join(","),
         draggable,
-        zone === "hand"
-          ? handOrder.indexOf(c.id)
-          : zone === "bench"
-            ? benchOrder.indexOf(benchKeys[index] ?? c.id)
-            : index,
-      );
+        displayIndex:
+          zone === "hand"
+            ? handOrder.indexOf(c.id)
+            : zone === "bench"
+              ? benchOrder.indexOf(benchKeys[index] ?? c.id)
+              : index,
+      });
       f.noteArt(c);
       for (const e of a?.energies ?? []) f.noteArt(e);
       for (const t of a?.tools ?? []) f.noteArt(t);
@@ -318,27 +332,26 @@ export function boardRows(
   }
   if (v.board.stadium) {
     const c = v.board.stadium;
-    f.row(
-      "C",
-      c.id,
-      c.cardId,
-      c.name,
-      "global",
-      "stadium",
-      0,
-      false,
-      c.category,
-      c.trainerType ?? "",
-      "",
-      "",
-      0,
-      "",
-      "",
-      "",
-      "",
-      false,
-      0,
-    );
+    f.row(W.card, {
+      uid: c.id,
+      cardId: c.cardId,
+      name: c.name,
+      owner: "global",
+      zone: "stadium",
+      index: 0,
+      hidden: false,
+      category: c.category,
+      trainerType: c.trainerType ?? "",
+      stage: "",
+      hp: "",
+      damage: 0,
+      energies: "",
+      tools: "",
+      status: "",
+      types: "",
+      draggable: false,
+      displayIndex: 0,
+    });
     f.noteArt(c);
   }
 }
@@ -347,47 +360,44 @@ export function boardRows(
 export function cardActionRows(f: EmitFrame, actions: Map<string, SimCardAction[]>) {
   for (const [uid, list] of actions)
     for (const a of list)
-      f.row(
-        "K",
-        f.register(a),
+      f.row(W.cardAction, {
+        token: f.register(a),
         uid,
-        a.label,
-        a.colour ?? "blue",
-        !!a.disabled,
-        a.targetUid ?? "",
-        a.group ?? "",
-        (a.cost ?? []).join(","),
-        a.damage ?? "",
-        a.cost !== undefined,
-      );
+        label: a.label,
+        colour: a.colour ?? "blue",
+        disabled: !!a.disabled,
+        targetUid: a.targetUid ?? "",
+        group: a.group ?? "",
+        cost: (a.cost ?? []).join(","),
+        damage: a.damage ?? "",
+        hasCost: a.cost !== undefined,
+      });
 }
 
 /** `A`: the sidebar, kept behind a dialog without registering its actions. */
 export function sidebarRows(f: EmitFrame, options: SimOption[], menuOpen: boolean) {
   for (const o of options)
-    f.row(
-      "A",
-      menuOpen ? "" : f.register(o),
-      o.label,
-      o.colour ?? "blue",
-      !!o.disabled,
-      o.slot ?? "minor",
-    );
+    f.row(W.sidebar, {
+      token: menuOpen ? "" : f.register(o),
+      label: o.label,
+      colour: o.colour ?? "blue",
+      disabled: !!o.disabled,
+      slot: o.slot ?? "minor",
+    });
 }
 
 /** `M` and its `O` options and `F` footer. */
 export function menuRows(f: EmitFrame, menu: SimMenu, menuId: number) {
-  f.row(
-    "M",
-    menu.kind,
-    menu.title,
-    menu.note ?? "",
-    !!menu.mandatory,
-    menuId,
-    !!menu.hideTargetOutline,
-    menu.counterSourceUid ?? "",
-    !!menu.counterTransfer,
-  );
+  f.row(W.menu, {
+    kind: menu.kind,
+    title: menu.title,
+    note: menu.note ?? "",
+    mandatory: !!menu.mandatory,
+    id: menuId,
+    hideTargetOutline: !!menu.hideTargetOutline,
+    counterSourceUid: menu.counterSourceUid ?? "",
+    counterTransfer: !!menu.counterTransfer,
+  });
   for (const o of menu.options) f.option("O", o);
   for (const o of menu.footer ?? []) f.option("F", o);
 }
@@ -416,23 +426,22 @@ function infoRow(card: Card): string {
     .join(RS);
   const wr = (list: { type: string; value?: string }[] | null) =>
     list?.[0] ? `${list[0].type}:${list[0].value ?? ""}` : "";
-  return encodeFields(
-    [
-      "I",
-      card.id,
-      card.category,
-      card.trainerType ?? "",
-      card.stage ?? "",
-      card.hp ?? "",
-      (card.category === "Energy" ? [energyProvidesOf(card)] : (card.types ?? [])).join(","),
-      card.retreat ?? "",
-      wr(card.weaknesses),
-      wr(card.resistances),
-      card.effect ?? "",
+  return encodeRow(
+    wireRow(W.info, {
+      cardId: card.id,
+      category: card.category,
+      trainerType: card.trainerType ?? "",
+      stage: card.stage ?? "",
+      hp: card.hp ?? "",
+      types: (card.category === "Energy" ? [energyProvidesOf(card)] : (card.types ?? [])).join(","),
+      retreat: card.retreat ?? "",
+      weakness: wr(card.weaknesses),
+      resistance: wr(card.resistances),
+      effect: card.effect ?? "",
       abilities,
       attacks,
-      card.energyType ?? "",
-      card.name,
-    ].map((f) => pixelText(String(f))),
+      energyType: card.energyType ?? "",
+      name: card.name,
+    }),
   );
 }
