@@ -289,6 +289,7 @@ function love.load()
     sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,settings=settings,jiggle=jiggle}))
   screens={library,builder,sandbox,online,simulator}
   layout(g.getDimensions())
+  Mailbox.poll()
   browserState()
   followPage()
   state.ready=true
@@ -296,6 +297,7 @@ function love.load()
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
+  Mailbox.poll()
   local effect=next(unloadedEffects)
   if effect then loadEffect(effect) end
   for i=#soundVoices,1,-1 do

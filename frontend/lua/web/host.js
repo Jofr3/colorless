@@ -45,15 +45,26 @@ let bridge;
 const unwrittenMailboxes = new Map();
 /** @type {Set<string>} */
 const mailboxFiles = new Set();
+// Lua reads only the revision list each frame (ui/mailbox.lua), so it is written after the data.
+/** @type {Map<string, number>} */
+const mailboxRevisions = new Map();
+let mailboxSerial = 0;
+/** @param {LoveRuntime} running @param {string} name @param {string} text */
+function replaceFile(running, name, text) {
+  if (mailboxFiles.has(name)) running.FS_unlink(`/${name}`);
+  running.FS_createDataFile("/", name, text, true, true);
+  mailboxFiles.add(name);
+}
 /** @param {string} name @param {string} text */
 function writeMailbox(name, text) {
-  if (!runtime) {
+  if (!runtime || !bridge) {
     unwrittenMailboxes.set(name, text);
     return;
   }
-  if (mailboxFiles.has(name)) runtime.FS_unlink(`/${name}`);
-  runtime.FS_createDataFile("/", name, text, true, true);
-  mailboxFiles.add(name);
+  replaceFile(runtime, name, text);
+  mailboxRevisions.set(name, ++mailboxSerial);
+  const list = [...mailboxRevisions].map(([file, revision]) => `${file}\t${revision}`);
+  replaceFile(runtime, bridge.mailboxes.revisions, list.join("\n"));
 }
 window.colorlessHost = {
   connect(connected) {
