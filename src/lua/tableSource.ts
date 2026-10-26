@@ -32,10 +32,30 @@ export type LifecycleFlag =
 export interface TableLifecycle {
   flags: LifecycleFlag[];
   opponentAway: { name: string; forfeitAt: number | null } | null;
-  /** The last rejected `send`, null once one is accepted. */
-  error: string | null;
+  /** The refusal to show: a new object per refused `send`, null once one is
+   * accepted. A refused automatic step is never shown. */
+  error: { readonly reason: string } | null;
+  /** A standing problem that is not a refusal. */
+  warning?: string;
 }
-/** Where the simulator's game lives: the local hot-seat host, or a lobby. */
+export type HistoryStep =
+  | "previousTurn"
+  | "nextTurn"
+  | "undoAction"
+  | "redoAction"
+  | "undoTurn"
+  | "redoTurn";
+/** The hot-seat game's turn and action history. */
+export interface TableHistory {
+  turns(): { index: number; count: number };
+  canStep(type: Exclude<HistoryStep, "previousTurn" | "nextTurn">): boolean;
+  step(type: HistoryStep): void;
+}
+/** Where the simulator's game lives: the local hot-seat host, or a lobby.
+ * Every change, including the answer to a `send`, reaches the simulator
+ * through `subscribe`: a local table answers before `send` returns, an online
+ * one when the server does. The optional members are what only some tables
+ * can do. */
 export interface TableSource {
   readonly mode: "local" | "online";
   readonly spectating: boolean;
@@ -48,9 +68,8 @@ export interface TableSource {
   card(cardId: string): Card | undefined;
   /** The face behind a visible card (stage fallback, types, Energy provides). */
   face(card: Pick<RedactedCard, "id" | "cardId">): Card | undefined;
-  /** null: unknown here, fall back to the view's own gates. */
-  allowed(action: GameAction): boolean | null;
-  send(action: GameAction, opts?: { auto?: boolean }): void;
+  allowed(action: GameAction): boolean;
+  send(action: GameAction): void;
   allowances(): { energy: boolean; supporter: boolean; retreated: boolean } | null;
   /** Cosmetic bench order key: the bottom of the stack, so evolving keeps its place. */
   benchKey(owner: "you" | "opponent", index: number): string;
@@ -58,27 +77,36 @@ export interface TableSource {
   takeEvents(): TableEvents;
   lifecycle(): TableLifecycle;
   subscribe(onChange: () => void): () => void;
+  /** Walk away from the table for good. */
+  leave(): void;
   /** The simulator let go of this table (closed or rebound). */
   release?(): void;
+  history?: TableHistory;
+  /** The same decks reshuffled into a fresh game; the reason when it cannot start. */
+  restart?(): string | null;
+  rematch?(): void;
+  /** Hand cards drawn from the deck since the last accepted `send` began a new turn. */
+  turnDraws?(): { seat: Seat; hand: string[]; uid: string }[];
 }
 type Host = ReturnType<typeof initHost>;
-export type HistoryStep =
-  | "previousTurn"
-  | "nextTurn"
-  | "undoAction"
-  | "redoAction"
-  | "undoTurn"
-  | "redoTurn";
 
-/** The hot-seat game: today's local host, with save, undo and auto-steps. */
+const SAVE_FAILED = "Could not save this game. Browser storage may be full.";
+
+/** The hot-seat game: the local host, with save, undo and auto-steps. */
 export class LocalTableSource implements TableSource {
   readonly mode = "local";
   readonly spectating = false;
+  readonly history: TableHistory = this;
   host: Host;
   private events = NO_EVENTS;
   private before: GameState | null = null;
+  private refused: { reason: string } | null = null;
+  private saved = true;
+  private listeners = new Set<() => void>();
   constructor(setup: LocalGameSetup) {
     this.host = initHost(setup);
+    // A save made on a decision the table takes for the player resumes past it.
+    if (this.autoSteps()) this.persist();
   }
   private seen: { game: GameState; seat: Seat; view: RedactedGame } | null = null;
   view() {
@@ -111,8 +139,16 @@ export class LocalTableSource implements TableSource {
     const counterSource = counterSourcePicked(this.view(), action);
     const beforeGame = this.host.game;
     const before = this.host.log.length;
-    this.before = beforeGame;
     this.host = hostReducer(this.host, { action, at: Date.now() });
+    const error = this.host.lastError;
+    if (error) {
+      this.refused = { reason: error.message };
+      this.events = NO_EVENTS;
+      this.notify();
+      return;
+    }
+    this.refused = null;
+    this.before = beforeGame;
     const { knockedOut, shuffled, coin } = eventsFromLog(
       this.host.log.slice(before),
       (seat) => this.host.names[seat],
@@ -125,6 +161,7 @@ export class LocalTableSource implements TableSource {
       coin: coin && trainer ? { ...coin, title: trainer.name } : coin,
       counterSource,
     };
+    this.settle();
   }
   allowances() {
     const a = this.host.game.allowances;
@@ -145,18 +182,22 @@ export class LocalTableSource implements TableSource {
     return {
       flags: ["undo", "newgame", "choosedecks", "concede", "leave"],
       opponentAway: null,
-      error: this.host.lastError?.message ?? null,
+      error: this.refused,
+      ...(this.saved ? {} : { warning: SAVE_FAILED }),
     };
   }
-  subscribe() {
-    return () => {};
+  subscribe(onChange: () => void) {
+    this.listeners.add(onChange);
+    return () => this.listeners.delete(onChange);
   }
-  /** Hand cards drawn from the deck since the last `send` began a new turn. */
+  leave() {
+    this.persist();
+  }
   turnDraws(): { seat: Seat; hand: string[]; uid: string }[] {
     const previous = this.before;
     this.before = null;
     const game = this.host.game;
-    if (!previous || this.host.lastError || game.turn <= previous.turn) return [];
+    if (!previous || game.turn <= previous.turn) return [];
     return (["p1", "p2"] as const).flatMap((seat) => {
       const hand = game.players[seat].hand;
       const old = previous.players[seat];
@@ -171,10 +212,29 @@ export class LocalTableSource implements TableSource {
   canStep(type: Exclude<HistoryStep, "previousTurn" | "nextTurn">) {
     return stepTarget(this.host, type) !== null;
   }
-  history(type: HistoryStep) {
+  step(type: HistoryStep) {
     this.host = hostReducer(this.host, { type });
+    this.fresh();
   }
-  /** False when the save did not stick (storage full). */
+  restart() {
+    const h = this.host;
+    const startedAt = Math.max(Date.now(), h.startedAt + 1);
+    const created = createGame({
+      seed: startedAt,
+      decks: { p1: deckCardIdsOf(h.game, "p1"), p2: deckCardIdsOf(h.game, "p2") },
+      cardPool: h.game.cardPool,
+    });
+    if (!created.ok) return created.error.message;
+    this.host = initHost({
+      state: created.state,
+      events: created.events,
+      names: h.names,
+      startedAt,
+    });
+    this.fresh();
+    return null;
+  }
+  /** Writes the save; false when it did not stick (storage full). */
   persist() {
     const h = this.host;
     saveSimulator({
@@ -192,26 +252,28 @@ export class LocalTableSource implements TableSource {
         stepIndex: h.stepIndex,
       },
     });
-    return loadSimulatorSave()?.startedAt === h.startedAt;
+    this.saved = loadSimulatorSave()?.startedAt === h.startedAt;
+    return this.saved;
   }
-  /** The same decks reshuffled into a fresh game. */
-  nextGame(): { ok: true; setup: LocalGameSetup } | { ok: false; message: string } {
-    const h = this.host;
-    const startedAt = Math.max(Date.now(), h.startedAt + 1);
-    const created = createGame({
-      seed: startedAt,
-      decks: { p1: deckCardIdsOf(h.game, "p1"), p2: deckCardIdsOf(h.game, "p2") },
-      cardPool: h.game.cardPool,
-    });
-    if (!created.ok) return { ok: false, message: created.error.message };
-    return {
-      ok: true,
-      setup: { state: created.state, events: created.events, names: h.names, startedAt },
-    };
+
+  /** A board reached without a `send`: nothing to animate, nothing refused. */
+  private fresh() {
+    this.events = NO_EVENTS;
+    this.before = null;
+    this.refused = null;
+    this.settle();
+  }
+  private settle() {
+    this.autoSteps();
+    this.persist();
+    this.notify();
+  }
+  private notify() {
+    for (const fn of [...this.listeners]) fn();
   }
   /** Mulligan draws and Prize picks the hot seat takes for the player. True when
-   * anything stepped (the caller saves). */
-  autoSteps() {
+   * anything stepped. */
+  private autoSteps() {
     const drawn = this.stepWhile("setup:drawExtra");
     const taken = this.stepWhile("ko:takePrizes");
     return drawn || taken;

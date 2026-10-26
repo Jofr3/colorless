@@ -7,7 +7,7 @@ import type {
   RedactedInPlay,
 } from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
-import type { SimCardAction, SimMenu, SimOption } from "./simulator";
+import type { SimCardAction, SimMenu, SimOption } from "./simulatorTypes";
 import type { SimulatorOrder } from "./simulatorOrder";
 import type { TableSource } from "./tableSource";
 import { encodeFields, pixelText } from "./wire";

@@ -165,6 +165,18 @@ describe("LuaOnlineMatch", () => {
     ]);
   });
 
+  it("the table answers the simulator's gate from the frame it holds", async () => {
+    const t = await table();
+    expect(t.sim.allowed({ type: "endTurn", seat: "p1" })).toBe(true);
+    t.push(
+      frame(t.state, (v) => {
+        v.activePlayer = "opponent";
+        v.waitingOn = "opponent";
+      }),
+    );
+    expect(t.sim.allowed({ type: "endTurn", seat: "p1" })).toBe(false);
+  });
+
   it("offers Evolve only onto the hand card's evolution targets", () => {
     const state = driveSetup(7, undefined, { first: "p1", bench: { p1: ["fix-basic-1"] } });
     const g = frame(state);

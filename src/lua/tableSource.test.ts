@@ -56,6 +56,43 @@ describe("LocalTableSource", () => {
     expect(src.turnDraws().map((d) => d.seat)).toEqual([other]);
     expect(src.turnDraws()).toEqual([]);
   });
+  it("answers every change through its subscribers before the call returns", () => {
+    const state = driveSetup(7, undefined, { first: "p1" });
+    const src = new LocalTableSource({ state, events: [], names, startedAt: 100 });
+    const heard: string[] = [];
+    src.subscribe(() => heard.push(src.lifecycle().error?.reason ?? src.view().phase.kind));
+    src.send({ type: "endTurn", seat: "p2" });
+    const refused = src.lifecycle().error;
+    expect(heard).toEqual([refused?.reason]);
+    src.send({ type: "endTurn", seat: "p2" });
+    expect(src.lifecycle().error).not.toBe(refused);
+    expect(src.lifecycle().error?.reason).toBe(refused?.reason);
+    src.send({ type: "endTurn", seat: "p1" });
+    expect(heard).toHaveLength(3);
+    expect(heard[2]).toBe("turn:action");
+    src.history.step("undoAction");
+    expect(heard).toHaveLength(4);
+    expect(src.host.game).toBe(state);
+    expect(src.restart()).toBeNull();
+    expect(heard).toHaveLength(5);
+    expect(src.matchId()).not.toBe("100");
+  });
+  it("reports a save that did not stick as a warning beside the accepted move", () => {
+    const state = driveSetup(7, undefined, { first: "p1" });
+    const sim = new LuaSimulator(vi.fn(), vi.fn());
+    sim.open({ state, events: [], names, startedAt: 100 });
+    vi.stubGlobal("localStorage", {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("full");
+      },
+      removeItem: () => {},
+    });
+    sim.dispatch({ type: "endTurn", seat: "p1" });
+    expect(sim.host?.game.turn).toBe(state.turn + 1);
+    expect(sim.source?.lifecycle().error).toBeNull();
+    expect(sim.message).toMatch(/^Could not save/);
+  });
 });
 
 describe("LocalTableSource coin flips", () => {
@@ -115,7 +152,7 @@ describe("LuaSimulator over a TableSource", () => {
     const before = rows(last);
     // A plain delegate is not a LocalTableSource, so only the seam is used.
     const delegate: TableSource = {
-      mode: "online",
+      mode: "local",
       spectating: false,
       view: () => local.view(),
       names: () => local.names(),
@@ -130,6 +167,7 @@ describe("LuaSimulator over a TableSource", () => {
       takeEvents: () => local.takeEvents(),
       lifecycle: () => local.lifecycle(),
       subscribe: () => () => {},
+      leave: () => local.leave(),
     };
     sim.source = delegate;
     sim.emit();

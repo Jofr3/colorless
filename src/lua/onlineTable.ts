@@ -203,8 +203,8 @@ export class LuaOnlineMatch implements TableSource {
   face(card: Pick<RedactedCard, "cardId">) {
     return this.pool[card.cardId];
   }
-  allowed() {
-    return null;
+  allowed(action: GameAction) {
+    return !!this.seen && onlineGate(action, this.seen);
   }
   send(action: GameAction, opts: { auto?: boolean } = {}) {
     this.counter = counterSourcePicked(this.seen, action) ?? this.counter;
@@ -240,10 +240,6 @@ export class LuaOnlineMatch implements TableSource {
     this.events = NO_EVENTS;
     return events;
   }
-  /** The refusal to show: none for an automatic step. */
-  rejection(): ActionError | null {
-    return this.error !== this.muted ? this.error : null;
-  }
   lifecycle(): TableLifecycle {
     const over = !!this.seen?.outcome;
     const opponent = this.client.opponent;
@@ -259,7 +255,8 @@ export class LuaOnlineMatch implements TableSource {
         opponent && !opponent.connected && !over
           ? { name: opponent.name, forfeitAt: opponent.forfeitAt }
           : null,
-      error: this.rejection()?.reason ?? null,
+      // An automatic step's refusal is muted.
+      error: this.error !== this.muted ? this.error : null,
     };
   }
   rematch() {
