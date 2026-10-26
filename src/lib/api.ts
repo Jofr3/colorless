@@ -156,6 +156,11 @@ export function getCard(id: string): Promise<Card> {
   return request(`/cards/${encodeURIComponent(id)}`);
 }
 
+/** The full Cards of up to MAX_ID_VALUES ids, in id order; unknown ids are left out. */
+export function getFullCards(ids: string[]): Promise<Card[]> {
+  return request(`/cards/full${queryString({ id: ids })}`);
+}
+
 /** Every set brief (optionally one serie's), ordered by release date. */
 export function getSets(serie?: string): Promise<SetBrief[]> {
   return request(`/sets${queryString({ serie })}`);

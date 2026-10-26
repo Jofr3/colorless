@@ -76,6 +76,13 @@ export type CardsQuery = z.infer<typeof cardsQuerySchema>;
 /** What a caller may send: every field optional, a repeatable one as a string or string[]. */
 export type CardsQueryParams = z.input<typeof cardsQuerySchema>;
 
+/** GET /cards/full query params: the ids whose full Cards to return (repeatable, 1 to
+    MAX_ID_VALUES). Unknown ids are omitted from the response. */
+export const fullCardsQuerySchema = z.object({
+  id: multiParam.pipe(z.array(param).max(MAX_ID_VALUES)),
+});
+export type FullCardsQuery = z.infer<typeof fullCardsQuerySchema>;
+
 /** GET /sets query params. */
 export const setsQuerySchema = z.object({
   /** Serie id, e.g. "sv". */

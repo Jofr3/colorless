@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { json, stubFetch } from "../test/fetchStub";
+import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
 import { encodeFields } from "./wire";
@@ -113,9 +113,7 @@ describe("Lua deck library", () => {
       "GET /decks": () => json(complete),
       "GET /decks/a": () => json(contents(filled(card.id))),
       "GET /decks/d": () => json({ ...contents(filled("old")), id: "d" }),
-      [`GET /cards/${card.id}`]: () => json(card),
-      "GET /cards/old": () => json(rotated),
-      "GET /cards/energy": () => json(energy),
+      "GET /cards/full": fullCardsFrom({ [card.id]: card, old: rotated, energy }),
     });
     const { publish } = await setup();
     expect(deckRows(publish.mock.lastCall?.[0])).toEqual({ a: "", b: "1", c: "1", d: "" });

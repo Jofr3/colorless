@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { json, stubFetch } from "../test/fetchStub";
+import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
 import { loadSimulatorSave } from "../game/simulatorSave";
@@ -44,8 +44,7 @@ const reads = {
   "GET /decks": () => json(decks),
   "GET /decks/a": () => json(full("a")),
   "GET /decks/b": () => json(full("b")),
-  [`GET /cards/${card.id}`]: () => json(card),
-  "GET /cards/energy": () => json(energy),
+  "GET /cards/full": fullCardsFrom({ [card.id]: card, energy }),
 };
 async function setup() {
   const publish = vi.fn();
@@ -85,7 +84,7 @@ describe("Lua sandbox setup", () => {
     expect(sandbox.selected).toEqual(["a", "a"]);
     await sandbox.command("select\t1\tnot-a-deck");
     expect(sandbox.selected).toEqual(["a", "a"]);
-    expect(calls).toHaveLength(5);
+    expect(calls).toHaveLength(4);
     expect(calls).not.toContain("GET /decks/empty");
   });
   it("hides incomplete decks and allows both players to use the same complete deck", async () => {
@@ -110,8 +109,10 @@ describe("Lua sandbox setup", () => {
     clearCardPoolCache();
     stubFetch({
       ...reads,
-      [`GET /cards/${card.id}`]: () =>
-        json({ ...card, category: "Energy", energyType: "Normal", stage: null }),
+      "GET /cards/full": fullCardsFrom({
+        [card.id]: { ...card, category: "Energy", energyType: "Normal", stage: null },
+        energy,
+      }),
     });
     await sandbox.command("start");
     expect(sandbox.message).toContain("no Basic Pokémon");
@@ -233,9 +234,11 @@ describe("Lua sandbox setup", () => {
           ),
         ),
       "GET /decks/deleted": () => json({ error: "not found" }, 404),
-      "GET /cards/absent": () => json({ error: "not found" }, 404),
-      "GET /cards/old": () =>
-        json({ ...card, id: "old", legal: { standard: false, expanded: true } }),
+      "GET /cards/full": fullCardsFrom({
+        [card.id]: card,
+        energy,
+        old: { ...card, id: "old", legal: { standard: false, expanded: true } },
+      }),
     });
     const { sandbox, launch } = await setup();
     expect(sandbox.decks.map((deck) => deck.id)).toEqual([
@@ -251,7 +254,7 @@ describe("Lua sandbox setup", () => {
     expect(launch).toHaveBeenCalledOnce();
   });
   it("keeps catalog failures retryable and shows an empty chooser when every deck is invalid", async () => {
-    stubFetch({ ...reads, "GET /cards/energy": () => json({ error: "down" }, 503) });
+    stubFetch({ ...reads, "GET /cards/full": () => json({ error: "down" }, 503) });
     const { sandbox } = await setup();
     expect(sandbox.phase).toBe("error");
     stubFetch(reads);

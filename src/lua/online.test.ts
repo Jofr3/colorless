@@ -7,7 +7,7 @@ import {
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
-import { json, stubFetch } from "../test/fetchStub";
+import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
 import { LobbyClient, type LobbyClientOptions } from "../online/lobbyClient";
@@ -55,9 +55,7 @@ const deckReads = {
   "GET /decks/x": () => json(saved("x", card.id, "standard")),
   "GET /decks/y": () => json(saved("y", "old", "expanded")),
   "GET /decks/z": () => json(saved("z", "old", "standard")),
-  [`GET /cards/${card.id}`]: () => json(card),
-  "GET /cards/old": () => json(old),
-  "GET /cards/energy": () => json(energy),
+  "GET /cards/full": fullCardsFrom({ [card.id]: card, old, energy }),
 };
 
 type Made = { opts: LobbyClientOptions; client: LobbyClient } & ReturnType<typeof fakeLobbyChannel>;

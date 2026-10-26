@@ -63,6 +63,16 @@ describe("GET /cards param validation", () => {
     expect(body.error).toBe("invalid query");
   });
 
+  it("400s a /cards/full request with no ids, an empty id or more than 100 ids", async () => {
+    const { kv } = fakeKv();
+    const tooMany = Array.from({ length: 101 }, (_, i) => `id=sv01-${i}`).join("&");
+    for (const query of ["", "?id=", "?id=sv01-001&id=", `?${tooMany}`]) {
+      const res = await app.request(`/cards/full${query}`, {}, envWith(kv));
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toBe("invalid query");
+    }
+  });
+
   it("never caches a 400", async () => {
     const { kv, puts } = fakeKv();
     await app.request("/cards?pageSize=1000", {}, envWith(kv));
