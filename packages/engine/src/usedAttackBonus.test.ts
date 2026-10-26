@@ -18,7 +18,7 @@ import {
 } from "./effects";
 import type { BoardCondition, GameAction, GameState, PendingStage, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   USED_ATTACK_DECK,

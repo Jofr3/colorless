@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";

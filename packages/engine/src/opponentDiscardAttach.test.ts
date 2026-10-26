@@ -5,7 +5,6 @@ import { programPlayable } from "./cardplay";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import {
-  ENERGY_TYPE_BY_CODE,
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
@@ -25,11 +24,13 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import { ENERGY_TYPE_BY_CODE } from "./deriver/vocabulary";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import type { EffectContext, EffectContinuation, EffectPrompt, PokemonRef } from "./interpreter";
-import { attachEnergyTargets, attachSeat, runProgram } from "./interpreter";
+import type { EffectContext, EffectContinuation, EffectPrompt, PokemonRef } from "./effectPrompt";
+import { runProgram } from "./interpreter";
+import { attachEnergyTargets, attachSeat } from "./ops/energy";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { passivesOf } from "./continuous";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction, programFor } from "./index";
-import { conditionHolds, conditionNote, evolveEarlyLicensed } from "./interpreter";
+import { conditionHolds, conditionNote, evolveEarlyLicensed } from "./boardCondition";
 import {
   FIXTURE_POOL,
   battler,

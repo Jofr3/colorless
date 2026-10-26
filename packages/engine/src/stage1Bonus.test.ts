@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor, registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,

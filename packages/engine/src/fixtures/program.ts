@@ -1,4 +1,4 @@
-import type { EffectOp } from "../effects";
+import type { EffectOp } from "../effectTypes";
 
 export function walkProgram(ops: readonly EffectOp[]): EffectOp[] {
   const out: EffectOp[] = [];

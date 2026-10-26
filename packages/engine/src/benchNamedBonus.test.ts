@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  POKEMON_TYPES,
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
@@ -17,8 +16,9 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
+import { POKEMON_TYPES } from "./effectTypes";
 import type { BoardCondition, GameState } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   BENCH_NAMED_DECK,

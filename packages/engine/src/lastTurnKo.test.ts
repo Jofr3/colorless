@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {

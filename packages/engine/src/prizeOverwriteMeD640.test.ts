@@ -6,7 +6,7 @@ import { installedWeaknessRetypeOf, installedWeaknessRewriteOf } from "./continu
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds } from "./interpreter";
+import { conditionHolds } from "./boardCondition";
 import { formatElapsed, type LogContext, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {

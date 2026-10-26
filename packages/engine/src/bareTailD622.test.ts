@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameAction, GameEvent, GameState, InPlayPokemon } from "./index";
 import {

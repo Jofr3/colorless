@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   HEALED_THIS_TURN_DECK,
   activeUid,

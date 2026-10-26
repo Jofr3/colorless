@@ -5,7 +5,7 @@ import {
   deriveAttackOptionalCostBoost,
   optionalCostBoostProgram,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
 import { runProgram } from "./interpreter";

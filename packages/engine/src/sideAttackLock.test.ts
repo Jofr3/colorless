@@ -4,7 +4,7 @@ import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./c
 import { attackLocked, countAttachedEnergy, providedEnergy } from "./continuous";
 import * as effectsModule from "./effects";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction, redactGame } from "./index";
 import type { GameState, InPlayPokemon, PlayerSide, Seat } from "./index";

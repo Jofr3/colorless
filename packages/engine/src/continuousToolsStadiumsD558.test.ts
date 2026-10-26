@@ -13,11 +13,12 @@ import {
   toolRetreatDiscount,
 } from "./continuous";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
-import { attackerPreWRBonus, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { attackerPreWRBonus } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

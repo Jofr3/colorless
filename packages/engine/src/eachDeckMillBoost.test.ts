@@ -3,7 +3,7 @@ import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import {
   deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
@@ -12,7 +12,7 @@ import {
 import type { GameEvent } from "./events";
 import { engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
-import type { EffectRecord } from "./interpreter";
+import type { EffectRecord } from "./effectPrompt";
 import { runProgram } from "./interpreter";
 import { logFromEvents } from "./log";
 import {

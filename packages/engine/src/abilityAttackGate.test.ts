@@ -3,7 +3,7 @@ import { attackCostAt } from "./attack";
 import { effectiveAttackCost, passivesOf, selfAttackCostDiscount } from "./continuous";
 import type { GameState, Seat } from "./index";
 import { applyAction, conditionNote, programFor, redactGame } from "./index";
-import { attackBarredByAbility, conditionHolds, countOwnerPokemonInPlay } from "./interpreter";
+import { attackBarredByAbility, conditionHolds, countOwnerPokemonInPlay } from "./boardCondition";
 import {
   FIXTURE_POOL,
   ROW14_DECK,

@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";

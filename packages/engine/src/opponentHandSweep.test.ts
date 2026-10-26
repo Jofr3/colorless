@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
 import { matchesFilter } from "./cards";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import type { CardFilter, EffectOp } from "./effects";
+import type { CardFilter, EffectOp } from "./effectTypes";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
 import { engineVersion } from "./index";

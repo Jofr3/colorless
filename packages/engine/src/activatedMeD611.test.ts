@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, pokemonPlayBarred } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";

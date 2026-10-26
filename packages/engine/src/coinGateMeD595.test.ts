@@ -5,7 +5,7 @@ import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction } from "./index";
-import type { PokemonRef } from "./interpreter";
+import type { PokemonRef } from "./effectPrompt";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import type { CoinFace } from "./rng";

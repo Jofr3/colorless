@@ -4,7 +4,7 @@ import { countAttachedEnergy, providedEnergy } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {

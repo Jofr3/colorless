@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   BENCH_ALL_DAMAGED_DECK,
   attachFromDeck,

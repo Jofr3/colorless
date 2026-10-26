@@ -7,7 +7,8 @@ import {
 } from "./effects";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import {
   FIXTURE_POOL,
   activeUid,

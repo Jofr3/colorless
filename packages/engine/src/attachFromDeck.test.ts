@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { EffectOp } from "./effects";
-import { STATUS_WORD_OF } from "./effects";
+import type { EffectOp } from "./effectTypes";
+import { STATUS_WORD_OF } from "./deriver/vocabulary";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import type { EffectPrompt, PokemonRef } from "./interpreter";
+import type { EffectPrompt, PokemonRef } from "./effectPrompt";
 import { resumeProgram, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {

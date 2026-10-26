@@ -19,9 +19,9 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameState } from "./index";
-import type { EffectContinuation, EffectPrompt } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 import { runProgram } from "./interpreter";
 import {
   FIXTURE_POOL,

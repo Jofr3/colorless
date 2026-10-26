@@ -11,7 +11,7 @@ import {
 } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote, evolveEarlyLicensed } from "./interpreter";
+import { conditionHolds, conditionNote, evolveEarlyLicensed } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

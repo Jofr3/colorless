@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState } from "./index";
 import { CATALOG_MANIFEST } from "./catalogManifest";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";

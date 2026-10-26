@@ -10,7 +10,7 @@ import {
   discardScaledBoostProgram,
   splitAttackTrailingClause,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { runProgram } from "./interpreter";

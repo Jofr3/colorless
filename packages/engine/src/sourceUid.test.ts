@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import type { EffectPrompt, PokemonRef } from "./interpreter";
+import type { EffectPrompt, PokemonRef } from "./effectPrompt";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {

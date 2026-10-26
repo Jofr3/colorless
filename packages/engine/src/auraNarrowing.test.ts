@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { seatPreWRDamageBonus } from "./continuous";
-import type { CardFilter } from "./effects";
+import type { CardFilter } from "./effectTypes";
 import type { GameState } from "./index";
 import { programFor } from "./index";
 import {

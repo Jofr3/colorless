@@ -139,7 +139,8 @@ only the conclusion.
   `continuous.ts` stays a read model that pushes no events and draws no RNG. The op contract lives in `effectTypes.ts`, program
   types in `programTypes.ts`, and stepOp's arm bodies in `ops/*.ts`,
   `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
-  `interpreter.ts` keeps runProgram, stepOp, answerOp and resumeProgram. A parked
+  `interpreter.ts` keeps runProgram, stepOp, answerOp and resumeProgram. Neither it nor
+  `effects.ts` re-exports these modules: import a helper from the module that defines it. A parked
   op's answer goes through `answerOp`, one arm per `parks: true` op (a missing arm
   fails to compile), which returns the board and the ops the answer buys, the
   shape stepOp returns. resumeProgram is answerOp, then `discardMisplacedEnergy`,

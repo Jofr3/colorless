@@ -12,7 +12,7 @@ import {
   deriveAttackPreDamage,
   optionalBoostProgram,
 } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,

@@ -92,7 +92,15 @@ import {
   splitAttackTrailingClause,
   splitAttackRequirementClause,
 } from "./effects";
-import type { AttackCopyOverride, BoardCondition } from "./effectTypes";
+import type {
+  AttackCopyOverride,
+  BoardCondition,
+  AttackCopy,
+  CardFilter,
+  EffectOp,
+  OpOf,
+  ResolvedAttackCopy,
+} from "./effectTypes";
 import type {
   AttackBonusConsequent,
   AttackCoinFlip,
@@ -100,14 +108,9 @@ import type {
   AttackDiscardScaledBoost,
   AttackOptionalBoost,
   AttackOptionalCostBoost,
-  AttackCopy,
   AttackDamageBonus,
   AttackFlipCount,
   AttackPreDamage,
-  CardFilter,
-  EffectOp,
-  OpOf,
-  ResolvedAttackCopy,
 } from "./effects";
 import type { GameEvent } from "./events";
 import {

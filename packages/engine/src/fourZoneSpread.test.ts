@@ -24,7 +24,8 @@ import {
 } from "./effects";
 import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, countPokemonInPlay, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { conditionHolds, countPokemonInPlay } from "./boardCondition";
 import {
   FIXTURE_POOL,
   attachFromDeck,

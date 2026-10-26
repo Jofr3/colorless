@@ -2,7 +2,7 @@ import manifest from "../package.json" with { type: "json" };
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
-import type { CardFilter } from "./effects";
+import type { CardFilter } from "./effectTypes";
 import { applyAction, conditionHolds, conditionNote, engineVersion, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {

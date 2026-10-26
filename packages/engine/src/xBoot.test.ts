@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { EffectOp, EffectPrompt, GameState, PokemonRef } from "./index";
-import { attachEnergyTargets } from "./interpreter";
+import { attachEnergyTargets } from "./ops/energy";
 import { programFor, registryCardIds } from "./registry";
 import { battler, deckOf, typedEnergy, must, driveSetup } from "./testFixtures";
 import { FIXTURE_POOL } from "./testFixtures";

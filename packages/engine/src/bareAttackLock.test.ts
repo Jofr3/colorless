@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { attackLocked } from "./continuous";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import * as effectsModule from "./effects";
 import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, programFor } from "./index";

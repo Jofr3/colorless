@@ -1,9 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction } from "./index";
-import { conditionHolds, conditionNote, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,

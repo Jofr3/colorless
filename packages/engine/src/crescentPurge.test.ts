@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema, redactedSideSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import {
   deriveAttackEffect,
   deriveAttackOptionalCostBoost,
@@ -11,7 +11,8 @@ import {
 import type { GameEvent } from "./events";
 import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
-import { conditionHolds, conditionNote, runProgram } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import {
   FIXTURE_POOL,

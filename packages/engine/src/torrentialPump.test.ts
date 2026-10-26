@@ -19,7 +19,7 @@ import {
   deriveAttackRequirement,
   optionalCostBoostProgram,
 } from "./effects";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { applyAction } from "./index";
 import type { BoardCondition, EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {

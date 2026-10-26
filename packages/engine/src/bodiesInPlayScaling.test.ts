@@ -14,15 +14,15 @@ import {
   deriveAttackOptionalCostBoost,
   deriveAttackPreDamage,
   deriveAttackRequirement,
-  POKEMON_TYPES,
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { CardFilter } from "./effects";
+import { POKEMON_TYPES } from "./effectTypes";
+import type { CardFilter } from "./effectTypes";
 import { programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import { applyAction } from "./index";
-import { countOwnerPokemonInPlay, countPokemonInPlay } from "./interpreter";
+import { countOwnerPokemonInPlay, countPokemonInPlay } from "./boardCondition";
 import { matchesFilter, topCardOf } from "./cards";
 import {
   FIXTURE_POOL,

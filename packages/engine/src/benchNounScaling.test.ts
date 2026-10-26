@@ -3,8 +3,6 @@ import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./c
 import * as effectsModule from "./effects";
 import { matchesFilter, topCardOf } from "./cards";
 import {
-  POKEMON_TYPE_BY_CODE,
-  POKEMON_TYPES,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -13,7 +11,9 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { CardFilter } from "./effects";
+import { POKEMON_TYPE_BY_CODE } from "./deriver/vocabulary";
+import { POKEMON_TYPES } from "./effectTypes";
+import type { CardFilter } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import {

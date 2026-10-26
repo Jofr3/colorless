@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { BoardCondition } from "./effects";
+import type { BoardCondition } from "./effectTypes";
 import { cardOfUid } from "./cards";
 import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
-import { conditionHolds, conditionNote } from "./interpreter";
+import { conditionHolds, conditionNote } from "./boardCondition";
 import { redactGame } from "./redact";
 import {
   FIXTURE_POOL,
