@@ -127,6 +127,22 @@ WHERE "demo"."name" IS NOT excluded."name"
     expect(sql).not.toContain('"demo"."active" IS NOT');
   });
 
+  it("rewrites every row when only derived columns would be compared", () => {
+    const columns: readonly SqlColumnSpec<DemoRow>[] = [
+      { name: "id", key: "id", kind: "text" },
+      { name: "active", key: "active", kind: "boolean", derived: true },
+    ];
+    const sql = buildUpsertSql("demo", columns, [
+      { id: "a-1", name: "Ann", count: null, active: true, tags: null },
+    ]);
+    expect(sql).toBe(
+      `INSERT INTO "demo" ("id", "active") VALUES
+('a-1', 1)
+ON CONFLICT("id") DO UPDATE SET
+  "active" = excluded."active";`,
+    );
+  });
+
   it("refuses to build a zero-row statement", () => {
     expect(() => buildUpsertSql("demo", DEMO_COLUMNS, [])).toThrow(/zero rows/);
   });

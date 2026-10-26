@@ -69,7 +69,7 @@ export function sqlLiteral(value: unknown, kind: SqlColumnKind): string {
  * emits explicit nulls), and `ON CONFLICT(id) DO UPDATE` overwrites all
  * non-id columns from `excluded` so reruns converge on the latest upstream
  * state, but only for a row whose non-derived columns changed: an unchanged
- * row is not rewritten. Callers chunk rows (see `chunk`) before building.
+ * row is not rewritten. With no non-derived column to compare, every row is. Callers chunk rows (see `chunk`) before building.
  */
 export function buildUpsertSql<Row>(
   table: string,
@@ -95,16 +95,15 @@ export function buildUpsertSql<Row>(
   const updates = updated
     .map((column) => `"${column.name}" = excluded."${column.name}"`)
     .join(",\n  ");
-  const changed = updated
-    .filter((column) => column.derived === undefined)
+  const compared = updated.filter((column) => column.derived === undefined);
+  const changed = compared
     .map((column) => `"${table}"."${column.name}" IS NOT excluded."${column.name}"`)
     .join("\n  OR ");
   return [
     `INSERT INTO "${table}" (${columnList}) VALUES`,
     tuples.join(",\n"),
     `ON CONFLICT("id") DO UPDATE SET`,
-    `  ${updates}`,
-    `WHERE ${changed};`,
+    compared.length === 0 ? `  ${updates};` : `  ${updates}\nWHERE ${changed};`,
   ].join("\n");
 }
 
