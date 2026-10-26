@@ -5,6 +5,7 @@ local Codec=require('ui.codec')
 local Text={}
 Text.__index=Text
 local g=love.graphics
+local SHADOW={0,0,0,0.3}
 function Text.new()
   return setmetatable({value='',created=0},Text)
 end
@@ -23,12 +24,17 @@ function Text:draw(time,reduced,x,y,w,h,roomWidth,textScale)
   local font=T.font(200)
   local unit,scale=60,textScale or 0.5
   local factor=scale*0.1/20*unit
-  local letters={}
-  local width=0
-  for char in self.value:gmatch(Codec.UTF8_CHAR) do
-    local cw=font:getWidth(char)*factor
-    letters[#letters+1]={char=char,w=cw,rawWidth=font:getWidth(char)}
-    width=width+cw
+  -- Letter metrics are measured once per value, font and scale.
+  local letters,width=self.letters,self.lettersWidth
+  if self.lettersFor~=self.value or self.lettersFont~=font or self.lettersFactor~=factor then
+    letters,width={},0
+    for char in self.value:gmatch(Codec.UTF8_CHAR) do
+      local cw=font:getWidth(char)*factor
+      letters[#letters+1]={char=char,w=cw,rawWidth=font:getWidth(char)}
+      width=width+cw
+    end
+    self.letters,self.lettersWidth=letters,width
+    self.lettersFor,self.lettersFont,self.lettersFactor=self.value,font,factor
   end
   local height=font:getHeight()*factor*0.83
   -- Account for the cycle's empty 0.05-tile row beneath the text object.
@@ -37,9 +43,10 @@ function Text:draw(time,reduced,x,y,w,h,roomWidth,textScale)
   local px=((x+w/2-roomWidth/2)/(roomWidth/2))*1.5
   local norm=math.sqrt(px*px+1.5*1.5)
   g.setFont(font)
-  for _,shadow in ipairs({true,false}) do
+  for pass=1,2 do
+    local shadow=pass==1
     local cursor=left
-    g.setColor(shadow and {0,0,0,0.3} or T.white)
+    g.setColor(shadow and SHADOW or T.white)
     for i,letter in ipairs(letters) do
       local pop,offset=Text.letter(time,self.created,i,#letters,reduced,scale)
       local dx=shadow and -px*scale*unit/20 or px/norm*0.1/20*unit

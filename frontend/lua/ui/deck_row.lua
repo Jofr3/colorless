@@ -14,15 +14,23 @@ local Row={colours={
 local g=love.graphics
 -- UIElement's static text: native font, .45/.5 scale, with shadow only
 -- on the card name (the original badge and score values have no shadow).
-local function text(value,scale,x,y,w,h,colour,shadow,roomWidth)
-  value=tostring(value):gsub('%c',' ')
+-- The shown text, its scale factor and its width for a value, scale and cell
+-- width.
+local fitted=Fit.cached(function(value,scale,w)
+  value=value:gsub('%c',' ')
   local font=T.font(200)
   local factor=scale*0.3
   if font:getWidth(value)*factor>w-6 then factor=math.max(0.3*0.3,(w-6)/math.max(1,font:getWidth(value)))end
   if font:getWidth(value)*factor>w-6 then
     value=Fit.ellipsize(value,w-6,function(s) return font:getWidth(s)*factor end)
   end
-  local tw,th=font:getWidth(value)*factor,font:getHeight()*0.83*factor
+  return value,factor,font:getWidth(value)*factor
+end)
+local function text(value,scale,x,y,w,h,colour,shadow,roomWidth)
+  local factor,tw
+  value,factor,tw=fitted(tostring(value),scale,w)
+  local font=T.font(200)
+  local th=font:getHeight()*0.83*factor
   local cx,cy=x+w/2,y+h/2
   g.setFont(font)
   if shadow then

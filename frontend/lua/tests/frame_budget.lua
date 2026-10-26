@@ -66,7 +66,7 @@ local function perFrame(label,n,mx,my)
   Stub.reset()
   frames(n,mx,my)
   local result={}
-  for _,name in ipairs({'g.rectangle','g.polygon','shader.send','shader.hasUniform','font.getWidth','g.newCanvas','g.newImage','g.setColor'}) do
+  for _,name in ipairs({'g.rectangle','g.polygon','shader.send','shader.hasUniform','font.getWidth','font.getWrap','g.newCanvas','g.newImage','g.setColor'}) do
     result[name]=Stub.get(name)/n
   end
   return result
@@ -119,7 +119,8 @@ balanced('after a second resize')
 -- A targeting prompt with long text.
 sim:sync(Snapshots.prompt(4));frames(30)
 local prompt=perFrame('prompt',20)
-atMost('prompt frame: font:getWidth',prompt['font.getWidth'],40)
+atMost('prompt frame: font:getWidth',prompt['font.getWidth'],2)
+atMost('prompt frame: font:getWrap',prompt['font.getWrap'],0)
 balanced('after a prompt')
 
 -- The setup screen's dice button.
@@ -140,7 +141,7 @@ builder:sync(Snapshots.builder(1))
 for _=1,30 do time=time+1/60;builder:update(1/60,time,-100,-100,false);builder:draw(shaders) end
 Stub.reset()
 for _=1,10 do time=time+1/60;builder:update(1/60,time,-100,-100,false);builder:draw(shaders) end
-atMost('builder frame: font:getWidth',Stub.get('font.getWidth')/10,200)
+atMost('builder frame: font:getWidth',Stub.get('font.getWidth')/10,10)
 atMost('builder frame: g.polygon',Stub.get('g.polygon')/10,110)
 
 print('PASS: frame budget ('..table.concat(report,'; ')..')')
