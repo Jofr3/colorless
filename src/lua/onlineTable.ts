@@ -166,6 +166,8 @@ export class LuaOnlineMatch implements TableSource {
   private error: ActionError | null = null;
   private muted: ActionError | null = null;
   private sentRematch = "";
+  /** What the table shows of the lobby beyond the match, as last notified. */
+  private shownLobby = "";
   private released = false;
   private listeners = new Set<() => void>();
   private unsubscribe: () => void;
@@ -179,6 +181,7 @@ export class LuaOnlineMatch implements TableSource {
   ) {
     this.error = client.state.actionError;
     this.muted = this.error;
+    this.shownLobby = this.lobbyKey();
     this.unsubscribe = client.subscribe(() => this.changed());
     this.frame(client.state.match);
   }
@@ -290,13 +293,30 @@ export class LuaOnlineMatch implements TableSource {
     for (const fn of [...this.listeners]) fn();
   }
 
+  /** The lobby's part of what the table shows: the names, the opponent's presence and forfeit
+   * clock, the link and the match id. */
+  private lobbyKey() {
+    const { self, opponent } = this.client;
+    return JSON.stringify([
+      self?.name,
+      opponent?.name,
+      opponent?.connected,
+      opponent?.forfeitAt,
+      this.client.state.status,
+      this.matchId(),
+    ]);
+  }
+
+  /** Re-render only for a change the table shows; most lobby frames mid-match carry none. */
   private changed() {
     const { match, actionError } = this.client.state;
+    let shown = false;
     // A rematch takes the lobby out of in-game; the finished board stays up
     // until the next game's first frame.
     if (match !== this.seen && !(match === null && this.seen?.outcome)) {
       this.pending = false;
       this.frame(match);
+      shown = true;
     }
     if (actionError !== this.error) {
       this.error = actionError;
@@ -304,8 +324,14 @@ export class LuaOnlineMatch implements TableSource {
         if (this.auto) this.muted = actionError;
         else this.pending = false;
       }
+      shown = true;
     }
-    this.notify();
+    const lobby = this.lobbyKey();
+    if (lobby !== this.shownLobby) {
+      this.shownLobby = lobby;
+      shown = true;
+    }
+    if (shown) this.notify();
   }
 
   /** Take a new frame: the cues of the log rows it brought, bench keys, auto-steps. */
