@@ -10,5 +10,6 @@ export * from "./card";
 export * from "./common";
 export * from "./facets";
 export * from "./page";
+export * from "./query";
 export * from "./serie";
 export * from "./set";

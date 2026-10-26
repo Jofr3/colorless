@@ -10,6 +10,8 @@
 
 import {
   loginRequestSchema,
+  type OAuthFailure,
+  type OAuthProvider,
   registerRequestSchema,
   updateProfileRequestSchema,
   type User,
@@ -30,7 +32,6 @@ import {
   generateState,
   OAUTH_STATE_COOKIE,
   type OAuthProfile,
-  type OAuthProvider,
   oauthConfig,
   packStateCookieValue,
   parseOAuthProfile,
@@ -287,10 +288,6 @@ authRoutes.get("/oauth/:provider", (c) => {
   return c.redirect(buildAuthorizeUrl(config, callbackUrl(c, provider), state), 302);
 });
 
-/** Failure codes the callback hands back to the app as `?authError=`; the
-    app maps each to a message (src/lua/account.ts). */
-type OAuthFailure = "state" | "exchange" | "profile" | "no-email" | "email-in-use";
-
 /** The callback is a top-level browser navigation, so failures go back to the
     app page with a code rather than rendering JSON at the API origin. */
 function oauthFailureRedirect(env: Env, redirect: string, failure: OAuthFailure): string {
@@ -371,7 +368,7 @@ async function findOrCreateOAuthUser(
   db: Db,
   provider: OAuthProvider,
   profile: OAuthProfile,
-): Promise<UserRow | "no-email" | "email-in-use"> {
+): Promise<UserRow | Extract<OAuthFailure, "no-email" | "email-in-use">> {
   try {
     return await linkOrCreateOAuthUser(db, provider, profile);
   } catch (error) {
@@ -386,7 +383,7 @@ async function linkOrCreateOAuthUser(
   db: Db,
   provider: OAuthProvider,
   profile: OAuthProfile,
-): Promise<UserRow | "no-email" | "email-in-use"> {
+): Promise<UserRow | Extract<OAuthFailure, "no-email" | "email-in-use">> {
   const linked = await db
     .select({ user: users })
     .from(oauthIdentities)

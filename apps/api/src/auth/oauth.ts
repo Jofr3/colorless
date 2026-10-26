@@ -7,15 +7,14 @@
 // installs a client id + secret, oauthConfig() returns null and the routes
 // answer 503 "provider not configured" — the code path is live either way.
 
+import { OAUTH_PROVIDERS, type OAuthProvider } from "@colorless/schema";
 import { z } from "zod";
 import type { Env } from "../env";
 import { fromBase64Url, randomBytes, toBase64Url } from "./encoding";
 
-export type OAuthProvider = "google";
-
 /** Narrow a path param to a known provider; null → route 404s. */
 export function parseProvider(value: string): OAuthProvider | null {
-  return value === "google" ? value : null;
+  return OAUTH_PROVIDERS.find((provider) => provider === value) ?? null;
 }
 
 export type OAuthConfig = {

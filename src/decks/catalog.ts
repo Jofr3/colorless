@@ -6,8 +6,14 @@
 // "Pokémon Tool", …) unchanged.
 
 import { isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
-import type { Card, CardBrief, CardCategory, CatalogFacets } from "@colorless/schema";
-import { type CardsQuery, getCards, getSets } from "../lib/api";
+import type {
+  Card,
+  CardBrief,
+  CardCategory,
+  CardsQueryParams,
+  CatalogFacets,
+} from "@colorless/schema";
+import { getCards, getSets } from "../lib/api";
 import {
   type BuilderCard,
   ENERGY_TYPES,
@@ -145,7 +151,7 @@ function hpBound(value: string): number | undefined {
  * Translate the rail's Filters into a page-less GET /cards query. Every dimension goes on the wire,
  * so the grid and the reported total always answer the same query.
  */
-export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuery {
+export function filtersToCardsQuery(filters: Filters, format: Format): CardsQueryParams {
   const name = filters.query.trim();
   const text = filters.text.trim();
   const serverKinds = filters.subtypes.length > 0 ? filters.subtypes.map(wireSubtypeOf) : undefined;
