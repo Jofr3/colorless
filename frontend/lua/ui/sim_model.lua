@@ -72,9 +72,27 @@ local function option(list,r) local o=W.option
 end
 function parse.O(m,r) if m.menu then option(m.menu.options,r) end end
 function parse.F(m,r) if m.menu then option(m.menu.footer,r) end end
+-- Card text rows repeat in every snapshot, so their decoded fields are kept
+-- by raw line (read only, never mutated); the memo starts over past a bound.
+local textRows,textCount={},0
+local function snapshotRows(raw)
+  local list={}
+  for line in raw:gmatch('[^\n]+') do
+    local fields
+    if line:byte(1)==73 and line:byte(2)==9 then -- 'I\t'
+      fields=textRows[line]
+      if not fields then
+        if textCount>=512 then textRows,textCount={},0 end
+        fields=Codec.fields(line);textRows[line]=fields;textCount=textCount+1
+      end
+    else fields=Codec.fields(line) end
+    list[#list+1]=fields
+  end
+  return list
+end
 -- Returns nil for an empty snapshot.
 function Model.parse(raw)
-  local rows=Codec.rows(raw)
+  local rows=snapshotRows(raw)
   local f=rows[1];if not f then return nil end
   local H=W.header
   local m={

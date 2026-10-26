@@ -79,4 +79,13 @@ check(x.rareCandy=='candy','Rare Candy pending')
 check(x.menu.kind=='board' and x.menu.id=='pick-1' and x.menu.title=='Pick' and x.menu.note=='Note' and not x.menu.mandatory and x.menu.hideTargetOutline and x.menu.counterSourceUid=='src' and x.menu.counterTransfer,'Board menu parsed')
 check(#x.menu.options==1 and x.menu.options[1].colour==T.blue and x.menu.options[1].disabled and x.menu.options[1].selected and x.menu.options[1].dimmed,'Options before the menu row are dropped; unknown colours are blue')
 check(#x.menu.footer==1 and x.menu.footer[1].colour==T.green,'Footer row parsed')
+-- Card text rows repeat across snapshots; each parse still reads its own text.
+local function textOf(name)
+  return table.concat({row(1,'ready'),row('I','c1','Pokemon','','Basic',60,'Fire','','','',name,'','','','Card')},'\n')
+end
+check(Model.parse(textOf('First')).info.c1.effect=='First','Card text parsed')
+check(Model.parse(textOf('First')).info.c1.effect=='First','Repeated card text parses the same')
+check(Model.parse(textOf('Second')).info.c1.effect=='Second','Changed card text replaces the old text')
+for i=1,600 do Model.parse(textOf('Text '..i)) end
+check(Model.parse(textOf('First')).info.c1.effect=='First','Card text still parses after many distinct rows')
 print('PASS: simulator model')
