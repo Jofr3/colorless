@@ -64,8 +64,8 @@ P2–P4; tracked here so nothing is forgotten.
   is one that must agree with the server forever.
   The initial follows the draft as you type; a 401 mid-save re-probes and the
   panel becomes a sign-in prompt (`state.from` returns you here). **A rename
-  reaches a lobby at the next hello** (`loadDisplayName` resolves the seat name
-  there), so a player already seated keeps the old name until they rejoin.
+  reaches a lobby on the next connection** (the seat name is read with the session
+  at the socket upgrade), so a player already seated keeps the old name until they rejoin.
   Browser-verified across two clients: "Brock" → "Pewter Brock" updated the
   initial, the corner control and the OPPONENT's player panel, with a
   byte-identical gradient throughout (the seed is the id, not the name).
