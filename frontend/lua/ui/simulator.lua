@@ -80,6 +80,7 @@ function Simulator:layout(w,h,viewportUnit)
   -- Canvas in love.js; card faces are canvases, so repaint them.
   for _,c in ipairs(self.cards) do c:rebuild() end
   for _,c in ipairs(self.ghosts) do c:rebuild() end
+  for _,c in pairs(self.attached or {}) do c:rebuild() end
   self:placeCards(true)
   if self.koPresentation then self.koPresentation:layout() end
   if self.overlay then self.overlay:layout() end
