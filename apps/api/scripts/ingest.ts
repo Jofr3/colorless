@@ -112,7 +112,8 @@ async function fetchValidated<Schema extends z.ZodType>(
   return result;
 }
 
-/** Runs `task` over `items` with at most `limit` running at once; results keep input order. */
+/** Runs `task` over `items` with at most `limit` running at once; results keep input order. The
+    first failure rejects the whole run and stops the other workers from claiming more items. */
 async function mapBounded<Item, Result>(
   items: readonly Item[],
   limit: number,
@@ -120,11 +121,17 @@ async function mapBounded<Item, Result>(
 ): Promise<Result[]> {
   const results: Result[] = new Array(items.length);
   let next = 0;
+  let failed = false;
   const worker = async () => {
-    while (next < items.length) {
+    while (!failed && next < items.length) {
       const index = next;
       next += 1;
-      results[index] = await task(items[index] as Item);
+      try {
+        results[index] = await task(items[index] as Item);
+      } catch (error) {
+        failed = true;
+        throw error;
+      }
     }
   };
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
