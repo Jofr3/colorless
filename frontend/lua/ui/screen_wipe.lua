@@ -2,6 +2,7 @@
 -- A single opaque square, not a fade. The source's 'before' event flips the
 -- card immediately and blocks the scene change for 0.7 REAL seconds.
 local Card=require('ui.card')
+local CardBack=require('ui.card_back')
 local CardFrame=require('ui.card_frame')
 local D=require('ui.card_dimensions')
 local Dissolve=require('ui.dissolve')
@@ -14,12 +15,6 @@ Wipe.lifespan=1.7
 Wipe.dissolveAt=Wipe.coverTime+0.55
 Wipe.removeAt=Wipe.coverTime+1.1
 Wipe.palette={T.panel,T.orange,T.paleGold,T.red}
-local centers
-local function atlases()
-  if centers then return end
-  centers=g.newImage('assets/textures/2x/Enhancers.png')
-  centers:setFilter('nearest','nearest')
-end
 function Wipe.new(callback,colour,reduced,feedback)
   local self=setmetatable({age=0,callback=callback,colour=colour,reduced=reduced,
     feedback=feedback or function()end,facing=love.math.random()*2*math.pi,
@@ -35,8 +30,6 @@ function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
   self.maxScale=math.max(40,math.sqrt(vw*vw+vh*vh)/unit*Wipe.lifespan/(2*Wipe.coverTime)*1.04)
   if self.reduced then return end
   if not self.card then
-    atlases()
-    self.back=g.newQuad(0,0,142,190,centers:getDimensions())
     self.art=TransitionArt.pick()
     local ok,face=pcall(g.newImage,self.art.path)
     local rejectedToken
@@ -59,7 +52,7 @@ function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
           g.setColor(1,1,1)
           g.draw(self.face,0,0,0,aw/self.face:getWidth(),ah/self.face:getHeight())
         end,self.border)
-      else g.draw(centers,self.back,0,0,0,cw/142,ch/190) end
+      else CardBack.draw(nil,cw,ch) end
     end},1)
     self.card.disintegration=true
     self.card:place(w/2,h/2,D.TILE_W*unit/D.W,false)

@@ -18,13 +18,6 @@ local CollectionMotion=require('ui.collection_motion')
 local Motion=require('ui.motion')
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
-local GREY_DARK={0.525,0.546,0.585,1}
-local function frame(x,y,w,h)
-  Button.panel(x,y+6,w,h,GREY_DARK,2.4)
-  Button.panel(x,y,w,h,T.jokerGrey,2.4)
-  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
-end
-Overlay.frame=frame
 local function lines(text)
   local out={}
   for line in (tostring(text or '')..'\n'):gmatch('(.-)\n') do out[#out+1]=line end
@@ -464,7 +457,7 @@ function Overlay:draw(shaders)
   local x,y,w,h=self.x,self.y,self.w,self.h
   local d=self.data
   g.push();g.translate(0,self:offset())
-  frame(x,y,w,h)
+  Button.modalFrameRaised(x,y,w,h)
   local kind=self.kind
   if kind~='inspect' and kind~='gameover' and kind~='options' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
   if kind=='list' or kind=='confirm' then

@@ -40,11 +40,6 @@ local function caption(text,size,x,y,w,colour,align)
   end
   T.text(text,size,x,y,w,colour,align)
 end
-local function frame(x,y,w,h)
-  Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.modalFrame(x,y,w,h)
-  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
-end
 function Builder.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionLabel='',optionPage=1,optionPages=1},Builder)
 end
@@ -126,11 +121,7 @@ function Builder:face(item,w,h)
     CardFrame.border(self.art[item.id],T.paper))
 end
 function Builder:artwork(item,w,h)
-  local path=self.art[item.id]
-  if path and love.filesystem.getInfo(path) then
-    local ok,img=pcall(g.newImage,path)
-    if ok then img:setFilter('linear','linear');g.setColor(1,1,1);g.draw(img,0,0,0,w/img:getWidth(),h/img:getHeight());img:release();return end
-  end
+  if CardFrame.scan(self.art[item.id],w,h) then return end
   if item.kind=='Energy' then return Builder.energyFace(item,w,h) end
   T.box(0,0,w,h,T.paper,4);T.box(4,4,w-8,h-8,T.ink,4)
   T.text(item.name,18,10,36,w-20,T.paper)
@@ -656,7 +647,7 @@ function Builder:drawControlFaces(controls,active)
   end
 end
 function Builder:draw(shaders)
-  local w,h,p=self.width,self.height,self.portrait;frame(p and 12 or 30,20,p and w-24 or w-60,h-30)
+  local w,h,p=self.width,self.height,self.portrait;Button.modalFrameRaised(p and 12 or 30,20,p and w-24 or w-60,h-30)
   if self.phase=='ready'then
     if not p or self.tab=='catalog'then
       Button.panel(p and 24 or 48,p and 155 or PANEL_Y,p and 432 or 716,p and 538 or PANEL_HEIGHT,T.panel)
@@ -705,7 +696,7 @@ function Builder:draw(shaders)
 end
 function Builder:drawModal(shaders)
   local m=self.modal;if not m then return end
-  local p,w=self.portrait,self.width;g.push();g.translate(0,m.motion.VT.y*60);frame(m.x,m.y,m.w,m.h)
+  local p,w=self.portrait,self.width;g.push();g.translate(0,m.motion.VT.y*60);Button.modalFrameRaised(m.x,m.y,m.w,m.h)
   local x,y,bw=m.x+24,m.y+76,m.w-48
   if m.mode=='detail'then
     local item=self.selectedItem or m.item

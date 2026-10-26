@@ -72,7 +72,7 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 ## Files
 
 - `main.lua`: home scene, page intents, responsive layout, input/audio lifecycle.
-- `ui/button.lua`: shared main-menu and utility button rendering, press states and hit bounds.
+- `ui/button.lua`: shared main-menu and utility button rendering, press states and hit bounds; `modalFrameRaised` is the `create_UIBox_generic_options` frame (emboss, JOKER_GREY border, dark interior) every modal and page panel uses.
 - `ui/room.lua`: original screen-motion equations and inverse transform for pointer input.
 - `ui/screen.lua`: original CRT uniforms, screen compositing, and perspective/lens mapping for pointer input.
 - `ui/settings.lua`: responsive settings overlay, tab/slider/toggle rendering, modal pointer and keyboard input.
@@ -89,6 +89,9 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/card.lua`: generated card faces, original hover hit buffer, pointer/ambient tilt and edition/shadow passes.
 - `ui/motion.lua`: tile-space target/visible transforms and original movement equations.
 - `ui/theme.lua`: palette, font cache, text and stepped pixel panels.
+- `ui/card_back.lua`: the red and blue Balatro deck backs from `Enhancers.png`, one atlas shared by the library, the sandbox chooser, the online picker, the table and the screen wipe.
+- `ui/deck_grid.lua`: one page of deck piles in a two-row grid with its bounds and page count, shared by the sandbox chooser and the online picker.
+- `ui/fx.lua`: `attention_text` with its backdrop and the blocking `after` sequencer; `ui/sim_fx.lua` adds the table's background colour ramp on top.
 - `ui/online.lua`: the online lobby modal (create/join, code pill, versus seats, deck picker with the regulation filter, countdown, info steps).
 - `ui/simulator.lua`, `ui/sim_overlay.lua`, `ui/sim_hud.lua`: the game table; online mode adds the `L` row, the away banner, flag-driven Options/game-over buttons and the press-again Leave.
 - `src/online/lobbyClient.ts`: the framework-free lobby WebSocket client used by the Lua adapters; `createLobby.ts` mints a code.
@@ -107,7 +110,9 @@ extends the nearby colours from each of its four outer edges, preserving
 silver gradients and full-art variation rather than choosing a single tint.
 Rounded/transparent corners use the nearest straight edge. Small edge profiles
 are cached for up to 64 artwork files; decoded pixels are released immediately.
-Generated faces use their own outer stock colour.
+Generated faces use their own outer stock colour. `CardFrame.scan(path,w,h)` draws a
+cached scan into the artwork box and returns false when there is none, so the
+builder and the table fall back to their own placeholder faces.
 The scan fits the inner rectangle. Corners copy both the alpha mask and the
 inner rim of Balatro's ordinary `Enhancers.png` card at its native 1× scale.
 The source's empty outer row/column are removed, so the straight borders
@@ -279,6 +284,8 @@ imports, and save-failure recovery.
 Additional checks: `deck_row.lua`, `input_hover.lua`, `drag_return.lua`, and
 `transfer.lua` in `frontend/lua/tests/` cover source palettes and hover layering,
 return animation and texture cleanup, and decklist editing/confirmation.
+`shared_widgets.lua` covers the raised modal frame, the shared deck backs,
+`CardFrame.scan` and the deck pile grid.
 
 ## Sandbox deck selection
 

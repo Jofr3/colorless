@@ -15,12 +15,13 @@ local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
-local Fx=require('ui.sim_fx')
+local Fx=require('ui.fx')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
 local Alert=require('ui.card_alert')
-local Library=require('ui.library')
+local CardBack=require('ui.card_back')
+local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
 local g=love.graphics
 local Online={}
@@ -131,27 +132,10 @@ function Online:deckBox(p)
   return {cx=p.x+p.w/2,cy=p.y+144+D.HALF_H*scale,scale=scale}
 end
 function Online:makeCards(entering)
-  for _,card in ipairs(self.cards) do card.texture:release() end
-  self.cards={}
+  DeckGrid.release(self)
   if not self.width or not self.picker then return end
   self:frame()
-  local matches=self:matches()
-  local size=self.portrait and 4 or 10
-  self.pages=math.max(1,math.ceil(#matches/size));self.page=math.max(1,math.min(self.pages,self.page))
-  self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
-  local cols=self.portrait and 2 or 5
-  local a=self.area
-  local scale=self:pickerScale()
-  for i=(self.page-1)*size+1,math.min(#matches,self.page*size) do
-    local item=matches[i]
-    item.drawFace=function(w,h) Library.face(self,item,w,h) end
-    local card=Pile.new(item,i)
-    local index=#self.cards
-    card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
-    card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
-    card:collect(cols,index%cols,self.width/2,entering,self.time,self.reduced,self.width)
-    self.cards[#self.cards+1]=card
-  end
+  DeckGrid.fill(self,self:matches(),self.portrait and 4 or 10,self.portrait and 2 or 5,self:pickerScale(),entering)
 end
 -- Your chosen deck's pile, drawn as in the picker.
 function Online:makePiles()
@@ -166,7 +150,7 @@ function Online:makePiles()
   if you and you.deckId~='' then
     local deck=self:deck(you.deckId)
     local item={count=deck and deck.count or Limits.deckSize,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
-    item.drawFace=function(w,h) Library.face(self,item,w,h) end
+    item.drawFace=function(w,h) CardBack.draw(nil,w,h) end
     local box=self:deckBox(self.panels.you)
     local pile=Pile.new(item,1);pile:place(box.cx,box.cy,box.scale,false,self.width)
     self.piles.you=pile
@@ -627,9 +611,7 @@ function Online:draw()
   local x,y,w,h=self.x,self.y,self.w,self.h
   if not x then return end
   g.push();g.translate(0,self:offset())
-  Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.modalFrame(x,y,w,h)
-  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
+  Button.modalFrameRaised(x,y,w,h)
   local step,d=self.step,self.dyna
   if self.link=='connecting' and (step=='waiting' or step=='versus' or step=='countdown') then
     T.text('Reconnecting...',18,x+16,y+8,w-32,T.gold,'right')

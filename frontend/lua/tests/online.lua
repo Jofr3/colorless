@@ -12,6 +12,7 @@ Card.rebuild=function(self) self.texture={release=function() end} end
 local T=require('ui.theme')
 T.font=function() return font end
 local Online=require('ui.online')
+assert(not package.loaded['ui.library'] and not package.loaded['ui.simulator'] and not package.loaded['ui.sim_fx'],'The modal needs no other page')
 local Codec=require('ui.codec')
 local commands,said,sounds,home,signin={},{},{},0,0
 local o=Online.new({command=function(raw) commands[#commands+1]=Codec.fields(raw) end,

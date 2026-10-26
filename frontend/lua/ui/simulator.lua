@@ -13,7 +13,7 @@ local CardFrame=require('ui.card_frame')
 local Motion=require('ui.motion')
 local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
-local Library=require('ui.library')
+local CardBack=require('ui.card_back')
 local Codec=require('ui.codec')
 local W=require('ui.wire_fields').sim
 local Mailbox=require('ui.mailbox')
@@ -94,7 +94,7 @@ function Simulator:point(x,y) return (x-self.ox)/self.zoom,(y-self.oy)/self.zoom
 function Simulator:drawBack(owner,w,h)
   local seat=self.viewerSeat
   if owner=='opponent' then seat=seat=='p1' and 'p2' or 'p1' end
-  Library.face(self,{backColour=seat=='p1' and 'blue' or 'red'},w,h)
+  CardBack.draw(seat=='p1' and 'blue' or 'red',w,h)
 end
 function Simulator:face(item,w,h)
   if item.hidden or item.cardId=='' or item.cardId=='hidden' then self:drawBack(item.owner,w,h);return end
@@ -102,11 +102,7 @@ function Simulator:face(item,w,h)
     CardFrame.border(self.art[item.cardId],T.ink))
 end
 function Simulator:artwork(item,w,h)
-  local path=self.art[item.cardId]
-  if path and love.filesystem.getInfo(path) then
-    local ok,img=pcall(g.newImage,path)
-    if ok then img:setFilter('linear','linear');g.setColor(1,1,1);g.draw(img,0,0,0,w/img:getWidth(),h/img:getHeight());img:release();return end
-  end
+  if CardFrame.scan(self.art[item.cardId],w,h) then return end
   local info=self.info[item.cardId] or {}
   local types=Energy.split(info.types)
   local colour=info.category=='Trainer' and (Popup.badgeColours[info.trainerType or ''] or T.blue) or Energy.colour(types[1] or 'Colorless')

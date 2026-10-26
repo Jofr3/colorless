@@ -4,6 +4,7 @@ love={math={random=function() return 0.5 end},graphics={},keyboard={isDown=funct
 local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={release=function() end} end
 local Sandbox=require('ui.sandbox')
+assert(not package.loaded['ui.library'],'The chooser needs no other page')
 local Codec=require('ui.codec')
 local calls={};local left=false
 local chooser=Sandbox.new({command=function(raw) calls[#calls+1]=Codec.fields(raw) end,feedback=function() end,announce=function() end,home=function() left=true end})

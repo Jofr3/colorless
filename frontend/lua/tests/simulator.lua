@@ -14,6 +14,7 @@ Card.rebuild=function(self) self.texture={release=function() end} end
 local T=require('ui.theme')
 T.font=function() return font() end
 local Simulator=require('ui.simulator')
+assert(not package.loaded['ui.library'],'The table needs no other page')
 local commands={}
 local announced={}
 local sim=Simulator.new({command=function(raw) commands[#commands+1]=raw end,announce=function(t) announced[#announced+1]=t end,feedback=function() end,settings=function() end,jiggle=function() end})

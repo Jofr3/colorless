@@ -4,6 +4,7 @@ local T=require('ui.theme')
 local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
+local CardBack=require('ui.card_back')
 local Alert=require('ui.card_alert')
 local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
@@ -52,16 +53,6 @@ function Library:layout(w,h)
   self:makeCards(false)
   self:build()
 end
-function Library:face(item,w,h)
-  if not self.backs then
-    self.backs=g.newImage('assets/textures/2x/Enhancers.png')
-    self.backs:setFilter('nearest','nearest')
-    self.backQuad=g.newQuad(0,0,142,190,self.backs:getDimensions())
-    self.blueBackQuad=g.newQuad(0,380,142,190,self.backs:getDimensions())
-  end
-  local quad=item.backColour=='blue' and self.blueBackQuad or self.backQuad
-  g.setColor(1,1,1); g.draw(self.backs,quad,0,0,0,w/142,h/190)
-end
 function Library:makeCards(entering)
   if not self.width then return end
   self:release()
@@ -70,7 +61,7 @@ function Library:makeCards(entering)
   local left=(self.width-span)/2
   for i,item in ipairs(self.items) do
     item.colour=T.blue; item.edition='dissolve'
-    item.drawFace=function(w,h) self:face(item,w,h) end
+    item.drawFace=function(w,h) CardBack.draw(item.backColour,w,h) end
     local card=Pile.new(item,i)
     card:place(left+span/cols*((i-1)%cols+0.5),(self.portrait and 280 or 240)+math.floor((i-1)/cols)*(self.portrait and 220 or 250),self.portrait and 0.68 or 0.82,false,self.width)
     card:collect(cols,(i-1)%cols,self.width/2,entering,self.time,self.reduced,self.width)
@@ -287,9 +278,7 @@ function Library:draw(shaders)
   local w,h,p=self.width,self.height,self.portrait
   local frameW=p and w-32 or 1032
   local frameX=(w-frameW)/2
-  Button.panel(frameX,26,frameW,h-34,{0.525,0.546,0.585,1},2.4)
-  Button.modalFrame(frameX,20,frameW,h-34)
-  Button.panel(frameX+4,24,frameW-8,h-42,T.tray,2.4)
+  Button.modalFrameRaised(frameX,20,frameW,h-34)
   if self.phase=='ready' then
     -- Joker collection row: G.C.BLACK, r=0.1, emboss=0.05; no drop shadow.
     local trayWidth=p and 380 or 1000
@@ -343,9 +332,7 @@ function Library:drawModal()
   if self.modal then
     local m=self.modal
     g.push(); g.translate(0,m.motion.VT.y*60)
-    Button.panel(m.x,m.y+6,m.w,m.h,{0.525,0.546,0.585,1},2.4)
-    Button.modalFrame(m.x,m.y,m.w,m.h)
-    Button.panel(m.x+4,m.y+4,m.w-8,m.h-8,T.tray,2.4)
+    Button.modalFrameRaised(m.x,m.y,m.w,m.h)
     caption(m.mode=='manage' and m.item.name or (m.mode=='create' and 'New ' or m.mode=='delete' and 'Delete ' or 'Rename ')..m.item.kind,36,m.x+20,m.y+20,m.w-40)
     if m.mode=='delete' then
       caption(m.item.name,26,m.x+24,m.y+84,m.w-48,T.paper)
