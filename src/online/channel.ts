@@ -28,6 +28,8 @@ const RECONNECT_MAX_MS = 8000;
 // client's periodic hello retries make individual frames safe to lose).
 const MAX_QUEUED_MESSAGES = 32;
 
+type Queued = { kind: LobbyMessage["kind"]; encoded: string };
+
 /** The delay before reconnect attempt `attempt` (0-based): 400ms doubling to a
     cap of 8s. Exported for tests. */
 export function reconnectDelayMs(attempt: number): number {
@@ -56,7 +58,7 @@ export function createLobbyChannel(code: string): LobbyChannel {
 
   const url = apiWebSocketUrl(`/lobby/${code}/ws`);
   const handlers = new Set<(message: LobbyMessage) => void>();
-  const queue: string[] = [];
+  const queue: Queued[] = [];
   let socket: WebSocket | null = null;
   let open = false;
   let closed = false;
@@ -94,7 +96,7 @@ export function createLobbyChannel(code: string): LobbyChannel {
       attempt = 0;
       while (queue.length > 0) {
         const pending = queue.shift();
-        if (pending !== undefined) ws.send(pending);
+        if (pending !== undefined) ws.send(pending.encoded);
       }
       pingTimer = setInterval(() => ws.send(LOBBY_WS_PING), PING_INTERVAL_MS);
     };
@@ -153,7 +155,14 @@ export function createLobbyChannel(code: string): LobbyChannel {
       if (open && socket !== null) {
         socket.send(encoded);
       } else {
-        queue.push(encoded);
+        // The client re-announces every few hundred ms while the link is down; a reconnect
+        // needs one hello, in the place of the first so later frames still follow a seat.
+        const held = message.kind === "hello" ? queue.findIndex((q) => q.kind === "hello") : -1;
+        if (held >= 0) {
+          queue[held] = { kind: message.kind, encoded };
+          return;
+        }
+        queue.push({ kind: message.kind, encoded });
         if (queue.length > MAX_QUEUED_MESSAGES) queue.shift();
       }
     },

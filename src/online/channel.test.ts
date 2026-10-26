@@ -137,6 +137,30 @@ describe("createLobbyChannel", () => {
     channel.close();
   });
 
+  it("holds one hello while down, the newest, ahead of the frames posted after the first", () => {
+    const channel = createLobbyChannel("ABCD");
+    const ws = FakeWebSocket.last();
+    const intent: LobbyMessage = {
+      kind: "intent",
+      from: "p1",
+      intent: { type: "set-ready", ready: true },
+    };
+    channel.post(HELLO);
+    channel.post(intent);
+    for (let i = 0; i < 40; i++) channel.post({ ...HELLO, name: `Ana ${i}` });
+    channel.post({ kind: "bye", from: "p1", slot: "guest" });
+    ws.open();
+    expect(ws.sent.map((raw) => JSON.parse(raw) as LobbyMessage)).toEqual([
+      { ...HELLO, name: "Ana 39" },
+      intent,
+      { kind: "bye", from: "p1", slot: "guest" },
+    ]);
+    channel.post(HELLO);
+    channel.post(HELLO);
+    expect(ws.sent).toHaveLength(5);
+    channel.close();
+  });
+
   it("backs off between failed reconnect attempts", () => {
     createLobbyChannel("ABCD").subscribe(() => {});
     FakeWebSocket.last().drop(); // attempt 0 scheduled at 400ms

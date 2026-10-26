@@ -144,6 +144,31 @@ describe("LobbyDO — create and seat", () => {
     expect(snapshotOf(guest)).toEqual(snapshot);
   });
 
+  it("answers a repeated hello to the asker alone and writes nothing", async () => {
+    const { host, guest } = await startedMatch();
+    const snapshot = snapshotOf(host);
+    const guestFrames = guest.sent.length;
+    const hostFrames = host.sent.length;
+    const writes: string[] = [];
+    const put = h.storage.put.bind(h.storage);
+    h.storage.put = async (key, value) => {
+      writes.push(typeof key === "string" ? key : Object.keys(key).join());
+      await put(key, value);
+    };
+    for (let i = 0; i < 3; i++) await h.send(host, hello("h"));
+    expect(writes).toEqual([]);
+    expect(guest.sent.length).toBe(guestFrames);
+    expect(host.sent.slice(hostFrames).map((frame) => frame.kind)).toEqual([
+      "state",
+      "match",
+      "state",
+      "match",
+      "state",
+      "match",
+    ]);
+    expect(snapshotOf(host)).toEqual(snapshot);
+  });
+
   it("refuses another account replaying a seat's player id", async () => {
     await seatBoth();
     const thief = await h.connect("eve");

@@ -54,6 +54,7 @@ import {
   rematch,
   reseatHost,
   resetAfterFailedStart,
+  sameSnapshot,
   seatClaimAllowed,
   setSeatConnected,
   slotOf,
@@ -262,8 +263,15 @@ export class LobbyDO {
     const next = await this.seatedSnapshot(decision, snapshot, frame.from, name, avatarSeed);
     if (next === null) return;
     attachPlayer(ws, frame.from);
-    await this.clearDisconnectGrace(frame.from);
-    await this.commit(next);
+    const graceCleared = await this.clearDisconnectGrace(frame.from);
+    if (snapshot !== null && sameSnapshot(snapshot, next)) {
+      // A repeated hello changes nothing the other sockets see. Only this one needs the lobby,
+      // since the client counts itself seated on a `state` frame.
+      this.send(ws, { kind: "state", snapshot });
+      if (graceCleared) await this.scheduleMaintenance();
+    } else {
+      await this.commit(next);
+    }
     await this.sendMatchOrRetireStale(ws);
   }
 
@@ -710,13 +718,15 @@ export class LobbyDO {
   }
 
   /**
-   * Cancel the disconnect grace when a player returns. The forfeit deadline is cleared by the
-   * reseat itself.
+   * Cancel the disconnect grace when a player returns, reporting whether one was pending. The
+   * forfeit deadline is cleared by the reseat itself.
    */
-  private async clearDisconnectGrace(playerId: string): Promise<void> {
+  private async clearDisconnectGrace(playerId: string): Promise<boolean> {
     const pending = await this.pendingDisconnects();
     const next = withoutPendingDisconnect(pending, playerId);
-    if (next.length !== pending.length) await this.state.storage.put(PENDING_KEY, next);
+    if (next.length === pending.length) return false;
+    await this.state.storage.put(PENDING_KEY, next);
+    return true;
   }
 
   private liveSockets(excluding?: WebSocket): WebSocket[] {

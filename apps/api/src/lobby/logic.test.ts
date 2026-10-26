@@ -15,6 +15,7 @@ import {
   rematch,
   reseatHost,
   resetAfterFailedStart,
+  sameSnapshot,
   seatClaimAllowed,
   setSeatConnected,
   LIVENESS_SWEEP_MS,
@@ -225,6 +226,26 @@ describe("reseatHost", () => {
     snapshot = setSeatConnected(snapshot, "host", false);
     const back = reseatHost(snapshot, "Ana2");
     expect(back.host).toMatchObject({ name: "Ana2", connected: true, deckId: "d1" });
+  });
+});
+
+describe("sameSnapshot", () => {
+  it("compares values, not key order or identity", () => {
+    const snapshot = countdownLobby();
+    const reordered = JSON.parse(
+      JSON.stringify({ ...snapshot, host: { forfeitAt: null, ...snapshot.host } }),
+    ) as LobbySnapshot;
+    expect(sameSnapshot(snapshot, reordered)).toBe(true);
+    expect(sameSnapshot(snapshot, reseatHost(snapshot, "Ana"))).toBe(true);
+  });
+
+  it("tells apart any changed seat field, a seat leaving, and the countdown stamp", () => {
+    const snapshot = countdownLobby();
+    expect(sameSnapshot(snapshot, reseatHost(snapshot, "Ana2"))).toBe(false);
+    expect(sameSnapshot(snapshot, reseatHost(snapshot, "Ana", "seed"))).toBe(false);
+    expect(sameSnapshot(snapshot, withForfeitAt(snapshot, "guest", 5))).toBe(false);
+    expect(sameSnapshot(snapshot, stampCountdown(snapshot, 1))).toBe(false);
+    expect(sameSnapshot(removeGuest(snapshot), snapshot)).toBe(false);
   });
 });
 
