@@ -353,6 +353,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     min: z.number(),
     max: z.number(),
     declinable: z.boolean(),
+    /** Each pick receives damage counters rather than damage; absent otherwise. */
+    unit: z.literal("counters").optional(),
     note: z.string(),
   }),
   /**
@@ -514,7 +516,14 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),
-  z.object({ kind: z.literal("effect:choose"), prompt: redactedEffectPromptSchema.nullable() }),
+  z.object({
+    kind: z.literal("effect:choose"),
+    prompt: redactedEffectPromptSchema.nullable(),
+    /** What invoked the parked effect; a new value requires deploying the client first. */
+    invokedBy: z.enum(["attack", "item", "supporter", "ability"]).optional(),
+    /** The invoking Ability's name, when its Pokémon has exactly one. */
+    abilityName: z.string().optional(),
+  }),
   z.object({ kind: z.literal("gameOver") }),
 ]);
 export type RedactedPhase = z.infer<typeof redactedPhaseSchema>;

@@ -288,6 +288,41 @@ describe("LuaOnlineMatch", () => {
     expect(t.rows()[0]?.[6]).toBe("Pick another");
   });
 
+  it("captions prompts from the frame alone: counter placement and the Ability's name", async () => {
+    const t = await table();
+    const parked = (phase: RedactedGame["phase"]) =>
+      frame(t.state, (v) => {
+        v.phase = phase;
+        v.waitingOn = "you";
+      });
+    const target = { seat: "p2", spot: { spot: "active" } } as const;
+    t.push(
+      parked({
+        kind: "effect:choose",
+        prompt: {
+          kind: "choosePokemonMulti",
+          candidates: [target],
+          min: 1,
+          max: 1,
+          declinable: false,
+          unit: "counters",
+          note: "",
+        },
+      }),
+    );
+    expect(t.tagged("M")[0]?.[2]).toBe("Place damage counters");
+    expect(t.tagged("M")[0]?.[6]).toBe("true");
+    t.push(
+      parked({
+        kind: "effect:choose",
+        prompt: { kind: "confirm", note: "Use it?" },
+        invokedBy: "ability",
+        abilityName: "Drive Off",
+      }),
+    );
+    expect(t.tagged("M")[0]?.[2]).toBe("Do you want to use Drive Off?");
+  });
+
   it("names the opponent while waiting on them, and a reconnect keeps the table", async () => {
     const t = await table();
     t.push(

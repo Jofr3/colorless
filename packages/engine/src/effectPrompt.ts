@@ -108,19 +108,23 @@ export type EffectPrompt =
    * from zero to `upTo`. Absent `upTo` is a mandatory pick, forced at one candidate. `upTo` is not
    * clamped to what is available, so the prompt matches its note; with a ceiling the prompt parks
    * even at one candidate because declining is still a choice. For "any number" effects `upTo` is
-   * the live budget. `takeVerb` captions the quantity (absent means attach).
+   * the live budget. `takeVerb` captions the quantity (absent means attach). `counterTransfer`
+   * marks a damage-counter move between two chosen Pokémon; `from` is absent while the source is
+   * still being chosen.
    */
   | {
       kind: "choosePokemon";
       candidates: PokemonRef[];
       upTo?: number;
       takeVerb?: "move" | "put";
+      counterTransfer?: { upTo: number; abilitySourceUid?: string; from?: PokemonRef };
       note: string;
     }
   /**
    * Pick `min`..`max` in-play Pokémon as a set. The printed number is exact unless the card says
    * "up to" (`min: 0`). `declinable` is the printed "you may": all-or-nothing, so the legal answers
-   * are `min..max` plus the empty set.
+   * are `min..max` plus the empty set. `unit: "counters"` means each pick receives damage counters
+   * rather than damage.
    */
   | {
       kind: "choosePokemonMulti";
@@ -128,6 +132,7 @@ export type EffectPrompt =
       min: number;
       max: number;
       declinable: boolean;
+      unit?: "counters";
       note: string;
     }
   /**

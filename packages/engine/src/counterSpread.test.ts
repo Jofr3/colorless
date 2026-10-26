@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { deriveAttackEffect, programFor } from "./index";
+import { deriveAttackEffect, programFor, redactGame } from "./index";
 import type { EffectOp, GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   COUNTER_SPREAD_DECK,
@@ -408,6 +408,18 @@ describe("DRIVEN — the unroll is the printed placement, not an approximation o
     // ONE counter each, on two different bodies — the spread the card prints.
     expect(after2.state.players.p2.bench[0]?.damage).toBe(10);
     expect(after2.state.players.p2.bench[1]?.damage).toBe(10);
+  });
+
+  it("marks each placement prompt as counters, on the engine and on the answerer's wire", () => {
+    let state = flutterMane(board());
+    state = bench(state, "p2", ["fix-titan", "fix-titan"]);
+    const parked = declare(state).state;
+    expect(parked.phase.kind === "effect:choose" && parked.phase.prompt).toMatchObject({
+      kind: "choosePokemonMulti",
+      unit: "counters",
+    });
+    const wire = redactGame(parked, "p1").phase;
+    expect(wire.kind === "effect:choose" && wire.prompt).toMatchObject({ unit: "counters" });
   });
 
   it("lets ALL N stack on ONE body — 'in any way you like' includes 'all here'", () => {

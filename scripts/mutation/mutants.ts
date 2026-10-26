@@ -41158,8 +41158,8 @@ export const MUTANTS: Mutant[] = [
     what: '`redactPhase` drops `takeVerb` (the D135 spread deleted): the online dialog reads "attach" for a counter move. Killed by §2\'s wire assertion.',
     file: "packages/engine/src/redact.ts",
     symbol: "redactPrompt",
-    find: "        ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),\n      };",
-    replace: "      };",
+    find: "        ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/calmDiversD572.test.ts"],
   },
   {

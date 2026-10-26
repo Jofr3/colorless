@@ -80,7 +80,6 @@ describe("LuaSimulator over a TableSource", () => {
       allowances: () => local.allowances(),
       benchKey: (owner, i) => local.benchKey(owner, i),
       board: () => local.board(),
-      effectContext: () => local.effectContext(),
       takeEvents: () => local.takeEvents(),
       lifecycle: () => local.lifecycle(),
       subscribe: () => () => {},

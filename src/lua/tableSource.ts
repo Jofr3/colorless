@@ -61,7 +61,6 @@ export interface TableSource {
   benchKey(owner: "you" | "opponent", index: number): string;
   /** The board drags are translated against (moveToAction). */
   board(): BoardState;
-  effectContext(): { placingCounters: boolean; invokedBy?: string; abilityName?: string };
   takeEvents(): TableEvents;
   lifecycle(): TableLifecycle;
   subscribe(onChange: () => void): () => void;
@@ -77,6 +76,24 @@ export type HistoryStep =
   | "undoTurn"
   | "redoTurn";
 const NO_EVENTS: TableEvents = { knockedOut: [], shuffled: [], coin: null };
+
+/** The damage-counter source a player just picked, so its destination menu keeps it raised. */
+export function counterSourcePicked(
+  view: RedactedGame | null,
+  action: GameAction,
+): PokemonRef | undefined {
+  const p = view?.phase;
+  const transfer =
+    p?.kind === "effect:choose" && p.prompt?.kind === "choosePokemon"
+      ? p.prompt.counterTransfer
+      : undefined;
+  return transfer &&
+    !transfer.from &&
+    action.type === "resolveEffect" &&
+    action.choice.kind === "pokemon"
+    ? action.choice.ref
+    : undefined;
+}
 
 /** The hot-seat game: today's local host, with save, undo and auto-steps. */
 export class LocalTableSource implements TableSource {
@@ -111,6 +128,7 @@ export class LocalTableSource implements TableSource {
     return applyAction(this.host.game, action).ok;
   }
   send(action: GameAction) {
+    const counterSource = counterSourcePicked(this.view(), action);
     const beforeGame = this.host.game;
     const before = this.host.log.length;
     this.before = beforeGame;
@@ -135,14 +153,7 @@ export class LocalTableSource implements TableSource {
       knockedOut,
       shuffled: [...seats],
       coin,
-      counterSource:
-        beforeGame.phase.kind === "effect:choose" &&
-        beforeGame.phase.cont.pendingOp.op === "moveCountersToOpponentChosen" &&
-        beforeGame.phase.cont.pendingOp.from === undefined &&
-        action.type === "resolveEffect" &&
-        action.choice.kind === "pokemon"
-          ? action.choice.ref
-          : undefined,
+      counterSource,
     };
   }
   allowances() {
@@ -156,17 +167,6 @@ export class LocalTableSource implements TableSource {
   }
   board() {
     return projectGameState(this.host.game, this.host.viewerSeat).board;
-  }
-  effectContext() {
-    const game = this.host.game;
-    if (game.phase.kind !== "effect:choose") return { placingCounters: false };
-    const { pendingOp, ctx } = game.phase.cont;
-    const abilities = ctx?.sourceUid ? cardOfUid(game, ctx.sourceUid)?.abilities : null;
-    return {
-      placingCounters: pendingOp?.op === "damageChosen" && pendingOp.deals !== true,
-      invokedBy: ctx?.invokedBy,
-      abilityName: abilities?.length === 1 ? abilities[0]?.name : undefined,
-    };
   }
   takeEvents() {
     const events = this.events;

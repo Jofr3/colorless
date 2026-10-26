@@ -412,6 +412,7 @@ describe("§8 — redact: the face-up card at its index, for p1, p2 and a specta
         indices: [0, 1, 2, 3, 4, 5],
         note: "Choose 1 of your face-down Prize cards to turn face up.",
       },
+      invokedBy: "attack",
     });
     if (mine.kind === "effect:choose" && mine.prompt !== null) {
       expect(redactedEffectPromptSchema.parse(mine.prompt)).toEqual(mine.prompt);

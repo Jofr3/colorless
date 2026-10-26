@@ -240,6 +240,7 @@ describe("the rider fires — main hit to the Defender, N to 1 chosen Benched", 
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect(prompt.max).toBe(1);
+    expect(prompt.unit).toBeUndefined();
     expect(prompt.note).toContain("30 damage");
     const { state: done, events: e2 } = mustApply(parked, {
       type: "resolveEffect",

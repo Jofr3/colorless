@@ -10,7 +10,13 @@ import { fetchCardPool } from "../game/cardPool";
 import { projectionFromRedacted } from "../game/projection";
 import type { ActionError, LobbyClient } from "../online/lobbyClient";
 import { benchLimitFor } from "../game/board";
-import type { LifecycleFlag, TableEvents, TableLifecycle, TableSource } from "./tableSource";
+import {
+  counterSourcePicked,
+  type LifecycleFlag,
+  type TableEvents,
+  type TableLifecycle,
+  type TableSource,
+} from "./tableSource";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const roomOnBench = (v: RedactedGame) =>
@@ -195,18 +201,7 @@ export class LuaOnlineMatch implements TableSource {
     return null;
   }
   send(action: GameAction, opts: { auto?: boolean } = {}) {
-    const p = this.seen?.phase;
-    const transfer =
-      p?.kind === "effect:choose" && p.prompt?.kind === "choosePokemon"
-        ? p.prompt.counterTransfer
-        : undefined;
-    if (
-      transfer &&
-      !transfer.from &&
-      action.type === "resolveEffect" &&
-      action.choice.kind === "pokemon"
-    )
-      this.counter = action.choice.ref;
+    this.counter = counterSourcePicked(this.seen, action) ?? this.counter;
     this.auto = !!opts.auto;
     if (!opts.auto) this.pending = true;
     this.client.sendAction(action);
@@ -236,9 +231,6 @@ export class LuaOnlineMatch implements TableSource {
   board() {
     if (!this.seen) throw new Error("No match frame");
     return projectionFromRedacted(this.seen).board;
-  }
-  effectContext() {
-    return { placingCounters: false };
   }
   takeEvents() {
     const events = this.events;
