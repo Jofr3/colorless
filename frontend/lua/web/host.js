@@ -29,7 +29,7 @@ let settingsOpen = false;
 let bridge;
 // `COLORLESS:<channel>:<rest>` prints whose rest is handed on unchanged.
 const relays = {
-  page: (page) => setPage(page),
+  page: (page) => bridge.navigate(page),
   builder: builderCommand,
   simulator: (command) => bridge.command("simulator", command),
   online: onlineCommand,
@@ -66,17 +66,27 @@ window.colorlessHost = {
       if (snapshot.split("\t")[1] === "authenticated") clearAuthInputs();
       else finishName(true);
     }
-    if (screen === "builder" && currentPage === "builder") {
-      const f = snapshot.split("\n")[0].split("\t").map(decodeURIComponent);
-      document.title = `Colorless — ${f[2] || "Deck builder"}`;
-      canvas.setAttribute(
-        "aria-label",
-        `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`,
-      );
-    }
   },
-  route(page, id = "", replace = false) {
-    setPage(page, !replace, id);
+  showPage(next) {
+    const moved = next.page !== view.page || next.id !== view.id;
+    if (moved) {
+      finishLibraryInput();
+      finishBuilderInput();
+    }
+    view = next;
+    libraryPage = view.page !== "home";
+    syncModalAccessibility();
+    if (moved || !pageRevision)
+      writeMailbox(
+        "__page.txt",
+        [++pageRevision, view.page, view.id].map(encodeURIComponent).join("\t"),
+      );
+    document.title = view.title;
+    if (!settingsOpen) canvas.setAttribute("aria-label", view.label);
+  },
+  finishInputs() {
+    finishLibraryInput();
+    finishBuilderInput();
   },
   // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
   // them at the 96 kept here); touch them lowest first so eviction spares the head.
@@ -362,7 +372,7 @@ globalThis.Module = {
       updateLoadingProgress(100);
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = pageTitle();
+      document.title = view.title;
       canvas.focus({ preventScroll: true });
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
@@ -421,7 +431,7 @@ globalThis.Module = {
         );
       } else {
         syncModalAccessibility();
-        canvas.setAttribute("aria-label", canvasLabel());
+        canvas.setAttribute("aria-label", view.label);
       }
       canvas.focus({ preventScroll: true });
     } else {
@@ -461,7 +471,6 @@ addEventListener("load", () => {
     .then(() => {
       updateLoadingProgress(95);
       void prepareTransitionArt();
-      syncPage();
       // ?account and ?settings open the settings popup on the matching tab.
       const params = new URLSearchParams(location.search);
       if (params.has("account") || params.has("settings")) {
@@ -531,53 +540,20 @@ addEventListener(
   true,
 );
 
-// Library transport: Lua owns the page; the browser supplies text input and API I/O.
-// Pages live in the path: /decks, /decks/<id> (builder), /sandbox, /sandbox/play
-// (simulator), /online, /online/<code> and /online/<code>/play (match). Old
-// query URLs (/?page=decks, /?lobby=CODE), /simulator, /match/<code> and
-// React's /lobby/<code> still resolve and are rewritten.
-const pages = ["decks", "builder", "sandbox", "simulator", "online", "match"];
-const pageIds = { builder: "deck", online: "lobby", match: "lobby" };
-function routeFromLocation() {
-  const params = new URLSearchParams(location.search);
-  const legacy = params.get("page") || (params.has("lobby") ? "online" : "");
-  if (legacy) return { page: legacy, id: params.get(pageIds[legacy] || "deck") || "" };
-  const [first = "", second = "", third = ""] = location.pathname
-    .split("/")
-    .filter(Boolean)
-    .map(decodeURIComponent);
-  if (first === "decks" && second) return { page: "builder", id: second };
-  if (first === "sandbox" && second === "play") return { page: "simulator", id: "" };
-  if (first === "online" && second && third === "play") return { page: "match", id: second };
-  if (first === "lobby") return { page: "online", id: second };
-  return { page: pages.includes(first) && first !== "builder" ? first : "home", id: second };
-}
-function routePath(page, id) {
-  if (page === "home") return "/";
-  if (page === "builder") return `/decks/${encodeURIComponent(id)}`;
-  if (page === "simulator") return "/sandbox/play";
-  if (page === "match") return `/online/${encodeURIComponent(id)}/play`;
-  return id ? `/${page}/${encodeURIComponent(id)}` : `/${page}`;
-}
-function routeUrl(page, id) {
-  const url = new URL(location.href);
-  url.pathname = routePath(page, id);
-  // Only rewrite the query when a legacy parameter is present, so ?settings keeps its form.
-  const legacy = ["page", ...Object.values(pageIds)].filter((param) => url.searchParams.has(param));
-  for (const param of legacy) url.searchParams.delete(param);
-  return url;
-}
-let { page: currentPage, id: pageId } = routeFromLocation();
-if (!pages.includes(currentPage)) currentPage = "home";
-if (!pageIds[currentPage]) pageId = "";
-let libraryPage = currentPage !== "home";
-history.replaceState(null, "", routeUrl(currentPage, pageId));
+// The bridge's router owns the page; the host mirrors it for accessibility and Lua.
+let view = {
+  page: "home",
+  id: "",
+  title: document.title,
+  label: canvas.getAttribute("aria-label"),
+};
+let libraryPage = false;
 let pageRevision = 0;
 let transitionOpen = false;
 function syncModalAccessibility() {
   document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage || transitionOpen;
   canvas.setAttribute("aria-busy", String(transitionOpen));
-  if (settingsOpen || (libraryPage && currentPage !== "simulator" && currentPage !== "match")) {
+  if (settingsOpen || (libraryPage && view.page !== "simulator" && view.page !== "match")) {
     canvas.setAttribute("role", "dialog");
     canvas.setAttribute("aria-modal", "true");
   } else {
@@ -585,64 +561,16 @@ function syncModalAccessibility() {
     canvas.removeAttribute("aria-modal");
   }
 }
-function pageTitle() {
-  return `Colorless — ${currentPage === "simulator" ? "Simulator" : currentPage === "match" ? "Online match" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : currentPage === "online" ? "Online" : libraryPage ? "Decks" : "Home"}`;
-}
-function canvasLabel() {
-  return currentPage === "simulator"
-    ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options."
-    : currentPage === "match"
-      ? "Online game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options."
-      : currentPage === "sandbox"
-        ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home."
-        : currentPage === "online"
-          ? "Online lobby. Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back."
-          : libraryPage
-            ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
-            : "Colorless main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
-}
-function syncPage() {
-  syncModalAccessibility();
-  writeMailbox(
-    "__page.txt",
-    [++pageRevision, currentPage, pageId].map(encodeURIComponent).join("\t"),
-  );
-  document.title = pageTitle();
-  canvas.setAttribute("aria-label", canvasLabel());
-}
-function setPage(page, push = true, id = "", saved = false) {
-  if (currentPage === "builder" && !saved && (page !== currentPage || id !== pageId)) {
-    finishBuilderInput();
-    history.replaceState(null, "", routeUrl("builder", pageId));
-    bridge.leaveBuilder(() => setPage(page, push, id, true));
-    return;
-  }
-  finishLibraryInput();
-  finishBuilderInput();
-  currentPage = pages.includes(page) ? page : "home";
-  pageId = pageIds[currentPage] ? id : "";
-  libraryPage = currentPage !== "home";
-  const url = routeUrl(currentPage, pageId);
-  url.searchParams.delete("account");
-  url.searchParams.delete("settings");
-  if (push) history.pushState(null, "", url);
-  else history.replaceState(null, "", url);
-  syncPage();
-}
-addEventListener("popstate", () => {
-  const { page, id } = routeFromLocation();
-  setPage(page, false, id);
-});
 document.getElementById("decks-link").addEventListener("click", (event) => {
   if (!ready) return;
   event.preventDefault();
-  setPage("decks");
+  bridge.navigate("decks");
   canvas.focus({ preventScroll: true });
 });
 document.getElementById("online-link").addEventListener("click", (event) => {
   if (!ready) return;
   event.preventDefault();
-  setPage("online");
+  bridge.navigate("online");
   canvas.focus({ preventScroll: true });
 });
 function libraryCommand(command, owner = "library") {

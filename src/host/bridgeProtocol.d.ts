@@ -25,12 +25,19 @@ export interface HostArtworkCache {
   remove(id: string): Promise<void>;
 }
 
+/** The page the router settled on, with its document title and canvas label. */
+export interface PageView {
+  page: string;
+  id: string;
+  title: string;
+  label: string;
+}
+
 /** What the bridge hands the host when it connects. */
 export interface ColorlessBridge {
   command(screen: BridgeScreen, raw: string): void;
+  navigate(page: string): void;
   authenticate(request: AuthRequest): void;
-  /** Runs `proceed` once the open deck has saved. */
-  leaveBuilder(proceed: () => void): void;
   artwork: HostArtworkCache;
 }
 
@@ -38,7 +45,9 @@ export interface ColorlessHost {
   connect(bridge: ColorlessBridge): void;
   /** A screen's snapshot for Lua. */
   publish(screen: BridgeScreen, snapshot: string): void;
-  route(page: string, id?: string, replace?: boolean): void;
+  showPage(view: PageView): void;
+  /** Ends any text edit, publishing its last value. */
+  finishInputs(): void;
   /** Card art in priority order. */
   wantArt(cards: readonly ArtRequest[]): void;
 }

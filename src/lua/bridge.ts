@@ -8,14 +8,32 @@ import { launchSandbox } from "./sandboxLaunch";
 import { setSessionRecoveryHandler } from "../lib/api";
 import { ArtworkCache } from "./artworkCache";
 import type { ArtRequest, BridgeScreen } from "../host/bridgeProtocol";
+import { type Route, Router, pageLabel, pageTitle } from "../host/router";
 
 const host = window.colorlessHost;
 
+const router = new Router(window, {
+  changed: showPage,
+  holdLeave: (from, proceed) => {
+    if (from.page !== "builder") return false;
+    host.finishInputs();
+    builder.navigate(proceed);
+    return true;
+  },
+});
+
 const publishTo = (screen: BridgeScreen) => (snapshot: string) => host.publish(screen, snapshot);
-const route = (page: string, id?: string, replace?: boolean) => host.route(page, id, replace);
+const route = (page: string, id?: string, replace?: boolean) => router.navigate(page, id, replace);
 const wantArt = (cards: readonly ArtRequest[]) => host.wantArt(cards);
 
-const builder = new LuaBuilder(publishTo("builder"), () => route("decks"), wantArt);
+const builder = new LuaBuilder(
+  (snapshot) => {
+    publishTo("builder")(snapshot);
+    if (router.current.page === "builder") showPage(router.current);
+  },
+  () => route("decks"),
+  wantArt,
+);
 window.addEventListener("beforeunload", (event) => {
   if (
     builder.id &&
@@ -56,6 +74,19 @@ setSessionRecoveryHandler(async () => {
   return account.status === "authenticated";
 });
 
+function showPage(route: Route) {
+  const deck =
+    route.page === "builder" && builder.id === route.id && builder.name
+      ? { name: builder.name, cards: [...builder.entries.values()].reduce((a, b) => a + b, 0) }
+      : undefined;
+  host.showPage({
+    ...route,
+    title: pageTitle(route.page, deck?.name),
+    label: pageLabel(route.page, deck),
+  });
+}
+showPage(router.current);
+
 const screens: Record<BridgeScreen, { command(raw: string): unknown }> = {
   library,
   builder,
@@ -70,6 +101,6 @@ host.connect({
   // email, the name and a masked password.
   authenticate: ({ mode, email, password, name }) =>
     void account.authenticate(mode, email, password, name),
-  leaveBuilder: (proceed) => builder.navigate(proceed),
+  navigate: (page) => router.navigate(page),
   artwork: new ArtworkCache(),
 });
