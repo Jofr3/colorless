@@ -119,3 +119,5 @@ host.connect({
   artwork: new ArtworkCache(),
   mailboxes: MAILBOXES,
 });
+// Ask who is signed in while the runtime downloads; Lua's navigation refreshes reuse the answer.
+void account.refresh();
