@@ -35,15 +35,20 @@ export function spliceReport(): SpliceReport {
     } catch {
       continue; // a missing target is `precheck`'s business, not this gate's
     }
-    if (!text.includes(mutant.find)) continue;
-    const literal = text.split(mutant.find).join(mutant.replace);
-    const viaString = text.replace(mutant.find, mutant.replace);
+    const at = text.indexOf(mutant.find);
+    if (at === -1) continue;
+    // Patching a lone match without a `$` in `replace` reads nothing outside the match, so such a
+    // row is checked on the match alone rather than on three copies of its file.
+    const lone = !mutant.replace.includes("$") && !text.includes(mutant.find, at + 1);
+    const subject = lone ? mutant.find : text;
+    const literal = subject.split(mutant.find).join(mutant.replace);
+    const viaString = subject.replace(mutant.find, mutant.replace);
     if (viaString !== literal) {
       spliceable.push(
         `      ${mutant.id}: ${String(viaString.length - literal.length)} unintended byte(s) in ${mutant.file}`,
       );
     }
-    if (applyMutant(text, mutant.find, mutant.replace) !== literal) {
+    if (applyMutant(subject, mutant.find, mutant.replace) !== literal) {
       corrupted.push(`      ${mutant.id} in ${mutant.file}`);
     }
   }

@@ -7,9 +7,12 @@
  *   bun scripts/mutation/binding-gate.ts
  */
 
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { type Report, runReport, wiringProblems } from "../lib/cli";
+import { isRecord, type Report, runReport, wiringProblems } from "../lib/cli";
 import { repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS } from "./mutants";
 
@@ -38,6 +41,8 @@ export type FileInfo = {
   top: TopStatement[];
   /** Original-region scans, keyed by `lo:hi`. */
   regions: Map<string, Original>;
+  /** `regionDigest` results, keyed by `lo:hi`. */
+  digests: Map<string, string>;
 };
 
 /** The script kind of a target, or `null` for a non-code target (JSON, Markdown). */
@@ -198,15 +203,39 @@ export function fileInfoOf(file: string, text: string): FileInfo | null {
       free: new Set([...refs].filter((r) => !decls.has(r))),
     };
   });
-  return { text, kind, top, regions: new Map() };
+  return { text, kind, top, regions: new Map(), digests: new Map() };
 }
 
 const files = new Map<string, FileInfo | null>();
 const sourceOf = sourceCache();
-function fileInfo(file: string): FileInfo | null {
+function fileInfo(file: string, cache: VerdictCache): FileInfo | null {
   const cached = files.get(file);
   if (cached !== undefined) return cached;
-  const fi = fileInfoOf(file, sourceOf(file));
+  const text = sourceOf(file);
+  const kind = kindOf(file);
+  const textKey = sha1(JSON.stringify([kind, text]));
+  const stored = cache.storedFiles.get(textKey);
+  const fi =
+    stored === undefined || kind === null
+      ? fileInfoOf(file, text)
+      : {
+          text,
+          kind,
+          top: stored.map(([start, end, names, free]) => ({
+            start,
+            end,
+            names,
+            free: new Set(free),
+          })),
+          regions: new Map(),
+          digests: new Map(),
+        };
+  if (fi !== null) {
+    cache.usedFiles.set(
+      textKey,
+      fi.top.map((t) => [t.start, t.end, t.names, [...t.free]]),
+    );
+  }
   files.set(file, fi);
   return fi;
 }
@@ -243,17 +272,130 @@ function originalRegion(fi: FileInfo, lo: number, hi: number): Original {
 /** One row's verdict: what it flags, and whether it introduces any identifier at all. */
 export type RowVerdict = { flagged: string[]; introduces: boolean };
 
+/** A digest of everything a verdict reads besides `find` and `replace`: the script kind, the
+    region's text, and what the statements outside it bind and read. */
+function regionDigest(fi: FileInfo, lo: number, hi: number): string {
+  const key = `${String(lo)}:${String(hi)}`;
+  const cached = fi.digests.get(key);
+  if (cached !== undefined) return cached;
+  const names = new Set<string>();
+  const free = new Set<string>();
+  for (const t of fi.top) {
+    if (t.end > lo && t.start < hi) continue;
+    for (const name of t.names) names.add(name);
+    for (const name of t.free) free.add(name);
+  }
+  const digest = sha1(
+    JSON.stringify([fi.kind, fi.text.slice(lo, hi), [...names].sort(), [...free].sort()]),
+  );
+  fi.digests.set(key, digest);
+  return digest;
+}
+
+/** A target file's top-level statements as stored: start, end, names, free names. */
+type StoredStatement = [number, number, string[], string[]];
+
+/**
+ * Results of earlier runs, kept under tmp/: each target file's statements, keyed by its text, and
+ * each row's verdict, keyed by `regionDigest`, where `find` sits in the region, and the `replace`.
+ * `stamp` ties them to this gate's own source, the TypeScript version and the runtime whose
+ * globals `isGlobal` sees. A run writes back only what it used.
+ */
+type VerdictCache = {
+  stamp: string;
+  storedFiles: Map<string, StoredStatement[]>;
+  usedFiles: Map<string, StoredStatement[]>;
+  stored: Map<string, RowVerdict>;
+  used: Map<string, RowVerdict>;
+};
+
+const VERDICT_CACHE = repoPath("tmp/binding-gate-cache.json");
+
+const sha1 = (text: string): string => createHash("sha1").update(text).digest("hex");
+
+type SavedCache = {
+  stamp: string;
+  files: [string, StoredStatement[]][];
+  verdicts: [string, RowVerdict][];
+};
+
+function isSavedCache(v: unknown): v is SavedCache {
+  return (
+    isRecord(v) &&
+    typeof v.stamp === "string" &&
+    Array.isArray(v.files) &&
+    Array.isArray(v.verdicts)
+  );
+}
+
+function loadVerdictCache(): VerdictCache {
+  const stamp = sha1(
+    JSON.stringify([
+      readFileSync(fileURLToPath(import.meta.url), "utf8"),
+      ts.version,
+      process.versions.bun ?? process.version,
+    ]),
+  );
+  const cache: VerdictCache = {
+    stamp,
+    storedFiles: new Map(),
+    usedFiles: new Map(),
+    stored: new Map(),
+    used: new Map(),
+  };
+  try {
+    const saved: unknown = JSON.parse(readFileSync(VERDICT_CACHE, "utf8"));
+    if (isSavedCache(saved) && saved.stamp === stamp) {
+      cache.storedFiles = new Map(saved.files);
+      cache.stored = new Map(saved.verdicts);
+    }
+  } catch {
+    // No cache, or an unreadable one: every row is judged afresh.
+  }
+  return cache;
+}
+
+function saveVerdictCache(cache: VerdictCache): void {
+  const saved: SavedCache = {
+    stamp: cache.stamp,
+    files: [...cache.usedFiles],
+    verdicts: [...cache.used],
+  };
+  try {
+    mkdirSync(dirname(VERDICT_CACHE), { recursive: true });
+    const partial = `${VERDICT_CACHE}.${String(process.pid)}`;
+    writeFileSync(partial, JSON.stringify(saved));
+    renameSync(partial, VERDICT_CACHE);
+  } catch {
+    // The cache only saves time; failing to write it costs the next run its hits.
+  }
+}
+
 /**
  * The core check, shared by the self-check and the live corpus. Null when `find` does not occur
  * exactly once, which precheck reports.
  */
-export function judgeRow(fi: FileInfo, find: string, replace: string): RowVerdict | null {
+export function judgeRow(
+  fi: FileInfo,
+  find: string,
+  replace: string,
+  cache?: VerdictCache,
+): RowVerdict | null {
   const at = fi.text.indexOf(find);
   if (at === -1 || fi.text.indexOf(find, at + 1) !== -1) return null;
   const stop = at + find.length;
   const covering = fi.top.filter((t) => t.end > at && t.start < stop);
   const lo = covering[0]?.start ?? at;
   const hi = covering.at(-1)?.end ?? stop;
+  const key =
+    cache === undefined
+      ? ""
+      : sha1(JSON.stringify([regionDigest(fi, lo, hi), at - lo, find.length, replace]));
+  const hit = cache?.stored.get(key);
+  if (hit !== undefined) {
+    cache?.used.set(key, hit);
+    return hit;
+  }
   const before = originalRegion(fi, lo, hi);
   const afterSf = parse(fi.text.slice(lo, at) + replace + fi.text.slice(stop, hi), fi.kind);
   const after = scan(afterSf);
@@ -270,10 +412,12 @@ export function judgeRow(fi: FileInfo, find: string, replace: string): RowVerdic
       fi.top.some((t) => (t.end <= lo || t.start >= hi) && t.free.has(name)),
   );
 
-  return {
+  const verdict = {
     flagged: [...fresh, ...orphaned],
     introduces: [...after.refs].some((r) => !before.refs.has(r)),
   };
+  cache?.used.set(key, verdict);
+  return verdict;
 }
 
 /** One synthetic case: a file, a patch, and the names it must flag (exactly). */
@@ -417,15 +561,16 @@ export function bindingReport(): BindingReport {
   let nonCode = 0;
   let introducing = 0;
   let flaggedRows = 0;
+  const cache = loadVerdictCache();
   for (const m of MUTANTS) {
     if (!existsSync(repoPath(m.file))) continue; // a missing target is `precheck`'s business
-    const fi = fileInfo(m.file);
+    const fi = fileInfo(m.file, cache);
     if (fi === null) {
       nonCode++;
       continue;
     }
     code++;
-    const verdict = judgeRow(fi, m.find, m.replace);
+    const verdict = judgeRow(fi, m.find, m.replace, cache);
     if (verdict === null) continue;
     if (verdict.introduces) introducing++;
     if (verdict.flagged.length === 0) continue;
@@ -434,6 +579,7 @@ export function bindingReport(): BindingReport {
       named.push(`   ${m.id}  [${m.file}] → ${verdict.flagged.join(", ")}`);
     }
   }
+  saveVerdictCache(cache);
 
   if (flaggedRows === 0) {
     return {

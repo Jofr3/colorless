@@ -51,8 +51,20 @@ export function enclosingSymbol(
 ): string | undefined {
   if (!/\.(ts|tsx|mts|js|mjs)$/.test(file)) return undefined;
   const sf = parse(file, text);
-  const holds = (n: ts.Node) => n.getStart(sf) <= start && end <= n.getEnd();
-  const statement = sf.statements.find(holds);
+  // Statements, like an object literal's properties, are in source order and do not overlap, so
+  // only the first one ending at or after `end` can hold the span.
+  const holder = <T extends ts.Node>(nodes: readonly T[]): T | undefined => {
+    let lo = 0;
+    let hi = nodes.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if ((nodes[mid] as T).getEnd() < end) lo = mid + 1;
+      else hi = mid;
+    }
+    const node = nodes[lo];
+    return node !== undefined && node.getStart(sf) <= start ? node : undefined;
+  };
+  const statement = holder(sf.statements);
   if (statement === undefined) return undefined;
   const name = nameOf(statement);
   if (name === undefined) return undefined;
@@ -61,7 +73,7 @@ export function enclosingSymbol(
   while (init !== undefined && (ts.isAsExpression(init) || ts.isSatisfiesExpression(init)))
     init = init.expression;
   if (init === undefined || !ts.isObjectLiteralExpression(init)) return name;
-  const property = init.properties.find(holds);
+  const property = holder(init.properties);
   const key = property === undefined ? undefined : propertyKey(property);
   return key === undefined ? name : `${name}.${key}`;
 }
