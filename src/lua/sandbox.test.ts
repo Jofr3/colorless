@@ -50,7 +50,7 @@ const reads = {
 async function setup() {
   const publish = vi.fn();
   const launch = vi.fn();
-  const sandbox = new LuaSandbox(publish, launch);
+  const sandbox = new LuaSandbox(publish, async () => launch);
   sandbox.session("authenticated", "user");
   await sandbox.command("open");
   return { sandbox, publish, launch };
@@ -71,7 +71,9 @@ afterEach(() => {
 describe("Lua sandbox setup", () => {
   it("ignores a command with a malformed percent-sequence", async () => {
     const publish = vi.fn();
-    await expect(new LuaSandbox(publish, vi.fn()).command("pick\t%")).resolves.toBeUndefined();
+    await expect(
+      new LuaSandbox(publish, async () => () => {}).command("pick\t%"),
+    ).resolves.toBeUndefined();
     expect(publish).not.toHaveBeenCalled();
   });
   it("loads decks across folders, escapes names and selects each player independently", async () => {
@@ -158,6 +160,26 @@ describe("Lua sandbox setup", () => {
     expect(calls.filter((path) => path === "GET /decks/a")).toHaveLength(1);
     expect(launch).not.toHaveBeenCalled();
   });
+  it("does not hand off a game the user left while the handoff was still loading", async () => {
+    stubFetch(reads);
+    const launch = vi.fn();
+    let loaded!: (launch: () => void) => void;
+    const sandbox = new LuaSandbox(
+      vi.fn(),
+      () =>
+        new Promise((resolve) => {
+          loaded = resolve;
+        }),
+    );
+    sandbox.session("authenticated", "user");
+    await sandbox.command("open");
+    const pending = sandbox.command("start");
+    await vi.waitFor(() => expect(loaded).toBeDefined());
+    await sandbox.command("close");
+    loaded(launch);
+    await pending;
+    expect(launch).not.toHaveBeenCalled();
+  });
   it("clears selections on sign-out and ignores stale account responses", async () => {
     let finish!: (response: Response) => void;
     stubFetch({
@@ -166,7 +188,7 @@ describe("Lua sandbox setup", () => {
           finish = resolve;
         }),
     });
-    const sandbox = new LuaSandbox(vi.fn(), vi.fn());
+    const sandbox = new LuaSandbox(vi.fn(), async () => () => {});
     sandbox.session("authenticated", "old-user");
     const pending = sandbox.command("open");
     sandbox.session("anonymous", "");

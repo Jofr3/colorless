@@ -58,9 +58,9 @@ window.addEventListener("beforeunload", (event) => {
   }
 });
 const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
-const sandbox = new LuaSandbox(publishTo("sandbox"), async (setup) => {
+const sandbox = new LuaSandbox(publishTo("sandbox"), async () => {
   const { launchSandbox } = await import("./sandboxLaunch");
-  launchSandbox(setup, () => route("simulator"));
+  return (setup) => launchSandbox(setup, () => route("simulator"));
 });
 const online = new LuaOnline(publishTo("online"), route, { user: () => account.user });
 // The game table and the rules engine behind it load when Lua first opens or asks about a table.

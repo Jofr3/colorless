@@ -22,7 +22,8 @@ export class LuaSandbox {
 
   constructor(
     private publish: (snapshot: string) => void,
-    private launch: (setup: LocalGameSetup) => void | Promise<void>,
+    /** Resolves to the synchronous handoff, so nothing async sits between the last check and it. */
+    private loadLaunch: () => Promise<(setup: LocalGameSetup) => void>,
   ) {}
 
   session(status: AccountStatus, id: string) {
@@ -120,9 +121,12 @@ export class LuaSandbox {
       this.emit();
       try {
         // Fetch fresh contents and rerun the deck validation.
-        const { prepareSandbox } = await import("../game/prepareSandbox");
+        const [{ prepareSandbox }, launch] = await Promise.all([
+          import("../game/prepareSandbox"),
+          this.loadLaunch(),
+        ]);
         const setup = await prepareSandbox([...this.selected]);
-        if (live() && this.active) await this.launch(setup);
+        if (live() && this.active) launch(setup);
       } catch (error) {
         if (!live()) return;
         this.message =
