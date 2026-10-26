@@ -28,6 +28,7 @@ import {
   setsUpsertSql,
   weaklessLegalPokemon,
 } from "../src/ingest";
+import { CATALOG_EPOCH_KEY } from "../src/catalog/epoch";
 import { createSource, parseTransport } from "../src/ingest/source";
 
 const DELAY_MS = 50;
@@ -130,6 +131,28 @@ function applySqlFile(path: string): void {
     throw new Error(`wrangler d1 execute failed for ${path}`);
   }
   console.log(`  applied ${path}`);
+}
+
+/** Stamps a new catalog epoch in the CACHE namespace of the same target, which retires every
+    catalog response cached before this ingest. */
+function stampCatalogEpoch(): boolean {
+  const epoch = Date.now().toString(36);
+  if (dryRun) {
+    console.log(`  dry-run: would stamp ${CATALOG_EPOCH_KEY}=${epoch}`);
+    return true;
+  }
+  const result = spawnSync(
+    "bunx",
+    ["wrangler", "kv", "key", "put", CATALOG_EPOCH_KEY, epoch, "--binding", "CACHE", d1Target],
+    { cwd: API_ROOT, encoding: "utf8" },
+  );
+  if (result.status !== 0) {
+    console.error(result.stdout);
+    console.error(result.stderr);
+    return false;
+  }
+  console.log(`  stamped ${CATALOG_EPOCH_KEY}=${epoch}`);
+  return true;
 }
 
 // --- run ----------------------------------------------------------------------
@@ -249,6 +272,9 @@ for (const setId of setIds) {
 console.log("\nreprint legality:");
 applySqlFile(writeSqlFile("reprint-legality", reprintLegalitySql()));
 
+console.log("\ncatalog cache:");
+const epochStamped = stampCatalogEpoch();
+
 // --- summary -------------------------------------------------------------------
 
 const totalCards = outcomes.reduce((sum, outcome) => sum + outcome.cards, 0);
@@ -276,6 +302,12 @@ if (weakless.length > 0) {
 if (failedSets.length > 0) {
   console.error(`${failedSets.length} set(s) failed: ${failedSets.map((o) => o.setId).join(", ")}`);
 }
-if (failedSets.length > 0 || weakless.length > 0) {
+if (!epochStamped) {
+  console.error(
+    `could not stamp ${CATALOG_EPOCH_KEY}: cached catalog responses stay up to a day — rerun ` +
+      `\`wrangler kv key put ${CATALOG_EPOCH_KEY} <new value> --binding CACHE ${d1Target}\``,
+  );
+}
+if (failedSets.length > 0 || weakless.length > 0 || !epochStamped) {
   process.exit(1);
 }

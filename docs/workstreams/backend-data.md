@@ -362,10 +362,11 @@ cd apps/api && bun run deploy          # or, from the repo root: bun run api:dep
 #    them in the rows.
 cd apps/api && bun scripts/ingest.ts --serie sv --remote
 
-# 4. The KV catalog cache is NOT invalidated by step 3 (a data-only change does
-#    not bump `CACHE_VERSION`, by design — see apps/api/src/catalog/cache.ts).
-#    Cached `/facets` and `/cards` bodies keep the pre-ingest answer for up to
-#    the 1h TTL. Nothing to run; just do not treat the first hour as a failure.
+# 4. Step 3 ends by stamping a new `catalog:epoch` in the CACHE KV namespace,
+#    which is part of every catalog cache key (apps/api/src/catalog/cache.ts), so
+#    the pre-ingest KV entries stop being served within about six minutes; a
+#    browser may show its own cached body for up to an hour more. A data-only
+#    change does not bump `CACHE_VERSION`.
 ```
 
 **Command check (against `package.json` and `apps/api/package.json`):**
@@ -715,8 +716,9 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 ```
 GET    /health
 
-# Catalog (public; KV cache-aside on every 200, 1h TTL, `x-colorless-cache: hit|miss`,
-# key = `catalog:v9:` (D628; v8 was D612) + normalized path+sorted-query — bump the version prefix
+# Catalog (public; best-effort KV cache-aside on every 200, 1-day TTL,
+# `x-colorless-cache: hit|miss|bypass` (free-text and id queries bypass KV),
+# key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + normalized path+sorted-query — bump the version prefix
 # whenever a cached shape — or its values for already-ingested rows — changes;
 # invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:

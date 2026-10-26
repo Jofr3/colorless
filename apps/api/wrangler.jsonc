@@ -38,7 +38,7 @@
   "kv_namespaces": [
     {
       // Response cache for the public catalog GETs (§3.3/§6): cache-aside,
-      // 1h TTL, keyed by normalized path+query. Simulated locally by
+      // keyed by the ingest epoch plus normalized path+query. Simulated locally by
       // `wrangler dev` under .wrangler/state.
       "binding": "CACHE",
       "id": "e9954577422e4f8b91318efc3f45f55a"

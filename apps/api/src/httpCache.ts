@@ -10,9 +10,9 @@ import { etag, RETAINED_304_HEADERS } from "hono/etag";
 export const CACHE_STATUS_HEADER = "x-colorless-cache";
 
 /** Public catalog freshness: 5 minutes fresh, then up to an hour more served
-    stale while one background revalidation refreshes it. The KV entry behind
-    it lives an hour too, so a re-ingest or a CACHE_VERSION bump reaches a
-    browser within about two hours at worst, usually far sooner. */
+    stale while one background revalidation refreshes it. A re-ingest retires
+    the KV entries behind it within minutes (catalog/cache.ts), so it reaches a
+    browser within about seventy minutes at worst, usually far sooner. */
 export const PUBLIC_CATALOG_CACHE = "public, max-age=300, stale-while-revalidate=3600";
 
 /** Per-user data: stored, but always revalidated before use. */
