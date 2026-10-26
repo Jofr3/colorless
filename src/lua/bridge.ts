@@ -1,4 +1,4 @@
-import { LuaAccount } from "./account";
+import { type AccountStatus, LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
 import { LuaOnline } from "./online";
@@ -34,10 +34,13 @@ const router = new Router(window, {
 
 const route = (page: string, id?: string, replace?: boolean) => router.navigate(page, id, replace);
 const wantArt = (cards: readonly ArtRequest[]) => host.wantArt(cards);
+/** A screen's snapshots go to the mailbox named after it. */
+const publishTo = (screen: BridgeScreen) => (snapshot: string) =>
+  host.writeMailbox(MAILBOXES[screen], snapshot);
 
 const builder = new LuaBuilder(
   (snapshot) => {
-    host.writeMailbox(MAILBOXES.builder, snapshot);
+    publishTo("builder")(snapshot);
     if (router.current.page === "builder") showPage(router.current);
   },
   () => route("decks"),
@@ -54,30 +57,36 @@ window.addEventListener("beforeunload", (event) => {
     event.preventDefault();
   }
 });
-const library = new LuaLibrary(
-  (snapshot) => host.writeMailbox(MAILBOXES.library, snapshot),
-  (id) => route("builder", id),
+const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
+const sandbox = new LuaSandbox(publishTo("sandbox"), (setup) =>
+  launchSandbox(setup, () => route("simulator")),
 );
-const sandbox = new LuaSandbox(
-  (snapshot) => host.writeMailbox(MAILBOXES.sandbox, snapshot),
-  (setup) => launchSandbox(setup, () => route("simulator")),
+const online = new LuaOnline(publishTo("online"), route, { user: () => account.user });
+const simulator = new LuaSimulator(publishTo("simulator"), route, wantArt, (code) =>
+  online.matchSource(code),
 );
-const online = new LuaOnline((snapshot) => host.writeMailbox(MAILBOXES.online, snapshot), route, {
-  user: () => account.user,
-});
-const simulator = new LuaSimulator(
-  (snapshot) => host.writeMailbox(MAILBOXES.simulator, snapshot),
-  route,
-  wantArt,
-  (code) => online.matchSource(code),
-);
-
 const account = new LuaAccount((snapshot) => {
   shell.accountChanged(snapshot);
   const status = account.status;
   const userId = account.user?.id ?? "";
-  for (const screen of [library, builder, sandbox, online]) screen.session(status, userId);
+  for (const screen of Object.values(screens)) screen.session?.(status, userId);
 });
+
+interface Screen {
+  command(raw: string): unknown;
+  /** Follows the signed-in user. */
+  session?(status: AccountStatus, userId: string): void;
+}
+/** Lua's `COLORLESS:<screen>:` commands and the account's session go to these adapters. */
+const screens: Record<BridgeScreen, Screen> = {
+  library,
+  builder,
+  sandbox,
+  online,
+  simulator,
+  account,
+};
+
 {
   const url = new URL(location.href);
   const authError = url.searchParams.get("authError");
@@ -91,15 +100,6 @@ setSessionRecoveryHandler(async () => {
   await account.refresh();
   return account.status === "authenticated";
 });
-
-const screens: Record<BridgeScreen, { command(raw: string): unknown }> = {
-  library,
-  builder,
-  sandbox,
-  online,
-  simulator,
-  account,
-};
 
 function showPage(route: Route) {
   const deck =

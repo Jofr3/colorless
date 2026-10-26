@@ -25,6 +25,7 @@ import { formatDecklist } from "../decks/decklistText";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
+import { epochGuard, sessionUser } from "./epochGuard";
 
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
 type CatalogPage = { items: BuilderCard[]; total: number };
@@ -65,8 +66,8 @@ export class LuaBuilder {
   transfer = "";
   private user = "";
   private active = false;
-  private epoch = 0;
-  private searchEpoch = 0;
+  private readonly epoch = epochGuard();
+  private readonly searches = epochGuard();
   private revision = 0;
   private saver?: DeckSaver<DeckSnapshot>;
   private savedTimer?: ReturnType<typeof setTimeout>;
@@ -90,9 +91,10 @@ export class LuaBuilder {
     private images: (cards: { id: string; url: string }[]) => void = () => {},
   ) {}
   session(status: AccountStatus, user: string) {
-    if (status === "loading" || (status === "authenticated" && user === this.user)) return;
-    this.epoch++;
-    this.searchEpoch++;
+    const next = sessionUser(status, user, this.user);
+    if (next === undefined) return;
+    this.epoch.invalidate();
+    this.searches.invalidate();
     clearTimeout(this.searchTimer);
     clearTimeout(this.savedTimer);
     this.pendingExit = undefined;
@@ -100,7 +102,7 @@ export class LuaBuilder {
     this.importing = false;
     this.saver?.dispose();
     this.saver = undefined;
-    this.user = status === "authenticated" ? user : "";
+    this.user = next;
     this.entries.clear();
     this.cards.clear();
     this.previewIds = [];
@@ -342,18 +344,18 @@ export class LuaBuilder {
     }
     clearTimeout(this.savedTimer);
     clearTimeout(this.searchTimer);
-    this.searchEpoch++;
+    this.searches.invalidate();
     this.busy = false;
     this.previewIds = [];
     this.results = [];
-    const epoch = ++this.epoch;
+    const live = this.epoch.next();
     const id = this.id;
     this.phase = "loading";
     this.message = "";
     this.emit();
     try {
       const data = await api.getDeck(id);
-      if (epoch !== this.epoch) return;
+      if (!live()) return;
       this.name = data.name;
       this.format = data.format ?? "standard";
       this.cover = data.chosenCoverCardId;
@@ -368,13 +370,13 @@ export class LuaBuilder {
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
-          if (epoch !== this.epoch || !this.user) throw new Error("Session changed");
+          if (!live() || !this.user) throw new Error("Session changed");
           const result = await api.patchDeck(id, { ...snapshot, name: snapshot.name || undefined });
-          if (epoch === this.epoch) this.acknowledged = JSON.stringify(snapshot);
+          if (live()) this.acknowledged = JSON.stringify(snapshot);
           return result;
         },
         onStatus: (status) => {
-          if (epoch !== this.epoch) return;
+          if (!live()) return;
           this.saveStatus = status;
           clearTimeout(this.savedTimer);
           if (status === "saved") {
@@ -399,22 +401,22 @@ export class LuaBuilder {
       });
       this.phase = "ready";
       this.emit();
-      await Promise.all([this.hydrate(epoch), this.search(), this.loadOptions(epoch)]);
+      await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
     } catch (error) {
       reportError("open deck", error);
-      if (epoch === this.epoch) {
+      if (live()) {
         this.phase = "error";
         this.message = "Could not open this deck. Try again.";
         this.emit();
       }
     }
   }
-  private async hydrate(epoch: number) {
+  private async hydrate(live: () => boolean) {
     try {
       const ids = [...this.entries.keys()].filter((id) => !this.cards.has(id));
       for (let start = 0; start < ids.length; start += 100) {
         const data = await api.getCards({ id: ids.slice(start, start + 100), pageSize: 100 });
-        if (epoch !== this.epoch) return;
+        if (!live()) return;
         for (const item of data.items) {
           const c = toBuilderCard(item);
           this.cards.set(c.cardId, c);
@@ -423,27 +425,27 @@ export class LuaBuilder {
       this.emit();
     } catch (error) {
       reportError("hydrate deck cards", error);
-      if (epoch === this.epoch) {
+      if (live()) {
         this.message = "Some cards could not load. Retry loading before adding cards.";
         this.emit();
       }
     }
   }
-  private async loadOptions(epoch: number) {
+  private async loadOptions(live: () => boolean) {
     try {
       const [facets, sets, series] = await Promise.all([
         api.getFacets(),
         api.getSets(),
         api.getSeries(),
       ]);
-      if (epoch !== this.epoch) return;
+      if (!live()) return;
       this.facets = facets;
       this.sets = sets;
       this.series = series;
       this.emit();
     } catch (error) {
       reportError("load filter options", error);
-      if (epoch === this.epoch) {
+      if (live()) {
         this.message = "Filter options could not load. Retry loading to reconnect.";
         this.emit();
       }
@@ -452,23 +454,23 @@ export class LuaBuilder {
   async search() {
     clearTimeout(this.searchTimer);
     if (this.phase !== "ready") return;
-    const epoch = this.epoch;
-    const request = ++this.searchEpoch;
+    const live = this.epoch.current();
+    const latest = this.searches.next();
+    const current = () => live() && latest();
     this.busy = true;
     this.results = [];
     this.emit();
     const catalog = this.catalog();
     try {
       const data = await this.fetchPage(catalog, this.page, true);
-      if (epoch !== this.epoch || request !== this.searchEpoch) return;
+      if (!current()) return;
       this.results = data.items;
       this.total = data.total;
     } catch (error) {
       reportError("search cards", error);
-      if (epoch === this.epoch && request === this.searchEpoch)
-        this.message = "Card search failed. Try again.";
+      if (current()) this.message = "Card search failed. Try again.";
     }
-    if (epoch === this.epoch && request === this.searchEpoch) {
+    if (current()) {
       this.busy = false;
       this.emit();
       this.prefetch(catalog);
@@ -519,14 +521,14 @@ export class LuaBuilder {
   /** Warm the neighbouring pages and queue their artwork behind this page's. */
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     const last = Math.max(1, Math.ceil(this.total / this.size));
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
         this.fetchPage(catalog, page)
           .then(() => {
-            if (epoch === this.epoch && catalog.key === this.pageKey) this.publishImages();
+            if (live() && catalog.key === this.pageKey) this.publishImages();
           })
           .catch((error) => reportError("prefetch card page", error));
       }
@@ -641,7 +643,8 @@ export class LuaBuilder {
     this.emit();
   }
   private async onRetry() {
-    await Promise.all([this.hydrate(this.epoch), this.search(), this.loadOptions(this.epoch)]);
+    const live = this.epoch.current();
+    await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
   }
   private onName(name: string) {
     this.name = name.slice(0, DECK_NAME_MAX);
@@ -705,7 +708,7 @@ export class LuaBuilder {
       return;
     }
     clearTimeout(this.searchTimer);
-    this.searchEpoch++;
+    this.searches.invalidate();
     this.busy = false;
     this.results = cached.items;
     this.total = cached.total;
@@ -783,7 +786,7 @@ export class LuaBuilder {
           : value,
     );
     this.page = 1;
-    this.searchEpoch++;
+    this.searches.invalidate();
     clearTimeout(this.searchTimer);
     if (action === "filter")
       this.searchTimer = setTimeout(() => void this.search(), SEARCH_DEBOUNCE_MS);
@@ -795,13 +798,13 @@ export class LuaBuilder {
     if (key === "supertype") this.filters = { ...this.filters, subtypes: [], suffixes: [] };
   }
   private async onDetail(id: string) {
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     this.selected = id;
     this.details = "Loading card details...";
     this.emit();
     try {
       const c = await api.getCard(id);
-      if (epoch !== this.epoch || this.selected !== id) return;
+      if (!live() || this.selected !== id) return;
       this.cards.set(c.id, toBuilderCard(c));
       this.gaps.set(c.id, simulationGaps(c));
       this.details =
@@ -816,7 +819,7 @@ export class LuaBuilder {
           .join("\n\n") || "No additional rules text.";
     } catch (error) {
       reportError("load card details", error);
-      if (epoch !== this.epoch || this.selected !== id) return;
+      if (!live() || this.selected !== id) return;
       this.details = "Details could not load. Close and reopen to retry.";
     }
     this.emit();
@@ -838,13 +841,13 @@ export class LuaBuilder {
   private async onImport(text: string) {
     if (this.importing) return;
     const generation = ++this.importGeneration;
-    const epoch = this.epoch;
+    const live = this.epoch.current();
     this.importing = true;
     this.message = "Resolving decklist...";
     this.emit();
     try {
       const result = await importDecklist(text);
-      if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
+      if (!live() || generation !== this.importGeneration || !this.active) return;
       if (
         result.unmatched.length ||
         result.entries.length === 0 ||
@@ -864,10 +867,10 @@ export class LuaBuilder {
       }
     } catch (error) {
       reportError("import decklist", error);
-      if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
+      if (!live() || generation !== this.importGeneration || !this.active) return;
       this.message = "Import failed. Your deck is unchanged. Try again.";
     }
-    if (epoch === this.epoch) {
+    if (live()) {
       this.importing = false;
       this.emit();
     }
