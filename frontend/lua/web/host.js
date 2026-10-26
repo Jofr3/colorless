@@ -28,12 +28,7 @@ let preferencesMailboxCreated = false;
 let settingsRequest = 0;
 let settingsTab = 1;
 let settingsOpen = false;
-let accountReady = false;
-const pendingLibraryCommands = [];
-const pendingBuilderCommands = [];
-const pendingSandboxCommands = [];
-const pendingSimulatorCommands = [];
-const pendingOnlineCommands = [];
+let bridgeReady = false;
 // `COLORLESS:<channel>:<rest>` prints whose rest is handed on unchanged.
 const relays = {
   page: (page) => setPage(page),
@@ -48,7 +43,6 @@ function relayChannel(message) {
   const channel = message.match(/^COLORLESS:([a-z]+):/)?.[1];
   return channel && Object.hasOwn(relays, channel) ? channel : undefined;
 }
-let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
 function writeMailbox(name, text) {
@@ -63,22 +57,10 @@ document.addEventListener("colorless:account-state", (event) => {
   if (accountSnapshot.split("\t")[1] !== "authenticated") finishName(true);
   if (accountSnapshot.split("\t")[1] === "authenticated") clearAuthInputs();
 });
-document.addEventListener("colorless:account-ready", () => {
-  accountReady = true;
-  void prepareTransitionArt();
-  for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
-  for (const command of pendingBuilderCommands.splice(0)) builderCommand(command);
-  for (const command of pendingSandboxCommands.splice(0)) sandboxCommand(command);
-  for (const command of pendingSimulatorCommands.splice(0)) simulatorCommand(command);
-  for (const command of pendingOnlineCommands.splice(0)) onlineCommand(command);
-  if (accountRefreshPending) accountCommand("refresh");
+document.addEventListener("colorless:bridge-ready", () => {
+  bridgeReady = true;
 });
 function accountCommand(command) {
-  if (!accountReady) {
-    accountRefreshPending = true;
-    return;
-  }
-  accountRefreshPending = false;
   document.dispatchEvent(new CustomEvent("colorless:account-command", { detail: command }));
 }
 // build:lua replaces the empty object with web/limits.json, generated from the
@@ -448,9 +430,16 @@ globalThis.Module = {
     fail("The menu could not start. Reload to try again, or use the menu links.");
   },
 };
-// Every classic script (game package, runtime) has run by the window load event.
+// Boot invariant: Love() starts on window load, after every classic script
+// (game package, runtime) and the deferred bridge module have run, so Lua's
+// first print finds the bridge listening. A bridge that failed to run would
+// leave every screen dead, so show the failure overlay instead of starting.
 addEventListener("load", () => {
   if (typeof Love !== "function") return;
+  if (!bridgeReady) {
+    fail("Could not load the menu. Reload to try again.");
+    return;
+  }
   Love(Module)
     .then((module) => {
       runtime = module;
@@ -647,10 +636,6 @@ document.addEventListener("colorless:library-state", (event) =>
   writeMailbox("__library.txt", event.detail),
 );
 function libraryCommand(command, owner = "library") {
-  if (!accountReady) {
-    pendingLibraryCommands.push(command);
-    return;
-  }
   const [action, field, value] = command.split("\t").map(decodeURIComponent);
   if (action === "input") {
     finishLibraryInput();
@@ -819,10 +804,6 @@ function finishBuilderInput(cancel = false) {
   canvas.focus({ preventScroll: true });
 }
 function builderCommand(command) {
-  if (!accountReady) {
-    pendingBuilderCommands.push(command);
-    return;
-  }
   const [action, field, value] = command.split("\t").map(decodeURIComponent);
   if (action === "input") {
     finishBuilderInput();
@@ -1007,10 +988,6 @@ document.addEventListener("colorless:sandbox-state", (event) =>
   writeMailbox("__sandbox.txt", event.detail),
 );
 function sandboxCommand(command) {
-  if (!accountReady) {
-    pendingSandboxCommands.push(command);
-    return;
-  }
   const action = command.split("\t")[0];
   if (action === "input" || action === "finish-input") {
     libraryCommand(command, "sandbox");
@@ -1030,10 +1007,6 @@ document.addEventListener("colorless:simulator-state", (event) =>
   writeMailbox("__simulator.txt", event.detail),
 );
 function simulatorCommand(command) {
-  if (!accountReady) {
-    pendingSimulatorCommands.push(command);
-    return;
-  }
   document.dispatchEvent(new CustomEvent("colorless:simulator-command", { detail: command }));
 }
 
@@ -1042,10 +1015,6 @@ document.addEventListener("colorless:online-state", (event) =>
   writeMailbox("__online.txt", event.detail),
 );
 function onlineCommand(command) {
-  if (!accountReady) {
-    pendingOnlineCommands.push(command);
-    return;
-  }
   const action = command.split("\t")[0];
   if (action === "input" || action === "finish-input") {
     libraryCommand(command, "online");

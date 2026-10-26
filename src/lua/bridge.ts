@@ -91,4 +91,4 @@ document.addEventListener("colorless:authenticate", (event) => {
     return;
   void account.authenticate(mode, email, password, name);
 });
-document.dispatchEvent(new Event("colorless:account-ready"));
+document.dispatchEvent(new Event("colorless:bridge-ready"));
