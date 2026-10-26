@@ -764,14 +764,18 @@ for (const type of ["keydown", "keyup", "keypress"])
 document.addEventListener("colorless:route", (e) =>
   setPage(e.detail.page, !e.detail.replace, e.detail.id || ""),
 );
+// build:lua replaces the empty object with web/wire_fields.json: each mailbox row's field
+// name → 0-based column, generated from src/lua/wireFields.ts by scripts/lua-constants.ts.
+const wireFields = /* lua-wire-fields */ {};
 document.addEventListener("colorless:builder-state", (e) => {
   writeMailbox("__builder.txt", e.detail);
   if (currentPage === "builder") {
     const f = e.detail.split("\n")[0].split("\t").map(decodeURIComponent);
-    document.title = `Colorless — ${f[2] || "Deck builder"}`;
+    const { name, count } = wireFields.builder.header;
+    document.title = `Colorless — ${f[name] || "Deck builder"}`;
     canvas.setAttribute(
       "aria-label",
-      `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`,
+      `Deck builder. ${f[name]}. ${f[count]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`,
     );
   }
 });

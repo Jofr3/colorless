@@ -12,6 +12,19 @@ import {
 import { SimulatorOrder } from "./simulatorOrder";
 import { LocalTableSource } from "./tableSource";
 import { encodeFields } from "./wire";
+import { type RowKind, WIRE_ROWS, wireColumn } from "./wireFields";
+
+const SIM = WIRE_ROWS.sim;
+const at =
+  <K extends RowKind>(kind: K) =>
+  (row: string[], field: K["fields"][number]) =>
+    row[wireColumn(kind, field)];
+const header = at(SIM.header);
+const option = at(SIM.option);
+const cardAction = at(SIM.cardAction);
+const sidebar = at(SIM.sidebar);
+const card = at(SIM.card);
+const SHUFFLED = wireColumn(SIM.header, "shuffled");
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -50,13 +63,27 @@ const setup = (seed: number, deck: typeof MIXED_DECK) => ({
 function click(sim: LuaSimulator, raw: string, r: () => number) {
   const rows = parse(raw);
   const pick = <T>(xs: T[]) => xs[Math.floor(r() * xs.length)];
-  const rev = rows[0]?.[0] ?? "";
-  const ids = (keep: (row: string[]) => boolean) =>
-    rows.filter((x) => x[1] && keep(x)).map((x) => x[1] ?? "");
-  const menu = ids((x) => (x[0] === "O" || x[0] === "F") && x[4] === "false");
-  const attacks = ids((x) => x[0] === "K" && x[5] === "false" && x[10] === "true");
-  const buttons = ids((x) => (x[0] === "K" && x[5] === "false") || x[0] === "A");
-  const own = rows.filter((x) => x[0] === "C" && x[4] === "you" && x[5] === "hand");
+  const rev = header(rows[0] ?? [], "revision") ?? "";
+  const ids = (keep: (row: string[]) => string | undefined) =>
+    rows.flatMap((x) => {
+      const token = keep(x);
+      return token ? [token] : [];
+    });
+  const menu = ids((x) =>
+    (x[0] === "O" || x[0] === "F") && option(x, "disabled") === "false"
+      ? option(x, "token")
+      : undefined,
+  );
+  const liveAction = (x: string[]) => x[0] === "K" && cardAction(x, "disabled") === "false";
+  const attacks = ids((x) =>
+    liveAction(x) && cardAction(x, "hasCost") === "true" ? cardAction(x, "token") : undefined,
+  );
+  const buttons = ids((x) =>
+    liveAction(x) ? cardAction(x, "token") : x[0] === "A" ? sidebar(x, "token") : undefined,
+  );
+  const own = rows.filter(
+    (x) => x[0] === "C" && card(x, "owner") === "you" && card(x, "zone") === "hand",
+  );
   const choice =
     menu.length && r() < 0.8
       ? menu
@@ -69,7 +96,9 @@ function click(sim: LuaSimulator, raw: string, r: () => number) {
   else if (own.length) {
     const c = pick(own) ?? [];
     const to = pick(["active", "bench", "playmat"]) ?? "bench";
-    sim.command(encodeFields(["move", c[1] ?? "", "hand", c[6] ?? "", to, "0"]));
+    sim.command(
+      encodeFields(["move", card(c, "uid") ?? "", "hand", card(c, "index") ?? "", to, "0"]),
+    );
   } else sim.command("dismiss");
 }
 
@@ -95,12 +124,12 @@ describe("LuaSimulator.emit", () => {
         const again = parse(published.at(-1) ?? "");
         const [head = [], ...rest] = first;
         const [headAgain = [], ...restAgain] = again;
-        expect(Number(headAgain[0])).toBe(Number(head[0]) + 1);
-        expect(headAgain[19]).toBe("");
-        expect(headAgain.slice(1, 19)).toEqual(head.slice(1, 19));
-        expect(headAgain.slice(20)).toEqual(head.slice(20));
+        expect(Number(header(headAgain, "revision"))).toBe(Number(header(head, "revision")) + 1);
+        expect(headAgain[SHUFFLED]).toBe("");
+        expect(headAgain.slice(1, SHUFFLED)).toEqual(head.slice(1, SHUFFLED));
+        expect(headAgain.slice(SHUFFLED + 1)).toEqual(head.slice(SHUFFLED + 1));
         expect(restAgain).toEqual(rest);
-        if (head[19]) shuffles++;
+        if (head[SHUFFLED]) shuffles++;
       }
     }
     expect(shuffles).toBeGreaterThan(0);

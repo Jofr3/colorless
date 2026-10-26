@@ -4,6 +4,7 @@ import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
 import { encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
 
 const decks = [
   {
@@ -61,7 +62,7 @@ const deckRows = (snapshot: unknown) =>
       .split("\n")
       .filter((line) => line.startsWith("D\t"))
       .map((line) => line.split("\t"))
-      .map((fields) => [fields[1], fields[7]]),
+      .map((fields) => [fields[1], fields[wireColumn(WIRE_ROWS.library.deck, "illegal")]]),
   );
 describe("Lua deck library", () => {
   it("marks incomplete decks illegal at once and judges complete ones in the background", async () => {

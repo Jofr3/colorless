@@ -2,6 +2,9 @@ import { simulationGaps, type SimulationGap } from "@colorless/engine";
 import * as api from "../lib/api";
 import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
+import { WIRE_ROWS, type WireValue, wireRow } from "./wireFields";
+
+const W = WIRE_ROWS.builder;
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
 import { formatById } from "@colorless/engine";
 import { ENERGY_TYPES, type BuilderCard } from "../decks/cards";
@@ -188,80 +191,108 @@ export class LuaBuilder {
     const illegal = illegalCardNames(deck, formatById(this.format));
     const missing = [...this.entries.keys()].filter((id) => !this.cards.has(id)).length;
     const groups = countsBySupertype(deck);
-    const rows: (string | number)[][] = [
-      [
-        ++this.revision,
-        this.phase,
-        this.name,
-        this.format,
-        this.saveStatus,
-        this.message,
-        +this.busy,
-        this.page,
-        Math.max(1, Math.ceil(this.total / this.size)),
-        this.total,
+    const rows: WireValue[][] = [
+      wireRow(W.header, {
+        revision: ++this.revision,
+        phase: this.phase,
+        name: this.name,
+        format: this.format,
+        saveStatus: this.saveStatus,
+        message: this.message,
+        busy: +this.busy,
+        page: this.page,
+        pages: Math.max(1, Math.ceil(this.total / this.size)),
+        total: this.total,
         count,
-        this.selected,
-        this.details,
-        this.transfer,
-        this.cover ?? "",
-        +this.importing,
-        +this.dirty,
-      ],
+        selected: this.selected,
+        details: this.details,
+        transfer: this.transfer,
+        cover: this.cover ?? "",
+        importing: +this.importing,
+        dirty: +this.dirty,
+      }),
     ];
-    const row = (tag: string, c: BuilderCard) => [
-      tag,
-      c.cardId,
-      c.name,
-      c.supertype,
-      c.subtype,
-      this.entries.get(c.cardId) ?? 0,
-      remaining(c),
-      c.hp ?? "",
-      c.regulationMark ?? "",
-      c.number ?? "",
-      c.hasImage === false ? 0 : 1,
-      copyLimit(c),
-      +illegal.has(c.name),
-      (this.gaps.get(c.cardId) ?? []).join(","),
-    ];
+    const row = (tag: "C" | "D" | "S", c: BuilderCard) =>
+      wireRow(
+        W.card,
+        {
+          cardId: c.cardId,
+          name: c.name,
+          supertype: c.supertype,
+          subtype: c.subtype,
+          quantity: this.entries.get(c.cardId) ?? 0,
+          remaining: remaining(c),
+          hp: c.hp ?? "",
+          mark: c.regulationMark ?? "",
+          number: c.number ?? "",
+          copyLimit: copyLimit(c),
+          illegal: +illegal.has(c.name),
+          gaps: (this.gaps.get(c.cardId) ?? []).join(","),
+        },
+        tag,
+      );
     for (const c of this.results) rows.push(row("C", c));
     for (const [id, quantity] of this.entries) {
       const c = this.cards.get(id);
-      rows.push(c ? row("D", c) : ["D", id, "Unavailable card", "", "", quantity, 0]);
+      rows.push(
+        c
+          ? row("D", c)
+          : wireRow(
+              W.card,
+              {
+                cardId: id,
+                name: "Unavailable card",
+                supertype: "",
+                subtype: "",
+                quantity,
+                remaining: 0,
+                hp: "",
+                mark: "",
+                number: "",
+                copyLimit: "",
+                illegal: "",
+                gaps: "",
+              },
+              "D",
+            ),
+      );
     }
     const selectedCard = this.cards.get(this.selected);
     if (selectedCard) rows.push(row("S", selectedCard));
-    rows.push([
-      "V",
-      missing
-        ? `${missing} card(s) unavailable. Remove them or retry loading.`
-        : validation.legal
-          ? "Ready to play"
-          : validation.issues.map((i) => i.message).join("\n"),
-      groups.Pokémon,
-      groups.Trainer,
-      groups.Energy,
-    ]);
+    rows.push(
+      wireRow(W.validation, {
+        message: missing
+          ? `${missing} card(s) unavailable. Remove them or retry loading.`
+          : validation.legal
+            ? "Ready to play"
+            : validation.issues.map((i) => i.message).join("\n"),
+        pokemon: groups.Pokémon,
+        trainer: groups.Trainer,
+        energy: groups.Energy,
+      }),
+    );
     for (const o of this.options()) {
       const value = this.value(o.key);
       const i = o.values.indexOf(value);
       const selected = this.filters[o.key as keyof Filters];
-      rows.push([
-        "O",
-        o.key,
-        o.label,
-        Array.isArray(selected) && selected.length > 1
-          ? `${selected.length} selected`
-          : (o.labels?.[i] ?? (value || "All")),
-        o.values.length,
-        i + 1,
-        Array.isArray(selected) && selected.length > 0
-          ? o.values
-              .flatMap((v, index) => (selected.includes(v as never) ? [index + 1] : []))
-              .join(",")
-          : String(i + 1),
-      ]);
+      rows.push(
+        wireRow(W.option, {
+          key: o.key,
+          label: o.label,
+          value:
+            Array.isArray(selected) && selected.length > 1
+              ? `${selected.length} selected`
+              : (o.labels?.[i] ?? (value || "All")),
+          count: o.values.length,
+          index: i + 1,
+          selected:
+            Array.isArray(selected) && selected.length > 0
+              ? o.values
+                  .flatMap((v, index) => (selected.includes(v as never) ? [index + 1] : []))
+                  .join(",")
+              : String(i + 1),
+        }),
+      );
     }
     const option = this.options().find((o) => o.key === this.optionKey);
     if (option) {
@@ -272,29 +303,32 @@ export class LuaBuilder {
         1,
         Math.min(Math.max(1, Math.ceil(choices.length / 7)), this.optionPage),
       );
-      rows.push([
-        "P",
-        this.optionKey,
-        option.label,
-        this.optionPage,
-        Math.max(1, Math.ceil(choices.length / 7)),
-        this.optionQuery,
-      ]);
+      rows.push(
+        wireRow(W.picker, {
+          key: this.optionKey,
+          label: option.label,
+          page: this.optionPage,
+          pages: Math.max(1, Math.ceil(choices.length / 7)),
+          query: this.optionQuery,
+        }),
+      );
       const selected = this.filters[this.optionKey as keyof Filters];
       for (const c of choices.slice((this.optionPage - 1) * 7, this.optionPage * 7)) {
-        rows.push([
-          "Q",
-          c.value,
-          c.label,
-          +(Array.isArray(selected)
-            ? c.value === ""
-              ? selected.length === 0
-              : selected.includes(c.value as never)
-            : this.value(this.optionKey) === c.value),
-        ]);
+        rows.push(
+          wireRow(W.choice, {
+            value: c.value,
+            label: c.label,
+            selected: +(Array.isArray(selected)
+              ? c.value === ""
+                ? selected.length === 0
+                : selected.includes(c.value as never)
+              : this.value(this.optionKey) === c.value),
+          }),
+        );
       }
     }
-    for (const k of ["query", "text", "hpMin", "hpMax", "sort"]) rows.push(["F", k, this.value(k)]);
+    for (const k of ["query", "text", "hpMin", "hpMax", "sort"])
+      rows.push(wireRow(W.field, { key: k, value: this.value(k) }));
     this.publish(encodeRows(rows));
     this.publishImages();
   }

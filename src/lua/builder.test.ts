@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LuaBuilder } from "./builder";
 import { encodeFields } from "./wire";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
 import type { CardBrief, Deck } from "@colorless/schema";
 vi.mock("../lib/api", () => ({
@@ -197,7 +198,7 @@ describe("Lua deck builder", () => {
           .split("\n")
           .filter((line) => line.startsWith("D\t"))
           .map((line) => line.split("\t"))
-          .map((fields) => [fields[1], fields[12]]),
+          .map((fields) => [fields[1], fields[wireColumn(WIRE_ROWS.builder.card, "illegal")]]),
       );
     expect(rows()).toEqual({ a: "0", x: "1" });
     await b.command("format");

@@ -1,0 +1,210 @@
+{
+  "sim": {
+    "header": {
+      "revision": 0,
+      "phase": 1,
+      "you": 2,
+      "opponent": 3,
+      "turn": 4,
+      "gamePhase": 5,
+      "message": 6,
+      "title": 7,
+      "hint": 8,
+      "turnIndex": 9,
+      "turnCount": 10,
+      "waitingOn": 11,
+      "activePlayer": 12,
+      "seat": 13,
+      "energyAttached": 14,
+      "supporterPlayed": 15,
+      "retreated": 16,
+      "outcome": 17,
+      "outcomeDetail": 18,
+      "shuffled": 19,
+      "matchId": 20
+    },
+    "lifecycle": {
+      "mode": 1,
+      "spectating": 2,
+      "awayName": 3,
+      "awayMs": 4,
+      "flags": 5,
+      "allow": 6
+    },
+    "rareCandy": {
+      "uid": 1
+    },
+    "knockedOut": {
+      "uid": 1
+    },
+    "side": {
+      "owner": 1,
+      "deck": 2,
+      "prizes": 3,
+      "hand": 4,
+      "discard": 5,
+      "mulligans": 6
+    },
+    "card": {
+      "uid": 1,
+      "cardId": 2,
+      "name": 3,
+      "owner": 4,
+      "zone": 5,
+      "index": 6,
+      "hidden": 7,
+      "category": 8,
+      "trainerType": 9,
+      "stage": 10,
+      "hp": 11,
+      "damage": 12,
+      "energies": 13,
+      "tools": 14,
+      "status": 15,
+      "types": 16,
+      "draggable": 17,
+      "displayIndex": 18
+    },
+    "cardAction": {
+      "token": 1,
+      "uid": 2,
+      "label": 3,
+      "colour": 4,
+      "disabled": 5,
+      "targetUid": 6,
+      "group": 7,
+      "cost": 8,
+      "damage": 9,
+      "hasCost": 10
+    },
+    "sidebar": {
+      "token": 1,
+      "label": 2,
+      "colour": 3,
+      "disabled": 4,
+      "slot": 5
+    },
+    "menu": {
+      "kind": 1,
+      "title": 2,
+      "note": 3,
+      "mandatory": 4,
+      "id": 5,
+      "hideTargetOutline": 6,
+      "counterSourceUid": 7,
+      "counterTransfer": 8
+    },
+    "option": {
+      "token": 1,
+      "label": 2,
+      "colour": 3,
+      "disabled": 4,
+      "selected": 5,
+      "cardId": 6,
+      "uid": 7,
+      "dimmed": 8
+    },
+    "info": {
+      "cardId": 1,
+      "category": 2,
+      "trainerType": 3,
+      "stage": 4,
+      "hp": 5,
+      "types": 6,
+      "retreat": 7,
+      "weakness": 8,
+      "resistance": 9,
+      "effect": 10,
+      "abilities": 11,
+      "attacks": 12,
+      "energyType": 13,
+      "name": 14
+    }
+  },
+  "library": {
+    "header": {
+      "revision": 0,
+      "phase": 1,
+      "busy": 2,
+      "message": 3,
+      "query": 4,
+      "sort": 5,
+      "page": 6,
+      "pages": 7,
+      "total": 8,
+      "result": 9
+    },
+    "deck": {
+      "id": 1,
+      "name": 2,
+      "count": 3,
+      "tint": 4,
+      "illegal": 5
+    }
+  },
+  "builder": {
+    "header": {
+      "revision": 0,
+      "phase": 1,
+      "name": 2,
+      "format": 3,
+      "saveStatus": 4,
+      "message": 5,
+      "busy": 6,
+      "page": 7,
+      "pages": 8,
+      "total": 9,
+      "count": 10,
+      "selected": 11,
+      "details": 12,
+      "transfer": 13,
+      "cover": 14,
+      "importing": 15,
+      "dirty": 16
+    },
+    "card": {
+      "cardId": 1,
+      "name": 2,
+      "supertype": 3,
+      "subtype": 4,
+      "quantity": 5,
+      "remaining": 6,
+      "hp": 7,
+      "mark": 8,
+      "number": 9,
+      "copyLimit": 10,
+      "illegal": 11,
+      "gaps": 12
+    },
+    "validation": {
+      "message": 1,
+      "pokemon": 2,
+      "trainer": 3,
+      "energy": 4
+    },
+    "option": {
+      "key": 1,
+      "label": 2,
+      "value": 3,
+      "count": 4,
+      "index": 5,
+      "selected": 6
+    },
+    "picker": {
+      "key": 1,
+      "label": 2,
+      "page": 3,
+      "pages": 4,
+      "query": 5
+    },
+    "choice": {
+      "value": 1,
+      "label": 2,
+      "selected": 3
+    },
+    "field": {
+      "key": 1,
+      "value": 2
+    }
+  }
+}

@@ -10,6 +10,7 @@ local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
+local W=require('ui.wire_fields').library
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
@@ -80,19 +81,21 @@ function Library:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
   local lines=Codec.rows(raw)
-  local f=lines[1]; if not f or #f<14 then return end
-  self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
-  self.query,self.sort=f[6],f[8]
-  self.page,self.pages,self.total=tonumber(f[9]),tonumber(f[10]),tonumber(f[11])
+  local H=W.header
+  local f=lines[1]; if not f or #f<H.result then return end
+  self.phase,self.busy,self.message=f[H.phase],f[H.busy]=='1',f[H.message]
+  self.query,self.sort=f[H.query],f[H.sort]
+  self.page,self.pages,self.total=tonumber(f[H.page]),tonumber(f[H.pages]),tonumber(f[H.total])
   self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
   if self.editing~='search' then self.search=self.query end
   local items={}; local signature={self.query,tostring(self.page)}
   for i=2,#lines do
     local row=lines[i]
     if row[1]=='D' then
-      -- Field 8 is the legality verdict: '' while it is still being checked.
-      items[#items+1]={kind='deck',id=row[2],name=row[3],parent=row[4],count=tonumber(row[5]) or 0,tint=tonumber(row[6]) or 0,cover=row[7] or '',illegal=row[8]=='1'}
-      signature[#signature+1]=table.concat(row,'\t',1,7)
+      local d=W.deck
+      -- The legality verdict is '' while it is still being checked.
+      items[#items+1]={kind='deck',id=row[d.id],name=row[d.name],count=tonumber(row[d.count]) or 0,tint=tonumber(row[d.tint]) or 0,illegal=row[d.illegal]=='1'}
+      signature[#signature+1]=table.concat({row[d.id],row[d.name],row[d.count],row[d.tint]},'\t')
     end
   end
   signature=table.concat(signature,'\n')
@@ -103,7 +106,7 @@ function Library:sync(raw)
     -- A verdict arriving later only flips the alert; the piles stay put.
     for i,item in ipairs(items) do if self.items[i] then self.items[i].illegal=item.illegal end end
   end
-  if self.modal and self.modal.pending and f[14]=='ok' then self:closeModal() end
+  if self.modal and self.modal.pending and f[H.result]=='ok' then self:closeModal() end
   if self.phase~='ready' and not self.busy then self:closeModal() end
   self:build()
 end

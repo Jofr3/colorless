@@ -15,6 +15,7 @@ local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
 local Library=require('ui.library')
 local Codec=require('ui.codec')
+local W=require('ui.wire_fields').sim
 local Mailbox=require('ui.mailbox')
 local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
@@ -179,14 +180,14 @@ function Simulator:beginKoPrizes()
   local p=self.koPresentation
   p.prizes={};p.prizeStart=self.time
   local rows=Codec.rows(p.raw)
-  local flipped=rows[1][14]~=self.viewerSeat
+  local flipped=rows[1][W.header.seat]~=self.viewerSeat
   -- The destination snapshot may already face the next player. Map its
   -- public pile counts back onto the table that is still being presented.
   for _,r in ipairs(rows) do
     if r[1]=='S' then
-      local owner=flipped and (r[2]=='you' and 'opponent' or 'you') or r[2]
+      local owner=flipped and (r[W.side.owner]=='you' and 'opponent' or 'you') or r[W.side.owner]
       local side=self.sides[owner]
-      local taken=side and side.prizes-(tonumber(r[4]) or 0) or 0
+      local taken=side and side.prizes-(tonumber(r[W.side.prizes]) or 0) or 0
       if taken>0 then
         p.prizes[owner]={count=taken,prizesBefore=side.prizes,handCount=side.hand+taken,handBefore=side.hand}
       end
@@ -284,9 +285,10 @@ function Simulator:sync(raw,finishKo)
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
   local rows=Codec.rows(raw)
   local f=rows[1];if not f then return end
+  local H=W.header
   -- A same-deck restart is a fresh table, even though card UIDs are reused.
-  if f[21] and f[21]~='' then
-    if self.matchId and self.matchId~=f[21] then
+  if f[H.matchId] and f[H.matchId]~='' then
+    if self.matchId and self.matchId~=f[H.matchId] then
       if self.callbacks.transition then
         local accepted=self.callbacks.transition(function()
           local latest=self.wipeRaw
@@ -298,13 +300,13 @@ function Simulator:sync(raw,finishKo)
       end
       self:open(self.reduced,true)
     end
-    self.matchId=f[21]
+    self.matchId=f[H.matchId]
   end
   if self.koPresentation then
     local returned=false
     for _,r in ipairs(rows) do
-      if r[1]=='C' and (r[6]=='active' or r[6]=='bench') then
-        for _,c in ipairs(self.koPresentation.cards) do if r[2]==c.item.id then returned=true end end
+      if r[1]=='C' and (r[W.card.zone]=='active' or r[W.card.zone]=='bench') then
+        for _,c in ipairs(self.koPresentation.cards) do if r[W.card.uid]==c.item.id then returned=true end end
       end
     end
     if not returned then self.koPresentation.raw=raw;return end
@@ -319,10 +321,11 @@ function Simulator:sync(raw,finishKo)
   if finishKo~=true and not self.reduced and self.phase=='ready' then
     local cards,seen={},{}
     for _,r in ipairs(rows) do
-      if r[1]=='D' and not seen[r[2]] then
-        seen[r[2]]=true
+      local uid=r[W.knockedOut.uid]
+      if r[1]=='D' and not seen[uid] then
+        seen[uid]=true
         for _,c in ipairs(self.cards) do
-          if c.item.id==r[2] and (c.item.zone=='active' or c.item.zone=='bench') then cards[#cards+1]=c end
+          if c.item.id==uid and (c.item.zone=='active' or c.item.zone=='bench') then cards[#cards+1]=c end
         end
       end
     end
@@ -338,51 +341,61 @@ function Simulator:sync(raw,finishKo)
   end
   self.raw=raw
   local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,gamePhase=self.gamePhase,rareCandy=self.rareCandy}
-  self.revision=tonumber(f[1]) or 0
-  self.phase,self.you,self.opponent=f[2],f[3],f[4]
-  self.turn=tonumber(f[5]) or 0;self.gamePhase=f[6] or '';self.message=f[7] or '';self.title=f[8] or '';self.hint=f[9] or ''
-  self.turnIndex=tonumber(f[10]) or 0;self.turnCount=tonumber(f[11]) or 0
-  self.waiting,self.activePlayer,self.viewerSeat=f[12] or '',f[13] or '',f[14] or ''
-  self.allow={energy=f[15]=='1',supporter=f[16]=='1',retreated=f[17]=='1'}
-  self.outcome,self.outcomeDetail=f[18] or '',f[19] or ''
-  self.shuffled=f[20] or ''
+  self.revision=tonumber(f[H.revision]) or 0
+  self.phase,self.you,self.opponent=f[H.phase],f[H.you],f[H.opponent]
+  self.turn=tonumber(f[H.turn]) or 0;self.gamePhase=f[H.gamePhase] or '';self.message=f[H.message] or '';self.title=f[H.title] or '';self.hint=f[H.hint] or ''
+  self.turnIndex=tonumber(f[H.turnIndex]) or 0;self.turnCount=tonumber(f[H.turnCount]) or 0
+  self.waiting,self.activePlayer,self.viewerSeat=f[H.waitingOn] or '',f[H.activePlayer] or '',f[H.seat] or ''
+  self.allow={energy=f[H.energyAttached]=='1',supporter=f[H.supporterPlayed]=='1',retreated=f[H.retreated]=='1'}
+  self.outcome,self.outcomeDetail=f[H.outcome] or '',f[H.outcomeDetail] or ''
+  self.shuffled=f[H.shuffled] or ''
   self.items={};self.sides={};self.actions={};self.cardActions={};self.info=self.info or {};self.rareCandy=nil
   local menu,away
   for i=2,#rows do
     local r=rows[i]
-    if r[1]=='S' then self.sides[r[2]]={deck=tonumber(r[3]) or 0,prizes=tonumber(r[4]) or 0,hand=tonumber(r[5]) or 0,discard=tonumber(r[6]) or 0,mulligan=tonumber(r[7]) or 0}
-    elseif r[1]=='C' then
+    if r[1]=='S' then local s=W.side
+      self.sides[r[s.owner]]={deck=tonumber(r[s.deck]) or 0,prizes=tonumber(r[s.prizes]) or 0,hand=tonumber(r[s.hand]) or 0,discard=tonumber(r[s.discard]) or 0,mulligan=tonumber(r[s.mulligans]) or 0}
+    elseif r[1]=='C' then local c=W.card
       -- Attached cards: "type|uid|cardId" per Energy, "uid|cardId" per Tool.
       local energies,energyCards={},{}
-      for _,part in ipairs(Energy.split(r[14])) do
+      for _,part in ipairs(Energy.split(r[c.energies])) do
         local kind,uid,cardId=part:match('^([^|]*)|?([^|]*)|?(.*)$')
         energies[#energies+1]=kind
         if uid and uid~='' then energyCards[#energyCards+1]={id=uid,cardId=cardId,kind=kind} end
       end
       local toolCards={}
-      for _,part in ipairs(Energy.split(r[15])) do
+      for _,part in ipairs(Energy.split(r[c.tools])) do
         local uid,cardId=part:match('^([^|]*)|?(.*)$')
         if uid and uid~='' then toolCards[#toolCards+1]={id=uid,cardId=cardId} end
       end
-      self.items[#self.items+1]={id=r[2],cardId=r[3],name=r[4],owner=r[5],zone=r[6],index=tonumber(r[7]) or 0,hidden=r[8]=='true',category=r[9] or '',trainerType=r[10] or '',stage=r[11] or '',
-        hp=tonumber(r[12]),damage=tonumber(r[13]) or 0,energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[16] or '',types=r[17] or '',draggable=r[18]=='true',displayIndex=tonumber(r[19]) or 0}
-    elseif r[1]=='R' then self.rareCandy=r[2]
-    elseif r[1]=='L' then
-      -- Lifecycle: mode, spectating, away name and forfeit ms, flags, allow.
-      if (r[2] or '')~='' then self.mode=r[2] end
-      away={name=r[4] or '',ms=r[5] or ''}
-      self.flags={};for _,flag in ipairs(Codec.list(r[6])) do self.flags[flag]=true end
-      self.allow.partial=r[7]=='partial'
-    elseif r[1]=='I' then
-      self.info[r[2]]={category=r[3] or '',trainerType=r[4] or '',stage=r[5] or '',hp=r[6] or '',types=r[7] or '',retreat=r[8] or '',weakness=r[9] or '',resistance=r[10] or '',effect=r[11] or '',abilities=r[12] or '',attacks=r[13] or '',energyType=r[14] or '',name=r[15] or ''}
-    elseif r[1]=='A' then self.actions[#self.actions+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',slot=r[6] or 'minor'}
-    elseif r[1]=='K' then
-      local list=self.cardActions[r[3]] or {};self.cardActions[r[3]]=list
-      list[#list+1]={token=r[2],uid=r[3],label=r[4],colour=T[r[5]] or T.blue,disabled=r[6]=='true',targetUid=r[7] or '',group=r[8] or '',cost=Energy.split(r[9]),damage=r[10] or '',hasCost=r[11]=='true'}
-    elseif r[1]=='M' then menu={kind=r[2],title=r[3],note=r[4],mandatory=r[5]=='true',id=r[6] or r[3],hideTargetOutline=r[7]=='true',counterSourceUid=r[8] or '',counterTransfer=r[9]=='true',options={},footer={}}
-    elseif (r[1]=='O' or r[1]=='F') and menu then
+      self.items[#self.items+1]={id=r[c.uid],cardId=r[c.cardId],name=r[c.name],owner=r[c.owner],zone=r[c.zone],index=tonumber(r[c.index]) or 0,hidden=r[c.hidden]=='true',
+        category=r[c.category] or '',trainerType=r[c.trainerType] or '',stage=r[c.stage] or '',hp=tonumber(r[c.hp]),damage=tonumber(r[c.damage]) or 0,
+        energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[c.status] or '',types=r[c.types] or '',
+        draggable=r[c.draggable]=='true',displayIndex=tonumber(r[c.displayIndex]) or 0}
+    elseif r[1]=='R' then self.rareCandy=r[W.rareCandy.uid]
+    elseif r[1]=='L' then local l=W.lifecycle
+      if (r[l.mode] or '')~='' then self.mode=r[l.mode] end
+      away={name=r[l.awayName] or '',ms=r[l.awayMs] or ''}
+      self.flags={};for _,flag in ipairs(Codec.list(r[l.flags])) do self.flags[flag]=true end
+      self.allow.partial=r[l.allow]=='partial'
+    elseif r[1]=='I' then local n=W.info
+      self.info[r[n.cardId]]={category=r[n.category] or '',trainerType=r[n.trainerType] or '',stage=r[n.stage] or '',hp=r[n.hp] or '',types=r[n.types] or '',
+        retreat=r[n.retreat] or '',weakness=r[n.weakness] or '',resistance=r[n.resistance] or '',effect=r[n.effect] or '',abilities=r[n.abilities] or '',
+        attacks=r[n.attacks] or '',energyType=r[n.energyType] or '',name=r[n.name] or ''}
+    elseif r[1]=='A' then local a=W.sidebar
+      self.actions[#self.actions+1]={token=r[a.token],label=r[a.label],colour=T[r[a.colour]] or T.blue,disabled=r[a.disabled]=='true',slot=r[a.slot] or 'minor'}
+    elseif r[1]=='K' then local k=W.cardAction
+      local uid=r[k.uid]
+      local list=self.cardActions[uid] or {};self.cardActions[uid]=list
+      list[#list+1]={token=r[k.token],uid=uid,label=r[k.label],colour=T[r[k.colour]] or T.blue,disabled=r[k.disabled]=='true',targetUid=r[k.targetUid] or '',
+        group=r[k.group] or '',cost=Energy.split(r[k.cost]),damage=r[k.damage] or '',hasCost=r[k.hasCost]=='true'}
+    elseif r[1]=='M' then local m=W.menu
+      menu={kind=r[m.kind],title=r[m.title],note=r[m.note],mandatory=r[m.mandatory]=='true',id=r[m.id] or r[m.title],hideTargetOutline=r[m.hideTargetOutline]=='true',
+        counterSourceUid=r[m.counterSourceUid] or '',counterTransfer=r[m.counterTransfer]=='true',options={},footer={}}
+    elseif (r[1]=='O' or r[1]=='F') and menu then local o=W.option
       local list=r[1]=='O' and menu.options or menu.footer
-      list[#list+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',selected=r[6]=='true',cardId=r[7] or '',uid=r[8] or '',dimmed=r[9]=='true'}
+      list[#list+1]={token=r[o.token],label=r[o.label],colour=T[r[o.colour]] or T.blue,disabled=r[o.disabled]=='true',selected=r[o.selected]=='true',
+        cardId=r[o.cardId] or '',uid=r[o.uid] or '',dimmed=r[o.dimmed]=='true'}
     end
   end
   self.menu=menu

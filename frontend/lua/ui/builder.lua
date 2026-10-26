@@ -16,6 +16,7 @@ local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
+local W=require('ui.wire_fields').builder
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
@@ -177,27 +178,32 @@ end
 function Builder:sync(raw)
   if not raw or raw==self.raw then return end;self.raw=raw
   local lines=Codec.rows(raw)
-  local f=lines[1];if not f or #f<17 then return end
-  self.phase,self.name,self.format,self.saveStatus,self.message=f[2],f[3],f[4],f[5],f[6]
-  self.busy=f[7]=='1';self.page,self.pages,self.total,self.count=tonumber(f[8]),tonumber(f[9]),tonumber(f[10]),tonumber(f[11])
-  self.selected,self.details=f[12],f[13]
-  if f[14]~=self.exportRaw then
-    self.exportRaw=f[14];self.transfer=f[14];self.transferBaseline=f[14]
+  local H=W.header
+  local f=lines[1];if not f or #f<H.dirty then return end
+  self.phase,self.name,self.format,self.saveStatus,self.message=f[H.phase],f[H.name],f[H.format],f[H.saveStatus],f[H.message]
+  self.busy=f[H.busy]=='1';self.page,self.pages,self.total,self.count=tonumber(f[H.page]),tonumber(f[H.pages]),tonumber(f[H.total]),tonumber(f[H.count])
+  self.selected,self.details=f[H.selected],f[H.details]
+  if f[H.transfer]~=self.exportRaw then
+    self.exportRaw=f[H.transfer];self.transfer=f[H.transfer];self.transferBaseline=f[H.transfer]
   end
-  self.cover=f[15];self.importing=f[16]=='1';self.dirty=f[17]=='1'
+  self.cover=f[H.cover];self.importing=f[H.importing]=='1';self.dirty=f[H.dirty]=='1'
   self.options={};self.choices={};self.deck={};self.items={};self.selectedItem=nil
   local signature={tostring(self.page)}
   for i=2,#lines do local r=lines[i]
     if r[1]=='C' or r[1]=='D' or r[1]=='S' then
-      local item={id=r[2],name=r[3],kind=r[4],subtype=r[5],quantity=tonumber(r[6]) or 0,remaining=tonumber(r[7]) or 0,hp=r[8] or '',mark=r[9] or '',number=r[10] or '',copyLimit=tonumber(r[12]) or 4,illegal=r[13]=='1',gaps=r[14] or ''}
+      local c=W.card
+      local item={id=r[c.cardId],name=r[c.name],kind=r[c.supertype],subtype=r[c.subtype],quantity=tonumber(r[c.quantity]) or 0,remaining=tonumber(r[c.remaining]) or 0,
+        hp=r[c.hp] or '',mark=r[c.mark] or '',number=r[c.number] or '',copyLimit=tonumber(r[c.copyLimit]) or 4,illegal=r[c.illegal]=='1',gaps=r[c.gaps] or ''}
       if r[1]=='C' then self.items[#self.items+1]=item;signature[#signature+1]=item.id
       elseif r[1]=='D' then self.deck[#self.deck+1]=item
       else self.selectedItem=item end
-    elseif r[1]=='V' then self.validation=r[2];self.groups={r[3],r[4],r[5]}
-    elseif r[1]=='O' then self.options[#self.options+1]={key=r[2],label=r[3],value=r[4],count=tonumber(r[5]) or 0,index=tonumber(r[6]) or 1,selected=r[7]}
-    elseif r[1]=='P' then self.optionLabel=r[3];self.optionPage=tonumber(r[4]);self.optionPages=tonumber(r[5]);self.fields.optionQuery=r[6]
-    elseif r[1]=='Q' then self.choices[#self.choices+1]={value=r[2],label=r[3],selected=r[4]=='1'}
-    elseif r[1]=='F' then self.fields[r[2]]=r[3] end
+    elseif r[1]=='V' then local v=W.validation;self.validation=r[v.message];self.groups={r[v.pokemon],r[v.trainer],r[v.energy]}
+    elseif r[1]=='O' then local o=W.option
+      self.options[#self.options+1]={key=r[o.key],label=r[o.label],value=r[o.value],count=tonumber(r[o.count]) or 0,index=tonumber(r[o.index]) or 1,selected=r[o.selected]}
+    elseif r[1]=='P' then local p=W.picker
+      self.optionLabel=r[p.label];self.optionPage=tonumber(r[p.page]);self.optionPages=tonumber(r[p.pages]);self.fields.optionQuery=r[p.query]
+    elseif r[1]=='Q' then local q=W.choice;self.choices[#self.choices+1]={value=r[q.value],label=r[q.label],selected=r[q.selected]=='1'}
+    elseif r[1]=='F' then self.fields[r[W.field.key]]=r[W.field.value] end
   end
   signature=table.concat(signature,'|')
   if signature~=self.signature then self.signature=signature;self:makeCards(true)

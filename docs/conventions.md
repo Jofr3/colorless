@@ -82,6 +82,15 @@ only the conclusion.
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
   regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` to match.
+- **The Lua mailbox rows are declared once** (`src/lua/wireFields.ts` `WIRE_ROWS`): each row kind's
+  tag(s) and field order, `as const`. Emitters build a record and encode it with `wireRow`, so a
+  missing or extra field fails to compile. `bun scripts/lua-constants.ts` turns the table into
+  `frontend/lua/ui/wire_fields.lua` (field → 1-based column) and `frontend/lua/web/wire_fields.json`
+  (0-based, inlined into host.js by `build:lua`); `--check` runs in `check:static`. Readers index
+  by name (`f[W.header.matchId]`, `r[W.card.zone]`) and tests by `wireColumn`, never by number. To
+  add, drop or reorder a field, edit `WIRE_ROWS`, rerun the generator and the fixtures; the web
+  deploy is atomic and content-hashed, so no slot is kept for an older client. The command and
+  text-input records Lua sends back are still positional.
 - **Deck construction rules live once, in the engine** (`deckRules.ts`): `FORMATS`/`formatById`
   (a null or unknown format plays Standard), the `isAceSpec`/`isRadiantPokemon`/`isPrismStar`
   classes, `isLegalInFormat` (the card's `legal` flags, no printed-mark fallback), and
