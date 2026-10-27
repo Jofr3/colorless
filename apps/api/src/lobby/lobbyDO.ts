@@ -406,6 +406,12 @@ export class LobbyDO {
     // The clock stamps the appended log rows' elapsed time.
     const outcome = applyMatchAction(record, seat, frame.action, this.deps.now());
     if (!outcome.ok) {
+      // A throw is refused like any move, and logged (throttled: a client can repeat the frame).
+      // `type` passed the allowlist to reach the engine, so it is one of a fixed set of names.
+      if ("thrown" in outcome) {
+        const error = describeError(outcome.thrown);
+        await this.log("action_threw", { type: frame.action.type, error }, true);
+      }
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
     }

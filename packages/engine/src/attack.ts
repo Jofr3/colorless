@@ -1045,7 +1045,8 @@ function checkDeclaration(state: GameState, action: AttackAction): DeclaredAttac
   }
   // §4: the going-first player may not attack on turn 1, unless the Active's Ability or the
   // declared attack licenses it. It reads `action.index` before the index is validated, which is
-  // safe because it is only a lookup, and keeps this rejection ahead of the others.
+  // safe because `attackGateOf` reads only an integer index, and keeps this rejection ahead of the
+  // others.
   if (firstTurnAttackBanned(state, active, action.index)) {
     return err("FIRST_TURN_ATTACK", "the going-first player cannot attack on turn 1 (§4)");
   }

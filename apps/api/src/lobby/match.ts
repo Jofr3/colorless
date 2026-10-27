@@ -372,13 +372,20 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set(
     .map(([type]) => type),
 );
 
+/** The refusal for a move the online match will not run: an off-allowlist type, or one the engine
+    threw on. It names nothing about the engine or the opponent. */
+const UNAVAILABLE_MOVE_REASON = "That move isn't available here.";
+
 /**
  * Apply a client action to a persisted match. The action is bound to the actor's own `seat`, never
  * the client-claimed one, gated to `SUPPORTED_MATCH_ACTIONS`, then run through the engine's total
  * `applyAction`. On accept returns the next record with the events logged at `now`; on reject
- * returns a `reason` and changes nothing.
+ * returns a `reason` and changes nothing. A throw out of the engine (a broken totality contract,
+ * MI3) is a refusal too, carrying the caught `thrown` for the caller to log.
  */
-export type MatchActionOutcome = { ok: true; record: MatchRecord } | { ok: false; reason: string };
+export type MatchActionOutcome =
+  | { ok: true; record: MatchRecord }
+  | { ok: false; reason: string; thrown?: unknown };
 
 export function applyMatchAction(
   record: MatchRecord,
@@ -389,8 +396,24 @@ export function applyMatchAction(
   // Off-allowlist types never reach the engine (the soft-lock gate) — a generic
   // reason, since there is no engine message to quote.
   if (!SUPPORTED_MATCH_ACTIONS.has(action.type)) {
-    return { ok: false, reason: "That move isn't available here." };
+    return { ok: false, reason: UNAVAILABLE_MOVE_REASON };
   }
+  // The engine is meant to be total, but a crafted frame once threw out of it (MI3). Nothing is
+  // persisted before this returns, so a throw is refused like an off-allowlist move instead of
+  // escaping `webSocketMessage` and leaving the actor without a reply.
+  try {
+    return engineOutcome(record, seat, action, now);
+  } catch (thrown) {
+    return { ok: false, reason: UNAVAILABLE_MOVE_REASON, thrown };
+  }
+}
+
+function engineOutcome(
+  record: MatchRecord,
+  seat: Seat,
+  action: WireAction,
+  now: number,
+): MatchActionOutcome {
   const result = applyAction(record.state, { ...action, seat } as GameAction);
   // The engine's own rejection message is safe to surface: it describes the
   // ACTOR's own illegal move / wrong phase, never the opponent's hidden zones.
