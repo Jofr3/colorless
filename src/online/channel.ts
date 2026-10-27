@@ -1,4 +1,9 @@
-import { LOBBY_WS_PING, LOBBY_WS_PONG, type LobbyMessage } from "@colorless/schema";
+import {
+  LOBBY_WS_CLOSED,
+  LOBBY_WS_PING,
+  LOBBY_WS_PONG,
+  type LobbyMessage,
+} from "@colorless/schema";
 import { apiWebSocketUrl } from "../lib/apiOrigin";
 
 // The transport the lobby talks over. The rest of the online feature depends
@@ -52,8 +57,12 @@ function createNoopChannel(): LobbyChannel {
   };
 }
 
-/** Open the transport for a given lobby code. */
-export function createLobbyChannel(code: string): LobbyChannel {
+/** Open the transport for a given lobby code. `onLobbyClosed` runs once if the server closes the
+    lobby for good (`LOBBY_WS_CLOSED`), after which the channel stops reconnecting. */
+export function createLobbyChannel(
+  code: string,
+  { onLobbyClosed }: { onLobbyClosed?: () => void } = {},
+): LobbyChannel {
   if (typeof WebSocket === "undefined") return createNoopChannel();
 
   const url = apiWebSocketUrl(`/lobby/${code}/ws`);
@@ -125,7 +134,7 @@ export function createLobbyChannel(code: string): LobbyChannel {
       dispatch(parsed as LobbyMessage);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event: CloseEvent) => {
       open = false;
       socket = null;
       if (pingTimer !== null) {
@@ -133,6 +142,13 @@ export function createLobbyChannel(code: string): LobbyChannel {
         pingTimer = null;
       }
       if (closed) return;
+      // The lobby is gone (wiped after an hour without play): a reconnect could only fail.
+      if (event.code === LOBBY_WS_CLOSED) {
+        closed = true;
+        queue.length = 0;
+        onLobbyClosed?.();
+        return;
+      }
       // Unexpected close (server restart, network blip, nonexistent lobby):
       // retry with capped backoff. A dead code keeps failing quietly, which is
       // exactly the silence the client's not-found timeout interprets.

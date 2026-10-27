@@ -91,17 +91,16 @@ function headOf(record: MatchRecord): StoredHead {
 /**
  * The storage entries that persist `record`, given what the keys already hold: the head always,
  * the card tables when they are not the ones written, and the log chunks from the first one
- * holding a new entry. Nothing written means everything is.
+ * holding a new entry, or all of them once the log was trimmed (MIX2). Nothing written means
+ * everything is.
  */
 function matchEntries(record: MatchRecord, written: Written | null): Record<string, unknown> {
   const { cardPool, cardIdByUid } = record.state;
-  const continues =
-    written !== null &&
-    written.seed === record.seed &&
-    written.startedAt === record.startedAt &&
-    record.log.length >= written.logLength;
+  const sameMatch =
+    written !== null && written.seed === record.seed && written.startedAt === record.startedAt;
+  const continues = sameMatch && record.log.length >= written.logLength;
   const entries: Record<string, unknown> = { [MATCH_KEY]: headOf(record) };
-  if (!continues || written.cardPool !== cardPool || written.cardIdByUid !== cardIdByUid) {
+  if (!sameMatch || written.cardPool !== cardPool || written.cardIdByUid !== cardIdByUid) {
     entries[TABLES_KEY] = { cardPool, cardIdByUid };
   }
   const from = continues
@@ -134,8 +133,15 @@ export class MatchStore implements MatchSlot {
 
   async put(record: MatchRecord): Promise<void> {
     const entries = Object.entries(matchEntries(record, this.written));
+    // A shorter log (a trimmed one) leaves chunks past its end, which no read reaches.
+    const kept = chunkCount(record.log.length);
+    const had = chunkCount(this.written?.logLength ?? 0);
+    const stale = Array.from({ length: Math.max(0, had - kept) }, (_, i) => logChunkKey(kept + i));
     // Writes issued without an await between them commit together.
-    await Promise.all(batches(entries).map((batch) => this.storage.put(Object.fromEntries(batch))));
+    await Promise.all([
+      ...batches(entries).map((batch) => this.storage.put(Object.fromEntries(batch))),
+      ...batches(stale).map((batch) => this.storage.delete(batch)),
+    ]);
     this.mirror = { raw: record };
     this.written = {
       seed: record.seed,

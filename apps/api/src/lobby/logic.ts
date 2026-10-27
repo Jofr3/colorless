@@ -72,6 +72,69 @@ export function socketIsSilent(
     without losing the room. */
 export const EMPTY_LOBBY_TTL_MS = 10 * 60_000;
 
+/**
+ * How long a lobby with sockets may go without a commit, an accepted action or a seated hello
+ * before the alarm closes every socket and wipes it (LB2). A socket that only pings otherwise holds
+ * a lobby, and its 30s liveness alarm, forever. The activity stamp is written at most every
+ * `ACTIVITY_STAMP_MS`, so the ceiling lands up to that much early.
+ */
+export const INACTIVE_LOBBY_MS = 60 * 60_000;
+
+/** How stale the stored activity stamp may get before a commit or action rewrites it. A lobby
+    that lives less than this after its creation never writes one. */
+export const ACTIVITY_STAMP_MS = 5 * 60_000;
+
+/**
+ * Sockets one lobby admits (LB2, decision 7): two seats, eight spectators, and two for a player
+ * whose old socket has not closed yet when the reload's new one opens. Past it, a socket is turned
+ * away (it is answered "full"), unless its account holds a seat in this lobby, so a crowd cannot
+ * keep a player out of their own match.
+ */
+export const LOBBY_SOCKET_CAP = 2 + 8 + 2;
+
+/** The most sockets past which even a seat-holding account is refused, checked before the D1
+    session read so a flood costs no D1 reads. */
+export const LOBBY_SOCKET_HARD_CAP = LOBBY_SOCKET_CAP + 4;
+
+/** Turned-away sockets held at once while their hello is answered "full"; past it the upgrade is
+    refused outright. */
+export const OVERFLOW_SOCKETS_MAX = 4;
+
+/** How long a turned-away socket may stay open without sending its hello. The client sends it on
+    open, so the next liveness sweep closes one older than this. */
+export const OVERFLOW_HELLO_MS = 5_000;
+
+/**
+ * Frames one socket may send at once (LB1, MI2). A reconnect flushes the client's queue of up to
+ * 32 frames (channel.ts) plus its hello and the hello's 700ms retries, which this covers.
+ */
+export const FRAME_BURST = 40;
+
+/** Frames per second a socket's budget refills at: well above a player's clicks and the
+    client's automatic steps, far below a script's loop. */
+export const FRAME_REFILL_PER_SECOND = 5;
+
+/**
+ * The longest frame a socket may send, in UTF-16 code units (LB1). The largest legitimate frame
+ * is an action answering a prompt over a whole deck, a few kilobytes; a hello or intent is under
+ * half a kilobyte.
+ */
+export const FRAME_MAX_CHARS = 16 * 1024;
+
+/** A socket's frame budget: tokens left as of `at` (epoch ms). */
+export type FrameBudget = { tokens: number; at: number };
+
+/**
+ * The budget after one more frame at `now`, or null when the socket has none left. A socket
+ * starts with `FRAME_BURST` tokens and regains `FRAME_REFILL_PER_SECOND` a second up to it.
+ */
+export function spendFrame(budget: FrameBudget | undefined, now: number): FrameBudget | null {
+  const start = budget ?? { tokens: FRAME_BURST, at: now };
+  const refill = (Math.max(0, now - start.at) * FRAME_REFILL_PER_SECOND) / 1000;
+  const tokens = Math.min(FRAME_BURST, start.tokens + refill);
+  return tokens < 1 ? null : { tokens: tokens - 1, at: now };
+}
+
 /** Parse + validate one inbound WebSocket frame (§3.6: EVERY frame is
     validated). Anything malformed — bad JSON, unknown kind, server-only
     frames, a fabricated "full" rejection — is null, and the DO drops it. */
@@ -347,6 +410,9 @@ export const storedCodeSchema = z.string();
 
 /** The empty-lobby expiry, epoch ms. It feeds `Math.min` in the alarm scheduler. */
 export const storedCleanupAtSchema = z.number();
+
+/** An epoch-ms stamp: when the lobby was created, or last saw a commit, an action or a hello. */
+export const storedTimeSchema = z.number();
 
 /** The playerId who picks the next game's play order. */
 export const storedChooserSchema = z.string();

@@ -23,3 +23,9 @@ export const LOBBY_WS_PONG = "pong";
 export const LOBBY_ID_MAX = 64;
 export const LOBBY_NAME_MAX = 64;
 export const LOBBY_DECK_NAME_MAX = 100;
+
+/** The close code the DO ends a socket with when it closes the lobby for good (no commit or
+    accepted action for an hour, then wiped). A client that sees it stops reconnecting, since the
+    code no longer names a lobby; an older client retries and is answered 404 like any expired
+    lobby. Every other close is a dropped link the client reconnects after. */
+export const LOBBY_WS_CLOSED = 4000;

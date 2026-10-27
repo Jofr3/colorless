@@ -5,7 +5,10 @@ import { ALL_BASIC_DECK, driveSetup } from "@colorless/engine/testing";
 import {
   applyMatchAction,
   beginMatch,
+  capLog,
   loadMatchRecord,
+  MATCH_LOG_KEPT,
+  MATCH_LOG_MAX,
   MATCH_RECORD_VERSION,
   MATCH_ACTION_DISPOSITION,
   type MatchRecord,
@@ -781,5 +784,29 @@ describe("matchFrameFor — the per-viewer match frame", () => {
     });
     expect(matchFrameFor(record, "spectator", record.log.length).log).toEqual([]);
     expect(Object.keys(matchFrameFor(record, "p2"))).not.toContain("logFrom");
+  });
+});
+
+describe("capLog — the match log's bound (MIX2)", () => {
+  const rows = (count: number) =>
+    Array.from({ length: count }, (_, turn) => ({ kind: "turn" as const, turn }));
+
+  it("keeps a log within the cap as it is", () => {
+    const log = rows(MATCH_LOG_MAX);
+    expect(capLog(log, "+01:00")).toEqual({ log, trimmed: false });
+  });
+
+  it("trims a log past the cap to its newest rows behind a system row", () => {
+    const log = rows(MATCH_LOG_MAX + 1);
+    const capped = capLog(log, "+01:00");
+    expect(capped.trimmed).toBe(true);
+    expect(capped.log).toHaveLength(MATCH_LOG_KEPT + 1);
+    expect(capped.log[0]).toEqual({
+      kind: "action",
+      who: "system",
+      elapsed: "+01:00",
+      segments: [{ text: "Earlier log entries were trimmed." }],
+    });
+    expect(capped.log.slice(1)).toEqual(log.slice(-MATCH_LOG_KEPT));
   });
 });
