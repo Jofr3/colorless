@@ -14,7 +14,8 @@ export const BOOKMARK_LOG = join(API_ROOT, "..", "..", "tmp", "d1-bookmarks.log"
 export type D1Target = "--local" | "--remote";
 export type Row = Record<string, unknown>;
 
-function wrangler(args: readonly string[]): string {
+/** Runs `bunx wrangler ...args` in apps/api and returns its stdout; throws on a non-zero exit. */
+export function wrangler(args: readonly string[]): string {
   const result = spawnSync("bunx", ["wrangler", ...args], {
     cwd: API_ROOT,
     encoding: "utf8",

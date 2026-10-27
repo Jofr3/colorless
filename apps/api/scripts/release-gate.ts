@@ -1,11 +1,14 @@
 // Read-only checks `bun run release` and the API deploy run against production before they write.
 // Each named step runs in order; the first failure exits 1.
 //
-//   bun scripts/release-gate.ts clean-tree bookmark print-keys   # release, before the remote migrations
+//   bun scripts/release-gate.ts clean-tree secrets bookmark print-keys   # release, before the remote migrations
 //   bun scripts/release-gate.ts migrations            # `deploy`, before wrangler deploy
 //
 // clean-tree  The working tree has no changes and HEAD is origin/main, so what deploys is a pushed
 //             commit (wrangler deploys from the working tree).
+// secrets     The production Worker holds every secret in src/requiredSecrets.ts (PASSWORD_PEPPER,
+//             LOG_TAG_KEY). `wrangler secret list` shows names only. Both degrade quietly when
+//             absent, so this is where a forgotten `wrangler secret put` is caught.
 // bookmark    Records the remote database's Time Travel bookmark (scripts/d1.ts recordBookmark).
 // print-keys  The local and remote catalogs agree on every card's print_key. The engine's
 //             PROGRAM_ALIAS table is generated from the LOCAL catalog (scripts/registry-aliases.ts),
@@ -17,7 +20,8 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { API_ROOT, type D1Target, d1Query, recordBookmark } from "./d1";
+import { missingSecrets } from "../src/requiredSecrets";
+import { API_ROOT, type D1Target, d1Query, recordBookmark, wrangler } from "./d1";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trimEnd();
 
@@ -40,6 +44,23 @@ const STEPS: Record<string, () => void> = {
           ? []
           : [`  HEAD ${head.slice(0, 8)} is not origin/main ${main.slice(0, 8)}`]),
         "Commit, merge into main, push, and release again.",
+      ].join("\n"),
+    );
+  },
+  secrets: () => {
+    const missing = missingSecrets(wrangler(["secret", "list", "--format", "json"]));
+    if (missing.length === 0) {
+      console.log("secrets: OK — PASSWORD_PEPPER and LOG_TAG_KEY are set on the Worker");
+      return;
+    }
+    throw new Error(
+      [
+        `secrets: FAIL — the production Worker lacks ${missing.join(", ")}.`,
+        "Generate each value (openssl rand -base64 32), store it in the password manager FIRST,",
+        "then from apps/api:",
+        ...missing.map((name) => `  bunx wrangler secret put ${name}`),
+        "and release again. A lost PASSWORD_PEPPER locks every peppered password account out;",
+        "see docs/workstreams/backend-data.md §3.5.",
       ].join("\n"),
     );
   },
