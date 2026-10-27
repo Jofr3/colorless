@@ -380,9 +380,33 @@ data loss rather than a validation failure.
      liveness check). A guest `bye` frees the seat immediately; a host `bye`
      just marks the seat disconnected (lobby survives, host can return).
   3. *Empty-lobby expiry* — 10 min after the last socket goes (also arms at
-     create), `storage.deleteAll()` + `deleteAlarm()` wipe the lobby and free
-     the code; a socket upgrade for a never-created/expired code is refused
-     (404), which the client reads as silence → "not found".
+     create), `storage.deleteAll()` wipes the lobby and frees the code; a socket
+     upgrade for a never-created/expired code is refused (404), which the client
+     reads as silence → "not found". A lobby nobody has said hello in derives
+     its expiry from `created` instead of storing `cleanupAt` (security LB3), so
+     a create writes 2 keys and an alarm and its wipe deletes 2 keys: 5 rows
+     written, down from 8.
+  4. *Inactivity ceiling* — a lobby with sockets but no commit or accepted
+     action or seated hello for an hour (`INACTIVE_LOBBY_MS`, judged from an `activeAt` stamp
+     written at most every 5 min, else `created`) is closed: every socket gets
+     close code `LOBBY_WS_CLOSED` (4000), which the client takes as "not found"
+     and does not reconnect after, and the lobby is wiped (security LB2).
+- **Abuse limits (security Phase 3, `lobby/logic.ts`):** every frame spends
+  from a per-socket token bucket before it is parsed (burst 40, which covers a
+  reconnect's 32 queued frames plus its hello; refill 5 a second); a frame past
+  it closes the socket with 1008, and a frame over 16K characters (the largest
+  legitimate one, an action over a whole deck, is about 4K) with 1009. Both run
+  `socketGone`, so the seat gets its grace. A lobby holds 12 sockets (2 seats,
+  8 spectators, 2 for a reload's old and new socket); past that a socket is
+  turned away (its hello is answered `reject full`, shown as "Lobby is full",
+  and it is closed with 1013), except that an account holding a seat is let in
+  up to 16; up to 4 turned-away sockets are held at once and any further
+  upgrade is refused with 503. `scheduleMaintenance` keeps an alarm already due
+  at or before the next deadline, so a commit no longer re-sets the alarm (one
+  row per commit instead of two). Each distinct match frame (a seat's view, the
+  spectators' shared one) is built once per broadcast. The match log keeps at
+  most 2000 rows: past that it is cut to the newest 1500 behind a system row
+  "Earlier log entries were trimmed." and sent whole (security MIX2).
 - **Anonymity:** lobbies stay account-less this phase, matching the client
   model — players are lobby-scoped session ids minted by the browser
   (`net/session.ts`), no auth cookie or user row involved.
@@ -558,7 +582,7 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 | KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3 at page size 4, 8 or 50; never an empty result) |
 | Worker requests | 100,000 | every API request, including WebSocket upgrades and the asset mirror; nothing limits traffic before the Worker on workers.dev |
 | Durable Object requests | 100,000 | lobby creation, each WebSocket upgrade and each incoming frame |
-| Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change), and every `setAlarm` (the liveness deadline moves on each commit) |
+| Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change, a socket's frames capped at 40 then 5 a second), each liveness `setAlarm` (one per 30 s while a lobby has sockets, for at most an hour without play), and about 5 per lobby created and wiped |
 
 The KV write quota is the tight one, and only the catalog cache spends it.
 Sign-in no longer touches KV. The Workers Rate Limiting bindings are free and

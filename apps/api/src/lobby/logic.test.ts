@@ -17,6 +17,9 @@ import {
   forfeitDeadlines,
   endMatch,
   FIRST_KEEPALIVE_MARGIN_MS,
+  FRAME_BURST,
+  FRAME_REFILL_PER_SECOND,
+  type FrameBudget,
   helloDecision,
   parseClientMessage,
   readSnapshot,
@@ -32,6 +35,7 @@ import {
   slotOf,
   SOCKET_SILENCE_MS,
   socketIsSilent,
+  spendFrame,
   splitDuePending,
   stampCountdown,
   storedChooserSchema,
@@ -612,5 +616,37 @@ describe("readStored — the DO's smaller storage keys", () => {
     expect(readStored(storedCleanupAtSchema, "later")).toBeUndefined();
     expect(readStored(storedCleanupAtSchema, Number.NaN)).toBeUndefined();
     expect(readStored(storedChooserSchema, null)).toBeUndefined();
+  });
+});
+
+describe("spendFrame — a socket's frame budget (LB1)", () => {
+  /** How many frames in a row `spendFrame` allows at `now` from `budget`. */
+  function allowed(budget: FrameBudget | undefined, now: number): number {
+    let count = 0;
+    for (let next = spendFrame(budget, now); next !== null; next = spendFrame(next, now)) count++;
+    return count;
+  }
+
+  it("starts a socket with the burst, which covers a reconnect's queued frames and hello", () => {
+    expect(allowed(undefined, 0)).toBe(FRAME_BURST);
+    // The client queues up to 32 frames while its link is down (channel.ts), plus one hello.
+    expect(FRAME_BURST).toBeGreaterThan(32 + 1);
+  });
+
+  it("refills at the set rate up to the burst, and never from a clock that went back", () => {
+    const empty: FrameBudget = { tokens: 0, at: 1_000 };
+    expect(spendFrame(empty, 1_000)).toBeNull();
+    expect(allowed(empty, 1_000 + 1_000)).toBe(FRAME_REFILL_PER_SECOND);
+    expect(allowed(empty, 1_000 + 60_000)).toBe(FRAME_BURST);
+    expect(spendFrame(empty, 0)).toBeNull();
+  });
+
+  it("lets a socket paced at the refill rate send without end", () => {
+    let budget: FrameBudget | null | undefined;
+    const step = 1000 / FRAME_REFILL_PER_SECOND;
+    for (let i = 0; i < 1_000; i++) {
+      budget = spendFrame(budget ?? undefined, i * step);
+      expect(budget).not.toBeNull();
+    }
   });
 });

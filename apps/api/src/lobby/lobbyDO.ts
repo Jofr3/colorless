@@ -10,6 +10,7 @@ import {
   createSnapshot,
   isValidLobbyCode,
   LOBBY_NAME_MAX,
+  LOBBY_WS_CLOSED,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -35,8 +36,10 @@ import {
   attachedSession,
   attachedUserId,
   attachLogDeltas,
+  attachOverflow,
   attachPlayer,
   attachSpectator,
+  isOverflow,
   isSpectating,
   takesLogDeltas,
 } from "./attachment";
@@ -46,16 +49,24 @@ import { lobbyDisplayName } from "./displayName";
 import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
   ABANDON_GRACE_MS,
+  ACTIVITY_STAMP_MS,
   abandonsMatch,
   applyBye,
   countdownEndsAt,
   endMatch,
   DISCONNECT_GRACE_MS,
   EMPTY_LOBBY_TTL_MS,
+  FRAME_MAX_CHARS,
+  type FrameBudget,
   forfeitDeadlines,
   type HelloDecision,
   helloDecision,
+  INACTIVE_LOBBY_MS,
   LIVENESS_SWEEP_MS,
+  LOBBY_SOCKET_CAP,
+  LOBBY_SOCKET_HARD_CAP,
+  OVERFLOW_HELLO_MS,
+  OVERFLOW_SOCKETS_MAX,
   parseClientMessage,
   type PendingDisconnect,
   readSnapshot,
@@ -69,6 +80,7 @@ import {
   setSeatConnected,
   slotOf,
   socketIsSilent,
+  spendFrame,
   splitDuePending,
   stampCountdown,
   storedChooserSchema,
@@ -76,6 +88,7 @@ import {
   storedCodeSchema,
   storedPendingSchema,
   storedSeatUsersSchema,
+  storedTimeSchema,
   withForfeitAt,
   withoutPendingDisconnect,
   withPendingDisconnect,
@@ -105,7 +118,12 @@ import { applyIntent, bothReady, removeGuest, seatGuest } from "./snapshot";
 const CREATED_KEY = "created";
 const CODE_KEY = "code";
 const SNAPSHOT_KEY = "snapshot";
+// When the empty lobby is wiped, written when its last socket leaves. A lobby no socket has said
+// hello in has none: its expiry is derived from `created` (LB3), so a create writes two keys.
 const CLEANUP_AT_KEY = "cleanupAt";
+// The last commit or accepted action, epoch ms, written at most every ACTIVITY_STAMP_MS; absent
+// reads as `created`. The inactivity ceiling (INACTIVE_LOBBY_MS) is judged from it.
+const ACTIVE_AT_KEY = "activeAt";
 const PENDING_KEY = "pendingDisconnects";
 // The playerId who lost the last game in this lobby: they choose the rematch's
 // play order (`settleFirstPlayer`). Consumed by the next successful handoff.
@@ -201,6 +219,14 @@ export class LobbyDO {
   /** The alarm this instance last set (null: none, or the one that fired), so an unchanged
       reschedule writes nothing; undefined = not known since the last wake. */
   private alarmAt: number | null | undefined;
+  /** In-memory mirror of the activity stamp (ACTIVE_AT_KEY, else CREATED_KEY); undefined = not
+      read since the last wake. */
+  private activeAt: number | undefined;
+  /** Each socket's frame budget (LB1). In memory only: a socket sending enough to matter keeps the
+      instance awake, and a hibernation that resets it costs nothing. */
+  private readonly frameBudgets = new WeakMap<WebSocket, FrameBudget>();
+  /** Sockets this instance closed, whose frames still in flight are dropped unread. */
+  private readonly closing = new WeakSet<WebSocket>();
 
   constructor(state: DurableObjectState, env: Env, deps: LobbyDeps = lobbyDepsFromEnv(env)) {
     this.state = state;
@@ -226,7 +252,8 @@ export class LobbyDO {
         return Response.json({ error: "code in use" }, { status: 409 });
       }
       await this.state.storage.put({ [CREATED_KEY]: this.deps.now(), [CODE_KEY]: code });
-      // Arm the expiry now, so a minted-but-never-entered lobby still evaporates.
+      // Arm the expiry now, so a minted-but-never-entered lobby still evaporates. It is derived
+      // from `created`, so this writes only the alarm.
       await this.scheduleMaintenance();
       return Response.json({ code }, { status: 201 });
     }
@@ -238,6 +265,9 @@ export class LobbyDO {
       if ((await this.state.storage.get(CREATED_KEY)) === undefined) {
         return Response.json({ error: "no such lobby" }, { status: 404 });
       }
+      // The flood guard, before the D1 session read: past it even a seated player is refused
+      // (LB2). Only a seat-holding account's sockets get past LOBBY_SOCKET_CAP to reach it.
+      if (this.members().length >= LOBBY_SOCKET_HARD_CAP) return await this.refuseUpgrade();
       const pair = new WebSocketPair();
       this.state.acceptWebSocket(pair[1]);
       attachConnectedAt(pair[1], this.deps.now());
@@ -273,6 +303,7 @@ export class LobbyDO {
           displayName: lobbyDisplayName(account.displayName),
         });
       }
+      if (!(await this.admit(pair[1], account))) return await this.refuseUpgrade(pair[1]);
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
       return new Response(null, { status: 101, webSocket: pair[0] });
@@ -282,9 +313,12 @@ export class LobbyDO {
   }
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
+    // Every frame, valid or not, spends from the socket's budget before it is parsed (LB1, MI2).
+    if (!(await this.withinBudget(ws, message))) return;
     if (typeof message !== "string") return;
     const frame = parseClientMessage(message);
     if (frame === null) return; // §3.6: anything that doesn't validate is dropped
+    if (isOverflow(ws)) return await this.turnAway(ws, frame);
     const snapshot = await this.loadSnapshot();
 
     switch (frame.kind) {
@@ -342,6 +376,9 @@ export class LobbyDO {
     // account's own reconnects and is let back in.
     if (binds) await this.evictFromSeat(frame.from, userId, ws);
     const graceCleared = await this.clearDisconnectGrace(frame.from);
+    // A player arriving or coming back counts as activity, so the reconnects after a deploy do not
+    // leave a lobby older than the ceiling, with no stamp yet, to be closed by the next sweep.
+    await this.touchActivity();
     if (snapshot !== null && sameSnapshot(snapshot, next)) {
       // A repeated hello changes nothing the other sockets see. Only this one needs the lobby,
       // since the client counts itself seated on a `state` frame.
@@ -436,7 +473,10 @@ export class LobbyDO {
     const { state, log } = outcome.record;
     if (state === record.state && log.length === record.log.length) return;
     await this.match.put(outcome.record);
-    await this.broadcastMatch(outcome.record, current, { logFrom: record.log.length });
+    await this.touchActivity();
+    // A trimmed log no longer continues the one every socket holds, so it goes out whole.
+    const logFrom = outcome.logTrimmed ? undefined : record.log.length;
+    await this.broadcastMatch(outcome.record, current, { logFrom });
   }
 
   /** The match seat `playerId` acts from, or null when the lobby is not in-game or does not seat
@@ -559,6 +599,21 @@ export class LobbyDO {
     //    rather than waiting another sweep.
     await this.sweepSilentSockets(now);
 
+    // A lobby nobody has changed for INACTIVE_LOBBY_MS is closed for good (LB2): every socket is
+    // told so, and the lobby is wiped, since a client would otherwise reconnect into it at once.
+    const sockets = this.liveSockets();
+    if (sockets.length > 0 && now - (await this.lastActivity()) >= INACTIVE_LOBBY_MS) {
+      for (const ws of sockets) {
+        try {
+          ws.close(LOBBY_WS_CLOSED, "lobby closed after an hour without play");
+        } catch {
+          // Already gone.
+        }
+      }
+      await this.wipe(now, "inactive");
+      return true;
+    }
+
     // 1) and 2), retried while the handoff finds the lobby changed under it. A retry with the
     //    same decks and accounts reuses the D1 reads, so it awaits nothing and a cosmetic change
     //    (a rename) cannot overtake it again; the bound covers changes that do re-read.
@@ -577,22 +632,62 @@ export class LobbyDO {
 
     // 3) An empty lobby past its expiry evaporates entirely, freeing the code
     //    for a future POST /lobby to mint again.
-    const cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
-    if (this.liveSockets().length === 0 && cleanupAt !== undefined && now >= cleanupAt) {
-      const created = await this.state.storage.get(CREATED_KEY);
-      await this.log("lobby_wiped", {
-        ageMs: typeof created === "number" ? now - created : null,
-        inGame: this.snapshot?.phase === "in-game",
-      });
-      this.snapshot = null;
-      this.seatUsersMirror = undefined;
-      this.match.forget();
-      await this.state.storage.deleteAll();
-      await this.state.storage.deleteAlarm(); // deleteAll leaves alarms in place
-      this.alarmAt = null;
-      return true;
-    }
-    return false;
+    if (this.liveSockets().length > 0) return false;
+    const cleanupAt = await this.emptyLobbyExpiry();
+    if (cleanupAt === undefined || now < cleanupAt) return false;
+    await this.wipe(now, "empty");
+    return true;
+  }
+
+  /** Delete every key of the lobby, freeing its code, and any alarm set since this one fired. */
+  private async wipe(now: number, cause: "empty" | "inactive"): Promise<void> {
+    const created = await this.state.storage.get(CREATED_KEY);
+    await this.log("lobby_wiped", {
+      cause,
+      ageMs: typeof created === "number" ? now - created : null,
+      inGame: (await this.loadSnapshot())?.phase === "in-game",
+    });
+    this.snapshot = null;
+    this.seatUsersMirror = undefined;
+    this.activeAt = undefined;
+    this.match.forget();
+    await this.state.storage.deleteAll();
+    // deleteAll leaves alarms in place. The one that woke us is spent, so only an alarm a commit
+    // set during this pass is left to clear.
+    if (this.alarmAt !== null) await this.state.storage.deleteAlarm();
+    this.alarmAt = null;
+  }
+
+  /**
+   * When an empty lobby is wiped: the stored expiry, set when its last socket left, or for a lobby
+   * nobody has said hello in, `created` plus the TTL, derived so a create writes no expiry key
+   * (LB3). Undefined for a lobby already wiped.
+   */
+  private async emptyLobbyExpiry(): Promise<number | undefined> {
+    const stored = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
+    if (stored !== undefined) return stored;
+    if ((await this.loadSnapshot()) !== null) return undefined;
+    const created = await this.read(CREATED_KEY, storedTimeSchema);
+    return created === undefined ? undefined : created + EMPTY_LOBBY_TTL_MS;
+  }
+
+  /** When the lobby last saw a commit, an accepted action or a seated hello, to within
+      ACTIVITY_STAMP_MS. */
+  private async lastActivity(): Promise<number> {
+    this.activeAt ??=
+      (await this.read(ACTIVE_AT_KEY, storedTimeSchema)) ??
+      (await this.read(CREATED_KEY, storedTimeSchema)) ??
+      this.deps.now();
+    return this.activeAt;
+  }
+
+  /** Record a commit, an accepted action or a seated hello, writing the stamp only once it is
+      ACTIVITY_STAMP_MS stale, so a busy lobby pays one row every few minutes for it. */
+  private async touchActivity(): Promise<void> {
+    const now = this.deps.now();
+    if (now - (await this.lastActivity()) < ACTIVITY_STAMP_MS) return;
+    await this.state.storage.put(ACTIVE_AT_KEY, now);
+    this.activeAt = now;
   }
 
   /**
@@ -738,24 +833,108 @@ export class LobbyDO {
    * `close()` does not fire `webSocketClose`, so `socketGone` is called explicitly.
    */
   private async sweepSilentSockets(now: number): Promise<void> {
-    const silent = this.liveSockets().filter((ws) => {
-      let connectedAt = attachedConnectedAt(ws);
-      if (connectedAt === null) {
-        // An attachment from before the upgrade recorded its time: start its window now, so a
-        // socket that never answers is still let go one window later.
-        connectedAt = now;
-        attachConnectedAt(ws, now);
+    const connectedAt = (ws: WebSocket): number => {
+      const at = attachedConnectedAt(ws);
+      if (at !== null) return at;
+      // An attachment from before the upgrade recorded its time: start its window now, so a
+      // socket that never answers is still let go one window later.
+      attachConnectedAt(ws, now);
+      return now;
+    };
+    for (const ws of this.liveSockets()) {
+      const since = connectedAt(ws);
+      // A turned-away socket that never sent the hello it would be answered "full" on.
+      if (isOverflow(ws) && now - since > OVERFLOW_HELLO_MS) {
+        await this.closeSocket(ws, 1013, "lobby full");
+      } else if (socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), since, now)) {
+        await this.closeSocket(ws, 1001, "keepalive lost");
       }
-      return socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), connectedAt, now);
-    });
-    for (const ws of silent) {
-      try {
-        ws.close(1001, "keepalive lost");
-      } catch {
-        // Already gone; the bookkeeping below still applies.
-      }
-      await this.socketGone(ws);
     }
+  }
+
+  /**
+   * Close a socket from this side and do the bookkeeping its close would have: our own `close()`
+   * does not fire `webSocketClose`, so without `socketGone` a seat would stay connected with no
+   * grace or forfeit clock. Frames still in flight from it are dropped.
+   */
+  private async closeSocket(ws: WebSocket, code: number, reason: string): Promise<void> {
+    this.closing.add(ws);
+    try {
+      ws.close(code, reason);
+    } catch {
+      // Already gone; the bookkeeping below still applies.
+    }
+    await this.socketGone(ws);
+  }
+
+  /**
+   * Spend one frame from the socket's budget and check its size (LB1, MI2). False when the frame
+   * is to be dropped: the socket is already closing, or it is closed here for sending too much
+   * (1008) or too large a frame (1009). A closed client reconnects through the per-IP upgrade
+   * limit.
+   */
+  private async withinBudget(ws: WebSocket, message: string | ArrayBuffer): Promise<boolean> {
+    if (this.closing.has(ws)) return false;
+    const budget = spendFrame(this.frameBudgets.get(ws), this.deps.now());
+    const size = typeof message === "string" ? message.length : message.byteLength;
+    if (budget !== null && size <= FRAME_MAX_CHARS) {
+      this.frameBudgets.set(ws, budget);
+      return true;
+    }
+    const cause = budget === null ? "frame_rate" : "frame_size";
+    await this.log("socket_closed", { cause }, true);
+    if (budget === null) await this.closeSocket(ws, 1008, "too many messages");
+    else await this.closeSocket(ws, 1009, "message too big");
+    return false;
+  }
+
+  /**
+   * Answer a socket admitted past the socket cap: its hello is refused as full, which the client
+   * shows as a full lobby, and it is closed whatever it sent. Like any refused client it re-sends
+   * its hello only once the link goes quiet.
+   */
+  private async turnAway(ws: WebSocket, frame: LobbyClientMessage): Promise<void> {
+    if (frame.kind === "hello") this.send(ws, { kind: "reject", to: frame.from, reason: "full" });
+    await this.closeSocket(ws, 1013, "lobby full");
+  }
+
+  /** The sockets that count toward the lobby's cap: every live one but those being turned away. */
+  private members(excluding?: WebSocket): WebSocket[] {
+    return this.liveSockets(excluding).filter((ws) => !isOverflow(ws));
+  }
+
+  /**
+   * Whether a just-accepted socket may stay (LB2). Under LOBBY_SOCKET_CAP it joins; past it, a
+   * socket whose account holds a seat here still joins (the hard cap, checked before the session
+   * read, bounds those), and any other is marked to be turned away, while fewer than
+   * OVERFLOW_SOCKETS_MAX are. False refuses the upgrade.
+   */
+  private async admit(ws: WebSocket, account: SessionAccount | null): Promise<boolean> {
+    const members = this.members(ws).length;
+    if (members < LOBBY_SOCKET_CAP) return true;
+    if (account !== null && members < LOBBY_SOCKET_HARD_CAP) {
+      const seatUsers = await this.seatUsers();
+      if (Object.values(seatUsers).includes(account.userId)) return true;
+    }
+    const overflow = this.liveSockets(ws).filter((socket) => isOverflow(socket)).length;
+    if (overflow >= OVERFLOW_SOCKETS_MAX) return false;
+    attachOverflow(ws);
+    return true;
+  }
+
+  /** Refuse a socket upgrade because the lobby holds all the sockets it takes, closing the
+      server half if it was already accepted. The client retries it like a dropped link. */
+  private async refuseUpgrade(accepted?: WebSocket): Promise<Response> {
+    if (accepted !== undefined) {
+      this.closing.add(accepted);
+      try {
+        accepted.close(1013, "lobby full");
+      } catch {
+        // Already closed.
+      }
+    }
+    await this.log("ws_refused", { cause: "lobby_full" }, true);
+    return Response.json({ error: "lobby full" }, { status: 503 });
   }
 
   /** P4 handoff (online.md): the countdown just flipped this lobby to in-game,
@@ -899,14 +1078,7 @@ export class LobbyDO {
     const strays = this.liveSockets(keep).filter(
       (ws) => attachedPlayer(ws) === playerId && attachedUserId(ws) !== userId,
     );
-    for (const ws of strays) {
-      try {
-        ws.close(1008, "seat claimed by an account");
-      } catch {
-        // Already gone; the bookkeeping below still applies.
-      }
-      await this.socketGone(ws);
-    }
+    for (const ws of strays) await this.closeSocket(ws, 1008, "seat claimed by an account");
     if (strays.length > 0) await this.log("seat_evicted", { sockets: strays.length });
   }
 
@@ -928,6 +1100,7 @@ export class LobbyDO {
     this.snapshot = stamped;
     if (abandoned) await this.match.delete();
     this.broadcast({ kind: "state", snapshot: stamped });
+    await this.touchActivity();
     await this.scheduleMaintenance();
   }
 
@@ -958,19 +1131,28 @@ export class LobbyDO {
     if (sockets.length > 0) deadlines.push(this.deps.now() + LIVENESS_SWEEP_MS);
 
     if (sockets.length === 0) {
-      let cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
-      if (cleanupAt === undefined) {
+      // A lobby somebody said hello in expires a TTL after its last socket left, which is stored;
+      // one nobody did has its expiry derived from `created` (`emptyLobbyExpiry`).
+      let cleanupAt = await this.emptyLobbyExpiry();
+      if (cleanupAt === undefined && snapshot !== null) {
         cleanupAt = this.deps.now() + EMPTY_LOBBY_TTL_MS;
         await this.state.storage.put(CLEANUP_AT_KEY, cleanupAt);
       }
-      deadlines.push(cleanupAt);
+      if (cleanupAt !== undefined) deadlines.push(cleanupAt);
     } else if ((await this.state.storage.get(CLEANUP_AT_KEY)) !== undefined) {
       await this.state.storage.delete(CLEANUP_AT_KEY);
     }
 
-    // Setting the alarm counts as a storage write, and most commits leave it where it was.
+    // Setting the alarm counts as a storage write. An alarm already due at or before the earliest
+    // deadline is kept, since `alarm()` re-derives every deadline when it fires and schedules the
+    // rest: so the liveness deadline each commit pushes 30s on writes nothing (LB1).
+    const now = this.deps.now();
     const at = deadlines.length === 0 ? null : Math.min(...deadlines);
-    if (at === this.alarmAt) return;
+    // After a wake the alarm is read back (a read, not a write) rather than set blind.
+    const armed = this.alarmAt === undefined ? await this.state.storage.getAlarm() : this.alarmAt;
+    this.alarmAt = armed;
+    if (at === armed) return;
+    if (at !== null && armed !== null && armed > now && armed <= at) return;
     if (at === null) await this.state.storage.deleteAlarm();
     else await this.state.storage.setAlarm(at);
     this.alarmAt = at;
@@ -1015,8 +1197,12 @@ export class LobbyDO {
   }
 
   private send(ws: WebSocket, message: LobbyServerMessage): void {
+    this.sendEncoded(ws, JSON.stringify(message));
+  }
+
+  private sendEncoded(ws: WebSocket, encoded: string): void {
     try {
-      ws.send(JSON.stringify(message));
+      ws.send(encoded);
     } catch {
       // Socket already gone; its close event will tidy up.
     }
@@ -1028,15 +1214,10 @@ export class LobbyDO {
     }
   }
 
+  /** Send `message` to every member socket; a turned-away one gets nothing but its refusal. */
   private broadcast(message: LobbyServerMessage): void {
     const encoded = JSON.stringify(message);
-    for (const ws of this.liveSockets()) {
-      try {
-        ws.send(encoded);
-      } catch {
-        // Socket already gone; its close event will tidy up.
-      }
-    }
+    for (const ws of this.members()) this.sendEncoded(ws, encoded);
   }
 
   /**
@@ -1051,10 +1232,20 @@ export class LobbyDO {
     { only, logFrom }: { only?: WebSocket; logFrom?: number } = {},
   ): Promise<void> {
     const seatUsers = await this.seatUsers();
+    // Every spectator, and every socket of one seat, gets the same frame: each distinct one is
+    // redacted and encoded once per broadcast (LB2).
+    const frames = new Map<string, string>();
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = viewerOf(ws, snapshot, seatUsers);
       if (viewer === null) continue;
-      this.send(ws, matchFrameFor(record, viewer, takesLogDeltas(ws) ? logFrom : undefined));
+      const from = takesLogDeltas(ws) ? logFrom : undefined;
+      const key = `${viewer}:${from ?? "all"}`;
+      let encoded = frames.get(key);
+      if (encoded === undefined) {
+        encoded = JSON.stringify(matchFrameFor(record, viewer, from));
+        frames.set(key, encoded);
+      }
+      this.sendEncoded(ws, encoded);
     }
   }
 
@@ -1108,8 +1299,10 @@ export class LobbyDO {
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
     await this.match.put(outcome.record);
+    await this.touchActivity();
     await this.log("forfeit", { seat, cause });
-    await this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
+    const logFrom = outcome.logTrimmed ? undefined : load.record.log.length;
+    await this.broadcastMatch(outcome.record, snapshot, { logFrom });
   }
 
   /**

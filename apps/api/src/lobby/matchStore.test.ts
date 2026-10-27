@@ -53,6 +53,19 @@ async function readBack(storage: FakeStorage): Promise<unknown> {
 }
 
 describe("MatchStore — the split record", () => {
+  it("rewrites a trimmed log's chunks without the tables, and deletes the chunks past its end", async () => {
+    const { storage, writes } = recordingStorage();
+    const store = new MatchStore(storage);
+    const long = appended(begun(), LOG_CHUNK * 5);
+    await store.put(long);
+    const trimmed = { ...long, log: long.log.slice(-(LOG_CHUNK + 3)) };
+    await store.put(trimmed);
+    expect(writes.at(-1)).toEqual(["match", "matchLog:0", "matchLog:1"]);
+    const chunks = [...storage.data.keys()].filter((key) => key.startsWith("matchLog:"));
+    expect(chunks.sort()).toEqual(["matchLog:0", "matchLog:1"]);
+    expect(readMatchRecord(await readBack(storage))).toEqual(trimmed);
+  });
+
   it("reads back exactly the record it wrote, key order included", async () => {
     const { storage } = recordingStorage();
     const record = appended(begun(), LOG_CHUNK * 2 + 5);

@@ -30,6 +30,26 @@ wire change: the Lua pages talk to the same lobby Durable Object as React.
   continuation titles and stack bottoms for bench order (a server deploy would have to add them to
   `RedactedGame` first).
 
+## Status — abuse limits (security Phase 3, 2026-10-27)
+
+The lobby DO now bounds what one client can cost (details in `backend-data.md` §3.6, constants in
+`apps/api/src/lobby/logic.ts`, metrics in `lobbyAbuse.test.ts`):
+
+- **Frames:** a per-socket token bucket (burst 40, 5 a second) and a 16K-character frame cap;
+  over either the socket is closed (1008 / 1009) and its seat takes the usual grace. The client
+  reconnects as after any drop.
+- **Sockets:** 12 per lobby (2 seats, 8 spectators, 2 reload slack). Past that a joiner's hello is
+  answered `reject full` ("Lobby is full") and the socket closed with 1013; an account holding a
+  seat still gets back in (up to 16), so watchers cannot lock a player out of their match.
+- **Inactivity:** no commit, accepted action or seated hello for an hour closes every socket with
+  `LOBBY_WS_CLOSED` (4000) and wipes the lobby. The client stops reconnecting on that code and
+  shows "Lobby not found"; an older client keeps retrying into the 404.
+- **Match log:** at most 2000 rows; past that the newest 1500 are kept behind a system row
+  ("Earlier log entries were trimmed.") and the next frame carries the whole log, which the client
+  already accepts in place of what it held. The Lua table reads a shorter log as a fresh one, so
+  that one action's table cues are skipped. Per-turn uses of repeatable abilities are not capped:
+  that would be a rule the engine does not have, and the frame budget already bounds the rate.
+
 ## Status — P4 kickoff (2026-07-23)
 
 **Started** (P3 engine broad enough at 0.39.0). **Milestone 1 (WS transport + lobby

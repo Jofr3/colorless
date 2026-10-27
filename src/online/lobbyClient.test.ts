@@ -77,6 +77,17 @@ describe("LobbyClient", () => {
     expect(kinds().length).toBe(sent);
   });
 
+  it("reports not-found and stops re-announcing once the server closes the lobby for good", () => {
+    const { client, push, kinds } = make("guest");
+    push({ kind: "state", snapshot: snap() });
+    client.lobbyClosed();
+    expect(client.state.status).toBe("not-found");
+    const sent = kinds().length;
+    vi.advanceTimersByTime(60_000);
+    expect(kinds().length).toBe(sent);
+    expect(client.state.status).toBe("not-found");
+  });
+
   it("flips to connecting after 5 s without the server, and back on the next state", () => {
     const { client, push, kinds } = make("guest");
     push({ kind: "state", snapshot: snap() });

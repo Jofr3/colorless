@@ -60775,8 +60775,8 @@ export const MUTANTS: Mutant[] = [
     what: "The DO sends log deltas to every socket, so a client that never announced them takes a delta for the whole log. Killed by the full-log test for a socket that did not ask.",
     file: "apps/api/src/lobby/lobbyDO.ts",
     symbol: "LobbyDO",
-    find: "matchFrameFor(record, viewer, takesLogDeltas(ws) ? logFrom : undefined)",
-    replace: "matchFrameFor(record, viewer, logFrom)",
+    find: "const from = takesLogDeltas(ws) ? logFrom : undefined;",
+    replace: "const from = logFrom;",
     expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts"],
   },
   {
@@ -60795,9 +60795,8 @@ export const MUTANTS: Mutant[] = [
     what: "An accepted action's delta starts at the new log length instead of the old one, so it carries none of the action's entries. Killed by the held-log rebuild.",
     file: "apps/api/src/lobby/lobbyDO.ts",
     symbol: "LobbyDO",
-    find: "this.broadcastMatch(outcome.record, current, { logFrom: record.log.length });",
-    replace:
-      "this.broadcastMatch(outcome.record, current, { logFrom: outcome.record.log.length });",
+    find: "const logFrom = outcome.logTrimmed ? undefined : record.log.length;",
+    replace: "const logFrom = outcome.logTrimmed ? undefined : outcome.record.log.length;",
     expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts"],
   },
   {
@@ -60806,9 +60805,8 @@ export const MUTANTS: Mutant[] = [
     what: "A forfeit's delta starts at the new log length, so the concede rows never reach a delta client. Killed by the forfeit delta test.",
     file: "apps/api/src/lobby/lobbyDO.ts",
     symbol: "LobbyDO",
-    find: "this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });",
-    replace:
-      "this.broadcastMatch(outcome.record, snapshot, { logFrom: outcome.record.log.length });",
+    find: "const logFrom = outcome.logTrimmed ? undefined : load.record.log.length;",
+    replace: "const logFrom = outcome.logTrimmed ? undefined : outcome.record.log.length;",
     expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts"],
   },
   {

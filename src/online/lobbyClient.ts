@@ -143,7 +143,8 @@ export class LobbyClient {
     this.playerId = opts.playerId;
     this.name = opts.name;
     this.now = deps.now ?? Date.now;
-    this.channel = deps.channel ?? createLobbyChannel(opts.code);
+    this.channel =
+      deps.channel ?? createLobbyChannel(opts.code, { onLobbyClosed: () => this.lobbyClosed() });
     this.current = {
       ...initialLobbyState(opts.code, opts.role, opts.playerId, opts.name),
       ...opts.resume,
@@ -224,6 +225,13 @@ export class LobbyClient {
   private stop() {
     if (this.tick !== null) clearInterval(this.tick);
     this.tick = null;
+  }
+
+  /** The server closed the lobby for good: the code names no lobby any more. */
+  lobbyClosed() {
+    if (this.disposed) return;
+    this.stop();
+    this.set({ status: "not-found" });
   }
 
   private hello() {

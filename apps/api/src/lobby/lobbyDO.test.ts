@@ -869,6 +869,8 @@ describe("LobbyDO — bounded growth", () => {
     await h.send(host, hello("h"));
     const guest = await h.connect("bo");
     for (let i = 0; i < 20; i++) {
+      // Paced within the socket's frame budget.
+      h.world.now += 1000;
       await h.send(guest, hello(`g${i}`));
       await h.send(guest, { kind: "bye", from: `g${i}`, slot: "guest" });
     }

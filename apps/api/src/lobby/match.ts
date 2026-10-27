@@ -384,8 +384,39 @@ const UNAVAILABLE_MOVE_REASON = "That move isn't available here.";
  * MI3) is a refusal too, carrying the caught `thrown` for the caller to log.
  */
 export type MatchActionOutcome =
-  | { ok: true; record: MatchRecord }
+  | { ok: true; record: MatchRecord; logTrimmed: boolean }
   | { ok: false; reason: string; thrown?: unknown };
+
+/**
+ * The most log rows a match keeps (MIX2). A legal repeatable ability (Solar Transfer moves one
+ * Energy as often as you like) appends rows without end, and every reconnect and spectator is sent
+ * the whole log. A real game logs a few hundred rows.
+ */
+export const MATCH_LOG_MAX = 2000;
+
+/** The rows kept when the log passes `MATCH_LOG_MAX`, so it is trimmed once per 500 new rows and
+    not on every action after. */
+export const MATCH_LOG_KEPT = 1500;
+
+/** The row a trimmed log starts with, in place of the rows dropped. */
+export function logTrimmedRow(elapsed: string): SeatLogEntry {
+  return {
+    kind: "action",
+    who: "system",
+    elapsed,
+    segments: [{ text: "Earlier log entries were trimmed." }],
+  };
+}
+
+/** `log` within `MATCH_LOG_MAX` rows: as it is, or its newest `MATCH_LOG_KEPT` after a
+    trimmed row. */
+export function capLog(
+  log: SeatLogEntry[],
+  elapsed: string,
+): { log: SeatLogEntry[]; trimmed: boolean } {
+  if (log.length <= MATCH_LOG_MAX) return { log, trimmed: false };
+  return { log: [logTrimmedRow(elapsed), ...log.slice(-MATCH_LOG_KEPT)], trimmed: true };
+}
 
 export function applyMatchAction(
   record: MatchRecord,
@@ -420,15 +451,15 @@ function engineOutcome(
   if (!result.ok) return { ok: false, reason: result.error.message };
   // Format the accepted events into log rows (leak-safe: counts for hidden draws,
   // names off public state) and append. The log grows; seed/startedAt/names ride on.
+  const elapsed = formatElapsed(now - record.startedAt);
   const entries = logFromEvents(result.events, {
     names: record.names,
     state: result.state,
-    elapsed: formatElapsed(now - record.startedAt),
+    elapsed,
   });
-  return {
-    ok: true,
-    record: { ...record, state: result.state, log: [...record.log, ...entries] },
-  };
+  // A trimmed log does not continue the one sockets hold, so the caller sends it whole.
+  const { log, trimmed } = capLog([...record.log, ...entries], elapsed);
+  return { ok: true, record: { ...record, state: result.state, log }, logTrimmed: trimmed };
 }
 
 /** Who a match frame is for: a seated player, or a seatless spectator. */

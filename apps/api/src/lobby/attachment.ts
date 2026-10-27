@@ -22,6 +22,7 @@ type LobbyAttachment = {
   connectedAt: number | null;
   spectating: boolean;
   logDeltas: boolean;
+  overflow: boolean;
 };
 
 /** The runtime caps an attachment at 2 KB, so an account name is clipped well below it. */
@@ -38,6 +39,7 @@ function read(ws: AttachmentCarrier): LobbyAttachment {
       connectedAt: null,
       spectating: false,
       logDeltas: false,
+      overflow: false,
     };
   }
   const partial = raw as Partial<LobbyAttachment>;
@@ -49,6 +51,7 @@ function read(ws: AttachmentCarrier): LobbyAttachment {
     connectedAt: Number.isFinite(partial.connectedAt) ? (partial.connectedAt as number) : null,
     spectating: partial.spectating === true,
     logDeltas: partial.logDeltas === true,
+    overflow: partial.overflow === true,
   };
 }
 
@@ -95,6 +98,17 @@ export function attachSpectator(ws: AttachmentCarrier): void {
 /** Record whether the socket's latest hello announced that it takes log deltas. */
 export function attachLogDeltas(ws: AttachmentCarrier, logDeltas: boolean): void {
   update(ws, { logDeltas });
+}
+
+/** Mark a socket admitted past the lobby's socket cap: its hello is answered "full" and it is
+    closed, and it never takes a seat or receives a broadcast. */
+export function attachOverflow(ws: AttachmentCarrier): void {
+  update(ws, { overflow: true });
+}
+
+/** Whether this socket was admitted past the socket cap only to be turned away. */
+export function isOverflow(ws: AttachmentCarrier): boolean {
+  return read(ws).overflow;
 }
 
 /** Whether this socket is watching the match without a seat. */

@@ -8,9 +8,11 @@ import {
   attachedSession,
   attachedUserId,
   attachLogDeltas,
+  attachOverflow,
   attachPlayer,
   attachSpectator,
   attachAccount,
+  isOverflow,
   isSpectating,
   takesLogDeltas,
 } from "./attachment";
@@ -32,6 +34,15 @@ function account(userId: string, displayName: string | null) {
 }
 
 describe("attachment codec", () => {
+  it("marks a turned-away socket, keeping the rest, and reads an older attachment as a member", () => {
+    const ws = fakeSocket({ playerId: null, userId: "u", connectedAt: 5 });
+    expect(isOverflow(ws)).toBe(false);
+    attachOverflow(ws);
+    expect(isOverflow(ws)).toBe(true);
+    expect(attachedUserId(ws)).toBe("u");
+    expect(attachedConnectedAt(ws)).toBe(5);
+  });
+
   it("round-trips a player id", () => {
     const ws = fakeSocket();
     attachPlayer(ws, "player-1");
