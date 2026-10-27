@@ -26,7 +26,8 @@ import { appOrigin, type Env } from "../env";
 import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
 import { chainMentions } from "../http/errors";
-import { logEvent, logEventThrottled } from "../http/log";
+import { logErrorThrottled, logEvent, logEventThrottled } from "../http/log";
+import { accountTag, logTag } from "../http/logTag";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { avatarSeedOf } from "./avatar";
@@ -34,6 +35,8 @@ import { generateHandle } from "./handle";
 import {
   buildAuthorizeUrl,
   clearedStateCookie,
+  codeChallengeOf,
+  generateCodeVerifier,
   generateState,
   OAUTH_STATE_COOKIE,
   type OAuthProfile,
@@ -47,8 +50,23 @@ import {
   tokenRequest,
   unpackStateCookieValue,
 } from "./oauth";
-import { DUMMY_PASSWORD_HASH, hashPassword, passwordNeedsRehash, verifyPassword } from "./password";
-import { limitAttempt, type RateLimitScope, rateLimitKeys } from "./rateLimit";
+import {
+  DEFAULT_ITERATIONS,
+  dummyPasswordHash,
+  hashPassword,
+  type Peppers,
+  passwordNeedsRehash,
+  pepperUnavailable,
+  peppersOf,
+  verifyPassword,
+} from "./password";
+import {
+  countFailure,
+  limitAttempt,
+  type RateLimitKeys,
+  type RateLimitScope,
+  rateLimitKeys,
+} from "./rateLimit";
 import { requireUser, type UserRow } from "./requireUser";
 import {
   clearedSessionCookie,
@@ -95,23 +113,24 @@ async function afterRateLimit<T, E extends { Bindings: Env }>(
   scope: RateLimitScope,
   email: string,
   lookup: Parameters<typeof limitAttempt<T>>[2],
-): Promise<{ limited: Response } | { limited: null; found: T }> {
+): Promise<{ limited: Response } | { limited: null; found: T; keys: RateLimitKeys }> {
   const ip = clientIpKey(c);
   if (await bindingRefuses(c.env.AUTH_LIMIT, `${scope}:${ip}`, "auth", scope)) {
-    logEventThrottled("auth", "rate_limited", { scope, by: "binding" });
+    const net = await logTag(c.env, "net", ip);
+    logEventThrottled("auth", "rate_limited", { scope, by: "binding", net });
     return { limited: bindingRefusal(c, "too many attempts") };
   }
   const keys = await rateLimitKeys(scope, ip, email);
   const attempt = await limitAttempt(db, keys, lookup);
   if (attempt.allowed) {
-    return { limited: null, found: attempt.found };
+    return { limited: null, found: attempt.found, keys };
   }
   c.header("Retry-After", String(attempt.retryAfterSeconds));
   if (attempt.reason === "unavailable") {
     return { limited: c.json({ error: "temporarily unavailable, try again later" }, 503) };
   }
   // Throttled: a brute-force burst answers 429 on every attempt past the budget.
-  logEventThrottled("auth", "rate_limited", { scope });
+  logEventThrottled("auth", "rate_limited", { scope, net: await logTag(c.env, "net", ip) });
   return { limited: c.json({ error: "too many attempts" }, 429) };
 }
 
@@ -180,6 +199,23 @@ function isUniqueViolation(error: unknown): boolean {
   return chainMentions(error, /UNIQUE constraint failed/);
 }
 
+/** The Worker's password peppers. Without PASSWORD_PEPPER, new hashes are made unpeppered (as
+    before AU9) rather than refusing sign-ups and logins over a missing secret, and a throttled
+    error line says so; the release gate refuses to release without it. */
+async function passwordPeppers(env: Env): Promise<Peppers> {
+  const peppers = await peppersOf(env);
+  if (peppers.current === null) logErrorThrottled("auth", "pepper_missing");
+  return peppers;
+}
+
+/** The 503 for a stored hash peppered with a pepper this Worker does not hold (a lost or
+    mistyped secret): not the password's fault, so neither a 401 nor a counted failure. */
+function pepperUnavailableResponse<E extends { Bindings: Env }>(c: Context<E>) {
+  logErrorThrottled("auth", "pepper_unavailable");
+  c.header("Retry-After", "60");
+  return c.json({ error: "temporarily unavailable, try again later" }, 503);
+}
+
 // --- email + password ------------------------------------------------------
 
 authRoutes.post("/register", validate("json", registerRequestSchema), async (c) => {
@@ -200,7 +236,11 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
     // Left blank, a generated handle: opponents see this name, and the email's local part would
     // publish the address (security audit AU3). The user can rename any time.
     displayName: body.displayName ?? generateHandle(),
-    passwordHash: await hashPassword(body.password),
+    passwordHash: await hashPassword(
+      body.password,
+      DEFAULT_ITERATIONS,
+      (await passwordPeppers(c.env)).current,
+    ),
     emailVerified: false,
   });
   const session = await newSession(row.id);
@@ -214,6 +254,7 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
     }
     throw error;
   }
+  logEvent("auth", "registered", { account: await accountTag(c.env, row.id) });
   c.header("Set-Cookie", sessionCookie(session.token));
   return c.json(userSchema.parse(mapUserRow(row)), 201);
 });
@@ -228,31 +269,42 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
     return attempt.limited;
   }
   const row = attempt.found[0];
+  const peppers = await passwordPeppers(c.env);
+  if (row?.passwordHash != null && pepperUnavailable(row.passwordHash, peppers)) {
+    return pepperUnavailableResponse(c);
+  }
   // Unknown email and password-less (OAuth-only) accounts still burn one
   // PBKDF2 verify against a throwaway hash — timing parity with the wrong-
   // password path, and ONE message for every failure (§3.5): no oracle for
   // which field was wrong.
-  const verified = await verifyPassword(body.password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
+  const verified = await verifyPassword(
+    body.password,
+    row?.passwordHash ?? dummyPasswordHash(peppers.current),
+    peppers,
+  );
   if (row === undefined || row.passwordHash === null || !verified) {
-    logEvent("auth", "login_failed", {
+    return refuseLogin(c, db, attempt.keys, {
       reason:
         row === undefined
           ? "unknown_email"
           : row.passwordHash === null
             ? "no_password"
             : "wrong_password",
+      account: row === undefined ? undefined : await accountTag(c.env, row.id),
     });
-    return c.json({ error: "invalid email or password" }, 401);
   }
   const session = await newSession(row.id);
-  // Iteration upgrade path: re-hash at today's DEFAULT_ITERATIONS while we
-  // hold the plaintext. Scoped to the verified hash, like the session insert,
-  // so it cannot restore a password an OAuth link cleared meanwhile.
-  const rehash = passwordNeedsRehash(row.passwordHash)
+  // Upgrade path: re-hash at today's DEFAULT_ITERATIONS and under today's pepper while we hold the
+  // plaintext. Scoped to the verified hash, like the session insert, so it cannot restore a
+  // password an OAuth link cleared meanwhile.
+  const rehashed = passwordNeedsRehash(row.passwordHash, peppers.current);
+  const rehash = rehashed
     ? [
         db
           .update(users)
-          .set({ passwordHash: await hashPassword(body.password) })
+          .set({
+            passwordHash: await hashPassword(body.password, DEFAULT_ITERATIONS, peppers.current),
+          })
           .where(and(eq(users.id, row.id), eq(users.passwordHash, row.passwordHash))),
       ]
     : [];
@@ -262,13 +314,32 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
     insertSessionWhilePasswordHolds(db, session.row, row.passwordHash),
     ...rehash,
   ]);
+  const account = await accountTag(c.env, row.id);
   if (inserted.meta.changes === 0) {
-    logEvent("auth", "login_failed", { reason: "credential_changed" });
-    return c.json({ error: "invalid email or password" }, 401);
+    return refuseLogin(c, db, attempt.keys, { reason: "credential_changed", account });
   }
+  logEvent("auth", "login_ok", { method: "password", account, rehashed });
   c.header("Set-Cookie", sessionCookie(session.token));
   return c.json(userSchema.parse(mapUserRow(row)));
 });
+
+/** A failed login: counted against the email's failure cap (rateLimit.ts), then one uniform 401,
+    or past the cap a 429. Either way the password was wrong, so neither tells a guesser more than
+    the other; the right password still signs in past the cap. */
+async function refuseLogin(
+  c: AuthContext,
+  db: Db,
+  keys: RateLimitKeys,
+  fields: { reason: string; account: string | undefined },
+) {
+  const failure = await countFailure(db, keys);
+  logEvent("auth", "login_failed", failure.capped ? { ...fields, capped: true } : fields);
+  if (failure.capped) {
+    c.header("Retry-After", String(failure.retryAfterSeconds));
+    return c.json({ error: "too many attempts" }, 429);
+  }
+  return c.json({ error: "invalid email or password" }, 401);
+}
 
 // --- session ----------------------------------------------------------------
 
@@ -306,6 +377,7 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
       .update(users)
       .set({ displayName, namePrompt: false })
       .where(eq(users.id, row.id));
+    logEvent("auth", "profile_updated", { account: await accountTag(c.env, row.id) });
   }
   // The updated row, not a re-read: this session owns the only change.
   return c.json(userSchema.parse(mapUserRow({ ...row, displayName, namePrompt: false })));
@@ -320,6 +392,7 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
   const row = c.get("user");
   const { password, confirmEmail } = c.req.valid("json");
   const db = drizzle(c.env.DB);
+  const account = await accountTag(c.env, row.id);
   // A password account proves it is its owner at the keyboard, not only a holder of the cookie.
   // An OAuth-only account has no secret to ask for, so it types its email: a request made with the
   // cookie but without the person (a forged command, a framed click) does not delete it.
@@ -328,6 +401,7 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
     if (confirmEmail?.trim().toLowerCase() !== row.email.toLowerCase()) {
       logEvent("auth", "delete_failed", {
         reason: confirmEmail === undefined ? "no_confirm_email" : "wrong_confirm_email",
+        account,
       });
       return c.json({ error: "email confirmation mismatch" }, 403);
     }
@@ -340,9 +414,18 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
       return attempt.limited;
     }
     const hash = attempt.found[0]?.passwordHash ?? null;
-    if (password === undefined || hash === null || !(await verifyPassword(password, hash))) {
+    const peppers = await passwordPeppers(c.env);
+    if (hash !== null && pepperUnavailable(hash, peppers)) {
+      return pepperUnavailableResponse(c);
+    }
+    if (
+      password === undefined ||
+      hash === null ||
+      !(await verifyPassword(password, hash, peppers))
+    ) {
       logEvent("auth", "delete_failed", {
         reason: password === undefined ? "no_password" : "wrong_password",
+        account,
       });
       return c.json({ error: "invalid password" }, 401);
     }
@@ -359,11 +442,11 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
     );
   // With no password to scope by, nothing matched means a concurrent delete already did the work.
   if (deleted.meta.changes === 0 && verifiedHash !== null) {
-    logEvent("auth", "delete_failed", { reason: "credential_changed" });
+    logEvent("auth", "delete_failed", { reason: "credential_changed", account });
     return c.json({ error: "invalid password" }, 401);
   }
-  // Nothing that identifies the account: it no longer exists.
-  logEvent("auth", "account_deleted", {});
+  // The tag, not the id: it ties the deletion to the account's earlier lines, and names nobody.
+  logEvent("auth", "account_deleted", { account });
   c.header("Set-Cookie", clearedSessionCookie());
   return c.body(null, 204);
 });
@@ -371,8 +454,28 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
 authRoutes.post("/logout", async (c) => {
   const sessionId = await sessionIdFromCookie(c.req.header("Cookie"));
   if (sessionId !== null) {
-    await drizzle(c.env.DB).delete(sessions).where(eq(sessions.id, sessionId));
+    const [ended] = await drizzle(c.env.DB)
+      .delete(sessions)
+      .where(eq(sessions.id, sessionId))
+      .returning({ userId: sessions.userId });
+    if (ended !== undefined) {
+      logEvent("auth", "logout", { account: await accountTag(c.env, ended.userId) });
+    }
   }
+  c.header("Set-Cookie", clearedSessionCookie());
+  return c.body(null, 204);
+});
+
+// Sign out everywhere (security audit AU7): every session of the caller's account ends, this one
+// included, so a session left signed in on another device stops working. A lobby socket opened
+// earlier keeps its seat until it closes, but no new match starts for it without a session.
+authRoutes.post("/logout-all", requireUser, async (c) => {
+  const user = c.get("user");
+  const ended = await drizzle(c.env.DB).delete(sessions).where(eq(sessions.userId, user.id));
+  logEvent("auth", "logout_all", {
+    account: await accountTag(c.env, user.id),
+    sessions: ended.meta.changes,
+  });
   c.header("Set-Cookie", clearedSessionCookie());
   return c.body(null, 204);
 });
@@ -386,7 +489,7 @@ function callbackUrl(c: AuthContext, provider: OAuthProvider): string {
   return `${origin}/auth/oauth/${provider}/callback`;
 }
 
-authRoutes.get("/oauth/:provider", (c) => {
+authRoutes.get("/oauth/:provider", async (c) => {
   const provider = parseProvider(c.req.param("provider"));
   if (provider === null) {
     return c.json({ error: "unknown provider" }, 404);
@@ -396,9 +499,11 @@ authRoutes.get("/oauth/:provider", (c) => {
     return c.json({ error: "provider not configured" }, 503);
   }
   const state = generateState();
+  const codeVerifier = generateCodeVerifier();
   const redirect = sanitizeRedirect(c.req.query("redirect"));
-  c.header("Set-Cookie", stateCookie(packStateCookieValue(state, redirect)));
-  return c.redirect(buildAuthorizeUrl(config, callbackUrl(c, provider), state), 302);
+  c.header("Set-Cookie", stateCookie(packStateCookieValue(state, codeVerifier, redirect)));
+  const challenge = await codeChallengeOf(codeVerifier);
+  return c.redirect(buildAuthorizeUrl(config, callbackUrl(c, provider), state, challenge), 302);
 });
 
 /** The callback is a top-level browser navigation, so failures go back to the
@@ -465,7 +570,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   }
 
   // Code → access token.
-  const exchange = tokenRequest(config, code, callbackUrl(c, provider));
+  const exchange = tokenRequest(config, code, callbackUrl(c, provider), packed.codeVerifier);
   const tokenResponse = await upstreamJson(exchange.url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
@@ -491,26 +596,54 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
 
   const db = drizzle(c.env.DB);
   const result = await findOrCreateOAuthUser(db, provider, profile);
-  if (result === "no-email" || result === "email-in-use") {
+  if (typeof result === "string") {
     logEvent("auth", "oauth_refused", { provider, reason: result });
     // email-in-use: the provider email matches an existing account but is NOT
     // provider-verified — linking would let anyone with an unverified alias
-    // take the account over.
+    // take the account over. email-unverified: no existing account, and an
+    // address the provider does not vouch for makes none.
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, result), 302);
   }
-  const session = await newSession(result.id);
-  await db.batch([sweepExpiredSessions(db, result.id), db.insert(sessions).values(session.row)]);
+  const { user, outcome } = result;
+  const account = await accountTag(c.env, user.id);
+  if (outcome.kind === "created") {
+    logEvent("auth", "oauth_created", { provider, account });
+  } else if (outcome.kind === "linked") {
+    logEvent("auth", "oauth_linked", {
+      provider,
+      account,
+      claimed: outcome.claimed,
+      ...(outcome.claimed
+        ? { identitiesRemoved: outcome.identitiesRemoved, sessionsRevoked: outcome.sessionsRevoked }
+        : {}),
+    });
+  }
+  const session = await newSession(user.id);
+  await db.batch([sweepExpiredSessions(db, user.id), db.insert(sessions).values(session.row)]);
+  logEvent("auth", "login_ok", { method: "oauth", provider, account });
   c.header("Set-Cookie", sessionCookie(session.token), { append: true });
   return c.redirect(`${appOrigin(c.env)}${packed.redirect}`, 302);
 });
 
+type OAuthRefusal = Extract<OAuthFailure, "no-email" | "email-in-use" | "email-unverified">;
+
+/** How a callback's user was found, for the audit line. A claimed link took over an unverified
+    account, clearing its password, its sessions and every other identity. */
+type OAuthOutcome =
+  | { kind: "returning" | "created" }
+  | { kind: "linked"; claimed: false }
+  | { kind: "linked"; claimed: true; identitiesRemoved: number; sessionsRevoked: number };
+
+type OAuthUser = { user: UserRow; outcome: OAuthOutcome };
+
 /** §3.5 find-or-create: linked identity → that user; verified-email match →
-    link identity to the existing user; otherwise a fresh user + identity. */
+    link identity to the existing user; otherwise a fresh user + identity,
+    for a provider-verified email only. */
 async function findOrCreateOAuthUser(
   db: Db,
   provider: OAuthProvider,
   profile: OAuthProfile,
-): Promise<UserRow | Extract<OAuthFailure, "no-email" | "email-in-use">> {
+): Promise<OAuthUser | OAuthRefusal> {
   try {
     return await linkOrCreateOAuthUser(db, provider, profile);
   } catch (error) {
@@ -525,7 +658,7 @@ async function linkOrCreateOAuthUser(
   db: Db,
   provider: OAuthProvider,
   profile: OAuthProfile,
-): Promise<UserRow | Extract<OAuthFailure, "no-email" | "email-in-use">> {
+): Promise<OAuthUser | OAuthRefusal> {
   const linked = await db
     .select({ user: users })
     .from(oauthIdentities)
@@ -538,7 +671,7 @@ async function linkOrCreateOAuthUser(
     )
     .get();
   if (linked !== undefined) {
-    return linked.user;
+    return { user: linked.user, outcome: { kind: "returning" } };
   }
   if (profile.email === null) {
     // users.email is NOT NULL UNIQUE — nothing to key a new account on.
@@ -551,14 +684,15 @@ async function linkOrCreateOAuthUser(
       return "email-in-use";
     }
     // Link, and promote emailVerified — the provider just attested it. An
-    // unverified account's password and sessions could belong to whoever
-    // registered the address first, so they go: the owner signs in through
-    // the provider from now on.
+    // unverified account's password, sessions and other identities could
+    // belong to whoever registered the address first, so they go (AU4): the
+    // owner signs in through this identity from now on.
     if (existing.emailVerified) {
       await db.insert(oauthIdentities).values({ ...identity, userId: existing.id });
-      return existing;
+      return { user: existing, outcome: { kind: "linked", claimed: false } };
     }
-    await db.batch([
+    const [identitiesRemoved, , , sessionsRevoked] = await db.batch([
+      db.delete(oauthIdentities).where(eq(oauthIdentities.userId, existing.id)),
       db.insert(oauthIdentities).values({ ...identity, userId: existing.id }),
       db
         .update(users)
@@ -566,7 +700,19 @@ async function linkOrCreateOAuthUser(
         .where(eq(users.id, existing.id)),
       db.delete(sessions).where(eq(sessions.userId, existing.id)),
     ]);
-    return { ...existing, emailVerified: true, passwordHash: null };
+    return {
+      user: { ...existing, emailVerified: true, passwordHash: null },
+      outcome: {
+        kind: "linked",
+        claimed: true,
+        identitiesRemoved: identitiesRemoved.meta.changes,
+        sessionsRevoked: sessionsRevoked.meta.changes,
+      },
+    };
+  }
+  if (!profile.emailVerified) {
+    // A provider that has not verified the address cannot vouch for it (AU4).
+    return "email-unverified";
   }
   const row = newUserRow({
     email: profile.email,
@@ -579,7 +725,7 @@ async function linkOrCreateOAuthUser(
     db.insert(users).values(row),
     db.insert(oauthIdentities).values({ ...identity, userId: row.id }),
   ]);
-  return row;
+  return { user: row, outcome: { kind: "created" } };
 }
 
 // --- email-dependent flows: stubs -------------------------------------------

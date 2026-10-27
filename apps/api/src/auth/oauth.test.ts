@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Env } from "../env";
 import {
   buildAuthorizeUrl,
+  codeChallengeOf,
+  generateCodeVerifier,
   generateState,
   type OAuthConfig,
   oauthConfig,
@@ -62,7 +64,12 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
 
   it("builds the authorize URL with all required, properly-encoded params", () => {
     const url = new URL(
-      buildAuthorizeUrl(config, "http://localhost:8787/auth/oauth/google/callback", "st4te"),
+      buildAuthorizeUrl(
+        config,
+        "http://localhost:8787/auth/oauth/google/callback",
+        "st4te",
+        "ch4llenge",
+      ),
     );
     expect(url.origin + url.pathname).toBe("https://accounts.google.com/o/oauth2/v2/auth");
     expect(url.searchParams.get("response_type")).toBe("code");
@@ -72,12 +79,14 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
     );
     expect(url.searchParams.get("scope")).toBe("openid email profile");
     expect(url.searchParams.get("state")).toBe("st4te");
+    expect(url.searchParams.get("code_challenge")).toBe("ch4llenge");
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
     // The redirect URI must arrive percent-encoded on the wire.
     expect(url.search).toContain("redirect_uri=http%3A%2F%2Flocalhost");
   });
 
-  it("builds a form-encoded authorization_code exchange", () => {
-    const request = tokenRequest(config, "the-code", "https://api.example/cb");
+  it("builds a form-encoded authorization_code exchange carrying the PKCE verifier", () => {
+    const request = tokenRequest(config, "the-code", "https://api.example/cb", "the-verifier");
     expect(request.url).toBe(config.tokenUrl);
     expect(Object.fromEntries(request.body)).toEqual({
       grant_type: "authorization_code",
@@ -85,6 +94,7 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
       redirect_uri: "https://api.example/cb",
       client_id: "client-1",
       client_secret: "secret-1",
+      code_verifier: "the-verifier",
     });
   });
 
@@ -96,6 +106,24 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
   });
 });
 
+describe("PKCE", () => {
+  it("mints unique 256-bit verifiers in the RFC 7636 alphabet", () => {
+    const verifiers = new Set(Array.from({ length: 20 }, generateCodeVerifier));
+    expect(verifiers.size).toBe(20);
+    for (const verifier of verifiers) {
+      expect(verifier).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    }
+  });
+
+  it("derives the S256 challenge of RFC 7636 appendix B", async () => {
+    expect(await codeChallengeOf("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk")).toBe(
+      "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+    );
+  });
+});
+
+const VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+
 describe("state cookie", () => {
   it("mints unique base64url states", () => {
     const states = new Set(Array.from({ length: 20 }, generateState));
@@ -105,17 +133,22 @@ describe("state cookie", () => {
     }
   });
 
-  it("round-trips state + redirect through the packed value", () => {
-    const packed = packStateCookieValue("myst4te", "/decks?tab=all");
+  it("round-trips state, verifier and redirect through the packed value", () => {
+    const packed = packStateCookieValue("myst4te", VERIFIER, "/decks?tab=all");
     expect(unpackStateCookieValue(packed)).toEqual({
       state: "myst4te",
+      codeVerifier: VERIFIER,
       redirect: "/decks?tab=all",
     });
   });
 
   it("sanitizes the redirect on the way OUT of the cookie too", () => {
-    const packed = packStateCookieValue("s", "https://evil.example/phish");
-    expect(unpackStateCookieValue(packed)).toEqual({ state: "s", redirect: "/" });
+    const packed = packStateCookieValue("s", VERIFIER, "https://evil.example/phish");
+    expect(unpackStateCookieValue(packed)).toEqual({
+      state: "s",
+      codeVerifier: VERIFIER,
+      redirect: "/",
+    });
   });
 
   it("rejects malformed cookie values with null", () => {
@@ -124,6 +157,12 @@ describe("state cookie", () => {
     expect(unpackStateCookieValue("no-separator")).toBeNull();
     expect(unpackStateCookieValue(".leading")).toBeNull();
     expect(unpackStateCookieValue("state.not+base64url")).toBeNull();
+    expect(unpackStateCookieValue(`state.${VERIFIER}.not+base64url`)).toBeNull();
+    // A cookie from before PKCE (state.redirect) carries no verifier.
+    expect(unpackStateCookieValue("state.Lw")).toBeNull();
+    expect(unpackStateCookieValue("state.short.Lw")).toBeNull();
+    expect(unpackStateCookieValue(`state.${VERIFIER}.Lw.extra`)).toBeNull();
+    expect(unpackStateCookieValue(`.${VERIFIER}.Lw`)).toBeNull();
   });
 
   it("serializes scoped, short-lived, Lax cookies", () => {

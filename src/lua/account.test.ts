@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
 import { LuaAccount, SESSION_CHECK_MAX_AGE_MS } from "./account";
+import { messageWidth } from "./builder";
 import { encodeFields } from "./wire";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -333,5 +334,46 @@ describe("Lua account deletion", () => {
     expect(account.message).toBe("Your session expired. Sign in again.");
     expect(account.status).toBe("anonymous");
     expect(account.busy).toBe(false);
+  });
+  it("signs out everywhere, keeping the account if that fails", async () => {
+    let answer = () => json({ error: "unavailable" }, 503);
+    const { calls } = stubFetch({ ...session, "POST /auth/logout-all": () => answer() });
+    const { account } = setup();
+    await account.refresh();
+    await account.command(encodeFields(["logout-all"]));
+    expect(account.message).toBe("Could not sign out everywhere. Try again.");
+    expect(account.user?.id).toBe(USER.id);
+    answer = () => json({});
+    await account.command(encodeFields(["logout-all"]));
+    expect(calls.filter((call) => call === "POST /auth/logout-all")).toHaveLength(2);
+    expect(account.status).toBe("anonymous");
+    expect(account.user).toBeNull();
+    expect(account.message).toBe("Signed out on every device.");
+  });
+  it("says so when signing out everywhere finds this session already gone", async () => {
+    stubFetch({ ...session, "POST /auth/logout-all": () => json({ error: "unauthorized" }, 401) });
+    const { account } = setup();
+    await account.refresh();
+    await account.signOut(true);
+    expect(account.status).toBe("anonymous");
+    expect(account.message).toBe("Your session expired. Sign in again.");
+  });
+  it("explains a Google email that Google has not verified", async () => {
+    stubFetch({ "GET /auth/me": () => json({}, 401) });
+    const { account } = setup();
+    account.noteAuthError("email-unverified");
+    await account.refresh();
+    expect(account.message).toBe("Google has not verified that email address.");
+  });
+  it("fits each new account message on one line of the portrait account tab", async () => {
+    // The tab draws messages at size 17 across 384 px in portrait; messageWidth measures size 14.
+    const limit = (384 * 14) / 17;
+    const messages = [
+      "Google has not verified that email address.",
+      "Signing out everywhere...",
+      "Signed out on every device.",
+      "Could not sign out everywhere. Try again.",
+    ];
+    for (const message of messages) expect(messageWidth(message), message).toBeLessThan(limit);
   });
 });

@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
-import { unpackStateCookieValue } from "./oauth";
+import { codeChallengeOf, packStateCookieValue, unpackStateCookieValue } from "./oauth";
+
+/** A well-formed state cookie for the state "real" and the redirect "/". */
+const STATE_COOKIE = `oauth_state=${packStateCookieValue("real", "v".repeat(43), "/")}`;
 
 let warn: MockInstance<typeof console.warn>;
 
@@ -131,7 +134,7 @@ describe("GET /auth/oauth/:provider (start)", () => {
     }
   });
 
-  it("302s to the provider with a state that matches the cookie", async () => {
+  it("302s to the provider with a state that matches the cookie, and its PKCE challenge", async () => {
     const env = envWith({ GOOGLE_CLIENT_ID: "d-id", GOOGLE_CLIENT_SECRET: "d-secret" });
     const res = await app.request(
       "http://localhost:8787/auth/oauth/google?redirect=/decks",
@@ -154,12 +157,16 @@ describe("GET /auth/oauth/:provider (start)", () => {
     expect(cookie).toContain(`oauth_state=${state}.`);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("Max-Age=600");
-    expect(
-      unpackStateCookieValue(cookie.split(";")[0]?.slice("oauth_state=".length) ?? null),
-    ).toEqual({
-      state,
-      redirect: "/decks",
-    });
+    const packed = unpackStateCookieValue(
+      cookie.split(";")[0]?.slice("oauth_state=".length) ?? null,
+    );
+    expect(packed).toEqual({ state, codeVerifier: expect.any(String), redirect: "/decks" });
+    // The verifier stays in the cookie; only its S256 hash goes to the provider.
+    expect(location.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(location.searchParams.get("code_challenge")).toBe(
+      await codeChallengeOf(packed?.codeVerifier ?? ""),
+    );
+    expect(location.search).not.toContain(packed?.codeVerifier);
   });
 });
 
@@ -173,9 +180,9 @@ describe("GET /auth/oauth/:provider/callback", () => {
     const env = envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" });
     const cases = [
       { query: "?code=x&state=forged", cookie: undefined }, // no cookie at all
-      { query: "?code=x", cookie: "oauth_state=real.Lw" }, // provider sent no state
-      { query: "?state=real", cookie: "oauth_state=real.Lw" }, // no code
-      { query: "?code=x&state=forged", cookie: "oauth_state=real.Lw" }, // mismatch
+      { query: "?code=x", cookie: STATE_COOKIE }, // provider sent no state
+      { query: "?state=real", cookie: STATE_COOKIE }, // no code
+      { query: "?code=x&state=forged", cookie: STATE_COOKIE }, // mismatch
     ];
     for (const { query, cookie } of cases) {
       const res = await app.request(
@@ -226,7 +233,7 @@ describe("GET /auth/oauth/:provider/callback", () => {
     vi.stubGlobal("fetch", vi.fn(tokenEndpoint));
     const res = await app.request(
       "/auth/oauth/google/callback?code=x&state=real",
-      { headers: { Cookie: "oauth_state=real.Lw" } },
+      { headers: { Cookie: STATE_COOKIE } },
       envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
     );
     expect(new URL(res.headers.get("Location") ?? "").searchParams.get("authError")).toBe(
@@ -246,7 +253,7 @@ describe("GET /auth/oauth/:provider/callback", () => {
     );
     const res = await app.request(
       "/auth/oauth/google/callback?code=x&state=real",
-      { headers: { Cookie: "oauth_state=real.Lw" } },
+      { headers: { Cookie: STATE_COOKIE } },
       envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
     );
     expect(new URL(res.headers.get("Location") ?? "").searchParams.get("authError")).toBe(
@@ -271,7 +278,7 @@ describe("GET /auth/oauth/:provider/callback", () => {
     try {
       const res = await app.request(
         "/auth/oauth/google/callback?code=x&state=real",
-        { headers: { Cookie: "oauth_state=real.Lw" } },
+        { headers: { Cookie: STATE_COOKIE } },
         envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
       );
       expect(res.status).toBe(302);

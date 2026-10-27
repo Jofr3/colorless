@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { logEvent, logEventThrottled, resetLogThrottle } from "./log";
+import { logErrorThrottled, logEvent, logEventThrottled, resetLogThrottle } from "./log";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -24,6 +24,17 @@ describe("logEvent", () => {
       '{"evt":"kv","kind":"put_failed"}',
       '{"evt":"kv","kind":"get_failed"}',
       '{"evt":"kv","kind":"put_failed","suppressed":2}',
+    ]);
+  });
+
+  it("throttles error-level lines the same way", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    logErrorThrottled("auth", "pepper_missing", {}, 1000, 0);
+    logErrorThrottled("auth", "pepper_missing", {}, 1000, 10);
+    logErrorThrottled("auth", "pepper_missing", {}, 1000, 2000);
+    expect(error.mock.calls.map(([line]) => line)).toEqual([
+      '{"evt":"auth","kind":"pepper_missing"}',
+      '{"evt":"auth","kind":"pepper_missing","suppressed":1}',
     ]);
   });
 });

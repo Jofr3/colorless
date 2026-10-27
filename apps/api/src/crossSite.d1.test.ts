@@ -26,6 +26,8 @@ const UNSAFE_ROUTES: Record<string, { body?: unknown; textPlain?: number }> = {
   },
   // AEX1: signed the visitor out before the guard.
   "POST /auth/logout": { textPlain: 403 },
+  // AU7: would sign the visitor out everywhere.
+  "POST /auth/logout-all": { textPlain: 403 },
   "POST /auth/verify-email": { textPlain: 403 },
   "POST /auth/reset-password": { textPlain: 403 },
   "POST /decks": { body: { name: "Planted", tint: 1 }, textPlain: 403 },

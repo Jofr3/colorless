@@ -8,7 +8,16 @@ import {
   registerRequestSchema,
   updateProfileRequestSchema,
 } from "@colorless/schema";
-import { ApiError, deleteAccount, login, register, logout, me, updateProfile } from "../lib/api";
+import {
+  ApiError,
+  deleteAccount,
+  login,
+  logout,
+  logoutAll,
+  me,
+  register,
+  updateProfile,
+} from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
 
@@ -18,9 +27,14 @@ const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   profile: "Google sign-in failed. Try again.",
   "no-email": "Google did not share an email address.",
   "email-in-use": "That email already has an account. Sign in with your password.",
+  "email-unverified": "Google has not verified that email address.",
 };
 
 const EMAIL_MISMATCH = "That is not this account's email.";
+const SESSION_EXPIRED = "Your session expired. Sign in again.";
+const SIGNING_OUT_EVERYWHERE = "Signing out everywhere...";
+const SIGNED_OUT_EVERYWHERE = "Signed out on every device.";
+const SIGN_OUT_EVERYWHERE_FAILED = "Could not sign out everywhere. Try again.";
 const HIDDEN_CHARACTERS = "Names cannot have hidden characters.";
 
 interface FormIssue {
@@ -156,25 +170,32 @@ export class LuaAccount {
     }
   }
 
-  async signOut() {
+  /** Signs this browser out, or with `everywhere` every session of the account (AU7). A 401 means
+   * this session is gone already: signed out here, though for `everywhere` the others may live on,
+   * which the message says. */
+  async signOut(everywhere = false) {
     if (this.busy || !this.user) return;
     const op = ++this.operation;
     this.busy = true;
-    this.message = "Signing out...";
+    this.message = everywhere ? SIGNING_OUT_EVERYWHERE : "Signing out...";
     this.emit();
     try {
+      let expired = false;
       try {
-        await logout();
+        await (everywhere ? logoutAll() : logout());
       } catch (error) {
         if (!(error instanceof ApiError && error.status === 401)) throw error;
+        expired = true;
       }
       if (op !== this.operation) return;
       this.user = null;
       this.status = "anonymous";
       this.checkedAt = Date.now();
-      this.message = "";
+      this.message = !everywhere ? "" : expired ? SESSION_EXPIRED : SIGNED_OUT_EVERYWHERE;
     } catch {
-      if (op === this.operation) this.message = "Could not sign out. Try again.";
+      if (op === this.operation) {
+        this.message = everywhere ? SIGN_OUT_EVERYWHERE_FAILED : "Could not sign out. Try again.";
+      }
     } finally {
       if (op === this.operation) {
         this.busy = false;
@@ -325,6 +346,7 @@ export class LuaAccount {
     // not pass it; the refusal asks for a new one.
     if (action === "keep" && this.user) await this.save(this.user.displayName);
     if (action === "logout") await this.signOut();
+    if (action === "logout-all") await this.signOut(true);
     if (action === "google") await this.google();
     if (action === "clear-message" && !this.busy) {
       this.message = "";

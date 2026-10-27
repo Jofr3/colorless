@@ -5,6 +5,9 @@ import { resetLogThrottle } from "../http/log";
 import { useTestD1 } from "../testing/d1";
 import {
   ACCOUNT_MAX_ATTEMPTS,
+  countFailure,
+  EMAIL_FAILURE_WINDOW_MS,
+  EMAIL_MAX_FAILURES,
   IP_MAX_ATTEMPTS,
   limitAttempt,
   RATE_LIMIT_WINDOW_MS,
@@ -140,5 +143,47 @@ describe("limitAttempt", () => {
       { evt: "auth", kind: "limiter_error", error: "Error", quota: true },
     ]);
     expect(await counters()).toEqual([]);
+  });
+});
+
+describe("countFailure (AU6)", () => {
+  const fail = (keys: RateLimitKeys, nowMs: number, db: D1Database = d1().db) =>
+    countFailure(drizzle(db), keys, nowMs);
+
+  it(`counts ${EMAIL_MAX_FAILURES} failures an hour per email, then caps further ones without writing`, async () => {
+    const keys = await rateLimitKeys("login", IP, "ash@example.com");
+    for (let i = 0; i < EMAIL_MAX_FAILURES; i++) {
+      expect(await fail(keys, NOW + i)).toEqual({ capped: false });
+    }
+    const later = NOW + 10 * 60 * 1000;
+    expect(await fail(keys, later)).toEqual({
+      capped: true,
+      retryAfterSeconds: (EMAIL_FAILURE_WINDOW_MS - 10 * 60 * 1000) / 1000,
+    });
+    // Another address is capped too, and nothing past the cap is written.
+    const elsewhere = await rateLimitKeys("login", "198.51.100.7", "ASH@example.com");
+    expect((await fail(elsewhere, later)).capped).toBe(true);
+    expect(await counters()).toEqual([
+      { key: keys.email, count: EMAIL_MAX_FAILURES, reset_at: NOW + EMAIL_FAILURE_WINDOW_MS },
+    ]);
+    // The window ends and counting starts over.
+    expect(await fail(keys, NOW + EMAIL_FAILURE_WINDOW_MS)).toEqual({ capped: false });
+    expect((await counters())[0]?.count).toBe(1);
+  });
+
+  it("caps nothing, and logs, when D1 fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failing = new Proxy(d1().db, {
+      get(target, property) {
+        if (property === "batch") return () => Promise.reject(new Error("D1_ERROR: boom"));
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const keys = await rateLimitKeys("login", IP, "ash@example.com");
+    expect(await fail(keys, NOW, failing)).toEqual({ capped: false });
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "auth", kind: "limiter_error", error: "Error", quota: false },
+    ]);
   });
 });

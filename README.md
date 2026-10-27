@@ -83,6 +83,33 @@ same site (`jofrescari.workers.dev`): the `SameSite=Lax` session cookie is first
 for the app's requests. Moving to a custom domain must keep the two on one site,
 or sign-in breaks.
 
+### API secrets
+
+The API needs two Worker secrets besides the Google ones, and `bun run release`
+refuses to release until both exist (`release:gate` step `secrets`, which only
+lists secret names):
+
+| Secret | What it does | If it is lost |
+|---|---|---|
+| `PASSWORD_PEPPER` | HMAC key applied to every password before PBKDF2, so a D1 export alone cannot be cracked offline | every account whose hash it peppered cannot sign in with its password (Google sign-in still works) until it is restored |
+| `LOG_TAG_KEY` | key of the pseudonymous account and network tags in auth log lines | older log lines no longer match new ones; nothing else |
+
+Set them **before** the first release that needs them, and keep a copy of each in
+the password manager first: Cloudflare never shows a secret again. From `apps/api/`:
+
+```sh
+openssl rand -base64 32   # once per secret; save it in the password manager
+bunx wrangler secret put PASSWORD_PEPPER
+bunx wrangler secret put LOG_TAG_KEY
+cd ../.. && bun run release
+```
+
+`wrangler secret put` applies at once to the deployed Worker. Existing password
+hashes keep working and are re-peppered at each account's next sign-in, so nobody
+is logged out. To rotate the pepper, set the old value as `PASSWORD_PEPPER_PREVIOUS`
+and the new one as `PASSWORD_PEPPER`; delete the previous one only once the accounts
+that matter have signed in again (backend-data.md §3.5).
+
 ## Google login
 
 Create a **Web application** OAuth client in [Google Auth Platform](https://console.cloud.google.com/auth/clients).

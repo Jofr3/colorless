@@ -223,6 +223,12 @@ export function logout(): Promise<void> {
   return request("/auth/logout", { method: "POST", recoverSession: false });
 }
 
+/** End every session of my account, this one included, and clear the cookie. 401 when the
+    session is already gone. */
+export function logoutAll(): Promise<void> {
+  return request("/auth/logout-all", { method: "POST", recoverSession: false });
+}
+
 /** Who the session cookie says I am. Throws ApiError 401 when logged out —
     deliberately NOT swallowed here; "401 means signed out" is the caller's
     branch, not this module's. */

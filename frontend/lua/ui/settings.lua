@@ -40,7 +40,8 @@ end
 function Settings:layout(w,h)
   self.width,self.height=w,h
   local mode=self.auth and self.auth.mode
-  self.w,self.h=w<600 and 440 or 780,mode=='login' and 560 or mode=='register' and 620 or 540
+  -- The tabs are 600 tall for the account tab's four rows of buttons and its message.
+  self.w,self.h=w<600 and 440 or 780,mode=='login' and 560 or mode=='register' and 620 or mode=='delete' and 540 or 600
   self.x,self.y=(w-self.w)/2,(h-self.h)/2
   self:build()
 end
@@ -229,8 +230,10 @@ function Settings:build()
       add('name','Display name','edit',240)
       add('action',a.busy and 'Please wait...' or 'Save','save',310,w/2-6)
       add('action','Sign out','logout',310,w/2-6,x+w/2+6)
+      -- Ends every session of the account, this browser's too (POST /auth/logout-all).
+      add('action','Sign out everywhere','logout-all',370)
       -- Opens the deletion form; nothing is deleted from this tab.
-      add('action','Delete account','delete',370)
+      add('action','Delete account','delete',430)
     elseif not a.busy then
       add('action',a.status=='error' and 'Retry' or 'Sign in',a.status=='error' and 'refresh' or 'login',245,240,self.x+(self.w-240)/2)
     end
@@ -406,7 +409,7 @@ function Settings:draw()
       T.text(text,24,self.x+32,self.y+172,self.w-64)
     end
     if a.message~='' then
-      T.text(a.message,17,self.x+28,self.y+428,self.w-56,T.paper)
+      T.text(a.message,17,self.x+28,self.y+488,self.w-56,T.paper)
     end
   end
   for i,item in ipairs(self.items) do
