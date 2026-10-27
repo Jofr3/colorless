@@ -48,3 +48,26 @@ describe("GET /assets/cards/:cardId/:file for a missing asset", () => {
     expect(res.headers.get("cache-control")).toBeNull();
   });
 });
+
+describe("GET /assets for an id that is not a tcgdex id", () => {
+  it("404s without reading R2, D1 or the origin", async () => {
+    const fetch = vi.fn(async () => new Response("", { status: 200 }));
+    vi.stubGlobal("fetch", fetch);
+    const untouched = {
+      get: () => Promise.reject(new Error("R2 read")),
+      put: () => Promise.reject(new Error("R2 write")),
+    };
+    const env = { ...d1().env({ ASSETS: untouched }), DB: undefined };
+    for (const path of [
+      "cards/..%2F..%2Fx/high.webp",
+      "cards/a%0Ab/high.webp",
+      "cards/.hidden/high.webp",
+      `cards/${"a".repeat(65)}/high.webp`,
+      "sets/sv01..x/logo.webp",
+      "sets/-x/symbol.webp",
+    ]) {
+      expect((await app.request(`/assets/${path}`, {}, env)).status).toBe(404);
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});

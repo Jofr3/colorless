@@ -1,7 +1,7 @@
 // tcgdex to D1 catalog ingest. Card data only; images are mirrored lazily by the /assets routes.
 // Every payload is validated with @colorless/schema before mapping, and all writes are upserts, so
 // reruns are safe. Validated payloads are kept on disk for a day (`--refresh` refetches), and each
-// set is written by one SQL file. Imports ../src/ingest/source and ./payloadCache directly so the
+// set is written by one SQL file. Imports ../src/ingest/source, ./payloadCache and ./sqlFile directly so the
 // SDK and node:fs cannot reach the Worker through the ingest barrel.
 
 import { spawnSync } from "node:child_process";
@@ -9,6 +9,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import {
+  isTcgdexId,
   type TcgdexCard,
   type TcgdexSerie,
   type TcgdexSet,
@@ -30,6 +31,7 @@ import {
 } from "../src/ingest";
 import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
 import { createSource, parseTransport } from "../src/ingest/source";
+import { sqlFilePath } from "../src/ingest/sqlFile";
 import { API_ROOT, DATABASE, recordBookmark } from "./d1";
 
 const DELAY_MS = 50;
@@ -69,6 +71,11 @@ const targetSetIds = args.sets
   .map((id) => id.trim())
   .filter((id) => id.length > 0);
 const targetSerieId = targetSetIds ? undefined : (args.serie ?? "sv");
+const badId = [...(targetSetIds ?? []), targetSerieId ?? ""].find((id) => id && !isTcgdexId(id));
+if (badId !== undefined) {
+  console.error(`not a tcgdex id: ${JSON.stringify(badId)}`);
+  process.exit(1);
+}
 const dryRun = args["dry-run"] ?? false;
 const d1Target = args.remote ? "--remote" : "--local";
 const refresh = args.refresh ?? false;
@@ -161,9 +168,8 @@ mkdirSync(outDir, { recursive: true });
 let fileOrdinal = 0;
 
 function writeSqlFile(label: string, sql: string): string {
-  const name = `${String(fileOrdinal).padStart(3, "0")}-${label}.sql`;
+  const path = sqlFilePath(outDir, fileOrdinal, label);
   fileOrdinal += 1;
-  const path = join(outDir, name);
   writeFileSync(path, `${sql}\n`);
   return path;
 }

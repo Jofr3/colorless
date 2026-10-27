@@ -5,6 +5,7 @@
 import * as z from "zod";
 import {
   tcgdexBoosterSchema,
+  tcgdexIdSchema,
   tcgdexLegalSchema,
   tcgdexSetBriefSchema,
   tcgdexTimestampSchema,
@@ -46,7 +47,7 @@ export type TcgdexItem = z.infer<typeof tcgdexItemSchema>;
 // quality/extension (append e.g. `/high.webp`); missing on cards without
 // scans. `updated` mixes `Z` and `+HH:MM` offsets across cards.
 const tcgdexCardBaseShape = {
-  id: z.string(),
+  id: tcgdexIdSchema,
   localId: z.string(),
   name: z.string(),
   image: z.string().optional(),

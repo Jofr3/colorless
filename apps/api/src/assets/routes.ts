@@ -1,6 +1,6 @@
 // GET /assets/* — the lazy tcgdex→R2 asset mirror (D9, §3.4).
 //
-// Cache-aside per request: validate the file name against a strict allowlist
+// Cache-aside per request: validate the id and the file name against strict allowlists
 // (anything else 404s without touching the origin) → serve from R2 on hit →
 // on miss, resolve the tcgdex origin base URL from D1 (first real Drizzle
 // query in the app), fetch the original, respond, and store it in R2 after
@@ -8,6 +8,7 @@
 // ingest never touches R2 — objects are only ever written here, keyed
 // `cards/{cardId}/{file}` / `sets/{setId}/{file}`, and immutable thereafter.
 
+import { isTcgdexId } from "@colorless/schema";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
@@ -153,7 +154,7 @@ function missingAsset(c: Context): Response {
 
 assetsRoutes.get("/cards/:cardId/:file", async (c) => {
   const { cardId, file } = c.req.param();
-  if (!isCardAssetFile(file)) {
+  if (!isTcgdexId(cardId) || !isCardAssetFile(file)) {
     return c.notFound();
   }
   const response = await serveMirroredAsset(
@@ -175,7 +176,7 @@ assetsRoutes.get("/cards/:cardId/:file", async (c) => {
 
 assetsRoutes.get("/sets/:setId/:file", async (c) => {
   const { setId, file } = c.req.param();
-  if (!isSetAssetFile(file)) {
+  if (!isTcgdexId(setId) || !isSetAssetFile(file)) {
     return c.notFound();
   }
   const response = await serveMirroredAsset(

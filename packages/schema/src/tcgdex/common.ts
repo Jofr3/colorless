@@ -5,6 +5,20 @@
 import * as z from "zod";
 
 /**
+ * A tcgdex serie, set or card id. Ids become catalog keys, URL segments, R2 keys and the ingest's
+ * file names, so they are held to what tcgdex uses: ASCII letters, digits, `.`, `_` and `-`,
+ * starting with a letter or digit, at most 64 characters, and never `..`. A new upstream format
+ * fails validation loudly rather than reaching a path.
+ */
+export const TCGDEX_ID_PATTERN = /^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+export const tcgdexIdSchema = z.string().regex(TCGDEX_ID_PATTERN);
+
+/** Whether `id` has the shape of a tcgdex id (TCGDEX_ID_PATTERN). */
+export function isTcgdexId(id: string): boolean {
+  return TCGDEX_ID_PATTERN.test(id);
+}
+
+/**
  * tcgdex `updated` timestamps mix UTC (`2026-06-08T12:42:35Z`, with or
  * without milliseconds) and zoned (`2026-07-01T21:27:44+01:00`) forms.
  */
@@ -49,7 +63,7 @@ export type TcgdexBooster = z.infer<typeof tcgdexBoosterSchema>;
 
 /** List/resume shape of a card (`/cards`, `set.cards[]`). `image` is a base URL without extension. */
 export const tcgdexCardBriefSchema = z.object({
-  id: z.string(),
+  id: tcgdexIdSchema,
   localId: z.string(),
   name: z.string(),
   image: z.string().optional(),
@@ -62,7 +76,7 @@ export type TcgdexCardBrief = z.infer<typeof tcgdexCardBriefSchema>;
  * logo-less sets such as `sve` (Scarlet & Violet Energy).
  */
 export const tcgdexSetBriefSchema = z.object({
-  id: z.string(),
+  id: tcgdexIdSchema,
   name: z.string(),
   logo: z.string().optional(),
   symbol: z.string().optional(),
@@ -76,7 +90,7 @@ export type TcgdexSetBrief = z.infer<typeof tcgdexSetBriefSchema>;
  * `set.serie` form is just `{id, name}`.
  */
 export const tcgdexSerieBriefSchema = z.object({
-  id: z.string(),
+  id: tcgdexIdSchema,
   name: z.string(),
   logo: z.string().optional(),
 });
