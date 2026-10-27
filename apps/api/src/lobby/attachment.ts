@@ -1,7 +1,8 @@
 // What a lobby socket remembers across hibernation. `playerId` is set by the first valid hello.
-// `userId` is the account from the session cookie at upgrade, set independently and never
-// broadcast. `spectating` marks a refused socket watching the match; spectators have no seat.
-// `logDeltas` records that the socket's hello announced it takes log deltas in match frames.
+// `userId` and `displayName` are the account from the session cookie at upgrade, set independently
+// of the seat; the userId is never broadcast. `spectating` marks a refused socket watching the
+// match; spectators have no seat. `logDeltas` records that the socket's hello announced it takes
+// log deltas in match frames.
 
 /** The slice of the WebSocket API the codec touches — lets tests use a plain
     fake instead of a runtime socket. */
@@ -10,19 +11,24 @@ export type AttachmentCarrier = Pick<WebSocket, "serializeAttachment" | "deseria
 type LobbyAttachment = {
   playerId: string | null;
   userId: string | null;
+  displayName: string | null;
   spectating: boolean;
   logDeltas: boolean;
 };
 
+/** The runtime caps an attachment at 2 KB, so an account name is clipped well below it. */
+const ATTACHED_NAME_MAX = 256;
+
 function read(ws: AttachmentCarrier): LobbyAttachment {
   const raw: unknown = ws.deserializeAttachment();
   if (typeof raw !== "object" || raw === null) {
-    return { playerId: null, userId: null, spectating: false, logDeltas: false };
+    return { playerId: null, userId: null, displayName: null, spectating: false, logDeltas: false };
   }
   const partial = raw as Partial<LobbyAttachment>;
   return {
     playerId: typeof partial.playerId === "string" ? partial.playerId : null,
     userId: typeof partial.userId === "string" ? partial.userId : null,
+    displayName: typeof partial.displayName === "string" ? partial.displayName : null,
     spectating: partial.spectating === true,
     logDeltas: partial.logDeltas === true,
   };
@@ -32,7 +38,7 @@ function update(ws: AttachmentCarrier, patch: Partial<LobbyAttachment>): void {
   ws.serializeAttachment({ ...read(ws), ...patch } satisfies LobbyAttachment);
 }
 
-/** Bind a socket to the player id its hello announced, preserving any userId
+/** Bind a socket to the player id its hello announced, preserving any account
     already resolved at the /ws upgrade. */
 export function attachPlayer(ws: AttachmentCarrier, playerId: string): void {
   // Taking a seat ends any spectating: the same browser can be refused a seat,
@@ -40,10 +46,14 @@ export function attachPlayer(ws: AttachmentCarrier, playerId: string): void {
   update(ws, { playerId, spectating: false });
 }
 
-/** Record the authenticated account for a socket (set at the /ws upgrade, before
-    any hello), preserving any playerId already bound. */
-export function attachUserId(ws: AttachmentCarrier, userId: string): void {
-  update(ws, { userId });
+/** Record the authenticated account and its lobby name (null to keep the announced one) for a
+    socket, set at the /ws upgrade before any hello, preserving any playerId already bound. */
+export function attachAccount(
+  ws: AttachmentCarrier,
+  userId: string,
+  displayName: string | null,
+): void {
+  update(ws, { userId, displayName: displayName?.slice(0, ATTACHED_NAME_MAX) ?? null });
 }
 
 /** Mark a socket a SPECTATOR of the running match (P4 3c-vii-b) — refused a seat
@@ -80,4 +90,10 @@ export function attachedPlayer(ws: AttachmentCarrier): string | null {
     socket. Used only inside the DO (the deck-ownership check at handoff). */
 export function attachedUserId(ws: AttachmentCarrier): string | null {
   return read(ws).userId;
+}
+
+/** The lobby name of the socket's account as read at the upgrade, or null for an anonymous socket
+    or a blank account name. */
+export function attachedDisplayName(ws: AttachmentCarrier): string | null {
+  return read(ws).displayName;
 }

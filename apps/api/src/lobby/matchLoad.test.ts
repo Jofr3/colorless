@@ -12,6 +12,8 @@ import {
   readMatchRecord,
   startMatch,
 } from "./match";
+import { FakeStorage } from "./lobbyHarness";
+import { MATCH_KEY, MATCH_LAYOUT, MatchStore } from "./matchStore";
 
 const BODY = "load-body";
 const TRAINER = "load-trainer";
@@ -168,6 +170,41 @@ describe("loadMatchRecord — the DO's read of an older record", () => {
     ).rejects.toThrow("D1 down");
     expect(slot.puts).toEqual([]);
     expect(slot.value).toBe(v41);
+  });
+});
+
+describe("loadMatchRecord over the DO's store — a whole record from before the split", () => {
+  it("migrates an older whole record, writes it back split, and the next wake reads it as current", async () => {
+    for (const version of [41, 49]) {
+      const storage = new FakeStorage();
+      await storage.put(MATCH_KEY, oldRecord(version));
+      const load = await loadMatchRecord(new MatchStore(storage), async () => FRESH_POOL);
+      if (load.kind !== "ok") throw new Error(`v${version}: expected ok, got ${load.kind}`);
+      expect(load.record.version).toBe(MATCH_RECORD_VERSION);
+      expect(storage.data.get(MATCH_KEY)).toMatchObject({
+        layout: MATCH_LAYOUT,
+        version: MATCH_RECORD_VERSION,
+      });
+      const woken = await loadMatchRecord(new MatchStore(storage), never);
+      expect(woken).toEqual(load);
+      expect(woken.kind === "ok" && woken.record.state.cardPool[TRAINER]).toEqual(
+        version === 41 ? FRESH_TRAINER : STALE_TRAINER,
+      );
+    }
+  });
+
+  it("reads a current whole record without writing, and an unknown version as stale", async () => {
+    const current = migrateMatchRecord(oldRecord(41), FRESH_POOL);
+    for (const [value, kind] of [
+      [current, "ok"],
+      [{ ...current, version: MATCH_RECORD_VERSION + 1 }, "stale"],
+    ] as const) {
+      const storage = new FakeStorage();
+      await storage.put(MATCH_KEY, value);
+      const load = await loadMatchRecord(new MatchStore(storage), never);
+      expect(load.kind).toBe(kind);
+      expect([...storage.data.keys()]).toEqual([MATCH_KEY]);
+    }
   });
 });
 

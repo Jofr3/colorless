@@ -426,6 +426,22 @@ describe("LuaOnlineMatch", () => {
     expect(t.rows()[0]?.[19]).toBe("opponent");
   });
 
+  it("re-renders on a lobby frame only when it changes what the table shows", async () => {
+    const t = await table();
+    const renders = () => t.publish.mock.calls.length;
+    const before = renders();
+    t.fake().push({ kind: "state", snapshot: snap(t.me) });
+    const host = { ...makePlayer("h", "Brock"), deckId: "d", deckName: "Other deck" };
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { host }) });
+    expect(renders()).toBe(before);
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { host: { ...host, connected: false } }) });
+    expect(renders()).toBe(before + 1);
+    expect(t.tagged("L")[0]?.[3]).toBe("Brock");
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { host: { ...host, name: "Misty" } }) });
+    expect(renders()).toBe(before + 2);
+    expect(t.rows()[0]?.[3]).toBe("Misty");
+  });
+
   it("counts the opponent's forfeit clock in the L row", async () => {
     vi.setSystemTime(1_000_000);
     const t = await table();

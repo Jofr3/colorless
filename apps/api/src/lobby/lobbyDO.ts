@@ -20,20 +20,21 @@ import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
-import { resolveUserIdFromCookie } from "../auth/resolveSession";
+import { resolveAccountFromCookie, type SessionAccount } from "../auth/resolveSession";
 import {
+  attachAccount,
+  attachedDisplayName,
   attachedPlayer,
   attachedUserId,
   attachLogDeltas,
   attachPlayer,
   attachSpectator,
-  attachUserId,
   isSpectating,
   takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
-import { loadDisplayName } from "./displayName";
+import { lobbyDisplayName } from "./displayName";
 import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
   ABANDON_GRACE_MS,
@@ -54,6 +55,7 @@ import {
   rematch,
   reseatHost,
   resetAfterFailedStart,
+  sameSnapshot,
   seatClaimAllowed,
   setSeatConnected,
   slotOf,
@@ -83,6 +85,7 @@ import {
   type Seat,
   rematchChooser,
 } from "./match";
+import { MatchStore } from "./matchStore";
 import { applyIntent, bothReady, removeGuest, seatGuest } from "./snapshot";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
@@ -93,9 +96,6 @@ const CODE_KEY = "code";
 const SNAPSHOT_KEY = "snapshot";
 const CLEANUP_AT_KEY = "cleanupAt";
 const PENDING_KEY = "pendingDisconnects";
-// The authoritative match (P4) — the engine GameState + seed, written once when
-// the countdown flips the lobby to in-game (online.md increment 1b).
-const MATCH_KEY = "match";
 // The playerId who lost the last game in this lobby: they choose the rematch's
 // play order (`settleFirstPlayer`). Consumed by the next successful handoff.
 const CHOOSER_KEY = "nextChooser";
@@ -130,9 +130,7 @@ export interface LobbyDeps {
   now(): number;
   randomSeed(): number;
   /** The account a forwarded `Cookie` header's session belongs to, or null. */
-  resolveUser(cookie: string | null): Promise<string | null>;
-  /** The account's lobby display name, or null to keep the announced one. */
-  displayName(userId: string | null): Promise<string | null>;
+  resolveAccount(cookie: string | null): Promise<SessionAccount | null>;
   /** A player's chosen deck as flat card ids, owner-scoped to `userId`. */
   loadDeck(deckId: string | null, userId: string | null): Promise<LoadDeckResult>;
   /** The catalog cards for `ids`, keyed by id; missing ids are absent. */
@@ -145,8 +143,7 @@ export function lobbyDepsFromEnv(env: Env): LobbyDeps {
   return {
     now: () => Date.now(),
     randomSeed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0,
-    resolveUser: (cookie) => resolveUserIdFromCookie(db(), cookie),
-    displayName: (userId) => loadDisplayName(db(), userId),
+    resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
     loadDeck: (deckId, userId) => loadPlayerDeck(db(), deckId, userId),
     loadPool: (ids) => loadCardPool(db(), ids),
   };
@@ -157,10 +154,14 @@ export class LobbyDO {
   private readonly deps: LobbyDeps;
   /** In-memory mirror of SNAPSHOT_KEY; undefined = not read since last wake. */
   private snapshot: LobbySnapshot | null | undefined;
+  /** The authoritative match: the engine GameState, seed and log, written when the countdown
+      flips the lobby to in-game and on every accepted action. */
+  private readonly match: MatchStore;
 
   constructor(state: DurableObjectState, env: Env, deps: LobbyDeps = lobbyDepsFromEnv(env)) {
     this.state = state;
     this.deps = deps;
+    this.match = new MatchStore(state.storage);
     // Keepalive pings are answered in the proxy layer — a hibernated lobby
     // stays hibernated while clients ping to check their link.
     state.setWebSocketAutoResponse(new WebSocketRequestResponsePair(LOBBY_WS_PING, LOBBY_WS_PONG));
@@ -199,9 +200,12 @@ export class LobbyDO {
       // increment 3): the resolved account rides on the socket so the match
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
-      // start a match with a saved deck. Only the DO ever reads it.
-      const userId = await this.deps.resolveUser(request.headers.get("Cookie"));
-      if (userId !== null) attachUserId(pair[1], userId);
+      // start a match with a saved deck. Only the DO ever reads it. The account's name is read in
+      // the same query, so a rename shows from the next connection on.
+      const account = await this.deps.resolveAccount(request.headers.get("Cookie"));
+      if (account !== null) {
+        attachAccount(pair[1], account.userId, lobbyDisplayName(account.displayName));
+      }
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
       return new Response(null, { status: 101, webSocket: pair[0] });
@@ -253,17 +257,23 @@ export class LobbyDO {
       await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
     }
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
-    // announced name. The read happens after the refusal branches so a refused socket costs no
-    // D1 query.
-    const name = (await this.deps.displayName(userId)) ?? frame.name;
+    // announced name.
+    const name = attachedDisplayName(ws) ?? frame.name;
     // …and the face, from the same account (P5-2). Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);
     const next = await this.seatedSnapshot(decision, snapshot, frame.from, name, avatarSeed);
     if (next === null) return;
     attachPlayer(ws, frame.from);
-    await this.clearDisconnectGrace(frame.from);
-    await this.commit(next);
+    const graceCleared = await this.clearDisconnectGrace(frame.from);
+    if (snapshot !== null && sameSnapshot(snapshot, next)) {
+      // A repeated hello changes nothing the other sockets see. Only this one needs the lobby,
+      // since the client counts itself seated on a `state` frame.
+      this.send(ws, { kind: "state", snapshot });
+      if (graceCleared) await this.scheduleMaintenance();
+    } else {
+      await this.commit(next);
+    }
     await this.sendMatchOrRetireStale(ws);
   }
 
@@ -336,7 +346,7 @@ export class LobbyDO {
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
     }
-    await this.state.storage.put(MATCH_KEY, outcome.record);
+    await this.match.put(outcome.record);
     this.broadcastMatch(outcome.record, snapshot, { logFrom: record.log.length });
   }
 
@@ -404,7 +414,7 @@ export class LobbyDO {
     if (loserId === null) await this.state.storage.delete(CHOOSER_KEY);
     else await this.state.storage.put(CHOOSER_KEY, loserId);
     // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
-    // MATCH_KEY with it — which is precisely what makes the next handoff mint
+    // the match with it — which is precisely what makes the next handoff mint
     // a FRESH game rather than hitting its idempotency guard on this one.
     await this.commit(rematch(snapshot, slot));
   }
@@ -510,7 +520,7 @@ export class LobbyDO {
       if (snapshot.phase !== "in-game" && next.phase === "in-game") {
         // `handoffToMatch` just wrote this record with the CURRENT version, so
         // the stale arm is unreachable here — read through the same guard anyway
-        // (one door onto MATCH_KEY), and skip rather than retire: retiring inside
+        // (one door onto the match), and skip rather than retire: retiring inside
         // the alarm would commit a second snapshot mid-flip.
         const load = await this.loadOrMigrateMatch();
         if (load.kind === "ok") this.broadcastMatch(load.record, next);
@@ -524,6 +534,7 @@ export class LobbyDO {
     const cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
     if (sockets.length === 0 && cleanupAt !== undefined && now >= cleanupAt) {
       this.snapshot = null;
+      this.match.forget();
       await this.state.storage.deleteAll();
       await this.state.storage.deleteAlarm(); // deleteAll leaves alarms in place
       return;
@@ -583,16 +594,13 @@ export class LobbyDO {
     if ((await this.loadOrMigrateMatch()).kind === "ok") return { ok: true };
     if (snapshot.guest === null) return { ok: false, reason: "The lobby needs two players." };
     // Each player's chosen deck, owner-scoped by the account their socket authenticated at /ws,
-    // so a crafted `select-deck` naming someone else's deck resolves to nothing.
-    const hostDeck = await this.deps.loadDeck(
-      snapshot.host.deckId,
-      this.userIdOf(snapshot.host.id),
-    );
+    // so a crafted `select-deck` naming someone else's deck resolves to nothing. Both are read at
+    // once; the host's failure is reported first either way.
+    const [hostDeck, guestDeck] = await Promise.all([
+      this.deps.loadDeck(snapshot.host.deckId, this.userIdOf(snapshot.host.id)),
+      this.deps.loadDeck(snapshot.guest.deckId, this.userIdOf(snapshot.guest.id)),
+    ]);
     if (!hostDeck.ok) return { ok: false, reason: `${snapshot.host.name}: ${hostDeck.reason}.` };
-    const guestDeck = await this.deps.loadDeck(
-      snapshot.guest.deckId,
-      this.userIdOf(snapshot.guest.id),
-    );
     if (!guestDeck.ok) return { ok: false, reason: `${snapshot.guest.name}: ${guestDeck.reason}.` };
     // Storage enforces no construction rules, so `beginMatch` is the validator.
     const cardPool = await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids]);
@@ -611,7 +619,7 @@ export class LobbyDO {
       now: this.deps.now(),
     });
     if (!begun.ok) return begun;
-    await this.state.storage.put(MATCH_KEY, begun.record);
+    await this.match.put(begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
     return { ok: true };
   }
@@ -642,7 +650,7 @@ export class LobbyDO {
     const abandoned = abandonsMatch(this.snapshot ?? null, stamped);
     this.snapshot = stamped;
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
-    if (abandoned) await this.state.storage.delete(MATCH_KEY);
+    if (abandoned) await this.match.delete();
     this.broadcast({ kind: "state", snapshot: stamped });
     await this.scheduleMaintenance();
   }
@@ -710,13 +718,15 @@ export class LobbyDO {
   }
 
   /**
-   * Cancel the disconnect grace when a player returns. The forfeit deadline is cleared by the
-   * reseat itself.
+   * Cancel the disconnect grace when a player returns, reporting whether one was pending. The
+   * forfeit deadline is cleared by the reseat itself.
    */
-  private async clearDisconnectGrace(playerId: string): Promise<void> {
+  private async clearDisconnectGrace(playerId: string): Promise<boolean> {
     const pending = await this.pendingDisconnects();
     const next = withoutPendingDisconnect(pending, playerId);
-    if (next.length !== pending.length) await this.state.storage.put(PENDING_KEY, next);
+    if (next.length === pending.length) return false;
+    await this.state.storage.put(PENDING_KEY, next);
+    return true;
   }
 
   private liveSockets(excluding?: WebSocket): WebSocket[] {
@@ -818,25 +828,19 @@ export class LobbyDO {
     if (load.kind !== "ok") return;
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
-    await this.state.storage.put(MATCH_KEY, outcome.record);
+    await this.match.put(outcome.record);
     this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
   }
 
   /**
-   * Read the persisted match: absent, usable, or unreadable by this build. Every `MATCH_KEY` read
+   * Read the persisted match: absent, usable, or unreadable by this build. Every match read
    * goes through here. An older migratable record is migrated and WRITTEN BACK before it is
    * returned, so this is not a pure read.
    */
   private async loadOrMigrateMatch(): Promise<MatchLoad> {
     // The D1 read opens the DO's input gate, which is why `loadMatchRecord` re-reads before
-    // writing.
-    return loadMatchRecord(
-      {
-        get: () => this.state.storage.get(MATCH_KEY),
-        put: (record) => this.state.storage.put(MATCH_KEY, record),
-      },
-      (ids) => this.deps.loadPool(ids),
-    );
+    // writing; the store's mirror makes that re-read see any write made meanwhile.
+    return loadMatchRecord(this.match, (ids) => this.deps.loadPool(ids));
   }
 
   /**
@@ -845,7 +849,7 @@ export class LobbyDO {
    * `resetAfterFailedStart`, because the latter leaves an in-game lobby in-game.
    */
   private async retireStaleMatch(): Promise<void> {
-    await this.state.storage.delete(MATCH_KEY);
+    await this.match.delete();
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
     await this.commit(endMatch(snapshot));
