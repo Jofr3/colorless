@@ -1,7 +1,8 @@
 // tcgdex to D1 catalog ingest. Card data only; images are mirrored lazily by the /assets routes.
 // Every payload is validated with @colorless/schema before mapping, and all writes are upserts, so
-// reruns are safe. Imports ../src/ingest/source directly so the SDK cannot reach the Worker through
-// the ingest barrel.
+// reruns are safe. Validated payloads are kept on disk for a day (`--refresh` refetches), and each
+// set is written by one SQL file. Imports ../src/ingest/source and ./payloadCache directly so the
+// SDK and node:fs cannot reach the Worker through the ingest barrel.
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -16,6 +17,8 @@ import {
   tcgdexSerieSchema,
   tcgdexSetSchema,
 } from "@colorless/schema";
+import type { z } from "zod";
+import { CATALOG_EPOCH_KEY } from "../src/catalog/epoch";
 import {
   CARDS_PER_CHUNK,
   cardsUpsertSql,
@@ -28,9 +31,13 @@ import {
   setsUpsertSql,
   weaklessLegalPokemon,
 } from "../src/ingest";
+import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
 import { createSource, parseTransport } from "../src/ingest/source";
 
 const DELAY_MS = 50;
+/** Card requests in flight at once; their starts still keep DELAY_MS apart. */
+const FETCH_CONCURRENCY = 4;
+const PAYLOAD_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const DATABASE = "colorless";
 const MAX_FAILURES_PRINTED = 10;
 
@@ -46,6 +53,7 @@ const { values: args } = parseArgs({
     remote: { type: "boolean", default: false },
     "dry-run": { type: "boolean", default: false },
     transport: { type: "string" },
+    refresh: { type: "boolean", default: false },
   },
   strict: true,
 });
@@ -68,6 +76,7 @@ const targetSetIds = args.sets
 const targetSerieId = targetSetIds ? undefined : (args.serie ?? "sv");
 const dryRun = args["dry-run"] ?? false;
 const d1Target = args.remote ? "--remote" : "--local";
+const refresh = args.refresh ?? false;
 
 // --- polite fetching + validation --------------------------------------------
 //
@@ -76,10 +85,61 @@ const d1Target = args.remote ? "--remote" : "--local";
 // the SDK adds no politeness of its own.
 
 const source = createSource(transport, { delayMs: DELAY_MS });
+const payloads = createPayloadCache({
+  dir: join(API_ROOT, ".wrangler", "tcgdex-cache"),
+  maxAgeMs: PAYLOAD_MAX_AGE_MS,
+});
+let cachedPayloads = 0;
+
+/** A validated payload, from the disk cache when a fresh entry still validates, else fetched
+    (and cached once it validates). */
+async function fetchValidated<Schema extends z.ZodType>(
+  kind: PayloadKind,
+  id: string,
+  fetchRaw: (id: string) => Promise<unknown>,
+  schema: Schema,
+): Promise<z.ZodSafeParseResult<z.output<Schema>>> {
+  if (!refresh) {
+    const cached = schema.safeParse(payloads.read(kind, id));
+    if (cached.success) {
+      cachedPayloads += 1;
+      return cached;
+    }
+  }
+  const raw = await fetchRaw(id);
+  const result = schema.safeParse(raw);
+  if (result.success) payloads.write(kind, id, raw);
+  return result;
+}
+
+/** Runs `task` over `items` with at most `limit` running at once; results keep input order. The
+    first failure rejects the whole run and stops the other workers from claiming more items. */
+async function mapBounded<Item, Result>(
+  items: readonly Item[],
+  limit: number,
+  task: (item: Item) => Promise<Result>,
+): Promise<Result[]> {
+  const results: Result[] = new Array(items.length);
+  let next = 0;
+  let failed = false;
+  const worker = async () => {
+    while (!failed && next < items.length) {
+      const index = next;
+      next += 1;
+      try {
+        results[index] = await task(items[index] as Item);
+      } catch (error) {
+        failed = true;
+        throw error;
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 async function fetchSerie(serieId: string): Promise<TcgdexSerie> {
-  const raw = await source.getSerie(serieId);
-  const result = tcgdexSerieSchema.safeParse(raw);
+  const result = await fetchValidated("serie", serieId, source.getSerie, tcgdexSerieSchema);
   if (!result.success) {
     throw new Error(
       `serie ${serieId} failed validation:\n${JSON.stringify(result.error.issues, null, 2)}`,
@@ -89,8 +149,7 @@ async function fetchSerie(serieId: string): Promise<TcgdexSerie> {
 }
 
 async function fetchSet(setId: string): Promise<TcgdexSet> {
-  const raw = await source.getSet(setId);
-  const result = tcgdexSetSchema.safeParse(raw);
+  const result = await fetchValidated("set", setId, source.getSet, tcgdexSetSchema);
   if (!result.success) {
     throw new Error(
       `set ${setId} failed validation:\n${JSON.stringify(result.error.issues, null, 2)}`,
@@ -130,6 +189,28 @@ function applySqlFile(path: string): void {
     throw new Error(`wrangler d1 execute failed for ${path}`);
   }
   console.log(`  applied ${path}`);
+}
+
+/** Stamps a new catalog epoch in the CACHE namespace of the same target, which retires every
+    catalog response cached before this ingest. */
+function stampCatalogEpoch(): boolean {
+  const epoch = Date.now().toString(36);
+  if (dryRun) {
+    console.log(`  dry-run: would stamp ${CATALOG_EPOCH_KEY}=${epoch}`);
+    return true;
+  }
+  const result = spawnSync(
+    "bunx",
+    ["wrangler", "kv", "key", "put", CATALOG_EPOCH_KEY, epoch, "--binding", "CACHE", d1Target],
+    { cwd: API_ROOT, encoding: "utf8" },
+  );
+  if (result.status !== 0) {
+    console.error(result.stdout);
+    console.error(result.stderr);
+    return false;
+  }
+  console.log(`  stamped ${CATALOG_EPOCH_KEY}=${epoch}`);
+  return true;
 }
 
 // --- run ----------------------------------------------------------------------
@@ -176,8 +257,8 @@ if (targetSetIds) {
 console.log(`series: ${serieRowsSource.map((serie) => serie.id).join(", ")}`);
 applySqlFile(writeSqlFile("series", seriesUpsertSql(serieRowsSource.map(mapSerie))));
 
-// Phase C — one set at a time: fetch + validate every card, then write and
-// apply the set row followed by its card chunks.
+// Phase C — one set at a time: fetch + validate every card, then write the set
+// row and its card chunks to one file and apply it.
 const outcomes: SetOutcome[] = [];
 const weakless: string[] = [];
 for (const setId of setIds) {
@@ -188,15 +269,17 @@ for (const setId of setIds) {
 
     const cardPayloads: TcgdexCard[] = [];
     const failures: { cardId: string; issues: string }[] = [];
-    for (const brief of set.cards) {
-      const raw = await source.getCard(brief.id);
-      const parsed = tcgdexCardSchema.safeParse(raw);
+    const parsedCards = await mapBounded(set.cards, FETCH_CONCURRENCY, (brief) =>
+      fetchValidated("card", brief.id, source.getCard, tcgdexCardSchema),
+    );
+    parsedCards.forEach((parsed, index) => {
       if (parsed.success) {
         cardPayloads.push(parsed.data);
       } else {
-        failures.push({ cardId: brief.id, issues: JSON.stringify(parsed.error.issues) });
+        const cardId = set.cards[index]?.id ?? "?";
+        failures.push({ cardId, issues: JSON.stringify(parsed.error.issues) });
       }
-    }
+    });
     if (failures.length > 0) {
       console.error(
         `  ${failures.length}/${set.cards.length} cards failed validation — aborting this set:`,
@@ -217,14 +300,11 @@ for (const setId of setIds) {
       continue;
     }
 
-    applySqlFile(writeSqlFile(`set-${setId}`, setsUpsertSql([mapSet(set)])));
     const rows = cardPayloads.map(mapCard);
     weakless.push(...weaklessLegalPokemon(rows));
     const chunks = chunk(rows, CARDS_PER_CHUNK);
-    chunks.forEach((rows, index) => {
-      const label = `cards-${setId}-${String(index).padStart(2, "0")}`;
-      applySqlFile(writeSqlFile(label, cardsUpsertSql(rows)));
-    });
+    const statements = [setsUpsertSql([mapSet(set)]), ...chunks.map(cardsUpsertSql)];
+    applySqlFile(writeSqlFile(`set-${setId}`, statements.join("\n\n")));
     outcomes.push({
       setId,
       cards: cardPayloads.length,
@@ -232,7 +312,7 @@ for (const setId of setIds) {
       status: "ok",
       seconds: (Date.now() - setStartedAt) / 1000,
     });
-    console.log(`  ${cardPayloads.length} cards in ${chunks.length} chunk file(s)`);
+    console.log(`  ${cardPayloads.length} cards in ${chunks.length} statement(s), one file`);
   } catch (error) {
     console.error(`  failed: ${error instanceof Error ? error.message : String(error)}`);
     outcomes.push({
@@ -249,6 +329,9 @@ for (const setId of setIds) {
 console.log("\nreprint legality:");
 applySqlFile(writeSqlFile("reprint-legality", reprintLegalitySql()));
 
+console.log("\ncatalog cache:");
+const epochStamped = stampCatalogEpoch();
+
 // --- summary -------------------------------------------------------------------
 
 const totalCards = outcomes.reduce((sum, outcome) => sum + outcome.cards, 0);
@@ -263,7 +346,8 @@ for (const outcome of outcomes) {
 }
 console.log(
   `\ntotal: ${outcomes.length} set(s), ${totalCards} cards, ` +
-    `${source.requestCount} tcgdex requests via ${source.transport}, ` +
+    `${source.requestCount} tcgdex requests via ${source.transport} ` +
+    `(${cachedPayloads} payloads from the disk cache), ` +
     `${((Date.now() - startedAt) / 1000).toFixed(1)}s${dryRun ? " (dry-run: nothing applied)" : ""}`,
 );
 if (weakless.length > 0) {
@@ -276,6 +360,12 @@ if (weakless.length > 0) {
 if (failedSets.length > 0) {
   console.error(`${failedSets.length} set(s) failed: ${failedSets.map((o) => o.setId).join(", ")}`);
 }
-if (failedSets.length > 0 || weakless.length > 0) {
+if (!epochStamped) {
+  console.error(
+    `could not stamp ${CATALOG_EPOCH_KEY}: cached catalog responses stay up to a day — rerun ` +
+      `\`wrangler kv key put ${CATALOG_EPOCH_KEY} <new value> --binding CACHE ${d1Target}\``,
+  );
+}
+if (failedSets.length > 0 || weakless.length > 0 || !epochStamped) {
   process.exit(1);
 }

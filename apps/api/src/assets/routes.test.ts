@@ -1,20 +1,29 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { serveMirroredAsset } from "./routes";
 
-/** An empty R2 stand-in that records puts. */
-function emptyBucket() {
+/** An empty R2 stand-in that records puts; `failPut` makes every put throw. */
+function emptyBucket(failPut = false) {
   const puts: string[] = [];
   const bucket = {
     get: async () => null,
     put: async (key: string) => {
       puts.push(key);
+      if (failPut) throw new Error("R2 put failed");
     },
   };
   return { env: { ASSETS: bucket as unknown as R2Bucket }, puts };
 }
 
-const serve = (env: { ASSETS: R2Bucket }, originUrl: string | null = "https://origin/x.webp") =>
-  serveMirroredAsset(env, "cards/x/high.webp", "image/webp", async () => originUrl);
+/** Runs deferred work at once, as the routes do outside the Workers runtime. */
+const now = async (work: () => Promise<unknown>) => {
+  await work().catch(() => {});
+};
+
+const serve = (
+  env: { ASSETS: R2Bucket },
+  originUrl: string | null = "https://origin/x.webp",
+  later = now,
+) => serveMirroredAsset(env, "cards/x/high.webp", "image/webp", async () => originUrl, later);
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -30,6 +39,34 @@ describe("serveMirroredAsset on an R2 miss", () => {
     const res = await serve(env);
     expect(res?.status).toBe(200);
     expect(res?.headers.get("x-colorless-cache")).toBe("miss");
+    expect(puts).toEqual(["cards/x/high.webp"]);
+  });
+
+  it("answers before the R2 write, which it hands to the deferred runner", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("img", { status: 200 })),
+    );
+    const { env, puts } = emptyBucket();
+    const deferred: (() => Promise<unknown>)[] = [];
+    const res = await serve(env, "https://origin/x.webp", async (work) => {
+      deferred.push(work);
+    });
+    expect(await res?.text()).toBe("img");
+    expect(puts).toEqual([]);
+    await deferred[0]?.();
+    expect(puts).toEqual(["cards/x/high.webp"]);
+  });
+
+  it("still serves the image when the R2 write fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("img", { status: 200 })),
+    );
+    const { env, puts } = emptyBucket(true);
+    const res = await serve(env);
+    expect(res?.status).toBe(200);
+    expect(await res?.text()).toBe("img");
     expect(puts).toEqual(["cards/x/high.webp"]);
   });
 

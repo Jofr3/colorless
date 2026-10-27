@@ -61,7 +61,8 @@ export interface SdkSourceOptions extends SourceOptions {
 
 /**
  * Shared bookkeeping: the request counter and the "delay before every request
- * except the first" rule both transports obey.
+ * except the first" rule both transports obey. Starts are spaced in call
+ * order even when requests overlap, so concurrent callers share one rate.
  */
 function createPacer(options: SourceOptions): {
   pace: () => Promise<void>;
@@ -70,13 +71,18 @@ function createPacer(options: SourceOptions): {
   const delayMs = options.delayMs ?? DEFAULT_DELAY_MS;
   const sleep =
     options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  let calls = 0;
   let requests = 0;
+  let lastStart: Promise<void> = Promise.resolve();
   return {
-    async pace(): Promise<void> {
-      if (requests > 0 && delayMs > 0) {
-        await sleep(delayMs);
-      }
-      requests += 1;
+    pace(): Promise<void> {
+      const spaced = calls > 0 && delayMs > 0;
+      calls += 1;
+      lastStart = lastStart.then(async () => {
+        if (spaced) await sleep(delayMs);
+        requests += 1;
+      });
+      return lastStart;
     },
     count: () => requests,
   };

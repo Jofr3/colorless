@@ -148,6 +148,14 @@ describe("politeness posture (the SDK adds none, so the seam owns it)", () => {
       expect(slept).toEqual([50, 50]);
       expect(source.requestCount).toBe(3);
     });
+
+    it(`${name}: spaces overlapping requests one delay apart, in call order`, async () => {
+      const { sleep, slept } = recordingSleep();
+      const source = build(sleep);
+      await Promise.all(["a", "b", "c", "d"].map((id) => source.getCard(id)));
+      expect(slept).toEqual([50, 50, 50]);
+      expect(source.requestCount).toBe(4);
+    });
   }
 });
 

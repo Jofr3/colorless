@@ -9,6 +9,7 @@
 
 import {
   type CardBrief,
+  type CardsQuery,
   cardBriefSchema,
   cardSchema,
   cardsQuerySchema,
@@ -22,7 +23,7 @@ import {
   setWithCardsSchema,
 } from "@colorless/schema";
 import { asc, count, eq, isNotNull } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
 import * as z from "zod";
@@ -48,11 +49,10 @@ const cardsResponseSchema = paginatedSchema(cardBriefSchema);
 const setsResponseSchema = z.array(setBriefSchema);
 const seriesResponseSchema = z.array(serieSchema);
 
-catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), async (c) => {
-  const query = c.req.valid("query");
-  const db = drizzle(c.env.DB);
+/** The page and the match count for a /cards query. */
+export function cardsPageStatements(db: DrizzleD1Database, query: CardsQuery) {
   const where = buildCardsWhere(query);
-  const [rows, totals] = await db.batch([
+  return [
     db
       .select(cardBriefColumns)
       .from(cards)
@@ -61,7 +61,26 @@ catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), a
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
     db.select({ total: count() }).from(cards).where(where),
-  ]);
+  ] as const;
+}
+
+/** A set's cards in collector order. */
+export function setCardsStatement(db: DrizzleD1Database, setId: string) {
+  return db
+    .select(cardBriefColumns)
+    .from(cards)
+    .where(eq(cards.setId, setId))
+    .orderBy(asc(cards.localId));
+}
+
+catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), async (c) => {
+  const query = c.req.valid("query");
+  const db = drizzle(c.env.DB);
+  const [page, matches] = cardsPageStatements(db, query);
+  const [rows, totals] =
+    query.total === undefined
+      ? await db.batch([page, matches])
+      : [await page, [{ total: query.total }]];
   const payload: Paginated<CardBrief> = {
     items: rows.map(mapCardBriefRow),
     page: query.page,
@@ -99,11 +118,7 @@ catalogRoutes.get("/sets/:id", catalogCache, async (c) => {
   const db = drizzle(c.env.DB);
   const [setRows, cardRows] = await db.batch([
     db.select().from(sets).where(eq(sets.id, setId)),
-    db
-      .select(cardBriefColumns)
-      .from(cards)
-      .where(eq(cards.setId, setId))
-      .orderBy(asc(cards.localId)),
+    setCardsStatement(db, setId),
   ]);
   const row = setRows[0];
   if (row === undefined) {

@@ -56,8 +56,18 @@ export const CARDS_COLUMNS: readonly SqlColumnSpec<CardRow>[] = [
   { name: "legal_standard", key: "legalStandard", kind: "boolean" },
   { name: "legal_expanded", key: "legalExpanded", kind: "boolean" },
   { name: "print_key", key: "printKey", kind: "text" },
-  { name: "legal_standard_effective", key: "legalStandardEffective", kind: "boolean" },
-  { name: "legal_expanded_effective", key: "legalExpandedEffective", kind: "boolean" },
+  {
+    name: "legal_standard_effective",
+    key: "legalStandardEffective",
+    kind: "boolean",
+    derived: true,
+  },
+  {
+    name: "legal_expanded_effective",
+    key: "legalExpandedEffective",
+    kind: "boolean",
+    derived: true,
+  },
   { name: "variants_json", key: "variantsJson", kind: "json" },
   { name: "image_url", key: "imageUrl", kind: "text" },
   { name: "updated", key: "updated", kind: "text" },
@@ -78,13 +88,16 @@ export function cardsUpsertSql(rows: readonly CardRow[]): string {
 /** The reprint-rule post-pass, run once over the WHOLE table after every
     set's upsert: a print is effectively legal in a format when any print
     sharing its `print_key` is legal there per tcgdex. Whole-table on purpose —
-    a partial `--sets` ingest can still flip a rotated print elsewhere legal. */
+    a partial `--sets` ingest can still flip a rotated print elsewhere legal.
+    Only rows whose verdict changes are written. */
 export function reprintLegalitySql(): string {
   const twin = (flag: "legal_standard" | "legal_expanded") =>
     `EXISTS (SELECT 1 FROM cards AS twin WHERE twin.print_key = cards.print_key AND twin.${flag} = 1)`;
   return `UPDATE cards SET
   legal_standard_effective = ${twin("legal_standard")},
   legal_expanded_effective = ${twin("legal_expanded")}
-WHERE print_key IS NOT NULL;
+WHERE print_key IS NOT NULL
+  AND (legal_standard_effective IS NOT ${twin("legal_standard")}
+    OR legal_expanded_effective IS NOT ${twin("legal_expanded")});
 `;
 }

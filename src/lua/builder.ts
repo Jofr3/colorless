@@ -1,6 +1,11 @@
 import type { SimulationGap } from "@colorless/engine";
 import * as api from "../lib/api";
-import { DECK_NAME_MAX, MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
+import {
+  DECK_NAME_MAX,
+  MAX_DECK_CARD_ENTRIES,
+  type CatalogFacets,
+  UNCACHED_CATALOG_PARAMS,
+} from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
 import { WIRE_ROWS, type WireValue, wireRow } from "./wireFields";
 
@@ -95,6 +100,8 @@ export class LuaBuilder {
   private importGeneration = 0;
   // Catalog pages for the current query, keyed by page; cleared when it changes.
   private pageKey = "";
+  // The query `total` was counted for.
+  private totalKey = "";
   private pages = new Map<number, CatalogPage>();
   private pageRequests = new Map<number, Promise<CatalogPage>>();
   constructor(
@@ -507,6 +514,7 @@ export class LuaBuilder {
       if (!current()) return;
       this.results = data.items;
       this.total = data.total;
+      this.totalKey = catalog.key;
     } catch (error) {
       reportError("search cards", error);
       if (current()) this.message = LOAD_FAILED.search;
@@ -521,11 +529,13 @@ export class LuaBuilder {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
   }
-  /** One request per page and query; `fresh` refetches a cached page. */
+  /** One request per page and query; `fresh` refetches a cached page. A `total` already known for
+      this query spares the server a recount. */
   private fetchPage(
     { query, size, key }: Catalog,
     page: number,
     fresh = false,
+    total?: number,
   ): Promise<CatalogPage> {
     if (key !== this.pageKey) {
       this.pageKey = key;
@@ -537,7 +547,7 @@ export class LuaBuilder {
     const pending = this.pageRequests.get(page);
     if (pending) return pending;
     const request = api
-      .getCards({ ...query, page, pageSize: size })
+      .getCards({ ...query, page, pageSize: size, total })
       .then((data) => {
         const result = { items: data.items.map(toBuilderCard), total: data.total };
         if (key === this.pageKey) {
@@ -559,15 +569,22 @@ export class LuaBuilder {
     if (key === this.pageKey) this.pageRequests.set(page, request);
     return request;
   }
-  /** Warm the neighbouring pages and queue their artwork behind this page's. */
+  /** Warm the neighbouring pages and queue their artwork behind this page's. The known total goes
+      along only on a free-text query: the API caches the others, where it would split a page's
+      cache entry. */
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
     const live = this.epoch.current();
     const last = Math.max(1, Math.ceil(this.total / this.size));
+    const total =
+      catalog.key === this.totalKey &&
+      UNCACHED_CATALOG_PARAMS.some((param) => catalog.query[param] !== undefined)
+        ? this.total
+        : undefined;
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
-        this.fetchPage(catalog, page)
+        this.fetchPage(catalog, page, false, total)
           .then(() => {
             if (live() && catalog.key === this.pageKey) this.publishImages();
           })
@@ -753,6 +770,7 @@ export class LuaBuilder {
     this.busy = false;
     this.results = cached.items;
     this.total = cached.total;
+    this.totalKey = catalog.key;
     this.emit();
     this.prefetch(catalog);
   }

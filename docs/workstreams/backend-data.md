@@ -119,20 +119,25 @@ colorless/
 
 **Card data** is ingested by a local Bun script — `apps/api/scripts/ingest.ts`
 (`bun scripts/ingest.ts [--serie sv | --sets sv01,sv02] [--remote] [--dry-run]
-[--transport=fetch|sdk]`, run from `apps/api/`) — not by the request Worker:
+[--refresh] [--transport=fetch|sdk]`, run from `apps/api/`) — not by the request Worker:
 
 1. Traverse serie → sets → each card's full detail from the tcgdex REST API
-   (sequential, ~50ms spacing), validating every payload with the Zod schemas
-   in `@colorless/schema`; any card validation failure aborts that set with a
-   report.
+   (four requests in flight, starts ~50ms apart), validating every payload with
+   the Zod schemas in `@colorless/schema`; any card validation failure aborts
+   that set with a report. Validated payloads are kept for a day under
+   `apps/api/.wrangler/tcgdex-cache/` and revalidated when read back, so a
+   rerun (the remote ingest after a local one) does not refetch; `--refresh`
+   ignores the cache.
 2. Map onto the §5.3 rows (missing `legal` → false/false; category-specific
    fields NULL elsewhere; `*_url` columns keep the tcgdex **origin** base
    URLs) and generate batched upsert SQL — `INSERT … ON CONFLICT(id) DO
-   UPDATE`, ≤100 cards per file (`apps/api/src/ingest/`, unit-tested).
-3. Apply in FK order (series → set → card chunks) via
-   `wrangler d1 execute colorless --local|--remote --file …`. Idempotent by
-   tcgdex `id` — rerunning is always safe; `--dry-run` writes SQL, applies
-   nothing.
+   UPDATE … WHERE <a column changed>`, ≤100 cards per statement
+   (`apps/api/src/ingest/`, unit-tested). Unchanged rows are not rewritten.
+3. Apply in FK order (series, then one file per set holding the set row and
+   its card statements) via `wrangler d1 execute colorless --local|--remote
+   --file …`, then the reprint-legality pass, then stamp `catalog:epoch` in
+   the CACHE namespace of the same target (§6). Idempotent by tcgdex `id` —
+   rerunning is always safe; `--dry-run` writes SQL, applies nothing.
 
 **Images are NOT mirrored at ingest time.** The Worker's `GET /assets/*`
 routes (§6) mirror lazily, cache-aside: R2 hit → serve; miss → resolve the
@@ -362,10 +367,11 @@ cd apps/api && bun run deploy          # or, from the repo root: bun run api:dep
 #    them in the rows.
 cd apps/api && bun scripts/ingest.ts --serie sv --remote
 
-# 4. The KV catalog cache is NOT invalidated by step 3 (a data-only change does
-#    not bump `CACHE_VERSION`, by design — see apps/api/src/catalog/cache.ts).
-#    Cached `/facets` and `/cards` bodies keep the pre-ingest answer for up to
-#    the 1h TTL. Nothing to run; just do not treat the first hour as a failure.
+# 4. Step 3 ends by stamping a new `catalog:epoch` in the CACHE KV namespace,
+#    which is part of every catalog cache key (apps/api/src/catalog/cache.ts), so
+#    the pre-ingest KV entries stop being served within about six minutes; a
+#    browser may show its own cached body for up to an hour more. A data-only
+#    change does not bump `CACHE_VERSION`.
 ```
 
 **Command check (against `package.json` and `apps/api/package.json`):**
@@ -715,8 +721,9 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 ```
 GET    /health
 
-# Catalog (public; KV cache-aside on every 200, 1h TTL, `x-colorless-cache: hit|miss`,
-# key = `catalog:v9:` (D628; v8 was D612) + normalized path+sorted-query — bump the version prefix
+# Catalog (public; best-effort KV cache-aside on every 200, 1-day TTL,
+# `x-colorless-cache: hit|miss|bypass` (free-text and id queries bypass KV),
+# key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + normalized path+sorted-query — bump the version prefix
 # whenever a cached shape — or its values for already-ingested rows — changes;
 # invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:

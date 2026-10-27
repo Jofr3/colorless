@@ -3,6 +3,7 @@
 // tcgdex sends them.
 
 import type { TcgdexAbility, TcgdexAttack, TcgdexVariants, TcgdexWeakRes } from "@colorless/schema";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const series = sqliteTable("series", {
@@ -99,9 +100,13 @@ export const cards = sqliteTable(
     /** tcgdex `updated` ISO timestamp, verbatim — ingest skips unchanged rows. */
     updated: text("updated"),
   },
+  // Each /cards sort and the exact-name lookup read an index in its own order, so a page
+  // reads its own rows rather than scanning and sorting the table. The expression index
+  // matches `lower("cards"."name")` as catalog/query.ts writes it.
   (t) => [
-    index("cards_set_id_idx").on(t.setId),
-    index("cards_name_idx").on(t.name),
+    index("cards_set_local_idx").on(t.setId, t.localId),
+    index("cards_name_set_local_idx").on(t.name, t.setId, t.localId),
+    index("cards_name_lower_idx").on(sql`lower(${t.name})`, t.setId, t.localId),
     index("cards_print_key_idx").on(t.printKey),
   ],
 );
