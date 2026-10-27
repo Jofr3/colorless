@@ -825,7 +825,9 @@ cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Ener
       variants_json, image_url, updated)
 
 -- User data (read-write)
-users(id PK, email UNIQUE, display_name, password_hash?, email_verified, created_at)
+users(id PK, email UNIQUE, display_name, password_hash?, email_verified, name_prompt, created_at)
+  -- display_name: typed, or a generated "Trainer-XXXX" handle (AU3); name_prompt: ask once to
+  -- choose a public name (accounts from before handles; PATCH /auth/me clears it)
 oauth_identities(provider, provider_id, user_id FK, PRIMARY KEY(provider, provider_id))
 sessions(id PK, user_id FK, expires_at, created_at)
 folders(id PK, user_id FK, parent_id FK?, name)

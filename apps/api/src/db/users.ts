@@ -26,6 +26,16 @@ export const users = sqliteTable(
     passwordHash: text("password_hash"),
     emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
     /**
+     * Ask this account, once, to choose its public name (security audit AU3): its name may be the
+     * email's local part or the Google account's real name, from before new accounts got a
+     * generated handle. Cleared when the user saves a name or keeps the current one
+     * (PATCH /auth/me). The default is true, so a row written by any path that does not say
+     * otherwise (the Worker deployed before this column, a hand-written insert) is asked rather
+     * than missed; register and OAuth sign-up write false. Migration 0012 cleared it for the
+     * existing accounts whose name came neither from their email nor from Google.
+     */
+    namePrompt: integer("name_prompt", { mode: "boolean" }).notNull().default(true),
+    /**
      * The account's favourite deck, or null. The thunk and `AnySQLiteColumn` type break the
      * users/decks reference cycle. drizzle-kit omits the referential action on ADD COLUMN, so the
      * migration restores `ON DELETE SET NULL` by hand.

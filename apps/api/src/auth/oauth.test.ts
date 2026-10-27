@@ -154,7 +154,7 @@ describe("sanitizeRedirect", () => {
 });
 
 describe("parseOAuthProfile", () => {
-  it("normalizes a google userinfo payload", () => {
+  it("normalizes a google userinfo payload and drops the real name", () => {
     const profile = parseOAuthProfile({
       sub: "10769150350006150715113082367",
       name: "Ash Ketchum",
@@ -168,16 +168,16 @@ describe("parseOAuthProfile", () => {
       providerId: "10769150350006150715113082367",
       email: "ash.k@gmail.com",
       emailVerified: true,
-      displayName: "Ash Ketchum",
     });
   });
 
-  it("falls back to the email local part, then 'player', for nameless google accounts", () => {
-    expect(parseOAuthProfile({ sub: "1", email: "misty@example.com" })).toMatchObject({
-      displayName: "misty",
-      emailVerified: false, // email present but email_verified absent → NOT verified
+  it("treats an email without email_verified as unverified, and a missing one as null", () => {
+    expect(parseOAuthProfile({ sub: "1", email: "misty@example.com" })).toEqual({
+      providerId: "1",
+      email: "misty@example.com",
+      emailVerified: false,
     });
-    expect(parseOAuthProfile({ sub: "1" })).toMatchObject({ displayName: "player" });
+    expect(parseOAuthProfile({ sub: "1" })).toMatchObject({ email: null });
   });
 
   it("rejects drifted payloads with null", () => {

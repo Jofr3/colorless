@@ -15,6 +15,9 @@ function Account:sync(raw)
   self.id,self.name,self.email=f[5],f[6],f[7]
   -- Whether deleting the account asks for its password (an OAuth-only account has none).
   self.hasPassword=f[8]=='1'
+  -- Whether to ask the account, once, to choose its public name (its name may be its email's
+  -- local part or its Google name). A host without the field never asks.
+  self.namePrompt=f[9]=='1'
   self.savedRemaining=self.message=='Saved.' and 3 or nil
   if resetName then self.draftName=self.name end
   if self.status~='authenticated' then self.editing=false end
@@ -29,6 +32,11 @@ function Account:input(raw)
   self.selectionStart=tonumber(f[4]) or 0; self.selectionEnd=tonumber(f[5]) or 0
   self.message=''
   return true
+end
+-- Whether to show the "choose your public name" prompt now: the server asks for it, and this
+-- session has not shown it to this account already (Later asks again on the next visit).
+function Account:shouldPrompt()
+  return self.status=='authenticated' and self.namePrompt and not self.busy and self.promptedId~=self.id
 end
 function Account:canSave()
   local trimmed=self.draftName:match('^%s*(.-)%s*$')

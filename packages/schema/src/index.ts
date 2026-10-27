@@ -5,6 +5,7 @@ export * from "./auth";
 export * from "./catalog";
 export * from "./constants";
 export * from "./decks";
+export * from "./displayName";
 export * from "./health";
 export * from "./lobby";
 export * from "./match";

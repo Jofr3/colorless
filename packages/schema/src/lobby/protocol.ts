@@ -4,6 +4,8 @@
 // along with them — the client trusts the server's frames; validation is the
 // Durable Object's job.
 
+import { DISPLAY_NAME_MAX } from "../displayName";
+
 /** How long the "battle starting" countdown runs. Shared because both ends
     time it: the DO's alarm flips countdown → in-game when it elapses, and the
     client overlay animates the same window from `countdownStartedAt`. */
@@ -21,7 +23,7 @@ export const LOBBY_WS_PONG = "pong";
     base64url, seatId.ts; deck ids are UUIDs), so a longer one is refused; names are typed by people, so a longer one is clipped instead. The
     name bound is the account display name's. */
 export const LOBBY_ID_MAX = 64;
-export const LOBBY_NAME_MAX = 64;
+export const LOBBY_NAME_MAX = DISPLAY_NAME_MAX;
 export const LOBBY_DECK_NAME_MAX = 100;
 
 /** The close code the DO ends a socket with when it closes the lobby for good (no commit or

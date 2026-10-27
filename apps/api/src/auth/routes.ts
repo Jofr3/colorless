@@ -30,6 +30,7 @@ import { logEvent, logEventThrottled } from "../http/log";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { avatarSeedOf } from "./avatar";
+import { generateHandle } from "./handle";
 import {
   buildAuthorizeUrl,
   clearedStateCookie,
@@ -76,6 +77,7 @@ function mapUserRow(row: UserRow): User {
     // this account, so a player's profile draws the face opponents see.
     avatarSeed: avatarSeedOf(row.id),
     hasPassword: row.passwordHash !== null,
+    namePrompt: row.namePrompt,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -156,11 +158,19 @@ function insertSessionWhilePasswordHolds(db: Db, row: SessionRow, passwordHash: 
   );
 }
 
-/** A fresh users row: a new id, no favourite deck, created now. */
+/** A fresh users row: a new id, no favourite deck, created now. Its name is one the user typed or
+    a generated handle, never taken from the email or a provider profile, so it is never asked to
+    choose a public name (`namePrompt`, security audit AU3). */
 function newUserRow(
   fields: Pick<UserRow, "email" | "displayName" | "passwordHash" | "emailVerified">,
 ): UserRow {
-  return { id: crypto.randomUUID(), ...fields, favouriteDeckId: null, createdAt: new Date() };
+  return {
+    id: crypto.randomUUID(),
+    ...fields,
+    namePrompt: false,
+    favouriteDeckId: null,
+    createdAt: new Date(),
+  };
 }
 
 /** D1 surfaces SQLite constraint failures as message text — good enough to
@@ -187,8 +197,9 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
   }
   const row = newUserRow({
     email: body.email,
-    // Default display name: the email's local part (user can rename later).
-    displayName: body.displayName ?? body.email.split("@")[0] ?? body.email,
+    // Left blank, a generated handle: opponents see this name, and the email's local part would
+    // publish the address (security audit AU3). The user can rename any time.
+    displayName: body.displayName ?? generateHandle(),
     passwordHash: await hashPassword(body.password),
     emailVerified: false,
   });
@@ -288,12 +299,16 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
   const { displayName } = c.req.valid("json");
 
   // No write when nothing changed: the form disables Save in that case, but
-  // the route is the api, and a re-submit shouldn't cost a D1 write.
-  if (displayName !== row.displayName) {
-    await drizzle(c.env.DB).update(users).set({ displayName }).where(eq(users.id, row.id));
+  // the route is the api, and a re-submit shouldn't cost a D1 write. Sending the current name
+  // while the account is asked to choose one (`namePrompt`) is that answer: keep it.
+  if (displayName !== row.displayName || row.namePrompt) {
+    await drizzle(c.env.DB)
+      .update(users)
+      .set({ displayName, namePrompt: false })
+      .where(eq(users.id, row.id));
   }
   // The updated row, not a re-read: this session owns the only change.
-  return c.json(userSchema.parse(mapUserRow({ ...row, displayName })));
+  return c.json(userSchema.parse(mapUserRow({ ...row, displayName, namePrompt: false })));
 });
 
 // Deleting your own account (database audit OP6). One statement: every table holding the user's
@@ -555,7 +570,8 @@ async function linkOrCreateOAuthUser(
   }
   const row = newUserRow({
     email: profile.email,
-    displayName: profile.displayName,
+    // Never the Google profile's real name: opponents see this name (security audit AU3).
+    displayName: generateHandle(),
     passwordHash: null,
     emailVerified: profile.emailVerified,
   });

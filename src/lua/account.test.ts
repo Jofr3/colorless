@@ -102,6 +102,36 @@ describe("Lua account adapter", () => {
     expect(account.message).toBe("Names cannot have hidden characters.");
     expect(impl.mock.calls.some(([, init]) => init?.method === "PATCH")).toBe(false);
   });
+  it("tells Lua to ask for a public name, and Keep answers with the current name", async () => {
+    const asked = { ...USER, displayName: "ash", namePrompt: true };
+    const { impl } = stubFetch({
+      "GET /auth/me": () => json(asked),
+      "PATCH /auth/me": () => json({ ...asked, namePrompt: false }),
+    });
+    const { account, publish } = setup();
+    const fields = () => String(publish.mock.lastCall?.[0]).split("\t").map(decodeURIComponent);
+    await account.refresh();
+    expect(fields()[8]).toBe("1");
+    await account.command(encodeFields(["keep"]));
+    const call = impl.mock.calls.find(([, init]) => init?.method === "PATCH");
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({ displayName: "ash" });
+    expect(account.message).toBe("Saved.");
+    expect(fields()[8]).toBe("0");
+  });
+  it("reads a server without the prompt field as not asking", async () => {
+    stubFetch(session);
+    const { account, publish } = setup();
+    await account.refresh();
+    expect(String(publish.mock.lastCall?.[0]).split("\t")[8]).toBe("0");
+  });
+  it("saves a name by the server's rule: folded, collapsed and trimmed", async () => {
+    const { impl } = stubFetch({ ...session, "PATCH /auth/me": () => json(USER) });
+    const { account } = setup();
+    await account.refresh();
+    await account.save("  Ａsh   Ketchum ");
+    const call = impl.mock.calls.find(([, init]) => init?.method === "PATCH");
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({ displayName: "Ash Ketchum" });
+  });
   it("turns an expired save into signed-out state", async () => {
     stubFetch({ ...session, "PATCH /auth/me": () => json({}, 401) });
     const { account } = setup();

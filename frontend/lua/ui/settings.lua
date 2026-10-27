@@ -26,6 +26,11 @@ local rows={
    {kind='toggle',key='muted',label='Mute'}},
 }
 local DELETE_WARNING='This permanently deletes your account, your decks and your folders. It cannot be undone.'
+-- The one-time prompt for an account whose name may have come from its email or Google account
+-- (security audit AU3). Saving a name or keeping this one answers it for good; Later asks again
+-- on the next visit.
+local NAME_PROMPT_TITLE='Choose your public name'
+local NAME_PROMPT='Opponents and spectators see this name. It may come from your email or your Google account. Keep it, or choose another.'
 function Settings.new(preferences,callbacks,reduced,keyboard,account)
   local self=setmetatable({preferences=preferences,callbacks=callbacks,tab=1,focus=keyboard==false and 0 or 1,hover=0,
     account=account or Account.new(),reduced=reduced,deleteJuice=Motion.new(0,0)},Settings)
@@ -58,10 +63,42 @@ function Settings:closeAuth()
   self.callbacks.announce(signedIn and 'Signed in. Account settings.' or 'Account settings')
 end
 function Settings:accountChanged()
-  local signedIn=self.account.status=='authenticated'
+  local a=self.account
+  local signedIn=a.status=='authenticated'
+  -- The name prompt ends once answered (the server stops asking) or once signed out.
+  if self.prompt then
+    if signedIn and a.namePrompt then self:build() else self:closePrompt(false,signedIn) end
+    return
+  end
   -- A sign-in form closes once signed in, the deletion form once the account is gone.
   if self.auth and (self.auth.mode=='delete')~=signedIn then self:closeAuth()
   else self:build() end
+  if not self.auth and self.tab==TAB.account and a:shouldPrompt() then self:openNamePrompt(false) end
+end
+-- `standalone`: Settings opened only to ask, so Later closes Settings rather than showing the
+-- account tab.
+function Settings:openNamePrompt(standalone)
+  local a=self.account
+  if self.auth or not a:shouldPrompt() then return end
+  if a.editing then self.callbacks.account('finish-edit'); a.editing=false end
+  -- Shown once a session per account. The current name is prefilled: this screen is the user's own.
+  a.promptedId=a.id; a.draftName=a.name; a.message=''
+  self.prompt={standalone=standalone}
+  self.tab=TAB.account; self.pressed=nil; self.hover=0; self.armed=nil
+  self:layout(self.width,self.height)
+  self.focus=self.focus>0 and 1 or 0
+  self.callbacks.announce(NAME_PROMPT_TITLE..'. '..NAME_PROMPT..' Current name: '..a.name..'.')
+end
+-- `close`: Later from a standalone prompt closes Settings. `answered`: the name was saved or kept.
+function Settings:closePrompt(close,answered)
+  local standalone=self.prompt and self.prompt.standalone
+  if self.account.editing then self.callbacks.account('finish-edit'); self.account.editing=false end
+  self.prompt=nil
+  if close and standalone then self.callbacks.close(); return end
+  self.tab=TAB.account; self.pressed=nil; self.hover=0
+  if self.focus>0 then self.focus=TAB.account end
+  self:layout(self.width,self.height)
+  self.callbacks.announce(answered and 'Name saved. Account settings.' or 'Account settings')
 end
 -- The deletion's second step, after the in-game Leave match (sim_overlay.lua): the first press
 -- arms the button for 3 s, and only a press while armed deletes.
@@ -137,7 +174,23 @@ function Settings:buildAuth()
   self.items[#self.items+1]={kind='auth-back',label='Back',x=self.x+16,y=self.y+self.h-58,
     w=self.w-32,h=38,fontSize=30,colour=T.orange}
 end
+function Settings:buildPrompt()
+  local w=math.min(360,self.w-64)
+  local x=self.x+(self.w-w)/2
+  local function add(kind,label,action,y,width,at,colour)
+    self.items[#self.items+1]={kind=kind,label=label,action=action,x=at or x,y=self.y+y,
+      w=width or w,h=40,fontSize=27,colour=colour or T.red}
+  end
+  self.items={}
+  add('name','Public name','edit',262)
+  add('action',self.account.busy and 'Please wait...' or 'Save name','save',332,w/2-6)
+  add('action','Keep name','keep',332,w/2-6,x+w/2+6)
+  self.items[#self.items+1]={kind='prompt-later',label='Later',x=self.x+16,y=self.y+self.h-58,
+    w=self.w-32,h=38,fontSize=30,colour=T.orange}
+  if self.focus>#self.items then self.focus=1 end
+end
 function Settings:build()
+  if self.prompt then self:buildPrompt(); return end
   if self.auth then self:buildAuth(); return end
   local narrow=self.width<600
   local tabWidth=narrow and 94 or 150
@@ -207,7 +260,8 @@ function Settings:describe(item)
   if item.kind=='tab' then return item.label..' settings' end
   if item.kind=='back' then return 'Back' end
   if item.kind=='action' then return item.label end
-  if item.kind=='name' then return 'Display name: '..self.account.draftName..'. Enter to edit.' end
+  if item.kind=='prompt-later' then return 'Later. Asks again next time.' end
+  if item.kind=='name' then return item.label..': '..self.account.draftName..'. Enter to edit.' end
   if item.kind=='email' then return 'Email: '..self.account.email..'. Disabled.' end
   return item.label..': '..((item.kind=='toggle' or item.kind=='cycle') and (self:value(item)==1 and 'on' or 'off') or self:value(item))
 end
@@ -258,6 +312,7 @@ function Settings:activate(index)
     if self.account.editing then self.callbacks.account('finish-edit'); self.account.editing=false end
     self.tab=item.tab; self:build(); if self.focus>0 then self.focus=index end
     self.callbacks.announce(self:describe(self.items[index]))
+  elseif item.kind=='prompt-later' then self:closePrompt(true,false)
   elseif item.kind=='auth-tab' then self:openAuth(item.mode)
   elseif item.kind=='auth-back' then self:closeAuth()
   elseif item.kind=='auth-field' then
@@ -303,7 +358,8 @@ function Settings:keypressed(key)
   if self.account.editing then return end
   if key=='escape' then
     self.callbacks.feedback()
-    if self.auth then self:closeAuth() else self.callbacks.close() end
+    if self.prompt then self:closePrompt(true,false)
+    elseif self.auth then self:closeAuth() else self.callbacks.close() end
     return
   end
   local item=self.items[self.focus]
@@ -329,7 +385,13 @@ function Settings:draw()
   local panel=Button.panel
   g.push(); g.translate(0,self.motion.VT.y*60)
   Button.modalFrameRaised(self.x,self.y,self.w,self.h)
-  if self.auth then
+  if self.prompt then
+    T.text(NAME_PROMPT_TITLE,30,self.x+32,self.y+40,self.w-64)
+    T.text(NAME_PROMPT,22,self.x+32,self.y+96,self.w-64)
+    if self.account.message~='' then
+      T.text(self.account.message,17,self.x+28,self.y+392,self.w-56,T.paper)
+    end
+  elseif self.auth then
     if self.auth.mode=='delete' then
       T.text('Delete account',30,self.x+32,self.y+40,self.w-64)
       T.text(DELETE_WARNING,22,self.x+32,self.y+96,self.w-64)
@@ -350,7 +412,7 @@ function Settings:draw()
   for i,item in ipairs(self.items) do
     local active=self.hover==i or self.focus==i
     local pressed=self.pressed==i and self.hover==i
-    if item.kind=='tab' or item.kind=='back' or item.kind=='action' or
+    if item.kind=='tab' or item.kind=='back' or item.kind=='action' or item.kind=='prompt-later' or
       (self.auth and item.kind~='auth-field') then
       local disabled=self:disabled(item)
       local colour=item.colour

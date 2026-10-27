@@ -141,9 +141,11 @@ describe("POST /auth/register", () => {
     const user = (await res.json()) as { id: string; email: string; displayName: string };
     expect(user).toMatchObject({
       email: "misty@example.com",
-      displayName: "misty",
       emailVerified: false,
+      namePrompt: false,
     });
+    // A blank name gets a generated handle, never the email's local part (AU3).
+    expect(user.displayName).toMatch(/^Trainer-[A-Z2-9]{4}$/);
     const rows = await userRows();
     expect(rows).toHaveLength(1);
     expect(rows[0]?.passwordHash).toMatch(/^pbkdf2\$/);
@@ -151,6 +153,14 @@ describe("POST /auth/register", () => {
     const session = await me(sessionCookieOf(res));
     expect(session.status).toBe(200);
     expect(((await session.json()) as { id: string }).id).toBe(user.id);
+  });
+
+  it("keeps a typed name, normalized, and refuses one with a control character", async () => {
+    const res = await register("misty@example.com", "starmie-456", "  \uFF2Disty   Water ");
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({ displayName: "Misty Water", namePrompt: false });
+    const refused = await register("brock@example.com", "onix-4567", "Brock\u202e");
+    expect(refused.status).toBe(400);
   });
 
   it("409s an email already registered, whatever its case", async () => {
@@ -679,6 +689,57 @@ describe("PATCH /auth/me", () => {
   });
 });
 
+describe("the one-time public-name prompt", () => {
+  async function patchName(cookie: string, displayName: string) {
+    return app.request(
+      "/auth/me",
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ displayName }),
+      },
+      d1().env(),
+    );
+  }
+  async function promptOf(userId: string) {
+    return d1()
+      .db.prepare("SELECT name_prompt AS prompt, display_name AS name FROM users WHERE id = ?")
+      .bind(userId)
+      .first<{ prompt: number; name: string }>();
+  }
+
+  it("asks a flagged account; keeping the current name clears the ask and renames nothing", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "misty@example.com");
+    await d1()
+      .db.prepare("UPDATE users SET display_name = 'misty', name_prompt = 1 WHERE id = ?")
+      .bind(userId)
+      .run();
+    expect(await (await me(cookie)).json()).toMatchObject({
+      displayName: "misty",
+      namePrompt: true,
+    });
+
+    const kept = await patchName(cookie, "misty");
+    expect(kept.status).toBe(200);
+    expect(await kept.json()).toMatchObject({ displayName: "misty", namePrompt: false });
+    expect(await promptOf(userId)).toEqual({ prompt: 0, name: "misty" });
+    expect(await (await me(cookie)).json()).toMatchObject({ namePrompt: false });
+  });
+
+  it("clears the ask when a new name is saved", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
+    await d1().db.prepare("UPDATE users SET name_prompt = 1 WHERE id = ?").bind(userId).run();
+    const saved = await patchName(cookie, "Pewter Leader");
+    expect(await saved.json()).toMatchObject({ displayName: "Pewter Leader", namePrompt: false });
+    expect(await promptOf(userId)).toEqual({ prompt: 0, name: "Pewter Leader" });
+  });
+
+  it("asks a row inserted without saying otherwise, as the Worker before this column writes", async () => {
+    const id = await insertUser({ email: "erika@example.com" });
+    expect(await promptOf(id)).toEqual({ prompt: 1, name: "Misty" });
+  });
+});
+
 describe("GET /auth/me", () => {
   it("re-sends the session cookie as Lax for its remaining lifetime, on a 304 too", async () => {
     const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
@@ -724,7 +785,11 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
       { provider: "google", providerId: "g-1", userId: rows[0]?.id },
     ]);
     const session = await me(sessionCookieOf(res));
-    expect(((await session.json()) as { id: string }).id).toBe(rows[0]?.id);
+    const user = (await session.json()) as { id: string; displayName: string };
+    expect(user.id).toBe(rows[0]?.id);
+    // A generated handle, not the Google real name (AU3), and so no prompt to choose one.
+    expect(user).toMatchObject({ namePrompt: false });
+    expect(user.displayName).toMatch(/^Trainer-[A-Z2-9]{4}$/);
   });
 
   it("signs a returning identity into its account even after the Google email changed", async () => {

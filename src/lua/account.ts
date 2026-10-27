@@ -6,6 +6,7 @@ import {
   hasControlChars,
   loginRequestSchema,
   registerRequestSchema,
+  updateProfileRequestSchema,
 } from "@colorless/schema";
 import { ApiError, deleteAccount, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
@@ -73,6 +74,7 @@ export class LuaAccount {
         u?.displayName ?? "",
         u?.email ?? "",
         u?.hasPassword ? 1 : 0,
+        u?.namePrompt ? 1 : 0,
       ]),
     );
   }
@@ -112,16 +114,15 @@ export class LuaAccount {
       failure === undefined ? "Google sign-in failed. Try again." : OAUTH_ERROR_MESSAGES[failure];
   }
 
+  /** Saves `name` as the display name, by the same rule the server applies. Saving the current
+   * name unchanged is how the "choose your public name" prompt's Keep answers it. */
   async save(name: string) {
     if (this.busy || !this.user) return;
-    const trimmed = name.trim();
-    if (!trimmed || trimmed.length > DISPLAY_NAME_MAX) {
-      this.message = `Use 1 to ${DISPLAY_NAME_MAX} characters for your name.`;
-      this.emit();
-      return;
-    }
-    if (hasControlChars(trimmed)) {
-      this.message = HIDDEN_CHARACTERS;
+    const request = updateProfileRequestSchema.safeParse({ displayName: name });
+    if (!request.success) {
+      this.message = hasControlChars(name.trim())
+        ? HIDDEN_CHARACTERS
+        : `Use 1 to ${DISPLAY_NAME_MAX} characters for your name.`;
       this.emit();
       return;
     }
@@ -130,7 +131,7 @@ export class LuaAccount {
     this.message = "Saving...";
     this.emit();
     try {
-      const user = await updateProfile({ displayName: trimmed });
+      const user = await updateProfile(request.data);
       if (op !== this.operation) return;
       this.user = user;
       this.message = "Saved.";
@@ -320,6 +321,9 @@ export class LuaAccount {
     const [action, name] = fields;
     if (action === "refresh") await this.refresh(SESSION_CHECK_MAX_AGE_MS);
     if (action === "save" && name !== undefined) await this.save(name);
+    // Keeps the current name, answering the one-time prompt. A name saved before today's rule may
+    // not pass it; the refusal asks for a new one.
+    if (action === "keep" && this.user) await this.save(this.user.displayName);
     if (action === "logout") await this.signOut();
     if (action === "google") await this.google();
     if (action === "clear-message" && !this.busy) {

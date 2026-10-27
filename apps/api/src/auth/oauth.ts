@@ -167,15 +167,14 @@ export type OAuthProfile = {
   email: string | null;
   /** Only ever true when the provider itself asserts verification. */
   emailVerified: boolean;
-  displayName: string;
 };
 
-// Google OIDC userinfo (openid email profile scopes).
+// Google OIDC userinfo (openid email profile scopes). The profile's `name` is not read: a new
+// account gets a generated handle rather than the user's real name (security audit AU3).
 const googleUserinfoSchema = z.object({
   sub: z.string().min(1),
   email: z.string().nullish(),
   email_verified: z.boolean().nullish(),
-  name: z.string().nullish(),
 });
 
 /** Normalize a provider userinfo payload; null when the shape drifted. */
@@ -184,12 +183,10 @@ export function parseOAuthProfile(json: unknown): OAuthProfile | null {
   if (!parsed.success) {
     return null;
   }
-  const { sub, email, email_verified, name } = parsed.data;
-  const lowered = email ? email.toLowerCase() : null;
+  const { sub, email, email_verified } = parsed.data;
   return {
     providerId: sub,
-    email: lowered,
+    email: email ? email.toLowerCase() : null,
     emailVerified: email_verified === true,
-    displayName: name || (lowered ? (lowered.split("@")[0] ?? lowered) : "player"),
   };
 }

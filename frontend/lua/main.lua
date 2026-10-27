@@ -333,6 +333,16 @@ function love.update(dt)
   -- The lobby keeps polling under Settings (sign-in) and during a wipe.
   if state.page=='online' then online:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if wipe then love.mouse.setCursor(state.arrowCursor);return end
+  -- An account asked to choose its public name hears it on the home menu or before an online
+  -- lobby, where the name is shown to others; Settings reads the account itself while open.
+  if not popup and (state.page=='home' or state.page=='online') then
+    local accountRaw=Mailbox.read('account')
+    if accountRaw then account:sync(accountRaw) end
+    if account:shouldPrompt() then
+      openSettings(false,'account')
+      if popup then popup:openNamePrompt(true) end
+    end
+  end
   if popup then
     local accountRaw=Mailbox.read('account')
     if accountRaw then
