@@ -909,3 +909,22 @@ Phase 3 of the 2026-10-27 security audit. Anyone could spend the account's share
   - The match log keeps at most 2,000 rows, cut to the newest 1,500 behind a "trimmed" row.
   - Repeatable-ability uses are not capped, since that would be a rules change; the frame budget bounds their rate.
 - **Decklist import (WC3).** At most 200 card lines, 120 characters a line and 8 lookups at a time. The quadratic trailing-set regex is replaced, and set codes may start with a digit ("Pikachu 30TH 023" imports).
+
+### 2026-10-27 — A cryptographic match RNG and secret seat credentials
+
+Phase 4 of the 2026-10-27 security audit. The engine and the lobby protocol change together.
+
+- **ChaCha20 for every new game (MI1, user decision 8a).** The match RNG was mulberry32 with a 32-bit seed. A player recovered the seed from their own opening hand in about four minutes, then predicted every shuffle and flip and located the opponent's hidden cards.
+  - `rngState` is now either `{alg: "chacha20", key, counter}`, a 256-bit key from `crypto.getRandomValues` drawn through `@noble/ciphers` 2.4.0 (pinned exactly, audited, synchronous), or the old mulberry32 number.
+  - The lobby's seed type admits only the ChaCha20 form, and new local games (sandbox start and restart) mint one. A numeric seed still means mulberry32, so tests, fixtures and the bench are unchanged (fingerprint unchanged).
+  - The key never leaves the engine state: redaction copies nothing from `rngState`, and a test plays a match with a spectator through a hibernate and checks that no frame or log line carries it. The audit's brute force over all 2^32 seeds now finds no candidate.
+  - Old local saves are not invalidated: a save replays its actions with the generator it was made with, so a mulberry32 save keeps replaying identically. This is the migration the user asked for.
+  - Live online matches are rekeyed on their next read: a v50 record still on mulberry32 continues under a fresh ChaCha20 key. Cards it already dealt stay where they are until the next shuffle.
+  - `GAME_STATE_VERSION` and `MATCH_RECORD_VERSION` go to 51, so a rollback retires ChaCha20 matches instead of misreading their state as a fixed seed.
+  - The "fresh 32-bit reseed per action" stopgap was rejected: any shuffle seeded with 32 bits whose output a player partly sees leaks its whole order.
+- **Deck ids stay in the lobby (LB5).** Snapshots carry `hasDeck` (and the deck name) instead of each seat's saved-deck id. The DO keeps the ids in its stored state and strips them before sending. A test plays a full match, concede and rematch, and checks that no frame to anyone carries a deck id or a seat secret.
+- **Secret seat credentials (LB6).** A seat was claimed by its public `playerId`, which every snapshot broadcast.
+  - Each tab now mints a 256-bit secret (in sessionStorage per lobby) and sends it only in `hello`. Snapshots, intents, byes, rematches and kicks use the public id, the first 22 base64url characters of SHA-256(secret), which client and DO compute synchronously (`packages/schema/src/lobby/seatId.ts`, pinned to WebCrypto by a test). The DO never stores the secret.
+  - A public id sent as a hello is refused, binds nothing and cannot act.
+  - The Phase 1 account binding and eviction are unchanged.
+- **Cutover.** A lobby stored before the change cannot be carried over, since its ids were public, so the DO wipes it on the next upgrade (404) or alarm (4000) and logs `lobby_wiped cause=legacy`. A tab still running the old client sends a UUID hello, is answered "full" and holds nothing until it reloads. The client and the API ship in the same `bun run release`.
