@@ -27,6 +27,7 @@ the script after adding a decision.
 | 2026-10-27 | Security safety nets before the fixes | decisions.md:835 |
 | 2026-10-27 | Security hot fixes: lobby origins, the print bridge, seat ownership and the request edge | decisions.md:846 |
 | 2026-10-27 | A same-site Lax session cookie and a cross-site guard | decisions.md:872 |
+| 2026-10-27 | Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies | decisions.md:880 |
 
 ## Numbered decisions
 

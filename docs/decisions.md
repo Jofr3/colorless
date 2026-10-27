@@ -876,3 +876,35 @@ Phase 2 of the 2026-10-27 security audit (AEX1). It corrects the premise behind 
 - **Lax.** The session cookie is `HttpOnly; Secure; SameSite=Lax`. Nobody is logged out: the attribute change keeps the name and the token. `GET /auth/me`, the session check every page load makes, re-sends the cookie with its remaining lifetime (on a 304 too), so the old `None` cookies are replaced instead of living out their 30 days. The `__Host-` rename was declined (user decision 1): it would log everyone out once, so it waits for a move that does that anyway.
 - **Cross-site guard.** Any POST, PUT, PATCH or DELETE whose `Origin` is not an app origin (`null` included), or that sends `Sec-Fetch-Site: cross-site`, gets 403 before it runs. A request without `Origin` passes: browsers send `Origin` on every such method, so it is not a page acting with a visitor's cookie. This also closes `POST /lobby` and register to other sites (LB3's hygiene part). JSON content types are not required globally, because logout and `POST /lobby` send no body.
 - **Constraint.** The web app and the API must stay on one registrable domain. A move to a custom domain (AE2, decision 6) must put both on it, or sign-in breaks.
+
+### 2026-10-27 — Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies
+
+Phase 3 of the 2026-10-27 security audit. Anyone could spend the account's shared Workers Free quotas (5M D1 rows read, 100k rows written, 1,000 KV writes and 100k Durable Object writes a day), which stops sign-in, decks and the lobby for everyone until 00:00 UTC. This phase bounds each path. The Worker's own 100k requests a day remains, accepted as a known availability risk (user decision 6, §3.7.4).
+
+- **Search in the browser (CA1, decision 3).**
+  - `GET /cards/index` serves every card as one compact row (about 280 KB gzipped, one KV entry per epoch). The builder answers name and rules-text searches from it, and decklist import resolves names from it. A free-text search now reads 0 D1 rows (it was about 10k a request).
+  - The shared matcher (`searchCardIndex`) is pinned to `GET /cards` by a parity test of 54 queries.
+  - Server-side, `/cards` refuses pages past 1,000 cards (the builder's pager stops there for server pages). `CATALOG_SEARCH_LIMIT` (30 a minute per IP) covers KV-bypassing scans and `/cards/index` misses. Uncached reads are tallied in an `evt=d1 kind=catalog_reads` line.
+- **Catalog and assets (CA2-CA4, CAX1).**
+  - Empty results and HP bounds no longer enter KV.
+  - Asset URLs are pinned to https `assets.tcgdex.net`, and mirrored bodies must be images under 5 MB.
+  - Only the files the client uses are mirrored: card `high.webp`, set `logo.webp` and `symbol.webp`.
+  - tcgdex ids are validated at ingest, and the ingest SQL file paths cannot leave their directory.
+- **Sign-up and deck writes (AUX1, DK1-DK3, decisions 4 and 5).**
+  - Register has its own D1 budget of 5 an hour per IP.
+  - `AUTH_LIMIT` (10 a minute per scope and IP) refuses floods before any D1 write.
+  - `DECK_WRITE_LIMIT` (60 a minute per account) and `DECK_WRITE_IP_LIMIT` (180 per IP) bound deck writes; the saver waits out a 429 and keeps the edits.
+  - The 500-deck cap is now enforced in the insert statement, so racing creates can no longer pass it. This supersedes the database audit's accepted race.
+  - Card ids on write must be 1-40 characters of `[A-Za-z0-9._-]`.
+  - Binding errors fail open everywhere, and the D1 sign-in limiter behind them still fails closed.
+  - Not done: a deck save still rewrites every card row, so an account at its burst limit can still spend the daily write quota. Denormalizing and diff-saving decks is the later option (decision 4, option 3).
+- **Lobbies (LB1-LB3, MI2, MIX2, decision 7).**
+  - Frames: every socket has a budget of 40 frames, refilled at 5 a second, checked before parsing; 1008 when it is overrun, and 1009 for a frame over 16K characters. Both closes take the normal seat-gone path.
+  - Alarms are no longer re-armed when one is already due earlier, so a commit costs one row instead of two.
+  - Sockets: 12 per lobby (2 seats, 8 spectators, 2 for a reload), with an account that holds a seat let in up to 16.
+  - Inactivity: an hour with no activity closes the lobby with 4000, and the updated client stops reconnecting on that code.
+  - Each distinct spectator or seat frame is built once per broadcast.
+  - Creating a lobby costs 5 rows instead of 8.
+  - The match log keeps at most 2,000 rows, cut to the newest 1,500 behind a "trimmed" row.
+  - Repeatable-ability uses are not capped, since that would be a rules change; the frame budget bounds their rate.
+- **Decklist import (WC3).** At most 200 card lines, 120 characters a line and 8 lookups at a time. The quadratic trailing-set regex is replaced, and set codes may start with a digit ("Pikachu 30TH 023" imports).
