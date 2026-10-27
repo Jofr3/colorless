@@ -21,6 +21,7 @@ the script after adding a decision.
 | 2026-10-26 | Frontend structure: named wire, a typed page shell, one simulator flow | decisions.md:757 |
 | 2026-10-27 | Performance: measure first, then the boot download, the catalog cache, the save, the frame and the loop | decisions.md:770 |
 | 2026-10-27 | Database safety nets before any schema change | decisions.md:786 |
+| 2026-10-27 | Database hot fixes: the shared quota, races and silent failures | decisions.md:796 |
 
 ## Numbered decisions
 
