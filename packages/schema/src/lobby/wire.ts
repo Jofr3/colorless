@@ -5,6 +5,7 @@
 // server sends are in serverWire.ts, so the Worker never builds the redacted-game schema.
 
 import * as z from "zod";
+import { cleanDisplayName } from "../displayName";
 import { wireActionSchema } from "../match/action";
 import { stripControlChars } from "../text";
 import type { Equals } from "./equals";
@@ -83,7 +84,8 @@ export const lobbyIntentSchemaMatchesType: Equals<
 export const helloMessageSchema = z.object({
   kind: z.literal("hello"),
   from: clientId,
-  name: clippedString(LOBBY_NAME_MAX),
+  // The account display name's rule (displayName.ts), stripped rather than refused.
+  name: z.string().transform(cleanDisplayName),
   logDeltas: z.boolean().optional(),
 });
 export const intentMessageSchema = z.object({

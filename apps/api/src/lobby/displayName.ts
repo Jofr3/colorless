@@ -1,11 +1,11 @@
 // Resolves a lobby seat's name from the account rather than trusting the hello frame, so a player
 // cannot present as someone else.
 
-import { stripControlChars } from "@colorless/schema";
+import { cleanDisplayName } from "@colorless/schema";
 
-/** An account's stored display name as a lobby should use it: without control or format
-    characters (a name saved before the account schemas refused them), trimmed, or null
-    when there is nothing usable.
+/** An account's stored display name as a lobby should use it: under the display-name rule
+    (`cleanDisplayName`: a name saved before the account schemas refused control or format
+    characters loses them, and it is normalized and clipped), or null when nothing usable is left.
 
     Null rather than a fallback, because the ONE fallback that suggests itself
     here — the email, which `AccountButton` uses — must never be taken: that
@@ -14,6 +14,6 @@ import { stripControlChars } from "@colorless/schema";
     problem; a published email address is not. The caller falls back to the
     client-announced handle instead. Pure. */
 export function lobbyDisplayName(stored: string | null | undefined): string | null {
-  const trimmed = stripControlChars(stored ?? "").trim();
-  return trimmed === "" ? null : trimmed;
+  const cleaned = cleanDisplayName(stored ?? "");
+  return cleaned === "" ? null : cleaned;
 }

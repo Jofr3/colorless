@@ -40,7 +40,7 @@ export const CONSISTENCY_CHECKS: readonly { name: string; sql: string }[] = [
   },
   {
     name: "boolean column not 0/1",
-    sql: `SELECT 'users' AS t, id FROM users WHERE email_verified NOT IN (0, 1)
+    sql: `SELECT 'users' AS t, id FROM users WHERE email_verified NOT IN (0, 1) OR name_prompt NOT IN (0, 1)
           UNION ALL SELECT 'sets', id FROM sets WHERE legal_standard NOT IN (0, 1) OR legal_expanded NOT IN (0, 1)
           UNION ALL SELECT 'cards', id FROM cards WHERE legal_standard NOT IN (0, 1) OR legal_expanded NOT IN (0, 1)
             OR legal_standard_effective NOT IN (0, 1) OR legal_expanded_effective NOT IN (0, 1)`,

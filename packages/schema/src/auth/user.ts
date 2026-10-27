@@ -18,6 +18,12 @@ export const userSchema = z.object({
   /** Whether the account signs in with a password, so deleting it asks for that password. Only
       the fact: the hash never leaves apps/api. */
   hasPassword: z.boolean(),
+  /** Ask this user, once, to choose their public name: the account predates generated default
+      handles, so its name may be its email's local part or its Google real name (security audit
+      AU3). Saving a name, or keeping this one, through PATCH /auth/me clears it. Optional so a
+      client reads a server from before the field as "do not ask"; a client from before it
+      ignores it. */
+  namePrompt: z.boolean().optional(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   createdAt: z.iso.datetime(),
 });

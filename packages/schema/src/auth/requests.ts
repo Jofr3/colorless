@@ -2,9 +2,8 @@
 // zValidator at the boundary and reusable by the web app's forms.
 
 import * as z from "zod";
+import { collapseSpaces, DISPLAY_NAME_MAX, foldDisplayName } from "../displayName";
 import { withoutControlChars } from "../text";
-
-export const DISPLAY_NAME_MAX = 64;
 
 /** Emails are normalized to lowercase AT the boundary: `users.email` is
     UNIQUE and every lookup is exact, so one canonical casing everywhere. */
@@ -18,9 +17,18 @@ const emailField = z
     is a DoS guard — every char feeds PBKDF2. */
 const newPasswordField = z.string().min(8).max(256);
 
-/** Other players see it, so it carries no control or format characters (text.ts). Trimmed first,
-    so a pasted trailing newline is not refused. */
-const displayNameField = withoutControlChars(z.string().trim().min(1).max(DISPLAY_NAME_MAX));
+/** The account display name as register and PATCH /auth/me take it (displayName.ts has the
+    rule; a lobby hello applies the same rule but strips instead of refusing). Other players see
+    it, so a control or format character (text.ts) is refused. It is NFKC-folded and trimmed
+    first, so a pasted trailing newline is not refused, then its whitespace runs collapse and it
+    must be 1 to DISPLAY_NAME_MAX characters. The raw bound only caps the normalizing work. */
+export const displayNameField = z
+  .string()
+  .max(DISPLAY_NAME_MAX * 4)
+  .transform(foldDisplayName)
+  .pipe(withoutControlChars(z.string().min(1)))
+  .transform(collapseSpaces)
+  .pipe(z.string().max(DISPLAY_NAME_MAX));
 
 export const registerRequestSchema = z.object({
   email: emailField,
@@ -35,10 +43,10 @@ export const loginRequestSchema = z.object({
 });
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
-/** Editing your own profile (P5-5). Same 1–64 bounds as register's optional
-    name, but REQUIRED here: register may omit it and get the email's local
-    part, while explicitly saving a blank one would only cost you your name —
-    the lobby would fall back to a generated "Player 4271" handle (P5-1). */
+/** Editing your own profile (P5-5). Same field as register's optional name, but REQUIRED here:
+    register may omit it and get a generated handle ("Trainer-7K3Q"), while explicitly saving a
+    blank one would only cost you your name. Saving also answers the one-time "choose your public
+    name" prompt (`User.namePrompt`): sending the current name unchanged keeps it. */
 export const updateProfileRequestSchema = z.object({
   displayName: displayNameField,
 });
