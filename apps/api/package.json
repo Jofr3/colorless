@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "CI=true bun run db:migrate:local && bun ../../scripts/with-system-certs.ts wrangler dev --var APP_ORIGIN:http://localhost:5175",
-    "deploy": "wrangler deploy",
+    "deploy": "bun scripts/release-gate.ts migrations && wrangler deploy",
+    "release:gate": "bun scripts/release-gate.ts bookmark print-keys",
+    "db:check": "bun scripts/db-check.ts",
     "typecheck": "tsc -b",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "bun ../../scripts/with-system-certs.ts wrangler d1 migrations apply colorless --local",

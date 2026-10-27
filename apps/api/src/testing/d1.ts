@@ -1,25 +1,33 @@
-/// <reference types="vite/types/importMeta.d.ts" />
 // Real bindings for route tests: Miniflare's in-memory D1, with every drizzle migration applied in
 // order, and KV. One instance per test file; `reset` empties the user tables and KV between tests
 // while the seeded catalog rows stay.
 
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Miniflare } from "miniflare";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { generateSessionToken, hashSessionToken, SESSION_TTL_MS } from "../auth/session";
 import type { Env } from "../env";
 
-const MIGRATIONS = import.meta.glob<string>("../../drizzle/*.sql", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
+// Read from disk on each run rather than through `import.meta.glob`: vitest's module cache keys a
+// file by its own content, so a cached glob would not see a migration added later.
+const MIGRATIONS_DIR = fileURLToPath(new URL("../../drizzle/", import.meta.url).href);
 
-function migrationStatements(): string[] {
-  return Object.keys(MIGRATIONS)
+export type MigrationFile = { name: string; statements: string[] };
+
+/** Every migration file in order, as `wrangler d1 migrations apply` names and splits it. */
+export function migrationFiles(): MigrationFile[] {
+  return readdirSync(MIGRATIONS_DIR)
+    .filter((name) => name.endsWith(".sql"))
     .sort()
-    .flatMap((path) => (MIGRATIONS[path] ?? "").split("--> statement-breakpoint"))
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0);
+    .map((name) => ({
+      name,
+      statements: readFileSync(join(MIGRATIONS_DIR, name), "utf8")
+        .split("--> statement-breakpoint")
+        .map((statement) => statement.trim())
+        .filter((statement) => statement.length > 0),
+    }));
 }
 
 export type TestD1 = {
@@ -40,7 +48,9 @@ export async function createTestD1(): Promise<TestD1> {
   });
   const db = (await mf.getD1Database("DB")) as unknown as D1Database;
   const kv = (await mf.getKVNamespace("CACHE")) as unknown as KVNamespace;
-  await db.batch(migrationStatements().map((statement) => db.prepare(statement)));
+  await db.batch(
+    migrationFiles().flatMap((file) => file.statements.map((statement) => db.prepare(statement))),
+  );
   return {
     db,
     kv,

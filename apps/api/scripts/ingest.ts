@@ -7,7 +7,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import {
   type TcgdexCard,
@@ -33,15 +32,13 @@ import {
 } from "../src/ingest";
 import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
 import { createSource, parseTransport } from "../src/ingest/source";
+import { API_ROOT, DATABASE, recordBookmark } from "./d1";
 
 const DELAY_MS = 50;
 /** Card requests in flight at once; their starts still keep DELAY_MS apart. */
 const FETCH_CONCURRENCY = 4;
 const PAYLOAD_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-const DATABASE = "colorless";
 const MAX_FAILURES_PRINTED = 10;
-
-const API_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 // --- args -------------------------------------------------------------------
 
@@ -252,6 +249,9 @@ if (targetSetIds) {
   serieRowsSource = [serie];
   setIds = serie.sets.map((set) => set.id);
 }
+
+// A restore point before the first remote write.
+if (args.remote && !dryRun) recordBookmark(`ingest ${setIds.join(",")}`);
 
 // Phase B — series first (sets FK-reference them).
 console.log(`series: ${serieRowsSource.map((serie) => serie.id).join(", ")}`);

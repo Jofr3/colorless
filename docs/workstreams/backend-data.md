@@ -381,13 +381,93 @@ cd apps/api && bun scripts/ingest.ts --serie sv --remote
 | `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
 | `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply colorless --remote` |
 | `cd apps/api && bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
-| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `wrangler deploy` |
+| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations`, then `wrangler deploy` (§3.7.2) |
 | `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
 
 **Why step 3 has never run here.** `api.tcgdex.net` is refused by this
 environment's network policy — the same wall D188, D194, D197 and D198 hit. The
 ingest is the only step that needs the public internet; steps 1, 2 and 4 do not,
 and step 1 is therefore unblocked TODAY and should not wait for the backfill.
+
+#### 3.7.2 Release gates (2026-10-27)
+
+`bun run release` now runs, in order: `check` → `release:gate` (apps/api:
+records the remote Time Travel bookmark, then fails unless the local and remote
+catalogs agree on every card's `print_key`, because the engine's
+`PROGRAM_ALIAS` table is generated from the local one) → `db:migrate:remote` →
+`api:deploy` → web `deploy`. The API `deploy` script itself first runs
+`release-gate.ts migrations`, which fails unless every file in `drizzle/` is
+applied remotely, so a bare `api:deploy` can no longer ship a Worker ahead of
+its migrations (the D203 incident above). All three gates only read
+production. `check:static` adds `migration-guard.ts` (no unreviewed table
+rebuilds) and `drizzle-drift.ts` (schema.ts matches the migrations); see
+docs/conventions.md "Database migrations".
+
+`bun run db:check` (apps/api; `--remote` for production) runs the read-only
+consistency checks in `apps/api/src/db/consistency.ts`: SQLite integrity and
+foreign keys, ownership the routes enforce, value domains, the reprint
+post-pass, and whether stored `print_key`s still match today's `printKey`
+(a mismatch means a full re-ingest is owed). `--upstream` (needs network, run
+through `scripts/with-system-certs.ts`) also lists cards tcgdex no longer has;
+those are only reported. Run it after every remote ingest.
+
+#### 3.7.3 Backup and recovery
+
+What can be lost, and how it comes back:
+
+| Store | Recovery |
+| --- | --- |
+| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | Time Travel, or a user-table export taken before a risky change. Nothing else can recreate them. |
+| D1 catalog (`series`, `sets`, `cards`) | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
+| KV `CACHE` | Disposable: stamp a new `catalog:epoch`. |
+| R2 `ASSETS` | Disposable: refilled from tcgdex on demand. |
+| LobbyDO storage | Ephemeral by design; matches in progress are lost. |
+
+**Time Travel** is always on: the database can be restored to any minute in
+the last 7 days on the Free plan (30 on paid). `release` and
+`ingest.ts --remote` record the bookmark taken just before they write, with
+the reason, in `tmp/d1-bookmarks.log` (gitignored) and print the restore
+command. A restore rewinds the WHOLE database, catalog and user data
+together, so every deck edit, registration and login after that point is lost.
+Prefer a targeted repair (re-ingest the catalog, or re-import the user tables
+from an export) when the damage is confined to one side.
+
+```sh
+cd apps/api
+bunx wrangler d1 time-travel info colorless                       # current bookmark
+bunx wrangler d1 time-travel restore colorless --bookmark=<bookmark>
+bunx wrangler d1 time-travel restore colorless --timestamp=2026-10-27T09:00:00Z
+bun run db:check -- --remote                                      # after any restore
+bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
+```
+
+**Before a migration that rebuilds or rewrites a user table**, export the user
+tables. The file holds emails and password hashes, so keep it in `tmp/`:
+
+```sh
+cd apps/api
+bunx wrangler d1 export colorless --remote --no-schema \
+  --table users --table sessions --table oauth_identities \
+  --table folders --table decks --table deck_cards \
+  --output ../../tmp/backup/users-$(date +%F).sql
+```
+
+**Re-importing an export** (learned on 2026-10-22, when the database was copied
+to `colorless`):
+- `wrangler d1 export` writes `CREATE TABLE cards` before `sets`, so a full
+  export does not re-import as written. Reorder the CREATEs parent first
+  (`series`, `sets`, `cards`, `users`, `folders`, `decks`, `deck_cards`,
+  `sessions`, `oauth_identities`), or export with `--no-schema` into a migrated
+  database.
+- Import in chunks of about 700 KB, each starting with
+  `PRAGMA defer_foreign_keys=TRUE;`. A single 5 MB file fails with
+  `D1_RESET_DO`. Retry chunks that fail with transient upload errors.
+- `users.favourite_deck_id` points at `decks`, which points back at `users`:
+  insert users with a null favourite, then decks, then set the favourites.
+- Changing `database_id` in wrangler.jsonc orphans the local Miniflare file
+  under `.wrangler/state/v3/d1/`. Run `bun run db:migrate:local` to create the
+  new file, then copy the old one into it with sqlite's `.backup`.
+- Run `bun run db:check -- --remote` afterwards.
 
 ---
 

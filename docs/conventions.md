@@ -206,11 +206,10 @@ only the conclusion.
   `reprintAliasMeD58*.test.ts`). `registryCardIds()` lists REGISTRY keys only; a
   sweep that means every programmed printing uses `programmedCardIds()`
   (`fixtures/printings.ts`).
-- **Before an API deploy, check the generated table against the remote catalog.**
-  It is built from the LOCAL D1, which CI cannot see. From `apps/api`, run
-  `bunx wrangler d1 execute colorless --json --command "select id, print_key from cards
-  order by id"` once with `--local` and once with `--remote` and diff the two; if they
-  differ, re-ingest locally, re-run `bun scripts/registry-aliases.ts`, and commit.
+- **The generated table must match the remote catalog.** It is built from the LOCAL
+  D1, which CI cannot see, so `bun run release` runs `release-gate.ts print-keys`
+  (apps/api), which fails when the local and remote `print_key` columns differ; then
+  re-ingest locally, re-run `bun scripts/registry-aliases.ts`, and commit.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
   (2026-10-23) after measuring zero residue; sections below that describe them
   are history.
@@ -420,6 +419,39 @@ the trend improved.
   D195: an old list's *"every item was fixed"* was one item too generous, and a
   deferred note **named a remedy rather than the defect** (the real fix touched
   neither thing the note pointed at).
+
+## Database migrations
+
+D1 applies each migration file in one transaction with foreign keys enforced, and
+the previous Worker keeps serving while `release` migrates. Two rules follow.
+
+- **Expand, then contract.** A migration must stay readable by the Worker that is
+  already deployed: add tables, columns (nullable or with a default) and indexes
+  freely; drop or rename a column only one release after the code stopped reading
+  it. `release` migrates before it deploys, and the API `deploy` refuses to run
+  while a migration is unapplied remotely (`apps/api/scripts/release-gate.ts`).
+- **Never let drizzle-kit rebuild a table that has children.** For a CHECK, an FK
+  action, NOT NULL or a type change, drizzle-kit writes `PRAGMA foreign_keys=OFF;
+  CREATE __new_t; INSERT … SELECT; DROP TABLE t; RENAME`. Inside D1's transaction
+  the PRAGMA does nothing, so `DROP TABLE` fires ON DELETE: rebuilding `users`
+  empties sessions, identities, folders, decks and deck_cards; rebuilding `decks`
+  empties deck_cards and clears favourites; rebuilding `cards` or `sets` fails at
+  COMMIT because deck rows reference them (NO ACTION). `PRAGMA
+  defer_foreign_keys` defers checks, not actions, so it does not help.
+  `scripts/migration-guard.ts` (check:static) fails on `PRAGMA foreign_keys`,
+  `DROP TABLE` or `__new_` in a migration file not listed in its `REVIEWED`.
+  Prefer what needs no rebuild: a `BEFORE INSERT/UPDATE` trigger instead of a
+  CHECK, a new column instead of a changed one. When a rebuild is unavoidable,
+  hand-write it: copy every descendant table out (`CREATE TABLE __keep_x AS
+  SELECT * FROM x`, down the whole cascade tree), rebuild, re-insert parents
+  before children, re-point `users.favourite_deck_id`, drop the copies; export
+  the user tables first (backend-data.md §3.7.3). Then make
+  `apps/api/src/db/migrations.d1.test.ts` pass (it seeds every table, applies each
+  newer migration file by itself and compares row counts, references and
+  `PRAGMA foreign_key_check`) and add the file to `REVIEWED` with the reason.
+- `scripts/drizzle-drift.ts` (check:static) fails when `schema.ts` has changes no
+  migration records. drizzle-kit does not track triggers; note any next to the
+  table in `apps/api/src/db/`.
 
 ## Working beside other agents
 
