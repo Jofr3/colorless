@@ -210,6 +210,16 @@ describe("Lua deck library", () => {
     expect(library.result).toBe("error");
     expect(library.message).toContain("Could not save");
   });
+  it("says why a create was refused when the account holds the most decks it can", async () => {
+    stubFetch({
+      ...reads,
+      "POST /decks": () => json({ error: "deck limit reached", limit: 500 }, 409),
+    });
+    const { library } = await setup();
+    await library.command(encodeFields(["create", "deck", "One more"]));
+    expect(library.result).toBe("error");
+    expect(library.message).toBe("Your library is full (500 decks). Delete one to make room.");
+  });
   it("falls back from saved Manual and ignores stale manual sort/reorder commands", async () => {
     localStorage.setItem("decks.sortKey", "manual");
     const { calls } = stubFetch(reads);

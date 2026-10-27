@@ -3,12 +3,15 @@
 
 import {
   createDeckRequestSchema,
+  type Deck,
   type DeckCard,
+  deckConflictSchema,
   deckSchema,
   deckSummarySchema,
+  MAX_DECKS_PER_USER,
   patchDeckRequestSchema,
 } from "@colorless/schema";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, exists, inArray, type SQL, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import type { SQLiteUpdateSetSource } from "drizzle-orm/sqlite-core";
 import { type Context, Hono } from "hono";
@@ -54,12 +57,14 @@ function unknownCardsResponse(
     : c.json({ error: "unknown card id(s)", cardIds: unknown }, 400);
 }
 
-/** The `position` a created deck takes: one below the user's current minimum, so new decks land
-    first in the position-ordered list. Two racing creates can tie, which is harmless: the id
-    tiebreak keeps the order stable. */
-function minPositionQuery(db: Db, userId: string) {
+/** How many decks the user has, against MAX_DECKS_PER_USER, and the `position` a created deck
+    takes: one below the user's current minimum, so new decks land first in the position-ordered
+    list. Two racing creates can tie, which is harmless: the id tiebreak keeps the order stable.
+    They can also both pass the cap from one below it, which is as harmless: the cap bounds reads,
+    it is not an exact quota. */
+function deckSlotQuery(db: Db, userId: string) {
   return db
-    .select({ min: sql<number | null>`min(${decks.position})` })
+    .select({ count: sql<number>`count(*)`, min: sql<number | null>`min(${decks.position})` })
     .from(decks)
     .where(eq(decks.userId, userId));
 }
@@ -73,9 +78,18 @@ function deckCardInserts(db: Db, deckId: string, entries: readonly DeckCard[]) {
 }
 
 /** Replace a deck's card list by writing only what differs: rows whose card left the list are
-    deleted, and the upsert skips rows whose count is unchanged. */
-function deckCardReplacement(db: Db, deckId: string, entries: readonly DeckCard[]) {
+    deleted, and the upsert skips rows whose count is unchanged. Both statements write only while
+    the deck row matches `guard`, since a D1 batch carries on past a statement that changes
+    nothing. The list travels as one JSON parameter, so neither statement grows with the deck. */
+function deckCardReplacement(
+  db: Db,
+  deckId: string,
+  entries: readonly DeckCard[],
+  guard: SQL | undefined,
+) {
   const keptIds = JSON.stringify(entries.map((entry) => entry.cardId));
+  const rows = JSON.stringify(entries.map(({ cardId, count }) => [cardId, count]));
+  const holds = exists(db.select({ id: decks.id }).from(decks).where(guard));
   return [
     db
       .delete(deckCards)
@@ -83,16 +97,20 @@ function deckCardReplacement(db: Db, deckId: string, entries: readonly DeckCard[
         and(
           eq(deckCards.deckId, deckId),
           sql`${deckCards.cardId} not in (select "value" from json_each(${keptIds}))`,
+          holds,
         ),
       ),
-    ...deckCardInserts(db, deckId, entries).map((insert) =>
-      insert.onConflictDoUpdate({
+    db
+      .insert(deckCards)
+      .select(
+        sql`select ${deckId}, "value" ->> 0, "value" ->> 1 from json_each(${rows}) where ${holds}`,
+      )
+      .onConflictDoUpdate({
         target: [deckCards.deckId, deckCards.cardId],
         set: { count: sql`excluded.count` },
         setWhere: sql`${deckCards.count} is not excluded.count`,
       }),
-    ),
-  ];
+  ] as const;
 }
 
 /** The (already user-scoped) card list of one deck, in stable id order. */
@@ -102,6 +120,28 @@ function selectDeckCards(db: Db, deckId: string) {
     .from(deckCards)
     .where(eq(deckCards.deckId, deckId))
     .orderBy(asc(deckCards.cardId));
+}
+
+/** One full deck, only if `userId` owns it. */
+async function readDeck(db: Db, deckId: string, userId: string): Promise<Deck | undefined> {
+  const [deckRows, cardRows] = await db.batch([
+    db
+      .select()
+      .from(decks)
+      .where(ownedBy(decks, deckId, userId)),
+    selectDeckCards(db, deckId),
+  ]);
+  const row = deckRows[0];
+  return row === undefined ? undefined : deckSchema.parse(mapDeckRow(row, cardRows));
+}
+
+/** The answer to a patch its precondition refused: 404 when the deck is gone or not the caller's,
+    else 409 with the deck as it stands now, for the client to reload. */
+async function refusedPatchResponse(c: Context, db: Db, deckId: string, userId: string) {
+  const deck = await readDeck(db, deckId, userId);
+  return deck === undefined
+    ? c.json({ error: "deck not found" }, 404)
+    : c.json(deckConflictSchema.parse({ error: "deck changed since this version", deck }), 409);
 }
 
 // --- decks -------------------------------------------------------------------
@@ -164,20 +204,8 @@ deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
 });
 
 deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
-  const deckId = c.req.param("id");
-  const db = drizzle(c.env.DB);
-  const [deckRows, cardRows] = await db.batch([
-    db
-      .select()
-      .from(decks)
-      .where(ownedBy(decks, deckId, c.get("user").id)),
-    selectDeckCards(db, deckId),
-  ]);
-  const row = deckRows[0];
-  if (row === undefined) {
-    return c.json({ error: "deck not found" }, 404);
-  }
-  return c.json(deckSchema.parse(mapDeckRow(row, cardRows)));
+  const deck = await readDeck(drizzle(c.env.DB), c.req.param("id"), c.get("user").id);
+  return deck === undefined ? c.json({ error: "deck not found" }, 404) : c.json(deck);
 });
 
 deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, async (c) => {
@@ -185,10 +213,14 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
   const user = c.get("user");
   const db = drizzle(c.env.DB);
   const ids = body.cards.map((entry) => entry.cardId);
-  const [positionRows, ...known] = await db.batch([
-    minPositionQuery(db, user.id),
+  const [slotRows, ...known] = await db.batch([
+    deckSlotQuery(db, user.id),
     ...knownCardQueries(db, ids),
   ]);
+  const slot = slotRows[0];
+  if ((slot?.count ?? 0) >= MAX_DECKS_PER_USER) {
+    return c.json({ error: "deck limit reached", limit: MAX_DECKS_PER_USER }, 409);
+  }
   const badCards = unknownCardsResponse(c, ids, known);
   if (badCards !== null) {
     return badCards;
@@ -203,7 +235,7 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
     // A brand-new deck wears the derived default; picking a cover is an edit
     // you make later, in the editor, once there is something to pick.
     coverCardId: null,
-    position: (positionRows[0]?.min ?? 1) - 1,
+    position: (slot?.min ?? 1) - 1,
     updated: new Date(),
     version: 0,
   };
@@ -245,6 +277,11 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
   if (badCards !== null) {
     return badCards;
   }
+  // A save made from an older copy is refused here without a write; the guarded batch below
+  // refuses one that loses its race after this read.
+  if (body.version !== undefined && existing.version !== body.version) {
+    return refusedPatchResponse(c, db, deckId, user.id);
+  }
   const chosen = body.chosenCoverCardId;
   if (chosen !== undefined && chosen !== null && cardIdsAfter?.has(chosen) !== true) {
     return c.json({ error: "cover card not in deck", cardIds: [chosen] }, 400);
@@ -252,7 +289,10 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
   // Only the fields the request names are written, so a patch from a tab holding an older copy
   // does not put back the fields another tab changed since. For the nullable fields, absent means
   // "keep" and null means "clear".
-  const changes: SQLiteUpdateSetSource<typeof decks> = { updated: new Date() };
+  const changes: SQLiteUpdateSetSource<typeof decks> = {
+    updated: new Date(),
+    version: sql`${decks.version} + 1`,
+  };
   if (body.name !== undefined) changes.name = body.name;
   if (body.tint !== undefined) changes.tint = body.tint;
   if (body.format !== undefined) changes.format = body.format;
@@ -267,22 +307,28 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
     const keptIds = JSON.stringify(body.cards.map((entry) => entry.cardId));
     changes.coverCardId = sql`case when ${decks.coverCardId} in (select "value" from json_each(${keptIds})) then ${decks.coverCardId} end`;
   }
-  const update = db
-    .update(decks)
-    .set(changes)
-    .where(ownedBy(decks, deckId, user.id))
-    .returning();
+  // The write's precondition: the deck is still the caller's and, for a versioned save, still at
+  // the version the save was made from. An unversioned patch is last-writer-wins, and still moves
+  // the version so that versioned saves from other copies notice it.
+  const precondition =
+    body.version === undefined
+      ? ownedBy(decks, deckId, user.id)
+      : and(ownedBy(decks, deckId, user.id), eq(decks.version, body.version));
+  const update = db.update(decks).set(changes).where(precondition).returning();
   if (body.cards === undefined) {
     const [updated, cardsAfter] = await db.batch([update, selectDeckCards(db, deckId)]);
     const row = updated[0];
     return row === undefined
-      ? c.json({ error: "deck not found" }, 404)
+      ? refusedPatchResponse(c, db, deckId, user.id)
       : c.json(deckSchema.parse(mapDeckRow(row, cardsAfter)));
   }
-  const [updated] = await db.batch([update, ...deckCardReplacement(db, deckId, body.cards)]);
+  // The card writes go before the UPDATE, the only statement that moves `version`, so all three
+  // judge the precondition against the same row: either all of them write or none does.
+  const [removeCards, upsertCards] = deckCardReplacement(db, deckId, body.cards, precondition);
+  const [, , updated] = await db.batch([removeCards, upsertCards, update]);
   const row = updated[0];
   return row === undefined
-    ? c.json({ error: "deck not found" }, 404)
+    ? refusedPatchResponse(c, db, deckId, user.id)
     : c.json(deckSchema.parse(mapDeckRow(row, body.cards)));
 });
 

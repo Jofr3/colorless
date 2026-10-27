@@ -11,6 +11,9 @@ import { deckCardSchema } from "./deck";
     200 leaves room for oversized casual lists while bounding request size. */
 export const MAX_DECK_CARD_ENTRIES = 200;
 
+/** Decks one account can hold: bounds the unpaginated GET /decks and its deck_cards reads. */
+export const MAX_DECKS_PER_USER = 500;
+
 /** Deck names. */
 export const DECK_NAME_MAX = 100;
 
@@ -37,13 +40,16 @@ const deckCardsField = z
     }
   });
 
-/** Requires at least one field — the schema-level "empty patch" guard. */
+/** Requires at least one field other than `version`, which is a precondition rather than a change
+    — the schema-level "empty patch" guard. */
 function nonEmptyPatch<Shape extends z.ZodRawShape>(shape: Shape) {
   return z
     .object(shape)
-    .refine((patch) => Object.values(patch).some((value) => value !== undefined), {
-      message: "empty patch: provide at least one field",
-    });
+    .refine(
+      (patch) =>
+        Object.entries(patch).some(([key, value]) => key !== "version" && value !== undefined),
+      { message: "empty patch: provide at least one field" },
+    );
 }
 
 export const createDeckRequestSchema = z.object({
@@ -68,5 +74,9 @@ export const patchDeckRequestSchema = nonEmptyPatch({
       Must be a card in the deck AFTER this patch applies — sending one that
       isn't is a 400, since the request contradicts itself. */
   chosenCoverCardId: z.string().min(1).nullable().optional(),
+  /** The deck version this patch was made from. When present the patch applies only while the
+      deck is still at it, and answers 409 with the current deck otherwise. Absent, the patch is
+      last-writer-wins (web builds from before versions). */
+  version: z.number().int().min(0).optional(),
 });
 export type PatchDeckRequest = z.infer<typeof patchDeckRequestSchema>;

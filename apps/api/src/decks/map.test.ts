@@ -26,6 +26,7 @@ describe("mapDeckRow", () => {
       folderId: "f1",
       position: -3,
       updated: "2026-07-09T12:34:56.000Z",
+      version: 0,
       cards: [{ cardId: "sv01-001", count: 4 }],
       chosenCoverCardId: null,
     });
