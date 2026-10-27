@@ -121,6 +121,7 @@ describe("Lua wire fixtures", () => {
     const deck = (id: string, name: string, cardCount: number, tint: number): Deck => ({
       id,
       name,
+      format: null,
       folderId: null,
       cardCount,
       tint,

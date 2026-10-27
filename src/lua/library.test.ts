@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
-import { clearSavedDeckCache } from "../game/sandboxDecks";
 import { encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
@@ -55,7 +54,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   clearCardPoolCache();
-  clearSavedDeckCache();
 });
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const deckRows = (snapshot: unknown) =>
