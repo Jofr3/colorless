@@ -7,7 +7,8 @@
 // outgoing payload parsed through the canonical domain schemas at the
 // boundary (the /health pattern) so row/schema drift fails loudly instead of
 // leaking. Paired queries (page + count, set + its cards)
-// go through db.batch() — one D1 round trip.
+// go through db.batch() — one D1 round trip — except a free-text page, which
+// carries its own count (cardsCountedPageStatement).
 
 import {
   type CardBrief,
@@ -17,6 +18,7 @@ import {
   cardsQuerySchema,
   type CatalogFacets,
   catalogFacetsSchema,
+  FREE_TEXT_CATALOG_PARAMS,
   fullCardsQuerySchema,
   MAX_CACHED_CARDS_PAGE,
   type Paginated,
@@ -26,7 +28,7 @@ import {
   setsQuerySchema,
   setWithCardsSchema,
 } from "@colorless/schema";
-import { asc, count, eq, isNotNull } from "drizzle-orm";
+import { asc, count, eq, sql } from "drizzle-orm";
 import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
@@ -37,6 +39,7 @@ import { validate } from "../http/validation";
 import { facetVocabulary } from "../sentinel";
 import { catalogHttpCache, catalogPathCache, catalogQueryCache, catalogUncached } from "./cache";
 import {
+  type CardBriefRow,
   cardBriefColumns,
   mapCardBriefRow,
   mapCardRow,
@@ -69,6 +72,48 @@ export function cardsPageStatements(db: DrizzleD1Database, query: CardsQuery) {
   ] as const;
 }
 
+/**
+ * The page with the match count riding along on every row, for a free-text query. A typed term
+ * matches sparsely, so filling the page walks most of the table and the count then scans it again;
+ * the window counts during that one walk. It costs the table plus about the matches, so it halves
+ * a typical search and costs a dense one-letter term up to 40% more than the pair (5,084-card
+ * catalog, 2026-10-27). The window is ordered like the page and framed over the whole result, so
+ * SQLite feeds it straight off the sort's index; a bare `over ()` buffers every match and sorts it
+ * again, about twice the pair's rows on that one-letter term.
+ */
+export function cardsCountedPageStatement(db: DrizzleD1Database, query: CardsQuery) {
+  const order = cardsOrder(query.sort);
+  const total = sql<number>`count(*) over (order by ${sql.join(order, sql`, `)}
+    rows between unbounded preceding and unbounded following)`;
+  return db
+    .select({ ...cardBriefColumns, total })
+    .from(cards)
+    .where(buildCardsWhere(query))
+    .orderBy(...order)
+    .limit(query.pageSize)
+    .offset((query.page - 1) * query.pageSize);
+}
+
+/** The page's rows and the query's match count: a passed-back total is trusted, a free-text query
+    counts in its page statement, and any other shape batches its page with an indexed count. */
+async function cardsPage(
+  db: DrizzleD1Database,
+  query: CardsQuery,
+): Promise<{ rows: CardBriefRow[]; total: number }> {
+  const [page, matches] = cardsPageStatements(db, query);
+  if (query.total !== undefined) return { rows: await page, total: query.total };
+  if (FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined)) {
+    const rows = await cardsCountedPageStatement(db, query);
+    const counted = rows[0]?.total;
+    if (counted !== undefined) return { rows, total: counted };
+    // A page past the last match has no row to carry the count, so only it is counted apart.
+    if (query.page === 1) return { rows, total: 0 };
+    return { rows, total: (await matches)[0]?.total ?? 0 };
+  }
+  const [rows, totals] = await db.batch([page, matches]);
+  return { rows, total: totals[0]?.total ?? 0 };
+}
+
 /** A set's cards in collector order. */
 export function setCardsStatement(db: DrizzleD1Database, setId: string) {
   return db
@@ -89,17 +134,12 @@ catalogRoutes.get(
   ),
   async (c) => {
     const query = c.req.valid("query");
-    const db = drizzle(c.env.DB);
-    const [page, matches] = cardsPageStatements(db, query);
-    const [rows, totals] =
-      query.total === undefined
-        ? await db.batch([page, matches])
-        : [await page, [{ total: query.total }]];
+    const { rows, total } = await cardsPage(drizzle(c.env.DB), query);
     const payload: Paginated<CardBrief> = {
       items: rows.map(mapCardBriefRow),
       page: query.page,
       pageSize: query.pageSize,
-      total: totals[0]?.total ?? 0,
+      total,
     };
     return c.json(cardsResponseSchema.parse(payload));
   },
@@ -184,52 +224,65 @@ catalogRoutes.get("/series", catalogPathCache, async (c) => {
   return c.json(seriesResponseSchema.parse(payload));
 });
 
-/** Scalar facet rows → the string list, nulls and "no value" SENTINELS
-    dropped (../sentinel.ts). SQL already sorted them and the DISTINCT
-    already deduped, so order survives; the extra dedupe in
-    `facetVocabulary` only matters when normalisation collapses two stored
-    spellings onto the same absence. The SQL keeps its `isNotNull` guard —
-    it is what makes the round trip cheap — and this catches what a string
-    sentinel slips past it. */
-const facetValues = (rows: { value: string | null }[]): string[] =>
-  facetVocabulary(rows.map((row) => row.value));
+/** SQLite's BINARY collation order (UTF-8 bytes, which is code point order), the order the facet
+    lists have always been served in. JS's default sort compares UTF-16 units instead, which
+    disagrees for a character past U+FFFF. */
+function binaryOrder(a: string, b: string): number {
+  const left = a[Symbol.iterator]();
+  const right = b[Symbol.iterator]();
+  for (;;) {
+    const x = left.next();
+    const y = right.next();
+    if (x.done || y.done) return Number(!x.done) - Number(!y.done);
+    const difference = (x.value.codePointAt(0) ?? 0) - (y.value.codePointAt(0) ?? 0);
+    if (difference !== 0) return difference;
+  }
+}
+
+/** One aggregate's JSON array → the facet list: nulls and "no value" SENTINELS dropped
+    (../sentinel.ts), deduped (normalisation can collapse two stored spellings onto the same
+    absence), then sorted. */
+const facetValues = (json: string): string[] =>
+  facetVocabulary(JSON.parse(json) as (string | null)[]).sort(binaryOrder);
+
+/** The distinct values of a column as one JSON array, nulls included. */
+const distinctValues = (column: SQLiteColumn) => sql<string>`json_group_array(distinct ${column})`;
+
+/** Every facet's distinct values in one aggregate pass over cards, so /facets reads the table once
+    rather than once per facet. `types` holds the stored JSON text of each distinct type list. */
+export function facetsStatement(db: DrizzleD1Database) {
+  return db
+    .select({
+      rarities: distinctValues(cards.rarity),
+      types: distinctValues(cards.typesJson),
+      stages: distinctValues(cards.stage),
+      trainerTypes: distinctValues(cards.trainerType),
+      energyTypes: distinctValues(cards.energyType),
+      illustrators: distinctValues(cards.illustrator),
+      regulationMarks: distinctValues(cards.regulationMark),
+      suffixes: distinctValues(cards.suffix),
+    })
+    .from(cards);
+}
 
 // GET /facets: the filter vocabularies present in the catalog. This list must come from the data,
 // never from a constant: the suffix filter stays unreachable until rows carry a suffix.
 catalogRoutes.get("/facets", catalogPathCache, async (c) => {
-  const db = drizzle(c.env.DB);
-  const distinctOf = <Column extends SQLiteColumn>(column: Column) =>
-    db.selectDistinct({ value: column }).from(cards).where(isNotNull(column)).orderBy(asc(column));
-  const [
-    rarityRows,
-    typeRows,
-    stageRows,
-    trainerRows,
-    energyRows,
-    illustratorRows,
-    markRows,
-    suffixRows,
-  ] = await db.batch([
-    distinctOf(cards.rarity),
-    db.selectDistinct({ value: cards.typesJson }).from(cards).where(isNotNull(cards.typesJson)),
-    distinctOf(cards.stage),
-    distinctOf(cards.trainerType),
-    distinctOf(cards.energyType),
-    distinctOf(cards.illustrator),
-    distinctOf(cards.regulationMark),
-    distinctOf(cards.suffix),
-  ]);
+  const row = await facetsStatement(drizzle(c.env.DB)).get();
+  // An aggregate without GROUP BY always yields one row, "[]" columns on an empty table.
+  if (row === undefined) throw new Error("facet aggregate returned no row");
+  const typeLists = (JSON.parse(row.types) as (string | null)[]).flatMap((list) =>
+    list === null ? [] : (JSON.parse(list) as string[]),
+  );
   const payload: CatalogFacets = {
-    rarities: facetValues(rarityRows),
-    // `types` is array-valued, so it is flattened and sorted here, then passed through the same
-    // sentinel guard as the other facets.
-    types: facetVocabulary(typeRows.flatMap((row) => row.value ?? [])).sort(),
-    stages: facetValues(stageRows),
-    trainerTypes: facetValues(trainerRows),
-    energyTypes: facetValues(energyRows),
-    illustrators: facetValues(illustratorRows),
-    regulationMarks: facetValues(markRows),
-    suffixes: facetValues(suffixRows),
+    rarities: facetValues(row.rarities),
+    types: facetVocabulary(typeLists).sort(binaryOrder),
+    stages: facetValues(row.stages),
+    trainerTypes: facetValues(row.trainerTypes),
+    energyTypes: facetValues(row.energyTypes),
+    illustrators: facetValues(row.illustrators),
+    regulationMarks: facetValues(row.regulationMarks),
+    suffixes: facetValues(row.suffixes),
   };
   return c.json(catalogFacetsSchema.parse(payload));
 });

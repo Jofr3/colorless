@@ -6,6 +6,7 @@ import {
   type CatalogFacets,
   type Deck as SavedDeck,
   deckConflictSchema,
+  FREE_TEXT_CATALOG_PARAMS,
   MAX_CACHED_CARDS_PAGE,
   UNCACHED_CATALOG_PARAMS,
 } from "@colorless/schema";
@@ -44,6 +45,9 @@ type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; ke
 type Command = (a: string, b: string) => void | Promise<void>;
 /** Pages fetched on each side of the visible one, so paging never waits. */
 const PREFETCH_PAGES = 2;
+/** Pages per request for a free-text query: the first page and its forward prefetch. The API reads
+    the whole table for such a query whatever the page, so one request saves the rescans. */
+const FREE_TEXT_SPAN = PREFETCH_PAGES + 1;
 const SEARCH_DEBOUNCE_MS = 250;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
@@ -118,7 +122,8 @@ export class LuaBuilder {
   // The query `total` was counted for.
   private totalKey = "";
   private pages = new Map<number, CatalogPage>();
-  private pageRequests = new Map<number, Promise<CatalogPage>>();
+  // In-flight requests by every page they cover, each resolving to its pages by number.
+  private pageRequests = new Map<number, Promise<(page: number) => CatalogPage>>();
   constructor(
     private publish: (raw: string) => void,
     private back: () => void,
@@ -567,8 +572,10 @@ export class LuaBuilder {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
   }
-  /** One request per page and query; `fresh` refetches a cached page. A `total` already known for
-      this query spares the server a recount. */
+  /** One request per page and query, except that a free-text query fetches FREE_TEXT_SPAN pages as
+      one larger page and splits it here, in fixed blocks so a page always comes from the same
+      request; `fresh` refetches a cached page. A `total` already known for this query spares the
+      server a recount. */
   private fetchPage(
     { query, size, key }: Catalog,
     page: number,
@@ -583,14 +590,26 @@ export class LuaBuilder {
     const cached = this.pages.get(page);
     if (cached && !fresh) return Promise.resolve(cached);
     const pending = this.pageRequests.get(page);
-    if (pending) return pending;
+    if (pending) return pending.then((pageOf) => pageOf(page));
+    const span = FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined)
+      ? FREE_TEXT_SPAN
+      : 1;
+    const block = Math.floor((page - 1) / span);
+    const first = block * span + 1;
     const request = api
-      .getCards({ ...query, page, pageSize: size, total })
+      .getCards({ ...query, page: block + 1, pageSize: size * span, total })
       .then((data) => {
-        const result = { items: data.items.map(toBuilderCard), total: data.total };
+        const items = data.items.map(toBuilderCard);
+        const pageOf = (n: number): CatalogPage => ({
+          items: items.slice((n - first) * size, (n - first + 1) * size),
+          total: data.total,
+        });
         if (key === this.pageKey) {
-          for (const c of result.items) this.cards.set(c.cardId, c);
-          this.pages.set(page, result);
+          for (const c of items) this.cards.set(c.cardId, c);
+          // A page past the last match is kept only when it was the one asked for, as before.
+          const last = Math.max(1, Math.ceil(data.total / size));
+          for (let n = first; n < first + span; n++)
+            if (n === page || n <= last) this.pages.set(n, pageOf(n));
           // Keep the pages nearest the visible one.
           while (this.pages.size > MAX_CACHED_PAGES) {
             const far = [...this.pages.keys()].reduce((a, b) =>
@@ -599,13 +618,15 @@ export class LuaBuilder {
             this.pages.delete(far);
           }
         }
-        return result;
+        return pageOf;
       })
       .finally(() => {
-        if (this.pageRequests.get(page) === request) this.pageRequests.delete(page);
+        for (let n = first; n < first + span; n++)
+          if (this.pageRequests.get(n) === request) this.pageRequests.delete(n);
       });
-    if (key === this.pageKey) this.pageRequests.set(page, request);
-    return request;
+    if (key === this.pageKey)
+      for (let n = first; n < first + span; n++) this.pageRequests.set(n, request);
+    return request.then((pageOf) => pageOf(page));
   }
   /** Warm the neighbouring pages and queue their artwork behind this page's. The known total goes
       along only where the API does not cache the page (a free-text query, or a page past

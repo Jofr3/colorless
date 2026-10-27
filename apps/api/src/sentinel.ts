@@ -21,7 +21,7 @@ export function normalizeSentinel(value: string | null | undefined): string | nu
 
 /**
  * A facet vocabulary → the same list with sentinels and nulls dropped and
- * duplicates collapsed, ORDER PRESERVED (the SQL DISTINCTs already sort).
+ * duplicates collapsed, ORDER PRESERVED (GET /facets sorts the result).
  *
  * Dedupe is not theoretical: normalising can collapse two distinct stored
  * spellings ("None" and "") onto the same absence, and a facet list feeds
