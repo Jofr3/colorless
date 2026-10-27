@@ -23,6 +23,8 @@ import {
   toBuilderCard,
   importDecklist,
   kindOptions,
+  loadCardIndex,
+  searchCards,
   suffixOptions,
 } from "../decks/catalog";
 import {
@@ -46,9 +48,6 @@ type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; ke
 type Command = (a: string, b: string) => void | Promise<void>;
 /** Pages fetched on each side of the visible one, so paging never waits. */
 const PREFETCH_PAGES = 2;
-/** Pages per request for a free-text query: the first page and its forward prefetch. The API reads
-    the whole table for such a query whatever the page, so one request saves the rescans. */
-const FREE_TEXT_SPAN = PREFETCH_PAGES + 1;
 const SEARCH_DEBOUNCE_MS = 250;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
@@ -145,8 +144,10 @@ export class LuaBuilder {
   // The query `total` was counted for.
   private totalKey = "";
   private pages = new Map<number, CatalogPage>();
-  // In-flight requests by every page they cover, each resolving to its pages by number.
-  private pageRequests = new Map<number, Promise<(page: number) => CatalogPage>>();
+  // In-flight page requests by page.
+  private pageRequests = new Map<number, Promise<CatalogPage>>();
+  // Every match of the current free-text query, found in the card index.
+  private indexMatches?: { key: string; cards: Promise<BuilderCard[]> };
   constructor(
     private publish: (raw: string) => void,
     private back: () => void,
@@ -516,6 +517,9 @@ export class LuaBuilder {
       this.phase = "ready";
       this.emit();
       await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
+      // Name and rules-text searches run over the card index; load it once the deck has shown, so
+      // the first search does not wait for it.
+      if (live()) loadCardIndex().catch((error) => reportError("load card index", error));
     } catch (error) {
       reportError("open deck", error);
       if (live()) {
@@ -591,27 +595,31 @@ export class LuaBuilder {
       this.prefetch(catalog);
     }
   }
-  /** The last page the pager reaches: the API refuses a page that skips more than
-      MAX_CARDS_OFFSET cards, so a longer result stops there and narrowing the filters shows the
-      rest. */
+  /** The last page the pager reaches. The API refuses a page that skips more than
+      MAX_CARDS_OFFSET cards, so a longer server result stops there and narrowing the filters shows
+      the rest; a free-text result comes from the card index and pages to its end. */
   private lastPage(): number {
     const pages = Math.ceil(this.total / this.size);
+    const { query } = this.catalog();
+    if (FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined))
+      return Math.max(1, pages);
     return Math.max(1, Math.min(pages, Math.floor(MAX_CARDS_OFFSET / this.size) + 1));
   }
   private catalog(): Catalog {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
   }
-  /** One request per page and query, except that a free-text query fetches FREE_TEXT_SPAN pages as
-      one larger page and splits it here, in fixed blocks so a page always comes from the same
-      request; `fresh` refetches a cached page. A `total` already known for this query spares the
-      server a recount. */
+  /** One request per page and query, except that a free-text query's pages come from the card
+      index, searched once per query in the browser (the API would read the whole table for each).
+      `fresh` refetches a cached page. A `total` already known for this query spares the server a
+      recount. */
   private fetchPage(
-    { query, size, key }: Catalog,
+    catalog: Catalog,
     page: number,
     fresh = false,
     total?: number,
   ): Promise<CatalogPage> {
+    const { query, key } = catalog;
     if (key !== this.pageKey) {
       this.pageKey = key;
       this.pages.clear();
@@ -619,44 +627,52 @@ export class LuaBuilder {
     }
     const cached = this.pages.get(page);
     if (cached && !fresh) return Promise.resolve(cached);
+    if (FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined))
+      return this.indexPage(catalog, page);
     const pending = this.pageRequests.get(page);
-    if (pending) return pending.then((pageOf) => pageOf(page));
-    const span = FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined)
-      ? FREE_TEXT_SPAN
-      : 1;
-    const block = Math.floor((page - 1) / span);
-    const first = block * span + 1;
+    if (pending) return pending;
     const request = api
-      .getCards({ ...query, page: block + 1, pageSize: size * span, total })
+      .getCards({ ...query, page, pageSize: catalog.size, total })
       .then((data) => {
-        const items = data.items.map(toBuilderCard);
-        const pageOf = (n: number): CatalogPage => ({
-          items: items.slice((n - first) * size, (n - first + 1) * size),
-          total: data.total,
-        });
-        if (key === this.pageKey) {
-          for (const c of items) this.cards.set(c.cardId, c);
-          // A page past the last match is kept only when it was the one asked for, as before.
-          const last = Math.max(1, Math.ceil(data.total / size));
-          for (let n = first; n < first + span; n++)
-            if (n === page || n <= last) this.pages.set(n, pageOf(n));
-          // Keep the pages nearest the visible one.
-          while (this.pages.size > MAX_CACHED_PAGES) {
-            const far = [...this.pages.keys()].reduce((a, b) =>
-              Math.abs(a - this.page) >= Math.abs(b - this.page) ? a : b,
-            );
-            this.pages.delete(far);
-          }
-        }
-        return pageOf;
+        const result = { items: data.items.map(toBuilderCard), total: data.total };
+        if (key === this.pageKey) this.keepPage(page, result);
+        return result;
       })
       .finally(() => {
-        for (let n = first; n < first + span; n++)
-          if (this.pageRequests.get(n) === request) this.pageRequests.delete(n);
+        if (this.pageRequests.get(page) === request) this.pageRequests.delete(page);
       });
-    if (key === this.pageKey)
-      for (let n = first; n < first + span; n++) this.pageRequests.set(n, request);
-    return request.then((pageOf) => pageOf(page));
+    if (key === this.pageKey) this.pageRequests.set(page, request);
+    return request;
+  }
+  /** A free-text query's page, sliced from every match the card index finds for it. */
+  private indexPage({ query, size, key }: Catalog, page: number): Promise<CatalogPage> {
+    if (this.indexMatches?.key !== key) {
+      const entry = { key, cards: loadCardIndex().then((loaded) => searchCards(loaded, query)) };
+      this.indexMatches = entry;
+      // A failed load is forgotten, so Retry loads the index again.
+      entry.cards.catch(() => {
+        if (this.indexMatches === entry) this.indexMatches = undefined;
+      });
+    }
+    return this.indexMatches.cards.then((matches) => {
+      const result = {
+        items: matches.slice((page - 1) * size, page * size),
+        total: matches.length,
+      };
+      if (key === this.pageKey) this.keepPage(page, result);
+      return result;
+    });
+  }
+  /** Cache a page of the current query, keeping only the pages nearest the visible one. */
+  private keepPage(page: number, result: CatalogPage) {
+    for (const c of result.items) this.cards.set(c.cardId, c);
+    this.pages.set(page, result);
+    while (this.pages.size > MAX_CACHED_PAGES) {
+      const far = [...this.pages.keys()].reduce((a, b) =>
+        Math.abs(a - this.page) >= Math.abs(b - this.page) ? a : b,
+      );
+      this.pages.delete(far);
+    }
   }
   /** Warm the neighbouring pages and queue their artwork behind this page's. The known total goes
       along only where the API does not cache the page (a free-text query, or a page past
@@ -996,7 +1012,9 @@ export class LuaBuilder {
     try {
       const result = await importDecklist(text);
       if (!live() || generation !== this.importGeneration || !this.active) return;
-      if (
+      if (result.tooManyLines) {
+        this.message = "Too many card lines. Deck unchanged.";
+      } else if (
         result.unmatched.length ||
         result.entries.length === 0 ||
         result.entries.length > MAX_DECK_CARD_ENTRIES

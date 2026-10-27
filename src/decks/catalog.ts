@@ -6,14 +6,20 @@
 // "Pokémon Tool", …) unchanged.
 
 import { type Format, isBasicEnergy, isSpecialEnergy } from "@colorless/engine/rules";
-import type {
-  Card,
-  CardBrief,
-  CardCategory,
-  CardsQueryParams,
-  CatalogFacets,
+import {
+  type Card,
+  type CardBrief,
+  type CardCategory,
+  type CardIndex,
+  type CardIndexRow,
+  type CardsQueryParams,
+  type CatalogFacets,
+  cardIndexBrief,
+  cardsQuerySchema,
+  prepareCardIndex,
+  searchCardIndex,
 } from "@colorless/schema";
-import { getCards, getSets } from "../lib/api";
+import { getCardIndex, getCards, getSets } from "../lib/api";
 import {
   type BuilderCard,
   CATEGORY_BY_SUPERTYPE,
@@ -21,7 +27,13 @@ import {
   type EnergyType,
   type Supertype,
 } from "./cards";
-import { type ImportResult, nameKey, parseDecklist, resolveDecklist } from "./decklistText";
+import {
+  type ImportResult,
+  MAX_DECKLIST_LINES,
+  nameKey,
+  parseDecklist,
+  resolveDecklist,
+} from "./decklistText";
 import type { Filters } from "./poolFilter";
 
 const SUPERTYPE_BY_CATEGORY: Record<CardCategory, Supertype> = {
@@ -177,11 +189,74 @@ export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuer
   };
 }
 
+// ---- The card index: every card, searched in the browser -------------------------------------
+// GET /cards/index loads once and is searched here, so the builder's name and rules-text searches
+// and the decklist import's name lookups cost the API no D1 reads (security audit CA1). Searching
+// applies GET /cards' own semantics (@colorless/schema `searchCardIndex`, held to the API's
+// answers by apps/api/src/catalog/cardIndex.d1.test.ts).
+
+/** How long a loaded index is reused before it is fetched again. An ingest changes it; while the
+    API's copy is unchanged the browser's HTTP cache answers the refetch. */
+const INDEX_REUSE_MS = 60 * 60 * 1000;
+
+/** The prepared index, with each row's BuilderCard made the first time a search returns it. */
+export interface LoadedCardIndex {
+  index: CardIndex;
+  cards: Map<CardIndexRow, BuilderCard>;
+}
+
+let loadedIndex: { at: number; index: Promise<LoadedCardIndex> } | undefined;
+
+/** The card index, fetched on first use and shared by every caller. A failed load is forgotten,
+    so the next call retries. */
+export function loadCardIndex(now = Date.now()): Promise<LoadedCardIndex> {
+  if (loadedIndex === undefined || now - loadedIndex.at > INDEX_REUSE_MS) {
+    const index = getCardIndex().then((payload) => ({
+      index: prepareCardIndex(payload),
+      cards: new Map<CardIndexRow, BuilderCard>(),
+    }));
+    const entry = { at: now, index };
+    loadedIndex = entry;
+    index.catch(() => {
+      if (loadedIndex === entry) loadedIndex = undefined;
+    });
+  }
+  return loadedIndex.index;
+}
+
+/** Drop the loaded index, so the next search fetches it again. */
+export function forgetCardIndex(): void {
+  loadedIndex = undefined;
+}
+
+/** Every card GET /cards would answer `query` with, in its order; paging params are ignored. A
+    query the API would refuse throws, as its request would have failed. */
+export function searchCards(loaded: LoadedCardIndex, query: CardsQueryParams): BuilderCard[] {
+  return searchCardIndex(loaded.index, cardsQuerySchema.parse(query)).map((row) => {
+    let card = loaded.cards.get(row);
+    if (card === undefined) {
+      card = toBuilderCard(cardIndexBrief(row));
+      loaded.cards.set(row, card);
+    }
+    return card;
+  });
+}
+
+/** A catalog search for the decklist import: the loaded index, or GET /cards. */
+type CardSearch = (query: CardsQueryParams) => Promise<BuilderCard[]>;
+
+/** One GET /cards page of 100. */
+const apiSearch: CardSearch = async (query) =>
+  (await getCards({ ...query, pageSize: 100 })).items.map(toBuilderCard);
+
 /**
  * Resolve a decklist name against the catalog by exact name: the normalized key, its "Basic …"
- * Energy form and the raw spelling, unioned. Each is one indexed lookup.
+ * Energy form and the raw spelling, unioned. On the API each is one indexed lookup.
  */
-export async function findCardsByName(name: string): Promise<BuilderCard[]> {
+export async function findCardsByName(
+  name: string,
+  search: CardSearch = apiSearch,
+): Promise<BuilderCard[]> {
   const key = nameKey(name);
   if (key === "") return [];
   const raw = name.replace(/\s+/g, " ").trim();
@@ -193,9 +268,8 @@ export async function findCardsByName(name: string): Promise<BuilderCard[]> {
   if (!terms.includes(raw.toLowerCase())) terms.push(raw);
   const found = new Map<string, BuilderCard>();
   for (const term of terms) {
-    const { items } = await getCards({ nameExact: term, pageSize: 100 });
-    for (const item of items) {
-      if (nameKey(item.name) === key) found.set(item.id, toBuilderCard(item));
+    for (const card of await search({ nameExact: term })) {
+      if (nameKey(card.name) === key) found.set(card.cardId, card);
     }
   }
   return [...found.values()];
@@ -204,15 +278,18 @@ export async function findCardsByName(name: string): Promise<BuilderCard[]> {
 /**
  * The last resort for a decklist name: a substring search kept to cards whose normalized key is
  * the name's, for a stored spelling only the key bridges (stray outer whitespace, a "Basic "
- * prefix outside Energy). Nothing in today's catalog needs it. It scans the table, so
+ * prefix outside Energy). Nothing in today's catalog needs it. On the API it scans the table, so
  * the import runs it only after every exact lookup missed, and `total: 0` spares the count
  * statement, which would scan it again for a total the import never reads.
  */
-export async function findCardsBySubstring(name: string): Promise<BuilderCard[]> {
+export async function findCardsBySubstring(
+  name: string,
+  search: CardSearch = async (query) =>
+    (await getCards({ ...query, pageSize: 100, total: 0 })).items.map(toBuilderCard),
+): Promise<BuilderCard[]> {
   const key = nameKey(name);
   if (key === "") return [];
-  const { items } = await getCards({ name: key, pageSize: 100, total: 0 });
-  return items.filter((item) => nameKey(item.name) === key).map(toBuilderCard);
+  return (await search({ name: key })).filter((card) => nameKey(card.name) === key);
 }
 
 /** Decklist set code → set id, from GET /sets: the official abbreviation
@@ -226,16 +303,25 @@ async function setIdsByCode(): Promise<(code: string) => string | undefined> {
   return (code) => byCode.get(code.toUpperCase());
 }
 
-/** Parse + resolve a pasted decklist against the live catalog. Rejects on an
-    api/network failure (the dialog reports it); mere unknown names come back
-    as `unmatched`. */
-export function importDecklist(text: string): Promise<ImportResult> {
+/** Parse + resolve a pasted decklist against the catalog: the card index when it loads, else one
+    API lookup per name. Rejects on an api/network failure (the dialog reports it); mere unknown
+    names come back as `unmatched`. A list of more than MAX_DECKLIST_LINES card lines is refused
+    before any lookup. */
+export async function importDecklist(text: string): Promise<ImportResult> {
+  const lines = parseDecklist(text);
+  if (lines.length > MAX_DECKLIST_LINES) return { entries: [], unmatched: [], tooManyLines: true };
   // The set map loads alongside the name lookups and is only awaited for a
   // line that names a set among reprints; its failure still rejects there.
   const codes = setIdsByCode();
   codes.catch(() => {});
-  return resolveDecklist(parseDecklist(text), findCardsByName, {
+  const search = await loadCardIndex().then(
+    (loaded): CardSearch =>
+      async (query) =>
+        searchCards(loaded, query),
+    () => undefined,
+  );
+  return resolveDecklist(lines, (name) => findCardsByName(name, search), {
     setIdForCode: async (code) => (await codes)(code),
-    findLoosely: findCardsBySubstring,
+    findLoosely: (name) => findCardsBySubstring(name, search),
   });
 }

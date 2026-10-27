@@ -134,6 +134,27 @@ describe("ApiError", () => {
     expect((error as ApiError).body).toBeUndefined();
     expect((error as ApiError).message).toBe("request failed with status 502");
   });
+
+  it("carries a 429's Retry-After seconds, and nothing for a missing or dated one", async () => {
+    const limited = (retryAfter?: string) =>
+      new Response(JSON.stringify({ error: "too many requests" }), {
+        status: 429,
+        headers: {
+          "content-type": "application/json",
+          ...(retryAfter === undefined ? {} : { "retry-after": retryAfter }),
+        },
+      });
+    for (const [header, seconds] of [
+      ["30", 30],
+      [undefined, undefined],
+      ["Wed, 21 Oct 2026 07:28:00 GMT", undefined],
+    ] as const) {
+      stubFetch(limited(header));
+      const error = await createDeck({ name: "x", tint: 0, cards: [] }).catch((e: unknown) => e);
+      expect((error as ApiError).status).toBe(429);
+      expect((error as ApiError).retryAfterSeconds).toBe(seconds);
+    }
+  });
 });
 
 describe("session recovery", () => {

@@ -2,8 +2,18 @@
 // {num}" lines under Pokémon/Trainer/Energy headers. Name resolution is injected, so this module
 // stays pure.
 
+import { MAX_DECK_CARD_ENTRIES } from "@colorless/schema";
 import { type BuilderCard, isBasicEnergy, SUPERTYPES } from "./cards";
 import type { Deck, DeckEntry } from "./deckMath";
+
+/** The most card lines an import resolves: a list with more is refused before any lookup. A deck
+    holds at most MAX_DECK_CARD_ENTRIES distinct cards, so a longer list could not be saved. */
+export const MAX_DECKLIST_LINES = MAX_DECK_CARD_ENTRIES;
+/** The longest card line looked up. The longest card name is about 40 characters, so a longer line
+    is reported unknown without asking the catalog. */
+export const MAX_DECKLIST_LINE_LENGTH = 120;
+/** Name lookups in flight at once, for an import that asks the API per name. */
+export const DECKLIST_LOOKUP_CONCURRENCY = 8;
 
 /** A "<qty> <name…>" card line lifted from the pasted text. */
 export interface DecklistLine {
@@ -23,6 +33,8 @@ export interface UnmatchedLine {
 export interface ImportResult {
   entries: DeckEntry[];
   unmatched: UnmatchedLine[];
+  /** Set when the list had more than MAX_DECKLIST_LINES card lines and nothing was looked up. */
+  tooManyLines?: true;
 }
 
 /** The print a line names: its trailing set code and collector number. */
@@ -60,17 +72,23 @@ export function nameKey(name: string): string {
 // A card line starts with a quantity; everything after is the name, possibly
 // with a trailing set code + collector number ("SVI 189", "PR-SV 50").
 const QTY_RE = /^(\d+)\s+(.+)$/;
-// Peels a trailing "<SET> <NUM>" off a name. A set token is short (2–7 chars,
-// "PRE", "PR-SV" or our export's "SV10.5B"); the captured head is what's
-// left. Only applied when the FULL name fails to resolve, so a real ending
-// like "… ex" / "Boss's Orders" isn't shaved off.
-const TRAILING_SET_RE = /^(.*?)\s+([A-Za-z][A-Za-z0-9.-]{1,6})\s+([A-Za-z0-9]{1,4})$/;
+// A set token is short (2–7 chars: "PRE", "PR-SV", our export's "SV10.5B" or "30TH"), and a
+// collector number is 1–4 letters or digits.
+const SET_TOKEN_RE = /^[A-Za-z0-9][A-Za-z0-9.-]{1,6}$/;
+const NUMBER_TOKEN_RE = /^[A-Za-z0-9]{1,4}$/;
 
-/** Peel a trailing set code + collector number off a line's name. */
-function splitPrint(name: string): { name: string; print?: PrintRef } {
-  const m = TRAILING_SET_RE.exec(name);
-  if (!m?.[1] || !m[2] || !m[3]) return { name };
-  return { name: m[1].trim(), print: { set: m[2], number: m[3] } };
+/** Peel a trailing "<SET> <NUM>" off a line's name; the head is what's left. Only applied when the
+    FULL name fails to resolve, so a real ending like "… ex" / "Boss's Orders" isn't shaved off.
+    It inspects the last two whitespace-separated tokens, linear in the name's length. */
+export function splitPrint(name: string): { name: string; print?: PrintRef } {
+  // Tokens at even positions, the whitespace between them at odd ones.
+  const parts = name.trim().split(/(\s+)/);
+  const set = parts[parts.length - 3];
+  const number = parts[parts.length - 1];
+  const head = parts.slice(0, -4).join("").trim();
+  if (set === undefined || number === undefined || head === "") return { name };
+  if (!SET_TOKEN_RE.test(set) || !NUMBER_TOKEN_RE.test(number)) return { name };
+  return { name: head, print: { set, number } };
 }
 
 /** Collector numbers compare without leading zeros or case: "080" is "80". */
@@ -155,26 +173,49 @@ function memoByKey(
   };
 }
 
+/** A semaphore: `run` calls its task once fewer than `max` tasks it started are unsettled. */
+function concurrencyLimit(max: number): <T>(task: () => Promise<T>) => Promise<T> {
+  let active = 0;
+  const waiting: (() => void)[] = [];
+  return async (task) => {
+    // A finishing task hands its slot straight to the next waiter, so `active` never passes max.
+    if (active < max) active++;
+    else await new Promise<void>((resolve) => waiting.push(resolve));
+    try {
+      return await task();
+    } finally {
+      const next = waiting.shift();
+      if (next) next();
+      else active--;
+    }
+  };
+}
+
+/** A line too long to be a card line, reported unknown without a lookup. */
+const tooLong = (line: DecklistLine) => line.raw.length > MAX_DECKLIST_LINE_LENGTH;
+
 /**
  * Resolve parsed lines to cards through `findPrints`. Quantities for the same card are summed and
  * unresolved lines are returned for the UI. A lookup that throws rejects the whole import rather
- * than marking cards unmatched.
+ * than marking cards unmatched. At most DECKLIST_LOOKUP_CONCURRENCY lookups run at once.
  */
 export async function resolveDecklist(
   lines: DecklistLine[],
   findPrints: (name: string) => Promise<BuilderCard[]>,
   options: ResolveOptions = {},
 ): Promise<ImportResult> {
-  const lookup = memoByKey(findPrints);
+  const run = concurrencyLimit(DECKLIST_LOOKUP_CONCURRENCY);
+  const lookup = memoByKey((name) => run(() => findPrints(name)));
   const { findLoosely } = options;
-  const lookupLoosely = findLoosely && memoByKey(findLoosely);
+  const lookupLoosely = findLoosely && memoByKey((name) => run(() => findLoosely(name)));
 
   // Warm the full-name lookups concurrently, then the stripped-name retries of
   // the lines that missed (every line of a PTCG Live export, whose names end in
   // a set and number); the per-line pass below then resolves from cache.
-  const full = await Promise.all(lines.map((line) => lookup(line.name)));
+  const lookedUp = lines.filter((line) => !tooLong(line));
+  const full = await Promise.all(lookedUp.map((line) => lookup(line.name)));
   await Promise.all(
-    lines.flatMap((line, index) => {
+    lookedUp.flatMap((line, index) => {
       const split = full[index]?.length === 0 ? splitPrint(line.name) : undefined;
       return split?.print ? [lookup(split.name)] : [];
     }),
@@ -184,6 +225,14 @@ export async function resolveDecklist(
   const unmatched: UnmatchedLine[] = [];
 
   for (const line of lines) {
+    if (tooLong(line)) {
+      unmatched.push({
+        quantity: line.quantity,
+        name: `${line.name.slice(0, 24)}...`,
+        raw: line.raw,
+      });
+      continue;
+    }
     let prints = await lookup(line.name);
     let name = line.name;
     let print: PrintRef | undefined;

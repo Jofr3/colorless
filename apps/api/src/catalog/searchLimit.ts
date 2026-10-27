@@ -5,11 +5,11 @@
 // 5,084-card catalog), and a deep page reads every row it skips. Such shapes never reach KV, and
 // D1's 5M rows read a day are the whole account's: about 1,000 of them stop sign-in, decks and
 // the lobby until 00:00 UTC. The CATALOG_SEARCH_LIMIT binding (wrangler.jsonc) allows
-// SEARCH_LIMIT_PER_MINUTE of them per address. The builder sends one free-text request per
-// settled keystroke (a 250 ms debounce, which a 40 wpm typist settles on every key) and one per
-// three pages, and an HP bound one per settled keystroke plus two prefetches, so 60 a minute
-// leaves an active searcher about twice their peak. It bounds a careless loop, not a determined
-// attacker: one address can still read about 300k rows a minute. Client-side search is the fix.
+// SEARCH_LIMIT_PER_MINUTE of them per address. The builder answers name and rules-text searches
+// from the card index in the browser (cardIndex.ts), so what it still sends here is an HP bound
+// (one request per settled keystroke plus two prefetches) and deep pages; 30 a minute covers that
+// with room. It bounds a careless loop, not a determined attacker: one address can still read
+// about 150k rows a minute. The same budget covers GET /cards/index when KV misses it.
 
 import type { CardsQuery } from "@colorless/schema";
 import type { Context, MiddlewareHandler } from "hono";
@@ -19,7 +19,7 @@ import { logEvent, logEventThrottled } from "../http/log";
 
 /** wrangler.jsonc `CATALOG_SEARCH_LIMIT.simple`: the limit and its period, so the longest a
     refusal lasts. */
-export const SEARCH_LIMIT_PER_MINUTE = 60;
+export const SEARCH_LIMIT_PER_MINUTE = 30;
 const LIMIT_PERIOD_SECONDS = 60;
 
 /**
@@ -33,19 +33,33 @@ export function catalogSearchLimit(
   return async (c, next) => {
     const binding = c.env.CATALOG_SEARCH_LIMIT;
     if (binding === undefined || !scans(c.req.valid("query"))) return next();
-    if (await withinLimit(c, binding)) return next();
-    logEventThrottled("catalog", "rate_limited", { route: "/cards" });
-    c.header("Retry-After", String(LIMIT_PERIOD_SECONDS));
-    return c.json({ error: "too many searches; try again in a minute" }, 429);
+    if (await withinLimit(c, binding, "/cards")) return next();
+    return refused(c, "/cards");
   };
 }
 
-async function withinLimit(c: Context, binding: RateLimit): Promise<boolean> {
+/** The same budget for a route that reads the whole catalog whenever it runs: mounted after the
+    route's KV cache, so only a miss spends it. */
+export function catalogScanLimit(route: string): MiddlewareHandler<{ Bindings: Env }> {
+  return async (c, next) => {
+    const binding = c.env.CATALOG_SEARCH_LIMIT;
+    if (binding === undefined || (await withinLimit(c, binding, route))) return next();
+    return refused(c, route);
+  };
+}
+
+function refused(c: Context, route: string) {
+  logEventThrottled("catalog", "rate_limited", { route });
+  c.header("Retry-After", String(LIMIT_PERIOD_SECONDS));
+  return c.json({ error: "too many searches; try again in a minute" }, 429);
+}
+
+async function withinLimit(c: Context, binding: RateLimit, route: string): Promise<boolean> {
   try {
     return (await binding.limit({ key: clientIpKey(c) })).success;
   } catch (error) {
     logEventThrottled("catalog", "limiter_error", {
-      route: "/cards",
+      route,
       error: error instanceof Error ? error.name : typeof error,
     });
     return true;

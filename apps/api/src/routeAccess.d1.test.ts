@@ -30,6 +30,7 @@ const ACCESS: Record<string, Access> = {
   "GET /assets/cards/:cardId/:file": { kind: "public" },
   "GET /assets/sets/:setId/:file": { kind: "public" },
   "GET /cards": { kind: "public" },
+  "GET /cards/index": { kind: "public" },
   "GET /cards/full": { kind: "public" },
   "GET /cards/:id": { kind: "public" },
   "GET /sets": { kind: "public" },

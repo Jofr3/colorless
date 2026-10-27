@@ -1,7 +1,7 @@
 // Shared wire-shape fixtures for the suites that stub the api, plus the
 // hand-built BuilderCard factory (`builderCard`) the pure builder suites use.
 
-import type { CardBrief, CatalogFacets, User } from "@colorless/schema";
+import type { CardBrief, CardIndexPayload, CatalogFacets, User } from "@colorless/schema";
 import type { BuilderCard } from "../decks/cards";
 
 /** The signed-in account the account suite authenticates as. */
@@ -34,6 +34,40 @@ export function cardBrief(over: Partial<CardBrief> = {}): CardBrief {
     energyType: null,
     legal: { standard: true, expanded: true },
     ...over,
+  };
+}
+
+/** A GET /cards/index body holding `cards` in their own collector slots (set order is list
+    order), with stored attack text from `attacks` by card id. */
+export function cardIndexPayload(
+  cards: CardBrief[],
+  attacks: Record<string, string> = {},
+): CardIndexPayload {
+  return {
+    version: 1,
+    series: Object.fromEntries(cards.map((card) => [card.setId, "sv"])),
+    cards: cards.map((card, index) => [
+      card.id,
+      card.name,
+      card.category,
+      card.rarity,
+      card.image === null ? 0 : 1,
+      card.setId,
+      String(index).padStart(3, "0"),
+      card.types === null ? null : JSON.stringify(card.types),
+      card.hp,
+      card.regulationMark,
+      card.stage,
+      card.trainerType,
+      card.energyType,
+      null,
+      null,
+      card.legal.standard ? 1 : 0,
+      card.legal.expanded ? 1 : 0,
+      null,
+      attacks[card.id] ?? null,
+      null,
+    ]),
   };
 }
 

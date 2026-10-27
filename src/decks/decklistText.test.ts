@@ -5,13 +5,16 @@ import type { Deck } from "./deckMath";
 import {
   cardSetLabel,
   choosePrint,
+  DECKLIST_LOOKUP_CONCURRENCY,
   formatDecklist,
+  MAX_DECKLIST_LINE_LENGTH,
   nameKey,
   numberKey,
   parseDecklist,
   preferArt,
   resolveDecklist,
   splitCardId,
+  splitPrint,
 } from "./decklistText";
 
 const charizard = builderCard({
@@ -316,5 +319,89 @@ describe("choosePrint / numberKey / splitCardId", () => {
   it("returns the only print without consulting the reference", () => {
     expect(choosePrint([charizard], { set: "XYZ", number: "1" })).toBe(charizard);
     expect(choosePrint([], { set: "XYZ", number: "1" })).toBeUndefined();
+  });
+});
+
+describe("splitPrint", () => {
+  it("peels the last two tokens as a set code and a number", () => {
+    expect(splitPrint("Rocky Helmet SVI 193")).toEqual({
+      name: "Rocky Helmet",
+      print: { set: "SVI", number: "193" },
+    });
+    expect(splitPrint("Iono  PR-SV   124")).toEqual({
+      name: "Iono",
+      print: { set: "PR-SV", number: "124" },
+    });
+    expect(splitPrint("Pikachu SV10.5B 001").print?.set).toBe("SV10.5B");
+  });
+
+  it("reads a set code that starts with a digit, as the app's own export writes", () => {
+    expect(splitPrint("Pikachu 30TH 023")).toEqual({
+      name: "Pikachu",
+      print: { set: "30TH", number: "023" },
+    });
+  });
+
+  it("leaves a name without a set and number whole", () => {
+    for (const name of ["Pikachu 023", "Boss's Orders", "Mew", "A TOOLONGSET 1", "A B !"]) {
+      expect(splitPrint(name)).toEqual({ name });
+    }
+  });
+
+  it("takes linear time on a long pasted line", () => {
+    // The old pattern's lazy prefix took about a second on this.
+    const line = `${"a ".repeat(15_000)}!`;
+    const started = performance.now();
+    expect(splitPrint(line)).toEqual({ name: line });
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+});
+
+describe("decklist import limits", () => {
+  it("imports its own export of a set whose id starts with a digit", async () => {
+    const pikachu = builderCard({
+      cardId: "30th-023",
+      name: "Pikachu",
+      supertype: "Pokémon",
+      subtype: "Basic",
+      types: ["Lightning"],
+    });
+    const find = (name: string) =>
+      Promise.resolve([pikachu].filter((card) => nameKey(card.name) === nameKey(name)));
+    const text = formatDecklist(deckOf([pikachu, 2]));
+    expect(text).toContain("2 Pikachu 30TH 023");
+    const { entries, unmatched } = await resolveDecklist(parseDecklist(text), find);
+    expect(unmatched).toEqual([]);
+    expect(entries).toEqual([{ card: pikachu, quantity: 2 }]);
+  });
+
+  it("reports a line longer than MAX_DECKLIST_LINE_LENGTH unknown without looking it up", async () => {
+    const find = vi.fn(findInPool);
+    const long = `1 ${"X".repeat(MAX_DECKLIST_LINE_LENGTH)}`;
+    const { entries, unmatched } = await resolveDecklist(
+      parseDecklist(`${long}\n2 Charmander`),
+      find,
+    );
+    expect(entries).toEqual([{ card: charmander, quantity: 2 }]);
+    expect(unmatched).toEqual([{ quantity: 1, name: `${"X".repeat(24)}...`, raw: long }]);
+    expect(find.mock.calls.map(([name]) => name)).toEqual(["Charmander"]);
+  });
+
+  it(`runs at most ${DECKLIST_LOOKUP_CONCURRENCY} lookups at once`, async () => {
+    let active = 0;
+    let most = 0;
+    const find = async (name: string) => {
+      active++;
+      most = Math.max(most, active);
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      active--;
+      return findInPool(name);
+    };
+    const text = Array.from({ length: 40 }, (_, index) => `1 Card ${index}`).join("\n");
+    const { unmatched } = await resolveDecklist(parseDecklist(text), find, {
+      findLoosely: find,
+    });
+    expect(unmatched).toHaveLength(40);
+    expect(most).toBe(DECKLIST_LOOKUP_CONCURRENCY);
   });
 });

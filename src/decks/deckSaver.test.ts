@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createDeckSaver, type SaveStatus } from "./deckSaver";
+import { ApiError } from "../lib/api";
+import {
+  createDeckSaver,
+  MAX_RATE_LIMIT_RETRIES,
+  rateLimitRetryDelay,
+  type SaveStatus,
+} from "./deckSaver";
 
 // The saver is the builder's whole persistence contract (debounce, serialize,
-// latest-wins, no-op skip, no auto-retry), so it gets exercised directly with
+// latest-wins, no-op skip, no auto-retry but a rate-limited one), so it gets exercised directly with
 // fake timers and a hand-controlled save promise.
 
 type Snap = { v: number };
@@ -189,5 +195,84 @@ describe("createDeckSaver", () => {
 
     expect(save).not.toHaveBeenCalled();
     expect(recorder.statuses).toEqual([]);
+  });
+});
+
+describe("a rate-limited save", () => {
+  const limited = (retryAfterSeconds?: number) =>
+    new ApiError(429, { error: "too many requests" }, retryAfterSeconds);
+
+  it("waits the Retry-After and sends the same edits again, without reporting a failure", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    save.mockRejectedValueOnce(limited(3));
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    expect(save).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(2_999);
+    expect(save).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith({ v: 1 });
+    expect(recorder.statuses).toEqual(["saving", "saving", "saved"]);
+  });
+
+  it("folds edits made while waiting into the one retry, which a flush cannot hurry", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    save.mockRejectedValueOnce(limited(5));
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 3 });
+    saver.flush();
+    // Refused at 600 ms, so the retry is due at 5,600 ms.
+    await vi.advanceTimersByTimeAsync(4_399);
+    expect(save).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith({ v: 3 });
+  });
+
+  it("backs off without a Retry-After, then reports the failure and keeps the edits", async () => {
+    const save = vi.fn(async (_: Snap): Promise<void> => {
+      throw limited();
+    });
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    const waits = [2_000, 4_000, 8_000, 16_000, 32_000];
+    expect(waits).toHaveLength(MAX_RATE_LIMIT_RETRIES);
+    for (const [index, wait] of waits.entries()) {
+      await vi.advanceTimersByTimeAsync(wait - 1);
+      expect(save).toHaveBeenCalledTimes(index + 1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(save).toHaveBeenCalledTimes(index + 2);
+    }
+    expect(recorder.statuses.at(-1)).toBe("failed");
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(save).toHaveBeenCalledTimes(MAX_RATE_LIMIT_RETRIES + 1);
+
+    // The edits are still pending: Retry sends them.
+    save.mockResolvedValueOnce(undefined);
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(save).toHaveBeenLastCalledWith({ v: 1 });
+    expect(recorder.statuses.at(-1)).toBe("saved");
+  });
+
+  it("is told apart from other failures, and its wait is bounded", () => {
+    expect(rateLimitRetryDelay(new Error("offline"), 1)).toBeUndefined();
+    expect(rateLimitRetryDelay(new ApiError(409, undefined), 1)).toBeUndefined();
+    expect(rateLimitRetryDelay(limited(), 1)).toBe(2_000);
+    expect(rateLimitRetryDelay(limited(0), 1)).toBe(1_000);
+    expect(rateLimitRetryDelay(limited(3_600), 1)).toBe(60_000);
+    expect(rateLimitRetryDelay(limited(5), MAX_RATE_LIMIT_RETRIES + 1)).toBeUndefined();
   });
 });

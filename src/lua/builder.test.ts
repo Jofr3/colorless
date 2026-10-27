@@ -6,15 +6,19 @@ import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
 import {
   type CardBrief,
+  type CardIndexPayload,
   type CardsQueryParams,
   type Deck,
   MAX_CARDS_OFFSET,
 } from "@colorless/schema";
+import { forgetCardIndex } from "../decks/catalog";
+import { cardIndexPayload } from "../test/fixtures";
 vi.mock("../lib/api", async (importOriginal) => ({
   ApiError: (await importOriginal<typeof import("../lib/api")>()).ApiError,
   getDeck: vi.fn(),
   patchDeck: vi.fn(),
   getCards: vi.fn(),
+  getCardIndex: vi.fn(),
   getCard: vi.fn(),
   getFacets: vi.fn(),
   getSets: vi.fn(),
@@ -62,12 +66,19 @@ const catalogOf =
     const items = ids(start, Math.min(count, start + pageSize)).map((id) => card(id));
     return { items, total: count, page, pageSize };
   };
+/** Forty Abra, `c0` to `c39`, each with a Teleport attack, and a Pikachu. */
+const ABRA_INDEX = cardIndexPayload(
+  [...ids(0, 40).map((id) => card(id, "Abra")), card("p", "Pikachu")],
+  Object.fromEntries(ids(0, 40).map((id) => [id, '[{"name":"Teleport","effect":"Switch."}]'])),
+);
 const tick = async () => {
   await vi.advanceTimersByTimeAsync(650);
 };
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
+  forgetCardIndex();
+  vi.mocked(api.getCardIndex).mockResolvedValue(ABRA_INDEX);
   vi.mocked(api.getDeck).mockResolvedValue(deck());
   vi.mocked(api.getCards).mockResolvedValue({
     items: [card("a"), card("b")],
@@ -249,14 +260,8 @@ describe("Lua deck builder", () => {
     resolve({ items: [card("old")], total: 1, page: 1, pageSize: 8 });
     await old;
     expect(b.results.some((c) => c.cardId === "old")).toBe(false);
-    vi.mocked(api.getCards).mockResolvedValue({
-      items: [card("new", "Abra")],
-      total: 1,
-      page: 1,
-      pageSize: 8,
-    });
     await tick();
-    expect(b.results[0]?.cardId).toBe("new");
+    expect(b.results[0]?.cardId).toBe("c0");
   });
   it("makes each queued save from the version the previous save returned", async () => {
     vi.mocked(api.getDeck).mockResolvedValue({ ...deck(), version: 4 });
@@ -337,20 +342,24 @@ describe("Lua deck builder", () => {
   it("imports atomically: unmatched lines leave the current deck intact", async () => {
     const { b } = await setup();
     await b.command("add\ta");
-    vi.mocked(api.getCards).mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 100 });
+    const searches = vi.mocked(api.getCards).mock.calls.length;
     await b.command(encodeFields(["import", "4 Nonexistent Pokemon"]));
     expect([...b.entries]).toEqual([["a", 1]]);
     expect(b.message).toContain("Deck unchanged");
     expect(b.transfer).toBe("");
-    vi.mocked(api.getCards).mockResolvedValue({
-      items: [card("b", "Abra")],
-      total: 1,
-      page: 1,
-      pageSize: 100,
-    });
+    // Names resolve in the card index, its first print of Abra.
     await b.command(encodeFields(["import", "2 Abra"]));
-    expect([...b.entries]).toEqual([["b", 2]]);
+    expect([...b.entries]).toEqual([["c0", 2]]);
     expect(b.transfer).toBe("2 Abra");
+    expect(vi.mocked(api.getCards).mock.calls.length).toBe(searches);
+  });
+  it("refuses a decklist with more card lines than a deck can hold", async () => {
+    const { b } = await setup();
+    await b.command("add\ta");
+    const text = Array.from({ length: 201 }, () => "1 Abra").join("\n");
+    await b.command(encodeFields(["import", text]));
+    expect(b.message).toBe("Too many card lines. Deck unchanged.");
+    expect([...b.entries]).toEqual([["a", 1]]);
   });
   it("offers Retry only after a load failed", async () => {
     const { b, publish } = await setup();
@@ -358,12 +367,6 @@ describe("Lua deck builder", () => {
       String(publish.mock.lastCall?.[0]).split("\n")[0]?.split("\t")[
         wireColumn(WIRE_ROWS.builder.header, "retry")
       ];
-    vi.mocked(api.getCards).mockResolvedValueOnce({
-      items: [card("b", "Abra")],
-      total: 1,
-      page: 1,
-      pageSize: 100,
-    });
     await b.command(encodeFields(["import", "2 Abra"]));
     expect(b.message).toBe("Deck imported.");
     expect(retry()).toBe("0");
@@ -450,35 +453,23 @@ describe("Lua deck builder", () => {
     await tick();
     expect(pages()).toEqual([1, 2, 3, 4]);
   });
-  it("fetches a name search's pages three to a request and splits them", async () => {
+  it("searches names and rules text in the card index, loaded once, without asking /cards", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
     const images = vi.fn();
     const { b, publish } = await setup(images);
     await tick();
-    const calls = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q);
-    const seen = calls().length;
-    await b.command(encodeFields(["filter", "query", "Abra"]));
+    // The index loads once the deck has shown, before any search needs it.
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+    const seen = vi.mocked(api.getCards).mock.calls.length;
+    await b.command(encodeFields(["filter", "query", "abr"]));
     await tick();
-    const requests = () =>
-      calls()
-        .slice(seen)
-        .map((q) => [q?.page, q?.pageSize, q?.total]);
-    // The first page and its prefetch in one request, which counts the matches as it goes.
-    expect(requests()).toEqual([[1, 24, undefined]]);
     expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
     expect(b.total).toBe(40);
+    // The visible page's art first, then the prefetched pages after it.
     expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual(ids(0, 24));
     publish.mockClear();
-    await b.command("page\t1");
-    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
-    expect(publish).toHaveBeenCalledTimes(1);
-    await tick();
-    // Page 4 is the next block's first; the block request passes the known total back.
-    expect(requests()).toEqual([
-      [1, 24, undefined],
-      [2, 24, 40],
-    ]);
     for (const [first, last] of [
+      [8, 16],
       [16, 24],
       [24, 32],
       [32, 40],
@@ -488,7 +479,38 @@ describe("Lua deck builder", () => {
       expect(b.results.map((c) => c.cardId)).toEqual(ids(first, last));
       await tick();
     }
-    expect(requests()).toHaveLength(2);
+    await b.command(encodeFields(["filter", "query", ""]));
+    await b.command(encodeFields(["filter", "text", "teleport"]));
+    await tick();
+    expect(b.total).toBe(40);
+    await b.command(encodeFields(["filter", "text", "thunder"]));
+    await tick();
+    expect(b.results).toEqual([]);
+    expect(b.total).toBe(0);
+    // A name filter combines with the other dimensions, as the API's would.
+    await b.command(encodeFields(["filter", "text", ""]));
+    await b.command(encodeFields(["filter", "query", "pika"]));
+    await tick();
+    expect(b.results.map((c) => c.cardId)).toEqual(["p"]);
+    await b.command("cycle\tsupertype\t2");
+    await tick();
+    expect(b.filters.supertype).toBe("Trainer");
+    expect(b.results).toEqual([]);
+    expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  it("reports a search failed when the card index does not load, and loads it again on Retry", async () => {
+    vi.mocked(api.getCardIndex).mockRejectedValue(new Error("offline"));
+    const { b } = await setup();
+    await tick();
+    await b.command(encodeFields(["filter", "query", "abra"]));
+    await tick();
+    expect(b.message).toBe("Card search failed. Try again.");
+    vi.mocked(api.getCardIndex).mockResolvedValue(ABRA_INDEX);
+    await b.command("retry");
+    await tick();
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
+    expect(b.total).toBe(40);
   });
   it("stops the pager where the API's offset cap ends a long result", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 5000));
@@ -498,7 +520,7 @@ describe("Lua deck builder", () => {
     await tick();
     // 8 cards a page: page 126 starts at card 1,001, the deepest the API serves.
     expect(b.page).toBe(126);
-    await b.command(encodeFields(["filter", "query", "a"]));
+    await b.command(encodeFields(["filter", "hpMin", "10"]));
     await tick();
     await b.command("page\t1000");
     await tick();
@@ -512,39 +534,40 @@ describe("Lua deck builder", () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
     const { b } = await setup();
     await tick();
-    await b.command(encodeFields(["filter", "query", "Abra"]));
+    await b.command(encodeFields(["filter", "hpMin", "50"]));
     await tick();
     await b.command("page\t1");
     await tick();
     const seen = vi.mocked(api.getCards).mock.calls.length;
-    // The search field reports its unchanged text again when an edit starts or ends.
-    await b.command(encodeFields(["filter", "query", "Abra"]));
+    // The field reports its unchanged text again when an edit starts or ends.
+    await b.command(encodeFields(["filter", "hpMin", "50"]));
     await tick();
     expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
     expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
   });
   it("does not pass an earlier query's total to the prefetches of a search that failed", async () => {
-    const catalog = catalogOf((query) => (query?.name === "Abra" ? 40 : 16));
+    const catalog = catalogOf((query) => (query?.hpMin === 10 ? 40 : 16));
     let failures = 1;
     vi.mocked(api.getCards).mockImplementation(async (query) => {
-      if (query?.name === "Bulb" && failures-- > 0) throw new Error("offline");
+      if (query?.hpMin === 20 && failures-- > 0) throw new Error("offline");
       return catalog(query);
     });
     const { b } = await setup();
-    await b.command(encodeFields(["filter", "query", "Abra"]));
+    await b.command(encodeFields(["filter", "hpMin", "10"]));
     await tick();
     const calls = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q);
     const seen = calls().length;
-    await b.command(encodeFields(["filter", "query", "Bulb"]));
+    await b.command(encodeFields(["filter", "hpMin", "20"]));
     await tick();
-    // The failed first block is fetched again by the prefetch, counting afresh.
+    // The failed page is not fetched again until asked for, and no page carries the old total.
     expect(
       calls()
         .slice(seen)
         .map((q) => [q?.page, q?.total]),
     ).toEqual([
       [1, undefined],
-      [1, undefined],
+      [2, undefined],
+      [3, undefined],
     ]);
     await b.command("page\t1");
     expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
@@ -553,8 +576,9 @@ describe("Lua deck builder", () => {
   it("does not apply an import after its dialog is cancelled", async () => {
     const { b } = await setup();
     await b.command("add\ta");
-    let resolve!: (value: Awaited<ReturnType<typeof api.getCards>>) => void;
-    vi.mocked(api.getCards).mockImplementationOnce(
+    forgetCardIndex();
+    let resolve!: (value: CardIndexPayload) => void;
+    vi.mocked(api.getCardIndex).mockImplementationOnce(
       () =>
         new Promise((r) => {
           resolve = r;
@@ -562,7 +586,7 @@ describe("Lua deck builder", () => {
     );
     const importing = b.command(encodeFields(["import", "2 Abra"]));
     await b.command("cancel-import");
-    resolve({ items: [card("b", "Abra")], total: 1, page: 1, pageSize: 100 });
+    resolve(ABRA_INDEX);
     await importing;
     expect([...b.entries]).toEqual([["a", 1]]);
     expect(b.message).toContain("cancelled");

@@ -621,14 +621,15 @@ D1 rows read is the other one anonymous traffic can spend: about 1,000
 free-text searches use the day's 5M, and then sign-in, decks and the lobby fail
 until 00:00 UTC. `GET /cards` therefore refuses a page that skips more than
 1,000 cards (`MAX_CARDS_OFFSET`), and `CATALOG_SEARCH_LIMIT` (namespace 1003)
-allows 60 scanning queries a minute per IP (an IPv6 address counts as its /64):
+allows 30 scanning queries a minute per IP (an IPv6 address counts as its /64):
 any query that bypasses KV and names neither `id` nor `nameExact`, which are
-index lookups. 60 is about twice an active builder user's peak: each settled
-keystroke of a search is one request, and a 40 wpm typist settles on every
-key. It slows a careless loop but not a determined one (one address can still
-read about 300k rows a minute); client-side search is the lasting fix. A
-cacheable filter value that matches nothing (`illustrator=junk`) still scans
-the table on each miss and is not limited.
+index lookups. The builder answers name and rules-text searches in the browser
+from `GET /cards/index` (one KV entry per catalog epoch), so what it still sends
+here is an HP bound and deep pages. The same budget covers `/cards/index` when
+KV misses it. The limit slows a careless loop but not a determined one (one
+address can still read about 150k rows a minute). A cacheable filter value that
+matches nothing (`illustrator=junk`) still scans the table on each miss and is
+not limited.
 
 **After every deploy**, check that the Worker reaches D1 and that the remote
 migration count matches the files:
@@ -1063,9 +1064,15 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   counts in its page statement (window count), and the
                          #   builder fetches its pages three to a request;
                          #   400 when (page-1)*pageSize > 1000 (MAX_CARDS_OFFSET);
-                         #   429 {error} + Retry-After: 60 past 60 scanning queries a
+                         #   429 {error} + Retry-After: 60 past 30 scanning queries a
                          #   minute per IP (CATALOG_SEARCH_LIMIT: KV-bypassing and not
                          #   bounded by id/nameExact; fails open; §3.7.4)
+GET    /cards/index      # every card as one compact row (CardIndexPayload: filter
+                         #   values plus abilities/attacks/effect text) for the
+                         #   builder's in-browser name and rules-text search and the
+                         #   decklist import; one KV entry per epoch; a KV miss reads
+                         #   the catalog once and spends CATALOG_SEARCH_LIMIT;
+                         #   about 2 MB raw, 280 KB gzip
 GET    /cards/:id        # full canonical Card; 404 JSON if absent; never in KV (a
                          #   1-row PK read is cheaper than a KV write)
 GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown
