@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetLogThrottle } from "../http/log";
 import {
+  checkRateLimit,
   evaluateRateLimit,
   parseRateLimitState,
   RATE_LIMIT_MAX_ATTEMPTS,
@@ -66,5 +68,29 @@ describe("evaluateRateLimit", () => {
     const decision = evaluateRateLimit(nearEnd, NOW);
     expect(decision.ttlSeconds).toBe(60);
     expect(decision.retryAfterSeconds).toBe(5);
+  });
+});
+
+describe("checkRateLimit when KV fails", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetLogThrottle();
+  });
+
+  const key = rateLimitKey("login", "203.0.113.9", "ash@example.com");
+  const quotaError = () => Promise.reject(new Error("KV put() limit exceeded for the day."));
+  // An exhausted window, so only failing open can allow the attempt after the read.
+  const exhausted = JSON.stringify({ count: RATE_LIMIT_MAX_ATTEMPTS, resetAt: NOW + 60_000 });
+
+  it.each([
+    ["get", { get: quotaError, put: async () => {} }],
+    ["put", { get: async () => exhausted, put: quotaError }],
+  ])("allows the attempt and logs when the %s throws", async (op, kv) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const decision = await checkRateLimit(kv as unknown as KVNamespace, key, NOW);
+    expect(decision.allowed).toBe(true);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "auth", kind: "limiter_error", op, error: "Error", quota: true },
+    ]);
   });
 });

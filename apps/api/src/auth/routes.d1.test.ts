@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import type { Env } from "../env";
+import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { raceBeforeFirstBatch, useTestD1 } from "../testing/d1";
 import { packStateCookieValue } from "./oauth";
@@ -7,12 +8,23 @@ import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash } from "./password"
 
 const d1 = useTestD1();
 
+let warn: MockInstance<typeof console.warn>;
+
+beforeEach(() => {
+  warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+/** The structured lines logged so far in this test. */
+function logged(): Record<string, unknown>[] {
+  return warn.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+}
+
 const GOOGLE = { GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" };
 
-function postJson(body: unknown) {
+function postJson(body: unknown, headers: Record<string, string> = {}) {
   return {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   };
 }
@@ -62,6 +74,8 @@ async function oauthCallback(userinfo: UserinfoBody, env: Env = d1().env(GOOGLE)
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  resetLogThrottle();
 });
 
 /** The callback's `?authError=` code, or null for a successful sign-in redirect. */
@@ -172,7 +186,57 @@ describe("POST /auth/login", () => {
       expect(await res.json()).toEqual({ error: "invalid email or password" });
       expect(sessionCookieOf(res)).toBeNull();
     }
+    // The operator's lines tell the cases apart and carry no address.
+    expect(logged()).toEqual(
+      ["wrong_password", "unknown_email", "no_password"].map((reason) => ({
+        evt: "auth",
+        kind: "login_failed",
+        reason,
+      })),
+    );
   });
+
+  it.each([
+    ["needs no rehash", DEFAULT_ITERATIONS],
+    ["would be rehashed", 1000],
+  ])(
+    "mints no session when an OAuth link revokes a password that %s mid-login",
+    async (_label, iterations) => {
+      const id = await insertUser({
+        email: "victim@example.com",
+        passwordHash: await hashPassword("squatter-pass", iterations),
+      });
+      const { db } = d1();
+      // The verified-email link's batch, committing while the login verifies the password.
+      const env = d1().env({
+        DB: raceBeforeFirstBatch(db, async () => {
+          await db.batch([
+            db
+              .prepare("UPDATE users SET email_verified = 1, password_hash = NULL WHERE id = ?")
+              .bind(id),
+            db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
+          ]);
+        }),
+      });
+      const res = await app.request(
+        "/auth/login",
+        postJson({ email: "victim@example.com", password: "squatter-pass" }),
+        env,
+      );
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({ error: "invalid email or password" });
+      expect(sessionCookieOf(res)).toBeNull();
+      const sessions = await db
+        .prepare("SELECT count(*) AS n FROM sessions WHERE user_id = ?")
+        .bind(id)
+        .first<{ n: number }>();
+      expect(sessions?.n).toBe(0);
+      expect((await userRows())[0]?.passwordHash).toBeNull();
+      expect(logged()).toEqual([
+        { evt: "auth", kind: "login_failed", reason: "credential_changed" },
+      ]);
+    },
+  );
 
   it("re-hashes a password stored below the current iteration count", async () => {
     const id = await insertUser({
@@ -216,6 +280,37 @@ describe("POST /auth/login", () => {
     for (const cookie of [misty, brock, sessionCookieOf(res)]) {
       expect((await me(cookie)).status).toBe(200);
     }
+  });
+});
+
+/** The real KV, except that `op` throws as a spent daily write quota does. */
+function failingKv(kv: KVNamespace, op: "get" | "put"): KVNamespace {
+  return new Proxy(kv, {
+    get(target, property) {
+      if (property === op) {
+        return () => Promise.reject(new Error(`KV ${op}() limit exceeded for the day.`));
+      }
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
+
+describe("register and login while the limiter's KV fails", () => {
+  it.each(["get", "put"] as const)("let the attempt through when KV %s throws", async (op) => {
+    const env = d1().env({ CACHE: failingKv(d1().kv, op) });
+    const headers = { "cf-connecting-ip": "203.0.113.9" };
+    const body = { email: "misty@example.com", password: "starmie-456" };
+    const registered = await app.request("/auth/register", postJson(body, headers), env);
+    expect(registered.status).toBe(201);
+    const res = await app.request("/auth/login", postJson(body, headers), env);
+    expect(res.status).toBe(200);
+    expect((await me(sessionCookieOf(res))).status).toBe(200);
+    // Throttled to one line per isolate while the failure lasts.
+    expect(logged()).toEqual([
+      { evt: "auth", kind: "limiter_error", op, error: "Error", quota: true },
+    ]);
+    expect(JSON.stringify(logged())).not.toMatch(/misty|203\.0\.113\.9/);
   });
 });
 

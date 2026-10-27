@@ -111,21 +111,26 @@ export class LuaSandbox {
     ) {
       this.selected[a === "1" ? 0 : 1] = b;
       this.message = "";
-    } else if (
-      action === "start" &&
-      this.selected.every((id) => this.decks.some((d) => d.id === id && d.cardCount === DECK_SIZE))
-    ) {
+    } else if (action === "start") {
+      const [first, second] = this.selected.map((id) =>
+        this.decks.find((d) => d.id === id && d.cardCount === DECK_SIZE),
+      );
+      if (first === undefined || second === undefined) {
+        this.emit();
+        return;
+      }
       const live = this.epoch.next();
       this.busy = true;
       this.message = "";
       this.emit();
       try {
-        // Fetch fresh contents and rerun the deck validation.
+        // Rerun the deck validation on the contents the picker judged, which the session's deck
+        // cache serves while their summaries' `updated` matches.
         const [{ prepareSandbox }, launch] = await Promise.all([
           import("../game/prepareSandbox"),
           this.loadLaunch(),
         ]);
-        const setup = await prepareSandbox([...this.selected]);
+        const setup = await prepareSandbox([first, second]);
         if (live() && this.active) launch(setup);
       } catch (error) {
         if (!live()) return;

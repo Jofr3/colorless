@@ -7,8 +7,13 @@
 // across colos. That's acceptable for a brute-force guard — it bounds the
 // order of magnitude, it isn't an accounting system. If precise limiting
 // ever matters, move to a Durable Object.
+//
+// A KV error fails OPEN: the Free plan's 1,000 writes/day are shared with the
+// catalog cache and one key takes one write per second, so a spent quota or a
+// double submit must not become a sign-in outage. The error is logged.
 
 import * as z from "zod";
+import { logEventThrottled } from "../http/log";
 
 export const RATE_LIMIT_MAX_ATTEMPTS = 10;
 export const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
@@ -72,15 +77,29 @@ export function evaluateRateLimit(state: RateLimitState | null, nowMs: number): 
   };
 }
 
-/** Record an attempt and decide — the one KV-touching function. */
+/** Record an attempt and decide — the one KV-touching function. A failed get
+    or put allows the attempt (see the header). */
 export async function checkRateLimit(
   kv: KVNamespace,
   key: string,
   nowMs: number = Date.now(),
 ): Promise<RateLimitDecision> {
-  const decision = evaluateRateLimit(parseRateLimitState(await kv.get(key)), nowMs);
-  await kv.put(key, JSON.stringify(decision.nextState), {
-    expirationTtl: decision.ttlSeconds,
-  });
-  return decision;
+  let op: "get" | "put" = "get";
+  try {
+    const decision = evaluateRateLimit(parseRateLimitState(await kv.get(key)), nowMs);
+    op = "put";
+    await kv.put(key, JSON.stringify(decision.nextState), {
+      expirationTtl: decision.ttlSeconds,
+    });
+    return decision;
+  } catch (error) {
+    // The key holds the IP and email and KV's message may echo it, so only the
+    // error's name and whether it reads as a quota limit are logged.
+    logEventThrottled("auth", "limiter_error", {
+      op,
+      error: error instanceof Error ? error.name : typeof error,
+      quota: error instanceof Error && /limit exceeded/i.test(error.message),
+    });
+    return { ...evaluateRateLimit(null, nowMs), allowed: true };
+  }
 }

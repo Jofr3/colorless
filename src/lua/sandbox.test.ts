@@ -106,13 +106,24 @@ describe("Lua sandbox setup", () => {
     expect(game.names).toEqual({ p1: "Player 1", p2: "Player 2" });
     expect(game.state.firstPlayer).toBeNull();
   });
-  it("revalidates fresh contents, including card count and Basic Pokémon", async () => {
+  it("starts from the contents the picker fetched without fetching them again", async () => {
+    const { calls } = stubFetch(reads);
+    const { sandbox, launch } = await setup();
+    const fetched = calls.length;
+    await sandbox.command("select\t2\tb");
+    await sandbox.command("start");
+    expect(launch).toHaveBeenCalledOnce();
+    expect(calls).toHaveLength(fetched);
+  });
+  it("revalidates contents the cache no longer holds, including card count and Basic Pokémon", async () => {
     stubFetch(reads);
     const { sandbox, launch } = await setup();
+    clearSavedDeckCache();
     stubFetch({ ...reads, "GET /decks/a": () => json(full("a", 59)) });
     await sandbox.command("start");
     expect(sandbox.message).toContain("59 cards");
     expect(launch).not.toHaveBeenCalled();
+    clearSavedDeckCache();
     clearCardPoolCache();
     stubFetch({
       ...reads,
@@ -148,6 +159,8 @@ describe("Lua sandbox setup", () => {
   it("rejects double starts and cancels the handoff if the user leaves while loading", async () => {
     stubFetch(reads);
     const { sandbox, launch } = await setup();
+    // So the start has a fetch to hold open.
+    clearSavedDeckCache();
     let finish!: (response: Response) => void;
     const { calls } = stubFetch({
       ...reads,
