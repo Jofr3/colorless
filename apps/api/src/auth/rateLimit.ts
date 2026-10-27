@@ -1,4 +1,6 @@
-// Fixed-window rate limiting for register/login (§3.5), in the D1 table `auth_rate_limits`.
+// Fixed-window rate limiting for register, login and account deletion (§3.5), in the D1 table
+// `auth_rate_limits`. Each scope has its own windows: deletion asks for the current password, so
+// without a budget a stolen session cookie could guess it at full speed.
 //
 // Every attempt counts against two keys. The (scope, ip, email) key allows 10 per 15 minutes,
 // which is what slows a password guesser on one account. The (scope, ip) key allows 50, which
@@ -31,7 +33,7 @@ export const ACCOUNT_MAX_ATTEMPTS = 10;
 /** Attempts per (scope, ip) per window, across every email. */
 export const IP_MAX_ATTEMPTS = 50;
 
-export type RateLimitScope = "register" | "login";
+export type RateLimitScope = "register" | "login" | "delete";
 
 export type RateLimitKeys = { account: string; ip: string };
 

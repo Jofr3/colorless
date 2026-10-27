@@ -11,6 +11,7 @@ export const USER: User = {
   displayName: "Ash",
   emailVerified: false,
   avatarSeed: "1a2b3c4d",
+  hasPassword: true,
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 

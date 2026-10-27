@@ -73,6 +73,16 @@ describe("session routes without a cookie", () => {
     expect(((await res.json()) as { error: string }).error).toBe("unauthorized");
   });
 
+  it("DELETE /auth/me → 401 before the body or D1", async () => {
+    const res = await app.request(
+      "/auth/me",
+      { method: "DELETE", headers: { "Content-Type": "application/json" }, body: "{}" },
+      envWith(),
+    );
+    expect(res.status).toBe(401);
+    expect(((await res.json()) as { error: string }).error).toBe("unauthorized");
+  });
+
   it("POST /auth/logout → 204 and clears the cookie, no D1 needed", async () => {
     const res = await app.request("/auth/logout", { method: "POST" }, envWith());
     expect(res.status).toBe(204);

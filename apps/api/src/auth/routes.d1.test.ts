@@ -2,12 +2,21 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
-import { raceBeforeBatch, raceBeforeFirstBatch, signedInUser, useTestD1 } from "../testing/d1";
+import {
+  raceBeforeBatch,
+  raceBeforeFirstBatch,
+  seedCards,
+  signedInUser,
+  useTestD1,
+} from "../testing/d1";
 import { packStateCookieValue } from "./oauth";
 import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash } from "./password";
 import { ACCOUNT_MAX_ATTEMPTS, rateLimitKeys } from "./rateLimit";
 
-const d1 = useTestD1();
+// One catalog card, for the deck contents account deletion must take with it.
+const d1 = useTestD1((db) =>
+  seedCards(db, [{ id: "sv01-001", name: "Sprigatito", category: "Pokemon" }]),
+);
 
 let warn: MockInstance<typeof console.warn>;
 
@@ -337,6 +346,193 @@ describe("register and login rate limiting", () => {
     // Throttled to one line per isolate while the failure lasts.
     expect(logged()).toEqual([{ evt: "auth", kind: "limiter_error", error: "Error", quota: true }]);
     expect(JSON.stringify(logged())).not.toMatch(/misty|203\.0\.113\.9/);
+  });
+});
+
+describe("DELETE /auth/me", () => {
+  function deleteAccount(
+    cookie: string | null,
+    body: unknown,
+    headers: Record<string, string> = {},
+    env: Env = d1().env(),
+  ) {
+    return app.request(
+      "/auth/me",
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookie === null ? {} : { Cookie: cookie }),
+          ...headers,
+        },
+        body: JSON.stringify(body),
+      },
+      env,
+    );
+  }
+
+  /** Everything an account can own: nested folders, a deck in one with a card line and the
+      favourite pointing at it, a Google identity, and a second session. */
+  async function seedLibrary(userId: string, prefix: string) {
+    const { db } = d1();
+    await db.batch([
+      db
+        .prepare("INSERT INTO folders (id, user_id, name) VALUES (?, ?, 'Water')")
+        .bind(`${prefix}-root`, userId),
+      db
+        .prepare("INSERT INTO folders (id, user_id, parent_id, name) VALUES (?, ?, ?, 'Gym')")
+        .bind(`${prefix}-child`, userId, `${prefix}-root`),
+      db
+        .prepare(
+          "INSERT INTO decks (id, user_id, folder_id, name, tint, cover_card_id) VALUES (?, ?, ?, 'Deck', 200, 'sv01-001')",
+        )
+        .bind(`${prefix}-deck`, userId, `${prefix}-child`),
+      db
+        .prepare("INSERT INTO deck_cards (deck_id, card_id, count) VALUES (?, 'sv01-001', 4)")
+        .bind(`${prefix}-deck`),
+      db
+        .prepare("UPDATE users SET favourite_deck_id = ? WHERE id = ?")
+        .bind(`${prefix}-deck`, userId),
+      db
+        .prepare(
+          "INSERT INTO oauth_identities (provider, provider_id, user_id) VALUES ('google', ?, ?)",
+        )
+        .bind(`${prefix}-sub`, userId),
+      db
+        .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
+        .bind(`${prefix}-session`, userId, Date.now() + 60_000),
+    ]);
+  }
+
+  /** The account's rows in every table that can hold them. */
+  async function ownedRows(userId: string, prefix: string) {
+    const count = async (sql: string, bind: string) =>
+      (await d1().db.prepare(sql).bind(bind).first<{ n: number }>())?.n;
+    return {
+      users: await count("SELECT count(*) AS n FROM users WHERE id = ?", userId),
+      sessions: await count("SELECT count(*) AS n FROM sessions WHERE user_id = ?", userId),
+      identities: await count(
+        "SELECT count(*) AS n FROM oauth_identities WHERE user_id = ?",
+        userId,
+      ),
+      folders: await count("SELECT count(*) AS n FROM folders WHERE user_id = ?", userId),
+      decks: await count("SELECT count(*) AS n FROM decks WHERE user_id = ?", userId),
+      deckCards: await count(
+        "SELECT count(*) AS n FROM deck_cards WHERE deck_id = ?",
+        `${prefix}-deck`,
+      ),
+    };
+  }
+
+  const NONE = { users: 0, sessions: 0, identities: 0, folders: 0, decks: 0, deckCards: 0 };
+
+  it("deletes a password account and all it owns, clears the cookie and leaves others be", async () => {
+    const registered = await register("misty@example.com", "starmie-456");
+    const misty = ((await registered.json()) as { id: string }).id;
+    const cookie = sessionCookieOf(registered);
+    await seedLibrary(misty, "misty");
+    const brock = await signedInUser(d1().db, "brock@example.com");
+    await seedLibrary(brock.userId, "brock");
+
+    const res = await deleteAccount(cookie, { password: "starmie-456" });
+    expect(res.status).toBe(204);
+    const logout = await app.request("/auth/logout", { method: "POST" }, d1().env());
+    expect(res.headers.get("Set-Cookie")).toBe(logout.headers.get("Set-Cookie"));
+    expect(await ownedRows(misty, "misty")).toEqual(NONE);
+    expect(await ownedRows(brock.userId, "brock")).toEqual({
+      users: 1,
+      sessions: 2,
+      identities: 1,
+      folders: 2,
+      decks: 1,
+      deckCards: 1,
+    });
+    expect((await me(cookie)).status).toBe(401);
+    expect((await me(brock.cookie)).status).toBe(200);
+    // The email is free again.
+    expect((await register("misty@example.com", "psyduck-789")).status).toBe(201);
+    expect(logged()).toContainEqual({ evt: "auth", kind: "account_deleted" });
+    expect(JSON.stringify(logged())).not.toMatch(/misty|starmie/);
+  });
+
+  it("401s a wrong or missing password and keeps the account", async () => {
+    const cookie = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    for (const body of [{ password: "psyduck-789" }, {}]) {
+      const res = await deleteAccount(cookie, body);
+      expect(res.status).toBe(401);
+      expect(await res.json()).toEqual({ error: "invalid password" });
+    }
+    expect(await userRows()).toHaveLength(1);
+    expect((await me(cookie)).status).toBe(200);
+    expect(logged()).toEqual([
+      { evt: "auth", kind: "delete_failed", reason: "wrong_password" },
+      { evt: "auth", kind: "delete_failed", reason: "no_password" },
+    ]);
+  });
+
+  it("deletes an OAuth-only account without a password", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
+    await seedLibrary(userId, "brock");
+    const res = await deleteAccount(cookie, {});
+    expect(res.status).toBe(204);
+    expect(await ownedRows(userId, "brock")).toEqual(NONE);
+    expect((await me(cookie)).status).toBe(401);
+  });
+
+  it("counts attempts in its own scope and 429s an exhausted one, even with the password", async () => {
+    const cookie = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const headers = { "cf-connecting-ip": "203.0.113.7" };
+    const keys = await rateLimitKeys("delete", "203.0.113.7", "misty@example.com");
+    const counted = async () =>
+      (
+        await d1()
+          .db.prepare("SELECT count FROM auth_rate_limits WHERE key = ?")
+          .bind(keys.account)
+          .first<{ count: number }>()
+      )?.count;
+
+    expect((await deleteAccount(cookie, { password: "wrong-guess" }, headers)).status).toBe(401);
+    expect(await counted()).toBe(1);
+    await d1()
+      .db.prepare("UPDATE auth_rate_limits SET count = ? WHERE key = ?")
+      .bind(ACCOUNT_MAX_ATTEMPTS + 1, keys.account)
+      .run();
+    const res = await deleteAccount(cookie, { password: "starmie-456" }, headers);
+    expect(res.status).toBe(429);
+    expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(await userRows()).toHaveLength(1);
+    // Signing in keeps its own budget.
+    expect((await login("misty@example.com", "starmie-456")).status).toBe(200);
+  });
+
+  it("refuses a delete whose password an OAuth link cleared during the verify", async () => {
+    const cookie = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const { db } = d1();
+    // The limiter's batch is the route's only one; the link commits as it returns.
+    const raced = new Proxy(db, {
+      get(target, property) {
+        if (property === "batch") {
+          return async (statements: D1PreparedStatement[]) => {
+            const result = await target.batch(statements);
+            await target.prepare("UPDATE users SET password_hash = NULL").run();
+            return result;
+          };
+        }
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const res = await deleteAccount(
+      cookie,
+      { password: "starmie-456" },
+      {},
+      d1().env({ DB: raced }),
+    );
+    expect(res.status).toBe(401);
+    expect(await userRows()).toHaveLength(1);
+    expect(logged()).toEqual([
+      { evt: "auth", kind: "delete_failed", reason: "credential_changed" },
+    ]);
   });
 });
 

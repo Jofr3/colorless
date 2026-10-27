@@ -15,6 +15,9 @@ export const userSchema = z.object({
       the face a player sees on their own profile is the face opponents see.
       Sent rather than derived client-side on purpose: one hash, one place. */
   avatarSeed: z.string(),
+  /** Whether the account signs in with a password, so deleting it asks for that password. Only
+      the fact: the hash never leaves apps/api. */
+  hasPassword: z.boolean(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   createdAt: z.iso.datetime(),
 });

@@ -38,3 +38,10 @@ export const updateProfileRequestSchema = z.object({
   displayName: z.string().trim().min(1).max(DISPLAY_NAME_MAX),
 });
 export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;
+
+/** Deleting your own account (DELETE /auth/me). An account with a password must send it; an
+    OAuth-only account has none to send. Same bounds as login. */
+export const deleteAccountRequestSchema = z.object({
+  password: z.string().min(1).max(256).optional(),
+});
+export type DeleteAccountRequest = z.infer<typeof deleteAccountRequestSchema>;
