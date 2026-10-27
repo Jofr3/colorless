@@ -63,6 +63,20 @@ describe("GET /cards param validation", () => {
     expect(body.error).toBe("invalid query");
   });
 
+  it("400s more repeated filter values than one D1 statement can bind", async () => {
+    const { kv } = fakeKv();
+    const values = (name: string, count: number) =>
+      Array.from({ length: count }, (_, i) => `${name}=v${i}`).join("&");
+    for (const query of [
+      values("rarity", 31),
+      [values("type", 30), values("rarity", 30), values("stage", 30)].join("&"),
+    ]) {
+      const res = await app.request(`/cards?${query}`, {}, envWith(kv));
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toBe("invalid query");
+    }
+  });
+
   it("400s a /cards/full request with no ids, an empty id or more than 100 ids", async () => {
     const { kv } = fakeKv();
     const tooMany = Array.from({ length: 101 }, (_, i) => `id=sv01-${i}`).join("&");

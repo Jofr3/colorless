@@ -1,5 +1,12 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
-import { type CardsQueryParams, cardsQuerySchema, MAX_ID_VALUES, setsQuerySchema } from "./query";
+import {
+  type CardsQueryParams,
+  cardsQuerySchema,
+  MAX_FILTER_VALUES,
+  MAX_FILTER_VALUES_TOTAL,
+  MAX_ID_VALUES,
+  setsQuerySchema,
+} from "./query";
 
 /** Parse params the way zValidator hands them to the schema: a single
     occurrence arrives as a string, a repeated key as a string[]. */
@@ -81,6 +88,28 @@ describe("cardsQuerySchema", () => {
       id: Array.from({ length: MAX_ID_VALUES + 1 }, (_, i) => `sv01-${i}`),
     });
     expect(overCap.success).toBe(false);
+  });
+
+  it("caps each repeatable filter at MAX_FILTER_VALUES and all of them at the total", () => {
+    const values = (prefix: string, count: number) =>
+      Array.from({ length: count }, (_, i) => `${prefix}${i}`);
+    for (const name of ["type", "rarity", "stage", "suffix", "trainerType", "energyType"]) {
+      expect(parseCards({ [name]: values("v", MAX_FILTER_VALUES) }).success).toBe(true);
+      expect(parseCards({ [name]: values("v", MAX_FILTER_VALUES + 1) }).success).toBe(false);
+    }
+    expect(
+      parseCards({
+        type: values("t", MAX_FILTER_VALUES),
+        rarity: values("r", MAX_FILTER_VALUES_TOTAL - MAX_FILTER_VALUES),
+      }).success,
+    ).toBe(true);
+    expect(
+      parseCards({
+        type: values("t", MAX_FILTER_VALUES),
+        rarity: values("r", MAX_FILTER_VALUES),
+        stage: values("s", 1),
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts each sort value", () => {
