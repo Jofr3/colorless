@@ -675,7 +675,7 @@ API's deck representation, extended with a card list.
 
 > **Status (M7):** the deck/folder domain schemas now live in
 > `packages/schema/src/decks/` — `Folder`, `Deck` (+ `cards: [{cardId, count}]`),
-> `DeckSummary` (cards replaced by the summed `cardCount`), and the
+> `DeckSummary` (the summed `cardCount`, with `cards` only on complete decks), and the
 > create/patch request schemas for both resources.
 
 ### 5.3 D1 relational schema
@@ -970,8 +970,14 @@ POST   /auth/verify-email  ·  POST /auth/reset-password
 # → 400 `{"error":"unknown card id(s)","cardIds":[…]}` (checked with a chunked
 # IN query against `cards`, never the FK error text).
 GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
-                         #   updated, version, cardCount} — cardCount = summed
-                         #   copy counts
+                         #   updated, version, cardCount, coverCardId, cards?}
+                         #   — cardCount = summed copy counts (0 when empty);
+                         #   `cards` (as GET /decks/:id orders them) only on a
+                         #   deck of exactly DECK_SIZE, so the sandbox/online
+                         #   pickers and the library's legality check need no
+                         #   per-deck GET, and each row stays ≤60 entries.
+                         #   Optional on the wire: a client falls back to
+                         #   GET /decks/:id when it is absent (an older api)
 GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
                          #   cards: [{cardId, count}]
 POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}

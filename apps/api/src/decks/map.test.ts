@@ -52,11 +52,25 @@ describe("mapDeckRow", () => {
 });
 
 describe("mapDeckSummaryRow", () => {
-  it("carries the summed cardCount instead of the card list", () => {
-    const summary = mapDeckSummaryRow(deckRow, 60, "sv01-001");
+  it("sums cardCount and carries the card list of a complete deck", () => {
+    const cards = [
+      { cardId: "sv01-001", count: 4 },
+      { cardId: "sv01-230", count: 56 },
+    ];
+    const summary = mapDeckSummaryRow(deckRow, cards, "sv01-001");
     expect(summary.cardCount).toBe(60);
+    expect(summary.cards).toEqual(cards);
     expect(summary.coverCardId).toBe("sv01-001");
-    expect(summary).not.toHaveProperty("cards");
     expect(deckSummarySchema.parse(summary)).toEqual(summary);
+  });
+
+  it("leaves the card list off an incomplete deck, and counts an empty one as 0", () => {
+    const short = mapDeckSummaryRow(deckRow, [{ cardId: "sv01-001", count: 59 }], null);
+    expect(short.cardCount).toBe(59);
+    expect(short).not.toHaveProperty("cards");
+    const empty = mapDeckSummaryRow(deckRow, [], null);
+    expect(empty.cardCount).toBe(0);
+    expect(empty).not.toHaveProperty("cards");
+    expect(deckSummarySchema.parse(empty)).toEqual(empty);
   });
 });

@@ -10,7 +10,6 @@ import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
-import { clearSavedDeckCache } from "../game/sandboxDecks";
 import { LobbyClient, type LobbyClientOptions } from "../online/lobbyClient";
 import { LuaOnline, NOTICE_MS, TABLE_CLAIM_MS } from "./online";
 
@@ -51,11 +50,14 @@ const saved = (id: string, cardId: string, format: string) => ({
     { cardId: "energy", count: 56 },
   ],
 });
+/** The complete decks' format and cards, which GET /decks carries on their summaries. */
+const contents: Record<string, ReturnType<typeof saved>> = {
+  x: saved("x", card.id, "standard"),
+  y: saved("y", "old", "expanded"),
+  z: saved("z", "old", "standard"),
+};
 const deckReads = {
-  "GET /decks": () => json(summaries),
-  "GET /decks/x": () => json(saved("x", card.id, "standard")),
-  "GET /decks/y": () => json(saved("y", "old", "expanded")),
-  "GET /decks/z": () => json(saved("z", "old", "standard")),
+  "GET /decks": () => json(summaries.map((deck) => ({ ...deck, ...contents[deck.id] }))),
   "GET /cards/full": fullCardsFrom({ [card.id]: card, old, energy }),
 };
 
@@ -120,7 +122,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearCardPoolCache();
-  clearSavedDeckCache();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -226,7 +227,7 @@ describe("Lua online adapter", () => {
   });
 
   it("lists playable decks with their regulation flags and online verdict, or reports anonymous", async () => {
-    stubFetch(deckReads);
+    const { calls } = stubFetch(deckReads);
     const { online, header, rows } = setup();
     online.session("anonymous", "");
     await online.command("decks");
@@ -240,6 +241,8 @@ describe("Lua online adapter", () => {
       ["D", "z", "Relic", "60", "0", "1", "0", "Standard"],
       ["D", "x", "Zap", "60", "1", "1", "1", "Standard"],
     ]);
+    // The list carries every complete deck's cards, so no deck is fetched on its own.
+    expect(calls).toEqual(["GET /decks", "GET /cards/full"]);
   });
 
   it("sends select, ready and kick only when they are allowed", async () => {

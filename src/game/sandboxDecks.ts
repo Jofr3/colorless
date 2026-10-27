@@ -4,9 +4,12 @@ import { ApiError, getDeck } from "../lib/api";
 import type { Deck } from "../decks/data";
 import { fetchCardPool } from "./cardPool";
 
+/** What judging a deck reads: a summary's own fields, or the fetched deck's. */
+type DeckContents = Pick<SavedDeck, "name" | "format" | "cards">;
+
 /** What `createGame` needs to run a deck: exactly DECK_SIZE cards, every one in the pool, and a
  * Basic Pokémon to start with. Format and construction rules are not asked. */
-function isPlayableDeck(deck: SavedDeck, pool: Record<string, Card>): boolean {
+function isPlayableDeck(deck: DeckContents, pool: Record<string, Card>): boolean {
   let total = 0;
   let basic = false;
   for (const { cardId, count } of deck.cards) {
@@ -19,50 +22,40 @@ function isPlayableDeck(deck: SavedDeck, pool: Record<string, Card>): boolean {
 }
 
 /** The online verdict: legal in its own format, which is what a lobby checks at match start. */
-const legalIn = (deck: SavedDeck, pool: Record<string, Card>, format: string | null) =>
+const legalIn = (deck: DeckContents, pool: Record<string, Card>, format: string | null) =>
   savedDeckReasons(deck.cards, format, pool).length === 0;
 
-type Verdict = { deck: SavedDeck; playable: boolean; legal: boolean; pool: Record<string, Card> };
+type Verdict = {
+  deck: DeckContents;
+  playable: boolean;
+  legal: boolean;
+  pool: Record<string, Card>;
+};
 
-/** Saved decks fetched this session. An entry serves a summary whose `updated` matches it, since
-    every write to a deck moves its `updated`. */
-const savedDecks = new Map<string, SavedDeck>();
-
-/** TEST-ONLY: the module-level cache outlives a test's fetch stub, so suites reset it between
-    cases. */
-export function clearSavedDeckCache(): void {
-  savedDecks.clear();
+/** The contents behind `summary`: the card list GET /decks sends on a complete deck, or, from an
+    api that predates it, a fetch of the deck. */
+export async function deckContents(summary: Deck): Promise<DeckContents> {
+  return summary.cards === undefined ? getDeck(summary.id) : { ...summary, cards: summary.cards };
 }
 
-/** The saved deck behind `summary`, from this session's cache while it is current. */
-export async function savedDeck(summary: Deck): Promise<SavedDeck> {
-  const cached = savedDecks.get(summary.id);
-  if (cached !== undefined && cached.updated === summary.updated) return cached;
-  const deck = await getDeck(summary.id);
-  savedDecks.set(deck.id, deck);
-  return deck;
-}
-
-/** Fetch the complete candidates' contents (unless cached and current) and their card pool with
- * bounded requests, then judge each. Network failures remain retryable errors, rather
+/** Read the complete candidates' contents (fetching only those the list left out) and their card
+ * pool with bounded requests, then judge each. Network failures remain retryable errors, rather
  * than silently classifying those decks as invalid; a deck deleted since the
  * summary was fetched (404) is simply absent from the result. */
 async function judgeSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
 ): Promise<Map<string, Verdict>> {
-  const listed = new Set(summaries.map((deck) => deck.id));
-  for (const id of savedDecks.keys()) if (!listed.has(id)) savedDecks.delete(id);
   const candidates = summaries.filter((deck) => deck.cardCount === DECK_SIZE);
   const queue = candidates.values();
-  const saved = new Map<string, SavedDeck>();
+  const saved = new Map<string, DeckContents>();
   const verdicts = new Map<string, Verdict>();
   let failed = false;
   async function worker() {
     for (const deck of queue) {
       if (failed || !current()) return;
       try {
-        saved.set(deck.id, await savedDeck(deck));
+        saved.set(deck.id, await deckContents(deck));
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) continue;
         failed = true;

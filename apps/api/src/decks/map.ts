@@ -4,6 +4,7 @@
 // `user_id` never crosses the boundary — ownership is a WHERE clause, not a
 // response field — and the epoch-ms `updated` column serializes to ISO here.
 
+import { DECK_SIZE } from "@colorless/engine";
 import type { Deck, DeckCard, DeckSummary } from "@colorless/schema";
 import type { decks } from "../db/schema";
 
@@ -34,13 +35,21 @@ export function mapDeckRow(row: DeckRow, cards: readonly DeckCard[]): Deck {
   };
 }
 
-/** List row: `cardCount` is the SQL-side sum of the deck's copy counts, and
-    `coverCardId` the deck's face (P5-3 — `pickCoverCardId`, null for a deck with
-    nothing to show). */
+/** List row: `cardCount` is the sum of the deck's copy counts, `cards` its entries only when that
+    sum is DECK_SIZE (the decks a picker or the legality check reads), and `coverCardId` the deck's
+    face (P5-3 — `pickCoverCardId`, null for a deck with nothing to show). */
 export function mapDeckSummaryRow(
   row: DeckRow,
-  cardCount: number,
+  cards: readonly DeckCard[],
   coverCardId: string | null,
 ): DeckSummary {
-  return { ...mapDeckBase(row), cardCount, coverCardId };
+  const cardCount = cards.reduce((sum, entry) => sum + entry.count, 0);
+  return {
+    ...mapDeckBase(row),
+    cardCount,
+    ...(cardCount === DECK_SIZE && {
+      cards: cards.map(({ cardId, count }) => ({ cardId, count })),
+    }),
+    coverCardId,
+  };
 }

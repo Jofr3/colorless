@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
-import { clearSavedDeckCache } from "../game/sandboxDecks";
 import { loadSimulatorSave } from "../game/simulatorSave";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
 
 const SAVED = "2026-10-01T00:00:00.000Z";
 const EDITED = "2026-10-02T00:00:00.000Z";
-const decks = [
+/** The list as an api before summary card lists served it: the picker fetches each complete deck. */
+const legacy = [
   { id: "b", name: "Training Deck", cardCount: 60, folderId: "folder", updated: SAVED },
   { id: "a", name: "Electric\tDreams%", cardCount: 60, folderId: null, updated: SAVED },
   { id: "empty", name: "Empty", cardCount: 0, folderId: null, updated: SAVED },
@@ -34,21 +34,30 @@ const energy = {
   energyType: "Normal",
   stage: null,
 };
+const contents = (count = 60) => [
+  { cardId: card.id, count: 4 },
+  { cardId: energy.id, count: count - 4 },
+];
 const full = (id: string, count = 60, updated = SAVED) => ({
   id,
-  name: decks.find((deck) => deck.id === id)?.name ?? id,
+  name: legacy.find((deck) => deck.id === id)?.name ?? id,
   format: "standard",
   updated,
-  cards: [
-    { cardId: card.id, count: 4 },
-    { cardId: energy.id, count: count - 4 },
-  ],
+  cards: contents(count),
 });
+/** The list as GET /decks serves it now: each complete deck carries its format and cards. */
+const decks = legacy.map((deck) =>
+  deck.cardCount === 60 ? { ...deck, format: "standard", cards: contents() } : deck,
+);
 const reads = {
   "GET /decks": () => json(decks),
+  "GET /cards/full": fullCardsFrom({ [card.id]: card, energy }),
+};
+const legacyReads = {
+  ...reads,
+  "GET /decks": () => json(legacy),
   "GET /decks/a": () => json(full("a")),
   "GET /decks/b": () => json(full("b")),
-  "GET /cards/full": fullCardsFrom({ [card.id]: card, energy }),
 };
 async function setup() {
   const publish = vi.fn();
@@ -68,7 +77,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearCardPoolCache();
-  clearSavedDeckCache();
   vi.unstubAllGlobals();
 });
 
@@ -91,8 +99,16 @@ describe("Lua sandbox setup", () => {
     expect(sandbox.selected).toEqual(["a", "a"]);
     await sandbox.command("select\t1\tnot-a-deck");
     expect(sandbox.selected).toEqual(["a", "a"]);
+    expect(calls).toEqual(["GET /decks", "GET /cards/full"]);
+  });
+  it("fetches each complete deck from an api whose list carries no cards, and starts from them", async () => {
+    const { calls } = stubFetch(legacyReads);
+    const { sandbox, launch } = await setup();
+    expect(sandbox.decks.map((deck) => deck.id)).toEqual(["a", "b"]);
     expect(calls).toHaveLength(4);
     expect(calls).not.toContain("GET /decks/empty");
+    await sandbox.command("start");
+    expect(launch).toHaveBeenCalledOnce();
   });
   it("hides incomplete decks and allows both players to use the same complete deck", async () => {
     stubFetch(reads);
@@ -106,7 +122,7 @@ describe("Lua sandbox setup", () => {
     expect(game.names).toEqual({ p1: "Player 1", p2: "Player 2" });
     expect(game.state.firstPlayer).toBeNull();
   });
-  it("starts from the contents the picker fetched without fetching them again", async () => {
+  it("starts from the contents the list carried without fetching them", async () => {
     const { calls } = stubFetch(reads);
     const { sandbox, launch } = await setup();
     const fetched = calls.length;
@@ -115,18 +131,16 @@ describe("Lua sandbox setup", () => {
     expect(launch).toHaveBeenCalledOnce();
     expect(calls).toHaveLength(fetched);
   });
-  it("revalidates contents the cache no longer holds, including card count and Basic Pokémon", async () => {
-    stubFetch(reads);
+  it("revalidates contents it fetches at the start, including card count and Basic Pokémon", async () => {
+    stubFetch(legacyReads);
     const { sandbox, launch } = await setup();
-    clearSavedDeckCache();
-    stubFetch({ ...reads, "GET /decks/a": () => json(full("a", 59)) });
+    stubFetch({ ...legacyReads, "GET /decks/a": () => json(full("a", 59)) });
     await sandbox.command("start");
     expect(sandbox.message).toContain("59 cards");
     expect(launch).not.toHaveBeenCalled();
-    clearSavedDeckCache();
     clearCardPoolCache();
     stubFetch({
-      ...reads,
+      ...legacyReads,
       "GET /cards/full": fullCardsFrom({
         [card.id]: { ...card, category: "Energy", energyType: "Normal", stage: null },
         energy,
@@ -157,13 +171,12 @@ describe("Lua sandbox setup", () => {
     expect(navigate).toHaveBeenCalledOnce();
   });
   it("rejects double starts and cancels the handoff if the user leaves while loading", async () => {
-    stubFetch(reads);
+    // An api whose list carries no cards, so the start has a fetch to hold open.
+    stubFetch(legacyReads);
     const { sandbox, launch } = await setup();
-    // So the start has a fetch to hold open.
-    clearSavedDeckCache();
     let finish!: (response: Response) => void;
     const { calls } = stubFetch({
-      ...reads,
+      ...legacyReads,
       "GET /decks/a": () =>
         new Promise((resolve) => {
           finish = resolve;
@@ -231,7 +244,7 @@ describe("Lua sandbox setup", () => {
   });
   it("offers any deck a game can run, whatever its copies or format, but not one with no Basic or a missing card", async () => {
     const names = ["valid", "no-basic", "copies", "missing", "standard", "expanded", "deleted"];
-    const summaries = names.map((id) => ({ ...decks[0], id, name: id }));
+    const summaries = names.map((id) => ({ ...legacy[0], id, name: id }));
     const custom = (
       id: string,
       cards: { cardId: string; count: number }[],
@@ -301,18 +314,24 @@ describe("Lua sandbox setup", () => {
     stubFetch(reads);
     await sandbox.command("refresh");
     expect(sandbox.decks).toHaveLength(2);
+    const noBasic = [{ cardId: energy.id, count: 60 }];
     stubFetch({
       ...reads,
-      "GET /decks": () => json(decks.map((deck) => ({ ...deck, updated: EDITED }))),
-      "GET /decks/a": () => json(full("a", 59, EDITED)),
-      "GET /decks/b": () => json(full("b", 59, EDITED)),
+      "GET /decks": () =>
+        json(
+          decks.map((deck) => ({
+            ...deck,
+            updated: EDITED,
+            ...(deck.cardCount === 60 && { cards: noBasic }),
+          })),
+        ),
     });
     await sandbox.command("refresh");
     expect(sandbox.phase).toBe("ready");
     expect(sandbox.decks).toEqual([]);
     expect(sandbox.selected).toEqual(["", ""]);
   });
-  it("reuses a deck's contents and cards until its summary's updated moves", async () => {
+  it("judges every reload from the list alone, the card pool already in hand", async () => {
     const { calls } = stubFetch(reads);
     const { sandbox } = await setup();
     calls.length = 0;
@@ -321,11 +340,14 @@ describe("Lua sandbox setup", () => {
     const edited = stubFetch({
       ...reads,
       "GET /decks": () =>
-        json(decks.map((deck) => (deck.id === "a" ? { ...deck, updated: EDITED } : deck))),
-      "GET /decks/a": () => json(full("a", 59, EDITED)),
+        json(
+          decks.map((deck) =>
+            deck.id === "a" ? { ...deck, updated: EDITED, cardCount: 59, cards: undefined } : deck,
+          ),
+        ),
     });
     await sandbox.command("refresh");
-    expect(edited.calls).toEqual(["GET /decks", "GET /decks/a"]);
+    expect(edited.calls).toEqual(["GET /decks"]);
     expect(sandbox.decks.map((deck) => deck.id)).toEqual(["b"]);
   });
 });

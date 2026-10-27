@@ -3,7 +3,7 @@ import type { DeckCard } from "@colorless/schema";
 import type { Deck } from "../decks/data";
 import { fetchCardPool } from "./cardPool";
 import type { LocalGameSetup } from "./localHost";
-import { savedDeck } from "./sandboxDecks";
+import { deckContents } from "./sandboxDecks";
 import { SandboxSetupError } from "./sandboxSetupError";
 
 /** Expand `{cardId, count}` rows (the persisted Deck shape) into the flat id
@@ -17,9 +17,10 @@ function expandDeck(cards: readonly DeckCard[]): string[] {
 }
 
 /** Check two saved decks can run, whatever their format, and create the sandbox match between them.
-    The contents come from the picker's cache while each summary's `updated` still matches it. */
+    The contents are the ones the picker judged: the summaries' own card lists, fetched only from an
+    api that predates them. */
 export async function prepareSandbox(decks: readonly [Deck, Deck]): Promise<LocalGameSetup> {
-  const saved = await Promise.all([savedDeck(decks[0]), savedDeck(decks[1])]);
+  const saved = await Promise.all([deckContents(decks[0]), deckContents(decks[1])]);
   for (const [index, deck] of saved.entries()) {
     const count = deck.cards.reduce((sum, card) => sum + card.count, 0);
     if (count !== DECK_SIZE) {

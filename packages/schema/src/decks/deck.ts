@@ -1,7 +1,7 @@
 // The deck-library Deck, in two projections:
 //   - `Deck` — the full resource (GET /decks/:id): carries `cards`.
-//   - `DeckSummary` — the list row (GET /decks): `cards` replaced by
-//     `cardCount`, the summed counts.
+//   - `DeckSummary` — the list row (GET /decks): `cardCount`, the summed
+//     counts, with `cards` only on complete decks.
 
 import * as z from "zod";
 
@@ -55,9 +55,14 @@ export type Deck = z.infer<typeof deckSchema>;
 export const deckConflictSchema = z.object({ error: z.string(), deck: deckSchema });
 export type DeckConflict = z.infer<typeof deckConflictSchema>;
 
-/** The GET /decks list row: no card list, just the summed copy count. */
+/** The GET /decks list row: the summed copy count, and the card list of a complete deck. */
 export const deckSummarySchema = deckBaseSchema.extend({
   cardCount: z.number().int().min(0),
+  /** The deck's entries in card id order, as GET /decks/:id serves them, on a deck of exactly
+      DECK_SIZE cards and absent on any other: the pickers and the legality check judge complete
+      decks only, so this spares them a request per deck while bounding each row at DECK_SIZE
+      entries. Optional so a web build can talk to an api from before it, by fetching the deck. */
+  cards: z.array(deckCardSchema).optional(),
   /** The card whose art fronts this deck in the library grid — the owner's
       `chosenCoverCardId` when they picked one that is still in the deck and
       drawable (P5-6), else the derived default (P5-3, `pickCoverCardId`), else
