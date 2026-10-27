@@ -188,6 +188,33 @@ describe("GET /decks cover aggregation", () => {
   });
 });
 
+describe("GET /decks card lists", () => {
+  it("carries a complete deck's cards as GET /decks/:id serves them, and no other deck's", async () => {
+    const complete = await createDeck("Complete", [
+      card("sv01-230", 40),
+      card("sv01-004", 4),
+      card("sv01-191", 16),
+    ]);
+    await createDeck("Short", [card("sv01-004", 4), card("sv01-230", 55)]);
+    await createDeck("Over", [card("sv01-004", 4), card("sv01-230", 57)]);
+    await createDeck("Empty", []);
+    const listed = Object.fromEntries((await listDecks()).map((deck) => [deck.name, deck]));
+    expect(listed.Complete?.cardCount).toBe(60);
+    expect(listed.Complete?.cards).toEqual((await getDeck(complete.id)).cards);
+    expect(listed.Complete?.cards?.map((entry) => entry.cardId)).toEqual([
+      "sv01-004",
+      "sv01-191",
+      "sv01-230",
+    ]);
+    for (const name of ["Short", "Over", "Empty"]) {
+      expect(listed[name]).not.toHaveProperty("cards");
+    }
+    expect([listed.Short?.cardCount, listed.Over?.cardCount, listed.Empty?.cardCount]).toEqual([
+      59, 61, 0,
+    ]);
+  });
+});
+
 describe("folderId on the deck routes", () => {
   it("creates at the library root, and null moves a filed deck back to it", async () => {
     const res = await app.request(

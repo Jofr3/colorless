@@ -149,17 +149,15 @@ async function refusedPatchResponse(c: Context, db: Db, deckId: string, userId: 
 deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   const db = drizzle(c.env.DB);
   const userId = c.get("user").id;
-  // Cover candidates for the whole library come from a second query in the same batch, rather
-  // than the window function this would need to fold into the aggregate: the rule then lives in a
-  // pure `pickCoverCardId` that can be argued with and tested, and the extra rows are one per
-  // distinct card per deck.
-  const [rows, candidateRows] = await db.batch([
+  // Every deck's cards come from a second query in the same batch, joined to the catalog facts
+  // the cover rule needs. Each deck's count, cover and (when complete) card list are derived from
+  // those rows here rather than in SQL: the cover rule then lives in a pure `pickCoverCardId` that
+  // can be argued with and tested, and the rows are one per distinct card per deck.
+  const [rows, cardRows] = await db.batch([
     db
-      .select({ deck: decks, cardCount: sql<number>`coalesce(sum(${deckCards.count}), 0)` })
+      .select()
       .from(decks)
-      .leftJoin(deckCards, eq(deckCards.deckId, decks.id))
       .where(eq(decks.userId, userId))
-      .groupBy(decks.id)
       .orderBy(asc(decks.position), asc(decks.id)),
     db
       .select({
@@ -173,10 +171,11 @@ deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
       .from(deckCards)
       .innerJoin(decks, eq(decks.id, deckCards.deckId))
       .innerJoin(cards, eq(cards.id, deckCards.cardId))
-      .where(eq(decks.userId, userId)),
+      .where(eq(decks.userId, userId))
+      .orderBy(asc(deckCards.deckId), asc(deckCards.cardId)),
   ]);
   const byDeck = new Map<string, CoverCandidate[]>();
-  for (const row of candidateRows) {
+  for (const row of cardRows) {
     const list = byDeck.get(row.deckId) ?? [];
     list.push({
       cardId: row.cardId,
@@ -189,16 +188,17 @@ deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   }
   return c.json(
     deckSummariesResponseSchema.parse(
-      rows.map((row) =>
-        mapDeckSummaryRow(
-          row.deck,
-          row.cardCount,
+      rows.map((row) => {
+        const candidates = byDeck.get(row.id) ?? [];
+        return mapDeckSummaryRow(
+          row,
+          candidates,
           // The owner's pin wins over the derived default, but only while it is
           // still a drawable card in the deck (P5-6) — resolved against the
           // candidates already in hand, so honouring a choice costs no query.
-          effectiveCoverCardId(row.deck.coverCardId, byDeck.get(row.deck.id) ?? []),
-        ),
-      ),
+          effectiveCoverCardId(row.coverCardId, candidates),
+        );
+      }),
     ),
   );
 });
