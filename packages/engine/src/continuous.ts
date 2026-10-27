@@ -1908,13 +1908,17 @@ export function firstTurnAttackBanned(
  * §4/§8: the printed attack gate on the attack at menu `index`, or undefined. Read from the menu
  * row's source card, not through `passivesOf`, because it is attack text and §9 locks only
  * Abilities. Registry rows take precedence; otherwise the gate is derived from that attack's own
- * text. Out-of-range indexes return undefined.
+ * text. Out-of-range and non-integer indexes return undefined.
  */
 export function attackGateOf(
   state: GameState,
   pokemon: InPlayPokemon,
   index: number,
 ): AttackTimingGate | undefined {
+  // `firstTurnAttackBanned` reaches here with the wire index before `attack` validates it, and an
+  // array indexed by "__proto__", "constructor" or "length" yields an inherited member whose
+  // `card` is undefined (MI3), so only an integer may index the menu.
+  if (!Number.isInteger(index)) return undefined;
   // `index` is the flat menu index; the gate is looked up on the card the attack is printed on, at
   // its own index there. A body not in play has no seat, so its menu is its printed attacks.
   const entry = attackMenuOf(state, seatOfPokemon(state, pokemon), pokemon)[index];

@@ -437,6 +437,19 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     if (engineRefused.ok) throw new Error("expected reject");
     expect(engineRefused.reason).not.toBe("That move isn't available here.");
   });
+
+  it("REFUSES an action the engine throws on, handing the caller what was thrown (MI3)", () => {
+    const { record, winner } = freshRecord();
+    // A state the engine cannot read stands in for any input that breaks its totality contract;
+    // the crafted turn-1 attack index that once did is pinned in attack.test and lobbyAbuse.test.
+    const broken = { ...record, state: { ...record.state, players: null } } as never;
+    const outcome = applyMatchAction(broken, winner, { type: "concede" }, STARTED_AT);
+    expect(outcome).toEqual({
+      ok: false,
+      reason: "That move isn't available here.",
+      thrown: expect.any(TypeError),
+    });
+  });
 });
 
 describe("readMatchRecord — the persisted-shape gate", () => {

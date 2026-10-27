@@ -142,6 +142,20 @@ describe("first-turn restriction (§4)", () => {
     expectErr(state, { type: "attack", seat: "p1", index: 0 }, "FIRST_TURN_ATTACK");
   });
 
+  it("rejects a turn-1 index naming an array member instead of throwing (MI3)", () => {
+    let state = driveSetup(
+      SEED,
+      { p1: ATTACKER_DECK, p2: defenderDeck("fix-wall") },
+      { first: "p1", active: { p1: "fix-attacker", p2: "fix-wall" } },
+    );
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
+    // The §4 ban reads the index before the integer check, so these once reached
+    // `attackMenuOf(...)[index]` and threw on the inherited member's missing card.
+    for (const index of ["__proto__", "constructor", "length", "toString"]) {
+      expectErr(state, { type: "attack", seat: "p1", index: index as never }, "FIRST_TURN_ATTACK");
+    }
+  });
+
   it("lets the second player attack on their first turn (turn 2)", () => {
     let state = driveSetup(
       SEED,
