@@ -215,7 +215,9 @@ original DynaText character pop-in (rate 8) and ongoing bump motion; it stays
 silent and respects Reduced Motion.
 
 Click a deck to open its Lua builder (`/decks/<id>`). Compact deck rows show the name above each pile and a right-aligned count
-(e.g. 60/60) beneath it. Dragging a top card returns it to its pile without changing the sort order. Failed writes reconcile with the server.
+(e.g. 60/60) beneath it. A small blue dots button under each pile's left half (the focus stop after its deck,
+read as "Manage <name>") opens the Manage dialog: Edit deck, Rename and Delete deck. Delete opens a second
+dialog that names the deck and must be confirmed. Dragging a top card returns it to its pile without changing the sort order. Failed writes reconcile with the server.
 New decks are created without a folder.
 
 Deck piles follow the in-game `G.deck` implementation in `cardarea.lua` and

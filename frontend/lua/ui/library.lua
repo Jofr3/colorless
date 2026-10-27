@@ -26,6 +26,16 @@ end
 local function caption(text,size,x,y,w,colour)
   text,size=Fit.fit(text,size,w); T.text(text,size,x,y,w,colour)
 end
+-- The Manage button's face: three pixel dots, following the face's parallax
+-- like the builder's icon buttons.
+local function manageDots(b,pressed,roomWidth)
+  local sx=((b.x+b.w/2-roomWidth/2)/(roomWidth/2))*1.5
+  local layer=0.4-(pressed and 1.5 or 0)
+  g.push(); g.translate(b.x+layer*sx*3+b.w/2,b.y-layer*4.5+b.h/2); g.scale(pressed and 0.985 or 1)
+  g.setColor(T.white)
+  for dot=-1,1 do g.rectangle('fill',dot*8-2,-2,4,4) end
+  g.pop()
+end
 function Library.new(callbacks)
   return setmetatable({callbacks=callbacks,pageText=PageText.new(),phase='loading',busy=false,message='',query='',sort='name-asc',page=1,pages=1,total=0,items={},cards={},controls={},focus=0,hover=0,time=0,draft='',search='',editing=''},Library)
 end
@@ -143,7 +153,11 @@ function Library:build()
     self:add('Sort: '..(sortLabels[self.sort] or 'Name A-Z'),p and 24 or contentX+490,p and 102 or 48,p and 208 or 260,42,'sort',T.blue)
     self:add('New deck',p and 248 or contentX+764,p and 102 or 48,p and 208 or 236,42,'new-deck',T.red)
     for i,card in ipairs(self.cards) do
-      self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-D.HALF_W*card.baseScale,y=card.homeY-D.HALF_H*card.baseScale,w=D.W*card.baseScale,h=D.H*card.baseScale,action='card',card=i}
+      local s=card.baseScale
+      self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-D.HALF_W*s,y=card.homeY-D.HALF_H*s,w=D.W*s,h=D.H*s,action='card',card=i}
+      -- Rename and Delete live in the Manage dialog: a dots button under the
+      -- pile's left half (the count sits under the right), focused after its deck.
+      self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel=''})
     end
     self:add('<',w/2-177,h-144,36,48,'previous',T.red).fontSize=30
     self:add('>',w/2+141,h-144,36,48,'next',T.red).fontSize=30
@@ -160,7 +174,7 @@ function Library:openModal(mode,item)
   self.modal.motion.T.y=0
   self.draft=mode=='create' and 'Untitled Deck' or item.name
   self:build()
-  self.callbacks.announce(mode=='manage' and item.name or mode..' '..item.kind)
+  self.callbacks.announce(mode=='manage' and item.name or mode=='delete' and 'Delete '..item.name..'? This deck will be permanently deleted.' or mode..' '..item.kind)
 end
 function Library:input(raw)
   if not raw or self.inputRaw==raw then return end
@@ -243,7 +257,9 @@ function Library:update(dt,time,mx,my,reduced)
     if card then card.dragging=self.drag.active; card.targetX,card.targetY=mx+self.drag.offsetX,my+self.drag.offsetY end
   end
   for i,card in ipairs(self.cards) do
-    local hovered=not self.modal and ((self.controls[self.hover] or {}).card==i or (self.controls[self.focus] or {}).card==i)
+    -- Only the pile itself lifts; its Manage button does not.
+    local hover,focus=self.controls[self.hover] or {},self.controls[self.focus] or {}
+    local hovered=not self.modal and (hover.action=='card' and hover.card==i or focus.action=='card' and focus.card==i)
     if hovered and not card.hovered then card:juiceUp(time,0.05,0.03,reduced); self.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     card:update(dt,time,hovered,reduced,self.width)
   end
@@ -324,7 +340,11 @@ function Library:draw(shaders)
   end
   for i,b in ipairs(self.modal and self.baseControls or self.controls) do
     if b.input then Input.draw(b,self.search,not self.modal and self.editing=='search',self.first,self.last,self.time,false,not self.modal and self.hover==i)
-    elseif b.action~='card' then Button.draw(b,not self.modal and not b.disabled and (self.hover==i or self.focus==i),not self.modal and self.pressed==i,false,w) end
+    elseif b.action~='card' then
+      local pressed=not self.modal and self.pressed==i
+      Button.draw(b,not self.modal and not b.disabled and (self.hover==i or self.focus==i),pressed,false,w)
+      if b.action=='manage' then manageDots(b,pressed,w) end
+    end
   end
   if not self.modal then
     if self.message~='' then caption(self.message,23,28,h-178,w-56,T.red) end

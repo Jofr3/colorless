@@ -146,11 +146,13 @@ describe("Lua deck builder", () => {
     await b.command("leave");
     await tick();
     expect(b.saveStatus).toBe("failed");
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
     expect(back).not.toHaveBeenCalled();
     expect(b.entries.get("a")).toBe(1);
     await b.command("leave");
     await tick();
     expect(back).toHaveBeenCalledTimes(1);
+    expect(b.message).toBe("");
   });
   it("serializes a follow-up edit behind an in-flight save before navigating", async () => {
     let resolve!: (d: Deck) => void;

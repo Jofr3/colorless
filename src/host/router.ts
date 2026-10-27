@@ -91,7 +91,7 @@ export function pageTitle(page: Page, deckName = ""): string {
 }
 
 const LIBRARY_LABEL =
-  "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home.";
+  "Deck library. Tab or arrows choose controls and cards; each deck's Manage button renames or deletes it. Enter opens. Escape returns home.";
 const TABLE_LABEL =
   "game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options.";
 
