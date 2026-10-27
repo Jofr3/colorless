@@ -272,9 +272,16 @@ data loss rather than a validation failure.
   answers one uniform 401. *Caveat:* 100k iterations ≈ tens of ms CPU — if
   free-plan Workers CPU limits 500 the auth routes in production, lower the
   count or move to WASM Argon2. Register/login are rate-limited per scope in
-  the D1 table `auth_rate_limits` (`apps/api/src/auth/rateLimit.ts`): 10
-  attempts per 15 min per (IP, email) and 50 per IP across emails, an IPv6
-  address counting as its /64. Keys are SHA-256 hashes, never the IP or email.
+  the D1 table `auth_rate_limits` (`apps/api/src/auth/rateLimit.ts`): login
+  (and deletion) 10 attempts per 15 min per (IP, email) and 50 per IP across
+  emails; register 5 per hour per IP (security audit AUX1: each allowed
+  register writes about 10 rows and leaves a user behind). An IPv6 address
+  counts as its /64. Keys are SHA-256 hashes, never the IP or email. In front
+  of it, the Workers Rate Limiting binding `AUTH_LIMIT` allows 10 a minute per
+  (scope, IP) and refuses a flood with 429 + `Retry-After: 60` before any D1
+  write; it fails open on a binding error (`evt = "auth", kind =
+  "binding_error"`), like the lobby's, while the D1 limiter behind it still
+  fails closed.
   The counting upserts run in the same `db.batch` as the user lookup, so they
   are exact under concurrency and cost no extra round trip; an attempt already
   over budget writes nothing. Over budget → 429 with `Retry-After`. A D1 error
@@ -548,9 +555,37 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 | Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change), and every `setAlarm` (the liveness deadline moves on each commit) |
 
 The KV write quota is the tight one, and only the catalog cache spends it.
-Sign-in no longer touches KV. The lobby's per-IP limits (`POST /lobby` 10 a
-minute, the `/ws` upgrade 60 a minute) are Workers Rate Limiting bindings, not
-a stored quota.
+Sign-in no longer touches KV. The Workers Rate Limiting bindings are free and
+store nothing; they bound bursts, not a day:
+
+| Binding | Limit | Key | On a binding error |
+| --- | --- | --- | --- |
+| `LOBBY_CREATE_LIMIT` | 10 / 60 s | IP | open |
+| `LOBBY_SOCKET_LIMIT` | 60 / 60 s | IP | open |
+| `AUTH_LIMIT` | 10 / 60 s | scope (register, login, delete) + IP | open; the D1 sign-in limiter behind it fails closed |
+| `DECK_WRITE_LIMIT` | 60 / 60 s | account | open |
+| `DECK_WRITE_IP_LIMIT` | 180 / 60 s | IP | open |
+
+IP keys count an IPv6 address as its /64. Deck writes are POST, PATCH and
+DELETE `/decks`; the builder saves at most about once a second (600 ms debounce,
+one save in flight), and the client backs off on a 429. An account at its limit
+swapping 200-entry lists still writes about 36,000 D1 rows a minute, so the
+deck bindings do not protect the daily write quota from a determined account
+(security audit DK1, decision 4: bindings now, a denormalized list later).
+
+**Known availability risk (security audit AE2, accepted).** Workers Free allows
+100,000 requests a day across the account, and every API request counts,
+including the ones a limiter refuses: all the limits above run inside the
+Worker, and workers.dev has nothing in front of it. A loop of about 1.2
+requests a second for a day, or a short burst from a few hosts, spends the
+quota, and the API answers Cloudflare error 1027 until 00:00 UTC (the static web
+Worker keeps serving). If that abuse is seen, move the web app **and** the API
+to one custom domain on a Cloudflare zone (`workers_dev: false`) and add the
+Free WAF rate-limiting rule on `/auth/*`, `/decks*` and `/lobby*`, rather than
+upgrading to Workers Paid. Both must stay on one registrable domain: the session
+cookie is `SameSite=Lax`, so an API on another site would lose it. The move
+changes `VITE_API_ORIGIN`, the CSP, `APP_ORIGIN` and the Google redirect URI,
+and logs everyone out once.
 
 **After every deploy**, check that the Worker reaches D1 and that the remote
 migration count matches the files:
@@ -588,7 +623,8 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | Query | What it finds |
 | --- | --- |
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
-| `evt = "auth"` | Login, register and OAuth failures, account deletions (`apps/api/src/auth/`). |
+| `evt = "auth"` | Login, register and OAuth failures, account deletions (`apps/api/src/auth/`); `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it), `limiter_error` from the D1 limiter and `binding_error` from the binding. |
+| `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
 | `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). |
@@ -1005,10 +1041,12 @@ GET    /assets/sets/:setId/:file     # logo|symbol . png|webp  (e.g. symbol.png)
 # Auth (D2a) — implemented (§3.5 as-built); bodies validated, users
 # boundary-parsed through @colorless/schema userSchema (never any hash field)
 POST   /auth/register            # {email, password, displayName?} → 201 user + session
-                                 #   cookie; 400 invalid body; 409 duplicate email; 429 rate-limited;
-                                 #   503 when the limiter cannot count (D1 error)
+                                 #   cookie; 400 invalid body; 409 duplicate email; 429 rate-limited
+                                 #   (AUTH_LIMIT 10/min, then 5/hour per IP in D1); 503 when the
+                                 #   limiter cannot count (D1 error)
 POST   /auth/login               # {email, password} → 200 user + session cookie;
-                                 #   uniform 401 on any failure; 429 rate-limited; 503 as above
+                                 #   uniform 401 on any failure; 429 rate-limited (AUTH_LIMIT
+                                 #   10/min, then the D1 budgets); 503 as above
 POST   /auth/logout              # deletes the session row, clears the cookie → 204
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
 DELETE /auth/me                  # {password?, confirmEmail?} → 204, deletes the account (cascades),
@@ -1028,8 +1066,13 @@ POST   /auth/verify-email  ·  POST /auth/reset-password
 # as null (a non-null value → 400), lists still order by `position`, and the
 # `folders` table and `decks.folder_id` column stay. Card lists: {cardId, count 1–99},
 # ≤200 distinct entries, duplicate cardIds → 400, ids absent from the catalog
-# → 400 `{"error":"unknown card id(s)","cardIds":[…]}` (checked with a chunked
-# IN query against `cards`, never the FK error text).
+# → 400 `{"error":"unknown card id(s)","cardIds":[…]}` naming at most 20 (checked
+# with a chunked IN query against `cards`, never the FK error text). On writes a
+# card id (and `chosenCoverCardId`) is 1–40 characters of `[A-Za-z0-9._-]`, else
+# 400 (security audit DK3; catalog ids are 12 at most today); read schemas do not
+# check it, so a deck saved earlier always loads. POST, PATCH and DELETE are
+# limited to 60 a minute per account and 180 per IP (Workers Rate Limiting,
+# §3.7.4) → 429 `{"error":"too many requests"}` + Retry-After: 60.
 GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
                          #   updated, version, cardCount, coverCardId, cards?}
                          #   — cardCount = summed copy counts (0 when empty);
@@ -1044,9 +1087,11 @@ GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
 POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}
                          #   → 201 Deck (server-minted UUID id, version 0);
                          #   409 {"error":"deck limit reached","limit":500} once
-                         #   the account holds MAX_DECKS_PER_USER decks (counted
-                         #   in the read that picks the new deck's position, so
-                         #   two racing creates can pass it by one)
+                         #   the account holds MAX_DECKS_PER_USER decks. The
+                         #   insert counts the decks in the same statement
+                         #   (INSERT … SELECT … WHERE count < cap) and the cards
+                         #   insert is guarded by EXISTS on the deck row, so
+                         #   racing creates never pass the cap (security DK2)
 PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null clears
                          #   the nullable ones) AND/OR wholesale `cards`
                          #   replacement (only the differing rows, in one

@@ -17,6 +17,19 @@ export const MAX_DECKS_PER_USER = 500;
 /** Deck names. */
 export const DECK_NAME_MAX = 100;
 
+/** Longest card id a write accepts. Catalog ids are a set id and a number ("swsh10.5-001", 12
+    characters at most today); the cap leaves room for longer set ids without letting a request
+    carry, or a 400 echo, an arbitrarily long string (security audit DK3). */
+export const CARD_ID_MAX = 40;
+
+/** A card id as a write names it: the catalog's characters only. Read schemas stay loose, so a
+    deck saved before this check always loads. */
+export const cardIdSchema = z
+  .string()
+  .min(1)
+  .max(CARD_ID_MAX)
+  .regex(/^[A-Za-z0-9._-]+$/, "card ids use letters, digits, '.', '_' and '-'");
+
 const nameField = z.string().trim().min(1).max(DECK_NAME_MAX);
 const tintField = z.number().int().min(0).max(360);
 const formatField = z.string().trim().min(1).max(32);
@@ -24,7 +37,7 @@ const formatField = z.string().trim().min(1).max(32);
 /** A deck's card list: capped, and each catalog card appears at most once —
     copies are expressed through `count`, never by repeating the entry. */
 const deckCardsField = z
-  .array(deckCardSchema)
+  .array(deckCardSchema.extend({ cardId: cardIdSchema }))
   .max(MAX_DECK_CARD_ENTRIES)
   .superRefine((entries, ctx) => {
     const seen = new Set<string>();
@@ -73,7 +86,7 @@ export const patchDeckRequestSchema = nonEmptyPatch({
   /** The owner's cover pick (P5-6): a card id to pin, `null` for automatic.
       Must be a card in the deck AFTER this patch applies — sending one that
       isn't is a 400, since the request contradicts itself. */
-  chosenCoverCardId: z.string().min(1).nullable().optional(),
+  chosenCoverCardId: cardIdSchema.nullable().optional(),
   /** The deck version this patch was made from. When present the patch applies only while the
       deck is still at it, and answers 409 with the current deck otherwise. Absent, the patch is
       last-writer-wins (web builds from before versions). */

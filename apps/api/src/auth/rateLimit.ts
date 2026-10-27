@@ -2,12 +2,17 @@
 // `auth_rate_limits`. Each scope has its own windows: deletion asks for the current password, so
 // without a budget a stolen session cookie could guess it at full speed.
 //
-// Every attempt counts against two keys. The (scope, ip, email) key allows 10 per 15 minutes,
-// which is what slows a password guesser on one account. The (scope, ip) key allows 50, which
-// stops one address cycling through emails while leaving room for a household, office or
-// school behind one NAT address, where several people sign in and mistype within the same
-// quarter hour. An attempt refused by the account key does not count against the address, so
-// one locked-out account does not use up its neighbours' budget.
+// Every attempt counts against two keys. For login and deletion the (scope, ip, email) key allows
+// 10 per 15 minutes, which is what slows a password guesser on one account. The (scope, ip) key
+// allows 50, which stops one address cycling through emails while leaving room for a household,
+// office or school behind one NAT address, where several people sign in and mistype within the
+// same quarter hour. An attempt refused by the account key does not count against the address,
+// so one locked-out account does not use up its neighbours' budget.
+//
+// Register gets 5 an hour per address (security audit AUX1): each allowed register writes about
+// 10 rows and leaves a user behind, so the login budget let one address spend half the day's
+// write quota. Nobody makes more than a few accounts an hour; a class signing up together behind
+// one address waits for the window, which the 429's Retry-After says.
 //
 // The counting statements run in the same D1 batch as the route's user lookup: no extra round
 // trip, and since D1 runs a batch as one serial transaction, concurrent attempts cannot
@@ -29,15 +34,39 @@ import { authRateLimits } from "../db/schema";
 import { logEventThrottled } from "../http/log";
 import { toBase64Url } from "./encoding";
 
+/** The login and delete window. */
 export const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
-/** Attempts per (scope, ip, email) per window. */
+/** Login and delete attempts per (scope, ip, email) per window. */
 export const ACCOUNT_MAX_ATTEMPTS = 10;
-/** Attempts per (scope, ip) per window, across every email. */
+/** Login and delete attempts per (scope, ip) per window, across every email. */
 export const IP_MAX_ATTEMPTS = 50;
+/** The register window, and the registers it allows per address (and so per address and email). */
+export const REGISTER_WINDOW_MS = 60 * 60 * 1000;
+export const REGISTER_MAX_ATTEMPTS = 5;
 
 export type RateLimitScope = "register" | "login" | "delete";
 
-export type RateLimitKeys = { account: string; ip: string };
+type ScopeBudget = { windowMs: number; accountMax: number; ipMax: number };
+
+const BUDGETS: Record<RateLimitScope, ScopeBudget> = {
+  login: {
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    accountMax: ACCOUNT_MAX_ATTEMPTS,
+    ipMax: IP_MAX_ATTEMPTS,
+  },
+  delete: {
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    accountMax: ACCOUNT_MAX_ATTEMPTS,
+    ipMax: IP_MAX_ATTEMPTS,
+  },
+  register: {
+    windowMs: REGISTER_WINDOW_MS,
+    accountMax: REGISTER_MAX_ATTEMPTS,
+    ipMax: REGISTER_MAX_ATTEMPTS,
+  },
+};
+
+export type RateLimitKeys = { scope: RateLimitScope; account: string; ip: string };
 
 async function sha256(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -55,7 +84,7 @@ export async function rateLimitKeys(
     sha256(`account\n${scope}\n${ip}\n${email.trim().toLowerCase()}`),
     sha256(`ip\n${scope}\n${ip}`),
   ]);
-  return { account, ip: address };
+  return { scope, account, ip: address };
 }
 
 type Budget = { key: string; max: number };
@@ -64,13 +93,19 @@ type Budget = { key: string; max: number };
  * Counts one attempt against `own`: a missing row or a passed window starts at 1, a live window
  * adds 1. Writes nothing while `own` is already over its max, or while `other` is.
  */
-function countAttempt(db: DrizzleD1Database, own: Budget, other: Budget, nowMs: number) {
+function countAttempt(
+  db: DrizzleD1Database,
+  own: Budget,
+  other: Budget,
+  windowMs: number,
+  nowMs: number,
+) {
   const { resetAt, count } = authRateLimits;
   // Raw SQL is not batchable with parameters in drizzle's D1 driver, so the statement is built
   // on an insert; the select's columns follow the table's: key, count, reset_at.
   return db
     .insert(authRateLimits)
-    .select(sql`SELECT ${own.key}, 1, ${nowMs + RATE_LIMIT_WINDOW_MS}
+    .select(sql`SELECT ${own.key}, 1, ${nowMs + windowMs}
       WHERE NOT EXISTS (SELECT 1 FROM auth_rate_limits AS other
         WHERE other."key" = ${other.key} AND other.reset_at > ${nowMs} AND other.count > ${other.max})`)
     .onConflictDoUpdate({
@@ -124,14 +159,15 @@ export async function limitAttempt<T>(
   lookup: () => RunnableQuery<T, "sqlite"> & PromiseLike<T>,
   nowMs: number = Date.now(),
 ): Promise<LimitedLookup<T>> {
-  const account = { key: keys.account, max: ACCOUNT_MAX_ATTEMPTS };
-  const ip = { key: keys.ip, max: IP_MAX_ATTEMPTS };
+  const budget = BUDGETS[keys.scope];
+  const account = { key: keys.account, max: budget.accountMax };
+  const ip = { key: keys.ip, max: budget.ipMax };
   let refused: { resetAt: number | null }[];
   let found: T;
   try {
     [, , refused, found] = await db.batch([
-      countAttempt(db, account, ip, nowMs),
-      countAttempt(db, ip, account, nowMs),
+      countAttempt(db, account, ip, budget.windowMs, nowMs),
+      countAttempt(db, ip, account, budget.windowMs, nowMs),
       refusedUntil(db, account, ip, nowMs),
       lookup(),
     ]);

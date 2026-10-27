@@ -56,6 +56,24 @@
       "name": "LOBBY_SOCKET_LIMIT",
       "namespace_id": "1002",
       "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      // Per (scope, IP) ahead of the D1 sign-in limiter on register, login and account deletion
+      // (src/auth/routes.ts): a flood is refused before it spends a D1 write.
+      "name": "AUTH_LIMIT",
+      "namespace_id": "1004",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      // Deck writes per account and per IP (src/decks/routes.ts, which justifies the numbers).
+      "name": "DECK_WRITE_LIMIT",
+      "namespace_id": "1005",
+      "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      "name": "DECK_WRITE_IP_LIMIT",
+      "namespace_id": "1006",
+      "simple": { "limit": 180, "period": 60 }
     }
   ],
   "kv_namespaces": [

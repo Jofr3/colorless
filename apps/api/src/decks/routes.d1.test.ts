@@ -1,5 +1,6 @@
 import { type Deck, type DeckCard, type DeckSummary, MAX_DECKS_PER_USER } from "@colorless/schema";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import {
   raceBeforeBatch,
@@ -9,6 +10,7 @@ import {
   signedInUser,
   useTestD1,
 } from "../testing/d1";
+import { brokenRateLimit, fakeRateLimit } from "../testing/rateLimit";
 
 const SCAN = "https://assets.tcgdex.net/en/sv/sv01/x";
 
@@ -432,16 +434,69 @@ describe("PATCH /decks/:id versions", () => {
 });
 
 describe("POST /decks cap", () => {
-  it(`refuses a deck past ${MAX_DECKS_PER_USER} and takes one again after a delete`, async () => {
-    const { db } = d1();
-    await db
+  /** Gives ash `count` decks named bulk-1 … bulk-count. */
+  function fillDecks(count: number, db: D1Database = d1().db) {
+    return db
       .prepare(
         `INSERT INTO decks (id, user_id, name, tint, position, updated)
           WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?)
           SELECT 'bulk-' || i, ?, 'Deck ' || i, 0, i, 0 FROM n`,
       )
-      .bind(MAX_DECKS_PER_USER, ash.userId)
+      .bind(count, ash.userId)
       .run();
+  }
+
+  const deckCount = async () =>
+    (
+      await d1()
+        .db.prepare("SELECT count(*) AS n FROM decks WHERE user_id = ?")
+        .bind(ash.userId)
+        .first<{ n: number }>()
+    )?.n;
+
+  it("lets concurrent creates fill the cap exactly, never past it", async () => {
+    await fillDecks(MAX_DECKS_PER_USER - 3);
+    const responses = await Promise.all(
+      Array.from({ length: 10 }, (_, i) =>
+        app.request(
+          "/decks",
+          jsonInit("POST", { name: `Racer ${i}`, tint: 22 }, ash.cookie),
+          d1().env(),
+        ),
+      ),
+    );
+    const statuses = responses.map((res) => res.status).sort();
+    expect(statuses).toEqual([...Array(3).fill(201), ...Array(7).fill(409)]);
+    expect(await deckCount()).toBe(MAX_DECKS_PER_USER);
+  });
+
+  it("writes neither the deck nor its cards when the cap fills between the count and the insert", async () => {
+    const { db } = d1();
+    await fillDecks(MAX_DECKS_PER_USER - 1);
+    const res = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "Late", tint: 22, cards: [card("sv01-004", 4)] }, ash.cookie),
+      d1().env({
+        DB: raceBeforeBatch(db, 1, async () => {
+          await db
+            .prepare("INSERT INTO decks (id, user_id, name, tint) VALUES ('winner', ?, 'W', 0)")
+            .bind(ash.userId)
+            .run();
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: "deck limit reached", limit: MAX_DECKS_PER_USER });
+    expect(await deckCount()).toBe(MAX_DECKS_PER_USER);
+    const cardRows = await db
+      .prepare("SELECT count(*) AS n FROM deck_cards")
+      .first<{ n: number }>();
+    expect(cardRows?.n).toBe(0);
+  });
+
+  it(`refuses a deck past ${MAX_DECKS_PER_USER} and takes one again after a delete`, async () => {
+    const { db } = d1();
+    await fillDecks(MAX_DECKS_PER_USER);
     const full = await app.request(
       "/decks",
       jsonInit("POST", { name: "One more", tint: 22 }, ash.cookie),
@@ -606,5 +661,99 @@ describe("a failed deck query", () => {
     ]);
     expect(lines.join("\n")).not.toContain(deck.id);
     expect(lines.join("\n")).not.toContain(ash.userId);
+  });
+});
+
+describe("unknown card ids", () => {
+  it("names at most 20 of them", async () => {
+    const cards = Array.from({ length: 25 }, (_, i) => card(`sv99-${i}`, 1));
+    const res = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "Bad", tint: 22, cards }, ash.cookie),
+      d1().env(),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { cardIds: string[] };
+    expect(body.cardIds).toEqual(cards.slice(0, 20).map((entry) => entry.cardId));
+  });
+});
+
+describe("deck write limits", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetLogThrottle();
+  });
+
+  const from = (ip: string, init: { headers: Record<string, string> }) => ({
+    ...init,
+    headers: { ...init.headers, "cf-connecting-ip": ip },
+  });
+
+  it("429s an account over its budget on every write, without writing, and leaves reads alone", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const perUser = fakeRateLimit(1);
+    const perIp = fakeRateLimit(100);
+    const env = d1().env({ DECK_WRITE_LIMIT: perUser.binding, DECK_WRITE_IP_LIMIT: perIp.binding });
+    const ip = "203.0.113.9";
+    const created = await app.request(
+      "/decks",
+      from(ip, jsonInit("POST", { name: "Fire", tint: 22 }, ash.cookie)),
+      env,
+    );
+    expect(created.status).toBe(201);
+    const { id } = (await created.json()) as Deck;
+    const writes = [
+      ["/decks", jsonInit("POST", { name: "Water", tint: 22 }, ash.cookie)],
+      [`/decks/${id}`, jsonInit("PATCH", { name: "Renamed" }, ash.cookie)],
+      [`/decks/${id}`, { method: "DELETE", headers: { Cookie: ash.cookie } }],
+    ] as const;
+    for (const [path, init] of writes) {
+      const res = await app.request(path, from(ip, init), env);
+      expect(res.status).toBe(429);
+      expect(res.headers.get("Retry-After")).toBe("60");
+      expect(await res.json()).toEqual({ error: "too many requests" });
+    }
+    expect((await listDecks()).map((deck) => deck.name)).toEqual(["Fire"]);
+    expect(perUser.keys).toEqual(Array(4).fill(ash.userId));
+    // A refused account does not spend its address's budget.
+    expect(perIp.keys).toEqual([ip]);
+    const read = await app.request(`/decks/${id}`, { headers: { Cookie: ash.cookie } }, env);
+    expect(read.status).toBe(200);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "decks", kind: "rate_limited", route: "post" },
+    ]);
+  });
+
+  it("limits one address across accounts, counting an IPv6 /64 as one", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const perIp = fakeRateLimit(1);
+    const env = d1().env({
+      DECK_WRITE_LIMIT: fakeRateLimit(100).binding,
+      DECK_WRITE_IP_LIMIT: perIp.binding,
+    });
+    const gary = await signedInUser(d1().db, "gary@example.com");
+    const create = (who: SignedIn, ip: string) =>
+      app.request("/decks", from(ip, jsonInit("POST", { name: "D", tint: 22 }, who.cookie)), env);
+    expect((await create(ash, "2001:db8:0:12::1")).status).toBe(201);
+    expect((await create(gary, "2001:db8:0:12:ffff::2")).status).toBe(429);
+    expect((await create(gary, "2001:db8:0:13::1")).status).toBe(201);
+    expect(perIp.keys).toEqual(["2001:db8:0:12::/64", "2001:db8:0:12::/64", "2001:db8:0:13::/64"]);
+  });
+
+  it("lets writes through when a binding fails, and logs it", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const env = d1().env({
+      DECK_WRITE_LIMIT: brokenRateLimit,
+      DECK_WRITE_IP_LIMIT: brokenRateLimit,
+    });
+    const res = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "Fire", tint: 22 }, ash.cookie),
+      env,
+    );
+    expect(res.status).toBe(201);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "decks", kind: "binding_error", route: "post", error: "Error" },
+    ]);
   });
 });

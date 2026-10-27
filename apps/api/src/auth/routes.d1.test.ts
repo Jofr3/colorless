@@ -11,7 +11,14 @@ import {
 } from "../testing/d1";
 import { packStateCookieValue } from "./oauth";
 import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash } from "./password";
-import { ACCOUNT_MAX_ATTEMPTS, rateLimitKeys, UNAVAILABLE_RETRY_SECONDS } from "./rateLimit";
+import { brokenRateLimit, fakeRateLimit } from "../testing/rateLimit";
+import {
+  ACCOUNT_MAX_ATTEMPTS,
+  REGISTER_MAX_ATTEMPTS,
+  REGISTER_WINDOW_MS,
+  rateLimitKeys,
+  UNAVAILABLE_RETRY_SECONDS,
+} from "./rateLimit";
 
 // One catalog card, for the deck contents account deletion must take with it.
 const d1 = useTestD1((db) =>
@@ -351,6 +358,73 @@ describe("register and login rate limiting", () => {
     expect(logged()).toEqual([{ evt: "auth", kind: "limiter_error", error: "Error", quota: true }]);
     expect(JSON.stringify(logged())).not.toMatch(/misty|203\.0\.113\.9/);
   });
+
+  it(`gives register its own budget of ${REGISTER_MAX_ATTEMPTS} an hour per address`, async () => {
+    const headers = { "cf-connecting-ip": "203.0.113.9" };
+    const registerFrom = (email: string, from = headers) =>
+      app.request("/auth/register", postJson({ email, password: "starmie-456" }, from), d1().env());
+    for (let i = 0; i < REGISTER_MAX_ATTEMPTS; i++) {
+      expect((await registerFrom(`trainer${i}@example.com`)).status).toBe(201);
+    }
+    const refused = await registerFrom("one-more@example.com");
+    expect(refused.status).toBe(429);
+    expect(Number(refused.headers.get("Retry-After"))).toBeGreaterThan(
+      REGISTER_WINDOW_MS / 1000 - 10,
+    );
+    expect(await refused.json()).toEqual({ error: "too many attempts" });
+    // Signing in from the address, and registering from another, are untouched.
+    const signIn = postJson({ email: "trainer0@example.com", password: "starmie-456" }, headers);
+    expect((await app.request("/auth/login", signIn, d1().env())).status).toBe(200);
+    expect(
+      (await registerFrom("one-more@example.com", { "cf-connecting-ip": "198.51.100.7" })).status,
+    ).toBe(201);
+  });
+
+  const storedCounters = async () =>
+    (await d1().db.prepare("SELECT count(*) AS n FROM auth_rate_limits").first<{ n: number }>())?.n;
+
+  it("refuses a flood at the AUTH_LIMIT binding before the D1 limiter writes, per scope and /64", async () => {
+    const { binding, keys } = fakeRateLimit(2);
+    const env = d1().env({ AUTH_LIMIT: binding });
+    const loginFrom = (ip: string) =>
+      app.request("/auth/login", postJson(body, { "cf-connecting-ip": ip }), env);
+    expect((await loginFrom("2001:db8:0:12::1")).status).toBe(401);
+    expect((await loginFrom("2001:db8:0:12::2")).status).toBe(401);
+    const counted = await storedCounters();
+    const refused = await loginFrom("2001:db8:0:12:ffff::3");
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("Retry-After")).toBe("60");
+    expect(await refused.json()).toEqual({ error: "too many attempts" });
+    expect(await storedCounters()).toBe(counted);
+    expect(keys).toEqual(Array(3).fill("login:2001:db8:0:12::/64"));
+    // Register counts apart from login.
+    const registered = await app.request(
+      "/auth/register",
+      postJson(body, { "cf-connecting-ip": "2001:db8:0:12::1" }),
+      env,
+    );
+    expect(registered.status).toBe(201);
+    expect(keys.at(-1)).toBe("register:2001:db8:0:12::/64");
+    expect(logged()).toContainEqual({
+      evt: "auth",
+      kind: "rate_limited",
+      scope: "login",
+      by: "binding",
+    });
+  });
+
+  it("falls through to the D1 limiter when the binding fails", async () => {
+    const env = d1().env({ AUTH_LIMIT: brokenRateLimit });
+    const res = await app.request("/auth/login", postJson(body), env);
+    expect(res.status).toBe(401);
+    expect(await storedCounters()).toBe(2);
+    expect(logged()).toContainEqual({
+      evt: "auth",
+      kind: "binding_error",
+      route: "login",
+      error: "Error",
+    });
+  });
 });
 
 describe("DELETE /auth/me", () => {
@@ -531,6 +605,17 @@ describe("DELETE /auth/me", () => {
     expect(await userRows()).toHaveLength(1);
     // Signing in keeps its own budget.
     expect((await login("misty@example.com", "starmie-456")).status).toBe(200);
+  });
+
+  it("puts a password check behind the AUTH_LIMIT binding too", async () => {
+    const cookie = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const { binding, keys } = fakeRateLimit(0);
+    const env = d1().env({ AUTH_LIMIT: binding });
+    const res = await deleteAccount(cookie, { password: "starmie-456" }, {}, env);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("60");
+    expect(keys).toEqual(["delete:unknown"]);
+    expect(await userRows()).toHaveLength(1);
   });
 
   it("refuses a delete whose password an OAuth link cleared during the verify", async () => {

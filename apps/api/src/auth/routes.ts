@@ -23,6 +23,7 @@ import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import { oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
+import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
 import { chainMentions } from "../http/errors";
 import { logEvent, logEventThrottled } from "../http/log";
@@ -81,15 +82,24 @@ function mapUserRow(row: UserRow): User {
 
 /** Count this attempt and run `lookup` in one D1 batch. An over-budget attempt answers 429, and
     one the limiter could not count (a D1 error, such as a spent write quota) 503; neither exposes
-    anything about the lookup. */
-async function afterRateLimit<T>(
-  c: Context,
+    anything about the lookup.
+
+    The AUTH_LIMIT binding comes first, per scope and address: 10 a minute, which no person
+    signing in reaches, refuses a flood before the D1 limiter spends a write counting it (AUX1).
+    It fails open (http/bindingLimit.ts); the D1 limiter behind it fails closed. */
+async function afterRateLimit<T, E extends { Bindings: Env }>(
+  c: Context<E>,
   db: Db,
   scope: RateLimitScope,
   email: string,
   lookup: Parameters<typeof limitAttempt<T>>[2],
 ): Promise<{ limited: Response } | { limited: null; found: T }> {
-  const keys = await rateLimitKeys(scope, clientIpKey(c), email);
+  const ip = clientIpKey(c);
+  if (await bindingRefuses(c.env.AUTH_LIMIT, `${scope}:${ip}`, "auth", scope)) {
+    logEventThrottled("auth", "rate_limited", { scope, by: "binding" });
+    return { limited: bindingRefusal(c, "too many attempts") };
+  }
+  const keys = await rateLimitKeys(scope, ip, email);
   const attempt = await limitAttempt(db, keys, lookup);
   if (attempt.allowed) {
     return { limited: null, found: attempt.found };

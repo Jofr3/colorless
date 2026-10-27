@@ -1,4 +1,4 @@
-// The caller's address as a rate-limit key part (auth/rateLimit.ts, http/ipRateLimit.ts).
+// The caller's address as a rate-limit key part, for the D1 sign-in limiter and the bindings.
 
 import type { Context } from "hono";
 

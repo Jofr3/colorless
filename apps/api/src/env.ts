@@ -15,6 +15,13 @@ export type Env = {
       (src/lobby/routes.ts). Absent in unit tests, where nothing is limited. */
   LOBBY_CREATE_LIMIT?: RateLimit;
   LOBBY_SOCKET_LIMIT?: RateLimit;
+  /** Per-(scope, IP) Workers rate limit ahead of the D1 sign-in limiter on register, login and
+      account deletion (src/auth/routes.ts). Absent in unit tests. */
+  AUTH_LIMIT?: RateLimit;
+  /** Deck writes (POST/PATCH/DELETE /decks), per account and per IP (src/decks/routes.ts).
+      Absent in unit tests. */
+  DECK_WRITE_LIMIT?: RateLimit;
+  DECK_WRITE_IP_LIMIT?: RateLimit;
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
       target (§3.5). wrangler.jsonc `vars` sets the dev default; production
       overrides it when the web app's real origin exists. */

@@ -1,5 +1,14 @@
 // Authenticated deck routes. User data is never KV-cached. Each :id lookup is scoped to the user,
 // so another user's deck returns the same 404 as a missing one.
+//
+// Writes (POST, PATCH, DELETE) are limited by two Workers Rate Limiting bindings (security audit
+// DK1): 60 a minute per account and 180 a minute per address, so fresh accounts from one address
+// do not multiply the budget. The builder's saver (src/decks/deckSaver.ts) waits 600 ms after the
+// last edit and keeps one save in flight, so even nonstop editing sends about one PATCH a second,
+// and a person building a deck pauses to search; creates and deletes are single clicks. 180 leaves
+// room for three people editing flat out behind one address. A refused save is not lost: the
+// client keeps it and retries after a backoff. The bindings bound bursts, not a day: an account
+// at its limit swapping full 200-entry lists still writes about 36,000 rows a minute.
 
 import {
   createDeckRequestSchema,
@@ -15,12 +24,16 @@ import { and, asc, eq, exists, inArray, type SQL, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import type { SQLiteUpdateSetSource } from "drizzle-orm/sqlite-core";
 import { type Context, Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import * as z from "zod";
-import { requireUser } from "../auth/requireUser";
+import { type AuthedEnv, requireUser } from "../auth/requireUser";
 import { chunk, D1_MAX_BOUND_PARAMS } from "../db/batch";
 import { ownedBy } from "../db/owned";
 import { cards, deckCards, decks } from "../db/schema";
 import type { Env } from "../env";
+import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
+import { clientIpKey } from "../http/clientIp";
+import { logEventThrottled } from "../http/log";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { type CoverCandidate, effectiveCoverCardId } from "./cover";
@@ -30,6 +43,23 @@ import { unknownIds } from "./validate";
 export const deckRoutes = new Hono<{ Bindings: Env }>();
 
 type Db = DrizzleD1Database;
+
+/** The write limit, after requireUser. An account over its budget is not counted against its
+    address, so one busy account does not use up its neighbours' budget. */
+const deckWriteLimit = createMiddleware<AuthedEnv>(async (c, next) => {
+  const route = c.req.method.toLowerCase();
+  if (
+    (await bindingRefuses(c.env.DECK_WRITE_LIMIT, c.get("user").id, "decks", route)) ||
+    (await bindingRefuses(c.env.DECK_WRITE_IP_LIMIT, clientIpKey(c), "decks", route))
+  ) {
+    logEventThrottled("decks", "rate_limited", { route });
+    return bindingRefusal(c, "too many requests");
+  }
+  await next();
+});
+
+/** Every write's gate: the session, then the write limit. */
+const deckWriter = [requireUser, deckWriteLimit] as const;
 
 // Response schemas — the domain shapes each route parses itself against.
 const deckSummariesResponseSchema = z.array(deckSummarySchema);
@@ -52,29 +82,49 @@ function unknownCardsResponse(
     ids,
     known.flat().map((row) => row.id),
   );
+  // The schema bounds each id's length; the list is clipped so the 400 stays small.
   return unknown.length === 0
     ? null
-    : c.json({ error: "unknown card id(s)", cardIds: unknown }, 400);
+    : c.json({ error: "unknown card id(s)", cardIds: unknown.slice(0, UNKNOWN_IDS_SHOWN) }, 400);
 }
 
-/** How many decks the user has, against MAX_DECKS_PER_USER, and the `position` a created deck
-    takes: one below the user's current minimum, so new decks land first in the position-ordered
-    list. Two racing creates can tie, which is harmless: the id tiebreak keeps the order stable.
-    They can also both pass the cap from one below it, which is as harmless: the cap bounds reads,
-    it is not an exact quota. */
-function deckSlotQuery(db: Db, userId: string) {
+/** The most unknown ids one 400 names. */
+const UNKNOWN_IDS_SHOWN = 20;
+
+/** How many decks the user has: an early 409 for an account at MAX_DECKS_PER_USER, before the
+    card check. The insert re-checks the cap itself. */
+function deckCountQuery(db: Db, userId: string) {
+  return db.select({ count: sql<number>`count(*)` }).from(decks).where(eq(decks.userId, userId));
+}
+
+/** A new deck's insert, which writes only while the account holds fewer than MAX_DECKS_PER_USER
+    decks: the count is taken in the statement itself, so concurrent creates cannot pass the cap
+    (security audit DK2). The deck takes one below the account's lowest `position`, so new decks
+    land first in the position-ordered list. The select's columns follow the table's. */
+function guardedDeckInsert(db: Db, row: Omit<DeckRow, "position">) {
+  const theirs = sql`(select count(*) from ${decks} where ${decks.userId} = ${row.userId})`;
+  const position = sql`(select coalesce(min(${decks.position}), 1) - 1 from ${decks}
+    where ${decks.userId} = ${row.userId})`;
   return db
-    .select({ count: sql<number>`count(*)`, min: sql<number | null>`min(${decks.position})` })
-    .from(decks)
-    .where(eq(decks.userId, userId));
+    .insert(decks)
+    .select(
+      sql`select ${row.id}, ${row.userId}, ${row.folderId}, ${row.name}, ${row.format},
+        ${row.tint}, ${row.coverCardId}, ${position}, ${row.updated.getTime()}, ${row.version}
+        where ${theirs} < ${MAX_DECKS_PER_USER}`,
+    )
+    .returning();
 }
 
-/** Chunked `deck_cards` inserts for one deck (3 bound params per row). */
-function deckCardInserts(db: Db, deckId: string, entries: readonly DeckCard[]) {
-  const rowsPerInsert = Math.floor(D1_MAX_BOUND_PARAMS / 3);
-  return chunk(entries, rowsPerInsert).map((group) =>
-    db.insert(deckCards).values(group.map(({ cardId, count }) => ({ deckId, cardId, count }))),
-  );
+/** A new deck's cards, as one statement whatever the list's length, written only if the deck's
+    guarded insert wrote its row. */
+function newDeckCardsInsert(db: Db, deckId: string, entries: readonly DeckCard[]) {
+  const rows = JSON.stringify(entries.map(({ cardId, count }) => [cardId, count]));
+  const inserted = exists(db.select({ id: decks.id }).from(decks).where(eq(decks.id, deckId)));
+  return db
+    .insert(deckCards)
+    .select(
+      sql`select ${deckId}, "value" ->> 0, "value" ->> 1 from json_each(${rows}) where ${inserted}`,
+    );
 }
 
 /** Replace a deck's card list by writing only what differs: rows whose card left the list are
@@ -208,42 +258,50 @@ deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
   return deck === undefined ? c.json({ error: "deck not found" }, 404) : c.json(deck);
 });
 
-deckRoutes.post("/", requireUser, validate("json", createDeckRequestSchema), async (c) => {
+deckRoutes.post("/", ...deckWriter, validate("json", createDeckRequestSchema), async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
   const ids = body.cards.map((entry) => entry.cardId);
-  const [slotRows, ...known] = await db.batch([
-    deckSlotQuery(db, user.id),
+  const deckLimitReached = () =>
+    c.json({ error: "deck limit reached", limit: MAX_DECKS_PER_USER }, 409);
+  const [countRows, ...known] = await db.batch([
+    deckCountQuery(db, user.id),
     ...knownCardQueries(db, ids),
   ]);
-  const slot = slotRows[0];
-  if ((slot?.count ?? 0) >= MAX_DECKS_PER_USER) {
-    return c.json({ error: "deck limit reached", limit: MAX_DECKS_PER_USER }, 409);
+  if ((countRows[0]?.count ?? 0) >= MAX_DECKS_PER_USER) {
+    return deckLimitReached();
   }
   const badCards = unknownCardsResponse(c, ids, known);
   if (badCards !== null) {
     return badCards;
   }
-  const row: DeckRow = {
-    id: crypto.randomUUID(),
-    userId: user.id,
-    folderId: body.folderId ?? null,
-    name: body.name,
-    format: body.format ?? null,
-    tint: body.tint,
-    // A brand-new deck wears the derived default; picking a cover is an edit
-    // you make later, in the editor, once there is something to pick.
-    coverCardId: null,
-    position: (slot?.min ?? 1) - 1,
-    updated: new Date(),
-    version: 0,
-  };
-  await db.batch([db.insert(decks).values(row), ...deckCardInserts(db, row.id, body.cards)]);
+  const deckId = crypto.randomUUID();
+  const [inserted] = await db.batch([
+    guardedDeckInsert(db, {
+      id: deckId,
+      userId: user.id,
+      folderId: body.folderId ?? null,
+      name: body.name,
+      format: body.format ?? null,
+      tint: body.tint,
+      // A brand-new deck wears the derived default; picking a cover is an edit
+      // you make later, in the editor, once there is something to pick.
+      coverCardId: null,
+      updated: new Date(),
+      version: 0,
+    }),
+    newDeckCardsInsert(db, deckId, body.cards),
+  ]);
+  const row = inserted[0];
+  // A create that raced others past the count above: the cap filled in between, nothing written.
+  if (row === undefined) {
+    return deckLimitReached();
+  }
   return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);
 });
 
-deckRoutes.patch("/:id", requireUser, validate("json", patchDeckRequestSchema), async (c) => {
+deckRoutes.patch("/:id", ...deckWriter, validate("json", patchDeckRequestSchema), async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const deckId = c.req.param("id");
@@ -332,7 +390,7 @@ deckRoutes.patch("/:id", requireUser, validate("json", patchDeckRequestSchema), 
     : c.json(deckSchema.parse(mapDeckRow(row, body.cards)));
 });
 
-deckRoutes.delete("/:id", requireUser, async (c) => {
+deckRoutes.delete("/:id", ...deckWriter, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(decks)
     .where(ownedBy(decks, c.req.param("id"), c.get("user").id))

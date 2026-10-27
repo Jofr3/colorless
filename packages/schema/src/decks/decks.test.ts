@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CARD_ID_MAX,
   createDeckRequestSchema,
   deckSchema,
   deckSummarySchema,
@@ -154,5 +155,42 @@ describe("patchDeckRequestSchema", () => {
       cards: [card("sv01-001"), card("sv01-001")],
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("card ids on deck writes", () => {
+  const longest = `${"a".repeat(CARD_ID_MAX - 4)}-001`;
+  const createWith = (cardId: string) =>
+    createDeckRequestSchema.safeParse({ name: "D", tint: 0, cards: [card(cardId)] }).success;
+
+  it("takes catalog-shaped ids up to the cap", () => {
+    for (const id of ["sv01-001", "swsh10.5-001", "me02.5-010", "swsh12tg_TG01", longest]) {
+      expect(createWith(id), id).toBe(true);
+      expect(patchDeckRequestSchema.safeParse({ chosenCoverCardId: id }).success, id).toBe(true);
+    }
+  });
+
+  it("refuses a longer id or one with other characters, in the list and as the cover", () => {
+    for (const id of [`${longest}x`, "sv01 001", "sv01-001\n", "<b>", "sv01/001", "é"]) {
+      expect(createWith(id), id).toBe(false);
+      expect(patchDeckRequestSchema.safeParse({ cards: [card(id)] }).success, id).toBe(false);
+      expect(patchDeckRequestSchema.safeParse({ chosenCoverCardId: id }).success, id).toBe(false);
+    }
+  });
+
+  it("leaves the read schemas loose, so a deck saved before the check still loads", () => {
+    const odd = "x".repeat(CARD_ID_MAX + 10);
+    const deck = deckSchema.parse({
+      id: "d1",
+      name: "Old",
+      format: null,
+      tint: 0,
+      folderId: null,
+      position: 0,
+      updated: "2026-07-09T00:00:00.000Z",
+      cards: [card(odd)],
+      chosenCoverCardId: odd,
+    });
+    expect(deck.cards[0]?.cardId).toBe(odd);
   });
 });
