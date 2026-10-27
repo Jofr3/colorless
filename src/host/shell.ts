@@ -77,6 +77,21 @@ export function normalizeCodeField(element: { value: string; selectionStart: num
   return { value, caret };
 }
 
+/** One print from Lua (frontend/lua/ui/bridge.lua): `COLORLESS:<channel>` or
+    `COLORLESS:<channel>:<payload>`, the payload being percent-encoded TAB-joined fields. Anything
+    else, a payload with an unencoded byte included, is not a command. */
+export function parsePrint(message: string): { channel: string; rest: string } | null {
+  const match = /^COLORLESS:([a-z][a-z-]*)(?::([\w.~%\t-]*))?$/.exec(message);
+  if (!match) return null;
+  return { channel: match[1] ?? "", rest: match[2] ?? "" };
+}
+
+/** A payload of one text field, decoded, with control characters shown as spaces. */
+export function printText(rest: string): string {
+  const [text = ""] = decodeFields(rest) ?? [];
+  return text.replace(/\p{Cc}/gu, " ");
+}
+
 /** The live region's next text: a repeat of the current message gains a trailing no-break space,
     so screen readers still hear it. */
 export function nextAnnouncement(current: string, message: string): string {
@@ -238,9 +253,9 @@ export class HostShell {
   }
 
   onPrint(message: string) {
-    const match = /^COLORLESS:([a-z-]+)(?::([\s\S]*))?$/.exec(message);
-    if (!match) return;
-    const [, channel = "", rest = ""] = match;
+    const print = parsePrint(message);
+    if (!print) return;
+    const { channel, rest } = print;
     switch (channel) {
       case "ready":
         this.ready = true;
@@ -248,7 +263,7 @@ export class HostShell {
         this.focusCanvas();
         break;
       case "page":
-        this.ports.navigate(rest);
+        this.ports.navigate(printText(rest));
         break;
       case "library":
       case "sandbox":
@@ -269,17 +284,20 @@ export class HostShell {
         break;
       case "announce": {
         const region = this.doc.getElementById("announcement");
-        if (region) region.textContent = nextAnnouncement(region.textContent ?? "", rest);
+        if (region)
+          region.textContent = nextAnnouncement(region.textContent ?? "", printText(rest));
         break;
       }
       case "preferences":
-        writePersisted(PREFERENCES_KEY, rest);
+        writePersisted(PREFERENCES_KEY, printText(rest));
         break;
-      case "settings":
-        if (rest === "open" || rest === "closed") this.settingsChanged(rest === "open");
+      case "settings": {
+        const state = printText(rest);
+        if (state === "open" || state === "closed") this.settingsChanged(state === "open");
         break;
+      }
       case "transition":
-        this.transitionOpen = rest === "open";
+        this.transitionOpen = printText(rest) === "open";
         this.syncModal();
         break;
     }
@@ -390,7 +408,7 @@ export class HostShell {
   }
 
   private authPrint(raw: string) {
-    const [action = "", value = ""] = raw.split("\t");
+    const [action = "", value = ""] = decodeFields(raw) ?? [];
     if (action === "open") {
       this.name.finish();
       this.auth.finish();

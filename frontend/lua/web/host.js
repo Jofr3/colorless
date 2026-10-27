@@ -146,7 +146,7 @@ const loveModule = {
       void loadMusic();
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
-        message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
+        message.match(/^COLORLESS:transition-art:(used|invalid)\t(\d+)$/) || [];
       if (token) void consumeTransitionArt(Number(token), action === "invalid");
       return;
     }
