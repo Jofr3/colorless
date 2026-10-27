@@ -95,9 +95,11 @@ import {
 import {
   applyMatchAction,
   beginMatch,
+  freshMatchRng,
   loadMatchRecord,
   type MatchLoad,
   type MatchRecord,
+  type MatchRng,
   type MatchSlot,
   type MatchViewer,
   matchFrameFor,
@@ -190,7 +192,8 @@ const STALE_MATCH_REASON =
     seed and deck pre-shuffle, and the D1 lookups. */
 export interface LobbyDeps {
   now(): number;
-  randomSeed(): number;
+  /** A new match's RNG: a ChaCha20 state, never a numeric seed (security audit MI1). */
+  randomSeed(): MatchRng;
   /** A deck list in an order that says nothing about the list, before the engine mints a uid per
       position in it (`cryptoShuffle`). */
   shuffleDeck(ids: readonly string[]): string[];
@@ -203,13 +206,13 @@ export interface LobbyDeps {
   loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
 }
 
-/** The production wiring: the system clock, a CSPRNG seed and shuffle, and the Worker's D1
-    binding. */
+/** The production wiring: the system clock, a CSPRNG-keyed match RNG and shuffle, and the
+    Worker's D1 binding. */
 export function lobbyDepsFromEnv(env: Env): LobbyDeps {
   const db = () => drizzle(env.DB);
   return {
     now: () => Date.now(),
-    randomSeed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0,
+    randomSeed: () => freshMatchRng(),
     shuffleDeck: (ids) => cryptoShuffle(ids),
     resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
     loadDeck: (deckId, owner) => loadPlayerDeck(db(), deckId, owner),

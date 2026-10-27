@@ -141,7 +141,7 @@ import { programFor } from "./registry";
 import type { ParsedDamage } from "./cards";
 import type { AttackMenuEntry } from "./continuous";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS, shuffle } from "./rng";
-import type { CoinFace } from "./rng";
+import type { CoinFace, RngState } from "./rng";
 import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggerLookup";
 import { koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
@@ -455,10 +455,11 @@ function takeFlips(
   attackerSeat: Seat,
   attacker: InPlayPokemon,
   count: AttackFlipCount,
-): [faces: CoinFace[], nextState: number] {
+): [faces: CoinFace[], nextState: RngState] {
   // An invariant throw: a flip-until-tails truncated at `MAX_UNTIL_TAILS_FLIPS` has no honest
-  // heads count, and scoring it would corrupt the match. Unreachable with the current RNG (its
-  // longest heads run is 31); it fires only if the RNG is replaced with something degenerate.
+  // heads count, and scoring it would corrupt the match. Unreachable in practice (mulberry32's
+  // longest heads run is 31, and 64 ChaCha20 heads in a row has probability 2⁻⁶⁴); it fires only
+  // if the RNG is replaced with something degenerate.
   if (count.kind === "untilTails") {
     const [faces, rngState] = flipUntilTails(state.rngState, MAX_UNTIL_TAILS_FLIPS);
     if (faces.at(-1) !== "tails") {

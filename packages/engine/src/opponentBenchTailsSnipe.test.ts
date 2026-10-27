@@ -25,7 +25,7 @@ import {
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
-import { flipCoin } from "./rng";
+import { flipCoin, type RngState } from "./rng";
 import type { CoinFace } from "./rng";
 import { FIXTURE_POOL, basicEnergy, battler, deckOf } from "./testFixtures";
 import { makeInPlay } from "./types";
@@ -331,7 +331,7 @@ function tailsOf(events: readonly GameEvent[]): number {
 }
 
 /** `count` flips by hand off `rng`, in order, and the state they leave behind. */
-function flipsByHand(rng: number, count: number): [faces: CoinFace[], next: number] {
+function flipsByHand(rng: RngState, count: number): [faces: CoinFace[], next: RngState] {
   const faces: CoinFace[] = [];
   let cursor = rng;
   for (let taken = 0; taken < count; taken += 1) {

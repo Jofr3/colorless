@@ -13,7 +13,7 @@ import { basicFromHandError, cardOfUid, handHasBasic } from "./cards";
 import { isBasicPokemon } from "./cardClasses";
 import type { GameEvent } from "./events";
 import { startTurn } from "./flow";
-import { flipCoin, shuffle } from "./rng";
+import { flipCoin, type RngState, shuffle } from "./rng";
 import { programFor } from "./registry";
 import type { GameState, PlayerSide, Seat } from "./types";
 import {
@@ -44,7 +44,10 @@ export type CreateErrorCode = Extract<
 >;
 
 export interface CreateGameOptions {
-  seed: number;
+  /** Where the game's randomness starts. Every real game passes `freshRngState()` (a ChaCha20
+      key). A number seeds the legacy mulberry32 generator, for tests, fixtures and the benchmark
+      only: its 32 bits are recoverable from the opening hand (security audit MI1). */
+  seed: RngState;
   /** Exactly 60 catalog card ids per seat, in any order. */
   decks: Record<Seat, string[]>;
   /** id → Card for (at least) every id the decks reference. */
@@ -117,7 +120,8 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
   }
 
   const events: GameEvent[] = [];
-  let rngState = options.seed | 0; // stored state stays a signed int32
+  // A legacy seed is stored as a signed int32; a ChaCha20 state as it came.
+  let rngState: RngState = typeof options.seed === "number" ? options.seed | 0 : options.seed;
 
   // §3.2 — each player shuffles their deck.
   for (const seat of SEATS) {

@@ -9,7 +9,7 @@ import { applyAction, redactGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { type CoinFace, flipCoin } from "./rng";
+import { type CoinFace, flipCoin, type RngState } from "./rng";
 import {
   FIXTURE_POOL,
   activeUid,
@@ -156,7 +156,7 @@ function withFaces(state: GameState, faces: readonly CoinFace[]): GameState {
 }
 
 /** The rng cursor after `n` flips from `from`. */
-function advanced(from: number, n: number): number {
+function advanced(from: RngState, n: number): RngState {
   let rng = from;
   for (let i = 0; i < n; i++) rng = flipCoin(rng)[1];
   return rng;

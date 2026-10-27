@@ -8,7 +8,7 @@ import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction } from "./index";
 import type { PokemonRef } from "./effectPrompt";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
+import { flipCoin, type RngState } from "./rng";
 import type { CoinFace } from "./rng";
 import {
   FIXTURE_POOL,
@@ -179,7 +179,7 @@ function rngForFaces(faces: readonly CoinFace[]): number {
   }
   throw new Error(`no rngState draws ${faces.join(",")}`);
 }
-function rngAfter(start: number, n: number): number {
+function rngAfter(start: RngState, n: number): RngState {
   let rng = start;
   for (let i = 0; i < n; i += 1) rng = flipCoin(rng)[1];
   return rng;

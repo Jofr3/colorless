@@ -1,5 +1,5 @@
 {
-  "version": 50,
+  "version": 51,
   "shape": {
     "allowances": {
       "abilitiesUsed": [],
@@ -141,7 +141,11 @@
         "p1": [],
         "p2": []
       },
-      "rngState": "number",
+      "rngState": {
+        "alg": "string",
+        "counter": "number",
+        "key": "string"
+      },
       "stadium": "null",
       "turn": "number"
     },

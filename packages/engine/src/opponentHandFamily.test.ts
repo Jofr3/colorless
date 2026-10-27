@@ -17,6 +17,7 @@ import {
   deepFreeze,
   driveSetup,
   handFromDeck,
+  legacyRngOf,
   mustApply,
   setActiveFromDeck,
   types,
@@ -347,7 +348,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
     const picked = new Set<number>();
     for (let bump = 0; bump < 24; bump++) {
       const base = ready();
-      const state: GameState = { ...base, rngState: (base.rngState + bump * 7919) | 0 };
+      const state: GameState = { ...base, rngState: (legacyRngOf(base) + bump * 7919) | 0 };
       const hand = [...state.players.p2.hand];
       const { events } = attack(state, KNOCK_OFF);
       const uid = findEvent(events, "RANDOM_CARD_TAKEN")?.uid as string;
@@ -382,7 +383,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
     expect(a.state.rngState).toBe(b.state.rngState);
     // …and a DIFFERENT rngState is a different run — otherwise the equality above
     // would hold for a build that ignored the RNG entirely.
-    const moved: GameState = { ...state, rngState: (state.rngState + 1) | 0 };
+    const moved: GameState = { ...state, rngState: (legacyRngOf(state) + 1) | 0 };
     expect(attack(moved, KNOCK_OFF).state.rngState).not.toBe(a.state.rngState);
   });
 

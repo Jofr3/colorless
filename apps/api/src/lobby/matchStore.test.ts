@@ -1,3 +1,4 @@
+import { drbgSeed } from "@colorless/engine/testing";
 import type { SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { basicCard, FakeStorage, LEGAL_DECK } from "./lobbyHarness";
@@ -8,7 +9,7 @@ const POOL = Object.fromEntries(LEGAL_DECK.map((id) => [id, basicCard(id)]));
 
 function begun(seed = 9): MatchRecord {
   const result = beginMatch({
-    seed,
+    seed: drbgSeed(seed),
     hostDeck: LEGAL_DECK,
     guestDeck: LEGAL_DECK,
     cardPool: POOL,
@@ -114,6 +115,18 @@ describe("MatchStore — the split record", () => {
     const store = new MatchStore(storage);
     await store.put(appended(begun(9), LOG_CHUNK));
     const rematch = begun(10);
+    await store.put(rematch);
+    expect(writes.at(-1)).toEqual(["match", "matchLog:0", "matchTables"]);
+    expect(readMatchRecord(await readBack(storage))).toEqual(rematch);
+  });
+
+  it("tells two ChaCha20 seeds apart: a same-millisecond rematch with a log as long is written whole", async () => {
+    const { storage, writes } = recordingStorage();
+    const store = new MatchStore(storage);
+    const first = begun(9);
+    await store.put(first);
+    const rematch = begun(10);
+    expect([rematch.startedAt, rematch.log.length]).toEqual([first.startedAt, first.log.length]);
     await store.put(rematch);
     expect(writes.at(-1)).toEqual(["match", "matchLog:0", "matchTables"]);
     expect(readMatchRecord(await readBack(storage))).toEqual(rematch);

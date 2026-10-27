@@ -3,6 +3,7 @@ import {
   cardOfUid,
   createGame,
   deckCardIdsOf,
+  freshRngState,
   otherSeat,
   redactGame,
   type GameAction,
@@ -227,7 +228,7 @@ export class LocalTableSource implements TableSource {
     const h = this.host;
     const startedAt = Math.max(Date.now(), h.startedAt + 1);
     const created = createGame({
-      seed: startedAt,
+      seed: freshRngState(),
       decks: { p1: deckCardIdsOf(h.game, "p1"), p2: deckCardIdsOf(h.game, "p2") },
       cardPool: h.game.cardPool,
     });

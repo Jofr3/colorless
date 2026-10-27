@@ -3,6 +3,7 @@
 // the DO constructs (`WebSocketPair`, `WebSocketRequestResponsePair`, a `Response` that accepts a
 // 101 upgrade). `createLobbyHarness` installs the globals and `dispose` restores them.
 
+import { drbgSeed } from "@colorless/engine/testing";
 import {
   type Card,
   type LobbyClientMessage,
@@ -15,6 +16,7 @@ import type { Env } from "../env";
 import type { LoadDeckResult } from "./deckLoad";
 import { DO_CREATE_PATH, DO_WS_PATH, doUrl, LOBBY_CODE_HEADER } from "./doProtocol";
 import { type LobbyDeps, LobbyDO } from "./lobbyDO";
+import type { MatchRng } from "./match";
 
 /** A seat secret for a test's player `label`: fixed per label, so a test can say hello as "h"
     again after a reload, as a tab keeps its secret. */
@@ -214,8 +216,8 @@ function installWorkerGlobals(): () => void {
 export interface LobbyWorld {
   /** Epoch ms the DO reads as now. */
   now: number;
-  /** The seed the next handoff mints. */
-  seed: number;
+  /** The RNG the next handoff mints (`drbgSeed(n)` for a fixed one). */
+  seed: MatchRng;
   /** userId → account display name. */
   displayNames: Map<string, string>;
   /** deckId → its owner, flat card ids and format (absent reads as none picked). */
@@ -344,7 +346,7 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
   const restore = installWorkerGlobals();
   const fullWorld: LobbyWorld = {
     now: 1_000_000,
-    seed: 1,
+    seed: drbgSeed(1),
     displayNames: new Map(),
     decks: new Map(),
     pool: { ...LEGAL_POOL, basic: basicCard("basic") },

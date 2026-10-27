@@ -7,14 +7,16 @@
 //
 // The audit's full sweep (145M actions over every fixture deck) found exactly one throw: a turn-1
 // `attack` whose index names an array member. This keeps a deterministic slice of it in CI (about
-// 68k actions); raise DECK_COUNT and MAX_STEPS locally for a wider sweep.
+// 68k actions per generator); raise DECK_COUNT and MAX_STEPS locally for a wider sweep. Each deck
+// is walked twice, on the legacy mulberry32 generator and on ChaCha20, which every real game uses
+// (MI1).
 
 import { wireActionSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, logFromEvents, redactGame, SEATS } from "./index";
+import type { GameAction, GameEvent, GameState, InPlayPokemon, RngState, Seat } from "./index";
+import { applyAction, createGame, isRngState, logFromEvents, redactGame, SEATS } from "./index";
 import * as Decks from "./fixtures/decks";
-import { FIXTURE_POOL, candidateActions, deepFreeze, walkGame } from "./testFixtures";
+import { FIXTURE_POOL, candidateActions, deepFreeze, drbgSeed, walkGame } from "./testFixtures";
 
 /** Decks walked, steps per walk, and the fuzz rng's seed. The defaults run in a few seconds. */
 const DECK_COUNT = 6;
@@ -262,6 +264,9 @@ function afterAccept(before: GameState, after: GameState, events: GameEvent[]): 
   if (bad !== null) return `non-JSON value at ${bad}`;
   const [was, now] = [zoneUids(before), zoneUids(after)];
   if (was.join() !== now.join()) return `card count ${String(was.length)} -> ${String(now.length)}`;
+  // A game keeps its generator: a ChaCha20 game never falls back to a guessable number.
+  if (!isRngState(after.rngState) || typeof after.rngState !== typeof before.rngState)
+    return "rngState left its generator";
   return null;
 }
 
@@ -282,8 +287,12 @@ describe("applyAction under hostile wire actions (MI3)", () => {
     let sent = 0;
     let accepted = 0;
     let turnOneAttacks = 0;
-    for (const [deckName, deck] of fuzzDecks()) {
-      const start = createdOn(deck);
+    const walks = fuzzDecks().flatMap(([name, deck]) => [
+      [name, deck, FUZZ_SEED],
+      [`${name} (ChaCha20)`, deck, drbgSeed(FUZZ_SEED)],
+    ]) as [string, string[], RngState][];
+    for (const [deckName, deck, seed] of walks) {
+      const start = createdOn(deck, seed);
       if (start === null) continue;
       walkGame(
         start,
@@ -315,20 +324,20 @@ describe("applyAction under hostile wire actions (MI3)", () => {
       );
     }
     // A sweep that sent little or reached no turn-1 attack would pass without testing anything.
-    expect(sent).toBeGreaterThan(10_000);
+    expect(sent).toBeGreaterThan(20_000);
     expect(accepted).toBeGreaterThan(100);
     expect(turnOneAttacks).toBeGreaterThan(0);
     expect(Object.fromEntries(problems)).toEqual({});
     // No `__proto__` key in any frame reached the shared prototype.
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
-    // About 3 s alone; the margin covers a loaded machine running the whole suite.
-  }, 30_000);
+    // About 6 s alone; the margin covers a loaded machine running the whole suite.
+  }, 60_000);
 });
 
 /** A fresh game on `deck` for both seats, or null when the fixture deck is not a legal start. */
-function createdOn(deck: string[]): GameState | null {
+function createdOn(deck: string[], seed: RngState): GameState | null {
   const created = createGame({
-    seed: FUZZ_SEED,
+    seed,
     decks: { p1: deck, p2: deck },
     cardPool: FIXTURE_POOL,
   });

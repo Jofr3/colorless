@@ -1,4 +1,4 @@
-import { createGame, DECK_SIZE, isBasicPokemon } from "@colorless/engine";
+import { createGame, DECK_SIZE, freshRngState, isBasicPokemon } from "@colorless/engine";
 import type { DeckCard } from "@colorless/schema";
 import type { Deck } from "../decks/data";
 import { fetchCardPool } from "./cardPool";
@@ -48,7 +48,9 @@ export async function prepareSandbox(decks: readonly [Deck, Deck]): Promise<Loca
   }
   const startedAt = Date.now();
   const created = createGame({
-    seed: startedAt,
+    // A fresh ChaCha20 key, never the clock: a guessable seed would let a player read the deck
+    // order off the opening hand (security audit MI1).
+    seed: freshRngState(),
     decks: { p1: cardIdsByPlayer[0], p2: cardIdsByPlayer[1] },
     cardPool: pool,
   });

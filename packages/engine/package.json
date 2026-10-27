@@ -9,6 +9,7 @@
     "./testing": "./src/testFixtures.ts"
   },
   "dependencies": {
-    "@colorless/schema": "workspace:*"
+    "@colorless/schema": "workspace:*",
+    "@noble/ciphers": "2.4.0"
   }
 }

@@ -25,7 +25,7 @@ import {
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { countPokemonInPlay } from "./boardCondition";
-import { flipCoin } from "./rng";
+import { flipCoin, type RngState } from "./rng";
 import type { CoinFace } from "./rng";
 import { FIXTURE_POOL, basicEnergy, battler, deckOf, itemTrainer } from "./testFixtures";
 import { makeInPlay } from "./types";
@@ -513,7 +513,7 @@ function headsOf(events: readonly GameEvent[]): number {
 /** Take `count` flips by hand off `rng`, returning the faces IN ORDER and the state
     they leave behind. `count === 0` is a REAL call here, not a degenerate one: it
     returns the input unchanged, which is exactly the zero board's claim. */
-function foldByHand(rng: number, count: number): [faces: CoinFace[], next: number] {
+function foldByHand(rng: RngState, count: number): [faces: CoinFace[], next: RngState] {
   const faces: CoinFace[] = [];
   let cursor = rng;
   for (let taken = 0; taken < count; taken += 1) {
