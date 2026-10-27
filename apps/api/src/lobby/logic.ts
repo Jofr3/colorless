@@ -12,6 +12,7 @@ import {
   type LobbySnapshot,
   lobbySnapshotSchema,
   playerStateSchema,
+  stripControlChars,
 } from "@colorless/schema";
 import * as z from "zod";
 import { applyIntent, recomputePhase, removeGuest, setGuestConnected } from "./snapshot";
@@ -201,14 +202,17 @@ export function readSnapshot(raw: unknown): LobbySnapshot | null {
 
 /** A seat as stored by any deploy. `avatarSeed` and `forfeitAt` were added after the first lobbies
     were written, so a missing or malformed value reads as null; `forfeitAt` feeds `Math.min` in the
-    alarm scheduler, where an undefined would set NaN. Names stored before frames were bounded are
-    clipped to the bound rather than refused, so such a lobby keeps working. */
+    alarm scheduler, where an undefined would set NaN. Names stored before frames were bounded and
+    stripped of control characters are cleaned as the frames now are rather than refused, so such
+    a lobby keeps working. */
 const storedSeatSchema = playerStateSchema.extend({
-  name: z.string().transform((name) => name.slice(0, LOBBY_NAME_MAX)),
+  name: z.string().transform((name) => stripControlChars(name).slice(0, LOBBY_NAME_MAX)),
   deckName: z
     .string()
     .nullable()
-    .transform((name) => name?.slice(0, LOBBY_DECK_NAME_MAX) ?? null),
+    .transform((name) =>
+      name === null ? null : stripControlChars(name).slice(0, LOBBY_DECK_NAME_MAX),
+    ),
   avatarSeed: z.string().nullable().catch(null),
   forfeitAt: z.number().nullable().catch(null),
 });

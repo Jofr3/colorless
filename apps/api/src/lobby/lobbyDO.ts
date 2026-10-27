@@ -17,6 +17,7 @@ import {
   type LobbySnapshot,
   makePlayer,
   type PlayerState,
+  stripControlChars,
 } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
@@ -94,6 +95,7 @@ import {
   rematchChooser,
 } from "./match";
 import { MatchStore } from "./matchStore";
+import { cryptoShuffle } from "./shuffle";
 import { applyIntent, bothReady, removeGuest, seatGuest } from "./snapshot";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
@@ -155,10 +157,13 @@ const STALE_MATCH_REASON =
   "This match ended because the server was updated. Pick your decks and ready up to play again.";
 
 /** Everything the lobby reads from outside its own storage and sockets: the clock, the match
-    seed, and the D1 lookups. */
+    seed and deck pre-shuffle, and the D1 lookups. */
 export interface LobbyDeps {
   now(): number;
   randomSeed(): number;
+  /** A deck list in an order that says nothing about the list, before the engine mints a uid per
+      position in it (`cryptoShuffle`). */
+  shuffleDeck(ids: readonly string[]): string[];
   /** The account a forwarded `Cookie` header's session belongs to, or null. */
   resolveAccount(cookie: string | null): Promise<SessionAccount | null>;
   /** A player's chosen deck as flat card ids, owner-scoped to `owner`, whose session must still
@@ -168,12 +173,14 @@ export interface LobbyDeps {
   loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
 }
 
-/** The production wiring: the system clock, a CSPRNG seed and the Worker's D1 binding. */
+/** The production wiring: the system clock, a CSPRNG seed and shuffle, and the Worker's D1
+    binding. */
 export function lobbyDepsFromEnv(env: Env): LobbyDeps {
   const db = () => drizzle(env.DB);
   return {
     now: () => Date.now(),
     randomSeed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0,
+    shuffleDeck: (ids) => cryptoShuffle(ids),
     resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
     loadDeck: (deckId, owner) => loadPlayerDeck(db(), deckId, owner),
     loadPool: (ids) => loadCardPool(db(), ids),
@@ -185,6 +192,8 @@ export class LobbyDO {
   private readonly deps: LobbyDeps;
   /** In-memory mirror of SNAPSHOT_KEY; undefined = not read since last wake. */
   private snapshot: LobbySnapshot | null | undefined;
+  /** In-memory mirror of SEAT_USERS_KEY, read on every frame; undefined = not read since last wake. */
+  private seatUsersMirror: Record<string, string> | undefined;
   /** The authoritative match: the engine GameState, seed and log, written when the countdown
       flips the lobby to in-game and on every accepted action. */
   private readonly match: MatchStore;
@@ -310,8 +319,9 @@ export class LobbyDO {
     const userId = attachedUserId(ws);
     if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, frame.from);
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
-    // announced name. Both are clipped to the wire bound, as every stored name is.
-    const name = (attachedDisplayName(ws) ?? frame.name).slice(0, LOBBY_NAME_MAX);
+    // announced name. Both are cleaned as the wire cleans names, as every stored name is: an
+    // opponent's client prints it.
+    const name = stripControlChars(attachedDisplayName(ws) ?? frame.name).slice(0, LOBBY_NAME_MAX);
     // …and the face, from the same account (P5-2). Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);
@@ -319,13 +329,17 @@ export class LobbyDO {
     if (next === null) return;
     // Bind the seat to the account on its FIRST authenticated claim, keeping only the bindings of
     // the ids still seated once this hello lands.
-    if (boundUserId === null && userId !== null) {
-      await this.state.storage.put(
-        SEAT_USERS_KEY,
-        seatedUsers({ ...seatUsers, [frame.from]: userId }, next),
-      );
+    const binds = boundUserId === null && userId !== null;
+    if (binds) {
+      const bound = seatedUsers({ ...seatUsers, [frame.from]: userId }, next);
+      await this.state.storage.put(SEAT_USERS_KEY, bound);
+      this.seatUsersMirror = bound;
     }
     attachPlayer(ws, frame.from);
+    // Any other socket on the now-bound seat attached while it was unbound, maybe by someone who
+    // only read the public id. It is closed rather than left acting for the seat; a reload of the
+    // account's own reconnects and is let back in.
+    if (binds) await this.evictFromSeat(frame.from, userId, ws);
     const graceCleared = await this.clearDisconnectGrace(frame.from);
     if (snapshot !== null && sameSnapshot(snapshot, next)) {
       // A repeated hello changes nothing the other sockets see. Only this one needs the lobby,
@@ -366,9 +380,9 @@ export class LobbyDO {
     frame: ClientFrame<"intent">,
     snapshot: LobbySnapshot | null,
   ): Promise<void> {
-    // The socket must be bound to the id it claims — a guest can't steer
+    // The socket must own the id it claims — a guest can't steer
     // the host's seat by forging `from`.
-    if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
+    if (snapshot === null || !(await this.ownsSeat(ws, frame.from))) return;
     const slot = slotOf(snapshot, frame.from);
     if (slot === null) return;
     // A repeated intent changes nothing, and `commit` then writes and sends nothing.
@@ -386,6 +400,7 @@ export class LobbyDO {
     // lobby with a persisted match may act.
     const playerId = attachedPlayer(ws);
     if (playerId === null || this.seatInMatch(snapshot, playerId) === null) return;
+    if (!(await this.ownsSeat(ws, playerId))) return;
     const load = await this.loadOrMigrateMatch();
     // A record this deploy can't read is retired here rather than silently
     // swallowing every action for the rest of the lobby's life.
@@ -395,7 +410,7 @@ export class LobbyDO {
     // lobby as it is now.
     const current = await this.loadSnapshot();
     const seat = this.seatInMatch(current, playerId);
-    if (current === null || seat === null) return;
+    if (current === null || seat === null || !(await this.ownsSeat(ws, playerId))) return;
     const record = load.record;
     // Bind the action to the socket's seat (a client can't act for the
     // opponent) and run the engine's total applyAction. A rejected action
@@ -420,7 +435,7 @@ export class LobbyDO {
     const { state, log } = outcome.record;
     if (state === record.state && log.length === record.log.length) return;
     await this.match.put(outcome.record);
-    this.broadcastMatch(outcome.record, current, { logFrom: record.log.length });
+    await this.broadcastMatch(outcome.record, current, { logFrom: record.log.length });
   }
 
   /** The match seat `playerId` acts from, or null when the lobby is not in-game or does not seat
@@ -441,7 +456,7 @@ export class LobbyDO {
     // guest. Relay it first (the sticky "you were removed"), then free the
     // seat and broadcast the now-waiting lobby.
     if (snapshot === null || snapshot.guest === null) return;
-    if (attachedPlayer(ws) !== snapshot.host.id || frame.to !== snapshot.guest.id) return;
+    if (frame.to !== snapshot.guest.id || !(await this.ownsSeat(ws, snapshot.host.id))) return;
     this.sendToPlayer(frame.to, frame);
     await this.commit(removeGuest(snapshot));
   }
@@ -451,7 +466,7 @@ export class LobbyDO {
     frame: ClientFrame<"bye">,
     snapshot: LobbySnapshot | null,
   ): Promise<void> {
-    if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
+    if (snapshot === null || !(await this.ownsSeat(ws, frame.from))) return;
     const slot = slotOf(snapshot, frame.from);
     if (slot === null) return;
     // Walking out of a RUNNING match FORFEITS it (P4 3c-iv) instead of
@@ -483,8 +498,8 @@ export class LobbyDO {
     // frame and not a seat `intent`: only the DO can see whether the match it
     // holds has finished, and a rematch mid-game must be refused (conceding is
     // how you leave a live one).
-    if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
-    if (snapshot.phase !== "in-game") return;
+    if (snapshot === null || snapshot.phase !== "in-game") return;
+    if (!(await this.ownsSeat(ws, frame.from))) return;
     const slot = slotOf(snapshot, frame.from);
     if (slot === null) return;
     const load = await this.loadOrMigrateMatch();
@@ -569,6 +584,7 @@ export class LobbyDO {
         inGame: this.snapshot?.phase === "in-game",
       });
       this.snapshot = null;
+      this.seatUsersMirror = undefined;
       this.match.forget();
       await this.state.storage.deleteAll();
       await this.state.storage.deleteAlarm(); // deleteAll leaves alarms in place
@@ -680,7 +696,7 @@ export class LobbyDO {
       // (one door onto the match), and skip rather than retire: retiring inside
       // the alarm would commit a second snapshot mid-flip.
       const load = await this.loadOrMigrateMatch();
-      if (load.kind === "ok") this.broadcastMatch(load.record, next);
+      if (load.kind === "ok") await this.broadcastMatch(load.record, next);
     }
 
     for (const seat of forfeiting) await this.concedeSeat(next, seat, now, "abandoned");
@@ -762,7 +778,13 @@ export class LobbyDO {
       // the fresh write below simply replaces it (no retirement needed, and no
       // reset: the players are about to be in-game either way).
       live = (await this.loadOrMigrateMatch()).kind === "ok";
-      if (!live) decks = await readDecks(this.deckRequest(snapshot.host), this.deckRequest(guest));
+      if (!live) {
+        const seatUsers = await this.seatUsers();
+        decks = await readDecks(
+          this.deckRequest(snapshot.host, seatUsers),
+          this.deckRequest(guest, seatUsers),
+        );
+      }
     } catch (error) {
       failure = describeError(error);
     }
@@ -793,10 +815,12 @@ export class LobbyDO {
     const chooserId = await this.read(CHOOSER_KEY, storedChooserSchema);
     const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
     // Storage enforces no construction rules, so `beginMatch` is the validator.
+    // D1 lists a deck by card id and the engine mints uids in list order, so each list is shuffled
+    // first or a uid would place its card in the sorted decklist (MIX1).
     const begun = beginMatch({
       seed,
-      hostDeck: hostDeck.ids,
-      guestDeck: guestDeck.ids,
+      hostDeck: this.deps.shuffleDeck(hostDeck.ids),
+      guestDeck: this.deps.shuffleDeck(guestDeck.ids),
       cardPool,
       names: { host: snapshot.host.name, guest: guest.name },
       formats: { host: hostDeck.format, guest: guestDeck.format },
@@ -837,15 +861,16 @@ export class LobbyDO {
   }
 
   /** What the handoff reads for a seat: its chosen deck, as the account its live socket holds. */
-  private deckRequest(player: PlayerState): DeckRequest {
-    return { deckId: player.deckId, owner: this.ownerOf(player.id) };
+  private deckRequest(player: PlayerState, seatUsers: Record<string, string>): DeckRequest {
+    return { deckId: player.deckId, owner: this.ownerOf(player.id, seatUsers) };
   }
 
   /** The account and session a seated player's live socket authenticated at /ws, or null
       (an anonymous socket, or none live). At handoff both seats have a live
-      socket (the alarm gates on it); used to owner-scope their deck read. */
-  private ownerOf(playerId: string): DeckOwner | null {
-    const socket = this.liveSockets().find((ws) => attachedPlayer(ws) === playerId);
+      socket (the alarm gates on it); used to owner-scope their deck read. Only a socket that
+      owns the seat counts, so a bound seat reads as its own account. */
+  private ownerOf(playerId: string, seatUsers: Record<string, string>): DeckOwner | null {
+    const socket = this.liveSockets().find((ws) => ownsSeat(ws, playerId, seatUsers));
     return socket === undefined ? null : attachedSession(socket);
   }
 
@@ -859,7 +884,29 @@ export class LobbyDO {
   /** playerId → the account bound to it (3a-sec). Empty until an authenticated
       socket claims a seat. */
   private async seatUsers(): Promise<Record<string, string>> {
-    return (await this.read(SEAT_USERS_KEY, storedSeatUsersSchema)) ?? {};
+    this.seatUsersMirror ??= (await this.read(SEAT_USERS_KEY, storedSeatUsersSchema)) ?? {};
+    return this.seatUsersMirror;
+  }
+
+  /** Whether `ws` may act for, and see the hand of, `playerId` (`ownsSeat`). */
+  private async ownsSeat(ws: WebSocket, playerId: string): Promise<boolean> {
+    return ownsSeat(ws, playerId, await this.seatUsers());
+  }
+
+  /** Close every socket on `playerId`'s seat but `keep` that is not `userId`'s. */
+  private async evictFromSeat(playerId: string, userId: string, keep: WebSocket): Promise<void> {
+    const strays = this.liveSockets(keep).filter(
+      (ws) => attachedPlayer(ws) === playerId && attachedUserId(ws) !== userId,
+    );
+    for (const ws of strays) {
+      try {
+        ws.close(1008, "seat claimed by an account");
+      } catch {
+        // Already gone; the bookkeeping below still applies.
+      }
+      await this.socketGone(ws);
+    }
+    if (strays.length > 0) await this.log("seat_evicted", { sockets: strays.length });
   }
 
   /** Persist → broadcast → re-arm the alarm: the ONE path every snapshot
@@ -997,23 +1044,17 @@ export class LobbyDO {
    * `logFrom` is the log length every socket already holds: a socket that takes log deltas gets
    * only the entries after it, and every other socket the whole log.
    */
-  private broadcastMatch(
+  private async broadcastMatch(
     record: MatchRecord,
     snapshot: LobbySnapshot,
     { only, logFrom }: { only?: WebSocket; logFrom?: number } = {},
-  ): void {
+  ): Promise<void> {
+    const seatUsers = await this.seatUsers();
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
-      const viewer = this.viewerOf(ws, snapshot);
+      const viewer = viewerOf(ws, snapshot, seatUsers);
       if (viewer === null) continue;
       this.send(ws, matchFrameFor(record, viewer, takesLogDeltas(ws) ? logFrom : undefined));
     }
-  }
-
-  /** Whose view a socket gets: its seat, a spectator's, or null for an unseated non-spectator. */
-  private viewerOf(ws: WebSocket, snapshot: LobbySnapshot): MatchViewer | null {
-    const playerId = attachedPlayer(ws);
-    if (playerId === null) return isSpectating(ws) ? "spectator" : null;
-    return matchSeatOf(snapshot, playerId);
   }
 
   /** A (re)connecting socket that lands in an already-in-game lobby gets the
@@ -1025,7 +1066,7 @@ export class LobbyDO {
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
     const load = await this.loadOrMigrateMatch();
-    if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, { only: ws });
+    if (load.kind === "ok") await this.broadcastMatch(load.record, snapshot, { only: ws });
     else if (load.kind === "stale") await this.retireStaleMatch();
   }
 
@@ -1047,7 +1088,7 @@ export class LobbyDO {
     // (a browser run caught exactly this: their board read "Host vs Guest"). It
     // carries nothing private; it is the same frame both players already hold.
     this.send(ws, { kind: "state", snapshot });
-    this.broadcastMatch(load.record, snapshot, { only: ws });
+    await this.broadcastMatch(load.record, snapshot, { only: ws });
   }
 
   /**
@@ -1067,7 +1108,7 @@ export class LobbyDO {
     if (!outcome.ok) return;
     await this.match.put(outcome.record);
     await this.log("forfeit", { seat, cause });
-    this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
+    await this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
   }
 
   /**
@@ -1121,6 +1162,27 @@ export class LobbyDO {
     if (throttled) logEventThrottled("lobby", kind, { lobby, ...fields });
     else logEvent("lobby", kind, { lobby, ...fields });
   }
+}
+
+/** Whether `ws` acts for `playerId`: it is attached to that seat, and the seat is unbound or bound
+    to the socket's account. A socket that attached while the seat was unbound fails the second
+    test once an account binds it. */
+function ownsSeat(ws: WebSocket, playerId: string, seatUsers: Record<string, string>): boolean {
+  return (
+    attachedPlayer(ws) === playerId &&
+    seatClaimAllowed(seatUsers[playerId] ?? null, attachedUserId(ws))
+  );
+}
+
+/** Whose view a socket gets: the seat it owns, a spectator's, or null for any other socket. */
+function viewerOf(
+  ws: WebSocket,
+  snapshot: LobbySnapshot,
+  seatUsers: Record<string, string>,
+): MatchViewer | null {
+  const playerId = attachedPlayer(ws);
+  if (playerId === null) return isSpectating(ws) ? "spectator" : null;
+  return ownsSeat(ws, playerId, seatUsers) ? matchSeatOf(snapshot, playerId) : null;
 }
 
 /** A caught error as a log field, clipped so one line stays short. */

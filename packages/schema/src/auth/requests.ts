@@ -2,6 +2,7 @@
 // zValidator at the boundary and reusable by the web app's forms.
 
 import * as z from "zod";
+import { withoutControlChars } from "../text";
 
 export const DISPLAY_NAME_MAX = 64;
 
@@ -17,10 +18,14 @@ const emailField = z
     is a DoS guard — every char feeds PBKDF2. */
 const newPasswordField = z.string().min(8).max(256);
 
+/** Other players see it, so it carries no control or format characters (text.ts). Trimmed first,
+    so a pasted trailing newline is not refused. */
+const displayNameField = withoutControlChars(z.string().trim().min(1).max(DISPLAY_NAME_MAX));
+
 export const registerRequestSchema = z.object({
   email: emailField,
   password: newPasswordField,
-  displayName: z.string().trim().min(1).max(DISPLAY_NAME_MAX).optional(),
+  displayName: displayNameField.optional(),
 });
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 
@@ -35,7 +40,7 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
     part, while explicitly saving a blank one would only cost you your name —
     the lobby would fall back to a generated "Player 4271" handle (P5-1). */
 export const updateProfileRequestSchema = z.object({
-  displayName: z.string().trim().min(1).max(DISPLAY_NAME_MAX),
+  displayName: displayNameField,
 });
 export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;
 

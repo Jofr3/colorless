@@ -30,6 +30,10 @@ describe("registerRequestSchema", () => {
     ["bad email", { email: "not-an-email", password: "long-enough" }],
     ["short password", { email: "a@b.co", password: "seven77" }],
     ["blank display name", { email: "a@b.co", password: "long-enough", displayName: "   " }],
+    [
+      "a display name with a control character",
+      { email: "a@b.co", password: "long-enough", displayName: "x\nCOLORLESS:auth:submit" },
+    ],
   ])("rejects %s", (_label, body) => {
     expect(registerRequestSchema.safeParse(body).success).toBe(false);
   });
@@ -51,6 +55,7 @@ describe("updateProfileRequestSchema", () => {
     expect(updateProfileRequestSchema.parse({ displayName: "  Brock  " }).displayName).toBe(
       "Brock",
     );
+    expect(updateProfileRequestSchema.parse({ displayName: "Brock\n" }).displayName).toBe("Brock");
   });
 
   it("strips the retired favourite-deck id an older client may still send", () => {
@@ -63,6 +68,8 @@ describe("updateProfileRequestSchema", () => {
     ["a blank name", { displayName: "   " }],
     ["a missing name — unlike register, it is required here", {}],
     ["a name past 64 chars", { displayName: "x".repeat(65) }],
+    ["a name with a control character", { displayName: "Brock\tCOLORLESS:account:logout" }],
+    ["a name with a bidi override", { displayName: "Brock\u202e" }],
   ])("rejects %s", (_label, body) => {
     expect(updateProfileRequestSchema.safeParse(body).success).toBe(false);
   });

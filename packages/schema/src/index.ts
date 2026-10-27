@@ -9,3 +9,4 @@ export * from "./health";
 export * from "./lobby";
 export * from "./match";
 export * from "./tcgdex";
+export * from "./text";

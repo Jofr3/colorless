@@ -276,6 +276,31 @@ describe("LobbyDO — countdown and handoff", () => {
     expect(guest.last("match")).toEqual(matchFrameFor(await storedMatch(), "p2"));
   });
 
+  it("mints card uids over each deck as the pre-shuffle reorders it, in every game (MIX1)", async () => {
+    const shuffled: string[][] = [];
+    h.deps.shuffleDeck = (ids) => {
+      const order = [...ids].reverse();
+      shuffled.push(order);
+      return order;
+    };
+    /** The card ids behind `seat`'s uids, in uid order. */
+    const listOf = async (seat: "p1" | "p2") => {
+      const { cardIdByUid } = (await storedMatch()).state;
+      return DECK.map((_, i) => cardIdByUid[`${seat}#${String(i)}`]);
+    };
+    const { host, guest } = await startedMatch();
+    expect(shuffled).toEqual([[...DECK].reverse(), [...DECK].reverse()]);
+    expect(await listOf("p1")).toEqual([...DECK].reverse());
+    expect(await listOf("p2")).toEqual([...DECK].reverse());
+
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    await h.send(guest, { kind: "rematch", from: "g" });
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    expect(shuffled).toHaveLength(4);
+  });
+
   it("lets a rematch's loser choose the play order", async () => {
     const { host, guest } = await startedMatch();
     await h.send(guest, { kind: "action", action: { type: "concede" } });

@@ -10,6 +10,13 @@ describe("lobbyDisplayName", () => {
     expect(lobbyDisplayName("  Misty  ")).toBe("Misty");
   });
 
+  it("strips control and format characters a name saved before the rule may hold", () => {
+    expect(lobbyDisplayName("Ash\nCOLORLESS:account:logout\u202e")).toBe(
+      "AshCOLORLESS:account:logout",
+    );
+    expect(lobbyDisplayName("\u200b\n\t")).toBeNull();
+  });
+
   it("reports NOTHING for a blank name rather than substituting one", () => {
     expect(lobbyDisplayName("")).toBeNull();
     expect(lobbyDisplayName("   ")).toBeNull();

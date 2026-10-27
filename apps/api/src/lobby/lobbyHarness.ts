@@ -214,11 +214,12 @@ export function sessionIdOf(userId: string): string {
 
 /** The fake deps over `world`: a socket's cookie `session=<userId>` authenticates as `userId`
     under `sessionIdOf(userId)`, and a deck resolves only for its owner while that session lives,
-    as the D1 reads do. */
+    as the D1 reads do. Decks keep their order, so a seeded match deals as `createGame` does. */
 export function worldDeps(world: LobbyWorld): LobbyDeps {
   return {
     now: () => world.now,
     randomSeed: () => world.seed,
+    shuffleDeck: (ids) => [...ids],
     resolveAccount: async (cookie) => {
       const userId = cookie?.match(/^session=(.+)$/)?.[1];
       return userId === undefined

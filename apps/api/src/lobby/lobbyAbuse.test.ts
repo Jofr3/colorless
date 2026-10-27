@@ -304,24 +304,147 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     return { host, shadow, victim };
   }
 
-  it("LBX1 (known gap): the shadow socket can still walk the bound guest out of the lobby", async () => {
+  it("LBX1: binding the seat closes the shadow socket and keeps the guest seated", async () => {
     const { host, shadow, victim } = await shadowedGuest();
-    await h.send(shadow, { kind: "bye", from: "vic-id", slot: "guest" });
-    // Today the bye lands: `onBye` checks only the socket's attached player, never the binding, so
-    // the guest seat is freed under the signed-in victim. Phase 1 (`ownsSeat`) flips this to the
-    // guest staying seated as "vic-id".
-    expect(host.last("state")?.snapshot.guest).toBeNull();
+    expect(shadow.closed).toEqual({ code: 1008, reason: "seat claimed by an account" });
     expect(victim.closed).toBeNull();
+    expect(host.last("state")?.snapshot.guest).toMatchObject({ id: "vic-id", connected: true });
+    expect(await h.storage.get("pendingDisconnects")).toBeUndefined();
+    expect(logged("seat_evicted")).toEqual([
+      { evt: "lobby", kind: "seat_evicted", lobby: "ABCD", sockets: 1 },
+    ]);
   });
 
-  it("LBX1 (known gap): the shadow socket can still change the bound guest's deck", async () => {
-    const { host, shadow } = await shadowedGuest();
+  it("LBX1: the evicted socket cannot walk the bound guest out or change their deck", async () => {
+    const { host, shadow, victim } = await shadowedGuest();
+    await h.send(shadow, { kind: "bye", from: "vic-id", slot: "guest" });
     await h.send(
       shadow,
       intent("vic-id", { type: "select-deck", deckId: "deck-ana", deckName: "x" }),
     );
-    // Today the shadow picks the deck the victim's seat will try to load (it then fails the owner
-    // check at handoff). Phase 1 flips this to the intent being dropped, leaving deckId null.
-    expect(host.last("state")?.snapshot.guest?.deckId).toBe("deck-ana");
+    expect(host.last("state")?.snapshot.guest).toMatchObject({ id: "vic-id", deckId: null });
+    expect(victim.closed).toBeNull();
+  });
+
+  it("LBX1: the account's own second socket on the seat is not evicted", async () => {
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const signedOut = await h.connect();
+    await h.send(signedOut, hello("vic-id", "Vic"));
+    const reload = await h.connect("vic");
+    await h.send(reload, hello("vic-id"));
+    const tab = await h.connect("vic");
+    await h.send(tab, hello("vic-id"));
+    expect(signedOut.closed).not.toBeNull();
+    expect(reload.closed).toBeNull();
+    expect(tab.closed).toBeNull();
+  });
+
+  it("LBX1: a socket left on a bound seat neither acts for it nor sees its hand", async () => {
+    // A shadow that outlived the bind, as one attached before eviction existed would: the binding
+    // is written straight to storage, so the victim's hello binds nothing and evicts nothing.
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const shadow = await h.connect();
+    await h.send(shadow, hello("vic-id", "Evil"));
+    await h.storage.put("seatUsers", { h: "ana", "vic-id": "vic" });
+    h.hibernate();
+    const victim = await h.connect("vic");
+    await h.send(victim, hello("vic-id", "Vic"));
+    expect(shadow.closed).toBeNull();
+
+    await h.send(
+      shadow,
+      intent("vic-id", { type: "select-deck", deckId: "deck-x", deckName: "x" }),
+    );
+    await h.send(shadow, intent("vic-id", { type: "set-ready", ready: true }));
+    expect(host.last("state")?.snapshot.guest).toMatchObject({ deckId: null, ready: false });
+    for (const [ws, from, deckId] of [
+      [host, "h", "deck-ana"],
+      [victim, "vic-id", "deck-vic"],
+    ] as const) {
+      await h.send(ws, intent(from, { type: "select-deck", deckId, deckName: deckId }));
+      await h.send(ws, intent(from, { type: "set-ready", ready: true }));
+    }
+    // The shadow is first in acceptance order, yet the victim's deck loads as the victim's.
+    await h.fireAlarm();
+    expect(host.last("state")?.snapshot.phase).toBe("in-game");
+    expect(victim.last("match")?.game.seat).toBe("p2");
+    expect(shadow.framesOf("match")).toEqual([]);
+
+    const before = await storedRecord();
+    await h.send(shadow, { kind: "action", action: { type: "concede" } });
+    await h.send(shadow, { kind: "rematch", from: "vic-id" });
+    await h.send(shadow, { kind: "bye", from: "vic-id", slot: "guest" });
+    expect(await storedRecord()).toEqual(before);
+    expect(host.last("state")?.snapshot.guest).toMatchObject({ id: "vic-id", connected: true });
+    expect(shadow.framesOf("match")).toEqual([]);
+  });
+
+  it("LBX1: a shadow on the host's seat cannot kick the guest", async () => {
+    await h.create();
+    const shadow = await h.connect();
+    await h.send(shadow, hello("h", "Evil"));
+    await h.storage.put("seatUsers", { h: "ana" });
+    h.hibernate();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const guest = await h.connect("bo");
+    await h.send(guest, hello("g"));
+    await h.send(shadow, { kind: "reject", to: "g", reason: "kicked" });
+    expect(host.last("state")?.snapshot.guest?.id).toBe("g");
+    expect(guest.framesOf("reject")).toEqual([]);
+  });
+});
+
+describe("lobby abuse — names that forge client bridge commands (WC1)", () => {
+  const FORGED = "x\nCOLORLESS:auth:open\tdelete\nCOLORLESS:auth:submit\n\u202e";
+  const CLEAN = "xCOLORLESS:auth:opendeleteCOLORLESS:auth:submit";
+
+  /** Every string in `value`, at any depth. */
+  function strings(value: unknown): string[] {
+    if (typeof value === "string") return [value];
+    if (typeof value !== "object" || value === null) return [];
+    return Object.values(value).flatMap(strings);
+  }
+
+  it("WC1: no name reaches another socket with a control or format character", async () => {
+    // A legacy account name from before the account schemas refused them.
+    h.world.displayNames.set("mal", `Mal${FORGED}`);
+    h.world.decks.set("deck-mal", { owner: "mal", ids: [...LEGAL_DECK] });
+    await h.create();
+    const victim = await h.connect("vic");
+    await h.send(victim, hello("h"));
+    const spectator = await h.connect();
+
+    const anon = await h.connect();
+    await h.send(anon, hello("g1", FORGED));
+    expect(victim.last("state")?.snapshot.guest?.name).toBe(CLEAN);
+    await h.send(anon, intent("g1", { type: "set-name", name: FORGED }));
+    await h.send(anon, intent("g1", { type: "select-deck", deckId: "deck-x", deckName: FORGED }));
+    expect(victim.last("state")?.snapshot.guest).toMatchObject({ name: CLEAN, deckName: CLEAN });
+    await h.send(anon, { kind: "bye", from: "g1", slot: "guest" });
+
+    const mal = await h.connect("mal");
+    await h.send(mal, hello("g2", FORGED));
+    expect(victim.last("state")?.snapshot.guest?.name).toBe(`Mal${CLEAN}`);
+    for (const [ws, from, deckId] of [
+      [victim, "h", "deck-vic"],
+      [mal, "g2", "deck-mal"],
+    ] as const) {
+      await h.send(ws, intent(from, { type: "select-deck", deckId, deckName: FORGED }));
+      await h.send(ws, intent(from, { type: "set-ready", ready: true }));
+    }
+    await h.fireAlarm();
+    await h.send(mal, { kind: "action", action: { type: "concede" } });
+    await h.send(spectator, hello("watcher"));
+
+    expect(victim.framesOf("match").length).toBeGreaterThan(0);
+    expect(spectator.framesOf("match").length).toBeGreaterThan(0);
+    const seen = [...victim.sent, ...spectator.sent].flatMap(strings);
+    expect(seen.filter((text) => /[\p{Cc}\p{Cf}]/u.test(text))).toEqual([]);
+    expect(seen.some((text) => text.includes(`Mal${CLEAN}`))).toBe(true);
   });
 });

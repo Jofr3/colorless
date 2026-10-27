@@ -96,6 +96,23 @@ describe("parseClientMessage — the length bounds", () => {
     );
     expect(pick).toMatchObject({ intent: { deckName: long(LOBBY_DECK_NAME_MAX) } });
   });
+
+  it("strips control characters from a hello's name and a deck name, and refuses a set-name with any", () => {
+    const forged = "x\nCOLORLESS:auth:submit\u200b";
+    expect(parseClientMessage(JSON.stringify({ kind: "hello", from: "g1", name: forged }))).toEqual(
+      { kind: "hello", from: "g1", name: "xCOLORLESS:auth:submit" },
+    );
+    const pick = parseClientMessage(
+      JSON.stringify({
+        kind: "intent",
+        from: "g1",
+        intent: { type: "select-deck", deckId: "d1", deckName: forged },
+      }),
+    );
+    expect(pick).toMatchObject({ intent: { deckName: "xCOLORLESS:auth:submit" } });
+    const rename = { kind: "intent", from: "g1", intent: { type: "set-name", name: forged } };
+    expect(parseClientMessage(JSON.stringify(rename))).toBeNull();
+  });
 });
 
 describe("seatedUsers — the bindings worth keeping", () => {
@@ -282,6 +299,17 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     expect(read?.host.deckName).toBe("d".repeat(LOBBY_DECK_NAME_MAX));
     expect(read?.guest?.deckName).toBeNull();
     expect(readSnapshot(stored)).toEqual(stored);
+  });
+
+  it("strips control and format characters from names stored before the wire refused them", () => {
+    const stored = lobbyWithGuest();
+    const forged = {
+      ...stored,
+      host: { ...stored.host, name: "x\nCOLORLESS:auth:submit\u202e", deckName: "d\r\n\t" },
+    };
+    const read = readSnapshot(forged);
+    expect(read?.host.name).toBe("xCOLORLESS:auth:submit");
+    expect(read?.host.deckName).toBe("d");
   });
 
   it("keeps a stored avatar seed and reads a malformed seat as no snapshot", () => {
