@@ -20,11 +20,12 @@ export const PRIVATE_REVALIDATE_CACHE = "private, no-cache";
 
 /** A 304 to a cross-origin credentialed fetch still needs its CORS headers
     (the cors middleware set them before the handler ran, and hono/etag strips
-    every header it isn't told to keep). */
+    every header it isn't told to keep), and a re-sent session cookie (GET /auth/me). */
 const RETAINED_HEADERS = [
   ...RETAINED_304_HEADERS,
   "access-control-allow-origin",
   "access-control-allow-credentials",
+  "set-cookie",
   CACHE_STATUS_HEADER,
 ];
 

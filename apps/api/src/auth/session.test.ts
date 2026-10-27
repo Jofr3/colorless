@@ -39,14 +39,14 @@ describe("session cookie serialization", () => {
   it("installs the token with the §3.5 attributes", () => {
     const cookie = sessionCookie("tok123");
     expect(cookie).toBe(
-      `session=tok123; Max-Age=${SESSION_TTL_SECONDS}; Path=/; HttpOnly; Secure; SameSite=None`,
+      `session=tok123; Max-Age=${SESSION_TTL_SECONDS}; Path=/; HttpOnly; Secure; SameSite=Lax`,
     );
     expect(SESSION_TTL_SECONDS).toBe(30 * 24 * 60 * 60);
   });
 
   it("clears with Max-Age=0 and the same attributes", () => {
     expect(clearedSessionCookie()).toBe(
-      "session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=None",
+      "session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
     );
   });
 });

@@ -1,7 +1,6 @@
 // Requests from a foreign site carrying the visitor's session cookie: every unsafe-method route
-// and the lobby WebSocket upgrade. The `it.fails` cases are open findings of the 2026-10 security
-// audit and assert the fixed behavior; when a fix lands its case starts passing, which fails the
-// run until `.fails` is removed and the matching row of TEXT_PLAIN_POST is updated.
+// and the lobby WebSocket upgrade (findings AU1 and AEX1 of the 2026-10 security audit). A new
+// unsafe route must be added to UNSAFE_ROUTES.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sessionCookie } from "./auth/session";
@@ -14,23 +13,24 @@ const EVIL = "https://evil.example";
 const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** Every unsafe-method route with a body its schema accepts, and for a POST (which a page can
-    send without a preflight) what a cross-site form-encodable POST with the cookie gets today. */
+    send without a preflight) what a cross-site form-encodable POST with the cookie gets: the
+    Origin guard refuses each before it runs (AEX1). */
 const UNSAFE_ROUTES: Record<string, { body?: unknown; textPlain?: number }> = {
   "POST /auth/register": {
     body: { email: "new@example.com", password: "hunter2hunter2" },
-    textPlain: 400,
+    textPlain: 403,
   },
   "POST /auth/login": {
     body: { email: "victim@example.com", password: "hunter2hunter2" },
-    textPlain: 400,
+    textPlain: 403,
   },
-  // AEX1: signs the visitor out.
-  "POST /auth/logout": { textPlain: 204 },
-  "POST /auth/verify-email": { textPlain: 501 },
-  "POST /auth/reset-password": { textPlain: 501 },
-  "POST /decks": { body: { name: "Planted", tint: 1 }, textPlain: 400 },
-  // LB3 (fixed with AEX1's Origin guard): mints a lobby on the visitor's address.
-  "POST /lobby": { textPlain: 201 },
+  // AEX1: signed the visitor out before the guard.
+  "POST /auth/logout": { textPlain: 403 },
+  "POST /auth/verify-email": { textPlain: 403 },
+  "POST /auth/reset-password": { textPlain: 403 },
+  "POST /decks": { body: { name: "Planted", tint: 1 }, textPlain: 403 },
+  // LB3: minted a lobby on the visitor's address before the guard.
+  "POST /lobby": { textPlain: 403 },
   "PATCH /auth/me": { body: { displayName: "Mallory" } },
   "DELETE /auth/me": { body: { confirmEmail: "victim@example.com" } },
   "PATCH /decks/:id": { body: { name: "Hijacked" } },
@@ -218,8 +218,8 @@ describe("cross-site requests", () => {
   });
 });
 
-describe("known gaps (security audit 2026-10)", () => {
-  it.fails("AEX1: a cross-site text/plain logout leaves the session alive", async () => {
+describe("the cross-site Origin guard and Lax cookie (AEX1)", () => {
+  it("AEX1: a cross-site text/plain logout leaves the session alive", async () => {
     await app.request(
       "/auth/logout",
       {
@@ -232,11 +232,21 @@ describe("known gaps (security audit 2026-10)", () => {
     expect(me.status).toBe(200);
   });
 
-  it.fails("AEX1: the session cookie is SameSite=Lax", () => {
+  it.each([
+    ["the app's Origin, same-site", { Origin: APP, "Sec-Fetch-Site": "same-site" }, 201],
+    ["no Origin (not a browser page)", {}, 201],
+    ["a null Origin", { Origin: "null" }, 403],
+    ["no Origin but Sec-Fetch-Site cross-site", { "Sec-Fetch-Site": "cross-site" }, 403],
+  ])("AEX1: POST /lobby with %s answers %i", async (_, headers, status) => {
+    const res = await app.request("/lobby", { method: "POST", headers }, env());
+    expect(res.status).toBe(status);
+  });
+
+  it("AEX1: the session cookie is SameSite=Lax", () => {
     expect(sessionCookie("token")).toContain("SameSite=Lax");
   });
 
-  it.fails.each(unsafeRoutes)(
+  it.each(unsafeRoutes)(
     "AEX1: refuses %s from a foreign Origin with the cookie and a JSON body",
     async (key) => {
       const [method, path] = split(key);

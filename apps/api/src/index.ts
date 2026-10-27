@@ -55,8 +55,8 @@ app.use("*", async (c, next) => {
   c.header("Cross-Origin-Resource-Policy", "same-site");
 });
 
-// CORS on everything: the web app lives on a DIFFERENT origin (§3.5) and
-// sends `credentials: "include"` so the SameSite=None session cookie rides
+// CORS on everything: the web app lives on a DIFFERENT origin of the same site (§3.5) and
+// sends `credentials: "include"` so the SameSite=Lax session cookie rides
 // along — that combination requires an exact allow-origin echo, never `*`.
 // Configured per-request because env is only known per-request on Workers.
 // Preflights (every JSON write) are cached for a day — browsers clamp it
@@ -72,6 +72,24 @@ app.use("*", (c, next) =>
     allowMethods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
   })(c, next),
 );
+
+// A state-changing request from another site is refused (AEX1): the session cookie is Lax, so a
+// browser leaves it off such requests anyway, but this also stops a request that needs no cookie
+// (POST /lobby, register) and covers a cookie set before the move to Lax. A request with no Origin
+// is not from a browser page, so it carries no visitor's cookie; `Sec-Fetch-Site` catches a
+// browser that sent no Origin.
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+app.use("*", async (c, next) => {
+  if (UNSAFE_METHODS.has(c.req.method)) {
+    const origin = c.req.header("Origin");
+    const foreignOrigin = origin !== undefined && !appCorsOrigins(c.env).includes(origin);
+    if (foreignOrigin || c.req.header("Sec-Fetch-Site") === "cross-site") {
+      logEventThrottled("http", "cross_site_refused", { method: c.req.method, route: c.req.path });
+      return c.json({ error: "forbidden origin" }, 403);
+    }
+  }
+  await next();
+});
 
 // No legitimate body is larger than about 8 KB: a 200-entry deck save of the longest card ids.
 // The cap stops a large body being buffered and parsed (or a huge array validated) at all. A

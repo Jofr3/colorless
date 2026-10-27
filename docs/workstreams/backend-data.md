@@ -242,18 +242,28 @@ data loss rather than a validation failure.
 
 - **Server sessions** (not stateless JWT — easy logout/rotation) in D1
   `sessions`. The browser holds a 256-bit random token in an http-only cookie
-  `session` (`Secure; SameSite=None; Path=/`, 30-day `Max-Age`); the DB row id
+  `session` (`HttpOnly; Secure; SameSite=Lax; Path=/`, 30-day `Max-Age`); the DB row id
   is **sha256(token)**, so a leaked dump authenticates nothing. Expiry is
   enforced on read; an expired row is deleted when its cookie is presented or
   the user signs in again, and a daily Cron Trigger (`17 4 * * *`,
   `apps/api/src/auth/sweep.ts`) deletes the rest, 500 rows per statement and
   at most 10,000 per table per run, logging `evt = "d1", kind = "sweep"`.
-  `SameSite=None` because the web app lives on a **different origin**: the
-  Worker runs `hono/cors` app-wide with `origin = APP_ORIGIN` (wrangler.jsonc
-  `vars`, dev default `http://localhost:5173`) and `credentials: true`, and
-  the client fetches with `credentials: "include"`. Preflights allow only the
+  The web app is a **different origin but the same site**: the public suffix
+  is `workers.dev` itself, so both Workers sit on `jofrescari.workers.dev`
+  (locally both are on `localhost`, ports aside), and a Lax cookie rides the
+  app's credentialed fetches and the lobby WebSocket. The Worker runs
+  `hono/cors` app-wide with `origin = APP_ORIGIN` (wrangler.jsonc `vars`, dev
+  default `http://localhost:5175`) and `credentials: true`, and the client
+  fetches with `credentials: "include"`. Preflights allow only the
   `Content-Type` request header and `GET, HEAD, POST, PATCH, DELETE`, which is
-  all the client sends.
+  all the client sends. `GET /auth/me` re-sends the cookie with its remaining
+  lifetime, which replaced the `SameSite=None` cookies set before 2026-10-27.
+  **Cross-site guard:** a POST, PUT, PATCH or DELETE whose `Origin` is not an
+  app origin (including `null`), or that says `Sec-Fetch-Site: cross-site`,
+  gets 403 `{"error":"forbidden origin"}` before it runs
+  (`evt = "http", kind = "cross_site_refused"`, throttled). A request with no
+  `Origin` (curl, tests) passes, since it carries no visitor's cookie. The lobby
+  WebSocket upgrade applies the same origin list.
 - **Email + password:** PBKDF2-SHA256 via WebCrypto (zero deps,
   Workers-native), stored as `pbkdf2$<iterations>$<salt-b64url>$<hash-b64url>`
   — verify reads the iteration count from the encoding, so raising the

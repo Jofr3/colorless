@@ -87,7 +87,7 @@ describe("session routes without a cookie", () => {
     const res = await app.request("/auth/logout", { method: "POST" }, envWith());
     expect(res.status).toBe(204);
     expect(res.headers.get("Set-Cookie")).toBe(
-      "session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=None",
+      "session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
     );
   });
 });

@@ -53,6 +53,7 @@ import {
   generateSessionToken,
   hashSessionToken,
   readCookie,
+  SESSION_COOKIE,
   SESSION_TTL_MS,
   sessionCookie,
   sessionIdFromCookie,
@@ -255,9 +256,15 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
 // is just "echo the resolved caller".
 // ETagged `private, no-cache` (../httpCache.ts): the boot probe revalidates
 // to a 304 while the profile is unchanged.
-authRoutes.get("/me", privateRevalidate, requireUser, (c) =>
-  c.json(userSchema.parse(mapUserRow(c.get("user")))),
-);
+// The session check re-sends the cookie with its current attributes and remaining lifetime, so a
+// cookie set before the move to SameSite=Lax (2026-10-27) is replaced on the next page load
+// instead of living out its 30 days.
+authRoutes.get("/me", privateRevalidate, requireUser, (c) => {
+  const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
+  const remaining = Math.floor((c.get("sessionExpiresAt").getTime() - Date.now()) / 1000);
+  if (token !== null && remaining > 0) c.header("Set-Cookie", sessionCookie(token, remaining));
+  return c.json(userSchema.parse(mapUserRow(c.get("user"))));
+});
 
 // Editing your own account (P5-5 — polish.md "Profiles"). The name P5-1 made
 // authoritative was, until now, whatever register chose: the lobby broadcasts

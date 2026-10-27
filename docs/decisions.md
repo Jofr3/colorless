@@ -868,3 +868,11 @@ Phase 1 of the 2026-10-27 security audit. Server-only and web-only fixes, with n
   - a deny-all `Permissions-Policy` and `Cross-Origin-Opener-Policy: same-origin`.
   
   There is no COEP, because love.js and the cross-origin card art need none.
+
+### 2026-10-27 — A same-site Lax session cookie and a cross-site guard
+
+Phase 2 of the 2026-10-27 security audit (AEX1). It corrects the premise behind the known limit in "The Lua frontend replaces React" (2026-10-22). The public suffix list's entry is the bare `workers.dev`, with no wildcard, so the registrable domain is `jofrescari.workers.dev`. The web app and the API are therefore different origins but the same site, and the session cookie was never third-party. `SameSite=None` gained nothing and let any site's requests carry the cookie (logout CSRF, the AU1 socket hijack, authenticated framing).
+
+- **Lax.** The session cookie is `HttpOnly; Secure; SameSite=Lax`. Nobody is logged out: the attribute change keeps the name and the token. `GET /auth/me`, the session check every page load makes, re-sends the cookie with its remaining lifetime (on a 304 too), so the old `None` cookies are replaced instead of living out their 30 days. The `__Host-` rename was declined (user decision 1): it would log everyone out once, so it waits for a move that does that anyway.
+- **Cross-site guard.** Any POST, PUT, PATCH or DELETE whose `Origin` is not an app origin (`null` included), or that sends `Sec-Fetch-Site: cross-site`, gets 403 before it runs. A request without `Origin` passes: browsers send `Origin` on every such method, so it is not a page acting with a visitor's cookie. This also closes `POST /lobby` and register to other sites (LB3's hygiene part). JSON content types are not required globally, because logout and `POST /lobby` send no body.
+- **Constraint.** The web app and the API must stay on one registrable domain. A move to a custom domain (AE2, decision 6) must put both on it, or sign-in breaks.

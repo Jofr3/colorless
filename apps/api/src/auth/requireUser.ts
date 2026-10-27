@@ -16,8 +16,9 @@ import { clearedSessionCookie, sessionExpired, sessionIdFromCookie } from "./ses
 
 export type UserRow = typeof users.$inferSelect;
 
-/** Hono env for routes behind requireUser: `c.get("user")` is the caller. */
-export type AuthedEnv = { Bindings: Env; Variables: { user: UserRow } };
+/** Hono env for routes behind requireUser: `c.get("user")` is the caller, and
+    `c.get("sessionExpiresAt")` when the session presented ends. */
+export type AuthedEnv = { Bindings: Env; Variables: { user: UserRow; sessionExpiresAt: Date } };
 
 export const requireUser = createMiddleware<AuthedEnv>(async (c, next) => {
   const sessionId = await sessionIdFromCookie(c.req.header("Cookie"));
@@ -42,5 +43,6 @@ export const requireUser = createMiddleware<AuthedEnv>(async (c, next) => {
     return c.json({ error: "unauthorized" }, 401);
   }
   c.set("user", row.user);
+  c.set("sessionExpiresAt", row.expiresAt);
   await next();
 });

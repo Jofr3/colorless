@@ -78,10 +78,10 @@ Checks that compare against Balatro's source skip themselves when it is missing
 `VITE_API_ORIGIN` from `.env.production`. The frontend Worker has no script; unknown
 paths (such as old React URLs) fall back to the host page. The API's `APP_ORIGIN` must equal the
 frontend's origin (CORS and the post-login redirect), so redeploy the API after
-changing it. `workers.dev` is a public suffix, which makes the two Workers
-different sites: the `SameSite=None` session cookie is a third-party cookie
-there, and browsers that block those cannot sign in until both share a custom
-domain.
+changing it. The public suffix is `workers.dev` itself, so both Workers are on the
+same site (`jofrescari.workers.dev`): the `SameSite=Lax` session cookie is first-party
+for the app's requests. Moving to a custom domain must keep the two on one site,
+or sign-in breaks.
 
 ## Google login
 

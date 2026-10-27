@@ -594,6 +594,33 @@ describe("PATCH /auth/me", () => {
   });
 });
 
+describe("GET /auth/me", () => {
+  it("re-sends the session cookie as Lax for its remaining lifetime, on a 304 too", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
+    const tenMinutes = Date.now() + 10 * 60 * 1000;
+    await d1()
+      .db.prepare("UPDATE sessions SET expires_at = ? WHERE user_id = ?")
+      .bind(tenMinutes, userId)
+      .run();
+    const first = await app.request("/auth/me", { headers: { Cookie: cookie } }, d1().env());
+    expect(first.status).toBe(200);
+    const sent = first.headers.get("Set-Cookie") ?? "";
+    expect(sent).toContain(`${cookie};`);
+    expect(sent).toContain("SameSite=Lax");
+    const maxAge = Number(/Max-Age=(\d+)/.exec(sent)?.[1]);
+    expect(maxAge).toBeGreaterThan(590);
+    expect(maxAge).toBeLessThanOrEqual(600);
+    const etag = first.headers.get("ETag") ?? "";
+    const revalidated = await app.request(
+      "/auth/me",
+      { headers: { Cookie: cookie, "If-None-Match": etag } },
+      d1().env(),
+    );
+    expect(revalidated.status).toBe(304);
+    expect(revalidated.headers.get("Set-Cookie")).toContain("SameSite=Lax");
+  });
+});
+
 describe("GET /auth/oauth/google/callback find-or-create", () => {
   it("creates an account and identity for a new Google user", async () => {
     const res = await oauthCallback({

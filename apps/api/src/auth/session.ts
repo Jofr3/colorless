@@ -1,6 +1,8 @@
 // The browser holds a random token and the sessions row id is sha256(token), so a leaked database
-// contains nothing that authenticates. The cookie is SameSite=None (which requires Secure) because
-// the web app is on a different origin and sends credentialed fetches.
+// contains nothing that authenticates. The cookie is SameSite=Lax: the web app is on a different
+// origin but the same site (both are on the account's workers.dev subdomain, and `workers.dev` is
+// the public suffix), so its credentialed fetches and the lobby WebSocket carry the cookie while
+// other sites' requests do not.
 
 import { randomBytes, toBase64Url } from "./encoding";
 
@@ -32,11 +34,11 @@ export function sessionExpired(expiresAt: Date, now: number = Date.now()): boole
   return expiresAt.getTime() <= now;
 }
 
-const SESSION_COOKIE_ATTRIBUTES = "Path=/; HttpOnly; Secure; SameSite=None";
+const SESSION_COOKIE_ATTRIBUTES = "Path=/; HttpOnly; Secure; SameSite=Lax";
 
-/** Set-Cookie value that installs a session token for 30 days. */
-export function sessionCookie(token: string): string {
-  return `${SESSION_COOKIE}=${token}; Max-Age=${SESSION_TTL_SECONDS}; ${SESSION_COOKIE_ATTRIBUTES}`;
+/** Set-Cookie value that installs a session token, for 30 days unless `maxAgeSeconds` says less. */
+export function sessionCookie(token: string, maxAgeSeconds: number = SESSION_TTL_SECONDS): string {
+  return `${SESSION_COOKIE}=${token}; Max-Age=${maxAgeSeconds}; ${SESSION_COOKIE_ATTRIBUTES}`;
 }
 
 /** Set-Cookie value that clears the session cookie (logout / dead session). */
