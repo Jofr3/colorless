@@ -25,6 +25,7 @@ the script after adding a decision.
 | 2026-10-27 | Database additive changes: D1 sign-in counters, versioned decks, sweeps and limits | decisions.md:811 |
 | 2026-10-27 | Account deletion, library controls, and fewer catalog and deck reads | decisions.md:824 |
 | 2026-10-27 | Security safety nets before the fixes | decisions.md:835 |
+| 2026-10-27 | Security hot fixes: lobby origins, the print bridge, seat ownership and the request edge | decisions.md:846 |
 
 ## Numbered decisions
 

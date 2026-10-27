@@ -32,7 +32,7 @@ const UNSAFE_ROUTES: Record<string, { body?: unknown; textPlain?: number }> = {
   // LB3 (fixed with AEX1's Origin guard): mints a lobby on the visitor's address.
   "POST /lobby": { textPlain: 201 },
   "PATCH /auth/me": { body: { displayName: "Mallory" } },
-  "DELETE /auth/me": { body: {} },
+  "DELETE /auth/me": { body: { confirmEmail: "victim@example.com" } },
   "PATCH /decks/:id": { body: { name: "Hijacked" } },
   "DELETE /decks/:id": {},
 };

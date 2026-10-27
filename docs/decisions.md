@@ -842,3 +842,29 @@ Phase 0 of the 2026-10-27 security audit (51 findings: 4 high, 8 medium, 32 low,
 - **Engine fuzz.** `actionFuzz.test.ts` drives about 68k seeded crafted actions (prototype keys, wrong types, out-of-turn and other-seat actions) through the DO's path in about 3 s. The engine must not throw or mutate its input, and every accepted state must redact cleanly and keep each card in one zone.
 - **MI3.** A turn-1 `attack` with index `"__proto__"` threw out of the engine. `attackGateOf` now reads only an integer index, and `applyMatchAction` turns any engine throw into the usual refusal plus a throttled `action_threw` log line. Legal play is unchanged (bench fingerprint unchanged).
 - **Dev and release hygiene.** The Vite dev server denies `.dev.vars`, `.wrangler/`, `apps/` and `tmp/`. CI has read-only permissions, actions pinned to commit SHAs, and Dependabot. `release:gate` refuses a dirty tree or a HEAD that is not `origin/main`. Both Workers set `preview_urls: false`. `scripts/autoloop` is deleted. §3.7.4 lists the Worker and Durable Object quotas.
+
+### 2026-10-27 — Security hot fixes: lobby origins, the print bridge, seat ownership and the request edge
+
+Phase 1 of the 2026-10-27 security audit. Server-only and web-only fixes, with no migration. The web client and the API change together in one `bun run release`.
+
+- **Lobby socket origins (AU1).** A WebSocket upgrade whose `Origin` is not one of the app's CORS origins gets 403 before the rate limiter and the Durable Object. An upgrade with no `Origin` (not a browser, so no victim cookie) still passes. The cross-site matrix case now passes. A new web origin must be added to `APP_ORIGIN` or online play refuses it.
+- **One print bridge (WC1).** Lua's `announce` print put opponent names on the line-based Lua-to-host bridge raw, so a name containing a line feed forged host commands. Every Lua print now goes through `frontend/lua/ui/bridge.lua`, which percent-encodes each field. `shell.ts` rejects any payload outside the encoded alphabet and decodes each channel exactly once. `scripts/lua-bridge-guard.ts` (in `check:static`) refuses any other print in shipped Lua. `transition-art` became `used\t7`.
+- **Names carry no control or format characters.** One rule in `packages/schema/src/text.ts` (Unicode Cc and Cf). Register, `PATCH /auth/me` and the lobby `set-name` refuse such names. A lobby hello and a deck name are stripped instead: a hello that failed validation would lock out an account whose stored name predates the rule. The DO also strips names read from D1 and from stored snapshots. Joined emoji sequences (zero-width joiner) are refused in new account names. The pixel font does not draw them anyway.
+- **Deleting a Google-only account needs its email.** `DELETE /auth/me` on an account with no password requires `confirmEmail` equal to the account's email (trimmed, case-insensitive), else 403. The Settings form shows an empty email field for such accounts and is never prefilled. This is the user's decision 2 (a).
+- **Seats belong to their account's sockets (LBX1).** When an account binds a seat, other sockets on that seat that are not the account's are closed (1008, `seat_evicted`). Every intent, action, bye, rematch and host reject re-checks `ownsSeat`, and so do `viewerOf` and `ownerOf`, so a shadow socket cannot act, read the hand or supply the deck.
+- **Shuffled decks at handoff (MIX1).** `handoffToMatch` crypto-shuffles both deck lists before `beginMatch` mints uids, so uid order no longer reveals the list. This is not the RNG change (MI1, Phase 4).
+- **Request edge.**
+  - Dependencies: hono 4.13, zod 4.6, @hono/zod-validator 0.9. `bun audit --prod` is clean, and the CI static job now gates on it, through bun 1.4.2, since 1.3.13's audit has no `--prod`.
+  - CORS: preflights allow only `Content-Type` and GET, HEAD, POST, PATCH and DELETE.
+  - Requests: 64 KB body cap with a JSON 413 (the largest real request is about 8 KB); at most 20 validation issues; `/decks` POST and PATCH check the session before validating.
+  - Responses: every one carries `nosniff` and `Cross-Origin-Resource-Policy: same-site`, and framework errors are JSON.
+- **Logging and failures.**
+  - AE4: unhandled errors log the route, the error names and the SQL text, never the message or bound values.
+  - `isUniqueViolation` looks through drizzle's wrapper, so a racing OAuth insert retries instead of returning 500.
+  - AU5: the sign-in limiter now fails closed. If its D1 batch fails, register, login and delete answer 503 with `Retry-After: 60`, instead of becoming an unthrottled password oracle.
+- **Web headers (AE3).** Every page carries:
+  - `frame-ancestors 'none'` as a header (a meta CSP cannot set it);
+  - `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`;
+  - a deny-all `Permissions-Policy` and `Cross-Origin-Opener-Policy: same-origin`.
+  
+  There is no COEP, because love.js and the cross-origin card art need none.
