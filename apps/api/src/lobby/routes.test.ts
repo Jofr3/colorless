@@ -94,6 +94,41 @@ describe("GET /lobby/:code/ws", () => {
       upgrade: "websocket",
     });
   });
+
+  it("403s an upgrade from a foreign Origin before the limiter and the DO", async () => {
+    const { env, seen } = envWithLobby(marker);
+    let limited = 0;
+    const counting = { limit: async () => ({ success: ++limited > 0 }) };
+    const withLimit = { ...env, APP_ORIGIN: "https://app.example", LOBBY_SOCKET_LIMIT: counting };
+    const socket = (origin: string) =>
+      app.request(
+        "/lobby/ABCD/ws",
+        { headers: { Upgrade: "websocket", Origin: origin } },
+        withLimit,
+      );
+    const refused = await socket("https://evil.example");
+    expect(refused.status).toBe(403);
+    expect(await refused.json()).toEqual({ error: "forbidden origin" });
+    expect((await socket("null")).status).toBe(403);
+    expect(limited).toBe(0);
+    expect(seen).toHaveLength(0);
+    expect((await socket("https://app.example")).headers.get("x-marker")).toBe("do");
+    expect(limited).toBe(1);
+    expect(seen).toHaveLength(1);
+  });
+
+  it("accepts both loopback names for a dev frontend", async () => {
+    const { env, seen } = envWithLobby(marker);
+    for (const origin of ["http://localhost:5175", "http://127.0.0.1:5175"]) {
+      const res = await app.request(
+        "/lobby/ABCD/ws",
+        { headers: { Upgrade: "websocket", Origin: origin } },
+        env,
+      );
+      expect(res.headers.get("x-marker")).toBe("do");
+    }
+    expect(seen).toHaveLength(2);
+  });
 });
 
 describe("per-IP limits on POST /lobby and the /ws upgrade", () => {

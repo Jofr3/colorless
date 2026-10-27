@@ -210,15 +210,15 @@ describe("cross-site requests", () => {
       { origin: null, cookie: victim.cookie },
     ]);
   });
-});
 
-describe("known gaps (security audit 2026-10)", () => {
-  it.fails("AU1: refuses a lobby upgrade from a foreign Origin", async () => {
+  it("AU1: refuses a lobby upgrade from a foreign Origin", async () => {
     const res = await upgrade(EVIL);
     expect(lobby.forwarded).toEqual([]);
     expect(res.status).toBe(403);
   });
+});
 
+describe("known gaps (security audit 2026-10)", () => {
   it.fails("AEX1: a cross-site text/plain logout leaves the session alive", async () => {
     await app.request(
       "/auth/logout",

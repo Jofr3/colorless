@@ -16,7 +16,7 @@
 
 import { generateLobbyCode, isValidLobbyCode } from "@colorless/schema";
 import { type Context, Hono } from "hono";
-import type { Env } from "../env";
+import { appCorsOrigins, type Env } from "../env";
 import { clientIpKey } from "../http/clientIp";
 import { logEventThrottled } from "../http/log";
 import {
@@ -95,7 +95,14 @@ lobbySocketRoutes.get("/:code/ws", async (c) => {
   if (!isWebSocketUpgrade(c.req.header("Upgrade"))) {
     return c.json({ error: "expected a websocket upgrade" }, 426);
   }
-  // Counted only here: a malformed or non-upgrade request never reaches a DO.
+  // CORS does not govern a handshake and the DO trusts the forwarded cookie, so a page on another
+  // site must not open a socket as its visitor (AU1). A client that sends no Origin is not a
+  // browser and cannot carry a visitor's cookie.
+  const origin = c.req.header("Origin");
+  if (origin !== undefined && !appCorsOrigins(c.env).includes(origin)) {
+    return c.json({ error: "forbidden origin" }, 403);
+  }
+  // Counted only here: a malformed, non-upgrade or foreign request never reaches a DO.
   const limited = await overIpLimit(c, "ws", c.env.LOBBY_SOCKET_LIMIT);
   if (limited !== null) return limited;
   const stub = c.env.LOBBY.get(c.env.LOBBY.idFromName(code));
