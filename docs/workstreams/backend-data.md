@@ -924,7 +924,11 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   is what keeps an unreachable filter unreachable (D198,
                          #   §5.3.3);
                          #   sort=name|hp-desc|set (default set); page (1-based,
-                         #   default 1), pageSize (default 50, max 100)
+                         #   default 1), pageSize (default 50, max 100); total = a
+                         #   count an earlier page reported, echoed instead of
+                         #   recounting; a free-text query (name/nameExact/text)
+                         #   counts in its page statement (window count), and the
+                         #   builder fetches its pages three to a request
 GET    /cards/:id        # full canonical Card; 404 JSON if absent; never in KV (a
                          #   1-row PK read is cheaper than a KV write)
 GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown
@@ -935,11 +939,13 @@ GET    /series           # Serie[] = SerieBrief + nested SetBrief[]
 GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actually
                          #   present: rarities, types, stages, trainerTypes,
                          #   energyTypes, illustrators, regulationMarks, suffixes.
-                         #   One db.batch of DISTINCTs, each through the sentinel
-                         #   guard (D194); a list is EMPTY when the column has no
-                         #   values, and the builder's rail hides the section it
-                         #   feeds — the only thing standing between an unpopulated
-                         #   column and a filter that empties a page (D198, §5.3.3)
+                         #   One aggregate pass over cards (json_group_array(DISTINCT)
+                         #   per column, sorted in byte order in the handler), each
+                         #   through the sentinel guard (D194); a list is EMPTY when
+                         #   the column has no values, and the builder's rail hides
+                         #   the section it feeds — the only thing standing
+                         #   between an unpopulated column and a filter that
+                         #   empties a page (D198, §5.3.3)
 
 # Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists, else 404
 GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)

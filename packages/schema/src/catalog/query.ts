@@ -113,11 +113,18 @@ export const cardsQuerySchema = z
   });
 export type CardsQuery = z.infer<typeof cardsQuerySchema>;
 /**
+ * The free-text search params. A LIKE over a typed term walks most of the table whatever the page,
+ * so the API counts such a query's matches in its page statement (a window count) rather than in a
+ * second scan, and a paging client fetches several pages of one in a single request (pageSize is
+ * the page count times its own page size). An exact name is an index lookup either way.
+ */
+export const FREE_TEXT_CATALOG_PARAMS = ["name", "nameExact", "text"] as const;
+/**
  * Catalog query params whose values are typed by a person or drawn from one deck: id hydration and
  * the free-text searches. Such queries almost never recur, so the API does not cache them, and a
  * paging client may send a known `total` with one of them.
  */
-export const UNCACHED_CATALOG_PARAMS = ["id", "name", "nameExact", "text"] as const;
+export const UNCACHED_CATALOG_PARAMS = ["id", ...FREE_TEXT_CATALOG_PARAMS] as const;
 /** The last GET /cards page the API caches. A browsing client's first page and its prefetches
     recur across visitors; a deeper page is one person paging, so it goes to D1, and a paging
     client sends a known `total` with it to spare the recount. */

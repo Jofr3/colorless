@@ -3,7 +3,7 @@ import { LuaBuilder } from "./builder";
 import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
-import type { CardBrief, Deck } from "@colorless/schema";
+import type { CardBrief, CardsQueryParams, Deck } from "@colorless/schema";
 vi.mock("../lib/api", async (importOriginal) => ({
   ApiError: (await importOriginal<typeof import("../lib/api")>()).ApiError,
   getDeck: vi.fn(),
@@ -43,6 +43,19 @@ const deck = (cards: Deck["cards"] = []): Deck =>
     cards,
     chosenCoverCardId: null,
   }) as Deck;
+/** Card ids `c<start>` to `c<end - 1>`: positions in a catalogOf result. */
+const ids = (start: number, end: number) =>
+  Array.from({ length: end - start }, (_, index) => `c${start + index}`);
+/** A getCards stand-in serving `total(query)` matches, paged by the query's page and pageSize. */
+const catalogOf =
+  (total: (query: CardsQueryParams | undefined) => number) => async (query?: CardsQueryParams) => {
+    const page = query?.page ?? 1;
+    const pageSize = query?.pageSize ?? 50;
+    const count = total(query);
+    const start = Math.min(count, (page - 1) * pageSize);
+    const items = ids(start, Math.min(count, start + pageSize)).map((id) => card(id));
+    return { items, total: count, page, pageSize };
+  };
 const tick = async () => {
   await vi.advanceTimersByTimeAsync(650);
 };
@@ -428,18 +441,53 @@ describe("Lua deck builder", () => {
     expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
     await tick();
     expect(pages()).toEqual([1, 2, 3, 4]);
-    // A new query starts its own cache; a name search's prefetches pass its total back.
+  });
+  it("fetches a name search's pages three to a request and splits them", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const images = vi.fn();
+    const { b, publish } = await setup(images);
+    await tick();
+    const calls = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q);
+    const seen = calls().length;
     await b.command(encodeFields(["filter", "query", "Abra"]));
     await tick();
-    expect(pages().slice(4)).toEqual([1, 2, 3]);
-    expect(totals().slice(4)).toEqual([undefined, 40, 40]);
+    const requests = () =>
+      calls()
+        .slice(seen)
+        .map((q) => [q?.page, q?.pageSize, q?.total]);
+    // The first page and its prefetch in one request, which counts the matches as it goes.
+    expect(requests()).toEqual([[1, 24, undefined]]);
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
+    expect(b.total).toBe(40);
+    expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual(ids(0, 24));
+    publish.mockClear();
+    await b.command("page\t1");
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
+    expect(publish).toHaveBeenCalledTimes(1);
+    await tick();
+    // Page 4 is the next block's first; the block request passes the known total back.
+    expect(requests()).toEqual([
+      [1, 24, undefined],
+      [2, 24, 40],
+    ]);
+    for (const [first, last] of [
+      [16, 24],
+      [24, 32],
+      [32, 40],
+    ] as const) {
+      await b.command("page\t1");
+      expect(b.busy).toBe(false);
+      expect(b.results.map((c) => c.cardId)).toEqual(ids(first, last));
+      await tick();
+    }
+    expect(requests()).toHaveLength(2);
   });
   it("does not pass an earlier query's total to the prefetches of a search that failed", async () => {
+    const catalog = catalogOf((query) => (query?.name === "Abra" ? 40 : 16));
+    let failures = 1;
     vi.mocked(api.getCards).mockImplementation(async (query) => {
-      const page = query?.page ?? 1;
-      const total = query?.name === "Abra" ? 40 : 16;
-      if (query?.name === "Bulb" && page === 1) throw new Error("offline");
-      return { items: [card(`p${page}a`), card(`p${page}b`)], total, page, pageSize: 8 };
+      if (query?.name === "Bulb" && failures-- > 0) throw new Error("offline");
+      return catalog(query);
     });
     const { b } = await setup();
     await b.command(encodeFields(["filter", "query", "Abra"]));
@@ -448,17 +496,17 @@ describe("Lua deck builder", () => {
     const seen = calls().length;
     await b.command(encodeFields(["filter", "query", "Bulb"]));
     await tick();
+    // The failed first block is fetched again by the prefetch, counting afresh.
     expect(
       calls()
         .slice(seen)
         .map((q) => [q?.page, q?.total]),
     ).toEqual([
       [1, undefined],
-      [2, undefined],
-      [3, undefined],
+      [1, undefined],
     ]);
     await b.command("page\t1");
-    expect(b.results.map((c) => c.cardId)).toEqual(["p2a", "p2b"]);
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
     expect(b.total).toBe(16);
   });
   it("does not apply an import after its dialog is cancelled", async () => {

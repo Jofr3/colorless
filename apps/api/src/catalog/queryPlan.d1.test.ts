@@ -5,7 +5,12 @@ import { type CardsQuery, cardsQuerySchema } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import { describe, expect, it } from "vitest";
 import { useTestD1 } from "../testing/d1";
-import { cardsPageStatements, setCardsStatement } from "./routes";
+import {
+  cardsCountedPageStatement,
+  cardsPageStatements,
+  facetsStatement,
+  setCardsStatement,
+} from "./routes";
 
 const SET_IDS = ["sv01", "sv02", "sv03", "sv04", "sv05", "sv06"];
 const CARDS_PER_SET = 120;
@@ -115,6 +120,37 @@ describe("catalog query plans", () => {
     expect(await rowsRead(page)).toBeLessThanOrEqual(50);
     expect(await planOf(total)).toContain("SEARCH cards USING COVERING INDEX cards_set_local_idx");
     expect(await rowsRead(total)).toBeLessThanOrEqual(CARDS_PER_SET + 1);
+  });
+
+  it("counts a free-text page in its page statement, one walk of the sort's index", async () => {
+    const indexes = { name: "cards_name_set_local_idx", set: "cards_set_local_idx" };
+    for (const [sort, index] of Object.entries(indexes)) {
+      // A sparse term, so filling the page walks the whole index: the pair would read it twice.
+      const query = cardsQuery(`name=pokemon 07&legal=standard&sort=${sort}&pageSize=24`);
+      const statement = cardsCountedPageStatement(db(), query);
+      const plan = await planOf(statement);
+      expect(plan).toContain(`SCAN cards USING INDEX ${index}`);
+      expect(plan).not.toContain("TEMP B-TREE");
+      const matches = TOTAL_CARDS / NAMES.length;
+      // The walk, plus each match written to the window buffer and read back from it.
+      expect(await rowsRead(statement)).toBeLessThanOrEqual(TOTAL_CARDS + 2 * matches + 1);
+      const [page, total] = cardsPageStatements(db(), query);
+      expect(await rowsRead(page)).toBe(TOTAL_CARDS);
+      expect(await rowsRead(total)).toBe(TOTAL_CARDS);
+    }
+  });
+
+  it("feeds the hp-desc window off the Pokémon-HP expression index", async () => {
+    const statement = cardsCountedPageStatement(db(), cardsQuery("name=pokemon&sort=hp-desc"));
+    const plan = await planOf(statement);
+    expect(plan).toContain("USING INDEX cards_pokemon_hp_idx");
+    expect(plan).not.toContain("TEMP B-TREE");
+  });
+
+  it("reads every facet in one pass over the table", async () => {
+    const statement = facetsStatement(db());
+    expect((await planOf(statement)).match(/SCAN cards/g)).toHaveLength(1);
+    expect(await rowsRead(statement)).toBeLessThanOrEqual(TOTAL_CARDS);
   });
 
   it("lists a set's cards for /sets/:id without a sort pass", async () => {
