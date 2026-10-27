@@ -61,9 +61,31 @@ const LOAD_FAILED = {
 } as const;
 const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
 // Messages show on one 294 px line beside Retry, shrunk to size 14 at most: a longer one wraps
-// under the Back bar, so fixed wording stays within about 280 px at that size.
+// under the Back bar, so every message stays within MESSAGE_MAX_PX at that size (builder.test.ts).
 const DECK_CONFLICT = "Deck changed elsewhere; reloaded the latest.";
 const SAVE_FAILED = "Could not save. Your edits are kept. Retry.";
+/** m6x11plus advances at size 14 for ASCII 32-126, in 7/8 px steps minus 3 (read with fontTools;
+    the font has no kerning). Other characters count as 4, the width of most letters. */
+const MESSAGE_GLYPHS =
+  "40354470223404044444444444003434744444444444464445444446544242444444444440240644444444465443034";
+/** The width a message's caption needs at its smallest size, size 14. */
+export function messageWidth(text: string): number {
+  let steps = 0;
+  for (const ch of text) steps += Number(MESSAGE_GLYPHS[(ch.codePointAt(0) ?? 0) - 32] ?? 4) + 3;
+  return steps * 0.875;
+}
+const MESSAGE_MAX_PX = 280;
+
+/** Why an import was refused over unknown lines, naming as many of them as fit one line. */
+export function unresolvedMessage(lines: readonly string[]): string {
+  const unchanged = ". Deck unchanged.";
+  for (let shown = lines.length; shown > 0; shown--) {
+    const more = shown < lines.length ? ` +${lines.length - shown} more` : "";
+    const text = `Unknown: ${lines.slice(0, shown).join(", ")}${more}${unchanged}`;
+    if (messageWidth(text) <= MESSAGE_MAX_PX) return text;
+  }
+  return `${lines.length} unknown ${lines.length === 1 ? "card" : "cards"}${unchanged}`;
+}
 
 /** For a save refused as a version conflict, the deck as the server now holds it, or null when the
     409 did not carry it; undefined for any other failure. */
@@ -891,16 +913,17 @@ export class LuaBuilder {
         : arg;
     if (!option && !["query", "text", "hpMin", "hpMax"].includes(key)) return;
     const current = this.filters[key as keyof Filters];
-    this.setFilter(
-      key,
-      Array.isArray(current)
-        ? value
-          ? [value]
-          : []
-        : typeof current === "boolean"
-          ? value === "1"
-          : value,
-    );
+    const next = Array.isArray(current)
+      ? value
+        ? [value]
+        : []
+      : typeof current === "boolean"
+        ? value === "1"
+        : value;
+    // The text field reports its value again when an edit starts or ends unchanged; refetching
+    // then would only repeat the search on screen.
+    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    this.setFilter(key, next);
     this.page = 1;
     this.searches.invalidate();
     clearTimeout(this.searchTimer);
@@ -974,7 +997,7 @@ export class LuaBuilder {
         result.entries.length > MAX_DECK_CARD_ENTRIES
       ) {
         this.message = result.unmatched.length
-          ? `Could not resolve: ${result.unmatched.map((x) => x.raw).join(", ")}. Deck unchanged.`
+          ? unresolvedMessage(result.unmatched.map((x) => x.name))
           : "No usable decklist, or too long. Deck unchanged.";
       } else {
         for (const e of result.entries) this.cards.set(e.card.cardId, e.card);

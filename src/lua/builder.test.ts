@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LuaBuilder } from "./builder";
+import { readFileSync } from "node:fs";
+import { LuaBuilder, messageWidth, unresolvedMessage } from "./builder";
 import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
@@ -484,6 +485,21 @@ describe("Lua deck builder", () => {
     }
     expect(requests()).toHaveLength(2);
   });
+  it("keeps the page and requests nothing when a filter is set to the value it has", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const { b } = await setup();
+    await tick();
+    await b.command(encodeFields(["filter", "query", "Abra"]));
+    await tick();
+    await b.command("page\t1");
+    await tick();
+    const seen = vi.mocked(api.getCards).mock.calls.length;
+    // The search field reports its unchanged text again when an edit starts or ends.
+    await b.command(encodeFields(["filter", "query", "Abra"]));
+    await tick();
+    expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
+  });
   it("does not pass an earlier query's total to the prefetches of a search that failed", async () => {
     const catalog = catalogOf((query) => (query?.name === "Abra" ? 40 : 16));
     let failures = 1;
@@ -527,5 +543,43 @@ describe("Lua deck builder", () => {
     await importing;
     expect([...b.entries]).toEqual([["a", 1]]);
     expect(b.message).toContain("cancelled");
+  });
+});
+
+describe("builder message widths", () => {
+  const MAX = 280;
+  it("measures like the game font", () => {
+    // Widths fontTools gave for m6x11plus at size 14.
+    expect(messageWidth("Deck changed elsewhere; reloaded the latest.")).toBe(253.75);
+    expect(messageWidth("Unknown: WWWWWWWWWWWWWWWWWWWW. Deck unchanged.")).toBe(308);
+    expect(messageWidth("Pokémon Catcher")).toBe(93.625);
+  });
+
+  it("keeps every fixed message on one line", () => {
+    const source = readFileSync(new URL("./builder.ts", import.meta.url), "utf8");
+    const messages = [
+      ...source.matchAll(/this\.message = "([^"]+)"/g),
+      ...source.matchAll(/^\s+\w+: "([^"]+)",$/gm),
+      ...source.matchAll(/^const [A-Z_]+ = "([^"]+)";$/gm),
+    ].map((m) => m[1] as string);
+    expect(messages.length).toBeGreaterThan(10);
+    for (const message of messages) expect(messageWidth(message), message).toBeLessThanOrEqual(MAX);
+  });
+
+  it("names the unknown cards that fit, then counts the rest", () => {
+    expect(unresolvedMessage(["Rocky Helmet SVI 193"])).toBe(
+      "Unknown: Rocky Helmet SVI 193. Deck unchanged.",
+    );
+    expect(unresolvedMessage(["Mew ex", "Arven", "Iono", "Boss's Orders"])).toBe(
+      "Unknown: Mew ex +3 more. Deck unchanged.",
+    );
+    expect(unresolvedMessage(["Mmmmmmmmmmmmmmmmmmmmmmmmmmmm"])).toBe(
+      "1 unknown card. Deck unchanged.",
+    );
+    expect(unresolvedMessage(["Wwwwwwwwwwwwwwwwwwwwwwwww", "Mew"])).toBe(
+      "2 unknown cards. Deck unchanged.",
+    );
+    for (const lines of [["Rocky Helmet SVI 193"], ["Mew ex", "Arven", "Iono", "Boss's Orders"]])
+      expect(messageWidth(unresolvedMessage(lines))).toBeLessThanOrEqual(MAX);
   });
 });
