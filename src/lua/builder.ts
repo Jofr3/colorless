@@ -8,6 +8,7 @@ import {
   deckConflictSchema,
   FREE_TEXT_CATALOG_PARAMS,
   MAX_CACHED_CARDS_PAGE,
+  MAX_CARDS_OFFSET,
   UNCACHED_CATALOG_PARAMS,
 } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
@@ -261,7 +262,7 @@ export class LuaBuilder {
         message: this.message,
         busy: +this.busy,
         page: this.page,
-        pages: Math.max(1, Math.ceil(this.total / this.size)),
+        pages: this.lastPage(),
         total: this.total,
         count,
         selected: this.selected,
@@ -590,6 +591,13 @@ export class LuaBuilder {
       this.prefetch(catalog);
     }
   }
+  /** The last page the pager reaches: the API refuses a page that skips more than
+      MAX_CARDS_OFFSET cards, so a longer result stops there and narrowing the filters shows the
+      rest. */
+  private lastPage(): number {
+    const pages = Math.ceil(this.total / this.size);
+    return Math.max(1, Math.min(pages, Math.floor(MAX_CARDS_OFFSET / this.size) + 1));
+  }
   private catalog(): Catalog {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
@@ -656,7 +664,7 @@ export class LuaBuilder {
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
     const live = this.epoch.current();
-    const last = Math.max(1, Math.ceil(this.total / this.size));
+    const last = this.lastPage();
     const known = catalog.key === this.totalKey ? this.total : undefined;
     const freeText = UNCACHED_CATALOG_PARAMS.some((param) => catalog.query[param] !== undefined);
     for (let d = 1; d <= PREFETCH_PAGES; d++)
@@ -833,10 +841,7 @@ export class LuaBuilder {
     this.changed();
   }
   private async onPage(delta: string) {
-    this.page = Math.max(
-      1,
-      Math.min(Math.max(1, Math.ceil(this.total / this.size)), this.page + Number(delta)),
-    );
+    this.page = Math.max(1, Math.min(this.lastPage(), this.page + Number(delta)));
     // A prefetched page shows at once, with no loading state.
     const catalog = this.catalog();
     const cached = catalog.key === this.pageKey ? this.pages.get(this.page) : undefined;

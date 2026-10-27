@@ -4,7 +4,12 @@ import builderSource from "./builder.ts?raw";
 import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
-import type { CardBrief, CardsQueryParams, Deck } from "@colorless/schema";
+import {
+  type CardBrief,
+  type CardsQueryParams,
+  type Deck,
+  MAX_CARDS_OFFSET,
+} from "@colorless/schema";
 vi.mock("../lib/api", async (importOriginal) => ({
   ApiError: (await importOriginal<typeof import("../lib/api")>()).ApiError,
   getDeck: vi.fn(),
@@ -484,6 +489,24 @@ describe("Lua deck builder", () => {
       await tick();
     }
     expect(requests()).toHaveLength(2);
+  });
+  it("stops the pager where the API's offset cap ends a long result", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 5000));
+    const { b } = await setup();
+    await tick();
+    await b.command("page\t1000");
+    await tick();
+    // 8 cards a page: page 126 starts at card 1,001, the deepest the API serves.
+    expect(b.page).toBe(126);
+    await b.command(encodeFields(["filter", "query", "a"]));
+    await tick();
+    await b.command("page\t1000");
+    await tick();
+    expect(b.page).toBe(126);
+    for (const [query] of vi.mocked(api.getCards).mock.calls) {
+      const offset = ((query?.page ?? 1) - 1) * (query?.pageSize ?? 50);
+      expect(offset).toBeLessThanOrEqual(MAX_CARDS_OFFSET);
+    }
   });
   it("keeps the page and requests nothing when a filter is set to the value it has", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
