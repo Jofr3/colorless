@@ -2,7 +2,7 @@
 // the log is leak-safe for any viewer, so the same array goes to both clients and each maps `who`
 // to you/opponent. Types are inferred from the Zod schema.
 
-import { z } from "zod";
+import * as z from "zod";
 
 /** How a log segment is emphasised when rendered — mirrors the playmat's
     `LogSegmentTone`. `default` is the un-toned fallback; the log builder only

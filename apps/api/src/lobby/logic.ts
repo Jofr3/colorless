@@ -11,7 +11,7 @@ import {
   lobbySnapshotSchema,
   playerStateSchema,
 } from "@colorless/schema";
-import { z } from "zod";
+import * as z from "zod";
 import { applyIntent, recomputePhase, removeGuest, setGuestConnected } from "./snapshot";
 
 /** The old model's reconnect grace (its PRESENCE_TIMEOUT_MS): a lost socket

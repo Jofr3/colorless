@@ -1,5 +1,10 @@
 import { cardOfUid, topUid } from "./cards";
-import { benchLimitOf, energyMayBeAttachedTo, owesToolTrim } from "./continuous";
+import {
+  benchLimitOf,
+  energyMayBeAttachedTo,
+  owesToolTrim,
+  poolHasOwnerBoundEnergy,
+} from "./continuous";
 import type { GameEvent } from "./events";
 import type { GameState, InPlayPokemon, PendingStage, PokemonTarget, Seat } from "./types";
 import { inPlayOf, otherSeat, SEATS, withSide } from "./types";
@@ -39,6 +44,7 @@ export function postStepChecks(
  * card never stays on an invalid body. Returns `state` itself when nothing moves.
  */
 export function discardMisplacedEnergy(state: GameState, events: GameEvent[]): GameState {
+  if (!poolHasOwnerBoundEnergy(state.cardPool)) return state;
   let next = state;
   for (const seat of SEATS) {
     const side = next.players[seat];

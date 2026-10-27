@@ -33,7 +33,7 @@ import type {
   SeatLogEntry,
   WireAction,
 } from "@colorless/schema";
-import { z } from "zod";
+import * as z from "zod";
 import { slotOf } from "./logic";
 
 export type { Seat };

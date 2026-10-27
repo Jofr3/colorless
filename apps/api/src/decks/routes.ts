@@ -12,7 +12,7 @@ import { asc, eq, inArray, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
-import { z } from "zod";
+import * as z from "zod";
 import { requireUser } from "../auth/requireUser";
 import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
 import { ownedBy } from "../db/owned";

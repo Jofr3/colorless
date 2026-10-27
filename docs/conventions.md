@@ -46,7 +46,7 @@ only the conclusion.
   Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (coverage guards, the import graph,
-  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the Worker bundle budget, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
@@ -56,12 +56,23 @@ only the conclusion.
   triggers: a program step can knock out, which runs triggers and the turn
   flow, which run programs), and on a relative import that crosses a workspace
   root (each package, each app, `src`, `scripts`). Import another root through
-  its package entry: `@colorless/engine/testing` is the fixture barrel and
-  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads. A pure helper that
+  its package entry: `@colorless/engine/testing` is the fixture barrel,
+  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads and `@colorless/schema/constants` the
+  zod-free constants; engine runtime code imports only that subpath's values, so it never builds
+  a zod schema (`--check` fails on a value import from zod or the schema root). Schemas that only tests parse (`redactedGameSchema`, `lobbyServerMessageSchema`)
+  sit in modules nothing on the Worker's runtime path imports, so the bundle drops them. A pure helper that
   would close a new cycle belongs in a lower module.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
   module-level state that leaks between files; `app` covers everything else.
+- **The engine remembers derived facts by object identity**: `disabledAbilityUids` per
+  `GameState` (`DISABLED_ABILITY_UIDS`, `continuous.ts`), `cardOfUid`'s faces per `cardIdByUid`
+  and `cardPool` (`FACES_BY_UID`, `cards.ts`) and `poolHasOwnerBoundEnergy` per `cardPool`
+  (`OWNER_BOUND_POOLS`, `continuous.ts`). Once the engine has read a state, never write into it,
+  its `cardIdByUid` or its `cardPool` in place, tests included: build a new object
+  (`{ ...state, ... }`, `patchSide`, `{ ...state.cardPool, [id]: card }`), or the next read returns
+  the answer remembered for the old contents. The `engine` project shares these memos across
+  files in a worker, so such a stale read can pass or fail depending on which files run together.
 - After any refactor that moves, reformats or un-comments mutated code, run
   `bun scripts/mutation/reanchor.ts --write`: it re-points rows whose `find` moved
   (whitespace, comments and file splits are ignored when matching) and lists the
@@ -204,6 +215,18 @@ only the conclusion.
   generates from `src/host/mailboxes.ts`: add a mailbox there, not as a string in Lua. Lua owns
   the preferences record; the page stores it as Lua writes it. Adapters guard async replies
   with `epochGuard()` (`src/lua/epochGuard.ts`).
+- Import zod as `import * as z from "zod"`, never `import { z }`: the named import keeps every zod
+  locale in the Worker bundle. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
+  Worker with a wrangler dry run and fails on a non-English locale or a bundle over its budget.
+- **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
+  real-card pool `scripts/bench/pool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
+  applyAction per action and per action type, two redactions, logFromEvents, legality probes and a
+  cold engine import, as medians. `--node` runs it under V8, `--cpu-prof` writes a profile to
+  `tmp/bench/`. Its `fingerprint` hashes every state, event list, redaction and log row: a pure
+  performance change must leave it identical, and any rules change moves it. It is not part of
+  `check` and nothing gates on its timings. Its replays reuse the recorded games' state objects, so
+  `FACES_BY_UID` and `OWNER_BOUND_POOLS` are warm, as in the browser simulator; the lobby loads a fresh state
+  per action and gains less from them.
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
   234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;

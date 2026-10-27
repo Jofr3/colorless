@@ -2,7 +2,7 @@
 // so the web's filter selects reflect what is actually ingested instead of
 // hardcoded constants.
 
-import { z } from "zod";
+import * as z from "zod";
 
 /** One facet: the distinct non-null values present in the catalog, sorted
     ascending. Plain strings on purpose — the vocabulary IS the data. */

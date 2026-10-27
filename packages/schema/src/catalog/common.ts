@@ -2,7 +2,7 @@
 // for the module contract). Both live here because cards and sets each carry
 // a `legal` block, and set briefs carry the two-count `cardCount`.
 
-import { z } from "zod";
+import * as z from "zod";
 
 /** Format legality. The DB stores both flags NOT NULL (ingest maps a missing
     upstream block to false/false), so neither side is ever null here. */

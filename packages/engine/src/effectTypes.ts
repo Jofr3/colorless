@@ -1,12 +1,8 @@
 // The effect-op contract: the op, condition and filter vocabulary that registry programs and the
 // deriver produce and the interpreter runs. Types and pure data only; no parsing.
 
-import {
-  type Attack,
-  BASIC_ENERGY_TYPES,
-  type BasicEnergyType,
-  type Card,
-} from "@colorless/schema";
+import type { Attack, Card } from "@colorless/schema";
+import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema/constants";
 import type { Banner } from "./banners";
 import type { StatusName } from "./events";
 import type { CoinFace } from "./rng";

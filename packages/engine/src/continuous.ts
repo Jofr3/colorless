@@ -420,9 +420,21 @@ export function stadiumLicensesSameTurnEvolve(
  * Auras are collected ungated off each source's printed passive, tagged with their holder, then
  * settled by a stratified pass: an aura is on once every aura reaching its holder is off, off once
  * an on aura reaches its holder, and mutual source cycles are kept both on. Only on auras mark
- * targets. A Stadium lock has no holder and is always on.
+ * targets. A Stadium lock has no holder and is always on. Remembered per state, so a state the
+ * engine has read is never changed in place, by the engine or by a test.
  */
-export function disabledAbilityUids(state: GameState): Set<string> {
+export function disabledAbilityUids(state: GameState): ReadonlySet<string> {
+  let disabled = DISABLED_ABILITY_UIDS.get(state);
+  if (disabled === undefined) {
+    disabled = abilityLockedUids(state);
+    DISABLED_ABILITY_UIDS.set(state, disabled);
+  }
+  return disabled;
+}
+
+const DISABLED_ABILITY_UIDS = new WeakMap<GameState, ReadonlySet<string>>();
+
+function abilityLockedUids(state: GameState): ReadonlySet<string> {
   const disabled = new Set<string>();
   // Collect the live auras first (ungated), each tagged with its source's seat and its holder, so
   // the pass below can ask whether another aura reaches it. A Stadium's aura has no holder: no
@@ -2191,6 +2203,8 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
  * never KOs. Lives here so interpreter.ts can use it; flow.ts re-exports it.
  */
 export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boolean {
+  // Max HP is never below the floor, so less damage than that is never lethal.
+  if (pokemon.damage < MIN_EFFECTIVE_MAX_HP) return false;
   const hp = effectiveMaxHp(state, pokemon);
   return hp !== null && pokemon.damage >= hp;
 }
@@ -2250,6 +2264,23 @@ export function energyMayBeAttachedTo(
     owner === undefined || matchesFilter(topCardOf(state, holder), { kind: "ownerPokemon", owner })
   );
 }
+
+/**
+ * Does `pool` hold an Energy that `energyMayBeAttachedTo` can refuse? Without one no attached
+ * Energy is ever misplaced. Remembered per pool object, which a game keeps from state to state and nothing writes into.
+ */
+export function poolHasOwnerBoundEnergy(pool: GameState["cardPool"]): boolean {
+  let known = OWNER_BOUND_POOLS.get(pool);
+  if (known === undefined) {
+    known = Object.values(pool).some(
+      (card) => programFor(card.id)?.energy?.attachOnlyToOwner !== undefined,
+    );
+    OWNER_BOUND_POOLS.set(pool, known);
+  }
+  return known;
+}
+
+const OWNER_BOUND_POOLS = new WeakMap<GameState["cardPool"], boolean>();
 
 /** Does `uid`, attached to `pokemon`, provide `energyType` (§6.3)? The
     `providesEnergy` filter's predicate.

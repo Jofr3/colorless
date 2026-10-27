@@ -25,7 +25,7 @@ import { asc, count, eq, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
-import { z } from "zod";
+import * as z from "zod";
 import { cards, series, sets } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";

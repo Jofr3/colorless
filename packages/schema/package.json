@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./constants": "./src/constants.ts",
     "./tcgdex-fixtures/*": "./src/tcgdex/__fixtures__/*"
   },
   "dependencies": {

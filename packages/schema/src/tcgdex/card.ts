@@ -2,7 +2,7 @@
 // most fields. `hp`, `abilities` and `attacks` also appear on Pokémon-faced Trainers (Antique
 // Fossils, Technical Machines), so the Trainer branch keeps them.
 
-import { z } from "zod";
+import * as z from "zod";
 import {
   tcgdexBoosterSchema,
   tcgdexLegalSchema,

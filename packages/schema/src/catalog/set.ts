@@ -5,7 +5,7 @@
 // Both fields carry the same base path — each is null-gated by its own
 // origin column, so a symbol-only set gets `logo: null`.
 
-import { z } from "zod";
+import * as z from "zod";
 import { cardBriefSchema } from "./card";
 import { cardCountSchema, legalSchema } from "./common";
 

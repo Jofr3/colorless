@@ -1,4 +1,4 @@
-import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
+import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema/constants";
 import { TYPE_SYMBOL } from "../cardText";
 import { POKEMON_TYPES, type PokemonType } from "../effectTypes";
 import type { StatusName } from "../events";

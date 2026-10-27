@@ -2,8 +2,10 @@
 /**
  * The repo's module import graph. `--check` fails when a runtime (non-test) import cycle other than
  * the recorded one exists, or when a relative import crosses a workspace root (each package, each
- * app, `src`, `scripts`); cross-root imports go through the package's `exports` instead. Without
- * `--check` it prints every runtime cycle and every crossing import. A step of `bun run check`.
+ * app, `src`, `scripts`); cross-root imports go through the package's `exports` instead. It also
+ * fails when engine runtime code imports a value from zod or the schema package's root, which
+ * builds every zod schema on import; `@colorless/schema/constants` is zod-free. Without `--check`
+ * it prints every runtime cycle and every crossing import. A step of `bun run check`.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -40,6 +42,14 @@ const WORKSPACE_GROUPS = ["packages", "apps"];
 const ROOT_DIRS = ["src", "scripts"];
 
 const isTestFile = (file: string): boolean => /\.test\.tsx?$/.test(file);
+
+const ZOD_SPECIFIERS = ["zod", "@colorless/schema"];
+
+const isEngineRuntimeFile = (file: string): boolean =>
+  file.startsWith("packages/engine/src/") &&
+  !isTestFile(file) &&
+  !file.startsWith("packages/engine/src/fixtures/") &&
+  file !== "packages/engine/src/testFixtures.ts";
 
 /** The workspace root a repo-relative path belongs to; files at the repo root belong to ".". */
 export function workspaceRootOf(file: string): string {
@@ -145,6 +155,7 @@ function resolvePackage(specifier: string, entries: ReadonlyMap<string, string>)
 export type Graph = {
   runtimeEdges: Map<string, Set<string>>;
   crossings: { from: string; specifier: string; to: string }[];
+  engineZodImports: { from: string; specifier: string }[];
 };
 
 export function buildGraph(files: readonly string[], read: (file: string) => string): Graph {
@@ -152,9 +163,13 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
   const entries = packageEntries();
   const runtimeEdges = new Map<string, Set<string>>();
   const crossings: Graph["crossings"] = [];
+  const engineZodImports: Graph["engineZodImports"] = [];
   for (const file of files) {
     const edges = new Set<string>();
     for (const imp of importsOf(read(file))) {
+      if (imp.runtime && isEngineRuntimeFile(file) && ZOD_SPECIFIERS.includes(imp.specifier)) {
+        engineZodImports.push({ from: file, specifier: imp.specifier });
+      }
       const relativeSpec = imp.specifier.startsWith(".");
       if (relativeSpec) {
         const path = relative(REPO_ROOT, resolve(REPO_ROOT, dirname(file), imp.specifier));
@@ -170,7 +185,7 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
     }
     if (!isTestFile(file)) runtimeEdges.set(file, edges);
   }
-  return { runtimeEdges, crossings };
+  return { runtimeEdges, crossings, engineZodImports };
 }
 
 /** Tarjan's strongly connected components with more than one member (or a self-import). */
@@ -244,10 +259,18 @@ export function problemsOf(graph: Graph): string[] {
       `import-graph: FAIL — ${c.from} imports "${c.specifier}" across a workspace root (${c.to}); use the package's exports.`,
     );
   }
+  for (const z of graph.engineZodImports) {
+    problems.push(
+      `import-graph: FAIL — ${z.from} imports a value from "${z.specifier}", which builds zod schemas on import; import types only, and values from "@colorless/schema/constants".`,
+    );
+  }
   return problems;
 }
 
-/** Keeps the guard able to go red: a known cycle and a known crossing must both be reported. */
+/**
+ * Keeps the guard able to go red: a known cycle, a known crossing and an engine value import from
+ * the schema root must all be reported.
+ */
 export function selfCheck(): string[] {
   const problems: string[] = [];
   const files: Record<string, string> = {
@@ -255,6 +278,10 @@ export function selfCheck(): string[] {
     "src/b.ts": 'export { a } from "./a";',
     "src/c.ts": 'import { a } from "./a";\nimport { x } from "../scripts/x";',
     "scripts/x.ts": "export const x = 1;",
+    "packages/engine/src/a.ts":
+      'import type { Card } from "@colorless/schema";\nimport { X } from "@colorless/schema/constants";\nimport { cardSchema } from "@colorless/schema";',
+    "packages/engine/src/a.test.ts": 'import { cardSchema } from "@colorless/schema";',
+    "packages/engine/src/fixtures/a.ts": 'import * as z from "zod";',
   };
   const graph = buildGraph(Object.keys(files), (f) => files[f] ?? "");
   const cycles = cyclesOf(graph.runtimeEdges);
@@ -266,6 +293,12 @@ export function selfCheck(): string[] {
   if (graph.crossings.length !== 1 || graph.crossings[0]?.to !== "scripts/x") {
     problems.push(
       `import-graph: SELF-CHECK FAILED — expected one crossing into scripts/x, got ${JSON.stringify(graph.crossings)}.`,
+    );
+  }
+  const zod = graph.engineZodImports;
+  if (zod.length !== 1 || zod[0]?.from !== "packages/engine/src/a.ts") {
+    problems.push(
+      `import-graph: SELF-CHECK FAILED — expected one engine value import from the schema root, in packages/engine/src/a.ts, got ${JSON.stringify(zod)}.`,
     );
   }
   return problems;
@@ -298,7 +331,7 @@ function main(): void {
   if (problems.length > 0) fail(problems.join("\n"));
   const ms = (performance.now() - t0).toFixed(0);
   console.log(
-    `import-graph: OK — ${files.length} files, one recorded runtime cycle of ${RECORDED_CYCLE.length} modules, no cross-root relative imports beyond the ${ALLOWED_CROSSINGS.length} allowed · ${ms}ms.`,
+    `import-graph: OK — ${files.length} files, one recorded runtime cycle of ${RECORDED_CYCLE.length} modules, no cross-root relative imports beyond the ${ALLOWED_CROSSINGS.length} allowed, no zod in engine runtime imports · ${ms}ms.`,
   );
 }
 

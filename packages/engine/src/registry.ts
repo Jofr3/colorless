@@ -1,5 +1,6 @@
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
 import { canonicalPrinting } from "./printGroups";
+import { PROGRAM_ALIAS } from "./registryAliases.generated";
 import type { CardProgram } from "./programTypes";
 import { activated, berry, searchThenShuffle, searchTopOrderProgram } from "./registryBuilders";
 import { BENCH_CEILING } from "./types";
@@ -8693,18 +8694,28 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
 
 Object.freeze(REGISTRY);
 
+/**
+ * Each printing's program: its own REGISTRY row, else the row of its print_key group's canonical
+ * printing.
+ */
+const PROGRAM_BY_ID: ReadonlyMap<string, CardProgram> = (() => {
+  const out = new Map(Object.entries(REGISTRY));
+  for (const [member, canonical] of Object.entries(PROGRAM_ALIAS)) {
+    const program = Object.hasOwn(REGISTRY, canonical) ? REGISTRY[canonical] : undefined;
+    if (program !== undefined && !Object.hasOwn(REGISTRY, member)) out.set(member, program);
+  }
+  return out;
+})();
+
 /** The fixture pool's programs; empty outside the test suite. */
-let testPrograms: Readonly<Record<string, CardProgram>> = Object.freeze({});
+let testPrograms: ReadonlyMap<string, CardProgram> = new Map();
 let installedTestPrograms: Readonly<Record<string, CardProgram>> | undefined;
 
 /** The authored program for a catalog card id, or undefined when the card has
     none (an unsimulated Trainer/Ability, or a Pokémon whose attacks are wholly
     text-derived). A reprint shares its print_key group's row. */
 export function programFor(cardId: string): CardProgram | undefined {
-  if (Object.hasOwn(REGISTRY, cardId)) return REGISTRY[cardId];
-  const canonical = canonicalPrinting(cardId);
-  if (canonical !== cardId && Object.hasOwn(REGISTRY, canonical)) return REGISTRY[canonical];
-  return Object.hasOwn(testPrograms, cardId) ? testPrograms[cardId] : undefined;
+  return PROGRAM_BY_ID.get(cardId) ?? testPrograms.get(cardId);
 }
 
 /**
@@ -8713,7 +8724,7 @@ export function programFor(cardId: string): CardProgram | undefined {
  * in-suite audits can iterate the authored pool.
  */
 export function registryCardIds(): string[] {
-  return [...Object.keys(REGISTRY), ...Object.keys(testPrograms)];
+  return [...Object.keys(REGISTRY), ...testPrograms.keys()];
 }
 
 /**
@@ -8731,5 +8742,5 @@ export function registerTestPrograms(programs: Readonly<Record<string, CardProgr
   );
   if (clash !== undefined) throw new Error(`registerTestPrograms: ${clash} is a registry id`);
   installedTestPrograms = programs;
-  testPrograms = Object.freeze({ ...programs });
+  testPrograms = new Map(Object.entries(programs));
 }

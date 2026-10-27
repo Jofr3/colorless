@@ -4,7 +4,7 @@
 // tcgplayer block keys its per-print prices by dynamic variant names
 // ("normal", "holofoil", "reverse-holofoil", ...), hence the catchall.
 
-import { z } from "zod";
+import * as z from "zod";
 import { tcgdexTimestampSchema } from "./common";
 
 /** Cardmarket aggregates are EUR numbers, `null` when there is no data (holo-only cards etc.). */
