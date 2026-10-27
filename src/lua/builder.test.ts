@@ -4,7 +4,8 @@ import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
 import type { CardBrief, Deck } from "@colorless/schema";
-vi.mock("../lib/api", () => ({
+vi.mock("../lib/api", async (importOriginal) => ({
+  ApiError: (await importOriginal<typeof import("../lib/api")>()).ApiError,
   getDeck: vi.fn(),
   patchDeck: vi.fn(),
   getCards: vi.fn(),
@@ -235,6 +236,72 @@ describe("Lua deck builder", () => {
     });
     await tick();
     expect(b.results[0]?.cardId).toBe("new");
+  });
+  it("makes each queued save from the version the previous save returned", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue({ ...deck(), version: 4 });
+    let resolve!: (d: Deck) => void;
+    vi.mocked(api.patchDeck)
+      .mockImplementationOnce(
+        () =>
+          new Promise((r) => {
+            resolve = r;
+          }),
+      )
+      .mockResolvedValueOnce({ ...deck(), version: 6 });
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    await b.command("add\tb");
+    await tick();
+    resolve({ ...deck(), version: 5 });
+    await tick();
+    await b.command("remove\tb");
+    await tick();
+    expect(vi.mocked(api.patchDeck).mock.calls.map(([, body]) => body.version)).toEqual([4, 5, 6]);
+  });
+  it("reloads the server copy and says so when another tab saved first", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue({ ...deck(), version: 1 });
+    const theirs: Deck = {
+      ...deck([{ cardId: "b", count: 2 }]),
+      name: "Theirs",
+      tint: 22,
+      folderId: null,
+      position: 0,
+      updated: "2026-10-27T10:00:00.000Z",
+      version: 2,
+    };
+    vi.mocked(api.patchDeck).mockRejectedValueOnce(
+      new api.ApiError(409, { error: "deck changed since this version", deck: theirs }),
+    );
+    const { b, publish, back } = await setup();
+    await b.command("add\ta");
+    await b.command("leave");
+    await tick();
+    // The leave waits, so the notice is read before the editor closes.
+    expect(back).not.toHaveBeenCalled();
+    expect([...b.entries]).toEqual([["b", 2]]);
+    expect(b.name).toBe("Theirs");
+    expect(b.message).toBe("This deck changed somewhere else; reloaded the latest version.");
+    expect(String(publish.mock.lastCall?.[0])).toContain("reloaded%20the%20latest%20version");
+    expect(b.saveStatus).toBe("");
+    // The copy in hand was reloaded without asking again, and the next save is made from it.
+    expect(api.getDeck).toHaveBeenCalledTimes(1);
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    await b.command("add\ta");
+    await tick();
+    expect(api.patchDeck).toHaveBeenLastCalledWith("one", expect.objectContaining({ version: 2 }));
+  });
+  it("fetches the latest copy on a conflict that did not carry it", async () => {
+    vi.mocked(api.getDeck)
+      .mockResolvedValueOnce(deck())
+      .mockResolvedValueOnce({ ...deck([{ cardId: "b", count: 1 }]), version: 3 });
+    vi.mocked(api.patchDeck).mockRejectedValueOnce(new api.ApiError(409, undefined));
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    expect(api.getDeck).toHaveBeenCalledTimes(2);
+    expect([...b.entries]).toEqual([["b", 1]]);
+    expect(b.message).toBe("This deck changed somewhere else; reloaded the latest version.");
   });
   it("clears private state and prevents queued writes when the session changes", async () => {
     const { b } = await setup();

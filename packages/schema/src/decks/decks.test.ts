@@ -113,6 +113,12 @@ describe("patchDeckRequestSchema", () => {
     expect(patchDeckRequestSchema.safeParse({}).success).toBe(false);
   });
 
+  it("takes a version alongside a change, but not as the whole patch", () => {
+    expect(patchDeckRequestSchema.parse({ name: "Zard", version: 3 }).version).toBe(3);
+    expect(patchDeckRequestSchema.safeParse({ version: 3 }).success).toBe(false);
+    expect(patchDeckRequestSchema.safeParse({ name: "Zard", version: -1 }).success).toBe(false);
+  });
+
   it("accepts a lone explicit null (clear folder / format)", () => {
     expect(patchDeckRequestSchema.parse({ folderId: null }).folderId).toBeNull();
     expect(patchDeckRequestSchema.parse({ format: null }).format).toBeNull();

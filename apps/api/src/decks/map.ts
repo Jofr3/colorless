@@ -19,6 +19,7 @@ function mapDeckBase(row: DeckRow) {
     folderId: row.folderId,
     position: row.position,
     updated: row.updated.toISOString(),
+    version: row.version,
   };
 }
 

@@ -4,6 +4,8 @@ import {
   DECK_NAME_MAX,
   MAX_DECK_CARD_ENTRIES,
   type CatalogFacets,
+  type Deck as SavedDeck,
+  deckConflictSchema,
   MAX_CACHED_CARDS_PAGE,
   UNCACHED_CATALOG_PARAMS,
 } from "@colorless/schema";
@@ -54,6 +56,15 @@ const LOAD_FAILED = {
   search: "Card search failed. Try again.",
 } as const;
 const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
+const DECK_CONFLICT = "This deck changed somewhere else; reloaded the latest version.";
+
+/** For a save refused as a version conflict, the deck as the server now holds it, or null when the
+    409 did not carry it; undefined for any other failure. */
+function conflictingDeck(error: unknown): SavedDeck | null | undefined {
+  if (!(error instanceof api.ApiError) || error.status !== 409) return undefined;
+  const parsed = deckConflictSchema.safeParse(error.body);
+  return parsed.success ? parsed.data.deck : null;
+}
 
 export class LuaBuilder {
   id = "";
@@ -382,7 +393,9 @@ export class LuaBuilder {
       ].slice(0, LUA_ART_SLOTS),
     );
   }
-  async load() {
+  /** Open the deck. `current` is a copy of it already in hand (a conflict's), and `notice` the
+      message to show once it is open. */
+  async load(current?: SavedDeck, notice = "") {
     if (!this.user || !this.id) {
       if (!this.id) {
         this.phase = "error";
@@ -403,8 +416,9 @@ export class LuaBuilder {
     this.message = "";
     this.emit();
     try {
-      const data = await api.getDeck(id);
+      const data = current?.id === id ? current : await api.getDeck(id);
       if (!live()) return;
+      this.message = notice;
       this.name = data.name;
       this.format = data.format ?? "standard";
       this.cover = data.chosenCoverCardId;
@@ -416,13 +430,33 @@ export class LuaBuilder {
       this.acknowledged = JSON.stringify(initial);
       this.dirty = false;
       this.saveStatus = "";
+      // Saves are serialized, so each one is made from the version the previous one left.
+      let version = data.version;
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
           if (!live() || !this.user) throw new Error("Session changed");
-          const result = await api.patchDeck(id, { ...snapshot, name: snapshot.name || undefined });
-          if (live()) this.acknowledged = JSON.stringify(snapshot);
-          return result;
+          try {
+            const result = await api.patchDeck(id, {
+              ...snapshot,
+              name: snapshot.name || undefined,
+              version,
+            });
+            version = result.version;
+            if (live()) this.acknowledged = JSON.stringify(snapshot);
+            return result;
+          } catch (error) {
+            // Another tab or device saved first. Its copy wins and this one's unsaved edits go
+            // (the user's call, over offering to overwrite). The reload starts a new epoch, which
+            // silences this saver's status callback and any save queued behind this one.
+            const latest = conflictingDeck(error);
+            if (latest !== undefined && live() && this.active) {
+              this.pendingExit = undefined;
+              this.leaving = false;
+              void this.load(latest ?? undefined, DECK_CONFLICT);
+            }
+            throw error;
+          }
         },
         onStatus: (status) => {
           if (!live()) return;

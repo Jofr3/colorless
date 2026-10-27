@@ -1,7 +1,8 @@
-import type { Deck, DeckCard, DeckSummary } from "@colorless/schema";
+import { type Deck, type DeckCard, type DeckSummary, MAX_DECKS_PER_USER } from "@colorless/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import app from "../index";
 import {
+  raceBeforeBatch,
   raceBeforeFirstBatch,
   type SignedIn,
   seedCards,
@@ -252,6 +253,138 @@ describe("PATCH /decks/:id against a concurrent write", () => {
       .bind(deck.id)
       .first<{ name: string }>();
     expect(row?.name).toBe("Charizard");
+  });
+});
+
+describe("PATCH /decks/:id versions", () => {
+  const storedCards = (id: string) =>
+    d1()
+      .db.prepare("SELECT card_id AS cardId, count FROM deck_cards WHERE deck_id = ? ORDER BY 1")
+      .bind(id)
+      .all<DeckCard>()
+      .then((result) => result.results);
+
+  it("moves the version on every write, versioned or not, and serves it", async () => {
+    const deck = await createDeck("Fire", [card("sv01-004", 4)]);
+    expect(deck.version).toBe(0);
+    const renamed = await patchDeck(deck.id, { name: "Blaze", version: 0 });
+    expect(await renamed.json()).toMatchObject({ name: "Blaze", version: 1 });
+    const swapped = await patchDeck(deck.id, { cards: [card("sv01-006", 2)] });
+    expect(await swapped.json()).toMatchObject({ cards: [card("sv01-006", 2)], version: 2 });
+    expect((await getDeck(deck.id)).version).toBe(2);
+    expect((await listDecks())[0]?.version).toBe(2);
+  });
+
+  it("refuses a save from a stale version with the current deck, and writes nothing", async () => {
+    const deck = await createDeck("Fire", [card("sv01-004", 4)]);
+    expect((await patchDeck(deck.id, { cards: [card("sv01-006", 2)], version: 0 })).status).toBe(
+      200,
+    );
+    const counting = countingBatchWrites(d1().db);
+    const res = await app.request(
+      `/decks/${deck.id}`,
+      jsonInit("PATCH", { name: "Stale", cards: [card("sv01-007", 1)], version: 0 }, ash.cookie),
+      d1().env({ DB: counting.db }),
+    );
+    expect(res.status).toBe(409);
+    const current = await getDeck(deck.id);
+    expect(await res.json()).toEqual({ error: "deck changed since this version", deck: current });
+    expect(current).toMatchObject({ name: "Fire", cards: [card("sv01-006", 2)], version: 1 });
+    expect(counting.written()).toBe(0);
+  });
+
+  it("lets a save without a version win over a newer one", async () => {
+    const deck = await createDeck("Fire", [card("sv01-004", 4)]);
+    await patchDeck(deck.id, { name: "Blaze", version: 0 });
+    const res = await patchDeck(deck.id, { name: "Old tab", cards: [card("sv01-007", 1)] });
+    expect(res.status).toBe(200);
+    expect(await getDeck(deck.id)).toMatchObject({
+      name: "Old tab",
+      cards: [card("sv01-007", 1)],
+      version: 2,
+    });
+  });
+
+  it("refuses a versioned save that another tab beat to the write, card list included", async () => {
+    const deck = await createDeck("Fire", [card("sv01-004", 4), card("sv01-006", 2)]);
+    // The other tab's save lands between this one's reads (a batch, since it names cards) and its
+    // write, and takes the deck to exactly the version this save would have written.
+    const otherTab = async () => {
+      const res = await patchDeck(deck.id, { name: "Theirs", cards: [card("sv01-191", 4)] });
+      expect(res.status).toBe(200);
+    };
+    const res = await app.request(
+      `/decks/${deck.id}`,
+      jsonInit("PATCH", { name: "Mine", cards: [card("sv01-007", 1)], version: 0 }, ash.cookie),
+      d1().env({ DB: raceBeforeBatch(d1().db, 1, otherTab) }),
+    );
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ deck: { name: "Theirs", version: 1 } });
+    expect(await storedCards(deck.id)).toEqual([card("sv01-191", 4)]);
+  });
+
+  it("refuses a versioned rename that another tab beat to the write", async () => {
+    const deck = await createDeck("Fire", [card("sv01-004", 4)]);
+    const res = await app.request(
+      `/decks/${deck.id}`,
+      jsonInit("PATCH", { name: "Mine", version: 0 }, ash.cookie),
+      d1().env({
+        DB: raceBeforeFirstBatch(d1().db, async () => {
+          expect((await patchDeck(deck.id, { tint: 5 })).status).toBe(200);
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
+    expect(await getDeck(deck.id)).toMatchObject({ name: "Fire", tint: 5, version: 1 });
+  });
+
+  it("writes no cards into a deck that stopped being the caller's", async () => {
+    const gary = await signedInUser(d1().db, "gary@example.com");
+    const deck = await createDeck("Charizard", [card("sv01-004", 4)]);
+    const res = await app.request(
+      `/decks/${deck.id}`,
+      jsonInit("PATCH", { cards: [card("sv01-007", 1)] }, ash.cookie),
+      d1().env({
+        DB: raceBeforeBatch(d1().db, 1, async () => {
+          await d1()
+            .db.prepare("UPDATE decks SET user_id = ? WHERE id = ?")
+            .bind(gary.userId, deck.id)
+            .run();
+        }),
+      }),
+    );
+    expect(res.status).toBe(404);
+    expect(await storedCards(deck.id)).toEqual([card("sv01-004", 4)]);
+  });
+});
+
+describe("POST /decks cap", () => {
+  it(`refuses a deck past ${MAX_DECKS_PER_USER} and takes one again after a delete`, async () => {
+    const { db } = d1();
+    await db
+      .prepare(
+        `INSERT INTO decks (id, user_id, name, tint, position, updated)
+          WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?)
+          SELECT 'bulk-' || i, ?, 'Deck ' || i, 0, i, 0 FROM n`,
+      )
+      .bind(MAX_DECKS_PER_USER, ash.userId)
+      .run();
+    const full = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "One more", tint: 22 }, ash.cookie),
+      d1().env(),
+    );
+    expect(full.status).toBe(409);
+    expect(await full.json()).toEqual({ error: "deck limit reached", limit: MAX_DECKS_PER_USER });
+    const deleted = await app.request(
+      "/decks/bulk-1",
+      { method: "DELETE", headers: { Cookie: ash.cookie } },
+      d1().env(),
+    );
+    expect(deleted.status).toBe(204);
+    await createDeck("One more", []);
+    // The cap is per account.
+    await createDeck("Gary's", [], await signedInUser(db, "gary@example.com"));
   });
 });
 

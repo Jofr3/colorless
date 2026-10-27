@@ -32,6 +32,10 @@ const deckBaseSchema = z.object({
   position: z.number().int(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   updated: z.iso.datetime(),
+  /** Bumped by every write. PATCH /decks/:id takes the version a save was made from and refuses
+      it (409) once the deck has moved on. Optional so a web build can talk to an api from before
+      versions; every current api response carries it. */
+  version: z.number().int().min(0).optional(),
 });
 
 /** The full deck resource — what GET /decks/:id (and create/patch) serve. */
@@ -45,6 +49,11 @@ export const deckSchema = deckBaseSchema.extend({
   chosenCoverCardId: z.string().nullable(),
 });
 export type Deck = z.infer<typeof deckSchema>;
+
+/** The 409 body of a PATCH /decks/:id whose `version` the deck has moved past: the deck as it
+    stands now, so the client can reload it without another request. */
+export const deckConflictSchema = z.object({ error: z.string(), deck: deckSchema });
+export type DeckConflict = z.infer<typeof deckConflictSchema>;
 
 /** The GET /decks list row: no card list, just the summed copy count. */
 export const deckSummarySchema = deckBaseSchema.extend({

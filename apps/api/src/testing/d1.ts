@@ -141,15 +141,22 @@ export async function signedInUser(db: D1Database, email: string): Promise<Signe
  * commits between a route's reads and its write.
  */
 export function raceBeforeFirstBatch(db: D1Database, winner: () => Promise<void>): D1Database {
-  let raced = false;
+  return raceBeforeBatch(db, 0, winner);
+}
+
+/** `raceBeforeFirstBatch`, for a route whose reads are a batch too: `winner` runs just before the
+    batch with this 0-based index. */
+export function raceBeforeBatch(
+  db: D1Database,
+  index: number,
+  winner: () => Promise<void>,
+): D1Database {
+  let batches = 0;
   return new Proxy(db, {
     get(target, property) {
       if (property === "batch") {
         return async (statements: D1PreparedStatement[]) => {
-          if (!raced) {
-            raced = true;
-            await winner();
-          }
+          if (batches++ === index) await winner();
           return target.batch(statements);
         };
       }

@@ -951,15 +951,35 @@ POST   /auth/verify-email  ·  POST /auth/reset-password
 # → 400 `{"error":"unknown card id(s)","cardIds":[…]}` (checked with a chunked
 # IN query against `cards`, never the FK error text).
 GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
-                         #   updated, cardCount} — cardCount = summed copy counts
+                         #   updated, version, cardCount} — cardCount = summed
+                         #   copy counts
 GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
                          #   cards: [{cardId, count}]
 POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}
-                         #   → 201 Deck (server-minted UUID id)
+                         #   → 201 Deck (server-minted UUID id, version 0);
+                         #   409 {"error":"deck limit reached","limit":500} once
+                         #   the account holds MAX_DECKS_PER_USER decks (counted
+                         #   in the read that picks the new deck's position, so
+                         #   two racing creates can pass it by one)
 PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null clears
                          #   the nullable ones) AND/OR wholesale `cards`
-                         #   replacement (delete+reinsert in one db.batch);
-                         #   refreshes `updated`; empty patch → 400
+                         #   replacement (only the differing rows, in one
+                         #   db.batch); writes only the named fields; refreshes
+                         #   `updated` and bumps `version`; an empty patch (or
+                         #   a lone `version`) → 400. Optional `version` = the
+                         #   one the save was made from: the patch applies only
+                         #   while the deck is still at it, else 409
+                         #   {"error", "deck"} with the current deck and nothing
+                         #   written. Every statement of the write batch carries
+                         #   that precondition (the card writes as EXISTS guards,
+                         #   ahead of the UPDATE that moves `version`), because a
+                         #   D1 batch does not stop at an UPDATE that changes no
+                         #   row. Without `version` it is last-writer-wins (web
+                         #   builds from before versions, the library's rename).
+                         #   The builder makes each save from the version the
+                         #   previous one returned, and on a 409 reloads the deck
+                         #   from the body with a notice; the stale copy's
+                         #   unsaved edits are dropped.
 DELETE /decks/:id        # 204 (deck_cards cascade away)
 
 # Lobby (Durable Object) — implemented (P1 m8, apps/api/src/lobby/; §3.6

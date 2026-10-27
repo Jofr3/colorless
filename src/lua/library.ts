@@ -1,5 +1,5 @@
 import { DECK_SIZE } from "@colorless/engine/rules";
-import { DECK_NAME_MAX } from "@colorless/schema";
+import { DECK_NAME_MAX, MAX_DECKS_PER_USER } from "@colorless/schema";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
@@ -165,10 +165,14 @@ export class LuaLibrary {
       await work();
       succeeded = true;
     } catch (error) {
+      const status = error instanceof api.ApiError ? error.status : 0;
+      // Only a create answers 409 here: renames send no version, so they never conflict.
       failure =
-        error instanceof api.ApiError && error.status === 401
+        status === 401
           ? "Your session expired. Sign in again."
-          : "Could not save the change. Please try again.";
+          : status === 409
+            ? `Your library is full (${MAX_DECKS_PER_USER} decks). Delete one to make room.`
+            : "Could not save the change. Please try again.";
     }
     if (!live()) return;
     this.busy = false;
