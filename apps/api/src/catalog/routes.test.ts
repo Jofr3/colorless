@@ -54,6 +54,21 @@ describe("GET /cards param validation", () => {
     }
   });
 
+  it("400s a page that skips more than MAX_CARDS_OFFSET cards, saying why", async () => {
+    const { kv } = fakeKv();
+    for (const query of [
+      "page=127&pageSize=8",
+      "page=12&pageSize=100&total=5000",
+      "page=42&name=a",
+    ]) {
+      const res = await app.request(`/cards?${query}`, {}, envWith(kv));
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { error: string; issues: string[] };
+      expect(body.error).toBe("invalid query");
+      expect(body.issues[0]).toMatch(/^page: page \d+ at \d+ a page skips more than 1000 cards/);
+    }
+  });
+
   it("400s more than 100 repeated ids (the hydration cap)", async () => {
     const { kv } = fakeKv();
     const ids = Array.from({ length: 101 }, (_, i) => `id=sv01-${i}`).join("&");

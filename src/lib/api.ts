@@ -180,13 +180,10 @@ export function getFacets(): Promise<CatalogFacets> {
 
 // ---- Assets (plain URLs — these feed <img src>, not fetch) ------------------
 
-/** The url of a card scan on the api's lazy R2 mirror. */
-export function cardImageUrl(
-  cardId: string,
-  quality: "high" | "low",
-  ext: "webp" | "png" | "jpg" = "webp",
-): string {
-  return apiUrl(`/assets/cards/${encodeURIComponent(cardId)}/${quality}.${ext}`);
+/** The url of a card scan on the api's lazy R2 mirror, which serves only the high-quality WebP
+    (apps/api/src/assets/files.ts `CARD_ASSET_FILES`). */
+export function cardImageUrl(cardId: string, quality: "high"): string {
+  return apiUrl(`/assets/cards/${encodeURIComponent(cardId)}/${quality}.webp`);
 }
 
 // ---- Auth -------------------------------------------------------------------

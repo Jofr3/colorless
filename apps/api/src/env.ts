@@ -22,6 +22,9 @@ export type Env = {
       Absent in unit tests. */
   DECK_WRITE_LIMIT?: RateLimit;
   DECK_WRITE_IP_LIMIT?: RateLimit;
+  /** Per-IP Workers rate limit on GET /cards queries that scan the catalog
+      (src/catalog/searchLimit.ts). Absent in unit tests. */
+  CATALOG_SEARCH_LIMIT?: RateLimit;
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
       target (§3.5). wrangler.jsonc `vars` sets the dev default; production
       overrides it when the web app's real origin exists. */

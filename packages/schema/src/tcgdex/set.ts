@@ -5,6 +5,7 @@ import {
   tcgdexBoosterSchema,
   tcgdexCardBriefSchema,
   tcgdexCardCountSchema,
+  tcgdexIdSchema,
   tcgdexLegalSchema,
   tcgdexSerieBriefSchema,
 } from "./common";
@@ -22,7 +23,7 @@ export type TcgdexSetAbbreviation = z.infer<typeof tcgdexSetAbbreviationSchema>;
  * upstream but not observed live yet.
  */
 export const tcgdexSetSchema = z.object({
-  id: z.string(),
+  id: tcgdexIdSchema,
   name: z.string(),
   logo: z.string().optional(),
   symbol: z.string().optional(),

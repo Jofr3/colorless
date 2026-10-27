@@ -207,12 +207,9 @@ describe("session recovery", () => {
 });
 
 describe("cardImageUrl", () => {
-  it("builds card image urls, defaulting the extension to webp", () => {
+  it("builds the high-quality WebP url, the one card file the api mirrors", () => {
     expect(cardImageUrl("sv06.5-001", "high")).toBe(
       "http://localhost:8787/assets/cards/sv06.5-001/high.webp",
-    );
-    expect(cardImageUrl("sv06.5-001", "low", "png")).toBe(
-      "http://localhost:8787/assets/cards/sv06.5-001/low.png",
     );
   });
 });

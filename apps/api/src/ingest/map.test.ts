@@ -54,6 +54,25 @@ describe("mapSet", () => {
   });
 });
 
+describe("asset URLs off the asset origin", () => {
+  const foreign = [
+    "http://assets.tcgdex.net/en/sv/sv01/081",
+    "https://evil.example/en/sv/sv01/081",
+    "javascript:alert(1)",
+    "not a url",
+  ];
+
+  it("drop to no image on cards, sets and series", () => {
+    for (const url of foreign) {
+      const card = tcgdexCardSchema.parse({ ...cardPokemonAbility, image: url });
+      expect(mapCard(card).imageUrl).toBeNull();
+      const set = mapSet(tcgdexSetSchema.parse({ ...setFull, logo: url, symbol: url }));
+      expect([set.logoUrl, set.symbolUrl]).toEqual([null, null]);
+      expect(mapSerie(tcgdexSerieSchema.parse({ ...serieFull, logo: url })).logoUrl).toBeNull();
+    }
+  });
+});
+
 describe("mapCard", () => {
   it("maps a Pokémon: battle fields filled, Trainer/Energy fields null", () => {
     const card = tcgdexCardSchema.parse(cardPokemonAbility);

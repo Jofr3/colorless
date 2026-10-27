@@ -15,6 +15,7 @@ import seriesList from "./__fixtures__/series-list.json";
 import setFull from "./__fixtures__/set-full-sv01.json";
 import setsPage from "./__fixtures__/sets-page1.json";
 import {
+  isTcgdexId,
   tcgdexCardBriefSchema,
   tcgdexCardSchema,
   tcgdexSerieBriefSchema,
@@ -200,5 +201,58 @@ describe("rejects garbage", () => {
   it("rejects a card brief missing localId", () => {
     const result = tcgdexCardBriefSchema.safeParse({ id: "sv01-001", name: "Pineco" });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("tcgdex ids", () => {
+  const unsafe = [
+    "001-set-x/../../../../drizzle/9999_evil",
+    "..",
+    "sv01..x",
+    ".hidden",
+    "-flag",
+    "sv01/001",
+    "sv01\\001",
+    "sv01\nevil",
+    "sv 01",
+    "",
+    "a".repeat(65),
+  ];
+
+  it("accepts the shapes tcgdex uses", () => {
+    for (const id of [
+      "sv01",
+      "sv06.5",
+      "sv10.5b",
+      "30th-c",
+      "sve-002",
+      "swsh3-136",
+      "a".repeat(64),
+    ]) {
+      expect(isTcgdexId(id)).toBe(true);
+    }
+  });
+
+  it("rejects anything that could leave a path segment or a log line", () => {
+    for (const id of unsafe) {
+      expect(isTcgdexId(id)).toBe(false);
+    }
+  });
+
+  it("holds every serie, set and card id in a payload to that shape", () => {
+    const badId = "001-set-x/../../../../drizzle/9999_evil";
+    const brief = { id: badId, localId: "1", name: "x" };
+    const rejected: [z.ZodType, unknown][] = [
+      [tcgdexSerieSchema, { ...serieFull, id: badId }],
+      [tcgdexSerieSchema, { ...serieFull, sets: [{ ...setFull, id: badId }] }],
+      [tcgdexSetSchema, { ...setFull, id: badId }],
+      [tcgdexSetSchema, { ...setFull, cards: [brief] }],
+      [tcgdexSetSchema, { ...setFull, serie: { id: badId, name: "x" } }],
+      [tcgdexCardSchema, { ...cardTrainer, id: badId }],
+      [tcgdexCardSchema, { ...cardTrainer, set: { ...cardTrainer.set, id: badId } }],
+    ];
+    for (const [schema, payload] of rejected) {
+      expect(schema.safeParse(payload).success).toBe(false);
+    }
   });
 });

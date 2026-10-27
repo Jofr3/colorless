@@ -1,7 +1,7 @@
 // Canonical domain Set. `logo`/`symbol` are OUR asset base path
 // `/assets/sets/{id}` (or null when the set has no such asset — e.g. `sve`
-// has neither): clients append `/logo.{ext}` or `/symbol.{ext}` with
-// ext ∈ png|webp, served by the Worker's GET /assets/sets/:id/:file route.
+// has neither): clients append `/logo.webp` or `/symbol.webp`, served by the
+// Worker's GET /assets/sets/:id/:file route.
 // Both fields carry the same base path — each is null-gated by its own
 // origin column, so a symbol-only set gets `logo: null`.
 
@@ -14,9 +14,9 @@ export const setBriefSchema = z.object({
   id: z.string(),
   serieId: z.string(),
   name: z.string(),
-  /** OUR asset base path `/assets/sets/{id}` (append `/logo.{ext}`), or null. */
+  /** OUR asset base path `/assets/sets/{id}` (append `/logo.webp`), or null. */
   logo: z.string().nullable(),
-  /** OUR asset base path `/assets/sets/{id}` (append `/symbol.{ext}`), or null. */
+  /** OUR asset base path `/assets/sets/{id}` (append `/symbol.webp`), or null. */
   symbol: z.string().nullable(),
   /** "YYYY-MM-DD". */
   releaseDate: z.iso.date(),

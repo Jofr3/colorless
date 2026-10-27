@@ -124,13 +124,17 @@ colorless/
 1. Traverse serie → sets → each card's full detail from the tcgdex REST API
    (four requests in flight, starts ~50ms apart), validating every payload with
    the Zod schemas in `@colorless/schema`; any card validation failure aborts
-   that set with a report. Validated payloads are kept for a day under
+   that set with a report. Serie, set and card ids must match
+   `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$` with no `..` (`TCGDEX_ID_PATTERN`),
+   since they become file names, URL segments and R2 keys; the SQL file
+   label is also percent-encoded and checked to stay in the run's directory.
+   Validated payloads are kept for a day under
    `apps/api/.wrangler/tcgdex-cache/` and revalidated when read back, so a
    rerun (the remote ingest after a local one) does not refetch; `--refresh`
    ignores the cache.
 2. Map onto the §5.3 rows (missing `legal` → false/false; category-specific
    fields NULL elsewhere; `*_url` columns keep the tcgdex **origin** base
-   URLs) and generate batched upsert SQL — `INSERT … ON CONFLICT(id) DO
+   URLs, only when https on `assets.tcgdex.net`, else NULL) and generate batched upsert SQL — `INSERT … ON CONFLICT(id) DO
    UPDATE … WHERE <a column changed>`, ≤100 cards per statement
    (`apps/api/src/ingest/`, unit-tested). Unchanged rows are not rewritten.
 3. Apply in FK order (series, then one file per set holding the set row and
@@ -142,7 +146,9 @@ colorless/
 **Images are NOT mirrored at ingest time.** The Worker's `GET /assets/*`
 routes (§6) mirror lazily, cache-aside: R2 hit → serve; miss → resolve the
 origin base URL from D1, fetch the original from tcgdex, store it in R2,
-respond. Rationale: a full SV-era backfill is ~10k images — over Worker
+respond. Only `assets.tcgdex.net` over https is fetched, and only an `image/*`
+body of the file's type (by magic bytes) up to 5 MB is stored; the allowlist
+is the files a client uses (`high.webp` for cards). Rationale: a full SV-era backfill is ~10k images — over Worker
 subrequest limits, slow via CLI puts, and mostly assets nobody views.
 
 A future **Cron Trigger** (stretch) will run small incremental data deltas
@@ -546,10 +552,10 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 
 | Resource | Free limit / day | Main spenders |
 | --- | ---: | --- |
-| D1 rows read | 5,000,000 | free-text builder searches, decklist import, catalog KV misses |
+| D1 rows read | 5,000,000 | free-text builder searches (about 5,100 rows each), deep /cards pages, decklist import, catalog KV misses |
 | D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt), the daily sweep (at most 20,000) |
 | KV reads | 100,000 | every KV-cached catalog request |
-| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3) |
+| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3 at page size 4, 8 or 50; never an empty result) |
 | Worker requests | 100,000 | every API request, including WebSocket upgrades and the asset mirror; nothing limits traffic before the Worker on workers.dev |
 | Durable Object requests | 100,000 | lobby creation, each WebSocket upgrade and each incoming frame |
 | Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change), and every `setAlarm` (the liveness deadline moves on each commit) |
@@ -586,6 +592,19 @@ upgrading to Workers Paid. Both must stay on one registrable domain: the session
 cookie is `SameSite=Lax`, so an API on another site would lose it. The move
 changes `VITE_API_ORIGIN`, the CSP, `APP_ORIGIN` and the Google redirect URI,
 and logs everyone out once.
+
+D1 rows read is the other one anonymous traffic can spend: about 1,000
+free-text searches use the day's 5M, and then sign-in, decks and the lobby fail
+until 00:00 UTC. `GET /cards` therefore refuses a page that skips more than
+1,000 cards (`MAX_CARDS_OFFSET`), and `CATALOG_SEARCH_LIMIT` (namespace 1003)
+allows 60 scanning queries a minute per IP (an IPv6 address counts as its /64):
+any query that bypasses KV and names neither `id` nor `nameExact`, which are
+index lookups. 60 is about twice an active builder user's peak: each settled
+keystroke of a search is one request, and a 40 wpm typist settles on every
+key. It slows a careless loop but not a determined one (one address can still
+read about 300k rows a minute); client-side search is the lasting fix. A
+cacheable filter value that matches nothing (`illustrator=junk`) still scans
+the table on each miss and is not limited.
 
 **After every deploy**, check that the Worker reaches D1 and that the remote
 migration count matches the files:
@@ -627,7 +646,9 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
-| `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). |
+| `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). `catalog_reads`: each isolate's tally of uncached `/cards` queries, at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
+| `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`. |
+| `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
 
 ---
@@ -983,7 +1004,8 @@ GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or
 # /sets/:id and /cards pages 1-3 only (MAX_CACHED_CARDS_PAGE) — each miss spends
 # one of the account's 1,000 KV writes/day;
 # `x-colorless-cache: hit|miss|bypass` (bypass: /cards/:id, /cards/full, /cards
-# page 4+, a /cards query carrying `total`, and free-text/id queries);
+# page 4+, a /cards query carrying `total` or a pageSize other than 4, 8 or 50,
+# and free-text/id/hpMin/hpMax queries); an empty list or page is never stored;
 # key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + path (route params decoded)
 # + the VALIDATED query: only schema keys, defaults dropped, repeats sorted —
 # /facets, /series and /sets/:id ignore the query, so `?bust=N` cannot mint
@@ -1015,7 +1037,11 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   count an earlier page reported, echoed instead of
                          #   recounting; a free-text query (name/nameExact/text)
                          #   counts in its page statement (window count), and the
-                         #   builder fetches its pages three to a request
+                         #   builder fetches its pages three to a request;
+                         #   400 when (page-1)*pageSize > 1000 (MAX_CARDS_OFFSET);
+                         #   429 {error} + Retry-After: 60 past 60 scanning queries a
+                         #   minute per IP (CATALOG_SEARCH_LIMIT: KV-bypassing and not
+                         #   bounded by id/nameExact; fails open; §3.7.4)
 GET    /cards/:id        # full canonical Card; 404 JSON if absent; never in KV (a
                          #   1-row PK read is cheaper than a KV write)
 GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown
@@ -1034,9 +1060,12 @@ GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actua
                          #   between an unpopulated column and a filter that
                          #   empties a page (D198, §5.3.3)
 
-# Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists, else 404
-GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)
-GET    /assets/sets/:setId/:file     # logo|symbol . png|webp  (e.g. symbol.png)
+# Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists and tcgdex-id
+# shaped :cardId/:setId, else 404. Fetches only https://assets.tcgdex.net/ (also
+# after redirects) and stores only an image/* body whose magic bytes match the
+# file type, at most 5 MB; anything else answers as missing (404, logged)
+GET    /assets/cards/:cardId/:file   # high.webp only (the one file the web app shows)
+GET    /assets/sets/:setId/:file     # logo.webp | symbol.webp
 
 # Auth (D2a) — implemented (§3.5 as-built); bodies validated, users
 # boundary-parsed through @colorless/schema userSchema (never any hash field)
