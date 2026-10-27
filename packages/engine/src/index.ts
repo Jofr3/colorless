@@ -192,7 +192,8 @@ export type { PendingDecision, PhaseView } from "./phaseView";
 export { redactGame } from "./redact";
 export { formatElapsed, logFromEvents } from "./log";
 export type { LogContext } from "./log";
-export type { CoinFace } from "./rng";
+export type { CoinFace, DrbgState, RngState } from "./rng";
+export { freshRngState, isRngState } from "./rng";
 export { createGame, deckCardIdsOf } from "./setup";
 export {
   ACE_SPEC_LIMIT,

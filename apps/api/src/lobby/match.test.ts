@@ -1,7 +1,7 @@
 import { formatElapsed, logFromEvents, otherSeat, redactGame, type Seat } from "@colorless/engine";
 import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { ALL_BASIC_DECK, driveSetup } from "@colorless/engine/testing";
+import { ALL_BASIC_DECK, drbgSeed, driveSetup } from "@colorless/engine/testing";
 import {
   applyMatchAction,
   beginMatch,
@@ -70,7 +70,12 @@ const LEGAL_DECK = Object.keys(LEGAL_POOL).flatMap((id) => [id, id, id, id]);
 
 describe("startMatch — the lobby → engine handoff", () => {
   it("maps host→p1 / guest→p2 into a game paused at the first-player choice", () => {
-    const result = startMatch({ seed: 1, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    const result = startMatch({
+      seed: drbgSeed(1),
+      hostDeck: DECK,
+      guestDeck: DECK,
+      cardPool: POOL,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.error.message);
     // Both decks became 60-card p1#/p2# stacks; the engine paused at setup.
@@ -81,8 +86,8 @@ describe("startMatch — the lobby → engine handoff", () => {
   });
 
   it("is deterministic — the same seed reproduces the same coin winner", () => {
-    const a = startMatch({ seed: 7, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
-    const b = startMatch({ seed: 7, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    const a = startMatch({ seed: drbgSeed(7), hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    const b = startMatch({ seed: drbgSeed(7), hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
     expect(a.ok && b.ok).toBe(true);
     if (!a.ok || !b.ok) throw new Error("expected both to create");
     if (a.state.phase.kind !== "setup:chooseFirst" || b.state.phase.kind !== "setup:chooseFirst") {
@@ -92,14 +97,24 @@ describe("startMatch — the lobby → engine handoff", () => {
   });
 
   it("surfaces the engine's rejection of an illegal deck (not 60 cards)", () => {
-    const result = startMatch({ seed: 1, hostDeck: ["basic"], guestDeck: DECK, cardPool: POOL });
+    const result = startMatch({
+      seed: drbgSeed(1),
+      hostDeck: ["basic"],
+      guestDeck: DECK,
+      cardPool: POOL,
+    });
     expect(result.ok).toBe(false);
   });
 });
 
 describe("settleFirstPlayer — who sets the play order", () => {
   function created(seed: number) {
-    const result = startMatch({ seed, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    const result = startMatch({
+      seed: drbgSeed(seed),
+      hostDeck: DECK,
+      guestDeck: DECK,
+      cardPool: POOL,
+    });
     if (!result.ok || result.state.phase.kind !== "setup:chooseFirst") throw new Error("no game");
     return { result, coinWinner: result.state.phase.coinWinner };
   }
@@ -183,7 +198,12 @@ const STARTED_AT = 1_000;
     CURRENT `MATCH_RECORD_VERSION` included, so the storage-shape suite below
     reads exactly what this build would have written. */
 function freshRecord(seed = 1): { record: MatchRecord; winner: "p1" | "p2" } {
-  const created = startMatch({ seed, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+  const created = startMatch({
+    seed: drbgSeed(seed),
+    hostDeck: DECK,
+    guestDeck: DECK,
+    cardPool: POOL,
+  });
   if (!created.ok) throw new Error(created.error.message);
   if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("expected chooseFirst");
   const log = logFromEvents(created.events, {
@@ -194,7 +214,7 @@ function freshRecord(seed = 1): { record: MatchRecord; winner: "p1" | "p2" } {
   return {
     record: {
       version: MATCH_RECORD_VERSION,
-      seed,
+      seed: drbgSeed(seed),
       startedAt: STARTED_AT,
       names: NAMES,
       state: created.state,
@@ -251,7 +271,7 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     );
     expect(next.ok).toBe(true);
     if (!next.ok) throw new Error("expected accept");
-    expect(next.record.seed).toBe(1);
+    expect(next.record.seed).toEqual(drbgSeed(1));
     // The coin winner's choice advanced setup off chooseFirst.
     expect(next.record.state.phase.kind).not.toBe("setup:chooseFirst");
   });
@@ -469,7 +489,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
 
   it("refuses a version this build doesn't write (older AND newer)", () => {
     const { record } = freshRecord();
-    expect(MATCH_RECORD_VERSION).toBe(50);
+    expect(MATCH_RECORD_VERSION).toBe(51);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.
@@ -607,7 +627,7 @@ describe("applyMatchAction — concede (the forfeit seam)", () => {
 describe("beginMatch — the record a countdown's end persists", () => {
   const begin = (overrides: Partial<Parameters<typeof beginMatch>[0]> = {}) =>
     beginMatch({
-      seed: 3,
+      seed: drbgSeed(3),
       hostDeck: LEGAL_DECK,
       guestDeck: LEGAL_DECK,
       cardPool: LEGAL_POOL,
@@ -620,7 +640,7 @@ describe("beginMatch — the record a countdown's end persists", () => {
 
   function created(seed: number) {
     const result = startMatch({
-      seed,
+      seed: drbgSeed(seed),
       hostDeck: LEGAL_DECK,
       guestDeck: LEGAL_DECK,
       cardPool: LEGAL_POOL,
@@ -633,7 +653,7 @@ describe("beginMatch — the record a countdown's end persists", () => {
     const begun = begin();
     if (!begun.ok) throw new Error(begun.reason);
     expect(begun.record.version).toBe(MATCH_RECORD_VERSION);
-    expect(begun.record.seed).toBe(3);
+    expect(begun.record.seed).toEqual(drbgSeed(3));
     expect(begun.record.startedAt).toBe(5_000);
     expect(begun.record.names).toEqual({ p1: "Ana", p2: "Bo" });
     expect(readMatchRecord(structuredClone(begun.record))).toEqual(begun.record);
@@ -735,7 +755,7 @@ describe("matchFrameFor — the per-viewer match frame", () => {
   /** A match past the first-player choice, so both hands are dealt. */
   function dealtRecord(): MatchRecord {
     const begun = beginMatch({
-      seed: 1,
+      seed: drbgSeed(1),
       hostDeck: LEGAL_DECK,
       guestDeck: LEGAL_DECK,
       cardPool: LEGAL_POOL,

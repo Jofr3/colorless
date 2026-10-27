@@ -10,7 +10,7 @@ import {
 } from "./index";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
-import { MAX_UNTIL_TAILS_FLIPS, flipCoin, flipUntilTails } from "./rng";
+import { MAX_UNTIL_TAILS_FLIPS, flipCoin, flipUntilTails, type RngState } from "./rng";
 import {
   FIXTURE_POOL,
   PER_HEADS_PROGRAM_DECK,
@@ -112,7 +112,7 @@ function gyaradosActive(state: GameState, seat: Seat): GameState {
   return attachFromDeck(setActiveFromDeck(state, seat, "swsh10.5-022"), seat, "fix-energy", 1);
 }
 
-function foldFlips(state: number, count: number): [faces: CoinFace[], next: number] {
+function foldFlips(state: RngState, count: number): [faces: CoinFace[], next: RngState] {
   const faces: CoinFace[] = [];
   let rng = state;
   for (let i = 0; i < count; i += 1) {

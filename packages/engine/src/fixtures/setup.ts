@@ -1,5 +1,5 @@
 import type { Card } from "@colorless/schema";
-import type { GameEvent, GameState, Seat } from "../index";
+import type { GameEvent, GameState, RngState, Seat } from "../index";
 import { SEATS, applyAction, cardOfUid, createGame, isBasicPokemon } from "../index";
 import { MIXED_DECK } from "./decks";
 import { firstBasicInHand, handUid, must, mustApply } from "./game";
@@ -21,7 +21,7 @@ export interface SetupOptions {
 }
 
 export function mustCreate(
-  seed: number,
+  seed: RngState,
   decks: Decks = { p1: MIXED_DECK, p2: MIXED_DECK },
   cardPool: Record<string, Card> = FIXTURE_POOL,
 ): { state: GameState; events: GameEvent[] } {
@@ -68,7 +68,7 @@ export function finishOpeningSetup(initial: GameState): { state: GameState; even
 
 /** Scripts opening placements, prizes, compensation and bonus Bench choices. */
 export function driveSetup(
-  seed: number,
+  seed: RngState,
   decks: Decks = { p1: MIXED_DECK, p2: MIXED_DECK },
   opts: SetupOptions = {},
 ): GameState {

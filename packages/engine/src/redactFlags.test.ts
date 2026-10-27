@@ -1,6 +1,6 @@
 import type { Card, RedactedGame } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { GameAction, GameState, PokemonTarget } from "./index";
+import type { GameAction, GameState, PokemonTarget, RngState } from "./index";
 import { applyAction, cardOfUid, redactGame, topUid, turnGate } from "./index";
 import { CATALOG_MANIFEST } from "./catalogManifest";
 import {
@@ -17,6 +17,7 @@ import {
   STADIUM_TOOL_DECK,
   candidateActions,
   deckOf,
+  drbgSeed,
   mustCreate,
   trainerCard,
   inAttackAgainWindow,
@@ -230,9 +231,15 @@ const KINDS = [
 describe("redacted turn flags agree with the engine, inside and outside the window", () => {
   const reached = new Set<string>();
 
-  it.each(WALKS)("on every state of a seeded %s walk", (name, deck, pool) => {
+  // Each walk runs on the legacy generator and on ChaCha20, which every real game uses (MI1).
+  it.each(
+    WALKS.flatMap(([name, deck, pool]) => [
+      [name, deck, pool, 7],
+      [`${name} (ChaCha20)`, deck, pool, drbgSeed(7)],
+    ]) as [string, string[], Record<string, Card>, RngState][],
+  )("on every state of a seeded %s walk", (name, deck, pool, seed) => {
     const drift = new Map<string, number>();
-    walkGame(mustCreate(7, { p1: deck, p2: deck }, pool).state, 11, (state) => {
+    walkGame(mustCreate(seed, { p1: deck, p2: deck }, pool).state, 11, (state) => {
       for (const board of [state, inAttackAgainWindow(state)]) {
         if (board === null) continue;
         for (const c of flagChecks(board)) {

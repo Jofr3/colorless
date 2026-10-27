@@ -30,6 +30,19 @@ wire change: the Lua pages talk to the same lobby Durable Object as React.
   continuation titles and stack bottoms for bench order (a server deploy would have to add them to
   `RedactedGame` first).
 
+## Status — match RNG (security Phase 4, MI1, 2026-10-27)
+
+A match's randomness is a ChaCha20 keystream (`packages/engine/src/rng.ts`, `@noble/ciphers`)
+under a fresh 256-bit key the DO mints at handoff (`freshMatchRng`, `crypto.getRandomValues`).
+It replaces the 32-bit mulberry32 seed, which a player could recover from their own opening hand
+and then predict every shuffle and flip. `LobbyDeps.randomSeed` and `StartMatchOptions.seed` are
+typed as the ChaCha20 state, so a handoff cannot start a match on a number. The key lives in
+`MatchRecord.state.rngState` (and `seed`, the starting state) in DO storage only: `redactGame`
+copies no part of it, and `lobbyDO.test.ts` checks that no frame or log line of a played match
+carries it. Records are version 51; a v50 match in storage at deploy is migrated on its next read
+and carries on under a fresh key (`migrateMatchRecord`), so no live match is retired. Rolling the
+API back below 51 retires v51 matches instead of misreading their state.
+
 ## Status — abuse limits (security Phase 3, 2026-10-27)
 
 The lobby DO now bounds what one client can cost (details in `backend-data.md` §3.6, constants in

@@ -1,3 +1,4 @@
+import { drbgSeed } from "@colorless/engine/testing";
 // The lobby abuse harness (security audit, Phase 0). Each case measures what one abusive client
 // costs the lobby, in storage writes, alarms, sockets and frames, and asserts the number. The
 // Phase 0 baselines were changed on purpose by the fix their finding id names (LB1, LB2, LB3, MI2
@@ -29,7 +30,7 @@ let warn: MockInstance<typeof console.warn>;
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   h = createLobbyHarness({
-    seed: 42,
+    seed: drbgSeed(42),
     displayNames: new Map([
       ["ana", "Ana"],
       ["bo", "Bo"],

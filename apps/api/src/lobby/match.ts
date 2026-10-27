@@ -11,6 +11,7 @@
 import {
   type CreateErrorCode,
   type CreateGameResult,
+  type DrbgState,
   type GameAction,
   type GameEvent,
   type GameState,
@@ -19,10 +20,13 @@ import {
   createGame,
   formatById,
   formatElapsed,
+  freshRngState,
   GAME_STATE_VERSION,
+  isRngState,
   logFromEvents,
   migrateGameState,
   poolIdsNeededFor,
+  type RngState,
   redactGame,
   savedDeckReasons,
 } from "@colorless/engine";
@@ -37,6 +41,16 @@ import * as z from "zod";
 import { slotOf } from "./logic";
 
 export type { Seat };
+
+/** A match's RNG: always a ChaCha20 state with a fresh 256-bit key (security audit MI1). The type
+    is the guard: a handoff cannot start a match on a guessable numeric seed. */
+export type MatchRng = DrbgState;
+
+/** The RNG a new match starts from, keyed from the platform CSPRNG. The key never leaves the DO:
+    `matchFrameFor` sends only the redacted board and the log. */
+export function freshMatchRng(): MatchRng {
+  return freshRngState();
+}
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
 export const SEAT_OF_SLOT = { host: "p1", guest: "p2" } as const satisfies Record<
@@ -59,8 +73,9 @@ export function playerIdOfSeat(snapshot: LobbySnapshot, seat: Seat): string | nu
 }
 
 export interface StartMatchOptions {
-  /** The authoritative RNG seed the DO owns for this match (shuffle + coin flip). */
-  seed: number;
+  /** The authoritative RNG the DO owns for this match (shuffles and coin flips), from
+      `freshMatchRng`. */
+  seed: MatchRng;
   /** The host's 60-card deck as a flat list of catalog ids (becomes p1). */
   hostDeck: readonly string[];
   /** The guest's 60-card deck (becomes p2). */
@@ -197,8 +212,9 @@ export interface MatchRecord {
       through `loadMatchRecord`: a current record is used as stored, an older one the
       engine can migrate is migrated and written back, and anything else is retired. */
   version: number;
-  /** The RNG seed the DO minted for this match. */
-  seed: number;
+  /** The RNG state the match was created from: the ChaCha20 state the DO minted, or the u32
+      seed of a match started before MI1's fix. Server-side only, like `state`. */
+  seed: RngState;
   /** Epoch ms the match started — the log's "+MM:SS" elapsed origin. */
   startedAt: number;
   /** Display names per seat (the lobby player names: host → p1, guest → p2) — the
@@ -234,13 +250,24 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
 
 /**
  * Migrate an older record to this deploy's version, or `null` if it is not a well-formed migratable
- * record. The envelope is kept; the engine migrates the state.
+ * record. The envelope is kept; the engine migrates the state. A state still on the mulberry32
+ * generator (a match started before MI1's fix) carries on under a fresh ChaCha20 key from `rekey`:
+ * its 32-bit seed may already have been recovered from a player's opening hand, and nothing
+ * replays an online match, so changing generator mid-match costs nothing. What the old seed already
+ * decided (deck orders, Prizes) stays as dealt until the next shuffle.
  */
-export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
+export function migrateMatchRecord(
+  raw: unknown,
+  fresh: Record<string, Card>,
+  rekey: () => MatchRng = freshMatchRng,
+): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
-  const state = migrateGameState(record.state, record.version, fresh);
-  return state === null ? null : { ...record, version: MATCH_RECORD_VERSION, state };
+  const migrated = migrateGameState(record.state, record.version, fresh);
+  if (migrated === null) return null;
+  const state =
+    typeof migrated.rngState === "number" ? { ...migrated, rngState: rekey() } : migrated;
+  return { ...record, version: MATCH_RECORD_VERSION, state };
 }
 
 /**
@@ -315,7 +342,10 @@ const storedStateSchema = z.custom<GameState>(
 function matchRecordSchema(version: z.ZodType<number>, state: z.ZodType<GameState>) {
   return z.object({
     version,
-    seed: z.number(),
+    // A record from before MI1's fix holds the u32 the DO minted, which can pass the int32 range.
+    seed: z.custom<RngState>(
+      (value) => (typeof value === "number" && Number.isFinite(value)) || isRngState(value),
+    ),
     startedAt: z.number(),
     names: z.object({ p1: z.string(), p2: z.string() }),
     state,

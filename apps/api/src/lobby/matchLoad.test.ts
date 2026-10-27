@@ -1,7 +1,7 @@
-import type { GameState } from "@colorless/engine";
+import { createGame, type GameState, isRngState, migrateGameState } from "@colorless/engine";
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { firstP1Turn, storedAt } from "@colorless/engine/testing";
+import { drbgSeed, firstP1Turn, storedAt } from "@colorless/engine/testing";
 import {
   loadMatchRecord,
   MATCH_RECORD_VERSION,
@@ -10,7 +10,6 @@ import {
   migratablePoolIdsOf,
   migrateMatchRecord,
   readMatchRecord,
-  startMatch,
 } from "./match";
 import { FakeStorage } from "./lobbyHarness";
 import { MATCH_KEY, MATCH_LAYOUT, MatchStore } from "./matchStore";
@@ -60,11 +59,11 @@ const FRESH_POOL = { [BODY]: BODY_CARD, [TRAINER]: FRESH_TRAINER };
 const DECK = [...Array.from({ length: 58 }, () => BODY), TRAINER, TRAINER];
 const NAMES = { p1: "Ana", p2: "Bo" } as const;
 
+/** A match an older deploy started: on the mulberry32 generator, from a numeric seed. */
 function board(): GameState {
-  const created = startMatch({
+  const created = createGame({
     seed: 5830,
-    hostDeck: DECK,
-    guestDeck: DECK,
+    decks: { p1: DECK, p2: DECK },
     cardPool: { [BODY]: BODY_CARD, [TRAINER]: STALE_TRAINER },
   });
   if (!created.ok) throw new Error(created.error.message);
@@ -222,6 +221,38 @@ describe("migrateMatchRecord — the envelope around the engine's migration", ()
       old.names,
       old.log,
     ]);
+  });
+
+  it("moves a match still on mulberry32 to a fresh ChaCha20 key and changes nothing else (MI1)", () => {
+    for (const version of [41, 49, 50]) {
+      const old = oldRecord(version);
+      expect(typeof old.state.rngState).toBe("number");
+      const migrated = migrateMatchRecord(old, FRESH_POOL, () => drbgSeed(version));
+      if (migrated === null) throw new Error(`v${version}: not migrated`);
+      expect(migrated.state.rngState).toEqual(drbgSeed(version));
+      const engine = migrateGameState(old.state, version, FRESH_POOL);
+      expect({ ...migrated.state, rngState: old.state.rngState }).toEqual(engine);
+      expect(migrated.seed).toBe(5830);
+    }
+    // The old DO minted an unsigned u32 seed, which the record kept as it was.
+    const high = migrateMatchRecord({ ...oldRecord(50), seed: 4_000_000_000 }, {});
+    expect(high?.seed).toBe(4_000_000_000);
+    // The default rekey is the CSPRNG one: well formed, and a different key each time.
+    const a = migrateMatchRecord(oldRecord(50), {})?.state.rngState;
+    const b = migrateMatchRecord(oldRecord(50), {})?.state.rngState;
+    expect(isRngState(a) && typeof a === "object").toBe(true);
+    expect(a).not.toEqual(b);
+  });
+
+  it("a v50 record is read through the store, rekeyed once, and the next wake keeps that key", async () => {
+    const storage = new FakeStorage();
+    await storage.put(MATCH_KEY, oldRecord(50));
+    const load = await loadMatchRecord(new MatchStore(storage), never);
+    if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
+    expect(load.record.version).toBe(MATCH_RECORD_VERSION);
+    expect(typeof load.record.state.rngState).toBe("object");
+    const woken = await loadMatchRecord(new MatchStore(storage), never);
+    expect(woken).toEqual(load);
   });
 
   it("a record failing the envelope checks is neither migrated nor asked for a pool", () => {

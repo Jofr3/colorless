@@ -44,7 +44,14 @@ export interface MatchStorage {
 }
 
 /** What the split keys hold, enough to write the next action's changes alone. */
-type Written = FixedTables & { seed: number; startedAt: number; logLength: number };
+type Written = FixedTables & { seed: string; startedAt: number; logLength: number };
+
+/** A record's seed as a comparable value: a ChaCha20 seed is an object, which a read from storage
+    copies. Total, since a head read back from storage is not validated. */
+function seedId(seed: unknown): string {
+  if (!isObject(seed)) return String(seed);
+  return `${String(seed.key)}:${String(seed.counter)}`;
+}
 
 function logChunkKey(index: number): string {
   return `${LOG_KEY_PREFIX}${index}`;
@@ -97,7 +104,9 @@ function headOf(record: MatchRecord): StoredHead {
 function matchEntries(record: MatchRecord, written: Written | null): Record<string, unknown> {
   const { cardPool, cardIdByUid } = record.state;
   const sameMatch =
-    written !== null && written.seed === record.seed && written.startedAt === record.startedAt;
+    written !== null &&
+    written.seed === seedId(record.seed) &&
+    written.startedAt === record.startedAt;
   const continues = sameMatch && record.log.length >= written.logLength;
   const entries: Record<string, unknown> = { [MATCH_KEY]: headOf(record) };
   if (!sameMatch || written.cardPool !== cardPool || written.cardIdByUid !== cardIdByUid) {
@@ -144,7 +153,7 @@ export class MatchStore implements MatchSlot {
     ]);
     this.mirror = { raw: record };
     this.written = {
-      seed: record.seed,
+      seed: seedId(record.seed),
       startedAt: record.startedAt,
       cardPool: record.state.cardPool,
       cardIdByUid: record.state.cardIdByUid,
@@ -183,7 +192,7 @@ export class MatchStore implements MatchSlot {
     if (log.length !== head.logLength) return head;
     const { layout: _layout, logLength: _logLength, state, ...envelope } = head;
     this.written = {
-      seed: head.seed,
+      seed: seedId(head.seed),
       startedAt: head.startedAt,
       cardPool: tables.cardPool,
       cardIdByUid: tables.cardIdByUid,

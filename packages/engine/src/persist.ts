@@ -16,7 +16,7 @@ import {
  * step cannot be migrated, and its states are discarded. `persistShape.test.ts` pins a skeleton of
  * the persisted shape to this number.
  */
-export const GAME_STATE_VERSION = 50;
+export const GAME_STATE_VERSION = 51;
 
 /** The one version whose Trainer faces are refreshed from the catalog. */
 const POOL_REFRESH_VERSION = 41;
@@ -40,6 +40,10 @@ const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
   [47, unchanged],
   [48, unchanged],
   [49, withGateOpsKey],
+  // 51 widened `rngState` to a ChaCha20 state (security audit MI1). A v50 state keeps its
+  // mulberry32 number, which every reader still accepts; the bump is so a deploy before 51, which
+  // would read a ChaCha20 state as a number, retires a v51 state instead of misreading it.
+  [50, unchanged],
 ]);
 
 /**

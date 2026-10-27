@@ -25,7 +25,7 @@ import {
 import type { AttackCoinFlip } from "./effects";
 import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { flipCoin } from "./rng";
+import { flipCoin, type RngState } from "./rng";
 import type { CoinFace } from "./rng";
 import {
   FIXTURE_POOL,
@@ -218,7 +218,7 @@ function skippedRows(events: readonly GameEvent[]) {
   );
 }
 /** `rngState` after exactly `n` `flipCoin` steps from `from`. */
-function stepped(from: number, n: number): number {
+function stepped(from: RngState, n: number): RngState {
   let rng = from;
   for (let i = 0; i < n; i += 1) rng = flipCoin(rng)[1];
   return rng;

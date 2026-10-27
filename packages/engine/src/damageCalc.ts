@@ -26,7 +26,7 @@ import {
   survivalBraceOf,
 } from "./continuous";
 import type { GameEvent } from "./events";
-import { flipCoin } from "./rng";
+import { flipCoin, type RngState } from "./rng";
 import type { GameState, InPlayPokemon, Seat } from "./types";
 import { withAttackDamageTaken } from "./types";
 
@@ -86,7 +86,7 @@ export function koSurvivalCoinFlip(
   seat: Seat,
   dealt: number,
   events: GameEvent[],
-): [damage: number | null, rngState: number] {
+): [damage: number | null, rngState: RngState] {
   const ability = passivesOf(state, pokemon).survivesKoOnCoinFlip;
   if (ability === null) return [null, state.rngState];
   const hp = effectiveMaxHp(state, pokemon);
@@ -112,7 +112,7 @@ export function coinFlipShieldPrevents(
   seat: Seat,
   damage: number,
   events: GameEvent[],
-): [prevented: boolean, rngState: number] {
+): [prevented: boolean, rngState: RngState] {
   if (damage <= 0) return [false, state.rngState];
   const uid = topUid(pokemon);
   if (uid === undefined) return [false, state.rngState];
@@ -194,7 +194,7 @@ export interface LandedHit {
   body: InPlayPokemon;
   dealt: number;
   spent: string[];
-  rngState: number;
+  rngState: RngState;
 }
 
 /**

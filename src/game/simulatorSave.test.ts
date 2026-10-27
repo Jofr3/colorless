@@ -52,31 +52,40 @@ const expectDeckPicker = () => {
 };
 
 describe("the simulator save", () => {
-  it("restores the whole history: every action undoes back to the start and redoes to the end", () => {
-    const { src } = playSimulatorGame(11, { maxMoves: 150 });
-    const live = src.host;
-    expect(live.steps.length).toBeGreaterThan(100);
-    const table = reload();
-    expect(table.host).toEqual(live);
-    for (let i = live.steps.length - 2; i >= 0; i--) {
-      table.history.step("undoAction");
-      const step = live.steps[table.host.stepIndex];
-      expect(table.host.stepIndex).toBeLessThanOrEqual(i);
-      expect(table.host.game).toEqual(step?.game);
-      expect(table.host.log).toEqual(live.log.slice(0, step?.logLength));
-      expect(table.host.viewerSeat).toBe(step?.viewerSeat);
-      i = table.host.stepIndex;
-    }
-    expect(table.history.canStep("undoAction")).toBe(false);
-    expect(table.host.game).toEqual(live.origin.game);
-    expect(table.host.log).toEqual(live.origin.log);
-    const back = reload();
-    expect(back.host.game).toEqual(live.origin.game);
-    while (back.history.canStep("redoAction")) back.history.step("redoAction");
-    expect(back.host.game).toEqual(live.game);
-    expect(back.host.log).toEqual(live.log);
-    expect(back.host.viewerSeat).toBe(live.viewerSeat);
-  });
+  // A save made before MI1's fix: its game draws from the legacy mulberry32 generator, and still
+  // replays on it.
+  it.each([
+    ["the legacy generator", false],
+    ["ChaCha20", true],
+  ])(
+    "restores the whole history on %s: every action undoes back to the start and redoes to the end",
+    (_, chacha) => {
+      const { src } = playSimulatorGame(11, { maxMoves: 150, chacha });
+      const live = src.host;
+      expect(typeof live.origin.game.rngState).toBe(chacha ? "object" : "number");
+      expect(live.steps.length).toBeGreaterThan(100);
+      const table = reload();
+      expect(table.host).toEqual(live);
+      for (let i = live.steps.length - 2; i >= 0; i--) {
+        table.history.step("undoAction");
+        const step = live.steps[table.host.stepIndex];
+        expect(table.host.stepIndex).toBeLessThanOrEqual(i);
+        expect(table.host.game).toEqual(step?.game);
+        expect(table.host.log).toEqual(live.log.slice(0, step?.logLength));
+        expect(table.host.viewerSeat).toBe(step?.viewerSeat);
+        i = table.host.stepIndex;
+      }
+      expect(table.history.canStep("undoAction")).toBe(false);
+      expect(table.host.game).toEqual(live.origin.game);
+      expect(table.host.log).toEqual(live.origin.log);
+      const back = reload();
+      expect(back.host.game).toEqual(live.origin.game);
+      while (back.history.canStep("redoAction")) back.history.step("redoAction");
+      expect(back.host.game).toEqual(live.game);
+      expect(back.host.log).toEqual(live.log);
+      expect(back.host.viewerSeat).toBe(live.viewerSeat);
+    },
+  );
 
   it("reopens at the place in history it was left, by turn as well as by action", () => {
     const { src } = playSimulatorGame(23, { maxMoves: 120 });
@@ -175,6 +184,16 @@ describe("the simulator save", () => {
       "has a starting board that cannot be shown",
       (r) => {
         if (r.origin.game.players) r.origin.game.players.p1.hand = [{}];
+      },
+    ],
+    [
+      "has a starting RNG state no generator reads",
+      (r) => {
+        (r.origin.game as Record<string, unknown>).rngState = {
+          alg: "chacha20",
+          key: "x",
+          counter: 0,
+        };
       },
     ],
     [

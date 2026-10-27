@@ -11,6 +11,7 @@ import type {
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 import type { AbilityProgram } from "./programTypes";
+import type { RngState } from "./rng";
 
 // The whole GameState is a plain JSON-safe value — no classes, no Date, no
 // functions — so snapshots serialize, replay and structurally share. Nothing
@@ -1096,8 +1097,10 @@ export function freshHandPlayLocks(): Record<Seat, Record<StampedPlayLockKey, nu
 }
 
 export interface GameState {
-  /** mulberry32 state (signed int32) — every shuffle/flip advances it. */
-  rngState: number;
+  /** The generator's state — every shuffle/flip advances it. A ChaCha20 state in every game
+      started since the MI1 fix, a legacy mulberry32 int32 in older saves and numeric-seed
+      fixtures (rng.ts). Secret: redaction never copies it. */
+  rngState: RngState;
   /** 1-based turn counter; 0 while in setup. Odd turns belong to firstPlayer. */
   turn: number;
   /** Chosen by the coin winner; null only during setup:chooseFirst. */

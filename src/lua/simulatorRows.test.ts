@@ -26,9 +26,21 @@ const sidebar = at(SIM.sidebar);
 const card = at(SIM.card);
 const SHUFFLED = wireColumn(SIM.header, "shuffled");
 
+let keys = 0;
 beforeEach(() => {
+  keys = 0;
   vi.useFakeTimers();
   vi.setSystemTime(1_700_000_000_000);
+  // A restart keys its game from the CSPRNG (MI1). A fixed stream of keys keeps the walks
+  // repeatable, as the fixed clock did for the old clock seed; the emit test's one shuffle is a
+  // mulligan in a restarted game, so the stream was searched for deals that reach one.
+  vi.spyOn(crypto, "getRandomValues").mockImplementation((array) => {
+    if (array instanceof Uint8Array) {
+      keys++;
+      for (let i = 0; i < array.length; i++) array[i] = (keys * 131 + i * 7 + 9) & 255;
+    }
+    return array;
+  });
   const storage = new Map<string, string>();
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => storage.get(key) ?? null,
@@ -39,6 +51,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 function rng(seed: number) {

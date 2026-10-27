@@ -1,3 +1,5 @@
+import { isRngState } from "@colorless/engine";
+import { drbgSeed } from "@colorless/engine/testing";
 import {
   COUNTDOWN_MS,
   LOBBY_WS_PING,
@@ -8,6 +10,7 @@ import {
   type LobbySnapshot,
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
+import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import {
   basicCard,
@@ -26,7 +29,14 @@ import {
   readSnapshot,
   SOCKET_SILENCE_MS,
 } from "./logic";
-import { MATCH_RECORD_VERSION, type MatchRecord, matchFrameFor, readMatchRecord } from "./match";
+import { lobbyDepsFromEnv } from "./lobbyDO";
+import {
+  freshMatchRng,
+  MATCH_RECORD_VERSION,
+  type MatchRecord,
+  matchFrameFor,
+  readMatchRecord,
+} from "./match";
 import { MatchStore } from "./matchStore";
 
 const DECK = [...LEGAL_DECK];
@@ -39,7 +49,7 @@ let warn: MockInstance<typeof console.warn>;
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   h = createLobbyHarness({
-    seed: 42,
+    seed: drbgSeed(42),
     displayNames: new Map([
       ["ana", "Ana"],
       ["bo", "Bo"],
@@ -216,7 +226,7 @@ describe("LobbyDO — countdown and handoff", () => {
     expect(snapshotOf(host).phase).toBe("in-game");
     const record = await storedMatch();
     expect(record.version).toBe(MATCH_RECORD_VERSION);
-    expect(record.seed).toBe(42);
+    expect(record.seed).toEqual(drbgSeed(42));
     expect(record.startedAt).toBe(endsAt);
     expect(record.names).toEqual({ p1: "Ana", p2: "Bo" });
     expect(host.last("match")).toEqual(matchFrameFor(record, "p1"));
@@ -318,6 +328,44 @@ describe("LobbyDO — countdown and handoff", () => {
       coinWinner: "p2",
     });
     expect(h.storage.data.has("nextChooser")).toBe(false);
+  });
+});
+
+describe("LobbyDO — the match RNG (MI1)", () => {
+  it("production mints a fresh ChaCha20 key for every match, never a numeric seed", () => {
+    const deps = lobbyDepsFromEnv({} as Env);
+    const [a, b] = [deps.randomSeed(), deps.randomSeed()];
+    for (const rng of [a, b]) {
+      expect(isRngState(rng)).toBe(true);
+      expect(rng).toMatchObject({ alg: "chacha20", counter: 0 });
+      expect(rng.key).toMatch(/^[0-9a-f]{64}$/);
+    }
+    expect(a.key).not.toBe(b.key);
+  });
+
+  it("starts the match on that state and keeps it on the DO: no frame or log line carries the key", async () => {
+    h.world.seed = freshMatchRng();
+    const { key } = h.world.seed;
+    const { host, guest } = await startedMatch();
+    const watcher = await h.connect("eve");
+    await h.send(watcher, hello("w"));
+    const start = await storedMatch();
+    // The game draws from the minted key; a deal and a coin advanced its counter.
+    expect(start.state.rngState).toMatchObject({ alg: "chacha20", key });
+    expect((start.state.rngState as { counter: number }).counter).toBeGreaterThan(0);
+    const [first, second] = start.state.players.p1.hand;
+    await h.send(host, { kind: "action", action: { type: "setupPlaceActive", uid: first } });
+    await h.send(host, { kind: "action", action: { type: "setupPlaceBench", uid: second } });
+    h.hibernate();
+    await h.send(host, hello("h"));
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    const sent = [host, guest, watcher].flatMap((ws) => ws.sent);
+    expect(sent.filter((frame) => frame.kind === "match").length).toBeGreaterThan(6);
+    const wire = JSON.stringify(sent);
+    expect(wire).not.toContain(key);
+    expect(wire).not.toContain("rngState");
+    expect(wire).not.toContain("chacha20");
+    expect(JSON.stringify(warn.mock.calls)).not.toContain(key);
   });
 });
 

@@ -4,7 +4,7 @@ import { settleProgram } from "./flow";
 import { type GameEvent, type GameState, createGame } from "./index";
 import { runProgram } from "./interpreter";
 import { GAME_STATE_VERSION } from "./persist";
-import { completeSetup } from "./testFixtures";
+import { completeSetup, drbgSeed } from "./testFixtures";
 import { freshAllowances, makeInPlay } from "./types";
 
 // A persisted state is read back as-is only when its version matches, so any change to its shape
@@ -68,7 +68,7 @@ function basicCard(id: string): Card {
 function freshGame(): GameState {
   const deck = Array.from({ length: 60 }, () => "basic");
   const started = createGame({
-    seed: 3,
+    seed: drbgSeed(3),
     decks: { p1: [...deck], p2: [...deck] },
     cardPool: { basic: basicCard("basic") },
   });

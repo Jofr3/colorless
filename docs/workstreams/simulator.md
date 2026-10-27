@@ -12,7 +12,11 @@ approximately, then more accurately each pass. Reused by online matches (P4).
 2. **Deterministic core.** A pure, seedable state machine:
    `GameState → Action → GameState` (+ emitted events for the UI/log). No
    randomness except a **seeded RNG** (shuffle, coin flips) so games are
-   replayable and testable.
+   replayable and testable. The RNG state is `GameState.rngState`: every new
+   game, local or online, starts from `freshRngState()`, a ChaCha20 keystream
+   under a 256-bit CSPRNG key (security audit MI1). A bare number is the old
+   mulberry32 generator. Local saves made before the switch carry it and replay
+   on it unchanged, and numeric seeds stay for tests, fixtures and `bun run bench`.
 3. **Composable, data-driven card effects.** Most cards are minor variations on a
    few archetypes, so effects are authored as **data** — parameterized primitive
    ops over shared templates, not one function per card — and every op emits a

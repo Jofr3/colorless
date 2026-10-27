@@ -2,7 +2,7 @@
 // the save bench. Not a test file itself.
 
 import type { GameAction } from "@colorless/engine";
-import { candidateActions, MIXED_DECK, mustCreate } from "@colorless/engine/testing";
+import { candidateActions, drbgSeed, MIXED_DECK, mustCreate } from "@colorless/engine/testing";
 import { LocalTableSource } from "../lua/tableSource";
 
 export interface SimulatorGameOptions {
@@ -15,11 +15,14 @@ export interface SimulatorGameOptions {
   holdAttacks?: boolean;
   onOpen?: (src: LocalTableSource) => void;
   onMove?: (src: LocalTableSource, move: GameAction, moves: number) => void;
+  /** Deal on ChaCha20 (`drbgSeed(seed)`), as every new game does, instead of the legacy
+      generator every save made before MI1's fix carries. */
+  chacha?: boolean;
 }
 
 /** A fresh game on a new table, which saves into `localStorage`. */
-export function openSimulatorGame(seed: number) {
-  const created = mustCreate(seed, { p1: MIXED_DECK, p2: MIXED_DECK });
+export function openSimulatorGame(seed: number, chacha = false) {
+  const created = mustCreate(chacha ? drbgSeed(seed) : seed, { p1: MIXED_DECK, p2: MIXED_DECK });
   return new LocalTableSource({
     state: created.state,
     events: created.events,
@@ -32,7 +35,7 @@ export function openSimulatorGame(seed: number) {
     preferring moves that keep the turn going, until the game ends or
     `maxMoves` moves were accepted. */
 export function playSimulatorGame(seed: number, opts: SimulatorGameOptions) {
-  const src = openSimulatorGame(seed);
+  const src = openSimulatorGame(seed, opts.chacha);
   opts.onOpen?.(src);
   const budget = opts.turnBudget ?? 12;
   const endOdds = opts.endOdds ?? 10;

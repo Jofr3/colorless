@@ -1,4 +1,10 @@
-import { engineVersion, redactGame, type GameState, type Seat } from "@colorless/engine";
+import {
+  engineVersion,
+  isRngState,
+  redactGame,
+  type GameState,
+  type Seat,
+} from "@colorless/engine";
 import { readPersisted, removePersisted, writePersisted } from "../lib/persistedState";
 import {
   positionOf,
@@ -120,7 +126,9 @@ function validState(state: GameState): boolean {
   if (
     !state ||
     !Number.isInteger(state.turn) ||
-    !Number.isInteger(state.rngState) ||
+    // A save from before MI1's fix carries a mulberry32 number and replays on it; a newer one
+    // carries a ChaCha20 state. Either replays only under the generator it was recorded with.
+    !isRngState(state.rngState) ||
     !state.phase ||
     !state.cardPool ||
     !state.cardIdByUid ||

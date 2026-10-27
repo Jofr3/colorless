@@ -11,7 +11,7 @@ import {
   programFor,
 } from "./index";
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
-import { flipCoin } from "./rng";
+import { flipCoin, type RngState } from "./rng";
 import {
   FIXTURE_POOL,
   PER_ENERGY_FLIP_DECK,
@@ -134,7 +134,7 @@ function activeDamage(state: GameState, seat: Seat): number | undefined {
   return state.players[seat].active?.damage;
 }
 
-function foldFlips(state: number, count: number): [faces: CoinFace[], next: number] {
+function foldFlips(state: RngState, count: number): [faces: CoinFace[], next: RngState] {
   const faces: CoinFace[] = [];
   let rng = state;
   for (let i = 0; i < count; i += 1) {

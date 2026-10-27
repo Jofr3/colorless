@@ -10,7 +10,7 @@ import {
 } from "./index";
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { MAX_UNTIL_TAILS_FLIPS, flipCoin, flipUntilTails } from "./rng";
+import { MAX_UNTIL_TAILS_FLIPS, flipCoin, flipUntilTails, type RngState } from "./rng";
 import {
   FIXTURE_POOL,
   UNTIL_TAILS_FLIP_DECK,
@@ -112,7 +112,7 @@ function activeDamage(state: GameState, seat: Seat): number | undefined {
   return state.players[seat].active?.damage;
 }
 
-function foldFlips(state: number, count: number): [faces: CoinFace[], next: number] {
+function foldFlips(state: RngState, count: number): [faces: CoinFace[], next: RngState] {
   const faces: CoinFace[] = [];
   let rng = state;
   for (let i = 0; i < count; i += 1) {
