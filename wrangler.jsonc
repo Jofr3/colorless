@@ -6,6 +6,8 @@
   // Worker's origin as its APP_ORIGIN.
   "name": "colorless",
   "compatibility_date": "2026-06-01",
+  // No per-version preview URLs: only the deployed version is reachable.
+  "preview_urls": false,
   "assets": {
     // dist/.assetsignore (copied from public/) keeps the hidden source maps out.
     "directory": "./dist",

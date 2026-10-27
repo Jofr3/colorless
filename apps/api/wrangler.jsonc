@@ -3,6 +3,9 @@
   "name": "colorless-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-01",
+  // No per-version preview URLs, so an old API version never runs against production D1.
+  // (Workers with a Durable Object get none today; this keeps it that way.)
+  "preview_urls": false,
   "observability": {
     "enabled": true
   },

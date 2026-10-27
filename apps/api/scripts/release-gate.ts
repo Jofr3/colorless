@@ -1,9 +1,11 @@
 // Read-only checks `bun run release` and the API deploy run against production before they write.
 // Each named step runs in order; the first failure exits 1.
 //
-//   bun scripts/release-gate.ts bookmark print-keys   # release, before the remote migrations
+//   bun scripts/release-gate.ts clean-tree bookmark print-keys   # release, before the remote migrations
 //   bun scripts/release-gate.ts migrations            # `deploy`, before wrangler deploy
 //
+// clean-tree  The working tree has no changes and HEAD is origin/main, so what deploys is a pushed
+//             commit (wrangler deploys from the working tree).
 // bookmark    Records the remote database's Time Travel bookmark (scripts/d1.ts recordBookmark).
 // print-keys  The local and remote catalogs agree on every card's print_key. The engine's
 //             PROGRAM_ALIAS table is generated from the LOCAL catalog (scripts/registry-aliases.ts),
@@ -11,12 +13,36 @@
 // migrations  Every file in drizzle/ is applied remotely, and nothing else is: a Worker deployed
 //             ahead of its migrations 500s the endpoints that read the new columns (D203).
 
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { API_ROOT, type D1Target, d1Query, recordBookmark } from "./d1";
 
+const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trimEnd();
+
 const STEPS: Record<string, () => void> = {
+  "clean-tree": () => {
+    const changes = git("status", "--porcelain");
+    const head = git("rev-parse", "HEAD");
+    const main = git("rev-parse", "origin/main");
+    if (changes === "" && head === main) {
+      console.log(`clean-tree: OK — deploying ${head.slice(0, 8)} (origin/main)`);
+      return;
+    }
+    throw new Error(
+      [
+        "clean-tree: FAIL — release deploys the working tree, which must be pushed main:",
+        ...(changes === ""
+          ? []
+          : ["  uncommitted changes:", ...changes.split("\n").map((line) => `    ${line}`)]),
+        ...(head === main
+          ? []
+          : [`  HEAD ${head.slice(0, 8)} is not origin/main ${main.slice(0, 8)}`]),
+        "Commit, merge into main, push, and release again.",
+      ].join("\n"),
+    );
+  },
   bookmark: () => {
     recordBookmark("release");
   },

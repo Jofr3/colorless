@@ -7,8 +7,11 @@ dist
 .claude/
 tmp/
 .wrangler/
-.dev.vars
+.dev.vars*
+!.dev.vars.example
 .env
+.env.*
+!.env.production
 
 # Session scratchpad — working files, never part of the repo (D346).
 # Every slice since D340 has had the stop-hook nagging about this directory and

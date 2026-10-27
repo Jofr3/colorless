@@ -525,6 +525,9 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 | D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt), the daily sweep (at most 20,000) |
 | KV reads | 100,000 | every KV-cached catalog request |
 | KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3) |
+| Worker requests | 100,000 | every API request, including WebSocket upgrades and the asset mirror; nothing limits traffic before the Worker on workers.dev |
+| Durable Object requests | 100,000 | lobby creation, each WebSocket upgrade and each incoming frame |
+| Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change), and every `setAlarm` (the liveness deadline moves on each commit) |
 
 The KV write quota is the tight one, and only the catalog cache spends it.
 Sign-in no longer touches KV. The lobby's per-IP limits (`POST /lobby` 10 a
@@ -554,7 +557,10 @@ bunx wrangler d1 insights colorless --time-period 1d --sort-by reads --limit 10
 **Daily usage against the limits** is in the Cloudflare dashboard: the D1
 database `colorless` → Metrics (rows read and rows written per day), and the KV
 namespace `colorless-cache` → Metrics (reads and writes per day). Compare them
-with the table above.
+with the table above. Worker requests are under Workers & Pages → `colorless-api`
+→ Metrics, and the Durable Object figures under Workers & Pages → Durable Objects
+→ `LobbyDO` → Metrics (requests and rows written per day); Account Home →
+Workers & Pages → Usage shows the account-wide totals.
 
 **Workers Logs** (`colorless-api` → Observability; `observability.enabled` in
 `apps/api/wrangler.jsonc`). Every line from `apps/api/src/http/log.ts` is JSON

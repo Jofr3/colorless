@@ -73,6 +73,23 @@ export default defineConfig(({ mode }) => {
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   return {
     plugins: [loveVersionsPlugin(), cspPlugin(buildCsp(apiOrigin))],
+    server: {
+      // The dev server's root is the repo root, so without this it serves any file in it, such as
+      // apps/api/.dev.vars (OAuth secret) and the local D1 database under .wrangler/. Setting
+      // `deny` replaces Vite's defaults, so the first four entries repeat them.
+      fs: {
+        deny: [
+          ".env",
+          ".env.*",
+          "*.{crt,pem}",
+          "**/.git/**",
+          ".dev.vars*",
+          "**/.wrangler/**",
+          "**/tmp/**",
+          "**/apps/**",
+        ],
+      },
+    },
     build: {
       // Match the TypeScript target so output isn't down-levelled further than needed.
       target: "es2022",
