@@ -2,8 +2,8 @@
 // headers are rebuilt on a hit, which is safe because every catalog response is JSON.
 // KV is best effort: a failed read is a miss, and the write runs after the response, so a KV
 // outage or a spent write quota costs the cache and never the request. Each failure is logged
-// (throttled) as `evt = "kv"`, because the account's 1,000 writes/day are shared with the login
-// rate limiter and a spent quota shows up there first.
+// (throttled) as `evt = "kv"`, because a spent quota (1,000 writes/day on the Free plan, the
+// whole account's) is otherwise invisible.
 //
 // Every miss spends one of those writes, so only shapes that recur are cached, and the key is
 // built from the validated query rather than the raw URL: a param the schema does not know, a
