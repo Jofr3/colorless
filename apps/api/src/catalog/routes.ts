@@ -15,6 +15,7 @@ import {
   cardsQuerySchema,
   type CatalogFacets,
   catalogFacetsSchema,
+  fullCardsQuerySchema,
   type Paginated,
   paginatedSchema,
   serieSchema,
@@ -40,12 +41,13 @@ import {
   mapSetBriefRow,
   mapSetRow,
 } from "./map";
-import { buildCardsWhere, cardsOrder } from "./query";
+import { buildCardsWhere, cardIdIn, cardsOrder } from "./query";
 
 export const catalogRoutes = new Hono<{ Bindings: Env }>();
 
 // Response schemas — the domain shapes each route parses itself against.
 const cardsResponseSchema = paginatedSchema(cardBriefSchema);
+const fullCardsResponseSchema = z.array(cardSchema);
 const setsResponseSchema = z.array(setBriefSchema);
 const seriesResponseSchema = z.array(serieSchema);
 
@@ -89,6 +91,24 @@ catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), a
   };
   return c.json(cardsResponseSchema.parse(payload));
 });
+
+// Full Cards for a batch of ids, in id order; unknown ids are left out. Registered before
+// /cards/:id, which would otherwise claim the path.
+catalogRoutes.get(
+  "/cards/full",
+  catalogCache,
+  validate("query", fullCardsQuerySchema),
+  async (c) => {
+    const { id } = c.req.valid("query");
+    const rows = await drizzle(c.env.DB)
+      .select()
+      .from(cards)
+      .where(cardIdIn(id))
+      .orderBy(asc(cards.id))
+      .all();
+    return c.json(fullCardsResponseSchema.parse(rows.map(mapCardRow)));
+  },
+);
 
 catalogRoutes.get("/cards/:id", catalogCache, async (c) => {
   const row = await drizzle(c.env.DB)

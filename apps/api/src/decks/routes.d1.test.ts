@@ -206,3 +206,104 @@ describe("folderId on the deck routes", () => {
     expect((await getDeck(filed.id)).folderId).toBeNull();
   });
 });
+
+/** `db`, plus the rows its batches have written so far. */
+function countingBatchWrites(db: D1Database) {
+  let written = 0;
+  const counted = new Proxy(db, {
+    get(target, property) {
+      if (property === "batch") {
+        return async (statements: D1PreparedStatement[]) => {
+          const results = await target.batch(statements);
+          for (const result of results) written += result.meta.rows_written;
+          return results;
+        };
+      }
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  return { db: counted, written: () => written };
+}
+
+describe("deck card lists", () => {
+  it("replaces the list: dropped cards go, new cards come, changed counts change", async () => {
+    const deck = await createDeck("Fire", [
+      card("sv01-004", 4),
+      card("sv01-006", 2),
+      card("sv01-230", 10),
+    ]);
+    const res = await patchDeck(deck.id, {
+      cards: [card("sv01-230", 12), card("sv01-007", 2), card("sv01-004", 4)],
+    });
+    expect(res.status).toBe(200);
+    expect((await getDeck(deck.id)).cards).toEqual([
+      card("sv01-004", 4),
+      card("sv01-007", 2),
+      card("sv01-230", 12),
+    ]);
+    expect((await patchDeck(deck.id, { cards: [] })).status).toBe(200);
+    expect((await getDeck(deck.id)).cards).toEqual([]);
+  });
+
+  it("writes one card row beyond the deck row when one count changes", async () => {
+    const entries = [
+      card("sv01-004", 4),
+      card("sv01-006", 2),
+      card("sv01-007", 2),
+      card("sv01-016", 3),
+      card("sv01-191", 4),
+      card("sv01-230", 10),
+    ];
+    const changed = [...entries.slice(0, 5), card("sv01-230", 11)];
+    const deck = await createDeck("Fire", entries);
+    const writesOf = async (body: unknown) => {
+      const counting = countingBatchWrites(d1().db);
+      const res = await app.request(
+        `/decks/${deck.id}`,
+        jsonInit("PATCH", body, ash.cookie),
+        d1().env({ DB: counting.db }),
+      );
+      expect(res.status).toBe(200);
+      return counting.written();
+    };
+    const rename = await writesOf({ name: "Renamed" });
+    expect(await writesOf({ cards: changed })).toBe(rename + 1);
+    expect(await writesOf({ cards: changed })).toBe(rename);
+    expect((await getDeck(deck.id)).cards).toEqual(changed);
+  });
+
+  it("refuses unknown cards on create and patch without writing", async () => {
+    const created = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "Bad", tint: 22, cards: [card("sv99-001", 1)] }, ash.cookie),
+      d1().env(),
+    );
+    expect(created.status).toBe(400);
+    expect(await created.json()).toEqual({ error: "unknown card id(s)", cardIds: ["sv99-001"] });
+    expect(await listDecks()).toEqual([]);
+
+    const deck = await createDeck("Fire", [card("sv01-004", 4)]);
+    const res = await patchDeck(deck.id, {
+      name: "Renamed",
+      cards: [card("sv01-004", 4), card("sv99-001", 1)],
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unknown card id(s)", cardIds: ["sv99-001"] });
+    expect(await getDeck(deck.id)).toMatchObject({ name: "Fire", cards: [card("sv01-004", 4)] });
+  });
+
+  it("answers 404 before judging the cards of another account's deck", async () => {
+    const gary = await signedInUser(d1().db, "gary@example.com");
+    const deck = await createDeck("Gary's", [card("sv01-004", 4)], gary);
+    const res = await patchDeck(deck.id, { cards: [card("sv99-001", 1)] });
+    expect(res.status).toBe(404);
+  });
+
+  it("puts each new deck first", async () => {
+    const first = await createDeck("First", []);
+    const second = await createDeck("Second", []);
+    expect(second.position).toBe(first.position - 1);
+    expect((await listDecks()).map((deck) => deck.name)).toEqual(["Second", "First"]);
+  });
+});

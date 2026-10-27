@@ -17,7 +17,7 @@ import {
   type User,
   userSchema,
 } from "@colorless/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lte } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import { ownedBy } from "../db/owned";
@@ -98,6 +98,28 @@ async function guardRateLimit(
   return c.json({ error: "too many attempts" }, 429);
 }
 
+/** Deletes the user's expired sessions. Expiry is enforced on read, so this only keeps the table
+    from growing with abandoned rows; it rides along whenever the user signs in. */
+function sweepExpiredSessions(db: Db, userId: string) {
+  return db
+    .delete(sessions)
+    .where(and(eq(sessions.userId, userId), lte(sessions.expiresAt, new Date())));
+}
+
+/** Count this attempt while `lookup` runs. An over-budget attempt answers 429 without waiting on
+    the lookup or exposing anything about it, even when it fails. */
+async function afterRateLimit<T>(
+  c: AuthContext,
+  scope: RateLimitScope,
+  email: string,
+  lookup: () => Promise<T>,
+): Promise<{ limited: Response } | { limited: null; found: T }> {
+  const pending = Promise.resolve().then(lookup);
+  pending.catch(() => {});
+  const limited = await guardRateLimit(c, scope, email);
+  return limited === null ? { limited, found: await pending } : { limited };
+}
+
 /** Mint a token + its sessions row (id = sha256(token), 30-day expiry).
     The caller inserts the row — alone or inside a batch. */
 async function newSession(userId: string) {
@@ -129,16 +151,14 @@ function isUniqueViolation(error: unknown): boolean {
 
 authRoutes.post("/register", validate("json", registerRequestSchema), async (c) => {
   const body = c.req.valid("json");
-  const limited = await guardRateLimit(c, "register", body.email);
-  if (limited) {
-    return limited;
-  }
   const db = drizzle(c.env.DB);
-  const existing = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, body.email))
-    .get();
+  const attempt = await afterRateLimit(c, "register", body.email, () =>
+    db.select({ id: users.id }).from(users).where(eq(users.email, body.email)).get(),
+  );
+  if (attempt.limited) {
+    return attempt.limited;
+  }
+  const existing = attempt.found;
   if (existing !== undefined) {
     return c.json({ error: "email already registered" }, 409);
   }
@@ -166,12 +186,14 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
 
 authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
   const body = c.req.valid("json");
-  const limited = await guardRateLimit(c, "login", body.email);
-  if (limited) {
-    return limited;
-  }
   const db = drizzle(c.env.DB);
-  const row = await db.select().from(users).where(eq(users.email, body.email)).get();
+  const attempt = await afterRateLimit(c, "login", body.email, () =>
+    db.select().from(users).where(eq(users.email, body.email)).get(),
+  );
+  if (attempt.limited) {
+    return attempt.limited;
+  }
+  const row = attempt.found;
   // Unknown email and password-less (OAuth-only) accounts still burn one
   // PBKDF2 verify against a throwaway hash — timing parity with the wrong-
   // password path, and ONE message for every failure (§3.5): no oracle for
@@ -180,16 +202,22 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
   if (row === undefined || row.passwordHash === null || !verified) {
     return c.json({ error: "invalid email or password" }, 401);
   }
+  const session = await newSession(row.id);
   // Iteration upgrade path: re-hash at today's DEFAULT_ITERATIONS while we
   // hold the plaintext.
-  if (passwordNeedsRehash(row.passwordHash)) {
-    await db
-      .update(users)
-      .set({ passwordHash: await hashPassword(body.password) })
-      .where(eq(users.id, row.id));
-  }
-  const session = await newSession(row.id);
-  await db.insert(sessions).values(session.row);
+  const rehash = passwordNeedsRehash(row.passwordHash)
+    ? [
+        db
+          .update(users)
+          .set({ passwordHash: await hashPassword(body.password) })
+          .where(eq(users.id, row.id)),
+      ]
+    : [];
+  await db.batch([
+    sweepExpiredSessions(db, row.id),
+    db.insert(sessions).values(session.row),
+    ...rehash,
+  ]);
   c.header("Set-Cookie", sessionCookie(session.token));
   return c.json(userSchema.parse(mapUserRow(row)));
 });
@@ -357,7 +385,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, result), 302);
   }
   const session = await newSession(result.id);
-  await db.insert(sessions).values(session.row);
+  await db.batch([sweepExpiredSessions(db, result.id), db.insert(sessions).values(session.row)]);
   c.header("Set-Cookie", sessionCookie(session.token), { append: true });
   return c.redirect(`${appOrigin(c.env)}${packed.redirect}`, 302);
 });

@@ -8,13 +8,12 @@ import {
   deckSummarySchema,
   patchDeckRequestSchema,
 } from "@colorless/schema";
-import { asc, eq, inArray, sql } from "drizzle-orm";
-import type { BatchItem } from "drizzle-orm/batch";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import * as z from "zod";
 import { requireUser } from "../auth/requireUser";
-import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
+import { chunk, D1_MAX_BOUND_PARAMS } from "../db/batch";
 import { ownedBy } from "../db/owned";
 import { cards, deckCards, decks } from "../db/schema";
 import type { Env } from "../env";
@@ -31,25 +30,23 @@ type Db = DrizzleD1Database;
 // Response schemas — the domain shapes each route parses itself against.
 const deckSummariesResponseSchema = z.array(deckSummarySchema);
 
-/** 400 naming the card ids absent from the catalog, or null when all exist.
-    One logical IN query — chunked to D1's bound-parameter cap and run in a
-    single db.batch round trip — instead of relying on FK error text. */
-async function guardUnknownCards(
-  c: Context,
-  db: Db,
-  entries: readonly DeckCard[],
-): Promise<Response | null> {
-  if (entries.length === 0) {
-    return null;
-  }
-  const ids = entries.map((entry) => entry.cardId);
-  const queries = chunk(ids, D1_MAX_BOUND_PARAMS).map((group) =>
+/** One IN query per D1 bound-parameter chunk naming which of `ids` the catalog knows; the caller
+    runs them inside its own db.batch and hands the rows to `unknownCardsResponse`. */
+function knownCardQueries(db: Db, ids: readonly string[]) {
+  return chunk(ids, D1_MAX_BOUND_PARAMS).map((group) =>
     db.select({ id: cards.id }).from(cards).where(inArray(cards.id, group)),
   );
-  const results = await db.batch(nonEmpty(queries));
+}
+
+/** 400 naming the requested card ids absent from the catalog, or null when all exist. */
+function unknownCardsResponse(
+  c: Context,
+  ids: string[],
+  known: readonly { id: string }[][],
+): Response | null {
   const unknown = unknownIds(
     ids,
-    results.flat().map((row) => row.id),
+    known.flat().map((row) => row.id),
   );
   return unknown.length === 0
     ? null
@@ -59,13 +56,11 @@ async function guardUnknownCards(
 /** The `position` a created deck takes: one below the user's current minimum, so new decks land
     first in the position-ordered list. Two racing creates can tie, which is harmless: the id
     tiebreak keeps the order stable. */
-async function nextPrependPosition(db: Db, userId: string): Promise<number> {
-  const row = await db
+function minPositionQuery(db: Db, userId: string) {
+  return db
     .select({ min: sql<number | null>`min(${decks.position})` })
     .from(decks)
-    .where(eq(decks.userId, userId))
-    .get();
-  return (row?.min ?? 1) - 1;
+    .where(eq(decks.userId, userId));
 }
 
 /** Chunked `deck_cards` inserts for one deck (3 bound params per row). */
@@ -74,6 +69,29 @@ function deckCardInserts(db: Db, deckId: string, entries: readonly DeckCard[]) {
   return chunk(entries, rowsPerInsert).map((group) =>
     db.insert(deckCards).values(group.map(({ cardId, count }) => ({ deckId, cardId, count }))),
   );
+}
+
+/** Replace a deck's card list by writing only what differs: rows whose card left the list are
+    deleted, and the upsert skips rows whose count is unchanged. */
+function deckCardReplacement(db: Db, deckId: string, entries: readonly DeckCard[]) {
+  const keptIds = JSON.stringify(entries.map((entry) => entry.cardId));
+  return [
+    db
+      .delete(deckCards)
+      .where(
+        and(
+          eq(deckCards.deckId, deckId),
+          sql`${deckCards.cardId} not in (select "value" from json_each(${keptIds}))`,
+        ),
+      ),
+    ...deckCardInserts(db, deckId, entries).map((insert) =>
+      insert.onConflictDoUpdate({
+        target: [deckCards.deckId, deckCards.cardId],
+        set: { count: sql`excluded.count` },
+        setWhere: sql`${deckCards.count} is not excluded.count`,
+      }),
+    ),
+  ];
 }
 
 /** The (already user-scoped) card list of one deck, in stable id order. */
@@ -90,32 +108,32 @@ function selectDeckCards(db: Db, deckId: string) {
 deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   const db = drizzle(c.env.DB);
   const userId = c.get("user").id;
-  const rows = await db
-    .select({ deck: decks, cardCount: sql<number>`coalesce(sum(${deckCards.count}), 0)` })
-    .from(decks)
-    .leftJoin(deckCards, eq(deckCards.deckId, decks.id))
-    .where(eq(decks.userId, userId))
-    .groupBy(decks.id)
-    .orderBy(asc(decks.position), asc(decks.id))
-    .all();
-  // Cover candidates for the whole library in ONE query (P5-3), rather than the
-  // window function this would need to fold into the aggregate above: the RULE
-  // then lives in a pure `pickCoverCardId` that can be argued with and tested,
-  // and the extra rows are one per distinct card per deck.
-  const candidateRows = await db
-    .select({
-      deckId: deckCards.deckId,
-      cardId: deckCards.cardId,
-      count: deckCards.count,
-      category: cards.category,
-      hp: cards.hp,
-      imageUrl: cards.imageUrl,
-    })
-    .from(deckCards)
-    .innerJoin(decks, eq(decks.id, deckCards.deckId))
-    .innerJoin(cards, eq(cards.id, deckCards.cardId))
-    .where(eq(decks.userId, userId))
-    .all();
+  // Cover candidates for the whole library come from a second query in the same batch, rather
+  // than the window function this would need to fold into the aggregate: the rule then lives in a
+  // pure `pickCoverCardId` that can be argued with and tested, and the extra rows are one per
+  // distinct card per deck.
+  const [rows, candidateRows] = await db.batch([
+    db
+      .select({ deck: decks, cardCount: sql<number>`coalesce(sum(${deckCards.count}), 0)` })
+      .from(decks)
+      .leftJoin(deckCards, eq(deckCards.deckId, decks.id))
+      .where(eq(decks.userId, userId))
+      .groupBy(decks.id)
+      .orderBy(asc(decks.position), asc(decks.id)),
+    db
+      .select({
+        deckId: deckCards.deckId,
+        cardId: deckCards.cardId,
+        count: deckCards.count,
+        category: cards.category,
+        hp: cards.hp,
+        imageUrl: cards.imageUrl,
+      })
+      .from(deckCards)
+      .innerJoin(decks, eq(decks.id, deckCards.deckId))
+      .innerJoin(cards, eq(cards.id, deckCards.cardId))
+      .where(eq(decks.userId, userId)),
+  ]);
   const byDeck = new Map<string, CoverCandidate[]>();
   for (const row of candidateRows) {
     const list = byDeck.get(row.deckId) ?? [];
@@ -165,7 +183,12 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
-  const badCards = await guardUnknownCards(c, db, body.cards);
+  const ids = body.cards.map((entry) => entry.cardId);
+  const [positionRows, ...known] = await db.batch([
+    minPositionQuery(db, user.id),
+    ...knownCardQueries(db, ids),
+  ]);
+  const badCards = unknownCardsResponse(c, ids, known);
   if (badCards !== null) {
     return badCards;
   }
@@ -179,7 +202,7 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
     // A brand-new deck wears the derived default; picking a cover is an edit
     // you make later, in the editor, once there is something to pick.
     coverCardId: null,
-    position: await nextPrependPosition(db, user.id),
+    position: (positionRows[0]?.min ?? 1) - 1,
     updated: new Date(),
   };
   await db.batch([db.insert(decks).values(row), ...deckCardInserts(db, row.id, body.cards)]);
@@ -191,28 +214,35 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
   const user = c.get("user");
   const deckId = c.req.param("id");
   const db = drizzle(c.env.DB);
-  const existing = await db
+  const owned = db
     .select()
     .from(decks)
-    .where(ownedBy(decks, deckId, user.id))
-    .get();
+    .where(ownedBy(decks, deckId, user.id));
+  // A cover pin must name a card the deck still runs, and `cards` can be replaced by this same
+  // request, so the list it has to live in is the one the patch leaves behind. The stored list is
+  // read only for a pin without a new list, so the ordinary rename or autosave reads no cards.
+  let existing: DeckRow | undefined;
+  let badCards: Response | null = null;
+  let cardIdsAfter: Set<string> | null = null;
+  if (body.cards !== undefined) {
+    const ids = body.cards.map((entry) => entry.cardId);
+    const [deckRows, ...known] = await db.batch([owned, ...knownCardQueries(db, ids)]);
+    existing = deckRows[0];
+    badCards = unknownCardsResponse(c, ids, known);
+    cardIdsAfter = new Set(ids);
+  } else if ((body.chosenCoverCardId ?? null) !== null) {
+    const [deckRows, storedCards] = await db.batch([owned, selectDeckCards(db, deckId)]);
+    existing = deckRows[0];
+    cardIdsAfter = new Set(storedCards.map((entry) => entry.cardId));
+  } else {
+    existing = await owned.get();
+  }
   if (existing === undefined) {
     return c.json({ error: "deck not found" }, 404);
   }
-  const badCards = await guardUnknownCards(c, db, body.cards ?? []);
   if (badCards !== null) {
     return badCards;
   }
-  // A cover pin must name a card the deck still runs (P5-6) — and `cards` can
-  // be replaced by this same request, so the list it has to live in is the one
-  // the patch LEAVES BEHIND. Read only when a pin is actually in play, so the
-  // ordinary rename/move patch costs nothing.
-  const pinInPlay =
-    (body.chosenCoverCardId ?? null) !== null ||
-    (existing.coverCardId !== null && body.cards !== undefined);
-  const cardIdsAfter = pinInPlay
-    ? new Set((body.cards ?? (await selectDeckCards(db, deckId).all())).map((e) => e.cardId))
-    : null;
   let coverCardId = existing.coverCardId;
   if (body.chosenCoverCardId !== undefined) {
     // Explicit: a card id pins it, null goes back to the derived default.
@@ -235,27 +265,23 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
     coverCardId,
     updated: new Date(),
   };
-  const statements: BatchItem<"sqlite">[] = [
-    db
-      .update(decks)
-      .set({
-        name: next.name,
-        tint: next.tint,
-        format: next.format,
-        folderId: next.folderId,
-        coverCardId: next.coverCardId,
-        updated: next.updated,
-      })
-      .where(eq(decks.id, deckId)),
-  ];
-  if (body.cards !== undefined) {
-    // Wholesale replacement: delete + reinsert atomically in the same batch.
-    statements.push(db.delete(deckCards).where(eq(deckCards.deckId, deckId)));
-    statements.push(...deckCardInserts(db, deckId, body.cards));
+  const update = db
+    .update(decks)
+    .set({
+      name: next.name,
+      tint: next.tint,
+      format: next.format,
+      folderId: next.folderId,
+      coverCardId: next.coverCardId,
+      updated: next.updated,
+    })
+    .where(eq(decks.id, deckId));
+  if (body.cards === undefined) {
+    const [, cardsAfter] = await db.batch([update, selectDeckCards(db, deckId)]);
+    return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
   }
-  await db.batch(nonEmpty(statements));
-  const cardsAfter = body.cards ?? (await selectDeckCards(db, deckId).all());
-  return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
+  await db.batch([update, ...deckCardReplacement(db, deckId, body.cards)]);
+  return c.json(deckSchema.parse(mapDeckRow(next, body.cards)));
 });
 
 deckRoutes.delete("/:id", requireUser, async (c) => {

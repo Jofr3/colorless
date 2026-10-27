@@ -1,7 +1,7 @@
-import type { Card } from "@colorless/schema";
+import { type Card, MAX_ID_VALUES } from "@colorless/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
-import { json, stubFetch } from "../test/fetchStub";
+import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { clearCardPoolCache, fetchCardPool } from "./cardPool";
 
 /** A full wire-shaped Card (every column, null off-category) keyed by id. */
@@ -38,6 +38,8 @@ afterEach(() => {
   clearCardPoolCache();
 });
 
+const ids = (url: URL) => url.searchParams.getAll("id");
+
 describe("fetchCardPool", () => {
   it("resolves empty input without touching the network", async () => {
     const { impl } = stubFetch({});
@@ -45,106 +47,103 @@ describe("fetchCardPool", () => {
     expect(impl).not.toHaveBeenCalled();
   });
 
-  it("dedupes ids and keys the pool by card id", async () => {
+  it("asks once for the deduped, sorted ids and keys the pool by card id", async () => {
+    const asked: string[][] = [];
     const { impl } = stubFetch({
-      "GET /cards/a": () => json(card("a")),
-      "GET /cards/b": () => json(card("b")),
+      "GET /cards/full": (url) => {
+        asked.push(ids(url));
+        return fullCardsFrom({ a: card("a"), b: card("b") })(url);
+      },
     });
-    const { pool, missing } = await fetchCardPool(["a", "b", "a", "b", "a"]);
+    const { pool, missing } = await fetchCardPool(["b", "a", "b", "a", "a"]);
     expect(pool).toEqual({ a: card("a"), b: card("b") });
     expect(missing).toEqual([]);
-    expect(impl).toHaveBeenCalledTimes(2);
+    expect(impl).toHaveBeenCalledTimes(1);
+    expect(asked).toEqual([["a", "b"]]);
   });
 
-  it("partitions 404s into missing, in input order", async () => {
-    stubFetch({
-      "GET /cards/gone-1": () => json({ error: "card not found" }, 404),
-      "GET /cards/a": () => json(card("a")),
-      "GET /cards/gone-2": () => json({ error: "card not found" }, 404),
-      "GET /cards/b": () => json(card("b")),
-    });
+  it("files ids the catalog left out under missing, in input order", async () => {
+    stubFetch({ "GET /cards/full": fullCardsFrom({ a: card("a"), b: card("b") }) });
     const { pool, missing } = await fetchCardPool(["gone-1", "a", "gone-2", "b"]);
     expect(missing).toEqual(["gone-1", "gone-2"]);
     expect(Object.keys(pool).sort()).toEqual(["a", "b"]);
   });
 
-  it("rejects on a non-404 http failure instead of filing it under missing", async () => {
-    stubFetch({
-      "GET /cards/a": () => json(card("a")),
-      "GET /cards/boom": () => json({ error: "internal" }, 500),
-      "GET /cards/b": () => json(card("b")),
-    });
+  it("rejects on an http failure instead of filing it under missing", async () => {
+    stubFetch({ "GET /cards/full": () => json({ error: "internal" }, 500) });
     const error = await fetchCardPool(["a", "boom", "b"]).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).status).toBe(500);
   });
 
   it("rejects on a network failure", async () => {
-    stubFetch({
-      "GET /cards/a": () => Promise.reject(new TypeError("fetch failed")),
-    });
+    stubFetch({ "GET /cards/full": () => Promise.reject(new TypeError("fetch failed")) });
     await expect(fetchCardPool(["a"])).rejects.toThrow("fetch failed");
   });
 
-  it("serves cached ids without new fetches on a second call", async () => {
+  it("asks only for ids it has not seen, and serves the rest from the cache", async () => {
+    const asked: string[][] = [];
     const { impl } = stubFetch({
-      "GET /cards/a": () => json(card("a")),
-      "GET /cards/b": () => json(card("b")),
+      "GET /cards/full": (url) => {
+        asked.push(ids(url));
+        return fullCardsFrom({ a: card("a"), b: card("b"), c: card("c") })(url);
+      },
     });
     await fetchCardPool(["a", "b"]);
-    expect(impl).toHaveBeenCalledTimes(2);
-    // "Play again" with the same decks: zero new requests, same partition.
     const { pool, missing } = await fetchCardPool(["a", "b"]);
-    expect(impl).toHaveBeenCalledTimes(2);
+    expect(impl).toHaveBeenCalledTimes(1);
     expect(pool).toEqual({ a: card("a"), b: card("b") });
     expect(missing).toEqual([]);
+    await fetchCardPool(["c", "b"]);
+    expect(asked).toEqual([["a", "b"], ["c"]]);
   });
 
-  it("keeps a 404 cached as missing — absence is a stable catalog fact", async () => {
-    const { impl } = stubFetch({
-      "GET /cards/gone": () => json({ error: "card not found" }, 404),
-    });
+  it("keeps an absent id cached as missing — absence is a stable catalog fact", async () => {
+    const { impl } = stubFetch({ "GET /cards/full": fullCardsFrom({}) });
     await expect(fetchCardPool(["gone"])).resolves.toEqual({ pool: {}, missing: ["gone"] });
     await expect(fetchCardPool(["gone"])).resolves.toEqual({ pool: {}, missing: ["gone"] });
     expect(impl).toHaveBeenCalledTimes(1);
   });
 
-  it("retries a transiently-failed id (rejected promises evict) while successes stay cached", async () => {
-    let flakyCalls = 0;
-    const { impl } = stubFetch({
-      "GET /cards/a": () => json(card("a")),
-      "GET /cards/flaky": () => {
-        flakyCalls += 1;
-        return flakyCalls === 1 ? json({ error: "internal" }, 500) : json(card("flaky"));
+  it("retries the ids of a failed request while successes stay cached", async () => {
+    let calls = 0;
+    const asked: string[][] = [];
+    stubFetch({
+      "GET /cards/full": (url) => {
+        calls += 1;
+        asked.push(ids(url));
+        return calls === 2
+          ? json({ error: "internal" }, 500)
+          : fullCardsFrom({ a: card("a"), flaky: card("flaky") })(url);
       },
     });
+    await fetchCardPool(["a"]);
     await expect(fetchCardPool(["a", "flaky"])).rejects.toBeInstanceOf(ApiError);
-    // The 5xx did not poison the id: the next call refetches ONLY flaky.
     const { pool, missing } = await fetchCardPool(["a", "flaky"]);
     expect(pool).toEqual({ a: card("a"), flaky: card("flaky") });
     expect(missing).toEqual([]);
-    expect(flakyCalls).toBe(2);
-    expect(impl).toHaveBeenCalledTimes(3); // a once (cached), flaky twice
+    expect(asked).toEqual([["a"], ["flaky"], ["flaky"]]);
   });
 
-  it("keeps at most 8 requests in flight", async () => {
-    const ids = Array.from({ length: 20 }, (_, i) => `c${i}`);
-    let inFlight = 0;
-    let peak = 0;
-    const routes: Record<string, () => Promise<Response>> = {};
-    for (const id of ids) {
-      routes[`GET /cards/${id}`] = async () => {
-        inFlight += 1;
-        peak = Math.max(peak, inFlight);
-        await Promise.resolve(); // yield so every ready worker starts its fetch first
-        inFlight -= 1;
-        return json(card(id));
-      };
-    }
-    stubFetch(routes);
-    const { pool, missing } = await fetchCardPool(ids);
-    expect(Object.keys(pool)).toHaveLength(20);
+  it("shares a request still in flight with a concurrent call", async () => {
+    const { impl } = stubFetch({ "GET /cards/full": fullCardsFrom({ a: card("a") }) });
+    const [first, second] = await Promise.all([fetchCardPool(["a"]), fetchCardPool(["a"])]);
+    expect(first).toEqual(second);
+    expect(impl).toHaveBeenCalledTimes(1);
+  });
+
+  it("splits more than MAX_ID_VALUES ids into requests of at most that many", async () => {
+    const many = Array.from({ length: MAX_ID_VALUES * 2 + 5 }, (_, i) => `c${i}`);
+    const sizes: number[] = [];
+    stubFetch({
+      "GET /cards/full": (url) => {
+        sizes.push(ids(url).length);
+        return fullCardsFrom(Object.fromEntries(many.map((id) => [id, card(id)])))(url);
+      },
+    });
+    const { pool, missing } = await fetchCardPool(many);
+    expect(Object.keys(pool)).toHaveLength(many.length);
     expect(missing).toEqual([]);
-    expect(peak).toBe(8);
+    expect(sizes).toEqual([MAX_ID_VALUES, MAX_ID_VALUES, 5]);
   });
 });

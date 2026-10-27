@@ -184,6 +184,39 @@ describe("POST /auth/login", () => {
     expect(parsePasswordHash(row?.passwordHash ?? "")?.iterations).toBe(DEFAULT_ITERATIONS);
     expect((await login("oak@example.com", "pallet-town")).status).toBe(200);
   });
+
+  it("clears the account's expired sessions and keeps its live ones and everyone else's", async () => {
+    const misty = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const brock = sessionCookieOf(await register("brock@example.com", "onix-789"));
+    const { db } = d1();
+    const userIdOf = async (email: string) =>
+      (await db.prepare("SELECT id FROM users WHERE email = ?").bind(email).first<{ id: string }>())
+        ?.id;
+    const expired = Date.now() - 1000;
+    await db.batch(
+      [
+        ["misty-old-1", await userIdOf("misty@example.com")],
+        ["misty-old-2", await userIdOf("misty@example.com")],
+        ["brock-old", await userIdOf("brock@example.com")],
+      ].map(([id, userId]) =>
+        db
+          .prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")
+          .bind(id, userId, expired),
+      ),
+    );
+    const res = await login("misty@example.com", "starmie-456");
+    expect(res.status).toBe(200);
+    const { results } = await db
+      .prepare("SELECT id FROM sessions ORDER BY id")
+      .all<{ id: string }>();
+    const ids = results.map((row) => row.id);
+    expect(ids).toContain("brock-old");
+    expect(ids.filter((id) => id.startsWith("misty-old"))).toEqual([]);
+    expect(ids).toHaveLength(4);
+    for (const cookie of [misty, brock, sessionCookieOf(res)]) {
+      expect((await me(cookie)).status).toBe(200);
+    }
+  });
 });
 
 describe("GET /auth/oauth/google/callback find-or-create", () => {

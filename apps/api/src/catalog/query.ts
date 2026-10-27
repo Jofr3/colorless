@@ -30,19 +30,21 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
   return sql`${column} like ${pattern} escape '\\'`;
 }
 
+/** `cards.id` is one of `ids`, bound as one JSON array to stay under D1's 100-parameter cap. */
+export function cardIdIn(ids: readonly string[]): SQL {
+  return sql`${cards.id} in (select "value" from json_each(${JSON.stringify(ids)}))`;
+}
+
 /**
  * The Drizzle `where` for a validated /cards query; undefined means unfiltered.
  * `%` and `_` in `name` are escaped. `type` matches the quoted value inside `types_json`, which
  * works because no type name is a substring of another. `text` matching over the JSON columns can
- * also hit JSON keys. `id` binds the whole list as one JSON array to stay under D1's 100-parameter
- * cap. Sentinel normalisation does not apply here: filters match stored values.
+ * also hit JSON keys. Sentinel normalisation does not apply here: filters match stored values.
  */
 export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   const conditions: SQL[] = [];
   if (query.id !== undefined) {
-    conditions.push(
-      sql`${cards.id} in (select "value" from json_each(${JSON.stringify(query.id)}))`,
-    );
+    conditions.push(cardIdIn(query.id));
   }
   if (query.name !== undefined) {
     conditions.push(likeEscaped(cards.name, `%${escapeLike(query.name)}%`));

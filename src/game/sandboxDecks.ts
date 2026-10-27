@@ -24,14 +24,35 @@ const legalIn = (deck: SavedDeck, pool: Record<string, Card>, format: string | n
 
 type Verdict = { deck: SavedDeck; playable: boolean; legal: boolean; pool: Record<string, Card> };
 
-/** Fetch the complete candidates' contents and their card pool with bounded
- * requests, then judge each. Network failures remain retryable errors, rather
+/** Saved decks fetched this session. An entry serves a summary whose `updated` matches it, since
+    every write to a deck moves its `updated`. */
+const savedDecks = new Map<string, SavedDeck>();
+
+/** TEST-ONLY: the module-level cache outlives a test's fetch stub, so suites reset it between
+    cases. */
+export function clearSavedDeckCache(): void {
+  savedDecks.clear();
+}
+
+/** The saved deck behind `summary`, from this session's cache while it is current. */
+async function savedDeck(summary: Deck): Promise<SavedDeck> {
+  const cached = savedDecks.get(summary.id);
+  if (cached !== undefined && cached.updated === summary.updated) return cached;
+  const deck = await getDeck(summary.id);
+  savedDecks.set(deck.id, deck);
+  return deck;
+}
+
+/** Fetch the complete candidates' contents (unless cached and current) and their card pool with
+ * bounded requests, then judge each. Network failures remain retryable errors, rather
  * than silently classifying those decks as invalid; a deck deleted since the
  * summary was fetched (404) is simply absent from the result. */
 async function judgeSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
 ): Promise<Map<string, Verdict>> {
+  const listed = new Set(summaries.map((deck) => deck.id));
+  for (const id of savedDecks.keys()) if (!listed.has(id)) savedDecks.delete(id);
   const candidates = summaries.filter((deck) => deck.cardCount === DECK_SIZE);
   const queue = candidates.values();
   const saved = new Map<string, SavedDeck>();
@@ -41,7 +62,7 @@ async function judgeSandboxDecks(
     for (const deck of queue) {
       if (failed || !current()) return;
       try {
-        saved.set(deck.id, await getDeck(deck.id));
+        saved.set(deck.id, await savedDeck(deck));
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) continue;
         failed = true;

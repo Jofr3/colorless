@@ -4,5 +4,5 @@ import type { DeckSummary } from "@colorless/schema";
     pickers read. The library array stays sorted by `position`. */
 export type Deck = Pick<
   DeckSummary,
-  "id" | "name" | "folderId" | "cardCount" | "tint" | "coverCardId" | "position"
+  "id" | "name" | "folderId" | "cardCount" | "tint" | "coverCardId" | "position" | "updated"
 >;

@@ -1,0 +1,1 @@
+CREATE INDEX `users_favourite_deck_id_idx` ON `users` (`favourite_deck_id`);

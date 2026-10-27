@@ -71,6 +71,13 @@
       "when": 1793046379717,
       "tag": "0009_gigantic_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1793060243732,
+      "tag": "0010_users_favourite_deck_idx",
+      "breakpoints": true
     }
   ]
 }
