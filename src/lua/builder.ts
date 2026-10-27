@@ -56,7 +56,7 @@ const LOAD_FAILED = {
   search: "Card search failed. Try again.",
 } as const;
 const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
-const DECK_CONFLICT = "This deck changed somewhere else; reloaded the latest version.";
+const DECK_CONFLICT = "Deck changed elsewhere; reloaded the latest.";
 
 /** For a save refused as a version conflict, the deck as the server now holds it, or null when the
     409 did not carry it; undefined for any other failure. */

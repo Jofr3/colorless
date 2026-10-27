@@ -281,8 +281,8 @@ describe("Lua deck builder", () => {
     expect(back).not.toHaveBeenCalled();
     expect([...b.entries]).toEqual([["b", 2]]);
     expect(b.name).toBe("Theirs");
-    expect(b.message).toBe("This deck changed somewhere else; reloaded the latest version.");
-    expect(String(publish.mock.lastCall?.[0])).toContain("reloaded%20the%20latest%20version");
+    expect(b.message).toBe("Deck changed elsewhere; reloaded the latest.");
+    expect(String(publish.mock.lastCall?.[0])).toContain("reloaded%20the%20latest.");
     expect(b.saveStatus).toBe("");
     // The copy in hand was reloaded without asking again, and the next save is made from it.
     expect(api.getDeck).toHaveBeenCalledTimes(1);
@@ -301,7 +301,7 @@ describe("Lua deck builder", () => {
     await tick();
     expect(api.getDeck).toHaveBeenCalledTimes(2);
     expect([...b.entries]).toEqual([["b", 1]]);
-    expect(b.message).toBe("This deck changed somewhere else; reloaded the latest version.");
+    expect(b.message).toBe("Deck changed elsewhere; reloaded the latest.");
   });
   it("clears private state and prevents queued writes when the session changes", async () => {
     const { b } = await setup();
