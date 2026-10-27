@@ -407,6 +407,21 @@ data loss rather than a validation failure.
   spectators' shared one) is built once per broadcast. The match log keeps at
   most 2000 rows: past that it is cut to the newest 1500 behind a system row
   "Earlier log entries were trimmed." and sent whole (security MIX2).
+- **Session re-check (security Phase 5, MI4, user decision 13):** a socket
+  keeps the account its cookie resolved to at the upgrade for as long as it
+  stays open. A `rematch` re-reads the session of every socket holding a seat
+  (`lobby/sessionCheck.ts`, one primary-key read, none for anonymous seats),
+  and refuses the rematch if one ended (a logout, a revoked session, a deleted
+  account, whose sessions cascade): the asker gets a `reject-action` saying who
+  is signed out, and the sockets on the ended session are closed with 1008.
+  Their reconnect, with no live cookie, is refused the account-bound seat and
+  watches. A failed read lets the rematch through, since the handoff's deck
+  read re-checks each session in the same query. Nothing else re-reads a
+  session: a match already running plays out.
+- **Names:** a seat's name comes only from its hello, the account's name for a
+  signed-in socket. The `set-name` intent is gone from the wire (security
+  AU8); a frame carrying it fails validation and is dropped, after spending
+  from the socket's budget like any frame.
 - **Anonymity:** lobbies stay account-less this phase, matching the client
   model — players are lobby-scoped session ids minted by the browser
   (`net/session.ts`), no auth cookie or user row involved.
@@ -670,12 +685,35 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
 | `evt = "auth"` | Login, register and OAuth failures, account deletions (`apps/api/src/auth/`); `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it), `limiter_error` from the D1 limiter and `binding_error` from the binding. |
 | `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
-| `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
+| `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`, kinds below), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
 | `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). `catalog_reads`: each isolate's tally of uncached `/cards` queries, at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
 | `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`. |
 | `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
+
+Every `evt = "lobby"` line carries the lobby's `code` as `lobby`. None carries
+an account id, a session id, an email, a seat secret, a deck id or a name:
+`signedIn` and `seated` say only whether there was one. The refusals and
+closes a client can repeat are throttled (marked *t*); the throttle is per
+`kind`, so one cause can hide another's line for 10 minutes, counted in
+`suppressed`. The security audit trail (LB8) is the first six:
+
+| `kind` | Fields | When |
+| --- | --- | --- |
+| `hello_refused` *t* | `cause`, `signedIn`, `spectating` | A hello claimed no seat. `cause`: `credential` (the `from` is no seat secret, as from a client older than LB6), `full` (both seats are held by others), `bound` (the seat is bound to an account this socket is not signed in as). A `full` that only makes the socket a spectator of a running match is how watching works, and is not logged. |
+| `seat_evicted` | `sockets` | An account bound a seat, closing (1008) the sockets on it that were not the account's (LBX1). |
+| `socket_closed` *t* | `cause`, `code`, `frames`, `chars`, `seated`, `ageMs` | A socket closed for its frames (LB1): `frame_rate` (1008, its budget ran out) or `frame_size` (1009, a frame over 16K characters). `frames` counts the frames it sent since the instance woke, the closing one included; `chars` is the closing frame's size; `ageMs` the time since its upgrade. One line per socket, never one per frame. |
+| `overflow_closed` *t* | `cause`, `code`, `sockets` | Sockets past the cap closed with 1013 (LB2): `turned_away` (one sent a frame and was answered full) or `no_hello` (a sweep let go `sockets` that never said hello). |
+| `ws_refused` *t* | `cause`, `error` | An upgrade refused: `lobby_full` (503, the hard socket cap) or `session_lookup` (503, D1 failed resolving the cookie). |
+| `rematch_refused` | `cause`, `sockets`, `requester` | A rematch refused because a seat's session ended (`session_ended`, MI4): the `sockets` holding it were closed (1008), `requester` says whether the asker's own was one. |
+| `rematch_unchecked` *t* | `cause`, `error` | The rematch's session read failed (`session_lookup`) and the rematch went ahead; the handoff's deck read re-checks each session. |
+| `lobby_wiped` | `cause`, `sockets`, `ageMs`, `inGame` | The lobby was deleted: `empty` (its expiry), `inactive` (an hour without play; `sockets` were closed with 4000) or `legacy` (stored before the LB6 cutover). |
+| `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused`; or the lobby kept changing under the handoff. |
+| `forfeit` | `seat`, `cause` | A seat conceded by leaving (`left`) or by its forfeit clock (`abandoned`). |
+| `action_threw` *t* | `type`, `error` | The engine threw on an action; it was refused like any move (MI3). |
+| `match_migrated`, `match_retired` | `from`, `to` / `cause` | A stored match was migrated to this build's version, or retired as unreadable. |
+| `alarm_failed` | `error` | An alarm pass threw; the alarm is re-armed. |
 
 ---
 

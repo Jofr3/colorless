@@ -110,6 +110,7 @@ import {
   rematchChooser,
 } from "./match";
 import { MatchStore } from "./matchStore";
+import { liveSessionIds } from "./sessionCheck";
 import { cryptoShuffle } from "./shuffle";
 import {
   applyIntent,
@@ -181,6 +182,12 @@ const HANDOFF_ATTEMPTS = 3;
 /** What both players are told when the handoff could not reach D1. */
 const DECK_LOAD_FAILED_REASON = "Couldn't load the decks. Ready up to try again.";
 
+/** What a rematch's requester is told when their own session has ended (MI4). */
+const REMATCH_SIGNED_OUT_REASON = "You're signed out. Sign in again to play another game.";
+
+/** What a rematch's requester is told when their opponent's session has ended (MI4). */
+const REMATCH_OPPONENT_SIGNED_OUT_REASON = "Your opponent is signed out, so there's no rematch.";
+
 /** What both players are told when a match is retired because this deploy can't
     read its persisted record (a server update landed mid-match). Phrased as the
     recoverable, no-fault event it is — the lobby is already back at `selecting`
@@ -204,6 +211,8 @@ export interface LobbyDeps {
   loadDeck(deckId: string | null, owner: DeckOwner | null): Promise<LoadDeckResult>;
   /** The catalog cards for `ids`, keyed by id; missing ids are absent. */
   loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
+  /** The ids of the `owners`' sessions that still live for their account (`liveSessionIds`). */
+  liveSessions(owners: readonly DeckOwner[]): Promise<Set<string>>;
 }
 
 /** The production wiring: the system clock, a CSPRNG-keyed match RNG and shuffle, and the
@@ -217,6 +226,7 @@ export function lobbyDepsFromEnv(env: Env): LobbyDeps {
     resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
     loadDeck: (deckId, owner) => loadPlayerDeck(db(), deckId, owner),
     loadPool: (ids) => loadCardPool(db(), ids),
+    liveSessions: (owners) => liveSessionIds(db(), owners),
   };
 }
 
@@ -239,6 +249,9 @@ export class LobbyDO {
   /** Each socket's frame budget (LB1). In memory only: a socket sending enough to matter keeps the
       instance awake, and a hibernation that resets it costs nothing. */
   private readonly frameBudgets = new WeakMap<WebSocket, FrameBudget>();
+  /** How many frames each socket has sent since this instance woke, for the abuse close's log line
+      (LB8). In memory only, like the budget. */
+  private readonly frameCounts = new WeakMap<WebSocket, number>();
   /** Sockets this instance closed, whose frames still in flight are dropped unread. */
   private readonly closing = new WeakSet<WebSocket>();
 
@@ -366,19 +379,23 @@ export class LobbyDO {
     // `from` that is no secret at all comes from a client older than the split, which is told the
     // lobby is full: it cannot hold a seat here, and a reload brings the current client.
     if (!isSeatSecret(frame.from)) {
-      await this.log("hello_refused", { cause: "credential" }, true);
+      await this.log(
+        "hello_refused",
+        { cause: "credential", signedIn: attachedUserId(ws) !== null, spectating: false },
+        true,
+      );
       this.send(ws, { kind: "reject", to: frame.from, reason: "full" });
       return;
     }
     const seatId = publicSeatId(frame.from);
     const decision = helloDecision(snapshot, seatId);
-    if (decision === "reject-full") return await this.refuseSeat(ws, seatId);
+    if (decision === "reject-full") return await this.refuseSeat(ws, seatId, "full");
     // Seat authentication (3a-sec): once a seat is claimed by an account, only that account may
     // re-adopt it, even with the seat's secret. An unbound (anonymous) seat is unaffected.
     const seatUsers = await this.seatUsers();
     const boundUserId = seatUsers[seatId] ?? null;
     const userId = attachedUserId(ws);
-    if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, seatId);
+    if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, seatId, "bound");
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
     // announced name. Both are cleaned as the wire cleans names, as every stored name is: an
     // opponent's client prints it.
@@ -575,12 +592,13 @@ export class LobbyDO {
     // the client only offers the control on a finished board, so reaching this
     // means a crafted frame, and it changes nothing.
     if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
-    // The read may have awaited D1 (a migration): the rematch starts from the lobby as it is now,
-    // not as it was before, or it would undo whatever happened meanwhile.
+    if (!(await this.seatSessionsLive(ws, snapshot))) return;
+    // The reads may have awaited D1 (a migration, the session check): the rematch starts from the
+    // lobby as it is now, not as it was before, or it would undo whatever happened meanwhile.
     const current = await this.loadSnapshot();
     if (current === null || current.phase !== "in-game") return;
     const currentSlot = slotOf(current, frame.from);
-    if (currentSlot === null) return;
+    if (currentSlot === null || !(await this.ownsSeat(ws, frame.from))) return;
     // The loser picks who goes first next time; a tie goes back to the coin.
     const loser = rematchChooser(load.record.state);
     const loserId = loser === null ? null : playerIdOfSeat(current, loser);
@@ -636,7 +654,7 @@ export class LobbyDO {
           // Already gone.
         }
       }
-      await this.wipe(now, "inactive");
+      await this.wipe(now, "inactive", sockets.length);
       return true;
     }
 
@@ -665,11 +683,17 @@ export class LobbyDO {
     return true;
   }
 
-  /** Delete every key of the lobby, freeing its code, and any alarm set since this one fired. */
-  private async wipe(now: number, cause: "empty" | "inactive" | "legacy"): Promise<void> {
+  /** Delete every key of the lobby, freeing its code, and any alarm set since this one fired.
+      `sockets` is how many open sockets the wipe closed (4000). */
+  private async wipe(
+    now: number,
+    cause: "empty" | "inactive" | "legacy",
+    sockets = 0,
+  ): Promise<void> {
     const created = await this.state.storage.get(CREATED_KEY);
     await this.log("lobby_wiped", {
       cause,
+      sockets,
       ageMs: typeof created === "number" ? now - created : null,
       inGame: (await this.loadSnapshot())?.phase === "in-game",
     });
@@ -698,14 +722,15 @@ export class LobbyDO {
       this.snapshot = readSnapshot(raw);
       return false;
     }
-    for (const ws of this.liveSockets()) {
+    const sockets = this.liveSockets();
+    for (const ws of sockets) {
       try {
         ws.close(LOBBY_WS_CLOSED, "lobby closed by a server update");
       } catch {
         // Already gone.
       }
     }
-    await this.wipe(this.deps.now(), "legacy");
+    await this.wipe(this.deps.now(), "legacy", sockets.length);
     return true;
   }
 
@@ -892,14 +917,24 @@ export class LobbyDO {
       attachConnectedAt(ws, now);
       return now;
     };
+    let unanswered = 0;
     for (const ws of this.liveSockets()) {
       const since = connectedAt(ws);
       // A turned-away socket that never sent the hello it would be answered "full" on.
       if (isOverflow(ws) && now - since > OVERFLOW_HELLO_MS) {
         await this.closeSocket(ws, 1013, "lobby full");
+        unanswered++;
       } else if (socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), since, now)) {
         await this.closeSocket(ws, 1001, "keepalive lost");
       }
+    }
+    // One line per sweep, however many it let go (LB8).
+    if (unanswered > 0) {
+      await this.log(
+        "overflow_closed",
+        { cause: "no_hello", code: 1013, sockets: unanswered },
+        true,
+      );
     }
   }
 
@@ -926,15 +961,32 @@ export class LobbyDO {
    */
   private async withinBudget(ws: WebSocket, message: string | ArrayBuffer): Promise<boolean> {
     if (this.closing.has(ws)) return false;
-    const budget = spendFrame(this.frameBudgets.get(ws), this.deps.now());
+    const now = this.deps.now();
+    const budget = spendFrame(this.frameBudgets.get(ws), now);
     const size = typeof message === "string" ? message.length : message.byteLength;
+    const frames = (this.frameCounts.get(ws) ?? 0) + 1;
+    this.frameCounts.set(ws, frames);
     if (budget !== null && size <= FRAME_MAX_CHARS) {
       this.frameBudgets.set(ws, budget);
       return true;
     }
-    const cause = budget === null ? "frame_rate" : "frame_size";
-    await this.log("socket_closed", { cause }, true);
-    if (budget === null) await this.closeSocket(ws, 1008, "too many messages");
+    // One line per closed socket, never one per frame (LB8): throttled, since the client
+    // reconnects and a script can repeat the close.
+    const rate = budget === null;
+    const connectedAt = attachedConnectedAt(ws);
+    await this.log(
+      "socket_closed",
+      {
+        cause: rate ? "frame_rate" : "frame_size",
+        code: rate ? 1008 : 1009,
+        frames,
+        chars: size,
+        seated: attachedPlayer(ws) !== null,
+        ageMs: connectedAt === null ? null : now - connectedAt,
+      },
+      true,
+    );
+    if (rate) await this.closeSocket(ws, 1008, "too many messages");
     else await this.closeSocket(ws, 1009, "message too big");
     return false;
   }
@@ -950,6 +1002,7 @@ export class LobbyDO {
       this.send(ws, { kind: "reject", to, reason: "full" });
     }
     await this.closeSocket(ws, 1013, "lobby full");
+    await this.log("overflow_closed", { cause: "turned_away", code: 1013, sockets: 1 }, true);
   }
 
   /** The sockets that count toward the lobby's cap: every live one but those being turned away. */
@@ -1106,6 +1159,58 @@ export class LobbyDO {
   private ownerOf(playerId: string, seatUsers: Record<string, string>): DeckOwner | null {
     const socket = this.liveSockets().find((ws) => ownsSeat(ws, playerId, seatUsers));
     return socket === undefined ? null : attachedSession(socket);
+  }
+
+  /**
+   * Before a rematch, re-check the session each seat's sockets authenticated with at the upgrade
+   * (security audit MI4, user decision 13): true when every one still lives. A socket keeps its
+   * account for as long as it stays open, so a logout, a revoked session or a deleted account
+   * would otherwise go on to another game. A socket whose session has ended is closed (1008); its
+   * reconnect, with no live cookie, is refused the account-bound seat and watches instead. The
+   * requester is told why. One D1 read per rematch request, and none for anonymous seats.
+   *
+   * A failed read lets the rematch through: the handoff's deck read re-checks each session anyway,
+   * and refusing would strand the client, which asks only once per finished match.
+   */
+  private async seatSessionsLive(requester: WebSocket, snapshot: LobbyState): Promise<boolean> {
+    const seatUsers = await this.seatUsers();
+    const seated = [snapshot.host.id, snapshot.guest?.id];
+    const held = this.liveSockets().flatMap((ws) => {
+      const playerId = attachedPlayer(ws);
+      const session = attachedSession(ws);
+      return playerId !== null &&
+        session !== null &&
+        seated.includes(playerId) &&
+        ownsSeat(ws, playerId, seatUsers)
+        ? [{ ws, session }]
+        : [];
+    });
+    if (held.length === 0) return true;
+    let live: Set<string>;
+    try {
+      live = await this.deps.liveSessions(held.map(({ session }) => session));
+    } catch (error) {
+      await this.log(
+        "rematch_unchecked",
+        { cause: "session_lookup", error: describeError(error) },
+        true,
+      );
+      return true;
+    }
+    const ended = held.filter(({ session }) => !live.has(session.sessionId));
+    if (ended.length === 0) return true;
+    const own = ended.some(({ ws }) => ws === requester);
+    this.send(requester, {
+      kind: "reject-action",
+      reason: own ? REMATCH_SIGNED_OUT_REASON : REMATCH_OPPONENT_SIGNED_OUT_REASON,
+    });
+    for (const { ws } of ended) await this.closeSocket(ws, 1008, "session ended");
+    await this.log("rematch_refused", {
+      cause: "session_ended",
+      sockets: ended.length,
+      requester: own,
+    });
+    return false;
   }
 
   /** Whether both of the lobby's seated players still have a live socket. */
@@ -1320,13 +1425,29 @@ export class LobbyDO {
    * No seat for this socket. It is always rejected as full, and if a match is running it becomes a
    * spectator with the seatless board. Spectators have no playerId, so they cannot act, and anyone
    * with the lobby code can watch.
+   *
+   * `cause` says why (LB8): both seats are held by others (`full`), or the seat is bound to an
+   * account this socket is not signed in as (`bound`). A `full` that only makes a spectator is how
+   * watching works, so it is not logged.
    */
-  private async refuseSeat(ws: WebSocket, to: string): Promise<void> {
+  private async refuseSeat(ws: WebSocket, to: string, cause: "full" | "bound"): Promise<void> {
     this.send(ws, { kind: "reject", to, reason: "full" });
+    const spectating = await this.watchMatch(ws);
+    if (cause === "bound" || !spectating) {
+      await this.log(
+        "hello_refused",
+        { cause, signedIn: attachedUserId(ws) !== null, spectating },
+        true,
+      );
+    }
+  }
+
+  /** Make a seatless socket a spectator of the running match, true when there is one to watch. */
+  private async watchMatch(ws: WebSocket): Promise<boolean> {
     const snapshot = await this.loadSnapshot();
-    if (snapshot === null || snapshot.phase !== "in-game") return;
+    if (snapshot === null || snapshot.phase !== "in-game") return false;
     const load = await this.loadOrMigrateMatch();
-    if (load.kind !== "ok") return;
+    if (load.kind !== "ok") return false;
     attachSpectator(ws);
     // The snapshot as well as the board. `state` frames only go out on a lobby
     // COMMIT, and a match in progress may not produce one for many minutes — so a
@@ -1335,6 +1456,7 @@ export class LobbyDO {
     // carries nothing private; it is the same frame both players already hold.
     this.send(ws, { kind: "state", snapshot: wireSnapshot(snapshot) });
     await this.broadcastMatch(load.record, snapshot, { only: ws });
+    return true;
   }
 
   /**

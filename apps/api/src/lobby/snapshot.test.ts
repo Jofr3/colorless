@@ -71,16 +71,10 @@ describe("applyIntent", () => {
     expect(s.guest?.ready).toBe(false);
   });
 
-  it("renames without touching the phase", () => {
-    const s = seatGuest(freshLobby(), "guest-1", "Guest");
-    const renamed = applyIntent(s, "host", { type: "set-name", name: "Champ" });
-    expect(renamed.host.name).toBe("Champ");
-    expect(renamed.phase).toBe(s.phase);
-  });
-
   it("is a no-op for an empty seat", () => {
     const s = freshLobby();
-    expect(applyIntent(s, "guest", { type: "set-name", name: "x" })).toBe(s);
+    expect(applyIntent(s, "guest", { type: "set-ready", ready: true })).toBe(s);
+    expect(applyIntent(s, "guest", { type: "select-deck", deckId: "d", deckName: "D" })).toBe(s);
   });
 });
 

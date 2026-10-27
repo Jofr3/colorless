@@ -6,7 +6,7 @@
 
 import * as z from "zod";
 import { wireActionSchema } from "../match/action";
-import { stripControlChars, withoutControlChars } from "../text";
+import { stripControlChars } from "../text";
 import type { Equals } from "./equals";
 import { LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX, LOBBY_NAME_MAX } from "./protocol";
 import type {
@@ -58,13 +58,10 @@ export const lobbySnapshotSchemaMatchesType: Equals<
 // snapshot schemas above stay unbounded: they also describe what the server sends.
 // Names also lose control and format characters (text.ts) before the clip. A hello's is stripped
 // rather than refused: a refused hello is dropped unanswered, which would shut an account whose
-// stored name predates the rule out of every lobby. `set-name` is a fresh write, so it is refused.
+// stored name predates the rule out of every lobby.
 const clientId = z.string().max(LOBBY_ID_MAX);
 const clippedString = (max: number) =>
   z.string().transform((value) => stripControlChars(value).slice(0, max));
-const newName = withoutControlChars(z.string()).transform((value) =>
-  value.slice(0, LOBBY_NAME_MAX),
-);
 
 export const lobbyIntentSchema = z.discriminatedUnion("type", [
   z.object({
@@ -73,7 +70,6 @@ export const lobbyIntentSchema = z.discriminatedUnion("type", [
     deckName: clippedString(LOBBY_DECK_NAME_MAX),
   }),
   z.object({ type: z.literal("set-ready"), ready: z.boolean() }),
-  z.object({ type: z.literal("set-name"), name: newName }),
 ]);
 export const lobbyIntentSchemaMatchesType: Equals<
   z.infer<typeof lobbyIntentSchema>,

@@ -56,11 +56,12 @@ export type LobbySnapshot = {
   countdownStartedAt: number | null;
 };
 
-/** A change a player asks to make to their own seat. The lobby server validates and applies it. */
+/** A change a player asks to make to their own seat. The lobby server validates and applies it.
+    A seat's name comes only from its hello: the account's name for a signed-in socket, else the
+    announced one (the `set-name` intent was removed, security audit AU8). */
 export type LobbyIntent =
   | { type: "select-deck"; deckId: string; deckName: string }
-  | { type: "set-ready"; ready: boolean }
-  | { type: "set-name"; name: string };
+  | { type: "set-ready"; ready: boolean };
 
 /** Everything that can travel over a lobby channel. In a `hello`, `from` is the sender's seat
     SECRET, which claims the seat; in every other frame `from` and `to` are public seat ids. The

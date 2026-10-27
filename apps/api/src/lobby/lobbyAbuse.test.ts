@@ -15,6 +15,7 @@ import {
   type LobbyHarness,
   seatIdOf,
   seatSecret,
+  sessionIdOf,
 } from "./lobbyHarness";
 import {
   DISCONNECT_GRACE_MS,
@@ -76,6 +77,13 @@ const intent = (from: string, change: LobbyIntent): LobbyClientMessage => ({
   kind: "intent",
   from: seatIdOf(from),
   intent: change,
+});
+
+/** A deck pick that differs from the one before it, so every such intent is a lobby commit. */
+const pick = (i: number): LobbyIntent => ({
+  type: "select-deck",
+  deckId: "deck-x",
+  deckName: i % 2 ? "b" : "a",
 });
 
 /** Storage operations from now on, as the Free plan bills them: every key put, key deleted and
@@ -167,7 +175,7 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
     for (let i = 0; i < frames; i++) {
       h.world.now += 1;
       const before = h.storage.data.get("snapshot");
-      await h.send(ws, intent("attacker", { type: "set-name", name: i % 2 ? "a" : "b" }));
+      await h.send(ws, intent("attacker", pick(i)));
       if (h.storage.data.get("snapshot") !== before) processed++;
     }
     // Was: 200 snapshot puts and 200 alarms (2 rows a frame), and the socket never closed. Now the
@@ -185,8 +193,20 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
         deadline: h.world.now - (frames - FRAME_BURST) + DISCONNECT_GRACE_MS,
       },
     ]);
+    // One line for the socket, never one per frame (LB8): the hello and the 39 frames it paid
+    // for, then the one that closed it, 40ms after the upgrade.
     expect(logged("socket_closed")).toEqual([
-      { evt: "lobby", kind: "socket_closed", lobby: "ABCD", cause: "frame_rate" },
+      {
+        evt: "lobby",
+        kind: "socket_closed",
+        lobby: "ABCD",
+        cause: "frame_rate",
+        code: 1008,
+        frames: FRAME_BURST + 1,
+        chars: JSON.stringify(intent("attacker", pick(frames))).length,
+        seated: true,
+        ageMs: FRAME_BURST,
+      },
     ]);
   });
 
@@ -197,7 +217,7 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
     const writes = countWrites();
     for (let i = 0; i < 60; i++) {
       h.world.now += 1000;
-      await h.send(ws, intent("host", { type: "set-name", name: i % 2 ? "a" : "b" }));
+      await h.send(ws, intent("host", pick(i)));
     }
     // Was one alarm per commit. Each commit pushes the liveness deadline 30s on, and the armed
     // alarm, due sooner, is kept until it is due: a minute of commits sets it twice.
@@ -213,6 +233,9 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
     expect(big.closed).toBeNull();
     await h.send(big, "x".repeat(FRAME_MAX_CHARS + 1));
     expect(big.closed).toEqual({ code: 1009, reason: "message too big" });
+    expect(logged("socket_closed")).toMatchObject([
+      { cause: "frame_size", code: 1009, frames: 3, chars: FRAME_MAX_CHARS + 1, seated: true },
+    ]);
 
     const junk = await h.connect();
     for (let i = 0; i < FRAME_BURST; i++) await h.send(junk, "not json");
@@ -345,8 +368,8 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     expect(refused).toBe(100 - (LOBBY_SOCKET_CAP - 1) - OVERFLOW_SOCKETS_MAX);
     const members = accepted.slice(0, LOBBY_SOCKET_CAP - 1);
     const overflow = accepted.slice(LOBBY_SOCKET_CAP - 1);
-    await h.send(host, intent("h", { type: "set-name", name: "Ana B" }));
-    expect(members.every((ws) => ws.last("state")?.snapshot.host.name === "Ana B")).toBe(true);
+    await h.send(host, intent("h", pick(1)));
+    expect(members.every((ws) => ws.last("state")?.snapshot.host.deckName === "b")).toBe(true);
     expect(overflow.every((ws) => ws.sent.length === 0)).toBe(true);
 
     // A turned-away socket's hello is answered "full", which the client shows as a full lobby.
@@ -355,10 +378,17 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     await h.send(asks, hello("watcher", "Watcher"));
     expect(asks.sent).toEqual([{ kind: "reject", to: seatIdOf("watcher"), reason: "full" }]);
     expect(asks.closed).toEqual({ code: 1013, reason: "lobby full" });
-    // One that never says hello is let go at the next sweep.
+    expect(logged("overflow_closed")).toMatchObject([
+      { cause: "turned_away", code: 1013, sockets: 1 },
+    ]);
+    // One that never says hello is let go at the next sweep, in one line for all of them.
+    resetLogThrottle();
     h.world.now += OVERFLOW_HELLO_MS + 1;
     await h.fireAlarm();
     expect(silent.every((ws) => ws.closed?.code === 1013)).toBe(true);
+    expect(logged("overflow_closed").slice(1)).toMatchObject([
+      { cause: "no_hello", code: 1013, sockets: silent.length },
+    ]);
     expect(members.every((ws) => ws.closed === null)).toBe(true);
     expect(logged("ws_refused")[0]).toMatchObject({ cause: "lobby_full" });
   });
@@ -434,7 +464,7 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     expect(h.storage.data.size).toBe(0);
     expect(h.storage.alarm).toBeNull();
     expect(writes).toEqual({ puts: 0, keys: 0, deletes: 2, alarms: wakes - 1 });
-    expect(logged("lobby_wiped")).toMatchObject([{ cause: "inactive", inGame: false }]);
+    expect(logged("lobby_wiped")).toMatchObject([{ cause: "inactive", sockets: 1, inGame: false }]);
     await expect(h.connect()).rejects.toThrow("upgrade refused with 404");
   });
 
@@ -447,7 +477,7 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     for (let minute = 1; minute <= minutes; minute++) {
       for (let sweep = 0; sweep < 2; sweep++) await h.fireAlarm();
       if (minute % 10 === 0) {
-        await h.send(host, intent("h", { type: "set-name", name: `Ana ${minute}` }));
+        await h.send(host, intent("h", pick(minute / 10)));
       }
     }
     expect(host.closed).toBeNull();
@@ -674,7 +704,6 @@ describe("lobby abuse — names that forge client bridge commands (WC1)", () => 
     const anon = await h.connect();
     await h.send(anon, hello("g1", FORGED));
     expect(victim.last("state")?.snapshot.guest?.name).toBe(CLEAN);
-    await h.send(anon, intent("g1", { type: "set-name", name: FORGED }));
     await h.send(anon, intent("g1", { type: "select-deck", deckId: "deck-x", deckName: FORGED }));
     expect(victim.last("state")?.snapshot.guest).toMatchObject({ name: CLEAN, deckName: CLEAN });
     await h.send(anon, { kind: "bye", from: seatIdOf("g1"), slot: "guest" });
@@ -777,7 +806,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     await h.send(intruder, {
       kind: "intent",
       from: guestId,
-      intent: { type: "set-name", name: "X" },
+      intent: { type: "select-deck", deckId: "deck-eve", deckName: "X" },
     });
     await h.send(intruder, { kind: "bye", from: hostId, slot: "host" });
 
@@ -803,10 +832,96 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     // The old client shows a full lobby; a reload brings it the current client.
     expect(old.sent).toEqual([{ kind: "reject", to: uuid, reason: "full" }]);
     expect(old.closed).toBeNull();
-    await h.send(old, { kind: "intent", from: uuid, intent: { type: "set-name", name: "x" } });
+    await h.send(old, { kind: "intent", from: uuid, intent: { type: "set-ready", ready: true } });
     expect(h.storage.data.has("snapshot")).toBe(false);
     const current = await h.connect("ana");
     await h.send(current, hello("h"));
     expect(current.last("state")?.snapshot.host).toMatchObject({ id: seatIdOf("h"), name: "Ana" });
+  });
+});
+
+describe("lobby abuse — the audit trail (LB8)", () => {
+  it("LB8: a seat-claim refusal is logged by cause, and a spectator's is not", async () => {
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const guest = await h.connect("bo");
+    await h.send(guest, hello("g"));
+
+    // Both seats are held: a third player is refused.
+    const third = await h.connect("vic");
+    await h.send(third, hello("v"));
+    expect(third.last("reject")).toEqual({ kind: "reject", to: seatIdOf("v"), reason: "full" });
+    expect(logged("hello_refused")).toEqual([
+      {
+        evt: "lobby",
+        kind: "hello_refused",
+        lobby: "ABCD",
+        cause: "full",
+        signedIn: true,
+        spectating: false,
+      },
+    ]);
+
+    // The guest's own secret, without the account the seat is bound to.
+    resetLogThrottle();
+    const shadow = await h.connect();
+    await h.send(shadow, hello("g"));
+    expect(shadow.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
+    expect(logged("hello_refused").slice(1)).toMatchObject([
+      { cause: "bound", signedIn: false, spectating: false },
+    ]);
+
+    // Throttled: a refused client that keeps asking writes one line per ten minutes.
+    for (let i = 0; i < 5; i++) await h.send(shadow, hello("g"));
+    expect(logged("hello_refused")).toHaveLength(2);
+  });
+
+  it("LB8: watching a match is not a refusal worth a line", async () => {
+    await matchInTurnOne();
+    const watcher = await h.connect("vic");
+    await h.send(watcher, hello("w"));
+    expect(watcher.framesOf("match").length).toBeGreaterThan(0);
+    expect(logged("hello_refused")).toEqual([]);
+  });
+
+  it("LB8: no lobby line names an account, a session, a seat secret or a deck", async () => {
+    const { host, guest } = await matchInTurnOne();
+    const shadow = await h.connect();
+    await h.send(shadow, hello("g"));
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    h.world.endedSessions.add(sessionIdOf("bo"));
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    for (let i = 0; i <= FRAME_BURST; i++) await h.send(host, "junk");
+    const lines = warn.mock.calls.map(([line]) => String(line));
+    expect(lines.length).toBeGreaterThanOrEqual(3);
+    const secrets = ["ana", "bo", sessionIdOf("ana"), sessionIdOf("bo"), "deck-ana", "deck-bo"];
+    secrets.push(seatSecret("h"), seatSecret("g"));
+    for (const secret of secrets) {
+      expect(lines.filter((line) => line.includes(`"${secret}"`))).toEqual([]);
+    }
+  });
+});
+
+describe("lobby abuse — the removed set-name intent (AU8)", () => {
+  it("AU8: an older client's set-name is dropped unread and still spends the frame budget", async () => {
+    await h.create();
+    const host = await h.connect();
+    await h.send(host, hello("h", "Ana"));
+    const writes = countWrites();
+    const rename = JSON.stringify({
+      kind: "intent",
+      from: seatIdOf("h"),
+      intent: { type: "set-name", name: "Captain" },
+    });
+    for (let i = 1; i < FRAME_BURST; i++) await h.send(host, rename);
+    expect(host.closed).toBeNull();
+    expect(writes).toEqual({ puts: 0, keys: 0, deletes: 0, alarms: 0 });
+    expect(host.last("state")?.snapshot.host.name).toBe("Ana");
+    await h.send(host, rename);
+    expect(host.closed).toEqual({ code: 1008, reason: "too many messages" });
+    expect(logged("socket_closed")).toMatchObject([
+      { cause: "frame_rate", frames: FRAME_BURST + 1 },
+    ]);
   });
 });

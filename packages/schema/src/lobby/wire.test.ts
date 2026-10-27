@@ -132,10 +132,10 @@ describe("lobbyIntentSchema", () => {
       type: "set-ready",
       ready: true,
     });
-    expect(lobbyIntentSchema.parse({ type: "set-name", name: "Ana" })).toEqual({
-      type: "set-name",
-      name: "Ana",
-    });
+  });
+
+  it("refuses the removed set-name intent (AU8)", () => {
+    expect(lobbyIntentSchema.safeParse({ type: "set-name", name: "Ana" }).success).toBe(false);
   });
 
   it("refuses unknown variants, missing fields and wrong types", () => {
@@ -310,7 +310,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
       { kind: "hello", from: "g1", name: "Bo" },
       { kind: "state", snapshot: SNAPSHOT },
       { kind: "match", game: MATCH_GAME, log: MATCH_LOG },
-      { kind: "intent", from: "g1", intent: { type: "set-name", name: "Bo" } },
+      { kind: "intent", from: "g1", intent: { type: "set-ready", ready: true } },
       { kind: "action", action: { type: "endTurn", seat: "p1" } },
       { kind: "reject", to: "g1", reason: "full" },
       { kind: "reject-action", reason: "Illegal move." },

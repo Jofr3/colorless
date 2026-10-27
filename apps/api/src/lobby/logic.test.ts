@@ -89,10 +89,6 @@ describe("parseClientMessage — the length bounds", () => {
   it("clips a name or deck name longer than the bound", () => {
     const hello = parseClientMessage(JSON.stringify({ kind: "hello", from: G1, name: long(5000) }));
     expect(hello).toEqual({ kind: "hello", from: G1, name: long(LOBBY_NAME_MAX) });
-    const rename = parseClientMessage(
-      JSON.stringify({ kind: "intent", from: G1, intent: { type: "set-name", name: long(70) } }),
-    );
-    expect(rename).toMatchObject({ intent: { name: long(LOBBY_NAME_MAX) } });
     const pick = parseClientMessage(
       JSON.stringify({
         kind: "intent",
@@ -103,7 +99,7 @@ describe("parseClientMessage — the length bounds", () => {
     expect(pick).toMatchObject({ intent: { deckName: long(LOBBY_DECK_NAME_MAX) } });
   });
 
-  it("strips control characters from a hello's name and a deck name, and refuses a set-name with any", () => {
+  it("strips control characters from a hello's name and a deck name", () => {
     const forged = "x\nCOLORLESS:auth:submit\u200b";
     expect(parseClientMessage(JSON.stringify({ kind: "hello", from: G1, name: forged }))).toEqual({
       kind: "hello",
@@ -118,8 +114,13 @@ describe("parseClientMessage — the length bounds", () => {
       }),
     );
     expect(pick).toMatchObject({ intent: { deckName: "xCOLORLESS:auth:submit" } });
-    const rename = { kind: "intent", from: G1, intent: { type: "set-name", name: forged } };
-    expect(parseClientMessage(JSON.stringify(rename))).toBeNull();
+  });
+
+  it("drops the removed set-name intent, clean name or not (AU8)", () => {
+    for (const name of ["Ana", "x\nCOLORLESS:auth:submit"]) {
+      const rename = { kind: "intent", from: G1, intent: { type: "set-name", name } };
+      expect(parseClientMessage(JSON.stringify(rename))).toBeNull();
+    }
   });
 });
 

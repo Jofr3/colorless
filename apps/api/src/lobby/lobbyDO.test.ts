@@ -758,7 +758,10 @@ describe("LobbyDO — events while the handoff awaits D1", () => {
     const held = holdDeckReads();
     const alarm = startAlarm();
     await held.inside;
-    await h.send(host, intent("h", { type: "set-name", name: "Captain" }));
+    // The account renamed itself, and a reload of the host's tab says hello under the new name.
+    h.world.displayNames.set("ana", "Captain");
+    const reloaded = await h.connect("ana");
+    await h.send(reloaded, hello("h"));
     held.release();
     await alarm;
     expect(snapshotOf(host).phase).toBe("in-game");
@@ -950,6 +953,112 @@ describe("LobbyDO — the session behind a socket", () => {
   });
 });
 
+describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
+  /** A finished match: the guest conceded. Counts the session checks from then on. */
+  async function finishedMatch() {
+    const seated = await startedMatch();
+    await h.send(seated.guest, { kind: "action", action: { type: "concede" } });
+    expect((await storedMatch()).state.phase.kind).toBe("gameOver");
+    const checks: string[][] = [];
+    const check = h.deps.liveSessions;
+    h.deps.liveSessions = (owners) => {
+      checks.push(owners.map((owner) => owner.sessionId));
+      return check(owners);
+    };
+    return { ...seated, checks };
+  }
+
+  it("starts the rematch after one read of both sessions, and never reads them per frame", async () => {
+    const { host, guest, checks } = await finishedMatch();
+    // A signed-in spectator holds no seat, so its session is not the rematch's to check.
+    const watcher = await h.connect("vic");
+    await h.send(watcher, hello("w"));
+    expect(watcher.framesOf("match").length).toBeGreaterThan(0);
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(snapshotOf(host).phase).toBe("selecting");
+    expect(checks).toEqual([[sessionIdOf("ana"), sessionIdOf("bo")]]);
+    // The rest of the lobby's life reads no session: a repeated rematch, intents and a new match.
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    expect(checks).toHaveLength(1);
+  });
+
+  it("refuses a requester whose session was revoked, and its reconnect only watches", async () => {
+    const { host, guest, checks } = await finishedMatch();
+    h.world.endedSessions.add(sessionIdOf("bo"));
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(guest.last("reject-action")).toEqual({
+      kind: "reject-action",
+      reason: "You're signed out. Sign in again to play another game.",
+    });
+    expect(guest.closed).toEqual({ code: 1008, reason: "session ended" });
+    expect(host.closed).toBeNull();
+    expect(host.framesOf("reject-action")).toEqual([]);
+    expect(snapshotOf(host).phase).toBe("in-game");
+    expect((await storedMatch()).state.phase.kind).toBe("gameOver");
+    expect(checks).toHaveLength(1);
+    expect(logged("rematch_refused")).toEqual([
+      {
+        evt: "lobby",
+        kind: "rematch_refused",
+        lobby: "ABCD",
+        cause: "session_ended",
+        sockets: 1,
+        requester: true,
+      },
+    ]);
+
+    // Without a live cookie the reload is anonymous: the account-bound seat refuses it, and it
+    // watches the finished board instead of acting for the seat.
+    const reloaded = await h.connect();
+    await h.send(reloaded, hello("g"));
+    expect(reloaded.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
+    expect(reloaded.framesOf("match").length).toBeGreaterThan(0);
+    await h.send(reloaded, { kind: "rematch", from: seatIdOf("g") });
+    expect(snapshotOf(host).phase).toBe("in-game");
+    expect(logged("hello_refused")).toMatchObject([
+      { cause: "bound", signedIn: false, spectating: true },
+    ]);
+  });
+
+  it("refuses a rematch with an opponent whose account was deleted", async () => {
+    const { host, guest } = await finishedMatch();
+    // Deleting an account deletes its sessions.
+    h.world.endedSessions.add(sessionIdOf("ana"));
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(guest.last("reject-action")).toEqual({
+      kind: "reject-action",
+      reason: "Your opponent is signed out, so there's no rematch.",
+    });
+    expect(host.closed).toEqual({ code: 1008, reason: "session ended" });
+    expect(guest.closed).toBeNull();
+    expect(snapshotOf(guest).phase).toBe("in-game");
+    expect(logged("rematch_refused")).toMatchObject([{ sockets: 1, requester: false }]);
+  });
+
+  it("lets the rematch through when the session read fails, since the handoff re-checks", async () => {
+    const { host, guest } = await finishedMatch();
+    h.deps.liveSessions = async () => {
+      throw new Error("D1_ERROR: network connection lost");
+    };
+    h.world.endedSessions.add(sessionIdOf("bo"));
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(snapshotOf(host).phase).toBe("selecting");
+    expect(logged("rematch_unchecked")).toMatchObject([{ cause: "session_lookup" }]);
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    expect(host.last("match-error")).toEqual({
+      kind: "match-error",
+      reason: "Bo: sign in again to play a saved deck.",
+    });
+    expect(matchKeys()).toEqual([]);
+  });
+});
+
 describe("LobbyDO — bounded growth", () => {
   it("clips a long account name to the seat bound and drops a hello with an over-long id", async () => {
     h.world.displayNames.set("bo", "B".repeat(300));
@@ -1015,7 +1124,6 @@ describe("LobbyDO — no-ops cost nothing", () => {
     const frames = host.sent.length + guest.sent.length;
     for (let i = 0; i < 3; i++) {
       await readyUp(host, "h", "deck-ana");
-      await h.send(host, intent("h", { type: "set-name", name: "Ana" }));
     }
     expect(writes).toEqual([]);
     expect(host.sent.length + guest.sent.length).toBe(frames);

@@ -224,7 +224,7 @@ export interface LobbyWorld {
   decks: Map<string, { owner: string; ids: string[]; format?: string | null }>;
   /** Every card the fake catalog holds. */
   pool: Record<string, Card>;
-  /** Session ids that have since ended (logged out, expired or revoked). */
+  /** Session ids that have since ended (logged out, expired, revoked, or the account deleted). */
   endedSessions: Set<string>;
 }
 
@@ -270,6 +270,12 @@ export function worldDeps(world: LobbyWorld): LobbyDeps {
       }
       return pool;
     },
+    liveSessions: async (owners) =>
+      new Set(
+        owners
+          .map((owner) => owner.sessionId)
+          .filter((sessionId) => !world.endedSessions.has(sessionId)),
+      ),
   };
 }
 

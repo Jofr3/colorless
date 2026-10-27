@@ -139,10 +139,6 @@ export function applyIntent(
     const next = { ...player, deckId: intent.deckId, deckName: intent.deckName };
     return recomputePhase(withPlayer(snapshot, slot, next));
   }
-  if (intent.type === "set-ready") {
-    const next = { ...player, ready: intent.ready && player.deckId !== null };
-    return recomputePhase(withPlayer(snapshot, slot, next));
-  }
-  // set-name is cosmetic and never affects the phase.
-  return withPlayer(snapshot, slot, { ...player, name: intent.name });
+  const next = { ...player, ready: intent.ready && player.deckId !== null };
+  return recomputePhase(withPlayer(snapshot, slot, next));
 }
