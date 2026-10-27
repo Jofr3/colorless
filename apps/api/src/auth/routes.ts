@@ -17,12 +17,13 @@ import {
   type User,
   userSchema,
 } from "@colorless/schema";
-import { and, eq, lte } from "drizzle-orm";
+import { and, eq, lte, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import { ownedBy } from "../db/owned";
 import { decks, oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
+import { logEvent, logEventThrottled } from "../http/log";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { avatarSeedOf } from "./avatar";
@@ -94,6 +95,8 @@ async function guardRateLimit(
   if (decision.allowed) {
     return null;
   }
+  // Throttled: a brute-force burst answers 429 on every attempt past the budget.
+  logEventThrottled("auth", "rate_limited", { scope });
   c.header("Retry-After", String(decision.retryAfterSeconds));
   return c.json({ error: "too many attempts" }, 429);
 }
@@ -132,6 +135,27 @@ async function newSession(userId: string) {
       expiresAt: new Date(Date.now() + SESSION_TTL_MS),
     },
   };
+}
+
+type SessionRow = Awaited<ReturnType<typeof newSession>>["row"];
+
+/** A password login's session insert, as INSERT … SELECT from the user's row while it still holds
+    the hash that was verified. The verify is slow, and an OAuth verified-email link that commits
+    during it clears the password and deletes the sessions; the insert then selects nothing, rather
+    than minting a session for the credential the link revoked. */
+function insertSessionWhilePasswordHolds(db: Db, row: SessionRow, passwordHash: string) {
+  return db.insert(sessions).select(
+    db
+      .select({
+        id: sql<string>`${row.id}`.as("id"),
+        userId: users.id,
+        expiresAt: sql<Date>`${row.expiresAt.getTime()}`.as("expires_at"),
+        // The column's default, which a select-sourced insert does not apply.
+        createdAt: sql<Date>`(unixepoch() * 1000)`.as("created_at"),
+      })
+      .from(users)
+      .where(and(eq(users.id, row.userId), eq(users.passwordHash, passwordHash))),
+  );
 }
 
 /** A fresh users row: a new id, no favourite deck, created now. */
@@ -200,24 +224,38 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
   // which field was wrong.
   const verified = await verifyPassword(body.password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
   if (row === undefined || row.passwordHash === null || !verified) {
+    logEvent("auth", "login_failed", {
+      reason:
+        row === undefined
+          ? "unknown_email"
+          : row.passwordHash === null
+            ? "no_password"
+            : "wrong_password",
+    });
     return c.json({ error: "invalid email or password" }, 401);
   }
   const session = await newSession(row.id);
   // Iteration upgrade path: re-hash at today's DEFAULT_ITERATIONS while we
-  // hold the plaintext.
+  // hold the plaintext. Scoped to the verified hash, like the session insert,
+  // so it cannot restore a password an OAuth link cleared meanwhile.
   const rehash = passwordNeedsRehash(row.passwordHash)
     ? [
         db
           .update(users)
           .set({ passwordHash: await hashPassword(body.password) })
-          .where(eq(users.id, row.id)),
+          .where(and(eq(users.id, row.id), eq(users.passwordHash, row.passwordHash))),
       ]
     : [];
-  await db.batch([
+  // The insert runs before the rehash, which changes the hash it checks.
+  const [, inserted] = await db.batch([
     sweepExpiredSessions(db, row.id),
-    db.insert(sessions).values(session.row),
+    insertSessionWhilePasswordHolds(db, session.row, row.passwordHash),
     ...rehash,
   ]);
+  if (inserted.meta.changes === 0) {
+    logEvent("auth", "login_failed", { reason: "credential_changed" });
+    return c.json({ error: "invalid email or password" }, 401);
+  }
   c.header("Set-Cookie", sessionCookie(session.token));
   return c.json(userSchema.parse(mapUserRow(row)));
 });
@@ -324,15 +362,37 @@ function oauthFailureRedirect(env: Env, redirect: string, failure: OAuthFailure)
   return url.toString();
 }
 
-/** The JSON body of a 2xx provider response, or null for a network error, a non-2xx status or a
-    body that is not JSON. */
-async function upstreamJson(url: string, init: RequestInit): Promise<unknown> {
+type Upstream = {
+  /** The JSON body of a 2xx response; null for a network error, a non-2xx status or a body that
+      is not JSON. */
+  json: unknown;
+  /** The HTTP status, or null when the fetch itself failed. */
+  status: number | null;
+  /** The OAuth `error` code of a failed response (redirect_uri_mismatch, invalid_client, ...). */
+  providerError: string | null;
+};
+
+/** The provider's error code from a JSON body, kept only when it looks like one: the line it lands
+    in must not carry free text. */
+function providerErrorOf(json: unknown): string | null {
+  const code =
+    typeof json === "object" && json !== null && "error" in json ? json.error : undefined;
+  return typeof code === "string" && /^[\w.-]{1,64}$/.test(code) ? code : null;
+}
+
+async function upstreamJson(url: string, init: RequestInit): Promise<Upstream> {
+  let response: Response;
   try {
-    const response = await fetch(url, init);
-    return response.ok ? await response.json() : null;
+    response = await fetch(url, init);
   } catch {
-    return null;
+    return { json: null, status: null, providerError: null };
   }
+  const json: unknown = await response.json().catch(() => null);
+  return {
+    json: response.ok ? json : null,
+    status: response.status,
+    providerError: providerErrorOf(json),
+  };
 }
 
 authRoutes.get("/oauth/:provider/callback", async (c) => {
@@ -350,35 +410,42 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   const state = c.req.query("state");
   const code = c.req.query("code");
   if (!code || !state || packed === null || packed.state !== state) {
+    logEvent("auth", "oauth_state", {
+      provider,
+      reason: packed === null ? "no_cookie" : !code ? "no_code" : !state ? "no_state" : "mismatch",
+    });
     return c.redirect(oauthFailureRedirect(c.env, packed?.redirect ?? "/?account", "state"), 302);
   }
 
   // Code → access token.
   const exchange = tokenRequest(config, code, callbackUrl(c, provider));
-  const accessToken = parseTokenResponse(
-    await upstreamJson(exchange.url, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-      body: exchange.body,
-    }),
-  );
+  const tokenResponse = await upstreamJson(exchange.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    body: exchange.body,
+  });
+  const accessToken = parseTokenResponse(tokenResponse.json);
   if (accessToken === null) {
+    const { status, providerError } = tokenResponse;
+    logEvent("auth", "oauth_exchange", { provider, status, providerError });
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "exchange"), 302);
   }
 
   // Access token → normalized profile.
-  const profile = parseOAuthProfile(
-    await upstreamJson(config.userinfoUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
-  );
+  const userinfo = await upstreamJson(config.userinfoUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const profile = parseOAuthProfile(userinfo.json);
   if (profile === null) {
+    const { status, providerError } = userinfo;
+    logEvent("auth", "oauth_profile", { provider, status, providerError });
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "profile"), 302);
   }
 
   const db = drizzle(c.env.DB);
   const result = await findOrCreateOAuthUser(db, provider, profile);
   if (result === "no-email" || result === "email-in-use") {
+    logEvent("auth", "oauth_refused", { provider, reason: result });
     // email-in-use: the provider email matches an existing account but is NOT
     // provider-verified — linking would let anyone with an unverified alias
     // take the account over.

@@ -1,8 +1,26 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import type { Env } from "../env";
+import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { unpackStateCookieValue } from "./oauth";
 import { RATE_LIMIT_MAX_ATTEMPTS } from "./rateLimit";
+
+let warn: MockInstance<typeof console.warn>;
+
+beforeEach(() => {
+  warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  resetLogThrottle();
+});
+
+/** The structured lines logged so far in this test. */
+function logged(): Record<string, unknown>[] {
+  return warn.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+}
 
 /** In-memory stand-in for the CACHE KV namespace. */
 function fakeKv(seed: Record<string, string> = {}) {
@@ -77,6 +95,9 @@ describe("auth rate limiting", () => {
       expect(res.status).toBe(429);
       expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(0);
       expect(((await res.json()) as { error: string }).error).toBe("too many attempts");
+      expect(logged()).toEqual([{ evt: "auth", kind: "rate_limited", scope }]);
+      warn.mockClear();
+      resetLogThrottle();
     }
   });
 
@@ -222,6 +243,78 @@ describe("GET /auth/oauth/:provider/callback", () => {
       // The one-shot state cookie is dropped even on failure.
       expect(res.headers.get("Set-Cookie")).toContain("oauth_state=; Max-Age=0");
     }
+    expect(logged()).toEqual(
+      ["no_cookie", "no_state", "no_code", "mismatch"].map((reason) => ({
+        evt: "auth",
+        kind: "oauth_state",
+        provider: "google",
+        reason,
+      })),
+    );
+  });
+
+  it.each([
+    [
+      "the provider's error code from a refused code exchange",
+      () =>
+        Response.json(
+          { error: "redirect_uri_mismatch", error_description: "Bad" },
+          { status: 400 },
+        ),
+      "exchange",
+      { kind: "oauth_exchange", status: 400, providerError: "redirect_uri_mismatch" },
+    ],
+    [
+      "no status for an exchange that never reached the provider",
+      () => Promise.reject(new TypeError("network down")),
+      "exchange",
+      { kind: "oauth_exchange", status: null, providerError: null },
+    ],
+    [
+      "a free-text error as no code",
+      () => Response.json({ error: "user misty@example.com is blocked" }, { status: 400 }),
+      "exchange",
+      { kind: "oauth_exchange", status: 400, providerError: null },
+    ],
+  ])("logs %s", async (_label, tokenEndpoint, authError, line) => {
+    vi.stubGlobal("fetch", vi.fn(tokenEndpoint));
+    const res = await app.request(
+      "/auth/oauth/google/callback?code=x&state=real",
+      { headers: { Cookie: "oauth_state=real.Lw" } },
+      envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
+    );
+    expect(new URL(res.headers.get("Location") ?? "").searchParams.get("authError")).toBe(
+      authError,
+    );
+    expect(logged()).toEqual([{ evt: "auth", provider: "google", ...line }]);
+  });
+
+  it("logs the userinfo endpoint's status and error code when the profile fetch fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input) === "https://oauth2.googleapis.com/token"
+          ? Response.json({ access_token: "access-token" })
+          : Response.json({ error: "invalid_token" }, { status: 401 }),
+      ),
+    );
+    const res = await app.request(
+      "/auth/oauth/google/callback?code=x&state=real",
+      { headers: { Cookie: "oauth_state=real.Lw" } },
+      envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
+    );
+    expect(new URL(res.headers.get("Location") ?? "").searchParams.get("authError")).toBe(
+      "profile",
+    );
+    expect(logged()).toEqual([
+      {
+        evt: "auth",
+        kind: "oauth_profile",
+        provider: "google",
+        status: 401,
+        providerError: "invalid_token",
+      },
+    ]);
   });
   it.each([
     ["a network error", () => Promise.reject(new TypeError("network down"))],
