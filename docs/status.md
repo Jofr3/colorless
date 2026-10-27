@@ -1,7 +1,7 @@
 # Status — start here
 
 A Pokémon TCG deck builder and simulator: build decks from the real catalog, play them locally in
-a sandbox, or play them online against another account. Updated 2026-10-26.
+a sandbox, or play them online against another account. Updated 2026-10-27.
 
 ## Where things are
 
@@ -26,6 +26,7 @@ a sandbox, or play them online against another account. Updated 2026-10-26.
 - **Deployed:** everything on `main`, including the Phase 4 architecture work (2026-10-26).
 - **Card coverage:** the coverage program finished in October. `simulationGaps` lists text the engine still can't run, and the builder shows it on the card.
 - **Architecture audit:** Phases 0–4 are done (`decisions.md`, 2026-10-24 to 2026-10-26). Left out on purpose: H5 (explicit card-pool cache) and the host art-loader slice.
+- **Performance:** the 2026-10-27 work in `decisions.md` is on branch `perf`, not yet deployed. `bun run bench` is the engine benchmark; its fingerprint must not change in a pure performance change.
 - **Deferred:** card readings left for a rulings review are the `R-…` entries in `decisions.md` and the "Ruling notes" in `reference/card-revision.md`.
 
 ## Docs

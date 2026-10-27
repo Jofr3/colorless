@@ -146,6 +146,10 @@ async function cdp(
   return fail(`Chromium (${chromium}) did not open a debugging port`);
 }
 
+// Turn signals into a normal exit so the "exit" handlers below still kill the browsers.
+process.once("SIGINT", () => process.exit(130));
+process.once("SIGTERM", () => process.exit(143));
+
 async function boot(mbps: number): Promise<Sample> {
   const profile = mkdtempSync(join(tmpdir(), "colorless-boot-profile-"));
   const debugPort = 20000 + Math.floor(Math.random() * 20000);
@@ -161,8 +165,15 @@ async function boot(mbps: number): Promise<Sample> {
       "--autoplay-policy=no-user-gesture-required",
       "about:blank",
     ],
-    { stdio: "ignore" },
+    { stdio: "ignore", detached: true },
   );
+  // Its own process group, so the whole browser goes even if this script is interrupted.
+  const killBrowser = () => {
+    try {
+      if (browser.pid) process.kill(-browser.pid, "SIGKILL");
+    } catch {}
+  };
+  process.once("exit", killBrowser);
   // Resource timing lists a file only once it has arrived, so the network events time the
   // downloads, including one still in flight when the page turns ready.
   const requests = new Map<string, { name: string; wall: number; sent: number; done?: number }>();
@@ -230,7 +241,8 @@ async function boot(mbps: number): Promise<Sample> {
     close();
     return fail(`the page never became ready (${state.result?.value ?? "no page state"})`);
   } finally {
-    browser.kill();
+    killBrowser();
+    process.off("exit", killBrowser);
     rmSync(profile, { recursive: true, force: true });
   }
 }
