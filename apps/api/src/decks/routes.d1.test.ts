@@ -1,7 +1,13 @@
 import type { Deck, DeckCard, DeckSummary } from "@colorless/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import app from "../index";
-import { type SignedIn, seedCards, signedInUser, useTestD1 } from "../testing/d1";
+import {
+  raceBeforeFirstBatch,
+  type SignedIn,
+  seedCards,
+  signedInUser,
+  useTestD1,
+} from "../testing/d1";
 
 const SCAN = "https://assets.tcgdex.net/en/sv/sv01/x";
 
@@ -204,6 +210,48 @@ describe("folderId on the deck routes", () => {
     const moved = await patchDeck(filed.id, { folderId: null });
     expect(moved.status).toBe(200);
     expect((await getDeck(filed.id)).folderId).toBeNull();
+  });
+});
+
+describe("PATCH /decks/:id against a concurrent write", () => {
+  /** A PATCH whose write lands just after `winner` commits, as another tab's save would. */
+  function racedPatch(id: string, body: unknown, winner: (db: D1Database) => Promise<unknown>) {
+    const { db } = d1();
+    return app.request(
+      `/decks/${id}`,
+      jsonInit("PATCH", body, ash.cookie),
+      d1().env({ DB: raceBeforeFirstBatch(db, () => winner(db).then(() => {})) }),
+    );
+  }
+
+  it("writes only the fields the request names and answers with the stored row", async () => {
+    const deck = await createDeck("Charizard", [card("sv01-004", 4), card("sv01-006", 2)]);
+    const res = await racedPatch(deck.id, { name: "Zard" }, (db) =>
+      db
+        .prepare(
+          "UPDATE decks SET tint = 5, format = 'expanded', cover_card_id = 'sv01-006' WHERE id = ?",
+        )
+        .bind(deck.id)
+        .run(),
+    );
+    expect(res.status).toBe(200);
+    const expected = { name: "Zard", tint: 5, format: "expanded", chosenCoverCardId: "sv01-006" };
+    expect(await res.json()).toMatchObject(expected);
+    expect(await getDeck(deck.id)).toMatchObject(expected);
+  });
+
+  it("does not write a deck that stopped being the caller's", async () => {
+    const gary = await signedInUser(d1().db, "gary@example.com");
+    const deck = await createDeck("Charizard", [card("sv01-004", 4)]);
+    const res = await racedPatch(deck.id, { name: "Stolen" }, (db) =>
+      db.prepare("UPDATE decks SET user_id = ? WHERE id = ?").bind(gary.userId, deck.id).run(),
+    );
+    expect(res.status).toBe(404);
+    const row = await d1()
+      .db.prepare("SELECT name FROM decks WHERE id = ?")
+      .bind(deck.id)
+      .first<{ name: string }>();
+    expect(row?.name).toBe("Charizard");
   });
 });
 

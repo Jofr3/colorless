@@ -10,6 +10,7 @@ import {
 } from "@colorless/schema";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
+import type { SQLiteUpdateSetSource } from "drizzle-orm/sqlite-core";
 import { type Context, Hono } from "hono";
 import * as z from "zod";
 import { requireUser } from "../auth/requireUser";
@@ -243,45 +244,45 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
   if (badCards !== null) {
     return badCards;
   }
-  let coverCardId = existing.coverCardId;
-  if (body.chosenCoverCardId !== undefined) {
-    // Explicit: a card id pins it, null goes back to the derived default.
-    coverCardId = body.chosenCoverCardId;
-    if (coverCardId !== null && cardIdsAfter?.has(coverCardId) !== true) {
-      return c.json({ error: "cover card not in deck", cardIds: [coverCardId] }, 400);
-    }
-  } else if (coverCardId !== null && cardIdsAfter !== null && !cardIdsAfter.has(coverCardId)) {
-    // The pinned card left the deck in this patch, so the choice goes with it
-    // rather than lingering as a pin nothing can honour.
-    coverCardId = null;
+  const chosen = body.chosenCoverCardId;
+  if (chosen !== undefined && chosen !== null && cardIdsAfter?.has(chosen) !== true) {
+    return c.json({ error: "cover card not in deck", cardIds: [chosen] }, 400);
   }
-  const next: DeckRow = {
-    ...existing,
-    name: body.name ?? existing.name,
-    tint: body.tint ?? existing.tint,
-    // For the nullable fields, absent means "keep" and null means "clear".
-    format: body.format === undefined ? existing.format : body.format,
-    folderId: body.folderId === undefined ? existing.folderId : body.folderId,
-    coverCardId,
-    updated: new Date(),
-  };
+  // Only the fields the request names are written, so a patch from a tab holding an older copy
+  // does not put back the fields another tab changed since. For the nullable fields, absent means
+  // "keep" and null means "clear".
+  const changes: SQLiteUpdateSetSource<typeof decks> = { updated: new Date() };
+  if (body.name !== undefined) changes.name = body.name;
+  if (body.tint !== undefined) changes.tint = body.tint;
+  if (body.format !== undefined) changes.format = body.format;
+  if (body.folderId !== undefined) changes.folderId = body.folderId;
+  if (chosen !== undefined) {
+    // Explicit: a card id pins it, null goes back to the derived default.
+    changes.coverCardId = chosen;
+  } else if (body.cards !== undefined) {
+    // A pinned card that left the deck in this patch takes the choice with it rather than
+    // lingering as a pin nothing can honour. Judged against the stored pin, not the one read
+    // above, which a concurrent patch may have changed.
+    const keptIds = JSON.stringify(body.cards.map((entry) => entry.cardId));
+    changes.coverCardId = sql`case when ${decks.coverCardId} in (select "value" from json_each(${keptIds})) then ${decks.coverCardId} end`;
+  }
   const update = db
     .update(decks)
-    .set({
-      name: next.name,
-      tint: next.tint,
-      format: next.format,
-      folderId: next.folderId,
-      coverCardId: next.coverCardId,
-      updated: next.updated,
-    })
-    .where(eq(decks.id, deckId));
+    .set(changes)
+    .where(ownedBy(decks, deckId, user.id))
+    .returning();
   if (body.cards === undefined) {
-    const [, cardsAfter] = await db.batch([update, selectDeckCards(db, deckId)]);
-    return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
+    const [updated, cardsAfter] = await db.batch([update, selectDeckCards(db, deckId)]);
+    const row = updated[0];
+    return row === undefined
+      ? c.json({ error: "deck not found" }, 404)
+      : c.json(deckSchema.parse(mapDeckRow(row, cardsAfter)));
   }
-  await db.batch([update, ...deckCardReplacement(db, deckId, body.cards)]);
-  return c.json(deckSchema.parse(mapDeckRow(next, body.cards)));
+  const [updated] = await db.batch([update, ...deckCardReplacement(db, deckId, body.cards)]);
+  const row = updated[0];
+  return row === undefined
+    ? c.json({ error: "deck not found" }, 404)
+    : c.json(deckSchema.parse(mapDeckRow(row, body.cards)));
 });
 
 deckRoutes.delete("/:id", requireUser, async (c) => {
