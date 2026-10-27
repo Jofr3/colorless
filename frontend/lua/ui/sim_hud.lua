@@ -120,7 +120,7 @@ function Hud:sync(sim,time)
     local subtitle=Dyna.new({string=self.setupSubtitle or '',scale=0.34,colours={LIGHT},
       shadow=true,silent=true,font_offset=true,maxw=sim.L and sim.L.hud.w-40 or 230})
     title:pop_out(5,time);subtitle:pop_out(5,time)
-    self.departingPrompt={title=title,subtitle=subtitle,motion=Motion.new(0,0),start=time}
+    self.departingPrompt={title=title,subtitle=subtitle,motion=Motion.new(0,0),start=time,panelHeight=self:actionPanelHeight()}
     self.departingPrompt.motion.T.y=-10
     -- Blind:set_blind holds the panel above its slot for 0.05s, then
     -- reveals the name and fires the impact another 0.15s later.
@@ -155,8 +155,11 @@ function Hud:sync(sim,time)
   self.setupSubtitle=sim.title or ''
   self.choosingFirst=choosingFirst
   local actions=sim.actions or {}
-  self.compactActions=choosingFirst or (#actions==1 and actions[1].label=='Ready')
-  self.turnActions=sim.gamePhase=='turn:action'
+  local history=false
+  for _,a in ipairs(actions) do if a.label=='Undo action' then history=true end end
+  -- The hot seat's undo/redo row takes the turn's two-row panel, in setup too.
+  self.compactActions=not history and (choosingFirst or (#actions==1 and actions[1].label=='Ready'))
+  self.turnActions=history or sim.gamePhase=='turn:action'
   self.oppName=sim.opponent or ''
   -- Online the viewer's seat is fixed: name the hands instead of the seats.
   if sim.mode=='online' then
@@ -337,8 +340,8 @@ function Hud:draw(sim,L,time,reduced,hovered)
   g.pop()
   local prompt=self.departingPrompt
   if prompt then
-    -- Keep the outgoing text at its old compact-action-panel origin.
-    local oldTop=y+math.floor((h-246-60-4.1*L.hud.unit)/2)
+    -- Keep the outgoing text at its old action panel's origin.
+    local oldTop=y+math.floor((h-246-prompt.panelHeight-4.1*L.hud.unit)/2)
     g.push();g.translate(0,prompt.motion.VT.y*L.hud.unit)
     prompt.title:draw(ix+iw/2,oldTop+th/2-18,rw)
     prompt.subtitle:draw(ix+iw/2,oldTop+th/2+22,rw)

@@ -395,7 +395,11 @@ describe("Lua simulator", () => {
     for (const index of [0, secondTarget]) {
       expect(sim.menu?.kind).toBe("board");
       expect(rows(publish).find((r: string[]) => r[0] === "M")?.[6]).toBe("true");
-      expect(rows(publish).filter((r: string[]) => r[0] === "F")).toHaveLength(0);
+      // No confirm step: the footer is only the hot seat's Undo and Redo.
+      expect(rows(publish).flatMap((r: string[]) => (r[0] === "F" ? [r[2]] : []))).toEqual([
+        "Undo",
+        "Redo",
+      ]);
       const before = sim.host?.game.players.p2.bench[index]?.damage ?? 0;
       sim.menu?.options[index]?.run();
       expect(sim.host?.game.players.p2.bench[index]?.damage).toBe(before + 10);
@@ -584,6 +588,62 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.phase.kind).toBe("turn:action");
     expect(sim.host?.game.turn).toBe(1);
     expect(loadSimulatorSave()?.game).toEqual(sim.host?.game);
+  });
+  it("undoes and redoes through setup, back to the first-player choice", () => {
+    const { sim } = setup(true);
+    const button = (label: string) => sim.sidebar().find((o) => o.label === label);
+    const start = sim.host?.game;
+    expect(button("Undo action")?.disabled).toBe(true);
+    button("P1 first")?.run();
+    expect(sim.host?.game.phase.kind).toBe("setup:place");
+    expect(sim.sidebar().map((o) => o.label)).toEqual([
+      "Ready",
+      "Undo turn",
+      "Undo action",
+      "New game",
+      "Redo action",
+      "Redo turn",
+    ]);
+    const placed = sim.host?.game;
+    button("Undo action")?.run();
+    expect(sim.host?.game).toBe(start);
+    expect(button("Redo action")?.disabled).toBe(false);
+    button("Redo action")?.run();
+    expect(sim.host?.game).toBe(placed);
+  });
+  it("keeps Undo and Redo on a knock-out's promotion, before and after it is answered", () => {
+    const state = knockoutState("fix-victim", 30, 3);
+    const publish = vi.fn();
+    const sim = new LuaSimulator(publish, vi.fn());
+    sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+    const footer = () => rows(publish).filter((r: string[]) => r[0] === "F");
+    const run = (label: string) => {
+      const token = footer().find((r: string[]) => r[2] === label)?.[1];
+      sim.command(`invoke\t${rows(publish)[0]?.[0]}\t${token}`);
+    };
+    sim.dispatch({ type: "attack", seat: "p1", index: 0 });
+    const prompt = sim.host?.game;
+    expect(prompt?.phase.kind).toBe("ko:promote");
+    expect(footer().map((r: string[]) => [r[2], r[4]])).toEqual([
+      ["Undo", "false"],
+      ["Redo", "true"],
+    ]);
+    run("Undo");
+    expect(sim.host?.game).toEqual(state);
+    expect(sim.menu).toBeNull();
+    sim.history("redoAction");
+    expect(sim.host?.game).toBe(prompt);
+    expect(sim.menu?.kind).toBe("board");
+    sim.menu?.options[0]?.run();
+    expect(sim.host?.game.phase.kind).toBe("turn:action");
+    sim.history("undoAction");
+    expect(sim.host?.game).toBe(prompt);
+    expect(footer().map((r: string[]) => [r[2], r[4]])).toEqual([
+      ["Undo", "false"],
+      ["Redo", "false"],
+    ]);
+    run("Undo");
+    expect(sim.host?.game).toEqual(state);
   });
   it.each(["fresh", "resume", "partial"] as const)(
     "draws both full mulligan bonuses automatically (%s) without replaying them",

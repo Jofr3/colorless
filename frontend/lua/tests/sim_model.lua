@@ -55,7 +55,8 @@ check(endTurn.slot=='primary' and not endTurn.disabled and endTurn.colour==T.red
 local p=Model.parse(fixture('sim_prompt.txt'))
 check(p.revision==2 and p.gamePhase=='effect:choose' and p.hint:find('Search your deck'),'Prompt header parsed')
 check(p.menu.kind=='cards' and p.menu.mandatory and p.menu.id~='' and p.menu.counterSourceUid=='' and not p.menu.counterTransfer,'Search prompt is a mandatory card menu')
-check(#p.menu.options>0 and #p.menu.footer==1 and p.menu.footer[1].label=='0/1','Prompt options and footer parsed')
+check(#p.menu.options>0 and #p.menu.footer==3 and p.menu.footer[1].label=='0/1','Prompt options and footer parsed')
+check(p.menu.footer[2].label=='Undo' and not p.menu.footer[2].disabled and p.menu.footer[3].label=='Redo' and p.menu.footer[3].disabled,'Hot-seat prompts keep Undo and Redo')
 for _,o in ipairs(p.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and not o.disabled and not o.selected,'Option '..o.token..' names a card') end
 check(next(p.cardActions)==nil,'Card buttons hide behind the prompt')
 

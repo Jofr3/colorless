@@ -222,4 +222,38 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   assert(sim.overlay==nil and sim.gamePhase=='setup:chooseFirst','Restart closes the old overlay and returns to setup')
   assert(sim.matchId=='new-match' and #sim.cards==0,'Restart clears the previous table')
 end
+-- Hot-seat setup keeps the same history row under Ready or the first-player
+-- choice, with the dice beside the two named choices.
+for _,size in ipairs({{1280,800},{480,850}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local labels={'Undo turn','Undo action','New game','Redo action','Redo turn'}
+  for _,setup in ipairs({
+    {phase='setup:place',top={{'Ready','blue','primary'}}},
+    {phase='setup:chooseFirst',top={{'P1 first','blue','primary'},{'P2 first','blue','primary'},{'Random','red','minor'}}},
+  }) do
+    local rows={row(100,'ready','Player 1','Player 2',0,setup.phase,'','Setup','',0,0,'you','','p1',0,0,0,'','','','setup-match')}
+    for i,a in ipairs(setup.top) do rows[#rows+1]=row('A','top'..i,a[1],a[2],false,a[3]) end
+    for i,label in ipairs(labels) do rows[#rows+1]=row('A','history'..i,label,'red',i~=2,'minor') end
+    sim:sync(table.concat(rows,'\n'));frames(2,31)
+    local top,icons={},{}
+    for _,b in ipairs(sim.controls) do
+      if b.token and b.token:match('^top') then top[#top+1]=b elseif b.token and b.token:match('^history') then icons[#icons+1]=b end
+    end
+    assert(#top==#setup.top and #icons==5,setup.phase..' draws its choices and the history row')
+    for i,b in ipairs(icons) do
+      assert(b.label==labels[i] and b.w==b.h and b.y==icons[1].y and b.x+b.w<=sim.L.w)
+    end
+    for i,b in ipairs(top) do
+      assert(b.y==top[1].y and b.x>=0,setup.phase..' choices share one row')
+      if i>1 then assert(b.x>=top[i-1].x+top[i-1].w+5,setup.phase..' choices do not overlap') end
+    end
+    local last=top[#top]
+    assert(last.x+last.w<=(sim.L.portrait and icons[1].x or sim.L.w),setup.phase..' choices clear the history row')
+    if not sim.L.portrait then assert(icons[1].y>=top[1].y+top[1].h,'History sits under the choices') end
+    if setup.phase=='setup:chooseFirst' then
+      assert(last.icon=='dice' and last.w==last.h and last.setupChoice,'Random keeps the dice')
+      assert(top[1].setupChoice and top[2].setupChoice,'Named choices keep setup feedback')
+    end
+  end
+end
 print('PASS: Lua simulator draw paths for every table state and overlay kind in both layouts')

@@ -70,7 +70,7 @@ check(sim.menu==nil,'No prompt on the open table')
 sim:sync(fixture('sim_prompt.txt'))
 check(sim.gamePhase=='effect:choose' and sim.hint:find('Search your deck'),'Prompt header parsed')
 check(sim.menu and sim.menu.kind=='cards' and sim.menu.mandatory,'Search prompt is a mandatory card menu')
-check(#sim.menu.options>0 and #sim.menu.footer==1,'Prompt options and footer parsed')
+check(#sim.menu.options>0 and #sim.menu.footer==3,'Prompt options and footer parsed')
 for _,o in ipairs(sim.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and not o.disabled,'Option '..o.token..' names a card') end
 check(sim.menu.footer[1].label=='0/1','Footer counts the picks')
 check(next(sim.cardActions)==nil,'Card buttons hide behind the prompt')

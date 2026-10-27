@@ -324,6 +324,22 @@ export class LuaSimulator {
       ];
     return src.mode === "local" ? this.hotSeatSidebar(v, src) : this.remoteSidebar(v, src);
   }
+  /** A hot-seat prompt (a promotion, a card's choice) keeps Undo and Redo,
+   * which step out of it without answering. */
+  private withHistory(menu: SimMenu): SimMenu {
+    const history = this.source?.history;
+    if (!history || !menu.mandatory || menu.kind === "coin") return menu;
+    const step = (label: string, type: "undoAction" | "redoAction"): SimOption => ({
+      label,
+      colour: "red",
+      disabled: !history.canStep(type),
+      run: () => this.history(type),
+    });
+    return {
+      ...menu,
+      footer: [...(menu.footer ?? []), step("Undo", "undoAction"), step("Redo", "redoAction")],
+    };
+  }
   /** Both seats at one table: either player's choices, plus the game's history. */
   private hotSeatSidebar(v: RedactedGame, src: TableSource): SimOption[] {
     const seat = v.seat;
@@ -333,6 +349,26 @@ export class LuaSimulator {
       flags.includes("newgame")
         ? [{ label: "New game", colour: "red", slot, run: () => this.command("newgame") }]
         : [];
+    const step = (
+      label: string,
+      type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
+    ): SimOption => ({
+      label,
+      colour: "red",
+      slot: "minor",
+      disabled: !src.history?.canStep(type),
+      run: () => this.history(type),
+    });
+    // The undo/redo row, on the setup screens as well as the turn.
+    const history: SimOption[] = flags.includes("undo")
+      ? [
+          step("Undo turn", "undoTurn"),
+          step("Undo action", "undoAction"),
+          ...newGame("minor"),
+          step("Redo action", "redoAction"),
+          step("Redo turn", "redoTurn"),
+        ]
+      : [];
     if (p.kind === "setup:chooseFirst")
       return [
         {
@@ -356,6 +392,7 @@ export class LuaSimulator {
           ),
           slot: "minor",
         },
+        ...history,
       ];
     if (p.kind === "setup:place")
       return [
@@ -363,34 +400,15 @@ export class LuaSimulator {
           ...this.action("Ready", { type: "setupReady", seat }, seat === "p2" ? "red" : "blue"),
           slot: "primary",
         },
+        ...history,
       ];
-    if (p.kind === "turn:action") {
-      // Attacks, Retreat and Abilities live on the Active card's attached
-      // buttons; the panel keeps End turn and the undo/redo history.
-      const history = (
-        label: string,
-        type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
-      ): SimOption[] =>
-        flags.includes("undo")
-          ? [
-              {
-                label,
-                colour: "red",
-                slot: "minor",
-                disabled: !src.history?.canStep(type),
-                run: () => this.history(type),
-              },
-            ]
-          : [];
+    // Attacks, Retreat and Abilities live on the Active card's attached
+    // buttons; the panel keeps End turn and the undo/redo history.
+    if (p.kind === "turn:action")
       return [
         { ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" },
-        ...history("Undo turn", "undoTurn"),
-        ...history("Undo action", "undoAction"),
-        ...newGame("minor"),
-        ...history("Redo action", "redoAction"),
-        ...history("Redo turn", "redoTurn"),
+        ...history,
       ];
-    }
     if (p.kind === "gameOver") return newGame("danger");
     return [];
   }
@@ -750,7 +768,7 @@ export class LuaSimulator {
       if (!s.menu) cardActionRows(f, cardActions(v, this, staged));
     }
     sidebarRows(f, this.sidebar(), !!s.menu);
-    if (s.menu) menuRows(f, s.menu, s.menuId);
+    if (s.menu) menuRows(f, this.withHistory(s.menu), s.menuId);
     if (src) infoRows(f, src);
     this.handlers = f.handlers;
     this.boardArt = f.art;

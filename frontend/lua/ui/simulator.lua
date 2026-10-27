@@ -841,9 +841,37 @@ function Simulator:build()
   for _,a in ipairs((self.targeting or self.luaTargeting) and {} or self.actions) do
     if a.slot=='primary' then primaries[#primaries+1]=a elseif a.slot=='danger' then dangers[#dangers+1]=a else minors[#minors+1]=a end
   end
-  local history={}
-  for _,a in ipairs(minors) do history[a.label]=a end
-  if self.gamePhase=='setup:chooseFirst' and #primaries==2 and #minors<=1 and #dangers==0 then
+  -- The hot-seat history row: the turn's End turn, setup's Ready or its
+  -- first-player choice sit above it, or beside it on portrait.
+  local historyRow={{'Undo turn','rewind'},{'Undo action','undo'},{'New game','restart'},{'Redo action','redo'},{'Redo turn','fast_forward'}}
+  local history,others={},{}
+  for _,entry in ipairs(historyRow) do history[entry[1]]=true end
+  for _,a in ipairs(minors) do if history[a.label] then history[a.label]=a else others[#others+1]=a end end
+  local hasHistory=#primaries>0 and #dangers==0
+  for _,entry in ipairs(historyRow) do hasHistory=hasHistory and history[entry[1]]~=true end
+  local chooseFirst=self.gamePhase=='setup:chooseFirst'
+  if hasHistory and (#others==0 or chooseFirst and #others==1) then
+    local gap=6
+    local size=cl.horizontal and 44 or (cl.w-4*gap)/5
+    -- Slightly less space above End turn than below the history row.
+    local y=cl.horizontal and cl.y+8 or cl.y+(cl.h-44-gap-size)/2+1.8+3/2-2
+    local topW=cl.horizontal and cl.w-5*(size+gap) or cl.w
+    local bw=(topW-#others*(44+gap)-(#primaries-1)*gap)/#primaries
+    local x=cl.x
+    for _,a in ipairs(primaries) do
+      self:add(a.label,x,y,bw,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=chooseFirst and 22 or 24,setupChoice=chooseFirst or nil})
+      x=x+bw+gap
+    end
+    local dice=others[1]
+    if dice then self:add(dice.label,x,y,44,44,'invoke',dice.colour,{token=dice.token,disabled=dice.disabled,icon='dice',setupChoice=true}) end
+    x=cl.horizontal and cl.x+topW+gap or cl.x
+    if not cl.horizontal then y=y+44+gap end
+    for i,entry in ipairs(historyRow) do
+      local action=history[entry[1]]
+      self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',entry[2]=='restart' and T.gold or T.red,
+        {token=action.token,disabled=action.disabled,icon=entry[2]})
+    end
+  elseif chooseFirst and #primaries==2 and #minors<=1 and #dangers==0 then
     -- Online the coin winner gets Go first / Go second without the dice.
     local h,gap=44,6
     local bw=#minors==1 and (cl.w-h-2*gap)/2 or (cl.w-gap)/2
@@ -853,22 +881,6 @@ function Simulator:build()
     end
     local a=minors[1]
     if a then self:add(a.label,cl.x+2*(bw+gap),y,h,h,'invoke',a.colour,{token=a.token,disabled=a.disabled,icon='dice',setupChoice=true}) end
-  elseif #primaries==1 and #dangers==0 and #minors==5
-    and history['Undo turn'] and history['Undo action'] and history['New game'] and history['Redo action'] and history['Redo turn'] then
-    local gap=6
-    local size=cl.horizontal and 44 or (cl.w-4*gap)/5
-    -- Slightly less space above End turn than below the history row.
-    local y=cl.horizontal and cl.y+8 or cl.y+(cl.h-44-gap-size)/2+1.8+3/2-2
-    local a=primaries[1]
-    local primaryW=cl.horizontal and cl.w-5*(size+gap) or cl.w
-    self:add(a.label,cl.x,y,primaryW,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=24})
-    local x=cl.horizontal and cl.x+primaryW+gap or cl.x
-    if not cl.horizontal then y=y+44+gap end
-    for i,entry in ipairs({{'Undo turn','rewind'},{'Undo action','undo'},{'New game','restart'},{'Redo action','redo'},{'Redo turn','fast_forward'}}) do
-      local action=history[entry[1]]
-      self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',entry[2]=='restart' and T.gold or T.red,
-        {token=action.token,disabled=action.disabled,icon=entry[2]})
-    end
   elseif cl.horizontal then
     local all={}
     for _,a in ipairs(primaries) do all[#all+1]=a end

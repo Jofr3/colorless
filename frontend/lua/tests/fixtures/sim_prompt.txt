@@ -42,6 +42,8 @@ O	18	fix-wall	blue	false	false	fix-wall	p1%2329	false
 O	19	fix-attacker	blue	false	false	fix-attacker	p1%233	false
 O	20	fix-attacker	blue	false	false	fix-attacker	p1%230	false
 F	21	0%2F1	blue	false	false			false
+F	22	Undo	red	false	false			false
+F	23	Redo	red	true	false			false
 I	sv01-167	Trainer	Stadium							The%20Retreat%20Cost%20of%20each%20Basic%20Pok%C3%A9mon%20in%20play%20(both%20yours%20and%20your%20opponent's)%20is%20%7BC%7D%20less.				Beach%20Court
 I	fix-attacker	Pokemon		Basic	120	Fire	1					Bite%1FColorless%1F30%1F%1EFlame%1FFire%2CColorless%1F60%1F%1EYawn%1F%1F%1FYour%20opponent's%20Active%20Pok%C3%A9mon%20is%20now%20Asleep.%1ERage%1FColorless%1F10%2B%1FThis%20attack%20does%2010%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EFury%1FColorless%1F%1FThis%20attack%20does%2020%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EBounty%1FColorless%1F40%2B%1FThis%20attack%20does%2050%20more%20damage%20for%20each%20Prize%20card%20your%20opponent%20has%20taken.		fix-attacker
 I	sv01-197	Trainer	Tool							The%20attacks%20of%20the%20Pok%C3%A9mon%20this%20card%20is%20attached%20to%20do%2010%20more%20damage...				sv01-197
