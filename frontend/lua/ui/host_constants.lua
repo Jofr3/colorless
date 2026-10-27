@@ -15,6 +15,7 @@ return {
     onlineInput='__online_input.txt',
     page='__page.txt',
     preferences='__preferences.txt',
+    revisions='__mailbox_revisions.txt',
     sandbox='__sandbox.txt',
     sandboxInput='__sandbox_input.txt',
     settings='__settings.txt',

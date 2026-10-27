@@ -5,7 +5,7 @@
 // builder keeps speaking its own dialect (accented "Pokémon", "Stage 1",
 // "Pokémon Tool", …) unchanged.
 
-import { type Format, isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
+import { type Format, isBasicEnergy, isSpecialEnergy } from "@colorless/engine/rules";
 import type {
   Card,
   CardBrief,

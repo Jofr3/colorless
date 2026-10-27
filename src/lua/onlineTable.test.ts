@@ -12,7 +12,7 @@ import { driveSetup } from "@colorless/engine/testing";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import { LobbyClient } from "../online/lobbyClient";
 import { LuaOnline } from "./online";
-import { onlineGate, promptGate } from "./onlineTable";
+import { LuaOnlineMatch, onlineGate, promptGate } from "./onlineTable";
 import { LuaSimulator } from "./simulator";
 
 const CODE = "ABCD";
@@ -74,7 +74,7 @@ async function table(state: GameState = driveSetup(7, undefined, { first: "p1" }
     publish,
     simRoute,
     () => {},
-    (code) => online.matchSource(code),
+    (code) => online.matchSource(code, LuaOnlineMatch),
   );
   await online.command(`open\t${CODE}`);
   const fake = () => {
@@ -136,7 +136,7 @@ describe("LuaOnlineMatch", () => {
       publish,
       route,
       () => {},
-      (code) => online.matchSource(code),
+      (code) => online.matchSource(code, LuaOnlineMatch),
     );
     sim.command("open\tonline\tWXYZ");
     expect(route).toHaveBeenCalledWith("online", "WXYZ", true);

@@ -1,8 +1,8 @@
-import { DECK_SIZE } from "@colorless/engine";
+import { DECK_SIZE } from "@colorless/engine/rules";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
-import { prepareSandbox, SandboxSetupError } from "../game/prepareSandbox";
+import { SandboxSetupError } from "../game/sandboxSetupError";
 import { validSandboxDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import type { AccountStatus } from "./account";
@@ -22,7 +22,8 @@ export class LuaSandbox {
 
   constructor(
     private publish: (snapshot: string) => void,
-    private launch: (setup: LocalGameSetup) => void,
+    /** Resolves to the synchronous handoff, so nothing async sits between the last check and it. */
+    private loadLaunch: () => Promise<(setup: LocalGameSetup) => void>,
   ) {}
 
   session(status: AccountStatus, id: string) {
@@ -120,8 +121,12 @@ export class LuaSandbox {
       this.emit();
       try {
         // Fetch fresh contents and rerun the deck validation.
+        const [{ prepareSandbox }, launch] = await Promise.all([
+          import("../game/prepareSandbox"),
+          this.loadLaunch(),
+        ]);
         const setup = await prepareSandbox([...this.selected]);
-        if (live() && this.active) this.launch(setup);
+        if (live() && this.active) launch(setup);
       } catch (error) {
         if (!live()) return;
         this.message =

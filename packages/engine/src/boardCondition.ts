@@ -4,7 +4,6 @@ import {
   cardOfUid,
   evolveFromOf,
   hasPrintedAbility,
-  isBasicPokemon,
   isExOrV,
   isStage1Pokemon,
   isStage2Pokemon,
@@ -14,6 +13,7 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
+import { isBasicPokemon } from "./cardClasses";
 import {
   attackGateOf,
   countAttachedEnergy,

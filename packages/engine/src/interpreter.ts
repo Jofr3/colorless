@@ -3,11 +3,11 @@ import {
   benchMatches,
   cardOfUid,
   energyProvidesOf,
-  isBasicPokemon,
   matchesFilter,
   topCardOf,
   topUid,
 } from "./cards";
+import { isBasicPokemon } from "./cardClasses";
 import {
   benchLimitOf,
   countersMoveLocked,

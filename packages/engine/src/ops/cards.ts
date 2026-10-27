@@ -1,12 +1,6 @@
 import { conditionHolds } from "../boardCondition";
-import {
-  benchMatches,
-  cardOfUid,
-  evolveFromOf,
-  isBasicPokemon,
-  matchesFilter,
-  topUid,
-} from "../cards";
+import { benchMatches, cardOfUid, evolveFromOf, matchesFilter, topUid } from "../cards";
+import { isBasicPokemon } from "../cardClasses";
 import {
   inPlayCardOf,
   intoPlayOnlyViaOf,

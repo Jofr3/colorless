@@ -19,6 +19,8 @@ export const MAILBOXES = {
   onlineInput: "__online_input.txt",
   art: "__art.txt",
   transitionArt: "__transition_art.txt",
+  /** Each mailbox file and its revision, rewritten after every mailbox write. */
+  revisions: "__mailbox_revisions.txt",
 } as const;
 
 export type Mailbox = keyof typeof MAILBOXES;

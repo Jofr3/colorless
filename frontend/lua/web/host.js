@@ -45,15 +45,26 @@ let bridge;
 const unwrittenMailboxes = new Map();
 /** @type {Set<string>} */
 const mailboxFiles = new Set();
+// Lua reads only the revision list each frame (ui/mailbox.lua), so it is written after the data.
+/** @type {Map<string, number>} */
+const mailboxRevisions = new Map();
+let mailboxSerial = 0;
+/** @param {LoveRuntime} running @param {string} name @param {string} text */
+function replaceFile(running, name, text) {
+  if (mailboxFiles.has(name)) running.FS_unlink(`/${name}`);
+  running.FS_createDataFile("/", name, text, true, true);
+  mailboxFiles.add(name);
+}
 /** @param {string} name @param {string} text */
 function writeMailbox(name, text) {
-  if (!runtime) {
+  if (!runtime || !bridge) {
     unwrittenMailboxes.set(name, text);
     return;
   }
-  if (mailboxFiles.has(name)) runtime.FS_unlink(`/${name}`);
-  runtime.FS_createDataFile("/", name, text, true, true);
-  mailboxFiles.add(name);
+  replaceFile(runtime, name, text);
+  mailboxRevisions.set(name, ++mailboxSerial);
+  const list = [...mailboxRevisions].map(([file, revision]) => `${file}\t${revision}`);
+  replaceFile(runtime, bridge.mailboxes.revisions, list.join("\n"));
 }
 window.colorlessHost = {
   connect(connected) {
@@ -76,6 +87,16 @@ window.colorlessHost = {
 };
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 
+// Boot timings for devtools and scripts/bench-boot.ts.
+/** @type {Set<string>} */
+const bootMarks = new Set();
+/** @param {"love-start" | "data-loaded" | "ready"} name */
+function markBoot(name) {
+  if (bootMarks.has(name)) return;
+  bootMarks.add(name);
+  performance.mark(`colorless:${name}`);
+  if (name === "ready") performance.measure("colorless:boot", undefined, "colorless:ready");
+}
 /** @param {string} message */
 function fail(message) {
   document.body.classList.add("failed");
@@ -118,9 +139,11 @@ const loveModule = {
       return;
     }
     if (message === "COLORLESS:ready") {
+      markBoot("ready");
       updateLoadingProgress(100);
       ready = true;
       loading.style.display = "none";
+      void loadMusic();
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
@@ -140,6 +163,7 @@ const loveModule = {
     const download = message?.match(/\(([\d.]+)\/(\d+)\)/);
     if (download && Number(download[2]) > 0) {
       updateLoadingProgress(90 * Math.min(1, Number(download[1]) / Number(download[2])));
+      if (Number(download[1]) >= Number(download[2])) markBoot("data-loaded");
     }
   },
   onAbort: () => {
@@ -147,6 +171,28 @@ const loveModule = {
   },
 };
 globalThis.Module = loveModule;
+// Download and compile the runtime while the page's scripts load. love.js would start only once
+// Love() runs on window load, and a <link rel=preload> would hold that load event back and give
+// up the streaming compile.
+const runtimeUrl = loveModule.locateFile("love.wasm");
+const compiledRuntime = WebAssembly.compileStreaming(fetch(runtimeUrl)).catch(() =>
+  fetch(runtimeUrl)
+    .then((response) => response.arrayBuffer())
+    .then((bytes) => WebAssembly.compile(bytes)),
+);
+// instantiateWasm reports a failure; until love.js asks for the runtime nothing else listens.
+compiledRuntime.catch(() => {});
+loveModule.instantiateWasm = (imports, receive) => {
+  compiledRuntime
+    .then((module) =>
+      WebAssembly.instantiate(module, imports).then((instance) => receive(instance, module)),
+    )
+    .catch((error) => {
+      console.error(error);
+      fail("Could not download the menu. Reload to try again.");
+    });
+  return {};
+};
 // Boot invariant: Love() starts on window load, after every classic script
 // (game package, runtime) and the deferred bridge module have run, so Lua's
 // first print finds the bridge connected. A bridge that failed to run would
@@ -157,8 +203,11 @@ addEventListener("load", () => {
     fail("Could not load the menu. Reload to try again.");
     return;
   }
+  markBoot("love-start");
   Love(loveModule)
     .then(() => {
+      // A package served from the loader's IndexedDB cache reports no download progress.
+      markBoot("data-loaded");
       updateLoadingProgress(95);
       void prepareTransitionArt();
     })
@@ -198,6 +247,18 @@ addEventListener(
   },
   true,
 );
+
+// Lua starts the menu music once this file appears (main.lua's MUSIC).
+async function loadMusic() {
+  try {
+    const response = await fetch(loveModule.locateFile("music1.ogg"));
+    if (!response.ok) throw new Error(`music ${response.status}`);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    runtime?.FS_createDataFile("/assets/sounds", "music1.ogg", bytes, true, false);
+  } catch (error) {
+    console.error("[colorless] load music", error);
+  }
+}
 
 /** @type {Map<string, string>} */
 const artCache = new Map();

@@ -32,6 +32,10 @@ function formProblem(issue: FormIssue | undefined, mode: "login" | "register") {
   return mode === "register" ? "Passwords need at least 8 characters." : "Enter your password.";
 }
 
+/** How long a session check answers the page's navigation refreshes. A revoked session still
+ * surfaces at once: any 401 from another request re-checks through the session recovery. */
+export const SESSION_CHECK_MAX_AGE_MS = 60_000;
+
 /** The Lua scene owns the UI; this adapter shares the typed API client
  * and cookie session. No credentials or profile data go into localStorage. */
 export type AccountStatus = "loading" | "authenticated" | "anonymous" | "error";
@@ -45,6 +49,8 @@ export class LuaAccount {
   private revision = 0;
   /** A failed Google sign-in, shown once by the next anonymous refresh. */
   private authNotice = "";
+  /** When the server last answered who is signed in. */
+  private checkedAt = Number.NEGATIVE_INFINITY;
   constructor(private publish: (snapshot: string) => void) {}
 
   private emit() {
@@ -62,8 +68,9 @@ export class LuaAccount {
     );
   }
 
-  async refresh() {
-    if (this.busy) return;
+  /** Asks the server who is signed in, unless it answered within `maxAgeMs`. */
+  async refresh(maxAgeMs = 0) {
+    if (this.busy || Date.now() - this.checkedAt < maxAgeMs) return;
     const op = ++this.operation;
     this.busy = true;
     this.message = "";
@@ -73,10 +80,12 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = user;
       this.status = "authenticated";
+      this.checkedAt = Date.now();
     } catch (error) {
       if (op !== this.operation) return;
       this.user = null;
       this.status = error instanceof ApiError && error.status === 401 ? "anonymous" : "error";
+      this.checkedAt = this.status === "anonymous" ? Date.now() : Number.NEGATIVE_INFINITY;
       this.message =
         this.status === "error" ? "Could not reach the server. Try again." : this.authNotice;
       this.authNotice = "";
@@ -116,6 +125,7 @@ export class LuaAccount {
       if (error instanceof ApiError && error.status === 401) {
         this.user = null;
         this.status = "anonymous";
+        this.checkedAt = Date.now();
         this.message = "Your session expired. Sign in again.";
       } else {
         this.message =
@@ -146,6 +156,7 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = null;
       this.status = "anonymous";
+      this.checkedAt = Date.now();
       this.message = "";
     } catch {
       if (op === this.operation) this.message = "Could not sign out. Try again.";
@@ -187,6 +198,7 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = user;
       this.status = "authenticated";
+      this.checkedAt = Date.now();
       this.message = "";
     } catch (error) {
       if (op !== this.operation) return;
@@ -234,7 +246,7 @@ export class LuaAccount {
     const fields = decodeFields(raw);
     if (!fields) return;
     const [action, name] = fields;
-    if (action === "refresh") await this.refresh();
+    if (action === "refresh") await this.refresh(SESSION_CHECK_MAX_AGE_MS);
     if (action === "save" && name !== undefined) await this.save(name);
     if (action === "logout") await this.signOut();
     if (action === "google") await this.google();

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
-import { LuaAccount } from "./account";
+import { LuaAccount, SESSION_CHECK_MAX_AGE_MS } from "./account";
 import { encodeFields } from "./wire";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -21,6 +21,35 @@ describe("Lua account adapter", () => {
     await account.refresh();
     expect(account.status).toBe("error");
     expect(account.busy).toBe(false);
+  });
+  it("answers navigation refreshes from a recent session check", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const { calls } = stubFetch({ ...session, "POST /auth/logout": () => json({}) });
+      const { account } = setup();
+      const navigate = () => account.command(encodeFields(["refresh"]));
+      await account.refresh();
+      await navigate();
+      expect(calls).toEqual(["GET /auth/me"]);
+      vi.advanceTimersByTime(SESSION_CHECK_MAX_AGE_MS);
+      await navigate();
+      expect(calls).toEqual(["GET /auth/me", "GET /auth/me"]);
+      await account.refresh();
+      expect(calls).toHaveLength(3);
+      await account.command(encodeFields(["logout"]));
+      await navigate();
+      expect(account.status).toBe("anonymous");
+      expect(calls.at(-1)).toBe("POST /auth/logout");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("checks again after a failed session check", async () => {
+    const { calls } = stubFetch({ "GET /auth/me": () => json({}, 503) });
+    const { account } = setup();
+    await account.refresh();
+    await account.command(encodeFields(["refresh"]));
+    expect(calls).toEqual(["GET /auth/me", "GET /auth/me"]);
   });
   it("shows a failed Google sign-in once, on the next anonymous refresh", async () => {
     stubFetch({ "GET /auth/me": () => json({}, 401) });

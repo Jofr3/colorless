@@ -1,6 +1,6 @@
 import { initHost, type LocalGameSetup } from "../game/localHost";
 import { saveSimulator } from "../game/simulatorSave";
-import { SandboxSetupError } from "../game/prepareSandbox";
+import { SandboxSetupError } from "../game/sandboxSetupError";
 
 /** Hand off through the simulator save, including the initial event log.
  * Navigate only once the save is stored. */

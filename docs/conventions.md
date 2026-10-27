@@ -62,6 +62,12 @@ only the conclusion.
   a zod schema (`--check` fails on a value import from zod or the schema root). Schemas that only tests parse (`redactedGameSchema`, `lobbyServerMessageSchema`)
   sit in modules nothing on the Worker's runtime path imports, so the bundle drops them. A pure helper that
   would close a new cycle belongs in a lower module.
+- The web app's page bundle stays free of the rules interpreter: code that runs before a table
+  opens imports engine values from `@colorless/engine/rules` (deck rules, card classes, `DECK_SIZE`),
+  and the game table (`src/lua/simulator.ts`, the online table), sandbox setup and the builder's
+  simulation gaps load the full engine through `import()`. The bridge queues the table's commands
+  while its chunk loads (`LazyScreen`). Type-only imports from `@colorless/engine` are free;
+  `import-graph.ts --check` fails when the bridge's static imports reach the engine root.
 - Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
   module-level state that leaks between files; `app` covers everything else.

@@ -1,6 +1,7 @@
 import { BASIC_ENERGY_TYPES } from "@colorless/schema/constants";
 import type { Attack, Card } from "@colorless/schema";
 import type { Rejection } from "./actions";
+import { isBasicEnergy, isBasicPokemon, isSpecialEnergy } from "./cardClasses";
 import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
 import { normalizedFace } from "./cardText";
@@ -69,11 +70,6 @@ export function isFossilTop(state: GameState, pokemon: InPlayPokemon): boolean {
   return id !== undefined && FOSSIL_IDS.has(id);
 }
 
-/** `stage` uses the tcgdex vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
-export function isBasicPokemon(card: Pick<Card, "category" | "stage">): boolean {
-  return card.category === "Pokemon" && card.stage === "Basic";
-}
-
 export function handHasBasic(state: GameState, seat: Seat): boolean {
   return state.players[seat].hand.some((uid) => {
     const card = cardOfUid(state, uid);
@@ -118,32 +114,6 @@ export function isEvolutionPokemon(card: Card): boolean {
 /** Basic and Special energy both occupy the one attach per turn (§6.3). */
 export function isEnergyCard(card: Card): boolean {
   return card.category === "Energy";
-}
-
-/**
- * A Special Energy (§6.1): tagged "Special", or printing rules text. tcgdex tags some Special
- * Energies "Normal", and Basic Energy prints no rules text. An unauthored Special Energy degrades
- * to a plain Colorless provider.
- */
-export function isSpecialEnergy(card: EnergyFace): boolean {
-  return card.category === "Energy" && (card.energyType === "Special" || printsRulesText(card));
-}
-
-/**
- * The face fields the Basic/Special Energy test reads, so callers without a whole `Card` can use
- * it. A missing `effect` reads as no rules text.
- */
-export type EnergyFace = Pick<Card, "category" | "energyType"> & {
-  effect?: Card["effect"] | undefined;
-};
-
-/** A Basic Energy card (§6.1): tagged "Normal" and printing no rules text. */
-export function isBasicEnergy(card: EnergyFace): boolean {
-  return card.category === "Energy" && card.energyType === "Normal" && !isSpecialEnergy(card);
-}
-
-function printsRulesText(card: EnergyFace): boolean {
-  return (card.effect ?? "").trim() !== "";
 }
 
 /**

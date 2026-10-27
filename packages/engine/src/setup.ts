@@ -9,7 +9,8 @@ import type {
   SetupReadyAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { basicFromHandError, cardOfUid, handHasBasic, isBasicPokemon } from "./cards";
+import { basicFromHandError, cardOfUid, handHasBasic } from "./cards";
+import { isBasicPokemon } from "./cardClasses";
 import type { GameEvent } from "./events";
 import { startTurn } from "./flow";
 import { flipCoin, shuffle } from "./rng";

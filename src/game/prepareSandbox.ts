@@ -3,8 +3,7 @@ import type { DeckCard } from "@colorless/schema";
 import { getDeck } from "../lib/api";
 import { fetchCardPool } from "./cardPool";
 import type { LocalGameSetup } from "./localHost";
-
-export class SandboxSetupError extends Error {}
+import { SandboxSetupError } from "./sandboxSetupError";
 
 /** Expand `{cardId, count}` rows (the persisted Deck shape) into the flat id
     list createGame expects. */

@@ -68,11 +68,8 @@ export {
   energyProvidesOf,
   evolveFromOf,
   hpOf,
-  isBasicEnergy,
-  isBasicPokemon,
   isEnergyCard,
   isMegaEvolutionPokemonEx,
-  isSpecialEnergy,
   parseAttackDamage,
   pokemonSuffixOf,
   prizeValueOf,
@@ -82,13 +79,9 @@ export {
   topUid,
   weaknessOf,
 } from "./cards";
-export type {
-  DamageModifier,
-  EnergyFace,
-  ParsedDamage,
-  PokemonSuffix,
-  PreventedAttackerClass,
-} from "./cards";
+export { isBasicEnergy, isBasicPokemon, isSpecialEnergy } from "./cardClasses";
+export type { DamageModifier, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
+export type { EnergyFace } from "./cardClasses";
 export { normalizeCardText } from "./cardText";
 export {
   alliedRetreatDiscount,

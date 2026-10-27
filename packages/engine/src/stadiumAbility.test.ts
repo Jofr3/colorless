@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cardOfUid, hasRuleBox, isBasicPokemon } from "./cards";
+import { cardOfUid, hasRuleBox } from "./cards";
+import { isBasicPokemon } from "./cardClasses";
 import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import {

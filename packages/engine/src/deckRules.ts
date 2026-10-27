@@ -3,7 +3,7 @@
 // local play runs any deck `createGame` accepts.
 
 import type { Card } from "@colorless/schema";
-import { type EnergyFace, isBasicEnergy, isBasicPokemon } from "./cards";
+import { type EnergyFace, isBasicEnergy, isBasicPokemon } from "./cardClasses";
 import { DECK_SIZE } from "./types";
 
 export interface Format {

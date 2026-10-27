@@ -3,11 +3,11 @@ import {
   activeTop,
   cardOfUid,
   energyProvidesOf,
-  isBasicEnergy,
   matchesFilter,
   preventsAttackerBanner,
   topUid,
 } from "./cards";
+import { isBasicEnergy } from "./cardClasses";
 import {
   attackBlockOf,
   attackerHasSpecialEnergy,

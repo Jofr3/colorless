@@ -22,7 +22,7 @@ import {
 } from "../online/session";
 import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
-import { type CardPool, LuaOnlineMatch } from "./onlineTable";
+import type { CardPool, LuaOnlineMatch } from "./onlineTable";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
 import { epochGuard } from "./epochGuard";
@@ -193,14 +193,15 @@ export class LuaOnline {
     if (this.surface === "match") this.release();
   }
 
-  /** The table source for the live match on `code`; null sends the simulator
-   * back to the modal, which resumes the lobby and routes again. */
-  matchSource(code: string): LuaOnlineMatch | null {
+  /** The table source for the live match on `code`, built with the table's `Match` class (loaded
+   * with the table); null sends the simulator back to the modal, which resumes the lobby and
+   * routes again. */
+  matchSource(code: string, Match: typeof LuaOnlineMatch): LuaOnlineMatch | null {
     const c = this.client;
     if (!c || c.code !== code || !this.live(c)) return null;
     const client = this.attach(code);
     if (!client) return null;
-    return new LuaOnlineMatch(
+    return new Match(
       client,
       {
         serial: () => this.serial,

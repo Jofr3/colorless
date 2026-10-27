@@ -14,11 +14,11 @@ import {
   basicFromHandError,
   cardOfUid,
   evolveFromOf,
-  isBasicPokemon,
   isEnergyCard,
   isFossilTop,
   topUid,
 } from "./cards";
+import { isBasicPokemon } from "./cardClasses";
 import {
   aceSpecPlayBarred,
   benchLimitOf,
