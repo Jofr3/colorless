@@ -205,6 +205,7 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
     coverCardId: null,
     position: (positionRows[0]?.min ?? 1) - 1,
     updated: new Date(),
+    version: 0,
   };
   await db.batch([db.insert(decks).values(row), ...deckCardInserts(db, row.id, body.cards)]);
   return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);

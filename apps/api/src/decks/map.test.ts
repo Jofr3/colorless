@@ -12,6 +12,7 @@ const deckRow: DeckRow = {
   coverCardId: null,
   position: -3,
   updated: new Date("2026-07-09T12:34:56.000Z"),
+  version: 0,
 };
 
 describe("mapDeckRow", () => {
