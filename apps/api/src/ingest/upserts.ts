@@ -3,10 +3,13 @@
 // is the CLI's job.
 
 import type { CardRow, SeriesRow, SetRow } from "./map";
-import { buildUpsertSql, type SqlColumnSpec } from "./sql";
+import { buildUpsertSql, chunk, escapeSqlText, type SqlColumnSpec } from "./sql";
 
 /** Keep card upsert files modest for `wrangler d1 execute --file` (§3.4). */
 export const CARDS_PER_CHUNK = 100;
+
+/** D1 refuses a statement over 100 KB; the margin covers the encoding of the file around it. */
+export const MAX_STATEMENT_BYTES = 90_000;
 
 // Specs are exported for the round-trip test in ./upserts.test.ts.
 export const SERIES_COLUMNS: readonly SqlColumnSpec<SeriesRow>[] = [
@@ -60,17 +63,19 @@ export const CARDS_COLUMNS: readonly SqlColumnSpec<CardRow>[] = [
     name: "legal_standard_effective",
     key: "legalStandardEffective",
     kind: "boolean",
-    derived: true,
+    insertOnly: true,
   },
   {
     name: "legal_expanded_effective",
     key: "legalExpandedEffective",
     kind: "boolean",
-    derived: true,
+    insertOnly: true,
   },
   { name: "variants_json", key: "variantsJson", kind: "json" },
   { name: "image_url", key: "imageUrl", kind: "text" },
-  { name: "updated", key: "updated", kind: "text" },
+  // Stored for reference only; tcgdex re-stamps whole sets at once, so comparing it would rewrite
+  // every row of a set whose cards did not change.
+  { name: "updated", key: "updated", kind: "text", derived: true },
 ];
 
 export function seriesUpsertSql(rows: readonly SeriesRow[]): string {
@@ -85,18 +90,40 @@ export function cardsUpsertSql(rows: readonly CardRow[]): string {
   return buildUpsertSql("cards", CARDS_COLUMNS, rows);
 }
 
-/** The reprint-rule post-pass, run once over the WHOLE table after every
-    set's upsert: a print is effectively legal in a format when any print
-    sharing its `print_key` is legal there per tcgdex. Whole-table on purpose —
-    a partial `--sets` ingest can still flip a rotated print elsewhere legal.
-    Only rows whose verdict changes are written. */
-export function reprintLegalitySql(): string {
+/**
+ * The card upserts for `rows`: CARDS_PER_CHUNK rows a statement, halved until each statement fits
+ * MAX_STATEMENT_BYTES, so a text-dense set fails here rather than on the remote database alone.
+ */
+export function cardsUpsertStatements(
+  rows: readonly CardRow[],
+  maxBytes = MAX_STATEMENT_BYTES,
+): string[] {
+  const fit = (part: readonly CardRow[]): string[] => {
+    const sql = cardsUpsertSql(part);
+    if (new TextEncoder().encode(sql).length <= maxBytes) return [sql];
+    if (part.length === 1) {
+      throw new Error(`card ${part[0]?.id} alone makes a ${maxBytes}+ byte statement`);
+    }
+    const half = Math.ceil(part.length / 2);
+    return [...fit(part.slice(0, half)), ...fit(part.slice(half))];
+  };
+  return chunk(rows, CARDS_PER_CHUNK).flatMap(fit);
+}
+
+/** The reprint-rule post-pass: a print is effectively legal in a format when any print sharing
+    its `print_key` is legal there per tcgdex. The CLI appends it scoped to each set's file, so the
+    set's rows are right in the same import that upserts them, and runs it over the WHOLE table
+    after every set, because a partial `--sets` ingest can still flip a rotated print elsewhere
+    legal. Twins are looked up across the whole table either way. Only rows whose verdict changes
+    are written. */
+export function reprintLegalitySql(setId?: string): string {
   const twin = (flag: "legal_standard" | "legal_expanded") =>
     `EXISTS (SELECT 1 FROM cards AS twin WHERE twin.print_key = cards.print_key AND twin.${flag} = 1)`;
+  const scope = setId === undefined ? "" : `\n  AND set_id = ${escapeSqlText(setId)}`;
   return `UPDATE cards SET
   legal_standard_effective = ${twin("legal_standard")},
   legal_expanded_effective = ${twin("legal_expanded")}
-WHERE print_key IS NOT NULL
+WHERE print_key IS NOT NULL${scope}
   AND (legal_standard_effective IS NOT ${twin("legal_standard")}
     OR legal_expanded_effective IS NOT ${twin("legal_expanded")});
 `;

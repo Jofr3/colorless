@@ -6,13 +6,15 @@
 export type SqlColumnKind = "text" | "number" | "boolean" | "json";
 
 /** One column of a generated upsert: SQL name, row property, value kind. A `derived` column is
-    rewritten by a later pass, so it is written but not compared when deciding whether a row
-    changed. */
+    written but not compared when deciding whether a row changed. An `insertOnly` column is
+    written when the row is new and never overwritten afterwards: a later pass owns it, and an
+    upsert that reset it would expose the reset until that pass ran. */
 export interface SqlColumnSpec<Row> {
   name: string;
   key: keyof Row;
   kind: SqlColumnKind;
   derived?: true;
+  insertOnly?: true;
 }
 
 /**
@@ -66,10 +68,10 @@ export function sqlLiteral(value: unknown, kind: SqlColumnKind): string {
 
 /**
  * Build one multi-row upsert. Every column is listed for every row (mapping
- * emits explicit nulls), and `ON CONFLICT(id) DO UPDATE` overwrites all
- * non-id columns from `excluded` so reruns converge on the latest upstream
- * state, but only for a row whose non-derived columns changed: an unchanged
- * row is not rewritten. With no non-derived column to compare, every row is. Callers chunk rows (see `chunk`) before building.
+ * emits explicit nulls), and `ON CONFLICT(id) DO UPDATE` overwrites every
+ * non-id, non-insertOnly column from `excluded` so reruns converge on the
+ * latest upstream state, but only for a row whose compared columns changed: an
+ * unchanged row is not rewritten. With no non-derived column to compare, every row is. Callers chunk rows (see `chunk`) before building.
  */
 export function buildUpsertSql<Row>(
   table: string,
@@ -91,7 +93,7 @@ export function buildUpsertSql<Row>(
     });
     return `(${values.join(", ")})`;
   });
-  const updated = columns.filter((column) => column.name !== "id");
+  const updated = columns.filter((column) => column.name !== "id" && !column.insertOnly);
   const updates = updated
     .map((column) => `"${column.name}" = excluded."${column.name}"`)
     .join(",\n  ");

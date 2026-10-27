@@ -19,9 +19,7 @@ import {
 import type { z } from "zod";
 import { CATALOG_EPOCH_KEY } from "../src/catalog/epoch";
 import {
-  CARDS_PER_CHUNK,
-  cardsUpsertSql,
-  chunk,
+  cardsUpsertStatements,
   mapCard,
   mapSerie,
   mapSet,
@@ -170,22 +168,53 @@ function writeSqlFile(label: string, sql: string): string {
   return path;
 }
 
+/** Rows written by every remote apply so far; null once one reported no count. Local wrangler
+    prints no count, so a local run never learns it. */
+let rowsWritten: number | null = args.remote ? 0 : null;
+
+/** The `rows_written` a `wrangler d1 execute --json` printed, or null when it printed none. */
+function rowsWrittenOf(stdout: string): number | null {
+  try {
+    const statements = JSON.parse(stdout) as { meta?: { rows_written?: unknown } }[];
+    const counts = statements.map((statement) => statement.meta?.rows_written);
+    return counts.every((n) => typeof n === "number")
+      ? counts.reduce<number>((sum, n) => sum + (n as number), 0)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Applies a file through `--file`, which on --remote goes through D1's import API: the whole
+    file is one transaction, and the database answers no queries while it runs (seconds a set). */
 function applySqlFile(path: string): void {
+  applySql(path, ["--file", path]);
+}
+
+/** Applies one statement through `--command`, which on --remote is an ordinary query and so does
+    not make the database unavailable the way an import does. The file is written for the record. */
+function applySqlCommand(path: string, sql: string): void {
+  applySql(path, ["--command", sql]);
+}
+
+function applySql(path: string, input: readonly string[]): void {
   if (dryRun) {
     console.log(`  dry-run: would apply ${path}`);
     return;
   }
   const result = spawnSync(
     "bunx",
-    ["wrangler", "d1", "execute", DATABASE, d1Target, "--yes", "--file", path],
-    { cwd: API_ROOT, encoding: "utf8" },
+    ["wrangler", "d1", "execute", DATABASE, d1Target, "--yes", "--json", ...input],
+    { cwd: API_ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
   if (result.status !== 0) {
     console.error(result.stdout);
     console.error(result.stderr);
     throw new Error(`wrangler d1 execute failed for ${path}`);
   }
-  console.log(`  applied ${path}`);
+  const written = rowsWrittenOf(result.stdout);
+  if (rowsWritten !== null) rowsWritten = written === null ? null : rowsWritten + written;
+  console.log(`  applied ${path}${written === null ? "" : ` (${written} rows written)`}`);
 }
 
 /** Stamps a new catalog epoch in the CACHE namespace of the same target, which retires every
@@ -255,7 +284,8 @@ if (args.remote && !dryRun) recordBookmark(`ingest ${setIds.join(",")}`);
 
 // Phase B — series first (sets FK-reference them).
 console.log(`series: ${serieRowsSource.map((serie) => serie.id).join(", ")}`);
-applySqlFile(writeSqlFile("series", seriesUpsertSql(serieRowsSource.map(mapSerie))));
+const seriesSql = seriesUpsertSql(serieRowsSource.map(mapSerie));
+applySqlCommand(writeSqlFile("series", seriesSql), seriesSql);
 
 // Phase C — one set at a time: fetch + validate every card, then write the set
 // row and its card chunks to one file and apply it.
@@ -302,8 +332,10 @@ for (const setId of setIds) {
 
     const rows = cardPayloads.map(mapCard);
     weakless.push(...weaklessLegalPokemon(rows));
-    const chunks = chunk(rows, CARDS_PER_CHUNK);
-    const statements = [setsUpsertSql([mapSet(set)]), ...chunks.map(cardsUpsertSql)];
+    const chunks = cardsUpsertStatements(rows);
+    // The set-scoped reprint pass rides in the same file, so the import that upserts the set's
+    // cards also settles their effective legality.
+    const statements = [setsUpsertSql([mapSet(set)]), ...chunks, reprintLegalitySql(setId)];
     applySqlFile(writeSqlFile(`set-${setId}`, statements.join("\n\n")));
     outcomes.push({
       setId,
@@ -325,12 +357,27 @@ for (const setId of setIds) {
   }
 }
 
-// Phase D — the reprint rule over the whole table (see reprintLegalitySql).
+// Phase D — the reprint rule over the whole table (see reprintLegalitySql). Each set's file
+// already settled its own rows, so a failure here leaves only other sets' twins stale.
 console.log("\nreprint legality:");
-applySqlFile(writeSqlFile("reprint-legality", reprintLegalitySql()));
+let postPassFailed = false;
+try {
+  const postPass = reprintLegalitySql();
+  applySqlCommand(writeSqlFile("reprint-legality", postPass), postPass);
+} catch (error) {
+  postPassFailed = true;
+  console.error(`  failed: ${error instanceof Error ? error.message : String(error)}`);
+}
 
+// A remote run that wrote nothing changed no response, so it keeps the cached pages and the KV
+// writes that refilling them would spend. A run with an unknown count stamps.
 console.log("\ncatalog cache:");
-const epochStamped = stampCatalogEpoch();
+let epochStamped = true;
+if (rowsWritten === 0 && !dryRun) {
+  console.log(`  0 rows written: ${CATALOG_EPOCH_KEY} left as it was`);
+} else {
+  epochStamped = stampCatalogEpoch();
+}
 
 // --- summary -------------------------------------------------------------------
 
@@ -346,6 +393,7 @@ for (const outcome of outcomes) {
 }
 console.log(
   `\ntotal: ${outcomes.length} set(s), ${totalCards} cards, ` +
+    `${rowsWritten === null ? "" : `${rowsWritten} rows written, `}` +
     `${source.requestCount} tcgdex requests via ${source.transport} ` +
     `(${cachedPayloads} payloads from the disk cache), ` +
     `${((Date.now() - startedAt) / 1000).toFixed(1)}s${dryRun ? " (dry-run: nothing applied)" : ""}`,
@@ -360,12 +408,18 @@ if (weakless.length > 0) {
 if (failedSets.length > 0) {
   console.error(`${failedSets.length} set(s) failed: ${failedSets.map((o) => o.setId).join(", ")}`);
 }
+if (postPassFailed) {
+  console.error(
+    "the whole-table reprint pass failed: rerun the same command (unchanged rows are skipped) " +
+      "so reprints in other sets pick up this run's legality",
+  );
+}
 if (!epochStamped) {
   console.error(
     `could not stamp ${CATALOG_EPOCH_KEY}: cached catalog responses stay up to a day — rerun ` +
       `\`wrangler kv key put ${CATALOG_EPOCH_KEY} <new value> --binding CACHE ${d1Target}\``,
   );
 }
-if (failedSets.length > 0 || weakless.length > 0 || !epochStamped) {
+if (failedSets.length > 0 || weakless.length > 0 || !epochStamped || postPassFailed) {
   process.exit(1);
 }

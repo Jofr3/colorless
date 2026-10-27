@@ -97,7 +97,8 @@ export const cards = sqliteTable(
     variantsJson: text("variants_json", { mode: "json" }).$type<TcgdexVariants>(),
     /** tcgdex origin image base URL, extensionless (§4.4: append `/high.webp` etc.). */
     imageUrl: text("image_url"),
-    /** tcgdex `updated` ISO timestamp, verbatim — ingest skips unchanged rows. */
+    /** tcgdex `updated` ISO timestamp, verbatim. Nothing reads it, and ingest does not compare
+        it: tcgdex re-stamps whole sets at once. */
     updated: text("updated"),
   },
   // Each /cards sort and the exact-name lookup read an index in its own order, so a page

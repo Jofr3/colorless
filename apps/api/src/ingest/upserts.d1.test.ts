@@ -69,4 +69,30 @@ describe("ingest upserts on D1", () => {
     expect(await run(cardsUpsertSql([rotatedTrainer, legalReprint]))).toBe(0);
     expect(await effectiveStandard(rotatedTrainer.id)).toBe(1);
   });
+
+  it("keeps a reprint-raised verdict when its print is re-upserted", async () => {
+    await seedSet();
+    await run(cardsUpsertSql([rotatedTrainer, legalReprint]));
+    await run(reprintLegalitySql());
+    // A real upstream change rewrites the row; its own flag must not reset the raised verdict.
+    await run(cardsUpsertSql([{ ...rotatedTrainer, illustrator: "Someone Else" }]));
+    expect(await effectiveStandard(rotatedTrainer.id)).toBe(1);
+  });
+
+  it("settles a new print's verdict with the set-scoped pass alone", async () => {
+    await seedSet();
+    // Catalog rows outlive each test here, so the new print takes an id no other test wrote.
+    const newPrint: CardRow = { ...rotatedTrainer, id: "sv01-998", localId: "998" };
+    await run(cardsUpsertSql([legalReprint]));
+    await run(cardsUpsertSql([newPrint]));
+    expect(await effectiveStandard(newPrint.id)).toBe(0);
+    expect(await run(reprintLegalitySql(newPrint.setId))).toBeGreaterThan(0);
+    expect(await effectiveStandard(newPrint.id)).toBe(1);
+  });
+
+  it("does not rewrite a row whose only change is tcgdex's updated stamp", async () => {
+    await seedSet();
+    await run(cardsUpsertSql([pokemon]));
+    expect(await run(cardsUpsertSql([{ ...pokemon, updated: "2099-01-01T00:00:00Z" }]))).toBe(0);
+  });
 });

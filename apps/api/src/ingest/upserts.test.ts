@@ -19,6 +19,7 @@ import type { SqlColumnSpec } from "./sql";
 import {
   CARDS_COLUMNS,
   cardsUpsertSql,
+  cardsUpsertStatements,
   reprintLegalitySql,
   SERIES_COLUMNS,
   seriesUpsertSql,
@@ -222,5 +223,35 @@ describe("reprintLegalitySql", () => {
       "legal_expanded_effective = EXISTS (SELECT 1 FROM cards AS twin WHERE twin.print_key = cards.print_key AND twin.legal_expanded = 1)",
     );
     expect(sql).toContain("WHERE print_key IS NOT NULL");
+  });
+
+  it("scopes the rows it rewrites to one set, still finding twins anywhere", () => {
+    const sql = reprintLegalitySql("sv'01");
+    expect(sql).toContain("WHERE print_key IS NOT NULL\n  AND set_id = 'sv''01'");
+    expect(sql).toContain("FROM cards AS twin WHERE twin.print_key = cards.print_key AND");
+    expect(sql).not.toContain("twin.set_id");
+  });
+});
+
+describe("cardsUpsertStatements", () => {
+  const rows = Array.from({ length: 7 }, (_, i) => ({ ...hostileCard, id: `test-${i}` }));
+
+  it("keeps a statement per CARDS_PER_CHUNK rows while they fit", () => {
+    expect(cardsUpsertStatements(rows)).toEqual([cardsUpsertSql(rows)]);
+  });
+
+  it("halves a statement until each fits the byte budget, keeping every row once", () => {
+    const budget = new TextEncoder().encode(cardsUpsertSql(rows.slice(0, 3))).length;
+    const statements = cardsUpsertStatements(rows, budget);
+    expect(statements.length).toBeGreaterThan(1);
+    for (const sql of statements) {
+      expect(new TextEncoder().encode(sql).length).toBeLessThanOrEqual(budget);
+    }
+    const ids = statements.flatMap((sql) => [...sql.matchAll(/\('(test-\d)'/g)].map((m) => m[1]));
+    expect(ids).toEqual(rows.map((row) => row.id));
+  });
+
+  it("refuses a single row larger than the budget", () => {
+    expect(() => cardsUpsertStatements(rows, 100)).toThrow("test-0");
   });
 });

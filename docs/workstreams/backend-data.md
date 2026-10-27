@@ -168,6 +168,22 @@ rerun after a partial failure) is always safe. A card whose payload fails Zod
 validation aborts **that set only**, printing the offending ids and their zod
 issues; the run exits non-zero if any set failed.
 
+What each run writes (2026-10-27):
+- Each set is one file: the set row, its cards in statements under 90 KB
+  (D1 refuses 100 KB), and the reprint pass scoped to that set, so one import
+  upserts the cards and settles their effective legality together. An upsert
+  never overwrites `legal_*_effective` on an existing row; the passes own it.
+  A row whose only change is tcgdex's `updated` stamp is not rewritten.
+- The series upsert and the whole-table reprint pass go through `--command`.
+  If that pass fails, rerun the same command: unchanged rows are skipped.
+- **`--remote` imports each set file**, and wrangler warns that the database
+  answers no queries while an import runs (a few seconds a set; 30 sets for a
+  full refresh). Run remote ingests at low traffic (user decision, 2026-10-27).
+  Each remote run first records a Time Travel bookmark (§3.7.3), prints the
+  rows written per file, and does not stamp `catalog:epoch` when it wrote no
+  rows, so cached pages and the KV writes to refill them survive a no-op run.
+  Run `bun run db:check -- --remote` afterwards.
+
 #### 3.4.2 Transport seam — `--transport=fetch|sdk` (D188)
 
 Network access lives behind `apps/api/src/ingest/source.ts`, a three-method

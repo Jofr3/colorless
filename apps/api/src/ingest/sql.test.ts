@@ -127,6 +127,24 @@ WHERE "demo"."name" IS NOT excluded."name"
     expect(sql).not.toContain('"demo"."active" IS NOT');
   });
 
+  it("inserts an insertOnly column but never overwrites or compares it", () => {
+    const columns: readonly SqlColumnSpec<DemoRow>[] = [
+      { name: "id", key: "id", kind: "text" },
+      { name: "name", key: "name", kind: "text" },
+      { name: "active", key: "active", kind: "boolean", insertOnly: true },
+    ];
+    const sql = buildUpsertSql("demo", columns, [
+      { id: "a-1", name: "Ann", count: null, active: true, tags: null },
+    ]);
+    expect(sql).toBe(
+      `INSERT INTO "demo" ("id", "name", "active") VALUES
+('a-1', 'Ann', 1)
+ON CONFLICT("id") DO UPDATE SET
+  "name" = excluded."name"
+WHERE "demo"."name" IS NOT excluded."name";`,
+    );
+  });
+
   it("rewrites every row when only derived columns would be compared", () => {
     const columns: readonly SqlColumnSpec<DemoRow>[] = [
       { name: "id", key: "id", kind: "text" },
