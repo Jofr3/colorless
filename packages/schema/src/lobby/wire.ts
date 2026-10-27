@@ -9,7 +9,7 @@ import { cleanDisplayName } from "../displayName";
 import { wireActionSchema } from "../match/action";
 import { stripControlChars } from "../text";
 import type { Equals } from "./equals";
-import { LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX, LOBBY_NAME_MAX } from "./protocol";
+import { LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX } from "./protocol";
 import type {
   LobbyIntent,
   LobbyMessage,
