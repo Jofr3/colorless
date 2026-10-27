@@ -8,9 +8,11 @@
 // boundary (the /health pattern) so row/schema drift fails loudly instead of
 // leaking. Paired queries (page + count, set + its cards)
 // go through db.batch() — one D1 round trip — except a free-text page, which
-// carries its own count (cardsCountedPageStatement).
+// carries its own count (cardsCountedPageStatement). A /cards query that scans
+// is limited per IP and its rows read are logged (./searchLimit.ts).
 
 import {
+  CACHED_CARDS_PAGE_SIZES,
   type CardBrief,
   type CardsQuery,
   cardBriefSchema,
@@ -37,7 +39,13 @@ import { cards, series, sets } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";
 import { facetVocabulary } from "../sentinel";
-import { catalogHttpCache, catalogPathCache, catalogQueryCache, catalogUncached } from "./cache";
+import {
+  bypassesCache,
+  catalogHttpCache,
+  catalogPathCache,
+  catalogQueryCache,
+  catalogUncached,
+} from "./cache";
 import {
   type CardBriefRow,
   cardBriefColumns,
@@ -48,6 +56,7 @@ import {
   mapSetRow,
 } from "./map";
 import { buildCardsWhere, cardIdIn, cardsOrder } from "./query";
+import { catalogSearchLimit, countingReads, recordCatalogReads } from "./searchLimit";
 
 export const catalogRoutes = new Hono<{ Bindings: Env }>();
 
@@ -100,18 +109,45 @@ async function cardsPage(
   db: DrizzleD1Database,
   query: CardsQuery,
 ): Promise<{ rows: CardBriefRow[]; total: number }> {
+  // Every statement runs as a batch, the drizzle path whose results carry `rows_read`.
   const [page, matches] = cardsPageStatements(db, query);
-  if (query.total !== undefined) return { rows: await page, total: query.total };
+  if (query.total !== undefined) {
+    const [rows] = await db.batch([page]);
+    return { rows, total: query.total };
+  }
   if (FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined)) {
-    const rows = await cardsCountedPageStatement(db, query);
+    const [rows] = await db.batch([cardsCountedPageStatement(db, query)]);
     const counted = rows[0]?.total;
     if (counted !== undefined) return { rows, total: counted };
     // A page past the last match has no row to carry the count, so only it is counted apart.
     if (query.page === 1) return { rows, total: 0 };
-    return { rows, total: (await matches)[0]?.total ?? 0 };
+    const [totals] = await db.batch([matches]);
+    return { rows, total: totals[0]?.total ?? 0 };
   }
   const [rows, totals] = await db.batch([page, matches]);
   return { rows, total: totals[0]?.total ?? 0 };
+}
+
+/** Whether KV may store a /cards page: one of the first MAX_CACHED_CARDS_PAGE, at a page size a
+    client uses, and not carrying a passed-back `total`, which is echoed into the body. */
+export function cardsCacheable(query: CardsQuery): boolean {
+  return (
+    query.page <= MAX_CACHED_CARDS_PAGE &&
+    query.total === undefined &&
+    CACHED_CARDS_PAGE_SIZES.includes(query.pageSize)
+  );
+}
+
+/**
+ * Whether a /cards query reads D1 on every request with nothing bounding its reads: it bypasses
+ * KV, and it names neither ids nor an exact name. Those two are index lookups that read about one
+ * row per match whatever else the query carries (queryPlan.d1.test.ts), and the decklist import
+ * sends one exact lookup per line, so they are not limited.
+ */
+export function cardsQueryScans(query: CardsQuery): boolean {
+  return (
+    query.id === undefined && query.nameExact === undefined && bypassesCache(query, cardsCacheable)
+  );
 }
 
 /** A set's cards in collector order. */
@@ -127,14 +163,13 @@ catalogRoutes.get(
   "/cards",
   catalogHttpCache,
   validate("query", cardsQuerySchema),
-  // A passed-back `total` is echoed into the body, so a page that carries one is never stored.
-  catalogQueryCache(
-    cardsQuerySchema,
-    (query) => query.page <= MAX_CACHED_CARDS_PAGE && query.total === undefined,
-  ),
+  catalogSearchLimit(cardsQueryScans),
+  catalogQueryCache(cardsQuerySchema, cardsCacheable),
   async (c) => {
     const query = c.req.valid("query");
-    const { rows, total } = await cardsPage(drizzle(c.env.DB), query);
+    const reads = { rows: 0 };
+    const { rows, total } = await cardsPage(drizzle(countingReads(c.env.DB, reads)), query);
+    if (bypassesCache(query, cardsCacheable)) recordCatalogReads(query, reads.rows);
     const payload: Paginated<CardBrief> = {
       items: rows.map(mapCardBriefRow),
       page: query.page,

@@ -112,6 +112,30 @@ describe("catalog query plans", () => {
     expect(await rowsRead(total)).toBeLessThanOrEqual(matches + 1);
   });
 
+  it("bounds an id or exact-name query by its index whatever else it carries", async () => {
+    // Why the per-IP search limit leaves these two out (catalog/searchLimit.ts).
+    const matches = TOTAL_CARDS / NAMES.length;
+    const bounded = {
+      "id=sv01-001&id=sv06-120&name=zz&sort=name&page=9&pageSize=100": 2,
+      "id=sv02-007&text=zz&hpMin=500&sort=hp-desc": 1,
+      "nameExact=pokemon 07&text=zz&sort=hp-desc&page=5&pageSize=100": matches,
+      "nameExact=pokemon 07&name=zz&legal=standard&sort=name": matches,
+    };
+    for (const [search, rows] of Object.entries(bounded)) {
+      const query = cardsQuery(search);
+      for (const statement of [
+        ...cardsPageStatements(db(), query),
+        cardsCountedPageStatement(db(), query),
+      ]) {
+        expect(await planOf(statement)).toMatch(
+          /SEARCH cards USING (COVERING )?INDEX (sqlite_autoindex_cards_1|cards_name_lower_idx)/,
+        );
+        // Each match, once more through the window's buffer, plus the json_each ids.
+        expect(await rowsRead(statement)).toBeLessThanOrEqual(2 * rows + 3);
+      }
+    }
+  });
+
   it("pages one set by searching the (set, local id) index", async () => {
     const [page, total] = cardsPageStatements(db(), cardsQuery("set=sv03"));
     const plan = await planOf(page);

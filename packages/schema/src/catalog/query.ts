@@ -27,6 +27,13 @@ export const MAX_ID_VALUES = 100;
 export const MAX_FILTER_VALUES = 30;
 export const MAX_FILTER_VALUES_TOTAL = 60;
 
+/**
+ * The deepest row a GET /cards page may start at: `(page - 1) * pageSize`. D1 reads every skipped
+ * row, so a deep page costs its offset, and a caller paging past this narrows its filters instead.
+ * The builder stops its pager here (8 cards a page: page 126).
+ */
+export const MAX_CARDS_OFFSET = 1000;
+
 /** A repeatable vocabulary filter, OR-ed within its dimension. */
 const multiParam = repeatable.pipe(z.array(param).max(MAX_FILTER_VALUES));
 
@@ -99,6 +106,15 @@ export const cardsQuerySchema = z
     total: z.coerce.number<number>().int().min(0).optional(),
   })
   .check((ctx) => {
+    const offset = (ctx.value.page - 1) * ctx.value.pageSize;
+    if (offset > MAX_CARDS_OFFSET) {
+      ctx.issues.push({
+        code: "custom",
+        message: `page ${ctx.value.page} at ${ctx.value.pageSize} a page skips more than ${MAX_CARDS_OFFSET} cards; narrow the filters`,
+        input: ctx.value,
+        path: ["page"],
+      });
+    }
     const values = VOCABULARY_FILTERS.reduce(
       (sum, name) => sum + (ctx.value[name]?.length ?? 0),
       0,
@@ -120,15 +136,24 @@ export type CardsQuery = z.infer<typeof cardsQuerySchema>;
  */
 export const FREE_TEXT_CATALOG_PARAMS = ["name", "nameExact", "text"] as const;
 /**
- * Catalog query params whose values are typed by a person or drawn from one deck: id hydration and
- * the free-text searches. Such queries almost never recur, so the API does not cache them, and a
- * paging client may send a known `total` with one of them.
+ * Catalog query params whose values are typed by a person or drawn from one deck: id hydration,
+ * the free-text searches and the HP bounds. Such queries almost never recur, and any number would
+ * mint a KV entry, so the API does not cache them, and a paging client may send a known `total`
+ * with one of them.
  */
-export const UNCACHED_CATALOG_PARAMS = ["id", ...FREE_TEXT_CATALOG_PARAMS] as const;
+export const UNCACHED_CATALOG_PARAMS = [
+  "id",
+  ...FREE_TEXT_CATALOG_PARAMS,
+  "hpMin",
+  "hpMax",
+] as const;
 /** The last GET /cards page the API caches. A browsing client's first page and its prefetches
     recur across visitors; a deeper page is one person paging, so it goes to D1, and a paging
     client sends a known `total` with it to spare the recount. */
 export const MAX_CACHED_CARDS_PAGE = 3;
+/** The GET /cards page sizes the API caches: the builder's grid (4 or 8 cards a page) and the
+    default. Any other size goes to D1, so a caller cannot mint a KV entry per number. */
+export const CACHED_CARDS_PAGE_SIZES: readonly number[] = [4, 8, 50];
 /** What a caller may send: every field optional, a repeatable one as a string or string[]. */
 export type CardsQueryParams = z.input<typeof cardsQuerySchema>;
 

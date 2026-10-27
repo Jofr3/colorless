@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   type CardsQueryParams,
   cardsQuerySchema,
+  MAX_CARDS_OFFSET,
   MAX_FILTER_VALUES,
   MAX_FILTER_VALUES_TOTAL,
   MAX_ID_VALUES,
@@ -144,6 +145,21 @@ describe("cardsQuerySchema", () => {
     for (const params of rejected) {
       expect(parseCards(params).success).toBe(false);
     }
+  });
+
+  it("caps a page's offset at MAX_CARDS_OFFSET cards", () => {
+    expect(parseCards({ page: "126", pageSize: "8" }).success).toBe(true);
+    expect(parseCards({ page: "11", pageSize: "100" }).success).toBe(true);
+    expect(parseCards({ page: "21", pageSize: "50", text: "x" }).success).toBe(true);
+    const deep = parseCards({ page: "127", pageSize: "8" });
+    expect(deep.success).toBe(false);
+    expect(deep.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["page"],
+        message: `page 127 at 8 a page skips more than ${MAX_CARDS_OFFSET} cards; narrow the filters`,
+      }),
+    ]);
+    expect(parseCards({ page: "12", pageSize: "100", total: "5000" }).success).toBe(false);
   });
 
   it("ignores unknown params", () => {

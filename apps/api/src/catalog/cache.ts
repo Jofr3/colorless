@@ -7,7 +7,8 @@
 //
 // Every miss spends one of those writes, so only shapes that recur are cached, and the key is
 // built from the validated query rather than the raw URL: a param the schema does not know, a
-// default spelled out, or a reordered repeat cannot mint a new entry.
+// default spelled out, or a reordered repeat cannot mint a new entry. An empty result is never
+// stored, so values that match nothing cannot spend writes either.
 
 import { UNCACHED_CATALOG_PARAMS } from "@colorless/schema";
 import type { Context, MiddlewareHandler, Next } from "hono";
@@ -137,9 +138,25 @@ async function cacheAside(
     const body = c.res.clone();
     await afterResponse(
       c,
-      async () => kv.put(key, await body.text(), { expirationTtl: CACHE_TTL_SECONDS }),
+      async () => {
+        const text = await body.text();
+        if (!emptyResult(text)) await kv.put(key, text, { expirationTtl: CACHE_TTL_SECONDS });
+      },
       () => logEventThrottled("kv", "put_failed", { route }),
     );
+  }
+}
+
+/** An empty list or an empty page: a filter value nothing matches, so a typo, a page past the end
+    or a caller minting keys. It is not stored, which keeps such values from spending KV writes. */
+function emptyResult(body: string): boolean {
+  try {
+    const value: unknown = JSON.parse(body);
+    if (Array.isArray(value)) return value.length === 0;
+    const items = (value as { items?: unknown } | null)?.items;
+    return Array.isArray(items) && items.length === 0;
+  } catch {
+    return false;
   }
 }
 
@@ -176,8 +193,19 @@ export function catalogQueryCache<Schema extends z.ZodType<Record<string, unknow
   const defaults: Record<string, unknown> = parsedDefaults.success ? parsedDefaults.data : {};
   return (c, next) => {
     const query = c.req.valid("query");
-    const uncached =
-      UNCACHED_CATALOG_PARAMS.some((param) => query[param] !== undefined) || !cacheable(query);
-    return cacheAside(c, next, uncached ? null : cacheQuery(query, defaults));
+    return cacheAside(
+      c,
+      next,
+      bypassesCache(query, cacheable) ? null : cacheQuery(query, defaults),
+    );
   };
+}
+
+/** Whether `catalogQueryCache` sends a validated query straight to D1: it carries a typed or id
+    param (UNCACHED_CATALOG_PARAMS) or fails the route's `cacheable`. */
+export function bypassesCache<Query extends Record<string, unknown>>(
+  query: Query,
+  cacheable: (query: Query) => boolean = () => true,
+): boolean {
+  return UNCACHED_CATALOG_PARAMS.some((param) => query[param] !== undefined) || !cacheable(query);
 }

@@ -12,6 +12,12 @@ const d1 = useTestD1((db) =>
   seedCards(db, [
     { id: "sv01-004", name: "Charmander", category: "Pokemon", hp: 70 },
     { id: "sv01-016", name: "Pidgey", category: "Pokemon", hp: 60 },
+    // Enough Trainers to fill three pages of four.
+    ...Array.from({ length: 8 }, (_, index) => ({
+      id: `sv01-1${index}0`,
+      name: `Potion ${index}`,
+      category: "Trainer" as const,
+    })),
   ]),
 );
 
@@ -93,8 +99,15 @@ describe("catalog KV cache over D1", () => {
     expect(store.has(keyOf("/cards", "category=Pokemon", "e2"))).toBe(true);
   });
 
-  it("bypasses KV for free-text and id queries without reading or writing it", async () => {
-    for (const query of ["name=char", "nameExact=Pidgey", "text=burn", "id=sv01-004"]) {
+  it("bypasses KV for free-text, id and HP queries without reading or writing it", async () => {
+    for (const query of [
+      "name=char",
+      "nameExact=Pidgey",
+      "text=burn",
+      "id=sv01-004",
+      "hpMin=60",
+      "hpMax=80",
+    ]) {
       const { kv, calls } = recordingKv();
       const res = await app.request(`/cards?${query}`, {}, d1().env({ CACHE: kv }));
       expect(res.status).toBe(200);
@@ -201,15 +214,45 @@ describe("which catalog shapes spend a KV write", () => {
     const { kv, calls } = recordingKv();
     const env = d1().env({ CACHE: kv });
     for (const page of [1, 2, 3]) {
-      const res = await app.request(`/cards?pageSize=1&page=${page}`, {}, env);
+      const res = await app.request(`/cards?pageSize=4&page=${page}`, {}, env);
       expect(res.headers.get("x-colorless-cache")).toBe("miss");
     }
     expect(putKeys(calls)).toHaveLength(3);
     calls.length = 0;
-    const deep = await app.request("/cards?pageSize=1&page=4", {}, env);
+    const deep = await app.request("/cards?pageSize=4&page=4", {}, env);
     expect(deep.status).toBe(200);
     expect(deep.headers.get("x-colorless-cache")).toBe("bypass");
     expect(calls).toEqual([]);
+  });
+
+  it("caches only the page sizes a client uses", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const pageSize of [4, 8, 50]) {
+      const res = await app.request(`/cards?pageSize=${pageSize}`, {}, env);
+      expect(res.headers.get("x-colorless-cache")).toBe("miss");
+    }
+    expect(putKeys(calls)).toHaveLength(3);
+    calls.length = 0;
+    for (const pageSize of [1, 7, 9, 100]) {
+      const res = await app.request(`/cards?pageSize=${pageSize}`, {}, env);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-colorless-cache")).toBe("bypass");
+    }
+    expect(calls).toEqual([]);
+  });
+
+  it("never stores an empty result, so values that match nothing spend no KV write", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const path of ["/cards?set=junk0", "/cards?illustrator=junk1", "/sets?serie=junk2"]) {
+      const res = await app.request(path, {}, env);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-colorless-cache")).toBe("miss");
+    }
+    // A page past the last match is empty too.
+    expect((await app.request("/cards?pageSize=8&page=3", {}, env)).status).toBe(200);
+    expect(putKeys(calls)).toEqual([]);
   });
 
   it("never stores a page carrying a passed-back total", async () => {

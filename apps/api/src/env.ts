@@ -15,6 +15,9 @@ export type Env = {
       (src/lobby/routes.ts). Absent in unit tests, where nothing is limited. */
   LOBBY_CREATE_LIMIT?: RateLimit;
   LOBBY_SOCKET_LIMIT?: RateLimit;
+  /** Per-IP Workers rate limit on GET /cards queries that scan the catalog
+      (src/catalog/searchLimit.ts). Absent in unit tests. */
+  CATALOG_SEARCH_LIMIT?: RateLimit;
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
       target (§3.5). wrangler.jsonc `vars` sets the dev default; production
       overrides it when the web app's real origin exists. */

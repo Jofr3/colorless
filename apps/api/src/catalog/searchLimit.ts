@@ -1,0 +1,112 @@
+// The per-IP limit on GET /cards queries that read a large part of the catalog on every request,
+// and the log of what those queries read.
+//
+// A `name` or `text` search is a LIKE that walks the whole table (about 5,100 rows on the
+// 5,084-card catalog), and a deep page reads every row it skips. Such shapes never reach KV, and
+// D1's 5M rows read a day are the whole account's: about 1,000 of them stop sign-in, decks and
+// the lobby until 00:00 UTC. The CATALOG_SEARCH_LIMIT binding (wrangler.jsonc) allows
+// SEARCH_LIMIT_PER_MINUTE of them per address. The builder sends one free-text request per
+// settled keystroke (a 250 ms debounce, which a 40 wpm typist settles on every key) and one per
+// three pages, and an HP bound one per settled keystroke plus two prefetches, so 60 a minute
+// leaves an active searcher about twice their peak. It bounds a careless loop, not a determined
+// attacker: one address can still read about 300k rows a minute. Client-side search is the fix.
+
+import type { CardsQuery } from "@colorless/schema";
+import type { Context, MiddlewareHandler } from "hono";
+import type { Env } from "../env";
+import { clientIpKey } from "../http/clientIp";
+import { logEvent, logEventThrottled } from "../http/log";
+
+/** wrangler.jsonc `CATALOG_SEARCH_LIMIT.simple`: the limit and its period, so the longest a
+    refusal lasts. */
+export const SEARCH_LIMIT_PER_MINUTE = 60;
+const LIMIT_PERIOD_SECONDS = 60;
+
+/**
+ * A 429 once the caller's address is over its search budget for queries `scans` picks, else
+ * next. The binding counts per Cloudflare location and approximately. Without the binding (unit
+ * tests), or when it throws, the request proceeds: a broken limiter must not close the builder.
+ */
+export function catalogSearchLimit(
+  scans: (query: CardsQuery) => boolean,
+): MiddlewareHandler<{ Bindings: Env }, string, { out: { query: CardsQuery } }> {
+  return async (c, next) => {
+    const binding = c.env.CATALOG_SEARCH_LIMIT;
+    if (binding === undefined || !scans(c.req.valid("query"))) return next();
+    if (await withinLimit(c, binding)) return next();
+    logEventThrottled("catalog", "rate_limited", { route: "/cards" });
+    c.header("Retry-After", String(LIMIT_PERIOD_SECONDS));
+    return c.json({ error: "too many searches; try again in a minute" }, 429);
+  };
+}
+
+async function withinLimit(c: Context, binding: RateLimit): Promise<boolean> {
+  try {
+    return (await binding.limit({ key: clientIpKey(c) })).success;
+  } catch (error) {
+    logEventThrottled("catalog", "limiter_error", {
+      route: "/cards",
+      error: error instanceof Error ? error.name : typeof error,
+    });
+    return true;
+  }
+}
+
+/** How often an isolate writes its tally of uncached /cards reads. */
+const READS_LOG_INTERVAL_MS = 60_000;
+
+type ReadsTally = { queries: number; rowsRead: number; maxRowsRead: number; maxParams: string };
+const emptyTally = (): ReadsTally => ({ queries: 0, rowsRead: 0, maxRowsRead: 0, maxParams: "" });
+let tally = emptyTally();
+let lastLogged: number | undefined;
+
+/**
+ * Adds one uncached /cards query's D1 `rows_read` to this isolate's tally, and writes the tally as
+ * one `evt = "d1", kind = "catalog_reads"` line at most once a minute: the queries, their rows
+ * read, and the heaviest one's param names (never their values). The first query an isolate
+ * serves is logged at once; a tally the isolate dies holding is lost, so the lines undercount.
+ */
+export function recordCatalogReads(query: CardsQuery, rowsRead: number, now = Date.now()): void {
+  tally.queries += 1;
+  tally.rowsRead += rowsRead;
+  if (rowsRead > tally.maxRowsRead) {
+    tally.maxRowsRead = rowsRead;
+    tally.maxParams = Object.keys(query)
+      .filter((name) => query[name as keyof CardsQuery] !== undefined)
+      .sort()
+      .join(",");
+  }
+  if (lastLogged !== undefined && now - lastLogged < READS_LOG_INTERVAL_MS) return;
+  logEvent("d1", "catalog_reads", {
+    queries: tally.queries,
+    rows_read: tally.rowsRead,
+    max_rows_read: tally.maxRowsRead,
+    max_params: tally.maxParams,
+  });
+  lastLogged = now;
+  tally = emptyTally();
+}
+
+/** Forgets the tally; tests only. */
+export function resetCatalogReads(): void {
+  tally = emptyTally();
+  lastLogged = undefined;
+}
+
+/** `db` with each batch's `meta.rows_read` added to `reads.rows`. Only batches are counted: they
+    are the one drizzle path whose results carry D1's meta. */
+export function countingReads(db: D1Database, reads: { rows: number }): D1Database {
+  return new Proxy(db, {
+    get(target, property) {
+      if (property === "batch") {
+        return async (statements: D1PreparedStatement[]) => {
+          const results = await target.batch(statements);
+          for (const result of results) reads.rows += result.meta?.rows_read ?? 0;
+          return results;
+        };
+      }
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}

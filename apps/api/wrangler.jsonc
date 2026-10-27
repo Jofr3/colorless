@@ -56,6 +56,13 @@
       "name": "LOBBY_SOCKET_LIMIT",
       "namespace_id": "1002",
       "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      // Per-IP limit on GET /cards queries that scan the catalog (src/catalog/searchLimit.ts,
+      // which justifies the number).
+      "name": "CATALOG_SEARCH_LIMIT",
+      "namespace_id": "1003",
+      "simple": { "limit": 60, "period": 60 }
     }
   ],
   "kv_namespaces": [
