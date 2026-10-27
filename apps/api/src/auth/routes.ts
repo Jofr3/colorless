@@ -280,12 +280,20 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
 // read for it finds nothing.
 authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchema), async (c) => {
   const row = c.get("user");
-  const { password } = c.req.valid("json");
+  const { password, confirmEmail } = c.req.valid("json");
   const db = drizzle(c.env.DB);
   // A password account proves it is its owner at the keyboard, not only a holder of the cookie.
-  // An OAuth-only account has nothing to ask for; its session is the credential.
+  // An OAuth-only account has no secret to ask for, so it types its email: a request made with the
+  // cookie but without the person (a forged command, a framed click) does not delete it.
   let verifiedHash: string | null = null;
-  if (row.passwordHash !== null) {
+  if (row.passwordHash === null) {
+    if (confirmEmail?.trim().toLowerCase() !== row.email.toLowerCase()) {
+      logEvent("auth", "delete_failed", {
+        reason: confirmEmail === undefined ? "no_confirm_email" : "wrong_confirm_email",
+      });
+      return c.json({ error: "email confirmation mismatch" }, 403);
+    }
+  } else {
     // The hash is re-read with the attempt count, since the verify below is slow either way.
     const attempt = await afterRateLimit(c, db, "delete", row.email, () =>
       db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, row.id)),

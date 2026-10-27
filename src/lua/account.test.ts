@@ -234,7 +234,7 @@ describe("Lua account deletion", () => {
     });
     const { account, publish } = setup();
     await account.refresh();
-    await account.deleteAccount("private-test-password");
+    await account.deleteAccount("private-test-password", "ash@example.com");
     const call = impl.mock.calls.find(([, init]) => init?.method === "DELETE");
     expect(JSON.parse(String(call?.[1]?.body))).toEqual({ password: "private-test-password" });
     expect(call?.[1]?.credentials).toBe("include");
@@ -243,40 +243,59 @@ describe("Lua account deletion", () => {
     expect(account.message).toBe("Account deleted.");
     expect(JSON.stringify(publish.mock.calls)).not.toContain("private-test-password");
   });
-  it("sends no password for an OAuth-only account", async () => {
+  it("sends the typed email, and no password, for an OAuth-only account", async () => {
     const { impl } = stubFetch({
       "GET /auth/me": () => json({ ...USER, hasPassword: false }),
       "DELETE /auth/me": () => new Response(null, { status: 204 }),
     });
     const { account } = setup();
     await account.refresh();
-    await account.deleteAccount("");
+    await account.deleteAccount("", " Ash@Example.com ");
     const call = impl.mock.calls.find(([, init]) => init?.method === "DELETE");
-    expect(JSON.parse(String(call?.[1]?.body))).toEqual({});
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({ confirmEmail: "Ash@Example.com" });
     expect(account.status).toBe("anonymous");
   });
-  it("asks for the password before contacting the server", async () => {
+  it("asks for the password, or the account's email, before contacting the server", async () => {
     const { calls } = stubFetch(session);
     const { account } = setup();
     await account.refresh();
-    await account.deleteAccount("");
-    expect(calls).toEqual(["GET /auth/me"]);
+    await account.deleteAccount("", "ash@example.com");
     expect(account.message).toBe("Enter your password.");
+    expect(calls).toEqual(["GET /auth/me"]);
+    const oauthOnly = stubFetch({ "GET /auth/me": () => json({ ...USER, hasPassword: false }) });
+    await account.refresh();
+    await account.deleteAccount("", " ");
+    expect(account.message).toBe("Type your email to confirm.");
+    await account.deleteAccount("", "misty@example.com");
+    expect(account.message).toBe("That is not this account's email.");
+    expect(oauthOnly.calls).toEqual(["GET /auth/me"]);
+    expect(account.status).toBe("authenticated");
+  });
+  it("keeps an OAuth-only account the server refuses to delete", async () => {
+    stubFetch({
+      "GET /auth/me": () => json({ ...USER, hasPassword: false }),
+      "DELETE /auth/me": () => json({ error: "email confirmation mismatch" }, 403),
+    });
+    const { account } = setup();
+    await account.refresh();
+    await account.deleteAccount("", "ash@example.com");
+    expect(account.message).toBe("That is not this account's email.");
+    expect(account.status).toBe("authenticated");
   });
   it("keeps the account on a wrong password or a limit, and signs out a gone session", async () => {
     let answer = () => json({ error: "invalid password" }, 401);
     stubFetch({ ...session, "DELETE /auth/me": () => answer() });
     const { account } = setup();
     await account.refresh();
-    await account.deleteAccount("wrong");
+    await account.deleteAccount("wrong", "");
     expect(account.message).toBe("Wrong password.");
     expect(account.status).toBe("authenticated");
     answer = () => json({ error: "too many attempts" }, 429);
-    await account.deleteAccount("wrong");
+    await account.deleteAccount("wrong", "");
     expect(account.message).toBe("Too many attempts. Wait a moment.");
     expect(account.user?.id).toBe(USER.id);
     answer = () => json({ error: "unauthorized" }, 401);
-    await account.deleteAccount("right");
+    await account.deleteAccount("right", "");
     expect(account.message).toBe("Your session expired. Sign in again.");
     expect(account.status).toBe("anonymous");
     expect(account.busy).toBe(false);

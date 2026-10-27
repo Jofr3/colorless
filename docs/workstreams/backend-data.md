@@ -270,17 +270,21 @@ data loss rather than a validation failure.
   favourite-deck field is retired: `PATCH /auth/me` ignores `favouriteDeckId`
   and users no longer carry it; the `users.favourite_deck_id` column stays.
 - **Account deletion** (database audit OP6): `DELETE /auth/me` with
-  `{password?}`. An account with a password must send it (wrong or missing →
-  401 `invalid password`, counted by the limiter in its own `delete` scope, so
-  a stolen cookie cannot guess it fast); an OAuth-only account sends none. One
+  `{password?, confirmEmail?}`. An account with a password must send it (wrong
+  or missing → 401 `invalid password`, counted by the limiter in its own
+  `delete` scope, so a stolen cookie cannot guess it fast); an OAuth-only
+  account must send its email as typed, compared trimmed and case-insensitively
+  (missing or different → 403 `email confirmation mismatch`, security audit
+  WC1), so the cookie alone never deletes an account. The client never prefills
+  that field. One
   `DELETE FROM users`, scoped to the verified hash like the login's session
   insert, and the `ON DELETE CASCADE` keys remove its sessions, identities,
   folders, decks and deck cards. The 204 clears the cookie as logout does and
   logs `evt = "auth", kind = "account_deleted"` with no id or email. Limiter
   rows age out on their own; a lobby seat bound to the id only compares it, and
   the handoff's deck read finds nothing. There is no purge of unverified
-  accounts. The web app asks for the password in the Settings account tab and
-  needs a second press to confirm.
+  accounts. The web app asks for the password (or, without one, the email) in
+  the Settings account tab and needs a second press to confirm.
 - **Password-reset + email-verify are 501 stubs** — they need an outbound
   email provider, which is not chosen yet; no token plumbing exists until it
   is (`POST /auth/verify-email`, `POST /auth/reset-password` explain this).
@@ -971,8 +975,9 @@ POST   /auth/login               # {email, password} → 200 user + session cook
                                  #   uniform 401 on any failure; 429 rate-limited
 POST   /auth/logout              # deletes the session row, clears the cookie → 204
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
-DELETE /auth/me                  # {password?} → 204, deletes the account (cascades), clears the
-                                 #   cookie; 401 wrong/missing password; 429 rate-limited
+DELETE /auth/me                  # {password?, confirmEmail?} → 204, deletes the account (cascades),
+                                 #   clears the cookie; 401 wrong/missing password; 403 OAuth-only
+                                 #   account without its typed email; 429 rate-limited
 GET    /auth/oauth/:provider     # google — 302 to provider; 503 until secrets installed
 GET    /auth/oauth/:provider/callback  # state-checked code exchange → session, 302 to APP_ORIGIN
 POST   /auth/verify-email  ·  POST /auth/reset-password

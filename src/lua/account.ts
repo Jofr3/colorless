@@ -18,6 +18,8 @@ const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   "email-in-use": "That email already has an account. Sign in with your password.",
 };
 
+const EMAIL_MISMATCH = "That is not this account's email.";
+
 interface FormIssue {
   path: readonly PropertyKey[];
   code: string;
@@ -169,14 +171,24 @@ export class LuaAccount {
     }
   }
 
-  /** Deletes the signed-in account. The password comes from the shell's native field and goes
-   * only to the API; an OAuth-only account sends none. Success ends as a sign-out does, and also
-   * drops the saved decks fetched this session, which no longer exist. */
-  async deleteAccount(password: string) {
+  /** Deletes the signed-in account. The password, or for an OAuth-only account the typed email,
+   * comes from the shell's native fields and goes only to the API, which checks it. Success ends
+   * as a sign-out does, and also drops the saved decks fetched this session, which no longer
+   * exist. */
+  async deleteAccount(password: string, email: string) {
     if (this.busy || !this.user) return;
     const needsPassword = this.user.hasPassword;
+    const confirmEmail = email.trim();
     if (needsPassword && !password) {
       this.refuse("Enter your password.");
+      return;
+    }
+    if (!needsPassword && !confirmEmail) {
+      this.refuse("Type your email to confirm.");
+      return;
+    }
+    if (!needsPassword && confirmEmail.toLowerCase() !== this.user.email.toLowerCase()) {
+      this.refuse(EMAIL_MISMATCH);
       return;
     }
     const op = ++this.operation;
@@ -184,7 +196,7 @@ export class LuaAccount {
     this.message = "Deleting your account...";
     this.emit();
     try {
-      await deleteAccount(needsPassword ? { password } : {});
+      await deleteAccount(needsPassword ? { password } : { confirmEmail });
       if (op !== this.operation) return;
       this.user = null;
       this.status = "anonymous";
@@ -203,9 +215,11 @@ export class LuaAccount {
         this.message =
           status === 401
             ? "Wrong password."
-            : status === 429
-              ? "Too many attempts. Wait a moment."
-              : "Could not delete your account. Try again.";
+            : status === 403
+              ? EMAIL_MISMATCH
+              : status === 429
+                ? "Too many attempts. Wait a moment."
+                : "Could not delete your account. Try again.";
       }
     } finally {
       if (op === this.operation) {

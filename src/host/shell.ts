@@ -37,9 +37,9 @@ export interface ShellPorts {
   command(screen: BridgeScreen, raw: string): void;
   navigate(page: string): void;
   authenticate(request: AuthRequest): void;
-  /** Deletes the signed-in account; `password` is the auth form's field, empty for an OAuth-only
-   * account. */
-  deleteAccount(password: string): void;
+  /** Deletes the signed-in account with the auth form's fields: the password, or for an
+   * OAuth-only account the email typed to confirm. */
+  deleteAccount(password: string, email: string): void;
 }
 
 /** What the auth form is open for: signing in, creating an account, or confirming a deletion. */
@@ -416,6 +416,12 @@ export class HostShell {
       this.authInput("password").value = "";
       this.authInput("password").autocomplete =
         this.authMode === "register" ? "new-password" : "current-password";
+      // A deletion's email is typed, never filled in: by this page or by the browser.
+      const email = this.authInput("email");
+      const deleting = this.authMode === "delete";
+      if (deleting) email.value = "";
+      email.autocomplete = deleting ? "off" : "username";
+      email.setAttribute("aria-label", deleting ? "Type your email to confirm" : "Email");
       this.auth.publish("reset");
       this.ports.command("account", "clear-message");
       this.canvas.setAttribute(
@@ -427,7 +433,7 @@ export class HostShell {
     } else if (action === "submit") {
       this.auth.finish();
       if (this.authMode === "delete") {
-        this.ports.deleteAccount(this.authInput("password").value);
+        this.ports.deleteAccount(this.authInput("password").value, this.authInput("email").value);
         return;
       }
       this.ports.authenticate({
