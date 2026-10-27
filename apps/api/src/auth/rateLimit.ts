@@ -78,28 +78,36 @@ export function evaluateRateLimit(state: RateLimitState | null, nowMs: number): 
 }
 
 /** Record an attempt and decide — the one KV-touching function. A failed get
-    or put allows the attempt (see the header). */
+    allows the attempt (see the header); a failed put keeps the decision the
+    get already made, so a full window stays refused. */
 export async function checkRateLimit(
   kv: KVNamespace,
   key: string,
   nowMs: number = Date.now(),
 ): Promise<RateLimitDecision> {
-  let op: "get" | "put" = "get";
+  let decision: RateLimitDecision;
   try {
-    const decision = evaluateRateLimit(parseRateLimitState(await kv.get(key)), nowMs);
-    op = "put";
+    decision = evaluateRateLimit(parseRateLimitState(await kv.get(key)), nowMs);
+  } catch (error) {
+    logLimiterError("get", error);
+    return { ...evaluateRateLimit(null, nowMs), allowed: true };
+  }
+  try {
     await kv.put(key, JSON.stringify(decision.nextState), {
       expirationTtl: decision.ttlSeconds,
     });
-    return decision;
   } catch (error) {
-    // The key holds the IP and email and KV's message may echo it, so only the
-    // error's name and whether it reads as a quota limit are logged.
-    logEventThrottled("auth", "limiter_error", {
-      op,
-      error: error instanceof Error ? error.name : typeof error,
-      quota: error instanceof Error && /limit exceeded/i.test(error.message),
-    });
-    return { ...evaluateRateLimit(null, nowMs), allowed: true };
+    logLimiterError("put", error);
   }
+  return decision;
+}
+
+/** The key holds the IP and email and KV's message may echo it, so only the
+    error's name and whether it reads as a quota limit are logged. */
+function logLimiterError(op: "get" | "put", error: unknown): void {
+  logEventThrottled("auth", "limiter_error", {
+    op,
+    error: error instanceof Error ? error.name : typeof error,
+    quota: error instanceof Error && /limit exceeded/i.test(error.message),
+  });
 }

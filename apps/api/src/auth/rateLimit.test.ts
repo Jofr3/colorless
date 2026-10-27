@@ -79,18 +79,37 @@ describe("checkRateLimit when KV fails", () => {
 
   const key = rateLimitKey("login", "203.0.113.9", "ash@example.com");
   const quotaError = () => Promise.reject(new Error("KV put() limit exceeded for the day."));
-  // An exhausted window, so only failing open can allow the attempt after the read.
+  const fresh = JSON.stringify({ count: 1, resetAt: NOW + 60_000 });
   const exhausted = JSON.stringify({ count: RATE_LIMIT_MAX_ATTEMPTS, resetAt: NOW + 60_000 });
+  const logged = (warn: { mock: { calls: unknown[][] } }) =>
+    warn.mock.calls.map(([line]) => JSON.parse(String(line)));
 
-  it.each([
-    ["get", { get: quotaError, put: async () => {} }],
-    ["put", { get: async () => exhausted, put: quotaError }],
-  ])("allows the attempt and logs when the %s throws", async (op, kv) => {
+  it("allows the attempt and logs when the get throws", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const kv = { get: quotaError, put: async () => {} };
     const decision = await checkRateLimit(kv as unknown as KVNamespace, key, NOW);
     expect(decision.allowed).toBe(true);
-    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
-      { evt: "auth", kind: "limiter_error", op, error: "Error", quota: true },
+    expect(logged(warn)).toEqual([
+      { evt: "auth", kind: "limiter_error", op: "get", error: "Error", quota: true },
     ]);
+  });
+
+  it("keeps the read's decision and logs when only the put throws", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    for (const [stored, allowed] of [
+      [fresh, true],
+      [exhausted, false],
+    ] as const) {
+      const kv = { get: async () => stored, put: quotaError };
+      const decision = await checkRateLimit(kv as unknown as KVNamespace, key, NOW);
+      expect(decision.allowed).toBe(allowed);
+    }
+    expect(logged(warn)[0]).toEqual({
+      evt: "auth",
+      kind: "limiter_error",
+      op: "put",
+      error: "Error",
+      quota: true,
+    });
   });
 });
