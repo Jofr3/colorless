@@ -8,7 +8,7 @@ const d1 = useTestD1((db) =>
       id: "sv01-004",
       name: "Charmander",
       category: "Pokemon",
-      imageUrl: "https://origin/sv01/004",
+      imageUrl: "https://assets.tcgdex.net/en/sv/sv01/004",
     },
     { id: "sv01-016", name: "Pidgey", category: "Pokemon", imageUrl: null },
   ]),

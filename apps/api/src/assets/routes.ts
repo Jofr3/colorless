@@ -14,16 +14,21 @@ import { type Context, Hono } from "hono";
 import { cards, sets } from "../db/schema";
 import type { Env } from "../env";
 import { afterResponse } from "../http/afterResponse";
+import { logEventThrottled } from "../http/log";
 import { CACHE_STATUS_HEADER } from "../httpCache";
 import {
   cardAssetKey,
   cardOriginUrl,
   contentTypeFor,
+  type ImageType,
+  isAssetOriginUrl,
   isCardAssetFile,
   isSetAssetFile,
+  MAX_ASSET_BYTES,
   setAssetKey,
   setAssetKind,
   setOriginUrl,
+  sniffImageType,
 } from "./files";
 
 export const assetsRoutes = new Hono<{ Bindings: Env }>();
@@ -53,11 +58,16 @@ function assetResponse(
  * row, a missing asset URL or an origin 404 is `null` (the app's 404); an origin 5xx or a network
  * error is a 502, so an upstream outage does not read as a missing image. The R2 write goes to
  * `later`, which runs it after the response and drops its failure.
+ *
+ * What is stored stays for good, so only an image of `contentType` from the asset origin is: the
+ * URL and the final URL after redirects must be https on ASSET_ORIGIN's host, the response must
+ * say `image/*`, its bytes must start with `contentType`'s magic number, and it must fit in
+ * MAX_ASSET_BYTES. Anything else is refused as missing and logged.
  */
 export async function serveMirroredAsset(
   env: Pick<Env, "ASSETS">,
   key: string,
-  contentType: string,
+  contentType: ImageType,
   resolveOriginUrl: () => Promise<string | null>,
   later: (work: () => Promise<unknown>) => Promise<void>,
 ): Promise<Response | null> {
@@ -69,6 +79,7 @@ export async function serveMirroredAsset(
   if (originUrl === null) {
     return null;
   }
+  if (!isAssetOriginUrl(originUrl)) return refused("origin_url");
   let origin: Response;
   try {
     origin = await fetch(originUrl);
@@ -81,12 +92,55 @@ export async function serveMirroredAsset(
   if (origin.status !== 200) {
     return null;
   }
+  // A constructed Response (tests) has no url; a fetched one names where redirects ended.
+  if (!isAssetOriginUrl(origin.url || originUrl)) return refused("redirect");
+  if (!origin.headers.get("Content-Type")?.toLowerCase().startsWith("image/")) {
+    return refused("content_type");
+  }
   // Buffer the image (card scans are ~100KB) so one body feeds both the R2
   // put and the response without tee-ing the stream.
-  const bytes = await origin.arrayBuffer();
+  const bytes = await readCapped(origin, MAX_ASSET_BYTES);
+  if (bytes === null) return refused("too_large");
+  if (sniffImageType(bytes) !== contentType) return refused("magic");
   const stored = bytes.slice(0);
   await later(() => env.ASSETS.put(key, stored, { httpMetadata: { contentType } }));
   return assetResponse(bytes, contentType, "miss");
+}
+
+/** A response the mirror will not store, logged by why. */
+function refused(reason: string): null {
+  logEventThrottled("assets", "origin_refused", { reason });
+  return null;
+}
+
+/** The body, or null once it passes `limit` bytes: a declared length over it is refused unread,
+    and an undeclared one is read only up to it. */
+async function readCapped(response: Response, limit: number): Promise<ArrayBuffer | null> {
+  if (Number(response.headers.get("Content-Length") ?? 0) > limit) {
+    await response.body?.cancel();
+    return null;
+  }
+  if (response.body === null) return new ArrayBuffer(0);
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    length += value.byteLength;
+    if (length > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes.buffer;
 }
 
 function upstreamFailure(): Response {

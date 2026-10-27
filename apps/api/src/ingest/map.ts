@@ -5,6 +5,7 @@
 
 import { isSpecialEnergy, normalizeCardText } from "@colorless/engine";
 import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@colorless/schema";
+import { isAssetOriginUrl } from "../assets/files";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
@@ -13,12 +14,18 @@ export type SeriesRow = Required<typeof series.$inferInsert>;
 export type SetRow = Required<typeof sets.$inferInsert>;
 export type CardRow = Required<typeof cards.$inferInsert>;
 
+/** An upstream asset base URL, kept only on the asset origin: the /assets mirror fetches from it
+    and stores what it gets for good, so any other host or scheme is dropped as no image. */
+function assetBase(url: string | undefined): string | null {
+  return url !== undefined && isAssetOriginUrl(url) ? url : null;
+}
+
 export function mapSerie(serie: TcgdexSerie): SeriesRow {
   return {
     id: serie.id,
     name: serie.name,
     releaseDate: serie.releaseDate ?? null,
-    logoUrl: serie.logo ?? null,
+    logoUrl: assetBase(serie.logo),
   };
 }
 
@@ -27,8 +34,8 @@ export function mapSet(set: TcgdexSet): SetRow {
     id: set.id,
     serieId: set.serie.id,
     name: set.name,
-    logoUrl: set.logo ?? null,
-    symbolUrl: set.symbol ?? null,
+    logoUrl: assetBase(set.logo),
+    symbolUrl: assetBase(set.symbol),
     releaseDate: set.releaseDate,
     countTotal: set.cardCount.total,
     countOfficial: set.cardCount.official,
@@ -129,7 +136,7 @@ function mapCardFields(card: TcgdexCard): CardRow {
     legalStandardEffective: null,
     legalExpandedEffective: null,
     variantsJson: card.variants ?? null,
-    imageUrl: card.image ?? null,
+    imageUrl: assetBase(card.image),
     updated: card.updated ?? null,
   };
   switch (card.category) {
