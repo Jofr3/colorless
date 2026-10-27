@@ -23,6 +23,7 @@ the script after adding a decision.
 | 2026-10-27 | Database safety nets before any schema change | decisions.md:786 |
 | 2026-10-27 | Database hot fixes: the shared quota, races and silent failures | decisions.md:796 |
 | 2026-10-27 | Database additive changes: D1 sign-in counters, versioned decks, sweeps and limits | decisions.md:811 |
+| 2026-10-27 | Account deletion, library controls, and fewer catalog and deck reads | decisions.md:824 |
 
 ## Numbered decisions
 
