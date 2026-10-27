@@ -1,17 +1,20 @@
 // Worker bindings + vars (wrangler.jsonc). `D1Database`/`R2Bucket`/
-// `KVNamespace`/`DurableObjectNamespace` come from @cloudflare/workers-types,
-// wired in via tsconfig `types`.
+// `KVNamespace`/`DurableObjectNamespace`/`RateLimit` come from
+// @cloudflare/workers-types, wired in via tsconfig `types`.
 
 export type Env = {
   DB: D1Database;
   /** R2 bucket `colorless-assets` — the lazy tcgdex asset mirror (D9). */
   ASSETS: R2Bucket;
-  /** KV namespace — catalog response cache (src/catalog/cache.ts) + auth
-      rate-limit counters (src/auth/rateLimit.ts). */
+  /** KV namespace — catalog response cache (src/catalog/cache.ts). */
   CACHE: KVNamespace;
   /** The lobby Durable Objects (§3.6) — one instance per lobby code,
       addressed with `idFromName(code)` (src/lobby/). */
   LOBBY: DurableObjectNamespace;
+  /** Per-IP Workers rate limits on POST /lobby and the /lobby/:code/ws upgrade
+      (src/lobby/routes.ts). Absent in unit tests, where nothing is limited. */
+  LOBBY_CREATE_LIMIT?: RateLimit;
+  LOBBY_SOCKET_LIMIT?: RateLimit;
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
       target (§3.5). wrangler.jsonc `vars` sets the dev default; production
       overrides it when the web app's real origin exists. */

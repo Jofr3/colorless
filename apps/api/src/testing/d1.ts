@@ -58,7 +58,7 @@ export async function createTestD1(): Promise<TestD1> {
       ({ DB: db, ASSETS: undefined, CACHE: kv, ...overrides }) as unknown as Env,
     reset: async () => {
       // Deleting users cascades to sessions, identities, folders, decks and deck cards.
-      await db.prepare("DELETE FROM users").run();
+      await db.batch([db.prepare("DELETE FROM users"), db.prepare("DELETE FROM auth_rate_limits")]);
       const { keys } = await kv.list();
       await Promise.all(keys.map((key) => kv.delete(key.name)));
     },
@@ -141,13 +141,22 @@ export async function signedInUser(db: D1Database, email: string): Promise<Signe
  * commits between a route's reads and its write.
  */
 export function raceBeforeFirstBatch(db: D1Database, winner: () => Promise<void>): D1Database {
-  let raced = false;
+  return raceBeforeBatch(db, 0, winner);
+}
+
+/** raceBeforeFirstBatch for a route whose reads are themselves a batch: `winner` runs just
+    before batch number `index` (0-based). The sign-in routes read in a batch with the limiter. */
+export function raceBeforeBatch(
+  db: D1Database,
+  index: number,
+  winner: () => Promise<void>,
+): D1Database {
+  let batches = 0;
   return new Proxy(db, {
     get(target, property) {
       if (property === "batch") {
         return async (statements: D1PreparedStatement[]) => {
-          if (!raced) {
-            raced = true;
+          if (batches++ === index) {
             await winner();
           }
           return target.batch(statements);

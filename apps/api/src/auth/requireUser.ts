@@ -35,7 +35,7 @@ export const requireUser = createMiddleware<AuthedEnv>(async (c, next) => {
     c.header("Set-Cookie", clearedSessionCookie());
     return c.json({ error: "unauthorized" }, 401);
   }
-  // The dead row is deleted lazily here; there is no background sweeper.
+  // The dead row is deleted as soon as it is presented; the daily sweep (sweep.ts) gets the rest.
   if (sessionExpired(row.expiresAt)) {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
     c.header("Set-Cookie", clearedSessionCookie());

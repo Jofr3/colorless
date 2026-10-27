@@ -12,10 +12,11 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
+import { sweepExpired } from "./auth/sweep";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
-import { logEventThrottled } from "./http/log";
+import { logEvent, logEventThrottled } from "./http/log";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -89,8 +90,21 @@ app.get("/health/db", async (c) => {
   return c.json(dbHealthResponseSchema.parse(payload));
 });
 
+/** The daily Cron Trigger (wrangler.jsonc `triggers.crons`). A failure is logged and rethrown,
+    so the run also shows as failed under the Worker's Cron Events. */
+async function scheduled(controller: ScheduledController, env: Env): Promise<void> {
+  try {
+    logEvent("d1", "sweep", await sweepExpired(env.DB, controller.scheduledTime));
+  } catch (error) {
+    logEvent("d1", "sweep_failed", { error: error instanceof Error ? error.name : typeof error });
+    throw error;
+  }
+}
+
 // wrangler instantiates Durable Objects by the classes the entry module
 // exports; LobbyDO backs the LOBBY binding (wrangler.jsonc).
 export { LobbyDO } from "./lobby/lobbyDO";
 
-export default app;
+// The Worker's handlers: Hono answers `fetch`, and `scheduled` rides on the same object so tests
+// keep calling `app.request()` on the default export.
+export default Object.assign(app, { scheduled });

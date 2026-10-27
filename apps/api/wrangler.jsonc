@@ -35,6 +35,26 @@
       "bucket_name": "colorless-assets"
     }
   ],
+  "triggers": {
+    // The daily sweep of expired sessions and sign-in counters (src/auth/sweep.ts), at an
+    // off-peak minute rather than on the hour.
+    "crons": ["17 4 * * *"]
+  },
+  "ratelimits": [
+    {
+      // Per-IP limits on lobby creation and the lobby WebSocket upgrade (src/lobby/routes.ts,
+      // which justifies the numbers). `namespace_id` is any positive integer unique within the
+      // Cloudflare account; `period` may only be 10 or 60 seconds.
+      "name": "LOBBY_CREATE_LIMIT",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "LOBBY_SOCKET_LIMIT",
+      "namespace_id": "1002",
+      "simple": { "limit": 60, "period": 60 }
+    }
+  ],
   "kv_namespaces": [
     {
       // Response cache for the public catalog GETs (§3.3/§6): cache-aside,

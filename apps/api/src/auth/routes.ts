@@ -20,9 +20,9 @@ import {
 import { and, eq, lte, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
-import { ownedBy } from "../db/owned";
-import { decks, oauthIdentities, sessions, users } from "../db/schema";
+import { oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
+import { clientIpKey } from "../http/clientIp";
 import { logEvent, logEventThrottled } from "../http/log";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
@@ -44,7 +44,7 @@ import {
   unpackStateCookieValue,
 } from "./oauth";
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordNeedsRehash, verifyPassword } from "./password";
-import { checkRateLimit, type RateLimitScope, rateLimitKey } from "./rateLimit";
+import { limitAttempt, type RateLimitScope, rateLimitKeys } from "./rateLimit";
 import { requireUser, type UserRow } from "./requireUser";
 import {
   clearedSessionCookie,
@@ -71,34 +71,28 @@ function mapUserRow(row: UserRow): User {
     // Derived, never stored (P5-2): the same token the lobby broadcasts for
     // this account, so a player's profile draws the face opponents see.
     avatarSeed: avatarSeedOf(row.id),
-    // The stored CHOICE (P5-7), just the id — /settings resolves its cover +
-    // name from GET /decks. The FK's SET NULL guarantees a non-null id is a
-    // live deck of this account's.
-    favouriteDeckId: row.favouriteDeckId,
     createdAt: row.createdAt.toISOString(),
   };
 }
 
-/** Best-effort caller IP for rate-limit keys — Cloudflare sets this header
-    on every request (wrangler dev included). */
-function clientIp(c: AuthContext): string {
-  return c.req.header("cf-connecting-ip") ?? "unknown";
-}
-
-/** Count this attempt; a 429 Response when over budget, null to proceed. */
-async function guardRateLimit(
+/** Count this attempt and run `lookup` in one D1 batch. An over-budget attempt answers 429 and
+    exposes nothing about the lookup. */
+async function afterRateLimit<T>(
   c: AuthContext,
+  db: Db,
   scope: RateLimitScope,
   email: string,
-): Promise<Response | null> {
-  const decision = await checkRateLimit(c.env.CACHE, rateLimitKey(scope, clientIp(c), email));
-  if (decision.allowed) {
-    return null;
+  lookup: Parameters<typeof limitAttempt<T>>[2],
+): Promise<{ limited: Response } | { limited: null; found: T }> {
+  const keys = await rateLimitKeys(scope, clientIpKey(c), email);
+  const attempt = await limitAttempt(db, keys, lookup);
+  if (attempt.allowed) {
+    return { limited: null, found: attempt.found };
   }
   // Throttled: a brute-force burst answers 429 on every attempt past the budget.
   logEventThrottled("auth", "rate_limited", { scope });
-  c.header("Retry-After", String(decision.retryAfterSeconds));
-  return c.json({ error: "too many attempts" }, 429);
+  c.header("Retry-After", String(attempt.retryAfterSeconds));
+  return { limited: c.json({ error: "too many attempts" }, 429) };
 }
 
 /** Deletes the user's expired sessions. Expiry is enforced on read, so this only keeps the table
@@ -107,20 +101,6 @@ function sweepExpiredSessions(db: Db, userId: string) {
   return db
     .delete(sessions)
     .where(and(eq(sessions.userId, userId), lte(sessions.expiresAt, new Date())));
-}
-
-/** Count this attempt while `lookup` runs. An over-budget attempt answers 429 without waiting on
-    the lookup or exposing anything about it, even when it fails. */
-async function afterRateLimit<T>(
-  c: AuthContext,
-  scope: RateLimitScope,
-  email: string,
-  lookup: () => Promise<T>,
-): Promise<{ limited: Response } | { limited: null; found: T }> {
-  const pending = Promise.resolve().then(lookup);
-  pending.catch(() => {});
-  const limited = await guardRateLimit(c, scope, email);
-  return limited === null ? { limited, found: await pending } : { limited };
 }
 
 /** Mint a token + its sessions row (id = sha256(token), 30-day expiry).
@@ -176,13 +156,13 @@ function isUniqueViolation(error: unknown): boolean {
 authRoutes.post("/register", validate("json", registerRequestSchema), async (c) => {
   const body = c.req.valid("json");
   const db = drizzle(c.env.DB);
-  const attempt = await afterRateLimit(c, "register", body.email, () =>
-    db.select({ id: users.id }).from(users).where(eq(users.email, body.email)).get(),
+  const attempt = await afterRateLimit(c, db, "register", body.email, () =>
+    db.select({ id: users.id }).from(users).where(eq(users.email, body.email)).limit(1),
   );
   if (attempt.limited) {
     return attempt.limited;
   }
-  const existing = attempt.found;
+  const existing = attempt.found[0];
   if (existing !== undefined) {
     return c.json({ error: "email already registered" }, 409);
   }
@@ -211,13 +191,13 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
 authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
   const body = c.req.valid("json");
   const db = drizzle(c.env.DB);
-  const attempt = await afterRateLimit(c, "login", body.email, () =>
-    db.select().from(users).where(eq(users.email, body.email)).get(),
+  const attempt = await afterRateLimit(c, db, "login", body.email, () =>
+    db.select().from(users).where(eq(users.email, body.email)).limit(1),
   );
   if (attempt.limited) {
     return attempt.limited;
   }
-  const row = attempt.found;
+  const row = attempt.found[0];
   // Unknown email and password-less (OAuth-only) accounts still burn one
   // PBKDF2 verify against a throwaway hash — timing parity with the wrong-
   // password path, and ONE message for every failure (§3.5): no oracle for
@@ -278,47 +258,17 @@ authRoutes.get("/me", privateRevalidate, requireUser, (c) =>
 // signed-out caller should hear "unauthorized", not a critique of their body.
 authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema), async (c) => {
   const row = c.get("user");
-  const { displayName, favouriteDeckId } = c.req.valid("json");
-  const db = drizzle(c.env.DB);
-
-  const changes: Partial<Pick<UserRow, "displayName" | "favouriteDeckId">> = {};
-  if (displayName !== row.displayName) {
-    changes.displayName = displayName;
-  }
-  // The favourite (P5-7). Absent (undefined) leaves it untouched; null clears
-  // it; a non-null id must be one of the CALLER'S OWN decks — anyone else's or
-  // a phantom is a 400, not a row that would resolve to nothing on the
-  // profile. An UNCHANGED non-null id skips the check: the FK's ON DELETE SET
-  // NULL means it can't have gone stale under us.
-  if (favouriteDeckId !== undefined && favouriteDeckId !== row.favouriteDeckId) {
-    if (favouriteDeckId !== null) {
-      const owned = await db
-        .select({ id: decks.id })
-        .from(decks)
-        .where(ownedBy(decks, favouriteDeckId, row.id))
-        .get();
-      if (owned === undefined) {
-        return c.json({ error: "favourite deck not found" }, 400);
-      }
-    }
-    changes.favouriteDeckId = favouriteDeckId;
-  }
+  // A `favouriteDeckId` from an older client is stripped by the schema: the field is retired and
+  // the column is left as it stands.
+  const { displayName } = c.req.valid("json");
 
   // No write when nothing changed: the form disables Save in that case, but
   // the route is the api, and a re-submit shouldn't cost a D1 write.
-  if (Object.keys(changes).length > 0) {
-    await db.update(users).set(changes).where(eq(users.id, row.id));
+  if (displayName !== row.displayName) {
+    await drizzle(c.env.DB).update(users).set({ displayName }).where(eq(users.id, row.id));
   }
   // The updated row, not a re-read: this session owns the only change.
-  return c.json(
-    userSchema.parse(
-      mapUserRow({
-        ...row,
-        displayName,
-        favouriteDeckId: favouriteDeckId === undefined ? row.favouriteDeckId : favouriteDeckId,
-      }),
-    ),
-  );
+  return c.json(userSchema.parse(mapUserRow({ ...row, displayName })));
 });
 
 authRoutes.post("/logout", async (c) => {

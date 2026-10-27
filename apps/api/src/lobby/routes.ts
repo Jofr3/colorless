@@ -6,10 +6,19 @@
 // upgrade request's `session` cookie IS forwarded to the DO, which resolves it to
 // an account at /ws (P4 increment 3) — used ONLY to owner-scope that player's
 // saved-deck read at the match handoff, never for seat identity.
+//
+// Both routes are limited per IP (wrangler.jsonc `ratelimits`): each wakes a Durable Object, and
+// the Free plan's DO quota is account-wide. The limits sit far above what play needs. Creating a
+// lobby is a click: 10 a minute. A socket opens on join, on every page reload and on every
+// reconnect, whose backoff (src/online/channel.ts) runs from 400 ms to 8 s, about 11 a minute
+// while a link stays down: 60 a minute leaves room for several tabs or players behind one
+// address. A refused upgrade fails like any dropped link, and the client's backoff retries it.
 
 import { generateLobbyCode, isValidLobbyCode } from "@colorless/schema";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import type { Env } from "../env";
+import { clientIpKey } from "../http/clientIp";
+import { logEventThrottled } from "../http/log";
 import {
   DO_CREATE_PATH,
   DO_WS_PATH,
@@ -19,11 +28,41 @@ import {
 } from "./doProtocol";
 
 const CREATE_ATTEMPTS = 5;
+/** Both bindings' `simple.period` in wrangler.jsonc, so the longest a refusal lasts. */
+const LIMIT_PERIOD_SECONDS = 60;
+
+/**
+ * A 429 once the caller's address is over `binding`'s budget, else null. The binding counts per
+ * Cloudflare location and approximately, which is enough to bound a flood. Without the binding
+ * (unit tests), or when it throws, the request proceeds: a broken limiter must not close online
+ * play.
+ */
+async function overIpLimit(
+  c: Context<{ Bindings: Env }>,
+  route: "create" | "ws",
+  binding: RateLimit | undefined,
+): Promise<Response | null> {
+  if (binding === undefined) return null;
+  try {
+    if ((await binding.limit({ key: clientIpKey(c) })).success) return null;
+  } catch (error) {
+    logEventThrottled("lobby", "limiter_error", {
+      route,
+      error: error instanceof Error ? error.name : typeof error,
+    });
+    return null;
+  }
+  logEventThrottled("lobby", "rate_limited", { route });
+  c.header("Retry-After", String(LIMIT_PERIOD_SECONDS));
+  return c.json({ error: "too many requests" }, 429);
+}
 
 /** POST /lobby — mounted behind the app-wide CORS like every fetched route. */
 export const lobbyRoutes = new Hono<{ Bindings: Env }>();
 
 lobbyRoutes.post("/", async (c) => {
+  const limited = await overIpLimit(c, "create", c.env.LOBBY_CREATE_LIMIT);
+  if (limited !== null) return limited;
   // Mint by randomness, claim through the DO: /create initializes an instance
   // exactly once, so a 409 means a live lobby already owns that code — draw
   // again. (Expired lobbies wipe their storage, which frees the code.)
@@ -56,6 +95,9 @@ lobbySocketRoutes.get("/:code/ws", async (c) => {
   if (!isWebSocketUpgrade(c.req.header("Upgrade"))) {
     return c.json({ error: "expected a websocket upgrade" }, 426);
   }
+  // Counted only here: a malformed or non-upgrade request never reaches a DO.
+  const limited = await overIpLimit(c, "ws", c.env.LOBBY_SOCKET_LIMIT);
+  if (limited !== null) return limited;
   const stub = c.env.LOBBY.get(c.env.LOBBY.idFromName(code));
   // Forward the original upgrade request, re-addressed to the DO's internal
   // /ws path; the 101 (or the DO's 404 for an expired code) flows back as-is.
