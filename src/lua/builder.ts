@@ -1,14 +1,13 @@
 import type { SimulationGap } from "@colorless/engine";
 import * as api from "../lib/api";
 import {
+  type CardsQueryParams,
   DECK_NAME_MAX,
   MAX_DECK_CARD_ENTRIES,
   type CatalogFacets,
   type Deck as SavedDeck,
   deckConflictSchema,
-  FREE_TEXT_CATALOG_PARAMS,
   MAX_CACHED_CARDS_PAGE,
-  MAX_CARDS_OFFSET,
   UNCACHED_CATALOG_PARAMS,
 } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
@@ -95,6 +94,14 @@ function conflictingDeck(error: unknown): SavedDeck | null | undefined {
   return parsed.success ? parsed.data.deck : null;
 }
 
+/** Whether the builder serves `page` of `query` from the card index rather than GET /cards: any
+    page the API would not cache. */
+function fromIndex(query: CardsQueryParams, page: number): boolean {
+  return (
+    page > MAX_CACHED_CARDS_PAGE ||
+    UNCACHED_CATALOG_PARAMS.some((param) => query[param] !== undefined)
+  );
+}
 export class LuaBuilder {
   id = "";
   name = "";
@@ -142,7 +149,6 @@ export class LuaBuilder {
   // Catalog pages for the current query, keyed by page; cleared when it changes.
   private pageKey = "";
   // The query `total` was counted for.
-  private totalKey = "";
   private pages = new Map<number, CatalogPage>();
   // In-flight page requests by page.
   private pageRequests = new Map<number, Promise<CatalogPage>>();
@@ -584,7 +590,7 @@ export class LuaBuilder {
       if (!current()) return;
       this.results = data.items;
       this.total = data.total;
-      this.totalKey = catalog.key;
+      if (this.message === LOAD_FAILED.search) this.message = "";
     } catch (error) {
       reportError("search cards", error);
       if (current()) this.message = LOAD_FAILED.search;
@@ -595,30 +601,21 @@ export class LuaBuilder {
       this.prefetch(catalog);
     }
   }
-  /** The last page the pager reaches. The API refuses a page that skips more than
-      MAX_CARDS_OFFSET cards, so a longer server result stops there and narrowing the filters shows
-      the rest; a free-text result comes from the card index and pages to its end. */
+  /** The last page the pager reaches. Only pages the API caches are requested from it (see
+      `fromIndex`), so every result pages to its end. */
   private lastPage(): number {
-    const pages = Math.ceil(this.total / this.size);
-    const { query } = this.catalog();
-    if (FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined))
-      return Math.max(1, pages);
-    return Math.max(1, Math.min(pages, Math.floor(MAX_CARDS_OFFSET / this.size) + 1));
+    return Math.max(1, Math.ceil(this.total / this.size));
   }
   private catalog(): Catalog {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
   }
-  /** One request per page and query, except that a free-text query's pages come from the card
-      index, searched once per query in the browser (the API would read the whole table for each).
-      `fresh` refetches a cached page. A `total` already known for this query spares the server a
-      recount. */
-  private fetchPage(
-    catalog: Catalog,
-    page: number,
-    fresh = false,
-    total?: number,
-  ): Promise<CatalogPage> {
+  /** One request per page and query for the pages the API caches in KV; every other page comes
+      from the card index, searched once per query in the browser. An uncached page (free text, an
+      HP bound, or past MAX_CACHED_CARDS_PAGE) would read much of the table and spend the API's
+      per-address search limit, which brisk paging would exhaust. `fresh` refetches a cached
+      page. */
+  private fetchPage(catalog: Catalog, page: number, fresh = false): Promise<CatalogPage> {
     const { query, key } = catalog;
     if (key !== this.pageKey) {
       this.pageKey = key;
@@ -627,12 +624,11 @@ export class LuaBuilder {
     }
     const cached = this.pages.get(page);
     if (cached && !fresh) return Promise.resolve(cached);
-    if (FREE_TEXT_CATALOG_PARAMS.some((param) => query[param] !== undefined))
-      return this.indexPage(catalog, page);
+    if (fromIndex(query, page)) return this.indexPage(catalog, page);
     const pending = this.pageRequests.get(page);
     if (pending) return pending;
     const request = api
-      .getCards({ ...query, page, pageSize: catalog.size, total })
+      .getCards({ ...query, page, pageSize: catalog.size })
       .then((data) => {
         const result = { items: data.items.map(toBuilderCard), total: data.total };
         if (key === this.pageKey) this.keepPage(page, result);
@@ -674,20 +670,15 @@ export class LuaBuilder {
       this.pages.delete(far);
     }
   }
-  /** Warm the neighbouring pages and queue their artwork behind this page's. The known total goes
-      along only where the API does not cache the page (a free-text query, or a page past
-      MAX_CACHED_CARDS_PAGE): the API never stores a page requested with one. */
+  /** Warm the neighbouring pages and queue their artwork behind this page's. */
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
     const live = this.epoch.current();
     const last = this.lastPage();
-    const known = catalog.key === this.totalKey ? this.total : undefined;
-    const freeText = UNCACHED_CATALOG_PARAMS.some((param) => catalog.query[param] !== undefined);
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
-        const total = freeText || page > MAX_CACHED_CARDS_PAGE ? known : undefined;
-        this.fetchPage(catalog, page, false, total)
+        this.fetchPage(catalog, page)
           .then(() => {
             if (live() && catalog.key === this.pageKey) this.publishImages();
           })
@@ -870,7 +861,6 @@ export class LuaBuilder {
     this.busy = false;
     this.results = cached.items;
     this.total = cached.total;
-    this.totalKey = catalog.key;
     this.emit();
     this.prefetch(catalog);
   }

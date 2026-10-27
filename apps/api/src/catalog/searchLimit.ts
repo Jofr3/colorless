@@ -5,11 +5,11 @@
 // 5,084-card catalog), and a deep page reads every row it skips. Such shapes never reach KV, and
 // D1's 5M rows read a day are the whole account's: about 1,000 of them stop sign-in, decks and
 // the lobby until 00:00 UTC. The CATALOG_SEARCH_LIMIT binding (wrangler.jsonc) allows
-// SEARCH_LIMIT_PER_MINUTE of them per address. The builder answers name and rules-text searches
-// from the card index in the browser (cardIndex.ts), so what it still sends here is an HP bound
-// (one request per settled keystroke plus two prefetches) and deep pages; 30 a minute covers that
-// with room. It bounds a careless loop, not a determined attacker: one address can still read
-// about 150k rows a minute. The same budget covers GET /cards/index when KV misses it.
+// SEARCH_LIMIT_PER_MINUTE of them per address. The builder asks GET /cards only for the pages KV
+// caches and serves every other page (free text, HP bounds, pages past MAX_CACHED_CARDS_PAGE) from
+// the card index in the browser (cardIndex.ts), so the limit meets only other callers. It bounds a
+// careless loop, not a determined attacker: one address can still read about 150k rows a minute.
+// The same budget covers GET /cards/index when KV misses it.
 
 import type { CardsQuery } from "@colorless/schema";
 import type { Context, MiddlewareHandler } from "hono";

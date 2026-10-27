@@ -623,10 +623,11 @@ until 00:00 UTC. `GET /cards` therefore refuses a page that skips more than
 1,000 cards (`MAX_CARDS_OFFSET`), and `CATALOG_SEARCH_LIMIT` (namespace 1003)
 allows 30 scanning queries a minute per IP (an IPv6 address counts as its /64):
 any query that bypasses KV and names neither `id` nor `nameExact`, which are
-index lookups. The builder answers name and rules-text searches in the browser
-from `GET /cards/index` (one KV entry per catalog epoch), so what it still sends
-here is an HP bound and deep pages. The same budget covers `/cards/index` when
-KV misses it. The limit slows a careless loop but not a determined one (one
+index lookups. The builder asks `/cards` only for the pages KV caches (pages 1-3
+at its page sizes) and serves every other page, free text and HP bounds included,
+from `GET /cards/index` in the browser (one KV entry per catalog epoch), so the
+limit meets only other callers. The same budget covers `/cards/index` when KV
+misses it. The limit slows a careless loop but not a determined one (one
 address can still read about 150k rows a minute). A cacheable filter value that
 matches nothing (`illustrator=junk`) still scans the table on each miss and is
 not limited.

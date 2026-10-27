@@ -9,7 +9,7 @@ import {
   type CardIndexPayload,
   type CardsQueryParams,
   type Deck,
-  MAX_CARDS_OFFSET,
+  MAX_CACHED_CARDS_PAGE,
 } from "@colorless/schema";
 import { forgetCardIndex } from "../decks/catalog";
 import { cardIndexPayload } from "../test/fixtures";
@@ -445,13 +445,13 @@ describe("Lua deck builder", () => {
     expect(publish).toHaveBeenCalledTimes(1);
     expect(b.busy).toBe(false);
     await tick();
-    expect(pages()).toEqual([1, 2, 3, 4]);
-    // Page 4 is past the API's cached pages, so it carries the known total.
-    expect(totals()[3]).toBe(40);
+    // Page 4 is past the API's cached pages, so it comes from the card index.
+    expect(pages()).toEqual([1, 2, 3]);
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
     await b.command("page\t-1");
     expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
     await tick();
-    expect(pages()).toEqual([1, 2, 3, 4]);
+    expect(pages()).toEqual([1, 2, 3]);
   });
   it("searches names and rules text in the card index, loaded once, without asking /cards", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
@@ -511,24 +511,24 @@ describe("Lua deck builder", () => {
     await tick();
     expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
     expect(b.total).toBe(40);
+    expect(b.message).toBe("");
   });
-  it("stops the pager where the API's offset cap ends a long result", async () => {
-    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 5000));
+  it("asks /cards only for the pages the API caches, and the card index for the rest", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
     const { b } = await setup();
     await tick();
-    await b.command("page\t1000");
+    await b.command("page\t3");
     await tick();
-    // 8 cards a page: page 126 starts at card 1,001, the deepest the API serves.
-    expect(b.page).toBe(126);
+    expect(b.page).toBe(4);
     await b.command(encodeFields(["filter", "hpMin", "10"]));
     await tick();
-    await b.command("page\t1000");
-    await tick();
-    expect(b.page).toBe(126);
+    expect(vi.mocked(api.getCards).mock.calls.length).toBeGreaterThan(0);
     for (const [query] of vi.mocked(api.getCards).mock.calls) {
-      const offset = ((query?.page ?? 1) - 1) * (query?.pageSize ?? 50);
-      expect(offset).toBeLessThanOrEqual(MAX_CARDS_OFFSET);
+      expect(query?.page ?? 1).toBeLessThanOrEqual(MAX_CACHED_CARDS_PAGE);
+      expect(query?.hpMin).toBeUndefined();
+      expect(query?.total).toBeUndefined();
     }
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
   });
   it("keeps the page and requests nothing when a filter is set to the value it has", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
@@ -544,34 +544,6 @@ describe("Lua deck builder", () => {
     await tick();
     expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
     expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
-  });
-  it("does not pass an earlier query's total to the prefetches of a search that failed", async () => {
-    const catalog = catalogOf((query) => (query?.hpMin === 10 ? 40 : 16));
-    let failures = 1;
-    vi.mocked(api.getCards).mockImplementation(async (query) => {
-      if (query?.hpMin === 20 && failures-- > 0) throw new Error("offline");
-      return catalog(query);
-    });
-    const { b } = await setup();
-    await b.command(encodeFields(["filter", "hpMin", "10"]));
-    await tick();
-    const calls = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q);
-    const seen = calls().length;
-    await b.command(encodeFields(["filter", "hpMin", "20"]));
-    await tick();
-    // The failed page is not fetched again until asked for, and no page carries the old total.
-    expect(
-      calls()
-        .slice(seen)
-        .map((q) => [q?.page, q?.total]),
-    ).toEqual([
-      [1, undefined],
-      [2, undefined],
-      [3, undefined],
-    ]);
-    await b.command("page\t1");
-    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
-    expect(b.total).toBe(16);
   });
   it("does not apply an import after its dialog is cancelled", async () => {
     const { b } = await setup();

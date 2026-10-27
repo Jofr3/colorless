@@ -884,7 +884,8 @@ Phase 3 of the 2026-10-27 security audit. Anyone could spend the account's share
 - **Search in the browser (CA1, decision 3).**
   - `GET /cards/index` serves every card as one compact row (about 280 KB gzipped, one KV entry per epoch). The builder answers name and rules-text searches from it, and decklist import resolves names from it. A free-text search now reads 0 D1 rows (it was about 10k a request).
   - The shared matcher (`searchCardIndex`) is pinned to `GET /cards` by a parity test of 54 queries.
-  - Server-side, `/cards` refuses pages past 1,000 cards (the builder's pager stops there for server pages). `CATALOG_SEARCH_LIMIT` (30 a minute per IP) covers KV-bypassing scans and `/cards/index` misses. Uncached reads are tallied in an `evt=d1 kind=catalog_reads` line.
+  - Once loaded, the index also serves every page the API would not cache (HP bounds, pages past the third), so the builder asks `/cards` only for KV-cached pages. Browser QA found that brisk paging through server pages ran into the search limit, which is why.
+  - Server-side, `/cards` refuses pages past 1,000 cards. `CATALOG_SEARCH_LIMIT` (30 a minute per IP) covers KV-bypassing scans and `/cards/index` misses. Uncached reads are tallied in an `evt=d1 kind=catalog_reads` line.
 - **Catalog and assets (CA2-CA4, CAX1).**
   - Empty results and HP bounds no longer enter KV.
   - Asset URLs are pinned to https `assets.tcgdex.net`, and mirrored bodies must be images under 5 MB.
