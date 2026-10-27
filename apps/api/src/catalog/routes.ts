@@ -1,10 +1,12 @@
 // GET /cards, /sets, /series — the public catalog read API (§6).
 //
-// Every route: KV cache-aside middleware first (./cache.ts), query params
-// validated with @hono/zod-validator (invalid → terse 400 JSON), Drizzle
-// over D1, and the outgoing payload parsed through the canonical domain
-// schemas at the boundary (the /health pattern) so row/schema drift fails
-// loudly instead of leaking. Paired queries (page + count, set + its cards)
+// Every route: browser cache headers, query params validated with
+// @hono/zod-validator (invalid → terse 400 JSON), KV cache-aside where a KV
+// write pays for itself (./cache.ts: /facets, /series, /sets, /sets/:id and
+// /cards pages 1-3, keyed by the validated query), Drizzle over D1, and the
+// outgoing payload parsed through the canonical domain schemas at the
+// boundary (the /health pattern) so row/schema drift fails loudly instead of
+// leaking. Paired queries (page + count, set + its cards)
 // go through db.batch() — one D1 round trip.
 
 import {
@@ -16,6 +18,7 @@ import {
   type CatalogFacets,
   catalogFacetsSchema,
   fullCardsQuerySchema,
+  MAX_CACHED_CARDS_PAGE,
   type Paginated,
   paginatedSchema,
   serieSchema,
@@ -32,7 +35,7 @@ import { cards, series, sets } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";
 import { facetVocabulary } from "../sentinel";
-import { catalogCache } from "./cache";
+import { catalogHttpCache, catalogPathCache, catalogQueryCache, catalogUncached } from "./cache";
 import {
   cardBriefColumns,
   mapCardBriefRow,
@@ -75,28 +78,38 @@ export function setCardsStatement(db: DrizzleD1Database, setId: string) {
     .orderBy(asc(cards.localId));
 }
 
-catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), async (c) => {
-  const query = c.req.valid("query");
-  const db = drizzle(c.env.DB);
-  const [page, matches] = cardsPageStatements(db, query);
-  const [rows, totals] =
-    query.total === undefined
-      ? await db.batch([page, matches])
-      : [await page, [{ total: query.total }]];
-  const payload: Paginated<CardBrief> = {
-    items: rows.map(mapCardBriefRow),
-    page: query.page,
-    pageSize: query.pageSize,
-    total: totals[0]?.total ?? 0,
-  };
-  return c.json(cardsResponseSchema.parse(payload));
-});
+catalogRoutes.get(
+  "/cards",
+  catalogHttpCache,
+  validate("query", cardsQuerySchema),
+  // A passed-back `total` is echoed into the body, so a page that carries one is never stored.
+  catalogQueryCache(
+    cardsQuerySchema,
+    (query) => query.page <= MAX_CACHED_CARDS_PAGE && query.total === undefined,
+  ),
+  async (c) => {
+    const query = c.req.valid("query");
+    const db = drizzle(c.env.DB);
+    const [page, matches] = cardsPageStatements(db, query);
+    const [rows, totals] =
+      query.total === undefined
+        ? await db.batch([page, matches])
+        : [await page, [{ total: query.total }]];
+    const payload: Paginated<CardBrief> = {
+      items: rows.map(mapCardBriefRow),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: totals[0]?.total ?? 0,
+    };
+    return c.json(cardsResponseSchema.parse(payload));
+  },
+);
 
 // Full Cards for a batch of ids, in id order; unknown ids are left out. Registered before
 // /cards/:id, which would otherwise claim the path.
 catalogRoutes.get(
   "/cards/full",
-  catalogCache,
+  catalogUncached,
   validate("query", fullCardsQuerySchema),
   async (c) => {
     const { id } = c.req.valid("query");
@@ -110,7 +123,7 @@ catalogRoutes.get(
   },
 );
 
-catalogRoutes.get("/cards/:id", catalogCache, async (c) => {
+catalogRoutes.get("/cards/:id", catalogUncached, async (c) => {
   const row = await drizzle(c.env.DB)
     .select()
     .from(cards)
@@ -122,18 +135,24 @@ catalogRoutes.get("/cards/:id", catalogCache, async (c) => {
   return c.json(cardSchema.parse(mapCardRow(row)));
 });
 
-catalogRoutes.get("/sets", catalogCache, validate("query", setsQuerySchema), async (c) => {
-  const { serie } = c.req.valid("query");
-  const rows = await drizzle(c.env.DB)
-    .select()
-    .from(sets)
-    .where(serie === undefined ? undefined : eq(sets.serieId, serie))
-    .orderBy(asc(sets.releaseDate), asc(sets.id))
-    .all();
-  return c.json(setsResponseSchema.parse(rows.map(mapSetBriefRow)));
-});
+catalogRoutes.get(
+  "/sets",
+  catalogHttpCache,
+  validate("query", setsQuerySchema),
+  catalogQueryCache(setsQuerySchema),
+  async (c) => {
+    const { serie } = c.req.valid("query");
+    const rows = await drizzle(c.env.DB)
+      .select()
+      .from(sets)
+      .where(serie === undefined ? undefined : eq(sets.serieId, serie))
+      .orderBy(asc(sets.releaseDate), asc(sets.id))
+      .all();
+    return c.json(setsResponseSchema.parse(rows.map(mapSetBriefRow)));
+  },
+);
 
-catalogRoutes.get("/sets/:id", catalogCache, async (c) => {
+catalogRoutes.get("/sets/:id", catalogPathCache, async (c) => {
   const setId = c.req.param("id");
   const db = drizzle(c.env.DB);
   const [setRows, cardRows] = await db.batch([
@@ -149,7 +168,7 @@ catalogRoutes.get("/sets/:id", catalogCache, async (c) => {
   );
 });
 
-catalogRoutes.get("/series", catalogCache, async (c) => {
+catalogRoutes.get("/series", catalogPathCache, async (c) => {
   const db = drizzle(c.env.DB);
   // ~1 serie per era, so fetch all sets once and group in memory.
   const [serieRows, setRows] = await db.batch([
@@ -177,7 +196,7 @@ const facetValues = (rows: { value: string | null }[]): string[] =>
 
 // GET /facets: the filter vocabularies present in the catalog. This list must come from the data,
 // never from a constant: the suffix filter stays unreachable until rows carry a suffix.
-catalogRoutes.get("/facets", catalogCache, async (c) => {
+catalogRoutes.get("/facets", catalogPathCache, async (c) => {
   const db = drizzle(c.env.DB);
   const distinctOf = <Column extends SQLiteColumn>(column: Column) =>
     db.selectDistinct({ value: column }).from(cards).where(isNotNull(column)).orderBy(asc(column));

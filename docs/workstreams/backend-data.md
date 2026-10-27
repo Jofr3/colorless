@@ -801,11 +801,18 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 ```
 GET    /health
 
-# Catalog (public; best-effort KV cache-aside on every 200, 1-day TTL,
-# `x-colorless-cache: hit|miss|bypass` (free-text and id queries bypass KV),
-# key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + normalized path+sorted-query — bump the version prefix
-# whenever a cached shape — or its values for already-ingested rows — changes;
-# invalid query params → terse 400 JSON)
+# Catalog (public; every 200 carries `public, max-age=300, swr=3600` + ETag;
+# best-effort KV cache-aside, 1-day TTL, on the 200s of /facets, /series, /sets,
+# /sets/:id and /cards pages 1-3 only (MAX_CACHED_CARDS_PAGE) — each miss spends
+# one of the account's 1,000 KV writes/day, shared with the login limiter;
+# `x-colorless-cache: hit|miss|bypass` (bypass: /cards/:id, /cards/full, /cards
+# page 4+, a /cards query carrying `total`, and free-text/id queries);
+# key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + path (route params decoded)
+# + the VALIDATED query: only schema keys, defaults dropped, repeats sorted —
+# /facets, /series and /sets/:id ignore the query, so `?bust=N` cannot mint
+# entries; bump the version prefix whenever a cached shape — or its values for
+# already-ingested rows — changes; KV get/put/epoch failures log `evt = "kv"`;
+# invalid query params → terse 400 JSON, before KV is touched)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), nameExact, category,
                          #   type, rarity, stage, suffix, trainerType, energyType, set,
@@ -828,7 +835,8 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   §5.3.3);
                          #   sort=name|hp-desc|set (default set); page (1-based,
                          #   default 1), pageSize (default 50, max 100)
-GET    /cards/:id        # full canonical Card; 404 JSON if absent
+GET    /cards/:id        # full canonical Card; 404 JSON if absent; never in KV (a
+                         #   1-row PK read is cheaper than a KV write)
 GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown
                          #   ids are omitted; id batches never enter KV (card-pool load)
 GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate

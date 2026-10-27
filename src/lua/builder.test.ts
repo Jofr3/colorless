@@ -338,7 +338,7 @@ describe("Lua deck builder", () => {
     const pages = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.page);
     expect(pages()).toEqual([1, 2, 3]);
     const totals = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.total);
-    // A cached query keeps one cache key per page, so its prefetches send no total.
+    // The API caches a browsing query's first pages, so their prefetches send no total.
     expect(totals()).toEqual([undefined, undefined, undefined]);
     expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual([
       "p1a",
@@ -355,6 +355,8 @@ describe("Lua deck builder", () => {
     expect(b.busy).toBe(false);
     await tick();
     expect(pages()).toEqual([1, 2, 3, 4]);
+    // Page 4 is past the API's cached pages, so it carries the known total.
+    expect(totals()[3]).toBe(40);
     await b.command("page\t-1");
     expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
     await tick();

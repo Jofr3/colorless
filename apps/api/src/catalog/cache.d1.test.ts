@@ -1,7 +1,8 @@
-// The catalog KV cache over a real D1: what a miss stores, what bypasses KV, and that a failing
-// or slow KV never changes the response.
+// The catalog KV cache over a real D1: what a miss stores, what bypasses KV, that only the
+// shapes worth a KV write spend one, and that a failing or slow KV never changes the response.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { seedCards, useTestD1 } from "../testing/d1";
 import { catalogCacheKey } from "./cache";
@@ -38,8 +39,10 @@ function recordingKv(
   return { kv, store, calls };
 }
 
-const keyOf = (path: string, epoch: string | null = null) =>
-  catalogCacheKey(new URL(`http://api.test${path}`), epoch);
+const keyOf = (path: string, query = "", epoch: string | null = null) =>
+  catalogCacheKey(path, query, epoch);
+
+const putKeys = (calls: KvCall[]) => calls.filter((call) => call.op === "put").map((c) => c.key);
 
 async function cardsIds(res: Response): Promise<string[]> {
   const body = (await res.json()) as { items: { id: string }[] };
@@ -48,6 +51,7 @@ async function cardsIds(res: Response): Promise<string[]> {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  resetLogThrottle();
 });
 
 describe("catalog KV cache over D1", () => {
@@ -57,7 +61,7 @@ describe("catalog KV cache over D1", () => {
     const first = await app.request("/cards?category=Pokemon", {}, env);
     expect(first.headers.get("x-colorless-cache")).toBe("miss");
     expect(await cardsIds(first)).toEqual(["sv01-004", "sv01-016"]);
-    expect(store.has(keyOf("/cards?category=Pokemon", "e1"))).toBe(true);
+    expect(store.has(keyOf("/cards", "category=Pokemon", "e1"))).toBe(true);
     const second = await app.request("/cards?category=Pokemon", {}, env);
     expect(second.headers.get("x-colorless-cache")).toBe("hit");
     expect(await cardsIds(second)).toEqual(["sv01-004", "sv01-016"]);
@@ -65,12 +69,12 @@ describe("catalog KV cache over D1", () => {
 
   it("works against Miniflare's KV", async () => {
     const env = d1().env();
-    expect((await app.request("/cards/sv01-004", {}, env)).headers.get("x-colorless-cache")).toBe(
+    expect((await app.request("/sets/sv01", {}, env)).headers.get("x-colorless-cache")).toBe(
       "miss",
     );
-    const hit = await app.request("/cards/sv01-004", {}, env);
+    const hit = await app.request("/sets/sv01", {}, env);
     expect(hit.headers.get("x-colorless-cache")).toBe("hit");
-    expect(((await hit.json()) as { name: string }).name).toBe("Charmander");
+    expect(((await hit.json()) as { cards: { name: string }[] }).cards[0]?.name).toBe("Charmander");
   });
 
   it("stops serving entries cached before a new epoch once the isolate rereads it", async () => {
@@ -86,7 +90,7 @@ describe("catalog KV cache over D1", () => {
     clock.mockReturnValue(now + 61_000);
     const reread = await app.request("/cards?category=Pokemon", {}, env);
     expect(reread.headers.get("x-colorless-cache")).toBe("miss");
-    expect(store.has(keyOf("/cards?category=Pokemon", "e2"))).toBe(true);
+    expect(store.has(keyOf("/cards", "category=Pokemon", "e2"))).toBe(true);
   });
 
   it("bypasses KV for free-text and id queries without reading or writing it", async () => {
@@ -109,9 +113,9 @@ describe("catalog KV cache over D1", () => {
   });
 
   it("reads a failing KV entry as a miss", async () => {
-    const key = keyOf("/cards/sv01-016");
+    const key = keyOf("/cards", "category=Pokemon");
     const { kv } = recordingKv({}, { get: [key] });
-    const res = await app.request("/cards/sv01-016", {}, d1().env({ CACHE: kv }));
+    const res = await app.request("/cards?category=Pokemon", {}, d1().env({ CACHE: kv }));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-colorless-cache")).toBe("miss");
   });
@@ -144,5 +148,120 @@ describe("catalog KV cache over D1", () => {
     expect(deferred).toHaveLength(1);
     release();
     await Promise.all(deferred);
+  });
+});
+
+describe("which catalog shapes spend a KV write", () => {
+  it("keys /cards by the validated query: junk params, defaults and order share one entry", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const search of [
+      "category=Pokemon",
+      "category=Pokemon&bust=1",
+      "bust=2&category=Pokemon&page=1",
+      "category=Pokemon&sort=set&pageSize=50&page=01",
+    ]) {
+      const res = await app.request(`/cards?${search}`, {}, env);
+      expect(res.status).toBe(200);
+    }
+    expect(putKeys(calls)).toEqual([keyOf("/cards", "category=Pokemon")]);
+  });
+
+  it("ignores the query on /facets, /series and /sets/:id", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const path of ["/facets", "/series", "/sets/sv01"]) {
+      for (const search of ["", "?bust=1", "?bust=2&name=x"]) {
+        expect((await app.request(`${path}${search}`, {}, env)).status).toBe(200);
+      }
+    }
+    expect(putKeys(calls)).toEqual([keyOf("/facets"), keyOf("/series"), keyOf("/sets/sv01")]);
+  });
+
+  it("keys /sets/:id by the decoded id, so an encoded spelling shares its entry", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    expect((await app.request("/sets/sv01", {}, env)).status).toBe(200);
+    expect((await app.request("/sets/sv%301", {}, env)).headers.get("x-colorless-cache")).toBe(
+      "hit",
+    );
+    expect(putKeys(calls)).toEqual([keyOf("/sets/sv01")]);
+  });
+
+  it("keys /sets by its serie filter only", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const search of ["", "?bust=1", "?serie=sv", "?serie=sv&x=1"]) {
+      expect((await app.request(`/sets${search}`, {}, env)).status).toBe(200);
+    }
+    expect(putKeys(calls)).toEqual([keyOf("/sets"), keyOf("/sets", "serie=sv")]);
+  });
+
+  it("caches /cards pages 1-3 and sends page 4 on to D1 without touching KV", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const page of [1, 2, 3]) {
+      const res = await app.request(`/cards?pageSize=1&page=${page}`, {}, env);
+      expect(res.headers.get("x-colorless-cache")).toBe("miss");
+    }
+    expect(putKeys(calls)).toHaveLength(3);
+    calls.length = 0;
+    const deep = await app.request("/cards?pageSize=1&page=4", {}, env);
+    expect(deep.status).toBe(200);
+    expect(deep.headers.get("x-colorless-cache")).toBe("bypass");
+    expect(calls).toEqual([]);
+  });
+
+  it("never stores a page carrying a passed-back total", async () => {
+    const { kv, calls } = recordingKv();
+    const res = await app.request("/cards?category=Pokemon&total=999", {}, d1().env({ CACHE: kv }));
+    expect(((await res.json()) as { total: number }).total).toBe(999);
+    expect(res.headers.get("x-colorless-cache")).toBe("bypass");
+    expect(calls).toEqual([]);
+  });
+
+  it("keeps /cards/:id and /cards/full out of KV, with the public browser cache", async () => {
+    const { kv, calls } = recordingKv();
+    const env = d1().env({ CACHE: kv });
+    for (const path of ["/cards/sv01-004", "/cards/full?id=sv01-004"]) {
+      const res = await app.request(path, {}, env);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-colorless-cache")).toBe("bypass");
+      expect(res.headers.get("cache-control")).toContain("max-age=300");
+      expect(res.headers.get("etag")).not.toBeNull();
+    }
+    expect(calls).toEqual([]);
+  });
+});
+
+describe("catalog KV failure logs", () => {
+  const kvLines = (warn: { mock: { calls: unknown[][] } }) =>
+    warn.mock.calls
+      .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
+      .filter((line) => line.evt === "kv");
+
+  it("logs a failed put with its route, once per throttle window", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { kv } = recordingKv({}, { put: true });
+    const env = d1().env({ CACHE: kv });
+    await app.request("/cards?category=Pokemon", {}, env);
+    await app.request("/cards?category=Trainer", {}, env);
+    expect(kvLines(warn)).toEqual([{ evt: "kv", kind: "put_failed", route: "/cards" }]);
+  });
+
+  it("logs a failed get and a failed epoch read", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failingGet = recordingKv({}, { get: [keyOf("/sets/sv01")] });
+    expect((await app.request("/sets/sv01", {}, d1().env({ CACHE: failingGet.kv }))).status).toBe(
+      200,
+    );
+    const failingEpoch = recordingKv({}, { get: [CATALOG_EPOCH_KEY] });
+    expect((await app.request("/facets", {}, d1().env({ CACHE: failingEpoch.kv }))).status).toBe(
+      200,
+    );
+    expect(kvLines(warn)).toEqual([
+      { evt: "kv", kind: "get_failed", route: "/sets/:id" },
+      { evt: "kv", kind: "epoch_failed", route: "/facets" },
+    ]);
   });
 });

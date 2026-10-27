@@ -1,13 +1,22 @@
 // KV cache-aside for the public catalog GETs. Only 200 responses are stored, and only the body;
 // headers are rebuilt on a hit, which is safe because every catalog response is JSON.
-// KV is best effort: a failed read is a miss, and the write runs after the response with its
-// failure dropped, so a KV outage or a spent write quota costs the cache and never the request.
+// KV is best effort: a failed read is a miss, and the write runs after the response, so a KV
+// outage or a spent write quota costs the cache and never the request. Each failure is logged
+// (throttled) as `evt = "kv"`, because the account's 1,000 writes/day are shared with the login
+// rate limiter and a spent quota shows up there first.
+//
+// Every miss spends one of those writes, so only shapes that recur are cached, and the key is
+// built from the validated query rather than the raw URL: a param the schema does not know, a
+// default spelled out, or a reordered repeat cannot mint a new entry.
 
 import { UNCACHED_CATALOG_PARAMS } from "@colorless/schema";
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler, Next } from "hono";
 import { every } from "hono/combine";
+import { routePath } from "hono/route";
+import type * as z from "zod";
 import type { Env } from "../env";
 import { afterResponse } from "../http/afterResponse";
+import { logEventThrottled } from "../http/log";
 import {
   CACHE_STATUS_HEADER,
   cacheControl,
@@ -31,29 +40,36 @@ const EPOCH_MEMO_MS = 60_000;
 const EPOCH_EDGE_TTL_SECONDS = 300;
 
 /**
- * KV key for a request URL: version, catalog epoch, path and query, with the query keys (then
- * values) sorted so `?a=1&b=2` and `?b=2&a=1` share an entry. Keys are normalized at the
- * *request* level, not the resolved-filter level — `/cards` and `/cards?page=1` cache separately
- * even though they answer alike; duplicate entries are harmless. A null epoch (none stamped yet)
- * leaves its segment out.
+ * KV key: version, catalog epoch, path, then the canonical query (`cacheQuery`). A null epoch
+ * (none stamped yet) leaves its segment out.
  */
-export function catalogCacheKey(url: URL, epoch: string | null = null): string {
-  const entries = [...url.searchParams.entries()].sort(([keyA, valueA], [keyB, valueB]) =>
-    keyA === keyB ? valueA.localeCompare(valueB) : keyA.localeCompare(keyB),
-  );
-  const query = new URLSearchParams(entries).toString();
+export function catalogCacheKey(path: string, query = "", epoch: string | null = null): string {
   const scope = epoch === null ? CACHE_VERSION : `${CACHE_VERSION}:${epoch}`;
-  return `catalog:${scope}:${url.pathname}${query ? `?${query}` : ""}`;
+  return `catalog:${scope}:${path}${query ? `?${query}` : ""}`;
 }
 
-/** KV rejects keys over 512 bytes. A normalized key that long BYPASSES the cache instead of
-    erroring the GET. URL paths and queries are percent-encoded (ASCII), so length == bytes. */
+/**
+ * The query part of a key, from a validated query: only the fields the schema output carries (zod
+ * strips unknown params), a value equal to the schema's default left out, repeated values deduped
+ * and sorted, and keys sorted. `?bust=1`, `?page=1`, `?page=01` and the bare path share one entry.
+ */
+export function cacheQuery(
+  query: Record<string, unknown>,
+  defaults: Record<string, unknown> = {},
+): string {
+  const params = new URLSearchParams();
+  for (const name of Object.keys(query).sort()) {
+    const value = query[name];
+    if (value === undefined || JSON.stringify(value) === JSON.stringify(defaults[name])) continue;
+    const values = Array.isArray(value) ? [...new Set(value.map(String))].sort() : [String(value)];
+    for (const each of values) params.append(name, each);
+  }
+  return params.toString();
+}
+
+/** KV rejects keys over 512 bytes. A key that long BYPASSES the cache instead of erroring the
+    GET. Keys are percent-encoded (ASCII), so length == bytes. */
 const KV_MAX_KEY_BYTES = 512;
-
-/** Caching a query that almost never recurs spends a KV write that is never read back. */
-export function bypassesCatalogCache(url: URL): boolean {
-  return UNCACHED_CATALOG_PARAMS.some((param) => url.searchParams.has(param));
-}
 
 type EpochRead = { epoch: string | null; readAt: number } | { failedAt: number };
 
@@ -63,7 +79,7 @@ const epochReads = new WeakMap<KVNamespace, EpochRead>();
 
 /** The stamped catalog epoch, reread at most once a minute per isolate; undefined when KV
     cannot be read, which skips the cache. */
-async function catalogEpoch(kv: KVNamespace): Promise<string | null | undefined> {
+async function catalogEpoch(kv: KVNamespace, route: string): Promise<string | null | undefined> {
   const now = Date.now();
   const memo = epochReads.get(kv);
   if (memo !== undefined) {
@@ -76,15 +92,28 @@ async function catalogEpoch(kv: KVNamespace): Promise<string | null | undefined>
     return epoch;
   } catch {
     epochReads.set(kv, { failedAt: now });
+    logEventThrottled("kv", "epoch_failed", { route });
     return undefined;
   }
 }
 
-const kvCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
-  const url = new URL(c.req.url);
+/** The request path rebuilt from the route pattern and its decoded params, so a percent-encoded
+    spelling of `/sets/sv01` cannot mint a second entry for the same set. */
+function canonicalPath(c: Context, route: string): string {
+  return route.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(c.req.param(name) ?? ""));
+}
+
+/** Cache-aside under the route's path plus `query`; a null query goes straight to the handler. */
+async function cacheAside(
+  c: Context<{ Bindings: Env }>,
+  next: Next,
+  query: string | null,
+): Promise<Response | undefined> {
   const kv = c.env.CACHE;
-  const epoch = bypassesCatalogCache(url) ? undefined : await catalogEpoch(kv);
-  const key = epoch === undefined ? undefined : catalogCacheKey(url, epoch);
+  const route = routePath(c);
+  const epoch = query === null ? undefined : await catalogEpoch(kv, route);
+  const key =
+    epoch === undefined ? undefined : catalogCacheKey(canonicalPath(c, route), query ?? "", epoch);
   if (key === undefined || key.length > KV_MAX_KEY_BYTES) {
     await next();
     if (c.res.status === 200) {
@@ -92,7 +121,10 @@ const kvCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
     }
     return;
   }
-  const cached = await kv.get(key).catch(() => null);
+  const cached = await kv.get(key).catch(() => {
+    logEventThrottled("kv", "get_failed", { route });
+    return null;
+  });
   if (cached !== null) {
     return c.body(cached, 200, {
       "Content-Type": "application/json",
@@ -103,12 +135,49 @@ const kvCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   if (c.res.status === 200) {
     c.res.headers.set(CACHE_STATUS_HEADER, "miss");
     const body = c.res.clone();
-    await afterResponse(c, async () =>
-      kv.put(key, await body.text(), { expirationTtl: CACHE_TTL_SECONDS }),
+    await afterResponse(
+      c,
+      async () => kv.put(key, await body.text(), { expirationTtl: CACHE_TTL_SECONDS }),
+      () => logEventThrottled("kv", "put_failed", { route }),
     );
   }
-};
+}
 
-/** The middleware every catalog route mounts: browser revalidation and
-    freshness outside, the KV cache-aside inside. */
-export const catalogCache = every(conditionalGet, cacheControl(PUBLIC_CATALOG_CACHE), kvCache);
+/** Browser revalidation and freshness, which every catalog route gets whether or not KV holds
+    it. */
+export const catalogHttpCache = every(conditionalGet, cacheControl(PUBLIC_CATALOG_CACHE));
+
+/** For a route whose response depends on its path alone (/facets, /series, /sets/:id): the query
+    is ignored, so `/facets?bust=1` is the `/facets` entry. */
+export const catalogPathCache = every(
+  catalogHttpCache,
+  (c: Context<{ Bindings: Env }>, next: Next) => cacheAside(c, next, ""),
+);
+
+/** For a route that does not use KV at all: one-row lookups and id batches, where a KV write
+    would cost more than the D1 read it saves. */
+export const catalogUncached = every(catalogHttpCache, async (c: Context, next: Next) => {
+  await next();
+  if (c.res.status === 200) {
+    c.res.headers.set(CACHE_STATUS_HEADER, "bypass");
+  }
+});
+
+/**
+ * KV cache-aside keyed by a validated query, for a route that mounts `catalogHttpCache`, then
+ * `validate("query", schema)`, then this. A query carrying a free-text or id param
+ * (UNCACHED_CATALOG_PARAMS) or failing `cacheable` goes straight to D1.
+ */
+export function catalogQueryCache<Schema extends z.ZodType<Record<string, unknown>>>(
+  schema: Schema,
+  cacheable: (query: z.output<Schema>) => boolean = () => true,
+): MiddlewareHandler<{ Bindings: Env }, string, { out: { query: z.output<Schema> } }> {
+  const parsedDefaults = schema.safeParse({});
+  const defaults: Record<string, unknown> = parsedDefaults.success ? parsedDefaults.data : {};
+  return (c, next) => {
+    const query = c.req.valid("query");
+    const uncached =
+      UNCACHED_CATALOG_PARAMS.some((param) => query[param] !== undefined) || !cacheable(query);
+    return cacheAside(c, next, uncached ? null : cacheQuery(query, defaults));
+  };
+}

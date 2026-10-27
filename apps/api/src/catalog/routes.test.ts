@@ -84,9 +84,9 @@ describe("GET /cards param validation", () => {
 describe("catalog KV cache middleware", () => {
   it("serves a seeded key as a hit without touching D1", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
-    const { kv } = fakeKv({ "catalog:v12:/cards?page=1&set=nope": cachedBody });
-    // Param order differs from the stored key — normalization must line up.
-    const res = await app.request("/cards?set=nope&page=1", {}, envWith(kv));
+    const { kv } = fakeKv({ "catalog:v12:/cards?set=nope": cachedBody });
+    // The explicit default page drops out of the key, as does a param the schema does not know.
+    const res = await app.request("/cards?page=1&bust=7&set=nope", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-colorless-cache")).toBe("hit");
     expect(res.headers.get("content-type")).toBe("application/json");

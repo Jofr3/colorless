@@ -79,9 +79,13 @@ export type CardsQuery = z.infer<typeof cardsQuerySchema>;
 /**
  * Catalog query params whose values are typed by a person or drawn from one deck: id hydration and
  * the free-text searches. Such queries almost never recur, so the API does not cache them, and a
- * paging client sends a known `total` only with one of them.
+ * paging client may send a known `total` with one of them.
  */
 export const UNCACHED_CATALOG_PARAMS = ["id", "name", "nameExact", "text"] as const;
+/** The last GET /cards page the API caches. A browsing client's first page and its prefetches
+    recur across visitors; a deeper page is one person paging, so it goes to D1, and a paging
+    client sends a known `total` with it to spare the recount. */
+export const MAX_CACHED_CARDS_PAGE = 3;
 /** What a caller may send: every field optional, a repeatable one as a string or string[]. */
 export type CardsQueryParams = z.input<typeof cardsQuerySchema>;
 
