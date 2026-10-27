@@ -54,6 +54,9 @@ const SEATED = new Set<OnlineStep>(["waiting", "versus", "countdown", "starting"
 
 /** The online modal's data side over one LobbyClient; Lua owns all layout,
  * controls and motion. Spectating is not offered: a full lobby is an info step. */
+/** How long a live match waits for the table to take its client (see `release`). */
+export const TABLE_CLAIM_MS = 30_000;
+
 export class LuaOnline {
   client: LobbyClient | null = null;
   surface: Surface = "none";
@@ -367,16 +370,22 @@ export class LuaOnline {
     this.over = false;
   }
 
-  /** A surface let go: unless another takes the client this tick, bye. */
+  /** A surface let go: unless another takes the client, bye. Another surface gets this tick,
+   * except when the modal just routed a live match to the table: the table loads with `import()`
+   * on first use, so it gets TABLE_CLAIM_MS, and a bye before then would concede the match. */
   private release() {
     this.surface = "none";
     this.op++;
-    setTimeout(() => {
-      if (this.surface === "none" && this.client) {
-        this.drop();
-        this.emit();
-      }
-    }, 0);
+    const handoff = this.routed === "match" && this.client !== null && this.live(this.client);
+    setTimeout(
+      () => {
+        if (this.surface === "none" && this.client) {
+          this.drop();
+          this.emit();
+        }
+      },
+      handoff ? TABLE_CLAIM_MS : 0,
+    );
   }
 
   private changed() {

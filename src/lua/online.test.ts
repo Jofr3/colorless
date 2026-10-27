@@ -12,7 +12,7 @@ import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
 import { clearSavedDeckCache } from "../game/sandboxDecks";
 import { LobbyClient, type LobbyClientOptions } from "../online/lobbyClient";
-import { LuaOnline, NOTICE_MS } from "./online";
+import { LuaOnline, NOTICE_MS, TABLE_CLAIM_MS } from "./online";
 
 const CODE = "ABCD";
 const card = {
@@ -364,6 +364,36 @@ describe("Lua online adapter", () => {
     expect(c.kinds()).not.toContain("bye");
     online.detach();
     vi.advanceTimersByTime(0);
+    expect(c.kinds()).toContain("bye");
+  });
+
+  it("a live match routed to the table waits for the table to load before any bye", async () => {
+    const { online, last } = setup();
+    await online.command("open");
+    await online.command(`join\t${CODE}`);
+    const c = last();
+    const me = identity().playerId;
+    c.push({ kind: "state", snapshot: seated(me, { phase: "in-game" }) });
+    c.push({ kind: "match", game, log: [] });
+    // The modal closes as it routes; the lazily imported table takes the client later.
+    await online.command("close");
+    vi.advanceTimersByTime(TABLE_CLAIM_MS - 1);
+    expect(c.kinds()).not.toContain("bye");
+    expect(online.attach(CODE)).toBe(c.client);
+    online.detach();
+    vi.advanceTimersByTime(0);
+    expect(c.kinds()).toContain("bye");
+  });
+
+  it("a live match the table never claims says bye once the wait is over", async () => {
+    const { online, last } = setup();
+    await online.command("open");
+    await online.command(`join\t${CODE}`);
+    const c = last();
+    c.push({ kind: "state", snapshot: seated(identity().playerId, { phase: "in-game" }) });
+    c.push({ kind: "match", game, log: [] });
+    await online.command("close");
+    vi.advanceTimersByTime(TABLE_CLAIM_MS);
     expect(c.kinds()).toContain("bye");
   });
 
