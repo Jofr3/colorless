@@ -269,6 +269,18 @@ data loss rather than a validation failure.
   fails open (`evt = "auth", kind = "limiter_error"`). The profile's
   favourite-deck field is retired: `PATCH /auth/me` ignores `favouriteDeckId`
   and users no longer carry it; the `users.favourite_deck_id` column stays.
+- **Account deletion** (database audit OP6): `DELETE /auth/me` with
+  `{password?}`. An account with a password must send it (wrong or missing →
+  401 `invalid password`, counted by the limiter in its own `delete` scope, so
+  a stolen cookie cannot guess it fast); an OAuth-only account sends none. One
+  `DELETE FROM users`, scoped to the verified hash like the login's session
+  insert, and the `ON DELETE CASCADE` keys remove its sessions, identities,
+  folders, decks and deck cards. The 204 clears the cookie as logout does and
+  logs `evt = "auth", kind = "account_deleted"` with no id or email. Limiter
+  rows age out on their own; a lobby seat bound to the id only compares it, and
+  the handoff's deck read finds nothing. There is no purge of unverified
+  accounts. The web app asks for the password in the Settings account tab and
+  needs a second press to confirm.
 - **Password-reset + email-verify are 501 stubs** — they need an outbound
   email provider, which is not chosen yet; no token plumbing exists until it
   is (`POST /auth/verify-email`, `POST /auth/reset-password` explain this).
@@ -552,7 +564,7 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | Query | What it finds |
 | --- | --- |
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
-| `evt = "auth"` | Login, register and OAuth failures (`apps/api/src/auth/`). |
+| `evt = "auth"` | Login, register and OAuth failures, account deletions (`apps/api/src/auth/`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
@@ -959,6 +971,8 @@ POST   /auth/login               # {email, password} → 200 user + session cook
                                  #   uniform 401 on any failure; 429 rate-limited
 POST   /auth/logout              # deletes the session row, clears the cookie → 204
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
+DELETE /auth/me                  # {password?} → 204, deletes the account (cascades), clears the
+                                 #   cookie; 401 wrong/missing password; 429 rate-limited
 GET    /auth/oauth/:provider     # google — 302 to provider; 503 until secrets installed
 GET    /auth/oauth/:provider/callback  # state-checked code exchange → session, 302 to APP_ORIGIN
 POST   /auth/verify-email  ·  POST /auth/reset-password

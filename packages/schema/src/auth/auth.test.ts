@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  deleteAccountRequestSchema,
   loginRequestSchema,
   registerRequestSchema,
   updateProfileRequestSchema,
@@ -67,6 +68,20 @@ describe("updateProfileRequestSchema", () => {
   });
 });
 
+describe("deleteAccountRequestSchema", () => {
+  it("accepts a password, or none for an OAuth-only account", () => {
+    expect(deleteAccountRequestSchema.parse({ password: "x" })).toEqual({ password: "x" });
+    expect(deleteAccountRequestSchema.parse({})).toEqual({});
+  });
+
+  it.each([
+    ["an empty password", { password: "" }],
+    ["a password past 256 chars", { password: "x".repeat(257) }],
+  ])("rejects %s", (_label, body) => {
+    expect(deleteAccountRequestSchema.safeParse(body).success).toBe(false);
+  });
+});
+
 describe("userSchema", () => {
   it("has no password-shaped fields, even via passthrough attempts", () => {
     const parsed = userSchema.parse({
@@ -75,6 +90,7 @@ describe("userSchema", () => {
       displayName: "Ash",
       emailVerified: false,
       avatarSeed: "1a2b3c4d",
+      hasPassword: true,
       createdAt: "2026-07-09T00:00:00.000Z",
       passwordHash: "should-be-stripped",
     });

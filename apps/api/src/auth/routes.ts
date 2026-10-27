@@ -9,6 +9,7 @@
 // guarantees no password/hash field can ever leak.
 
 import {
+  deleteAccountRequestSchema,
   loginRequestSchema,
   type OAuthFailure,
   type OAuthProvider,
@@ -71,6 +72,7 @@ function mapUserRow(row: UserRow): User {
     // Derived, never stored (P5-2): the same token the lobby broadcasts for
     // this account, so a player's profile draws the face opponents see.
     avatarSeed: avatarSeedOf(row.id),
+    hasPassword: row.passwordHash !== null,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -78,7 +80,7 @@ function mapUserRow(row: UserRow): User {
 /** Count this attempt and run `lookup` in one D1 batch. An over-budget attempt answers 429 and
     exposes nothing about the lookup. */
 async function afterRateLimit<T>(
-  c: AuthContext,
+  c: Context,
   db: Db,
   scope: RateLimitScope,
   email: string,
@@ -269,6 +271,55 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
   }
   // The updated row, not a re-read: this session owns the only change.
   return c.json(userSchema.parse(mapUserRow({ ...row, displayName })));
+});
+
+// Deleting your own account (database audit OP6). One statement: every table holding the user's
+// data references users ON DELETE CASCADE (sessions, oauth_identities, folders, decks and through
+// them deck_cards), so the delete takes this session and every other with it. Rate-limit rows are
+// hashed and age out on their own; a lobby seat bound to the id only ever compares it, and a deck
+// read for it finds nothing.
+authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchema), async (c) => {
+  const row = c.get("user");
+  const { password } = c.req.valid("json");
+  const db = drizzle(c.env.DB);
+  // A password account proves it is its owner at the keyboard, not only a holder of the cookie.
+  // An OAuth-only account has nothing to ask for; its session is the credential.
+  let verifiedHash: string | null = null;
+  if (row.passwordHash !== null) {
+    // The hash is re-read with the attempt count, since the verify below is slow either way.
+    const attempt = await afterRateLimit(c, db, "delete", row.email, () =>
+      db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, row.id)),
+    );
+    if (attempt.limited) {
+      return attempt.limited;
+    }
+    const hash = attempt.found[0]?.passwordHash ?? null;
+    if (password === undefined || hash === null || !(await verifyPassword(password, hash))) {
+      logEvent("auth", "delete_failed", {
+        reason: password === undefined ? "no_password" : "wrong_password",
+      });
+      return c.json({ error: "invalid password" }, 401);
+    }
+    verifiedHash = hash;
+  }
+  // Scoped to the verified hash, like the login's session insert: an OAuth link that cleared the
+  // password during the verify also ended this session, so the delete then matches nothing.
+  const deleted = await db
+    .delete(users)
+    .where(
+      verifiedHash === null
+        ? eq(users.id, row.id)
+        : and(eq(users.id, row.id), eq(users.passwordHash, verifiedHash)),
+    );
+  // With no password to scope by, nothing matched means a concurrent delete already did the work.
+  if (deleted.meta.changes === 0 && verifiedHash !== null) {
+    logEvent("auth", "delete_failed", { reason: "credential_changed" });
+    return c.json({ error: "invalid password" }, 401);
+  }
+  // Nothing that identifies the account: it no longer exists.
+  logEvent("auth", "account_deleted", {});
+  c.header("Set-Cookie", clearedSessionCookie());
+  return c.body(null, 204);
 });
 
 authRoutes.post("/logout", async (c) => {

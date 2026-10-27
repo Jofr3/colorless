@@ -13,6 +13,8 @@ function Account:sync(raw)
   local resetName=reset or self.draftName==self.name
   self.status,self.busy,self.message=f[2],f[3]=='1',f[4]
   self.id,self.name,self.email=f[5],f[6],f[7]
+  -- Whether deleting the account asks for its password (an OAuth-only account has none).
+  self.hasPassword=f[8]=='1'
   self.savedRemaining=self.message=='Saved.' and 3 or nil
   if resetName then self.draftName=self.name end
   if self.status~='authenticated' then self.editing=false end

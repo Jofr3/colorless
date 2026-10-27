@@ -37,7 +37,19 @@ export interface ShellPorts {
   command(screen: BridgeScreen, raw: string): void;
   navigate(page: string): void;
   authenticate(request: AuthRequest): void;
+  /** Deletes the signed-in account; `password` is the auth form's field, empty for an OAuth-only
+   * account. */
+  deleteAccount(password: string): void;
 }
+
+/** What the auth form is open for: signing in, creating an account, or confirming a deletion. */
+type AuthMode = AuthRequest["mode"] | "delete";
+
+const AUTH_FORM_LABEL: Record<AuthMode, string> = {
+  login: "Sign in",
+  register: "Create account",
+  delete: "Delete account",
+};
 
 /** Lua's preferences record, kept as Lua serializes it; Lua owns its fields. */
 const PREFERENCES_KEY = "colorless.lua.preferences";
@@ -84,7 +96,9 @@ export class HostShell {
   private readonly line: TextProxy;
   private readonly builderText: TextProxy;
   private readonly auth: AuthProxy;
-  private authMode: "login" | "register" = "login";
+  private authMode: AuthMode = "login";
+  /** The account the last snapshot named, "" when signed out. */
+  private accountUser = "";
 
   constructor(
     private readonly doc: Document,
@@ -213,8 +227,14 @@ export class HostShell {
 
   accountChanged(snapshot: string) {
     this.host.writeMailbox(MAILBOXES.account, snapshot);
-    if (decodeFields(snapshot)?.[1] === "authenticated") this.auth.clear();
-    else this.name.finish("done", true);
+    const [, status = "", , , user = ""] = decodeFields(snapshot) ?? [];
+    // A different account (a sign-in, a sign-out, a deletion) empties the auth form, password
+    // included. Other snapshots leave it: the deletion form stays filled while signed in.
+    if (user !== this.accountUser) {
+      this.accountUser = user;
+      this.auth.clear();
+    }
+    if (status !== "authenticated") this.name.finish("done", true);
   }
 
   onPrint(message: string) {
@@ -374,7 +394,7 @@ export class HostShell {
     if (action === "open") {
       this.name.finish();
       this.auth.finish();
-      this.authMode = value === "register" ? "register" : "login";
+      this.authMode = value === "register" || value === "delete" ? value : "login";
       this.authInput("password").value = "";
       this.authInput("password").autocomplete =
         this.authMode === "register" ? "new-password" : "current-password";
@@ -382,12 +402,16 @@ export class HostShell {
       this.ports.command("account", "clear-message");
       this.canvas.setAttribute(
         "aria-label",
-        `${this.authMode === "register" ? "Create account" : "Sign in"}. Tab between controls. Enter edits or activates. Escape returns to Settings.`,
+        `${AUTH_FORM_LABEL[this.authMode]}. Tab between controls. Enter edits or activates. Escape returns to Settings.`,
       );
     } else if (action === "edit" && (AUTH_FIELDS as readonly string[]).includes(value)) {
       this.auth.edit(value as AuthField);
     } else if (action === "submit") {
       this.auth.finish();
+      if (this.authMode === "delete") {
+        this.ports.deleteAccount(this.authInput("password").value);
+        return;
+      }
       this.ports.authenticate({
         mode: this.authMode,
         email: this.authInput("email").value,
