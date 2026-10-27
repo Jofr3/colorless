@@ -42,6 +42,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Known advisories in what the Workers ship (hono, zod, drizzle-orm and
+      # their dependencies; dev tools are left to Dependabot). The pinned bun
+      # 1.3.13 has no `audit --prod` and would audit the whole dev tree, so the
+      # audit alone runs on a newer bun; it only reads bun.lock. A new advisory
+      # with no fix yet gets a dated `--ignore=GHSA-…` here.
+      - name: Audit production dependencies
+        run: bunx bun@1.4.2 audit --prod --audit-level=moderate
+
       # The previous run's build info and engine and schema declarations, so
       # `tsc -b` re-checks only what changed. Each run saves under its own sha.
       - name: Cache TypeScript build
