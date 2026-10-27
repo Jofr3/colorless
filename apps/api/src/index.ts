@@ -15,6 +15,7 @@ import { routePath } from "hono/route";
 import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
 import { sweepExpired } from "./auth/sweep";
+import { cardIndexRoutes } from "./catalog/cardIndex";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
@@ -70,6 +71,8 @@ app.use("*", (c, next) =>
     maxAge: 86400,
     allowHeaders: ["Content-Type"],
     allowMethods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
+    // A 429's wait, which the deck saver honours before retrying.
+    exposeHeaders: ["Retry-After"],
   })(c, next),
 );
 
@@ -116,7 +119,9 @@ app.route("/decks", deckRoutes);
 // matching WebSocket route is mounted above, ahead of CORS.
 app.route("/lobby", lobbyRoutes);
 
-// Public catalog reads (KV-cached): /cards, /sets, /series.
+// Public catalog reads (KV-cached): /cards, /sets, /series. The whole-catalog search index mounts
+// first, since /cards/:id would otherwise claim /cards/index.
+app.route("/", cardIndexRoutes);
 app.route("/", catalogRoutes);
 
 app.get("/health", (c) => {

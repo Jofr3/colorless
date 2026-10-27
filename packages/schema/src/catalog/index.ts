@@ -13,3 +13,4 @@ export * from "./page";
 export * from "./query";
 export * from "./serie";
 export * from "./set";
+export * from "./cardIndex";

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../test/fetchStub";
-import { cardBrief as brief, cardsPage, FACETS } from "../test/fixtures";
+import { cardBrief as brief, cardIndexPayload, cardsPage, FACETS } from "../test/fixtures";
 import type { Card } from "@colorless/schema";
 import { DEFAULT_FORMAT, formatById } from "@colorless/engine";
 import { isBasicEnergy } from "./cards";
@@ -9,11 +9,13 @@ import {
   filtersToCardsQuery,
   findCardsByName,
   findCardsBySubstring,
+  forgetCardIndex,
   importDecklist,
   kindOptions,
   suffixOptions,
   toBuilderCard,
 } from "./catalog";
+import { MAX_DECKLIST_LINES } from "./decklistText";
 import { DEFAULT_FILTERS, type Filters } from "./poolFilter";
 
 const expanded = formatById("expanded");
@@ -404,5 +406,44 @@ describe("importDecklist", () => {
       "nameExact=mystery card",
       "name=mystery card",
     ]);
+  });
+
+  it("resolves names in the card index when it loads, asking /cards nothing", async () => {
+    const prints = [
+      brief({ id: "sve-002", name: "Fire Energy", category: "Energy", energyType: "Normal" }),
+      brief({ id: "sv01-193", name: "Rocky Helmet", category: "Trainer" }),
+      brief({
+        id: "sv03-230",
+        name: "Basic Fire Energy",
+        category: "Energy",
+        energyType: "Normal",
+      }),
+    ];
+    const { calls } = stubFetch({
+      "GET /sets": () => json([]),
+      "GET /cards/index": () => json(cardIndexPayload(prints)),
+    });
+    const { entries, unmatched } = await importDecklist(
+      "2 Rocky Helmet SVI 193\n5 Basic Fire Energy\n1 Mystery Card",
+    );
+    expect(unmatched.map((line) => line.name)).toEqual(["Mystery Card"]);
+    // The plain print comes first, as from GET /cards: exact key, then its "Basic …" form.
+    expect(entries.map((entry) => [entry.card.cardId, entry.quantity])).toEqual([
+      ["sv01-193", 2],
+      ["sve-002", 5],
+    ]);
+    expect(calls.filter((call) => call === "GET /cards")).toEqual([]);
+    forgetCardIndex();
+  });
+
+  it(`refuses more than ${MAX_DECKLIST_LINES} card lines before any lookup`, async () => {
+    const { impl } = stubFetch({});
+    const text = Array.from({ length: MAX_DECKLIST_LINES + 1 }, () => "1 Pikachu").join("\n");
+    await expect(importDecklist(text)).resolves.toEqual({
+      entries: [],
+      unmatched: [],
+      tooManyLines: true,
+    });
+    expect(impl).not.toHaveBeenCalled();
   });
 });

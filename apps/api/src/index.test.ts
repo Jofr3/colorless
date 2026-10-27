@@ -43,6 +43,11 @@ describe("CORS", () => {
     expect(res.headers.get("access-control-allow-headers")).toBe("Content-Type");
     expect(res.headers.get("access-control-allow-methods")).toBe("GET,HEAD,POST,PATCH,DELETE");
   });
+
+  it("lets the web client read a 429's Retry-After", async () => {
+    const res = await app.request("/health", { headers: { Origin: "http://localhost:5175" } });
+    expect(res.headers.get("access-control-expose-headers")).toBe("Retry-After");
+  });
 });
 
 describe("response headers", () => {

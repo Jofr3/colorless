@@ -5,6 +5,7 @@
 import type {
   Card,
   CardBrief,
+  CardIndexPayload,
   CardsQueryParams,
   CatalogFacets,
   CreateDeckRequest,
@@ -31,8 +32,10 @@ import { apiUrl } from "./apiOrigin";
 export class ApiError extends Error {
   readonly status: number;
   readonly body: unknown;
+  /** The seconds a 429 or 503 said to wait (its `Retry-After`), when it said. */
+  readonly retryAfterSeconds: number | undefined;
 
-  constructor(status: number, body: unknown) {
+  constructor(status: number, body: unknown, retryAfterSeconds?: number) {
     const detail =
       typeof body === "object" && body !== null && "error" in body
         ? String((body as { error: unknown }).error)
@@ -41,6 +44,7 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
     this.body = body;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -99,7 +103,9 @@ async function request<T>(path: string, init?: RequestOptions): Promise<T> {
   if (response.status === 401 && init?.recoverSession !== false && (await attemptRecovery())) {
     response = await send(path, init);
   }
-  if (!response.ok) throw new ApiError(response.status, await errorBody(response));
+  if (!response.ok) {
+    throw new ApiError(response.status, await errorBody(response), retryAfter(response));
+  }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
@@ -112,6 +118,13 @@ function send(path: string, init?: { method?: string; body?: unknown }): Promise
     headers: hasBody ? { "content-type": "application/json" } : undefined,
     body: hasBody ? JSON.stringify(init?.body) : undefined,
   });
+}
+
+/** A `Retry-After` given in seconds (the API never sends the date form), else undefined. */
+function retryAfter(response: Response): number | undefined {
+  const value = response.headers.get("Retry-After");
+  if (value === null || !/^\d+$/.test(value.trim())) return undefined;
+  return Number(value);
 }
 
 /** The parsed error payload, or undefined when it isn't JSON (proxies and
@@ -150,6 +163,11 @@ function queryString(params: Record<string, string | number | string[] | undefin
 /** Search the card catalog — a page of briefs plus the total match count. */
 export function getCards(params: CardsQueryParams = {}): Promise<Paginated<CardBrief>> {
   return request(`/cards${queryString(params)}`);
+}
+
+/** Every card as a compact search row, for searching names and rules text in the browser. */
+export function getCardIndex(): Promise<CardIndexPayload> {
+  return request("/cards/index");
 }
 
 /** One full canonical card by tcgdex id, e.g. "sv06.5-001". Unknown id → 404. */
