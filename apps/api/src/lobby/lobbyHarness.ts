@@ -13,8 +13,12 @@ import { type LobbyDeps, LobbyDO } from "./lobbyDO";
 export class FakeSocket {
   readonly sent: LobbyServerMessage[] = [];
   closed: { code: number | undefined; reason: string | undefined } | null = null;
-  /** The last auto-answered keepalive, or null before the first. */
+  /** The last auto-answered keepalive, or null before the first. When null on a socket whose
+      client `pings`, the runtime reads as having just answered one. */
   lastPong: Date | null = null;
+  /** Whether the client keeps pinging, as the web client does every 1.5s. A test of a silent
+      socket pins `lastPong`, or clears this for a client that never pinged at all. */
+  pings = true;
   private attachment: unknown = null;
 
   serializeAttachment(value: unknown): void {
@@ -114,6 +118,9 @@ export class FakeState {
   readonly sockets: FakeSocket[] = [];
   autoResponse: { request: string; response: string } | null = null;
 
+  /** `clock` is the epoch ms a pinging socket's latest keepalive reads as answered at. */
+  constructor(private readonly clock: () => number = Date.now) {}
+
   acceptWebSocket(ws: FakeSocket): void {
     this.sockets.push(ws);
   }
@@ -127,7 +134,7 @@ export class FakeState {
   }
 
   getWebSocketAutoResponseTimestamp(ws: FakeSocket): Date | null {
-    return ws.lastPong;
+    return ws.lastPong ?? (ws.pings ? new Date(this.clock()) : null);
   }
 }
 
@@ -196,10 +203,18 @@ export interface LobbyWorld {
   decks: Map<string, { owner: string; ids: string[]; format?: string | null }>;
   /** Every card the fake catalog holds. */
   pool: Record<string, Card>;
+  /** Session ids that have since ended (logged out, expired or revoked). */
+  endedSessions: Set<string>;
 }
 
-/** The fake deps over `world`: a socket's cookie `session=<userId>` authenticates as `userId`,
-    and a deck resolves only for its owner, as the D1 reads do. */
+/** The session id the fake deps give `userId`'s cookie. */
+export function sessionIdOf(userId: string): string {
+  return `session-of-${userId}`;
+}
+
+/** The fake deps over `world`: a socket's cookie `session=<userId>` authenticates as `userId`
+    under `sessionIdOf(userId)`, and a deck resolves only for its owner while that session lives,
+    as the D1 reads do. */
 export function worldDeps(world: LobbyWorld): LobbyDeps {
   return {
     now: () => world.now,
@@ -208,15 +223,21 @@ export function worldDeps(world: LobbyWorld): LobbyDeps {
       const userId = cookie?.match(/^session=(.+)$/)?.[1];
       return userId === undefined
         ? null
-        : { userId, displayName: world.displayNames.get(userId) ?? null };
+        : {
+            userId,
+            sessionId: sessionIdOf(userId),
+            displayName: world.displayNames.get(userId) ?? null,
+          };
     },
-    loadDeck: async (deckId, userId): Promise<LoadDeckResult> => {
-      if (userId === null)
+    loadDeck: async (deckId, owner): Promise<LoadDeckResult> => {
+      if (owner === null)
         return { ok: false, reason: "you must be signed in to play a saved deck" };
       if (deckId === null) return { ok: false, reason: "no deck selected" };
       const deck = world.decks.get(deckId);
-      if (deck === undefined || deck.owner !== userId)
+      if (deck === undefined || deck.owner !== owner.userId)
         return { ok: false, reason: "deck not found" };
+      if (world.endedSessions.has(owner.sessionId))
+        return { ok: false, reason: "sign in again to play a saved deck" };
       return { ok: true, ids: [...deck.ids], format: deck.format ?? null };
     },
     loadPool: async (ids) => {
@@ -278,6 +299,9 @@ export interface LobbyHarness {
   readonly state: FakeState;
   readonly storage: FakeStorage;
   readonly world: LobbyWorld;
+  /** The deps every instance is woken with. Replacing one of its functions reaches the current
+      instance and every later one, e.g. to hold a D1 read open or make it fail. */
+  readonly deps: LobbyDeps;
   /** POST /create for `code`. */
   create(code?: string): Promise<Response>;
   /** GET /ws, optionally signed in as `userId`; resolves to the accepted server socket. */
@@ -304,11 +328,12 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
     displayNames: new Map(),
     decks: new Map(),
     pool: { ...LEGAL_POOL, basic: basicCard("basic") },
+    endedSessions: new Set(),
     ...world,
   };
-  const state = new FakeState();
-  const wake = () =>
-    new LobbyDO(state as unknown as DurableObjectState, {} as Env, worldDeps(fullWorld));
+  const state = new FakeState(() => fullWorld.now);
+  const deps = worldDeps(fullWorld);
+  const wake = () => new LobbyDO(state as unknown as DurableObjectState, {} as Env, deps);
   let lobby = wake();
   const socket = (ws: FakeSocket) => ws as unknown as WebSocket;
 
@@ -319,6 +344,7 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
     state,
     storage: state.storage,
     world: fullWorld,
+    deps,
     create: (code = "ABCD") =>
       lobby.fetch(
         new Request(doUrl(DO_CREATE_PATH), {

@@ -60795,9 +60795,9 @@ export const MUTANTS: Mutant[] = [
     what: "An accepted action's delta starts at the new log length instead of the old one, so it carries none of the action's entries. Killed by the held-log rebuild.",
     file: "apps/api/src/lobby/lobbyDO.ts",
     symbol: "LobbyDO",
-    find: "this.broadcastMatch(outcome.record, snapshot, { logFrom: record.log.length });",
+    find: "this.broadcastMatch(outcome.record, current, { logFrom: record.log.length });",
     replace:
-      "this.broadcastMatch(outcome.record, snapshot, { logFrom: outcome.record.log.length });",
+      "this.broadcastMatch(outcome.record, current, { logFrom: outcome.record.log.length });",
     expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts"],
   },
   {

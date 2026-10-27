@@ -4,6 +4,8 @@
 
 import {
   COUNTDOWN_MS,
+  LOBBY_DECK_NAME_MAX,
+  LOBBY_NAME_MAX,
   type LobbyClientMessage,
   lobbyClientMessageSchema,
   type LobbySlot,
@@ -42,12 +44,24 @@ export const SOCKET_SILENCE_MS = 15_000;
     if we answered keepalives in the handler and gave up hibernation entirely. */
 export const LIVENESS_SWEEP_MS = 30_000;
 
+/** The extra time a socket that has never been answered gets on top of `SOCKET_SILENCE_MS`,
+    counted from the upgrade: the client's first ping goes out 1.5s after its socket opens, and
+    the 101 has to reach it first. */
+export const FIRST_KEEPALIVE_MARGIN_MS = 5_000;
+
 /**
- * Whether a socket's last auto-answered keepalive is older than `SOCKET_SILENCE_MS`. A null
- * timestamp counts as alive, because a newly connected socket has not been answered yet.
+ * Whether a socket has gone quiet: its last auto-answered keepalive is older than
+ * `SOCKET_SILENCE_MS`, or, never answered, it connected longer ago than that plus
+ * `FIRST_KEEPALIVE_MARGIN_MS`. Without the second arm a connection that died before its first
+ * ping, or a client that never pings, would count as alive forever.
  */
-export function socketIsSilent(lastAutoResponse: Date | null, now: number): boolean {
-  return lastAutoResponse !== null && now - lastAutoResponse.getTime() > SOCKET_SILENCE_MS;
+export function socketIsSilent(
+  lastAutoResponse: Date | null,
+  connectedAt: number,
+  now: number,
+): boolean {
+  if (lastAutoResponse !== null) return now - lastAutoResponse.getTime() > SOCKET_SILENCE_MS;
+  return now - connectedAt > SOCKET_SILENCE_MS + FIRST_KEEPALIVE_MARGIN_MS;
 }
 
 /** How long an empty lobby (zero sockets — also a freshly-minted, never-joined
@@ -187,8 +201,14 @@ export function readSnapshot(raw: unknown): LobbySnapshot | null {
 
 /** A seat as stored by any deploy. `avatarSeed` and `forfeitAt` were added after the first lobbies
     were written, so a missing or malformed value reads as null; `forfeitAt` feeds `Math.min` in the
-    alarm scheduler, where an undefined would set NaN. */
+    alarm scheduler, where an undefined would set NaN. Names stored before frames were bounded are
+    clipped to the bound rather than refused, so such a lobby keeps working. */
 const storedSeatSchema = playerStateSchema.extend({
+  name: z.string().transform((name) => name.slice(0, LOBBY_NAME_MAX)),
+  deckName: z
+    .string()
+    .nullable()
+    .transform((name) => name?.slice(0, LOBBY_DECK_NAME_MAX) ?? null),
   avatarSeed: z.string().nullable().catch(null),
   forfeitAt: z.number().nullable().catch(null),
 });
@@ -305,6 +325,19 @@ export const storedPendingSchema = z.array(pendingDisconnectSchema);
 
 /** playerId → the account bound to that seat. */
 export const storedSeatUsersSchema = z.record(z.string(), z.string());
+
+/**
+ * The seat bindings worth keeping: those of the ids `snapshot` still seats. A departed player's
+ * binding guards nothing, since an id that holds no seat holds no hand, and keeping every one would
+ * grow the map with each guest a lobby ever had.
+ */
+export function seatedUsers(
+  seatUsers: Record<string, string>,
+  snapshot: LobbySnapshot,
+): Record<string, string> {
+  const seated = [snapshot.host.id, snapshot.guest?.id];
+  return Object.fromEntries(Object.entries(seatUsers).filter(([id]) => seated.includes(id)));
+}
 
 export const storedCodeSchema = z.string();
 

@@ -48,7 +48,7 @@ describe("loadPlayerDeck — the auth guards (short-circuit before any query)", 
   });
 
   it("refuses when the player selected no deck", async () => {
-    expect(await loadPlayerDeck(NO_DB, null, "u1")).toEqual({
+    expect(await loadPlayerDeck(NO_DB, null, { userId: "u1", sessionId: "s1" })).toEqual({
       ok: false,
       reason: "no deck selected",
     });

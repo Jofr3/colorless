@@ -6,9 +6,10 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { sessions, users } from "../db/schema";
 import { sessionExpired, sessionIdFromCookie } from "./session";
 
-/** The account a session cookie authenticates: its id and its stored display name, which is null
-    when the session outlived its user row. */
-export type SessionAccount = { userId: string; displayName: string | null };
+/** The account a session cookie authenticates: its id, the sessions row id (the token's hash) that
+    authenticated it, so a long-lived socket can re-check the session later, and its stored display
+    name, which is null when the session outlived its user row. */
+export type SessionAccount = { userId: string; sessionId: string; displayName: string | null };
 
 /** The account the `session` cookie authenticates, or null (no cookie / an
     unknown or expired session). One indexed `sessions` read joined to the user
@@ -30,5 +31,5 @@ export async function resolveAccountFromCookie(
     .where(eq(sessions.id, sessionId))
     .get();
   if (row === undefined || sessionExpired(row.expiresAt)) return null;
-  return { userId: row.userId, displayName: row.displayName };
+  return { userId: row.userId, sessionId, displayName: row.displayName };
 }

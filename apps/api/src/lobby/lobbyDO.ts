@@ -9,22 +9,28 @@ import {
   type Card,
   createSnapshot,
   isValidLobbyCode,
+  LOBBY_NAME_MAX,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
   type LobbyServerMessage,
   type LobbySnapshot,
   makePlayer,
+  type PlayerState,
 } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
 import { resolveAccountFromCookie, type SessionAccount } from "../auth/resolveSession";
+import { type LogFields, logEvent, logEventThrottled } from "../http/log";
 import {
   attachAccount,
+  attachConnectedAt,
+  attachedConnectedAt,
   attachedDisplayName,
   attachedPlayer,
+  attachedSession,
   attachedUserId,
   attachLogDeltas,
   attachPlayer,
@@ -33,7 +39,7 @@ import {
   takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
-import { type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
+import { type DeckOwner, type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
 import { lobbyDisplayName } from "./displayName";
 import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
@@ -57,6 +63,7 @@ import {
   resetAfterFailedStart,
   sameSnapshot,
   seatClaimAllowed,
+  seatedUsers,
   setSeatConnected,
   slotOf,
   socketIsSilent,
@@ -77,6 +84,7 @@ import {
   loadMatchRecord,
   type MatchLoad,
   type MatchRecord,
+  type MatchSlot,
   type MatchViewer,
   matchFrameFor,
   matchSeatOf,
@@ -114,8 +122,30 @@ type ClientFrame<Kind extends LobbyClientMessage["kind"]> = Extract<
 
 /** Whether the match handoff started a real game, or why it couldn't (P4
     increment 3) — a failed deck resolution surfaces `reason` to the players
-    instead of wedging the lobby in-game with no match. */
-type HandoffResult = { ok: true } | { ok: false; reason: string };
+    instead of wedging the lobby in-game with no match. `superseded`: the lobby
+    changed while the handoff awaited D1, so it wrote nothing and the alarm
+    starts its pass over. */
+type HandoffResult =
+  | { kind: "started" }
+  | { kind: "failed"; reason: string }
+  | { kind: "superseded" };
+
+/** What the handoff reads for one seat: the chosen deck, and the account and session to read it as. */
+type DeckRequest = { deckId: string | null; owner: DeckOwner | null };
+
+/** Both seats' decks as D1 returned them, and the catalog cards they name. */
+type HandoffDecks = { host: LoadDeckResult; guest: LoadDeckResult; pool: Record<string, Card> };
+
+/** The handoff's D1 reads for a pair of requests. One alarm pass memoizes the last pair, so a
+    retry with the same decks and accounts awaits nothing. */
+type ReadDecks = (host: DeckRequest, guest: DeckRequest) => Promise<HandoffDecks>;
+
+/** How many times one alarm pass tries the handoff when the lobby keeps changing under it. Past
+    this, the pass commits nothing and the rescheduled alarm, already due, tries again at once. */
+const HANDOFF_ATTEMPTS = 3;
+
+/** What both players are told when the handoff could not reach D1. */
+const DECK_LOAD_FAILED_REASON = "Couldn't load the decks. Ready up to try again.";
 
 /** What both players are told when a match is retired because this deploy can't
     read its persisted record (a server update landed mid-match). Phrased as the
@@ -131,8 +161,9 @@ export interface LobbyDeps {
   randomSeed(): number;
   /** The account a forwarded `Cookie` header's session belongs to, or null. */
   resolveAccount(cookie: string | null): Promise<SessionAccount | null>;
-  /** A player's chosen deck as flat card ids, owner-scoped to `userId`. */
-  loadDeck(deckId: string | null, userId: string | null): Promise<LoadDeckResult>;
+  /** A player's chosen deck as flat card ids, owner-scoped to `owner`, whose session must still
+      live. */
+  loadDeck(deckId: string | null, owner: DeckOwner | null): Promise<LoadDeckResult>;
   /** The catalog cards for `ids`, keyed by id; missing ids are absent. */
   loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
 }
@@ -144,7 +175,7 @@ export function lobbyDepsFromEnv(env: Env): LobbyDeps {
     now: () => Date.now(),
     randomSeed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0,
     resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
-    loadDeck: (deckId, userId) => loadPlayerDeck(db(), deckId, userId),
+    loadDeck: (deckId, owner) => loadPlayerDeck(db(), deckId, owner),
     loadPool: (ids) => loadCardPool(db(), ids),
   };
 }
@@ -157,6 +188,9 @@ export class LobbyDO {
   /** The authoritative match: the engine GameState, seed and log, written when the countdown
       flips the lobby to in-game and on every accepted action. */
   private readonly match: MatchStore;
+  /** The alarm this instance last set (null: none, or the one that fired), so an unchanged
+      reschedule writes nothing; undefined = not known since the last wake. */
+  private alarmAt: number | null | undefined;
 
   constructor(state: DurableObjectState, env: Env, deps: LobbyDeps = lobbyDepsFromEnv(env)) {
     this.state = state;
@@ -196,15 +230,38 @@ export class LobbyDO {
       }
       const pair = new WebSocketPair();
       this.state.acceptWebSocket(pair[1]);
+      attachConnectedAt(pair[1], this.deps.now());
       // Authenticate the connection from the forwarded `session` cookie (P4
       // increment 3): the resolved account rides on the socket so the match
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
       // start a match with a saved deck. Only the DO ever reads it. The account's name is read in
       // the same query, so a rename shows from the next connection on.
-      const account = await this.deps.resolveAccount(request.headers.get("Cookie"));
+      let account: SessionAccount | null;
+      try {
+        account = await this.deps.resolveAccount(request.headers.get("Cookie"));
+      } catch (error) {
+        // D1 is unreachable. Refused rather than admitted as anonymous, which would quietly cost a
+        // signed-in player their decks; the client retries. The server half is already accepted
+        // (see above), so it is closed here or it would hold an empty lobby open, unanswered.
+        try {
+          pair[1].close(1011, "session lookup failed");
+        } catch {
+          // Already closed.
+        }
+        await this.log(
+          "ws_refused",
+          { cause: "session_lookup", error: describeError(error) },
+          true,
+        );
+        return Response.json({ error: "lobby unavailable, try again" }, { status: 503 });
+      }
       if (account !== null) {
-        attachAccount(pair[1], account.userId, lobbyDisplayName(account.displayName));
+        attachAccount(pair[1], {
+          userId: account.userId,
+          sessionId: account.sessionId,
+          displayName: lobbyDisplayName(account.displayName),
+        });
       }
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
@@ -252,18 +309,22 @@ export class LobbyDO {
     const boundUserId = seatUsers[frame.from] ?? null;
     const userId = attachedUserId(ws);
     if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, frame.from);
-    // Bind the seat to the account on its FIRST authenticated claim.
-    if (boundUserId === null && userId !== null) {
-      await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
-    }
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
-    // announced name.
-    const name = attachedDisplayName(ws) ?? frame.name;
+    // announced name. Both are clipped to the wire bound, as every stored name is.
+    const name = (attachedDisplayName(ws) ?? frame.name).slice(0, LOBBY_NAME_MAX);
     // …and the face, from the same account (P5-2). Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);
     const next = await this.seatedSnapshot(decision, snapshot, frame.from, name, avatarSeed);
     if (next === null) return;
+    // Bind the seat to the account on its FIRST authenticated claim, keeping only the bindings of
+    // the ids still seated once this hello lands.
+    if (boundUserId === null && userId !== null) {
+      await this.state.storage.put(
+        SEAT_USERS_KEY,
+        seatedUsers({ ...seatUsers, [frame.from]: userId }, next),
+      );
+    }
     attachPlayer(ws, frame.from);
     const graceCleared = await this.clearDisconnectGrace(frame.from);
     if (snapshot !== null && sameSnapshot(snapshot, next)) {
@@ -310,8 +371,8 @@ export class LobbyDO {
     if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
     const slot = slotOf(snapshot, frame.from);
     if (slot === null) return;
-    const next = applyIntent(snapshot, slot, frame.intent);
-    if (next !== snapshot) await this.commit(next);
+    // A repeated intent changes nothing, and `commit` then writes and sends nothing.
+    await this.commit(applyIntent(snapshot, slot, frame.intent));
   }
 
   private async onAction(
@@ -323,16 +384,18 @@ export class LobbyDO {
     // OWN bound seat — never the client-claimed action.seat — so a client
     // can never act for its opponent. Only a seated player in an in-game
     // lobby with a persisted match may act.
-    if (snapshot === null || snapshot.phase !== "in-game") return;
     const playerId = attachedPlayer(ws);
-    if (playerId === null) return;
-    const seat = matchSeatOf(snapshot, playerId);
-    if (seat === null) return;
+    if (playerId === null || this.seatInMatch(snapshot, playerId) === null) return;
     const load = await this.loadOrMigrateMatch();
     // A record this deploy can't read is retired here rather than silently
     // swallowing every action for the rest of the lobby's life.
     if (load.kind === "stale") return await this.retireStaleMatch();
     if (load.kind === "none") return;
+    // The read may have awaited D1 (a migration), letting other events run: judge the seat by the
+    // lobby as it is now.
+    const current = await this.loadSnapshot();
+    const seat = this.seatInMatch(current, playerId);
+    if (current === null || seat === null) return;
     const record = load.record;
     // Bind the action to the socket's seat (a client can't act for the
     // opponent) and run the engine's total applyAction. A rejected action
@@ -346,8 +409,20 @@ export class LobbyDO {
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
     }
+    // An accepted action that changed nothing (a Pokémon dropped back where it was) leaves every
+    // view as it is, so it is neither written nor sent.
+    const { state, log } = outcome.record;
+    if (state === record.state && log.length === record.log.length) return;
     await this.match.put(outcome.record);
-    this.broadcastMatch(outcome.record, snapshot, { logFrom: record.log.length });
+    this.broadcastMatch(outcome.record, current, { logFrom: record.log.length });
+  }
+
+  /** The match seat `playerId` acts from, or null when the lobby is not in-game or does not seat
+      them. */
+  private seatInMatch(snapshot: LobbySnapshot | null, playerId: string): Seat | null {
+    return snapshot === null || snapshot.phase !== "in-game"
+      ? null
+      : matchSeatOf(snapshot, playerId);
   }
 
   private async onReject(
@@ -379,12 +454,16 @@ export class LobbyDO {
     // applyMatchAction → persist → broadcastMatch path. A no-op once the game
     // is over (the engine refuses a concede then), which is what makes a
     // double `bye` — an explicit leave() plus the unmount's — harmless.
-    const seat = snapshot.phase === "in-game" ? matchSeatOf(snapshot, frame.from) : null;
-    if (seat !== null) await this.concedeSeat(snapshot, seat, this.deps.now());
+    const seat = this.seatInMatch(snapshot, frame.from);
+    if (seat !== null) await this.concedeSeat(snapshot, seat, this.deps.now(), "left");
     // …and only THEN the lobby change, which in-game keeps the seat (so the
     // result the concede just broadcast stays on the winner's screen) and
-    // otherwise frees a guest's / parks the host's (applyBye).
-    await this.commit(applyBye(snapshot, slot));
+    // otherwise frees a guest's / parks the host's (applyBye). The concede's
+    // match read may have awaited D1, so the change applies to the lobby as it is now.
+    const current = await this.loadSnapshot();
+    const currentSlot = current === null ? null : slotOf(current, frame.from);
+    if (current === null || currentSlot === null) return;
+    await this.commit(applyBye(current, currentSlot));
   }
 
   private async onRematch(
@@ -408,15 +487,21 @@ export class LobbyDO {
     // the client only offers the control on a finished board, so reaching this
     // means a crafted frame, and it changes nothing.
     if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
+    // The read may have awaited D1 (a migration): the rematch starts from the lobby as it is now,
+    // not as it was before, or it would undo whatever happened meanwhile.
+    const current = await this.loadSnapshot();
+    if (current === null || current.phase !== "in-game") return;
+    const currentSlot = slotOf(current, frame.from);
+    if (currentSlot === null) return;
     // The loser picks who goes first next time; a tie goes back to the coin.
     const loser = rematchChooser(load.record.state);
-    const loserId = loser === null ? null : playerIdOfSeat(snapshot, loser);
+    const loserId = loser === null ? null : playerIdOfSeat(current, loser);
     if (loserId === null) await this.state.storage.delete(CHOOSER_KEY);
     else await this.state.storage.put(CHOOSER_KEY, loserId);
     // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
     // the match with it — which is precisely what makes the next handoff mint
     // a FRESH game rather than hitting its idempotency guard on this one.
-    await this.commit(rematch(snapshot, slot));
+    await this.commit(rematch(current, currentSlot));
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {
@@ -428,118 +513,180 @@ export class LobbyDO {
   }
 
   async alarm(): Promise<void> {
+    // The alarm that woke us is spent, so the next schedule has to set one whatever it was.
+    this.alarmAt = null;
     const now = this.deps.now();
+    let wiped = false;
+    try {
+      wiped = await this.maintain(now);
+    } catch (error) {
+      // Logged and not rethrown: the `finally` re-arms the alarm, and that is the retry. The
+      // runtime's own retry on top would run the same pass twice.
+      await this.log("alarm_failed", { error: describeError(error) });
+    } finally {
+      // Always, so one failed pass cannot leave the liveness sweep, the countdown and the
+      // forfeit clocks with nothing to wake them.
+      if (!wiped) await this.scheduleMaintenance();
+    }
+  }
+
+  /** One alarm pass; true when it wiped the lobby, which leaves nothing to schedule. */
+  private async maintain(now: number): Promise<boolean> {
     // 0) Sockets that stopped answering keepalives (P4 3c-viii). FIRST, so a
     //    connection dropped here is judged by everything below on this same pass
     //    rather than waiting another sweep.
     await this.sweepSilentSockets(now);
+
+    // 1) and 2), retried while the handoff finds the lobby changed under it. A retry with the
+    //    same decks and accounts reuses the D1 reads, so it awaits nothing and a cosmetic change
+    //    (a rename) cannot overtake it again; the bound covers changes that do re-read.
+    let reads: { key: string; decks: Promise<HandoffDecks> } | null = null;
+    const readDecks: ReadDecks = (host, guest) => {
+      const key = JSON.stringify([host, guest]);
+      if (reads?.key !== key) reads = { key, decks: this.readHandoffDecks(host, guest) };
+      return reads.decks;
+    };
+    for (let attempt = 1; !(await this.advanceLobby(now, readDecks)); attempt++) {
+      if (attempt === HANDOFF_ATTEMPTS) {
+        await this.log("handoff_deferred", { attempts: attempt });
+        break;
+      }
+    }
+
+    // 3) An empty lobby past its expiry evaporates entirely, freeing the code
+    //    for a future POST /lobby to mint again.
+    const cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
+    if (this.liveSockets().length === 0 && cleanupAt !== undefined && now >= cleanupAt) {
+      const created = await this.state.storage.get(CREATED_KEY);
+      await this.log("lobby_wiped", {
+        ageMs: typeof created === "number" ? now - created : null,
+        inGame: this.snapshot?.phase === "in-game",
+      });
+      this.snapshot = null;
+      this.match.forget();
+      await this.state.storage.deleteAll();
+      await this.state.storage.deleteAlarm(); // deleteAll leaves alarms in place
+      this.alarmAt = null;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Steps 1 and 2 of the alarm on the lobby as it is now: lapsed disconnect graces, the countdown's
+   * handoff, and due forfeits, committed together. False when the handoff was superseded: nothing
+   * was written, and the caller runs the step again on the changed lobby.
+   */
+  private async advanceLobby(now: number, readDecks: ReadDecks): Promise<boolean> {
     const sockets = this.liveSockets();
     const hasSocket = (playerId: string) =>
       sockets.some((socket) => attachedPlayer(socket) === playerId);
 
     // 1) Disconnect graces that ran out → seats whose player never returned
     //    drop to disconnected (unreadying them; the phase re-derives).
-    const { due, waiting } = splitDuePending(await this.pendingDisconnects(), now);
-    if (due.length > 0) await this.state.storage.put(PENDING_KEY, waiting);
+    const { due } = splitDuePending(await this.pendingDisconnects(), now);
 
     const snapshot = await this.loadSnapshot();
-    if (snapshot !== null) {
-      let next = snapshot;
-      // A seat whose grace ran out drops to disconnected — and, if a MATCH is
-      // running, starts its much longer forfeit clock in the SAME write (P4
-      // 3c-ii, on the snapshot since 3c-v). Arming it here rather than at
-      // socket-close is deliberate: this is the first moment we know they did not
-      // come straight back, and the 5s grace has already absorbed the blips.
-      // `recomputePhase` never leaves in-game, so the phase read before the call
-      // is the phase after it.
-      for (const entry of due) {
-        const slot = slotOf(next, entry.playerId);
-        if (slot !== null && !hasSocket(entry.playerId)) {
-          const forfeitAt = next.phase === "in-game" ? now + ABANDON_GRACE_MS : null;
-          next = setSeatConnected(next, slot, false, forfeitAt);
-        }
+    if (snapshot === null) {
+      await this.consumeDuePending(due, now);
+      return true;
+    }
+    let next = snapshot;
+    // A seat whose grace ran out drops to disconnected — and, if a MATCH is
+    // running, starts its much longer forfeit clock in the SAME write (P4
+    // 3c-ii, on the snapshot since 3c-v). Arming it here rather than at
+    // socket-close is deliberate: this is the first moment we know they did not
+    // come straight back, and the 5s grace has already absorbed the blips.
+    // `recomputePhase` never leaves in-game, so the phase read before the call
+    // is the phase after it.
+    for (const entry of due) {
+      const slot = slotOf(next, entry.playerId);
+      if (slot !== null && !hasSocket(entry.playerId)) {
+        const forfeitAt = next.phase === "in-game" ? now + ABANDON_GRACE_MS : null;
+        next = setSeatConnected(next, slot, false, forfeitAt);
       }
+    }
 
-      // 2) A countdown that ran its course starts the match — unless a seat's
-      //    player is gone mid-countdown (possible without a close event, e.g.
-      //    a half-open connection), who is demoted instead, exactly like the
-      //    old host's liveness check before flipping to in-game.
-      const endsAt = countdownEndsAt(next);
-      let matchError: string | null = null;
-      if (endsAt !== null && now >= endsAt && bothReady(next)) {
-        const hostLive = hasSocket(next.host.id);
-        const guestLive = next.guest !== null && hasSocket(next.guest.id);
-        if (hostLive && guestLive) {
-          // P4: instantiate the authoritative engine game BEFORE flipping to
-          // in-game, so a client that sees "in-game" can rely on the match
-          // existing (increment 1c reads + redacts it) — and only flip if it
-          // actually started. A chosen deck that won't resolve (not signed in /
-          // not the player's / malformed, increment 3) must NOT wedge the lobby
-          // in-game with no match: drop both back to selecting and surface why.
-          const inGame: LobbySnapshot = { ...next, phase: "in-game" };
-          const handoff = await this.handoffToMatch(inGame);
-          if (handoff.ok) {
-            next = inGame;
-          } else {
-            next = resetAfterFailedStart(next);
-            matchError = handoff.reason;
-          }
+    // 2) A countdown that ran its course starts the match — unless a seat's
+    //    player is gone mid-countdown (possible without a close event, e.g.
+    //    a half-open connection), who is demoted instead, exactly like the
+    //    old host's liveness check before flipping to in-game.
+    const endsAt = countdownEndsAt(next);
+    let matchError: string | null = null;
+    if (endsAt !== null && now >= endsAt && bothReady(next)) {
+      const hostLive = hasSocket(next.host.id);
+      const guestLive = next.guest !== null && hasSocket(next.guest.id);
+      if (hostLive && guestLive) {
+        // P4: instantiate the authoritative engine game BEFORE flipping to
+        // in-game, so a client that sees "in-game" can rely on the match
+        // existing (increment 1c reads + redacts it) — and only flip if it
+        // actually started. A chosen deck that won't resolve (not signed in /
+        // not the player's / malformed, increment 3) must NOT wedge the lobby
+        // in-game with no match: drop both back to selecting and surface why.
+        const inGame: LobbySnapshot = { ...next, phase: "in-game" };
+        const handoff = await this.handoffToMatch(inGame, snapshot, readDecks);
+        if (handoff.kind === "superseded") return false;
+        if (handoff.kind === "started") {
+          next = inGame;
         } else {
-          if (!guestLive) next = setSeatConnected(next, "guest", false);
-          if (!hostLive) next = setSeatConnected(next, "host", false);
+          next = resetAfterFailedStart(next);
+          matchError = handoff.reason;
         }
+      } else {
+        if (!guestLive) next = setSeatConnected(next, "guest", false);
+        if (!hostLive) next = setSeatConnected(next, "host", false);
       }
-
-      // A player who never came back forfeits. Judged on the final `next` so a match started on
-      // this alarm is not judged by a previous deadline. The deadline is consumed whether or not
-      // the forfeit lands, and the concede runs after the commit.
-      const forfeiting: Seat[] = [];
-      for (const { slot, deadline } of forfeitDeadlines(next)) {
-        if (deadline > now) continue;
-        const player = slot === "host" ? next.host : next.guest;
-        next = withForfeitAt(next, slot, null);
-        // `hasSocket` re-checks the live truth: a deadline is cleared the moment
-        // its player says hello, but this also covers one set before they came
-        // back. A lobby that already left in-game has nothing to forfeit.
-        if (next.phase === "in-game" && player !== null && !hasSocket(player.id)) {
-          forfeiting.push(SEAT_OF_SLOT[slot]);
-        }
-      }
-
-      if (next !== snapshot) await this.commit(next);
-
-      // A match that couldn't start: tell both players why (the commit above has
-      // already dropped them back to selecting, un-readied).
-      if (matchError !== null) this.broadcast({ kind: "match-error", reason: matchError });
-
-      // On the countdown → in-game FLIP, fan each socket its own redacted match
-      // view (the `state` broadcast above only says "in-game"; without this the
-      // client sits on the placeholder). Gated on the transition so a later
-      // alarm mid-match doesn't re-broadcast. Skipped if the handoff failed to
-      // write a record (the load-failure wedge, online.md).
-      if (snapshot.phase !== "in-game" && next.phase === "in-game") {
-        // `handoffToMatch` just wrote this record with the CURRENT version, so
-        // the stale arm is unreachable here — read through the same guard anyway
-        // (one door onto the match), and skip rather than retire: retiring inside
-        // the alarm would commit a second snapshot mid-flip.
-        const load = await this.loadOrMigrateMatch();
-        if (load.kind === "ok") this.broadcastMatch(load.record, next);
-      }
-
-      for (const seat of forfeiting) await this.concedeSeat(next, seat, now);
     }
 
-    // 3) An empty lobby past its expiry evaporates entirely, freeing the code
-    //    for a future POST /lobby to mint again.
-    const cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
-    if (sockets.length === 0 && cleanupAt !== undefined && now >= cleanupAt) {
-      this.snapshot = null;
-      this.match.forget();
-      await this.state.storage.deleteAll();
-      await this.state.storage.deleteAlarm(); // deleteAll leaves alarms in place
-      return;
+    // A player who never came back forfeits. Judged on the final `next` so a match started on
+    // this alarm is not judged by a previous deadline. The deadline is consumed whether or not
+    // the forfeit lands, and the concede runs after the commit.
+    const forfeiting: Seat[] = [];
+    for (const { slot, deadline } of forfeitDeadlines(next)) {
+      if (deadline > now) continue;
+      const player = slot === "host" ? next.host : next.guest;
+      next = withForfeitAt(next, slot, null);
+      // `hasSocket` re-checks the live truth: a deadline is cleared the moment
+      // its player says hello, but this also covers one set before they came
+      // back. A lobby that already left in-game has nothing to forfeit.
+      if (next.phase === "in-game" && player !== null && !hasSocket(player.id)) {
+        forfeiting.push(SEAT_OF_SLOT[slot]);
+      }
     }
-    await this.scheduleMaintenance(sockets);
+
+    // The graces judged above are consumed in the same breath as the snapshot they changed, and
+    // before it, since the commit schedules the next alarm from what is still pending.
+    await this.consumeDuePending(due, now);
+    await this.commit(next);
+
+    // A match that couldn't start: tell both players why (the commit above has
+    // already dropped them back to selecting, un-readied).
+    if (matchError !== null) this.broadcast({ kind: "match-error", reason: matchError });
+
+    // On the countdown → in-game FLIP, fan each socket its own redacted match
+    // view (the `state` broadcast above only says "in-game"; without this the
+    // client sits on the placeholder). Gated on the transition so a later
+    // alarm mid-match doesn't re-broadcast. Skipped if the handoff failed to
+    // write a record (the load-failure wedge, online.md).
+    if (snapshot.phase !== "in-game" && next.phase === "in-game") {
+      // `handoffToMatch` just wrote this record with the CURRENT version, so
+      // the stale arm is unreachable here — read through the same guard anyway
+      // (one door onto the match), and skip rather than retire: retiring inside
+      // the alarm would commit a second snapshot mid-flip.
+      const load = await this.loadOrMigrateMatch();
+      if (load.kind === "ok") this.broadcastMatch(load.record, next);
+    }
+
+    for (const seat of forfeiting) await this.concedeSeat(next, seat, now, "abandoned");
+    return true;
+  }
+
+  /** Drop the disconnect graces judged due at `now`. Read again rather than written from the
+      list read at the start of the pass, so an entry another event added meanwhile survives. */
+  private async consumeDuePending(due: readonly PendingDisconnect[], now: number): Promise<void> {
+    if (due.length === 0) return;
+    const { waiting } = splitDuePending(await this.pendingDisconnects(), now);
+    await this.state.storage.put(PENDING_KEY, waiting);
   }
 
   // --- Internals -------------------------------------------------------------
@@ -568,9 +715,16 @@ export class LobbyDO {
    * `close()` does not fire `webSocketClose`, so `socketGone` is called explicitly.
    */
   private async sweepSilentSockets(now: number): Promise<void> {
-    const silent = this.liveSockets().filter((ws) =>
-      socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), now),
-    );
+    const silent = this.liveSockets().filter((ws) => {
+      let connectedAt = attachedConnectedAt(ws);
+      if (connectedAt === null) {
+        // An attachment from before the upgrade recorded its time: start its window now, so a
+        // socket that never answers is still let go one window later.
+        connectedAt = now;
+        attachConnectedAt(ws, now);
+      }
+      return socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), connectedAt, now);
+    });
     for (const ws of silent) {
       try {
         ws.close(1001, "keepalive lost");
@@ -584,52 +738,116 @@ export class LobbyDO {
   /** P4 handoff (online.md): the countdown just flipped this lobby to in-game,
       so mint the authoritative engine game once and persist it. The DO owns the
       RNG seed + all hidden info here on out. Idempotent — a re-fired alarm never
-      restarts a live match. Fixed placeholder decks + a D1-resolved pool for now
-      (real deck selection is increment 3). */
-  private async handoffToMatch(snapshot: LobbySnapshot): Promise<HandoffResult> {
-    // Idempotency: a LIVE match is never restarted. A record this deploy can't
-    // read doesn't count as live — the lobby is starting a match right now, so
-    // the fresh write below simply replaces it (no retirement needed, and no
-    // reset: the players are about to be in-game either way).
-    if ((await this.loadOrMigrateMatch()).kind === "ok") return { ok: true };
-    if (snapshot.guest === null) return { ok: false, reason: "The lobby needs two players." };
-    // Each player's chosen deck, owner-scoped by the account their socket authenticated at /ws,
-    // so a crafted `select-deck` naming someone else's deck resolves to nothing. Both are read at
-    // once; the host's failure is reported first either way.
-    const [hostDeck, guestDeck] = await Promise.all([
-      this.deps.loadDeck(snapshot.host.deckId, this.userIdOf(snapshot.host.id)),
-      this.deps.loadDeck(snapshot.guest.deckId, this.userIdOf(snapshot.guest.id)),
-    ]);
-    if (!hostDeck.ok) return { ok: false, reason: `${snapshot.host.name}: ${hostDeck.reason}.` };
-    if (!guestDeck.ok) return { ok: false, reason: `${snapshot.guest.name}: ${guestDeck.reason}.` };
-    // Storage enforces no construction rules, so `beginMatch` is the validator.
-    const cardPool = await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids]);
+      restarts a live match. `snapshot` is the in-game lobby to start, derived from
+      `startedFrom`, the snapshot the alarm pass read. */
+  private async handoffToMatch(
+    snapshot: LobbySnapshot,
+    startedFrom: LobbySnapshot,
+    readDecks: ReadDecks,
+  ): Promise<HandoffResult> {
+    const guest = snapshot.guest;
+    if (guest === null) return { kind: "failed", reason: "The lobby needs two players." };
+    let live = false;
+    let decks: HandoffDecks | null = null;
+    let failure: string | null = null;
+    try {
+      // Idempotency: a LIVE match is never restarted. A record this deploy can't
+      // read doesn't count as live — the lobby is starting a match right now, so
+      // the fresh write below simply replaces it (no retirement needed, and no
+      // reset: the players are about to be in-game either way).
+      live = (await this.loadOrMigrateMatch()).kind === "ok";
+      if (!live) decks = await readDecks(this.deckRequest(snapshot.host), this.deckRequest(guest));
+    } catch (error) {
+      failure = describeError(error);
+    }
+    // Those reads went to D1, which opens the input gate: another event may have changed the
+    // lobby, or a seat's socket gone away, meanwhile. Writing now would commit a lobby derived
+    // from before that (a guest who left re-seated, an un-ready overridden), so nothing is
+    // written and the pass runs again on the lobby as it is. `commit` assigns a new object on
+    // every change, so identity says whether one landed.
+    if (this.snapshot !== startedFrom || !this.seatsHaveSockets(snapshot)) {
+      return { kind: "superseded" };
+    }
+    if (failure !== null)
+      return await this.failedStart("d1_error", DECK_LOAD_FAILED_REASON, failure);
+    if (live || decks === null) return { kind: "started" };
+    const { host: hostDeck, guest: guestDeck, pool: cardPool } = decks;
+    // The host's failure is reported first either way.
+    if (!hostDeck.ok) {
+      return await this.failedStart(
+        "deck_unresolved",
+        `${snapshot.host.name}: ${hostDeck.reason}.`,
+      );
+    }
+    if (!guestDeck.ok) {
+      return await this.failedStart("deck_unresolved", `${guest.name}: ${guestDeck.reason}.`);
+    }
     const seed = this.deps.randomSeed();
     // A player no longer seated (a new guest since the rematch) falls back to the coin.
     const chooserId = await this.read(CHOOSER_KEY, storedChooserSchema);
     const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
+    // Storage enforces no construction rules, so `beginMatch` is the validator.
     const begun = beginMatch({
       seed,
       hostDeck: hostDeck.ids,
       guestDeck: guestDeck.ids,
       cardPool,
-      names: { host: snapshot.host.name, guest: snapshot.guest.name },
+      names: { host: snapshot.host.name, guest: guest.name },
       formats: { host: hostDeck.format, guest: guestDeck.format },
       chooser,
       now: this.deps.now(),
     });
-    if (!begun.ok) return begun;
+    if (!begun.ok) return await this.failedStart("match_refused", begun.reason);
     await this.match.put(begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
-    return { ok: true };
+    return { kind: "started" };
   }
 
-  /** The account a seated player's live socket authenticated at /ws, or null
+  /** A handoff that could not start the match, logged by `cause` (the reason the players see
+      carries their names, so it stays out of the log). */
+  private async failedStart(
+    cause: "d1_error" | "deck_unresolved" | "match_refused",
+    reason: string,
+    error?: string,
+  ): Promise<HandoffResult> {
+    await this.log("handoff_failed", { cause, error });
+    return { kind: "failed", reason };
+  }
+
+  /** Both seats' decks and the catalog cards they name, from D1. Each deck is owner-scoped by the
+      account and session its socket authenticated at /ws, so a crafted `select-deck` naming
+      someone else's deck, or a socket whose session has ended, resolves to nothing. The two decks
+      are read at once. Rejects when D1 does. */
+  private async readHandoffDecks(host: DeckRequest, guest: DeckRequest): Promise<HandoffDecks> {
+    const [hostDeck, guestDeck] = await Promise.all([
+      this.deps.loadDeck(host.deckId, host.owner),
+      this.deps.loadDeck(guest.deckId, guest.owner),
+    ]);
+    const pool =
+      hostDeck.ok && guestDeck.ok
+        ? await this.deps.loadPool([...hostDeck.ids, ...guestDeck.ids])
+        : {};
+    return { host: hostDeck, guest: guestDeck, pool };
+  }
+
+  /** What the handoff reads for a seat: its chosen deck, as the account its live socket holds. */
+  private deckRequest(player: PlayerState): DeckRequest {
+    return { deckId: player.deckId, owner: this.ownerOf(player.id) };
+  }
+
+  /** The account and session a seated player's live socket authenticated at /ws, or null
       (an anonymous socket, or none live). At handoff both seats have a live
       socket (the alarm gates on it); used to owner-scope their deck read. */
-  private userIdOf(playerId: string): string | null {
+  private ownerOf(playerId: string): DeckOwner | null {
     const socket = this.liveSockets().find((ws) => attachedPlayer(ws) === playerId);
-    return socket === undefined ? null : attachedUserId(socket);
+    return socket === undefined ? null : attachedSession(socket);
+  }
+
+  /** Whether both of the lobby's seated players still have a live socket. */
+  private seatsHaveSockets(snapshot: LobbySnapshot): boolean {
+    const sockets = this.liveSockets();
+    const seated = [snapshot.host.id, snapshot.guest?.id];
+    return seated.every((id) => sockets.some((socket) => attachedPlayer(socket) === id));
   }
 
   /** playerId → the account bound to it (3a-sec). Empty until an authenticated
@@ -639,17 +857,21 @@ export class LobbyDO {
   }
 
   /** Persist → broadcast → re-arm the alarm: the ONE path every snapshot
-      change takes, so nothing is ever announced that didn't hit storage. */
+      change takes, so nothing is ever announced that didn't hit storage. A
+      snapshot equal to the current one is no change: nothing is written or sent. */
   private async commit(next: LobbySnapshot): Promise<void> {
+    const previous = this.snapshot ?? null;
     const stamped = stampCountdown(next, this.deps.now());
+    if (previous !== null && sameSnapshot(previous, stamped)) return;
     // A persisted match outlives EXACTLY the match it describes: when this commit
     // takes the lobby out of in-game (the host's kick, or `endMatch` retiring an
     // unreadable record — a mid-match `bye` no longer does, 3c-iv), drop the stale
     // GameState so a rematch in this same lobby mints a fresh one instead of
     // handoffToMatch's guard reusing the old (P4, online.md).
-    const abandoned = abandonsMatch(this.snapshot ?? null, stamped);
-    this.snapshot = stamped;
+    const abandoned = abandonsMatch(previous, stamped);
+    // Stored before it is mirrored, so a failed put leaves memory agreeing with storage.
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
+    this.snapshot = stamped;
     if (abandoned) await this.match.delete();
     this.broadcast({ kind: "state", snapshot: stamped });
     await this.scheduleMaintenance();
@@ -692,8 +914,12 @@ export class LobbyDO {
       await this.state.storage.delete(CLEANUP_AT_KEY);
     }
 
-    if (deadlines.length === 0) await this.state.storage.deleteAlarm();
-    else await this.state.storage.setAlarm(Math.min(...deadlines));
+    // Setting the alarm counts as a storage write, and most commits leave it where it was.
+    const at = deadlines.length === 0 ? null : Math.min(...deadlines);
+    if (at === this.alarmAt) return;
+    if (at === null) await this.state.storage.deleteAlarm();
+    else await this.state.storage.setAlarm(at);
+    this.alarmAt = at;
   }
 
   /** The stored snapshot, read through `readSnapshot` so a lobby persisted by an
@@ -823,12 +1049,18 @@ export class LobbyDO {
    * It goes through the same path as a player's own concede, so the result is identical. Does
    * nothing if there is no readable record or the game is already over.
    */
-  private async concedeSeat(snapshot: LobbySnapshot, seat: Seat, now: number): Promise<void> {
+  private async concedeSeat(
+    snapshot: LobbySnapshot,
+    seat: Seat,
+    now: number,
+    cause: "abandoned" | "left",
+  ): Promise<void> {
     const load = await this.loadOrMigrateMatch();
     if (load.kind !== "ok") return;
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
     await this.match.put(outcome.record);
+    await this.log("forfeit", { seat, cause });
     this.broadcastMatch(outcome.record, snapshot, { logFrom: load.record.log.length });
   }
 
@@ -839,8 +1071,25 @@ export class LobbyDO {
    */
   private async loadOrMigrateMatch(): Promise<MatchLoad> {
     // The D1 read opens the DO's input gate, which is why `loadMatchRecord` re-reads before
-    // writing; the store's mirror makes that re-read see any write made meanwhile.
-    return loadMatchRecord(this.match, (ids) => this.deps.loadPool(ids));
+    // writing; the store's mirror makes that re-read see any write made meanwhile. Its only
+    // write is the migration's, which this slot logs with the version it migrated from.
+    let read: unknown;
+    const slot: MatchSlot = {
+      get: async () => {
+        read = await this.match.get();
+        return read;
+      },
+      put: async (record) => {
+        await this.match.put(record);
+        const from =
+          typeof read === "object" && read !== null ? Reflect.get(read, "version") : null;
+        await this.log("match_migrated", {
+          from: typeof from === "number" ? from : null,
+          to: record.version,
+        });
+      },
+    };
+    return loadMatchRecord(slot, (ids) => this.deps.loadPool(ids));
   }
 
   /**
@@ -850,9 +1099,25 @@ export class LobbyDO {
    */
   private async retireStaleMatch(): Promise<void> {
     await this.match.delete();
+    await this.log("match_retired", { cause: "unreadable_record" });
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
     await this.commit(endMatch(snapshot));
     this.broadcast({ kind: "match-error", reason: STALE_MATCH_REASON });
   }
+
+  /**
+   * One `lobby` log line, tagged with this lobby's code (log.ts says what fields may carry: never a
+   * player-typed string). `throttled` caps a line that repeats for as long as an outage lasts.
+   */
+  private async log(kind: string, fields: LogFields = {}, throttled = false): Promise<void> {
+    const lobby = this.snapshot?.code ?? (await this.read(CODE_KEY, storedCodeSchema)) ?? null;
+    if (throttled) logEventThrottled("lobby", kind, { lobby, ...fields });
+    else logEvent("lobby", kind, { lobby, ...fields });
+  }
+}
+
+/** A caught error as a log field, clipped so one line stays short. */
+function describeError(error: unknown): string {
+  return (error instanceof Error ? `${error.name}: ${error.message}` : String(error)).slice(0, 200);
 }

@@ -2,14 +2,16 @@ import { drizzle } from "drizzle-orm/d1";
 import { describe, expect, it } from "vitest";
 import { signedInUser, useTestD1 } from "../testing/d1";
 import { resolveAccountFromCookie } from "./resolveSession";
+import { sessionIdFromCookie } from "./session";
 
 const d1 = useTestD1();
 
 describe("resolveAccountFromCookie — the lobby socket's account", () => {
-  it("reads the session's account with its display name", async () => {
+  it("reads the session's account with the session's id and its display name", async () => {
     const ash = await signedInUser(d1().db, "ash@example.com");
     expect(await resolveAccountFromCookie(drizzle(d1().db), ash.cookie)).toEqual({
       userId: ash.userId,
+      sessionId: await sessionIdFromCookie(ash.cookie),
       displayName: "ash",
     });
   });

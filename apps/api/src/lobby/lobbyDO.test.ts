@@ -7,19 +7,23 @@ import {
   type LobbyServerMessage,
   type LobbySnapshot,
 } from "@colorless/schema";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
+import { resetLogThrottle } from "../http/log";
 import {
   basicCard,
   createLobbyHarness,
   type FakeSocket,
   LEGAL_DECK,
   type LobbyHarness,
+  sessionIdOf,
 } from "./lobbyHarness";
 import {
   ABANDON_GRACE_MS,
   DISCONNECT_GRACE_MS,
   EMPTY_LOBBY_TTL_MS,
+  FIRST_KEEPALIVE_MARGIN_MS,
   LIVENESS_SWEEP_MS,
+  readSnapshot,
   SOCKET_SILENCE_MS,
 } from "./logic";
 import { MATCH_RECORD_VERSION, type MatchRecord, matchFrameFor, readMatchRecord } from "./match";
@@ -30,8 +34,10 @@ const STALE_REASON =
   "This match ended because the server was updated. Pick your decks and ready up to play again.";
 
 let h: LobbyHarness;
+let warn: MockInstance<typeof console.warn>;
 
 beforeEach(() => {
+  warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   h = createLobbyHarness({
     seed: 42,
     displayNames: new Map([
@@ -45,7 +51,18 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => h.dispose());
+afterEach(() => {
+  h.dispose();
+  vi.restoreAllMocks();
+  resetLogThrottle();
+});
+
+/** The fields of every `lobby` log line of `kind` written so far. */
+function logged(kind: string): Record<string, unknown>[] {
+  return warn.mock.calls
+    .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
+    .filter((line) => line.evt === "lobby" && line.kind === kind);
+}
 
 const hello = (from: string, name = `anon-${from}`): LobbyClientMessage => ({
   kind: "hello",
@@ -490,12 +507,16 @@ describe("LobbyDO — disconnects", () => {
     expect(host.last("match")).toEqual(matchFrameFor(over, "p1"));
     expect(snapshotOf(host).guest?.forfeitAt).toBeNull();
     expect(guest.framesOf("match")).toHaveLength(1);
+    expect(logged("forfeit")).toEqual([
+      { evt: "lobby", kind: "forfeit", lobby: "ABCD", seat: "p2", cause: "abandoned" },
+    ]);
 
     const emptiedAt = h.world.now;
     await h.drop(host);
     await fireAlarmsUntil(() => h.storage.data.size === 0);
     expect(h.storage.alarm).toBeNull();
     expect(h.world.now).toBe(emptiedAt + EMPTY_LOBBY_TTL_MS);
+    expect(logged("lobby_wiped")).toMatchObject([{ lobby: "ABCD", inGame: true }]);
     expect((await h.create()).status).toBe(201);
   });
 
@@ -544,6 +565,9 @@ describe("LobbyDO — stale records", () => {
     expect(snapshot.guest?.ready).toBe(false);
     expect(back.last("match-error")).toEqual({ kind: "match-error", reason: STALE_REASON });
     expect(guest.last("match-error")).toEqual({ kind: "match-error", reason: STALE_REASON });
+    expect(logged("match_retired")).toEqual([
+      { evt: "lobby", kind: "match_retired", lobby: "ABCD", cause: "unreadable_record" },
+    ]);
   });
 
   it("retires an unreadable record when a player acts", async () => {
@@ -552,5 +576,346 @@ describe("LobbyDO — stale records", () => {
     expect(matchKeys()).toEqual([]);
     expect(snapshotOf(guest).phase).toBe("selecting");
     expect(guest.last("match-error")).toEqual({ kind: "match-error", reason: STALE_REASON });
+  });
+});
+
+/** Seat both players and ready them: the countdown's alarm is armed and due next. */
+async function readiedLobby() {
+  const seated = await seatBoth();
+  await readyUp(seated.host, "h", "deck-ana");
+  await readyUp(seated.guest, "g", "deck-bo");
+  return seated;
+}
+
+/** Run the pending alarm without awaiting it, as the runtime does while other events arrive. */
+function startAlarm(): Promise<void> {
+  const at = h.storage.alarm;
+  if (at === null) throw new Error("no alarm is set");
+  h.storage.alarm = null;
+  h.world.now = Math.max(h.world.now, at);
+  return h.lobby.alarm();
+}
+
+/** Hold every deck read open until `release`, as a slow D1 round trip does. The DO's input gate
+    is open while it waits, so frames delivered meanwhile run. */
+function holdDeckReads() {
+  const read = h.deps.loadDeck;
+  let release = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let entered = () => {};
+  const inside = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const held = { inside, release: () => release(), calls: 0 };
+  h.deps.loadDeck = async (deckId, owner) => {
+    held.calls++;
+    entered();
+    await gate;
+    return read(deckId, owner);
+  };
+  return held;
+}
+
+/** Every storage write and alarm change from now on, by key. */
+function recordWrites(): string[] {
+  const writes: string[] = [];
+  const storage = h.storage;
+  const put = storage.put.bind(storage);
+  const remove = storage.delete.bind(storage) as (keys: string | string[]) => Promise<unknown>;
+  const setAlarm = storage.setAlarm.bind(storage);
+  const deleteAlarm = storage.deleteAlarm.bind(storage);
+  storage.put = async (key, value) => {
+    writes.push(typeof key === "string" ? key : Object.keys(key).join());
+    await put(key, value);
+  };
+  storage.delete = (async (keys: string | string[]) => {
+    writes.push(`delete:${String(keys)}`);
+    return remove(keys);
+  }) as typeof storage.delete;
+  storage.setAlarm = async (at) => {
+    writes.push("setAlarm");
+    await setAlarm(at);
+  };
+  storage.deleteAlarm = async () => {
+    writes.push("deleteAlarm");
+    await deleteAlarm();
+  };
+  return writes;
+}
+
+describe("LobbyDO — events while the handoff awaits D1", () => {
+  it("a guest who leaves is not re-seated into a match", async () => {
+    const { host, guest } = await readiedLobby();
+    const held = holdDeckReads();
+    const alarm = startAlarm();
+    await held.inside;
+    await h.send(guest, { kind: "bye", from: "g", slot: "guest" });
+    await h.drop(guest);
+    held.release();
+    await alarm;
+    const snapshot = snapshotOf(host);
+    expect(snapshot.phase).toBe("waiting");
+    expect(snapshot.guest).toBeNull();
+    expect(matchKeys()).toEqual([]);
+    expect(host.framesOf("match")).toEqual([]);
+  });
+
+  it("an un-ready lands, and the countdown stops", async () => {
+    const { host } = await readiedLobby();
+    const held = holdDeckReads();
+    const alarm = startAlarm();
+    await held.inside;
+    await h.send(host, intent("h", { type: "set-ready", ready: false }));
+    held.release();
+    await alarm;
+    expect(snapshotOf(host).phase).toBe("selecting");
+    expect(snapshotOf(host).host.ready).toBe(false);
+    expect(matchKeys()).toEqual([]);
+  });
+
+  it("a rename lands in the lobby and the match without reading the decks again", async () => {
+    const { host } = await readiedLobby();
+    const held = holdDeckReads();
+    const alarm = startAlarm();
+    await held.inside;
+    await h.send(host, intent("h", { type: "set-name", name: "Captain" }));
+    held.release();
+    await alarm;
+    expect(snapshotOf(host).phase).toBe("in-game");
+    expect(snapshotOf(host).host.name).toBe("Captain");
+    expect((await storedMatch()).names.p1).toBe("Captain");
+    expect(held.calls).toBe(2);
+  });
+
+  it("a socket that drops keeps the match from starting without its player", async () => {
+    const { host, guest } = await readiedLobby();
+    const held = holdDeckReads();
+    const alarm = startAlarm();
+    await held.inside;
+    await h.drop(guest);
+    held.release();
+    await alarm;
+    expect(snapshotOf(host).phase).toBe("selecting");
+    expect(snapshotOf(host).guest?.connected).toBe(false);
+    expect(matchKeys()).toEqual([]);
+  });
+
+  it("stops retrying after a bounded number of changes, and the next alarm starts the match", async () => {
+    h.world.decks.set("deck-bo-2", { owner: "bo", ids: DECK });
+    const { host, guest } = await readiedLobby();
+    const endsAt = h.storage.alarm;
+    const read = h.deps.loadDeck;
+    let switches = 0;
+    h.deps.loadDeck = async (deckId, owner) => {
+      if (owner?.userId === "bo") {
+        switches++;
+        const next = switches % 2 === 1 ? "deck-bo-2" : "deck-bo";
+        await h.send(guest, intent("g", { type: "select-deck", deckId: next, deckName: next }));
+      }
+      return read(deckId, owner);
+    };
+    await h.fireAlarm();
+    expect(switches).toBe(3);
+    expect(snapshotOf(host).phase).toBe("countdown");
+    expect(matchKeys()).toEqual([]);
+    expect(logged("handoff_deferred")).toMatchObject([{ lobby: "ABCD", attempts: 3 }]);
+    expect(h.storage.alarm).toBe(endsAt);
+
+    h.deps.loadDeck = read;
+    await h.fireAlarm();
+    expect(snapshotOf(host).phase).toBe("in-game");
+    expect(snapshotOf(host).guest?.deckId).toBe("deck-bo-2");
+  });
+});
+
+describe("LobbyDO — failures", () => {
+  it("drops both back with a reason when D1 fails at the handoff, and keeps the alarm", async () => {
+    const { host, guest } = await readiedLobby();
+    h.deps.loadDeck = async () => {
+      throw new Error("D1_ERROR: Network connection lost.");
+    };
+    await h.fireAlarm();
+    const snapshot = snapshotOf(host);
+    expect(snapshot.phase).toBe("selecting");
+    expect([snapshot.host.ready, snapshot.guest?.ready]).toEqual([false, false]);
+    const error = {
+      kind: "match-error",
+      reason: "Couldn't load the decks. Ready up to try again.",
+    };
+    expect(host.last("match-error")).toEqual(error);
+    expect(guest.last("match-error")).toEqual(error);
+    expect(h.storage.alarm).toBe(h.world.now + LIVENESS_SWEEP_MS);
+    expect(logged("handoff_failed")).toEqual([
+      {
+        evt: "lobby",
+        kind: "handoff_failed",
+        lobby: "ABCD",
+        cause: "d1_error",
+        error: "Error: D1_ERROR: Network connection lost.",
+      },
+    ]);
+  });
+
+  it("logs an alarm that throws and re-arms it, so the countdown is not stranded", async () => {
+    const { host } = await readiedLobby();
+    const endsAt = h.storage.alarm;
+    const seed = h.deps.randomSeed;
+    h.deps.randomSeed = () => {
+      throw new Error("no entropy");
+    };
+    await h.fireAlarm();
+    expect(logged("alarm_failed")).toMatchObject([{ lobby: "ABCD", error: "Error: no entropy" }]);
+    expect(h.storage.alarm).toBe(endsAt);
+    h.deps.randomSeed = seed;
+    await h.fireAlarm();
+    expect(snapshotOf(host).phase).toBe("in-game");
+  });
+
+  it("refuses a join with 503 when the session lookup fails, leaving no socket behind", async () => {
+    await h.create();
+    h.deps.resolveAccount = async () => {
+      throw new Error("D1_ERROR: Network connection lost.");
+    };
+    await expect(h.connect("ana")).rejects.toThrow("upgrade refused with 503");
+    expect(h.state.getWebSockets()).toEqual([]);
+    expect(h.state.sockets[0]?.closed).toEqual({ code: 1011, reason: "session lookup failed" });
+    expect(logged("ws_refused")).toMatchObject([{ lobby: "ABCD", cause: "session_lookup" }]);
+    await fireAlarmsUntil(() => h.storage.data.size === 0);
+  });
+
+  it("keeps memory agreeing with storage when a snapshot write fails", async () => {
+    const { host } = await seatBoth();
+    await h.send(host, intent("h", { type: "select-deck", deckId: "deck-ana", deckName: "A" }));
+    const put = h.storage.put.bind(h.storage);
+    let fail = true;
+    h.storage.put = async (key, value) => {
+      if (fail && key === "snapshot") {
+        fail = false;
+        throw new Error("SQLITE_TOOBIG");
+      }
+      await put(key, value);
+    };
+    const ready = intent("h", { type: "set-ready", ready: true });
+    await expect(h.send(host, ready)).rejects.toThrow("SQLITE_TOOBIG");
+    await h.send(host, ready);
+    expect(snapshotOf(host).host.ready).toBe(true);
+    expect(readSnapshot(h.storage.data.get("snapshot"))?.host.ready).toBe(true);
+  });
+});
+
+describe("LobbyDO — the session behind a socket", () => {
+  it("loads no deck for a socket whose session ended after it connected", async () => {
+    const { host } = await readiedLobby();
+    h.world.endedSessions.add(sessionIdOf("bo"));
+    await h.fireAlarm();
+    expect(host.last("match-error")).toEqual({
+      kind: "match-error",
+      reason: "Bo: sign in again to play a saved deck.",
+    });
+    expect(matchKeys()).toEqual([]);
+  });
+
+  it("plays a socket attached before sessions were recorded as signed out", async () => {
+    const { host, guest } = await readiedLobby();
+    guest.serializeAttachment({ playerId: "g", userId: "bo", displayName: "Bo" });
+    await h.fireAlarm();
+    expect(host.last("match-error")).toEqual({
+      kind: "match-error",
+      reason: "Bo: you must be signed in to play a saved deck.",
+    });
+  });
+});
+
+describe("LobbyDO — bounded growth", () => {
+  it("clips a long account name to the seat bound and drops a hello with an over-long id", async () => {
+    h.world.displayNames.set("bo", "B".repeat(300));
+    const { host } = await seatBoth();
+    expect(snapshotOf(host).guest?.name).toBe("B".repeat(64));
+    const stranger = await h.connect();
+    await h.send(stranger, hello("x".repeat(65)));
+    expect(stranger.sent).toEqual([]);
+  });
+
+  it("keeps seat bindings only for the ids still seated", async () => {
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const guest = await h.connect("bo");
+    for (let i = 0; i < 20; i++) {
+      await h.send(guest, hello(`g${i}`));
+      await h.send(guest, { kind: "bye", from: `g${i}`, slot: "guest" });
+    }
+    await h.send(guest, hello("g-last"));
+    expect(h.storage.data.get("seatUsers")).toEqual({ h: "ana", "g-last": "bo" });
+  });
+
+  it("lets go of a socket that never answered a keepalive, so an empty lobby still expires", async () => {
+    await h.create();
+    const connectedAt = h.world.now;
+    const host = await h.connect("ana");
+    host.pings = false;
+    await h.send(host, hello("h"));
+    await fireAlarmsUntil(() => host.closed !== null);
+    expect(host.closed).toEqual({ code: 1001, reason: "keepalive lost" });
+    expect(h.world.now - connectedAt).toBeGreaterThan(
+      SOCKET_SILENCE_MS + FIRST_KEEPALIVE_MARGIN_MS,
+    );
+    await fireAlarmsUntil(() => h.storage.data.size === 0);
+  });
+
+  it("starts the window of a socket attached before connection times were recorded at its first sweep", async () => {
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    host.pings = false;
+    host.serializeAttachment({ playerId: "h", userId: "ana", displayName: "Ana" });
+    h.hibernate();
+    await h.fireAlarm();
+    const firstSweep = h.world.now;
+    expect(host.closed).toBeNull();
+    await fireAlarmsUntil(() => host.closed !== null);
+    expect(h.world.now - firstSweep).toBeGreaterThan(SOCKET_SILENCE_MS + FIRST_KEEPALIVE_MARGIN_MS);
+  });
+});
+
+describe("LobbyDO — no-ops cost nothing", () => {
+  it("writes, sends and schedules nothing for a repeated intent", async () => {
+    const { host, guest } = await seatBoth();
+    await readyUp(host, "h", "deck-ana");
+    const writes = recordWrites();
+    const frames = host.sent.length + guest.sent.length;
+    for (let i = 0; i < 3; i++) {
+      await readyUp(host, "h", "deck-ana");
+      await h.send(host, intent("h", { type: "set-name", name: "Ana" }));
+    }
+    expect(writes).toEqual([]);
+    expect(host.sent.length + guest.sent.length).toBe(frames);
+  });
+
+  it("writes and sends nothing for an accepted action that changes nothing", async () => {
+    const { host, guest } = await startedMatch();
+    const [active, benched] = (await storedMatch()).state.players.p1.hand;
+    await h.send(host, { kind: "action", action: { type: "setupPlaceActive", uid: active } });
+    await h.send(host, { kind: "action", action: { type: "setupPlaceBench", uid: benched } });
+    const writes = recordWrites();
+    const frames = host.sent.length + guest.sent.length;
+    for (let i = 0; i < 3; i++) {
+      await h.send(host, {
+        kind: "action",
+        action: { type: "reorderBench", uid: benched, index: 0 },
+      });
+    }
+    expect(host.framesOf("reject-action")).toEqual([]);
+    expect(writes).toEqual([]);
+    expect(host.sent.length + guest.sent.length).toBe(frames);
+  });
+
+  it("sets the alarm once for the countdown's handoff", async () => {
+    await readiedLobby();
+    const writes = recordWrites();
+    await h.fireAlarm();
+    expect(writes.filter((key) => key === "setAlarm")).toEqual(["setAlarm"]);
   });
 });

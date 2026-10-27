@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   type AttachmentCarrier,
+  attachConnectedAt,
+  attachedConnectedAt,
   attachedDisplayName,
   attachedPlayer,
+  attachedSession,
   attachedUserId,
   attachLogDeltas,
   attachPlayer,
@@ -21,6 +24,11 @@ function fakeSocket(initial: unknown = null): AttachmentCarrier {
     },
     deserializeAttachment: () => attachment,
   } as AttachmentCarrier;
+}
+
+/** An account as the /ws upgrade resolves it. */
+function account(userId: string, displayName: string | null) {
+  return { userId, sessionId: `session-of-${userId}`, displayName };
 }
 
 describe("attachment codec", () => {
@@ -50,7 +58,7 @@ describe("attachment codec", () => {
   it("carries the userId independently, set before the playerId (the /ws → hello order)", () => {
     const ws = fakeSocket();
     // /ws upgrade authenticates the account first — no playerId yet.
-    attachAccount(ws, "user-9", null);
+    attachAccount(ws, account("user-9", null));
     expect(attachedUserId(ws)).toBe("user-9");
     expect(attachedPlayer(ws)).toBeNull();
     // The later hello binds the playerId WITHOUT dropping the userId…
@@ -58,7 +66,7 @@ describe("attachment codec", () => {
     expect(attachedPlayer(ws)).toBe("player-1");
     expect(attachedUserId(ws)).toBe("user-9");
     // …and setting the userId again preserves the playerId.
-    attachAccount(ws, "user-10", null);
+    attachAccount(ws, account("user-10", null));
     expect(attachedUserId(ws)).toBe("user-10");
     expect(attachedPlayer(ws)).toBe("player-1");
   });
@@ -66,14 +74,14 @@ describe("attachment codec", () => {
   it("carries the account's lobby name beside its id, clipped, through every other write", () => {
     const ws = fakeSocket();
     expect(attachedDisplayName(ws)).toBeNull();
-    attachAccount(ws, "user-9", "Ana");
+    attachAccount(ws, account("user-9", "Ana"));
     attachPlayer(ws, "player-1");
     attachLogDeltas(ws, true);
     attachSpectator(ws);
     expect(attachedDisplayName(ws)).toBe("Ana");
-    attachAccount(ws, "user-9", null);
+    attachAccount(ws, account("user-9", null));
     expect(attachedDisplayName(ws)).toBeNull();
-    attachAccount(ws, "user-9", "x".repeat(5000));
+    attachAccount(ws, account("user-9", "x".repeat(5000)));
     expect(attachedDisplayName(ws)).toBe("x".repeat(256));
     expect(attachedDisplayName(fakeSocket({ displayName: 7 }))).toBeNull();
   });
@@ -85,16 +93,37 @@ describe("attachment codec", () => {
   });
 });
 
+describe("the session and the connection time", () => {
+  it("carry the account's session and the upgrade's instant through every other write", () => {
+    const ws = fakeSocket();
+    attachConnectedAt(ws, 1234);
+    attachAccount(ws, account("user-9", "Ana"));
+    attachPlayer(ws, "player-1");
+    attachLogDeltas(ws, true);
+    expect(attachedSession(ws)).toEqual({ userId: "user-9", sessionId: "session-of-user-9" });
+    expect(attachedConnectedAt(ws)).toBe(1234);
+  });
+
+  it("read an anonymous socket, or an attachment from before they existed, as null", () => {
+    expect(attachedSession(fakeSocket())).toBeNull();
+    expect(attachedConnectedAt(fakeSocket())).toBeNull();
+    const old = fakeSocket({ playerId: "p", userId: "user-9", displayName: null });
+    expect(attachedUserId(old)).toBe("user-9");
+    expect(attachedSession(old)).toBeNull();
+    expect(attachedConnectedAt(fakeSocket({ connectedAt: "soon" }))).toBeNull();
+  });
+});
+
 describe("the log-delta flag", () => {
   it("reads false until a hello announces it, and survives every other write", () => {
     const ws = fakeSocket();
     expect(takesLogDeltas(ws)).toBe(false);
-    attachAccount(ws, "user-9", null);
+    attachAccount(ws, account("user-9", null));
     attachLogDeltas(ws, true);
     attachSpectator(ws);
     expect(takesLogDeltas(ws)).toBe(true);
     attachPlayer(ws, "player-1");
-    attachAccount(ws, "user-10", null);
+    attachAccount(ws, account("user-10", null));
     expect(takesLogDeltas(ws)).toBe(true);
     expect(attachedPlayer(ws)).toBe("player-1");
     attachLogDeltas(ws, false);
@@ -122,7 +151,7 @@ describe("the spectator marker (3c-vii-b)", () => {
 
   it("keeps the authenticated account (a watcher may still be signed in)", () => {
     const ws = fakeSocket();
-    attachAccount(ws, "user-9", null);
+    attachAccount(ws, account("user-9", null));
     attachSpectator(ws);
     expect(attachedUserId(ws)).toBe("user-9");
     // …and the account survives while watching, so a later seat claim still

@@ -1,4 +1,12 @@
-import { COUNTDOWN_MS, createSnapshot, type LobbySnapshot, makePlayer } from "@colorless/schema";
+import {
+  COUNTDOWN_MS,
+  createSnapshot,
+  LOBBY_DECK_NAME_MAX,
+  LOBBY_ID_MAX,
+  LOBBY_NAME_MAX,
+  type LobbySnapshot,
+  makePlayer,
+} from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   ABANDON_GRACE_MS,
@@ -8,6 +16,7 @@ import {
   countdownEndsAt,
   forfeitDeadlines,
   endMatch,
+  FIRST_KEEPALIVE_MARGIN_MS,
   helloDecision,
   parseClientMessage,
   readSnapshot,
@@ -17,6 +26,7 @@ import {
   resetAfterFailedStart,
   sameSnapshot,
   seatClaimAllowed,
+  seatedUsers,
   setSeatConnected,
   LIVENESS_SWEEP_MS,
   slotOf,
@@ -48,6 +58,56 @@ function countdownLobby(): LobbySnapshot {
   expect(snapshot.phase).toBe("countdown");
   return snapshot;
 }
+
+describe("parseClientMessage — the length bounds", () => {
+  const long = (length: number) => "x".repeat(length);
+
+  it("refuses an id longer than the bound in every frame that carries one", () => {
+    const id = long(LOBBY_ID_MAX + 1);
+    for (const frame of [
+      { kind: "hello", from: id, name: "Bo" },
+      { kind: "intent", from: id, intent: { type: "set-ready", ready: true } },
+      { kind: "intent", from: "g1", intent: { type: "select-deck", deckId: id, deckName: "A" } },
+      { kind: "bye", from: id, slot: "guest" },
+      { kind: "rematch", from: id },
+      { kind: "reject", to: id, reason: "kicked" },
+    ]) {
+      expect(parseClientMessage(JSON.stringify(frame))).toBeNull();
+    }
+    const fits = { kind: "rematch", from: long(LOBBY_ID_MAX) };
+    expect(parseClientMessage(JSON.stringify(fits))).toEqual(fits);
+  });
+
+  it("clips a name or deck name longer than the bound", () => {
+    const hello = parseClientMessage(
+      JSON.stringify({ kind: "hello", from: "g1", name: long(5000) }),
+    );
+    expect(hello).toEqual({ kind: "hello", from: "g1", name: long(LOBBY_NAME_MAX) });
+    const rename = parseClientMessage(
+      JSON.stringify({ kind: "intent", from: "g1", intent: { type: "set-name", name: long(70) } }),
+    );
+    expect(rename).toMatchObject({ intent: { name: long(LOBBY_NAME_MAX) } });
+    const pick = parseClientMessage(
+      JSON.stringify({
+        kind: "intent",
+        from: "g1",
+        intent: { type: "select-deck", deckId: "d1", deckName: long(5000) },
+      }),
+    );
+    expect(pick).toMatchObject({ intent: { deckName: long(LOBBY_DECK_NAME_MAX) } });
+  });
+});
+
+describe("seatedUsers — the bindings worth keeping", () => {
+  it("keeps the host's and guest's bindings and drops every departed id's", () => {
+    const lobby = lobbyWithGuest();
+    expect(seatedUsers({ h1: "ana", g1: "bo", gone: "eve", other: "zed" }, lobby)).toEqual({
+      h1: "ana",
+      g1: "bo",
+    });
+    expect(seatedUsers({ h1: "ana", g1: "bo" }, removeGuest(lobby))).toEqual({ h1: "ana" });
+  });
+});
 
 describe("parseClientMessage", () => {
   it("parses a valid frame", () => {
@@ -209,6 +269,19 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     // Never throws on a blob that isn't one — the DO is the only writer, which is
     // precisely why an impossible value must not take the lobby down.
     expect(readSnapshot({})).toBeNull();
+  });
+
+  it("clips names stored before frames were bounded, rather than refusing the lobby", () => {
+    const stored = lobbyWithGuest();
+    const long = {
+      ...stored,
+      host: { ...stored.host, name: "n".repeat(5000), deckName: "d".repeat(5000) },
+    };
+    const read = readSnapshot(long);
+    expect(read?.host.name).toBe("n".repeat(LOBBY_NAME_MAX));
+    expect(read?.host.deckName).toBe("d".repeat(LOBBY_DECK_NAME_MAX));
+    expect(read?.guest?.deckName).toBeNull();
+    expect(readSnapshot(stored)).toEqual(stored);
   });
 
   it("keeps a stored avatar seed and reads a malformed seat as no snapshot", () => {
@@ -440,16 +513,19 @@ describe("socketIsSilent — the half-open connection (3c-viii)", () => {
   it("gives up on a socket whose keepalives stopped", () => {
     // The client pings every 1.5s and the runtime auto-answers, so a gap this
     // long means the connection is gone even though no close ever arrived.
-    expect(socketIsSilent(at(1_000), 1_000 + SOCKET_SILENCE_MS + 1)).toBe(true);
+    expect(socketIsSilent(at(1_000), 0, 1_000 + SOCKET_SILENCE_MS + 1)).toBe(true);
   });
 
   it("leaves a socket answering on time alone, including right on the boundary", () => {
-    expect(socketIsSilent(at(1_000), 1_500)).toBe(false);
-    expect(socketIsSilent(at(1_000), 1_000 + SOCKET_SILENCE_MS)).toBe(false);
+    expect(socketIsSilent(at(1_000), 0, 1_500)).toBe(false);
+    expect(socketIsSilent(at(1_000), 0, 1_000 + SOCKET_SILENCE_MS)).toBe(false);
   });
 
-  it("treats a socket that has NEVER auto-answered as alive", () => {
-    expect(socketIsSilent(null, 1_000_000)).toBe(false);
+  it("gives a socket that has NEVER auto-answered one window from its upgrade, plus the margin", () => {
+    const window = SOCKET_SILENCE_MS + FIRST_KEEPALIVE_MARGIN_MS;
+    expect(socketIsSilent(null, 1_000, 1_000)).toBe(false);
+    expect(socketIsSilent(null, 1_000, 1_000 + window)).toBe(false);
+    expect(socketIsSilent(null, 1_000, 1_000 + window + 1)).toBe(true);
   });
 
   it("is comfortably inside the forfeit clock it feeds", () => {

@@ -7,6 +7,7 @@
 import * as z from "zod";
 import { wireActionSchema } from "../match/action";
 import type { Equals } from "./equals";
+import { LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX, LOBBY_NAME_MAX } from "./protocol";
 import type {
   LobbyIntent,
   LobbyMessage,
@@ -52,10 +53,19 @@ export const lobbySnapshotSchemaMatchesType: Equals<
   LobbySnapshot
 > = true;
 
+// The bounds on what a client sends (protocol.ts says which are refused and which clipped). The
+// snapshot schemas above stay unbounded: they also describe what the server sends.
+const clientId = z.string().max(LOBBY_ID_MAX);
+const clippedString = (max: number) => z.string().transform((value) => value.slice(0, max));
+
 export const lobbyIntentSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("select-deck"), deckId: z.string(), deckName: z.string() }),
+  z.object({
+    type: z.literal("select-deck"),
+    deckId: clientId,
+    deckName: clippedString(LOBBY_DECK_NAME_MAX),
+  }),
   z.object({ type: z.literal("set-ready"), ready: z.boolean() }),
-  z.object({ type: z.literal("set-name"), name: z.string() }),
+  z.object({ type: z.literal("set-name"), name: clippedString(LOBBY_NAME_MAX) }),
 ]);
 export const lobbyIntentSchemaMatchesType: Equals<
   z.infer<typeof lobbyIntentSchema>,
@@ -65,13 +75,13 @@ export const lobbyIntentSchemaMatchesType: Equals<
 // The message shapes a client sends, composed here and, with the server's, in serverWire.ts.
 export const helloMessageSchema = z.object({
   kind: z.literal("hello"),
-  from: z.string(),
-  name: z.string(),
+  from: clientId,
+  name: clippedString(LOBBY_NAME_MAX),
   logDeltas: z.boolean().optional(),
 });
 export const intentMessageSchema = z.object({
   kind: z.literal("intent"),
-  from: z.string(),
+  from: clientId,
   intent: lobbyIntentSchema,
 });
 export const actionMessageSchema = z.object({
@@ -80,12 +90,12 @@ export const actionMessageSchema = z.object({
 });
 export const byeMessageSchema = z.object({
   kind: z.literal("bye"),
-  from: z.string(),
+  from: clientId,
   slot: lobbySlotSchema,
 });
 export const rematchMessageSchema = z.object({
   kind: z.literal("rematch"),
-  from: z.string(),
+  from: clientId,
 });
 
 /** What a client may send the lobby server. The DO validates EVERY inbound
@@ -94,7 +104,7 @@ export const lobbyClientMessageSchema = z.discriminatedUnion("kind", [
   helloMessageSchema,
   intentMessageSchema,
   actionMessageSchema,
-  z.object({ kind: z.literal("reject"), to: z.string(), reason: z.literal("kicked") }),
+  z.object({ kind: z.literal("reject"), to: clientId, reason: z.literal("kicked") }),
   byeMessageSchema,
   rematchMessageSchema,
 ]);
