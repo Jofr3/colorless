@@ -88,3 +88,30 @@ for _,item in ipairs(popup.items) do
 end
 popup:keypressed('escape'); assert(not popup.auth and popup.tab==4)
 print('PASS: account deletion form, password step, press-twice lockout and timeout, busy and deleted return')
+
+-- Signing out everywhere is one press on the account tab, sent as its own account command.
+local sent={}
+popup.callbacks.account=function(cmd) sent[#sent+1]=cmd end
+for _,size in ipairs({{1280,800},{480,850}}) do
+  popup:layout(size[1],size[2])
+  local everywhere
+  for i,item in ipairs(popup.items) do if item.action=='logout-all' then everywhere=i end end
+  assert(everywhere and popup.items[everywhere].label=='Sign out everywhere')
+  for _,item in ipairs(popup.items) do
+    assert(item.x>=popup.x and item.x+item.w<=popup.x+popup.w)
+    assert(item.y>=popup.y and item.y+item.h<=popup.y+popup.h)
+  end
+  -- The rows below the name field do not overlap, and the message line sits under the last one.
+  local rows={}
+  for _,item in ipairs(popup.items) do if item.action and item.action~='edit' then rows[#rows+1]=item end end
+  table.sort(rows,function(a,b) return a.y<b.y end)
+  for i=2,#rows do assert(rows[i].y>=rows[i-1].y+rows[i-1].h or rows[i].y==rows[i-1].y) end
+  assert(rows[#rows].y+rows[#rows].h<=popup.y+488,'The message is drawn below the last button')
+  popup:activate(everywhere)
+end
+assert(#sent==2 and sent[1]=='logout-all' and sent[2]=='logout-all')
+account.busy=true; popup:build()
+for i,item in ipairs(popup.items) do if item.action=='logout-all' then popup:activate(i) end end
+assert(#sent==2,'Busy disables it')
+account.busy=false
+print('PASS: sign out everywhere button, layout in both orientations, busy guard')
