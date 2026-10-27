@@ -10,9 +10,15 @@ import {
   type Seat,
 } from "@colorless/engine";
 import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@colorless/schema";
-import { initHost, hostReducer, stepTarget, type LocalGameSetup } from "../game/localHost";
-
-import { saveSimulator, loadSimulatorSave } from "../game/simulatorSave";
+import {
+  dropAutoSteps,
+  hostReducer,
+  initHost,
+  stepTarget,
+  type AutoPhase,
+  type LocalGameSetup,
+} from "../game/localHost";
+import { saveSimulator } from "../game/simulatorSave";
 import {
   autoStepFor,
   counterSourcePicked,
@@ -103,9 +109,10 @@ export class LocalTableSource implements TableSource {
   private refused: { reason: string } | null = null;
   private saved = true;
   private listeners = new Set<() => void>();
-  constructor(setup: LocalGameSetup) {
-    this.host = initHost(setup);
-    // A save made on a decision the table takes for the player resumes past it.
+  /** A fresh match from its setup, or a restored one. */
+  constructor(setup: LocalGameSetup | Host) {
+    this.host = "origin" in setup ? setup : initHost(setup);
+    // A match opened on a decision the table takes for the player resumes past it.
     if (this.autoSteps()) this.persist();
   }
   private seen: { game: GameState; seat: Seat; view: RedactedGame } | null = null;
@@ -236,23 +243,7 @@ export class LocalTableSource implements TableSource {
   }
   /** Writes the save; false when it did not stick (storage full). */
   persist() {
-    const h = this.host;
-    saveSimulator({
-      state: h.game,
-      events: [],
-      names: h.names,
-      startedAt: h.startedAt,
-      resume: {
-        log: h.log,
-        viewerSeat: h.viewerSeat,
-        turns: h.turns,
-        turnIndex: h.turnIndex,
-        latestTurn: h.latestTurn,
-        steps: h.steps,
-        stepIndex: h.stepIndex,
-      },
-    });
-    this.saved = loadSimulatorSave()?.startedAt === h.startedAt;
+    this.saved = saveSimulator(this.host);
     return this.saved;
   }
 
@@ -278,22 +269,17 @@ export class LocalTableSource implements TableSource {
     const taken = this.stepWhile("ko:takePrizes");
     return drawn || taken;
   }
-  private stepWhile(kind: "setup:drawExtra" | "ko:takePrizes") {
+  private stepWhile(kind: AutoPhase) {
     let stepped = false;
     while (this.host.game.phase.kind === kind) {
       const action = autoStepFor(this.view());
       if (!action) break;
-      const next = hostReducer(this.host, { action, at: Date.now() });
+      const next = hostReducer(this.host, { action, at: Date.now(), auto: kind });
       if (next.lastError || next.game === this.host.game) break;
       this.host = next;
       stepped = true;
     }
-    if (stepped) {
-      // An automatic step belongs to the decision that caused it. History must not
-      // land on a pending one, which would perform it again and drop the redo branch.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== kind);
-      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
-    }
+    if (stepped) this.host = dropAutoSteps(this.host, kind);
     return stepped;
   }
 }

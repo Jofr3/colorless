@@ -11,7 +11,16 @@ import {
   mustApply,
   mustCreate,
 } from "@colorless/engine/testing";
-import { hostReducer, initHost, stepTarget, waitingSeatOf, type LocalGameSetup } from "./localHost";
+import {
+  dropAutoSteps,
+  hostReducer,
+  initHost,
+  replayHost,
+  restorePosition,
+  stepTarget,
+  waitingSeatOf,
+  type LocalGameSetup,
+} from "./localHost";
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
@@ -74,6 +83,40 @@ describe("waitingSeatOf", () => {
     expect(waitingSeatOf(over, "p2")).toBe("p2");
   });
 });
+
+/** p1 Bites fix-victim (30 HP, OHKO) with two benched defenders: the prize
+    pick parks first (p1), then the promotion parks for p2. */
+function koBoard(): GameState {
+  let state = driveSetup(
+    11,
+    {
+      p1: deckOf({ "fix-attacker": 30, "fix-fire-energy": 20, "fix-water-energy": 10 }),
+      p2: deckOf({ "fix-victim": 40, "fix-water-energy": 20 }),
+    },
+    {
+      first: "p1",
+      active: { p1: "fix-attacker", p2: "fix-victim" },
+      bench: { p2: ["fix-victim", "fix-victim"] },
+    },
+  );
+  state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
+  state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+  return mustApply(state, { type: "endTurn", seat: "p2" }).state;
+}
+
+/** Two Fire Energy in hand for p1's attacker, so its turns have actions besides ending. */
+function energyBoard(): GameState {
+  return handFromDeck(
+    driveSetup(
+      11,
+      { p1: deckOf({ "fix-attacker": 30, "fix-fire-energy": 30 }), p2: MIXED_DECK },
+      { first: "p1", active: { p1: "fix-attacker" } },
+    ),
+    "p1",
+    "fix-fire-energy",
+    2,
+  );
+}
 
 function freshSetup(): LocalGameSetup {
   const { state, events } = mustCreate(170, { p1: MIXED_DECK, p2: MIXED_DECK });
@@ -359,26 +402,7 @@ describe("initHost / hostReducer", () => {
   });
 
   it("hands the device to the KO'd defender when a promotion parks", () => {
-    // p1 Bites fix-victim (30 HP, OHKO) with two benched defenders: the
-    // prize pick parks first (p1), then the promotion parks for p2.
-    const KO_SEED = 11;
-    let state = driveSetup(
-      KO_SEED,
-      {
-        p1: deckOf({ "fix-attacker": 30, "fix-fire-energy": 20, "fix-water-energy": 10 }),
-        p2: deckOf({ "fix-victim": 40, "fix-water-energy": 20 }),
-      },
-      {
-        first: "p1",
-        active: { p1: "fix-attacker", p2: "fix-victim" },
-        bench: { p2: ["fix-victim", "fix-victim"] },
-      },
-    );
-    state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
-    state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
-    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-
-    let host = initHost({ state, events: [], names: NAMES, startedAt: 0 });
+    let host = initHost({ state: koBoard(), events: [], names: NAMES, startedAt: 0 });
     expect(host.viewerSeat).toBe("p1");
     host = hostReducer(host, { action: { type: "attack", seat: "p1", index: 0 }, at: 1_000 });
     expect(host.game.phase.kind).toBe("ko:takePrizes");
@@ -393,5 +417,138 @@ describe("initHost / hostReducer", () => {
     // The parked tail resumes: p1's turn ends, p2's turn 4 begins.
     expect(host.game.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(host.viewerSeat).toBe("p2");
+  });
+});
+
+describe("the line of play", () => {
+  const endTurn = (seat: Seat, at: number) => ({ action: { type: "endTurn", seat } as const, at });
+  const attach = (state: GameState, at: number) => ({
+    action: {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: handUid(state, "p1", "fix-fire-energy"),
+      target: { spot: "active" },
+    } as const,
+    at,
+  });
+  const endTurns = (start: ReturnType<typeof initHost>, count: number) => {
+    let host = start;
+    for (let i = 0; i < count; i++) {
+      if (host.game.phase.kind !== "turn:action") throw new Error("expected a turn");
+      host = hostReducer(host, endTurn(host.game.phase.seat, 1000 * (i + 1)));
+      if (host.lastError) throw new Error(host.lastError.message);
+    }
+    return host;
+  };
+
+  it("records each accepted action once, and a new one after an undo replaces the tail", () => {
+    const setup = { state: energyBoard(), events: [], names: NAMES, startedAt: 0 };
+    let host = initHost(setup);
+    host = hostReducer(host, attach(host.game, 1000));
+    host = hostReducer(host, endTurn("p1", 2000));
+    host = hostReducer(host, endTurn("p1", 2500));
+    expect(host.lastError).not.toBeNull();
+    host = hostReducer(host, endTurn("p2", 3000));
+    expect(host.actions.map((a) => a.at)).toEqual([1000, 2000, 3000]);
+    expect(host.cursor).toBe(3);
+    const undone = hostReducer(hostReducer(host, { type: "undoAction" }), { type: "undoAction" });
+    expect(undone.cursor).toBe(1);
+    expect(undone.actions).toBe(host.actions);
+    expect(undone.log).toEqual(host.log.slice(0, undone.steps[1]?.logLength));
+    const replaced = hostReducer(undone, endTurn("p1", 4000));
+    expect(replaced.actions.map((a) => a.at)).toEqual([1000, 4000]);
+    expect(replaced.steps.map((s) => s.actions)).toEqual([0, 1, 2]);
+  });
+
+  it("replays a line to the history the reducer built, undone and replaced actions included", () => {
+    const setup = { state: energyBoard(), events: [], names: NAMES, startedAt: 0 };
+    let host = initHost(setup);
+    host = hostReducer(host, attach(host.game, 1000));
+    host = hostReducer(host, endTurn("p1", 2000));
+    host = hostReducer(host, endTurn("p2", 3000));
+    host = hostReducer(host, attach(host.game, 4000));
+    host = hostReducer(hostReducer(host, { type: "undoAction" }), { type: "undoAction" });
+    host = hostReducer(host, endTurn("p2", 5000));
+    host = hostReducer(host, endTurn("p1", 6000));
+    expect(host.actions).toHaveLength(4);
+    expect(replayHost(setup, host.actions)).toEqual(host);
+  });
+
+  it("replays automatic steps and drops them from the history where the table did", () => {
+    const setup = { state: koBoard(), events: [], names: NAMES, startedAt: 0 };
+    let host = initHost(setup);
+    host = hostReducer(host, { action: { type: "attack", seat: "p1", index: 0 }, at: 1000 });
+    host = hostReducer(host, {
+      action: { type: "takePrizes", seat: "p1", prizeIndices: [0] },
+      at: 1000,
+      auto: "ko:takePrizes",
+    });
+    host = dropAutoSteps(host, "ko:takePrizes");
+    const prized = host;
+    host = hostReducer(host, { action: { type: "promote", seat: "p2", benchIndex: 0 }, at: 2000 });
+    expect(host.steps.map((s) => s.game.phase.kind)).not.toContain("ko:takePrizes");
+    expect(host.steps.map((s) => s.actions)).toEqual([0, 2, 3]);
+    expect(replayHost(setup, host.actions)).toEqual(host);
+    expect(replayHost(setup, host.actions.slice(0, 2))).toEqual(prized);
+  });
+
+  it("refuses a line the engine does not accept", () => {
+    const setup = { state: energyBoard(), events: [], names: NAMES, startedAt: 0 };
+    expect(replayHost(setup, [endTurn("p2", 1000)])).toBeNull();
+    expect(replayHost(setup, [endTurn("p1", 1000), endTurn("p1", 2000)])).toBeNull();
+    expect(replayHost(setup, [])).toEqual(initHost(setup));
+  });
+
+  it("keeps every action of a long game undoable, by action and by turn", () => {
+    const setup = { state: driveSetup(170), events: [], names: NAMES, startedAt: 0 };
+    const host = endTurns(initHost(setup), 60);
+    expect(host.steps).toHaveLength(61);
+    const latest = host;
+    let back = host;
+    for (let i = 59; i >= 0; i--) {
+      back = hostReducer(back, { type: "undoAction" });
+      expect(back.game).toBe(latest.steps[i]?.game);
+      expect(back.log).toHaveLength(latest.steps[i]?.logLength ?? -1);
+    }
+    expect(back.game).toBe(setup.state);
+    expect(back.log).toEqual(initHost(setup).log);
+    expect(hostReducer(back, { type: "undoAction" })).toBe(back);
+    let turns = 0;
+    for (back = latest; back.stepIndex > 0; turns++) back = hostReducer(back, { type: "undoTurn" });
+    expect(turns).toBe(60);
+    for (let i = 0; i < 60; i++) back = hostReducer(back, { type: "redoTurn" });
+    expect(back.game).toBe(latest.game);
+    expect(back.log).toBe(latest.log);
+  });
+
+  it("lands on a turn whose start step was dropped, putting it back in its place", () => {
+    const setup = { state: driveSetup(170), events: [], names: NAMES, startedAt: 0 };
+    let host = initHost(setup);
+    host = endTurns(host, 3);
+    const second = host.steps[2];
+    host = { ...host, steps: host.steps.filter((s) => s !== second), stepIndex: 2 };
+    const back = hostReducer(host, { type: "previousTurn" });
+    expect(back.game).toBe(second?.game);
+    expect(back.stepIndex).toBe(2);
+    expect(back.steps.map((s) => s.actions)).toEqual([0, 1, 2, 3]);
+    expect(back.cursor).toBe(2);
+    expect(hostReducer(back, { type: "undoAction" }).game).toBe(host.steps[1]?.game);
+    expect(hostReducer(back, { type: "redoAction" }).game).toBe(host.game);
+  });
+
+  it("restores a saved place in the line, and refuses one no snapshot matches", () => {
+    const setup = { state: energyBoard(), events: [], names: NAMES, startedAt: 0 };
+    let host = initHost(setup);
+    host = hostReducer(host, attach(host.game, 1000));
+    host = hostReducer(host, endTurn("p1", 2000));
+    host = hostReducer(host, endTurn("p2", 3000));
+    const end = replayHost(setup, host.actions);
+    if (!end) throw new Error("expected a replay");
+    const undone = hostReducer(host, { type: "undoAction" });
+    const turnBack = hostReducer(host, { type: "previousTurn" });
+    for (const at of [host, undone, turnBack]) expect(restorePosition(end, at)).toEqual(at);
+    expect(restorePosition(end, { cursor: 2, stepIndex: 0, turnIndex: 0 })).toBeNull();
+    expect(restorePosition(end, { cursor: 0, stepIndex: 9, turnIndex: 0 })).toBeNull();
+    expect(restorePosition(end, { cursor: 0, stepIndex: 0, turnIndex: 9 })).toBeNull();
   });
 });

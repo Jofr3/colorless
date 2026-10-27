@@ -126,8 +126,8 @@ describe("Lua sandbox setup", () => {
     const navigate = vi.fn();
     launchSandbox(game, navigate);
     expect(navigate).toHaveBeenCalledOnce();
-    expect(loadSimulatorSave()?.state).toEqual(game.state);
-    expect(loadSimulatorSave()?.resume?.log.length).toBeGreaterThan(0);
+    expect(loadSimulatorSave()?.game).toEqual(game.state);
+    expect(loadSimulatorSave()?.log.length).toBeGreaterThan(0);
     vi.stubGlobal("localStorage", {
       getItem: () => null,
       setItem: () => {

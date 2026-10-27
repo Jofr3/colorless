@@ -34,6 +34,7 @@
     "mutants": "bun scripts/mutation/run.ts",
     "mutants:sample": "bun scripts/mutation/sample.ts",
     "bench": "bun scripts/bench.ts",
+    "bench:simsave": "bun src/test/simulatorSaveBench.ts",
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy",
     "build:lua": "node frontend/lua/build.mjs",
