@@ -26,7 +26,7 @@
     "test:lua": "bun scripts/test-lua.ts",
     "lua-constants:check": "bun scripts/lua-constants.ts --check",
     "mutants:precheck": "bun scripts/mutation/precheck.ts",
-    "check": "bun scripts/check.ts 'bun run check:static' 'bun run check:lua' 'bun run check:test'",
+    "check": "bun scripts/check.ts 'bun run check:static' 'bun run check:lua' && bun run check:test",
     "docs:index": "bun scripts/decision-index.ts",
     "check:static": "bun scripts/check.ts 'bun scripts/typecheck-coverage.ts' 'bun scripts/import-graph.ts --check' 'tsc -b' 'bun scripts/lint-coverage.ts' 'biome ci . --error-on-warnings' 'bun scripts/lua-constants.ts --check' 'bun scripts/registry-aliases.ts --check' 'bun scripts/decision-index.ts --check' 'bun scripts/mutation/precheck.ts'",
     "check:lua": "bun scripts/test-lua.ts --require-source",
