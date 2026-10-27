@@ -321,7 +321,8 @@ describe("applyAction under hostile wire actions (MI3)", () => {
     expect(Object.fromEntries(problems)).toEqual({});
     // No `__proto__` key in any frame reached the shared prototype.
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
-  });
+    // About 3 s alone; the margin covers a loaded machine running the whole suite.
+  }, 30_000);
 });
 
 /** A fresh game on `deck` for both seats, or null when the fixture deck is not a legal start. */

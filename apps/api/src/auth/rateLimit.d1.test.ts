@@ -10,6 +10,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
   type RateLimitKeys,
   rateLimitKeys,
+  UNAVAILABLE_RETRY_SECONDS,
 } from "./rateLimit";
 
 const d1 = useTestD1();
@@ -44,6 +45,7 @@ describe("limitAttempt", () => {
     const refused = await attempt(keys, NOW + 60_000);
     expect(refused).toEqual({
       allowed: false,
+      reason: "limited",
       retryAfterSeconds: (RATE_LIMIT_WINDOW_MS - 60_000) / 1000,
     });
     // Further refusals write nothing: the account stops at one past its budget and the address
@@ -87,6 +89,7 @@ describe("limitAttempt", () => {
     const fresh = await rateLimitKeys("login", IP, "new@example.com");
     expect(await attempt(fresh)).toEqual({
       allowed: false,
+      reason: "limited",
       retryAfterSeconds: RATE_LIMIT_WINDOW_MS / 1000,
     });
     // Once the address is over budget, a new email writes no row of its own.
@@ -109,7 +112,7 @@ describe("limitAttempt", () => {
     expect(stored).not.toMatch(/ash|example|203\.0\.113/);
   });
 
-  it("allows the attempt and runs the lookup alone when the counting batch fails", async () => {
+  it("refuses the attempt as unavailable, without the lookup, when the counting batch fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     await d1()
       .db.prepare("INSERT INTO users (id, email, display_name) VALUES ('u', 'a@b.co', 'A')")
@@ -124,7 +127,15 @@ describe("limitAttempt", () => {
       },
     });
     const keys = await rateLimitKeys("login", IP, "ash@example.com");
-    expect(await attempt(keys, NOW, failing)).toEqual({ allowed: true, found: [{ id: "u" }] });
+    const orm = drizzle(failing);
+    const lookup = vi.fn(() => orm.select({ id: users.id }).from(users).limit(1));
+    expect(await limitAttempt(orm, keys, lookup, NOW)).toEqual({
+      allowed: false,
+      reason: "unavailable",
+      retryAfterSeconds: UNAVAILABLE_RETRY_SECONDS,
+    });
+    // Built once for the batch, never run on its own.
+    expect(lookup).toHaveBeenCalledOnce();
     expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
       { evt: "auth", kind: "limiter_error", error: "Error", quota: true },
     ]);

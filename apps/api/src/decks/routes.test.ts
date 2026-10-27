@@ -38,48 +38,23 @@ describe("401 gating without a session cookie (before any D1 access)", () => {
   });
 });
 
-describe("body validation runs before auth and D1", () => {
-  // No cookie AND no DB: a 400 here proves the validator answered first.
+describe("the session gate runs before body validation", () => {
+  // No cookie AND no DB: a 401 for a bad body proves the validator never ran, so an anonymous
+  // caller cannot make the API validate anything (validation itself: routes.d1.test.ts).
   const invalid: [string, "POST" | "PATCH", unknown][] = [
     ["/decks", "POST", { name: "No tint" }],
-    ["/decks", "POST", { name: "", tint: 22 }],
-    ["/decks", "POST", { ...VALID_DECK, tint: 361 }],
+    ["/decks", "POST", { ...VALID_DECK, cards: [{ cardId: "sv01-001", count: 100 }] }],
+    ["/decks/d1", "PATCH", {}],
     [
       "/decks",
       "POST",
-      {
-        ...VALID_DECK,
-        cards: [
-          { cardId: "sv01-001", count: 1 },
-          { cardId: "sv01-001", count: 2 },
-        ],
-      },
+      { ...VALID_DECK, cards: Array.from({ length: 1000 }, () => ({ cardId: "x", count: 0 })) },
     ],
-    ["/decks", "POST", { ...VALID_DECK, cards: [{ cardId: "sv01-001", count: 100 }] }],
-    ["/decks/d1", "PATCH", {}],
-    ["/decks", "POST", { ...VALID_DECK, folderId: "f1" }],
-    ["/decks/d1", "PATCH", { folderId: "f1" }],
   ];
 
-  it.each(invalid)("%s %s %o → 400 invalid body", async (path, method, body) => {
+  it.each(invalid)("%s %s %o → 401", async (path, method, body) => {
     const res = await app.request(path, jsonInit(method, body), bareEnv());
-    expect(res.status).toBe(400);
-    const payload = (await res.json()) as { error: string; issues: string[] };
-    expect(payload.error).toBe("invalid body");
-    expect(payload.issues.length).toBeGreaterThan(0);
-  });
-
-  it("names duplicate cardIds in the 400 issues", async () => {
-    const body = {
-      ...VALID_DECK,
-      cards: [
-        { cardId: "sv01-001", count: 1 },
-        { cardId: "sv01-001", count: 2 },
-      ],
-    };
-    const res = await app.request("/decks", jsonInit("POST", body), bareEnv());
-    const payload = (await res.json()) as { issues: string[] };
-    expect(payload.issues.join("\n")).toContain("sv01-001");
+    expect(res.status).toBe(401);
   });
 });
 

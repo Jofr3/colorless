@@ -17,8 +17,10 @@
 // Keys are SHA-256 hashes: the table never holds an IP or an email. The daily sweep
 // (./sweep.ts) deletes rows whose window has passed.
 //
-// A D1 error fails OPEN: the attempt proceeds unlimited and the error is logged, so a spent
-// write quota or a transient failure does not also take sign-in down.
+// A D1 error fails CLOSED: the attempt is refused as unavailable (the route's 503) and the error
+// is logged. Failing open made a spent write quota an unthrottled password oracle: a wrong guess
+// answered 401 and the right one failed at the session insert. Register, login and deletion all
+// need a write to succeed, so refusing them costs nothing that would have worked.
 
 import { and, eq, gt, or, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
@@ -98,18 +100,23 @@ function refusedUntil(db: DrizzleD1Database, account: Budget, ip: Budget, nowMs:
     );
 }
 
+/** How long a caller refused because the limiter's batch failed is asked to wait. */
+export const UNAVAILABLE_RETRY_SECONDS = 60;
+
 export type LimitedLookup<T> =
   | { allowed: true; found: T }
   | {
       allowed: false;
-      /** Seconds until the refusing window ends: the 429's Retry-After. */
+      /** "limited": over budget, the 429. "unavailable": the batch failed, the 503. */
+      reason: "limited" | "unavailable";
+      /** Seconds until the refusing window ends, or UNAVAILABLE_RETRY_SECONDS: the Retry-After. */
       retryAfterSeconds: number;
     };
 
 /**
  * Counts this attempt and runs `lookup` in the same batch. A refused attempt carries nothing
- * from the lookup. When the batch fails the attempt is allowed and `lookup` runs alone, so a
- * lookup error still surfaces.
+ * from the lookup. When the batch fails nothing was counted, so the attempt is refused as
+ * unavailable and `lookup` is not retried on its own.
  */
 export async function limitAttempt<T>(
   db: DrizzleD1Database,
@@ -130,12 +137,16 @@ export async function limitAttempt<T>(
     ]);
   } catch (error) {
     logLimiterError(error);
-    return { allowed: true, found: await lookup() };
+    return { allowed: false, reason: "unavailable", retryAfterSeconds: UNAVAILABLE_RETRY_SECONDS };
   }
   const resetAt = refused[0]?.resetAt ?? null;
   return resetAt === null
     ? { allowed: true, found }
-    : { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((resetAt - nowMs) / 1000)) };
+    : {
+        allowed: false,
+        reason: "limited",
+        retryAfterSeconds: Math.max(1, Math.ceil((resetAt - nowMs) / 1000)),
+      };
 }
 
 /** D1's message may echo the statement, so only the error's name and whether it reads as a spent

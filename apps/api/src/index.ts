@@ -8,24 +8,35 @@ import {
   healthResponseSchema,
 } from "@colorless/schema";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
+import { routePath } from "hono/route";
 import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
 import { sweepExpired } from "./auth/sweep";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
-import { logEvent, logEventThrottled } from "./http/log";
+import { errorFields } from "./http/errors";
+import { logError, logEvent, logEventThrottled } from "./http/log";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
 
-// Every error body is JSON `{ error, ...extras }`, including unmatched routes and uncaught throws.
+// Every error body is JSON `{ error, ...extras }`, including unmatched routes, Hono's own
+// HTTPExceptions (a malformed JSON body) and uncaught throws.
 app.notFound((c) => c.json({ error: "not found" }, 404));
 app.onError((error, c) => {
-  if (error instanceof HTTPException) return error.getResponse();
-  console.error(error);
+  if (error instanceof HTTPException) {
+    return c.json({ error: error.message || "request failed" }, error.status);
+  }
+  // Names and the SQL only: a failed query's message carries its bound values (./http/errors.ts).
+  logError("http", "unhandled", {
+    method: c.req.method,
+    route: routePath(c, -1),
+    ...errorFields(error),
+  });
   return c.json({ error: "internal error" }, 500);
 });
 
@@ -34,14 +45,44 @@ app.onError((error, c) => {
 // trying to mutate the 101 response's immutable headers.
 app.route("/lobby", lobbySocketRoutes);
 
+// Every response is what its Content-Type says, and is readable only by the same site: the web
+// app and the API are both on the account's workers.dev subdomain, which is one site because
+// `workers.dev` is the public suffix. Set after `next`, and outside CORS, so preflights and error
+// responses carry them too.
+app.use("*", async (c, next) => {
+  await next();
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("Cross-Origin-Resource-Policy", "same-site");
+});
+
 // CORS on everything: the web app lives on a DIFFERENT origin (§3.5) and
 // sends `credentials: "include"` so the SameSite=None session cookie rides
 // along — that combination requires an exact allow-origin echo, never `*`.
 // Configured per-request because env is only known per-request on Workers.
 // Preflights (every JSON write) are cached for a day — browsers clamp it
-// (Chromium to two hours) — instead of re-asking before each deck save.
+// (Chromium to two hours) — instead of re-asking before each deck save. The
+// web client sends no request header but Content-Type (src/lib/api.ts), and
+// an explicit list stops hono echoing whatever a preflight asks for.
 app.use("*", (c, next) =>
-  cors({ origin: appCorsOrigins(c.env), credentials: true, maxAge: 86400 })(c, next),
+  cors({
+    origin: appCorsOrigins(c.env),
+    credentials: true,
+    maxAge: 86400,
+    allowHeaders: ["Content-Type"],
+    allowMethods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
+  })(c, next),
+);
+
+// No legitimate body is larger than about 8 KB: a 200-entry deck save of the longest card ids.
+// The cap stops a large body being buffered and parsed (or a huge array validated) at all. A
+// body with no Content-Length is counted as it streams in.
+const MAX_BODY_BYTES = 64 * 1024;
+app.use(
+  "*",
+  bodyLimit({
+    maxSize: MAX_BODY_BYTES,
+    onError: (c) => c.json({ error: "body too large", limit: MAX_BODY_BYTES }, 413),
+  }),
 );
 
 // Accounts + sessions (§3.5): register/login/logout/me, OAuth, 501 stubs.

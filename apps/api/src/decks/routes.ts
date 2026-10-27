@@ -208,7 +208,7 @@ deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
   return deck === undefined ? c.json({ error: "deck not found" }, 404) : c.json(deck);
 });
 
-deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, async (c) => {
+deckRoutes.post("/", requireUser, validate("json", createDeckRequestSchema), async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
@@ -243,7 +243,7 @@ deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, asy
   return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);
 });
 
-deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, async (c) => {
+deckRoutes.patch("/:id", requireUser, validate("json", patchDeckRequestSchema), async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const deckId = c.req.param("id");

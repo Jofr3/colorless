@@ -1,5 +1,5 @@
 import { type Deck, type DeckCard, type DeckSummary, MAX_DECKS_PER_USER } from "@colorless/schema";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import app from "../index";
 import {
   raceBeforeBatch,
@@ -73,6 +73,52 @@ async function coversByName(who: SignedIn = ash) {
 }
 
 const card = (cardId: string, count: number): DeckCard => ({ cardId, count });
+
+describe("deck body validation, signed in", () => {
+  const invalid: [string, "POST" | "PATCH", unknown][] = [
+    ["/decks", "POST", { name: "No tint" }],
+    ["/decks", "POST", { name: "", tint: 22 }],
+    ["/decks", "POST", { name: "Charizard ex", tint: 361 }],
+    [
+      "/decks",
+      "POST",
+      { name: "Charizard ex", tint: 22, cards: [card("sv01-004", 1), card("sv01-004", 2)] },
+    ],
+    ["/decks", "POST", { name: "Charizard ex", tint: 22, cards: [card("sv01-004", 100)] }],
+    ["/decks/d1", "PATCH", {}],
+    ["/decks", "POST", { name: "Charizard ex", tint: 22, folderId: "f1" }],
+    ["/decks/d1", "PATCH", { folderId: "f1" }],
+  ];
+
+  it.each(invalid)("%s %s %o → 400 invalid body", async (path, method, body) => {
+    const res = await app.request(path, jsonInit(method, body, ash.cookie), d1().env());
+    expect(res.status).toBe(400);
+    const payload = (await res.json()) as { error: string; issues: string[] };
+    expect(payload.error).toBe("invalid body");
+    expect(payload.issues.length).toBeGreaterThan(0);
+  });
+
+  it("names duplicate cardIds in the 400 issues", async () => {
+    const body = { name: "Dupes", tint: 22, cards: [card("sv01-004", 1), card("sv01-004", 2)] };
+    const res = await app.request("/decks", jsonInit("POST", body, ash.cookie), d1().env());
+    const payload = (await res.json()) as { issues: string[] };
+    expect(payload.issues.join("\n")).toContain("sv01-004");
+  });
+
+  it("answers an oversized bad card list with one short 400", async () => {
+    // 1,000 bad entries (about 23 KB): zod stops at the list's max, and at most 20 issues return.
+    const cards = Array.from({ length: 1000 }, (_, i) => ({ cardId: `bogus-${i}`, count: 0 }));
+    const res = await app.request(
+      "/decks",
+      jsonInit("POST", { name: "Flood", tint: 22, cards }, ash.cookie),
+      d1().env(),
+    );
+    expect(res.status).toBe(400);
+    const text = await res.text();
+    expect((JSON.parse(text) as { issues: string[] }).issues.length).toBeLessThanOrEqual(20);
+    expect(text.length).toBeLessThan(2000);
+  });
+});
 
 describe("PATCH /decks/:id cover pin", () => {
   it("pins a card the deck runs, and null goes back to automatic", async () => {
@@ -513,5 +559,52 @@ describe("deck card lists", () => {
     const second = await createDeck("Second", []);
     expect(second.position).toBe(first.position - 1);
     expect((await listDecks()).map((deck) => deck.name)).toEqual(["Second", "First"]);
+  });
+});
+
+describe("a failed deck query", () => {
+  it("answers a JSON 500 and logs the route and the SQL, never the bound values", async () => {
+    const deck = await createDeck("Secret Deck Name", [card("sv01-004", 4)]);
+    const { db } = d1();
+    // The session lookup reads; the delete fails as on a spent quota.
+    const spent = async () => {
+      throw new Error("D1_ERROR: Exceeded maximum rows written");
+    };
+    const failing = new Proxy(db, {
+      get(target, property) {
+        if (property === "prepare") {
+          return (query: string) =>
+            /^delete from "decks"/i.test(query)
+              ? { bind: () => ({ all: spent, raw: spent, run: spent, first: spent }) }
+              : target.prepare(query);
+        }
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await app.request(
+      `/decks/${deck.id}`,
+      { method: "DELETE", headers: { Cookie: ash.cookie } },
+      d1().env({ DB: failing }),
+    );
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "internal error" });
+    const lines = error.mock.calls.map((args) => String(args[0]));
+    error.mockRestore();
+    expect(lines.map((line) => JSON.parse(line))).toEqual([
+      {
+        evt: "http",
+        kind: "unhandled",
+        method: "DELETE",
+        route: "/decks/:id",
+        error: "DrizzleQueryError",
+        cause: "Error",
+        query: expect.stringMatching(/^delete from "decks"/),
+        quota: true,
+      },
+    ]);
+    expect(lines.join("\n")).not.toContain(deck.id);
+    expect(lines.join("\n")).not.toContain(ash.userId);
   });
 });
