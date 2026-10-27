@@ -252,6 +252,38 @@ describe("resolveDecklist", () => {
     ]);
   });
 
+  it("asks for the stripped names of every line that missed at once, not line by line", async () => {
+    // Only the stripped lookups count: the full-name wave is concurrent anyway.
+    let inFlight = 0;
+    let most = 0;
+    const lookup = async (name: string) => {
+      if (/\d$/.test(name)) return findInPool(name);
+      inFlight += 1;
+      most = Math.max(most, inFlight);
+      await Promise.resolve();
+      inFlight -= 1;
+      return findInPool(name);
+    };
+    const { unmatched } = await resolveDecklist(
+      parseDecklist("4 Charmander OBF 26\n4 Charizard ex OBF 125\n1 Professor's Research SVI 189"),
+      lookup,
+    );
+    expect(unmatched).toEqual([]);
+    expect(most).toBe(3);
+  });
+
+  it("tries the loose lookup only after the full and the stripped exact lookups miss", async () => {
+    const loose = vi.fn(findInPool);
+    const { entries, unmatched } = await resolveDecklist(
+      parseDecklist("4 Charmander OBF 26\n3 Mystery Card ABC 9\n1 Unknown"),
+      findInPool,
+      { findLoosely: loose },
+    );
+    expect(entries).toEqual([{ card: charmander, quantity: 4 }]);
+    expect(unmatched.map((line) => line.name)).toEqual(["Mystery Card", "Unknown"]);
+    expect(loose.mock.calls.map(([name]) => name)).toEqual(["Mystery Card", "Unknown"]);
+  });
+
   it("rejects when a lookup throws — an api failure is not 'unmatched'", async () => {
     const failing = () => Promise.reject(new Error("api down"));
     await expect(resolveDecklist(parseDecklist("2 Charmander"), failing)).rejects.toThrow(

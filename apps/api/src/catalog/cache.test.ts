@@ -1,56 +1,54 @@
+import { cardsQuerySchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { bypassesCatalogCache, catalogCacheKey } from "./cache";
+import { cacheQuery, catalogCacheKey } from "./cache";
 
-const key = (url: string) => catalogCacheKey(new URL(url));
+const DEFAULTS = cardsQuerySchema.parse({});
+/** The cache query for a raw /cards query string, as the route validates it. */
+const cardsKeyQuery = (search: string) => {
+  const raw: Record<string, string | string[]> = {};
+  for (const [name, value] of new URLSearchParams(search)) {
+    const seen = raw[name];
+    raw[name] = seen === undefined ? value : [...(Array.isArray(seen) ? seen : [seen]), value];
+  }
+  return cacheQuery(cardsQuerySchema.parse(raw), DEFAULTS);
+};
 
 describe("catalogCacheKey", () => {
-  it("keys by path under the versioned catalog prefix", () => {
+  it("keys by path and query under the versioned catalog prefix", () => {
     // The version segment guards cached SHAPES: bumping it (v2→v3 with the P2
     // CardBrief `legal` field) orphans every older entry instead of serving it.
-    expect(key("http://api.test/cards")).toBe("catalog:v12:/cards");
-    expect(key("http://api.test/cards/sv06.5-001")).toBe("catalog:v12:/cards/sv06.5-001");
-  });
-
-  it("normalizes query order — reordered params share a key", () => {
-    expect(key("http://api.test/cards?set=sv06.5&page=2&pageSize=5")).toBe(
-      key("http://api.test/cards?pageSize=5&set=sv06.5&page=2"),
-    );
-    expect(key("http://api.test/cards?set=sv06.5&page=2")).toBe(
-      "catalog:v12:/cards?page=2&set=sv06.5",
-    );
-  });
-
-  it("sorts repeated keys by value, deterministically", () => {
-    expect(key("http://api.test/cards?type=Water&type=Fire")).toBe(
-      key("http://api.test/cards?type=Fire&type=Water"),
-    );
-  });
-
-  it("separates different values, paths and hosts' shared paths", () => {
-    expect(key("http://api.test/cards?page=1")).not.toBe(key("http://api.test/cards?page=2"));
-    expect(key("http://api.test/cards")).not.toBe(key("http://api.test/sets"));
-    // The host never enters the key — one Worker, one origin.
-    expect(key("http://a.test/cards?x=1")).toBe(key("http://b.test/cards?x=1"));
+    expect(catalogCacheKey("/cards")).toBe("catalog:v12:/cards");
+    expect(catalogCacheKey("/cards", "page=2&set=sv01")).toBe("catalog:v12:/cards?page=2&set=sv01");
   });
 
   it("scopes keys by the stamped catalog epoch", () => {
-    const url = new URL("http://api.test/cards?set=sv01");
-    expect(catalogCacheKey(url, "m3k1")).toBe("catalog:v12:m3k1:/cards?set=sv01");
-    expect(catalogCacheKey(url, "m3k1")).not.toBe(catalogCacheKey(url, "m3k2"));
-    expect(catalogCacheKey(url, null)).toBe("catalog:v12:/cards?set=sv01");
+    expect(catalogCacheKey("/cards", "set=sv01", "m3k1")).toBe("catalog:v12:m3k1:/cards?set=sv01");
+    expect(catalogCacheKey("/cards", "", "m3k1")).not.toBe(catalogCacheKey("/cards", "", "m3k2"));
+    expect(catalogCacheKey("/cards", "set=sv01", null)).toBe("catalog:v12:/cards?set=sv01");
   });
 });
 
-describe("bypassesCatalogCache", () => {
-  it("bypasses id hydration and the free-text searches", () => {
-    for (const query of ["id=sv01-001", "name=char", "nameExact=Pidgey", "text=burn&set=sv01"]) {
-      expect(bypassesCatalogCache(new URL(`http://api.test/cards?${query}`))).toBe(true);
-    }
+describe("cacheQuery", () => {
+  it("drops params the schema does not know", () => {
+    expect(cardsKeyQuery("bust=1")).toBe("");
+    expect(cardsKeyQuery("set=sv01&bust=1")).toBe(cardsKeyQuery("set=sv01&bust=2&utm=x"));
   });
 
-  it("caches browsing, vocabulary filters and later pages", () => {
-    for (const path of ["/cards", "/cards?page=7", "/cards?set=sv01&type=Fire", "/facets"]) {
-      expect(bypassesCatalogCache(new URL(`http://api.test${path}`))).toBe(false);
-    }
+  it("drops defaults, spelled out or not", () => {
+    expect(cardsKeyQuery("page=1&sort=set&pageSize=50")).toBe("");
+    expect(cardsKeyQuery("set=sv01&page=01")).toBe("set=sv01");
+    expect(cardsKeyQuery("page=2&pageSize=8")).toBe("page=2&pageSize=8");
+  });
+
+  it("sorts keys and repeated values, and dedupes repeats", () => {
+    expect(cardsKeyQuery("type=Water&rarity=Common&type=Fire")).toBe(
+      "rarity=Common&type=Fire&type=Water",
+    );
+    expect(cardsKeyQuery("type=Fire&type=Fire")).toBe(cardsKeyQuery("type=Fire"));
+  });
+
+  it("separates different values", () => {
+    expect(cardsKeyQuery("page=2")).not.toBe(cardsKeyQuery("page=3"));
+    expect(cardsKeyQuery("sort=name")).toBe("sort=name");
   });
 });

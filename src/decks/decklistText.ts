@@ -37,6 +37,11 @@ export interface ResolveOptions {
       builder's map comes from GET /sets). Without it only the upper-cased
       set id form of a code can match. */
   setIdForCode?: (code: string) => string | undefined | Promise<string | undefined>;
+  /** A looser lookup, tried for a line only after the exact ones (its full name, then the name
+      with a trailing set and number stripped) all miss. The catalog's is a substring search,
+      which reads a large part of the table, so it must not run for every PTCG Live line whose
+      set suffix makes the full-name lookup miss. */
+  findLoosely?: (name: string) => Promise<BuilderCard[]>;
 }
 
 /** Collapse to a stable match key: lowercased, whitespace-collapsed, with the
@@ -135,6 +140,21 @@ export function preferArt(prints: BuilderCard[], card: BuilderCard): BuilderCard
   return prints.find((print) => isBasicEnergy(print) && print.hasImage === true) ?? card;
 }
 
+/** `find`, called once per normalized name. */
+function memoByKey(
+  find: (name: string) => Promise<BuilderCard[]>,
+): (name: string) => Promise<BuilderCard[]> {
+  const cache = new Map<string, Promise<BuilderCard[]>>();
+  return (name) => {
+    const key = nameKey(name);
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const pending = find(name);
+    cache.set(key, pending);
+    return pending;
+  };
+}
+
 /**
  * Resolve parsed lines to cards through `findPrints`. Quantities for the same card are summed and
  * unresolved lines are returned for the UI. A lookup that throws rejects the whole import rather
@@ -145,19 +165,20 @@ export async function resolveDecklist(
   findPrints: (name: string) => Promise<BuilderCard[]>,
   options: ResolveOptions = {},
 ): Promise<ImportResult> {
-  const cache = new Map<string, Promise<BuilderCard[]>>();
-  const lookup = (name: string): Promise<BuilderCard[]> => {
-    const key = nameKey(name);
-    const cached = cache.get(key);
-    if (cached) return cached;
-    const pending = findPrints(name);
-    cache.set(key, pending);
-    return pending;
-  };
+  const lookup = memoByKey(findPrints);
+  const { findLoosely } = options;
+  const lookupLoosely = findLoosely && memoByKey(findLoosely);
 
-  // Warm the full-name lookups concurrently; the per-line pass below then
-  // resolves from cache (stripped-name retries are the rare second wave).
-  await Promise.all(lines.map((line) => lookup(line.name)));
+  // Warm the full-name lookups concurrently, then the stripped-name retries of
+  // the lines that missed (every line of a PTCG Live export, whose names end in
+  // a set and number); the per-line pass below then resolves from cache.
+  const full = await Promise.all(lines.map((line) => lookup(line.name)));
+  await Promise.all(
+    lines.flatMap((line, index) => {
+      const split = full[index]?.length === 0 ? splitPrint(line.name) : undefined;
+      return split?.print ? [lookup(split.name)] : [];
+    }),
+  );
 
   const merged = new Map<string, DeckEntry>();
   const unmatched: UnmatchedLine[] = [];
@@ -176,6 +197,7 @@ export async function resolveDecklist(
         prints = await lookup(name);
       }
     }
+    if (prints.length === 0 && lookupLoosely) prints = await lookupLoosely(name);
 
     const wantedSetId =
       print && prints.length > 1 ? await options.setIdForCode?.(print.set) : undefined;

@@ -63,6 +63,20 @@ describe("GET /cards param validation", () => {
     expect(body.error).toBe("invalid query");
   });
 
+  it("400s more repeated filter values than one D1 statement can bind", async () => {
+    const { kv } = fakeKv();
+    const values = (name: string, count: number) =>
+      Array.from({ length: count }, (_, i) => `${name}=v${i}`).join("&");
+    for (const query of [
+      values("rarity", 31),
+      [values("type", 30), values("rarity", 30), values("stage", 30)].join("&"),
+    ]) {
+      const res = await app.request(`/cards?${query}`, {}, envWith(kv));
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toBe("invalid query");
+    }
+  });
+
   it("400s a /cards/full request with no ids, an empty id or more than 100 ids", async () => {
     const { kv } = fakeKv();
     const tooMany = Array.from({ length: 101 }, (_, i) => `id=sv01-${i}`).join("&");
@@ -84,9 +98,9 @@ describe("GET /cards param validation", () => {
 describe("catalog KV cache middleware", () => {
   it("serves a seeded key as a hit without touching D1", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
-    const { kv } = fakeKv({ "catalog:v12:/cards?page=1&set=nope": cachedBody });
-    // Param order differs from the stored key — normalization must line up.
-    const res = await app.request("/cards?set=nope&page=1", {}, envWith(kv));
+    const { kv } = fakeKv({ "catalog:v12:/cards?set=nope": cachedBody });
+    // The explicit default page drops out of the key, as does a param the schema does not know.
+    const res = await app.request("/cards?page=1&bust=7&set=nope", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-colorless-cache")).toBe("hit");
     expect(res.headers.get("content-type")).toBe("application/json");

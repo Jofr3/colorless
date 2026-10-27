@@ -4,6 +4,7 @@ import {
   DECK_NAME_MAX,
   MAX_DECK_CARD_ENTRIES,
   type CatalogFacets,
+  MAX_CACHED_CARDS_PAGE,
   UNCACHED_CATALOG_PARAMS,
 } from "@colorless/schema";
 import { decodeFields, encodeRows } from "./wire";
@@ -570,20 +571,18 @@ export class LuaBuilder {
     return request;
   }
   /** Warm the neighbouring pages and queue their artwork behind this page's. The known total goes
-      along only on a free-text query: the API caches the others, where it would split a page's
-      cache entry. */
+      along only where the API does not cache the page (a free-text query, or a page past
+      MAX_CACHED_CARDS_PAGE): the API never stores a page requested with one. */
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
     const live = this.epoch.current();
     const last = Math.max(1, Math.ceil(this.total / this.size));
-    const total =
-      catalog.key === this.totalKey &&
-      UNCACHED_CATALOG_PARAMS.some((param) => catalog.query[param] !== undefined)
-        ? this.total
-        : undefined;
+    const known = catalog.key === this.totalKey ? this.total : undefined;
+    const freeText = UNCACHED_CATALOG_PARAMS.some((param) => catalog.query[param] !== undefined);
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
+        const total = freeText || page > MAX_CACHED_CARDS_PAGE ? known : undefined;
         this.fetchPage(catalog, page, false, total)
           .then(() => {
             if (live() && catalog.key === this.pageKey) this.publishImages();
