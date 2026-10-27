@@ -35,7 +35,7 @@ export function clearSavedDeckCache(): void {
 }
 
 /** The saved deck behind `summary`, from this session's cache while it is current. */
-async function savedDeck(summary: Deck): Promise<SavedDeck> {
+export async function savedDeck(summary: Deck): Promise<SavedDeck> {
   const cached = savedDecks.get(summary.id);
   if (cached !== undefined && cached.updated === summary.updated) return cached;
   const deck = await getDeck(summary.id);
