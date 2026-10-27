@@ -469,6 +469,59 @@ to `colorless`):
   new file, then copy the old one into it with sqlite's `.backup`.
 - Run `bun run db:check -- --remote` afterwards.
 
+#### 3.7.4 Monitoring
+
+The account is on the Workers Free plan. These limits are per day, account-wide,
+and reset at 00:00 UTC; past one, the binding fails until then:
+
+| Resource | Free limit / day | Main spenders |
+| --- | ---: | --- |
+| D1 rows read | 5,000,000 | free-text builder searches, decklist import, catalog KV misses |
+| D1 rows written | 100,000 | remote ingest, deck saves, sessions |
+| KV reads | 100,000 | every KV-cached catalog request, the login rate limiter |
+| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3), the login rate limiter |
+
+The KV write quota is the tight one, and it is shared: once the catalog cache
+has spent it, the login rate limiter cannot write either.
+
+**After every deploy**, check that the Worker reaches D1 and that the remote
+migration count matches the files:
+
+```sh
+curl -fsS https://colorless-api.jofrescari.workers.dev/health/db
+# {"ok":true,"migrations":11}, where 11 = `ls apps/api/drizzle/*.sql | wc -l`.
+# 503 {"ok":false}: a D1 error (binding, schema, quota); the reason is not in
+# the body, look for `evt = "d1"` in Workers Logs and in `wrangler tail`.
+```
+
+`GET /health` never touches D1, so it stays green through all of these.
+
+**Which statements read the most rows** (remote only, experimental; also
+`--sort-by writes|time|count`, `--sort-type avg`, `--json`):
+
+```sh
+cd apps/api
+bunx wrangler d1 insights colorless --time-period 1d --sort-by reads --limit 10
+```
+
+**Daily usage against the limits** is in the Cloudflare dashboard: the D1
+database `colorless` → Metrics (rows read and rows written per day), and the KV
+namespace `colorless-cache` → Metrics (reads and writes per day). Compare them
+with the table above.
+
+**Workers Logs** (`colorless-api` → Observability; `observability.enabled` in
+`apps/api/wrangler.jsonc`). Every line from `apps/api/src/http/log.ts` is JSON
+with an `evt` field, and repeating failures are throttled to one line per 10
+minutes per isolate, carrying a `suppressed` count. Saved queries:
+
+| Query | What it finds |
+| --- | --- |
+| `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
+| `evt = "auth"` | Login, register and OAuth failures (`apps/api/src/auth/`). |
+| `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`). |
+| `evt = "d1"` | `/health/db` failures. |
+| `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
+
 ---
 
 ## 4. tcgdex.dev integration reference
@@ -800,6 +853,8 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 
 ```
 GET    /health
+GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or 503
+                         #   {ok:false}; no-store; post-deploy check (§3.7.4)
 
 # Catalog (public; every 200 carries `public, max-age=300, swr=3600` + ETag;
 # best-effort KV cache-aside, 1-day TTL, on the 200s of /facets, /series, /sets,

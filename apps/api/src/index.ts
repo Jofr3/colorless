@@ -1,7 +1,12 @@
 // The colorless api — a Hono app deployed as a Cloudflare Worker.
 // Spec: docs/workstreams/backend-data.md (§6 is the target API surface).
 
-import { type HealthResponse, healthResponseSchema } from "@colorless/schema";
+import {
+  type DbHealthResponse,
+  dbHealthResponseSchema,
+  type HealthResponse,
+  healthResponseSchema,
+} from "@colorless/schema";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
@@ -10,6 +15,7 @@ import { authRoutes } from "./auth/routes";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
+import { logEventThrottled } from "./http/log";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -62,6 +68,25 @@ app.get("/health", (c) => {
   // Parse our own response at the boundary — the same pattern every future
   // route will use for its inputs, so a schema drift fails loudly here.
   return c.json(healthResponseSchema.parse(payload));
+});
+
+// One cheap D1 read, for the post-deploy check and an uptime probe: /health above answers without
+// touching D1, so it stays green through a schema mismatch or a spent read quota. The body says
+// only whether the read worked and how many migrations are applied, which the repo already tells
+// anyone; a failure is logged as `evt = "d1"` and its error never reaches the caller.
+app.get("/health/db", async (c) => {
+  c.header("Cache-Control", "no-store");
+  let payload: DbHealthResponse;
+  try {
+    const row = await c.env.DB.prepare("SELECT count(*) AS migrations FROM d1_migrations").first<{
+      migrations: number;
+    }>();
+    payload = { ok: true, migrations: row?.migrations ?? 0 };
+  } catch {
+    logEventThrottled("d1", "health_failed");
+    return c.json(dbHealthResponseSchema.parse({ ok: false }), 503);
+  }
+  return c.json(dbHealthResponseSchema.parse(payload));
 });
 
 // wrangler instantiates Durable Objects by the classes the entry module
