@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { json } from "../test/fetchStub";
+import { json, stubFetch } from "../test/fetchStub";
 import { cardBrief as brief, cardsPage, FACETS } from "../test/fixtures";
 import type { Card } from "@colorless/schema";
 import { DEFAULT_FORMAT, formatById } from "@colorless/engine";
@@ -8,6 +8,8 @@ import { validateDeck } from "./deckMath";
 import {
   filtersToCardsQuery,
   findCardsByName,
+  findCardsBySubstring,
+  importDecklist,
   kindOptions,
   suffixOptions,
   toBuilderCard,
@@ -311,21 +313,13 @@ describe("findCardsByName", () => {
     ]);
   });
 
-  it("falls back to the substring search for a stored name only the key can bridge", async () => {
-    // The stored name carries a doubled space, so neither nameExact layer can
-    // equal it — the substring page plus the normalized-key guard reaches it.
-    // (The unstripped retry is skipped: the raw name only differs by case.)
-    const mock = vi
-      .fn()
-      .mockResolvedValueOnce(json(cardsPage([])))
-      .mockResolvedValueOnce(json(cardsPage([brief({ name: "Iron  Hands ex" })])));
+  it("never falls back to the substring search itself", async () => {
+    // The unstripped retry is skipped too: the raw name only differs by case.
+    const mock = vi.fn().mockImplementation(async () => json(cardsPage([])));
     vi.stubGlobal("fetch", mock);
-
-    const [card] = await findCardsByName("Iron Hands ex");
-    expect(card?.name).toBe("Iron  Hands ex");
+    await expect(findCardsByName("Iron Hands ex")).resolves.toEqual([]);
     expect(mock.mock.calls.map((call) => String(call[0]))).toEqual([
       "http://localhost:8787/cards?nameExact=iron+hands+ex&pageSize=100",
-      "http://localhost:8787/cards?name=iron+hands+ex&pageSize=100",
     ]);
   });
 
@@ -347,5 +341,68 @@ describe("findCardsByName", () => {
       vi.fn().mockImplementation(async () => json(cardsPage([brief({ name: "Joltik Rocker" })]))),
     );
     await expect(findCardsByName("Joltik")).resolves.toEqual([]);
+    await expect(findCardsBySubstring("Joltik")).resolves.toEqual([]);
+  });
+});
+
+describe("findCardsBySubstring", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reaches a stored name only the key can bridge, without asking for a count", async () => {
+    // The stored name carries a trailing space, so no nameExact lookup can
+    // equal it; the substring page plus the normalized-key guard reaches it.
+    const mock = vi.fn().mockResolvedValue(json(cardsPage([brief({ name: "Iron Hands ex " })])));
+    vi.stubGlobal("fetch", mock);
+    const [card] = await findCardsBySubstring("Iron Hands ex");
+    expect(card?.name).toBe("Iron Hands ex ");
+    expect(mock.mock.calls.map((call) => String(call[0]))).toEqual([
+      "http://localhost:8787/cards?name=iron+hands+ex&pageSize=100&total=0",
+    ]);
+  });
+});
+
+describe("importDecklist", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** The /cards queries an import makes, as `nameExact=…` / `name=…` strings. */
+  function stubCatalog(byExactName: Record<string, ReturnType<typeof brief>[]>) {
+    const queries: string[] = [];
+    stubFetch({
+      "GET /sets": () => json([]),
+      "GET /cards": (url) => {
+        const query = [...url.searchParams].filter(
+          ([key]) => key === "nameExact" || key === "name",
+        );
+        queries.push(query.map(([key, value]) => `${key}=${value}`).join("&"));
+        const exact = url.searchParams.get("nameExact");
+        return json(cardsPage(exact === null ? [] : (byExactName[exact] ?? [])));
+      },
+    });
+    return queries;
+  }
+
+  it("retries a PTCG Live line without its set and number before any substring search", async () => {
+    const queries = stubCatalog({
+      "rocky helmet": [brief({ id: "sv01-193", name: "Rocky Helmet", category: "Trainer" })],
+    });
+    const { entries, unmatched } = await importDecklist("2 Rocky Helmet SVI 193");
+    expect(unmatched).toEqual([]);
+    expect(entries.map((entry) => [entry.card.cardId, entry.quantity])).toEqual([["sv01-193", 2]]);
+    expect(queries).toEqual(["nameExact=rocky helmet svi 193", "nameExact=rocky helmet"]);
+  });
+
+  it("searches by substring only once every exact lookup missed, on the stripped name", async () => {
+    const queries = stubCatalog({});
+    const { unmatched } = await importDecklist("1 Mystery Card SVI 9");
+    expect(unmatched).toHaveLength(1);
+    expect(queries).toEqual([
+      "nameExact=mystery card svi 9",
+      "nameExact=mystery card",
+      "name=mystery card",
+    ]);
   });
 });

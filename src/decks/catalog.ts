@@ -178,8 +178,8 @@ export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuer
 }
 
 /**
- * Resolve a decklist name against the catalog in layers, each a server query, stopping at the first
- * hit (first in collector order).
+ * Resolve a decklist name against the catalog by exact name: the normalized key, its "Basic …"
+ * Energy form and the raw spelling, unioned. Each is one indexed lookup.
  */
 export async function findCardsByName(name: string): Promise<BuilderCard[]> {
   const key = nameKey(name);
@@ -198,8 +198,20 @@ export async function findCardsByName(name: string): Promise<BuilderCard[]> {
       if (nameKey(item.name) === key) found.set(item.id, toBuilderCard(item));
     }
   }
-  if (found.size > 0) return [...found.values()];
-  const { items } = await getCards({ name: key, pageSize: 100 });
+  return [...found.values()];
+}
+
+/**
+ * The last resort for a decklist name: a substring search kept to cards whose normalized key is
+ * the name's, for a stored spelling only the key bridges (stray outer whitespace, a "Basic "
+ * prefix outside Energy). Nothing in today's catalog needs it. It scans the table, so
+ * the import runs it only after every exact lookup missed, and `total: 0` spares the count
+ * statement, which would scan it again for a total the import never reads.
+ */
+export async function findCardsBySubstring(name: string): Promise<BuilderCard[]> {
+  const key = nameKey(name);
+  if (key === "") return [];
+  const { items } = await getCards({ name: key, pageSize: 100, total: 0 });
   return items.filter((item) => nameKey(item.name) === key).map(toBuilderCard);
 }
 
@@ -224,5 +236,6 @@ export function importDecklist(text: string): Promise<ImportResult> {
   codes.catch(() => {});
   return resolveDecklist(parseDecklist(text), findCardsByName, {
     setIdForCode: async (code) => (await codes)(code),
+    findLoosely: findCardsBySubstring,
   });
 }
