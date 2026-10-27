@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { Deck } from "../decks/data";
+import { savedDeck } from "../game/sandboxDecks";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
 import { LuaAccount, SESSION_CHECK_MAX_AGE_MS } from "./account";
@@ -210,6 +212,92 @@ describe("Lua authentication", () => {
     await account.google();
     expect(new URL(String(impl.mock.calls[0]?.[0])).searchParams.get("redirect")).toBe("/?account");
     expect(account.message).toBe("Google sign-in is not set up yet.");
+    expect(account.busy).toBe(false);
+  });
+});
+
+describe("Lua account deletion", () => {
+  const SUMMARY: Deck = {
+    id: "deck-1",
+    name: "Water",
+    folderId: null,
+    cardCount: 60,
+    tint: 200,
+    coverCardId: null,
+    position: 0,
+    updated: "2026-01-01T00:00:00.000Z",
+  };
+  const fields = (publish: ReturnType<typeof setup>["publish"]) =>
+    String(publish.mock.lastCall?.[0]).split("\t").map(decodeURIComponent);
+
+  it("tells Lua whether the account has a password to ask for", async () => {
+    stubFetch({ "GET /auth/me": () => json({ ...USER, hasPassword: false }) });
+    const { account, publish } = setup();
+    await account.refresh();
+    expect(fields(publish)[7]).toBe("0");
+    stubFetch(session);
+    await account.refresh();
+    expect(fields(publish)[7]).toBe("1");
+  });
+  it("deletes with the password, ends signed out and forgets this session's saved decks", async () => {
+    const { impl, calls } = stubFetch({
+      ...session,
+      "GET /decks/deck-1": () => json({ ...SUMMARY, cards: [] }),
+      "DELETE /auth/me": () => new Response(null, { status: 204 }),
+    });
+    const { account, publish } = setup();
+    await account.refresh();
+    await savedDeck(SUMMARY);
+    await savedDeck(SUMMARY);
+    const deckReads = () => calls.filter((call) => call === "GET /decks/deck-1").length;
+    expect(deckReads()).toBe(1);
+    await account.deleteAccount("private-test-password");
+    const call = impl.mock.calls.find(([, init]) => init?.method === "DELETE");
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({ password: "private-test-password" });
+    expect(call?.[1]?.credentials).toBe("include");
+    expect(account.user).toBeNull();
+    expect(account.status).toBe("anonymous");
+    expect(account.message).toBe("Account deleted.");
+    expect(JSON.stringify(publish.mock.calls)).not.toContain("private-test-password");
+    await savedDeck(SUMMARY);
+    expect(deckReads()).toBe(2);
+  });
+  it("sends no password for an OAuth-only account", async () => {
+    const { impl } = stubFetch({
+      "GET /auth/me": () => json({ ...USER, hasPassword: false }),
+      "DELETE /auth/me": () => new Response(null, { status: 204 }),
+    });
+    const { account } = setup();
+    await account.refresh();
+    await account.deleteAccount("");
+    const call = impl.mock.calls.find(([, init]) => init?.method === "DELETE");
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({});
+    expect(account.status).toBe("anonymous");
+  });
+  it("asks for the password before contacting the server", async () => {
+    const { calls } = stubFetch(session);
+    const { account } = setup();
+    await account.refresh();
+    await account.deleteAccount("");
+    expect(calls).toEqual(["GET /auth/me"]);
+    expect(account.message).toBe("Enter your password.");
+  });
+  it("keeps the account on a wrong password or a limit, and signs out a gone session", async () => {
+    let answer = () => json({ error: "invalid password" }, 401);
+    stubFetch({ ...session, "DELETE /auth/me": () => answer() });
+    const { account } = setup();
+    await account.refresh();
+    await account.deleteAccount("wrong");
+    expect(account.message).toBe("Wrong password.");
+    expect(account.status).toBe("authenticated");
+    answer = () => json({ error: "too many attempts" }, 429);
+    await account.deleteAccount("wrong");
+    expect(account.message).toBe("Too many attempts. Wait a moment.");
+    expect(account.user?.id).toBe(USER.id);
+    answer = () => json({ error: "unauthorized" }, 401);
+    await account.deleteAccount("right");
+    expect(account.message).toBe("Your session expired. Sign in again.");
+    expect(account.status).toBe("anonymous");
     expect(account.busy).toBe(false);
   });
 });

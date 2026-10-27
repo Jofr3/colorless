@@ -7,6 +7,7 @@ local Modal=require('ui.modal')
 local Account=require('ui.account')
 local Auth=require('ui.auth')
 local Input=require('ui.text_input')
+local Motion=require('ui.motion')
 local g=love.graphics
 local Settings={}
 Settings.__index=Settings
@@ -24,15 +25,17 @@ local rows={
    {kind='slider',key='effectsVolume',label='Game Sounds'},
    {kind='toggle',key='muted',label='Mute'}},
 }
+local DELETE_WARNING='This permanently deletes your account, your decks and your folders. It cannot be undone.'
 function Settings.new(preferences,callbacks,reduced,keyboard,account)
   local self=setmetatable({preferences=preferences,callbacks=callbacks,tab=1,focus=keyboard==false and 0 or 1,hover=0,
-    account=account or Account.new()},Settings)
+    account=account or Account.new(),reduced=reduced,deleteJuice=Motion.new(0,0)},Settings)
   self.motion=Modal.motion(reduced)
   return self
 end
 function Settings:layout(w,h)
   self.width,self.height=w,h
-  self.w,self.h=w<600 and 440 or 780,self.auth and (self.auth.mode=='login' and 560 or 620) or 540
+  local mode=self.auth and self.auth.mode
+  self.w,self.h=w<600 and 440 or 780,mode=='login' and 560 or mode=='register' and 620 or 540
   self.x,self.y=(w-self.w)/2,(h-self.h)/2
   self:build()
 end
@@ -42,21 +45,33 @@ function Settings:openAuth(mode)
   self.account.message=''
   self:layout(self.width,self.height)
   self.focus=mode=='register' and 2 or 1
-  self.pressed=nil; self.hover=0
+  self.pressed=nil; self.hover=0; self.armed=nil
   self.callbacks.auth('open\t'..self.auth.mode)
-  self.callbacks.announce(mode=='register' and 'Create account' or 'Sign in')
+  self.callbacks.announce(mode=='register' and 'Create account' or mode=='delete' and 'Delete account. '..DELETE_WARNING or 'Sign in')
 end
 function Settings:closeAuth()
-  self.auth=nil
+  local signedIn=self.auth.mode~='delete' and self.account.status=='authenticated'
+  self.auth=nil; self.armed=nil
   self.callbacks.auth('close')
   self.tab=TAB.account; self.focus=TAB.account; self.pressed=nil; self.hover=0
   self:layout(self.width,self.height)
-  self.callbacks.announce(self.account.status=='authenticated' and 'Signed in. Account settings.' or 'Account settings')
+  self.callbacks.announce(signedIn and 'Signed in. Account settings.' or 'Account settings')
 end
 function Settings:accountChanged()
-  if self.auth and self.account.status=='authenticated' then self:closeAuth()
+  local signedIn=self.account.status=='authenticated'
+  -- A sign-in form closes once signed in, the deletion form once the account is gone.
+  if self.auth and (self.auth.mode=='delete')~=signedIn then self:closeAuth()
   else self:build() end
 end
+-- The deletion's second step, after the in-game Leave match (sim_overlay.lua): the first press
+-- arms the button for 3 s, and only a press while armed deletes.
+function Settings:arm()
+  self.armed=self.time or 0
+  self.deleteJuice:juice_up(self.armed,0.3,0.1,self.reduced)
+  self:build()
+  self.callbacks.announce('Press again to delete your account permanently.')
+end
+function Settings:disarm() if self.armed then self.armed=nil; self:build() end end
 function Settings:authInput(raw)
   if not self.auth or not self.auth:input(raw) then return end
   local a=self.auth
@@ -71,8 +86,25 @@ function Settings:authInput(raw)
   if self.items[self.focus].kind=='auth-field' then self:activate(self.focus)
   else self.callbacks.announce(self:describe(self.items[self.focus])) end
 end
+function Settings:buildDelete()
+  local w=math.min(360,self.w-64)
+  local x=self.x+(self.w-w)/2
+  self.items={}
+  local y=250
+  if self.account.hasPassword then
+    self.items[1]={kind='auth-field',label='Password',field='password',placeholder='Your password',
+      x=x,y=self.y+y,w=w,h=40,fontSize=27,colour=T.red}
+    y=y+90
+  end
+  local label=self.account.busy and 'Please wait...' or self.armed and 'Press again to delete' or 'Delete account'
+  self.items[#self.items+1]={kind='delete-confirm',label=label,x=x,y=self.y+y,w=w,h=40,fontSize=27,colour=T.red}
+  self.authMessageY=y+52
+  self.items[#self.items+1]={kind='auth-back',label='Back',x=self.x+16,y=self.y+self.h-58,
+    w=self.w-32,h=38,fontSize=30,colour=T.orange}
+end
 function Settings:buildAuth()
   local a=self.auth
+  if a.mode=='delete' then self:buildDelete(); return end
   local tabWidth=self.width<600 and 168 or 210
   local left=self.x+(self.w-2*tabWidth-12)/2
   self.items={}
@@ -136,10 +168,12 @@ function Settings:build()
         w=width or w,h=40,fontSize=27,colour=T.red}
     end
     if a.status=='authenticated' then
-      add('email','Email',nil,163)
-      add('name','Display name','edit',263)
-      add('action',a.busy and 'Please wait...' or 'Save','save',345,w/2-6)
-      add('action','Sign out','logout',345,w/2-6,x+w/2+6)
+      add('email','Email',nil,150)
+      add('name','Display name','edit',240)
+      add('action',a.busy and 'Please wait...' or 'Save','save',310,w/2-6)
+      add('action','Sign out','logout',310,w/2-6,x+w/2+6)
+      -- Opens the deletion form; nothing is deleted from this tab.
+      add('action','Delete account','delete',370)
     elseif not a.busy then
       add('action',a.status=='error' and 'Retry' or 'Sign in',a.status=='error' and 'refresh' or 'login',245,240,self.x+(self.w-240)/2)
     end
@@ -161,6 +195,9 @@ end
 function Settings:describe(item)
   if item.kind=='auth-field' then
     return item.label..(item.field=='password' and '. Enter to edit.' or ': '..self.auth[item.field]..'. Enter to edit.')
+  end
+  if item.kind=='delete-confirm' and not self.armed and not self.account.busy then
+    return 'Delete account. Asks you to press again.'
   end
   if self.auth then return item.label end
   if item.kind=='tab' then return item.label..' settings' end
@@ -196,15 +233,24 @@ function Settings:slide(item,x)
 end
 function Settings:update(dt,time,mx,my,reduced)
   self.markerTime=reduced and 12 or time
+  self.time,self.reduced=time,reduced
   self.motion:update(dt,time,false,false,reduced)
+  self.deleteJuice:update(dt,time,false,false,reduced)
+  if self.armed and time-self.armed>3 then self:disarm() end
   self.hover,self.hoverPart=self:hit(mx,my,true)
   if self.drag then self:slide(self.items[self.drag],mx) end
 end
 function Settings:activate(index)
   local item=self.items[index]
   if not item or self:disabled(item) then return end
+  local confirm=item.kind=='delete-confirm'
+  -- The 0.35 s lockout after arming stops a double click from deleting.
+  if confirm and self.armed and (self.time or 0)-self.armed<0.35 then return end
+  if not confirm then self:disarm() end
   self.callbacks.feedback()
-  if item.kind=='tab' then
+  if confirm then
+    if self.armed then self:disarm(); self.callbacks.auth('submit') else self:arm() end
+  elseif item.kind=='tab' then
     if self.account.editing then self.callbacks.account('finish-edit'); self.account.editing=false end
     self.tab=item.tab; self:build(); if self.focus>0 then self.focus=index end
     self.callbacks.announce(self:describe(self.items[index]))
@@ -215,7 +261,7 @@ function Settings:activate(index)
     self.callbacks.auth('edit\t'..item.field)
   elseif item.kind=='auth-submit' then self.callbacks.auth('submit')
   elseif item.kind=='auth-google' then self.callbacks.auth('google')
-  elseif item.action=='login' then self:openAuth('login')
+  elseif item.action=='login' or item.action=='delete' then self:openAuth(item.action)
   elseif item.action then
     if item.action=='edit' then self.focus=index end
     self.callbacks.account(self.account:command(item.action))
@@ -229,6 +275,8 @@ function Settings:mousepressed(x,y)
   self.pressed,self.pressedPart=self:hit(x,y)
   self.focus=0
   local item=self.items[self.pressed]
+  -- A press anywhere but the armed button disarms it.
+  if not item or item.kind~='delete-confirm' then self:disarm() end
   if item and item.kind=='slider' then
     self.drag=self.pressed
     self:slide(item,x)
@@ -269,6 +317,7 @@ function Settings:keypressed(key)
     local backward=Controls.backward(key)
     self.focus=self.focus==0 and (backward and #self.items or 1)
       or ((self.focus-1+(backward and -1 or 1))%#self.items)+1
+    if self.items[self.focus].kind~='delete-confirm' then self:disarm() end
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
@@ -277,7 +326,13 @@ function Settings:draw()
   g.push(); g.translate(0,self.motion.VT.y*60)
   Button.modalFrameRaised(self.x,self.y,self.w,self.h)
   if self.auth then
-    if self.account.message~='' then T.text(self.account.message,19,self.x+30,self.y+self.authMessageY,self.w-60,T.paper) end
+    if self.auth.mode=='delete' then
+      T.text('Delete account',30,self.x+32,self.y+40,self.w-64)
+      T.text(DELETE_WARNING,22,self.x+32,self.y+96,self.w-64)
+    end
+    if self.account.message~='' then T.text(self.account.message,19,self.x+30,self.y+self.authMessageY,self.w-60,T.paper)
+    -- delete_profile's warning_text: hidden until the first press, as on Leave match.
+    elseif self.armed then T.text('Press again to delete permanently',19,self.x+30,self.y+self.authMessageY,self.w-60) end
   elseif self.tab==TAB.account then
     local a=self.account
     if a.status~='authenticated' then
@@ -285,7 +340,7 @@ function Settings:draw()
       T.text(text,24,self.x+32,self.y+172,self.w-64)
     end
     if a.message~='' then
-      T.text(a.message,17,self.x+28,self.y+410,self.w-56,T.paper)
+      T.text(a.message,17,self.x+28,self.y+428,self.w-56,T.paper)
     end
   end
   for i,item in ipairs(self.items) do
@@ -296,7 +351,13 @@ function Settings:draw()
       local disabled=self:disabled(item)
       local colour=item.colour
       if disabled then item.colour=T.panel end
+      local juice=item.kind=='delete-confirm'
+      if juice then
+        local m=self.deleteJuice
+        g.push();g.translate(item.x+item.w/2,item.y+item.h/2);g.rotate(m.VT.r);g.scale(m.VT.scale);g.translate(-item.x-item.w/2,-item.y-item.h/2)
+      end
       Button.draw(item,active and not disabled,pressed and not disabled,self.focus==i,self.width)
+      if juice then g.pop() end
       item.colour=colour
       if (not self.auth and item.tab==self.tab) or (self.auth and item.mode==self.auth.mode) then
         Button.chosen(item,self.markerTime or 12,pressed,self.width)

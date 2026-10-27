@@ -21,6 +21,7 @@ const shell = new HostShell(document, host, {
   // email, the name and a masked password.
   authenticate: ({ mode, email, password, name }) =>
     void account.authenticate(mode, email, password, name),
+  deleteAccount: (password) => void account.deleteAccount(password),
 });
 const router = new Router(window, {
   changed: showPage,

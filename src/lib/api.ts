@@ -9,6 +9,7 @@ import type {
   CatalogFacets,
   CreateDeckRequest,
   Deck,
+  DeleteAccountRequest,
   DeckSummary,
   LoginRequest,
   OAuthProvider,
@@ -219,6 +220,13 @@ export function me(): Promise<User> {
     session recovery, because there a 401 IS the answer. */
 export function updateProfile(body: UpdateProfileRequest): Promise<User> {
   return request("/auth/me", { method: "PATCH", body, recoverSession: false });
+}
+
+/** Delete your own account and everything it owns; the 204 clears the cookie. 401 with
+    `{error: "invalid password"}` for a wrong or missing password, or `{error: "unauthorized"}`
+    when the session is gone; 429 when the password has been guessed at too often. */
+export function deleteAccount(body: DeleteAccountRequest): Promise<void> {
+  return request("/auth/me", { method: "DELETE", body, recoverSession: false });
 }
 
 /** The url that STARTS an OAuth flow — assign it to window.location (it

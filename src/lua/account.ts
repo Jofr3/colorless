@@ -6,7 +6,8 @@ import {
   loginRequestSchema,
   registerRequestSchema,
 } from "@colorless/schema";
-import { ApiError, login, register, logout, me, updateProfile } from "../lib/api";
+import { clearSavedDeckCache } from "../game/sandboxDecks";
+import { ApiError, deleteAccount, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
 
@@ -64,6 +65,7 @@ export class LuaAccount {
         u?.id ?? "",
         u?.displayName ?? "",
         u?.email ?? "",
+        u?.hasPassword ? 1 : 0,
       ]),
     );
   }
@@ -160,6 +162,53 @@ export class LuaAccount {
       this.message = "";
     } catch {
       if (op === this.operation) this.message = "Could not sign out. Try again.";
+    } finally {
+      if (op === this.operation) {
+        this.busy = false;
+        this.emit();
+      }
+    }
+  }
+
+  /** Deletes the signed-in account. The password comes from the shell's native field and goes
+   * only to the API; an OAuth-only account sends none. Success ends as a sign-out does, and also
+   * drops the saved decks fetched this session, which no longer exist. */
+  async deleteAccount(password: string) {
+    if (this.busy || !this.user) return;
+    const needsPassword = this.user.hasPassword;
+    if (needsPassword && !password) {
+      this.refuse("Enter your password.");
+      return;
+    }
+    const op = ++this.operation;
+    this.busy = true;
+    this.message = "Deleting your account...";
+    this.emit();
+    try {
+      await deleteAccount(needsPassword ? { password } : {});
+      if (op !== this.operation) return;
+      clearSavedDeckCache();
+      this.user = null;
+      this.status = "anonymous";
+      this.checkedAt = Date.now();
+      this.message = "Account deleted.";
+    } catch (error) {
+      if (op !== this.operation) return;
+      const status = error instanceof ApiError ? error.status : 0;
+      // Both refusals are 401s: the body tells a wrong password from a session that is gone.
+      if (status === 401 && error instanceof ApiError && error.message === "unauthorized") {
+        this.user = null;
+        this.status = "anonymous";
+        this.checkedAt = Date.now();
+        this.message = "Your session expired. Sign in again.";
+      } else {
+        this.message =
+          status === 401
+            ? "Wrong password."
+            : status === 429
+              ? "Too many attempts. Wait a moment."
+              : "Could not delete your account. Try again.";
+      }
     } finally {
       if (op === this.operation) {
         this.busy = false;
