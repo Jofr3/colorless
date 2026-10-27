@@ -47,10 +47,16 @@ function maxFileSize(): number {
  */
 function checkedCount(files: string[]): number {
   if (files.length === 0) return 0;
-  const r = spawnSync(BIOME, ["lint", "--max-diagnostics=0", ...files], {
-    cwd: REPO_ROOT,
-    encoding: "utf8",
-  });
+  // One cheap rule is enough: Biome still processes every file it can see, and only the count is
+  // read.
+  const r = spawnSync(
+    BIOME,
+    ["lint", "--only=suspicious/noDebugger", "--max-diagnostics=0", ...files],
+    {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    },
+  );
   const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
   const m = out.match(/Checked (\d+) files? in/);
   if (m) return Number(m[1]);

@@ -47,10 +47,21 @@ only the conclusion.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (coverage guards, the import graph,
   `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the Worker bundle budget, the mutant `precheck`), `check:lua` (the headless Lua tests,
-  requiring Balatro's source) and `check:test` (vitest). CI runs the same three
+  requiring Balatro's source) and `check:test` (vitest). `scripts/check.ts` runs
+  `check:static` and `check:lua`, and the steps of `check:static`, concurrently,
+  printing each step's output when it finishes and then a timing table; a step is
+  one quoted argument, so adding one to `package.json` is all it takes.
+  `check:test` runs after them on its own, since vitest already uses every core
+  and sharing them makes its timeouts flaky. CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the remote D1
   migrations, the API deploy and then the web deploy, in that order.
+- `tsc -b` checks the engine and the schema once: both are composite projects
+  that emit declarations into their ignored `dist/`, and the app, the api and
+  the scripts read them through project references, so an error in engine source
+  is reported by the engine project alone. CI caches the build info and those
+  declarations and backdates them on restore, so every project still compares
+  its sources by content.
 - `scripts/import-graph.ts --check` fails on any runtime import cycle other than
   the recorded `RECORDED_CYCLE` (flow, interpreter, ops/board, ops/energy,
   triggers: a program step can knock out, which runs triggers and the turn
@@ -68,9 +79,15 @@ only the conclusion.
   simulation gaps load the full engine through `import()`. The bridge queues the table's commands
   while its chunk loads (`LazyScreen`). Type-only imports from `@colorless/engine` are free;
   `import-graph.ts --check` fails when the bridge's static imports reach the engine root.
-- Vitest has two projects (`vitest.config.ts`): `engine` runs without per-file
+- Vitest has three projects (`vitest.config.ts`): `engine` runs without per-file
   isolation, so engine suites must not use mocks, stubs, fake timers or other
-  module-level state that leaks between files; `app` covers everything else.
+  module-level state that leaks between files. The app suites are split by the
+  config itself: a file that calls `vi.mock`, `vi.stubGlobal`, `vi.stubEnv`,
+  `vi.useFakeTimers`, `vi.setSystemTime`, `vi.spyOn`, `vi.unstubAll*` or
+  `vi.resetModules`, or names `globalThis`, runs in `app-isolated`; every other
+  app file runs in `app`, without isolation, so it must not leave other
+  module-level state behind either. Vitest caches transformed modules in
+  `node_modules/.experimental-vitest-cache` (`bunx vitest --clearCache` empties it).
 - **The engine remembers derived facts by object identity**: `disabledAbilityUids` per
   `GameState` (`DISABLED_ABILITY_UIDS`, `continuous.ts`), `cardOfUid`'s faces per `cardIdByUid`
   and `cardPool` (`FACES_BY_UID`, `cards.ts`) and `poolHasOwnerBoundEnergy` per `cardPool`

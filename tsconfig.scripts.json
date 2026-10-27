@@ -1,7 +1,6 @@
 {
-  // Dev tooling. Scripts import engine sources by relative path, so those are typechecked again
-  // here rather than through a project reference (which would need the engine to emit).
-  // `bun:sqlite` is typed by scripts/bun-runtime.d.ts.
+  // Dev tooling. The engine and schema are read through their declarations; the api sources the
+  // scripts import are typechecked here again. `bun:sqlite` is typed by scripts/bun-runtime.d.ts.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
@@ -14,5 +13,6 @@
     "apps/api/scripts",
     "packages/schema/scripts",
     "apps/api/drizzle.config.ts"
-  ]
+  ],
+  "references": [{ "path": "./packages/engine" }, { "path": "./packages/schema" }]
 }

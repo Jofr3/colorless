@@ -116,13 +116,14 @@ try {
   // instant re-add and then serves index.html for /love/love.js. Re-create
   // the two files with a pause between unlink and write so the watcher
   // registers them again.
-  for (const name of ["love.js", "love.wasm"]) {
+  const runtime = ["love.js", "love.wasm"].map((name) => {
     const path = join(output, name);
     const bytes = readFileSync(path);
     rmSync(path);
-    await new Promise((done) => setTimeout(done, 500));
-    writeFileSync(path, bytes);
-  }
+    return { path, bytes };
+  });
+  await new Promise((done) => setTimeout(done, 500));
+  for (const { path, bytes } of runtime) writeFileSync(path, bytes);
   copyFileSync(join(source, "resources", music), join(output, "music1.ogg"));
   // The root index.html is the host page; drop the compiler's own page and theme.
   rmSync(join(output, "index.html"), { force: true });

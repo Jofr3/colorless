@@ -18,13 +18,22 @@
  */
 
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { isRecord, parseJson } from "../lib/cli.ts";
 import { REPO_ROOT } from "../lib/repo.ts";
 import { applyMutant } from "./apply.ts";
 import { argvProblems, knownFlagsUsage } from "./argv.ts";
 import { MUTANTS, type Mutant } from "./mutants.ts";
+import { vouchedKeys } from "./vouch.ts";
 
 /**
  * Process exit codes. `noSelection` shares 2 with `recovered`; recovery-gate tells them apart by
@@ -52,6 +61,22 @@ const EXIT = {
  */
 const JOURNAL =
   process.env.MUTATION_JOURNAL_PATH ?? join(REPO_ROOT, "tmp", "mutation-journal.json");
+
+/**
+ * Vitest's on-disk module cache for this harness, kept apart from the default one. A mutant run
+ * caches its mutated module like any other, so the entries a mutant run adds are deleted after it.
+ */
+const MODULE_CACHE = join(REPO_ROOT, "tmp", "mutation-vitest-cache");
+
+function moduleCacheEntries(): Set<string> {
+  return new Set(existsSync(MODULE_CACHE) ? readdirSync(MODULE_CACHE) : []);
+}
+
+function dropModuleCacheEntriesBesides(kept: ReadonlySet<string>): void {
+  for (const name of moduleCacheEntries()) {
+    if (!kept.has(name)) rmSync(join(MODULE_CACHE, name), { recursive: true, force: true });
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Restoration
@@ -251,7 +276,7 @@ function spawnRecording(bin: string, args: string[], verbose: boolean): Promise<
     const proc = spawn(bin, args, {
       cwd: REPO_ROOT,
       stdio: verbose ? "inherit" : ["ignore", "pipe", "pipe"],
-      env: { ...process.env, CI: "1", FORCE_COLOR: "0" },
+      env: { ...process.env, CI: "1", FORCE_COLOR: "0", VITEST_MODULE_CACHE_PATH: MODULE_CACHE },
     });
     child = proc;
     let out = "";
@@ -276,14 +301,81 @@ function spawnRecording(bin: string, args: string[], verbose: boolean): Promise<
     is deliberately clustered by decision, so this roughly halves wall time. */
 const baselineCache = new Map<string, SuiteResult>();
 
+function baselineKey(
+  files: string[],
+  nameFilter: string | undefined,
+  command: string[] | undefined,
+): string {
+  return command === undefined
+    ? `${files.join("|")}::${nameFilter ?? ""}`
+    : `!${command.join(" ")}`;
+}
+
+function isJsonReport(v: unknown): v is { testResults: { name: string }[] } {
+  return (
+    isRecord(v) &&
+    Array.isArray(v.testResults) &&
+    v.testResults.every((r) => isRecord(r) && typeof r.name === "string")
+  );
+}
+
+/**
+ * Runs the baselines of every selected suite row in one vitest process and records the keys it
+ * vouches for (`vouchedKeys`), so only the rest get a run of their own. An unreadable report
+ * vouches for none. Name-filtered keys keep their own run.
+ */
+async function batchBaselines(selected: readonly Mutant[], verbose: boolean): Promise<void> {
+  const keyed = new Map<string, string[]>();
+  for (const m of selected) {
+    if (m.killedByCommand !== undefined || m.nameFilter !== undefined) continue;
+    keyed.set(baselineKey(m.expectKilledBy, undefined, undefined), m.expectKilledBy);
+  }
+  if (keyed.size < 2) return;
+  const filters = [...new Set([...keyed.values()].flat())];
+  process.stdout.write(`  baselines: ${keyed.size} suite set(s) in one run … `);
+  const report = join(REPO_ROOT, "tmp", `mutation-baseline-${process.pid}.json`);
+  mkdirSync(dirname(report), { recursive: true });
+  let ran: string[] = [];
+  let run: SuiteResult;
+  try {
+    run = await spawnRecording(
+      "bunx",
+      [
+        "vitest",
+        "run",
+        "--reporter=dot",
+        "--reporter=json",
+        `--outputFile.json=${report}`,
+        ...filters,
+      ],
+      verbose,
+    );
+    if (run.green) {
+      try {
+        ran = parseJson(readFileSync(report, "utf8"), report, isJsonReport).testResults.map((r) =>
+          relative(REPO_ROOT, r.name),
+        );
+      } catch {
+        // Without the report nothing is vouched for, and every suite set runs its own.
+      }
+    }
+  } finally {
+    rmSync(report, { force: true });
+  }
+  const vouched = vouchedKeys(keyed, run.green, ran);
+  for (const key of vouched) baselineCache.set(key, { green: true, ms: 0, tail: "" });
+  console.log(
+    `${run.green ? "green" : "RED, so every suite set runs its own"} · ${vouched.length} vouched · ${(run.ms / 1000).toFixed(1)}s`,
+  );
+}
+
 async function baselineFor(
   files: string[],
   nameFilter: string | undefined,
   command: string[] | undefined,
   verbose: boolean,
 ) {
-  const key =
-    command === undefined ? `${files.join("|")}::${nameFilter ?? ""}` : `!${command.join(" ")}`;
+  const key = baselineKey(files, nameFilter, command);
   const hit = baselineCache.get(key);
   if (hit !== undefined) return hit;
   const result =
@@ -404,6 +496,7 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
   }
 
   const mutatedText = applyMutant(text, mutant.find, mutant.replace);
+  const cachedModules = moduleCacheEntries();
   let mutated: SuiteResult;
   let clobberedTo: string | null = null;
   try {
@@ -432,6 +525,7 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
     inFlight.delete(absolute);
     if (inFlight.size === 0) clearJournal();
     else writeJournal();
+    dropModuleCacheEntriesBesides(cachedModules);
   }
 
   // A clobber overrides the mutant's verdict and fails the run, since the file under test changed
@@ -546,6 +640,7 @@ async function main(): Promise<void> {
 
   const rows: Row[] = [];
   const started = Date.now();
+  if (!full) await batchBaselines(selected, options.verbose);
   for (const mutant of selected) {
     process.stdout.write(`  ${mutant.id.padEnd(26)} … `);
     const row = await runMutant(mutant, options);
