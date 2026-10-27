@@ -1,6 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Deck } from "../decks/data";
-import { savedDeck } from "../game/sandboxDecks";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
 import { LuaAccount, SESSION_CHECK_MAX_AGE_MS } from "./account";
@@ -217,16 +215,6 @@ describe("Lua authentication", () => {
 });
 
 describe("Lua account deletion", () => {
-  const SUMMARY: Deck = {
-    id: "deck-1",
-    name: "Water",
-    folderId: null,
-    cardCount: 60,
-    tint: 200,
-    coverCardId: null,
-    position: 0,
-    updated: "2026-01-01T00:00:00.000Z",
-  };
   const fields = (publish: ReturnType<typeof setup>["publish"]) =>
     String(publish.mock.lastCall?.[0]).split("\t").map(decodeURIComponent);
 
@@ -239,18 +227,13 @@ describe("Lua account deletion", () => {
     await account.refresh();
     expect(fields(publish)[7]).toBe("1");
   });
-  it("deletes with the password, ends signed out and forgets this session's saved decks", async () => {
-    const { impl, calls } = stubFetch({
+  it("deletes with the password and ends signed out", async () => {
+    const { impl } = stubFetch({
       ...session,
-      "GET /decks/deck-1": () => json({ ...SUMMARY, cards: [] }),
       "DELETE /auth/me": () => new Response(null, { status: 204 }),
     });
     const { account, publish } = setup();
     await account.refresh();
-    await savedDeck(SUMMARY);
-    await savedDeck(SUMMARY);
-    const deckReads = () => calls.filter((call) => call === "GET /decks/deck-1").length;
-    expect(deckReads()).toBe(1);
     await account.deleteAccount("private-test-password");
     const call = impl.mock.calls.find(([, init]) => init?.method === "DELETE");
     expect(JSON.parse(String(call?.[1]?.body))).toEqual({ password: "private-test-password" });
@@ -259,8 +242,6 @@ describe("Lua account deletion", () => {
     expect(account.status).toBe("anonymous");
     expect(account.message).toBe("Account deleted.");
     expect(JSON.stringify(publish.mock.calls)).not.toContain("private-test-password");
-    await savedDeck(SUMMARY);
-    expect(deckReads()).toBe(2);
   });
   it("sends no password for an OAuth-only account", async () => {
     const { impl } = stubFetch({

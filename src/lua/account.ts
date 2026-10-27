@@ -6,7 +6,6 @@ import {
   loginRequestSchema,
   registerRequestSchema,
 } from "@colorless/schema";
-import { clearSavedDeckCache } from "../game/sandboxDecks";
 import { ApiError, deleteAccount, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
@@ -187,7 +186,6 @@ export class LuaAccount {
     try {
       await deleteAccount(needsPassword ? { password } : {});
       if (op !== this.operation) return;
-      clearSavedDeckCache();
       this.user = null;
       this.status = "anonymous";
       this.checkedAt = Date.now();
