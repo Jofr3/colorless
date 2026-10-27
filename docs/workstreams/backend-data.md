@@ -271,9 +271,31 @@ data loss rather than a validation failure.
   `Origin` (curl, tests) passes, since it carries no visitor's cookie. The lobby
   WebSocket upgrade applies the same origin list.
 - **Email + password:** PBKDF2-SHA256 via WebCrypto (zero deps,
-  Workers-native), stored as `pbkdf2$<iterations>$<salt-b64url>$<hash-b64url>`
-  — verify reads the iteration count from the encoding, so raising the
-  default (currently 100k) upgrades hashes lazily on login. Constant-time
+  Workers-native) over HMAC-SHA256(`PASSWORD_PEPPER`, password), stored as
+  `pbkdf2p$<pepper id>$<iterations>$<salt-b64url>$<hash-b64url>` (security
+  audit AU9). Hashes from before the pepper are `pbkdf2$<iterations>$…` and
+  still verify. Verify reads the scheme, pepper id and iteration count from the
+  encoding, so raising the default (currently 100k) or adding the pepper
+  upgrades hashes lazily: a successful login re-hashes at today's iterations
+  under today's pepper, and nobody is logged out. The pepper id is 8 base64url
+  characters of an HMAC of a fixed string under the pepper, so a hash names its
+  pepper without revealing it. **Pepper custody:** `PASSWORD_PEPPER` is a
+  `wrangler secret`, never in D1, so an exported database alone cannot be
+  cracked offline; the price is that losing it locks every peppered password
+  account out of password sign-in (Google sign-in still works) — keep a copy in
+  the password manager before `wrangler secret put`. Rotation: set the old value
+  as `PASSWORD_PEPPER_PREVIOUS` and the new one as `PASSWORD_PEPPER`; hashes
+  under either verify and are re-peppered with the new one on login; drop the
+  previous one once the accounts that matter have signed in. **Without the
+  secret** the Worker fails safe rather than closed: it keeps making unpeppered
+  hashes (as before) and logs a throttled error `evt = "auth", kind =
+  "pepper_missing"`, because refusing every sign-up and login over a missing
+  secret would be an outage while unpeppered hashes are only the old status
+  quo, upgraded on the next login once the secret is back; the release gate
+  refuses to release without it (§3.7.2). A stored hash whose pepper the
+  Worker does not hold (a lost or mistyped secret) answers 503 + `Retry-After:
+  60` (`kind = "pepper_unavailable"`), never a 401, and counts no failure.
+  Constant-time
   compare; login burns a dummy verify on unknown emails (timing parity) and
   answers one uniform 401. *Caveat:* 100k iterations ≈ tens of ms CPU — if
   free-plan Workers CPU limits 500 the auth routes in production, lower the
@@ -293,9 +315,40 @@ data loss rather than a validation failure.
   over budget writes nothing. Over budget → 429 with `Retry-After`. A D1 error
   (such as a spent write quota) fails closed: 503 with `Retry-After: 60`, and
   `evt = "auth", kind = "limiter_error"` (security audit AU5; failing open made
-  login an unthrottled password oracle once writes failed). The profile's
+  login an unthrottled password oracle once writes failed). **Per-email
+  failure cap** (security audit AU6, decision 9): every failed login also
+  counts against an IP-free (login, email) key, unknown emails included; after
+  50 failures in an hour, further *failures* answer 429 `too many attempts` +
+  `Retry-After` (the end of that hour) instead of 401, and write nothing. The
+  password is still checked, so the right one signs in past the cap: anyone
+  can make a known email's failures say 429, but nobody can lock its owner out
+  of password sign-in, and 429 says nothing 401 did not (both mean "not this
+  password", whoever owns the email). It does not slow a guesser spread over
+  many addresses — the per-address budgets bound that — it marks the targeted
+  account in the logs (`login_failed` with `capped: true`) and tells clients to
+  back off. A device-cookie scheme would be the next step if distributed
+  guessing is ever seen. A failed login costs one more D1 batch (the failure
+  upsert and a read of its window). The profile's
   favourite-deck field is retired: `PATCH /auth/me` ignores `favouriteDeckId`
   and users no longer carry it; the `users.favourite_deck_id` column stays.
+- **Sign out everywhere** (security audit AU7): `POST /auth/logout-all` (behind
+  `requireUser` and the cross-site guard) deletes every session of the
+  caller's account, this one included, and clears the cookie → 204. Settings →
+  Account has a "Sign out everywhere" button. Sessions keep their 30-day
+  absolute lifetime; the audit's optional idle timeout was not added (it would
+  cost a D1 write per active session per day, shared with deck saves). A lobby
+  socket opened before keeps its seat until it closes.
+- **Audit trail** (security audit AU10): `registered`, `login_ok` (`method`
+  password or oauth, `rehashed`), `login_failed`, `logout`, `logout_all`,
+  `profile_updated`, `delete_failed`, `account_deleted`, `oauth_created`,
+  `oauth_linked` (`claimed`, with `identitiesRemoved` and `sessionsRevoked` for
+  a claim) and `oauth_refused` lines under `evt = "auth"`. Each names its
+  account by a tag, `HMAC-SHA256(LOG_TAG_KEY, "account\n" + userId)` cut to 12
+  base64url characters (`apps/api/src/http/logTag.ts`), and `rate_limited` names
+  the network by the same MAC of its clientIpKey (`net`). Without the
+  `LOG_TAG_KEY` secret every tag reads `untagged`. No line carries an email,
+  IP, user id or `avatarSeed` (public in lobbies). Losing or rotating the key
+  only stops old tags matching new ones.
 - **Account deletion** (database audit OP6): `DELETE /auth/me` with
   `{password?, confirmEmail?}`. An account with a password must send it (wrong
   or missing → 401 `invalid password`, counted by the limiter in its own
@@ -307,7 +360,8 @@ data loss rather than a validation failure.
   `DELETE FROM users`, scoped to the verified hash like the login's session
   insert, and the `ON DELETE CASCADE` keys remove its sessions, identities,
   folders, decks and deck cards. The 204 clears the cookie as logout does and
-  logs `evt = "auth", kind = "account_deleted"` with no id or email. Limiter
+  logs `evt = "auth", kind = "account_deleted"` with the account tag and no id
+  or email. Limiter
   rows age out on their own; a lobby seat bound to the id only compares it, and
   the handoff's deck read finds nothing. There is no purge of unverified
   accounts. The web app asks for the password (or, without one, the email) in
@@ -315,14 +369,30 @@ data loss rather than a validation failure.
 - **Password-reset + email-verify are 501 stubs** — they need an outbound
   email provider, which is not chosen yet; no token plumbing exists until it
   is (`POST /auth/verify-email`, `POST /auth/reset-password` explain this).
-- **OAuth (Google):** standard authorization-code flow; CSRF state
-  in a short-lived http-only cookie (also carrying the allowlisted relative
-  `?redirect=` path). On callback: verify state → exchange code → fetch
-  profile (Google `openid email profile` via OIDC userinfo) → find-or-create: linked
-  `oauth_identities` row → that user; else user by **provider-verified**
-  email → link (unverified match ⇒ 409, no takeover); else create user
-  (`email_verified` from the provider) + identity. Then session + redirect to
-  `APP_ORIGIN`. A single user may hold both a password and OAuth identities.
+  **Known limit (security audit AU11, decision 11, accepted):** with no email
+  verification and no reset, `POST /auth/register` is an account-enumeration
+  oracle (409 `email already registered`, slowed only by the register budget),
+  and anyone can register someone else's address. Its owner can recover a
+  squatted address only by signing in with Google under it (the verified-email
+  claim below, which clears the squatter's password, sessions and identities);
+  without a Google account there is no recovery. Revisit when an email provider
+  is chosen: register would answer a generic 202 and finish through a link.
+- **OAuth (Google):** standard authorization-code flow with PKCE (S256,
+  security audit AU12); CSRF state, the PKCE code verifier and the allowlisted
+  relative `?redirect=` path ride in one short-lived http-only cookie
+  (`state.verifier.b64url(redirect)`), and only the verifier's SHA-256 goes to
+  Google; the token exchange sends the verifier. A sign-in started before the
+  PKCE deploy fails once with `?authError=state`. On callback: verify state →
+  exchange code → fetch profile (Google `openid email profile` via OIDC
+  userinfo) → find-or-create: linked `oauth_identities` row → that user; else
+  user by **provider-verified** email → link (unverified match ⇒
+  `?authError=email-in-use`, no takeover); else, only for a provider-verified
+  email, create user + identity (unverified ⇒ `?authError=email-unverified`, no
+  account; security audit AU4). Linking a verified email to an **unverified**
+  account claims it: one batch removes its password, its sessions **and every
+  other OAuth identity** (AU4), then links this one, so whoever registered the
+  address first keeps no way in. Then session + redirect to `APP_ORIGIN`. A
+  single user may hold both a password and OAuth identities.
 - **Providers activate by configuration alone** — with secrets absent the
   routes answer `503 {"error":"provider not configured"}`. To activate, register
   a Google OAuth client (<https://console.cloud.google.com/auth/clients>, Web application)
@@ -486,14 +556,28 @@ and step 1 is therefore unblocked TODAY and should not wait for the backfill.
 #### 3.7.2 Release gates (2026-10-27)
 
 `bun run release` now runs, in order: `check` → `release:gate` (apps/api:
+fails unless the tree is clean at `origin/main`; fails unless the production
+Worker holds every secret in `apps/api/src/requiredSecrets.ts`, today
+`PASSWORD_PEPPER` and `LOG_TAG_KEY`, read with `wrangler secret list`, which
+shows names only, and prints the `wrangler secret put` lines to run; then
 records the remote Time Travel bookmark, then fails unless the local and remote
 catalogs agree on every card's `print_key`, because the engine's
 `PROGRAM_ALIAS` table is generated from the local one) → `db:migrate:remote` →
 `api:deploy` → web `deploy`. The API `deploy` script itself first runs
 `release-gate.ts migrations`, which fails unless every file in `drizzle/` is
 applied remotely, so a bare `api:deploy` can no longer ship a Worker ahead of
-its migrations (the D203 incident above). All three gates only read
-production. `check:static` adds `migration-guard.ts` (no unreviewed table
+its migrations (the D203 incident above). All these gates only read
+production.
+
+**Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
+`PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
+the password manager, then from `apps/api/` run `bunx wrangler secret put
+PASSWORD_PEPPER` and `bunx wrangler secret put LOG_TAG_KEY`, and only then `bun
+run release`. A secret put applies to the running Worker at once and the old code
+ignores both, so the order is safe; the gate refuses the release until both exist.
+Nobody is logged out: existing hashes are re-peppered at each account's next
+sign-in. Google sign-ins in flight at the deploy fail once (PKCE changed the state
+cookie). `check:static` adds `migration-guard.ts` (no unreviewed table
 rebuilds) and `drizzle-drift.ts` (schema.ts matches the migrations); see
 docs/conventions.md "Database migrations".
 
@@ -577,7 +661,7 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 | Resource | Free limit / day | Main spenders |
 | --- | ---: | --- |
 | D1 rows read | 5,000,000 | free-text builder searches (about 5,100 rows each), deep /cards pages, decklist import, catalog KV misses |
-| D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt), the daily sweep (at most 20,000) |
+| D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt, one more per failed login below the per-email cap), the daily sweep (at most 20,000) |
 | KV reads | 100,000 | every KV-cached catalog request |
 | KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3 at page size 4, 8 or 50; never an empty result) |
 | Worker requests | 100,000 | every API request, including WebSocket upgrades and the asset mirror; nothing limits traffic before the Worker on workers.dev |
@@ -668,7 +752,7 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | Query | What it finds |
 | --- | --- |
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
-| `evt = "auth"` | Login, register and OAuth failures, account deletions (`apps/api/src/auth/`); `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it), `limiter_error` from the D1 limiter and `binding_error` from the binding. |
+| `evt = "auth"` | The account audit trail (`apps/api/src/auth/routes.ts`, §3.5): `registered`, `login_ok`, `login_failed` (`reason`; `capped: true` past the per-email cap), `logout`, `logout_all` (`sessions` ended), `profile_updated`, `delete_failed`, `account_deleted`, `oauth_created`, `oauth_linked` (`claimed`, `identitiesRemoved`, `sessionsRevoked`), `oauth_refused` and the other OAuth failures. `account` is the keyed tag of the user id (`apps/api/src/http/logTag.ts`, secret `LOG_TAG_KEY`; `untagged` without it): filter on one tag to follow an account across addresses. `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it) carries `net`, the same kind of tag for the address; `limiter_error` from the D1 limiter and `binding_error` from the binding. Error level: `pepper_missing` (no `PASSWORD_PEPPER`; set it) and `pepper_unavailable` (a stored hash needs a pepper the Worker lacks: restore the secret or `PASSWORD_PEPPER_PREVIOUS`). No line carries an email, IP or user id. |
 | `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
@@ -1107,14 +1191,21 @@ POST   /auth/register            # {email, password, displayName?} → 201 user 
                                  #   limiter cannot count (D1 error)
 POST   /auth/login               # {email, password} → 200 user + session cookie;
                                  #   uniform 401 on any failure; 429 rate-limited (AUTH_LIMIT
-                                 #   10/min, then the D1 budgets); 503 as above
+                                 #   10/min, then the D1 budgets), or a failure past the email's
+                                 #   50 failures/hour (the right password still → 200); 503 as
+                                 #   above, or when the stored hash's pepper is missing
 POST   /auth/logout              # deletes the session row, clears the cookie → 204
+POST   /auth/logout-all          # session cookie → deletes every session of the account, clears
+                                 #   the cookie → 204; 401 without a live session
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
 DELETE /auth/me                  # {password?, confirmEmail?} → 204, deletes the account (cascades),
                                  #   clears the cookie; 401 wrong/missing password; 403 OAuth-only
                                  #   account without its typed email; 429 rate-limited
-GET    /auth/oauth/:provider     # google — 302 to provider; 503 until secrets installed
-GET    /auth/oauth/:provider/callback  # state-checked code exchange → session, 302 to APP_ORIGIN
+GET    /auth/oauth/:provider     # google — 302 to provider with a PKCE S256 challenge; 503
+                                 #   until secrets installed
+GET    /auth/oauth/:provider/callback  # state-checked code exchange (PKCE verifier) → session, 302
+                                 #   to APP_ORIGIN; failures 302 back with ?authError= state |
+                                 #   exchange | profile | no-email | email-in-use | email-unverified
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
 
