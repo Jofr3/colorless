@@ -54,11 +54,6 @@ const VIOLATIONS: Record<string, string[]> = {
   "cards.category outside Pokemon/Trainer/Energy": [
     "UPDATE cards SET category = 'Item' WHERE id = 'sv01-181'",
   ],
-  "two cards with one set number": [
-    `INSERT INTO cards (id, set_id, local_id, name, category, legal_standard, legal_expanded,
-      print_key, legal_standard_effective, legal_expanded_effective)
-      VALUES ('sv01-181b', 'sv01', '181', 'Nest Ball', 'Trainer', 1, 1, '${KEY}', 1, 1)`,
-  ],
   "card the reprint post-pass has not reached": [
     "UPDATE cards SET legal_expanded_effective = NULL WHERE id = 'sv01-181'",
   ],
@@ -69,8 +64,14 @@ const VIOLATIONS: Record<string, string[]> = {
   ],
 };
 
-/** PRAGMA-backed checks: D1 enforces foreign keys and owns the file, so a test cannot break them. */
-const UNSEEDABLE = ["integrity (PRAGMA quick_check)", "foreign keys (PRAGMA foreign_key_check)"];
+/** Checks a test cannot break: D1 enforces foreign keys and owns the file, and the unique
+    `cards_set_local_idx` (0011) refuses a second card with one set number. The last stays for a
+    database migrated before 0011 and in case the index is ever dropped. */
+const UNSEEDABLE = [
+  "integrity (PRAGMA quick_check)",
+  "foreign keys (PRAGMA foreign_key_check)",
+  "two cards with one set number",
+];
 
 async function restoreCatalog(db: D1Database): Promise<void> {
   await db.batch([

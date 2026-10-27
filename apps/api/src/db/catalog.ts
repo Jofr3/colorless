@@ -4,7 +4,7 @@
 
 import type { TcgdexAbility, TcgdexAttack, TcgdexVariants, TcgdexWeakRes } from "@colorless/schema";
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const series = sqliteTable("series", {
   id: text("id").primaryKey(),
@@ -102,12 +102,18 @@ export const cards = sqliteTable(
     updated: text("updated"),
   },
   // Each /cards sort and the exact-name lookup read an index in its own order, so a page
-  // reads its own rows rather than scanning and sorting the table. The expression index
-  // matches `lower("cards"."name")` as catalog/query.ts writes it.
+  // reads its own rows rather than scanning and sorting the table. The expression indexes
+  // match `lower("cards"."name")` and catalog/query.ts `pokemonHp()` as that file writes them.
+  // Collector order is unique, so every sort's tail makes pages deterministic.
   (t) => [
-    index("cards_set_local_idx").on(t.setId, t.localId),
+    uniqueIndex("cards_set_local_idx").on(t.setId, t.localId),
     index("cards_name_set_local_idx").on(t.name, t.setId, t.localId),
     index("cards_name_lower_idx").on(sql`lower(${t.name})`, t.setId, t.localId),
     index("cards_print_key_idx").on(t.printKey),
+    index("cards_pokemon_hp_idx").on(
+      sql`(case when ${t.category} = 'Pokemon' then ${t.hp} end) desc`,
+      t.setId,
+      t.localId,
+    ),
   ],
 );

@@ -78,6 +78,13 @@
       "when": 1793060243732,
       "tag": "0010_users_favourite_deck_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793091814453,
+      "tag": "0011_rate_limits_deck_version_hp_idx",
+      "breakpoints": true
     }
   ]
 }

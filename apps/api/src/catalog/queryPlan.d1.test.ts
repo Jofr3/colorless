@@ -83,6 +83,14 @@ describe("catalog query plans", () => {
     expect(await rowsRead(page)).toBeLessThanOrEqual(50);
   });
 
+  it("pages sort=hp-desc off the Pokémon-HP expression index", async () => {
+    const [page] = cardsPageStatements(db(), cardsQuery("sort=hp-desc"));
+    const plan = await planOf(page);
+    expect(plan).toContain("USING INDEX cards_pokemon_hp_idx");
+    expect(plan).not.toContain("TEMP B-TREE");
+    expect(await rowsRead(page)).toBeLessThanOrEqual(50);
+  });
+
   it("finds an exact name through the lower(name) index, in collector order", async () => {
     const [page, total] = cardsPageStatements(
       db(),

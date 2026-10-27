@@ -115,6 +115,9 @@ export const decks = sqliteTable(
     /** Manual sort slot, global per user (see @colorless/schema Deck.position). */
     position: integer("position").notNull().default(0),
     updated: integer("updated", { mode: "timestamp_ms" }).notNull().default(nowMs),
+    /** Bumped by every write, so a save from a stale copy is refused instead of undoing the
+        newer one (PATCH /decks/:id). */
+    version: integer("version").notNull().default(0),
   },
   (t) => [index("decks_user_id_idx").on(t.userId), index("decks_folder_id_idx").on(t.folderId)],
 );
@@ -133,3 +136,14 @@ export const deckCards = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.deckId, t.cardId] })],
 );
+
+/**
+ * Sign-in attempt counters (auth/rateLimit.ts): one row per limited key, counted by a single
+ * atomic upsert. `key` is a hash, never the IP or email itself. Rows past `reset_at` are dead and
+ * the daily sweep deletes them.
+ */
+export const authRateLimits = sqliteTable("auth_rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  resetAt: integer("reset_at").notNull(),
+});
