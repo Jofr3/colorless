@@ -51,12 +51,15 @@ const MAX_CACHED_PAGES = 40;
 /** Messages for a failed load, the ones the Retry button answers. */
 const LOAD_FAILED = {
   deck: "Could not open this deck. Try again.",
-  cards: "Some cards could not load. Retry loading before adding cards.",
-  options: "Filter options could not load. Retry loading to reconnect.",
+  cards: "Some cards did not load. Retry before adding.",
+  options: "Filter options did not load. Retry to reconnect.",
   search: "Card search failed. Try again.",
 } as const;
 const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
+// Messages show on one 294 px line beside Retry, shrunk to size 14 at most: a longer one wraps
+// under the Back bar, so fixed wording stays within about 280 px at that size.
 const DECK_CONFLICT = "Deck changed elsewhere; reloaded the latest.";
+const SAVE_FAILED = "Could not save. Your edits are kept. Retry.";
 
 /** For a save refused as a version conflict, the deck as the server now holds it, or null when the
     409 did not carry it; undefined for any other failure. */
@@ -463,7 +466,7 @@ export class LuaBuilder {
           this.saveStatus = status;
           clearTimeout(this.savedTimer);
           if (status === "saved") {
-            if (this.message.startsWith("Could not save.")) this.message = "";
+            if (this.message === SAVE_FAILED) this.message = "";
             this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
             if (this.leaving && !this.dirty) {
               this.exit();
@@ -477,7 +480,7 @@ export class LuaBuilder {
           if (status === "failed") {
             this.pendingExit = undefined;
             this.leaving = false;
-            this.message = "Could not save. Your edits are still here. Retry save.";
+            this.message = SAVE_FAILED;
           }
           this.emit();
         },
@@ -750,7 +753,7 @@ export class LuaBuilder {
   private onAdd(id: string) {
     const c = this.cards.get(id);
     if ([...this.entries.keys()].some((entry) => !this.cards.has(entry))) {
-      this.message = "Resolve unavailable deck cards before adding more.";
+      this.message = "Resolve unavailable cards before adding more.";
       this.emit();
       return;
     }
@@ -924,7 +927,7 @@ export class LuaBuilder {
     const deck = this.deck();
     this.transfer = deck.length ? formatDecklist(deck) : "";
     const missing = [...this.entries.keys()].some((id) => !this.cards.has(id));
-    this.message = missing ? "Unavailable cards cannot be exported. Resolve them first." : "";
+    this.message = missing ? "Resolve unavailable cards before exporting." : "";
     this.emit();
   }
   private onCancelImport() {
@@ -951,7 +954,7 @@ export class LuaBuilder {
       ) {
         this.message = result.unmatched.length
           ? `Could not resolve: ${result.unmatched.map((x) => x.raw).join(", ")}. Deck unchanged.`
-          : "No usable decklist, or too many entries. Deck unchanged.";
+          : "No usable decklist, or too long. Deck unchanged.";
       } else {
         for (const e of result.entries) this.cards.set(e.card.cardId, e.card);
         this.entries = new Map(
