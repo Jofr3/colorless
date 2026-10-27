@@ -7,6 +7,7 @@ local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
 local Account = require('ui.account')
 local Codec = require('ui.codec')
+local Bridge = require('ui.bridge')
 local Mailbox = require('ui.mailbox')
 local Library = require('ui.library')
 local Builder = require('ui.builder')
@@ -65,7 +66,7 @@ local function sound(name,pitch,volume,sourceVolume)
   local gain=sourceVolume and (volume or 1) or (quiet[name] or 0.6)*(volume or 1)
   s:setPitch(pitch or 1);s:setVolume(gain*preferences.volume/100*preferences.effectsVolume/100);s:play()
 end
-local function announce(text) print('COLORLESS:announce:'..text) end
+local function announce(text) Bridge.emit('announce',text) end
 local function layout(w,h)
   width,height=w,h
   state.pressed=nil
@@ -141,13 +142,13 @@ applyPage=function(page,deckId)
   elseif page=='match' then
     library:command('close');simulator:open(state.reduced,false,'online',deckId or '')
   elseif page=='builder' then
-    library:command('close');builder:open(state.reduced,deckId);print('COLORLESS:account:refresh')
+    library:command('close');builder:open(state.reduced,deckId);Bridge.emit('account','refresh')
   elseif page=='sandbox' then
-    library:command('close');sandbox:open(state.reduced);print('COLORLESS:account:refresh')
+    library:command('close');sandbox:open(state.reduced);Bridge.emit('account','refresh')
   elseif page=='decks' then
-    library:open(state.reduced);print('COLORLESS:account:refresh')
+    library:open(state.reduced);Bridge.emit('account','refresh')
   elseif page=='online' then
-    library:command('close');room.jiggle=room.jiggle+1;online:open(state.reduced,deckId or '');print('COLORLESS:account:refresh')
+    library:command('close');room.jiggle=room.jiggle+1;online:open(state.reduced,deckId or '');Bridge.emit('account','refresh')
   else library:closeModal();library:command('close') end
 end
 startWipe=function(callback)
@@ -158,7 +159,7 @@ startWipe=function(callback)
   local colour=isTable(state.page) and simulator:backgroundColours()[2] or T.panel
   wipe=ScreenWipe.new(callback,colour,state.reduced,function(name,pitch,volume) sound(name,pitch,volume,true) end)
   wipe:layout(virtualWidth,virtualHeight,Screen.unit(width,height)/layoutScale,width/layoutScale,height/layoutScale)
-  print('COLORLESS:transition:open')
+  Bridge.emit('transition','open')
   return true
 end
 requestPage=function(page,deckId)
@@ -217,14 +218,14 @@ applyPreferences=function()
 end
 local function savePreferences()
   applyPreferences()
-  print('COLORLESS:preferences:'..preferences:serialize())
+  Bridge.emit('preferences',preferences:serialize())
 end
 closeSettings=function()
-  print('COLORLESS:auth:close')
-  print('COLORLESS:account:finish-edit')
+  Bridge.emit('auth','close')
+  Bridge.emit('account','finish-edit')
   popup=nil; state.pressed=nil; state.focused=#menu+2; state.hovered=0
   savePreferences()
-  print('COLORLESS:settings:closed')
+  Bridge.emit('settings','closed')
   announce('Settings closed')
 end
 openSettings=function(keyboard,tab)
@@ -236,21 +237,21 @@ openSettings=function(keyboard,tab)
     changed=savePreferences,close=closeSettings,announce=announce,
     reduced=function() return state.reduced end,
     feedback=function() sound('button'); room.jiggle=room.jiggle+0.5 end,
-    account=function(command) print('COLORLESS:account:'..command) end,
-    auth=function(command) print('COLORLESS:auth:'..command) end,
+    account=function(command) Bridge.send('account',command) end,
+    auth=function(command) Bridge.send('auth',command) end,
   },state.reduced,keyboard,account)
   popup.tab=Settings.tabs[tab or 'game'] or Settings.tabs.game
   if keyboard then popup.focus=popup.tab end
   popup:layout(virtualWidth,virtualHeight)
-  print('COLORLESS:account:refresh')
-  print('COLORLESS:settings:open')
+  Bridge.emit('account','refresh')
+  Bridge.emit('settings','open')
   announce('Settings. '..(popup.tab==Settings.tabs.account and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
 end
 -- What every screen gets: its command channel, sound, announcements and the
 -- sign-in popup (a no-op while a wipe blocks Settings). `extra` adds or overrides.
 local function callbacksFor(channel,extra)
   local callbacks={
-    command=function(command) print('COLORLESS:'..channel..':'..command) end,
+    command=function(command) Bridge.send(channel,command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     signin=function() openSettings(false,'account'); if popup then popup:openAuth('login') end end,
@@ -264,9 +265,9 @@ local function activate(index)
   room.jiggle=room.jiggle+0.5
   state.lastClicked={index=index,at=state.time}
   local item=index<=#menu and menu[index] or controls[index-#menu]
-  if item.action=='sandbox' then print('COLORLESS:simulator:resume')
-  elseif item.action=='decks' then print('COLORLESS:page:decks')
-  elseif item.action=='online' then print('COLORLESS:page:online')
+  if item.action=='sandbox' then Bridge.emit('simulator','resume')
+  elseif item.action=='decks' then Bridge.emit('page','decks')
+  elseif item.action=='online' then Bridge.emit('page','online')
   elseif item.action=='settings' then openSettings()
   elseif item.action=='account' then openSettings(false,'account') end
 end
@@ -277,13 +278,13 @@ function love.load()
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
   for _,name in ipairs({'splash','background','CRT','dissolve','played'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
   for _,name in ipairs(effects) do unloadedEffects[name]=true end
-  local function refresh() print('COLORLESS:account:refresh') end
-  local function home() print('COLORLESS:page:home') end
+  local function refresh() Bridge.emit('account','refresh') end
+  local function home() Bridge.emit('page','home') end
   local function settings() openSettings() end
   local function jiggle(amount) room.jiggle=room.jiggle+(amount or 1) end
   library=Library.new(callbacksFor('library',{refresh=refresh,home=home,settings=settings}))
   builder=Builder.new(callbacksFor('builder'))
-  sandbox=Sandbox.new(callbacksFor('sandbox',{refresh=refresh,home=home,decks=function() print('COLORLESS:page:decks') end}))
+  sandbox=Sandbox.new(callbacksFor('sandbox',{refresh=refresh,home=home,decks=function() Bridge.emit('page','decks') end}))
   online=Online.new(callbacksFor('online',{home=home,jiggle=jiggle}))
   simulator=Simulator.new(callbacksFor('simulator',{transition=function(callback) return startWipe(callback) end,
     sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,settings=settings,jiggle=jiggle}))
@@ -293,7 +294,7 @@ function love.load()
   browserState()
   followPage()
   state.ready=true
-  print('COLORLESS:ready')
+  Bridge.emit('ready')
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
@@ -319,7 +320,7 @@ function love.update(dt)
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   if wipe and wipe:update(dt) then
     wipe:release();wipe=nil
-    print('COLORLESS:transition:closed')
+    Bridge.emit('transition','closed')
     if pendingPage then requestPage(pendingPage.page,pendingPage.deckId) end
   end
   local mx,my=pointer(love.mouse.getPosition())

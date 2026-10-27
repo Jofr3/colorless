@@ -76,14 +76,18 @@ describe("updateProfileRequestSchema", () => {
 });
 
 describe("deleteAccountRequestSchema", () => {
-  it("accepts a password, or none for an OAuth-only account", () => {
+  it("accepts a password, or the typed email for an OAuth-only account", () => {
     expect(deleteAccountRequestSchema.parse({ password: "x" })).toEqual({ password: "x" });
+    expect(deleteAccountRequestSchema.parse({ confirmEmail: " Ash@Example.com" })).toEqual({
+      confirmEmail: " Ash@Example.com",
+    });
     expect(deleteAccountRequestSchema.parse({})).toEqual({});
   });
 
   it.each([
     ["an empty password", { password: "" }],
     ["a password past 256 chars", { password: "x".repeat(257) }],
+    ["a confirmation past 254 chars", { confirmEmail: "x".repeat(255) }],
   ])("rejects %s", (_label, body) => {
     expect(deleteAccountRequestSchema.safeParse(body).success).toBe(false);
   });

@@ -2,6 +2,7 @@
 -- A single opaque square, not a fade. The source's 'before' event flips the
 -- card immediately and blocks the scene change for 0.7 REAL seconds.
 local Card=require('ui.card')
+local Bridge=require('ui.bridge')
 local CardBack=require('ui.card_back')
 local CardFrame=require('ui.card_frame')
 local D=require('ui.card_dimensions')
@@ -43,8 +44,8 @@ function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
     -- or the window resizes; neither should change the selected artwork.
     self.face=face;self.face:setFilter('linear','linear')
     self.border=CardFrame.border(self.art.path)
-    if self.art.token then print('COLORLESS:transition-art:used:'..self.art.token)
-    elseif rejectedToken then print('COLORLESS:transition-art:invalid:'..rejectedToken) end
+    if self.art.token then Bridge.emit('transition-art','used',self.art.token)
+    elseif rejectedToken then Bridge.emit('transition-art','invalid',rejectedToken) end
     self.card=Card.new({edition='dissolve',resolution=2,drawFace=function(cw,ch)
       g.setColor(1,1,1)
       if self.front then

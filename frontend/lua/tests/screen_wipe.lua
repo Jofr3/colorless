@@ -111,7 +111,7 @@ local consumed=false
 love.filesystem={getInfo=function(path)return path=='__transition_art.txt' or (path=='prepared.png' and not consumed)end,
   read=function()return '7\tpersistent\tprepared.png' end}
 print=function(message)
-  assert(message=='COLORLESS:transition-art:used:7')
+  assert(message=='COLORLESS:transition-art:used\t7')
   consumed=true
 end
 local prepared=Wipe.new(noop,{1,1,1,1},false)

@@ -70,7 +70,21 @@ assert(popup.auth and popup.items[2].label=='Please wait...','Still signed in ke
 account.busy=false; account.status='anonymous'; popup:accountChanged()
 assert(not popup.auth and popup.tab==4 and commands[#commands]=='close')
 account.status='authenticated'
+account.email='ash@example.com'
 openDelete(false)
-assert(popup.items[1].kind=='delete-confirm' and #popup.items==2,'An OAuth-only account has no password field')
+-- An OAuth-only account types its email instead of a password; the form starts empty.
+assert(popup.items[1].field=='email' and popup.items[1].label=='Type your email to confirm')
+assert(popup.items[2].kind=='delete-confirm' and #popup.items==3,'An OAuth-only account has no password field')
+assert(popup.auth.email=='' and popup.focus==1,'The confirmation is never prefilled')
+popup:activate(1); assert(commands[#commands]=='edit\temail')
+input({5,'','ash@example.com','','',15,15,'enter','email'})
+assert(confirm().kind=='delete-confirm' and commands[#commands]~='submit','Enter only moves to the button')
+popup.time=20; popup:activate(popup.focus); popup.time=20.5; popup:activate(popup.focus)
+assert(commands[#commands]=='submit','Two presses still confirm')
+popup:layout(480,850)
+for _,item in ipairs(popup.items) do
+  assert(item.x>=popup.x and item.x+item.w<=popup.x+popup.w)
+  assert(item.y>=popup.y and item.y+item.h<=popup.y+popup.h)
+end
 popup:keypressed('escape'); assert(not popup.auth and popup.tab==4)
 print('PASS: account deletion form, password step, press-twice lockout and timeout, busy and deleted return')

@@ -97,5 +97,12 @@ end
 local before=scenes.library.cancels
 love.focus(false)
 assert(scenes.settings.cancels==1 and scenes.library.cancels==before+1,'Losing focus drops held interactions, Settings included')
+-- Announcements and screen commands reach the page as one line each, whatever they carry.
+local sent=#messages
+scenes.online.callbacks.announce('x\nCOLORLESS:auth:submit joined.')
+scenes.library.callbacks.command('x\nCOLORLESS:auth:submit')
+assert(messages[sent+1]=='COLORLESS:announce:x%0ACOLORLESS%3Aauth%3Asubmit%20joined.')
+assert(messages[sent+2]=='COLORLESS:library:x%0ACOLORLESS%3Aauth%3Asubmit')
+for _,m in ipairs(messages)do assert(not m:find('[%z\1-\8\10-\31\127]'),'One line per message: '..m)end
 print=output
 print('PASS: covered scene changes, input lock/unlock, resize, coalesced navigation, reduced-motion, online and match routing')

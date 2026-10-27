@@ -229,7 +229,9 @@ only the conclusion.
   the deferred bridge module has run and called `colorlessHost.connect`; when it has not, the
   host shows the failure overlay instead of starting. Everything else is TypeScript in
   `src/host/` (`router.ts` owns routes and history, `shell.ts` takes Lua's
-  `COLORLESS:<channel>:` prints, `textProxy.ts` drives the native inputs with the shared
+  `COLORLESS:<channel>:` prints, which Lua sends only through `ui/bridge.lua` with every
+  payload field percent-encoded, so no data can break a line and forge a command;
+  `scripts/lua-bridge-guard.ts` fails on any other stdout write; `textProxy.ts` drives the native inputs with the shared
   `[revision, field, value, selectionStart, selectionEnd, action]` record), wired by
   `src/lua/bridge.ts`, which registers the screen adapters in one table. The host script has
   no imports, so it receives data (mailbox names, the artwork cache) through `connect`. Lua

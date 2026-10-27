@@ -44,9 +44,11 @@ export const updateProfileRequestSchema = z.object({
 });
 export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;
 
-/** Deleting your own account (DELETE /auth/me). An account with a password must send it; an
-    OAuth-only account has none to send. Same bounds as login. */
+/** Deleting your own account (DELETE /auth/me). An account with a password must send it (same
+    bounds as login). An OAuth-only account has none, so it must type its email instead, which the
+    server compares trimmed and case-insensitively: a cookie alone never deletes an account. */
 export const deleteAccountRequestSchema = z.object({
   password: z.string().min(1).max(256).optional(),
+  confirmEmail: z.string().max(254).optional(),
 });
 export type DeleteAccountRequest = z.infer<typeof deleteAccountRequestSchema>;

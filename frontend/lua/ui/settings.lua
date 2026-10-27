@@ -91,11 +91,15 @@ function Settings:buildDelete()
   local x=self.x+(self.w-w)/2
   self.items={}
   local y=250
+  -- The server asks for the password, or without one the email typed out; it is never filled in.
   if self.account.hasPassword then
     self.items[1]={kind='auth-field',label='Password',field='password',placeholder='Your password',
       x=x,y=self.y+y,w=w,h=40,fontSize=27,colour=T.red}
-    y=y+90
+  else
+    self.items[1]={kind='auth-field',label='Type your email to confirm',field='email',placeholder='Your account email',
+      x=x,y=self.y+y,w=w,h=40,fontSize=27,colour=T.red}
   end
+  y=y+90
   local label=self.account.busy and 'Please wait...' or self.armed and 'Press again to delete' or 'Delete account'
   self.items[#self.items+1]={kind='delete-confirm',label=label,x=x,y=self.y+y,w=w,h=40,fontSize=27,colour=T.red}
   self.authMessageY=y+52

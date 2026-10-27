@@ -224,7 +224,9 @@ export function updateProfile(body: UpdateProfileRequest): Promise<User> {
 
 /** Delete your own account and everything it owns; the 204 clears the cookie. 401 with
     `{error: "invalid password"}` for a wrong or missing password, or `{error: "unauthorized"}`
-    when the session is gone; 429 when the password has been guessed at too often. */
+    when the session is gone; 403 `{error: "email confirmation mismatch"}` when an OAuth-only
+    account's typed email is missing or different; 429 when the password has been guessed at too
+    often. */
 export function deleteAccount(body: DeleteAccountRequest): Promise<void> {
   return request("/auth/me", { method: "DELETE", body, recoverSession: false });
 }

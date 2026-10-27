@@ -470,13 +470,37 @@ describe("DELETE /auth/me", () => {
     ]);
   });
 
-  it("deletes an OAuth-only account without a password", async () => {
+  it("deletes an OAuth-only account whose email is typed, trimmed and in any case", async () => {
     const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
     await seedLibrary(userId, "brock");
-    const res = await deleteAccount(cookie, {});
+    const res = await deleteAccount(cookie, { confirmEmail: "  Brock@Example.COM " });
     expect(res.status).toBe(204);
     expect(await ownedRows(userId, "brock")).toEqual(NONE);
     expect((await me(cookie)).status).toBe(401);
+  });
+
+  it("403s an OAuth-only delete without its email, or with another, and keeps the account", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
+    await seedLibrary(userId, "brock");
+    for (const body of [{}, { confirmEmail: "" }, { confirmEmail: "misty@example.com" }]) {
+      const res = await deleteAccount(cookie, body);
+      expect(res.status).toBe(403);
+      expect(await res.json()).toEqual({ error: "email confirmation mismatch" });
+    }
+    expect((await ownedRows(userId, "brock")).users).toBe(1);
+    expect((await me(cookie)).status).toBe(200);
+    expect(logged()).toEqual([
+      { evt: "auth", kind: "delete_failed", reason: "no_confirm_email" },
+      { evt: "auth", kind: "delete_failed", reason: "wrong_confirm_email" },
+      { evt: "auth", kind: "delete_failed", reason: "wrong_confirm_email" },
+    ]);
+  });
+
+  it("asks a password account for its password, not its email", async () => {
+    const cookie = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const res = await deleteAccount(cookie, { confirmEmail: "misty@example.com" });
+    expect(res.status).toBe(401);
+    expect(await userRows()).toHaveLength(1);
   });
 
   it("counts attempts in its own scope and 429s an exhausted one, even with the password", async () => {

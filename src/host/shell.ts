@@ -37,9 +37,9 @@ export interface ShellPorts {
   command(screen: BridgeScreen, raw: string): void;
   navigate(page: string): void;
   authenticate(request: AuthRequest): void;
-  /** Deletes the signed-in account; `password` is the auth form's field, empty for an OAuth-only
-   * account. */
-  deleteAccount(password: string): void;
+  /** Deletes the signed-in account with the auth form's fields: the password, or for an
+   * OAuth-only account the email typed to confirm. */
+  deleteAccount(password: string, email: string): void;
 }
 
 /** What the auth form is open for: signing in, creating an account, or confirming a deletion. */
@@ -75,6 +75,21 @@ export function normalizeCodeField(element: { value: string; selectionStart: num
     ? value.length
     : normalizeLobbyCode(element.value.slice(0, element.selectionStart ?? 0)).length;
   return { value, caret };
+}
+
+/** One print from Lua (frontend/lua/ui/bridge.lua): `COLORLESS:<channel>` or
+    `COLORLESS:<channel>:<payload>`, the payload being percent-encoded TAB-joined fields. Anything
+    else, a payload with an unencoded byte included, is not a command. */
+export function parsePrint(message: string): { channel: string; rest: string } | null {
+  const match = /^COLORLESS:([a-z][a-z-]*)(?::([\w.~%\t-]*))?$/.exec(message);
+  if (!match) return null;
+  return { channel: match[1] ?? "", rest: match[2] ?? "" };
+}
+
+/** A payload of one text field, decoded, with control characters shown as spaces. */
+export function printText(rest: string): string {
+  const [text = ""] = decodeFields(rest) ?? [];
+  return text.replace(/\p{Cc}/gu, " ");
 }
 
 /** The live region's next text: a repeat of the current message gains a trailing no-break space,
@@ -238,9 +253,9 @@ export class HostShell {
   }
 
   onPrint(message: string) {
-    const match = /^COLORLESS:([a-z-]+)(?::([\s\S]*))?$/.exec(message);
-    if (!match) return;
-    const [, channel = "", rest = ""] = match;
+    const print = parsePrint(message);
+    if (!print) return;
+    const { channel, rest } = print;
     switch (channel) {
       case "ready":
         this.ready = true;
@@ -248,7 +263,7 @@ export class HostShell {
         this.focusCanvas();
         break;
       case "page":
-        this.ports.navigate(rest);
+        this.ports.navigate(printText(rest));
         break;
       case "library":
       case "sandbox":
@@ -269,17 +284,20 @@ export class HostShell {
         break;
       case "announce": {
         const region = this.doc.getElementById("announcement");
-        if (region) region.textContent = nextAnnouncement(region.textContent ?? "", rest);
+        if (region)
+          region.textContent = nextAnnouncement(region.textContent ?? "", printText(rest));
         break;
       }
       case "preferences":
-        writePersisted(PREFERENCES_KEY, rest);
+        writePersisted(PREFERENCES_KEY, printText(rest));
         break;
-      case "settings":
-        if (rest === "open" || rest === "closed") this.settingsChanged(rest === "open");
+      case "settings": {
+        const state = printText(rest);
+        if (state === "open" || state === "closed") this.settingsChanged(state === "open");
         break;
+      }
       case "transition":
-        this.transitionOpen = rest === "open";
+        this.transitionOpen = printText(rest) === "open";
         this.syncModal();
         break;
     }
@@ -390,7 +408,7 @@ export class HostShell {
   }
 
   private authPrint(raw: string) {
-    const [action = "", value = ""] = raw.split("\t");
+    const [action = "", value = ""] = decodeFields(raw) ?? [];
     if (action === "open") {
       this.name.finish();
       this.auth.finish();
@@ -398,6 +416,12 @@ export class HostShell {
       this.authInput("password").value = "";
       this.authInput("password").autocomplete =
         this.authMode === "register" ? "new-password" : "current-password";
+      // A deletion's email is typed, never filled in: by this page or by the browser.
+      const email = this.authInput("email");
+      const deleting = this.authMode === "delete";
+      if (deleting) email.value = "";
+      email.autocomplete = deleting ? "off" : "username";
+      email.setAttribute("aria-label", deleting ? "Type your email to confirm" : "Email");
       this.auth.publish("reset");
       this.ports.command("account", "clear-message");
       this.canvas.setAttribute(
@@ -409,7 +433,7 @@ export class HostShell {
     } else if (action === "submit") {
       this.auth.finish();
       if (this.authMode === "delete") {
-        this.ports.deleteAccount(this.authInput("password").value);
+        this.ports.deleteAccount(this.authInput("password").value, this.authInput("email").value);
         return;
       }
       this.ports.authenticate({
