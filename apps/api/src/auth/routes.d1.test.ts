@@ -11,7 +11,7 @@ import {
 } from "../testing/d1";
 import { packStateCookieValue } from "./oauth";
 import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash } from "./password";
-import { ACCOUNT_MAX_ATTEMPTS, rateLimitKeys } from "./rateLimit";
+import { ACCOUNT_MAX_ATTEMPTS, rateLimitKeys, UNAVAILABLE_RETRY_SECONDS } from "./rateLimit";
 
 // One catalog card, for the deck contents account deletion must take with it.
 const d1 = useTestD1((db) =>
@@ -321,28 +321,32 @@ describe("register and login rate limiting", () => {
     expect(other.status).toBe(401);
   });
 
-  it("lets the attempt through when the counting batch fails", async () => {
-    // A fresh env per request, whose first batch (the limiter's) fails as a spent write quota.
-    const env = () => {
-      let failed = false;
-      const db = new Proxy(d1().db, {
-        get(target, property) {
-          if (property === "batch" && !failed) {
-            failed = true;
-            return () => Promise.reject(new Error("D1_ERROR: rows written limit exceeded"));
-          }
-          const value = Reflect.get(target, property);
-          return typeof value === "function" ? value.bind(target) : value;
-        },
-      });
-      return d1().env({ DB: db });
-    };
+  it("answers 503 to every attempt, right or wrong, while the counting batch fails", async () => {
     const headers = { "cf-connecting-ip": "203.0.113.9" };
-    const registered = await app.request("/auth/register", postJson(body, headers), env());
-    expect(registered.status).toBe(201);
-    const res = await app.request("/auth/login", postJson(body, headers), env());
-    expect(res.status).toBe(200);
-    expect((await me(sessionCookieOf(res))).status).toBe(200);
+    expect((await app.request("/auth/register", postJson(body, headers), d1().env())).status).toBe(
+      201,
+    );
+    // Every batch fails, as on a spent daily write quota; single reads still work.
+    const db = new Proxy(d1().db, {
+      get(target, property) {
+        if (property === "batch") {
+          return () => Promise.reject(new Error("D1_ERROR: rows written limit exceeded"));
+        }
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const env = d1().env({ DB: db });
+    const guesses = [...Array.from({ length: 12 }, (_, i) => `wrong-guess-${i}`), body.password];
+    for (const password of guesses) {
+      const res = await app.request("/auth/login", postJson({ ...body, password }, headers), env);
+      // The right password is not told apart from a wrong one: no 401 oracle, no 500.
+      expect(res.status).toBe(503);
+      expect(res.headers.get("Retry-After")).toBe(String(UNAVAILABLE_RETRY_SECONDS));
+      expect(await res.json()).toEqual({ error: "temporarily unavailable, try again later" });
+    }
+    const other = { email: "brock@example.com", password: "onix-7890" };
+    expect((await app.request("/auth/register", postJson(other, headers), env)).status).toBe(503);
     // Throttled to one line per isolate while the failure lasts.
     expect(logged()).toEqual([{ evt: "auth", kind: "limiter_error", error: "Error", quota: true }]);
     expect(JSON.stringify(logged())).not.toMatch(/misty|203\.0\.113\.9/);
@@ -670,6 +674,57 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     expect(await userRows()).toMatchObject([{ id: winner }]);
     const session = await me(sessionCookieOf(res));
     expect(((await session.json()) as { id: string }).id).toBe(winner);
+  });
+
+  it("retries a link whose single identity insert lost the race (drizzle wraps that error)", async () => {
+    const db = d1().db;
+    const brock = await insertUser({ email: "brock@example.com", emailVerified: true });
+    let raced = false;
+    // A concurrent callback links the same identity just before this one's insert runs.
+    const racing = new Proxy(db, {
+      get(target, property) {
+        if (property === "prepare") {
+          return (query: string) => {
+            if (!raced && /^insert into "oauth_identities"/i.test(query)) {
+              raced = true;
+              return {
+                bind: (...values: unknown[]) => {
+                  const statement = target.prepare(query).bind(...values);
+                  const first = async <R>(run: () => Promise<R>) => {
+                    await target
+                      .prepare(
+                        "INSERT INTO oauth_identities (provider, provider_id, user_id) VALUES ('google', 'g-8', ?)",
+                      )
+                      .bind(brock)
+                      .run();
+                    return run();
+                  };
+                  return new Proxy(statement, {
+                    get(inner, name) {
+                      const value = Reflect.get(inner, name);
+                      return typeof value === "function"
+                        ? (...args: unknown[]) => first(() => value.apply(inner, args))
+                        : value;
+                    },
+                  });
+                },
+              };
+            }
+            return target.prepare(query);
+          };
+        }
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const res = await oauthCallback(
+      { sub: "g-8", email: "brock@example.com", email_verified: true },
+      d1().env({ ...GOOGLE, DB: racing }),
+    );
+    expect(raced).toBe(true);
+    expect(authErrorOf(res)).toBeNull();
+    const session = await me(sessionCookieOf(res));
+    expect(((await session.json()) as { id: string }).id).toBe(brock);
   });
 
   // Linking keeps an unverified account's password and sessions, so whoever registered the

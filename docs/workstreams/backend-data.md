@@ -251,7 +251,9 @@ data loss rather than a validation failure.
   `SameSite=None` because the web app lives on a **different origin**: the
   Worker runs `hono/cors` app-wide with `origin = APP_ORIGIN` (wrangler.jsonc
   `vars`, dev default `http://localhost:5173`) and `credentials: true`, and
-  the client fetches with `credentials: "include"`.
+  the client fetches with `credentials: "include"`. Preflights allow only the
+  `Content-Type` request header and `GET, HEAD, POST, PATCH, DELETE`, which is
+  all the client sends.
 - **Email + password:** PBKDF2-SHA256 via WebCrypto (zero deps,
   Workers-native), stored as `pbkdf2$<iterations>$<salt-b64url>$<hash-b64url>`
   — verify reads the iteration count from the encoding, so raising the
@@ -266,7 +268,9 @@ data loss rather than a validation failure.
   The counting upserts run in the same `db.batch` as the user lookup, so they
   are exact under concurrency and cost no extra round trip; an attempt already
   over budget writes nothing. Over budget → 429 with `Retry-After`. A D1 error
-  fails open (`evt = "auth", kind = "limiter_error"`). The profile's
+  (such as a spent write quota) fails closed: 503 with `Retry-After: 60`, and
+  `evt = "auth", kind = "limiter_error"` (security audit AU5; failing open made
+  login an unthrottled password oracle once writes failed). The profile's
   favourite-deck field is retired: `PATCH /auth/me` ignores `favouriteDeckId`
   and users no longer carry it; the `users.favourite_deck_id` column stays.
 - **Account deletion** (database audit OP6): `DELETE /auth/me` with
@@ -572,6 +576,7 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
 | `evt = "auth"` | Login, register and OAuth failures, account deletions (`apps/api/src/auth/`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
+| `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
 | `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
 
@@ -904,6 +909,20 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 
 ## 6. API surface (v1)
 
+Every response carries `X-Content-Type-Options: nosniff` and
+`Cross-Origin-Resource-Policy: same-site` (the web app and the API share the
+`<account>.workers.dev` site). Every error body is JSON `{error, …}`: unmatched
+routes (404), Hono's own errors such as a malformed JSON body (400), and
+uncaught throws (500 `internal error`, logged as `evt = "http", kind =
+"unhandled"` with the method, route pattern, error and cause names, the SQL
+without its parameters, and a `quota` flag; never the message, which holds a
+failed query's bound values). A request body over 64 KB answers 413 `{error:
+"body too large", limit}` before it is parsed; the largest real body, a
+200-entry deck save, is about 8 KB. A failed validation answers 400 `{error:
+"invalid body" | "invalid query", issues}` with at most 20 issues. Routes
+behind a session check it before validating the body, so an anonymous caller
+gets 401 without the API validating anything.
+
 ```
 GET    /health
 GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or 503
@@ -972,9 +991,10 @@ GET    /assets/sets/:setId/:file     # logo|symbol . png|webp  (e.g. symbol.png)
 # Auth (D2a) — implemented (§3.5 as-built); bodies validated, users
 # boundary-parsed through @colorless/schema userSchema (never any hash field)
 POST   /auth/register            # {email, password, displayName?} → 201 user + session
-                                 #   cookie; 400 invalid body; 409 duplicate email; 429 rate-limited
+                                 #   cookie; 400 invalid body; 409 duplicate email; 429 rate-limited;
+                                 #   503 when the limiter cannot count (D1 error)
 POST   /auth/login               # {email, password} → 200 user + session cookie;
-                                 #   uniform 401 on any failure; 429 rate-limited
+                                 #   uniform 401 on any failure; 429 rate-limited; 503 as above
 POST   /auth/logout              # deletes the session row, clears the cookie → 204
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
 DELETE /auth/me                  # {password?} → 204, deletes the account (cascades), clears the

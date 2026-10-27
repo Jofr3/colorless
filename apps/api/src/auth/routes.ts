@@ -24,6 +24,7 @@ import { type Context, Hono } from "hono";
 import { oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
 import { clientIpKey } from "../http/clientIp";
+import { chainMentions } from "../http/errors";
 import { logEvent, logEventThrottled } from "../http/log";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
@@ -77,8 +78,9 @@ function mapUserRow(row: UserRow): User {
   };
 }
 
-/** Count this attempt and run `lookup` in one D1 batch. An over-budget attempt answers 429 and
-    exposes nothing about the lookup. */
+/** Count this attempt and run `lookup` in one D1 batch. An over-budget attempt answers 429, and
+    one the limiter could not count (a D1 error, such as a spent write quota) 503; neither exposes
+    anything about the lookup. */
 async function afterRateLimit<T>(
   c: Context,
   db: Db,
@@ -91,9 +93,12 @@ async function afterRateLimit<T>(
   if (attempt.allowed) {
     return { limited: null, found: attempt.found };
   }
+  c.header("Retry-After", String(attempt.retryAfterSeconds));
+  if (attempt.reason === "unavailable") {
+    return { limited: c.json({ error: "temporarily unavailable, try again later" }, 503) };
+  }
   // Throttled: a brute-force burst answers 429 on every attempt past the budget.
   logEventThrottled("auth", "rate_limited", { scope });
-  c.header("Retry-After", String(attempt.retryAfterSeconds));
   return { limited: c.json({ error: "too many attempts" }, 429) };
 }
 
@@ -148,9 +153,10 @@ function newUserRow(
 }
 
 /** D1 surfaces SQLite constraint failures as message text — good enough to
-    turn a register/link race into a 409 instead of a 500. */
+    turn a register/link race into a 409 instead of a 500. A batch throws D1's error itself; a
+    single query throws drizzle's wrapper, which keeps that text on `cause`. */
 function isUniqueViolation(error: unknown): boolean {
-  return error instanceof Error && error.message.includes("UNIQUE constraint failed");
+  return chainMentions(error, /UNIQUE constraint failed/);
 }
 
 // --- email + password ------------------------------------------------------
