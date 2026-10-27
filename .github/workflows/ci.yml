@@ -60,6 +60,15 @@ jobs:
           \( -name '*.tsbuildinfo' -o -path './packages/*/dist/*' \)
           -exec touch -d 2000-01-01 {} +
 
+      # The mutant binding gate's verdicts from the previous run. The gate
+      # discards a cache stamped by another version of itself.
+      - name: Cache binding-gate verdicts
+        uses: actions/cache@v4
+        with:
+          path: tmp/binding-gate-cache.json
+          key: ${{ runner.os }}-binding-gate-${{ hashFiles('scripts/mutation/binding-gate.ts', 'bun.lock') }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-binding-gate-${{ hashFiles('scripts/mutation/binding-gate.ts', 'bun.lock') }}-
+
       - name: Static checks
         run: bun run check:static
 
