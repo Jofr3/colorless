@@ -58,7 +58,7 @@ export async function createTestD1(): Promise<TestD1> {
       ({ DB: db, ASSETS: undefined, CACHE: kv, ...overrides }) as unknown as Env,
     reset: async () => {
       // Deleting users cascades to sessions, identities, folders, decks and deck cards.
-      await db.prepare("DELETE FROM users").run();
+      await db.batch([db.prepare("DELETE FROM users"), db.prepare("DELETE FROM auth_rate_limits")]);
       const { keys } = await kv.list();
       await Promise.all(keys.map((key) => kv.delete(key.name)));
     },

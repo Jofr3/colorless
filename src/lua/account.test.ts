@@ -80,9 +80,9 @@ describe("Lua account adapter", () => {
     const fields = String(publish.mock.lastCall?.[0]).split("\t").map(decodeURIComponent);
     expect(fields[5]).toBe("Zoë");
   });
-  it("does not load decks or submit a favourite-deck change", async () => {
+  it("saves without loading decks", async () => {
     const { impl, calls } = stubFetch({
-      "GET /auth/me": () => json({ ...USER, favouriteDeckId: "existing-deck" }),
+      "GET /auth/me": () => json(USER),
       "PATCH /auth/me": () => json(USER),
     });
     const { account } = setup();

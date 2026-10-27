@@ -52,29 +52,16 @@ describe("updateProfileRequestSchema", () => {
     );
   });
 
-  it("carries a favourite-deck id when given one", () => {
+  it("strips the retired favourite-deck id an older client may still send", () => {
     expect(
-      updateProfileRequestSchema.parse({ displayName: "Brock", favouriteDeckId: "deck-1" })
-        .favouriteDeckId,
-    ).toBe("deck-1");
-  });
-
-  it("accepts null to clear the favourite, and absent to leave it unchanged", () => {
-    expect(
-      updateProfileRequestSchema.parse({ displayName: "Brock", favouriteDeckId: null })
-        .favouriteDeckId,
-    ).toBeNull();
-    // Omitted → undefined: the handler reads that as "don't touch it".
-    expect(
-      updateProfileRequestSchema.parse({ displayName: "Brock" }).favouriteDeckId,
-    ).toBeUndefined();
+      updateProfileRequestSchema.parse({ displayName: "Brock", favouriteDeckId: "deck-1" }),
+    ).toEqual({ displayName: "Brock" });
   });
 
   it.each([
     ["a blank name", { displayName: "   " }],
     ["a missing name — unlike register, it is required here", {}],
     ["a name past 64 chars", { displayName: "x".repeat(65) }],
-    ["a non-string favourite id", { displayName: "Brock", favouriteDeckId: 7 }],
   ])("rejects %s", (_label, body) => {
     expect(updateProfileRequestSchema.safeParse(body).success).toBe(false);
   });
@@ -88,7 +75,6 @@ describe("userSchema", () => {
       displayName: "Ash",
       emailVerified: false,
       avatarSeed: "1a2b3c4d",
-      favouriteDeckId: null,
       createdAt: "2026-07-09T00:00:00.000Z",
       passwordHash: "should-be-stripped",
     });

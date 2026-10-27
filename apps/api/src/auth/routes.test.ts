@@ -3,7 +3,6 @@ import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { unpackStateCookieValue } from "./oauth";
-import { RATE_LIMIT_MAX_ATTEMPTS } from "./rateLimit";
 
 let warn: MockInstance<typeof console.warn>;
 
@@ -22,18 +21,6 @@ function logged(): Record<string, unknown>[] {
   return warn.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
 }
 
-/** In-memory stand-in for the CACHE KV namespace. */
-function fakeKv(seed: Record<string, string> = {}) {
-  const store = new Map(Object.entries(seed));
-  const kv = {
-    get: async (key: string) => store.get(key) ?? null,
-    put: async (key: string, value: string) => {
-      store.set(key, value);
-    },
-  };
-  return { kv, store };
-}
-
 /** DB/ASSETS stay undefined — any touch throws loudly, proving order. */
 function envWith(overrides: Partial<Record<keyof Env, unknown>> = {}): Env {
   return { DB: undefined, ASSETS: undefined, CACHE: undefined, ...overrides } as unknown as Env;
@@ -48,7 +35,7 @@ function postJson(body: unknown, headers: Record<string, string> = {}) {
 }
 
 describe("POST /auth/register|login body validation", () => {
-  it("400s invalid bodies with a terse JSON error, before KV or D1", async () => {
+  it("400s invalid bodies with a terse JSON error, before D1", async () => {
     const cases: [string, unknown][] = [
       ["/auth/register", { email: "not-an-email", password: "long-enough" }],
       ["/auth/register", { email: "a@b.co", password: "short" }],
@@ -57,64 +44,13 @@ describe("POST /auth/register|login body validation", () => {
       ["/auth/login", {}],
     ];
     for (const [path, body] of cases) {
-      // Even CACHE is undefined: validation must come before rate limiting.
+      // DB is undefined: validation must come before rate limiting.
       const res = await app.request(path, postJson(body), envWith());
       expect(res.status).toBe(400);
       const payload = (await res.json()) as { error: string; issues: string[] };
       expect(payload.error).toBe("invalid body");
       expect(payload.issues.length).toBeGreaterThan(0);
     }
-  });
-});
-
-describe("auth rate limiting", () => {
-  const seededEnv = (key: string) => {
-    const { kv } = fakeKv({
-      [key]: JSON.stringify({
-        count: RATE_LIMIT_MAX_ATTEMPTS,
-        resetAt: Date.now() + 10 * 60 * 1000,
-      }),
-    });
-    return envWith({ CACHE: kv });
-  };
-
-  it("429s register/login once the (ip, email) window is exhausted — before D1", async () => {
-    for (const [path, scope] of [
-      ["/auth/register", "register"],
-      ["/auth/login", "login"],
-    ] as const) {
-      const env = seededEnv(`ratelimit:${scope}:203.0.113.9:ash@example.com`);
-      const res = await app.request(
-        path,
-        postJson(
-          { email: "Ash@example.com", password: "long-enough-pw" },
-          { "cf-connecting-ip": "203.0.113.9" },
-        ),
-        env,
-      );
-      expect(res.status).toBe(429);
-      expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(0);
-      expect(((await res.json()) as { error: string }).error).toBe("too many attempts");
-      expect(logged()).toEqual([{ evt: "auth", kind: "rate_limited", scope }]);
-      warn.mockClear();
-      resetLogThrottle();
-    }
-  });
-
-  it("keys per IP: another address is not blocked by the exhausted one", async () => {
-    const env = seededEnv("ratelimit:login:203.0.113.9:ash@example.com");
-    // Different IP → fresh window → passes the guard and reaches D1, which
-    // is undefined here and throws → Hono answers 500. 500-not-429 is the
-    // assertion that the limiter let it through.
-    const res = await app.request(
-      "/auth/login",
-      postJson(
-        { email: "ash@example.com", password: "long-enough-pw" },
-        { "cf-connecting-ip": "198.51.100.7" },
-      ),
-      env,
-    );
-    expect(res.status).toBe(500);
   });
 });
 
@@ -383,7 +319,7 @@ describe("CORS for the credentialed web app", () => {
   });
 
   it("echoes APP_ORIGIN with credentials on auth responses", async () => {
-    const env = envWith({ CACHE: fakeKv().kv, APP_ORIGIN: "https://web.example" });
+    const env = envWith({ APP_ORIGIN: "https://web.example" });
     const res = await app.request("/auth/me", { headers: { Origin: "https://web.example" } }, env);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://web.example");
     expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");

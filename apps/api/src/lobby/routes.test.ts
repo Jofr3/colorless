@@ -1,6 +1,7 @@
 import { isValidLobbyCode } from "@colorless/schema";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import type { Env } from "../env";
+import { resetLogThrottle } from "../http/log";
 import app from "../index";
 
 type SeenRequest = { instance: string; url: string; method: string; upgrade: string | null };
@@ -92,5 +93,83 @@ describe("GET /lobby/:code/ws", () => {
       url: "https://lobby-do/ws",
       upgrade: "websocket",
     });
+  });
+});
+
+describe("per-IP limits on POST /lobby and the /ws upgrade", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetLogThrottle();
+  });
+
+  /** A rate-limit binding allowing `limit` calls per key, recording each key it is asked for. */
+  function fakeLimiter(limit: number) {
+    const counts = new Map<string, number>();
+    const keys: string[] = [];
+    const binding = {
+      limit: async ({ key }: { key: string }) => {
+        keys.push(key);
+        const count = (counts.get(key) ?? 0) + 1;
+        counts.set(key, count);
+        return { success: count <= limit };
+      },
+    };
+    return { binding, keys };
+  }
+
+  const from = (ip: string, headers: Record<string, string> = {}) => ({
+    headers: { "cf-connecting-ip": ip, ...headers },
+  });
+
+  const logged = (warn: MockInstance<typeof console.warn>) =>
+    warn.mock.calls.map(([line]) => JSON.parse(String(line)));
+
+  it("429s an address over the create budget and lets another through", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { env, seen } = envWithLobby(() => Response.json({}, { status: 201 }));
+    const limited = { ...env, LOBBY_CREATE_LIMIT: fakeLimiter(2).binding };
+    const post = (ip: string) => app.request("/lobby", { method: "POST", ...from(ip) }, limited);
+    expect((await post("203.0.113.9")).status).toBe(201);
+    expect((await post("203.0.113.9")).status).toBe(201);
+    const refused = await post("203.0.113.9");
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("Retry-After")).toBe("60");
+    expect(await refused.json()).toEqual({ error: "too many requests" });
+    expect((await post("198.51.100.7")).status).toBe(201);
+    expect(seen).toHaveLength(3);
+    expect(logged(warn)).toEqual([{ evt: "lobby", kind: "rate_limited", route: "create" }]);
+  });
+
+  it("counts only upgrades that would reach a DO, keyed by the IPv6 /64", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { env, seen } = envWithLobby(
+      () => new Response("do-reached", { headers: { "x-marker": "do" } }),
+    );
+    const limiter = fakeLimiter(1);
+    const limited = { ...env, LOBBY_SOCKET_LIMIT: limiter.binding };
+    const upgrade = { Upgrade: "websocket" };
+    const socket = (code: string, ip: string, headers: Record<string, string> = upgrade) =>
+      app.request(`/lobby/${code}/ws`, from(ip, headers), limited);
+    expect((await socket("ABC", "2001:db8::1")).status).toBe(404);
+    expect((await socket("ABCD", "2001:db8::1", {})).status).toBe(426);
+    expect((await socket("ABCD", "2001:db8::1")).headers.get("x-marker")).toBe("do");
+    expect((await socket("ABCD", "2001:db8::2")).status).toBe(429);
+    expect(limiter.keys).toEqual(["2001:db8:0:0::/64", "2001:db8:0:0::/64"]);
+    expect(seen).toHaveLength(1);
+  });
+
+  it("lets requests through when the binding fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { env } = envWithLobby(() => Response.json({}, { status: 201 }));
+    const broken = { limit: () => Promise.reject(new Error("limiter unavailable")) };
+    const res = await app.request(
+      "/lobby",
+      { method: "POST" },
+      { ...env, LOBBY_CREATE_LIMIT: broken },
+    );
+    expect(res.status).toBe(201);
+    expect(logged(warn)).toEqual([
+      { evt: "lobby", kind: "limiter_error", route: "create", error: "Error" },
+    ]);
   });
 });

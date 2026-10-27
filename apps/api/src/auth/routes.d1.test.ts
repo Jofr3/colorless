@@ -2,9 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
-import { raceBeforeFirstBatch, useTestD1 } from "../testing/d1";
+import { raceBeforeBatch, raceBeforeFirstBatch, signedInUser, useTestD1 } from "../testing/d1";
 import { packStateCookieValue } from "./oauth";
 import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash } from "./password";
+import { ACCOUNT_MAX_ATTEMPTS, rateLimitKeys } from "./rateLimit";
 
 const d1 = useTestD1();
 
@@ -147,7 +148,7 @@ describe("POST /auth/register", () => {
   it("409s the loser of a register race that passed the pre-check", async () => {
     const db = d1().db;
     const env = d1().env({
-      DB: raceBeforeFirstBatch(db, async () => {
+      DB: raceBeforeBatch(db, 1, async () => {
         await insertUser({ email: "brock@example.com" });
       }),
     });
@@ -209,7 +210,7 @@ describe("POST /auth/login", () => {
       const { db } = d1();
       // The verified-email link's batch, committing while the login verifies the password.
       const env = d1().env({
-        DB: raceBeforeFirstBatch(db, async () => {
+        DB: raceBeforeBatch(db, 1, async () => {
           await db.batch([
             db
               .prepare("UPDATE users SET email_verified = 1, password_hash = NULL WHERE id = ?")
@@ -283,34 +284,89 @@ describe("POST /auth/login", () => {
   });
 });
 
-/** The real KV, except that `op` throws as a spent daily write quota does. */
-function failingKv(kv: KVNamespace, op: "get" | "put"): KVNamespace {
-  return new Proxy(kv, {
-    get(target, property) {
-      if (property === op) {
-        return () => Promise.reject(new Error(`KV ${op}() limit exceeded for the day.`));
-      }
-      const value = Reflect.get(target, property);
-      return typeof value === "function" ? value.bind(target) : value;
-    },
-  });
-}
+describe("register and login rate limiting", () => {
+  const body = { email: "misty@example.com", password: "starmie-456" };
 
-describe("register and login while the limiter's KV fails", () => {
-  it.each(["get", "put"] as const)("let the attempt through when KV %s throws", async (op) => {
-    const env = d1().env({ CACHE: failingKv(d1().kv, op) });
+  it("429s an exhausted address and email with Retry-After, across its whole IPv6 /64", async () => {
+    const keys = await rateLimitKeys("login", "2001:db8:0:12::/64", body.email);
+    await d1()
+      .db.prepare("INSERT INTO auth_rate_limits (key, count, reset_at) VALUES (?, ?, ?)")
+      .bind(keys.account, ACCOUNT_MAX_ATTEMPTS, Date.now() + 10 * 60 * 1000)
+      .run();
+    for (const ip of ["2001:db8:0:12::1", "2001:db8:0:12:ffff::2"]) {
+      const res = await app.request(
+        "/auth/login",
+        postJson({ ...body, email: "Misty@Example.com" }, { "cf-connecting-ip": ip }),
+        d1().env(),
+      );
+      expect(res.status).toBe(429);
+      expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(590);
+      expect(await res.json()).toEqual({ error: "too many attempts" });
+    }
+    expect(logged()).toEqual([{ evt: "auth", kind: "rate_limited", scope: "login" }]);
+    const other = await app.request(
+      "/auth/login",
+      postJson(body, { "cf-connecting-ip": "2001:db8:0:13::1" }),
+      d1().env(),
+    );
+    expect(other.status).toBe(401);
+  });
+
+  it("lets the attempt through when the counting batch fails", async () => {
+    // A fresh env per request, whose first batch (the limiter's) fails as a spent write quota.
+    const env = () => {
+      let failed = false;
+      const db = new Proxy(d1().db, {
+        get(target, property) {
+          if (property === "batch" && !failed) {
+            failed = true;
+            return () => Promise.reject(new Error("D1_ERROR: rows written limit exceeded"));
+          }
+          const value = Reflect.get(target, property);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      return d1().env({ DB: db });
+    };
     const headers = { "cf-connecting-ip": "203.0.113.9" };
-    const body = { email: "misty@example.com", password: "starmie-456" };
-    const registered = await app.request("/auth/register", postJson(body, headers), env);
+    const registered = await app.request("/auth/register", postJson(body, headers), env());
     expect(registered.status).toBe(201);
-    const res = await app.request("/auth/login", postJson(body, headers), env);
+    const res = await app.request("/auth/login", postJson(body, headers), env());
     expect(res.status).toBe(200);
     expect((await me(sessionCookieOf(res))).status).toBe(200);
     // Throttled to one line per isolate while the failure lasts.
-    expect(logged()).toEqual([
-      { evt: "auth", kind: "limiter_error", op, error: "Error", quota: true },
-    ]);
+    expect(logged()).toEqual([{ evt: "auth", kind: "limiter_error", error: "Error", quota: true }]);
     expect(JSON.stringify(logged())).not.toMatch(/misty|203\.0\.113\.9/);
+  });
+});
+
+describe("PATCH /auth/me", () => {
+  it("renames the account and ignores the retired favourite-deck field", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "misty@example.com");
+    const { db } = d1();
+    await db.batch([
+      db
+        .prepare("INSERT INTO decks (id, user_id, name, tint) VALUES ('d', ?, 'Water', 200)")
+        .bind(userId),
+      db.prepare("UPDATE users SET favourite_deck_id = 'd' WHERE id = ?").bind(userId),
+    ]);
+    const res = await app.request(
+      "/auth/me",
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ displayName: "Misty W", favouriteDeckId: null }),
+      },
+      d1().env(),
+    );
+    expect(res.status).toBe(200);
+    const user = (await res.json()) as Record<string, unknown>;
+    expect(user.displayName).toBe("Misty W");
+    expect(user).not.toHaveProperty("favouriteDeckId");
+    const row = await db
+      .prepare("SELECT display_name AS name, favourite_deck_id AS favourite FROM users")
+      .first();
+    expect(row).toEqual({ name: "Misty W", favourite: "d" });
   });
 });
 
