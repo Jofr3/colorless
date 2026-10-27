@@ -30,14 +30,15 @@ local function gapLine(gaps)
   local parts={};for gap in (gaps or ''):gmatch('[^,]+') do parts[#parts+1]=GAP_LABELS[gap] or gap end
   return #parts>0 and 'Not simulated yet: '..table.concat(parts,', ') or nil
 end
-local function caption(text,size,x,y,w,colour,align)
-  text=(text or ''):gsub('%c',' ')
+local fitCaption=Fit.cached(function(text,size,w)
+  text=text:gsub('%c',' ')
   size=Fit.shrink(text,size,14,w)
-  if T.font(size):getWidth(text)>w then
-    local out='';for c in Fit.chars(text) do
-      if T.font(size):getWidth(out..'...')>w then break end;out=out..c
-    end;text=out..'...'
-  end
+  local font=T.font(size)
+  if font:getWidth(text)>w then text=Fit.overhang(text,w,function(s) return font:getWidth(s) end) end
+  return text,size
+end)
+local function caption(text,size,x,y,w,colour,align)
+  text,size=fitCaption(text or '',size,w)
   T.text(text,size,x,y,w,colour,align)
 end
 function Builder.new(callbacks)
@@ -114,7 +115,7 @@ function Builder:layout(w,h)
   self.deckPage=math.max(1,math.min(self.deckPage,math.ceil(#self:visibleDeck()/self:deckPageSize())))
   if self.detailCard then self.detailCard.texture:release();self.detailCard=nil end
   self:command('size',self.portrait and 4 or 8)
-  self:makeCards(false);self:build()
+  CardFrame.open();self:makeCards(false);self:build();CardFrame.close()
 end
 function Builder:face(item,w,h)
   CardFrame.draw(w,h,function(aw,ah) self:artwork(item,aw,ah) end,
@@ -423,6 +424,7 @@ function Builder:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   if self.motion then self.motion:update(dt,time,false,false,reduced)end
   my=my-self:offset();self.mx,self.my=mx,my
+  CardFrame.open()
   for _,file in ipairs({'builder','builderInput','art','builderClipboard'})do
     local raw=Mailbox.read(file)
     if raw then
@@ -438,6 +440,7 @@ function Builder:update(dt,time,mx,my,reduced)
       elseif file=='builderClipboard' and raw~=self.clipboardRaw then self.clipboardRaw=raw;self.clipboard=Codec.fields(raw)[2] or raw end
     end
   end
+  CardFrame.close()
   self:refreshTransferControls()
   if self.modal then self.modal.motion:update(dt,time,false,false,reduced)end
   self.hover=self:hit(mx,my,true,true)
@@ -626,12 +629,9 @@ function Builder:drawControlFaces(controls,active)
         end
       end
     elseif b.action~='card' and b.action~='deck-card' then
-      local original=b.label;local size=b.fontSize
-      size=Fit.shrink(b.label,size,14,b.w-16)
-      if T.font(size):getWidth(b.label)>b.w-16 then
-        b.label=Fit.ellipsize(b.label,b.w-16,function(s) return T.font(size):getWidth(s) end)
-      end
-      b.fontSize=size;Button.draw(b,active and not b.disabled and (self.hover==i or self.focus==i),active and self.pressed==i,false,self.width);b.label=original
+      local original=b.label
+      b.label,b.fontSize=Fit.label(b.label,b.fontSize,b.w-16)
+      Button.draw(b,active and not b.disabled and (self.hover==i or self.focus==i),active and self.pressed==i,false,self.width);b.label=original
       if b.icon then
         local pressed=active and self.pressed==i
         local sx=((b.x+b.w/2-self.width/2)/(self.width/2))*1.5

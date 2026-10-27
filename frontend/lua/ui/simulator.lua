@@ -78,11 +78,14 @@ function Simulator:layout(w,h,viewportUnit)
   self.drag=nil;self.highlight=nil;self.hoverCard=nil
   -- A browser resize goes through love.window.setMode, which empties every
   -- Canvas in love.js; card faces are canvases, so repaint them.
+  CardFrame.open()
   for _,c in ipairs(self.cards) do c:rebuild() end
   for _,c in ipairs(self.ghosts) do c:rebuild() end
+  for _,c in pairs(self.attached or {}) do c:rebuild() end
   self:placeCards(true)
   if self.koPresentation then self.koPresentation:layout() end
   if self.overlay then self.overlay:layout() end
+  CardFrame.close()
   self:build()
 end
 function Simulator:point(x,y) return (x-self.ox)/self.zoom,(y-self.oy)/self.zoom end
@@ -540,12 +543,23 @@ function Simulator:placeCards(resize,previous)
       landing[(c.item.owner=='global' and 'you' or c.item.owner)]=true
     end
   end
+  -- A pile whose face would paint the same pixels keeps its canvas and only
+  -- takes the new count. A resize has emptied every canvas, so it rebuilds.
+  local function pile(old,item,zone,top)
+    local key=self:pileFace(item.kind,item.owner,top)
+    local p=old
+    if p and p.faceKey==key and not resize then p.item=item
+    else p=Pile.new(item,1);p.faceKey=key end
+    p:place(zone.x,zone.y,zone.scale,false,self.boardW);p.owner=item.owner;p.topItem=top
+    return p,p==old
+  end
   for _,owner in ipairs({'opponent','you'}) do
     local side=self.sides[owner]
     local zone=L.zones[prefix(owner)..'deck']
     if side and zone then
       local item={id=owner..'deck',owner=owner,kind='deck',count=side.deck,name='Deck',drawFace=function(w,h) self:drawBack(owner,w,h) end}
-      local p=Pile.new(item,1);p:place(zone.x,zone.y,zone.scale,false,self.boardW);p.owner=owner
+      local p,kept=pile(oldPiles[owner..':deck'],item,zone)
+      if kept then oldPiles[owner..':deck']=nil end
       self.piles[#self.piles+1]=p
     end
     local dzone=L.zones[prefix(owner)..'discard']
@@ -553,13 +567,16 @@ function Simulator:placeCards(resize,previous)
     for _,it in ipairs(self.items) do if it.owner==owner and it.zone=='discard' then top=it end end
     if side and dzone and top then
       local item={id=owner..'discard',owner=owner,kind='discard',count=math.max(1,side.discard),name='Discard',drawFace=function(w,h) self:face(top,w,h) end}
-      local p=Pile.new(item,1);p:place(dzone.x,dzone.y,dzone.scale,false,self.boardW);p.owner=owner;p.topItem=top
       if landing[owner] and not resize then
-        if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release() end
+        local pending=self.pendingPiles[owner]
+        local p,kept=pile(pending,item,dzone,top)
+        if pending and not kept then pending.texture:release() end
         self.pendingPiles[owner]=p
         local keep=oldPiles[owner..':discard']
         if keep then self.piles[#self.piles+1]=keep;oldPiles[owner..':discard']=nil end
       else
+        local p,kept=pile(oldPiles[owner..':discard'],item,dzone,top)
+        if kept then oldPiles[owner..':discard']=nil end
         self.piles[#self.piles+1]=p
         if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release();self.pendingPiles[owner]=nil end
       end
@@ -569,6 +586,16 @@ function Simulator:placeCards(resize,previous)
   end
   for _,p in pairs(oldPiles) do p.texture:release() end
   self:sortRows()
+end
+-- What a pile's canvas shows: the owner's card back, or the discard's top
+-- card with its scan.
+function Simulator:pileFace(kind,owner,top)
+  if kind=='deck' then
+    local seat=self.viewerSeat
+    if owner=='opponent' then seat=seat=='p1' and 'p2' or 'p1' end
+    return 'deck:'..seat
+  end
+  return 'discard:'..top.cardId..':'..tostring(top.hidden)..':'..tostring(self.art[top.cardId])
 end
 function Simulator:sortRows()
   table.sort(self.cards,function(a,b)
@@ -1121,6 +1148,7 @@ end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
+  CardFrame.open()
   self:sync(Mailbox.read('simulator'))
   local raw=Mailbox.read('art')
   if raw and raw~=self.artRaw then
@@ -1128,10 +1156,11 @@ function Simulator:update(dt,time,mx,my,reduced)
     local old=self.art;self.art=art
     for _,c in ipairs(self.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
     -- Discard piles paint their top card's scan, which can arrive after a reload.
-    for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild() end end
+    for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild();p.faceKey=self:pileFace(p.item.kind,p.owner,p.topItem) end end
     for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
     if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
   end
+  CardFrame.close()
   mx,my=self:point(mx,my);self.mx,self.my=mx,my
   -- Table juice waits behind an open coin flip, like Balatro's event queue.
   self.fx:update(dt,time,reduced,self.overlay and self.overlay.kind=='coin')
@@ -1478,14 +1507,19 @@ function Simulator:backgroundColours() return self.fx:colours() end
 local function well(x,y,w,h)
   Button.panel(x,y,w,h,{0,0,0,0.1},1.2)
 end
+-- Badge text by status field, e.g. 'burned,asleep' -> 'Burned Asleep'.
+local statusLabels={}
 function Simulator:drawBadges(c,rw)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
   local ch=D.H*c.baseScale*c.motion.VT.scale
   if item.status~='' then
-    local names={}
-    for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
-    local label=table.concat(names,' ')
+    local label=statusLabels[item.status]
+    if not label then
+      local names={}
+      for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
+      label=table.concat(names,' ');statusLabels[item.status]=label
+    end
     local tw=Dyna.measure(label,0.26)+12
     Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,T.purple,1)
     Dyna.static(label,0.26,c.x-tw/2,c.y-ch/2-20,tw,16,T.white,{roomWidth=rw})
@@ -1494,6 +1528,24 @@ end
 -- Attached cards tuck behind the Pokémon sideways: Energy peeks out of the
 -- right edge aligned to the bottom, Tools out of the left edge aligned to the
 -- top, each further card a little less exposed, like a fanned stack.
+local function attachedStack(self,list,side,c,cw,ch,s,aw,ah,peek,visit)
+  local n=#list
+  local step=math.min(18,(ch-aw-6)/math.max(n-1,1))
+  -- The first card sits at the edge; each later one lands on top of it.
+  for i=1,n do
+    local tex=self.attached[list[i].id]
+    if tex and tex.texture then
+      local out=peek
+      -- Rotated 90°: horizontal extent ah, vertical aw. Inset 3px from the
+      -- Pokémon's edge so neither the card nor its shadow shows past it.
+      local x=c.x+side*(cw/2+out-ah/2)
+      local y=side>0 and c.y+ch/2-aw/2-3-(i-1)*step or c.y-ch/2+aw/2+3+(i-1)*step
+      -- The card's top (name banner) faces outward, as on a real table.
+      local angle=side>0 and math.pi/2 or -math.pi/2
+      visit(tex,x,y,s,angle,side)
+    end
+  end
+end
 function Simulator:eachAttached(c,visit)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
@@ -1505,36 +1557,19 @@ function Simulator:eachAttached(c,visit)
   -- Stacks climb the edge: each further Energy sits 18px higher (Tools 18px
   -- lower), all peeking out by the same amount, like cards slid under a
   -- Pokémon one after another.
-  local function stack(list,side)
-    local n=#list
-    local step=math.min(18,(ch-aw-6)/math.max(n-1,1))
-    -- The first card sits at the edge; each later one lands on top of it.
-    for i=1,n do
-      local tex=self.attached[list[i].id]
-      if tex and tex.texture then
-        local out=peek
-        -- Rotated 90°: horizontal extent ah, vertical aw. Inset 3px from the
-        -- Pokémon's edge so neither the card nor its shadow shows past it.
-        local x=c.x+side*(cw/2+out-ah/2)
-        local y=side>0 and c.y+ch/2-aw/2-3-(i-1)*step or c.y-ch/2+aw/2+3+(i-1)*step
-        -- The card's top (name banner) faces outward, as on a real table.
-        local angle=side>0 and math.pi/2 or -math.pi/2
-        visit(tex,x,y,s,angle,side)
-      end
-    end
-  end
-  stack(item.energyCards or {},1)
-  stack(item.toolCards or {},-1)
+  if item.energyCards then attachedStack(self,item.energyCards,1,c,cw,ch,s,aw,ah,peek,visit) end
+  if item.toolCards then attachedStack(self,item.toolCards,-1,c,cw,ch,s,aw,ah,peek,visit) end
+end
+local function drawAttachedCard(tex,x,y,scale,angle,side)
+  local res=tex.item.resolution or 1
+  local sx=scale/res
+  g.setColor(0,0,0,0.3)
+  g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,D.W*res/2,D.H*res/2)
+  g.setColor(1,1,1,1)
+  g.draw(tex.texture,x,y,angle,sx,sx,D.W*res/2,D.H*res/2)
 end
 function Simulator:drawAttached(c)
-  self:eachAttached(c,function(tex,x,y,scale,angle,side)
-    local res=tex.item.resolution or 1
-    local sx=scale/res
-    g.setColor(0,0,0,0.3)
-    g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,D.W*res/2,D.H*res/2)
-    g.setColor(1,1,1,1)
-    g.draw(tex.texture,x,y,angle,sx,sx,D.W*res/2,D.H*res/2)
-  end)
+  self:eachAttached(c,drawAttachedCard)
 end
 function Simulator:drawCard(c,shaders,rw)
   if c.koHidden or c.koAnimating or c.drawAfterPromotion then return end

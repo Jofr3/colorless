@@ -27,7 +27,8 @@ local BOTTOM_TILES=1.5+2*0.2+2*1.45+0.13
 local SETUP_PAUSE=0.5
 local function emboss(x,y,w,h,colour,r,hovered,extrusion)
   local depth=hovered and 0.5 or 0.7
-  Button.panel(x,y+(extrusion or 3),w,h,{colour[1]*depth,colour[2]*depth,colour[3]*depth,colour[4] or 1},r or 1.2)
+  local shade=Button.shade(colour,depth);shade[4]=colour[4] or 1
+  Button.panel(x,y+(extrusion or 3),w,h,shade,r or 1.2)
   Button.panel(x,y,w,h,colour,r or 1.2)
 end
 function Hud:bottomLayout(L)
@@ -273,12 +274,19 @@ function Hud:drawPrompt(sim,L,x,y,w,h)
   local note=prompt.note and prompt.note~='' and prompt.note or 'Click a highlighted card'
   local scale=L.portrait and 0.27 or 0.4
   local titles,notes,th,nh
-  repeat
-    titles,th=Dyna.wrap(title,scale,w)
-    notes,nh=Dyna.wrap(note,scale*0.8,w)
-    if #titles*(th+3)+8+#notes*(nh+3)<=h or scale<=0.16 then break end
-    scale=scale-0.01
-  until false
+  local fit=self.promptFit
+  if fit and fit.title==title and fit.note==note and fit.w==w and fit.h==h and fit.start==scale then
+    titles,notes,th,nh,scale=fit.titles,fit.notes,fit.th,fit.nh,fit.scale
+  else
+    local start=scale
+    repeat
+      titles,th=Dyna.wrap(title,scale,w)
+      notes,nh=Dyna.wrap(note,scale*0.8,w)
+      if #titles*(th+3)+8+#notes*(nh+3)<=h or scale<=0.16 then break end
+      scale=scale-0.01
+    until false
+    self.promptFit={title=title,note=note,w=w,h=h,start=start,titles=titles,notes=notes,th=th,nh=nh,scale=scale}
+  end
   local height=#titles*(th+3)+8+#notes*(nh+3)
   local yy=y+math.max(0,(h-height)/2)
   for _,line in ipairs(titles) do

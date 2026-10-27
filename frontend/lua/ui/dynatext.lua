@@ -13,10 +13,19 @@ local function chars(text)
   for c in tostring(text):gmatch(Codec.UTF8_CHAR) do out[#out+1]=c end
   return out
 end
+-- The atlas font's width of each string drawn, kept per font object.
+local widths,counts=setmetatable({},{__mode='k'}),setmetatable({},{__mode='k'})
+local function width(font,text)
+  local known=widths[font]
+  if not known or counts[font]>=512 then known={};widths[font]=known;counts[font]=0 end
+  local w=known[text]
+  if not w then w=font:getWidth(text);known[text]=w;counts[font]=counts[font]+1 end
+  return w
+end
 -- Metrics of a static string at a DynaText/UIElement scale, in pixels.
 function Dyna.measure(text,scale)
   local font=T.font(200)
-  return font:getWidth(tostring(text))*factor(scale),font:getHeight()*factor(scale)*Dyna.HEIGHT_SCALE
+  return width(font,tostring(text))*factor(scale),font:getHeight()*factor(scale)*Dyna.HEIGHT_SCALE
 end
 -- Word-wrap at a scale; returns lines and the line height.
 function Dyna.wrap(text,scale,width)

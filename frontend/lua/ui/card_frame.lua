@@ -5,6 +5,23 @@ local D=require('ui.card_dimensions')
 local Frame={}
 local DEFAULT={192/255,200/255,214/255}
 local borders,order={},{}
+-- Scans decoded while a batch of face rebuilds is open, by path. Every face
+-- that shows the same file in one batch draws one decode; the batch releases
+-- them when it closes, so no decoded image outlives it.
+local held,batches={},0
+function Frame.open() batches=batches+1 end
+function Frame.close()
+  batches=batches-1
+  if batches>0 then return end
+  for path,img in pairs(held) do img:release();held[path]=nil end
+end
+local function hold(path,source)
+  local ok,img=pcall(g.newImage,source)
+  if not ok then return nil end
+  img:setFilter('linear','linear')
+  if batches>0 then held[path]=img end
+  return img
+end
 
 function Frame.border(path,fallback)
   fallback=fallback or DEFAULT
@@ -15,6 +32,13 @@ function Frame.border(path,fallback)
   if not ok then return fallback end
   local w,h=data:getDimensions()
   local found=false
+  -- Neighbouring samples overlap, so read each edge pixel once.
+  local seen,R,G,B,A={},{},{},{},{}
+  local function pixel(x,y)
+    local i=y*w+x
+    if not seen[i] then seen[i]=true;R[i],G[i],B[i],A[i]=data:getPixel(x,y) end
+    return R[i],G[i],B[i],A[i]
+  end
   local function sample(horizontal,far,t)
     -- Rounded scan corners may be transparent or contain a white matte.
     -- Continue the nearest straight edge through our stepped corners.
@@ -27,7 +51,7 @@ function Frame.border(path,fallback)
         if horizontal then x=along+delta;y=far and h-1-depth or depth
         else x=far and w-1-depth or depth;y=along+delta end
         x=math.max(0,math.min(w-1,x));y=math.max(0,math.min(h-1,y))
-        local pr,pg,pb,a=data:getPixel(x,y)
+        local pr,pg,pb,a=pixel(x,y)
         if a>=0.9 then r=r+pr;g=g+pg;b=b+pb;n=n+1 end
       end
     end
@@ -44,6 +68,7 @@ function Frame.border(path,fallback)
     border.left[y]=sample(false,false,(y-0.5)/D.ART_H)
     border.right[y]=sample(false,true,(y-0.5)/D.ART_H)
   end
+  if batches>0 and not held[path] then hold(path,data) end
   data:release()
   if not found then return fallback end
   borders[path]=border;order[#order+1]=path
@@ -56,12 +81,11 @@ end
 -- so the caller can draw its placeholder face instead.
 function Frame.scan(path,w,h)
   if not path or not love.filesystem.getInfo(path) then return false end
-  local ok,img=pcall(g.newImage,path)
-  if not ok then return false end
-  img:setFilter('linear','linear')
+  local img=held[path] or hold(path,path)
+  if not img then return false end
   g.setColor(1,1,1)
   g.draw(img,0,0,0,w/img:getWidth(),h/img:getHeight())
-  img:release()
+  if batches==0 then img:release() end
   return true
 end
 

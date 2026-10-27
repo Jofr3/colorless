@@ -157,7 +157,7 @@ function Pile:drawDragged(shaders,time,mx,my,reduced,roomWidth)
   -- The atlas reports logical 71x95 pixels for its 2x back.
   if self.item.kind~='discard' then values.texture_details={0,0,71,95};values.image_details={71,95} end
   local shader=shaders.dissolve
-  for key,value in pairs(values) do if shader:hasUniform(key) then shader:send(key,value) end end
+  Card.send(shader,values)
   local parallax=(self.motion.T.x*self.unit-roomWidth/2)/(roomWidth/2)*1.5
   local scale=self.baseScale*self.motion.VT.scale
   g.setShader(shader); g.setColor(1,1,1,1)

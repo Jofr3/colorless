@@ -4,30 +4,40 @@ local g = love.graphics
 
 -- The same four-step corner profile as UIElement:draw_pixellated_rect.
 -- A single polygon avoids seams between corner strips when the room rotates.
+-- Vertex arrays are refilled on every call; g.polygon copies them.
+local fan,outline={},{}
 local function panel(x,y,w,h,colour,r,progress,mode)
   r=r or 1.8 -- source res=0.6, at TILESCALE=3 (60 pixels per tile)
   g.setColor(colour)
   local sw,sh=w-4*r,h-4*r
   g.push(); g.translate(x,y)
-  local vertices={
-    sw/2,sh/2,0,4*r,r,4*r,r,2*r,2*r,2*r,2*r,r,4*r,r,4*r,0,
-    sw,0,sw,r,sw+2*r,r,sw+2*r,2*r,sw+3*r,2*r,sw+3*r,4*r,w,4*r,
-    w,sh,sw+3*r,sh,sw+3*r,sh+2*r,sw+2*r,sh+2*r,sw+2*r,sh+3*r,
-    sw,sh+3*r,sw,h,4*r,h,4*r,sh+3*r,2*r,sh+3*r,2*r,sh+2*r,
-    r,sh+2*r,r,sh,0,sh,0,4*r,
-  }
+  local v=fan
+  v[1],v[2],v[3],v[4],v[5],v[6],v[7],v[8],v[9],v[10],v[11],v[12],v[13],v[14],v[15],v[16]=
+    sw/2,sh/2,0,4*r,r,4*r,r,2*r,2*r,2*r,2*r,r,4*r,r,4*r,0
+  v[17],v[18],v[19],v[20],v[21],v[22],v[23],v[24],v[25],v[26],v[27],v[28],v[29],v[30]=
+    sw,0,sw,r,sw+2*r,r,sw+2*r,2*r,sw+3*r,2*r,sw+3*r,4*r,w,4*r
+  v[31],v[32],v[33],v[34],v[35],v[36],v[37],v[38],v[39],v[40]=
+    w,sh,sw+3*r,sh,sw+3*r,sh+2*r,sw+2*r,sh+2*r,sw+2*r,sh+3*r
+  v[41],v[42],v[43],v[44],v[45],v[46],v[47],v[48],v[49],v[50],v[51],v[52]=
+    sw,sh+3*r,sw,h,4*r,h,4*r,sh+3*r,2*r,sh+3*r,2*r,sh+2*r
+  v[53],v[54],v[55],v[56],v[57],v[58],v[59],v[60]=
+    r,sh+2*r,r,sh,0,sh,0,4*r
   if progress then
     local edge=w*math.max(0,math.min(1,progress))
-    for i=1,#vertices,2 do vertices[i]=math.min(vertices[i],edge)end
+    for i=1,#v,2 do v[i]=math.min(v[i],edge)end
   end
   -- Original line vertices skip the fan centre AND the duplicated first
   -- perimeter point (k > 4), avoiding a zero-length closing edge in LÖVE.
-  if mode=='line' then for _=1,4 do table.remove(vertices,1) end end
-  g.polygon(mode or 'fill',vertices)
+  if mode=='line' then
+    for i=5,#v do outline[i-4]=v[i] end
+    v=outline
+  end
+  g.polygon(mode or 'fill',v)
   g.pop()
 end
 
 Button.panel=panel
+local SHADOW={0,0,0,0.3}
 function Button.modalFrame(x,y,w,h) Button.panel(x,y,w,h,T.jokerGrey,2.4) end
 -- create_UIBox_generic_options: the dark emboss below, the JOKER_GREY border
 -- and the L_BLACK interior.
@@ -63,10 +73,11 @@ function Button.chosen(b,time,pressed,roomWidth)
   g.setColor(T.red); triangle(1,false)
 end
 
+local TRAY_SHADE={T.tray[1]*0.7,T.tray[2]*0.7,T.tray[3]*0.7,1}
 function Button.tray(x,y,w,h)
   -- Main menu row: emboss=0.1 tile, but no shadow=true.
   local c=T.tray
-  panel(x,y+6,w,h,{c[1]*0.7,c[2]*0.7,c[3]*0.7,1})
+  panel(x,y+6,w,h,TRAY_SHADE)
   panel(x,y,w,h,c)
 end
 
@@ -81,11 +92,18 @@ function Button.hoverColour(colour,active)
   return active and {colour[1]*2/3,colour[2]*2/3,colour[3]*2/3,colour[4]} or colour
 end
 
+-- colour's RGB times k, opaque, in a table reused by every call.
+local shaded={}
+function Button.shade(colour,k)
+  shaded[1],shaded[2],shaded[3],shaded[4]=colour[1]*k,colour[2]*k,colour[3]*k,1
+  return shaded
+end
+
 function Button.cycleFace(x,y,w,h,hovered,emboss)
   -- create_option_cycle's non-clickable center: hover overlay on the face,
   -- emboss darken=.5 on hover (.3 otherwise), with no button drop shadow.
   local depth=hovered and 0.5 or 0.7
-  Button.panel(x,y+(emboss or 6),w,h,{T.red[1]*depth,T.red[2]*depth,T.red[3]*depth,1})
+  Button.panel(x,y+(emboss or 6),w,h,Button.shade(T.red,depth))
   Button.panel(x,y,w,h,Button.hoverColour(T.red,hovered))
 end
 
@@ -95,14 +113,14 @@ function Button.slider(x,y,w,fraction,label,hovered)
   -- is a separate shadowed, non-interactive container (not a button).
   local c=T.panel -- G.C.BLACK
   local depth=hovered and 0.5 or 0.7
-  Button.panel(x,y+3,w,24,{c[1]*depth,c[2]*depth,c[3]*depth,1})
+  Button.panel(x,y+3,w,24,Button.shade(c,depth))
   Button.panel(x,y,w,24,Button.hoverColour(c,hovered))
   if fraction>0 then
     local fill=w*math.min(1,fraction)
     Button.panel(x,y,fill,24,T.red,math.min(1.8,fill/8))
   end
   g.push();g.translate(x+w+8,y);g.scale(0.98)
-  Button.panel(0,6.75,48,24,{0,0,0,0.3})
+  Button.panel(0,6.75,48,24,SHADOW)
   g.pop()
   Button.panel(x+w+8,y,48,24,T.red)
   g.setFont(T.font(21));g.setColor(T.white)
@@ -186,14 +204,35 @@ local historyPixels={
     '.....#####.....',
   },
 }
-local function historyIcon(icon)
-  if icon=='fast_forward' or icon=='redo' then g.scale(-1,1) end
-  local pixels=historyPixels[icon=='restart' and 'restart' or ((icon=='rewind' or icon=='fast_forward') and 'rewind' or 'undo')]
-  for y,row in ipairs(pixels) do
-    for x=1,#row do
-      if row:sub(x,x)=='#' then g.rectangle('fill',x-8.5,y-#pixels/2-1,1,1) end
+-- Each glyph colour's horizontal runs of cells, as {x,y,w} rectangles, built
+-- on first use: one rectangle per run instead of one per pixel. A run covers
+-- exactly the cells it replaces, so the rasterised pixels do not change.
+local runs={}
+local function pixelRuns(key,rows,char,ox,oy)
+  if runs[key] then return runs[key] end
+  local list={}
+  for y,row in ipairs(rows) do
+    local x=1
+    while x<=#row do
+      if row:sub(x,x)==char then
+        local last=x
+        while row:sub(last+1,last+1)==char do last=last+1 end
+        list[#list+1]={x-1+ox,y-1+oy,last-x+1}
+        x=last+1
+      else x=x+1 end
     end
   end
+  runs[key]=list
+  return list
+end
+local function fillRuns(list,dy)
+  for _,r in ipairs(list) do g.rectangle('fill',r[1],r[2]+dy,r[3],1) end
+end
+local function historyIcon(icon)
+  if icon=='fast_forward' or icon=='redo' then g.scale(-1,1) end
+  local name=icon=='restart' and 'restart' or ((icon=='rewind' or icon=='fast_forward') and 'rewind' or 'undo')
+  local pixels=historyPixels[name]
+  fillRuns(pixelRuns(name,pixels,'#',-7.5,-#pixels/2),0)
 end
 
 function Button.draw(b,active,pressed,focused,roomWidth)
@@ -209,7 +248,7 @@ function Button.draw(b,active,pressed,focused,roomWidth)
   g.translate(b.x+layer*sx*3,b.y+layer*sy*3)
   g.push()
   g.scale(0.98)
-  panel(-sx*distance*3,-sy*distance*3,b.w,b.h,{0,0,0,0.3})
+  panel(-sx*distance*3,-sy*distance*3,b.w,b.h,SHADOW)
   g.pop()
   g.push()
   g.scale(pressed and 0.985 or 1)
@@ -221,17 +260,10 @@ function Button.draw(b,active,pressed,focused,roomWidth)
     g.push();g.translate(b.w/2,b.h/2);g.scale(pressed and 0.985 or 1)
     g.scale(size/17);g.translate(-8.5,-8.5)
     -- Custom top-down sprite with stepped corners and five square pips.
-    for _,shadow in ipairs({true,false}) do
-      for y,row in ipairs(dicePixels) do
-        for x=1,#row do
-          local colour=dicePalette[row:sub(x,x)]
-          if colour then
-            if shadow then g.setColor(0,0,0,0.3) else g.setColor(colour) end
-            g.rectangle('fill',x-1,y-1+(shadow and 1 or 0),1,1)
-          end
-        end
-      end
-    end
+    local white,pips=pixelRuns('diceW',dicePixels,'W',0,0),pixelRuns('diceP',dicePixels,'P',0,0)
+    g.setColor(0,0,0,0.3);fillRuns(white,1);fillRuns(pips,1)
+    g.setColor(dicePalette.W);fillRuns(white,0)
+    g.setColor(dicePalette.P);fillRuns(pips,0)
     g.pop();g.pop()
     return
   end
