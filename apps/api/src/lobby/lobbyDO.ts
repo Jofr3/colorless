@@ -23,6 +23,7 @@ import type { z } from "zod";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
 import { resolveAccountFromCookie, type SessionAccount } from "../auth/resolveSession";
+import { describeError } from "../http/errors";
 import { type LogFields, logEvent, logEventThrottled } from "../http/log";
 import {
   attachAccount,
@@ -1121,9 +1122,4 @@ export class LobbyDO {
     if (throttled) logEventThrottled("lobby", kind, { lobby, ...fields });
     else logEvent("lobby", kind, { lobby, ...fields });
   }
-}
-
-/** A caught error as a log field, clipped so one line stays short. */
-function describeError(error: unknown): string {
-  return (error instanceof Error ? `${error.name}: ${error.message}` : String(error)).slice(0, 200);
 }

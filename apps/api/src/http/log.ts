@@ -10,6 +10,11 @@ export function logEvent(evt: string, kind: string, fields: LogFields = {}): voi
   console.warn(JSON.stringify({ evt, kind, ...fields }));
 }
 
+/** The same line at error level, for failures nothing handled. */
+export function logError(evt: string, kind: string, fields: LogFields = {}): void {
+  console.error(JSON.stringify({ evt, kind, ...fields }));
+}
+
 /** When each throttled key last logged, per isolate. */
 const lastLogged = new Map<string, number>();
 

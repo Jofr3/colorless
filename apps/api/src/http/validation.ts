@@ -9,12 +9,16 @@ type Target = "json" | "query";
 
 const LABEL: Record<Target, "body" | "query"> = { json: "body", query: "query" };
 
+/** Issues one 400 lists at most: a body of many bad entries would otherwise answer with a line
+    for each of them. */
+export const MAX_REPORTED_ISSUES = 20;
+
 /** The 400 for a failed parse. zValidator surfaces the zod-core error type. */
 export function invalidRequest(c: Context, target: Target, error: z.core.$ZodError) {
   const label = LABEL[target];
-  const issues = error.issues.map(
-    (issue) => `${issue.path.map(String).join(".") || label}: ${issue.message}`,
-  );
+  const issues = error.issues
+    .slice(0, MAX_REPORTED_ISSUES)
+    .map((issue) => `${issue.path.map(String).join(".") || label}: ${issue.message}`);
   return c.json({ error: `invalid ${label}`, issues }, 400);
 }
 
