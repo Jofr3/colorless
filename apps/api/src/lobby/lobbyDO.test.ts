@@ -1,5 +1,6 @@
 import {
   COUNTDOWN_MS,
+  LOBBY_WS_CLOSED,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -15,6 +16,8 @@ import {
   type FakeSocket,
   LEGAL_DECK,
   type LobbyHarness,
+  seatIdOf,
+  seatSecret,
   sessionIdOf,
 } from "./lobbyHarness";
 import {
@@ -64,15 +67,17 @@ function logged(kind: string): Record<string, unknown>[] {
     .filter((line) => line.evt === "lobby" && line.kind === kind);
 }
 
+/** A hello presenting `from`'s seat secret. */
 const hello = (from: string, name = `anon-${from}`): LobbyClientMessage => ({
   kind: "hello",
-  from,
+  from: seatSecret(from),
   name,
 });
 
+/** An intent from `from`'s seat, addressed by its public id. */
 const intent = (from: string, change: LobbyIntent): LobbyClientMessage => ({
   kind: "intent",
-  from,
+  from: seatIdOf(from),
   intent: change,
 });
 
@@ -193,11 +198,11 @@ describe("LobbyDO — create and seat", () => {
     expect(snapshotOf(host)).toEqual(snapshot);
   });
 
-  it("refuses another account replaying a seat's player id", async () => {
+  it("refuses another account presenting a bound seat's secret", async () => {
     await seatBoth();
     const thief = await h.connect("eve");
     await h.send(thief, hello("h"));
-    expect(thief.last("reject")).toEqual({ kind: "reject", to: "h", reason: "full" });
+    expect(thief.last("reject")).toEqual({ kind: "reject", to: seatIdOf("h"), reason: "full" });
   });
 });
 
@@ -294,7 +299,7 @@ describe("LobbyDO — countdown and handoff", () => {
     expect(await listOf("p2")).toEqual([...DECK].reverse());
 
     await h.send(guest, { kind: "action", action: { type: "concede" } });
-    await h.send(guest, { kind: "rematch", from: "g" });
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     await readyUp(host, "h", "deck-ana");
     await readyUp(guest, "g", "deck-bo");
     await h.fireAlarm();
@@ -305,10 +310,10 @@ describe("LobbyDO — countdown and handoff", () => {
     const { host, guest } = await startedMatch();
     await h.send(guest, { kind: "action", action: { type: "concede" } });
     expect((await storedMatch()).state.phase.kind).toBe("gameOver");
-    await h.send(guest, { kind: "rematch", from: "g" });
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     expect(snapshotOf(host).phase).toBe("selecting");
     expect(matchKeys()).toEqual([]);
-    expect(h.storage.data.get("nextChooser")).toBe("g");
+    expect(h.storage.data.get("nextChooser")).toBe(seatIdOf("g"));
 
     await readyUp(host, "h", "deck-ana");
     await readyUp(guest, "g", "deck-bo");
@@ -382,7 +387,7 @@ describe("LobbyDO — match actions", () => {
     const watcher = await h.connect("eve");
     await h.send(watcher, hello("w"));
     const record = await storedMatch();
-    expect(watcher.last("reject")).toEqual({ kind: "reject", to: "w", reason: "full" });
+    expect(watcher.last("reject")).toEqual({ kind: "reject", to: seatIdOf("w"), reason: "full" });
     expect(snapshotOf(watcher).phase).toBe("in-game");
     expect(watcher.last("match")).toEqual(matchFrameFor(record, "spectator"));
 
@@ -394,7 +399,7 @@ describe("LobbyDO — match actions", () => {
 describe("LobbyDO — log deltas", () => {
   const deltaHello = (from: string): LobbyClientMessage => ({
     kind: "hello",
-    from,
+    from: seatSecret(from),
     name: `anon-${from}`,
     logDeltas: true,
   });
@@ -446,7 +451,7 @@ describe("LobbyDO — log deltas", () => {
   it("sends a forfeit as a delta too", async () => {
     const { host, guest } = await mixedMatch();
     const start = await storedMatch();
-    await h.send(guest, { kind: "bye", from: "g", slot: "guest" });
+    await h.send(guest, { kind: "bye", from: seatIdOf("g"), slot: "guest" });
     expect((await storedMatch()).state.phase.kind).toBe("gameOver");
     expect(host.last("match")?.logFrom).toBe(start.log.length);
     expect(heldLog(host.sent)).toEqual((await storedMatch()).log);
@@ -482,7 +487,7 @@ describe("LobbyDO — log deltas", () => {
   it("starts a rematch with the full log", async () => {
     const { host, guest } = await mixedMatch();
     await h.send(guest, { kind: "action", action: { type: "concede" } });
-    await h.send(guest, { kind: "rematch", from: "g" });
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     await readyUp(host, "h", "deck-ana");
     await readyUp(guest, "g", "deck-bo");
     await h.fireAlarm();
@@ -565,7 +570,7 @@ describe("LobbyDO — disconnects", () => {
     expect(guest.closed).toEqual({ code: 1001, reason: "keepalive lost" });
     expect(host.closed).toBeNull();
     expect(h.storage.data.get("pendingDisconnects")).toEqual([
-      { playerId: "g", deadline: h.world.now + DISCONNECT_GRACE_MS },
+      { playerId: seatIdOf("g"), deadline: h.world.now + DISCONNECT_GRACE_MS },
     ]);
   });
 });
@@ -676,7 +681,7 @@ describe("LobbyDO — events while the handoff awaits D1", () => {
     const held = holdDeckReads();
     const alarm = startAlarm();
     await held.inside;
-    await h.send(guest, { kind: "bye", from: "g", slot: "guest" });
+    await h.send(guest, { kind: "bye", from: seatIdOf("g"), slot: "guest" });
     await h.drop(guest);
     held.release();
     await alarm;
@@ -751,7 +756,51 @@ describe("LobbyDO — events while the handoff awaits D1", () => {
     h.deps.loadDeck = read;
     await h.fireAlarm();
     expect(snapshotOf(host).phase).toBe("in-game");
-    expect(snapshotOf(host).guest?.deckId).toBe("deck-bo-2");
+    expect(readSnapshot(h.storage.data.get("snapshot"))?.guest?.deckId).toBe("deck-bo-2");
+  });
+});
+
+describe("LobbyDO — lobbies stored before seat secrets (LB6)", () => {
+  /** A live match whose stored seats carry the ids clients sent before the split, as a deploy
+      finds it: its sockets dropped, the instance woken afresh. `lurker` stays connected. */
+  async function legacyLobby() {
+    await h.create();
+    const lurker = await h.connect();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const guest = await h.connect("bo");
+    await h.send(guest, hello("g"));
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    await h.drop(host);
+    await h.drop(guest);
+    const stored = readSnapshot(h.storage.data.get("snapshot"));
+    if (stored?.guest == null) throw new Error("no stored lobby");
+    h.storage.data.set("snapshot", {
+      ...stored,
+      host: { ...stored.host, id: "6f1c2b9e-0a4d-4c3b-9e8f-1a2b3c4d5e6f" },
+      guest: { ...stored.guest, id: "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b" },
+    });
+    h.hibernate();
+    return { lurker };
+  }
+
+  it("wipes such a lobby on the next socket and answers it like an expired one", async () => {
+    await legacyLobby();
+    await expect(h.connect("ana")).rejects.toThrow("upgrade refused with 404");
+    expect(h.storage.data.size).toBe(0);
+    expect(h.storage.alarm).toBeNull();
+    expect(logged("lobby_wiped")).toMatchObject([{ lobby: "ABCD", cause: "legacy" }]);
+    expect((await h.create()).status).toBe(201);
+  });
+
+  it("wipes such a lobby on its next alarm, closing what is still connected for good", async () => {
+    const { lurker } = await legacyLobby();
+    await h.fireAlarm();
+    expect(h.storage.data.size).toBe(0);
+    expect(h.storage.alarm).toBeNull();
+    expect(lurker.closed?.code).toBe(LOBBY_WS_CLOSED);
   });
 });
 
@@ -844,7 +893,7 @@ describe("LobbyDO — the session behind a socket", () => {
 
   it("plays a socket attached before sessions were recorded as signed out", async () => {
     const { host, guest } = await readiedLobby();
-    guest.serializeAttachment({ playerId: "g", userId: "bo", displayName: "Bo" });
+    guest.serializeAttachment({ playerId: seatIdOf("g"), userId: "bo", displayName: "Bo" });
     await h.fireAlarm();
     expect(host.last("match-error")).toEqual({
       kind: "match-error",
@@ -859,7 +908,7 @@ describe("LobbyDO — bounded growth", () => {
     const { host } = await seatBoth();
     expect(snapshotOf(host).guest?.name).toBe("B".repeat(64));
     const stranger = await h.connect();
-    await h.send(stranger, hello("x".repeat(65)));
+    await h.send(stranger, { kind: "hello", from: "x".repeat(65), name: "x" });
     expect(stranger.sent).toEqual([]);
   });
 
@@ -872,10 +921,13 @@ describe("LobbyDO — bounded growth", () => {
       // Paced within the socket's frame budget.
       h.world.now += 1000;
       await h.send(guest, hello(`g${i}`));
-      await h.send(guest, { kind: "bye", from: `g${i}`, slot: "guest" });
+      await h.send(guest, { kind: "bye", from: seatIdOf(`g${i}`), slot: "guest" });
     }
     await h.send(guest, hello("g-last"));
-    expect(h.storage.data.get("seatUsers")).toEqual({ h: "ana", "g-last": "bo" });
+    expect(h.storage.data.get("seatUsers")).toEqual({
+      [seatIdOf("h")]: "ana",
+      [seatIdOf("g-last")]: "bo",
+    });
   });
 
   it("lets go of a socket that never answered a keepalive, so an empty lobby still expires", async () => {
@@ -897,7 +949,7 @@ describe("LobbyDO — bounded growth", () => {
     const host = await h.connect("ana");
     await h.send(host, hello("h"));
     host.pings = false;
-    host.serializeAttachment({ playerId: "h", userId: "ana", displayName: "Ana" });
+    host.serializeAttachment({ playerId: seatIdOf("h"), userId: "ana", displayName: "Ana" });
     h.hibernate();
     await h.fireAlarm();
     const firstSweep = h.world.now;

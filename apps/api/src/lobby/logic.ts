@@ -4,18 +4,23 @@
 
 import {
   COUNTDOWN_MS,
+  isPublicSeatId,
   LOBBY_DECK_NAME_MAX,
   LOBBY_NAME_MAX,
   type LobbyClientMessage,
   lobbyClientMessageSchema,
+  lobbyPhaseSchema,
   type LobbySlot,
-  type LobbySnapshot,
-  lobbySnapshotSchema,
-  playerStateSchema,
   stripControlChars,
 } from "@colorless/schema";
 import * as z from "zod";
-import { applyIntent, recomputePhase, removeGuest, setGuestConnected } from "./snapshot";
+import {
+  applyIntent,
+  type LobbyState,
+  recomputePhase,
+  removeGuest,
+  setGuestConnected,
+} from "./snapshot";
 
 /** The old model's reconnect grace (its PRESENCE_TIMEOUT_MS): a lost socket
     only shows as a disconnected seat if the player hasn't come back within
@@ -150,7 +155,7 @@ export function parseClientMessage(raw: string): LobbyClientMessage | null {
 }
 
 /** Which seat a player id holds in the snapshot, if any. */
-export function slotOf(snapshot: LobbySnapshot, playerId: string): LobbySlot | null {
+export function slotOf(snapshot: LobbyState, playerId: string): LobbySlot | null {
   if (snapshot.host.id === playerId) return "host";
   if (snapshot.guest?.id === playerId) return "guest";
   return null;
@@ -165,7 +170,8 @@ export type HelloDecision = "claim-host" | "reseat-host" | "seat-guest" | "rejec
     here is the host side: the first hello into a freshly-created lobby claims
     the host seat, and the host id (pinned in the snapshot for the lobby's
     lifetime) always re-seats as host. */
-export function helloDecision(snapshot: LobbySnapshot | null, from: string): HelloDecision {
+export function helloDecision(snapshot: LobbyState | null, from: string): HelloDecision {
+  // `from` is the public id of the seat the hello's secret claims (seatId.ts).
   if (snapshot === null) return "claim-host";
   if (snapshot.host.id === from) return "reseat-host";
   if (snapshot.guest === null || snapshot.guest.id === from) return "seat-guest";
@@ -177,8 +183,9 @@ export function helloDecision(snapshot: LobbySnapshot | null, from: string): Hel
 
 /**
  * Whether a socket with `userId` may claim a seat bound to `boundUserId`. Once an account claims a
- * seat, only that account can reclaim it, since the playerId is public. An unbound seat stays
- * bearer-only, which is safe because an anonymous seat cannot load a deck.
+ * seat, only that account can reclaim it, even with the seat's secret (a tab signed out of it, or a
+ * secret copied elsewhere). An unbound seat is claimed by its secret alone, which only its client
+ * holds (LB6).
  */
 export function seatClaimAllowed(boundUserId: string | null, userId: string | null): boolean {
   return boundUserId === null || boundUserId === userId;
@@ -190,18 +197,18 @@ export function seatClaimAllowed(boundUserId: string | null, userId: string | nu
  * one only when disconnecting from a running match.
  */
 export function setSeatConnected(
-  snapshot: LobbySnapshot,
+  snapshot: LobbyState,
   slot: LobbySlot,
   connected: boolean,
   forfeitAt: number | null = null,
-): LobbySnapshot {
+): LobbyState {
   const next =
     slot === "guest" ? setGuestConnected(snapshot, connected) : hostConnected(snapshot, connected);
   // The single writer, so neither arm above has to remember the invariant.
   return withForfeitAt(next, slot, forfeitAt);
 }
 
-function hostConnected(snapshot: LobbySnapshot, connected: boolean): LobbySnapshot {
+function hostConnected(snapshot: LobbyState, connected: boolean): LobbyState {
   const host = connected
     ? { ...snapshot.host, connected: true }
     : { ...snapshot.host, connected: false, ready: false };
@@ -210,10 +217,10 @@ function hostConnected(snapshot: LobbySnapshot, connected: boolean): LobbySnapsh
 
 /** Write one seat's forfeit deadline (null = none). Pure; no policy of its own. */
 export function withForfeitAt(
-  snapshot: LobbySnapshot,
+  snapshot: LobbyState,
   slot: LobbySlot,
   forfeitAt: number | null,
-): LobbySnapshot {
+): LobbyState {
   if (slot === "host") return { ...snapshot, host: { ...snapshot.host, forfeitAt } };
   return snapshot.guest === null
     ? snapshot
@@ -225,7 +232,7 @@ export function withForfeitAt(
     the SNAPSHOT rather than a second storage list is the point of 3c-v: the
     deadline the opponent's countdown renders is the same number the alarm fires
     on, so the two can never disagree. */
-export function forfeitDeadlines(snapshot: LobbySnapshot): { slot: LobbySlot; deadline: number }[] {
+export function forfeitDeadlines(snapshot: LobbyState): { slot: LobbySlot; deadline: number }[] {
   const seats: { slot: LobbySlot; forfeitAt: number | null }[] = [
     { slot: "host", forfeitAt: snapshot.host.forfeitAt },
     ...(snapshot.guest === null
@@ -241,10 +248,10 @@ export function forfeitDeadlines(snapshot: LobbySnapshot): { slot: LobbySlot; de
     keep their deck/ready, adopt the announced name, mark them present — and, as
     on every other return path, cancel any armed forfeit (3c-v). */
 export function reseatHost(
-  snapshot: LobbySnapshot,
+  snapshot: LobbyState,
   name: string,
   avatarSeed: string | null = null,
-): LobbySnapshot {
+): LobbyState {
   return {
     ...snapshot,
     host: { ...snapshot.host, name, avatarSeed, connected: true, forfeitAt: null },
@@ -254,35 +261,61 @@ export function reseatHost(
 /**
  * Read a snapshot from storage, filling in fields added since it was written. Unlike matches there
  * is no version gate: a missing field has one sensible default, and retiring snapshots would evict
- * live lobbies on every such deploy.
+ * live lobbies on every such deploy. A lobby stored before seats had public ids (`isLegacySnapshot`)
+ * reads as null; the DO wipes such a lobby before reading it.
  */
-export function readSnapshot(raw: unknown): LobbySnapshot | null {
+export function readSnapshot(raw: unknown): LobbyState | null {
   // Never throws: the DO is the only writer, so a malformed blob is impossible in practice and
   // must not take the lobby down if it happens anyway.
   const parsed = storedSnapshotSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
 }
 
+/**
+ * Whether `raw` is a lobby stored before the seat secret split (LB6): its seats are named by the
+ * ids clients sent, which every snapshot broadcast, so they cannot be carried over as public ids,
+ * and no client can present a secret for them. Absent and unreadable values are not legacy.
+ */
+export function isLegacySnapshot(raw: unknown): boolean {
+  const parsed = legacySnapshotSchema.safeParse(raw);
+  if (!parsed.success) return false;
+  const { host, guest } = parsed.data;
+  return !isPublicSeatId(host.id) || (guest !== null && !isPublicSeatId(guest.id));
+}
+
 /** A seat as stored by any deploy. `avatarSeed` and `forfeitAt` were added after the first lobbies
     were written, so a missing or malformed value reads as null; `forfeitAt` feeds `Math.min` in the
     alarm scheduler, where an undefined would set NaN. Names stored before frames were bounded and
     stripped of control characters are cleaned as the frames now are rather than refused, so such
-    a lobby keeps working. */
-const storedSeatSchema = playerStateSchema.extend({
+    a lobby keeps working. The id must be a public seat id. */
+const storedSeatSchema = z.object({
+  id: z.string().refine(isPublicSeatId),
   name: z.string().transform((name) => stripControlChars(name).slice(0, LOBBY_NAME_MAX)),
+  deckId: z.string().nullable(),
   deckName: z
     .string()
     .nullable()
     .transform((name) =>
       name === null ? null : stripControlChars(name).slice(0, LOBBY_DECK_NAME_MAX),
     ),
+  ready: z.boolean(),
+  connected: z.boolean(),
   avatarSeed: z.string().nullable().catch(null),
   forfeitAt: z.number().nullable().catch(null),
 });
 
-const storedSnapshotSchema = lobbySnapshotSchema.extend({
+const storedSnapshotSchema = z.object({
+  code: z.string(),
+  phase: lobbyPhaseSchema,
   host: storedSeatSchema,
   guest: storedSeatSchema.nullable(),
+  countdownStartedAt: z.number().nullable(),
+});
+
+/** Just enough of a stored lobby to read its seat ids. */
+const legacySnapshotSchema = z.object({
+  host: z.object({ id: z.string() }),
+  guest: z.object({ id: z.string() }).nullable(),
 });
 
 /** The countdown ended but the match couldn't START (a chosen deck wouldn't
@@ -290,7 +323,7 @@ const storedSnapshotSchema = lobbySnapshotSchema.extend({
     lobby falls back to `selecting` for a retry instead of wedging in-game with no
     match. Un-readying is what breaks the loop — leaving it in `countdown` past
     its deadline would just re-fire the failing handoff on the next alarm. */
-export function resetAfterFailedStart(snapshot: LobbySnapshot): LobbySnapshot {
+export function resetAfterFailedStart(snapshot: LobbyState): LobbyState {
   return recomputePhase({
     ...snapshot,
     host: { ...snapshot.host, ready: false },
@@ -303,7 +336,7 @@ export function resetAfterFailedStart(snapshot: LobbySnapshot): LobbySnapshot {
  * `recomputePhase` never leaves in-game on its own, so the phase is cleared explicitly first.
  * `abandonsMatch` is true for this transition, so `commit` drops the match record.
  */
-export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
+export function endMatch(snapshot: LobbyState): LobbyState {
   return recomputePhase({
     ...snapshot,
     phase: "selecting",
@@ -317,7 +350,7 @@ export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
  * End the finished match and ready the asker. The opponent accepts by readying. Goes through
  * `applyIntent` so the rule that you can't be ready without a deck is enforced in one place.
  */
-export function rematch(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot {
+export function rematch(snapshot: LobbyState, slot: LobbySlot): LobbyState {
   return applyIntent(endMatch(snapshot), slot, { type: "set-ready", ready: true });
 }
 
@@ -326,14 +359,14 @@ export function rematch(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot
  * player keeps the board and result; a leave may send two byes. Otherwise the host's seat is marked
  * gone because the host id is fixed, and the guest's seat is freed.
  */
-export function applyBye(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot {
+export function applyBye(snapshot: LobbyState, slot: LobbySlot): LobbyState {
   return snapshot.phase === "in-game" || slot === "host"
     ? setSeatConnected(snapshot, slot, false)
     : removeGuest(snapshot);
 }
 
 /** Whether two snapshots hold the same values, whatever their key order. */
-export function sameSnapshot(a: LobbySnapshot, b: LobbySnapshot): boolean {
+export function sameSnapshot(a: LobbyState, b: LobbyState): boolean {
   return sameValue(a, b);
 }
 
@@ -352,14 +385,14 @@ function sameValue(a: unknown, b: unknown): boolean {
 
 /** Stamp the countdown's start the moment `recomputePhase` enters the phase, which leaves
     `countdownStartedAt` null for this to fill, so every client counts from one instant. */
-export function stampCountdown(snapshot: LobbySnapshot, now: number): LobbySnapshot {
+export function stampCountdown(snapshot: LobbyState, now: number): LobbyState {
   return snapshot.phase === "countdown" && snapshot.countdownStartedAt === null
     ? { ...snapshot, countdownStartedAt: now }
     : snapshot;
 }
 
 /** When the running countdown flips to in-game, or null if none is running. */
-export function countdownEndsAt(snapshot: LobbySnapshot): number | null {
+export function countdownEndsAt(snapshot: LobbyState): number | null {
   return snapshot.phase === "countdown" && snapshot.countdownStartedAt !== null
     ? snapshot.countdownStartedAt + COUNTDOWN_MS
     : null;
@@ -371,7 +404,7 @@ export function countdownEndsAt(snapshot: LobbySnapshot): number | null {
     in-game on its own. The DO drops its persisted match record on exactly these,
     so a rematch in the same lobby mints a fresh game instead of `handoffToMatch`
     reusing the stale one (P4). `prev` null = a brand-new lobby, never in-game. */
-export function abandonsMatch(prev: LobbySnapshot | null, next: LobbySnapshot): boolean {
+export function abandonsMatch(prev: LobbyState | null, next: LobbyState): boolean {
   return prev !== null && prev.phase === "in-game" && next.phase !== "in-game";
 }
 
@@ -390,7 +423,7 @@ export type PendingDisconnect = z.infer<typeof pendingDisconnectSchema>;
 
 export const storedPendingSchema = z.array(pendingDisconnectSchema);
 
-/** playerId → the account bound to that seat. */
+/** Public seat id → the account bound to that seat. */
 export const storedSeatUsersSchema = z.record(z.string(), z.string());
 
 /**
@@ -400,7 +433,7 @@ export const storedSeatUsersSchema = z.record(z.string(), z.string());
  */
 export function seatedUsers(
   seatUsers: Record<string, string>,
-  snapshot: LobbySnapshot,
+  snapshot: LobbyState,
 ): Record<string, string> {
   const seated = [snapshot.host.id, snapshot.guest?.id];
   return Object.fromEntries(Object.entries(seatUsers).filter(([id]) => seated.includes(id)));
@@ -414,7 +447,7 @@ export const storedCleanupAtSchema = z.number();
 /** An epoch-ms stamp: when the lobby was created, or last saw a commit, an action or a hello. */
 export const storedTimeSchema = z.number();
 
-/** The playerId who picks the next game's play order. */
+/** The public seat id of the player who picks the next game's play order. */
 export const storedChooserSchema = z.string();
 
 /**

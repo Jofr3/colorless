@@ -8,14 +8,16 @@ export type LobbySlot = "host" | "guest";
 
 /** One player's state within a lobby, as tracked by the host. */
 export type PlayerState = {
-  /** Stable id for this player's browser session. Lets the host tell a
-      reconnect (same id) from a brand-new joiner (different id). */
+  /** The seat's PUBLIC id (seatId.ts): a hash of the secret only this player's client holds, so
+      the lobby can name the seat to everyone without handing out what claims it (LB6). Stable
+      across reconnects of the same tab. */
   id: string;
   name: string;
-  /** Chosen deck, or null until they pick one. */
-  deckId: string | null;
-  /** Denormalised deck name so the opponent can label the pick without needing
-      the deck library (the guest may not share the host's decks). */
+  /** Whether they have picked a deck. The deck's id stays on the server, which reads the deck
+      with it at match start: it is a private library id, never broadcast (LB5). */
+  hasDeck: boolean;
+  /** The picked deck's name, or null until they pick one. Sent so a player's own client can
+      label its pick after a reload, when it no longer remembers which deck it chose. */
   deckName: string | null;
   /** Locked in and waiting to start. Only ever true with a deck chosen. */
   ready: boolean;
@@ -60,11 +62,13 @@ export type LobbyIntent =
   | { type: "set-ready"; ready: boolean }
   | { type: "set-name"; name: string };
 
-/** Everything that can travel over a lobby channel. `from` is the sender's
-    player id so the host can bind messages to the right seat. */
+/** Everything that can travel over a lobby channel. In a `hello`, `from` is the sender's seat
+    SECRET, which claims the seat; in every other frame `from` and `to` are public seat ids. The
+    server judges a frame by the seat its socket's hello claimed, never by `from`. */
 export type LobbyMessage =
-  /** guest → host: request to join, or re-announce after a reconnect. `logDeltas` says the client
-      takes `match` frames that carry only the log's new entries. */
+  /** client → server: request to join, or re-announce after a reconnect. `from` is the client's
+      seat secret (seatId.ts), sent in no other frame. `logDeltas` says the client takes `match`
+      frames that carry only the log's new entries. */
   | { kind: "hello"; from: string; name: string; logDeltas?: boolean }
   /** host → all: the authoritative snapshot after any change. */
   | { kind: "state"; snapshot: LobbySnapshot }

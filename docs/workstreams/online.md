@@ -50,6 +50,31 @@ The lobby DO now bounds what one client can cost (details in `backend-data.md` �
   that one action's table cues are skipped. Per-turn uses of repeatable abilities are not capped:
   that would be a rule the engine does not have, and the frame budget already bounds the rate.
 
+## Status — seat secrets and private deck ids (security Phase 4, LB5/LB6, 2026-10-27)
+
+Wire change, shipped with the web client in one release (the deploy drops every socket anyway):
+
+- **Seat secret (LB6).** Each tab mints a 256-bit secret per lobby (`mintSeatSecret`, kept in
+  `sessionStorage` as `online.identity.CODE` = `{secret, role, name}`) and sends it in the
+  `hello` only. Snapshots, `reject.to`, and the `from` of intents, byes and rematches carry the
+  seat's public id: `publicSeatId(secret)`, the first 22 base64url characters of SHA-256 (a
+  synchronous hash in `packages/schema/src/lobby/seatId.ts`, so the client and the DO derive it
+  without awaiting). The DO hashes the hello's secret and stores only public ids (snapshot,
+  `seatUsers`, pending disconnects, chooser, attachments). Reading an id off a snapshot no longer
+  claims or binds a seat; the account binding and eviction (LBX1) apply unchanged on top.
+- **Deck ids stay in the DO (LB5).** A seat on the wire has `hasDeck` and `deckName`; the DO
+  stores `deckId` (`LobbyState`, `wireSnapshot` in `apps/api/src/lobby/snapshot.ts`) and reads the
+  deck with it at handoff. The client remembers its own pick (`LobbyClientState.deckId`); after a
+  reload it only knows the pick's name, and the Lua seat line carries `hasDeck` as field 9.
+- **Old clients.** A hello whose `from` is not a secret (a pre-split client's UUID) is answered
+  `reject full` to that `from`, logged `hello_refused cause=credential`, and seats nothing: an old
+  cached tab shows "Lobby is full" until reloaded. An identity saved by an old client is ignored,
+  so a reloaded tab joins as a fresh guest.
+- **Stored lobbies.** A lobby stored before the split (a seat id that is not a public id) cannot
+  be carried over: its ids were public, and no client holds a secret that hashes to them. The DO
+  wipes it, on the next `/ws` (answered 404, "Lobby not found") or on its next alarm (live sockets
+  closed with 4000), logging `lobby_wiped cause=legacy`. Players create a new lobby.
+
 ## Status — P4 kickoff (2026-07-23)
 
 **Started** (P3 engine broad enough at 0.39.0). **Milestone 1 (WS transport + lobby

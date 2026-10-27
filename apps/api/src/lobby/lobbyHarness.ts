@@ -3,11 +3,30 @@
 // the DO constructs (`WebSocketPair`, `WebSocketRequestResponsePair`, a `Response` that accepts a
 // 101 upgrade). `createLobbyHarness` installs the globals and `dispose` restores them.
 
-import type { Card, LobbyClientMessage, LobbyServerMessage } from "@colorless/schema";
+import {
+  type Card,
+  type LobbyClientMessage,
+  type LobbyServerMessage,
+  publicSeatId,
+  seatSecretFrom,
+  sha256,
+} from "@colorless/schema";
 import type { Env } from "../env";
 import type { LoadDeckResult } from "./deckLoad";
 import { DO_CREATE_PATH, DO_WS_PATH, doUrl, LOBBY_CODE_HEADER } from "./doProtocol";
 import { type LobbyDeps, LobbyDO } from "./lobbyDO";
+
+/** A seat secret for a test's player `label`: fixed per label, so a test can say hello as "h"
+    again after a reload, as a tab keeps its secret. */
+export function seatSecret(label: string): string {
+  return seatSecretFrom(sha256(Uint8Array.from(label, (char) => char.charCodeAt(0))));
+}
+
+/** The public id the lobby names `label`'s seat by: what its snapshots carry and what intents,
+    byes, rematches and kicks address. */
+export function seatIdOf(label: string): string {
+  return publicSeatId(seatSecret(label));
+}
 
 /** The server end of an accepted lobby socket, recording every frame the DO sends it. */
 export class FakeSocket {

@@ -8,6 +8,7 @@ import {
   type LobbySnapshot,
   makePlayer,
   type PlayerState,
+  publicSeatId,
   type RedactedGame,
   type SeatLogEntry,
   type WireAction,
@@ -45,11 +46,12 @@ export type ActionError = { reason: string; nonce: number };
 export type LobbyClientOptions = {
   code: string;
   role: LobbySlot;
-  playerId: string;
+  /** This tab's seat secret (session.ts): sent only in the hello, which it claims the seat with. */
+  secret: string;
   name: string;
   /** A seat carried over from the socket this one replaces (a reopen after
       signing in), so the view holds its step until the server reseats us. */
-  resume?: Pick<LobbyClientState, "snapshot" | "status">;
+  resume?: Pick<LobbyClientState, "snapshot" | "status" | "deckId">;
 };
 
 export type LobbyClientState = {
@@ -64,6 +66,10 @@ export type LobbyClientState = {
   actionError: ActionError | null;
   /** Why the last match failed to START; cleared by the next lobby state. */
   matchError: string | null;
+  /** The saved deck this client picked. The server keeps every seat's deck id to itself (LB5) and
+      says only whether one is picked, so this is the client's own memory of its pick: null once
+      the server says none is, and unknown (null) after a reload, which keeps the deck's name. */
+  deckId: string | null;
 };
 
 const HELLO_RETRY_MS = 700;
@@ -90,6 +96,7 @@ function initialLobbyState(
     matchLog: [],
     actionError: null,
     matchError: null,
+    deckId: null,
   };
 }
 
@@ -121,7 +128,9 @@ export function versusStatus(self: PlayerState | null, opponent: PlayerState | n
 export class LobbyClient {
   readonly code: string;
   readonly role: LobbySlot;
+  /** This seat's PUBLIC id, as the lobby's snapshots name it: the hash of `secret`. */
   readonly playerId: string;
+  private readonly secret: string;
   private name: string;
   private channel: LobbyChannel;
   private now: () => number;
@@ -140,13 +149,14 @@ export class LobbyClient {
   constructor(opts: LobbyClientOptions, deps: { channel?: LobbyChannel; now?: () => number } = {}) {
     this.code = opts.code;
     this.role = opts.role;
-    this.playerId = opts.playerId;
+    this.secret = opts.secret;
+    this.playerId = publicSeatId(opts.secret);
     this.name = opts.name;
     this.now = deps.now ?? Date.now;
     this.channel =
       deps.channel ?? createLobbyChannel(opts.code, { onLobbyClosed: () => this.lobbyClosed() });
     this.current = {
-      ...initialLobbyState(opts.code, opts.role, opts.playerId, opts.name),
+      ...initialLobbyState(opts.code, opts.role, this.playerId, opts.name),
       ...opts.resume,
     };
     this.mountedAt = this.now();
@@ -175,6 +185,7 @@ export class LobbyClient {
   }
 
   selectDeck(deck: DeckChoice) {
+    this.set({ deckId: deck.id });
     this.intent({ type: "select-deck", deckId: deck.id, deckName: deck.name });
   }
 
@@ -235,7 +246,7 @@ export class LobbyClient {
   }
 
   private hello() {
-    this.channel.post({ kind: "hello", from: this.playerId, name: this.name, logDeltas: true });
+    this.channel.post({ kind: "hello", from: this.secret, name: this.name, logDeltas: true });
   }
 
   private intent(intent: LobbyIntent) {
@@ -256,8 +267,8 @@ export class LobbyClient {
           break;
         }
         // Only adopt a snapshot that seats US: refused sockets get broadcasts too.
-        const seated = this.role === "host" ? snapshot.host.id : snapshot.guest?.id;
-        if (this.refusal !== null || seated !== this.playerId) break;
+        const seat = this.role === "host" ? snapshot.host : snapshot.guest;
+        if (this.refusal !== null || seat?.id !== this.playerId) break;
         this.lastServerSeen = this.now();
         this.connectedOnce = true;
         // The failing handoff broadcasts its state BEFORE the match-error, so
@@ -266,6 +277,7 @@ export class LobbyClient {
           snapshot,
           status: "connected",
           matchError: null,
+          ...(!seat.hasDeck && { deckId: null }),
           ...(snapshot.phase !== "in-game" && { match: null, matchLog: [], actionError: null }),
         });
         break;

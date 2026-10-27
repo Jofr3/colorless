@@ -14,6 +14,7 @@ import {
   lobbyIntentSchema,
   lobbyIntentSchemaMatchesType,
   lobbySnapshotSchema,
+  playerStateSchema,
 } from "./wire";
 
 const SNAPSHOT: LobbySnapshot = {
@@ -22,7 +23,7 @@ const SNAPSHOT: LobbySnapshot = {
   host: {
     id: "h1",
     name: "Ana",
-    deckId: "d1",
+    hasDeck: true,
     deckName: "Sparks",
     ready: false,
     connected: true,
@@ -32,7 +33,7 @@ const SNAPSHOT: LobbySnapshot = {
   guest: {
     id: "g1",
     name: "Bo",
-    deckId: null,
+    hasDeck: false,
     deckName: null,
     ready: false,
     connected: true,
@@ -291,6 +292,15 @@ describe("lobbySnapshotSchema", () => {
 
   it("refuses an unknown phase", () => {
     expect(lobbySnapshotSchema.safeParse({ ...SNAPSHOT, phase: "paused" }).success).toBe(false);
+  });
+
+  it("says whether a seat has picked a deck, never which (LB5)", () => {
+    expect(Object.keys(playerStateSchema.shape)).toContain("hasDeck");
+    expect(Object.keys(playerStateSchema.shape)).not.toContain("deckId");
+    expect(
+      lobbySnapshotSchema.safeParse({ ...SNAPSHOT, host: { ...SNAPSHOT.host, hasDeck: undefined } })
+        .success,
+    ).toBe(false);
   });
 });
 

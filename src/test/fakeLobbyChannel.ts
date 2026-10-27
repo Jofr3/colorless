@@ -1,7 +1,7 @@
 // A scripted LobbyChannel for the lobby client suites: records every post and
 // pushes server frames to the subscribers. Not a test file itself.
 
-import type { LobbyMessage } from "@colorless/schema";
+import { type LobbyMessage, publicSeatId, seatSecretFrom, sha256 } from "@colorless/schema";
 import type { LobbyChannel } from "../online/channel";
 
 export function fakeLobbyChannel() {
@@ -30,4 +30,14 @@ export function fakeLobbyChannel() {
     kinds: () => posts.map((p) => p.kind),
     closed: () => closed,
   };
+}
+
+/** A fixed seat secret for a test player `label`, as a tab keeps in sessionStorage. */
+export function testSeatSecret(label: string): string {
+  return seatSecretFrom(sha256(Uint8Array.from(label, (char) => char.charCodeAt(0))));
+}
+
+/** The public id a lobby names `label`'s seat by. */
+export function testSeatId(label: string): string {
+  return publicSeatId(testSeatSecret(label));
 }

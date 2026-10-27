@@ -1,12 +1,4 @@
-import {
-  COUNTDOWN_MS,
-  createSnapshot,
-  LOBBY_DECK_NAME_MAX,
-  LOBBY_ID_MAX,
-  LOBBY_NAME_MAX,
-  type LobbySnapshot,
-  makePlayer,
-} from "@colorless/schema";
+import { COUNTDOWN_MS, LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX, LOBBY_NAME_MAX } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   ABANDON_GRACE_MS,
@@ -21,6 +13,7 @@ import {
   FRAME_REFILL_PER_SECOND,
   type FrameBudget,
   helloDecision,
+  isLegacySnapshot,
   parseClientMessage,
   readSnapshot,
   readStored,
@@ -47,13 +40,24 @@ import {
   withoutPendingDisconnect,
   withPendingDisconnect,
 } from "./logic";
-import { applyIntent, removeGuest, seatGuest } from "./snapshot";
+import {
+  applyIntent,
+  createLobbyState,
+  type LobbyState,
+  makeSeat,
+  removeGuest,
+  seatGuest,
+} from "./snapshot";
 
-function lobbyWithGuest(): LobbySnapshot {
-  return seatGuest(createSnapshot("ABCD", makePlayer("h1", "Ana")), "g1", "Bo");
+// Public seat ids, as the DO stores (seatId.ts): 22 base64url characters.
+const H1 = "h1".padEnd(22, "0");
+const G1 = "g1".padEnd(22, "0");
+
+function lobbyWithGuest(): LobbyState {
+  return seatGuest(createLobbyState("ABCD", makeSeat(H1, "Ana")), G1, "Bo");
 }
 
-function countdownLobby(): LobbySnapshot {
+function countdownLobby(): LobbyState {
   let snapshot = lobbyWithGuest();
   snapshot = applyIntent(snapshot, "host", { type: "select-deck", deckId: "d1", deckName: "A" });
   snapshot = applyIntent(snapshot, "guest", { type: "select-deck", deckId: "d2", deckName: "B" });
@@ -71,7 +75,7 @@ describe("parseClientMessage — the length bounds", () => {
     for (const frame of [
       { kind: "hello", from: id, name: "Bo" },
       { kind: "intent", from: id, intent: { type: "set-ready", ready: true } },
-      { kind: "intent", from: "g1", intent: { type: "select-deck", deckId: id, deckName: "A" } },
+      { kind: "intent", from: G1, intent: { type: "select-deck", deckId: id, deckName: "A" } },
       { kind: "bye", from: id, slot: "guest" },
       { kind: "rematch", from: id },
       { kind: "reject", to: id, reason: "kicked" },
@@ -83,18 +87,16 @@ describe("parseClientMessage — the length bounds", () => {
   });
 
   it("clips a name or deck name longer than the bound", () => {
-    const hello = parseClientMessage(
-      JSON.stringify({ kind: "hello", from: "g1", name: long(5000) }),
-    );
-    expect(hello).toEqual({ kind: "hello", from: "g1", name: long(LOBBY_NAME_MAX) });
+    const hello = parseClientMessage(JSON.stringify({ kind: "hello", from: G1, name: long(5000) }));
+    expect(hello).toEqual({ kind: "hello", from: G1, name: long(LOBBY_NAME_MAX) });
     const rename = parseClientMessage(
-      JSON.stringify({ kind: "intent", from: "g1", intent: { type: "set-name", name: long(70) } }),
+      JSON.stringify({ kind: "intent", from: G1, intent: { type: "set-name", name: long(70) } }),
     );
     expect(rename).toMatchObject({ intent: { name: long(LOBBY_NAME_MAX) } });
     const pick = parseClientMessage(
       JSON.stringify({
         kind: "intent",
-        from: "g1",
+        from: G1,
         intent: { type: "select-deck", deckId: "d1", deckName: long(5000) },
       }),
     );
@@ -103,18 +105,20 @@ describe("parseClientMessage — the length bounds", () => {
 
   it("strips control characters from a hello's name and a deck name, and refuses a set-name with any", () => {
     const forged = "x\nCOLORLESS:auth:submit\u200b";
-    expect(parseClientMessage(JSON.stringify({ kind: "hello", from: "g1", name: forged }))).toEqual(
-      { kind: "hello", from: "g1", name: "xCOLORLESS:auth:submit" },
-    );
+    expect(parseClientMessage(JSON.stringify({ kind: "hello", from: G1, name: forged }))).toEqual({
+      kind: "hello",
+      from: G1,
+      name: "xCOLORLESS:auth:submit",
+    });
     const pick = parseClientMessage(
       JSON.stringify({
         kind: "intent",
-        from: "g1",
+        from: G1,
         intent: { type: "select-deck", deckId: "d1", deckName: forged },
       }),
     );
     expect(pick).toMatchObject({ intent: { deckName: "xCOLORLESS:auth:submit" } });
-    const rename = { kind: "intent", from: "g1", intent: { type: "set-name", name: forged } };
+    const rename = { kind: "intent", from: G1, intent: { type: "set-name", name: forged } };
     expect(parseClientMessage(JSON.stringify(rename))).toBeNull();
   });
 });
@@ -122,19 +126,19 @@ describe("parseClientMessage — the length bounds", () => {
 describe("seatedUsers — the bindings worth keeping", () => {
   it("keeps the host's and guest's bindings and drops every departed id's", () => {
     const lobby = lobbyWithGuest();
-    expect(seatedUsers({ h1: "ana", g1: "bo", gone: "eve", other: "zed" }, lobby)).toEqual({
-      h1: "ana",
-      g1: "bo",
+    expect(seatedUsers({ [H1]: "ana", [G1]: "bo", gone: "eve", other: "zed" }, lobby)).toEqual({
+      [H1]: "ana",
+      [G1]: "bo",
     });
-    expect(seatedUsers({ h1: "ana", g1: "bo" }, removeGuest(lobby))).toEqual({ h1: "ana" });
+    expect(seatedUsers({ [H1]: "ana", [G1]: "bo" }, removeGuest(lobby))).toEqual({ [H1]: "ana" });
   });
 });
 
 describe("parseClientMessage", () => {
   it("parses a valid frame", () => {
-    expect(parseClientMessage(JSON.stringify({ kind: "hello", from: "g1", name: "Bo" }))).toEqual({
+    expect(parseClientMessage(JSON.stringify({ kind: "hello", from: G1, name: "Bo" }))).toEqual({
       kind: "hello",
-      from: "g1",
+      from: G1,
       name: "Bo",
     });
   });
@@ -144,7 +148,7 @@ describe("parseClientMessage", () => {
     expect(parseClientMessage(JSON.stringify({ kind: "boom" }))).toBeNull();
     expect(parseClientMessage(JSON.stringify({ kind: "heartbeat", from: "x" }))).toBeNull();
     expect(
-      parseClientMessage(JSON.stringify({ kind: "reject", to: "g1", reason: "full" })),
+      parseClientMessage(JSON.stringify({ kind: "reject", to: G1, reason: "full" })),
     ).toBeNull();
   });
 });
@@ -152,25 +156,25 @@ describe("parseClientMessage", () => {
 describe("slotOf", () => {
   it("resolves both seats and rejects strangers", () => {
     const snapshot = lobbyWithGuest();
-    expect(slotOf(snapshot, "h1")).toBe("host");
-    expect(slotOf(snapshot, "g1")).toBe("guest");
+    expect(slotOf(snapshot, H1)).toBe("host");
+    expect(slotOf(snapshot, G1)).toBe("guest");
     expect(slotOf(snapshot, "x9")).toBeNull();
   });
 });
 
 describe("helloDecision", () => {
   it("claims the host seat in a lobby with no snapshot yet", () => {
-    expect(helloDecision(null, "h1")).toBe("claim-host");
+    expect(helloDecision(null, H1)).toBe("claim-host");
   });
 
   it("re-seats known ids on their own seats", () => {
     const snapshot = lobbyWithGuest();
-    expect(helloDecision(snapshot, "h1")).toBe("reseat-host");
-    expect(helloDecision(snapshot, "g1")).toBe("seat-guest");
+    expect(helloDecision(snapshot, H1)).toBe("reseat-host");
+    expect(helloDecision(snapshot, G1)).toBe("seat-guest");
   });
 
   it("seats a newcomer while the guest seat is empty", () => {
-    expect(helloDecision(createSnapshot("ABCD", makePlayer("h1", "Ana")), "g1")).toBe("seat-guest");
+    expect(helloDecision(createLobbyState("ABCD", makeSeat(H1, "Ana")), G1)).toBe("seat-guest");
   });
 
   it("refuses a newcomer while the incumbent guest is connected", () => {
@@ -184,9 +188,9 @@ describe("helloDecision", () => {
     const inCountdown = setSeatConnected(countdownLobby(), "guest", false);
     // Disconnecting drops ready and leaves countdown, so re-enter it manually
     // to model the "seat dropped but match underway" refusals.
-    const inGame: LobbySnapshot = { ...inCountdown, phase: "in-game" };
+    const inGame: LobbyState = { ...inCountdown, phase: "in-game" };
     expect(helloDecision(inGame, "g2")).toBe("reject-full");
-    const countdown: LobbySnapshot = { ...inCountdown, phase: "countdown" };
+    const countdown: LobbyState = { ...inCountdown, phase: "countdown" };
     expect(helloDecision(countdown, "g2")).toBe("reject-full");
   });
 });
@@ -216,7 +220,7 @@ describe("setSeatConnected", () => {
 });
 
 describe("the forfeit deadline on the seat (3c-v)", () => {
-  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+  const running = (): LobbyState => ({ ...countdownLobby(), phase: "in-game" });
 
   it("arms the deadline in the SAME write that marks the seat gone", () => {
     // One writer for the pair is the whole point: you cannot disconnect a seat
@@ -230,11 +234,11 @@ describe("the forfeit deadline on the seat (3c-v)", () => {
     const away = setSeatConnected(running(), "guest", false, 9_000);
     expect(setSeatConnected(away, "guest", true).guest?.forfeitAt).toBeNull();
     // …and the reconnect paths the hello branches actually take.
-    expect(seatGuest(away, "g1", "Bo").guest?.forfeitAt).toBeNull();
+    expect(seatGuest(away, G1, "Bo").guest?.forfeitAt).toBeNull();
     const hostAway = setSeatConnected(running(), "host", false, 9_000);
     expect(reseatHost(hostAway, "Ana").host.forfeitAt).toBeNull();
     // A brand-new seat never carries one.
-    expect(makePlayer("x", "X").forfeitAt).toBeNull();
+    expect(makeSeat("x", "X").forfeitAt).toBeNull();
   });
 
   it("defaults to none, so a plain disconnect outside a match arms nothing", () => {
@@ -256,7 +260,7 @@ describe("the forfeit deadline on the seat (3c-v)", () => {
   });
 
   it("ignores a guest seat that isn't there", () => {
-    const solo = createSnapshot("ABCD", makePlayer("h1", "Ana"));
+    const solo = createLobbyState("ABCD", makeSeat(H1, "Ana"));
     expect(withForfeitAt(solo, "guest", 1)).toBe(solo);
     expect(forfeitDeadlines(solo)).toEqual([]);
   });
@@ -270,8 +274,8 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     const legacy = {
       code: "ABCD",
       phase: "selecting",
-      host: { id: "h1", name: "Ana", deckId: null, deckName: null, ready: false, connected: true },
-      guest: { id: "g1", name: "Bo", deckId: null, deckName: null, ready: false, connected: false },
+      host: { id: H1, name: "Ana", deckId: null, deckName: null, ready: false, connected: true },
+      guest: { id: G1, name: "Bo", deckId: null, deckName: null, ready: false, connected: false },
       countdownStartedAt: null,
     };
     const read = readSnapshot(legacy);
@@ -316,6 +320,19 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     expect(read?.host.deckName).toBe("d");
   });
 
+  it("reads a lobby stored before seats had public ids as legacy, and as no snapshot (LB6)", () => {
+    const stored = lobbyWithGuest();
+    const legacy = {
+      ...stored,
+      guest: stored.guest && { ...stored.guest, id: "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b" },
+    };
+    expect(isLegacySnapshot(legacy)).toBe(true);
+    expect(readSnapshot(legacy)).toBeNull();
+    expect(isLegacySnapshot(stored)).toBe(false);
+    expect(isLegacySnapshot(undefined)).toBe(false);
+    expect(isLegacySnapshot("nope")).toBe(false);
+  });
+
   it("keeps a stored avatar seed and reads a malformed seat as no snapshot", () => {
     const stored = lobbyWithGuest();
     const seeded = { ...stored, host: { ...stored.host, avatarSeed: "seed-1" } };
@@ -342,7 +359,7 @@ describe("sameSnapshot", () => {
         ...snapshot,
         host: Object.fromEntries(Object.entries(snapshot.host).reverse()),
       }),
-    ) as LobbySnapshot;
+    ) as LobbyState;
     expect(sameSnapshot(snapshot, reordered)).toBe(true);
     expect(sameSnapshot(snapshot, reseatHost(snapshot, "Ana"))).toBe(true);
   });
@@ -388,13 +405,13 @@ describe("resetAfterFailedStart", () => {
   });
 
   it("CANNOT end a running match — recomputePhase never leaves in-game", () => {
-    const running: LobbySnapshot = { ...countdownLobby(), phase: "in-game" };
+    const running: LobbyState = { ...countdownLobby(), phase: "in-game" };
     expect(resetAfterFailedStart(running).phase).toBe("in-game");
   });
 });
 
 describe("endMatch — stopping a RUNNING match", () => {
-  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+  const running = (): LobbyState => ({ ...countdownLobby(), phase: "in-game" });
 
   it("leaves in-game and hands the lobby back at selecting, both un-readied", () => {
     const next = endMatch(running());
@@ -414,7 +431,7 @@ describe("endMatch — stopping a RUNNING match", () => {
   });
 
   it("falls back to waiting when the guest already left", () => {
-    const soloed: LobbySnapshot = { ...running(), guest: null };
+    const soloed: LobbyState = { ...running(), guest: null };
     expect(endMatch(soloed).phase).toBe("waiting");
   });
 
@@ -426,7 +443,7 @@ describe("endMatch — stopping a RUNNING match", () => {
 });
 
 describe("rematch — play again in the same lobby (3c-vi)", () => {
-  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+  const running = (): LobbyState => ({ ...countdownLobby(), phase: "in-game" });
 
   it("ends the match and READIES the asker, leaving the opponent to accept", () => {
     // Pressing Rematch is an offer; the opponent accepts by readying, which is the
@@ -454,7 +471,7 @@ describe("rematch — play again in the same lobby (3c-vi)", () => {
   });
 
   it("cannot ready a seat with no deck — the asker just lands back un-readied", () => {
-    const deckless: LobbySnapshot = {
+    const deckless: LobbyState = {
       ...running(),
       host: { ...running().host, deckId: null, deckName: null },
     };
@@ -463,7 +480,7 @@ describe("rematch — play again in the same lobby (3c-vi)", () => {
 });
 
 describe("applyBye — a graceful leave (3c-iv)", () => {
-  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+  const running = (): LobbyState => ({ ...countdownLobby(), phase: "in-game" });
 
   it("frees the guest seat when no match is running", () => {
     const next = applyBye(lobbyWithGuest(), "guest");
@@ -510,7 +527,7 @@ describe("countdown helpers", () => {
     expect(stamped.countdownStartedAt).toBe(1000);
     // Already stamped → untouched; other phases → untouched.
     expect(stampCountdown(stamped, 2000)).toBe(stamped);
-    const waiting = createSnapshot("ABCD", makePlayer("h1", "Ana"));
+    const waiting = createLobbyState("ABCD", makeSeat(H1, "Ana"));
     expect(stampCountdown(waiting, 1000)).toBe(waiting);
   });
 
@@ -523,7 +540,7 @@ describe("countdown helpers", () => {
 
 describe("abandonsMatch", () => {
   it("is true only when a commit takes the lobby out of in-game (the match-record drop)", () => {
-    const inGame: LobbySnapshot = { ...countdownLobby(), phase: "in-game" };
+    const inGame: LobbyState = { ...countdownLobby(), phase: "in-game" };
     // The real abandon path: removeGuest (a guest's bye / the host's kick) resets
     // in-game → waiting. This is the transition that must drop the stale match.
     expect(abandonsMatch(inGame, removeGuest(inGame))).toBe(true);
@@ -572,22 +589,22 @@ describe("socketIsSilent — the half-open connection (3c-viii)", () => {
 
 describe("pending-disconnect bookkeeping", () => {
   it("adds, refreshes and removes entries by player", () => {
-    let pending = withPendingDisconnect([], "g1", 5000);
-    pending = withPendingDisconnect(pending, "h1", 6000);
-    pending = withPendingDisconnect(pending, "g1", 7000); // refresh, not duplicate
+    let pending = withPendingDisconnect([], G1, 5000);
+    pending = withPendingDisconnect(pending, H1, 6000);
+    pending = withPendingDisconnect(pending, G1, 7000); // refresh, not duplicate
     expect(pending).toHaveLength(2);
-    expect(pending.find((entry) => entry.playerId === "g1")?.deadline).toBe(7000);
-    expect(withoutPendingDisconnect(pending, "g1").map((entry) => entry.playerId)).toEqual(["h1"]);
+    expect(pending.find((entry) => entry.playerId === G1)?.deadline).toBe(7000);
+    expect(withoutPendingDisconnect(pending, G1).map((entry) => entry.playerId)).toEqual([H1]);
   });
 
   it("splits due from waiting at a boundary-inclusive deadline", () => {
     const pending = [
-      { playerId: "g1", deadline: 5000 },
-      { playerId: "h1", deadline: 6000 },
+      { playerId: G1, deadline: 5000 },
+      { playerId: H1, deadline: 6000 },
     ];
     const { due, waiting } = splitDuePending(pending, 5000);
-    expect(due.map((entry) => entry.playerId)).toEqual(["g1"]);
-    expect(waiting.map((entry) => entry.playerId)).toEqual(["h1"]);
+    expect(due.map((entry) => entry.playerId)).toEqual([G1]);
+    expect(waiting.map((entry) => entry.playerId)).toEqual([H1]);
   });
 });
 
@@ -596,22 +613,22 @@ describe("readStored — the DO's smaller storage keys", () => {
   const stored = <T>(value: T): unknown => structuredClone(value);
 
   it("reads back what each writer stores", () => {
-    const pending = withPendingDisconnect(withPendingDisconnect([], "g1", 5000), "h1", 6000);
+    const pending = withPendingDisconnect(withPendingDisconnect([], G1, 5000), H1, 6000);
     expect(readStored(storedPendingSchema, stored(pending))).toEqual(pending);
     expect(readStored(storedPendingSchema, stored([]))).toEqual([]);
     const seatUsers = { h1: "user-a", g1: "user-b" };
     expect(readStored(storedSeatUsersSchema, stored(seatUsers))).toEqual(seatUsers);
     expect(readStored(storedCodeSchema, stored("ABCD"))).toBe("ABCD");
     expect(readStored(storedCleanupAtSchema, stored(1_700_000_000_000))).toBe(1_700_000_000_000);
-    expect(readStored(storedChooserSchema, stored("g1"))).toBe("g1");
+    expect(readStored(storedChooserSchema, stored(G1))).toBe(G1);
   });
 
   it("reads an absent or unreadable value as never written", () => {
     expect(readStored(storedPendingSchema, undefined)).toBeUndefined();
-    expect(readStored(storedPendingSchema, [{ playerId: "g1" }])).toBeUndefined();
-    expect(readStored(storedPendingSchema, [{ playerId: "g1", deadline: "soon" }])).toBeUndefined();
+    expect(readStored(storedPendingSchema, [{ playerId: G1 }])).toBeUndefined();
+    expect(readStored(storedPendingSchema, [{ playerId: G1, deadline: "soon" }])).toBeUndefined();
     expect(readStored(storedSeatUsersSchema, { g1: 7 })).toBeUndefined();
-    expect(readStored(storedSeatUsersSchema, "g1")).toBeUndefined();
+    expect(readStored(storedSeatUsersSchema, G1)).toBeUndefined();
     expect(readStored(storedCodeSchema, 1234)).toBeUndefined();
     expect(readStored(storedCleanupAtSchema, "later")).toBeUndefined();
     expect(readStored(storedCleanupAtSchema, Number.NaN)).toBeUndefined();

@@ -43,10 +43,10 @@ local function inside(label)
       label..': '..tostring(item.label or item.kind)..' outside the frame')
   end
 end
-local you={'P','you',1,'Ash',1,0,'',''}
+local you={'P','you',1,'Ash',1,0,'','',0}
 local function seats(ready,deck,oppReady,oppConnected)
-  return {{'P','you',1,'Ash',1,ready and 1 or 0,deck and 'deck2' or '',deck and 'Deck 2' or ''},
-    {'P','opponent',1,'Misty',oppConnected==false and 0 or 1,oppReady and 1 or 0,'',''}}
+  return {{'P','you',1,'Ash',1,ready and 1 or 0,deck and 'deck2' or '',deck and 'Deck 2' or '',deck and 1 or 0},
+    {'P','opponent',1,'Misty',oppConnected==false and 0 or 1,oppReady and 1 or 0,'','',0}}
 end
 local function decks()
   local rows=seats(false,true)
@@ -110,6 +110,13 @@ assert(said[#said]:find('^Versus%. Misty joined%.') and sounds[#sounds]=='cardFa
 local _,ready=action('ready');assert(ready.disabled,'Ready needs a deck')
 snapshot('versus',{kick=true},seats(false,true))
 _,ready=action('ready');assert(not ready.disabled and action('choose'))
+-- After a reload the client no longer knows which deck it picked (the server keeps the id):
+-- the pick still counts, and its name labels the pile.
+local reloaded=seats(false,true);reloaded[1][7]=''
+snapshot('versus',{kick=true},reloaded)
+_,ready=action('ready');local _,change=action('choose')
+assert(not ready.disabled and change.label=='Change deck' and o.piles.you,'A pick the client forgot still counts')
+snapshot('versus',{kick=true},seats(false,true))
 o:activate((action('ready')));assert(last()[1]=='ready' and last()[2]=='1')
 snapshot('versus',{kick=true},seats(true,true,true))
 assert(said[#said]:find('You are ready%.') and said[#said]:find('Misty is ready%.'))

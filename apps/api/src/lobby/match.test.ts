@@ -1,5 +1,5 @@
 import { formatElapsed, logFromEvents, otherSeat, redactGame, type Seat } from "@colorless/engine";
-import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@colorless/schema";
+import { type Card, redactedPhaseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { ALL_BASIC_DECK, driveSetup } from "@colorless/engine/testing";
 import {
@@ -24,6 +24,7 @@ import {
   startMatch,
   SUPPORTED_MATCH_ACTIONS,
 } from "./match";
+import type { LobbyState } from "./snapshot";
 
 // P4 — the lobby → engine handoff. `startMatch` is a pure wrapper over the P3
 // engine's `createGame`, so this also proves the engine imports and runs inside the
@@ -140,7 +141,7 @@ describe("settleFirstPlayer — who sets the play order", () => {
 });
 
 describe("matchSeatOf — which redacted view a socket receives", () => {
-  const player = (id: string): LobbySnapshot["host"] => ({
+  const player = (id: string): LobbyState["host"] => ({
     id,
     name: id,
     deckId: null,
@@ -150,7 +151,7 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
     avatarSeed: null,
     forfeitAt: null,
   });
-  const snapshot: LobbySnapshot = {
+  const snapshot: LobbyState = {
     code: "ABCD",
     phase: "in-game",
     host: player("h"),

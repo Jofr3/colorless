@@ -11,7 +11,7 @@ export function makePlayer(
   return {
     id,
     name,
-    deckId: null,
+    hasDeck: false,
     deckName: null,
     ready: false,
     connected: true,

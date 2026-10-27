@@ -143,8 +143,11 @@ export class LuaOnline {
         p?.name ?? "",
         +!!p?.connected,
         +!!p?.ready,
-        (own && p?.deckId) || "",
+        // The server sends no seat's deck id (LB5): yours is the client's memory of its pick,
+        // unknown after a reload, so whether a deck is picked rides on its own.
+        (own && p?.hasDeck && c?.state.deckId) || "",
         (own && p?.deckName) || "",
+        +!!p?.hasDeck,
       ]);
     this.publish(
       [
@@ -312,7 +315,7 @@ export class LuaOnline {
         this.client.selectDeck({ id: deck.id, name: deck.name });
     } else if (action === "ready") {
       const self = this.client?.self;
-      if (self && (a !== "1" || self.deckId)) this.client?.setReady(a === "1");
+      if (self && (a !== "1" || self.hasDeck)) this.client?.setReady(a === "1");
     } else if (action === "kick") {
       if (this.client?.role === "host" && this.client.opponent) this.client.kick();
     } else if (action === "copy" && this.code) {
@@ -334,12 +337,12 @@ export class LuaOnline {
     this.stale = false;
     if (!this.client || !this.identity) return;
     const { code, self } = this.client;
-    const { snapshot, status } = this.client.state;
+    const { snapshot, status, deckId } = this.client.state;
     this.client.dispose({ bye: false });
     // Hold the seat on screen: a fresh client's first state would flash
     // joining/waiting, close the picker and replay the join cues.
     const seated = self && (status === "connected" || status === "connecting");
-    this.connect(code, this.identity, seated ? { snapshot, status } : undefined);
+    this.connect(code, this.identity, seated ? { snapshot, status, deckId } : undefined);
   }
 
   private connect(code: string, identity: LobbyIdentity, resume?: LobbyClientOptions["resume"]) {
@@ -349,7 +352,7 @@ export class LuaOnline {
     const opts = {
       code,
       role: identity.role,
-      playerId: identity.playerId,
+      secret: identity.secret,
       name: this.name(),
       resume,
     };

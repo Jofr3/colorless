@@ -7,7 +7,14 @@ import { LOBBY_WS_CLOSED, type LobbyClientMessage, type LobbyIntent } from "@col
 import type { GameState } from "@colorless/engine";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
-import { createLobbyHarness, type FakeSocket, LEGAL_DECK, type LobbyHarness } from "./lobbyHarness";
+import {
+  createLobbyHarness,
+  type FakeSocket,
+  LEGAL_DECK,
+  type LobbyHarness,
+  seatIdOf,
+  seatSecret,
+} from "./lobbyHarness";
 import {
   DISCONNECT_GRACE_MS,
   FRAME_BURST,
@@ -56,15 +63,17 @@ function logged(kind: string): Record<string, unknown>[] {
     .filter((line) => line.evt === "lobby" && line.kind === kind);
 }
 
+/** A hello presenting `from`'s seat secret. */
 const hello = (from: string, name = `anon-${from}`): LobbyClientMessage => ({
   kind: "hello",
-  from,
+  from: seatSecret(from),
   name,
 });
 
+/** An intent from `from`'s seat, addressed by its public id. */
 const intent = (from: string, change: LobbyIntent): LobbyClientMessage => ({
   kind: "intent",
-  from,
+  from: seatIdOf(from),
   intent: change,
 });
 
@@ -171,7 +180,7 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
     expect(writes).toEqual({ puts: FRAME_BURST + 1, keys: FRAME_BURST + 1, deletes: 0, alarms: 1 });
     expect(await h.storage.get("pendingDisconnects")).toEqual([
       {
-        playerId: "attacker",
+        playerId: seatIdOf("attacker"),
         deadline: h.world.now - (frames - FRAME_BURST) + DISCONNECT_GRACE_MS,
       },
     ]);
@@ -211,7 +220,10 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
     expect(junk.closed).toEqual({ code: 1008, reason: "too many messages" });
     // Frames still in flight from a closed socket are dropped unread.
     await h.send(junk, hello("late"));
-    expect(h.storage.data.get("snapshot")).toMatchObject({ host: { id: "big" }, guest: null });
+    expect(h.storage.data.get("snapshot")).toMatchObject({
+      host: { id: seatIdOf("big") },
+      guest: null,
+    });
   });
 
   it("LB1: the largest legitimate frame, an action over a whole deck, fits the cap twice over", async () => {
@@ -340,7 +352,7 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     const [asks, ...silent] = overflow;
     if (asks === undefined) throw new Error("no overflow socket");
     await h.send(asks, hello("watcher", "Watcher"));
-    expect(asks.sent).toEqual([{ kind: "reject", to: "watcher", reason: "full" }]);
+    expect(asks.sent).toEqual([{ kind: "reject", to: seatIdOf("watcher"), reason: "full" }]);
     expect(asks.closed).toEqual({ code: 1013, reason: "lobby full" });
     // One that never says hello is let go at the next sweep.
     h.world.now += OVERFLOW_HELLO_MS + 1;
@@ -357,11 +369,14 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     await connectMany(LOBBY_SOCKET_CAP - 1);
     const reload = await h.connect("ana");
     await h.send(reload, hello("h"));
-    expect(reload.last("state")?.snapshot.host).toMatchObject({ id: "h", connected: true });
+    expect(reload.last("state")?.snapshot.host).toMatchObject({
+      id: seatIdOf("h"),
+      connected: true,
+    });
     // Another account is turned away; the seat's own account fills up to the hard cap only.
     const stranger = await h.connect("bo");
     await h.send(stranger, hello("g"));
-    expect(stranger.last("reject")).toEqual({ kind: "reject", to: "g", reason: "full" });
+    expect(stranger.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
     const { accepted, refused } = await connectMany(10, "ana");
     expect(accepted).toHaveLength(LOBBY_SOCKET_HARD_CAP - LOBBY_SOCKET_CAP - 1);
     expect(refused).toBe(10 - accepted.length);
@@ -510,8 +525,9 @@ describe("lobby abuse — the match log (MIX2)", () => {
 });
 
 describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", () => {
-  /** The guest joins signed out as `vic-id`, a second anonymous socket replays that public id,
-      and the guest then signs in, which binds the seat to their account. */
+  /** The guest joins signed out as `vic-id`, a second anonymous socket presents that seat's
+      secret too (a copy of the tab's storage: since LB6 a snapshot no longer hands it out), and
+      the guest then signs in, which binds the seat to their account. */
   async function shadowedGuest() {
     await h.create();
     const host = await h.connect("ana");
@@ -523,7 +539,10 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     await h.drop(signedOut);
     const victim = await h.connect("vic");
     await h.send(victim, hello("vic-id", "Vic"));
-    expect(await h.storage.get("seatUsers")).toEqual({ h: "ana", "vic-id": "vic" });
+    expect(await h.storage.get("seatUsers")).toEqual({
+      [seatIdOf("h")]: "ana",
+      [seatIdOf("vic-id")]: "vic",
+    });
     return { host, shadow, victim };
   }
 
@@ -531,7 +550,10 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     const { host, shadow, victim } = await shadowedGuest();
     expect(shadow.closed).toEqual({ code: 1008, reason: "seat claimed by an account" });
     expect(victim.closed).toBeNull();
-    expect(host.last("state")?.snapshot.guest).toMatchObject({ id: "vic-id", connected: true });
+    expect(host.last("state")?.snapshot.guest).toMatchObject({
+      id: seatIdOf("vic-id"),
+      connected: true,
+    });
     expect(await h.storage.get("pendingDisconnects")).toBeUndefined();
     expect(logged("seat_evicted")).toEqual([
       { evt: "lobby", kind: "seat_evicted", lobby: "ABCD", sockets: 1 },
@@ -540,12 +562,15 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
 
   it("LBX1: the evicted socket cannot walk the bound guest out or change their deck", async () => {
     const { host, shadow, victim } = await shadowedGuest();
-    await h.send(shadow, { kind: "bye", from: "vic-id", slot: "guest" });
+    await h.send(shadow, { kind: "bye", from: seatIdOf("vic-id"), slot: "guest" });
     await h.send(
       shadow,
       intent("vic-id", { type: "select-deck", deckId: "deck-ana", deckName: "x" }),
     );
-    expect(host.last("state")?.snapshot.guest).toMatchObject({ id: "vic-id", deckId: null });
+    expect(host.last("state")?.snapshot.guest).toMatchObject({
+      id: seatIdOf("vic-id"),
+      hasDeck: false,
+    });
     expect(victim.closed).toBeNull();
   });
 
@@ -572,7 +597,7 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     await h.send(host, hello("h"));
     const shadow = await h.connect();
     await h.send(shadow, hello("vic-id", "Evil"));
-    await h.storage.put("seatUsers", { h: "ana", "vic-id": "vic" });
+    await h.storage.put("seatUsers", { [seatIdOf("h")]: "ana", [seatIdOf("vic-id")]: "vic" });
     h.hibernate();
     const victim = await h.connect("vic");
     await h.send(victim, hello("vic-id", "Vic"));
@@ -583,7 +608,7 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
       intent("vic-id", { type: "select-deck", deckId: "deck-x", deckName: "x" }),
     );
     await h.send(shadow, intent("vic-id", { type: "set-ready", ready: true }));
-    expect(host.last("state")?.snapshot.guest).toMatchObject({ deckId: null, ready: false });
+    expect(host.last("state")?.snapshot.guest).toMatchObject({ hasDeck: false, ready: false });
     for (const [ws, from, deckId] of [
       [host, "h", "deck-ana"],
       [victim, "vic-id", "deck-vic"],
@@ -599,10 +624,13 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
 
     const before = await storedRecord();
     await h.send(shadow, { kind: "action", action: { type: "concede" } });
-    await h.send(shadow, { kind: "rematch", from: "vic-id" });
-    await h.send(shadow, { kind: "bye", from: "vic-id", slot: "guest" });
+    await h.send(shadow, { kind: "rematch", from: seatIdOf("vic-id") });
+    await h.send(shadow, { kind: "bye", from: seatIdOf("vic-id"), slot: "guest" });
     expect(await storedRecord()).toEqual(before);
-    expect(host.last("state")?.snapshot.guest).toMatchObject({ id: "vic-id", connected: true });
+    expect(host.last("state")?.snapshot.guest).toMatchObject({
+      id: seatIdOf("vic-id"),
+      connected: true,
+    });
     expect(shadow.framesOf("match")).toEqual([]);
   });
 
@@ -610,14 +638,14 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     await h.create();
     const shadow = await h.connect();
     await h.send(shadow, hello("h", "Evil"));
-    await h.storage.put("seatUsers", { h: "ana" });
+    await h.storage.put("seatUsers", { [seatIdOf("h")]: "ana" });
     h.hibernate();
     const host = await h.connect("ana");
     await h.send(host, hello("h"));
     const guest = await h.connect("bo");
     await h.send(guest, hello("g"));
-    await h.send(shadow, { kind: "reject", to: "g", reason: "kicked" });
-    expect(host.last("state")?.snapshot.guest?.id).toBe("g");
+    await h.send(shadow, { kind: "reject", to: seatIdOf("g"), reason: "kicked" });
+    expect(host.last("state")?.snapshot.guest?.id).toBe(seatIdOf("g"));
     expect(guest.framesOf("reject")).toEqual([]);
   });
 });
@@ -648,7 +676,7 @@ describe("lobby abuse — names that forge client bridge commands (WC1)", () => 
     await h.send(anon, intent("g1", { type: "set-name", name: FORGED }));
     await h.send(anon, intent("g1", { type: "select-deck", deckId: "deck-x", deckName: FORGED }));
     expect(victim.last("state")?.snapshot.guest).toMatchObject({ name: CLEAN, deckName: CLEAN });
-    await h.send(anon, { kind: "bye", from: "g1", slot: "guest" });
+    await h.send(anon, { kind: "bye", from: seatIdOf("g1"), slot: "guest" });
 
     const mal = await h.connect("mal");
     await h.send(mal, hello("g2", FORGED));
@@ -669,5 +697,115 @@ describe("lobby abuse — names that forge client bridge commands (WC1)", () => 
     const seen = [...victim.sent, ...spectator.sent].flatMap(strings);
     expect(seen.filter((text) => /[\p{Cc}\p{Cf}]/u.test(text))).toEqual([]);
     expect(seen.some((text) => text.includes(`Mal${CLEAN}`))).toBe(true);
+  });
+});
+
+describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
+  /** Everything a socket was sent, as the text it went out as. */
+  const wire = (ws: FakeSocket) => ws.sent.map((frame) => JSON.stringify(frame)).join("\n");
+
+  it("LB5, LB6: no frame carries a deck id or a seat secret, to an opponent, a spectator or a lurker", async () => {
+    await h.create();
+    const lurker = await h.connect();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    const guest = await h.connect("bo");
+    await h.send(guest, hello("g"));
+    for (const [ws, from, deckId] of [
+      [host, "h", "deck-ana"],
+      [guest, "g", "deck-bo"],
+    ] as const) {
+      await h.send(ws, intent(from, { type: "select-deck", deckId, deckName: `${from}'s list` }));
+      await h.send(ws, intent(from, { type: "set-ready", ready: true }));
+    }
+    await h.fireAlarm();
+    expect(host.last("state")?.snapshot.phase).toBe("in-game");
+    const spectator = await h.connect("eve");
+    await h.send(spectator, hello("w"));
+    expect(spectator.framesOf("match").length).toBeGreaterThan(0);
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+
+    // Was: every state frame carried both seats' deck ids, and the public id a hello claims with.
+    const hidden = ["deck-ana", "deck-bo", seatSecret("h"), seatSecret("g")];
+    for (const ws of [host, guest, spectator, lurker]) {
+      expect(ws.sent.length).toBeGreaterThan(0);
+      const text = wire(ws);
+      expect(hidden.filter((value) => text.includes(value))).toEqual([]);
+    }
+    // A pick shows as made, under its name; the DO keeps the id it reads the deck with.
+    expect(lurker.last("state")?.snapshot.guest).toMatchObject({
+      id: seatIdOf("g"),
+      hasDeck: true,
+      deckName: "g's list",
+    });
+    expect(h.storage.data.get("snapshot")).toMatchObject({
+      host: { deckId: "deck-ana" },
+      guest: { deckId: "deck-bo" },
+    });
+  });
+
+  it("LB6: a seat's public id, read off a snapshot, neither claims the seat nor binds it", async () => {
+    // Two anonymous seats, which no account guards: the secret is all that claims them.
+    await h.create();
+    const host = await h.connect();
+    await h.send(host, hello("h", "Host"));
+    const guest = await h.connect();
+    await h.send(guest, hello("g", "Guest"));
+    const seen = host.last("state")?.snapshot;
+    if (seen?.guest == null) throw new Error("no seated guest");
+    const hostId = seen.host.id;
+    const guestId = seen.guest.id;
+
+    // Was: a signed-in intruder's hello with the guest's id took the seat and bound it to the
+    // intruder's account (LB-hijack), and one with the host's id re-seated it (LB-anon-host).
+    const intruder = await h.connect("eve");
+    for (const id of [hostId, guestId]) {
+      await h.send(intruder, { kind: "hello", from: id, name: "Evil" });
+      expect(intruder.last("reject")).toEqual({ kind: "reject", to: id, reason: "full" });
+    }
+    // A secret of its own names a seat of its own, which the held guest seat refuses.
+    await h.send(intruder, hello("eve"));
+    expect(intruder.last("reject")).toEqual({
+      kind: "reject",
+      to: seatIdOf("eve"),
+      reason: "full",
+    });
+    // No hello seated it, so it acts for neither seat.
+    await h.send(intruder, { kind: "reject", to: guestId, reason: "kicked" });
+    await h.send(intruder, {
+      kind: "intent",
+      from: guestId,
+      intent: { type: "set-name", name: "X" },
+    });
+    await h.send(intruder, { kind: "bye", from: hostId, slot: "host" });
+
+    const after = host.last("state")?.snapshot;
+    expect(after?.host).toMatchObject({ id: hostId, name: "Host", connected: true });
+    expect(after?.guest).toMatchObject({ id: guestId, name: "Guest", connected: true });
+    expect(guest.framesOf("reject")).toEqual([]);
+    expect(h.storage.data.has("seatUsers")).toBe(false);
+    expect(logged("hello_refused")[0]).toMatchObject({ cause: "credential" });
+
+    // The guest's own secret still seats it, and binds it to the account it signs in with.
+    const signedIn = await h.connect("bo");
+    await h.send(signedIn, hello("g", "Guest"));
+    expect(signedIn.framesOf("reject")).toEqual([]);
+    expect(h.storage.data.get("seatUsers")).toEqual({ [guestId]: "bo" });
+  });
+
+  it("LB6: a client from before the split is answered full and holds nothing", async () => {
+    await h.create();
+    const old = await h.connect("ana");
+    const uuid = "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b";
+    await h.send(old, { kind: "hello", from: uuid, name: "Ana", logDeltas: true });
+    // The old client shows a full lobby; a reload brings it the current client.
+    expect(old.sent).toEqual([{ kind: "reject", to: uuid, reason: "full" }]);
+    expect(old.closed).toBeNull();
+    await h.send(old, { kind: "intent", from: uuid, intent: { type: "set-name", name: "x" } });
+    expect(h.storage.data.has("snapshot")).toBe(false);
+    const current = await h.connect("ana");
+    await h.send(current, hello("h"));
+    expect(current.last("state")?.snapshot.host).toMatchObject({ id: seatIdOf("h"), name: "Ana" });
   });
 });

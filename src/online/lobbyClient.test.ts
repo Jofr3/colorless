@@ -5,7 +5,7 @@ import {
   type RedactedGame,
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
+import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyChannel";
 import {
   countdownSeconds,
   LobbyClient,
@@ -18,8 +18,8 @@ import {
 // posts and pushes server frames, on fake timers for the 700 ms tick.
 
 const CODE = "ABCD";
-const host = makePlayer("h", "Host");
-const guest = makePlayer("g", "Guest");
+const host = makePlayer(testSeatId("h"), "Host");
+const guest = makePlayer(testSeatId("g"), "Guest");
 const snap = (over: Partial<LobbySnapshot> = {}): LobbySnapshot => ({
   ...createSnapshot(CODE, host),
   guest,
@@ -28,10 +28,10 @@ const snap = (over: Partial<LobbySnapshot> = {}): LobbySnapshot => ({
 });
 const game = { seat: "p1", phase: { kind: "turn:action" } } as unknown as RedactedGame;
 
-function make(role: "host" | "guest", playerId = role === "host" ? "h" : "g") {
+function make(role: "host" | "guest", label = role === "host" ? "h" : "g") {
   const fake = fakeLobbyChannel();
   const client = new LobbyClient(
-    { code: CODE, role, playerId, name: role === "host" ? "Host" : "Guest" },
+    { code: CODE, role, secret: testSeatSecret(label), name: role === "host" ? "Host" : "Guest" },
     { channel: fake.channel },
   );
   return { client, ...fake };
@@ -48,21 +48,23 @@ describe("LobbyClient", () => {
   it("seeds the host's snapshot and says hello at once", () => {
     const { client, posts } = make("host");
     expect(client.state.status).toBe("connected");
-    expect(client.state.snapshot?.host.id).toBe("h");
-    expect(client.self?.id).toBe("h");
+    expect(client.state.snapshot?.host.id).toBe(testSeatId("h"));
+    expect(client.self?.id).toBe(testSeatId("h"));
     expect(client.opponent).toBeNull();
-    expect(posts).toEqual([{ kind: "hello", from: "h", name: "Host", logDeltas: true }]);
+    expect(posts).toEqual([
+      { kind: "hello", from: testSeatSecret("h"), name: "Host", logDeltas: true },
+    ]);
   });
 
   it("a guest adopts only a state that seats it", () => {
     const { client, push } = make("guest");
     expect(client.state).toMatchObject({ snapshot: null, status: "connecting" });
-    push({ kind: "state", snapshot: snap({ guest: makePlayer("x", "Other") }) });
+    push({ kind: "state", snapshot: snap({ guest: makePlayer(testSeatId("x"), "Other") }) });
     expect(client.state.snapshot).toBeNull();
     push({ kind: "state", snapshot: snap() });
     expect(client.state.status).toBe("connected");
-    expect(client.self?.id).toBe("g");
-    expect(client.opponent?.id).toBe("h");
+    expect(client.self?.id).toBe(testSeatId("g"));
+    expect(client.opponent?.id).toBe(testSeatId("h"));
   });
 
   it("re-sends hello until seated, then reports not-found after 4 s of silence", () => {
@@ -108,7 +110,7 @@ describe("LobbyClient", () => {
     const { client, push } = make("guest", "z");
     push({ kind: "reject", to: "someone-else", reason: "full" });
     expect(client.state.status).toBe("connecting");
-    push({ kind: "reject", to: "z", reason: "full" });
+    push({ kind: "reject", to: testSeatId("z"), reason: "full" });
     expect(client.state.status).toBe("full");
     push({ kind: "state", snapshot: snap({ phase: "in-game" }) });
     expect(client.state.snapshot?.phase).toBe("in-game");
@@ -121,7 +123,7 @@ describe("LobbyClient", () => {
   it("a kick is sticky: later states, matches and errors are ignored", () => {
     const { client, push, kinds } = make("guest");
     push({ kind: "state", snapshot: snap() });
-    push({ kind: "reject", to: "g", reason: "kicked" });
+    push({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
     expect(client.state.status).toBe("kicked");
     push({ kind: "state", snapshot: snap() });
     push({ kind: "match", game, log: [] });
@@ -194,7 +196,7 @@ describe("LobbyClient", () => {
     expect(client.state.matchLog).toEqual([a]);
     expect(client.state.match).toBe(game);
     expect(posts.slice(sent)).toEqual([
-      { kind: "hello", from: "h", name: "Host", logDeltas: true },
+      { kind: "hello", from: testSeatSecret("h"), name: "Host", logDeltas: true },
     ]);
     push({ kind: "match", game: skipped, log: [a, a, c] });
     expect(client.state.matchLog).toEqual([a, a, c]);
@@ -202,7 +204,7 @@ describe("LobbyClient", () => {
 
   it("a spectator resyncs a gap the same way", () => {
     const { client, push, kinds } = make("guest", "z");
-    push({ kind: "reject", to: "z", reason: "full" });
+    push({ kind: "reject", to: testSeatId("z"), reason: "full" });
     push({ kind: "match", game, log: [] });
     const sent = kinds().length;
     push({ kind: "match", game, log: [{ kind: "turn", turn: 2 }], logFrom: 1 });
@@ -226,7 +228,7 @@ describe("LobbyClient", () => {
   it("dispose says bye and closes; {bye:false} only closes", () => {
     const a = make("host");
     a.client.dispose();
-    expect(a.posts.at(-1)).toEqual({ kind: "bye", from: "h", slot: "host" });
+    expect(a.posts.at(-1)).toEqual({ kind: "bye", from: testSeatId("h"), slot: "host" });
     expect(a.closed()).toBe(true);
     const sent = a.kinds().length;
     vi.advanceTimersByTime(5000);
@@ -247,7 +249,7 @@ describe("LobbyClient", () => {
     expect(h.kinds()).not.toContain("reject");
     h.push({ kind: "state", snapshot: snap() });
     h.client.kick();
-    expect(h.posts.at(-1)).toEqual({ kind: "reject", to: "g", reason: "kicked" });
+    expect(h.posts.at(-1)).toEqual({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
   });
 
   it("posts intents, rematch and actions for its own seat", () => {
@@ -257,11 +259,42 @@ describe("LobbyClient", () => {
     client.requestRematch();
     client.leave();
     expect(posts.slice(1)).toEqual([
-      { kind: "intent", from: "g", intent: { type: "select-deck", deckId: "d", deckName: "Deck" } },
-      { kind: "intent", from: "g", intent: { type: "set-ready", ready: true } },
-      { kind: "rematch", from: "g" },
-      { kind: "bye", from: "g", slot: "guest" },
+      {
+        kind: "intent",
+        from: testSeatId("g"),
+        intent: { type: "select-deck", deckId: "d", deckName: "Deck" },
+      },
+      { kind: "intent", from: testSeatId("g"), intent: { type: "set-ready", ready: true } },
+      { kind: "rematch", from: testSeatId("g") },
+      { kind: "bye", from: testSeatId("g"), slot: "guest" },
     ]);
+  });
+
+  it("sends its seat secret in the hello alone, and knows its seat by the public id (LB6)", () => {
+    const { client, posts, push } = make("guest");
+    client.selectDeck({ id: "d", name: "Deck" });
+    client.leave();
+    const secret = testSeatSecret("g");
+    expect(posts[0]).toMatchObject({ kind: "hello", from: secret });
+    expect(posts.slice(1).every((post) => !JSON.stringify(post).includes(secret))).toBe(true);
+    expect(client.playerId).toBe(testSeatId("g"));
+    // A snapshot naming the seat by its secret is not ours: only the public id is.
+    push({ kind: "state", snapshot: snap({ guest: makePlayer(secret, "Guest") }) });
+    expect(client.state.snapshot).toBeNull();
+  });
+
+  it("remembers its own deck pick, which the server never sends back (LB5)", () => {
+    const { client, push } = make("guest");
+    push({ kind: "state", snapshot: snap() });
+    client.selectDeck({ id: "d", name: "Deck" });
+    expect(client.state.deckId).toBe("d");
+    push({
+      kind: "state",
+      snapshot: snap({ guest: { ...guest, hasDeck: true, deckName: "Deck" } }),
+    });
+    expect(client.state.deckId).toBe("d");
+    push({ kind: "state", snapshot: snap() });
+    expect(client.state.deckId).toBeNull();
   });
 });
 

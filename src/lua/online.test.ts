@@ -1,12 +1,14 @@
 import {
   createSnapshot,
+  isSeatSecret,
   type LobbySnapshot,
   makePlayer,
+  publicSeatId,
   type RedactedGame,
   type User,
 } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
+import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyChannel";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
@@ -90,7 +92,7 @@ function setup(user: User | null = null) {
 }
 
 const snap = (over: Partial<LobbySnapshot> = {}): LobbySnapshot => ({
-  ...createSnapshot(CODE, makePlayer("h", "Host")),
+  ...createSnapshot(CODE, makePlayer(testSeatId("h"), "Host")),
   phase: "selecting",
   ...over,
 });
@@ -101,6 +103,8 @@ const identity = (code = CODE) => {
   const raw = sessionStorage.getItem(`online.identity.${code}`);
   return raw ? JSON.parse(raw) : null;
 };
+/** The public id of the seat this tab's staked secret claims. */
+const myId = () => publicSeatId(identity().secret);
 const store = () => {
   const values = new Map<string, string>();
   return {
@@ -141,7 +145,7 @@ describe("Lua online adapter", () => {
     expect(identity()).toMatchObject({ role: "host", name: "Ash" });
     expect(last().posts[0]).toEqual({
       kind: "hello",
-      from: identity().playerId,
+      from: identity().secret,
       name: "Ash",
       logDeltas: true,
     });
@@ -196,34 +200,51 @@ describe("Lua online adapter", () => {
     expect(header().slice(1, 7)).toEqual(["joining", "0", "", CODE, "guest", "connecting"]);
     expect(route).toHaveBeenCalledWith("online", CODE, true);
     expect(rows()).toHaveLength(1);
-    const me = identity().playerId;
+    const me = myId();
     last().push({ kind: "state", snapshot: snap({ guest: makePlayer("other", "Other") }) });
     expect(header()[1]).toBe("joining");
-    const host = { ...makePlayer("h", "Host"), deckId: "secret", deckName: "Secret", ready: true };
+    const host = { ...makePlayer("h", "Host"), hasDeck: true, deckName: "Secret", ready: true };
     last().push({
       kind: "state",
-      snapshot: snap({ host, guest: { ...makePlayer(me, "Me"), deckId: "d", deckName: "Mine" } }),
+      snapshot: snap({ host, guest: { ...makePlayer(me, "Me"), hasDeck: true, deckName: "Mine" } }),
     });
     expect(header().slice(1, 2)).toEqual(["versus"]);
     expect(header()[12]).toBe("0");
     expect(header()[13]).toBe("");
+    // A pick this client did not make here (a reload) has no deck id to show, only its name.
     expect(rows().slice(1)).toEqual([
-      ["P", "you", "1", "Me", "1", "0", "d", "Mine"],
-      ["P", "opponent", "1", "Host", "1", "1", "", ""],
+      ["P", "you", "1", "Me", "1", "0", "", "Mine", "1"],
+      ["P", "opponent", "1", "Host", "1", "1", "", "", "1"],
     ]);
   });
 
   it("resumes a staked identity on a deep link (reload keeps the seat)", async () => {
     sessionStorage.setItem(
       `online.identity.${CODE}`,
-      JSON.stringify({ playerId: "h", role: "host", name: "Ash" }),
+      JSON.stringify({ secret: testSeatSecret("h"), role: "host", name: "Ash" }),
     );
     const { online, header, last } = setup();
     await online.command(`open\t${CODE}`);
-    expect(last().opts).toMatchObject({ code: CODE, role: "host", playerId: "h" });
+    expect(last().opts).toMatchObject({ code: CODE, role: "host", secret: testSeatSecret("h") });
     expect(header()[1]).toBe("waiting");
     await online.command(`open\t${CODE}`);
     expect(header()[1]).toBe("waiting");
+  });
+
+  it("joins afresh from an identity saved before seat secrets (LB6)", async () => {
+    sessionStorage.setItem(
+      `online.identity.${CODE}`,
+      JSON.stringify({
+        playerId: "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b",
+        role: "host",
+        name: "Ash",
+      }),
+    );
+    const { online, last } = setup();
+    await online.command(`open\t${CODE}`);
+    expect(last().opts.role).toBe("guest");
+    expect(isSeatSecret(last().opts.secret)).toBe(true);
+    expect(identity()).toMatchObject({ secret: last().opts.secret, role: "guest" });
   });
 
   it("lists playable decks with their regulation flags and online verdict, or reports anonymous", async () => {
@@ -247,12 +268,12 @@ describe("Lua online adapter", () => {
 
   it("sends select, ready and kick only when they are allowed", async () => {
     stubFetch(deckReads);
-    const { online, header, last } = setup();
+    const { online, header, rows, last } = setup();
     online.session("authenticated", "u");
     await online.command("decks");
     sessionStorage.setItem(
       `online.identity.${CODE}`,
-      JSON.stringify({ playerId: "h", role: "host", name: "Ash" }),
+      JSON.stringify({ secret: testSeatSecret("h"), role: "host", name: "Ash" }),
     );
     await online.command(`open\t${CODE}`);
     const c = last();
@@ -260,7 +281,7 @@ describe("Lua online adapter", () => {
     await online.command("ready\t1");
     await online.command("select\tshort");
     expect(c.kinds()).toEqual(["hello"]);
-    c.push({ kind: "state", snapshot: seated("g") });
+    c.push({ kind: "state", snapshot: seated(testSeatId("g")) });
     expect(header()[12]).toBe("1");
     const before = c.posts.length;
     await online.command("select\tz");
@@ -268,33 +289,31 @@ describe("Lua online adapter", () => {
     await online.command("select\tx");
     expect(c.posts.at(-1)).toEqual({
       kind: "intent",
-      from: "h",
+      from: testSeatId("h"),
       intent: { type: "select-deck", deckId: "x", deckName: "Zap" },
     });
-    c.push({
-      kind: "state",
-      snapshot: seated("g", { host: { ...makePlayer("h", "Ash"), deckId: "x", deckName: "Zap" } }),
-    });
+    const ash = { ...makePlayer(testSeatId("h"), "Ash"), hasDeck: true, deckName: "Zap" };
+    c.push({ kind: "state", snapshot: seated(testSeatId("g"), { host: ash }) });
+    // The snapshot only says a deck is picked; the client remembers which.
+    expect(rows()[1]).toEqual(["P", "you", "1", "Ash", "1", "0", "x", "Zap", "1"]);
     await online.command("ready\t1");
     expect(c.posts.at(-1)).toMatchObject({ intent: { type: "set-ready", ready: true } });
     c.push({
       kind: "state",
-      snapshot: seated("g", {
-        host: { ...makePlayer("h", "Ash"), deckId: "x", deckName: "Zap", ready: true },
-      }),
+      snapshot: seated(testSeatId("g"), { host: { ...ash, ready: true } }),
     });
     const sent = c.posts.length;
     await online.command("select\ty");
     expect(c.posts.length).toBe(sent);
     await online.command("kick");
-    expect(c.posts.at(-1)).toEqual({ kind: "reject", to: "g", reason: "kicked" });
+    expect(c.posts.at(-1)).toEqual({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
   });
 
   it("emits the countdown only when the whole second changes", async () => {
     const { online, header, publish, last } = setup();
     await online.command("open");
     await online.command(`join\t${CODE}`);
-    const me = identity().playerId;
+    const me = myId();
     last().push({
       kind: "state",
       snapshot: seated(me, { phase: "countdown", countdownStartedAt: Date.now() }),
@@ -316,7 +335,7 @@ describe("Lua online adapter", () => {
     await online.command("open");
     await online.command(`join\t${CODE}`);
     route.mockClear();
-    const me = identity().playerId;
+    const me = myId();
     last().push({ kind: "state", snapshot: seated(me, { phase: "in-game" }) });
     expect(header()[1]).toBe("starting");
     expect(route).not.toHaveBeenCalled();
@@ -375,7 +394,7 @@ describe("Lua online adapter", () => {
     await online.command("open");
     await online.command(`join\t${CODE}`);
     const c = last();
-    const me = identity().playerId;
+    const me = myId();
     c.push({ kind: "state", snapshot: seated(me, { phase: "in-game" }) });
     c.push({ kind: "match", game, log: [] });
     // The modal closes as it routes; the lazily imported table takes the client later.
@@ -393,7 +412,7 @@ describe("Lua online adapter", () => {
     await online.command("open");
     await online.command(`join\t${CODE}`);
     const c = last();
-    c.push({ kind: "state", snapshot: seated(identity().playerId, { phase: "in-game" }) });
+    c.push({ kind: "state", snapshot: seated(myId(), { phase: "in-game" }) });
     c.push({ kind: "match", game, log: [] });
     await online.command("close");
     vi.advanceTimersByTime(TABLE_CLAIM_MS);
@@ -425,7 +444,7 @@ describe("Lua online adapter", () => {
     expect(made[1]?.opts).toMatchObject({
       code: CODE,
       role: "guest",
-      playerId: first?.opts.playerId,
+      secret: first?.opts.secret,
       name: "Misty",
     });
     online.session("authenticated", "u");
@@ -448,7 +467,7 @@ describe("Lua online adapter", () => {
     online.session("anonymous", "");
     await online.command("open");
     await online.command(`join\t${CODE}`);
-    const me = made[0]?.opts.playerId ?? "";
+    const me = publicSeatId(made[0]?.opts.secret ?? "");
     made[0]?.push({ kind: "state", snapshot: seated(me) });
     steps.length = 0;
     current = { id: "u", displayName: "Misty", email: "m@x" } as User;
@@ -480,7 +499,7 @@ describe("Lua online adapter", () => {
     await online.command("open");
     await online.command(`join\t${CODE}`);
     route.mockClear();
-    const me = identity().playerId;
+    const me = myId();
     last().push({ kind: "reject", to: me, reason: "full" });
     last().push({ kind: "state", snapshot: seated("other", { phase: "in-game" }) });
     expect(header()[1]).toBe("full");

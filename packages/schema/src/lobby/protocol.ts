@@ -17,8 +17,8 @@ export const LOBBY_WS_PING = "ping";
 export const LOBBY_WS_PONG = "pong";
 
 /** Length bounds on the strings a client puts in a lobby frame, which the DO stores and copies
-    into every match log row. Ids are minted by code (playerIds and deckIds are UUIDs), so a
-    longer one is refused; names are typed by people, so a longer one is clipped instead. The
+    into every match log row. Ids are minted by code (seat secrets and public seat ids are
+    base64url, seatId.ts; deck ids are UUIDs), so a longer one is refused; names are typed by people, so a longer one is clipped instead. The
     name bound is the account display name's. */
 export const LOBBY_ID_MAX = 64;
 export const LOBBY_NAME_MAX = 64;

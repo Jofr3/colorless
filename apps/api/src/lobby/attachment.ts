@@ -1,4 +1,5 @@
-// What a lobby socket remembers across hibernation. `playerId` is set by the first valid hello.
+// What a lobby socket remembers across hibernation. `playerId` is set by the first valid hello: the
+// PUBLIC id of the seat whose secret the hello presented (seatId.ts), never the secret.
 // `userId`, `sessionId` and `displayName` are the account from the session cookie at upgrade, set
 // independently of the seat; none is ever broadcast. The session id lets the match handoff check
 // that the session still lives when it reads the account's decks. `connectedAt` is when the upgrade
@@ -59,7 +60,7 @@ function update(ws: AttachmentCarrier, patch: Partial<LobbyAttachment>): void {
   ws.serializeAttachment({ ...read(ws), ...patch } satisfies LobbyAttachment);
 }
 
-/** Bind a socket to the player id its hello announced, preserving any account
+/** Bind a socket to the public id of the seat its hello claimed, preserving any account
     already resolved at the /ws upgrade. */
 export function attachPlayer(ws: AttachmentCarrier, playerId: string): void {
   // Taking a seat ends any spectating: the same browser can be refused a seat,

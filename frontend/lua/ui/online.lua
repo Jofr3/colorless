@@ -109,7 +109,7 @@ function Online:frame()
   if self.picker then self.h=h-72
   elseif versus then
     -- Your seat grows a deck preview once you have chosen one.
-    self.youH=((self.seats.you or {}).deckId or '')~='' and 432 or 208
+    self.youH=(self.seats.you or {}).hasDeck and 432 or 208
     self.h=math.min(2*self.pad+262+self.youH,h-40)
   else self.h=heights[self.step] or 440 end
   self.x,self.y=(w-self.w)/2,(h-self.h)/2
@@ -141,14 +141,14 @@ end
 function Online:makePiles()
   local you,opp=self.seats.you,self.seats.opponent
   local shown=(self.step=='versus' or self.step=='countdown') and not self.picker
-  local key=shown and table.concat({self.width,self.height,you and you.deckId or '',opp and opp.present and 1 or 0},'|') or ''
+  local key=shown and table.concat({self.width,self.height,you and you.hasDeck and 1 or 0,you and you.deckId or '',you and you.deckName or '',opp and opp.present and 1 or 0},'|') or ''
   if key==self.pileKey then return end
   self.pileKey=key
   for _,pile in pairs(self.piles) do pile.texture:release() end
   self.piles={}
   if not shown then return end
-  if you and you.deckId~='' then
-    local deck=self:deck(you.deckId)
+  if you and you.hasDeck then
+    local deck=you.deckId~='' and self:deck(you.deckId) or nil
     local item={count=deck and deck.count or Limits.deckSize,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
     item.drawFace=function(w,h) CardBack.draw(nil,w,h) end
     local box=self:deckBox(self.panels.you)
@@ -206,10 +206,10 @@ function Online:build()
     local locked=step=='countdown'
     local you=self.seats.you or {}
     local p=self.panels.you
-    add({kind='button',action='choose',label=(you.deckId or '')~='' and 'Change deck' or 'Choose deck',x=p.x+12,
+    add({kind='button',action='choose',label=you.hasDeck and 'Change deck' or 'Choose deck',x=p.x+12,
       y=p.y+p.h-100,w=p.w-24,h=40,disabled=locked or you.ready})
     add({kind='button',action='ready',label=you.ready and 'Cancel ready' or 'Ready',x=p.x+12,
-      y=p.y+p.h-52,w=p.w-24,h=40,colour=you.ready and T.orange or T.red,disabled=locked or (you.deckId or '')==''})
+      y=p.y+p.h-52,w=p.w-24,h=40,colour=you.ready and T.orange or T.red,disabled=locked or not you.hasDeck})
   elseif info[step] then
     add({kind='button',action='online',label='Back to online',x=x+(w-300)/2,y=y+h-124,w=300,h=46,fontSize=30})
   end
@@ -286,7 +286,8 @@ function Online:sync(raw)
   for i=2,#rows do
     local r=rows[i]
     if r[1]=='P' and #r>=8 then
-      seats[r[2]]={present=r[3]=='1',name=r[4],connected=r[5]=='1',ready=r[6]=='1',deckId=r[7],deckName=r[8]}
+      -- deckId: your own pick, when this client still knows it; hasDeck: whether one is picked.
+      seats[r[2]]={present=r[3]=='1',name=r[4],connected=r[5]=='1',ready=r[6]=='1',deckId=r[7],deckName=r[8],hasDeck=r[9]=='1'}
     elseif r[1]=='D' and #r>=4 then
       decks[#decks+1]={id=r[2],name=r[3],count=tonumber(r[4]) or 0,standard=r[5]=='1',expanded=r[6]=='1',
         online=r[7]=='1',formatName=r[8] or ''}

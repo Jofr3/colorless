@@ -1,13 +1,16 @@
-import type { LobbySlot } from "@colorless/schema";
+import { isSeatSecret, type LobbySlot, seatSecretFrom } from "@colorless/schema";
 import { readPersisted, writePersisted } from "../lib/persistedState";
 
 // Who you are, per lobby. Split across two stores on purpose:
 //   • the display name lives in localStorage, so it's remembered across visits;
-//   • your identity in a *specific* lobby (id + role) lives in sessionStorage,
+//   • your identity in a *specific* lobby (seat secret + role) lives in sessionStorage,
 //     so a page refresh keeps you in your seat, but a brand-new tab that pastes
 //     the same code joins as a fresh guest rather than impersonating the host.
+// The seat secret is what claims the seat (LB6): it is sent only in the hello and never shown;
+// the lobby names the seat by its public id (`publicSeatId`). An identity saved by a client from
+// before the secret (a `playerId`) is not one, so such a tab joins afresh.
 
-export type LobbyIdentity = { playerId: string; role: LobbySlot; name: string };
+export type LobbyIdentity = { secret: string; role: LobbySlot; name: string };
 
 const NAME_KEY = "online.playerName";
 
@@ -33,7 +36,8 @@ function isIdentity(value: unknown): value is LobbyIdentity {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Record<string, unknown>;
   return (
-    typeof candidate.playerId === "string" &&
+    typeof candidate.secret === "string" &&
+    isSeatSecret(candidate.secret) &&
     (candidate.role === "host" || candidate.role === "guest") &&
     typeof candidate.name === "string"
   );
@@ -67,10 +71,15 @@ export function clearIdentity(code: string): void {
   }
 }
 
+/** A fresh seat secret: 256 bits from the browser's CSPRNG. */
+export function mintSeatSecret(): string {
+  return seatSecretFrom(crypto.getRandomValues(new Uint8Array(32)));
+}
+
 /** Persist a freshly-created identity for a lobby you're about to enter. Called
     by the hub the instant you create or join, so the room finds it on arrival. */
 export function stakeIdentity(code: string, role: LobbySlot): LobbyIdentity {
-  const identity: LobbyIdentity = { playerId: crypto.randomUUID(), role, name: loadPlayerName() };
+  const identity: LobbyIdentity = { secret: mintSeatSecret(), role, name: loadPlayerName() };
   saveIdentity(code, identity);
   return identity;
 }

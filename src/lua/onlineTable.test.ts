@@ -3,6 +3,7 @@ import {
   createSnapshot,
   type LobbySnapshot,
   makePlayer,
+  publicSeatId,
   type RedactedEffectPrompt,
   type RedactedGame,
   type SeatLogEntry,
@@ -82,7 +83,9 @@ async function table(state: GameState = driveSetup(7, undefined, { first: "p1" }
     if (!f) throw new Error("no client");
     return f;
   };
-  const me = JSON.parse(sessionStorage.getItem(`online.identity.${CODE}`) ?? "{}").playerId;
+  const me = publicSeatId(
+    JSON.parse(sessionStorage.getItem(`online.identity.${CODE}`) ?? "{}").secret,
+  );
   const push = (game: RedactedGame, log: SeatLogEntry[] = []) =>
     fake().push({ kind: "match", game, log });
   fake().push({ kind: "state", snapshot: snap(me) });
@@ -431,7 +434,7 @@ describe("LuaOnlineMatch", () => {
     const renders = () => t.publish.mock.calls.length;
     const before = renders();
     t.fake().push({ kind: "state", snapshot: snap(t.me) });
-    const host = { ...makePlayer("h", "Brock"), deckId: "d", deckName: "Other deck" };
+    const host = { ...makePlayer("h", "Brock"), hasDeck: true, deckName: "Other deck" };
     t.fake().push({ kind: "state", snapshot: snap(t.me, { host }) });
     expect(renders()).toBe(before);
     t.fake().push({ kind: "state", snapshot: snap(t.me, { host: { ...host, connected: false } }) });

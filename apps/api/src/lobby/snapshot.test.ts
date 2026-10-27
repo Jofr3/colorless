@@ -1,22 +1,30 @@
-import { createSnapshot, type LobbySnapshot, makePlayer } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyIntent, bothReady, removeGuest, seatGuest, setGuestConnected } from "./snapshot";
+import {
+  applyIntent,
+  bothReady,
+  createLobbyState,
+  type LobbyState,
+  makeSeat,
+  removeGuest,
+  seatGuest,
+  setGuestConnected,
+} from "./snapshot";
 
-const hostReady = (s: LobbySnapshot) =>
+const hostReady = (s: LobbyState) =>
   applyIntent(
     applyIntent(s, "host", { type: "select-deck", deckId: "d-host", deckName: "Host Deck" }),
     "host",
     { type: "set-ready", ready: true },
   );
 
-const guestReady = (s: LobbySnapshot) =>
+const guestReady = (s: LobbyState) =>
   applyIntent(
     applyIntent(s, "guest", { type: "select-deck", deckId: "d-guest", deckName: "Guest Deck" }),
     "guest",
     { type: "set-ready", ready: true },
   );
 
-const freshLobby = () => createSnapshot("ABCD", makePlayer("host-1", "Host"));
+const freshLobby = () => createLobbyState("ABCD", makeSeat("host-1", "Host"));
 
 describe("createSnapshot", () => {
   it("starts waiting with no guest", () => {

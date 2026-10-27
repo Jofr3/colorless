@@ -26,15 +26,10 @@ import {
   redactGame,
   savedDeckReasons,
 } from "@colorless/engine";
-import type {
-  Card,
-  LobbyServerMessage,
-  LobbySnapshot,
-  SeatLogEntry,
-  WireAction,
-} from "@colorless/schema";
+import type { Card, LobbyServerMessage, SeatLogEntry, WireAction } from "@colorless/schema";
 import * as z from "zod";
 import { slotOf } from "./logic";
+import type { LobbyState } from "./snapshot";
 
 export type { Seat };
 
@@ -48,13 +43,13 @@ export const SEAT_OF_SLOT = { host: "p1", guest: "p2" } as const satisfies Recor
     host → p1, guest → p2 (SEAT_OF_SLOT), or null for a player not seated in this
     lobby (a refused/observer socket). The DO's per-viewer match broadcast keys
     each socket's redaction off this. */
-export function matchSeatOf(snapshot: LobbySnapshot, playerId: string): Seat | null {
+export function matchSeatOf(snapshot: LobbyState, playerId: string): Seat | null {
   const slot = slotOf(snapshot, playerId);
   return slot === null ? null : SEAT_OF_SLOT[slot];
 }
 
 /** The lobby player holding engine `seat`, or null when that seat is empty. */
-export function playerIdOfSeat(snapshot: LobbySnapshot, seat: Seat): string | null {
+export function playerIdOfSeat(snapshot: LobbyState, seat: Seat): string | null {
   return seat === SEAT_OF_SLOT.host ? snapshot.host.id : (snapshot.guest?.id ?? null);
 }
 

@@ -30,7 +30,7 @@ export const lobbyPhaseSchemaMatchesType: Equals<
 export const playerStateSchema = z.object({
   id: z.string(),
   name: z.string(),
-  deckId: z.string().nullable(),
+  hasDeck: z.boolean(),
   deckName: z.string().nullable(),
   ready: z.boolean(),
   connected: z.boolean(),
@@ -81,6 +81,9 @@ export const lobbyIntentSchemaMatchesType: Equals<
 > = true;
 
 // The message shapes a client sends, composed here and, with the server's, in serverWire.ts.
+// A hello's `from` is the seat secret (seatId.ts). Its shape is the DO's to check rather than this
+// schema's: a frame that fails here is dropped unanswered, and a client from before the secret
+// should be told the lobby is full instead of waiting on silence.
 export const helloMessageSchema = z.object({
   kind: z.literal("hello"),
   from: clientId,
