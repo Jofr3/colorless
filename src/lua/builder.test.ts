@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { readFileSync } from "node:fs";
 import { LuaBuilder, messageWidth, unresolvedMessage } from "./builder";
+import builderSource from "./builder.ts?raw";
 import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
@@ -556,7 +556,7 @@ describe("builder message widths", () => {
   });
 
   it("keeps every fixed message on one line", () => {
-    const source = readFileSync(new URL("./builder.ts", import.meta.url), "utf8");
+    const source = builderSource;
     const messages = [
       ...source.matchAll(/this\.message = "([^"]+)"/g),
       ...source.matchAll(/^\s+\w+: "([^"]+)",$/gm),
