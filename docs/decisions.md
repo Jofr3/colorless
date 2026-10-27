@@ -928,3 +928,29 @@ Phase 4 of the 2026-10-27 security audit. The engine and the lobby protocol chan
   - A public id sent as a hello is refused, binds nothing and cannot act.
   - The Phase 1 account binding and eviction are unchanged.
 - **Cutover.** A lobby stored before the change cannot be carried over, since its ids were public, so the DO wipes it on the next upgrade (404) or alarm (4000) and logs `lobby_wiped cause=legacy`. A tab still running the old client sends a UUID hello, is answered "full" and holds nothing until it reloads. The client and the API ship in the same `bun run release`.
+
+### 2026-10-27 — Auth hardening, an audit trail, and private default names
+
+Phase 5 of the 2026-10-27 security audit, and the last phase. One additive migration (0012) and two new Worker secrets, which must be set before the release.
+
+- **Audit trail (AU10, LB8).** Security events are logged:
+  - auth: register, login success and failure, logout, logout-all, profile change, deletion, OAuth create and link or claim, rate-limit refusals;
+  - lobby: seat-claim refusals, abuse and overflow closes, wipes, rematch refusals.
+  
+  An account is named by a 12-character HMAC tag under the `LOG_TAG_KEY` secret ("untagged" without it), never by email, IP, id, seat secret or deck id. A test holds lobby lines to that.
+- **Password pepper (AU9, decision 10).**
+  - New hashes are `pbkdf2p$<pepper id>$…`, HMAC-peppered with `PASSWORD_PEPPER`. Old `pbkdf2$` hashes still verify and are re-peppered at the next login, so nobody is logged out. `PASSWORD_PEPPER_PREVIOUS` allows a rotation.
+  - Without the secret the Worker keeps making unpeppered hashes and logs an error rather than refusing sign-in: a configuration mistake should not become an outage. A hash naming a pepper the Worker lacks answers 503.
+  - A lost pepper locks peppered accounts out of password sign-in, so the value is kept in a password manager.
+  - `release:gate` gains a read-only `secrets` step that refuses a release while either secret is missing.
+- **Per-email failure cap (AU6, decision 9).** After 50 failed logins for one email in an hour, from any address, further failures get 429 instead of 401. The password is still checked, so the owner signs in past the cap: no lockout and no new oracle. It does not slow guessing spread over many addresses; the per-IP budgets do that.
+- **Sign out everywhere (AU7).** `POST /auth/logout-all` ends every session of the account, and Settings → Account has the control. No idle timeout: it would cost a D1 write per active session per day.
+- **Google sign-in (AU12, AU4).** The flow uses PKCE (S256); the verifier rides in the state cookie, so sign-ins in flight at deploy fail once. Claiming an unverified account also removes its other Google identities. A Google email Google has not verified creates no account (`email-unverified`).
+- **Private default names (AU3, AU8, decision 12).**
+  - New accounts without a typed name, and every new Google account, get a generated handle (`Trainer-YWHU`); the Google real name is no longer read.
+  - Migration 0012 adds `users.name_prompt`. It flags accounts whose name is their email's local part and every Google-linked account, since nothing records where a linked account's name came from. Names do not change.
+  - Flagged accounts see "Choose your public name" once after sign-in (Save, Keep or Later). Saving or keeping clears the flag, which `User.namePrompt` carries.
+  - One `displayNameField` rule (normalized, trimmed, 1-64 characters, no control or format characters) serves register, `PATCH /auth/me` and the lobby hello, which still strips rather than refuses. The unused lobby `set-name` message is gone.
+- **Rematch re-check (MI4, decision 13).** A rematch reads the two seats' sessions once. A logged-out or deleted account cannot start one, and its socket is closed so it reconnects as a spectator. If the read fails, the rematch proceeds, since match start re-checks each session anyway.
+- **Not done.** Email verification and password reset stay unbuilt (decision 11): register remains an enumeration oracle and a squatted address cannot be recovered (backend-data.md §3.5).
+- **Deploy order.** Set `PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32`, saved in a password manager), then `bun run release`, which applies 0012 before the API deploy.
