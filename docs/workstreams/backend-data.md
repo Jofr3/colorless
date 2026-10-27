@@ -244,7 +244,10 @@ data loss rather than a validation failure.
   `sessions`. The browser holds a 256-bit random token in an http-only cookie
   `session` (`Secure; SameSite=None; Path=/`, 30-day `Max-Age`); the DB row id
   is **sha256(token)**, so a leaked dump authenticates nothing. Expiry is
-  enforced on read; expired rows are deleted lazily — no sweeper.
+  enforced on read; an expired row is deleted when its cookie is presented or
+  the user signs in again, and a daily Cron Trigger (`17 4 * * *`,
+  `apps/api/src/auth/sweep.ts`) deletes the rest, 500 rows per statement and
+  at most 10,000 per table per run, logging `evt = "d1", kind = "sweep"`.
   `SameSite=None` because the web app lives on a **different origin**: the
   Worker runs `hono/cors` app-wide with `origin = APP_ORIGIN` (wrangler.jsonc
   `vars`, dev default `http://localhost:5173`) and `credentials: true`, and
@@ -256,8 +259,16 @@ data loss rather than a validation failure.
   compare; login burns a dummy verify on unknown emails (timing parity) and
   answers one uniform 401. *Caveat:* 100k iterations ≈ tens of ms CPU — if
   free-plan Workers CPU limits 500 the auth routes in production, lower the
-  count or move to WASM Argon2. Register/login are rate-limited
-  10 attempts / 15 min per (IP, email) via approximate KV counters on `CACHE`.
+  count or move to WASM Argon2. Register/login are rate-limited per scope in
+  the D1 table `auth_rate_limits` (`apps/api/src/auth/rateLimit.ts`): 10
+  attempts per 15 min per (IP, email) and 50 per IP across emails, an IPv6
+  address counting as its /64. Keys are SHA-256 hashes, never the IP or email.
+  The counting upserts run in the same `db.batch` as the user lookup, so they
+  are exact under concurrency and cost no extra round trip; an attempt already
+  over budget writes nothing. Over budget → 429 with `Retry-After`. A D1 error
+  fails open (`evt = "auth", kind = "limiter_error"`). The profile's
+  favourite-deck field is retired: `PATCH /auth/me` ignores `favouriteDeckId`
+  and users no longer carry it; the `users.favourite_deck_id` column stays.
 - **Password-reset + email-verify are 501 stubs** — they need an outbound
   email provider, which is not chosen yet; no token plumbing exists until it
   is (`POST /auth/verify-email`, `POST /auth/reset-password` explain this).
@@ -419,6 +430,11 @@ production. `check:static` adds `migration-guard.ts` (no unreviewed table
 rebuilds) and `drizzle-drift.ts` (schema.ts matches the migrations); see
 docs/conventions.md "Database migrations".
 
+The daily sweep's Cron Trigger and the lobby's rate-limit bindings live in
+`apps/api/wrangler.jsonc` and take effect with `api:deploy`; there is no
+separate step. A rate-limit binding's `namespace_id` must be unique within the
+Cloudflare account.
+
 `bun run db:check` (apps/api; `--remote` for production) runs the read-only
 consistency checks in `apps/api/src/db/consistency.ts`: SQLite integrity and
 foreign keys, ownership the routes enforce, value domains, the reprint
@@ -434,6 +450,7 @@ What can be lost, and how it comes back:
 | Store | Recovery |
 | --- | --- |
 | D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | Time Travel, or a user-table export taken before a risky change. Nothing else can recreate them. |
+| D1 `auth_rate_limits` | Disposable: at worst a caller gets a fresh sign-in budget. |
 | D1 catalog (`series`, `sets`, `cards`) | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
 | KV `CACHE` | Disposable: stamp a new `catalog:epoch`. |
 | R2 `ASSETS` | Disposable: refilled from tcgdex on demand. |
@@ -493,12 +510,14 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 | Resource | Free limit / day | Main spenders |
 | --- | ---: | --- |
 | D1 rows read | 5,000,000 | free-text builder searches, decklist import, catalog KV misses |
-| D1 rows written | 100,000 | remote ingest, deck saves, sessions |
-| KV reads | 100,000 | every KV-cached catalog request, the login rate limiter |
-| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3), the login rate limiter |
+| D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt), the daily sweep (at most 20,000) |
+| KV reads | 100,000 | every KV-cached catalog request |
+| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3) |
 
-The KV write quota is the tight one, and it is shared: once the catalog cache
-has spent it, the login rate limiter cannot write either.
+The KV write quota is the tight one, and only the catalog cache spends it.
+Sign-in no longer touches KV. The lobby's per-IP limits (`POST /lobby` 10 a
+minute, the `/ws` upgrade 60 a minute) are Workers Rate Limiting bindings, not
+a stored quota.
 
 **After every deploy**, check that the Worker reaches D1 and that the remote
 migration count matches the files:
@@ -534,8 +553,8 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | --- | --- |
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
 | `evt = "auth"` | Login, register and OAuth failures (`apps/api/src/auth/`). |
-| `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`). |
-| `evt = "d1"` | `/health/db` failures. |
+| `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
+| `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
 
 ---
@@ -875,7 +894,7 @@ GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or
 # Catalog (public; every 200 carries `public, max-age=300, swr=3600` + ETag;
 # best-effort KV cache-aside, 1-day TTL, on the 200s of /facets, /series, /sets,
 # /sets/:id and /cards pages 1-3 only (MAX_CACHED_CARDS_PAGE) — each miss spends
-# one of the account's 1,000 KV writes/day, shared with the login limiter;
+# one of the account's 1,000 KV writes/day;
 # `x-colorless-cache: hit|miss|bypass` (bypass: /cards/:id, /cards/full, /cards
 # page 4+, a /cards query carrying `total`, and free-text/id queries);
 # key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + path (route params decoded)
@@ -963,11 +982,13 @@ PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null 
 DELETE /decks/:id        # 204 (deck_cards cascade away)
 
 # Lobby (Durable Object) — implemented (P1 m8, apps/api/src/lobby/; §3.6
-# as-built). Account-less: neither route reads the session cookie.
+# as-built). Account-less: neither route reads the session cookie. Both are
+# limited per IP (Workers Rate Limiting) → 429 + Retry-After: 60.
 POST   /lobby                    # mint an unused code (draw + claim via the DO,
                                  #   retry on 409 collision) → 201 {code}; 503
-                                 #   after five straight collisions
+                                 #   after five straight collisions; 10/min/IP
 GET    /lobby/:code/ws           # strict code check (404) → upgrade check (426)
+                                 #   → 60/min/IP (429)
                                  #   → forward to the code's LobbyDO; 404 from
                                  #   the DO for never-created/expired lobbies.
                                  #   Mounted BEFORE the CORS middleware: ws
