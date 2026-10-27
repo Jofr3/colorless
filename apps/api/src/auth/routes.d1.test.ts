@@ -7,13 +7,15 @@ import {
   raceBeforeFirstBatch,
   seedCards,
   signedInUser,
+  TEST_PEPPER,
   useTestD1,
 } from "../testing/d1";
 import { packStateCookieValue } from "./oauth";
-import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash } from "./password";
+import { DEFAULT_ITERATIONS, hashPassword, parsePasswordHash, pepperOf } from "./password";
 import { brokenRateLimit, fakeRateLimit } from "../testing/rateLimit";
 import {
   ACCOUNT_MAX_ATTEMPTS,
+  EMAIL_MAX_FAILURES,
   REGISTER_MAX_ATTEMPTS,
   REGISTER_WINDOW_MS,
   rateLimitKeys,
@@ -29,12 +31,18 @@ let warn: MockInstance<typeof console.warn>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  tokenBodies = [];
 });
 
-/** The structured lines logged so far in this test. */
-function logged(): Record<string, unknown>[] {
-  return warn.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+/** The structured lines logged so far in this test, only those of `kinds` when any are named. */
+function logged(...kinds: string[]): Record<string, unknown>[] {
+  return warn.mock.calls
+    .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
+    .filter((line) => kinds.length === 0 || kinds.includes(String(line.kind)));
 }
+
+/** What every account tag reads in these tests, which set no LOG_TAG_KEY. */
+const UNTAGGED = "untagged";
 
 const GOOGLE = { GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" };
 
@@ -66,6 +74,11 @@ async function login(email: string, password: string) {
 
 type UserinfoBody = { sub: string; email?: string; email_verified?: boolean; name?: string };
 
+/** The PKCE verifier of oauthCallback's state cookie. */
+const VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+/** The form bodies oauthCallback's token exchanges sent, newest last. */
+let tokenBodies: URLSearchParams[] = [];
+
 /** One Google callback whose code exchange and userinfo answer as Google would. */
 async function oauthCallback(userinfo: UserinfoBody, env: Env = d1().env(GOOGLE)) {
   const realFetch = globalThis.fetch;
@@ -74,6 +87,7 @@ async function oauthCallback(userinfo: UserinfoBody, env: Env = d1().env(GOOGLE)
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = input instanceof Request ? input.url : String(input);
       if (url === "https://oauth2.googleapis.com/token") {
+        tokenBodies.push(new URLSearchParams(String(init?.body)));
         return Response.json({ access_token: "access-token" });
       }
       if (url === "https://openidconnect.googleapis.com/v1/userinfo") {
@@ -84,7 +98,7 @@ async function oauthCallback(userinfo: UserinfoBody, env: Env = d1().env(GOOGLE)
   );
   return app.request(
     "/auth/oauth/google/callback?code=code&state=state",
-    { headers: { Cookie: `oauth_state=${packStateCookieValue("state", "/decks")}` } },
+    { headers: { Cookie: `oauth_state=${packStateCookieValue("state", VERIFIER, "/decks")}` } },
     env,
   );
 }
@@ -146,7 +160,9 @@ describe("POST /auth/register", () => {
     });
     const rows = await userRows();
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.passwordHash).toMatch(/^pbkdf2\$/);
+    // Peppered with the env's PASSWORD_PEPPER (AU9).
+    expect(rows[0]?.passwordHash).toMatch(/^pbkdf2p\$[A-Za-z0-9_-]{8}\$100000\$/);
+    expect(logged()).toEqual([{ evt: "auth", kind: "registered", account: UNTAGGED }]);
 
     const session = await me(sessionCookieOf(res));
     expect(session.status).toBe(200);
@@ -203,14 +219,13 @@ describe("POST /auth/login", () => {
       expect(await res.json()).toEqual({ error: "invalid email or password" });
       expect(sessionCookieOf(res)).toBeNull();
     }
-    // The operator's lines tell the cases apart and carry no address.
-    expect(logged()).toEqual(
-      ["wrong_password", "unknown_email", "no_password"].map((reason) => ({
-        evt: "auth",
-        kind: "login_failed",
-        reason,
-      })),
-    );
+    // The operator's lines tell the cases apart and carry no address; an account that exists is
+    // named by its tag.
+    expect(logged("login_failed")).toEqual([
+      { evt: "auth", kind: "login_failed", reason: "wrong_password", account: UNTAGGED },
+      { evt: "auth", kind: "login_failed", reason: "unknown_email" },
+      { evt: "auth", kind: "login_failed", reason: "no_password", account: UNTAGGED },
+    ]);
   });
 
   it.each([
@@ -250,7 +265,7 @@ describe("POST /auth/login", () => {
       expect(sessions?.n).toBe(0);
       expect((await userRows())[0]?.passwordHash).toBeNull();
       expect(logged()).toEqual([
-        { evt: "auth", kind: "login_failed", reason: "credential_changed" },
+        { evt: "auth", kind: "login_failed", reason: "credential_changed", account: UNTAGGED },
       ]);
     },
   );
@@ -319,7 +334,9 @@ describe("register and login rate limiting", () => {
       expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(590);
       expect(await res.json()).toEqual({ error: "too many attempts" });
     }
-    expect(logged()).toEqual([{ evt: "auth", kind: "rate_limited", scope: "login" }]);
+    expect(logged()).toEqual([
+      { evt: "auth", kind: "rate_limited", scope: "login", net: UNTAGGED },
+    ]);
     const other = await app.request(
       "/auth/login",
       postJson(body, { "cf-connecting-ip": "2001:db8:0:13::1" }),
@@ -355,7 +372,9 @@ describe("register and login rate limiting", () => {
     const other = { email: "brock@example.com", password: "onix-7890" };
     expect((await app.request("/auth/register", postJson(other, headers), env)).status).toBe(503);
     // Throttled to one line per isolate while the failure lasts.
-    expect(logged()).toEqual([{ evt: "auth", kind: "limiter_error", error: "Error", quota: true }]);
+    expect(logged("limiter_error")).toEqual([
+      { evt: "auth", kind: "limiter_error", error: "Error", quota: true },
+    ]);
     expect(JSON.stringify(logged())).not.toMatch(/misty|203\.0\.113\.9/);
   });
 
@@ -410,6 +429,7 @@ describe("register and login rate limiting", () => {
       kind: "rate_limited",
       scope: "login",
       by: "binding",
+      net: UNTAGGED,
     });
   });
 
@@ -417,7 +437,8 @@ describe("register and login rate limiting", () => {
     const env = d1().env({ AUTH_LIMIT: brokenRateLimit });
     const res = await app.request("/auth/login", postJson(body), env);
     expect(res.status).toBe(401);
-    expect(await storedCounters()).toBe(2);
+    // The address and the address-and-email attempt counters, and the email's failure counter.
+    expect(await storedCounters()).toBe(3);
     expect(logged()).toContainEqual({
       evt: "auth",
       kind: "binding_error",
@@ -529,7 +550,7 @@ describe("DELETE /auth/me", () => {
     expect((await me(brock.cookie)).status).toBe(200);
     // The email is free again.
     expect((await register("misty@example.com", "psyduck-789")).status).toBe(201);
-    expect(logged()).toContainEqual({ evt: "auth", kind: "account_deleted" });
+    expect(logged()).toContainEqual({ evt: "auth", kind: "account_deleted", account: UNTAGGED });
     expect(JSON.stringify(logged())).not.toMatch(/misty|starmie/);
   });
 
@@ -542,9 +563,9 @@ describe("DELETE /auth/me", () => {
     }
     expect(await userRows()).toHaveLength(1);
     expect((await me(cookie)).status).toBe(200);
-    expect(logged()).toEqual([
-      { evt: "auth", kind: "delete_failed", reason: "wrong_password" },
-      { evt: "auth", kind: "delete_failed", reason: "no_password" },
+    expect(logged("delete_failed")).toEqual([
+      { evt: "auth", kind: "delete_failed", reason: "wrong_password", account: UNTAGGED },
+      { evt: "auth", kind: "delete_failed", reason: "no_password", account: UNTAGGED },
     ]);
   });
 
@@ -567,11 +588,14 @@ describe("DELETE /auth/me", () => {
     }
     expect((await ownedRows(userId, "brock")).users).toBe(1);
     expect((await me(cookie)).status).toBe(200);
-    expect(logged()).toEqual([
-      { evt: "auth", kind: "delete_failed", reason: "no_confirm_email" },
-      { evt: "auth", kind: "delete_failed", reason: "wrong_confirm_email" },
-      { evt: "auth", kind: "delete_failed", reason: "wrong_confirm_email" },
-    ]);
+    expect(logged("delete_failed")).toEqual(
+      ["no_confirm_email", "wrong_confirm_email", "wrong_confirm_email"].map((reason) => ({
+        evt: "auth",
+        kind: "delete_failed",
+        reason,
+        account: UNTAGGED,
+      })),
+    );
   });
 
   it("asks a password account for its password, not its email", async () => {
@@ -643,8 +667,8 @@ describe("DELETE /auth/me", () => {
     );
     expect(res.status).toBe(401);
     expect(await userRows()).toHaveLength(1);
-    expect(logged()).toEqual([
-      { evt: "auth", kind: "delete_failed", reason: "credential_changed" },
+    expect(logged("delete_failed")).toEqual([
+      { evt: "auth", kind: "delete_failed", reason: "credential_changed", account: UNTAGGED },
     ]);
   });
 });
@@ -881,5 +905,400 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     });
     await oauthCallback({ sub: "g-7", email: "brock@example.com", email_verified: true });
     expect((await login("brock@example.com", "onix-789")).status).toBe(200);
+  });
+});
+
+describe("OAuth identities and verified emails (AU4) and PKCE (AU12)", () => {
+  it("sends the state cookie's PKCE verifier with the code exchange", async () => {
+    await oauthCallback({ sub: "g-1", email: "erika@example.com", email_verified: true });
+    expect(tokenBodies.map((body) => body.get("code_verifier"))).toEqual([VERIFIER]);
+  });
+
+  it("creates no account from an email Google has not verified", async () => {
+    for (const userinfo of [
+      { sub: "g-9", email: "erika@example.com", email_verified: false },
+      { sub: "g-9", email: "erika@example.com" },
+    ]) {
+      const res = await oauthCallback(userinfo);
+      expect(authErrorOf(res)).toBe("email-unverified");
+      expect(sessionCookieOf(res)).toBeNull();
+    }
+    expect(await userRows()).toEqual([]);
+    expect(await identityRows()).toEqual([]);
+    expect(logged("oauth_refused")).toEqual(
+      Array(2).fill({
+        evt: "auth",
+        kind: "oauth_refused",
+        provider: "google",
+        reason: "email-unverified",
+      }),
+    );
+  });
+
+  it("leaves only the claiming identity on an unverified account a verified email claims", async () => {
+    // An identity linked before the owner claimed the address, as an unverified provider email
+    // could once create.
+    const squatter = await register("victim@example.com", "squatter-pass");
+    const squatterId = ((await squatter.json()) as { id: string }).id;
+    await d1()
+      .db.prepare(
+        "INSERT INTO oauth_identities (provider, provider_id, user_id) VALUES ('google', 'g-squatter', ?)",
+      )
+      .bind(squatterId)
+      .run();
+    const claim = await oauthCallback({
+      sub: "g-owner",
+      email: "victim@example.com",
+      email_verified: true,
+    });
+    expect(authErrorOf(claim)).toBeNull();
+    expect(await identityRows()).toEqual([
+      { provider: "google", providerId: "g-owner", userId: squatterId },
+    ]);
+    expect(logged("oauth_linked", "login_ok")).toEqual([
+      {
+        evt: "auth",
+        kind: "oauth_linked",
+        provider: "google",
+        account: UNTAGGED,
+        claimed: true,
+        identitiesRemoved: 1,
+        sessionsRevoked: 1,
+      },
+      { evt: "auth", kind: "login_ok", method: "oauth", provider: "google", account: UNTAGGED },
+    ]);
+    // The squatter's identity no longer signs in: Google calls the email unverified for it.
+    const again = await oauthCallback({ sub: "g-squatter", email: "victim@example.com" });
+    expect(authErrorOf(again)).toBe("email-in-use");
+    expect(sessionCookieOf(again)).toBeNull();
+  });
+
+  it("logs a new Google account and a plain link apart from a claim", async () => {
+    await insertUser({ email: "brock@example.com", emailVerified: true });
+    await oauthCallback({ sub: "g-1", email: "erika@example.com", email_verified: true });
+    await oauthCallback({ sub: "g-2", email: "brock@example.com", email_verified: true });
+    await oauthCallback({ sub: "g-1", email: "erika@example.com", email_verified: true });
+    expect(logged("oauth_created", "oauth_linked")).toEqual([
+      { evt: "auth", kind: "oauth_created", provider: "google", account: UNTAGGED },
+      {
+        evt: "auth",
+        kind: "oauth_linked",
+        provider: "google",
+        account: UNTAGGED,
+        claimed: false,
+      },
+    ]);
+    expect(logged("login_ok")).toHaveLength(3);
+  });
+});
+
+describe("POST /auth/logout-all (AU7)", () => {
+  const post = (path: string, cookie: string | null) =>
+    app.request(
+      path,
+      { method: "POST", headers: cookie === null ? {} : { Cookie: cookie } },
+      d1().env(),
+    );
+
+  it("ends every session of the account, this one included, and no one else's", async () => {
+    const here = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const elsewhere = sessionCookieOf(await login("misty@example.com", "starmie-456"));
+    const brock = await signedInUser(d1().db, "brock@example.com");
+    const res = await post("/auth/logout-all", here);
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Set-Cookie")).toBe(
+      (await post("/auth/logout", null)).headers.get("Set-Cookie"),
+    );
+    expect((await me(here)).status).toBe(401);
+    expect((await me(elsewhere)).status).toBe(401);
+    expect((await me(brock.cookie)).status).toBe(200);
+    expect(logged("logout_all")).toEqual([
+      { evt: "auth", kind: "logout_all", account: UNTAGGED, sessions: 2 },
+    ]);
+    // The password still works: only sessions end.
+    expect((await login("misty@example.com", "starmie-456")).status).toBe(200);
+  });
+
+  it("401s without a live session and ends nothing", async () => {
+    const brock = await signedInUser(d1().db, "brock@example.com");
+    expect((await post("/auth/logout-all", null)).status).toBe(401);
+    expect((await post("/auth/logout-all", "session=not-a-session")).status).toBe(401);
+    expect((await me(brock.cookie)).status).toBe(200);
+  });
+});
+
+describe("audit trail (AU10)", () => {
+  const LOG_TAG_KEY = "test-log-tag-key";
+
+  it("tags each account's events with one keyed tag that names no id, email or address", async () => {
+    const env = d1().env({ LOG_TAG_KEY });
+    const send = (path: string, init: RequestInit) => app.request(path, init, env);
+    const headers = { "cf-connecting-ip": "203.0.113.9" };
+    const registered = await send(
+      "/auth/register",
+      postJson({ email: "misty@example.com", password: "starmie-456" }, headers),
+    );
+    const misty = ((await registered.json()) as { id: string }).id;
+    await send(
+      "/auth/login",
+      postJson({ email: "misty@example.com", password: "wrong-guess" }, headers),
+    );
+    const signedIn = await send(
+      "/auth/login",
+      postJson({ email: "misty@example.com", password: "starmie-456" }, headers),
+    );
+    const cookie = sessionCookieOf(signedIn) ?? "";
+    await send("/auth/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({ displayName: "Misty W" }),
+    });
+    await send("/auth/logout", { method: "POST", headers: { Cookie: cookie } });
+    await send(
+      "/auth/register",
+      postJson(
+        { email: "brock@example.com", password: "onix-7890" },
+        { "cf-connecting-ip": "1.2.3.4" },
+      ),
+    );
+
+    const lines = logged();
+    expect(lines.map((line) => line.kind)).toEqual([
+      "registered",
+      "login_failed",
+      "login_ok",
+      "profile_updated",
+      "logout",
+      "registered",
+    ]);
+    const tags = lines.map((line) => line.account);
+    const mistyTag = tags[0];
+    expect(mistyTag).toMatch(/^[A-Za-z0-9_-]{12}$/);
+    expect(tags.slice(0, 5)).toEqual(Array(5).fill(mistyTag));
+    expect(tags[5]).not.toBe(mistyTag);
+    expect(lines[2]).toEqual({
+      evt: "auth",
+      kind: "login_ok",
+      method: "password",
+      account: mistyTag,
+      rehashed: false,
+    });
+    const text = JSON.stringify(lines);
+    for (const secret of [misty, "misty@example.com", "brock", "203.0.113.9", "starmie"]) {
+      expect(text).not.toContain(secret);
+    }
+    // Another key gives other tags: without the secret a tag cannot be computed from an id.
+    const again = sessionCookieOf(await login("misty@example.com", "starmie-456")) ?? "";
+    await app.request(
+      "/auth/logout-all",
+      { method: "POST", headers: { Cookie: again } },
+      d1().env({ LOG_TAG_KEY: "another-key" }),
+    );
+    expect(logged("logout_all")[0]?.account).not.toBe(mistyTag);
+  });
+
+  it("tags the network a refused attempt came from, never its address", async () => {
+    const env = d1().env({ LOG_TAG_KEY });
+    const keys = await rateLimitKeys("login", "203.0.113.9", "misty@example.com");
+    await d1()
+      .db.prepare("INSERT INTO auth_rate_limits (key, count, reset_at) VALUES (?, ?, ?)")
+      .bind(keys.ip, 51, Date.now() + 60_000)
+      .run();
+    const res = await app.request(
+      "/auth/login",
+      postJson(
+        { email: "misty@example.com", password: "starmie-456" },
+        { "cf-connecting-ip": "203.0.113.9" },
+      ),
+      env,
+    );
+    expect(res.status).toBe(429);
+    const [line] = logged("rate_limited");
+    expect(line).toEqual({
+      evt: "auth",
+      kind: "rate_limited",
+      scope: "login",
+      net: expect.stringMatching(/^[A-Za-z0-9_-]{12}$/),
+    });
+    expect(JSON.stringify(line)).not.toContain("203.0.113");
+  });
+});
+
+describe("password pepper (AU9)", () => {
+  async function storedHash(email: string) {
+    return (
+      await d1()
+        .db.prepare("SELECT password_hash AS hash FROM users WHERE email = ?")
+        .bind(email)
+        .first<{ hash: string | null }>()
+    )?.hash;
+  }
+
+  it("re-peppers an unpeppered hash on the next login, which keeps working", async () => {
+    await insertUser({
+      email: "oak@example.com",
+      passwordHash: await hashPassword("pallet-town", DEFAULT_ITERATIONS),
+    });
+    expect((await login("oak@example.com", "pallet-town")).status).toBe(200);
+    const pepper = await pepperOf(TEST_PEPPER);
+    expect(parsePasswordHash((await storedHash("oak@example.com")) ?? "")?.pepperId).toBe(
+      pepper.id,
+    );
+    expect(logged("login_ok")).toEqual([
+      { evt: "auth", kind: "login_ok", method: "password", account: UNTAGGED, rehashed: true },
+    ]);
+    expect((await login("oak@example.com", "pallet-town")).status).toBe(200);
+    expect((await login("oak@example.com", "pallet-tow")).status).toBe(401);
+  });
+
+  it("hashes unpeppered without the secret and logs it, then upgrades once it is set", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const unpeppered = d1().env({ PASSWORD_PEPPER: undefined });
+    const res = await app.request(
+      "/auth/register",
+      postJson({ email: "misty@example.com", password: "starmie-456" }),
+      unpeppered,
+    );
+    expect(res.status).toBe(201);
+    expect(await storedHash("misty@example.com")).toMatch(/^pbkdf2\$100000\$/);
+    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "auth", kind: "pepper_missing" },
+    ]);
+    expect((await login("misty@example.com", "starmie-456")).status).toBe(200);
+    expect(await storedHash("misty@example.com")).toMatch(/^pbkdf2p\$/);
+  });
+
+  it("answers 503, not a wrong password, while a peppered hash's pepper is missing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await register("misty@example.com", "starmie-456");
+    for (const env of [
+      d1().env({ PASSWORD_PEPPER: undefined }),
+      d1().env({ PASSWORD_PEPPER: "a-different-pepper" }),
+    ]) {
+      for (const password of ["starmie-456", "wrong-guess"]) {
+        const res = await app.request(
+          "/auth/login",
+          postJson({ email: "misty@example.com", password }),
+          env,
+        );
+        expect(res.status).toBe(503);
+        expect(res.headers.get("Retry-After")).toBe("60");
+      }
+    }
+    expect(logged("login_failed")).toEqual([]);
+    expect(await storedHash("misty@example.com")).toMatch(/^pbkdf2p\$/);
+  });
+
+  it("verifies under PASSWORD_PEPPER_PREVIOUS while rotating, and re-peppers with the new one", async () => {
+    await register("misty@example.com", "starmie-456");
+    const signIn = (env: Env) =>
+      app.request(
+        "/auth/login",
+        postJson({ email: "misty@example.com", password: "starmie-456" }),
+        env,
+      );
+    const rotating = d1().env({
+      PASSWORD_PEPPER: "the-new-pepper",
+      PASSWORD_PEPPER_PREVIOUS: TEST_PEPPER,
+    });
+    expect((await signIn(rotating)).status).toBe(200);
+    const fresh = await pepperOf("the-new-pepper");
+    expect(parsePasswordHash((await storedHash("misty@example.com")) ?? "")?.pepperId).toBe(
+      fresh.id,
+    );
+    expect((await signIn(d1().env({ PASSWORD_PEPPER: "the-new-pepper" }))).status).toBe(200);
+  });
+
+  it("checks a deletion's password under the pepper too", async () => {
+    const cookie = sessionCookieOf(await register("misty@example.com", "starmie-456"));
+    const res = await app.request(
+      "/auth/me",
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Cookie: cookie ?? "" },
+        body: JSON.stringify({ password: "starmie-456" }),
+      },
+      d1().env(),
+    );
+    expect(res.status).toBe(204);
+  });
+});
+
+describe("per-email failure cap (AU6)", () => {
+  const attempt = (email: string, password: string, ip: string) =>
+    app.request(
+      "/auth/login",
+      postJson({ email, password }, { "cf-connecting-ip": ip }),
+      d1().env(),
+    );
+
+  async function failures(email: string) {
+    const keys = await rateLimitKeys("login", "any address", email);
+    return (
+      await d1()
+        .db.prepare("SELECT count FROM auth_rate_limits WHERE key = ?")
+        .bind(keys.email)
+        .first<{ count: number }>()
+    )?.count;
+  }
+
+  async function spendCap(email: string) {
+    const keys = await rateLimitKeys("login", "any address", email);
+    await d1()
+      .db.prepare("INSERT INTO auth_rate_limits (key, count, reset_at) VALUES (?, ?, ?)")
+      .bind(keys.email, EMAIL_MAX_FAILURES, Date.now() + 30 * 60 * 1000)
+      .run();
+  }
+
+  it("counts failures per email across addresses, and not successes", async () => {
+    await register("misty@example.com", "starmie-456");
+    expect((await attempt("Misty@example.com", "wrong-1", "203.0.113.1")).status).toBe(401);
+    expect((await attempt("misty@example.com", "wrong-2", "198.51.100.2")).status).toBe(401);
+    expect((await attempt("misty@example.com", "starmie-456", "198.51.100.3")).status).toBe(200);
+    expect(await failures("misty@example.com")).toBe(2);
+  });
+
+  it("answers 429 to further failures past the cap, from any address, and still signs the owner in", async () => {
+    await register("misty@example.com", "starmie-456");
+    await spendCap("misty@example.com");
+    const refused = await attempt("misty@example.com", "wrong-guess", "203.0.113.50");
+    expect(refused.status).toBe(429);
+    expect(await refused.json()).toEqual({ error: "too many attempts" });
+    const retryAfter = Number(refused.headers.get("Retry-After"));
+    expect(retryAfter).toBeGreaterThan(29 * 60);
+    expect(retryAfter).toBeLessThanOrEqual(30 * 60);
+    expect(sessionCookieOf(refused)).toBeNull();
+    // The right password is not refused: the cap cannot lock the owner out.
+    const owner = await attempt("misty@example.com", "starmie-456", "198.51.100.7");
+    expect(owner.status).toBe(200);
+    expect((await me(sessionCookieOf(owner))).status).toBe(200);
+    // A failure past the cap writes nothing.
+    expect(await failures("misty@example.com")).toBe(EMAIL_MAX_FAILURES);
+    expect(logged("login_failed")).toEqual([
+      {
+        evt: "auth",
+        kind: "login_failed",
+        reason: "wrong_password",
+        account: UNTAGGED,
+        capped: true,
+      },
+    ]);
+  });
+
+  it("treats an unknown email the same way, so the cap tells nothing about who has an account", async () => {
+    for (let i = 0; i < 3; i++) {
+      expect((await attempt("nobody@example.com", `guess-${i}`, `203.0.113.${i}`)).status).toBe(
+        401,
+      );
+    }
+    expect(await failures("nobody@example.com")).toBe(3);
+    await spendCap("ghost@example.com");
+    expect((await attempt("ghost@example.com", "guess", "203.0.113.9")).status).toBe(429);
+  });
+
+  it("caps one email only", async () => {
+    await register("misty@example.com", "starmie-456");
+    await spendCap("brock@example.com");
+    expect((await attempt("misty@example.com", "wrong-guess", "203.0.113.9")).status).toBe(401);
   });
 });

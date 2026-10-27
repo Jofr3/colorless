@@ -1,7 +1,8 @@
 // Structured log lines for Workers Logs: one JSON object per line with an `evt` field, so a saved
 // query (`evt = "auth"`, `evt = "kv"`, `evt = "lobby"`) finds every line of one kind. Fields must
-// never carry an email, an IP, a password, a session token or a player-typed string; use ids,
-// counts, status codes and short fixed reasons.
+// never carry an email, an IP, a password, a session token or a player-typed string; use counts,
+// status codes, short fixed reasons, and for an account or a network the keyed tag from
+// ./logTag.ts, never the raw id.
 
 export type LogFields = Record<string, string | number | boolean | null | undefined>;
 
@@ -30,6 +31,28 @@ export function logEventThrottled(
   intervalMs = 10 * 60 * 1000,
   now = Date.now(),
 ): void {
+  throttled(logEvent, evt, kind, fields, intervalMs, now);
+}
+
+/** logError, throttled like logEventThrottled: for a misconfiguration every request would hit. */
+export function logErrorThrottled(
+  evt: string,
+  kind: string,
+  fields: LogFields = {},
+  intervalMs = 10 * 60 * 1000,
+  now = Date.now(),
+): void {
+  throttled(logError, evt, kind, fields, intervalMs, now);
+}
+
+function throttled(
+  log: (evt: string, kind: string, fields: LogFields) => void,
+  evt: string,
+  kind: string,
+  fields: LogFields,
+  intervalMs: number,
+  now: number,
+): void {
   const key = `${evt}:${kind}`;
   const suppressedKey = `${key}:suppressed`;
   const last = lastLogged.get(key);
@@ -40,7 +63,7 @@ export function logEventThrottled(
   const suppressed = lastLogged.get(suppressedKey) ?? 0;
   lastLogged.set(key, now);
   lastLogged.set(suppressedKey, 0);
-  logEvent(evt, kind, suppressed > 0 ? { ...fields, suppressed } : fields);
+  log(evt, kind, suppressed > 0 ? { ...fields, suppressed } : fields);
 }
 
 /** Forgets the throttle state; tests only. */

@@ -43,6 +43,7 @@ const ACCESS: Record<string, Access> = {
   "GET /auth/me": { kind: "requireUser" },
   "PATCH /auth/me": { kind: "requireUser", body: { displayName: "Mallory" } },
   "DELETE /auth/me": { kind: "requireUser", body: {} },
+  "POST /auth/logout-all": { kind: "requireUser" },
   "GET /decks": { kind: "requireUser" },
   "POST /decks": { kind: "requireUser", body: { name: "Probe", tint: 1 } },
   "GET /decks/:id": { kind: "owner" },

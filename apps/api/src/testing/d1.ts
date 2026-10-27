@@ -14,6 +14,9 @@ import type { Env } from "../env";
 // file by its own content, so a cached glob would not see a migration added later.
 const MIGRATIONS_DIR = fileURLToPath(new URL("../../drizzle/", import.meta.url).href);
 
+/** The PASSWORD_PEPPER of every test env. */
+export const TEST_PEPPER = "test-pepper-not-a-secret";
+
 export type MigrationFile = { name: string; statements: string[] };
 
 /** Every migration file in order, as `wrangler d1 migrations apply` names and splits it. */
@@ -33,7 +36,9 @@ export function migrationFiles(): MigrationFile[] {
 export type TestD1 = {
   db: D1Database;
   kv: KVNamespace;
-  /** A Worker env with the real DB and CACHE; the other bindings throw if a route touches them. */
+  /** A Worker env with the real DB and CACHE and a TEST_PEPPER password pepper, as production
+      has one; the other bindings throw if a route touches them. LOG_TAG_KEY is unset, so log
+      lines carry the literal "untagged". */
   env(overrides?: Partial<Record<keyof Env, unknown>>): Env;
   reset(): Promise<void>;
   dispose(): Promise<void>;
@@ -55,7 +60,13 @@ export async function createTestD1(): Promise<TestD1> {
     db,
     kv,
     env: (overrides = {}) =>
-      ({ DB: db, ASSETS: undefined, CACHE: kv, ...overrides }) as unknown as Env,
+      ({
+        DB: db,
+        ASSETS: undefined,
+        CACHE: kv,
+        PASSWORD_PEPPER: TEST_PEPPER,
+        ...overrides,
+      }) as unknown as Env,
     reset: async () => {
       // Deleting users cascades to sessions, identities, folders, decks and deck cards.
       await db.batch([db.prepare("DELETE FROM users"), db.prepare("DELETE FROM auth_rate_limits")]);

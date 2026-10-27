@@ -19,6 +19,15 @@
 // undercount. An attempt already over budget writes nothing, so hammering a refused key spends
 // none of the Free plan's 100,000 D1 rows written a day, which deck saves and sessions share.
 //
+// Login also has a soft cap per email, whatever the address (security audit AU6, decision 9):
+// after 50 failed logins for one email in an hour, further FAILURES answer 429 instead of 401
+// until the hour ends. Only failures count, after the password was checked, so the right password
+// still signs in: the cap cannot lock the owner out, and 429 says nothing 401 did not (both mean
+// "not this password", and an unknown email counts the same way). It does not slow a guesser
+// spread over many addresses, whom the per-address budgets bound; it gives the owner's account a
+// visible `rate_limited by: "email"` line and tells well-behaved clients to back off. A failure
+// past the cap writes nothing.
+//
 // Keys are SHA-256 hashes: the table never holds an IP or an email. The daily sweep
 // (./sweep.ts) deletes rows whose window has passed.
 //
@@ -44,6 +53,10 @@ export const IP_MAX_ATTEMPTS = 50;
 export const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 export const REGISTER_MAX_ATTEMPTS = 5;
 
+/** The per-email failure window, and the failed logins it allows before failures answer 429. */
+export const EMAIL_FAILURE_WINDOW_MS = 60 * 60 * 1000;
+export const EMAIL_MAX_FAILURES = 50;
+
 export type RateLimitScope = "register" | "login" | "delete";
 
 type ScopeBudget = { windowMs: number; accountMax: number; ipMax: number };
@@ -66,25 +79,33 @@ const BUDGETS: Record<RateLimitScope, ScopeBudget> = {
   },
 };
 
-export type RateLimitKeys = { scope: RateLimitScope; account: string; ip: string };
+export type RateLimitKeys = {
+  scope: RateLimitScope;
+  account: string;
+  ip: string;
+  /** The (scope, email) key of the failure cap, the same from every address. */
+  email: string;
+};
 
 async function sha256(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return toBase64Url(new Uint8Array(digest));
 }
 
-/** The two stored keys for one attempt. `ip` is the route's clientIpKey; the email is
+/** The stored keys for one attempt. `ip` is the route's clientIpKey; the email is
     normalized so casing cannot mint a fresh window. */
 export async function rateLimitKeys(
   scope: RateLimitScope,
   ip: string,
   email: string,
 ): Promise<RateLimitKeys> {
-  const [account, address] = await Promise.all([
-    sha256(`account\n${scope}\n${ip}\n${email.trim().toLowerCase()}`),
+  const normalized = email.trim().toLowerCase();
+  const [account, address, emailKey] = await Promise.all([
+    sha256(`account\n${scope}\n${ip}\n${normalized}`),
     sha256(`ip\n${scope}\n${ip}`),
+    sha256(`email\n${scope}\n${normalized}`),
   ]);
-  return { scope, account, ip: address };
+  return { scope, account, ip: address, email: emailKey };
 }
 
 type Budget = { key: string; max: number };
@@ -183,6 +204,47 @@ export async function limitAttempt<T>(
         reason: "limited",
         retryAfterSeconds: Math.max(1, Math.ceil((resetAt - nowMs) / 1000)),
       };
+}
+
+export type CountedFailure =
+  | { capped: false }
+  /** Past the email's failure cap: this failure answers 429 with this Retry-After. */
+  | { capped: true; retryAfterSeconds: number };
+
+/**
+ * Counts one failed attempt against the email's failure cap, and says whether the cap was
+ * already spent: an upsert that writes only while the window has room, and the row it leaves, in
+ * one batch. A D1 error counts nothing and caps nothing (logged): the attempt already failed, so
+ * this cannot let a password through.
+ */
+export async function countFailure(
+  db: DrizzleD1Database,
+  keys: RateLimitKeys,
+  nowMs: number = Date.now(),
+): Promise<CountedFailure> {
+  const { key, resetAt, count } = authRateLimits;
+  try {
+    const [counted, rows] = await db.batch([
+      db
+        .insert(authRateLimits)
+        .values({ key: keys.email, count: 1, resetAt: nowMs + EMAIL_FAILURE_WINDOW_MS })
+        .onConflictDoUpdate({
+          target: authRateLimits.key,
+          set: {
+            count: sql`CASE WHEN ${resetAt} <= ${nowMs} THEN 1 ELSE ${count} + 1 END`,
+            resetAt: sql`CASE WHEN ${resetAt} <= ${nowMs} THEN excluded.reset_at ELSE ${resetAt} END`,
+          },
+          setWhere: sql`${resetAt} <= ${nowMs} OR ${count} < ${EMAIL_MAX_FAILURES}`,
+        }),
+      db.select({ resetAt }).from(authRateLimits).where(eq(key, keys.email)),
+    ]);
+    if (counted.meta.changes > 0) return { capped: false };
+    const until = rows[0]?.resetAt ?? nowMs + EMAIL_FAILURE_WINDOW_MS;
+    return { capped: true, retryAfterSeconds: Math.max(1, Math.ceil((until - nowMs) / 1000)) };
+  } catch (error) {
+    logLimiterError(error);
+    return { capped: false };
+  }
 }
 
 /** D1's message may echo the statement, so only the error's name and whether it reads as a spent
