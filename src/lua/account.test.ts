@@ -98,6 +98,8 @@ describe("Lua account adapter", () => {
     await account.refresh();
     await account.save(" ");
     await account.save("a".repeat(65));
+    await account.save("Ash\nCOLORLESS:auth:submit");
+    expect(account.message).toBe("Names cannot have hidden characters.");
     expect(impl.mock.calls.some(([, init]) => init?.method === "PATCH")).toBe(false);
   });
   it("turns an expired save into signed-out state", async () => {
@@ -174,6 +176,8 @@ describe("Lua authentication", () => {
     expect(account.message).toBe("Password is too long.");
     await account.authenticate("register", USER.email, "test-password", "x".repeat(65));
     expect(account.message).toContain("characters for your name");
+    await account.authenticate("register", USER.email, "test-password", "Bad\u202EName");
+    expect(account.message).toBe("Names cannot have hidden characters.");
     expect(impl).not.toHaveBeenCalled();
   });
   it.each([

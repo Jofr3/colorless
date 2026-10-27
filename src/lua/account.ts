@@ -3,6 +3,7 @@ import {
   OAUTH_FAILURES,
   type OAuthFailure,
   type User,
+  hasControlChars,
   loginRequestSchema,
   registerRequestSchema,
 } from "@colorless/schema";
@@ -19,6 +20,7 @@ const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
 };
 
 const EMAIL_MISMATCH = "That is not this account's email.";
+const HIDDEN_CHARACTERS = "Names cannot have hidden characters.";
 
 interface FormIssue {
   path: readonly PropertyKey[];
@@ -26,10 +28,14 @@ interface FormIssue {
 }
 
 /** What to tell someone whose sign-in form the request schema refused, by its first issue. */
-function formProblem(issue: FormIssue | undefined, mode: "login" | "register") {
+function formProblem(issue: FormIssue | undefined, mode: "login" | "register", name = "") {
   const field = issue?.path[0];
   if (field === "email") return "Enter a valid email address.";
-  if (field === "displayName") return `Use up to ${DISPLAY_NAME_MAX} characters for your name.`;
+  if (field === "displayName") {
+    return hasControlChars(name)
+      ? HIDDEN_CHARACTERS
+      : `Use up to ${DISPLAY_NAME_MAX} characters for your name.`;
+  }
   if (issue?.code === "too_big") return "Password is too long.";
   return mode === "register" ? "Passwords need at least 8 characters." : "Enter your password.";
 }
@@ -111,6 +117,11 @@ export class LuaAccount {
     const trimmed = name.trim();
     if (!trimmed || trimmed.length > DISPLAY_NAME_MAX) {
       this.message = `Use 1 to ${DISPLAY_NAME_MAX} characters for your name.`;
+      this.emit();
+      return;
+    }
+    if (hasControlChars(trimmed)) {
+      this.message = HIDDEN_CHARACTERS;
       this.emit();
       return;
     }
@@ -240,7 +251,7 @@ export class LuaAccount {
     } else {
       const request = registerRequestSchema.safeParse(form);
       if (request.success) await this.signIn(() => register(request.data));
-      else this.refuse(formProblem(request.error.issues[0], mode));
+      else this.refuse(formProblem(request.error.issues[0], mode, displayName));
     }
   }
 
