@@ -301,7 +301,7 @@ type StoredStatement = [number, number, string[], string[]];
  * `stamp` ties them to this gate's own source, the TypeScript version and the runtime whose
  * globals `isGlobal` sees. A run writes back only what it used.
  */
-type VerdictCache = {
+export type VerdictCache = {
   stamp: string;
   storedFiles: Map<string, StoredStatement[]>;
   usedFiles: Map<string, StoredStatement[]>;
@@ -328,6 +328,20 @@ function isSavedCache(v: unknown): v is SavedCache {
   );
 }
 
+/** A cache holding the verdicts `stored`, as a run that found them under its stamp starts. */
+export function verdictCacheOf(
+  stamp: string,
+  stored: ReadonlyMap<string, RowVerdict> = new Map(),
+): VerdictCache {
+  return {
+    stamp,
+    storedFiles: new Map(),
+    usedFiles: new Map(),
+    stored: new Map(stored),
+    used: new Map(),
+  };
+}
+
 function loadVerdictCache(): VerdictCache {
   const stamp = sha1(
     JSON.stringify([
@@ -336,13 +350,7 @@ function loadVerdictCache(): VerdictCache {
       process.versions.bun ?? process.version,
     ]),
   );
-  const cache: VerdictCache = {
-    stamp,
-    storedFiles: new Map(),
-    usedFiles: new Map(),
-    stored: new Map(),
-    used: new Map(),
-  };
+  const cache = verdictCacheOf(stamp);
   try {
     const saved: unknown = JSON.parse(readFileSync(VERDICT_CACHE, "utf8"));
     if (isSavedCache(saved) && saved.stamp === stamp) {

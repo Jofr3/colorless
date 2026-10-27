@@ -33,6 +33,7 @@ import { REPO_ROOT } from "../lib/repo.ts";
 import { applyMutant } from "./apply.ts";
 import { argvProblems, knownFlagsUsage } from "./argv.ts";
 import { MUTANTS, type Mutant } from "./mutants.ts";
+import { vouchedKeys } from "./vouch.ts";
 
 /**
  * Process exit codes. `noSelection` shares 2 with `recovered`; recovery-gate tells them apart by
@@ -320,10 +321,8 @@ function isJsonReport(v: unknown): v is { testResults: { name: string }[] } {
 
 /**
  * Runs the baselines of every selected suite row in one vitest process and records the keys it
- * vouches for, so only the rest get a run of their own. It vouches only when the whole run exits 0,
- * since an error outside any test fails a run without failing a file, and only for a key whose
- * filters matched a file, matching them as `vitest run` does (a case-insensitive substring of the
- * repo-relative path). Name-filtered keys keep their own run.
+ * vouches for (`vouchedKeys`), so only the rest get a run of their own. An unreadable report
+ * vouches for none. Name-filtered keys keep their own run.
  */
 async function batchBaselines(selected: readonly Mutant[], verbose: boolean): Promise<void> {
   const keyed = new Map<string, string[]>();
@@ -352,22 +351,21 @@ async function batchBaselines(selected: readonly Mutant[], verbose: boolean): Pr
       verbose,
     );
     if (run.green) {
-      ran = parseJson(readFileSync(report, "utf8"), report, isJsonReport).testResults.map((r) =>
-        relative(REPO_ROOT, r.name).toLowerCase(),
-      );
+      try {
+        ran = parseJson(readFileSync(report, "utf8"), report, isJsonReport).testResults.map((r) =>
+          relative(REPO_ROOT, r.name),
+        );
+      } catch {
+        // Without the report nothing is vouched for, and every suite set runs its own.
+      }
     }
   } finally {
     rmSync(report, { force: true });
   }
-  let vouched = 0;
-  for (const [key, files] of keyed) {
-    const lowered = files.map((f) => f.toLowerCase());
-    if (!ran.some((file) => lowered.some((f) => file.includes(f)))) continue;
-    baselineCache.set(key, { green: true, ms: 0, tail: "" });
-    vouched++;
-  }
+  const vouched = vouchedKeys(keyed, run.green, ran);
+  for (const key of vouched) baselineCache.set(key, { green: true, ms: 0, tail: "" });
   console.log(
-    `${run.green ? "green" : "RED, so every suite set runs its own"} · ${vouched} vouched · ${(run.ms / 1000).toFixed(1)}s`,
+    `${run.green ? "green" : "RED, so every suite set runs its own"} · ${vouched.length} vouched · ${(run.ms / 1000).toFixed(1)}s`,
   );
 }
 
