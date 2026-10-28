@@ -623,6 +623,11 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   `recoverFromJournal` now checks whether the journal's PID IS ALIVE and refuses
   (exit **3**, distinct from the **2** that means a dead run was recovered).
   **NEVER RUN THE HARNESS, OR A `check`, WHILE A SWEEP IS IN FLIGHT.**
+  `scripts/check.ts` now refuses to start while the journal exists, and says
+  whether its writer is alive; `CHECK_DURING_MUTATION=1` overrides it.
+- **A hung mutant is killed at its deadline** (five times its baseline, never
+  under a minute) and counts as KILLED, tagged `TIMEOUT` in the progress line,
+  the table and a list under the summary line.
 - ⚠️ **Fixing the instance is not fixing the class.** D369 hit exactly the defect
   above through `--list` and repaired it by moving that one read-only command
   ahead of the recovery — correct, and it left every WRITING invocation walking
