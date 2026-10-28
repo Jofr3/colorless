@@ -10,7 +10,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^1.9.4",
-        "@cloudflare/workers-types": "^5.20260708.1",
+        "@cloudflare/workers-types": "^5.20261025.1",
         "@colorless/api": "workspace:*",
         "@types/node": "^25.6.0",
         "typescript": "^6.0.3",
@@ -31,7 +31,7 @@
         "zod": "^4.6.7",
       },
       "devDependencies": {
-        "@cloudflare/workers-types": "^5.20260708.1",
+        "@cloudflare/workers-types": "^5.20261025.1",
         "@tcgdex/sdk": "2.9.0",
         "drizzle-kit": "^0.31.10",
         "miniflare": "4.20260708.0",
@@ -96,7 +96,7 @@
 
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260708.1", "", { "os": "win32", "cpu": "x64" }, "sha512-bC/aSAwLy16Vjo24i9XU3aWH+eRgz7NeR5xPKavGbembO18ZywYTQbXh14eXtY6fAqN3RzRG8psijTdhX4xydA=="],
 
-    "@cloudflare/workers-types": ["@cloudflare/workers-types@5.20260708.1", "", {}, "sha512-FSRyCsxALKmmNnk/2HMkTiX9Iz9yqTiTWX/BJZdffGznMSunXmQgb3mKy9wGBX2BCTLOuRYWL36uh7/3Gm05Eg=="],
+    "@cloudflare/workers-types": ["@cloudflare/workers-types@5.20261025.1", "", {}, "sha512-tMRFCIZKRRieDIdAe38rpszuInDpG6ugnT8mHgJrBj8zR0EbdWeTkg8NunLhVfX3tpBatD0UXVbDuZfgZxe9Fg=="],
 
     "@colorless/api": ["@colorless/api@workspace:apps/api"],
 
