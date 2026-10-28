@@ -123,7 +123,9 @@ only the conclusion.
   a test-only module.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
-  rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
+  rewritten with `-u`. The pinned skeleton covers a fresh game, a body and a side with every
+  install field set by its op, and one park per prompt kind; a new install field needs an op in
+  the test's `INSTALL_OPS`, and a field only an unsampled op writes is not pinned. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
   regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` and
   `frontend/lua/tests/sim_model.lua` to match.
 - **The Lua mailbox rows are declared once** (`src/lua/wireFields.ts` `WIRE_ROWS`): each row kind's

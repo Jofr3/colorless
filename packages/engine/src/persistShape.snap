@@ -189,6 +189,99 @@
       "usedAttack": "null",
       "weaknessRetype": "null"
     },
+    "installedBody": {
+      "attackBlock": {
+        "effects": "boolean",
+        "maxDamage": "number",
+        "turn": "number"
+      },
+      "attackDamageDebuff": {
+        "amount": "number",
+        "turn": "number"
+      },
+      "attackFlipLockTurn": "number",
+      "attackLockedTurn": "number",
+      "attackTwoFlipLockTurn": "number",
+      "boostedAttack": {
+        "amount": "number",
+        "attackIndex": "null",
+        "turn": "number"
+      },
+      "costTaxTurn": "number",
+      "damageReduction": {
+        "amount": "number",
+        "turn": "number"
+      },
+      "damageVulnerability": {
+        "amount": "number",
+        "turn": "number"
+      },
+      "handAttachMark": {
+        "barred": "boolean",
+        "counters": "number",
+        "endsTurn": "boolean",
+        "tripped": "boolean",
+        "turn": "number"
+      },
+      "installedRecoil": {
+        "amount": "number",
+        "turn": "number"
+      },
+      "koBounty": {
+        "amount": "number",
+        "turn": "number"
+      },
+      "lockedAttacks": [
+        {
+          "attackIndex": "number",
+          "turn": "number"
+        }
+      ],
+      "noWeaknessTurn": "number",
+      "retreatBlocked": "boolean",
+      "retreatLockedTurn": "number",
+      "scheduledEffect": {
+        "amount": "number",
+        "kind": "string",
+        "turn": "number"
+      },
+      "weaknessRetype": {
+        "turn": "number",
+        "type": "string"
+      }
+    },
+    "installedSide": {
+      "chosenAttackShield": {
+        "fromClass": {
+          "stage": "string"
+        },
+        "turn": "number",
+        "uid": "string"
+      },
+      "sideAttackBlock": {
+        "banner": "string",
+        "fromClass": {
+          "stage": "string"
+        },
+        "sourceUid": "string",
+        "turn": "number"
+      },
+      "sideAttackLock": {
+        "maxEnergy": "null",
+        "turn": "number"
+      },
+      "sideDamageReduction": [
+        {
+          "amount": "number",
+          "turn": "number"
+        }
+      ],
+      "sideRetreatLock": {
+        "status": "string",
+        "turn": "number"
+      },
+      "trainerFlipLockTurn": "number"
+    },
     "parked": {
       "cont": {
         "ctx": {
@@ -221,6 +314,458 @@
         "note": "string"
       },
       "seat": "string"
+    },
+    "parkedByPrompt": {
+      "attachCards (attachFromDeck)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "filter": {
+              "kind": "string"
+            },
+            "max": "number",
+            "op": "string"
+          },
+          "rest": [
+            {
+              "op": "string"
+            }
+          ]
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            "string"
+          ],
+          "kind": "string",
+          "max": "number",
+          "note": "string",
+          "targets": [
+            {
+              "seat": "string",
+              "spot": {
+                "index": "number",
+                "spot": "string"
+              }
+            },
+            {
+              "seat": "string",
+              "spot": {
+                "spot": "string"
+              }
+            }
+          ]
+        },
+        "seat": "string"
+      },
+      "chooseAttack (preventChosenAttack)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            {
+              "index": "number",
+              "name": "string"
+            }
+          ],
+          "kind": "string",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "chooseCards (attachEnergyFrom)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "op": "string",
+            "pickOnto": {
+              "ref": {
+                "seat": "string",
+                "spot": {
+                  "spot": "string"
+                }
+              },
+              "take": "number"
+            },
+            "source": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            "string"
+          ],
+          "dest": "string",
+          "kind": "string",
+          "max": "number",
+          "min": "number",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "chooseCards (searchDeck)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "dest": "string",
+            "filter": {
+              "kind": "string"
+            },
+            "max": "number",
+            "op": "string"
+          },
+          "rest": [
+            {
+              "op": "string"
+            }
+          ]
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            "string"
+          ],
+          "dest": "string",
+          "kind": "string",
+          "max": "number",
+          "min": "number",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "choosePokemon (switchActive)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            {
+              "seat": "string",
+              "spot": {
+                "index": "number",
+                "spot": "string"
+              }
+            }
+          ],
+          "kind": "string",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "choosePokemonMulti (damageChosen)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "amount": "number",
+            "count": "number",
+            "op": "string",
+            "source": "string",
+            "target": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            {
+              "seat": "string",
+              "spot": {
+                "index": "number",
+                "spot": "string"
+              }
+            }
+          ],
+          "declinable": "boolean",
+          "kind": "string",
+          "max": "number",
+          "min": "number",
+          "note": "string",
+          "unit": "string"
+        },
+        "seat": "string"
+      },
+      "choosePrize (turnPrizeFaceUp)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "indices": [
+            "number"
+          ],
+          "kind": "string",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "discardEnergy (discardEnergy)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "filter": {
+              "kind": "string"
+            },
+            "from": "string",
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "discardable": [
+            {
+              "from": {
+                "seat": "string",
+                "spot": {
+                  "index": "number",
+                  "spot": "string"
+                }
+              },
+              "uid": "string"
+            },
+            {
+              "from": {
+                "seat": "string",
+                "spot": {
+                  "spot": "string"
+                }
+              },
+              "uid": "string"
+            }
+          ],
+          "kind": "string",
+          "note": "string",
+          "scope": {
+            "count": "number",
+            "kind": "string"
+          }
+        },
+        "seat": "string"
+      },
+      "discardTools (discardTools)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "count": "number",
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "discardable": [
+            {
+              "from": {
+                "seat": "string",
+                "spot": {
+                  "spot": "string"
+                }
+              },
+              "uid": "string"
+            }
+          ],
+          "kind": "string",
+          "note": "string",
+          "scope": {
+            "kind": "string",
+            "max": "number"
+          }
+        },
+        "seat": "string"
+      },
+      "guessHp (opponentGuessesHp)": {
+        "answerer": "string",
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "draw": "number",
+            "op": "string",
+            "uid": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "kind": "string",
+          "name": "string",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "mayDraw (opponentMayDraw)": {
+        "answerer": "string",
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "count": "number",
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "count": "number",
+          "kind": "string",
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "moveEnergy (moveEnergy)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "filter": {
+              "kind": "string"
+            },
+            "max": "number",
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "destinations": [
+            {
+              "seat": "string",
+              "spot": {
+                "index": "number",
+                "spot": "string"
+              }
+            },
+            {
+              "seat": "string",
+              "spot": {
+                "spot": "string"
+              }
+            }
+          ],
+          "kind": "string",
+          "max": "number",
+          "movable": [
+            {
+              "from": {
+                "seat": "string",
+                "spot": {
+                  "index": "number",
+                  "spot": "string"
+                }
+              },
+              "uid": "string"
+            },
+            {
+              "from": {
+                "seat": "string",
+                "spot": {
+                  "spot": "string"
+                }
+              },
+              "uid": "string"
+            }
+          ],
+          "note": "string"
+        },
+        "seat": "string"
+      },
+      "orderCards (reorderTop)": {
+        "cont": {
+          "ctx": {
+            "dealt": "number",
+            "invokedBy": "string",
+            "seat": "string",
+            "sourceUid": "string"
+          },
+          "pendingOp": {
+            "n": "number",
+            "op": "string"
+          },
+          "rest": []
+        },
+        "kind": "string",
+        "prompt": {
+          "candidates": [
+            "string"
+          ],
+          "kind": "string",
+          "note": "string"
+        },
+        "seat": "string"
+      }
     },
     "side": {
       "active": {
