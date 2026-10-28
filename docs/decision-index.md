@@ -30,6 +30,7 @@ the script after adding a decision.
 | 2026-10-27 | Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies | decisions.md:880 |
 | 2026-10-27 | A cryptographic match RNG and secret seat credentials | decisions.md:913 |
 | 2026-10-27 | Auth hardening, an audit trail, and private default names | decisions.md:932 |
+| 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:958 |
 
 ## Numbered decisions
 
