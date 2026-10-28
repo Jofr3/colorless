@@ -7,7 +7,7 @@
 // and re-serializing 5,000 rows would spend most of the Free plan's 10 ms of CPU, and one value for
 // the whole catalog would near D1's 2 MB value cap.
 
-import { CARD_INDEX_COLUMNS } from "@colorless/schema";
+import { CARD_INDEX_COLUMNS, CARD_INDEX_VERSION } from "@colorless/schema";
 import { type SQL, sql } from "drizzle-orm";
 import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
@@ -61,7 +61,7 @@ export function cardIndexStatements(db: DrizzleD1Database) {
 /** The response body from the statements' results: the set arrays' rows spliced into one. */
 export function cardIndexBody(sets: readonly { rows: string }[], series: string): string {
   const rows = sets.map((set) => set.rows.slice(1, -1)).filter((inner) => inner !== "");
-  return `{"version":1,"series":${series},"cards":[${rows.join(",")}]}`;
+  return `{"version":${CARD_INDEX_VERSION},"series":${series},"cards":[${rows.join(",")}]}`;
 }
 
 export const cardIndexRoutes = new Hono<{ Bindings: Env }>();

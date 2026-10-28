@@ -59,9 +59,16 @@ export type CardIndexRow = [
   effect: string | null,
 ];
 
+/**
+ * The GET /cards/index payload version: bump it with any change to the columns or how their values
+ * are written. The browser and the CDN keep an old body for a while whatever the API's KV holds, and
+ * a client refuses a version it does not know rather than read its rows at the wrong positions.
+ */
+export const CARD_INDEX_VERSION = 1;
+
 /** The GET /cards/index body. Rows come in no particular order. */
 export interface CardIndexPayload {
-  version: 1;
+  version: typeof CARD_INDEX_VERSION;
   /** Each set's serie, for the `serie` filter. */
   series: Record<string, string>;
   cards: CardIndexRow[];
@@ -110,7 +117,11 @@ export interface CardIndex {
   orders: Record<CardsQuery["sort"], readonly number[]>;
 }
 
+/** The payload made searchable; throws on a version this code does not read. */
 export function prepareCardIndex(payload: CardIndexPayload): CardIndex {
+  if (payload.version !== CARD_INDEX_VERSION) {
+    throw new Error(`card index version ${String(payload.version)} is not ${CARD_INDEX_VERSION}`);
+  }
   const cards = payload.cards.map(
     (row): SearchableCard => ({
       row,

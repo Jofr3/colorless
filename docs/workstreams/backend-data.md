@@ -1168,7 +1168,9 @@ GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or
 # + the VALIDATED query: only schema keys, defaults dropped, repeats sorted —
 # /facets, /series and /sets/:id ignore the query, so `?bust=N` cannot mint
 # entries; bump the version prefix whenever a cached shape — or its values for
-# already-ingested rows — changes; KV get/put/epoch failures log `evt = "kv"`;
+# already-ingested rows — changes (catalog/cacheShape.d1.test.ts pins each
+# version's response schemas and card index columns, so a shape change fails
+# until it is bumped); KV get/put/epoch failures log `evt = "kv"`;
 # invalid query params → terse 400 JSON, before KV is touched)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), nameExact, category,
@@ -1205,7 +1207,9 @@ GET    /cards/index      # every card as one compact row (CardIndexPayload: filt
                          #   builder's in-browser name and rules-text search and the
                          #   decklist import; one KV entry per epoch; a KV miss reads
                          #   the catalog once and spends CATALOG_SEARCH_LIMIT;
-                         #   about 2 MB raw, 280 KB gzip
+                         #   about 2 MB raw, 280 KB gzip; `version`
+                         #   (CARD_INDEX_VERSION) changes with the columns, and the
+                         #   client refuses one it does not know (falls back to /cards)
 GET    /cards/:id        # full canonical Card; 404 JSON if absent; never in KV (a
                          #   1-row PK read is cheaper than a KV write)
 GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown

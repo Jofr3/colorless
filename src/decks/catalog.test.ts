@@ -436,6 +436,25 @@ describe("importDecklist", () => {
     forgetCardIndex();
   });
 
+  it("asks /cards instead of reading an index of an unknown version, and refetches the index", async () => {
+    const prints = [brief({ id: "sv01-193", name: "Rocky Helmet", category: "Trainer" })];
+    let version = 2;
+    const { calls } = stubFetch({
+      "GET /sets": () => json([]),
+      "GET /cards/index": () => json({ ...cardIndexPayload(prints), version }),
+      "GET /cards": () => json(cardsPage(prints)),
+    });
+    const fromApi = await importDecklist("2 Rocky Helmet");
+    expect(fromApi.entries.map((entry) => entry.card.cardId)).toEqual(["sv01-193"]);
+    expect(calls.filter((call) => call === "GET /cards").length).toBeGreaterThan(0);
+    version = 1;
+    calls.length = 0;
+    const fromIndex = await importDecklist("2 Rocky Helmet");
+    expect(fromIndex.entries.map((entry) => entry.card.cardId)).toEqual(["sv01-193"]);
+    expect(calls.filter((call) => call !== "GET /sets")).toEqual(["GET /cards/index"]);
+    forgetCardIndex();
+  });
+
   it(`refuses more than ${MAX_DECKLIST_LINES} card lines before any lookup`, async () => {
     const { impl } = stubFetch({});
     const text = Array.from({ length: MAX_DECKLIST_LINES + 1 }, () => "1 Pikachu").join("\n");

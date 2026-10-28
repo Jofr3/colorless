@@ -66,6 +66,16 @@ const fullCardsResponseSchema = z.array(cardSchema);
 const setsResponseSchema = z.array(setBriefSchema);
 const seriesResponseSchema = z.array(serieSchema);
 
+/** Each KV-cached route's response schema (./cache.ts), whose shapes cacheShape.test.ts pins to
+    CACHE_VERSION. GET /cards/index is pinned there by its own columns. */
+export const CACHED_RESPONSE_SCHEMAS = {
+  "/cards": cardsResponseSchema,
+  "/sets": setsResponseSchema,
+  "/sets/:id": setWithCardsSchema,
+  "/series": seriesResponseSchema,
+  "/facets": catalogFacetsSchema,
+};
+
 /** The page and the match count for a /cards query. */
 export function cardsPageStatements(db: DrizzleD1Database, query: CardsQuery) {
   const where = buildCardsWhere(query);
