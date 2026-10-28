@@ -148,7 +148,8 @@ routes (§6) mirror lazily, cache-aside: R2 hit → serve; miss → resolve the
 origin base URL from D1, fetch the original from tcgdex, store it in R2,
 respond. Only `assets.tcgdex.net` over https is fetched, and only an `image/*`
 body of the file's type (by magic bytes) up to 5 MB is stored; the allowlist
-is the files a client uses (`high.webp` for cards). Rationale: a full SV-era backfill is ~10k images — over Worker
+is the files a client uses (`high.webp` for cards). An origin 5xx, a network
+error, a broken body or no full answer within 10 s is a 502, never stored. Rationale: a full SV-era backfill is ~10k images — over Worker
 subrequest limits, slow via CLI puts, and mostly assets nobody views.
 
 A future **Cron Trigger** (stretch) will run small incremental data deltas
@@ -396,8 +397,10 @@ data loss rather than a validation failure.
   address first keeps no way in. Then session + redirect to `APP_ORIGIN`. A
   D1 failure in find-or-create or the session insert goes back the same way
   with `?authError=unavailable` (logged `evt = "auth", kind =
-  "oauth_unavailable"` at error level), never a JSON 500 at the API origin. A
-  single user may hold both a password and OAuth identities.
+  "oauth_unavailable"` at error level), never a JSON 500 at the API origin.
+  Each Google request (token exchange, userinfo) gives up after 10 s, body
+  included, as an `exchange` or `profile` failure. A single user may hold both
+  a password and OAuth identities.
 - **Providers activate by configuration alone** — with secrets absent the
   routes answer `503 {"error":"provider not configured"}`. To activate, register
   a Google OAuth client (<https://console.cloud.google.com/auth/clients>, Web application)

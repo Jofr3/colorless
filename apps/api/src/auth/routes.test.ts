@@ -3,6 +3,7 @@ import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { codeChallengeOf, packStateCookieValue, unpackStateCookieValue } from "./oauth";
+import { UPSTREAM_TIMEOUT_MS } from "./routes";
 
 /** A well-formed state cookie for the state "real" and the redirect "/". */
 const STATE_COOKIE = `oauth_state=${packStateCookieValue("real", "v".repeat(43), "/")}`;
@@ -287,6 +288,71 @@ describe("GET /auth/oauth/:provider/callback", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  describe("a provider that never answers", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /** The callback's authError once UPSTREAM_TIMEOUT_MS has passed, and not a moment before. */
+    async function authErrorAtDeadline(): Promise<string | null> {
+      let settled = false;
+      const pending = Promise.resolve(
+        app.request(
+          "/auth/oauth/google/callback?code=x&state=real",
+          { headers: { Cookie: STATE_COOKIE } },
+          envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
+        ),
+      ).finally(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(UPSTREAM_TIMEOUT_MS - 1);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      const res = await pending;
+      expect(res.status).toBe(302);
+      return new URL(res.headers.get("Location") ?? "").searchParams.get("authError");
+    }
+
+    it("gives up on a code exchange that never responds, and aborts its fetch", async () => {
+      const signals: (AbortSignal | null | undefined)[] = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+          signals.push(init?.signal);
+          // Ignores its signal, as a stalled socket might.
+          return new Promise<Response>(() => {});
+        }),
+      );
+      expect(await authErrorAtDeadline()).toBe("exchange");
+      expect(signals.map((signal) => signal?.aborted)).toEqual([true]);
+      expect(logged()).toEqual([
+        {
+          evt: "auth",
+          kind: "oauth_exchange",
+          provider: "google",
+          status: null,
+          providerError: null,
+        },
+      ]);
+    });
+
+    it("gives up on a userinfo body that never ends", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL) =>
+          String(input) === "https://oauth2.googleapis.com/token"
+            ? Response.json({ access_token: "access-token" })
+            : new Response(new ReadableStream(), { status: 200 }),
+        ),
+      );
+      expect(await authErrorAtDeadline()).toBe("profile");
+      expect(logged()).toMatchObject([{ kind: "oauth_profile", status: 200 }]);
+    });
   });
 });
 

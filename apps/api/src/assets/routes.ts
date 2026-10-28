@@ -15,6 +15,7 @@ import { type Context, Hono } from "hono";
 import { cards, sets } from "../db/schema";
 import type { Env } from "../env";
 import { afterResponse } from "../http/afterResponse";
+import { deadline } from "../http/deadline";
 import { logEventThrottled } from "../http/log";
 import { CACHE_STATUS_HEADER } from "../httpCache";
 import {
@@ -40,6 +41,9 @@ const CACHE_FOREVER = "public, max-age=31536000, immutable";
 /** An unknown card or set, or one the origin has no image for: briefly, since ingest can add it. */
 const MISSING_ASSET_CACHE = "public, max-age=3600";
 
+/** How long a mirror miss waits on the asset origin, body included, before it answers 502. */
+export const ORIGIN_TIMEOUT_MS = 10_000;
+
 function assetResponse(
   body: ReadableStream | ArrayBuffer,
   contentType: string,
@@ -56,8 +60,9 @@ function assetResponse(
 
 /**
  * The shared R2-then-origin flow. `resolveOriginUrl` is only consulted on an R2 miss. An unknown
- * row, a missing asset URL or an origin 404 is `null` (the app's 404); an origin 5xx or a network
- * error is a 502, so an upstream outage does not read as a missing image. The R2 write goes to
+ * row, a missing asset URL or an origin 404 is `null` (the app's 404); an origin 5xx, a network
+ * error or no answer within ORIGIN_TIMEOUT_MS is a 502, so an upstream outage does not read as a
+ * missing image. The R2 write goes to
  * `later`, which runs it after the response and drops its failure.
  *
  * What is stored stays for good, so only an image of `contentType` from the asset origin is: the
@@ -81,26 +86,36 @@ export async function serveMirroredAsset(
     return null;
   }
   if (!isAssetOriginUrl(originUrl)) return refused("origin_url");
+  const limit = deadline(ORIGIN_TIMEOUT_MS);
   let origin: Response;
+  let bytes: ArrayBuffer | null;
   try {
-    origin = await fetch(originUrl);
-  } catch {
-    return upstreamFailure();
+    try {
+      origin = await limit.within(fetch(originUrl, { signal: limit.signal }));
+    } catch {
+      return upstreamFailure();
+    }
+    if (origin.status >= 500) {
+      return upstreamFailure();
+    }
+    if (origin.status !== 200) {
+      return null;
+    }
+    // A constructed Response (tests) has no url; a fetched one names where redirects ended.
+    if (!isAssetOriginUrl(origin.url || originUrl)) return refused("redirect");
+    if (!origin.headers.get("Content-Type")?.toLowerCase().startsWith("image/")) {
+      return refused("content_type");
+    }
+    // Buffer the image (card scans are ~100KB) so one body feeds both the R2
+    // put and the response without tee-ing the stream.
+    try {
+      bytes = await limit.within(readCapped(origin, MAX_ASSET_BYTES));
+    } catch {
+      return upstreamFailure();
+    }
+  } finally {
+    limit.clear();
   }
-  if (origin.status >= 500) {
-    return upstreamFailure();
-  }
-  if (origin.status !== 200) {
-    return null;
-  }
-  // A constructed Response (tests) has no url; a fetched one names where redirects ended.
-  if (!isAssetOriginUrl(origin.url || originUrl)) return refused("redirect");
-  if (!origin.headers.get("Content-Type")?.toLowerCase().startsWith("image/")) {
-    return refused("content_type");
-  }
-  // Buffer the image (card scans are ~100KB) so one body feeds both the R2
-  // put and the response without tee-ing the stream.
-  const bytes = await readCapped(origin, MAX_ASSET_BYTES);
   if (bytes === null) return refused("too_large");
   if (sniffImageType(bytes) !== contentType) return refused("magic");
   const stored = bytes.slice(0);

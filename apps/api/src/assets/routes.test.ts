@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
 import { MAX_ASSET_BYTES } from "./files";
-import { serveMirroredAsset } from "./routes";
+import { ORIGIN_TIMEOUT_MS, serveMirroredAsset } from "./routes";
 
 /** An empty R2 stand-in that records puts; `failPut` makes every put throw. */
 function emptyBucket(failPut = false) {
@@ -105,6 +105,45 @@ describe("serveMirroredAsset on an R2 miss", () => {
     const res = await serve(env);
     expect(res?.status).toBe(502);
     expect(await res?.json()).toEqual({ error: "asset origin unavailable" });
+    expect(puts).toEqual([]);
+  });
+
+  it.each([
+    // Ignores its signal, as a stalled socket might.
+    ["an origin that never responds", () => new Promise<Response>(() => {})],
+    ["an image body that never ends", async () => image(new ReadableStream())],
+  ])("answers %s with a 502 once its time is up", async (_label, upstream) => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      vi.stubGlobal("fetch", vi.fn(upstream));
+      const { env, puts } = emptyBucket();
+      let settled = false;
+      const pending = serve(env).finally(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(ORIGIN_TIMEOUT_MS - 1);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      const res = await pending;
+      expect(res?.status).toBe(502);
+      expect(puts).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("answers a body that breaks off with a 502", async () => {
+    const broken = new ReadableStream({
+      pull(controller) {
+        controller.error(new TypeError("connection reset"));
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => image(broken)),
+    );
+    const { env, puts } = emptyBucket();
+    expect((await serve(env))?.status).toBe(502);
     expect(puts).toEqual([]);
   });
 });

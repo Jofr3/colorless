@@ -24,6 +24,7 @@ import { type Context, Hono } from "hono";
 import { oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
 import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
+import { deadline } from "../http/deadline";
 import { clientIpKey } from "../http/clientIp";
 import { chainMentions, errorFields } from "../http/errors";
 import { logError, logErrorThrottled, logEvent, logEventThrottled } from "../http/log";
@@ -539,19 +540,27 @@ function providerErrorOf(json: unknown): string | null {
   return typeof code === "string" && /^[\w.-]{1,64}$/.test(code) ? code : null;
 }
 
+/** How long the callback waits on each provider request, body included, before it fails. */
+export const UPSTREAM_TIMEOUT_MS = 10_000;
+
 async function upstreamJson(url: string, init: RequestInit): Promise<Upstream> {
-  let response: Response;
+  const limit = deadline(UPSTREAM_TIMEOUT_MS);
   try {
-    response = await fetch(url, init);
-  } catch {
-    return { json: null, status: null, providerError: null };
+    let response: Response;
+    try {
+      response = await limit.within(fetch(url, { ...init, signal: limit.signal }));
+    } catch {
+      return { json: null, status: null, providerError: null };
+    }
+    const json: unknown = await limit.within(response.json()).catch(() => null);
+    return {
+      json: response.ok ? json : null,
+      status: response.status,
+      providerError: providerErrorOf(json),
+    };
+  } finally {
+    limit.clear();
   }
-  const json: unknown = await response.json().catch(() => null);
-  return {
-    json: response.ok ? json : null,
-    status: response.status,
-    providerError: providerErrorOf(json),
-  };
 }
 
 authRoutes.get("/oauth/:provider/callback", async (c) => {
