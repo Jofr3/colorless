@@ -813,10 +813,11 @@ source migrated in place, table for table, `name_prompt` included
 under `.wrangler/state/v3/d1/`. Run `bun run db:migrate:local` to create the
 new file, then copy the old one into it with sqlite's `.backup`.
 
-**Remote Time Travel rehearsal** (not run yet; ask the user before running it).
-It proves the remote restore path, including that a restore rewinds
-`d1_migrations`, on a throwaway database that nothing else uses. From the repo
-root, about ten minutes:
+**Remote Time Travel rehearsal** (run 2026-10-28 with the user's OK: every
+expectation below held, and `colorless-drill` was deleted afterwards; it needs
+`CI=true` so `d1 create` does not prompt). It proves the remote restore path,
+including that a restore rewinds `d1_migrations`, on a throwaway database that
+nothing else uses. From the repo root, about ten minutes:
 
 ```sh
 mkdir -p tmp/drill/migrations && cd tmp/drill
