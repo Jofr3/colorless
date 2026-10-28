@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LuaBuilder, messageWidth, unresolvedMessage } from "./builder";
-import builderSource from "./builder.ts?raw";
+import { FIXED_MESSAGES, LuaBuilder, messageWidth, unresolvedMessage } from "./builder";
 import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
@@ -575,14 +574,8 @@ describe("builder message widths", () => {
   });
 
   it("keeps every fixed message on one line", () => {
-    const source = builderSource;
-    const messages = [
-      ...source.matchAll(/this\.message = "([^"]+)"/g),
-      ...source.matchAll(/^\s+\w+: "([^"]+)",$/gm),
-      ...source.matchAll(/^const [A-Z_]+ = "([^"]+)";$/gm),
-    ].map((m) => m[1] as string);
-    expect(messages.length).toBeGreaterThan(10);
-    for (const message of messages) expect(messageWidth(message), message).toBeLessThanOrEqual(MAX);
+    for (const message of FIXED_MESSAGES)
+      expect(messageWidth(message), message).toBeLessThanOrEqual(MAX);
   });
 
   it("names the unknown cards that fit, then counts the rest", () => {
