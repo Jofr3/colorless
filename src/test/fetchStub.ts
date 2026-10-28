@@ -33,10 +33,10 @@ export function stubFetch(routes: Record<string, (url: URL) => Response | Promis
   return { impl, calls };
 }
 
-/** Stub fetch with one canned response for every call; returns the mock for
-    call inspection (url/init assertions). */
+/** Stub fetch with one canned response for every call, each call reading its
+    own copy of it; returns the mock for call inspection (url/init assertions). */
 export function stubFetchResponse(response: Response) {
-  const mock = vi.fn().mockResolvedValue(response);
+  const mock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => response.clone());
   vi.stubGlobal("fetch", mock);
   return mock;
 }
