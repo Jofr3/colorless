@@ -51,7 +51,7 @@
     "@cloudflare/workers-types": "^5.20260708.1",
     "@colorless/api": "workspace:*",
     "@types/node": "^25.6.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.0.9",
     "vitest": "^4.1.9",
     "wrangler": "^4.0.0"
