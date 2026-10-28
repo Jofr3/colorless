@@ -81,6 +81,9 @@ describe("Lua account adapter", () => {
     expect(account.message).toBe("That email already has an account. Sign in with your password.");
     await account.refresh();
     expect(account.message).toBe("");
+    account.noteAuthError("unavailable");
+    await account.refresh();
+    expect(account.message).toBe("Sign-in is unavailable right now. Try again later.");
     account.noteAuthError("constructor");
     await account.refresh();
     expect(account.message).toBe("Google sign-in failed. Try again.");

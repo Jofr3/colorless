@@ -25,8 +25,8 @@ import { oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
 import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
-import { chainMentions } from "../http/errors";
-import { logErrorThrottled, logEvent, logEventThrottled } from "../http/log";
+import { chainMentions, errorFields } from "../http/errors";
+import { logError, logErrorThrottled, logEvent, logEventThrottled } from "../http/log";
 import { accountTag, logTag } from "../http/logTag";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
@@ -595,7 +595,12 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   }
 
   const db = drizzle(c.env.DB);
-  const result = await findOrCreateOAuthUser(db, provider, profile);
+  let result: Awaited<ReturnType<typeof findOrCreateOAuthUser>>;
+  try {
+    result = await findOrCreateOAuthUser(db, provider, profile);
+  } catch (error) {
+    return oauthUnavailable(c, provider, packed.redirect, error);
+  }
   if (typeof result === "string") {
     logEvent("auth", "oauth_refused", { provider, reason: result });
     // email-in-use: the provider email matches an existing account but is NOT
@@ -619,11 +624,27 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
     });
   }
   const session = await newSession(user.id);
-  await db.batch([sweepExpiredSessions(db, user.id), db.insert(sessions).values(session.row)]);
+  try {
+    await db.batch([sweepExpiredSessions(db, user.id), db.insert(sessions).values(session.row)]);
+  } catch (error) {
+    return oauthUnavailable(c, provider, packed.redirect, error);
+  }
   logEvent("auth", "login_ok", { method: "oauth", provider, account });
   c.header("Set-Cookie", sessionCookie(session.token), { append: true });
   return c.redirect(`${appOrigin(c.env)}${packed.redirect}`, 302);
 });
+
+/** A D1 failure while the callback finds the account or records the session: logged as the error
+    handler logs one, and sent back to the app like the callback's other failures. */
+function oauthUnavailable(
+  c: AuthContext,
+  provider: OAuthProvider,
+  redirect: string,
+  error: unknown,
+): Response {
+  logError("auth", "oauth_unavailable", { provider, ...errorFields(error) });
+  return c.redirect(oauthFailureRedirect(c.env, redirect, "unavailable"), 302);
+}
 
 type OAuthRefusal = Extract<OAuthFailure, "no-email" | "email-in-use" | "email-unverified">;
 

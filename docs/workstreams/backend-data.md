@@ -392,6 +392,9 @@ data loss rather than a validation failure.
   account claims it: one batch removes its password, its sessions **and every
   other OAuth identity** (AU4), then links this one, so whoever registered the
   address first keeps no way in. Then session + redirect to `APP_ORIGIN`. A
+  D1 failure in find-or-create or the session insert goes back the same way
+  with `?authError=unavailable` (logged `evt = "auth", kind =
+  "oauth_unavailable"` at error level), never a JSON 500 at the API origin. A
   single user may hold both a password and OAuth identities.
 - **Providers activate by configuration alone** — with secrets absent the
   routes answer `503 {"error":"provider not configured"}`. To activate, register
@@ -1245,7 +1248,8 @@ GET    /auth/oauth/:provider     # google — 302 to provider with a PKCE S256 c
                                  #   until secrets installed
 GET    /auth/oauth/:provider/callback  # state-checked code exchange (PKCE verifier) → session, 302
                                  #   to APP_ORIGIN; failures 302 back with ?authError= state |
-                                 #   exchange | profile | no-email | email-in-use | email-unverified
+                                 #   exchange | profile | no-email | email-in-use | email-unverified |
+                                 #   unavailable (D1 failed)
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
 

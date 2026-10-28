@@ -28,6 +28,7 @@ const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   "no-email": "Google did not share an email address.",
   "email-in-use": "That email already has an account. Sign in with your password.",
   "email-unverified": "Google has not verified that email address.",
+  unavailable: "Sign-in is unavailable right now. Try again later.",
 };
 
 const EMAIL_MISMATCH = "That is not this account's email.";

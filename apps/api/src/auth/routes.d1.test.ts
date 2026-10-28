@@ -944,6 +944,43 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     expect(((await session.json()) as { id: string }).id).toBe(brock);
   });
 
+  it("sends a new user back to the app as unavailable when D1 refuses every write", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await oauthCallback(
+      { sub: "g-9", email: "erika@example.com", email_verified: true },
+      d1().env({ ...GOOGLE, DB: failingD1(d1().db, { sql: /^insert/i }) }),
+    );
+    expect(res.headers.get("Location")).toBe("http://localhost:5175/decks?authError=unavailable");
+    expect(sessionCookieOf(res)).toBeNull();
+    // The state cookie is still single-use.
+    expect(res.headers.getSetCookie()).toEqual([expect.stringMatching(/^oauth_state=;/)]);
+    expect(await userRows()).toEqual([]);
+    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      {
+        evt: "auth",
+        kind: "oauth_unavailable",
+        provider: "google",
+        error: "Error",
+        quota: true,
+      },
+    ]);
+  });
+
+  it("sends a returning user back as unavailable when only the session insert fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await oauthCallback({ sub: "g-9", email: "erika@example.com", email_verified: true });
+    const res = await oauthCallback(
+      { sub: "g-9", email: "erika@example.com", email_verified: true },
+      d1().env({ ...GOOGLE, DB: failingD1(d1().db, { sql: /^insert into "sessions"/i }) }),
+    );
+    expect(authErrorOf(res)).toBe("unavailable");
+    expect(sessionCookieOf(res)).toBeNull();
+    expect(logged("login_ok")).toHaveLength(1);
+    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)).kind)).toEqual([
+      "oauth_unavailable",
+    ]);
+  });
+
   // Linking keeps an unverified account's password and sessions, so whoever registered the
   // address first keeps access to the account its real owner then signs into.
   it("revokes a squatter's password and sessions when a verified email links", async () => {
