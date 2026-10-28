@@ -525,6 +525,25 @@ describe("checkup Knock Outs (§13)", () => {
     expect(done.pending).toEqual([]);
   });
 
+  it("refuses every action after a tie, from either seat", () => {
+    let state = walls(TAILS);
+    state = setConditions(state, "p1", { poisonDamage: 120 });
+    state = setConditions(state, "p2", { poisonDamage: 120 });
+    const { state: done } = mustApply(state, { type: "endTurn", seat: "p1" });
+    for (const seat of ["p1", "p2"] as const) {
+      for (const action of [
+        { type: "endTurn", seat },
+        { type: "concede", seat },
+      ] as const) {
+        const result = applyAction(done, action);
+        expect(result.ok ? "applied" : result.error, `${seat} ${action.type}`).toEqual({
+          code: "GAME_OVER",
+          message: "the game is over (tie)",
+        });
+      }
+    }
+  });
+
   it("double KO, both on their last prize — the tie again, prize-flavored", () => {
     let state = walls(TAILS, { p1: 1, p2: 1 });
     state = setPrizes(setPrizes(state, "p1", 1), "p2", 1);
