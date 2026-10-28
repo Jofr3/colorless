@@ -612,6 +612,14 @@ reads D1 and counts as many migrations as `drizzle/` has files; it reads the
 origin from `.env.production`, and `API_ORIGIN=http://localhost:8787` points it
 at a local `wrangler dev`. All these gates only read production.
 
+**Before releasing, run `bun run e2e`** (`scripts/e2e.ts`; needs `CHROMIUM`, or
+chromium on PATH, and `BALATRO_SOURCE`; about 70 s). It is the one check of the
+real love.js page against a real local API and LobbyDO: boot, a sandbox game, a
+crash and its reload, a stalled boot, and an online match through a rematch. It
+is opt-in, not a `release` step (CI cannot build game.data either), because it
+needs a browser and takes a minute; it touches nothing remote and nothing in the
+dev D1. `--gpu` adds the CRT shader parity check.
+
 **When a release step fails.** Every step is safe to repeat, so `bun run
 release` again is always a valid recovery once the cause is fixed; it records a
 new bookmark each time, and a restore wants the first one of the release (the

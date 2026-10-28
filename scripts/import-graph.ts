@@ -36,6 +36,8 @@ export const RECORDED_CYCLE: readonly string[] = [
 export const ALLOWED_CROSSINGS: readonly string[] = [
   "scripts/lua-constants.ts -> ../src/host/mailboxes",
   "scripts/lua-constants.ts -> ../src/lua/wireFields",
+  "scripts/e2e.ts -> ../src/host/mailboxes",
+  "scripts/e2e.ts -> ../src/lua/wireFields",
 ];
 
 /** The web page's one module script. */

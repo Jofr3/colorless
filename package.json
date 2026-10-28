@@ -16,6 +16,7 @@
     "build": "tsc -b && bun run build:lua && vite build",
     "preview": "vite preview",
     "bench:boot": "bun scripts/bench-boot.ts",
+    "e2e": "bun scripts/e2e.ts",
     "typecheck": "tsc -b",
     "lint": "biome lint .",
     "lint:coverage": "bun scripts/lint-coverage.ts",
