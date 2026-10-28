@@ -16,7 +16,11 @@ import { guardUnsavedEdits } from "../host/unsavedEdits";
 const host = window.colorlessHost;
 
 const shell = new HostShell(document, host, {
-  command: (screen, raw) => void screens[screen].command(raw),
+  // A command that rejects is reported here; HostShell reports one that throws.
+  command: (screen, raw) =>
+    void Promise.resolve(screens[screen].command(raw)).catch((error: unknown) =>
+      reportError(`run a ${screen} command`, error),
+    ),
   navigate: (page) => router.navigate(page),
   // Credentials stay in the native browser inputs and the API client. Lua receives only the
   // email, the name and a masked password.
