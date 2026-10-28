@@ -49,7 +49,8 @@ main {
 .failed #loading-progress {
   display: none;
 }
-.failed #status {
+.failed #status,
+.stalled #status {
   position: static;
   width: auto;
   height: auto;
@@ -70,6 +71,7 @@ main {
   white-space: nowrap;
 }
 .failed .accessible-menu,
+.stalled .accessible-menu,
 .accessible-menu:focus-within {
   clip: auto;
   width: auto;

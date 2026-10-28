@@ -19,9 +19,25 @@ const loadingFill = element("loading-fill");
 let loadingValue = 0;
 /** @param {number} value */
 function updateLoadingProgress(value) {
-  loadingValue = Math.max(loadingValue, Math.min(100, value));
+  const next = Math.max(loadingValue, Math.min(100, value));
+  if (next > loadingValue) watchBoot();
+  loadingValue = next;
   loadingFill.style.width = `${loadingValue}%`;
   loadingProgress.setAttribute("aria-valuenow", String(Math.round(loadingValue)));
+}
+// Nothing times out a download that stops moving, so after a while without progress the page
+// says so and shows the menu links, and keeps waiting: any progress takes the note down again.
+const BOOT_STALL_MS = 45000;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let bootStallTimer;
+function watchBoot() {
+  clearTimeout(bootStallTimer);
+  document.body.classList.remove("stalled");
+  if (ready || document.body.classList.contains("failed")) return;
+  bootStallTimer = setTimeout(() => {
+    document.body.classList.add("stalled");
+    statusElement.textContent = "Still loading… Reload to try again, or use the menu links.";
+  }, BOOT_STALL_MS);
 }
 // Preserve browser reload shortcuts before SDL can consume their key events.
 for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
@@ -103,6 +119,8 @@ const BOOT_FAILED = "The menu could not start. Reload to try again, or use the m
 const CRASHED = "Something went wrong. Reload to continue; a game in progress is saved.";
 /** @param {string} message */
 function fail(message) {
+  clearTimeout(bootStallTimer);
+  document.body.classList.remove("stalled");
   document.body.classList.add("failed");
   loading.style.display = "flex";
   statusElement.textContent = message;
@@ -144,8 +162,9 @@ const loveModule = {
     }
     if (message === "COLORLESS:ready") {
       markBoot("ready");
-      updateLoadingProgress(100);
       ready = true;
+      watchBoot();
+      updateLoadingProgress(100);
       loading.style.display = "none";
       void loadMusic();
     } else if (message.startsWith("COLORLESS:transition-art:")) {
@@ -161,7 +180,6 @@ const loveModule = {
   },
   setStatus: (message) => {
     if (ready || document.body.classList.contains("failed")) return;
-    if (message) statusElement.textContent = message;
     // love.js reports downloaded bytes as "Downloading data... (loaded/total)".
     // Reserve the final 10% for runtime startup; only Lua's ready signal completes it.
     const download = message?.match(/\(([\d.]+)\/(\d+)\)/);
@@ -169,12 +187,15 @@ const loveModule = {
       updateLoadingProgress(90 * Math.min(1, Number(download[1]) / Number(download[2])));
       if (Number(download[1]) >= Number(download[2])) markBoot("data-loaded");
     }
+    if (message && !document.body.classList.contains("stalled"))
+      statusElement.textContent = message;
   },
   onAbort: () => {
     fail(ready ? CRASHED : BOOT_FAILED);
   },
 };
 globalThis.Module = loveModule;
+watchBoot();
 // Download and compile the runtime while the page's scripts load. love.js would start only once
 // Love() runs on window load, and a <link rel=preload> would hold that load event back and give
 // up the streaming compile.
