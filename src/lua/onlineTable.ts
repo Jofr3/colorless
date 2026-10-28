@@ -323,6 +323,8 @@ export class LuaOnlineMatch implements TableSource {
       if (actionError) {
         if (this.auto) this.muted = actionError;
         else this.pending = false;
+        // A refused rematch (a signed-out seat) is not waiting on the other player any more.
+        if (this.seen?.outcome && this.sentRematch === this.matchId()) this.sentRematch = "";
       }
       shown = true;
     }

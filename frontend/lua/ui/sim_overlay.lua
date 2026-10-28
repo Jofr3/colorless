@@ -557,6 +557,10 @@ function Overlay:draw(shaders)
       Dyna.static(r.label,0.34,bx+16,ry,bw/2,24,T.jokerGrey,{align='left',roomWidth=rw})
       Dyna.static(r.value,0.4,bx+bw/2,ry-2,bw/2-16,28,r.colour or T.white,{align='right',roomWidth=rw,fit=true})
     end
+    -- A refused rematch says why above the buttons, where the table's banner notice would be hidden.
+    if sim.mode=='online' and (sim.message or '')~='' then
+      Dyna.static(sim.message,0.3,x+24,y+h-150-34,w-48,26,T.red,{roomWidth=rw,fit=true})
+    end
   end
   -- delete_profile's warning_text: hidden until the first press.
   if self.armed and self.warningY then Dyna.static('Press again to confirm',0.4,x+24,self.warningY,w-48,42,T.white,{roomWidth=rw}) end

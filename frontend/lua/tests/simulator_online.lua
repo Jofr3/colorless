@@ -32,10 +32,10 @@ local base={
   row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'','','','Water','false',0),
 }
 local revision=0
--- opts: phase, outcome, seat, match, supporter, L (a row) or noL, actions.
+-- opts: phase, outcome, message, seat, match, supporter, L (a row) or noL, actions.
 local function snapshot(opts)
   opts=opts or {};revision=revision+1
-  local out={row(revision,'ready','Ash','Misty',3,opts.phase or 'turn:action','','Your turn','',0,0,'you','you',opts.seat or 'p1',
+  local out={row(revision,'ready','Ash','Misty',3,opts.phase or 'turn:action',opts.message or '','Your turn','',0,0,'you','you',opts.seat or 'p1',
     0,opts.supporter and 1 or 0,0,opts.outcome or '',opts.outcome and 'All prize cards taken.' or '','',opts.match or 'ABCD:1')}
   if not opts.noL then out[#out+1]=opts.L or row('L','online','false','','','concede,leave','partial') end
   for _,r in ipairs(base) do out[#out+1]=r end
@@ -126,6 +126,12 @@ assert(sim.overlay.controls[rematch].label=='Waiting...')
 sim.rematchSent=nil
 snapshot({phase='gameOver',outcome='loss',L=row('L','online','false','','','rematch,rematch-sent,leave','partial')})
 assert(sim.overlay.controls[rematch].disabled,'rematch-sent alone disables it')
+-- A refused rematch (a signed-out seat) comes back as a message without the flag.
+sim.rematchSent=true
+snapshot({phase='gameOver',outcome='loss',message="You're signed out. Sign in again to play another game.",L=row('L','online','false','','','rematch,leave','partial')})
+assert(not sim:rematchPending(),'A refused rematch can be pressed again')
+assert(sim.overlay.controls[rematch].label=='Rematch' and not sim.overlay.controls[rematch].disabled,'Rematch is live after a refusal')
+draw(2)
 sim.rematchSent=true
 snapshot({match='ABCD:2'})
 assert(not sim.rematchSent and not sim:rematchPending(),'A new matchId resets the rematch')

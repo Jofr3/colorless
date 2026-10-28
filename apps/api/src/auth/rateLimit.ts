@@ -25,7 +25,7 @@
 // still signs in: the cap cannot lock the owner out, and 429 says nothing 401 did not (both mean
 // "not this password", and an unknown email counts the same way). It does not slow a guesser
 // spread over many addresses, whom the per-address budgets bound; it gives the owner's account a
-// visible `rate_limited by: "email"` line and tells well-behaved clients to back off. A failure
+// `login_failed` line marked `capped: true` and tells well-behaved clients to back off. A failure
 // past the cap writes nothing.
 //
 // Keys are SHA-256 hashes: the table never holds an IP or an email. The daily sweep

@@ -486,6 +486,24 @@ describe("LuaOnlineMatch", () => {
     expect(t.tagged("L")[0]?.[5]).toBe("concede,leave");
   });
 
+  it("a refused rematch says why and lets Rematch be pressed again", async () => {
+    const t = await table();
+    t.push(
+      frame(t.state, (v) => {
+        v.phase = { kind: "gameOver" };
+        v.outcome = { result: "win", winner: "you", reason: "conceded" };
+      }),
+    );
+    t.sim.command("rematch");
+    expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    const reason = "You're signed out. Sign in again to play another game.";
+    t.fake().push({ kind: "reject-action", reason });
+    expect(t.tagged("L")[0]?.[5]).toBe("rematch,leave");
+    expect(t.rows()[0]?.[6]).toBe(reason);
+    t.sim.command("rematch");
+    expect(t.fake().posts.filter((p) => p.kind === "rematch")).toHaveLength(2);
+  });
+
   it("an opponent's rematch is accepted by readying, and their leaving ends the wait", async () => {
     const t = await table();
     t.push(
