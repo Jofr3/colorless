@@ -173,7 +173,7 @@ export function savedDeckReasons(
 ): string[] {
   const entries: DeckRuleEntry[] = [];
   for (const { cardId, count } of cards) {
-    const card = pool[cardId];
+    const card = Object.hasOwn(pool, cardId) ? pool[cardId] : undefined;
     if (card === undefined) return ["The deck has a card that's no longer in the catalog."];
     entries.push({ card, count });
   }
