@@ -32,6 +32,6 @@
     "@tcgdex/sdk": "2.9.0",
     "drizzle-kit": "^0.31.10",
     "miniflare": "4.20260708.0",
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.152.0"
   }
 }
