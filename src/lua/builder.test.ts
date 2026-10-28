@@ -108,6 +108,39 @@ async function setup(images = vi.fn()) {
   await b.command("open\tone");
   return { b, publish, back };
 }
+/** A PATCH /decks/:id stand-in that holds `deck` and refuses a stale version with the route's 409.
+    `offline` fails every save before it arrives; `loseNext` commits the next one and loses its
+    response. */
+function versionedServer() {
+  const stored: Deck = {
+    ...deck(),
+    tint: 1,
+    folderId: null,
+    position: 0,
+    updated: "2026-10-28T00:00:00.000Z",
+    version: 1,
+  };
+  const server = { deck: stored, offline: false, loseNext: false };
+  vi.mocked(api.getDeck).mockResolvedValue(stored);
+  vi.mocked(api.patchDeck).mockImplementation(async (_id, body) => {
+    if (server.offline) throw new TypeError("Failed to fetch");
+    if (body.version !== server.deck.version) {
+      throw new api.ApiError(409, { error: "deck changed since this version", deck: server.deck });
+    }
+    server.deck = {
+      ...server.deck,
+      cards: body.cards ?? server.deck.cards,
+      chosenCoverCardId: body.chosenCoverCardId ?? null,
+      version: (server.deck.version ?? 0) + 1,
+    };
+    if (server.loseNext) {
+      server.loseNext = false;
+      throw new TypeError("Failed to fetch");
+    }
+    return server.deck;
+  });
+  return server;
+}
 describe("Lua deck builder", () => {
   it("loads only the visible deck previews without saving and releases them in list view", async () => {
     const images = vi.fn();
@@ -327,6 +360,63 @@ describe("Lua deck builder", () => {
     expect(api.getDeck).toHaveBeenCalledTimes(2);
     expect([...b.entries]).toEqual([["b", 1]]);
     expect(b.message).toBe("Deck changed elsewhere; reloaded the latest.");
+  });
+  it("takes a 409 carrying a save whose response was lost as that save, across offline edits", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    expect(server.deck.cards).toEqual([{ cardId: "a", count: 1 }]);
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    server.offline = true;
+    await b.command("add\tb");
+    await tick();
+    await b.command("add\tb");
+    await tick();
+    server.offline = false;
+    await b.command("add\ta");
+    await tick();
+    const kept = [
+      { cardId: "a", count: 2 },
+      { cardId: "b", count: 2 },
+    ];
+    expect(server.deck.cards).toEqual(kept);
+    expect(b.snapshot().cards).toEqual(kept);
+    expect(b.message).toBe("");
+    expect(b.saveStatus).toBe("saved");
+    expect(api.getDeck).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(api.patchDeck).mock.calls.map(([, body]) => body.version)).toEqual([
+      1, 1, 1, 1, 2,
+    ]);
+  });
+  it("sends an undo made after a save whose response was lost, and counts it unsaved until then", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await tick();
+    await b.command("remove\ta");
+    expect(b.saveStatus).toBe("pending");
+    await b.command("leave");
+    expect(back).not.toHaveBeenCalled();
+    await tick();
+    expect(server.deck.cards).toEqual([]);
+    expect(server.deck.version).toBe(3);
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+  it("still reloads on a 409 carrying a deck this tab never sent, after a lost response", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    server.deck = { ...server.deck, cards: [{ cardId: "b", count: 2 }], version: 3 };
+    await b.command("add\tb");
+    await tick();
+    expect([...b.entries]).toEqual([["b", 2]]);
+    expect(b.message).toBe("Deck changed elsewhere; reloaded the latest.");
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
   });
   it("clears private state and prevents queued writes when the session changes", async () => {
     const { b } = await setup();

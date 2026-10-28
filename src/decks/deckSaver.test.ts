@@ -3,6 +3,7 @@ import { ApiError } from "../lib/api";
 import {
   createDeckSaver,
   MAX_RATE_LIMIT_RETRIES,
+  outcomeUnknown,
   rateLimitRetryDelay,
   type SaveStatus,
 } from "./deckSaver";
@@ -195,6 +196,53 @@ describe("createDeckSaver", () => {
 
     expect(save).not.toHaveBeenCalled();
     expect(recorder.statuses).toEqual([]);
+  });
+
+});
+
+describe("a save whose outcome is unknown", () => {
+  it.each([
+    ["the network failed", new TypeError("Failed to fetch")],
+    ["a gateway answered 502", new ApiError(502, undefined)],
+  ])("still sends an undo back to the saved state when %s", async (_, error) => {
+    const sent: Snap[] = [];
+    let fail = true;
+    const save = vi.fn(async (snapshot: Snap) => {
+      sent.push(snapshot);
+      if (fail) {
+        fail = false;
+        throw error;
+      }
+    });
+    const saver = createDeckSaver<Snap>({ save, delay: 600, initial: { v: 1 } });
+
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(10_000);
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(sent).toEqual([{ v: 2 }, { v: 1 }]);
+  });
+
+  it("is told apart from a refusal, after which a revert has nothing to send", async () => {
+    const save = vi
+      .fn<(snapshot: Snap) => Promise<void>>()
+      .mockRejectedValueOnce(new ApiError(400, { error: "invalid deck" }));
+    const saver = createDeckSaver<Snap>({ save, delay: 600, initial: { v: 1 } });
+
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 1 });
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(outcomeUnknown(new TypeError("Failed to fetch"))).toBe(true);
+    expect(outcomeUnknown(new ApiError(504, undefined))).toBe(true);
+    expect(outcomeUnknown(new ApiError(409, undefined))).toBe(false);
+    expect(outcomeUnknown(new ApiError(429, undefined))).toBe(false);
   });
 });
 

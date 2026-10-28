@@ -24,6 +24,15 @@ export function rateLimitRetryDelay(error: unknown, attempt: number): number | u
   return Math.min(MAX_RETRY_SECONDS, Math.max(MIN_RETRY_SECONDS, seconds)) * 1000;
 }
 
+/**
+ * Whether a rejected save may still have been written: no response arrived (the network failed or
+ * the request timed out), or a 5xx, which a gateway can send after the Worker committed. A 4xx is
+ * the API refusing the save before any write.
+ */
+export function outcomeUnknown(error: unknown): boolean {
+  return !(error instanceof ApiError) || error.status >= 500;
+}
+
 export interface DeckSaverOptions<T> {
   /** Perform the save (the PATCH). Rejections surface as status "failed". */
   save: (snapshot: T) => Promise<unknown>;
@@ -61,7 +70,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
   const serialize = options.serialize ?? ((snapshot: T) => JSON.stringify(snapshot));
   const retryDelay = options.retryDelay ?? rateLimitRetryDelay;
 
-  /** Serialization of the last state the server acknowledged. */
+  /** Serialization of the last state the server acknowledged, or undefined when unknown. */
   let savedKey = options.initial === undefined ? undefined : serialize(options.initial);
   let pending: { snapshot: T; key: string } | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -112,6 +121,9 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
       },
       (error: unknown) => {
         inFlight = false;
+        // The server may hold this snapshot now, so no later one counts as already saved: an undo
+        // back to the acknowledged state must still be sent.
+        if (outcomeUnknown(error)) savedKey = undefined;
         if (disposed) {
           // No callbacks and no restore-and-retry of the failed snapshot —
           // but a NEWER snapshot queued behind the flight still fires once

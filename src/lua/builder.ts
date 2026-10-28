@@ -33,8 +33,8 @@ import {
   illegalCardNames,
   type Deck,
 } from "../decks/deckMath";
-import { createDeckSaver, type DeckSaver } from "../decks/deckSaver";
-import { toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
+import { createDeckSaver, type DeckSaver, outcomeUnknown } from "../decks/deckSaver";
+import { savedSnapshot, toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
@@ -481,26 +481,46 @@ export class LuaBuilder {
       this.selected = "";
       this.details = "";
       this.saver?.dispose();
-      const initial = this.snapshot();
+      const initial = savedSnapshot(data);
       this.acknowledged = JSON.stringify(initial);
       this.dirty = false;
       this.saveStatus = "";
       // Saves are serialized, so each one is made from the version the previous one left.
       let version = data.version;
+      // The saves since the last acknowledged one that got no answer: the server may hold any of them.
+      const unconfirmed = new Set<string>();
+      const patch = (snapshot: DeckSnapshot) =>
+        api.patchDeck(id, { ...snapshot, name: snapshot.name || undefined, version });
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
           if (!live() || !this.user) throw new Error("Session changed");
+          const key = JSON.stringify(snapshot);
           try {
-            const result = await api.patchDeck(id, {
-              ...snapshot,
-              name: snapshot.name || undefined,
-              version,
-            });
+            let result: SavedDeck;
+            try {
+              result = await patch(snapshot);
+            } catch (error) {
+              // A 409 carrying one of this tab's unanswered saves is that save landing, not
+              // another device: take its version and send the current edits on top of it.
+              const latest = conflictingDeck(error);
+              const landed = latest ? JSON.stringify(savedSnapshot(latest)) : "";
+              if (!latest || !unconfirmed.has(landed) || !live()) throw error;
+              version = latest.version;
+              unconfirmed.clear();
+              this.acknowledged = landed;
+              result = await patch(snapshot);
+            }
             version = result.version;
-            if (live()) this.acknowledged = JSON.stringify(snapshot);
+            unconfirmed.clear();
+            if (live()) this.acknowledged = key;
             return result;
           } catch (error) {
+            // The server may or may not hold this snapshot, so every state counts as unsaved.
+            if (outcomeUnknown(error)) {
+              unconfirmed.add(key);
+              if (live()) this.acknowledged = "";
+            }
             // Another tab or device saved first. Its copy wins and this one's unsaved edits go
             // (the user's call, over offering to overwrite). The reload starts a new epoch, which
             // silences this saver's status callback and any save queued behind this one.
