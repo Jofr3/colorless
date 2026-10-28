@@ -137,6 +137,29 @@ describe("createLobbyChannel", () => {
     channel.close();
   });
 
+  it("leads every reopened socket with the newest hello, though none was posted while down", () => {
+    const channel = createLobbyChannel("ABCD");
+    const first = FakeWebSocket.last();
+    first.open();
+    channel.post(HELLO);
+    channel.post({ ...HELLO, name: "Ana B" });
+    first.drop();
+    const intent: LobbyMessage = {
+      kind: "intent",
+      from: "p1",
+      intent: { type: "set-ready", ready: true },
+    };
+    channel.post(intent);
+    vi.advanceTimersByTime(reconnectDelayMs(0));
+    const second = FakeWebSocket.last();
+    second.open();
+    expect(second.sent.map((raw) => JSON.parse(raw) as LobbyMessage)).toEqual([
+      { ...HELLO, name: "Ana B" },
+      intent,
+    ]);
+    channel.close();
+  });
+
   it("holds one hello while down, the newest, ahead of the frames posted after the first", () => {
     const channel = createLobbyChannel("ABCD");
     const ws = FakeWebSocket.last();

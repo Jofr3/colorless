@@ -74,6 +74,10 @@ export function createLobbyChannel(
   let attempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
+  // The newest hello posted. A reopened socket is attached to no seat until it says hello, and the
+  // client only re-announces after PRESENCE_TIMEOUT_MS of silence, which the server's pongs to the
+  // new socket never let happen: so every reopen leads with it.
+  let lastHello: string | null = null;
 
   const dispatch = (message: LobbyMessage) => {
     // Snapshot the set so a handler that unsubscribes mid-dispatch can't mutate
@@ -103,6 +107,7 @@ export function createLobbyChannel(
       }
       open = true;
       attempt = 0;
+      if (lastHello !== null && !queue.some((q) => q.kind === "hello")) ws.send(lastHello);
       while (queue.length > 0) {
         const pending = queue.shift();
         if (pending !== undefined) ws.send(pending.encoded);
@@ -168,6 +173,7 @@ export function createLobbyChannel(
     post: (message) => {
       if (closed) return;
       const encoded = JSON.stringify(message);
+      if (message.kind === "hello") lastHello = encoded;
       if (open && socket !== null) {
         socket.send(encoded);
       } else {
