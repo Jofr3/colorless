@@ -82,6 +82,18 @@ afterEach(() => {
 });
 
 describe("HostShell", () => {
+  it("routes Lua's prints to the screens and the router", () => {
+    const { shell, ports } = fakePage();
+    shell.onPrint(print("simulator", "open"));
+    shell.onPrint(print("library", "rename", "d1"));
+    shell.onPrint(print("page", "decks"));
+    shell.onPrint("COLORLESS:builder:unencoded byte");
+    expect(ports.command).toHaveBeenCalledWith("simulator", encodeFields(["open"]));
+    expect(ports.command).toHaveBeenCalledWith("library", encodeFields(["rename", "d1"]));
+    expect(ports.navigate).toHaveBeenCalledWith("decks");
+    expect(ports.command).toHaveBeenCalledTimes(2);
+  });
+
   it("reports a command that throws instead of throwing into love.js, and runs the next", () => {
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     const { shell, ports } = fakePage();
@@ -102,5 +114,31 @@ describe("HostShell", () => {
     expect(note.split("\t")[1]).toBe(
       "Copy failed. Select the decklist and use your copy shortcut.",
     );
+  });
+
+  it("empties the auth form for another account, a deletion's email, and on close", () => {
+    const { shell, labelled } = fakePage();
+    const email = labelled("Email");
+    const password = labelled("Password");
+    if (!email || !password) throw new Error("The auth form has no inputs");
+    const account = (user: string) =>
+      encodeFields([1, user ? "authenticated" : "anonymous", 0, "", user]);
+
+    shell.onPrint(print("auth", "open", "login"));
+    email.value = "ash@example.com";
+    password.value = "pikachu123";
+    shell.accountChanged(account("u1"));
+    expect([email.value, password.value]).toEqual(["", ""]);
+
+    email.value = "ash@example.com";
+    password.value = "pikachu123";
+    shell.accountChanged(account("u1"));
+    expect([email.value, password.value]).toEqual(["ash@example.com", "pikachu123"]);
+    shell.onPrint(print("auth", "open", "delete"));
+    expect([email.value, password.value]).toEqual(["", ""]);
+
+    email.value = "ash@example.com";
+    shell.onPrint(print("auth", "close"));
+    expect(email.value).toBe("");
   });
 });

@@ -11,6 +11,7 @@ import type { ArtRequest } from "../host/bridgeProtocol";
 import { MAILBOXES } from "../host/mailboxes";
 import { type Route, Router, pageLabel, pageTitle } from "../host/router";
 import { type BridgeScreen, HostShell } from "../host/shell";
+import { reloadUnlessRecent } from "../host/reloadThrottle";
 import { guardUnsavedEdits } from "../host/unsavedEdits";
 
 const host = window.colorlessHost;
@@ -104,14 +105,10 @@ setSessionRecoveryHandler(async () => {
  * onto the new build, at most once a minute so a broken build cannot loop. */
 function screenLoadFailed(error: unknown) {
   reportError("load a screen", error);
-  const key = "colorless:screen-reload";
-  try {
-    if (Date.now() - Number(sessionStorage.getItem(key)) < 60_000) return;
-    sessionStorage.setItem(key, String(Date.now()));
-  } catch {
-    return;
-  }
-  location.reload();
+  reloadUnlessRecent(
+    () => sessionStorage,
+    () => location.reload(),
+  );
 }
 
 function showPage(route: Route) {
