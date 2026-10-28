@@ -1,6 +1,9 @@
 // The ingest CLI's run decisions (apps/api/scripts/ingest.ts), kept here so they are unit-tested:
 // bounded fetching, counting the rows remote applies wrote, whether to stamp a new catalog epoch,
-// and the exit status. Not re-exported from ./index.ts: the Worker never runs an ingest.
+// the legality guard, and the exit status. Not re-exported from ./index.ts: the Worker never runs
+// an ingest.
+
+import type { TcgdexCard } from "@colorless/schema";
 
 /** Runs `task` over `items` with at most `limit` running at once; results keep input order. The
     first failure rejects the whole run and stops the other workers from claiming more items. */
@@ -73,6 +76,22 @@ export function createRowsTally(remote: boolean): RowsTally {
     KV writes refilling them would spend. An unknown count stamps; a dry run reports the stamp. */
 export function shouldStampEpoch(rowsWritten: number | null, dryRun: boolean): boolean {
   return dryRun || rowsWritten !== 0;
+}
+
+/**
+ * The cards tcgdex now sends without `legal` whose stored row is legal in some format. An absent
+ * `legal` maps to legal nowhere, so upstream dropping the field would quietly rewrite legality for
+ * the whole catalog. A card never stored passes, so a set published before its legality still
+ * ingests. `storedLegal` is asked only about the cards that lack `legal`, which is normally none.
+ */
+export function legalityDrift(
+  cards: readonly TcgdexCard[],
+  storedLegal: (ids: readonly string[]) => ReadonlySet<string>,
+): string[] {
+  const unlegaled = cards.filter((card) => card.legal === undefined).map((card) => card.id);
+  if (unlegaled.length === 0) return [];
+  const legal = storedLegal(unlegaled);
+  return unlegaled.filter((id) => legal.has(id));
 }
 
 export interface RunSummary {

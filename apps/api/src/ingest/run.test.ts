@@ -1,7 +1,10 @@
+import { type TcgdexCard, tcgdexCardSchema } from "@colorless/schema";
+import cardPokemon from "@colorless/schema/tcgdex-fixtures/card-pokemon-swsh3-136.json";
 import { describe, expect, it } from "vitest";
 import {
   createRowsTally,
   exitCode,
+  legalityDrift,
   mapBounded,
   rerunCommand,
   rowsWrittenOf,
@@ -155,6 +158,41 @@ describe("rerunCommand", () => {
     );
     expect(rerunCommand(["me01"], { remote: false, transport: "sdk" })).toBe(
       "bun scripts/ingest.ts --sets me01 --transport sdk",
+    );
+  });
+});
+
+describe("legalityDrift", () => {
+  const card = (id: string, withLegal: boolean): TcgdexCard => {
+    const parsed = tcgdexCardSchema.parse({ ...cardPokemon, id });
+    if (withLegal) return parsed;
+    const { legal: _dropped, ...rest } = parsed;
+    return rest as TcgdexCard;
+  };
+
+  it("asks nothing when every card still carries legal", () => {
+    const asked: string[][] = [];
+    const drift = legalityDrift([card("a", true), card("b", true)], (ids) => {
+      asked.push([...ids]);
+      return new Set(ids);
+    });
+    expect(drift).toEqual([]);
+    expect(asked).toEqual([]);
+  });
+
+  it("names the cards that lost legal while stored as legal", () => {
+    const asked: string[][] = [];
+    const drift = legalityDrift([card("a", true), card("b", false), card("c", false)], (ids) => {
+      asked.push([...ids]);
+      return new Set(["b"]);
+    });
+    expect(asked).toEqual([["b", "c"]]);
+    expect(drift).toEqual(["b"]);
+  });
+
+  it("lets a new set without legality through", () => {
+    expect(legalityDrift([card("new-1", false), card("new-2", false)], () => new Set())).toEqual(
+      [],
     );
   });
 });

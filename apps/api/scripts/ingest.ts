@@ -21,6 +21,7 @@ import type { z } from "zod";
 import { CATALOG_EPOCH_KEY } from "../src/catalog/epoch";
 import {
   cardsUpsertStatements,
+  escapeSqlText,
   mapCard,
   mapSerie,
   mapSet,
@@ -33,13 +34,14 @@ import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache
 import {
   createRowsTally,
   exitCode,
+  legalityDrift,
   mapBounded,
   rerunCommand,
   shouldStampEpoch,
 } from "../src/ingest/run";
 import { createSource, parseTransport } from "../src/ingest/source";
 import { sqlFilePath } from "../src/ingest/sqlFile";
-import { API_ROOT, DATABASE, recordBookmark, WRANGLER_TIMEOUT_MS } from "./d1";
+import { API_ROOT, DATABASE, d1Query, recordBookmark, WRANGLER_TIMEOUT_MS } from "./d1";
 
 const DELAY_MS = 50;
 /** Card requests in flight at once; their starts still keep DELAY_MS apart. */
@@ -58,6 +60,7 @@ const { values: args } = parseArgs({
     "dry-run": { type: "boolean", default: false },
     transport: { type: "string" },
     refresh: { type: "boolean", default: false },
+    "allow-legality-change": { type: "boolean", default: false },
   },
   strict: true,
 });
@@ -84,6 +87,7 @@ if (badId !== undefined) {
   process.exit(1);
 }
 const dryRun = args["dry-run"] ?? false;
+const allowLegalityChange = args["allow-legality-change"] ?? false;
 const d1Target = args.remote ? "--remote" : "--local";
 const refresh = args.refresh ?? false;
 
@@ -139,6 +143,15 @@ async function fetchSet(setId: string): Promise<TcgdexSet> {
     );
   }
   return result.data;
+}
+
+/** Which of `ids` the target database stores as legal in some format (a read, even on --remote). */
+function storedLegalIds(ids: readonly string[]): Set<string> {
+  const rows = d1Query(
+    d1Target,
+    `SELECT id FROM cards WHERE (legal_standard = 1 OR legal_expanded = 1) AND id IN (${ids.map(escapeSqlText).join(", ")})`,
+  );
+  return new Set((rows[0] ?? []).map((row) => String(row.id)));
 }
 
 // --- SQL files + application --------------------------------------------------
@@ -293,6 +306,27 @@ for (const setId of setIds) {
       if (failures.length > MAX_FAILURES_PRINTED) {
         console.error(`    … and ${failures.length - MAX_FAILURES_PRINTED} more`);
       }
+      outcomes.push({
+        setId,
+        cards: 0,
+        chunks: 0,
+        status: "failed",
+        seconds: (Date.now() - setStartedAt) / 1000,
+      });
+      continue;
+    }
+
+    const drift = allowLegalityChange ? [] : legalityDrift(cardPayloads, storedLegalIds);
+    if (drift.length > 0) {
+      console.error(
+        `  ${drift.length} card(s) came without \`legal\` but are stored as legal — aborting this set,`,
+      );
+      console.error(
+        "  since an absent field marks a card legal nowhere (pass --allow-legality-change if tcgdex",
+      );
+      console.error(
+        `  really dropped their legality): ${drift.slice(0, MAX_FAILURES_PRINTED).join(", ")}`,
+      );
       outcomes.push({
         setId,
         cards: 0,

@@ -119,7 +119,7 @@ colorless/
 
 **Card data** is ingested by a local Bun script — `apps/api/scripts/ingest.ts`
 (`bun scripts/ingest.ts [--serie sv | --sets sv01,sv02] [--remote] [--dry-run]
-[--refresh] [--transport=fetch|sdk]`, run from `apps/api/`) — not by the request Worker:
+[--refresh] [--transport=fetch|sdk] [--allow-legality-change]`, run from `apps/api/`) — not by the request Worker:
 
 1. Traverse serie → sets → each card's full detail from the tcgdex REST API
    (four requests in flight, starts ~50ms apart), validating every payload with
@@ -132,7 +132,9 @@ colorless/
    `apps/api/.wrangler/tcgdex-cache/` and revalidated when read back, so a
    rerun (the remote ingest after a local one) does not refetch; `--refresh`
    ignores the cache.
-2. Map onto the §5.3 rows (missing `legal` → false/false; category-specific
+2. Map onto the §5.3 rows (missing `legal` → false/false, so a set in which
+   a card stored as legal comes without `legal` is aborted, unless
+   `--allow-legality-change`: that is upstream drift, not a rotation; category-specific
    fields NULL elsewhere; `*_url` columns keep the tcgdex **origin** base
    URLs, only when https on `assets.tcgdex.net`, else NULL) and generate batched upsert SQL — `INSERT … ON CONFLICT(id) DO
    UPDATE … WHERE <a column changed>`, ≤100 cards per statement
