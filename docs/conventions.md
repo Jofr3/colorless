@@ -444,6 +444,9 @@ the previous Worker keeps serving while `release` migrates. Two rules follow.
   freely; drop or rename a column only one release after the code stopped reading
   it. `release` migrates before it deploys, and the API `deploy` refuses to run
   while a migration is unapplied remotely (`apps/api/scripts/release-gate.ts`).
+  `scripts/migration-guard.ts` fails on `DROP COLUMN` or a `RENAME` in a file
+  not listed in its `CONTRACTS_REVIEWED`, with the commit since which no code
+  reads the old name.
 - **Never let drizzle-kit rebuild a table that has children.** For a CHECK, an FK
   action, NOT NULL or a type change, drizzle-kit writes `PRAGMA foreign_keys=OFF;
   CREATE __new_t; INSERT … SELECT; DROP TABLE t; RENAME`. Inside D1's transaction

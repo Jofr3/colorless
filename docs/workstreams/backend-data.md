@@ -630,8 +630,8 @@ run release`. A secret put applies to the running Worker at once and the old cod
 ignores both, so the order is safe; the gate refuses the release until both exist.
 Nobody is logged out: existing hashes are re-peppered at each account's next
 sign-in. Google sign-ins in flight at the deploy fail once (PKCE changed the state
-cookie). `check:static` adds `migration-guard.ts` (no unreviewed table
-rebuilds) and `drizzle-drift.ts` (schema.ts matches the migrations); see
+cookie). `check:static` adds `migration-guard.ts` (no unreviewed table rebuild,
+drop or rename) and `drizzle-drift.ts` (schema.ts matches the migrations); see
 docs/conventions.md "Database migrations".
 
 The daily sweep's Cron Trigger and the lobby's rate-limit bindings live in
