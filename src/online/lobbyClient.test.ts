@@ -9,8 +9,8 @@ import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyC
 import {
   countdownSeconds,
   LobbyClient,
-  NOT_FOUND_MS,
   PRESENCE_TIMEOUT_MS,
+  UNREACHABLE_MS,
   versusStatus,
 } from "./lobbyClient";
 
@@ -67,22 +67,40 @@ describe("LobbyClient", () => {
     expect(client.opponent?.id).toBe(testSeatId("h"));
   });
 
-  it("re-sends hello until seated, then reports not-found after 4 s of silence", () => {
+  it("stays connecting through a silence, re-sending hello, then reports unreachable after 20 s", () => {
     const { client, kinds } = make("guest");
-    vi.advanceTimersByTime(NOT_FOUND_MS);
-    expect(kinds().filter((k) => k === "hello").length).toBeGreaterThan(3);
+    // A slow first socket is silence, not "not found": that takes the server's word.
+    vi.advanceTimersByTime(UNREACHABLE_MS);
+    expect(kinds().filter((k) => k === "hello").length).toBeGreaterThan(20);
     expect(client.state.status).toBe("connecting");
     vi.advanceTimersByTime(700);
-    expect(client.state.status).toBe("not-found");
+    expect(client.state.status).toBe("unreachable");
     const sent = kinds().length;
     vi.advanceTimersByTime(5000);
     expect(kinds().length).toBe(sent);
   });
 
-  it("a server that answers only after not-found takes the client back, its poll running again", () => {
-    const { client, push, posts } = make("guest");
-    vi.advanceTimersByTime(NOT_FOUND_MS + 700);
+  it("reports not-found at once when the server says the code names no lobby", () => {
+    const { client, kinds } = make("guest");
+    vi.advanceTimersByTime(700);
+    client.lobbyClosed();
     expect(client.state.status).toBe("not-found");
+    const sent = kinds().length;
+    vi.advanceTimersByTime(UNREACHABLE_MS);
+    expect(kinds().length).toBe(sent);
+    expect(client.state.status).toBe("not-found");
+  });
+
+  it("a host whose first socket never answers reports unreachable, not its seeded lobby", () => {
+    const { client } = make("host");
+    vi.advanceTimersByTime(UNREACHABLE_MS + 700);
+    expect(client.state.status).toBe("unreachable");
+  });
+
+  it("a server that answers only after the unreachable window takes the client back, its poll running again", () => {
+    const { client, push, posts } = make("guest");
+    vi.advanceTimersByTime(UNREACHABLE_MS + 700);
+    expect(client.state.status).toBe("unreachable");
     // A slow cold start: the lobby's first state lands after the window.
     push({ kind: "state", snapshot: snap() });
     expect(client.state.status).toBe("connected");
@@ -95,9 +113,9 @@ describe("LobbyClient", () => {
     expect(client.state.status).toBe("connected");
   });
 
-  it("a full lobby that answers only after not-found is re-announced to after a silence", () => {
+  it("a full lobby that answers only after the unreachable window is re-announced to after a silence", () => {
     const { client, push, posts } = make("guest");
-    vi.advanceTimersByTime(NOT_FOUND_MS + 700);
+    vi.advanceTimersByTime(UNREACHABLE_MS + 700);
     push({ kind: "reject", to: testSeatId("g"), reason: "full" });
     expect(client.state.status).toBe("full");
     const before = posts.filter((p) => p.kind === "hello").length;

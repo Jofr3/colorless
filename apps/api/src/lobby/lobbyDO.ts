@@ -12,6 +12,7 @@ import {
   isValidLobbyCode,
   LOBBY_NAME_MAX,
   LOBBY_WS_CLOSED,
+  LOBBY_WS_NOT_FOUND,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -125,8 +126,8 @@ import {
 } from "./snapshot";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
-// upgrade for a code that was never created (or has expired) is refused, so
-// guessing codes yields silence, which the client reads as "not found".
+// for a code that was never created (or has expired) is accepted and closed at
+// once with LOBBY_WS_NOT_FOUND, which the client shows as "not found".
 const CREATED_KEY = "created";
 const CODE_KEY = "code";
 const SNAPSHOT_KEY = "snapshot";
@@ -154,6 +155,19 @@ type ClientFrame<Kind extends LobbyClientMessage["kind"]> = Extract<
   LobbyClientMessage,
   { kind: Kind }
 >;
+
+/**
+ * The answer to a socket for a code that names no lobby: the upgrade is accepted and the socket
+ * closed at once with `LOBBY_WS_NOT_FOUND`, the client's one definite "not found". A refused upgrade
+ * looks to a browser like any failed connection. The socket is accepted outside hibernation, so the
+ * lobby never counts or sweeps it, and nothing is stored: a guessed code still costs one wake.
+ */
+function noSuchLobby(): Response {
+  const pair = new WebSocketPair();
+  pair[1].accept();
+  pair[1].close(LOBBY_WS_NOT_FOUND, "no such lobby");
+  return new Response(null, { status: 101, webSocket: pair[0] });
+}
 
 /** Whether the match handoff started a real game, or why it couldn't (P4
     increment 3) — a failed deck resolution surfaces `reason` to the players
@@ -294,7 +308,7 @@ export class LobbyDO {
         (await this.retireLegacyLobby()) ||
         (await this.state.storage.get(CREATED_KEY)) === undefined
       ) {
-        return Response.json({ error: "no such lobby" }, { status: 404 });
+        return noSuchLobby();
       }
       // The flood guard, before the D1 session read: past it even a seated player is refused
       // (LB2). Only a seat-holding account's sockets get past LOBBY_SOCKET_CAP to reach it.

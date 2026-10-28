@@ -107,6 +107,7 @@ lobbySocketRoutes.get("/:code/ws", async (c) => {
   if (limited !== null) return limited;
   const stub = c.env.LOBBY.get(c.env.LOBBY.idFromName(code));
   // Forward the original upgrade request, re-addressed to the DO's internal
-  // /ws path; the 101 (or the DO's 404 for an expired code) flows back as-is.
+  // /ws path; the 101 flows back as-is, for an expired code too (closed at once
+  // with LOBBY_WS_NOT_FOUND).
   return stub.fetch(new Request(doUrl(DO_WS_PATH), c.req.raw));
 });

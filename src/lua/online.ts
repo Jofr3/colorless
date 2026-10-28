@@ -37,6 +37,7 @@ export type OnlineStep =
   | "starting"
   | "full"
   | "not-found"
+  | "unreachable"
   | "kicked"
   | "invalid";
 
@@ -106,7 +107,7 @@ export class LuaOnline {
     const c = this.client;
     if (!c) return "menu";
     const { status, snapshot } = c.state;
-    if (status === "kicked" || status === "not-found") return status;
+    if (status === "kicked" || status === "not-found" || status === "unreachable") return status;
     if (status === "full" || status === "spectating") return "full";
     if (!snapshot || !c.self) return "joining";
     return PHASE_STEP[snapshot.phase];

@@ -56,7 +56,9 @@ The lobby DO now bounds what one client can cost (details in `backend-data.md` Â
   seat still gets back in (up to 16), so watchers cannot lock a player out of their match.
 - **Inactivity:** no commit, accepted action or seated hello for an hour closes every socket with
   `LOBBY_WS_CLOSED` (4000) and wipes the lobby. The client stops reconnecting on that code and
-  shows "Lobby not found"; an older client keeps retrying into the 404.
+  shows "Lobby not found". A later socket for the code is accepted and closed at once with
+  `LOBBY_WS_NOT_FOUND` (4004), which the client also shows as "Lobby not found" (REL-QA4); an
+  older client reconnects after it, as after the 404 it got before.
 - **Match log:** at most 2000 rows; past that the newest 1500 are kept behind a system row
   ("Earlier log entries were trimmed.") and the next frame carries the whole log, which the client
   already accepts in place of what it held. The Lua table reads a shorter log as a fresh one, so
@@ -85,7 +87,7 @@ Wire change, shipped with the web client in one release (the deploy drops every 
   so a reloaded tab joins as a fresh guest.
 - **Stored lobbies.** A lobby stored before the split (a seat id that is not a public id) cannot
   be carried over: its ids were public, and no client holds a secret that hashes to them. The DO
-  wipes it, on the next `/ws` (answered 404, "Lobby not found") or on its next alarm (live sockets
+  wipes it, on the next `/ws` (closed at once with 4004, "Lobby not found") or on its next alarm (live sockets
   closed with 4000), logging `lobby_wiped cause=legacy`. Players create a new lobby.
 
 ## Status â€” P4 kickoff (2026-07-23)

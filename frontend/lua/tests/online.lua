@@ -210,13 +210,15 @@ assert(said[#said]=='Removed from the lobby. The host removed you from this lobb
 o:activate((action('online')));assert(last()[1]=='leave' and #last()==1)
 snapshot('not-found',{code='ZZZZ'});assert(said[#said]:find('No open lobby with the code ZZZZ'))
 o:keypressed('escape');assert(home==3 and last()[2]=='home')
+snapshot('unreachable',{code='ZZZZ'});assert(said[#said]=="Can't reach the lobby. Couldn't connect to lobby ZZZZ. Check your connection, then try again.")
+assert(action('online'),'An unreachable lobby offers Back to online')
 
 -- Every step fits its frame in both rooms.
 local steps={
   {'menu',{account='anonymous'}},{'menu',{account='anonymous'},nil,2},{'joining'},{'waiting',{},{you}},
   {'versus',{kick=true},seats(false,true)},{'versus',{kick=true,decks='ready'},decks(),nil,true},
   {'versus',{decks='anonymous'},seats(false,false),nil,true},{'countdown',{countdown=2},seats(true,true,true)},
-  {'starting'},{'invalid'},{'full'},{'not-found'},{'kicked'},
+  {'starting'},{'invalid'},{'full'},{'not-found'},{'unreachable'},{'kicked'},
 }
 -- Draw every step too, against a no-op renderer.
 setmetatable(love.graphics,{__index=function() return function() end end})

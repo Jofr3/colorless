@@ -3,6 +3,7 @@ import { drbgSeed, storedAt } from "@colorless/engine/testing";
 import {
   COUNTDOWN_MS,
   LOBBY_WS_CLOSED,
+  LOBBY_WS_NOT_FOUND,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -160,8 +161,16 @@ async function fireAlarmsUntil(done: () => boolean | Promise<boolean>, limit = 5
 }
 
 describe("LobbyDO — create and seat", () => {
-  it("refuses a socket for a code that was never created", async () => {
-    await expect(h.connect("ana")).rejects.toThrow("upgrade refused with 404");
+  it("answers a socket for a code that was never created with a definite not-found close", async () => {
+    expect(await h.upgrade("ana")).toEqual({
+      kind: "closed",
+      code: LOBBY_WS_NOT_FOUND,
+      reason: "no such lobby",
+    });
+    // Nothing is held or stored, and no alarm is armed for the guess.
+    expect(h.state.getWebSockets()).toEqual([]);
+    expect(h.storage.data.size).toBe(0);
+    expect(h.storage.alarm).toBeNull();
   });
 
   it("claims a code once and arms the empty-lobby expiry", async () => {
@@ -960,7 +969,11 @@ describe("LobbyDO — lobbies stored before seat secrets (LB6)", () => {
 
   it("wipes such a lobby on the next socket and answers it like an expired one", async () => {
     await legacyLobby();
-    await expect(h.connect("ana")).rejects.toThrow("upgrade refused with 404");
+    expect(await h.upgrade("ana")).toEqual({
+      kind: "closed",
+      code: LOBBY_WS_NOT_FOUND,
+      reason: "no such lobby",
+    });
     expect(h.storage.data.size).toBe(0);
     expect(h.storage.alarm).toBeNull();
     expect(logged("lobby_wiped")).toMatchObject([{ lobby: "ABCD", cause: "legacy" }]);

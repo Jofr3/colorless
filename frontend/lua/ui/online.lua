@@ -33,6 +33,7 @@ local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
   full={'Lobby is full','Lobby %s already has two players.'},
   ['not-found']={'Lobby not found','No open lobby with the code %s. Ask for a fresh code, or create your own.'},
+  unreachable={"Can't reach the lobby","Couldn't connect to lobby %s. Check your connection, then try again."},
   kicked={'Removed from the lobby','The host removed you from this lobby.'},
 }
 local backs={menu={'Back','home'},joining={'Cancel','leave'},waiting={'Leave','home'},versus={'Leave','leave'},

@@ -1,5 +1,5 @@
 import { drbgSeed } from "@colorless/engine/testing";
-import type { LobbyClientMessage } from "@colorless/schema";
+import { LOBBY_WS_NOT_FOUND, type LobbyClientMessage } from "@colorless/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
 import { attachedPlayer } from "./attachment";
@@ -123,8 +123,8 @@ async function lifecycle(seed: number): Promise<string | null> {
       else if (op === "hibernate") lobby.hibernate();
       else if (op === "redeploy") lobby.redeploy();
     } catch (error) {
-      // A connect to a lobby that expired is refused: the lifecycle is over.
-      if (String(error).includes("404")) return null;
+      // A connect to a lobby that expired is closed at once: the lifecycle is over.
+      if (String(error).includes(`closed at once with ${LOBBY_WS_NOT_FOUND}`)) return null;
       return broke(`a step threw ${String(error)}`);
     }
 

@@ -9,6 +9,7 @@ import {
 import { COUNTDOWN_MS } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SEAT_LOST } from "../lua/onlineTable";
+import { UNREACHABLE_MS } from "../online/lobbyClient";
 import { type Bridge, type OnlineTab, openBridge, SEAM_CODE } from "./lobbyBridge";
 
 // Two tabs' real lobby clients, Lua online modals and tables against the real lobby DO, through
@@ -150,23 +151,48 @@ describe("the web client against the lobby DO", () => {
     expect(alarms).toHaveBeenCalledTimes(60_000 / SEATED_LIVENESS_SWEEP_MS);
   });
 
-  it("a lobby that answers only after the not-found window still shows a later outage", async () => {
+  it("a code that names no lobby shows not-found at once, and the tab stops reconnecting", async () => {
+    b.h.storage.data.clear();
+    const guest = await b.online(b.tab("bo"), "guest", "g");
+    await b.run(300);
+    expect(guest.online.step()).toBe("not-found");
+    await b.run(30_000);
+    expect(guest.sockets).toHaveLength(1);
+    expect(guest.online.step()).toBe("not-found");
+  });
+
+  it("a slow first socket shows joining, never not-found, until the lobby answers", async () => {
     await b.online(b.tab("ana"), "host", "h");
     await b.run(500);
     const slow = b.tab("bo");
     slow.connectDelayMs = 6000;
     const guest = await b.online(slow, "guest", "g");
-    await b.run(5000);
-    expect(guest.online.step()).toBe("not-found");
-    slow.connectDelayMs = 0;
-    await b.run(2000);
+    const steps = new Set<string>();
+    for (let elapsed = 0; elapsed < 7000; elapsed += 100) {
+      await b.run(100);
+      steps.add(guest.online.step());
+    }
+    expect([...steps]).toEqual(["joining", "versus"]);
+  });
+
+  it("a lobby that answers only after the unreachable window still shows a later outage", async () => {
+    await b.online(b.tab("ana"), "host", "h");
+    await b.run(500);
+    const down = b.tab("bo");
+    down.offline = true;
+    const guest = await b.online(down, "guest", "g");
+    await b.run(UNREACHABLE_MS + 1000);
+    expect(guest.online.step()).toBe("unreachable");
+    down.offline = false;
+    await b.run(10_000);
     expect(guest.online.step()).toBe("versus");
+    const opened = guest.sockets.length;
     lastSocket(guest).socket.blackholed = true;
     await b.run(6000);
     expect(guest.client().state.status).toBe("connecting");
     await b.run(10_000);
     expect(guest.client().state.status).toBe("connected");
-    expect(guest.sockets).toHaveLength(2);
+    expect(guest.sockets).toHaveLength(opened + 1);
   });
 
   it("after a deploy both tabs reconnect into the match, and a tab that cannot is forfeited", async () => {

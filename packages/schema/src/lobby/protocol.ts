@@ -31,3 +31,10 @@ export const LOBBY_DECK_NAME_MAX = 100;
     code no longer names a lobby; an older client retries and is answered 404 like any expired
     lobby. Every other close is a dropped link the client reconnects after. */
 export const LOBBY_WS_CLOSED = 4000;
+
+/** The close code a socket for a code that names no lobby (never created, expired or wiped) is
+    accepted and closed with at once. It is the client's only definite "not found": a refused
+    upgrade fails like any dropped link, and a slow first socket is the same silence. A client
+    that sees it stops reconnecting; an older one reconnects after it, as after the 404 it got
+    before, and its own window decides. */
+export const LOBBY_WS_NOT_FOUND = 4004;

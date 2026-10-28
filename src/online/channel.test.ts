@@ -1,4 +1,4 @@
-import { LOBBY_WS_CLOSED, type LobbyMessage } from "@colorless/schema";
+import { LOBBY_WS_CLOSED, LOBBY_WS_NOT_FOUND, type LobbyMessage } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CONNECT_TIMEOUT_MS,
@@ -317,6 +317,19 @@ describe("createLobbyChannel", () => {
     expect(onLobbyClosed).toHaveBeenCalledTimes(1);
     expect(FakeWebSocket.instances).toHaveLength(1);
     expect(ws.sent.filter((frame) => frame !== "ping")).toEqual([]);
+  });
+
+  it("stops reconnecting and says so when the server answers that the code names no lobby", () => {
+    const onLobbyClosed = vi.fn();
+    const channel = createLobbyChannel("ZZZZ", { onLobbyClosed });
+    const ws = FakeWebSocket.last();
+    // The upgrade is accepted and closed at once.
+    ws.open();
+    ws.drop(LOBBY_WS_NOT_FOUND);
+    channel.post(HELLO);
+    vi.advanceTimersByTime(60_000);
+    expect(onLobbyClosed).toHaveBeenCalledTimes(1);
+    expect(FakeWebSocket.instances).toHaveLength(1);
   });
 
   it("reconnects after any other server close, a refused or rate-limited one included", () => {

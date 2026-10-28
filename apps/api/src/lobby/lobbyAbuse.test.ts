@@ -4,7 +4,12 @@ import { drbgSeed } from "@colorless/engine/testing";
 // Phase 0 baselines were changed on purpose by the fix their finding id names (LB1, LB2, LB3, MI2
 // and MIX2 in Phase 3), and each such case says what the number was.
 
-import { LOBBY_WS_CLOSED, type LobbyClientMessage, type LobbyIntent } from "@colorless/schema";
+import {
+  LOBBY_WS_CLOSED,
+  LOBBY_WS_NOT_FOUND,
+  type LobbyClientMessage,
+  type LobbyIntent,
+} from "@colorless/schema";
 import type { GameState } from "@colorless/engine";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
@@ -465,7 +470,11 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     expect(h.storage.alarm).toBeNull();
     expect(writes).toEqual({ puts: 0, keys: 0, deletes: 2, alarms: wakes - 1 });
     expect(logged("lobby_wiped")).toMatchObject([{ cause: "inactive", sockets: 1, inGame: false }]);
-    await expect(h.connect()).rejects.toThrow("upgrade refused with 404");
+    expect(await h.upgrade()).toEqual({
+      kind: "closed",
+      code: LOBBY_WS_NOT_FOUND,
+      reason: "no such lobby",
+    });
   });
 
   it("LB2: play keeps a lobby open past the hour, stamping its activity every few minutes", async () => {

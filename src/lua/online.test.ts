@@ -12,7 +12,7 @@ import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyC
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
-import { LobbyClient, type LobbyClientOptions } from "../online/lobbyClient";
+import { LobbyClient, type LobbyClientOptions, UNREACHABLE_MS } from "../online/lobbyClient";
 import { LuaOnline, NOTICE_MS, TABLE_CLAIM_MS } from "./online";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 
@@ -543,7 +543,15 @@ describe("Lua online adapter", () => {
     expect(route).not.toHaveBeenCalled();
     await online.command("leave");
     await online.command(`join\t${CODE}`);
+    // Silence is still joining; only the server's word is "not found".
     vi.advanceTimersByTime(5000);
+    expect(header()[H("step")]).toBe("joining");
+    expect(header()[H("link")]).toBe("connecting");
+    online.client?.lobbyClosed();
     expect(header()[H("step")]).toBe("not-found");
+    await online.command("leave");
+    await online.command(`join\t${CODE}`);
+    vi.advanceTimersByTime(UNREACHABLE_MS + 700);
+    expect(header()[H("step")]).toBe("unreachable");
   });
 });

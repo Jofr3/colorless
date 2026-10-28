@@ -26,13 +26,17 @@ import { createLobbyChannel, type LobbyChannel } from "./channel";
 
 /** How our link to the lobby server is faring. "connecting" also covers a
     client that lost the server and is trying to reconnect. "kicked" is a
-    terminal state — the host removed us. "full" means both seats are held; if a
-    MATCH is running the server also starts feeding us the seatless board, and we
-    become "spectating" (P4 3c-vii-b) — the same connection, no seat. */
+    terminal state — the host removed us. "not-found" is the server's definite
+    word that the code names no lobby; "unreachable" is a first connection that
+    never got an answer (a later one still takes the client back). "full" means
+    both seats are held; if a MATCH is running the server also starts feeding us
+    the seatless board, and we become "spectating" (P4 3c-vii-b) — the same
+    connection, no seat. */
 export type LobbyStatus =
   | "connecting"
   | "connected"
   | "not-found"
+  | "unreachable"
   | "full"
   | "kicked"
   | "spectating";
@@ -77,9 +81,12 @@ const HELLO_RETRY_MS = 700;
 // surfaces every server pong as a heartbeat frame, so a healthy-but-quiet
 // lobby never trips this.
 export const PRESENCE_TIMEOUT_MS = 5000;
-// A client that never hears back from the server within this window decides
-// the code is wrong / the lobby doesn't exist (or has expired).
-export const NOT_FOUND_MS = 4000;
+/** A client that never hears back from the server within this window says it could not connect.
+    Silence is not "not found": a dead code is answered at once with LOBBY_WS_NOT_FOUND, so this
+    only ends a server that is down or a path that never connects. It covers a first socket's
+    CONNECT_TIMEOUT_MS (channel.ts) and a retry, so a slow cold start still lands as "connecting".
+    It was a 4 s not-found window, which a slow first socket overran. */
+export const UNREACHABLE_MS = 20_000;
 
 /** The state before any frame: the host lands on its own seeded snapshot. */
 function initialLobbyState(
@@ -240,14 +247,14 @@ export class LobbyClient {
     this.tick = null;
   }
 
-  /** Run the presence poll, unless it already runs. A server that answers after the not-found
+  /** Run the presence poll, unless it already runs. A server that answers after the unreachable
       window stopped it starts it again, so a later silence still reads as the link down. */
   private startPoll() {
     if (this.tick !== null || this.disposed || this.closedForGood) return;
     this.tick = setInterval(() => this.poll(), HELLO_RETRY_MS);
   }
 
-  /** The server closed the lobby for good: the code names no lobby any more. */
+  /** The server says the code names no lobby: closed for good, or never there. */
   lobbyClosed() {
     if (this.disposed) return;
     this.closedForGood = true;
@@ -346,9 +353,9 @@ export class LobbyClient {
       return;
     }
     if (!this.connectedOnce) {
-      if (this.now() - this.mountedAt > NOT_FOUND_MS) {
+      if (this.now() - this.mountedAt > UNREACHABLE_MS) {
         this.stop();
-        this.set({ status: "not-found" });
+        this.set({ status: "unreachable" });
         return;
       }
       this.hello();

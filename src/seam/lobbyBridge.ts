@@ -62,7 +62,16 @@ export class BridgeSocket {
       seam.deliver(async () => {
         try {
           if (offline) throw new Error("offline");
-          const server = await seam.h.connect(this.user);
+          const outcome = await seam.h.upgrade(this.user);
+          if (outcome.kind === "refused") throw new Error(`refused with ${outcome.status}`);
+          // A code that names no lobby: the socket opens and its close follows at once.
+          if (outcome.kind === "closed") {
+            this.serverClosed = true;
+            this.toClient(() => this.onopen?.());
+            this.toClient(() => this.onclose?.({ code: outcome.code ?? 1005 }));
+            return;
+          }
+          const server = outcome.server;
           // Closed by the client while it connected: the server end goes as the close reaches it.
           if (this.clientClosed) return await seam.h.drop(server);
           this.server = server;

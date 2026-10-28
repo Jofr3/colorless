@@ -44,7 +44,16 @@ export class FakeSocket {
   /** Whether the client keeps pinging, as the web client does every 1.5s. A test of a silent
       socket pins `lastPong`, or clears this for a client that never pinged at all. */
   pings = true;
+  /** Accepted with the standard `accept()`, outside hibernation, as an answer the DO closes at
+      once is. */
+  acceptedStandalone = false;
+  /** The pair's other end: the client's half of a server socket, and back. */
+  peer: FakeSocket | null = null;
   private attachment: unknown = null;
+
+  accept(): void {
+    this.acceptedStandalone = true;
+  }
 
   serializeAttachment(value: unknown): void {
     this.attachment = structuredClone(value);
@@ -172,6 +181,11 @@ export class FakeState {
 class FakeWebSocketPair {
   readonly 0 = new FakeSocket();
   readonly 1 = new FakeSocket();
+
+  constructor() {
+    this[0].peer = this[1];
+    this[1].peer = this[0];
+  }
 }
 
 class FakeRequestResponsePair {
@@ -342,7 +356,10 @@ export interface LobbyHarness {
   readonly deps: LobbyDeps;
   /** POST /create for `code`. */
   create(code?: string): Promise<Response>;
-  /** GET /ws, optionally signed in as `userId`; resolves to the accepted server socket. */
+  /** GET /ws, optionally signed in as `userId`; resolves to how the DO answered it. */
+  upgrade(userId?: string): Promise<UpgradeOutcome>;
+  /** GET /ws, optionally signed in as `userId`; resolves to the accepted server socket, and
+      throws on any other answer. */
   connect(userId?: string): Promise<FakeSocket>;
   /** Deliver one client frame (or raw text) to the DO. */
   send(ws: FakeSocket, frame: LobbyClientMessage | string): Promise<void>;
@@ -361,6 +378,13 @@ export interface LobbyHarness {
   dispose(): void;
 }
 
+/** How the DO answered a socket upgrade: a socket it holds, a socket it accepted and closed at once
+    with `code` (a code that names no lobby), or an HTTP refusal. */
+export type UpgradeOutcome =
+  | { kind: "accepted"; server: FakeSocket }
+  | { kind: "closed"; code: number | undefined; reason: string | undefined }
+  | { kind: "refused"; status: number };
+
 /** A fresh lobby DO on fake state, with the Workers globals installed until `dispose`. */
 export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarness {
   const restore = installWorkerGlobals();
@@ -378,6 +402,19 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
   const wake = () => new LobbyDO(state as unknown as DurableObjectState, {} as Env, deps);
   let lobby = wake();
   const socket = (ws: FakeSocket) => ws as unknown as WebSocket;
+  async function upgrade(userId?: string): Promise<UpgradeOutcome> {
+    const headers: Record<string, string> = { Upgrade: "websocket" };
+    if (userId !== undefined) headers.Cookie = `session=${userId}`;
+    const before = state.sockets.length;
+    const response = await lobby.fetch(new Request(doUrl(DO_WS_PATH), { headers }));
+    if (response.status !== 101) return { kind: "refused", status: response.status };
+    const accepted = state.sockets[before];
+    if (accepted !== undefined) return { kind: "accepted", server: accepted };
+    const server = (response.webSocket as unknown as FakeSocket | null)?.peer;
+    if (!server?.acceptedStandalone || server.closed === null)
+      throw new Error("a 101 whose socket the DO neither holds nor closed");
+    return { kind: "closed", ...server.closed };
+  }
 
   return {
     get lobby() {
@@ -394,16 +431,12 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
           headers: { [LOBBY_CODE_HEADER]: code },
         }),
       ),
+    upgrade,
     async connect(userId) {
-      const headers: Record<string, string> = { Upgrade: "websocket" };
-      if (userId !== undefined) headers.Cookie = `session=${userId}`;
-      const before = state.sockets.length;
-      const response = await lobby.fetch(new Request(doUrl(DO_WS_PATH), { headers }));
-      const accepted = state.sockets[before];
-      if (response.status !== 101 || accepted === undefined) {
-        throw new Error(`upgrade refused with ${response.status}`);
-      }
-      return accepted;
+      const outcome = await upgrade(userId);
+      if (outcome.kind === "refused") throw new Error(`upgrade refused with ${outcome.status}`);
+      if (outcome.kind === "closed") throw new Error(`upgrade closed at once with ${outcome.code}`);
+      return outcome.server;
     },
     send: (ws, frame) =>
       lobby.webSocketMessage(socket(ws), typeof frame === "string" ? frame : JSON.stringify(frame)),

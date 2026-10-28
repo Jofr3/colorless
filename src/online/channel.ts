@@ -1,5 +1,6 @@
 import {
   LOBBY_WS_CLOSED,
+  LOBBY_WS_NOT_FOUND,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyMessage,
@@ -66,8 +67,9 @@ function createNoopChannel(): LobbyChannel {
   };
 }
 
-/** Open the transport for a given lobby code. `onLobbyClosed` runs once if the server closes the
-    lobby for good (`LOBBY_WS_CLOSED`), after which the channel stops reconnecting. `openSocket`
+/** Open the transport for a given lobby code. `onLobbyClosed` runs once if the server says the
+    code names no lobby: it closed the lobby for good (`LOBBY_WS_CLOSED`), or there is none
+    (`LOBBY_WS_NOT_FOUND`, at once on the upgrade). The channel then stops reconnecting. `openSocket`
     opens each socket (the browser's WebSocket by default; the seam suites pass one wired to the
     lobby DO, as one tab's cookie would upgrade it). */
 export function createLobbyChannel(
@@ -130,16 +132,16 @@ export function createLobbyChannel(
     socket = null;
     stopSocketTimers();
     if (closed) return;
-    // The lobby is gone (wiped after an hour without play): a reconnect could only fail.
-    if (code === LOBBY_WS_CLOSED) {
+    // The lobby is gone (wiped after an hour without play), or there never was one: a reconnect
+    // could only fail.
+    if (code === LOBBY_WS_CLOSED || code === LOBBY_WS_NOT_FOUND) {
       closed = true;
       queue.length = 0;
       onLobbyClosed?.();
       return;
     }
-    // Unexpected close (server restart, network blip, nonexistent lobby):
-    // retry with capped backoff. A dead code keeps failing quietly, which is
-    // exactly the silence the client's not-found timeout interprets.
+    // Unexpected close (server restart, network blip, a refused upgrade): retry with capped
+    // backoff. A server that never answers is the silence the client's unreachable window ends.
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null;
       connect();
