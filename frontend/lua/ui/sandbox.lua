@@ -7,6 +7,7 @@ local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local W=require('ui.wire_fields').sandbox
 local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local PageText=require('ui.page_text')
@@ -85,13 +86,14 @@ function Sandbox:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
   local rows=Codec.rows(raw)
-  local f=rows[1];if not f or #f<6 then return end
-  self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
+  local H,K=W.header,W.deck
+  local f=rows[1];if not f or #f<H.second then return end
+  self.phase,self.busy,self.message=f[H.phase],f[H.busy]=='1',f[H.message]
   if self.phase~='ready' and self.editing then self:command('finish-input');self.editing=false end
-  self.selected={f[5],f[6]};self.items={}
+  self.selected={f[H.first],f[H.second]};self.items={}
   local signature={}
   for i=2,#rows do local r=rows[i];if r[1]=='D' then
-    self.items[#self.items+1]={id=r[2],name=r[3],count=tonumber(r[4]) or 0}
+    self.items[#self.items+1]={id=r[K.id],name=r[K.name],count=tonumber(r[K.count]) or 0}
     signature[#signature+1]=table.concat(r,'\t')
   end end
   signature=table.concat(signature,'\n')

@@ -4,7 +4,7 @@
 //   bunx vitest run src/lua/wireFixtures.test.ts -u
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CardBrief } from "@colorless/schema";
+import { type CardBrief, createSnapshot, makePlayer, publicSeatId } from "@colorless/schema";
 import type { GameState } from "@colorless/engine";
 import {
   attachFromDeck,
@@ -18,8 +18,16 @@ import {
 } from "@colorless/engine/testing";
 import { toBuilderCard } from "../decks/catalog";
 import type { Deck } from "../decks/data";
+import type { PlayableDeck } from "../game/sandboxDecks";
+import { LobbyClient } from "../online/lobbyClient";
+import { fakeLobbyChannel, testSeatId } from "../test/fakeLobbyChannel";
+import { json, stubFetch } from "../test/fetchStub";
+import { USER } from "../test/fixtures";
+import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
+import { LuaOnline } from "./online";
+import { LuaSandbox } from "./sandbox";
 import { LuaSimulator } from "./simulator";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 
@@ -35,15 +43,22 @@ const pin = (name: string, raw: string) =>
 
 const parse = (raw: string) => raw.split("\n").map((r) => r.split("\t").map(decodeURIComponent));
 
-beforeEach(() => {
+const memoryStorage = () => {
   const storage = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
+  return {
     getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => storage.set(key, value),
     removeItem: (key: string) => storage.delete(key),
-  });
+  };
+};
+beforeEach(() => {
+  vi.stubGlobal("localStorage", memoryStorage());
+  vi.stubGlobal("sessionStorage", memoryStorage());
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 const NEST_BALL = "nest-ball";
 
@@ -80,6 +95,18 @@ function table(): GameState {
   };
   return patchSide(state, "p1", { hand: [...state.players.p1.hand, NEST_BALL] });
 }
+
+const deck = (id: string, name: string, cardCount: number, tint: number): Deck => ({
+  id,
+  name,
+  format: null,
+  folderId: null,
+  cardCount,
+  tint,
+  coverCardId: null,
+  position: 0,
+  updated: "2026-10-01T00:00:00.000Z",
+});
 
 describe("Lua wire fixtures", () => {
   it("the simulator table and an effect prompt", async () => {
@@ -118,17 +145,6 @@ describe("Lua wire fixtures", () => {
       (raw) => published.push(raw),
       () => {},
     );
-    const deck = (id: string, name: string, cardCount: number, tint: number): Deck => ({
-      id,
-      name,
-      format: null,
-      folderId: null,
-      cardCount,
-      tint,
-      coverCardId: null,
-      position: 0,
-      updated: "2026-10-01T00:00:00.000Z",
-    });
     library.decks = [
       deck("d1", "Fire Rush", 60, 20),
       deck("d2", "Water Wall", 42, 200),
@@ -184,5 +200,74 @@ describe("Lua wire fixtures", () => {
     builder.selected = pikachu.cardId;
     builder.emit();
     await pin("builder_snapshot.txt", published.at(-1) ?? "");
+  });
+
+  it("the online lobby", async () => {
+    vi.useFakeTimers();
+    const published: string[] = [];
+    let channel: ReturnType<typeof fakeLobbyChannel> | undefined;
+    const online = new LuaOnline(
+      (raw) => published.push(raw),
+      () => {},
+      {
+        user: () => USER,
+        client: (opts) => {
+          channel = fakeLobbyChannel();
+          return new LobbyClient(opts, { channel: channel.channel });
+        },
+      },
+    );
+    online.session("authenticated", USER.id);
+    await online.command("open");
+    await online.command("join\tABCD");
+    const staked = JSON.parse(sessionStorage.getItem("online.identity.ABCD") ?? "{}");
+    const me = {
+      ...makePlayer(publicSeatId(staked.secret), "Ash"),
+      hasDeck: true,
+      deckName: "Zap",
+    };
+    channel?.push({
+      kind: "state",
+      snapshot: {
+        ...createSnapshot("ABCD", { ...makePlayer(testSeatId("h"), "Misty"), ready: true }),
+        phase: "selecting",
+        guest: me,
+      },
+    });
+    const playable = (d: Deck, formatName: string, standard: boolean): PlayableDeck => ({
+      ...d,
+      online: standard,
+      formatName,
+      standard,
+      expanded: true,
+    });
+    online.decks = [
+      playable(deck("d1", "Zap", 60, 90), "Standard", true),
+      playable(deck("d2", "Relic", 60, 30), "Expanded", false),
+    ];
+    online.deckPhase = "ready";
+    online.emit();
+    await pin("online_snapshot.txt", published.at(-1) ?? "");
+    online.halt();
+  });
+
+  it("the sandbox chooser", async () => {
+    const published: string[] = [];
+    const sandbox = new LuaSandbox(
+      (raw) => published.push(raw),
+      async () => () => {},
+    );
+    sandbox.decks = [deck("d1", "Fire Rush", 60, 20), deck("d2", "Water Wall", 42, 200)];
+    sandbox.selected = ["d1", "d2"];
+    sandbox.phase = "ready";
+    sandbox.emit();
+    await pin("sandbox_snapshot.txt", published.at(-1) ?? "");
+  });
+
+  it("the account", async () => {
+    const published: string[] = [];
+    stubFetch({ "GET /auth/me": () => json({ ...USER, namePrompt: true }) });
+    await new LuaAccount((raw) => published.push(raw)).refresh();
+    await pin("account_snapshot.txt", published.at(-1) ?? "");
   });
 });

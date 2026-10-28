@@ -22,6 +22,7 @@ import {
 } from "../online/session";
 import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
+import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { CardPool, LuaOnlineMatch } from "./onlineTable";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
@@ -135,51 +136,56 @@ export class LuaOnline {
     const opponent = c?.opponent ?? null;
     // A refused socket still holds the public snapshot: never render its seats.
     const seated = SEATED.has(step);
+    const W = WIRE_ROWS.online;
     const seat = (tag: string, p: typeof self, own: boolean) =>
-      encodeFields([
-        "P",
-        tag,
-        +!!p,
-        p?.name ?? "",
-        +!!p?.connected,
-        +!!p?.ready,
-        // The server sends no seat's deck id (LB5): yours is the client's memory of its pick,
-        // unknown after a reload, so whether a deck is picked rides on its own.
-        (own && p?.hasDeck && c?.state.deckId) || "",
-        (own && p?.deckName) || "",
-        +!!p?.hasDeck,
-      ]);
+      encodeFields(
+        wireRow(W.seat, {
+          seat: tag,
+          present: +!!p,
+          name: p?.name ?? "",
+          connected: +!!p?.connected,
+          ready: +!!p?.ready,
+          // The server sends no seat's deck id (LB5): yours is the client's memory of its pick,
+          // unknown after a reload, so whether a deck is picked rides on its own.
+          deckId: (own && p?.hasDeck && c?.state.deckId) || "",
+          deckName: (own && p?.deckName) || "",
+          hasDeck: +!!p?.hasDeck,
+        }),
+      );
     this.publish(
       [
-        encodeFields([
-          ++this.revision,
-          step,
-          +this.busy,
-          this.message || (error ? `Couldn't start the match - ${error}` : ""),
-          this.code,
-          c?.role ?? "",
-          c ? (c.state.status === "connecting" ? "connecting" : "connected") : "",
-          this.seconds < 0 ? "" : this.seconds,
-          this.notice,
-          this.deckPhase,
-          this.name(),
-          this.account,
-          +(c?.role === "host" && !!opponent),
-          step === "versus" || step === "countdown" ? versusStatus(self, opponent) : "",
-        ]),
+        encodeFields(
+          wireRow(W.header, {
+            revision: ++this.revision,
+            step,
+            busy: +this.busy,
+            message: this.message || (error ? `Couldn't start the match - ${error}` : ""),
+            code: this.code,
+            role: c?.role ?? "",
+            link: c ? (c.state.status === "connecting" ? "connecting" : "connected") : "",
+            countdown: this.seconds < 0 ? "" : this.seconds,
+            notice: this.notice,
+            deckPhase: this.deckPhase,
+            name: this.name(),
+            account: this.account,
+            canKick: +(c?.role === "host" && !!opponent),
+            status: step === "versus" || step === "countdown" ? versusStatus(self, opponent) : "",
+          }),
+        ),
         ...(seated ? [seat("you", self, true), seat("opponent", opponent, false)] : []),
         ...(this.deckPhase === "ready"
           ? this.decks.map((d) =>
-              encodeFields([
-                "D",
-                d.id,
-                d.name,
-                d.cardCount,
-                +d.standard,
-                +d.expanded,
-                +d.online,
-                d.formatName,
-              ]),
+              encodeFields(
+                wireRow(W.deck, {
+                  id: d.id,
+                  name: d.name,
+                  count: d.cardCount,
+                  standard: +d.standard,
+                  expanded: +d.expanded,
+                  online: +d.online,
+                  formatName: d.formatName,
+                }),
+              ),
             )
           : []),
       ].join("\n"),

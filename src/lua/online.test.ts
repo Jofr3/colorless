@@ -14,8 +14,13 @@ import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
 import { LobbyClient, type LobbyClientOptions } from "../online/lobbyClient";
 import { LuaOnline, NOTICE_MS, TABLE_CLAIM_MS } from "./online";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
 
 const CODE = "ABCD";
+const H = (field: (typeof WIRE_ROWS.online.header.fields)[number]) =>
+  wireColumn(WIRE_ROWS.online.header, field);
+const P = (field: (typeof WIRE_ROWS.online.seat.fields)[number]) =>
+  wireColumn(WIRE_ROWS.online.seat, field);
 const card = {
   ...cardBrief(),
   illustrator: null,
@@ -136,9 +141,9 @@ describe("Lua online adapter", () => {
     const { online, header, route, last } = setup();
     await online.command("open");
     expect(header().slice(1, 3)).toEqual(["menu", "0"]);
-    expect(header()[10]).toBe("Ash");
+    expect(header()[H("name")]).toBe("Ash");
     const pending = online.command("create");
-    expect(header()[2]).toBe("1");
+    expect(header()[H("busy")]).toBe("1");
     await pending;
     expect(header().slice(1, 7)).toEqual(["waiting", "0", "", CODE, "host", "connected"]);
     expect(route).toHaveBeenCalledWith("online", CODE, true);
@@ -165,7 +170,7 @@ describe("Lua online adapter", () => {
     ]);
     stubFetch({ "POST /lobby": () => json({ code: "0O1I" }, 201) });
     await online.command("create");
-    expect(header()[1]).toBe("menu");
+    expect(header()[H("step")]).toBe("menu");
     expect(route).not.toHaveBeenCalled();
     expect(made).toHaveLength(0);
   });
@@ -174,23 +179,23 @@ describe("Lua online adapter", () => {
     localStorage.removeItem("online.playerName");
     const { online, header } = setup();
     await online.command("open");
-    const shown = header()[10];
+    const shown = header()[H("name")];
     expect(shown).toMatch(/^Player \d{4}$/);
     await online.command("join\tABCD");
     expect(identity()).toMatchObject({ name: shown });
-    expect(header()[10]).toBe(shown);
+    expect(header()[H("name")]).toBe(shown);
   });
 
   it("refuses an incomplete join code and flags an invalid deep link", async () => {
     const { online, header, made } = setup();
     await online.command("open");
     await online.command("join\tAB");
-    expect(header()[3]).toBe("Enter the full 4-character code.");
+    expect(header()[H("message")]).toBe("Enter the full 4-character code.");
     expect(made).toHaveLength(0);
     await online.command("open\t0O1");
-    expect(header()[1]).toBe("invalid");
+    expect(header()[H("step")]).toBe("invalid");
     await online.command("leave");
-    expect(header()[1]).toBe("menu");
+    expect(header()[H("step")]).toBe("menu");
   });
 
   it("joins: joining until seated, then versus with the opponent's deck hidden", async () => {
@@ -202,15 +207,15 @@ describe("Lua online adapter", () => {
     expect(rows()).toHaveLength(1);
     const me = myId();
     last().push({ kind: "state", snapshot: snap({ guest: makePlayer("other", "Other") }) });
-    expect(header()[1]).toBe("joining");
+    expect(header()[H("step")]).toBe("joining");
     const host = { ...makePlayer("h", "Host"), hasDeck: true, deckName: "Secret", ready: true };
     last().push({
       kind: "state",
       snapshot: snap({ host, guest: { ...makePlayer(me, "Me"), hasDeck: true, deckName: "Mine" } }),
     });
     expect(header().slice(1, 2)).toEqual(["versus"]);
-    expect(header()[12]).toBe("0");
-    expect(header()[13]).toBe("");
+    expect(header()[H("canKick")]).toBe("0");
+    expect(header()[H("status")]).toBe("");
     // A pick this client did not make here (a reload) has no deck id to show, only its name.
     expect(rows().slice(1)).toEqual([
       ["P", "you", "1", "Me", "1", "0", "", "Mine", "1"],
@@ -225,13 +230,13 @@ describe("Lua online adapter", () => {
     const me = myId();
     const host = makePlayer("h", "Ho\udc00st");
     last().push({ kind: "state", snapshot: snap({ host, guest: makePlayer(me, "Me") }) });
-    expect(header()[1]).toBe("versus");
-    expect(rows()[2]?.[3]).toBe("Ho\ufffdst");
+    expect(header()[H("step")]).toBe("versus");
+    expect(rows()[2]?.[P("name")]).toBe("Ho\ufffdst");
     last().push({
       kind: "state",
       snapshot: snap({ host: { ...host, ready: true }, guest: makePlayer(me, "Me") }),
     });
-    expect(rows()[2]?.[5]).toBe("1");
+    expect(rows()[2]?.[P("ready")]).toBe("1");
   });
 
   it("a page that failed closes the lobby link without a bye and keeps the seat", async () => {
@@ -255,9 +260,9 @@ describe("Lua online adapter", () => {
     const { online, header, last } = setup();
     await online.command(`open\t${CODE}`);
     expect(last().opts).toMatchObject({ code: CODE, role: "host", secret: testSeatSecret("h") });
-    expect(header()[1]).toBe("waiting");
+    expect(header()[H("step")]).toBe("waiting");
     await online.command(`open\t${CODE}`);
-    expect(header()[1]).toBe("waiting");
+    expect(header()[H("step")]).toBe("waiting");
   });
 
   it("joins afresh from an identity saved before seat secrets (LB6)", async () => {
@@ -281,11 +286,11 @@ describe("Lua online adapter", () => {
     const { online, header, rows } = setup();
     online.session("anonymous", "");
     await online.command("decks");
-    expect(header()[9]).toBe("anonymous");
-    expect(header()[11]).toBe("anonymous");
+    expect(header()[H("deckPhase")]).toBe("anonymous");
+    expect(header()[H("account")]).toBe("anonymous");
     online.session("authenticated", "u");
-    await vi.waitFor(() => expect(header()[9]).toBe("ready"));
-    expect(header()[11]).toBe("authenticated");
+    await vi.waitFor(() => expect(header()[H("deckPhase")]).toBe("ready"));
+    expect(header()[H("account")]).toBe("authenticated");
     expect(rows().slice(1)).toEqual([
       ["D", "y", "Archive", "60", "0", "1", "1", "Expanded"],
       ["D", "z", "Relic", "60", "0", "1", "0", "Standard"],
@@ -311,7 +316,7 @@ describe("Lua online adapter", () => {
     await online.command("select\tshort");
     expect(c.kinds()).toEqual(["hello"]);
     c.push({ kind: "state", snapshot: seated(testSeatId("g")) });
-    expect(header()[12]).toBe("1");
+    expect(header()[H("canKick")]).toBe("1");
     const before = c.posts.length;
     await online.command("select\tz");
     expect(c.posts).toHaveLength(before);
@@ -348,15 +353,15 @@ describe("Lua online adapter", () => {
       snapshot: seated(me, { phase: "countdown", countdownStartedAt: Date.now() }),
     });
     expect(header().slice(1, 2)).toEqual(["countdown"]);
-    expect(header()[7]).toBe("3");
+    expect(header()[H("countdown")]).toBe("3");
     const before = publish.mock.calls.length;
     vi.advanceTimersByTime(800);
     expect(publish.mock.calls.length).toBe(before);
     vi.advanceTimersByTime(400);
-    expect(header()[7]).toBe("2");
+    expect(header()[H("countdown")]).toBe("2");
     expect(publish.mock.calls.length).toBe(before + 1);
     vi.advanceTimersByTime(2000);
-    expect(header()[7]).toBe("0");
+    expect(header()[H("countdown")]).toBe("0");
   });
 
   it("routes to the match once the lobby is in-game with a board", async () => {
@@ -366,7 +371,7 @@ describe("Lua online adapter", () => {
     route.mockClear();
     const me = myId();
     last().push({ kind: "state", snapshot: seated(me, { phase: "in-game" }) });
-    expect(header()[1]).toBe("starting");
+    expect(header()[H("step")]).toBe("starting");
     expect(route).not.toHaveBeenCalled();
     last().push({ kind: "match", game, log: [] });
     last().push({ kind: "match", game, log: [] });
@@ -400,7 +405,7 @@ describe("Lua online adapter", () => {
     vi.advanceTimersByTime(0);
     expect(c.kinds()).toContain("bye");
     expect(identity()).not.toBeNull();
-    expect(header()[1]).toBe("menu");
+    expect(header()[H("step")]).toBe("menu");
   });
 
   it("a match surface taking the client in the same tick prevents the bye", async () => {
@@ -513,14 +518,14 @@ describe("Lua online adapter", () => {
     await online.command(`join\t${CODE}`);
     await online.command("copy\tcode");
     expect(writeText).toHaveBeenLastCalledWith(CODE);
-    expect(header()[8]).toBe("Copied");
+    expect(header()[H("notice")]).toBe("Copied");
     vi.advanceTimersByTime(NOTICE_MS);
-    expect(header()[8]).toBe("");
+    expect(header()[H("notice")]).toBe("");
     await online.command("copy\tlink");
     expect(writeText).toHaveBeenLastCalledWith(`https://colorless.test/online/${CODE}`);
     writeText.mockRejectedValueOnce(new Error("denied"));
     await online.command("copy\tcode");
-    expect(header()[8]).toBe("Copy failed");
+    expect(header()[H("notice")]).toBe("Copy failed");
   });
 
   it("maps refusals to info steps (full never spectates)", async () => {
@@ -531,14 +536,14 @@ describe("Lua online adapter", () => {
     const me = myId();
     last().push({ kind: "reject", to: me, reason: "full" });
     last().push({ kind: "state", snapshot: seated("other", { phase: "in-game" }) });
-    expect(header()[1]).toBe("full");
+    expect(header()[H("step")]).toBe("full");
     expect(rows()).toHaveLength(1);
     last().push({ kind: "match", game, log: [] });
-    expect(header()[1]).toBe("full");
+    expect(header()[H("step")]).toBe("full");
     expect(route).not.toHaveBeenCalled();
     await online.command("leave");
     await online.command(`join\t${CODE}`);
     vi.advanceTimersByTime(5000);
-    expect(header()[1]).toBe("not-found");
+    expect(header()[H("step")]).toBe("not-found");
   });
 });

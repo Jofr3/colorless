@@ -18,19 +18,23 @@ local commands,said,sounds,home,signin={},{},{},0,0
 local o=Online.new({command=function(raw) commands[#commands+1]=Codec.fields(raw) end,
   announce=function(text) said[#said+1]=text end,feedback=function(name) sounds[#sounds+1]=name end,
   jiggle=function() end,home=function() home=home+1 end,signin=function() signin=signin+1 end})
+local W=require('ui.wire_fields').online
+-- A row from field names, in the columns wire_fields.lua gives them.
+local function row(tag,spec,fields)
+  local out={}
+  for _,column in pairs(spec) do out[column]='' end
+  if tag then out[1]=tag end
+  for name,value in pairs(fields) do out[assert(spec[name],name)]=Codec.encode(value) end
+  return table.concat(out,'\t')
+end
 local revision,time=0,20
 local function snapshot(step,opts,rows)
   opts=opts or {};revision=revision+1
-  local f={revision,step,opts.busy and 1 or 0,opts.message or '',opts.code or 'ABCD',opts.role or 'host',
-    opts.link or 'connected',opts.countdown or '',opts.notice or '',opts.decks or 'idle',opts.name or 'Ash',
-    opts.account or 'authenticated',opts.kick and 1 or 0,opts.status or ''}
-  for i,v in ipairs(f) do f[i]=Codec.encode(v) end
-  local lines={table.concat(f,'\t')}
-  for _,r in ipairs(rows or {}) do
-    local encoded={}
-    for i,v in ipairs(r) do encoded[i]=Codec.encode(v) end
-    lines[#lines+1]=table.concat(encoded,'\t')
-  end
+  local lines={row(nil,W.header,{revision=revision,step=step,busy=opts.busy and 1 or 0,message=opts.message or '',
+    code=opts.code or 'ABCD',role=opts.role or 'host',link=opts.link or 'connected',countdown=opts.countdown or '',
+    notice=opts.notice or '',deckPhase=opts.decks or 'idle',name=opts.name or 'Ash',
+    account=opts.account or 'authenticated',canKick=opts.kick and 1 or 0,status=opts.status or ''})}
+  for _,r in ipairs(rows or {}) do lines[#lines+1]=row(r[1],r[1]=='P' and W.seat or W.deck,r[2]) end
   o:sync(table.concat(lines,'\n'))
 end
 local function last() return commands[#commands] end
@@ -43,14 +47,20 @@ local function inside(label)
       label..': '..tostring(item.label or item.kind)..' outside the frame')
   end
 end
-local you={'P','you',1,'Ash',1,0,'','',0}
+local function seat(fields) return {'P',fields} end
+local you=seat({seat='you',present=1,name='Ash',connected=1,ready=0,deckId='',deckName='',hasDeck=0})
 local function seats(ready,deck,oppReady,oppConnected)
-  return {{'P','you',1,'Ash',1,ready and 1 or 0,deck and 'deck2' or '',deck and 'Deck 2' or '',deck and 1 or 0},
-    {'P','opponent',1,'Misty',oppConnected==false and 0 or 1,oppReady and 1 or 0,'','',0}}
+  return {seat({seat='you',present=1,name='Ash',connected=1,ready=ready and 1 or 0,deckId=deck and 'deck2' or '',
+      deckName=deck and 'Deck 2' or '',hasDeck=deck and 1 or 0}),
+    seat({seat='opponent',present=1,name='Misty',connected=oppConnected==false and 0 or 1,ready=oppReady and 1 or 0,
+      deckId='',deckName='',hasDeck=0})}
 end
 local function decks()
   local rows=seats(false,true)
-  for i=1,12 do rows[#rows+1]={'D','deck'..i,'Deck '..i,60,i%2,i%3==0 and 1 or 0,i==11 and 0 or 1,'Standard'} end
+  for i=1,12 do
+    rows[#rows+1]={'D',{id='deck'..i,name='Deck '..i,count=60,standard=i%2,expanded=i%3==0 and 1 or 0,
+      online=i==11 and 0 or 1,formatName='Standard'}}
+  end
   return rows
 end
 
@@ -112,7 +122,7 @@ snapshot('versus',{kick=true},seats(false,true))
 _,ready=action('ready');assert(not ready.disabled and action('choose'))
 -- After a reload the client no longer knows which deck it picked (the server keeps the id):
 -- the pick still counts, and its name labels the pile.
-local reloaded=seats(false,true);reloaded[1][7]=''
+local reloaded=seats(false,true);reloaded[1][2].deckId=''
 snapshot('versus',{kick=true},reloaded)
 _,ready=action('ready');local _,change=action('choose')
 assert(not ready.disabled and change.label=='Change deck' and o.piles.you,'A pick the client forgot still counts')

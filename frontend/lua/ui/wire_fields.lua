@@ -27,4 +27,16 @@ return {
     choice={value=2,label=3,selected=4},
     field={key=2,value=3},
   },
+  online={
+    header={revision=1,step=2,busy=3,message=4,code=5,role=6,link=7,countdown=8,notice=9,deckPhase=10,name=11,account=12,canKick=13,status=14},
+    seat={seat=2,present=3,name=4,connected=5,ready=6,deckId=7,deckName=8,hasDeck=9},
+    deck={id=2,name=3,count=4,standard=5,expanded=6,online=7,formatName=8},
+  },
+  sandbox={
+    header={revision=1,phase=2,busy=3,message=4,first=5,second=6},
+    deck={id=2,name=3,count=4},
+  },
+  account={
+    header={revision=1,status=2,busy=3,message=4,id=5,displayName=6,email=7,hasPassword=8,namePrompt=9},
+  },
 }

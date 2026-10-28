@@ -20,6 +20,7 @@ import {
 } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
+import { WIRE_ROWS, wireRow } from "./wireFields";
 
 const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   state: "Google sign-in expired. Try again.",
@@ -80,17 +81,19 @@ export class LuaAccount {
   private emit() {
     const u = this.user;
     this.publish(
-      encodeFields([
-        ++this.revision,
-        this.status,
-        this.busy ? 1 : 0,
-        this.message,
-        u?.id ?? "",
-        u?.displayName ?? "",
-        u?.email ?? "",
-        u?.hasPassword ? 1 : 0,
-        u?.namePrompt ? 1 : 0,
-      ]),
+      encodeFields(
+        wireRow(WIRE_ROWS.account.header, {
+          revision: ++this.revision,
+          status: this.status,
+          busy: this.busy ? 1 : 0,
+          message: this.message,
+          id: u?.id ?? "",
+          displayName: u?.displayName ?? "",
+          email: u?.email ?? "",
+          hasPassword: u?.hasPassword ? 1 : 0,
+          namePrompt: u?.namePrompt ? 1 : 0,
+        }),
+      ),
     );
   }
 

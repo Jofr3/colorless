@@ -5,6 +5,7 @@ import type { LocalGameSetup } from "../game/localHost";
 import { SandboxSetupError } from "../game/sandboxSetupError";
 import { validSandboxDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
+import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { AccountStatus } from "./account";
 import { epochGuard, sessionUser } from "./epochGuard";
 
@@ -43,8 +44,21 @@ export class LuaSandbox {
   emit() {
     this.publish(
       [
-        encodeFields([++this.revision, this.phase, +this.busy, this.message, ...this.selected]),
-        ...this.decks.map((d) => encodeFields(["D", d.id, d.name, d.cardCount])),
+        encodeFields(
+          wireRow(WIRE_ROWS.sandbox.header, {
+            revision: ++this.revision,
+            phase: this.phase,
+            busy: +this.busy,
+            message: this.message,
+            first: this.selected[0],
+            second: this.selected[1],
+          }),
+        ),
+        ...this.decks.map((d) =>
+          encodeFields(
+            wireRow(WIRE_ROWS.sandbox.deck, { id: d.id, name: d.name, count: d.cardCount }),
+          ),
+        ),
       ].join("\n"),
     );
   }

@@ -1,4 +1,5 @@
 local Codec=require('ui.codec')
+local H=require('ui.wire_fields').account.header
 local Account={}
 Account.__index=Account
 function Account.new()
@@ -7,17 +8,17 @@ end
 function Account:sync(raw)
   if not raw or self.raw==raw then return false end
   local f=Codec.fields(raw)
-  if #f<7 then return false end
+  if #f<H.email then return false end
   self.raw=raw
-  local reset=self.id~=f[5] or f[4]=='Saved.'
+  local reset=self.id~=f[H.id] or f[H.message]=='Saved.'
   local resetName=reset or self.draftName==self.name
-  self.status,self.busy,self.message=f[2],f[3]=='1',f[4]
-  self.id,self.name,self.email=f[5],f[6],f[7]
+  self.status,self.busy,self.message=f[H.status],f[H.busy]=='1',f[H.message]
+  self.id,self.name,self.email=f[H.id],f[H.displayName],f[H.email]
   -- Whether deleting the account asks for its password (an OAuth-only account has none).
-  self.hasPassword=f[8]=='1'
+  self.hasPassword=f[H.hasPassword]=='1'
   -- Whether to ask the account, once, to choose its public name (its name may be its email's
   -- local part or its Google name). A host without the field never asks.
-  self.namePrompt=f[9]=='1'
+  self.namePrompt=f[H.namePrompt]=='1'
   self.savedRemaining=self.message=='Saved.' and 3 or nil
   if resetName then self.draftName=self.name end
   if self.status~='authenticated' then self.editing=false end

@@ -11,6 +11,7 @@ local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
 local Codec=require('ui.codec')
+local W=require('ui.wire_fields').online
 local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
@@ -276,21 +277,23 @@ function Online:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
   local rows=Codec.rows(raw)
-  local f=rows[1];if not f or #f<14 then return end
+  local H,P,K=W.header,W.seat,W.deck
+  local f=rows[1];if not f or #f<H.status then return end
   local was={step=self.step,seats=self.seats,status=self.status,message=self.message,notice=self.notice,
     countdown=self.countdown,deckPhase=self.deckPhase}
-  self.busy,self.message,self.code,self.role,self.link=f[3]=='1',f[4],f[5],f[6],f[7]
-  self.countdown,self.notice,self.deckPhase,self.name,self.account=tonumber(f[8]),f[9],f[10],f[11],f[12]
-  self.status=f[14]
+  self.busy,self.message,self.code,self.role,self.link=f[H.busy]=='1',f[H.message],f[H.code],f[H.role],f[H.link]
+  self.countdown,self.notice,self.deckPhase=tonumber(f[H.countdown]),f[H.notice],f[H.deckPhase]
+  self.name,self.account,self.status=f[H.name],f[H.account],f[H.status]
   local seats,decks,signature={},{},{}
   for i=2,#rows do
     local r=rows[i]
-    if r[1]=='P' and #r>=8 then
+    if r[1]=='P' and #r>=P.deckName then
       -- deckId: your own pick, when this client still knows it; hasDeck: whether one is picked.
-      seats[r[2]]={present=r[3]=='1',name=r[4],connected=r[5]=='1',ready=r[6]=='1',deckId=r[7],deckName=r[8],hasDeck=r[9]=='1'}
-    elseif r[1]=='D' and #r>=4 then
-      decks[#decks+1]={id=r[2],name=r[3],count=tonumber(r[4]) or 0,standard=r[5]=='1',expanded=r[6]=='1',
-        online=r[7]=='1',formatName=r[8] or ''}
+      seats[r[P.seat]]={present=r[P.present]=='1',name=r[P.name],connected=r[P.connected]=='1',ready=r[P.ready]=='1',
+        deckId=r[P.deckId],deckName=r[P.deckName],hasDeck=r[P.hasDeck]=='1'}
+    elseif r[1]=='D' and #r>=K.count then
+      decks[#decks+1]={id=r[K.id],name=r[K.name],count=tonumber(r[K.count]) or 0,standard=r[K.standard]=='1',
+        expanded=r[K.expanded]=='1',online=r[K.online]=='1',formatName=r[K.formatName] or ''}
       signature[#signature+1]=table.concat(r,'\t')
     end
   end
@@ -300,12 +303,12 @@ function Online:sync(raw)
   signature=table.concat(signature,'\n')
   local changed=signature~=self.signature
   if changed then self.signature=signature;self.decks=decks end
-  local say=self:react(was,f[2])
+  local say=self:react(was,f[H.step])
   if changed then self:makeCards(true) end
   self:build()
   if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
   -- Leaving a lobby lands back on the Create tab, which is a fresh lobby.
-  if f[2]=='menu' and was.step~='menu' then self:create() end
+  if f[H.step]=='menu' and was.step~='menu' then self:create() end
 end
 function Online:react(was,step)
   local say={}

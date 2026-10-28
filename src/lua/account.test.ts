@@ -5,6 +5,10 @@ import { USER } from "../test/fixtures";
 import { LuaAccount, SESSION_CHECK_MAX_AGE_MS } from "./account";
 import { messageWidth } from "./builder";
 import { encodeFields } from "./wire";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
+
+const A = (field: (typeof WIRE_ROWS.account.header.fields)[number]) =>
+  wireColumn(WIRE_ROWS.account.header, field);
 
 afterEach(() => vi.unstubAllGlobals());
 const setup = () => {
@@ -103,7 +107,7 @@ describe("Lua account adapter", () => {
     expect(call?.[1]?.credentials).toBe("include");
     expect(account.message).toBe("Saved.");
     const fields = String(publish.mock.lastCall?.[0]).split("\t").map(decodeURIComponent);
-    expect(fields[5]).toBe("Zoë");
+    expect(fields[A("displayName")]).toBe("Zoë");
   });
   it("saves without loading decks", async () => {
     const { impl, calls } = stubFetch({
@@ -136,18 +140,18 @@ describe("Lua account adapter", () => {
     const { account, publish } = setup();
     const fields = () => String(publish.mock.lastCall?.[0]).split("\t").map(decodeURIComponent);
     await account.refresh();
-    expect(fields()[8]).toBe("1");
+    expect(fields()[A("namePrompt")]).toBe("1");
     await account.command(encodeFields(["keep"]));
     const call = impl.mock.calls.find(([, init]) => init?.method === "PATCH");
     expect(JSON.parse(String(call?.[1]?.body))).toEqual({ displayName: "ash" });
     expect(account.message).toBe("Saved.");
-    expect(fields()[8]).toBe("0");
+    expect(fields()[A("namePrompt")]).toBe("0");
   });
   it("reads a server without the prompt field as not asking", async () => {
     stubFetch(session);
     const { account, publish } = setup();
     await account.refresh();
-    expect(String(publish.mock.lastCall?.[0]).split("\t")[8]).toBe("0");
+    expect(String(publish.mock.lastCall?.[0]).split("\t")[A("namePrompt")]).toBe("0");
   });
   it("saves a name by the server's rule: folded, collapsed and trimmed", async () => {
     const { impl } = stubFetch({ ...session, "PATCH /auth/me": () => json(USER) });
@@ -281,10 +285,10 @@ describe("Lua account deletion", () => {
     stubFetch({ "GET /auth/me": () => json({ ...USER, hasPassword: false }) });
     const { account, publish } = setup();
     await account.refresh();
-    expect(fields(publish)[7]).toBe("0");
+    expect(fields(publish)[A("hasPassword")]).toBe("0");
     stubFetch(session);
     await account.refresh();
-    expect(fields(publish)[7]).toBe("1");
+    expect(fields(publish)[A("hasPassword")]).toBe("1");
   });
   it("deletes with the password and ends signed out", async () => {
     const { impl } = stubFetch({

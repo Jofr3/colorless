@@ -197,6 +197,54 @@ export const WIRE_ROWS = {
     choice: { tags: ["Q"], fields: ["value", "label", "selected"] },
     field: { tags: ["F"], fields: ["key", "value"] },
   },
+  online: {
+    header: {
+      fields: [
+        "revision",
+        "step",
+        "busy",
+        "message",
+        "code",
+        "role",
+        "link",
+        "countdown",
+        "notice",
+        "deckPhase",
+        "name",
+        "account",
+        "canKick",
+        "status",
+      ],
+    },
+    /** One row per seat, `seat` being `you` or `opponent`. */
+    seat: {
+      tags: ["P"],
+      fields: ["seat", "present", "name", "connected", "ready", "deckId", "deckName", "hasDeck"],
+    },
+    deck: {
+      tags: ["D"],
+      fields: ["id", "name", "count", "standard", "expanded", "online", "formatName"],
+    },
+  },
+  sandbox: {
+    header: { fields: ["revision", "phase", "busy", "message", "first", "second"] },
+    deck: { tags: ["D"], fields: ["id", "name", "count"] },
+  },
+  account: {
+    header: {
+      fields: [
+        "revision",
+        "status",
+        "busy",
+        "message",
+        "id",
+        "displayName",
+        "email",
+        "hasPassword",
+        "namePrompt",
+      ],
+    },
+  },
 } as const satisfies Record<string, Record<string, RowKind>>;
 
 /** A row's columns in declared order, its tag first; a kind with several tags names the one. */
