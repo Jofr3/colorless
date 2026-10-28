@@ -176,3 +176,71 @@ export function raceBeforeBatch(
     },
   });
 }
+
+/** The message of a spent daily write quota, as D1 words it; errorFields logs it as `quota`. */
+export const SPENT_QUOTA = "D1_ERROR: Exceeded maximum rows written";
+
+export type D1Failure = {
+  /** The statements that fail: those whose SQL matches, run alone or inside a batch. Every
+      statement when neither this nor `batch` is given. */
+  sql?: RegExp;
+  /** Every batch fails, whatever it holds. Single statements still run unless `sql` matches. */
+  batch?: boolean;
+  /** What a failing call rejects with: a message (a new Error each time) or one error. A spent
+      write quota by default. */
+  error?: string | Error;
+};
+
+/**
+ * `db`, except that the calls `failure` names reject as D1 does in an outage or on a spent quota.
+ * Every other statement runs on the real database.
+ */
+export function failingD1(db: D1Database, failure: D1Failure = {}): D1Database {
+  const { error = SPENT_QUOTA } = failure;
+  const fails = (query: string) =>
+    failure.sql === undefined ? failure.batch !== true : failure.sql.test(query);
+  const reject = async () => {
+    throw typeof error === "string" ? new Error(error) : error;
+  };
+  // The statements handed out to fail, so that a batch holding one fails too.
+  const failing = new WeakSet<D1PreparedStatement>();
+  const failingStatement = (statement: D1PreparedStatement): D1PreparedStatement => {
+    const wrapped = new Proxy(statement, {
+      get(target, property) {
+        if (property === "bind") {
+          return (...values: unknown[]) => failingStatement(target.bind(...values));
+        }
+        if (
+          property === "first" ||
+          property === "run" ||
+          property === "all" ||
+          property === "raw"
+        ) {
+          return reject;
+        }
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    failing.add(wrapped);
+    return wrapped;
+  };
+  return new Proxy(db, {
+    get(target, property) {
+      if (property === "prepare") {
+        return (query: string) => {
+          const statement = target.prepare(query);
+          return fails(query) ? failingStatement(statement) : statement;
+        };
+      }
+      if (property === "batch") {
+        return (statements: D1PreparedStatement[]) =>
+          failure.batch === true || statements.some((statement) => failing.has(statement))
+            ? reject()
+            : target.batch(statements);
+      }
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}

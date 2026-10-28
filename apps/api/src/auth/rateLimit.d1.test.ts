@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { users } from "../db/schema";
 import { resetLogThrottle } from "../http/log";
-import { useTestD1 } from "../testing/d1";
+import { failingD1, useTestD1 } from "../testing/d1";
 import {
   ACCOUNT_MAX_ATTEMPTS,
   countFailure,
@@ -120,17 +120,8 @@ describe("limitAttempt", () => {
     await d1()
       .db.prepare("INSERT INTO users (id, email, display_name) VALUES ('u', 'a@b.co', 'A')")
       .run();
-    const failing = new Proxy(d1().db, {
-      get(target, property) {
-        if (property === "batch") {
-          return () => Promise.reject(new Error("D1_ERROR: rows written limit exceeded"));
-        }
-        const value = Reflect.get(target, property);
-        return typeof value === "function" ? value.bind(target) : value;
-      },
-    });
     const keys = await rateLimitKeys("login", IP, "ash@example.com");
-    const orm = drizzle(failing);
+    const orm = drizzle(failingD1(d1().db, { batch: true }));
     const lookup = vi.fn(() => orm.select({ id: users.id }).from(users).limit(1));
     expect(await limitAttempt(orm, keys, lookup, NOW)).toEqual({
       allowed: false,
@@ -173,13 +164,7 @@ describe("countFailure (AU6)", () => {
 
   it("caps nothing, and logs, when D1 fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const failing = new Proxy(d1().db, {
-      get(target, property) {
-        if (property === "batch") return () => Promise.reject(new Error("D1_ERROR: boom"));
-        const value = Reflect.get(target, property);
-        return typeof value === "function" ? value.bind(target) : value;
-      },
-    });
+    const failing = failingD1(d1().db, { batch: true, error: "D1_ERROR: boom" });
     const keys = await rateLimitKeys("login", IP, "ash@example.com");
     expect(await fail(keys, NOW, failing)).toEqual({ capped: false });
     expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([

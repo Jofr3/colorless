@@ -3,6 +3,7 @@ import type { Env } from "../env";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import {
+  failingD1,
   raceBeforeBatch,
   raceBeforeFirstBatch,
   seedCards,
@@ -361,16 +362,7 @@ describe("register and login rate limiting", () => {
       201,
     );
     // Every batch fails, as on a spent daily write quota; single reads still work.
-    const db = new Proxy(d1().db, {
-      get(target, property) {
-        if (property === "batch") {
-          return () => Promise.reject(new Error("D1_ERROR: rows written limit exceeded"));
-        }
-        const value = Reflect.get(target, property);
-        return typeof value === "function" ? value.bind(target) : value;
-      },
-    });
-    const env = d1().env({ DB: db });
+    const env = d1().env({ DB: failingD1(d1().db, { batch: true }) });
     const guesses = [...Array.from({ length: 12 }, (_, i) => `wrong-guess-${i}`), body.password];
     for (const password of guesses) {
       const res = await app.request("/auth/login", postJson({ ...body, password }, headers), env);

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import worker from "../index";
-import { useTestD1 } from "../testing/d1";
+import { failingD1, useTestD1 } from "../testing/d1";
 import { sweepExpired } from "./sweep";
 
 const d1 = useTestD1();
@@ -79,11 +79,7 @@ describe("the daily sweep", () => {
 
   it("logs and rethrows a D1 failure, so the cron run shows as failed", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const env = d1().env({
-      DB: {
-        prepare: () => ({ bind: () => ({ run: () => Promise.reject(new TypeError("down")) }) }),
-      },
-    });
+    const env = d1().env({ DB: failingD1(d1().db, { error: new TypeError("down") }) });
     const controller = { scheduledTime: NOW, cron: "17 4 * * *", noRetry: () => {} };
     await expect(worker.scheduled(controller, env)).rejects.toThrow("down");
     expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([

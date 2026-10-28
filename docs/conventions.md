@@ -114,7 +114,7 @@ only the conclusion.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
   seeded play-forward sweeps (`onStep` sees each accepted action's events); `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
   for LobbyDO (its `dispose` fails a test whose DO sent a frame `lobbyServerMessageSchema`
-  refuses); `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1;
+  refuses); `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1, with `failingD1` there for one whose statements or batches fail;
   `openBridge` (`src/seam/lobbyBridge.ts`) for the web client's channel, LobbyClient and Lua
   online adapters against that real LobbyDO, over sockets that drop, reopen or go half-open, on
   fake timers. A suite outside the api imports the harness as `@colorless/api/testing/lobbyHarness`

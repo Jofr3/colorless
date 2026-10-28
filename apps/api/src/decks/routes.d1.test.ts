@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import {
+  failingD1,
   raceBeforeBatch,
   raceBeforeFirstBatch,
   type SignedIn,
@@ -620,23 +621,8 @@ describe("deck card lists", () => {
 describe("a failed deck query", () => {
   it("answers a JSON 500 and logs the route and the SQL, never the bound values", async () => {
     const deck = await createDeck("Secret Deck Name", [card("sv01-004", 4)]);
-    const { db } = d1();
     // The session lookup reads; the delete fails as on a spent quota.
-    const spent = async () => {
-      throw new Error("D1_ERROR: Exceeded maximum rows written");
-    };
-    const failing = new Proxy(db, {
-      get(target, property) {
-        if (property === "prepare") {
-          return (query: string) =>
-            /^delete from "decks"/i.test(query)
-              ? { bind: () => ({ all: spent, raw: spent, run: spent, first: spent }) }
-              : target.prepare(query);
-        }
-        const value = Reflect.get(target, property);
-        return typeof value === "function" ? value.bind(target) : value;
-      },
-    });
+    const failing = failingD1(d1().db, { sql: /^delete from "decks"/i });
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await app.request(
       `/decks/${deck.id}`,
