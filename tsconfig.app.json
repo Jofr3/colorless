@@ -7,5 +7,7 @@
     "types": ["vite/client"]
   },
   "include": ["src"],
+  // The seam suites run web client code against the api's, which needs the Workers types too.
+  "exclude": ["src/seam"],
   "references": [{ "path": "./packages/engine" }, { "path": "./packages/schema" }]
 }

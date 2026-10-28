@@ -114,7 +114,13 @@ only the conclusion.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
   seeded play-forward sweeps (`onStep` sees each accepted action's events); `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
   for LobbyDO (its `dispose` fails a test whose DO sent a frame `lobbyServerMessageSchema`
-  refuses); `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
+  refuses); `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1;
+  `openBridge` (`src/seam/lobbyBridge.ts`) for the web client's channel, LobbyClient and Lua
+  online adapters against that real LobbyDO, over sockets that drop, reopen or go half-open, on
+  fake timers. A suite outside the api imports the harness as `@colorless/api/testing/lobbyHarness`
+  (never a relative import across roots); `src/seam` is typechecked by `tsconfig.seam.json`, with
+  the DOM and the Workers types, and `worker-bundle.ts --check` fails if the Worker bundle carries
+  a test-only module.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;

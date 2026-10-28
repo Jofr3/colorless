@@ -58,12 +58,18 @@ function createNoopChannel(): LobbyChannel {
 }
 
 /** Open the transport for a given lobby code. `onLobbyClosed` runs once if the server closes the
-    lobby for good (`LOBBY_WS_CLOSED`), after which the channel stops reconnecting. */
+    lobby for good (`LOBBY_WS_CLOSED`), after which the channel stops reconnecting. `openSocket`
+    opens each socket (the browser's WebSocket by default; the seam suites pass one wired to the
+    lobby DO, as one tab's cookie would upgrade it). */
 export function createLobbyChannel(
   code: string,
-  { onLobbyClosed }: { onLobbyClosed?: () => void } = {},
+  {
+    onLobbyClosed,
+    openSocket,
+  }: { onLobbyClosed?: () => void; openSocket?: (url: string) => WebSocket } = {},
 ): LobbyChannel {
-  if (typeof WebSocket === "undefined") return createNoopChannel();
+  if (openSocket === undefined && typeof WebSocket === "undefined") return createNoopChannel();
+  const socketFor = openSocket ?? ((url: string) => new WebSocket(url));
 
   const url = apiWebSocketUrl(`/lobby/${code}/ws`);
   const handlers = new Set<(message: LobbyMessage) => void>();
@@ -97,7 +103,7 @@ export function createLobbyChannel(
   };
 
   const connect = () => {
-    const ws = new WebSocket(url);
+    const ws = socketFor(url);
     socket = ws;
 
     ws.onopen = () => {

@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.seam.json" },
     { "path": "./tsconfig.node.json" },
     { "path": "./tsconfig.scripts.json" },
     { "path": "./frontend/lua/web" },
