@@ -250,10 +250,12 @@ export class LuaOnlineMatch implements TableSource {
     const over = !!this.seen?.outcome;
     const opponent = this.client.opponent;
     const sent = this.sentRematch === this.matchId();
+    // A seat refused on reconnect (a signed-out account) leaves this tab watching: no rematch.
+    const seated = !this.watching();
     const flags: LifecycleFlag[] = [];
     if (this.seen && !over) flags.push("concede");
-    if (over) flags.push("rematch");
-    if (over && sent) flags.push("rematch-sent");
+    if (over && seated) flags.push("rematch");
+    if (over && seated && sent) flags.push("rematch-sent");
     flags.push("leave");
     return {
       flags,
@@ -265,8 +267,11 @@ export class LuaOnlineMatch implements TableSource {
       error: this.error !== this.muted ? this.error : null,
     };
   }
+  private watching() {
+    return this.client.state.status === "spectating";
+  }
   rematch() {
-    if (!this.seen?.outcome || this.sentRematch === this.matchId()) return;
+    if (!this.seen?.outcome || this.watching() || this.sentRematch === this.matchId()) return;
     this.sentRematch = this.matchId();
     // The opponent asked first and the lobby already left the game: agree by readying.
     if (this.client.state.snapshot?.phase === "in-game") this.client.requestRematch();

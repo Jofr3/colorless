@@ -132,6 +132,11 @@ snapshot({phase='gameOver',outcome='loss',message="You're signed out. Sign in ag
 assert(not sim:rematchPending(),'A refused rematch can be pressed again')
 assert(sim.overlay.controls[rematch].label=='Rematch' and not sim.overlay.controls[rematch].disabled,'Rematch is live after a refusal')
 draw(2)
+-- Watching after the refusal (the seat refused on reconnect): Rematch is gone, not Waiting...
+sim.rematchSent=true
+snapshot({phase='gameOver',outcome='loss',L=row('L','online','false','','','leave','partial')})
+assert(not sim:rematchPending(),'Losing the seat drops a pending rematch')
+assert(sim.overlay.controls[rematch].label=='Rematch' and sim.overlay.controls[rematch].disabled,'A watcher cannot ask for a rematch')
 sim.rematchSent=true
 snapshot({match='ABCD:2'})
 assert(not sim.rematchSent and not sim:rematchPending(),'A new matchId resets the rematch')

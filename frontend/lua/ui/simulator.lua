@@ -249,7 +249,8 @@ function Simulator:apply(m)
   if m.mode then self.mode=m.mode end
   if m.flags then self.flags=m.flags end
   -- A refused rematch comes back as a message with the sent flag gone: Rematch is live again.
-  if self.rematchSent and m.flags and not m.flags['rematch-sent'] and m.message~='' then self.rematchSent=nil end
+  -- So does a seat lost on reconnect (a signed-out account), which takes Rematch away.
+  if self.rematchSent and m.flags and not m.flags['rematch-sent'] and (m.message~='' or not m.flags.rematch) then self.rematchSent=nil end
 end
 -- boss_warning_text: two floating DynaTexts over the table while the opponent
 -- is disconnected. The forfeit clock counts down from receipt, so presence

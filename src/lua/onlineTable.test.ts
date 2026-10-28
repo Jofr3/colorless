@@ -488,18 +488,23 @@ describe("LuaOnlineMatch", () => {
 
   it("a refused rematch says why and lets Rematch be pressed again", async () => {
     const t = await table();
-    t.push(
-      frame(t.state, (v) => {
-        v.phase = { kind: "gameOver" };
-        v.outcome = { result: "win", winner: "you", reason: "conceded" };
-      }),
-    );
+    const over = frame(t.state, (v) => {
+      v.phase = { kind: "gameOver" };
+      v.outcome = { result: "win", winner: "you", reason: "conceded" };
+    });
+    t.push(over);
     t.sim.command("rematch");
     expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
     const reason = "You're signed out. Sign in again to play another game.";
     t.fake().push({ kind: "reject-action", reason });
     expect(t.tagged("L")[0]?.[5]).toBe("rematch,leave");
     expect(t.rows()[0]?.[6]).toBe(reason);
+    t.sim.command("rematch");
+    expect(t.fake().posts.filter((p) => p.kind === "rematch")).toHaveLength(2);
+    // The refused seat reconnects without its account and can only watch: no Rematch to press.
+    t.fake().push({ kind: "reject", to: t.me, reason: "full" });
+    t.push(over);
+    expect(t.tagged("L")[0]?.[5]).toBe("leave");
     t.sim.command("rematch");
     expect(t.fake().posts.filter((p) => p.kind === "rematch")).toHaveLength(2);
   });
