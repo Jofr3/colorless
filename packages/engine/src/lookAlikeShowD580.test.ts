@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { resolvedByAnyReader } from "./censusAttackCorpus";
 import { supporterEffectOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
@@ -652,29 +652,39 @@ const MOVES_P2_HAND = new Set([
 ]);
 
 describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter names, through the attack", () => {
-  const parked = new Map<string, string[]>();
-
-  it("every name is offered on its board, used, and SETTLES — no throw, every nested park answered, the turn passed", () => {
-    const refusedOnBase: string[] = [];
+  // Every name is played through once, before the tests that read it, so each stands alone.
+  const population: {
+    name: string;
+    offeredOnBase: boolean;
+    card: string;
+    declared: ReturnType<typeof run>;
+    picked: ReturnType<typeof run>;
+    done: ReturnType<typeof settle>;
+  }[] = [];
+  beforeAll(() => {
     for (const [id, name] of SUPPORTERS) {
       const base = board([id, ITEM, FILLER, FILLER, PLAIN]);
-      if (opponentSupporterOffer(base, { seat: "p1" }).length === 0) refusedOnBase.push(name);
+      const offeredOnBase = opponentSupporterOffer(base, { seat: "p1" }).length > 0;
       const state = unlocked(name, base);
       const card = state.players.p2.hand[0] ?? "";
       const declared = run(state, look);
+      const picked = run(declared.state, use(card));
+      population.push({ name, offeredOnBase, card, declared, picked, done: settle(picked.state) });
+    }
+  });
+
+  it("every name is offered on its board, used, and SETTLES — no throw, every nested park answered, the turn passed", () => {
+    for (const { name, card, declared, picked, done } of population) {
       const p = prompt(declared.state);
       expect(
         p.kind === "chooseCards" && p.dest === "use" && p.candidates.includes(card),
         name,
       ).toBe(true);
-      const picked = run(declared.state, use(card));
       expect(picked.events, name).toContainEqual({
         type: "SUPPORTER_EFFECT_USED",
         seat: "p1",
         uid: card,
       });
-      const done = settle(picked.state);
-      parked.set(name, done.parks);
       const all = [...declared.events, ...picked.events, ...done.events];
       expect(
         done.state.phase.kind === "turn:action" || done.state.phase.kind === "gameOver",
@@ -690,6 +700,7 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
         expect(done.state.players.p2.discard, name).not.toContain(card);
       }
     }
+    const refusedOnBase = population.filter((p) => !p.offeredOnBase).map((p) => p.name);
     expect(refusedOnBase.sort()).toEqual(["Briar", "Cassiopeia", "Hassel", "Team Rocket's Archer"]);
   });
 
@@ -697,7 +708,7 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
     // The prompt kinds each copied program parked, in order, on the population board, every one
     // answered by `autoAnswer` (taking something where allowed). An empty list is a program that
     // resolved inline on this board (a draw, a heal, a whiffing search over a deck with no match).
-    expect(Object.fromEntries(parked)).toEqual({
+    expect(Object.fromEntries(population.map((p) => [p.name, p.done.parks]))).toEqual({
       Amarys: [],
       "Bianca's Devotion": [],
       "Billy & O'Nare": [],

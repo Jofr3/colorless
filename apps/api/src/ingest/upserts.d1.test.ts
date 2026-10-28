@@ -6,12 +6,22 @@ import cardPokemonAbility from "@colorless/schema/tcgdex-fixtures/card-pokemon-a
 import cardTrainer from "@colorless/schema/tcgdex-fixtures/card-trainer-sv01-181.json";
 import serieFull from "@colorless/schema/tcgdex-fixtures/serie-full-sv.json";
 import setFull from "@colorless/schema/tcgdex-fixtures/set-full-sv01.json";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { useTestD1 } from "../testing/d1";
 import { type CardRow, mapCard, mapSerie, mapSet } from "./map";
 import { cardsUpsertSql, reprintLegalitySql, seriesUpsertSql, setsUpsertSql } from "./upserts";
 
 const d1 = useTestD1();
+
+// The shared reset keeps catalog rows, and these tests read verdicts across every row.
+beforeEach(async () => {
+  const { db } = d1();
+  await db.batch([
+    db.prepare("DELETE FROM cards"),
+    db.prepare("DELETE FROM sets"),
+    db.prepare("DELETE FROM series"),
+  ]);
+});
 
 const pokemon = mapCard(tcgdexCardSchema.parse(cardPokemonAbility));
 const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
@@ -81,7 +91,6 @@ describe("ingest upserts on D1", () => {
 
   it("settles a new print's verdict with the set-scoped pass alone", async () => {
     await seedSet();
-    // Catalog rows outlive each test here, so the new print takes an id no other test wrote.
     const newPrint: CardRow = { ...rotatedTrainer, id: "sv01-998", localId: "998" };
     await run(cardsUpsertSql([legalReprint]));
     await run(cardsUpsertSql([newPrint]));
