@@ -1,3 +1,9 @@
+import {
+  CARD_ID_MAX,
+  DECK_NAME_MAX,
+  MAX_DECK_CARD_ENTRIES,
+  patchDeckRequestSchema,
+} from "@colorless/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetchResponse as stubFetch, stubFetchSequence } from "../test/fetchStub";
 import {
@@ -104,6 +110,27 @@ describe("request plumbing", () => {
     const plain = stubFetch(json({ id: "d1" }));
     await patchDeck("d1", { name: "x" });
     expect(requestInit(plain).keepalive).toBeFalsy();
+  });
+
+  it("keeps the largest deck save the API accepts inside the browsers' keepalive quota", async () => {
+    // Chromium and Firefox refuse a keepalive fetch whose body would take the page's in-flight
+    // keepalive bytes past 64 KiB; the builder sends one save at a time.
+    const worst = "\u0001"; // JSON spells it in six bytes
+    const ids = Array.from({ length: MAX_DECK_CARD_ENTRIES }, (_, i) =>
+      String(i).padStart(CARD_ID_MAX, "x"),
+    );
+    const body = {
+      name: worst.repeat(DECK_NAME_MAX),
+      format: worst.repeat(32),
+      cards: ids.map((cardId) => ({ cardId, count: 99 })),
+      chosenCoverCardId: ids[0] ?? null,
+      version: Number.MAX_SAFE_INTEGER,
+    };
+    expect(patchDeckRequestSchema.safeParse(body).success).toBe(true);
+    const mock = stubFetch(json({ id: "d1" }));
+    await patchDeck("d1", body, { keepalive: true });
+    const bytes = new TextEncoder().encode(requestInit(mock).body as string).length;
+    expect(bytes).toBeLessThan(64 * 1024);
   });
 
   it("resolves 204 responses to undefined", async () => {
