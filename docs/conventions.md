@@ -163,6 +163,13 @@ only the conclusion.
   is 42. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
   `storedAt`/`migrateStored`/`mustMigrate` fixtures; the DO's read is tested in
   `apps/api/src/lobby/matchLoad.test.ts`.
+  - **A hand-written step also gets one real record** (reliability audit EN6). `storedAt` strips
+    keys from a current state, and the same person writes it and the step, so a wrong idea of the
+    old shape passes both. Before changing the engine, write one parked mid-turn state from a
+    bench-deck walk (`actionFuzzReal.test.ts`'s setup) with the pre-change engine, by a script, and
+    commit it as a fixture with the version it was written at. The step's test migrates it and
+    plays 20 steps with `fixtures/fuzz.ts`'s checks. Delete the fixture when its version retires.
+    An `unchanged` or `withDefaultKeys` step needs none.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag
