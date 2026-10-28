@@ -14,7 +14,7 @@
  * way out, failing or not.
  *
  *   CHROMIUM=<binary> BALATRO_SOURCE=<dir> bun run e2e [--gpu] [--keep]
- *   FIREFOX=<binary> BALATRO_SOURCE=<dir> bun run e2e --firefox [--keep]
+ *   FIREFOX=<binary> BALATRO_SOURCE=<dir> bun run e2e --firefox [--gpu] [--keep]
  *
  * CHROMIUM defaults to the first of chromium, chromium-browser, google-chrome on PATH, FIREFOX to
  * firefox. Headless Firefox makes no WebGL context, so --firefox runs it on a private Xvfb (XVFB,
@@ -592,9 +592,10 @@ async function builderSaves(owner: Page) {
 
 const ONLINE = WIRE_ROWS.online;
 async function lobby(host: Page, guest: Page, hostDeck: string, guestDeck: string) {
+  // Lua opens /online on its Create tab, which makes the lobby (frontend/lua/ui/online.lua). An
+  // `open` sent after that lobby exists would drop it for a second one, after the guest has the
+  // first code.
   await open(host, "/online");
-  await lua(host, "online", "open");
-  await lua(host, "online", "create");
   const code = await waitFor<string>(
     host,
     "a lobby code",
