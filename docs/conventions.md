@@ -86,7 +86,9 @@ only the conclusion.
   `vi.useFakeTimers`, `vi.setSystemTime`, `vi.spyOn`, `vi.unstubAll*` or
   `vi.resetModules`, or names `globalThis`, runs in `app-isolated`; every other
   app file runs in `app`, without isolation, so it must not leave other
-  module-level state behind either. Vitest caches transformed modules in
+  module-level state behind either. Both shared projects undo stubbed globals,
+  stubbed env vars and spies after every test, so a stub a helper installs (for
+  example `stubFetch`) lasts one test there. Vitest caches transformed modules in
   `node_modules/.experimental-vitest-cache` (`bunx vitest --clearCache` empties it).
 - **The engine remembers derived facts by object identity**: `disabledAbilityUids` per
   `GameState` (`DISABLED_ABILITY_UIDS`, `continuous.ts`), `cardOfUid`'s faces per `cardIdByUid`

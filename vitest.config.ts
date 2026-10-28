@@ -21,7 +21,8 @@ const APP_ROOTS = [
 // An app suite that replaces a global, an env var, the clock or a module, or
 // touches `globalThis` itself, can leak into the next file sharing its worker,
 // so it runs isolated; `vi.unstubAll*` marks one whose stubs come from a helper.
-// The rest share one module graph per worker, as the engine suites do.
+// The rest share one module graph per worker, as the engine suites do; a stub or spy a helper
+// installs there is undone after each test, since the file's own text cannot reveal it.
 const NEEDS_ISOLATION =
   /\bvi\.(mock|doMock|stubGlobal|stubEnv|unstubAll\w*|useFakeTimers|setSystemTime|spyOn|resetModules)\b|\bglobalThis\b/;
 
@@ -31,6 +32,13 @@ const isolatedAppSuites = APP_ROOTS.flatMap((root) =>
     .map((file) => `${root}/${file}`)
     .filter((file) => NEEDS_ISOLATION.test(readFileSync(join(ROOT, file), "utf8"))),
 );
+
+const sharedGraph = {
+  isolate: false,
+  unstubGlobals: true,
+  unstubEnvs: true,
+  restoreMocks: true,
+} as const;
 
 export default defineConfig({
   test: {
@@ -50,7 +58,7 @@ export default defineConfig({
           // Engine suites use no mocks, stubs or fake timers, so files can share
           // one module graph per worker; isolating them costs most of the run in
           // re-importing the engine.
-          isolate: false,
+          ...sharedGraph,
         },
       },
       {
@@ -60,7 +68,7 @@ export default defineConfig({
           setupFiles,
           include: APP_ROOTS.map((root) => `${root}/**/*.{test,spec}.ts`),
           exclude: [...configDefaults.exclude, ...isolatedAppSuites],
-          isolate: false,
+          ...sharedGraph,
         },
       },
       {
