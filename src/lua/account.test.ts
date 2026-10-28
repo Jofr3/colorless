@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { REQUEST_TIMEOUT_MS } from "../lib/api";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
 import { LuaAccount, SESSION_CHECK_MAX_AGE_MS } from "./account";
@@ -51,6 +52,26 @@ describe("Lua account adapter", () => {
     await account.refresh();
     await account.command(encodeFields(["refresh"]));
     expect(calls).toEqual(["GET /auth/me", "GET /auth/me"]);
+  });
+  it("gives up on a session check that never answers, so sign-in still works", async () => {
+    vi.useFakeTimers();
+    try {
+      const { calls } = stubFetch({
+        "GET /auth/me": () => new Promise<Response>(() => {}),
+        "POST /auth/login": () => json(USER),
+      });
+      const { account } = setup();
+      const boot = account.refresh();
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      await boot;
+      expect(account.status).toBe("error");
+      expect(account.busy).toBe(false);
+      await account.authenticate("login", "ash@example.com", "correct horse battery", "");
+      expect(calls).toEqual(["GET /auth/me", "POST /auth/login"]);
+      expect(account.status).toBe("authenticated");
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it("shows a failed Google sign-in once, on the next anonymous refresh", async () => {
     stubFetch({ "GET /auth/me": () => json({}, 401) });

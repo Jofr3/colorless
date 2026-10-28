@@ -226,6 +226,32 @@ describe("the simulator save", () => {
     expect(saveSimulator(src.host)).toBe(false);
   });
 
+  it("drops the last match's save when a new match's write does not stick", () => {
+    const { src } = playSimulatorGame(11, { maxMoves: 30 });
+    const abandoned = src.host.startedAt;
+    expect(loadSimulatorSave()?.startedAt).toBe(abandoned);
+    const write = localStorage.setItem;
+    localStorage.setItem = () => {
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+    expect(src.restart()).toBeNull();
+    expect(src.persist()).toBe(false);
+    expect(storage.has(SAVE_KEY)).toBe(false);
+    localStorage.setItem = write;
+    expectDeckPicker();
+  });
+
+  it("keeps an earlier point of the same match when a later write does not stick", () => {
+    const { src } = playSimulatorGame(11, { maxMoves: 5 });
+    const before = storage.get(SAVE_KEY);
+    localStorage.setItem = () => {
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+    expect(saveSimulator({ ...src.host, actions: [...src.host.actions] })).toBe(false);
+    expect(storage.get(SAVE_KEY)).toBe(before);
+    expect(loadSimulatorSave()?.startedAt).toBe(src.host.startedAt);
+  });
+
   it("stays within its size budget over a whole game at a pinned seed, and restores it", () => {
     const budget = new Map([
       [11, 20_000],

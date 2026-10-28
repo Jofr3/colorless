@@ -57,7 +57,15 @@ export function saveSimulator(host: HostState): boolean {
     fingerprint: fingerprintOf(host.latestTurn.game),
   };
   lastLoad = null;
-  return writePersisted(SIMULATOR_SAVE_KEY, `${head},${JSON.stringify(rest).slice(1)}`);
+  const stored = writePersisted(SIMULATOR_SAVE_KEY, `${head},${JSON.stringify(rest).slice(1)}`);
+  // A write that did not stick leaves the save before it. An earlier point of this match is still
+  // worth resuming; another match's is one the player left, which a reload must not bring back.
+  // With two tabs on the simulator, the other tab's match counts as another match.
+  const ownMatch = (raw: string) => raw.startsWith(`${head},`);
+  if (!stored && !readPersisted(SIMULATOR_SAVE_KEY, ownMatch, true)) {
+    removePersisted(SIMULATOR_SAVE_KEY);
+  }
+  return stored;
 }
 
 export function clearSimulatorSave(): void {

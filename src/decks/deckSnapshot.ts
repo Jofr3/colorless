@@ -4,7 +4,7 @@
 // the card ORDER (which decides whether a save fires at all) and the cover PIN
 // (which decides whether the server accepts it).
 
-import type { DeckCard } from "@colorless/schema";
+import type { Deck, DeckCard } from "@colorless/schema";
 
 /** Name kept pre-trimmed so it either matches the server's own trim or is
     omitted (empty) from the PATCH body. */
@@ -41,4 +41,15 @@ export function toSnapshot(
       .map(([cardId, count]) => ({ cardId, count }))
       .sort((a, b) => a.cardId.localeCompare(b.cardId)),
   };
+}
+
+/** The snapshot of a deck as the server sent it, made by the same rules as the editor's, so the two
+    compare equal when they hold the same deck. A deck without a format plays Standard. */
+export function savedSnapshot(deck: Deck): DeckSnapshot {
+  return toSnapshot(
+    deck.name,
+    deck.format ?? "standard",
+    new Map(deck.cards.map((entry) => [entry.cardId, entry.count])),
+    deck.chosenCoverCardId,
+  );
 }

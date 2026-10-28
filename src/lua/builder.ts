@@ -33,8 +33,8 @@ import {
   illegalCardNames,
   type Deck,
 } from "../decks/deckMath";
-import { createDeckSaver, type DeckSaver } from "../decks/deckSaver";
-import { toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
+import { createDeckSaver, type DeckSaver, outcomeUnknown } from "../decks/deckSaver";
+import { savedSnapshot, toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
@@ -161,6 +161,8 @@ export class LuaBuilder {
   private acknowledged = "";
   private dirty = false;
   private leaving = false;
+  /** Set while persistNow() fires a save, which then outlives the page. */
+  private keepalive = false;
   private importing = false;
   private importGeneration = 0;
   // Catalog pages for the current query, keyed by page; cleared when it changes.
@@ -481,26 +483,51 @@ export class LuaBuilder {
       this.selected = "";
       this.details = "";
       this.saver?.dispose();
-      const initial = this.snapshot();
+      const initial = savedSnapshot(data);
       this.acknowledged = JSON.stringify(initial);
       this.dirty = false;
       this.saveStatus = "";
       // Saves are serialized, so each one is made from the version the previous one left.
       let version = data.version;
+      // The saves since the last acknowledged one that got no answer: the server may hold any of them.
+      const unconfirmed = new Set<string>();
+      const patch = (snapshot: DeckSnapshot) =>
+        api.patchDeck(
+          id,
+          { ...snapshot, name: snapshot.name || undefined, version },
+          { keepalive: this.keepalive },
+        );
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
           if (!live() || !this.user) throw new Error("Session changed");
+          const key = JSON.stringify(snapshot);
           try {
-            const result = await api.patchDeck(id, {
-              ...snapshot,
-              name: snapshot.name || undefined,
-              version,
-            });
+            let result: SavedDeck;
+            try {
+              result = await patch(snapshot);
+            } catch (error) {
+              // A 409 carrying one of this tab's unanswered saves is that save landing, not
+              // another device: take its version and send the current edits on top of it,
+              // unless they are what landed.
+              const latest = conflictingDeck(error);
+              const landed = latest ? JSON.stringify(savedSnapshot(latest)) : "";
+              if (!latest || !unconfirmed.has(landed) || !live()) throw error;
+              version = latest.version;
+              unconfirmed.clear();
+              this.acknowledged = landed;
+              result = landed === key ? latest : await patch(snapshot);
+            }
             version = result.version;
-            if (live()) this.acknowledged = JSON.stringify(snapshot);
+            unconfirmed.clear();
+            if (live()) this.acknowledged = key;
             return result;
           } catch (error) {
+            // The server may or may not hold this snapshot, so every state counts as unsaved.
+            if (outcomeUnknown(error)) {
+              unconfirmed.add(key);
+              if (live()) this.acknowledged = "";
+            }
             // Another tab or device saved first. Its copy wins and this one's unsaved edits go
             // (the user's call, over offering to overwrite). The reload starts a new epoch, which
             // silences this saver's status callback and any save queued behind this one.
@@ -710,6 +737,24 @@ export class LuaBuilder {
     this.saver?.schedule(this.snapshot());
     this.emit();
   }
+  /** Whether leaving the page now could lose edits: some are unsaved, or a save is still on its way. */
+  hasUnsavedEdits() {
+    return this.id !== "" && this.phase === "ready" && (this.dirty || this.saver?.idle() === false);
+  }
+  /** Send the pending edits now, in a request that outlives the page: it is being hidden, and may be
+      discarded, or closed. A save already in flight or backing off is left to finish. */
+  persistNow() {
+    this.keepalive = true;
+    try {
+      this.saver?.flush();
+    } finally {
+      this.keepalive = false;
+    }
+  }
+  /** Send edits whose save failed again, as when the network comes back. */
+  retrySave() {
+    this.saver?.flush();
+  }
   navigate(done: () => void) {
     if (this.dirty) {
       this.pendingExit = done;
@@ -735,7 +780,7 @@ export class LuaBuilder {
   /** Commands that need a loaded deck; while it loads only `retry` applies. */
   private readonly readyCommands = new Map<string, Command>([
     ["preview-cards", (a, b) => this.onPreviewCards(a, b)],
-    ["retry-save", () => this.saver?.flush()],
+    ["retry-save", () => this.retrySave()],
     ["retry", () => this.onRetry()],
     ["name", (a) => this.onName(a)],
     ["format", () => this.onFormat()],

@@ -11,11 +11,17 @@ import type { ArtRequest } from "../host/bridgeProtocol";
 import { MAILBOXES } from "../host/mailboxes";
 import { type Route, Router, pageLabel, pageTitle } from "../host/router";
 import { type BridgeScreen, HostShell } from "../host/shell";
+import { reloadUnlessRecent } from "../host/reloadThrottle";
+import { guardUnsavedEdits } from "../host/unsavedEdits";
 
 const host = window.colorlessHost;
 
 const shell = new HostShell(document, host, {
-  command: (screen, raw) => void screens[screen].command(raw),
+  // A command that rejects is reported here; HostShell reports one that throws.
+  command: (screen, raw) =>
+    void Promise.resolve(screens[screen].command(raw)).catch((error: unknown) =>
+      reportError(`run a ${screen} command`, error),
+    ),
   navigate: (page) => router.navigate(page),
   // Credentials stay in the native browser inputs and the API client. Lua receives only the
   // email, the name and a masked password.
@@ -47,17 +53,7 @@ const builder = new LuaBuilder(
   () => route("decks"),
   wantArt,
 );
-window.addEventListener("beforeunload", (event) => {
-  if (
-    builder.id &&
-    builder.phase === "ready" &&
-    builder.saveStatus &&
-    builder.saveStatus !== "saved"
-  ) {
-    void builder.command("retry-save");
-    event.preventDefault();
-  }
-});
+guardUnsavedEdits({ window, document }, builder);
 const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
 const sandbox = new LuaSandbox(publishTo("sandbox"), async () => {
   const { launchSandbox } = await import("./sandboxLaunch");
@@ -109,14 +105,10 @@ setSessionRecoveryHandler(async () => {
  * onto the new build, at most once a minute so a broken build cannot loop. */
 function screenLoadFailed(error: unknown) {
   reportError("load a screen", error);
-  const key = "colorless:screen-reload";
-  try {
-    if (Date.now() - Number(sessionStorage.getItem(key)) < 60_000) return;
-    sessionStorage.setItem(key, String(Date.now()));
-  } catch {
-    return;
-  }
-  location.reload();
+  reloadUnlessRecent(
+    () => sessionStorage,
+    () => location.reload(),
+  );
 }
 
 function showPage(route: Route) {

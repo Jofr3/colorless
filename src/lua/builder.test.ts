@@ -11,19 +11,25 @@ import {
   MAX_CACHED_CARDS_PAGE,
 } from "@colorless/schema";
 import { forgetCardIndex } from "../decks/catalog";
+import { MAX_TRANSIENT_RETRIES } from "../decks/deckSaver";
 import { cardIndexPayload } from "../test/fixtures";
-vi.mock("../lib/api", async (importOriginal) => ({
-  ApiError: (await importOriginal<typeof import("../lib/api")>()).ApiError,
-  getDeck: vi.fn(),
-  patchDeck: vi.fn(),
-  getCards: vi.fn(),
-  getCardIndex: vi.fn(),
-  getCard: vi.fn(),
-  getFacets: vi.fn(),
-  getSets: vi.fn(),
-  getSeries: vi.fn(),
-  cardImageUrl: (id: string) => `/assets/${id}.png`,
-}));
+vi.mock("../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/api")>();
+  return {
+    ApiError: actual.ApiError,
+    DECK_WRITE_TIMEOUT_MS: actual.DECK_WRITE_TIMEOUT_MS,
+    withDeadline: actual.withDeadline,
+    getDeck: vi.fn(),
+    patchDeck: vi.fn(),
+    getCards: vi.fn(),
+    getCardIndex: vi.fn(),
+    getCard: vi.fn(),
+    getFacets: vi.fn(),
+    getSets: vi.fn(),
+    getSeries: vi.fn(),
+    cardImageUrl: (id: string) => `/assets/${id}.png`,
+  };
+});
 const card = (
   id: string,
   name = "Pikachu",
@@ -108,6 +114,39 @@ async function setup(images = vi.fn()) {
   await b.command("open\tone");
   return { b, publish, back };
 }
+/** A PATCH /decks/:id stand-in that holds `deck` and refuses a stale version with the route's 409.
+    `offline` fails every save before it arrives; `loseNext` commits the next one and loses its
+    response. */
+function versionedServer() {
+  const stored: Deck = {
+    ...deck(),
+    tint: 1,
+    folderId: null,
+    position: 0,
+    updated: "2026-10-28T00:00:00.000Z",
+    version: 1,
+  };
+  const server = { deck: stored, offline: false, loseNext: false };
+  vi.mocked(api.getDeck).mockResolvedValue(stored);
+  vi.mocked(api.patchDeck).mockImplementation(async (_id, body) => {
+    if (server.offline) throw new TypeError("Failed to fetch");
+    if (body.version !== server.deck.version) {
+      throw new api.ApiError(409, { error: "deck changed since this version", deck: server.deck });
+    }
+    server.deck = {
+      ...server.deck,
+      cards: body.cards ?? server.deck.cards,
+      chosenCoverCardId: body.chosenCoverCardId ?? null,
+      version: (server.deck.version ?? 0) + 1,
+    };
+    if (server.loseNext) {
+      server.loseNext = false;
+      throw new TypeError("Failed to fetch");
+    }
+    return server.deck;
+  });
+  return server;
+}
 describe("Lua deck builder", () => {
   it("loads only the visible deck previews without saving and releases them in list view", async () => {
     const images = vi.fn();
@@ -166,14 +205,21 @@ describe("Lua deck builder", () => {
           { cardId: "b", count: 1 },
         ],
       }),
+      { keepalive: false },
     );
   });
   it("retains a failed save and waits for successful persistence before leaving", async () => {
-    vi.mocked(api.patchDeck).mockRejectedValueOnce(new Error("offline"));
+    for (let i = 0; i <= MAX_TRANSIENT_RETRIES; i++) {
+      vi.mocked(api.patchDeck).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    }
     const { b, back } = await setup();
     await b.command("add\ta");
     await b.command("leave");
     await tick();
+    // Retried on its own at 2, 4 and 8 s, still "saving", before it is reported.
+    expect(b.saveStatus).toBe("saving");
+    await vi.advanceTimersByTimeAsync(14_000);
+    expect(api.patchDeck).toHaveBeenCalledTimes(MAX_TRANSIENT_RETRIES + 1);
     expect(b.saveStatus).toBe("failed");
     expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
     expect(back).not.toHaveBeenCalled();
@@ -182,6 +228,64 @@ describe("Lua deck builder", () => {
     await tick();
     expect(back).toHaveBeenCalledTimes(1);
     expect(b.message).toBe("");
+  });
+  it("gives up on saves that never answer, so Retry and Leave work again", async () => {
+    vi.mocked(api.patchDeck).mockImplementation(() =>
+      api.withDeadline(api.DECK_WRITE_TIMEOUT_MS, () => new Promise<Deck>(() => {})),
+    );
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await b.command("leave");
+    await tick();
+    expect(b.saveStatus).toBe("saving");
+    // Four tries of 30 s each, with the 2, 4 and 8 s waits between them.
+    await vi.advanceTimersByTimeAsync(4 * api.DECK_WRITE_TIMEOUT_MS + 14_000);
+    expect(api.patchDeck).toHaveBeenCalledTimes(4);
+    expect(b.saveStatus).toBe("failed");
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    expect(back).not.toHaveBeenCalled();
+    vi.mocked(api.patchDeck).mockResolvedValue(deck());
+    await b.command("leave");
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(5);
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+  it("sends pending edits at once, in a save that outlives the page, when it is hidden", async () => {
+    let resolve!: (d: Deck) => void;
+    vi.mocked(api.patchDeck).mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+    const { b } = await setup();
+    expect(b.hasUnsavedEdits()).toBe(false);
+    await b.command("add\ta");
+    expect(b.hasUnsavedEdits()).toBe(true);
+    b.persistNow();
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[2]).toEqual({ keepalive: true });
+    // Reverted while that save is out: the editor matches the saved copy, but the revert is unsent.
+    await b.command("remove\ta");
+    expect(b.hasUnsavedEdits()).toBe(true);
+    resolve(deck([{ cardId: "a", count: 1 }]));
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[2]).toEqual({ keepalive: false });
+    expect(b.hasUnsavedEdits()).toBe(false);
+  });
+  it("sends a failed save again when asked, as when the network returns", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValue(new TypeError("Failed to fetch"));
+    const { b } = await setup();
+    await b.command("add\ta");
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(b.saveStatus).toBe("failed");
+    expect(b.hasUnsavedEdits()).toBe(true);
+    vi.mocked(api.patchDeck).mockResolvedValue(deck([{ cardId: "a", count: 1 }]));
+    b.retrySave();
+    await tick();
+    expect(b.saveStatus).toBe("saved");
+    expect(b.hasUnsavedEdits()).toBe(false);
   });
   it("serializes a follow-up edit behind an in-flight save before navigating", async () => {
     let resolve!: (d: Deck) => void;
@@ -314,7 +418,7 @@ describe("Lua deck builder", () => {
     expect(api.patchDeck).toHaveBeenCalledTimes(1);
     await b.command("add\ta");
     await tick();
-    expect(api.patchDeck).toHaveBeenLastCalledWith("one", expect.objectContaining({ version: 2 }));
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[1]).toMatchObject({ version: 2 });
   });
   it("fetches the latest copy on a conflict that did not carry it", async () => {
     vi.mocked(api.getDeck)
@@ -327,6 +431,77 @@ describe("Lua deck builder", () => {
     expect(api.getDeck).toHaveBeenCalledTimes(2);
     expect([...b.entries]).toEqual([["b", 1]]);
     expect(b.message).toBe("Deck changed elsewhere; reloaded the latest.");
+  });
+  it("takes the 409 its own retry gets as the save whose response was lost", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    expect(server.deck.cards).toEqual([{ cardId: "a", count: 1 }]);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(server.deck).toMatchObject({ cards: [{ cardId: "a", count: 1 }], version: 2 });
+    expect(b.saveStatus).toBe("saved");
+    expect(b.message).toBe("");
+    // The retry found its edits already saved, so nothing more was written.
+    expect(vi.mocked(api.patchDeck).mock.calls.map(([, body]) => body.version)).toEqual([1, 1]);
+  });
+  it("takes a 409 carrying a save whose response was lost as that save, across offline edits", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    expect(server.deck.cards).toEqual([{ cardId: "a", count: 1 }]);
+    server.offline = true;
+    await b.command("add\tb");
+    await tick();
+    await b.command("add\tb");
+    await vi.advanceTimersByTimeAsync(14_000);
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    server.offline = false;
+    await b.command("add\ta");
+    await tick();
+    const kept = [
+      { cardId: "a", count: 2 },
+      { cardId: "b", count: 2 },
+    ];
+    expect(server.deck.cards).toEqual(kept);
+    expect(b.snapshot().cards).toEqual(kept);
+    expect(b.message).toBe("");
+    expect(b.saveStatus).toBe("saved");
+    expect(api.getDeck).toHaveBeenCalledTimes(1);
+    const versions = vi.mocked(api.patchDeck).mock.calls.map(([, body]) => body.version);
+    expect(versions.at(-1)).toBe(2);
+    expect(new Set(versions.slice(0, -1))).toEqual(new Set([1]));
+  });
+  it("sends an undo made after a save whose response was lost, and counts it unsaved until then", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await tick();
+    await b.command("remove\ta");
+    expect(b.saveStatus).toBe("pending");
+    await b.command("leave");
+    expect(back).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(server.deck.cards).toEqual([]);
+    expect(server.deck.version).toBe(3);
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+  it("still reloads on a 409 carrying a deck this tab never sent, after a lost response", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b } = await setup();
+    await b.command("add\ta");
+    await tick();
+    server.deck = { ...server.deck, cards: [{ cardId: "b", count: 2 }], version: 3 };
+    await b.command("add\tb");
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect([...b.entries]).toEqual([["b", 2]]);
+    expect(b.message).toBe("Deck changed elsewhere; reloaded the latest.");
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
   });
   it("clears private state and prevents queued writes when the session changes", async () => {
     const { b } = await setup();

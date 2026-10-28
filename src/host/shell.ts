@@ -3,6 +3,7 @@
 
 import { DECK_NAME_MAX, DISPLAY_NAME_MAX, normalizeLobbyCode } from "@colorless/schema";
 import { readPersisted, writePersisted } from "../lib/persistedState";
+import { reportError } from "../lib/reportError";
 import { decodeFields, encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
@@ -252,7 +253,17 @@ export class HostShell {
     if (status !== "authenticated") this.name.finish("done", true);
   }
 
+  /** Runs one of Lua's prints. It never throws: love.js swallows an error thrown from print, and
+      the unflushed line then spoils the next command too. */
   onPrint(message: string) {
+    try {
+      this.runPrint(message);
+    } catch (error) {
+      reportError("run a Lua command", error);
+    }
+  }
+
+  private runPrint(message: string) {
     const print = parsePrint(message);
     if (!print) return;
     const { channel, rest } = print;
@@ -393,10 +404,10 @@ export class HostShell {
     else if (action === "copy") {
       const note = (text: string) =>
         this.host.writeMailbox(MAILBOXES.builderClipboard, `${Date.now()}\t${text}`);
-      navigator.clipboard.writeText(field).then(
-        () => note("Copied decklist."),
-        () => note("Copy failed. Select the decklist and use your copy shortcut."),
-      );
+      const failed = () => note("Copy failed. Select the decklist and use your copy shortcut.");
+      // The clipboard is missing outside a secure context.
+      if (!navigator.clipboard) failed();
+      else navigator.clipboard.writeText(field).then(() => note("Copied decklist."), failed);
     } else this.ports.command("builder", raw);
   }
 
