@@ -368,8 +368,8 @@ function Builder:build()
       self:add('Clear',328,158,128,42,'confirm-clear',T.red)
     end
   end
-  if self.saveStatus=='failed' then self:add(p and 'Retry save' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-86,p and 432 or 110,p and 36 or 20,'retry-save',T.red).fontSize=p and 24 or 18
-  elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-86,p and 432 or 110,p and 36 or 20,'retry',T.profile).fontSize=p and 24 or 18 end
+  if self.saveStatus=='failed' then self:add(p and 'Retry save' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry-save',T.red).fontSize=p and 24 or 16
+  elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry',T.profile).fontSize=p and 24 or 16 end
 end
 function Builder:openModal(mode,item)
   self:command('finish-input');self.editing='';self.focus=0;self.pressed=nil
