@@ -33,8 +33,6 @@ const RECONNECT_MAX_MS = 8000;
 // client's periodic hello retries make individual frames safe to lose).
 const MAX_QUEUED_MESSAGES = 32;
 
-type Queued = { kind: LobbyMessage["kind"]; encoded: string };
-
 /** The delay before reconnect attempt `attempt` (0-based): 400ms doubling to a
     cap of 8s. Exported for tests. */
 export function reconnectDelayMs(attempt: number): number {
@@ -73,7 +71,7 @@ export function createLobbyChannel(
 
   const url = apiWebSocketUrl(`/lobby/${code}/ws`);
   const handlers = new Set<(message: LobbyMessage) => void>();
-  const queue: Queued[] = [];
+  const queue: string[] = [];
   let socket: WebSocket | null = null;
   let open = false;
   let closed = false;
@@ -82,7 +80,8 @@ export function createLobbyChannel(
   let pingTimer: ReturnType<typeof setInterval> | null = null;
   // The newest hello posted. A reopened socket is attached to no seat until it says hello, and the
   // client only re-announces after PRESENCE_TIMEOUT_MS of silence, which the server's pongs to the
-  // new socket never let happen: so every reopen leads with it.
+  // new socket never let happen: so every socket leads with it, ahead of every frame queued while
+  // it was down, and a hello posted then is held only here.
   let lastHello: string | null = null;
 
   const dispatch = (message: LobbyMessage) => {
@@ -113,11 +112,8 @@ export function createLobbyChannel(
       }
       open = true;
       attempt = 0;
-      if (lastHello !== null && !queue.some((q) => q.kind === "hello")) ws.send(lastHello);
-      while (queue.length > 0) {
-        const pending = queue.shift();
-        if (pending !== undefined) ws.send(pending.encoded);
-      }
+      if (lastHello !== null) ws.send(lastHello);
+      for (const pending of queue.splice(0)) ws.send(pending);
       pingTimer = setInterval(() => ws.send(LOBBY_WS_PING), PING_INTERVAL_MS);
     };
 
@@ -182,15 +178,8 @@ export function createLobbyChannel(
       if (message.kind === "hello") lastHello = encoded;
       if (open && socket !== null) {
         socket.send(encoded);
-      } else {
-        // The client re-announces every few hundred ms while the link is down; a reconnect
-        // needs one hello, in the place of the first so later frames still follow a seat.
-        const held = message.kind === "hello" ? queue.findIndex((q) => q.kind === "hello") : -1;
-        if (held >= 0) {
-          queue[held] = { kind: message.kind, encoded };
-          return;
-        }
-        queue.push({ kind: message.kind, encoded });
+      } else if (message.kind !== "hello") {
+        queue.push(encoded);
         if (queue.length > MAX_QUEUED_MESSAGES) queue.shift();
       }
     },

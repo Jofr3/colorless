@@ -75,6 +75,21 @@ describe("the web client against the lobby DO", () => {
     expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
   });
 
+  it("a move made while the link is down lands after the reconnect, behind the seat's hello", async () => {
+    const { host, guest } = await inGame();
+    guest.offline = true;
+    const { server } = lastSocket(guest);
+    b.deliver(() => b.h.drop(server));
+    await b.run(1000);
+    concede(guest);
+    // Long enough for the client to miss the server and say hello again while still down.
+    await b.run(5000);
+    guest.offline = false;
+    await b.run(10_000);
+    expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
+    expect(guest.client().state.status).toBe("connected");
+  });
+
   it("a signed-out seat's rematch is refused, and the tab keeps its result as a watcher", async () => {
     const { host, guest } = await inGame();
     concede(host);

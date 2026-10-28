@@ -160,6 +160,25 @@ describe("createLobbyChannel", () => {
     channel.close();
   });
 
+  it("frames posted while down before the client's re-hello still follow a hello", () => {
+    const channel = createLobbyChannel("ABCD");
+    const first = FakeWebSocket.last();
+    first.open();
+    channel.post(HELLO);
+    first.drop();
+    const action: LobbyMessage = { kind: "action", action: { type: "endTurn", seat: "p1" } };
+    channel.post(action);
+    channel.post({ ...HELLO, name: "Ana B" });
+    vi.advanceTimersByTime(reconnectDelayMs(0));
+    const second = FakeWebSocket.last();
+    second.open();
+    expect(second.sent.map((raw) => JSON.parse(raw) as LobbyMessage)).toEqual([
+      { ...HELLO, name: "Ana B" },
+      action,
+    ]);
+    channel.close();
+  });
+
   it("holds one hello while down, the newest, ahead of the frames posted after the first", () => {
     const channel = createLobbyChannel("ABCD");
     const ws = FakeWebSocket.last();

@@ -25,9 +25,10 @@ import { LuaOnlineMatch } from "../lua/onlineTable";
 
 export const SEAM_CODE = "ABCD";
 
-/** One browser tab: the account its cookie upgrades a socket as (undefined when signed out), and
-    every socket its channels opened, oldest first. */
-export type Tab = { user: string | undefined; readonly sockets: BridgeSocket[] };
+/** One browser tab: the account its cookie upgrades a socket as (undefined when signed out),
+    whether its network is down (a new socket fails to connect), and every socket its channels
+    opened, oldest first. */
+export type Tab = { user: string | undefined; offline: boolean; readonly sockets: BridgeSocket[] };
 
 /** The client end of one lobby socket, as `createLobbyChannel` drives a WebSocket. */
 export class BridgeSocket {
@@ -39,17 +40,21 @@ export class BridgeSocket {
   server: FakeSocket | null = null;
   /** The path is dead without a close either way: nothing crosses it any more. */
   blackholed = false;
-  /** Whether the client's channel closed this socket. */
-  closedByClient = false;
+  readonly user: string | undefined;
   private gone = false;
 
   constructor(
     private readonly seam: Bridge,
-    readonly user: string | undefined,
+    tab: Tab,
   ) {
+    this.user = tab.user;
+    const offline = tab.offline;
     seam.deliver(async () => {
       try {
-        const server = await seam.h.connect(user);
+        if (offline) throw new Error("offline");
+        const server = await seam.h.connect(this.user);
+        // Closed by the client while it connected: the server end goes as the close reaches it.
+        if (this.gone) return await seam.h.drop(server);
         this.server = server;
         const send = server.send.bind(server);
         server.send = (data: string) => {
@@ -83,7 +88,6 @@ export class BridgeSocket {
   }
 
   close(code?: number): void {
-    this.closedByClient = true;
     if (this.gone) return;
     const reaches = !this.blackholed;
     this.gone = true;
@@ -166,13 +170,13 @@ export async function openBridge(world: Partial<LobbyWorld> = {}): Promise<Bridg
     deliver(work) {
       queue = queue.then(work).catch(() => {});
     },
-    tab: (user) => ({ user, sockets: [] }),
+    tab: (user) => ({ user, offline: false, sockets: [] }),
     client(tab, opts) {
       let client: LobbyClient | null = null;
       const channel = createLobbyChannel(opts.code, {
         onLobbyClosed: () => client?.lobbyClosed(),
         openSocket: () => {
-          const socket = new BridgeSocket(bridge, tab.user);
+          const socket = new BridgeSocket(bridge, tab);
           tab.sockets.push(socket);
           return socket as unknown as WebSocket;
         },
