@@ -96,7 +96,7 @@ describe("reorderBench", () => {
     expect(applyAction(state, action).ok).toBe(true);
     const locked: GameState = {
       ...state,
-      phase: { kind: "setup:place", ready: { p1: true, p2: false } },
+      phase: { kind: "setup:place", stage: "opening", ready: { p1: true, p2: false } },
     };
     expect(applyAction(locked, action)).toMatchObject({
       ok: false,

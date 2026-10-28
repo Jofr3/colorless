@@ -147,7 +147,7 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
       return {
         kind: "setup:place",
         ready: { you: phase.ready[viewerSeat], opponent: phase.ready[otherSeat(viewerSeat)] },
-        ...(phase.stage === undefined ? {} : { stage: phase.stage }),
+        stage: phase.stage,
         ...(phase.bonusCards === undefined
           ? {}
           : { bonusCards: spectating ? [] : phase.bonusCards[viewerSeat] }),

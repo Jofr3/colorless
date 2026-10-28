@@ -125,8 +125,8 @@ only the conclusion.
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. The pinned skeleton covers a fresh game, a body and a side with every
   install field set by its op, and one park per prompt kind; a new install field needs an op in
-  the test's `INSTALL_OPS`, and a field only an unsampled op writes is not pinned. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
-  regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` and
+  the test's `INSTALL_OPS`, and a field only an unsampled op writes is not pinned. A change to
+  the Lua wire fails `src/lua/wireFixtures.test.ts`; regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` and
   `frontend/lua/tests/sim_model.lua` to match.
 - **The Lua mailbox rows are declared once** (`src/lua/wireFields.ts` `WIRE_ROWS`): each row kind's
   tag(s) and field order, `as const`. Emitters build a record and encode it with `wireRow`, so a
@@ -153,13 +153,14 @@ only the conclusion.
   enum literal needs the client deployed first.
 - **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
   `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
-  keeps only the record envelope and `loadMatchRecord`, and calls `poolIdsNeededFor` and
-  `migrateGameState` for the state. To bump: raise `GAME_STATE_VERSION`, rewrite the shape
-  snapshot, and give the previous version a `MIGRATION_STEPS` entry if its states can be
-  carried forward: `unchanged` when the old bytes already read correctly, `withDefaultKeys`
-  when the change only adds side installs (`clearedSideInstalls`) or attack-effect fields
-  (`clearedAttackEffects`), or a hand-written step otherwise. A version with no entry is
-  retired. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
+  keeps only the record envelope and `loadMatchRecord`, and calls `migrateGameState` for the
+  state. To bump: raise `GAME_STATE_VERSION`, rewrite the shape snapshot, and give the previous
+  version a `MIGRATION_STEPS` entry if its states can be carried forward: `unchanged` when the old
+  bytes already read correctly, `withDefaultKeys` when the change only adds side installs
+  (`clearedSideInstalls`) or attack-effect fields (`clearedAttackEffects`), or a hand-written step
+  otherwise. A version with no entry is retired: the DO answers its record `stale` and retires the
+  match, and a local save is already refused by its `engineVersion`. The oldest migratable version
+  is 42. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
   `storedAt`/`migrateStored`/`mustMigrate` fixtures; the DO's read is tested in
   `apps/api/src/lobby/matchLoad.test.ts`.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,

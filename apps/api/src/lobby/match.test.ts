@@ -192,7 +192,7 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ana", p2: "Bo" };
-const OLDEST_MIGRATABLE = 41;
+const OLDEST_MIGRATABLE = 42;
 const STARTED_AT = 1_000;
 
 /** A freshly created match persisted the way `handoffToMatch` writes it — the
@@ -547,9 +547,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
         puts.push(written);
       },
     };
-    const load = await loadMatchRecord(slot, async () => {
-      throw new Error("D1 asked");
-    });
+    const load = await loadMatchRecord(slot);
     expect(load).toEqual({ kind: "stale" });
     expect(puts).toEqual([]);
   });
@@ -559,20 +557,17 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     for (let version = OLDEST_MIGRATABLE; version < MATCH_RECORD_VERSION; version++) {
       const stored = JSON.parse(JSON.stringify({ ...record, version }));
       expect(readMatchRecord(stored)).toBeNull();
-      const migrated = migrateMatchRecord(stored, {});
+      const migrated = migrateMatchRecord(stored);
       expect(migrated?.version).toBe(MATCH_RECORD_VERSION);
       expect(readMatchRecord(JSON.parse(JSON.stringify(migrated)))).not.toBeNull();
     }
-    expect(migrateMatchRecord({ ...record, version: OLDEST_MIGRATABLE - 1 }, {})).toBeNull();
+    expect(migrateMatchRecord({ ...record, version: OLDEST_MIGRATABLE - 1 })).toBeNull();
     expect(
-      migrateMatchRecord(
-        {
-          ...record,
-          version: OLDEST_MIGRATABLE,
-          state: { ...record.state, cardPool: null },
-        },
-        {},
-      ),
+      migrateMatchRecord({
+        ...record,
+        version: OLDEST_MIGRATABLE,
+        state: { ...record.state, cardPool: null },
+      }),
     ).toBeNull();
   });
 });

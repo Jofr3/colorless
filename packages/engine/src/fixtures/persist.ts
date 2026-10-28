@@ -1,7 +1,6 @@
-import type { Card } from "@colorless/schema";
 import type { GameAction, GameState, InPlayPokemon, Seat } from "../index";
 import { applyAction } from "../index";
-import { migrateGameState, poolIdsNeededFor } from "../persist";
+import { migrateGameState } from "../persist";
 
 /** A state as an older deploy persisted it, with the version it was stamped with. */
 export interface StoredState {
@@ -10,23 +9,12 @@ export interface StoredState {
 }
 
 /** `migrateGameState` over a stored state; takes loosely typed input, as storage does. */
-export function migrateStored(
-  stored: { version: number; state: unknown },
-  fresh: Record<string, Card> = {},
-): GameState | null {
-  return migrateGameState(stored.state, stored.version, fresh);
+export function migrateStored(stored: { version: number; state: unknown }): GameState | null {
+  return migrateGameState(stored.state, stored.version);
 }
 
-/** `poolIdsNeededFor` over a stored state. */
-export function storedPoolIds(stored: { version: number; state: unknown }): string[] | null {
-  return poolIdsNeededFor(stored.state, stored.version);
-}
-
-export function mustMigrate(
-  stored: { version: number; state: unknown },
-  fresh: Record<string, Card> = {},
-): GameState {
-  const migrated = migrateStored(stored, fresh);
+export function mustMigrate(stored: { version: number; state: unknown }): GameState {
+  const migrated = migrateStored(stored);
   if (migrated === null) throw new Error(`v${stored.version} not migrated`);
   return migrated;
 }

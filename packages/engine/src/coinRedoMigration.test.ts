@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { type GameState, type InPlayPokemon, applyAction, createGame } from "./index";
-import { firstP1Turn, migrateStored, mustMigrate, storedAt, storedPoolIds } from "./testFixtures";
+import { firstP1Turn, migrateStored, mustMigrate, storedAt } from "./testFixtures";
 
 const BODY = "redo-body";
 const FLIPPER = "redo-flipper"; // {C}: "Flip a coin. If tails, this attack does nothing."
@@ -116,14 +116,13 @@ function fresh(seed = 6460): GameState {
 const p1Turn = (state: GameState) => firstP1Turn(state, BODY);
 
 describe("coin redo: the version gate", () => {
-  it("a v48 state is migrated with no pool ids", () => {
-    expect(storedPoolIds(storedAt(48, fresh()))).toEqual([]);
+  it("a v48 state is migrated", () => {
+    expect(migrateStored(storedAt(48, fresh()))).not.toBeNull();
   });
 
-  it("v40 and v51 are not migrated; a v48 state missing its players is not migrated", () => {
+  it("v40, the retired v41 and v51 are not migrated; a v48 state missing its players is not migrated", () => {
     const old = storedAt(48, fresh());
-    for (const version of [40, 51]) {
-      expect(storedPoolIds({ ...old, version })).toBeNull();
+    for (const version of [40, 41, 51]) {
       expect(migrateStored({ ...old, version })).toBeNull();
     }
     expect(migrateStored({ ...old, state: { ...old.state, players: null } })).toBeNull();
@@ -134,7 +133,7 @@ describe("coin redo: what the migration writes", () => {
   it("v48: nothing — every byte of the state kept, the pool unread", () => {
     const board = p1Turn(fresh());
     const old = storedAt(48, board);
-    const migrated = mustMigrate(old, { [BADGE]: { ...BADGE_CARD, name: "stale" } as Card });
+    const migrated = mustMigrate(old);
     expect(migrated).toEqual(board);
     expect(migrated.cardPool[BADGE]).toBe(old.state.cardPool[BADGE]);
     expect(migrated).toEqual(old.state);
@@ -156,15 +155,12 @@ describe("coin redo: what the migration writes", () => {
     expect(migrated.players.p1.trainerFlipLockTurn).toBe(board.turn);
   });
 
-  it("v47, v46 and v45: nothing too; v44: the lock keys; v43, v42 and v41: the earlier steps too", () => {
+  it("v47, v46 and v45: nothing too; v44: the lock keys; v43 and v42: the earlier steps too", () => {
     for (const version of [47, 46, 45] as const) {
       expect(mustMigrate(storedAt(version, fresh()))).toEqual(storedAt(version, fresh()).state);
     }
-    for (const version of [44, 43, 42, 41] as const) {
-      const migrated = mustMigrate(storedAt(version, fresh()), {
-        [JAW]: JAW_CARD,
-        [BADGE]: BADGE_CARD,
-      });
+    for (const version of [44, 43, 42] as const) {
+      const migrated = mustMigrate(storedAt(version, fresh()));
       expect(migrated.players.p1.trainerFlipLockTurn).toBeNull();
       expect(migrated.handPlayLockedTurn.p2.Stadium).toBeNull();
       if (version <= 43) expect(migrated.players.p1.prizesTakenOnTurn).toBeNull();

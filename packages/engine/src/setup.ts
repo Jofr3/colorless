@@ -259,38 +259,25 @@ export function setupDrawExtra(state: GameState, action: SetupDrawExtraAction): 
     return err("BAD_EXTRA_COUNT", `may draw 0–${owed} extra cards, got ${action.count}`);
   }
   const events: GameEvent[] = [];
-  // Older saved setups may have entered this phase before reserving prizes.
-  let next = setSetupPrizes(state, SEATS, events);
-  next = drawToHand(next, action.seat, action.count, "compensation", "top", events);
+  let next = drawToHand(state, action.seat, action.count, "compensation", "top", events);
   events.push({ type: "COMPENSATION_DECIDED", seat: action.seat, drawn: action.count, owed });
 
   const decided: Record<Seat, boolean> = { ...phase.decided, [action.seat]: true };
-  if (phase.bonusCards !== undefined) {
-    const drawn = next.players[action.seat].hand.slice(state.players[action.seat].hand.length);
-    const bonusCards = { ...phase.bonusCards, [action.seat]: drawn };
-    if (decided.p1 && decided.p2) {
-      const ready = { p1: false, p2: false };
-      for (const seat of SEATS) {
-        ready[seat] =
-          next.players[seat].bench.length >= BENCH_MAX ||
-          !bonusCards[seat].some((uid) => {
-            const card = cardOfUid(next, uid);
-            return card !== undefined && isBasicPokemon(card);
-          });
-      }
-      next = { ...next, phase: { kind: "setup:place", stage: "bonus", ready, bonusCards } };
-      return ready.p1 && ready.p2 ? finishSetup(next, events) : ok(next, events);
-    }
+  const drawn = next.players[action.seat].hand.slice(state.players[action.seat].hand.length);
+  const bonusCards = { ...phase.bonusCards, [action.seat]: drawn };
+  if (!(decided.p1 && decided.p2))
     return ok({ ...next, phase: { ...phase, decided, bonusCards } }, events);
+  const ready = { p1: false, p2: false };
+  for (const seat of SEATS) {
+    ready[seat] =
+      next.players[seat].bench.length >= BENCH_MAX ||
+      !bonusCards[seat].some((uid) => {
+        const card = cardOfUid(next, uid);
+        return card !== undefined && isBasicPokemon(card);
+      });
   }
-  next = {
-    ...next,
-    phase:
-      decided.p1 && decided.p2
-        ? { kind: "setup:place", ready: { p1: false, p2: false } }
-        : { ...phase, decided },
-  };
-  return ok(next, events);
+  next = { ...next, phase: { kind: "setup:place", stage: "bonus", ready, bonusCards } };
+  return ready.p1 && ready.p2 ? finishSetup(next, events) : ok(next, events);
 }
 
 /**
@@ -382,7 +369,7 @@ export function setupReady(state: GameState, action: SetupReadyAction): ApplyRes
   const events: GameEvent[] = [{ type: "SETUP_READY", seat: action.seat }];
   let next: GameState = { ...state, phase: { ...phase, ready } };
   if (phase.stage === "opening") {
-    next = setSetupPrizes(next, [action.seat], events);
+    next = setSetupPrizes(next, action.seat, events);
     const opponent = otherSeat(action.seat);
     if (next.players[opponent].active === null) {
       next = resolveMulligans(next, opponent, events);
@@ -409,24 +396,18 @@ export function setupReady(state: GameState, action: SetupReadyAction): ApplyRes
   return finishSetup(next, events);
 }
 
-/** Reserve prizes once, retaining any already-set cards when a setup resumes. */
-function setSetupPrizes(state: GameState, seats: readonly Seat[], events: GameEvent[]): GameState {
-  let next = state;
-  for (const seat of seats) {
-    const side = next.players[seat];
-    if (side.prizes.length > 0) continue;
-    const prizes = side.deck.slice(0, PRIZE_COUNT);
-    next = withSide(next, seat, { ...side, deck: side.deck.slice(PRIZE_COUNT), prizes });
-    // Copied, not aliased: `prizes` is the array the state now holds.
-    events.push({ type: "PRIZES_SET", seat, uids: [...prizes] });
-  }
-  return next;
+/** Reserve `seat`'s prizes, at its opening Ready. */
+function setSetupPrizes(state: GameState, seat: Seat, events: GameEvent[]): GameState {
+  const side = state.players[seat];
+  const prizes = side.deck.slice(0, PRIZE_COUNT);
+  // Copied, not aliased: `prizes` is the array the state now holds.
+  events.push({ type: "PRIZES_SET", seat, uids: [...prizes] });
+  return withSide(state, seat, { ...side, deck: side.deck.slice(PRIZE_COUNT), prizes });
 }
 
-/** Reveal the board and begin the first player's turn. */
-function finishSetup(state: GameState, events: GameEvent[]): ApplyResult {
-  // Preserve compatibility with older saves parked at placement without prizes.
-  const next = setSetupPrizes(state, SEATS, events);
+/** Reveal the board and begin the first player's turn. Each seat's opening Ready set its
+    prizes. */
+function finishSetup(next: GameState, events: GameEvent[]): ApplyResult {
   // §3.9 — everything flips face-up. The board is already in the state, so
   // the event carries no payload.
   events.push({ type: "SETUP_REVEALED" });

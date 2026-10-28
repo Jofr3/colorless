@@ -1539,9 +1539,7 @@ export class LobbyDO {
    * returned, so this is not a pure read.
    */
   private async loadOrMigrateMatch(): Promise<MatchLoad> {
-    // The D1 read opens the DO's input gate, which is why `loadMatchRecord` re-reads before
-    // writing; the store's mirror makes that re-read see any write made meanwhile. Its only
-    // write is the migration's, which this slot logs with the version it migrated from.
+    // Its only write is the migration's, which this slot logs with the version it migrated from.
     let read: unknown;
     const slot: MatchSlot = {
       get: async () => {
@@ -1558,7 +1556,7 @@ export class LobbyDO {
         });
       },
     };
-    return loadMatchRecord(slot, (ids) => this.deps.loadPool(ids));
+    return loadMatchRecord(slot);
   }
 
   /**

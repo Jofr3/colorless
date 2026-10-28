@@ -1,5 +1,5 @@
 import { isRngState } from "@colorless/engine";
-import { drbgSeed } from "@colorless/engine/testing";
+import { drbgSeed, storedAt } from "@colorless/engine/testing";
 import {
   COUNTDOWN_MS,
   LOBBY_WS_CLOSED,
@@ -686,12 +686,40 @@ describe("LobbyDO — disconnects", () => {
 });
 
 describe("LobbyDO — stale records", () => {
-  async function staleMatch() {
+  async function staleMatch(version = MATCH_RECORD_VERSION + 1) {
     const seated = await startedMatch();
-    await h.storage.put("match", { ...(await storedMatch()), version: MATCH_RECORD_VERSION + 1 });
+    await h.storage.put("match", { ...(await storedMatch()), version });
     h.hibernate();
     return seated;
   }
+
+  it("retires a record at the retired version 41 the same way, without throwing", async () => {
+    const { host, guest } = await staleMatch(41);
+    await h.drop(host);
+    const back = await h.connect("ana");
+    await h.send(back, hello("h"));
+    expect(matchKeys()).toEqual([]);
+    expect(snapshotOf(back).phase).toBe("selecting");
+    expect(guest.last("match-error")).toEqual({ kind: "match-error", reason: STALE_REASON });
+    expect(logged("match_retired")).toHaveLength(1);
+  });
+
+  it("migrates a record at the oldest migratable version, 42, and play continues", async () => {
+    const { host, guest } = await startedMatch();
+    const current = await storedMatch();
+    await h.storage.put("match", { ...current, ...storedAt(42, current.state) });
+    h.hibernate();
+    await h.drop(host);
+    const back = await h.connect("ana");
+    await h.send(back, hello("h"));
+    expect(snapshotOf(back).phase).toBe("in-game");
+    expect((await storedMatch()).version).toBe(MATCH_RECORD_VERSION);
+    expect(logged("match_migrated")).toEqual([
+      expect.objectContaining({ from: 42, to: MATCH_RECORD_VERSION }),
+    ]);
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    expect(logged("match_retired")).toEqual([]);
+  });
 
   it("retires an unreadable record when a player reconnects", async () => {
     const { host, guest } = await staleMatch();

@@ -384,7 +384,7 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
   it("is FALSE in every setup phase and after gameOver — no turn to be during", () => {
     const armed = playNemona(pikachu(board(11), "p1"), "p1");
     for (const phase of [
-      { kind: "setup:place", ready: { p1: false, p2: false } },
+      { kind: "setup:place", stage: "opening", ready: { p1: false, p2: false } },
       { kind: "gameOver", outcome: { result: "win", winner: "p1", reason: "prizesTaken" } },
     ] as const) {
       const state: GameState = { ...armed, phase };

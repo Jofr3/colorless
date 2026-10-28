@@ -25,7 +25,6 @@ import {
   isRngState,
   logFromEvents,
   migrateGameState,
-  poolIdsNeededFor,
   type RngState,
   redactGame,
   savedDeckReasons,
@@ -235,15 +234,6 @@ export interface MatchRecord {
 export const MATCH_RECORD_VERSION = GAME_STATE_VERSION;
 
 /**
- * The catalog ids a migratable record's state needs re-read from D1 (`poolIdsNeededFor`), or
- * `null` for anything that is not a well-formed migratable record.
- */
-export function migratablePoolIdsOf(raw: unknown): string[] | null {
-  const record = readMigratableRecord(raw);
-  return record === null ? null : poolIdsNeededFor(record.state, record.version);
-}
-
-/**
  * Migrate an older record to this deploy's version, or `null` if it is not a well-formed migratable
  * record. The envelope is kept; the engine migrates the state. A state still on the mulberry32
  * generator (a match started before MI1's fix) carries on under a fresh ChaCha20 key from `rekey`:
@@ -253,12 +243,11 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
  */
 export function migrateMatchRecord(
   raw: unknown,
-  fresh: Record<string, Card>,
   rekey: () => MatchRng = freshMatchRng,
 ): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
-  const migrated = migrateGameState(record.state, record.version, fresh);
+  const migrated = migrateGameState(record.state, record.version);
   if (migrated === null) return null;
   const state =
     typeof migrated.rngState === "number" ? { ...migrated, rngState: rekey() } : migrated;
@@ -276,27 +265,15 @@ export interface MatchSlot {
 
 /**
  * Read the persisted match: absent, usable, or stale. A migratable record is migrated and written
- * back before it is returned. `loadPool` is external I/O, so the slot is re-read after it, since
- * another event may have changed the match meanwhile. A failed `loadPool` writes nothing; the
- * record is never played unmigrated.
+ * back before it is returned; the record is never played unmigrated. A record at a retired version
+ * (41 and older) is stale.
  */
-export async function loadMatchRecord(
-  slot: MatchSlot,
-  loadPool: (ids: readonly string[]) => Promise<Record<string, Card>>,
-): Promise<MatchLoad> {
+export async function loadMatchRecord(slot: MatchSlot): Promise<MatchLoad> {
   const raw = await slot.get();
   if (raw === undefined) return { kind: "none" };
   const record = readMatchRecord(raw);
   if (record !== null) return { kind: "ok", record };
-  const ids = migratablePoolIdsOf(raw);
-  if (ids === null) return { kind: "stale" };
-  // Most migratable versions need no catalog rows, and skip D1.
-  const fresh = ids.length === 0 ? {} : await loadPool(ids);
-  const again = await slot.get();
-  if (again === undefined) return { kind: "none" };
-  const current = readMatchRecord(again);
-  if (current !== null) return { kind: "ok", record: current };
-  const migrated = migrateMatchRecord(again, fresh);
+  const migrated = migrateMatchRecord(raw);
   if (migrated === null) return { kind: "stale" };
   await slot.put(migrated);
   return { kind: "ok", record: migrated };

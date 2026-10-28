@@ -30,7 +30,12 @@ describe("mulligan deck markers", () => {
   it("clears the drawing player's die while leaving the other player's pending cards", () => {
     const state: GameState = {
       ...opening(),
-      phase: { kind: "setup:drawExtra", owed: { p1: 5, p2: 2 }, decided: { p1: true, p2: false } },
+      phase: {
+        kind: "setup:drawExtra",
+        owed: { p1: 5, p2: 2 },
+        decided: { p1: true, p2: false },
+        bonusCards: { p1: [], p2: [] },
+      },
     };
     expect(pendingMulligansOf(state, "p1")).toBe(0);
     expect(pendingMulligansOf(state, "p2")).toBe(2);
@@ -41,7 +46,12 @@ describe("mulligan deck markers", () => {
   it("uses the actual cards owed once the bonus draw phase begins", () => {
     const state: GameState = {
       ...opening(),
-      phase: { kind: "setup:drawExtra", owed: { p1: 3, p2: 1 }, decided: { p1: false, p2: false } },
+      phase: {
+        kind: "setup:drawExtra",
+        owed: { p1: 3, p2: 1 },
+        decided: { p1: false, p2: false },
+        bonusCards: { p1: [], p2: [] },
+      },
     };
     expect(pendingMulligansOf(state, "p1")).toBe(3);
     expect(pendingMulligansOf(state, "p2")).toBe(1);

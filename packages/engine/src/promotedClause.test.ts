@@ -714,7 +714,7 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
     for (const phase of [
       { kind: "ko:takePrizes", seat: "p1", count: 1 },
       { kind: "ko:promote", seat: "p2" },
-      { kind: "setup:place", ready: { p1: false, p2: false } },
+      { kind: "setup:place", stage: "opening", ready: { p1: false, p2: false } },
       { kind: "gameOver", outcome: { result: "win", winner: "p1", reason: "prizesTaken" } },
     ] as const) {
       const parked: GameState = { ...gusted, phase };
