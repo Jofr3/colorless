@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./testing/lobbyHarness": "./src/testing/lobbyHarness.ts",
-    "./testing/contract": "./src/testing/contract.ts"
+    "./testing/contract": "./src/testing/contract.ts",
+    "./testing/fixtureCatalog": "./src/testing/fixtureCatalog.ts"
   },
   "scripts": {
     "dev": "CI=true bun run db:migrate:local && bun ../../scripts/with-system-certs.ts wrangler dev --var APP_ORIGIN:http://localhost:5175",
