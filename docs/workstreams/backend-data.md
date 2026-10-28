@@ -615,10 +615,17 @@ at a local `wrangler dev`. All these gates only read production.
 **Before releasing, run `bun run e2e`** (`scripts/e2e.ts`; needs `CHROMIUM`, or
 chromium on PATH, and `BALATRO_SOURCE`; about 70 s). It is the one check of the
 real love.js page against a real local API and LobbyDO: boot, a sandbox game, a
-crash and its reload, a stalled boot, and an online match through a rematch. It
-is opt-in, not a `release` step (CI cannot build game.data either), because it
-needs a browser and takes a minute; it touches nothing remote and nothing in the
-dev D1. `--gpu` adds the CRT shader parity check.
+crash and its reload, the builder's last save as the page is hidden, navigated
+away and closed (a keepalive PATCH), a stalled boot, and an online match through
+a rematch whose guest socket goes silent mid-match and is replaced by the
+watchdog. It is opt-in, not a `release` step (CI cannot build game.data either),
+because it needs a browser and takes a minute; it touches nothing remote and
+nothing in the dev D1. `--gpu` adds the CRT shader parity check. **`bun run e2e
+--firefox`** (needs `FIREFOX`, or firefox on PATH; about 80 s) runs the same
+steps in Firefox over WebDriver BiDi, on its own Xvfb with Mesa's software GL
+(fetched from nixpkgs when missing), since headless Firefox makes no WebGL
+context. Run it when a change touches page lifecycle, fetch or WebSocket code;
+the 2026-10-28 run passed on Firefox 157 (`tmp/rel/qa2/`).
 
 **When a release step fails.** Every step is safe to repeat, so `bun run
 release` again is always a valid recovery once the cause is fixed; it records a
