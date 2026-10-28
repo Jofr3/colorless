@@ -113,7 +113,8 @@ only the conclusion.
   it locally with `bun run mutants --only <id>`.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
   seeded play-forward sweeps (`onStep` sees each accepted action's events); `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
-  for LobbyDO; `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
+  for LobbyDO (its `dispose` fails a test whose DO sent a frame `lobbyServerMessageSchema`
+  refuses); `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;

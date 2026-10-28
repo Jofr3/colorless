@@ -8,6 +8,7 @@ import {
   type Card,
   type LobbyClientMessage,
   type LobbyServerMessage,
+  lobbyServerMessageSchema,
   publicSeatId,
   seatSecretFrom,
   sha256,
@@ -33,6 +34,9 @@ export function seatIdOf(label: string): string {
 /** The server end of an accepted lobby socket, recording every frame the DO sends it. */
 export class FakeSocket {
   readonly sent: LobbyServerMessage[] = [];
+  /** Each sent frame the shared server wire schema refuses, with why. Not thrown from `send`,
+      since the DO swallows a throwing send as a socket already gone; `dispose` fails on it. */
+  readonly offWire: string[] = [];
   closed: { code: number | undefined; reason: string | undefined } | null = null;
   /** The last auto-answered keepalive, or null before the first. When null on a socket whose
       client `pings`, the runtime reads as having just answered one. */
@@ -52,7 +56,13 @@ export class FakeSocket {
 
   send(data: string): void {
     if (this.closed !== null) throw new Error("socket is closed");
-    this.sent.push(JSON.parse(data) as LobbyServerMessage);
+    const frame: unknown = JSON.parse(data);
+    const checked = lobbyServerMessageSchema.safeParse(frame);
+    if (!checked.success) {
+      const issues = checked.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+      this.offWire.push(`${data.slice(0, 120)} (${issues.join("; ")})`);
+    }
+    this.sent.push(frame as LobbyServerMessage);
   }
 
   close(code?: number, reason?: string): void {
@@ -343,7 +353,8 @@ export interface LobbyHarness {
   /** Evict the instance and wake a fresh one on the same storage and sockets, as hibernation
       does: only what storage and the socket attachments hold survives. */
   hibernate(): void;
-  /** Restore the globals `createLobbyHarness` replaced. */
+  /** Restore the globals `createLobbyHarness` replaced, then fail if the DO sent any socket a
+      frame off the server wire schema. */
   dispose(): void;
 }
 
@@ -407,6 +418,12 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
     hibernate() {
       lobby = wake();
     },
-    dispose: restore,
+    dispose() {
+      restore();
+      const offWire = state.sockets.flatMap((ws) => ws.offWire);
+      if (offWire.length > 0) {
+        throw new Error(`the DO sent frames off the server wire schema:\n${offWire.join("\n")}`);
+      }
+    },
   };
 }
