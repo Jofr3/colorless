@@ -28,6 +28,13 @@ describe("escapeSqlText", () => {
   it("throws on NUL rather than emit a silently-truncating literal", () => {
     expect(() => escapeSqlText("bad\u0000text")).toThrow(/NUL/);
   });
+
+  it("throws on a lone surrogate rather than let the SQL file turn it into U+FFFD", () => {
+    for (const bad of ["a\uD83Db", "a\uDE00b", "end\uD83D", "\uDE00\uD83D"]) {
+      expect(() => escapeSqlText(bad), JSON.stringify(bad)).toThrow(/lone UTF-16 surrogate/);
+    }
+    expect(escapeSqlText("Pikachu ⚡ 😀")).toBe("'Pikachu ⚡ 😀'");
+  });
 });
 
 describe("sqlLiteral", () => {
