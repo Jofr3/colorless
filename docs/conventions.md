@@ -281,7 +281,12 @@ only the conclusion.
   accounts and decks through the API. It reads the mailboxes by `WIRE_ROWS` and drives Lua through
   bridge lines, and stops every process it started, failing or not; a failed run keeps the
   temporary directory and prints it. A new step goes in `smoke()`; keep it semantic, never canvas
-  coordinates.
+  coordinates. **`bun run e2e --firefox`** runs the same smoke in Firefox (`FIREFOX`, or firefox
+  on PATH; with Nix, `$(nix build nixpkgs#firefox --no-link --print-out-paths)/bin/firefox`) over
+  WebDriver BiDi, through the driver interface in `scripts/lib/browser.ts`; a step uses only that
+  interface, so it runs in both. Headless Firefox makes no WebGL context, so this mode starts its
+  own Xvfb and, where `/run/opengl-driver` is missing, Mesa's software GL, both from nixpkgs unless
+  `XVFB`/`MESA` name them; it is opt-in too, about 80 s.
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
   234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;

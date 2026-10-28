@@ -1,6 +1,9 @@
-// Runs every headless Lua test under frontend/lua/tests with `lua5.1`, the
-// dialect love.js ships, when it is on PATH, else the system `lua` (override
-// with LUA=lua5.2); the summary names the interpreter. effects_gpu.lua needs
+// Runs every headless Lua test under frontend/lua/tests under Lua 5.1, the
+// dialect love.js ships: `lua5.1` when it is on PATH, else, where `nix` is,
+// nixpkgs#lua5_1 (built once and kept under node_modules/.cache/lua5.1, a GC
+// root, so a run pays no nix eval; resolved again if the link goes missing),
+// else the system `lua`. LUA=<binary> overrides all of it (CI sets
+// LUA=lua5.1); the summary names the interpreter. effects_gpu.lua needs
 // love.js in a browser and is skipped. Tests that compare against Balatro's
 // source exit 77 when it is missing
 // (frontend/lua/tests/support/balatro_source.lua), or skip only those checks
@@ -11,7 +14,7 @@
 //   bun scripts/test-lua.ts [--require-source]
 
 import { spawn, spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { REPO_ROOT, repoPath } from "./lib/repo";
 
@@ -20,8 +23,24 @@ const BROWSER_ONLY = new Set(["effects_gpu.lua"]);
 const SKIPPED = 77;
 const TIMEOUT_MS = 60_000;
 const SHIPPED = "lua5.1";
-const lua = process.env.LUA ?? (versionOf(SHIPPED) === undefined ? "lua" : SHIPPED);
+const NIX_LINK = repoPath("node_modules/.cache/lua5.1");
+const lua = process.env.LUA ?? findShipped();
 const requireSource = process.argv.includes("--require-source");
+
+/** A Lua 5.1 binary: lua5.1 on PATH, else nixpkgs#lua5_1 through `nix`, else plain `lua`. */
+function findShipped(): string {
+  if (versionOf(SHIPPED) !== undefined) return SHIPPED;
+  const linked = `${NIX_LINK}/bin/lua`;
+  if (existsSync(linked)) return linked;
+  if (spawnSync("nix", ["--version"]).status !== 0) return "lua";
+  mkdirSync(repoPath("node_modules/.cache"), { recursive: true });
+  const build = spawnSync("nix", ["build", "nixpkgs#lua5_1", "--out-link", NIX_LINK], {
+    encoding: "utf8",
+  });
+  if (build.status === 0 && existsSync(linked)) return linked;
+  console.log(`(nix build nixpkgs#lua5_1 failed, falling back to lua)\n${build.stderr.trim()}`);
+  return "lua";
+}
 
 /** `Lua 5.1.5` and the like, or undefined when `bin` does not run. 5.1 prints it to stderr. */
 function versionOf(bin: string): string | undefined {

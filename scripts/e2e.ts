@@ -4,19 +4,25 @@
  * build game.data. It builds the site against its own local API on free ports, with a fresh
  * migrated D1 under a temporary directory that holds only the fixture catalog
  * (`@colorless/api/testing/fixtureCatalog`), makes its accounts and decks through that API, and
- * drives headless Chromium through:
+ * drives headless Chromium (or Firefox, with --firefox) through:
  *   boot and keyboard input; a sandbox game to turn 3; a Lua crash mid-game and the reload that
- *   resumes it; a boot whose game.data never arrives (the stall note); an online match from
- *   create to a rematch, in two browser contexts; an invite link to a code that names no lobby.
+ *   resumes it; a builder edit saved as the page is hidden, navigated away and closed (keepalive);
+ *   a boot whose game.data never arrives (the stall note); an online match from create to a
+ *   rematch, in two browser contexts, whose guest socket goes silent and is replaced mid-match;
+ *   an invite link to a code that names no lobby.
  * It reads state from the mailboxes the page writes for Lua and drives Lua through the bridge's
  * own `COLORLESS:` lines, never by canvas coordinates. Every process it starts is stopped on the
  * way out, failing or not.
  *
  *   CHROMIUM=<binary> BALATRO_SOURCE=<dir> bun run e2e [--gpu] [--keep]
+ *   FIREFOX=<binary> BALATRO_SOURCE=<dir> bun run e2e --firefox [--gpu] [--keep]
  *
- * CHROMIUM defaults to the first of chromium, chromium-browser, google-chrome on PATH. --gpu adds
- * the CRT parity check (frontend/lua/tests/effects_gpu.lua). --keep leaves the temporary directory
- * (site, D1 state, API log); a failed run always leaves it.
+ * CHROMIUM defaults to the first of chromium, chromium-browser, google-chrome on PATH, FIREFOX to
+ * firefox. Headless Firefox makes no WebGL context, so --firefox runs it on a private Xvfb (XVFB,
+ * else Xvfb on PATH, else nixpkgs#xorg.xvfb), with Mesa's software GL (MESA, else nixpkgs#mesa)
+ * where the system has none in /run/opengl-driver. --gpu adds the CRT parity check
+ * (frontend/lua/tests/effects_gpu.lua). --keep leaves the temporary directory (site, D1 state, API
+ * log); a failed run always leaves it.
  */
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
@@ -36,6 +42,13 @@ import { delimiter, extname, join, normalize } from "node:path";
 import { FIXTURE_DECK, fixtureCatalogStatements } from "@colorless/api/testing/fixtureCatalog";
 import { MAILBOXES } from "../src/host/mailboxes";
 import { WIRE_ROWS, wireColumn } from "../src/lua/wireFields";
+import {
+  type Browser,
+  launchChromium,
+  launchFirefox,
+  type Page,
+  type PageOptions,
+} from "./lib/browser";
 import { fail } from "./lib/cli";
 import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 
@@ -49,21 +62,29 @@ const t0 = Date.now();
 const log = (line: string) => console.log(`[${((Date.now() - t0) / 1000).toFixed(1)}s] ${line}`);
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
-function findChromium(): string {
-  const named = process.env.CHROMIUM;
+const firefox = process.argv.includes("--firefox");
+
+/** The browser binary: $CHROMIUM or $FIREFOX, else the first of its usual names on PATH. */
+function findBrowser(): string {
+  const variable = firefox ? "FIREFOX" : "CHROMIUM";
+  const named = process.env[variable];
   if (named) {
-    if (!existsSync(named)) fail(`CHROMIUM=${named} does not exist.`);
+    if (!existsSync(named)) fail(`${variable}=${named} does not exist.`);
     return named;
   }
-  for (const name of ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable"])
+  const names = firefox
+    ? ["firefox"]
+    : ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable"];
+  for (const name of names)
     for (const dir of (process.env.PATH ?? "").split(delimiter))
       if (dir && existsSync(join(dir, name))) return join(dir, name);
+  const [label, attr] = firefox ? ["Firefox", "firefox"] : ["Chromium", "chromium"];
   return fail(
-    "e2e needs Chromium: set CHROMIUM to its binary, or put chromium on PATH (with Nix:\n" +
-      "  CHROMIUM=$(nix build nixpkgs#chromium --no-link --print-out-paths)/bin/chromium).",
+    `e2e needs ${label}: set ${variable} to its binary, or put ${attr} on PATH (with Nix:\n` +
+      `  ${variable}=$(nix build nixpkgs#${attr} --no-link --print-out-paths)/bin/${attr}).`,
   );
 }
-const chromium = findChromium();
+const binary = findBrowser();
 
 // ---------- processes, and stopping them ----------
 
@@ -73,11 +94,15 @@ const servers: Server[] = [];
 let passed = false;
 
 /** Starts `command` in its own process group, so stopping it takes every process it spawned. */
-function start(command: string, args: string[], options: { cwd?: string; logFile?: string } = {}) {
+function start(
+  command: string,
+  args: string[],
+  options: { cwd?: string; logFile?: string; env?: Record<string, string> } = {},
+) {
   const out = options.logFile ? createWriteStream(options.logFile) : undefined;
   const child = spawn(command, args, {
     cwd: options.cwd ?? REPO_ROOT,
-    env: { ...process.env, CI: "true", WRANGLER_SEND_METRICS: "false" },
+    env: { ...process.env, CI: "true", WRANGLER_SEND_METRICS: "false", ...options.env },
     stdio: ["ignore", out ? "pipe" : "ignore", out ? "pipe" : "ignore"],
     detached: true,
   });
@@ -178,155 +203,146 @@ function serve(dir: string): Promise<number> {
   );
 }
 
-// ---------- the browser, over the DevTools protocol ----------
+// ---------- the browser ----------
 
-type CdpMessage = {
-  id?: number;
-  method?: string;
-  sessionId?: string;
-  params?: Record<string, unknown>;
-  result?: Record<string, unknown>;
-  error?: unknown;
-};
-type Page = { name: string; session: string; consoleErrors: string[]; consoleLines: string[] };
-
-let socket: WebSocket | undefined;
-let serial = 0;
-const pending = new Map<
-  number,
-  { ok: (v: Record<string, unknown>) => void; no: (e: Error) => void }
->();
-const listeners: ((message: CdpMessage) => void)[] = [];
-
-async function connectBrowser() {
-  const profile = join(root, "profile");
-  const debugPort = await freePort();
-  start(chromium, [
-    "--headless=new",
-    `--remote-debugging-port=${debugPort}`,
-    `--user-data-dir=${profile}`,
-    "--no-first-run",
-    "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader",
-    "--autoplay-policy=no-user-gesture-required",
-    "--window-size=1280,800",
-    // Two love.js pages share the CPU; a page in the background must not be throttled.
-    "--disable-background-timer-throttling",
-    "--disable-renderer-backgrounding",
-    "--disable-backgrounding-occluded-windows",
-    "about:blank",
-  ]);
-  let url = "";
-  for (let attempt = 0; attempt < 100 && !url; attempt++) {
-    await sleep(100);
-    try {
-      const version = (await (
-        await fetch(`http://127.0.0.1:${debugPort}/json/version`)
-      ).json()) as {
-        webSocketDebuggerUrl: string;
-      };
-      url = version.webSocketDebuggerUrl;
-    } catch {}
-  }
-  if (!url) throw new Error(`Chromium (${chromium}) did not open a debugging port`);
-  const opened = new WebSocket(url);
-  await new Promise((done, reject) => {
-    opened.addEventListener("open", done);
-    opened.addEventListener("error", reject);
-  });
-  opened.addEventListener("message", (event) => {
-    const message = JSON.parse(String(event.data)) as CdpMessage;
-    if (message.id === undefined) {
-      for (const listener of listeners) listener(message);
-      return;
-    }
-    const waiter = pending.get(message.id);
-    pending.delete(message.id);
-    if (message.error) waiter?.no(new Error(JSON.stringify(message.error)));
-    else waiter?.ok(message.result ?? {});
-  });
-  socket = opened;
-}
-
-function send(method: string, params: object = {}, sessionId?: string) {
-  const sent = Date.now();
-  return new Promise<Record<string, unknown>>((ok, no) => {
-    const id = ++serial;
-    pending.set(id, { ok, no });
-    socket?.send(JSON.stringify({ id, method, params, sessionId }));
-  }).finally(() => {
-    if (Date.now() - sent > 5000) log(`slow DevTools call ${method}: ${Date.now() - sent} ms`);
-  });
-}
-
-// Records the page's mailbox writes and the bridge's prints, and keeps the bridge to send through.
+// Records the page's mailbox writes, the bridge's prints, its non-GET fetches and its WebSockets,
+// and keeps the bridge to send through. `muteSockets()` makes every open socket half-open as the
+// page sees it: frames still go out as far as the page knows, but none leave and none arrive.
 const HOOK = `(() => {
-  const mail = {}, prints = [], errors = [];
+  const mail = {}, prints = [], errors = [], fetches = [], sockets = [];
   let host, bridge;
-  window.__e2e = { mail, prints, errors, send: (line) => bridge && bridge.onPrint(line) };
+  window.__e2e = { mail, prints, errors, fetches, sockets, send: (line) => bridge && bridge.onPrint(line),
+    muteSockets: () => sockets.filter((s) => s.open && !s.closedByPage).map((s) => { s.mutedAt = Date.now(); return s.url; }).length };
   addEventListener("error", (e) => errors.push(String(e.message || e.type)));
   addEventListener("unhandledrejection", (e) => errors.push("rejection " + String(e.reason)));
+  // zod probes for eval with a caught Function("") (empty sample), which the CSP refuses; any other
+  // violation is an error.
+  addEventListener("securitypolicyviolation", (e) => { if (e.sample !== "" || !e.violatedDirective.startsWith("script-src")) errors.push("csp " + e.violatedDirective + " " + e.sourceFile + ":" + e.lineNumber + " " + e.sample); });
   Object.defineProperty(window, "colorlessHost", { configurable: true, get: () => host, set: (h) => {
     const write = h.writeMailbox, connect = h.connect;
     h.writeMailbox = (n, t) => { mail[n] = t; return write(n, t); };
     h.connect = (b) => { const on = b.onPrint; b.onPrint = (m) => { prints.push(m); return on(m); }; bridge = b; connect(b); };
     host = h;
   } });
+  const nativeFetch = window.fetch;
+  window.fetch = (input, init) => {
+    const method = (init && init.method) || "GET";
+    if (method !== "GET") fetches.push({ at: Date.now(), method, url: String(input), keepalive: !!(init && init.keepalive), bytes: init && typeof init.body === "string" ? init.body.length : 0 });
+    return nativeFetch(input, init);
+  };
+  const Native = window.WebSocket;
+  window.WebSocket = class extends Native {
+    constructor(url, protocols) {
+      super(url, protocols);
+      const record = { url: String(url), created: Date.now(), open: 0, closedByPage: 0, closed: 0, mutedAt: 0, pings: [], pongs: 0, received: 0 };
+      sockets.push(record);
+      this.__record = record;
+      super.addEventListener("open", () => { record.open = Date.now(); });
+      super.addEventListener("close", () => { record.closed = Date.now(); });
+    }
+    get onmessage() { return this.__onmessage || null; }
+    set onmessage(handler) {
+      this.__onmessage = handler;
+      const record = this.__record;
+      super.onmessage = handler && ((event) => {
+        if (record.mutedAt) return;
+        record.received++;
+        if (event.data === "pong") record.pongs++;
+        handler.call(this, event);
+      });
+    }
+    send(data) {
+      if (data === "ping") this.__record.pings.push(Date.now());
+      if (!this.__record.mutedAt) super.send(data);
+    }
+    close(code, reason) {
+      if (!this.__record.closedByPage) this.__record.closedByPage = Date.now();
+      super.close(code, reason);
+    }
+  };
 })();`;
 
-async function newPage(name: string, options: { userAgentMark?: string } = {}): Promise<Page> {
-  const { browserContextId } = await send("Target.createBrowserContext", { disposeOnDetach: true });
-  const { targetId } = await send("Target.createTarget", { url: "about:blank", browserContextId });
-  const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-  const session = String(sessionId);
-  const page: Page = { name, session, consoleErrors: [], consoleLines: [] };
-  listeners.push((message) => {
-    if (message.sessionId !== session) return;
-    const params = message.params ?? {};
-    if (message.method === "Runtime.consoleAPICalled") {
-      const args = (params.args ?? []) as { value?: unknown; description?: string }[];
-      const text = args.map((arg) => String(arg.value ?? arg.description)).join(" ");
-      page.consoleLines.push(text);
-      if (params.type === "error") page.consoleErrors.push(text);
-    }
-    if (message.method === "Runtime.exceptionThrown")
-      page.consoleErrors.push(`exception ${JSON.stringify(params.exceptionDetails)}`);
-  });
-  await send("Runtime.enable", {}, session);
-  await send("Page.enable", {}, session);
-  if (options.userAgentMark) {
-    const { userAgent } = await send("Browser.getVersion");
-    await send(
-      "Network.setUserAgentOverride",
-      { userAgent: `${userAgent} ${options.userAgentMark}` },
-      session,
-    );
-  }
-  await send(
-    "Emulation.setDeviceMetricsOverride",
-    { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false },
-    session,
-  );
-  await send("Page.addScriptToEvaluateOnNewDocument", { source: HOOK }, session);
-  await send("Emulation.setFocusEmulationEnabled", { enabled: true }, session);
-  return page;
+let browser: Browser | undefined;
+function driver(): Browser {
+  if (!browser) throw new Error("no browser yet");
+  return browser;
 }
 
-async function evaluate<T = unknown>(page: Page, expression: string): Promise<T> {
-  const reply = (await send(
-    "Runtime.evaluate",
-    { expression, awaitPromise: true, returnByValue: true },
-    page.session,
-  )) as {
-    result?: { value?: T };
-    exceptionDetails?: { text?: string; exception?: { description?: string } };
-  };
-  if (reply.exceptionDetails) {
-    const detail = reply.exceptionDetails.exception?.description ?? reply.exceptionDetails.text;
-    throw new Error(`${page.name}: ${detail}`);
-  }
-  return reply.result?.value as T;
+/** A nixpkgs package's store path, fetched or built the first time. */
+function nixPackage(attr: string): string {
+  const built = spawnSync("nix", ["build", `nixpkgs#${attr}`, "--no-link", "--print-out-paths"], {
+    encoding: "utf8",
+  });
+  const path = built.stdout?.trim().split("\n")[0];
+  if (built.status !== 0 || !path)
+    throw new Error(`nix build nixpkgs#${attr} failed:\n${built.stderr}`);
+  return path;
 }
+
+const onPath = (name: string) =>
+  (process.env.PATH ?? "")
+    .split(delimiter)
+    .map((dir) => join(dir, name))
+    .find((file) => existsSync(file));
+
+/** The environment Firefox gets WebGL in: its own Xvfb display, and where the system has no GL
+    driver of its own (NixOS keeps it in /run/opengl-driver), Mesa's software rasterizer from MESA or
+    nixpkgs. Headless Firefox makes no WebGL context at all, so love.js could not start. */
+async function firefoxDisplay(): Promise<Record<string, string>> {
+  const xvfb = process.env.XVFB ?? onPath("Xvfb") ?? `${nixPackage("xorg.xvfb")}/bin/Xvfb`;
+  const server = spawn(
+    xvfb,
+    ["-displayfd", "3", "-screen", "0", "1280x800x24", "-nolisten", "tcp"],
+    {
+      stdio: ["ignore", "ignore", "ignore", "pipe"],
+      detached: true,
+    },
+  );
+  started.push(server);
+  const display = await new Promise<string>((done, reject) => {
+    let text = "";
+    server.stdio[3]?.on("data", (chunk: Buffer) => {
+      text += chunk.toString();
+      if (text.includes("\n")) done(text.trim());
+    });
+    server.once("error", reject);
+    server.once("exit", (code) => reject(new Error(`Xvfb (${xvfb}) exited with ${code}`)));
+    setTimeout(() => reject(new Error("Xvfb named no display in 10 s")), 10_000);
+  });
+  const env: Record<string, string> = { DISPLAY: `:${display}` };
+  const mesa =
+    process.env.MESA ??
+    (existsSync("/run/opengl-driver/lib") || !onPath("nix") ? undefined : nixPackage("mesa"));
+  if (mesa)
+    Object.assign(env, {
+      __EGL_VENDOR_LIBRARY_DIRS: `${mesa}/share/glvnd/egl_vendor.d`,
+      __GLX_VENDOR_LIBRARY_NAME: "mesa",
+      LIBGL_DRIVERS_PATH: `${mesa}/lib/dri`,
+      GBM_BACKENDS_PATH: `${mesa}/lib/gbm`,
+      LD_LIBRARY_PATH: `${mesa}/lib`,
+    });
+  log(`Firefox on Xvfb display :${display}${mesa ? ` with ${mesa}` : ""}`);
+  return env;
+}
+
+async function launchBrowser() {
+  const env = firefox ? await firefoxDisplay() : {};
+  const options = {
+    binary,
+    profile: join(root, "profile"),
+    port: await freePort(),
+    start: (command: string, args: string[]) => start(command, args, { env }),
+    headless: !firefox,
+    hook: HOOK,
+    log,
+  };
+  browser = await (firefox ? launchFirefox(options) : launchChromium(options));
+  log(`browser ${browser.version}`);
+}
+
+const newPage = (name: string, options?: PageOptions) => driver().newPage(name, options);
+const evaluate = <T = unknown>(page: Page, expression: string) =>
+  driver().evaluate<T>(page, expression);
 
 const FAILED_TEXT = `document.body.classList.contains('failed') && document.getElementById('status').textContent`;
 
@@ -355,7 +371,7 @@ let site = "";
 let apiOrigin = "";
 
 async function open(page: Page, path: string) {
-  await send("Page.navigate", { url: site + path }, page.session);
+  await driver().navigate(page, site + path);
   await waitFor(
     page,
     "Lua ready",
@@ -413,19 +429,13 @@ async function seedAccount(page: Page, label: string): Promise<string> {
   return deck.id;
 }
 
-async function key(page: Page, name: string, code: string, keyCode: number) {
-  for (const type of ["keyDown", "keyUp"])
-    await send(
-      "Input.dispatchKeyEvent",
-      { type, key: name, code, windowsVirtualKeyCode: keyCode },
-      page.session,
-    );
-}
-
 async function assertHealthy(page: Page, step: string) {
   const errors = await evaluate<string[]>(page, "window.__e2e.errors");
   const failed = await evaluate<boolean>(page, `document.body.classList.contains('failed')`);
-  const consoleErrors = page.consoleErrors.filter((line) => !/favicon|music/.test(line));
+  // Firefox also logs each CSP violation; the hook has already failed any but zod's eval probe.
+  const consoleErrors = page.consoleErrors.filter(
+    (line) => !/favicon|music|blocked a JavaScript eval \(script-src\)/.test(line),
+  );
   if (failed || errors.length > 0 || consoleErrors.length > 0)
     throw new Error(
       `${page.name} is unhealthy after ${step}: failed=${failed} ${JSON.stringify([...errors, ...consoleErrors])}`,
@@ -502,13 +512,91 @@ async function play(page: Page, steps: number, done: (header: string[]) => boole
   throw new Error(`${page.name}: the table did not get there in ${steps} steps`);
 }
 
+// ---------- the deck builder's last save ----------
+
+const BUILDER = WIRE_ROWS.builder.header;
+const builderField = (field: (typeof BUILDER.fields)[number]) =>
+  `(window.__e2e.mail[${JSON.stringify(MAILBOXES.builder)}] || '').split('\\n')[0].split('\\t').map(decodeURIComponent)[${col(BUILDER, field)}]`;
+
+/** Polls the server, through `reader`'s cookie, until deck `id` is named `name`. */
+async function serverHas(reader: Page, id: string, name: string, ms = 8000) {
+  const until = Date.now() + ms;
+  for (;;) {
+    const deck = await api<{ name: string }>(reader, "GET", `/decks/${id}`);
+    if (deck.name === name) return;
+    if (Date.now() > until) throw new Error(`the server kept "${deck.name}", not "${name}"`);
+    await sleep(200);
+  }
+}
+
+/** A builder tab on deck `id`, in `owner`'s cookie jar, ready to edit. */
+async function builderTab(owner: Page, id: string, name: string) {
+  const page = await newPage(name, { beside: owner });
+  pages.push(page);
+  await open(page, `/decks/${id}`);
+  await lua(page, "builder", "open", id);
+  await waitFor(page, "the builder", `${builderField("phase")} === 'ready'`, 20_000);
+  return page;
+}
+
+/** A rename sent inside the save debounce, then the page hidden, navigated away or closed: each
+    save must still reach the server, in a fetch marked keepalive (src/host/unsavedEdits.ts). */
+async function builderSaves(owner: Page) {
+  const { id } = await api<{ id: string }>(owner, "POST", "/decks", {
+    name: "E2E builder",
+    tint: 10,
+    format: "expanded",
+    cards: FIXTURE_DECK,
+  });
+  const patches = (page: Page) =>
+    evaluate<{ keepalive: boolean; bytes: number }[]>(
+      page,
+      `window.__e2e.fetches.filter((f) => f.method === 'PATCH' && f.url.includes(${JSON.stringify(id)}))`,
+    );
+
+  // Hidden: synthetic, as a headless tab is never hidden; the page stays, so its fetch is visible.
+  const page = await builderTab(owner, id, "builder");
+  await lua(page, "builder", "name", "E2E hidden");
+  await sleep(50);
+  await evaluate(
+    page,
+    `(Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' }), document.dispatchEvent(new Event('visibilitychange')))`,
+  );
+  await serverHas(owner, id, "E2E hidden");
+  const sent = await patches(page);
+  if (sent.length !== 1 || !sent[0]?.keepalive)
+    throw new Error(`the hidden save sent ${JSON.stringify(sent)}, not one keepalive PATCH`);
+  await waitFor(page, "the save to settle", `${builderField("saveStatus")} !== 'saving'`, 10_000);
+  await evaluate(page, "delete document.visibilityState");
+
+  // Navigated away: an ordinary fetch would be cancelled with the page.
+  await lua(page, "builder", "name", "E2E navigated");
+  await sleep(100);
+  await driver().navigate(page, "about:blank");
+  await serverHas(owner, id, "E2E navigated");
+  pages.splice(pages.indexOf(page), 1);
+  await driver().closePage(page);
+
+  // Closed.
+  const closing = await builderTab(owner, id, "builder-close");
+  await lua(closing, "builder", "name", "E2E closed");
+  await sleep(100);
+  pages.splice(pages.indexOf(closing), 1);
+  await driver().closePage(closing);
+  await serverHas(owner, id, "E2E closed");
+  results.push(
+    `builder: a save inside the debounce reached the server when hidden (keepalive, ${sent[0].bytes} bytes), navigated away and closed`,
+  );
+}
+
 // ---------- the online lobby ----------
 
 const ONLINE = WIRE_ROWS.online;
 async function lobby(host: Page, guest: Page, hostDeck: string, guestDeck: string) {
+  // Lua opens /online on its Create tab, which makes the lobby (frontend/lua/ui/online.lua). An
+  // `open` sent after that lobby exists would drop it for a second one, after the guest has the
+  // first code.
   await open(host, "/online");
-  await lua(host, "online", "open");
-  await lua(host, "online", "create");
   const code = await waitFor<string>(
     host,
     "a lobby code",
@@ -561,6 +649,52 @@ async function deadCode(page: Page) {
   if (took > 3000)
     throw new Error(`${page.name}: "not found" took ${took} ms, not a definite answer`);
   return took;
+}
+
+type SocketRecord = {
+  url: string;
+  open: number;
+  closedByPage: number;
+  pings: number[];
+  pongs: number;
+};
+
+/** The lobby socket's pings and pongs, then the watchdog: a socket that hears nothing back is given
+    up after SOCKET_SILENCE_MS (src/online/channel.ts) for a new one, and the match goes on. */
+async function socketWatchdog(page: Page) {
+  const lobbySockets = `window.__e2e.sockets.filter((s) => s.url.includes('/lobby/'))`;
+  await waitFor(
+    page,
+    "five pings",
+    `${lobbySockets}.some((s) => s.open && !s.closedByPage && s.pings.length >= 5)`,
+    15_000,
+  );
+  const live = (await evaluate<SocketRecord[]>(page, lobbySockets)).find(
+    (s) => s.open && !s.closedByPage,
+  );
+  if (!live) throw new Error(`${page.name}: no open lobby socket`);
+  const gaps = live.pings.slice(1).map((at, i) => at - (live.pings[i] ?? at));
+  const gap = gaps.sort((a, b) => a - b)[Math.floor(gaps.length / 2)] ?? 0;
+  if (gap < 1200 || gap > 2000) throw new Error(`${page.name}: pings ${gap} ms apart, not 1500`);
+  if (live.pongs < live.pings.length - 2)
+    throw new Error(`${page.name}: ${live.pongs} pongs for ${live.pings.length} pings`);
+  const muted = await evaluate<number>(page, "window.__e2e.muteSockets()");
+  if (muted !== 1) throw new Error(`${page.name}: muted ${muted} sockets, not one`);
+  const given = await waitFor<number>(
+    page,
+    "the watchdog to give up the silent socket",
+    "(() => { const s = window.__e2e.sockets.find((s) => s.mutedAt); return s && s.closedByPage ? s.closedByPage - s.mutedAt : 0; })()",
+    20_000,
+  );
+  if (given < 9000 || given > 14_000)
+    throw new Error(`${page.name}: the silent socket was given up after ${given} ms`);
+  const back = await waitFor<number>(
+    page,
+    "a new socket that hears the server",
+    `(() => { const old = window.__e2e.sockets.find((s) => s.mutedAt); const s = ${lobbySockets}.find((s) => s.open > old.closedByPage && s.pongs > 0); return s ? s.open - old.closedByPage : 0; })()`,
+    15_000,
+  );
+  return `pings ${gap} ms apart, each answered; a silent socket given up after ${(given / 1000).toFixed(1)} s and replaced ${back} ms later`;
 }
 
 // ---------- the run ----------
@@ -636,13 +770,13 @@ async function smoke() {
   }
   log(`API on ${apiOrigin}, site on ${site}`);
 
-  await connectBrowser();
+  await launchBrowser();
 
   // A page whose game.data never arrives, left to sit while the rest runs.
   const stalled = await newPage("stalled", { userAgentMark: STALL_MARK });
   pages.push(stalled);
   const stallStarted = Date.now();
-  await send("Page.navigate", { url: `${site}/` }, stalled.session);
+  await driver().navigate(stalled, `${site}/`);
 
   // ---- boot and real keyboard input ----
   const host = await newPage("host");
@@ -652,7 +786,7 @@ async function smoke() {
   log(`boot ready in ${Date.now() - bootStart} ms`);
   await assertHealthy(host, "boot");
   await evaluate(host, "document.getElementById('canvas').focus()");
-  await key(host, "ArrowRight", "ArrowRight", 39);
+  await driver().key(host, "ArrowRight");
   await waitFor(
     host,
     "Lua to announce the focus",
@@ -703,6 +837,9 @@ async function smoke() {
   host.consoleErrors.length = 0;
   results.push(`crash: "${crashed}", and the reload resumed turn ${resumed[HEADER.turn]}`);
 
+  // ---- the builder's last save, as the page hides or goes ----
+  await builderSaves(host);
+
   // ---- an online match, through a rematch ----
   const guest = await newPage("guest");
   pages.push(guest);
@@ -716,6 +853,15 @@ async function smoke() {
     `${headerField(HEADER.phase)} === 'ready' && ${headerField(HEADER.matchId)}`,
     20_000,
   );
+  const watchdog = await socketWatchdog(guest);
+  for (const page of [host, guest])
+    await waitFor(
+      page,
+      "the same match after the new socket",
+      `${headerField(HEADER.phase)} === 'ready' && ${headerField(HEADER.matchId)} === ${JSON.stringify(firstMatch)} && ${headerField(HEADER.outcome)} === ''`,
+      10_000,
+    );
+  results.push(`watchdog: ${watchdog}; the match went on`);
   await lua(host, "simulator", "concede");
   const label = col(SIM.option, "label");
   const confirm = await waitFor<string>(
@@ -777,7 +923,7 @@ async function gpuParity() {
   const port = await serve(dir);
   const page = await newPage("gpu");
   pages.push(page);
-  await send("Page.navigate", { url: `http://127.0.0.1:${port}/` }, page.session);
+  await driver().navigate(page, `http://127.0.0.1:${port}/`);
   const until = Date.now() + BOOT_MS;
   while (!page.consoleLines.some((line) => /^GPU (PASS|FAIL|ERROR)/.test(line))) {
     if (Date.now() > until) throw new Error("the GPU check printed no verdict");
@@ -823,7 +969,7 @@ try {
   await report(error);
 } finally {
   for (const result of results) log(`ok: ${result}`);
-  socket?.close();
+  browser?.close();
   await stopAll();
 }
 log(passed ? `PASS in ${((Date.now() - t0) / 1000).toFixed(1)} s` : "FAIL");

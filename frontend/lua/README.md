@@ -182,8 +182,10 @@ transition works without a network request; their source URLs are recorded in
 
 Run from the repository root with Lua 5.1, the dialect love.js ships (5.2 and
 LuaJIT also run them, but accept syntax 5.1 rejects, such as `goto`). CI runs
-the whole suite under `lua5.1`, and `bun run test:lua` prefers it when it is
-on PATH:
+the whole suite under `lua5.1`, and so does `bun run test:lua`: it takes
+`lua5.1` from PATH, else, where `nix` is, builds nixpkgs#lua5_1 once and keeps
+it under `node_modules/.cache/lua5.1`, else falls back to `lua` and says so
+(`LUA=<binary>` overrides it):
 
 ```sh
 lua frontend/lua/tests/motion.lua
