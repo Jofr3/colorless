@@ -228,6 +228,15 @@ Two more things the SDK does *not* do for us:
 - **No pacing or backoff**, only a per-URL in-process cache. So the seam owns
   the 50 ms inter-request spacing for *both* transports; the politeness posture
   is identical either way.
+- **No deadline or retry.** The seam gives every request 15 s, body included,
+  and `createSource` retries a failure that may pass up to 3 times: a network
+  error, a timeout, a 200 whose body is not JSON, and under `fetch` a 408, 429
+  or 5xx. It waits the server's `Retry-After` (at most a minute) or else a
+  full-jitter backoff (up to 1, 2, 4 s). Each attempt is paced and counted. A
+  404 or another 4xx, and the SDK's `undefined`, fail at once. Under `sdk` the
+  deadline only stops the wait, since the SDK takes no signal. A set that still
+  fails is listed at the end of the run with the `--sets` command that retries
+  it alone.
 
 `source.ts` lives under `src/` (so it typechecks and is unit-tested with
 stubs) but is deliberately **not** re-exported from the `src/ingest/` barrel,
