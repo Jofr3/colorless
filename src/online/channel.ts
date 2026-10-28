@@ -36,14 +36,18 @@ export const SOCKET_SILENCE_MS = 10_000;
 export const CONNECT_TIMEOUT_MS = 10_000;
 const RECONNECT_BASE_MS = 400;
 const RECONNECT_MAX_MS = 8000;
+/** A socket open this long counts as a working link, so the next reconnect starts the backoff
+    over. One the server closes sooner (a full lobby turning a tab away) keeps backing off. */
+export const STABLE_OPEN_MS = 5000;
 // Posts buffered while disconnected; beyond this the oldest are dropped (the
 // client's periodic hello retries make individual frames safe to lose).
 const MAX_QUEUED_MESSAGES = 32;
 
-/** The delay before reconnect attempt `attempt` (0-based): 400ms doubling to a
-    cap of 8s. Exported for tests. */
-export function reconnectDelayMs(attempt: number): number {
-  return Math.min(RECONNECT_BASE_MS * 2 ** Math.min(attempt, 8), RECONNECT_MAX_MS);
+/** The delay before reconnect attempt `attempt` (0-based): 400ms doubling to a cap of 8s, spread
+    ±20% by `jitter` (0 to 1) so tabs a server restart dropped together do not return together. */
+export function reconnectDelayMs(attempt: number, jitter = Math.random()): number {
+  const delay = Math.min(RECONNECT_BASE_MS * 2 ** Math.min(attempt, 8), RECONNECT_MAX_MS);
+  return Math.round(delay * (0.8 + 0.4 * jitter));
 }
 
 /** The transport-liveness frame synthesized from each server pong. `from` is
@@ -83,6 +87,7 @@ export function createLobbyChannel(
   let open = false;
   let closed = false;
   let attempt = 0;
+  let openedAt: number | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let connectTimer: ReturnType<typeof setTimeout> | null = null;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -119,6 +124,8 @@ export function createLobbyChannel(
 
   /** The socket is gone: give up on the lobby if the server closed it for good, else reconnect. */
   const lost = (code: number | undefined) => {
+    if (openedAt !== null && Date.now() - openedAt >= STABLE_OPEN_MS) attempt = 0;
+    openedAt = null;
     open = false;
     socket = null;
     stopSocketTimers();
@@ -165,7 +172,7 @@ export function createLobbyChannel(
       if (connectTimer !== null) clearTimeout(connectTimer);
       connectTimer = null;
       open = true;
-      attempt = 0;
+      openedAt = Date.now();
       if (lastHello !== null) ws.send(lastHello);
       for (const pending of queue.splice(0)) ws.send(pending);
       pingTimer = setInterval(() => {

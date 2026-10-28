@@ -30,7 +30,8 @@ export const SEAM_CODE = "ABCD";
     opened, oldest first. */
 export type Tab = { user: string | undefined; offline: boolean; readonly sockets: BridgeSocket[] };
 
-/** The client end of one lobby socket, as `createLobbyChannel` drives a WebSocket. */
+/** The client end of one lobby socket, as `createLobbyChannel` drives a WebSocket. Frames the
+    server sent before it closed still arrive, ahead of the close. */
 export class BridgeSocket {
   onopen: (() => void) | null = null;
   onmessage: ((event: { data: string }) => void) | null = null;
@@ -41,7 +42,10 @@ export class BridgeSocket {
   /** The path is dead without a close either way: nothing crosses it any more. */
   blackholed = false;
   readonly user: string | undefined;
-  private gone = false;
+  /** The client closed this end: nothing reaches it any more. */
+  private clientClosed = false;
+  /** The server end closed, or never opened. */
+  private serverClosed = false;
 
   constructor(
     private readonly seam: Bridge,
@@ -54,57 +58,54 @@ export class BridgeSocket {
         if (offline) throw new Error("offline");
         const server = await seam.h.connect(this.user);
         // Closed by the client while it connected: the server end goes as the close reaches it.
-        if (this.gone) return await seam.h.drop(server);
+        if (this.clientClosed) return await seam.h.drop(server);
         this.server = server;
         const send = server.send.bind(server);
         server.send = (data: string) => {
           send(data);
-          if (this.live()) queueMicrotask(() => this.live() && this.onmessage?.({ data }));
+          this.toClient(() => this.onmessage?.({ data }));
         };
         const close = server.close.bind(server);
         server.close = (code?: number, reason?: string) => {
           close(code, reason);
-          if (!this.live()) return;
-          this.gone = true;
-          queueMicrotask(() => this.onclose?.({ code: code ?? 1005 }));
+          if (this.serverClosed) return;
+          this.serverClosed = true;
+          this.toClient(() => this.onclose?.({ code: code ?? 1005 }));
         };
-        queueMicrotask(() => this.live() && this.onopen?.());
+        this.toClient(() => this.onopen?.());
       } catch {
-        this.gone = true;
-        queueMicrotask(() => this.onclose?.({ code: 1006 }));
+        this.serverClosed = true;
+        this.toClient(() => this.onclose?.({ code: 1006 }));
       }
     });
   }
 
   send(data: string): void {
     const server = this.server;
-    if (!this.live() || server === null) return;
+    if (this.clientClosed || this.serverClosed || this.blackholed || server === null) return;
     if (data === LOBBY_WS_PING) {
       server.lastPong = new Date(Date.now());
-      queueMicrotask(() => this.live() && this.onmessage?.({ data: LOBBY_WS_PONG }));
+      this.toClient(() => this.onmessage?.({ data: LOBBY_WS_PONG }));
       return;
     }
     this.seam.deliver(() => this.seam.h.send(server, data));
   }
 
   close(code?: number): void {
-    if (this.gone) return;
-    const reaches = !this.blackholed;
-    this.gone = true;
+    if (this.clientClosed) return;
+    this.clientClosed = true;
     const server = this.server;
-    if (reaches && server !== null && server.closed === null)
+    if (!this.blackholed && server !== null && server.closed === null)
       this.seam.deliver(() => this.seam.h.drop(server));
     queueMicrotask(() => this.onclose?.({ code: code ?? 1005 }));
   }
 
-  /** The server dropped the connection without the close reaching the client either (a redeploy
-      seen from a tab that then went away): nothing more crosses. */
-  sever(): void {
-    this.gone = true;
-  }
-
-  private live(): boolean {
-    return !this.gone && !this.blackholed;
+  /** Run `event` on the client a task later, unless the path is dead or the client closed by then. */
+  private toClient(event: () => void): void {
+    if (this.blackholed) return;
+    queueMicrotask(() => {
+      if (!this.blackholed && !this.clientClosed) event();
+    });
   }
 }
 
@@ -143,6 +144,8 @@ export type Bridge = {
 export async function openBridge(world: Partial<LobbyWorld> = {}): Promise<Bridge> {
   vi.useFakeTimers({ now: 1_000_000 });
   vi.spyOn(console, "warn").mockImplementation(() => {});
+  // Reconnect delays at the middle of their jitter, so runs repeat exactly.
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
   const stores = { session: memoryStore(), local: memoryStore() };
   vi.stubGlobal("sessionStorage", stores.session);
   vi.stubGlobal("localStorage", stores.local);

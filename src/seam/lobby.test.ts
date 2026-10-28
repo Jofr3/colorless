@@ -1,4 +1,4 @@
-import { sessionIdOf } from "@colorless/api/testing/lobbyHarness";
+import { seatSecret, sessionIdOf } from "@colorless/api/testing/lobbyHarness";
 import { COUNTDOWN_MS } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SEAT_LOST } from "../lua/onlineTable";
@@ -138,6 +138,28 @@ describe("the web client against the lobby DO", () => {
     await b.run(500);
     expect(host.client().self?.hasDeck).toBe(true);
     expect(opponentRow()?.[3]).toBe("Brock");
+  });
+
+  it("a tab a full lobby keeps turning away backs off rather than reconnecting in a loop", async () => {
+    await inGame();
+    const watch = (label: string) => {
+      const tab = b.tab(undefined);
+      const client = b.client(tab, {
+        code: SEAM_CODE,
+        role: "guest",
+        secret: seatSecret(label),
+        name: label,
+      });
+      return { tab, client };
+    };
+    // Two seats and ten watchers fill the lobby's sockets.
+    for (let i = 0; i < 10; i++) watch(`w${i}`);
+    await b.run(1000);
+    const late = watch("late");
+    await b.run(60_000);
+    expect(late.tab.sockets.length).toBeGreaterThan(3);
+    expect(late.tab.sockets.length).toBeLessThan(15);
+    expect(late.client.state.status).toBe("full");
   });
 
   it("a signed-out seat's rematch is refused, and the tab keeps its result as a watcher", async () => {

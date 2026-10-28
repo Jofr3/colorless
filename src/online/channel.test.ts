@@ -5,6 +5,7 @@ import {
   createLobbyChannel,
   reconnectDelayMs,
   SOCKET_SILENCE_MS,
+  STABLE_OPEN_MS,
 } from "./channel";
 
 // The WebSocket transport's pure/mechanical parts, driven through a scripted
@@ -57,20 +58,28 @@ beforeEach(() => {
   vi.useFakeTimers();
   FakeWebSocket.instances = [];
   vi.stubGlobal("WebSocket", FakeWebSocket);
+  // Reconnect delays at the middle of their jitter, so a test can wait out exactly one.
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 const HELLO: LobbyMessage = { kind: "hello", from: "p1", name: "Ana" };
 
 describe("reconnectDelayMs", () => {
   it("doubles from 400ms and caps at 8s", () => {
-    expect([0, 1, 2, 3, 4, 5, 6].map(reconnectDelayMs)).toEqual([
+    expect([0, 1, 2, 3, 4, 5, 6].map((attempt) => reconnectDelayMs(attempt, 0.5))).toEqual([
       400, 800, 1600, 3200, 6400, 8000, 8000,
     ]);
+  });
+
+  it("spreads each delay by a fifth either way", () => {
+    expect([0, 1].map((jitter) => reconnectDelayMs(0, jitter))).toEqual([320, 480]);
+    expect([0, 1].map((jitter) => reconnectDelayMs(9, jitter))).toEqual([6400, 9600]);
   });
 });
 
@@ -278,6 +287,25 @@ describe("createLobbyChannel", () => {
     expect(FakeWebSocket.instances).toHaveLength(3);
   });
 
+  it("keeps backing off while each socket is closed soon after it opens, and starts over after one that held", () => {
+    createLobbyChannel("ABCD");
+    // A full lobby turns the tab away right after each open.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      FakeWebSocket.last().open();
+      FakeWebSocket.last().drop(1013);
+      vi.advanceTimersByTime(reconnectDelayMs(attempt) - 1);
+      expect(FakeWebSocket.instances).toHaveLength(attempt + 1);
+      vi.advanceTimersByTime(1);
+      expect(FakeWebSocket.instances).toHaveLength(attempt + 2);
+    }
+    FakeWebSocket.last().open();
+    vi.advanceTimersByTime(STABLE_OPEN_MS);
+    FakeWebSocket.last().receive("pong");
+    FakeWebSocket.last().drop();
+    vi.advanceTimersByTime(reconnectDelayMs(0));
+    expect(FakeWebSocket.instances).toHaveLength(6);
+  });
+
   it("stops reconnecting and says so when the server closes the lobby for good", () => {
     const onLobbyClosed = vi.fn();
     const channel = createLobbyChannel("ABCD", { onLobbyClosed });
@@ -294,10 +322,10 @@ describe("createLobbyChannel", () => {
   it("reconnects after any other server close, a refused or rate-limited one included", () => {
     const onLobbyClosed = vi.fn();
     createLobbyChannel("ABCD", { onLobbyClosed });
-    for (const code of [1008, 1009, 1013]) {
+    for (const [attempt, code] of [1008, 1009, 1013].entries()) {
       FakeWebSocket.last().open();
       FakeWebSocket.last().drop(code);
-      vi.advanceTimersByTime(reconnectDelayMs(0));
+      vi.advanceTimersByTime(reconnectDelayMs(attempt));
     }
     expect(FakeWebSocket.instances).toHaveLength(4);
     expect(onLobbyClosed).not.toHaveBeenCalled();
