@@ -473,17 +473,43 @@ describe("LuaOnlineMatch", () => {
     ]);
     expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
     expect(t.tagged("A")[0]?.slice(2, 5)).toEqual(["Waiting...", "red", "true"]);
-    // The lobby leaves the game for the rematch: both stay at the finished table.
+    // The lobby leaves the game for the rematch, readying this seat: both stay at the finished table.
     t.route.mockClear();
-    t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting" }) });
+    const readied = { ...makePlayer(t.me, "Ash"), ready: true };
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting", guest: readied }) });
     expect(t.route).not.toHaveBeenCalled();
     expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    expect(t.fake().kinds()).not.toContain("intent");
     // The next game starts on the same table under a fresh id.
     t.fake().push({ kind: "state", snapshot: snap(t.me) });
     t.push(frame(t.state));
     expect(t.route).not.toHaveBeenCalled();
     expect(t.rows()[0]?.[20]).toBe(`${CODE}:2`);
     expect(t.tagged("L")[0]?.[5]).toBe("concede,leave");
+  });
+
+  it("a rematch the opponent's got ahead of is accepted by readying, once", async () => {
+    const t = await table();
+    t.push(
+      frame(t.state, (v) => {
+        v.phase = { kind: "gameOver" };
+        v.outcome = { result: "win", winner: "you", reason: "conceded" };
+      }),
+    );
+    t.sim.command("rematch");
+    // Brock pressed too, and his reached the server first: the lobby left the game readying only him.
+    const asked = { ...makePlayer("h", "Brock"), ready: true };
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting", host: asked }) });
+    const readies = () =>
+      t.fake().posts.filter((p) => p.kind === "intent" && p.intent.type === "set-ready");
+    expect(readies()).toEqual([
+      { kind: "intent", from: t.me, intent: { type: "set-ready", ready: true } },
+    ]);
+    expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    // A handoff that fails unreadies both: that is the players' to retry.
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting" }) });
+    t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting", host: asked }) });
+    expect(readies()).toHaveLength(1);
   });
 
   it("a refused rematch says why and lets Rematch be pressed again", async () => {

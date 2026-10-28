@@ -90,6 +90,22 @@ describe("the web client against the lobby DO", () => {
     expect(guest.client().state.status).toBe("connected");
   });
 
+  it("both pressing Rematch within a round trip starts the next match on both tables", async () => {
+    const { host, guest } = await inGame();
+    concede(guest);
+    await b.run(300);
+    const first = host.match.matchId();
+    host.match.rematch();
+    guest.match.rematch();
+    await b.run(COUNTDOWN_MS + 2000);
+    for (const tab of [host, guest]) {
+      expect(tab.client().state.snapshot?.phase).toBe("in-game");
+      expect(tab.match.matchId()).not.toBe(first);
+      expect(tab.match.view()?.outcome).toBeNull();
+      expect(tab.match.lifecycle().flags).toEqual(["concede", "leave"]);
+    }
+  });
+
   it("a signed-out seat's rematch is refused, and the tab keeps its result as a watcher", async () => {
     const { host, guest } = await inGame();
     concede(host);

@@ -169,6 +169,8 @@ export class LuaOnlineMatch implements TableSource {
   private error: ActionError | null = null;
   private muted: ActionError | null = null;
   private sentRematch = "";
+  /** The match whose rematch this table saw the lobby take up, ready or readied once. */
+  private acceptedRematch = "";
   /** What the table shows of the lobby beyond the match, as last notified. */
   private shownLobby = "";
   private released = false;
@@ -279,7 +281,10 @@ export class LuaOnlineMatch implements TableSource {
     this.sentRematch = this.matchId();
     // The opponent asked first and the lobby already left the game: agree by readying.
     if (this.client.state.snapshot?.phase === "in-game") this.client.requestRematch();
-    else this.client.setReady(true);
+    else {
+      this.acceptedRematch = this.sentRematch;
+      this.client.setReady(true);
+    }
     this.notify();
   }
   /** Walk out for good: bye (a forfeit if the match is live), forget the seat. */
@@ -339,12 +344,26 @@ export class LuaOnlineMatch implements TableSource {
       }
       shown = true;
     }
+    this.acceptRematch();
     const lobby = this.lobbyKey();
     if (lobby !== this.shownLobby) {
       this.shownLobby = lobby;
       shown = true;
     }
     if (shown) this.notify();
+  }
+
+  /** Our rematch is pending and the lobby left the game for one: when it was the opponent's that
+   * got there first (both pressed within a round trip) or ours was lost, this seat is not ready,
+   * so it agrees by readying. Once per match, so a handoff that fails and unreadies both is left
+   * to the players. */
+  private acceptRematch() {
+    const id = this.matchId();
+    const self = this.client.self;
+    if (this.sentRematch !== id || this.acceptedRematch === id || !self) return;
+    if (this.client.state.snapshot?.phase !== "selecting") return;
+    this.acceptedRematch = id;
+    if (!self.ready) this.client.setReady(true);
   }
 
   /** Take a new frame: the cues of the log rows it brought, bench keys, auto-steps. */
