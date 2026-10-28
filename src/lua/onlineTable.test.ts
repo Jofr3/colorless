@@ -13,7 +13,7 @@ import { driveSetup } from "@colorless/engine/testing";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import { LobbyClient } from "../online/lobbyClient";
 import { LuaOnline } from "./online";
-import { LuaOnlineMatch, onlineGate, promptGate, SEAT_LOST } from "./onlineTable";
+import { LuaOnlineMatch, onlineGate, promptGate } from "./onlineTable";
 import { LuaSimulator } from "./simulator";
 
 const CODE = "ABCD";
@@ -503,9 +503,13 @@ describe("LuaOnlineMatch", () => {
     expect(t.fake().posts.filter((p) => p.kind === "rematch")).toHaveLength(2);
     // The refused seat reconnects without its account and can only watch: no Rematch to press.
     t.fake().push({ kind: "reject", to: t.me, reason: "full" });
-    t.push(structuredClone(over));
+    // The spectator view (the other seat's side) does not replace the result this tab saw seated.
+    const watched = structuredClone(over);
+    watched.outcome = { result: "win", winner: "opponent", reason: "conceded" };
+    t.push(watched);
     expect(t.tagged("L")[0]?.[5]).toBe("leave");
-    expect(t.rows()[0]?.[6]).toBe(SEAT_LOST);
+    expect(t.sim.view()?.outcome).toEqual(over.outcome);
+    expect(t.rows()[0]?.[6]).toBe(reason);
     // The finished table stays up for the watcher rather than routing to "Lobby is full".
     expect(t.route).not.toHaveBeenCalledWith("online", CODE, expect.anything());
     t.sim.command("rematch");

@@ -321,8 +321,10 @@ export class LuaOnlineMatch implements TableSource {
     const { match, actionError } = this.client.state;
     let shown = false;
     // A rematch takes the lobby out of in-game; the finished board stays up
-    // until the next game's first frame.
-    if (match !== this.seen && !(match === null && this.seen?.outcome)) {
+    // until the next game's first frame. A tab that lost its seat after the game ended is sent the
+    // spectator view, which this tab's names would mislabel: it keeps the result it saw seated.
+    const keepResult = !!this.seen?.outcome && (match === null || this.watching());
+    if (match !== this.seen && !keepResult) {
       this.pending = false;
       this.frame(match);
       shown = true;
