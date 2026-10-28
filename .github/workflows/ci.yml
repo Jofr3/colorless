@@ -149,8 +149,9 @@ jobs:
           key: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
           restore-keys: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-
 
+      # The runner has two cores; vitest alone would use one worker.
       - name: Test
-        run: bun run check:test
+        run: bun run check:test --maxWorkers=2
 
   # Precheck proves mutant anchors are unique; this proves a slice of the killers
   # still kill: rows on the files this push or PR changed, plus a random draw
