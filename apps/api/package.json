@@ -17,7 +17,7 @@
     "@colorless/engine": "workspace:*",
     "@colorless/schema": "workspace:*",
     "@hono/zod-validator": "^0.9.1",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "zod": "^4.6.7"
   },
