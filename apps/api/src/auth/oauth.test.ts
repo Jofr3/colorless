@@ -190,6 +190,35 @@ describe("sanitizeRedirect", () => {
   ])("falls back to / for %s", (_label, raw) => {
     expect(sanitizeRedirect(raw)).toBe("/");
   });
+
+  // The callback builds its redirect both ways: `new URL(redirect, app)` for a failure and
+  // `${app}${redirect}` for a sign-in.
+  it("keeps 2,000 seeded hostile redirects on the app origin through the state cookie", () => {
+    const APP = "https://app.example";
+    // Full-width and small solidus/backslash forms and a bidi override among them.
+    const PIECES = [
+      ...["/", "/", "\\", ".", "@", ":", "%", "2F", "5C", "?", "#", "\t", "\n", "\u0000", "\u007f"],
+      ...[" ", "　", "／", "﹨", "‮", "evil.com", "a", "javascript:", "//"],
+      ...["%0d%0a", "%2f%2f"],
+    ];
+    let s = 1;
+    const next = () => {
+      s = (s + 0x6d2b79f5) >>> 0;
+      let t = s;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const pick = () => PIECES[Math.floor(next() * PIECES.length)] ?? "";
+    for (let i = 0; i < 2000; i++) {
+      const raw = Array.from({ length: 1 + Math.floor(next() * 8) }, pick).join("");
+      const kept = sanitizeRedirect(raw);
+      expect(new URL(kept, APP).origin, JSON.stringify(raw)).toBe(APP);
+      expect(new URL(`${APP}${kept}`).origin, JSON.stringify(raw)).toBe(APP);
+      const unpacked = unpackStateCookieValue(packStateCookieValue("st", "a".repeat(43), raw));
+      expect(unpacked?.redirect).toBe(kept);
+    }
+  });
 });
 
 describe("parseOAuthProfile", () => {
