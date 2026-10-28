@@ -187,6 +187,27 @@ describe("createDeckSaver", () => {
     expect(recorder.statuses).toEqual(["saving"]); // nothing after dispose
   });
 
+  it("is idle only with nothing queued, backing off or in flight", async () => {
+    const first = deferred();
+    const save = vi
+      .fn<(snapshot: Snap) => Promise<void>>()
+      .mockReturnValueOnce(first.promise)
+      .mockRejectedValueOnce(new ApiError(429, undefined, 5));
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    expect(saver.idle()).toBe(true);
+    saver.schedule({ v: 1 });
+    expect(saver.idle()).toBe(false);
+    saver.flush();
+    expect(saver.idle()).toBe(false);
+    first.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saver.idle()).toBe(true);
+    saver.schedule({ v: 2 });
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saver.idle()).toBe(false);
+  });
+
   it("dispose cancels the pending save and silences callbacks", async () => {
     const save = vi.fn(async (_: Snap) => {});
     const recorder = statusRecorder();

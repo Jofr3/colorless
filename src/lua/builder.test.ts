@@ -205,6 +205,7 @@ describe("Lua deck builder", () => {
           { cardId: "b", count: 1 },
         ],
       }),
+      { keepalive: false },
     );
   });
   it("retains a failed save and waits for successful persistence before leaving", async () => {
@@ -248,6 +249,43 @@ describe("Lua deck builder", () => {
     await tick();
     expect(api.patchDeck).toHaveBeenCalledTimes(5);
     expect(back).toHaveBeenCalledTimes(1);
+  });
+  it("sends pending edits at once, in a save that outlives the page, when it is hidden", async () => {
+    let resolve!: (d: Deck) => void;
+    vi.mocked(api.patchDeck).mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+    const { b } = await setup();
+    expect(b.hasUnsavedEdits()).toBe(false);
+    await b.command("add\ta");
+    expect(b.hasUnsavedEdits()).toBe(true);
+    b.persistNow();
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[2]).toEqual({ keepalive: true });
+    // Reverted while that save is out: the editor matches the saved copy, but the revert is unsent.
+    await b.command("remove\ta");
+    expect(b.hasUnsavedEdits()).toBe(true);
+    resolve(deck([{ cardId: "a", count: 1 }]));
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[2]).toEqual({ keepalive: false });
+    expect(b.hasUnsavedEdits()).toBe(false);
+  });
+  it("sends a failed save again when asked, as when the network returns", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValue(new TypeError("Failed to fetch"));
+    const { b } = await setup();
+    await b.command("add\ta");
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(b.saveStatus).toBe("failed");
+    expect(b.hasUnsavedEdits()).toBe(true);
+    vi.mocked(api.patchDeck).mockResolvedValue(deck([{ cardId: "a", count: 1 }]));
+    b.retrySave();
+    await tick();
+    expect(b.saveStatus).toBe("saved");
+    expect(b.hasUnsavedEdits()).toBe(false);
   });
   it("serializes a follow-up edit behind an in-flight save before navigating", async () => {
     let resolve!: (d: Deck) => void;
@@ -380,7 +418,7 @@ describe("Lua deck builder", () => {
     expect(api.patchDeck).toHaveBeenCalledTimes(1);
     await b.command("add\ta");
     await tick();
-    expect(api.patchDeck).toHaveBeenLastCalledWith("one", expect.objectContaining({ version: 2 }));
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[1]).toMatchObject({ version: 2 });
   });
   it("fetches the latest copy on a conflict that did not carry it", async () => {
     vi.mocked(api.getDeck)

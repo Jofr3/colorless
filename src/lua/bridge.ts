@@ -11,6 +11,7 @@ import type { ArtRequest } from "../host/bridgeProtocol";
 import { MAILBOXES } from "../host/mailboxes";
 import { type Route, Router, pageLabel, pageTitle } from "../host/router";
 import { type BridgeScreen, HostShell } from "../host/shell";
+import { guardUnsavedEdits } from "../host/unsavedEdits";
 
 const host = window.colorlessHost;
 
@@ -47,17 +48,7 @@ const builder = new LuaBuilder(
   () => route("decks"),
   wantArt,
 );
-window.addEventListener("beforeunload", (event) => {
-  if (
-    builder.id &&
-    builder.phase === "ready" &&
-    builder.saveStatus &&
-    builder.saveStatus !== "saved"
-  ) {
-    void builder.command("retry-save");
-    event.preventDefault();
-  }
-});
+guardUnsavedEdits({ window, document }, builder);
 const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
 const sandbox = new LuaSandbox(publishTo("sandbox"), async () => {
   const { launchSandbox } = await import("./sandboxLaunch");

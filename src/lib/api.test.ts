@@ -97,6 +97,15 @@ describe("request plumbing", () => {
     expect(JSON.parse(init.body as string)).toEqual({ name: "Grass rush", tint: 120, cards: [] });
   });
 
+  it("lets only a deck save asked to outlive the page do so", async () => {
+    const kept = stubFetch(json({ id: "d1" }));
+    await patchDeck("d1", { name: "x" }, { keepalive: true });
+    expect(requestInit(kept).keepalive).toBe(true);
+    const plain = stubFetch(json({ id: "d1" }));
+    await patchDeck("d1", { name: "x" });
+    expect(requestInit(plain).keepalive).toBeFalsy();
+  });
+
   it("resolves 204 responses to undefined", async () => {
     stubFetch(new Response(null, { status: 204 }));
     await expect(logout()).resolves.toBeUndefined();

@@ -81,6 +81,8 @@ export interface DeckSaver<T> {
   schedule(snapshot: T): void;
   /** Fire any pending save NOW (leave/close flush). No-op when clean. */
   flush(): void;
+  /** Whether nothing is left to send: no save queued, waiting out a backoff or in flight. */
+  idle(): boolean;
   /** Cancel the timer, stop accepting snapshots, and silence future callbacks
       (the builder reset or reloaded). The in-flight request, if any, is left to finish
       server-side — and a snapshot still pending behind it (a flush() that
@@ -195,6 +197,9 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
       if (disposed) return;
       if (pending !== null) fire();
       else clearTimer();
+    },
+    idle() {
+      return !inFlight && pending === null;
     },
     dispose() {
       disposed = true;

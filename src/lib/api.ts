@@ -96,6 +96,8 @@ interface RequestOptions {
   /** How long the call may take, body included, before it is abandoned. Default
       REQUEST_TIMEOUT_MS. */
   timeoutMs?: number;
+  /** Let the request outlive the page (a save sent as the tab is hidden or closed). */
+  keepalive?: boolean;
 }
 
 /** How long a call may take before it is abandoned, in ms: a stalled connection otherwise leaves
@@ -176,6 +178,7 @@ function send(
     headers: hasBody ? { "content-type": "application/json" } : undefined,
     body: hasBody ? JSON.stringify(init?.body) : undefined,
     signal,
+    keepalive: init?.keepalive,
   });
 }
 
@@ -337,12 +340,18 @@ export function createDeck(body: CreateDeckRequest): Promise<Deck> {
 }
 
 /** Patch fields and/or wholesale-replace `cards`. Absent = keep, null =
-    clear (format, folderId); an empty patch → 400. */
-export function patchDeck(id: string, body: PatchDeckRequest): Promise<Deck> {
+    clear (format, folderId); an empty patch → 400. `keepalive` lets the
+    request outlive the page. */
+export function patchDeck(
+  id: string,
+  body: PatchDeckRequest,
+  options: { keepalive?: boolean } = {},
+): Promise<Deck> {
   return request(`/decks/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body,
     timeoutMs: DECK_WRITE_TIMEOUT_MS,
+    keepalive: options.keepalive,
   });
 }
 

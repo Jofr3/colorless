@@ -161,6 +161,8 @@ export class LuaBuilder {
   private acknowledged = "";
   private dirty = false;
   private leaving = false;
+  /** Set while persistNow() fires a save, which then outlives the page. */
+  private keepalive = false;
   private importing = false;
   private importGeneration = 0;
   // Catalog pages for the current query, keyed by page; cleared when it changes.
@@ -490,7 +492,11 @@ export class LuaBuilder {
       // The saves since the last acknowledged one that got no answer: the server may hold any of them.
       const unconfirmed = new Set<string>();
       const patch = (snapshot: DeckSnapshot) =>
-        api.patchDeck(id, { ...snapshot, name: snapshot.name || undefined, version });
+        api.patchDeck(
+          id,
+          { ...snapshot, name: snapshot.name || undefined, version },
+          { keepalive: this.keepalive },
+        );
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
@@ -731,6 +737,24 @@ export class LuaBuilder {
     this.saver?.schedule(this.snapshot());
     this.emit();
   }
+  /** Whether leaving the page now could lose edits: some are unsaved, or a save is still on its way. */
+  hasUnsavedEdits() {
+    return this.id !== "" && this.phase === "ready" && (this.dirty || this.saver?.idle() === false);
+  }
+  /** Send the pending edits now, in a request that outlives the page: it is being hidden, and may be
+      discarded, or closed. A save already in flight or backing off is left to finish. */
+  persistNow() {
+    this.keepalive = true;
+    try {
+      this.saver?.flush();
+    } finally {
+      this.keepalive = false;
+    }
+  }
+  /** Send edits whose save failed again, as when the network comes back. */
+  retrySave() {
+    this.saver?.flush();
+  }
   navigate(done: () => void) {
     if (this.dirty) {
       this.pendingExit = done;
@@ -756,7 +780,7 @@ export class LuaBuilder {
   /** Commands that need a loaded deck; while it loads only `retry` applies. */
   private readonly readyCommands = new Map<string, Command>([
     ["preview-cards", (a, b) => this.onPreviewCards(a, b)],
-    ["retry-save", () => this.saver?.flush()],
+    ["retry-save", () => this.retrySave()],
     ["retry", () => this.onRetry()],
     ["name", (a) => this.onName(a)],
     ["format", () => this.onFormat()],
