@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { type EffectOp, type GameState, applyAction, createGame } from "./index";
-import { type StoredState, firstP1Turn, mustMigrate, storedPoolIds } from "./testFixtures";
+import { type StoredState, firstP1Turn, migrateStored, mustMigrate } from "./testFixtures";
 
 const BODY = "gate-body";
 const ASKER = "gate-asker";
@@ -137,10 +137,10 @@ function v49(state: GameState): StoredState {
 }
 
 describe("gate ops `then` → `ops`: the version gate", () => {
-  it("a v49 state is migrated with no pool ids; a newer one is not", () => {
+  it("a v49 state is migrated; a newer one is not", () => {
     const old = v49(parkedWithNestedGates(4901));
-    expect(storedPoolIds(old)).toEqual([]);
-    expect(storedPoolIds({ ...old, version: 51 })).toBeNull();
+    expect(migrateStored(old)).not.toBeNull();
+    expect(migrateStored({ ...old, version: 51 })).toBeNull();
   });
 });
 
@@ -156,7 +156,7 @@ describe("gate ops `then` → `ops`: what the migration writes", () => {
 
   it("every older migratable version gets the rename too", () => {
     const current = parkedWithNestedGates(4903);
-    for (const version of [41, 44, 48]) {
+    for (const version of [42, 44, 48]) {
       const out = mustMigrate({ ...v49(current), version });
       expect(out.phase).toEqual(current.phase);
     }

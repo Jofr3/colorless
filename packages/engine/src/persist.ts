@@ -1,4 +1,3 @@
-import type { Card } from "@colorless/schema";
 import {
   type GameState,
   type InPlayPokemon,
@@ -18,20 +17,18 @@ import {
  */
 export const GAME_STATE_VERSION = 51;
 
-/** The one version whose Trainer faces are refreshed from the catalog. */
-const POOL_REFRESH_VERSION = 41;
-
-type MigrationStep = (state: GameState, freshPool: Readonly<Record<string, Card>>) => GameState;
+type MigrationStep = (state: GameState) => GameState;
 
 const unchanged: MigrationStep = (state) => state;
 
 /**
  * Each migratable version, ascending, with the step that brings its states up to the next. A state
  * runs its own version's step and every later one, so each version takes only the keys it lacks; an
- * earlier step would clobber live values it already holds.
+ * earlier step would clobber live values it already holds. Version 41, the last that refreshed its
+ * Trainer faces from the catalog and could hold a setup from before the bonus Bench step, is
+ * retired (reliability audit, user decision 14).
  */
 const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
-  [POOL_REFRESH_VERSION, withFreshTrainerFaces],
   [42, withDefaultKeys],
   [43, withRecordKeys],
   [44, withLockKeys],
@@ -47,31 +44,15 @@ const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
 ]);
 
 /**
- * The catalog ids whose current rows `migrateGameState` needs as `freshPool`: the state's pool for
- * a version whose Trainer faces are refreshed, `[]` for any other migratable version, or `null`
- * when `raw` is not a migratable state at `fromVersion`.
- */
-export function poolIdsNeededFor(raw: unknown, fromVersion: number): string[] | null {
-  const state = migratableState(raw, fromVersion);
-  if (state === null) return null;
-  return fromVersion === POOL_REFRESH_VERSION ? Object.keys(state.cardPool) : [];
-}
-
-/**
  * Migrate a state persisted at `fromVersion` to `GAME_STATE_VERSION`, or `null` when it is not a
- * migratable state: an unknown or current version, or a value without the top-level objects every
- * step reads. `freshPool` holds the catalog rows `poolIdsNeededFor` names. The input is not
- * modified.
+ * migratable state: an unknown, retired or current version, or a value without the top-level
+ * objects every step reads. The input is not modified.
  */
-export function migrateGameState(
-  raw: unknown,
-  fromVersion: number,
-  freshPool: Readonly<Record<string, Card>> = {},
-): GameState | null {
+export function migrateGameState(raw: unknown, fromVersion: number): GameState | null {
   let state = migratableState(raw, fromVersion);
   if (state === null) return null;
   for (const [version, step] of MIGRATION_STEPS) {
-    if (version >= fromVersion) state = step(state, freshPool);
+    if (version >= fromVersion) state = step(state);
   }
   return state;
 }
@@ -150,16 +131,6 @@ function renamedGateKeys(value: unknown): unknown {
     return [gate && key === "then" ? "ops" : key, next];
   });
   return changed ? Object.fromEntries(entries) : value;
-}
-
-/** Replaces every persisted Trainer face of a v41 state with its `fresh` catalog row. */
-function withFreshTrainerFaces(state: GameState, fresh: Readonly<Record<string, Card>>): GameState {
-  const cardPool: Record<string, Card> = { ...state.cardPool };
-  for (const [id, card] of Object.entries(cardPool)) {
-    const row = fresh[id];
-    if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;
-  }
-  return { ...state, cardPool };
 }
 
 /**

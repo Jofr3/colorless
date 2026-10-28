@@ -7,7 +7,6 @@ import {
   MATCH_RECORD_VERSION,
   type MatchRecord,
   type MatchSlot,
-  migratablePoolIdsOf,
   migrateMatchRecord,
   readMatchRecord,
 } from "./match";
@@ -53,8 +52,9 @@ const STALE_TRAINER: Card = {
   trainerType: "Item",
   effect: "Draw a card.",
 };
-const FRESH_TRAINER: Card = { ...STALE_TRAINER, hp: 60 };
-const FRESH_POOL = { [BODY]: BODY_CARD, [TRAINER]: FRESH_TRAINER };
+
+/** The oldest version an older deploy's record is still migrated from; 41 is retired. */
+const OLDEST_MIGRATABLE = 42;
 
 const DECK = [...Array.from({ length: 58 }, () => BODY), TRAINER, TRAINER];
 const NAMES = { p1: "Ana", p2: "Bo" } as const;
@@ -89,118 +89,72 @@ function fakeSlot(value: unknown) {
   return { slot, api };
 }
 
-const never = async (): Promise<Record<string, Card>> => {
-  throw new Error("D1 asked");
-};
-
 describe("loadMatchRecord — the DO's read of an older record", () => {
-  it("a v41 record asks D1 for its pool, is written back once at this version, and the next read is plain", async () => {
-    const { slot, api } = fakeSlot(oldRecord(41));
-    const asked: string[][] = [];
-    const load = await loadMatchRecord(api, async (ids) => {
-      asked.push([...ids].sort());
-      return FRESH_POOL;
-    });
-    expect(asked).toEqual([[BODY, TRAINER].sort()]);
+  it("a record at the oldest migratable version is written back once at this version, and the next read is plain", async () => {
+    const { slot, api } = fakeSlot(oldRecord(OLDEST_MIGRATABLE));
+    const load = await loadMatchRecord(api);
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
     expect(load.record.version).toBe(MATCH_RECORD_VERSION);
-    expect(load.record.state.cardPool[TRAINER]).toEqual(FRESH_TRAINER);
     expect(load.record.state.players.p1.chosenAttackShield).toBeNull();
+    expect(load.record.state.cardPool[TRAINER]).toEqual(STALE_TRAINER);
     expect(slot.puts).toEqual([load.record]);
-    expect(await loadMatchRecord(api, never)).toEqual(load);
+    expect(await loadMatchRecord(api)).toEqual(load);
     expect(slot.puts).toHaveLength(1);
   });
 
-  it("every newer migratable version is written back once without asking D1", async () => {
-    for (let version = 42; version <= 49; version++) {
+  it("every migratable version is written back once", async () => {
+    for (let version = OLDEST_MIGRATABLE; version < MATCH_RECORD_VERSION; version++) {
       const { slot, api } = fakeSlot(oldRecord(version));
-      const load = await loadMatchRecord(api, never);
+      const load = await loadMatchRecord(api);
       if (load.kind !== "ok") throw new Error(`v${version}: expected ok, got ${load.kind}`);
       expect(load.record.version).toBe(MATCH_RECORD_VERSION);
       expect(load.record.state.players.p1.trainerFlipLockTurn).toBeNull();
-      expect(load.record.state.cardPool[TRAINER]).toEqual(STALE_TRAINER);
       expect(slot.puts).toEqual([load.record]);
     }
   });
 
-  it("a current record is read as-is; a v40 record is stale; an empty slot is none — D1 never asked, nothing written", async () => {
-    const current = migrateMatchRecord(oldRecord(41), FRESH_POOL);
+  it("a current record is read as-is; a retired v41 or v40 record is stale; an empty slot is none — nothing written", async () => {
+    const current = migrateMatchRecord(oldRecord(OLDEST_MIGRATABLE));
     for (const [value, kind] of [
       [current, "ok"],
+      [oldRecord(41), "stale"],
       [{ ...oldRecord(41), version: 40 }, "stale"],
       [undefined, "none"],
     ] as const) {
       const { slot, api } = fakeSlot(value);
-      expect((await loadMatchRecord(api, never)).kind).toBe(kind);
+      expect((await loadMatchRecord(api)).kind).toBe(kind);
       expect(slot.puts).toEqual([]);
     }
-  });
-
-  it("another event migrated or advanced the match during the D1 load: that record wins, nothing is written", async () => {
-    const v41 = oldRecord(41);
-    const theirs = migrateMatchRecord(v41, { [TRAINER]: FRESH_TRAINER });
-    if (theirs === null) throw new Error("not migrated");
-    const { slot, api } = fakeSlot(v41);
-    const load = await loadMatchRecord(api, async () => {
-      slot.value = theirs;
-      return FRESH_POOL;
-    });
-    expect(load).toEqual({ kind: "ok", record: theirs });
-    expect(slot.puts).toEqual([]);
-  });
-
-  it("the match ended during the D1 load: none, nothing is written", async () => {
-    const { slot, api } = fakeSlot(oldRecord(41));
-    const load = await loadMatchRecord(api, async () => {
-      slot.value = undefined;
-      return FRESH_POOL;
-    });
-    expect(load).toEqual({ kind: "none" });
-    expect(slot.puts).toEqual([]);
-  });
-
-  it("a failed D1 load rejects and leaves the v41 record untouched for the next read", async () => {
-    const v41 = oldRecord(41);
-    const { slot, api } = fakeSlot(v41);
-    await expect(
-      loadMatchRecord(api, async () => {
-        throw new Error("D1 down");
-      }),
-    ).rejects.toThrow("D1 down");
-    expect(slot.puts).toEqual([]);
-    expect(slot.value).toBe(v41);
   });
 });
 
 describe("loadMatchRecord over the DO's store — a whole record from before the split", () => {
   it("migrates an older whole record, writes it back split, and the next wake reads it as current", async () => {
-    for (const version of [41, 49]) {
+    for (const version of [OLDEST_MIGRATABLE, 49]) {
       const storage = new FakeStorage();
       await storage.put(MATCH_KEY, oldRecord(version));
-      const load = await loadMatchRecord(new MatchStore(storage), async () => FRESH_POOL);
+      const load = await loadMatchRecord(new MatchStore(storage));
       if (load.kind !== "ok") throw new Error(`v${version}: expected ok, got ${load.kind}`);
       expect(load.record.version).toBe(MATCH_RECORD_VERSION);
       expect(storage.data.get(MATCH_KEY)).toMatchObject({
         layout: MATCH_LAYOUT,
         version: MATCH_RECORD_VERSION,
       });
-      const woken = await loadMatchRecord(new MatchStore(storage), never);
+      const woken = await loadMatchRecord(new MatchStore(storage));
       expect(woken).toEqual(load);
-      expect(woken.kind === "ok" && woken.record.state.cardPool[TRAINER]).toEqual(
-        version === 41 ? FRESH_TRAINER : STALE_TRAINER,
-      );
     }
   });
 
-  it("reads a current whole record without writing, and an unknown version as stale", async () => {
-    const current = migrateMatchRecord(oldRecord(41), FRESH_POOL);
+  it("reads a current whole record without writing, and an unknown or retired version as stale", async () => {
+    const current = migrateMatchRecord(oldRecord(OLDEST_MIGRATABLE));
     for (const [value, kind] of [
       [current, "ok"],
       [{ ...current, version: MATCH_RECORD_VERSION + 1 }, "stale"],
+      [oldRecord(41), "stale"],
     ] as const) {
       const storage = new FakeStorage();
       await storage.put(MATCH_KEY, value);
-      const load = await loadMatchRecord(new MatchStore(storage), never);
+      const load = await loadMatchRecord(new MatchStore(storage));
       expect(load.kind).toBe(kind);
       expect([...storage.data.keys()]).toEqual([MATCH_KEY]);
     }
@@ -211,7 +165,7 @@ describe("migrateMatchRecord — the envelope around the engine's migration", ()
   it("keeps the envelope, stamps this version and hands back a record readMatchRecord accepts", () => {
     const old = oldRecord(44);
     expect(readMatchRecord(old)).toBeNull();
-    const migrated = migrateMatchRecord(old, {});
+    const migrated = migrateMatchRecord(old);
     if (migrated === null) throw new Error("not migrated");
     expect(migrated.version).toBe(MATCH_RECORD_VERSION);
     expect(readMatchRecord(JSON.parse(JSON.stringify(migrated)))).not.toBeNull();
@@ -224,22 +178,22 @@ describe("migrateMatchRecord — the envelope around the engine's migration", ()
   });
 
   it("moves a match still on mulberry32 to a fresh ChaCha20 key and changes nothing else (MI1)", () => {
-    for (const version of [41, 49, 50]) {
+    for (const version of [OLDEST_MIGRATABLE, 49, 50]) {
       const old = oldRecord(version);
       expect(typeof old.state.rngState).toBe("number");
-      const migrated = migrateMatchRecord(old, FRESH_POOL, () => drbgSeed(version));
+      const migrated = migrateMatchRecord(old, () => drbgSeed(version));
       if (migrated === null) throw new Error(`v${version}: not migrated`);
       expect(migrated.state.rngState).toEqual(drbgSeed(version));
-      const engine = migrateGameState(old.state, version, FRESH_POOL);
+      const engine = migrateGameState(old.state, version);
       expect({ ...migrated.state, rngState: old.state.rngState }).toEqual(engine);
       expect(migrated.seed).toBe(5830);
     }
     // The old DO minted an unsigned u32 seed, which the record kept as it was.
-    const high = migrateMatchRecord({ ...oldRecord(50), seed: 4_000_000_000 }, {});
+    const high = migrateMatchRecord({ ...oldRecord(50), seed: 4_000_000_000 });
     expect(high?.seed).toBe(4_000_000_000);
     // The default rekey is the CSPRNG one: well formed, and a different key each time.
-    const a = migrateMatchRecord(oldRecord(50), {})?.state.rngState;
-    const b = migrateMatchRecord(oldRecord(50), {})?.state.rngState;
+    const a = migrateMatchRecord(oldRecord(50))?.state.rngState;
+    const b = migrateMatchRecord(oldRecord(50))?.state.rngState;
     expect(isRngState(a) && typeof a === "object").toBe(true);
     expect(a).not.toEqual(b);
   });
@@ -247,16 +201,16 @@ describe("migrateMatchRecord — the envelope around the engine's migration", ()
   it("a v50 record is read through the store, rekeyed once, and the next wake keeps that key", async () => {
     const storage = new FakeStorage();
     await storage.put(MATCH_KEY, oldRecord(50));
-    const load = await loadMatchRecord(new MatchStore(storage), never);
+    const load = await loadMatchRecord(new MatchStore(storage));
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
     expect(load.record.version).toBe(MATCH_RECORD_VERSION);
     expect(typeof load.record.state.rngState).toBe("object");
-    const woken = await loadMatchRecord(new MatchStore(storage), never);
+    const woken = await loadMatchRecord(new MatchStore(storage));
     expect(woken).toEqual(load);
   });
 
-  it("a record failing the envelope checks is neither migrated nor asked for a pool", () => {
-    const old = oldRecord(41);
+  it("a record failing the envelope checks is not migrated", () => {
+    const old = oldRecord(OLDEST_MIGRATABLE);
     const { version: _version, ...unversioned } = old;
     for (const raw of [
       { ...old, log: undefined },
@@ -268,18 +222,16 @@ describe("migrateMatchRecord — the envelope around the engine's migration", ()
       41,
       "x",
     ]) {
-      expect(migratablePoolIdsOf(raw)).toBeNull();
-      expect(migrateMatchRecord(raw, FRESH_POOL)).toBeNull();
+      expect(migrateMatchRecord(raw)).toBeNull();
     }
   });
 
-  it("the engine decides the version: a current or unknown version is not migrated", () => {
-    const old = oldRecord(41);
-    for (const version of [40, MATCH_RECORD_VERSION, MATCH_RECORD_VERSION + 1]) {
-      expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
-      expect(migrateMatchRecord({ ...old, version }, FRESH_POOL)).toBeNull();
+  it("the engine decides the version: a retired, current or unknown version is not migrated", () => {
+    const old = oldRecord(OLDEST_MIGRATABLE);
+    for (const version of [40, 41, MATCH_RECORD_VERSION, MATCH_RECORD_VERSION + 1]) {
+      expect(migrateMatchRecord({ ...old, version })).toBeNull();
     }
-    expect(migratablePoolIdsOf(old)?.sort()).toEqual([BODY, TRAINER].sort());
-    expect(migratablePoolIdsOf({ ...old, version: 45 })).toEqual([]);
+    expect(migrateMatchRecord(old)).not.toBeNull();
+    expect(migrateMatchRecord({ ...old, version: 45 })).not.toBeNull();
   });
 });

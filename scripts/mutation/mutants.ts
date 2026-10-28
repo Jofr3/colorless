@@ -44625,29 +44625,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["apps/api/src/ingest/map.test.ts"],
   },
   {
-    id: "D583-migration-keeps-the-stale-face",
-    decision: "D583",
-    what: "`migrateMatchRecord` stamps v42 without refreshing a face: a match created before the D581 re-ingest keeps TM Fluorite with no attack for life. Killed by poolMigration's write and board rungs.",
-    file: "packages/engine/src/persist.ts",
-    symbol: "withFreshTrainerFaces",
-    find: '    if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;\n',
-    replace: "",
-    expectKilledBy: [
-      "packages/engine/src/poolMigration.test.ts",
-      "apps/api/src/lobby/matchLoad.test.ts",
-    ],
-  },
-  {
-    id: "D583-migration-refreshes-every-face",
-    decision: "D583",
-    what: "`migrateMatchRecord` replaces EVERY face D1 returns: a Pokémon's persisted face (and any category change) moves mid-match. Killed by poolMigration's keep rungs.",
-    file: "packages/engine/src/persist.ts",
-    symbol: "withFreshTrainerFaces",
-    find: '    if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;',
-    replace: "    if (row !== undefined) cardPool[id] = row;",
-    expectKilledBy: ["packages/engine/src/poolMigration.test.ts"],
-  },
-  {
     id: "D583-migration-stamps-the-old-version",
     decision: "D583",
     what: "the migrated record keeps version 41: `readMatchRecord` refuses it, so the DO would re-migrate on every read. Killed by poolMigration's gate rung.",
@@ -44660,15 +44637,12 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D583-migration-takes-any-version",
     decision: "D583",
-    what: "the migration gate drops its version test: a v40 (or v43) record is migrated and stamped v42 instead of retired. Killed by poolMigration's every-other-version rung.",
+    what: "the migration gate drops its version test: a retired v41 or v40 record is migrated instead of retired. Killed by persist.test's retired-version rung (poolMigration's until v41 was retired).",
     file: "packages/engine/src/persist.ts",
     symbol: "migratableState",
     find: "  if (!MIGRATION_STEPS.has(fromVersion)) return null;",
     replace: "",
-    expectKilledBy: [
-      "packages/engine/src/poolMigration.test.ts",
-      "apps/api/src/lobby/matchLoad.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/persist.test.ts", "apps/api/src/lobby/matchLoad.test.ts"],
   },
   {
     id: "D583-identity-reads-the-tag",
@@ -44679,16 +44653,6 @@ export const MUTANTS: Mutant[] = [
     find: "return isBasicEnergy(card) ? `basic:",
     replace: 'return card.category === "Energy" && card.energyType === "Normal" ? `basic:',
     expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
-  },
-  {
-    id: "D583-load-skips-the-reread",
-    decision: "D583",
-    what: "`loadMatchRecord` migrates the record it read BEFORE the D1 load: a record another event migrated, advanced or ended during the load is overwritten with a stale v42. Killed by poolMigration's concurrent rungs (review round).",
-    file: "apps/api/src/lobby/match.ts",
-    symbol: "loadMatchRecord",
-    find: "  const again = await slot.get();\n",
-    replace: "  const again = raw;\n",
-    expectKilledBy: ["apps/api/src/lobby/matchLoad.test.ts"],
   },
   {
     id: "D583-load-does-not-persist",
@@ -53791,27 +53755,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/sideStateMigration.test.ts"],
   },
   {
-    id: "D621-migration-v42-asks-d1",
-    decision: "D621",
-    what: "A v42 record's load asks D1 for an empty pool. Killed by sideStateMigration's never-asked loader.",
-    file: "apps/api/src/lobby/match.ts",
-    symbol: "loadMatchRecord",
-    find: "  const fresh = ids.length === 0 ? {} : await loadPool(ids);",
-    replace: "  const fresh = await loadPool(ids);",
-    expectKilledBy: ["apps/api/src/lobby/matchLoad.test.ts"],
-  },
-  {
-    id: "D621-migration-v42-pool-refreshed",
-    decision: "D621",
-    what: "A v42 record's Trainer faces are refreshed too. Killed by sideStateMigration (the pool is untouched).",
-    file: "packages/engine/src/persist.ts",
-    symbol: "migrateGameState",
-    find: "    if (version >= fromVersion) state = step(state, freshPool);",
-    replace:
-      "    if (version >= fromVersion || version === POOL_REFRESH_VERSION)\n      state = step(state, freshPool);",
-    expectKilledBy: ["packages/engine/src/sideStateMigration.test.ts"],
-  },
-  {
     id: "D621-log-attacker-branch-inverted",
     decision: "D621",
     what: "The boosted row's attacker branch is inverted: Gladion's row reads as every attacker's. Killed by sideStateMeD621 §3.",
@@ -57651,9 +57594,9 @@ export const MUTANTS: Mutant[] = [
     what: "D630's step runs on a v44 record too: a live Settle the Score / Juggernaut Horn record is wiped. Killed by lockKeysMigration.",
     file: "packages/engine/src/persist.ts",
     symbol: "migrateGameState",
-    find: "    if (version >= fromVersion) state = step(state, freshPool);",
+    find: "    if (version >= fromVersion) state = step(state);",
     replace:
-      "    if (\n      version >= fromVersion ||\n      (version === 43 && fromVersion === 44)\n    )\n      state = step(state, freshPool);",
+      "    if (\n      version >= fromVersion ||\n      (version === 43 && fromVersion === 44)\n    )\n      state = step(state);",
     expectKilledBy: ["packages/engine/src/lockKeysMigration.test.ts"],
   },
   {
@@ -57840,9 +57783,9 @@ export const MUTANTS: Mutant[] = [
     what: "the v45 re-stamp is gone: D636's step runs on a v45 record and wipes a live lock. Killed by fossilsMigration.",
     file: "packages/engine/src/persist.ts",
     symbol: "migrateGameState",
-    find: "    if (version >= fromVersion) state = step(state, freshPool);",
+    find: "    if (version >= fromVersion) state = step(state);",
     replace:
-      "    if (\n      version >= fromVersion ||\n      (fromVersion === 45 && version > POOL_REFRESH_VERSION)\n    )\n      state = step(state, freshPool);",
+      "    if (\n      version >= fromVersion ||\n      (fromVersion === 45 && version > 41)\n    )\n      state = step(state);",
     expectKilledBy: ["packages/engine/src/fossilsMigration.test.ts"],
   },
   {
@@ -58554,9 +58497,9 @@ export const MUTANTS: Mutant[] = [
     what: "the re-stamp drops v46: a v46 record takes D621's / D630's / D636's steps, nulling live keys. Killed by prizeStageMigration.",
     file: "packages/engine/src/persist.ts",
     symbol: "migrateGameState",
-    find: "    if (version >= fromVersion) state = step(state, freshPool);",
+    find: "    if (version >= fromVersion) state = step(state);",
     replace:
-      "    if (\n      version >= fromVersion ||\n      (fromVersion === 46 && version > POOL_REFRESH_VERSION)\n    )\n      state = step(state, freshPool);",
+      "    if (\n      version >= fromVersion ||\n      (fromVersion === 46 && version > 41)\n    )\n      state = step(state);",
     expectKilledBy: ["packages/engine/src/prizeStageMigration.test.ts"],
   },
   {
@@ -59344,9 +59287,9 @@ export const MUTANTS: Mutant[] = [
     what: "the re-stamp drops v47: a v47 record takes D621's / D630's / D636's steps, nulling live keys. Killed by toolTrimMigration.",
     file: "packages/engine/src/persist.ts",
     symbol: "migrateGameState",
-    find: "    if (version >= fromVersion) state = step(state, freshPool);",
+    find: "    if (version >= fromVersion) state = step(state);",
     replace:
-      "    if (\n      version >= fromVersion ||\n      (fromVersion === 47 && version > POOL_REFRESH_VERSION)\n    )\n      state = step(state, freshPool);",
+      "    if (\n      version >= fromVersion ||\n      (fromVersion === 47 && version > 41)\n    )\n      state = step(state);",
     expectKilledBy: ["packages/engine/src/toolTrimMigration.test.ts"],
   },
   {
@@ -60198,9 +60141,9 @@ export const MUTANTS: Mutant[] = [
     what: "match.ts `migrateMatchRecord` no longer re-stamps a v48 record. Killed by coinRedoMigration.",
     file: "packages/engine/src/persist.ts",
     symbol: "migrateGameState",
-    find: "    if (version >= fromVersion) state = step(state, freshPool);",
+    find: "    if (version >= fromVersion) state = step(state);",
     replace:
-      "    if (\n      version >= fromVersion ||\n      (fromVersion === 48 && version > POOL_REFRESH_VERSION)\n    )\n      state = step(state, freshPool);",
+      "    if (\n      version >= fromVersion ||\n      (fromVersion === 48 && version > 41)\n    )\n      state = step(state);",
     expectKilledBy: ["packages/engine/src/coinRedoMigration.test.ts"],
   },
   {
@@ -61366,6 +61309,20 @@ export const MUTANTS: Mutant[] = [
       "apps/api/src/lobby/lobbyDO.test.ts",
       "apps/api/src/lobby/lobbyLifecycle.test.ts",
       "src/seam/lobby.test.ts",
+    ],
+  },
+  {
+    id: "REL-EN7-v41-migrated-again",
+    decision: "REL-EN7",
+    what: "Version 41 gets a migration step back: a retired v41 record, which may hold a setup from before the bonus Bench step, is migrated and played instead of retired. Killed by persist.test's retired-version rung, matchLoad's stale rows and the DO's v41 retirement case.",
+    file: "packages/engine/src/persist.ts",
+    symbol: "MIGRATION_STEPS",
+    find: "  [42, withDefaultKeys],\n",
+    replace: "  [41, withDefaultKeys],\n  [42, withDefaultKeys],\n",
+    expectKilledBy: [
+      "packages/engine/src/persist.test.ts",
+      "apps/api/src/lobby/matchLoad.test.ts",
+      "apps/api/src/lobby/lobbyDO.test.ts",
     ],
   },
   {

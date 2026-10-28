@@ -126,8 +126,10 @@ only the conclusion.
   a test-only module.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
-  rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;
-  regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` and
+  rewritten with `-u`. The pinned skeleton covers a fresh game, a body and a side with every
+  install field set by its op, and one park per prompt kind; a new install field needs an op in
+  the test's `INSTALL_OPS`, and a field only an unsampled op writes is not pinned. A change to
+  the Lua wire fails `src/lua/wireFixtures.test.ts`; regenerate its fixtures with `-u` and update `frontend/lua/tests/wire_fixtures.lua` and
   `frontend/lua/tests/sim_model.lua` to match.
 - **The Lua mailbox rows are declared once** (`src/lua/wireFields.ts` `WIRE_ROWS`): each row kind's
   tag(s) and field order, `as const`. Emitters build a record and encode it with `wireRow`, so a
@@ -154,15 +156,23 @@ only the conclusion.
   enum literal needs the client deployed first.
 - **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
   `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
-  keeps only the record envelope and `loadMatchRecord`, and calls `poolIdsNeededFor` and
-  `migrateGameState` for the state. To bump: raise `GAME_STATE_VERSION`, rewrite the shape
-  snapshot, and give the previous version a `MIGRATION_STEPS` entry if its states can be
-  carried forward: `unchanged` when the old bytes already read correctly, `withDefaultKeys`
-  when the change only adds side installs (`clearedSideInstalls`) or attack-effect fields
-  (`clearedAttackEffects`), or a hand-written step otherwise. A version with no entry is
-  retired. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
+  keeps only the record envelope and `loadMatchRecord`, and calls `migrateGameState` for the
+  state. To bump: raise `GAME_STATE_VERSION`, rewrite the shape snapshot, and give the previous
+  version a `MIGRATION_STEPS` entry if its states can be carried forward: `unchanged` when the old
+  bytes already read correctly, `withDefaultKeys` when the change only adds side installs
+  (`clearedSideInstalls`) or attack-effect fields (`clearedAttackEffects`), or a hand-written step
+  otherwise. A version with no entry is retired: the DO answers its record `stale` and retires the
+  match, and a local save is already refused by its `engineVersion`. The oldest migratable version
+  is 42. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
   `storedAt`/`migrateStored`/`mustMigrate` fixtures; the DO's read is tested in
   `apps/api/src/lobby/matchLoad.test.ts`.
+  - **A hand-written step also gets one real record** (reliability audit EN6). `storedAt` strips
+    keys from a current state, and the same person writes it and the step, so a wrong idea of the
+    old shape passes both. Before changing the engine, write one parked mid-turn state from a
+    bench-deck walk (`actionFuzzReal.test.ts`'s setup) with the pre-change engine, by a script, and
+    commit it as a fixture with the version it was written at. The step's test migrates it and
+    plays 20 steps with `fixtures/fuzz.ts`'s checks. Delete the fixture when its version retires.
+    An `unchanged` or `withDefaultKeys` step needs none.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag
@@ -255,7 +265,7 @@ only the conclusion.
   locale in the Worker bundle. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
   Worker with a wrangler dry run and fails on a non-English locale or a bundle over its budget.
 - **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
-  real-card pool `scripts/bench/pool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
+  real-card pool `packages/engine/src/fixtures/benchPool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
   applyAction per action and per action type, two redactions, logFromEvents, legality probes and a
   cold engine import, as medians. `--node` runs it under V8, `--cpu-prof` writes a profile to
   `tmp/bench/`. Its `fingerprint` hashes every state, event list, redaction and log row: a pure

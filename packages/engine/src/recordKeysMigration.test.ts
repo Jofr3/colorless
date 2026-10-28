@@ -1,13 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { type GameState, type InPlayPokemon, type Seat, applyAction, createGame } from "./index";
-import {
-  type StoredState,
-  firstP1Turn,
-  migrateStored,
-  mustMigrate,
-  storedPoolIds,
-} from "./testFixtures";
+import { type StoredState, firstP1Turn, migrateStored, mustMigrate } from "./testFixtures";
 
 const BODY = "record-body";
 const TRAINER = "record-trainer";
@@ -53,7 +47,6 @@ const STALE_TRAINER: Card = {
   trainerType: "Item",
   effect: "Draw a card.",
 } as unknown as Card;
-const FRESH_TRAINER: Card = { ...STALE_TRAINER, hp: 60 } as Card;
 
 const DECK = [...Array.from({ length: 58 }, () => BODY), TRAINER, TRAINER];
 
@@ -107,15 +100,14 @@ function oldState(version: 41 | 42 | 43, state?: GameState): StoredState {
 }
 
 describe("record keys: the version gate", () => {
-  it("a v43 state is migrated with no pool ids; a v41 one needs its pool", () => {
-    expect(storedPoolIds(oldState(43))).toEqual([]);
-    expect(storedPoolIds(oldState(41))?.sort()).toEqual([BODY, TRAINER].sort());
+  it("a v43 state is migrated; a v41 one is retired", () => {
+    expect(migrateStored(oldState(43))).not.toBeNull();
+    expect(migrateStored(oldState(41))).toBeNull();
   });
 
   it("v40 and v51 are not migrated; a v43 state missing its players is not migrated", () => {
     const old = oldState(43);
     for (const version of [40, 51]) {
-      expect(storedPoolIds({ ...old, version })).toBeNull();
       expect(migrateStored({ ...old, version })).toBeNull();
     }
     expect(migrateStored({ ...old, state: { ...old.state, players: null } })).toBeNull();
@@ -126,7 +118,7 @@ describe("record keys: what the migration writes", () => {
   it("v43: each side gains `prizesTakenOnTurn: null` and a list; each body `attackDamageTaken: null`; every other byte kept", () => {
     const board = firstP1Turn(fresh(), BODY);
     const old = oldState(43, board);
-    const migrated = mustMigrate(old, { [TRAINER]: FRESH_TRAINER });
+    const migrated = mustMigrate(old);
     for (const seat of ["p1", "p2"] as const) {
       const side = migrated.players[seat];
       expect(side.prizesTakenOnTurn).toBeNull();
@@ -174,17 +166,13 @@ describe("record keys: what the migration writes", () => {
     expect(listed?.players.p2.sideDamageReduction).toEqual([record, record]);
   });
 
-  it("v42: the side keys and the record keys; v41: the Trainer refresh too", () => {
-    const v42 = mustMigrate(oldState(42), { [TRAINER]: FRESH_TRAINER });
+  it("v42: the side keys and the record keys", () => {
+    const v42 = mustMigrate(oldState(42));
     expect(v42.players.p1.chosenAttackShield).toBeNull();
     expect(v42.players.p2.sideRetreatLock).toBeNull();
     expect(v42.players.p1.prizesTakenOnTurn).toBeNull();
     expect(v42.players.p2.sideDamageReduction).toEqual([]);
     expect(v42.cardPool[TRAINER]).toEqual(STALE_TRAINER);
-    const v41 = mustMigrate(oldState(41), { [TRAINER]: FRESH_TRAINER });
-    expect(v41.cardPool[TRAINER]).toEqual(FRESH_TRAINER);
-    expect(v41.players.p1.chosenAttackShield).toBeNull();
-    expect(v41.players.p1.sideDamageReduction).toEqual([]);
   });
 
   it("does not touch the state it was given", () => {

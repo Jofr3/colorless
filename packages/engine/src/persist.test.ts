@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameState, InPlayPokemon } from "./index";
-import { withDefaultKeys } from "./persist";
+import { GAME_STATE_VERSION, migrateGameState, withDefaultKeys } from "./persist";
 import { ALL_BASIC_DECK, completeSetup, mustCreate } from "./testFixtures";
 import { clearedAttackEffects, clearedSideInstalls } from "./types";
 
@@ -72,5 +72,29 @@ describe("withDefaultKeys", () => {
     const before = JSON.stringify(old);
     withDefaultKeys(old);
     expect(JSON.stringify(old)).toBe(before);
+  });
+});
+
+describe("migrateGameState: the oldest migratable version is 42", () => {
+  it("migrates every version from 42 to the one before the current one", () => {
+    const state = inTurn();
+    for (let version = 42; version < GAME_STATE_VERSION; version++) {
+      expect(migrateGameState(state, version), `v${version}`).not.toBeNull();
+    }
+  });
+
+  it("refuses the retired v41 and older, the current version and a newer one", () => {
+    const state = inTurn();
+    for (const version of [40, 41, GAME_STATE_VERSION, GAME_STATE_VERSION + 1]) {
+      expect(migrateGameState(state, version), `v${version}`).toBeNull();
+    }
+  });
+
+  it("refuses a value without the top-level objects every step reads", () => {
+    const state = inTurn();
+    for (const raw of [null, undefined, 42, "x"]) expect(migrateGameState(raw, 42)).toBeNull();
+    for (const key of ["cardPool", "players", "phase"]) {
+      expect(migrateGameState({ ...state, [key]: null }, 42), key).toBeNull();
+    }
   });
 });

@@ -1,13 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { type GameState, type Seat, applyAction, createGame } from "./index";
-import {
-  type StoredState,
-  firstP1Turn,
-  migrateStored,
-  mustMigrate,
-  storedPoolIds,
-} from "./testFixtures";
+import { type StoredState, firstP1Turn, migrateStored, mustMigrate } from "./testFixtures";
 
 const BODY = "side-body";
 const TRAINER = "side-trainer";
@@ -52,7 +46,6 @@ const STALE_TRAINER: Card = {
   trainerType: "Item",
   effect: "Draw a card.",
 } as unknown as Card;
-const FRESH_TRAINER: Card = { ...STALE_TRAINER, hp: 60 } as Card;
 
 const DECK = [...Array.from({ length: 58 }, () => BODY), TRAINER, TRAINER];
 
@@ -73,15 +66,14 @@ function oldState(version: 41 | 42, seed = 6210): StoredState {
 }
 
 describe("side keys: the version gate", () => {
-  it("a v42 state is migrated with no pool ids; a v41 one needs its pool", () => {
-    expect(storedPoolIds(oldState(42))).toEqual([]);
-    expect(storedPoolIds(oldState(41))?.sort()).toEqual([BODY, TRAINER].sort());
+  it("a v42 state, the oldest migratable, is migrated; a v41 one is retired", () => {
+    expect(migrateStored(oldState(42))).not.toBeNull();
+    expect(migrateStored(oldState(41))).toBeNull();
   });
 
   it("v40 and v51 are not migrated; a v42 state missing its players is not migrated", () => {
     const old = oldState(42);
     for (const version of [40, 51]) {
-      expect(storedPoolIds({ ...old, version })).toBeNull();
       expect(migrateStored({ ...old, version })).toBeNull();
     }
     expect(migrateStored({ ...old, state: { ...old.state, players: null } })).toBeNull();
@@ -91,7 +83,7 @@ describe("side keys: the version gate", () => {
 describe("side keys: what the migration writes", () => {
   it("v42: both sides gain the two keys as null, the pool is untouched, every other byte kept", () => {
     const old = oldState(42);
-    const migrated = mustMigrate(old, { [TRAINER]: FRESH_TRAINER });
+    const migrated = mustMigrate(old);
     for (const seat of ["p1", "p2"] as const) {
       expect(migrated.players[seat].chosenAttackShield).toBeNull();
       expect(migrated.players[seat].sideRetreatLock).toBeNull();
@@ -121,13 +113,6 @@ describe("side keys: what the migration writes", () => {
     const migrated = mustMigrate({ version: 42, state: live });
     expect(migrated.players.p1.sideAttackLock).toEqual(lock);
     expect(migrated.players.p2.active?.attackLockedTurn).toBe(board.turn + 1);
-  });
-
-  it("v41: the Trainer refresh and the two keys", () => {
-    const migrated = mustMigrate(oldState(41), { [TRAINER]: FRESH_TRAINER });
-    expect(migrated.cardPool[TRAINER]).toEqual(FRESH_TRAINER);
-    expect(migrated.players.p1.sideRetreatLock).toBeNull();
-    expect(migrated.players.p2.chosenAttackShield).toBeNull();
   });
 
   it("does not touch the state it was given", () => {

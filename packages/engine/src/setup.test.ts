@@ -335,34 +335,6 @@ describe("setupDrawExtra", () => {
     expect(next.players.p1.bench).toHaveLength(5);
   });
 
-  it("sets prizes before compensation when resuming an older setup without prizes", () => {
-    const { state, owed } = owedState();
-    const oldState = {
-      ...state,
-      players: {
-        p1: {
-          ...state.players.p1,
-          deck: [...state.players.p1.prizes, ...state.players.p1.deck],
-          prizes: [],
-        },
-        p2: {
-          ...state.players.p2,
-          deck: [...state.players.p2.prizes, ...state.players.p2.deck],
-          prizes: [],
-        },
-      },
-    };
-    const { state: next, events } = mustApply(oldState, {
-      type: "setupDrawExtra",
-      seat: "p1",
-      count: owed,
-    });
-    expect(types(events).slice(0, 3)).toEqual(["PRIZES_SET", "PRIZES_SET", "CARDS_DRAWN"]);
-    expect(next.players.p1.prizes).toEqual(state.players.p1.prizes);
-    expect(next.players.p2.prizes).toEqual(state.players.p2.prizes);
-    expect(next.players.p1.hand.slice(HAND_SIZE - 1)).toEqual(state.players.p1.deck.slice(0, owed));
-  });
-
   it("caps the draw at the owed count", () => {
     const { state, owed } = owedState();
     for (const count of [owed + 1, -1, 0.5]) {

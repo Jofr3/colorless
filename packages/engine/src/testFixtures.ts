@@ -1,3 +1,4 @@
+export * from "./fixtures/bench";
 export * from "./fixtures/board";
 export {
   basicEnergy,

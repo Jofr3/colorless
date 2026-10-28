@@ -212,7 +212,7 @@ export {
   validateDeck,
 } from "./deckRules";
 export type { DeckRuleCard, DeckRuleEntry, Format } from "./deckRules";
-export { GAME_STATE_VERSION, migrateGameState, poolIdsNeededFor } from "./persist";
+export { GAME_STATE_VERSION, migrateGameState } from "./persist";
 export { pendingMulligansOf } from "./mulligans";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
 export {

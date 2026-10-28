@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
-import { err, ok } from "./actions";
+import { ok } from "./actions";
 import {
   activeTop,
   cardOfUid,
@@ -1776,13 +1776,11 @@ export function evaluateWin(state: GameState): GameOutcome | null {
 }
 
 /**
- * Concede: the opponent wins by `conceded`. Legal in every phase except `gameOver`, so a player can
- * concede mid-turn or during a park nobody can answer; `finishGame` clears `pending`.
+ * Concede: the opponent wins by `conceded`. Legal in every phase but `gameOver`, which
+ * `dispatchAction` refuses before any action, so a player can concede mid-turn or during a park
+ * nobody can answer; `finishGame` clears `pending`.
  */
 export function concede(state: GameState, action: ConcedeAction): ApplyResult {
-  if (state.phase.kind === "gameOver") {
-    return err("GAME_OVER", "the game is already over");
-  }
   return finishGame(
     state,
     { result: "win", winner: otherSeat(action.seat), reason: "conceded" },

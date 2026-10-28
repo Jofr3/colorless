@@ -42,6 +42,7 @@ describe("waitingSeatOf", () => {
       kind: "setup:drawExtra",
       owed: { p1: 1, p2: 1 },
       decided: { p1: false, p2: false },
+      bonusCards: { p1: [], p2: [] },
     });
     expect(waitingSeatOf(both, "p1")).toBe("p1");
     expect(waitingSeatOf(both, "p2")).toBe("p2");
@@ -49,12 +50,17 @@ describe("waitingSeatOf", () => {
       kind: "setup:drawExtra",
       owed: { p1: 1, p2: 1 },
       decided: { p1: true, p2: false },
+      bonusCards: { p1: [], p2: [] },
     });
     expect(waitingSeatOf(p1Done, "p1")).toBe("p2");
   });
 
   it("setup:place flips to the seat still not ready", () => {
-    const p1Ready = withPhase(base, { kind: "setup:place", ready: { p1: true, p2: false } });
+    const p1Ready = withPhase(base, {
+      kind: "setup:place",
+      stage: "bonus",
+      ready: { p1: true, p2: false },
+    });
     expect(waitingSeatOf(p1Ready, "p1")).toBe("p2");
     expect(waitingSeatOf(p1Ready, "p2")).toBe("p2");
   });

@@ -1037,14 +1037,13 @@ export type Phase =
       kind: "setup:drawExtra";
       owed: Record<Seat, number>;
       decided: Record<Seat, boolean>;
-      /** Present after opening placements, tracking cards eligible for the bonus Bench step. */
-      bonusCards?: Record<Seat, string[]>;
+      /** The cards each seat drew here, which the bonus Bench step may place. */
+      bonusCards: Record<Seat, string[]>;
     }
   | {
       kind: "setup:place";
       ready: Record<Seat, boolean>;
-      /** Absent on older saves, which retain their original placement flow. */
-      stage?: "opening" | "bonus";
+      stage: "opening" | "bonus";
       bonusCards?: Record<Seat, string[]>;
     }
   // Per-turn allowances live on GameState.allowances (NOT here) so the ko:*
