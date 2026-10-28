@@ -133,6 +133,25 @@ async function startedMatch() {
   return seated;
 }
 
+/** Hold the next session read open until `release`, as a slow D1 round trip does: frames
+    delivered meanwhile run. */
+function holdSessionRead() {
+  const read = h.deps.liveSessions;
+  let release = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let held = true;
+  h.deps.liveSessions = async (owners) => {
+    if (held) {
+      held = false;
+      await gate;
+    }
+    return read(owners);
+  };
+  return () => release();
+}
+
 /** Fire alarms until `done` holds, failing if the lobby stops scheduling them first. */
 async function fireAlarmsUntil(done: () => boolean | Promise<boolean>, limit = 50): Promise<void> {
   for (let i = 0; i < limit && !(await done()); i++) await h.fireAlarm();
@@ -598,6 +617,19 @@ describe("LobbyDO — disconnects", () => {
     expect((await h.create()).status).toBe(201);
   });
 
+  it("lands a forfeit at its deadline though a late alarm moved the liveness sweeps off it", async () => {
+    const { host, guest } = await startedMatch();
+    await h.drop(guest);
+    await h.fireAlarm();
+    const forfeitAt = snapshotOf(host).guest?.forfeitAt;
+    expect(forfeitAt).toBeTypeOf("number");
+    // The next sweep runs 7 s late, as a busy runtime's alarm may.
+    h.world.now = (h.storage.alarm ?? 0) + 7000;
+    await h.fireAlarm();
+    await fireAlarmsUntil(async () => (await storedMatch()).state.phase.kind === "gameOver");
+    expect(h.world.now).toBe(forfeitAt);
+  });
+
   it("wipes an empty lobby whose alarm fired late, past both the grace and the expiry", async () => {
     await h.create();
     const host = await h.connect("ana");
@@ -1061,19 +1093,7 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
 
   it("takes a rematch whose session read the other seat's rematch overtook as its acceptance", async () => {
     const { host, guest } = await finishedMatch();
-    const read = h.deps.liveSessions;
-    let release = () => {};
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    let held = true;
-    h.deps.liveSessions = async (owners) => {
-      if (held) {
-        held = false;
-        await gate;
-      }
-      return read(owners);
-    };
+    const release = holdSessionRead();
     const first = h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     await h.send(host, { kind: "rematch", from: seatIdOf("h") });
     expect(snapshotOf(guest)).toMatchObject({ phase: "selecting", guest: { ready: false } });
@@ -1094,6 +1114,20 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
     });
     expect(guest.closed).toEqual({ code: 1008, reason: "session ended" });
     expect(snapshotOf(host)).toMatchObject({ phase: "selecting", guest: { ready: false } });
+  });
+
+  it("starts a rematch from the lobby as its session read left it: an opponent who left stays away", async () => {
+    const { host, guest } = await finishedMatch();
+    const release = holdSessionRead();
+    const asked = h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    await h.send(host, { kind: "bye", from: seatIdOf("h"), slot: "host" });
+    release();
+    await asked;
+    expect(snapshotOf(guest)).toMatchObject({
+      phase: "selecting",
+      host: { connected: false },
+      guest: { ready: true },
+    });
   });
 
   it("lets the rematch through when the session read fails, since the handoff re-checks", async () => {
