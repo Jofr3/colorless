@@ -4,7 +4,8 @@
  * never uses git; its layers are try/finally, signal handlers, a synchronous exit write, and an
  * on-disk journal that startup recovers only if its writer pid is dead. Files with uncommitted
  * changes are skipped (SKIPPED-DIRTY) unless `--allow-dirty`. A kill proves the suite went red, not
- * why.
+ * why. A mutant run past its deadline (`mutantDeadlineMs`) is killed and counts as KILLED, tagged
+ * TIMEOUT.
  *
  *   bun run mutants                 # every mutant
  *   bun run mutants --list          # print the corpus, run nothing
@@ -17,7 +18,7 @@
  * Any other argument is rejected. Exit codes are in `EXIT`.
  */
 
-import { spawn, spawnSync } from "node:child_process";
+import { type ChildProcess, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -33,6 +34,7 @@ import { REPO_ROOT } from "../lib/repo.ts";
 import { applyMutant } from "./apply.ts";
 import { argvProblems, knownFlagsUsage } from "./argv.ts";
 import { MUTANTS, type Mutant } from "./mutants.ts";
+import { killGroup, mutantDeadlineMs, type SuiteResult, spawnRecording } from "./spawn.ts";
 import { vouchedKeys } from "./vouch.ts";
 
 /**
@@ -220,27 +222,31 @@ function dirtyPathsAmong(paths: string[]): string[] {
   );
 }
 
-let child: ReturnType<typeof spawn> | null = null;
+let child: ChildProcess | null = null;
+
+function killChild(): void {
+  if (child !== null) killGroup(child);
+}
 
 function installNets(): void {
   process.on("exit", restoreAll);
   for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
     process.on(sig, () => {
       process.stderr.write(`\n[${sig}] restoring ${inFlight.size} file(s) before exit…\n`);
-      child?.kill("SIGKILL");
+      killChild();
       restoreAll();
       process.exit(EXIT.interrupted);
     });
   }
   process.on("uncaughtException", (err) => {
     process.stderr.write(`\n[uncaught] ${String(err)}\n`);
-    child?.kill("SIGKILL");
+    killChild();
     restoreAll();
     process.exit(EXIT.findings);
   });
   process.on("unhandledRejection", (err) => {
     process.stderr.write(`\n[unhandled rejection] ${String(err)}\n`);
-    child?.kill("SIGKILL");
+    killChild();
     restoreAll();
     process.exit(EXIT.findings);
   });
@@ -250,50 +256,43 @@ function installNets(): void {
 // Running vitest
 // ─────────────────────────────────────────────────────────────────────────────
 
-type SuiteResult = { green: boolean; ms: number; tail: string };
-
 /**
  * Some guards are bun scripts rather than vitest suites; `killedByCommand` runs one (argv array, no
  * shell, cwd at the repo root).
  */
-function runProcess(command: string[], verbose: boolean): Promise<SuiteResult> {
-  return spawnRecording(command[0] as string, command.slice(1), verbose);
+function runProcess(
+  command: string[],
+  verbose: boolean,
+  deadlineMs?: number,
+): Promise<SuiteResult> {
+  return record(command[0] as string, command.slice(1), verbose, deadlineMs);
 }
 
 function runVitest(
   files: string[],
   nameFilter: string | undefined,
   verbose: boolean,
+  deadlineMs?: number,
 ): Promise<SuiteResult> {
   const args = ["vitest", "run", "--reporter=dot", ...files];
   if (nameFilter !== undefined) args.push("-t", nameFilter);
-  return spawnRecording("bunx", args, verbose);
+  return record("bunx", args, verbose, deadlineMs);
 }
 
-function spawnRecording(bin: string, args: string[], verbose: boolean): Promise<SuiteResult> {
-  const started = Date.now();
-  return new Promise((resolvePromise) => {
-    const proc = spawn(bin, args, {
-      cwd: REPO_ROOT,
-      stdio: verbose ? "inherit" : ["ignore", "pipe", "pipe"],
-      env: { ...process.env, CI: "1", FORCE_COLOR: "0", VITEST_MODULE_CACHE_PATH: MODULE_CACHE },
-    });
-    child = proc;
-    let out = "";
-    proc.stdout?.on("data", (d: Buffer) => {
-      out += d.toString();
-    });
-    proc.stderr?.on("data", (d: Buffer) => {
-      out += d.toString();
-    });
-    proc.on("close", (code) => {
-      child = null;
-      resolvePromise({
-        green: code === 0,
-        ms: Date.now() - started,
-        tail: out.split("\n").slice(-25).join("\n"),
-      });
-    });
+function record(
+  bin: string,
+  args: string[],
+  verbose: boolean,
+  deadlineMs?: number,
+): Promise<SuiteResult> {
+  return spawnRecording(bin, args, {
+    cwd: REPO_ROOT,
+    env: { ...process.env, CI: "1", FORCE_COLOR: "0", VITEST_MODULE_CACHE_PATH: MODULE_CACHE },
+    verbose,
+    deadlineMs,
+    track: (proc) => {
+      child = proc;
+    },
   });
 }
 
@@ -338,7 +337,7 @@ async function batchBaselines(selected: readonly Mutant[], verbose: boolean): Pr
   let ran: string[] = [];
   let run: SuiteResult;
   try {
-    run = await spawnRecording(
+    run = await record(
       "bunx",
       [
         "vitest",
@@ -363,7 +362,10 @@ async function batchBaselines(selected: readonly Mutant[], verbose: boolean): Pr
     rmSync(report, { force: true });
   }
   const vouched = vouchedKeys(keyed, run.green, ran);
-  for (const key of vouched) baselineCache.set(key, { green: true, ms: 0, tail: "" });
+  // The batch's time stands in for each set's: an upper bound, so the deadline it sets is generous.
+  for (const key of vouched) {
+    baselineCache.set(key, { green: true, timedOut: false, ms: run.ms, tail: "" });
+  }
   console.log(
     `${run.green ? "green" : "RED, so every suite set runs its own"} · ${vouched.length} vouched · ${(run.ms / 1000).toFixed(1)}s`,
   );
@@ -419,6 +421,8 @@ type Row = {
   verdict: Verdict;
   ms: number;
   note: string;
+  /** The mutant run hit its deadline; its verdict counts it as red. */
+  timedOut?: boolean;
 };
 
 async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptions): Promise<Row> {
@@ -497,6 +501,7 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
 
   const mutatedText = applyMutant(text, mutant.find, mutant.replace);
   const cachedModules = moduleCacheEntries();
+  const deadlineMs = mutantDeadlineMs(baseline.ms);
   let mutated: SuiteResult;
   let clobberedTo: string | null = null;
   try {
@@ -505,8 +510,8 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
     writeFileSync(absolute, mutatedText);
     mutated =
       command === undefined
-        ? await runVitest(files, nameFilter, verbose)
-        : await runProcess(command, verbose);
+        ? await runVitest(files, nameFilter, verbose, deadlineMs)
+        : await runProcess(command, verbose, deadlineMs);
   } finally {
     // Another writer could change the file during the mutation window, so compare before restoring
     // and keep a copy of any interloping version beside the journal.
@@ -548,17 +553,28 @@ async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptio
       mutated.green ? "green" : "killed"
     ];
 
+  // A hang is a behaviour change the suite detected, so it counts as red and is tagged TIMEOUT.
   return {
     mutant,
     verdict,
     ms: mutated.ms,
-    note: verdict === "SURVIVED" || verdict === "STALE-SURVIVOR" ? mutated.tail.trim() : "",
+    note: mutated.timedOut
+      ? `TIMEOUT: killed at its ${(deadlineMs / 1000).toFixed(0)}s deadline`
+      : verdict === "SURVIVED" || verdict === "STALE-SURVIVOR"
+        ? mutated.tail.trim()
+        : "",
+    timedOut: mutated.timedOut,
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLI
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** A row's verdict as printed, with its TIMEOUT tag. */
+function shownVerdict(row: Row): string {
+  return row.timedOut === true ? `${row.verdict} TIMEOUT` : row.verdict;
+}
 
 /** Pad AND truncate — a long `decision` string must not shove the columns out
     of alignment, which is the only reason the table is readable at 16 rows. */
@@ -645,7 +661,7 @@ async function main(): Promise<void> {
     process.stdout.write(`  ${mutant.id.padEnd(26)} … `);
     const row = await runMutant(mutant, options);
     rows.push(row);
-    console.log(`${row.verdict.padEnd(16)} ${(row.ms / 1000).toFixed(1)}s`);
+    console.log(`${shownVerdict(row).padEnd(16)} ${(row.ms / 1000).toFixed(1)}s`);
   }
   const totalMs = Date.now() - started;
 
@@ -657,7 +673,7 @@ async function main(): Promise<void> {
   console.log("─".repeat(84));
   for (const row of rows) {
     console.log(
-      `${cell(row.mutant.id, 26)}${cell(row.mutant.decision, 22)}${cell(row.verdict, 17)}${cell(`${(row.ms / 1000).toFixed(1)}s`, 8)}${row.mutant.killedByCommand === undefined ? row.mutant.expectKilledBy.length : "cmd"}`,
+      `${cell(row.mutant.id, 26)}${cell(row.mutant.decision, 22)}${cell(shownVerdict(row), 17)}${cell(`${(row.ms / 1000).toFixed(1)}s`, 8)}${row.mutant.killedByCommand === undefined ? row.mutant.expectKilledBy.length : "cmd"}`,
     );
   }
   console.log("─".repeat(84));
@@ -670,11 +686,17 @@ async function main(): Promise<void> {
   const skipped = byVerdict("SKIPPED-DIRTY");
   const clobbered = byVerdict("CLOBBER");
   const errors = byVerdict("ERROR");
+  const timedOut = rows.filter((r) => r.timedOut === true);
 
   console.log(
     `${killed.length} killed · ${known.length} known survivor(s) · ${gaps.length} GAP(S) · ${stale.length} stale · ${skipped.length} skipped(dirty) · ${clobbered.length} clobber(s) · ${errors.length} error(s) · ${(totalMs / 1000).toFixed(1)}s total\n`,
   );
 
+  // Timeouts are counted in their verdict above; the summary line's format is quoted verbatim in
+  // docs/conventions.md (D503), so they are listed here instead.
+  for (const row of timedOut) {
+    console.log(`  ⏱  ${row.verdict} TIMEOUT  ${row.mutant.id} — ${row.note}`);
+  }
   for (const row of known) {
     console.log(`  known survivor  ${row.mutant.id} — ${row.mutant.survives?.kind}`);
     console.log(`      ${row.mutant.survives?.reason}\n`);
