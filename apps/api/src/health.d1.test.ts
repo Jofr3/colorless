@@ -35,12 +35,16 @@ describe("GET /health/db", () => {
         db.prepare("INSERT INTO d1_migrations (name) VALUES (?)").bind(file.name),
       ),
     ]);
-    const res = await app.request("/health/db", {}, d1().env());
-    expect(res.status).toBe(200);
-    expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(dbHealthResponseSchema.parse(await res.json())).toEqual({
-      ok: true,
-      migrations: migrationFiles().length,
-    });
+    try {
+      const res = await app.request("/health/db", {}, d1().env());
+      expect(res.status).toBe(200);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+      expect(dbHealthResponseSchema.parse(await res.json())).toEqual({
+        ok: true,
+        migrations: migrationFiles().length,
+      });
+    } finally {
+      await db.prepare("DROP TABLE d1_migrations").run();
+    }
   });
 });

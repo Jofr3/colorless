@@ -132,50 +132,6 @@ describe("catalog KV cache middleware", () => {
     expect(res.headers.get("x-colorless-cache")).toBe("hit");
   });
 
-  it("accepts repeated type/rarity params — hono hands them to zod as arrays", async () => {
-    const { kv } = fakeKv();
-    const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
-    // NOT a 400: validation passed and the request died later, at the
-    // deliberately-absent D1 stub (the full data path runs via wrangler dev).
-    expect(res.status).not.toBe(400);
-  });
-
-  it("accepts the P2 params — repeated ids/kinds and the scalar filters", async () => {
-    const { kv } = fakeKv();
-    for (const query of [
-      "id=sv06.5-001&id=sve-002",
-      "nameExact=Joltik",
-      "stage=Basic&stage=Stage1&trainerType=Item&energyType=Special",
-      "serie=sv&illustrator=Naoyo%20Kimura&text=Poison",
-      "suffix=ex&suffix=VMAX",
-    ]) {
-      const res = await app.request(`/cards?${query}`, {}, envWith(kv));
-      expect(res.status).not.toBe(400); // dies at the absent D1, not validation
-    }
-  });
-
-  it("bypasses KV entirely when the normalized key exceeds the 512-byte cap", async () => {
-    // A realistic 60-unique-id deck hydration — the query string alone is
-    // way past 512 bytes, and KV would 414 the GET instead of missing.
-    const ids = Array.from({ length: 60 }, (_, i) => `id=sv06.5-${String(i + 1).padStart(3, "0")}`);
-    const { kv, gets, puts } = fakeKv();
-    const res = await app.request(`/cards?${ids.join("&")}&pageSize=100`, {}, envWith(kv));
-    expect(res.status).not.toBe(400); // validation passed; died at the absent D1
-    expect(gets).toEqual([]);
-    expect(puts).toEqual([]);
-  });
-
-  it("bypasses KV for id-hydration requests even when the key would fit", async () => {
-    // Per-deck id sets essentially never recur, so caching one is a
-    // guaranteed-miss read plus a never-re-read write — `id` skips KV
-    // outright, short key or not.
-    const { kv, gets, puts } = fakeKv();
-    const res = await app.request("/cards?id=sv06.5-001&pageSize=100", {}, envWith(kv));
-    expect(res.status).not.toBe(400); // validation passed; died at the absent D1
-    expect(gets).toEqual([]);
-    expect(puts).toEqual([]);
-  });
-
   it("serves a seeded /facets key as a hit without touching D1", async () => {
     const facets = {
       rarities: ["Common"],

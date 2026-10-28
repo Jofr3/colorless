@@ -228,34 +228,50 @@ const KINDS = [
   "main phase",
 ];
 
-describe("redacted turn flags agree with the engine, inside and outside the window", () => {
-  const reached = new Set<string>();
+/** Each walk runs on the legacy generator and on ChaCha20, which every real game uses (MI1). */
+const RUNS = WALKS.flatMap(([name, deck, pool]) => [
+  [name, deck, pool, 7],
+  [`${name} (ChaCha20)`, deck, pool, drbgSeed(7)],
+]) as [string, string[], Record<string, Card>, RngState][];
 
-  // Each walk runs on the legacy generator and on ChaCha20, which every real game uses (MI1).
-  it.each(
-    WALKS.flatMap(([name, deck, pool]) => [
-      [name, deck, pool, 7],
-      [`${name} (ChaCha20)`, deck, pool, drbgSeed(7)],
-    ]) as [string, string[], Record<string, Card>, RngState][],
-  )("on every state of a seeded %s walk", (name, deck, pool, seed) => {
-    const drift = new Map<string, number>();
-    walkGame(mustCreate(seed, { p1: deck, p2: deck }, pool).state, 11, (state) => {
-      for (const board of [state, inAttackAgainWindow(state)]) {
-        if (board === null) continue;
-        for (const c of flagChecks(board)) {
-          reached.add(`${c.kind}:${c.flagged}`);
-          if (c.flagged === (c.verdict === "ok")) continue;
-          const d = `${c.what}: ${c.flagged ? `offered, refused ${c.verdict}` : "greyed, legal"}`;
-          if (!drift.has(d)) drift.set(d, board.turn);
-        }
+interface WalkResult {
+  reached: Set<string>;
+  drift: string[];
+}
+
+// Each walk runs once and is remembered, so every test computes what it reads and stands alone.
+const walked = new Map<string, WalkResult>();
+
+function walkFlags(name: string, deck: string[], pool: Record<string, Card>, seed: RngState) {
+  const known = walked.get(name);
+  if (known !== undefined) return known;
+  const reached = new Set<string>();
+  const drift = new Map<string, number>();
+  walkGame(mustCreate(seed, { p1: deck, p2: deck }, pool).state, 11, (state) => {
+    for (const board of [state, inAttackAgainWindow(state)]) {
+      if (board === null) continue;
+      for (const c of flagChecks(board)) {
+        reached.add(`${c.kind}:${c.flagged}`);
+        if (c.flagged === (c.verdict === "ok")) continue;
+        const d = `${c.what}: ${c.flagged ? `offered, refused ${c.verdict}` : "greyed, legal"}`;
+        if (!drift.has(d)) drift.set(d, board.turn);
       }
-    });
-    expect([...drift].map(([d, turn]) => `${d} (${name} turn ${turn})`)).toEqual([]);
+    }
+  });
+  const result = { reached, drift: [...drift].map(([d, turn]) => `${d} (${name} turn ${turn})`) };
+  walked.set(name, result);
+  return result;
+}
+
+describe("redacted turn flags agree with the engine, inside and outside the window", () => {
+  it.each(RUNS)("on every state of a seeded %s walk", (name, deck, pool, seed) => {
+    expect(walkFlags(name, deck, pool, seed).drift).toEqual([]);
   });
 
   it("and the walks reach every kind of affordance, offered and greyed", () => {
+    const reached = new Set(RUNS.flatMap((run) => [...walkFlags(...run).reached]));
     for (const kind of KINDS)
       for (const flagged of [true, false]) expect(reached).toContain(`${kind}:${flagged}`);
     expect(reached).toContain("rare candy:true");
-  });
+  }, 60_000);
 });

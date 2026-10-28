@@ -86,7 +86,9 @@ only the conclusion.
   `vi.useFakeTimers`, `vi.setSystemTime`, `vi.spyOn`, `vi.unstubAll*` or
   `vi.resetModules`, or names `globalThis`, runs in `app-isolated`; every other
   app file runs in `app`, without isolation, so it must not leave other
-  module-level state behind either. Vitest caches transformed modules in
+  module-level state behind either. Both shared projects undo stubbed globals,
+  stubbed env vars and spies after every test, so a stub a helper installs (for
+  example `stubFetch`) lasts one test there. Vitest caches transformed modules in
   `node_modules/.experimental-vitest-cache` (`bunx vitest --clearCache` empties it).
 - **The engine remembers derived facts by object identity**: `disabledAbilityUids` per
   `GameState` (`DISABLED_ABILITY_UIDS`, `continuous.ts`), `cardOfUid`'s faces per `cardIdByUid`
@@ -111,7 +113,8 @@ only the conclusion.
   it locally with `bun run mutants --only <id>`.
 - Test seams to reuse: `walkGame`/`candidateActions` (`fixtures/walk.ts`) for
   seeded play-forward sweeps (`onStep` sees each accepted action's events); `createLobbyHarness` (`apps/api/src/lobby/lobbyHarness.ts`)
-  for LobbyDO; `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
+  for LobbyDO (its `dispose` fails a test whose DO sent a frame `lobbyServerMessageSchema`
+  refuses); `useTestD1` (`apps/api/src/testing/d1.ts`) for routes on a real D1.
   A change to the persisted game shape fails `packages/engine/src/persistShape.test.ts`
   until `GAME_STATE_VERSION` (`packages/engine/src/persist.ts`) is bumped and the snapshot
   rewritten with `-u`. A change to the Lua wire fails `src/lua/wireFixtures.test.ts`;

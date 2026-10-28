@@ -116,6 +116,18 @@ describe("catalog KV cache over D1", () => {
     }
   });
 
+  it("bypasses KV for a key past its 512-byte cap, reading only the epoch", async () => {
+    const { kv, calls } = recordingKv();
+    const res = await app.request(
+      `/cards?illustrator=${"x".repeat(600)}`,
+      {},
+      d1().env({ CACHE: kv }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-colorless-cache")).toBe("bypass");
+    expect(calls).toEqual([{ op: "get", key: CATALOG_EPOCH_KEY }]);
+  });
+
   it("still answers 200 when the KV write fails", async () => {
     const { kv, calls } = recordingKv({}, { put: true });
     const res = await app.request("/cards?category=Pokemon", {}, d1().env({ CACHE: kv }));

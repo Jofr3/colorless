@@ -92,7 +92,7 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     }
     let basics = 0;
     for (const id of deck) {
-      const card = options.cardPool[id];
+      const card = Object.hasOwn(options.cardPool, id) ? options.cardPool[id] : undefined;
       if (card === undefined) {
         return createErr("UNKNOWN_CARD_ID", `${seat} deck references unknown card id "${id}"`);
       }

@@ -61,8 +61,25 @@ const LOAD_FAILED = {
 const LOAD_FAILURES = new Set<string>(Object.values(LOAD_FAILED));
 // Messages show on one 294 px line beside Retry, shrunk to size 14 at most: a longer one wraps
 // under the Back bar, so every message stays within MESSAGE_MAX_PX at that size (builder.test.ts).
-const DECK_CONFLICT = "Deck changed elsewhere; reloaded the latest.";
-const SAVE_FAILED = "Could not save. Your edits are kept. Retry.";
+const MESSAGE = {
+  chooseDeck: "Choose a deck from your library.",
+  deckConflict: "Deck changed elsewhere; reloaded the latest.",
+  saveFailed: "Could not save. Your edits are kept. Retry.",
+  resolveBeforeAdding: "Resolve unavailable cards before adding more.",
+  copyLimit: "This card has reached its copy limit.",
+  resolveBeforeExporting: "Resolve unavailable cards before exporting.",
+  importCancelled: "Import cancelled. Deck unchanged.",
+  resolving: "Resolving decklist...",
+  tooManyLines: "Too many card lines. Deck unchanged.",
+  noDecklist: "No usable decklist, or too long. Deck unchanged.",
+  imported: "Deck imported.",
+  importFailed: "Import failed. Your deck is unchanged. Try again.",
+} as const;
+/** Every message the builder shows other than the unknown-card count (`unresolvedMessage`). */
+export const FIXED_MESSAGES: readonly string[] = [
+  ...Object.values(LOAD_FAILED),
+  ...Object.values(MESSAGE),
+];
 /** m6x11plus advances at size 14 for ASCII 32-126, in 7/8 px steps minus 3 (read with fontTools;
     the font has no kerning). Other characters count as 4, the width of most letters. */
 const MESSAGE_GLYPHS =
@@ -437,7 +454,7 @@ export class LuaBuilder {
     if (!this.user || !this.id) {
       if (!this.id) {
         this.phase = "error";
-        this.message = "Choose a deck from your library.";
+        this.message = MESSAGE.chooseDeck;
       }
       this.emit();
       return;
@@ -491,7 +508,7 @@ export class LuaBuilder {
             if (latest !== undefined && live() && this.active) {
               this.pendingExit = undefined;
               this.leaving = false;
-              void this.load(latest ?? undefined, DECK_CONFLICT);
+              void this.load(latest ?? undefined, MESSAGE.deckConflict);
             }
             throw error;
           }
@@ -501,7 +518,7 @@ export class LuaBuilder {
           this.saveStatus = status;
           clearTimeout(this.savedTimer);
           if (status === "saved") {
-            if (this.message === SAVE_FAILED) this.message = "";
+            if (this.message === MESSAGE.saveFailed) this.message = "";
             this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
             if (this.leaving && !this.dirty) {
               this.exit();
@@ -515,7 +532,7 @@ export class LuaBuilder {
           if (status === "failed") {
             this.pendingExit = undefined;
             this.leaving = false;
-            this.message = SAVE_FAILED;
+            this.message = MESSAGE.saveFailed;
           }
           this.emit();
         },
@@ -811,7 +828,7 @@ export class LuaBuilder {
   private onAdd(id: string) {
     const c = this.cards.get(id);
     if ([...this.entries.keys()].some((entry) => !this.cards.has(entry))) {
-      this.message = "Resolve unavailable cards before adding more.";
+      this.message = MESSAGE.resolveBeforeAdding;
       this.emit();
       return;
     }
@@ -823,7 +840,7 @@ export class LuaBuilder {
       this.entries.set(id, (this.entries.get(id) ?? 0) + 1);
       this.changed();
     } else {
-      this.message = "This card has reached its copy limit.";
+      this.message = MESSAGE.copyLimit;
       this.emit();
     }
   }
@@ -982,14 +999,14 @@ export class LuaBuilder {
     const deck = this.deck();
     this.transfer = deck.length ? formatDecklist(deck) : "";
     const missing = [...this.entries.keys()].some((id) => !this.cards.has(id));
-    this.message = missing ? "Resolve unavailable cards before exporting." : "";
+    this.message = missing ? MESSAGE.resolveBeforeExporting : "";
     this.emit();
   }
   private onCancelImport() {
     if (!this.importing) return;
     this.importGeneration++;
     this.importing = false;
-    this.message = "Import cancelled. Deck unchanged.";
+    this.message = MESSAGE.importCancelled;
     this.emit();
   }
   private async onImport(text: string) {
@@ -997,13 +1014,13 @@ export class LuaBuilder {
     const generation = ++this.importGeneration;
     const live = this.epoch.current();
     this.importing = true;
-    this.message = "Resolving decklist...";
+    this.message = MESSAGE.resolving;
     this.emit();
     try {
       const result = await importDecklist(text);
       if (!live() || generation !== this.importGeneration || !this.active) return;
       if (result.tooManyLines) {
-        this.message = "Too many card lines. Deck unchanged.";
+        this.message = MESSAGE.tooManyLines;
       } else if (
         result.unmatched.length ||
         result.entries.length === 0 ||
@@ -1011,7 +1028,7 @@ export class LuaBuilder {
       ) {
         this.message = result.unmatched.length
           ? unresolvedMessage(result.unmatched.map((x) => x.name))
-          : "No usable decklist, or too long. Deck unchanged.";
+          : MESSAGE.noDecklist;
       } else {
         for (const e of result.entries) this.cards.set(e.card.cardId, e.card);
         this.entries = new Map(
@@ -1019,12 +1036,12 @@ export class LuaBuilder {
         );
         this.transfer = text;
         this.changed();
-        this.message = "Deck imported.";
+        this.message = MESSAGE.imported;
       }
     } catch (error) {
       reportError("import decklist", error);
       if (!live() || generation !== this.importGeneration || !this.active) return;
-      this.message = "Import failed. Your deck is unchanged. Try again.";
+      this.message = MESSAGE.importFailed;
     }
     if (live()) {
       this.importing = false;
