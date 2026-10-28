@@ -502,14 +502,15 @@ export class LuaBuilder {
               result = await patch(snapshot);
             } catch (error) {
               // A 409 carrying one of this tab's unanswered saves is that save landing, not
-              // another device: take its version and send the current edits on top of it.
+              // another device: take its version and send the current edits on top of it,
+              // unless they are what landed.
               const latest = conflictingDeck(error);
               const landed = latest ? JSON.stringify(savedSnapshot(latest)) : "";
               if (!latest || !unconfirmed.has(landed) || !live()) throw error;
               version = latest.version;
               unconfirmed.clear();
               this.acknowledged = landed;
-              result = await patch(snapshot);
+              result = landed === key ? latest : await patch(snapshot);
             }
             version = result.version;
             unconfirmed.clear();

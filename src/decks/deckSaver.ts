@@ -24,6 +24,30 @@ export function rateLimitRetryDelay(error: unknown, attempt: number): number | u
   return Math.min(MAX_RETRY_SECONDS, Math.max(MIN_RETRY_SECONDS, seconds)) * 1000;
 }
 
+/** Saves that failed in passing (no response, or a gateway error) retried before the save is
+    reported failed. */
+export const MAX_TRANSIENT_RETRIES = 3;
+/** The gateway statuses a retry may get past. A 500 is the Worker's own failure and stays reported. */
+const TRANSIENT_STATUSES: ReadonlySet<number> = new Set([502, 503, 504]);
+
+/**
+ * How long to wait before retrying a save that failed in passing: the network failed or timed
+ * out, or a gateway answered 502, 503 or 504. 2, 4 then 8 seconds; undefined for any other
+ * failure, and once MAX_TRANSIENT_RETRIES retries in a row failed too. Safe only because a
+ * retried save that had already landed is recognised by the 409 it gets (src/lua/builder.ts).
+ */
+export function transientRetryDelay(error: unknown, attempt: number): number | undefined {
+  const transient = !(error instanceof ApiError) || TRANSIENT_STATUSES.has(error.status);
+  if (!transient || attempt > MAX_TRANSIENT_RETRIES) return undefined;
+  return 2 ** attempt * 1000;
+}
+
+/** The saver's default: a 429 is retried by its rate-limit backoff, a passing failure by
+    transientRetryDelay, and anything else is reported. */
+export function saveRetryDelay(error: unknown, attempt: number): number | undefined {
+  return rateLimitRetryDelay(error, attempt) ?? transientRetryDelay(error, attempt);
+}
+
 /**
  * Whether a rejected save may still have been written: no response arrived (the network failed or
  * the request timed out), or a 5xx, which a gateway can send after the Worker committed. A 4xx is
@@ -48,7 +72,7 @@ export interface DeckSaverOptions<T> {
   onStatus?: (status: SaveStatus, error?: unknown) => void;
   /** For a rejected save, how many ms to wait before retrying it on its own, or undefined to
       report it "failed". `attempt` counts the rejections in a row, from 1. Default
-      rateLimitRetryDelay: a 429 is retried, with backoff. */
+      saveRetryDelay: a 429 or a passing failure is retried, with backoff. */
   retryDelay?: (error: unknown, attempt: number) => number | undefined;
 }
 
@@ -68,7 +92,7 @@ export interface DeckSaver<T> {
 export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
   const delay = options.delay ?? 600;
   const serialize = options.serialize ?? ((snapshot: T) => JSON.stringify(snapshot));
-  const retryDelay = options.retryDelay ?? rateLimitRetryDelay;
+  const retryDelay = options.retryDelay ?? saveRetryDelay;
 
   /** Serialization of the last state the server acknowledged, or undefined when unknown. */
   let savedKey = options.initial === undefined ? undefined : serialize(options.initial);
@@ -139,7 +163,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
         if (pending === null) pending = { snapshot, key };
         const wait = retryDelay(error, ++rejections);
         if (wait !== undefined) {
-          // Rate limited: the edits stay pending and are sent again after the wait, still
+          // Retried: the edits stay pending and are sent again after the wait, still
           // "saving", with newer edits coalescing into that one retry.
           notBefore = Date.now() + wait;
           clearTimer();

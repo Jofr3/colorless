@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "../lib/api";
+import { ApiError, RequestTimeoutError } from "../lib/api";
 import {
   createDeckSaver,
   MAX_RATE_LIMIT_RETRIES,
+  MAX_TRANSIENT_RETRIES,
   outcomeUnknown,
   rateLimitRetryDelay,
   type SaveStatus,
+  transientRetryDelay,
 } from "./deckSaver";
 
 // The saver is the builder's whole persistence contract (debounce, serialize,
-// latest-wins, no-op skip, no auto-retry but a rate-limited one), so it gets exercised directly with
+// latest-wins, no-op skip, retries only after a 429 or a passing failure), so it gets exercised directly with
 // fake timers and a hand-controlled save promise.
 
 type Snap = { v: number };
@@ -112,7 +114,7 @@ describe("createDeckSaver", () => {
   });
 
   it("reports a failure, keeps the snapshot, and retries on flush — never on its own", async () => {
-    const boom = new Error("500");
+    const boom = new ApiError(500, { error: "internal error" });
     const save = vi
       .fn<(snapshot: Snap) => Promise<void>>()
       .mockRejectedValueOnce(boom)
@@ -335,6 +337,60 @@ describe("a save whose outcome is unknown", () => {
     expect(outcomeUnknown(new ApiError(504, undefined))).toBe(true);
     expect(outcomeUnknown(new ApiError(409, undefined))).toBe(false);
     expect(outcomeUnknown(new ApiError(429, undefined))).toBe(false);
+  });
+});
+
+describe("a save that failed in passing", () => {
+  it.each([
+    ["the network failed", new TypeError("Failed to fetch")],
+    ["it timed out", new RequestTimeoutError(30_000)],
+    ["a gateway answered 502", new ApiError(502, undefined)],
+    ["a gateway answered 503", new ApiError(503, undefined)],
+    ["a gateway answered 504", new ApiError(504, undefined)],
+  ])("is sent again after 2, 4 and 8 s when %s, then reported", async (_, error) => {
+    const save = vi.fn(async (_: Snap): Promise<void> => {
+      throw error;
+    });
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    const waits = [2_000, 4_000, 8_000];
+    expect(waits).toHaveLength(MAX_TRANSIENT_RETRIES);
+    for (const [index, wait] of waits.entries()) {
+      await vi.advanceTimersByTimeAsync(wait - 1);
+      expect(save).toHaveBeenCalledTimes(index + 1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(save).toHaveBeenCalledTimes(index + 2);
+    }
+    expect(recorder.statuses).toEqual(["saving", "saving", "saving", "saving", "failed"]);
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(save).toHaveBeenCalledTimes(MAX_TRANSIENT_RETRIES + 1);
+  });
+
+  it("lands on a retry without reporting a failure", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    save.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(2_600);
+
+    expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 1 }]]);
+    expect(recorder.statuses).toEqual(["saving", "saving", "saved"]);
+  });
+
+  it("is told apart from the Worker's own failure and from a refusal", () => {
+    expect(transientRetryDelay(new TypeError("Failed to fetch"), 1)).toBe(2_000);
+    expect(transientRetryDelay(new ApiError(503, undefined), 3)).toBe(8_000);
+    expect(transientRetryDelay(new ApiError(504, undefined), MAX_TRANSIENT_RETRIES + 1)).toBe(
+      undefined,
+    );
+    expect(transientRetryDelay(new ApiError(500, undefined), 1)).toBeUndefined();
+    expect(transientRetryDelay(new ApiError(400, undefined), 1)).toBeUndefined();
+    expect(transientRetryDelay(new ApiError(409, undefined), 1)).toBeUndefined();
   });
 });
 
