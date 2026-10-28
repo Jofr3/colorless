@@ -180,7 +180,10 @@ same-deck restarts and replacement snapshots. The scans are bundled so the first
 transition works without a network request; their source URLs are recorded in
 `assets/transition_cards/SOURCES.md` and their hashes in the build manifest.
 
-Run from the repository root with Lua 5.2 or later (LuaJIT also works):
+Run from the repository root with Lua 5.1, the dialect love.js ships (5.2 and
+LuaJIT also run them, but accept syntax 5.1 rejects, such as `goto`). CI runs
+the whole suite under `lua5.1`, and `bun run test:lua` prefers it when it is
+on PATH:
 
 ```sh
 lua frontend/lua/tests/motion.lua

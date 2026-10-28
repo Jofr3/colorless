@@ -1,13 +1,15 @@
-// Runs every headless Lua test under frontend/lua/tests with the system `lua`
-// (override with LUA=lua5.2). effects_gpu.lua needs love.js in a browser and is
-// skipped. Tests that compare against Balatro's source exit 77 when it is
-// missing (frontend/lua/tests/support/balatro_source.lua); --require-source
-// makes that a failure instead. Files run concurrently, one per core; a
-// failure's output is printed whole, in file order.
+// Runs every headless Lua test under frontend/lua/tests with `lua5.1`, the
+// dialect love.js ships, when it is on PATH, else the system `lua` (override
+// with LUA=lua5.2); the summary names the interpreter. effects_gpu.lua needs
+// love.js in a browser and is skipped. Tests that compare against Balatro's
+// source exit 77 when it is missing
+// (frontend/lua/tests/support/balatro_source.lua); --require-source makes that
+// a failure instead. Files run concurrently, one per core; a failure's output
+// is printed whole, in file order.
 //
 //   bun scripts/test-lua.ts [--require-source]
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { REPO_ROOT, repoPath } from "./lib/repo";
@@ -16,8 +18,16 @@ const TESTS = "frontend/lua/tests";
 const BROWSER_ONLY = new Set(["effects_gpu.lua"]);
 const SKIPPED = 77;
 const TIMEOUT_MS = 60_000;
-const lua = process.env.LUA ?? "lua";
+const SHIPPED = "lua5.1";
+const lua = process.env.LUA ?? (versionOf(SHIPPED) === undefined ? "lua" : SHIPPED);
 const requireSource = process.argv.includes("--require-source");
+
+/** `Lua 5.1.5` and the like, or undefined when `bin` does not run. 5.1 prints it to stderr. */
+function versionOf(bin: string): string | undefined {
+  const run = spawnSync(bin, ["-v"], { encoding: "utf8" });
+  if (run.error !== undefined || run.status !== 0) return undefined;
+  return `${run.stdout}${run.stderr}`.match(/Lua(JIT)? [\d.]+/)?.[0];
+}
 
 type Outcome = { status: number | null; output: string };
 
@@ -66,7 +76,10 @@ for (const file of files) {
   }
 }
 const ran = files.length - skipped.length;
-console.log(`${ran - failed.length}/${ran} Lua test files passed`);
+const version = versionOf(lua) ?? lua;
+console.log(`${ran - failed.length}/${ran} Lua test files passed under ${version}`);
+if (!version.startsWith("Lua 5.1"))
+  console.log(`(love.js runs Lua 5.1; CI runs these under ${SHIPPED})`);
 if (skipped.length > 0)
   console.log(`${skipped.length} skipped without Balatro source: ${skipped.join(", ")}`);
 if (failed.length > 0) process.exit(1);
