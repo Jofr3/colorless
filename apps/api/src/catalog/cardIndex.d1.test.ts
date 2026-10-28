@@ -11,7 +11,7 @@ import {
   searchCardIndex,
 } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { CACHE_STATUS_HEADER } from "../httpCache";
 import app from "../index";
 import { useTestD1 } from "../testing/d1";
@@ -352,10 +352,19 @@ const QUERIES = [
 ];
 
 describe("GET /cards/index", () => {
-  it("finds what GET /cards finds, in its order, for every filter and sort", async () => {
-    const index = prepareCardIndex(await cardIndex());
-    expect(index.cards).toHaveLength(ROWS.length);
-    for (const search of QUERIES) {
+  // The index is built once from the seeded catalog, which no reset touches. One case per query,
+  // so each stays well inside the timeout and a failure names its query.
+  describe("finds what GET /cards finds, in its order", () => {
+    let index: ReturnType<typeof prepareCardIndex>;
+    beforeAll(async () => {
+      index = prepareCardIndex(await cardIndex());
+    });
+
+    it("holds every card", () => {
+      expect(index.cards).toHaveLength(ROWS.length);
+    });
+
+    it.each(QUERIES)("for ?%s", async (search) => {
       const server = await allPages(search);
       // A repeated param becomes an array, as hono hands it to the API's validator.
       const params = new URLSearchParams(search);
@@ -368,12 +377,9 @@ describe("GET /cards/index", () => {
         ),
       );
       const found = searchCardIndex(index, query);
-      expect(
-        found.map((row) => row[0]),
-        search,
-      ).toEqual(server.items.map((item) => item.id));
-      expect(found.length, search).toBe(server.total);
-    }
+      expect(found.map((row) => row[0])).toEqual(server.items.map((item) => item.id));
+      expect(found.length).toBe(server.total);
+    });
   });
 
   it("serves each card as GET /cards does, with the stored Energy subtype and Energy text", async () => {
