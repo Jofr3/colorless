@@ -36,6 +36,7 @@ the script after adding a decision.
 | 2026-10-28 | Data ops and the release pipeline: a restore recipe proven locally, recovery per release step | decisions.md:1012 |
 | 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:1031 |
 | 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:1053 |
+| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:1066 |
 
 ## Numbered decisions
 

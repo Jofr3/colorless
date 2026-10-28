@@ -4,4 +4,10 @@
 
 export { resetLogThrottle } from "../http/log";
 export * from "../lobby/lobbyHarness";
-export { ABANDON_GRACE_MS, DISCONNECT_GRACE_MS, SOCKET_SILENCE_MS } from "../lobby/logic";
+export {
+  ABANDON_GRACE_MS,
+  DISCONNECT_GRACE_MS,
+  LIVENESS_SWEEP_MS,
+  SEATED_LIVENESS_SWEEP_MS,
+  SOCKET_SILENCE_MS,
+} from "../lobby/logic";

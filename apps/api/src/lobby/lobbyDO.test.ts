@@ -30,6 +30,7 @@ import {
   FIRST_KEEPALIVE_MARGIN_MS,
   LIVENESS_SWEEP_MS,
   readSnapshot,
+  SEATED_LIVENESS_SWEEP_MS,
   SOCKET_SILENCE_MS,
 } from "./logic";
 import { lobbyDepsFromEnv } from "./lobbyDO";
@@ -198,6 +199,8 @@ describe("LobbyDO — create and seat", () => {
     const snapshot = snapshotOf(host);
     expect(snapshot.phase).toBe("selecting");
     expect(snapshot.guest?.name).toBe("Guest");
+    // A guest who could be told of the host's half-open link: the sweep runs every 5s.
+    expect(h.storage.alarm).toBe(h.world.now + SEATED_LIVENESS_SWEEP_MS);
     expect(snapshot.guest?.avatarSeed).toBeNull();
     expect(snapshotOf(guest)).toEqual(snapshot);
   });
@@ -671,6 +674,34 @@ describe("LobbyDO — disconnects", () => {
     expect(h.storage.alarm).toBeNull();
   });
 
+  it("tells the opponent of a mid-match half-open socket within 20s of its last keepalive", async () => {
+    const { host, guest } = await startedMatch();
+    const silentFrom = h.world.now;
+    guest.lastPong = new Date(silentFrom);
+    await fireAlarmsUntil(() => snapshotOf(host).guest?.connected === false);
+    expect(guest.closed).toEqual({ code: 1001, reason: "keepalive lost" });
+    expect(h.world.now - silentFrom).toBeLessThanOrEqual(
+      SEATED_LIVENESS_SWEEP_MS + SOCKET_SILENCE_MS + DISCONNECT_GRACE_MS,
+    );
+    expect(h.world.now - silentFrom).toBeLessThanOrEqual(20_000);
+    // The forfeit clock runs from the moment the host is told.
+    expect(snapshotOf(host).guest?.forfeitAt).toBe(h.world.now + ABANDON_GRACE_MS);
+  });
+
+  it("keeps a lone host's lobby on the 30s sweep, before and after a guest leaves", async () => {
+    await h.create();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    await h.fireAlarm();
+    expect(h.storage.alarm).toBe(h.world.now + LIVENESS_SWEEP_MS);
+    const guest = await h.connect();
+    await h.send(guest, hello("g", "Guest"));
+    await h.send(guest, { kind: "bye", from: seatIdOf("g"), slot: "guest" });
+    expect(snapshotOf(host).guest).toBeNull();
+    await h.fireAlarm();
+    expect(h.storage.alarm).toBe(h.world.now + LIVENESS_SWEEP_MS);
+  });
+
   it("closes a socket that stopped answering keepalives and starts its grace", async () => {
     const { host, guest } = await startedMatch();
     guest.lastPong = new Date(h.world.now);
@@ -961,7 +992,7 @@ describe("LobbyDO — failures", () => {
     };
     expect(host.last("match-error")).toEqual(error);
     expect(guest.last("match-error")).toEqual(error);
-    expect(h.storage.alarm).toBe(h.world.now + LIVENESS_SWEEP_MS);
+    expect(h.storage.alarm).toBe(h.world.now + SEATED_LIVENESS_SWEEP_MS);
     expect(logged("handoff_failed")).toEqual([
       {
         evt: "lobby",

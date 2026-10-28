@@ -61214,6 +61214,20 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["src/online/lobbyClient.test.ts", "src/seam/lobby.test.ts"],
   },
   {
+    id: "REL-QA3-seated-sweep-at-idle-cadence",
+    decision: "REL-QA3",
+    what: "A lobby with both seats held keeps the idle 30 s liveness sweep, so a half-open player shows as away up to 45 s after their keepalives stop and a 30 s outage ends before the opponent is told. Killed by logic.test's cadence case, lobbyDO.test's mid-match half-open case and the seam suite's away-within-20-s case.",
+    file: "apps/api/src/lobby/logic.ts",
+    symbol: "livenessSweepMs",
+    find: "  return snapshot?.guest != null ? SEATED_LIVENESS_SWEEP_MS : LIVENESS_SWEEP_MS;",
+    replace: "  return LIVENESS_SWEEP_MS;",
+    expectKilledBy: [
+      "apps/api/src/lobby/logic.test.ts",
+      "apps/api/src/lobby/lobbyDO.test.ts",
+      "src/seam/lobby.test.ts",
+    ],
+  },
+  {
     id: "REL-LB1-table-never-accepts-a-crossed-rematch",
     decision: "REL-LB1",
     what: "A table whose rematch is pending never readies when the opponent's got there first, so it waits on a frame the server dropped. Killed by onlineTable.test's crossed-rematch case.",

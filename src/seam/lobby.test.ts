@@ -1,4 +1,11 @@
-import { seatSecret, sessionIdOf } from "@colorless/api/testing/lobbyHarness";
+import {
+  DISCONNECT_GRACE_MS,
+  LIVENESS_SWEEP_MS,
+  SEATED_LIVENESS_SWEEP_MS,
+  SOCKET_SILENCE_MS,
+  seatSecret,
+  sessionIdOf,
+} from "@colorless/api/testing/lobbyHarness";
 import { COUNTDOWN_MS } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SEAT_LOST } from "../lua/onlineTable";
@@ -107,6 +114,42 @@ describe("the web client against the lobby DO", () => {
     expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
   });
 
+  it("a player whose link goes half-open and stays down shows as away within 20 s", async () => {
+    const { host, guest } = await inGame();
+    // The guest's network goes: the open socket is dead without a close, and no new one connects.
+    lastSocket(guest).socket.blackholed = true;
+    guest.offline = true;
+    let away = 0;
+    for (let elapsed = 0; elapsed < 30_000 && away === 0; elapsed += 500) {
+      await b.run(500);
+      if (host.match.lifecycle().opponentAway !== null) away = elapsed + 500;
+    }
+    expect(away).toBeGreaterThan(0);
+    expect(away).toBeLessThanOrEqual(
+      SEATED_LIVENESS_SWEEP_MS + SOCKET_SILENCE_MS + DISCONNECT_GRACE_MS,
+    );
+    expect(host.match.lifecycle().opponentAway?.forfeitAt).toBeTypeOf("number");
+    // The outage ends inside the forfeit window: the guest is reseated and the host told.
+    guest.offline = false;
+    await b.run(20_000);
+    expect(guest.client().state.status).toBe("connected");
+    expect(host.match.lifecycle().opponentAway).toBeNull();
+    expect(host.match.view()?.outcome).toBeNull();
+  });
+
+  it("a lone host's lobby sweeps every 30 s, and every 5 s once a guest sits down", async () => {
+    await b.online(b.tab("ana"), "host", "h");
+    await b.run(500);
+    const alarms = vi.spyOn(b.h.lobby, "alarm");
+    await b.run(60_000);
+    expect(alarms).toHaveBeenCalledTimes(60_000 / LIVENESS_SWEEP_MS);
+    await b.online(b.tab("bo"), "guest", "g");
+    await b.run(500);
+    alarms.mockClear();
+    await b.run(60_000);
+    expect(alarms).toHaveBeenCalledTimes(60_000 / SEATED_LIVENESS_SWEEP_MS);
+  });
+
   it("a lobby that answers only after the not-found window still shows a later outage", async () => {
     await b.online(b.tab("ana"), "host", "h");
     await b.run(500);
@@ -136,8 +179,9 @@ describe("the web client against the lobby DO", () => {
     // The guest's network goes, and a second deploy drops it with everyone else.
     guest.offline = true;
     b.deliver(async () => b.h.redeploy());
-    // The next liveness sweep, at most 30 s on, finds the seat orphaned; its grace runs 5 s.
-    await b.run(40_000);
+    // The next liveness sweep, at most 5 s on with both seats held, finds the seat orphaned; its
+    // grace runs 5 s.
+    await b.run(SEATED_LIVENESS_SWEEP_MS + DISCONNECT_GRACE_MS + 1000);
     expect(host.match.lifecycle().opponentAway).toMatchObject({ name: "g" });
     await b.run(100_000);
     expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });

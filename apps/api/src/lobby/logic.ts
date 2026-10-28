@@ -34,21 +34,40 @@ export const DISCONNECT_GRACE_MS = 5000;
  */
 export const ABANDON_GRACE_MS = 90_000;
 
-/** How long a socket may go without answering a keepalive before the lobby gives
-    up on it (P4 3c-viii). The client pings every 1.5s (channel.ts) and the DO's
-    `setWebSocketAutoResponse` answers WITHOUT waking it, so 15s is ten missed
-    pings — long enough that a phone switching networks or a paused tab is not
-    mistaken for a dead one, short enough to land well inside the 90s forfeit. */
-export const SOCKET_SILENCE_MS = 15_000;
+/** How long a socket may go without answering a keepalive before the lobby gives up on it (P4
+    3c-viii). The client pings every 1.5s (channel.ts) and the DO's `setWebSocketAutoResponse`
+    answers WITHOUT waking it, so 10s is six missed pings. It was 15s; it matches the client's own
+    silence limit (channel.ts `SOCKET_SILENCE_MS`), so a client whose path died has already given
+    the socket up for a new one by the time the lobby does, and closing it here costs nothing. A
+    hidden tab's timers still fire once a second, well inside it. A tab frozen for longer, or a
+    phone that switched networks, loses this TCP connection whatever the limit, and reconnects. */
+export const SOCKET_SILENCE_MS = 10_000;
 
-/** How often the alarm checks for silent sockets while any are connected
-    (3c-viii). It is a POLL, and it has to be: the whole point of the auto-response
-    is that a ping does not wake the DO, so nothing else will ever notice pings
-    that STOPPED. 30s is the compromise — a half-open socket costs its opponent at
-    most this plus the usual 5s grace before the forfeit clock starts, while an
-    occupied lobby wakes twice a minute instead of the ~40 times a minute it would
-    if we answered keepalives in the handler and gave up hibernation entirely. */
+/** How often the alarm checks for silent sockets while any are connected and nobody holds the
+    other seat (3c-viii). It is a POLL, and it has to be: the whole point of the auto-response is
+    that a ping does not wake the DO, so nothing else will ever notice pings that STOPPED. With one
+    seat held there is nobody to tell, so a lone host's lobby wakes twice a minute instead of the
+    ~40 times a minute it would if we answered keepalives in the handler and gave up hibernation. */
 export const LIVENESS_SWEEP_MS = 30_000;
+
+/**
+ * The liveness sweep while both seats are held, a match or the versus screen. A half-open player
+ * is shown to their opponent as away, and their forfeit clock starts, at most this plus
+ * `SOCKET_SILENCE_MS` plus `DISCONNECT_GRACE_MS` after their keepalives stop: 20s, where the idle
+ * sweep's 45s let a 30s outage end before the opponent saw anything.
+ *
+ * The cost is wakes: 12 a minute (720 an hour) per two-seat lobby instead of 2, each an alarm
+ * run and an alarm write. Five seconds is also under the runtime's ~10s hibernation idle, so a
+ * seated lobby stays in memory, billed for duration, rather than hibernating between moves. Both
+ * are bounded per lobby by `INACTIVE_LOBBY_MS`, and a lobby with one seat held keeps the 30s.
+ */
+export const SEATED_LIVENESS_SWEEP_MS = 5_000;
+
+/** The liveness sweep a lobby needs: `SEATED_LIVENESS_SWEEP_MS` while both seats are held, so an
+    opponent who could be told is told soon, else `LIVENESS_SWEEP_MS`. */
+export function livenessSweepMs(snapshot: LobbyState | null): number {
+  return snapshot?.guest != null ? SEATED_LIVENESS_SWEEP_MS : LIVENESS_SWEEP_MS;
+}
 
 /** The extra time a socket that has never been answered gets on top of `SOCKET_SILENCE_MS`,
     counted from the upgrade: the client's first ping goes out 1.5s after its socket opens, and

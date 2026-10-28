@@ -61,7 +61,7 @@ import {
   helloDecision,
   INACTIVE_LOBBY_MS,
   isLegacySnapshot,
-  LIVENESS_SWEEP_MS,
+  livenessSweepMs,
   LOBBY_SOCKET_CAP,
   LOBBY_SOCKET_HARD_CAP,
   OVERFLOW_HELLO_MS,
@@ -1335,11 +1335,11 @@ export class LobbyDO {
       for (const { deadline } of forfeitDeadlines(snapshot)) deadlines.push(deadline);
     }
 
-    // While anyone is connected, keep a slow poll running: it is the ONLY thing
-    // that can notice a socket whose keepalives stopped (3c-viii), because the
-    // auto-response deliberately never wakes us. With nobody connected there is
-    // nothing to check — the empty-lobby expiry below owns that case.
-    if (sockets.length > 0) deadlines.push(this.deps.now() + LIVENESS_SWEEP_MS);
+    // While anyone is connected, keep a poll running: it is the ONLY thing that can notice a
+    // socket whose keepalives stopped (3c-viii), because the auto-response deliberately never
+    // wakes us. It runs faster while both seats are held (`livenessSweepMs`). With nobody
+    // connected there is nothing to check — the empty-lobby expiry below owns that case.
+    if (sockets.length > 0) deadlines.push(this.deps.now() + livenessSweepMs(snapshot));
 
     if (sockets.length === 0) {
       // A lobby somebody said hello in expires a TTL after its last socket left, which is stored;

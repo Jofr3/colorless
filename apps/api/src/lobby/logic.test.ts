@@ -25,6 +25,8 @@ import {
   seatedUsers,
   setSeatConnected,
   LIVENESS_SWEEP_MS,
+  livenessSweepMs,
+  SEATED_LIVENESS_SWEEP_MS,
   slotOf,
   SOCKET_SILENCE_MS,
   socketIsSilent,
@@ -585,6 +587,27 @@ describe("socketIsSilent — the half-open connection (3c-viii)", () => {
     expect(LIVENESS_SWEEP_MS + SOCKET_SILENCE_MS + DISCONNECT_GRACE_MS).toBeLessThan(
       ABANDON_GRACE_MS,
     );
+  });
+
+  it("tells a seated opponent within 20s, inside a 30s outage", () => {
+    expect(SEATED_LIVENESS_SWEEP_MS + SOCKET_SILENCE_MS + DISCONNECT_GRACE_MS).toBeLessThanOrEqual(
+      20_000,
+    );
+  });
+});
+
+describe("livenessSweepMs — the sweep's cadence", () => {
+  it("polls every 30s with no lobby or one seat held: nobody to tell", () => {
+    expect(livenessSweepMs(null)).toBe(LIVENESS_SWEEP_MS);
+    expect(livenessSweepMs(createLobbyState("ABCD", makeSeat(H1, "Ana")))).toBe(LIVENESS_SWEEP_MS);
+  });
+
+  it("polls every 5s while both seats are held, in the versus screen or a match", () => {
+    expect(livenessSweepMs(lobbyWithGuest())).toBe(SEATED_LIVENESS_SWEEP_MS);
+    expect(livenessSweepMs({ ...lobbyWithGuest(), phase: "in-game" })).toBe(
+      SEATED_LIVENESS_SWEEP_MS,
+    );
+    expect(SEATED_LIVENESS_SWEEP_MS).toBeLessThan(LIVENESS_SWEEP_MS);
   });
 });
 
