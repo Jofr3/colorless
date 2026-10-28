@@ -540,12 +540,11 @@ async function lobby(host: Page, guest: Page, hostDeck: string, guestDeck: strin
   }
   await lua(host, "online", "ready", "1");
   await lua(guest, "online", "ready", "1");
+  // The route and the table's mailbox change before Lua has opened the table, which a busy
+  // machine can hold back for seconds; a press before that goes to no table, as no player's can.
+  const opened = JSON.stringify(`COLORLESS:simulator:open\tonline\t${code}`);
   for (const page of [host, guest])
-    await waitFor(
-      page,
-      "the online table",
-      "/^\\/online\\/[A-Z0-9]+\\/play$/.test(location.pathname)",
-    );
+    await waitFor(page, "Lua to open the online table", `window.__e2e.prints.includes(${opened})`);
 }
 
 // ---------- the run ----------
@@ -780,8 +779,15 @@ async function report(error: unknown) {
       `location.pathname + ' | ' + document.body.className + ' | ' + document.getElementById('status').textContent`,
     ).catch(() => "(no answer)");
     log(`${page.name}: ${state}`);
-    const prints = await evaluate<string[]>(page, "window.__e2e.prints.slice(-5)").catch(() => []);
+    const prints = await evaluate<string[]>(page, "window.__e2e.prints.slice(-15)").catch(() => []);
     if (prints.length > 0) log(`${page.name} last prints: ${JSON.stringify(prints)}`);
+    for (const name of [MAILBOXES.simulator, MAILBOXES.online]) {
+      const rows = await rowsOf(page, name).catch(() => []);
+      const shown = rows.filter(
+        (row, i) => i === 0 || row[0] === "L" || row[0] === "P" || row[0] === "A",
+      );
+      if (rows.length > 0) log(`${page.name} ${name}: ${JSON.stringify(shown)}`);
+    }
     if (page.consoleErrors.length > 0)
       log(`${page.name} errors: ${JSON.stringify(page.consoleErrors.slice(-5))}`);
   }
