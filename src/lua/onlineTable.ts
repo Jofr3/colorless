@@ -20,6 +20,9 @@ import type { LifecycleFlag, TableLifecycle, TableSource } from "./tableSource";
 import { autoStepFor, counterSourcePicked, eventsFromLog, NO_EVENTS } from "./tableEvents";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+/** Shown on a finished table whose seat was refused on reconnect: its account is signed out. */
+export const SEAT_LOST = "Sign in again to take your seat back.";
 /** A server that predates `benchLimit` leaves the limit to this client's own card data. */
 const benchLimitOf = (v: RedactedGame) =>
   v.board.you.benchLimit ??
@@ -265,6 +268,7 @@ export class LuaOnlineMatch implements TableSource {
           : null,
       // An automatic step's refusal is muted.
       error: this.error !== this.muted ? this.error : null,
+      ...(over && !seated && { warning: SEAT_LOST }),
     };
   }
   private watching() {

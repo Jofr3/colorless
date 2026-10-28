@@ -401,7 +401,13 @@ export class LuaOnline {
     if (inGame) this.over = !!c.state.match?.outcome;
     if (this.surface === "modal" && c.state.status === "connected" && this.live(c))
       this.go("match");
-    else if (this.surface === "match" && !this.live(c) && !this.rematching(c)) this.go("online");
+    else if (
+      this.surface === "match" &&
+      !this.live(c) &&
+      !this.rematching(c) &&
+      !this.watchingFinished(c)
+    )
+      this.go("online");
     this.emit();
   }
 
@@ -418,6 +424,13 @@ export class LuaOnline {
         snapshot?.phase === "in-game") &&
       !!c.opponent?.connected
     );
+  }
+
+  /** A finished game whose seat was refused on reconnect (its account signed out): the tab stays
+   * at the table as a watcher, where the result and the reason are, rather than "Lobby is full". */
+  private watchingFinished(c: LobbyClient) {
+    const { status } = c.state;
+    return this.over && (status === "full" || status === "spectating");
   }
 
   /** A seated match is running; a reconnecting link still counts. */

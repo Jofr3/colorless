@@ -676,7 +676,9 @@ function Simulator:react(previous)
     if self.outcome~='' and self.outcome~=previous.outcome then self:openGameOver() end
     return
   end
-  if self.message~='' and (self.message~=previous.message or self.revision~=previous.revision) then
+  -- The game-over panel shows the message itself; the banner would sit behind it.
+  local gameOver=self.overlay and self.overlay.kind=='gameover'
+  if self.message~='' and not gameOver and (self.message~=previous.message or self.revision~=previous.revision) then
     fx:attention({text=self.message,scale=0.5,colour=T.white,backdrop=T.red,x=L.banner.x,y=L.banner.y,hold=1.6,sound='cancel',jiggle=0.5,maxw=L.table.w-40})
   end
   -- Public uids are stable across a hot-seat flip; hidden cards are positional.
