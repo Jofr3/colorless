@@ -250,8 +250,10 @@ data loss rather than a validation failure.
   `sessions`. The browser holds a 256-bit random token in an http-only cookie
   `session` (`HttpOnly; Secure; SameSite=Lax; Path=/`, 30-day `Max-Age`); the DB row id
   is **sha256(token)**, so a leaked dump authenticates nothing. Expiry is
-  enforced on read; an expired row is deleted when its cookie is presented or
-  the user signs in again, and a daily Cron Trigger (`17 4 * * *`,
+  enforced on read; an expired row is deleted when its cookie is presented
+  (after the response, best effort: a failed delete still answers 401 and is
+  logged `expired_session_delete_failed`) or the user signs in again, and a
+  daily Cron Trigger (`17 4 * * *`,
   `apps/api/src/auth/sweep.ts`) deletes the rest, 500 rows per statement and
   at most 10,000 per table per run, logging `evt = "d1", kind = "sweep"`.
   The web app is a **different origin but the same site**: the public suffix
@@ -1237,7 +1239,8 @@ POST   /auth/login               # {email, password} → 200 user + session cook
                                  #   10/min, then the D1 budgets), or a failure past the email's
                                  #   50 failures/hour (the right password still → 200); 503 as
                                  #   above, or when the stored hash's pepper is missing
-POST   /auth/logout              # deletes the session row, clears the cookie → 204
+POST   /auth/logout              # deletes the session row, clears the cookie → 204; a failed
+                                 #   delete is logged (logout_failed) and still clears it → 204
 POST   /auth/logout-all          # session cookie → deletes every session of the account, clears
                                  #   the cookie → 204; 401 without a live session
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)

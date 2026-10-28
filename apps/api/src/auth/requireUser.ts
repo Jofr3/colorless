@@ -12,6 +12,9 @@ import { drizzle } from "drizzle-orm/d1";
 import { createMiddleware } from "hono/factory";
 import { sessions, users } from "../db/schema";
 import type { Env } from "../env";
+import { afterResponse } from "../http/afterResponse";
+import { errorFields } from "../http/errors";
+import { logEventThrottled } from "../http/log";
 import { clearedSessionCookie, sessionExpired, sessionIdFromCookie } from "./session";
 
 export type UserRow = typeof users.$inferSelect;
@@ -36,9 +39,16 @@ export const requireUser = createMiddleware<AuthedEnv>(async (c, next) => {
     c.header("Set-Cookie", clearedSessionCookie());
     return c.json({ error: "unauthorized" }, 401);
   }
-  // The dead row is deleted as soon as it is presented; the daily sweep (sweep.ts) gets the rest.
+  // The dead row is deleted as soon as it is presented; the daily sweep (sweep.ts) gets the rest,
+  // including a row whose delete failed, so that failure still answers 401.
   if (sessionExpired(row.expiresAt)) {
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    await afterResponse(
+      c,
+      async () => {
+        await db.delete(sessions).where(eq(sessions.id, sessionId));
+      },
+      (error) => logEventThrottled("auth", "expired_session_delete_failed", errorFields(error)),
+    );
     c.header("Set-Cookie", clearedSessionCookie());
     return c.json({ error: "unauthorized" }, 401);
   }

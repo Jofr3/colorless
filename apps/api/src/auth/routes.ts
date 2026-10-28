@@ -454,12 +454,19 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
 authRoutes.post("/logout", async (c) => {
   const sessionId = await sessionIdFromCookie(c.req.header("Cookie"));
   if (sessionId !== null) {
-    const [ended] = await drizzle(c.env.DB)
-      .delete(sessions)
-      .where(eq(sessions.id, sessionId))
-      .returning({ userId: sessions.userId });
-    if (ended !== undefined) {
-      logEvent("auth", "logout", { account: await accountTag(c.env, ended.userId) });
+    // The cookie is cleared even when the row cannot be deleted, so a browser signed out on a
+    // shared computer stops presenting it; the row then ends at its expiry or with sign out
+    // everywhere, which reports its failure instead.
+    try {
+      const [ended] = await drizzle(c.env.DB)
+        .delete(sessions)
+        .where(eq(sessions.id, sessionId))
+        .returning({ userId: sessions.userId });
+      if (ended !== undefined) {
+        logEvent("auth", "logout", { account: await accountTag(c.env, ended.userId) });
+      }
+    } catch (error) {
+      logError("auth", "logout_failed", errorFields(error));
     }
   }
   c.header("Set-Cookie", clearedSessionCookie());

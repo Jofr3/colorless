@@ -781,6 +781,78 @@ describe("GET /auth/me", () => {
     expect(revalidated.status).toBe(304);
     expect(revalidated.headers.get("Set-Cookie")).toContain("SameSite=Lax");
   });
+
+  const expire = (userId: string) =>
+    d1().db.prepare("UPDATE sessions SET expires_at = 1 WHERE user_id = ?").bind(userId).run();
+  const sessionCount = async () =>
+    (await d1().db.prepare("SELECT count(*) AS n FROM sessions").first<number>("n")) ?? 0;
+  const clearedCookie = async () =>
+    (await app.request("/auth/logout", { method: "POST" }, d1().env())).headers.get("Set-Cookie");
+
+  it("401s an expired session, clears its cookie and deletes its row", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
+    await expire(userId);
+    const res = await me(cookie);
+    expect(res.status).toBe(401);
+    expect(res.headers.get("Set-Cookie")).toBe(await clearedCookie());
+    expect(await sessionCount()).toBe(0);
+  });
+
+  it("still 401s an expired session, and logs, when deleting its row fails", async () => {
+    const { userId, cookie } = await signedInUser(d1().db, "brock@example.com");
+    await expire(userId);
+    const res = await me(cookie, d1().env({ DB: failingD1(d1().db, { sql: /^delete/i }) }));
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    expect(res.headers.get("Set-Cookie")).toBe(await clearedCookie());
+    // The daily sweep deletes it instead.
+    expect(await sessionCount()).toBe(1);
+    expect(logged("expired_session_delete_failed")).toEqual([
+      {
+        evt: "auth",
+        kind: "expired_session_delete_failed",
+        error: "DrizzleQueryError",
+        cause: "Error",
+        query: expect.stringMatching(/^delete from "sessions"/),
+        quota: true,
+      },
+    ]);
+  });
+});
+
+describe("POST /auth/logout", () => {
+  const logout = (cookie: string, env: Env = d1().env()) =>
+    app.request("/auth/logout", { method: "POST", headers: { Cookie: cookie } }, env);
+
+  it("ends the session and clears the cookie", async () => {
+    const ash = await signedInUser(d1().db, "ash@example.com");
+    const res = await logout(ash.cookie);
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Set-Cookie")).toMatch(/^session=;/);
+    expect((await me(ash.cookie)).status).toBe(401);
+  });
+
+  it("still clears the cookie, and logs, when deleting the session fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const ash = await signedInUser(d1().db, "ash@example.com");
+    const res = await logout(
+      ash.cookie,
+      d1().env({ DB: failingD1(d1().db, { sql: /^delete from "sessions"/i }) }),
+    );
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Set-Cookie")).toMatch(/^session=;/);
+    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      {
+        evt: "auth",
+        kind: "logout_failed",
+        error: "DrizzleQueryError",
+        cause: "Error",
+        query: expect.stringMatching(/^delete from "sessions"/),
+        quota: true,
+      },
+    ]);
+    expect(logged("logout")).toEqual([]);
+  });
 });
 
 describe("GET /auth/oauth/google/callback find-or-create", () => {
