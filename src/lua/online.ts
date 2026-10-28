@@ -238,6 +238,17 @@ export class LuaOnline {
     else this.emit();
   }
 
+  /** The page can no longer run the game: close the lobby link without a bye, as a closed tab's
+   * would, so the opponent's grace and forfeit clock start. The seat's identity is kept, so a
+   * reload takes the seat back. */
+  halt() {
+    this.unsubscribe();
+    this.unsubscribe = () => {};
+    this.client?.dispose({ bye: false });
+    this.client = null;
+    this.identity = null;
+  }
+
   /** Leave the lobby for good: bye, forget the seat. */
   leave() {
     const code = this.code;

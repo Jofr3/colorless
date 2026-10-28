@@ -134,6 +134,7 @@ showPage(router.current);
 
 host.connect({
   onPrint: (message) => shell.onPrint(message),
+  onFailed: () => online.halt(),
   artwork: new ArtworkCache(),
   mailboxes: MAILBOXES,
 });

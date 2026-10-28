@@ -234,6 +234,19 @@ describe("Lua online adapter", () => {
     expect(rows()[2]?.[5]).toBe("1");
   });
 
+  it("a page that failed closes the lobby link without a bye and keeps the seat", async () => {
+    const { online, last } = setup();
+    await online.command("open");
+    await online.command("join\tab-cd");
+    const staked = identity();
+    online.halt();
+    expect(last().closed()).toBe(true);
+    expect(last().kinds()).not.toContain("bye");
+    expect(online.client).toBeNull();
+    expect(identity()).toEqual(staked);
+    online.halt();
+  });
+
   it("resumes a staked identity on a deep link (reload keeps the seat)", async () => {
     sessionStorage.setItem(
       `online.identity.${CODE}`,

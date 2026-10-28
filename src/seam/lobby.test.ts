@@ -143,6 +143,16 @@ describe("the web client against the lobby DO", () => {
     expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
   });
 
+  it("a page that fails mid-match lets the opponent's forfeit clock run", async () => {
+    const { host, guest } = await inGame();
+    host.online.halt();
+    await b.run(6000);
+    expect(guest.match.lifecycle().opponentAway).toMatchObject({ name: "h" });
+    expect(guest.match.lifecycle().opponentAway?.forfeitAt).toBeTypeOf("number");
+    await b.run(95_000);
+    expect(guest.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
+  });
+
   it("both pressing Rematch within a round trip starts the next match on both tables", async () => {
     const { host, guest } = await inGame();
     concede(guest);

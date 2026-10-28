@@ -61368,4 +61368,14 @@ export const MUTANTS: Mutant[] = [
       "src/seam/lobby.test.ts",
     ],
   },
+  {
+    id: "LUX1-failed-page-says-bye",
+    decision: "LUX1",
+    what: "A page that failed says bye as it closes its lobby link, which concedes a running match at once instead of leaving the player the grace and the forfeit clock to reload in. Killed by online.test's failed-page case.",
+    file: "src/lua/online.ts",
+    symbol: "LuaOnline",
+    find: "    this.client?.dispose({ bye: false });\n    this.client = null;\n    this.identity = null;",
+    replace: "    this.client?.dispose();\n    this.client = null;\n    this.identity = null;",
+    expectKilledBy: ["src/lua/online.test.ts"],
+  },
 ];

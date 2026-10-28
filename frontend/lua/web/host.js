@@ -102,6 +102,7 @@ function fail(message) {
   document.body.classList.add("failed");
   loading.style.display = "flex";
   statusElement.textContent = message;
+  bridge?.onFailed();
 }
 function syncViewport() {
   if (!bridge) return;
