@@ -1,8 +1,8 @@
 // tcgdex to D1 catalog ingest. Card data only; images are mirrored lazily by the /assets routes.
 // Every payload is validated with @colorless/schema before mapping, and all writes are upserts, so
 // reruns are safe. Validated payloads are kept on disk for a day (`--refresh` refetches), and each
-// set is written by one SQL file. Imports ../src/ingest/source, ./payloadCache and ./sqlFile directly so the
-// SDK and node:fs cannot reach the Worker through the ingest barrel.
+// set is written by one SQL file. Imports ../src/ingest/source, ./payloadCache, ./sqlFile and ./run
+// directly so the SDK and node:fs cannot reach the Worker through the ingest barrel.
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -30,9 +30,16 @@ import {
   weaklessLegalPokemon,
 } from "../src/ingest";
 import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
+import {
+  createRowsTally,
+  exitCode,
+  mapBounded,
+  rerunCommand,
+  shouldStampEpoch,
+} from "../src/ingest/run";
 import { createSource, parseTransport } from "../src/ingest/source";
 import { sqlFilePath } from "../src/ingest/sqlFile";
-import { API_ROOT, DATABASE, recordBookmark } from "./d1";
+import { API_ROOT, DATABASE, recordBookmark, WRANGLER_TIMEOUT_MS } from "./d1";
 
 const DELAY_MS = 50;
 /** Card requests in flight at once; their starts still keep DELAY_MS apart. */
@@ -114,32 +121,6 @@ async function fetchValidated<Schema extends z.ZodType>(
   return result;
 }
 
-/** Runs `task` over `items` with at most `limit` running at once; results keep input order. The
-    first failure rejects the whole run and stops the other workers from claiming more items. */
-async function mapBounded<Item, Result>(
-  items: readonly Item[],
-  limit: number,
-  task: (item: Item) => Promise<Result>,
-): Promise<Result[]> {
-  const results: Result[] = new Array(items.length);
-  let next = 0;
-  let failed = false;
-  const worker = async () => {
-    while (!failed && next < items.length) {
-      const index = next;
-      next += 1;
-      try {
-        results[index] = await task(items[index] as Item);
-      } catch (error) {
-        failed = true;
-        throw error;
-      }
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
-
 async function fetchSerie(serieId: string): Promise<TcgdexSerie> {
   const result = await fetchValidated("serie", serieId, source.getSerie, tcgdexSerieSchema);
   if (!result.success) {
@@ -174,22 +155,7 @@ function writeSqlFile(label: string, sql: string): string {
   return path;
 }
 
-/** Rows written by every remote apply so far; null once one reported no count. Local wrangler
-    prints no count, so a local run never learns it. */
-let rowsWritten: number | null = args.remote ? 0 : null;
-
-/** The `rows_written` a `wrangler d1 execute --json` printed, or null when it printed none. */
-function rowsWrittenOf(stdout: string): number | null {
-  try {
-    const statements = JSON.parse(stdout) as { meta?: { rows_written?: unknown } }[];
-    const counts = statements.map((statement) => statement.meta?.rows_written);
-    return counts.every((n) => typeof n === "number")
-      ? counts.reduce<number>((sum, n) => sum + (n as number), 0)
-      : null;
-  } catch {
-    return null;
-  }
-}
+const rowsWritten = createRowsTally(args.remote ?? false);
 
 /** Applies a file through `--file`, which on --remote goes through D1's import API: the whole
     file is one transaction, and the database answers no queries while it runs (seconds a set). */
@@ -211,15 +177,16 @@ function applySql(path: string, input: readonly string[]): void {
   const result = spawnSync(
     "bunx",
     ["wrangler", "d1", "execute", DATABASE, d1Target, "--yes", "--json", ...input],
-    { cwd: API_ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+    { cwd: API_ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, timeout: WRANGLER_TIMEOUT_MS },
   );
   if (result.status !== 0) {
+    rowsWritten.failed();
     console.error(result.stdout);
     console.error(result.stderr);
-    throw new Error(`wrangler d1 execute failed for ${path}`);
+    const reason = result.error ? ` (${result.error.message})` : "";
+    throw new Error(`wrangler d1 execute failed for ${path}${reason}`);
   }
-  const written = rowsWrittenOf(result.stdout);
-  if (rowsWritten !== null) rowsWritten = written === null ? null : rowsWritten + written;
+  const written = rowsWritten.applied(result.stdout);
   console.log(`  applied ${path}${written === null ? "" : ` (${written} rows written)`}`);
 }
 
@@ -234,7 +201,7 @@ function stampCatalogEpoch(): boolean {
   const result = spawnSync(
     "bunx",
     ["wrangler", "kv", "key", "put", CATALOG_EPOCH_KEY, epoch, "--binding", "CACHE", d1Target],
-    { cwd: API_ROOT, encoding: "utf8" },
+    { cwd: API_ROOT, encoding: "utf8", timeout: WRANGLER_TIMEOUT_MS },
   );
   if (result.status !== 0) {
     console.error(result.stdout);
@@ -375,11 +342,9 @@ try {
   console.error(`  failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
-// A remote run that wrote nothing changed no response, so it keeps the cached pages and the KV
-// writes that refilling them would spend. A run with an unknown count stamps.
 console.log("\ncatalog cache:");
 let epochStamped = true;
-if (rowsWritten === 0 && !dryRun) {
+if (!shouldStampEpoch(rowsWritten.total, dryRun)) {
   console.log(`  0 rows written: ${CATALOG_EPOCH_KEY} left as it was`);
 } else {
   epochStamped = stampCatalogEpoch();
@@ -399,7 +364,7 @@ for (const outcome of outcomes) {
 }
 console.log(
   `\ntotal: ${outcomes.length} set(s), ${totalCards} cards, ` +
-    `${rowsWritten === null ? "" : `${rowsWritten} rows written, `}` +
+    `${rowsWritten.total === null ? "" : `${rowsWritten.total} rows written, `}` +
     `${source.requestCount} tcgdex requests via ${source.transport} ` +
     `(${cachedPayloads} payloads from the disk cache), ` +
     `${((Date.now() - startedAt) / 1000).toFixed(1)}s${dryRun ? " (dry-run: nothing applied)" : ""}`,
@@ -412,7 +377,11 @@ if (weakless.length > 0) {
   );
 }
 if (failedSets.length > 0) {
-  console.error(`${failedSets.length} set(s) failed: ${failedSets.map((o) => o.setId).join(", ")}`);
+  const ids = failedSets.map((o) => o.setId);
+  console.error(`${failedSets.length} set(s) failed: ${ids.join(", ")}`);
+  console.error(
+    `  retry them: ${rerunCommand(ids, { remote: args.remote ?? false, transport: args.transport })}`,
+  );
 }
 if (postPassFailed) {
   console.error(
@@ -426,6 +395,8 @@ if (!epochStamped) {
       `\`wrangler kv key put ${CATALOG_EPOCH_KEY} <new value> --binding CACHE ${d1Target}\``,
   );
 }
-if (failedSets.length > 0 || weakless.length > 0 || !epochStamped || postPassFailed) {
+if (
+  exitCode({ failedSets: failedSets.map((o) => o.setId), weakless, epochStamped, postPassFailed })
+) {
   process.exit(1);
 }
