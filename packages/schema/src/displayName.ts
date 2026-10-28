@@ -8,7 +8,7 @@
 // DISPLAY_NAME_MAX characters. Control and format characters (text.ts) are refused on an account
 // write and stripped where a name is only read or announced.
 
-import { stripControlChars } from "./text";
+import { clipText, stripControlChars } from "./text";
 
 export const DISPLAY_NAME_MAX = 64;
 
@@ -27,7 +27,6 @@ export function collapseSpaces(value: string): string {
     then the name is normalized and clipped to the bound. May return "". */
 export function cleanDisplayName(value: string): string {
   const folded = collapseSpaces(stripControlChars(value.normalize("NFKC"))).trim();
-  // The bound counts UTF-16 units, as the account schemas' max does; a cut never splits a pair.
-  const clipped = folded.slice(0, DISPLAY_NAME_MAX);
-  return (/[\uD800-\uDBFF]$/.test(clipped) ? clipped.slice(0, -1) : clipped).trimEnd();
+  // The bound counts UTF-16 units, as the account schemas' max does.
+  return clipText(folded, DISPLAY_NAME_MAX).trimEnd();
 }

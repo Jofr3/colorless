@@ -1,7 +1,7 @@
 /** The Lua mailbox wire: fields are percent-encoded and TAB-joined, rows are
- * newline-joined. */
+ * newline-joined. A lone surrogate, which `encodeURIComponent` throws on, goes as U+FFFD. */
 export const encodeFields = (fields: (string | number | boolean)[]) =>
-  fields.map((v) => encodeURIComponent(String(v))).join("\t");
+  fields.map((v) => encodeURIComponent(String(v).replace(/\p{Cs}/gu, "\uFFFD"))).join("\t");
 
 export const encodeRows = (rows: (string | number | boolean)[][]) =>
   rows.map(encodeFields).join("\n");

@@ -7,6 +7,7 @@
 
 import {
   type Card,
+  clipText,
   isSeatSecret,
   isValidLobbyCode,
   LOBBY_NAME_MAX,
@@ -16,7 +17,6 @@ import {
   type LobbyClientMessage,
   type LobbyServerMessage,
   publicSeatId,
-  stripControlChars,
 } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import type { z } from "zod";
@@ -399,7 +399,7 @@ export class LobbyDO {
     // The seat's name comes from the account, not the frame. Anonymous sockets keep their
     // announced name. Both are cleaned as the wire cleans names, as every stored name is: an
     // opponent's client prints it.
-    const name = stripControlChars(attachedDisplayName(ws) ?? frame.name).slice(0, LOBBY_NAME_MAX);
+    const name = clipText(attachedDisplayName(ws) ?? frame.name, LOBBY_NAME_MAX);
     // …and the face, from the same account (P5-2). Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);

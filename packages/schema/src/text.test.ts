@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as z from "zod";
-import { hasControlChars, stripControlChars, withoutControlChars } from "./text";
+import { clipText, hasControlChars, stripControlChars, withoutControlChars } from "./text";
 
 const FORGED = "x\nCOLORLESS:auth:open\tdelete\r\nCOLORLESS:auth:submit\n";
 
@@ -23,6 +23,22 @@ describe("the control-character rule for names", () => {
       expect(hasControlChars(name)).toBe(false);
       expect(stripControlChars(name)).toBe(name);
     }
+  });
+
+  it("finds and strips a lone surrogate anywhere, and leaves a pair alone", () => {
+    for (const name of ["a\udc00", "\ud800b", "a\udc00b", "\udbff", "🔥\ud83d"]) {
+      expect(hasControlChars(name), JSON.stringify(name)).toBe(true);
+      expect(() => encodeURIComponent(stripControlChars(name))).not.toThrow();
+    }
+    expect(stripControlChars("a\udc00b")).toBe("ab");
+    expect(stripControlChars("\ud83d\udd25\ud83d")).toBe("🔥");
+  });
+
+  it("clips after stripping, never leaving half a pair", () => {
+    expect(clipText(`${"\n".repeat(10)}Ash`, 3)).toBe("Ash");
+    expect(clipText("ab🔥", 3)).toBe("ab");
+    expect(clipText("ab🔥", 4)).toBe("ab🔥");
+    expect(clipText("a\udc00🔥", 3)).toBe("a🔥");
   });
 
   it("strips every occurrence, so a forged bridge line cannot survive", () => {

@@ -37,5 +37,9 @@ describe("the display-name rule", () => {
       name: ` Ｂrock${RLO}   the Rock `,
     });
     expect(hello.name).toBe("Brock the Rock");
+    // A crafted lone surrogate, anywhere in the name, is stripped rather than clipped around.
+    for (const name of ["Bro\udc00ck", "Brock\ud800", "\udc00Brock"]) {
+      expect(helloMessageSchema.parse({ kind: "hello", from: "seat", name }).name).toBe("Brock");
+    }
   });
 });

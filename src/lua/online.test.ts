@@ -218,6 +218,22 @@ describe("Lua online adapter", () => {
     ]);
   });
 
+  it("keeps emitting when the opponent's name holds a lone surrogate", async () => {
+    const { online, header, rows, last } = setup();
+    await online.command("open");
+    await online.command("join\tab-cd");
+    const me = myId();
+    const host = makePlayer("h", "Ho\udc00st");
+    last().push({ kind: "state", snapshot: snap({ host, guest: makePlayer(me, "Me") }) });
+    expect(header()[1]).toBe("versus");
+    expect(rows()[2]?.[3]).toBe("Ho\ufffdst");
+    last().push({
+      kind: "state",
+      snapshot: snap({ host: { ...host, ready: true }, guest: makePlayer(me, "Me") }),
+    });
+    expect(rows()[2]?.[5]).toBe("1");
+  });
+
   it("resumes a staked identity on a deep link (reload keeps the seat)", async () => {
     sessionStorage.setItem(
       `online.identity.${CODE}`,

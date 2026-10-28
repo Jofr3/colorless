@@ -123,6 +123,23 @@ describe("the web client against the lobby DO", () => {
     }
   });
 
+  it("an opponent's crafted name with a lone surrogate reaches the host's screen cleaned", async () => {
+    const host = await b.online(b.tab("ana"), "host", "h");
+    await b.run(500);
+    await b.online(b.tab(undefined), "guest", "g", "Bro\udc00ck");
+    await b.run(500);
+    const opponentRow = () =>
+      (host.publish.mock.lastCall?.[0] ?? "")
+        .split("\n")
+        .map((row) => row.split("\t").map(decodeURIComponent))
+        .find((row) => row[0] === "P" && row[1] === "opponent");
+    expect(opponentRow()?.[3]).toBe("Brock");
+    host.client().selectDeck({ id: "deck-ana", name: "Ana's deck" });
+    await b.run(500);
+    expect(host.client().self?.hasDeck).toBe(true);
+    expect(opponentRow()?.[3]).toBe("Brock");
+  });
+
   it("a signed-out seat's rematch is refused, and the tab keeps its result as a watcher", async () => {
     const { host, guest } = await inGame();
     concede(host);

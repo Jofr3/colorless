@@ -3,6 +3,7 @@
 // is a thin shell around these.
 
 import {
+  clipText,
   COUNTDOWN_MS,
   isPublicSeatId,
   LOBBY_DECK_NAME_MAX,
@@ -11,7 +12,6 @@ import {
   lobbyClientMessageSchema,
   lobbyPhaseSchema,
   type LobbySlot,
-  stripControlChars,
 } from "@colorless/schema";
 import * as z from "zod";
 import {
@@ -290,14 +290,12 @@ export function isLegacySnapshot(raw: unknown): boolean {
     a lobby keeps working. The id must be a public seat id. */
 const storedSeatSchema = z.object({
   id: z.string().refine(isPublicSeatId),
-  name: z.string().transform((name) => stripControlChars(name).slice(0, LOBBY_NAME_MAX)),
+  name: z.string().transform((name) => clipText(name, LOBBY_NAME_MAX)),
   deckId: z.string().nullable(),
   deckName: z
     .string()
     .nullable()
-    .transform((name) =>
-      name === null ? null : stripControlChars(name).slice(0, LOBBY_DECK_NAME_MAX),
-    ),
+    .transform((name) => (name === null ? null : clipText(name, LOBBY_DECK_NAME_MAX))),
   ready: z.boolean(),
   connected: z.boolean(),
   avatarSeed: z.string().nullable().catch(null),

@@ -127,8 +127,9 @@ export type Bridge = {
   tab(user: string | undefined): Tab;
   /** A LobbyClient whose channel opens its sockets from `tab`. */
   client(tab: Tab, opts: LobbyClientOptions): LobbyClient;
-  /** A tab holding a Lua online modal on the seam's lobby, opened as `label` in `role`. */
-  online(tab: Tab, role: "host" | "guest", label: string): Promise<OnlineTab>;
+  /** A tab holding a Lua online modal on the seam's lobby, opened as `label` in `role` with the
+      seat secret `seatSecret(label)`, announcing `name` (the label by default). */
+  online(tab: Tab, role: "host" | "guest", label: string, name?: string): Promise<OnlineTab>;
   /** Let `ms` of fake time pass in 100ms steps, settling every delivery and due alarm. */
   run(ms: number): Promise<void>;
   /** Settle the deliveries and microtasks pending now, without moving the clock. */
@@ -184,7 +185,7 @@ export async function openBridge(world: Partial<LobbyWorld> = {}): Promise<Bridg
       client = new LobbyClient(opts, { channel });
       return client;
     },
-    async online(tab, role, label) {
+    async online(tab, role, label, name = label) {
       const route = vi.fn<(page: string, id: string, replace: boolean) => void>();
       const publish = vi.fn<(snapshot: string) => void>();
       const online = new LuaOnline(publish, route, {
@@ -198,7 +199,7 @@ export async function openBridge(world: Partial<LobbyWorld> = {}): Promise<Bridg
       // The seat this tab staked when it created or joined the lobby, as its sessionStorage holds.
       stores.session.setItem(
         `online.identity.${SEAM_CODE}`,
-        JSON.stringify({ secret: seatSecret(label), role, name: label }),
+        JSON.stringify({ secret: seatSecret(label), role, name }),
       );
       await online.command(`open\t${SEAM_CODE}`);
       const client = () => {

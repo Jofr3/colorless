@@ -7,7 +7,7 @@
 import * as z from "zod";
 import { cleanDisplayName } from "../displayName";
 import { wireActionSchema } from "../match/action";
-import { stripControlChars } from "../text";
+import { clipText } from "../text";
 import type { Equals } from "./equals";
 import { LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX } from "./protocol";
 import type {
@@ -61,8 +61,7 @@ export const lobbySnapshotSchemaMatchesType: Equals<
 // rather than refused: a refused hello is dropped unanswered, which would shut an account whose
 // stored name predates the rule out of every lobby.
 const clientId = z.string().max(LOBBY_ID_MAX);
-const clippedString = (max: number) =>
-  z.string().transform((value) => stripControlChars(value).slice(0, max));
+const clippedString = (max: number) => z.string().transform((value) => clipText(value, max));
 
 export const lobbyIntentSchema = z.discriminatedUnion("type", [
   z.object({
