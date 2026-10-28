@@ -560,7 +560,7 @@ cd apps/api && bun scripts/ingest.ts --serie sv --remote
 | `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
 | `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply colorless --remote` |
 | `cd apps/api && bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
-| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations`, then `wrangler deploy` (§3.7.2) |
+| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree`, then `wrangler deploy` (§3.7.2) |
 | `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
 
 **Why step 3 has never run here.** `api.tcgdex.net` is refused by this
@@ -570,19 +570,46 @@ and step 1 is therefore unblocked TODAY and should not wait for the backfill.
 
 #### 3.7.2 Release gates (2026-10-27)
 
-`bun run release` now runs, in order: `check` → `release:gate` (apps/api:
+`bun run release` runs, in order: `check` → `release:gate` (apps/api:
 fails unless the tree is clean at `origin/main`; fails unless the production
 Worker holds every secret in `apps/api/src/requiredSecrets.ts`, today
 `PASSWORD_PEPPER` and `LOG_TAG_KEY`, read with `wrangler secret list`, which
 shows names only, and prints the `wrangler secret put` lines to run; then
 records the remote Time Travel bookmark, then fails unless the local and remote
 catalogs agree on every card's `print_key`, because the engine's
-`PROGRAM_ALIAS` table is generated from the local one) → `db:migrate:remote` →
-`api:deploy` → web `deploy`. The API `deploy` script itself first runs
-`release-gate.ts migrations`, which fails unless every file in `drizzle/` is
-applied remotely, so a bare `api:deploy` can no longer ship a Worker ahead of
-its migrations (the D203 incident above). All these gates only read
-production.
+`PROGRAM_ALIAS` table is generated from the local one) → `build` (the web
+bundle, before anything remote changes; `build:lua` needs `BALATRO_SOURCE`) →
+`db:migrate:remote` → `api:deploy` → `release:health` → `deploy:web`. The API
+`deploy` script first runs `release-gate.ts migrations clean-tree`: it fails
+unless every file in `drizzle/` is applied remotely, so a bare `api:deploy`
+cannot ship a Worker ahead of its migrations (the D203 incident above), and
+then re-checks the tree. `deploy:web` re-checks the tree and runs `wrangler
+deploy` on the `dist/` that `build` made; `bun run deploy` is `build` then
+`deploy:web`. The tree is checked again right before each `wrangler deploy`
+because other agents share the checkout and wrangler ships what is on disk at
+that moment. `release:health` (`release-gate.ts health`) asks the deployed API
+for `GET /health/db` (three tries, five seconds apart) and fails unless it
+reads D1 and counts as many migrations as `drizzle/` has files; it reads the
+origin from `.env.production`, and `API_ORIGIN=http://localhost:8787` points it
+at a local `wrangler dev`. All these gates only read production.
+
+**When a release step fails.** Every step is safe to repeat, so `bun run
+release` again is always a valid recovery once the cause is fixed; it records a
+new bookmark each time, and a restore wants the first one of the release (the
+earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
+
+| Failed step | What production is running | Recovery |
+| --- | --- | --- |
+| `check`, `release:gate`, `build` | Nothing changed. | Fix what it printed and release again. |
+| `db:migrate:remote` | The files before the failing one are applied; the failing one rolled back (one transaction per file). The old Worker reads the expanded schema fine. | A transient error: release again. A SQL error: fix the file (it is not applied remotely), commit, push, release again. |
+| `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (rebuild with `bun run deploy` if the tree changed since `build`). |
+| `release:health` | New Worker, which cannot read D1 or sees another migration count. | A D1 error (`evt = "d1"` in Workers Logs, §3.7.4) that is a spent quota or binding problem: fix it, rerun `bun run release:health`. Bad code: `bunx wrangler deployments list`, then `bunx wrangler rollback <version id> -m "<why>"` to the version before the release, and check `/health/db` again. The schema stays: the old Worker reads it (expand, then contract). |
+| `deploy:web` | New API, old web app; fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root. A bad web build: `bunx wrangler deployments list` and `bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
+
+Never revert or edit a migration file that is applied remotely: undo it with a
+new migration. A rollback of the API across a change of
+`MATCH_RECORD_VERSION` (the engine's game-state version) retires the matches
+the newer Worker stored, so players in a match at that moment lose it.
 
 **Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
 `PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
@@ -615,7 +642,7 @@ What can be lost, and how it comes back:
 
 | Store | Recovery |
 | --- | --- |
-| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | Time Travel, or a user-table export taken before a risky change. Nothing else can recreate them. |
+| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | Time Travel, or an export taken before a risky change. Nothing else can recreate them. |
 | D1 `auth_rate_limits` | Disposable: at worst a caller gets a fresh sign-in budget. |
 | D1 catalog (`series`, `sets`, `cards`) | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
 | KV `CACHE` | Disposable: stamp a new `catalog:epoch`. |
@@ -628,45 +655,170 @@ the last 7 days on the Free plan (30 on paid). `release` and
 the reason, in `tmp/d1-bookmarks.log` (gitignored) and print the restore
 command. A restore rewinds the WHOLE database, catalog and user data
 together, so every deck edit, registration and login after that point is lost.
-Prefer a targeted repair (re-ingest the catalog, or re-import the user tables
-from an export) when the damage is confined to one side.
+Prefer a targeted repair (re-ingest the catalog, or re-import rows from an
+export) when the damage is confined to one side.
 
 ```sh
 cd apps/api
 bunx wrangler d1 time-travel info colorless                       # current bookmark
 bunx wrangler d1 time-travel restore colorless --bookmark=<bookmark>
 bunx wrangler d1 time-travel restore colorless --timestamp=2026-10-27T09:00:00Z
-bun run db:check -- --remote                                      # after any restore
+# After any restore, in this order:
+bun scripts/release-gate.ts migrations    # "not applied remotely" = the restore rewound a migration
+bun run db:check -- --remote
 bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
+bun run release:health
 ```
 
-**Before a migration that rebuilds or rewrites a user table**, export the user
-tables. The file holds emails and password hashes, so keep it in `tmp/`:
+**A restore that crosses a release.** Time Travel rewinds `d1_migrations` with
+everything else, and the `release` bookmark is taken before
+`db:migrate:remote`, so restoring to it puts the database back at the previous
+migration level while the new Worker still reads the new columns: those
+endpoints 500 (the D203 class), and `db:check` does not notice, since it never
+reads `d1_migrations`. When `release-gate.ts migrations` lists a file as not
+applied remotely:
+
+1. Roll the API back to the version deployed before the release: `bunx
+   wrangler deployments list`, then `bunx wrangler rollback <version id> -m
+   "D1 restored to <bookmark>"`. Then `curl -fsS
+   https://colorless-api.jofrescari.workers.dev/health/db` should count the
+   files minus the ones listed (`release:health` compares with all of
+   `drizzle/`, so it fails until step 3). Roll the web app back too (`bunx
+   wrangler rollback` from the repo root) if it needs the new API.
+2. Do not follow the gate's hint to run `db:migrate:remote` yet: it re-applies
+   the migration that did the damage. Fix that migration or remove it in a
+   new commit; it is no longer applied remotely, so editing it is allowed here.
+   A local database that applied the old version needs a fresh state
+   (`rm -rf .wrangler/state`, `bun run db:migrate:local`, re-ingest).
+3. Release again.
+
+**Before a migration that rebuilds or rewrites a user table**, export the whole
+database. The file holds emails and password hashes, so keep it in `tmp/`
+(gitignored) and delete it once it is no longer needed. It also holds the
+catalog and the `d1_migrations` rows, which say how far the export was
+migrated. About 6 MB today, a few seconds; the database answers no other query
+while an export runs.
 
 ```sh
 cd apps/api
+mkdir -p ../../tmp/backup
 bunx wrangler d1 export colorless --remote --no-schema \
-  --table users --table sessions --table oauth_identities \
-  --table folders --table decks --table deck_cards \
-  --output ../../tmp/backup/users-$(date +%F).sql
+  --output ../../tmp/backup/colorless-$(date +%F-%H%M).sql
 ```
 
-**Re-importing an export** (learned on 2026-10-22, when the database was copied
-to `colorless`):
-- `wrangler d1 export` writes `CREATE TABLE cards` before `sets`, so a full
-  export does not re-import as written. Reorder the CREATEs parent first
-  (`series`, `sets`, `cards`, `users`, `folders`, `decks`, `deck_cards`,
-  `sessions`, `oauth_identities`), or export with `--no-schema` into a migrated
-  database.
-- Import in chunks of about 700 KB, each starting with
-  `PRAGMA defer_foreign_keys=TRUE;`. A single 5 MB file fails with
-  `D1_RESET_DO`. Retry chunks that fail with transient upload errors.
-- `users.favourite_deck_id` points at `decks`, which points back at `users`:
-  insert users with a null favourite, then decks, then set the favourites.
-- Changing `database_id` in wrangler.jsonc orphans the local Miniflare file
-  under `.wrangler/state/v3/d1/`. Run `bun run db:migrate:local` to create the
-  new file, then copy the old one into it with sqlite's `.backup`.
-- Run `bun run db:check -- --remote` afterwards.
+Always export with `--no-schema` and import into a database the migrations
+built: a schema export writes `CREATE TABLE cards` before `sets` and does not
+re-import as written.
+
+**Rebuilding from an export** into an empty database that `db:migrate:remote`
+has migrated to the current `drizzle/` (a new database, or one whose rows are
+gone). The export is one `INSERT` per line, so its rows can be picked by table.
+A file that `wrangler d1 execute --file` imports is one transaction, its
+foreign keys checked at the end because of the PRAGMA, so a chunk may reference
+only rows in itself or in an earlier chunk: the catalog before the decks that
+use its cards, and users, folders and decks together (a user's favourite deck
+points back at the user, a folder at its parent folder). A single 5 MB file
+fails with `D1_RESET_DO`, so chunks stay under about 700 KB:
+
+```sh
+cd apps/api
+F=../../tmp/backup/colorless-2026-10-28-0900.sql      # the export
+D=../../tmp/restore && rm -rf $D && mkdir -p $D
+# 1. Every table in the export, with its row count.
+grep -o '^INSERT INTO "[a-z0-9_]*"' $F | sort | uniq -c
+# 2. Chunks, parent first. d1_migrations and sqlite_sequence stay out (importing them into
+#    a migrated database fails on UNIQUE d1_migrations.id); auth_rate_limits is disposable.
+rows() { for t in "$@"; do grep "^INSERT INTO \"$t\" " $F; done; }
+rows series sets > $D/01-catalog.sql
+rows cards | split -C 600K -d -a 3 --additional-suffix=.sql - $D/02-cards-
+rows users folders decks > $D/03-owners.sql
+rows deck_cards | split -C 600K -d -a 3 --additional-suffix=.sql - $D/04-deck-cards-
+rows sessions oauth_identities > $D/05-sign-in.sql
+sed -i '1i PRAGMA defer_foreign_keys=TRUE;' $D/*.sql
+ls -l $D    # each file under ~700 KB; a table step 1 lists but no chunk holds needs a chunk
+# 3. Import in name order. A failed file imported nothing: fix the cause and rerun the loop,
+#    which resumes at that file.
+for f in $D/*.sql; do bunx wrangler d1 execute colorless --remote --yes --file $f && mv $f $f.done || break; done
+# 4. Backfills. A migration newer than the export never ran its data statements on these
+#    rows. List the export's migrations and compare with drizzle/:
+grep '^INSERT INTO "d1_migrations"' $F | grep -o "'[0-9]\{4\}_[a-z0-9_]*\.sql'"
+ls drizzle/*.sql
+#    For each newer file that has UPDATE, INSERT or DELETE lines (0003 and 0012 today),
+#    run them, which start at the first such line (docs/conventions.md "Database migrations"):
+sed -n '/^\(UPDATE\|INSERT\|DELETE\)/,$p' drizzle/0012_users_name_prompt.sql > $D/backfill-0012.sql
+bunx wrangler d1 execute colorless --remote --yes --file $D/backfill-0012.sql
+# 5. Check, compare the row counts it prints with step 1, and retire the cached catalog.
+bun run db:check -- --remote
+bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
+```
+
+A target that still holds its catalog (only user rows are gone) takes the user
+chunks alone: `rm $D/01-* $D/02-*` before step 3. An older export of the user
+tables alone (no catalog chunks) needs the catalog first: run the ingest
+(§3.4.1) for every serie production holds before step 3. Either way, a
+deck_cards chunk that then fails its foreign keys uses a card the catalog no
+longer has.
+
+**Repairing rows in the live database**, when some rows were lost and the rest
+are current: build the chunks the same way, keep only those of the damaged
+tables, and make them skip rows that still exist before step 3:
+
+```sh
+sed -i 's/^INSERT INTO /INSERT OR IGNORE INTO /' $D/*.sql
+```
+
+A plain `INSERT` aborts the whole chunk on the first row that still exists.
+`OR IGNORE` puts back only the missing rows and keeps every live one. Never
+use `INSERT OR REPLACE` on `users`, `folders` or `decks`: REPLACE deletes the
+live row first, and its `ON DELETE CASCADE` deletes the sessions, decks and
+deck cards that hang off it, including those created after the export (both
+proven in the 2026-10-28 drill). `OR IGNORE` does not overwrite a damaged
+value in a row that still exists: for that, import the export into a local copy
+(below) and write `UPDATE`s from it, or use Time Travel. A backfill from step 4
+must then run only over the restored rows; for 0012, add `AND id IN (...)` with
+their user ids.
+
+**Rehearsing locally.** Every command above also runs against a local copy:
+`wrangler d1 execute` and `migrations apply` take `--local --persist-to <dir>`
+in place of `--remote`, `bun run db:check -- --persist-to <dir>` checks that
+copy, and `wrangler d1 export` (which has no `--persist-to`) takes `--local -c
+<config>` with a config whose `.wrangler/state` is that dir (the config's
+`database_id` must match `apps/api/wrangler.jsonc`, which names the file). The
+2026-10-28 drill ran the rebuild and the repair this way, from an export taken
+at migration 0011 with synthetic users, about 12,700 user rows and the full
+catalog: export about 2 s, 14 chunks imported in 86 s, and the result matched the
+source migrated in place, table for table, `name_prompt` included
+(docs/decisions.md, "Data ops and the release pipeline").
+
+**Changing `database_id`** in wrangler.jsonc orphans the local Miniflare file
+under `.wrangler/state/v3/d1/`. Run `bun run db:migrate:local` to create the
+new file, then copy the old one into it with sqlite's `.backup`.
+
+**Remote Time Travel rehearsal** (not run yet; ask the user before running it).
+It proves the remote restore path, including that a restore rewinds
+`d1_migrations`, on a throwaway database that nothing else uses. From the repo
+root, about ten minutes:
+
+```sh
+mkdir -p tmp/drill/migrations && cd tmp/drill
+printf '{ "name": "colorless-drill", "compatibility_date": "2026-06-01" }\n' > wrangler.jsonc
+bunx wrangler d1 create colorless-drill --binding DB --update-config    # adds it to tmp/drill/wrangler.jsonc only
+printf 'CREATE TABLE drill (id integer PRIMARY KEY, note text NOT NULL);\n' > migrations/0000_drill.sql
+bunx wrangler d1 migrations apply colorless-drill --remote
+bunx wrangler d1 execute colorless-drill --remote --command "INSERT INTO drill (note) VALUES ('kept')"
+bunx wrangler d1 time-travel info colorless-drill                         # note the bookmark: B
+printf "ALTER TABLE drill ADD extra text;\nUPDATE drill SET note = 'damaged';\n" > migrations/0001_damage.sql
+bunx wrangler d1 migrations apply colorless-drill --remote
+bunx wrangler d1 execute colorless-drill --remote --command "INSERT INTO drill (note) VALUES ('lost')"
+bunx wrangler d1 time-travel restore colorless-drill --bookmark=<B>
+bunx wrangler d1 execute colorless-drill --remote --command "SELECT * FROM drill; SELECT name FROM d1_migrations"
+#   expect: one row (1, 'kept') with no `extra` column, and only 0000_drill.sql
+bunx wrangler d1 migrations list colorless-drill --remote                 # expect 0001_damage.sql unapplied
+bunx wrangler d1 delete colorless-drill
+cd ../.. && rm -rf tmp/drill
+```
+
+Record the restore's duration and anything that differed here.
 
 #### 3.7.4 Monitoring
 
@@ -732,11 +884,13 @@ matches nothing (`illustrator=junk`) still scans the table on each miss and is
 not limited.
 
 **After every deploy**, check that the Worker reaches D1 and that the remote
-migration count matches the files:
+migration count matches the files; `release` runs this as `release:health`:
 
 ```sh
+cd apps/api && bun run release:health
+# The same by hand:
 curl -fsS https://colorless-api.jofrescari.workers.dev/health/db
-# {"ok":true,"migrations":11}, where 11 = `ls apps/api/drizzle/*.sql | wc -l`.
+# {"ok":true,"migrations":13}, where 13 = `ls apps/api/drizzle/*.sql | wc -l`.
 # 503 {"ok":false}: a D1 error (binding, schema, quota); the reason is not in
 # the body, look for `evt = "d1"` in Workers Logs and in `wrangler tail`.
 ```
