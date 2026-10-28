@@ -1039,6 +1039,63 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
     expect(logged("rematch_refused")).toMatchObject([{ sockets: 1, requester: false }]);
   });
 
+  it("takes a rematch that finds the lobby already out of the game as its acceptance", async () => {
+    const { host, guest, checks } = await finishedMatch();
+    // Both pressed Rematch before seeing the other's: the host's lands first.
+    await h.send(host, { kind: "rematch", from: seatIdOf("h") });
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(snapshotOf(guest)).toMatchObject({
+      phase: "countdown",
+      host: { ready: true },
+      guest: { ready: true },
+    });
+    expect(checks).toHaveLength(2);
+    // The chooser is the first rematch's: the guest conceded, so the guest picks.
+    expect(h.storage.data.get("nextChooser")).toBe(seatIdOf("g"));
+    await h.fireAlarm();
+    expect((await storedMatch()).state.phase.kind).toBe("setup:chooseFirst");
+    // Once ready, a repeated rematch reads nothing and changes nothing.
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(checks).toHaveLength(2);
+  });
+
+  it("takes a rematch whose session read the other seat's rematch overtook as its acceptance", async () => {
+    const { host, guest } = await finishedMatch();
+    const read = h.deps.liveSessions;
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let held = true;
+    h.deps.liveSessions = async (owners) => {
+      if (held) {
+        held = false;
+        await gate;
+      }
+      return read(owners);
+    };
+    const first = h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    await h.send(host, { kind: "rematch", from: seatIdOf("h") });
+    expect(snapshotOf(guest)).toMatchObject({ phase: "selecting", guest: { ready: false } });
+    release();
+    await first;
+    expect(snapshotOf(host)).toMatchObject({ phase: "countdown", guest: { ready: true } });
+    expect(h.storage.data.get("nextChooser")).toBe(seatIdOf("g"));
+  });
+
+  it("refuses a late rematch from a signed-out seat as a rematch is refused", async () => {
+    const { host, guest } = await finishedMatch();
+    await h.send(host, { kind: "rematch", from: seatIdOf("h") });
+    h.world.endedSessions.add(sessionIdOf("bo"));
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    expect(guest.last("reject-action")).toEqual({
+      kind: "reject-action",
+      reason: "You're signed out. Sign in again to play another game.",
+    });
+    expect(guest.closed).toEqual({ code: 1008, reason: "session ended" });
+    expect(snapshotOf(host)).toMatchObject({ phase: "selecting", guest: { ready: false } });
+  });
+
   it("lets the rematch through when the session read fails, since the handoff re-checks", async () => {
     const { host, guest } = await finishedMatch();
     h.deps.liveSessions = async () => {

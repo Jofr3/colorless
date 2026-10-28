@@ -582,6 +582,7 @@ export class LobbyDO {
     // frame and not a seat `intent`: only the DO can see whether the match it
     // holds has finished, and a rematch mid-game must be refused (conceding is
     // how you leave a live one).
+    if (snapshot?.phase === "selecting") return await this.onLateRematch(ws, frame, snapshot);
     if (snapshot === null || snapshot.phase !== "in-game") return;
     if (!(await this.ownsSeat(ws, frame.from))) return;
     const slot = slotOf(snapshot, frame.from);
@@ -594,8 +595,10 @@ export class LobbyDO {
     if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
     if (!(await this.seatSessionsLive(ws, snapshot))) return;
     // The reads may have awaited D1 (a migration, the session check): the rematch starts from the
-    // lobby as it is now, not as it was before, or it would undo whatever happened meanwhile.
+    // lobby as it is now, not as it was before, or it would undo whatever happened meanwhile. The
+    // other seat's rematch may have landed then, which makes this one its acceptance.
     const current = await this.loadSnapshot();
+    if (current?.phase === "selecting") return await this.acceptRematch(ws, frame.from, current);
     if (current === null || current.phase !== "in-game") return;
     const currentSlot = slotOf(current, frame.from);
     if (currentSlot === null || !(await this.ownsSeat(ws, frame.from))) return;
@@ -608,6 +611,31 @@ export class LobbyDO {
     // the match with it — which is precisely what makes the next handoff mint
     // a FRESH game rather than hitting its idempotency guard on this one.
     await this.commit(rematch(current, currentSlot));
+  }
+
+  /** A rematch that finds the lobby already out of the game: the other seat's rematch got there
+      first (both pressed within a round trip), so this one is the acceptance and readies its
+      sender, after the same session check a rematch makes. An already ready seat costs no read. */
+  private async onLateRematch(
+    ws: WebSocket,
+    frame: ClientFrame<"rematch">,
+    snapshot: LobbyState,
+  ): Promise<void> {
+    if (!(await this.ownsSeat(ws, frame.from))) return;
+    const slot = slotOf(snapshot, frame.from);
+    if (slot === null || snapshot[slot]?.ready) return;
+    if (!(await this.seatSessionsLive(ws, snapshot))) return;
+    // The session check may have awaited D1: ready the seat in the lobby as it is now.
+    const current = await this.loadSnapshot();
+    if (current?.phase === "selecting") await this.acceptRematch(ws, frame.from, current);
+  }
+
+  /** Ready `playerId`'s seat, as its readying intent would, in a lobby another seat's rematch
+      took out of the game. */
+  private async acceptRematch(ws: WebSocket, playerId: string, current: LobbyState): Promise<void> {
+    const slot = slotOf(current, playerId);
+    if (slot === null || !(await this.ownsSeat(ws, playerId))) return;
+    await this.commit(applyIntent(current, slot, { type: "set-ready", ready: true }));
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {
