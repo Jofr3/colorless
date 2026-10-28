@@ -18,10 +18,12 @@ permissions:
 # The same named steps as `bun run check`, split into parallel jobs: static, lua
 # (with the bundle) and test. Lua tests needing Balatro's source (not in this
 # repository) are skipped, and the bundle is built without the Lua package for
-# the same reason.
+# the same reason. Every job has a timeout, so a hung test fails in minutes
+# rather than GitHub's default six hours.
 jobs:
   static:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -87,6 +89,7 @@ jobs:
 
   lua:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -113,6 +116,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -153,6 +157,7 @@ jobs:
   # seeded by the commit.
   mutants:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       # The sample diffs names against the base, which needs history but no
       # old file contents.
@@ -195,6 +200,7 @@ jobs:
   # The fingerprint line shows whether a change altered play.
   bench:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     continue-on-error: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
