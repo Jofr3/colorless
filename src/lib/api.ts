@@ -93,15 +93,69 @@ interface RequestOptions {
       `/auth/` path prefix (the P2-M1 shape): the prefix silently decided for
       any route added under it, and couldn't express the reverse case. */
   recoverSession?: false;
+  /** How long the call may take, body included, before it is abandoned. Default
+      REQUEST_TIMEOUT_MS. */
+  timeoutMs?: number;
+}
+
+/** How long a call may take before it is abandoned, in ms: a stalled connection otherwise leaves
+    it pending for minutes, and the screen that made it waiting on it. */
+export const REQUEST_TIMEOUT_MS = 20_000;
+/** A deck write carries a whole card list, and a lost one is recovered from (src/lua/builder.ts),
+    so it gets longer before it is given up. */
+export const DECK_WRITE_TIMEOUT_MS = 30_000;
+/** The card index is one large payload. */
+const CARD_INDEX_TIMEOUT_MS = 60_000;
+
+/** A call abandoned at its deadline. Not an ApiError: no response arrived, so a write may still
+    have been applied. Nothing retries it here; the screens offer Retry. */
+export class RequestTimeoutError extends Error {
+  readonly timeoutMs: number;
+
+  constructor(timeoutMs: number) {
+    super(`request timed out after ${timeoutMs} ms`);
+    this.name = "RequestTimeoutError";
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+/** Runs `call` with a signal that aborts after `timeoutMs`, and rejects with a
+    RequestTimeoutError then even when the call ignores its signal. Timed with setTimeout, so fake
+    timers drive it. */
+export async function withDeadline<T>(
+  timeoutMs: number,
+  call: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      // Rejected before the abort, so the race settles with the timeout rather than with the
+      // AbortError the aborted fetch rejects with.
+      reject(new RequestTimeoutError(timeoutMs));
+      controller.abort();
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([call(controller.signal), expired]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** The one fetch wrapper every call goes through: cookie on every request,
-    JSON in/out, non-2xx → ApiError, 204 → undefined. A 401 runs the
-    session-recovery hook above and retries once, unless the call opted out. */
-async function request<T>(path: string, init?: RequestOptions): Promise<T> {
-  let response = await send(path, init);
+    JSON in/out, non-2xx → ApiError, 204 → undefined, and a deadline. A 401 runs
+    the session-recovery hook above and retries once, unless the call opted out. */
+function request<T>(path: string, init?: RequestOptions): Promise<T> {
+  return withDeadline(init?.timeoutMs ?? REQUEST_TIMEOUT_MS, (signal) =>
+    exchange<T>(path, init, signal),
+  );
+}
+
+async function exchange<T>(path: string, init: RequestOptions | undefined, signal: AbortSignal) {
+  let response = await send(path, init, signal);
   if (response.status === 401 && init?.recoverSession !== false && (await attemptRecovery())) {
-    response = await send(path, init);
+    response = await send(path, init, signal);
   }
   if (!response.ok) {
     throw new ApiError(response.status, await errorBody(response), retryAfter(response));
@@ -110,13 +164,18 @@ async function request<T>(path: string, init?: RequestOptions): Promise<T> {
   return (await response.json()) as T;
 }
 
-function send(path: string, init?: { method?: string; body?: unknown }): Promise<Response> {
+function send(
+  path: string,
+  init: RequestOptions | undefined,
+  signal: AbortSignal,
+): Promise<Response> {
   const hasBody = init?.body !== undefined;
   return fetch(apiUrl(path), {
     method: init?.method ?? "GET",
     credentials: "include",
     headers: hasBody ? { "content-type": "application/json" } : undefined,
     body: hasBody ? JSON.stringify(init?.body) : undefined,
+    signal,
   });
 }
 
@@ -167,7 +226,7 @@ export function getCards(params: CardsQueryParams = {}): Promise<Paginated<CardB
 
 /** Every card as a compact search row, for searching names and rules text in the browser. */
 export function getCardIndex(): Promise<CardIndexPayload> {
-  return request("/cards/index");
+  return request("/cards/index", { timeoutMs: CARD_INDEX_TIMEOUT_MS });
 }
 
 /** One full canonical card by tcgdex id, e.g. "sv06.5-001". Unknown id → 404. */
@@ -274,15 +333,22 @@ export function getDeck(id: string): Promise<Deck> {
 /** Create a deck; the server mints the id. Unknown cardIds → ApiError 400
     whose body carries the offending `cardIds`. */
 export function createDeck(body: CreateDeckRequest): Promise<Deck> {
-  return request("/decks", { method: "POST", body });
+  return request("/decks", { method: "POST", body, timeoutMs: DECK_WRITE_TIMEOUT_MS });
 }
 
 /** Patch fields and/or wholesale-replace `cards`. Absent = keep, null =
     clear (format, folderId); an empty patch → 400. */
 export function patchDeck(id: string, body: PatchDeckRequest): Promise<Deck> {
-  return request(`/decks/${encodeURIComponent(id)}`, { method: "PATCH", body });
+  return request(`/decks/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body,
+    timeoutMs: DECK_WRITE_TIMEOUT_MS,
+  });
 }
 
 export function deleteDeck(id: string): Promise<void> {
-  return request(`/decks/${encodeURIComponent(id)}`, { method: "DELETE" });
+  return request(`/decks/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    timeoutMs: DECK_WRITE_TIMEOUT_MS,
+  });
 }

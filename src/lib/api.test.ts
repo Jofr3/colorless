@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetchResponse as stubFetch, stubFetchSequence } from "../test/fetchStub";
 import {
   ApiError,
+  DECK_WRITE_TIMEOUT_MS,
   cardImageUrl,
   createDeck,
   getCard,
@@ -11,6 +12,9 @@ import {
   login,
   logout,
   me,
+  patchDeck,
+  REQUEST_TIMEOUT_MS,
+  RequestTimeoutError,
   setSessionRecoveryHandler,
   updateProfile,
 } from "./api";
@@ -224,6 +228,70 @@ describe("session recovery", () => {
     release(true);
     await expect(both).resolves.toEqual([[], []]);
     expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("request deadlines", () => {
+  /** A fetch that never answers until its signal aborts, as a stalled connection does. */
+  function stubStalledFetch() {
+    const signals: AbortSignal[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_: RequestInfo | URL, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            const signal = init?.signal;
+            if (signal) signals.push(signal);
+            signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError")),
+            );
+          }),
+      ),
+    );
+    return signals;
+  }
+  afterEach(() => vi.useRealTimers());
+
+  it("abandons a read that never answers, aborting its fetch", async () => {
+    vi.useFakeTimers();
+    const signals = stubStalledFetch();
+    const failure = me().catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS - 1);
+    expect(signals[0]?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const error = await failure;
+    expect(error).toBeInstanceOf(RequestTimeoutError);
+    expect(error).not.toBeInstanceOf(ApiError);
+    expect(signals[0]?.aborted).toBe(true);
+  });
+
+  it("gives a deck write longer before abandoning it", async () => {
+    vi.useFakeTimers();
+    stubStalledFetch();
+    let settled = false;
+    const failure = patchDeck("d1", { name: "x" }).catch((error: unknown) => {
+      settled = true;
+      return error;
+    });
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(DECK_WRITE_TIMEOUT_MS - REQUEST_TIMEOUT_MS);
+    expect(await failure).toBeInstanceOf(RequestTimeoutError);
+  });
+
+  it("times out even when the fetch ignores its signal, and leaves no timer behind an answer", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    const failure = getSets().catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+    expect(await failure).toBeInstanceOf(RequestTimeoutError);
+
+    stubFetch(json([]));
+    await expect(getSets()).resolves.toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

@@ -12,18 +12,23 @@ import {
 } from "@colorless/schema";
 import { forgetCardIndex } from "../decks/catalog";
 import { cardIndexPayload } from "../test/fixtures";
-vi.mock("../lib/api", async (importOriginal) => ({
-  ApiError: (await importOriginal<typeof import("../lib/api")>()).ApiError,
-  getDeck: vi.fn(),
-  patchDeck: vi.fn(),
-  getCards: vi.fn(),
-  getCardIndex: vi.fn(),
-  getCard: vi.fn(),
-  getFacets: vi.fn(),
-  getSets: vi.fn(),
-  getSeries: vi.fn(),
-  cardImageUrl: (id: string) => `/assets/${id}.png`,
-}));
+vi.mock("../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/api")>();
+  return {
+    ApiError: actual.ApiError,
+    DECK_WRITE_TIMEOUT_MS: actual.DECK_WRITE_TIMEOUT_MS,
+    withDeadline: actual.withDeadline,
+    getDeck: vi.fn(),
+    patchDeck: vi.fn(),
+    getCards: vi.fn(),
+    getCardIndex: vi.fn(),
+    getCard: vi.fn(),
+    getFacets: vi.fn(),
+    getSets: vi.fn(),
+    getSeries: vi.fn(),
+    cardImageUrl: (id: string) => `/assets/${id}.png`,
+  };
+});
 const card = (
   id: string,
   name = "Pikachu",
@@ -215,6 +220,26 @@ describe("Lua deck builder", () => {
     await tick();
     expect(back).toHaveBeenCalledTimes(1);
     expect(b.message).toBe("");
+  });
+  it("gives up on a save that never answers, so Retry and Leave work again", async () => {
+    vi.mocked(api.patchDeck)
+      .mockImplementationOnce(() =>
+        api.withDeadline(api.DECK_WRITE_TIMEOUT_MS, () => new Promise<Deck>(() => {})),
+      )
+      .mockResolvedValue(deck());
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await b.command("leave");
+    await tick();
+    expect(b.saveStatus).toBe("saving");
+    await vi.advanceTimersByTimeAsync(api.DECK_WRITE_TIMEOUT_MS);
+    expect(b.saveStatus).toBe("failed");
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    expect(back).not.toHaveBeenCalled();
+    await b.command("leave");
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
+    expect(back).toHaveBeenCalledTimes(1);
   });
   it("serializes a follow-up edit behind an in-flight save before navigating", async () => {
     let resolve!: (d: Deck) => void;
