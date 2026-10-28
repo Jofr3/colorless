@@ -61686,7 +61686,8 @@ export const MUTANTS: Mutant[] = [
     file: "src/lib/api.ts",
     symbol: "errorBody",
     find: '  if (!response.headers.get("content-type")?.includes("application/json")) return undefined;',
-    replace: '  if (!response.headers.get("content-type")?.includes("text/json")) return undefined;',
+    replace:
+      '  if (!response.headers.get("content-type")?.includes("text/json")) return undefined;',
     expectKilledBy: ["src/seam/api.test.ts", "src/lib/api.test.ts"],
   },
 ];
