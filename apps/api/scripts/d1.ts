@@ -14,6 +14,10 @@ export const BOOKMARK_LOG = join(API_ROOT, "..", "..", "tmp", "d1-bookmarks.log"
 export type D1Target = "--local" | "--remote";
 export type Row = Record<string, unknown>;
 
+/** Longest one wrangler call may run before it is killed. Every call here takes seconds; this
+    bounds a stalled connection, which would otherwise hold a release or an ingest. */
+export const WRANGLER_TIMEOUT_MS = 5 * 60 * 1000;
+
 /** Runs `bunx wrangler ...args` in apps/api and returns its stdout; throws on a non-zero exit. */
 export function wrangler(args: readonly string[]): string {
   const result = spawnSync("bunx", ["wrangler", ...args], {
@@ -21,16 +25,30 @@ export function wrangler(args: readonly string[]): string {
     encoding: "utf8",
     // A whole-catalog select prints several MB of JSON.
     maxBuffer: 256 * 1024 * 1024,
+    timeout: WRANGLER_TIMEOUT_MS,
   });
   if (result.status !== 0) {
-    throw new Error(`wrangler ${args.join(" ")} failed:\n${result.stdout}\n${result.stderr}`);
+    const reason = result.error ? ` (${result.error.message})` : "";
+    throw new Error(
+      `wrangler ${args.join(" ")} failed${reason}:\n${result.stdout}\n${result.stderr}`,
+    );
   }
   return result.stdout;
 }
 
-/** The rows of each `;`-separated statement in `sql`, in order. */
-export function d1Query(target: D1Target, sql: string): Row[][] {
-  const out = wrangler(["d1", "execute", DATABASE, target, "--json", "--command", sql]);
+/** The rows of each `;`-separated statement in `sql`, in order. `persistTo` points a `--local`
+    query at another local state directory, such as a restore drill's copy. */
+export function d1Query(target: D1Target, sql: string, persistTo?: string): Row[][] {
+  const out = wrangler([
+    "d1",
+    "execute",
+    DATABASE,
+    target,
+    ...(persistTo === undefined ? [] : ["--persist-to", persistTo]),
+    "--json",
+    "--command",
+    sql,
+  ]);
   let parsed: unknown;
   try {
     parsed = JSON.parse(out);

@@ -1,8 +1,8 @@
 // The only place the ingest touches the network. Both transports return raw `unknown` payloads so
 // Zod validation upstream cannot be bypassed. The SDK path uses `client.fetch` because its model
 // endpoints rename keys. The fetch transport is the default because the SDK discards non-5xx error
-// statuses. The seam owns the inter-request delay for both. Not re-exported from ./index.ts, to
-// keep the SDK out of the Worker bundle.
+// statuses. The seam owns the inter-request delay, the per-request deadline and the retries for
+// both. Not re-exported from ./index.ts, to keep the SDK out of the Worker bundle.
 
 import TCGdex from "@tcgdex/sdk";
 
@@ -29,12 +29,78 @@ export interface CatalogSource {
 export const DEFAULT_BASE_URL = "https://api.tcgdex.net/v2/en";
 /** Default inter-request spacing, in ms. */
 export const DEFAULT_DELAY_MS = 50;
+/** Default deadline for one request, body included. Without one a stalled socket holds a set for
+    about six minutes. */
+export const DEFAULT_TIMEOUT_MS = 15_000;
+/** Default retries after a failed attempt that may pass: a network error, a timeout, 408, 429 or
+    5xx. One such failure among a set's few hundred cards would otherwise fail the set. */
+export const DEFAULT_RETRIES = 3;
+/** Full-jitter backoff: attempt n waits a random time up to min(MAX, BASE * 2^n). */
+const RETRY_BASE_MS = 1_000;
+const RETRY_MAX_MS = 20_000;
+/** The longest Retry-After honoured; a longer one waits this long and tries anyway. */
+const RETRY_AFTER_MAX_MS = 60_000;
 
 export interface SourceOptions {
   /** Inter-request spacing. Applied by the seam, not by the transport. */
   delayMs?: number;
-  /** Injected by tests so pacing is asserted without real time passing. */
+  /** Injected by tests so pacing and backoff are asserted without real time passing. */
   sleep?: (ms: number) => Promise<void>;
+  /** Deadline for one request. */
+  timeoutMs?: number;
+  /** Retries after the first attempt (createSource only); 0 turns them off. */
+  retries?: number;
+  /** Injected by tests to fix the backoff jitter; Math.random otherwise. */
+  random?: () => number;
+}
+
+/** A failed request, and whether trying it again may succeed. */
+export class SourceRequestError extends Error {
+  readonly retryable: boolean;
+  /** How long the server asked us to wait, from Retry-After. */
+  readonly retryAfterMs: number | undefined;
+
+  constructor(
+    message: string,
+    retryable: boolean,
+    options: { retryAfterMs?: number; cause?: unknown } = {},
+  ) {
+    super(message, { cause: options.cause });
+    this.name = "SourceRequestError";
+    this.retryable = retryable;
+    this.retryAfterMs = options.retryAfterMs;
+  }
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+function describeFailure(error: unknown, timeoutMs: number): string {
+  if (error instanceof Error && error.name === "TimeoutError") {
+    return `timed out after ${timeoutMs} ms`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** Retry-After as milliseconds (delta-seconds or an HTTP date), or undefined when absent. */
+function retryAfterMs(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const seconds = Number(value);
+  const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - Date.now();
+  return Number.isNaN(ms) ? undefined : Math.min(RETRY_AFTER_MAX_MS, Math.max(0, ms));
+}
+
+/** Rejects with a TimeoutError after `ms` unless `promise` settles first. Used where the request
+    cannot take a signal (the SDK), so the request itself keeps running until it settles. */
+function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error(`timed out after ${ms} ms`);
+      error.name = "TimeoutError";
+      reject(error);
+    }, ms);
+  });
+  return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
 }
 
 export interface FetchSourceOptions extends SourceOptions {
@@ -69,8 +135,7 @@ function createPacer(options: SourceOptions): {
   count: () => number;
 } {
   const delayMs = options.delayMs ?? DEFAULT_DELAY_MS;
-  const sleep =
-    options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleep = options.sleep ?? defaultSleep;
   let calls = 0;
   let requests = 0;
   let lastStart: Promise<void> = Promise.resolve();
@@ -89,22 +154,46 @@ function createPacer(options: SourceOptions): {
 }
 
 /**
- * Raw-`fetch` transport — the historical path, byte-for-byte the request the
- * ingest has always made. Non-2xx throws with the status, which is what the
- * CLI's per-set abort reports.
+ * Raw-`fetch` transport — the historical path, the same URL the ingest has
+ * always requested, now under a deadline. Non-2xx throws with the status, which
+ * is what the CLI's per-set abort reports; every failure names the path.
  */
 export function createFetchSource(options: FetchSourceOptions = {}): CatalogSource {
   const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const { pace, count } = createPacer(options);
 
   async function fetchJson(path: string): Promise<unknown> {
     await pace();
-    const response = await fetchImpl(`${baseUrl}${path}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} for ${path}`);
+    // One signal for the headers and the body, so a body that stalls mid-stream is cut too.
+    const signal = AbortSignal.timeout(timeoutMs);
+    let response: Response;
+    try {
+      response = await fetchImpl(`${baseUrl}${path}`, { signal });
+    } catch (error) {
+      throw new SourceRequestError(`${describeFailure(error, timeoutMs)} for ${path}`, true, {
+        cause: error,
+      });
     }
-    return response.json();
+    if (!response.ok) {
+      const status = response.status;
+      throw new SourceRequestError(
+        `HTTP ${status} for ${path}`,
+        status === 408 || status === 429 || status >= 500,
+        { retryAfterMs: retryAfterMs(response.headers.get("retry-after")) },
+      );
+    }
+    try {
+      return await response.json();
+    } catch (error) {
+      // A cut-off body, or a proxy's HTML error page sent with 200.
+      throw new SourceRequestError(
+        `unreadable JSON for ${path}: ${describeFailure(error, timeoutMs)}`,
+        true,
+        { cause: error },
+      );
+    }
   }
 
   return {
@@ -128,13 +217,25 @@ export function createSdkSource(options: SdkSourceOptions = {}): CatalogSource {
   // The one line in this module that cannot be exercised without network: the
   // default client. Tests inject `client` and cover everything below it.
   const client: TcgdexRawClient = options.client ?? createDefaultSdkClient(options.lang);
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const { pace, count } = createPacer(options);
 
-  async function required(kind: string, id: string, payload: unknown): Promise<unknown> {
+  async function read(kind: string, id: string, request: () => Promise<unknown>) {
+    await pace();
+    let payload: unknown;
+    try {
+      payload = await withDeadline(request(), timeoutMs);
+    } catch (error) {
+      // The SDK throws on a 5xx or a network failure, both worth another try.
+      throw new SourceRequestError(`${describeFailure(error, timeoutMs)} for ${kind} ${id}`, true, {
+        cause: error,
+      });
+    }
     if (payload === undefined) {
       // The SDK collapses 404/429/4xx into `undefined` and drops the status.
-      throw new Error(
+      throw new SourceRequestError(
         `no payload for ${kind} ${id} — @tcgdex/sdk returned undefined (non-200 below 500; status not recoverable)`,
+        false,
       );
     }
     return payload;
@@ -145,18 +246,9 @@ export function createSdkSource(options: SdkSourceOptions = {}): CatalogSource {
     get requestCount() {
       return count();
     },
-    async getSerie(serieId) {
-      await pace();
-      return required("serie", serieId, await client.fetch("series", serieId));
-    },
-    async getSet(setId) {
-      await pace();
-      return required("set", setId, await client.fetch("sets", setId));
-    },
-    async getCard(cardId) {
-      await pace();
-      return required("card", cardId, await client.fetch("cards", cardId));
-    },
+    getSerie: (serieId) => read("serie", serieId, () => client.fetch("series", serieId)),
+    getSet: (setId) => read("set", setId, () => client.fetch("sets", setId)),
+    getCard: (cardId) => read("card", cardId, () => client.fetch("cards", cardId)),
   };
 }
 
@@ -165,12 +257,54 @@ function createDefaultSdkClient(lang = "en"): TcgdexRawClient {
   return new TCGdex(lang as ConstructorParameters<typeof TCGdex>[0]);
 }
 
-/** Build the source the CLI's `--transport` flag selected. */
+/**
+ * Retries each read after a failure that may pass (SourceRequestError.retryable), up to `retries`
+ * times, waiting the server's Retry-After or else a full-jitter backoff. Each attempt goes back
+ * through the transport, so it is paced and counted like any request.
+ */
+export function withRetries(source: CatalogSource, options: SourceOptions = {}): CatalogSource {
+  const retries = options.retries ?? DEFAULT_RETRIES;
+  const sleep = options.sleep ?? defaultSleep;
+  const random = options.random ?? Math.random;
+
+  async function attempt(read: () => Promise<unknown>): Promise<unknown> {
+    for (let failures = 0; ; failures++) {
+      try {
+        return await read();
+      } catch (error) {
+        if (!(error instanceof SourceRequestError) || !error.retryable) throw error;
+        if (failures >= retries) {
+          if (failures === 0) throw error;
+          throw new SourceRequestError(`${error.message} (${failures + 1} attempts)`, false, {
+            cause: error,
+          });
+        }
+        const backoff = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** failures);
+        await sleep(error.retryAfterMs ?? Math.floor(random() * backoff));
+      }
+    }
+  }
+
+  return {
+    get transport() {
+      return source.transport;
+    },
+    get requestCount() {
+      return source.requestCount;
+    },
+    getSerie: (serieId) => attempt(() => source.getSerie(serieId)),
+    getSet: (setId) => attempt(() => source.getSet(setId)),
+    getCard: (cardId) => attempt(() => source.getCard(cardId)),
+  };
+}
+
+/** Build the source the CLI's `--transport` flag selected, with retries. */
 export function createSource(
   transport: Transport,
   options: FetchSourceOptions & SdkSourceOptions = {},
 ): CatalogSource {
-  return transport === "sdk" ? createSdkSource(options) : createFetchSource(options);
+  const source = transport === "sdk" ? createSdkSource(options) : createFetchSource(options);
+  return withRetries(source, options);
 }
 
 /**

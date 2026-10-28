@@ -54,8 +54,11 @@ only the conclusion.
   `check:test` runs after them on its own, since vitest already uses every core
   and sharing them makes its timeouts flaky. CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
-  `bun run format` before committing. `bun run release` runs check, the remote D1
-  migrations, the API deploy and then the web deploy, in that order.
+  `bun run format` before committing. `bun run release` runs check, the release
+  gates, the web build, the remote D1 migrations, the API deploy, the
+  `/health/db` check and then the web deploy, in that order, re-checking the
+  tree is clean at `origin/main` right before each deploy
+  (`docs/workstreams/backend-data.md` §3.7.2 has the recovery per step).
 - `tsc -b` checks the engine and the schema once: both are composite projects
   that emit declarations into their ignored `dist/`, and the app, the api and
   the scripts read them through project references, so an error in engine source
@@ -441,6 +444,9 @@ the previous Worker keeps serving while `release` migrates. Two rules follow.
   freely; drop or rename a column only one release after the code stopped reading
   it. `release` migrates before it deploys, and the API `deploy` refuses to run
   while a migration is unapplied remotely (`apps/api/scripts/release-gate.ts`).
+  `scripts/migration-guard.ts` fails on `DROP COLUMN` or a `RENAME` in a file
+  not listed in its `CONTRACTS_REVIEWED`, with the commit since which no code
+  reads the old name.
 - **Never let drizzle-kit rebuild a table that has children.** For a CHECK, an FK
   action, NOT NULL or a type change, drizzle-kit writes `PRAGMA foreign_keys=OFF;
   CREATE __new_t; INSERT … SELECT; DROP TABLE t; RENAME`. Inside D1's transaction
@@ -460,6 +466,10 @@ the previous Worker keeps serving while `release` migrates. Two rules follow.
   `apps/api/src/db/migrations.d1.test.ts` pass (it seeds every table, applies each
   newer migration file by itself and compares row counts, references and
   `PRAGMA foreign_key_check`) and add the file to `REVIEWED` with the reason.
+- **A backfill comes after the DDL.** Put a migration's data statements
+  (`UPDATE`, `INSERT`, `DELETE`) after its schema changes, each starting a line:
+  restoring an export older than the migration re-runs them from the first such
+  line to the end of the file (backend-data.md §3.7.3, step 4).
 - `scripts/drizzle-drift.ts` (check:static) fails when `schema.ts` has changes no
   migration records. drizzle-kit does not track triggers; note any next to the
   table in `apps/api/src/db/`.

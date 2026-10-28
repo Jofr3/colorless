@@ -21,11 +21,17 @@ export interface SqlColumnSpec<Row> {
  * Escape a string as a SQLite literal: wrap in single quotes, double any
  * embedded single quotes. Newlines and unicode are legal inside literals and
  * pass through verbatim. NUL cannot be represented in SQL text — throw rather
- * than silently truncate (SQLite would cut the string at the NUL).
+ * than silently truncate (SQLite would cut the string at the NUL). Nor can a
+ * lone UTF-16 surrogate: the file is written as UTF-8, which turns it into
+ * U+FFFD, so the stored text would differ from the payload.
  */
 export function escapeSqlText(value: string): string {
   if (value.includes("\u0000")) {
     throw new Error("cannot escape a string containing NUL (\\u0000) as a SQL literal");
+  }
+  // With the u flag a well-formed pair is one code point, so this matches only a lone half.
+  if (/\p{Surrogate}/u.test(value)) {
+    throw new Error("cannot escape a string containing a lone UTF-16 surrogate as a SQL literal");
   }
   return `'${value.replaceAll("'", "''")}'`;
 }

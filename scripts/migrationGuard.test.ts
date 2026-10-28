@@ -21,4 +21,21 @@ describe("migration-guard", () => {
       expect(report.lines.join("\n")).toContain("apps/api/drizzle/0011_rebuild.sql");
     }
   });
+
+  it("fails a drop or rename the Worker still serving would read, but not a rebuild's own rename", () => {
+    for (const sql of [
+      "ALTER TABLE `decks` DROP COLUMN `folder_id`;",
+      "ALTER TABLE `cards` RENAME COLUMN `suffix` TO `name_suffix`;",
+      "ALTER TABLE cards RENAME suffix TO name_suffix;",
+      "ALTER TABLE `folders` RENAME TO `deck_folders`;",
+    ]) {
+      const report = migrationGuardReport([{ name: "0013_contract.sql", sql }]);
+      expect(report.ok, sql).toBe(false);
+      expect(report.lines.join("\n")).toContain("CONTRACTS_REVIEWED");
+    }
+    const rebuild = migrationGuardReport([
+      { name: "0013_rebuild.sql", sql: "ALTER TABLE `__new_decks` RENAME TO `decks`;" },
+    ]);
+    expect(rebuild.lines.join("\n")).not.toContain("CONTRACTS_REVIEWED");
+  });
 });

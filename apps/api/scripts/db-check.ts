@@ -4,6 +4,7 @@
 //
 //   bun scripts/db-check.ts                  # local D1 (wrangler dev state)
 //   bun scripts/db-check.ts --remote         # production; reads only
+//   bun scripts/db-check.ts --persist-to <dir>   # another local state dir (a restore drill's copy)
 //   bun ../../scripts/with-system-certs.ts bun scripts/db-check.ts --upstream
 //                                            # also diff stored card ids against live tcgdex
 //
@@ -14,6 +15,7 @@
 // after either changes means a full re-ingest is owed); and with `--upstream`, card ids tcgdex no
 // longer lists (report only).
 
+import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { tcgdexSetSchema } from "@colorless/schema";
 import {
@@ -34,10 +36,16 @@ const { values: args } = parseArgs({
   options: {
     remote: { type: "boolean", default: false },
     upstream: { type: "boolean", default: false },
+    "persist-to": { type: "string" },
   },
   strict: true,
 });
+if (args.remote && args["persist-to"] !== undefined) {
+  console.error("db-check: --persist-to names a local state directory; drop --remote");
+  process.exit(1);
+}
 const target: D1Target = args.remote ? "--remote" : "--local";
+const persistTo = args["persist-to"] === undefined ? undefined : resolve(args["persist-to"]);
 
 async function staleCardIds(cards: readonly Row[]): Promise<Row[]> {
   const bySet = new Map<string, Set<string>>();
@@ -57,7 +65,8 @@ async function staleCardIds(cards: readonly Row[]): Promise<Row[]> {
   return stale;
 }
 
-console.log(`db-check: D1 "colorless" (${args.remote ? "REMOTE, read-only" : "local"})`);
+const where = args.remote ? "REMOTE, read-only" : persistTo ? `local, ${persistTo}` : "local";
+console.log(`db-check: D1 "colorless" (${where})`);
 
 const results = d1Query(
   target,
@@ -65,6 +74,7 @@ const results = d1Query(
     ...CONSISTENCY_CHECKS.map((c) => c.sql),
     ...COUNTED_TABLES.map((t) => `SELECT count(*) AS n FROM ${t}`),
   ].join(";\n"),
+  persistTo,
 );
 const failures: Failure[] = CONSISTENCY_CHECKS.map((check, i) => ({
   name: check.name,
@@ -75,7 +85,8 @@ const counts = COUNTED_TABLES.map(
 );
 console.log(`rows: ${counts.join(", ")}`);
 
-const cards = d1Query(target, `SELECT ${CARD_KEY_COLUMNS} FROM cards ORDER BY id`)[0] ?? [];
+const cards =
+  d1Query(target, `SELECT ${CARD_KEY_COLUMNS} FROM cards ORDER BY id`, persistTo)[0] ?? [];
 failures.push({
   name: "print_key differs from the current printKey (full re-ingest owed)",
   rows: printKeyMismatches(cards),

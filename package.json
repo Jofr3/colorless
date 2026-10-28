@@ -39,8 +39,9 @@
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy",
     "build:lua": "node frontend/lua/build.mjs",
-    "deploy": "bun run build && wrangler deploy",
-    "release": "bun run check && bun run --cwd apps/api release:gate && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run deploy"
+    "deploy": "bun run build && bun run deploy:web",
+    "deploy:web": "bun apps/api/scripts/release-gate.ts clean-tree && wrangler deploy",
+    "release": "bun run check && bun run --cwd apps/api release:gate && bun run build && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run --cwd apps/api release:health && bun run deploy:web"
   },
   "dependencies": {
     "@colorless/engine": "workspace:*",
