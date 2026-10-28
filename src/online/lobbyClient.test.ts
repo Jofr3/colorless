@@ -79,6 +79,32 @@ describe("LobbyClient", () => {
     expect(kinds().length).toBe(sent);
   });
 
+  it("a server that answers only after not-found takes the client back, its poll running again", () => {
+    const { client, push, posts } = make("guest");
+    vi.advanceTimersByTime(NOT_FOUND_MS + 700);
+    expect(client.state.status).toBe("not-found");
+    // A slow cold start: the lobby's first state lands after the window.
+    push({ kind: "state", snapshot: snap() });
+    expect(client.state.status).toBe("connected");
+    const hellos = () => posts.filter((p) => p.kind === "hello").length;
+    const before = hellos();
+    vi.advanceTimersByTime(PRESENCE_TIMEOUT_MS + 700);
+    expect(client.state.status).toBe("connecting");
+    expect(hellos()).toBeGreaterThan(before);
+    push({ kind: "state", snapshot: snap() });
+    expect(client.state.status).toBe("connected");
+  });
+
+  it("a full lobby that answers only after not-found is re-announced to after a silence", () => {
+    const { client, push, posts } = make("guest");
+    vi.advanceTimersByTime(NOT_FOUND_MS + 700);
+    push({ kind: "reject", to: testSeatId("g"), reason: "full" });
+    expect(client.state.status).toBe("full");
+    const before = posts.filter((p) => p.kind === "hello").length;
+    vi.advanceTimersByTime(PRESENCE_TIMEOUT_MS + 700);
+    expect(posts.filter((p) => p.kind === "hello").length).toBe(before + 1);
+  });
+
   it("reports not-found and stops re-announcing once the server closes the lobby for good", () => {
     const { client, push, kinds } = make("guest");
     push({ kind: "state", snapshot: snap() });

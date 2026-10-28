@@ -107,6 +107,25 @@ describe("the web client against the lobby DO", () => {
     expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
   });
 
+  it("a lobby that answers only after the not-found window still shows a later outage", async () => {
+    await b.online(b.tab("ana"), "host", "h");
+    await b.run(500);
+    const slow = b.tab("bo");
+    slow.connectDelayMs = 6000;
+    const guest = await b.online(slow, "guest", "g");
+    await b.run(5000);
+    expect(guest.online.step()).toBe("not-found");
+    slow.connectDelayMs = 0;
+    await b.run(2000);
+    expect(guest.online.step()).toBe("versus");
+    lastSocket(guest).socket.blackholed = true;
+    await b.run(6000);
+    expect(guest.client().state.status).toBe("connecting");
+    await b.run(10_000);
+    expect(guest.client().state.status).toBe("connected");
+    expect(guest.sockets).toHaveLength(2);
+  });
+
   it("both pressing Rematch within a round trip starts the next match on both tables", async () => {
     const { host, guest } = await inGame();
     concede(guest);

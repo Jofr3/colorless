@@ -137,7 +137,7 @@ export class LobbyClient {
   private current: LobbyClientState;
   private listeners = new Set<(s: LobbyClientState) => void>();
   private unsubscribe: () => void;
-  private tick: ReturnType<typeof setInterval> | null;
+  private tick: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
   // Why we hold no seat, if we don't. "kicked" is terminal — stop everything.
   // "full" is NOT: the server may still hand us the match to watch.
@@ -145,6 +145,8 @@ export class LobbyClient {
   private connectedOnce = false;
   private lastServerSeen = 0;
   private mountedAt: number;
+  /** The server closed the lobby for good: nothing will arrive to start the poll again. */
+  private closedForGood = false;
 
   constructor(opts: LobbyClientOptions, deps: { channel?: LobbyChannel; now?: () => number } = {}) {
     this.code = opts.code;
@@ -162,7 +164,7 @@ export class LobbyClient {
     this.mountedAt = this.now();
     this.unsubscribe = this.channel.subscribe((m) => this.receive(m));
     this.hello();
-    this.tick = setInterval(() => this.poll(), HELLO_RETRY_MS);
+    this.startPoll();
   }
 
   get state(): LobbyClientState {
@@ -238,9 +240,17 @@ export class LobbyClient {
     this.tick = null;
   }
 
+  /** Run the presence poll, unless it already runs. A server that answers after the not-found
+      window stopped it starts it again, so a later silence still reads as the link down. */
+  private startPoll() {
+    if (this.tick !== null || this.disposed || this.closedForGood) return;
+    this.tick = setInterval(() => this.poll(), HELLO_RETRY_MS);
+  }
+
   /** The server closed the lobby for good: the code names no lobby any more. */
   lobbyClosed() {
     if (this.disposed) return;
+    this.closedForGood = true;
     this.stop();
     this.set({ status: "not-found" });
   }
@@ -271,6 +281,7 @@ export class LobbyClient {
         if (this.refusal !== null || seat?.id !== this.playerId) break;
         this.lastServerSeen = this.now();
         this.connectedOnce = true;
+        this.startPoll();
         // The failing handoff broadcasts its state BEFORE the match-error, so
         // this clear runs first and the error still lands.
         this.set({
@@ -316,6 +327,7 @@ export class LobbyClient {
         if (message.to !== this.playerId) break;
         this.refusal = message.reason === "kicked" ? "kicked" : "full";
         this.lastServerSeen = this.now();
+        if (this.refusal === "full") this.startPoll();
         this.set({ status: this.refusal });
         break;
       }

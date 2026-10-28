@@ -26,9 +26,14 @@ import { LuaOnlineMatch } from "../lua/onlineTable";
 export const SEAM_CODE = "ABCD";
 
 /** One browser tab: the account its cookie upgrades a socket as (undefined when signed out),
-    whether its network is down (a new socket fails to connect), and every socket its channels
-    opened, oldest first. */
-export type Tab = { user: string | undefined; offline: boolean; readonly sockets: BridgeSocket[] };
+    whether its network is down (a new socket fails to connect), how long a new socket takes to
+    reach the DO (a slow cold start), and every socket its channels opened, oldest first. */
+export type Tab = {
+  user: string | undefined;
+  offline: boolean;
+  connectDelayMs: number;
+  readonly sockets: BridgeSocket[];
+};
 
 /** The client end of one lobby socket, as `createLobbyChannel` drives a WebSocket. Frames the
     server sent before it closed still arrive, ahead of the close. */
@@ -53,31 +58,34 @@ export class BridgeSocket {
   ) {
     this.user = tab.user;
     const offline = tab.offline;
-    seam.deliver(async () => {
-      try {
-        if (offline) throw new Error("offline");
-        const server = await seam.h.connect(this.user);
-        // Closed by the client while it connected: the server end goes as the close reaches it.
-        if (this.clientClosed) return await seam.h.drop(server);
-        this.server = server;
-        const send = server.send.bind(server);
-        server.send = (data: string) => {
-          send(data);
-          this.toClient(() => this.onmessage?.({ data }));
-        };
-        const close = server.close.bind(server);
-        server.close = (code?: number, reason?: string) => {
-          close(code, reason);
-          if (this.serverClosed) return;
+    const upgrade = () =>
+      seam.deliver(async () => {
+        try {
+          if (offline) throw new Error("offline");
+          const server = await seam.h.connect(this.user);
+          // Closed by the client while it connected: the server end goes as the close reaches it.
+          if (this.clientClosed) return await seam.h.drop(server);
+          this.server = server;
+          const send = server.send.bind(server);
+          server.send = (data: string) => {
+            send(data);
+            this.toClient(() => this.onmessage?.({ data }));
+          };
+          const close = server.close.bind(server);
+          server.close = (code?: number, reason?: string) => {
+            close(code, reason);
+            if (this.serverClosed) return;
+            this.serverClosed = true;
+            this.toClient(() => this.onclose?.({ code: code ?? 1005 }));
+          };
+          this.toClient(() => this.onopen?.());
+        } catch {
           this.serverClosed = true;
-          this.toClient(() => this.onclose?.({ code: code ?? 1005 }));
-        };
-        this.toClient(() => this.onopen?.());
-      } catch {
-        this.serverClosed = true;
-        this.toClient(() => this.onclose?.({ code: 1006 }));
-      }
-    });
+          this.toClient(() => this.onclose?.({ code: 1006 }));
+        }
+      });
+    if (tab.connectDelayMs > 0) setTimeout(upgrade, tab.connectDelayMs);
+    else upgrade();
   }
 
   send(data: string): void {
@@ -174,7 +182,7 @@ export async function openBridge(world: Partial<LobbyWorld> = {}): Promise<Bridg
     deliver(work) {
       queue = queue.then(work).catch(() => {});
     },
-    tab: (user) => ({ user, offline: false, sockets: [] }),
+    tab: (user) => ({ user, offline: false, connectDelayMs: 0, sockets: [] }),
     client(tab, opts) {
       let client: LobbyClient | null = null;
       const channel = createLobbyChannel(opts.code, {
