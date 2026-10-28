@@ -2,8 +2,8 @@
 -- align 'tri' and offset (-0.1, 0.1), inside the card's top-right corner.
 package.path='frontend/lua/?.lua;'..package.path
 local D=require('ui.card_dimensions')
-local source=require('tests.support.balatro_source').required()
-local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end
+-- Without Balatro's source only its attachment arguments go unchecked.
+local source=require('tests.support.balatro_source').optional()
 local noop=function()end
 local fills,draws,transform={},{},{}
 love={math={random=function()return 0.5 end},graphics={setColor=noop,setFont=noop,setLineWidth=noop,
@@ -15,9 +15,11 @@ local Button=require('ui.button');Button.panel=function(x,y,w,h,c,r)fills[#fills
 local Card=require('ui.card');Card.rebuild=function(self)self.texture={}end
 local Alert=require('ui.card_alert')
 -- Card:draw's attachment arguments, straight from the source.
-local card=read('/card.lua')
-assert(card:find('definition = create_UIBox_card_alert(), \n                    config = {align=(self.ability.set == \'Voucher\' and (self.config.center.order%2)==1) and "tli" or "tri",',1,true))
-assert(card:find('offset = {x = (self.ability.set == \'Voucher\' and (self.config.center.order%2)==1) and 0.1 or -0.1, y = 0.1}',1,true))
+if source then
+ local f=assert(io.open(source..'/card.lua'));local card=f:read('*a');f:close()
+ assert(card:find('definition = create_UIBox_card_alert(), \n                    config = {align=(self.ability.set == \'Voucher\' and (self.config.center.order%2)==1) and "tli" or "tri",',1,true))
+ assert(card:find('offset = {x = (self.ability.set == \'Voucher\' and (self.config.center.order%2)==1) and 0.1 or -0.1, y = 0.1}',1,true))
+end
 -- Deliberate deviation: the badge straddles the corner, centred 0.1 tiles in.
 assert(math.abs(Alert.card.x-(0.21-0.1))<1e-9 and math.abs(Alert.card.y-(0.1-0.21))<1e-9)
 -- moveable.lua 'tri': x = offset.x + major.w - self.w; y = offset.y (inner).
@@ -39,4 +41,5 @@ assert(#draws>=1 and math.abs(draws[#draws].x-(ox+0.21*unit))<4 and draws[#draws
 -- Menu badges (60px tiles) use the darker red_bad; cards keep plain red.
 fills={};Alert.draw(0,0,60,0,true,1280,true);assert(math.abs(fills[2].c[1]-T.red[1]*0.9)<1e-9 and fills[2].w==25.2)
 fills={};Alert.draw(0,0,60,0,true,1280,false);assert(fills[2].c[1]==T.red[1])
-print('PASS: card alerts follow Card:draw attachment, card transform and unit')
+print('PASS: card alerts follow Card:draw attachment, card transform and unit'
+ ..(source and '' or ' (source comparisons skipped: no Balatro source)'))

@@ -839,4 +839,5 @@ do
   sim:sync(match(903,'third'));sim:open(false);commit()
   assert(sim.matchId==nil and not sim.wipeRaw,'A canceled restart must not resurrect a closed table')
 end
-print('PASS: Lua simulator interactions, setup feedback, hand/Bench reordering, KO animations and delayed handoffs in both layouts')
+print('PASS: Lua simulator interactions, setup feedback, hand/Bench reordering, KO animations and delayed handoffs in both layouts'
+  ..(balatroSource and '' or ' (source comparisons skipped: no Balatro source)'))

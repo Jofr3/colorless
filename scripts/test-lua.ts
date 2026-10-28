@@ -3,9 +3,10 @@
 // with LUA=lua5.2); the summary names the interpreter. effects_gpu.lua needs
 // love.js in a browser and is skipped. Tests that compare against Balatro's
 // source exit 77 when it is missing
-// (frontend/lua/tests/support/balatro_source.lua); --require-source makes that
-// a failure instead. Files run concurrently, one per core; a failure's output
-// is printed whole, in file order.
+// (frontend/lua/tests/support/balatro_source.lua), or skip only those checks
+// and say so (`PARTIAL`); --require-source makes either a failure instead.
+// Files run concurrently, one per core; a failure's output is printed whole,
+// in file order.
 //
 //   bun scripts/test-lua.ts [--require-source]
 
@@ -29,7 +30,10 @@ function versionOf(bin: string): string | undefined {
   return `${run.stdout}${run.stderr}`.match(/Lua(JIT)? [\d.]+/)?.[0];
 }
 
-type Outcome = { status: number | null; output: string };
+/** What a test prints when it ran without its comparisons against the source. */
+const PARTIAL = "source comparisons skipped";
+
+type Outcome = { status: number | null; output: string; partial: boolean };
 
 function runOne(file: string): Promise<Outcome> {
   return new Promise((resolve, reject) => {
@@ -48,7 +52,9 @@ function runOne(file: string): Promise<Outcome> {
       stderr += d.toString();
     });
     child.on("error", reject);
-    child.on("close", (status) => resolve({ status, output: stderr || stdout }));
+    child.on("close", (status) =>
+      resolve({ status, output: stderr || stdout, partial: stdout.includes(PARTIAL) }),
+    );
   });
 }
 
@@ -67,9 +73,11 @@ await Promise.all(
 
 const failed: string[] = [];
 const skipped: string[] = [];
+const partial: string[] = [];
 for (const file of files) {
   const run = outcomes.get(file);
   if (run?.status === SKIPPED) skipped.push(file);
+  else if (run?.status === 0 && run.partial) partial.push(file);
   else if (run?.status !== 0) {
     failed.push(file);
     console.error(`FAIL ${file}\n${run?.output ?? ""}`);
@@ -82,4 +90,6 @@ if (!version.startsWith("Lua 5.1"))
   console.log(`(love.js runs Lua 5.1; CI runs these under ${SHIPPED})`);
 if (skipped.length > 0)
   console.log(`${skipped.length} skipped without Balatro source: ${skipped.join(", ")}`);
+if (partial.length > 0)
+  console.log(`${partial.length} ran without their source comparisons: ${partial.join(", ")}`);
 if (failed.length > 0) process.exit(1);

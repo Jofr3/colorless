@@ -1,6 +1,8 @@
 -- Run the actual source particle/event code as the behavioral reference.
 package.path='frontend/lua/?.lua;'..package.path
-local source=require('tests.support.balatro_source').required()
+-- Without Balatro's source the timing/particle comparisons are skipped; the
+-- coverage, reduced-motion and artwork checks below are app behaviour and run.
+local source=require('tests.support.balatro_source').optional()
 local noop=function()end
 local image={setFilter=noop,getDimensions=function()return 1850,800 end,getWidth=function()return 245 end,getHeight=function()return 337 end,release=noop}
 love={filesystem={getInfo=function()return nil end},math={random=math.random},graphics=setmetatable({
@@ -12,61 +14,63 @@ local checks=0
 local function near(a,b,epsilon)
   assert(math.abs(a-b)<(epsilon or 1e-8),tostring(a)..' != '..tostring(b));checks=checks+1
 end
-local function read(path)local f=assert(io.open(source..path));local s=f:read('*a');f:close();return s end
-dofile(source..'/engine/object.lua')
-dofile(source..'/engine/event.lua')
-Moveable=Object:extend();Moveable.move=noop
-dofile(source..'/engine/particles.lua')
-local callbacks=read('/functions/button_callbacks.lua')
-G={FUNCS={}}
-local start=assert(callbacks:find('G.FUNCS.wipe_on =',1,true))
-assert(loadstring(callbacks:sub(start)))()
-HEX=function()return {1,1,1,1}end
-pseudorandom_element=function(t)return t[1]end
-local sourceParticle,trace
-Card=function()return {states={hover={}},juice_up=noop,
- flip=function()trace.flip=G.TIMERS.REAL end,
- start_dissolve=function(_,colours)trace.burn=G.TIMERS.REAL;trace.palette=colours end}end
-UIBox=function()return {children={},alignment={offset={}},get_UIE_by_ID=noop,
- remove=function()trace.removed=G.TIMERS.REAL end}end
-local RealParticles=Particles
-Particles=function(_,_,_,_,config)sourceParticle=config;return {remove=noop}end
-play_sound=noop
-delay=function(t)G.E_MANAGER:add_event(Event({trigger='after',delay=t}))end
-for _,fps in ipairs({30,60,120,144})do
- trace={}
- G.SETTINGS={paused=true};G.TIMERS={REAL=0,TOTAL=0};G.ARGS={};G.CONTROLLER={locks={}}
- G.C={BLACK=Wipe.palette[1],ORANGE=Wipe.palette[2],GOLD=Wipe.palette[3],RED=Wipe.palette[4],BACKGROUND={C={0.2,0.3,0.4,1}},CLEAR={0,0,0,0}}
- G.UIT={};G.P_CARDS={};G.P_CENTERS={};G.E_MANAGER=EventManager()
- G.FUNCS.wipe_on()
- G.E_MANAGER:add_event(Event({func=function()trace.swap=G.TIMERS.REAL;return true end}))
- G.FUNCS.wipe_off()
- near(sourceParticle.scale,40);near(sourceParticle.lifespan,Wipe.lifespan);near(sourceParticle.max,1)
- for frame=1,fps*3 do
-  G.TIMERS.REAL=frame/fps;G.E_MANAGER:update(1/fps)
+if source then
+ local function read(path)local f=assert(io.open(source..path));local s=f:read('*a');f:close();return s end
+ dofile(source..'/engine/object.lua')
+ dofile(source..'/engine/event.lua')
+ Moveable=Object:extend();Moveable.move=noop
+ dofile(source..'/engine/particles.lua')
+ local callbacks=read('/functions/button_callbacks.lua')
+ G={FUNCS={}}
+ local start=assert(callbacks:find('G.FUNCS.wipe_on =',1,true))
+ assert(loadstring(callbacks:sub(start)))()
+ HEX=function()return {1,1,1,1}end
+ pseudorandom_element=function(t)return t[1]end
+ local sourceParticle,trace
+ Card=function()return {states={hover={}},juice_up=noop,
+  flip=function()trace.flip=G.TIMERS.REAL end,
+  start_dissolve=function(_,colours)trace.burn=G.TIMERS.REAL;trace.palette=colours end}end
+ UIBox=function()return {children={},alignment={offset={}},get_UIE_by_ID=noop,
+  remove=function()trace.removed=G.TIMERS.REAL end}end
+ local RealParticles=Particles
+ Particles=function(_,_,_,_,config)sourceParticle=config;return {remove=noop}end
+ play_sound=noop
+ delay=function(t)G.E_MANAGER:add_event(Event({trigger='after',delay=t}))end
+ for _,fps in ipairs({30,60,120,144})do
+  trace={}
+  G.SETTINGS={paused=true};G.TIMERS={REAL=0,TOTAL=0};G.ARGS={};G.CONTROLLER={locks={}}
+  G.C={BLACK=Wipe.palette[1],ORANGE=Wipe.palette[2],GOLD=Wipe.palette[3],RED=Wipe.palette[4],BACKGROUND={C={0.2,0.3,0.4,1}},CLEAR={0,0,0,0}}
+  G.UIT={};G.P_CARDS={};G.P_CENTERS={};G.E_MANAGER=EventManager()
+  G.FUNCS.wipe_on()
+  G.E_MANAGER:add_event(Event({func=function()trace.swap=G.TIMERS.REAL;return true end}))
+  G.FUNCS.wipe_off()
+  near(sourceParticle.scale,40);near(sourceParticle.lifespan,Wipe.lifespan);near(sourceParticle.max,1)
+  for frame=1,fps*3 do
+   G.TIMERS.REAL=frame/fps;G.E_MANAGER:update(1/fps)
+  end
+  -- Queue processing can add a frame per blocking event, even when complete.
+  near(trace.flip,0,1/30+1e-8)
+  near(trace.swap,Wipe.coverTime,3/math.min(fps,60)+1e-8)
+  near(trace.burn,Wipe.dissolveAt,6/math.min(fps,60)+1e-8)
+  near(trace.removed,Wipe.removeAt,6/math.min(fps,60)+1e-8)
+  for i=1,4 do assert(trace.palette[i]==Wipe.palette[i])end
+  local calls,sounds=0,{}
+  local wipe=Wipe.new(function()calls=calls+1 end,{0.2,0.3,0.4,1},false,function(name)sounds[#sounds+1]=name end)
+  wipe:layout(1280,800,1280/22)
+  local ref={scale=40,lifespan=sourceParticle.lifespan,timer_type='REAL',created_on_pause=true,
+   particles={{age=0,e_curr=0,scale=0,offset={x=0,y=0},velocity=0,dir=0,facing=wipe.facing,r_vel=wipe.rotationVelocity}}}
+  local done=false
+  for frame=1,math.ceil(fps*Wipe.removeAt)do
+   RealParticles.move(ref,1/fps)
+   done=wipe:update(1/fps)
+   if ref.particles[1]then near(wipe:scale(),ref.particles[1].scale);near(wipe.facing,ref.particles[1].facing)end
+   if wipe.age<Wipe.coverTime then assert(calls==0)else assert(calls==1)end
+   if wipe.burn then near(wipe.card.dissolve,math.min(1,(wipe.age-Wipe.dissolveAt)/0.7))end
+  end
+  if not done then done=wipe:update(1/fps)end
+  assert(done and calls==1 and #sounds==3)
+  wipe:release()
  end
- -- Queue processing can add a frame per blocking event, even when complete.
- near(trace.flip,0,1/30+1e-8)
- near(trace.swap,Wipe.coverTime,3/math.min(fps,60)+1e-8)
- near(trace.burn,Wipe.dissolveAt,6/math.min(fps,60)+1e-8)
- near(trace.removed,Wipe.removeAt,6/math.min(fps,60)+1e-8)
- for i=1,4 do assert(trace.palette[i]==Wipe.palette[i])end
- local calls,sounds=0,{}
- local wipe=Wipe.new(function()calls=calls+1 end,{0.2,0.3,0.4,1},false,function(name)sounds[#sounds+1]=name end)
- wipe:layout(1280,800,1280/22)
- local ref={scale=40,lifespan=sourceParticle.lifespan,timer_type='REAL',created_on_pause=true,
-  particles={{age=0,e_curr=0,scale=0,offset={x=0,y=0},velocity=0,dir=0,facing=wipe.facing,r_vel=wipe.rotationVelocity}}}
- local done=false
- for frame=1,math.ceil(fps*Wipe.removeAt)do
-  RealParticles.move(ref,1/fps)
-  done=wipe:update(1/fps)
-  if ref.particles[1]then near(wipe:scale(),ref.particles[1].scale);near(wipe.facing,ref.particles[1].facing)end
-  if wipe.age<Wipe.coverTime then assert(calls==0)else assert(calls==1)end
-  if wipe.burn then near(wipe.card.dissolve,math.min(1,(wipe.age-Wipe.dissolveAt)/0.7))end
- end
- if not done then done=wipe:update(1/fps)end
- assert(done and calls==1 and #sounds==3)
- wipe:release()
 end
 -- Every viewport corner must be covered at the mutation frame, at every
 -- random square angle, including portrait and letterboxed ultra-wide views.
@@ -120,4 +124,6 @@ assert(consumed and prepared.art.id=='persistent')
 for _=1,20 do prepared:update(1/60)end
 prepared:layout(480,850,30);prepared:release()
 print=output
-print('PASS: '..checks..' source screen-wipe timing/particle comparisons, coverage, resize and reduced motion')
+print('PASS: '..(source and checks..' source screen-wipe timing/particle comparisons, ' or '')
+ ..'coverage, resize and reduced motion'
+ ..(source and '' or ' (source comparisons skipped: no Balatro source)'))
