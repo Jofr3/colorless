@@ -7,7 +7,7 @@
  * drives headless Chromium through:
  *   boot and keyboard input; a sandbox game to turn 3; a Lua crash mid-game and the reload that
  *   resumes it; a boot whose game.data never arrives (the stall note); an online match from
- *   create to a rematch, in two browser contexts.
+ *   create to a rematch, in two browser contexts; an invite link to a code that names no lobby.
  * It reads state from the mailboxes the page writes for Lua and drives Lua through the bridge's
  * own `COLORLESS:` lines, never by canvas coordinates. Every process it starts is stopped on the
  * way out, failing or not.
@@ -547,6 +547,22 @@ async function lobby(host: Page, guest: Page, hostDeck: string, guestDeck: strin
     await waitFor(page, "Lua to open the online table", `window.__e2e.prints.includes(${opened})`);
 }
 
+/** The online header's `step`, as a JS expression. */
+const onlineStep = `(window.__e2e.mail[${JSON.stringify(MAILBOXES.online)}] || '').split('\\n')[0].split('\\t').map(decodeURIComponent)[${col(ONLINE.header, "step")}]`;
+
+/** An old-style invite link to a code no lobby holds: the server says so at once, so the modal
+    shows "not found" well inside the 4 s the client used to wait before guessing it. */
+async function deadCode(page: Page) {
+  await open(page, "/?lobby=ZZZZ");
+  const asked = Date.now();
+  await lua(page, "online", "open", "ZZZZ");
+  await waitFor(page, "the not-found step", `${onlineStep} === 'not-found'`, 10_000);
+  const took = Date.now() - asked;
+  if (took > 3000)
+    throw new Error(`${page.name}: "not found" took ${took} ms, not a definite answer`);
+  return took;
+}
+
 // ---------- the run ----------
 
 const results: string[] = [];
@@ -728,6 +744,11 @@ async function smoke() {
   await assertHealthy(host, "the online match");
   await assertHealthy(guest, "the online match");
   results.push("online: create, join, pick, ready, table, concede, game over, rematch, new match");
+
+  // ---- an invite to a code no lobby holds ----
+  const took = await deadCode(guest);
+  await assertHealthy(guest, "the dead lobby code");
+  results.push(`dead code: /?lobby=ZZZZ showed "not found" ${took} ms after the modal opened`);
 
   // ---- the stalled boot ----
   const note = await waitFor<string>(
