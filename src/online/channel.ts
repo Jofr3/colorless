@@ -27,6 +27,13 @@ export interface LobbyChannel {
 // jobs.
 
 const PING_INTERVAL_MS = 1500;
+/** An open socket with no frame back for this long since a ping it sent is given up for a new one:
+    a half-open link (NAT rebinding, a middlebox drop) never closes on its own. It is counted from
+    the oldest unanswered ping, so a background tab whose timers are throttled to one a minute
+    does not trip it, and it stays well inside the server's forfeit budget. */
+export const SOCKET_SILENCE_MS = 10_000;
+/** A socket still connecting after this long is given up and retried. */
+export const CONNECT_TIMEOUT_MS = 10_000;
 const RECONNECT_BASE_MS = 400;
 const RECONNECT_MAX_MS = 8000;
 // Posts buffered while disconnected; beyond this the oldest are dropped (the
@@ -77,6 +84,7 @@ export function createLobbyChannel(
   let closed = false;
   let attempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let connectTimer: ReturnType<typeof setTimeout> | null = null;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
   // The newest hello posted. A reopened socket is attached to no seat until it says hello, and the
   // client only re-announces after PRESENCE_TIMEOUT_MS of silence, which the server's pongs to the
@@ -90,34 +98,89 @@ export function createLobbyChannel(
     for (const handler of [...handlers]) handler(message);
   };
 
-  const stopTimers = () => {
+  const stopSocketTimers = () => {
     if (pingTimer !== null) {
       clearInterval(pingTimer);
       pingTimer = null;
     }
+    if (connectTimer !== null) {
+      clearTimeout(connectTimer);
+      connectTimer = null;
+    }
+  };
+
+  const stopTimers = () => {
+    stopSocketTimers();
     if (reconnectTimer !== null) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
     }
   };
 
+  /** The socket is gone: give up on the lobby if the server closed it for good, else reconnect. */
+  const lost = (code: number | undefined) => {
+    open = false;
+    socket = null;
+    stopSocketTimers();
+    if (closed) return;
+    // The lobby is gone (wiped after an hour without play): a reconnect could only fail.
+    if (code === LOBBY_WS_CLOSED) {
+      closed = true;
+      queue.length = 0;
+      onLobbyClosed?.();
+      return;
+    }
+    // Unexpected close (server restart, network blip, nonexistent lobby):
+    // retry with capped backoff. A dead code keeps failing quietly, which is
+    // exactly the silence the client's not-found timeout interprets.
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      connect();
+    }, reconnectDelayMs(attempt++));
+  };
+
+  /** Give up on `ws` without waiting for its close, which a dead path may hold back for a minute:
+      it is detached first, so nothing it says later reaches the channel. */
+  const abandon = (ws: WebSocket) => {
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onclose = null;
+    ws.onerror = null;
+    ws.close();
+    lost(undefined);
+  };
+
   const connect = () => {
     const ws = socketFor(url);
     socket = ws;
+    // The oldest ping since the last frame heard, or null when every ping has been answered.
+    let unansweredSince: number | null = null;
+    connectTimer = setTimeout(() => abandon(ws), CONNECT_TIMEOUT_MS);
 
     ws.onopen = () => {
       if (closed) {
         ws.close();
         return;
       }
+      if (connectTimer !== null) clearTimeout(connectTimer);
+      connectTimer = null;
       open = true;
       attempt = 0;
       if (lastHello !== null) ws.send(lastHello);
       for (const pending of queue.splice(0)) ws.send(pending);
-      pingTimer = setInterval(() => ws.send(LOBBY_WS_PING), PING_INTERVAL_MS);
+      pingTimer = setInterval(() => {
+        const now = Date.now();
+        if (unansweredSince !== null && now - unansweredSince >= SOCKET_SILENCE_MS) {
+          abandon(ws);
+          return;
+        }
+        unansweredSince ??= now;
+        ws.send(LOBBY_WS_PING);
+      }, PING_INTERVAL_MS);
     };
 
     ws.onmessage = (event: MessageEvent) => {
+      unansweredSince = null;
       if (typeof event.data !== "string") return;
       if (event.data === LOBBY_WS_PONG) {
         dispatch(SERVER_HEARTBEAT);
@@ -141,29 +204,7 @@ export function createLobbyChannel(
       dispatch(parsed as LobbyMessage);
     };
 
-    ws.onclose = (event: CloseEvent) => {
-      open = false;
-      socket = null;
-      if (pingTimer !== null) {
-        clearInterval(pingTimer);
-        pingTimer = null;
-      }
-      if (closed) return;
-      // The lobby is gone (wiped after an hour without play): a reconnect could only fail.
-      if (event.code === LOBBY_WS_CLOSED) {
-        closed = true;
-        queue.length = 0;
-        onLobbyClosed?.();
-        return;
-      }
-      // Unexpected close (server restart, network blip, nonexistent lobby):
-      // retry with capped backoff. A dead code keeps failing quietly, which is
-      // exactly the silence the client's not-found timeout interprets.
-      reconnectTimer = setTimeout(() => {
-        reconnectTimer = null;
-        connect();
-      }, reconnectDelayMs(attempt++));
-    };
+    ws.onclose = (event: CloseEvent) => lost(event.code);
 
     // Errors are always followed by close, which owns the retry.
     ws.onerror = () => {};

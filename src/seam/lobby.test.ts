@@ -90,6 +90,23 @@ describe("the web client against the lobby DO", () => {
     expect(guest.client().state.status).toBe("connected");
   });
 
+  it("a half-open link is given up for a new socket before the server forfeits the player", async () => {
+    const { host, guest } = await inGame();
+    const { socket, server } = lastSocket(guest);
+    // The guest's network path changes: the old connection is dead without a close either way.
+    socket.blackholed = true;
+    await b.run(30_000);
+    expect(guest.sockets).toHaveLength(2);
+    expect(guest.client().state.status).toBe("connected");
+    expect(host.match.lifecycle().opponentAway).toBeNull();
+    await b.run(150_000);
+    expect(server.closed).not.toBeNull();
+    expect(host.match.view()?.outcome).toBeNull();
+    concede(guest);
+    await b.run(300);
+    expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
+  });
+
   it("both pressing Rematch within a round trip starts the next match on both tables", async () => {
     const { host, guest } = await inGame();
     concede(guest);
