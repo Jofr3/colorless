@@ -61354,4 +61354,14 @@ export const MUTANTS: Mutant[] = [
     replace: '  fields.map((v) => encodeURIComponent(String(v))).join("\\t");',
     expectKilledBy: ["src/lua/wire.test.ts", "src/lua/online.test.ts"],
   },
+  {
+    id: "LB2-orphaned-seat-never-graced",
+    decision: "LB2",
+    what: "The alarm never gives a grace to a seat no socket holds, so after a deploy a player who never returns shows connected and is never forfeited. Killed by lobbyDO.test's redeploy case and the seam suite's.",
+    file: "apps/api/src/lobby/lobbyDO.ts",
+    symbol: "LobbyDO",
+    find: "    await this.graceOrphanedSeats(now);\n",
+    replace: "",
+    expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts", "src/seam/lobby.test.ts"],
+  },
 ];

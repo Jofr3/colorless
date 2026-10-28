@@ -126,6 +126,23 @@ describe("the web client against the lobby DO", () => {
     expect(guest.sockets).toHaveLength(2);
   });
 
+  it("after a deploy both tabs reconnect into the match, and a tab that cannot is forfeited", async () => {
+    const { host, guest } = await inGame();
+    b.deliver(async () => b.h.redeploy());
+    await b.run(5000);
+    expect(host.sockets).toHaveLength(2);
+    expect(guest.sockets).toHaveLength(2);
+    expect(host.match.lifecycle().opponentAway).toBeNull();
+    // The guest's network goes, and a second deploy drops it with everyone else.
+    guest.offline = true;
+    b.deliver(async () => b.h.redeploy());
+    // The next liveness sweep, at most 30 s on, finds the seat orphaned; its grace runs 5 s.
+    await b.run(40_000);
+    expect(host.match.lifecycle().opponentAway).toMatchObject({ name: "g" });
+    await b.run(100_000);
+    expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
+  });
+
   it("both pressing Rematch within a round trip starts the next match on both tables", async () => {
     const { host, guest } = await inGame();
     concede(guest);

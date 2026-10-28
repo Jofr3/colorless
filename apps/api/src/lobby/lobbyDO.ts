@@ -670,6 +670,7 @@ export class LobbyDO {
     //    connection dropped here is judged by everything below on this same pass
     //    rather than waiting another sweep.
     await this.sweepSilentSockets(now);
+    await this.graceOrphanedSeats(now);
 
     // A lobby nobody has changed for INACTIVE_LOBBY_MS is closed for good (LB2): every socket is
     // told so, and the lobby is wiped, since a client would otherwise reconnect into it at once.
@@ -964,6 +965,29 @@ export class LobbyDO {
         true,
       );
     }
+  }
+
+  /**
+   * Give the reconnect grace to a seat shown connected that no socket holds and no grace covers. Its
+   * socket went without a close the DO heard, as every socket does in a deploy, so without this the
+   * seat would show connected and never forfeit. A grace rather than a disconnect, because a socket
+   * that reconnected but has not said hello yet holds no seat either.
+   */
+  private async graceOrphanedSeats(now: number): Promise<void> {
+    const snapshot = await this.loadSnapshot();
+    if (snapshot === null) return;
+    const sockets = this.liveSockets();
+    const orphaned = [snapshot.host, snapshot.guest].flatMap((seat) =>
+      seat?.connected && !sockets.some((ws) => attachedPlayer(ws) === seat.id) ? [seat.id] : [],
+    );
+    if (orphaned.length === 0) return;
+    const pending = await this.pendingDisconnects();
+    const ungraced = orphaned.filter((id) => !pending.some((entry) => entry.playerId === id));
+    if (ungraced.length === 0) return;
+    let next = pending;
+    for (const id of ungraced) next = withPendingDisconnect(next, id, now + DISCONNECT_GRACE_MS);
+    await this.state.storage.put(PENDING_KEY, next);
+    await this.log("seat_orphaned", { seats: ungraced.length });
   }
 
   /**

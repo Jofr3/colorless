@@ -630,6 +630,36 @@ describe("LobbyDO — disconnects", () => {
     expect(h.world.now).toBe(forfeitAt);
   });
 
+  it("forfeits a seat whose player never came back after a deploy dropped every socket", async () => {
+    const { guest } = await startedMatch();
+    h.redeploy();
+    expect(guest.closed).toEqual({ code: 1001, reason: "redeploy" });
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    expect(snapshotOf(host).guest?.connected).toBe(true);
+    await fireAlarmsUntil(() => snapshotOf(host).guest?.connected === false);
+    expect(snapshotOf(host).guest?.forfeitAt).toBe(h.world.now + ABANDON_GRACE_MS);
+    expect(logged("seat_orphaned")).toMatchObject([{ seats: 1 }]);
+    await fireAlarmsUntil(async () => (await storedMatch()).state.phase.kind === "gameOver");
+    expect((await storedMatch()).state.phase).toMatchObject({
+      outcome: { result: "win", winner: "p1", reason: "conceded" },
+    });
+  });
+
+  it("keeps both seats after a deploy when both players come back, though one says hello late", async () => {
+    await startedMatch();
+    h.redeploy();
+    const host = await h.connect("ana");
+    await h.send(host, hello("h"));
+    // The guest's socket is open but has not said hello when the sweep runs.
+    const guest = await h.connect("bo");
+    await h.fireAlarm();
+    await h.send(guest, hello("g"));
+    for (let i = 0; i < 5; i++) await h.fireAlarm();
+    expect(snapshotOf(host).guest).toMatchObject({ connected: true, forfeitAt: null });
+    expect((await storedMatch()).state.phase.kind).not.toBe("gameOver");
+  });
+
   it("wipes an empty lobby whose alarm fired late, past both the grace and the expiry", async () => {
     await h.create();
     const host = await h.connect("ana");

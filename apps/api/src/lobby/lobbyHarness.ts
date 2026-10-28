@@ -353,6 +353,9 @@ export interface LobbyHarness {
   /** Evict the instance and wake a fresh one on the same storage and sockets, as hibernation
       does: only what storage and the socket attachments hold survives. */
   hibernate(): void;
+  /** A deploy restarts the lobby: every socket drops without the DO hearing a close, and a fresh
+      instance wakes on the same storage, its alarm included. */
+  redeploy(): void;
   /** Restore the globals `createLobbyHarness` replaced, then fail if the DO sent any socket a
       frame off the server wire schema. */
   dispose(): void;
@@ -416,6 +419,10 @@ export function createLobbyHarness(world: Partial<LobbyWorld> = {}): LobbyHarnes
       await lobby.alarm();
     },
     hibernate() {
+      lobby = wake();
+    },
+    redeploy() {
+      for (const ws of state.getWebSockets()) ws.close(1001, "redeploy");
       lobby = wake();
     },
     dispose() {
