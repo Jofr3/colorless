@@ -32,6 +32,7 @@ the script after adding a decision.
 | 2026-10-27 | Auth hardening, an audit trail, and private default names | decisions.md:932 |
 | 2026-10-28 | Online lobby reliability: a client-to-DO seam suite and the fixes it found | decisions.md:958 |
 | 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:981 |
+| 2026-10-28 | API failure paths: D1 write failures and stalled upstreams degrade to sensible answers | decisions.md:998 |
 
 ## Numbered decisions
 
