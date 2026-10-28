@@ -44642,10 +44642,7 @@ export const MUTANTS: Mutant[] = [
     symbol: "migratableState",
     find: "  if (!MIGRATION_STEPS.has(fromVersion)) return null;",
     replace: "",
-    expectKilledBy: [
-      "packages/engine/src/persist.test.ts",
-      "apps/api/src/lobby/matchLoad.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/persist.test.ts", "apps/api/src/lobby/matchLoad.test.ts"],
   },
   {
     id: "D583-identity-reads-the-tag",
@@ -61312,6 +61309,20 @@ export const MUTANTS: Mutant[] = [
       "apps/api/src/lobby/lobbyDO.test.ts",
       "apps/api/src/lobby/lobbyLifecycle.test.ts",
       "src/seam/lobby.test.ts",
+    ],
+  },
+  {
+    id: "REL-EN7-v41-migrated-again",
+    decision: "REL-EN7",
+    what: "Version 41 gets a migration step back: a retired v41 record, which may hold a setup from before the bonus Bench step, is migrated and played instead of retired. Killed by persist.test's retired-version rung, matchLoad's stale rows and the DO's v41 retirement case.",
+    file: "packages/engine/src/persist.ts",
+    symbol: "MIGRATION_STEPS",
+    find: "  [42, withDefaultKeys],\n",
+    replace: "  [41, withDefaultKeys],\n  [42, withDefaultKeys],\n",
+    expectKilledBy: [
+      "packages/engine/src/persist.test.ts",
+      "apps/api/src/lobby/matchLoad.test.ts",
+      "apps/api/src/lobby/lobbyDO.test.ts",
     ],
   },
   {
