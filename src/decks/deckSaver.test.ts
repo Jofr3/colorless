@@ -198,6 +198,98 @@ describe("createDeckSaver", () => {
     expect(recorder.statuses).toEqual([]);
   });
 
+  it("saves a revert to the saved state made while a flight was up", async () => {
+    const first = deferred();
+    const save = vi
+      .fn<(snapshot: Snap) => Promise<void>>()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValue(undefined);
+    const saver = createDeckSaver<Snap>({ save, delay: 600, initial: { v: 1 } });
+
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 1 });
+    first.resolve();
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(save.mock.calls).toEqual([[{ v: 2 }], [{ v: 1 }]]);
+  });
+
+  it("sends nothing for a snapshot that converged onto the flight, and reports it saved", async () => {
+    const first = deferred();
+    const save = vi.fn<(snapshot: Snap) => Promise<void>>().mockReturnValueOnce(first.promise);
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 3 });
+    saver.schedule({ v: 2 });
+    first.resolve();
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(recorder.statuses).toEqual(["saving", "saved"]);
+  });
+
+  it("holds a follow-up until its debounce ends when the flight lands first", async () => {
+    const first = deferred();
+    const save = vi
+      .fn<(snapshot: Snap) => Promise<void>>()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValue(undefined);
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 2 });
+    first.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(save).toHaveBeenCalledTimes(1);
+    saver.schedule({ v: 3 });
+    await vi.advanceTimersByTimeAsync(599);
+    expect(save).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 3 }]]);
+  });
+
+  it("still sends the newer snapshot once when a flight fails after dispose", async () => {
+    const first = deferred();
+    const save = vi
+      .fn<(snapshot: Snap) => Promise<void>>()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValue(undefined);
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 2 });
+    saver.flush();
+    saver.dispose();
+    first.reject(new ApiError(400, undefined));
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 2 }]]);
+    expect(recorder.statuses).toEqual(["saving"]);
+  });
+
+  it("sends nothing more after dispose when the failed flight was the latest edit", async () => {
+    const save = vi.fn<(snapshot: Snap) => Promise<void>>().mockRejectedValue(new Error("offline"));
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    saver.flush();
+    saver.dispose();
+    await vi.advanceTimersByTimeAsync(60_000);
+    saver.schedule({ v: 2 });
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(recorder.statuses).toEqual(["saving"]);
+  });
 });
 
 describe("a save whose outcome is unknown", () => {
@@ -312,6 +404,42 @@ describe("a rate-limited save", () => {
     saver.flush();
     await vi.advanceTimersByTimeAsync(0);
     expect(save).toHaveBeenLastCalledWith({ v: 1 });
+    expect(recorder.statuses.at(-1)).toBe("saved");
+  });
+
+  it("starts a fresh retry budget once a save gets through", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    for (let i = 0; i < MAX_RATE_LIMIT_RETRIES; i++) save.mockRejectedValueOnce(limited(1));
+    save.mockResolvedValueOnce(undefined);
+    for (let i = 0; i < MAX_RATE_LIMIT_RETRIES; i++) save.mockRejectedValueOnce(limited(1));
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600 + MAX_RATE_LIMIT_RETRIES * 1_000);
+    expect(recorder.statuses.at(-1)).toBe("saved");
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(600 + MAX_RATE_LIMIT_RETRIES * 1_000);
+
+    expect(save).toHaveBeenCalledTimes(2 * MAX_RATE_LIMIT_RETRIES + 2);
+    expect(save).toHaveBeenLastCalledWith({ v: 2 });
+    expect(recorder.statuses).not.toContain("failed");
+  });
+
+  it("keeps its whole retry budget after a failure that was reported", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    save.mockRejectedValueOnce(new ApiError(400, undefined));
+    for (let i = 0; i < MAX_RATE_LIMIT_RETRIES; i++) save.mockRejectedValueOnce(limited(1));
+    const recorder = statusRecorder();
+    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    expect(recorder.statuses).toEqual(["saving", "failed"]);
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(MAX_RATE_LIMIT_RETRIES * 1_000);
+
+    expect(save).toHaveBeenCalledTimes(MAX_RATE_LIMIT_RETRIES + 2);
     expect(recorder.statuses.at(-1)).toBe("saved");
   });
 

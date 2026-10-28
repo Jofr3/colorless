@@ -99,8 +99,12 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
     const { snapshot, key } = pending;
     pending = null;
     // The queued snapshot may have converged back onto what a just-landed
-    // flight saved — nothing left to send.
-    if (key === savedKey) return;
+    // flight saved — nothing left to send, and the "saving" that flight
+    // reported is over.
+    if (key === savedKey) {
+      if (!disposed) options.onStatus?.("saved");
+      return;
+    }
     inFlight = true;
     if (!disposed) options.onStatus?.("saving");
     options.save(snapshot).then(
