@@ -1,11 +1,14 @@
-// Read-only checks `bun run release` and the API deploy run against production before they write.
+// Read-only checks `bun run release` and the deploys run against production around their writes.
 // Each named step runs in order; the first failure exits 1.
 //
-//   bun scripts/release-gate.ts clean-tree secrets bookmark print-keys   # release, before the remote migrations
-//   bun scripts/release-gate.ts migrations            # `deploy`, before wrangler deploy
+//   bun scripts/release-gate.ts clean-tree secrets bookmark print-keys   # release, before the build
+//   bun scripts/release-gate.ts migrations clean-tree   # API `deploy`, just before wrangler deploy
+//   bun scripts/release-gate.ts clean-tree              # web `deploy:web`, just before wrangler deploy
+//   bun scripts/release-gate.ts health                  # `release:health`, after the API deploy
 //
 // clean-tree  The working tree has no changes and HEAD is origin/main, so what deploys is a pushed
-//             commit (wrangler deploys from the working tree).
+//             commit (wrangler deploys from the working tree). Checked again right before each
+//             wrangler deploy, because other agents share the checkout during a release.
 // secrets     The production Worker holds every secret in src/requiredSecrets.ts (PASSWORD_PEPPER,
 //             LOG_TAG_KEY). `wrangler secret list` shows names only. Both degrade quietly when
 //             absent, so this is where a forgotten `wrangler secret put` is caught.
@@ -15,17 +18,51 @@
 //             so a release built on a stale local ingest ships aliases production does not match.
 // migrations  Every file in drizzle/ is applied remotely, and nothing else is: a Worker deployed
 //             ahead of its migrations 500s the endpoints that read the new columns (D203).
+// health      The deployed API answers GET /health/db with as many applied migrations as drizzle/
+//             has files. Reads the origin the web build uses (.env.production VITE_API_ORIGIN);
+//             API_ORIGIN overrides it, e.g. for a local `wrangler dev`.
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { dbHealthResponseSchema } from "@colorless/schema";
 import { missingSecrets } from "../src/requiredSecrets";
 import { API_ROOT, type D1Target, d1Query, recordBookmark, wrangler } from "./d1";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trimEnd();
 
-const STEPS: Record<string, () => void> = {
+const migrationFiles = () =>
+  readdirSync(join(API_ROOT, "drizzle"))
+    .filter((name) => name.endsWith(".sql"))
+    .sort();
+
+const HEALTH_ATTEMPTS = 3;
+const HEALTH_RETRY_MS = 5_000;
+const HEALTH_TIMEOUT_MS = 10_000;
+
+function apiOrigin(): string {
+  if (process.env.API_ORIGIN) return process.env.API_ORIGIN.replace(/\/+$/, "");
+  const env = readFileSync(join(API_ROOT, "..", "..", ".env.production"), "utf8");
+  const origin = /^VITE_API_ORIGIN=(.+)$/m.exec(env)?.[1]?.trim();
+  if (!origin) throw new Error("health: FAIL — no VITE_API_ORIGIN in .env.production");
+  return origin.replace(/\/+$/, "");
+}
+
+/** One GET /health/db: the applied migration count, or why there is none. */
+async function dbHealth(url: string): Promise<{ migrations: number } | { problem: string }> {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
+    const body = dbHealthResponseSchema.safeParse(await response.json().catch(() => undefined));
+    if (!body.success) return { problem: `HTTP ${response.status}, not a /health/db body` };
+    if (!body.data.ok) return { problem: `HTTP ${response.status}: the Worker could not read D1` };
+    return { migrations: body.data.migrations };
+  } catch (error) {
+    return { problem: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+const STEPS: Record<string, () => void | Promise<void>> = {
   "clean-tree": () => {
     const changes = git("status", "--porcelain");
     const head = git("rev-parse", "HEAD");
@@ -94,9 +131,7 @@ const STEPS: Record<string, () => void> = {
     );
   },
   migrations: () => {
-    const files = readdirSync(join(API_ROOT, "drizzle"))
-      .filter((name) => name.endsWith(".sql"))
-      .sort();
+    const files = migrationFiles();
     const applied = (
       d1Query("--remote", "SELECT name FROM d1_migrations ORDER BY id")[0] ?? []
     ).map((row) => String(row.name));
@@ -112,6 +147,34 @@ const STEPS: Record<string, () => void> = {
         ...pending.map((name) => `  not applied remotely: ${name}`),
         ...unknown.map((name) => `  applied remotely but not in drizzle/: ${name}`),
         "Deploy through `bun run release` (it migrates first), or run `bun run db:migrate:remote`.",
+        "After a Time Travel restore, a file listed here was rewound: roll the Worker back first",
+        "(docs/workstreams/backend-data.md §3.7.3) instead of migrating again.",
+      ].join("\n"),
+    );
+  },
+  health: async () => {
+    const url = `${apiOrigin()}/health/db`;
+    const expected = migrationFiles().length;
+    let last = "";
+    for (let attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++) {
+      const result = await dbHealth(url);
+      if ("migrations" in result && result.migrations === expected) {
+        console.log(`health: OK — ${url} reads D1, ${expected} migrations applied`);
+        return;
+      }
+      last =
+        "migrations" in result
+          ? `${result.migrations} migrations applied, drizzle/ has ${expected}`
+          : result.problem;
+      if (attempt < HEALTH_ATTEMPTS) await new Promise((r) => setTimeout(r, HEALTH_RETRY_MS));
+    }
+    throw new Error(
+      [
+        `health: FAIL — ${url} after ${HEALTH_ATTEMPTS} tries: ${last}`,
+        "A count that differs from drizzle/: `bun scripts/release-gate.ts migrations` names the files.",
+        'A D1 error is logged as evt = "d1" in Workers Logs. To put the previous API back, from',
+        "apps/api: `bunx wrangler deployments list`, then `bunx wrangler rollback <version id>`.",
+        "See the recovery table in docs/workstreams/backend-data.md §3.7.2.",
       ].join("\n"),
     );
   },
@@ -124,7 +187,7 @@ if (requested.length === 0 || unknownSteps.length > 0) {
   process.exit(1);
 }
 try {
-  for (const step of requested) STEPS[step]?.();
+  for (const step of requested) await STEPS[step]?.();
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
