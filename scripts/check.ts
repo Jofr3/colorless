@@ -5,13 +5,60 @@
  * that `node_modules/.bin` provides runs from there. A step's output is printed whole when it
  * finishes, followed by a table of every step's time and result.
  *
+ * It refuses to start while a mutation sweep's journal exists (`mutationJournalProblem`).
+ *
  *   bun scripts/check.ts 'tsc -b' 'bun scripts/import-graph.ts --check'
  */
 
 import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { fail } from "./lib/cli";
-import { localBin, REPO_ROOT } from "./lib/repo";
+import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
+
+/** Set to `1` to check anyway. */
+const OVERRIDE = "CHECK_DURING_MUTATION";
+
+/**
+ * Why a check now would read mutated source, if it would. `scripts/mutation/run.ts` keeps its
+ * journal on disk exactly while a mutant is written: a live writer is mid-sweep, and a dead one
+ * left its files unrestored. Either way the steps would go red for nothing (D411).
+ */
+function mutationJournalProblem(): string | undefined {
+  if (process.env[OVERRIDE] === "1") return undefined;
+  const journal = process.env.MUTATION_JOURNAL_PATH ?? repoPath("tmp/mutation-journal.json");
+  if (!existsSync(journal)) return undefined;
+  let pid: unknown;
+  try {
+    pid = (JSON.parse(readFileSync(journal, "utf8")) as { pid?: unknown }).pid;
+  } catch {
+    pid = undefined;
+  }
+  const [what, next] =
+    typeof pid !== "number"
+      ? ["an unreadable mutation journal", "Read it and restore its files by hand"]
+      : pidIsAlive(pid)
+        ? [`a mutation sweep (pid ${pid}) is running; its journal`, "Wait for it to finish"]
+        : [
+            `a dead mutation run (pid ${pid}) left its files mutated; its journal`,
+            "Run `bun run mutants` once to restore them",
+          ];
+  return [
+    `check: refusing to start: ${what} is at ${journal},`,
+    "so the steps would read mutated source.",
+    `${next}, or set ${OVERRIDE}=1 to check anyway.`,
+  ].join("\n");
+}
+
+/** `run.ts`'s liveness test: signal 0 sends nothing, and EPERM is alive under another user. */
+function pidIsAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
 
 type Result = { step: string; ok: boolean; ms: number; output: string };
 
@@ -40,6 +87,8 @@ function run(step: string): Promise<Result> {
 
 const steps = process.argv.slice(2);
 if (steps.length === 0) fail("check: name at least one step to run.");
+const sweep = mutationJournalProblem();
+if (sweep !== undefined) fail(sweep);
 
 const results: Result[] = [];
 const queue = [...steps];
