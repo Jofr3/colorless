@@ -104,5 +104,16 @@ scenes.library.callbacks.command('x\nCOLORLESS:auth:submit')
 assert(messages[sent+1]=='COLORLESS:announce:x%0ACOLORLESS%3Aauth%3Asubmit%20joined.')
 assert(messages[sent+2]=='COLORLESS:library:x%0ACOLORLESS%3Aauth%3Asubmit')
 for _,m in ipairs(messages)do assert(not m:find('[%z\1-\8\10-\31\127]'),'One line per message: '..m)end
+-- love.draw runs under the open Settings popup, on every page mid-wipe and
+-- settled, and in portrait, so a nil index in one of its paths fails here.
+T.font=function()return {getWidth=function(_,s)return #tostring(s)*8 end,getHeight=function()return 20 end,
+ getWrap=function(_,s)return #tostring(s)*8,{tostring(s)}end,setFilter=noop}end
+local function draw(label)local ok,err=pcall(love.draw);assert(ok,label..': '..tostring(err))end
+draw('settings popup')
+local rev=11
+for _,page in ipairs({'home','decks','builder','sandbox','online','simulator','sandbox/play','match\tABCD'})do
+ rev=rev+1;route(rev,page);draw(page..' mid-wipe');frames(140);draw(page)
+end
+love.resize(480,850);frames(2);draw('portrait')
 print=output
-print('PASS: covered scene changes, input lock/unlock, resize, coalesced navigation, reduced-motion, online and match routing')
+print('PASS: covered scene changes, input lock/unlock, resize, coalesced navigation, reduced-motion, online and match routing, and love.draw on every page')
