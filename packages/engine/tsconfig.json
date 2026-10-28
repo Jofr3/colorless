@@ -11,6 +11,6 @@
     "emitDeclarationOnly": true,
     "outDir": "dist"
   },
-  "include": ["src", "package.json"],
+  "include": ["src", "src/fixtures/*.json", "package.json"],
   "references": [{ "path": "../schema" }]
 }

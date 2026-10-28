@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
-// Writes `scripts/bench/pool.json`, the real-card pool and four archetype decks `bun run bench`
-// plays. The local D1 is absent on a fresh clone, so the snapshot is committed; re-run this after
-// an ingest that should change what the benchmark plays (the fingerprint changes with it).
+// Writes `packages/engine/src/fixtures/benchPool.json`, the real-card pool and four archetype decks
+// `bun run bench` and `actionFuzzReal.test.ts` play. The local D1 is absent on a fresh clone, so the
+// snapshot is committed; re-run this after an ingest that should change what the benchmark plays
+// (the fingerprint changes with it).
 //
 //   bun scripts/bench/write-pool.ts     # COLORLESS_D1_SQLITE=<path> reads another sqlite
 
@@ -12,7 +13,7 @@ import type { Card } from "@colorless/schema";
 import { D1_DIR, findLocalD1 } from "../lib/localD1";
 import { localBin, REPO_ROOT, repoPath } from "../lib/repo";
 
-export const POOL_PATH = "scripts/bench/pool.json";
+export const POOL_PATH = "packages/engine/src/fixtures/benchPool.json";
 
 const DB_PATH = findLocalD1();
 if (DB_PATH === undefined)

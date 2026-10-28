@@ -252,7 +252,7 @@ only the conclusion.
   locale in the Worker bundle. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
   Worker with a wrangler dry run and fails on a non-English locale or a bundle over its budget.
 - **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
-  real-card pool `scripts/bench/pool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
+  real-card pool `packages/engine/src/fixtures/benchPool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
   applyAction per action and per action type, two redactions, logFromEvents, legality probes and a
   cold engine import, as medians. `--node` runs it under V8, `--cpu-prof` writes a profile to
   `tmp/bench/`. Its `fingerprint` hashes every state, event list, redaction and log row: a pure

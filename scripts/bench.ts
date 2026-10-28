@@ -26,9 +26,13 @@ import {
   logFromEvents,
   redactGame,
 } from "@colorless/engine";
-import { candidateActions, walkGame } from "@colorless/engine/testing";
-import type { Card } from "@colorless/schema";
-import snapshot from "./bench/pool.json";
+import {
+  BENCH_POOL,
+  type BenchDeckName,
+  benchDeck,
+  candidateActions,
+  walkGame,
+} from "@colorless/engine/testing";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
 const OUT_DIR = resolve(REPO_ROOT, "tmp/bench");
@@ -41,13 +45,7 @@ const PAIRS = [
   ["dragapult", "miraidon"],
   ["charizard", "dragapult"],
   ["gardevoir", "miraidon"],
-] as const;
-type DeckName = (typeof PAIRS)[number][number];
-
-const SNAPSHOT = snapshot as unknown as {
-  decks: Record<DeckName, [string, number][]>;
-  pool: Record<string, Card>;
-};
+] as const satisfies readonly (readonly [BenchDeckName, BenchDeckName])[];
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(name);
@@ -102,18 +100,14 @@ interface Trajectory {
   actions: GameAction[];
 }
 
-function deckOf(name: DeckName): string[] {
-  return SNAPSHOT.decks[name].flatMap(([id, count]) => Array<string>(count).fill(id));
-}
-
 function record(games: number): Trajectory[] {
   const out: Trajectory[] = [];
   for (let g = 0; g < games; g += 1) {
     const [a, b] = PAIRS[g % PAIRS.length] ?? PAIRS[0];
     const created = createGame({
       seed: 1000 + g,
-      decks: { p1: deckOf(a), p2: deckOf(b) },
-      cardPool: SNAPSHOT.pool,
+      decks: { p1: benchDeck(a), p2: benchDeck(b) },
+      cardPool: BENCH_POOL,
     });
     if (!created.ok) throw new Error(created.error.message);
     const actions: GameAction[] = [];
