@@ -97,6 +97,10 @@ function markBoot(name) {
   performance.mark(`colorless:${name}`);
   if (name === "ready") performance.measure("colorless:boot", undefined, "colorless:ready");
 }
+const BOOT_FAILED = "The menu could not start. Reload to try again, or use the menu links.";
+// After ready a Lua error stops a running page: the sandbox game is in local storage and an
+// online match on the server, so a reload picks either up again.
+const CRASHED = "Something went wrong. Reload to continue; a game in progress is saved.";
 /** @param {string} message */
 function fail(message) {
   document.body.classList.add("failed");
@@ -135,8 +139,7 @@ const loveModule = {
   print: (message) => {
     if (!message.startsWith("COLORLESS:")) {
       console.log(message);
-      if (/^Error:|stack traceback:/.test(message))
-        fail("The menu could not start. Reload to try again, or use the menu links.");
+      if (/^Error:|stack traceback:/.test(message)) fail(ready ? CRASHED : BOOT_FAILED);
       return;
     }
     if (message === "COLORLESS:ready") {
@@ -168,7 +171,7 @@ const loveModule = {
     }
   },
   onAbort: () => {
-    fail("The menu could not start. Reload to try again, or use the menu links.");
+    fail(ready ? CRASHED : BOOT_FAILED);
   },
 };
 globalThis.Module = loveModule;
