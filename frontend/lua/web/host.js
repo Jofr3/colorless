@@ -366,6 +366,12 @@ const loveModule = {
   },
 };
 globalThis.Module = loveModule;
+// A page being left aborts its downloads (Firefox reports a NetworkError); the plain package
+// is then not worth starting.
+let leaving = false;
+window.addEventListener("pagehide", () => {
+  leaving = true;
+});
 /** @param {string} url */
 async function fetchPackage(url) {
   if (typeof DecompressionStream === "function") {
@@ -382,6 +388,7 @@ async function fetchPackage(url) {
         body.body.pipeThrough(new DecompressionStream("gzip")),
       ).arrayBuffer();
     } catch (error) {
+      if (leaving) return new Promise(() => {});
       console.error("[colorless] packed game data", error);
     }
   }

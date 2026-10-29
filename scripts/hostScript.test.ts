@@ -270,6 +270,7 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
     finish,
     key,
     load: () => windowTarget.dispatchEvent(new Event("load")),
+    leave: () => windowTarget.dispatchEvent(new Event("pagehide")),
     visibility: (hidden: boolean) => {
       page.hidden = hidden;
       documentTarget.dispatchEvent(new Event("visibilitychange"));
@@ -465,6 +466,18 @@ describe("host.js game package (BT1)", () => {
     page.responses.set("/love/game.data.gz", () => new Response("", { status: 404 }));
     page.responses.set("/love/game.data", () => new Response(raw));
     expect(await fetchPackage(page)).toEqual(raw);
+  });
+
+  it("starts no plain download when the gzip copy fails because the page is being left", async () => {
+    const page = boot();
+    page.responses.set("/love/game.data.gz", () => {
+      page.leave();
+      throw new TypeError("NetworkError when attempting to fetch resource.");
+    });
+    expect(await fetchPackage(page)).toBeUndefined();
+    expect(page.fetches).toEqual(["/love/love.wasm", "/love/game.data.gz"]);
+    expect(page.body.classList.contains("failed")).toBe(false);
+    expect(page.errors).toEqual([]);
   });
 
   it("fails the page when neither copy downloads", async () => {
