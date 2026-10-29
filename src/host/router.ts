@@ -90,35 +90,52 @@ export function pageTitle(page: Page, deckName = ""): string {
   return `Colorless — ${(page === "builder" && deckName) || PAGE_NAMES[page]}`;
 }
 
-const LIBRARY_LABEL =
-  "Deck library. Tab or arrows choose controls and cards; each deck's Manage button renames or deletes it. Enter opens. Escape returns home.";
-const TABLE_LABEL =
-  "game table. Drag cards to play. Tab selects controls and cards; Enter activates; V views a selected card. Escape opens options.";
+const PAGE_LABELS: Record<Page, string> = {
+  home: "Colorless main menu",
+  decks: "Deck library",
+  builder: "Deck builder",
+  sandbox: "Sandbox deck selection",
+  simulator: "Sandbox game table",
+  online: "Online lobby",
+  match: "Online game table",
+};
 
-/** The canvas's accessible name on each page. */
-export function pageLabel(page: Page, deck?: { name: string; cards: number }): string {
-  switch (page) {
-    case "simulator":
-      return `Sandbox ${TABLE_LABEL}`;
-    case "match":
-      return `Online ${TABLE_LABEL}`;
-    case "sandbox":
-      return "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home.";
-    case "online":
-      return "Online lobby. Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back.";
-    case "builder":
-      if (deck)
-        return `Deck builder. ${deck.name}. ${deck.cards} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`;
-      return LIBRARY_LABEL;
-    case "decks":
-      return LIBRARY_LABEL;
-    case "home":
-      return "Colorless main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
-  }
+/** The open deck as the builder knows it: its name once loaded, or that it is still loading. */
+export interface BuilderDeck {
+  name: string;
+  loading: boolean;
 }
 
-/** Pages that draw the game table rather than a modal over the menu. */
-export const isTablePage = (page: Page) => page === "simulator" || page === "match";
+/** The canvas's accessible name and the page heading. It stays short and stable, so adding a card
+ * does not rename the focused canvas (Lua announces the count); how to use the page is in
+ * pageInstructions. */
+export function pageLabel(page: Page, deck?: BuilderDeck): string {
+  if (page === "builder" && deck?.name) return `Deck builder: ${deck.name}`;
+  if (page === "builder" && deck?.loading) return "Deck builder: loading the deck";
+  return PAGE_LABELS[page];
+}
+
+const TABLE_INSTRUCTIONS =
+  "Drag cards to play. Tab selects controls and cards; Enter activates; V views a selected card. Escape opens options.";
+
+const PAGE_INSTRUCTIONS: Record<Page, string> = {
+  home: "Click a button, or use Tab or arrow keys to choose and Enter to open. Tab past the last button, or Shift+Tab before the first, leaves the game for the page's links. M toggles sound. Settings opens a popup: Tab moves between controls, left and right adjust sliders, and Escape closes. Account opens your profile in the settings popup. Decks opens the deck library. Sandbox opens the deck chooser and game table. Online opens the lobby popup: create a lobby and share its code, or join with a code; then choose a deck and ready up.",
+  decks:
+    "Tab or arrows choose controls and cards; each deck's Manage button renames or deletes it. Enter opens. Escape returns home.",
+  builder:
+    "Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog. Escape returns to the deck library.",
+  sandbox:
+    "Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home.",
+  simulator: TABLE_INSTRUCTIONS,
+  online:
+    "Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back.",
+  match: TABLE_INSTRUCTIONS,
+};
+
+/** How to use each page: the canvas's description (#instructions). */
+export function pageInstructions(page: Page): string {
+  return PAGE_INSTRUCTIONS[page];
+}
 
 export interface RouterWindow {
   location: { href: string };

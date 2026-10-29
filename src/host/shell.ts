@@ -1,5 +1,5 @@
-/** The page around the Lua canvas: Lua's print commands, the text proxies, the accessible links
- * and the canvas's dialog semantics. */
+/** The page around the Lua canvas: Lua's print commands, the text proxies, the accessible links,
+ * the canvas's name, description and state, and the Tab that leaves the canvas. */
 
 import { DECK_NAME_MAX, DISPLAY_NAME_MAX, normalizeLobbyCode } from "@colorless/schema";
 import { readPersisted, writePersisted } from "../lib/persistedState";
@@ -7,7 +7,7 @@ import { reportError } from "../lib/reportError";
 import { decodeFields, encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
-import { type Page, isTablePage } from "./router";
+import type { Page } from "./router";
 import {
   AUTH_FIELDS,
   type AuthField,
@@ -31,8 +31,17 @@ export interface PageView {
   page: Page;
   id: string;
   title: string;
+  /** The canvas's accessible name and the page heading (router.ts pageLabel). */
   label: string;
+  /** How to use the page: the canvas's description (router.ts pageInstructions). */
+  instructions: string;
 }
+
+/** What host.js reports about the boot and the runtime (bridgeProtocol.d.ts onDegraded). */
+export type DegradedState = "stalled" | "failed" | "recovered";
+
+/** Where home's keyboard focus sits in its ring (main.lua's focus-edge print). */
+type FocusEdge = "first" | "last" | "none";
 
 export interface ShellPorts {
   command(screen: BridgeScreen, raw: string): void;
@@ -55,7 +64,15 @@ const AUTH_FORM_LABEL: Record<AuthMode, string> = {
 /** Lua's preferences record, kept as Lua serializes it; Lua owns its fields. */
 const PREFERENCES_KEY = "colorless.lua.preferences";
 
-const SETTINGS_LABEL = "Settings. Tab between controls. Arrow keys adjust values. Escape closes.";
+const SETTINGS_INSTRUCTIONS = "Tab between controls. Arrow keys adjust values. Escape closes.";
+const AUTH_INSTRUCTIONS =
+  "Tab between controls. Enter edits or activates. Escape returns to Settings.";
+const LOADING_LABEL = "Colorless is loading";
+const FAILED_LABEL = "Colorless has stopped. Reload to continue.";
+
+/** How long an announcement stays in the live region before it is cleared, so no stale text is
+    left for a screen reader to meet while reading. */
+export const ANNOUNCEMENT_CLEAR_MS = 5000;
 
 /** The screens whose single-line fields share one proxy, each with its own mailbox. */
 type LineOwner = "library" | "sandbox" | "online";
@@ -129,8 +146,14 @@ export function joinAnnouncements(parts: readonly string[]): string {
 export class HostShell {
   private view: PageView;
   private ready = false;
+  /** A stalled boot or a failed page: the canvas steps aside for the links, which load for real. */
+  private degraded: "stalled" | "failed" | null = null;
   private settingsOpen = false;
+  /** The auth form open in Settings. */
+  private authOpen = false;
   private transitionOpen = false;
+  private focusEdge: FocusEdge = "none";
+  private announcementTimer: ReturnType<typeof setTimeout> | undefined;
   private pageRevision = 0;
   private settingsRevision = 0;
   private lineOwner: LineOwner = "library";
@@ -162,6 +185,7 @@ export class HostShell {
       id: "",
       title: doc.title,
       label: canvas.getAttribute("aria-label") ?? "",
+      instructions: doc.getElementById("instructions")?.textContent ?? "",
     };
     const release = () => this.focusCanvas();
     host.writeMailbox(
@@ -252,11 +276,22 @@ export class HostShell {
     this.link("sandbox-link", () => ports.command("simulator", "resume"));
     this.link("settings-link", () => this.requestSettings("game"));
     this.link("account-link", () => this.requestSettings("account"));
+    this.link("home-link", () => ports.navigate("home"));
     // ?account and ?settings open Settings over the page on the matching tab.
     const params = new URLSearchParams(doc.location.search);
     if (params.has("account") || params.has("settings"))
       this.requestSettings(params.has("account") ? "account" : "game");
-    // Tab stays with the native links; arrows navigate inside the canvas.
+    // SDL's window listener (bubble phase) prevents every Tab; this capture listener runs first
+    // and keeps the one Tab that leaves home's ring from it, so the browser moves focus on.
+    window.addEventListener(
+      "keydown",
+      (event) => {
+        if (this.tabLeaves(event)) event.stopImmediatePropagation();
+      },
+      true,
+    );
+    // Off home and in Settings the canvas keeps Tab and the paging keys; arrows always navigate
+    // inside it rather than scrolling.
     canvas.addEventListener("keydown", (event) => {
       if (
         ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code) ||
@@ -267,19 +302,26 @@ export class HostShell {
     });
   }
 
-  /** Mirrors the router's page into Lua's page mailbox, the title and the canvas label. */
+  /** Mirrors the router's page into Lua's page mailbox, the title, heading and canvas. */
   showPage(view: PageView) {
     const moved = view.page !== this.view.page || view.id !== this.view.id;
     if (moved) this.finishInputs();
     this.view = view;
-    this.syncModal();
+    this.sync();
     if (moved || this.pageRevision === 0)
       this.host.writeMailbox(
         MAILBOXES.page,
         encodeFields([++this.pageRevision, view.page, view.id]),
       );
-    this.doc.title = view.title;
-    if (!this.settingsOpen) this.canvas.setAttribute("aria-label", view.label);
+  }
+
+  /** host.js's boot and runtime state. A failure is final; a stall lasts until the download moves
+      again or Lua is ready. */
+  onDegraded(state: DegradedState) {
+    if (state === "failed") this.degraded = "failed";
+    else if (this.degraded !== "failed")
+      this.degraded = state === "stalled" && !this.ready ? "stalled" : null;
+    this.sync();
   }
 
   /** Ends the deck and builder edits, publishing their last values. */
@@ -313,7 +355,12 @@ export class HostShell {
       const message = joinAnnouncements(this.heard);
       this.heard = [];
       const region = this.doc.getElementById("announcement");
-      if (region) region.textContent = nextAnnouncement(region.textContent ?? "", message);
+      if (!region) return;
+      region.textContent = nextAnnouncement(region.textContent ?? "", message);
+      clearTimeout(this.announcementTimer);
+      this.announcementTimer = setTimeout(() => {
+        region.textContent = "";
+      }, ANNOUNCEMENT_CLEAR_MS);
     });
   }
   onPrint(message: string) {
@@ -331,8 +378,10 @@ export class HostShell {
     switch (channel) {
       case "ready":
         this.ready = true;
-        this.doc.title = this.view.title;
+        if (this.degraded === "stalled") this.degraded = null;
+        this.sync();
         this.focusCanvas();
+        this.announce("Colorless is ready");
         break;
       case "page":
         this.ports.navigate(printText(rest));
@@ -367,37 +416,97 @@ export class HostShell {
       }
       case "transition":
         this.transitionOpen = printText(rest) === "open";
-        this.syncModal();
+        this.sync();
         break;
+      case "focus-edge": {
+        const edge = printText(rest);
+        if (edge === "first" || edge === "last" || edge === "none") this.focusEdge = edge;
+        break;
+      }
     }
   }
 
   private focusCanvas() {
-    this.canvas.focus({ preventScroll: true });
+    if (!this.degraded) this.canvas.focus({ preventScroll: true });
   }
 
   private link(id: string, run: () => void) {
     this.doc.getElementById(id)?.addEventListener("click", (event) => {
-      // Until Lua is ready the link loads its page the ordinary way.
-      if (!this.ready) return;
+      // Until Lua is ready, and once the boot stalls or the page fails, the link loads its page
+      // the ordinary way.
+      if (!this.ready || this.degraded) return;
       event.preventDefault();
       run();
       this.focusCanvas();
     });
   }
 
-  private syncModal() {
-    const elsewhere = this.view.page !== "home";
+  /** A text proxy holds focus and its keys. */
+  private editing(): boolean {
+    const lines = [this.name, this.line, this.builderLine, this.builderText];
+    return lines.some((proxy) => proxy.field !== "") || this.auth.editing !== "";
+  }
+
+  /** The Tab (or Shift+Tab) that leaves the canvas: on home, with Lua's focus on the ring's last
+      (first) button, and nothing over the menu. Lua says "none" while a popup or a wipe is up;
+      the shell's own Settings, wipe and proxy state are checked too, in case a print is late. */
+  private tabLeaves(event: Event): boolean {
+    const key = event as KeyboardEvent;
+    if (key.key !== "Tab" || key.ctrlKey || key.altKey || key.metaKey) return false;
+    if (this.doc.activeElement !== this.canvas) return false;
+    if (!this.ready || this.degraded || this.view.page !== "home") return false;
+    if (this.settingsOpen || this.transitionOpen || this.editing()) return false;
+    return this.focusEdge === (key.shiftKey ? "first" : "last");
+  }
+
+  /** The canvas's name while something covers the page, else the page's. */
+  private canvasLabel(): string {
+    if (this.degraded === "failed") return FAILED_LABEL;
+    if (!this.ready || this.degraded) return LOADING_LABEL;
+    if (this.settingsOpen && this.authOpen) return AUTH_FORM_LABEL[this.authMode];
+    if (this.settingsOpen) return "Settings";
+    return this.view.label;
+  }
+
+  private canvasInstructions(): string {
+    if (this.settingsOpen && this.authOpen) return AUTH_INSTRUCTIONS;
+    if (this.settingsOpen) return SETTINGS_INSTRUCTIONS;
+    return this.view.instructions;
+  }
+
+  /** Derives the page's semantics from its state, writing only what changed. The canvas is a game
+      application. Settings and the collection pages are drawn over home, so the home links are
+      inert under them (real inert, not aria-modal, which could hide the #announcement live
+      region outside a modal). While degraded the canvas steps aside: no role, out of the Tab
+      order, and the links live, so a deep link's reader can reach Home or a page. */
+  private sync() {
+    const degraded = this.degraded !== null;
     const menu = this.doc.querySelector<HTMLElement>(".accessible-menu");
-    if (menu) menu.inert = this.settingsOpen || elsewhere || this.transitionOpen;
-    this.canvas.setAttribute("aria-busy", String(this.transitionOpen));
-    if (this.settingsOpen || (elsewhere && !isTablePage(this.view.page))) {
-      this.canvas.setAttribute("role", "dialog");
-      this.canvas.setAttribute("aria-modal", "true");
-    } else {
-      this.canvas.removeAttribute("role");
-      this.canvas.removeAttribute("aria-modal");
-    }
+    const covered = this.settingsOpen || this.view.page !== "home" || this.transitionOpen;
+    if (menu) menu.inert = !degraded && covered;
+    const home = this.doc.getElementById("home-link");
+    if (home) home.hidden = this.view.page === "home";
+    const busy = this.degraded !== "failed" && (!this.ready || this.transitionOpen);
+    this.attribute("aria-busy", String(busy));
+    this.attribute("role", degraded ? null : "application");
+    this.attribute("aria-roledescription", degraded ? null : "game");
+    this.attribute("tabindex", degraded ? "-1" : "0");
+    this.attribute("aria-label", this.canvasLabel());
+    this.text("instructions", this.canvasInstructions());
+    this.text("page-heading", this.view.label);
+    if (this.doc.title !== this.view.title) this.doc.title = this.view.title;
+    if (this.degraded === "failed" && this.doc.activeElement === this.canvas) this.canvas.blur();
+  }
+
+  private attribute(name: string, value: string | null) {
+    if (this.canvas.getAttribute(name) === value) return;
+    if (value === null) this.canvas.removeAttribute(name);
+    else this.canvas.setAttribute(name, value);
+  }
+
+  private text(id: string, value: string) {
+    const element = this.doc.getElementById(id);
+    if (element && element.textContent !== value) element.textContent = value;
   }
 
   private requestSettings(tab: "game" | "account") {
@@ -407,13 +516,13 @@ export class HostShell {
   private settingsChanged(open: boolean) {
     this.settingsOpen = open;
     this.doc.getElementById("settings-link")?.setAttribute("aria-expanded", String(open));
+    this.authOpen = false;
     if (open) this.line.finish();
     else {
       this.name.finish();
       this.auth.clear();
     }
-    this.syncModal();
-    this.canvas.setAttribute("aria-label", open ? SETTINGS_LABEL : this.view.label);
+    this.sync();
     this.focusCanvas();
   }
 
@@ -496,10 +605,8 @@ export class HostShell {
       email.setAttribute("aria-label", deleting ? "Type your email to confirm" : "Email");
       this.auth.publish("reset");
       this.ports.command("account", "clear-message");
-      this.canvas.setAttribute(
-        "aria-label",
-        `${AUTH_FORM_LABEL[this.authMode]}. Tab between controls. Enter edits or activates. Escape returns to Settings.`,
-      );
+      this.authOpen = true;
+      this.sync();
     } else if (action === "edit" && (AUTH_FIELDS as readonly string[]).includes(value)) {
       this.auth.edit(value as AuthField);
     } else if (action === "submit") {
@@ -519,8 +626,9 @@ export class HostShell {
       this.ports.command("account", "google");
     } else if (action === "close") {
       this.auth.clear();
+      this.authOpen = false;
+      this.sync();
       this.focusCanvas();
-      this.canvas.setAttribute("aria-label", SETTINGS_LABEL);
     }
   }
 

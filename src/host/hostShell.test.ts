@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
-import { HostShell, type ShellPorts } from "./shell";
+import { HostShell, type PageView, type ShellPorts } from "./shell";
 
 /** Just enough of an element for the shell and its text proxies, on Node's EventTarget. */
 class FakeElement extends EventTarget {
@@ -32,24 +32,76 @@ class FakeElement extends EventTarget {
   removeAttribute(name: string) {
     this.attributes.delete(name);
   }
-  focus() {}
+  focus() {
+    page.activeElement = this;
+  }
+  blur() {
+    if (page.activeElement === this) page.activeElement = null;
+  }
   select() {}
   setSelectionRange() {}
   append() {}
 }
 class FakeCanvas extends FakeElement {}
+/** The fake document's focus, which FakeElement.focus moves. */
+const page: { activeElement: FakeElement | null } = { activeElement: null };
+
+const PAGE_VIEWS = {
+  home: {
+    page: "home",
+    id: "",
+    title: "Colorless — Home",
+    label: "Colorless main menu",
+    instructions: "Home instructions.",
+  },
+  builder: {
+    page: "builder",
+    id: "d1",
+    title: "Colorless — Tidal Splash",
+    label: "Deck builder: Tidal Splash",
+    instructions: "Builder instructions.",
+  },
+} satisfies Record<string, PageView>;
 
 function fakePage() {
   const canvas = new FakeCanvas();
+  canvas.setAttribute("role", "application");
+  canvas.setAttribute("tabindex", "0");
   const announcement = new FakeElement();
+  const instructions = new FakeElement();
+  const heading = new FakeElement();
+  const nav = new FakeElement();
+  const links = Object.fromEntries(
+    ["decks-link", "online-link", "sandbox-link", "settings-link", "account-link", "home-link"].map(
+      (id) => [id, new FakeElement()],
+    ),
+  );
+  const elements: Record<string, FakeElement> = {
+    canvas,
+    announcement,
+    instructions,
+    "page-heading": heading,
+    ...links,
+  };
   const created: FakeElement[] = [];
+  let titleWrites = 0;
+  let title = "Colorless";
+  page.activeElement = null;
   const doc = {
-    title: "Colorless",
+    get title() {
+      return title;
+    },
+    set title(value: string) {
+      titleWrites++;
+      title = value;
+    },
+    get activeElement() {
+      return page.activeElement;
+    },
     location: { search: "" },
     body: new FakeElement(),
-    getElementById: (id: string) =>
-      id === "canvas" ? canvas : id === "announcement" ? announcement : null,
-    querySelector: () => null,
+    getElementById: (id: string) => elements[id] ?? null,
+    querySelector: (selector: string) => (selector === ".accessible-menu" ? nav : null),
     createElement: (tag: string) => {
       const element = new FakeElement();
       element.tagName = tag.toUpperCase();
@@ -71,7 +123,42 @@ function fakePage() {
   };
   const shell = new HostShell(doc as unknown as Document, host, ports);
   const labelled = (label: string) => created.find((e) => e.getAttribute("aria-label") === label);
-  return { shell, ports, mailboxes, labelled, created, announcement };
+  return {
+    shell,
+    ports,
+    mailboxes,
+    labelled,
+    created,
+    announcement,
+    canvas,
+    instructions,
+    heading,
+    nav,
+    links,
+    titleWrites: () => titleWrites,
+  };
+}
+
+/** Clicks a link as a user would; true when the shell kept the browser from following it. */
+function click(link: FakeElement | undefined) {
+  const event = new Event("click", { cancelable: true });
+  link?.dispatchEvent(event);
+  return event.defaultPrevented;
+}
+
+/** A Tab keydown as the window's later listeners (SDL's) see it: whether it reached them, and
+    whether anything prevented the browser's own focus move. */
+function tab(shiftKey = false) {
+  let reached = false;
+  const later = () => {
+    reached = true;
+  };
+  window.addEventListener("keydown", later);
+  const event = new Event("keydown", { cancelable: true });
+  Object.assign(event, { key: "Tab", code: "Tab", shiftKey });
+  window.dispatchEvent(event);
+  window.removeEventListener("keydown", later);
+  return { reachedSdl: reached, prevented: event.defaultPrevented };
 }
 
 const print = (channel: string, ...fields: string[]) =>
@@ -211,5 +298,170 @@ describe("HostShell", () => {
     email.value = "ash@example.com";
     shell.onPrint(print("auth", "close"));
     expect(email.value).toBe("");
+  });
+});
+
+describe("HostShell's page semantics", () => {
+  it("says the canvas is loading until Lua is ready, then names the page and says it is ready", async () => {
+    const { shell, canvas, instructions, heading, nav, announcement } = fakePage();
+    shell.showPage(PAGE_VIEWS.builder);
+    expect(canvas.getAttribute("aria-busy")).toBe("true");
+    expect(canvas.getAttribute("aria-label")).toBe("Colorless is loading");
+    expect(canvas.getAttribute("role")).toBe("application");
+    expect(canvas.getAttribute("aria-roledescription")).toBe("game");
+    expect(canvas.getAttribute("aria-modal")).toBeNull();
+    expect(heading.textContent).toBe("Deck builder: Tidal Splash");
+    expect(instructions.textContent).toBe("Builder instructions.");
+    expect(nav.inert).toBe(true);
+    shell.onPrint(print("ready"));
+    expect(canvas.getAttribute("aria-busy")).toBe("false");
+    expect(canvas.getAttribute("aria-label")).toBe("Deck builder: Tidal Splash");
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("Colorless is ready");
+  });
+
+  it("opens the links and the page up while the boot stalls, and closes them again when it moves", () => {
+    const { shell, canvas, nav, links, ports } = fakePage();
+    shell.showPage(PAGE_VIEWS.builder);
+    expect(links["home-link"]?.hidden).toBe(false);
+    shell.onDegraded("stalled");
+    expect(nav.inert).toBe(false);
+    expect(canvas.getAttribute("tabindex")).toBe("-1");
+    expect(canvas.getAttribute("role")).toBeNull();
+    expect(canvas.getAttribute("aria-busy")).toBe("true");
+    expect(click(links["decks-link"])).toBe(false);
+    shell.onDegraded("recovered");
+    expect(nav.inert).toBe(true);
+    expect(canvas.getAttribute("tabindex")).toBe("0");
+    expect(canvas.getAttribute("role")).toBe("application");
+    shell.onPrint(print("ready"));
+    expect(click(links["decks-link"])).toBe(true);
+    expect(ports.navigate).toHaveBeenCalledWith("decks");
+  });
+
+  it("leaves a failed page to ordinary links, off the dead canvas", () => {
+    const { shell, canvas, nav, links, ports } = fakePage();
+    shell.showPage(PAGE_VIEWS.builder);
+    shell.onPrint(print("ready"));
+    canvas.focus();
+    shell.onDegraded("failed");
+    expect(nav.inert).toBe(false);
+    expect(canvas.getAttribute("tabindex")).toBe("-1");
+    expect(canvas.getAttribute("role")).toBeNull();
+    expect(canvas.getAttribute("aria-busy")).toBe("false");
+    expect(canvas.getAttribute("aria-label")).toBe("Colorless has stopped. Reload to continue.");
+    expect(page.activeElement).toBeNull();
+    expect(click(links["decks-link"])).toBe(false);
+    expect(click(links["home-link"])).toBe(false);
+    expect(ports.navigate).not.toHaveBeenCalled();
+    shell.onDegraded("recovered");
+    shell.onPrint(print("settings", "open"));
+    expect(nav.inert).toBe(false);
+    expect(canvas.getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("hides the Home link on home", () => {
+    const { shell, links } = fakePage();
+    shell.showPage(PAGE_VIEWS.home);
+    expect(links["home-link"]?.hidden).toBe(true);
+  });
+
+  it("writes the title, name, description and heading only when they change", () => {
+    const { shell, canvas, titleWrites } = fakePage();
+    shell.onPrint(print("ready"));
+    shell.showPage(PAGE_VIEWS.builder);
+    const writes = vi.spyOn(canvas, "setAttribute");
+    const titles = titleWrites();
+    shell.showPage({ ...PAGE_VIEWS.builder });
+    expect(writes).not.toHaveBeenCalled();
+    expect(titleWrites()).toBe(titles);
+  });
+
+  it("names and describes Settings and the auth form while they are open", () => {
+    const { shell, canvas, instructions } = fakePage();
+    shell.onPrint(print("ready"));
+    shell.showPage(PAGE_VIEWS.home);
+    shell.onPrint(print("settings", "open"));
+    expect(canvas.getAttribute("aria-label")).toBe("Settings");
+    expect(instructions.textContent).toBe(
+      "Tab between controls. Arrow keys adjust values. Escape closes.",
+    );
+    shell.onPrint(print("auth", "open", "register"));
+    expect(canvas.getAttribute("aria-label")).toBe("Create account");
+    expect(instructions.textContent).toBe(
+      "Tab between controls. Enter edits or activates. Escape returns to Settings.",
+    );
+    shell.onPrint(print("auth", "close"));
+    expect(canvas.getAttribute("aria-label")).toBe("Settings");
+    shell.onPrint(print("auth", "open", "login"));
+    shell.onPrint(print("settings", "closed"));
+    expect(canvas.getAttribute("aria-label")).toBe("Colorless main menu");
+    expect(instructions.textContent).toBe("Home instructions.");
+  });
+
+  it("clears an announcement a few seconds after it is made", async () => {
+    vi.useFakeTimers();
+    try {
+      const { shell, announcement } = fakePage();
+      shell.onPrint(print("announce", "Decks"));
+      await Promise.resolve();
+      vi.advanceTimersByTime(2000);
+      shell.onPrint(print("announce", "Decks"));
+      await Promise.resolve();
+      expect(announcement.textContent).toBe("Decks ");
+      vi.advanceTimersByTime(4000);
+      expect(announcement.textContent).toBe("Decks ");
+      vi.advanceTimersByTime(1000);
+      expect(announcement.textContent).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("HostShell's Tab out of the canvas", () => {
+  function onHome() {
+    const shell = fakePage();
+    shell.shell.onPrint(print("ready"));
+    shell.shell.showPage(PAGE_VIEWS.home);
+    shell.canvas.focus();
+    return shell;
+  }
+
+  it("lets Tab at the last home button and Shift+Tab at the first through to the browser", () => {
+    const { shell } = onHome();
+    expect(tab()).toEqual({ reachedSdl: true, prevented: false });
+    shell.onPrint(print("focus-edge", "last"));
+    expect(tab()).toEqual({ reachedSdl: false, prevented: false });
+    expect(tab(true).reachedSdl).toBe(true);
+    shell.onPrint(print("focus-edge", "first"));
+    expect(tab(true)).toEqual({ reachedSdl: false, prevented: false });
+    expect(tab().reachedSdl).toBe(true);
+    shell.onPrint(print("focus-edge", "none"));
+    expect(tab(true).reachedSdl).toBe(true);
+  });
+
+  it("keeps the Tab in the canvas off home, under Settings or a wipe, and while a field edits", () => {
+    const { shell, canvas } = onHome();
+    shell.onPrint(print("focus-edge", "last"));
+    shell.onPrint(print("settings", "open"));
+    expect(tab().reachedSdl).toBe(true);
+    shell.onPrint(print("settings", "closed"));
+    shell.onPrint(print("transition", "open"));
+    expect(tab().reachedSdl).toBe(true);
+    shell.onPrint(print("transition", "closed"));
+    shell.showPage(PAGE_VIEWS.builder);
+    expect(tab().reachedSdl).toBe(true);
+    shell.showPage(PAGE_VIEWS.home);
+    canvas.focus();
+    expect(tab().reachedSdl).toBe(false);
+    shell.onPrint(print("account", "edit", "Ash"));
+    canvas.focus();
+    expect(tab().reachedSdl).toBe(true);
+    shell.onPrint(print("account", "finish-edit"));
+    canvas.focus();
+    expect(tab().reachedSdl).toBe(false);
+    page.activeElement = null;
+    expect(tab().reachedSdl).toBe(true);
   });
 });

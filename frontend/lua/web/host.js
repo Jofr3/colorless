@@ -32,11 +32,15 @@ const BOOT_STALL_MS = 45000;
 let bootStallTimer;
 function watchBoot() {
   clearTimeout(bootStallTimer);
-  document.body.classList.remove("stalled");
+  if (document.body.classList.contains("stalled")) {
+    document.body.classList.remove("stalled");
+    if (!document.body.classList.contains("failed")) bridge?.onDegraded("recovered");
+  }
   if (ready || document.body.classList.contains("failed")) return;
   bootStallTimer = setTimeout(() => {
     document.body.classList.add("stalled");
     statusElement.textContent = "Still loading… Reload to try again, or use the menu links.";
+    bridge?.onDegraded("stalled");
   }, BOOT_STALL_MS);
 }
 // Preserve browser reload shortcuts before SDL can consume their key events.
@@ -124,7 +128,7 @@ function fail(message) {
   document.body.classList.add("failed");
   loading.style.display = "flex";
   statusElement.textContent = message;
-  bridge?.onFailed();
+  bridge?.onDegraded("failed");
 }
 function syncViewport() {
   if (!bridge) return;

@@ -22,9 +22,11 @@ export interface HostArtworkCache {
 export interface ColorlessBridge {
   /** Every `COLORLESS:` print from Lua; the host handles a few of them itself first. */
   onPrint(message: string): void;
-  /** The page shows its failure overlay (a Lua error, lost graphics, an abort): nothing can play
-   * on, so live online links close as a closed tab's would. */
-  onFailed(): void;
+  /** The boot or the runtime went wrong, or a stalled boot moved again. "stalled": the download
+   * stopped moving before ready; "recovered": it moved again; "failed": the page shows its failure
+   * overlay (a Lua error, lost graphics, an abort), so nothing can play on and live online links
+   * close as a closed tab's would. */
+  onDegraded(state: "stalled" | "failed" | "recovered"): void;
   artwork: HostArtworkCache;
   mailboxes: typeof MAILBOXES;
 }
