@@ -6,6 +6,7 @@ import { HostShell, type ShellPorts } from "./shell";
 
 /** Just enough of an element for the shell and its text proxies, on Node's EventTarget. */
 class FakeElement extends EventTarget {
+  tagName = "";
   value = "";
   hidden = false;
   inert = false;
@@ -16,6 +17,7 @@ class FakeElement extends EventTarget {
   autocapitalize = "";
   spellcheck = true;
   inputMode = "";
+  enterKeyHint = "";
   maxLength = 0;
   selectionStart = 0;
   selectionEnd = 0;
@@ -46,8 +48,9 @@ function fakePage() {
     body: new FakeElement(),
     getElementById: (id: string) => (id === "canvas" ? canvas : null),
     querySelector: () => null,
-    createElement: () => {
+    createElement: (tag: string) => {
       const element = new FakeElement();
+      element.tagName = tag.toUpperCase();
       created.push(element);
       return element;
     },
@@ -66,7 +69,7 @@ function fakePage() {
   };
   const shell = new HostShell(doc as unknown as Document, host, ports);
   const labelled = (label: string) => created.find((e) => e.getAttribute("aria-label") === label);
-  return { shell, ports, mailboxes, labelled };
+  return { shell, ports, mailboxes, labelled, created };
 }
 
 const print = (channel: string, ...fields: string[]) =>
@@ -114,6 +117,41 @@ describe("HostShell", () => {
     expect(note.split("\t")[1]).toBe(
       "Copy failed. Select the decklist and use your copy shortcut.",
     );
+  });
+
+  it("edits the builder's names and searches in a one-line field named as Lua draws it", () => {
+    const { shell, created } = fakePage();
+    const open = () => created.filter((e) => !e.hidden);
+    const expected = {
+      name: ["Deck name", "done", "text", 100],
+      query: ["Search cards", "search", "search", 300],
+      optionQuery: ["Find an option", "search", "search", 300],
+      text: ["Rules text", "search", "search", 300],
+    } as const;
+    for (const [field, [label, enter, mode, max]] of Object.entries(expected)) {
+      shell.onPrint(print("builder", "input", field, "Pika"));
+      const [element, ...others] = open();
+      expect(others).toEqual([]);
+      expect(element?.tagName).toBe("INPUT");
+      expect(element?.getAttribute("aria-label")).toBe(label);
+      expect([element?.enterKeyHint, element?.inputMode, element?.maxLength]).toEqual([
+        enter,
+        mode,
+        max,
+      ]);
+      expect([element?.spellcheck, element?.autocapitalize, element?.value]).toEqual([
+        false,
+        "none",
+        "Pika",
+      ]);
+    }
+    shell.onPrint(print("builder", "input", "transfer", "4 Pikachu"));
+    const [decklist, ...others] = open();
+    expect(others).toEqual([]);
+    expect(decklist?.tagName).toBe("TEXTAREA");
+    expect(decklist?.getAttribute("aria-label")).toBe("Decklist. Paste your list here.");
+    shell.onPrint(print("builder", "finish-input"));
+    expect(open()).toEqual([]);
   });
 
   it("empties the auth form for another account, a deletion's email, and on close", () => {

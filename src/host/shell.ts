@@ -65,6 +65,26 @@ const LINE_MAILBOX: Record<LineOwner, string> = {
   online: MAILBOXES.onlineInput,
 };
 
+/** The builder's text fields, named as Lua draws them (frontend/lua/ui/builder.lua FIELD_LABELS). */
+export const BUILDER_FIELD_LABEL: Record<string, string> = {
+  name: "Deck name",
+  query: "Search cards",
+  optionQuery: "Find an option",
+  text: "Rules text",
+  transfer: "Decklist. Paste your list here.",
+};
+
+/** Dresses the builder's one-line proxy for `field`: a deck name, or one of its searches. */
+export function dressBuilderLine(element: HTMLInputElement, field: string) {
+  const name = field === "name";
+  element.maxLength = name ? DECK_NAME_MAX : 300;
+  element.setAttribute("aria-label", BUILDER_FIELD_LABEL[field] ?? field);
+  element.spellcheck = false;
+  element.autocapitalize = "none";
+  element.enterKeyHint = name ? "done" : "search";
+  element.inputMode = name ? "text" : "search";
+}
+
 /** A pasted invite link (/online/CODE, or an older /?lobby=CODE) yields its code. */
 const INVITE_LINK = /(?:[?&]lobby=|\/(?:online|lobby|match)\/)([^&#?/\s]+)/i;
 
@@ -110,6 +130,10 @@ export class HostShell {
   private readonly canvas: HTMLCanvasElement;
   private readonly name: TextProxy;
   private readonly line: TextProxy;
+  /** The builder's name and search fields. */
+  private readonly builderLine: TextProxy;
+  private readonly builderLineInput: HTMLInputElement;
+  /** The builder's decklist, where Enter types a newline. */
   private readonly builderText: TextProxy;
   private readonly auth: AuthProxy;
   private authMode: AuthMode = "login";
@@ -160,20 +184,34 @@ export class HostShell {
       },
     });
 
+    const builderPublished = (field: string, value: string) => {
+      if (field === "name") this.builderCommand("name", value);
+      else if (field === "optionQuery") this.builderCommand("option-query", value);
+      else if (field !== "transfer") this.builderCommand("filter", field, value);
+    };
+    const builderLineInput = proxyElement(doc, "input");
+    builderLineInput.autocomplete = "off";
+    this.builderLineInput = builderLineInput;
+    this.builderLine = createTextProxy({
+      element: builderLineInput,
+      write: (record) => host.writeMailbox(MAILBOXES.builderInput, record),
+      release,
+      // A pasted line break would otherwise end up inside a name or a search.
+      normalize: (element) => {
+        element.value = element.value.replace(/[\r\n]/g, " ");
+      },
+      published: builderPublished,
+    });
     const builderInput = proxyElement(doc, "textarea");
+    builderInput.setAttribute("aria-label", BUILDER_FIELD_LABEL.transfer ?? "");
+    builderInput.spellcheck = false;
+    builderInput.autocapitalize = "none";
     this.builderText = createTextProxy({
       element: builderInput,
       write: (record) => host.writeMailbox(MAILBOXES.builderInput, record),
       release,
-      multiline: (field) => field === "transfer",
-      normalize: (element, field) => {
-        if (field !== "transfer") element.value = element.value.replace(/[\r\n]/g, " ");
-      },
-      published: (field, value) => {
-        if (field === "name") this.builderCommand("name", value);
-        else if (field === "optionQuery") this.builderCommand("option-query", value);
-        else if (field !== "transfer") this.builderCommand("filter", field, value);
-      },
+      multiline: () => true,
+      published: builderPublished,
     });
 
     const authInputs = {} as Record<AuthField, HTMLInputElement>;
@@ -238,6 +276,7 @@ export class HostShell {
   /** Ends the deck and builder edits, publishing their last values. */
   finishInputs() {
     this.line.finish();
+    this.builderLine.finish();
     this.builderText.finish();
   }
 
@@ -392,16 +431,19 @@ export class HostShell {
   private builderPrint(raw: string) {
     const [action = "", field = "", value = ""] = decodeFields(raw) ?? [];
     if (action === "input") {
+      this.builderLine.finish();
       this.builderText.finish();
-      const element = this.builderText.element;
-      element.maxLength = field === "transfer" ? 30000 : field === "name" ? DECK_NAME_MAX : 300;
-      element.setAttribute(
-        "aria-label",
-        field === "transfer" ? "Decklist. Paste your list here." : field,
-      );
-      this.builderText.open(field, value);
-    } else if (action === "finish-input") this.builderText.finish();
-    else if (action === "copy") {
+      if (field === "transfer") {
+        this.builderText.element.maxLength = 30000;
+        this.builderText.open(field, value);
+      } else {
+        dressBuilderLine(this.builderLineInput, field);
+        this.builderLine.open(field, value);
+      }
+    } else if (action === "finish-input") {
+      this.builderLine.finish();
+      this.builderText.finish();
+    } else if (action === "copy") {
       const note = (text: string) =>
         this.host.writeMailbox(MAILBOXES.builderClipboard, `${Date.now()}\t${text}`);
       const failed = () => note("Copy failed. Select the decklist and use your copy shortcut.");
