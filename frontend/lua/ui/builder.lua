@@ -19,11 +19,19 @@ local Mailbox=require('ui.mailbox')
 local W=require('ui.wire_fields').builder
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
+local Pager=require('ui.pager')
 local g=love.graphics
 local PANEL_Y,PANEL_HEIGHT=95,554
 local DECK_X,DECK_WIDTH=808,424
 local deckTypes={{key='all',label='All'},{key='Pokémon',label='Pokemon'},{key='Trainer',label='Trainer'},{key='Energy',label='Energy'}}
 local Builder={}; Builder.__index=Builder
+local SORT_LABELS={name='Name',['hp-desc']='HP',set='Set'}
+-- The visible labels of the builder's text fields, as the host's proxy also names them.
+local FIELD_LABELS={name='Deck name',query='Search cards',optionQuery='Find an option',text='Rules text',transfer='Decklist'}
+-- builder.ts's placeholder while a card's rules text loads.
+local LOADING_DETAILS='Loading card details...'
+local function formatName(format) return format=='standard' and 'Standard' or 'Expanded' end
+local MODAL_TITLES={choices='Options',transfer='Import or export decklist',clear='Clear this deck?',validation='Deck details',stats='Deck information'}
 -- The printed parts the simulator cannot play yet, by the engine's gap names.
 local GAP_LABELS={trainer='card effect',ability='Ability',specialEnergy='Energy effect',attack='attack effect'}
 local function gapLine(gaps)
@@ -50,7 +58,16 @@ end
 function Builder:open(reduced,id)
   if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
   self.motion=Modal.motion(reduced);self.id=id;self.modal=nil;self.focus=0;self.deckPage=1;self.deckType='all'
+  self.opening=true;self.spokenSummary=self:summary('loading');self.callbacks.announce(self.spokenSummary)
   self:command('open',id or '')
+end
+-- What the page says when it opens or its phase changes.
+function Builder:summary(phase)
+  phase=phase or self.phase
+  if phase=='loading' then return 'Deck builder. Opening your deck.' end
+  if phase=='anonymous' then return 'Deck builder. Sign in to build your deck.' end
+  if phase~='ready' then return 'Deck builder. Could not open this deck.' end
+  return 'Deck builder. '..(self.name~='' and self.name or 'Untitled deck')..', '..self.count..(self.count==1 and ' card.' or ' cards.')
 end
 function Builder:offset() return self.motion and self.motion.VT.y*60 or 0 end
 function Builder:closeModal()
@@ -71,6 +88,7 @@ function Builder:visibleDeck()
   return visible
 end
 function Builder:deckPageSize() return self.deckView=='cards' and 6 or (self.portrait and 8 or 9) end
+function Builder:deckPages() return math.max(1,math.ceil(#self:visibleDeck()/self:deckPageSize())) end
 function Builder:deckPager()
   local cx=self.portrait and self.width/2 or DECK_X+DECK_WIDTH/2
   return cx-174,self.portrait and 655 or PANEL_Y+500
@@ -167,11 +185,47 @@ function Builder:makeCards(entering)
     self.cards[i]=self:newCard(item,i,x,y,p and 1.04 or 1.08,{count=cols,column=(i-1)%cols,center=p and 238 or 407,entering=entering})
   end
 end
+-- The deck's quantities and the filter values, to tell what a sync changed.
+function Builder:baseline()
+  local deck,options={},{}
+  for _,item in ipairs(self.deck)do deck[item.id]={quantity=item.quantity,name=item.name} end
+  for _,o in ipairs(self.options)do options[o.key]=o.value end
+  return {phase=self.phase,page=self.page,format=self.format,sort=self.fields.sort or 'name',query=self.fields.query or '',deck=deck,options=options,
+    results=#self.items,busy=self.busy,count=self.count}
+end
+-- What a sync changed that the page draws: an option's value, the sort, the
+-- catalog page, a deck quantity, an empty search.
+function Builder:changes(was)
+  local say={}
+  local function add(text) if text and text~='' then say[#say+1]=text end end
+  if self.format~=was.format then add('Format: '..formatName(self.format)) end
+  for _,o in ipairs(self.options)do
+    if was.options[o.key] and was.options[o.key]~=o.value then add(o.label..': '..o.value) end
+  end
+  local sort=self.fields.sort or 'name'
+  if sort~=was.sort then add('Sort: '..(SORT_LABELS[sort] or sort)) end
+  -- A new search or sort starts on page 1 without saying so.
+  if self.page~=was.page and sort==was.sort and (self.fields.query or '')==was.query then add(Pager.page(self.page,self.pages)) end
+  local changed={}
+  for _,item in ipairs(self.deck)do
+    local old=was.deck[item.id]
+    if not old or old.quantity~=item.quantity then changed[#changed+1]=item end
+  end
+  local present={};for _,item in ipairs(self.deck)do present[item.id]=true end
+  for id,old in pairs(was.deck)do if not present[id] then changed[#changed+1]={id=id,name=old.name,quantity=0} end end
+  if #changed==1 then
+    local item=changed[1]
+    add(item.quantity>0 and item.quantity..' '..item.name..' in deck' or 'No '..item.name..' in deck')
+  elseif #changed>1 then add(self.count..(self.count==1 and ' card' or ' cards')..' in deck') end
+  if #self.items==0 and not self.busy and (was.results>0 or was.busy) then add('No matching cards') end
+  return say
+end
 function Builder:sync(raw)
   if not raw or raw==self.raw then return end;self.raw=raw
   local lines=Codec.rows(raw)
   local H=W.header
   local f=lines[1];if not f or #f<H.retry then return end
+  local was=self:baseline()
   self.phase,self.name,self.format,self.saveStatus,self.message=f[H.phase],f[H.name],f[H.format],f[H.saveStatus],f[H.message]
   self.busy=f[H.busy]=='1';self.page,self.pages,self.total,self.count=tonumber(f[H.page]),tonumber(f[H.pages]),tonumber(f[H.total]),tonumber(f[H.count])
   self.selected,self.details=f[H.selected],f[H.details]
@@ -205,8 +259,21 @@ function Builder:sync(raw)
   else for i,c in ipairs(self.cards)do c.item.quantity=self.items[i].quantity;c.item.remaining=self.items[i].remaining end end
   self.deckPage=math.max(1,math.min(self.deckPage,math.ceil(#self:visibleDeck()/self:deckPageSize())))
   self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
-  if self.message~='' and self.message~=self.announced then self.callbacks.announce(self.message) end;self.announced=self.message
+  local say={}
+  if self.opening or self.phase~=was.phase then
+    local summary=self:summary()
+    if summary~=self.spokenSummary then say[#say+1]=summary end
+    self.spokenSummary=summary;self.opening=nil
+  elseif self.phase=='ready' and not self.hpDrag and not (self.drag and self.drag.active) then
+    say=self:changes(was)
+  end
+  if self.message~='' and self.message~=self.announced then say[#say+1]=self.message end;self.announced=self.message
   self:build()
+  local m=self.modal
+  if m and m.mode=='detail' and not m.heardDetails and self:detailsFor(m.id) then
+    m.heardDetails=true;say[#say+1]=self:modalSpeech()
+  end
+  if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
 end
 function Builder:add(label,x,y,w,h,action,colour,arg,extra)
   local b=extra or {};b.label,b.x,b.y,b.w,b.h,b.action,b.colour,b.arg,b.fontSize=label,x,y,w,h,action,colour or T.red,arg,24
@@ -236,7 +303,8 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   width=width or 264;x=x or self.width/2-width/2
   local centreWidth=width-72
   local action=key=='format' and 'format' or 'cycle'
-  self:add('<',x,y,28.8,38.4,action,T.red,key=='format' and -1 or {key,-1}).fontSize=24
+  -- One focus stop per filter: '>' takes focus and Left/Right step it; '<' answers the pointer.
+  self:add('<',x,y,28.8,38.4,action,T.red,key=='format' and -1 or {key,-1},{skipFocus=true,cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
   self.filterTexts=self.filterTexts or {}
   local text=self.filterTexts[key] or PageText.new();self.filterTexts[key]=text
   -- Keep long catalog values within the original narrow cycle.
@@ -248,7 +316,7 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   text:set(display,self.time)
   self:add(value,x+36,y,centreWidth,38.4,'filter-value',T.red,key,
     {cycleCentre=true,inert=true,cycleWidth=width,optionTitle=label,cycleText=text,pipCount=count or 0,pipIndex=index or 1,pipSelected=selected})
-  self:add('>',x+width-28.8,y,28.8,38.4,action,T.red,key=='format' and 1 or {key,1}).fontSize=24
+  self:add('>',x+width-28.8,y,28.8,38.4,action,T.red,key=='format' and 1 or {key,1},{cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
 end
 function Builder:build()
   if not self.width then return end
@@ -299,9 +367,9 @@ function Builder:build()
       self:add('Reset filters',x,m.y+m.h-106,bw,34,'reset',T.profile)
     elseif m.mode=='choices' then
       self:field('optionQuery','',x,y,bw,42,'Find an option')
-      for i,o in ipairs(self.choices)do self:add(o.label,x,y+62+(i-1)*52,bw,40,'option-pick',o.selected and T.blue or T.red,o.value).fontSize=22 end
-      self:add('<',x,m.y+m.h-118,34,38,'option-page',T.red,-1)
-      self:add('>',x+bw-34,m.y+m.h-118,34,38,'option-page',T.red,1)
+      for i,o in ipairs(self.choices)do self:add(o.label,x,y+62+(i-1)*52,bw,40,'option-pick',o.selected and T.blue or T.red,o.value,{chosen=o.selected}).fontSize=22 end
+      Pager.arrow(self:add('<',x,m.y+m.h-118,34,38,'option-page',T.red,-1),-1,self.optionPage,self.optionPages)
+      Pager.arrow(self:add('>',x+bw-34,m.y+m.h-118,34,38,'option-page',T.red,1),1,self.optionPage,self.optionPages)
     elseif m.mode=='transfer' then
       self:add('',x,m.y+24,bw,m.h-208,'input',T.ink,'transfer',{multiline=true})
       self:add('Copy',x+bw-94,m.y+34,84,32,'copy',T.blue)
@@ -329,13 +397,13 @@ function Builder:build()
   if not p or self.tab=='catalog' then
     self:field('query','',p and 24 or 48,p and 98 or 38,p and 268 or 402,42,'Search cards')
     self:add('Filters',p and 306 or 464,p and 98 or 38,p and 150 or 116,42,'filters',T.red)
-    if not p then self:add('Sort: '..({name='Name',['hp-desc']='HP',set='Set'})[self.fields.sort or 'name'],594,38,170,42,'sort',T.blue).fontSize=22 end
+    if not p then self:add('Sort: '..SORT_LABELS[self.fields.sort or 'name'],594,38,170,42,'sort',T.blue).fontSize=22 end
     for i,c in ipairs(self.cards)do
       self.controls[#self.controls+1]={action='card',card=i,label=c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale}
     end
     local cx=p and w/2 or 408
-    self:add('<',cx-177,h-132,36,44,'page',T.red,-1).fontSize=30
-    self:add('>',cx+141,h-132,36,44,'page',T.red,1).fontSize=30
+    Pager.arrow(self:add('<',cx-177,h-132,36,44,'page',T.red,-1),-1,self.page,self.pages).fontSize=30
+    Pager.arrow(self:add('>',cx+141,h-132,36,44,'page',T.red,1),1,self.page,self.pages).fontSize=30
   end
   if not p or self.tab=='deck' then
     local x=p and 24 or DECK_X+8;local bw=p and 432 or DECK_WIDTH-16;local y=p and 291 or 179
@@ -362,8 +430,9 @@ function Builder:build()
       end
     end
     local pagerX,pagerY=self:deckPager()
-    self:add('<',pagerX,pagerY,30,36,'deck-page',T.red,-1).fontSize=26
-    self:add('>',pagerX+212,pagerY,30,36,'deck-page',T.red,1).fontSize=26
+    local deckPages=self:deckPages()
+    Pager.arrow(self:add('<',pagerX,pagerY,30,36,'deck-page',T.red,-1),-1,self.deckPage,deckPages).fontSize=26
+    Pager.arrow(self:add('>',pagerX+212,pagerY,30,36,'deck-page',T.red,1),1,self.deckPage,deckPages).fontSize=26
     self:add(self.deckView=='list' and 'Show cards' or 'Show list',pagerX+256,pagerY,40,36,'deck-view',T.profile,nil,{icon=self.deckView=='list' and 'cards' or 'list',displayLabel=''})
     self:add('Deck information',pagerX+308,pagerY,40,36,'deck-info',T.profile,nil,{icon='info',displayLabel=''})
     if p then
@@ -379,6 +448,106 @@ function Builder:openModal(mode,item)
   self:command('finish-input');self.editing='';self.focus=0;self.pressed=nil
   self.modal={mode=mode,item=item,id=item and item.id,motion=Modal.motion(self.reduced)}
   self:build()
+  if mode=='detail' then self.modal.heardDetails=self:detailsFor(self.modal.id)~=nil end
+  self.callbacks.announce(self:modalSpeech())
+end
+-- The card's rules text once it has arrived for `id`, else nil.
+function Builder:detailsFor(id)
+  if id and self.selected==id and self.details~='' and self.details~=LOADING_DETAILS then return self.details end
+end
+local function sentence(parts)
+  local out={}
+  for _,part in ipairs(parts)do
+    part=(part or ''):gsub('%s+',' '):gsub('^ ',''):gsub(' $','')
+    if part~='' then out[#out+1]=part:find('[%.%?!]$') and part or part..'.' end
+  end
+  return table.concat(out,' ')
+end
+-- What an open dialog says: its title and what it draws.
+function Builder:modalSpeech()
+  local m=self.modal;if not m then return '' end
+  if m.mode=='detail' then
+    local item=(self.selectedItem and self.selectedItem.id==m.id) and self.selectedItem or m.item or {}
+    local kind=table.concat({item.kind or '',item.subtype or ''},' '):gsub('^%s+',''):gsub('%s+$','')
+    if (item.hp or '')~='' then kind=kind..(kind~='' and ', ' or '')..item.hp..' HP' end
+    return sentence({item.name or 'Card',kind,(item.quantity or 0)..' in deck',gapLine(item.gaps),self:detailsFor(m.id)})
+  elseif m.mode=='filters' then
+    return 'Filters, '..({'Cards','Print','Text'})[self.filterPage]..' tab. Tab moves between filters, Escape closes.'
+  elseif m.mode=='stats' then
+    local left,right=DeckStats.rows(self)
+    local parts={MODAL_TITLES.stats}
+    for _,r in ipairs(left)do parts[#parts+1]=r.label..': '..r.value:gsub('/',' of ') end
+    for _,r in ipairs(right)do parts[#parts+1]=r.label..': '..r.value..r.suffix end
+    return sentence(parts)
+  elseif m.mode=='validation' then
+    return sentence({MODAL_TITLES.validation,self.count..' of '..Limits.deckSizeFor(self.format)..' cards, '..formatName(self.format),self.validation})
+  elseif m.mode=='clear' then
+    return sentence({MODAL_TITLES.clear,'All cards will be removed','The deck itself will be kept','Clear deck or Back'})
+  elseif m.mode=='choices' then
+    return sentence({self.optionLabel~='' and self.optionLabel or MODAL_TITLES.choices,Pager.page(self.optionPage,self.optionPages)})
+  end
+  return sentence({MODAL_TITLES[m.mode] or m.mode,'Edit the decklist or paste one, then Confirm. Copy copies it'})
+end
+-- The deck entry, catalog card or selected card with this id.
+function Builder:entry(id)
+  for _,item in ipairs(self.deck)do if item.id==id then return item end end
+  for _,item in ipairs(self.items)do if item.id==id then return item end end
+  if self.selectedItem and self.selectedItem.id==id then return self.selectedItem end
+  return self.modal and self.modal.item and self.modal.item.id==id and self.modal.item or nil
+end
+-- A deck entry as its row reads: quantity, name, and whether it breaks the format.
+local function entrySpeech(item,format)
+  if item.pending then return item.quantity..' x Loading card' end
+  local text=item.quantity..' x '..item.name
+  if item.illegal then return text..', not legal in '..formatName(format) end
+  return text
+end
+-- A catalog print: its name, set and number, so identical prints differ.
+local function printSpeech(item)
+  local set,number=item.id:match('^(.+)%-([^%-]+)$')
+  local copies=item.quantity>0 and item.quantity..' in deck' or 'not in deck'
+  return item.name..', '..(set or item.id):upper()..' '..(item.number~='' and item.number or number or '')..', '..copies
+end
+-- What a focused control says: its label, the value it shows, and what it acts on.
+function Builder:describe(b)
+  if not b then return '' end
+  local a=b.action
+  if b.input or b.multiline then
+    local field=b.arg
+    local value=field=='name' and self.name or field=='transfer' and self.transfer or self.fields[field] or ''
+    local label=FIELD_LABELS[field] or field
+    if field=='transfer' then
+      local lines=0;for line in value:gmatch('[^\n]+')do if line:find('%S') then lines=lines+1 end end
+      return label..', '..(lines==0 and 'empty' or lines..(lines==1 and ' line' or ' lines'))..'. Enter to edit.'
+    end
+    return label..': '..(value~='' and value or 'empty')..'. Enter to edit.'
+  end
+  if b.speech then return b.speech end
+  if b.cycleKey then return b.optionTitle..': '..b.optionValue..', left and right change it' end
+  if a=='card' then return printSpeech(self.cards[b.card].item) end
+  if a=='detail' or a=='deck-card' then return entrySpeech(b.arg,self.format) end
+  if a=='remove' or a=='discard' or a=='add' then
+    local item=self:entry(b.arg) or {name='card',quantity=0}
+    local verb=a=='add' and 'Add one ' or a=='remove' and 'Remove one ' or 'Discard '
+    return verb..(item.pending and 'Loading card' or item.name)..', '..item.quantity..' in deck'
+  end
+  if a=='hp-slider' then
+    return b.label..': '..((self.fields[b.arg] or '')~='' and self.fields[b.arg] or 'Any')..'. Left and right adjust it.'
+  end
+  if a=='tab' then
+    local chosen=self.tab==b.arg and ', selected' or ''
+    if b.arg=='deck' then return 'Deck tab'..chosen..', '..self.count..' of '..Limits.deckSizeFor(self.format)..' cards' end
+    return 'Browse cards tab'..chosen
+  end
+  if a=='deck-type' then return b.label..' deck cards'..(self.deckType==b.arg and ', selected' or '') end
+  if a=='filter-tab' then return b.label..' tab'..(self.filterPage==b.arg and ', selected' or '') end
+  if a=='option-pick' then return b.label..(b.chosen and ', selected' or '') end
+  if a=='transfer' then return 'Import or export decklist' end
+  if a=='confirm-clear' or a=='clear' then return 'Clear deck' end
+  if (a=='retry-save' or a=='retry') and b.label=='Retry' then return a=='retry' and 'Retry loading' or 'Retry save' end
+  if a=='copy' then return 'Copy decklist' end
+  if a=='import' then return 'Confirm import' end
+  return b.label
 end
 -- Whether `id` is a deck entry whose card is still loading: not known to be gone, so not discarded.
 function Builder:pendingEntry(id)
@@ -399,7 +568,7 @@ function Builder:activate(i)
   elseif a=='close' then local choices=self.modal and self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end
   elseif a=='signin' then self.callbacks.signin()
   elseif a=='filters' then self:openModal('filters')
-  elseif a=='filter-tab' then self.filterPage=v;self:build()
+  elseif a=='filter-tab' then self.filterPage=v;self:build();self.callbacks.announce(b.label..' tab')
   elseif a=='cycle' then self:command('cycle',v[1],v[2])
   elseif a=='transfer' then
     self.clipboard=nil;self.transfer='';self.transferBaseline=nil;self.exportRaw=nil
@@ -413,14 +582,19 @@ function Builder:activate(i)
   elseif a=='clear' then self:command('clear');self:closeModal()
   elseif a=='deck-info' then self:openModal('stats')
   elseif a=='validation' then self:openModal('validation')
-  elseif a=='tab' then self.tab=v;self:build()
+  elseif a=='tab' then self.tab=v;self:build();self.callbacks.announce(self:describe(b))
   elseif a=='deck-type' then self.deckType=v;self.deckPage=1;self:build();self.callbacks.announce(v=='all' and 'All deck cards' or v..' deck cards')
   elseif a=='deck-view' then
     local first=(self.deckPage-1)*self:deckPageSize()
     self.deckView=self.deckView=='list' and 'cards' or 'list';self.deckPage=math.floor(first/self:deckPageSize())+1;self:build()
     self.callbacks.announce(self.deckView=='cards' and 'Deck card view' or 'Deck list view')
-  elseif a=='deck-page' then self.deckPage=math.max(1,math.min(math.max(1,math.ceil(#self:visibleDeck()/self:deckPageSize())),self.deckPage+v));self:build()
+  elseif a=='deck-page' then self:turnDeckPage(v)
   else self:command(a,v or '') end
+end
+function Builder:turnDeckPage(delta)
+  local page=self.deckPage
+  self.deckPage=math.max(1,math.min(self:deckPages(),self.deckPage+delta));self:build()
+  if self.deckPage~=page then self.callbacks.announce(Pager.page(self.deckPage,self:deckPages(),'Deck')) end
 end
 function Builder:hit(x,y,localCoords,hoverOnly)
   if not localCoords then y=y-self:offset()end
@@ -556,11 +730,15 @@ function Builder:keypressed(key)
   if control and control.action=='hp-slider' and (key=='left' or key=='right' or key=='home' or key=='end')then
     self:setHP(control.arg,key=='home' and 0 or key=='end' and 400 or self:hpValue(control.arg)+(key=='left' and -10 or 10))
     self.callbacks.announce(control.label..': '..((self.fields[control.arg] or '')~='' and self.fields[control.arg] or 'Any'))
+  elseif control and control.cycleKey and (key=='left' or key=='right') then
+    local dir=key=='left' and -1 or 1
+    if control.action=='format' then self:command('format',dir) else self:command('cycle',control.cycleKey,dir) end
   elseif key=='escape' then if self.modal then local choices=self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end else self:command('leave')end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     if #self.controls==0 then return end
-    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled or self.controls[i].inert end)
-    self.callbacks.announce(self.controls[self.focus].label)
+    local found
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return Controls.unfocusable(self.controls[i]) end)
+    if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
   elseif key=='return' or key=='space'then self:activate(self.focus)
   elseif not self.modal and (key=='pagedown' or key=='pageup')then self:command('page',key=='pageup' and -1 or 1)end
 end
@@ -568,7 +746,7 @@ function Builder:wheelmoved(y)
   if self.modal then self.modal.scroll=math.max(0,(self.modal.scroll or 0)-y*36);return end
   if y==0 or not WheelPager.ready(self) then return end
   if not self.portrait and self.mx>800 or self.portrait and self.tab=='deck'then
-    self.deckPage=math.max(1,math.min(math.max(1,math.ceil(#self:visibleDeck()/self:deckPageSize())),self.deckPage+(y>0 and -1 or 1)));self:build()
+    self:turnDeckPage(y>0 and -1 or 1)
   elseif not self.busy then self:command('page',y>0 and -1 or 1)end
 end
 function Builder:drawControls(controls,active)

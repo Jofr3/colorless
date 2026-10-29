@@ -24,6 +24,7 @@ local Alert=require('ui.card_alert')
 local CardBack=require('ui.card_back')
 local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
+local Pager=require('ui.pager')
 local LobbyCode=require('ui.host_constants').lobbyCode
 local g=love.graphics
 local Online={}
@@ -179,8 +180,8 @@ function Online:build()
         -- A deck that can't be played online stays focusable so its reason is read out.
         add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,blocked=not card.item.online})
       end
-      add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36})
-      add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36})
+      Pager.arrow(add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36}),-1,self.page,self.pages)
+      Pager.arrow(add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36}),1,self.page,self.pages)
     elseif self.deckPhase=='anonymous' or self.deckPhase=='error' then
       local anonymous=self.deckPhase=='anonymous'
       add({kind='button',action=anonymous and 'signin' or 'decks',label=anonymous and 'Sign in' or 'Try again',x=x+(w-280)/2,y=self.area.y+180,w=280,h=48})
@@ -417,7 +418,7 @@ function Online:describe(item)
     return d.name..'. '..d.count..' cards.'..(d.id==(self.seats.you or {}).deckId and ' Selected.' or '')
       ..(d.online and '' or ' Not legal in '..d.formatName..', so it can\'t be played online.')
   end
-  return (item.displayLabel or item.label)..'. Button.'
+  return (item.speech or item.displayLabel or item.label)..'. Button.'
 end
 function Online:join()
   if self.busy or #self.joinCode<LobbyCode.length then return end
@@ -430,7 +431,9 @@ function Online:openPicker()
 end
 function Online:changePage(delta)
   if not self.picker or self.deckPhase~='ready' then return end
+  local page=self.page
   self.page=(self.page-1+delta+self.pages)%self.pages+1;self:makeCards(true);self:build();self.focus=0;self.pressed=nil
+  if self.page~=page then self.callbacks.announce(Pager.page(self.page,self.pages)) end
 end
 function Online:activate(i,dir)
   local item=self.items[i]
@@ -492,7 +495,7 @@ function Online:keypressed(key)
   if (key=='left' or key=='right') and item and item.kind=='cycle' then self:activate(self.focus,key=='left' and -1 or 1)
   elseif (key=='left' or key=='right') and self.step=='menu' then self:activate(self.tab==1 and 2 or 1)
   elseif key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
-    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.items,function(i) return self.items[i].disabled end)
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.items,function(i) return Controls.unfocusable(self.items[i]) end)
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus)

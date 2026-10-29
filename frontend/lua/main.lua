@@ -150,7 +150,7 @@ applyPage=function(page,deckId)
     library:open(state.reduced);Bridge.emit('account','refresh')
   elseif page=='online' then
     library:command('close');room.jiggle=room.jiggle+1;online:open(state.reduced,deckId or '');Bridge.emit('account','refresh')
-  else library:closeModal();library:command('close') end
+  else library:closeModal();library:command('close');announce('Home') end
 end
 startWipe=function(callback)
   if wipe then return false end

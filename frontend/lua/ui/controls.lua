@@ -13,6 +13,11 @@ function Controls.cycle(focus,dir,count,skip)
   end
   return focus,false
 end
+-- Whether Tab and the arrows pass over a control: a disabled one, an inert one,
+-- or one that only answers the pointer (a pager with a single page).
+function Controls.unfocusable(control)
+  return control.disabled or control.inert or control.skipFocus or false
+end
 -- Whether control i draws its hover look: the pointer's control wins, and
 -- keyboard focus shows only while the pointer is over none, so one control
 -- looks active at a time (main parks the pointer on a key press).

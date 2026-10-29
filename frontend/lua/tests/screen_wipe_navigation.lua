@@ -68,7 +68,10 @@ assert(scenes.simulator.opens==2)
 assert(count('COLORLESS:transition:open')==3 and count('COLORLESS:transition:closed')==3)
 -- The lobby modal opens over home without a wipe; its code retargets in place.
 files['__viewport.txt']='1280 800 0'
-route(6,'home');frames(140);route(7,'online');frames(5)
+local homes=count('COLORLESS:announce:Home')
+route(6,'home');frames(140)
+assert(count('COLORLESS:announce:Home')==homes+1,'Arriving home announces it once')
+route(7,'online');frames(5)
 assert(scenes.online.opens==1 and count('COLORLESS:transition:open')==4,'Home to online must not wipe')
 route(8,'online\tABCD');frames(5)
 assert(scenes.online.opens==1 and scenes.online.target=='ABCD','Online to online retargets without reopening')

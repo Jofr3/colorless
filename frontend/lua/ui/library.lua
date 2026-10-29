@@ -14,11 +14,13 @@ local Mailbox=require('ui.mailbox')
 local W=require('ui.wire_fields').library
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
+local Pager=require('ui.pager')
 local g=love.graphics
 local Library={}
 Library.__index=Library
 local sorts={'name-asc','name-desc','cards-desc'}
 local sortLabels={['name-asc']='Name A-Z',['name-desc']='Name Z-A',['cards-desc']='Card count'}
+local saved={create='Deck created.',rename='Deck renamed.',delete='Deck deleted.'}
 local function nextValue(values,current)
   for i,v in ipairs(values) do if v==current then return values[i%#values+1] end end
   return values[1]
@@ -42,6 +44,7 @@ end
 function Library:open(reduced)
   self.motion=Modal.motion(reduced)
   self.focus=0; self.hover=0; self.pressed=nil; self.drag=nil
+  self.opening=true
   self:sendSize()
   self:command('open')
 end
@@ -83,12 +86,45 @@ function Library:makeCards(entering)
     self.cards[#self.cards+1]=card
   end
 end
+-- The library's state as the page draws it: loading, signed out, failed,
+-- empty, no matches, or how many decks it lists.
+function Library:state()
+  if self.phase=='loading' then return 'Loading your library.' end
+  if self.phase=='anonymous' then return 'Sign in to browse and build your collection.' end
+  if self.phase~='ready' then return 'Could not load your decks.' end
+  local n=self.total or 0
+  if n==0 then return self.query~='' and 'No matches. Try another name.' or 'Nothing here yet. Create a deck to get started.' end
+  if self.query~='' then return n..(n==1 and ' deck matches.' or ' decks match.') end
+  return n..(n==1 and ' deck.' or ' decks.')
+end
+-- What a sync says: the page and its state on open or a phase change, then a
+-- changed state, sort, page, saved change or message, each once.
+function Library:changes(was,result)
+  local say={}
+  local function add(text) if text and text~='' then say[#say+1]=text end end
+  local m=self.modal
+  if m and m.pending and result=='ok' then add(saved[m.mode]) end
+  local state=self:state()
+  if self.opening or self.phase~=was.phase then
+    add((self.phase=='ready' and (self.total or 0)>0 and 'Deck library, ' or 'Deck library. ')..state)
+  else
+    if state~=self.spokenState then add(state) end
+    if self.sort~=was.sort then add('Sort: '..(sortLabels[self.sort] or self.sort)) end
+    -- A new search or sort starts on page 1 without saying so.
+    if self.page~=was.page and self.query==was.query and self.sort==was.sort then add(Pager.page(self.page,self.pages)) end
+  end
+  self.spokenState=state;self.opening=nil
+  if self.message~='' and self.message~=self.spokenMessage then add(self.message) end
+  self.spokenMessage=self.message
+  return say
+end
 function Library:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
   local lines=Codec.rows(raw)
   local H=W.header
   local f=lines[1]; if not f or #f<H.result then return end
+  local was={phase=self.phase,sort=self.sort,page=self.page,query=self.query}
   self.phase,self.busy,self.message=f[H.phase],f[H.busy]=='1',f[H.message]
   self.query,self.sort=f[H.query],f[H.sort]
   self.page,self.pages,self.total=tonumber(f[H.page]),tonumber(f[H.pages]),tonumber(f[H.total])
@@ -112,9 +148,11 @@ function Library:sync(raw)
     -- A verdict arriving later only flips the alert; the piles stay put.
     for i,item in ipairs(items) do if self.items[i] then self.items[i].illegal=item.illegal end end
   end
+  local say=self:changes(was,f[H.result])
   if self.modal and self.modal.pending and f[H.result]=='ok' then self:closeModal() end
   if self.phase~='ready' and not self.busy then self:closeModal() end
   self:build()
+  if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
 end
 function Library:add(label,x,y,w,h,action,colour,extra)
   local b=extra or {}
@@ -159,8 +197,8 @@ function Library:build()
       -- pile's left half (the count sits under the right), focused after its deck.
       self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel=''})
     end
-    self:add('<',w/2-177,h-144,36,48,'previous',T.red).fontSize=30
-    self:add('>',w/2+141,h-144,36,48,'next',T.red).fontSize=30
+    Pager.arrow(self:add('<',w/2-177,h-144,36,48,'previous',T.red),-1,self.page,self.pages).fontSize=30
+    Pager.arrow(self:add('>',w/2+141,h-144,36,48,'next',T.red),1,self.page,self.pages).fontSize=30
   elseif self.phase~='loading' then
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',w/2-140,h/2+48,280,48,self.phase=='anonymous' and 'signin' or 'refresh',T.red)
   end
@@ -174,7 +212,19 @@ function Library:openModal(mode,item)
   self.modal.motion.T.y=0
   self.draft=mode=='create' and 'Untitled Deck' or item.name
   self:build()
-  self.callbacks.announce(mode=='manage' and item.name or mode=='delete' and 'Delete '..item.name..'? This deck will be permanently deleted.' or mode..' '..item.kind)
+  self.callbacks.announce(mode=='manage' and item.name or mode=='delete' and 'Delete '..item.name..'? This deck will be permanently deleted.' or (mode=='create' and 'New ' or 'Rename ')..item.kind)
+end
+-- What a focused control says: its label, the value it shows, and what it acts on.
+function Library:describe(b)
+  if b.action=='input-search' then return 'Search decks: '..(self.search~='' and self.search or 'empty')..'. Enter to edit.' end
+  if b.action=='input-name' then return 'Deck name: '..(self.draft~='' and self.draft or 'empty')..'. Enter to edit.' end
+  if b.speech then return b.speech end
+  local item=b.card and self.items[b.card]
+  if b.action=='manage' then return 'Manage '..item.name end
+  if b.action=='card' then
+    return item.name..', '..item.count..(item.count==1 and ' card' or ' cards')..(item.illegal and ', not ready to play' or '')
+  end
+  return b.label
 end
 function Library:input(raw)
   if not raw or self.inputRaw==raw then return end
@@ -200,6 +250,8 @@ function Library:submit()
   elseif m.mode=='rename' then self:command('rename',m.item.kind,m.item.id,self.draft)
   else return end
   m.pending=true
+  -- The reply is heard even when it repeats the last message.
+  self.spokenMessage=nil
 end
 function Library:activate(i)
   local b=self.controls[i]; if not b or b.disabled then return end
@@ -292,8 +344,9 @@ function Library:keypressed(key)
     if self.modal then self:closeModal()
     else self.callbacks.home() end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled end)
-    local b=self.controls[self.focus]; if b then self.callbacks.announce((b.action=='manage' and 'Manage '..self.items[b.card].name) or b.label~='' and b.label or 'Search decks') end
+    local found
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return Controls.unfocusable(self.controls[i]) end)
+    if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
   elseif key=='return' or key=='space' then self:activate(self.focus)
   elseif key=='pageup' or key=='pagedown' then if not self.modal then self:command('page',key=='pageup' and -1 or 1) end end
 end

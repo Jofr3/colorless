@@ -16,9 +16,11 @@ local Labels=require('ui.deck_labels')
 local Input=require('ui.text_input')
 local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
+local Pager=require('ui.pager')
 local g=love.graphics
 local Sandbox={}
 Sandbox.__index=Sandbox
+local NO_DECKS='No valid decks. Create a deck to play.'
 function Sandbox.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',busy=false,message='',items={},selected={'',''},tab=1,controls={},cards={},query='',editing=false,page=1,pages=1,focus=0,hover=0,time=0,pageText=PageText.new()},Sandbox)
 end
@@ -28,6 +30,7 @@ end
 function Sandbox:open(reduced)
   self.motion=Modal.motion(reduced); self.focus=0; self.hover=0; self.pressed=nil
   self.query='';self.page=1;self.editing=false;self:makeCards(false);self:build()
+  self.opening=true
   self:command('open')
 end
 function Sandbox:offset() return self.motion and self.motion.VT.y*60 or 0 end
@@ -73,8 +76,8 @@ function Sandbox:build()
       local b=self:add(card.item.name,bounds.x,bounds.y,bounds.w,bounds.h,'card',nil,self.busy)
       b.card=i
     end
-    self:add('<',self.width/2-157,y+h-170,32,36,'previous',T.red,self.busy)
-    self:add('>',self.width/2+125,y+h-170,32,36,'next',T.red,self.busy)
+    Pager.arrow(self:add('<',self.width/2-157,y+h-170,32,36,'previous',T.red,self.busy),-1,self.page,self.pages)
+    Pager.arrow(self:add('>',self.width/2+125,y+h-170,32,36,'next',T.red,self.busy),1,self.page,self.pages)
     if #self.items==0 then self:add('Create a deck',x+w/2-140,y+310,280,44,'decks',T.blue,false) end
   elseif self.phase=='anonymous' or self.phase=='error' then
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',x+w/2-140,y+310,280,48,self.phase=='anonymous' and 'signin' or 'refresh',T.red,false)
@@ -88,6 +91,7 @@ function Sandbox:sync(raw)
   local rows=Codec.rows(raw)
   local H,K=W.header,W.deck
   local f=rows[1];if not f or #f<H.second then return end
+  local was,hadDecks=self.phase,#self.items>0
   self.phase,self.busy,self.message=f[H.phase],f[H.busy]=='1',f[H.message]
   if self.phase~='ready' and self.editing then self:command('finish-input');self.editing=false end
   self.selected={f[H.first],f[H.second]};self.items={}
@@ -99,15 +103,50 @@ function Sandbox:sync(raw)
   signature=table.concat(signature,'\n')
   if signature~=self.signature then self.signature=signature;self:makeCards(true);self.focus=0;self.pressed=nil end
   self:build()
-  if self.message~='' and self.message~=self.announced then self.callbacks.announce(self.message) end
+  local say={}
+  if self.opening or self.phase~=was then say[1]=self:summary();self.opening=nil
+  elseif self.phase=='ready' and hadDecks and #self.items==0 then say[1]=NO_DECKS end
+  if self.message~='' and self.message~=self.announced then say[#say+1]=self.message end
   self.announced=self.message
+  if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
+end
+local function seatDeck(self,seat) local d=self:deck(seat);return d and d.name or 'no deck' end
+-- What the chooser says when it opens or its phase changes.
+function Sandbox:summary()
+  local state
+  if self.phase=='loading' then state='Loading your decks.'
+  elseif self.phase=='anonymous' then state='Sign in to choose your decks.'
+  elseif self.phase~='ready' then state='Could not load your decks.'
+  elseif #self.items==0 then state=NO_DECKS
+  else
+    state=#self.items..(#self.items==1 and ' deck.' or ' decks.')..' Player 1: '..seatDeck(self,1)..'. Player 2: '..seatDeck(self,2)..'.'
+  end
+  return 'Sandbox. '..state
+end
+-- What a focused control says: its label, the value it shows, and what it acts on.
+function Sandbox:describe(b)
+  if b.input then return 'Search decks: '..(self.query~='' and self.query or 'empty')..'. Enter to edit.' end
+  if b.speech then return b.speech end
+  local seat=b.action=='tab1' and 1 or b.action=='tab2' and 2
+  if seat then return 'Player '..seat..' tab'..(self.tab==seat and ', selected' or '')..'. '..seatDeck(self,seat) end
+  if b.card then
+    local d=self.cards[b.card].item
+    local chosen=''
+    for i=1,2 do if self.selected[i]==d.id then chosen=chosen..', selected for Player '..i end end
+    return d.name..chosen..', '..d.count..(d.count==1 and ' card' or ' cards')
+  end
+  return b.label
 end
 function Sandbox:input(raw)
   if not raw or raw==self.inputRaw then return end
   self.inputRaw=raw
   local f=Codec.fields(raw);if #f<6 or f[2]~='search' then return end
   self.editing=f[6]=='input';self.first,self.last=tonumber(f[4]),tonumber(f[5])
-  if self.query~=f[3] then self.query=f[3];self.page=1;self:makeCards(true);self:build();self.pressed=nil;self.focus=0 end
+  if self.query~=f[3] then
+    local had=#self.cards>0
+    self.query=f[3];self.page=1;self:makeCards(true);self:build();self.pressed=nil;self.focus=0
+    if had~=(#self.cards>0) and #self.items>0 then self.callbacks.announce(had and 'No matches' or #self.cards..' decks shown') end
+  end
 end
 function Sandbox:hit(x,y)
   y=y-self:offset()
@@ -133,7 +172,9 @@ function Sandbox:update(dt,time,mx,my,reduced)
 end
 function Sandbox:changePage(delta)
   if self.busy or self.phase~='ready' then return end
+  local page=self.page
   self.page=(self.page-1+delta+self.pages)%self.pages+1;self:makeCards(true);self:build();self.focus=0;self.pressed=nil
+  if self.page~=page then self.callbacks.announce(Pager.page(self.page,self.pages)) end
 end
 function Sandbox:leave(action)
   self:command('finish-input');self.editing=false;self:command('close');self.callbacks[action]()
@@ -169,8 +210,8 @@ function Sandbox:keypressed(key)
   if key=='escape' then self:leave('home');return end
   if key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
     local found
-    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled end)
-    if found then self.callbacks.announce(self.controls[self.focus].label~='' and self.controls[self.focus].label or 'Search decks') end
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return Controls.unfocusable(self.controls[i]) end)
+    if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
