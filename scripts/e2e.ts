@@ -5,9 +5,10 @@
  * migrated D1 under a temporary directory that holds only the fixture catalog
  * (`@colorless/api/testing/fixtureCatalog`), makes its accounts and decks through that API, and
  * drives headless Chromium (or Firefox, with --firefox) through:
- *   boot and keyboard input; a sandbox game to turn 3; a Lua crash mid-game and the reload that
- *   resumes it; a builder edit saved as the page is hidden, navigated away and closed (keepalive);
- *   a boot whose game.data never arrives (the stall note); an online match from create to a
+ *   boot and keyboard input, and the Tab that leaves home past its last button; a sandbox game
+ *   to turn 3; a Lua crash mid-game and the reload that resumes it; a builder edit saved as the
+ *   page is hidden, navigated away and closed (keepalive); a deep link whose game.data never
+ *   arrives (the stall note, live links); an online match from create to a
  *   rematch, in two browser contexts, whose guest socket goes silent and is replaced mid-match;
  *   an invite link to a code that names no lobby.
  * It reads state from the mailboxes the page writes for Lua and drives Lua through the bridge's
@@ -785,7 +786,7 @@ async function smoke() {
   const stalled = await newPage("stalled", { userAgentMark: STALL_MARK });
   pages.push(stalled);
   const stallStarted = Date.now();
-  await driver().navigate(stalled, `${site}/`);
+  await driver().navigate(stalled, `${site}/decks/e2e-stall`);
 
   // ---- boot and real keyboard input ----
   const host = await newPage("host");
@@ -803,6 +804,34 @@ async function smoke() {
     5000,
   );
   results.push("boot: ready, no failure overlay, keyboard focus announced by Lua");
+
+  // ---- Tab past home's last button leaves the canvas ----
+  // ArrowRight focused Sandbox; four Tabs reach Settings, the ring's last button.
+  for (let i = 0; i < 4; i++) await driver().key(host, "Tab");
+  await waitFor(
+    host,
+    "Lua to report the last focus edge",
+    `window.__e2e.prints.includes('COLORLESS:focus-edge:last')`,
+    5000,
+  );
+  const heardBefore = await evaluate<number>(host, "window.__e2e.prints.length");
+  await driver().key(host, "Tab");
+  const left = await waitFor<string>(
+    host,
+    "Tab to leave the canvas",
+    `document.activeElement && document.activeElement.id !== 'canvas' && document.activeElement.id`,
+    5000,
+  );
+  await sleep(200);
+  const heardAfter = await evaluate<string[]>(
+    host,
+    `window.__e2e.prints.slice(${heardBefore}).filter((m) => m.startsWith('COLORLESS:announce:') || m.startsWith('COLORLESS:focus-edge:'))`,
+  );
+  if (left !== "sandbox-link" || heardAfter.length > 0)
+    throw new Error(
+      `Tab from Settings went to #${left}, and Lua heard ${JSON.stringify(heardAfter)}`,
+    );
+  results.push("tab: Tab past Settings left the canvas for the Sandbox link; Lua never saw it");
 
   // ---- a sandbox game ----
   const hostDeck = await seedAccount(host, "host");
@@ -912,13 +941,37 @@ async function smoke() {
     `document.body.classList.contains('stalled') && document.getElementById('status').textContent`,
     Math.max(0, STALL_NOTE_MS - (Date.now() - stallStarted)),
   );
-  const links = await evaluate<number>(
+  // On a deep link the links must be live and focusable (not inert under the builder), with a way
+  // Home; the overlay's Reload button is shown and takes focus too.
+  const stall = await evaluate<{
+    links: number;
+    inert: boolean;
+    home: boolean;
+    canvasTab: number;
+    reload: boolean;
+  }>(
     stalled,
-    `[...document.querySelectorAll('.accessible-menu a')].filter((a) => a.getBoundingClientRect().width > 1).length`,
+    `(() => {
+      const nav = document.querySelector('.accessible-menu');
+      const home = document.getElementById('home-link');
+      home.focus();
+      const focused = document.activeElement === home;
+      const reload = document.querySelector('#loading button');
+      reload?.focus();
+      return {
+        links: [...nav.querySelectorAll('a')].filter((a) => a.getBoundingClientRect().width > 1).length,
+        inert: nav.inert,
+        home: focused,
+        canvasTab: document.getElementById('canvas').tabIndex,
+        reload: !!reload && !reload.hidden && document.activeElement === reload,
+      };
+    })()`,
   );
-  if (links === 0) throw new Error("the stall note shows no menu links");
+  if (stall.links === 0) throw new Error("the stall note shows no menu links");
+  if (stall.inert || !stall.home || stall.canvasTab !== -1 || !stall.reload)
+    throw new Error(`the stalled deep link is not usable: ${JSON.stringify(stall)}`);
   results.push(
-    `stall: "${note}" with ${links} menu links, after ${((Date.now() - stallStarted) / 1000).toFixed(0)} s`,
+    `stall: "${note}" on /decks/e2e-stall with ${stall.links} live menu links (Home and Reload focusable), after ${((Date.now() - stallStarted) / 1000).toFixed(0)} s`,
   );
 
   if (gpu) await gpuParity();

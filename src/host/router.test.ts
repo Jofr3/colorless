@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  PAGES,
   type Route,
   Router,
   type RouterWindow,
+  pageInstructions,
   pageLabel,
   pageTitle,
   routeFromUrl,
@@ -88,14 +90,34 @@ describe("titles and labels", () => {
     expect(pageTitle("builder")).toBe("Colorless — Deck builder");
     expect(pageTitle("builder", "Tidal Splash")).toBe("Colorless — Tidal Splash");
     expect(pageTitle("decks", "Tidal Splash")).toBe("Colorless — Decks");
-    expect(pageLabel("builder", { name: "Tidal Splash", cards: 60 })).toContain(
-      "Tidal Splash. 60 cards.",
+  });
+
+  it("keeps the canvas name short: the page, and the builder's deck by name", () => {
+    expect(PAGES.map((page) => pageLabel(page))).toEqual([
+      "Colorless main menu",
+      "Deck library",
+      "Deck builder",
+      "Sandbox deck selection",
+      "Sandbox game table",
+      "Online lobby",
+      "Online game table",
+    ]);
+    expect(pageLabel("builder", { name: "Tidal Splash", loading: false })).toBe(
+      "Deck builder: Tidal Splash",
+    );
+    expect(pageLabel("builder", { name: "", loading: true })).toBe(
+      "Deck builder: loading the deck",
     );
   });
 
-  it("tells the table's keyboard players how to read a card", () => {
+  it("gives each page its own instructions", () => {
+    const all = PAGES.map((page) => pageInstructions(page));
+    expect(new Set(all.slice(0, 6)).size).toBe(6);
+    expect(pageInstructions("match")).toBe(pageInstructions("simulator"));
+    expect(pageInstructions("home")).toContain("Tab past the last button");
     for (const page of ["simulator", "match"] as const)
-      expect(pageLabel(page)).toContain("V views a selected card");
+      expect(pageInstructions(page)).toContain("V views a selected card");
+    expect(pageInstructions("decks")).toContain("Manage button");
   });
 });
 

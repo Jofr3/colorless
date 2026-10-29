@@ -28,8 +28,8 @@ export type DegradedState = "stalled" | "failed" | "recovered";
 export interface ColorlessBridge {
   /** Every `COLORLESS:` print from Lua; the host handles a few of them itself first. */
   onPrint(message: string): void;
-  /** The page's boot or run is in trouble, or out of it again; see `DegradedState`. Told once per
-   * change, and on connect when the page was already stalled or failed. */
+  /** The boot or the runtime went wrong, or a stalled boot moved again; see `DegradedState`. Told
+   * once per change, and on connect when the page was already stalled or failed. */
   onDegraded(state: DegradedState): void;
   artwork: HostArtworkCache;
   mailboxes: typeof MAILBOXES;

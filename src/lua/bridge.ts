@@ -11,7 +11,14 @@ import { reportError } from "../lib/reportError";
 import { ArtworkCache } from "./artworkCache";
 import type { ArtRequest } from "../host/bridgeProtocol";
 import { MAILBOXES } from "../host/mailboxes";
-import { type Route, Router, pageLabel, pageTitle } from "../host/router";
+import {
+  type BuilderDeck,
+  type Route,
+  Router,
+  pageInstructions,
+  pageLabel,
+  pageTitle,
+} from "../host/router";
 import { type BridgeScreen, HostShell } from "../host/shell";
 import { reloadUnlessRecent } from "../host/reloadThrottle";
 import { guardUnsavedEdits } from "../host/unsavedEdits";
@@ -113,15 +120,23 @@ function screenLoadFailed(error: unknown) {
   );
 }
 
+/** The builder's deck for the page's name: a deck the builder has not opened yet is loading too. */
+function builderDeck(route: Route): BuilderDeck | undefined {
+  if (route.page !== "builder") return undefined;
+  if (builder.id !== route.id) return { name: "", loading: true };
+  return {
+    name: builder.phase === "ready" ? builder.name : "",
+    loading: builder.phase === "loading",
+  };
+}
+
 function showPage(route: Route) {
-  const deck =
-    route.page === "builder" && builder.id === route.id && builder.name
-      ? { name: builder.name, cards: [...builder.entries.values()].reduce((a, b) => a + b, 0) }
-      : undefined;
+  const deck = builderDeck(route);
   shell.showPage({
     ...route,
     title: pageTitle(route.page, deck?.name),
     label: pageLabel(route.page, deck),
+    instructions: pageInstructions(route.page),
   });
 }
 showPage(router.current);
@@ -129,6 +144,7 @@ showPage(router.current);
 host.connect({
   onPrint: (message) => shell.onPrint(message),
   onDegraded: (state) => {
+    shell.onDegraded(state);
     if (state === "failed") online.halt();
   },
   artwork: new ArtworkCache(),

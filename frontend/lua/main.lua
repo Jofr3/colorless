@@ -19,7 +19,7 @@ local MenuLogo = require('ui.menu_logo')
 local Controls = require('ui.controls')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
-local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer'}
+local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
 local shaders, sounds, controls = {}, {}, {}
 local soundVoices={}
 local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLogo
@@ -207,6 +207,18 @@ local function followPage()
     openSettings(true,Codec.fields(settingsRaw)[2])
   end
 end
+-- Where home's keyboard focus sits in its ring. On 'last' the page lets the next Tab leave the
+-- canvas for its links, on 'first' the next Shift+Tab (src/host/shell.ts tabLeaves); under a
+-- popup, during a wipe, off home or with nothing focused Tab stays in the canvas.
+local function focusEdge()
+  if state.page~='home' or popup or wipe or state.focused==0 then return 'none' end
+  if state.focused==#menu+#controls then return 'last' end
+  return state.focused==1 and 'first' or 'none'
+end
+local function syncFocusEdge()
+  local edge=focusEdge()
+  if edge~=state.focusEdge then state.focusEdge=edge;Bridge.emit('focus-edge',edge) end
+end
 applyPreferences=function()
   state.reduced=preferences:reduced(state.systemReduced)
   state.muted=preferences.muted==1
@@ -321,6 +333,8 @@ function love.update(dt)
   state.poll=state.poll+dt
   if state.poll>0.25 then browserState(); state.poll=0 end
   followPage()
+  -- After this frame's key presses and page change, before the next Tab can arrive.
+  syncFocusEdge()
   local rawX,rawY=love.mouse.getPosition()
   room:update(dt,state.time,(rawX-offsetX)/layoutScale,(rawY-offsetY)/layoutScale,state.reduced,preferences.screenshake)
   -- Game:update applies canvas juice before advancing REAL/REAL_SHADER.

@@ -1,0 +1,23 @@
+/* Loaded only from index.html's <noscript>: without JavaScript nothing boots, so the page says
+   so and shows its links in place of the loading bar. A file, not inline, for the page's CSP. */
+#canvas,
+#loading {
+  display: none;
+}
+.noscript {
+  margin: 24px;
+  color: #fff;
+  font: 18px monospace;
+}
+.accessible-menu {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 24px;
+  clip: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #1e2b2d;
+  padding: 20px;
+}

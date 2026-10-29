@@ -1,0 +1,6 @@
+# Index the home page; deck builders, lobbies and the sandbox table are private or short-lived.
+User-agent: *
+Allow: /
+Disallow: /decks/
+Disallow: /online/
+Disallow: /sandbox/play
