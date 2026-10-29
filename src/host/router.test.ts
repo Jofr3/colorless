@@ -92,6 +92,11 @@ describe("titles and labels", () => {
       "Tidal Splash. 60 cards.",
     );
   });
+
+  it("tells the table's keyboard players how to read a card", () => {
+    for (const page of ["simulator", "match"] as const)
+      expect(pageLabel(page)).toContain("V views a selected card");
+  });
 });
 
 function fakeWindow(path: string) {

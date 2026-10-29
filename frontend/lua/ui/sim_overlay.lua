@@ -16,6 +16,8 @@ local Popup=require('ui.popup')
 local PageText=require('ui.page_text')
 local CollectionMotion=require('ui.collection_motion')
 local Motion=require('ui.motion')
+local Pager=require('ui.pager')
+local Speech=require('ui.sim_speech')
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
 local function lines(text)
@@ -36,7 +38,43 @@ function Overlay.new(sim,kind,data)
   self.motion.T.y=0
   self.titleText=Dyna.new({string=self.data.title or '',scale=kind=='gameover' and 1.1 or 0.62,colours={kind=='gameover' and (sim.outcome=='win' and T.blue or T.red) or T.white},shadow=true,float=true,pop_in=kind=='gameover' and 0.4 or nil,pop_in_rate=kind=='gameover' and 2 or 8,time=sim.time,maxw=kind=='gameover' and 520 or 600})
   self:layout()
+  self.pendingAnnounce=self:opening()
   return self
+end
+-- What a tray or the log says as it opens. It is spoken on the overlay's first
+-- update, after the snapshot that opened it has announced its own line.
+function Overlay:opening()
+  local d=self.data
+  if self.kind=='cards' or self.kind=='pile' then
+    local parts={}
+    if (d.title or '')~='' then parts[#parts+1]=d.title end
+    local line=(self.instructionText or '')~='' and self.instructionText or (d.note or ''):gsub('%s*\n%s*',' ')
+    if line~='' then parts[#parts+1]=line end
+    local n=#(d.options or {})
+    parts[#parts+1]=n==0 and (self.kind=='pile' and 'Discard pile is empty' or 'No cards') or n..(n==1 and ' card' or ' cards')
+    return Speech.sentences(parts)
+  elseif self.kind=='log' then
+    local n=#self.logEntries
+    if n==0 then return 'Game log, no entries yet' end
+    local parts={'Game log, '..n..(n==1 and ' entry' or ' entries')}
+    local from=math.max(1,n-2)
+    for i=from,n do parts[#parts+1]=(i==from and 'Latest: ' or '')..self.logEntries[i].text end
+    parts[#parts+1]='Up and down read the log'
+    return Speech.sentences(parts)
+  end
+end
+-- A tray's one line of instruction: the prompt's note, else, while an effect
+-- asks, the header's hint or the name of the card being played.
+function Overlay:instruction()
+  local d=self.data
+  if (d.note or '')~='' then return (d.note:gsub('%s*\n%s*',' ')) end
+  local sim=self.sim
+  if self.kind~='cards' or sim.gamePhase~='effect:choose' then return '' end
+  if (sim.hint or '')~='' then return sim.hint end
+  for _,it in ipairs(sim.items or {}) do
+    if it.zone=='played' and it.owner=='you' and not it.hidden then return it.name end
+  end
+  return ''
 end
 function Overlay:offset() return self.motion.VT.y*60 end
 function Overlay:release()
@@ -55,6 +93,9 @@ function Overlay:refresh(data)
   end
   self.data=data
   self.titleText:set(data.title or '',self.sim.time)
+  local toggled=self.toggled and data.options[self.toggled]
+  if toggled then self.pendingAnnounce=self:selection(toggled,data) end
+  self.toggled=nil
   if keepCards then
     for _,c in ipairs(self.cards) do
       local o=data.options[c.option]
@@ -63,6 +104,15 @@ function Overlay:refresh(data)
     end
   end
   if cardGrid and not keepCards then self:layout() else self:build(keepCards) end
+end
+-- '<name>, selected, 2 of 3' from the host's re-emitted menu: the count is
+-- how many are picked, out of the x/N on the confirm button when it has one.
+function Overlay:selection(option,data)
+  local picked=0
+  for _,o in ipairs(data.options) do if o.selected then picked=picked+1 end end
+  local max
+  for _,f in ipairs(data.footer or {}) do max=max or (f.label or ''):match('^%d+/(%d+)$') end
+  return option.label..', '..(option.selected and 'selected' or 'not selected')..', '..picked..(max and ' of '..max or ' chosen')
 end
 function Overlay:layout()
   local sim=self.sim
@@ -73,15 +123,20 @@ function Overlay:layout()
     self.cardGap=8
     -- Keep room for lift, held-card zoom and shadows outside the tight grid.
     self.cardPadding=24
-    local compact=(self.data.title or '')=='' and (self.data.note or '')==''
+    local compact=(self.data.title or '')==''
+    self.instructionText=compact and self:instruction() or ''
+    local band=self.instructionText~='' and 24 or 0
     local maxColumns=5
     self.cardColumns=compact and math.max(1,math.min(maxColumns,#(self.data.options or {}))) or maxColumns
-    self.cardHeader=compact and 24 or 110
+    self.cardHeader=compact and 24+band or 110
     w=p and 456 or math.min(W-40,maxColumns*D.W*sim.L.zones.you_hand.scale+(maxColumns-1)*self.cardGap+2*self.cardPadding+48)
+    local widest=w
     local unitBounds=CollectionMotion.bounds(maxColumns,1,0)
     self.cardScale=math.min(sim.L.zones.you_hand.scale,(w-48-(maxColumns-1)*self.cardGap-2*self.cardPadding)/unitBounds.width)
     local bounds=CollectionMotion.bounds(self.cardColumns,self.cardScale,self.cardGap)
     w=bounds.width+2*self.cardPadding+48
+    -- A narrow tray widens for its instruction line, up to the full tray.
+    if band>0 then w=math.max(w,math.min(widest,Dyna.measure(self.instructionText,0.28)+64)) end
     self.cardRowHeight=bounds.height
     local count=#(self.data.options or {})
     local rows=math.max(1,math.ceil(count/self.cardColumns))
@@ -195,7 +250,8 @@ function Overlay:build(keepCards)
     end
     local fy=bottom-(d.mandatory and 0 or 50)
     if self.pages>1 then
-      self:add('<',x+w/2-150,fy-48,34,36,'prev',T.red);self:add('>',x+w/2+116,fy-48,34,36,'next',T.red)
+      Pager.arrow(self:add('<',x+w/2-150,fy-48,34,36,'prev',T.red),-1,self.page,self.pages)
+      Pager.arrow(self:add('>',x+w/2+116,fy-48,34,36,'next',T.red),1,self.page,self.pages)
     end
     footer(d.footer,fy)
     if not d.mandatory then back() end
@@ -206,15 +262,16 @@ function Overlay:build(keepCards)
     self.viewport={x=x+24,y=y+self.cardHeader,w=w-48,h=gridBottom-(y+self.cardHeader)}
     self.cardTop=self.viewport.y+self.cardPadding
     if not keepCards then self:makeCards(d.options,self.cardScale,self.cardTop) end
-    if d.note and d.note~='' then self.noteLines=Dyna.wrap(d.note,0.28,bw-16) else self.noteLines={} end
+    -- An untitled tray prints its instruction as one line instead.
+    if (self.instructionText or '')=='' and d.note and d.note~='' then self.noteLines=Dyna.wrap(d.note,0.28,bw-16) else self.noteLines={} end
     for _,c in ipairs(self.cards) do
       self.controls[#self.controls+1]={label=c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale,action='card',card=c,disabled=c.item.disabled and kind=='cards',fontSize=20,token=d.options[c.option].token}
     end
     if self.pages>1 then
       self.paginationY=gridBottom+12
       self.pageText:set('Page '..self.page..'/'..self.pages,sim.time)
-      self:add('<',x+w/2-150,self.paginationY,34,36,'prev',T.red)
-      self:add('>',x+w/2+116,self.paginationY,34,36,'next',T.red)
+      Pager.arrow(self:add('<',x+w/2-150,self.paginationY,34,36,'prev',T.red),-1,self.page,self.pages)
+      Pager.arrow(self:add('>',x+w/2+116,self.paginationY,34,36,'next',T.red),1,self.page,self.pages)
     else self.paginationY=nil end
     footer(d.footer,fy)
     if not d.mandatory then back() end
@@ -231,10 +288,13 @@ function Overlay:build(keepCards)
     -- "turn<TAB><TAB><TAB>Turn N". Wrapped continuation lines indent under
     -- the text column.
     self.logLines={}
+    -- One spoken entry per row, at the first drawn line it wraps onto.
+    self.logEntries={}
     local textW=bw-24-(p and 0 or 150)
     for line in (tostring(d.note or '')..'\n'):gmatch('(.-)\n') do
       local who,name,elapsed,text=line:match('^([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$')
       if not who then who,name,elapsed,text='system','','',line end
+      if line~='' then self.logEntries[#self.logEntries+1]={text=(name~='' and name..': ' or '')..text,line=#self.logLines+1} end
       if who=='turn' then self.logLines[#self.logLines+1]={turn=text}
       else
         local wrapped=Dyna.wrap(text,0.3,textW)
@@ -245,9 +305,15 @@ function Overlay:build(keepCards)
     end
     self.visible=p and 24 or 19
     self.pages=math.max(1,math.ceil(#self.logLines/self.visible))
-    self.page=math.min(self.pages,math.max(self.page,self.pages))
+    -- The log opens on its newest page and keeps the reader's page after that.
+    self.page=self.logOpened and math.min(self.page,self.pages) or self.pages
+    self.logOpened=true
     self.pageText:set('Page '..self.page..'/'..self.pages,sim.time)
-    if self.pages>1 then self:add('<',x+w/2-150,bottom-48,34,36,'prev',T.red);self:add('>',x+w/2+116,bottom-48,34,36,'next',T.red) end
+    if self.pages>1 then
+      Pager.arrow(self:add('<',x+w/2-150,bottom-48,34,36,'prev',T.red),-1,self.page,self.pages)
+      Pager.arrow(self:add('>',x+w/2+116,bottom-48,34,36,'next',T.red),1,self.page,self.pages)
+    end
+    self.logFocus=math.min(self.logFocus or #self.logEntries,#self.logEntries)
     back()
   elseif kind=='options' then
     local top=y+24
@@ -366,6 +432,7 @@ function Overlay:hit(x,y)
 end
 function Overlay:update(dt,time,mx,my,reduced)
   self.time=time
+  if self.pendingAnnounce then self.sim.callbacks.announce(self.pendingAnnounce);self.pendingAnnounce=nil end
   self.motion:update(dt,time,false,false,reduced)
   self.titleText:update(time,reduced)
   self.leaveJuice:update(dt,time,false,false,reduced)
@@ -391,7 +458,8 @@ function Overlay:update(dt,time,mx,my,reduced)
   end
   if self.kind=='coin' then
     for _,f in ipairs(self.flips) do
-      if not f.landed and time>=f.start+0.9 then f.landed=true;self.sim.callbacks.feedback('coin'..(f.heads and '3' or '1'),f.heads and 1.05 or 0.9);self.sim.callbacks.jiggle(0.5) end
+      -- Reduced motion lands every coin at once, without the spin.
+      if not f.landed and (reduced or time>=f.start+0.9) then f.landed=true;self.sim.callbacks.feedback('coin'..(f.heads and '3' or '1'),f.heads and 1.05 or 0.9);self.sim.callbacks.jiggle(0.5) end
     end
   end
 end
@@ -408,6 +476,7 @@ function Overlay:activate(i)
     -- confirms or reverts it) with cardSlide1, or drop with a quiet cardSlide2.
     local item=b.card.item
     item.selected=not item.selected
+    self.toggled=b.card.option
     b.card:juiceUp(self.time,0.05,0.03,sim.reduced)
     sim.callbacks.feedback(item.selected and 'cardSlide1' or 'cardSlide2',1,item.selected and 1 or 0.3)
   else sim.callbacks.feedback('button') end
@@ -433,14 +502,16 @@ function Overlay:keypressed(key)
     if not self.data.mandatory and self.kind~='gameover' then sim:closeOverlay(true) end
     return true
   end
+  if self.kind=='log' and (key=='up' or key=='down') then
+    self:readLog(key=='up' and -1 or 1)
+    return true
+  end
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
     local total=#self.controls;if total==0 then return true end
     self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i) return self.controls[i].disabled end)
     local b=self.controls[self.focus]
     if self.armed and (not b or b.action~='leave') then self:disarm() end
-    if b then
-      sim.callbacks.announce(b.label)
-    end
+    if b then sim.callbacks.announce(self:describe(b)) end
     return true
   elseif key=='return' or key=='space' then self:activate(self.focus);return true
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1);return true end
@@ -451,9 +522,35 @@ function Overlay:changePage(delta)
   self.page=(self.page-1+delta+self.pages)%self.pages+1
   self.sim.pressedOverlay=nil;self.hover=0;self.focus=0
   self:build()
+  self.sim.callbacks.announce(Pager.page(self.page,self.pages))
+end
+-- A focused control as heard: a card in a tray with its selection, a pager
+-- arrow with its page.
+function Overlay:describe(b)
+  if b.speech then return b.speech end
+  local selected=b.card and b.card.item.selected or (not b.card and b.selected)
+  return b.label..(selected and ', selected' or '')
+end
+-- Up and down step through the log's entries, newest last, turning the page
+-- to the one that shows the entry.
+function Overlay:readLog(dir)
+  local n=#self.logEntries
+  if n==0 then self.sim.callbacks.announce('Game log, no entries yet');return end
+  self.logFocus=math.max(1,math.min(n,(self.logFocus or n)+(dir<0 and -1 or 1)))
+  local entry=self.logEntries[self.logFocus]
+  local page=math.ceil(entry.line/self.visible)
+  if page~=self.page then self.page=page;self.pageText:set('Page '..self.page..'/'..self.pages,self.sim.time) end
+  self.sim.callbacks.announce('Entry '..self.logFocus..' of '..n..': '..entry.text)
 end
 function Overlay:wheelmoved(y)
   if y~=0 and WheelPager.ready(self) then self:changePage(y>0 and -1 or 1) end
+end
+-- A coin `age` seconds into its flip: its spin (the face's width, -1..1), its
+-- height and whether it has landed. Reduced Motion shows it landed at once.
+function Overlay.coinPose(age,reduced)
+  local t=reduced and 1 or math.min(age/0.9,1)
+  if age>0 and t<1 then return math.cos(t*math.pi*7),math.sin(t*math.pi)*56,false end
+  return 1,0,t>=1
 end
 local function cycle(self,x,y,w,h)
   local hovered=Button.hit({x=x,y=y,w=w,h=h},self.sim.mx or -1,(self.sim.my or -1)-self:offset())
@@ -477,6 +574,7 @@ function Overlay:draw(shaders)
   elseif kind=='cards' or kind=='pile' then
     local top=y+(kind=='pile' and 64 or 66)
     for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,T.jokerGrey,{roomWidth=rw}) end
+    if (self.instructionText or '')~='' then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true}) end
     -- The pack tray: G.C.BLACK inset with a 0.05 emboss, like the collection.
     local v=self.viewport
     local tx,ty,tw,th=v.x,v.y,v.w,v.h
@@ -501,16 +599,10 @@ function Overlay:draw(shaders)
     for i,f in ipairs(self.flips) do
       local cx=x+w/2+(i-(n+1)/2)*spacing
       local cy=y+h/2-14
-      local age=math.max(0,(self.time or 0)-f.start)
-      local t=math.min(age/0.9,1)
-      local flip=1
-      local lift=0
+      local flip,lift,landed=Overlay.coinPose(math.max(0,(self.time or 0)-f.start),sim.reduced)
       local chip=Sprites.WHITE
-      if age>0 and t<1 then
-        flip=math.cos(t*math.pi*7)
-        lift=math.sin(t*math.pi)*56
-        chip=flip>=0 and Sprites.WHITE or Sprites.BLACK
-      elseif t>=1 then chip=f.heads and Sprites.WHITE or Sprites.BLACK;flip=1 end
+      if landed then chip=f.heads and Sprites.WHITE or Sprites.BLACK
+      elseif lift>0 then chip=flip>=0 and Sprites.WHITE or Sprites.BLACK end
       local px=(cx-rw/2)/(rw/2)*1.5
       if not Sprites.chip(chip,cx,cy-lift,88,sim.reduced and 0 or math.sin((self.time or 0)*0.7+i)*0.06,math.max(0.08,math.abs(flip)),px,0.1+lift/120) then
         g.setColor(T.white);g.circle('fill',cx,cy-lift,40,8)

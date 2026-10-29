@@ -26,6 +26,7 @@ local Fx=require('ui.sim_fx')
 local Model=require('ui.sim_model')
 local Ko=require('ui.sim_ko')
 local Popup=require('ui.popup')
+local Speech=require('ui.sim_speech')
 local Simulator={};Simulator.__index=Simulator
 local g=love.graphics
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
@@ -52,7 +53,7 @@ function Simulator:open(reduced,skipCommand,mode,code)
   self.prizeMotion={}
   self.rareCandy=nil
   self.counterMotion=nil;self.completedCounterTransfer=nil
-  self.reduced=reduced;self.drag=nil;self.focus=0;self.raw=nil;self.previous=nil;self.highlight=nil;self.hoverCard=nil;self.targeting=nil;self.luaTargeting=nil
+  self.reduced=reduced;self.drag=nil;self.focus=0;self.focusKey=nil;self.focusCard=nil;self.raw=nil;self.previous=nil;self.highlight=nil;self.hoverCard=nil;self.targeting=nil;self.luaTargeting=nil
   if self.overlay then self.overlay:release();self.overlay=nil end
   -- Forget the last game so a reopened page never diffs against it.
   for _,c in ipairs(self.cards) do c.texture:release() end
@@ -187,6 +188,13 @@ function Simulator:sync(raw,finishKo)
   if raw==self.raw then return end
   self.completedCounterTransfer=self.counterMotion and self.counterMotion.sent and self.counterMotion.cards or nil
   self.counterMotion=nil
+  -- Reduced motion skips the burn but still names each knocked-out Pokémon
+  -- where it stood.
+  local reducedKos
+  if finishKo~=true and self.reduced and self.phase=='ready' then
+    reducedKos={}
+    for _,c in ipairs(Ko.victims(m,self.cards)) do reducedKos[#reducedKos+1]={name=c.item.name,x=c.x,y=c.y-0.6*D.H*c.baseScale} end
+  end
   -- love.filesystem.read also returns the byte count; only our explicit
   -- boolean completion flag may bypass the presentation queue.
   if finishKo~=true and not self.reduced and self.phase=='ready' then
@@ -210,6 +218,9 @@ function Simulator:sync(raw,finishKo)
   self.highlight=nil;self.hoverCard=nil
   self:placeCards(false,previous)
   self:react(previous)
+  for _,ko in ipairs(reducedKos or {}) do
+    self.fx:attention({text='KNOCKED OUT: '..ko.name,scale=0.6,colour=T.white,backdrop=T.red,x=ko.x,y=ko.y,hold=1.2,maxw=self.L and self.L.table.w-40})
+  end
   self.completedCounterTransfer=nil
   self:applyMenu(previous)
   -- A shuffle riffles the owner's deck pile (CardArea shuffle_amt), with the
@@ -801,6 +812,7 @@ function Simulator:applyMenu(previous)
     return
   end
   self.targeting=nil
+  if menu.kind=='pile' and (menu.title or '')=='' then menu.title=self:pileTitle(#menu.options) end
   if self.overlay and self.overlay.data and self.overlay.data.id==menu.id and self.overlay.kind==menu.kind then self.overlay:refresh(menu);return end
   if self.overlay then self.overlay:release() end
   self.overlay=Overlay.new(self,menu.kind,menu)
@@ -922,7 +934,8 @@ function Simulator:build()
   -- Pile clicks.
   for _,owner in ipairs({'opponent','you'}) do
     local z=L.zones[(owner=='you' and 'you' or 'opp')..'_discard']
-    if z then self:add('',z.well.x,z.well.y,z.well.w,z.well.h,'pile',nil,{owner=owner,invisible=true,disabled=self.phase~='ready'}) end
+    local count=(self.sides[owner] or {}).discard or 0
+    if z then self:add('',z.well.x,z.well.y,z.well.w,z.well.h,'pile',nil,{owner=owner,invisible=true,disabled=self.phase~='ready' or count==0}) end
   end
   -- Targeting instructions live in the HUD; choices remain on the table.
   local target=self.targeting and self.targeting.menu or self.luaTargeting
@@ -954,7 +967,8 @@ function Simulator:build()
     self.closingPopup=nil
   end
   if self.reduced then self.closingPopup=nil end
-  if self.focus>#self.controls then self.focus=0 end
+  self:buildPrizeStops()
+  self:restoreFocus()
 end
 local function groupLabel(group)
   local labels={attach='Attach',evolve='Evolve',tool='Attach',rareCandy='Rare Candy',ability='Ability'}
@@ -971,7 +985,7 @@ function Simulator:buildAttached(card)
       if not groups[gk] then groups[gk]={label=groupLabel(gk),colour=a.colour,actions={},disabled=true};buttons[#buttons+1]=groups[gk] end
       groups[gk].actions[#groups[gk].actions+1]=a
       if not a.disabled then groups[gk].disabled=false end
-    else buttons[#buttons+1]={label=a.label,colour=a.colour,token=a.token,disabled=a.disabled,cost=a.cost,damage=a.damage,hasCost=a.hasCost,ability=a.group=='ability'} end
+    else buttons[#buttons+1]={label=a.label,colour=a.colour,token=a.token,disabled=a.disabled,cost=a.cost,damage=a.damage,hasCost=a.hasCost,ability=a.group=='ability',retreat=a.group=='retreat'} end
   end
   if not item.hidden and item.cardId~='' then buttons[#buttons+1]={label='View',colour=T.profile,view=true} end
   if #buttons==0 then return end
@@ -1008,7 +1022,7 @@ function Simulator:buildAttached(card)
   local buttonY=y+pad
   for _,b in ipairs(buttons) do
     local action=b.view and 'inspect' or (b.actions and 'target' or 'cardAction')
-    local added=self:add(b.label,x+pad,buttonY,bw,b.height,action,b.colour,{token=b.token,disabled=b.disabled,fontSize=21,attached=true,card=card,group=b,cost=b.cost,damage=b.damage,hasCost=b.hasCost,ability=b.ability})
+    local added=self:add(b.label,x+pad,buttonY,bw,b.height,action,b.colour,{token=b.token,disabled=b.disabled,fontSize=21,attached=true,card=card,group=b,cost=b.cost,damage=b.damage,hasCost=b.hasCost,ability=b.ability,retreat=b.retreat})
     self.attachedPopup.buttons[#self.attachedPopup.buttons+1]=added
     buttonY=buttonY+b.height+gap
     if b.disabled then added.colour=T.grey end -- not the panel black
@@ -1133,7 +1147,7 @@ function Simulator:prizePosition(owner,index)
   end
   return x,y
 end
-function Simulator:updatePrizes(dt,time,mx,my,reduced,blocked)
+function Simulator:updatePrizes(dt,time,mx,my,reduced,blocked,focusedSlot)
   local previous=self.prizeMotion or {}
   local current={}
   local faceUp={}
@@ -1149,7 +1163,7 @@ function Simulator:updatePrizes(dt,time,mx,my,reduced,blocked)
         local p=previous[key] or {motion=Motion.new(0,0,0)}
         local x,y=self:prizePosition(owner,i)
         local active=not blocked and not self.drag and self.hover==0 and not self.hoverCard
-          and math.abs(mx-x)<=D.HALF_W*z.scale and math.abs(my-y)<=D.HALF_H*z.scale
+          and (math.abs(mx-x)<=D.HALF_W*z.scale and math.abs(my-y)<=D.HALF_H*z.scale or (owner=='you' and focusedSlot==i))
         if active and not p.hovered then
           Card.juiceUp(p,time,0.05,0.03,reduced)
           self.callbacks.feedback('paper1',0.9+love.math.random()*0.2)
@@ -1210,6 +1224,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   self.hoverCard=hovered
   -- Keyboard focus shows only while the pointer is over no control or card.
   local pointed=self.hover>0 or hovered~=nil
+  local focusedControl=not blocked and not pointed and self.controls[self.focus] or nil
   for _,c in ipairs(self.cards) do
     local focused=not blocked and not pointed and self.focusCard==c
     local active=(not blocked and c==hovered) or focused
@@ -1284,21 +1299,25 @@ function Simulator:update(dt,time,mx,my,reduced)
   for _,p in ipairs(self.piles) do
     local active=not blocked and not self.drag and not hovered and (
       (self.hover==0 and p:hit(mx,my)) or
-      (control and control.action=='pile' and control.owner==p.owner and p.item.kind=='discard'))
+      (control and control.action=='pile' and control.owner==p.owner and p.item.kind=='discard') or
+      (focusedControl and focusedControl.action=='pile' and focusedControl.owner==p.owner and p.item.kind=='discard'))
     if active and not p.hovered then
       p:juiceUp(time,0.05,0.03,reduced)
       self.callbacks.feedback('paper1',0.9+love.math.random()*0.2)
     end
     p:update(dt,time,active,reduced,self.boardW)
   end
-  self:updatePrizes(dt,time,mx,my,reduced,blocked)
-  -- Hover popup (card_h_popup) for face-up cards with catalogue info.
+  local _,_,prizeStop=self:stopAt(self.focus)
+  self:updatePrizes(dt,time,mx,my,reduced,blocked,not pointed and prizeStop and prizeStop.slot)
+  -- Hover popup (card_h_popup) for face-up cards with catalogue info, and for
+  -- the keyboard's card while the pointer rests elsewhere.
   self.popup=nil
   local assigningCounters=self.targeting and self.targeting.menu.hideTargetOutline
-  if hovered and hovered~=self.highlight and not hovered.item.hidden and not self.drag and self.info[hovered.item.cardId] and not blocked and not assigningCounters then
-    local key=hovered.item.owner..':'..hovered.item.id..':'..(hovered.item.damage or 0)..':'..(hovered.item.status or '')
-    if self.popupKey~=key then self.popupKey=key;self.popupBox=Popup.build(self.info[hovered.item.cardId],hovered.item,self.portrait and 236 or 270,self.boardW,true) end
-    self.popup=hovered
+  local shown=hovered or (not pointed and self.focusCard) or nil
+  if shown and shown~=self.highlight and not shown.item.hidden and not self.drag and self.info[shown.item.cardId] and not blocked and not assigningCounters then
+    local key=shown.item.owner..':'..shown.item.id..':'..(shown.item.damage or 0)..':'..(shown.item.status or '')
+    if self.popupKey~=key then self.popupKey=key;self.popupBox=Popup.build(self.info[shown.item.cardId],shown.item,self.portrait and 236 or 270,self.boardW,true) end
+    self.popup=shown
   end
   self:updateKoPresentation(dt,time,reduced)
 end
@@ -1337,6 +1356,114 @@ function Simulator:dropZoneAt(x,y,card)
   end
   return nil
 end
+-- ---------------------------------------------------------------- focus
+-- The keyboard ring: the controls, then the face-up cards, then, while a Prize
+-- prompt is open, the face-down Prize slots it can take. A focused stop is
+-- remembered by key, so a rebuilt list (every snapshot) keeps it in place.
+function Simulator:buildPrizeStops()
+  self.prizeStops={}
+  local menu=self.targeting and self.targeting.menu
+  if not menu or menu.kind~='prizes' then return end
+  local faceUp={}
+  for _,c in ipairs(self.cards) do if c.item.owner=='you' and c.item.zone=='prize' then faceUp[c.item.index]=true end end
+  local count=(self.sides.you or {prizes=0}).prizes
+  for i=0,count-1 do
+    for _,o in ipairs(menu.options) do
+      if o.uid=='prize:'..i and not o.disabled and not faceUp[i] then self.prizeStops[#self.prizeStops+1]={slot=i,count=count,option=o} end
+    end
+  end
+end
+function Simulator:stopCount() return #self.controls+#self.cards+#(self.prizeStops or {}) end
+function Simulator:stopAt(i)
+  local n,m=#self.controls,#self.cards
+  if i<1 then return nil end
+  if i<=n then return self.controls[i] end
+  if i<=n+m then return nil,self.cards[i-n] end
+  return nil,nil,(self.prizeStops or {})[i-n-m]
+end
+-- Discard piles answer the keyboard though they draw no button of their own.
+function Simulator:skipStop(i)
+  local b,c,p=self:stopAt(i)
+  if b then return b.disabled or (b.invisible and b.action~='pile') or false end
+  if c then return c.item.hidden or c.drawAfterPromotion~=nil end
+  return p==nil
+end
+-- Public cards keep their uid across a hot-seat flip; hidden ones are positional.
+local function cardKey(item) return 'card:'..(item.hidden and item.owner..':'..item.id or item.id) end
+function Simulator:keyAt(i)
+  local b,c,p=self:stopAt(i)
+  if b then return 'control:'..b.action..':'..b.label..':'..(b.owner or ''),b.attached and b.card and cardKey(b.card.item) end
+  if c then return cardKey(c.item) end
+  if p then return 'prize:'..p.slot end
+end
+function Simulator:setFocus(i)
+  self.focus=i
+  local key,fallback=self:keyAt(i)
+  self.focusKey=key and {key=key,fallback=fallback} or nil
+  local _,c=self:stopAt(i)
+  self.focusCard=c
+end
+function Simulator:findStop(key)
+  for i=1,self:stopCount() do if not self:skipStop(i) and self:keyAt(i)==key then return i end end
+end
+-- After a rebuild: the same stop, else the card an attached button belonged
+-- to (announced, since focus moved), else nothing.
+function Simulator:restoreFocus()
+  local want=self.focusKey
+  if not want and self.focusCard then want={key=cardKey(self.focusCard.item)} end
+  if not want then
+    if self.focus>self:stopCount() then self.focus=0 end
+    return
+  end
+  local found=self:findStop(want.key)
+  if found then self:setFocus(found);return end
+  found=want.fallback and self:findStop(want.fallback)
+  if found then
+    self:setFocus(found)
+    self.callbacks.announce(self:describeStop(found))
+    return
+  end
+  self.focus=0;self.focusKey=nil;self.focusCard=nil
+end
+function Simulator:describeCard(c)
+  local text=Speech.card(c.item,self.info)
+  if c==self.highlight then text=text..', selected' end
+  if self:isCandidate(c) then text=text..', can be chosen' end
+  return text
+end
+function Simulator:retreatReason(b)
+  return Speech.retreatReason(self,b.card.item,b.cost)
+end
+function Simulator:describeStop(i)
+  local b,c,p=self:stopAt(i)
+  if c then return self:describeCard(c) end
+  if p then return 'Prize '..(p.slot+1)..' of '..p.count..(p.option.selected and ', selected' or '') end
+  if not b then return '' end
+  if b.action=='pile' then
+    local count=(self.sides[b.owner] or {}).discard or 0
+    return self:whose(b.owner)..' discard pile, '..count..(count==1 and ' card' or ' cards')
+  end
+  local text=b.attached and Speech.control(b) or b.label
+  if b.attached and b.disabled and b.retreat then text=text..', unavailable: '..self:retreatReason(b) end
+  return text
+end
+-- Enter on a card shows its buttons and focuses the first one that works;
+-- the ones that do not are read with it.
+function Simulator:focusAttached(card)
+  local first
+  local unavailable={}
+  for i,b in ipairs(self.controls) do
+    if b.attached and b.card==card then
+      if not b.disabled then first=first or i
+      else unavailable[#unavailable+1]=b.retreat and b.label..', '..self:retreatReason(b) or b.label end
+    end
+  end
+  if not first then self.callbacks.announce(self:describeCard(card));return end
+  self:setFocus(first)
+  local text=self:describeStop(first)
+  if #unavailable>0 then text=text..'. Unavailable: '..table.concat(unavailable,'; ') end
+  self.callbacks.announce(text)
+end
 -- ---------------------------------------------------------------- input
 function Simulator:activate(index)
   if self.counterMotion then return end
@@ -1353,7 +1480,7 @@ function Simulator:activate(index)
   if a=='invoke' then self:invoke(b.token)
   elseif a=='log' then self:command('log')
   elseif a=='options' then self:openOptions()
-  elseif a=='pile' then self.callbacks.feedback('cardSlide2',1);self:command('pile',b.owner)
+  elseif a=='pile' then self.callbacks.feedback('cardSlide2',1);self:openPile(b.owner)
   elseif a=='dismiss' then self:command('dismiss')
   elseif a=='cancelTargeting' then self.luaTargeting=nil;self:build()
   elseif a=='inspect' then self:openInspect(b.card)
@@ -1403,6 +1530,22 @@ function Simulator:openInspect(card)
   self.overlay=Overlay.new(self,'inspect',{title=card.item.name,item=card.item,actions=actions,mandatory=false})
   if self.callbacks.jiggle then self.callbacks.jiggle(0.5) end
   self:build()
+  local details=Speech.details(self.info[card.item.cardId])
+  self.callbacks.announce(Speech.card(card.item,self.info)..'.'..(details~='' and ' '..details or ''))
+end
+-- The pile tray's title names whose discard it is; the host sends it untitled.
+function Simulator:openPile(owner)
+  self.pileOwner=owner
+  self:command('pile',owner)
+end
+-- 'Your' or "Misty's".
+function Simulator:whose(owner)
+  if owner~='opponent' then return 'Your' end
+  return (self.opponent or '')~='' and self.opponent.."'s" or "Opponent's"
+end
+function Simulator:pileTitle(count)
+  if not self.pileOwner then return 'Discard pile ('..count..')' end
+  return self:whose(self.pileOwner)..' discard ('..count..')'
 end
 -- Forget any press or drag in progress, as when the window loses focus.
 function Simulator:cancelInteractions()
@@ -1411,7 +1554,7 @@ function Simulator:cancelInteractions()
 end
 function Simulator:mousepressed(x,y)
   if self.koPresentation or self.counterMotion then return end
-  x,y=self:point(x,y);self.focus=0;self.focusCard=nil
+  x,y=self:point(x,y);self.focus=0;self.focusCard=nil;self.focusKey=nil
   if self.peek then self.peek=false;return end
   if self.overlay then
     self.pressedOverlay=self.overlay:press(x,y);return
@@ -1466,7 +1609,7 @@ function Simulator:mousereleased(x,y)
       self:build()
     elseif self.targeting or self.luaTargeting then
       c:juiceUp(self.time,nil,nil,self.reduced)
-    elseif c.item.zone=='discard' then self.callbacks.feedback('cardSlide2',1);self:command('pile',c.item.owner)
+    elseif c.item.zone=='discard' then self.callbacks.feedback('cardSlide2',1);self:openPile(c.item.owner)
     elseif c.item.hidden then c:juiceUp(self.time,nil,nil,self.reduced)
     else
       -- Card:click lifts the card 0.2 card heights (cardSlide1 to select, a
@@ -1491,31 +1634,32 @@ function Simulator:keypressed(key)
       self.drag.card.dragging=false;self.drag=nil;self.clicked=nil;self.dropZone=nil
     elseif self.rareCandy then self:command('cancelRareCandy')
     elseif self.luaTargeting then self.luaTargeting=nil;self:build()
-    elseif self.highlight then self.highlight=nil;self:build()
+    elseif self.highlight then
+      -- Focus returns from the card's buttons to the card.
+      local card=self.highlight
+      self.highlight=nil;self.focusKey={key=cardKey(card.item)}
+      self:build()
+      if self.focusCard==card then self.callbacks.announce(self:describeCard(card)) end
     elseif self.targeting and not self.targeting.menu.mandatory then self:command('dismiss')
     else self:openOptions() end
     return
   end
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
-    local cardCount=#self.cards
-    local total=#self.controls+cardCount;if total==0 then return end
-    local found
-    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i)
-      local b=self.controls[i];local c=self.cards[i-#self.controls]
-      return not ((b and not b.disabled and not b.invisible) or (c and not c.item.hidden and not c.drawAfterPromotion))
-    end)
-    if found then
-      local b=self.controls[self.focus];local c=self.cards[self.focus-#self.controls]
-      self.focusCard=c;self.callbacks.announce(b and b.label or c.item.name)
-    end
+    local total=self:stopCount();if total==0 then return end
+    local focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i) return self:skipStop(i) end)
+    self.focus=focus
+    if found then self:setFocus(focus);self.callbacks.announce(self:describeStop(focus)) end
   elseif key=='return' or key=='space' then
+    local _,_,prize=self:stopAt(self.focus)
     if self.focusCard then
       local c=self.focusCard
       local target=self:targetFor(c)
       if target then self:selectTarget(c,target)
-      else self.highlight=(self.highlight==c) and nil or c;self:build() end
+      elseif self.highlight==c then self.highlight=nil;self:build();self.callbacks.announce(self:describeCard(c))
+      else self.highlight=c;self:build();self:focusAttached(c) end
+    elseif prize then self.callbacks.feedback('card1',1.1);self:invoke(prize.option.token)
     else self:activate(self.focus) end
-  elseif key=='v' and self.highlight then self:openInspect(self.highlight)
+  elseif key=='v' and (self.highlight or self.focusCard) then self:openInspect(self.highlight or self.focusCard)
   end
 end
 function Simulator:wheelmoved(y)

@@ -93,7 +93,7 @@ export function pageTitle(page: Page, deckName = ""): string {
 const LIBRARY_LABEL =
   "Deck library. Tab or arrows choose controls and cards; each deck's Manage button renames or deletes it. Enter opens. Escape returns home.";
 const TABLE_LABEL =
-  "game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options.";
+  "game table. Drag cards to play. Tab selects controls and cards; Enter activates; V views a selected card. Escape opens options.";
 
 /** The canvas's accessible name on each page. */
 export function pageLabel(page: Page, deck?: { name: string; cards: number }): string {
