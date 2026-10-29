@@ -1125,7 +1125,7 @@ describe("LuaSimulator announcements and refusals", () => {
     sim.dispatch({ type: "attack", seat: "p1", index: 0 });
     const said = field(publish, "announce");
     expect(said).toContain("One: fix-attacker used Bite. One: dealt 30 damage to Fixmon V.");
-    expect(said).toContain("Knocked out: Fixmon V.");
+    expect(said).toContain("Knocked out: your Fixmon V.");
     expect(said).toContain("One took 2 Prizes, 4 left.");
     expect(said.endsWith("Choose your new Active Pokémon. Click a Benched Pokémon.")).toBe(true);
   });
@@ -1134,7 +1134,7 @@ describe("LuaSimulator announcements and refusals", () => {
     const { sim, publish } = knockout(setPrizes(knockoutState("fix-pokemon-v", 210), "p1", 1));
     sim.dispatch({ type: "attack", seat: "p1", index: 0 });
     const said = field(publish, "announce");
-    expect(said).toContain("Knocked out: Fixmon V.");
+    expect(said).toContain("Knocked out: Two's Fixmon V.");
     expect(said.endsWith("One wins. All prize cards taken.")).toBe(true);
     expect(said).not.toContain("wins —");
   });

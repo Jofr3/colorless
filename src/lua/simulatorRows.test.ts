@@ -258,9 +258,54 @@ describe("announcement", () => {
       ...Array.from({ length: ANNOUNCE_LOG_ROWS + 2 }, (_, i) => row("p1", `step ${i}`)),
     ];
     const said = saidAfter({}, { log, view: v });
-    expect(said.startsWith(`Knocked out: ${ko.name}. Ash: step 2. `)).toBe(true);
+    expect(said.startsWith(`Knocked out: Brock's ${ko.name}. Ash: step 2. `)).toBe(true);
     expect(said).not.toContain("step 1.");
     expect(said).toContain(`Ash: step ${ANNOUNCE_LOG_ROWS + 1}.`);
+  });
+
+  it("keeps the action that started a batch and its damage when a Knock Out ends the turn", () => {
+    const ko = base.board.opponent.active;
+    if (!ko) throw Error("Missing Active");
+    const v = structuredClone(base);
+    v.board.opponent.active = null;
+    v.board.opponent.discard.push(ko);
+    const log: SeatLogEntry[] = [
+      row("p1", "Miraidon ex used Photon Blaster"),
+      {
+        ...row("p1", ""),
+        segments: [
+          { text: "dealt " },
+          { text: "220", tone: "damage" },
+          { text: ` damage to ${ko.name}` },
+        ],
+      },
+      row("p2", `${ko.name} was Knocked Out`, [{ kind: "knockOut", seat: "p2", uid: ko.id }]),
+      row("p1", "takes 2 prize cards"),
+      row("p1", "took 2 prize cards — 2 left"),
+      row("p2", "promoted Miraidon ex to Active"),
+      row("p1", "ended their turn"),
+      { kind: "turn", turn: 6 },
+      row("p2", "drew a card"),
+      ...Array.from({ length: 2 }, (_, i) => row("p2", `step ${i}`)),
+    ];
+    const said = saidAfter({}, { log, view: v });
+    expect(said.startsWith("Ash: Miraidon ex used Photon Blaster. Ash: dealt 220 damage to")).toBe(
+      true,
+    );
+    expect(said).toContain(`Knocked out: Brock's ${ko.name}.`);
+    // The generic rows still keep only the newest.
+    expect(said).not.toContain("takes 2 prize cards");
+    expect(said).toContain("Brock: step 1.");
+  });
+
+  it("says a Knock Out was the viewer's own Pokémon", () => {
+    const ko = base.board.you.active;
+    if (!ko) throw Error("Missing Active");
+    const v = structuredClone(base);
+    v.board.you.active = null;
+    v.board.you.discard.push(ko);
+    const log = [row("p1", "Knocked Out", [{ kind: "knockOut", seat: "p1", uid: ko.id }])];
+    expect(saidAfter({}, { log, view: v })).toBe(`Knocked out: your ${ko.name}.`);
   });
 
   it("counts the Prizes either player takes", () => {

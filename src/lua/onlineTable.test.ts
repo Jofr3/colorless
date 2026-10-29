@@ -400,7 +400,7 @@ describe("LuaOnlineMatch", () => {
     const coin = t.tagged("M")[0];
     expect(coin?.slice(1, 4)).toEqual(["coin", "Coin flip", "Brock: Tails"]);
     expect(t.rows()[0]?.[wireColumn(WIRE_ROWS.sim.header, "announce")]).toBe(
-      `Knocked out: ${ko.name}. Coin flip. Brock: Tails.`,
+      `Knocked out: Brock's ${ko.name}. Coin flip. Brock: Tails.`,
     );
   });
 

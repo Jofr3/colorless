@@ -218,7 +218,8 @@ export interface AnnounceInput {
   menu: SimMenu | null;
 }
 
-/** One announcement keeps the newest this many log rows; Knock Outs are always kept. */
+/** One announcement keeps the newest this many log rows. Knock Outs, the batch's first action
+    and any row that deals damage are always kept. */
 export const ANNOUNCE_LOG_ROWS = 6;
 
 const sentence = (text: string) => {
@@ -269,22 +270,34 @@ export function announcement(heard: Heard, a: AnnounceInput): { text: string; he
     who === "system" ? "" : who === seat ? (a.names?.you ?? "") : (a.names?.opponent ?? "");
 
   const rows: { text: string; keep: boolean }[] = [];
+  // The action that started the batch (an attack, a played card) and its damage outrank the rows
+  // that follow from it, such as a promote, the turn ending and the next draw.
+  let first = true;
   for (const e of a.log.length < was.log ? [] : a.log.slice(was.log)) {
     if (e.kind === "turn") {
       rows.push({ text: `Turn ${e.turn}.`, keep: false });
       continue;
     }
+    const lead = first;
+    first = false;
     // The game-over line says who won and why.
     if (ending && e.who === "system") continue;
     // The coin prompt reads out every face.
     if (coinShown && e.cues?.some((c) => c.kind === "coin")) continue;
     const text = e.segments.map((s) => s.text).join("");
-    const kos = (e.cues ?? []).flatMap((c) => (c.kind === "knockOut" ? [c.uid] : []));
-    for (const uid of kos)
-      rows.push({ text: sentence(`Knocked out: ${knockedOutName(v, uid) ?? text}`), keep: true });
-    if (kos.length > 0 || text.trim() === "") continue;
+    let knockedOut = false;
+    for (const c of e.cues ?? []) {
+      if (c.kind !== "knockOut") continue;
+      knockedOut = true;
+      const name = knockedOutName(v, c.uid);
+      // Whose, from the viewer's side: "your Pikachu", "Brock's Onix".
+      const whose = c.seat === seat ? "your " : `${nameOf(c.seat) || "the opponent"}'s `;
+      rows.push({ text: sentence(`Knocked out: ${name ? whose + name : text}`), keep: true });
+    }
+    if (knockedOut || text.trim() === "") continue;
     const who = nameOf(e.who);
-    rows.push({ text: sentence(who ? `${who}: ${text}` : text), keep: false });
+    const keep = lead || e.segments.some((s) => s.tone === "damage");
+    rows.push({ text: sentence(who ? `${who}: ${text}` : text), keep });
   }
   let dropped = rows.filter((r) => !r.keep).length - ANNOUNCE_LOG_ROWS;
   const parts = rows.filter((r) => r.keep || dropped-- <= 0).map((r) => r.text);
