@@ -5,6 +5,7 @@ import type {
   RedactedGame,
   RedactedGameOverReason,
   RedactedInPlay,
+  SeatLogEntry,
 } from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
 import type { SimCardAction, SimMenu, SimOption } from "./simulatorTypes";
@@ -54,6 +55,12 @@ export interface EmitState {
   online: boolean;
   turns: { index: number; count: number } | undefined;
   message: string;
+  /** Moves once per refusal or new warning, so Lua pops each exactly once. */
+  messageSerial: number;
+  /** A standing problem (a failing save, a lost seat), shown without the pop. */
+  warning: string;
+  /** What changed since the last emit, for screen readers; "" when nothing did. */
+  announce: string;
   pendingRareCandy: string | null;
   knockedOut: readonly string[];
   menu: SimMenu | null;
@@ -166,9 +173,146 @@ export function headerText(
       hint = `Waiting for ${them} to finish placing.`;
     else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
     if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
+    else if (v.waitingOn === "opponent" && !v.phase.kind.startsWith("setup:"))
+      title = `Waiting for ${them}`;
   }
   if (rareCandyPending) hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
   return { outcome, title, hint };
+}
+
+/** The game-over panel's reason line. */
+function outcomeDetail(v: RedactedGame | null) {
+  if (v?.outcome?.result === "win") return GAME_OVER_DETAIL[v.outcome.reason];
+  return v?.outcome?.result === "tie" ? "Both players ran out of options." : "";
+}
+
+/** What the last emit announced from, so the next says only what is new. */
+export interface Heard {
+  match: string;
+  /** How many log rows were read. */
+  log: number;
+  title: string;
+  /** The open prompt's kind, title and note, or "" with none open. */
+  prompt: string;
+  /** Prizes left per absolute seat. */
+  prizes: Record<string, number>;
+  over: boolean;
+}
+
+export const NOTHING_HEARD: Heard = {
+  match: "",
+  log: 0,
+  title: "",
+  prompt: "",
+  prizes: {},
+  over: false,
+};
+
+export interface AnnounceInput {
+  view: RedactedGame | null;
+  names: { you: string; opponent: string } | undefined;
+  log: readonly SeatLogEntry[];
+  match: string;
+  title: string;
+  hint: string;
+  menu: SimMenu | null;
+}
+
+/** One announcement keeps the newest this many log rows; Knock Outs are always kept. */
+export const ANNOUNCE_LOG_ROWS = 6;
+
+const sentence = (text: string) => {
+  const t = text.trim();
+  return t === "" || /[.!?]$/.test(t) ? t : `${t}.`;
+};
+const prizeWord = (n: number) => `${n} Prize${n === 1 ? "" : "s"}`;
+
+/** The name of the card a Knock Out cue names, wherever the frame now shows it. */
+function knockedOutName(v: RedactedGame | null, uid: string): string | undefined {
+  if (!v) return undefined;
+  for (const side of [v.board.you, v.board.opponent]) {
+    const cards = [
+      ...side.discard,
+      ...side.hand,
+      ...side.bench,
+      ...(side.active ? [side.active] : []),
+    ];
+    const card = cards.find((c) => c.id === uid);
+    if (card) return card.name;
+  }
+  return undefined;
+}
+
+/**
+ * The emit's screen-reader text: the log rows appended since the last emit (each after its
+ * player's name, the newest {@link ANNOUNCE_LOG_ROWS} kept), every Knock Out, Prizes taken, the
+ * game's end and why, a changed title, and a newly opened prompt's title, note and hint.
+ */
+export function announcement(heard: Heard, a: AnnounceInput): { text: string; heard: Heard } {
+  const v = a.view;
+  const seat = v?.seat;
+  const prizes: Record<string, number> = {};
+  if (v && seat) {
+    prizes[seat] = v.board.you.prizesRemaining;
+    prizes[otherSeat(seat)] = v.board.opponent.prizesRemaining;
+  }
+  const over = !!v?.outcome;
+  // A new table starts listening where it is, not from the top of its log.
+  const was: Heard =
+    a.match !== heard.match ? { ...NOTHING_HEARD, log: a.log.length, prizes, over } : heard;
+  const menu = a.menu;
+  const promptKey = menu ? JSON.stringify([menu.kind, menu.title, menu.note ?? ""]) : "";
+  const opening = !!menu && promptKey !== was.prompt;
+  const ending = over && !was.over;
+  const coinShown = opening && menu?.kind === "coin";
+  const nameOf = (who: string) =>
+    who === "system" ? "" : who === seat ? (a.names?.you ?? "") : (a.names?.opponent ?? "");
+
+  const rows: { text: string; keep: boolean }[] = [];
+  for (const e of a.log.length < was.log ? [] : a.log.slice(was.log)) {
+    if (e.kind === "turn") {
+      rows.push({ text: `Turn ${e.turn}.`, keep: false });
+      continue;
+    }
+    // The game-over line says who won and why.
+    if (ending && e.who === "system") continue;
+    // The coin prompt reads out every face.
+    if (coinShown && e.cues?.some((c) => c.kind === "coin")) continue;
+    const text = e.segments.map((s) => s.text).join("");
+    const kos = (e.cues ?? []).flatMap((c) => (c.kind === "knockOut" ? [c.uid] : []));
+    for (const uid of kos)
+      rows.push({ text: sentence(`Knocked out: ${knockedOutName(v, uid) ?? text}`), keep: true });
+    if (kos.length > 0 || text.trim() === "") continue;
+    const who = nameOf(e.who);
+    rows.push({ text: sentence(who ? `${who}: ${text}` : text), keep: false });
+  }
+  let dropped = rows.filter((r) => !r.keep).length - ANNOUNCE_LOG_ROWS;
+  const parts = rows.filter((r) => r.keep || dropped-- <= 0).map((r) => r.text);
+
+  if (seat)
+    for (const s of [seat, otherSeat(seat)]) {
+      const before = was.prizes[s];
+      const now = prizes[s] ?? 0;
+      if (before === undefined || now >= before) continue;
+      const taken = prizeWord(before - now);
+      parts.push(
+        s === seat
+          ? `+${taken}, ${now} left.`
+          : `${nameOf(s) || "Opponent"} took ${taken}, ${now} left.`,
+      );
+    }
+  if (ending) parts.push(sentence(a.title), sentence(outcomeDetail(v)));
+  if (menu && opening) {
+    parts.push(sentence(menu.title));
+    // The log's note is the whole log as rows.
+    if (menu.kind !== "log") parts.push(...(menu.note ?? "").split("\n").map(sentence));
+    if (v?.phase.kind === "effect:choose" && a.hint !== menu.title && a.hint !== menu.note)
+      parts.push(sentence(a.hint));
+  } else if (!ending && a.title !== was.title) parts.push(sentence(a.title));
+  return {
+    text: parts.filter((p) => p !== "").join(" "),
+    heard: { match: a.match, log: a.log.length, title: a.title, prompt: promptKey, prizes, over },
+  };
 }
 
 export function headerRow(f: EmitFrame, s: EmitState, revision: number, events: EmitEvents) {
@@ -194,14 +338,12 @@ export function headerRow(f: EmitFrame, s: EmitState, revision: number, events: 
     supporterPlayed: allow?.supporter ? 1 : 0,
     retreated: allow?.retreated ? 1 : 0,
     outcome,
-    outcomeDetail:
-      v?.outcome?.result === "win"
-        ? GAME_OVER_DETAIL[v.outcome.reason]
-        : outcome === "tie"
-          ? "Both players ran out of options."
-          : "",
+    outcomeDetail: outcomeDetail(v),
     shuffled: events.shuffled,
     matchId: src?.matchId() ?? "",
+    announce: s.announce,
+    messageSerial: s.messageSerial,
+    warning: s.warning,
   });
 }
 

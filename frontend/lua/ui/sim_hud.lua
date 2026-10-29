@@ -48,7 +48,7 @@ function Hud:bottomLayout(L)
 end
 -- sync, draw and seatColour take the simulator and only read it: phase,
 -- gamePhase, outcome, turn, you, opponent, viewerSeat, activePlayer, waiting,
--- mode, title, hint, sides, items, actions, allow, targeting, luaTargeting,
+-- mode, title, hint, warning, pendingSince, sides, items, actions, allow, targeting, luaTargeting,
 -- reduced and L.
 function Hud.new(callbacks)
   local self=setmetatable({},Hud)
@@ -100,6 +100,7 @@ local function statusLabel(sim)
   local viewer=sim.you or 'Player'
   if sim.gamePhase:sub(1,6)=='setup:' then return viewer..' setup' end
   if sim.gamePhase=='ko:takePrizes' or sim.gamePhase=='ko:promote' then return sim.waiting=='you' and viewer or 'Waiting' end
+  if sim.gamePhase=='effect:choose' and sim.waiting=='opponent' then return 'Waiting' end
   if sim.activePlayer=='you' then return viewer end
   if sim.activePlayer=='opponent' then return sim.opponent or 'Opponent' end
   return viewer
@@ -152,6 +153,7 @@ function Hud:sync(sim,time)
   set(self.p2HandText,p2.hand,true)
   set(self.turnCount,sim.turn or 0,true)
   self.hint=sim.hint or ''
+  self.warning=sim.warning or ''
   self.setupSubtitle=sim.title or ''
   self.choosingFirst=choosingFirst
   local actions=sim.actions or {}
@@ -300,6 +302,27 @@ function Hud:drawPrompt(sim,L,x,y,w,h)
     Dyna.static(line,scale*0.8,x,yy,w,nh,T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
   end
 end
+-- An action still unanswered after a second says so in the hint's place.
+Hud.SENDING_AFTER=1
+function Hud:hintText(sim,time)
+  if sim.pendingSince and time-sim.pendingSince>=Hud.SENDING_AFTER then return 'Sending...' end
+  return self.hint
+end
+-- With no prompt to show, the turn panel's body carries the hint, and a standing warning under it.
+function Hud:drawHint(sim,L,time,x,y,w,h)
+  local scale=0.32
+  local lines,lh=Dyna.wrap(self:hintText(sim,time),scale,w)
+  local warnings,wh={},0
+  if (self.warning or '')~='' then warnings,wh=Dyna.wrap(self.warning,scale,w) end
+  local height=#lines*(lh+3)+#warnings*(wh+3)
+  local yy=y+math.max(0,(h-height)/2)
+  for _,line in ipairs(lines) do
+    Dyna.static(line,scale,x,yy,w,lh,T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+lh+3
+  end
+  for _,line in ipairs(warnings) do
+    Dyna.static(line,scale,x,yy,w,wh,T.red,{roomWidth=L.w,shadow=false,fit=true});yy=yy+wh+3
+  end
+end
 function Hud:draw(sim,L,time,reduced,hovered)
   local x,y,w,h=L.hud.x,L.hud.y,L.hud.w,L.hud.h
   local rw=L.w
@@ -335,7 +358,8 @@ function Hud:draw(sim,L,time,reduced,hovered)
     local line=(#(sim.actions or {})==0 or sim.mode=='online') and (sim.hint or '')~='' and sim.hint or sim.title
     Dyna.static(line,0.34,ix+14,cy+th/2+10,iw-28,24,LIGHT,{roomWidth=rw,fit=true})
   elseif not self.panelTitleHidden then
-    self:drawPrompt(sim,L,ix+14,body+10,iw-28,th-72)
+    if sim.targeting or sim.luaTargeting then self:drawPrompt(sim,L,ix+14,body+10,iw-28,th-72)
+    else self:drawHint(sim,L,time,ix+14,body+10,iw-28,th-72) end
   end
   g.pop()
   local prompt=self.departingPrompt
@@ -396,7 +420,9 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   end
   self.turnText.cfg.maxw=140
   self.turnText:draw(ix+75,y+30,rw)
-  Dyna.static(self.hint,choosingFirst and 0.24 or 0.26,ix,y+56,230,14,T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
+  local hint=self:hintText(sim,time)
+  local warn=hint==self.hint and (self.warning or '')~=''
+  Dyna.static(warn and self.warning or hint,choosingFirst and 0.24 or 0.26,ix,y+56,230,14,warn and T.red or T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
   local function mini(xx,yy,label,text,colour)
     emboss(xx,yy,64,44,BOSS_MAIN,1.2)
     Dyna.static(label,0.26,xx,yy+2,64,12,LIGHT,{roomWidth=rw,fit=true})

@@ -28,6 +28,9 @@ import { effectMenu } from "./simulatorChoices";
 import { SimulatorOrder } from "./simulatorOrder";
 import { loadSimulatorSave } from "../game/simulatorSave";
 import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@colorless/engine";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
+
+const SIM_HEADER = WIRE_ROWS.sim.header;
 
 beforeEach(() => {
   const storage = new Map<string, string>();
@@ -1092,5 +1095,105 @@ describe("Lua simulator", () => {
     expect(route).toHaveBeenLastCalledWith("sandbox");
     sim.command("resume");
     expect(route).toHaveBeenLastCalledWith("sandbox");
+  });
+});
+
+describe("LuaSimulator announcements and refusals", () => {
+  const field = (publish: ReturnType<typeof vi.fn>, name: (typeof SIM_HEADER.fields)[number]) =>
+    rows(publish)[0]?.[wireColumn(SIM_HEADER, name)] ?? "";
+  const knockout = (state = knockoutState("fix-pokemon-v", 210)) => {
+    const publish = vi.fn();
+    const sim = new LuaSimulator(publish, vi.fn());
+    sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+    return { sim, publish };
+  };
+
+  it("an unchanged emit announces nothing", () => {
+    const { sim, publish } = knockout();
+    expect(field(publish, "announce")).toBe("Your turn.");
+    sim.emit();
+    expect(field(publish, "announce")).toBe("");
+    // Reopening the same game says where it stands again.
+    save(sim);
+    sim.command("close");
+    sim.command("open");
+    expect(field(publish, "announce")).toBe("Your turn.");
+  });
+
+  it("an attack's rows, its Knock Out and the Prizes it took reach the announcement", () => {
+    const { sim, publish } = knockout();
+    sim.dispatch({ type: "attack", seat: "p1", index: 0 });
+    const said = field(publish, "announce");
+    expect(said).toContain("One: fix-attacker used Bite. One: dealt 30 damage to Fixmon V.");
+    expect(said).toContain("Knocked out: Fixmon V.");
+    expect(said).toContain("One took 2 Prizes, 4 left.");
+    expect(said.endsWith("Choose your new Active Pokémon. Click a Benched Pokémon.")).toBe(true);
+  });
+
+  it("the last Prize says who won and why, once", () => {
+    const { sim, publish } = knockout(setPrizes(knockoutState("fix-pokemon-v", 210), "p1", 1));
+    sim.dispatch({ type: "attack", seat: "p1", index: 0 });
+    const said = field(publish, "announce");
+    expect(said).toContain("Knocked out: Fixmon V.");
+    expect(said.endsWith("One wins. All prize cards taken.")).toBe(true);
+    expect(said).not.toContain("wins —");
+  });
+
+  it("a refusal pops once: later emits keep its serial until another refusal", () => {
+    const { sim, publish } = setup();
+    const h = sim.host;
+    if (!h) throw Error("Missing host");
+    const energy = h.game.players[h.viewerSeat].hand.find(
+      (uid) => cardOfUid(h.game, uid)?.category === "Energy",
+    );
+    const refuse = () => sim.command(`move\t${energy}\thand\t0\tstadium\t0`);
+    const serial = () => field(publish, "messageSerial");
+    const before = serial();
+    refuse();
+    expect(field(publish, "message")).toBe("That card cannot go there right now.");
+    const refused = serial();
+    expect(refused).not.toBe(before);
+    expect(field(publish, "announce")).toBe("");
+    sim.command("log");
+    expect(field(publish, "announce")).toBe("Game log.");
+    sim.command("dismiss");
+    expect(serial()).toBe(refused);
+    refuse();
+    expect(serial()).not.toBe(refused);
+  });
+
+  it("a failing save pops once per failure, and its warning stays", () => {
+    const { sim, publish } = setup();
+    const storage = localStorage;
+    const full = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("full");
+      },
+      removeItem: () => {},
+    };
+    const serial = () => field(publish, "messageSerial");
+    const endTurn = () => {
+      const seat = sim.host?.viewerSeat;
+      if (seat) sim.dispatch({ type: "endTurn", seat });
+    };
+    const start = serial();
+    vi.stubGlobal("localStorage", full);
+    endTurn();
+    expect(field(publish, "warning")).toMatch(/^Could not save/);
+    expect(field(publish, "message")).toMatch(/^Could not save/);
+    const failed = serial();
+    expect(failed).not.toBe(start);
+    endTurn();
+    expect(serial()).toBe(failed);
+    expect(field(publish, "message")).toBe("");
+    expect(field(publish, "warning")).toMatch(/^Could not save/);
+    vi.stubGlobal("localStorage", storage);
+    endTurn();
+    expect(field(publish, "warning")).toBe("");
+    expect(serial()).toBe(failed);
+    vi.stubGlobal("localStorage", full);
+    endTurn();
+    expect(serial()).not.toBe(failed);
   });
 });

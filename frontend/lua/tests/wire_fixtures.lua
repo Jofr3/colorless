@@ -23,11 +23,13 @@ local function check(ok,message) if not ok then error(message,2) end end
 local function find(list,keep) for _,x in ipairs(list) do if keep(x) then return x end end end
 local function count(list,keep) local n=0;for _,x in ipairs(list) do if keep(x) then n=n+1 end end;return n end
 
-local sim=Simulator.new({command=function() end,announce=function() end,feedback=function() end,settings=function() end,jiggle=function() end})
+local said={}
+local sim=Simulator.new({command=function() end,announce=function(t) said[#said+1]=t end,feedback=function() end,settings=function() end,jiggle=function() end})
 sim:layout(1280,800);sim:open(false)
 sim:sync(fixture('sim_snapshot.txt'))
 check(sim.phase=='ready' and sim.you=='Ash' and sim.opponent=='Misty','Header names the players')
 check(sim.turn==1 and sim.gamePhase=='turn:action' and sim.title=='Your turn','Header carries the turn and phase')
+check(said[#said]=='Your turn.' and sim.messageSerial=='0' and sim.warning=='','Header carries the announcement, refusal serial and warning')
 check(sim.viewerSeat=='p1' and sim.activePlayer=='you' and sim.waiting=='you','Header carries the seats')
 check(sim.turnCount==1 and sim.matchId=='100' and sim.shuffled=='','Header carries the history and match id')
 check(not sim.allow.energy and not sim.allow.supporter and not sim.allow.retreated and not sim.allow.partial,'Nothing used yet this turn')
@@ -69,6 +71,7 @@ check(sim.menu==nil,'No prompt on the open table')
 
 sim:sync(fixture('sim_prompt.txt'))
 check(sim.gamePhase=='effect:choose' and sim.hint:find('Search your deck'),'Prompt header parsed')
+check(said[#said]=='Ash: played Nest Ball. Search your deck for a Basic Pokémon onto your Bench.','A played card and its prompt are announced')
 check(sim.menu and sim.menu.kind=='cards' and sim.menu.mandatory,'Search prompt is a mandatory card menu')
 check(#sim.menu.options>0 and #sim.menu.footer==3,'Prompt options and footer parsed')
 for _,o in ipairs(sim.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and not o.disabled,'Option '..o.token..' names a card') end

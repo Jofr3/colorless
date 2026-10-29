@@ -35,6 +35,7 @@ export type LifecycleFlag =
   | "concede"
   | "rematch"
   | "rematch-sent"
+  | "pending"
   | "leave";
 export interface TableLifecycle {
   flags: LifecycleFlag[];

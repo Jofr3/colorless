@@ -41,6 +41,9 @@ export const WIRE_ROWS = {
         "outcomeDetail",
         "shuffled",
         "matchId",
+        "announce",
+        "messageSerial",
+        "warning",
       ],
     },
     lifecycle: {
