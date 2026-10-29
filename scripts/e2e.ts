@@ -811,7 +811,7 @@ async function smoke() {
   await waitFor(
     host,
     "Lua to report the last focus edge",
-    `window.__e2e.prints.includes('COLORLESS:focus-edge:last')`,
+    `window.__e2e.prints.some((m) => m.startsWith('COLORLESS:focus-edge:last'))`,
     5000,
   );
   const heardBefore = await evaluate<number>(host, "window.__e2e.prints.length");
