@@ -23,6 +23,9 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
 
+# Compression comes from the Content-Type wrangler gives each file: Cloudflare compresses only
+# the types it lists, and .data gets none, so the game package also ships as game.data.gz
+# (application/gzip, sent as is), which host.js unpacks itself (frontend/lua/build.mjs).
 /love/*
   Cache-Control: public, max-age=31536000, immutable
 

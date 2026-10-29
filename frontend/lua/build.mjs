@@ -15,6 +15,7 @@ import { resolve, join, dirname, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { brotliCompressSync, constants as zlibConstants, gzipSync } from "node:zlib";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -129,8 +130,39 @@ try {
   rmSync(join(output, "index.html"), { force: true });
   rmSync(join(output, "theme"), { recursive: true, force: true });
   writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  // Workers static assets give .data no Content-Type, and Cloudflare compresses only the types it
+  // lists, so game.data would go out as is. host.js downloads this gzip copy instead (served as
+  // application/gzip, never compressed twice) and unpacks it with DecompressionStream; game.data
+  // stays beside it for a browser without one. game.js's loader asks host.js for the package
+  // (Module.fetchPackage), which this build patches in; a love.js whose loader no longer has
+  // that function stops the build rather than shipping a package nothing compresses or counts.
+  const gameData = readFileSync(join(output, "game.data"));
+  writeFileSync(join(output, "game.data.gz"), gzipSync(gameData, { level: 9 }));
+  const loader = "function fetchRemotePackage(packageName, packageSize, callback, errback) {";
+  const gameJs = readFileSync(join(output, "game.js"), "utf8");
+  if (gameJs.split(loader).length !== 2)
+    throw new Error(`love.js's game.js no longer has exactly one \`${loader}\`; update build.mjs`);
+  writeFileSync(
+    join(output, "game.js"),
+    gameJs.replace(
+      loader,
+      `${loader}\n      if (Module['fetchPackage']) return Module['fetchPackage'](packageName, callback);`,
+    ),
+  );
+  // Byte sizes for host.js's boot bar: response bodies yield decoded bytes, so love.wasm counts
+  // against its own size and is weighed by about what Cloudflare's brotli sends; the package is
+  // counted as the gzip copy that arrives.
+  const loveWasm = readFileSync(join(output, "love.wasm"));
+  const sizes = {
+    wasm: loveWasm.length,
+    wasmTransfer: brotliCompressSync(loveWasm, {
+      params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 4 },
+    }).length,
+    data: gameData.length,
+    packed: readFileSync(join(output, "game.data.gz")).length,
+  };
   // Content hashes for cache busting: host.js gets the runtime's (love.js asks
-  // its locateFile for love.wasm and game.js for game.data), then
+  // its locateFile for love.wasm, and host.js for the game package), then
   // versions.json lists every file for the Vite plugin that versions
   // index.html's own /love/ references (vite.config.ts).
   /** @param {string} path */
@@ -142,10 +174,18 @@ try {
     if (!["host.js", "host.css", "versions.json"].includes(name))
       versions[name] = shortHash(join(output, name));
   }
-  const marker = "/* love-versions */ {}";
-  const host = readFileSync(join(here, "web/host.js"), "utf8");
-  if (!host.includes(marker)) throw new Error(`web/host.js lost its ${marker} placeholder`);
-  writeFileSync(join(output, "host.js"), host.replace(marker, JSON.stringify(versions)));
+  let host = readFileSync(join(here, "web/host.js"), "utf8");
+  /** @type {[string, object][]} */
+  const placeholders = [
+    ["/* love-versions */ {}", versions],
+    ["/* love-sizes */ {}", sizes],
+  ];
+  for (const [marker, value] of placeholders) {
+    if (host.split(marker).length !== 2)
+      throw new Error(`web/host.js must hold its ${marker} placeholder exactly once`);
+    host = host.replace(marker, JSON.stringify(value));
+  }
+  writeFileSync(join(output, "host.js"), host);
   copyFileSync(join(here, "web/host.css"), join(output, "host.css"));
   for (const name of ["host.js", "host.css"]) versions[name] = shortHash(join(output, name));
   writeFileSync(join(output, "versions.json"), `${JSON.stringify(versions, null, 2)}\n`);

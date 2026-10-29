@@ -2,8 +2,10 @@
 /**
  * Cold-boot timing of the production page under a throttled network: headless Chromium loads a
  * built site with an empty profile and reports when the runtime started, when its data arrived and
- * when Lua printed ready (host.js's `colorless:*` performance marks), plus when love.wasm,
- * game.data and the menu music started and finished downloading. Opt-in; not part of `check`.
+ * when Lua printed ready (host.js's `colorless:*` performance marks), plus when love.wasm, the
+ * game package (game.data.gz, or game.data where it falls back) and the menu music started and
+ * finished downloading. The server compresses what Cloudflare would and sends game.data.gz as
+ * is. Opt-in; not part of `check`.
  *
  *   bun scripts/bench-boot.ts [--dist <dir>] [--mbps 20,5] [--runs 3] [--latency 40]
  *
@@ -194,7 +196,7 @@ async function boot(mbps: number): Promise<Sample> {
       const id = String(params.requestId);
       if (method === "Network.requestWillBeSent") {
         const url = String((params.request as { url?: string } | undefined)?.url);
-        const name = /\/love\/(love\.wasm|game\.data|music1\.ogg)/.exec(url)?.[1];
+        const name = /\/love\/(love\.wasm|game\.data(?:\.gz)?|music1\.ogg)/.exec(url)?.[1];
         if (name)
           requests.set(id, { name, wall: Number(params.wallTime), sent: Number(params.timestamp) });
       } else if (method === "Network.loadingFinished") {

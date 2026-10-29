@@ -22,8 +22,10 @@ declare global {
     preRun: ((module: LoveRuntime) => void)[];
     print(message: string): void;
     printErr(message: string): void;
-    setStatus(message: string): void;
     onAbort(): void;
+    /** The game package's download, which build.mjs routes here from game.js's loader; `receive`
+     * gets the unpacked package. */
+    fetchPackage(url: string, receive: (bytes: ArrayBuffer) => void): void;
     /** Emscripten's hook for instantiating the runtime itself; returns `{}` when asynchronous. */
     instantiateWasm?(
       imports: WebAssembly.Imports,

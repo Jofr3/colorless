@@ -16,15 +16,92 @@ const loading = element("loading");
 const statusElement = element("status");
 const loadingProgress = element("loading-progress");
 const loadingFill = element("loading-fill");
+
+/** @type {LoveRuntime | undefined} */
+let runtime;
+let ready = false;
+let failed = false;
+let stalled = false;
+/** @type {ColorlessBridge | undefined} */
+let bridge;
+
+const UNSUPPORTED =
+  "Colorless needs WebGL and WebAssembly. Turn on hardware acceleration or try another browser.";
+const BOOT_FAILED = "The menu could not start. Reload to try again, or use the menu links.";
+const DOWNLOAD_FAILED = "Could not download the menu. Reload to try again.";
+const LOAD_FAILED = "Could not load the menu. Reload to try again.";
+const GRAPHICS_LOST = "Graphics connection lost. Reload to continue.";
+// After ready a Lua error stops a running page: the sandbox game is in local storage and an
+// online match on the server, so a reload picks either up again.
+const CRASHED = "Something went wrong. Reload to continue; a game in progress is saved.";
+const STALLED = "Still loading… Reload to try again, or use the menu links.";
+const STARTING = "Starting…";
+/** @param {number} percent */
+const loadingText = (percent) =>
+  percent > 0 ? `Loading the menu… ${percent}%` : "Loading the menu…";
+
+// ---- the boot bar ----
+// One bar for the two downloads, each weighted by its expected transfer; the last tenth is the
+// runtime starting (the package unpacked at 95%, Lua's ready at 100%). The live region gets only
+// milestones, each quarter and the start, never byte counts.
+const DOWNLOAD_SHARE = 90;
+const MILESTONES = [25, 50, 75];
 let loadingValue = 0;
+let ariaValue = 0;
+let milestone = "";
 /** @param {number} value */
 function updateLoadingProgress(value) {
   const next = Math.max(loadingValue, Math.min(100, value));
-  if (next > loadingValue) watchBoot();
+  if (next <= loadingValue) return;
   loadingValue = next;
+  watchBoot();
   loadingFill.style.width = `${loadingValue}%`;
-  loadingProgress.setAttribute("aria-valuenow", String(Math.round(loadingValue)));
+  const whole = Math.floor(loadingValue);
+  if (whole !== ariaValue) {
+    ariaValue = whole;
+    loadingProgress.setAttribute("aria-valuenow", String(whole));
+  }
+  const reached =
+    loadingValue >= DOWNLOAD_SHARE
+      ? STARTING
+      : loadingText(MILESTONES.filter((m) => loadingValue >= m).pop() ?? 0);
+  if (reached !== milestone) {
+    milestone = reached;
+    if (!ready && !failed && !stalled) statusElement.textContent = milestone;
+  }
 }
+/** build:lua replaces the empty object with the byte sizes the bar weighs (build.mjs). */
+/** @type {Partial<Record<"wasm" | "wasmTransfer" | "data" | "packed", number>>} */
+const loveSizes = /* love-sizes */ {};
+/** @type {Record<"wasm" | "data", number>} */
+const downloaded = { wasm: 0, data: 0 };
+/** @param {"wasm" | "data"} part @param {number} bytes @param {number | undefined} expected */
+function download(part, bytes, expected) {
+  downloaded[part] = Math.max(downloaded[part], Math.min(1, expected ? bytes / expected : 0));
+  const wasm = loveSizes.wasmTransfer || 1;
+  const data = loveSizes.packed || 1;
+  updateLoadingProgress(
+    (DOWNLOAD_SHARE * (downloaded.wasm * wasm + downloaded.data * data)) / (wasm + data),
+  );
+}
+/** A response whose body reports its running byte count as it is read. Body chunks are decoded
+ * bytes, whatever the transfer encoding.
+ * @param {Response} response @param {(bytes: number) => void} onBytes @param {HeadersInit} [headers] */
+function counted(response, onBytes, headers) {
+  if (!response.body || typeof TransformStream !== "function") return response;
+  let bytes = 0;
+  const body = response.body.pipeThrough(
+    new TransformStream({
+      transform(chunk, controller) {
+        bytes += chunk.byteLength;
+        onBytes(bytes);
+        controller.enqueue(chunk);
+      },
+    }),
+  );
+  return new Response(body, { headers });
+}
+
 // Nothing times out a download that stops moving, so after a while without progress the page
 // says so and shows the menu links, and keeps waiting: any progress takes the note down again.
 const BOOT_STALL_MS = 45000;
@@ -32,12 +109,31 @@ const BOOT_STALL_MS = 45000;
 let bootStallTimer;
 function watchBoot() {
   clearTimeout(bootStallTimer);
-  document.body.classList.remove("stalled");
-  if (ready || document.body.classList.contains("failed")) return;
+  if (stalled && !failed) {
+    stalled = false;
+    document.body.classList.remove("stalled");
+    if (!ready) statusElement.textContent = milestone;
+  }
+  if (ready || failed) return;
   bootStallTimer = setTimeout(() => {
+    stalled = true;
     document.body.classList.add("stalled");
-    statusElement.textContent = "Still loading… Reload to try again, or use the menu links.";
+    statusElement.textContent = STALLED;
   }, BOOT_STALL_MS);
+}
+
+/** @param {string} message */
+function fail(message) {
+  // The first failure is the cause; what breaks after it is a consequence.
+  if (failed) return;
+  failed = true;
+  clearTimeout(bootStallTimer);
+  stalled = false;
+  document.body.classList.remove("stalled");
+  document.body.classList.add("failed");
+  loading.style.display = "flex";
+  statusElement.textContent = message;
+  bridge?.onFailed();
 }
 // Preserve browser reload shortcuts before SDL can consume their key events.
 for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
@@ -51,11 +147,6 @@ for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
     true,
   );
 }
-/** @type {LoveRuntime | undefined} */
-let runtime;
-let ready = false;
-/** @type {ColorlessBridge | undefined} */
-let bridge;
 // Mailboxes written before the runtime exists keep their latest text until preRun.
 /** @type {Map<string, string>} */
 const unwrittenMailboxes = new Map();
@@ -113,19 +204,6 @@ function markBoot(name) {
   performance.mark(`colorless:${name}`);
   if (name === "ready") performance.measure("colorless:boot", undefined, "colorless:ready");
 }
-const BOOT_FAILED = "The menu could not start. Reload to try again, or use the menu links.";
-// After ready a Lua error stops a running page: the sandbox game is in local storage and an
-// online match on the server, so a reload picks either up again.
-const CRASHED = "Something went wrong. Reload to continue; a game in progress is saved.";
-/** @param {string} message */
-function fail(message) {
-  clearTimeout(bootStallTimer);
-  document.body.classList.remove("stalled");
-  document.body.classList.add("failed");
-  loading.style.display = "flex";
-  statusElement.textContent = message;
-  bridge?.onFailed();
-}
 function syncViewport() {
   if (!bridge) return;
   // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
@@ -177,69 +255,155 @@ const loveModule = {
   },
   printErr: (message) => {
     console.error(message);
-  },
-  setStatus: (message) => {
-    if (ready || document.body.classList.contains("failed")) return;
-    // love.js reports downloaded bytes as "Downloading data... (loaded/total)".
-    // Reserve the final 10% for runtime startup; only Lua's ready signal completes it.
-    const download = message?.match(/\(([\d.]+)\/(\d+)\)/);
-    if (download && Number(download[2]) > 0) {
-      updateLoadingProgress(90 * Math.min(1, Number(download[1]) / Number(download[2])));
-      if (Number(download[1]) >= Number(download[2])) markBoot("data-loaded");
-    }
-    if (message && !document.body.classList.contains("stalled"))
-      statusElement.textContent = message;
+    if (!ready && message.includes("Unable to create OpenGL window")) fail(UNSUPPORTED);
   },
   onAbort: () => {
     fail(ready ? CRASHED : BOOT_FAILED);
   },
+  // game.js asks for the package here (build.mjs patches its loader). The gzip copy is about a
+  // third smaller and the host counts its bytes into the bar; the plain package is the fallback.
+  fetchPackage: (url, receive) => {
+    fetchPackage(url).then(
+      (bytes) => {
+        markBoot("data-loaded");
+        receive(bytes);
+      },
+      (error) => {
+        console.error(error);
+        fail(DOWNLOAD_FAILED);
+      },
+    );
+  },
 };
 globalThis.Module = loveModule;
-watchBoot();
+/** @param {string} url */
+async function fetchPackage(url) {
+  if (typeof DecompressionStream === "function") {
+    try {
+      const response = await fetch(loveModule.locateFile("game.data.gz"));
+      if (!response.ok) throw new Error(`game.data.gz: HTTP ${response.status}`);
+      // A server that labels the file with its encoding has the browser decode it already.
+      const decoded = response.headers.has("Content-Encoding");
+      const body = counted(response, (bytes) =>
+        download("data", bytes, decoded ? loveSizes.data : loveSizes.packed),
+      );
+      if (decoded || !body.body) return await body.arrayBuffer();
+      return await new Response(
+        body.body.pipeThrough(new DecompressionStream("gzip")),
+      ).arrayBuffer();
+    } catch (error) {
+      console.error("[colorless] packed game data", error);
+    }
+  }
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`game.data: HTTP ${response.status}`);
+  return counted(response, (bytes) => download("data", bytes, loveSizes.data)).arrayBuffer();
+}
+
+// SDL alerts when it cannot open its window: before ready, that is the missing-WebGL failure.
+const alertNatively = window.alert.bind(window);
+window.alert = (message) => {
+  if (ready) {
+    alertNatively(message);
+    return;
+  }
+  console.error(message);
+  fail(/OpenGL|WebGL|EGL/i.test(String(message)) ? UNSUPPORTED : BOOT_FAILED);
+};
+
+/** WebGL on a throwaway canvas: the page's own would keep the context it was asked for. */
+function hasWebGL() {
+  const probe = document.createElement("canvas");
+  const gl = probe.getContext("webgl2") || probe.getContext("webgl");
+  if (!gl) return false;
+  gl.getExtension("WEBGL_lose_context")?.loseContext();
+  return true;
+}
 // Download and compile the runtime while the page's scripts load. love.js would start only once
 // Love() runs on window load, and a <link rel=preload> would hold that load event back and give
 // up the streaming compile.
-const runtimeUrl = loveModule.locateFile("love.wasm");
-const compiledRuntime = WebAssembly.compileStreaming(fetch(runtimeUrl)).catch(() =>
-  fetch(runtimeUrl)
-    .then((response) => response.arrayBuffer())
-    .then((bytes) => WebAssembly.compile(bytes)),
-);
-// instantiateWasm reports a failure; until love.js asks for the runtime nothing else listens.
-compiledRuntime.catch(() => {});
-loveModule.instantiateWasm = (imports, receive) => {
-  compiledRuntime
-    .then((module) =>
-      WebAssembly.instantiate(module, imports).then((instance) => receive(instance, module)),
-    )
-    .catch((error) => {
+/** @param {AbortSignal | undefined} signal */
+async function compileRuntime(signal) {
+  const url = loveModule.locateFile("love.wasm");
+  const onBytes = (/** @type {number} */ bytes) => download("wasm", bytes, loveSizes.wasm);
+  const response = await fetch(url, { signal });
+  if (!response.ok) throw new Error(`love.wasm: HTTP ${response.status}`);
+  try {
+    return await WebAssembly.compileStreaming(
+      counted(response, onBytes, { "Content-Type": "application/wasm" }),
+    );
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    console.error("[colorless] streaming compile", error);
+  }
+  const retry = await fetch(url, { signal });
+  if (!retry.ok) throw new Error(`love.wasm: HTTP ${retry.status}`);
+  return WebAssembly.compile(await counted(retry, onBytes).arrayBuffer());
+}
+watchBoot();
+try {
+  if (typeof WebAssembly !== "object") fail(UNSUPPORTED);
+  else {
+    // The runtime's request goes out before the WebGL probe: a browser's first context can take
+    // half a second to create, which would hold back every boot's download. Without WebGL the
+    // request is cancelled and nothing else downloads.
+    const cancel = typeof AbortController === "function" ? new AbortController() : undefined;
+    const compiledRuntime = compileRuntime(cancel?.signal);
+    // A runtime that will not download fails the page at once, before the package downloads.
+    compiledRuntime.catch((error) => {
+      if (failed) return;
       console.error(error);
-      fail("Could not download the menu. Reload to try again.");
+      fail(DOWNLOAD_FAILED);
     });
-  return {};
-};
+    loveModule.instantiateWasm = (imports, receive) => {
+      compiledRuntime.then(
+        (module) =>
+          WebAssembly.instantiate(module, imports)
+            .then((instance) => receive(instance, module))
+            .catch((error) => {
+              console.error(error);
+              fail(BOOT_FAILED);
+            }),
+        () => {},
+      );
+      return {};
+    };
+    if (!hasWebGL()) {
+      fail(UNSUPPORTED);
+      cancel?.abort();
+    }
+  }
+} catch (error) {
+  console.error(error);
+  fail(BOOT_FAILED);
+}
 // Boot invariant: Love() starts on window load, after every classic script
 // (game package, runtime) and the deferred bridge module have run, so Lua's
 // first print finds the bridge connected. A bridge that failed to run would
 // leave every screen dead, so show the failure overlay instead of starting.
 addEventListener("load", () => {
-  if (typeof Love !== "function") return;
+  if (failed || typeof Love !== "function") return;
   if (!bridge) {
-    fail("Could not load the menu. Reload to try again.");
+    fail(LOAD_FAILED);
     return;
   }
   markBoot("love-start");
-  Love(loveModule)
-    .then(() => {
-      // A package served from the loader's IndexedDB cache reports no download progress.
-      markBoot("data-loaded");
-      updateLoadingProgress(95);
-      void prepareTransitionArt();
-    })
-    .catch((error) => {
-      console.error(error);
-      fail("Could not load the menu. Reload to try again.");
-    });
+  try {
+    Love(loveModule)
+      .then(() => {
+        // A package served from the loader's IndexedDB cache reports no download progress.
+        markBoot("data-loaded");
+        updateLoadingProgress(95);
+        void prepareTransitionArt();
+      })
+      .catch((error) => {
+        console.error(error);
+        fail(LOAD_FAILED);
+      });
+  } catch (error) {
+    console.error(error);
+    fail(LOAD_FAILED);
+  }
 });
 /** @type {ReturnType<typeof setTimeout> | undefined} */
 let resizeTimer;
@@ -260,15 +424,14 @@ canvas.addEventListener("contextmenu", (event) => {
 });
 canvas.addEventListener("webglcontextlost", (event) => {
   event.preventDefault();
-  fail("Graphics connection lost. Reload to continue.");
+  fail(GRAPHICS_LOST);
 });
 
 // Resource load errors don't bubble; listen in the capture phase.
 addEventListener(
   "error",
   (event) => {
-    if (event.target instanceof HTMLScriptElement)
-      fail("Could not download the menu. Reload to try again.");
+    if (event.target instanceof HTMLScriptElement) fail(DOWNLOAD_FAILED);
   },
   true,
 );

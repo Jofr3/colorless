@@ -185,7 +185,10 @@ const STALL_MARK = "colorless-e2e-stall";
 function serve(dir: string): Promise<number> {
   const server = createServer((request: IncomingMessage, response: ServerResponse) => {
     const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
-    if (pathname.endsWith("/game.data") && request.headers["user-agent"]?.includes(STALL_MARK))
+    if (
+      /\/game\.data(\.gz)?$/.test(pathname) &&
+      request.headers["user-agent"]?.includes(STALL_MARK)
+    )
       return;
     let file = join(dir, normalize(pathname));
     if (!file.startsWith(dir) || !existsSync(file) || statSync(file).isDirectory())
