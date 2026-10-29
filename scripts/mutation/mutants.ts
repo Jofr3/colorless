@@ -62628,6 +62628,16 @@ export const MUTANTS: Mutant[] = [
     killedByCommand: ["bun", "scripts/test-lua.ts", "announce.lua"],
   },
   {
+    id: "UI-PGX1-gapless-card-text-dropped",
+    decision: "UI-PGX1",
+    what: "A card with no simulation gaps leaves a nil hole before its rules text, so the card dialog never reads the text (browser QA B1). Killed by announce's gap-free card dialog case.",
+    file: "frontend/lua/ui/builder.lua",
+    find: "gapLine(item.gaps) or '',self:detailsFor(m.id)",
+    replace: "gapLine(item.gaps),self:detailsFor(m.id)",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/test-lua.ts", "announce.lua"],
+  },
+  {
     id: "UI-PG2-builder-open-silent",
     decision: "UI-PG2",
     what: "Opening the builder says nothing until its deck loads. Killed by announce's sync changes.",

@@ -88,7 +88,7 @@ local function builderSnapshot(o)
   end
   if o.selected then
     lines[#lines+1]=row('S',B.card,{cardId=o.selected,name='Charcadet',supertype='Pokémon',subtype='Basic',quantity=o.charcadet or 3,
-      remaining=1,hp=70,mark='G',number='31',copyLimit=4,illegal=0,gaps='attack'})
+      remaining=1,hp=70,mark='G',number='31',copyLimit=4,illegal=0,gaps=o.selectedGaps or 'attack'})
   end
   lines[#lines+1]=row('V',B.validation,{message='46 more cards to reach 60.',pokemon=3,trainer=2,energy=8})
   lines[#lines+1]=row('O',B.option,{key='supertype',label='Category',value=o.category or 'All',count=4,index=1,selected=1})
@@ -189,6 +189,11 @@ do
   count=#said
   b:sync(builderSnapshot({revision=nextRevision(),selected=item.id,details='Ember  30\nDiscard an Energy.'}))
   check(#said==count,'The card text is read once')
+  b:closeModal()
+  b:sync(builderSnapshot({revision=nextRevision()}))
+  b:openModal('detail',item)
+  b:sync(builderSnapshot({revision=nextRevision(),selected=item.id,selectedGaps='',details='Search your deck.'}))
+  check(last():find('Search your deck%.$'),'A card with no simulation gaps still reads its card text: '..last())
   b:closeModal()
   b:openModal('stats');check(last():find('^Deck information%. Format: Standard%. Total cards: 14 of 60%.'),'Deck information reads its stats: '..last())
   b:closeModal()

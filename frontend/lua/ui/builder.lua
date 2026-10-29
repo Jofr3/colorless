@@ -470,7 +470,7 @@ function Builder:modalSpeech()
     local item=(self.selectedItem and self.selectedItem.id==m.id) and self.selectedItem or m.item or {}
     local kind=table.concat({item.kind or '',item.subtype or ''},' '):gsub('^%s+',''):gsub('%s+$','')
     if (item.hp or '')~='' then kind=kind..(kind~='' and ', ' or '')..item.hp..' HP' end
-    return sentence({item.name or 'Card',kind,(item.quantity or 0)..' in deck',gapLine(item.gaps),self:detailsFor(m.id)})
+    return sentence({item.name or 'Card',kind,(item.quantity or 0)..' in deck',gapLine(item.gaps) or '',self:detailsFor(m.id)})
   elseif m.mode=='filters' then
     return 'Filters, '..({'Cards','Print','Text'})[self.filterPage]..' tab. Tab moves between filters, Escape closes.'
   elseif m.mode=='stats' then
