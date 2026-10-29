@@ -6,9 +6,23 @@
   <meta name="description" content="Colorless: a trading-card-game playmat with a deck builder, sandbox and online play, rendered in LÖVE.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#000000">
+  <!-- Link previews. vite.config.ts makes og:url and og:image absolute at build. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Colorless">
+  <meta property="og:title" content="Colorless">
+  <meta property="og:description" content="A trading-card-game playmat with a deck builder, sandbox and online play.">
+  <meta property="og:url" content="/">
+  <meta property="og:image" content="/share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The Colorless wordmark">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <title>Colorless — Home</title>
   <link rel="stylesheet" href="/love/host.css">
+  <noscript><link rel="stylesheet" href="/noscript.css"></noscript>
 </head>
 <body>
   <main>
@@ -18,6 +32,7 @@
       <div id="loading-progress" role="progressbar" aria-label="Loading Colorless" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loading-fill"></div></div>
       <span id="status" class="sr-only" role="status">Loading the menu…</span>
     </div>
+    <noscript><p class="noscript">Colorless needs JavaScript to run. Turn it on and reload the page.</p></noscript>
     <p id="instructions" class="sr-only"></p>
     <div id="announcement" role="status" class="sr-only"></div>
     <nav class="accessible-menu" aria-label="Main menu links">

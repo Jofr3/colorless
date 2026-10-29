@@ -32,6 +32,21 @@ function cspPlugin(csp: string): Plugin {
   };
 }
 
+// Link previews need absolute URLs, so the production HTML's og:url and og:image get the site's
+// origin; the dev server keeps index.html's root-relative ones.
+function shareUrlsPlugin(siteOrigin: string): Plugin {
+  return {
+    name: "share-urls",
+    apply: "build",
+    transformIndexHtml(html) {
+      return html.replace(
+        /(<meta property="og:(?:url|image)" content=")\//g,
+        (_match, start: string) => `${start}${siteOrigin}/`,
+      );
+    },
+  };
+}
+
 // The /love/ files keep fixed names (love.js and game.js locate their
 // siblings by name), so they are versioned by query string instead:
 // `build:lua` writes public/love/versions.json, and this appends each file's
@@ -71,8 +86,9 @@ function loveVersionsPlugin(): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
+  const siteOrigin = (env.VITE_SITE_ORIGIN ?? "http://localhost:5175").replace(/\/+$/, "");
   return {
-    plugins: [loveVersionsPlugin(), cspPlugin(buildCsp(apiOrigin))],
+    plugins: [loveVersionsPlugin(), cspPlugin(buildCsp(apiOrigin)), shareUrlsPlugin(siteOrigin)],
     server: {
       // The dev server's root is the repo root, so without this it serves any file in it, such as
       // apps/api/.dev.vars (OAuth secret) and the local D1 database under .wrangler/. Setting

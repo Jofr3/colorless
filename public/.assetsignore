@@ -1,1 +1,5 @@
 *.map
+# Build records nothing fetches at runtime: vite.config.ts reads versions.json at build, and
+# host.js carries the hashes inlined.
+love/versions.json
+love/asset-manifest.json
