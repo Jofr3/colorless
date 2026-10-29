@@ -135,18 +135,51 @@ function fail(message) {
   statusElement.textContent = message;
   bridge?.onFailed();
 }
-// Preserve browser reload shortcuts before SDL can consume their key events.
+// ---- keys the browser keeps ----
+/** Browser shortcuts SDL's window listeners would swallow. Lua binds none of them: no function
+ * keys, and nothing with Ctrl, Cmd or Alt. @param {KeyboardEvent} event */
+function browserShortcut(event) {
+  const key = event.key ?? "";
+  if (["F5", "F6", "F11", "F12"].includes(key)) return true;
+  const command = event.ctrlKey || event.metaKey;
+  if (command && !event.altKey && ["r", "=", "+", "-", "0", "l", "f"].includes(key.toLowerCase()))
+    return true;
+  return event.altKey && !command && (key === "ArrowLeft" || key === "ArrowRight");
+}
+// A capture listener on the window runs before SDL's (window, bubbling), so stopping an event
+// here keeps it from SDL without preventing what the browser does with it.
 for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
   window.addEventListener(
     type,
     (event) => {
-      if (event.ctrlKey && !event.altKey && !event.metaKey && event.key.toLowerCase() === "r") {
+      if (event.ctrlKey && !event.altKey && !event.metaKey && event.key?.toLowerCase() === "r") {
         event.stopImmediatePropagation();
+        return;
       }
+      const focused = document.activeElement;
+      // A text proxy (src/host/textProxy.ts) takes its own keys, Tab included, in a later
+      // capture listener.
+      if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return;
+      if (
+        browserShortcut(event) ||
+        // Tab moves between the page's own controls (the native links) unless
+        // the running menu has focus.
+        (event.key === "Tab" && (focused !== canvas || !ready || failed))
+      )
+        event.stopImmediatePropagation();
     },
     true,
   );
 }
+// Ctrl+wheel zooms the page; SDL's wheel listener on the canvas would prevent it.
+window.addEventListener(
+  "wheel",
+  (event) => {
+    if (event.ctrlKey) event.stopImmediatePropagation();
+  },
+  { capture: true, passive: true },
+);
+
 // Mailboxes written before the runtime exists keep their latest text until preRun.
 /** @type {Map<string, string>} */
 const unwrittenMailboxes = new Map();

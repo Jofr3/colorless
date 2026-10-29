@@ -465,3 +465,89 @@ describe("host.js game package (BT1)", () => {
     expect(await failureText(page)).toBe("Could not download the menu. Reload to try again.");
   });
 });
+
+describe("host.js keys (BT5, LC3)", () => {
+  const SHORTCUTS: [string, Record<string, unknown>][] = [
+    ["F5", { key: "F5" }],
+    ["F6", { key: "F6" }],
+    ["F11", { key: "F11" }],
+    ["F12", { key: "F12" }],
+    ["Ctrl+R", { key: "r", ctrlKey: true }],
+    ["Cmd+R", { key: "r", metaKey: true }],
+    ["Ctrl+Shift+R", { key: "R", ctrlKey: true, shiftKey: true }],
+    ["Ctrl+=", { key: "=", ctrlKey: true }],
+    ["Ctrl++", { key: "+", ctrlKey: true, shiftKey: true }],
+    ["Ctrl+-", { key: "-", ctrlKey: true }],
+    ["Cmd+0", { key: "0", metaKey: true }],
+    ["Alt+Left", { key: "ArrowLeft", altKey: true }],
+    ["Alt+Right", { key: "ArrowRight", altKey: true }],
+    ["Ctrl+L", { key: "l", ctrlKey: true }],
+    ["Ctrl+F", { key: "f", ctrlKey: true }],
+  ];
+  it.each(SHORTCUTS)("keeps %s from SDL without preventing it", (_, init) => {
+    const page = boot();
+    page.ready();
+    page.canvas.focus();
+    for (const type of ["keydown", "keyup", "keypress"])
+      expect(page.key(type, init)).toEqual({ reachedSdl: false, prevented: false });
+  });
+
+  it("leaves Lua's own keys to SDL while the running menu has focus", () => {
+    const page = boot();
+    page.ready();
+    page.canvas.focus();
+    for (const init of [
+      { key: "ArrowRight" },
+      { key: "Enter" },
+      { key: "m" },
+      { key: "Escape" },
+      { key: "Tab" },
+      { key: "Tab", shiftKey: true },
+      { key: "ArrowLeft", shiftKey: true },
+    ])
+      expect(page.key("keydown", init).reachedSdl).toBe(true);
+  });
+
+  it("keeps Ctrl+wheel (zoom) from SDL's canvas listener, and plain wheel not", () => {
+    const page = boot();
+    page.ready();
+    expect(page.key("wheel", { ctrlKey: true }).reachedSdl).toBe(false);
+    expect(page.key("wheel", {}).reachedSdl).toBe(true);
+  });
+
+  it("lets Tab move natively off the canvas, and before ready", () => {
+    const page = boot();
+    page.canvas.focus();
+    expect(page.key("keydown", { key: "Tab" })).toEqual({ reachedSdl: false, prevented: false });
+    page.ready();
+    expect(page.key("keydown", { key: "Tab" }).reachedSdl).toBe(true);
+    const link = new FakeElement(page.page, "A");
+    link.focus();
+    expect(page.key("keydown", { key: "Tab" }).reachedSdl).toBe(false);
+    expect(page.key("keydown", { key: "Tab", shiftKey: true }).reachedSdl).toBe(false);
+    expect(page.key("keydown", { key: "ArrowRight" }).reachedSdl).toBe(true);
+    page.module.print("Error: main.lua:1: boom");
+    page.canvas.focus();
+    expect(page.key("keydown", { key: "Tab" }).reachedSdl).toBe(false);
+  });
+
+  it("leaves a focused text proxy's keys, Tab and shortcuts too, to the proxy's own listener", () => {
+    const page = boot();
+    page.ready();
+    for (const proxy of [
+      new FakeInput(page.page, "INPUT"),
+      new FakeTextArea(page.page, "TEXTAREA"),
+    ]) {
+      proxy.focus();
+      for (const init of [
+        { key: "Tab" },
+        { key: "Tab", shiftKey: true },
+        { key: "ArrowLeft", altKey: true },
+        { key: "F6" },
+      ])
+        expect(page.key("keydown", init).reachedSdl).toBe(true);
+      // Ctrl+R was kept from every listener before; it still is.
+      expect(page.key("keydown", { key: "r", ctrlKey: true }).reachedSdl).toBe(false);
+    }
+  });
+});
