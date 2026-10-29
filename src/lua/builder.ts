@@ -19,6 +19,7 @@ import { formatById } from "@colorless/engine/rules";
 import { ENERGY_TYPES, type BuilderCard } from "../decks/cards";
 import {
   filtersToCardsQuery,
+  indexedCard,
   toBuilderCard,
   importDecklist,
   kindOptions,
@@ -36,6 +37,7 @@ import {
 import { createDeckSaver, type DeckSaver, outcomeUnknown } from "../decks/deckSaver";
 import { savedSnapshot, toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
+import { cachedCard } from "../game/cardPool";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
@@ -66,6 +68,7 @@ const MESSAGE = {
   deckConflict: "Deck changed elsewhere; reloaded the latest.",
   saveFailed: "Could not save. Your edits are kept. Retry.",
   resolveBeforeAdding: "Resolve unavailable cards before adding more.",
+  cardsLoading: "Deck cards are still loading.",
   copyLimit: "This card has reached its copy limit.",
   resolveBeforeExporting: "Resolve unavailable cards before exporting.",
   importCancelled: "Import cancelled. Deck unchanged.",
@@ -128,6 +131,10 @@ export class LuaBuilder {
   saveStatus = "";
   entries = new Map<string, number>();
   cards = new Map<string, BuilderCard>();
+  /** Entries whose card details have been asked for and not answered. Until then they publish as
+      loading rather than unavailable, and nothing may discard them. */
+  pending = new Set<string>();
+  private hydrating: Promise<void> = Promise.resolve();
   /** What each card whose details loaded prints that the simulator cannot play. */
   gaps = new Map<string, readonly SimulationGap[]>();
   cover: string | null = null;
@@ -193,6 +200,7 @@ export class LuaBuilder {
     this.user = next;
     this.entries.clear();
     this.cards.clear();
+    this.pending.clear();
     this.previewIds = [];
     this.results = [];
     this.name = "";
@@ -276,7 +284,8 @@ export class LuaBuilder {
     const count = [...this.entries.values()].reduce((a, b) => a + b, 0);
     const validation = validateDeck(deck, formatById(this.format));
     const illegal = illegalCardNames(deck, formatById(this.format));
-    const missing = [...this.entries.keys()].filter((id) => !this.cards.has(id)).length;
+    const loading = this.loadingCount();
+    const missing = [...this.entries.keys()].filter((id) => !this.cards.has(id)).length - loading;
     const groups = countsBySupertype(deck);
     const rows: WireValue[][] = [
       wireRow(W.header, {
@@ -325,35 +334,39 @@ export class LuaBuilder {
       rows.push(
         c
           ? row("D", c)
-          : wireRow(
-              W.card,
-              {
-                cardId: id,
-                name: "Unavailable card",
-                supertype: "",
-                subtype: "",
-                quantity,
-                remaining: 0,
-                hp: "",
-                mark: "",
-                number: "",
-                copyLimit: "",
-                illegal: "",
-                gaps: "",
-              },
-              "D",
-            ),
+          : this.pending.has(id)
+            ? wireRow(W.pending, { cardId: id, name: "Loading card...", quantity })
+            : wireRow(
+                W.card,
+                {
+                  cardId: id,
+                  name: "Unavailable card",
+                  supertype: "",
+                  subtype: "",
+                  quantity,
+                  remaining: 0,
+                  hp: "",
+                  mark: "",
+                  number: "",
+                  copyLimit: "",
+                  illegal: "",
+                  gaps: "",
+                },
+                "D",
+              ),
       );
     }
     const selectedCard = this.cards.get(this.selected);
     if (selectedCard) rows.push(row("S", selectedCard));
     rows.push(
       wireRow(W.validation, {
-        message: missing
-          ? `${missing} card(s) unavailable. Remove them or retry loading.`
-          : validation.legal
-            ? "Ready to play"
-            : validation.issues.map((i) => i.message).join("\n"),
+        message: loading
+          ? "Loading cards..."
+          : missing
+            ? `${missing} card(s) unavailable. Remove them or retry loading.`
+            : validation.legal
+              ? "Ready to play"
+              : validation.issues.map((i) => i.message).join("\n"),
         pokemon: groups.Pokémon,
         trainer: groups.Trainer,
         energy: groups.Energy,
@@ -480,6 +493,7 @@ export class LuaBuilder {
       this.format = data.format ?? "standard";
       this.cover = data.chosenCoverCardId;
       this.entries = new Map(data.cards.map((c) => [c.cardId, c.count]));
+      this.pending.clear();
       this.selected = "";
       this.details = "";
       this.saver?.dispose();
@@ -565,8 +579,11 @@ export class LuaBuilder {
         },
       });
       this.phase = "ready";
+      // Cards the page already holds are filled in before the first ready emit; the rest publish
+      // as loading until their request answers, so the deck shows without waiting for it.
+      const hydrated = this.hydrate(live);
       this.emit();
-      await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
+      await Promise.all([hydrated, this.search(), this.loadOptions(live)]);
       // Name and rules-text searches run over the card index; load it once the deck has shown, so
       // the first search does not wait for it.
       if (live()) loadCardIndex().catch((error) => reportError("load card index", error));
@@ -579,25 +596,64 @@ export class LuaBuilder {
       }
     }
   }
-  private async hydrate(live: () => boolean) {
+  /** Entries still waiting for their card details. */
+  private loadingCount(): number {
+    let count = 0;
+    for (const id of this.entries.keys()) if (!this.cards.has(id) && this.pending.has(id)) count++;
+    return count;
+  }
+  /** Fill in the deck's cards from what the page already holds (cards fetched for the library's
+      checks, the card index), synchronously, and ask GET /cards for the rest. */
+  private hydrate(live: () => boolean): Promise<void> {
+    const ids: string[] = [];
+    for (const id of this.entries.keys()) {
+      if (this.cards.has(id)) continue;
+      const full = cachedCard(id);
+      const known = full ? toBuilderCard(full) : indexedCard(id);
+      if (known) this.cards.set(id, known);
+      else ids.push(id);
+    }
+    if (ids.length === 0) {
+      if (this.message === LOAD_FAILED.cards) {
+        this.message = "";
+        this.emit();
+      }
+      return Promise.resolve();
+    }
+    for (const id of ids) this.pending.add(id);
+    this.hydrating = this.fetchDeckCards(ids, live);
+    return this.hydrating;
+  }
+  /** An id GET /cards answers without is unavailable; so is every id of a request that failed. */
+  private async fetchDeckCards(ids: string[], live: () => boolean) {
     try {
-      const ids = [...this.entries.keys()].filter((id) => !this.cards.has(id));
       for (let start = 0; start < ids.length; start += 100) {
-        const data = await api.getCards({ id: ids.slice(start, start + 100), pageSize: 100 });
+        const batch = ids.slice(start, start + 100);
+        const data = await api.getCards({ id: batch, pageSize: 100 });
         if (!live()) return;
         for (const item of data.items) {
           const c = toBuilderCard(item);
           this.cards.set(c.cardId, c);
         }
+        for (const id of batch) this.pending.delete(id);
       }
+      if (this.message === LOAD_FAILED.cards) this.message = "";
       this.emit();
     } catch (error) {
       reportError("hydrate deck cards", error);
       if (live()) {
+        for (const id of ids) this.pending.delete(id);
         this.message = LOAD_FAILED.cards;
         this.emit();
       }
     }
+  }
+  /** Wait out the deck cards' request; false when the deck changed meanwhile. */
+  private async settled(): Promise<boolean> {
+    if (this.loadingCount() === 0) return true;
+    const live = this.epoch.current();
+    await this.hydrating;
+    return live();
   }
   private async loadOptions(live: () => boolean) {
     try {
@@ -870,8 +926,15 @@ export class LuaBuilder {
     this.page = 1;
     await this.search();
   }
-  private onAdd(id: string) {
+  /** An add made while the deck's cards load waits for them, so its copy limit counts every copy. */
+  private async onAdd(id: string) {
+    if (!(await this.settled())) return;
     const c = this.cards.get(id);
+    if (this.loadingCount() > 0) {
+      this.message = MESSAGE.cardsLoading;
+      this.emit();
+      return;
+    }
     if ([...this.entries.keys()].some((entry) => !this.cards.has(entry))) {
       this.message = MESSAGE.resolveBeforeAdding;
       this.emit();
@@ -889,13 +952,15 @@ export class LuaBuilder {
       this.emit();
     }
   }
-  /** Drops an entry whose card no longer resolves. */
+  /** Drops an entry whose card no longer resolves. One still loading is not known to be gone. */
   private onDiscard(id: string) {
-    if (this.cards.has(id)) return;
+    if (this.cards.has(id) || this.pending.has(id)) return;
     this.entries.delete(id);
     this.changed();
   }
+  /** A loading entry shows no card, so what a removal would take from it is not known yet. */
   private onRemove(id: string) {
+    if (!this.cards.has(id) && this.pending.has(id)) return;
     const n = this.entries.get(id) ?? 0;
     if (n <= 1) this.entries.delete(id);
     else this.entries.set(id, n - 1);
@@ -1040,7 +1105,9 @@ export class LuaBuilder {
     }
     this.emit();
   }
-  private onExport() {
+  /** The decklist waits for the deck's cards, so it never leaves out the ones still loading. */
+  private async onExport() {
+    if (!(await this.settled())) return;
     const deck = this.deck();
     this.transfer = deck.length ? formatDecklist(deck) : "";
     const missing = [...this.entries.keys()].some((id) => !this.cards.has(id));

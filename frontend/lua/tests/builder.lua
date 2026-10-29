@@ -178,3 +178,30 @@ local galleryAlerts=0;for _,c in ipairs(tabs.deckCards)do if c.item.illegal then
 assert(galleryAlerts==1,'Gallery cards carry the same legality flag')
 tabs.deckView='list';tabs.deckPage=1
 print('PASS: gallery cards share the deck row legality flag')
+
+local loading=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
+loading:layout(1280,800)
+local loadingHeader=table.concat({6000,'ready','Test Deck','standard','','','0','1','1','0','3','','','','','0','0','0'},'\t')
+loading:sync(loadingHeader..'\nL\tp1\tLoading%20card...\t2\nD\tu1\tUnavailable%20card\t\t\t1\t0\nV\tLoading%20cards...\t0\t0\t0')
+local entry=loading.deck[1]
+assert(#loading.deck==2 and entry.pending and entry.id=='p1' and entry.name=='Loading card...' and entry.quantity==2,'A loading entry joins the deck list')
+assert(loading.validation=='Loading cards...')
+local function controlFor(action,id)
+ for i,c in ipairs(loading.controls)do if c.action==action and (c.arg==id or type(c.arg)=='table' and c.arg.id==id)then return i,c end end
+end
+assert(controlFor('detail','p1'),'A loading entry keeps its row')
+assert(not controlFor('discard','p1') and not controlFor('remove','p1'),'A loading entry offers no discard or remove')
+local _,plus=controlFor('add','p1');assert(plus and plus.disabled,'A loading entry cannot be added to')
+local discardUnavailable=controlFor('discard','u1');assert(discardUnavailable,'An unavailable entry keeps its discard')
+for _,action in ipairs({'discard','remove'})do
+ loading.controls[#loading.controls+1]={action=action,arg='p1',x=0,y=0,w=1,h=1}
+ local sent=#commands;loading:activate(#loading.controls)
+ assert(#commands==sent,'A loading entry refuses '..action)
+end
+loading:build();loading:activate(discardUnavailable)
+assert(commands[#commands][1]=='discard' and commands[#commands][2]=='u1','Discarding an unavailable entry still sends it')
+loading:activate((controlFor('detail','p1')))
+assert(loading.modal and loading.modal.mode=='detail')
+for _,c in ipairs(loading.controls)do if c.action=='remove' or c.action=='discard' then assert(c.disabled,'The loading entry detail cannot remove it')end end
+loading:closeModal()
+print('PASS: loading deck entries draw without discard and refuse it')

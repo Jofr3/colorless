@@ -203,18 +203,26 @@ const INDEX_REUSE_MS = 60 * 60 * 1000;
 export interface LoadedCardIndex {
   index: CardIndex;
   cards: Map<CardIndexRow, BuilderCard>;
+  /** Rows by card id, built on the first `indexedCard` lookup. */
+  byId?: Map<string, CardIndexRow>;
 }
 
 let loadedIndex: { at: number; index: Promise<LoadedCardIndex> } | undefined;
+/** The last index that finished loading, for lookups that must not wait or fetch. */
+let settledIndex: LoadedCardIndex | undefined;
 
 /** The card index, fetched on first use and shared by every caller. A failed load is forgotten,
     so the next call retries. */
 export function loadCardIndex(now = Date.now()): Promise<LoadedCardIndex> {
   if (loadedIndex === undefined || now - loadedIndex.at > INDEX_REUSE_MS) {
-    const index = getCardIndex().then((payload) => ({
-      index: prepareCardIndex(payload),
-      cards: new Map<CardIndexRow, BuilderCard>(),
-    }));
+    const index = getCardIndex().then((payload) => {
+      const loaded = {
+        index: prepareCardIndex(payload),
+        cards: new Map<CardIndexRow, BuilderCard>(),
+      };
+      settledIndex = loaded;
+      return loaded;
+    });
     const entry = { at: now, index };
     loadedIndex = entry;
     index.catch(() => {
@@ -227,19 +235,34 @@ export function loadCardIndex(now = Date.now()): Promise<LoadedCardIndex> {
 /** Drop the loaded index, so the next search fetches it again. */
 export function forgetCardIndex(): void {
   loadedIndex = undefined;
+  settledIndex = undefined;
+}
+
+function rowCard(loaded: LoadedCardIndex, row: CardIndexRow): BuilderCard {
+  let card = loaded.cards.get(row);
+  if (card === undefined) {
+    card = toBuilderCard(cardIndexBrief(row));
+    loaded.cards.set(row, card);
+  }
+  return card;
+}
+
+/** `id`'s card from an index that has already loaded; undefined when none has or it lacks the id.
+    Never starts a load. */
+export function indexedCard(id: string): BuilderCard | undefined {
+  const loaded = settledIndex;
+  if (loaded === undefined) return undefined;
+  loaded.byId ??= new Map(loaded.index.cards.map(({ row }) => [row[0], row]));
+  const row = loaded.byId.get(id);
+  return row === undefined ? undefined : rowCard(loaded, row);
 }
 
 /** Every card GET /cards would answer `query` with, in its order; paging params are ignored. A
     query the API would refuse throws, as its request would have failed. */
 export function searchCards(loaded: LoadedCardIndex, query: CardsQueryParams): BuilderCard[] {
-  return searchCardIndex(loaded.index, cardsQuerySchema.parse(query)).map((row) => {
-    let card = loaded.cards.get(row);
-    if (card === undefined) {
-      card = toBuilderCard(cardIndexBrief(row));
-      loaded.cards.set(row, card);
-    }
-    return card;
-  });
+  return searchCardIndex(loaded.index, cardsQuerySchema.parse(query)).map((row) =>
+    rowCard(loaded, row),
+  );
 }
 
 /** A catalog search for the decklist import: the loaded index, or GET /cards. */

@@ -108,6 +108,13 @@ check(legal.label=='Legal cards only' and legal.value=='On' and legal.count==2,'
 check(builder.fields.sort=='name' and builder.fields.query=='','Filter fields parsed')
 print('PASS: builder snapshot')
 
+builder:sync(fixture('builder_pending_snapshot.txt'))
+local loading=builder.deck[3]
+check(#builder.deck==3 and builder.count==9,'A loading entry stays in the deck and its count')
+check(loading.id=='sv01-999' and loading.name=='Loading card...' and loading.quantity==3 and loading.pending,'Loading entry parsed')
+check(not builder.deck[1].pending and builder.validation=='Loading cards...','Loading verdict parsed')
+print('PASS: builder loading snapshot')
+
 local Online=require('ui.online')
 local online=Online.new({command=function() end,announce=function() end,feedback=function() end,jiggle=function() end,
   home=function() end,signin=function() end})

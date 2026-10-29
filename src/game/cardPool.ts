@@ -14,11 +14,19 @@ const MISSING = Symbol("card not in catalog");
     not poison an id forever — the next call retries it); resolved entries
     (Cards and MISSING markers) live for the session. */
 const cache = new Map<string, Promise<Card | typeof MISSING>>();
+/** The Cards among `cache`'s entries that have arrived, readable without waiting. */
+const arrived = new Map<string, Card>();
 
 /** TEST-ONLY: the module-level cache outlives a test's fetch stub, so suites
     reset it between cases. */
 export function clearCardPoolCache(): void {
   cache.clear();
+  arrived.clear();
+}
+
+/** `id`'s Card if an earlier fetch already brought it; never requests it. */
+export function cachedCard(id: string): Card | undefined {
+  return arrived.get(id);
 }
 
 /** Request the uncached ids in batches, caching one promise per id. Ids are
@@ -32,7 +40,12 @@ function requestMissing(ids: string[]): void {
     );
     for (const id of group) {
       const pending: Promise<Card | typeof MISSING> = batch.then(
-        (found) => found.get(id) ?? MISSING,
+        (found) => {
+          const card = found.get(id);
+          if (card === undefined) return MISSING;
+          if (cache.get(id) === pending) arrived.set(id, card);
+          return card;
+        },
         (error: unknown) => {
           if (cache.get(id) === pending) cache.delete(id);
           throw error;

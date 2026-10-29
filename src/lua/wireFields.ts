@@ -188,6 +188,8 @@ export const WIRE_ROWS = {
         "gaps",
       ],
     },
+    /** A deck entry whose card details are still on their way: no card fields, no controls. */
+    pending: { tags: ["L"], fields: ["cardId", "name", "quantity"] },
     validation: { tags: ["V"], fields: ["message", "pokemon", "trainer", "energy"] },
     option: {
       tags: ["O"],

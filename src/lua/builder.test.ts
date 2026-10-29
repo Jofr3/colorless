@@ -4,13 +4,15 @@ import { encodeFields } from "./wire";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
 import {
+  type Card,
   type CardBrief,
   type CardIndexPayload,
   type CardsQueryParams,
   type Deck,
   MAX_CACHED_CARDS_PAGE,
 } from "@colorless/schema";
-import { forgetCardIndex } from "../decks/catalog";
+import { forgetCardIndex, loadCardIndex } from "../decks/catalog";
+import { clearCardPoolCache, fetchCardPool } from "../game/cardPool";
 import { MAX_TRANSIENT_RETRIES } from "../decks/deckSaver";
 import { cardIndexPayload } from "../test/fixtures";
 vi.mock("../lib/api", async (importOriginal) => {
@@ -23,6 +25,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     patchDeck: vi.fn(),
     getCards: vi.fn(),
     getCardIndex: vi.fn(),
+    getFullCards: vi.fn(),
     getCard: vi.fn(),
     getFacets: vi.fn(),
     getSets: vi.fn(),
@@ -83,6 +86,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
   forgetCardIndex();
+  clearCardPoolCache();
   vi.mocked(api.getCardIndex).mockResolvedValue(ABRA_INDEX);
   vi.mocked(api.getDeck).mockResolvedValue(deck());
   vi.mocked(api.getCards).mockResolvedValue({
@@ -736,6 +740,181 @@ describe("Lua deck builder", () => {
     await importing;
     expect([...b.entries]).toEqual([["a", 1]]);
     expect(b.message).toContain("cancelled");
+  });
+});
+
+describe("deck cards before their details arrive", () => {
+  type CardsPage = Awaited<ReturnType<typeof api.getCards>>;
+  const B = WIRE_ROWS.builder;
+  const rowsOf = (raw: unknown) =>
+    String(raw)
+      .split("\n")
+      .map((line) => line.split("\t").map(decodeURIComponent));
+  /** Each deck row as its tag, card id, name and quantity. */
+  const deckRows = (raw: unknown) =>
+    rowsOf(raw).flatMap((r) =>
+      r[0] === "D"
+        ? [
+            [
+              r[0],
+              r[wireColumn(B.card, "cardId")],
+              r[wireColumn(B.card, "name")],
+              r[wireColumn(B.card, "quantity")],
+            ],
+          ]
+        : r[0] === "L"
+          ? [
+              [
+                r[0],
+                r[wireColumn(B.pending, "cardId")],
+                r[wireColumn(B.pending, "name")],
+                r[wireColumn(B.pending, "quantity")],
+              ],
+            ]
+          : [],
+    );
+  const validationOf = (raw: unknown) =>
+    rowsOf(raw).find((r) => r[0] === "V")?.[wireColumn(B.validation, "message")];
+  const headerOf = (raw: unknown, field: (typeof B.header.fields)[number]) =>
+    rowsOf(raw)[0]?.[wireColumn(B.header, field)];
+  const readyEmits = (publish: ReturnType<typeof vi.fn>) =>
+    publish.mock.calls.map(([raw]) => raw).filter((raw) => headerOf(raw, "phase") === "ready");
+  /** GET /cards?id= held until `answer` or `fail`; any other query gets one catalog page. */
+  function holdDeckCards() {
+    const asked: string[][] = [];
+    let settle:
+      | { resolve: (page: CardsPage) => void; reject: (error: unknown) => void }
+      | undefined;
+    vi.mocked(api.getCards).mockImplementation((query) => {
+      if (!query?.id)
+        return Promise.resolve({ items: [card("a"), card("b")], total: 2, page: 1, pageSize: 8 });
+      asked.push([...query.id]);
+      return new Promise<CardsPage>((resolve, reject) => {
+        settle = { resolve, reject };
+      });
+    });
+    return {
+      asked,
+      answer: (items: CardBrief[]) =>
+        settle?.resolve({ items, total: items.length, page: 1, pageSize: 100 }),
+      fail: () => settle?.reject(new Error("offline")),
+    };
+  }
+  /** Open the deck and let everything but the held request answer. */
+  async function opening() {
+    const publish = vi.fn();
+    const b = new LuaBuilder(publish, vi.fn(), vi.fn());
+    b.session("authenticated", "u1");
+    void b.command("open\tone");
+    await tick();
+    return { b, publish };
+  }
+
+  it("publishes entries as loading, never unavailable, and refuses to drop them, until their cards arrive", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue(deck([{ cardId: "x", count: 2 }]));
+    const held = holdDeckCards();
+    const { b, publish } = await opening();
+    expect(held.asked).toEqual([["x"]]);
+    expect(deckRows(publish.mock.lastCall?.[0])).toEqual([["L", "x", "Loading card...", "2"]]);
+    expect(validationOf(publish.mock.lastCall?.[0])).toBe("Loading cards...");
+    for (const raw of readyEmits(publish)) {
+      expect(deckRows(raw).map((r) => r[2])).not.toContain("Unavailable card");
+      expect(validationOf(raw)).not.toMatch(/unavailable/);
+    }
+    await b.command("discard\tx");
+    await b.command("remove\tx");
+    await tick();
+    expect(b.entries.get("x")).toBe(2);
+    expect(api.patchDeck).not.toHaveBeenCalled();
+    held.answer([card("x")]);
+    await tick();
+    expect(deckRows(publish.mock.lastCall?.[0])).toEqual([["D", "x", "Pikachu", "2"]]);
+    expect(validationOf(publish.mock.lastCall?.[0])).not.toBe("Loading cards...");
+  });
+
+  it("fills cards the page already holds into the first ready emit and asks /cards for the rest only", async () => {
+    await loadCardIndex();
+    vi.mocked(api.getFullCards).mockResolvedValue([card("z", "Zapdos") as unknown as Card]);
+    await fetchCardPool(["z"]);
+    vi.mocked(api.getDeck).mockResolvedValue(
+      deck([
+        { cardId: "c0", count: 2 },
+        { cardId: "z", count: 1 },
+      ]),
+    );
+    const held = holdDeckCards();
+    const known = await opening();
+    expect(held.asked).toEqual([]);
+    const first = readyEmits(known.publish)[0];
+    expect(deckRows(first)).toEqual([
+      ["D", "c0", "Abra", "2"],
+      ["D", "z", "Zapdos", "1"],
+    ]);
+    for (const raw of readyEmits(known.publish))
+      expect(validationOf(raw)).not.toBe("Loading cards...");
+
+    vi.mocked(api.getDeck).mockResolvedValue(
+      deck([
+        { cardId: "c0", count: 2 },
+        { cardId: "q", count: 1 },
+        { cardId: "z", count: 1 },
+      ]),
+    );
+    const mixed = await opening();
+    expect(held.asked).toEqual([["q"]]);
+    expect(deckRows(readyEmits(mixed.publish)[0])).toEqual([
+      ["D", "c0", "Abra", "2"],
+      ["L", "q", "Loading card...", "1"],
+      ["D", "z", "Zapdos", "1"],
+    ]);
+  });
+
+  it("shows the cards of a failed request as unavailable, with Retry, and loads them on retry", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue(deck([{ cardId: "x", count: 2 }]));
+    const held = holdDeckCards();
+    const { b, publish } = await opening();
+    held.fail();
+    await tick();
+    const failed = publish.mock.lastCall?.[0];
+    expect(deckRows(failed)).toEqual([["D", "x", "Unavailable card", "2"]]);
+    expect(validationOf(failed)).toBe("1 card(s) unavailable. Remove them or retry loading.");
+    expect(headerOf(failed, "message")).toBe("Some cards did not load. Retry before adding.");
+    expect(headerOf(failed, "retry")).toBe("1");
+    void b.command("retry");
+    await tick();
+    expect(held.asked).toEqual([["x"], ["x"]]);
+    expect(deckRows(publish.mock.lastCall?.[0])).toEqual([["L", "x", "Loading card...", "2"]]);
+    held.answer([card("x")]);
+    await tick();
+    const loaded = publish.mock.lastCall?.[0];
+    expect(deckRows(loaded)).toEqual([["D", "x", "Pikachu", "2"]]);
+    expect(headerOf(loaded, "message")).toBe("");
+    expect(headerOf(loaded, "retry")).toBe("0");
+  });
+
+  it("applies an add made while the deck's cards load once they arrive, counting their copies", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue(deck([{ cardId: "x", count: 3 }]));
+    const held = holdDeckCards();
+    const { b } = await opening();
+    const adds = [b.command("add\ta"), b.command("add\ta")];
+    held.answer([card("x")]);
+    await Promise.all(adds);
+    expect([...b.entries]).toEqual([
+      ["x", 3],
+      ["a", 1],
+    ]);
+    expect(b.message).toBe("This card has reached its copy limit.");
+  });
+
+  it("writes the decklist an export asks for while the deck's cards load once they arrive", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue(deck([{ cardId: "x", count: 2 }]));
+    const held = holdDeckCards();
+    const { b } = await opening();
+    const exported = b.command("export");
+    held.answer([card("x")]);
+    await exported;
+    expect(b.transfer).toContain("2 Pikachu");
+    expect(b.message).toBe("");
   });
 });
 

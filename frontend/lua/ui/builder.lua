@@ -189,6 +189,9 @@ function Builder:sync(raw)
       if r[1]=='C' then self.items[#self.items+1]=item;signature[#signature+1]=item.id
       elseif r[1]=='D' then self.deck[#self.deck+1]=item
       else self.selectedItem=item end
+    elseif r[1]=='L' then local l=W.pending
+      self.deck[#self.deck+1]={id=r[l.cardId],name=r[l.name],kind='',subtype='',quantity=tonumber(r[l.quantity]) or 0,remaining=0,
+        hp='',mark='',number='',copyLimit=0,illegal=false,gaps='',pending=true}
     elseif r[1]=='V' then local v=W.validation;self.validation=r[v.message];self.groups={r[v.pokemon],r[v.trainer],r[v.energy]}
     elseif r[1]=='O' then local o=W.option
       self.options[#self.options+1]={key=r[o.key],label=r[o.label],value=r[o.value],count=tonumber(r[o.count]) or 0,index=tonumber(r[o.index]) or 1,selected=r[o.selected]}
@@ -349,7 +352,8 @@ function Builder:build()
     for i=(self.deckPage-1)*pageSize+1,math.min(#visible,self.deckPage*pageSize)do local item=visible[i];local yy=y+((i-1)%pageSize)*(p and 42 or 45)
       local rowWidth=bw-16
       self:add(item.name,x+8,yy,rowWidth-81,36,'detail',T.panel,item,{deckRow=true,rowWidth=rowWidth})
-      self:add(item.kind=='' and 'x' or '-',x+8+rowWidth-78,yy+6,34,24,item.kind=='' and 'discard' or 'remove',T.red,item.id,{rowAction=true})
+      -- A loading entry is not known to be unavailable, so it offers no discard.
+      if not item.pending then self:add(item.kind=='' and 'x' or '-',x+8+rowWidth-78,yy+6,34,24,item.kind=='' and 'discard' or 'remove',T.red,item.id,{rowAction=true}) end
       self:add('+',x+8+rowWidth-40,yy+6,34,24,'add',T.blue,item.id,{rowAction=true,disabled=item.remaining==0})
     end
     else
@@ -376,9 +380,16 @@ function Builder:openModal(mode,item)
   self.modal={mode=mode,item=item,id=item and item.id,motion=Modal.motion(self.reduced)}
   self:build()
 end
+-- Whether `id` is a deck entry whose card is still loading: not known to be gone, so not discarded.
+function Builder:pendingEntry(id)
+  for _,item in ipairs(self.deck)do if item.id==id then return item.pending==true end end
+  return false
+end
 function Builder:activate(i)
   local b=self.controls[i];if not b or b.disabled or b.inert then return end
-  local a,v=b.action,b.arg;self.callbacks.feedback('button')
+  local a,v=b.action,b.arg
+  if (a=='discard' or a=='remove') and self:pendingEntry(v) then return end
+  self.callbacks.feedback('button')
   if a=='input' then
     self.editing=v;local value=v=='name' and self.name or v=='transfer' and self.transfer or self.fields[v] or ''
     self.values[v]=value;self:command('input',v,value)

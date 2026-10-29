@@ -200,6 +200,10 @@ describe("Lua wire fixtures", () => {
     builder.selected = pikachu.cardId;
     builder.emit();
     await pin("builder_snapshot.txt", published.at(-1) ?? "");
+    builder.entries.set("sv01-999", 3);
+    builder.pending = new Set(["sv01-999"]);
+    builder.emit();
+    await pin("builder_pending_snapshot.txt", published.at(-1) ?? "");
   });
 
   it("the online lobby", async () => {
