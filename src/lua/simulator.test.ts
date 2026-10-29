@@ -1113,6 +1113,11 @@ describe("LuaSimulator announcements and refusals", () => {
     expect(field(publish, "announce")).toBe("Your turn.");
     sim.emit();
     expect(field(publish, "announce")).toBe("");
+    // Reopening the same game says where it stands again.
+    save(sim);
+    sim.command("close");
+    sim.command("open");
+    expect(field(publish, "announce")).toBe("Your turn.");
   });
 
   it("an attack's rows, its Knock Out and the Prizes it took reach the announcement", () => {
