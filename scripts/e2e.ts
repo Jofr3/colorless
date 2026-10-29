@@ -206,8 +206,10 @@ function serve(dir: string): Promise<number> {
 // ---------- the browser ----------
 
 // Records the page's mailbox writes, the bridge's prints, its non-GET fetches and its WebSockets,
-// and keeps the bridge to send through. `muteSockets()` makes every open socket half-open as the
-// page sees it: frames still go out as far as the page knows, but none leave and none arrive.
+// and keeps the bridge to send through. `muteSockets()` makes every open socket deaf: frames still
+// leave, but none arrive. The server keeps hearing the pings, so its own silence sweep (5 s while two
+// seats are held, 10 s of silence) never closes the socket first; when both ends went silent it
+// sometimes did, the page only saw a close and reconnected, and the watchdog step timed out.
 const HOOK = `(() => {
   const mail = {}, prints = [], errors = [], fetches = [], sockets = [];
   let host, bridge;
@@ -252,7 +254,7 @@ const HOOK = `(() => {
     }
     send(data) {
       if (data === "ping") this.__record.pings.push(Date.now());
-      if (!this.__record.mutedAt) super.send(data);
+      super.send(data);
     }
     close(code, reason) {
       if (!this.__record.closedByPage) this.__record.closedByPage = Date.now();
