@@ -361,9 +361,19 @@ describe("announcement", () => {
       "Ash: played Nest Ball.",
     );
     // A titled tray reads its title and note, but not the hint.
-    const titled: SimMenu = { kind: "cards", title: "Choose 2", note: "From your deck", options: [] };
+    const titled: SimMenu = {
+      kind: "cards",
+      title: "Choose 2",
+      note: "From your deck",
+      options: [],
+    };
     expect(saidAfter({}, { view: v, hint, menu: titled })).toBe(`${hint}`);
-    const log: SimMenu = { kind: "log", title: "Game log", note: "p1\tAsh\t0:01\tdrew", options: [] };
+    const log: SimMenu = {
+      kind: "log",
+      title: "Game log",
+      note: "p1\tAsh\t0:01\tdrew",
+      options: [],
+    };
     expect(saidAfter({}, { menu: log })).toBe("");
     const pile: SimMenu = { kind: "pile", title: "", options: [] };
     expect(saidAfter({}, { menu: pile })).toBe("");
