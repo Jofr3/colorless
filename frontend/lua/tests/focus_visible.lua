@@ -248,6 +248,6 @@ sandbox.message='Choose two decks';sandbox:draw()
 check(lines[#lines]=='Choose two decks','Sandbox hint uses the error line')
 Button.errorLine=errorLine
 trace={};Button.errorLine('Oops',20,100,200,300)
-check(trace[1]:match('^panel ') and trace[1]:find(serialise(T.ink),1,true),'The error line sits on an ink pill')
+check(trace[1] and trace[1]:match('^panel ') and trace[1]:find(serialise(T.ink),1,true),'The error line sits on an ink pill')
 trace=nil
 print('PASS: library, online and sandbox errors use the ink error line')
