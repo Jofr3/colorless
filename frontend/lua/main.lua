@@ -215,9 +215,15 @@ local function focusEdge()
   if state.focused==#menu+#controls then return 'last' end
   return state.focused==1 and 'first' or 'none'
 end
+-- The edge's button label rides along, for the page to say when Tab brings focus back to it.
 local function syncFocusEdge()
   local edge=focusEdge()
-  if edge~=state.focusEdge then state.focusEdge=edge;Bridge.emit('focus-edge',edge) end
+  local label=''
+  if edge~='none' then
+    local item=state.focused<=#menu and menu[state.focused] or controls[state.focused-#menu]
+    label=item.label
+  end
+  if edge..label~=state.focusEdge then state.focusEdge=edge..label;Bridge.emit('focus-edge',edge,label) end
 end
 applyPreferences=function()
   state.reduced=preferences:reduced(state.systemReduced)

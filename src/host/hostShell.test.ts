@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
-import { HostShell, type PageView, type ShellPorts } from "./shell";
+import { HostShell, type PageView, READY_JOIN_MS, type ShellPorts } from "./shell";
 
 /** Just enough of an element for the shell and its text proxies, on Node's EventTarget. */
 class FakeElement extends EventTarget {
@@ -303,6 +303,8 @@ describe("HostShell", () => {
 
 describe("HostShell's page semantics", () => {
   it("says the canvas is loading until Lua is ready, then names the page and says it is ready", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
     const { shell, canvas, instructions, heading, nav, announcement } = fakePage();
     shell.showPage(PAGE_VIEWS.builder);
     expect(canvas.getAttribute("aria-busy")).toBe("true");
@@ -316,8 +318,32 @@ describe("HostShell's page semantics", () => {
     shell.onPrint(print("ready"));
     expect(canvas.getAttribute("aria-busy")).toBe("false");
     expect(canvas.getAttribute("aria-label")).toBe("Deck builder: Tidal Splash");
+    vi.advanceTimersByTime(READY_JOIN_MS - 1);
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("");
+    vi.advanceTimersByTime(1);
     await Promise.resolve();
     expect(announcement.textContent).toBe("Colorless is ready");
+  });
+
+  it("says ready together with the page's first line instead of overwriting it", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    const { shell, announcement } = fakePage();
+    shell.showPage(PAGE_VIEWS.builder);
+    shell.onPrint(print("ready"));
+    await Promise.resolve();
+    vi.advanceTimersByTime(12);
+    shell.onPrint(print("announce", "Deck builder. Sign in to build your deck."));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe(
+      "Colorless is ready. Deck builder. Sign in to build your deck.",
+    );
+    vi.advanceTimersByTime(READY_JOIN_MS);
+    await Promise.resolve();
+    expect(announcement.textContent).toBe(
+      "Colorless is ready. Deck builder. Sign in to build your deck.",
+    );
   });
 
   it("opens the links and the page up while the boot stalls, and closes them again when it moves", () => {
@@ -439,6 +465,31 @@ describe("HostShell's Tab out of the canvas", () => {
     expect(tab().reachedSdl).toBe(true);
     shell.onPrint(print("focus-edge", "none"));
     expect(tab(true).reachedSdl).toBe(true);
+  });
+
+  it("names the edge button when Tab brings focus back to the canvas, but not after a click", async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => void vi.useRealTimers());
+    const { shell, canvas, announcement } = onHome();
+    vi.advanceTimersByTime(READY_JOIN_MS);
+    await Promise.resolve();
+    announcement.textContent = "";
+    shell.onPrint(print("focus-edge", "last", "Settings"));
+    tab();
+    canvas.blur();
+    tab(true);
+    canvas.focus();
+    canvas.dispatchEvent(new Event("focus"));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("Settings");
+    announcement.textContent = "";
+    tab();
+    canvas.blur();
+    window.dispatchEvent(new Event("pointerdown"));
+    canvas.focus();
+    canvas.dispatchEvent(new Event("focus"));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("");
   });
 
   it("keeps the Tab in the canvas off home, under Settings or a wipe, and while a field edits", () => {

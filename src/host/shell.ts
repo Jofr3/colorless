@@ -73,6 +73,10 @@ const FAILED_LABEL = "Colorless has stopped. Reload to continue.";
 /** How long an announcement stays in the live region before it is cleared, so no stale text is
     left for a screen reader to meet while reading. */
 export const ANNOUNCEMENT_CLEAR_MS = 5000;
+/** How long "Colorless is ready" waits for the page's own first line, to be said with it rather
+    than overwrite it (or be overwritten) a moment later. */
+export const READY_JOIN_MS = 400;
+const READY_ANNOUNCEMENT = "Colorless is ready";
 
 /** The screens whose single-line fields share one proxy, each with its own mailbox. */
 type LineOwner = "library" | "sandbox" | "online";
@@ -153,6 +157,12 @@ export class HostShell {
   private authOpen = false;
   private transitionOpen = false;
   private focusEdge: FocusEdge = "none";
+  /** The button at the edge, which Tab left the canvas from and comes back to. */
+  private edgeLabel = "";
+  /** Focus left the canvas past the edge; the keyboard's way back says where it lands. */
+  private leftAtEdge = false;
+  private lastKeyTab = false;
+  private readyTimer: ReturnType<typeof setTimeout> | undefined;
   private announcementTimer: ReturnType<typeof setTimeout> | undefined;
   private pageRevision = 0;
   private settingsRevision = 0;
@@ -286,10 +296,27 @@ export class HostShell {
     window.addEventListener(
       "keydown",
       (event) => {
-        if (this.tabLeaves(event)) event.stopImmediatePropagation();
+        this.lastKeyTab = (event as KeyboardEvent).key === "Tab";
+        if (!this.tabLeaves(event)) return;
+        this.leftAtEdge = true;
+        event.stopImmediatePropagation();
       },
       true,
     );
+    window.addEventListener(
+      "pointerdown",
+      () => {
+        this.lastKeyTab = false;
+      },
+      true,
+    );
+    // Lua cannot tell the canvas got focus back, so Tab's return to the edge button is said here.
+    canvas.addEventListener("focus", () => {
+      const back = this.leftAtEdge && this.lastKeyTab;
+      this.leftAtEdge = false;
+      if (back && this.view.page === "home" && !this.settingsOpen && this.focusEdge !== "none")
+        this.announce(this.edgeLabel);
+    });
     // Off home and in Settings the canvas keeps Tab and the paging keys; arrows always navigate
     // inside it rather than scrolling.
     canvas.addEventListener("keydown", (event) => {
@@ -349,8 +376,14 @@ export class HostShell {
       it would replace each other in the live region; they are joined into one message instead. */
   private announce(text: string) {
     if (!text || this.heard.includes(text)) return;
+    const first = this.heard.length === 0;
+    if (this.readyTimer !== undefined) {
+      clearTimeout(this.readyTimer);
+      this.readyTimer = undefined;
+      this.heard.push(READY_ANNOUNCEMENT);
+    }
     this.heard.push(text);
-    if (this.heard.length > 1) return;
+    if (!first) return;
     queueMicrotask(() => {
       const message = joinAnnouncements(this.heard);
       this.heard = [];
@@ -381,7 +414,11 @@ export class HostShell {
         if (this.degraded === "stalled") this.degraded = null;
         this.sync();
         this.focusCanvas();
-        this.announce("Colorless is ready");
+        clearTimeout(this.readyTimer);
+        this.readyTimer = setTimeout(() => {
+          this.readyTimer = undefined;
+          this.announce(READY_ANNOUNCEMENT);
+        }, READY_JOIN_MS);
         break;
       case "page":
         this.ports.navigate(printText(rest));
@@ -419,8 +456,10 @@ export class HostShell {
         this.sync();
         break;
       case "focus-edge": {
-        const edge = printText(rest);
-        if (edge === "first" || edge === "last" || edge === "none") this.focusEdge = edge;
+        const [edge = "", label = ""] = decodeFields(rest) ?? [];
+        if (edge !== "first" && edge !== "last" && edge !== "none") break;
+        this.focusEdge = edge;
+        this.edgeLabel = label.replace(/\p{Cc}/gu, " ");
         break;
       }
     }
@@ -436,6 +475,7 @@ export class HostShell {
       // the ordinary way.
       if (!this.ready || this.degraded) return;
       event.preventDefault();
+      this.leftAtEdge = false;
       run();
       this.focusCanvas();
     });

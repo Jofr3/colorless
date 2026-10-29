@@ -38,10 +38,11 @@ package.loaded['ui.settings']={tabs={game=1,graphics=2,audio=3,account=4},new=fu
  return popup
 end}
 local edges={}
+local labels={}
 local output=print
 print=function(line)
- local edge=line:match('^COLORLESS:focus%-edge:(.*)$')
- if edge then edges[#edges+1]=edge end
+ local edge,label=line:match('^COLORLESS:focus%-edge:([^\t]*)\t?(.*)$')
+ if edge then edges[#edges+1]=edge;labels[edge]=label end
 end
 dofile('frontend/lua/main.lua');love.load()
 local function frame()love.update(1/60);love.draw()end
@@ -61,6 +62,8 @@ press('tab');expect('Tab onto Sandbox reaches the first edge','first')
 press('tab');expect('Online is inside the ring','none')
 press('tab');press('tab');expect('Decks and Account are inside the ring; nothing repeats')
 press('tab');expect('Settings is the last edge','last')
+if labels.first~='Sandbox' or labels.last~='Settings' then print=output;error('The edges name their buttons (printed '..tostring(labels.first)..', '..tostring(labels.last)..')') end
+if labels.none~='' then print=output;error('Inside the ring no button is named') end
 frame();expect('The edge prints once')
 press('tab');expect('A Tab that reaches Lua wraps to Sandbox','first')
 shift=true;press('tab');shift=false;expect('Shift+Tab wraps back to Settings','last')
