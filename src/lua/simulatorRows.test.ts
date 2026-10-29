@@ -272,7 +272,9 @@ describe("announcement", () => {
     const log: SeatLogEntry[] = [
       row("p1", "Miraidon ex used Photon Blaster"),
       {
-        ...row("p1", ""),
+        kind: "action",
+        who: "p1",
+        elapsed: "+0:01",
         segments: [
           { text: "dealt " },
           { text: "220", tone: "damage" },
