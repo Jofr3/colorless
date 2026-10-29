@@ -71,7 +71,10 @@ check(sim.menu==nil,'No prompt on the open table')
 
 sim:sync(fixture('sim_prompt.txt'))
 check(sim.gamePhase=='effect:choose' and sim.hint:find('Search your deck'),'Prompt header parsed')
-check(said[#said]=='Ash: played Nest Ball. Search your deck for a Basic Pokémon onto your Bench.','A played card and its prompt are announced')
+check(said[#said]=='Ash: played Nest Ball.','A played card is announced, got '..tostring(said[#said]))
+-- The tray says the prompt's instruction once, as it opens.
+sim:update(1/60,1,-1000,-1000,true)
+check(said[#said]:find('^Search your deck for a Basic Pokémon onto your Bench%. %d+ cards?%.$'),'The tray opens with its instruction, got '..tostring(said[#said]))
 check(sim.menu and sim.menu.kind=='cards' and sim.menu.mandatory,'Search prompt is a mandatory card menu')
 check(#sim.menu.options>0 and #sim.menu.footer==3,'Prompt options and footer parsed')
 for _,o in ipairs(sim.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and not o.disabled,'Option '..o.token..' names a card') end

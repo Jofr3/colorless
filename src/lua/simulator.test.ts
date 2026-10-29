@@ -1155,7 +1155,9 @@ describe("LuaSimulator announcements and refusals", () => {
     expect(refused).not.toBe(before);
     expect(field(publish, "announce")).toBe("");
     sim.command("log");
-    expect(field(publish, "announce")).toBe("Game log.");
+    // The log opens in a new emit, and says its own opening words in Lua.
+    expect(rows(publish).some((r: string[]) => r[0] === "M" && r[1] === "log")).toBe(true);
+    expect(field(publish, "announce")).toBe("");
     sim.command("dismiss");
     expect(serial()).toBe(refused);
     refuse();

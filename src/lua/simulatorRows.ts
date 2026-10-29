@@ -8,7 +8,7 @@ import type {
   SeatLogEntry,
 } from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
-import type { SimCardAction, SimMenu, SimOption } from "./simulatorTypes";
+import type { SimCardAction, SimMenu, SimMenuKind, SimOption } from "./simulatorTypes";
 import type { SimulatorOrder } from "./simulatorOrder";
 import type { TableSource } from "./tableSource";
 import { encodeFields, pixelText } from "./wire";
@@ -226,6 +226,8 @@ const sentence = (text: string) => {
   const t = text.trim();
   return t === "" || /[.!?]$/.test(t) ? t : `${t}.`;
 };
+/** Menus Lua opens as a tray or the log, which announce their own opening words. */
+const TRAY_MENUS: ReadonlySet<SimMenuKind> = new Set(["cards", "pile", "log"]);
 const prizeWord = (n: number) => `${n} Prize${n === 1 ? "" : "s"}`;
 
 /** The name of the card a Knock Out cue names, wherever the frame now shows it. */
@@ -316,10 +318,17 @@ export function announcement(heard: Heard, a: AnnounceInput): { text: string; he
     }
   if (ending) parts.push(sentence(a.title), sentence(outcomeDetail(v)));
   if (menu && opening) {
-    parts.push(sentence(menu.title));
-    // The log's note is the whole log as rows.
-    if (menu.kind !== "log") parts.push(...(menu.note ?? "").split("\n").map(sentence));
-    if (v?.phase.kind === "effect:choose" && a.hint !== menu.title && a.hint !== menu.note)
+    // A card or pile tray and the log say their own title and note as they open (Lua's
+    // `Overlay:opening`), and an untitled card tray with no note reads the hint as its instruction.
+    const tray = TRAY_MENUS.has(menu.kind);
+    const trayHint = menu.kind === "cards" && menu.title === "" && !menu.note;
+    if (!tray) parts.push(sentence(menu.title), ...(menu.note ?? "").split("\n").map(sentence));
+    if (
+      v?.phase.kind === "effect:choose" &&
+      !trayHint &&
+      a.hint !== menu.title &&
+      a.hint !== menu.note
+    )
       parts.push(sentence(a.hint));
   } else if (!ending && a.title !== was.title) parts.push(sentence(a.title));
   return {

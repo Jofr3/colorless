@@ -349,4 +349,23 @@ describe("announcement", () => {
     const flips = [row("p1", "flipped heads", [{ kind: "coin", seat: "p1", face: "heads" }])];
     expect(saidAfter({}, { menu: coin, log: flips })).toBe("Bite. Ash: Heads. Ash: Tails.");
   });
+
+  it("leaves a tray's and the log's opening words to the tray, which says them as it opens", () => {
+    const v = structuredClone(base);
+    v.phase = { kind: "effect:choose", prompt: { kind: "confirm", note: "Pick" } };
+    const hint = "Search your deck for a Basic Pokémon onto your Bench.";
+    const played = [row("p1", "played Nest Ball")];
+    const tray: SimMenu = { kind: "cards", title: "", options: [] };
+    // The untitled tray prints the hint as its instruction and reads it.
+    expect(saidAfter({}, { view: v, hint, menu: tray, log: played })).toBe(
+      "Ash: played Nest Ball.",
+    );
+    // A titled tray reads its title and note, but not the hint.
+    const titled: SimMenu = { kind: "cards", title: "Choose 2", note: "From your deck", options: [] };
+    expect(saidAfter({}, { view: v, hint, menu: titled })).toBe(`${hint}`);
+    const log: SimMenu = { kind: "log", title: "Game log", note: "p1\tAsh\t0:01\tdrew", options: [] };
+    expect(saidAfter({}, { menu: log })).toBe("");
+    const pile: SimMenu = { kind: "pile", title: "", options: [] };
+    expect(saidAfter({}, { menu: pile })).toBe("");
+  });
 });
