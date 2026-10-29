@@ -521,6 +521,9 @@ function Overlay:changePage(delta)
   if (self.pages or 1)<=1 then return end
   self.page=(self.page-1+delta+self.pages)%self.pages+1
   self.sim.pressedOverlay=nil;self.hover=0;self.focus=0
+  -- The log's reading cursor moves to the page shown: Up then reads its last
+  -- entry and Down its first.
+  if self.kind=='log' then self.logTurned=true end
   self:build()
   self.sim.callbacks.announce(Pager.page(self.page,self.pages))
 end
@@ -532,14 +535,30 @@ function Overlay:describe(b)
   return b.label..(selected and ', selected' or '')
 end
 -- Up and down step through the log's entries, newest last, turning the page
--- to the one that shows the entry.
+-- to the one that shows the entry. After a page turn they start from the page
+-- shown: Up reads its last entry, Down its first.
 function Overlay:readLog(dir)
   local n=#self.logEntries
   if n==0 then self.sim.callbacks.announce('Game log, no entries yet');return end
-  self.logFocus=math.max(1,math.min(n,(self.logFocus or n)+(dir<0 and -1 or 1)))
+  local pageOf=function(e) return math.ceil(e.line/self.visible) end
+  if self.logTurned then
+    self.logTurned=nil
+    local first,last
+    for i,e in ipairs(self.logEntries) do
+      if pageOf(e)<=self.page then last=i end
+      if not first and pageOf(e)>=self.page then first=i end
+    end
+    -- An entry that starts on an earlier page and wraps onto this one is the
+    -- page's first.
+    if first and pageOf(self.logEntries[first])>self.page and last then first=last end
+    self.logFocus=dir<0 and (last or 1) or (first or n)
+  else
+    self.logFocus=math.max(1,math.min(n,(self.logFocus or n)+(dir<0 and -1 or 1)))
+  end
   local entry=self.logEntries[self.logFocus]
-  local page=math.ceil(entry.line/self.visible)
-  if page~=self.page then self.page=page;self.pageText:set('Page '..self.page..'/'..self.pages,self.sim.time) end
+  local page=pageOf(entry)
+  -- Rebuild on a page change, so the pager arrows name the page shown.
+  if page~=self.page then self.page=page;self:build() end
   self.sim.callbacks.announce('Entry '..self.logFocus..' of '..n..': '..entry.text)
 end
 function Overlay:wheelmoved(y)

@@ -20,7 +20,8 @@ T.font=function() return font() end
 local Fx=require('ui.fx')
 local banners={}
 local attention=Fx.attention
-Fx.attention=function(self,args) banners[#banners+1]=args.text;return attention(self,args) end
+local bannerAt={}
+Fx.attention=function(self,args) banners[#banners+1]=args.text;bannerAt[args.text]={x=args.x,y=args.y};return attention(self,args) end
 local Simulator=require('ui.simulator')
 local function check(ok,message) if not ok then error(message,2) end end
 
@@ -200,6 +201,32 @@ sim.overlay:keypressed('down');sim.overlay:keypressed('down')
 check(last()=='Entry 3 of 3: Misty: Misty attached Water Energy.','Down stops at the newest entry, got '..last())
 sim.overlay:keypressed('escape')
 print('PASS: the Game log speaks its entries')
+-- A page turn moves the reading cursor to the page shown: Up and Down read
+-- that page's entries, and an entry on another page turns to it and rebuilds,
+-- so the arrows name the page that shows.
+local entries={}
+for i=1,30 do entries[#entries+1]='p1\tAsh\t0:01\tstep '..i end
+sim:sync(snapshot(161,{rows={row('M','log','Game log',table.concat(entries,'\n'),'false','log2')}}));frames(1)
+local log=sim.overlay
+local function arrow(action) for _,c in ipairs(log.controls) do if c.action==action then return c end end end
+local firstPage=0
+for _,e in ipairs(log.logEntries) do if math.ceil(e.line/log.visible)==1 then firstPage=firstPage+1 end end
+check(log.pages==2 and log.page==2,'The long log opens on its last page')
+log:keypressed('pageup')
+check(log.page==1 and last()=='Page 1 of 2','Page up shows page 1, got '..last())
+log:keypressed('up')
+check(last()=='Entry '..firstPage..' of 30: Ash: step '..firstPage,'Up after a page turn reads the last entry shown, got '..last())
+check(log.page==1,'Reading the page shown keeps it')
+check(arrow('prev').speech=='Previous page, page 1 of 2','The arrows name the page shown, got '..tostring(arrow('prev').speech))
+log:keypressed('down')
+check(last()=='Entry '..(firstPage+1)..' of 30: Ash: step '..(firstPage+1),'Down reads on to the next page, got '..last())
+check(log.page==2 and arrow('next').speech=='Next page, page 2 of 2','Reading onto page 2 turns to it and rebuilds the arrows, got '..tostring(arrow('next').speech))
+log:keypressed('pageup');log:keypressed('down')
+check(last()=='Entry 1 of 30: Ash: step 1','Down after a page turn reads the first entry shown, got '..last())
+log:keypressed('pagedown')
+check(log.page==2 and last()=='Page 2 of 2','Next page goes forward from the page shown, got '..last())
+log:keypressed('escape')
+print('PASS: the Game log reads the page it shows after a page turn')
 
 -- Reduced Motion: a static Knock Out notice, and coins that land at once.
 sim:sync(snapshot(17));frames(2)
@@ -209,6 +236,20 @@ sim:sync(knocked);frames(1)
 local named=false;for _,t in ipairs(banners) do if t=='KNOCKED OUT: Quaxly' then named=true end end
 check(named,'Reduced Motion still names the knocked-out Pokémon, banners: '..table.concat(banners,', '))
 check(sim.koPresentation==nil,'Reduced Motion plays no burn')
+local D=require('ui.card_dimensions')
+-- The notice marks the victim's own spot: where it stood, or, after a
+-- hot-seat flip to the victim, that player's Active in the new layout.
+local function at(zone,where)
+  local p,z=bannerAt['KNOCKED OUT: Quaxly'],sim.L.zones[zone]
+  check(p and math.abs(p.x-z.x)<1 and math.abs(p.y-(z.y-0.6*D.H*z.scale))<1,where..' marks '..zone..', got '..(p and p.x..','..p.y or 'nothing'))
+end
+at('opp_active','Without a flip the notice')
+sim:sync(snapshot(181));frames(2)
+bannerAt={}
+local swap=function(raw) return (raw:gsub('\topponent\t','\tthem\t'):gsub('\tyou\t','\topponent\t'):gsub('\tthem\t','\tyou\t')) end
+sim:sync(swap(snapshot(182,{seat='p2',rows={row('D','opp1')},drop={opp1=true}})..'\n'..row('C','opp1','sv01-052','Quaxly','opponent','discard',0,'false','Pokemon','','Basic',60,0,'','','','Water','false',0)));frames(1)
+at('you_active','After the flip to the victim the notice')
+sim:sync(snapshot(183));frames(2)
 sim:sync(snapshot(19,{rows={row('M','coin','Coin flip','Ash: Heads\nMisty: Tails','true','coin'),row('O','50','Continue','blue','false','false','','')}}));frames(1)
 for _,f in ipairs(sim.overlay.flips) do check(f.landed,'Reduced Motion lands every coin on the first frame') end
 local Overlay=require('ui.sim_overlay')

@@ -190,11 +190,15 @@ function Simulator:sync(raw,finishKo)
   self.completedCounterTransfer=self.counterMotion and self.counterMotion.sent and self.counterMotion.cards or nil
   self.counterMotion=nil
   -- Reduced motion skips the burn but still names each knocked-out Pokémon
-  -- where it stood.
+  -- where it stood. Its spot is kept by owner and zone, so after a hot-seat
+  -- flip the notice lands on the victim's side of the new layout.
   local reducedKos
   if finishKo~=true and self.reduced and self.phase=='ready' then
     reducedKos={}
-    for _,c in ipairs(Ko.victims(m,self.cards)) do reducedKos[#reducedKos+1]={name=c.item.name,x=c.x,y=c.y-0.6*D.H*c.baseScale} end
+    for _,c in ipairs(Ko.victims(m,self.cards)) do
+      local zone=self.L and self.L.zones[prefix(c.item.owner)..c.item.zone]
+      reducedKos[#reducedKos+1]={name=c.item.name,owner=c.item.owner,zone=c.item.zone,dx=zone and (c.x-zone.x)/zone.scale or 0,x=c.x,y=c.y-0.6*D.H*c.baseScale}
+    end
   end
   -- love.filesystem.read also returns the byte count; only our explicit
   -- boolean completion flag may bypass the presentation queue.
@@ -219,7 +223,12 @@ function Simulator:sync(raw,finishKo)
   self.highlight=nil;self.hoverCard=nil
   self:placeCards(false,previous)
   self:react(previous)
+  local flipped=previous.viewerSeat~='' and previous.viewerSeat~=self.viewerSeat
   for _,ko in ipairs(reducedKos or {}) do
+    local owner=ko.owner
+    if flipped then owner=owner=='you' and 'opponent' or 'you' end
+    local zone=self.L and self.L.zones[prefix(owner)..ko.zone]
+    if zone then ko.x,ko.y=zone.x+ko.dx*zone.scale,zone.y-0.6*D.H*zone.scale end
     self.fx:attention({text='KNOCKED OUT: '..ko.name,scale=0.6,colour=T.white,backdrop=T.red,x=ko.x,y=ko.y,hold=1.2,maxw=self.L and self.L.table.w-40})
   end
   self.completedCounterTransfer=nil
