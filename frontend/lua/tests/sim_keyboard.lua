@@ -122,8 +122,14 @@ check(sim.highlight==nil and sim.focusCard and sim.focusCard.item.id=='active1',
 check(#said==before+1,'Escape reads the card once')
 check(last()=='Houndour, your Active, 50 of 70 HP, 2 Fire Energy','Escape reads the card again, got '..last())
 -- Retreat invokes its own token, which opens the Bench pick.
-sim:keypressed('return');sim:keypressed('tab');sim:keypressed('return')
+sim:keypressed('return');sim:keypressed('tab')
+local beforeSend=#said
+sim:keypressed('return')
 check(commands[#commands]=='invoke\t6\t5','Retreat sends its action, got '..tostring(commands[#commands]))
+-- The button's card is not read before the action's own result: it would be
+-- the card before the action, and after a hot-seat flip the wrong player's.
+check(#said==beforeSend,'A card button sends without reading its card, got '..last())
+check(sim.focusCard and sim.focusCard.item.id=='active1','Focus falls back to the button\'s card')
 -- A refused Retreat is skipped, and Enter on the card says why.
 sim:sync(snapshot(7,{retreated=true}));frames(2)
 tabTo(onCard('active1'),'your Active')
@@ -138,6 +144,19 @@ check(sim.overlay and sim.overlay.kind=='inspect','V inspects the focused card')
 check(last():find('^Houndour, your Active, 50 of 70 HP, 2 Fire Energy%. Basic Pokémon, Fire type, 70 HP%. Attack: Bite, costs 1 Colorless, 10 damage%. Attack: Flare, costs 1 Fire and 1 Colorless, 30 damage%. Discard an Energy%. Weakness: Water ×2%. Retreat cost: 1 Colorless%.$'),'The inspector reads the card, got '..last())
 sim.overlay:keypressed('escape')
 print('PASS: cards read their place and state, Enter focuses their buttons, Escape returns, Retreat answers the keyboard, V inspects')
+
+-- A button that asks for a target says the question as the pick opens.
+sim:sync(snapshot(71,{rows={row('K','60','card1','Attach','blue','false','active1','attach','','','false'),
+  row('K','61','card1','Attach','blue','false','bench1','attach','','','false')}}));frames(2)
+tabTo(onCard('card1'),'the hand card')
+sim:keypressed('return')
+check(sim.controls[sim.focus].label=='Attach','Enter focuses Attach')
+sim:keypressed('return')
+check(sim.luaTargeting and last()=='Attach to which Pokémon? Click a highlighted card.','The target pick is announced, got '..last())
+sim:keypressed('escape')
+check(sim.luaTargeting==nil,'Escape leaves the target pick')
+sim:sync(snapshot(72));frames(2)
+print('PASS: a target pick says its question')
 
 -- Prize slots join the ring only while a Prize prompt asks.
 local function prizeStops() local n=0;for i=1,sim:stopCount() do local _,_,p=sim:stopAt(i);if p then n=n+1 end end;return n end

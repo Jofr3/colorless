@@ -119,6 +119,13 @@ export function nextAnnouncement(current: string, message: string): string {
   return current === message ? `${message}\u00a0` : message;
 }
 
+/** One frame's announcements as one message. Joined parts each end as a sentence, so a focus
+    label such as "Fire Energy, your hand" does not run into the next; a lone part is kept as is. */
+export function joinAnnouncements(parts: readonly string[]): string {
+  if (parts.length === 1) return parts[0] ?? "";
+  return parts.map((p) => (/[.!?]$/.test(p.trimEnd()) ? p.trimEnd() : `${p.trimEnd()}.`)).join(" ");
+}
+
 export class HostShell {
   private view: PageView;
   private ready = false;
@@ -303,7 +310,7 @@ export class HostShell {
     this.heard.push(text);
     if (this.heard.length > 1) return;
     queueMicrotask(() => {
-      const message = this.heard.join(" ");
+      const message = joinAnnouncements(this.heard);
       this.heard = [];
       const region = this.doc.getElementById("announcement");
       if (region) region.textContent = nextAnnouncement(region.textContent ?? "", message);

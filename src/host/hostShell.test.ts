@@ -105,6 +105,19 @@ describe("HostShell", () => {
     await Promise.resolve();
     expect(announcement.textContent).toBe("Choose your next move.\u00a0");
   });
+  it("ends each joined part as a sentence, and leaves a lone part as it is", async () => {
+    const { shell, announcement } = fakePage();
+    shell.onPrint(print("announce", "Fire Energy, your hand"));
+    shell.onPrint(print("announce", "Attach to which Pok\u00e9mon?"));
+    shell.onPrint(print("announce", "Ash: placed a face-down Active Pok\u00e9mon."));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe(
+      "Fire Energy, your hand. Attach to which Pok\u00e9mon? Ash: placed a face-down Active Pok\u00e9mon.",
+    );
+    shell.onPrint(print("announce", "Fire Energy, your hand"));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("Fire Energy, your hand");
+  });
   it("routes Lua's prints to the screens and the router", () => {
     const { shell, ports } = fakePage();
     shell.onPrint(print("simulator", "open"));

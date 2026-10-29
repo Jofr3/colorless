@@ -870,7 +870,7 @@ function Simulator:add(label,x,y,w,h,action,colour,extra)
   self.controls[#self.controls+1]=b
   return b
 end
-function Simulator:build()
+function Simulator:build(quiet)
   local previousPopup=self.attachedPopup
   self.controls={}
   self.attachedPopup=nil
@@ -998,7 +998,7 @@ function Simulator:build()
   end
   if self.reduced then self.closingPopup=nil end
   self:buildPrizeStops()
-  self:restoreFocus()
+  self:restoreFocus(quiet)
 end
 local function groupLabel(group)
   local labels={attach='Attach',evolve='Evolve',tool='Attach',rareCandy='Rare Candy',ability='Ability'}
@@ -1437,8 +1437,8 @@ function Simulator:findStop(key)
   for i=1,self:stopCount() do if not self:skipStop(i) and self:keyAt(i)==key then return i end end
 end
 -- After a rebuild: the same stop, else the card an attached button belonged
--- to (announced, since focus moved), else nothing.
-function Simulator:restoreFocus()
+-- to (announced, since focus moved, unless `quiet`), else nothing.
+function Simulator:restoreFocus(quiet)
   local want=self.focusKey
   if not want and self.focusCard then want={key=cardKey(self.focusCard.item)} end
   if not want then
@@ -1450,7 +1450,7 @@ function Simulator:restoreFocus()
   found=want.fallback and self:findStop(want.fallback)
   if found then
     self:setFocus(found)
-    self.callbacks.announce(self:describeStop(found))
+    if not quiet then self.callbacks.announce(self:describeStop(found)) end
     return
   end
   self.focus=0;self.focusKey=nil;self.focusCard=nil
@@ -1515,16 +1515,23 @@ function Simulator:activate(index)
   elseif a=='cancelTargeting' then self.luaTargeting=nil;self:build()
   elseif a=='inspect' then self:openInspect(b.card)
   elseif a=='cardAction' then self:runCardAction(b.group)
-  elseif a=='target' then
-    self.luaTargeting={actions=b.group.actions,title=b.group.label..' to which Pokémon?',card=b.card}
-    self.highlight=nil;self:build()
+  elseif a=='target' then self:openTargeting({actions=b.group.actions,title=b.group.label..' to which Pokémon?',card=b.card})
   end
+end
+-- A card button that needs a target opens the pick on the table and says its
+-- question; the card it leaves is not read, since the pick follows at once.
+function Simulator:openTargeting(targeting)
+  self.luaTargeting=targeting;self.highlight=nil
+  self:build(true)
+  self.callbacks.announce(Speech.sentences({targeting.title,Hud.TARGET_NOTE}))
 end
 function Simulator:runCardAction(action)
   if not action or action.disabled then return end
-  if action.actions then self.luaTargeting={actions=action.actions,title=action.label..' to which Pokémon?'};self.highlight=nil;self:build();return end
+  if action.actions then self:openTargeting({actions=action.actions,title=action.label..' to which Pokémon?'});return end
   self.highlight=nil
-  self:build()
+  -- Quietly: the card the button leaves would be read as it was before the
+  -- action, ahead of the action's own result.
+  self:build(true)
   self:invoke(action.token)
 end
 -- The game-over Rematch reads Waiting... until the next match reopens the table.

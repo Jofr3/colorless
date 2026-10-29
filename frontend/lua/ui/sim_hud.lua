@@ -7,6 +7,8 @@ local Button=require('ui.button')
 local Dyna=require('ui.dynatext')
 local Motion=require('ui.motion')
 local Hud={};Hud.__index=Hud
+-- A target pick's note when its prompt has none, as drawn and as announced.
+Hud.TARGET_NOTE='Click a highlighted card'
 local g=love.graphics
 -- Colours straight from globals.lua / Blind:change_colour for a non-boss blind:
 local BLACK=T.panel                                        -- G.C.BLACK 374244
@@ -276,7 +278,7 @@ function Hud:drawPrompt(sim,L,x,y,w,h)
   local prompt=sim.targeting and sim.targeting.menu or sim.luaTargeting
   if not prompt then return end
   local title=prompt.title or ''
-  local note=prompt.note and prompt.note~='' and prompt.note or 'Click a highlighted card'
+  local note=prompt.note and prompt.note~='' and prompt.note or Hud.TARGET_NOTE
   local scale=L.portrait and 0.27 or 0.4
   local titles,notes,th,nh
   local fit=self.promptFit
