@@ -544,6 +544,17 @@ async function builderSaves(owner: Page) {
     format: "expanded",
     cards: FIXTURE_DECK,
   });
+  // The 600 ms save debounce is the whole window, so act the moment the builder holds the edit
+  // rather than after a fixed sleep a busy machine can outlast (the save would leave before it).
+  const rename = async (page: Page, name: string) => {
+    await lua(page, "builder", "name", name);
+    await waitFor(
+      page,
+      "the edit to be pending",
+      `${builderField("saveStatus")} === 'pending'`,
+      5000,
+    );
+  };
   const patches = (page: Page) =>
     evaluate<{ keepalive: boolean; bytes: number }[]>(
       page,
@@ -552,8 +563,7 @@ async function builderSaves(owner: Page) {
 
   // Hidden: synthetic, as a headless tab is never hidden; the page stays, so its fetch is visible.
   const page = await builderTab(owner, id, "builder");
-  await lua(page, "builder", "name", "E2E hidden");
-  await sleep(50);
+  await rename(page, "E2E hidden");
   await evaluate(
     page,
     `(Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' }), document.dispatchEvent(new Event('visibilitychange')))`,
@@ -566,8 +576,7 @@ async function builderSaves(owner: Page) {
   await evaluate(page, "delete document.visibilityState");
 
   // Navigated away: an ordinary fetch would be cancelled with the page.
-  await lua(page, "builder", "name", "E2E navigated");
-  await sleep(100);
+  await rename(page, "E2E navigated");
   await driver().navigate(page, "about:blank");
   await serverHas(owner, id, "E2E navigated");
   pages.splice(pages.indexOf(page), 1);
@@ -575,8 +584,7 @@ async function builderSaves(owner: Page) {
 
   // Closed.
   const closing = await builderTab(owner, id, "builder-close");
-  await lua(closing, "builder", "name", "E2E closed");
-  await sleep(100);
+  await rename(closing, "E2E closed");
   pages.splice(pages.indexOf(closing), 1);
   await driver().closePage(closing);
   await serverHas(owner, id, "E2E closed");
