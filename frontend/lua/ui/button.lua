@@ -1,4 +1,5 @@
 local T = require('ui.theme')
+local Fit = require('ui.text_fit')
 local Button = {}
 local g = love.graphics
 
@@ -79,6 +80,17 @@ function Button.tray(x,y,w,h)
   local c=T.tray
   panel(x,y+6,w,h,TRAY_SHADE)
   panel(x,y,w,h,c)
+end
+
+-- An error or warning line: red text, fitted to w and centred, on an ink
+-- pill reaching 12 px past it. Red on the grey tray is too faint to read; on
+-- ink it is about 5:1.
+function Button.errorLine(text,size,x,y,w)
+  text,size=Fit.fit(text,size,w)
+  local font=T.font(size)
+  local tw,th=font:getWidth(text)+24,font:getHeight()+8
+  Button.panel(x+(w-tw)/2,y-4,tw,th,T.ink)
+  T.text(text,size,x,y,w,T.red)
 end
 
 function Button.hit(b,x,y)

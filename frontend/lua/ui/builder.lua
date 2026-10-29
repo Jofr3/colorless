@@ -468,16 +468,20 @@ function Builder:update(dt,time,mx,my,reduced)
     if c then c.dragging=self.drag.active;c.targetX,c.targetY=mx,my end
   end
   for i,c in ipairs(self.cards)do
-    local active=not self.modal and ((self.controls[self.hover] or {}).card==i or (self.controls[self.focus] or {}).card==i)
+    local pointed=not self.modal and (self.controls[self.hover] or {}).card==i
+    local focused=not self.modal and self.hover==0 and (self.controls[self.focus] or {}).card==i
+    local active=pointed or focused
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.callbacks.feedback('paper1',1)end
     Collection.target(c,time,reduced,self.width)
-    c:update(dt,time,active,reduced)
+    c:update(dt,time,active,reduced,focused)
   end
   for i,c in ipairs(self.deckCards)do
-    local active=not self.modal and ((self.controls[self.hover] or {}).deckCard==i or (self.controls[self.focus] or {}).deckCard==i)
+    local pointed=not self.modal and (self.controls[self.hover] or {}).deckCard==i
+    local focused=not self.modal and self.hover==0 and (self.controls[self.focus] or {}).deckCard==i
+    local active=pointed or focused
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.callbacks.feedback('paper1',1)end
     Collection.target(c,time,reduced,self.width)
-    c:update(dt,time,active,reduced)
+    c:update(dt,time,active,reduced,focused)
   end
   if self.dragCard then
     local c=self.dragCard
@@ -576,19 +580,19 @@ function Builder:drawControls(controls,active)
 end
 function Builder:drawControlFaces(controls,active)
   for i,b in ipairs(controls)do
+    local lit=active and Controls.lit(self.hover,self.focus,i)
     if b.deckRow then
-      DeckRow.draw(b,active and (self.hover==i or self.focus==i),self.width)
+      DeckRow.draw(b,lit,self.width)
     elseif b.rowAction then
-      DeckRow.action(b,active and (self.hover==i or self.focus==i),active and self.pressed==i,self.width)
+      DeckRow.action(b,lit,active and self.pressed==i,self.width)
     elseif b.input then
       local value=b.arg=='name' and self.name or self.fields[b.arg] or ''
       if self.editing==b.arg then value=self.values[b.arg] or value end
-      Input.draw(b,value,active and self.editing==b.arg,self.first,self.last,self.time,b.disabled,active and self.hover==i)
+      Input.draw(b,value,active and self.editing==b.arg,self.first,self.last,self.time,b.disabled,lit)
     elseif b.action=='hp-slider' then
-      local highlighted=active and self.hover==i
       local value=self:hpValue(b.arg)
       local label=(self.fields[b.arg] or '')~='' and self.fields[b.arg] or 'Any'
-      Button.slider(b.x,b.y+7,b.w,value/400,label,highlighted)
+      Button.slider(b.x,b.y+7,b.w,value/400,label,lit)
     elseif b.cycleCentre then
       caption(b.optionTitle,24,b.x-36,b.y-30,b.cycleWidth,T.white)
       local hovered=active and self.hover==i
@@ -605,7 +609,7 @@ function Builder:drawControlFaces(controls,active)
         end
       end
     elseif b.multiline then
-      Input.background(b,active and self.editing=='transfer',b.disabled,active and self.hover==i)
+      Input.background(b,active and self.editing=='transfer',b.disabled,lit)
       local font=T.font(22);local value=self.transfer;local lines={};local base=0
       local display=value~='' and value or 'Paste a decklist here...'
       for paragraph in (display..'\n'):gmatch('(.-)\n')do
@@ -642,7 +646,7 @@ function Builder:drawControlFaces(controls,active)
     elseif b.action~='card' and b.action~='deck-card' then
       local original=b.label
       b.label,b.fontSize=Fit.label(b.label,b.fontSize,b.w-16)
-      Button.draw(b,active and not b.disabled and (self.hover==i or self.focus==i),active and self.pressed==i,false,self.width);b.label=original
+      Button.draw(b,lit and not b.disabled,active and self.pressed==i,lit and self.hover==0,self.width);b.label=original
       if b.icon then
         local pressed=active and self.pressed==i
         local sx=((b.x+b.w/2-self.width/2)/(self.width/2))*1.5

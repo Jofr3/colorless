@@ -9,9 +9,9 @@
 // (frontend/lua/tests/support/balatro_source.lua), or skip only those checks
 // and say so (`PARTIAL`); --require-source makes either a failure instead.
 // Files run concurrently, one per core; a failure's output is printed whole,
-// in file order.
+// in file order. Naming test files runs only those (a mutant row's killer).
 //
-//   bun scripts/test-lua.ts [--require-source]
+//   bun scripts/test-lua.ts [--require-source] [file.lua ...]
 
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
@@ -77,9 +77,16 @@ function runOne(file: string): Promise<Outcome> {
   });
 }
 
+const named = process.argv.slice(2).filter((arg) => arg.endsWith(".lua"));
 const files = readdirSync(repoPath(TESTS))
   .filter((f) => f.endsWith(".lua") && !BROWSER_ONLY.has(f))
+  .filter((f) => named.length === 0 || named.includes(f))
   .sort();
+const missing = named.filter((f) => !files.includes(f));
+if (missing.length > 0) {
+  console.error(`No such Lua test in ${TESTS}: ${missing.join(", ")}`);
+  process.exit(1);
+}
 const outcomes = new Map<string, Outcome>();
 const queue = [...files];
 await Promise.all(

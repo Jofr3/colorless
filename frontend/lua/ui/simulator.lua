@@ -1208,8 +1208,11 @@ function Simulator:update(dt,time,mx,my,reduced)
     end
   end
   self.hoverCard=hovered
+  -- Keyboard focus shows only while the pointer is over no control or card.
+  local pointed=self.hover>0 or hovered~=nil
   for _,c in ipairs(self.cards) do
-    local active=not blocked and (c==hovered or self.focusCard==c)
+    local focused=not blocked and not pointed and self.focusCard==c
+    local active=(not blocked and c==hovered) or focused
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     c.held=(self.drag~=nil and self.drag.card==c) or nil
     local breathe=reduced and 0 or 1
@@ -1255,7 +1258,7 @@ function Simulator:update(dt,time,mx,my,reduced)
         if not reduced then self.callbacks.feedback('card1',0.9+love.math.random()*0.2) end
       end
     end
-    if not c.drawAfterPromotion then c:update(dt,time,active,reduced) end
+    if not c.drawAfterPromotion then c:update(dt,time,active,reduced,focused) end
   end
   for i=#self.ghosts,1,-1 do
     local c=self.ghosts[i]
@@ -1682,7 +1685,7 @@ function Simulator:draw(shaders)
   end
   for i,b in ipairs(self.controls) do
     if not b.invisible then
-      local active=not self.overlay and (self.hover==i or self.focus==i)
+      local active=not self.overlay and (self.hover==i or (self.hover==0 and not self.hoverCard and self.focus==i))
       local pressed=(self.pressed==i and self.hover==i) or (b.lastClicked and self.time<b.lastClicked+0.1)
       if b.attached then
         g.push();g.translate(0,popupOffset(self.attachedPopup))

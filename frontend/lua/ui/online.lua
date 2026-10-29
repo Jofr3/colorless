@@ -396,7 +396,7 @@ function Online:update(dt,time,mx,my,reduced)
   for _,m in pairs(self.juice) do m:update(dt,time,false,false,reduced) end
   for _,pile in pairs(self.piles) do pile:update(dt,time,false,reduced,self.width) end
   for i,card in ipairs(self.cards) do
-    local active=(self.items[self.hover] or {}).card==i or (self.items[self.focus] or {}).card==i
+    local active=(self.items[self.hover] or {}).card==i or self.hover==0 and (self.items[self.focus] or {}).card==i
     if active and not card.hovered then
       if not card.motion.juice then card:juiceUp(time,0.05,0.03,reduced) end
       self.callbacks.feedback('paper1')
@@ -546,7 +546,7 @@ function Online:drawCycle(item,i)
   for _,side in ipairs({'left','right'}) do
     local arrow={label=side=='left' and '<' or '>',x=side=='left' and item.x or item.x+item.w-28.8,y=y,w=28.8,h=38.4,fontSize=24,colour=colour}
     local live=not item.disabled
-    Button.draw(arrow,live and ((self.hover==i and self.hoverPart==side) or self.focus==i),
+    Button.draw(arrow,live and ((self.hover==i and self.hoverPart==side) or (self.hover==0 and self.focus==i)),
       live and self.pressed==i and self.pressedPart==side and self.hoverPart==side,false,self.width)
   end
 end
@@ -631,7 +631,7 @@ function Online:draw()
   if self.picker then self:drawPicker()
   elseif step=='menu' then
     if self.tab==1 then T.text('Get a code to share, then wait for your opponent to join.',26,x+48,y+118,w-96,T.paper) end
-    if self.message~='' then local text,size=Fit.fit(self.message,20,w-48);T.text(text,size,x+24,y+300,w-48,T.red) end
+    if self.message~='' then Button.errorLine(self.message,20,x+24,y+300,w-48) end
     if self.account=='anonymous' then T.text('Sign in to play with your decks.',20,x+24,y+h-148,w-48,T.white) end
   elseif step=='joining' then
     d.title:draw(x+w/2,y+130,self.width)
@@ -648,7 +648,7 @@ function Online:draw()
     self:drawSeat('opponent');self:drawSeat('you')
     if step=='versus' then d.vs:draw(self.vs.x,self.vs.y,self.width) end
     local pad,px=self.pad,self.padX
-    if self.message~='' then local text,size=Fit.fit(self.message,20,w-2*px);T.text(text,size,x+px,y+h-pad-78,w-2*px,T.red) end
+    if self.message~='' then Button.errorLine(self.message,20,x+px,y+h-pad-78,w-2*px) end
   elseif step=='starting' then
     d.title:draw(x+w/2,y+130,self.width)
     T.text('Starting the match...',26,x+24,y+196,w-48,T.paper)
@@ -659,15 +659,16 @@ function Online:draw()
     T.text(info[step][2]:format(self.code),26,bx+20,by+24,bw-40,T.paper)
   end
   for i,item in ipairs(self.items) do
-    local active=not item.disabled and (self.hover==i or self.focus==i)
+    local lit=Controls.lit(self.hover,self.focus,i)
+    local active=not item.disabled and lit
     local pressed=not item.disabled and self.pressed==i and self.hover==i
-    if item.kind=='field' and item.field=='code' then self:drawCode(item,self.hover==i)
-    elseif item.kind=='field' then Input.draw(item,self.query,self.editing=='search',self.first,self.last,self.time,item.disabled,self.hover==i)
+    if item.kind=='field' and item.field=='code' then self:drawCode(item,lit)
+    elseif item.kind=='field' then Input.draw(item,self.query,self.editing=='search',self.first,self.last,self.time,item.disabled,lit)
     elseif item.kind=='cycle' then self:drawCycle(item,i)
     elseif item.kind~='card' then
       local colour=item.colour
       if item.disabled then item.colour=T.panel end
-      Button.draw(item,active,pressed,self.focus==i,self.width)
+      Button.draw(item,active,pressed,lit and self.hover==0,self.width)
       item.colour=colour
       if item.kind=='tab' and item.tab==self.tab then Button.chosen(item,self.markerTime or 12,pressed,self.width) end
     end

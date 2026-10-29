@@ -13,4 +13,10 @@ function Controls.cycle(focus,dir,count,skip)
   end
   return focus,false
 end
+-- Whether control i draws its hover look: the pointer's control wins, and
+-- keyboard focus shows only while the pointer is over none, so one control
+-- looks active at a time (main parks the pointer on a key press).
+function Controls.lit(hover,focus,i)
+  return hover==i or (hover==0 and focus==i)
+end
 return Controls

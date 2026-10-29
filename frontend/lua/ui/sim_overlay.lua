@@ -374,8 +374,12 @@ function Overlay:update(dt,time,mx,my,reduced)
   self.hover=self:hit(mx,my)
   local ly=my-self:offset()
   for i,c in ipairs(self.cards) do
-    local active,held=false,nil
-    for _,b in ipairs(self.controls) do if b.card==c and (self.hover==i or self.controls[self.hover]==b or self.controls[self.focus]==b) then active=true end end
+    local pointed,focused,held=false,false,nil
+    for _,b in ipairs(self.controls) do
+      if b.card==c and (self.hover==i or self.controls[self.hover]==b) then pointed=true end
+      if b.card==c and self.hover==0 and self.controls[self.focus]==b then focused=true end
+    end
+    local active=pointed or focused
     local pressed=self.controls[self.sim.pressedOverlay or 0]
     if pressed and pressed.card==c then held=true end
     c.held=held
@@ -383,7 +387,7 @@ function Overlay:update(dt,time,mx,my,reduced)
     c.lift=c.item.selected and 0.2*D.H*c.baseScale or 0
     if self.viewport then c.lift=math.min(c.lift,self.cardGap-4) end
     if c.collection then CollectionMotion.target(c,time,reduced,self.sim.boardW) end
-    c:update(dt,time,active,reduced)
+    c:update(dt,time,active,reduced,focused and not pointed)
   end
   if self.kind=='coin' then
     for _,f in ipairs(self.flips) do
@@ -571,7 +575,7 @@ function Overlay:draw(shaders)
         local m=self.leaveJuice
         g.push();g.translate(b.x+b.w/2,b.y+b.h/2);g.rotate(m.VT.r);g.scale(m.VT.scale);g.translate(-b.x-b.w/2,-b.y-b.h/2)
       end
-      Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.sim.pressedOverlay==i and self.hover==i,self.focus==i,rw)
+      Button.draw(b,not b.disabled and Controls.lit(self.hover,self.focus,i),self.sim.pressedOverlay==i and self.hover==i,self.hover==0 and self.focus==i,rw)
       if juice then g.pop() end
       if b.selected then g.setLineWidth(1.5);Button.outline(b.x-2,b.y-2,b.w+4,b.h+4,T.white,1.2) end
     end

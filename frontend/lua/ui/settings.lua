@@ -110,19 +110,21 @@ function Settings:arm()
   self.callbacks.announce('Press again to delete your account permanently.')
 end
 function Settings:disarm() if self.armed then self.armed=nil; self:build() end end
+-- Returns true when the field's Tab, Shift+Tab or Enter moved or kept keyboard focus.
 function Settings:authInput(raw)
-  if not self.auth or not self.auth:input(raw) then return end
+  if not self.auth or not self.auth:input(raw) then return false end
   local a=self.auth
   if a.action=='input' then self.account.message='' end
-  if a.action~='next' and a.action~='previous' and a.action~='enter' then return end
+  if a.action~='next' and a.action~='previous' and a.action~='enter' then return false end
   for i,item in ipairs(self.items) do if item.field==a.field then self.focus=i end end
   if a.action=='enter' and (a.field=='name' or (a.field=='password' and a.mode=='login')) then
-    self.callbacks.feedback(); self.callbacks.auth('submit'); return
+    self.callbacks.feedback(); self.callbacks.auth('submit'); return true
   end
   local step=a.action=='previous' and -1 or 1
   self.focus=(self.focus-1+step)%#self.items+1
   if self.items[self.focus].kind=='auth-field' then self:activate(self.focus)
   else self.callbacks.announce(self:describe(self.items[self.focus])) end
+  return true
 end
 function Settings:buildDelete()
   local w=math.min(360,self.w-64)
@@ -413,7 +415,7 @@ function Settings:draw()
     end
   end
   for i,item in ipairs(self.items) do
-    local active=self.hover==i or self.focus==i
+    local active=Controls.lit(self.hover,self.focus,i)
     local pressed=self.pressed==i and self.hover==i
     if item.kind=='tab' or item.kind=='back' or item.kind=='action' or item.kind=='prompt-later' or
       (self.auth and item.kind~='auth-field') then
@@ -433,12 +435,11 @@ function Settings:draw()
       end
     elseif item.kind=='auth-field' then
       local a=self.auth
-      Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.markerTime,self.account.busy,self.hover==i)
+      Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.markerTime,self.account.busy,active)
     elseif item.kind=='slider' then
-      local highlighted=self.hover==i
       local value=self:value(item)
       T.text(item.label,30,item.x-28,item.y-34,item.w+112)
-      Button.slider(item.x,item.y+7,item.w,value/100,tostring(value),highlighted)
+      Button.slider(item.x,item.y+7,item.w,value/100,tostring(value),active)
     elseif item.kind=='cycle' then
       local x,y=item.x+36,item.y
       local centreWidth=item.w-72
@@ -463,20 +464,20 @@ function Settings:draw()
       for _,side in ipairs({'left','right'}) do
         local arrow={label=side=='left' and '<' or '>',x=side=='left' and item.x or item.x+item.w-28.8,
           y=y,w=28.8,h=38.4,fontSize=24,colour=colour}
-        Button.draw(arrow,(self.hover==i and self.hoverPart==side) or self.focus==i,
+        Button.draw(arrow,(self.hover==i and self.hoverPart==side) or (self.hover==0 and self.focus==i),
           pressed and self.pressedPart==side and self.hoverPart==side,false,self.width)
       end
     elseif item.kind=='name' or item.kind=='email' then
       local disabled=item.kind=='email'
       local editing=not disabled and self.account.editing
       Input.draw(item,disabled and self.account.email or self.account.draftName,editing,
-        self.account.selectionStart,self.account.selectionEnd,self.markerTime,disabled,self.hover==i)
+        self.account.selectionStart,self.account.selectionEnd,self.markerTime,disabled,active)
     else
       local x=item.x+item.w+12
       T.text(item.label,27,item.x-12,item.y+5,item.w+12,T.white,'right')
       -- create_toggle: hover tints the fill; the white outline is drawn
       -- afterwards, unchanged. Only its line_emboss darkens (.3 -> .5).
-      local hovered=self.hover==i
+      local hovered=active
       local depth=hovered and 0.5 or 0.7
       panel(x,item.y+1.5,36,36,{depth,depth,depth,1})
       panel(x,item.y,36,36,T.white)

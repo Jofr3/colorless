@@ -123,7 +123,7 @@ function Sandbox:update(dt,time,mx,my,reduced)
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   self.mx,self.my=mx,my-self:offset();self.hover=self:hit(mx,my)
   for i,card in ipairs(self.cards) do
-    local active=not self.busy and ((self.controls[self.hover] or {}).card==i or (self.controls[self.focus] or {}).card==i)
+    local active=not self.busy and ((self.controls[self.hover] or {}).card==i or self.hover==0 and (self.controls[self.focus] or {}).card==i)
     if active and not card.hovered then
       if not card.motion.juice then card:juiceUp(time,0.05,0.03,reduced) end
       self.callbacks.feedback('paper1')
@@ -210,10 +210,11 @@ function Sandbox:draw()
   if message=='' and self.phase=='ready' then
     for seat=1,2 do local d=self:deck(seat);if d and d.count~=Limits.deckSize then message='Player '..seat..': choose a '..Limits.deckSize..'-card deck.';break end end
   end
-  if message~='' then local text,size=Fit.fit(message,18,w-40);T.text(text,size,x+20,y+h-124,w-40,T.red) end
+  if message~='' then Button.errorLine(message,18,x+20,y+h-124,w-40) end
   for i,b in ipairs(self.controls) do
-    if b.input then Input.draw(b,self.query,self.editing,self.first,self.last,self.time,b.disabled,self.hover==i)
-    elseif not b.card then Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.pressed==i,false,self.width) end
+    local lit=Controls.lit(self.hover,self.focus,i)
+    if b.input then Input.draw(b,self.query,self.editing,self.first,self.last,self.time,b.disabled,lit)
+    elseif not b.card then Button.draw(b,not b.disabled and lit,self.pressed==i,lit and self.hover==0,self.width) end
     if b.action=='tab'..self.tab then Button.chosen(b,self.time,self.pressed==i,self.width) end
   end
 end

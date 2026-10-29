@@ -259,7 +259,7 @@ function Library:update(dt,time,mx,my,reduced)
   for i,card in ipairs(self.cards) do
     -- Only the pile itself lifts; its Manage button does not.
     local hover,focus=self.controls[self.hover] or {},self.controls[self.focus] or {}
-    local hovered=not self.modal and (hover.action=='card' and hover.card==i or focus.action=='card' and focus.card==i)
+    local hovered=not self.modal and (hover.action=='card' and hover.card==i or self.hover==0 and focus.action=='card' and focus.card==i)
     if hovered and not card.hovered then card:juiceUp(time,0.05,0.03,reduced); self.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     card:update(dt,time,hovered,reduced,self.width)
   end
@@ -339,15 +339,16 @@ function Library:draw(shaders)
     T.text(self.phase=='anonymous' and 'Sign in to browse and build your collection.' or ' ',p and 21 or 26,24,h/2,w-48,T.paper)
   end
   for i,b in ipairs(self.modal and self.baseControls or self.controls) do
-    if b.input then Input.draw(b,self.search,not self.modal and self.editing=='search',self.first,self.last,self.time,false,not self.modal and self.hover==i)
+    local lit=not self.modal and Controls.lit(self.hover,self.focus,i)
+    if b.input then Input.draw(b,self.search,not self.modal and self.editing=='search',self.first,self.last,self.time,false,lit)
     elseif b.action~='card' then
       local pressed=not self.modal and self.pressed==i
-      Button.draw(b,not self.modal and not b.disabled and (self.hover==i or self.focus==i),pressed,false,w)
+      Button.draw(b,lit and not b.disabled,pressed,lit and self.hover==0,w)
       if b.action=='manage' then manageDots(b,pressed,w) end
     end
   end
   if not self.modal then
-    if self.message~='' then caption(self.message,23,28,h-178,w-56,T.red) end
+    if self.message~='' then Button.errorLine(self.message,23,28,h-178,w-56) end
     if self.busy then T.text('Loading...',22,24,h-178,w-48,T.paper) end
   end
   for _,card in ipairs(self.cards) do
@@ -369,10 +370,12 @@ function Library:drawModal()
       T.text('This deck will be permanently deleted.',p and 20 or 24,m.x+24,m.y+124,m.w-48,T.paper)
     end
     for i,b in ipairs(self.controls) do
-      if b.input then Input.draw(b,self.draft,self.editing=='name',self.first,self.last,self.time,false,self.hover==i)
-      else Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.pressed==i,false,w) end
+      local lit=Controls.lit(self.hover,self.focus,i)
+      if b.input then Input.draw(b,self.draft,self.editing=='name',self.first,self.last,self.time,false,lit)
+      else Button.draw(b,lit and not b.disabled,self.pressed==i,lit and self.hover==0,w) end
     end
-    caption(self.busy and 'Saving...' or self.message,20,m.x+20,m.y+m.h-91,m.w-40,self.busy and T.paper or T.red)
+    if self.busy then caption('Saving...',20,m.x+20,m.y+m.h-91,m.w-40,T.paper)
+    elseif self.message~='' then Button.errorLine(self.message,20,m.x+20,m.y+m.h-91,m.w-40) end
     g.pop()
   end
 end
