@@ -22,7 +22,7 @@ love={graphics=setmetatable({getDimensions=function()return 1280,800 end,newCanv
  newImage=function()return image end,newQuad=function()return {}end,newShader=function()return shader end,
  transformPoint=function(x,y)return x,y end},{__index=function()return noop end}),
  math={random=math.random},window={setTitle=noop,setMode=noop},audio={newSource=source},
- mouse={getSystemCursor=noop,setCursor=noop,getPosition=function()return 0,0 end},keyboard={isDown=function()return false end},
+ mouse={getSystemCursor=noop,setCursor=noop,getPosition=function()return 0,0 end,isDown=function()return false end},keyboard={isDown=function()return false end},
  filesystem={getInfo=function(name)return files[name] and {} or nil end,read=function(name)return files[name]end}}
 local T=require('ui.theme');T.text=noop
 for _,name in ipairs({'library','builder','sandbox','simulator','settings','online'})do

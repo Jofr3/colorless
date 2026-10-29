@@ -16,9 +16,10 @@ local Simulator = require('ui.simulator')
 local Online = require('ui.online')
 local Modal = require('ui.modal')
 local MenuLogo = require('ui.menu_logo')
+local Controls = require('ui.controls')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
-local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
+local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer'}
 local shaders, sounds, controls = {}, {}, {}
 local soundVoices={}
 local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLogo
@@ -30,7 +31,7 @@ local function isCollection(page) return page=='decks' or page=='builder' or pag
 local function isTable(page) return page=='simulator' or page=='match' end
 local preferences=Preferences.new()
 local account=Account.new()
-local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions
+local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions,parkPointer
 local wipe,pendingPage
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 local menu = {
@@ -223,14 +224,19 @@ end
 closeSettings=function()
   Bridge.emit('auth','close')
   Bridge.emit('account','finish-edit')
-  popup=nil; state.pressed=nil; state.focused=#menu+2; state.hovered=0
+  -- A keyboard close hands focus back to the home control that opened the popup; a pointer
+  -- close leaves none.
+  local opener=state.page=='home' and state.lastInput=='key' and state.settingsOpener or 0
+  popup=nil; state.pressed=nil; state.focused=opener; state.hovered=0
   savePreferences()
   Bridge.emit('settings','closed')
   announce('Settings closed')
 end
-openSettings=function(keyboard,tab)
+-- `opener`: the home control that asked; otherwise the one for the requested tab.
+openSettings=function(keyboard,tab,opener)
   if popup or wipe then return end
   keyboard=keyboard or state.focused>0
+  state.settingsOpener=opener or (tab=='account' and #menu+1 or #menu+2)
   state.pressed=nil; state.focused=0; state.hovered=0
   room.jiggle=room.jiggle+1
   popup=Settings.new(preferences,{
@@ -268,8 +274,8 @@ local function activate(index)
   if item.action=='sandbox' then Bridge.emit('simulator','resume')
   elseif item.action=='decks' then Bridge.emit('page','decks')
   elseif item.action=='online' then Bridge.emit('page','online')
-  elseif item.action=='settings' then openSettings()
-  elseif item.action=='account' then openSettings(false,'account') end
+  elseif item.action=='settings' then openSettings(nil,nil,index)
+  elseif item.action=='account' then openSettings(false,'account',index) end
 end
 function love.load()
   g.setDefaultFilter('nearest','nearest')
@@ -324,7 +330,7 @@ function love.update(dt)
     if pendingPage then requestPage(pendingPage.page,pendingPage.deckId) end
   end
   local mx,my=pointer(love.mouse.getPosition())
-  if wipe then mx,my=-1000,-1000 end
+  if wipe or (state.parked and not love.mouse.isDown(1)) then mx,my=-1000,-1000 end
   if isTable(state.page) then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if isCollection(state.page) then
     local lx,ly=libraryPoint(mx,my)
@@ -353,7 +359,8 @@ function love.update(dt)
       end
     end
     account:input(Mailbox.read('accountInput'))
-    popup:authInput(Mailbox.read('authInput'))
+    -- Tab or Enter in a native sign-in field moves focus as a key press would.
+    if popup:authInput(Mailbox.read('authInput')) then parkPointer() end
     popup:update(dt,state.time,mx,my,state.reduced)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return
@@ -371,7 +378,7 @@ function love.update(dt)
   end
 end
 local function button(b,index)
-  local active=state.hovered==index or state.focused==index
+  local active=Controls.lit(state.hovered,state.focused,index)
   local clicked=state.lastClicked and state.lastClicked.index==index and state.time-state.lastClicked.at<0.1
   local pressed=(state.pressed==index and state.hovered==index) or clicked
   Button.draw(b,active,pressed,state.focused==index,virtualWidth)
@@ -449,8 +456,22 @@ local function unlockAudio()
   state.audioUnlocked=true
   applyPreferences()
 end
+-- Hover follows the pointer only while it is over the canvas and has moved since the last key
+-- press or lifted finger. Parked, it reads as off-canvas until the next mousemoved, so a key
+-- press hands the highlight to keyboard focus and a tap leaves nothing highlighted.
+parkPointer=function()
+  state.parked=true; state.hovered=0
+end
+function love.mousemoved(_,_,dx,dy)
+  if dx~=0 or dy~=0 then state.parked=false end
+end
+function love.mousefocus(focused)
+  if not focused then parkPointer() end
+end
+function love.touchreleased() parkPointer() end
 function love.mousepressed(x,y,button)
   if button~=1 or wipe then return end
+  state.parked=false; state.lastInput='pointer'
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
   if popup then popup:mousepressed(x,y); return end
@@ -459,8 +480,9 @@ function love.mousepressed(x,y,button)
   if isCollection(state.page) then collection():mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
-function love.mousereleased(x,y,button)
+function love.mousereleased(x,y,button,istouch)
   if button~=1 or wipe then return end
+  if istouch then parkPointer() end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(x,y); return end
   if isTable(state.page) then simulator:mousereleased(x,y);return end
@@ -471,6 +493,8 @@ function love.mousereleased(x,y,button)
 end
 function love.keypressed(key)
   if wipe then return end
+  state.lastInput='key'
+  if not love.mouse.isDown(1) then parkPointer() end
   unlockAudio()
   if popup then popup:keypressed(key); return end
   if isTable(state.page) then simulator:keypressed(key);return end

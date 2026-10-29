@@ -111,8 +111,11 @@ function Card:juiceUp(time,scale,rotation,reduced)
     sign*(rotation and 0.4*rotation or 0.16),reduced)
 end
 
-function Card:update(dt,time,active,reduced)
+-- `focused`: active through keyboard focus rather than the pointer, so the
+-- face keeps its ambient tilt instead of leaning toward a pointer elsewhere.
+function Card:update(dt,time,active,reduced,focused)
   self.hovered=active
+  self.focused=active and focused or false
   local m=self.motion
   m.T.x=(self.dragging and self.targetX or self.homeX)/self.unit
   m.T.y=(self.dragging and self.targetY or (self.homeY-(self.lift or 0)))/self.unit
@@ -124,7 +127,7 @@ end
 
 function Card:shaderValues(time,mx,my,reduced)
   local tiltX,tiltY,tiltAmount
-  if self.hovered then
+  if self.hovered and not self.focused then
     tiltX,tiltY=mx,my
     -- Node:set_offset measures from the target top-left in TILE units, not UVs.
     local hx=mx/self.unit-(self.motion.T.x-CARD_W/2)
