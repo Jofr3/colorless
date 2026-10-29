@@ -21,3 +21,7 @@
   background: #1e2b2d;
   padding: 20px;
 }
+/* host.js unhides Home on deep links; without it, Home is shown everywhere. */
+#home-link[hidden] {
+  display: inline;
+}
