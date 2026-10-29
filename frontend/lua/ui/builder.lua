@@ -502,8 +502,8 @@ local function entrySpeech(item,format)
   if item.illegal then return text..', not legal in '..formatName(format) end
   return text
 end
--- A catalog print: its name, set and number, so identical prints differ.
-local function printSpeech(item)
+-- A catalog card: its name, set and number, so two printings of one card differ.
+local function cardSpeech(item)
   local set,number=item.id:match('^(.+)%-([^%-]+)$')
   local copies=item.quantity>0 and item.quantity..' in deck' or 'not in deck'
   return item.name..', '..(set or item.id):upper()..' '..(item.number~='' and item.number or number or '')..', '..copies
@@ -524,7 +524,7 @@ function Builder:describe(b)
   end
   if b.speech then return b.speech end
   if b.cycleKey then return b.optionTitle..': '..b.optionValue..', left and right change it' end
-  if a=='card' then return printSpeech(self.cards[b.card].item) end
+  if a=='card' then return cardSpeech(self.cards[b.card].item) end
   if a=='detail' or a=='deck-card' then return entrySpeech(b.arg,self.format) end
   if a=='remove' or a=='discard' or a=='add' then
     local item=self:entry(b.arg) or {name='card',quantity=0}
