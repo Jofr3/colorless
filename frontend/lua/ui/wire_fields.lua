@@ -2,7 +2,7 @@
 -- Each mailbox row's field name to its column; a tagged row's tag is column 1.
 return {
   sim={
-    header={revision=1,phase=2,you=3,opponent=4,turn=5,gamePhase=6,message=7,title=8,hint=9,turnIndex=10,turnCount=11,waitingOn=12,activePlayer=13,seat=14,energyAttached=15,supporterPlayed=16,retreated=17,outcome=18,outcomeDetail=19,shuffled=20,matchId=21},
+    header={revision=1,phase=2,you=3,opponent=4,turn=5,gamePhase=6,message=7,title=8,hint=9,turnIndex=10,turnCount=11,waitingOn=12,activePlayer=13,seat=14,energyAttached=15,supporterPlayed=16,retreated=17,outcome=18,outcomeDetail=19,shuffled=20,matchId=21,announce=22,messageSerial=23,warning=24},
     lifecycle={mode=2,spectating=3,awayName=4,awayMs=5,flags=6,allow=7},
     rareCandy={uid=2},
     knockedOut={uid=2},

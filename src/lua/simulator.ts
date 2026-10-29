@@ -21,12 +21,16 @@ import {
 } from "./simulatorActions";
 import type { SimMenu, SimMenuKind, SimOption, ThemeColour } from "./simulatorTypes";
 import {
+  announcement,
   boardRows,
   cardActionRows,
   EmitFrame,
   type EmitEvents,
   type EmitState,
+  type Heard,
   headerRow,
+  headerText,
+  NOTHING_HEARD,
   infoRows,
   menuRows,
   sidebarRows,
@@ -49,6 +53,10 @@ export class LuaSimulator {
   menu: SimMenu | null = null;
   message = "";
   revision = 0;
+  private messageSerial = 0;
+  /** The standing warning last seen, so only a new one pops. */
+  private warned = "";
+  private heard: Heard = NOTHING_HEARD;
   private menuId = 0;
   // Artwork for the last emit: the board, and each menu option by index.
   private boardArt = new Map<string, string>();
@@ -104,14 +112,23 @@ export class LuaSimulator {
   /** Seats whose deck was shuffled by the last accepted action ("you" /
       "opponent" / "both"), emitted once so the table can riffle the pile. */
   private shuffled = "";
+  /** Show `text` as a refusal: a new serial, so Lua pops it once however many emits follow. */
+  private refuse(text: string) {
+    this.message = text;
+    this.messageSerial++;
+  }
+  /** An online action is in flight: nothing more is sent until the server answers it. */
+  private sending() {
+    return this.source?.lifecycle().flags.includes("pending") ?? false;
+  }
   dispatch(action: GameAction) {
     const src = this.source;
-    if (!src) return;
+    if (!src || this.sending()) return;
     if (
       this.pendingRareCandy &&
       (action.type !== "rareCandy" || action.uid !== this.pendingRareCandy)
     ) {
-      this.message = "Finish Rare Candy or cancel it first.";
+      this.refuse("Finish Rare Candy or cancel it first.");
       this.emit();
       return;
     }
@@ -135,6 +152,8 @@ export class LuaSimulator {
     this.active = true;
     this.source = source;
     this.reset();
+    // An opened table says where it stands, even when it is the one last shown.
+    this.heard = NOTHING_HEARD;
     this.unsubscribe = source?.subscribe(() => this.changed()) ?? (() => {});
     if (source) this.prompt();
     this.emit();
@@ -151,7 +170,9 @@ export class LuaSimulator {
     this.pendingRareCandy = null;
     this.shuffled = "";
     this.menu = null;
-    this.message = src?.lifecycle().warning ?? "";
+    this.message = "";
+    // A table opened on a standing warning shows it without popping it.
+    this.warned = src?.lifecycle().warning ?? "";
     this.seen = src?.view() ?? null;
     this.rejected = src?.lifecycle().error ?? null;
     this.matchKey = src?.matchId() ?? "";
@@ -176,7 +197,7 @@ export class LuaSimulator {
       const events = src.takeEvents();
       this.knockedOut = events.knockedOut;
       this.shuffled = this.seats(events.shuffled);
-      this.message = src.lifecycle().warning ?? "";
+      this.message = "";
       // Keep a half-made answer while its prompt is unchanged.
       if (!this.menu || (this.menu.mandatory && this.key(v) !== this.promptKey)) {
         this.menu = null;
@@ -192,7 +213,7 @@ export class LuaSimulator {
     if (error !== this.rejected) {
       this.rejected = error;
       if (error) {
-        this.message = error.reason;
+        this.refuse(error.reason);
         if (!this.menu) this.prompt();
       }
     }
@@ -235,7 +256,7 @@ export class LuaSimulator {
   private restart() {
     const error = this.source?.restart?.();
     if (!error) return;
-    this.message = error;
+    this.refuse(error);
     this.emit();
   }
   action(label: string, action: GameAction, colour: ThemeColour = "blue"): SimOption {
@@ -527,6 +548,7 @@ export class LuaSimulator {
     this.pendingRareCandy = null;
   }
   private onInvoke(args: string[]) {
+    if (this.sending()) return;
     if (Number(args[0]) === this.revision) this.handlers.get(args[1] ?? "")?.();
   }
   private onDismiss() {
@@ -688,7 +710,7 @@ export class LuaSimulator {
           evolutionUid: uid,
         });
       } else {
-        this.message = "Drag a matching Stage 2 onto its Basic Pokemon, or cancel Rare Candy.";
+        this.refuse("Drag a matching Stage 2 onto its Basic Pokemon, or cancel Rare Candy.");
         this.emit();
       }
       return;
@@ -698,7 +720,7 @@ export class LuaSimulator {
         ? phase.trainers.find((t) => t.uid === uid && t.rareCandy)
         : undefined;
     if (fromZone === "hand" && zone === "playmat" && candy) {
-      if (candy.disabled) this.message = candy.reason ?? "No valid Rare Candy evolution right now.";
+      if (candy.disabled) this.refuse(candy.reason ?? "No valid Rare Candy evolution right now.");
       else {
         this.pendingRareCandy = uid;
         this.message = "";
@@ -725,7 +747,7 @@ export class LuaSimulator {
     );
     if (action) this.dispatch(action);
     else if (fromZone === "hand") {
-      this.message = "That card cannot go there right now.";
+      this.refuse("That card cannot go there right now.");
       this.emit();
     }
   }
@@ -737,13 +759,36 @@ export class LuaSimulator {
   }
   private emitState(): EmitState {
     const src = this.source;
+    const view = this.view();
+    const names = src?.names();
+    const online = src?.mode === "online";
+    const warning = src?.lifecycle().warning ?? "";
+    // A new warning pops once, unless a refusal is already showing; it stays drawn either way.
+    if (warning !== this.warned) {
+      this.warned = warning;
+      if (warning && !this.message) this.refuse(warning);
+    }
+    const { title, hint } = headerText(view, names, online, !!this.pendingRareCandy);
+    const said = announcement(this.heard, {
+      view,
+      names,
+      log: src?.log() ?? [],
+      match: src?.matchId() ?? "",
+      title,
+      hint,
+      menu: this.menu,
+    });
+    this.heard = said.heard;
     return {
       src,
-      view: this.view(),
-      names: src?.names(),
-      online: src?.mode === "online",
+      view,
+      names,
+      online,
       turns: src?.history?.turns(),
       message: this.message,
+      messageSerial: this.messageSerial,
+      warning,
+      announce: said.text,
       pendingRareCandy: this.pendingRareCandy,
       knockedOut: this.knockedOut,
       menu: this.menu,

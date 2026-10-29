@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { driveSetup, KNOCKOUT_DECK, MIXED_DECK, RARE_CANDY_DECK } from "@colorless/engine/testing";
+import { redactGame } from "@colorless/engine";
+import type { LogCue, SeatLogEntry } from "@colorless/schema";
 import { LuaSimulator } from "./simulator";
+import type { SimMenu } from "./simulatorTypes";
 import {
+  ANNOUNCE_LOG_ROWS,
+  type AnnounceInput,
+  announcement,
+  NOTHING_HEARD,
   boardRows,
   EmitFrame,
   type EmitState,
@@ -25,6 +32,7 @@ const cardAction = at(SIM.cardAction);
 const sidebar = at(SIM.sidebar);
 const card = at(SIM.card);
 const SHUFFLED = wireColumn(SIM.header, "shuffled");
+const ANNOUNCE = wireColumn(SIM.header, "announce");
 
 let keys = 0;
 beforeEach(() => {
@@ -116,8 +124,9 @@ function click(sim: LuaSimulator, raw: string, r: () => number) {
 }
 
 describe("LuaSimulator.emit", () => {
-  it("a re-emit repeats every row but the revision and the consumed shuffle", () => {
+  it("a re-emit repeats every row but the revision, the consumed shuffle and the announcement", () => {
     let shuffles = 0;
+    let announced = 0;
     for (const [seed, deck] of [
       [3, MIXED_DECK],
       [5, KNOCKOUT_DECK],
@@ -139,13 +148,17 @@ describe("LuaSimulator.emit", () => {
         const [headAgain = [], ...restAgain] = again;
         expect(Number(header(headAgain, "revision"))).toBe(Number(header(head, "revision")) + 1);
         expect(headAgain[SHUFFLED]).toBe("");
-        expect(headAgain.slice(1, SHUFFLED)).toEqual(head.slice(1, SHUFFLED));
-        expect(headAgain.slice(SHUFFLED + 1)).toEqual(head.slice(SHUFFLED + 1));
+        expect(headAgain[ANNOUNCE]).toBe("");
+        const rest_ = (h: string[]) =>
+          h.filter((_, i) => i !== 0 && i !== SHUFFLED && i !== ANNOUNCE);
+        expect(rest_(headAgain)).toEqual(rest_(head));
         expect(restAgain).toEqual(rest);
         if (head[SHUFFLED]) shuffles++;
+        if (head[ANNOUNCE]) announced++;
       }
     }
     expect(shuffles).toBeGreaterThan(0);
+    expect(announced).toBeGreaterThan(100);
   });
 
   it("the row builders read the state without changing it", () => {
@@ -158,6 +171,9 @@ describe("LuaSimulator.emit", () => {
       online: false,
       turns: src.turns(),
       message: "",
+      messageSerial: 0,
+      warning: "",
+      announce: "",
       pendingRareCandy: null,
       knockedOut: ["p2#1"],
       menu: null,
@@ -184,5 +200,108 @@ describe("LuaSimulator.emit", () => {
     expect([...b.infoIds]).toEqual([...a.infoIds]);
     expect(src.host.game).toBe(game);
     expect(parse(a.rows.join("\n")).filter((x) => x[0] === "D")).toEqual([["D", "p2#1"]]);
+  });
+});
+
+describe("announcement", () => {
+  const names = { you: "Ash", opponent: "Brock" };
+  const base = redactGame(driveSetup(4, { p1: MIXED_DECK, p2: MIXED_DECK }), "p1");
+  const row = (who: "p1" | "p2" | "system", text: string, cues?: LogCue[]): SeatLogEntry => ({
+    kind: "action",
+    who,
+    elapsed: "+0:01",
+    segments: [{ text }],
+    ...(cues && { cues }),
+  });
+  const input = (over: Partial<AnnounceInput> = {}): AnnounceInput => ({
+    view: base,
+    names,
+    log: [],
+    match: "m",
+    title: "Your turn",
+    hint: "",
+    menu: null,
+    ...over,
+  });
+  /** What an emit of `next` says after an emit of `first`. */
+  const saidAfter = (first: Partial<AnnounceInput>, next: Partial<AnnounceInput>) =>
+    announcement(announcement(NOTHING_HEARD, input(first)).heard, input(next)).text;
+
+  it("says where the table stands once, and nothing for an unchanged emit", () => {
+    const first = announcement(NOTHING_HEARD, input({ log: [row("p1", "drew a card")] }));
+    expect(first.text).toBe("Your turn.");
+    expect(announcement(first.heard, input({ log: [row("p1", "drew a card")] })).text).toBe("");
+  });
+
+  it("reads the rows appended since the last emit after the player's name", () => {
+    const old = [row("p1", "drew a card")];
+    const log: SeatLogEntry[] = [
+      ...old,
+      row("p2", "Onix used Tackle"),
+      row("p2", "dealt 30 damage to Pikachu"),
+      { kind: "turn", turn: 4 },
+      row("system", "Checkup"),
+    ];
+    expect(saidAfter({ log: old }, { log })).toBe(
+      "Brock: Onix used Tackle. Brock: dealt 30 damage to Pikachu. Turn 4. Checkup.",
+    );
+  });
+
+  it("keeps the newest rows of a long batch, and every Knock Out", () => {
+    const ko = base.board.opponent.active;
+    if (!ko) throw Error("Missing Active");
+    const v = structuredClone(base);
+    v.board.opponent.active = null;
+    v.board.opponent.discard.push(ko);
+    const log = [
+      row("p2", "Knocked Out", [{ kind: "knockOut", seat: "p2", uid: ko.id }]),
+      ...Array.from({ length: ANNOUNCE_LOG_ROWS + 2 }, (_, i) => row("p1", `step ${i}`)),
+    ];
+    const said = saidAfter({}, { log, view: v });
+    expect(said.startsWith(`Knocked out: ${ko.name}. Ash: step 2. `)).toBe(true);
+    expect(said).not.toContain("step 1.");
+    expect(said).toContain(`Ash: step ${ANNOUNCE_LOG_ROWS + 1}.`);
+  });
+
+  it("counts the Prizes either player takes", () => {
+    const mine = structuredClone(base);
+    mine.board.you.prizesRemaining = base.board.you.prizesRemaining - 1;
+    expect(saidAfter({}, { view: mine })).toBe(`+1 Prize, ${mine.board.you.prizesRemaining} left.`);
+    const theirs = structuredClone(base);
+    theirs.board.opponent.prizesRemaining = base.board.opponent.prizesRemaining - 2;
+    expect(saidAfter({}, { view: theirs })).toBe(
+      `Brock took 2 Prizes, ${theirs.board.opponent.prizesRemaining} left.`,
+    );
+  });
+
+  it("says who won and why once, in place of the log's win row", () => {
+    const over = structuredClone(base);
+    over.phase = { kind: "gameOver" };
+    over.outcome = { result: "win", winner: "opponent", reason: "deckOut" };
+    const log = [row("system", "Brock wins — Ash cannot draw")];
+    const first = announcement(NOTHING_HEARD, input()).heard;
+    const ended = announcement(first, input({ view: over, log, title: "Brock wins" }));
+    expect(ended.text).toBe("Brock wins. No cards left to draw.");
+    expect(announcement(ended.heard, input({ view: over, log, title: "Brock wins" })).text).toBe(
+      "",
+    );
+  });
+
+  it("reads a prompt's title, note and hint when it opens, not on each rebuild", () => {
+    const v = structuredClone(base);
+    v.phase = { kind: "effect:choose", prompt: { kind: "confirm", note: "Use it?" } };
+    const menu: SimMenu = { kind: "list", title: "Do you want to use Drive Off?", options: [] };
+    const prompt = { view: v, menu, hint: "Draw a card first.", title: "Choose your next move" };
+    const opened = announcement(announcement(NOTHING_HEARD, input()).heard, input(prompt));
+    expect(opened.text).toBe("Do you want to use Drive Off? Draw a card first.");
+    expect(announcement(opened.heard, input({ ...prompt, menu: { ...menu } })).text).toBe("");
+    const coin: SimMenu = {
+      kind: "coin",
+      title: "Bite",
+      note: "Ash: Heads\nAsh: Tails",
+      options: [],
+    };
+    const flips = [row("p1", "flipped heads", [{ kind: "coin", seat: "p1", face: "heads" }])];
+    expect(saidAfter({}, { menu: coin, log: flips })).toBe("Bite. Ash: Heads. Ash: Tails.");
   });
 });

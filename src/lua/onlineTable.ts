@@ -262,6 +262,7 @@ export class LuaOnlineMatch implements TableSource {
     if (over && seated) flags.push("rematch");
     if (over && seated && sent) flags.push("rematch-sent");
     flags.push("leave");
+    if (this.pending) flags.push("pending");
     return {
       flags,
       opponentAway:

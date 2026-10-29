@@ -15,6 +15,7 @@ import { LobbyClient } from "../online/lobbyClient";
 import { LuaOnline } from "./online";
 import { LuaOnlineMatch, onlineGate, promptGate } from "./onlineTable";
 import { LuaSimulator } from "./simulator";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
 
 const CODE = "ABCD";
 const store = () => {
@@ -398,6 +399,9 @@ describe("LuaOnlineMatch", () => {
     expect(t.rows()[0]?.[19]).toBe("opponent");
     const coin = t.tagged("M")[0];
     expect(coin?.slice(1, 4)).toEqual(["coin", "Coin flip", "Brock: Tails"]);
+    expect(t.rows()[0]?.[wireColumn(WIRE_ROWS.sim.header, "announce")]).toBe(
+      `Knocked out: ${ko.name}. Coin flip. Brock: Tails.`,
+    );
   });
 
   it("treats a card leaving play for the discard pile without a Knock Out cue as no Knock Out", async () => {
@@ -613,5 +617,82 @@ describe("LuaOnlineMatch", () => {
     t.sim.command(`reorder\thand\t${b[1]}\t0`);
     expect(t.tagged("C").find((r) => r[1] === b[1])?.[18]).toBe("0");
     expect(local.keys().filter((k) => k.startsWith("colorless:simulator"))).toEqual([]);
+  });
+});
+
+describe("an online action in flight", () => {
+  const endTurn = (t: Awaited<ReturnType<typeof table>>) => {
+    const button = t.tagged("A").find((r) => r[2] === "End turn");
+    t.sim.command(`invoke\t${t.rows()[0]?.[0]}\t${button?.[1]}`);
+  };
+  const flags = (t: Awaited<ReturnType<typeof table>>) => t.tagged("L")[0]?.[5]?.split(",");
+
+  it("a double click sends one action, and the L row says it is pending", async () => {
+    const t = await table();
+    endTurn(t);
+    expect(flags(t)).toContain("pending");
+    endTurn(t);
+    expect(t.actions()).toEqual([{ type: "endTurn", seat: "p1" }]);
+    // A drop while pending is not sent either.
+    const card = t.tagged("C").find((r) => r[4] === "you" && r[5] === "hand");
+    t.sim.command(`move\t${card?.[1]}\thand\t0\tbench\t0`);
+    expect(t.actions()).toHaveLength(1);
+  });
+
+  it("the next frame ends it", async () => {
+    const t = await table();
+    endTurn(t);
+    t.push(frame(t.state));
+    expect(flags(t)).not.toContain("pending");
+    endTurn(t);
+    expect(t.actions()).toHaveLength(2);
+  });
+
+  it("a refusal ends it", async () => {
+    const t = await table();
+    endTurn(t);
+    t.fake().push({ kind: "reject-action", reason: "Not now" });
+    expect(flags(t)).not.toContain("pending");
+    endTurn(t);
+    expect(t.actions()).toHaveLength(2);
+  });
+
+  it("an automatic step never holds the table", async () => {
+    const t = await table();
+    t.push(
+      frame(t.state, (v) => {
+        v.phase = { kind: "setup:drawExtra", owed: 1 };
+        v.waitingOn = "you";
+      }),
+    );
+    expect(t.actions()).toHaveLength(1);
+    expect(flags(t)).not.toContain("pending");
+  });
+});
+
+describe("the online table's announcements", () => {
+  const ANNOUNCE = wireColumn(WIRE_ROWS.sim.header, "announce");
+  it("reads the opponent's play, the Prizes either side takes, and waiting on them", async () => {
+    const t = await table();
+    const before = frame(t.state);
+    t.push(before);
+    const mine = structuredClone(before);
+    mine.board.you.prizesRemaining -= 1;
+    t.push(mine, [
+      { kind: "action", who: "p2", elapsed: "0:01", segments: [{ text: "Onix used Tackle" }] },
+    ]);
+    expect(t.rows()[0]?.[ANNOUNCE]).toBe(
+      `Brock: Onix used Tackle. +1 Prize, ${mine.board.you.prizesRemaining} left.`,
+    );
+    const choosing = structuredClone(mine);
+    choosing.board.opponent.prizesRemaining -= 2;
+    choosing.phase = { kind: "effect:choose", prompt: null };
+    choosing.waitingOn = "opponent";
+    t.push(choosing);
+    const header = t.rows()[0] ?? [];
+    expect(header.slice(7, 9)).toEqual(["Waiting for Brock", "Waiting for Brock..."]);
+    expect(header[ANNOUNCE]).toBe(
+      `Brock took 2 Prizes, ${choosing.board.opponent.prizesRemaining} left. Waiting for Brock.`,
+    );
   });
 });

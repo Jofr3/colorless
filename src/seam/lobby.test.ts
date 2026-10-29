@@ -115,6 +115,23 @@ describe("the web client against the lobby DO", () => {
     expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
   });
 
+  it("an action lost on a half-open link stops holding the table once the link is replaced", async () => {
+    const { host, guest } = await inGame();
+    lastSocket(guest).socket.blackholed = true;
+    concede(guest);
+    expect(guest.match.lifecycle().flags).toContain("pending");
+    await b.run(SOCKET_SILENCE_MS / 2);
+    expect(guest.match.lifecycle().flags).toContain("pending");
+    await b.run(SOCKET_SILENCE_MS * 2);
+    expect(guest.sockets).toHaveLength(2);
+    expect(guest.match.lifecycle().flags).not.toContain("pending");
+    // The concede went down with the old socket: the match goes on, and the player can act again.
+    expect(host.match.view()?.outcome).toBeNull();
+    concede(guest);
+    await b.run(300);
+    expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
+  });
+
   it("a player whose link goes half-open and stays down shows as away within 20 s", async () => {
     const { host, guest } = await inGame();
     // The guest's network goes: the open socket is dead without a close, and no new one connects.

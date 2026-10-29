@@ -163,6 +163,7 @@ function Simulator:sync(raw,finishKo)
   local pending=self.koPresentation
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
   local m=Model.parse(raw);if not m then return end
+  self:speak(m)
   -- A same-deck restart is a fresh table, even though card UIDs are reused.
   if m.matchId and m.matchId~='' then
     if self.matchId and self.matchId~=m.matchId then
@@ -201,7 +202,7 @@ function Simulator:sync(raw,finishKo)
     end
   end
   self.raw=raw
-  local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,gamePhase=self.gamePhase,rareCandy=self.rareCandy}
+  local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,messageSerial=self.messageSerial,gamePhase=self.gamePhase,rareCandy=self.rareCandy}
   self:apply(m)
   local menu=self.menu
   if previous.rareCandy and not self.rareCandy then self.luaTargeting=nil end
@@ -228,8 +229,21 @@ function Simulator:sync(raw,finishKo)
   self.hud:sync(self,self.time)
   self:build()
   if self.overlay and self.overlay.kind=='gameover' and self.mode=='online' then self.overlay:build() end
-  self.callbacks.announce(self.message~='' and self.message or (menu and menu.title) or self.title)
   self:syncAway(m.away or {name='',ms=''})
+end
+-- One announcement per snapshot read, before a Knock Out or a page wipe can hold
+-- it back: a refusal whose serial moved, then what the host says changed.
+function Simulator:speak(m)
+  local parts={}
+  if m.messageSerial~=self.spokenSerial then
+    self.spokenSerial=m.messageSerial
+    if m.message~='' then parts[#parts+1]=m.message end
+  end
+  if m.announce~=self.spokenAnnounce then
+    self.spokenAnnounce=m.announce
+    if m.announce~='' then parts[#parts+1]=m.announce end
+  end
+  if #parts>0 then self.callbacks.announce(table.concat(parts,' ')) end
 end
 -- Copy a parsed snapshot onto the table. Card text accumulates across
 -- snapshots; mode and flags keep their values unless the snapshot has an L row.
@@ -241,6 +255,7 @@ function Simulator:apply(m)
   self.waiting,self.activePlayer,self.viewerSeat=m.waiting,m.activePlayer,m.viewerSeat
   self.allow=m.allow
   self.outcome,self.outcomeDetail=m.outcome,m.outcomeDetail
+  self.messageSerial,self.warning=m.messageSerial,m.warning
   self.shuffled=m.shuffled
   self.items,self.sides,self.actions,self.cardActions=m.items,m.sides,m.actions,m.cardActions
   self.rareCandy,self.menu=m.rareCandy,m.menu
@@ -248,6 +263,12 @@ function Simulator:apply(m)
   for cardId,info in pairs(m.info) do self.info[cardId]=info end
   if m.mode then self.mode=m.mode end
   if m.flags then self.flags=m.flags end
+  -- An online action is in flight: nothing more is sent until the server answers it.
+  if self.flags.pending then
+    self.pendingSince=self.pendingSince or self.time
+    for _,a in ipairs(self.actions) do a.disabled=true end
+    for _,list in pairs(self.cardActions) do for _,a in ipairs(list) do a.disabled=true end end
+  else self.pendingSince=nil end
   -- A refused rematch comes back as a message with the sent flag gone: Rematch is live again.
   -- So does a seat lost on reconnect (a signed-out account), which takes Rematch away.
   if self.rematchSent and m.flags and not m.flags['rematch-sent'] and (m.message~='' or not m.flags.rematch) then self.rematchSent=nil end
@@ -678,7 +699,7 @@ function Simulator:react(previous)
   end
   -- The game-over panel shows the message itself; the banner would sit behind it.
   local gameOver=self.overlay and self.overlay.kind=='gameover'
-  if self.message~='' and not gameOver and (self.message~=previous.message or self.revision~=previous.revision) then
+  if self.message~='' and not gameOver and self.messageSerial~=previous.messageSerial then
     fx:attention({text=self.message,scale=0.5,colour=T.white,backdrop=T.red,x=L.banner.x,y=L.banner.y,hold=1.6,sound='cancel',jiggle=0.5,maxw=L.table.w-40})
   end
   -- Public uids are stable across a hot-seat flip; hidden cards are positional.

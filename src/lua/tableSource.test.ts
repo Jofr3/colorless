@@ -11,6 +11,9 @@ import {
 } from "@colorless/engine/testing";
 import { LuaSimulator } from "./simulator";
 import { LocalTableSource, type TableSource } from "./tableSource";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
+
+const ANNOUNCE = wireColumn(WIRE_ROWS.sim.header, "announce");
 
 beforeEach(() => {
   const storage = new Map<string, string>();
@@ -176,10 +179,10 @@ describe("LuaSimulator over a TableSource", () => {
     sim.source = delegate;
     sim.emit();
     const after = rows(last);
-    // Header: revision bumps; turn history (f10, f11) is local-only.
-    expect(after[0]?.filter((_, i) => i !== 0 && i !== 9 && i !== 10)).toEqual(
-      before[0]?.filter((_, i) => i !== 0 && i !== 9 && i !== 10),
-    );
+    // Header: revision bumps; turn history (f10, f11) is local-only; the opening announcement is
+    // said once.
+    const same = (_: string, i: number) => i !== 0 && i !== 9 && i !== 10 && i !== ANNOUNCE;
+    expect(after[0]?.filter(same)).toEqual(before[0]?.filter(same));
     const rest = (r: string[][]) => r.slice(1).filter((x) => x[0] !== "L");
     expect(rest(after)).toEqual(rest(before));
   });

@@ -102,6 +102,7 @@ function Model.parse(raw)
     waiting=f[H.waitingOn] or '',activePlayer=f[H.activePlayer] or '',viewerSeat=f[H.seat] or '',
     allow={energy=f[H.energyAttached]=='1',supporter=f[H.supporterPlayed]=='1',retreated=f[H.retreated]=='1'},
     outcome=f[H.outcome] or '',outcomeDetail=f[H.outcomeDetail] or '',shuffled=f[H.shuffled] or '',matchId=f[H.matchId],
+    announce=f[H.announce] or '',messageSerial=f[H.messageSerial] or '',warning=f[H.warning] or '',
     items={},sides={},actions={},cardActions={},info={},knockedOut={},knockedOutSeen={},
   }
   for i=2,#rows do
