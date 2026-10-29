@@ -215,9 +215,8 @@ const HOOK = `(() => {
     muteSockets: () => sockets.filter((s) => s.open && !s.closedByPage).map((s) => { s.mutedAt = Date.now(); return s.url; }).length };
   addEventListener("error", (e) => errors.push(String(e.message || e.type)));
   addEventListener("unhandledrejection", (e) => errors.push("rejection " + String(e.reason)));
-  // zod probes for eval with a caught Function("") (empty sample), which the CSP refuses; any other
-  // violation is an error.
-  addEventListener("securitypolicyviolation", (e) => { if (e.sample !== "" || !e.violatedDirective.startsWith("script-src")) errors.push("csp " + e.violatedDirective + " " + e.sourceFile + ":" + e.lineNumber + " " + e.sample); });
+  // Any violation is an error, zod's eval probe too: the page sets zod jitless so it never probes.
+  addEventListener("securitypolicyviolation", (e) => errors.push("csp " + e.violatedDirective + " " + e.sourceFile + ":" + e.lineNumber + " " + e.sample));
   Object.defineProperty(window, "colorlessHost", { configurable: true, get: () => host, set: (h) => {
     const write = h.writeMailbox, connect = h.connect;
     h.writeMailbox = (n, t) => { mail[n] = t; return write(n, t); };
@@ -432,10 +431,7 @@ async function seedAccount(page: Page, label: string): Promise<string> {
 async function assertHealthy(page: Page, step: string) {
   const errors = await evaluate<string[]>(page, "window.__e2e.errors");
   const failed = await evaluate<boolean>(page, `document.body.classList.contains('failed')`);
-  // Firefox also logs each CSP violation; the hook has already failed any but zod's eval probe.
-  const consoleErrors = page.consoleErrors.filter(
-    (line) => !/favicon|music|blocked a JavaScript eval \(script-src\)/.test(line),
-  );
+  const consoleErrors = page.consoleErrors.filter((line) => !/favicon|music/.test(line));
   if (failed || errors.length > 0 || consoleErrors.length > 0)
     throw new Error(
       `${page.name} is unhealthy after ${step}: failed=${failed} ${JSON.stringify([...errors, ...consoleErrors])}`,

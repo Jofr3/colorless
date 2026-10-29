@@ -3,10 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": ["./src/jitless.ts"],
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
+    "./jitless": "./src/jitless.ts",
     "./tcgdex-fixtures/*": "./src/tcgdex/__fixtures__/*"
   },
   "dependencies": {

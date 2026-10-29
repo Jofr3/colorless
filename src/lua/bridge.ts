@@ -1,3 +1,5 @@
+// First, before anything builds a zod schema: see the module.
+import "@colorless/schema/jitless";
 import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
