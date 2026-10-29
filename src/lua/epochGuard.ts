@@ -23,6 +23,10 @@ export function epochGuard(): EpochGuard {
   };
 }
 
+/** What a deck page says under "Could not load your decks": the session check or the deck list
+ * failed to reach the server. */
+export const DECKS_UNREACHABLE = "Check your connection, then try again.";
+
 /** The user an account update moves a screen to, or undefined when it leaves the screen's user
  * as it is: while the session is still loading, or when the same user is still signed in. */
 export function sessionUser(status: AccountStatus, id: string, user: string): string | undefined {

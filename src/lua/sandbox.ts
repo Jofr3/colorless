@@ -7,7 +7,7 @@ import { validSandboxDecks } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { AccountStatus } from "./account";
-import { epochGuard, sessionUser } from "./epochGuard";
+import { DECKS_UNREACHABLE, epochGuard, sessionUser } from "./epochGuard";
 
 /** Read-only deck selection; Lua owns all layout, controls and animation. */
 export class LuaSandbox {
@@ -35,7 +35,7 @@ export class LuaSandbox {
     this.decks = [];
     this.selected = ["", ""];
     this.busy = false;
-    this.message = "";
+    this.message = status === "error" ? DECKS_UNREACHABLE : "";
     this.phase = status === "error" ? "error" : this.user ? "loading" : "anonymous";
     if (this.active && this.user) void this.load();
     else this.emit();
@@ -90,9 +90,7 @@ export class LuaSandbox {
       this.decks = [];
       this.selected = ["", ""];
       this.message =
-        this.phase === "anonymous"
-          ? "Sign in to choose your decks."
-          : "Could not load your decks. Try again.";
+        this.phase === "anonymous" ? "Sign in to choose your decks." : DECKS_UNREACHABLE;
     } finally {
       if (live()) {
         this.busy = false;

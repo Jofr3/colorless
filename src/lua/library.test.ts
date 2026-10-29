@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
-import { encodeFields } from "./wire";
+import { decodeFields, encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 
@@ -227,6 +227,16 @@ describe("Lua deck library", () => {
     await library.command("order\tdeck\tc\tearlier");
     expect(library.sort).toBe("name-asc");
     expect(calls).toEqual(["GET /decks"]);
+  });
+  it("says why the library failed when the session check cannot reach the server", () => {
+    const publish = vi.fn();
+    const library = new LuaLibrary(publish, () => {});
+    library.session("error", "");
+    const [header] = String(publish.mock.lastCall?.[0]).split("\n");
+    const fields = decodeFields(header ?? "") ?? [];
+    const column = (name: "phase" | "message") => wireColumn(WIRE_ROWS.library.header, name);
+    expect(fields[column("phase")]).toBe("error");
+    expect(fields[column("message")]).toBe("Check your connection, then try again.");
   });
   it("discards a late load after sign-out", async () => {
     let settle!: (r: Response) => void;

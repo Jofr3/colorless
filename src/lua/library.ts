@@ -8,7 +8,7 @@ import { WIRE_ROWS, wireRow } from "./wireFields";
 import { reportError } from "../lib/reportError";
 import { readPersisted, writePersisted } from "../lib/persistedState";
 import type { AccountStatus } from "./account";
-import { epochGuard, sessionUser } from "./epochGuard";
+import { DECKS_UNREACHABLE, epochGuard, sessionUser } from "./epochGuard";
 
 const sorts = ["name-asc", "name-desc", "cards-desc"];
 const SORT_KEY = "decks.sortKey";
@@ -43,7 +43,7 @@ export class LuaLibrary {
     this.decks = [];
     this.legality = new Map();
     this.busy = false;
-    this.message = "";
+    this.message = status === "error" ? DECKS_UNREACHABLE : "";
     this.result = "";
     this.phase = status === "error" ? "error" : this.user ? "loading" : "anonymous";
     if (this.active && this.user) void this.load();
@@ -127,9 +127,7 @@ export class LuaLibrary {
         this.decks = [];
       }
       this.message =
-        this.phase === "anonymous"
-          ? "Your session expired. Sign in again."
-          : "Could not load your library. Try again.";
+        this.phase === "anonymous" ? "Your session expired. Sign in again." : DECKS_UNREACHABLE;
     } finally {
       if (live()) {
         this.busy = false;
