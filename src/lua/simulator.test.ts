@@ -1139,6 +1139,15 @@ describe("LuaSimulator announcements and refusals", () => {
     expect(said).not.toContain("wins —");
   });
 
+  it("a refused action shows the engine's reason without its rulebook section", () => {
+    const { sim, publish } = setup();
+    const seat = sim.host?.viewerSeat;
+    if (!seat) throw Error("Missing seat");
+    // The going-first player cannot attack on turn 1: "... on turn 1 (§4)" in the engine.
+    sim.dispatch({ type: "attack", seat, index: 0 });
+    expect(field(publish, "message")).toBe("the going-first player cannot attack on turn 1");
+  });
+
   it("a refusal pops once: later emits keep its serial until another refusal", () => {
     const { sim, publish } = setup();
     const h = sim.host;

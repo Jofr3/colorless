@@ -112,9 +112,10 @@ export class LuaSimulator {
   /** Seats whose deck was shuffled by the last accepted action ("you" /
       "opponent" / "both"), emitted once so the table can riffle the pile. */
   private shuffled = "";
-  /** Show `text` as a refusal: a new serial, so Lua pops it once however many emits follow. */
+  /** Show `text` as a refusal: a new serial, so Lua pops it once however many emits follow. An
+      engine reason's rulebook reference ("only one retreat per turn (§11)") is dropped. */
   private refuse(text: string) {
-    this.message = text;
+    this.message = text.replace(/\s*\(§[^()]*\)/g, "");
     this.messageSerial++;
   }
   /** An online action is in flight: nothing more is sent until the server answers it. */
