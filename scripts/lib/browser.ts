@@ -32,7 +32,7 @@ export interface Browser {
   /** The value of `expression`, awaited, as JSON carries it; a thrown error rejects. */
   evaluate<T>(page: Page, expression: string): Promise<T>;
   /** Presses and releases a key in the focused element. */
-  key(page: Page, key: "ArrowRight"): Promise<void>;
+  key(page: Page, key: "ArrowRight" | "Tab"): Promise<void>;
   /** Closes the tab as a user would, skipping any beforeunload prompt. */
   closePage(page: Page): Promise<void>;
   /** Ends the session; the process itself is the caller's to stop. */
@@ -212,7 +212,7 @@ export async function launchChromium(launch: Launch): Promise<Browser> {
       return reply.result?.value as T;
     },
     async key(page, key) {
-      const codes = { ArrowRight: 39 };
+      const codes = { ArrowRight: 39, Tab: 9 };
       for (const type of ["keyDown", "keyUp"])
         await call(
           "Input.dispatchKeyEvent",
@@ -349,7 +349,7 @@ export async function launchFirefox(launch: Launch): Promise<Browser> {
       return (value?.type === "string" ? JSON.parse(String(value.value)) : undefined) as T;
     },
     async key(page, key) {
-      const codes = { ArrowRight: "" };
+      const codes = { ArrowRight: "", Tab: "\uE004" };
       await call("input.performActions", {
         context: of(page),
         actions: [
