@@ -207,14 +207,17 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
   runInContext(SOURCE, context);
 
   const host = context.colorlessHost as {
-    connect(bridge: { onFailed(): void; onPrint(): void }): void;
+    connect(bridge: { onDegraded(state: string): void; onPrint(): void }): void;
   };
-  host.connect({ onFailed() {}, onPrint() {} });
+  const degraded: string[] = [];
+  host.connect({ onDegraded: (state) => degraded.push(state), onPrint() {} });
   const module = context.Module as {
     print(message: string): void;
     printErr(message: string): void;
     fetchPackage(url: string, receive: (bytes: ArrayBuffer) => void): void;
   };
+  const reloadButton = elements.loading.children.find((c) => c.id === "reload");
+  if (!reloadButton) throw new Error("host.js added no Reload button to #loading");
 
   /** Sends `n` bytes of a held response body. */
   const send = async (path: string, n: number) => {
@@ -245,8 +248,10 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
     ...elements,
     body: document.body,
     page,
+    reloadButton,
     module,
     host,
+    degraded,
     fetches,
     aborted,
     compiled,
@@ -272,6 +277,11 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
     ready: () => {
       context.Love = undefined;
       module.print("COLORLESS:ready");
+    },
+    connectLate: () => {
+      const seen: string[] = [];
+      host.connect({ onDegraded: (state) => seen.push(state), onPrint() {} });
+      return seen;
     },
     /** window.alert as SDL calls it, whatever host.js put there. */
     alert: (message: string) => (context.alert as (message: string) => void)(message),
@@ -466,6 +476,107 @@ describe("host.js game package (BT1)", () => {
   });
 });
 
+describe("host.js stall and failure overlay (BR1)", () => {
+  it("shows Reload on a stall without taking focus, and takes it down on progress", async () => {
+    const page = boot();
+    page.canvas.focus();
+    await page.advance(45000);
+    expect(page.body.classList.contains("stalled")).toBe(true);
+    expect(page.status.textContent).toBe("Still loading… Keep waiting, or reload to try again.");
+    expect(page.reloadButton.hidden).toBe(false);
+    expect(page.page.activeElement).toBe(page.canvas);
+    expect(page.degraded).toEqual(["stalled"]);
+    await page.send("/love/love.wasm", 100);
+    expect(page.body.classList.contains("stalled")).toBe(false);
+    expect(page.reloadButton.hidden).toBe(true);
+    expect(page.status.textContent).toBe("Loading the menu…");
+    expect(page.degraded).toEqual(["stalled", "recovered"]);
+  });
+
+  it("focuses Reload on a failure and writes the text once the overlay is back", async () => {
+    const page = boot();
+    page.canvas.focus();
+    page.module.print("Error: main.lua:1: boom");
+    expect(page.body.classList.contains("failed")).toBe(true);
+    expect(page.loading.style.display).toBe("flex");
+    expect(page.status.textContent).toBe("");
+    expect(page.status.getAttribute("aria-live")).toBe("assertive");
+    expect(page.reloadButton.hidden).toBe(false);
+    expect(page.page.activeElement).toBe(page.reloadButton);
+    expect(page.degraded).toEqual(["failed"]);
+    expect(await failureText(page)).toBe("The menu could not start. Reload to try again.");
+    // What breaks after the first failure does not replace its message.
+    page.contextLost();
+    expect(await failureText(page)).toBe("The menu could not start. Reload to try again.");
+    expect(page.degraded).toEqual(["failed"]);
+  });
+
+  it("tells a bridge that connects after the failure", () => {
+    const page = boot({ webAssembly: false });
+    expect(page.degraded).toEqual(["failed"]);
+    expect(page.connectLate()).toEqual(["failed"]);
+  });
+
+  it("empties the package cache before a reload after a boot failure", async () => {
+    const page = boot();
+    page.module.print("Error: main.lua:1: boom");
+    page.reloadButton.dispatchEvent(new Event("click"));
+    expect(page.deletedDatabases).toEqual(["EM_PRELOAD_CACHE"]);
+    expect(page.reloads).toEqual([]);
+    page.deletions[0]?.onblocked?.();
+    expect(page.reloads).toEqual(["reload"]);
+    // A delete that never answers still reloads, once.
+    await page.advance(1000);
+    expect(page.reloads).toEqual(["reload"]);
+    const unanswered = boot();
+    unanswered.module.print("Error: main.lua:1: boom");
+    unanswered.reloadButton.dispatchEvent(new Event("click"));
+    await unanswered.advance(1000);
+    expect(unanswered.reloads).toEqual(["reload"]);
+  });
+
+  it("reloads at once after a crash once ready, and while stalled", async () => {
+    const crashed = boot();
+    crashed.ready();
+    crashed.module.print("Error: main.lua:1: boom");
+    expect(await failureText(crashed)).toMatch(/^Something went wrong\. Reload to continue/);
+    crashed.reloadButton.dispatchEvent(new Event("click"));
+    expect(crashed.reloads).toEqual(["reload"]);
+    expect(crashed.deletedDatabases).toEqual([]);
+    const stalled = boot();
+    await stalled.advance(45000);
+    stalled.reloadButton.dispatchEvent(new Event("click"));
+    expect(stalled.reloads).toEqual(["reload"]);
+    expect(stalled.deletedDatabases).toEqual([]);
+  });
+
+  it("reloads once when a tab whose context was lost in the background is shown", async () => {
+    const page = boot();
+    page.ready();
+    page.page.hidden = true;
+    page.contextLost();
+    expect(await failureText(page)).toBe("Graphics connection lost. Reload to continue.");
+    expect(page.reloads).toEqual([]);
+    page.visibility(false);
+    expect(page.reloads).toEqual(["reload"]);
+    page.visibility(true);
+    page.visibility(false);
+    expect(page.reloads).toEqual(["reload"]);
+
+    const again = boot();
+    again.storage.set("colorless.host.contextReload", String(Date.now()));
+    again.page.hidden = true;
+    again.contextLost();
+    again.visibility(false);
+    expect(again.reloads).toEqual([]);
+
+    const shown = boot();
+    shown.contextLost();
+    shown.visibility(false);
+    expect(shown.reloads).toEqual([]);
+  });
+});
+
 describe("host.js keys (BT5, LC3)", () => {
   const SHORTCUTS: [string, Record<string, unknown>][] = [
     ["F5", { key: "F5" }],
@@ -515,7 +626,7 @@ describe("host.js keys (BT5, LC3)", () => {
     expect(page.key("wheel", {}).reachedSdl).toBe(true);
   });
 
-  it("lets Tab move natively off the canvas, and before ready", () => {
+  it("lets Tab move natively off the canvas, before ready and after a failure", async () => {
     const page = boot();
     page.canvas.focus();
     expect(page.key("keydown", { key: "Tab" })).toEqual({ reachedSdl: false, prevented: false });
@@ -527,6 +638,9 @@ describe("host.js keys (BT5, LC3)", () => {
     expect(page.key("keydown", { key: "Tab", shiftKey: true }).reachedSdl).toBe(false);
     expect(page.key("keydown", { key: "ArrowRight" }).reachedSdl).toBe(true);
     page.module.print("Error: main.lua:1: boom");
+    expect(page.page.activeElement).toBe(page.reloadButton);
+    for (const key of ["Tab", "Enter", " "])
+      expect(page.key("keydown", { key })).toEqual({ reachedSdl: false, prevented: false });
     page.canvas.focus();
     expect(page.key("keydown", { key: "Tab" }).reachedSdl).toBe(false);
   });

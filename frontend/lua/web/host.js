@@ -4,6 +4,7 @@
 
 /** @typedef {import("../../../src/host/bridgeProtocol").ColorlessBridge} ColorlessBridge */
 /** @typedef {import("../../../src/host/bridgeProtocol").ArtRequest} ArtRequest */
+/** @typedef {import("../../../src/host/bridgeProtocol").DegradedState} DegradedState */
 
 /** @param {string} id */
 function element(id) {
@@ -16,6 +17,14 @@ const loading = element("loading");
 const statusElement = element("status");
 const loadingProgress = element("loading-progress");
 const loadingFill = element("loading-fill");
+// The overlay's one control: shown while the boot stalls or after a failure, the only way to
+// start again that a keyboard can reach once the runtime is dead.
+const reloadButton = document.createElement("button");
+reloadButton.type = "button";
+reloadButton.id = "reload";
+reloadButton.textContent = "Reload";
+reloadButton.hidden = true;
+loading.append(reloadButton);
 
 /** @type {LoveRuntime | undefined} */
 let runtime;
@@ -24,21 +33,32 @@ let failed = false;
 let stalled = false;
 /** @type {ColorlessBridge | undefined} */
 let bridge;
+/** The last state told to the bridge, replayed to a bridge that connects after it. */
+/** @type {DegradedState | undefined} */
+let degraded;
+/** @param {DegradedState} state */
+function degrade(state) {
+  degraded = state;
+  bridge?.onDegraded(state);
+}
 
 const UNSUPPORTED =
   "Colorless needs WebGL and WebAssembly. Turn on hardware acceleration or try another browser.";
-const BOOT_FAILED = "The menu could not start. Reload to try again, or use the menu links.";
+const BOOT_FAILED = "The menu could not start. Reload to try again.";
 const DOWNLOAD_FAILED = "Could not download the menu. Reload to try again.";
 const LOAD_FAILED = "Could not load the menu. Reload to try again.";
 const GRAPHICS_LOST = "Graphics connection lost. Reload to continue.";
 // After ready a Lua error stops a running page: the sandbox game is in local storage and an
 // online match on the server, so a reload picks either up again.
 const CRASHED = "Something went wrong. Reload to continue; a game in progress is saved.";
-const STALLED = "Still loading… Reload to try again, or use the menu links.";
+const STALLED = "Still loading… Keep waiting, or reload to try again.";
 const STARTING = "Starting…";
 /** @param {number} percent */
 const loadingText = (percent) =>
   percent > 0 ? `Loading the menu… ${percent}%` : "Loading the menu…";
+// The failure text is written this long after the overlay is shown again, once the status
+// region is back in the accessibility tree: text that arrives with the region is often not read.
+const ANNOUNCE_DELAY_MS = 100;
 
 // ---- the boot bar ----
 // One bar for the two downloads, each weighted by its expected transfer; the last tenth is the
@@ -103,7 +123,7 @@ function counted(response, onBytes, headers) {
 }
 
 // Nothing times out a download that stops moving, so after a while without progress the page
-// says so and shows the menu links, and keeps waiting: any progress takes the note down again.
+// says so and offers Reload, and keeps waiting: any progress takes the note down again.
 const BOOT_STALL_MS = 45000;
 /** @type {ReturnType<typeof setTimeout> | undefined} */
 let bootStallTimer;
@@ -112,13 +132,19 @@ function watchBoot() {
   if (stalled && !failed) {
     stalled = false;
     document.body.classList.remove("stalled");
+    if (document.activeElement === reloadButton) canvas.focus({ preventScroll: true });
+    reloadButton.hidden = true;
     if (!ready) statusElement.textContent = milestone;
+    degrade("recovered");
   }
   if (ready || failed) return;
   bootStallTimer = setTimeout(() => {
     stalled = true;
     document.body.classList.add("stalled");
     statusElement.textContent = STALLED;
+    // Shown, not focused: the download may still finish, and a stall must not take focus away.
+    reloadButton.hidden = false;
+    degrade("stalled");
   }, BOOT_STALL_MS);
 }
 
@@ -132,9 +158,38 @@ function fail(message) {
   document.body.classList.remove("stalled");
   document.body.classList.add("failed");
   loading.style.display = "flex";
-  statusElement.textContent = message;
-  bridge?.onFailed();
+  statusElement.setAttribute("aria-live", "assertive");
+  statusElement.textContent = "";
+  setTimeout(() => {
+    statusElement.textContent = message;
+  }, ANNOUNCE_DELAY_MS);
+  reloadButton.hidden = false;
+  reloadButton.focus({ preventScroll: true });
+  degrade("failed");
 }
+// A boot that failed may have cached a package that does not belong with this runtime (a deploy
+// in the middle of a boot), so its reload starts from an empty package cache. The delete waits
+// for game.js's open connection, which closes as the page unloads.
+reloadButton.addEventListener("click", () => {
+  if (ready || !failed) {
+    location.reload();
+    return;
+  }
+  let reloading = false;
+  const reload = () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  };
+  setTimeout(reload, 1000);
+  try {
+    const request = indexedDB.deleteDatabase("EM_PRELOAD_CACHE");
+    request.onsuccess = request.onerror = request.onblocked = reload;
+  } catch {
+    reload();
+  }
+});
+
 // ---- keys the browser keeps ----
 /** Browser shortcuts SDL's window listeners would swallow. Lua binds none of them: no function
  * keys, and nothing with Ctrl, Cmd or Alt. @param {KeyboardEvent} event */
@@ -162,7 +217,8 @@ for (const type of /** @type {const} */ (["keydown", "keyup", "keypress"])) {
       if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return;
       if (
         browserShortcut(event) ||
-        // Tab moves between the page's own controls (the native links) unless
+        focused === reloadButton ||
+        // Tab moves between the page's own controls (the links, the overlay's Reload) unless
         // the running menu has focus.
         (event.key === "Tab" && (focused !== canvas || !ready || failed))
       )
@@ -209,6 +265,7 @@ function writeMailbox(name, text) {
 window.colorlessHost = {
   connect(connected) {
     bridge = connected;
+    if (degraded && degraded !== "recovered") connected.onDegraded(degraded);
   },
   writeMailbox,
   // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
@@ -455,9 +512,25 @@ canvas.addEventListener("pointerdown", () => {
 canvas.addEventListener("contextmenu", (event) => {
   event.preventDefault();
 });
+// A context lost in a background tab (the GPU process reclaimed it) comes back with a reload
+// once the tab is shown again, at most once a minute so a failing GPU cannot loop.
+const CONTEXT_RELOAD_KEY = "colorless.host.contextReload";
 canvas.addEventListener("webglcontextlost", (event) => {
   event.preventDefault();
   fail(GRAPHICS_LOST);
+  if (!document.hidden) return;
+  const shown = () => {
+    if (document.hidden) return;
+    document.removeEventListener("visibilitychange", shown);
+    try {
+      if (Date.now() - Number(sessionStorage.getItem(CONTEXT_RELOAD_KEY) ?? 0) < 60000) return;
+      sessionStorage.setItem(CONTEXT_RELOAD_KEY, String(Date.now()));
+    } catch {
+      return;
+    }
+    location.reload();
+  };
+  document.addEventListener("visibilitychange", shown);
 });
 
 // Resource load errors don't bubble; listen in the capture phase.

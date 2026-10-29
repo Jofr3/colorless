@@ -18,13 +18,19 @@ export interface HostArtworkCache {
   remove(id: string): Promise<void>;
 }
 
+/** `stalled`: the boot has made no download progress for a while and the overlay offers Reload,
+ * still waiting. `recovered`: progress again after a stall. `failed`: the failure overlay is up (a
+ * Lua error, lost graphics, an abort, a browser without WebGL or WebAssembly) and nothing can play
+ * on, so live online links close as a closed tab's would. */
+export type DegradedState = "stalled" | "failed" | "recovered";
+
 /** What the bridge hands the host when it connects. */
 export interface ColorlessBridge {
   /** Every `COLORLESS:` print from Lua; the host handles a few of them itself first. */
   onPrint(message: string): void;
-  /** The page shows its failure overlay (a Lua error, lost graphics, an abort): nothing can play
-   * on, so live online links close as a closed tab's would. */
-  onFailed(): void;
+  /** The page's boot or run is in trouble, or out of it again; see `DegradedState`. Told once per
+   * change, and on connect when the page was already stalled or failed. */
+  onDegraded(state: DegradedState): void;
   artwork: HostArtworkCache;
   mailboxes: typeof MAILBOXES;
 }

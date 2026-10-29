@@ -59,6 +59,24 @@ main {
   white-space: normal;
   text-align: center;
 }
+/* The overlay's Reload (host.js), shown while the boot stalls or after a failure: the bar's white
+   3px stroke and radius around the overlay's own type. */
+#reload {
+  padding: 8px 24px;
+  color: #fff;
+  background: #000;
+  border: 3px solid #fff;
+  border-radius: 6.5px;
+  font: 18px monospace;
+  cursor: pointer;
+}
+#reload:hover {
+  background: #1e2b2d;
+}
+#reload:focus-visible {
+  outline: 3px solid #eac058;
+  outline-offset: 3px;
+}
 .sr-only,
 .accessible-menu {
   position: absolute;

@@ -128,7 +128,9 @@ showPage(router.current);
 
 host.connect({
   onPrint: (message) => shell.onPrint(message),
-  onFailed: () => online.halt(),
+  onDegraded: (state) => {
+    if (state === "failed") online.halt();
+  },
   artwork: new ArtworkCache(),
   mailboxes: MAILBOXES,
 });
