@@ -68,6 +68,38 @@ describe("card actions", () => {
   });
 });
 
+describe("the Active's Retreat", () => {
+  it("opens the Bench pick, priced and gated by the engine's retreat", () => {
+    let state = driveSetup(7, undefined, { first: "p1" });
+    state = attachFromDeck(benchFromDeck(state, "p1", "fix-basic-1"), "p1", "fix-energy", 2);
+    const view = redactGame(state, "p1");
+    if (view.phase.kind !== "turn:action") throw Error("Expected action phase");
+    const retreat = vi.fn();
+    const host = { allowed: () => true, dispatch: () => {}, retreat };
+    const activeUid = view.board.you.active?.id ?? "";
+    const find = (v: typeof view) =>
+      cardActions(v, host, null)
+        .get(activeUid)
+        ?.find((a) => a.group === "retreat");
+    view.phase.retreat = { can: true, cost: 2 };
+    const live = find(view);
+    expect(live).toMatchObject({
+      label: "Retreat",
+      disabled: false,
+      cost: ["Colorless", "Colorless"],
+    });
+    live?.run();
+    expect(retreat).toHaveBeenCalledOnce();
+    view.phase.retreat = { can: false, cost: 0 };
+    expect(find(view)).toMatchObject({ disabled: true, cost: [] });
+    view.phase.retreat = null;
+    expect(find(view)?.disabled).toBe(true);
+    const benched = view.board.you.bench[0]?.id ?? "";
+    const benchedActions = cardActions(view, host, null).get(benched) ?? [];
+    expect(benchedActions.some((a) => a.group === "retreat")).toBe(false);
+  });
+});
+
 describe("forced retreat", () => {
   it("pays from the first Energy when every attached one is alike, and asks otherwise", () => {
     let state = driveSetup(7, undefined, { first: "p1" });

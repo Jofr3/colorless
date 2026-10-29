@@ -6,6 +6,8 @@ import type { SimCardAction, SimMenu, SimOption, ThemeColour } from "./simulator
 export interface ActionHost {
   allowed(action: GameAction): boolean;
   dispatch(action: GameAction): void;
+  /** Opens Retreat's first step, the Benched Pokémon to switch in. */
+  retreat?(): void;
 }
 
 export function actionOption(
@@ -170,6 +172,16 @@ export function cardActions(
             cost: a.effectiveCost ?? a.cost,
             damage: a.damage ?? "",
           });
+        // The keyboard's way to retreat; a pointer can also drag the Active onto the Bench.
+        const retreat = p.retreat;
+        push(uid, {
+          label: "Retreat",
+          colour: "blue",
+          group: "retreat",
+          disabled: !retreat?.can,
+          cost: Array<string>(retreat?.cost ?? 0).fill("Colorless"),
+          run: () => host.retreat?.(),
+        });
       }
       for (const a of p.discardable ?? [])
         if (JSON.stringify(a.target) === JSON.stringify(target))
@@ -234,6 +246,7 @@ export function retreatEnergyMenu(
   return {
     kind: "cards",
     title: "",
+    note: `Choose ${cost} Energy to discard.`,
     options: energies.map((c) => ({
       label: c.name,
       card: c,
