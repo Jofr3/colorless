@@ -63476,4 +63476,14 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "sim_table_speech.lua"],
   },
+  {
+    id: "UI-P2-frame-announcements-replace",
+    decision: "UI-SM1",
+    what: "Each announcement of a Lua frame replaces the last in the live region, so a table snapshot's line is lost to the tray that opens with it. Killed by hostShell.test's one-frame case.",
+    file: "src/host/shell.ts",
+    symbol: "HostShell",
+    find: "    if (this.heard.length > 1) return;\n",
+    replace: "    if (this.heard.length > 1) this.heard.shift();\n",
+    expectKilledBy: ["src/host/hostShell.test.ts"],
+  },
 ];

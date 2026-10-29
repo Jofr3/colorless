@@ -41,12 +41,14 @@ class FakeCanvas extends FakeElement {}
 
 function fakePage() {
   const canvas = new FakeCanvas();
+  const announcement = new FakeElement();
   const created: FakeElement[] = [];
   const doc = {
     title: "Colorless",
     location: { search: "" },
     body: new FakeElement(),
-    getElementById: (id: string) => (id === "canvas" ? canvas : null),
+    getElementById: (id: string) =>
+      id === "canvas" ? canvas : id === "announcement" ? announcement : null,
     querySelector: () => null,
     createElement: (tag: string) => {
       const element = new FakeElement();
@@ -69,7 +71,7 @@ function fakePage() {
   };
   const shell = new HostShell(doc as unknown as Document, host, ports);
   const labelled = (label: string) => created.find((e) => e.getAttribute("aria-label") === label);
-  return { shell, ports, mailboxes, labelled, created };
+  return { shell, ports, mailboxes, labelled, created, announcement };
 }
 
 const print = (channel: string, ...fields: string[]) =>
@@ -85,6 +87,24 @@ afterEach(() => {
 });
 
 describe("HostShell", () => {
+  it("joins the announcements of one Lua frame, so a later one does not replace an earlier one", async () => {
+    const { shell, announcement } = fakePage();
+    shell.onPrint(print("announce", "Ash: played Nest Ball."));
+    shell.onPrint(
+      print("announce", "Search your deck for a Basic Pokémon onto your Bench. 2 cards."),
+    );
+    shell.onPrint(print("announce", "Ash: played Nest Ball."));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe(
+      "Ash: played Nest Ball. Search your deck for a Basic Pokémon onto your Bench. 2 cards.",
+    );
+    shell.onPrint(print("announce", "Choose your next move."));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("Choose your next move.");
+    shell.onPrint(print("announce", "Choose your next move."));
+    await Promise.resolve();
+    expect(announcement.textContent).toBe("Choose your next move.\u00a0");
+  });
   it("routes Lua's prints to the screens and the router", () => {
     const { shell, ports } = fakePage();
     shell.onPrint(print("simulator", "open"));

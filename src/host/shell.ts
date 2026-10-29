@@ -127,6 +127,8 @@ export class HostShell {
   private pageRevision = 0;
   private settingsRevision = 0;
   private lineOwner: LineOwner = "library";
+  /** This Lua frame's announcements, spoken together once the frame's prints are handled. */
+  private heard: string[] = [];
   private readonly canvas: HTMLCanvasElement;
   private readonly name: TextProxy;
   private readonly line: TextProxy;
@@ -294,6 +296,19 @@ export class HostShell {
 
   /** Runs one of Lua's prints. It never throws: love.js swallows an error thrown from print, and
       the unflushed line then spoils the next command too. */
+  /** Lua prints a frame's lines in one task, so a table snapshot's line and the tray that opens with
+      it would replace each other in the live region; they are joined into one message instead. */
+  private announce(text: string) {
+    if (!text || this.heard.includes(text)) return;
+    this.heard.push(text);
+    if (this.heard.length > 1) return;
+    queueMicrotask(() => {
+      const message = this.heard.join(" ");
+      this.heard = [];
+      const region = this.doc.getElementById("announcement");
+      if (region) region.textContent = nextAnnouncement(region.textContent ?? "", message);
+    });
+  }
   onPrint(message: string) {
     try {
       this.runPrint(message);
@@ -332,12 +347,9 @@ export class HostShell {
       case "account":
         this.accountPrint(rest);
         break;
-      case "announce": {
-        const region = this.doc.getElementById("announcement");
-        if (region)
-          region.textContent = nextAnnouncement(region.textContent ?? "", printText(rest));
+      case "announce":
+        this.announce(printText(rest));
         break;
-      }
       case "preferences":
         writePersisted(PREFERENCES_KEY, printText(rest));
         break;
