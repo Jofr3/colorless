@@ -928,7 +928,7 @@ export class LuaBuilder {
   }
   /** An add made while the deck's cards load waits for them, so its copy limit counts every copy. */
   private async onAdd(id: string) {
-    if (!(await this.settled())) return;
+    if (this.loadingCount() > 0 && !(await this.settled())) return;
     const c = this.cards.get(id);
     if (this.loadingCount() > 0) {
       this.message = MESSAGE.cardsLoading;
@@ -1107,7 +1107,7 @@ export class LuaBuilder {
   }
   /** The decklist waits for the deck's cards, so it never leaves out the ones still loading. */
   private async onExport() {
-    if (!(await this.settled())) return;
+    if (this.loadingCount() > 0 && !(await this.settled())) return;
     const deck = this.deck();
     this.transfer = deck.length ? formatDecklist(deck) : "";
     const missing = [...this.entries.keys()].some((id) => !this.cards.has(id));
