@@ -300,10 +300,13 @@ function love.load()
   browserState()
   followPage()
   state.ready=true
-  Bridge.emit('ready')
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
+  -- The host hides its loading overlay on this signal, so it waits until a drawn frame is on the
+  -- canvas: sent from love.load, the overlay went before the first draw and one black frame
+  -- showed between the bar and the menu.
+  if state.drawn and not state.readySent then state.readySent=true; Bridge.emit('ready') end
   Mailbox.poll()
   local effect=next(unloadedEffects)
   if effect then loadEffect(effect) end
@@ -451,6 +454,7 @@ function love.draw()
   end
   g.setCanvas()
   screen:draw(scene)
+  state.drawn=true
 end
 local function unlockAudio()
   state.audioUnlocked=true
