@@ -144,6 +144,8 @@ describe("Lua sandbox setup", () => {
     stubFetch(reads);
     const { sandbox, publish } = await setup();
     await sandbox.command("close");
+    // Without the store's copy too: the picker keeps what it shows.
+    deckStore.reset();
     const held = heldDecks();
     const reopen = sandbox.command("open");
     expect(phaseOf(publish)).toBe("ready");

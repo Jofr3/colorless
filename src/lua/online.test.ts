@@ -337,6 +337,8 @@ describe("Lua online adapter", () => {
     online.session("authenticated", "u");
     await online.command("decks");
     expect(header()[H("deckPhase")]).toBe("ready");
+    // Without the store's copy too: the picker keeps what it shows.
+    deckStore.reset();
     let answer: () => void = () => {};
     stubFetch({
       ...deckReads,
@@ -359,6 +361,18 @@ describe("Lua online adapter", () => {
     expect(header()[H("deckPhase")]).toBe("loading");
     expect(rows()).toHaveLength(1);
     answer();
+  });
+
+  it("opens the picker on the decks another screen already judged", async () => {
+    const { calls } = stubFetch(deckReads);
+    await deckStore.judge(await deckStore.revalidate("u"));
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    const open = online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("ready");
+    expect(rows()).toHaveLength(4);
+    await open;
+    expect(calls.filter((call) => call === "GET /cards/full")).toHaveLength(1);
   });
 
   it("sends select, ready and kick only when they are allowed", async () => {
