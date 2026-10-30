@@ -19,12 +19,18 @@ local rows={
   {{kind='slider',key='screenshake',label='Screenshake'},
    {kind='toggle',key='reducedMotion',label='Reduced Motion'}},
   {{kind='slider',key='crt',label='CRT'},
-   {kind='cycle',key='bloom',label='CRT Bloom'}},
+   {kind='cycle',key='bloom',label='CRT Bloom'},
+   -- The update and draw cap (main.lua frameCap); `options` names each value, from 0.
+   {kind='cycle',key='highFrameRate',label='Max Frame Rate',options={'60 FPS','144 FPS'}}},
   {{kind='slider',key='volume',label='Master Volume'},
    {kind='slider',key='musicVolume',label='Music Volume'},
    {kind='slider',key='effectsVolume',label='Game Sounds'},
    {kind='toggle',key='muted',label='Mute'}},
 }
+-- The cycle's two arrows and the toggle's emboss, refilled or made once rather than per draw.
+local SIDES={'left','right'}
+local ARROWS={left={label='<',w=28.8,h=38.4,fontSize=24},right={label='>',w=28.8,h=38.4,fontSize=24}}
+local TOGGLE_EMBOSS={[true]={0.5,0.5,0.5,1},[false]={0.7,0.7,0.7,1}}
 local DELETE_WARNING='This permanently deletes your account, your decks and your folders. It cannot be undone.'
 -- The one-time prompt for an account whose name may have come from its email or Google account
 -- (security audit AU3). Saving a name or keeping this one answers it for good; Later asks again
@@ -268,6 +274,7 @@ function Settings:describe(item)
   if item.kind=='prompt-later' then return 'Later. Asks again next time.' end
   if item.kind=='name' then return item.label..': '..self.account.draftName..'. Enter to edit.' end
   if item.kind=='email' then return 'Email: '..self.account.email..'. Disabled.' end
+  if item.options then return item.label..': '..item.options[self:value(item)+1] end
   return item.label..': '..((item.kind=='toggle' or item.kind=='cycle') and (self:value(item)==1 and 'on' or 'off') or self:value(item))
 end
 function Settings:hit(x,y,hoverOnly)
@@ -302,6 +309,13 @@ function Settings:update(dt,time,mx,my,reduced)
   if self.armed and time-self.armed>3 then self:disarm() end
   self.hover,self.hoverPart=self:hit(mx,my,true)
   if self.drag then self:slide(self.items[self.drag],mx) end
+end
+-- True when the popup draws the same frame as long as nothing reaches it (main.lua's redraw
+-- gate): no slider drag, no armed delete button (it disarms after 3 s), no "Saved." waiting to
+-- clear, and its slide-in and juice at rest.
+function Settings:still()
+  return not self.drag and not self.armed and not self.account.savedRemaining
+    and self.motion:still() and self.deleteJuice:still()
 end
 function Settings:activate(index)
   local item=self.items[index]
@@ -448,9 +462,9 @@ function Settings:draw()
       local colour=self:disabled(item) and T.panel or T.red
       local highlighted=not self:disabled(item) and self.hover==i and self.hoverPart=='center'
       local depth=highlighted and 0.5 or 0.7
-      panel(x,y+6,centreWidth,38.4,{colour[1]*depth,colour[2]*depth,colour[3]*depth,1})
+      panel(x,y+6,centreWidth,38.4,Button.shade(colour,depth))
       panel(x,y,centreWidth,38.4,Button.hoverColour(colour,highlighted))
-      local label=self:value(item)==1 and 'On' or 'Off'
+      local label=item.options and item.options[self:value(item)+1] or self:value(item)==1 and 'On' or 'Off'
       local size=24
       while size>12 and T.font(size):getWidth(label)>centreWidth-12 do size=size-1 end
       local textScale=math.min(1,(centreWidth-12)/math.max(1,T.font(size):getWidth(label)))
@@ -461,9 +475,9 @@ function Settings:draw()
       for pip=0,count-1 do
         panel(x+(centreWidth-(count*7.2-2.4))/2+pip*7.2,y+28,4.8,4.8,index==pip and T.white or T.ink,0.6)
       end
-      for _,side in ipairs({'left','right'}) do
-        local arrow={label=side=='left' and '<' or '>',x=side=='left' and item.x or item.x+item.w-28.8,
-          y=y,w=28.8,h=38.4,fontSize=24,colour=colour}
+      for _,side in ipairs(SIDES) do
+        local arrow=ARROWS[side]
+        arrow.x,arrow.y,arrow.colour=side=='left' and item.x or item.x+item.w-28.8,y,colour
         Button.draw(arrow,(self.hover==i and self.hoverPart==side) or (self.hover==0 and self.focus==i),
           pressed and self.pressedPart==side and self.hoverPart==side,false,self.width)
       end
@@ -478,8 +492,7 @@ function Settings:draw()
       -- create_toggle: hover tints the fill; the white outline is drawn
       -- afterwards, unchanged. Only its line_emboss darkens (.3 -> .5).
       local hovered=active
-      local depth=hovered and 0.5 or 0.7
-      panel(x,item.y+1.5,36,36,{depth,depth,depth,1})
+      panel(x,item.y+1.5,36,36,TOGGLE_EMBOSS[hovered and true or false])
       panel(x,item.y,36,36,T.white)
       panel(x+3,item.y+3,30,30,Button.hoverColour(self:value(item)==1 and T.red or T.panel,hovered),1.5)
       if self:value(item)==1 then

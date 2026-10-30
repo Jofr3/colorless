@@ -7,14 +7,16 @@ local Mailbox={}
 local revisions,revisionsRaw
 local cached={}
 -- Reads the host's revision list; call once per frame before the mailboxes. A mailbox whose
--- revision has not moved since its last read is answered from memory.
+-- revision has not moved since its last read is answered from memory. True when the page wrote
+-- any mailbox since the last poll.
 function Mailbox.poll()
   local file=files.revisions
   local raw=love.filesystem.getInfo(file) and (love.filesystem.read(file)) or nil
-  if raw==revisionsRaw then return end
+  if raw==revisionsRaw then return false end
   revisionsRaw=raw
   revisions=raw and {} or nil
   for name,revision in (raw or ''):gmatch('([^\t\n]+)\t([^\n]+)') do revisions[name]=revision end
+  return true
 end
 local function readFile(file)
   if love.filesystem.getInfo(file) then return (love.filesystem.read(file)) end

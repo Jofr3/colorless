@@ -66,12 +66,21 @@ function Motion:move_scale(damping, hovered, dragging)
   end
 end
 
+-- True when nothing is moving: no juice, the visible transform on its target and no velocity.
+-- Scale counts only its velocity, as hover and drag hold it off the target on purpose.
+function Motion:still()
+  local t,v,velocity = self.T,self.VT,self.velocity
+  return not self.juice and v.x==t.x and v.y==t.y and v.r==t.r
+    and velocity.x==0 and velocity.y==0 and velocity.r==0 and velocity.scale==0
+end
+
 function Motion:update(realDt, time, hovered, dragging, reduced)
   if reduced then
     self.juice=nil
     self.VT.x,self.VT.y,self.VT.r = self.T.x,self.T.y,self.T.r
     self.VT.scale = self.T.scale+(hovered and 0.05 or 0)+(dragging and 0.1 or 0)
-    self.velocity = {x=0,y=0,r=0,scale=0}
+    local velocity = self.velocity
+    velocity.x,velocity.y,velocity.r,velocity.scale = 0,0,0,0
     return
   end
   if realDt<=0 then return end

@@ -5,7 +5,8 @@ love={graphics={push=noop,pop=noop,translate=noop,scale=noop,setColor=noop,setFo
 local T=require('ui.theme');T.text=noop;T.font=function(size)return {getWidth=function(_,s)return #s*size*0.5 end,getHeight=function()return size end}end
 local Button=require('ui.button')
 local panels={}
-Button.panel=function(x,y,w,h,colour)panels[#panels+1]={x=x,y=y,w=w,h=h,colour=colour}end
+-- Copies the colour, as the real panel's setColor does: Button.shade hands out one reused table.
+Button.panel=function(x,y,w,h,colour)panels[#panels+1]={x=x,y=y,w=w,h=h,colour={colour[1],colour[2],colour[3],colour[4]}}end
 local function same(a,b)for i=1,4 do if math.abs(a[i]-b[i])>1e-8 then return false end end;return true end
 local source=require('tests.support.balatro_source').required()
 local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end

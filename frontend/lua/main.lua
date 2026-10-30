@@ -17,10 +17,33 @@ local Online = require('ui.online')
 local Modal = require('ui.modal')
 local MenuLogo = require('ui.menu_logo')
 local Controls = require('ui.controls')
+local Pacer = require('ui.frame_pacer')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
 local shaders, sounds, controls = {}, {}, {}
+-- Shaders home's first frame does not need (audit LC8): love.load compiles only splash and CRT,
+-- and these compile one per update after ready, or at once for a page or wipe that draws with
+-- them first. Reading one that has not compiled yet compiles it, so no draw meets a missing one.
+local LATER_SHADERS={'background','dissolve','played'}
+local function ensureShader(name)
+  local shader=rawget(shaders,name)
+  if not shader then
+    shader=love.graphics.newShader('assets/shaders/'..name..'.fs')
+    rawset(shaders,name,shader)
+  end
+  return shader
+end
+local later={}
+for _,name in ipairs(LATER_SHADERS) do later[name]=true end
+setmetatable(shaders,{__index=function(_,name) if later[name] then return ensureShader(name) end end})
+local function ensureShaders(...)
+  for _,name in ipairs({...}) do ensureShader(name) end
+end
+-- The next shader the warm-up compiles, or nil once all have.
+local function nextShader()
+  for _,name in ipairs(LATER_SHADERS) do if not rawget(shaders,name) then return name end end
+end
 local soundVoices={}
 local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLogo
 local screens={}
@@ -68,8 +91,16 @@ local function sound(name,pitch,volume,sourceVolume)
   s:setPitch(pitch or 1);s:setVolume(gain*preferences.volume/100*preferences.effectsVolume/100);s:play()
 end
 local function announce(text) Bridge.emit('announce',text) end
+-- The redraw gate (love.run): anything that can change the picture keeps every update drawing for
+-- REDRAW_SECONDS, and a static frame is drawn again every BACKSTOP_SECONDS anyway, so a change
+-- nothing reported shows within a second.
+local REDRAW_SECONDS,BACKSTOP_SECONDS=0.5,1
+local function redraw() state.redrawUntil=state.time+REDRAW_SECONDS end
+-- Update and draw run at most this many times a second (Settings' Max Frame Rate).
+local function frameCap() return preferences.highFrameRate==1 and 144 or 60 end
 local function layout(w,h)
   width,height=w,h
+  redraw()
   state.pressed=nil
   local portrait=w/h<0.9
   virtualWidth,virtualHeight=portrait and 480 or 1280,portrait and 850 or 800
@@ -129,11 +160,15 @@ end
 -- browser-history requests replace a pending destination instead of stacking
 -- transitions or leaving a stale callback able to reopen an old game.
 applyPage=function(page,deckId)
+  redraw()
   -- Create/Join replace the URL with the lobby code; the modal stays put.
   if page=='online' and state.page=='online' then state.deckId=deckId;online:retarget(deckId);return end
   if state.page=='online' then online:close() end
   if state.page=='builder' then builder:command('close') end
   if state.page=='sandbox' then sandbox:command('close') end
+  -- Cards draw with dissolve and played; the table's background with background.fs.
+  if isTable(page) then ensureShaders('background','dissolve','played')
+  elseif isCollection(page) then ensureShaders('dissolve','played') end
   if isTable(state.page) then simulator:command('close') end
   state.deckId=deckId
   if popup then closeSettings() end
@@ -157,6 +192,8 @@ startWipe=function(callback)
   state.pressed=nil;state.hovered=0;state.focused=0
   -- Clear held interactions so an old drag cannot move during the wipe.
   cancelInteractions()
+  -- The wipe's card draws with dissolve, and it opens onto or away from the table.
+  ensureShaders('background','dissolve','played')
   local colour=isTable(state.page) and simulator:backgroundColours()[2] or T.panel
   wipe=ScreenWipe.new(callback,colour,state.reduced,function(name,pitch,volume) sound(name,pitch,volume,true) end)
   wipe:layout(virtualWidth,virtualHeight,Screen.unit(width,height)/layoutScale,width/layoutScale,height/layoutScale)
@@ -238,7 +275,9 @@ local function syncFocusEdge()
   if edge..label~=state.focusEdge then state.focusEdge=edge..label;Bridge.emit('focus-edge',edge,label) end
 end
 applyPreferences=function()
-  state.reduced=preferences:reduced(state.systemReduced)
+  local reduced=preferences:reduced(state.systemReduced)
+  if reduced~=state.reduced then redraw() end
+  state.reduced=reduced
   state.muted=preferences.muted==1
   if sounds.music1 then
     sounds.music1:setVolume(0.32*preferences.volume/100*preferences.musicVolume/100)
@@ -258,6 +297,7 @@ closeSettings=function()
   -- close leaves none.
   local opener=state.page=='home' and state.lastInput=='key' and state.settingsOpener or 0
   popup=nil; state.pressed=nil; state.focused=opener; state.hovered=0
+  redraw()
   savePreferences()
   Bridge.emit('settings','closed')
   announce('Settings closed')
@@ -269,6 +309,7 @@ openSettings=function(keyboard,tab,opener)
   state.settingsOpener=opener or (tab=='account' and #menu+1 or #menu+2)
   state.pressed=nil; state.focused=0; state.hovered=0
   room.jiggle=room.jiggle+1
+  redraw()
   popup=Settings.new(preferences,{
     changed=savePreferences,close=closeSettings,announce=announce,
     reduced=function() return state.reduced end,
@@ -312,7 +353,7 @@ function love.load()
   menuLogo=MenuLogo.new()
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
-  for _,name in ipairs({'splash','background','CRT','dissolve','played'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
+  ensureShaders('splash','CRT')
   for _,name in ipairs(effects) do unloadedEffects[name]=true end
   local function refresh() Bridge.emit('account','refresh') end
   local function home() Bridge.emit('page','home') end
@@ -336,8 +377,12 @@ function love.update(dt)
   -- The host hides its loading overlay on this signal, so it waits until a drawn frame is on the
   -- canvas: sent from love.load, the overlay went before the first draw and one black frame
   -- showed between the bar and the menu.
-  if state.drawn and not state.readySent then state.readySent=true; Bridge.emit('ready') end
-  Mailbox.poll()
+  if state.readySent then
+    -- After ready, one deferred shader per update.
+    local shader=nextShader()
+    if shader then ensureShader(shader) end
+  elseif state.drawn then state.readySent=true; Bridge.emit('ready') end
+  if Mailbox.poll() then redraw() end
   local effect=next(unloadedEffects)
   if effect then loadEffect(effect) end
   for i=#soundVoices,1,-1 do
@@ -497,6 +542,58 @@ function love.draw()
   g.setCanvas()
   screen:draw(scene)
   state.drawn=true
+end
+-- True when this frame would repeat the last one exactly, so love.run may skip drawing it. Only
+-- home and its Settings under reduced motion qualify: with motion on the vortex and CRT noise
+-- move every frame, and the other pages do not report stillness yet, so they always draw. A
+-- notice, a click's flash, a wipe or Settings with anything moving (Settings:still) draws.
+local function still()
+  if not state.drawn or wipe or not state.reduced or state.page~='home' or state.notice then return false end
+  if state.time<(state.redrawUntil or 0) then return false end
+  if state.lastClicked and state.time-state.lastClicked.at<0.1 then return false end
+  return not popup or popup:still()
+end
+-- LÖVE 11.4's default love.run, changed in three ways (audit LC1). A pacer runs update and draw at
+-- most frameCap() times a second however fast the display refreshes, while events are pumped on
+-- every animation frame. The redraw gate skips draw and present while still() holds, after
+-- drawing the first still frame (its update may have changed the picture) and then once every
+-- BACKSTOP_SECONDS; WebGL keeps showing the last presented frame through an animation frame that
+-- makes no GL calls. Any event asks for a redraw. And there is no love.timer.sleep(0.001):
+-- love.js runs this function once per requestAnimationFrame, and its sleep busy-waits.
+function love.run()
+  if love.load then love.load(love.arg and love.arg.parseGameArguments(arg),arg) end
+  if love.timer then love.timer.step() end
+  local pacer=Pacer.new()
+  local last=love.timer.getTime()
+  local wasStill,drawnAt=false,-math.huge
+  return function()
+    if love.event then
+      love.event.pump()
+      for name,a,b,c,d,e,f in love.event.poll() do
+        if name=='quit' then
+          if not love.quit or not love.quit() then return a or 0 end
+        end
+        love.handlers[name](a,b,c,d,e,f)
+        redraw()
+      end
+    end
+    local now=love.timer.getTime()
+    local elapsed=now-last
+    last=now
+    if not pacer:due(elapsed,frameCap()) then return end
+    if love.update then love.update(love.timer.step()) end
+    if love.graphics and love.graphics.isActive() then
+      local static=still()
+      if not static or not wasStill or state.time-drawnAt>=BACKSTOP_SECONDS then
+        drawnAt=state.time
+        love.graphics.origin()
+        love.graphics.clear(love.graphics.getBackgroundColor())
+        if love.draw then love.draw() end
+        love.graphics.present()
+      end
+      wasStill=static
+    end
+  end
 end
 local function unlockAudio()
   state.audioUnlocked=true

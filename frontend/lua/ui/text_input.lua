@@ -9,13 +9,14 @@ local fitSize=Fit.cached(function(value,size,width)
   while size>12 and T.font(size):getWidth(value)>width do size=size-1 end
   return size
 end)
+local SHADOW={0,0,0,0.3}
 function Input.background(item,editing,disabled,hovered)
   -- create_text_input + G.FUNCS.text_input: hooked colour is 30% darker;
   -- hover adds the standard black overlay. Shadow opacity never changes.
   local base=item.inputColour or T.ink
   local colour=disabled and T.panel or editing and {
     base[1]*0.7,base[2]*0.7,base[3]*0.7,base[4]} or base
-  Button.panel(item.x,item.y+4,item.w,item.h,{0,0,0,0.3})
+  Button.panel(item.x,item.y+4,item.w,item.h,SHADOW)
   Button.panel(item.x,item.y,item.w,item.h,Button.hoverColour(colour,hovered and not disabled))
 end
 function Input.draw(item,value,editing,firstUnit,lastUnit,time,disabled,hovered)

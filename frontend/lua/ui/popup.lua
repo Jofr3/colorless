@@ -10,29 +10,36 @@ local Popup={}
 local FRAME={0.5+191/255*0.5,0.5+199/255*0.5,0.5+213/255*0.5,1} -- lighten(JOKER_GREY,0.5)
 local BODY={55/255*0.9,66/255*0.9,68/255*0.9,0.8}                -- darken(BLACK,0.1) at 0.8
 local WHITE_BOX={1,1,1,1}
+-- Constant colours, made once rather than on every draw (audit LC7).
+local SECTION_SHADE={0.7,0.7,0.7,1}
+local FRAME_SHADE={FRAME[1]*0.7,FRAME[2]*0.7,FRAME[3]*0.7,1}
+local DISABLED_TEXT={0.55,0.59,0.6,1}
+local DISABLED_RED={0.6,0.3,0.28,1}
+local DISABLED_ABILITY_TEXT={0.78,0.78,0.78,1}
+local ACTIVE_TINT={0.88,0.94,0.97,1}
 -- name_from_rows / desc_from_rows: white, pixel-rounded panels with 0.05 emboss.
 local function whiteSection(x,y,w,h)
-  Button.panel(x,y+3,w,h,{0.7,0.7,0.7,1},1.2)
+  Button.panel(x,y+3,w,h,SECTION_SHADE,1.2)
   Button.panel(x,y,w,h,WHITE_BOX,1.2)
 end
 function Popup.frame(x,y,w,h)
-  Button.panel(x,y+4,w,h,{FRAME[1]*0.7,FRAME[2]*0.7,FRAME[3]*0.7,1},1.5)
+  Button.panel(x,y+4,w,h,FRAME_SHADE,1.5)
   Button.panel(x,y,w,h,FRAME,1.5)
   Button.panel(x+3,y+3,w-6,h-6,BODY,1.5)
 end
 function Popup.action(button,active,pressed,roomWidth)
   local x,y,w,h=button.x,button.y,button.w,button.h
   local scale=0.28
-  local colour=button.disabled and {0.55,0.59,0.6,1} or T.textDark
+  local colour=button.disabled and DISABLED_TEXT or T.textDark
   if pressed and not button.disabled then y=y+2 end
   if button.ability then
-    local red=button.disabled and {0.6,0.3,0.28,1} or Button.hoverColour(T.red,active)
-    Button.panel(x,y+3,w,h,{red[1]*0.7,red[2]*0.7,red[3]*0.7,1},1.2)
+    local red=button.disabled and DISABLED_RED or Button.hoverColour(T.red,active)
+    Button.panel(x,y+3,w,h,Button.shade(red,0.7),1.2)
     Button.panel(x,y,w,h,red,1.2)
-    colour=button.disabled and {0.78,0.78,0.78,1} or T.white
+    colour=button.disabled and DISABLED_ABILITY_TEXT or T.white
   else
     whiteSection(x,y,w,h)
-    if active and not button.disabled then Button.panel(x,y,w,h,{0.88,0.94,0.97,1},1.2) end
+    if active and not button.disabled then Button.panel(x,y,w,h,ACTIVE_TINT,1.2) end
   end
   local cost=button.cost or {}
   local damage=button.damage or ''
@@ -153,7 +160,7 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
   for _,l in ipairs(lines) do boxH=boxH+l.h end
   row(boxH+4,function(x,y)
     -- desc_from_rows: BACKGROUND_WHITE, r=0.1, emboss 0.05, padding 0.04.
-    Button.panel(x,y+3,boxW,boxH,{0.7,0.7,0.7,1},1.2)
+    Button.panel(x,y+3,boxW,boxH,SECTION_SHADE,1.2)
     Button.panel(x,y,boxW,boxH,WHITE_BOX,1.2)
     local cy=y+pad+1
     for _,l in ipairs(lines) do
@@ -240,7 +247,7 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
         if compact then
           colour=(b.colour[1]+b.colour[2]+b.colour[3])/3>0.65 and T.textDark or b.colour
         else
-          Button.panel(bx,by+3,bw,bh,{b.colour[1]*0.7,b.colour[2]*0.7,b.colour[3]*0.7,1},1.2)
+          Button.panel(bx,by+3,bw,bh,Button.shade(b.colour,0.7),1.2)
           Button.panel(bx,by,bw,bh,b.colour,1.2)
         end
         Dyna.static(b.text,scale.badge*fit,bx,compact and by or by-1,bw,bh,colour,{shadow=not compact,roomWidth=roomWidth})
