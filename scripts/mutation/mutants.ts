@@ -66364,10 +66364,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "UI-QA11-strip-three-lines",
     decision: "UI-QA11",
-    what: "The portrait prompt's strip takes as many lines as the note needs, over more of the table. Killed by table_targets.lua.",
+    what: "A long note in the portrait prompt's strip shrinks under the phone's smallest text to keep to two lines. Killed by table_targets.lua.",
     file: "frontend/lua/ui/sim_hud.lua",
-    find: "if #notes<=STRIP_LINES or strip.scale<=0.16 then break end",
-    replace: "break",
+    find: "strip.scale-0.01<floor then break end",
+    replace: "strip.scale<=0.16 then break end",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "table_targets.lua"],
   },

@@ -270,7 +270,8 @@ local function cell(x,y,b,label,text,roomWidth,on)
   end
 end
 -- The portrait prompt's smallest scale (audit QA11): under it the note leaves the box for a strip
--- of at most STRIP_LINES lines over the table's top band, just under the HUD.
+-- over the table's top band, just under the HUD, of STRIP_LINES lines; a note longer than that
+-- shrinks down to the phone's smallest text and then takes more lines.
 Hud.PORTRAIT_PROMPT_MIN=0.24
 local STRIP_LINES=2
 local STRIP_COLOUR={BOSS_DARK[1],BOSS_DARK[2],BOSS_DARK[3],0.92}
@@ -300,9 +301,10 @@ function Hud:drawPrompt(sim,L,x,y,w,h)
         -- the strip at the title's smallest scale, shrinking only past STRIP_LINES lines.
         while #titles*(th+3)>h and scale>0.16 do scale=scale-0.01;titles,th=Dyna.wrap(title,scale,w) end
         strip={x=L.hud.x,y=L.hud.y+L.hud.h+4,w=L.hud.w,scale=minimum}
+        local floor=Display.dyna(Hud.PORTRAIT_PROMPT_MIN*0.8)
         repeat
           notes,nh=Dyna.wrap(note,strip.scale,strip.w-24)
-          if #notes<=STRIP_LINES or strip.scale<=0.16 then break end
+          if #notes<=STRIP_LINES or strip.scale-0.01<floor then break end
           strip.scale=strip.scale-0.01
         until false
         strip.h=#notes*(nh+3)+9

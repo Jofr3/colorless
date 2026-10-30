@@ -157,6 +157,16 @@ check(strip>=1 and strip<=2,'The note spills into one or two lines under the HUD
 for _,t in ipairs(lines) do
   if t.y>=L.hud.y+L.hud.h then check(t.x>=0 and t.x+t.w<=L.w and t.y+t.h<=L.table.y+60,'The strip stays in the table\'s top band') end
 end
+-- A note too long for two lines shrinks, never under the phone's 11 CSS px, then takes more lines.
+local longer=prompt('Choose a Pokémon',long..' '..long,0.8125)
+local spilled=0
+for _,t in ipairs(longer) do
+  if t.y>=L.hud.y+L.hud.h then
+    spilled=spilled+1
+    check(t.scale*60*0.8125>=11-1e-9,'A long note stays at 11 CSS px at least ('..t.scale*60*0.8125 ..')')
+  end
+end
+check(spilled>=2,'A longer note takes two lines or more ('..spilled..')')
 local short=prompt('Attach to which Pokémon?','Pick one.',0.8125)
 for _,t in ipairs(short) do check(t.y<L.hud.y+L.hud.h,'A prompt that fits stays in the HUD') end
 -- Desktop prompts are as they were.
