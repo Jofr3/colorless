@@ -45,6 +45,7 @@ import { formatDecklist } from "../decks/decklistText";
 import { cachedCard, fetchCard } from "../game/cardPool";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
+import { whenIdle } from "../lib/idle";
 import type { AccountStatus } from "./account";
 import { epochGuard, sessionUser } from "./epochGuard";
 
@@ -626,9 +627,13 @@ export class LuaBuilder {
       const hydrated = this.hydrate(live);
       this.emit();
       await Promise.all([hydrated, this.search(), this.loadOptions(live, options)]);
-      // Name and rules-text searches run over the card index; load it once the deck has shown, so
-      // the first search does not wait for it.
-      if (live()) loadCardIndex().catch((error) => reportError("load card index", error));
+      // Name and rules-text searches run over the card index. Parsing and preparing it holds the
+      // main thread, so it loads once the first page has shown and the browser is idle; a
+      // free-text search made before then starts the same load and waits for it.
+      if (live())
+        whenIdle(() => {
+          if (live()) loadCardIndex().catch((error) => reportError("load card index", error));
+        });
     } catch (error) {
       reportError("open deck", error);
       if (live()) {

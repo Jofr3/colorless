@@ -119,29 +119,58 @@ export interface CardIndex {
 
 /** The payload made searchable; throws on a version this code does not read. */
 export function prepareCardIndex(payload: CardIndexPayload): CardIndex {
+  const steps = cardIndexSteps(payload);
+  for (;;) {
+    const step = steps.next();
+    if (step.done) return step.value;
+  }
+}
+
+/**
+ * prepareCardIndex a set at a time: each step prepares one set's cards and the generator yields
+ * after it (and after the name order), so a caller on a UI thread can give the thread back between
+ * sets. The result is the same index. Throws on a version this code does not read, at the first
+ * step.
+ */
+export function* cardIndexSteps(payload: CardIndexPayload): Generator<void, CardIndex, void> {
   if (payload.version !== CARD_INDEX_VERSION) {
     throw new Error(`card index version ${String(payload.version)} is not ${CARD_INDEX_VERSION}`);
   }
-  const cards = payload.cards.map(
-    (row): SearchableCard => ({
-      row,
-      name: asciiLower(row[1]),
-      types: row[7] === null ? null : asciiLower(row[7]),
-      texts: [row[17], row[18], row[19]].flatMap((text) =>
-        text === null ? [] : [asciiLower(text)],
-      ),
-    }),
-  );
-  const collector = (a: number, b: number) => {
-    const [x, y] = [payload.cards[a] as CardIndexRow, payload.cards[b] as CardIndexRow];
-    return binaryCompare(x[5], y[5]) || binaryCompare(x[6], y[6]);
-  };
-  const set = cards.map((_, index) => index).sort(collector);
+  const rows = payload.cards;
+  const at = (index: number) => rows[index] as CardIndexRow;
+  // Each set's row positions, in row order.
+  const bySet = new Map<string, number[]>();
+  rows.forEach((row, index) => {
+    const positions = bySet.get(row[5]);
+    if (positions === undefined) bySet.set(row[5], [index]);
+    else positions.push(index);
+  });
+  const cards = new Array<SearchableCard>(rows.length);
+  // Collector order, built set by set: the sets in id order, each set's cards by local id. Array
+  // sorts are stable and each set's positions start in row order, so equal local ids keep row
+  // order, as one sort of every row by set and local id would.
+  const set: number[] = [];
+  for (const setId of [...bySet.keys()].sort(binaryCompare)) {
+    const positions = bySet.get(setId) as number[];
+    for (const index of positions) {
+      const row = at(index);
+      cards[index] = {
+        row,
+        name: asciiLower(row[1]),
+        types: row[7] === null ? null : asciiLower(row[7]),
+        texts: [row[17], row[18], row[19]].flatMap((text) =>
+          text === null ? [] : [asciiLower(text)],
+        ),
+      };
+    }
+    positions.sort((a, b) => binaryCompare(at(a)[6], at(b)[6]));
+    for (const index of positions) set.push(index);
+    yield;
+  }
   // Array sorts are stable, so sorting the collector order keeps it as the tie-break.
-  const name = [...set].sort((a, b) =>
-    binaryCompare((payload.cards[a] as CardIndexRow)[1], (payload.cards[b] as CardIndexRow)[1]),
-  );
-  const hp = (index: number) => pokemonHp(payload.cards[index] as CardIndexRow) ?? -1;
+  const name = [...set].sort((a, b) => binaryCompare(at(a)[1], at(b)[1]));
+  yield;
+  const hp = (index: number) => pokemonHp(at(index)) ?? -1;
   const hpDesc = [...set].sort((a, b) => hp(b) - hp(a));
   return {
     cards,

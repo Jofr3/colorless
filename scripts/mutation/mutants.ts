@@ -61958,7 +61958,7 @@ export const MUTANTS: Mutant[] = [
     decision: "REL-AP7",
     what: "The client reads a card index of any version, so rows of a changed column order are searched at the wrong positions. Killed by catalog.test's unknown-version case.",
     file: "packages/schema/src/catalog/cardIndex.ts",
-    symbol: "prepareCardIndex",
+    symbol: "cardIndexSteps",
     find: "  if (payload.version !== CARD_INDEX_VERSION) {\n    throw new Error(`card index version ${String(payload.version)} is not ${CARD_INDEX_VERSION}`);\n  }\n",
     replace: "",
     expectKilledBy: ["src/decks/catalog.test.ts"],

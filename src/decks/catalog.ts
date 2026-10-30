@@ -11,12 +11,13 @@ import {
   type CardBrief,
   type CardCategory,
   type CardIndex,
+  type CardIndexPayload,
   type CardIndexRow,
   type CardsQueryParams,
   type CatalogFacets,
   cardIndexBrief,
+  cardIndexSteps,
   cardsQuerySchema,
-  prepareCardIndex,
   searchCardIndex,
 } from "@colorless/schema";
 import { getCardIndex, getCards, getFacets, getSeries, getSets } from "../lib/api";
@@ -211,13 +212,44 @@ let loadedIndex: { at: number; index: Promise<LoadedCardIndex> } | undefined;
 /** The last index that finished loading, for lookups that must not wait or fetch. */
 let settledIndex: LoadedCardIndex | undefined;
 
+/** How long preparing the index holds the main thread before it gives the thread back. */
+const PREPARE_SLICE_MS = 8;
+
+/** Gives the thread back for a moment: scheduler.yield where the browser has it, else a timer. */
+function yieldThread(): Promise<void> {
+  const scheduler = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (typeof scheduler?.yield === "function") return scheduler.yield();
+  return new Promise((done) => setTimeout(done, 0));
+}
+
+/** The payload prepared for search (prepareCardIndex) in slices of about `sliceMs`, giving the
+    thread back between sets, so a frame never waits on the whole index. */
+export async function prepareInSlices(
+  payload: CardIndexPayload,
+  sliceMs = PREPARE_SLICE_MS,
+): Promise<CardIndex> {
+  const steps = cardIndexSteps(payload);
+  let sliceStart = performance.now();
+  for (;;) {
+    const step = steps.next();
+    if (step.done) return step.value;
+    if (performance.now() - sliceStart >= sliceMs) {
+      await yieldThread();
+      sliceStart = performance.now();
+    }
+  }
+}
+
 /** The card index, fetched on first use and shared by every caller. A failed load is forgotten,
-    so the next call retries. */
-export function loadCardIndex(now = Date.now()): Promise<LoadedCardIndex> {
+    so the next call retries. `sliceMs` is prepareInSlices'. */
+export function loadCardIndex(
+  now = Date.now(),
+  sliceMs = PREPARE_SLICE_MS,
+): Promise<LoadedCardIndex> {
   if (loadedIndex === undefined || now - loadedIndex.at > INDEX_REUSE_MS) {
-    const index = getCardIndex().then((payload) => {
+    const index = getCardIndex().then(async (payload) => {
       const loaded = {
-        index: prepareCardIndex(payload),
+        index: await prepareInSlices(payload, sliceMs),
         cards: new Map<CardIndexRow, BuilderCard>(),
       };
       settledIndex = loaded;

@@ -114,6 +114,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
   deckStore.reset();
 });
 async function setup(images = vi.fn()) {
@@ -759,6 +760,91 @@ describe("Lua deck builder", () => {
     expect(b.results).toEqual([]);
     expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
     expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  /** requestIdleCallback held by the test: each queued callback runs when the test says. */
+  function heldIdle() {
+    const idle: (() => void)[] = [];
+    const requestIdleCallback = vi.fn((callback: () => void) => idle.push(callback));
+    vi.stubGlobal("requestIdleCallback", requestIdleCallback);
+    return idle;
+  }
+  it("loads the card index once the first page has shown and the browser is idle", async () => {
+    const idle = heldIdle();
+    let answer!: (page: Awaited<ReturnType<typeof api.getCards>>) => void;
+    vi.mocked(api.getCards).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+    const b = new LuaBuilder(vi.fn(), vi.fn());
+    b.session("authenticated", "u1");
+    const opening = b.command("open\tone");
+    await tick();
+    expect(idle).toHaveLength(0);
+    answer({ items: [card("a")], total: 1, page: 1, pageSize: 8 });
+    await opening;
+    expect(b.results.map((c) => c.cardId)).toEqual(["a"]);
+    // Parsing and preparing the index takes the main thread: not while the builder opens.
+    expect(api.getCardIndex).not.toHaveBeenCalled();
+    expect(idle).toHaveLength(1);
+    idle[0]?.();
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  it("loads the card index after a short timer where there is no requestIdleCallback", async () => {
+    vi.stubGlobal("requestIdleCallback", undefined);
+    await setup();
+    expect(api.getCardIndex).not.toHaveBeenCalled();
+    await tick();
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  it("answers a free-text search made before the idle load from the index, loaded for it", async () => {
+    const idle = heldIdle();
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const { b } = await setup();
+    await tick();
+    expect(api.getCardIndex).not.toHaveBeenCalled();
+    await b.command(encodeFields(["filter", "query", "abr"]));
+    await tick();
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
+    expect(b.total).toBe(40);
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+    // The idle load then finds the index loaded.
+    idle[0]?.();
+    await tick();
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  it("makes a free-text search wait for an index still loading, then answers it from the index", async () => {
+    const idle = heldIdle();
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    let deliver!: (payload: CardIndexPayload) => void;
+    vi.mocked(api.getCardIndex).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          deliver = resolve;
+        }),
+    );
+    const { b } = await setup();
+    await tick();
+    idle[0]?.();
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+    await b.command(encodeFields(["filter", "query", "abr"]));
+    await tick();
+    expect(b.busy).toBe(true);
+    deliver(ABRA_INDEX);
+    await tick();
+    expect(b.busy).toBe(false);
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
+    expect(b.total).toBe(40);
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  it("does not load the card index for a builder left before the browser was idle", async () => {
+    const idle = heldIdle();
+    const { b } = await setup();
+    b.session("anonymous", "");
+    idle[0]?.();
+    await tick();
+    expect(api.getCardIndex).not.toHaveBeenCalled();
   });
   it("reports a search failed when the card index does not load, and loads it again on Retry", async () => {
     vi.mocked(api.getCardIndex).mockRejectedValue(new Error("offline"));

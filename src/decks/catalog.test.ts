@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../test/fetchStub";
 import { cardBrief as brief, cardIndexPayload, cardsPage, FACETS } from "../test/fixtures";
-import type { Card } from "@colorless/schema";
+import { type Card, prepareCardIndex } from "@colorless/schema";
 import { DEFAULT_FORMAT, formatById } from "@colorless/engine";
 import { isBasicEnergy } from "./cards";
 import { validateDeck } from "./deckMath";
@@ -14,8 +14,10 @@ import {
   importDecklist,
   kindOptions,
   loadFacets,
+  loadCardIndex,
   loadSeries,
   loadSets,
+  prepareInSlices,
   suffixOptions,
   toBuilderCard,
 } from "./catalog";
@@ -398,6 +400,46 @@ describe("filter options", () => {
     fail = false;
     await expect(loadFacets()).resolves.toEqual(FACETS);
     expect(calls).toEqual(["GET /facets", "GET /facets"]);
+  });
+});
+
+describe("the card index", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    forgetCardIndex();
+  });
+  /** Three sets of two cards. */
+  const payload = cardIndexPayload(
+    ["a", "b", "c"].flatMap((setId) =>
+      [1, 2].map((n) => brief({ id: `${setId}-${n}`, name: `Card ${n}`, setId })),
+    ),
+  );
+
+  it("prepares a slice at a time, giving the thread back to a timer queued before it", async () => {
+    let ran = false;
+    setTimeout(() => {
+      ran = true;
+    }, 0);
+    const index = await prepareInSlices(payload, 0);
+    expect(ran).toBe(true);
+    expect(index).toEqual(prepareCardIndex(payload));
+  });
+
+  it("yields through scheduler.yield where the browser has it", async () => {
+    const yieldNow = vi.fn(() => Promise.resolve());
+    vi.stubGlobal("scheduler", { yield: yieldNow });
+    expect(await prepareInSlices(payload, 0)).toEqual(prepareCardIndex(payload));
+    // After each of the three sets and after the name order.
+    expect(yieldNow).toHaveBeenCalledTimes(4);
+  });
+
+  it("is loaded in slices", async () => {
+    const yieldNow = vi.fn(() => Promise.resolve());
+    vi.stubGlobal("scheduler", { yield: yieldNow });
+    stubFetch({ "GET /cards/index": () => json(payload) });
+    const loaded = await loadCardIndex(Date.now(), 0);
+    expect(loaded.index).toEqual(prepareCardIndex(payload));
+    expect(yieldNow).toHaveBeenCalledTimes(4);
   });
 });
 
