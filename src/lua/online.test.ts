@@ -12,6 +12,7 @@ import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyC
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
+import { deckStore } from "../decks/deckStore";
 import { LobbyClient, type LobbyClientOptions, UNREACHABLE_MS } from "../online/lobbyClient";
 import { LuaOnline, NOTICE_MS, TABLE_CLAIM_MS } from "./online";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
@@ -131,6 +132,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearCardPoolCache();
+  deckStore.reset();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -327,6 +329,36 @@ describe("Lua online adapter", () => {
     expect(header()[H("deckPhase")]).toBe("error");
     online.session("authenticated", "u");
     await vi.waitFor(() => expect(header()[H("deckPhase")]).toBe("ready"));
+  });
+
+  it("keeps the picker's decks while it checks them again, and never shows them to another user", async () => {
+    stubFetch(deckReads);
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    await online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("ready");
+    let answer: () => void = () => {};
+    stubFetch({
+      ...deckReads,
+      "GET /decks": () =>
+        new Promise<Response>((done) => {
+          answer = () => done(deckReads["GET /decks"]());
+        }),
+    });
+    const again = online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("ready");
+    expect(
+      rows()
+        .slice(1)
+        .map((row) => row[1]),
+    ).toEqual(["y", "z", "x"]);
+    answer();
+    await again;
+    expect(header()[H("deckPhase")]).toBe("ready");
+    online.session("authenticated", "v");
+    expect(header()[H("deckPhase")]).toBe("loading");
+    expect(rows()).toHaveLength(1);
+    answer();
   });
 
   it("sends select, ready and kick only when they are allowed", async () => {

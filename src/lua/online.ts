@@ -20,7 +20,8 @@ import {
   savePlayerName,
   stakeIdentity,
 } from "../online/session";
-import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
+import { type PlayableDeck, playableDecksFrom } from "../game/sandboxDecks";
+import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { CardPool, LuaOnlineMatch } from "./onlineTable";
@@ -72,6 +73,8 @@ export class LuaOnline {
   private account: AccountStatus = "loading";
   private userId = "";
   private decksWanted = false;
+  /** Whose decks `decks` holds. */
+  private decksUser = "";
   private readonly deckEpoch = epochGuard();
   private revision = 0;
   private op = 0;
@@ -496,29 +499,44 @@ export class LuaOnline {
     }, NOTICE_MS);
   }
 
+  /** Loads the picker's decks. The picker keeps the decks it shows this user (or what the deck
+   * store already judged) while the list is checked again, and says loading only with nothing to
+   * show. */
   private async loadDecks() {
     const live = this.deckEpoch.next();
-    this.decks = [];
+    if (this.decksUser !== this.userId) {
+      this.decks = [];
+      this.deckPhase = "idle";
+    }
     if (!this.userId) {
       this.deckPhase =
         this.account === "loading" ? "loading" : this.account === "error" ? "error" : "anonymous";
       this.emit();
       return;
     }
-    this.deckPhase = "loading";
+    const cached = deckStore.peek(this.userId);
+    const judged = cached && deckStore.peekVerdicts(cached);
+    if (cached && judged) this.showDecks(playableDecksFrom([...cached.decks], judged));
+    else if (this.deckPhase !== "ready") this.deckPhase = "loading";
     this.emit();
     try {
-      const summaries = await api.listDecks();
+      const list = await deckStore.revalidate(this.userId);
       if (!live()) return;
-      const decks = await playableDecks(summaries, live);
+      const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      this.decks = decks.sort((x, y) => x.name.localeCompare(y.name));
-      this.deckPhase = "ready";
+      this.showDecks(playableDecksFrom([...list.decks], verdicts));
     } catch (error) {
       if (!live()) return;
+      this.decks = [];
       this.deckPhase =
         error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
     }
     this.emit();
+  }
+
+  private showDecks(decks: PlayableDeck[]) {
+    this.decks = decks.sort((x, y) => x.name.localeCompare(y.name));
+    this.decksUser = this.userId;
+    this.deckPhase = "ready";
   }
 }

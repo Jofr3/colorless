@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
+import { deckStore } from "../decks/deckStore";
 import { loadSimulatorSave } from "../game/simulatorSave";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
@@ -77,8 +78,28 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearCardPoolCache();
+  deckStore.reset();
   vi.unstubAllGlobals();
 });
+/** GET /decks held until `answer()`, the other reads at once. */
+const heldDecks = () => {
+  let answer: () => void = () => {};
+  const stub = stubFetch({
+    ...reads,
+    "GET /decks": () =>
+      new Promise<Response>((done) => {
+        answer = () => done(json(decks));
+      }),
+  });
+  return { ...stub, answer: () => answer() };
+};
+const phaseOf = (publish: ReturnType<typeof vi.fn>) =>
+  String(publish.mock.lastCall?.[0]).split("\t")[1];
+const deckIds = (publish: ReturnType<typeof vi.fn>) =>
+  String(publish.mock.lastCall?.[0])
+    .split("\n")
+    .slice(1)
+    .map((row) => row.split("\t")[1]);
 
 describe("Lua sandbox setup", () => {
   it("ignores a command with a malformed percent-sequence", async () => {
@@ -107,6 +128,48 @@ describe("Lua sandbox setup", () => {
     await open;
     expect(sandbox.phase).toBe("ready");
     expect(warm).toHaveBeenCalledTimes(1);
+  });
+  it("says Loading only while it has no decks to show", async () => {
+    const held = heldDecks();
+    const publish = vi.fn();
+    const sandbox = new LuaSandbox(publish, async () => () => {});
+    sandbox.session("authenticated", "user");
+    const open = sandbox.command("open");
+    expect(phaseOf(publish)).toBe("loading");
+    held.answer();
+    await open;
+    expect(phaseOf(publish)).toBe("ready");
+  });
+  it("keeps its decks on screen and playable while it checks them again", async () => {
+    stubFetch(reads);
+    const { sandbox, publish } = await setup();
+    await sandbox.command("close");
+    const held = heldDecks();
+    const reopen = sandbox.command("open");
+    expect(phaseOf(publish)).toBe("ready");
+    expect(deckIds(publish)).toEqual(["a", "b"]);
+    expect(String(publish.mock.lastCall?.[0]).split("\t")[2]).toBe("0");
+    await sandbox.command("select\t2\tb");
+    expect(sandbox.selected).toEqual(["a", "b"]);
+    held.answer();
+    await reopen;
+    expect(deckIds(publish)).toEqual(["a", "b"]);
+    expect(sandbox.selected).toEqual(["a", "b"]);
+  });
+  it("opens on the decks another screen already judged, without judging them again", async () => {
+    const { calls } = stubFetch(reads);
+    const list = await deckStore.revalidate("user");
+    await deckStore.judge(list);
+    const held = heldDecks();
+    const publish = vi.fn();
+    const sandbox = new LuaSandbox(publish, async () => () => {});
+    sandbox.session("authenticated", "user");
+    const open = sandbox.command("open");
+    expect(phaseOf(publish)).toBe("ready");
+    expect(deckIds(publish)).toEqual(["a", "b"]);
+    held.answer();
+    await open;
+    expect([...calls, ...held.calls].filter((c) => c === "GET /cards/full")).toHaveLength(1);
   });
   it("loads decks across folders, escapes names and selects each player independently", async () => {
     const { calls } = stubFetch(reads);

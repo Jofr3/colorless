@@ -7,6 +7,7 @@ import { LuaOnline } from "./online";
 import { LuaSandbox } from "./sandbox";
 import { LazyScreen, loadFailureHandler, type Screen } from "./lazyScreen";
 import { hasSimulatorSave } from "../game/simulatorSaveKey";
+import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { setSessionRecoveryHandler } from "../lib/api";
 import { reportError } from "../lib/reportError";
@@ -113,6 +114,8 @@ const account = new LuaAccount((snapshot) => {
   shell.accountChanged(snapshot);
   const status = account.status;
   const userId = account.user?.id ?? "";
+  // Before the screens, so one opening now finds the signed-in user's list on its way.
+  deckStore.follow(status, userId);
   for (const screen of Object.values(screens)) screen.session?.(status, userId);
 });
 

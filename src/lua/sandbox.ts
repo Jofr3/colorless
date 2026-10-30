@@ -3,7 +3,8 @@ import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
 import { SandboxSetupError } from "../game/sandboxSetupError";
-import { validSandboxDecks } from "../game/sandboxDecks";
+import { sandboxDecksFrom } from "../game/sandboxDecks";
+import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { AccountStatus } from "./account";
@@ -65,27 +66,27 @@ export class LuaSandbox {
     );
   }
 
+  /** Loads the decks. The picker stays on what it shows (or on what the deck store already
+   * judged) while the list is checked again, and says loading only with nothing to show.
+   * Selecting stays live meanwhile: Play re-validates the chosen decks' contents anyway. */
   async load() {
     if (!this.user) {
       this.emit();
       return;
     }
     const live = this.epoch.next();
-    this.busy = true;
-    this.phase = "loading";
+    const cached = deckStore.peek(this.user);
+    const judged = cached && deckStore.peekVerdicts(cached);
+    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged));
+    else if (this.phase !== "ready") this.phase = "loading";
     this.message = "";
     this.emit();
     try {
-      const summaries = await api.listDecks();
+      const list = await deckStore.revalidate(this.user);
       if (!live()) return;
-      const decks = await validSandboxDecks(summaries, live);
+      const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      // Include decks in existing folders, without bringing folder management here.
-      this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
-      this.selected = this.selected.map((id) =>
-        decks.some((d) => d.id === id) ? id : (decks[0]?.id ?? ""),
-      ) as [string, string];
-      this.phase = "ready";
+      this.show(sandboxDecksFrom([...list.decks], verdicts));
     } catch (error) {
       if (!live()) return;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
@@ -93,12 +94,17 @@ export class LuaSandbox {
       this.selected = ["", ""];
       this.message =
         this.phase === "anonymous" ? "Sign in to choose your decks." : DECKS_UNREACHABLE;
-    } finally {
-      if (live()) {
-        this.busy = false;
-        this.emit();
-      }
     }
+    if (live()) this.emit();
+  }
+
+  private show(decks: Deck[]) {
+    // Include decks in existing folders, without bringing folder management here.
+    this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
+    this.selected = this.selected.map((id) =>
+      decks.some((d) => d.id === id) ? id : (decks[0]?.id ?? ""),
+    ) as [string, string];
+    this.phase = "ready";
   }
 
   async command(raw: string) {
