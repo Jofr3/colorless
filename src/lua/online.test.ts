@@ -300,6 +300,24 @@ describe("Lua online adapter", () => {
     expect(calls).toEqual(["GET /decks", "GET /cards/full"]);
   });
 
+  it("publishes a session update only when the account or its user changed", async () => {
+    const { online, publish, header } = setup();
+    online.session("loading", "");
+    const before = publish.mock.calls.length;
+    online.session("loading", "");
+    expect(publish.mock.calls.length).toBe(before);
+    online.session("authenticated", "u");
+    expect(publish.mock.calls.length).toBe(before + 1);
+    online.session("authenticated", "u");
+    online.session("authenticated", "u");
+    expect(publish.mock.calls.length).toBe(before + 1);
+    online.session("authenticated", "v");
+    expect(publish.mock.calls.length).toBe(before + 2);
+    online.session("anonymous", "");
+    expect(header()[H("account")]).toBe("anonymous");
+    expect(publish.mock.calls.length).toBe(before + 3);
+  });
+
   it("sends select, ready and kick only when they are allowed", async () => {
     stubFetch(deckReads);
     const { online, header, rows, last } = setup();

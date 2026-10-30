@@ -234,6 +234,8 @@ export class LuaOnline {
     const account =
       status === "authenticated" ? status : status === "loading" ? status : "anonymous";
     const user = account === "authenticated" ? id : "";
+    // Every account publish reaches every screen; only a new status or user is news here.
+    if (account === this.account && (account === "loading" || user === this.userId)) return;
     const changed = this.account !== "loading" && account !== "loading" && user !== this.userId;
     const resolved = this.account === "loading" && account !== "loading";
     this.account = account;

@@ -90,7 +90,13 @@ describe("Lua sandbox setup", () => {
   });
   it("warms the game table's code once the picker has its decks, not competing with them", async () => {
     let answer: (response: Response) => void = () => {};
-    stubFetch({ ...reads, "GET /decks": () => new Promise<Response>((done) => (answer = done)) });
+    stubFetch({
+      ...reads,
+      "GET /decks": () =>
+        new Promise<Response>((done) => {
+          answer = done;
+        }),
+    });
     const warm = vi.fn();
     const sandbox = new LuaSandbox(vi.fn(), async () => () => {}, warm);
     sandbox.session("authenticated", "user");

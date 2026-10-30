@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import * as api from "../lib/api";
 import { REQUEST_TIMEOUT_MS } from "../lib/api";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
@@ -19,14 +20,18 @@ const session = { "GET /auth/me": () => json(USER) };
 
 describe("Lua account adapter", () => {
   it("distinguishes anonymous sessions from a failed connection", async () => {
-    stubFetch({ "GET /auth/me": () => json({}, 401) });
-    const { account } = setup();
-    await account.refresh();
-    expect(account.status).toBe("anonymous");
     stubFetch({ "GET /auth/me": () => json({}, 503) });
+    const { account } = setup();
     await account.refresh();
     expect(account.status).toBe("error");
     expect(account.busy).toBe(false);
+    stubFetch({ "GET /auth/me": () => json({}, 401) });
+    await account.refresh();
+    expect(account.status).toBe("anonymous");
+    // A later check that cannot reach the server keeps the answer the page has.
+    stubFetch({ "GET /auth/me": () => json({}, 503) });
+    await account.refresh();
+    expect(account.status).toBe("anonymous");
   });
   it("answers navigation refreshes from a recent session check", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -77,20 +82,24 @@ describe("Lua account adapter", () => {
       vi.useRealTimers();
     }
   });
-  it("shows a failed Google sign-in once, on the next anonymous refresh", async () => {
+  it("shows a failed Google sign-in once, on the boot check's anonymous answer", async () => {
     stubFetch({ "GET /auth/me": () => json({}, 401) });
     const { account } = setup();
     account.noteAuthError("email-in-use");
     await account.refresh();
     expect(account.message).toBe("That email already has an account. Sign in with your password.");
+    await account.command(encodeFields(["clear-message"]));
     await account.refresh();
     expect(account.message).toBe("");
-    account.noteAuthError("unavailable");
-    await account.refresh();
-    expect(account.message).toBe("Sign-in is unavailable right now. Try again later.");
-    account.noteAuthError("constructor");
-    await account.refresh();
-    expect(account.message).toBe("Google sign-in failed. Try again.");
+    for (const [code, message] of [
+      ["unavailable", "Sign-in is unavailable right now. Try again later."],
+      ["constructor", "Google sign-in failed. Try again."],
+    ]) {
+      const booting = setup().account;
+      booting.noteAuthError(code ?? "");
+      await booting.refresh();
+      expect(booting.message).toBe(message);
+    }
   });
   it("saves only the display name using the shared credentialed client", async () => {
     const { impl } = stubFetch({
@@ -403,5 +412,178 @@ describe("Lua account deletion", () => {
       "Could not sign out everywhere. Try again.",
     ];
     for (const message of messages) expect(messageWidth(message), message).toBeLessThan(limit);
+  });
+});
+
+describe("Lua session checks", () => {
+  const busy = (publish: ReturnType<typeof setup>["publish"]) =>
+    publish.mock.calls.map(([snapshot]) => String(snapshot).split("\t")[A("busy")]);
+  /** /auth/me answers the first check at once and holds every later one until `answer`. */
+  const heldChecks = (routes: Record<string, () => Response> = {}) => {
+    let answer: (response: Response) => void = () => {};
+    let checks = 0;
+    const stub = stubFetch({
+      ...routes,
+      "GET /auth/me": () => {
+        checks++;
+        if (checks === 1) return json(USER);
+        return new Promise<Response>((done) => {
+          answer = done;
+        });
+      },
+    });
+    return { ...stub, answer: (response: Response) => answer(response) };
+  };
+  const later = () => vi.advanceTimersByTime(SESSION_CHECK_MAX_AGE_MS + 1);
+
+  it("a navigation check of an older session publishes nothing when the answer is the same", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const held = heldChecks();
+      const { account, publish } = setup();
+      await account.refresh();
+      const before = publish.mock.calls.length;
+      later();
+      const check = account.command(encodeFields(["refresh"]));
+      expect(account.busy).toBe(false);
+      expect(publish.mock.calls.length).toBe(before);
+      held.answer(json(USER));
+      await check;
+      expect(held.calls).toEqual(["GET /auth/me", "GET /auth/me"]);
+      expect(publish.mock.calls.length).toBe(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("a navigation check publishes the change when the session is gone or renamed", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const held = heldChecks();
+      const { account, publish } = setup();
+      await account.refresh();
+      const before = publish.mock.calls.length;
+      later();
+      const renamed = account.command(encodeFields(["refresh"]));
+      held.answer(json({ ...USER, displayName: "Misty" }));
+      await renamed;
+      expect(publish.mock.calls.length).toBe(before + 1);
+      expect(account.user?.displayName).toBe("Misty");
+      later();
+      const gone = account.command(encodeFields(["refresh"]));
+      held.answer(json({}, 401));
+      await gone;
+      expect(account.status).toBe("anonymous");
+      expect(publish.mock.calls.length).toBe(before + 2);
+      expect(busy(publish).slice(-2)).toEqual(["0", "0"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("a navigation check that cannot reach the server keeps the session and asks again next time", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const held = heldChecks();
+      const { account, publish } = setup();
+      await account.refresh();
+      const before = publish.mock.calls.length;
+      later();
+      const check = account.command(encodeFields(["refresh"]));
+      held.answer(json({}, 503));
+      await check;
+      expect(account.status).toBe("authenticated");
+      expect(account.message).toBe("");
+      expect(publish.mock.calls.length).toBe(before);
+      const again = account.command(encodeFields(["refresh"]));
+      held.answer(json(USER));
+      await again;
+      expect(held.calls).toHaveLength(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("a sign-out pressed during a navigation check goes ahead, and the check's answer is dropped", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const held = heldChecks({ "POST /auth/logout": () => json({}) });
+      const { account } = setup();
+      await account.refresh();
+      later();
+      const check = account.command(encodeFields(["refresh"]));
+      await account.command(encodeFields(["logout"]));
+      expect(held.calls).toContain("POST /auth/logout");
+      expect(account.status).toBe("anonymous");
+      held.answer(json(USER));
+      await check;
+      expect(account.status).toBe("anonymous");
+      expect(account.user).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("a save pressed during a navigation check goes ahead", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const held = heldChecks({ "PATCH /auth/me": () => json({ ...USER, displayName: "Brock" }) });
+      const { account } = setup();
+      await account.refresh();
+      later();
+      const check = account.command(encodeFields(["refresh"]));
+      await account.command(encodeFields(["save", "Brock"]));
+      expect(account.message).toBe("Saved.");
+      held.answer(json(USER));
+      await check;
+      expect(account.user?.displayName).toBe("Brock");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("Retry after a failed check shows the check while it runs", async () => {
+    let answer = () => json({}, 503);
+    stubFetch({ "GET /auth/me": () => answer() });
+    const { account, publish } = setup();
+    await account.refresh();
+    expect(account.status).toBe("error");
+    publish.mockClear();
+    answer = () => json(USER);
+    await account.command(encodeFields(["refresh"]));
+    expect(busy(publish)).toEqual(["1", "0"]);
+    expect(account.status).toBe("authenticated");
+  });
+  it("a refresh while a check is in flight waits for that check instead of answering at once", async () => {
+    const held = heldChecks();
+    const { account } = setup();
+    await account.refresh();
+    const navigation = account.refresh();
+    let settled = false;
+    const recovery = account.refresh().then(() => {
+      settled = true;
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    held.answer(json({}, 401));
+    await Promise.all([navigation, recovery]);
+    expect(account.status).toBe("anonymous");
+    expect(held.calls).toEqual(["GET /auth/me", "GET /auth/me"]);
+  });
+  it("session recovery answers from the check in flight, so a gone session is not retried", async () => {
+    const held = heldChecks({ "GET /decks/d1": () => json({}, 401) });
+    const { account } = setup();
+    api.setSessionRecoveryHandler(() => account.recover());
+    try {
+      await account.refresh();
+      const navigation = account.refresh();
+      const deck = api.getDeck("d1").then(
+        () => "ok",
+        (error: api.ApiError) => error.status,
+      );
+      await Promise.resolve();
+      held.answer(json({}, 401));
+      await navigation;
+      expect(await deck).toBe(401);
+      expect(account.status).toBe("anonymous");
+      expect(held.calls.filter((call) => call === "GET /decks/d1")).toHaveLength(1);
+    } finally {
+      api.setSessionRecoveryHandler(null);
+    }
   });
 });

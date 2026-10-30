@@ -135,10 +135,9 @@ const screens: Record<BridgeScreen, Screen> = {
     history.replaceState(history.state, "", url);
   }
 }
-setSessionRecoveryHandler(async () => {
-  await account.refresh();
-  return account.status === "authenticated";
-});
+// A 401 elsewhere waits for the session check in flight, if any, rather than answering from the
+// status before it.
+setSessionRecoveryHandler(() => account.recover());
 
 let noticeRevision = 0;
 /** A line Lua shows and says on whatever page is open. */

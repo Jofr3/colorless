@@ -76,6 +76,8 @@ export class LuaAccount {
   private authNotice = "";
   /** When the server last answered who is signed in. */
   private checkedAt = Number.NEGATIVE_INFINITY;
+  /** The session check in flight, until it settles. */
+  private checking: Promise<void> | undefined;
   constructor(private publish: (snapshot: string) => void) {}
 
   private emit() {
@@ -97,13 +99,37 @@ export class LuaAccount {
     );
   }
 
-  /** Asks the server who is signed in, unless it answered within `maxAgeMs`. */
-  async refresh(maxAgeMs = 0) {
-    if (this.busy || Date.now() - this.checkedAt < maxAgeMs) return;
+  /** Asks the server who is signed in, unless it answered within `maxAgeMs`; a check already in
+   * flight answers instead, so a caller that needs the server's answer (the session recovery)
+   * gets it rather than the status from before. With no answer yet (booting, or after a failed
+   * check, where Retry sends this) the check shows as busy. A session the page already knows is
+   * revalidated in the background: neither busy nor a message, and published only when the
+   * status or the user changed. */
+  refresh(maxAgeMs = 0): Promise<void> {
+    if (this.checking) return this.checking;
+    if (this.busy || Date.now() - this.checkedAt < maxAgeMs) return Promise.resolve();
+    const visible = this.status === "loading" || this.status === "error";
+    const check = this.check(visible).finally(() => {
+      if (this.checking === check) this.checking = undefined;
+    });
+    this.checking = check;
+    return check;
+  }
+
+  /** Whether the session survived, by the server's answer: the session recovery's handler. */
+  async recover(): Promise<boolean> {
+    await this.refresh();
+    return this.status === "authenticated";
+  }
+
+  private async check(visible: boolean) {
     const op = ++this.operation;
-    this.busy = true;
-    this.message = "";
-    this.emit();
+    const before = this.sessionKey();
+    if (visible) {
+      this.busy = true;
+      this.message = "";
+      this.emit();
+    }
     try {
       const user = await me();
       if (op !== this.operation) return;
@@ -112,18 +138,36 @@ export class LuaAccount {
       this.checkedAt = Date.now();
     } catch (error) {
       if (op !== this.operation) return;
+      const gone = error instanceof ApiError && error.status === 401;
+      // Unreachable in the background: keep what the page knows; the next navigation asks again.
+      if (!visible && !gone) return;
       this.user = null;
-      this.status = error instanceof ApiError && error.status === 401 ? "anonymous" : "error";
-      this.checkedAt = this.status === "anonymous" ? Date.now() : Number.NEGATIVE_INFINITY;
-      this.message =
-        this.status === "error" ? "Could not reach the server. Try again." : this.authNotice;
-      this.authNotice = "";
+      this.status = gone ? "anonymous" : "error";
+      this.checkedAt = gone ? Date.now() : Number.NEGATIVE_INFINITY;
+      if (visible) {
+        this.message =
+          this.status === "error" ? "Could not reach the server. Try again." : this.authNotice;
+        this.authNotice = "";
+      }
     } finally {
-      if (op === this.operation) {
+      if (op === this.operation && visible) {
         this.busy = false;
         this.emit();
-      }
+      } else if (op === this.operation && this.sessionKey() !== before) this.emit();
     }
+  }
+
+  /** What a background check compares: the status and every published field of the user. */
+  private sessionKey() {
+    const u = this.user;
+    return JSON.stringify([
+      this.status,
+      u?.id,
+      u?.displayName,
+      u?.email,
+      u?.hasPassword,
+      u?.namePrompt,
+    ]);
   }
 
   noteAuthError(code: string) {
