@@ -30,11 +30,12 @@ local function clip(r,f,side,at)
   else r.t=math.min(f.y,math.max(r.t,at)) end
 end
 local function rect(r) return {x=r.l,y=r.t,w=r.r-r.l,h=r.b-r.t} end
--- The rectangle `b` takes with nothing around it: minW x minH centred on the face, shifted back
--- inside `bounds` (what one side cannot take goes to the other).
+-- The rectangle `b` takes with nothing around it: minW x minH centred on the face (or hanging
+-- from its top when b.hitGrow is 'down', for a control just under something), shifted back inside
+-- `bounds` (what one side cannot take goes to the other).
 local function target(b,minW,minH,bounds)
   local w,h=math.max(b.w,minW),math.max(b.h,minH)
-  local r={l=b.x-(w-b.w)/2,t=b.y-(h-b.h)/2}
+  local r={l=b.x-(w-b.w)/2,t=b.hitGrow=='down' and b.y or b.y-(h-b.h)/2}
   r.r,r.b=r.l+w,r.t+h
   if bounds then
     local bl,bt=math.min(bounds.x,b.x),math.min(bounds.y,b.y)
