@@ -64694,4 +64694,14 @@ export const MUTANTS: Mutant[] = [
     replace: "    const by = 1;",
     expectKilledBy: ["src/lua/builder.test.ts"],
   },
+  {
+    id: "UI-ST3-builder-save-not-told",
+    decision: "UI-ST3",
+    what: "A landed builder save is not handed to deckSaved, so a deck list wired to it stays stale. Killed by builder.test's deckSaved case.",
+    file: "src/lua/builder.ts",
+    symbol: "LuaBuilder",
+    find: "            this.deckSaved(result);\n",
+    replace: "",
+    expectKilledBy: ["src/lua/builder.test.ts"],
+  },
 ];

@@ -181,6 +181,9 @@ export class LuaBuilder {
   selected = "";
   details = "";
   transfer = "";
+  /** Told the deck as the server holds it each time a save lands, so pages that list decks can
+      show it without asking again. Nothing listens until bridge.ts sets it. */
+  deckSaved: (deck: SavedDeck) => void = () => {};
   private user = "";
   private active = false;
   private readonly epoch = epochGuard();
@@ -571,6 +574,7 @@ export class LuaBuilder {
             version = result.version;
             unconfirmed.clear();
             if (live()) this.acknowledged = key;
+            this.deckSaved(result);
             return result;
           } catch (error) {
             // The server may or may not hold this snapshot, so every state counts as unsaved.

@@ -305,6 +305,16 @@ describe("Lua deck builder", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(status()).toBe("");
   });
+  it("hands each deck a save returns to deckSaved", async () => {
+    const saved = deck([{ cardId: "a", count: 1 }]);
+    vi.mocked(api.patchDeck).mockResolvedValue(saved);
+    const { b } = await setup();
+    b.deckSaved = vi.fn();
+    await b.command("add\ta");
+    expect(b.deckSaved).not.toHaveBeenCalled();
+    await tick();
+    expect(b.deckSaved).toHaveBeenCalledExactlyOnceWith(saved);
+  });
   it("sends a failed save again when asked, as when the network returns", async () => {
     vi.mocked(api.patchDeck).mockRejectedValue(new TypeError("Failed to fetch"));
     const { b } = await setup();
