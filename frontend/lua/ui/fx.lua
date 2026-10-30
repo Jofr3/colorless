@@ -50,11 +50,12 @@ function Fx:draw(roomWidth)
     local age=self.time-at.start
     if at.backdrop then
       -- Particles{scale=2.4, lifespan=5, speed=0}: one square growing from the centre.
-      -- Under reduced motion it is full size at its starting tilt, and does not spin.
-      local reduced=self.reduced
-      local size=(reduced and 2.4 or math.min(2*(age/5)*2.4,2.4))*60*(at.text.scale or 1)*0.7
+      -- Under reduced motion it holds the size and tilt it reaches with motion on as the
+      -- text's hold ends, the largest pose motion-on players see, and neither grows nor spins.
+      local pose=self.reduced and at.hold or age
+      local size=math.min(2*(pose/5)*2.4,2.4)*60*(at.text.scale or 1)*0.7
       local c=at.backdrop
-      g.push();g.translate(x,y);g.rotate(reduced and at.rotation or at.rotation+age*0.1)
+      g.push();g.translate(x,y);g.rotate(at.rotation+pose*0.1)
       g.setColor(c[1],c[2],c[3],(c[4] or 1)*at.fade)
       g.rectangle('fill',-size/2,-size/2,size,size)
       g.pop()

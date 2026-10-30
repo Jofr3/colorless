@@ -98,7 +98,7 @@ for _,pop in ipairs(pops(on)) do local p=math.min(1,math.max(1-(8.2-8)*3,0));che
 print('PASS: DynaText pops in and out as before with motion on and shows whole under reduced motion')
 
 -- Attention text: the backdrop square grows from the centre and spins with motion on;
--- under reduced motion it is full size at its resting tilt, and the frame repeats.
+-- under reduced motion it holds one pose, and the frame repeats while the text holds.
 local function attention(reduced,start)
   local fx=Fx.new({feedback=noop,jiggle=noop})
   fx:update(0,start,reduced,false)
@@ -120,17 +120,33 @@ for step=1,40 do
   check(angle==at.rotation+age*0.1,'Motion on: the backdrop spins as before')
   check(size==math.min(2*(age/5)*2.4,2.4)*60*(at.text.scale or 1)*0.7,'Motion on: the backdrop grows as before')
 end
+-- Under reduced motion the backdrop holds the pose motion on reaches when the text's hold
+-- ends (age at.hold): the largest pose a motion-on player sees, smaller than the full square.
+local function held(at)
+  return at.rotation+at.hold*0.1,math.min(2*(at.hold/5)*2.4,2.4)*60*(at.text.scale or 1)*0.7
+end
 fx,at=attention(true,3)
+local heldAngle,heldSize=held(at)
+check(heldSize<2.4*60*(at.text.scale or 1)*0.7,'The hold-end pose is smaller than the full square')
 local first
 for step=1,40 do
   local time=3+step*0.05
   local out,angle,size=backdrop(fx,time,true)
-  check(angle==at.rotation,'Reduced motion: the backdrop does not spin')
-  check(size==2.4*60*(at.text.scale or 1)*0.7,'Reduced motion: the backdrop is full size')
+  check(angle==heldAngle,'Reduced motion: the backdrop holds the tilt motion on reaches as the hold ends')
+  check(size==heldSize,'Reduced motion: the backdrop holds the size motion on reaches as the hold ends')
   first=first or out
   check(out==first,'Reduced motion: the held attention text draws the same frame at '..time)
 end
-print('PASS: the attention backdrop grows and spins as before with motion on and holds full size under reduced motion')
+local fading=0
+for step=1,5 do
+  local _,angle,size=backdrop(fx,3+at.hold+step*0.05,true)
+  if size then
+    fading=fading+1
+    check(angle==heldAngle and size==heldSize,'Reduced motion: the fading backdrop keeps the hold-end pose')
+  end
+end
+check(fading>0,'The backdrop is drawn while it fades')
+print('PASS: the attention backdrop grows and spins as before with motion on and holds its hold-end pose under reduced motion')
 
 -- Pages: under reduced motion a frame repeats at any time (main.lua's redraw gate relies on it
 -- for Settings); with motion on the tab markers still bob, so callers pass the real time.
