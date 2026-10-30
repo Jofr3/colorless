@@ -135,3 +135,24 @@ for _,screen in ipairs(SCREENS) do
 end
 Display.set({scale=1,collection=1,portrait=false})
 print('PASS: builder row actions and Retry hit areas; no hit area reaches another control')
+
+-- QA11: a pile's card count is secondary text, at least 11 CSS px on a phone held upright.
+local Labels=require('ui.deck_labels')
+local Pile=require('ui.deck_pile')
+local function countEm(css,portrait)
+  Display.set({scale=css,collection=css,portrait=portrait})
+  local pile=Pile.new({kind='deck',id='x',name='X',count=60,backColour='red',drawFace=function() end},1)
+  pile:place(240,300,0.68,false,480)
+  local smallest=math.huge
+  local print=love.graphics.print
+  love.graphics.print=function(text,x,y,r,sx) smallest=math.min(smallest,sx*200) end
+  Labels.drawCounter(pile)
+  love.graphics.print=print
+  return smallest*css
+end
+check(countEm(0.78,true)>=11-1e-9,'The count is at least 11 CSS px at 375 px wide ('..countEm(0.78,true)..')')
+check(countEm(0.75,true)>=11-1e-9,'and at 360 px wide')
+local desktop=countEm(1,false)
+check(math.abs(desktop-0.3*D.W*0.68/D.TILE_W)<1e-9,'Elsewhere the count keeps its size ('..desktop..')')
+Display.set({scale=1,collection=1,portrait=false})
+print('PASS: pile counts are at least 11 CSS px on a phone held upright')

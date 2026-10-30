@@ -4,6 +4,7 @@ local D=require('ui.card_dimensions')
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
+local Display=require('ui.display')
 local Labels={}
 local g=love.graphics
 local CARD_W,CARD_H=D.TILE_W,D.TILE_H
@@ -12,13 +13,15 @@ local function metric(text,scale)
   return font:getWidth(text)*scale*0.1/20,font:getHeight()*scale*0.1/20*0.83
 end
 Labels.metric=metric
-function Labels.counter(count,limit)
+-- `scale`: the text's UIElement scale, 0.3 unless a phone needs it larger.
+function Labels.counter(count,limit,scale)
+  scale=scale or 0.3
   local nodes={}
   local values={tostring(count),'/',tostring(limit or count)}
   local width=0.2+(#values+3)*0.03 -- two 0.1-tile spacers and node padding
   for _,text in ipairs(values) do
-    local w,h=metric(text,0.3)
-    nodes[#nodes+1]={text=text,w=w,h=h,scale=0.3}
+    local w,h=metric(text,scale)
+    nodes[#nodes+1]={text=text,w=w,h=h,scale=scale}
     width=width+w
   end
   local areaWidth=1.1*CARD_W
@@ -60,7 +63,10 @@ local function text(node,unit,shadow,parallax)
   g.print(node.text,x+10*factor,y-20*factor,0,factor,factor)
 end
 local function drawCounter(card,count,limit)
-  local nodes,bottom=Labels.counter(count,limit)
+  -- On a phone held upright the count is at least Display.MIN_TEXT_CSS (audit QA11); its em is
+  -- the scale times the pile's unit.
+  local scale=Display.phone() and math.max(0.3,Display.MIN_TEXT_CSS/(card.unit*Display.collection)) or nil
+  local nodes,bottom=Labels.counter(count,limit,scale)
   local gap=0.08*card.unit -- extra clearance below the pile in the library
   g.push(); g.translate(card.homeX,card.homeY+gap)
   for _,node in ipairs(nodes) do text(node,card.unit,false) end
