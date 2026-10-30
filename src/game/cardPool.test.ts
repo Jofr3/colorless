@@ -2,7 +2,7 @@ import { type Card, MAX_ID_VALUES } from "@colorless/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
-import { clearCardPoolCache, fetchCardPool } from "./cardPool";
+import { cachedCard, clearCardPoolCache, fetchCard, fetchCardPool } from "./cardPool";
 
 /** A full wire-shaped Card (every column, null off-category) keyed by id. */
 function card(id: string): Card {
@@ -145,5 +145,46 @@ describe("fetchCardPool", () => {
     expect(Object.keys(pool)).toHaveLength(many.length);
     expect(missing).toEqual([]);
     expect(sizes).toEqual([MAX_ID_VALUES, MAX_ID_VALUES, 5]);
+  });
+});
+
+describe("fetchCard", () => {
+  it("asks GET /cards/:id once, and shares the Card with cachedCard and fetchCardPool", async () => {
+    const { calls } = stubFetch({
+      "GET /cards/a": () => json(card("a")),
+      "GET /cards/full": fullCardsFrom({}),
+    });
+    expect(cachedCard("a")).toBeUndefined();
+    const [first, second] = await Promise.all([fetchCard("a"), fetchCard("a")]);
+    expect(first).toEqual(card("a"));
+    expect(second).toEqual(first);
+    expect(cachedCard("a")).toEqual(first);
+    await expect(fetchCard("a")).resolves.toEqual(first);
+    expect((await fetchCardPool(["a"])).pool).toEqual({ a: first });
+    expect(calls).toEqual(["GET /cards/a"]);
+  });
+
+  it("serves a Card fetchCardPool already brought", async () => {
+    const { calls } = stubFetch({ "GET /cards/full": fullCardsFrom({ b: card("b") }) });
+    await fetchCardPool(["b"]);
+    await expect(fetchCard("b")).resolves.toEqual(card("b"));
+    expect(calls).toEqual(["GET /cards/full"]);
+  });
+
+  it("forgets a failed request, so the next call asks again", async () => {
+    let fail = true;
+    const { calls } = stubFetch({
+      "GET /cards/a": () => (fail ? json({ error: "internal" }, 500) : json(card("a"))),
+    });
+    await expect(fetchCard("a")).rejects.toBeInstanceOf(ApiError);
+    fail = false;
+    await expect(fetchCard("a")).resolves.toEqual(card("a"));
+    expect(calls).toEqual(["GET /cards/a", "GET /cards/a"]);
+  });
+
+  it("rejects for an id the catalog is known to lack", async () => {
+    stubFetch({ "GET /cards/full": fullCardsFrom({}) });
+    await fetchCardPool(["gone"]);
+    await expect(fetchCard("gone")).rejects.toThrow("gone");
   });
 });

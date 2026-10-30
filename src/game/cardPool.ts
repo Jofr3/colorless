@@ -1,8 +1,9 @@
 // Deck card ids to the engine's `cardPool`: full Cards fetched through GET /cards/full, one request
-// per MAX_ID_VALUES ids not already cached. Results are cached module-wide.
+// per MAX_ID_VALUES ids not already cached. Results are cached module-wide, and shared with the
+// builder's card details (`fetchCard`).
 
 import { type Card, MAX_ID_VALUES } from "@colorless/schema";
-import { getFullCards } from "../lib/api";
+import { getCard, getFullCards } from "../lib/api";
 
 /** Cached verdict for an id the catalog does not hold. Absence is a stable
     catalog fact (it won't change match to match), so — unlike a transient
@@ -54,6 +55,29 @@ function requestMissing(ids: string[]): void {
       cache.set(id, pending);
     }
   }
+}
+
+/** `id`'s full Card: from the cache, else one GET /cards/:id, cached like a batch's. Rejects for
+    an id the catalog is known to lack, and on a failed request, which is not kept. */
+export async function fetchCard(id: string): Promise<Card> {
+  let entry = cache.get(id);
+  if (entry === undefined) {
+    const pending: Promise<Card | typeof MISSING> = getCard(id).then(
+      (card) => {
+        if (cache.get(id) === pending) arrived.set(id, card);
+        return card;
+      },
+      (error: unknown) => {
+        if (cache.get(id) === pending) cache.delete(id);
+        throw error;
+      },
+    );
+    cache.set(id, pending);
+    entry = pending;
+  }
+  const card = await entry;
+  if (card === MISSING) throw new Error(`Card ${id} is not in the catalog`);
+  return card;
 }
 
 /** Fetch every unique id's full Card. An id the catalog lacks lands in

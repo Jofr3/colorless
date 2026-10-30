@@ -919,6 +919,86 @@ describe("deck cards before their details arrive", () => {
   });
 });
 
+describe("card details", () => {
+  const H = WIRE_ROWS.builder.header;
+  const C = WIRE_ROWS.builder.card;
+  const rowsOf = (raw: unknown) =>
+    String(raw)
+      .split("\n")
+      .map((line) => line.split("\t").map(decodeURIComponent));
+  const fullCard = (id: string) =>
+    ({
+      ...card(id, "Charmander"),
+      effect: null,
+      abilities: null,
+      attacks: [{ name: "Ember", damage: 30, effect: "Discard an Energy." }],
+    }) as unknown as Card;
+  type Engine = Awaited<typeof import("@colorless/engine")>;
+  /** A builder whose rules engine loads only when the test says. */
+  async function heldEngine() {
+    let load!: (engine: Pick<Engine, "simulationGaps">) => void;
+    const loaded = new Promise<Pick<Engine, "simulationGaps">>((resolve) => {
+      load = resolve;
+    });
+    const engine = vi.fn(() => loaded);
+    const publish = vi.fn();
+    const b = new LuaBuilder(publish, vi.fn(), vi.fn(), engine);
+    b.session("authenticated", "u1");
+    await b.command("open\tone");
+    return {
+      b,
+      publish,
+      engine,
+      load: (gaps: string[]) => load({ simulationGaps: () => gaps as never }),
+    };
+  }
+
+  it("shows a card's rules text before the rules engine loads, and its gaps once it does", async () => {
+    let answer!: (c: Card) => void;
+    vi.mocked(api.getCard).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+    const { b, publish, engine, load } = await heldEngine();
+    const opened = b.command("detail\ta");
+    // The engine loads alongside the card's request, which has not answered yet.
+    expect(engine).toHaveBeenCalledTimes(1);
+    answer(fullCard("a"));
+    await opened;
+    const shown = rowsOf(publish.mock.lastCall?.[0]);
+    expect(shown[0]?.[wireColumn(H, "details")]).toBe("Ember  30\nDiscard an Energy.");
+    const selected = () => rowsOf(publish.mock.lastCall?.[0]).find((r) => r[0] === "S");
+    expect(selected()?.[wireColumn(C, "gaps")]).toBe("");
+    load(["attack"]);
+    await tick();
+    expect(selected()?.[wireColumn(C, "gaps")]).toBe("attack");
+  });
+
+  it("asks GET /cards/:id once per card, from the card pool's cache", async () => {
+    vi.mocked(api.getCard).mockImplementation(async (id) => fullCard(id));
+    const { b, load } = await heldEngine();
+    load([]);
+    await b.command("detail\ta");
+    await b.command("detail\tb");
+    await b.command("detail\ta");
+    expect(vi.mocked(api.getCard).mock.calls).toEqual([["a"], ["b"]]);
+    expect(b.details).toBe("Ember  30\nDiscard an Energy.");
+  });
+
+  it("says the details could not load, and loads them on the next try", async () => {
+    vi.mocked(api.getCard).mockRejectedValueOnce(new Error("offline"));
+    vi.mocked(api.getCard).mockResolvedValue(fullCard("a"));
+    const { b, load } = await heldEngine();
+    load([]);
+    await b.command("detail\ta");
+    expect(b.details).toBe("Details could not load. Close and reopen to retry.");
+    await b.command("detail\ta");
+    expect(b.details).toBe("Ember  30\nDiscard an Energy.");
+  });
+});
+
 describe("filter options", () => {
   it("asks for the filter options alongside the deck, once, and the decklist import reuses them", async () => {
     let answer!: (d: Deck) => void;

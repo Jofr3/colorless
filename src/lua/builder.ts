@@ -1,6 +1,8 @@
 import type { SimulationGap } from "@colorless/engine";
+type Engine = Pick<typeof import("@colorless/engine"), "simulationGaps">;
 import * as api from "../lib/api";
 import {
+  type Card,
   type CardsQueryParams,
   DECK_NAME_MAX,
   MAX_DECK_CARD_ENTRIES,
@@ -40,7 +42,7 @@ import {
 import { createDeckSaver, type DeckSaver, outcomeUnknown } from "../decks/deckSaver";
 import { savedSnapshot, toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
-import { cachedCard } from "../game/cardPool";
+import { cachedCard, fetchCard } from "../game/cardPool";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { reportError } from "../lib/reportError";
 import type { AccountStatus } from "./account";
@@ -115,6 +117,21 @@ function conflictingDeck(error: unknown): SavedDeck | null | undefined {
   if (!(error instanceof api.ApiError) || error.status !== 409) return undefined;
   const parsed = deckConflictSchema.safeParse(error.body);
   return parsed.success ? parsed.data.deck : null;
+}
+
+/** What the card details panel shows: the card's effect, abilities and attacks. */
+function rulesText(c: Card): string {
+  return (
+    [
+      c.effect,
+      ...(c.abilities ?? []).map((x) => `${x.name}: ${x.effect ?? ""}`),
+      ...(c.attacks ?? []).map(
+        (x) => `${x.name}${x.damage ? `  ${x.damage}` : ""}\n${x.effect ?? ""}`,
+      ),
+    ]
+      .filter(Boolean)
+      .join("\n\n") || "No additional rules text."
+  );
 }
 
 /** The filter options, each shared module-wide (catalog.ts). */
@@ -192,6 +209,8 @@ export class LuaBuilder {
     private publish: (raw: string) => void,
     private back: () => void,
     private images: (cards: { id: string; url: string }[]) => void = () => {},
+    /** The rules engine, a separate chunk; loaded with the first card details. */
+    private engine: () => Promise<Engine> = () => import("@colorless/engine"),
   ) {}
   session(status: AccountStatus, user: string) {
     const next = sessionUser(status, user, this.user);
@@ -1082,36 +1101,43 @@ export class LuaBuilder {
     this.filters = { ...this.filters, [key]: value };
     if (key === "supertype") this.filters = { ...this.filters, subtypes: [], suffixes: [] };
   }
+  /** Shows the card's rules text as soon as it arrives, and what the simulator cannot play of it
+      once the rules engine has loaded: the engine loads with the first card shown, not with the
+      page, and the text does not wait for it. */
   private async onDetail(id: string) {
     const live = this.epoch.current();
     this.selected = id;
     this.details = "Loading card details...";
     this.emit();
+    const engine = this.engine();
+    // A failed engine load is reported where its gaps are awaited.
+    engine.catch(() => {});
+    let c: Card;
     try {
-      // The rules engine loads with the first card shown, not with the page.
-      const [c, { simulationGaps }] = await Promise.all([
-        api.getCard(id),
-        import("@colorless/engine"),
-      ]);
-      if (!live() || this.selected !== id) return;
-      this.cards.set(c.id, toBuilderCard(c));
-      this.gaps.set(c.id, simulationGaps(c));
-      this.details =
-        [
-          c.effect,
-          ...(c.abilities ?? []).map((x) => `${x.name}: ${x.effect ?? ""}`),
-          ...(c.attacks ?? []).map(
-            (x) => `${x.name}${x.damage ? `  ${x.damage}` : ""}\n${x.effect ?? ""}`,
-          ),
-        ]
-          .filter(Boolean)
-          .join("\n\n") || "No additional rules text.";
+      c = await fetchCard(id);
     } catch (error) {
       reportError("load card details", error);
       if (!live() || this.selected !== id) return;
       this.details = "Details could not load. Close and reopen to retry.";
+      this.emit();
+      return;
     }
+    if (!live() || this.selected !== id) return;
+    this.cards.set(c.id, toBuilderCard(c));
+    this.details = rulesText(c);
     this.emit();
+    void this.addGaps(c, engine, live);
+  }
+  private async addGaps(c: Card, engine: Promise<Engine>, live: () => boolean) {
+    if (this.gaps.has(c.id)) return;
+    try {
+      const { simulationGaps } = await engine;
+      if (!live()) return;
+      this.gaps.set(c.id, simulationGaps(c));
+      this.emit();
+    } catch (error) {
+      reportError("load rules engine", error);
+    }
   }
   /** The decklist waits for the deck's cards, so it never leaves out the ones still loading. */
   private async onExport() {
