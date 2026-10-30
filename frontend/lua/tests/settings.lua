@@ -12,8 +12,19 @@ p:set('volume',-1); assert(p.volume==0)
 local restored=Preferences.new(p:serialize())
 assert(restored:serialize()==p:serialize())
 assert(Preferences.new('broken'):serialize()==Preferences.new():serialize())
+-- The frame-rate key was appended as a ninth value: a record saved before it (eight values)
+-- keeps every saved setting and takes the new key's default, and a nine-value record round-trips.
+assert(p.highFrameRate==0,'60 fps is the default')
+local legacy=Preferences.new('20 1 0 1 35 80 60 1')
+assert(legacy.screenshake==20 and legacy.reducedMotion==1 and legacy.crt==0 and legacy.bloom==1 and
+  legacy.volume==35 and legacy.musicVolume==80 and legacy.effectsVolume==60 and legacy.muted==1,
+  'An eight-value record from before the frame-rate key keeps its settings')
+assert(legacy.highFrameRate==0 and legacy:serialize()=='20 1 0 1 35 80 60 1 0','It takes the default frame rate')
+assert(Preferences.new('20 1 0 1 35 80 60 1 1').highFrameRate==1,'A nine-value record reads its frame rate')
+assert(Preferences.new('20 1 0 1 35 80 60').crt==70,'A record with too few values is not read')
+assert(Preferences.new('20 1 0 1 35 80 60 1 1 1').crt==70,'A record with too many values is not read')
 local stored=Preferences.new('{"version":1,"screenshake":20,"reducedMotion":1,"crt":0,"bloom":1,"volume":35,"musicVolume":80,"effectsVolume":60,"muted":1}')
-assert(stored:serialize()=='20 1 0 1 35 80 60 1','A JSON record reads field by field')
+assert(stored:serialize()=='20 1 0 1 35 80 60 1 0','A JSON record reads field by field')
 assert(Preferences.new('{"crt":250}').crt==100 and Preferences.new('{"crt":250}').volume==50)
 local changes,closed,announcements=0,0,{}
 local popup=Settings.new(p,{

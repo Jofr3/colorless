@@ -19,7 +19,9 @@ local rows={
   {{kind='slider',key='screenshake',label='Screenshake'},
    {kind='toggle',key='reducedMotion',label='Reduced Motion'}},
   {{kind='slider',key='crt',label='CRT'},
-   {kind='cycle',key='bloom',label='CRT Bloom'}},
+   {kind='cycle',key='bloom',label='CRT Bloom'},
+   -- The update and draw cap (main.lua frameCap); `options` names each value, from 0.
+   {kind='cycle',key='highFrameRate',label='Max Frame Rate',options={'60 FPS','144 FPS'}}},
   {{kind='slider',key='volume',label='Master Volume'},
    {kind='slider',key='musicVolume',label='Music Volume'},
    {kind='slider',key='effectsVolume',label='Game Sounds'},
@@ -268,6 +270,7 @@ function Settings:describe(item)
   if item.kind=='prompt-later' then return 'Later. Asks again next time.' end
   if item.kind=='name' then return item.label..': '..self.account.draftName..'. Enter to edit.' end
   if item.kind=='email' then return 'Email: '..self.account.email..'. Disabled.' end
+  if item.options then return item.label..': '..item.options[self:value(item)+1] end
   return item.label..': '..((item.kind=='toggle' or item.kind=='cycle') and (self:value(item)==1 and 'on' or 'off') or self:value(item))
 end
 function Settings:hit(x,y,hoverOnly)
@@ -450,7 +453,7 @@ function Settings:draw()
       local depth=highlighted and 0.5 or 0.7
       panel(x,y+6,centreWidth,38.4,{colour[1]*depth,colour[2]*depth,colour[3]*depth,1})
       panel(x,y,centreWidth,38.4,Button.hoverColour(colour,highlighted))
-      local label=self:value(item)==1 and 'On' or 'Off'
+      local label=item.options and item.options[self:value(item)+1] or self:value(item)==1 and 'On' or 'Off'
       local size=24
       while size>12 and T.font(size):getWidth(label)>centreWidth-12 do size=size-1 end
       local textScale=math.min(1,(centreWidth-12)/math.max(1,T.font(size):getWidth(label)))

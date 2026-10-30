@@ -1,8 +1,13 @@
 local Preferences={}
 Preferences.__index=Preferences
-Preferences.keys={'screenshake','reducedMotion','crt','bloom','volume','musicVolume','effectsVolume','muted'}
-Preferences.defaults={screenshake=50,reducedMotion=-1,crt=70,bloom=0,volume=50,musicVolume=100,effectsVolume=100,muted=0}
-local ranges={reducedMotion={-1,1},bloom={0,1},muted={0,1}}
+-- The record is positional (serialize), so a new key is only ever appended.
+Preferences.keys={'screenshake','reducedMotion','crt','bloom','volume','musicVolume','effectsVolume','muted','highFrameRate'}
+-- highFrameRate: 0 caps update and draw at 60 per second, 1 allows 144 (main.lua frameCap).
+Preferences.defaults={screenshake=50,reducedMotion=-1,crt=70,bloom=0,volume=50,musicVolume=100,effectsVolume=100,muted=0,highFrameRate=0}
+local ranges={reducedMotion={-1,1},bloom={0,1},muted={0,1},highFrameRate={0,1}}
+-- How many values a record had before highFrameRate was appended: such a record keeps its
+-- settings, and the keys after them keep their defaults.
+local FIRST_RECORD_LENGTH=8
 function Preferences.new(raw)
   local self=setmetatable({},Preferences)
   for key,value in pairs(Preferences.defaults) do self[key]=value end
@@ -14,8 +19,8 @@ function Preferences.new(raw)
   elseif raw then
     local values={}
     for value in raw:gmatch('%S+') do values[#values+1]=tonumber(value) or false end
-    if #values==#Preferences.keys then
-      for i,key in ipairs(Preferences.keys) do self:set(key,values[i]) end
+    if #values>=FIRST_RECORD_LENGTH and #values<=#Preferences.keys then
+      for i=1,#values do self:set(Preferences.keys[i],values[i]) end
     end
   end
   return self
