@@ -72,6 +72,10 @@ interface Options {
   saveData?: boolean;
   /** build.mjs's per-file content hashes, the love-versions placeholder. */
   versions?: Record<string, string>;
+  /** window.devicePixelRatio, innerWidth and innerHeight. */
+  ratio?: number;
+  width?: number;
+  height?: number;
 }
 
 /** One boot of host.js over a fresh fake page. */
@@ -81,6 +85,9 @@ function boot({
   decompression = true,
   saveData,
   versions,
+  ratio = 1,
+  width = 1280,
+  height = 800,
 }: Options = {}) {
   const page = {
     activeElement: null as FakeElement | null,
@@ -168,6 +175,21 @@ function boot({
   const nativeAlerts: string[] = [];
   const errors: unknown[] = [];
   const windowTarget = new EventTarget();
+  // matchMedia over the fake page: reduced motion never matches, and a resolution query matches
+  // the current ratio, hearing "change" when the ratio moves off it.
+  const mediaQueries: { media: string; target: EventTarget }[] = [];
+  const matchMedia = (media: string) => {
+    const target = new EventTarget();
+    mediaQueries.push({ media, target });
+    return {
+      media,
+      get matches() {
+        return media === `(resolution: ${context.devicePixelRatio}dppx)`;
+      },
+      addEventListener: target.addEventListener.bind(target),
+      removeEventListener: target.removeEventListener.bind(target),
+    };
+  };
   const context: Record<string, unknown> = {
     document,
     console: { log() {}, info() {}, warn() {}, error: (...args: unknown[]) => errors.push(args) },
@@ -179,10 +201,11 @@ function boot({
     addEventListener: windowTarget.addEventListener.bind(windowTarget),
     removeEventListener: windowTarget.removeEventListener.bind(windowTarget),
     alert: (message: string) => void nativeAlerts.push(message),
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    matchMedia,
     performance: { mark() {}, measure() {} },
-    innerWidth: 1280,
-    innerHeight: 800,
+    innerWidth: width,
+    innerHeight: height,
+    devicePixelRatio: ratio,
     navigator: { connection: saveData === undefined ? undefined : { saveData } },
     fetch,
     Response,
@@ -337,6 +360,18 @@ function boot({
     alert: (message: string) => (context.alert as (message: string) => void)(message),
     contextLost: () =>
       elements.canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true })),
+    /** The page moves to a screen of another pixel ratio: no resize, only the media query. */
+    moveToRatio: (next: number) => {
+      const was = `(resolution: ${context.devicePixelRatio}dppx)`;
+      context.devicePixelRatio = next;
+      for (const query of mediaQueries)
+        if (query.media === was) query.target.dispatchEvent(new Event("change"));
+    },
+    /** The window resizes, or browser zoom changes the CSS size and the ratio together. */
+    resize: (w: number, h: number, nextRatio = context.devicePixelRatio) => {
+      Object.assign(context, { innerWidth: w, innerHeight: h, devicePixelRatio: nextRatio });
+      windowTarget.dispatchEvent(new Event("resize"));
+    },
   };
 }
 
@@ -848,5 +883,54 @@ describe("host.js transition scans (BT9)", () => {
     await settle();
     expect(cardFetches(page)).toHaveLength(2);
     expect(page.fetches.some((url) => url.startsWith("/love/music1.ogg"))).toBe(false);
+  });
+});
+
+describe("host.js viewport (BT6)", () => {
+  const viewport = (page: ReturnType<typeof boot>) => page.written.get(`/${MAILBOXES.viewport}`);
+
+  it("sends the CSS size, reduced motion and the device-pixel size at the full ratio", () => {
+    const page = boot({ ratio: 3, width: 390, height: 844 });
+    page.start();
+    expect(viewport(page)).toBe("390 844 0 1170 2532");
+  });
+
+  it("sends one device pixel per CSS pixel at ratio 1, and rounds a fractional ratio", () => {
+    const flat = boot();
+    flat.start();
+    expect(viewport(flat)).toBe("1280 800 0 1280 800");
+    const scaled = boot({ ratio: 1.25, width: 1366, height: 768 });
+    scaled.start();
+    expect(viewport(scaled)).toBe("1366 768 0 1708 960");
+  });
+
+  it("re-sends at once when the page moves to a screen of another ratio, with no resize", () => {
+    const page = boot();
+    page.start();
+    page.moveToRatio(2);
+    expect(viewport(page)).toBe("1280 800 0 2560 1600");
+    page.moveToRatio(1.5);
+    expect(viewport(page)).toBe("1280 800 0 1920 1200");
+    page.moveToRatio(1);
+    expect(viewport(page)).toBe("1280 800 0 1280 800");
+  });
+
+  it("re-sends after a resize, browser zoom's new ratio included", async () => {
+    const page = boot();
+    page.start();
+    page.resize(640, 400, 2);
+    await page.advance(100);
+    expect(viewport(page)).toBe("640 400 0 1280 800");
+  });
+});
+
+describe("host page viewport (BT7)", () => {
+  it("keeps the canvas inside the safe area: the viewport has no viewport-fit=cover", () => {
+    const page = readFileSync(repoPath("index.html"), "utf8");
+    const content = page.match(/<meta name="viewport" content="([^"]*)">/)?.[1];
+    const directives = Object.fromEntries(
+      (content ?? "").split(",").map((part) => part.split("=").map((side) => side.trim())),
+    );
+    expect(directives).toEqual({ width: "device-width", "initial-scale": "1" });
   });
 });

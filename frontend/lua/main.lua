@@ -18,6 +18,7 @@ local Modal = require('ui.modal')
 local MenuLogo = require('ui.menu_logo')
 local Controls = require('ui.controls')
 local Pacer = require('ui.frame_pacer')
+local Viewport = require('ui.viewport')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
@@ -29,7 +30,9 @@ local LATER_SHADERS={'background','dissolve','played'}
 local function ensureShader(name)
   local shader=rawget(shaders,name)
   if not shader then
-    shader=love.graphics.newShader('assets/shaders/'..name..'.fs')
+    local path='assets/shaders/'..name..'.fs'
+    local code=name=='CRT' and love.filesystem.read(path)
+    shader=love.graphics.newShader(code and Screen.source(code) or path)
     rawset(shaders,name,shader)
   end
   return shader
@@ -57,6 +60,8 @@ local account=Account.new()
 local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions,parkPointer
 local wipe,pendingPage
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
+-- Device pixels per CSS pixel: width and height are the canvas's device pixels (audit BT6).
+local density=1
 local menu = {
   {label='Sandbox', action='sandbox', colour=T.blue},
   {label='Online', action='online', colour=T.red},
@@ -106,8 +111,8 @@ local REDRAW_SECONDS,BACKSTOP_SECONDS=0.5,1
 local function redraw() state.redrawUntil=state.time+REDRAW_SECONDS end
 -- Update and draw run at most this many times a second (Settings' Max Frame Rate).
 local function frameCap() return preferences.highFrameRate==1 and 144 or 60 end
-local function layout(w,h)
-  width,height=w,h
+local function layout(w,h,pixelDensity)
+  width,height,density=w,h,pixelDensity or 1
   redraw()
   state.pressed=nil
   local portrait=w/h<0.9
@@ -136,7 +141,7 @@ local function layout(w,h)
   if scene then scene:release() end
   scene=g.newCanvas(w,h)
   scene:setFilter('linear','linear') -- love.resize uses linear canvas filtering.
-  screen=Screen.new(shaders.CRT,w,h,Screen.unit(w,h))
+  screen=Screen.new(shaders.CRT,w,h,Screen.unit(w,h),density)
   if popup then popup:layout(virtualWidth,virtualHeight) end
   if library then library:layout(virtualWidth,virtualHeight) end
   if builder then builder:layout(virtualWidth,virtualHeight) end
@@ -225,10 +230,15 @@ local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
   local raw=Mailbox.read('viewport')
   if not raw then return end
-  local w,h,reduced=raw:match('^(%d+) (%d+) (%d)')
-  w,h=tonumber(w),tonumber(h)
-  if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
-  state.systemReduced=reduced=='1'
+  local limits=g.getSystemLimits and g.getSystemLimits()
+  local view=Viewport.parse(raw,limits and limits.texturesize)
+  if view and (width~=view.pixelWidth or height~=view.pixelHeight or density~=view.density) then
+    -- At one device pixel per CSS pixel SDL keeps resizing the canvas itself, as before; a denser
+    -- one is sized only from here, since SDL sizes a resizable canvas to its CSS size.
+    love.window.setMode(view.pixelWidth,view.pixelHeight,{resizable=view.density==1,vsync=1})
+    layout(view.pixelWidth,view.pixelHeight,view.density)
+  end
+  state.systemReduced=view~=nil and view.reduced
   loadMusic()
   local preferencesRaw=not state.preferencesLoaded and Mailbox.read('preferences')
   if preferencesRaw then
@@ -385,7 +395,7 @@ function love.load()
   followPage()
   state.ready=true
 end
-function love.resize(w,h) if scene then layout(w,h) end end
+function love.resize(w,h) if scene then layout(w,h,density) end end
 function love.update(dt)
   -- The host hides its loading overlay on this signal, so it waits until a drawn frame is on the
   -- canvas: sent from love.load, the overlay went before the first draw and one black frame
@@ -516,9 +526,9 @@ function love.draw()
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   end
   -- Text only, in the gap under the home menu or across the table's top edge, never under 12
-  -- device pixels. Where the gap cannot hold it that large, home shows it above the logo.
+  -- CSS pixels. Where the gap cannot hold it that large, home shows it above the logo.
   if state.notice then
-    local size=math.max(16,math.ceil(12/layoutScale))
+    local size=math.max(16,math.ceil(12*density/layoutScale))
     local y=isTable(state.page) and 16 or menuTray.y+menuTray.h+4
     if not isTable(state.page) and y+size+4>controls[1].y-12 then y=24 end
     Button.errorLine(state.notice.text,size,24,y,virtualWidth-48)
