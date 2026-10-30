@@ -18,13 +18,18 @@ package.loaded['ui.menu_logo']={new=function()
 end}
 local audio=setmetatable({isPlaying=function() return false end},{__index=function() return noop end})
 local mouseX,mouseY=0,0
-local transforms={}
+-- Where things draw: the transform stack's scale and offset (the room does not turn under
+-- reduced motion), so a button's drawn rectangle can be compared with where it answers.
+local m,stack={sx=1,sy=1,tx=0,ty=0},{}
+local function translate(x,y) m.tx,m.ty=m.tx+m.sx*x,m.ty+m.sy*y end
+local function scale(x,y) m.sx,m.sy=m.sx*x,m.sy*(y or x) end
 love={graphics=setmetatable({getDimensions=function() return 1280,800 end,
   newCanvas=function() return image end,newImage=function() return image end,newQuad=function() return {} end,
   newShader=function() return {release=noop,send=noop,hasUniform=function() return true end} end,
   getSystemLimits=function() return {texturesize=16384} end,
   newFont=function(_,size) return {setFilter=noop,getWidth=function(_,t) return #tostring(t)*size/2 end,getHeight=function() return size end} end,
-  translate=function(x,y) transforms[#transforms+1]={'t',x,y} end,scale=function(s) transforms[#transforms+1]={'s',s} end,
+  translate=translate,scale=scale,origin=function() m={sx=1,sy=1,tx=0,ty=0} end,
+  push=function() stack[#stack+1]={sx=m.sx,sy=m.sy,tx=m.tx,ty=m.ty} end,pop=function() m=table.remove(stack) end,
   transformPoint=function(x,y) return x,y end},{__index=function() return noop end}),
   math={random=math.random},window={setTitle=noop,setMode=noop},
   audio={newSource=function() return audio end},
@@ -33,8 +38,11 @@ love={graphics=setmetatable({getDimensions=function() return 1280,800 end,
   filesystem={getInfo=function(name) return files[name] or name:match('sounds/') end,read=function(name) return files[name] end}}
 local T=require('ui.theme');T.text=noop
 local Button=require('ui.button')
-local lit,noticeSize={},nil
-Button.draw=function(b,active) if active then lit[b.label]=true end end
+local lit,noticeSize,drawn={},nil,{}
+Button.draw=function(b,active)
+  if active then lit[b.label]=true end
+  drawn[b.label]={x=m.tx+m.sx*b.x,y=m.ty+m.sy*b.y,w=m.sx*b.w,h=m.sy*b.h}
+end
 Button.errorLine=function(_,size) noticeSize=size end
 local scenes={}
 for _,name in ipairs({'library','builder','sandbox','simulator','online'}) do
@@ -58,15 +66,20 @@ Settings.layout=function(self,w,h) popupLayout={w,h};return layout(self,w,h) end
 local output=print
 print=noop
 dofile('frontend/lua/main.lua');love.load()
-local function frame() love.update(1/60);lit={};love.draw() end
+local function frame() love.update(1/60);lit={};drawn={};love.graphics.origin();love.draw() end
 local function view(text) files['__viewport.txt']=text;for _=1,20 do frame() end end
 local function at(x,y) mouseX,mouseY=x,y;love.mousemoved(x,y,1,1);frame();return next(lit) end
 local function key(name) love.keypressed(name);frame() end
 -- Closing Settings from the keyboard hands focus back to home's Settings button, which then
 -- lights wherever the pointer is; a click on nothing clears it.
 local function close() key('escape');love.mousepressed(2,2,1);love.mousereleased(2,2,1);frame() end
--- `label` lights inside the rectangle x,y,w,h (screen pixels) and not just outside it.
+-- `label` is drawn over the rectangle x,y,w,h (screen pixels) and lights inside it and not just
+-- outside it.
 local function spans(label,x,y,w,h,message)
+  at(x+w/2,y+h/2)
+  local d=drawn[label]
+  check(d and math.abs(d.x-x)<1e-6 and math.abs(d.y-y)<1e-6 and math.abs(d.w-w)<1e-6 and math.abs(d.h-h)<1e-6,
+    message..': drawn at '..(d and ('%.2f,%.2f %.2fx%.2f'):format(d.x,d.y,d.w,d.h) or 'nowhere'))
   check(at(x+1,y+1)==label and at(x+w-1,y+h-1)==label,message..': inside')
   check(at(x-1,y+h/2)~=label and at(x+w+1,y+h/2)~=label and at(x+w/2,y-1)~=label and at(x+w/2,y+h+1)~=label,message..': not outside')
 end
@@ -86,7 +99,9 @@ check(popupLayout[1]==1024 and popupLayout[2]==640,'125% lays Settings out at on
 spans('Back',172.5,702.5,935,47.5,'125% Settings Back')
 key('right')
 check(popupLayout[1]==1024 and popupLayout[2]==640,'150% keeps Settings at 125%: its 620-tall form does not fit 533')
-close()
+-- A click lands where Back is drawn, outside where it was at 100%.
+at(200,740);love.mousepressed(200,740,1);love.mousereleased(200,740,1);frame()
+check(not drawn.Back,'A click on the grown Back closes Settings')
 -- Home at 150%: a 853x533 canvas; Settings at its centre + 24, 104 above the bottom.
 spans('Settings',676,644,180,72,'150% home Settings')
 check(math.abs(logo.scale-(271.33333-32)*836/322/836)<1e-3,'The logo shrinks to fit above the menu')

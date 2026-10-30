@@ -64,6 +64,11 @@ local function highlightActive()
   sim:build()
 end
 
+-- The host says whether the primary pointer is coarse; an older host's record means a mouse.
+local Viewport=require('ui.viewport')
+check(Viewport.parse('844 390 0 1688 780 1').coarse==true,'A coarse pointer is read')
+check(Viewport.parse('844 390 0 1688 780 0').coarse==false and Viewport.parse('844 390 0 1688 780').coarse==false,'A fine or unsaid one is not')
+
 -- Desktop: nothing changes.
 open(1280,800,{scale=1,portrait=false,coarse=false})
 highlightActive()

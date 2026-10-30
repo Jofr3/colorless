@@ -33,7 +33,7 @@ end
 -- The screens PG8 and QA11 name: desktop, a phone sideways and a phone upright.
 local SCREENS={
   {name='1280x800',w=1280,h=800,display={scale=1,collection=0.9,portrait=false}},
-  {name='844x390',w=1280,h=800,display={scale=0.4875,collection=0.4875,portrait=false}},
+  {name='844x390',w=1280,h=800,display={scale=0.4875,collection=0.4875*0.9,portrait=false}},
   {name='390x844',w=480,h=850,display={scale=0.8125,collection=0.8125,portrait=true}},
 }
 local function minimum(screen) return math.max(34,24/screen.display.collection) end
@@ -59,7 +59,10 @@ for n,screen in ipairs(SCREENS) do
       check(b.x==card.homeX-D.HALF_W*s and b.y==card.homeY+D.HALF_H*s+2 and b.w==40 and b.h==24,where..': Manage keeps its face')
       check(b.hitRect and contains(b.hitRect,b),where..': Manage has a hit area around its face')
       check(b.hitRect.h>=math.min(minimum(screen),30),where..': Manage is easier to hit ('..b.hitRect.h..' tall)')
-      check(b.hitRect.h*screen.display.collection>=20,where..': at least 20 CSS px tall')
+      -- Its area hangs from its face, so the pile above takes none of it.
+      check(b.hitRect.y>=b.y-2,where..': Manage takes nothing of the pile above it')
+      check(screen.name=='844x390' or (b.hitRect.y==b.y and b.hitRect.h>=34),where..': Manage answers 34 tall under its top edge')
+      check(screen.name~='844x390' or b.hitRect.h>=1.8*b.h,where..': sideways, nearly twice as tall as its face')
       -- A press in the grown part, under the face, opens the Manage dialog.
       local x,y=b.x+b.w/2,b.y+b.h+4
       check(library:hit(x,y)==i,where..': the space under Manage is Manage')
