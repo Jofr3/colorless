@@ -306,6 +306,13 @@ function Settings:update(dt,time,mx,my,reduced)
   self.hover,self.hoverPart=self:hit(mx,my,true)
   if self.drag then self:slide(self.items[self.drag],mx) end
 end
+-- True when the popup draws the same frame as long as nothing reaches it (main.lua's redraw
+-- gate): no slider drag, no armed delete button (it disarms after 3 s), no "Saved." waiting to
+-- clear, and its slide-in and juice at rest.
+function Settings:still()
+  return not self.drag and not self.armed and not self.account.savedRemaining
+    and self.motion:still() and self.deleteJuice:still()
+end
 function Settings:activate(index)
   local item=self.items[index]
   if not item or self:disabled(item) then return end
