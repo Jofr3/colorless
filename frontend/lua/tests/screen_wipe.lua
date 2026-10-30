@@ -90,6 +90,37 @@ local calls=0
 local reduced=Wipe.new(function()calls=calls+1 end,{},true,function()error('Reduced motion must be silent')end)
 reduced:layout(480,850,30);assert(not reduced.card)
 assert(reduced:update(1/60) and calls==1);reduced:update(1/60);assert(calls==1)
+-- A first visit's wipe can start before the host has written any transition scan (audit BT9):
+-- it neither errors nor waits, and the card burns face down. LÖVE's newImage throws for a file
+-- that is not there.
+local stubImage=love.graphics.newImage
+love.graphics.newImage=function(path)
+  if path~='assets/textures/2x/Enhancers.png' then error('Could not open file '..path..'. Does not exist.') end
+  return stubImage(path)
+end
+local cold=Wipe.new(noop,{1,1,1,1},false)
+cold:layout(1280,800,60)
+assert(cold.card and not cold.art and not cold.face,'A wipe with no artwork yet shows the card back')
+for _=1,math.ceil(60*Wipe.removeAt)+1 do cold:update(1/60) end
+assert(not cold.front,'Without artwork the card never turns face up')
+cold:layout(480,850,30);cold:release()
+-- A staged scan that will not decode is reported, and when the fallback scan will not decode
+-- either the card stays face down too.
+local output=print
+local said={}
+love.filesystem={getInfo=function(path)return path=='__transition_art.txt' or path=='broken.png'
+  or path=='assets/transition_cards/sv01-030.png' end,
+  read=function()return '9\tbroken\tbroken.png' end}
+print=function(message) said[#said+1]=message end
+local broken=Wipe.new(noop,{1,1,1,1},false)
+broken:layout(1280,800,60)
+print=output
+assert(said[1]=='COLORLESS:transition-art:invalid\t9' and #said==1,'A scan that will not decode is reported')
+assert(broken.card and not broken.art and not broken.face)
+for _=1,30 do broken:update(1/60) end
+assert(not broken.front);broken:release()
+love.filesystem={getInfo=function()return nil end}
+love.graphics.newImage=stubImage
 -- A selected cache file may be evicted during the covered scene swap.
 -- The image must survive both the flip and subsequent viewport changes.
 local exists,loads=true,0
@@ -110,7 +141,6 @@ cached:layout(480,850,30)
 assert(cached.front and cached.art.id=='cached-card' and loads==1,'Resize and flip must reuse retained artwork')
 cached:release()
 -- Acknowledge persistent art only after both the image and border load.
-local output=print
 local consumed=false
 love.filesystem={getInfo=function(path)return path=='__transition_art.txt' or (path=='prepared.png' and not consumed)end,
   read=function()return '7\tpersistent\tprepared.png' end}
@@ -125,5 +155,5 @@ for _=1,20 do prepared:update(1/60)end
 prepared:layout(480,850,30);prepared:release()
 print=output
 print('PASS: '..(source and checks..' source screen-wipe timing/particle comparisons, ' or '')
- ..'coverage, resize and reduced motion'
+ ..'coverage, resize, reduced motion and the face-down wipe without artwork'
  ..(source and '' or ' (source comparisons skipped: no Balatro source)'))

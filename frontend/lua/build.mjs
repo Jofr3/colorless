@@ -67,6 +67,9 @@ const assets = [
 // The menu music downloads after Lua is ready (web/host.js), outside game.data, which must arrive
 // in full before Lua starts.
 const music = "sounds/music1.ogg";
+// The screen wipe's fallback scans download after ready too (web/host.js, audit BT9), each beside
+// game.data under its content hash; Lua lists only those already written.
+const transitionCards = "transition_cards";
 // Kept in the repo for tools/logo_bake.lua and attribution; Lua never reads them.
 const unpackaged = new Set(["assets/branding/colorless.png", "assets/branding/colorless-menu.png"]);
 try {
@@ -75,7 +78,12 @@ try {
       recursive: true,
       filter: (from) => {
         const path = relative(here, from).split(sep).join("/");
-        return !unpackaged.has(path) && !path.endsWith(".md");
+        return (
+          !unpackaged.has(path) &&
+          !path.endsWith(".md") &&
+          path !== `assets/${transitionCards}` &&
+          !path.startsWith(`assets/${transitionCards}/`)
+        );
       },
     });
   /** @type {Record<string, string>} */
@@ -90,10 +98,12 @@ try {
       .update(readFileSync(join(here, "assets/branding", name)))
       .digest("hex");
   }
-  for (const name of readdirSync(join(here, "assets/transition_cards"))) {
-    if (!name.endsWith(".png")) continue;
-    manifest[`transition_cards/${name}`] = createHash("sha256")
-      .update(readFileSync(join(here, "assets/transition_cards", name)))
+  const cards = readdirSync(join(here, "assets", transitionCards))
+    .filter((name) => name.endsWith(".png"))
+    .sort();
+  for (const name of cards) {
+    manifest[`${transitionCards}/${name}`] = createHash("sha256")
+      .update(readFileSync(join(here, "assets", transitionCards, name)))
       .digest("hex");
   }
   for (const asset of assets) {
@@ -126,6 +136,10 @@ try {
   await new Promise((done) => setTimeout(done, 500));
   for (const { path, bytes } of runtime) writeFileSync(path, bytes);
   copyFileSync(join(source, "resources", music), join(output, "music1.ogg"));
+  rmSync(join(output, transitionCards), { recursive: true, force: true });
+  mkdirSync(join(output, transitionCards));
+  for (const name of cards)
+    copyFileSync(join(here, "assets", transitionCards, name), join(output, transitionCards, name));
   // The root index.html is the host page; drop the compiler's own page and theme.
   rmSync(join(output, "index.html"), { force: true });
   rmSync(join(output, "theme"), { recursive: true, force: true });
@@ -171,7 +185,9 @@ try {
   /** @type {Record<string, string>} */
   const versions = {};
   for (const name of readdirSync(output).sort()) {
-    if (!["host.js", "host.css", "versions.json"].includes(name))
+    if (name === transitionCards)
+      for (const card of cards) versions[`${name}/${card}`] = shortHash(join(output, name, card));
+    else if (!["host.js", "host.css", "versions.json"].includes(name))
       versions[name] = shortHash(join(output, name));
   }
   let host = readFileSync(join(here, "web/host.js"), "utf8");

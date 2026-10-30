@@ -23,6 +23,12 @@ function Wipe.new(callback,colour,reduced,feedback)
   if not reduced then self.feedback('cardFan2',1,1) end
   return self
 end
+-- The artwork's GPU image, or nil when there is none or its file will not decode.
+local function decode(art)
+  if not art then return nil end
+  local ok,face=pcall(g.newImage,art.path)
+  return ok and face or nil
+end
 function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
   self.width,self.height,self.unit=w,h,unit
   -- 40 tiles is the source value. Expand only for viewports whose diagonal
@@ -32,19 +38,24 @@ function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
   if self.reduced then return end
   if not self.card then
     self.art=TransitionArt.pick()
-    local ok,face=pcall(g.newImage,self.art.path)
+    local face=decode(self.art)
     local rejectedToken
-    if not ok then
+    if self.art and not face then
       rejectedToken=self.art.token
       self.art=TransitionArt.fallback()
-      face=g.newImage(self.art.path)
+      face=decode(self.art)
     end
+    -- A first visit's wipe can come before the host has written any scan (audit BT9): with no
+    -- artwork the card burns face down rather than waiting or failing.
+    if not face then self.art=nil end
     -- Decode once and retain the GPU image and border through the wipe. A
     -- scene change can evict the original cache file before the card flips
     -- or the window resizes; neither should change the selected artwork.
-    self.face=face;self.face:setFilter('linear','linear')
-    self.border=CardFrame.border(self.art.path)
-    if self.art.token then Bridge.emit('transition-art','used',self.art.token)
+    if face then
+      self.face=face;self.face:setFilter('linear','linear')
+      self.border=CardFrame.border(self.art.path)
+    end
+    if self.art and self.art.token then Bridge.emit('transition-art','used',self.art.token)
     elseif rejectedToken then Bridge.emit('transition-art','invalid',rejectedToken) end
     self.card=Card.new({edition='dissolve',resolution=2,drawFace=function(cw,ch)
       g.setColor(1,1,1)
@@ -84,9 +95,12 @@ function Wipe:update(dt)
   local c=self.card
   if c then
     -- Card:update changes sprite_facing at zero; Moveable:move_wh runs next.
-    if not self.front and self.flip<=0 then self.front=true;c:rebuild() end
-    self.flip=math.max(0,math.min(1,self.flip+(self.front and 1 or -1)*8*math.min(dt,1/20)))
-    c.flipScale=self.flip
+    -- Without artwork the card stays face down and does not turn.
+    if self.face then
+      if not self.front and self.flip<=0 then self.front=true;c:rebuild() end
+      self.flip=math.max(0,math.min(1,self.flip+(self.front and 1 or -1)*8*math.min(dt,1/20)))
+      c.flipScale=self.flip
+    end
     if self.age>=Wipe.dissolveAt and not self.burn then
       self.burn=Dissolve.new(c,Wipe.dissolveAt,Wipe.palette)
       self.feedback('whoosh2',0.9+love.math.random()*0.2,0.5)

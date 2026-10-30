@@ -66,6 +66,14 @@ local effects={'button','cardSlide1','highlight1','paper1','card1','cardSlide2',
 local unloadedEffects={}
 -- The host writes the menu music after the first frame; the menu starts without it.
 local MUSIC='assets/sounds/music1.ogg'
+-- The host downloads the music only when Lua asks (audit BT8), so a player who muted it or turned
+-- it down to nothing never pays for it: 'start' once the stored preferences are read and say it
+-- is heard (the host waits for ready, and skips it under Save-Data), 'change' when the player
+-- unmutes or turns a volume up (always downloaded).
+local function musicLevel() return preferences.muted==1 and 0 or preferences.volume*preferences.musicVolume end
+local function askForMusic(reason)
+  if not sounds.music1 and not love.filesystem.getInfo(MUSIC) then Bridge.emit('music','want',reason) end
+end
 local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
 -- Effects decode after startup, one per frame, or on first use.
 local function loadEffect(name)
@@ -226,6 +234,8 @@ local function browserState()
   if preferencesRaw then
     preferences=Preferences.new(preferencesRaw)
     state.preferencesLoaded=true
+    state.musicLevel=musicLevel()
+    if state.musicLevel>0 then askForMusic('start') end
   end
   applyPreferences()
 end
@@ -287,6 +297,9 @@ applyPreferences=function()
   end
 end
 local function savePreferences()
+  local level=musicLevel()
+  if level>(state.musicLevel or 0) then askForMusic('change') end
+  state.musicLevel=level
   applyPreferences()
   Bridge.emit('preferences',preferences:serialize())
 end
