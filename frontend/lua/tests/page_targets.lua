@@ -157,5 +157,10 @@ check(countEm(0.78,true)>=11-1e-9,'The count is at least 11 CSS px at 375 px wid
 check(countEm(0.75,true)>=11-1e-9,'and at 360 px wide')
 local desktop=countEm(1,false)
 check(math.abs(desktop-0.3*D.W*0.68/D.TILE_W)<1e-9,'Elsewhere the count keeps its size ('..desktop..')')
+-- Only a phone: a tablet held upright draws the portrait layout at full size or larger.
+Display.set({scale=1.2,collection=1.2,portrait=true})
+check(not Display.phone() and Display.text(8)==8 and Display.dyna(0.1)==0.1,'A tablet keeps every text size')
+Display.set({scale=0.8,collection=0.8,portrait=true})
+check(Display.phone() and Display.text(8)==14 and math.abs(Display.dyna(0.1)-11/0.8/60)<1e-12,'A phone raises small text to 11 CSS px')
 Display.set({scale=1,collection=1,portrait=false})
 print('PASS: pile counts are at least 11 CSS px on a phone held upright')

@@ -92,6 +92,14 @@ for _,b in ipairs(sim.controls) do
 end
 check(attached>0,'844x390: the active card shows its attached buttons')
 apart('844x390 attached')
+-- Every card of yours, in the hand too, where a popup can lie over the cards beside it.
+local function eachHighlight(where)
+  local mine={}
+  for _,c in ipairs(sim.cards) do if c.item.owner=='you' and not c.item.hidden then mine[#mine+1]=c end end
+  for _,c in ipairs(mine) do sim.highlight=c;sim:build();apart(where..' '..c.item.zone..' '..c.item.name) end
+  sim.highlight=nil;sim:build()
+end
+eachHighlight('844x390')
 for label,face in pairs(faces) do
   local b=byLabel(label)
   if b and not b.attached then check(b.x==face[1] and b.y==face[2] and b.w==face[3] and b.h==face[4],'844x390: '..label..' keeps its face') end
@@ -127,6 +135,7 @@ for _,b in ipairs(sim.controls) do
 end
 check(grown>0,'390x844: there are small attached buttons')
 apart('390x844')
+eachHighlight('390x844')
 
 -- The portrait prompt: never under 0.24, its note in a strip under the HUD when it does not fit.
 local L=Layout.portrait()
