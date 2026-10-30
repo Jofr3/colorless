@@ -64,4 +64,40 @@ for _,viewport in ipairs({{1280,800,60},{390,844,48.75},{1600,900,67.5}}) do
     assert(x==-math.huge and y==-math.huge,'Outside screen must not hit UI')
   end
 end
-print('PASS: '..checks..' source CRT uniform and distorted pointer comparisons')
+
+-- A canvas at the device pixel ratio (audit BT6): Balatro's CRT.fs, patched at load, measures its
+-- fringe and centre distance in CSS pixels, so at density d every corner, every pointer mapping
+-- and the scanline count are density 1's scaled by d.
+local shaderFile=assert(io.open(source..'/resources/shaders/CRT.fs','rb'))
+local code=shaderFile:read('*a'); shaderFile:close()
+local patched=Screen.source(code)
+local _,densities=patched:gsub('pixel_density','')
+assert(densities==4,'The fringe twice, the centre and the declaration use pixel_density ('..densities..')')
+assert(patched:gsub('pixel_density',''):len()<code:len()+40,'Nothing else changes')
+assert(Screen.source('void main() {}')=='void main() {}','A source without the fringe comes back unchanged')
+local patchedShader={hasUniform=function(_,name) return name=='pixel_density' end}
+for _,viewport in ipairs({{1280,800},{390,844},{844,390}}) do
+  local w,h=unpack(viewport)
+  local unit=Screen.unit(w,h)
+  local css=Screen.new(patchedShader,w,h,unit,1)
+  for _,density in ipairs({1.25,1.5,2,3}) do
+    local dw,dh=w*density,h*density
+    near(Screen.unit(dw,dh),unit*density)
+    local device=Screen.new(patchedShader,dw,dh,Screen.unit(dw,dh),density)
+    near(Screen.values(dh,unit*density,12,0,0,false,nil,density).scanlines,h*0.75)
+    for _,mouse in ipairs({{0,0},{w/2,h/2},{w*0.8,h*0.3}}) do
+      css:update(17.25,mouse[1],mouse[2],false,{crt=70,bloom=0})
+      device:update(17.25,mouse[1]*density,mouse[2]*density,false,{crt=70,bloom=0})
+      for i=1,4 do
+        local a,b=css.projected[i],device.projected[i]
+        near(b.x,a.x*density); near(b.y,a.y*density); near(b.q,a.q)
+      end
+      for _,point in ipairs({{w*0.1,h*0.1},{w/2,h/2},{w*0.93,h*0.71}}) do
+        local x,y=css:unproject(point[1],point[2])
+        local dx,dy=device:unproject(point[1]*density,point[2]*density)
+        near(dx,x*density); near(dy,y*density)
+      end
+    end
+  end
+end
+print('PASS: '..checks..' source CRT uniform and distorted pointer comparisons, the same in CSS pixels at DPR 1.25-3')

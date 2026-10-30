@@ -296,12 +296,32 @@ function markBoot(name) {
 }
 function syncViewport() {
   if (!bridge) return;
-  // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
-  // must use that same size; a capped scene leaves the rest of it black.
-  // Keep CSS-pixel dimensions (no devicePixelRatio multiplier).
-  const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"}`;
-  writeMailbox(bridge.mailboxes.viewport, text);
+  // The canvas fills the viewport. Lua renders at its CSS size times the full device pixel
+  // ratio (audit BT6), so text and art are drawn at the screen's own resolution, and lays out
+  // from the CSS size, so the page looks the same at every ratio.
+  const width = Math.max(1, Math.round(innerWidth));
+  const height = Math.max(1, Math.round(innerHeight));
+  const ratio = devicePixelRatio > 0 ? devicePixelRatio : 1;
+  const device = `${Math.max(1, Math.round(width * ratio))} ${Math.max(1, Math.round(height * ratio))}`;
+  writeMailbox(
+    bridge.mailboxes.viewport,
+    `${width} ${height} ${motion.matches ? "1" : "0"} ${device}`,
+  );
 }
+/** @type {MediaQueryList | undefined} */
+let pixelRatio;
+// Moving the window to a screen of another pixel ratio changes no CSS size, so no resize event
+// comes. This query matches only the current ratio; it is replaced at each change.
+function watchPixelRatio() {
+  pixelRatio?.removeEventListener("change", pixelRatioChanged);
+  pixelRatio = matchMedia(`(resolution: ${devicePixelRatio}dppx)`);
+  pixelRatio.addEventListener("change", pixelRatioChanged);
+}
+function pixelRatioChanged() {
+  watchPixelRatio();
+  syncViewport();
+}
+watchPixelRatio();
 // build:lua replaces the empty object with each /love/ file's content hash;
 // the `?v=` it adds changes the URL whenever the bytes do, which is what lets
 // the deployed /love/ files be cached as immutable (public/_headers).

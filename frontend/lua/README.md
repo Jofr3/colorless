@@ -42,7 +42,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 - Shared room sway, eased cursor movement, and click jiggle ported from `update_canvas_juice`. Input coordinates follow the moving UI; reduced-motion mode disables room motion.
 - Animated title-screen vortex, CRT/scanline/bloom pass, original UI sounds and music. The card renderer and edition effects remain available for future Lua pages.
 - Custom `COLORLESS` wordmark loaded from authored base and star sprites in `assets/branding/`. The 836 × 322 sprite uses exact 2×2 blocks from a 418 × 161 logical pixel grid, matching the original logo's pixel density and 2x texture treatment. It has angular, tapered lettering, ivory faces, a layered grey/teal border and subtle tinted ledge highlights. The second O is a silver colorless energy disc with a dark six-point star and no colored streaks. The star rotates clockwise once per minute while the disc and lettering remain fixed within the logo; Reduced Motion pauses the star at its current angle. Linear filtering and the live CRT shader match the source's rendering approach. No startup shaders or GPU readbacks are needed to create the logo. It scales proportionally for desktop and portrait and respects reduced motion. Authoring and palette details are in `assets/branding/SOURCES.md`.
-- The unmodified CRT shader uses Balatro's default CRT strength of 70: barrel lens distortion, feathered screen edges, RGB fringing, phosphor scanlines, noise, contrast correction and eased screen tilt. Canvas filtering and the native LÖVE canvas draw match the original. Tilt uses the original 22 × 12.9-tile viewport scale, independent of the responsive menu layout. Bloom and glitching are disabled by the original default settings. Pointer input is mapped through the screen distortion before hit testing.
+- Balatro's CRT shader (patched at load only to measure its fringe and centre distance in CSS pixels on a high-DPR canvas) uses Balatro's default CRT strength of 70: barrel lens distortion, feathered screen edges, RGB fringing, phosphor scanlines, noise, contrast correction and eased screen tilt. Canvas filtering and the native LÖVE canvas draw match the original. Tilt uses the original 22 × 12.9-tile viewport scale, independent of the responsive menu layout. Bloom and glitching are disabled by the original default settings. Pointer input is mapped through the screen distortion before hit testing.
 - Effects share Balatro's menu clock starting at 12 seconds, with room motion updated before advancing the shader clock. Reduced motion uses the original frozen background time of 300; this frontend additionally freezes CRT noise and disables screen tilt for the system accessibility preference.
 - Horizontal desktop menu and stacked portrait buttons, viewport resizing, keyboard navigation, native accessible navigation, system reduced-motion preference, and persisted sound toggle.
 
@@ -297,8 +297,18 @@ without opening another modal. Card details, filters, validation, import/export 
 use the same modal motion and backdrop as Settings. Native text proxies supply
 IME, clipboard, selection and mobile keyboards; even the multiline decklist is
 rendered in Lua.
-The host matches Lua's scene dimensions to the full browser viewport without a
-device-pixel-ratio multiplier, keeping the CRT pass and pointer mapping aligned.
+The host sends the viewport's CSS size and its device-pixel size (CSS size times the full
+`devicePixelRatio`, uncapped; re-sent on resize, browser zoom and a move to a screen of another
+ratio). Lua renders the scene and the CRT pass at the device size (`ui/viewport.lua`), so text and
+art are drawn at the screen's own resolution, and lays out from it with the same virtual canvas,
+so at any ratio the page looks like the ratio-1 page, only sharper: the CRT's scanline count
+comes from the CSS height, and its RGB fringe and centre distance are measured in CSS pixels
+(`Screen.source` patches CRT.fs at load; at ratio 1 it computes Balatro's values). Fonts and card
+faces keep their virtual-size rasters with nearest filtering, so the device-resolution scene shows
+their texels crisply; rasterizing the font at device size would change glyph advances (by up to
+7% at 22 px) and so every label's width. At ratio 1 SDL resizes the canvas itself, as before; a
+denser canvas is sized only by Lua's setMode, and one wider than the GPU's largest texture renders
+at the largest size that fits.
 
 Builder checks: `bunx vitest run src/lua/builder.test.ts` and
 `lua frontend/lua/tests/builder.lua`. They cover shared copy limits, delayed and
