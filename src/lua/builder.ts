@@ -40,6 +40,7 @@ import {
 } from "../decks/deckMath";
 import { createDeckSaver, type DeckSaver, outcomeUnknown } from "../decks/deckSaver";
 import { savedSnapshot, toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
+import { deckStore } from "../decks/deckStore";
 import { formatDecklist } from "../decks/decklistText";
 import { cachedCard, fetchCard } from "../game/cardPool";
 import { LUA_ART_SLOTS } from "./artworkCache";
@@ -182,9 +183,6 @@ export class LuaBuilder {
   selected = "";
   details = "";
   transfer = "";
-  /** Told the deck as the server holds it each time a save lands, so pages that list decks can
-      show it without asking again. Nothing listens until bridge.ts sets it. */
-  deckSaved: (deck: SavedDeck) => void = () => {};
   private user = "";
   private active = false;
   private readonly epoch = epochGuard();
@@ -519,6 +517,7 @@ export class LuaBuilder {
     this.results = [];
     const live = this.epoch.next();
     const id = this.id;
+    const user = this.user;
     this.phase = "loading";
     this.message = "";
     this.emit();
@@ -575,7 +574,8 @@ export class LuaBuilder {
             version = result.version;
             unconfirmed.clear();
             if (live()) this.acknowledged = key;
-            this.deckSaved(result);
+            // The library and the deck pickers show the saved copy without asking again.
+            deckStore.put(user, result);
             return result;
           } catch (error) {
             // The server may or may not hold this snapshot, so every state counts as unsaved.

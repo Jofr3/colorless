@@ -4,6 +4,7 @@ import { LuaSimulator } from "../lua/simulator";
 import { LocalTableSource } from "../lua/tableSource";
 import { playSimulatorGame } from "../test/simulatorGame";
 import { clearSimulatorSave, loadSimulatorSave, saveSimulator } from "./simulatorSave";
+import { hasSimulatorSave } from "./simulatorSaveKey";
 
 const SAVE_KEY = "colorless:simulator:game";
 let storage: Map<string, string>;
@@ -120,6 +121,25 @@ describe("the simulator save", () => {
     again.history.step("undoAction");
     expect(again.host.game).toEqual(game);
     expect(again.history.canStep("redoAction")).toBe(true);
+  });
+
+  it("tells whether a save of this format is stored without replaying it", () => {
+    expect(hasSimulatorSave()).toBe(false);
+    playSimulatorGame(11, { maxMoves: 20 });
+    expect(hasSimulatorSave()).toBe(true);
+    // Another engine's save still counts: opening it falls back to the deck picker.
+    tamper((record) => {
+      record.engineVersion = `${engineVersion}-other`;
+    });
+    expect(hasSimulatorSave()).toBe(true);
+    tamper((record) => {
+      record.version = 1;
+    });
+    expect(hasSimulatorSave()).toBe(false);
+    storage.set(SAVE_KEY, "not json");
+    expect(hasSimulatorSave()).toBe(false);
+    clearSimulatorSave();
+    expect(hasSimulatorSave()).toBe(false);
   });
 
   it("drops a save from an older format or another engine", () => {

@@ -207,6 +207,18 @@ local function followPage()
     openSettings(true,Codec.fields(settingsRaw)[2])
   end
 end
+-- How long a page notice stays on screen.
+local NOTICE_SECONDS=8
+-- A line the page asks to show and say on any page, such as a game table whose code could not
+-- load while the browser was offline. Each new revision is said again.
+local function followNotice()
+  local raw=Mailbox.read('notice')
+  if not raw or raw==state.noticeRaw then return end
+  state.noticeRaw=raw
+  local message=Codec.fields(raw)[2] or ''
+  state.notice=message~='' and {text=message,shownAt=state.time} or nil
+  if state.notice then announce(message) end
+end
 -- Where home's keyboard focus sits in its ring. On 'last' the page lets the next Tab leave the
 -- canvas for its links, on 'first' the next Shift+Tab (src/host/shell.ts tabLeaves); under a
 -- popup, during a wipe, off home or with nothing focused Tab stays in the canvas.
@@ -339,6 +351,8 @@ function love.update(dt)
   state.poll=state.poll+dt
   if state.poll>0.25 then browserState(); state.poll=0 end
   followPage()
+  followNotice()
+  if state.notice and state.time-state.notice.shownAt>NOTICE_SECONDS then state.notice=nil end
   -- After this frame's key presses and page change, before the next Tab can arrive.
   syncFocusEdge()
   local rawX,rawY=love.mouse.getPosition()
@@ -442,6 +456,10 @@ function love.draw()
   end
   T.text('Colorless',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
+  end
+  -- Text only, in the gap under the home menu or across the table's top edge.
+  if state.notice then
+    Button.errorLine(state.notice.text,16,24,isTable(state.page) and 16 or menuTray.y+menuTray.h+4,virtualWidth-48)
   end
   g.pop()
   if isCollection(state.page) then

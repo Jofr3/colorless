@@ -25,11 +25,18 @@ function isPlayableDeck(deck: DeckContents, pool: Record<string, Card>): boolean
 const legalIn = (deck: DeckContents, pool: Record<string, Card>, format: string | null) =>
   savedDeckReasons(deck.cards, format, pool).length === 0;
 
-type Verdict = {
-  deck: DeckContents;
+/** What every deck screen reads about one complete deck: the sandbox's (playable), the online
+ * picker's (legal in its own format, and in Standard and Expanded) and the library alert's
+ * (legal). */
+export type DeckVerdict = {
+  /** The name on the judged contents, fresher than a summary fetched before them. */
+  name: string;
   playable: boolean;
   legal: boolean;
-  pool: Record<string, Card>;
+  /** The deck's format, by name. */
+  formatName: string;
+  standard: boolean;
+  expanded: boolean;
 };
 
 /** The contents behind `summary`: the card list GET /decks sends on a complete deck, or, from an
@@ -42,14 +49,14 @@ export async function deckContents(summary: Deck): Promise<DeckContents> {
  * pool with bounded requests, then judge each. Network failures remain retryable errors, rather
  * than silently classifying those decks as invalid; a deck deleted since the
  * summary was fetched (404) is simply absent from the result. */
-async function judgeSandboxDecks(
+export async function judgeDecks(
   summaries: Deck[],
   current: () => boolean,
-): Promise<Map<string, Verdict>> {
+): Promise<Map<string, DeckVerdict>> {
   const candidates = summaries.filter((deck) => deck.cardCount === DECK_SIZE);
   const queue = candidates.values();
   const saved = new Map<string, DeckContents>();
-  const verdicts = new Map<string, Verdict>();
+  const verdicts = new Map<string, DeckVerdict>();
   let failed = false;
   async function worker() {
     for (const deck of queue) {
@@ -71,25 +78,30 @@ async function judgeSandboxDecks(
   if (!current()) return verdicts;
   for (const [id, deck] of saved) {
     verdicts.set(id, {
-      deck,
+      name: deck.name,
       playable: isPlayableDeck(deck, pool),
       legal: legalIn(deck, pool, deck.format),
-      pool,
+      formatName: formatById(deck.format).name,
+      standard: legalIn(deck, pool, "standard"),
+      expanded: legalIn(deck, pool, "expanded"),
     });
   }
   return verdicts;
 }
 
 /** The decks among `summaries` a local game can run, carrying their fresh names. */
+export function sandboxDecksFrom(summaries: Deck[], verdicts: Map<string, DeckVerdict>): Deck[] {
+  return summaries.flatMap((summary) => {
+    const verdict = verdicts.get(summary.id);
+    return verdict?.playable ? [{ ...summary, name: verdict.name }] : [];
+  });
+}
+
 export async function validSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
 ): Promise<Deck[]> {
-  const verdicts = await judgeSandboxDecks(summaries, current);
-  return summaries.flatMap((summary) => {
-    const verdict = verdicts.get(summary.id);
-    return verdict?.playable ? [{ ...summary, name: verdict.deck.name }] : [];
-  });
+  return sandboxDecksFrom(summaries, await judgeDecks(summaries, current));
 }
 
 export type PlayableDeck = Deck & {
@@ -101,40 +113,47 @@ export type PlayableDeck = Deck & {
   expanded: boolean;
 };
 
-/** {@link validSandboxDecks} plus each deck's online verdict, and its Standard and Expanded
+/** {@link sandboxDecksFrom} plus each deck's online verdict, and its Standard and Expanded
  * verdicts for the online picker's regulation filter. */
+export function playableDecksFrom(
+  summaries: Deck[],
+  verdicts: Map<string, DeckVerdict>,
+): PlayableDeck[] {
+  return summaries.flatMap((summary) => {
+    const v = verdicts.get(summary.id);
+    if (!v?.playable) return [];
+    const { name, legal, formatName, standard, expanded } = v;
+    return [{ ...summary, name, online: legal, formatName, standard, expanded }];
+  });
+}
+
 export async function playableDecks(
   summaries: Deck[],
   current: () => boolean,
 ): Promise<PlayableDeck[]> {
-  const verdicts = await judgeSandboxDecks(summaries, current);
-  return summaries.flatMap((summary) => {
-    const v = verdicts.get(summary.id);
-    if (!v?.playable) return [];
-    return [
-      {
-        ...summary,
-        name: v.deck.name,
-        online: v.legal,
-        formatName: formatById(v.deck.format).name,
-        standard: legalIn(v.deck, v.pool, "standard"),
-        expanded: legalIn(v.deck, v.pool, "expanded"),
-      },
-    ];
-  });
+  return playableDecksFrom(summaries, await judgeDecks(summaries, current));
 }
 
-/** Per-deck legality in each deck's own format, for the library's illegal-deck
- * alert: an incomplete deck is illegal without a request; a complete one gets
- * the verdict on its fetched contents. A deck missing from the result could not
- * be judged (deleted meanwhile, or the check was superseded). */
+/** Per-deck legality in each deck's own format, for the library's illegal-deck alert: an
+ * incomplete deck is illegal without a request; a complete one gets the verdict on its fetched
+ * contents. A deck missing from the result could not be judged (deleted meanwhile, or the check
+ * was superseded). */
+export function legalityFrom(
+  summaries: Deck[],
+  verdicts: Map<string, DeckVerdict> = new Map(),
+): Map<string, boolean> {
+  const legality = new Map<string, boolean>();
+  for (const deck of summaries) {
+    const verdict = verdicts.get(deck.id);
+    if (deck.cardCount !== DECK_SIZE) legality.set(deck.id, false);
+    else if (verdict) legality.set(deck.id, verdict.legal);
+  }
+  return legality;
+}
+
 export async function deckLegality(
   summaries: Deck[],
   current: () => boolean,
 ): Promise<Map<string, boolean>> {
-  const legality = new Map<string, boolean>();
-  for (const deck of summaries) if (deck.cardCount !== DECK_SIZE) legality.set(deck.id, false);
-  const verdicts = await judgeSandboxDecks(summaries, current);
-  for (const [id, verdict] of verdicts) legality.set(id, verdict.legal);
-  return legality;
+  return legalityFrom(summaries, await judgeDecks(summaries, current));
 }

@@ -244,4 +244,40 @@ for _,view in ipairs({{1280,800},{480,850}}) do
     end
   end
 end
+-- An account check that could not reach the server is its own state: no Sign in prompt, which
+-- would be the wrong next step during an outage.
+do
+  local shown={}
+  local text=T.text
+  T.text=function(value,...) shown[#shown+1]=value;return text(value,...) end
+  o:open(true,'');snapshot('menu',{code='',role='',link='',account='error'})
+  assert(not action('signin'),'No Sign in button while the server is unreachable')
+  o:draw()
+  for _,value in ipairs(shown) do assert(value~='Sign in to play with your decks.','No sign-in prompt for an unreachable server') end
+  shown={};snapshot('menu',{code='',role='',link='',account='anonymous'});o:draw()
+  assert(action('signin'),'Anonymous still gets Sign in')
+  local prompted=false
+  for _,value in ipairs(shown) do prompted=prompted or value=='Sign in to play with your decks.' end
+  assert(prompted,'Anonymous still gets the prompt')
+  T.text=text
+end
+-- The lobby link dropping and coming back is said, on the seated steps only.
+do
+  local function heard(text) for _,line in ipairs(said) do if line:find(text,1,true) then return true end end end
+  snapshot('joining',{link='connecting'});said={}
+  snapshot('waiting',{link='connected'},{you})
+  assert(not heard('Reconnected.'),'The first connection is not a reconnection')
+  said={};snapshot('waiting',{link='connecting'},{you})
+  assert(heard('Connection lost, reconnecting.'),'A dropped link is said while waiting')
+  said={};snapshot('waiting',{link='connecting'},{you});assert(#said==0,'Said once')
+  snapshot('waiting',{link='connected'},{you});assert(heard('Reconnected.'),'Its return is said')
+  for _,step in ipairs({'versus','countdown'}) do
+    local opts=step=='countdown' and {countdown=3} or {}
+    snapshot(step,opts,seats(true,true,true));said={}
+    opts.link='connecting';snapshot(step,opts,seats(true,true,true))
+    assert(heard('Connection lost, reconnecting.'),'A dropped link is said on '..step)
+    opts.link='connected';said={};snapshot(step,opts,seats(true,true,true))
+    assert(heard('Reconnected.'),'Its return is said on '..step)
+  end
+end
 print('PASS: online modal steps, code entry, busy guards, no kick, countdown lock, Escape order, deck picker, regulation filter and online verdict')

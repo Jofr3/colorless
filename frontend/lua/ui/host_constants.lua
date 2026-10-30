@@ -11,6 +11,7 @@ return {
     builderInput='__builder_input.txt',
     library='__library.txt',
     libraryInput='__library_input.txt',
+    notice='__notice.txt',
     online='__online.txt',
     onlineInput='__online_input.txt',
     page='__page.txt',

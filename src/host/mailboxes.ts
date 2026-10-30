@@ -19,6 +19,8 @@ export const MAILBOXES = {
   onlineInput: "__online_input.txt",
   art: "__art.txt",
   transitionArt: "__transition_art.txt",
+  /** A line for Lua to show and say, with its serial: revision, message. */
+  notice: "__notice.txt",
   /** Each mailbox file and its revision, rewritten after every mailbox write. */
   revisions: "__mailbox_revisions.txt",
 } as const;

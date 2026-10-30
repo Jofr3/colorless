@@ -12,6 +12,7 @@ import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyC
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
+import { deckStore } from "../decks/deckStore";
 import { LobbyClient, type LobbyClientOptions, UNREACHABLE_MS } from "../online/lobbyClient";
 import { LuaOnline, NOTICE_MS, TABLE_CLAIM_MS } from "./online";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
@@ -131,6 +132,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearCardPoolCache();
+  deckStore.reset();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -300,6 +302,101 @@ describe("Lua online adapter", () => {
     expect(calls).toEqual(["GET /decks", "GET /cards/full"]);
   });
 
+  it("publishes a session update only when the account or its user changed", async () => {
+    const { online, publish, header } = setup();
+    online.session("loading", "");
+    const before = publish.mock.calls.length;
+    online.session("loading", "");
+    expect(publish.mock.calls.length).toBe(before);
+    online.session("authenticated", "u");
+    expect(publish.mock.calls.length).toBe(before + 1);
+    online.session("authenticated", "u");
+    online.session("authenticated", "u");
+    expect(publish.mock.calls.length).toBe(before + 1);
+    online.session("authenticated", "v");
+    expect(publish.mock.calls.length).toBe(before + 2);
+    online.session("anonymous", "");
+    expect(header()[H("account")]).toBe("anonymous");
+    expect(publish.mock.calls.length).toBe(before + 3);
+  });
+
+  it("carries a session check that could not reach the server as its own state", async () => {
+    stubFetch(deckReads);
+    const { online, header } = setup();
+    online.session("error", "");
+    expect(header()[H("account")]).toBe("error");
+    await online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("error");
+    online.session("authenticated", "u");
+    await vi.waitFor(() => expect(header()[H("deckPhase")]).toBe("ready"));
+  });
+
+  it("keeps the picker's decks while it checks them again, and never shows them to another user", async () => {
+    stubFetch(deckReads);
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    await online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("ready");
+    // Without the store's copy too: the picker keeps what it shows.
+    deckStore.reset();
+    let answer: () => void = () => {};
+    stubFetch({
+      ...deckReads,
+      "GET /decks": () =>
+        new Promise<Response>((done) => {
+          answer = () => done(deckReads["GET /decks"]());
+        }),
+    });
+    const again = online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("ready");
+    expect(
+      rows()
+        .slice(1)
+        .map((row) => row[1]),
+    ).toEqual(["y", "z", "x"]);
+    answer();
+    await again;
+    expect(header()[H("deckPhase")]).toBe("ready");
+    online.session("authenticated", "v");
+    expect(header()[H("deckPhase")]).toBe("loading");
+    expect(rows()).toHaveLength(1);
+    answer();
+  });
+
+  it("judges a list the store holds while the picker checks it again, not after", async () => {
+    stubFetch(deckReads);
+    await deckStore.revalidate("u");
+    let answer: () => void = () => {};
+    stubFetch({
+      ...deckReads,
+      "GET /decks": () =>
+        new Promise<Response>((done) => {
+          answer = () => done(deckReads["GET /decks"]());
+        }),
+    });
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    const open = online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("loading");
+    await vi.waitFor(() => expect(header()[H("deckPhase")]).toBe("ready"));
+    expect(rows()).toHaveLength(4);
+    answer();
+    await open;
+    expect(rows()).toHaveLength(4);
+  });
+
+  it("opens the picker on the decks another screen already judged", async () => {
+    const { calls } = stubFetch(deckReads);
+    await deckStore.judge(await deckStore.revalidate("u"));
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    const open = online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("ready");
+    expect(rows()).toHaveLength(4);
+    await open;
+    expect(calls.filter((call) => call === "GET /cards/full")).toHaveLength(1);
+  });
+
   it("sends select, ready and kick only when they are allowed", async () => {
     stubFetch(deckReads);
     const { online, header, rows, last } = setup();
@@ -341,6 +438,33 @@ describe("Lua online adapter", () => {
     expect(c.posts.length).toBe(sent);
     await online.command("kick");
     expect(c.posts.at(-1)).toEqual({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
+  });
+
+  it("warms the game table's code once the lobby counts down, once per countdown", async () => {
+    const warmTable = vi.fn();
+    const made: LobbyClient[] = [];
+    const fakes: ReturnType<typeof fakeLobbyChannel>[] = [];
+    const online = new LuaOnline(vi.fn(), vi.fn(), {
+      warmTable,
+      client: (opts) => {
+        const fake = fakeLobbyChannel();
+        fakes.push(fake);
+        const client = new LobbyClient(opts, { channel: fake.channel });
+        made.push(client);
+        return client;
+      },
+    });
+    await online.command("open");
+    await online.command(`join\t${CODE}`);
+    const me = myId();
+    fakes[0]?.push({ kind: "state", snapshot: seated(me) });
+    expect(warmTable).not.toHaveBeenCalled();
+    fakes[0]?.push({
+      kind: "state",
+      snapshot: seated(me, { phase: "countdown", countdownStartedAt: Date.now() }),
+    });
+    vi.advanceTimersByTime(1200);
+    expect(warmTable).toHaveBeenCalledTimes(1);
   });
 
   it("emits the countdown only when the whole second changes", async () => {

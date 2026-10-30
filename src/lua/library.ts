@@ -1,8 +1,8 @@
-import { DECK_SIZE } from "@colorless/engine/rules";
 import { DECK_NAME_MAX, MAX_DECKS_PER_USER } from "@colorless/schema";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
-import { deckLegality } from "../game/sandboxDecks";
+import { legalityFrom } from "../game/sandboxDecks";
+import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import { reportError } from "../lib/reportError";
@@ -100,26 +100,24 @@ export class LuaLibrary {
     );
   }
 
-  /** Reloads the decks; the returned check stays true until something newer starts. */
+  /** Reloads the decks; the returned check stays true until something newer starts. A list the
+   * store already holds (another screen's, or the sign-in prefetch) shows at once meanwhile. */
   async load(): Promise<(() => boolean) | undefined> {
     if (!this.user || this.busy) {
       this.emit();
       return;
     }
     const live = this.epoch.next();
+    const cached = deckStore.peek(this.user);
+    if (cached) this.show(cached);
     this.busy = true;
     this.message = "";
     this.emit();
     try {
-      const decks = await api.listDecks();
+      const list = await deckStore.revalidate(this.user);
       if (!live()) return live;
-      this.decks = decks;
-      // Incomplete decks are illegal on sight; complete ones are judged below.
-      this.legality = new Map(
-        decks.filter((d) => d.cardCount !== DECK_SIZE).map((d) => [d.id, false] as const),
-      );
-      this.phase = "ready";
-      void this.judge(live);
+      this.show(list);
+      void this.judge(live, list);
     } catch (error) {
       if (!live()) return live;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
@@ -137,31 +135,41 @@ export class LuaLibrary {
     return live;
   }
 
+  /** `list` on the piles. Incomplete decks are illegal on sight; complete ones keep the verdicts
+   * already judged for this revision, or are judged by `judge`. */
+  private show(list: DeckList) {
+    this.decks = [...list.decks];
+    this.legality = legalityFrom(this.decks, deckStore.peekVerdicts(list));
+    this.phase = "ready";
+  }
+
   /** Judge the loaded decks in the background and republish the alerts. A
       failed check leaves the piles unmarked rather than surfacing an error:
       the library itself loaded, and the next load retries. */
-  private async judge(live: () => boolean) {
+  private async judge(live: () => boolean, list: DeckList) {
     try {
-      const legality = await deckLegality(this.decks, live);
+      const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      this.legality = legality;
+      this.legality = legalityFrom(this.decks, verdicts);
       this.emit();
     } catch (error) {
       reportError("judge deck legality", error);
     }
   }
 
-  private async mutate(work: () => Promise<unknown>) {
-    const live = this.epoch.current();
+  /** Runs a deck write, puts the server's answer on the piles and says how it went at once, then
+   * reconciles with the server's list behind it, even when the write failed. */
+  private async mutate(work: () => Promise<void>) {
+    const live = this.epoch.next();
     this.busy = true;
     this.message = "";
     this.result = "";
     this.emit();
-    let succeeded = false;
     let failure = "";
     try {
       await work();
-      succeeded = true;
+      const list = deckStore.peek(this.user);
+      if (live() && list) this.show(list);
     } catch (error) {
       const status = error instanceof api.ApiError ? error.status : 0;
       // Only a create answers 409 here: renames send no version, so they never conflict.
@@ -174,12 +182,30 @@ export class LuaLibrary {
     }
     if (!live()) return;
     this.busy = false;
-    // Reconcile with the server even when the write fails.
-    const loaded = await this.load();
-    if (!loaded?.()) return;
-    this.result = succeeded ? "ok" : "error";
+    this.result = failure ? "error" : "ok";
     if (failure) this.message = failure;
     this.emit();
+    await this.reconcile(live);
+  }
+
+  /** The server's list after a write, without holding up the result or the page: a list that
+   * answers as the piles already are publishes nothing new. */
+  private async reconcile(live: () => boolean) {
+    try {
+      const list = await deckStore.revalidate(this.user);
+      if (!live()) return;
+      this.show(list);
+      this.emit();
+      void this.judge(live, list);
+    } catch (error) {
+      if (!live()) return;
+      if (error instanceof api.ApiError && error.status === 401) {
+        this.phase = "anonymous";
+        this.decks = [];
+        this.message = "Your session expired. Sign in again.";
+        this.emit();
+      } else reportError("reconcile the deck library", error);
+    }
   }
 
   async command(raw: string) {
@@ -238,20 +264,25 @@ export class LuaLibrary {
         this.emit();
         return;
       }
-      await this.mutate(() =>
-        action === "create"
-          ? api.createDeck({
-              name,
-              folderId: null,
-              tint: Math.floor(Math.random() * 360),
-              cards: [],
-            })
-          : api.patchDeck(b, { name }),
-      );
+      await this.mutate(async () => {
+        const deck =
+          action === "create"
+            ? await api.createDeck({
+                name,
+                folderId: null,
+                tint: Math.floor(Math.random() * 360),
+                cards: [],
+              })
+            : await api.patchDeck(b, { name });
+        deckStore.put(this.user, deck);
+      });
       return;
     }
     if (action === "delete" && item) {
-      await this.mutate(() => api.deleteDeck(b));
+      await this.mutate(async () => {
+        await api.deleteDeck(b);
+        deckStore.remove(this.user, b);
+      });
       return;
     }
     this.emit();

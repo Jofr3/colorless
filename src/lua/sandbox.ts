@@ -3,7 +3,8 @@ import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
 import { SandboxSetupError } from "../game/sandboxSetupError";
-import { validSandboxDecks } from "../game/sandboxDecks";
+import { sandboxDecksFrom } from "../game/sandboxDecks";
+import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { AccountStatus } from "./account";
@@ -20,11 +21,15 @@ export class LuaSandbox {
   private user = "";
   private readonly epoch = epochGuard();
   private revision = 0;
+  /** The store revision on screen, -1 for none. */
+  private shown = -1;
 
   constructor(
     private publish: (snapshot: string) => void,
     /** Resolves to the synchronous handoff, so nothing async sits between the last check and it. */
     private loadLaunch: () => Promise<(setup: LocalGameSetup) => void>,
+    /** Starts loading the game table's code, which a Play from this picker will need. */
+    private warm: () => void = () => {},
   ) {}
 
   session(status: AccountStatus, id: string) {
@@ -33,6 +38,7 @@ export class LuaSandbox {
     this.epoch.invalidate();
     this.user = user;
     this.decks = [];
+    this.shown = -1;
     this.selected = ["", ""];
     this.busy = false;
     this.message = status === "error" ? DECKS_UNREACHABLE : "";
@@ -63,40 +69,62 @@ export class LuaSandbox {
     );
   }
 
+  /** Loads the decks. The picker stays on what it shows (or on what the deck store already
+   * judged) while the list is checked again, and says loading only with nothing to show.
+   * Selecting stays live meanwhile: Play re-validates the chosen decks' contents anyway. */
   async load() {
     if (!this.user) {
       this.emit();
       return;
     }
     const live = this.epoch.next();
-    this.busy = true;
-    this.phase = "loading";
+    const cached = deckStore.peek(this.user);
+    const judged = cached && deckStore.peekVerdicts(cached);
+    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged), cached.revision);
+    else {
+      if (this.phase !== "ready") this.phase = "loading";
+      // A list the store holds unjudged is judged while it is checked again, not after.
+      if (cached) void this.showJudged(cached, live);
+    }
     this.message = "";
     this.emit();
     try {
-      const summaries = await api.listDecks();
+      const list = await deckStore.revalidate(this.user);
       if (!live()) return;
-      const decks = await validSandboxDecks(summaries, live);
+      const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      // Include decks in existing folders, without bringing folder management here.
-      this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
-      this.selected = this.selected.map((id) =>
-        decks.some((d) => d.id === id) ? id : (decks[0]?.id ?? ""),
-      ) as [string, string];
-      this.phase = "ready";
+      this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
     } catch (error) {
       if (!live()) return;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
       this.decks = [];
+      this.shown = -1;
       this.selected = ["", ""];
       this.message =
         this.phase === "anonymous" ? "Sign in to choose your decks." : DECKS_UNREACHABLE;
-    } finally {
-      if (live()) {
-        this.busy = false;
-        this.emit();
-      }
     }
+    if (live()) this.emit();
+  }
+
+  /** Shows `list` once judged, unless something newer is on screen by then. A failure here says
+   * nothing: the revalidation that runs alongside reports its own. */
+  private async showJudged(list: DeckList, live: () => boolean) {
+    try {
+      const verdicts = await deckStore.judge(list);
+      if (!live() || list.revision <= this.shown) return;
+      this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
+      this.emit();
+    } catch {}
+  }
+
+  private show(decks: Deck[], revision: number) {
+    this.shown = revision;
+    // Include decks in existing folders, without bringing folder management here.
+    this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
+    this.selected = this.selected.map((id) =>
+      decks.some((d) => d.id === id) ? id : (decks[0]?.id ?? ""),
+    ) as [string, string];
+    this.phase = "ready";
   }
 
   async command(raw: string) {
@@ -112,6 +140,8 @@ export class LuaSandbox {
     if (action === "open" || action === "refresh") {
       this.active = true;
       await this.load();
+      // After the decks, so a slow link fetches them first.
+      if (action === "open" && this.active) this.warm();
       return;
     }
     if (!this.active || this.phase !== "ready" || this.busy) return;

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
+import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
@@ -54,7 +55,25 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   clearCardPoolCache();
+  deckStore.reset();
 });
+/** A deck as POST or PATCH /decks answers it. */
+const saved = (id: string, name: string, position = 0) => ({
+  id,
+  name,
+  format: null,
+  folderId: null,
+  tint: 0,
+  position,
+  updated: "2026-10-01T00:00:00.000Z",
+  cards: [],
+  chosenCoverCardId: null,
+});
+const header = (snapshot: unknown) => {
+  const fields = decodeFields(String(snapshot).split("\n")[0] ?? "") ?? [];
+  return (name: (typeof WIRE_ROWS.library.header.fields)[number]) =>
+    fields[wireColumn(WIRE_ROWS.library.header, name)];
+};
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const deckRows = (snapshot: unknown) =>
   Object.fromEntries(
@@ -173,7 +192,10 @@ describe("Lua deck library", () => {
     expect(calls).toEqual(["GET /decks"]);
   });
   it("creates root decks and validates names", async () => {
-    const { impl } = stubFetch({ ...reads, "POST /decks": () => json({}) });
+    const { impl } = stubFetch({
+      ...reads,
+      "POST /decks": () => json(saved("n", "A new deck", -1), 201),
+    });
     const { library } = await setup();
     await library.command("create\tdeck\t%20%20");
     expect(library.message).toContain("1 to 100");
@@ -189,7 +211,7 @@ describe("Lua deck library", () => {
   it("renames and deletes decks without changing folder membership", async () => {
     const { impl } = stubFetch({
       ...reads,
-      "PATCH /decks/b": () => json({}),
+      "PATCH /decks/b": () => json({ ...saved("b", "Renamed", 1), folderId: "f" }),
       "DELETE /decks/a": () => new Response(null, { status: 204 }),
     });
     const { library } = await setup();
@@ -207,6 +229,69 @@ describe("Lua deck library", () => {
     expect(calls.filter((c) => c === "GET /decks")).toHaveLength(2);
     expect(library.result).toBe("error");
     expect(library.message).toContain("Could not save");
+  });
+  it("shows a rename's answer at once and fetches the list again behind it", async () => {
+    let held: (() => void) | undefined;
+    let named = "Árbol\t%";
+    const { calls } = stubFetch({
+      "GET /decks": () => {
+        const list = decks.map((d) => (d.id === "b" ? { ...d, name: named } : d));
+        if (calls.filter((c) => c === "GET /decks").length === 1) return json(list);
+        return new Promise<Response>((done) => {
+          held = () => done(json(list));
+        });
+      },
+      "PATCH /decks/b": () => json({ ...saved("b", "Renamed", 1), folderId: "f" }),
+    });
+    const { library, publish } = await setup();
+    named = "Renamed";
+    const rename = library.command(encodeFields(["rename", "deck", "b", "Renamed"]));
+    await vi.waitFor(() => expect(header(publish.mock.lastCall?.[0])("result")).toBe("ok"));
+    expect(header(publish.mock.lastCall?.[0])("busy")).toBe("0");
+    expect(library.decks.find((d) => d.id === "b")?.name).toBe("Renamed");
+    expect(calls).toEqual(["GET /decks", "PATCH /decks/b", "GET /decks"]);
+    held?.();
+    await rename;
+    expect(library.decks.find((d) => d.id === "b")?.name).toBe("Renamed");
+  });
+  it("adds a created deck and drops a deleted one from the server's answer", async () => {
+    stubFetch({
+      ...reads,
+      "POST /decks": () => json(saved("n", "Fresh", -1), 201),
+      "DELETE /decks/a": () => new Response(null, { status: 204 }),
+    });
+    const { library } = await setup();
+    let shown: string[] = [];
+    const watch = vi.spyOn(library, "emit").mockImplementation(function (this: LuaLibrary) {
+      if (this.result === "ok" && shown.length === 0) shown = this.decks.map((d) => d.id);
+      return LuaLibrary.prototype.emit.call(this);
+    });
+    await library.command(encodeFields(["create", "deck", "Fresh"]));
+    expect(shown).toEqual(["n", "a", "b", "c"]);
+    shown = [];
+    await library.command("delete\tdeck\ta");
+    expect(shown).not.toContain("a");
+    watch.mockRestore();
+  });
+  it("opens on the list another screen already fetched, before its own request answers", async () => {
+    stubFetch(reads);
+    await deckStore.revalidate("user");
+    let answer: (() => void) | undefined;
+    stubFetch({
+      "GET /decks": () =>
+        new Promise<Response>((done) => {
+          answer = () => done(json(decks));
+        }),
+    });
+    const publish = vi.fn();
+    const library = new LuaLibrary(publish, () => {});
+    library.session("authenticated", "user");
+    const open = library.command("open");
+    expect(header(publish.mock.lastCall?.[0])("phase")).toBe("ready");
+    expect(library.decks.map((d) => d.id)).toEqual(["a", "b", "c"]);
+    answer?.();
+    await open;
+    expect(library.phase).toBe("ready");
   });
   it("says why a create was refused when the account holds the most decks it can", async () => {
     stubFetch({

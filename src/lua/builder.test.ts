@@ -13,6 +13,7 @@ import {
 } from "@colorless/schema";
 import { forgetCardIndex, forgetCatalogOptions, loadCardIndex } from "../decks/catalog";
 import { clearCardPoolCache, fetchCardPool } from "../game/cardPool";
+import { deckStore } from "../decks/deckStore";
 import { MAX_TRANSIENT_RETRIES } from "../decks/deckSaver";
 import { cardIndexPayload } from "../test/fixtures";
 vi.mock("../lib/api", async (importOriginal) => {
@@ -30,6 +31,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getFacets: vi.fn(),
     getSets: vi.fn(),
     getSeries: vi.fn(),
+    listDecks: vi.fn(),
     cardImageUrl: (id: string) => `/assets/${id}.png`,
   };
 });
@@ -110,7 +112,10 @@ beforeEach(() => {
   vi.mocked(api.getSets).mockResolvedValue([]);
   vi.mocked(api.getSeries).mockResolvedValue([]);
 });
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  deckStore.reset();
+});
 async function setup(images = vi.fn()) {
   const publish = vi.fn();
   const back = vi.fn();
@@ -305,15 +310,38 @@ describe("Lua deck builder", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(status()).toBe("");
   });
-  it("hands each deck a save returns to deckSaved", async () => {
-    const saved = deck([{ cardId: "a", count: 1 }]);
+  it("puts each deck a save returns in the shared deck store", async () => {
+    const row = {
+      id: "one",
+      name: "Electric Dreams",
+      format: "standard",
+      folderId: null,
+      cardCount: 0,
+      tint: 1,
+      coverCardId: null,
+      position: 0,
+      updated: "2026-10-29T00:00:00.000Z",
+    };
+    vi.mocked(api.listDecks).mockResolvedValue([row] as Awaited<ReturnType<typeof api.listDecks>>);
+    await deckStore.revalidate("u1");
+    const saved = {
+      ...deck([{ cardId: "a", count: 1 }]),
+      name: "Saved Dreams",
+      tint: 1,
+      folderId: null,
+      position: 0,
+      updated: "2026-10-30T00:00:00.000Z",
+      version: 2,
+    } as Deck;
     vi.mocked(api.patchDeck).mockResolvedValue(saved);
     const { b } = await setup();
-    b.deckSaved = vi.fn();
     await b.command("add\ta");
-    expect(b.deckSaved).not.toHaveBeenCalled();
+    expect(deckStore.peek("u1")?.decks[0]?.name).toBe("Electric Dreams");
     await tick();
-    expect(b.deckSaved).toHaveBeenCalledExactlyOnceWith(saved);
+    expect(deckStore.peek("u1")?.decks).toEqual([
+      expect.objectContaining({ id: "one", name: "Saved Dreams", cardCount: 1 }),
+    ]);
+    expect(api.listDecks).toHaveBeenCalledTimes(1);
   });
   it("sends a failed save again when asked, as when the network returns", async () => {
     vi.mocked(api.patchDeck).mockRejectedValue(new TypeError("Failed to fetch"));

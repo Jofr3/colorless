@@ -20,7 +20,8 @@ import {
   savePlayerName,
   stakeIdentity,
 } from "../online/session";
-import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
+import { type DeckVerdict, type PlayableDeck, playableDecksFrom } from "../game/sandboxDecks";
+import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { CardPool, LuaOnlineMatch } from "./onlineTable";
@@ -69,9 +70,13 @@ export class LuaOnline {
   notice = "";
   private invalid = false;
   private identity: LobbyIdentity | null = null;
-  private account = "loading";
+  private account: AccountStatus = "loading";
   private userId = "";
   private decksWanted = false;
+  /** Whose decks `decks` holds. */
+  private decksUser = "";
+  /** The store revision the picker shows, -1 for none. */
+  private decksShown = -1;
   private readonly deckEpoch = epochGuard();
   private revision = 0;
   private op = 0;
@@ -95,6 +100,8 @@ export class LuaOnline {
       client?: (opts: LobbyClientOptions) => LobbyClient;
       now?: () => number;
       cards?: CardPool;
+      /** Starts loading the game table's code, which a countdown is about to need. */
+      warmTable?: () => void;
     } = {},
   ) {}
 
@@ -229,9 +236,11 @@ export class LuaOnline {
   }
 
   session(status: AccountStatus, id: string) {
-    const account =
-      status === "authenticated" ? status : status === "loading" ? status : "anonymous";
+    // "error": the check could not reach the server, which Lua must not answer with Sign in.
+    const account = status;
     const user = account === "authenticated" ? id : "";
+    // Every account publish reaches every screen; only a new status or user is news here.
+    if (account === this.account && (account === "loading" || user === this.userId)) return;
     const changed = this.account !== "loading" && account !== "loading" && user !== this.userId;
     const resolved = this.account === "loading" && account !== "loading";
     this.account = account;
@@ -468,6 +477,7 @@ export class LuaOnline {
   }
 
   private sync(step: OnlineStep) {
+    if (step === "countdown" && this.ticker === null) this.deps.warmTable?.();
     if (step !== "countdown") {
       if (this.ticker !== null) clearInterval(this.ticker);
       this.ticker = null;
@@ -491,28 +501,64 @@ export class LuaOnline {
     }, NOTICE_MS);
   }
 
+  /** Loads the picker's decks. The picker keeps the decks it shows this user (or what the deck
+   * store already judged) while the list is checked again, and says loading only with nothing to
+   * show. */
   private async loadDecks() {
     const live = this.deckEpoch.next();
-    this.decks = [];
+    if (this.decksUser !== this.userId) {
+      this.decks = [];
+      this.decksShown = -1;
+      this.deckPhase = "idle";
+    }
     if (!this.userId) {
-      this.deckPhase = this.account === "loading" ? "loading" : "anonymous";
+      this.deckPhase =
+        this.account === "loading" ? "loading" : this.account === "error" ? "error" : "anonymous";
       this.emit();
       return;
     }
-    this.deckPhase = "loading";
+    const cached = deckStore.peek(this.userId);
+    const judged = cached && deckStore.peekVerdicts(cached);
+    if (cached && judged) this.showDecks(cached, judged);
+    else {
+      if (this.deckPhase !== "ready") this.deckPhase = "loading";
+      // A list the store holds unjudged is judged while it is checked again, not after.
+      if (cached) void this.showJudged(cached, live);
+    }
     this.emit();
     try {
-      const summaries = await api.listDecks();
+      const list = await deckStore.revalidate(this.userId);
       if (!live()) return;
-      const decks = await playableDecks(summaries, live);
+      const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      this.decks = decks.sort((x, y) => x.name.localeCompare(y.name));
-      this.deckPhase = "ready";
+      this.showDecks(list, verdicts);
     } catch (error) {
       if (!live()) return;
+      this.decks = [];
+      this.decksShown = -1;
       this.deckPhase =
         error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
     }
     this.emit();
+  }
+
+  /** Shows `list` once judged, unless something newer is on screen by then. A failure here says
+   * nothing: the revalidation that runs alongside reports its own. */
+  private async showJudged(list: DeckList, live: () => boolean) {
+    try {
+      const verdicts = await deckStore.judge(list);
+      if (!live() || list.revision <= this.decksShown) return;
+      this.showDecks(list, verdicts);
+      this.emit();
+    } catch {}
+  }
+
+  private showDecks(list: DeckList, verdicts: Map<string, DeckVerdict>) {
+    this.decks = playableDecksFrom([...list.decks], verdicts).sort((x, y) =>
+      x.name.localeCompare(y.name),
+    );
+    this.decksShown = list.revision;
+    this.decksUser = this.userId;
+    this.deckPhase = "ready";
   }
 }
