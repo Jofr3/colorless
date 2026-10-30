@@ -42,6 +42,7 @@ the script after adding a decision.
 | 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:1113 |
 | 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:1129 |
 | 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:1144 |
+| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:1161 |
 
 ## Numbered decisions
 
