@@ -59,7 +59,13 @@ _G.print=noop
 dofile('frontend/lua/main.lua')
 local draw=love.draw
 local draws=0
-love.draw=function() draws=draws+1;draw() end
+-- What the last drawn frame showed: the page notice, and the sign-in form's email field.
+local shown={}
+local Button,Input=require('ui.button'),require('ui.text_input')
+local errorLine,inputDraw=Button.errorLine,Input.draw
+Button.errorLine=function(text,...) shown.notice=text;return errorLine(text,...) end
+Input.draw=function(item,value,...) if item.field=='email' then shown.email=value end;return inputDraw(item,value,...) end
+love.draw=function() draws=draws+1;shown={};draw() end
 local loop=love.run()
 local updates=0
 local update=love.update
@@ -74,6 +80,16 @@ local function frames(seconds,hz,events)
   check(pumps-n==math.floor(seconds*hz+0.5),'Events are pumped on every animation frame')
   check(draws-d==presents-p,'Each draw is presented, and a skipped frame presents nothing')
   return draws-d,updates-u
+end
+-- Runs frames until the redraw gate's once-a-second backstop draws, so the next second has no
+-- backstop of its own.
+local function untilBackstop()
+  local before=draws
+  for _=1,300 do
+    clock=clock+1/144;loop()
+    if draws>before then return end
+  end
+  error('No backstop draw within two seconds')
 end
 local function near(value,expected,message) check(math.abs(value-expected)<=2,message..' ('..value..')') end
 
@@ -123,7 +139,12 @@ check(drawn<=3,'Then the static home stops drawing ('..drawn..')')
 write('notice','1\tThis table could not load.')
 drawn=frames(2,144)
 near(drawn,120,'A notice draws while shown')
-frames(7,144)
+frames(5.7,144)
+check(shown.notice=='This table could not load.','The notice is still up 7.7 s after it came')
+-- It goes 8 s after it showed: the update that clears it is followed by a draw, not by the
+-- backstop a second later.
+frames(0.6,144)
+check(shown.notice==nil,'The frame after the notice goes is drawn without it')
 drawn=frames(2,144)
 check(drawn<=3,'Once the notice is gone the home is static again ('..drawn..')')
 -- Settings under reduced motion: static once open; dragging a slider draws without events.
@@ -146,6 +167,17 @@ frames(0.05,144,{{'mousereleased',mouseX,mouseY,1,false,1}})
 frames(0.6,144)
 drawn=frames(2,144)
 check(drawn<=3,'Released, Settings is static again ('..drawn..')')
+-- Typing in the sign-in form arrives as a mailbox (the page's native field): it draws at once,
+-- with no event in the canvas.
+popup:openAuth('login')
+frames(1,144)
+untilBackstop()
+check(shown.email=='','The sign-in form shows an empty email')
+write('authInput','1\temail\tab@x\t\t\t4\t4\tinput\temail')
+frames(0.1,144)
+check(shown.email=='ab@x','A typed email shows within a frame or two, not at the next backstop')
+popup:closeAuth()
+frames(0.6,144)
 -- A resize draws.
 write('viewport','1000 700 1')
 drawn=frames(0.5,144)
