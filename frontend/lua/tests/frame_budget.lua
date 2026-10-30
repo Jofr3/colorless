@@ -6,6 +6,7 @@ local Stub=require('support.draw_stub').install()
 local Snapshots=require('support.snapshots')
 local Simulator=require('ui.simulator')
 local Builder=require('ui.builder')
+local CardFrame=require('ui.card_frame')
 
 local function check(ok,message) if not ok then error(message,2) end end
 local report={}
@@ -47,8 +48,14 @@ end
 -- share one file, as the browser host writes them.
 sim:layout(1280,800);sim:open(false)
 local raw,order=Snapshots.snapshot({revision=1})
-local rows={'1'}
-for i,cardId in ipairs(order) do rows[#rows+1]=cardId..'\t__card_art_'..i..'.png' end
+-- The other player's hand, face up after a hot-seat flip, is cached too.
+local _,misty=Snapshots.snapshot({flipped=true})
+local rows,listed={'1'},{}
+for _,list in ipairs({order,misty}) do
+  for _,cardId in ipairs(list) do
+    if not listed[cardId] then listed[cardId]=true;rows[#rows+1]=cardId..'\t__card_art_'..(#rows)..'.png' end
+  end
+end
 local artRaw=table.concat(rows,'\n')
 local files=require('ui.host_constants').mailboxes
 Stub.files[files.art]=artRaw
@@ -105,6 +112,69 @@ atMost('snapshot during a slide: new canvases',Stub.get('g.newCanvas'),0)
 frames(60)
 check(sim.pendingPiles.you==nil,'The waiting pile replaces the shown one when the card lands')
 balanced('after the slide')
+
+-- A hot-seat End turn mirrors the table for the next player. Public cards
+-- keep their uid, so they keep the face they already painted and appear in
+-- place on the mirrored side: no slide, no ghost. Only faces that changed are
+-- painted: the next player's hand, a card turned face up, one turned face
+-- down, and one whose card changed.
+sim:sync((Snapshots.snapshot({revision=40,hide={['opponent-b4']=true}})));frames(60)
+balanced('before a hot-seat flip')
+local painted={}
+for _,c in ipairs(sim.cards) do painted[c.item.id]=c.texture end
+local generation=Stub.generation
+local repainted={['opponent-b4']='turned face up',['you-b4']='turned face down',['you-b3']='changed card'}
+Stub.reset()
+-- Inside one face batch, as Simulator:update reads the mailbox.
+CardFrame.open()
+sim:sync((Snapshots.snapshot({revision=41,flipped=true,hide={['you-b4']=true},cardIds={['you-b3']='sv04-099'}})))
+CardFrame.close()
+check(sim.viewerSeat=='p2','The flip snapshot seats the other player')
+-- One scan each for the six hand cards and the one turned face up.
+atMost('hot-seat flip: new canvases',Stub.get('g.newCanvas'),9)
+atMost('hot-seat flip: decoded files',Stub.get('decode'),7)
+check(#sim.ghosts==0,'A hot-seat flip sends no card to the discard')
+local kept=0
+local function inPlace(when)
+  for _,c in ipairs(sim.cards) do
+    check(math.abs(c.x-c.homeX)<1 and math.abs(c.y-c.homeY)<1,('%s: %s slides instead of appearing in place'):format(when,c.item.id))
+  end
+end
+inPlace('hot-seat flip')
+for _,c in ipairs(sim.cards) do
+  local id=c.item.id
+  if repainted[id] then
+    check(c.texture~=painted[id] and c.texture.generation>generation,id..' is '..repainted[id]..' but keeps its old face')
+  elseif painted[id] then
+    check(c.texture==painted[id],id..' repaints a face that did not change');kept=kept+1
+  else
+    check(c.item.owner=='you' and c.item.zone=='hand' and c.texture.generation>generation,id..' is new to the table but has no fresh face')
+  end
+end
+check(sim.byUid['you:opponent-b4'] and not sim.byUid['you:opponent-b4'].item.hidden,'The face-up card is on the new side')
+check(sim.byUid['opponent:you-b4'] and sim.byUid['opponent:you-b4'].item.hidden,'The face-down card is on the new side')
+check(kept>=10,'Public cards in play keep their faces across the flip, kept '..kept)
+balanced('on a hot-seat flip')
+frames(30)
+inPlace('after a hot-seat flip')
+check(#sim.ghosts==0,'No ghost appears after the flip')
+balanced('after a hot-seat flip')
+-- The flip back to the first player.
+Stub.reset()
+sim:sync((Snapshots.snapshot({revision=42})))
+atMost('hot-seat flip back: new canvases',Stub.get('g.newCanvas'),10)
+inPlace('flip back')
+frames(60)
+balanced('after the flip back')
+-- Evolving gives the stack the Stage card's uid: the Basic's card takes it
+-- over in place and repaints its one canvas.
+Stub.reset()
+sim:sync((Snapshots.snapshot({revision=43,uids={['you-b0']='you-s0'},cardIds={['you-b0']='sv02-033'}})))
+check(sim.byUid['you:you-s0'] and sim.byUid['you:you-s0'].item.evolvedFrom,'The evolved card takes over the Basic')
+check(#sim.ghosts==0,'Evolving leaves no ghost')
+atMost('evolution: new canvases',Stub.get('g.newCanvas'),1)
+frames(60)
+balanced('after an evolution')
 
 -- A resize empties every Canvas in love.js, so every face must be repainted.
 local before=Stub.generation

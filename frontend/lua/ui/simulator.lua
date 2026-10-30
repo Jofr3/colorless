@@ -127,10 +127,10 @@ function Simulator:artwork(item,w,h)
   g.setColor(colour[1],colour[2],colour[3],0.12)
   for x=16,w-20,8 do for y=48,h-44,8 do g.rectangle('fill',x,y,2,2) end end
 end
-function Simulator:newCard(item,index,x,y,scale)
+function Simulator:newCard(item,index,x,y,scale,texture)
   item.edition='dissolve';item.resolution=2
   item.drawFace=function(w,h) self:face(item,w,h) end
-  local c=Card.new(item,index);c:place(x,y,scale,false)
+  local c=Card.new(item,index,nil,texture);c:place(x,y,scale,false)
   c.motion.T.r=0;c.motion.VT.r=0
   return c
 end
@@ -407,7 +407,9 @@ function Simulator:placeCards(resize,previous)
   end
   local youPrizesTaken=previous and previous.sides and previous.sides.you and self.sides.you and self.sides.you.prizes<previous.sides.you.prizes
   -- A hot-seat flip mirrors the whole table: every card is re-created in
-  -- place, with no entrance slide and no ghosts.
+  -- place, with no entrance slide and no ghosts. A public card keeps its uid
+  -- under the mirrored owner, and the face it painted when that face is
+  -- unchanged; hidden cards are positional, so they are always repainted.
   local flipped=previous and previous.viewerSeat and previous.viewerSeat~='' and previous.viewerSeat~=self.viewerSeat
   -- The first snapshot of a (re)loaded game has nothing to diff against: cards
   -- in play and piles simply appear; only the hand is dealt in from the deck.
@@ -416,7 +418,9 @@ function Simulator:placeCards(resize,previous)
   -- discard rows without creating a second departure animation.
   local dissolving=self.completedKOs or {}
   local function takeOldCard(item)
-    local key=item.owner..':'..item.id
+    local owner=item.owner
+    if flipped and not item.hidden and owner~='global' then owner=owner=='you' and 'opponent' or 'you' end
+    local key=owner..':'..item.id
     local c=old[key]
     -- Stadiums keep their UID but change from a player's hand to the shared
     -- board owner. Reuse the visible card on play, replacement and undo.
@@ -466,7 +470,10 @@ function Simulator:placeCards(resize,previous)
       local key=item.owner..':'..item.id
       local c=takeOldCard(item)
       if c and (c.item.cardId~=item.cardId or c.item.hidden~=item.hidden or (flipped and item.hidden)) then c.texture:release();c=nil end
-      if (item.zone=='active' or item.zone=='bench') and not item.hidden then
+      local painted
+      -- Mirrored by a flip: a new card on its new side, with the same face.
+      if c and flipped and c.item.owner~=item.owner then painted=c.texture;c=nil end
+      if not flipped and (item.zone=='active' or item.zone=='bench') and not item.hidden then
         local was=prevBySpot[item.owner..':'..item.zone..':'..item.index]
         local oldKey=was and (item.owner..':'..was.id)
         if oldKey and old[oldKey] then
@@ -477,12 +484,12 @@ function Simulator:placeCards(resize,previous)
             old[oldKey].texture:release();old[oldKey]=nil
           else
             c=old[oldKey];old[oldKey]=nil
-            c.texture:release();c.item=item;c.index=i;c:rebuild()
+            c.item=item;c.index=i;c:rebuild()
           end
         end
       end
       if not c then
-        c=self:newCard(item,i,x,y,scale)
+        c=self:newCard(item,i,x,y,scale,painted)
         local prev=prevByUid[key]
         if not self.reduced and previous and previous.items and not resize and not flipped and (not fresh or item.zone=='hand') then
           -- A card entering the table starts where it came from.

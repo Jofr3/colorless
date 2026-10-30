@@ -24,7 +24,12 @@ Late.ART_IDS={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046',
 
 -- `options.revision`, `options.matchId`, `options.discard` (top card offset),
 -- `options.discarded` (how many of your hand cards are now in the discard),
--- `options.extra` (rows appended at the end).
+-- `options.extra` (rows appended at the end), `options.flipped` (the same
+-- table after a hot-seat End turn: seen by Misty as p2, so owners mirror,
+-- public uids stay and the hands swap which one is face down),
+-- `options.hide` (uids shown face down), `options.cardIds` (uid to the
+-- card id shown instead) and `options.uids` (uid to the uid sent instead, as
+-- an evolved stack reports its new top card).
 function Late.snapshot(options)
   options=options or {}
   local ids,order={},{}
@@ -33,36 +38,48 @@ function Late.snapshot(options)
     if not ids[cardId] then ids[cardId]=true;order[#order+1]=cardId end
     return cardId
   end
-  local out={row(nil,W.header,{revision=options.revision or 1,phase='ready',you='Ash',opponent='Misty',turn=9,gamePhase='turn:action',
+  local flipped=options.flipped
+  local function card(fields)
+    if options.hide and options.hide[fields.uid] then fields.cardId='hidden';fields.hidden='true';fields.name='Face-down card' end
+    if options.cardIds and options.cardIds[fields.uid] then fields.cardId=options.cardIds[fields.uid] end
+    if options.uids and options.uids[fields.uid] then fields.uid=options.uids[fields.uid] end
+    return row('C',W.card,fields)
+  end
+  local out={row(nil,W.header,{revision=options.revision or 1,phase='ready',you=flipped and 'Misty' or 'Ash',opponent=flipped and 'Ash' or 'Misty',turn=flipped and 10 or 9,gamePhase='turn:action',
     title='Your turn',hint='Attach Energy, play Trainers and Pokemon, then attack or end your turn.',turnIndex=0,turnCount=1,
-    waitingOn='you',activePlayer='you',seat='p1',energyAttached=1,supporterPlayed=0,retreated=0,matchId=options.matchId or 'late'})}
+    waitingOn='you',activePlayer='you',seat=flipped and 'p2' or 'p1',energyAttached=1,supporterPlayed=0,retreated=0,matchId=options.matchId or 'late'})}
   out[#out+1]=row('L',W.lifecycle,{mode='local',spectating='false',flags='undo,newgame,choosedecks,concede,leave',allow='full'})
-  for _,owner in ipairs({'you','opponent'}) do
+  -- `player` names the seat in uids (Ash's cards are you-*), `owner` is the
+  -- side of the table the viewer sees it on.
+  for _,player in ipairs({'you','opponent'}) do
+    local ash=player=='you'
+    local owner=flipped and (ash and 'opponent' or 'you') or player
     local mine=owner=='you'
-    out[#out+1]=row('S',W.side,{owner=owner,deck=20,prizes=4,hand=mine and 7 or 6,discard=25,mulligans=0})
-    for i=0,mine and 6 or 5 do
+    local last=ash and 6 or 5
+    out[#out+1]=row('S',W.side,{owner=owner,deck=20,prizes=4,hand=last+1,discard=25,mulligans=0})
+    for i=0,last do
       if mine then
-        local gone=i<(options.discarded or 0)
-        out[#out+1]=row('C',W.card,{uid='you-h'..i,cardId=id(i),name='Hand Card '..i,owner=owner,zone=gone and 'discard' or 'hand',
+        local gone=ash and i<(options.discarded or 0)
+        out[#out+1]=card({uid=player..'-h'..i,cardId=id(ash and i or 10+i),name='Hand Card '..i,owner=owner,zone=gone and 'discard' or 'hand',
           index=gone and 25+i or i,hidden='false',category='Trainer',trainerType='Item',draggable='true',displayIndex=i})
       else
-        out[#out+1]=row('C',W.card,{uid='opponent-hand-'..i,cardId='hidden',name='Face-down card',owner=owner,zone='hand',index=i,hidden='true',draggable='false',displayIndex=i})
+        out[#out+1]=card({uid=owner..'-hand-'..i,cardId='hidden',name='Face-down card',owner=owner,zone='hand',index=i,hidden='true',draggable='false',displayIndex=i})
       end
     end
     local energy=id(40)
-    out[#out+1]=row('C',W.card,{uid=owner..'-a',cardId=id(mine and 20 or 21),name='Charizard ex',owner=owner,zone='active',index=0,hidden='false',
+    out[#out+1]=card({uid=player..'-a',cardId=id(ash and 20 or 21),name='Charizard ex',owner=owner,zone='active',index=0,hidden='false',
       category='Pokemon',stage='Stage2',hp=330,damage=120,
-      energies='Fire|'..owner..'-e1|'..energy..',Fire|'..owner..'-e2|'..energy..',Fire|'..owner..'-e3|'..energy,
-      tools=owner..'-t1|'..id(41),status='burned',types='Fire',draggable=mine and 'true' or 'false',displayIndex=0})
+      energies='Fire|'..player..'-e1|'..energy..',Fire|'..player..'-e2|'..energy..',Fire|'..player..'-e3|'..energy,
+      tools=player..'-t1|'..id(41),status='burned',types='Fire',draggable=mine and 'true' or 'false',displayIndex=0})
     for b=0,4 do
       local water=id(42)
-      out[#out+1]=row('C',W.card,{uid=owner..'-b'..b,cardId=id(22+b+(mine and 0 or 5)),name='Bench Mon '..b,owner=owner,zone='bench',index=b,hidden='false',
-        category='Pokemon',stage='Basic',hp=70+b*10,damage=b*10,energies='Water|'..owner..'-be'..b..'|'..water..',Water|'..owner..'-bf'..b..'|'..water,
+      out[#out+1]=card({uid=player..'-b'..b,cardId=id(22+b+(ash and 0 or 5)),name='Bench Mon '..b,owner=owner,zone='bench',index=b,hidden='false',
+        category='Pokemon',stage='Basic',hp=70+b*10,damage=b*10,energies='Water|'..player..'-be'..b..'|'..water..',Water|'..player..'-bf'..b..'|'..water,
         types='Water',draggable=mine and 'true' or 'false',displayIndex=b})
     end
     for d=0,24 do
       local n=d==24 and (options.discard or 0)+50+d or 50+d
-      out[#out+1]=row('C',W.card,{uid=owner..'-d'..d,cardId=id(n),name='Discard '..d,owner=owner,zone='discard',index=d,hidden='false',
+      out[#out+1]=card({uid=player..'-d'..d,cardId=id(n),name='Discard '..d,owner=owner,zone='discard',index=d,hidden='false',
         category='Trainer',trainerType='Item',draggable='false',displayIndex=d})
     end
   end
@@ -73,8 +90,9 @@ function Late.snapshot(options)
       abilities='Ability Name'..US..LOREM..US..'Ability',
       attacks='Flare'..US..'Fire,Colorless'..US..'30'..US..LOREM..RS..'Blast'..US..'Fire,Fire,Colorless'..US..'120'..US..LOREM,name='Card '..cardId})
   end
+  local viewer=flipped and 'opponent' or 'you'
   for k=1,8 do
-    out[#out+1]=row('K',W.cardAction,{token=k,uid='you-h'..(k%7),label='Attach to Bench Mon',colour='blue',disabled='false',targetUid='you-b'..(k%5),group='attach'})
+    out[#out+1]=row('K',W.cardAction,{token=k,uid=viewer..'-h'..(k%(flipped and 6 or 7)),label='Attach to Bench Mon',colour='blue',disabled='false',targetUid=viewer..'-b'..(k%5),group='attach'})
   end
   out[#out+1]=row('A',W.sidebar,{token='end',label='End turn',colour='red',disabled='false',slot='primary'})
   for i,label in ipairs({'Undo turn','Undo action','New game','Redo action','Redo turn'}) do

@@ -39,9 +39,10 @@ local function emblem(kind,colour)
   end
 end
 
-function Card.new(item,index,class)
+-- `texture`: a canvas already painted with this item's face, adopted as is.
+function Card.new(item,index,class,texture)
   local self = setmetatable({item=item,index=index,x=0,y=0,homeX=0,homeY=0,angle=0,scale=1,hovered=false,ambientTilt=0.2},class or Card)
-  self:rebuild()
+  if texture then self.texture=texture else self:rebuild() end
   return self
 end
 -- Canvas size and filter. Native rasters copy drawFace's texels unscaled.
