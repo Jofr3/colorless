@@ -12,6 +12,12 @@ declare global {
       canWrite: boolean,
     ): void;
     FS_unlink(path: string): void;
+    FS_createPath(parent: string, path: string, canRead: boolean, canWrite: boolean): string;
+  }
+
+  /** The Network Information API's Save-Data hint (Chromium only; absent elsewhere). */
+  interface Navigator {
+    readonly connection?: { readonly saveData?: boolean };
   }
 
   interface LoveModuleConfig {

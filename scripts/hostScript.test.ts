@@ -13,6 +13,14 @@ const SOURCE = readFileSync(repoPath("frontend/lua/web/host.js"), "utf8").replac
   "/* love-sizes */ {}",
   JSON.stringify(SIZES),
 );
+/** The two mailboxes host.js writes itself before Lua's first frame (src/host/mailboxes.ts). */
+const MAILBOXES = { viewport: "__viewport.txt", revisions: "__mailbox_revisions.txt" };
+/** build.mjs's versions for the deferred transition scans (audit BT9). */
+const CARD_VERSIONS = {
+  "transition_cards/sv01-030.png": "aaa111",
+  "transition_cards/sv01-033.png": "bbb222",
+  "music1.ogg": "ccc333",
+};
 
 const UNSUPPORTED =
   "Colorless needs WebGL and WebAssembly. Turn on hardware acceleration or try another browser.";
@@ -60,10 +68,20 @@ interface Options {
   webAssembly?: boolean;
   webgl?: boolean;
   decompression?: boolean;
+  /** navigator.connection.saveData; no connection object when undefined. */
+  saveData?: boolean;
+  /** build.mjs's per-file content hashes, the love-versions placeholder. */
+  versions?: Record<string, string>;
 }
 
 /** One boot of host.js over a fresh fake page. */
-function boot({ webAssembly = true, webgl = true, decompression = true }: Options = {}) {
+function boot({
+  webAssembly = true,
+  webgl = true,
+  decompression = true,
+  saveData,
+  versions,
+}: Options = {}) {
   const page = {
     activeElement: null as FakeElement | null,
     hidden: false,
@@ -165,6 +183,7 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
     performance: { mark() {}, measure() {} },
     innerWidth: 1280,
     innerHeight: 800,
+    navigator: { connection: saveData === undefined ? undefined : { saveData } },
     fetch,
     Response,
     TransformStream,
@@ -204,14 +223,26 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
   };
   context.window = context;
   createContext(context);
-  runInContext(SOURCE, context);
+  runInContext(
+    versions ? SOURCE.replace("/* love-versions */ {}", JSON.stringify(versions)) : SOURCE,
+    context,
+  );
 
   const host = context.colorlessHost as {
-    connect(bridge: { onDegraded(state: string): void; onPrint(): void }): void;
+    connect(bridge: {
+      onDegraded(state: string): void;
+      onPrint(): void;
+      mailboxes?: typeof MAILBOXES;
+    }): void;
   };
   const degraded: string[] = [];
-  host.connect({ onDegraded: (state) => degraded.push(state), onPrint() {} });
+  host.connect({
+    onDegraded: (state) => degraded.push(state),
+    onPrint() {},
+    mailboxes: MAILBOXES,
+  });
   const module = context.Module as {
+    preRun: ((runtime: unknown) => void)[];
     print(message: string): void;
     printErr(message: string): void;
     fetchPackage(url: string, receive: (bytes: ArrayBuffer) => void): void;
@@ -244,9 +275,27 @@ function boot({ webAssembly = true, webgl = true, decompression = true }: Option
     return { reachedSdl, prevented: event.defaultPrevented };
   };
 
+  /** The files host.js writes into the runtime's filesystem, by path, and the folders it makes. */
+  const written = new Map<string, Uint8Array | string>();
+  const folders: string[] = [];
+  /** Starts the runtime the way love.js does, before Lua's first frame. */
+  const start = () =>
+    module.preRun[0]?.({
+      FS_createDataFile: (parent: string, name: string, data: Uint8Array | string) => {
+        const path = `${parent === "/" ? "" : parent}/${name}`;
+        if (written.has(path)) throw new Error(`FS: ${path} exists`);
+        written.set(path, data);
+      },
+      FS_unlink: (path: string) => void written.delete(path),
+      FS_createPath: (parent: string, path: string) => void folders.push(`${parent}/${path}`),
+    });
+
   return {
     ...elements,
     body: document.body,
+    written,
+    folders,
+    start,
     page,
     reloadButton,
     module,
@@ -676,5 +725,128 @@ describe("host.js keys (BT5, LC3)", () => {
       // Ctrl+R was kept from every listener before; it still is.
       expect(page.key("keydown", { key: "r", ctrlKey: true }).reachedSdl).toBe(false);
     }
+  });
+});
+
+describe("host.js menu music (BT8)", () => {
+  const musicFetches = (page: ReturnType<typeof boot>) =>
+    page.fetches.filter((url) => url.startsWith("/love/music1.ogg"));
+
+  it("downloads the music after ready once Lua asks, and writes it where Lua looks", async () => {
+    const page = boot();
+    page.start();
+    page.module.print("COLORLESS:music:want\tstart");
+    await settle();
+    expect(musicFetches(page)).toEqual([]);
+    page.ready();
+    await page.send("/love/music1.ogg", 5);
+    await page.finish("/love/music1.ogg");
+    expect(musicFetches(page)).toHaveLength(1);
+    expect(page.written.get("/assets/sounds/music1.ogg")).toHaveLength(5);
+  });
+
+  it("downloads nothing for a player Lua does not ask for (muted, or the volume at zero)", async () => {
+    const page = boot();
+    page.start();
+    page.ready();
+    await settle();
+    expect(musicFetches(page)).toEqual([]);
+  });
+
+  it("downloads at once on an ask after ready, and only once however often Lua asks", async () => {
+    const page = boot();
+    page.start();
+    page.ready();
+    page.module.print("COLORLESS:music:want\tchange");
+    page.module.print("COLORLESS:music:want\tchange");
+    await settle();
+    expect(musicFetches(page)).toHaveLength(1);
+    await page.finish("/love/music1.ogg");
+    page.module.print("COLORLESS:music:want\tchange");
+    await settle();
+    expect(musicFetches(page)).toHaveLength(1);
+  });
+
+  it("skips the start ask under Save-Data, and downloads when the player turns the music on", async () => {
+    const page = boot({ saveData: true });
+    page.start();
+    page.module.print("COLORLESS:music:want\tstart");
+    page.ready();
+    await settle();
+    expect(musicFetches(page)).toEqual([]);
+    page.module.print("COLORLESS:music:want\tchange");
+    await settle();
+    expect(musicFetches(page)).toHaveLength(1);
+  });
+
+  it("downloads the start ask with a connection that does not save data", async () => {
+    const page = boot({ saveData: false });
+    page.start();
+    page.module.print("COLORLESS:music:want\tstart");
+    page.ready();
+    await settle();
+    expect(musicFetches(page)).toHaveLength(1);
+  });
+
+  it("asks again after a download that failed", async () => {
+    const page = boot();
+    page.responses.set("/love/music1.ogg", () => new Response(null, { status: 503 }));
+    page.start();
+    page.ready();
+    page.module.print("COLORLESS:music:want\tchange");
+    await settle();
+    page.module.print("COLORLESS:music:want\tchange");
+    await settle();
+    expect(musicFetches(page)).toHaveLength(2);
+    expect(page.written.has("/assets/sounds/music1.ogg")).toBe(false);
+  });
+});
+
+describe("host.js transition scans (BT9)", () => {
+  const cardFetches = (page: ReturnType<typeof boot>) =>
+    page.fetches.filter((url) => url.startsWith("/love/transition_cards/"));
+
+  it("downloads each versioned scan after ready into the folder Lua's fallback reads", async () => {
+    const page = boot({ versions: CARD_VERSIONS });
+    page.start();
+    await settle();
+    expect(cardFetches(page)).toEqual([]);
+    page.ready();
+    await settle();
+    expect(cardFetches(page).sort()).toEqual([
+      "/love/transition_cards/sv01-030.png?v=aaa111",
+      "/love/transition_cards/sv01-033.png?v=bbb222",
+    ]);
+    expect(page.folders).toEqual(["/assets/transition_cards"]);
+    await page.send("/love/transition_cards/sv01-033.png", 7);
+    await page.finish("/love/transition_cards/sv01-033.png");
+    expect(page.written.get("/assets/transition_cards/sv01-033.png")).toHaveLength(7);
+    expect(page.written.has("/assets/transition_cards/sv01-030.png")).toBe(false);
+    await page.finish("/love/transition_cards/sv01-030.png");
+    expect(page.written.has("/assets/transition_cards/sv01-030.png")).toBe(true);
+  });
+
+  it("keeps the scans that arrive when one fails", async () => {
+    const page = boot({ versions: CARD_VERSIONS });
+    page.responses.set(
+      "/love/transition_cards/sv01-030.png",
+      () => new Response(null, { status: 404 }),
+    );
+    page.start();
+    page.ready();
+    await page.finish("/love/transition_cards/sv01-033.png");
+    expect([...page.written.keys()].filter((path) => path.includes("transition_cards"))).toEqual([
+      "/assets/transition_cards/sv01-033.png",
+    ]);
+    expect(page.body.classList.contains("failed")).toBe(false);
+  });
+
+  it("downloads the scans under Save-Data too, and whether or not Lua asks for music", async () => {
+    const page = boot({ versions: CARD_VERSIONS, saveData: true });
+    page.start();
+    page.ready();
+    await settle();
+    expect(cardFetches(page)).toHaveLength(2);
+    expect(page.fetches.some((url) => url.startsWith("/love/music1.ogg"))).toBe(false);
   });
 });

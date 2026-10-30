@@ -112,7 +112,7 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/sim_ko.lua`: the Knock Out presentation (burns in engine order with attachments, Prize flights, the half-second handoff pause) behind `Ko.begin`, `update` (true when the held snapshot should apply) and `cancel`; `Simulator.koPresentation` holds the running one.
 - `src/online/lobbyClient.ts`: the framework-free lobby WebSocket client used by the Lua adapters; `createLobby.ts` mints a code.
 - `src/lua/online.ts` (`LuaOnline`), `onlineTable.ts` (`LuaOnlineMatch`) and `tableSource.ts` (`TableSource`, `LocalTableSource`): the online modal adapter, the online table source and the seam that lets one `LuaSimulator` drive local and online games.
-- `web/`: browser bootstrap (`host.js`, `host.css`; the page itself is the root `index.html`): the love.js `Module`, the WebAssembly/WebGL check, the early `love.wasm` download and compile (counted into one boot bar), the gzipped game package (`game.data.gz`, handed to host.js by `build.mjs`'s `Module.fetchPackage` patch and unpacked with DecompressionStream, with the plain `game.data` as fallback), the loading and failure overlay, boot performance marks, mailbox writes and their revision list, the viewport/reduced-motion mailbox, card art, and the menu music (`music1.ogg`, published beside `game.data` and written into the runtime's filesystem after Lua is ready). `host.js` is checked JavaScript (`// @ts-check`, `web/tsconfig.json`).
+- `web/`: browser bootstrap (`host.js`, `host.css`; the page itself is the root `index.html`): the love.js `Module`, the WebAssembly/WebGL check, the early `love.wasm` download and compile (counted into one boot bar), the gzipped game package (`game.data.gz`, handed to host.js by `build.mjs`'s `Module.fetchPackage` patch and unpacked with DecompressionStream, with the plain `game.data` as fallback), the loading and failure overlay, boot performance marks, mailbox writes and their revision list, the viewport/reduced-motion mailbox, card art, the menu music (`music1.ogg`, published beside `game.data` and written into the runtime's filesystem after Lua is ready, only once Lua asks for it: never for a muted player or one whose volume is zero, and not at start under Save-Data), and the screen wipe's eight fallback scans (`transition_cards/`, published and written the same way, for everyone). `host.js` is checked JavaScript (`// @ts-check`, `web/tsconfig.json`).
 - `build.mjs`: stages the application and local resources, then invokes love.js into `public/love/`.
 
 Card render textures are recreated after viewport changes because love.js clears canvas contents when resizing its WebGL backbuffer. Keep that behavior when adding future card artwork.
@@ -182,14 +182,16 @@ eviction, replacements and blocked storage. With Vite running, open
 The plain-text page avoids running the game loop during this storage-only test.
 
 `lua frontend/lua/tests/transition_art.lua` checks cached selection, shuffle
-cycles, new arrivals, eviction and the bundled fallback.
+cycles, new arrivals, eviction and the fallback of the scans that have arrived.
 `lua frontend/lua/tests/screen_wipe.lua` executes the original event and
 particle code at 30/60/120/144 FPS and checks timing, square motion, viewport
 coverage, resize and reduced motion. Run
 `lua frontend/lua/tests/screen_wipe_navigation.lua` for covered page changes,
 input locking and history routing; the simulator tests also cover deferred
-same-deck restarts and replacement snapshots. The scans are bundled so the first
-transition works without a network request; their source URLs are recorded in
+same-deck restarts and replacement snapshots. The fallback scans are published
+beside `game.data` (not inside it) and written into the runtime after ready; a
+wipe before the first arrives keeps its card face down, so the first transition
+never waits on the network. Their source URLs are recorded in
 `assets/transition_cards/SOURCES.md` and their hashes in the build manifest.
 
 Run from the repository root with Lua 5.1, the dialect love.js ships (5.2 and

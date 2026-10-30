@@ -11,6 +11,15 @@ local function publish(ids)
   end
   files['__art.txt']=table.concat(rows,'\n')
 end
+-- The host downloads the eight scans after ready (audit BT9): until the first arrives there is
+-- no artwork at all, and the wipe shows the card back.
+assert(Art.pick()==nil and Art.fallback()==nil,'No artwork before the scans arrive')
+-- The fallback lists only the scans written so far.
+local scans={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}
+local function scan(id) return 'assets/transition_cards/'..id..'.png' end
+files[scan('sv01-042')]='png'
+for _=1,3 do assert(Art.pick().path==scan('sv01-042'),'Only the scan that arrived is drawn')end
+for _,id in ipairs(scans) do files[scan(id)]='png' end
 -- The empty-cache fallback also exhausts its pool before repeating.
 local fallback={}
 for _=1,8 do local c=Art.pick();assert(not fallback[c.id]);fallback[c.id]=true;assert(c.path:match('^assets/transition_cards/'))end
@@ -52,4 +61,4 @@ files['prepared.png']=nil
 assert(Art.pick().id=='working','Missing prepared art must fall back to the working cache')
 files['__transition_art.txt']=''
 assert(Art.pick().id=='working','An acknowledged/empty mailbox must not select stale artwork')
-print('PASS: cached artwork selection, 64-card shuffle cycles, new arrivals, eviction, duplicates and fallback')
+print('PASS: cached artwork selection, 64-card shuffle cycles, new arrivals, eviction, duplicates, and the fallback of the scans that arrived')

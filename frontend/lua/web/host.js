@@ -334,7 +334,11 @@ const loveModule = {
       watchBoot();
       updateLoadingProgress(100);
       loading.style.display = "none";
-      void loadMusic();
+      void loadTransitionCards();
+      if (musicAsked) void loadMusic();
+    } else if (message.startsWith("COLORLESS:music:want\t")) {
+      askForMusic(message.slice("COLORLESS:music:want\t".length));
+      return;
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid)\t(\d+)$/) || [];
@@ -549,16 +553,67 @@ addEventListener(
   true,
 );
 
+// ---- the menu music ----
+// Lua asks for the music only when the player would hear it (main.lua askForMusic, audit BT8), so
+// a muted player or one whose volume is at zero never downloads its 2.9 MB. Lua's 'start' ask
+// downloads after ready, and not at all under Save-Data; a 'change' is the player unmuting or
+// turning a volume up, which downloads at once whatever the connection.
+let musicAsked = false;
+/** @type {"idle" | "loading" | "done"} */
+let music = "idle";
+/** @param {string} reason */
+function askForMusic(reason) {
+  if (reason !== "change" && navigator.connection?.saveData === true) return;
+  musicAsked = true;
+  if (ready) void loadMusic();
+}
 // Lua starts the menu music once this file appears (main.lua's MUSIC).
 async function loadMusic() {
+  if (music !== "idle") return;
+  music = "loading";
   try {
     const response = await fetch(loveModule.locateFile("music1.ogg"));
     if (!response.ok) throw new Error(`music ${response.status}`);
     const bytes = new Uint8Array(await response.arrayBuffer());
     runtime?.FS_createDataFile("/assets/sounds", "music1.ogg", bytes, true, false);
+    music = "done";
   } catch (error) {
+    // A later ask tries again.
+    music = "idle";
     console.error("[colorless] load music", error);
   }
+}
+
+// ---- the transition scans ----
+// The screen wipe's eight fallback scans download after ready instead of inside game.data
+// (audit BT9), each under its content hash like music1.ogg. Lua's fallback lists only the scans
+// written so far (ui/transition_art.lua), and a wipe before the first arrives burns the card
+// face down, so a slow first visit never waits for them.
+const TRANSITION_CARDS = "transition_cards";
+async function loadTransitionCards() {
+  const running = runtime;
+  const names = Object.keys(loveVersions).filter((name) => name.startsWith(`${TRANSITION_CARDS}/`));
+  if (!running || names.length === 0) return;
+  // The package holds no scan, so their folder is made here.
+  running.FS_createPath("/assets", TRANSITION_CARDS, true, true);
+  await Promise.all(
+    names.map(async (name) => {
+      try {
+        const response = await fetch(loveModule.locateFile(name));
+        if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        running.FS_createDataFile(
+          `/assets/${TRANSITION_CARDS}`,
+          name.slice(TRANSITION_CARDS.length + 1),
+          bytes,
+          true,
+          false,
+        );
+      } catch (error) {
+        console.error("[colorless] load transition card", error);
+      }
+    }),
+  );
 }
 
 /** @type {Map<string, string>} */

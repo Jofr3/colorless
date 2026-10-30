@@ -1,14 +1,19 @@
 -- The browser stages one image from its persistent disk pool. The current
--- session's working cache and bundled art remain fallbacks while it loads.
+-- session's working cache and the host's eight scans remain fallbacks while it loads.
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
 local Art={}
 local bundled={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}
 local shown,last={},nil
 
+-- The scans download after ready, outside game.data (web/host.js, audit BT9): only those
+-- already written take part, and before the first arrives there is no artwork at all.
 local function fallbackPool()
   local pool={}
-  for _,id in ipairs(bundled) do pool[#pool+1]={id=id,path='assets/transition_cards/'..id..'.png'} end
+  for _,id in ipairs(bundled) do
+    local path='assets/transition_cards/'..id..'.png'
+    if love.filesystem.getInfo(path) then pool[#pool+1]={id=id,path=path} end
+  end
   return pool
 end
 
@@ -31,7 +36,12 @@ local function draw(pool)
   return card
 end
 
-function Art.fallback() return draw(fallbackPool()) end
+-- A scan, or nil while none has arrived (the wipe then shows the card back).
+function Art.fallback()
+  local pool=fallbackPool()
+  if #pool==0 then return nil end
+  return draw(pool)
+end
 
 function Art.pick()
   local transition=Mailbox.read('transitionArt')
