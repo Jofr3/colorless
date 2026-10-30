@@ -164,6 +164,44 @@ local function libraryTransform()
   g.translate(virtualWidth/2,virtualHeight/2); g.scale(scale)
   g.translate(-virtualWidth/2,-virtualHeight/2+collection():offset())
 end
+-- Where `screen` draws the field a text proxy edits, for the page to put the proxy over it (audit
+-- BR6): the IME window and a phone keyboard's pan then anchor at the field. Whole CSS pixels from
+-- the canvas's top-left, through love.draw's own transforms; the room's sway and the CRT's bend
+-- are left out, a few pixels that would move the box every frame. Nil while it edits nothing.
+local function editBox(screen)
+  local x,y,w,h
+  if screen then x,y,w,h=screen:editBox() end
+  if not x then return nil end
+  g.push(); g.origin(); g.translate(offsetX,offsetY); g.scale(layoutScale)
+  if isCollection(state.page) and screen==collection() then libraryTransform() end
+  local left,top=g.transformPoint(x,y)
+  local right,bottom=g.transformPoint(x+w,y+h)
+  g.pop()
+  local function css(v) return math.floor(v/density+0.5) end
+  left,top,right,bottom=css(left),css(top),css(right),css(bottom)
+  return {left,top,math.max(1,right-left),math.max(1,bottom-top)}
+end
+-- The screen whose fields take the keys: Settings over any page, else the lobby or a collection.
+local function editingScreen()
+  return popup or state.page=='online' and online or isCollection(state.page) and collection() or nil
+end
+-- A command that opens an edit (`action` first: input, or Settings' edit) carries its field's box
+-- after its own fields (src/host/shell.ts reads them), and syncEditBox remembers it.
+local function withEditBox(command,action,screen)
+  if command:match('^[^\t]*')~=action then return command end
+  local box=editBox(screen)
+  state.editBox=box and table.concat(box,' ') or ''
+  return box and command..'\t'..table.concat(box,'\t') or command
+end
+-- Once a frame: the box again when the field moved (a resize, a dialog sliding in), for the page
+-- to move the proxy with it.
+local function syncEditBox()
+  local box=editBox(editingScreen())
+  local key=box and table.concat(box,' ') or ''
+  if key==state.editBox then return end
+  state.editBox=key
+  if box then Bridge.emit('field-box',unpack(box)) end
+end
 local function hit(x,y)
   for i,b in ipairs(menu) do if Button.hit(b,x,y) then return i end end
   for i,b in ipairs(controls) do if Button.hit(b,x,y) then return #menu+i end end
@@ -337,8 +375,8 @@ openSettings=function(keyboard,tab,opener)
     changed=savePreferences,close=closeSettings,announce=announce,
     reduced=function() return state.reduced end,
     feedback=function() sound('button'); room.jiggle=room.jiggle+0.5 end,
-    account=function(command) Bridge.send('account',command) end,
-    auth=function(command) Bridge.send('auth',command) end,
+    account=function(command) Bridge.send('account',withEditBox(command,'edit',popup)) end,
+    auth=function(command) Bridge.send('auth',withEditBox(command,'edit',popup)) end,
   },state.reduced,keyboard,account)
   popup.tab=Settings.tabs[tab or 'game'] or Settings.tabs.game
   if keyboard then popup.focus=popup.tab end
@@ -351,7 +389,10 @@ end
 -- sign-in popup (a no-op while a wipe blocks Settings). `extra` adds or overrides.
 local function callbacksFor(channel,extra)
   local callbacks={
-    command=function(command) Bridge.send(channel,command) end,
+    command=function(command)
+      local screen=({library=library,builder=builder,sandbox=sandbox,online=online})[channel]
+      Bridge.send(channel,withEditBox(command,'input',screen))
+    end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     signin=function() openSettings(false,'account'); if popup then popup:openAuth('login') end end,
@@ -423,6 +464,7 @@ function love.update(dt)
   if state.notice and state.time-state.notice.shownAt>NOTICE_SECONDS then state.notice=nil end
   -- After this frame's key presses and page change, before the next Tab can arrive.
   syncFocusEdge()
+  syncEditBox()
   local rawX,rawY=love.mouse.getPosition()
   room:update(dt,state.time,(rawX-offsetX)/layoutScale,(rawY-offsetY)/layoutScale,state.reduced,preferences.screenshake)
   -- Game:update applies canvas juice before advancing REAL/REAL_SHADER.

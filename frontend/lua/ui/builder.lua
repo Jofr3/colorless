@@ -79,6 +79,14 @@ function Builder:summary(phase)
   return 'Deck builder. '..(self.name~='' and self.name or 'Untitled deck')..', '..self.count..(self.count==1 and ' card.' or ' cards.')
 end
 function Builder:offset() return self.motion and self.motion.VT.y*60 or 0 end
+-- The box the field a text proxy edits is drawn in, its dialog's slide included, for main.lua to
+-- hand the page (audit BR6); nothing while none edits.
+function Builder:editBox()
+  if self.editing=='' then return end
+  for _,b in ipairs(self.controls)do
+    if b.action=='input' and b.arg==self.editing then return b.x,b.y+(self.modal and self.modal.motion.VT.y*60 or 0),b.w,b.h end
+  end
+end
 function Builder:closeModal()
   self.hpDrag=nil
   local returnTo=self.modal and self.modal.returnTo

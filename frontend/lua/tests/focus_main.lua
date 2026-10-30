@@ -26,7 +26,7 @@ for _,name in ipairs({'library','builder','sandbox','simulator','online'})do
  package.loaded['ui.'..name]={new=function(callbacks)
   local s={callbacks=callbacks,cards={},hover=0}
   for _,method in ipairs({'open','offset','backgroundColours','keypressed','mousepressed','mousereleased','wheelmoved',
-   'retarget','command','close','cancelInteractions','closeModal','layout','draw'})do s[method]=noop end
+   'retarget','command','close','cancelInteractions','editBox','closeModal','layout','draw'})do s[method]=noop end
   function s:offset()return 0 end
   function s:backgroundColours()return {T.blue,T.panel,T.panel}end
   function s:update(_,_,mx,my)self.mx,self.my=mx,my end
@@ -36,7 +36,7 @@ end
 local popup
 package.loaded['ui.settings']={tabs={game=1,graphics=2,audio=3,account=4},new=function(_,callbacks)
  popup={callbacks=callbacks,hover=0,focus=0}
- for _,method in ipairs({'layout','draw','accountChanged','cancelInteractions','openAuth','openNamePrompt','mousepressed'})do popup[method]=noop end
+ for _,method in ipairs({'layout','draw','accountChanged','cancelInteractions','editBox','openAuth','openNamePrompt','mousepressed'})do popup[method]=noop end
  function popup:update(_,_,mx)self.mx=mx end
  function popup:keypressed(key)if key=='escape' then self.callbacks.close()end end
  function popup:mousereleased()self.callbacks.close()end

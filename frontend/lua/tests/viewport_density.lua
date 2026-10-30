@@ -50,7 +50,7 @@ for _,name in ipairs({'library','builder','sandbox','simulator','online'}) do
   package.loaded['ui.'..name]={new=function(callbacks)
     local s={callbacks=callbacks,cards={},hover=0}
     for _,method in ipairs({'open','offset','backgroundColours','keypressed','wheelmoved',
-      'retarget','command','close','cancelInteractions','closeModal','layout','draw'}) do s[method]=noop end
+      'retarget','command','close','cancelInteractions','editBox','closeModal','layout','draw'}) do s[method]=noop end
     function s:offset() return 0 end
     function s:backgroundColours() return {T.blue,T.panel,T.panel} end
     function s:update(_,_,mx,my) self.mx,self.my=mx,my end

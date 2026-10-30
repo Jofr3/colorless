@@ -15,7 +15,9 @@ import {
   type TextProxy,
   createAuthProxy,
   createTextProxy,
+  placeProxy,
   proxyElement,
+  readFieldBox,
 } from "./textProxy";
 
 export type BridgeScreen = "library" | "builder" | "sandbox" | "simulator" | "online" | "account";
@@ -455,6 +457,9 @@ export class HostShell {
         this.transitionOpen = printText(rest) === "open";
         this.sync();
         break;
+      case "field-box":
+        this.moveEditingProxy(rest);
+        break;
       case "focus-edge": {
         const [edge = "", label = ""] = decodeFields(rest) ?? [];
         if (edge !== "first" && edge !== "last" && edge !== "none") break;
@@ -479,6 +484,21 @@ export class HostShell {
       run();
       this.focusCanvas();
     });
+  }
+
+  /** The field an edit's print carries from `start` (main.lua withEditBox): its proxy goes there. */
+  private place(element: HTMLElement, fields: readonly string[], start: number) {
+    placeProxy(element, readFieldBox(fields, start), this.canvas);
+  }
+
+  /** Lua's field moved (a resize, a dialog sliding in): the proxy editing it follows. */
+  private moveEditingProxy(raw: string) {
+    const box = readFieldBox(decodeFields(raw) ?? [], 0);
+    const lines = [this.name, this.line, this.builderLine, this.builderText];
+    const element =
+      lines.find((proxy) => proxy.field !== "")?.element ??
+      (this.auth.editing ? this.authInput(this.auth.editing) : undefined);
+    if (box && element) placeProxy(element, box, this.canvas);
   }
 
   /** A text proxy holds focus and its keys. */
@@ -567,7 +587,8 @@ export class HostShell {
   }
 
   private lineCommand(owner: LineOwner, raw: string) {
-    const [action = "", field = "", value = ""] = decodeFields(raw) ?? [];
+    const fields = decodeFields(raw) ?? [];
+    const [action = "", field = "", value = ""] = fields;
     if (action === "input") {
       this.line.finish();
       this.lineOwner = owner;
@@ -586,6 +607,7 @@ export class HostShell {
         "aria-label",
         code ? "Lobby code" : field === "search" ? "Search decks" : "Deck name",
       );
+      this.place(element, fields, 3);
       // A code typed before the field opened keeps its caret at the end.
       this.line.open(field, value, code);
     } else if (action === "finish-input") this.line.finish();
@@ -597,15 +619,18 @@ export class HostShell {
   }
 
   private builderPrint(raw: string) {
-    const [action = "", field = "", value = ""] = decodeFields(raw) ?? [];
+    const fields = decodeFields(raw) ?? [];
+    const [action = "", field = "", value = ""] = fields;
     if (action === "input") {
       this.builderLine.finish();
       this.builderText.finish();
       if (field === "transfer") {
         this.builderText.element.maxLength = 30000;
+        this.place(this.builderText.element, fields, 3);
         this.builderText.open(field, value);
       } else {
         dressBuilderLine(this.builderLineInput, field);
+        this.place(this.builderLineInput, fields, 3);
         this.builderLine.open(field, value);
       }
     } else if (action === "finish-input") {
@@ -622,14 +647,18 @@ export class HostShell {
   }
 
   private accountPrint(raw: string) {
-    const [action = "", value = ""] = decodeFields(raw) ?? [];
-    if (action === "edit") this.name.open("name", value);
-    else if (action === "finish-edit") this.name.finish();
+    const fields = decodeFields(raw) ?? [];
+    const [action = "", value = ""] = fields;
+    if (action === "edit") {
+      this.place(this.name.element, fields, 2);
+      this.name.open("name", value);
+    } else if (action === "finish-edit") this.name.finish();
     else this.ports.command("account", raw);
   }
 
   private authPrint(raw: string) {
-    const [action = "", value = ""] = decodeFields(raw) ?? [];
+    const fields = decodeFields(raw) ?? [];
+    const [action = "", value = ""] = fields;
     if (action === "open") {
       this.name.finish();
       this.auth.finish();
@@ -648,6 +677,7 @@ export class HostShell {
       this.authOpen = true;
       this.sync();
     } else if (action === "edit" && (AUTH_FIELDS as readonly string[]).includes(value)) {
+      this.place(this.authInput(value as AuthField), fields, 2);
       this.auth.edit(value as AuthField);
     } else if (action === "submit") {
       this.auth.finish();

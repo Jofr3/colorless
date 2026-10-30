@@ -34,6 +34,11 @@ function Sandbox:open(reduced)
   self:command('open')
 end
 function Sandbox:offset() return self.motion and self.motion.VT.y*60 or 0 end
+-- The search's box while a text proxy edits it, for main.lua to hand the page (audit BR6).
+function Sandbox:editBox()
+  if not self.editing then return end
+  for _,b in ipairs(self.controls) do if b.input then return b.x,b.y,b.w,b.h end end
+end
 function Sandbox:deck(seat)
   for _,item in ipairs(self.items) do if item.id==self.selected[seat] then return item end end
 end

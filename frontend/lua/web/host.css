@@ -88,6 +88,16 @@ main {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
 }
+/* The text proxies (src/host/textProxy.ts placeProxy) sit over the field Lua draws, so the IME
+   window and a phone keyboard's pan anchor there (audit BR6). Still clipped, they draw nothing;
+   fixed, they never make the page scroll; and the pointer goes through them to the canvas. */
+.text-proxy {
+  position: fixed;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+}
 .failed .accessible-menu,
 .stalled .accessible-menu,
 .accessible-menu:focus-within {

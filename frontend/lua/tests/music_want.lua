@@ -11,7 +11,7 @@ local settings
 for _,name in ipairs({'library','builder','sandbox','simulator','settings','online'})do
  package.loaded['ui.'..name]={tabs={game=1},new=function(preferences,callbacks)
   local s={hover=0,cards={},preferences=preferences,callbacks=callbacks}
-  for _,m in ipairs({'open','offset','keypressed','mousepressed','mousereleased','wheelmoved','command','close','cancelInteractions','layout','closeModal','update','draw','authInput','accountChanged','openAuth'})do s[m]=noop end
+  for _,m in ipairs({'open','offset','keypressed','mousepressed','mousereleased','wheelmoved','command','close','cancelInteractions','editBox','layout','closeModal','update','draw','authInput','accountChanged','openAuth'})do s[m]=noop end
   function s:backgroundColours()return {T.blue,T.panel,T.panel}end
   if name=='settings' then settings=s end
   return s

@@ -42,7 +42,13 @@ class FakeElement extends EventTarget {
   setSelectionRange() {}
   append() {}
 }
-class FakeCanvas extends FakeElement {}
+class FakeCanvas extends FakeElement {
+  /** Where the canvas sits in the viewport. */
+  frame = { left: 0, top: 0 };
+  getBoundingClientRect() {
+    return this.frame;
+  }
+}
 /** The fake document's focus, which FakeElement.focus moves. */
 const page: { activeElement: FakeElement | null } = { activeElement: null };
 
@@ -298,6 +304,87 @@ describe("HostShell", () => {
     email.value = "ash@example.com";
     shell.onPrint(print("auth", "close"));
     expect(email.value).toBe("");
+  });
+});
+
+describe("HostShell's text proxies at their fields (audit BR6)", () => {
+  /** Where a proxy sits, as its inline style says. */
+  const placed = (element: FakeElement | undefined) =>
+    element && [element.style.left, element.style.top, element.style.width, element.style.height];
+  const box = ["120", "48", "432", "42"];
+
+  it("puts each proxy over the field Lua opens it on, beside the canvas's own place", () => {
+    const { shell, created, labelled, canvas } = fakePage();
+    canvas.frame = { left: 5, top: 7 };
+    const open = () => created.filter((e) => !e.hidden);
+    shell.onPrint(print("library", "input", "search", "fire", ...box));
+    expect(open().map((e) => e.getAttribute("aria-label"))).toEqual(["Search decks"]);
+    expect(placed(open()[0])).toEqual(["125px", "55px", "432px", "42px"]);
+    shell.onPrint(print("online", "input", "code", "AB", "10", "20", "260", "56"));
+    expect(placed(open()[0])).toEqual(["15px", "27px", "260px", "56px"]);
+    shell.onPrint(print("online", "finish-input"));
+    shell.onPrint(print("builder", "input", "query", "Pika", ...box));
+    expect(open().map((e) => [e.tagName, e.getAttribute("aria-label")])).toEqual([
+      ["INPUT", "Search cards"],
+    ]);
+    expect(placed(open()[0])).toEqual(["125px", "55px", "432px", "42px"]);
+    shell.onPrint(print("builder", "input", "transfer", "4 Pikachu", "40", "100", "600", "400"));
+    expect(open().map((e) => e.tagName)).toEqual(["TEXTAREA"]);
+    expect(placed(open()[0])).toEqual(["45px", "107px", "600px", "400px"]);
+    shell.onPrint(print("builder", "finish-input"));
+    shell.onPrint(print("account", "edit", "Ash", ...box));
+    expect(placed(labelled("Display name"))).toEqual(["125px", "55px", "432px", "42px"]);
+    shell.onPrint(print("account", "finish-edit"));
+    shell.onPrint(print("auth", "open", "login"));
+    shell.onPrint(print("auth", "edit", "password", "300", "260", "360", "40"));
+    expect(open().map((e) => e.getAttribute("aria-label"))).toEqual(["Password"]);
+    expect(placed(labelled("Password"))).toEqual(["305px", "267px", "360px", "40px"]);
+  });
+
+  it("moves the editing proxy with its field, and no other", () => {
+    const { shell, labelled } = fakePage();
+    shell.onPrint(print("auth", "open", "register"));
+    shell.onPrint(print("auth", "edit", "email", ...box));
+    shell.onPrint(print("field-box", "120", "-30", "432", "42"));
+    expect(placed(labelled("Email"))).toEqual(["120px", "-30px", "432px", "42px"]);
+    expect(placed(labelled("Password"))).toEqual([undefined, undefined, undefined, undefined]);
+    shell.onPrint(print("auth", "edit", "password", ...box));
+    shell.onPrint(print("field-box", "0", "0", "100", "40"));
+    expect(placed(labelled("Password"))).toEqual(["0px", "0px", "100px", "40px"]);
+    expect(placed(labelled("Email"))).toEqual(["120px", "-30px", "432px", "42px"]);
+    shell.onPrint(print("library", "input", "search", "fire", ...box));
+    shell.onPrint(print("field-box", "1", "2", "3", "4"));
+    expect(placed(labelled("Search decks"))).toEqual(["1px", "2px", "3px", "4px"]);
+    shell.onPrint(print("library", "finish-input"));
+    shell.onPrint(print("field-box", "9", "9", "9", "9"));
+    expect(placed(labelled("Search decks"))).toEqual(["1px", "2px", "3px", "4px"]);
+  });
+
+  it("leaves a proxy in the page's flow for a print with no box, and ignores a broken one", () => {
+    const { shell, created } = fakePage();
+    const open = () => created.filter((e) => !e.hidden);
+    shell.onPrint(print("sandbox", "input", "search", "fire", ...box));
+    shell.onPrint(print("sandbox", "finish-input"));
+    shell.onPrint(print("sandbox", "input", "search", "fire"));
+    expect(placed(open()[0])).toEqual(["", "", "", ""]);
+    for (const broken of [
+      ["1.5", "2", "3", "4"],
+      ["1", "2", "0", "4"],
+      ["1", "2", "3", "-4"],
+      ["1", "2", "3"],
+      ["", "2", "3", "4"],
+      ["1e3", "2", "3", "4"],
+    ])
+      shell.onPrint(print("field-box", ...broken));
+    expect(placed(open()[0])).toEqual(["", "", "", ""]);
+  });
+
+  it("keeps each proxy's name and role where it is put", () => {
+    const { shell, created } = fakePage();
+    shell.onPrint(print("library", "input", "name", "Deck", ...box));
+    const [line] = created.filter((e) => !e.hidden);
+    expect([line?.tagName, line?.getAttribute("aria-label")]).toEqual(["INPUT", "Deck name"]);
+    expect(created.map((e) => e.className)).toEqual(created.map(() => "sr-only text-proxy"));
   });
 });
 

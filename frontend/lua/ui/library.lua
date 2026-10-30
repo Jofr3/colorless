@@ -56,6 +56,14 @@ end
 function Library:offset()
   return self.motion and self.motion.VT.y*60 or 0
 end
+-- The box the field a text proxy edits is drawn in, its dialog's slide included, for main.lua to
+-- hand the page (audit BR6); nothing while none edits.
+function Library:editBox()
+  local action=self.editing=='search' and 'input-search' or self.editing=='name' and 'input-name'
+  for _,b in ipairs(action and self.controls or {}) do
+    if b.action==action then return b.x,b.y+(self.modal and self.modal.motion.VT.y*60 or 0),b.w,b.h end
+  end
+end
 function Library:command(...)
   Codec.command(self.callbacks.command,...)
 end

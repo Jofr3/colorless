@@ -277,6 +277,17 @@ function Settings:describe(item)
   if item.options then return item.label..': '..item.options[self:value(item)+1] end
   return item.label..': '..((item.kind=='toggle' or item.kind=='cycle') and (self:value(item)==1 and 'on' or 'off') or self:value(item))
 end
+-- The box the field a text proxy edits is drawn in, the popup's slide included, for main.lua to
+-- hand the page (audit BR6): a sign-in field, or the account name; nothing while none edits.
+function Settings:editBox()
+  local field=self.auth and self.auth.editing~='' and self.auth.editing
+  local name=not self.auth and self.account.editing
+  for _,item in ipairs(self.items) do
+    if (field and item.kind=='auth-field' and item.field==field) or (name and item.action=='edit') then
+      return item.x,item.y+self.motion.VT.y*60,item.w,item.h
+    end
+  end
+end
 function Settings:hit(x,y,hoverOnly)
   y=y-self.motion.VT.y*60
   for i,item in ipairs(self.items) do

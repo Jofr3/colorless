@@ -67,6 +67,13 @@ function Online:command(...)
   Codec.command(self.callbacks.command,...)
 end
 function Online:offset() return self.motion.VT.y*60 end
+-- The box the field a text proxy edits is drawn in, the lobby's slide included, for main.lua to
+-- hand the page (audit BR6); nothing while none edits.
+function Online:editBox()
+  for _,item in ipairs(self.editing and self.items or {}) do
+    if item.kind=='field' and item.field==self.editing then return item.x,item.y+self:offset(),item.w,item.h end
+  end
+end
 function Online:open(reduced,code)
   self.motion=Modal.motion(reduced);self.reduced=reduced
   self.code=code or '';self.tab=1;self.joinCode='';self.editing=nil;self.picker=false;self.query='';self.page=1;self.filter=1

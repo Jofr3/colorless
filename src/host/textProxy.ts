@@ -40,13 +40,48 @@ function captureKeys(
     );
 }
 
+/** Where Lua draws the field a proxy edits: whole CSS pixels from the canvas's top-left. */
+export interface FieldBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const WHOLE = /^-?\d{1,6}$/;
+
+/** The box Lua's print carries in `fields` from `start` (frontend/lua/main.lua withEditBox), or
+ * null where it has none, as from an older game package, or a broken one. */
+export function readFieldBox(fields: readonly string[], start: number): FieldBox | null {
+  const parts = fields.slice(start, start + 4);
+  if (parts.length < 4 || !parts.every((part) => WHOLE.test(part))) return null;
+  const [x = 0, y = 0, width = 0, height = 0] = parts.map(Number);
+  return width > 0 && height > 0 ? { x, y, width, height } : null;
+}
+
+/** Puts a proxy over its field (audit BR6), so the IME window and a phone keyboard's pan anchor
+ * at the field the canvas draws, not at its corner. host.css keeps it clipped, fixed and out of
+ * the pointer's way. Without a box it goes back to where the page's flow leaves it. */
+export function placeProxy(element: HTMLElement, box: FieldBox | null, canvas: Element) {
+  const { style } = element;
+  if (!box) {
+    style.left = style.top = style.width = style.height = "";
+    return;
+  }
+  const frame = canvas.getBoundingClientRect();
+  style.left = `${frame.left + box.x}px`;
+  style.top = `${frame.top + box.y}px`;
+  style.width = `${box.width}px`;
+  style.height = `${box.height}px`;
+}
+
 /** Creates the hidden field a proxy types into. */
 export function proxyElement<K extends "input" | "textarea">(
   doc: Document,
   tag: K,
 ): HTMLElementTagNameMap[K] {
   const element = doc.createElement(tag);
-  element.className = "sr-only";
+  element.className = "sr-only text-proxy";
   element.style.fontSize = "16px";
   element.hidden = true;
   (doc.querySelector("main") ?? doc.body).append(element);

@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { decodeFields } from "../lua/wire";
 import { normalizeCodeField } from "./shell";
-import { type AuthField, createAuthProxy, createTextProxy } from "./textProxy";
+import {
+  type AuthField,
+  createAuthProxy,
+  createTextProxy,
+  placeProxy,
+  readFieldBox,
+} from "./textProxy";
 
 /** The slice of a text field the proxies touch, on Node's own EventTarget. */
 class FakeField extends EventTarget {
@@ -225,5 +231,48 @@ describe("createAuthProxy", () => {
     expect(fields.email.value).toBe("zoe@example.com");
     expect(last()?.slice(-2)).toEqual(["done", "email"]);
     expect(proxy.editing).toBe("");
+  });
+});
+
+describe("readFieldBox", () => {
+  it("reads the four whole numbers after a print's own fields", () => {
+    expect(readFieldBox(["input", "search", "fire", "120", "-8", "432", "42"], 3)).toEqual({
+      x: 120,
+      y: -8,
+      width: 432,
+      height: 42,
+    });
+    expect(readFieldBox(["0", "0", "1", "1"], 0)).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+  });
+
+  it("has no box for a print without one, or with a broken one", () => {
+    for (const fields of [
+      ["input", "search", "fire"],
+      ["1", "2", "3"],
+      ["1", "2", "3", ""],
+      ["1.5", "2", "3", "4"],
+      ["1e3", "2", "3", "4"],
+      [" 1", "2", "3", "4"],
+      ["1", "2", "0", "4"],
+      ["1", "2", "3", "-4"],
+      ["1", "2", "3", "4000000"],
+    ])
+      expect(readFieldBox(fields, 0)).toBeNull();
+  });
+});
+
+describe("placeProxy", () => {
+  const canvas = { getBoundingClientRect: () => ({ left: 10, top: -4 }) } as unknown as Element;
+
+  it("puts the proxy over the field, from the canvas's place in the viewport", () => {
+    const element = { style: {} } as HTMLElement;
+    placeProxy(element, { x: 120, y: 48, width: 432, height: 42 }, canvas);
+    expect(element.style).toEqual({ left: "130px", top: "44px", width: "432px", height: "42px" });
+  });
+
+  it("hands the proxy back to the page's flow without a box", () => {
+    const element = { style: { left: "1px", top: "2px", width: "3px", height: "4px" } };
+    placeProxy(element as unknown as HTMLElement, null, canvas);
+    expect(element.style).toEqual({ left: "", top: "", width: "", height: "" });
   });
 });
