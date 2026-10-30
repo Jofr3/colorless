@@ -64524,8 +64524,8 @@ export const MUTANTS: Mutant[] = [
     what: "The sandbox picker drops to Loading on every open while it checks its decks again. Killed by sandbox.test's kept-decks case.",
     file: "src/lua/sandbox.ts",
     symbol: "LuaSandbox",
-    find: '    else if (this.phase !== "ready") this.phase = "loading";\n',
-    replace: '    else this.phase = "loading";\n',
+    find: '      if (this.phase !== "ready") this.phase = "loading";\n',
+    replace: '      this.phase = "loading";\n',
     expectKilledBy: ["src/lua/sandbox.test.ts"],
   },
   {
@@ -64534,9 +64534,9 @@ export const MUTANTS: Mutant[] = [
     what: "The sandbox picker waits for its own fetch and judgement though the store holds this revision's verdicts. Killed by sandbox.test's store case.",
     file: "src/lua/sandbox.ts",
     symbol: "LuaSandbox",
-    find: "    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged));\n",
+    find: "    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged), cached.revision);\n",
     replace:
-      '    if (cached && judged && this.phase === "ready") this.show(sandboxDecksFrom([...cached.decks], judged));\n',
+      '    if (cached && judged && this.phase === "ready") this.show(sandboxDecksFrom([...cached.decks], judged), cached.revision);\n',
     expectKilledBy: ["src/lua/sandbox.test.ts"],
   },
   {
@@ -64545,8 +64545,8 @@ export const MUTANTS: Mutant[] = [
     what: "The online picker drops to Loading on every open while it checks its decks again. Killed by online.test's kept-decks case.",
     file: "src/lua/online.ts",
     symbol: "LuaOnline",
-    find: '    else if (this.deckPhase !== "ready") this.deckPhase = "loading";\n',
-    replace: '    else this.deckPhase = "loading";\n',
+    find: '      if (this.deckPhase !== "ready") this.deckPhase = "loading";\n',
+    replace: '      this.deckPhase = "loading";\n',
     expectKilledBy: ["src/lua/online.test.ts"],
   },
   {
@@ -64555,9 +64555,9 @@ export const MUTANTS: Mutant[] = [
     what: "The online picker waits for its own fetch and judgement though the store holds this revision's verdicts. Killed by online.test's store case.",
     file: "src/lua/online.ts",
     symbol: "LuaOnline",
-    find: "    if (cached && judged) this.showDecks(playableDecksFrom([...cached.decks], judged));\n",
+    find: "    if (cached && judged) this.showDecks(cached, judged);\n",
     replace:
-      '    if (cached && judged && this.deckPhase === "ready") this.showDecks(playableDecksFrom([...cached.decks], judged));\n',
+      '    if (cached && judged && this.deckPhase === "ready") this.showDecks(cached, judged);\n',
     expectKilledBy: ["src/lua/online.test.ts"],
   },
   {
@@ -64689,5 +64689,25 @@ export const MUTANTS: Mutant[] = [
     find: "    await this.reconcile(live);\n",
     replace: "",
     expectKilledBy: ["src/lua/library.test.ts"],
+  },
+  {
+    id: "UI-ST3-sandbox-judges-after",
+    decision: "UI-ST3",
+    what: "The sandbox picker judges a list the store holds only after GET /decks answers, one round trip later. Killed by sandbox.test's parallel-judge case.",
+    file: "src/lua/sandbox.ts",
+    symbol: "LuaSandbox",
+    find: "      if (cached) void this.showJudged(cached, live);\n",
+    replace: "",
+    expectKilledBy: ["src/lua/sandbox.test.ts"],
+  },
+  {
+    id: "UI-ST3-online-judges-after",
+    decision: "UI-ST3",
+    what: "The online picker judges a list the store holds only after GET /decks answers, one round trip later. Killed by online.test's parallel-judge case.",
+    file: "src/lua/online.ts",
+    symbol: "LuaOnline",
+    find: "      if (cached) void this.showJudged(cached, live);\n",
+    replace: "",
+    expectKilledBy: ["src/lua/online.test.ts"],
   },
 ];
