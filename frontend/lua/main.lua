@@ -457,9 +457,9 @@ function love.draw()
   T.text('Colorless',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   end
-  -- Text only, under the home menu or across the table's top edge.
+  -- Text only, in the gap under the home menu or across the table's top edge.
   if state.notice then
-    Button.errorLine(state.notice.text,18,24,isTable(state.page) and 16 or menuTray.y+menuTray.h+10,virtualWidth-48)
+    Button.errorLine(state.notice.text,16,24,isTable(state.page) and 16 or menuTray.y+menuTray.h+4,virtualWidth-48)
   end
   g.pop()
   if isCollection(state.page) then
