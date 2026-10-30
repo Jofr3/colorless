@@ -40,6 +40,14 @@ for _,case in ipairs({{120,60,2,2},{119.88,60,2,2},{144,60,2,3},{165,60,2,4},{24
     ('A %g Hz display under a %d cap runs about the cap (%g a second)'):format(hz,cap,fps))
   check(shortest>=low and longest<=high,('Runs come every %d-%d frames at %g Hz, cap %d (%d-%d)'):format(low,high,hz,cap,shortest,longest))
 end
+-- A real panel's frames come at a steady beat, without the jitter above that breaks up a run of
+-- every-frame draws: a 165 or 170 Hz panel under the 144 cap, or a 72 or 75 Hz one under 60, is
+-- held to about the cap too.
+for _,case in ipairs({{165,144},{170,144},{75,60},{72,60}}) do
+  local hz,cap=case[1],case[2]
+  local fps=run(hz,cap,20,0)
+  check(fps<=cap*1.02,('A steady %g Hz display under a %d cap runs about the cap (%g a second)'):format(hz,cap,fps))
+end
 -- A 144 Hz display under the 60 cap runs 60 a second, not 72 (every other frame) nor 48 (every
 -- third).
 local fps=run(144,60,20,0.001)

@@ -65832,4 +65832,14 @@ export const MUTANTS: Mutant[] = [
     replace: "",
     expectKilledBy: ["scripts/hostScript.test.ts"],
   },
+  {
+    id: "UI-QA5-B1-lua-early-carry",
+    decision: "UI-QA5",
+    what: "The frame pacer carries a quarter interval early again, so a steady 165 Hz panel under the 144 cap runs every frame (165 a second). Killed by frame_pacer.lua's steady-beat case.",
+    file: "frontend/lua/ui/frame_pacer.lua",
+    find: "local EARLY_CARRY,LATE_CARRY=0.45,0.2\n",
+    replace: "local EARLY_CARRY,LATE_CARRY=0.25,0.2\n",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/test-lua.ts", "frame_pacer.lua"],
+  },
 ];

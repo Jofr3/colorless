@@ -6,12 +6,14 @@
 -- and a faster one runs the frames closest to the cap's own beat.
 local Pacer={}
 Pacer.__index=Pacer
--- The most a run may leave owed, in cap intervals. Early: a run that came early never makes the
--- next one wait more than a quarter interval longer. Late: less than the half frame a display
+-- The most a run may leave owed, in cap intervals. Early: a run that came early makes the next
+-- one wait at most 0.45 interval longer, so with the half-frame margin a steady display runs
+-- every frame only up to 1.5/1.45 (about 1.03) times the cap: a 165 Hz panel under 144 is held
+-- to the cap, while a display at the cap through jitter still runs every frame. Late: less than the half frame a display
 -- at twice the cap runs early by, so a display a hair slower than that (119.88 Hz under 60) keeps
 -- running every other frame instead of slipping an extra one in every few seconds, and a stall
 -- (a hidden tab, a slow frame) is dropped rather than paid back with a burst of frames.
-local EARLY_CARRY,LATE_CARRY=0.25,0.2
+local EARLY_CARRY,LATE_CARRY=0.45,0.2
 function Pacer.new() return setmetatable({owed=0},Pacer) end
 -- `elapsed`: seconds since the previous animation frame. True when this frame runs.
 function Pacer:due(elapsed,cap)
