@@ -4,7 +4,7 @@ import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
 import { SandboxSetupError } from "../game/sandboxSetupError";
 import { sandboxDecksFrom } from "../game/sandboxDecks";
-import { deckStore } from "../decks/deckStore";
+import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { AccountStatus } from "./account";
@@ -21,6 +21,8 @@ export class LuaSandbox {
   private user = "";
   private readonly epoch = epochGuard();
   private revision = 0;
+  /** The store revision on screen, -1 for none. */
+  private shown = -1;
 
   constructor(
     private publish: (snapshot: string) => void,
@@ -36,6 +38,7 @@ export class LuaSandbox {
     this.epoch.invalidate();
     this.user = user;
     this.decks = [];
+    this.shown = -1;
     this.selected = ["", ""];
     this.busy = false;
     this.message = status === "error" ? DECKS_UNREACHABLE : "";
@@ -77,8 +80,12 @@ export class LuaSandbox {
     const live = this.epoch.next();
     const cached = deckStore.peek(this.user);
     const judged = cached && deckStore.peekVerdicts(cached);
-    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged));
-    else if (this.phase !== "ready") this.phase = "loading";
+    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged), cached.revision);
+    else {
+      if (this.phase !== "ready") this.phase = "loading";
+      // A list the store holds unjudged is judged while it is checked again, not after.
+      if (cached) void this.showJudged(cached, live);
+    }
     this.message = "";
     this.emit();
     try {
@@ -86,11 +93,12 @@ export class LuaSandbox {
       if (!live()) return;
       const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      this.show(sandboxDecksFrom([...list.decks], verdicts));
+      this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
     } catch (error) {
       if (!live()) return;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
       this.decks = [];
+      this.shown = -1;
       this.selected = ["", ""];
       this.message =
         this.phase === "anonymous" ? "Sign in to choose your decks." : DECKS_UNREACHABLE;
@@ -98,7 +106,19 @@ export class LuaSandbox {
     if (live()) this.emit();
   }
 
-  private show(decks: Deck[]) {
+  /** Shows `list` once judged, unless something newer is on screen by then. A failure here says
+   * nothing: the revalidation that runs alongside reports its own. */
+  private async showJudged(list: DeckList, live: () => boolean) {
+    try {
+      const verdicts = await deckStore.judge(list);
+      if (!live() || list.revision <= this.shown) return;
+      this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
+      this.emit();
+    } catch {}
+  }
+
+  private show(decks: Deck[], revision: number) {
+    this.shown = revision;
     // Include decks in existing folders, without bringing folder management here.
     this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
     this.selected = this.selected.map((id) =>

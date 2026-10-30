@@ -151,10 +151,10 @@ class DeckStore {
     );
   }
 
-  /** Forgets everything: between test cases. */
+  /** Forgets everything: between test cases. Revisions keep counting, so a screen never
+   * mistakes a new list for one it showed. */
   reset() {
     this.session("");
-    this.revision = 0;
   }
 
   private replace(user: string, decks: readonly Deck[]) {

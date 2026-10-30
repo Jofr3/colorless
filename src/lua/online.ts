@@ -20,8 +20,8 @@ import {
   savePlayerName,
   stakeIdentity,
 } from "../online/session";
-import { type PlayableDeck, playableDecksFrom } from "../game/sandboxDecks";
-import { deckStore } from "../decks/deckStore";
+import { type DeckVerdict, type PlayableDeck, playableDecksFrom } from "../game/sandboxDecks";
+import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import type { CardPool, LuaOnlineMatch } from "./onlineTable";
@@ -75,6 +75,8 @@ export class LuaOnline {
   private decksWanted = false;
   /** Whose decks `decks` holds. */
   private decksUser = "";
+  /** The store revision the picker shows, -1 for none. */
+  private decksShown = -1;
   private readonly deckEpoch = epochGuard();
   private revision = 0;
   private op = 0;
@@ -506,6 +508,7 @@ export class LuaOnline {
     const live = this.deckEpoch.next();
     if (this.decksUser !== this.userId) {
       this.decks = [];
+      this.decksShown = -1;
       this.deckPhase = "idle";
     }
     if (!this.userId) {
@@ -516,26 +519,45 @@ export class LuaOnline {
     }
     const cached = deckStore.peek(this.userId);
     const judged = cached && deckStore.peekVerdicts(cached);
-    if (cached && judged) this.showDecks(playableDecksFrom([...cached.decks], judged));
-    else if (this.deckPhase !== "ready") this.deckPhase = "loading";
+    if (cached && judged) this.showDecks(cached, judged);
+    else {
+      if (this.deckPhase !== "ready") this.deckPhase = "loading";
+      // A list the store holds unjudged is judged while it is checked again, not after.
+      if (cached) void this.showJudged(cached, live);
+    }
     this.emit();
     try {
       const list = await deckStore.revalidate(this.userId);
       if (!live()) return;
       const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      this.showDecks(playableDecksFrom([...list.decks], verdicts));
+      this.showDecks(list, verdicts);
     } catch (error) {
       if (!live()) return;
       this.decks = [];
+      this.decksShown = -1;
       this.deckPhase =
         error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
     }
     this.emit();
   }
 
-  private showDecks(decks: PlayableDeck[]) {
-    this.decks = decks.sort((x, y) => x.name.localeCompare(y.name));
+  /** Shows `list` once judged, unless something newer is on screen by then. A failure here says
+   * nothing: the revalidation that runs alongside reports its own. */
+  private async showJudged(list: DeckList, live: () => boolean) {
+    try {
+      const verdicts = await deckStore.judge(list);
+      if (!live() || list.revision <= this.decksShown) return;
+      this.showDecks(list, verdicts);
+      this.emit();
+    } catch {}
+  }
+
+  private showDecks(list: DeckList, verdicts: Map<string, DeckVerdict>) {
+    this.decks = playableDecksFrom([...list.decks], verdicts).sort((x, y) =>
+      x.name.localeCompare(y.name),
+    );
+    this.decksShown = list.revision;
     this.decksUser = this.userId;
     this.deckPhase = "ready";
   }

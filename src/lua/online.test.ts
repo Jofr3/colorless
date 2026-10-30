@@ -363,6 +363,28 @@ describe("Lua online adapter", () => {
     answer();
   });
 
+  it("judges a list the store holds while the picker checks it again, not after", async () => {
+    stubFetch(deckReads);
+    await deckStore.revalidate("u");
+    let answer: () => void = () => {};
+    stubFetch({
+      ...deckReads,
+      "GET /decks": () =>
+        new Promise<Response>((done) => {
+          answer = () => done(deckReads["GET /decks"]());
+        }),
+    });
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    const open = online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("loading");
+    await vi.waitFor(() => expect(header()[H("deckPhase")]).toBe("ready"));
+    expect(rows()).toHaveLength(4);
+    answer();
+    await open;
+    expect(rows()).toHaveLength(4);
+  });
+
   it("opens the picker on the decks another screen already judged", async () => {
     const { calls } = stubFetch(deckReads);
     await deckStore.judge(await deckStore.revalidate("u"));

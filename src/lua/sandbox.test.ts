@@ -158,6 +158,22 @@ describe("Lua sandbox setup", () => {
     expect(deckIds(publish)).toEqual(["a", "b"]);
     expect(sandbox.selected).toEqual(["a", "b"]);
   });
+  it("judges a list the store holds while it is checked again, not after", async () => {
+    stubFetch(reads);
+    await deckStore.revalidate("user");
+    const held = heldDecks();
+    const publish = vi.fn();
+    const sandbox = new LuaSandbox(publish, async () => () => {});
+    sandbox.session("authenticated", "user");
+    const open = sandbox.command("open");
+    expect(phaseOf(publish)).toBe("loading");
+    await vi.waitFor(() => expect(phaseOf(publish)).toBe("ready"));
+    expect(deckIds(publish)).toEqual(["a", "b"]);
+    expect(held.calls.filter((call) => call === "GET /decks")).toHaveLength(1);
+    held.answer();
+    await open;
+    expect(deckIds(publish)).toEqual(["a", "b"]);
+  });
   it("opens on the decks another screen already judged, without judging them again", async () => {
     const { calls } = stubFetch(reads);
     const list = await deckStore.revalidate("user");
