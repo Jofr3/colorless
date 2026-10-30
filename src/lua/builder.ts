@@ -24,6 +24,9 @@ import {
   importDecklist,
   kindOptions,
   loadCardIndex,
+  loadFacets,
+  loadSeries,
+  loadSets,
   searchCards,
   suffixOptions,
 } from "../decks/catalog";
@@ -112,6 +115,11 @@ function conflictingDeck(error: unknown): SavedDeck | null | undefined {
   if (!(error instanceof api.ApiError) || error.status !== 409) return undefined;
   const parsed = deckConflictSchema.safeParse(error.body);
   return parsed.success ? parsed.data.deck : null;
+}
+
+/** The filter options, each shared module-wide (catalog.ts). */
+function catalogOptions() {
+  return Promise.all([loadFacets(), loadSets(), loadSeries()]);
 }
 
 /** Whether the builder serves `page` of `query` from the card index rather than GET /cards: any
@@ -485,6 +493,9 @@ export class LuaBuilder {
     this.phase = "loading";
     this.message = "";
     this.emit();
+    // The filter options do not depend on the deck, so they load alongside it.
+    const options = catalogOptions();
+    options.catch(() => {});
     try {
       const data = current?.id === id ? current : await api.getDeck(id);
       if (!live()) return;
@@ -583,7 +594,7 @@ export class LuaBuilder {
       // as loading until their request answers, so the deck shows without waiting for it.
       const hydrated = this.hydrate(live);
       this.emit();
-      await Promise.all([hydrated, this.search(), this.loadOptions(live)]);
+      await Promise.all([hydrated, this.search(), this.loadOptions(live, options)]);
       // Name and rules-text searches run over the card index; load it once the deck has shown, so
       // the first search does not wait for it.
       if (live()) loadCardIndex().catch((error) => reportError("load card index", error));
@@ -655,17 +666,14 @@ export class LuaBuilder {
     await this.hydrating;
     return live();
   }
-  private async loadOptions(live: () => boolean) {
+  private async loadOptions(live: () => boolean, options = catalogOptions()) {
     try {
-      const [facets, sets, series] = await Promise.all([
-        api.getFacets(),
-        api.getSets(),
-        api.getSeries(),
-      ]);
+      const [facets, sets, series] = await options;
       if (!live()) return;
       this.facets = facets;
       this.sets = sets;
       this.series = series;
+      if (this.message === LOAD_FAILED.options) this.message = "";
       this.emit();
     } catch (error) {
       reportError("load filter options", error);

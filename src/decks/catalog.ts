@@ -19,7 +19,7 @@ import {
   prepareCardIndex,
   searchCardIndex,
 } from "@colorless/schema";
-import { getCardIndex, getCards, getSets } from "../lib/api";
+import { getCardIndex, getCards, getFacets, getSeries, getSets } from "../lib/api";
 import {
   type BuilderCard,
   CATEGORY_BY_SUPERTYPE,
@@ -238,6 +238,44 @@ export function forgetCardIndex(): void {
   settledIndex = undefined;
 }
 
+// ---- Filter options: facets, sets and series, shared like the index ----------------------------
+
+type Memo<T> = { at: number; value: Promise<T> };
+const optionMemos: { clear(): void }[] = [];
+
+/** `load`, made once and shared by every caller for INDEX_REUSE_MS, like loadCardIndex. A failed
+    load is forgotten, so the next call retries. */
+function memoised<T>(load: () => Promise<T>): (now?: number) => Promise<T> {
+  let memo: Memo<T> | undefined;
+  optionMemos.push({
+    clear: () => {
+      memo = undefined;
+    },
+  });
+  return (now = Date.now()) => {
+    if (memo === undefined || now - memo.at > INDEX_REUSE_MS) {
+      const entry = { at: now, value: load() };
+      memo = entry;
+      entry.value.catch(() => {
+        if (memo === entry) memo = undefined;
+      });
+    }
+    return memo.value;
+  };
+}
+
+/** The catalog's filter vocabularies (GET /facets). */
+export const loadFacets = memoised(getFacets);
+/** Every set (GET /sets): the builder's Set filter and the decklist import's set codes. */
+export const loadSets = memoised(() => getSets());
+/** Every series (GET /series). */
+export const loadSeries = memoised(getSeries);
+
+/** Drop the loaded filter options, so the next call fetches them again. */
+export function forgetCatalogOptions(): void {
+  for (const memo of optionMemos) memo.clear();
+}
+
 function rowCard(loaded: LoadedCardIndex, row: CardIndexRow): BuilderCard {
   let card = loaded.cards.get(row);
   if (card === undefined) {
@@ -315,11 +353,11 @@ export async function findCardsBySubstring(
   return (await search({ name: key })).filter((card) => nameKey(card.name) === key);
 }
 
-/** Decklist set code → set id, from GET /sets: the official abbreviation
-    ("PRE") and the upper-cased id our own export writes ("SV08.5"). */
+/** Decklist set code → set id, from the sets the builder loaded (GET /sets): the official
+    abbreviation ("PRE") and the upper-cased id our own export writes ("SV08.5"). */
 async function setIdsByCode(): Promise<(code: string) => string | undefined> {
   const byCode = new Map<string, string>();
-  for (const set of await getSets()) {
+  for (const set of await loadSets()) {
     if (set.abbreviation) byCode.set(set.abbreviation.toUpperCase(), set.id);
     byCode.set(set.id.toUpperCase(), set.id);
   }

@@ -11,7 +11,7 @@ import {
   type Deck,
   MAX_CACHED_CARDS_PAGE,
 } from "@colorless/schema";
-import { forgetCardIndex, loadCardIndex } from "../decks/catalog";
+import { forgetCardIndex, forgetCatalogOptions, loadCardIndex } from "../decks/catalog";
 import { clearCardPoolCache, fetchCardPool } from "../game/cardPool";
 import { MAX_TRANSIENT_RETRIES } from "../decks/deckSaver";
 import { cardIndexPayload } from "../test/fixtures";
@@ -86,6 +86,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
   forgetCardIndex();
+  forgetCatalogOptions();
   clearCardPoolCache();
   vi.mocked(api.getCardIndex).mockResolvedValue(ABRA_INDEX);
   vi.mocked(api.getDeck).mockResolvedValue(deck());
@@ -914,6 +915,50 @@ describe("deck cards before their details arrive", () => {
     held.answer([card("x")]);
     await exported;
     expect(b.transfer).toContain("2 Pikachu");
+    expect(b.message).toBe("");
+  });
+});
+
+describe("filter options", () => {
+  it("asks for the filter options alongside the deck, once, and the decklist import reuses them", async () => {
+    let answer!: (d: Deck) => void;
+    vi.mocked(api.getDeck).mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          answer = r;
+        }),
+    );
+    vi.mocked(api.getSets).mockResolvedValue([
+      { id: "sv01", name: "Scarlet & Violet", abbreviation: "SVI" },
+    ] as Awaited<ReturnType<typeof api.getSets>>);
+    const publish = vi.fn();
+    const b = new LuaBuilder(publish, vi.fn(), vi.fn());
+    b.session("authenticated", "u1");
+    const opened = b.command("open\tone");
+    // Still waiting on the deck: the options are already on their way.
+    expect(api.getFacets).toHaveBeenCalledTimes(1);
+    expect(api.getSets).toHaveBeenCalledTimes(1);
+    expect(api.getSeries).toHaveBeenCalledTimes(1);
+    answer(deck());
+    await opened;
+    expect(b.options().find((o) => o.key === "setId")?.labels).toEqual(["All", "Scarlet & Violet"]);
+    // A second deck, and an import naming a set code, ask for none of them again.
+    b.session("authenticated", "u2");
+    await b.command("open\ttwo");
+    await b.command(encodeFields(["import", "2 Abra SVI 1"]));
+    expect(api.getFacets).toHaveBeenCalledTimes(1);
+    expect(api.getSets).toHaveBeenCalledTimes(1);
+    expect(api.getSeries).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks again for options that failed to load, on Retry", async () => {
+    vi.mocked(api.getFacets).mockRejectedValueOnce(new Error("offline"));
+    const { b } = await setup();
+    expect(b.message).toBe("Filter options did not load. Retry to reconnect.");
+    await b.command("retry");
+    expect(api.getFacets).toHaveBeenCalledTimes(2);
+    // Sets and series loaded the first time, so Retry does not ask for them again.
+    expect(api.getSets).toHaveBeenCalledTimes(1);
     expect(b.message).toBe("");
   });
 });

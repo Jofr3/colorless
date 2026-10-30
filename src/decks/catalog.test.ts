@@ -10,8 +10,12 @@ import {
   findCardsByName,
   findCardsBySubstring,
   forgetCardIndex,
+  forgetCatalogOptions,
   importDecklist,
   kindOptions,
+  loadFacets,
+  loadSeries,
+  loadSets,
   suffixOptions,
   toBuilderCard,
 } from "./catalog";
@@ -365,9 +369,42 @@ describe("findCardsBySubstring", () => {
   });
 });
 
+describe("filter options", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    forgetCatalogOptions();
+  });
+
+  it("loads facets, sets and series once for every caller, and again after an hour", async () => {
+    const { calls } = stubFetch({
+      "GET /facets": () => json(FACETS),
+      "GET /sets": () => json([]),
+      "GET /series": () => json([]),
+    });
+    const now = Date.now();
+    await Promise.all([loadFacets(now), loadFacets(now), loadSets(now), loadSeries(now)]);
+    await Promise.all([loadFacets(now + 60_000), loadSets(now + 60_000), loadSeries(now + 60_000)]);
+    expect(calls).toEqual(["GET /facets", "GET /sets", "GET /series"]);
+    await loadSets(now + 60 * 60 * 1000 + 1);
+    expect(calls).toEqual(["GET /facets", "GET /sets", "GET /series", "GET /sets"]);
+  });
+
+  it("forgets a failed load, so the next call asks again", async () => {
+    let fail = true;
+    const { calls } = stubFetch({
+      "GET /facets": () => (fail ? json({ error: "down" }, 503) : json(FACETS)),
+    });
+    await expect(loadFacets()).rejects.toThrow();
+    fail = false;
+    await expect(loadFacets()).resolves.toEqual(FACETS);
+    expect(calls).toEqual(["GET /facets", "GET /facets"]);
+  });
+});
+
 describe("importDecklist", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    forgetCatalogOptions();
   });
 
   /** The /cards queries an import makes, as `nameExact=…` / `name=…` strings. */
